@@ -1620,3 +1620,10 @@ management:
 - [Spring Batch](spring-batch-interview.md) — пакетная обработка, интегрированная в Boot
 - [Микросервисы](../../architecture/microservices-interview.md) — Spring Boot как основа для микросервисов
 - [Docker](../../devops/docker-interview.md) — контейнеризация Spring Boot приложений
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [[spring-cloud-interview|Spring Cloud]]
+- [[spring-data-jpa-interview|Spring Data JPA]]
+- [[spring-framework-interview|Spring Framework]]

@@ -1822,3 +1822,10 @@ db.products.aggregate([
 - [Cassandra](cassandra-interview.md) — другая NoSQL БД (колоночная модель)
 - [CAP-теорема](../architecture/cap-theorem-interview.md) — компромиссы распределённых систем
 - [Hibernate / JPA](hibernate-interview.md) — ORM для реляционных БД
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]

@@ -1065,3 +1065,10 @@ FROM ubuntu@sha256:abc123...  # pin by digest, not tag
 - [Kubernetes](../devops/kubernetes-interview.md) — admission, pod security, image verification
 - [Docker](../devops/docker-interview.md) — image signing, scanning
 - [Observability](../monitoring/observability-interview.md) — auditing supply chain events
+
+- [[application-security-interview|Application Security]]
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[jwt-interview|JWT]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[oauth2-interview|OAuth2]]
+- [[owasp-top10-interview|OWASP Top 10]]

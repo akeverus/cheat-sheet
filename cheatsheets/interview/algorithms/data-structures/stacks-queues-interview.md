@@ -737,3 +737,10 @@ deque.offer(null); // NullPointerException
 - [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — BlockingQueue, ConcurrentLinkedQueue
 - [Apache Kafka](../../messaging/kafka-interview.md) — distributed queue
 - [RabbitMQ](../../messaging/rabbitmq-interview.md) — message broker queues
+
+- [[arrays-strings-interview|Массивы и строки]]
+- [[graphs-interview|Графы]]
+- [[hash-tables-interview|Хеш-таблицы]]
+- [[heaps-interview|Кучи (Heaps)]]
+- [[linked-lists-interview|Связные списки]]
+- [[trees-interview|Деревья]]

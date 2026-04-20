@@ -468,3 +468,10 @@ Compromised device → block
 - [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
 - [Kubernetes](../devops/kubernetes-interview.md) — NetworkPolicies
 - [Authentication & Authorization](authentication-authorization-patterns-interview.md)
+
+- [[application-security-interview|Application Security]]
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[jwt-interview|JWT]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[oauth2-interview|OAuth2]]
+- [[owasp-top10-interview|OWASP Top 10]]

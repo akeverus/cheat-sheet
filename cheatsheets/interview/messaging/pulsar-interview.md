@@ -508,3 +508,10 @@ Less common than KoP. RabbitMQ migrations less frequent.
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — separated storage/compute
 - [Caching](../architecture/caching-strategies-interview.md) — для acceleration
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — for choreographed sagas
+
+- [[aws-sqs-sns-interview|AWS SQS и SNS]]
+- [[kafka-interview|Apache Kafka]]
+- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
+- [[nats-interview|NATS]]
+- [[rabbitmq-interview|RabbitMQ]]
+- [[redpanda-interview|Redpanda]]

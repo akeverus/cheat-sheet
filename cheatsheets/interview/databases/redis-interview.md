@@ -2156,3 +2156,10 @@ CLIENT TRACKING on BCAST PREFIX user:
 - [CAP-теорема](../architecture/cap-theorem-interview.md) — Redis как CP/AP-система в зависимости от конфигурации
 - [Apache Kafka](../messaging/kafka-interview.md) — потоковая обработка, сравнение с Redis Streams
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция с Spring Data Redis
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]

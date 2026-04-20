@@ -1460,3 +1460,10 @@ long totalCount = futures.stream()
 - [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) — разделение read/write нагрузки для масштабирования
 - [Apache Kafka](../messaging/kafka-interview.md) — партиционирование и потоковая обработка для высокопроизводительных систем
 - [Kubernetes](../devops/kubernetes-interview.md) — HPA, VPA и автоматическое масштабирование приложений
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

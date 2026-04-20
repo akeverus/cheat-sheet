@@ -2932,3 +2932,10 @@ spec:
 - [Kubernetes](../devops/kubernetes-interview.md) — ServiceAccount, RBAC, Workload Identity
 - [Архитектура баз данных](../databases/database-architecture-interview.md) — Row-Level Security, шифрование данных
 - [HTTP и REST](../api/http-rest-interview.md) — TLS, HTTPS, заголовки безопасности
+
+- [[application-security-interview|Application Security]]
+- [[jwt-interview|JWT]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[oauth2-interview|OAuth2]]
+- [[owasp-top10-interview|OWASP Top 10]]
+- [[secrets-management-interview|Secrets Management]]

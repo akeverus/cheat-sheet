@@ -1907,3 +1907,10 @@ customerRepository.findAll(spec);
 - [Микросервисы](../architecture/microservices-interview.md) — архитектурные паттерны
 - [Технический долг](../code-quality/technical-debt-interview.md) — антипаттерны и код-смеллы
 - [System Design](../system-design/system-design-interview.md) — паттерны в контексте проектирования систем
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]

@@ -1648,3 +1648,10 @@ public JwtDecoder jwtDecoder() {
 - [Паттерны аутентификации](authentication-authorization-patterns-interview.md) — сравнение JWT с сессиями, SSO, SAML
 - [Application Security](application-security-interview.md) — общие принципы безопасности приложений, XSS, CSRF
 - [OWASP Top 10](owasp-top10-interview.md) — классификация уязвимостей, в т.ч. связанных с аутентификацией
+
+- [[application-security-interview|Application Security]]
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[oauth2-interview|OAuth2]]
+- [[owasp-top10-interview|OWASP Top 10]]
+- [[secrets-management-interview|Secrets Management]]

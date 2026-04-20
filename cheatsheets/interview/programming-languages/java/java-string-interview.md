@@ -1007,3 +1007,10 @@ try {
 - [Java Types](java-types-interview.md) — `String` vs примитивы, `char[]`, `CharSequence` иерархия
 - [Java 17-21](java-17-21-interview.md) — text blocks (Java 15+), форматирование ``, `String.formatted()`
 - [JVM](../../jvm/jvm-interview.md) — `String Pool` в `Metaspace`, `intern()`, влияние на GC и память
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-collections-interview|Java Collections]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]

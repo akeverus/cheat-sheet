@@ -1131,3 +1131,10 @@ graph TD
 - [Технический долг](../code-quality/technical-debt-interview.md) — прагматизм и компромиссы в разработке
 - [System Design](../system-design/system-design-interview.md) — проектирование систем: структурированный ответ
 - [Алгоритмы](../algorithms/algorithms-interview.md) — алгоритмическая часть технического интервью
+
+- [[conflict-stories-interview|Конфликтные истории]]
+- [[culture-fit-interview|Culture Fit]]
+- [[failure-stories-interview|Истории о неудачах]]
+- [[leadership-stories-interview|Истории о лидерстве]]
+- [[star-method-interview|Метод STAR]]
+- [[ai-agents-interview|AI Agents]]

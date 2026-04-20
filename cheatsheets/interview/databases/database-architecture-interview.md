@@ -1752,3 +1752,10 @@ public class UserService {
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — консистентность, репликация, консенсус
 - [Паттерны согласованности](../architecture/consistency-patterns-interview.md) — eventual consistency, strong consistency
 - [Паттерны масштабирования](../architecture/scalability-patterns-interview.md) — горизонтальное и вертикальное масштабирование
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]
+- [[elasticsearch-interview|Elasticsearch]]

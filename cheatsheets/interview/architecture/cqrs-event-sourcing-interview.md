@@ -2384,3 +2384,10 @@ meterRegistry.gauge("projection.lag",
 - [Clean Architecture](clean-architecture-interview.md) — слоёная архитектура как основа разделения Command и Query моделей
 - [Apache Kafka](../messaging/kafka-interview.md) — Kafka как Event Store для Event Sourcing и шина событий для CQRS проекций
 - [Архитектура баз данных](../databases/database-architecture-interview.md) — read replica, материализованные представления и физическое разделение read/write БД
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

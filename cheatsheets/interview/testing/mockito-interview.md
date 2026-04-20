@@ -1324,3 +1324,10 @@ class MyTest { ... }
 - [Testcontainers](testcontainers-interview.md) — реальные зависимости в тестах: PostgreSQL, Kafka, Redis
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — тестирование Spring Boot приложений, @SpringBootTest, TestRestTemplate
 - [Java Core](../programming-languages/java/java-core-interview.md) — основы Java, необходимые для понимания работы Mockito
+
+- [[chaos-engineering-interview|Chaos Engineering]]
+- [[contract-testing-interview|Contract Testing]]
+- [[integration-testing-interview|Integration Testing]]
+- [[load-testing-interview|Load Testing]]
+- [[mutation-testing-interview|Mutation Testing]]
+- [[property-based-testing-interview|Property-based Testing]]

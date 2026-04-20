@@ -764,3 +764,10 @@ spark.sql.adaptive.skewJoin.enabled=true
 - [Performance Testing](../performance/performance-testing-interview.md) — Spark UI и benchmarking
 - [JVM](../jvm/jvm-interview.md) — Spark на JVM, GC tuning
 - [Memory Management](../performance/memory-management-interview.md) — Tungsten off-heap
+
+- [[apache-airflow-interview|Apache Airflow]]
+- [[apache-flink-interview|Apache Flink]]
+- [[data-lake-lakehouse-interview|Data Lake и Lakehouse]]
+- [[data-warehousing-interview|Data Warehousing]]
+- [[dbt-interview|dbt]]
+- [[kafka-streams-interview|Kafka Streams]]

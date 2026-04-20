@@ -1507,3 +1507,10 @@ sequenceDiagram
 - [Паттерны масштабируемости](scalability-patterns-interview.md) — кэш как инструмент масштабирования и снижения нагрузки на БД
 - [Паттерны отказоустойчивости](resilience-patterns-interview.md) — кэш как fallback при недоступности upstream сервиса
 - [Архитектура баз данных](../databases/database-architecture-interview.md) — read replica vs кэш, стратегии снижения нагрузки на БД
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]
+- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]]

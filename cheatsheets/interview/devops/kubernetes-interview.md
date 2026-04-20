@@ -1889,3 +1889,10 @@ kubectl kustomize k8s/overlays/prod
 - [Observability](../monitoring/observability-interview.md) — мониторинг и трейсинг в K8s: Prometheus Operator, Fluentd, Jaeger
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция Java-приложений с K8s: liveness/readiness probes, graceful shutdown
 - [Дизайн CI/CD пайплайнов](../cicd/pipeline-design-interview.md) — GitOps и ArgoCD: деплой через Kubernetes манифесты
+
+- [[ansible-interview|Ansible]]
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[consul-interview|HashiCorp Consul]]
+- [[docker-interview|Docker]]
+- [[git-interview|Git]]
+- [[gradle-maven-interview|Gradle и Maven]]

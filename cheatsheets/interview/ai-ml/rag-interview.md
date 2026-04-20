@@ -683,3 +683,10 @@ result = evaluate(
 - [Caching](../architecture/caching-strategies-interview.md) — для embeddings cache
 - [Микросервисы](../architecture/microservices-interview.md) — где RAG живёт
 - [Elasticsearch](../databases/elasticsearch-interview.md) — для hybrid search
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]

@@ -2495,3 +2495,10 @@ int auditAndUpdatePrices(
 - [Spring Batch](spring-batch-interview.md) — JpaPagingItemReader и batch-доступ к данным
 - [Hibernate](../../databases/hibernate-interview.md) — ORM под капотом Spring Data JPA
 - [Архитектура баз данных](../../databases/database-architecture-interview.md) — транзакции и производительность
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [[spring-boot-interview|Spring Boot]]
+- [[spring-cloud-interview|Spring Cloud]]
+- [[spring-framework-interview|Spring Framework]]

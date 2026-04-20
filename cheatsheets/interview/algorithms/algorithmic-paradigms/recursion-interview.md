@@ -666,3 +666,10 @@ boolean isOdd(int n) {
 - [Анализ сложности](../complexity/complexity-analysis-interview.md) — recurrence relations
 - [JVM](../../jvm/jvm-interview.md) — stack frames, Xss, отсутствие TCO
 - [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — Project Loom virtual threads
+
+- [[backtracking-interview|Backtracking]]
+- [[divide-and-conquer-interview|Divide and Conquer]]
+- [[dynamic-programming-interview|Динамическое программирование]]
+- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
+- [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]
+- [[algorithms-interview|Алгоритмы (обзор)]]

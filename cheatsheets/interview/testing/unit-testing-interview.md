@@ -2108,3 +2108,10 @@ class OrderEventHandlerTest {
 - [Code Review](../code-quality/code-review-interview.md) — связь качества тестов и ревью
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — тестирование Spring-приложений (`@SpringBootTest`, `@MockBean`)
 - [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — тестирование многопоточного кода
+
+- [[chaos-engineering-interview|Chaos Engineering]]
+- [[contract-testing-interview|Contract Testing]]
+- [[integration-testing-interview|Integration Testing]]
+- [[load-testing-interview|Load Testing]]
+- [[mockito-interview|Mockito]]
+- [[mutation-testing-interview|Mutation Testing]]

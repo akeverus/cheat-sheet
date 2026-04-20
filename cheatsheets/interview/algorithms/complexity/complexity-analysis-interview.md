@@ -651,3 +651,10 @@ public int linearSearch(Blackhole bh) {
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — реальные сложности коллекций
 - [Application Profiling](../../performance/application-profiling-interview.md) — JMH, профилировщики, реальные замеры
 - [JVM](../../jvm/jvm-interview.md) — как стек, GC и JIT влияют на сложность
+
+- [[backtracking-interview|Backtracking]]
+- [[divide-and-conquer-interview|Divide and Conquer]]
+- [[dynamic-programming-interview|Динамическое программирование]]
+- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
+- [[recursion-interview|Рекурсия]]
+- [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]

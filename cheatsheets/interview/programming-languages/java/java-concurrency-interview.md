@@ -1661,3 +1661,10 @@ Response fetchWithTimeout(long userId) throws Exception {
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — `@Async`, `@Scheduled`, `ThreadPoolTaskExecutor`
 - [Design Patterns](../../design-patterns/design-patterns-interview.md) — паттерны многопоточного программирования
 - [Профилирование приложений](../../performance/application-profiling-interview.md) — анализ deadlock, thread dump, `JFR`
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-collections-interview|Java Collections]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]
+- [[java-core-interview|Java Core]]

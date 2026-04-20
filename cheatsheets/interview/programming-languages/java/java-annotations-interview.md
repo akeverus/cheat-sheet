@@ -1694,3 +1694,10 @@ public @org.springframework.lang.NonNull User getUser(
 - [JVM](../../jvm/jvm-interview.md) — `RetentionPolicy.RUNTIME` и Metaspace, overhead рефлексии аннотаций
 - [Java Modules](java-modules-interview.md) — Annotation Processors в модульном контексте, `opens` для доступа к аннотациям
 - [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — аннотации как основа Spring IoC: `@Component`, `@Autowired`, `@Transactional`
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-collections-interview|Java Collections]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]
+- [[java-core-interview|Java Core]]

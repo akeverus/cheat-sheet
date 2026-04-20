@@ -691,3 +691,10 @@ String reorganizeString(String s) {
 - [Анализ сложности](../complexity/complexity-analysis-interview.md) — buildHeap O(n) обоснование
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — PriorityQueue, PriorityBlockingQueue
 - [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — PriorityBlockingQueue, ScheduledThreadPoolExecutor
+
+- [[arrays-strings-interview|Массивы и строки]]
+- [[graphs-interview|Графы]]
+- [[hash-tables-interview|Хеш-таблицы]]
+- [[linked-lists-interview|Связные списки]]
+- [[stacks-queues-interview|Стеки и очереди]]
+- [[trees-interview|Деревья]]

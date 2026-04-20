@@ -745,3 +745,10 @@ audit_log({
 - [Микросервисы](../architecture/microservices-interview.md) — gateway pattern
 - [Application Security](../security/application-security-interview.md) — prompt injection
 - [API Gateway](../architecture/api-gateway-interview.md) — generalized pattern
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]
+- [[prompt-engineering-interview|Prompt Engineering]]

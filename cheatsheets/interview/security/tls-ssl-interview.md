@@ -1629,3 +1629,10 @@ keytool -importcert -alias api-example-com \
 - [Spring Security](../frameworks/spring/spring-security-interview.md) — X.509 аутентификация, настройка HTTPS в Spring
 - [Microservices](../architecture/microservices-interview.md) — service mesh и mTLS для внутренних вызовов
 - [Kubernetes](../devops/kubernetes-interview.md) — cert-manager, Ingress TLS, mTLS в Istio
+
+- [[application-security-interview|Application Security]]
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[jwt-interview|JWT]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[oauth2-interview|OAuth2]]
+- [[owasp-top10-interview|OWASP Top 10]]

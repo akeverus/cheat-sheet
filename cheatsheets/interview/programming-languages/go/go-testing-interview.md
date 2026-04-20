@@ -760,3 +760,10 @@ Race detector замедляет тесты в 5-10 раз. Включай в **
 - [Mockito](../../testing/mockito-interview.md) — для сравнения с Java mocks
 - [Testcontainers](../../testing/testcontainers-interview.md) — Docker в тестах
 - [Performance Testing](../../performance/performance-testing-interview.md) — benchmarks
+
+- [[go-concurrency-interview|Go Concurrency]]
+- [[go-generics-interview|Go Generics]]
+- [[go-interview|Go]]
+- [[go-memory-gc-interview|Go Memory и GC]]
+- [[go-modules-interview|Go Modules]]
+- [[go-stdlib-interview|Go Standard Library]]

@@ -1599,3 +1599,10 @@ nodetool tablestats keyspace.table | grep "SSTable count"
 - [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) — CQRS и Event Sourcing для масштабируемых систем
 
 В обычных корпоративных распределённых системах Byzantine faults не рассматривают: предполагается, что узлы принадлежат одной доверенной среде (datacenter). Достаточно crash fault tolerance через `Raft`/`Paxos`.
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

@@ -795,3 +795,10 @@ for attempt in range(5):
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, circuit breaker
 - [Observability](../monitoring/observability-interview.md) — tracing, logs
 - [Event-Driven Patterns](../architecture/event-driven-patterns-interview.md) — webhooks, sagas
+
+- [[design-chat-system-interview|Design Chat System]]
+- [[design-feed-system-interview|Design Feed System]]
+- [[design-rate-limiter-interview|Design Rate Limiter]]
+- [[design-search-interview|Design Search System]]
+- [[design-url-shortener-interview|Design URL Shortener]]
+- [[system-design-interview|System Design]]

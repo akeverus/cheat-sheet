@@ -864,3 +864,10 @@ D&C — это «решить и забыть», DP — «решить и зап
 - [Two Pointers](two-pointers-sliding-window-interview.md) — иногда альтернатива DP
 - [Анализ сложности](../complexity/complexity-analysis-interview.md) — pseudo-polynomial
 - [Хеш-таблицы](../data-structures/hash-tables-interview.md) — мемоизация через HashMap
+
+- [[backtracking-interview|Backtracking]]
+- [[divide-and-conquer-interview|Divide and Conquer]]
+- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
+- [[recursion-interview|Рекурсия]]
+- [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]
+- [[algorithms-interview|Алгоритмы (обзор)]]

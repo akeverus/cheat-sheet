@@ -1527,3 +1527,10 @@ graph LR
 - [Паттерны проектирования](../design-patterns/design-patterns-interview.md) — GoF-паттерны Observer и Mediator в контексте EDA
 - [Spring Framework](../frameworks/spring/spring-framework-interview.md) — ApplicationEvent, @EventListener и Spring Integration
 - [Observability](../monitoring/observability-interview.md) — трассировка событий, метрики и алертинг в EDA-системах
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

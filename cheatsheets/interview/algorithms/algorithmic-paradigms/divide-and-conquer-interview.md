@@ -690,3 +690,10 @@ class MergeSortTask extends RecursiveAction {
 - [Анализ сложности](../complexity/complexity-analysis-interview.md) — Master theorem
 - [Кучи](../data-structures/heaps-interview.md) — Heap Sort, build-heap
 - [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — Fork/Join framework
+
+- [[backtracking-interview|Backtracking]]
+- [[dynamic-programming-interview|Динамическое программирование]]
+- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
+- [[recursion-interview|Рекурсия]]
+- [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]
+- [[algorithms-interview|Алгоритмы (обзор)]]

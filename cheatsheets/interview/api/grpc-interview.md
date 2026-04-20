@@ -2233,3 +2233,10 @@ REST: HTTP 200 {"id":"123","status":"DELIVERED","total":99.9}
 - [Сетевые протоколы](../architecture/networking-interview.md) — gRPC работает поверх HTTP/2: multiplexing, flow control, header compression
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция gRPC со Spring Boot: grpc-spring-boot-starter, ServerInterceptor, аннотации
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — межсервисное взаимодействие, deadline propagation, retry политики
+
+- [[api-design-best-practices-interview|API Design Best Practices]]
+- [[api-versioning-interview|API Versioning]]
+- [[graphql-interview|GraphQL]]
+- [[http-rest-interview|HTTP и REST]]
+- [[openapi-swagger-interview|OpenAPI / Swagger]]
+- [[rest-maturity-interview|Richardson Maturity Model (REST)]]

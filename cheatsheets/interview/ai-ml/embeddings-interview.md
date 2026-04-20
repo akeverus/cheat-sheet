@@ -642,3 +642,10 @@ model.save("my-fine-tuned-model")
 - [PostgreSQL](../databases/postgresql-interview.md) — pgvector
 - [Elasticsearch](../databases/elasticsearch-interview.md) — vector search в ES
 - [Performance Testing](../performance/performance-testing-interview.md) — embedding latency
+
+- [[ai-agents-interview|AI Agents]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]
+- [[prompt-engineering-interview|Prompt Engineering]]

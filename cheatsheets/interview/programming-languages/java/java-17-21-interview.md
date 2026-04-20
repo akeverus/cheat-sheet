@@ -2010,3 +2010,10 @@ java --enable-preview --source 21 hello.java
 - [Java Types](java-types-interview.md) — `records`, `sealed classes`, `var` — ключевые нововведения Java 16-21
 - [Java Generics](java-generics-interview.md) — обобщения и `type inference`, взаимодействие с `records`
 - [JVM](../../jvm/jvm-interview.md) — устройство JVM, влияние `Virtual Threads` на планировщик, `GC` и `Project Loom`
+
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-collections-interview|Java Collections]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]
+- [[java-core-interview|Java Core]]

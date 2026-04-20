@@ -1341,3 +1341,10 @@ public class UserClientService {
 - [Паттерны масштабируемости](scalability-patterns-interview.md) — горизонтальное масштабирование микросервисов
 
 **Рекомендация:** для внутренних синхронных вызовов — `OpenFeign` (простота); для высоконагруженных реактивных сервисов — `WebClient`; для критичного по latency межсервисного взаимодействия — `gRPC` (см. [вопросы по gRPC](../api/grpc-interview.md)).
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

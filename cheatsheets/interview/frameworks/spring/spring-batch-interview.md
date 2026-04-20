@@ -2688,3 +2688,10 @@ public class BatchMetricsListener implements JobExecutionListener {
 - [Spring Boot Actuator](spring-boot-actuator-interview.md) — метрики и мониторинг batch-заданий
 - [Архитектура баз данных](../../databases/database-architecture-interview.md) — JobRepository и metadata-схемы
 - [Распределённые системы](../../architecture/distributed-systems-interview.md) — партиционирование и параллельная обработка
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [[spring-boot-interview|Spring Boot]]
+- [[spring-cloud-interview|Spring Cloud]]
+- [[spring-data-jpa-interview|Spring Data JPA]]
+- [[spring-framework-interview|Spring Framework]]

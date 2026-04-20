@@ -1830,3 +1830,10 @@ Component Tests — ключевой уровень в модели **Test Honey
 - [Code Review](../code-quality/code-review-interview.md) — ревью кода и тестов
 - [CI/CD Pipeline](../cicd/pipeline-design-interview.md) — проектирование pipeline с тестами
 - [Микросервисы](../architecture/microservices-interview.md) — тестирование микросервисной архитектуры
+
+- [[chaos-engineering-interview|Chaos Engineering]]
+- [[contract-testing-interview|Contract Testing]]
+- [[integration-testing-interview|Integration Testing]]
+- [[load-testing-interview|Load Testing]]
+- [[mockito-interview|Mockito]]
+- [[mutation-testing-interview|Mutation Testing]]

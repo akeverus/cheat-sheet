@@ -966,3 +966,10 @@ Channels более выразительны (особенно `select`). Blocki
 - [Микросервисы](../../architecture/microservices-interview.md) — Go идеален для них
 - [gRPC](../../api/grpc-interview.md) — Go реализация сильна
 - [Performance Testing](../../performance/performance-testing-interview.md) — benchmark goroutines
+
+- [[go-generics-interview|Go Generics]]
+- [[go-interview|Go]]
+- [[go-memory-gc-interview|Go Memory и GC]]
+- [[go-modules-interview|Go Modules]]
+- [[go-stdlib-interview|Go Standard Library]]
+- [[go-testing-interview|Go Testing]]

@@ -608,3 +608,10 @@ events → feature extraction (streaming) → ML model serving → predictions
 - [CAP Theorem](../architecture/cap-theorem-interview.md) — trade-offs distributed
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — consistency, replication
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — sagas через streaming
+
+- [[apache-airflow-interview|Apache Airflow]]
+- [[apache-flink-interview|Apache Flink]]
+- [[apache-spark-interview|Apache Spark]]
+- [[data-lake-lakehouse-interview|Data Lake и Lakehouse]]
+- [[data-warehousing-interview|Data Warehousing]]
+- [[dbt-interview|dbt]]

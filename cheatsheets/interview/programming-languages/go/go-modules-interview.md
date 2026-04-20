@@ -645,3 +645,10 @@ go get github.com/myorg/some-lib@abc1234
 - [Git](../../devops/git-interview.md) — модули привязаны к git
 - [Микросервисы](../../architecture/microservices-interview.md) — workspaces для monorepo
 - [Application Security](../../security/application-security-interview.md) — supply chain (GOPROXY, GOSUMDB)
+
+- [[go-concurrency-interview|Go Concurrency]]
+- [[go-generics-interview|Go Generics]]
+- [[go-interview|Go]]
+- [[go-memory-gc-interview|Go Memory и GC]]
+- [[go-stdlib-interview|Go Standard Library]]
+- [[go-testing-interview|Go Testing]]

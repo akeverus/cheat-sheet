@@ -615,3 +615,10 @@ go build -gcflags="-m" main.go
 - [Application Profiling](../../performance/application-profiling-interview.md) — pprof и аналоги
 - [Performance Testing](../../performance/performance-testing-interview.md) — Go bench
 - [Микросервисы](../../architecture/microservices-interview.md) — где Go экономит память
+
+- [[go-concurrency-interview|Go Concurrency]]
+- [[go-generics-interview|Go Generics]]
+- [[go-interview|Go]]
+- [[go-modules-interview|Go Modules]]
+- [[go-stdlib-interview|Go Standard Library]]
+- [[go-testing-interview|Go Testing]]

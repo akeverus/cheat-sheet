@@ -1233,3 +1233,10 @@ numactl --hardware
 - [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — многопоточность, lock contention, memory model
 - [Kubernetes](../devops/kubernetes-interview.md) — container-aware JVM, resource limits и OOM killer
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — warm-up, startup time, Actuator-метрики
+
+- [[application-profiling-interview|Application Profiling]]
+- [[caching-performance-interview|Caching Performance]]
+- [[database-performance-interview|Database Performance]]
+- [[memory-management-interview|Memory Management]]
+- [[network-performance-interview|Network Performance]]
+- [[performance-testing-interview|Performance Testing]]

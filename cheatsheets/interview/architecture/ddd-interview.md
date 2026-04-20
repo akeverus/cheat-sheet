@@ -1842,3 +1842,10 @@ public class MoneyEmbeddable {
 - [Паттерны согласованности](consistency-patterns-interview.md) — eventual consistency в DDD, Saga Pattern
 - [Паттерны отказоустойчивости](resilience-patterns-interview.md) — Circuit Breaker для Anti-Corruption Layer при межконтекстных вызовах
 - [Архитектура баз данных](../databases/database-architecture-interview.md) — стратегии персистенции агрегатов: CRUD vs Event Sourcing
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

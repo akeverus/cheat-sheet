@@ -659,3 +659,10 @@ spec:
 - [OAuth2](../security/oauth2-interview.md) — auth flows
 - [JWT](../security/jwt-interview.md) — JWT auth
 - [Zero Trust](../security/zero-trust-interview.md) — Vault key component
+
+- [[ansible-interview|Ansible]]
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[consul-interview|HashiCorp Consul]]
+- [[docker-interview|Docker]]
+- [[git-interview|Git]]
+- [[gradle-maven-interview|Gradle и Maven]]

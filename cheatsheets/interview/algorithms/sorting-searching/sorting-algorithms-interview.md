@@ -715,3 +715,10 @@ CPU читает данные блоками (cache lines, ~64 байта). Ал
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — Arrays.sort vs Collections.sort
 - [Java Stream API](../../programming-languages/java/java-stream-interview.md) — sorted() в стримах
 - [Графы](../data-structures/graphs-interview.md) — топологическая сортировка
+
+- [[searching-algorithms-interview|Алгоритмы поиска]]
+- [[backtracking-interview|Backtracking]]
+- [[divide-and-conquer-interview|Divide and Conquer]]
+- [[dynamic-programming-interview|Динамическое программирование]]
+- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
+- [[recursion-interview|Рекурсия]]

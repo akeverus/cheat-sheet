@@ -1901,3 +1901,10 @@ graph LR
 - [Kubernetes](../devops/kubernetes-interview.md) — платформа для Chaos Mesh и Litmus
 - [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — canary/blue-green как способ ограничить blast radius
 - [Pipeline Design](../cicd/pipeline-design-interview.md) — встраивание chaos в CI/CD
+
+- [[contract-testing-interview|Contract Testing]]
+- [[integration-testing-interview|Integration Testing]]
+- [[load-testing-interview|Load Testing]]
+- [[mockito-interview|Mockito]]
+- [[mutation-testing-interview|Mutation Testing]]
+- [[property-based-testing-interview|Property-based Testing]]

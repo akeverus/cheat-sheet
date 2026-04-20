@@ -754,3 +754,10 @@ public class HashSet<E> {
 - [Распределённые системы](../../architecture/distributed-systems-interview.md) — sharding и hashing
 - [Application Security](../../security/application-security-interview.md) — HashDoS защита
 - [Redis](../../databases/redis-interview.md) — hash table в основе
+
+- [[arrays-strings-interview|Массивы и строки]]
+- [[graphs-interview|Графы]]
+- [[heaps-interview|Кучи (Heaps)]]
+- [[linked-lists-interview|Связные списки]]
+- [[stacks-queues-interview|Стеки и очереди]]
+- [[trees-interview|Деревья]]

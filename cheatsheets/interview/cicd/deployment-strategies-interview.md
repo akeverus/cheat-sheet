@@ -2001,3 +2001,10 @@ ORDER BY 1;
 - [Метрики и трассировка](../monitoring/metrics-tracing-interview.md) — health checks и алерты при деплое
 - [Git](../devops/git-interview.md) — trunk-based development и feature flags
 - [Test Automation](../testing/test-automation-interview.md) — smoke-тесты и acceptance-тесты после деплоя
+
+- [[pipeline-design-interview|Дизайн пайплайнов]]
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]

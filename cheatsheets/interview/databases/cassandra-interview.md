@@ -1692,3 +1692,10 @@ cdc_free_space_check_interval_ms: 250
 - [Архитектура баз данных](database-architecture-interview.md) — сравнение подходов к хранению данных
 - [Apache Kafka](../messaging/kafka-interview.md) — интеграция через Kafka Connect для CDC и потоковой обработки
 - [Elasticsearch](elasticsearch-interview.md) — часто используется вместе с Cassandra для полнотекстового поиска
+
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]
+- [[elasticsearch-interview|Elasticsearch]]

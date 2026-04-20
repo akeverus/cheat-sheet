@@ -1676,3 +1676,10 @@ await expect(page).toHaveURL('/confirmation');
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — контекст, в котором observability особенно критична: CAP, консистентность, failure modes
 - [Микросервисы](../architecture/microservices-interview.md) — архитектурные паттерны, где трассировка и correlation ID обязательны
 - [Kubernetes](../devops/kubernetes-interview.md) — сбор метрик и логов в кластере: `kube-state-metrics`, Fluentd, Prometheus Operator
+
+- [[elk-stack-interview|ELK Stack]]
+- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
+- [[logging-strategies-interview|Стратегии логирования]]
+- [[loki-grafana-interview|Loki и Grafana]]
+- [[metrics-tracing-interview|Метрики и трейсинг]]
+- [[opentelemetry-interview|OpenTelemetry]]

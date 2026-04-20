@@ -805,3 +805,10 @@ Quarkus — отличный выбор для **новых** cloud-native пр�
 - [JVM Performance Tuning](../../performance/jvm-performance-tuning-interview.md) — startup и memory
 - [Memory Management](../../performance/memory-management-interview.md) — почему native жрёт меньше
 - [Integration Testing](../../testing/integration-testing-interview.md) — RestAssured
+
+- [[ktor-interview|Ktor]]
+- [[micronaut-interview|Micronaut]]
+- [[vertx-interview|Vert.x]]
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]

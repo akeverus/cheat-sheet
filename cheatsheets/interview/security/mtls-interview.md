@@ -510,3 +510,10 @@ ssl_ca_file = '/path/ca.crt'
 - [Микросервисы](../architecture/microservices-interview.md) — context
 - [Networking](../architecture/networking-interview.md) — protocol layers
 - [Kubernetes](../devops/kubernetes-interview.md) — cert-manager
+
+- [[application-security-interview|Application Security]]
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[jwt-interview|JWT]]
+- [[oauth2-interview|OAuth2]]
+- [[owasp-top10-interview|OWASP Top 10]]
+- [[secrets-management-interview|Secrets Management]]

@@ -609,3 +609,10 @@ spec:
 - [Микросервисы](../architecture/microservices-interview.md) — context
 - [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
 - [Git](../devops/git-interview.md) — secret scanning
+
+- [[application-security-interview|Application Security]]
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[jwt-interview|JWT]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[oauth2-interview|OAuth2]]
+- [[owasp-top10-interview|OWASP Top 10]]

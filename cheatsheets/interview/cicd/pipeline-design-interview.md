@@ -1794,3 +1794,10 @@ gh run list \
 - [Стратегии тестирования](../testing/test-strategies-interview.md) — пирамида тестов, `TDD`
 - [Test Automation](../testing/test-automation-interview.md) — автоматизация тестирования в CI/CD
 - [Практики code review](../leadership/code-review-practices-interview.md) — quality gates и автоматизация проверок
+
+- [[deployment-strategies-interview|Стратегии деплоя]]
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]

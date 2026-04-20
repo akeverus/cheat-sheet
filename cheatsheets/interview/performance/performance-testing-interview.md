@@ -1723,3 +1723,10 @@ graph LR
 - [Observability](../monitoring/observability-interview.md) — SLI/SLO/SLA, error budgets, три pillars observability
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — горизонтальное масштабирование, которое проверяет scalability testing
 - [Kubernetes](../devops/kubernetes-interview.md) — k6-operator, HPA и проверка autoscaling через spike-тесты
+
+- [[application-profiling-interview|Application Profiling]]
+- [[caching-performance-interview|Caching Performance]]
+- [[database-performance-interview|Database Performance]]
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
+- [[memory-management-interview|Memory Management]]
+- [[network-performance-interview|Network Performance]]

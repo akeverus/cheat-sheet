@@ -510,3 +510,10 @@ CREATE INVERTED INDEX ON orders (data);
 - [Паттерны согласованности](../architecture/consistency-patterns-interview.md) — strong consistency
 - [GCP](../cloud/gcp-interview.md) — Spanner alternative
 - [AWS](../cloud/aws-interview.md) — Aurora alternative
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]
+- [[elasticsearch-interview|Elasticsearch]]

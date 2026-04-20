@@ -1915,3 +1915,10 @@ public String getDbPassword() {
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — безопасность на уровне инфраструктуры
 - [Kubernetes](../devops/kubernetes-interview.md) — Pod Security, Network Policy, Secrets
 - [HTTP и REST](../api/http-rest-interview.md) — security headers, CORS, TLS
+
+- [[application-security-interview|Application Security]]
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[jwt-interview|JWT]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[oauth2-interview|OAuth2]]
+- [[secrets-management-interview|Secrets Management]]

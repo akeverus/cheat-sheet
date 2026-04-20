@@ -1564,3 +1564,10 @@ linkerd inject deployment.yaml | kubectl apply -f -
 - [Паттерны масштабируемости](scalability-patterns-interview.md) — CDN, шардирование и горизонтальное масштабирование
 - [gRPC](../api/grpc-interview.md) — высокопроизводительный транспорт на базе HTTP/2 и Protocol Buffers
 - [Docker](../devops/docker-interview.md) — сетевые режимы контейнеров: bridge, host, overlay
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

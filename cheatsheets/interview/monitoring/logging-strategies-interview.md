@@ -2021,3 +2021,10 @@ void jsonLogShouldNotContainPassword(CapturedOutput output) {
 - [Микросервисы](../architecture/microservices-interview.md) — где централизованное логирование обязательно и как его организовать
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация `logback-spring.xml`, профили, `spring-boot-starter-logging`
 - [Kubernetes](../devops/kubernetes-interview.md) — `stdout`/`stderr` стратегия, Fluentd/Fluent Bit, агрегация логов в кластере
+
+- [[elk-stack-interview|ELK Stack]]
+- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
+- [[loki-grafana-interview|Loki и Grafana]]
+- [[metrics-tracing-interview|Метрики и трейсинг]]
+- [[observability-interview|Observability]]
+- [[opentelemetry-interview|OpenTelemetry]]

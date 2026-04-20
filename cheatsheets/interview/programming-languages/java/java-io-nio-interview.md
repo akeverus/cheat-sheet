@@ -1517,3 +1517,10 @@ HttpResponse<Path> fileResponse = client.send(
 - [Java Exceptions](java-exceptions-interview.md) — иерархия `IOException`: `FileNotFoundException`, `SocketException`, обработка ошибок I/O
 - [Java 17-21](java-17-21-interview.md) — `Virtual Threads` и NIO: Project Loom меняет подходы к блокирующему I/O
 - [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — `ResourceLoader`, `MultipartFile`, `WebClient` — Spring-абстракции над Java NIO
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-collections-interview|Java Collections]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]

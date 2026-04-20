@@ -1404,3 +1404,10 @@ containers:
 - [Дизайн CI/CD пайплайна](../cicd/pipeline-design-interview.md) — автоматизация ревью и quality gates
 - [Безопасность приложений](../security/application-security-interview.md) — security review
 - [Git](../devops/git-interview.md) — PR-процесс и ветвление
+
+- [[clean-code-practices-interview|Clean Code Practices]]
+- [[code-coverage-interview|Code Coverage]]
+- [[code-smells-interview|Code Smells]]
+- [[refactoring-patterns-interview|Паттерны рефакторинга]]
+- [[static-analysis-interview|Static Analysis]]
+- [[technical-debt-interview|Технический долг]]

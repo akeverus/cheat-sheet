@@ -693,3 +693,10 @@ deployment.environment: production
 - [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability pillar
 - [Application Profiling](../performance/application-profiling-interview.md) — alternative для perf
 - [Spring Boot Actuator](../frameworks/spring/spring-boot-actuator-interview.md) — Actuator + OTel
+
+- [[elk-stack-interview|ELK Stack]]
+- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
+- [[logging-strategies-interview|Стратегии логирования]]
+- [[loki-grafana-interview|Loki и Grafana]]
+- [[metrics-tracing-interview|Метрики и трейсинг]]
+- [[observability-interview|Observability]]

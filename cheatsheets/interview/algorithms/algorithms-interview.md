@@ -366,3 +366,10 @@ algorithms/
 - [PostgreSQL](../databases/postgresql-interview.md) — B-Tree индексы
 - [Redis](../databases/redis-interview.md) — hash table, skip list
 - [Application Security](../security/application-security-interview.md) — HashDoS, ReDoS
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]

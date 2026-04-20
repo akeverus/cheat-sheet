@@ -746,3 +746,10 @@ void testBinarySearchEdgeCases() {
 - [Two Pointers](../algorithmic-paradigms/two-pointers-sliding-window-interview.md) — альтернатива Binary Search
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — Arrays.binarySearch, Collections.binarySearch
 - [Unit Testing](../../testing/unit-testing-interview.md) — testing edge cases
+
+- [[sorting-algorithms-interview|Алгоритмы сортировки]]
+- [[backtracking-interview|Backtracking]]
+- [[divide-and-conquer-interview|Divide and Conquer]]
+- [[dynamic-programming-interview|Динамическое программирование]]
+- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
+- [[recursion-interview|Рекурсия]]

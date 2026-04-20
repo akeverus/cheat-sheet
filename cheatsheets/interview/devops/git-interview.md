@@ -1387,3 +1387,10 @@ npx semantic-release
 - [Kubernetes](kubernetes-interview.md) — GitOps подход к управлению инфраструктурой через ArgoCD и Flux
 - [Code Review](../code-quality/code-review-interview.md) — pull request процесс, code review best practices
 - [Gradle и Maven](gradle-maven-interview.md) — инструменты сборки, интегрируемые с Git через CI/CD
+
+- [[ansible-interview|Ansible]]
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[consul-interview|HashiCorp Consul]]
+- [[docker-interview|Docker]]
+- [[gradle-maven-interview|Gradle и Maven]]
+- [[helm-interview|Helm]]

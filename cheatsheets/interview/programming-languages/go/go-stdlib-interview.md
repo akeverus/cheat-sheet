@@ -852,3 +852,10 @@ maps.Clone(m)
 - [PostgreSQL](../../databases/postgresql-interview.md) — database/sql + lib/pq
 - [Logging](../../logging/logging-interview.md) — slog vs zap vs zerolog
 - [Микросервисы](../../architecture/microservices-interview.md) — Go использует stdlib для большинства задач
+
+- [[go-concurrency-interview|Go Concurrency]]
+- [[go-generics-interview|Go Generics]]
+- [[go-interview|Go]]
+- [[go-memory-gc-interview|Go Memory и GC]]
+- [[go-modules-interview|Go Modules]]
+- [[go-testing-interview|Go Testing]]

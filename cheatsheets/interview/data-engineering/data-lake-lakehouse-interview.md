@@ -619,3 +619,10 @@ spark.readStream.format("kafka")...load() \
 - [Микросервисы](../architecture/microservices-interview.md) — produce events → lake
 - [Caching](../architecture/caching-strategies-interview.md) — для acceleration
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — concepts
+
+- [[apache-airflow-interview|Apache Airflow]]
+- [[apache-flink-interview|Apache Flink]]
+- [[apache-spark-interview|Apache Spark]]
+- [[data-warehousing-interview|Data Warehousing]]
+- [[dbt-interview|dbt]]
+- [[kafka-streams-interview|Kafka Streams]]

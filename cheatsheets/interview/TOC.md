@@ -191,7 +191,8 @@ updated: "2026-04-20"
 
 ## frameworks/spring
 
-- [Вопросы на собеседовании: `Spring AOP`](frameworks/spring/spring-aop-interview.md) — `22` вопроса
+- [Вопросы на собеседовании: `Spring AOP`](frameworks/spring/spring-aop-interview.md)
+- [Вопросы на собеседовании: `Spring Events`](frameworks/spring/spring-events-interview.md) — `16` вопросов — `22` вопроса
 - [Вопросы на собеседовании: `Spring Batch`](frameworks/spring/spring-batch-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Boot Actuator`](frameworks/spring/spring-boot-actuator-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Boot`](frameworks/spring/spring-boot-interview.md) — `42` вопроса
@@ -200,6 +201,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Spring Framework`](frameworks/spring/spring-framework-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Spring MVC`](frameworks/spring/spring-mvc-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Security`](frameworks/spring/spring-security-interview.md) — `43` вопроса
+- [Вопросы на собеседовании: `Spring Scheduling`](frameworks/spring/spring-scheduling-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring Validation`](frameworks/spring/spring-validation-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring WebFlux`](frameworks/spring/spring-webflux-interview.md) — `43` вопроса
 

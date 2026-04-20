@@ -1577,3 +1577,10 @@ public record Money(BigDecimal amount, Currency currency) implements Serializabl
 - [Java 17-21](java-17-21-interview.md) — сериализация `records` и `sealed classes` — новые подходы
 - [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — `Serialization Proxy`, `Builder` для безопасной десериализации
 - [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — `@JsonIgnore`, `@JsonProperty`, Jackson-интеграция в Spring
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-collections-interview|Java Collections]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]

@@ -764,3 +764,10 @@ Content-Encoding: gzip
 - [API Gateway](../architecture/api-gateway-interview.md) — routing, rate limiting
 - [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
 - [Application Security](../security/application-security-interview.md) — input validation, HTTPS
+
+- [[api-versioning-interview|API Versioning]]
+- [[graphql-interview|GraphQL]]
+- [[grpc-interview|gRPC]]
+- [[http-rest-interview|HTTP и REST]]
+- [[openapi-swagger-interview|OpenAPI / Swagger]]
+- [[rest-maturity-interview|Richardson Maturity Model (REST)]]

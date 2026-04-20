@@ -1584,3 +1584,10 @@ problem.setInstance(URI.create(request.getRequestURI()));
 - [Java OOP](java-oop-interview.md) — наследование и полиморфизм (контракт `throws`)
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — `@ExceptionHandler`, `@ControllerAdvice`
 - [Логирование](../../logging/logging-interview.md) — логирование исключений
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-collections-interview|Java Collections]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]

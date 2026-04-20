@@ -1746,3 +1746,10 @@ management.metrics.enable.reactor: true
 - [Метрики и трассировка](../monitoring/metrics-tracing-interview.md) — Prometheus, distributed tracing
 - [Observability](../monitoring/observability-interview.md) — наблюдаемость систем
 - [Kubernetes](../devops/kubernetes-interview.md) — оркестрация контейнеров
+
+- [[caching-performance-interview|Caching Performance]]
+- [[database-performance-interview|Database Performance]]
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
+- [[memory-management-interview|Memory Management]]
+- [[network-performance-interview|Network Performance]]
+- [[performance-testing-interview|Performance Testing]]

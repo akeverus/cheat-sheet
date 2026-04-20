@@ -2350,3 +2350,10 @@ class PaymentGatewayClientTest {
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация, профили, auto-configuration
 - [Docker](../devops/docker-interview.md) — контейнеризация, на которой построен Testcontainers
 - [Kafka](../messaging/kafka-interview.md) — тестирование event-driven архитектуры
+
+- [[chaos-engineering-interview|Chaos Engineering]]
+- [[contract-testing-interview|Contract Testing]]
+- [[load-testing-interview|Load Testing]]
+- [[mockito-interview|Mockito]]
+- [[mutation-testing-interview|Mutation Testing]]
+- [[property-based-testing-interview|Property-based Testing]]

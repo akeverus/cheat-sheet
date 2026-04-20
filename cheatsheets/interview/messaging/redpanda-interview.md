@@ -416,3 +416,10 @@ rpk topic create my-topic
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — shard-per-core
 - [Performance Testing](../performance/performance-testing-interview.md) — benchmarking
 - [OpenTelemetry](../monitoring/opentelemetry-interview.md) — Redpanda metrics
+
+- [[aws-sqs-sns-interview|AWS SQS и SNS]]
+- [[kafka-interview|Apache Kafka]]
+- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
+- [[nats-interview|NATS]]
+- [[pulsar-interview|Apache Pulsar]]
+- [[rabbitmq-interview|RabbitMQ]]

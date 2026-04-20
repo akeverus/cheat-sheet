@@ -507,3 +507,10 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 - [LLM Basics](../ai-ml/llm-basics-interview.md) — Azure OpenAI
 - [MLOps](../ai-ml/mlops-interview.md) — Azure ML
 - [OAuth2](../security/oauth2-interview.md) — Entra ID identity
+
+- [[aws-interview|AWS]]
+- [[aws-lambda-interview|AWS Lambda]]
+- [[cloud-native-patterns-interview|Cloud-native Patterns]]
+- [[gcp-interview|GCP (Google Cloud Platform)]]
+- [[serverless-interview|Serverless]]
+- [[ai-agents-interview|AI Agents]]

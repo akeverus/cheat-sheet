@@ -1605,3 +1605,10 @@ class UserServiceTest {
 - [Spring Batch](spring-batch-interview.md) — пакетная обработка vs. реактивные потоки
 - [Микросервисы](../../architecture/microservices-interview.md) — реактивные паттерны в распределённых системах
 - [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — потоки и модели конкурентности
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [[spring-boot-interview|Spring Boot]]
+- [[spring-cloud-interview|Spring Cloud]]
+- [[spring-data-jpa-interview|Spring Data JPA]]

@@ -458,3 +458,10 @@ GOOD: DELETE /users/123
 - [Микросервисы](../architecture/microservices-interview.md) — APIs context
 - [API Gateway](../architecture/api-gateway-interview.md) — context
 - [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
+
+- [[api-design-best-practices-interview|API Design Best Practices]]
+- [[api-versioning-interview|API Versioning]]
+- [[graphql-interview|GraphQL]]
+- [[grpc-interview|gRPC]]
+- [[http-rest-interview|HTTP и REST]]
+- [[openapi-swagger-interview|OpenAPI / Swagger]]

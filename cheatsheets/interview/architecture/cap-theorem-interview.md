@@ -1304,3 +1304,10 @@ Spanner — это CP-система. При network partition Spanner блок�
 - [Стратегии кэширования](caching-strategies-interview.md) — компромиссы согласованности при кэшировании
 - [Архитектура БД](../databases/database-architecture-interview.md) — как Cassandra, DynamoDB, ZooKeeper реализуют CAP
 - [Паттерны масштабирования](scalability-patterns-interview.md) — горизонтальное масштабирование и partition tolerance
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]
+- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]]

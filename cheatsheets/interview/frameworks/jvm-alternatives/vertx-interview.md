@@ -736,3 +736,10 @@ Vert.x — **зрелая** технология (с 2012), но более ни
 - [Apache Kafka](../../messaging/kafka-interview.md) — vs Event Bus для distributed messaging
 - [Hibernate](../../databases/hibernate-interview.md) — vs Hibernate Reactive (на Vert.x)
 - [Сетевые протоколы](../../architecture/networking-interview.md) — Netty under the hood
+
+- [[ktor-interview|Ktor]]
+- [[micronaut-interview|Micronaut]]
+- [[quarkus-interview|Quarkus]]
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]

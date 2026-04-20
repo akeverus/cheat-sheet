@@ -684,3 +684,10 @@ CREATE TABLE pg_users ENGINE = PostgreSQL('host:5432', 'db', 'users', 'user', 'p
 - [Caching](../architecture/caching-strategies-interview.md) — для acceleration
 - [Database Architecture](database-architecture-interview.md) — OLAP context
 - [SQL](sql-interview.md) — общие основы
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]
+- [[elasticsearch-interview|Elasticsearch]]

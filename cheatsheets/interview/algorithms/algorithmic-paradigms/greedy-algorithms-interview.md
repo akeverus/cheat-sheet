@@ -638,3 +638,10 @@ int maxProfit(int[] prices) {
 - [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — обычно начало greedy
 - [Two Pointers](two-pointers-sliding-window-interview.md) — родственная техника
 - [Анализ сложности](../complexity/complexity-analysis-interview.md) — почему greedy быстрее DP
+
+- [[backtracking-interview|Backtracking]]
+- [[divide-and-conquer-interview|Divide and Conquer]]
+- [[dynamic-programming-interview|Динамическое программирование]]
+- [[recursion-interview|Рекурсия]]
+- [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]
+- [[algorithms-interview|Алгоритмы (обзор)]]

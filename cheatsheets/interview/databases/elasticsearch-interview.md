@@ -1858,3 +1858,10 @@ GET /alerts/_search
 - [Apache Kafka](../messaging/kafka-interview.md) — потоковая обработка данных, часто используется с ES
 - [Cassandra](cassandra-interview.md) — совместное использование для hot/cold данных
 - [SQL](sql-interview.md) — сравнение реляционных и поисковых движков
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]

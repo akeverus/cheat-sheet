@@ -1920,3 +1920,10 @@ Matcher для заголовка гарантирует, что провайд�
 - [OpenAPI / Swagger](../api/openapi-swagger-interview.md) — schema-first подход, альтернатива и дополнение к Pact
 - [Микросервисы](../architecture/microservices-interview.md) — контекст, в котором контрактное тестирование критично
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция `@SpringBootTest` c Pact JVM и Spring Cloud Contract
+
+- [[chaos-engineering-interview|Chaos Engineering]]
+- [[integration-testing-interview|Integration Testing]]
+- [[load-testing-interview|Load Testing]]
+- [[mockito-interview|Mockito]]
+- [[mutation-testing-interview|Mutation Testing]]
+- [[property-based-testing-interview|Property-based Testing]]

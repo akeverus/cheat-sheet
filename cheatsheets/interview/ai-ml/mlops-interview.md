@@ -639,3 +639,10 @@ Prompts = код. Version в Git или dedicated tools.
 - [Pipeline Design](../cicd/pipeline-design-interview.md) — CI/CD
 - [Микросервисы](../architecture/microservices-interview.md) — где models live
 - [Git](../devops/git-interview.md) — version control
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[model-serving-interview|Model Serving]]
+- [[prompt-engineering-interview|Prompt Engineering]]

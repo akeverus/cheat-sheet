@@ -2150,3 +2150,10 @@ spring:
 - [Spring Batch](spring-batch-interview.md) — Spring Cloud Task для batch-задач в облаке
 - [Микросервисная архитектура](../../architecture/microservices-interview.md) — паттерны, реализованные в Spring Cloud
 - [Распределённые системы](../../architecture/distributed-systems-interview.md) — консистентность и отказоустойчивость
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [[spring-boot-interview|Spring Boot]]
+- [[spring-data-jpa-interview|Spring Data JPA]]
+- [[spring-framework-interview|Spring Framework]]

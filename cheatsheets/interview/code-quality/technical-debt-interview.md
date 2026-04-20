@@ -1416,3 +1416,10 @@ annotations:
 - [CI/CD пайплайны](../cicd/pipeline-design-interview.md) — автоматизация quality gates
 - [Стратегии тестирования](../testing/test-strategies-interview.md) — долг в тестах и покрытие
 - [Практики code review](../leadership/code-review-practices-interview.md) — процесс и культура ревью
+
+- [[clean-code-practices-interview|Clean Code Practices]]
+- [[code-coverage-interview|Code Coverage]]
+- [[code-review-interview|Code review]]
+- [[code-smells-interview|Code Smells]]
+- [[refactoring-patterns-interview|Паттерны рефакторинга]]
+- [[static-analysis-interview|Static Analysis]]

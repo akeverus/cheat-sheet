@@ -1518,3 +1518,10 @@ session.sendMessage(new TextMessage("ping"));
 - [Apache Kafka](../messaging/kafka-interview.md)
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md)
 - [System Design](../system-design/system-design-interview.md)
+
+- [[api-design-best-practices-interview|API Design Best Practices]]
+- [[api-versioning-interview|API Versioning]]
+- [[graphql-interview|GraphQL]]
+- [[grpc-interview|gRPC]]
+- [[http-rest-interview|HTTP и REST]]
+- [[openapi-swagger-interview|OpenAPI / Swagger]]

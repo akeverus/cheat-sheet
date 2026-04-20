@@ -1170,3 +1170,10 @@ curl -o /dev/null -s -w "dns:%{time_namelookup} conn:%{time_connect} tls:%{time_
 - [gRPC](../api/grpc-interview.md) — HTTP/2, streaming
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — timeouts, retries
 - [Observability](../monitoring/observability-interview.md) — network metrics и tracing
+
+- [[application-profiling-interview|Application Profiling]]
+- [[caching-performance-interview|Caching Performance]]
+- [[database-performance-interview|Database Performance]]
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
+- [[memory-management-interview|Memory Management]]
+- [[performance-testing-interview|Performance Testing]]

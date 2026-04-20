@@ -2020,3 +2020,10 @@ String lua = "if redis.call('get', KEYS[1]) == ARGV[1] then " +
 - [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) — eventual consistency через проекции и Event Sourcing
 - [Event-Driven паттерны](event-driven-patterns-interview.md) — Outbox Pattern, Saga и асинхронная согласованность
 - [Архитектура баз данных](../databases/database-architecture-interview.md) — уровни изоляции транзакций и MVCC
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]]

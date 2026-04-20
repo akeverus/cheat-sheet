@@ -619,3 +619,10 @@ Real-world: enterprise reports save **70-90%** moving к Loki.
 - [Kubernetes](../devops/kubernetes-interview.md) — log discovery
 - [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability
 - [Caching](../architecture/caching-strategies-interview.md) — для query performance
+
+- [[elk-stack-interview|ELK Stack]]
+- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
+- [[logging-strategies-interview|Стратегии логирования]]
+- [[metrics-tracing-interview|Метрики и трейсинг]]
+- [[observability-interview|Observability]]
+- [[opentelemetry-interview|OpenTelemetry]]

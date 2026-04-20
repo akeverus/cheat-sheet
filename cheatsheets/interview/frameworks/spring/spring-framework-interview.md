@@ -1821,3 +1821,10 @@ public PaymentGateway stubGateway() {
 - [Spring Batch](spring-batch-interview.md) — пакетная обработка данных
 - [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — паттерны, реализованные в Spring
 - [ООП в Java](../../programming-languages/java/java-oop-interview.md) — объектно-ориентированные основы
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [[spring-boot-interview|Spring Boot]]
+- [[spring-cloud-interview|Spring Cloud]]
+- [[spring-data-jpa-interview|Spring Data JPA]]

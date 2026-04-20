@@ -1972,3 +1972,10 @@ val sql = "SELECT * FROM users WHERE age > '18'"  // Сравнение числ
 - [Design Patterns](../../design-patterns/design-patterns-interview.md) — Builder и Fluent API как альтернативы DSL
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — Spring Security DSL и Beans DSL на Kotlin
 - [Java Core](../java/java-core-interview.md) — сравнение с Java Builder-паттерном
+
+- [[kotlin-collections-interview|Kotlin коллекции]]
+- [[kotlin-coroutines-interview|Kotlin Coroutines]]
+- [[kotlin-exceptions-interview|исключения в Kotlin]]
+- [[kotlin-interop-java-interview|интероп Kotlin и Java]]
+- [[kotlin-interview|Kotlin]]
+- [[kotlin-serialization-interview|сериализация в Kotlin]]

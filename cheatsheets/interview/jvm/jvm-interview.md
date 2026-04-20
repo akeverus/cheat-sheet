@@ -1231,3 +1231,10 @@ Spring AOT + GraalVM Native — это будущее serverless Java, но дл
 - [Memory Management](../performance/memory-management-interview.md) — heap/stack, GC roots, off-heap, false sharing
 - [Application Profiling](../performance/application-profiling-interview.md) — JFR, async-profiler, flame graphs, heap dumps
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — startup time, AOT, GraalVM native images
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]

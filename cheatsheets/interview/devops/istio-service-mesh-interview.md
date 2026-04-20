@@ -710,3 +710,10 @@ graph TD
 - [Deployment Strategies](../cicd/deployment-strategies-interview.md) — canary через Istio
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, circuit breaker
 - [Networking](../architecture/networking-interview.md) — L4/L7 concepts
+
+- [[ansible-interview|Ansible]]
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[consul-interview|HashiCorp Consul]]
+- [[docker-interview|Docker]]
+- [[git-interview|Git]]
+- [[gradle-maven-interview|Gradle и Maven]]

@@ -1064,3 +1064,10 @@ val grouped = users.groupBy("age").count()
 - [Микросервисы](../../architecture/microservices-interview.md) — Akka, ZIO HTTP
 - [Event-driven паттерны](../../architecture/event-driven-patterns-interview.md) — Akka actors
 - [JVM](../../jvm/jvm-interview.md) — где runs Scala
+
+- [[go-concurrency-interview|Go Concurrency]]
+- [[go-generics-interview|Go Generics]]
+- [[go-interview|Go]]
+- [[go-memory-gc-interview|Go Memory и GC]]
+- [[go-modules-interview|Go Modules]]
+- [[go-stdlib-interview|Go Standard Library]]

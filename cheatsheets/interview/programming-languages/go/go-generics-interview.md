@@ -669,3 +669,10 @@ constraints.Ordered
 - [Kotlin](../kotlin/kotlin-interview.md) — generics в Kotlin
 - [Scala](../scala/scala-interview.md) — самые мощные generics на JVM
 - [Design Patterns](../../design-patterns/design-patterns-interview.md) — где generics упрощают
+
+- [[go-concurrency-interview|Go Concurrency]]
+- [[go-interview|Go]]
+- [[go-memory-gc-interview|Go Memory и GC]]
+- [[go-modules-interview|Go Modules]]
+- [[go-stdlib-interview|Go Standard Library]]
+- [[go-testing-interview|Go Testing]]

@@ -813,3 +813,10 @@ Key Results:
 - [Микросервисная архитектура](../architecture/microservices-interview.md) — архитектура микросервисов
 - [Технический долг](../code-quality/technical-debt-interview.md) — управление техдолгом в команде
 - [Дизайн пайплайнов](../cicd/pipeline-design-interview.md) — DevOps и инженерные практики
+
+- [[code-review-practices-interview|Практики code review]]
+- [[conflict-resolution-interview|Разрешение конфликтов]]
+- [[estimations-planning-interview|Оценка и планирование]]
+- [[mentoring-interview|Менторство инженеров]]
+- [[tech-interviewing-interview|Проведение технических интервью]]
+- [[technical-decisions-interview|Технические решения]]

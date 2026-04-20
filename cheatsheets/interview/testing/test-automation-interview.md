@@ -2195,3 +2195,10 @@ void shouldQueryGraphQLWithRestAssured() {
 - [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — деплой и тестирование в CI/CD
 - [Docker](../devops/docker-interview.md) — контейнеризация для тестовых окружений
 - [Code Review](../code-quality/code-review-interview.md) — код-ревью и качество кода
+
+- [[chaos-engineering-interview|Chaos Engineering]]
+- [[contract-testing-interview|Contract Testing]]
+- [[integration-testing-interview|Integration Testing]]
+- [[load-testing-interview|Load Testing]]
+- [[mockito-interview|Mockito]]
+- [[mutation-testing-interview|Mutation Testing]]

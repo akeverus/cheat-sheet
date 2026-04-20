@@ -698,3 +698,10 @@ stream.map(...).disableChaining()
 - [Performance Testing](../performance/performance-testing-interview.md) — Flink benchmarking
 - [Memory Management](../performance/memory-management-interview.md) — RocksDB, off-heap
 - [JVM](../jvm/jvm-interview.md) — Flink на JVM
+
+- [[apache-airflow-interview|Apache Airflow]]
+- [[apache-spark-interview|Apache Spark]]
+- [[data-lake-lakehouse-interview|Data Lake и Lakehouse]]
+- [[data-warehousing-interview|Data Warehousing]]
+- [[dbt-interview|dbt]]
+- [[kafka-streams-interview|Kafka Streams]]

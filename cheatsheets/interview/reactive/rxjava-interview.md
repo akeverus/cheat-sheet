@@ -1618,3 +1618,10 @@ RxJavaPlugins.setErrorHandler(error -> {
 - [Паттерны проектирования](../design-patterns/design-patterns-interview.md) — паттерн `Observer` и `Publisher/Subscriber`
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — backpressure и flow control в распределённых системах
 - [Apache Kafka](../messaging/kafka-interview.md) — интеграция RxJava с Kafka consumer/producer
+
+- [[project-reactor-interview|Project Reactor]]
+- [[reactive-patterns-interview|Reactive Patterns]]
+- [[reactive-streams-interview|Reactive Streams]]
+- [[reactive-testing-interview|Тестирование реактивного кода]]
+- [[webflux-interview|Spring WebFlux]]
+- [[ai-agents-interview|AI Agents]]

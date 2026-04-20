@@ -691,3 +691,10 @@ public class UserController {
 - [Kubernetes](../../devops/kubernetes-interview.md) — нативная интеграция
 - [JVM](../../jvm/jvm-interview.md) — JIT vs AOT компиляция
 - [Memory Management](../../performance/memory-management-interview.md) — почему меньше памяти
+
+- [[ktor-interview|Ktor]]
+- [[quarkus-interview|Quarkus]]
+- [[vertx-interview|Vert.x]]
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]

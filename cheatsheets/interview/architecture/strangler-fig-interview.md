@@ -662,3 +662,10 @@ class StripePaymentProvider implements ... { ... }  // new
 - [Refactoring Patterns](../code-quality/refactoring-patterns-interview.md) — branch by abstraction
 - [Deployment Strategies](../cicd/deployment-strategies-interview.md) — canary, feature flags
 - [Consistency Patterns](consistency-patterns-interview.md) — during migration
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

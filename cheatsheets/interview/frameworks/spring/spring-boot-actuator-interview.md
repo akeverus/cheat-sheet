@@ -2307,3 +2307,10 @@ Spring Boot App
 - [Spring Batch](spring-batch-interview.md) — метрики batch-заданий через Actuator
 - [Микросервисы](../../architecture/microservices-interview.md) — observability в распределённых системах
 - [Распределённые системы](../../architecture/distributed-systems-interview.md) — мониторинг в production
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-interview|Spring Boot]]
+- [[spring-cloud-interview|Spring Cloud]]
+- [[spring-data-jpa-interview|Spring Data JPA]]
+- [[spring-framework-interview|Spring Framework]]

@@ -744,3 +744,10 @@ def my_pipeline():
 - [Микросервисы](../architecture/microservices-interview.md) — другой паттерн (event-driven)
 - [Git](../devops/git-interview.md) — обязательный для dbt projects
 - [Unit Testing](../testing/unit-testing-interview.md) — концепции тестов
+
+- [[apache-airflow-interview|Apache Airflow]]
+- [[apache-flink-interview|Apache Flink]]
+- [[apache-spark-interview|Apache Spark]]
+- [[data-lake-lakehouse-interview|Data Lake и Lakehouse]]
+- [[data-warehousing-interview|Data Warehousing]]
+- [[kafka-streams-interview|Kafka Streams]]

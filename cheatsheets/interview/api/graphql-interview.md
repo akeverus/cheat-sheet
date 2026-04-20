@@ -2106,3 +2106,10 @@ GraphQL или REST — на внешнем слое (developer experience), gRP
 - [Микросервисная архитектура](../architecture/microservices-interview.md) — GraphQL Federation как способ объединить несколько GraphQL-сервисов за одним endpoint
 - [API Gateway](../architecture/api-gateway-interview.md) — GraphQL-слой часто размещается за Gateway: аутентификация, rate limiting, маршрутизация
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция Spring for GraphQL: аннотации `@QueryMapping`, `@MutationMapping`, контроллеры и DataLoader
+
+- [[api-design-best-practices-interview|API Design Best Practices]]
+- [[api-versioning-interview|API Versioning]]
+- [[grpc-interview|gRPC]]
+- [[http-rest-interview|HTTP и REST]]
+- [[openapi-swagger-interview|OpenAPI / Swagger]]
+- [[rest-maturity-interview|Richardson Maturity Model (REST)]]

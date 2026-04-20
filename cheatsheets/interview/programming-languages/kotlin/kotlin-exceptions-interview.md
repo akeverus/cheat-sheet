@@ -1607,3 +1607,10 @@ class AsyncTaskService(
 - [Сериализация в Kotlin](kotlin-serialization-interview.md) — обработка ошибок при десериализации
 - [Java Core](../java/java-core-interview.md) — checked vs unchecked exceptions в Java
 - [Java Concurrency](../java/java-concurrency-interview.md) — обработка исключений в потоках
+
+- [[kotlin-collections-interview|Kotlin коллекции]]
+- [[kotlin-coroutines-interview|Kotlin Coroutines]]
+- [[kotlin-dsl-interview|DSL в Kotlin]]
+- [[kotlin-interop-java-interview|интероп Kotlin и Java]]
+- [[kotlin-interview|Kotlin]]
+- [[kotlin-serialization-interview|сериализация в Kotlin]]

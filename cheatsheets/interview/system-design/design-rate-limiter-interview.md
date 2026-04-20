@@ -699,3 +699,10 @@ Retry-After: 60
 - [Load Balancing](../architecture/load-balancing-interview.md) — request distribution
 - [HTTP/REST](../api/http-rest-interview.md) — 429, Retry-After
 - [Design URL Shortener](design-url-shortener-interview.md) — rate limiter component
+
+- [[design-chat-system-interview|Design Chat System]]
+- [[design-feed-system-interview|Design Feed System]]
+- [[design-payment-system-interview|Design Payment System]]
+- [[design-search-interview|Design Search System]]
+- [[design-url-shortener-interview|Design URL Shortener]]
+- [[system-design-interview|System Design]]

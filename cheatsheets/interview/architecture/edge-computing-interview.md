@@ -676,3 +676,10 @@ routes: [
 - [Scalability Patterns](scalability-patterns-interview.md) — global scaling
 - [Distributed Systems](distributed-systems-interview.md) — edge = distributed
 - [Observability](../monitoring/observability-interview.md) — debug edge workloads
+
+- [[api-gateway-interview|API Gateway]]
+- [[bff-pattern-interview|BFF Pattern]]
+- [[caching-strategies-interview|Стратегии кэширования]]
+- [[cap-theorem-interview|CAP-теорема]]
+- [[clean-architecture-interview|Clean Architecture]]
+- [[consistency-patterns-interview|Паттерны согласованности]]

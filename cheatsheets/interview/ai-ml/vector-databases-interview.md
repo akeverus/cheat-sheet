@@ -688,3 +688,10 @@ Local development / prototype?
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — sharding, replication
 - [MLOps](mlops-interview.md) — embedding model versioning
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — для больших scales
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]

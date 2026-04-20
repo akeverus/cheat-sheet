@@ -2215,3 +2215,10 @@ public class MethodSecurityConfig {}
 - [Spring Batch](spring-batch-interview.md) — защита batch-заданий и REST-триггеров
 - [OAuth2 и OpenID Connect](../../security/oauth2-interview.md) — протоколы аутентификации и авторизации
 - [Распределённые системы](../../architecture/distributed-systems-interview.md) — безопасность в микросервисах
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [[spring-boot-interview|Spring Boot]]
+- [[spring-cloud-interview|Spring Cloud]]
+- [[spring-data-jpa-interview|Spring Data JPA]]

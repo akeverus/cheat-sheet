@@ -2377,3 +2377,10 @@ spec:
 - [Kubernetes](../devops/kubernetes-interview.md) — Network Policy, Pod Security Admission, Secrets
 - [Архитектура баз данных](../databases/database-architecture-interview.md) — защита данных, шифрование at rest
 - [HTTP и REST](../api/http-rest-interview.md) — TLS, security headers, CORS
+
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[jwt-interview|JWT]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[oauth2-interview|OAuth2]]
+- [[owasp-top10-interview|OWASP Top 10]]
+- [[secrets-management-interview|Secrets Management]]

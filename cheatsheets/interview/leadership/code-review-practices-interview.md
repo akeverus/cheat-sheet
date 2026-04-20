@@ -1243,3 +1243,10 @@ graph LR
 - [Дизайн CI/CD pipeline](../cicd/pipeline-design-interview.md) — автоматизация сборки и деплоя
 - [Стратегии тестирования](../testing/test-strategies-interview.md) — пирамида тестов и подходы
 - [Паттерны рефакторинга](../code-quality/refactoring-patterns-interview.md) — рефакторинг при ревью
+
+- [[conflict-resolution-interview|Разрешение конфликтов]]
+- [[estimations-planning-interview|Оценка и планирование]]
+- [[mentoring-interview|Менторство инженеров]]
+- [[team-leadership-interview|Лидерство в команде]]
+- [[tech-interviewing-interview|Проведение технических интервью]]
+- [[technical-decisions-interview|Технические решения]]

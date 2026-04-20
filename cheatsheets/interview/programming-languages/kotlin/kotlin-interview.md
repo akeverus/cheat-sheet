@@ -1411,3 +1411,10 @@ button.addClickListener { doSomething() }
 - [Java Concurrency](../java/java-concurrency-interview.md) — многопоточность JVM, сравнение с корутинами
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — Kotlin со Spring Boot и Spring Data
 - [Design Patterns](../../design-patterns/design-patterns-interview.md) — паттерны, реализованные на Kotlin
+
+- [[kotlin-collections-interview|Kotlin коллекции]]
+- [[kotlin-coroutines-interview|Kotlin Coroutines]]
+- [[kotlin-dsl-interview|DSL в Kotlin]]
+- [[kotlin-exceptions-interview|исключения в Kotlin]]
+- [[kotlin-interop-java-interview|интероп Kotlin и Java]]
+- [[kotlin-serialization-interview|сериализация в Kotlin]]

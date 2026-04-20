@@ -1583,3 +1583,10 @@ Mono<Result> result = Mono.fromCallable(() -> blockingOperation())
 - [Java 8](../programming-languages/java/java-8-interview.md) — `CompletableFuture` как альтернативный подход к асинхронности
 - [Kotlin Coroutines](../programming-languages/kotlin/kotlin-coroutines-interview.md) — сравнение с корутинами как альтернативой реактивному программированию
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — реактивное программирование в контексте микросервисов
+
+- [[reactive-patterns-interview|Reactive Patterns]]
+- [[reactive-streams-interview|Reactive Streams]]
+- [[reactive-testing-interview|Тестирование реактивного кода]]
+- [[rxjava-interview|RxJava]]
+- [[webflux-interview|Spring WebFlux]]
+- [[ai-agents-interview|AI Agents]]

@@ -690,3 +690,10 @@ Terraform creates EC2 → Ansible installs nginx, copies config
 - [Pipeline Design](../cicd/pipeline-design-interview.md) — CI/CD
 - [Secrets Management](../security/secrets-management-interview.md) — Ansible Vault
 - [Application Security](../security/application-security-interview.md) — secure playbooks
+
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[consul-interview|HashiCorp Consul]]
+- [[docker-interview|Docker]]
+- [[git-interview|Git]]
+- [[gradle-maven-interview|Gradle и Maven]]
+- [[helm-interview|Helm]]

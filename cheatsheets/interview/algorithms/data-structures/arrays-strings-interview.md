@@ -1076,3 +1076,10 @@ while (i < n) {
 - [Java String](../../programming-languages/java/java-string-interview.md) — immutability, intern, surrogate pairs
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — ArrayList vs LinkedList
 - [Java Types](../../programming-languages/java/java-types-interview.md) — XOR, побитовые операции
+
+- [[graphs-interview|Графы]]
+- [[hash-tables-interview|Хеш-таблицы]]
+- [[heaps-interview|Кучи (Heaps)]]
+- [[linked-lists-interview|Связные списки]]
+- [[stacks-queues-interview|Стеки и очереди]]
+- [[trees-interview|Деревья]]

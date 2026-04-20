@@ -545,3 +545,10 @@ Existing Kafka ecosystem?
 - [Микросервисы](../architecture/microservices-interview.md) — decoupling
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — SQS for sagas
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, DLQ
+
+- [[kafka-interview|Apache Kafka]]
+- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
+- [[nats-interview|NATS]]
+- [[pulsar-interview|Apache Pulsar]]
+- [[rabbitmq-interview|RabbitMQ]]
+- [[redpanda-interview|Redpanda]]

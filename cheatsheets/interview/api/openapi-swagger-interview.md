@@ -1269,3 +1269,10 @@ springdoc:
 - [Spring Security](../frameworks/spring/spring-security-interview.md) — аутентификация, авторизация, OAuth2, JWT
 - [Spring MVC](../frameworks/spring/spring-mvc-interview.md) — контроллеры, фильтры, перехватчики, DispatcherServlet
 - [API Gateway](../architecture/api-gateway-interview.md) — маршрутизация, rate limiting, аутентификация на уровне шлюза
+
+- [[api-design-best-practices-interview|API Design Best Practices]]
+- [[api-versioning-interview|API Versioning]]
+- [[graphql-interview|GraphQL]]
+- [[grpc-interview|gRPC]]
+- [[http-rest-interview|HTTP и REST]]
+- [[rest-maturity-interview|Richardson Maturity Model (REST)]]

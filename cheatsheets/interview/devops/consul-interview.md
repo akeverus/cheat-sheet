@@ -581,3 +581,10 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 - [Application Security](../security/application-security-interview.md) — mTLS, ACLs
 - [Zero Trust](../security/zero-trust-interview.md) — Connect implements
 - [Load Balancing](../architecture/load-balancing-interview.md) — Consul + LB integration
+
+- [[ansible-interview|Ansible]]
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[docker-interview|Docker]]
+- [[git-interview|Git]]
+- [[gradle-maven-interview|Gradle и Maven]]
+- [[helm-interview|Helm]]

@@ -1836,3 +1836,10 @@ val protoBuf = ProtoBuf { encodeDefaults = false }
 - [Исключения в Kotlin](kotlin-exceptions-interview.md) — SerializationException и обработка ошибок
 - [Java Core](../java/java-core-interview.md) — сравнение с Java Serializable и Externalizable
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — интеграция kotlinx.serialization с Spring MVC/WebFlux
+
+- [[kotlin-collections-interview|Kotlin коллекции]]
+- [[kotlin-coroutines-interview|Kotlin Coroutines]]
+- [[kotlin-dsl-interview|DSL в Kotlin]]
+- [[kotlin-exceptions-interview|исключения в Kotlin]]
+- [[kotlin-interop-java-interview|интероп Kotlin и Java]]
+- [[kotlin-interview|Kotlin]]

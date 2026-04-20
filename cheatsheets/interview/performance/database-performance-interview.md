@@ -1296,3 +1296,10 @@ sysbench --db-driver=pgsql oltp_read_write run --threads=64 --time=60
 - [Performance Testing](performance-testing-interview.md) — methodology, tools
 - [Memory Management](memory-management-interview.md) — JVM ↔ DB interplay
 - [Consistency Patterns](../architecture/consistency-patterns-interview.md) — read replicas trade-offs
+
+- [[application-profiling-interview|Application Profiling]]
+- [[caching-performance-interview|Caching Performance]]
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
+- [[memory-management-interview|Memory Management]]
+- [[network-performance-interview|Network Performance]]
+- [[performance-testing-interview|Performance Testing]]

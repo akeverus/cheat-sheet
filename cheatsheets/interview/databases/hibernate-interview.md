@@ -1926,3 +1926,10 @@ void shouldUseSecondLevelCache() {
 - [Транзакции и уровни изоляции](database-transactions-interview.md) — ACID, MVCC, блокировки
 - [Spring Framework](../frameworks/spring/spring-framework-interview.md) — IoC/DI, AOP, управление транзакциями
 - [JVM](../jvm/jvm-interview.md) — управление памятью, GC, производительность
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]

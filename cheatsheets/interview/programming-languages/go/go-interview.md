@@ -1000,3 +1000,10 @@ func slowOperation(ctx context.Context) ([]byte, error) {
 - [Kubernetes](../../devops/kubernetes-interview.md) — написан на Go
 - [gRPC](../../api/grpc-interview.md) — популярная пара с Go
 - [Performance Testing](../../performance/performance-testing-interview.md) — Go бенчмарки
+
+- [[go-concurrency-interview|Go Concurrency]]
+- [[go-generics-interview|Go Generics]]
+- [[go-memory-gc-interview|Go Memory и GC]]
+- [[go-modules-interview|Go Modules]]
+- [[go-stdlib-interview|Go Standard Library]]
+- [[go-testing-interview|Go Testing]]

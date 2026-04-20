@@ -613,3 +613,10 @@ SELECT * FROM total_per_user EMIT CHANGES;
 - [Apache Airflow](apache-airflow-interview.md) — orchestration не-streaming
 - [Data Warehousing](data-warehousing-interview.md) — обычно sink Kafka Streams
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — Kafka Streams для choreographed sagas
+
+- [[apache-airflow-interview|Apache Airflow]]
+- [[apache-flink-interview|Apache Flink]]
+- [[apache-spark-interview|Apache Spark]]
+- [[data-lake-lakehouse-interview|Data Lake и Lakehouse]]
+- [[data-warehousing-interview|Data Warehousing]]
+- [[dbt-interview|dbt]]

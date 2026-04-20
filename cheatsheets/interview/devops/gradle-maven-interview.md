@@ -2008,3 +2008,10 @@ public class TestUserBuilder {
 - [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — артефакты сборки в процессе деплоя: JAR, WAR, Docker image
 - [Kubernetes](kubernetes-interview.md) — деплой артефактов в кластер, Helm-чарты и сборочные пайплайны
 - [Git](git-interview.md) — управление версиями кода: теги, ветки, интеграция с CI/CD сборками
+
+- [[ansible-interview|Ansible]]
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[consul-interview|HashiCorp Consul]]
+- [[docker-interview|Docker]]
+- [[git-interview|Git]]
+- [[helm-interview|Helm]]

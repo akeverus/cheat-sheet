@@ -2201,3 +2201,10 @@ public Map<String, Object> profile(@AuthenticationPrincipal Jwt jwt) {
 - [Микросервисы](../architecture/microservices-interview.md) — JWT propagation, API Gateway, service-to-service auth
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — безопасность в распределённых архитектурах
 - [Kubernetes](../devops/kubernetes-interview.md) — Secrets, ServiceAccount, Workload Identity
+
+- [[application-security-interview|Application Security]]
+- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
+- [[jwt-interview|JWT]]
+- [[mtls-interview|mTLS (Mutual TLS)]]
+- [[owasp-top10-interview|OWASP Top 10]]
+- [[secrets-management-interview|Secrets Management]]

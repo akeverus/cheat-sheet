@@ -677,3 +677,10 @@ LLM может **выполнить инструкцию** из документ
 - [Application Security](../security/application-security-interview.md) — prompt injection
 - [Caching](../architecture/caching-strategies-interview.md) — LLM response caching
 - [Микросервисы](../architecture/microservices-interview.md) — где интегрируем LLM
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]
+- [[prompt-engineering-interview|Prompt Engineering]]

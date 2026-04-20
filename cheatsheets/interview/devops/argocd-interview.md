@@ -1424,3 +1424,10 @@ metadata:
 - [CI/CD пайплайны](../cicd/pipeline-design-interview.md)
 - [Стратегии деплоя](../cicd/deployment-strategies-interview.md)
 - [Docker](docker-interview.md)
+
+- [[ansible-interview|Ansible]]
+- [[consul-interview|HashiCorp Consul]]
+- [[docker-interview|Docker]]
+- [[git-interview|Git]]
+- [[gradle-maven-interview|Gradle и Maven]]
+- [[helm-interview|Helm]]

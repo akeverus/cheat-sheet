@@ -701,3 +701,10 @@ Source → Loader (Fivetran/Airbyte) → Warehouse (Snowflake/BQ)
 - [Stream Processing](stream-processing-interview.md) — vs batch DWH
 - [Микросервисы](../architecture/microservices-interview.md) — operational vs analytical
 - [Caching](../architecture/caching-strategies-interview.md) — для acceleration BI
+
+- [[apache-airflow-interview|Apache Airflow]]
+- [[apache-flink-interview|Apache Flink]]
+- [[apache-spark-interview|Apache Spark]]
+- [[data-lake-lakehouse-interview|Data Lake и Lakehouse]]
+- [[dbt-interview|dbt]]
+- [[kafka-streams-interview|Kafka Streams]]

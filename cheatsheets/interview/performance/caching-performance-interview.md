@@ -1156,3 +1156,10 @@ Other edges hit shield (shield pre-populated)
 - [Performance Testing](performance-testing-interview.md) — load test with cache
 - [Load Balancing](../architecture/load-balancing-interview.md) — session affinity, cache locality
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — caching as scale tool
+
+- [[application-profiling-interview|Application Profiling]]
+- [[database-performance-interview|Database Performance]]
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
+- [[memory-management-interview|Memory Management]]
+- [[network-performance-interview|Network Performance]]
+- [[performance-testing-interview|Performance Testing]]

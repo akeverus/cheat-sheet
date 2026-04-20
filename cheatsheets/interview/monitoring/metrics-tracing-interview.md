@@ -2337,3 +2337,10 @@ rate(notifications_delivered_total[1h])
 - [Микросервисная архитектура](../architecture/microservices-interview.md) — паттерны, где метрики и трейсы обязательны: circuit breaker, bulkhead, saga
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — `Micrometer`, `Actuator`, `/actuator/prometheus`, интеграция с `OpenTelemetry` Java agent
 - [Kubernetes](../devops/kubernetes-interview.md) — `Prometheus Operator`, `kube-state-metrics`, `ServiceMonitor`, сбор метрик в кластере
+
+- [[elk-stack-interview|ELK Stack]]
+- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
+- [[logging-strategies-interview|Стратегии логирования]]
+- [[loki-grafana-interview|Loki и Grafana]]
+- [[observability-interview|Observability]]
+- [[opentelemetry-interview|OpenTelemetry]]

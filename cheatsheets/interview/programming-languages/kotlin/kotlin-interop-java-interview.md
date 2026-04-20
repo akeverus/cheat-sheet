@@ -1732,3 +1732,10 @@ val objects: List<Any> = readOnly // OK — ковариантность раб�
 - [Java Core](../java/java-core-interview.md) — базовые концепции Java для понимания интеропа
 - [Java Concurrency](../java/java-concurrency-interview.md) — использование Java-примитивов синхронизации из Kotlin
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — смешанные Kotlin+Java проекты в Spring
+
+- [[kotlin-collections-interview|Kotlin коллекции]]
+- [[kotlin-coroutines-interview|Kotlin Coroutines]]
+- [[kotlin-dsl-interview|DSL в Kotlin]]
+- [[kotlin-exceptions-interview|исключения в Kotlin]]
+- [[kotlin-interview|Kotlin]]
+- [[kotlin-serialization-interview|сериализация в Kotlin]]

@@ -2146,3 +2146,10 @@ public class LoanService {
 - [Unit-тестирование](../testing/unit-testing-interview.md) — тесты как страховка при рефакторинге
 - [Стратегии тестирования](../testing/test-strategies-interview.md) — планирование тестового покрытия перед рефакторингом
 - [ООП в Java](../programming-languages/java/java-oop-interview.md) — принципы SOLID и проектирование классов
+
+- [[clean-code-practices-interview|Clean Code Practices]]
+- [[code-coverage-interview|Code Coverage]]
+- [[code-review-interview|Code review]]
+- [[code-smells-interview|Code Smells]]
+- [[static-analysis-interview|Static Analysis]]
+- [[technical-debt-interview|Технический долг]]

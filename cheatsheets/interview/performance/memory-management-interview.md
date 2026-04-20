@@ -1422,3 +1422,10 @@ graph TD
 - [Java Collections](../programming-languages/java/java-collections-interview.md) — коллекции и их влияние на allocation rate
 - [Docker](../devops/docker-interview.md) — container memory limits и cgroups
 - [Kubernetes](../devops/kubernetes-interview.md) — resource requests/limits и OOM killer в поде
+
+- [[application-profiling-interview|Application Profiling]]
+- [[caching-performance-interview|Caching Performance]]
+- [[database-performance-interview|Database Performance]]
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
+- [[network-performance-interview|Network Performance]]
+- [[performance-testing-interview|Performance Testing]]

@@ -790,3 +790,10 @@ int slidingWindow(int[] arr, ...) {
 - [DP](dynamic-programming-interview.md) — иногда альтернатива
 - [Рекурсия](recursion-interview.md) — итеративная альтернатива
 - [Анализ сложности](../complexity/complexity-analysis-interview.md) — снижение O(n²) → O(n)
+
+- [[backtracking-interview|Backtracking]]
+- [[divide-and-conquer-interview|Divide and Conquer]]
+- [[dynamic-programming-interview|Динамическое программирование]]
+- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
+- [[recursion-interview|Рекурсия]]
+- [[algorithms-interview|Алгоритмы (обзор)]]

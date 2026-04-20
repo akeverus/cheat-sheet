@@ -498,3 +498,10 @@ Legacy Zipkin already?
 - [Cassandra](../databases/cassandra-interview.md) — Jaeger storage
 - [Elasticsearch](../databases/elasticsearch-interview.md) — Jaeger storage
 - [Performance Testing](../performance/performance-testing-interview.md) — найти slow paths
+
+- [[elk-stack-interview|ELK Stack]]
+- [[logging-strategies-interview|Стратегии логирования]]
+- [[loki-grafana-interview|Loki и Grafana]]
+- [[metrics-tracing-interview|Метрики и трейсинг]]
+- [[observability-interview|Observability]]
+- [[opentelemetry-interview|OpenTelemetry]]

@@ -1207,3 +1207,10 @@ trivy-scan:
 - [Gradle и Maven](gradle-maven-interview.md) — Gradle Docker Plugin и Jib для сборки образов
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — контейнеризация Spring Boot приложений с Buildpacks
 - [Наблюдаемость](../monitoring/observability-interview.md) — логирование и мониторинг контейнеров
+
+- [[ansible-interview|Ansible]]
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[consul-interview|HashiCorp Consul]]
+- [[git-interview|Git]]
+- [[gradle-maven-interview|Gradle и Maven]]
+- [[helm-interview|Helm]]

@@ -787,3 +787,10 @@ Patricia Trie для 0010, 0011, 1011:
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — нет встроенного Trie, но есть TreeMap
 - [Redis](../../databases/redis-interview.md) — radix tree для streams
 - [PostgreSQL](../../databases/postgresql-interview.md) — GIN/SP-GiST индексы используют tree-like structures
+
+- [[arrays-strings-interview|Массивы и строки]]
+- [[graphs-interview|Графы]]
+- [[hash-tables-interview|Хеш-таблицы]]
+- [[heaps-interview|Кучи (Heaps)]]
+- [[linked-lists-interview|Связные списки]]
+- [[stacks-queues-interview|Стеки и очереди]]

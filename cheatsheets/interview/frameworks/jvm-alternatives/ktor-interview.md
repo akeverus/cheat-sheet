@@ -909,3 +909,10 @@ Ktor — для команд, готовых **писать больше код�
 - [OAuth2](../../security/oauth2-interview.md) — auth integration
 - [Микросервисы](../../architecture/microservices-interview.md) — где Ktor хорош
 - [Spring Boot Actuator](../spring/spring-boot-actuator-interview.md) — production observability контраст
+
+- [[micronaut-interview|Micronaut]]
+- [[quarkus-interview|Quarkus]]
+- [[vertx-interview|Vert.x]]
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]

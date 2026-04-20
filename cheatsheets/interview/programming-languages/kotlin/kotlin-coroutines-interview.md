@@ -1529,3 +1529,10 @@ ids.flatMapMerge { id ->
 - [Java Concurrency](../java/java-concurrency-interview.md) — многопоточность в Java для сравнения моделей
 - [RxJava](../../reactive/rxjava-interview.md) — реактивные потоки, сравнение с `Flow`
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — интеграция корутин со Spring WebFlux
+
+- [[kotlin-collections-interview|Kotlin коллекции]]
+- [[kotlin-dsl-interview|DSL в Kotlin]]
+- [[kotlin-exceptions-interview|исключения в Kotlin]]
+- [[kotlin-interop-java-interview|интероп Kotlin и Java]]
+- [[kotlin-interview|Kotlin]]
+- [[kotlin-serialization-interview|сериализация в Kotlin]]

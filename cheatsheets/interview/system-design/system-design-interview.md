@@ -2740,3 +2740,10 @@ Downstream медленный → timeouts → Circuit Breaker открывае�
 - [Event-driven паттерны](../architecture/event-driven-patterns-interview.md) — Outbox, Saga, event sourcing в контексте system design
 - [Redis](../databases/redis-interview.md) — кэширование, очереди и rate limiting
 - [Балансировка нагрузки](../architecture/load-balancing-interview.md) — алгоритмы и паттерны
+
+- [[design-chat-system-interview|Design Chat System]]
+- [[design-feed-system-interview|Design Feed System]]
+- [[design-payment-system-interview|Design Payment System]]
+- [[design-rate-limiter-interview|Design Rate Limiter]]
+- [[design-search-interview|Design Search System]]
+- [[design-url-shortener-interview|Design URL Shortener]]

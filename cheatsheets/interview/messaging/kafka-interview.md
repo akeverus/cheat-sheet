@@ -1559,3 +1559,10 @@ groups:
 - [RxJava / Reactive](../reactive/rxjava-interview.md) — сравнение реактивных потоков и Kafka Streams
 - [Kubernetes](../devops/kubernetes-interview.md) — деплой Kafka в Kubernetes, Strimzi Operator
 - [Docker и контейнеризация](../devops/docker-interview.md) — контейнеризация Kafka-брокеров
+
+- [[aws-sqs-sns-interview|AWS SQS и SNS]]
+- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
+- [[nats-interview|NATS]]
+- [[pulsar-interview|Apache Pulsar]]
+- [[rabbitmq-interview|RabbitMQ]]
+- [[redpanda-interview|Redpanda]]

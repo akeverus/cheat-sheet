@@ -645,3 +645,10 @@ PUT _index_template/logs-template
 - [Kubernetes](../devops/kubernetes-interview.md) — log shipping в K8s
 - [Apache Kafka](../messaging/kafka-interview.md) — buffer для ingest
 - [Application Security](../security/application-security-interview.md) — SIEM
+
+- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
+- [[logging-strategies-interview|Стратегии логирования]]
+- [[loki-grafana-interview|Loki и Grafana]]
+- [[metrics-tracing-interview|Метрики и трейсинг]]
+- [[observability-interview|Observability]]
+- [[opentelemetry-interview|OpenTelemetry]]

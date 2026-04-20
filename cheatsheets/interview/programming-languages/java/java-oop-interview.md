@@ -1650,3 +1650,10 @@ class MyValidator implements StringValidator {
 - [Java Annotations](java-annotations-interview.md) — аннотации как метаданные ООП-компонентов
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — IoC, DI, как реализация принципа DIP
 - [Java Serialization](java-serialization-interview.md) — `Serializable`, `marker interface` в ООП-контексте
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-collections-interview|Java Collections]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]

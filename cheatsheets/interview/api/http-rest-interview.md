@@ -1800,3 +1800,10 @@ public class InsufficientFundsException extends RuntimeException
 - [Микросервисы](../architecture/microservices-interview.md) — REST как основа межсервисного взаимодействия
 - [Интеграционное тестирование](../testing/integration-testing-interview.md) — тестирование REST API
 - [Безопасность приложений](../security/application-security-interview.md) — HTTPS, CORS, rate limiting
+
+- [[api-design-best-practices-interview|API Design Best Practices]]
+- [[api-versioning-interview|API Versioning]]
+- [[graphql-interview|GraphQL]]
+- [[grpc-interview|gRPC]]
+- [[openapi-swagger-interview|OpenAPI / Swagger]]
+- [[rest-maturity-interview|Richardson Maturity Model (REST)]]

@@ -1520,3 +1520,10 @@ sealed interface State permits Idle, Running, Paused, Stopped {}
 - [Stream API](java-stream-interview.md) — функциональные условия, предикаты
 - [Java 8+](java-8-interview.md) — лямбды, Optional, функциональные интерфейсы
 - [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — Strategy, State вместо ветвлений
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-collections-interview|Java Collections]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-core-interview|Java Core]]

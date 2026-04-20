@@ -1474,3 +1474,10 @@ WeakHashMap<ExpensiveKey, Result> memoTable = new WeakHashMap<>();
 - [Java 17-21](java-17-21-interview.md) — `SequencedCollection`, улучшения в `Collections API`
 - [Алгоритмы и структуры данных](../../algorithms/algorithms-interview.md) — сложность операций, выбор структуры данных
 - [Design Patterns](../../design-patterns/design-patterns-interview.md) — Iterator, Composite, Decorator в контексте коллекций
+
+- [[java-17-21-interview|Java 17-21]]
+- [[java-8-interview|Java 8]]
+- [[java-annotations-interview|Java Annotations]]
+- [[java-concurrency-interview|Java Concurrency]]
+- [[java-conditional-statements-interview|Java Conditional Statements]]
+- [[java-core-interview|Java Core]]

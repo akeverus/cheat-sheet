@@ -1592,3 +1592,10 @@ cosign verify oci://registry.example.com/charts/my-chart:1.0.0 \
 - [Стратегии деплоя](../cicd/deployment-strategies-interview.md)
 - [CI/CD пайплайны](../cicd/pipeline-design-interview.md)
 - [Git](git-interview.md)
+
+- [[ansible-interview|Ansible]]
+- [[argocd-interview|ArgoCD и GitOps]]
+- [[consul-interview|HashiCorp Consul]]
+- [[docker-interview|Docker]]
+- [[git-interview|Git]]
+- [[gradle-maven-interview|Gradle и Maven]]

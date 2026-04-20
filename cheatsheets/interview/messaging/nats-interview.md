@@ -509,3 +509,10 @@ accounts: {
 - [gRPC](../api/grpc-interview.md) — alternative для RPC
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — NATS для sagas
 - [Caching](../architecture/caching-strategies-interview.md) — NATS KV
+
+- [[aws-sqs-sns-interview|AWS SQS и SNS]]
+- [[kafka-interview|Apache Kafka]]
+- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
+- [[pulsar-interview|Apache Pulsar]]
+- [[rabbitmq-interview|RabbitMQ]]
+- [[redpanda-interview|Redpanda]]

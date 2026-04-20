@@ -1775,3 +1775,10 @@ public Flux<ServerSentEvent<String>> streamEvents() {
 - [Spring Batch](spring-batch-interview.md) — пакетные задачи, запускаемые через REST
 - [HTTP и REST](../../api/http-rest-interview.md) — протокол и архитектурный стиль для REST API
 - [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — Front Controller, MVC
+
+- [[spring-aop-interview|Spring AOP]]
+- [[spring-batch-interview|Spring Batch]]
+- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [[spring-boot-interview|Spring Boot]]
+- [[spring-cloud-interview|Spring Cloud]]
+- [[spring-data-jpa-interview|Spring Data JPA]]

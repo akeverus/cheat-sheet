@@ -1517,3 +1517,10 @@ WHERE installed_version IS NOT NULL;
 - [Elasticsearch](elasticsearch-interview.md)
 - [Flyway и Liquibase](flyway-liquibase-interview.md)
 - [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md)
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]

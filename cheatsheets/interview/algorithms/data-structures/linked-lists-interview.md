@@ -1021,3 +1021,10 @@ queue.poll();    // потокобезопасно
 - [Анализ сложности](../complexity/complexity-analysis-interview.md) — амортизированная сложность операций
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — LinkedList vs ArrayList vs ArrayDeque
 - [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — ConcurrentLinkedQueue, lock-free
+
+- [[arrays-strings-interview|Массивы и строки]]
+- [[graphs-interview|Графы]]
+- [[hash-tables-interview|Хеш-таблицы]]
+- [[heaps-interview|Кучи (Heaps)]]
+- [[stacks-queues-interview|Стеки и очереди]]
+- [[trees-interview|Деревья]]

@@ -597,3 +597,10 @@ response = model.generate_content("Hello")
 - [LLM Basics](../ai-ml/llm-basics-interview.md) — Gemini
 - [MLOps](../ai-ml/mlops-interview.md) — Vertex AI
 - [Application Security](../security/application-security-interview.md) — IAM
+
+- [[aws-interview|AWS]]
+- [[aws-lambda-interview|AWS Lambda]]
+- [[azure-interview|Azure]]
+- [[cloud-native-patterns-interview|Cloud-native Patterns]]
+- [[serverless-interview|Serverless]]
+- [[ai-agents-interview|AI Agents]]

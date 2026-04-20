@@ -753,3 +753,10 @@ AWS framework для design good architectures.
 - [Observability](../monitoring/observability-interview.md) — CloudWatch, X-Ray
 - [Caching](../architecture/caching-strategies-interview.md) — CloudFront, ElastiCache
 - [Scalability](../architecture/scalability-patterns-interview.md) — Auto Scaling, multi-region
+
+- [[aws-lambda-interview|AWS Lambda]]
+- [[azure-interview|Azure]]
+- [[cloud-native-patterns-interview|Cloud-native Patterns]]
+- [[gcp-interview|GCP (Google Cloud Platform)]]
+- [[serverless-interview|Serverless]]
+- [[ai-agents-interview|AI Agents]]

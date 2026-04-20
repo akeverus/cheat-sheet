@@ -564,3 +564,10 @@ IoT devices → MQTT broker / NATS leaf → Central NATS / Kafka
 - [Распределённые системы](../architecture/distributed-systems-interview.md)
 - [CAP Theorem](../architecture/cap-theorem-interview.md)
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md)
+
+- [[aws-sqs-sns-interview|AWS SQS и SNS]]
+- [[kafka-interview|Apache Kafka]]
+- [[nats-interview|NATS]]
+- [[pulsar-interview|Apache Pulsar]]
+- [[rabbitmq-interview|RabbitMQ]]
+- [[redpanda-interview|Redpanda]]

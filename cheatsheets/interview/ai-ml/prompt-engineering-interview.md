@@ -700,3 +700,10 @@ response = llm(prompt.format(...))
 - [Unit Testing](../testing/unit-testing-interview.md) — prompt testing
 - [Caching](../architecture/caching-strategies-interview.md) — prompt caching
 - [Микросервисы](../architecture/microservices-interview.md) — где prompts живут
+
+- [[ai-agents-interview|AI Agents]]
+- [[embeddings-interview|Embeddings]]
+- [[llm-basics-interview|LLM Basics]]
+- [[llm-integration-patterns-interview|LLM Integration Patterns]]
+- [[mlops-interview|MLOps]]
+- [[model-serving-interview|Model Serving]]

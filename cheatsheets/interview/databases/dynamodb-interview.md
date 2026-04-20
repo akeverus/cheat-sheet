@@ -728,3 +728,10 @@ aws dynamodb update-continuous-backups \
 - [Caching Strategies](../architecture/caching-strategies-interview.md) — DAX
 - [Микросервисы](../architecture/microservices-interview.md) — DynamoDB per microservice
 - [Event-driven](../architecture/event-driven-patterns-interview.md) — Streams
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[elasticsearch-interview|Elasticsearch]]

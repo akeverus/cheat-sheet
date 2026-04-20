@@ -608,3 +608,10 @@ Daily invocations × duration × memory + per-invocation cost + auxiliary servic
 - [Observability](../monitoring/observability-interview.md) — challenges
 - [Scalability](../architecture/scalability-patterns-interview.md) — auto-scale benefits
 - [Application Security](../security/application-security-interview.md) — IAM, secrets
+
+- [[aws-interview|AWS]]
+- [[aws-lambda-interview|AWS Lambda]]
+- [[azure-interview|Azure]]
+- [[cloud-native-patterns-interview|Cloud-native Patterns]]
+- [[gcp-interview|GCP (Google Cloud Platform)]]
+- [[ai-agents-interview|AI Agents]]

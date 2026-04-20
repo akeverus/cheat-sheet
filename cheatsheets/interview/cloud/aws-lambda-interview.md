@@ -803,3 +803,10 @@ def handler(event, context):
 - [Observability](../monitoring/observability-interview.md) — Powertools, X-Ray
 - [Application Security](../security/application-security-interview.md) — IAM roles
 - [JVM](../jvm/jvm-interview.md) — для Java на Lambda
+
+- [[aws-interview|AWS]]
+- [[azure-interview|Azure]]
+- [[cloud-native-patterns-interview|Cloud-native Patterns]]
+- [[gcp-interview|GCP (Google Cloud Platform)]]
+- [[serverless-interview|Serverless]]
+- [[ai-agents-interview|AI Agents]]

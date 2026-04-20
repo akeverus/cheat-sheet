@@ -1059,3 +1059,10 @@ rabbitmqadmin export config.json
 - [Event-driven паттерны](../architecture/event-driven-patterns-interview.md) — паттерны асинхронного взаимодействия
 - [Стратегии кэширования](../architecture/caching-strategies-interview.md) — дополняет паттерны обмена данными
 - [Паттерны согласованности](../architecture/consistency-patterns-interview.md) — гарантии доставки и идемпотентность
+
+- [[aws-sqs-sns-interview|AWS SQS и SNS]]
+- [[kafka-interview|Apache Kafka]]
+- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
+- [[nats-interview|NATS]]
+- [[pulsar-interview|Apache Pulsar]]
+- [[redpanda-interview|Redpanda]]

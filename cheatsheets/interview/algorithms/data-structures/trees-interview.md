@@ -971,3 +971,10 @@ class FenwickTree {
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — TreeMap, TreeSet
 - [PostgreSQL](../../databases/postgresql-interview.md) — B-Tree индексы
 - [Database Architecture](../../databases/database-architecture-interview.md) — индексы и B+Tree
+
+- [[arrays-strings-interview|Массивы и строки]]
+- [[graphs-interview|Графы]]
+- [[hash-tables-interview|Хеш-таблицы]]
+- [[heaps-interview|Кучи (Heaps)]]
+- [[linked-lists-interview|Связные списки]]
+- [[stacks-queues-interview|Стеки и очереди]]

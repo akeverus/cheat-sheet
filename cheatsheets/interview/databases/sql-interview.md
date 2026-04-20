@@ -1873,3 +1873,10 @@ TRUNCATE orders;     -- быстро, но нельзя откатить час�
 - [Redis](redis-interview.md) — кэширование и in-memory хранилища
 - [Elasticsearch](elasticsearch-interview.md) — полнотекстовый поиск
 - [Транзакции и уровни изоляции](database-transactions-interview.md) — ACID, MVCC, блокировки
+
+- [[cassandra-interview|Apache Cassandra]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
+- [[database-architecture-interview|Database Architecture]]
+- [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[dynamodb-interview|DynamoDB]]
