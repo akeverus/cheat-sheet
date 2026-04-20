@@ -102,6 +102,10 @@ public class PreloadService {
      * @param filter текущий фильтр тестирования (тема, важные, только с ошибками)
      */
     public void preloadNext(InterviewFilter filter) {
+        if (!props.isAiEnabled()) {
+            log.info("Preload/warmup skipped: no AI keys configured");
+            return;
+        }
         int batch = props.getPreload().getBatchSize();
         preloadExecutor.execute(() -> {
             try {
@@ -133,6 +137,10 @@ public class PreloadService {
      * каждые {@code app.preload.log-progress-every} вопросов.</p>
      */
     public void warmupAll() {
+        if (!props.isAiEnabled()) {
+            log.info("Preload/warmup skipped: no AI keys configured");
+            return;
+        }
         warmupExecutor.execute(() -> {
             try {
                 List<Long> allIds = questionRepository.findAllQuestionIdsWithoutOptions();

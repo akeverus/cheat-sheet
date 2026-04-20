@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.ai.option;
 
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
@@ -25,19 +26,22 @@ public class AIQuestionService {
     OptionCache optionCache;
     TransactionTemplate transactionTemplate;
     Striped<Lock> questionLocks;
+    AppProperties appProperties;
 
     public AIQuestionService(
             AnswerOptionRepository answerOptionRepository,
             AiQuestionClient aiQuestionClient,
             OptionCache optionCache,
             Striped<Lock> questionLocks,
-            TransactionTemplate transactionTemplate
+            TransactionTemplate transactionTemplate,
+            AppProperties appProperties
     ) {
         this.answerOptionRepository = answerOptionRepository;
         this.aiQuestionClient = aiQuestionClient;
         this.optionCache = optionCache;
         this.transactionTemplate = transactionTemplate;
         this.questionLocks = questionLocks;
+        this.appProperties = appProperties;
     }
 
     public List<AnswerOption> getOrCreateOptions(Question question) {
@@ -53,6 +57,10 @@ public class AIQuestionService {
             if (existing != null && !existing.isEmpty()) {
                 optionCache.put(question.id(), existing);
                 return existing;
+            }
+
+            if (!appProperties.isAiEnabled()) {
+                throw new AiGenerationException("AI-ключи не настроены — no-AI flashcard-режим");
             }
 
             GeneratedOptions generated = aiQuestionClient.generateOptions(question.questionText(), question.codeSnippet())

@@ -163,6 +163,7 @@ public class InterviewPageMvcService {
                 excludeQuestionId
         );
         modelAttributeMapper.applyFocusPageState(model, pageState, reviewMode);
+        model.addAttribute("aiEnabled", appProperties.isAiEnabled());
         return navigationService.focusView();
     }
 }

@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.ai;
 
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.OptionSource;
 import com.cheatsheet.quiz.domain.Question;
@@ -50,13 +51,22 @@ class AIQuestionServiceTest {
             return null;
         }).when(transactionTemplate).executeWithoutResult(any());
 
+        AppProperties appProperties = new AppProperties() {
+            @Override
+            public boolean isAiEnabled() {
+                return true;
+            }
+        };
+        appProperties.setInterviewPath("cheatsheets/interview");
+
         Striped<Lock> questionLocks = Striped.lock(16);
         service = new AIQuestionService(
                 answerOptionRepository,
                 aiQuestionClient,
                 optionCache,
                 questionLocks,
-                transactionTemplate
+                transactionTemplate,
+                appProperties
         );
         question = new Question(1L, "slug", "slug", "f.md", "topic",
                 "Что такое X?", "X — это ответ.", false, "hash", QuestionType.TEXT, null, null, 0, null);
@@ -71,7 +81,7 @@ class AIQuestionServiceTest {
                 new AnswerOption(4L, 1L, "W3", false, 3, "OPENAI", "c")
         );
         when(answerOptionRepository.findByQuestionId(1L)).thenReturn(List.of()).thenReturn(saved);
-        when(aiQuestionClient.generateOptions(anyString(), anyString())).thenReturn(Optional.of(
+        when(aiQuestionClient.generateOptions(anyString(), any())).thenReturn(Optional.of(
                 new GeneratedOptions(List.of(
                         new GeneratedOptions.GeneratedOption("Correct", true),
                         new GeneratedOptions.GeneratedOption("W1", false),
@@ -94,7 +104,7 @@ class AIQuestionServiceTest {
                 new AnswerOption(2L, 1L, "W1", false, 1, "OPENAI", null)
         );
         when(answerOptionRepository.findByQuestionId(1L)).thenReturn(List.of()).thenReturn(saved);
-        when(aiQuestionClient.generateOptions(anyString(), anyString())).thenReturn(Optional.of(
+        when(aiQuestionClient.generateOptions(anyString(), any())).thenReturn(Optional.of(
                 new GeneratedOptions(List.of(
                         new GeneratedOptions.GeneratedOption("Correct", true),
                         new GeneratedOptions.GeneratedOption("W1", false)

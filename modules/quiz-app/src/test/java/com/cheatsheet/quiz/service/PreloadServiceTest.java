@@ -49,6 +49,10 @@ class PreloadServiceTest {
         props.getPreload().setSleepMs(0);
         props.getPreload().setMaxQueueSize(10);
         props.getPreload().setMaxQueues(5);
+        // Включаем AI-режим, чтобы preloadNext/warmupAll не делали early return
+        AppProperties.OpenAi openAi = new AppProperties.OpenAi();
+        openAi.setApiKey("test-key");
+        props.setOpenai(openAi);
         TaskExecutor directExecutor = Runnable::run;
         preloadService = new PreloadService(
                 props,
@@ -195,7 +199,7 @@ class PreloadServiceTest {
         long seed = 7L;
         List<Long> expectedSubset = shuffledSubset(allIds, 2, seed);
 
-        AppProperties props = new AppProperties();
+        AppProperties props = propsWithAiEnabled();
         props.getPreload().setBatchSize(2);
         props.getPreload().setSleepMs(0);
         props.getPreload().setMaxQueueSize(10);
@@ -231,7 +235,7 @@ class PreloadServiceTest {
         List<Long> expectedSubset = shuffledSubset(allIds, 10, seed);
         List<Long> prefixSubset = List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L);
 
-        AppProperties props = new AppProperties();
+        AppProperties props = propsWithAiEnabled();
         props.getPreload().setBatchSize(2);
         props.getPreload().setSleepMs(0);
         props.getPreload().setMaxQueueSize(10);
@@ -259,6 +263,14 @@ class PreloadServiceTest {
         assertThat(expectedSubset).isNotEqualTo(prefixSubset);
         verify(questionRepository, times(1)).findByIds(expectedSubset);
         verify(questionRepository, never()).findByIds(allIds);
+    }
+
+    private static AppProperties propsWithAiEnabled() {
+        AppProperties props = new AppProperties();
+        AppProperties.OpenAi openAi = new AppProperties.OpenAi();
+        openAi.setApiKey("test-key");
+        props.setOpenai(openAi);
+        return props;
     }
 
     private List<Long> shuffledSubset(List<Long> source, int limit, long seed) {
