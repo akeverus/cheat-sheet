@@ -24,9 +24,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[scala-akka|Akka]]
-- [[scala-slick|Slick]]
-- [[scala-doobie|Doobie]]
+- [Akka](scala-akka.md)
+- [Slick](scala-slick.md)
+- [Doobie](scala-doobie.md)
 ## Содержание
 
 - [Основы ScalaTest](#основы-scalatest)
@@ -1275,7 +1275,7 @@ class CalculatorSpec extends AnyFlatSpec with Matchers {
 }
 ```
 ## См. также
-- [[java-junit5|JUnit]] — **Java testing framework**
+- [JUnit](../testing-libraries/java-junit5.md) — **Java testing framework**
 - [Библиотеки](../) — **Alternative Scala testing library**
-- [[scala-play|Play Framework]] — **Web framework testing**
+- [Play Framework](scala-play.md) — **Web framework testing**
 

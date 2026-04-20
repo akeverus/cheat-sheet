@@ -24,11 +24,11 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[go-benchmarking|Go: бенчмаркинг]]
-- [[go-web-frameworks|Go: веб-фреймворки]]
-- [[go-observability|Go: наблюдаемость]]
-- [[go-encoding|Go: кодирование]]
-- [[go-logging|Go: логирование]]
+- [Go: бенчмаркинг](go-benchmarking.md)
+- [Go: веб-фреймворки](go-web-frameworks.md)
+- [Go: наблюдаемость](go-observability.md)
+- [Go: кодирование](go-encoding.md)
+- [Go: логирование](go-logging.md)
 ## Содержание
 
 - [Введение в коллекции](#введение-в-коллекции)

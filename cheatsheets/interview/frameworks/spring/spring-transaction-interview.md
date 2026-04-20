@@ -499,11 +499,11 @@ void shouldCommitAuditEvenIfOrderFails() {
 
 ## See also
 
-- [[spring-framework-interview|Spring Framework]] — AOP, прокси-механизм
-- [[spring-aop-interview|Spring AOP]] — как именно реализованы @Transactional и self-invocation
-- [[spring-data-jpa-interview|Spring Data JPA]] — транзакции в JPA-репозиториях
-- [[spring-data-jdbc-interview|Spring Data JDBC]] — транзакции в JDBC
-- [[hibernate-interview|Hibernate]] — dirty checking, first-level cache в транзакции
-- [[database-transactions-interview|Транзакции БД]] — ACID, isolation levels на уровне СУБД
-- [[spring-events-interview|Spring Events]] — @TransactionalEventListener (AFTER_COMMIT)
-- [[spring-testing-interview|Spring Testing]] — @Transactional в тестах, @Commit
+- [Spring Framework](spring-framework-interview.md) — AOP, прокси-механизм
+- [Spring AOP](spring-aop-interview.md) — как именно реализованы @Transactional и self-invocation
+- [Spring Data JPA](spring-data-jpa-interview.md) — транзакции в JPA-репозиториях
+- [Spring Data JDBC](spring-data-jdbc-interview.md) — транзакции в JDBC
+- [Hibernate](../../databases/hibernate-interview.md) — dirty checking, first-level cache в транзакции
+- [Транзакции БД](../../databases/database-transactions-interview.md) — ACID, isolation levels на уровне СУБД
+- [Spring Events](spring-events-interview.md) — @TransactionalEventListener (AFTER_COMMIT)
+- [Spring Testing](spring-testing-interview.md) — @Transactional в тестах, @Commit

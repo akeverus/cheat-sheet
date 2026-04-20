@@ -21,14 +21,14 @@ Burp Suite от PortSwigger — промышленная платформа дл
 ## Полезные ссылки
 
 ### Основные документы
-- [[burp-suite|Burp Suite]] — Proxy, Scanner, Repeater, Intruder, расширения
+- [Burp Suite](burp-suite.md) — Proxy, Scanner, Repeater, Intruder, расширения
 
 ### Соседние разделы
-- [[README|Security Testing]]
-- [[README|OWASP ZAP]]
-- [[README|sqlmap]]
-- [[testing-tools-overview|Testing Tools Overview]]
-- [[README|Security]]
+- [Security Testing](../../../basics/README.md)
+- [OWASP ZAP](../../../basics/README.md)
+- [sqlmap](../../../basics/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [Security](../../../basics/README.md)
 
 ### Внешние ресурсы
 - [Burp Suite Documentation](https://portswigger.net/burp/documentation)
@@ -46,11 +46,11 @@ Burp Suite от PortSwigger — промышленная платформа дл
 
 | Тема | Где читать |
 |------|-----------|
-| Proxy: перехват, модификация, HTTPS | [[burp-suite]] |
-| Scanner: passive/active crawl | [[burp-suite]] |
-| Repeater и Intruder (фаззинг, перебор) | [[burp-suite]] |
-| Decoder, Comparer, BApp-расширения | [[burp-suite]] |
-| Отчёты, CI-интеграция (Enterprise) | [[burp-suite]] |
+| Proxy: перехват, модификация, HTTPS | [burp-suite](burp-suite.md) |
+| Scanner: passive/active crawl | [burp-suite](burp-suite.md) |
+| Repeater и Intruder (фаззинг, перебор) | [burp-suite](burp-suite.md) |
+| Decoder, Comparer, BApp-расширения | [burp-suite](burp-suite.md) |
+| Отчёты, CI-интеграция (Enterprise) | [burp-suite](burp-suite.md) |
 
 ## Когда использовать
 
@@ -65,7 +65,7 @@ Burp Suite от PortSwigger — промышленная платформа дл
 
 ## Куда идти дальше
 
-- Обзор security testing — [[README]]
-- Open-source альтернатива — [[README]]
-- Специализированный SQLi — [[README]]
-- Безопасность приложений — [[README]]
+- Обзор security testing — [README](../../../basics/README.md)
+- Open-source альтернатива — [README](../../../basics/README.md)
+- Специализированный SQLi — [README](../../../basics/README.md)
+- Безопасность приложений — [README](../../../basics/README.md)

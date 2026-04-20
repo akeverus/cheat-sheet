@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [Java State Pattern in JDK](https://docs.oracle.com/javase/tutorial/)
 
 ### См. также
-- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
 - [Spring State Machine](https://spring.io/projects/spring-statemachine) — **Spring State Machine**
-- [[strategy|Strategy]] — **Strategy Pattern**
+- [Strategy](strategy.md) — **Strategy Pattern**
 
-- [[iterator|Итератор (Iterator)]]
-- [[visitor|Посетитель (Visitor)]]
-- [[interpreter|Интерпретатор (Interpreter)]]
+- [Итератор (Iterator)](iterator.md)
+- [Посетитель (Visitor)](visitor.md)
+- [Интерпретатор (Interpreter)](interpreter.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

@@ -649,14 +649,14 @@ class LegacyIntegrationTest {
 
 ## See also
 
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация, `@SpringBootApplication`, production features
-- [[spring-framework-interview|Spring Framework]] — ApplicationContext, BeanFactory, тестовый контекст
-- [[spring-mvc-interview|Spring MVC]] — `@WebMvcTest`, контроллеры, MockMvc handler mapping
-- [[spring-data-jpa-interview|Spring Data JPA]] — `@DataJpaTest`, TestEntityManager, repository тесты
-- [[spring-security-interview|Spring Security]] — `@WithMockUser`, jwt(), security filter chain тестирование
-- [[spring-aop-interview|Spring AOP]] — `@SpyBean` для проверки вызовов через AOP-proxy
-- [[spring-events-interview|Spring Events]] — `@RecordApplicationEvents`, `ApplicationEvents` в тестах
-- [[mockito-interview|Mockito]] — `@Mock`, `@InjectMocks`, verify, stubbing — без Spring
-- [[testcontainers-interview|Testcontainers]] — интеграция с Spring Boot, @ServiceConnection, @DynamicPropertySource
-- [[unit-testing-interview|Unit Testing]] — принципы юнит-тестирования, пирамида тестов, AAA
-- [[spring-testing|Шпаргалка: Spring Testing: Полное руководство по те]] — теория
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация, `@SpringBootApplication`, production features
+- [Spring Framework](spring-framework-interview.md) — ApplicationContext, BeanFactory, тестовый контекст
+- [Spring MVC](spring-mvc-interview.md) — `@WebMvcTest`, контроллеры, MockMvc handler mapping
+- [Spring Data JPA](spring-data-jpa-interview.md) — `@DataJpaTest`, TestEntityManager, repository тесты
+- [Spring Security](spring-security-interview.md) — `@WithMockUser`, jwt(), security filter chain тестирование
+- [Spring AOP](spring-aop-interview.md) — `@SpyBean` для проверки вызовов через AOP-proxy
+- [Spring Events](spring-events-interview.md) — `@RecordApplicationEvents`, `ApplicationEvents` в тестах
+- [Mockito](../../testing/mockito-interview.md) — `@Mock`, `@InjectMocks`, verify, stubbing — без Spring
+- [Testcontainers](../../testing/testcontainers-interview.md) — интеграция с Spring Boot, @ServiceConnection, @DynamicPropertySource
+- [Unit Testing](../../testing/unit-testing-interview.md) — принципы юнит-тестирования, пирамида тестов, AAA
+- [Шпаргалка: Spring Testing: Полное руководство по те](../../../frameworks/java-frameworks/spring/spring-testing.md) — теория

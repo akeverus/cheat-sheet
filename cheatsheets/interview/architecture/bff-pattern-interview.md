@@ -555,13 +555,13 @@ Client ←20ms→ Edge BFF (cached) ←150ms→ Services (cold path)
 
 ## See also
 
-- [[api-gateway-interview|API Gateway]] — related but different
-- [[microservices-interview|Microservices]] — BFF connects them
-- [[edge-computing-interview|Edge Computing]] — BFF at edge
-- [[graphql-interview|GraphQL]] — often used as BFF
+- [API Gateway](api-gateway-interview.md) — related but different
+- [Microservices](microservices-interview.md) — BFF connects them
+- [Edge Computing](edge-computing-interview.md) — BFF at edge
+- [GraphQL](../api/graphql-interview.md) — often used as BFF
 - [[rest-api-design-interview|REST API Design]] — BFF vs public API
-- [[caching-strategies-interview|Caching Strategies]] — BFF caching
-- [[resilience-patterns-interview|Resilience Patterns]] — fallbacks, timeouts
-- [[clean-architecture-interview|Clean Architecture]] — boundary design
-- [[ddd-interview|DDD]] — context mapping
-- [[scalability-patterns-interview|Scalability Patterns]] — BFF as layer
+- [Caching Strategies](caching-strategies-interview.md) — BFF caching
+- [Resilience Patterns](resilience-patterns-interview.md) — fallbacks, timeouts
+- [Clean Architecture](clean-architecture-interview.md) — boundary design
+- [DDD](ddd-interview.md) — context mapping
+- [Scalability Patterns](scalability-patterns-interview.md) — BFF as layer

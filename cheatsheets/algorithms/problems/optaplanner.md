@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [OptaPlanner GitHub](https://www.optaplanner.org/)
 
 ### См. также
-- [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
+- [Жадные алгоритмы](greedy-algorithms.md) — жадные алгоритмы
 - [Алгоритмы оптимизации](../algorithmic-paradigms/) — парадигмы
 
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
-- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
-- [[circular-buffer|Circular Buffer]]
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
+- [Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)](frequency-histogram-apache-commons.md)
+- [Circular Buffer](circular-buffer.md)
 ## Содержание
 
 - [Обзор](#обзор)

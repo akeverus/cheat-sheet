@@ -29,13 +29,13 @@ updated: "2026-04-20"
 - [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/pod-security-standards/) — стандарты безопасности подов
 
 ### См. также
-- [[data-security|Data Security]] — безопасность данных и шифрование
-- [[secrets-management|Secrets Management]] — управление секретами
-- [[security-practices|Security Practices]] — практики безопасности
+- [Data Security](../data/data-security.md) — безопасность данных и шифрование
+- [Secrets Management](../data/secrets-management.md) — управление секретами
+- [Security Practices](../security-practices.md) — практики безопасности
 
 
-- [[tls-ssl|TLS / SSL: handshake, сертификаты, конфигурация]]
-- [[spring-boot|Spring Boot — Полное руководство]]
+- [TLS / SSL: handshake, сертификаты, конфигурация](tls-ssl.md)
+- [Spring Boot — Полное руководство](../../frameworks/spring/spring-boot.md)
 ## Содержание
 
 - [Сетевая безопасность](#сетевая-безопасность)
@@ -526,4 +526,4 @@ aws s3api put-bucket-encryption \
 Оценить `CVSS`, определить затронутые системы, применить временные меры (блокировка через `firewall`), накатить патч, проверить исправление, задокументировать.
 
 **Безопасность в `DevOps`?**
-`SAST`/`SCA` в `CI`, сканирование образов при сборке, политики через `OPA`/`Kyverno`, секреты в `Vault`, `DAST` на `staging`. Подробнее — в [[security-practices|Security Practices]].
+`SAST`/`SCA` в `CI`, сканирование образов при сборке, политики через `OPA`/`Kyverno`, секреты в `Vault`, `DAST` на `staging`. Подробнее — в [Security Practices](../security-practices.md).

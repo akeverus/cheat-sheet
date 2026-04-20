@@ -17,7 +17,7 @@ updated: "2026-04-13"
 
 Глубокие ответы по `Spring Boot Actuator`: встроенные эндпоинты, `health indicators`, `Micrometer`, `Prometheus`, кастомные метрики, безопасность, production readiness.
 
-**`Spring Boot Actuator`** — модуль `Spring Boot`, предоставляющий production-ready возможности для мониторинга и управления приложением. Вопросы по `Actuator` часто встречаются на собеседованиях уровня `Middle / Senior Java Developer`, потому что показывают понимание кандидатом production-эксплуатации, observability и DevOps-практик. Файл охватывает все ключевые аспекты: от базовых эндпоинтов до интеграции с [[observability-interview|Observability]]-стеком (`Prometheus`, `Grafana`, `Micrometer`).
+**`Spring Boot Actuator`** — модуль `Spring Boot`, предоставляющий production-ready возможности для мониторинга и управления приложением. Вопросы по `Actuator` часто встречаются на собеседованиях уровня `Middle / Senior Java Developer`, потому что показывают понимание кандидатом production-эксплуатации, observability и DevOps-практик. Файл охватывает все ключевые аспекты: от базовых эндпоинтов до интеграции с [Observability](../../monitoring/observability-interview.md)-стеком (`Prometheus`, `Grafana`, `Micrometer`).
 
 ## Полезные ссылки
 
@@ -134,7 +134,7 @@ graph TB
     K --> L[Grafana Dashboard]
 ```
 
-В контексте [[microservices-interview|микросервисной архитектуры]] `Actuator` является ключевым элементом [[observability-interview|observability]]-стека — он предоставляет данные для систем мониторинга и оркестрации.
+В контексте [микросервисной архитектуры](../../architecture/microservices-interview.md) `Actuator` является ключевым элементом [observability](../../monitoring/observability-interview.md)-стека — он предоставляет данные для систем мониторинга и оркестрации.
 
 ---
 
@@ -258,7 +258,7 @@ management:
         include: "health,info,metrics,prometheus"
 ```
 
-Подробнее о безопасности эндпоинтов — в [[spring-security-interview|вопросах по Spring Security]] и Q26.
+Подробнее о безопасности эндпоинтов — в [вопросах по Spring Security](spring-security-interview.md) и Q26.
 
 ---
 
@@ -340,7 +340,7 @@ management:
       access: unrestricted            # изменение уровня логирования
 ```
 
-Это дополнительный уровень защиты поверх [[spring-security-interview|Spring Security]].
+Это дополнительный уровень защиты поверх [Spring Security](spring-security-interview.md).
 
 ---
 
@@ -464,7 +464,7 @@ public class ExternalServiceHealthIndicator implements HealthIndicator {
 }
 ```
 
-Для реактивных приложений на [[spring-webflux-interview|WebFlux]] используется `ReactiveHealthIndicator`.
+Для реактивных приложений на [WebFlux](spring-webflux-interview.md) используется `ReactiveHealthIndicator`.
 
 ---
 
@@ -644,9 +644,9 @@ management:
 }
 ```
 
-Полезен для отладки: можно проверить, какие бины зарегистрированы, их scope и зависимости. Связан с механизмом автоконфигурации, описанным в [[spring-boot-interview|Spring Boot]].
+Полезен для отладки: можно проверить, какие бины зарегистрированы, их scope и зависимости. Связан с механизмом автоконфигурации, описанным в [Spring Boot](spring-boot-interview.md).
 
-**`/mappings`** — все зарегистрированные `@RequestMapping` маршруты, включая маршруты из [[spring-mvc-interview|Spring MVC]]:
+**`/mappings`** — все зарегистрированные `@RequestMapping` маршруты, включая маршруты из [Spring MVC](spring-mvc-interview.md):
 
 ```json
 {
@@ -843,7 +843,7 @@ graph TB
 - **Cache** — hits, misses, evictions
 - **Система** — CPU, файловые дескрипторы, uptime
 
-Подробнее о метриках и трейсинге — в [[observability-interview|Observability]].
+Подробнее о метриках и трейсинге — в [Observability](../../monitoring/observability-interview.md).
 
 ---
 
@@ -1077,7 +1077,7 @@ jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"}
 jvm_threads_live_threads{application="my-app"}
 ```
 
-Для production-сценариев рекомендуется сочетать метрики с трейсингом и логированием — подробнее в [[observability-interview|Observability]].
+Для production-сценариев рекомендуется сочетать метрики с трейсингом и логированием — подробнее в [Observability](../../monitoring/observability-interview.md).
 
 ---
 
@@ -1248,7 +1248,7 @@ spring:
           service-url: http://my-app:8080
 ```
 
-Также поддерживается обнаружение через `Spring Cloud Discovery` (`Eureka`, `Consul`, `Kubernetes`) — SBA автоматически находит все зарегистрированные сервисы. Подробнее — в [[spring-cloud-interview|Spring Cloud]].
+Также поддерживается обнаружение через `Spring Cloud Discovery` (`Eureka`, `Consul`, `Kubernetes`) — SBA автоматически находит все зарегистрированные сервисы. Подробнее — в [Spring Cloud](spring-cloud-interview.md).
 
 ---
 
@@ -2295,20 +2295,20 @@ Spring Boot App
 
 ## See also
 
-- [[spring-framework-interview|Spring Framework]] — основа жизненного цикла и бинов Actuator
-- [[spring-boot-interview|Spring Boot]] — Actuator как часть Spring Boot экосистемы
-- [[spring-mvc-interview|Spring MVC]] — HTTP-эндпоинты для management API
-- [[spring-webflux-interview|Spring WebFlux]] — реактивные Actuator-эндпоинты
-- [[spring-security-interview|Spring Security]] — защита management-эндпоинтов
-- [[spring-data-jpa-interview|Spring Data JPA]] — health indicators для баз данных
-- [[spring-cloud-interview|Spring Cloud]] — распределённый мониторинг и трассировка
-- [[spring-batch-interview|Spring Batch]] — метрики batch-заданий через Actuator
-- [[microservices-interview|Микросервисы]] — observability в распределённых системах
-- [[distributed-systems-interview|Распределённые системы]] — мониторинг в production
+- [Spring Framework](spring-framework-interview.md) — основа жизненного цикла и бинов Actuator
+- [Spring Boot](spring-boot-interview.md) — Actuator как часть Spring Boot экосистемы
+- [Spring MVC](spring-mvc-interview.md) — HTTP-эндпоинты для management API
+- [Spring WebFlux](spring-webflux-interview.md) — реактивные Actuator-эндпоинты
+- [Spring Security](spring-security-interview.md) — защита management-эндпоинтов
+- [Spring Data JPA](spring-data-jpa-interview.md) — health indicators для баз данных
+- [Spring Cloud](spring-cloud-interview.md) — распределённый мониторинг и трассировка
+- [Spring Batch](spring-batch-interview.md) — метрики batch-заданий через Actuator
+- [Микросервисы](../../architecture/microservices-interview.md) — observability в распределённых системах
+- [Распределённые системы](../../architecture/distributed-systems-interview.md) — мониторинг в production
 
-- [[spring-aop-interview|Spring AOP]]
-- [[spring-batch-interview|Spring Batch]]
-- [[spring-boot-interview|Spring Boot]]
-- [[spring-cloud-interview|Spring Cloud]]
-- [[spring-data-jpa-interview|Spring Data JPA]]
-- [[spring-framework-interview|Spring Framework]]
+- [Spring AOP](spring-aop-interview.md)
+- [Spring Batch](spring-batch-interview.md)
+- [Spring Boot](spring-boot-interview.md)
+- [Spring Cloud](spring-cloud-interview.md)
+- [Spring Data JPA](spring-data-jpa-interview.md)
+- [Spring Framework](spring-framework-interview.md)

@@ -22,12 +22,12 @@ updated: "2026-04-20"
 - [Oracle Learning Library](https://education.oracle.com/) — обучающие материалы
 
 ### См. также
-- [[postgres-basics|PostgreSQL]] — основы **PostgreSQL**
-- [[mysql-basics|MySQL]] — основы **MySQL**
+- [PostgreSQL](../postgresql/postgres-basics.md) — основы **PostgreSQL**
+- [MySQL](../mysql/mysql-basics.md) — основы **MySQL**
 
-- [[postgres-indexes|PostgreSQL: типы индексов]]
-- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
-- [[postgres-queries|PostgreSQL: запросы и агрегаты]]
+- [PostgreSQL: типы индексов](../postgresql/postgres-indexes.md)
+- [PostgreSQL: администрирование и обслуживание](../postgresql/postgres-admin.md)
+- [PostgreSQL: запросы и агрегаты](../postgresql/postgres-queries.md)
 ## Содержание
 
 - [Введение в Oracle Database](#введение-в-oracle-database)

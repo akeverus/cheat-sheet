@@ -21,10 +21,10 @@ Hexagonal Architecture (Алистер Кокбёрн, 2005) — архитек�
 - [Hexagonal Architecture (Alistair Cockburn)](https://alistair.cockburn.us/hexagonal-architecture/) — оригинальная статья автора
 
 ### См. также
-- [[clean-architecture|Clean Architecture]] — схожий подход Роберта Мартина
-- [[solid-principles|SOLID]] — принципы, лежащие в основе
-- [[creational-patterns|Паттерны создания]] — паттерны GoF
-- [[microservices|Микросервисная архитектура]] — применение Hexagonal в микросервисах
+- [Clean Architecture](clean-architecture.md) — схожий подход Роберта Мартина
+- [SOLID](design-principles/solid-principles.md) — принципы, лежащие в основе
+- [Паттерны создания](../patterns/creational/creational-patterns.md) — паттерны GoF
+- [Микросервисная архитектура](software-architecture/microservices.md) — применение Hexagonal в микросервисах
 
 ## Содержание
 
@@ -288,8 +288,8 @@ class JpaProductRepositoryTest {
 
 ## See also
 
-- [[clean-architecture|Clean Architecture]] — схожий подход Роберта Мартина
-- [[ddd|Domain-Driven Design]] — Bounded Context, Aggregate
-- [[solid-principles|SOLID принципы]] — Dependency Inversion
-- [[hexagonal-architecture-interview|Hexagonal Architecture Interview]] — вопросы на собеседовании
-- [[spring-modulith|Spring Modulith]] — модульный монолит
+- [Clean Architecture](clean-architecture.md) — схожий подход Роберта Мартина
+- [Domain-Driven Design](ddd.md) — Bounded Context, Aggregate
+- [SOLID принципы](design-principles/solid-principles.md) — Dependency Inversion
+- [Hexagonal Architecture Interview](../interview/architecture/hexagonal-architecture-interview.md) — вопросы на собеседовании
+- [Spring Modulith](../frameworks/java-frameworks/spring/spring-modulith.md) — модульный монолит

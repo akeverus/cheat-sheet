@@ -20,13 +20,13 @@ updated: "2026-04-20"
 - [Baeldung: Sudoku Solver](https://www.baeldung.com/)
 
 ### См. также
-- [[traveling-salesman-problem|Задача коммивояжера]] — **TSP**
-- [[knapsack-problem|Задача о рюкзаке]] — **knapsack**
+- [Задача коммивояжера](traveling-salesman-problem.md) — **TSP**
+- [Задача о рюкзаке](knapsack-problem.md) — **knapsack**
 - [Бинарное дерево](../trees/) — бинарное дерево
 
-- [[optaplanner|OptaPlanner]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
-- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
+- [OptaPlanner](optaplanner.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
+- [Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)](frequency-histogram-apache-commons.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

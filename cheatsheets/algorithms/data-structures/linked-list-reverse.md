@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java Collections (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/package-summary.html)
 
 ### См. также
-- [[linked-list-middle|`linked-list-middle.md`]] — поиск среднего элемента связанного списка (`Linked List`)
-- [[README]] — задачи и алгоритмы, обзор разделов
+- [`linked-list-middle.md`](linked-list-middle.md) — поиск среднего элемента связанного списка (`Linked List`)
+- [README](../../basics/README.md) — задачи и алгоритмы, обзор разделов
 
-- [[collections-complexity|Временная сложность коллекций Java]]
-- [[collections-big-o|Практические примеры нотации Big O]]
-- [[collections-lock-free|Введение в структуры данных без блокировок]]
+- [Временная сложность коллекций Java](collections-complexity.md)
+- [Практические примеры нотации Big O](collections-big-o.md)
+- [Введение в структуры данных без блокировок](collections-lock-free.md)
 ## Содержание
 
 - [Обзор](#обзор)

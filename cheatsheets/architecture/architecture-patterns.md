@@ -1914,8 +1914,8 @@ class ServiceSidecar extends ServiceAmbassador {
 
 **Когда нужен API Gateway?** При множестве клиентов и сервисов: единая точка входа, маршрутизация, аутентификация, ограничение частоты запросов. В простом одном сервисе достаточно одного приложения.
 ## См. также
-- [[microservices|microservices.md]] — микросервисная архитектура
-- [[event-driven|event-driven.md]] — **event-driven** паттерны
-- [[cqrs|cqrs.md]] — **Command Query Responsibility Segregation**
-- [[event-sourcing|event-sourcing.md]] — **Event Sourcing**
-- [[ddd|ddd.md]] — **Domain-Driven Design**
+- [microservices.md](software-architecture/microservices.md) — микросервисная архитектура
+- [event-driven.md](event-driven.md) — **event-driven** паттерны
+- [cqrs.md](cqrs.md) — **Command Query Responsibility Segregation**
+- [event-sourcing.md](event-sourcing.md) — **Event Sourcing**
+- [ddd.md](ddd.md) — **Domain-Driven Design**

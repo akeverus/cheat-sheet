@@ -22,10 +22,10 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[kotlin-exposed|Kotlin Exposed]]
-- [[kotlin-kotlinx-coroutines|kotlinx.coroutines]]
-- [[kotlin-arrow|Arrow]]
-- [[kotlin-kodein|Kodein]]
+- [Kotlin Exposed](kotlin-exposed.md)
+- [kotlinx.coroutines](kotlin-kotlinx-coroutines.md)
+- [Arrow](kotlin-arrow.md)
+- [Kodein](kotlin-kodein.md)
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
@@ -1155,7 +1155,7 @@ object StructuredConfig : Configuration {
 }
 ```
 ## См. также
-- [[spring-boot|Spring Boot]] — **Spring** конфигурация
+- [Spring Boot](../../frameworks/spring/spring-boot.md) — **Spring** конфигурация
 - [Библиотеки](../) — **HOCON** (Human-Optimized Config Object Notation)
 - [Platform](../../platform/) — Инфраструктура и переменные окружения
 

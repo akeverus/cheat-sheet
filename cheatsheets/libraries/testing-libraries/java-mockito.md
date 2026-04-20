@@ -22,9 +22,9 @@ updated: "2026-04-20"
 - [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html) — **API** документация
 
 ### См. также
-- [[junit|JUnit 5]] — **JUnit** 5 для тестирования
+- [JUnit 5](../../testing/unit-testing/junit/junit.md) — **JUnit** 5 для тестирования
 - [MockK](https://mockk.io/) — **MockK** для **Kotlin**
-- [[README|Unit-тестирование]] и [[mockito-advanced|Mockito Advanced]]
+- [Unit-тестирование](../../basics/README.md) и [Mockito Advanced](../../testing/unit-testing/junit/mockito-advanced.md)
 
 ## Содержание
 
@@ -1143,7 +1143,7 @@ void `testWithRecords`() {
 - [JUnit 5 Integration](https://junit.org/junit5/docs/current/user-guide/#writing-tests-dependency-injection)
 
 ## См. также
-- [[java-junit5|JUnit 5]] — тестирование с **JUnit 5**
-- [[assertj|AssertJ]] — fluent assertions
-- [[java-testcontainers|Testcontainers]] — интеграционные тесты
+- [JUnit 5](java-junit5.md) — тестирование с **JUnit 5**
+- [AssertJ](../../testing/unit-testing/junit/assertj.md) — fluent assertions
+- [Testcontainers](../java/java-testcontainers.md) — интеграционные тесты
 

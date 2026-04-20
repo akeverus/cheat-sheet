@@ -1,13 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Static Analysis"
-description: "Краткие ответы про статический анализ: SonarQube, SpotBugs, PMD, Checkstyle, метрики качества, quality gates, интеграция в CI/CD."
+description: "Статический анализ кода: SonarQube, SpotBugs, PMD, Checkstyle, метрики качества, quality gates, интеграция в CI/CD pipelines"
 tags:
   - interview
   - code-quality
-  - static-analysis
-  - sonarqube
-  - spotbugs
-  - pmd
+  - static-analysis-interview
+aliases:
+  - "Static Analysis interview"
+  - "Static Analysis собеседование"
+  - "SonarQube interview"
+  - "SpotBugs interview"
+  - "code quality tools interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -521,10 +524,10 @@ PMD можно добавить если нужен CPD и расширенны�
 
 ## See also
 
-- [[code-review-interview|Code Review]]
-- [[code-smells-interview|Code Smells]]
-- [[code-coverage-interview|Code Coverage]]
-- [[technical-debt-interview|Technical Debt]]
-- [[refactoring-patterns-interview|Refactoring Patterns]]
-- [[clean-code-practices-interview|Clean Code Practices]]
-- [[java-core-interview|Java Core]]
+- [Code Review](code-review-interview.md)
+- [Code Smells](code-smells-interview.md)
+- [Code Coverage](code-coverage-interview.md)
+- [Technical Debt](technical-debt-interview.md)
+- [Refactoring Patterns](refactoring-patterns-interview.md)
+- [Clean Code Practices](clean-code-practices-interview.md)
+- [Java Core](../programming-languages/java/java-core-interview.md)

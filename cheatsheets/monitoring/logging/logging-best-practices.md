@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Log4j2](https://logging.apache.org/log4j/2.x/)
 
 ### См. также
-- [[logging-basics|Основы логирования]]
-- [[logback|Logback]]
-- [[structured-logging|Структурированное логирование]]
-- [[centralized-logging|Централизованное логирование]]
+- [Основы логирования](logging-basics.md)
+- [Logback](logback.md)
+- [Структурированное логирование](structured-logging.md)
+- [Централизованное логирование](centralized-logging.md)
 
-- [[slf4j|SLF4J для Java]]
+- [SLF4J для Java](slf4j.md)
 ## Содержание
 
 - [Введение](#введение)

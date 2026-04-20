@@ -22,13 +22,13 @@ updated: "2026-04-20"
 - [Java Executors](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html)
 
 ### См. также
-- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
-- [[producer-consumer|Producer-Consumer]] — **Producer-Consumer Pattern**
-- [[java-concurrency-basics|Пул потоков и Executors]] — в **Java Concurrency**
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
+- [Producer-Consumer](producer-consumer.md) — **Producer-Consumer Pattern**
+- [Пул потоков и Executors](../../languages/java/java-concurrency-basics.md) — в **Java Concurrency**
 
-- [[double-checked-locking|Двойная проверка блокировки (Double-Checked Locking)]]
-- [[read-write-lock|Блокировка чтения-записи (Read-Write Lock)]]
-- [[active-object|Активный объект (Active Object)]]
+- [Двойная проверка блокировки (Double-Checked Locking)](double-checked-locking.md)
+- [Блокировка чтения-записи (Read-Write Lock)](read-write-lock.md)
+- [Активный объект (Active Object)](active-object.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

@@ -312,13 +312,13 @@ Thread.ofPlatform().start(() -> {
 
 ## See also
 
-- [[java-concurrency-interview|Java Concurrency]] — основы многопоточности, synchronized, locks, Executor
-- [[java-17-21-interview|Java 17-21]] — все новшества Java 17-21, records, sealed classes
-- [[java-completable-future-interview|Java CompletableFuture]] — async composition на любых потоках (включая VT)
-- [[spring-boot-interview|Spring Boot]] — включение Virtual Threads через spring.threads.virtual.enabled
-- [[spring-async-interview|Spring @Async]] — @Async работает с Virtual Threads в Spring Boot 3.2+
-- [[spring-webflux-interview|Spring WebFlux]] — альтернативный реактивный подход (не-блокирующий)
-- [[kotlin-coroutines-interview|Kotlin Coroutines]] — сравнение с корутинами Kotlin
-- [[reactive-patterns-interview|Reactive Patterns]] — reactive streams как альтернатива VT
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — настройка JVM при использовании VT
-- [[java-concurrency-interview|Thread Pools]] — ThreadPoolExecutor концепции (почему не нужны для VT)
+- [Java Concurrency](java-concurrency-interview.md) — основы многопоточности, synchronized, locks, Executor
+- [Java 17-21](java-17-21-interview.md) — все новшества Java 17-21, records, sealed classes
+- [Java CompletableFuture](java-completable-future-interview.md) — async composition на любых потоках (включая VT)
+- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — включение Virtual Threads через spring.threads.virtual.enabled
+- [Spring @Async](../../frameworks/spring/spring-async-interview.md) — @Async работает с Virtual Threads в Spring Boot 3.2+
+- [Spring WebFlux](../../frameworks/spring/spring-webflux-interview.md) — альтернативный реактивный подход (не-блокирующий)
+- [Kotlin Coroutines](../kotlin/kotlin-coroutines-interview.md) — сравнение с корутинами Kotlin
+- [Reactive Patterns](../../reactive/reactive-patterns-interview.md) — reactive streams как альтернатива VT
+- [JVM Performance Tuning](../../performance/jvm-performance-tuning-interview.md) — настройка JVM при использовании VT
+- [Thread Pools](java-concurrency-interview.md) — ThreadPoolExecutor концепции (почему не нужны для VT)

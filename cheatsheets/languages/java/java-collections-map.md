@@ -1500,8 +1500,8 @@ Map<String, String> articles = ImmutableMap.of("Title", "My New Article", "Title
 
 ## См. также
 
-- [[java-annotations-reflection|Java Annotations и Reflection]]
-- [[java-basics|Java: основы]]
-- [[java-collections-converting|Java Collections: конвертирование]]
-- [[java-collections-list|Java Collections: List]]
-- [[java-collections-modification|Java Collections: модификация]]
+- [Java Annotations и Reflection](java-annotations-reflection.md)
+- [Java: основы](java-basics.md)
+- [Java Collections: конвертирование](java-collections-converting.md)
+- [Java Collections: List](java-collections-list.md)
+- [Java Collections: модификация](java-collections-modification.md)

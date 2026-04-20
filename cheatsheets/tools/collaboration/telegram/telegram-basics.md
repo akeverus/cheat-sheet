@@ -27,8 +27,8 @@ Telegram — мессенджер с акцентом на скорость, ш�
 
 
 ### См. также
-- [[confluence-basics|Confluence: основы]]
-- [[security-tools|Инструменты безопасности (Security Tools)]]
+- [Confluence: основы](../confluence/confluence-basics.md)
+- [Инструменты безопасности (Security Tools)](../../../security/tools/security-tools.md)
 ## Содержание
 
 - [Каналы и группы](#каналы-и-группы)
@@ -302,4 +302,4 @@ public class TelegramNotificationService {
 
 ## Заключение
 
-Telegram даёт каналы, группы и Bot API для уведомлений, алертов и простой автоматизации без развёртывания своего мессенджера. Для строгих требований к размещению данных и аудиту рассмотрите самохостируемые решения (Mattermost). Подробнее: [Bot API](https://core.telegram.org/bots/api), [Telegram FAQ](https://telegram.org/faq). См. также: [[mattermost-basics|Mattermost]], [[slack-basics|Slack]], [[jira-basics|Jira]].
+Telegram даёт каналы, группы и Bot API для уведомлений, алертов и простой автоматизации без развёртывания своего мессенджера. Для строгих требований к размещению данных и аудиту рассмотрите самохостируемые решения (Mattermost). Подробнее: [Bot API](https://core.telegram.org/bots/api), [Telegram FAQ](https://telegram.org/faq). См. также: [Mattermost](../mattermost/mattermost-basics.md), [Slack](../slack/slack-basics.md), [Jira](../jira/jira-basics.md).

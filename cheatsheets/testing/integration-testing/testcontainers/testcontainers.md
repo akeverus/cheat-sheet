@@ -16,7 +16,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[testcontainers-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Вопросы на собеседовании](../../../interview/testing/testcontainers-interview.md) — подготовка к интервью
 
 ## Полезные ссылки
 
@@ -26,7 +26,7 @@ updated: "2026-04-20"
 | GitHub | [testcontainers-java](https://github.com/testcontainers/testcontainers-java) |
 | JUnit 5 | [Getting Started JUnit 5](https://www.testcontainers.org/guides/getting_started_junit_5/) |
 | Модули | [Modules](https://www.testcontainers.org/modules/) |
-| См. также | [[junit]], [[database-testing|Database Testing]], [[wiremock]], [[testing-tools-overview|Testing Tools Overview]] |
+| См. также | [junit](../../unit-testing/junit/junit.md), [Database Testing](../database-testing/database-testing.md), [wiremock](../wiremock.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) |
 
 
 ## Содержание
@@ -442,4 +442,4 @@ class MyApplicationIntegrationTest {
 
 **Testcontainers** позволяет запускать реальные Docker-контейнеры (БД, очереди, сервисы) в интеграционных тестах на JUnit 5. Используйте специализированные модули где возможно, фиксируйте версии образов; один контейнер на класс даёт хороший баланс скорости и изоляции. Интеграция с Spring Boot через **@DynamicPropertySource** упрощает подстановку URL и кредов. В CI убедитесь в доступности Docker и при необходимости настройте таймауты и ресурсы.
 
-Для углублённого изучения: [официальная документация](https://www.testcontainers.org/) и [[testing-tools-overview|Testing Tools Overview]].
+Для углублённого изучения: [официальная документация](https://www.testcontainers.org/) и [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).

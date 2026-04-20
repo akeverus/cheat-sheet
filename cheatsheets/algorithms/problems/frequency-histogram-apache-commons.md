@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [XChart Library](https://github.com/knowm/XChart) — графики
 
 ### См. также
-- [[README|Математические алгоритмы]] — раздел math
+- [Математические алгоритмы](../../basics/README.md) — раздел math
 - [Задачи и алгоритмы](./) — обзор разделов
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
-- [[circular-buffer|Circular Buffer]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
+- [Circular Buffer](circular-buffer.md)
 ## Содержание
 
 - [Обзор](#обзор)

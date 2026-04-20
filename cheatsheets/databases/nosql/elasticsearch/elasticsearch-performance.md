@@ -34,12 +34,12 @@ updated: "2026-04-20"
 - [Profile API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-profile.html)
 
 ### См. также
-- [[elasticsearch-basics|Основы]] — **Elasticsearch**
-- [[elasticsearch-clustering|Кластеризация]] — кластеризация
-- [[elasticsearch-indexing|Индексация]] — индексация документов
+- [Основы](elasticsearch-basics.md) — **Elasticsearch**
+- [Кластеризация](elasticsearch-clustering.md) — кластеризация
+- [Индексация](elasticsearch-indexing.md) — индексация документов
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](../mongodb/mongodb-crud.md)
 ## Содержание
 
 - [Архитектура производительности](#архитектура-производительности)

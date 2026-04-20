@@ -19,7 +19,7 @@ Slick (Scala Language-Integrated Connection Kit) — современная `dat
 - [Slick GitHub](https://github.com/slick/slick)
 - [Slick Play Integration](https://www.playframework.com/documentation/2.8.x/PlaySlick)
 - [Typesafe Config](https://github.com/lightbend/config)
-- [[java-hikaricp|HikariCP]]
+- [HikariCP](../java/java-hikaricp.md)
 - [Flyway](https://flywaydb.org/)
 
 ## Содержание
@@ -1440,8 +1440,8 @@ db.run {
 }
 ```
 ## См. также
-- [[scala-play|Play Framework]] — **Web framework**
-- [[postgres-basics|PostgreSQL]] — **Database**
-- [[mysql-basics|MySQL]] — **Database**
-- [[README|Паттерны]] — **Patterns**
+- [Play Framework](scala-play.md) — **Web framework**
+- [PostgreSQL](../../databases/relational/postgresql/postgres-basics.md) — **Database**
+- [MySQL](../../databases/relational/mysql/mysql-basics.md) — **Database**
+- [Паттерны](../../basics/README.md) — **Patterns**
 

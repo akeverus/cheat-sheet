@@ -24,9 +24,9 @@ updated: "2026-04-13"
 ## Роль документа в связке testing
 
 - Этот файл отвечает за **unit-уровень**: отдельные классы/методы, моки и контракт поведения компонента.
-- За проверку интеграции с БД, брокерами и внешними API отвечают [[integration-testing-interview|Integration Testing]].
-- За общую стратегию покрытия и приоритизацию тестов отвечает [[test-strategies-interview|Стратегии тестирования]].
-- За масштабирование автотестов в CI/CD и поддержку framework отвечает [[test-automation-interview|Test Automation]].
+- За проверку интеграции с БД, брокерами и внешними API отвечают [Integration Testing](integration-testing-interview.md).
+- За общую стратегию покрытия и приоритизацию тестов отвечает [Стратегии тестирования](test-strategies-interview.md).
+- За масштабирование автотестов в CI/CD и поддержку framework отвечает [Test Automation](test-automation-interview.md).
 
 ## Полезные ссылки
 
@@ -179,7 +179,7 @@ void shouldApplyPremiumDiscount() {
 
 ## Q3. Что такое пирамида тестирования?
 
-**Пирамида тестирования** (Testing Pyramid, описана Mike Cohn) — модель, показывающая оптимальное соотношение типов тестов. Подробнее в [[test-strategies-interview|вопросах по стратегиям тестирования]].
+**Пирамида тестирования** (Testing Pyramid, описана Mike Cohn) — модель, показывающая оптимальное соотношение типов тестов. Подробнее в [вопросах по стратегиям тестирования](test-strategies-interview.md).
 
 ```mermaid
 graph TB
@@ -518,7 +518,7 @@ graph LR
 | **Spy** | Обёртка реального объекта | `spy(new ArrayList<>())` | Частичное мокирование |
 | **Fake** | Рабочая упрощённая реализация | `InMemoryRepository` вместо JDBC | Сложная логика без инфраструктуры |
 
-На собеседовании часто спрашивают: «Когда `mock`, а когда `stub`?» Ответ: `mock` — когда важно **что вызвали** (поведение), `stub` — когда важно **что вернули** (состояние). Подробнее про мокирование в [[integration-testing-interview|интеграционных тестах]].
+На собеседовании часто спрашивают: «Когда `mock`, а когда `stub`?» Ответ: `mock` — когда важно **что вызвали** (поведение), `stub` — когда важно **что вернули** (состояние). Подробнее про мокирование в [интеграционных тестах](integration-testing-interview.md).
 
 ## Q11. (!) Как использовать `Mockito`?
 
@@ -1225,7 +1225,7 @@ void shouldUpdateStatusEventually() {
 }
 ```
 
-**Важно**: никогда не использовать `Thread.sleep()` в тестах — это flaky и медленно. Подробнее о тестировании асинхронного кода — в [[java-concurrency-interview|Java Concurrency]].
+**Важно**: никогда не использовать `Thread.sleep()` в тестах — это flaky и медленно. Подробнее о тестировании асинхронного кода — в [Java Concurrency](../programming-languages/java/java-concurrency-interview.md).
 
 ## Q28. Как тестировать код с зависимостью от времени (`Clock`)?
 
@@ -1361,7 +1361,7 @@ void shouldEventuallyComplete() {
 }
 ```
 
-Подробнее о многопоточности — в [[java-concurrency-interview|Java Concurrency]].
+Подробнее о многопоточности — в [Java Concurrency](../programming-languages/java/java-concurrency-interview.md).
 
 ## Q31. Что такое `@TempDir` и зачем он нужен?
 
@@ -1499,7 +1499,7 @@ jacocoTestCoverageVerification {
 - **Покрытие ≠ качество** — 100% покрытия без осмысленных `assertions` бесполезно
 - Рекомендуемый минимум: 70-80% line, 60-70% branch
 
-Для анализа покрытия в CI/CD часто используют [[code-review-interview|SonarQube интеграцию]].
+Для анализа покрытия в CI/CD часто используют [SonarQube интеграцию](../code-quality/code-review-interview.md).
 
 ## Q35. Что такое `mutation testing`?
 
@@ -1566,7 +1566,7 @@ task integrationTest(type: Test) {
 }
 ```
 
-Стратегия для CI/CD: быстрые тесты на каждый коммит, медленные — по расписанию или на merge request. Подробнее — в [[test-automation-interview|Test Automation]].
+Стратегия для CI/CD: быстрые тесты на каждый коммит, медленные — по расписанию или на merge request. Подробнее — в [Test Automation](test-automation-interview.md).
 
 ## Q37. Что такое `@RepeatedTest` и `@Timeout`?
 
@@ -2097,19 +2097,19 @@ class OrderEventHandlerTest {
 
 ## See also
 
-- [[integration-testing-interview|Integration Testing]] — интеграционное тестирование с Testcontainers и Spring
-- [[test-strategies-interview|Стратегии тестирования]] — пирамида тестов, приоритизация покрытия
-- [[test-automation-interview|Test Automation]] — автоматизация тестирования в CI/CD
-- [[testcontainers-interview|Testcontainers]] — Docker-контейнеры в интеграционных тестах вместо H2
-- [[design-patterns-interview|Design Patterns]] — паттерны Builder, Factory в тестовых фикстурах
-- [[java-core-interview|Java Core]] — основы Java, необходимые для написания качественных тестов
-- [[code-review-interview|Code Review]] — связь качества тестов и ревью
-- [[spring-boot-interview|Spring Boot]] — тестирование Spring-приложений (`@SpringBootTest`, `@MockBean`)
-- [[java-concurrency-interview|Java Concurrency]] — тестирование многопоточного кода
+- [Integration Testing](integration-testing-interview.md) — интеграционное тестирование с Testcontainers и Spring
+- [Стратегии тестирования](test-strategies-interview.md) — пирамида тестов, приоритизация покрытия
+- [Test Automation](test-automation-interview.md) — автоматизация тестирования в CI/CD
+- [Testcontainers](testcontainers-interview.md) — Docker-контейнеры в интеграционных тестах вместо H2
+- [Design Patterns](../design-patterns/design-patterns-interview.md) — паттерны Builder, Factory в тестовых фикстурах
+- [Java Core](../programming-languages/java/java-core-interview.md) — основы Java, необходимые для написания качественных тестов
+- [Code Review](../code-quality/code-review-interview.md) — связь качества тестов и ревью
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — тестирование Spring-приложений (`@SpringBootTest`, `@MockBean`)
+- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — тестирование многопоточного кода
 
-- [[chaos-engineering-interview|Chaos Engineering]]
-- [[contract-testing-interview|Contract Testing]]
-- [[integration-testing-interview|Integration Testing]]
-- [[load-testing-interview|Load Testing]]
-- [[mockito-interview|Mockito]]
-- [[mutation-testing-interview|Mutation Testing]]
+- [Chaos Engineering](chaos-engineering-interview.md)
+- [Contract Testing](contract-testing-interview.md)
+- [Integration Testing](integration-testing-interview.md)
+- [Load Testing](load-testing-interview.md)
+- [Mockito](mockito-interview.md)
+- [Mutation Testing](mutation-testing-interview.md)

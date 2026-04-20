@@ -32,12 +32,12 @@ updated: "2026-04-20"
 - [RabbitMQ Shovel Plugin](https://www.rabbitmq.com/shovel.html) — репликация сообщений
 
 ### См. также
-- [[rest-api-best-practices|REST API Best Practices]] — **REST API** практики
-- [[grpc|gRPC]] — **gRPC**
-- [[kafka|Kafka]] — **Kafka** для **high-throughput**
-- [[spring-messaging|Spring Messaging]] — **Spring Messaging**
-- [[distributed-tracing|Distributed Tracing]] — мониторинг и трейсинг
-- [[rabbitmq-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [REST API Best Practices](../../api/rest/rest-api-best-practices.md) — **REST API** практики
+- [gRPC](../../api/grpc/grpc.md) — **gRPC**
+- [Kafka](../kafka/kafka.md) — **Kafka** для **high-throughput**
+- [Spring Messaging](../../../frameworks/java-frameworks/spring/spring-messaging.md) — **Spring Messaging**
+- [Distributed Tracing](../../../monitoring/tracing/distributed-tracing.md) — мониторинг и трейсинг
+- [Вопросы на собеседовании](../../../interview/messaging/rabbitmq-interview.md) — подготовка к интервью
 
 ## Содержание
 

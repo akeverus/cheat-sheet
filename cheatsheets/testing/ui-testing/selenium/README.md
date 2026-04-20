@@ -19,14 +19,14 @@ Selenium WebDriver — де-факто стандарт автоматизаци
 ## Полезные ссылки
 
 ### Основные документы
-- [[selenium|Selenium для Java]] — настройка, Page Object, ожидания, параллельный запуск
+- [Selenium для Java](selenium.md) — настройка, Page Object, ожидания, параллельный запуск
 
 ### Соседние разделы
-- [[README|UI Testing]]
-- [[README|JUnit]]
-- [[README|TestNG]]
-- [[testing-tools-overview|Testing Tools Overview]]
-- [[rest-assured|REST Assured]]
+- [UI Testing](../../../basics/README.md)
+- [JUnit](../../../basics/README.md)
+- [TestNG](../../../basics/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [REST Assured](../../integration-testing/rest-assured.md)
 
 ### Внешние ресурсы
 - [Selenium Documentation](https://www.selenium.dev/documentation/)
@@ -44,11 +44,11 @@ Selenium WebDriver — де-факто стандарт автоматизаци
 
 | Тема | Где читать |
 |------|-----------|
-| Настройка WebDriver и зависимости Maven | [[selenium]] |
-| Взаимодействия: click, type, select, actions | [[selenium]] |
-| Page Object Model | [[selenium]] |
-| Ожидания: implicit/explicit/fluent | [[selenium]] |
-| Data-driven, параллельный запуск, Spring Boot | [[selenium]] |
+| Настройка WebDriver и зависимости Maven | [selenium](selenium.md) |
+| Взаимодействия: click, type, select, actions | [selenium](selenium.md) |
+| Page Object Model | [selenium](selenium.md) |
+| Ожидания: implicit/explicit/fluent | [selenium](selenium.md) |
+| Data-driven, параллельный запуск, Spring Boot | [selenium](selenium.md) |
 
 ## Когда использовать: Selenium vs Playwright vs Cypress
 
@@ -67,6 +67,6 @@ Selenium — лучший выбор, когда команда уже на JVM/
 
 ## Куда идти дальше
 
-- Обзор UI-тестирования — [[README]]
-- JUnit/TestNG runners — [[README]]
-- API-тестирование — [[rest-assured]]
+- Обзор UI-тестирования — [README](../../../basics/README.md)
+- JUnit/TestNG runners — [README](../../../basics/README.md)
+- API-тестирование — [rest-assured](../../integration-testing/rest-assured.md)

@@ -179,7 +179,7 @@ public class LoginController {
 
 ### 3. `Token-Based Authentication`
 
-Использование токенов (`JWT`, `OAuth`) — `stateless`-подход, идеальный для [[microservices-interview|микросервисов]] и `SPA`.
+Использование токенов (`JWT`, `OAuth`) — `stateless`-подход, идеальный для [микросервисов](../architecture/microservices-interview.md) и `SPA`.
 
 ```java
 @Service
@@ -206,7 +206,7 @@ public class TokenAuthenticationService {
 
 ### 4. `Certificate-Based Authentication`
 
-Аутентификация через цифровые `X.509`-сертификаты — используется для `mTLS` между сервисами (подробнее в [[spring-security-interview|Spring Security]]).
+Аутентификация через цифровые `X.509`-сертификаты — используется для `mTLS` между сервисами (подробнее в [Spring Security](../frameworks/spring/spring-security-interview.md)).
 
 ```java
 @Configuration
@@ -230,7 +230,7 @@ public class CertificateAuthConfig {
 ## Q2. (!) Что такое `OAuth 2.0` и как он работает?
 
 `OAuth 2.0` — протокол авторизации, позволяющий приложениям получать ограниченный доступ к ресурсам пользователя
-без передачи учётных данных. Детальный разбор — в [[oauth2-interview|вопросах по OAuth 2.0]].
+без передачи учётных данных. Детальный разбор — в [вопросах по OAuth 2.0](oauth2-interview.md).
 
 ### Роли в `OAuth 2.0`
 
@@ -645,11 +645,11 @@ graph LR
     D -->|Есть права| F[200 OK / Ресурс]
 ```
 
-В `Spring Security` аутентификация обрабатывается `AuthenticationManager`, а авторизация — `AccessDecisionManager` / `AuthorizationManager` (Spring Security 6+). Подробнее — в [[spring-security-interview|Spring Security]].
+В `Spring Security` аутентификация обрабатывается `AuthenticationManager`, а авторизация — `AccessDecisionManager` / `AuthorizationManager` (Spring Security 6+). Подробнее — в [Spring Security](../frameworks/spring/spring-security-interview.md).
 
 ## Q6. (!) Как реализовать безопасность в микросервисах?
 
-Безопасность в [[microservices-interview|микросервисах]] строится на нескольких уровнях: edge-уровень (`API Gateway`), межсервисная аутентификация и централизованная авторизация.
+Безопасность в [микросервисах](../architecture/microservices-interview.md) строится на нескольких уровнях: edge-уровень (`API Gateway`), межсервисная аутентификация и централизованная авторизация.
 
 ```mermaid
 graph TB
@@ -1041,7 +1041,7 @@ if (userRepository.findByUsername(username).isEmpty()) {
 // UserDetailsService всегда вызывает passwordEncoder.matches()
 ```
 
-Подробнее о защите от уязвимостей — в [[owasp-top10-interview|OWASP Top 10]] и [[application-security-interview|Application Security]].
+Подробнее о защите от уязвимостей — в [OWASP Top 10](owasp-top10-interview.md) и [Application Security](application-security-interview.md).
 
 ## Q11. Как реализовать `API Gateway Security`?
 
@@ -1441,7 +1441,7 @@ public class SecurityAuditListener {
 }
 ```
 
-Централизованное хранение в `Elasticsearch` / `SIEM`; алерты по аномалиям (множественные неудачи, необычная геолокация). Подробнее — в [[observability-interview|Observability]].
+Централизованное хранение в `Elasticsearch` / `SIEM`; алерты по аномалиям (множественные неудачи, необычная геолокация). Подробнее — в [Observability](../monitoring/observability-interview.md).
 
 ## Q20. Что такое `Context-based Access Control`?
 
@@ -1512,7 +1512,7 @@ spec:
             paths: ["/api/orders/*/pay"]
 ```
 
-Подробнее о `Kubernetes` и инфраструктуре — в [[kubernetes-interview|Kubernetes]].
+Подробнее о `Kubernetes` и инфраструктуре — в [Kubernetes](../devops/kubernetes-interview.md).
 
 ## Q22. Что такое `Identity Federation`?
 
@@ -1866,7 +1866,7 @@ public class OrderApprovalPolicy implements Policy {
 
 ## Q32. (!) Как настроить `Spring Security` как `OAuth2 Resource Server`?
 
-`Resource Server` — сервис, защищающий API и валидирующий `access token` при каждом запросе. Подробнее о `Spring Security` — в [[spring-security-interview|Spring Security]].
+`Resource Server` — сервис, защищающий API и валидирующий `access token` при каждом запросе. Подробнее о `Spring Security` — в [Spring Security](../frameworks/spring/spring-security-interview.md).
 
 ### Конфигурация с `JWT`
 
@@ -2915,25 +2915,25 @@ spec:
 | Istio SPIFFE/SPIRE | Production с service mesh | Автоматически, ротация каждые 24ч |
 | Vault PKI Engine | Enterprise | HashiCorp Vault, TTL-based rotation |
 
-Подробнее о стратегиях тестирования — в [[integration-testing-interview|Integration Testing]] и [[unit-testing-interview|Unit Testing]].
+Подробнее о стратегиях тестирования — в [Integration Testing](../testing/integration-testing-interview.md) и [Unit Testing](../testing/unit-testing-interview.md).
 
 ---
 
 ## See also
 
-- [[application-security-interview|Application Security]] — общая безопасность приложений, Defense in Depth
-- [[spring-security-interview|Spring Security]] — конфигурация и фильтры Spring Security
-- [[oauth2-interview|OAuth 2.0]] — детальный разбор протокола OAuth 2.0, flows, токены
-- [[owasp-top10-interview|OWASP Top 10]] — A07 Auth Failures, Broken Access Control
-- [[microservices-interview|Микросервисы]] — безопасность в микросервисной архитектуре, service mesh
-- [[distributed-systems-interview|Распределённые системы]] — безопасность на уровне инфраструктуры
-- [[kubernetes-interview|Kubernetes]] — ServiceAccount, RBAC, Workload Identity
-- [[database-architecture-interview|Архитектура баз данных]] — Row-Level Security, шифрование данных
-- [[http-rest-interview|HTTP и REST]] — TLS, HTTPS, заголовки безопасности
+- [Application Security](application-security-interview.md) — общая безопасность приложений, Defense in Depth
+- [Spring Security](../frameworks/spring/spring-security-interview.md) — конфигурация и фильтры Spring Security
+- [OAuth 2.0](oauth2-interview.md) — детальный разбор протокола OAuth 2.0, flows, токены
+- [OWASP Top 10](owasp-top10-interview.md) — A07 Auth Failures, Broken Access Control
+- [Микросервисы](../architecture/microservices-interview.md) — безопасность в микросервисной архитектуре, service mesh
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — безопасность на уровне инфраструктуры
+- [Kubernetes](../devops/kubernetes-interview.md) — ServiceAccount, RBAC, Workload Identity
+- [Архитектура баз данных](../databases/database-architecture-interview.md) — Row-Level Security, шифрование данных
+- [HTTP и REST](../api/http-rest-interview.md) — TLS, HTTPS, заголовки безопасности
 
-- [[application-security-interview|Application Security]]
-- [[jwt-interview|JWT]]
-- [[mtls-interview|mTLS (Mutual TLS)]]
-- [[oauth2-interview|OAuth2]]
-- [[owasp-top10-interview|OWASP Top 10]]
-- [[secrets-management-interview|Secrets Management]]
+- [Application Security](application-security-interview.md)
+- [JWT](jwt-interview.md)
+- [mTLS (Mutual TLS)](mtls-interview.md)
+- [OAuth2](oauth2-interview.md)
+- [OWASP Top 10](owasp-top10-interview.md)
+- [Secrets Management](secrets-management-interview.md)

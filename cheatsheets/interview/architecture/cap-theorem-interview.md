@@ -1296,16 +1296,16 @@ Spanner — это CP-система. При network partition Spanner блок�
 
 ## See also
 
-- [[distributed-systems-interview|Распределённые системы]] — базовые концепции: репликация, шардирование, консенсус
-- [[consistency-patterns-interview|Паттерны согласованности]] — eventual consistency, linearizability, causal
-- [[microservices-interview|Микросервисы]] — выбор CP/AP для каждого сервиса в архитектуре
-- [[caching-strategies-interview|Стратегии кэширования]] — компромиссы согласованности при кэшировании
-- [[database-architecture-interview|Архитектура БД]] — как Cassandra, DynamoDB, ZooKeeper реализуют CAP
-- [[scalability-patterns-interview|Паттерны масштабирования]] — горизонтальное масштабирование и partition tolerance
+- [Распределённые системы](distributed-systems-interview.md) — базовые концепции: репликация, шардирование, консенсус
+- [Паттерны согласованности](consistency-patterns-interview.md) — eventual consistency, linearizability, causal
+- [Микросервисы](microservices-interview.md) — выбор CP/AP для каждого сервиса в архитектуре
+- [Стратегии кэширования](caching-strategies-interview.md) — компромиссы согласованности при кэшировании
+- [Архитектура БД](../databases/database-architecture-interview.md) — как Cassandra, DynamoDB, ZooKeeper реализуют CAP
+- [Паттерны масштабирования](scalability-patterns-interview.md) — горизонтальное масштабирование и partition tolerance
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[clean-architecture-interview|Clean Architecture]]
-- [[consistency-patterns-interview|Паттерны согласованности]]
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]]
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [Clean Architecture](clean-architecture-interview.md)
+- [Паттерны согласованности](consistency-patterns-interview.md)
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md)

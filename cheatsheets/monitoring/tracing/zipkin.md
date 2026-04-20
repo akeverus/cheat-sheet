@@ -28,9 +28,9 @@ updated: "2026-04-20"
 - [Micrometer Tracing](https://micrometer.io/docs/tracing) — абстракция трейсинга в **Spring Boot 3**
 
 ### См. также
-- [[jaeger|Jaeger]] — альтернативная система трейсинга
-- [[opentelemetry|OpenTelemetry]] — единый стандарт телеметрии и экспорт в **Zipkin**
-- [[distributed-tracing|Distributed Tracing]] — общие концепции распределённого трейсинга
+- [Jaeger](jaeger.md) — альтернативная система трейсинга
+- [OpenTelemetry](opentelemetry.md) — единый стандарт телеметрии и экспорт в **Zipkin**
+- [Distributed Tracing](distributed-tracing.md) — общие концепции распределённого трейсинга
 - [Monitoring README](../) — обзор мониторинга и **observability**
 
 ## Содержание
@@ -147,4 +147,4 @@ docker run -d -p 9411:9411 openzipkin/zipkin
 
 ## Заключение
 
-**Zipkin** — проверенная открытая система распределённого трейсинга, удобная для сбора и просмотра цепочек вызовов между сервисами. Современная интеграция строится вокруг **OpenTelemetry** или **Micrometer Tracing** с **Zipkin** в роли бэкенда, что сохраняет гибкость при смене или дополнении стека мониторинга. Для углублённого изучения смотрите [[opentelemetry]] и [[jaeger]].
+**Zipkin** — проверенная открытая система распределённого трейсинга, удобная для сбора и просмотра цепочек вызовов между сервисами. Современная интеграция строится вокруг **OpenTelemetry** или **Micrometer Tracing** с **Zipkin** в роли бэкенда, что сохраняет гибкость при смене или дополнении стека мониторинга. Для углублённого изучения смотрите [opentelemetry](opentelemetry.md) и [jaeger](jaeger.md).

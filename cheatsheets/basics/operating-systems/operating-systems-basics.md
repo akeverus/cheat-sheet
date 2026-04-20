@@ -23,13 +23,13 @@ updated: "2026-04-20"
 - [Operating System Concepts](https://www.os-book.com/OS10/) — основные концепции ОС
 
 ### См. также
-- [[computer-science-basics|Computer Science]]
+- [Computer Science](../computer-science/computer-science-basics.md)
 - [Компьютерные сети](../networks/)
 
-- [[linux-handbook|Linux и Bash: практический справочник]]
-- [[clean-code|Принципы чистого кода]]
-- [[git-basics|Основы Git]]
-- [[java-basics|Java: основы]]
+- [Linux и Bash: практический справочник](linux-handbook.md)
+- [Принципы чистого кода](../clean-code.md)
+- [Основы Git](../git-basics.md)
+- [Java: основы](../../languages/java/java-basics.md)
 ## Содержание
 
 - [Введение в операционные системы](#введение-в-операционные-системы)

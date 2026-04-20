@@ -557,7 +557,7 @@ meshConfig:
 
 **Caveat:** **app code должен propagate headers** (B3, W3C) для cross-service traces. Istio не делает context propagation внутри app.
 
-Подробнее — в [[opentelemetry-interview|OpenTelemetry]].
+Подробнее — в [OpenTelemetry](../monitoring/opentelemetry-interview.md).
 
 ## Q20. Access logs?
 
@@ -695,23 +695,23 @@ graph TD
 
 ## See also
 
-- [[linkerd-interview|Linkerd]] — main alternative
-- [[consul-interview|Consul Connect]] — multi-platform alternative
-- [[kubernetes-interview|Kubernetes]] — required platform
-- [[microservices-interview|Микросервисы]] — main use case
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
-- [[zero-trust-interview|Zero Trust]] — Istio enables
-- [[mtls-interview|mTLS]] — automatic via Istio
-- [[application-security-interview|Application Security]] — authz
-- [[opentelemetry-interview|OpenTelemetry]] — Istio integrates
-- [[observability-interview|Observability]] — context
-- [[deployment-strategies-interview|Deployment Strategies]] — canary через Istio
-- [[resilience-patterns-interview|Resilience Patterns]] — retries, circuit breaker
-- [[networking-interview|Networking]] — L4/L7 concepts
+- [Linkerd](linkerd-interview.md) — main alternative
+- [Consul Connect](consul-interview.md) — multi-platform alternative
+- [Kubernetes](kubernetes-interview.md) — required platform
+- [Микросервисы](../architecture/microservices-interview.md) — main use case
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
+- [Zero Trust](../security/zero-trust-interview.md) — Istio enables
+- [mTLS](../security/mtls-interview.md) — automatic via Istio
+- [Application Security](../security/application-security-interview.md) — authz
+- [OpenTelemetry](../monitoring/opentelemetry-interview.md) — Istio integrates
+- [Observability](../monitoring/observability-interview.md) — context
+- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — canary через Istio
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, circuit breaker
+- [Networking](../architecture/networking-interview.md) — L4/L7 concepts
 
-- [[ansible-interview|Ansible]]
-- [[argocd-interview|ArgoCD и GitOps]]
-- [[consul-interview|HashiCorp Consul]]
-- [[docker-interview|Docker]]
-- [[git-interview|Git]]
-- [[gradle-maven-interview|Gradle и Maven]]
+- [Ansible](ansible-interview.md)
+- [ArgoCD и GitOps](argocd-interview.md)
+- [HashiCorp Consul](consul-interview.md)
+- [Docker](docker-interview.md)
+- [Git](git-interview.md)
+- [Gradle и Maven](gradle-maven-interview.md)

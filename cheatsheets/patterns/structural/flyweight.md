@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Flyweight Pattern in Kotlin](https://www.baeldung.com/kotlin-flyweight-pattern)
 
 ### См. также
-- [[facade|Facade Pattern]]
-- [[composite|Composite Pattern]]
+- [Facade Pattern](facade.md)
+- [Composite Pattern](composite.md)
 
-- [[decorator|Декоратор (Decorator)]]
-- [[adapter|Адаптер (Adapter)]]
-- [[proxy|Заместитель (Proxy)]]
+- [Декоратор (Decorator)](decorator.md)
+- [Адаптер (Adapter)](adapter.md)
+- [Заместитель (Proxy)](proxy.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

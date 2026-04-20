@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Math.PI (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html#PI)
 
 ### См. также
-- [[distance-between-points|Вычисление расстояния между точками]] — расстояние между точками
-- [[rectangle-overlap|Пересечение прямоугольников]] — перекрытие прямоугольников
+- [Вычисление расстояния между точками](distance-between-points.md) — расстояние между точками
+- [Пересечение прямоугольников](rectangle-overlap.md) — перекрытие прямоугольников
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
-- [[lat-lon-to-2d-point|Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
+- [Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)](lat-lon-to-2d-point.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

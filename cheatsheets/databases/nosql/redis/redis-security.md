@@ -26,13 +26,13 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Redis Security](https://redis.io/docs/management/security/) — безопасность
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-basics|redis-basics.md]] — основы и администрирование
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-basics.md](redis-basics.md) — основы и администрирование
 
-- [[micronaut-security|Micronaut: Security — Authentication и Authorization]]
-- [[spring-security|Spring Security]]
-- [[tls-ssl|TLS / SSL: handshake, сертификаты, конфигурация]]
-- [[postgres-security|PostgreSQL: Безопасность]]
+- [Micronaut: Security — Authentication и Authorization](../../../frameworks/java-frameworks/micronaut/micronaut-security.md)
+- [Spring Security](../../../frameworks/java-frameworks/spring/spring-security.md)
+- [TLS / SSL: handshake, сертификаты, конфигурация](../../../security/infrastructure/tls-ssl.md)
+- [PostgreSQL: Безопасность](../../relational/postgresql/postgres-security.md)
 ## Содержание
 
 - [Введение в безопасность Redis](#введение-в-безопасность-redis)

@@ -1,6 +1,6 @@
 ---
 title: "Основы Terraform (редирект)"
-description: "Основной документ по теме: [[terraform|Terraform]]."
+description: "Основной документ по теме: [Terraform](terraform.md)."
 tags:
   - platform
   - iac
@@ -12,16 +12,16 @@ updated: "2026-04-20"
 ---
 # Основы Terraform (редирект)
 
-Основной документ по теме: **[[terraform]]**.
+Основной документ по теме: **[terraform](terraform.md)**.
 
 В нём: основы HCL, переменные, провайдеры, модули, state management, workspaces, CI/CD, troubleshooting и лучшие практики.
 
-Продвинутые enterprise-паттерны: **[[terraform-advanced|Terraform Advanced]]**.
+Продвинутые enterprise-паттерны: **[Terraform Advanced](terraform-advanced.md)**.
 
 ## Полезные ссылки
 
-[[terraform]]
-[[terraform-advanced|Terraform Advanced]]
+[terraform](terraform.md)
+[Terraform Advanced](terraform-advanced.md)
 
 ## Содержание
 
@@ -29,5 +29,5 @@ updated: "2026-04-20"
 
 ## См. также
 
-- [[terraform-advanced|Terraform Advanced]]
-- [[terraform|Terraform]]
+- [Terraform Advanced](terraform-advanced.md)
+- [Terraform](terraform.md)

@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Program for factorial of a number](https://www.geeksforgeeks.org/program-for-factorial-of-a-number/)
 
 ### См. также
-- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
-- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
+- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
+- [Наибольший общий делитель](greatest-common-divisor.md) — НОД
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

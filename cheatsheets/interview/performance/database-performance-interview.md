@@ -1284,20 +1284,20 @@ sysbench --db-driver=pgsql oltp_read_write run --threads=64 --time=60
 
 ## See also
 
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — application side
-- [[application-profiling-interview|Application Profiling]] — JFR, async-profiler
-- [[caching-strategies-interview|Caching Strategies]] — reduce DB load
-- [[postgresql-interview|PostgreSQL]] — deeper DB-specific questions
-- [[hibernate-interview|Hibernate]] — ORM performance patterns (N+1)
-- [[database-architecture-interview|Database Architecture]] — replication, sharding
-- [[caching-performance-interview|Caching Performance]] — cache tuning
-- [[performance-testing-interview|Performance Testing]] — methodology, tools
-- [[memory-management-interview|Memory Management]] — JVM ↔ DB interplay
-- [[consistency-patterns-interview|Consistency Patterns]] — read replicas trade-offs
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md) — application side
+- [Application Profiling](application-profiling-interview.md) — JFR, async-profiler
+- [Caching Strategies](../architecture/caching-strategies-interview.md) — reduce DB load
+- [PostgreSQL](../databases/postgresql-interview.md) — deeper DB-specific questions
+- [Hibernate](../databases/hibernate-interview.md) — ORM performance patterns (N+1)
+- [Database Architecture](../databases/database-architecture-interview.md) — replication, sharding
+- [Caching Performance](caching-performance-interview.md) — cache tuning
+- [Performance Testing](performance-testing-interview.md) — methodology, tools
+- [Memory Management](memory-management-interview.md) — JVM ↔ DB interplay
+- [Consistency Patterns](../architecture/consistency-patterns-interview.md) — read replicas trade-offs
 
-- [[application-profiling-interview|Application Profiling]]
-- [[caching-performance-interview|Caching Performance]]
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
-- [[memory-management-interview|Memory Management]]
-- [[network-performance-interview|Network Performance]]
-- [[performance-testing-interview|Performance Testing]]
+- [Application Profiling](application-profiling-interview.md)
+- [Caching Performance](caching-performance-interview.md)
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md)
+- [Memory Management](memory-management-interview.md)
+- [Network Performance](network-performance-interview.md)
+- [Performance Testing](performance-testing-interview.md)

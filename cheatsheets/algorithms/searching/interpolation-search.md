@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Interpolation Search](https://www.geeksforgeeks.org/interpolation-search/)
 
 ### См. также
-- [[binary-search|`binary-search.md`]] — бинарный поиск (`binary search`)
-- [[maximum-subarray|`maximum-subarray.md`]] — максимальный подмассив (`Kadane`)
+- [`binary-search.md`](binary-search.md) — бинарный поиск (`binary search`)
+- [`maximum-subarray.md`](maximum-subarray.md) — максимальный подмассив (`Kadane`)
 
-- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
-- [[find-max-element|Поиск k-го по величине элемента (Find Kth Largest Element)]]
-- [[merge-two-sorted-arrays|Слияние двух отсортированных массивов (Merge Two Sorted Arrays)]]
+- [k наибольших элементов (K Largest Elements)](k-largest-elements.md)
+- [Поиск k-го по величине элемента (Find Kth Largest Element)](find-max-element.md)
+- [Слияние двух отсортированных массивов (Merge Two Sorted Arrays)](merge-two-sorted-arrays.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

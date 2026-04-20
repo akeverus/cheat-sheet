@@ -143,7 +143,7 @@ Deque<Integer> stack = new ArrayDeque<>();
 stack.push(1); stack.pop();
 ```
 
-Если **нужен** thread-safe stack — `ConcurrentLinkedDeque` или `LinkedBlockingDeque`. Подробнее — в [[java-collections-interview|Java Collections]].
+Если **нужен** thread-safe stack — `ConcurrentLinkedDeque` или `LinkedBlockingDeque`. Подробнее — в [Java Collections](../../programming-languages/java/java-collections-interview.md).
 
 ## Q4. Что такое PriorityQueue?
 
@@ -164,7 +164,7 @@ PriorityQueue<int[]> pq = new PriorityQueue<>(
 - `peek()` — `O(1)`
 - `contains()`, `remove(Object)` — `O(n)` (линейный поиск!)
 
-Подробнее о heap — в [[heaps-interview|Кучи]].
+Подробнее о heap — в [Кучи](heaps-interview.md).
 
 ## Q5. (!) Реализация Stack на массиве?
 
@@ -285,7 +285,7 @@ class LinkedQueue<T> {
 }
 ```
 
-Все операции `O(1)`. Память на узел больше, чем на элемент массива (overhead на ссылку и объект). Подробнее — в [[linked-lists-interview|Linked Lists]].
+Все операции `O(1)`. Память на узел больше, чем на элемент массива (overhead на ссылку и объект). Подробнее — в [Linked Lists](linked-lists-interview.md).
 
 ## Q8. (!) Как реализовать Queue через два Stack?
 
@@ -585,7 +585,7 @@ BlockingQueue<Task> q = new SynchronousQueue<>();
 
 `LinkedBlockingQueue` обычно даёт лучший throughput благодаря двум локам (producer и consumer не конкурируют). `ArrayBlockingQueue` имеет лучшую predictability и fairness.
 
-Подробнее — в [[java-concurrency-interview|Java Concurrency]].
+Подробнее — в [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md).
 
 ## Q19. ConcurrentLinkedQueue — как работает lock-free?
 
@@ -646,7 +646,7 @@ PriorityBlockingQueue<Task> queue = new PriorityBlockingQueue<>(
 5. **OS scheduling** — round-robin процессов (часто circular queue)
 6. **Streaming** — буфер между источником и потребителем
 
-Подробнее о distributed queues — в [[kafka-interview|Kafka]] и [[rabbitmq-interview|RabbitMQ]].
+Подробнее о distributed queues — в [Kafka](../../messaging/kafka-interview.md) и [RabbitMQ](../../messaging/rabbitmq-interview.md).
 
 ## Q23. Что такое circular buffer и зачем?
 
@@ -723,22 +723,22 @@ deque.offer(null); // NullPointerException
 
 ## See also
 
-- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
-- [[arrays-strings-interview|Массивы и строки]] — циклический массив для очереди
-- [[linked-lists-interview|Связные списки]] — основа для linked stack/queue
-- [[heaps-interview|Кучи]] — реализация PriorityQueue
-- [[trees-interview|Деревья]] — BFS использует очередь, DFS — стек
-- [[graphs-interview|Графы]] — BFS/DFS обходы
-- [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]] — monotonic deque
-- [[recursion-interview|Рекурсия]] — связь со стеком вызовов
-- [[java-collections-interview|Java Collections]] — ArrayDeque vs Stack vs LinkedList
-- [[java-concurrency-interview|Java Concurrency]] — BlockingQueue, ConcurrentLinkedQueue
-- [[kafka-interview|Apache Kafka]] — distributed queue
-- [[rabbitmq-interview|RabbitMQ]] — message broker queues
+- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
+- [Массивы и строки](arrays-strings-interview.md) — циклический массив для очереди
+- [Связные списки](linked-lists-interview.md) — основа для linked stack/queue
+- [Кучи](heaps-interview.md) — реализация PriorityQueue
+- [Деревья](trees-interview.md) — BFS использует очередь, DFS — стек
+- [Графы](graphs-interview.md) — BFS/DFS обходы
+- [Two Pointers и Sliding Window](../algorithmic-paradigms/two-pointers-sliding-window-interview.md) — monotonic deque
+- [Рекурсия](../algorithmic-paradigms/recursion-interview.md) — связь со стеком вызовов
+- [Java Collections](../../programming-languages/java/java-collections-interview.md) — ArrayDeque vs Stack vs LinkedList
+- [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — BlockingQueue, ConcurrentLinkedQueue
+- [Apache Kafka](../../messaging/kafka-interview.md) — distributed queue
+- [RabbitMQ](../../messaging/rabbitmq-interview.md) — message broker queues
 
-- [[arrays-strings-interview|Массивы и строки]]
-- [[graphs-interview|Графы]]
-- [[hash-tables-interview|Хеш-таблицы]]
-- [[heaps-interview|Кучи (Heaps)]]
-- [[linked-lists-interview|Связные списки]]
-- [[trees-interview|Деревья]]
+- [Массивы и строки](arrays-strings-interview.md)
+- [Графы](graphs-interview.md)
+- [Хеш-таблицы](hash-tables-interview.md)
+- [Кучи (Heaps)](heaps-interview.md)
+- [Связные списки](linked-lists-interview.md)
+- [Деревья](trees-interview.md)

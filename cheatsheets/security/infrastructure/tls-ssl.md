@@ -581,11 +581,11 @@ java -Djavax.net.debug=ssl -jar app.jar 2>&1 | grep -i error
 
 ## См. также
 
-- [[infrastructure-security|Infrastructure Security]] — сетевой периметр и hardening
-- [[secrets-management|Secrets Management]] — хранение приватных ключей
-- [[data-security|Data Security]] — шифрование на уровне данных
-- [[application-security|Application Security]] — TLS как фундамент всей схемы
-- [[api-security|API Security]] — TLS для API
-- [[jwt-oauth2|JWT и OAuth2]] — токены поверх TLS
-- [[nginx-advanced|Nginx advanced]] — тонкая настройка reverse-proxy
-- [[tls-ssl-interview|TLS/SSL на собеседовании]]
+- [Infrastructure Security](infrastructure-security.md) — сетевой периметр и hardening
+- [Secrets Management](../data/secrets-management.md) — хранение приватных ключей
+- [Data Security](../data/data-security.md) — шифрование на уровне данных
+- [Application Security](../application/application-security.md) — TLS как фундамент всей схемы
+- [API Security](../application/api-security.md) — TLS для API
+- [JWT и OAuth2](../application/jwt-oauth2.md) — токены поверх TLS
+- [Nginx advanced](../../platform/infrastructure-tools/nginx-advanced.md) — тонкая настройка reverse-proxy
+- [TLS/SSL на собеседовании](../../interview/security/tls-ssl-interview.md)

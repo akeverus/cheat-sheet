@@ -593,7 +593,7 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 **RAG (LLM context):**
 - Embed knowledge base
 - Query → retrieve similar chunks → pass to LLM
-- See [[rag-interview|RAG]]
+- See [RAG](../ai-ml/rag-interview.md)
 
 **Challenges:**
 - Embedding drift (model updates → re-index)
@@ -693,13 +693,13 @@ POST products/_rollover
 
 ## See also
 
-- [[system-design-interview|System Design]] — общие принципы
-- [[elasticsearch-interview|Elasticsearch]] — deep dive
-- [[design-url-shortener-interview|Design URL Shortener]] — read-heavy patterns
-- [[design-feed-system-interview|Design Feed System]] — ranking parallels
-- [[caching-strategies-interview|Caching]] — query cache
-- [[scalability-patterns-interview|Scalability Patterns]] — sharding
-- [[distributed-systems-interview|Distributed Systems]] — scatter-gather
+- [System Design](system-design-interview.md) — общие принципы
+- [Elasticsearch](../databases/elasticsearch-interview.md) — deep dive
+- [Design URL Shortener](design-url-shortener-interview.md) — read-heavy patterns
+- [Design Feed System](design-feed-system-interview.md) — ranking parallels
+- [Caching](../architecture/caching-strategies-interview.md) — query cache
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — sharding
+- [Distributed Systems](../architecture/distributed-systems-interview.md) — scatter-gather
 - [[llm-interview|LLM]] — semantic search for RAG
-- [[embeddings-interview|Embeddings]] — vector search
-- [[mlops-interview|MLOps]] — LTR model deployment
+- [Embeddings](../ai-ml/embeddings-interview.md) — vector search
+- [MLOps](../ai-ml/mlops-interview.md) — LTR model deployment

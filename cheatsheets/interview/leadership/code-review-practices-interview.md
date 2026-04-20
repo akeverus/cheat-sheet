@@ -293,7 +293,7 @@ public class OrderService {
 - Постепенно расширять зоны ревью по мере касания модулей
 - Legacy без тестов ревьюить с повышенным вниманием к граничным случаям
 - Документировать стандарты и «как мы ревьюим»
-- Подробнее о работе с legacy — в [[technical-debt-interview|вопросах по техническому долгу]]
+- Подробнее о работе с legacy — в [вопросах по техническому долгу](../code-quality/technical-debt-interview.md)
 
 ## Q9. Как эволюционировать практики ревью в команде?
 
@@ -358,7 +358,7 @@ graph LR
     F -->|❌ Fail| H[Block merge]
 ```
 
-**Принцип:** красный `CI` блокирует merge. Ревьюер не комментирует форматирование — только логику, тесты, безопасность и архитектуру. При новом правиле в линтере — добавить в `CI` и убрать из ручного чек-листа. Подробнее о настройке pipeline — в [[pipeline-design-interview|вопросах по дизайну CI/CD pipeline]].
+**Принцип:** красный `CI` блокирует merge. Ревьюер не комментирует форматирование — только логику, тесты, безопасность и архитектуру. При новом правиле в линтере — добавить в `CI` и убрать из ручного чек-листа. Подробнее о настройке pipeline — в [вопросах по дизайну CI/CD pipeline](../cicd/pipeline-design-interview.md).
 
 ## Q12. (!) Как настроить статический анализ в CI pipeline?
 
@@ -717,7 +717,7 @@ public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
 }
 ```
 
-Контрактное тестирование (`Pact`, `Spring Cloud Contract`) автоматизирует часть проверок — см. также [[integration-testing-interview|Интеграционное тестирование]].
+Контрактное тестирование (`Pact`, `Spring Cloud Contract`) автоматизирует часть проверок — см. также [Интеграционное тестирование](../testing/integration-testing-interview.md).
 
 ## Q27. Практики ревью для срочных hotfix?
 
@@ -1234,17 +1234,17 @@ graph LR
 
 ## See also
 
-- [[code-review-interview|Code review]] — базовые вопросы по code review
-- [[team-leadership-interview|Лидерство в команде]] — управление командой и процессами
-- [[behavioral-interview|Поведенческое интервью]] — STAR-формат для ответов о code review и конфликтах в ревью
-- [[technical-debt-interview|Технический долг]] — стратегии работы с техдолгом
-- [[pipeline-design-interview|Дизайн CI/CD pipeline]] — автоматизация сборки и деплоя
-- [[test-strategies-interview|Стратегии тестирования]] — пирамида тестов и подходы
-- [[refactoring-patterns-interview|Паттерны рефакторинга]] — рефакторинг при ревью
+- [Code review](../code-quality/code-review-interview.md) — базовые вопросы по code review
+- [Лидерство в команде](team-leadership-interview.md) — управление командой и процессами
+- [Поведенческое интервью](../behavioral/behavioral-interview.md) — STAR-формат для ответов о code review и конфликтах в ревью
+- [Технический долг](../code-quality/technical-debt-interview.md) — стратегии работы с техдолгом
+- [Дизайн CI/CD pipeline](../cicd/pipeline-design-interview.md) — автоматизация сборки и деплоя
+- [Стратегии тестирования](../testing/test-strategies-interview.md) — пирамида тестов и подходы
+- [Паттерны рефакторинга](../code-quality/refactoring-patterns-interview.md) — рефакторинг при ревью
 
-- [[conflict-resolution-interview|Разрешение конфликтов]]
-- [[estimations-planning-interview|Оценка и планирование]]
-- [[mentoring-interview|Менторство инженеров]]
-- [[team-leadership-interview|Лидерство в команде]]
-- [[tech-interviewing-interview|Проведение технических интервью]]
-- [[technical-decisions-interview|Технические решения]]
+- [Разрешение конфликтов](conflict-resolution-interview.md)
+- [Оценка и планирование](estimations-planning-interview.md)
+- [Менторство инженеров](mentoring-interview.md)
+- [Лидерство в команде](team-leadership-interview.md)
+- [Проведение технических интервью](tech-interviewing-interview.md)
+- [Технические решения](technical-decisions-interview.md)

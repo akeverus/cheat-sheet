@@ -26,7 +26,7 @@ updated: "2026-04-20"
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
 ### См. также
-- [[containerization-overview|Containerization — обзор]]
+- [Containerization — обзор](../containerization-overview.md)
 ## Содержание
 
 - [Контейнеризация приложения Spring Boot](#контейнеризация-приложения-spring-boot)
@@ -672,7 +672,7 @@ docker history --format "{{.ID}} {{.CreatedBy}} {{.Size}}" spring-docker-demo
 
 ## См. также
 
-- [[docker-advanced|Docker Advanced]]
-- [[docker-basics|Docker: Полное руководство по контейнеризации]]
-- [[docker-compose|Docker Compose]]
-- [[docker-containers|Docker: работа с контейнерами]]
+- [Docker Advanced](docker-advanced.md)
+- [Docker: Полное руководство по контейнеризации](docker-basics.md)
+- [Docker Compose](docker-compose.md)
+- [Docker: работа с контейнерами](docker-containers.md)

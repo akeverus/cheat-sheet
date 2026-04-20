@@ -133,7 +133,7 @@ Deque<Integer> deque = new ArrayDeque<>();
 
 **На практике:** даже для частых вставок в начало `ArrayDeque` обычно быстрее `LinkedList` благодаря лучшей локальности. `LinkedList` оправдан только когда нужны итераторы с `remove()` посередине без сдвига.
 
-Подробнее — в [[java-collections-interview|Java Collections]].
+Подробнее — в [Java Collections](../../programming-languages/java/java-collections-interview.md).
 
 ## Q3. Что такое sentinel/dummy node и зачем он нужен?
 
@@ -839,7 +839,7 @@ class LRUCache {
 
 `O(1)` для `get` и `put`. **HashMap** даёт быстрый поиск, **doubly-linked list** — быстрое удаление и добавление в начало.
 
-**Лайфхак для интервью:** в Java это можно реализовать в **5 строк** через `LinkedHashMap` с `accessOrder = true` — см. [[hash-tables-interview|Hash Tables]] и `java.util.LinkedHashMap`.
+**Лайфхак для интервью:** в Java это можно реализовать в **5 строк** через `LinkedHashMap` с `accessOrder = true` — см. [Hash Tables](hash-tables-interview.md) и `java.util.LinkedHashMap`.
 
 ## Q26. (!) Реализовать стек на linked list?
 
@@ -1003,26 +1003,26 @@ queue.poll();    // потокобезопасно
 - Нет блокирующих операций (`take()`, `put()`)
 - Высокий аллокационный давление (новые узлы)
 
-Для **блокирующих** очередей — `LinkedBlockingQueue` или `ArrayBlockingQueue`. Подробнее — в [[java-concurrency-interview|Java Concurrency]].
+Для **блокирующих** очередей — `LinkedBlockingQueue` или `ArrayBlockingQueue`. Подробнее — в [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md).
 
 ---
 
 ## See also
 
-- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
-- [[arrays-strings-interview|Массивы и строки]] — параллельная категория линейных DS
-- [[stacks-queues-interview|Стеки и очереди]] — где linked list — внутренняя реализация
-- [[trees-interview|Деревья]] — расширение идеи связной структуры
-- [[hash-tables-interview|Хеш-таблицы]] — chained hashing на linked lists
-- [[sorting-algorithms-interview|Алгоритмы сортировки]] — Merge Sort on linked list
-- [[two-pointers-sliding-window-interview|Two Pointers]] — slow/fast применяются здесь
-- [[complexity-analysis-interview|Анализ сложности]] — амортизированная сложность операций
-- [[java-collections-interview|Java Collections]] — LinkedList vs ArrayList vs ArrayDeque
-- [[java-concurrency-interview|Java Concurrency]] — ConcurrentLinkedQueue, lock-free
+- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
+- [Массивы и строки](arrays-strings-interview.md) — параллельная категория линейных DS
+- [Стеки и очереди](stacks-queues-interview.md) — где linked list — внутренняя реализация
+- [Деревья](trees-interview.md) — расширение идеи связной структуры
+- [Хеш-таблицы](hash-tables-interview.md) — chained hashing на linked lists
+- [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — Merge Sort on linked list
+- [Two Pointers](../algorithmic-paradigms/two-pointers-sliding-window-interview.md) — slow/fast применяются здесь
+- [Анализ сложности](../complexity/complexity-analysis-interview.md) — амортизированная сложность операций
+- [Java Collections](../../programming-languages/java/java-collections-interview.md) — LinkedList vs ArrayList vs ArrayDeque
+- [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — ConcurrentLinkedQueue, lock-free
 
-- [[arrays-strings-interview|Массивы и строки]]
-- [[graphs-interview|Графы]]
-- [[hash-tables-interview|Хеш-таблицы]]
-- [[heaps-interview|Кучи (Heaps)]]
-- [[stacks-queues-interview|Стеки и очереди]]
-- [[trees-interview|Деревья]]
+- [Массивы и строки](arrays-strings-interview.md)
+- [Графы](graphs-interview.md)
+- [Хеш-таблицы](hash-tables-interview.md)
+- [Кучи (Heaps)](heaps-interview.md)
+- [Стеки и очереди](stacks-queues-interview.md)
+- [Деревья](trees-interview.md)

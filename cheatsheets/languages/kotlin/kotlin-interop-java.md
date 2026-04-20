@@ -25,13 +25,13 @@ updated: "2026-04-20"
 - [Kotlin Java Interop Tutorial](https://www.baeldung.com/kotlin/java-interop)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[java-basics|Основы Java]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Основы Java](../java/java-basics.md)
 
-- [[kotlin-performance|Kotlin Performance]]
-- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
-- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
-- [[kotlin-interop-java-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Kotlin Performance](kotlin-performance.md)
+- [Kotlin Functional Programming: Basics](kotlin-fp-basics.md)
+- [Sealed классы и интерфейсы в Kotlin](kotlin-sealed-classes.md)
+- [Вопросы на собеседовании](../../interview/programming-languages/kotlin/kotlin-interop-java-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Interop](#введение-в-interop)

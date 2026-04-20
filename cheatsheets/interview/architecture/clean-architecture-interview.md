@@ -757,7 +757,7 @@ features/
 | **Сложность для простых CRUD** | Высокая (много слоёв ради простой операции) | Низкая (один файл на операцию) |
 | **Когда выбирать** | Сложный домен, долгоживущий проект | CRUD-heavy, микросервисы, быстрая разработка |
 
-На практике часто комбинируют: Clean Architecture для ядра + Vertical Slices для feature-модулей. Именно так устроен наш проект (см. `feature/` в [[spring-framework-interview|Spring Framework]]).
+На практике часто комбинируют: Clean Architecture для ядра + Vertical Slices для feature-модулей. Именно так устроен наш проект (см. `feature/` в [Spring Framework](../frameworks/spring/spring-framework-interview.md)).
 
 ## Q17. Как организовать пакетную структуру Spring Boot проекта по Clean Architecture?
 
@@ -1459,7 +1459,7 @@ public class Account {
 3. **Value Objects** вместо примитивов (`Money` вместо `BigDecimal`, `OrderId` вместо `Long`)
 4. **Логика принятия решений -- в Entity**, а не в сервисе
 
-Подробнее о паттернах проектирования домена -- в [[ddd-interview|Domain-Driven Design]].
+Подробнее о паттернах проектирования домена -- в [Domain-Driven Design](ddd-interview.md).
 
 ## Q29. Как применять Clean Architecture в микросервисах?
 
@@ -1514,7 +1514,7 @@ public class PaymentServiceHttpAdapter implements PaymentPort {
 
 **3. Не перестарайтесь**: простой CRUD-микросервис не нуждается в полной Clean Architecture. Применяйте принцип пропорциональности сложности.
 
-Подробнее о межсервисном взаимодействии -- в [[microservices-interview|Микросервисы]].
+Подробнее о межсервисном взаимодействии -- в [Микросервисы](microservices-interview.md).
 
 ## Q30. Как эволюционно мигрировать монолит к Clean Architecture?
 
@@ -2313,18 +2313,18 @@ src/main/java/com/example/ordering/
 
 ## See also
 
-- [[ddd-interview|Domain-Driven Design]] — тактические и стратегические паттерны DDD, Bounded Context и агрегаты
-- [[design-patterns-interview|Design Patterns]] — SOLID, GoF и архитектурные паттерны, лежащие в основе Clean Architecture
-- [[microservices-interview|Микросервисы]] — применение Clean Architecture в микросервисной среде
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]] — разделение моделей чтения и записи в рамках чистой архитектуры
-- [[resilience-patterns-interview|Паттерны отказоустойчивости]] — Circuit Breaker и Retry в слое Infrastructure/Adapter
-- [[scalability-patterns-interview|Паттерны масштабируемости]] — горизонтальное масштабирование модулей чистой архитектуры
-- [[spring-boot-interview|Spring Boot]] — практическая реализация Clean Architecture со Spring IoC и Spring Data
+- [Domain-Driven Design](ddd-interview.md) — тактические и стратегические паттерны DDD, Bounded Context и агрегаты
+- [Design Patterns](../design-patterns/design-patterns-interview.md) — SOLID, GoF и архитектурные паттерны, лежащие в основе Clean Architecture
+- [Микросервисы](microservices-interview.md) — применение Clean Architecture в микросервисной среде
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) — разделение моделей чтения и записи в рамках чистой архитектуры
+- [Паттерны отказоустойчивости](resilience-patterns-interview.md) — Circuit Breaker и Retry в слое Infrastructure/Adapter
+- [Паттерны масштабируемости](scalability-patterns-interview.md) — горизонтальное масштабирование модулей чистой архитектуры
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — практическая реализация Clean Architecture со Spring IoC и Spring Data
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[cap-theorem-interview|CAP-теорема]]
-- [[consistency-patterns-interview|Паттерны согласованности]]
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]]
-- [[clean-architecture|Шпаргалка: Clean Architecture]] — теория
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [CAP-теорема](cap-theorem-interview.md)
+- [Паттерны согласованности](consistency-patterns-interview.md)
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md)
+- [Шпаргалка: Clean Architecture](../../architecture/clean-architecture.md) — теория

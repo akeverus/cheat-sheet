@@ -491,24 +491,24 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 ## See also
 
-- [[aws-interview|AWS]] — главный конкурент
-- [[gcp-interview|GCP]] — другой конкурент
-- [[serverless-interview|Serverless]] — Functions, Container Apps
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — patterns
-- [[kubernetes-interview|Kubernetes]] — AKS
-- [[microservices-interview|Микросервисы]] — на Azure
-- [[postgresql-interview|PostgreSQL]] — Database for PostgreSQL
-- [[redis-interview|Redis]] — Azure Cache for Redis
-- [[kafka-interview|Apache Kafka]] — Event Hubs
-- [[rabbitmq-interview|RabbitMQ]] — Service Bus
-- [[application-security-interview|Application Security]] — Entra ID
-- [[llm-basics-interview|LLM Basics]] — Azure OpenAI
-- [[mlops-interview|MLOps]] — Azure ML
-- [[oauth2-interview|OAuth2]] — Entra ID identity
+- [AWS](aws-interview.md) — главный конкурент
+- [GCP](gcp-interview.md) — другой конкурент
+- [Serverless](serverless-interview.md) — Functions, Container Apps
+- [Cloud-native Patterns](cloud-native-patterns-interview.md) — patterns
+- [Kubernetes](../devops/kubernetes-interview.md) — AKS
+- [Микросервисы](../architecture/microservices-interview.md) — на Azure
+- [PostgreSQL](../databases/postgresql-interview.md) — Database for PostgreSQL
+- [Redis](../databases/redis-interview.md) — Azure Cache for Redis
+- [Apache Kafka](../messaging/kafka-interview.md) — Event Hubs
+- [RabbitMQ](../messaging/rabbitmq-interview.md) — Service Bus
+- [Application Security](../security/application-security-interview.md) — Entra ID
+- [LLM Basics](../ai-ml/llm-basics-interview.md) — Azure OpenAI
+- [MLOps](../ai-ml/mlops-interview.md) — Azure ML
+- [OAuth2](../security/oauth2-interview.md) — Entra ID identity
 
-- [[aws-interview|AWS]]
-- [[aws-lambda-interview|AWS Lambda]]
-- [[cloud-native-patterns-interview|Cloud-native Patterns]]
-- [[gcp-interview|GCP (Google Cloud Platform)]]
-- [[serverless-interview|Serverless]]
-- [[ai-agents-interview|AI Agents]]
+- [AWS](aws-interview.md)
+- [AWS Lambda](aws-lambda-interview.md)
+- [Cloud-native Patterns](cloud-native-patterns-interview.md)
+- [GCP (Google Cloud Platform)](gcp-interview.md)
+- [Serverless](serverless-interview.md)
+- [AI Agents](../ai-ml/ai-agents-interview.md)

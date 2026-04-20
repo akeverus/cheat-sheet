@@ -20,10 +20,10 @@ Spring Modulith помогает строить модульные моноли�
 - [Spring Modulith (docs.spring.io)](https://docs.spring.io/spring-modulith/docs/current/reference/html/) — официальная документация Spring Modulith
 
 ### См. также
-- [[spring-boot|Spring Boot]] — базовый фреймворк
-- [[spring-events|Spring Events]] — события Spring, используемые между модулями
-- [[spring-core|Spring Core]] — ядро Spring Framework
-- [[spring-modulith-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Spring Boot](../../spring/spring-boot.md) — базовый фреймворк
+- [Spring Events](spring-events.md) — события Spring, используемые между модулями
+- [Spring Core](../../spring/spring-core.md) — ядро Spring Framework
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-modulith-interview.md) — подготовка к интервью
 
 ## Содержание
 

@@ -138,8 +138,8 @@ graph LR
 3. **`Onsite / Virtual Onsite`** (3-5 раундов по 45-60 мин):
    - **Раунд 1: `Coding / Algorithms`** — 2-3 задачи (`Medium / Hard`), оптимизация решений
    - **Раунд 2: `System Design`** — проектирование масштабируемой системы, `trade-offs`
-   - **Раунд 3: `Domain Knowledge`** — глубокие вопросы по `Java`, `JVM`, `Spring`, многопоточности (подробнее в [[java-core-interview|Java Core]] и [[java-concurrency-interview|Java Concurrency]])
-   - **Раунд 4: `Behavioral / Leadership`** — `STAR`-метод, конфликты, менторство (подробнее в [[behavioral-interview|Behavioral]])
+   - **Раунд 3: `Domain Knowledge`** — глубокие вопросы по `Java`, `JVM`, `Spring`, многопоточности (подробнее в [Java Core](../programming-languages/java/java-core-interview.md) и [Java Concurrency](../programming-languages/java/java-concurrency-interview.md))
+   - **Раунд 4: `Behavioral / Leadership`** — `STAR`-метод, конфликты, менторство (подробнее в [Behavioral](../behavioral/behavioral-interview.md))
    - **Раунд 5: `Hiring Manager`** — обсуждение проектов, мотивация, карьерные цели
 
 4. **Финальный раунд** (опционально): `Bar Raiser` (`Amazon`), `Executive interview`, `Team matching`
@@ -232,10 +232,10 @@ gantt
 
 ### Рекомендуемый маршрут (8 недель)
 
-1. **Недели 1-2: Алгоритмы и код** — изучите [[algorithms-interview|алгоритмы]], решайте 3-5 задач на `LeetCode` ежедневно
-2. **Недели 3-4: System Design** — пройдите [[system-design-interview|System Design]], читайте «Designing Data-Intensive Applications»
-3. **Недели 5-6: Domain и Runtime** — повторите [[java-core-interview|Java Core]], [[memory-management-interview|Memory Management]], [[spring-boot-interview|Spring Boot]]
-4. **Недели 7-8: Behavioral и коммуникация** — подготовьте STAR-истории ([[behavioral-interview|Behavioral]]), [[code-review-interview|Code Review]]
+1. **Недели 1-2: Алгоритмы и код** — изучите [алгоритмы](../algorithms/algorithms-interview.md), решайте 3-5 задач на `LeetCode` ежедневно
+2. **Недели 3-4: System Design** — пройдите [System Design](../system-design/system-design-interview.md), читайте «Designing Data-Intensive Applications»
+3. **Недели 5-6: Domain и Runtime** — повторите [Java Core](../programming-languages/java/java-core-interview.md), [Memory Management](../performance/memory-management-interview.md), [Spring Boot](../frameworks/spring/spring-boot-interview.md)
+4. **Недели 7-8: Behavioral и коммуникация** — подготовьте STAR-истории ([Behavioral](../behavioral/behavioral-interview.md)), [Code Review](../code-quality/code-review-interview.md)
 
 **На каждую неделю** фиксируйте 2-3 измеримых результата:
 - Количество решённых задач
@@ -283,7 +283,7 @@ public int[] twoSum(int[] nums, int target) {
 // Brute force: O(n²) — два вложенных цикла
 ```
 
-Подробнее о паттернах и структурах данных — в [[algorithms-interview|Алгоритмы]].
+Подробнее о паттернах и структурах данных — в [Алгоритмы](../algorithms/algorithms-interview.md).
 
 ### Ресурсы
 
@@ -445,7 +445,7 @@ i=1: complement = 9-7 = 2, seen={2:0}, found! → return [0, 1] ✓
 
 ## Q11. (!) Как подготовиться к System Design интервью?
 
-`System Design` интервью оценивает способность проектировать масштабируемые распределённые системы. Для `Senior`-уровня этот раунд имеет равный или больший вес, чем coding. Подробнее об архитектурных паттернах — в [[distributed-systems-interview|Распределённые системы]] и [[microservices-interview|Микросервисы]].
+`System Design` интервью оценивает способность проектировать масштабируемые распределённые системы. Для `Senior`-уровня этот раунд имеет равный или больший вес, чем coding. Подробнее об архитектурных паттернах — в [Распределённые системы](../architecture/distributed-systems-interview.md) и [Микросервисы](../architecture/microservices-interview.md).
 
 ### План подготовки (4-6 недель)
 
@@ -463,8 +463,8 @@ i=1: complement = 9-7 = 2, seen={2:0}, found! → return [0, 1] ✓
 - **«System Design Interview»** — Alex Xu (Volume 1 & 2)
 - **[System Design Primer](https://github.com/donnemartin/system-design-primer)** — GitHub
 - **[ByteByteGo](https://bytebytego.com/)** — визуальные объяснения
-- Подробнее о стратегиях кэширования — в [[caching-strategies-interview|Caching Strategies]]
-- О балансировке нагрузки — в [[load-balancing-interview|Load Balancing]]
+- Подробнее о стратегиях кэширования — в [Caching Strategies](../architecture/caching-strategies-interview.md)
+- О балансировке нагрузки — в [Load Balancing](../architecture/load-balancing-interview.md)
 
 ## Q12. (!) Какой фреймворк использовать для System Design задачи?
 
@@ -538,7 +538,7 @@ graph LR
 | `Notification System` | Push/Pull, приоритеты, retry |
 | `E-commerce` | Inventory, ordering, payment, eventual consistency |
 
-Для каждой задачи готовьте вариации: «Как масштабировать до 1M QPS?», «Как обеспечить 99.99% availability?», «Как обрабатывать пики нагрузки?». Подробнее о паттернах масштабирования — в [[scalability-patterns-interview|Scalability Patterns]].
+Для каждой задачи готовьте вариации: «Как масштабировать до 1M QPS?», «Как обеспечить 99.99% availability?», «Как обрабатывать пики нагрузки?». Подробнее о паттернах масштабирования — в [Scalability Patterns](../architecture/scalability-patterns-interview.md).
 
 ## Q14. Как рисовать архитектурные диаграммы на интервью?
 
@@ -584,7 +584,7 @@ graph LR
 | `Search Engine` | Полнотекстовый поиск | `Elasticsearch`, `Solr` |
 | `Object Storage` | Файлы, изображения, видео | `S3`, `GCS` |
 
-Подробнее о кэшировании — [[caching-strategies-interview|Caching Strategies]], о message queue — [[kafka-interview|Kafka]], о базах данных — [[database-architecture-interview|Database Architecture]].
+Подробнее о кэшировании — [Caching Strategies](../architecture/caching-strategies-interview.md), о message queue — [Kafka](../messaging/kafka-interview.md), о базах данных — [Database Architecture](../databases/database-architecture-interview.md).
 
 ## Q16. (!) Как рассказывать о своих проектах?
 
@@ -621,7 +621,7 @@ graph LR
 
 ## Q17. Как отвечать на поведенческие вопросы?
 
-Используйте `STAR`-метод: **Situation** — контекст; **Task** — ваша задача; **Action** — конкретные действия; **Result** — результат и выводы. Подробный разбор — в [[behavioral-interview|Behavioral]].
+Используйте `STAR`-метод: **Situation** — контекст; **Task** — ваша задача; **Action** — конкретные действия; **Result** — результат и выводы. Подробный разбор — в [Behavioral](../behavioral/behavioral-interview.md).
 
 ### Типичные вопросы и категории
 
@@ -952,7 +952,7 @@ TC/год = 180 + 36 + 50 + 0 = 266K ← лучше!
 
 ## Q30. (!) Чего ожидают от Senior инженера на интервью?
 
-`Senior` — это не только про количество лет опыта. Интервьюеры ожидают демонстрации определённых компетенций. Подробнее — в [[team-leadership-interview|Team Leadership]].
+`Senior` — это не только про количество лет опыта. Интервьюеры ожидают демонстрации определённых компетенций. Подробнее — в [Team Leadership](../leadership/team-leadership-interview.md).
 
 ### Ожидания по раундам
 
@@ -992,7 +992,7 @@ TC/год = 180 + 36 + 50 + 0 = 266K ← лучше!
 - **Incident management**: как действовали в критической ситуации
 - **Cross-team collaboration**: как работали с другими командами
 
-Подробнее — [[code-review-practices-interview|Code Review Practices]] и [[team-leadership-interview|Team Leadership]].
+Подробнее — [Code Review Practices](../leadership/code-review-practices-interview.md) и [Team Leadership](../leadership/team-leadership-interview.md).
 
 ## Q32. Какие вопросы по архитектуре задают Senior-кандидатам?
 
@@ -1000,11 +1000,11 @@ Senior-кандидатам задают вопросы, требующие **г
 
 ### Типичные вопросы
 
-1. «Как бы вы спроектировали систему, обрабатывающую 100K RPS?» → [[scalability-patterns-interview|Scalability Patterns]]
-2. «Когда выбрать SQL vs NoSQL?» → [[database-architecture-interview|Database Architecture]]
-3. «Как обеспечить consistency в распределённой системе?» → [[consistency-patterns-interview|Consistency Patterns]], [[cap-theorem-interview|CAP-теорема]]
-4. «Как организовать взаимодействие микросервисов?» → [[microservices-interview|Микросервисы]], [[event-driven-patterns-interview|Event-Driven]]
-5. «Как вы подходите к observability и мониторингу?» → [[observability-interview|Observability]]
+1. «Как бы вы спроектировали систему, обрабатывающую 100K RPS?» → [Scalability Patterns](../architecture/scalability-patterns-interview.md)
+2. «Когда выбрать SQL vs NoSQL?» → [Database Architecture](../databases/database-architecture-interview.md)
+3. «Как обеспечить consistency в распределённой системе?» → [Consistency Patterns](../architecture/consistency-patterns-interview.md), [CAP-теорема](../architecture/cap-theorem-interview.md)
+4. «Как организовать взаимодействие микросервисов?» → [Микросервисы](../architecture/microservices-interview.md), [Event-Driven](../architecture/event-driven-patterns-interview.md)
+5. «Как вы подходите к observability и мониторингу?» → [Observability](../monitoring/observability-interview.md)
 
 ### Как отвечать
 
@@ -1445,19 +1445,19 @@ Checklist:
 
 ## See also
 
-- [[behavioral-interview|Поведенческие (Behavioral)]] — поведенческие вопросы и STAR-метод
-- [[algorithms-interview|Алгоритмы]] — алгоритмы и структуры данных
-- [[system-design-interview|System Design]] — проектирование систем
-- [[code-review-interview|Code review]] — code review и quality mindset
-- [[logging-strategies-interview|Стратегии логирования]] — observability и эксплуатация
-- [[memory-management-interview|Memory Management]] — performance и JVM
-- [[team-leadership-interview|Team Leadership]] — лидерство и управление командой
-- [[java-core-interview|Java Core]] — базовые вопросы по Java
-- [[spring-boot-interview|Spring Boot]] — вопросы по Spring Boot
+- [Поведенческие (Behavioral)](../behavioral/behavioral-interview.md) — поведенческие вопросы и STAR-метод
+- [Алгоритмы](../algorithms/algorithms-interview.md) — алгоритмы и структуры данных
+- [System Design](../system-design/system-design-interview.md) — проектирование систем
+- [Code review](../code-quality/code-review-interview.md) — code review и quality mindset
+- [Стратегии логирования](../monitoring/logging-strategies-interview.md) — observability и эксплуатация
+- [Memory Management](../performance/memory-management-interview.md) — performance и JVM
+- [Team Leadership](../leadership/team-leadership-interview.md) — лидерство и управление командой
+- [Java Core](../programming-languages/java/java-core-interview.md) — базовые вопросы по Java
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — вопросы по Spring Boot
 
-- [[ai-agents-interview|AI Agents]]
-- [[embeddings-interview|Embeddings]]
-- [[llm-basics-interview|LLM Basics]]
-- [[llm-integration-patterns-interview|LLM Integration Patterns]]
-- [[mlops-interview|MLOps]]
-- [[model-serving-interview|Model Serving]]
+- [AI Agents](../ai-ml/ai-agents-interview.md)
+- [Embeddings](../ai-ml/embeddings-interview.md)
+- [LLM Basics](../ai-ml/llm-basics-interview.md)
+- [LLM Integration Patterns](../ai-ml/llm-integration-patterns-interview.md)
+- [MLOps](../ai-ml/mlops-interview.md)
+- [Model Serving](../ai-ml/model-serving-interview.md)

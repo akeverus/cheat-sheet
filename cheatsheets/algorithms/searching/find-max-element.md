@@ -18,12 +18,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: K'th Smallest/Largest in Unsorted Array](https://www.geeksforgeeks.org/kth-smallestlargest-element-unsorted-array/)
 
 ### См. также
-- [[maximum-subarray|Максимальный подмассив]] — **Kadane**
-- [[k-largest-elements|K наибольших элементов]] — k largest
-- [[quick-sort|Быстрая сортировка]] — quick sort
+- [Максимальный подмассив](maximum-subarray.md) — **Kadane**
+- [K наибольших элементов](k-largest-elements.md) — k largest
+- [Быстрая сортировка](../sorting/quick-sort.md) — quick sort
 
-- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
-- [[merge-two-sorted-arrays|Слияние двух отсортированных массивов (Merge Two Sorted Arrays)]]
+- [Интерполяционный поиск (Interpolation Search)](interpolation-search.md)
+- [Слияние двух отсортированных массивов (Merge Two Sorted Arrays)](merge-two-sorted-arrays.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

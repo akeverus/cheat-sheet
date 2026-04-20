@@ -18,14 +18,14 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[security-tools]] — обзор категорий и ключевых представителей
+- [security-tools](security-tools.md) — обзор категорий и ключевых представителей
 
 ### Соседние разделы
-- [[README|security/]] — корень раздела
-- [[README|security/testing/]] — методологии тестирования
-- [[README|security/infrastructure/]] — кластер и облако
-- [[README|monitoring/]] — наблюдаемость и SIEM
-- [[README|platform/ci-cd/]] — интеграция в пайплайн
+- [security/](../../basics/README.md) — корень раздела
+- [security/testing/](../../basics/README.md) — методологии тестирования
+- [security/infrastructure/](../../basics/README.md) — кластер и облако
+- [monitoring/](../../basics/README.md) — наблюдаемость и SIEM
+- [platform/ci-cd/](../../basics/README.md) — интеграция в пайплайн
 
 ### Внешние ресурсы
 - [OWASP Source Code Analysis Tools](https://owasp.org/www-community/Source_Code_Analysis_Tools)
@@ -78,7 +78,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Методики тестирования — [[README]]
-- Инфраструктурный hardening — [[README]]
-- Secrets и vault — [[secrets-management]]
-- Observability и SIEM — [[README]]
+- Методики тестирования — [README](../../basics/README.md)
+- Инфраструктурный hardening — [README](../../basics/README.md)
+- Secrets и vault — [secrets-management](../data/secrets-management.md)
+- Observability и SIEM — [README](../../basics/README.md)

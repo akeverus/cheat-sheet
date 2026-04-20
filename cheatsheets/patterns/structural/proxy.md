@@ -1746,8 +1746,8 @@ public class ProxyPatternTest {
 
 ## См. также
 
-- [[adapter|Адаптер (Adapter)]]
-- [[composite|Компоновщик (Composite)]]
-- [[decorator|Декоратор (Decorator)]]
-- [[facade|Фасад (Facade)]]
-- [[flyweight|Приспособленец (Flyweight)]]
+- [Адаптер (Adapter)](adapter.md)
+- [Компоновщик (Composite)](composite.md)
+- [Декоратор (Decorator)](decorator.md)
+- [Фасад (Facade)](facade.md)
+- [Приспособленец (Flyweight)](flyweight.md)

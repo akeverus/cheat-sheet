@@ -24,8 +24,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[scala-akka|Akka]]
-- [[scala-slick|Slick]]
+- [Akka](scala-akka.md)
+- [Slick](scala-slick.md)
 ## Содержание
 
 - [Основы Circe](#основы-circe)
@@ -1011,7 +1011,7 @@ val json = user.asJson.noSpaces
 val parsed = decode[User](json) // Either[Error, User]
 ```
 ## См. также
-- [[scala-play|Play Framework]] — **Web framework** с **JSON** поддержкой
-- [[scala-cats|Cats]] — Функциональная библиотека
-- [[README|Паттерны]] — Функциональные паттерны
+- [Play Framework](scala-play.md) — **Web framework** с **JSON** поддержкой
+- [Cats](scala-cats.md) — Функциональная библиотека
+- [Паттерны](../../basics/README.md) — Функциональные паттерны
 

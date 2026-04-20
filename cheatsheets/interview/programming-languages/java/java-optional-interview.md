@@ -465,11 +465,11 @@ class User {
 
 ## See also
 
-- [[java-core-interview|Java Core]] — null в Java, NullPointerException
-- [[java-stream-interview|Java Stream API]] — Optional.stream(), flatMap с Optional
-- [[java-8-interview|Java 8]] — Optional как нововведение Java 8
-- [[java-generics-interview|Java Generics]] — Optional<T> и система типов
-- [[java-functional-interface-interview|Functional Interfaces]] — Supplier в orElseGet, Consumer в ifPresent
-- [[java-exceptions-interview|Java Exceptions]] — orElseThrow и кастомные исключения
-- [[spring-data-jpa-interview|Spring Data JPA]] — Optional в Repository.findById()
-- [[java-collections-interview|Java Collections]] — когда пустой список лучше Optional
+- [Java Core](java-core-interview.md) — null в Java, NullPointerException
+- [Java Stream API](java-stream-interview.md) — Optional.stream(), flatMap с Optional
+- [Java 8](java-8-interview.md) — Optional как нововведение Java 8
+- [Java Generics](java-generics-interview.md) — Optional<T> и система типов
+- [Functional Interfaces](java-functional-interface-interview.md) — Supplier в orElseGet, Consumer в ifPresent
+- [Java Exceptions](java-exceptions-interview.md) — orElseThrow и кастомные исключения
+- [Spring Data JPA](../../frameworks/spring/spring-data-jpa-interview.md) — Optional в Repository.findById()
+- [Java Collections](java-collections-interview.md) — когда пустой список лучше Optional

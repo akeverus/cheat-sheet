@@ -798,14 +798,14 @@ UserDto toDto(User user);
 
 ## See also
 
-- [[java-annotations-interview|Java Annotations]] — `@Mapper`, `@Mapping` реализованы как аннотации APT; понимание JSR 269
-- [[java-generics-interview|Java Generics]] — `TypeReference`, generic-конверсии в MapStruct
-- [[java-core-interview|Java Core]] — основы Bean-паттерна: геттеры/сеттеры, equals/hashCode
-- [[java-jackson-interview|Jackson]] — альтернативный подход к DTO-маппингу через сериализацию
-- [[java-initialization-interview|Java Initialization]] — инициализация, static fields, Builder-паттерн
-- [[spring-data-jpa-interview|Spring Data JPA]] — маппинг Entity→DTO через MapStruct в persistence-слое
-- [[spring-mvc-interview|Spring MVC]] — типичный use case: контроллер получает DTO, сервис использует mapper
-- [[spring-boot-interview|Spring Boot]] — интеграция MapStruct как Spring-компонента, автоконфигурация
-- [[design-patterns-interview|Design Patterns]] — Decorator-паттерн в `@DecoratedWith`, Builder-паттерн
-- [[unit-testing-interview|Unit Testing]] — тестирование маппинг-логики через `Mappers.getMapper()`
-- [[java-mapstruct|Шпаргалка: MapStruct: Маппинг объектов в Java]] — теория
+- [Java Annotations](java-annotations-interview.md) — `@Mapper`, `@Mapping` реализованы как аннотации APT; понимание JSR 269
+- [Java Generics](java-generics-interview.md) — `TypeReference`, generic-конверсии в MapStruct
+- [Java Core](java-core-interview.md) — основы Bean-паттерна: геттеры/сеттеры, equals/hashCode
+- [Jackson](java-jackson-interview.md) — альтернативный подход к DTO-маппингу через сериализацию
+- [Java Initialization](java-initialization-interview.md) — инициализация, static fields, Builder-паттерн
+- [Spring Data JPA](../../frameworks/spring/spring-data-jpa-interview.md) — маппинг Entity→DTO через MapStruct в persistence-слое
+- [Spring MVC](../../frameworks/spring/spring-mvc-interview.md) — типичный use case: контроллер получает DTO, сервис использует mapper
+- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — интеграция MapStruct как Spring-компонента, автоконфигурация
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — Decorator-паттерн в `@DecoratedWith`, Builder-паттерн
+- [Unit Testing](../../testing/unit-testing-interview.md) — тестирование маппинг-логики через `Mappers.getMapper()`
+- [Шпаргалка: MapStruct: Маппинг объектов в Java](../../../libraries/java/java-mapstruct.md) — теория

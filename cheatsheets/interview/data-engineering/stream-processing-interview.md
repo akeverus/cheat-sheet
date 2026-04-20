@@ -236,9 +236,9 @@ e1 e2 e3 [gap] e4 e5 [gap] e6
 **Global** — все события в одном window (custom trigger).
 
 Подробнее в каждом фреймворке:
-- [[apache-flink-interview|Flink]]
-- [[kafka-streams-interview|Kafka Streams]]
-- [[apache-spark-interview|Spark]]
+- [Flink](apache-flink-interview.md)
+- [Kafka Streams](kafka-streams-interview.md)
+- [Spark](apache-spark-interview.md)
 
 ## Q10. Allowed lateness?
 
@@ -544,7 +544,7 @@ graph LR
 Producers → Kafka (transport) → Stream Processor (logic) → Sinks
 ```
 
-Kafka сам **не делает aggregations** — только хранит и доставляет messages. Подробнее — [[kafka-interview|Apache Kafka]].
+Kafka сам **не делает aggregations** — только хранит и доставляет messages. Подробнее — [Apache Kafka](../messaging/kafka-interview.md).
 
 ## Q26. (!) Где stream processing в production?
 
@@ -594,22 +594,22 @@ events → feature extraction (streaming) → ML model serving → predictions
 
 ## See also
 
-- [[apache-spark-interview|Apache Spark]] — Structured Streaming
-- [[apache-flink-interview|Apache Flink]] — true streaming
-- [[kafka-streams-interview|Kafka Streams]] — library streaming
-- [[kafka-interview|Apache Kafka]] — transport для streaming
-- [[event-driven-patterns-interview|Event-driven паттерны]] — фундамент streaming
-- [[apache-airflow-interview|Apache Airflow]] — для batch (vs streaming)
-- [[data-warehousing-interview|Data Warehousing]] — обычно destination
-- [[data-lake-lakehouse-interview|Data Lake / Lakehouse]] — destination для streaming
-- [[microservices-interview|Микросервисы]] — event-driven services
-- [[cap-theorem-interview|CAP Theorem]] — trade-offs distributed
-- [[distributed-systems-interview|Распределённые системы]] — consistency, replication
-- [[saga-pattern-interview|Saga Pattern]] — sagas через streaming
+- [Apache Spark](apache-spark-interview.md) — Structured Streaming
+- [Apache Flink](apache-flink-interview.md) — true streaming
+- [Kafka Streams](kafka-streams-interview.md) — library streaming
+- [Apache Kafka](../messaging/kafka-interview.md) — transport для streaming
+- [Event-driven паттерны](../architecture/event-driven-patterns-interview.md) — фундамент streaming
+- [Apache Airflow](apache-airflow-interview.md) — для batch (vs streaming)
+- [Data Warehousing](data-warehousing-interview.md) — обычно destination
+- [Data Lake / Lakehouse](data-lake-lakehouse-interview.md) — destination для streaming
+- [Микросервисы](../architecture/microservices-interview.md) — event-driven services
+- [CAP Theorem](../architecture/cap-theorem-interview.md) — trade-offs distributed
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — consistency, replication
+- [Saga Pattern](../architecture/saga-pattern-interview.md) — sagas через streaming
 
-- [[apache-airflow-interview|Apache Airflow]]
-- [[apache-flink-interview|Apache Flink]]
-- [[apache-spark-interview|Apache Spark]]
-- [[data-lake-lakehouse-interview|Data Lake и Lakehouse]]
-- [[data-warehousing-interview|Data Warehousing]]
-- [[dbt-interview|dbt]]
+- [Apache Airflow](apache-airflow-interview.md)
+- [Apache Flink](apache-flink-interview.md)
+- [Apache Spark](apache-spark-interview.md)
+- [Data Lake и Lakehouse](data-lake-lakehouse-interview.md)
+- [Data Warehousing](data-warehousing-interview.md)
+- [dbt](dbt-interview.md)

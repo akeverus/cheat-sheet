@@ -629,7 +629,7 @@ def handler(event, context):
 
 **Подвох:** Lambda processes batch — partial failure handling требует `ReportBatchItemFailures`.
 
-Подробнее — в [[aws-lambda-interview|AWS Lambda]].
+Подробнее — в [AWS Lambda](../cloud/aws-lambda-interview.md).
 
 ## Q27. (!) DAX (DynamoDB Accelerator)?
 
@@ -715,21 +715,21 @@ aws dynamodb update-continuous-backups \
 
 ## See also
 
-- [[mongodb-interview|MongoDB]] — alternative document store
-- [[cassandra-interview|Cassandra]] — wide-column NoSQL
-- [[redis-interview|Redis]] — for caching
-- [[aws-interview|AWS]] — context
-- [[aws-lambda-interview|AWS Lambda]] — Streams triggers
-- [[serverless-interview|Serverless]] — DynamoDB friendly
-- [[database-architecture-interview|Database Architecture]] — NoSQL context
-- [[scalability-patterns-interview|Scalability Patterns]] — DynamoDB scales
-- [[caching-strategies-interview|Caching Strategies]] — DAX
-- [[microservices-interview|Микросервисы]] — DynamoDB per microservice
-- [[event-driven-patterns-interview|Event-driven]] — Streams
+- [MongoDB](mongodb-interview.md) — alternative document store
+- [Cassandra](cassandra-interview.md) — wide-column NoSQL
+- [Redis](redis-interview.md) — for caching
+- [AWS](../cloud/aws-interview.md) — context
+- [AWS Lambda](../cloud/aws-lambda-interview.md) — Streams triggers
+- [Serverless](../cloud/serverless-interview.md) — DynamoDB friendly
+- [Database Architecture](database-architecture-interview.md) — NoSQL context
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — DynamoDB scales
+- [Caching Strategies](../architecture/caching-strategies-interview.md) — DAX
+- [Микросервисы](../architecture/microservices-interview.md) — DynamoDB per microservice
+- [Event-driven](../architecture/event-driven-patterns-interview.md) — Streams
 
-- [[cassandra-interview|Apache Cassandra]]
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
-- [[database-architecture-interview|Database Architecture]]
-- [[database-transactions-interview|Транзакции и уровни изоляции]]
-- [[elasticsearch-interview|Elasticsearch]]
+- [Apache Cassandra](cassandra-interview.md)
+- [ClickHouse](clickhouse-interview.md)
+- [CockroachDB](cockroachdb-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [Транзакции и уровни изоляции](database-transactions-interview.md)
+- [Elasticsearch](elasticsearch-interview.md)

@@ -24,12 +24,12 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[junit-advanced|JUnit Advanced]]
-- [[mockito-advanced|Mockito Advanced]]
-- [[spring-testing|Spring Testing]]
+- [JUnit Advanced](junit-advanced.md)
+- [Mockito Advanced](mockito-advanced.md)
+- [Spring Testing](../../../frameworks/java-frameworks/spring/spring-testing.md)
 
-- [[pytest|pytest]]
-- [[junit|JUnit 5]]
+- [pytest](../pytest/pytest.md)
+- [JUnit 5](junit.md)
 ## Содержание
 
 - [Введение в AssertJ](#введение-в-assertj)

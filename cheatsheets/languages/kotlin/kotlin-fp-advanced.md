@@ -25,12 +25,12 @@ updated: "2026-04-20"
 - [Arrow-Kt Tutorial](https://www.baeldung.com/kotlin/arrow-kt)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-fp-basics|Основы функционального программирования]]
-- [[kotlin-collections-operations|Операции над коллекциями]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Основы функционального программирования](kotlin-fp-basics.md)
+- [Операции над коллекциями](kotlin-collections-operations.md)
 
-- [[kotlin-performance|Kotlin Performance]]
-- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
+- [Kotlin Performance](kotlin-performance.md)
+- [Sealed классы и интерфейсы в Kotlin](kotlin-sealed-classes.md)
 ## Содержание
 
 - [Functors](#functors)

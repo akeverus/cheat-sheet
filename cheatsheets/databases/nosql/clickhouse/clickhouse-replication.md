@@ -36,10 +36,10 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 - [Cluster Monitoring](https://clickhouse.com/docs/en/operations/monitoring)
 
 ### См. также
-- [[clickhouse-tables|Таблицы]] — движки таблиц
-- [[clickhouse-materialized-views|Материализованные представления]] — в кластерах
+- [Таблицы](clickhouse-tables.md) — движки таблиц
+- [Материализованные представления](clickhouse-materialized-views.md) — в кластерах
 
-- [[redis-replication|Redis: Репликация]]
+- [Redis: Репликация](../redis/redis-replication.md)
 ## Содержание
 
 - [Введение в репликацию ClickHouse](#введение-в-репликацию-clickhouse)
@@ -776,6 +776,6 @@ GROUP BY database, table;
 
 
 **Следующие темы:**
-- [[clickhouse-performance|Производительность]]
-- [[clickhouse-integration|Интеграции и экосистема]]
+- [Производительность](clickhouse-performance.md)
+- [Интеграции и экосистема](clickhouse-integration.md)
 

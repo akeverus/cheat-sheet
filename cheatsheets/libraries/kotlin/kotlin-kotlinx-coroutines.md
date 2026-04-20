@@ -22,8 +22,8 @@ updated: "2026-04-20"
 - [Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html) — руководство по корутинам
 
 ### См. также
-- [[kotlin-concurrency-advanced|Kotlin Concurrency]] — **Kotlin Coroutines** в языке
-- [[kotlin-arrow|Arrow]] — **Arrow** для функционального программирования
+- [Kotlin Concurrency](../../languages/kotlin/kotlin-concurrency-advanced.md) — **Kotlin Coroutines** в языке
+- [Arrow](kotlin-arrow.md) — **Arrow** для функционального программирования
 
 ## Содержание
 
@@ -1352,7 +1352,7 @@ class UserPreferences {
 - [Channels Guide](https://kotlinlang.org/docs/channels.html)
 
 ## См. также
-- [[kotlin-basics|Kotlin Basics]] — Основы **Kotlin**
-- [[README|Паттерны]] — Реактивные паттерны
-- [[java-concurrency-basics|Java Concurrency]] — Асинхронное программирование в **Java**
+- [Kotlin Basics](../../languages/kotlin/kotlin-basics.md) — Основы **Kotlin**
+- [Паттерны](../../basics/README.md) — Реактивные паттерны
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — Асинхронное программирование в **Java**
 

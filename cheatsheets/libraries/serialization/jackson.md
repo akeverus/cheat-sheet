@@ -28,10 +28,10 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[java-jackson|Jackson: JSON-сериализация в Java]]
-- [[micronaut-serialization|Micronaut: Serialization — JSON, XML и Custom Serializers]]
-- [[java-junit5|JUnit 5]]
-- [[java-mockito|Mockito]]
+- [Jackson: JSON-сериализация в Java](../java/java-jackson.md)
+- [Micronaut: Serialization — JSON, XML и Custom Serializers](../../frameworks/java-frameworks/micronaut/micronaut-serialization.md)
+- [JUnit 5](../testing-libraries/java-junit5.md)
+- [Mockito](../testing-libraries/java-mockito.md)
 ## Содержание
 
 - [Введение в Jackson](#введение-в-jackson)
@@ -1437,4 +1437,4 @@ public class JacksonTroubleshooting {
 
 ## См. также
 
-- [[java-gson|Gson]]
+- [Gson](java-gson.md)

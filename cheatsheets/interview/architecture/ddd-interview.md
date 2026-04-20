@@ -660,7 +660,7 @@ public class Order {
 
 ### 4. Используйте Eventual Consistency между агрегатами
 
-Если бизнес-правило охватывает несколько агрегатов, применяйте доменные события и eventual consistency вместо одной транзакции. Подробнее в [[consistency-patterns-interview|паттернах согласованности]].
+Если бизнес-правило охватывает несколько агрегатов, применяйте доменные события и eventual consistency вместо одной транзакции. Подробнее в [паттернах согласованности](consistency-patterns-interview.md).
 
 ---
 
@@ -854,7 +854,7 @@ public void on(OrderPlacedEvent event) {
 }
 ```
 
-Подробнее о событийных паттернах в [[event-driven-patterns-interview|Event-Driven паттернах]].
+Подробнее о событийных паттернах в [Event-Driven паттернах](event-driven-patterns-interview.md).
 
 ---
 
@@ -1084,7 +1084,7 @@ public class OrderQueryService {
 }
 ```
 
-Подробнее о `CQRS` в контексте [[microservices-interview|микросервисов]].
+Подробнее о `CQRS` в контексте [микросервисов](microservices-interview.md).
 
 ---
 
@@ -1210,7 +1210,7 @@ sequenceDiagram
 | Производительность | Медленно (блокировки) | Быстро (eventual consistency) |
 | Сложность | Простая модель, сложная инфра | Сложная модель, простая инфра |
 
-Подробнее о компенсирующих транзакциях в [[microservices-interview|вопросах по микросервисам]].
+Подробнее о компенсирующих транзакциях в [вопросах по микросервисам](microservices-interview.md).
 
 ---
 
@@ -1411,7 +1411,7 @@ public class OrderController {
 public class JpaOrderRepository implements OrderRepository { /* ... */ }
 ```
 
-Подробнее в [[clean-architecture-interview|вопросах по Clean Architecture]].
+Подробнее в [вопросах по Clean Architecture](clean-architecture-interview.md).
 
 ---
 
@@ -1831,20 +1831,20 @@ public class MoneyEmbeddable {
 
 ## See also
 
-- [[microservices-interview|Микросервисы]] — DDD как основа декомпозиции, Bounded Context ↔ микросервис
-- [[design-patterns-interview|Design Patterns]] — GoF-паттерны в контексте доменного моделирования (Repository, Factory, Strategy)
-- [[event-driven-patterns-interview|Event-Driven паттерны]] — доменные события, Outbox Pattern и событийная архитектура
-- [[clean-architecture-interview|Clean Architecture]] — слоёная архитектура, изоляция домена, порты и адаптеры
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]] — CQRS как надстройка над доменной моделью, Event Sourcing для агрегатов
-- [[distributed-systems-interview|Распределённые системы]] — согласованность и транзакции между контекстами
-- [[consistency-patterns-interview|Паттерны согласованности]] — eventual consistency в DDD, Saga Pattern
-- [[resilience-patterns-interview|Паттерны отказоустойчивости]] — Circuit Breaker для Anti-Corruption Layer при межконтекстных вызовах
-- [[database-architecture-interview|Архитектура баз данных]] — стратегии персистенции агрегатов: CRUD vs Event Sourcing
+- [Микросервисы](microservices-interview.md) — DDD как основа декомпозиции, Bounded Context ↔ микросервис
+- [Design Patterns](../design-patterns/design-patterns-interview.md) — GoF-паттерны в контексте доменного моделирования (Repository, Factory, Strategy)
+- [Event-Driven паттерны](event-driven-patterns-interview.md) — доменные события, Outbox Pattern и событийная архитектура
+- [Clean Architecture](clean-architecture-interview.md) — слоёная архитектура, изоляция домена, порты и адаптеры
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) — CQRS как надстройка над доменной моделью, Event Sourcing для агрегатов
+- [Распределённые системы](distributed-systems-interview.md) — согласованность и транзакции между контекстами
+- [Паттерны согласованности](consistency-patterns-interview.md) — eventual consistency в DDD, Saga Pattern
+- [Паттерны отказоустойчивости](resilience-patterns-interview.md) — Circuit Breaker для Anti-Corruption Layer при межконтекстных вызовах
+- [Архитектура баз данных](../databases/database-architecture-interview.md) — стратегии персистенции агрегатов: CRUD vs Event Sourcing
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[cap-theorem-interview|CAP-теорема]]
-- [[clean-architecture-interview|Clean Architecture]]
-- [[consistency-patterns-interview|Паттерны согласованности]]
-- [[ddd|Шпаргалка: Domain-Driven Design (DDD)]] — теория
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [CAP-теорема](cap-theorem-interview.md)
+- [Clean Architecture](clean-architecture-interview.md)
+- [Паттерны согласованности](consistency-patterns-interview.md)
+- [Шпаргалка: Domain-Driven Design (DDD)](../../architecture/ddd.md) — теория

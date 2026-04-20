@@ -425,9 +425,9 @@ A: OpenClaw:
 ## Полезные ссылки
 
 ### См. также
-- [[aider-basics|Aider: основы]]
-- [[cursor-basics|Cursor: основы]]
-- [[claude-basics|Claude Code: основы]]
-- [[windsurf-basics|Windsurf: основы]]
-- [[copilot-basics|GitHub Copilot: основы]]
+- [Aider: основы](../aider/aider-basics.md)
+- [Cursor: основы](../cursor/cursor-basics.md)
+- [Claude Code: основы](../claude/claude-basics.md)
+- [Windsurf: основы](../windsurf/windsurf-basics.md)
+- [GitHub Copilot: основы](../copilot/copilot-basics.md)
 

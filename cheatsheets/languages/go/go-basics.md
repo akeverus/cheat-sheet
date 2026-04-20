@@ -29,10 +29,10 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[go-modules|`go-modules.md`]] — практики модулей и dependency management
-- [[go-concurrency|`go-concurrency.md`]] — конкурентность в production
-- [[go-testing|`go-testing.md`]] — unit/integration/load тестирование
-- [[go-observability|`go-observability.md`]] — метрики, логи и трассировка
+- [`go-modules.md`](go-modules.md) — практики модулей и dependency management
+- [`go-concurrency.md`](go-concurrency.md) — конкурентность в production
+- [`go-testing.md`](go-testing.md) — unit/integration/load тестирование
+- [`go-observability.md`](go-observability.md) — метрики, логи и трассировка
 
 ### Практика миграции Go 1.19 -> 1.22+
 
@@ -2924,14 +2924,14 @@ func createSecureClient() *http.Client {
 
 Этот блок оставлен как расширенная справка. Для production-работы удобнее идти по профильным документам:
 
-- [[go-configuration]] — конфигурация и работа с окружением
-- [[go-command-line]] — CLI, флаги и аргументы
-- [[go-time]] — время, таймеры, интервалы
-- [[go-regexp]] — регулярные выражения
-- [[go-database]] — БД, миграции, транзакции
-- [[go-concurrency]] — каналы, worker pool, pipeline
-- [[go-observability]] — метрики, логи, tracing
-- [[go-best-practices]] — архитектура и эксплуатационные практики
+- [go-configuration](go-configuration.md) — конфигурация и работа с окружением
+- [go-command-line](go-command-line.md) — CLI, флаги и аргументы
+- [go-time](go-time.md) — время, таймеры, интервалы
+- [go-regexp](go-regexp.md) — регулярные выражения
+- [go-database](go-database.md) — БД, миграции, транзакции
+- [go-concurrency](go-concurrency.md) — каналы, worker pool, pipeline
+- [go-observability](go-observability.md) — метрики, логи, tracing
+- [go-best-practices](go-best-practices.md) — архитектура и эксплуатационные практики
 
 ### Что изучать в этом файле, а что вынести в профильные документы
 

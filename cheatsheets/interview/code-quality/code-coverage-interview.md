@@ -1,13 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Code Coverage"
-description: "Краткие ответы про покрытие кода: line/branch/mutation coverage, JaCoCo, meaningful coverage vs coverage theater, практические подходы."
+description: "Покрытие кода: line/branch/mutation coverage, JaCoCo, meaningful coverage vs coverage theater, quality gates, CI/CD integration"
 tags:
   - interview
   - code-quality
-  - code-coverage
-  - jacoco
-  - testing
-  - mutation-testing
+  - code-coverage-interview
+aliases:
+  - "Code Coverage interview"
+  - "Code Coverage собеседование"
+  - "JaCoCo interview"
+  - "coverage metrics interview"
+  - "test coverage вопросы"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -541,10 +544,10 @@ task jacocoMergedReport(type: JacocoReport) {
 
 ## See also
 
-- [[code-review-interview|Code Review]]
-- [[static-analysis-interview|Static Analysis]]
-- [[code-smells-interview|Code Smells]]
-- [[technical-debt-interview|Technical Debt]]
-- [[clean-code-practices-interview|Clean Code Practices]]
-- [[refactoring-patterns-interview|Refactoring Patterns]]
-- [[java-core-interview|Java Core]]
+- [Code Review](code-review-interview.md)
+- [Static Analysis](static-analysis-interview.md)
+- [Code Smells](code-smells-interview.md)
+- [Technical Debt](technical-debt-interview.md)
+- [Clean Code Practices](clean-code-practices-interview.md)
+- [Refactoring Patterns](refactoring-patterns-interview.md)
+- [Java Core](../programming-languages/java/java-core-interview.md)

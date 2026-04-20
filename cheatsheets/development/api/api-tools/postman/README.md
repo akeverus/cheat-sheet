@@ -18,15 +18,15 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[postman-basics]] — запросы, коллекции, переменные, автоматизация
+- [postman-basics](postman-basics.md) — запросы, коллекции, переменные, автоматизация
 
 ### Соседние разделы
-- [[README|Родительский раздел: API Tools]]
-- [[README|Insomnia]] — лёгкая альтернатива
-- [[README|API Testing]] — виды тестов и место Postman в них
-- [[README|Swagger / OpenAPI]] — импорт/экспорт спецификаций
-- [[README|API Documentation]]
-- [[README|REST API]]
+- [Родительский раздел: API Tools](../../../../basics/README.md)
+- [Insomnia](../../../../basics/README.md) — лёгкая альтернатива
+- [API Testing](../../../../basics/README.md) — виды тестов и место Postman в них
+- [Swagger / OpenAPI](../../../../basics/README.md) — импорт/экспорт спецификаций
+- [API Documentation](../../../../basics/README.md)
+- [REST API](../../../../basics/README.md)
 
 ### Внешние ресурсы
 - [Postman Learning Center](https://learning.postman.com/docs/getting-started/introduction/)
@@ -84,7 +84,7 @@ newman run api.postman_collection.json \
 
 ## Куда идти дальше
 
-- Insomnia как альтернатива — [[README]]
-- Систематическое тестирование API — [[README]]
-- OpenAPI и импорт спецификаций — [[README]]
-- REST API design — [[README]]
+- Insomnia как альтернатива — [README](../../../../basics/README.md)
+- Систематическое тестирование API — [README](../../../../basics/README.md)
+- OpenAPI и импорт спецификаций — [README](../../../../basics/README.md)
+- REST API design — [README](../../../../basics/README.md)

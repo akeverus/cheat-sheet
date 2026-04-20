@@ -15,7 +15,7 @@ updated: "2026-04-19"
 ---
 # Вопросы на собеседовании: `Caching Performance`
 
-`Caching Performance` — метрики и tuning cache: **hit ratio**, eviction, TTL, thundering herd. Отличие от [[caching-strategies-interview|стратегий кэширования]] — здесь фокус на **measurement и troubleshooting** производительности. Ошибки: low hit ratio, stampede, cache bloat, stale serving.
+`Caching Performance` — метрики и tuning cache: **hit ratio**, eviction, TTL, thundering herd. Отличие от [стратегий кэширования](../architecture/caching-strategies-interview.md) — здесь фокус на **measurement и troubleshooting** производительности. Ошибки: low hit ratio, stampede, cache bloat, stale serving.
 
 ## Полезные ссылки
 
@@ -1144,20 +1144,20 @@ Other edges hit shield (shield pre-populated)
 
 ## See also
 
-- [[caching-strategies-interview|Caching Strategies]] — patterns (write-through, aside)
-- [[database-performance-interview|Database Performance]] — cache reduces DB load
-- [[redis-interview|Redis]] — deeper Redis internals
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — L1 cache memory
-- [[memory-management-interview|Memory Management]] — in-proc cache GC impact
-- [[application-profiling-interview|Application Profiling]] — how to measure cache overhead
-- [[network-performance-interview|Network Performance]] — RTT к Redis
-- [[performance-testing-interview|Performance Testing]] — load test with cache
-- [[load-balancing-interview|Load Balancing]] — session affinity, cache locality
-- [[scalability-patterns-interview|Scalability Patterns]] — caching as scale tool
+- [Caching Strategies](../architecture/caching-strategies-interview.md) — patterns (write-through, aside)
+- [Database Performance](database-performance-interview.md) — cache reduces DB load
+- [Redis](../databases/redis-interview.md) — deeper Redis internals
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md) — L1 cache memory
+- [Memory Management](memory-management-interview.md) — in-proc cache GC impact
+- [Application Profiling](application-profiling-interview.md) — how to measure cache overhead
+- [Network Performance](network-performance-interview.md) — RTT к Redis
+- [Performance Testing](performance-testing-interview.md) — load test with cache
+- [Load Balancing](../architecture/load-balancing-interview.md) — session affinity, cache locality
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — caching as scale tool
 
-- [[application-profiling-interview|Application Profiling]]
-- [[database-performance-interview|Database Performance]]
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
-- [[memory-management-interview|Memory Management]]
-- [[network-performance-interview|Network Performance]]
-- [[performance-testing-interview|Performance Testing]]
+- [Application Profiling](application-profiling-interview.md)
+- [Database Performance](database-performance-interview.md)
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md)
+- [Memory Management](memory-management-interview.md)
+- [Network Performance](network-performance-interview.md)
+- [Performance Testing](performance-testing-interview.md)

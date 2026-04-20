@@ -431,13 +431,13 @@ public void handle(ConsumerRecord<String, OrderEvent> record,
 
 ## See also
 
-- [[kafka-interview|Apache Kafka]] — основы Kafka: partitions, offsets, consumer groups, delivery semantics
-- [[spring-boot-interview|Spring Boot]] — auto-configuration, Spring Boot starters
-- [[spring-transaction-interview|Spring @Transactional]] — транзакции Kafka + JPA через ChainedKafkaTransactionManager
-- [[spring-retry-interview|Spring Retry]] — retry в Kafka listeners через DefaultErrorHandler
-- [[spring-modulith-interview|Spring Modulith]] — ApplicationEvents как альтернатива Kafka в монолите
-- [[spring-webflux-interview|Spring WebFlux]] — реактивный стек с ReactiveKafkaConsumerTemplate
-- [[spring-testing-interview|Spring Testing]] — @EmbeddedKafka для интеграционных тестов
-- [[messaging-interview|Message Brokers]] — сравнение Kafka, RabbitMQ, Pulsar
-- [[spring-events-interview|Spring Events]] — ApplicationEventPublisher как лёгкая альтернатива
-- [[resilience4j-interview|Resilience4j]] — circuit breaker для Kafka producers
+- [Apache Kafka](../../messaging/kafka-interview.md) — основы Kafka: partitions, offsets, consumer groups, delivery semantics
+- [Spring Boot](spring-boot-interview.md) — auto-configuration, Spring Boot starters
+- [Spring @Transactional](spring-transaction-interview.md) — транзакции Kafka + JPA через ChainedKafkaTransactionManager
+- [Spring Retry](spring-retry-interview.md) — retry в Kafka listeners через DefaultErrorHandler
+- [Spring Modulith](spring-modulith-interview.md) — ApplicationEvents как альтернатива Kafka в монолите
+- [Spring WebFlux](spring-webflux-interview.md) — реактивный стек с ReactiveKafkaConsumerTemplate
+- [Spring Testing](spring-testing-interview.md) — @EmbeddedKafka для интеграционных тестов
+- [Message Brokers](../../messaging/message-brokers-comparison-interview.md) — сравнение Kafka, RabbitMQ, Pulsar
+- [Spring Events](spring-events-interview.md) — ApplicationEventPublisher как лёгкая альтернатива
+- [Resilience4j](resilience4j-interview.md) — circuit breaker для Kafka producers

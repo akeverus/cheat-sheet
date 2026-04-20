@@ -18,16 +18,16 @@ APM (Application Performance Monitoring) — класс инструментов
 ## Полезные ссылки
 
 ### Основные документы
-- [[datadog]] — унифицированная SaaS-платформа (APM + infra + logs + RUM)
-- [[elastic-apm|Elastic APM]] — APM поверх Elastic Stack (ES + Kibana)
-- [[new-relic|New Relic]] — APM, NRQL, Java-агент, distributed tracing
+- [datadog](datadog.md) — унифицированная SaaS-платформа (APM + infra + logs + RUM)
+- [Elastic APM](elastic-apm.md) — APM поверх Elastic Stack (ES + Kibana)
+- [New Relic](new-relic.md) — APM, NRQL, Java-агент, distributed tracing
 
 ### Соседние разделы
-- [[README|Monitoring]]
-- [[README|Metrics]] — Prometheus/Grafana/Micrometer
-- [[README|Tracing]] — Jaeger, Zipkin, OpenTelemetry
-- [[README|Logging]]
-- [[README|Alerting]]
+- [Monitoring](../../basics/README.md)
+- [Metrics](../../basics/README.md) — Prometheus/Grafana/Micrometer
+- [Tracing](../../basics/README.md) — Jaeger, Zipkin, OpenTelemetry
+- [Logging](../../basics/README.md)
+- [Alerting](../../basics/README.md)
 
 ### Внешние ресурсы
 - [OpenTelemetry](https://opentelemetry.io/) — единый стандарт телеметрии
@@ -55,18 +55,18 @@ APM (Application Performance Monitoring) — класс инструментов
 
 | Задача | Инструмент |
 |--------|-----------|
-| SaaS-APM с готовыми дашбордами и инфра-мониторингом | [[datadog]] |
-| Хочется остаться в Elastic Stack, корреляция с логами | [[elastic-apm|Elastic APM]] |
-| Глубокий Java-агент, distributed tracing, NRQL-запросы | [[new-relic|New Relic]] |
-| Полный self-hosted на OSS | Prometheus + [[jaeger]] + [[elk-stack|ELK]] |
-| Vendor-neutral SDK и инструментация | [[opentelemetry]] |
+| SaaS-APM с готовыми дашбордами и инфра-мониторингом | [datadog](datadog.md) |
+| Хочется остаться в Elastic Stack, корреляция с логами | [Elastic APM](elastic-apm.md) |
+| Глубокий Java-агент, distributed tracing, NRQL-запросы | [New Relic](new-relic.md) |
+| Полный self-hosted на OSS | Prometheus + [jaeger](../tracing/jaeger.md) + [ELK](../logging/elk-stack.md) |
+| Vendor-neutral SDK и инструментация | [opentelemetry](../tracing/opentelemetry.md) |
 
 ## APM vs Prometheus/Jaeger
 
-- **Prometheus** ([[prometheus]]) — pull-модель, time-series, PromQL. Отличен для инфра и JVM-метрик.
-- **Jaeger/Zipkin** ([[jaeger]], [[zipkin]]) — distributed tracing, корреляция вызовов между сервисами.
+- **Prometheus** ([prometheus](../metrics/prometheus.md)) — pull-модель, time-series, PromQL. Отличен для инфра и JVM-метрик.
+- **Jaeger/Zipkin** ([jaeger](../tracing/jaeger.md), [zipkin](../tracing/zipkin.md)) — distributed tracing, корреляция вызовов между сервисами.
 - **APM-платформы** объединяют оба потока + ошибки + dependency map + profiling в одном UI, часто за счёт стоимости и vendor lock-in.
-- Через [[opentelemetry]] можно писать код один раз и переключать backend (Datadog, New Relic, Elastic APM, Jaeger) без переинструментирования.
+- Через [opentelemetry](../tracing/opentelemetry.md) можно писать код один раз и переключать backend (Datadog, New Relic, Elastic APM, Jaeger) без переинструментирования.
 
 ## Маршруты чтения
 
@@ -76,7 +76,7 @@ APM (Application Performance Monitoring) — класс инструментов
 
 ## Куда идти дальше
 
-- Метрики — [[README]]
-- Трейсинг — [[README]]
-- Логирование — [[README]]
-- Observability — [[observability-guide]]
+- Метрики — [README](../../basics/README.md)
+- Трейсинг — [README](../../basics/README.md)
+- Логирование — [README](../../basics/README.md)
+- Observability — [observability-guide](../observability-guide.md)

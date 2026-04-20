@@ -190,7 +190,7 @@ graph TD
     D --> G[Удаление/изменение]
 ```
 
-Принцип защиты — **deny-by-default** на каждом уровне: контроллер, сервис, база данных. Подробнее о паттернах авторизации — в [[authentication-authorization-patterns-interview|вопросах по авторизации]].
+Принцип защиты — **deny-by-default** на каждом уровне: контроллер, сервис, база данных. Подробнее о паттернах авторизации — в [вопросах по авторизации](authentication-authorization-patterns-interview.md).
 
 ## Q5. (!) Что такое IDOR и как от него защищаться?
 
@@ -232,7 +232,7 @@ Optional<Account> findByIdAndOwnerId(@Param("id") Long id,
 
 Дополнительные меры:
 - Использовать **`UUID`** вместо sequential `Long` для идентификаторов — усложняет перебор
-- Централизовать проверку ownership в **`PermissionEvaluator`** (см. [[spring-security-interview|Spring Security]])
+- Централизовать проверку ownership в **`PermissionEvaluator`** (см. [Spring Security](../frameworks/spring/spring-security-interview.md))
 - Добавить **`Row Level Security`** на уровне БД как defense in depth
 
 ## Q6. Чем отличается вертикальная эскалация привилегий от горизонтальной?
@@ -926,7 +926,7 @@ if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
 }
 ```
 
-Подробнее о паттернах аутентификации — в [[authentication-authorization-patterns-interview|вопросах по аутентификации]], о `OAuth2` — в [[oauth2-interview|вопросах по OAuth2]].
+Подробнее о паттернах аутентификации — в [вопросах по аутентификации](authentication-authorization-patterns-interview.md), о `OAuth2` — в [вопросах по OAuth2](oauth2-interview.md).
 
 ## Q25. Как защититься от brute force и credential stuffing?
 
@@ -1249,7 +1249,7 @@ public class SecurityAlertService {
 }
 ```
 
-Рекомендуемые метрики для дашбордов (подробнее в [[application-security-interview|вопросах по безопасности приложений]]):
+Рекомендуемые метрики для дашбордов (подробнее в [вопросах по безопасности приложений](application-security-interview.md)):
 - `security.auth.failure.rate` — аномальный рост = brute force
 - `security.access_denied.rate` — аномальный рост = зондирование
 - `security.input_validation.failure.rate` — аномальный рост = injection-попытки
@@ -1905,18 +1905,18 @@ public String getDbPassword() {
 
 ## See also
 
-- [[application-security-interview|Безопасность приложений]] — общие принципы AppSec, Defense in Depth
-- [[authentication-authorization-patterns-interview|Паттерны аутентификации и авторизации]] — RBAC, ABAC, Zero Trust
-- [[oauth2-interview|OAuth 2.0 и OpenID Connect]] — авторизационные flows, JWT, токены
-- [[spring-security-interview|Spring Security]] — реализация безопасности в Spring
-- [[microservices-interview|Микросервисы]] — безопасность в распределённых системах, service mesh
-- [[distributed-systems-interview|Распределённые системы]] — безопасность на уровне инфраструктуры
-- [[kubernetes-interview|Kubernetes]] — Pod Security, Network Policy, Secrets
-- [[http-rest-interview|HTTP и REST]] — security headers, CORS, TLS
+- [Безопасность приложений](application-security-interview.md) — общие принципы AppSec, Defense in Depth
+- [Паттерны аутентификации и авторизации](authentication-authorization-patterns-interview.md) — RBAC, ABAC, Zero Trust
+- [OAuth 2.0 и OpenID Connect](oauth2-interview.md) — авторизационные flows, JWT, токены
+- [Spring Security](../frameworks/spring/spring-security-interview.md) — реализация безопасности в Spring
+- [Микросервисы](../architecture/microservices-interview.md) — безопасность в распределённых системах, service mesh
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — безопасность на уровне инфраструктуры
+- [Kubernetes](../devops/kubernetes-interview.md) — Pod Security, Network Policy, Secrets
+- [HTTP и REST](../api/http-rest-interview.md) — security headers, CORS, TLS
 
-- [[application-security-interview|Application Security]]
-- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
-- [[jwt-interview|JWT]]
-- [[mtls-interview|mTLS (Mutual TLS)]]
-- [[oauth2-interview|OAuth2]]
-- [[secrets-management-interview|Secrets Management]]
+- [Application Security](application-security-interview.md)
+- [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
+- [JWT](jwt-interview.md)
+- [mTLS (Mutual TLS)](mtls-interview.md)
+- [OAuth2](oauth2-interview.md)
+- [Secrets Management](secrets-management-interview.md)

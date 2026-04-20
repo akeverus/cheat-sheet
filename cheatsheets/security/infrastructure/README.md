@@ -18,15 +18,15 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[infrastructure-security]] — сетевая безопасность, хосты, контейнеры, Kubernetes, облако
-- [[tls-ssl]] — TLS 1.2/1.3, X.509, mTLS, Nginx/Spring Boot/JVM, Let's Encrypt
+- [infrastructure-security](infrastructure-security.md) — сетевая безопасность, хосты, контейнеры, Kubernetes, облако
+- [tls-ssl](tls-ssl.md) — TLS 1.2/1.3, X.509, mTLS, Nginx/Spring Boot/JVM, Let's Encrypt
 
 ### Соседние разделы
-- [[README|security/]] — корень раздела
-- [[README|security/data/]] — шифрование, PKI, сертификаты
-- [[README|security/application/]] — прикладной уровень
-- [[README|platform/containers/kubernetes/]] — общий обзор K8s
-- [[README|platform/cloud-providers/]] — облачные сервисы
+- [security/](../../basics/README.md) — корень раздела
+- [security/data/](../../basics/README.md) — шифрование, PKI, сертификаты
+- [security/application/](../../basics/README.md) — прикладной уровень
+- [platform/containers/kubernetes/](../../basics/README.md) — общий обзор K8s
+- [platform/cloud-providers/](../../basics/README.md) — облачные сервисы
 
 ### Внешние ресурсы
 - [CIS Benchmarks](https://www.cisecurity.org/cis-benchmarks/) — руководства по hardening для Docker, Kubernetes, Linux, AWS/Azure/GCP
@@ -48,17 +48,17 @@ updated: "2026-04-20"
 
 | Тема | Где читать |
 |------|-----------|
-| Сетевая сегментация, firewall | [[infrastructure-security]] |
-| SSH, bastion, Zero Trust | [[infrastructure-security]] |
-| Linux hardening (AppArmor, SELinux, seccomp) | [[infrastructure-security]] |
-| Docker security (rootless, read-only FS, capabilities) | [[infrastructure-security]] |
-| Kubernetes RBAC, NetworkPolicy, PSS | [[infrastructure-security]] |
-| IAM, least privilege, AssumeRole | [[infrastructure-security]] |
-| Облако: VPC, security groups, KMS | [[infrastructure-security]] |
-| mTLS, service mesh, cert-manager | [[infrastructure-security]] |
-| TLS handshake, cipher suites, X.509 | [[tls-ssl]] |
-| Nginx/Spring Boot SSL, JVM keystore | [[tls-ssl]] |
-| Let's Encrypt / ACME / cert-manager | [[tls-ssl]] |
+| Сетевая сегментация, firewall | [infrastructure-security](infrastructure-security.md) |
+| SSH, bastion, Zero Trust | [infrastructure-security](infrastructure-security.md) |
+| Linux hardening (AppArmor, SELinux, seccomp) | [infrastructure-security](infrastructure-security.md) |
+| Docker security (rootless, read-only FS, capabilities) | [infrastructure-security](infrastructure-security.md) |
+| Kubernetes RBAC, NetworkPolicy, PSS | [infrastructure-security](infrastructure-security.md) |
+| IAM, least privilege, AssumeRole | [infrastructure-security](infrastructure-security.md) |
+| Облако: VPC, security groups, KMS | [infrastructure-security](infrastructure-security.md) |
+| mTLS, service mesh, cert-manager | [infrastructure-security](infrastructure-security.md) |
+| TLS handshake, cipher suites, X.509 | [tls-ssl](tls-ssl.md) |
+| Nginx/Spring Boot SSL, JVM keystore | [tls-ssl](tls-ssl.md) |
+| Let's Encrypt / ACME / cert-manager | [tls-ssl](tls-ssl.md) |
 
 ## CIS Benchmarks как ориентир
 
@@ -81,7 +81,7 @@ CIS публикует структурированные benchmark-докуме
 
 ## Куда идти дальше
 
-- Scanning-инструменты (Trivy, kube-bench, tfsec) — [[README]]
-- Security-тестирование в CI/CD — [[README]]
-- Secrets в кластере — [[secrets-management]]
-- Kubernetes-углубление — [[README]]
+- Scanning-инструменты (Trivy, kube-bench, tfsec) — [README](../../basics/README.md)
+- Security-тестирование в CI/CD — [README](../../basics/README.md)
+- Secrets в кластере — [secrets-management](../data/secrets-management.md)
+- Kubernetes-углубление — [README](../../basics/README.md)

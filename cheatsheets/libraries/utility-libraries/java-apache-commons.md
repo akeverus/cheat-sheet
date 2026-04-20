@@ -31,10 +31,10 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[jackson|Jackson: JSON сериализация в Java]]
-- [[java-gson|Gson]]
-- [[java-junit5|JUnit 5]]
-- [[java-mockito|Mockito]]
+- [Jackson: JSON сериализация в Java](../serialization/jackson.md)
+- [Gson](../serialization/java-gson.md)
+- [JUnit 5](../testing-libraries/java-junit5.md)
+- [Mockito](../testing-libraries/java-mockito.md)
 ## Содержание
 
 - [Введение в Apache Commons](#введение-в-apache-commons)
@@ -1492,4 +1492,4 @@ public class DataProcessingService {
 
 ## См. также
 
-- [[java-guava|Google Guava: Утилиты для Java]]
+- [Google Guava: Утилиты для Java](java-guava.md)

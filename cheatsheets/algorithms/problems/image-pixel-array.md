@@ -23,11 +23,11 @@ updated: "2026-04-20"
 ### См. также
 - [Задачи и алгоритмы](./) — обзор разделов
 
-- [[a-star-pathfinding|Поиск пути A* (A* Pathfinding Algorithm)]]
-- [[algorithms|Хеширование и хеш-функции (Hashing and Hash Functions)]]
-- [[branch-prediction|Предсказание ветвления (Branch Prediction)]]
-- [[calculator-implementation|Calculator Implementation]]
-- [[circular-buffer|Circular Buffer]]
+- [Поиск пути A* (A* Pathfinding Algorithm)](a-star-pathfinding.md)
+- [Хеширование и хеш-функции (Hashing and Hash Functions)](algorithms.md)
+- [Предсказание ветвления (Branch Prediction)](branch-prediction.md)
+- [Calculator Implementation](calculator-implementation.md)
+- [Circular Buffer](circular-buffer.md)
 
 ## Содержание
 

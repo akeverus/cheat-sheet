@@ -321,7 +321,7 @@ spec:
 | `ip_hash` | Просто, без cookie | Не работает за `NAT` |
 | Cookie | Надёжнее, гранулярнее | Требует поддержки cookie |
 
-**Рекомендация:** избегать sticky session. Предпочтительно stateless приложение с общим хранилищем сессий в [[redis-interview|Redis]] или `Memcached`. Sticky session — только для legacy систем, где невозможно вынести состояние.
+**Рекомендация:** избегать sticky session. Предпочтительно stateless приложение с общим хранилищем сессий в [Redis](../databases/redis-interview.md) или `Memcached`. Sticky session — только для legacy систем, где невозможно вынести состояние.
 
 ## Q5. Чем отличается активная балансировка от пассивной?
 
@@ -346,7 +346,7 @@ graph TB
 
 **Практика в Kubernetes:** `livenessProbe` и `readinessProbe` — активные проверки. При провале `readinessProbe` под исключается из `Service` и не получает трафик. При провале `livenessProbe` — под перезапускается.
 
-Для критичных сервисов предпочтительна **активная** проверка с интервалом 5-10 секунд и порогом 2-3 неудачи. Метрики (число healthy/unhealthy бэкендов) экспортировать в `Prometheus` для алертинга — подробнее в [[metrics-tracing-interview|вопросах по мониторингу]].
+Для критичных сервисов предпочтительна **активная** проверка с интервалом 5-10 секунд и порогом 2-3 неудачи. Метрики (число healthy/unhealthy бэкендов) экспортировать в `Prometheus` для алертинга — подробнее в [вопросах по мониторингу](../monitoring/metrics-tracing-interview.md).
 
 ## Q6. (!) Что такое Round Robin и когда его применять?
 
@@ -411,7 +411,7 @@ backend app_servers
     server app3 10.0.0.3:8080 weight 1 check
 ```
 
-В примере выше за 9 запросов: A получит 5, B получит 3, C получит 1. Удобно для [[deployment-strategies-interview|canary-деплоев]]: новому инстансу ставят вес 1, постепенно увеличивая.
+В примере выше за 9 запросов: A получит 5, B получит 3, C получит 1. Удобно для [canary-деплоев](../cicd/deployment-strategies-interview.md): новому инстансу ставят вес 1, постепенно увеличивая.
 
 ## Q8. Что такое Least Connections и когда его применять?
 
@@ -473,7 +473,7 @@ upstream backend_pool {
 | Кэширование, sharding | `Consistent Hashing` | Локальность данных |
 | Обязательное состояние на узле | `Sticky Session` | Привязка клиента к узлу |
 
-**Рекомендация:** для [[microservices-interview|микросервисов]] — stateless приложение + `Round Robin`. Если нужна более умная балансировка — `Least Connections`. Sticky session — крайняя мера; лучше вынести состояние в [[redis-interview|Redis]].
+**Рекомендация:** для [микросервисов](microservices-interview.md) — stateless приложение + `Round Robin`. Если нужна более умная балансировка — `Least Connections`. Sticky session — крайняя мера; лучше вынести состояние в [Redis](../databases/redis-interview.md).
 
 ## Q11. (!) Как настроить upstream балансировку в Nginx?
 
@@ -611,7 +611,7 @@ http {
 }
 ```
 
-При превышении лимита клиент получает `429 Too Many Requests`. Подробнее о rate limiting в контексте API — в [[http-rest-interview|вопросах по HTTP/REST]].
+При превышении лимита клиент получает `429 Too Many Requests`. Подробнее о rate limiting в контексте API — в [вопросах по HTTP/REST](../api/http-rest-interview.md).
 
 ## Q14. (!) Как настроить балансировку в HAProxy?
 
@@ -746,7 +746,7 @@ graph TB
 | Сложность клиента | Низкая | Выше (LB логика в клиенте) |
 | Примеры | `Nginx`, `HAProxy`, `AWS ALB` | `Spring Cloud LoadBalancer`, `gRPC` client LB |
 
-В [[microservices-interview|микросервисной архитектуре]] часто комбинируют оба подхода: внешний трафик через серверный балансировщик, межсервисные вызовы — через клиентскую балансировку.
+В [микросервисной архитектуре](microservices-interview.md) часто комбинируют оба подхода: внешний трафик через серверный балансировщик, межсервисные вызовы — через клиентскую балансировку.
 
 ## Q17. Как настроить Spring Cloud LoadBalancer?
 
@@ -827,7 +827,7 @@ public class PaymentService {
 }
 ```
 
-По умолчанию используется `Round Robin`. Подробнее о Service Discovery и Spring Cloud — в [[spring-cloud-interview|вопросах по Spring Cloud]].
+По умолчанию используется `Round Robin`. Подробнее о Service Discovery и Spring Cloud — в [вопросах по Spring Cloud](../frameworks/spring/spring-cloud-interview.md).
 
 ## Q18. Как реализовать кастомную стратегию балансировки в Spring Cloud?
 
@@ -924,7 +924,7 @@ backend api_servers
     server canary1 10.0.0.3:8080 weight 10 check
 ```
 
-Подробнее о стратегиях деплоя — в [[deployment-strategies-interview|вопросах по стратегиям деплоя]].
+Подробнее о стратегиях деплоя — в [вопросах по стратегиям деплоя](../cicd/deployment-strategies-interview.md).
 
 ## Q20. (!) Как обеспечить отказоустойчивость балансировщика?
 
@@ -1025,11 +1025,11 @@ spec:
 - Интеграция с `WAF`, `Cognito`
 - Поддержка `WebSocket`, `HTTP/2`
 
-**Выбор:** L4 для не-HTTP протоколов и минимальной латентности. L7 для HTTP/HTTPS с маршрутизацией по содержимому. Подробнее об облачной инфраструктуре — в [[scalability-patterns-interview|паттернах масштабирования]].
+**Выбор:** L4 для не-HTTP протоколов и минимальной латентности. L7 для HTTP/HTTPS с маршрутизацией по содержимому. Подробнее об облачной инфраструктуре — в [паттернах масштабирования](scalability-patterns-interview.md).
 
 ## Q23. (!) Как настроить health check в Kubernetes для Pod?
 
-В [[kubernetes-interview|Kubernetes]] три типа проб:
+В [Kubernetes](../devops/kubernetes-interview.md) три типа проб:
 
 - **`startupProbe`** — проверка при запуске. Пока не пройдёт, liveness и readiness не запускаются. Для приложений с долгим стартом.
 - **`livenessProbe`** — приложение живо? При провале — перезапуск контейнера.
@@ -1196,7 +1196,7 @@ spec:
 4. Существующие запросы завершаются
 5. По истечении `terminationGracePeriodSeconds` — `SIGKILL`
 
-Подробнее — в [[deployment-strategies-interview|вопросах по стратегиям деплоя]].
+Подробнее — в [вопросах по стратегиям деплоя](../cicd/deployment-strategies-interview.md).
 
 ## Q26. (!) Что такое DNS-based load balancing?
 
@@ -1270,7 +1270,7 @@ graph TB
 - **GCP Global Load Balancer** — единый `Anycast` IP, автоматическая гео-маршрутизация
 
 **Ключевые проблемы:**
-- Синхронизация данных между регионами (eventual consistency) — см. [[consistency-patterns-interview|паттерны согласованности]]
+- Синхронизация данных между регионами (eventual consistency) — см. [паттерны согласованности](consistency-patterns-interview.md)
 - Failover при падении целого региона
 - Compliance (GDPR — данные EU-пользователей в EU)
 
@@ -1435,7 +1435,7 @@ backend ws_servers
     server ws2 10.0.0.2:8080 check
 ```
 
-**Рекомендация:** для масштабирования WebSocket приложений — хранить состояние сессий в [[redis-interview|Redis]] Pub/Sub, чтобы сообщения доставлялись клиентам на любом сервере.
+**Рекомендация:** для масштабирования WebSocket приложений — хранить состояние сессий в [Redis](../databases/redis-interview.md) Pub/Sub, чтобы сообщения доставлялись клиентам на любом сервере.
 
 ## Q32. Что такое path-based routing в L7 балансировщике?
 
@@ -1492,7 +1492,7 @@ frontend http_front
     default_backend app_servers
 ```
 
-Path-based routing упрощает архитектуру [[microservices-interview|микросервисов]] без необходимости отдельного API Gateway.
+Path-based routing упрощает архитектуру [микросервисов](microservices-interview.md) без необходимости отдельного API Gateway.
 
 ## Q33. Как обеспечить балансировку для stateful приложений?
 
@@ -1541,11 +1541,11 @@ upstream backend {
 }
 ```
 
-**Рекомендация:** вариант 2 (Redis) — наиболее надёжный. Приложение stateless, горизонтально масштабируется, при падении узла сессии не теряются. Подробнее о Redis — в [[redis-interview|вопросах по Redis]].
+**Рекомендация:** вариант 2 (Redis) — наиболее надёжный. Приложение stateless, горизонтально масштабируется, при падении узла сессии не теряются. Подробнее о Redis — в [вопросах по Redis](../databases/redis-interview.md).
 
 ## Q34. (!) Как мониторить и анализировать работу балансировщика?
 
-Ключевые метрики для [[metrics-tracing-interview|мониторинга]] балансировщика:
+Ключевые метрики для [мониторинга](../monitoring/metrics-tracing-interview.md) балансировщика:
 
 | Метрика | Описание | Алерт |
 |---------|----------|-------|
@@ -1608,7 +1608,7 @@ histogram_quantile(0.99,
   rate(nginx_upstream_response_duration_seconds_bucket[5m])) > 0.2
 ```
 
-Экспортировать метрики в [[observability-interview|систему наблюдаемости]] (`Prometheus` + `Grafana`) для визуализации и алертинга.
+Экспортировать метрики в [систему наблюдаемости](../monitoring/observability-interview.md) (`Prometheus` + `Grafana`) для визуализации и алертинга.
 
 ## Q35. Как балансировщик обрабатывает медленные бэкенды?
 
@@ -1672,7 +1672,7 @@ backend app_servers
 - Настроить таймауты (`proxy_read_timeout`, `timeout server`)
 - Включить `proxy_next_upstream` для автоматического retry
 - Мониторить p95/p99 по каждому бэкенду отдельно
-- Настроить circuit breaker на уровне приложения (подробнее в [[spring-cloud-interview|Spring Cloud]])
+- Настроить circuit breaker на уровне приложения (подробнее в [Spring Cloud](../frameworks/spring/spring-cloud-interview.md))
 
 ## Q36. (!) Что такое IP Hash и когда его использовать?
 
@@ -1878,18 +1878,18 @@ spec:
 
 ## See also
 
-- [[scalability-patterns-interview|Паттерны масштабируемости]] — горизонтальное масштабирование и autoscaling
-- [[microservices-interview|Микросервисы]] — service discovery и межсервисная балансировка
-- [[distributed-systems-interview|Распределённые системы]] — репликация и отказоустойчивость за балансировщиком
-- [[kubernetes-interview|Kubernetes]] — Ingress, Service и балансировка в кластере
-- [[caching-strategies-interview|Стратегии кэширования]] — снижение нагрузки на бэкенды через кэширование
-- [[spring-cloud-interview|Spring Cloud]] — Spring Cloud LoadBalancer и интеграция со Service Discovery
-- [[resilience-patterns-interview|Паттерны отказоустойчивости]] — Circuit Breaker и health check при балансировке
+- [Паттерны масштабируемости](scalability-patterns-interview.md) — горизонтальное масштабирование и autoscaling
+- [Микросервисы](microservices-interview.md) — service discovery и межсервисная балансировка
+- [Распределённые системы](distributed-systems-interview.md) — репликация и отказоустойчивость за балансировщиком
+- [Kubernetes](../devops/kubernetes-interview.md) — Ingress, Service и балансировка в кластере
+- [Стратегии кэширования](caching-strategies-interview.md) — снижение нагрузки на бэкенды через кэширование
+- [Spring Cloud](../frameworks/spring/spring-cloud-interview.md) — Spring Cloud LoadBalancer и интеграция со Service Discovery
+- [Паттерны отказоустойчивости](resilience-patterns-interview.md) — Circuit Breaker и health check при балансировке
 - Метрики per-endpoint автоматически
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[cap-theorem-interview|CAP-теорема]]
-- [[clean-architecture-interview|Clean Architecture]]
-- [[consistency-patterns-interview|Паттерны согласованности]]
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [CAP-теорема](cap-theorem-interview.md)
+- [Clean Architecture](clean-architecture-interview.md)
+- [Паттерны согласованности](consistency-patterns-interview.md)

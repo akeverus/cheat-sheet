@@ -19,12 +19,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: K-th element of two sorted Arrays](https://www.geeksforgeeks.org/k-th-element-two-sorted-arrays/)
 
 ### См. также
-- [[binary-search|Бинарный поиск]] — binary search
-- [[merge-two-sorted-arrays|Объединение двух отсортированных массивов]] — merge two sorted
-- [[merge-sorted-sequences|Объединение отсортированных последовательностей]] — merge K sorted
+- [Бинарный поиск](binary-search.md) — binary search
+- [Объединение двух отсортированных массивов](merge-two-sorted-arrays.md) — merge two sorted
+- [Объединение отсортированных последовательностей](merge-sorted-sequences.md) — merge K sorted
 
-- [[maximum-subarray|Максимальный подмассив (Maximum Subarray Problem)]]
-- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
+- [Максимальный подмассив (Maximum Subarray Problem)](maximum-subarray.md)
+- [k наибольших элементов (K Largest Elements)](k-largest-elements.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -32,14 +32,14 @@ updated: "2026-04-20"
 - [**Spring Batch Performance** Tuning](https://docs.spring.io/spring-batch/reference/scalability.html) — производительность
 
 ### См. также
-- [[spring-boot|**Spring Boot**]] — **Spring Boot** основы
-- [[README|**PostgreSQL**]] — БД для **batch processing**
+- [**Spring Boot**](../../spring/spring-boot.md) — **Spring Boot** основы
+- [**PostgreSQL**](../../../basics/README.md) — БД для **batch processing**
 - [Мониторинг](../../../monitoring/) — мониторинг **batch jobs**
-- [[spring-integration|**Spring Integration**]] — интеграция с другими системами
+- [**Spring Integration**](spring-integration.md) — интеграция с другими системами
 
-- [[spring-websocket|Spring WebSocket]]
-- [[spring-ai|Spring AI]]
-- [[spring-batch-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Spring WebSocket](spring-websocket.md)
+- [Spring AI](spring-ai.md)
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-batch-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Spring Batch](#введение-в-spring-batch)

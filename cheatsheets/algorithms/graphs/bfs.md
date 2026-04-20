@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Visualgo: BFS](https://visualgo.net/)
 
 ### См. также
-- [[dijkstra|dijkstra.md]] — алгоритм Дейкстры
-- [[jgrapht|jgrapht.md]] — библиотека JGraphT
+- [dijkstra.md](dijkstra.md) — алгоритм Дейкстры
+- [jgrapht.md](jgrapht.md) — библиотека JGraphT
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](../strings/roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](../strings/balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](../strings/suffix-tree-pattern-matching.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

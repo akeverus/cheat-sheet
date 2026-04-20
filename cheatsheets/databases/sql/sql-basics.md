@@ -24,11 +24,11 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[postgres-queries|PostgreSQL Queries]] — практики запросов в PostgreSQL
-- [[mysql-queries|MySQL Queries]] — практики запросов в MySQL
-- [[postgres-indexes|PostgreSQL Indexes]] — проектирование индексов
+- [PostgreSQL Queries](../relational/postgresql/postgres-queries.md) — практики запросов в PostgreSQL
+- [MySQL Queries](../relational/mysql/mysql-queries.md) — практики запросов в MySQL
+- [PostgreSQL Indexes](../relational/postgresql/postgres-indexes.md) — проектирование индексов
 
-- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
+- [Hibernate: JPQL, HQL и Criteria API](../orm/hibernate-jpql-criteria.md)
 ## Содержание
 
 - [Что важно понимать до первого SELECT](#что-важно-понимать-до-первого-select)
@@ -110,7 +110,7 @@ FROM payments;
 
 ## Транзакции и изоляция
 
-> Подробная шпаргалка: [[sql-transactions-isolation]] — ACID, уровни изоляции, аномалии, MVCC, блокировки, Spring @Transactional.
+> Подробная шпаргалка: [sql-transactions-isolation](sql-transactions-isolation.md) — ACID, уровни изоляции, аномалии, MVCC, блокировки, Spring @Transactional.
 
 Транзакция нужна, когда несколько изменений должны быть атомарными.
 

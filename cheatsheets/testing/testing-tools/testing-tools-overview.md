@@ -27,16 +27,16 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[cucumber|Cucumber для Java]]
-- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
-- [[micronaut-testing|Micronaut: Testing — Unit Tests, Integration Tests и Mocking]]
-- [[spring-rest|Spring REST API: Полное руководство по разработке RESTful веб-сервисов]]
+- [Cucumber для Java](../cucumber.md)
+- [Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest](../../frameworks/java-frameworks/quarkus/quarkus-testing.md)
+- [Micronaut: Testing — Unit Tests, Integration Tests и Mocking](../../frameworks/java-frameworks/micronaut/micronaut-testing.md)
+- [Spring REST API: Полное руководство по разработке RESTful веб-сервисов](../../frameworks/java-frameworks/spring/spring-rest.md)
 ## См. также
 
-- [[README|Unit Testing]]
-- [[README|Integration Testing]]
-- [[README|CI/CD]]
-- [[README|Testing Strategies]]
+- [Unit Testing](../../basics/README.md)
+- [Integration Testing](../../basics/README.md)
+- [CI/CD](../../basics/README.md)
+- [Testing Strategies](../../basics/README.md)
 - [Productivity Tools](../../tools/)
 
 ## Содержание

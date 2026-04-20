@@ -18,14 +18,14 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[security-testing]] — подходы SAST/DAST/SCA/IAST и их интеграция в пайплайн
+- [security-testing](security-testing.md) — подходы SAST/DAST/SCA/IAST и их интеграция в пайплайн
 
 ### Соседние разделы
-- [[README|security/]] — корень раздела
-- [[README|security/tools/]] — конкретные инструменты
-- [[README|security/application/]] — что именно тестируем (OWASP Top 10)
-- [[README|platform/ci-cd/]] — куда встраивать проверки
-- [[README|testing/]] — общий раздел тестирования
+- [security/](../../basics/README.md) — корень раздела
+- [security/tools/](../../basics/README.md) — конкретные инструменты
+- [security/application/](../../basics/README.md) — что именно тестируем (OWASP Top 10)
+- [platform/ci-cd/](../../basics/README.md) — куда встраивать проверки
+- [testing/](../../basics/README.md) — общий раздел тестирования
 
 ### Внешние ресурсы
 - [OWASP Web Security Testing Guide (WSTG)](https://owasp.org/www-project-web-security-testing-guide/)
@@ -46,14 +46,14 @@ updated: "2026-04-20"
 
 | Тема | Где читать |
 |------|-----------|
-| SAST (статический анализ) | [[security-testing]] |
-| DAST (динамическое тестирование) | [[security-testing]] |
-| SCA (зависимости, CVE) | [[security-testing]] |
-| IAST и RASP | [[security-testing]] |
-| Secret scanning | [[security-testing]] |
-| Container scanning | [[security-testing]] |
-| Fuzzing | [[security-testing]] |
-| Пентесты и bug bounty | [[security-testing]] |
+| SAST (статический анализ) | [security-testing](security-testing.md) |
+| DAST (динамическое тестирование) | [security-testing](security-testing.md) |
+| SCA (зависимости, CVE) | [security-testing](security-testing.md) |
+| IAST и RASP | [security-testing](security-testing.md) |
+| Secret scanning | [security-testing](security-testing.md) |
+| Container scanning | [security-testing](security-testing.md) |
+| Fuzzing | [security-testing](security-testing.md) |
+| Пентесты и bug bounty | [security-testing](security-testing.md) |
 
 ## SAST vs DAST vs SCA vs IAST
 
@@ -83,7 +83,7 @@ SAST даёт много false positive, но ловит проблемы ран
 
 ## Куда идти дальше
 
-- Инструменты и их сравнение — [[README]]
-- Что именно проверяем (OWASP Top 10) — [[README]]
-- Встраивание в пайплайн — [[README]]
-- Общие подходы к тестированию — [[README]]
+- Инструменты и их сравнение — [README](../../basics/README.md)
+- Что именно проверяем (OWASP Top 10) — [README](../../basics/README.md)
+- Встраивание в пайплайн — [README](../../basics/README.md)
+- Общие подходы к тестированию — [README](../../basics/README.md)

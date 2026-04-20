@@ -17,7 +17,7 @@ updated: "2026-04-20"
 
 В JVM-экосистеме — восемь осмысленных вариантов HTTP-клиента. Они отличаются по уровню абстракции (raw vs декларативный), модели исполнения (sync/async/reactive), зависимостям и интеграции со Spring. Эта шпаргалка помогает выбрать подходящий и быстро написать код под типовые задачи.
 
-Фокус: клиентский HTTP (вызываем чужой API), а не серверный (прием запросов). Для server-side см. [[spring-rest|Spring MVC REST]] / [[spring-webflux|Spring WebFlux]].
+Фокус: клиентский HTTP (вызываем чужой API), а не серверный (прием запросов). Для server-side см. [Spring MVC REST](../../frameworks/java-frameworks/spring/spring-rest.md) / [Spring WebFlux](../../frameworks/java-frameworks/spring/spring-webflux.md).
 
 ## Полезные ссылки
 
@@ -39,13 +39,13 @@ updated: "2026-04-20"
 - [Retrofit Tutorial](https://www.baeldung.com/retrofit)
 
 ### См. также
-- [[java-apache-httpclient|Apache HttpClient: полное руководство]]
-- [[java-okhttp|OkHttp]]
-- [[java-retrofit|Retrofit]]
-- [[spring-rest|Spring MVC REST]]
-- [[spring-webflux|Spring WebFlux]]
-- [[java-reactive-project-reactor|Project Reactor (Mono/Flux)]]
-- [[java-resilience4j|Resilience4j — Retry и Circuit Breaker]]
+- [Apache HttpClient: полное руководство](java-apache-httpclient.md)
+- [OkHttp](java-okhttp.md)
+- [Retrofit](java-retrofit.md)
+- [Spring MVC REST](../../frameworks/java-frameworks/spring/spring-rest.md)
+- [Spring WebFlux](../../frameworks/java-frameworks/spring/spring-webflux.md)
+- [Project Reactor (Mono/Flux)](../../languages/java/java-reactive-project-reactor.md)
+- [Resilience4j — Retry и Circuit Breaker](java-resilience4j.md)
 
 ## Содержание
 
@@ -163,7 +163,7 @@ User u = user.block();
 **Плюсы:** reactive-stream, backpressure, HTTP/2, эффективен при большом количестве одновременных запросов.
 **Минусы:** нужно понимать Reactor; в синхронном коде выглядит избыточно.
 
-Подробнее о Reactor — [[java-reactive-project-reactor|Project Reactor]].
+Подробнее о Reactor — [Project Reactor](../../languages/java/java-reactive-project-reactor.md).
 
 ### RestClient (Spring 6.1+)
 
@@ -242,7 +242,7 @@ try (CloseableHttpClient client = HttpClients.createDefault()) {
 **Плюсы:** зрелая кодовая база, много настроек, HTTP/2, async-вариант `HttpAsyncClient`, NTLM, клиентские сертификаты.
 **Минусы:** объёмный API, нет встроенной сериализации; интеграция со Spring — только как `ClientHttpRequestFactory` для RestTemplate/RestClient.
 
-Подробнее — [[java-apache-httpclient|Apache HttpClient]].
+Подробнее — [Apache HttpClient](java-apache-httpclient.md).
 
 ### OkHttp
 
@@ -267,7 +267,7 @@ try (Response resp = client.newCall(req).execute()) {
 **Плюсы:** простой API, connection pooling из коробки, interceptors, HTTP/2, WebSocket; легковесный.
 **Минусы:** нет Spring-интеграции «из коробки»; только sync + callback (не CompletableFuture/Mono).
 
-Подробнее — [[java-okhttp|OkHttp]].
+Подробнее — [OkHttp](java-okhttp.md).
 
 ### Retrofit
 
@@ -294,7 +294,7 @@ User u = api.byId(42).execute().body();
 **Плюсы:** декларативный API, хорошо вписывается в Android/Kotlin; гибкие ConverterFactory и CallAdapter (RxJava, Coroutines).
 **Минусы:** зависит от OkHttp; не заточен под Spring; требует отдельного Converter для JSON.
 
-Подробнее — [[java-retrofit|Retrofit]].
+Подробнее — [Retrofit](java-retrofit.md).
 
 ## Большая таблица сравнения
 
@@ -332,7 +332,7 @@ flowchart TD
 - **Spring Boot 3.2+ MVC** `RestClient`.
 - **Spring Boot 2.x MVC** `RestTemplate` сейчас, план миграции на `RestClient` после апгрейда.
 - **Spring WebFlux** `WebClient`.
-- **Микросервисы + Spring Cloud** `OpenFeign` + `Resilience4j` (см. [[java-resilience4j|Resilience4j]]).
+- **Микросервисы + Spring Cloud** `OpenFeign` + `Resilience4j` (см. [Resilience4j](java-resilience4j.md)).
 - **Android/Kotlin** OkHttp + Retrofit.
 - **Enterprise с NTLM/сложным TLS/прокси** Apache HttpClient 5.
 
@@ -435,7 +435,7 @@ WebClient client = WebClient.builder()
 
 ### Retry и fallback
 
-Ретраи лучше делать через Resilience4j или Spring Retry, а не самописно. См. [[java-resilience4j|Resilience4j]].
+Ретраи лучше делать через Resilience4j или Spring Retry, а не самописно. См. [Resilience4j](java-resilience4j.md).
 
 WebClient + Reactor retry:
 ```java
@@ -568,10 +568,10 @@ ErrorDecoder decoder() {
 - **Один клиент на приложение, а не `new` на каждый запрос.** У всех клиентов внутри connection pool — создавайте `@Bean` и инжектите.
 - **Всегда явные таймауты** — connect + read. Без них тред висит вечно на сбое сети.
 - **Ретраи только на идемпотентные методы** (`GET`, `PUT`, `DELETE`). POST — только если API гарантирует идемпотентность (через `Idempotency-Key`).
-- **Circuit breaker** обязателен для вызовов внешних сервисов — см. [[java-resilience4j|Resilience4j]].
-- **Корреляция:** пробрасывайте `X-Request-Id` / `traceparent` через interceptor — см. [[java-opentelemetry|OpenTelemetry]].
+- **Circuit breaker** обязателен для вызовов внешних сервисов — см. [Resilience4j](java-resilience4j.md).
+- **Корреляция:** пробрасывайте `X-Request-Id` / `traceparent` через interceptor — см. [OpenTelemetry](java-opentelemetry.md).
 - **Логируйте тело выборочно** — не пишите в логи токены/PII. Используйте `HttpLoggingInterceptor.Level.HEADERS` в production.
-- **Mock** — для тестов поднимайте [[java-wiremock|WireMock]] вместо моков клиента.
+- **Mock** — для тестов поднимайте [WireMock](java-wiremock.md) вместо моков клиента.
 - **Стримьте большие ответы** через `InputStream`/`Flux<DataBuffer>`, не через `String`.
 - **Не блокируйте WebClient** в event-loop — `.block()` допустим только в MVC-контексте, не в WebFlux-обработчике.
 - **Apache HttpClient 5** в RestTemplate/RestClient как `ClientHttpRequestFactory` — если нужен HTTP/2 и connection pooling с метриками.
@@ -607,14 +607,14 @@ ErrorDecoder decoder() {
 
 ## См. также
 
-- [[java-apache-httpclient|Apache HttpClient — полное руководство]]
-- [[java-okhttp|OkHttp]]
-- [[java-retrofit|Retrofit]]
-- [[java-reactive-project-reactor|Project Reactor (Mono/Flux)]]
-- [[spring-webflux|Spring WebFlux]]
-- [[spring-rest|Spring MVC REST]]
-- [[spring-cloud|Spring Cloud]]
-- [[java-resilience4j|Resilience4j: Retry, Circuit Breaker]]
-- [[java-opentelemetry|OpenTelemetry — распределённый трейсинг]]
-- [[java-wiremock|WireMock — мокирование HTTP в тестах]]
-- [[java-jdbc|Java JDBC]] — соседняя тема про работу с БД
+- [Apache HttpClient — полное руководство](java-apache-httpclient.md)
+- [OkHttp](java-okhttp.md)
+- [Retrofit](java-retrofit.md)
+- [Project Reactor (Mono/Flux)](../../languages/java/java-reactive-project-reactor.md)
+- [Spring WebFlux](../../frameworks/java-frameworks/spring/spring-webflux.md)
+- [Spring MVC REST](../../frameworks/java-frameworks/spring/spring-rest.md)
+- [Spring Cloud](../../frameworks/java-frameworks/spring/spring-cloud.md)
+- [Resilience4j: Retry, Circuit Breaker](java-resilience4j.md)
+- [OpenTelemetry — распределённый трейсинг](java-opentelemetry.md)
+- [WireMock — мокирование HTTP в тестах](java-wiremock.md)
+- [Java JDBC](../../languages/java/java-jdbc.md) — соседняя тема про работу с БД

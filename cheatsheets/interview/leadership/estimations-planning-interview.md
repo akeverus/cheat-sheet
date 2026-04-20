@@ -1,13 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Оценка и планирование"
-description: "Практические вопросы по оценке задач: story points, t-shirt sizing, planning poker, velocity, работа с неопределённостью и срывом дедлайнов."
+description: "Оценка задач: story points, t-shirt sizing, planning poker, velocity, работа с неопределённостью, срывы дедлайнов, Agile/Scrum"
 tags:
   - interview
   - leadership
-  - estimation
-  - planning
-  - agile
-  - scrum
+  - estimations-planning-interview
+aliases:
+  - "Estimations interview"
+  - "Planning interview"
+  - "Story points собеседование"
+  - "Planning Poker interview"
+  - "Agile estimation interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -273,10 +276,10 @@ Velocity 35 sp/спринт при 40 чел-днях
 
 ## See also
 
-- [[team-leadership-interview|Team Leadership]]
-- [[code-review-practices-interview|Code Review Practices]]
-- [[behavioral-interview|Behavioral]]
-- [[technical-decisions-interview|Technical Decisions]]
-- [[mentoring-interview|Mentoring]]
-- [[conflict-resolution-interview|Conflict Resolution]]
-- [[tech-interviewing-interview|Conducting Technical Interviews]]
+- [Team Leadership](team-leadership-interview.md)
+- [Code Review Practices](code-review-practices-interview.md)
+- [Behavioral](../behavioral/behavioral-interview.md)
+- [Technical Decisions](technical-decisions-interview.md)
+- [Mentoring](mentoring-interview.md)
+- [Conflict Resolution](conflict-resolution-interview.md)
+- [Conducting Technical Interviews](tech-interviewing-interview.md)

@@ -12,7 +12,7 @@ updated: "2026-04-20"
 ---
 # Kubernetes в облаке
 
-**Kubernetes** становится стандартом для оркестрации контейнеров в облачных средах. Этот документ охватывает **managed Kubernetes** сервисы (EKS, `AKS`, GKE), **best practices** для **cloud-native deployments**, **multi-cloud** стратегии и интеграцию с облачными сервисами. Документ дополняет [[kubernetes-advanced|Kubernetes Advanced]] фокусом на облачные аспекты.
+**Kubernetes** становится стандартом для оркестрации контейнеров в облачных средах. Этот документ охватывает **managed Kubernetes** сервисы (EKS, `AKS`, GKE), **best practices** для **cloud-native deployments**, **multi-cloud** стратегии и интеграцию с облачными сервисами. Документ дополняет [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) фокусом на облачные аспекты.
 
 ## Полезные ссылки
 - [AWS EKS Documentation](https://docs.aws.amazon.com/eks/)
@@ -1393,8 +1393,8 @@ azure-cost-tags:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[aws-services|AWS Services]] — сервисы **AWS**
-- [[azure-services|Azure Services]] — сервисы **Azure**
-- [[gcp-services|GCP Services]] — сервисы **GCP**
-- [[kubernetes-advanced|Kubernetes Advanced]] — **Kubernetes**
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
+- [AWS Services](aws-services.md) — сервисы **AWS**
+- [Azure Services](azure-services.md) — сервисы **Azure**
+- [GCP Services](gcp-services.md) — сервисы **GCP**
+- [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) — **Kubernetes**
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**

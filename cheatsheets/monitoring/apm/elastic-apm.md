@@ -26,9 +26,9 @@ APM на базе стека Elastic: метрики приложений, тр�
 
 
 ### См. также
-- [[monitoring-best-practices|Лучшие практики мониторинга]]
-- [[observability-guide|Руководство по Observability]]
-- [[infrastructure-monitoring|Infrastructure Monitoring (обзор)]]
+- [Лучшие практики мониторинга](../monitoring-best-practices.md)
+- [Руководство по Observability](../observability-guide.md)
+- [Infrastructure Monitoring (обзор)](../infrastructure-monitoring.md)
 ## Содержание
 
 - [Архитектура](#архитектура)
@@ -105,5 +105,5 @@ Elastic APM — open-source решение, данные хранятся в в�
 
 ## См. также
 
-- [[datadog|Datadog APM]]
-- [[new-relic|New Relic APM]]
+- [Datadog APM](datadog.md)
+- [New Relic APM](new-relic.md)

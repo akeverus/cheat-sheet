@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Joda-Time (joda.org)](https://www.joda.org/joda-time/)
 
 ### См. также
-- [[standard-deviation|Стандартное отклонение]] — стандартное отклонение
-- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
+- [Стандартное отклонение](standard-deviation.md) — стандартное отклонение
+- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -488,8 +488,8 @@ icrometer.io/docs)
 
 ## См. также
 
-- [[quarkus-basics|Quarkus: Основы]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
-- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]
-- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]
+- [Quarkus: Основы](quarkus-basics.md)
+- [Quarkus: Cache — Кеширование данных](quarkus-cache.md)
+- [Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh](quarkus-cloud.md)
+- [Quarkus: Core — CDI, Bean Scopes и Configuration](quarkus-core.md)
+- [Quarkus: Data Access — Hibernate ORM, Panache и Repositories](quarkus-data.md)

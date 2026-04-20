@@ -547,14 +547,14 @@ Required: 15 instances
 
 ## See also
 
-- [[performance-testing-interview|Performance Testing]] — общая концепция
-- [[unit-testing-interview|Unit Testing]] — context
-- [[mutation-testing-interview|Mutation Testing]]
-- [[property-based-testing-interview|Property-based Testing]]
-- [[chaos-engineering-interview|Chaos Engineering]] — production resilience
-- [[application-profiling-interview|Application Profiling]] — find bottlenecks
-- [[scalability-patterns-interview|Scalability Patterns]] — context
-- [[microservices-interview|Микросервисы]] — testing distributed systems
-- [[observability-interview|Observability]] — monitor under load
+- [Performance Testing](../performance/performance-testing-interview.md) — общая концепция
+- [Unit Testing](unit-testing-interview.md) — context
+- [Mutation Testing](mutation-testing-interview.md)
+- [Property-based Testing](property-based-testing-interview.md)
+- [Chaos Engineering](chaos-engineering-interview.md) — production resilience
+- [Application Profiling](../performance/application-profiling-interview.md) — find bottlenecks
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — context
+- [Микросервисы](../architecture/microservices-interview.md) — testing distributed systems
+- [Observability](../monitoring/observability-interview.md) — monitor under load
 - [[cicd-interview|CI/CD]] — automation
-- [[caching-strategies-interview|Caching]] — для performance
+- [Caching](../architecture/caching-strategies-interview.md) — для performance

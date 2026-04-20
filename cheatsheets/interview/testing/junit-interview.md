@@ -1,16 +1,20 @@
 ---
-title: "JUnit — Interview"
-description: "Вопросы на собеседовании по JUnit 5: аннотации, жизненный цикл, параметризованные тесты, динамические тесты, расширения, Mockito интеграция."
+title: "Вопросы на собеседовании: JUnit 5"
+description: "JUnit 5 (Jupiter): аннотации, жизненный цикл PER_CLASS/PER_METHOD, параметризованные и динамические тесты, @Nested, Extensions, интеграция с Mockito и Spring"
 tags:
   - interview
   - testing
-  - junit
-  - junit5
-  - java
+  - junit-interview
+aliases:
+  - "JUnit 5 interview"
+  - "JUnit собеседование"
+  - "Jupiter interview"
+  - "JUnit вопросы"
+  - "Java unit testing interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# JUnit — Interview
+# Вопросы на собеседовании: `JUnit 5`
 
 ## Q1. Что такое JUnit 5 и как он структурирован?
 
@@ -530,8 +534,13 @@ assertThat(service.getAllOrders()).hasSize(1);
 
 ## See also
 
-- [[junit|JUnit]] — полный cheatsheet
-- [[mockito-interview|Mockito Interview]] — мокирование
-- [[unit-testing-interview|Unit Testing Interview]] — общие вопросы
-- [[testcontainers-interview|Testcontainers Interview]] — интеграционное тестирование
-- [[spring-testing-interview|Spring Testing Interview]] — тестирование Spring
+- [Mockito](mockito-interview.md) — мокирование в unit-тестах
+- [Unit Testing](unit-testing-interview.md) — best practices модульного тестирования
+- [Testcontainers](testcontainers-interview.md) — интеграционные тесты с реальными БД/брокерами
+- [Spring Testing](../frameworks/spring/spring-testing-interview.md) — тестирование Spring + JUnit integration
+- [Integration Testing](integration-testing-interview.md) — стратегии интеграционных тестов
+- [Test Strategies](test-strategies-interview.md) — пирамида тестирования
+- [Mutation Testing](mutation-testing-interview.md) — проверка качества тестов (PIT)
+- [Property-Based Testing](property-based-testing-interview.md) — jqwik как JUnit extension
+- [REST Assured](rest-assured-interview.md) — тестирование REST API
+- [Contract Testing](contract-testing-interview.md) — Pact + JUnit

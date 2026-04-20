@@ -26,12 +26,12 @@ Grafana — платформа для аналитики и интерактив
 
 ### См. также
 
-- [[prometheus|Prometheus]] — сбор метрик
-- [[micrometer|Micrometer]] — метрики JVM
-- [[alerting|Alerting]] — система алертинга
-- [[distributed-tracing|Distributed Tracing]] — распределённое трассирование
+- [Prometheus](prometheus.md) — сбор метрик
+- [Micrometer](micrometer.md) — метрики JVM
+- [Alerting](../alerting/alerting.md) — система алертинга
+- [Distributed Tracing](../tracing/distributed-tracing.md) — распределённое трассирование
 
-- [[redis-monitoring|Redis: Мониторинг]]
+- [Redis: Мониторинг](../../databases/nosql/redis/redis-monitoring.md)
 ## Содержание
 
 - [Основы Grafana](#основы-grafana)

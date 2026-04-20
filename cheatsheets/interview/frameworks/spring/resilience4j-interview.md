@@ -575,13 +575,13 @@ public class OrderService {
 
 ## See also
 
-- [[resilience-patterns-interview|Resilience Patterns]] — теоретические паттерны отказоустойчивости (Circuit Breaker, Retry, Bulkhead)
-- [[spring-retry-interview|Spring Retry]] — @Retryable/@Recover в Spring, альтернатива Resilience4j Retry
-- [[spring-boot-interview|Spring Boot]] — auto-configuration, starters
-- [[spring-aop-interview|Spring AOP]] — механизм работы аннотаций Resilience4j через proxy
-- [[microservices-interview|Microservices]] — context применения: защита межсервисных вызовов
-- [[spring-cloud-interview|Spring Cloud]] — Spring Cloud Circuit Breaker, Resilience4j как реализация
-- [[micrometer-interview|Micrometer]] — метрики Resilience4j через Micrometer
-- [[spring-webflux-interview|Spring WebFlux]] — Resilience4j с реактивным стеком (Mono/Flux)
-- [[spring-boot-actuator-interview|Spring Boot Actuator]] — health indicators для Circuit Breaker
-- [[distributed-systems-interview|Distributed Systems]] — теория: cascade failures, fault isolation
+- [Resilience Patterns](../../architecture/resilience-patterns-interview.md) — теоретические паттерны отказоустойчивости (Circuit Breaker, Retry, Bulkhead)
+- [Spring Retry](spring-retry-interview.md) — @Retryable/@Recover в Spring, альтернатива Resilience4j Retry
+- [Spring Boot](spring-boot-interview.md) — auto-configuration, starters
+- [Spring AOP](spring-aop-interview.md) — механизм работы аннотаций Resilience4j через proxy
+- [Microservices](../../architecture/microservices-interview.md) — context применения: защита межсервисных вызовов
+- [Spring Cloud](spring-cloud-interview.md) — Spring Cloud Circuit Breaker, Resilience4j как реализация
+- [Micrometer](../../monitoring/micrometer-interview.md) — метрики Resilience4j через Micrometer
+- [Spring WebFlux](spring-webflux-interview.md) — Resilience4j с реактивным стеком (Mono/Flux)
+- [Spring Boot Actuator](spring-boot-actuator-interview.md) — health indicators для Circuit Breaker
+- [Distributed Systems](../../architecture/distributed-systems-interview.md) — теория: cascade failures, fault isolation

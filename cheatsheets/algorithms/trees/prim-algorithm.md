@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Visualgo: Minimum Spanning Tree](https://visualgo.net/)
 
 ### См. также
-- [[kruskal-algorithm|`kruskal-algorithm.md`]] — алгоритм Крускала (`Kruskal`)
-- [[boruvka-algorithm|`boruvka-algorithm.md`]] — алгоритм Борувки (`Borůvka`)
-- [[dijkstra|`../graphs/dijkstra.md`]] — алгоритм Дейкстры (`Dijkstra`)
+- [`kruskal-algorithm.md`](kruskal-algorithm.md) — алгоритм Крускала (`Kruskal`)
+- [`boruvka-algorithm.md`](boruvka-algorithm.md) — алгоритм Борувки (`Borůvka`)
+- [`../graphs/dijkstra.md`](../graphs/dijkstra.md) — алгоритм Дейкстры (`Dijkstra`)
 
-- [[binary-search-tree-traversal|Обход бинарного дерева поиска (Binary Search Tree Traversal)]]
-- [[balanced-binary-tree-check|Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)]]
+- [Обход бинарного дерева поиска (Binary Search Tree Traversal)](binary-search-tree-traversal.md)
+- [Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)](balanced-binary-tree-check.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

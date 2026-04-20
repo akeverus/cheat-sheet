@@ -25,12 +25,12 @@ related: ["scala/scala-basics.md"]
 - [Logback Documentation](https://logback.qos.ch/documentation.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
+- [Основы Scala](scala-basics.md)
 
-- [[quarkus-logging|Quarkus: Logging — Логирование]]
-- [[micronaut-logging|Micronaut: Logging — Logback, SLF4J и Structured Logging]]
-- [[slf4j|SLF4J для Java]]
-- [[logback|Logback для Java]]
+- [Quarkus: Logging — Логирование](../../frameworks/java-frameworks/quarkus/quarkus-logging.md)
+- [Micronaut: Logging — Logback, SLF4J и Structured Logging](../../frameworks/java-frameworks/micronaut/micronaut-logging.md)
+- [SLF4J для Java](../../monitoring/logging/slf4j.md)
+- [Logback для Java](../../monitoring/logging/logback.md)
 ## Содержание
 
 - [Введение в логирование](#введение-в-логирование)

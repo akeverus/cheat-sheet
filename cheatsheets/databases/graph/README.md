@@ -17,9 +17,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[operating-systems-basics|Операционные системы]]
-- [[linux-handbook|Linux и Bash: практический справочник]]
+- [Операционные системы](../../basics/operating-systems/operating-systems-basics.md)
+- [Linux и Bash: практический справочник](../../basics/operating-systems/linux-handbook.md)
 ## Содержание
 
-- [[neo4j-basics|Neo4j Basics]]
-- [[orientdb-basics|OrientDB Basics]]
+- [Neo4j Basics](neo4j/neo4j-basics.md)
+- [OrientDB Basics](orientdb/orientdb-basics.md)

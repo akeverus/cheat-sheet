@@ -19,14 +19,14 @@ Apache JMeter — зрелый инструмент нагрузочного, с
 ## Полезные ссылки
 
 ### Основные документы
-- [[jmeter]] — Thread Group, Samplers, Listeners, CLI, отчёты
+- [jmeter](jmeter.md) — Thread Group, Samplers, Listeners, CLI, отчёты
 
 ### Соседние разделы
-- [[README|Performance Testing]]
-- [[README|Gatling]]
-- [[README|k6]]
-- [[README|Artillery]]
-- [[testing-tools-overview|Testing Tools Overview]]
+- [Performance Testing](../../../basics/README.md)
+- [Gatling](../../../basics/README.md)
+- [k6](../../../basics/README.md)
+- [Artillery](../../../basics/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
 
 ### Внешние ресурсы
 - [Apache JMeter](https://jmeter.apache.org/)
@@ -44,10 +44,10 @@ Apache JMeter — зрелый инструмент нагрузочного, с
 
 | Тема | Где читать |
 |------|-----------|
-| Thread Group, Samplers, Listeners, Assertions | [[jmeter]] |
-| GUI для разработки плана, CLI для прогона | [[jmeter]] |
-| HTML-report, плагины, JSR223 (Groovy) | [[jmeter]] |
-| Распределённый запуск master/slaves, CI/CD | [[jmeter]] |
+| Thread Group, Samplers, Listeners, Assertions | [jmeter](jmeter.md) |
+| GUI для разработки плана, CLI для прогона | [jmeter](jmeter.md) |
+| HTML-report, плагины, JSR223 (Groovy) | [jmeter](jmeter.md) |
+| Распределённый запуск master/slaves, CI/CD | [jmeter](jmeter.md) |
 
 ## Когда использовать: сравнение perf-инструментов
 
@@ -67,6 +67,6 @@ JMeter — лучший выбор для enterprise-стека, кросс-пр
 
 ## Куда идти дальше
 
-- Обзор нагрузочного тестирования — [[README]]
-- «Scenarios as code» — [[README]]
-- Современный легковесный — [[README]]
+- Обзор нагрузочного тестирования — [README](../../../basics/README.md)
+- «Scenarios as code» — [README](../../../basics/README.md)
+- Современный легковесный — [README](../../../basics/README.md)

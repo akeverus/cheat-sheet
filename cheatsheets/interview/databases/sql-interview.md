@@ -258,7 +258,7 @@ FROM customers;
 | Размер | 8 байт | 4 байта | 8 байт |
 | Часовой пояс | Не учитывает | Автоматически конвертирует | Автоматически конвертирует |
 
-> **Рекомендация**: в `PostgreSQL` используйте `TIMESTAMPTZ` для корректной работы с часовыми поясами. Подробнее о работе с датами в Java — в [[hibernate-interview|вопросах по Hibernate]].
+> **Рекомендация**: в `PostgreSQL` используйте `TIMESTAMPTZ` для корректной работы с часовыми поясами. Подробнее о работе с датами в Java — в [вопросах по Hibernate](hibernate-interview.md).
 
 ## Q7. (!) Что такое нормализация и какие нормальные формы существуют?
 
@@ -393,7 +393,7 @@ CREATE TRIGGER salary_change_trigger
 
 Типы триггеров: `BEFORE` / `AFTER` / `INSTEAD OF` (для `View`); `FOR EACH ROW` / `FOR EACH STATEMENT`.
 
-> **Совет**: избегайте сложной бизнес-логики в триггерах — это усложняет отладку и может вызвать каскадные проблемы. Подробнее о событийном подходе — в [[database-architecture-interview|вопросах по архитектуре БД]].
+> **Совет**: избегайте сложной бизнес-логики в триггерах — это усложняет отладку и может вызвать каскадные проблемы. Подробнее о событийном подходе — в [вопросах по архитектуре БД](database-architecture-interview.md).
 
 ## Q12. Что такое `Temporary` table?
 
@@ -954,7 +954,7 @@ CLUSTER employees USING idx_emp_department;
 -- хранят значение PK → поэтому компактный PK (INT) лучше UUID
 ```
 
-> Подробнее о хранении данных — в [[database-architecture-interview|вопросах по архитектуре БД]].
+> Подробнее о хранении данных — в [вопросах по архитектуре БД](database-architecture-interview.md).
 
 ## Q36. Что такое `Covering Index` и `Partial Index`?
 
@@ -1020,7 +1020,7 @@ BEGIN;
 COMMIT;
 ```
 
-> Подробнее о `ACID` в распределённых системах — в [[database-architecture-interview|вопросах по архитектуре БД]].
+> Подробнее о `ACID` в распределённых системах — в [вопросах по архитектуре БД](database-architecture-interview.md).
 
 ## Q39. (!) Какие уровни изоляции транзакций существуют?
 
@@ -1118,7 +1118,7 @@ public class Product {
 // При конкурентном UPDATE → OptimisticLockException
 ```
 
-Подробнее о блокировках в ORM — в [[hibernate-interview|вопросах по Hibernate]].
+Подробнее о блокировках в ORM — в [вопросах по Hibernate](hibernate-interview.md).
 
 ## Q42. (!) Что такое `EXPLAIN` и как читать план выполнения?
 
@@ -1206,7 +1206,7 @@ List<Order> findAll();
 private Customer customer;
 ```
 
-Подробнее о решении `N+1` — в [[hibernate-interview|вопросах по Hibernate]].
+Подробнее о решении `N+1` — в [вопросах по Hibernate](hibernate-interview.md).
 
 ## Q45. (!) В чём разница между `JDBC` и `JPA`?
 
@@ -1865,16 +1865,16 @@ TRUNCATE orders;     -- быстро, но нельзя откатить час�
 
 ## See also
 
-- [[mongodb-interview|MongoDB]] — вопросы по NoSQL базе MongoDB
-- [[hibernate-interview|Hibernate]] — ORM-фреймворк для работы с SQL из Java
-- [[database-architecture-interview|Архитектура БД]] — вопросы по архитектуре баз данных
-- [[redis-interview|Redis]] — кэширование и in-memory хранилища
-- [[elasticsearch-interview|Elasticsearch]] — полнотекстовый поиск
-- [[database-transactions-interview|Транзакции и уровни изоляции]] — ACID, MVCC, блокировки
+- [MongoDB](mongodb-interview.md) — вопросы по NoSQL базе MongoDB
+- [Hibernate](hibernate-interview.md) — ORM-фреймворк для работы с SQL из Java
+- [Архитектура БД](database-architecture-interview.md) — вопросы по архитектуре баз данных
+- [Redis](redis-interview.md) — кэширование и in-memory хранилища
+- [Elasticsearch](elasticsearch-interview.md) — полнотекстовый поиск
+- [Транзакции и уровни изоляции](database-transactions-interview.md) — ACID, MVCC, блокировки
 
-- [[cassandra-interview|Apache Cassandra]]
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
-- [[database-architecture-interview|Database Architecture]]
-- [[database-transactions-interview|Транзакции и уровни изоляции]]
-- [[dynamodb-interview|DynamoDB]]
+- [Apache Cassandra](cassandra-interview.md)
+- [ClickHouse](clickhouse-interview.md)
+- [CockroachDB](cockroachdb-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [Транзакции и уровни изоляции](database-transactions-interview.md)
+- [DynamoDB](dynamodb-interview.md)

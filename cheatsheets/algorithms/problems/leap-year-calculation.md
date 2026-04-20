@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java Year Documentation](https://docs.oracle.com/javase/8/docs/api/java/time/Year.html)
 
 ### См. также
-- [[age-calculation|Вычисление возраста]] — вычисление возраста
-- [[distance-between-points|Расстояние между точками]] — вычисление расстояния
+- [Вычисление возраста](../math/age-calculation.md) — вычисление возраста
+- [Расстояние между точками](../math/distance-between-points.md) — вычисление расстояния
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

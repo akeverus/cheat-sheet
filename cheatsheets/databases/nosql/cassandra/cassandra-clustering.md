@@ -30,13 +30,13 @@ updated: "2026-04-20"
 - [Cassandra Reaper](https://cassandra-reaper.io/)
 
 ### См. также
-- [[cassandra-data-modeling|cassandra-data-modeling.md]] — моделирование данных в **Cassandra**
-- [[cassandra-queries|cassandra-queries.md]] — **CQL** запросы
-- [[cassandra-admin|cassandra-admin.md]] — администрирование
+- [cassandra-data-modeling.md](cassandra-data-modeling.md) — моделирование данных в **Cassandra**
+- [cassandra-queries.md](cassandra-queries.md) — **CQL** запросы
+- [cassandra-admin.md](cassandra-admin.md) — администрирование
 - [README.md](./) — обзор **Cassandra**
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](../mongodb/mongodb-crud.md)
 ## Содержание
 
 - [Архитектура кластера](#архитектура-кластера)

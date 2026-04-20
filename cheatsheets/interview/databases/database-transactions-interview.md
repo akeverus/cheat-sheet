@@ -1040,7 +1040,7 @@ graph LR
 | **Сложность** | Протокол простой, инфраструктура сложная | Протокол сложный (компенсации), инфраструктура простая |
 | **Применимость** | Монолит, 2-3 ресурса | Микросервисы, много участников |
 
-Saga применяется, когда строгая консистентность не обязательна или когда участники не поддерживают XA (например, `NoSQL` базы, внешние API). Подробнее в [[distributed-systems-interview|вопросах по распределённым системам]].
+Saga применяется, когда строгая консистентность не обязательна или когда участники не поддерживают XA (например, `NoSQL` базы, внешние API). Подробнее в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
 
 ## Q33. Как connection pool взаимодействует с транзакциями?
 
@@ -1586,16 +1586,16 @@ max_wal_size = 1GB         # максимальный размер WAL пере�
 
 ## See also
 
-- [[sql-interview|SQL]] — основы SQL, DDL/DML, оптимизация запросов
-- [[hibernate-interview|Hibernate]] — ORM, кэширование, маппинг сущностей, JPA-транзакции
-- [[spring-data-jpa-interview|Spring Data JPA]] — репозитории, query methods, спецификации
-- [[database-architecture-interview|Database Architecture]] — архитектура БД, индексы, репликация, ACID на уровне движка
-- [[flyway-liquibase-interview|Flyway и Liquibase]] — миграции БД и их связь с транзакционным контекстом
-- [[distributed-systems-interview|Распределённые системы]] — CAP, консистентность, распределённые алгоритмы
+- [SQL](sql-interview.md) — основы SQL, DDL/DML, оптимизация запросов
+- [Hibernate](hibernate-interview.md) — ORM, кэширование, маппинг сущностей, JPA-транзакции
+- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — репозитории, query methods, спецификации
+- [Database Architecture](database-architecture-interview.md) — архитектура БД, индексы, репликация, ACID на уровне движка
+- [Flyway и Liquibase](flyway-liquibase-interview.md) — миграции БД и их связь с транзакционным контекстом
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — CAP, консистентность, распределённые алгоритмы
 
-- [[cassandra-interview|Apache Cassandra]]
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
-- [[database-architecture-interview|Database Architecture]]
-- [[dynamodb-interview|DynamoDB]]
-- [[elasticsearch-interview|Elasticsearch]]
+- [Apache Cassandra](cassandra-interview.md)
+- [ClickHouse](clickhouse-interview.md)
+- [CockroachDB](cockroachdb-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [DynamoDB](dynamodb-interview.md)
+- [Elasticsearch](elasticsearch-interview.md)

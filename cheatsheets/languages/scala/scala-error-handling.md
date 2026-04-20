@@ -27,12 +27,12 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [Scala Try](https://www.scala-lang.org/api/current/scala/util/Try.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-fp-basics|Функциональное программирование]]
+- [Основы Scala](scala-basics.md)
+- [Функциональное программирование](scala-fp-basics.md)
 
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
-- [[scala-collections|Scala Collections]]
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
+- [Scala Collections](scala-collections.md)
 ## Содержание
 
 - [Введение в обработку ошибок](#введение-в-обработку-ошибок)

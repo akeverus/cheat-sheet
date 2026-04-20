@@ -1,16 +1,36 @@
 ---
-title: "Spring Vault — Interview"
-description: "Вопросы на собеседовании по Spring Vault: интеграция с HashiCorp Vault, dynamic secrets, transit encryption, PKI, тестирование."
+title: "Вопросы на собеседовании: Spring Vault"
+description: "Spring Vault для интеграции с HashiCorp Vault: VaultTemplate, dynamic secrets, transit encryption, PKI, интеграция со Spring Cloud Config"
 tags:
   - interview
   - spring
-  - vault
-  - secrets
-  - security
+  - spring-vault-interview
+aliases:
+  - "Spring Vault interview"
+  - "Spring Vault собеседование"
+  - "HashiCorp Vault Spring interview"
+  - "secrets management interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Spring Vault — Interview
+# Вопросы на собеседовании: `Spring Vault`
+
+`Spring Vault` — официальная интеграция с `HashiCorp Vault` для управления секретами. Предоставляет `VaultTemplate`, автоматическое подтягивание секретов в `@Value`, поддержку dynamic secrets и transit encryption. Спрашивается в контексте security-first архитектур.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Spring Vault Docs](https://docs.spring.io/spring-vault/docs/current/reference/html/) — официальная документация
+- [HashiCorp Vault](https://www.vaultproject.io/docs) — документация Vault
+- [Baeldung: Spring Vault](https://www.baeldung.com/spring-vault) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 ## Q1. Что такое HashiCorp Vault и зачем его использовать?
 
@@ -498,8 +518,13 @@ public class ResilientSecretService {
 
 ## See also
 
-- [[spring-vault|Spring Vault]] — полный cheatsheet
-- [[secrets-management-interview|Secrets Management Interview]] — общие вопросы
-- [[spring-security-interview|Spring Security Interview]] — безопасность приложений
-- [[kubernetes-interview|Kubernetes Interview]] — Vault + K8s интеграция
-- [[spring-cloud-interview|Spring Cloud Interview]] — облачная конфигурация
+- [Secrets Management](../../security/secrets-management-interview.md) — общие вопросы по управлению секретами
+- [Spring Security](spring-security-interview.md) — безопасность приложений
+- [Kubernetes](../../devops/kubernetes-interview.md) — Vault + K8s интеграция через Service Account JWT
+- [Spring Cloud](spring-cloud-interview.md) — Spring Cloud Config + Vault backend
+- [Spring Boot](spring-boot-interview.md) — auto-configuration для Vault
+- [HashiCorp Vault](../../devops/vault-interview.md) — основы Vault (policies, secret engines)
+- [Application Security](../../security/application-security-interview.md) — общие паттерны безопасности
+- [mTLS](../../security/mtls-interview.md) — взаимная TLS аутентификация
+- [TLS/SSL](../../security/tls-ssl-interview.md) — управление сертификатами через Vault PKI
+- [OAuth2](../../security/oauth2-interview.md) — Vault как источник OAuth2 client credentials

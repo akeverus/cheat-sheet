@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Optional (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html)
 
 ### См. также
-- [[linked-list-reverse|Реверс Linked List]]
-- [[README|Задачи и алгоритмы]] — обзор разделов
+- [Реверс Linked List](linked-list-reverse.md)
+- [Задачи и алгоритмы](../../basics/README.md) — обзор разделов
 
-- [[collections-complexity|Временная сложность коллекций Java]]
-- [[collections-big-o|Практические примеры нотации Big O]]
-- [[collections-lock-free|Введение в структуры данных без блокировок]]
+- [Временная сложность коллекций Java](collections-complexity.md)
+- [Практические примеры нотации Big O](collections-big-o.md)
+- [Введение в структуры данных без блокировок](collections-lock-free.md)
 ## Содержание
 
 - [Обзор](#обзор)

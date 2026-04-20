@@ -27,14 +27,14 @@ Micrometer — фасад (vendor-neutral API) для сбора метрик в
 - [Prometheus — Java client (Micrometer)](https://prometheus.io/docs/instrumenting/clientlibs/)
 
 ### См. также
-- [[prometheus|Prometheus]] — сбор и хранение метрик
-- [[statsd|StatsD]] — сбор метрик через StatsD
-- [[infrastructure-monitoring|Infrastructure monitoring]] — обзор мониторинга
+- [Prometheus](prometheus.md) — сбор и хранение метрик
+- [StatsD](statsd.md) — сбор метрик через StatsD
+- [Infrastructure monitoring](../infrastructure-monitoring.md) — обзор мониторинга
 - [Monitoring](../) — раздел мониторинга
 
-- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
-- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
-- [[micrometer-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Quarkus: Actuator — Health Checks и Metrics](../../frameworks/java-frameworks/quarkus/quarkus-actuator.md)
+- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](../../frameworks/java-frameworks/micronaut/micronaut-actuator.md)
+- [Вопросы на собеседовании](../../interview/monitoring/micrometer-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение](#введение)

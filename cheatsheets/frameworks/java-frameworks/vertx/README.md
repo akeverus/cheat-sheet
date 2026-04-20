@@ -18,13 +18,13 @@ Eclipse Vert.x — реактивный event-driven toolkit для JVM. Арх�
 ## Полезные ссылки
 
 ### Основные документы
-- [[vertx-basics|Vert.x: Основы]] — Verticle, Event Bus, Future, HTTP, JSON
+- [Vert.x: Основы](vertx-basics.md) — Verticle, Event Bus, Future, HTTP, JSON
 
 ### Соседние разделы
-- [[README|Java Frameworks]]
-- [[README|Quarkus]] — построен на Vert.x
-- [[spring-webflux|Spring WebFlux]]
-- [[scala-akka|Akka]] — модель акторов в Scala
+- [Java Frameworks](../../../basics/README.md)
+- [Quarkus](../../../basics/README.md) — построен на Vert.x
+- [Spring WebFlux](../spring/spring-webflux.md)
+- [Akka](../../../libraries/scala/scala-akka.md) — модель акторов в Scala
 
 ### Внешние ресурсы
 - [Vert.x Docs](https://vertx.io/docs/)
@@ -71,10 +71,10 @@ Eclipse Vert.x — реактивный event-driven toolkit для JVM. Арх�
 
 - **Быстрый старт:** `vertx-basics.md` "HTTP Server" + "Event Bus" + "AsyncResult и Future".
 - **Проектирование API gateway:** `vertx-basics.md` расширение через Vert.x Web + Kafka client.
-- **Квест "а что под Quarkus":** `vertx-basics.md` [[quarkus-reactive|Quarkus Reactive]].
+- **Квест "а что под Quarkus":** `vertx-basics.md` [Quarkus Reactive](../quarkus/quarkus-reactive.md).
 
 ## Куда идти дальше
 
-- Сравнение JVM-фреймворков — [[README]]
-- Reactive patterns — [[README|patterns]]
-- Messaging — [[README|development/messaging]]
+- Сравнение JVM-фреймворков — [README](../../../basics/README.md)
+- Reactive patterns — [patterns](../../../basics/README.md)
+- Messaging — [development/messaging](../../../basics/README.md)

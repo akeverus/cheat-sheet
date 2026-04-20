@@ -1138,8 +1138,8 @@ security:
 }
 ```
 ## См. также
-- [[packer-basics|Packer Basics]] — краткое введение в Packer
-- [[terraform-basics|Terraform]] — Infrastructure as Code
-- [[ansible-basics|Ansible]] — Configuration Management
-- [[docker-basics|Docker]] — контейнеризация
-- [[aws-basics|AWS]] — Amazon Web Services
+- [Packer Basics](packer-basics.md) — краткое введение в Packer
+- [Terraform](../terraform/terraform-basics.md) — Infrastructure as Code
+- [Ansible](../ansible/ansible-basics.md) — Configuration Management
+- [Docker](../../containers/docker/docker-basics.md) — контейнеризация
+- [AWS](../../cloud-providers/aws-basics.md) — Amazon Web Services

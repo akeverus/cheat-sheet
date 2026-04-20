@@ -414,11 +414,11 @@ public CompletableFuture<String> fetchAsync() {
 
 ## See also
 
-- [[java-concurrency-interview|Java Concurrency]] — Future, ExecutorService, ForkJoinPool
-- [[java-8-interview|Java 8]] — CompletableFuture как нововведение Java 8
-- [[java-functional-interface-interview|Functional Interfaces]] — Function, Consumer, Supplier в CF
-- [[java-stream-interview|Java Stream API]] — параллельные стримы vs CompletableFuture
-- [[spring-scheduling-interview|Spring Scheduling]] — @Async и CompletableFuture в Spring
-- [[reactive-streams-interview|Reactive Streams]] — Mono/Flux как альтернатива CompletableFuture
-- [[java-17-21-interview|Java 17-21]] — Virtual Threads как альтернатива async-стилю
-- [[spring-webflux-interview|Spring WebFlux]] — реактивная альтернатива для веб-запросов
+- [Java Concurrency](java-concurrency-interview.md) — Future, ExecutorService, ForkJoinPool
+- [Java 8](java-8-interview.md) — CompletableFuture как нововведение Java 8
+- [Functional Interfaces](java-functional-interface-interview.md) — Function, Consumer, Supplier в CF
+- [Java Stream API](java-stream-interview.md) — параллельные стримы vs CompletableFuture
+- [Spring Scheduling](../../frameworks/spring/spring-scheduling-interview.md) — @Async и CompletableFuture в Spring
+- [Reactive Streams](../../reactive/reactive-streams-interview.md) — Mono/Flux как альтернатива CompletableFuture
+- [Java 17-21](java-17-21-interview.md) — Virtual Threads как альтернатива async-стилю
+- [Spring WebFlux](../../frameworks/spring/spring-webflux-interview.md) — реактивная альтернатива для веб-запросов

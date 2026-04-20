@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java Inheritance](https://docs.oracle.com/javase/tutorial/java/IandI/subclasses.html)
 
 ### См. также
-- [[java-basics|Java Basics]] — **Java OOP**
-- [[spring-framework-interview|Spring Core]] — **Spring Framework**
-- [[strategy|Strategy]] — **Strategy Pattern**
+- [Java Basics](../../languages/java/java-basics.md) — **Java OOP**
+- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — **Spring Framework**
+- [Strategy](strategy.md) — **Strategy Pattern**
 
-- [[iterator|Итератор (Iterator)]]
-- [[visitor|Посетитель (Visitor)]]
+- [Итератор (Iterator)](iterator.md)
+- [Посетитель (Visitor)](visitor.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

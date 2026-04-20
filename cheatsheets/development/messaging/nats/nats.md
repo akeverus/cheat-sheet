@@ -22,9 +22,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[activemq|Apache ActiveMQ]]
-- [[rabbitmq-advanced|RabbitMQ Advanced]]
-- [[nats-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Apache ActiveMQ](../activemq/activemq.md)
+- [RabbitMQ Advanced](../rabbitmq/rabbitmq-advanced.md)
+- [Вопросы на собеседовании](../../../interview/messaging/nats-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Основы NATS](#основы-nats)
@@ -1315,6 +1315,6 @@ public class ProductionNATSConfig {
 }
 ```
 ## См. также
-- [[rabbitmq|RabbitMQ]] — надёжная система сообщений
-- [[kafka|Kafka]] — потоковая обработка данных
-- [[spring-cloud|Spring Cloud]] — облачные стримы
+- [RabbitMQ](../rabbitmq/rabbitmq.md) — надёжная система сообщений
+- [Kafka](../kafka/kafka.md) — потоковая обработка данных
+- [Spring Cloud](../../../frameworks/java-frameworks/spring/spring-cloud.md) — облачные стримы

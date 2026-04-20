@@ -839,8 +839,8 @@ assertTrue(result[0].equals("MyResource"));
 
 ## См. также
 
-- [[java-annotations-reflection|Java Annotations и Reflection]]
-- [[java-basics|Java: основы]]
-- [[java-collections-converting|Java Collections: конвертирование]]
-- [[java-collections-list|Java Collections: List]]
-- [[java-collections-map|Java Collections: Map]]
+- [Java Annotations и Reflection](java-annotations-reflection.md)
+- [Java: основы](java-basics.md)
+- [Java Collections: конвертирование](java-collections-converting.md)
+- [Java Collections: List](java-collections-list.md)
+- [Java Collections: Map](java-collections-map.md)

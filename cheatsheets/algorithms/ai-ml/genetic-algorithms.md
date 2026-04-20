@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Jenetics (GitHub)](https://github.com/jenetics/jenetics) — генетические алгоритмы
 
 ### См. также
-- [[multi-swarm|Multi-Swarm]]
-- [[hill-climbing|Hill-Climbing]]
-- [[jenetics|Jenetics]]
+- [Multi-Swarm](../problems/multi-swarm.md)
+- [Hill-Climbing](../problems/hill-climbing.md)
+- [Jenetics](jenetics.md)
 
-- [[logistic-regression|Логистическая регрессия]]
-- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
+- [Логистическая регрессия](logistic-regression.md)
+- [Реализация CNN с помощью Deeplearning4j](cnn-deeplearning4j.md)
 ## Содержание
 
 - [Обзор](#обзор)

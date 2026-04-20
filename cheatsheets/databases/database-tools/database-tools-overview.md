@@ -24,14 +24,14 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
-- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
+- [Hibernate: JPQL, HQL и Criteria API](../orm/hibernate-jpql-criteria.md)
+- [Hibernate: кэширование (L1, L2, Query Cache)](../orm/hibernate-caching.md)
 ## См. также
 
-- [[postgres-basics|PostgreSQL Basics]]
-- [[README|MySQL]]
-- [[README|MongoDB]]
-- [[rest-api-design|REST API Design]]
+- [PostgreSQL Basics](../relational/postgresql/postgres-basics.md)
+- [MySQL](../../basics/README.md)
+- [MongoDB](../../basics/README.md)
+- [REST API Design](../../development/api/rest/rest-api-design.md)
 
 ## Содержание
 

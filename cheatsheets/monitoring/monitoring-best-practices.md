@@ -25,9 +25,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
-- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
-- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [Quarkus: Actuator — Health Checks и Metrics](../frameworks/java-frameworks/quarkus/quarkus-actuator.md)
+- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](../frameworks/java-frameworks/micronaut/micronaut-actuator.md)
+- [Spring Actuator: Полное руководство по мониторингу и управлению](../frameworks/java-frameworks/spring/spring-actuator.md)
 ## Содержание
 
 - [Золотые сигналы](#золотые-сигналы)
@@ -115,5 +115,5 @@ updated: "2026-04-20"
 
 ## См. также
 
-- [[infrastructure-monitoring|Infrastructure Monitoring (обзор)]]
-- [[observability-guide|Руководство по Observability]]
+- [Infrastructure Monitoring (обзор)](infrastructure-monitoring.md)
+- [Руководство по Observability](observability-guide.md)

@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [Spring Data](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/) — поддержка **DDD**
 
 ### См. также
-- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
-- [[cqrs|CQRS]] — **CQRS** паттерн
-- [[event-sourcing|Event Sourcing]] — **Event Sourcing**
-- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
+- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
+- [CQRS](cqrs.md) — **CQRS** паттерн
+- [Event Sourcing](event-sourcing.md) — **Event Sourcing**
+- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
 
-- [[soa|SOA (Service-Oriented Architecture)]]
-- [[ddd-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [SOA (Service-Oriented Architecture)](soa.md)
+- [Вопросы на собеседовании](../interview/architecture/ddd-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Domain-Driven Design](#введение-в-domain-driven-design)

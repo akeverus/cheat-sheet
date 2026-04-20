@@ -26,12 +26,12 @@ updated: "2026-04-20"
 - [MongoDB with Spring Boot](https://www.baeldung.com/spring-data-mongodb-tutorial)
 
 ### См. также
-- [[postgres-basics|PostgreSQL]] — сравнение с реляционными базами данных
-- [[redis-basics|Redis]] — другая **NoSQL** база данных
+- [PostgreSQL](../../relational/postgresql/postgres-basics.md) — сравнение с реляционными базами данных
+- [Redis](../redis/redis-basics.md) — другая **NoSQL** база данных
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
-- [[mongodb-queries|MongoDB: Запросы и операторы — Полное руководство по поиску документов]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](mongodb-crud.md)
+- [MongoDB: Запросы и операторы — Полное руководство по поиску документов](mongodb-queries.md)
 ## Содержание
 
 - [Введение в MongoDB](#введение-в-mongodb)

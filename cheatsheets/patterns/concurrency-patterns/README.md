@@ -18,18 +18,18 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[active-object|Active Object]] — отделение вызова метода от его выполнения
-- [[double-checked-locking|Double-Checked Locking]] — ленивая инициализация с `volatile`
-- [[future-task|Future/Task]] — асинхронные результаты, `Future`/`CompletableFuture`
-- [[producer-consumer]] — разделение производителей и потребителей через очередь
-- [[read-write-lock|Read-Write Lock]] — параллельное чтение, эксклюзивная запись
-- [[thread-pool|Thread Pool]] — переиспользование потоков через пул
+- [Active Object](active-object.md) — отделение вызова метода от его выполнения
+- [Double-Checked Locking](double-checked-locking.md) — ленивая инициализация с `volatile`
+- [Future/Task](future-task.md) — асинхронные результаты, `Future`/`CompletableFuture`
+- [producer-consumer](producer-consumer.md) — разделение производителей и потребителей через очередь
+- [Read-Write Lock](read-write-lock.md) — параллельное чтение, эксклюзивная запись
+- [Thread Pool](thread-pool.md) — переиспользование потоков через пул
 
 ### Соседние разделы
-- [[README|Patterns]] — корень паттернов
-- [[README|Behavioral]]
-- [[java-concurrency-basics|Java Concurrency (basics)]]
-- [[java-concurrency-advanced|Java Concurrency (advanced)]]
+- [Patterns](../../basics/README.md) — корень паттернов
+- [Behavioral](../../basics/README.md)
+- [Java Concurrency (basics)](../../languages/java/java-concurrency-basics.md)
+- [Java Concurrency (advanced)](../../languages/java/java-concurrency-advanced.md)
 - [Architecture: scalability](../../architecture/scalability/README.md)
 
 ### Внешние ресурсы
@@ -79,11 +79,11 @@ updated: "2026-04-20"
 
 - **База для backend-разработчика:** `Thread Pool` -> `Producer-Consumer` -> `Future/Task`.
 - **Подготовка к собеседованию по concurrency:** вся секция, плюс `java-concurrency-basics.md` и `java-concurrency-advanced.md`.
-- **Оптимизация hot-path:** `Double-Checked Locking` -> `Read-Write Lock` -> профилирование в [[README]].
+- **Оптимизация hot-path:** `Double-Checked Locking` -> `Read-Write Lock` -> профилирование в [README](../../basics/README.md).
 
 ## Куда идти дальше
 
-- Реактивные стеки — [[java-concurrency-advanced]]
+- Реактивные стеки — [java-concurrency-advanced](../../languages/java/java-concurrency-advanced.md)
 - Архитектура и масштабирование — [../../architecture/scalability/README.md](../../architecture/scalability/README.md)
-- Очереди и стриминг — [[README]]
+- Очереди и стриминг — [README](../../basics/README.md)
 - Вопросы на собеседовании — [../../interview/frameworks/java/java-concurrency-interview.md](../../interview/frameworks/java/java-concurrency-interview.md)

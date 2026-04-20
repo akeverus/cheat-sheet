@@ -1119,8 +1119,8 @@ after_success:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[jenkins|Jenkins]] — **Self-hosted CI/CD**
-- [[gitlab-ci|GitLab CI]]
-- [[github-actions|GitHub Actions]]
-- [[circleci|CircleCI]] — **Cloud CI/CD**
-- [[azure-devops|Azure DevOps]]
+- [Jenkins](jenkins.md) — **Self-hosted CI/CD**
+- [GitLab CI](gitlab-ci.md)
+- [GitHub Actions](github-actions.md)
+- [CircleCI](circleci.md) — **Cloud CI/CD**
+- [Azure DevOps](azure-devops.md)

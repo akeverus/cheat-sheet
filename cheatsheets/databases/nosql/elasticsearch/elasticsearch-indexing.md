@@ -33,12 +33,12 @@ updated: "2026-04-20"
 - [Beats](https://www.elastic.co/guide/en/beats/libbeat/current/index.html) — легковесные **shippers**
 
 ### См. также
-- [[elasticsearch-basics|Основы]] — **Elasticsearch**
-- [[elasticsearch-queries|Запросы]] — поиск и запросы
-- [[elasticsearch-performance|Производительность]] — производительность
+- [Основы](elasticsearch-basics.md) — **Elasticsearch**
+- [Запросы](elasticsearch-queries.md) — поиск и запросы
+- [Производительность](elasticsearch-performance.md) — производительность
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](../mongodb/mongodb-crud.md)
 ## Содержание
 
 - [Index API](#index-api)

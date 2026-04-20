@@ -28,12 +28,12 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Scala Collections Guide](https://www.baeldung.com/scala/collections)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-collections-set|Множества (Set)]]
-- [[scala-collections-map|Словари (Map)]]
-- [[scala-collections|Обзор коллекций]]
+- [Основы Scala](scala-basics.md)
+- [Множества (Set)](scala-collections-set.md)
+- [Словари (Map)](scala-collections-map.md)
+- [Обзор коллекций](scala-collections.md)
 
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
 ## Содержание
 
 - [Введение в List](#введение-в-list)

@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Find k largest elements](https://www.geeksforgeeks.org/k-largestor-smallest-elements-in-an-array/)
 
 ### См. также
-- [[kth-smallest-in-two-sorted-arrays|Поиск k-го по величине элемента]] — k-th smallest
-- [[top-n-frequent-elements|N самых частых элементов]] — top N frequent
+- [Поиск k-го по величине элемента](kth-smallest-in-two-sorted-arrays.md) — k-th smallest
+- [N самых частых элементов](top-n-frequent-elements.md) — top N frequent
 
-- [[maximum-subarray|Максимальный подмассив (Maximum Subarray Problem)]]
-- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
-- [[find-max-element|Поиск k-го по величине элемента (Find Kth Largest Element)]]
+- [Максимальный подмассив (Maximum Subarray Problem)](maximum-subarray.md)
+- [Интерполяционный поиск (Interpolation Search)](interpolation-search.md)
+- [Поиск k-го по величине элемента (Find Kth Largest Element)](find-max-element.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -18,15 +18,15 @@ Testcontainers — библиотека для JVM, которая подним�
 ## Полезные ссылки
 
 ### Основные документы
-- [[testcontainers]] — модули, JUnit 5, Spring Boot, CI/CD
+- [testcontainers](testcontainers.md) — модули, JUnit 5, Spring Boot, CI/CD
 
 ### Соседние разделы
-- [[README|Integration Testing]]
-- [[README|Database Testing]]
-- [[README|Contract Testing]]
-- [[wiremock]]
-- [[README|JUnit]]
-- [[README|Docker]]
+- [Integration Testing](../../../basics/README.md)
+- [Database Testing](../../../basics/README.md)
+- [Contract Testing](../../../basics/README.md)
+- [wiremock](../wiremock.md)
+- [JUnit](../../../basics/README.md)
+- [Docker](../../../basics/README.md)
 
 ### Внешние ресурсы
 - [Testcontainers Docs](https://www.testcontainers.org/)
@@ -44,11 +44,11 @@ Testcontainers — библиотека для JVM, которая подним�
 
 | Тема | Где читать |
 |------|-----------|
-| Установка, базовое использование `GenericContainer` | [[testcontainers]] |
-| Модули БД: `PostgreSQLContainer`, `MySQLContainer`, `MongoDBContainer` | [[testcontainers]] |
-| Очереди: `KafkaContainer`, `RabbitMQContainer` | [[testcontainers]] |
-| Docker Compose, сеть, ожидание готовности (wait strategies) | [[testcontainers]] |
-| Reuse контейнеров, Spring Boot `@ServiceConnection`, CI/CD | [[testcontainers]] |
+| Установка, базовое использование `GenericContainer` | [testcontainers](testcontainers.md) |
+| Модули БД: `PostgreSQLContainer`, `MySQLContainer`, `MongoDBContainer` | [testcontainers](testcontainers.md) |
+| Очереди: `KafkaContainer`, `RabbitMQContainer` | [testcontainers](testcontainers.md) |
+| Docker Compose, сеть, ожидание готовности (wait strategies) | [testcontainers](testcontainers.md) |
+| Reuse контейнеров, Spring Boot `@ServiceConnection`, CI/CD | [testcontainers](testcontainers.md) |
 
 ## Когда использовать
 
@@ -63,6 +63,6 @@ Testcontainers — библиотека для JVM, которая подним�
 
 ## Куда идти дальше
 
-- Тестирование БД — [[README]]
-- Контракты API — [[README]]
-- Docker — [[README]]
+- Тестирование БД — [README](../../../basics/README.md)
+- Контракты API — [README](../../../basics/README.md)
+- Docker — [README](../../../basics/README.md)

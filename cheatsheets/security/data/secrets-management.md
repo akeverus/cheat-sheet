@@ -37,17 +37,17 @@ Secrets management — системное решение для хранения
 - [NIST SP 800-57](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final)
 
 ### Соседние разделы
-- [[data-security|Data Security]]
-- [[application-security|Application Security]]
+- [Data Security](data-security.md)
+- [Application Security](../application/application-security.md)
 - [Infrastructure Security](../infrastructure/)
 - [Kubernetes](../../platform/containers/kubernetes/)
 
 
 ### См. также
-- [[spring-vault|Spring Vault: Полное руководство по управлению секретами]]
-- [[security-practices|Практики безопасности (Security Practices)]]
-- [[spring-boot|Spring Boot — Полное руководство]]
-- [[secrets-management-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Spring Vault: Полное руководство по управлению секретами](../../frameworks/java-frameworks/spring/spring-vault.md)
+- [Практики безопасности (Security Practices)](../security-practices.md)
+- [Spring Boot — Полное руководство](../../frameworks/spring/spring-boot.md)
+- [Вопросы на собеседовании](../../interview/security/secrets-management-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Типы секретов и жизненный цикл](#типы-секретов-и-жизненный-цикл)
@@ -292,4 +292,4 @@ repos:
 
 ## См. также
 
-- [[data-security|Безопасность данных (Data Security)]]
+- [Безопасность данных (Data Security)](data-security.md)

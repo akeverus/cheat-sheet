@@ -22,12 +22,12 @@ updated: "2026-04-20"
 - [Logback GitHub](https://github.com/qos-ch/logback)
 
 ### См. также
-- [[logging-basics|Основы логирования]]
-- [[slf4j|SLF4J]]
-- [[structured-logging|Структурированное логирование]]
+- [Основы логирования](logging-basics.md)
+- [SLF4J](slf4j.md)
+- [Структурированное логирование](structured-logging.md)
 
-- [[centralized-logging|Централизованное логирование для Java]]
-- [[log-aggregation|Агрегация логов для Java]]
+- [Централизованное логирование для Java](centralized-logging.md)
+- [Агрегация логов для Java](log-aggregation.md)
 ## Содержание
 
 - [Введение в Logback](#введение-в-logback)

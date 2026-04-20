@@ -16,7 +16,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[microservices-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Вопросы на собеседовании](../../interview/architecture/microservices-interview.md) — подготовка к интервью
 
 ## Полезные ссылки
 
@@ -823,8 +823,8 @@ public RequestResponsePact getUserPact(PactDslWithProvider builder) {
 
 ## См. также
 
-- [[adr-template|Записи архитектурных решений (ADR) — Шаблон]]
-- [[architecture-patterns|Архитектурные паттерны]]
-- [[cqrs|CQRS (Command Query Responsibility Segregation)]]
-- [[ddd|Domain-Driven Design (DDD)]]
-- [[design-principles|Принципы проектирования программного обеспечения]]
+- [Записи архитектурных решений (ADR) — Шаблон](../architectural-decision-records/adr-template.md)
+- [Архитектурные паттерны](../architecture-patterns.md)
+- [CQRS (Command Query Responsibility Segregation)](../cqrs.md)
+- [Domain-Driven Design (DDD)](../ddd.md)
+- [Принципы проектирования программного обеспечения](../design-principles/design-principles.md)

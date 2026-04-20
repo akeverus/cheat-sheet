@@ -27,9 +27,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[spring-data-jdbc|Spring Data JDBC: Полное руководство по работе с базами данных]]
-- [[spring-session|Spring Session: Полное руководство по управлению сессиями]]
-- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]
+- [Spring Data JDBC: Полное руководство по работе с базами данных](../java-frameworks/spring/spring-data-jdbc.md)
+- [Spring Session: Полное руководство по управлению сессиями](../java-frameworks/spring/spring-session.md)
+- [Quarkus: Data Access — Hibernate ORM, Panache и Repositories](../java-frameworks/quarkus/quarkus-data.md)
 ## Содержание
 
 - [Иерархия репозиториев](#иерархия-репозиториев)
@@ -521,5 +521,5 @@ Page<Product> results = productRepository.findAll(predicate, pageable);
 
 ## См. также
 
-- [[spring-boot|Spring Boot]]
-- [[spring-core|Spring Framework: Core]]
+- [Spring Boot](spring-boot.md)
+- [Spring Framework: Core](spring-core.md)

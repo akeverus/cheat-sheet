@@ -27,12 +27,12 @@ related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 - [Scala Vector API](https://www.scala-lang.org/api/current/scala/collection/immutable/Vector.html)
 
 ### См. также
-- [[scala-collections-list|Списки (List)]]
-- [[scala-collections|Обзор коллекций]]
+- [Списки (List)](scala-collections-list.md)
+- [Обзор коллекций](scala-collections.md)
 
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
-- [[scala-collections-array|Scala Collections — Array]]
-- [[scala-collections-set|Scala Collections — Set]]
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
+- [Scala Collections — Array](scala-collections-array.md)
+- [Scala Collections — Set](scala-collections-set.md)
 ## Содержание
 
 - [Введение в Vector](#введение-в-vector)

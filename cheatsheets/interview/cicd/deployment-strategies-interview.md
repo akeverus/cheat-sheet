@@ -93,7 +93,7 @@ updated: "2026-04-13"
 - [Q38. Как настроить деплой через Jenkins Pipeline (Declarative)?](#q38-как-настроить-деплой-через-jenkins-pipeline-declarative)
 - [Q39. Как реализовать DORA-метрики для оценки процесса деплоя?](#q39-как-реализовать-dora-метрики-для-оценки-процесса-деплоя)
 
-**Стратегии деплоя** определяют, как новая версия вводится в эксплуатацию с минимальным риском и простоем. На собеседовании ожидают понимание: Blue-Green, Canary, Rolling Update, Recreate; zero-downtime и rollback; связь с [[kubernetes-interview|Kubernetes]], CI/CD, feature flags; миграции БД и [[metrics-tracing-interview|мониторинг деплоя]].
+**Стратегии деплоя** определяют, как новая версия вводится в эксплуатацию с минимальным риском и простоем. На собеседовании ожидают понимание: Blue-Green, Canary, Rolling Update, Recreate; zero-downtime и rollback; связь с [Kubernetes](../devops/kubernetes-interview.md), CI/CD, feature flags; миграции БД и [мониторинг деплоя](../monitoring/metrics-tracing-interview.md).
 
 ## Q1. (!) Что такое Blue-Green деплой и когда его использовать?
 
@@ -225,7 +225,7 @@ graph LR
 | Сложность | Низкая | Высокая (нужен traffic splitting) |
 | Валидация | До переключения | В процессе, по метрикам |
 
-Реализация в [[kubernetes-interview|Kubernetes]]: два `Deployment` (старая и новая версия) и `Service / Ingress` с правилами веса. С `Istio VirtualService`:
+Реализация в [Kubernetes](../devops/kubernetes-interview.md): два `Deployment` (старая и новая версия) и `Service / Ingress` с правилами веса. С `Istio VirtualService`:
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -261,11 +261,11 @@ spec:
         version: v2
 ```
 
-При стабильных метриках долю v2 увеличивают до 50%, затем 100%. При росте ошибок или latency трафик возвращают на v1. Инструменты `Flagger`, `Argo Rollouts` автоматизируют Canary: анализируют метрики из [[metrics-tracing-interview|Prometheus]] и продвигают или откатывают новую версию.
+При стабильных метриках долю v2 увеличивают до 50%, затем 100%. При росте ошибок или latency трафик возвращают на v1. Инструменты `Flagger`, `Argo Rollouts` автоматизируют Canary: анализируют метрики из [Prometheus](../monitoring/metrics-tracing-interview.md) и продвигают или откатывают новую версию.
 
 ## Q3. (!) Что такое Rolling Update и как он работает в Kubernetes?
 
-`Rolling Update` — поды новой версии создаются по одному (или по несколько), старые удаляются по одному. В [[kubernetes-interview|Kubernetes]] задаётся в `Deployment` через `strategy.type: RollingUpdate`.
+`Rolling Update` — поды новой версии создаются по одному (или по несколько), старые удаляются по одному. В [Kubernetes](../devops/kubernetes-interview.md) задаётся в `Deployment` через `strategy.type: RollingUpdate`.
 
 ```mermaid
 sequenceDiagram
@@ -431,7 +431,7 @@ spring:
 
 ## Q6. Что такое rollback и как его выполнить в Kubernetes?
 
-**Rollback** — возврат к предыдущей (или заданной) версии приложения. В [[kubernetes-interview|Kubernetes]]:
+**Rollback** — возврат к предыдущей (или заданной) версии приложения. В [Kubernetes](../devops/kubernetes-interview.md):
 
 ```bash
 # Посмотреть историю ревизий
@@ -513,7 +513,7 @@ spec:
                   number: 80
 ```
 
-**Практика:** метрики помечать лейблом варианта (A/B) в [[metrics-tracing-interview|Prometheus / Grafana]]; решение о полном переходе — по статистической значимости и минимальному времени эксперимента (1-2 недели). При регрессии по ошибкам или latency — откат варианта B.
+**Практика:** метрики помечать лейблом варианта (A/B) в [Prometheus / Grafana](../monitoring/metrics-tracing-interview.md); решение о полном переходе — по статистической значимости и минимальному времени эксперимента (1-2 недели). При регрессии по ошибкам или latency — откат варианта B.
 
 ## Q9. (!) Как настроить readiness и liveness probe для безопасного деплоя?
 
@@ -589,7 +589,7 @@ graph LR
     style DP fill:#3498db,color:#fff
 ```
 
-Артефакт (jar, образ) собирается один раз и промотируется по окружениям; конфигурация меняется по окружению (переменные, секреты), не образ. Подробнее о проектировании пайплайнов — в [[pipeline-design-interview|вопросах по CI/CD пайплайнам]].
+Артефакт (jar, образ) собирается один раз и промотируется по окружениям; конфигурация меняется по окружению (переменные, секреты), не образ. Подробнее о проектировании пайплайнов — в [вопросах по CI/CD пайплайнам](pipeline-design-interview.md).
 
 **Практика:** один и тот же образ (`myapp:${GIT_SHA}` или semver) промотировать по окружениям; конфигурация — `ConfigMap / Secrets` по окружению. После деплоя в prod — этап проверки метрик (error rate, latency); при деградации — автоматический rollback (`Flagger`, `Argo Rollouts`) или алерт.
 
@@ -605,7 +605,7 @@ graph LR
 | Скорость деплоя | Зависит от образа | Быстрее (замена файлов) |
 | Аудит | Полный (тег образа → версия кода) | Сложно отследить |
 
-В [[kubernetes-interview|Kubernetes]] деплой по сути immutable: при обновлении образа создаются новые поды с новым образом, старые удаляются; конфигурация инжектируется через `ConfigMap / Secrets`, не меняя образ. Откат — `kubectl rollout undo`.
+В [Kubernetes](../devops/kubernetes-interview.md) деплой по сути immutable: при обновлении образа создаются новые поды с новым образом, старые удаляются; конфигурация инжектируется через `ConfigMap / Secrets`, не меняя образ. Откат — `kubectl rollout undo`.
 
 **Практика:** не менять образ «на месте» (не exec в под и не заменять бинарник); конфигурация только через `ConfigMap / Secrets` или переменные при старте. Образ собирать в CI из кода; тег образа = версия для трассируемости и отката.
 
@@ -653,7 +653,7 @@ images:
     newTag: 1.2.3  # обновляется CI/CD или Flux
 ```
 
-**Практика:** образ один (`myapp:${GIT_SHA}`); в каждом окружении свои `ConfigMap`/`Secrets` (DB URL, feature flags). В GitOps — [[pipeline-design-interview|Argo CD или Flux]] синхронизируют кластер с выбранным overlay.
+**Практика:** образ один (`myapp:${GIT_SHA}`); в каждом окружении свои `ConfigMap`/`Secrets` (DB URL, feature flags). В GitOps — [Argo CD или Flux](pipeline-design-interview.md) синхронизируют кластер с выбранным overlay.
 
 ## Q13. Что такое database migration при деплое и как её выполнять?
 
@@ -721,7 +721,7 @@ echo "All smoke tests passed"
 
 ## Q15. Как обеспечить откат (rollback) при проблемах после деплоя?
 
-Меры: (1) Хранить предыдущие ревизии/образы (Kubernetes rollout history). (2) Автоматический rollback по [[metrics-tracing-interview|метрикам]] (ошибки, latency) — `Argo Rollouts`, `Flagger`. (3) Ручной rollback одной командой (`kubectl rollout undo`). (4) Feature flags — отключить фичу без отката деплоя. (5) Документированная процедура и права на откат без длительного согласования.
+Меры: (1) Хранить предыдущие ревизии/образы (Kubernetes rollout history). (2) Автоматический rollback по [метрикам](../monitoring/metrics-tracing-interview.md) (ошибки, latency) — `Argo Rollouts`, `Flagger`. (3) Ручной rollback одной командой (`kubectl rollout undo`). (4) Feature flags — отключить фичу без отката деплоя. (5) Документированная процедура и права на откат без длительного согласования.
 
 **Практика:** образы предыдущих версий не удалять из registry до истечения политики хранения; `revisionHistoryLimit` в `Deployment` держать достаточным (например, 10). `Flagger / Argo Rollouts` при Canary анализируют метрики (error rate, latency) из Prometheus; при превышении порога откатывают трафик на старую версию.
 
@@ -829,7 +829,7 @@ spec:
 
 **Deployment approval** — ручное (или по правилам) подтверждение перехода к следующему этапу (часто деплой в prod). Требуют когда политика компании или регуляторика требует проверки перед продакшеном.
 
-В `GitLab`: protected environments с required approvals; в `GitHub Actions` — environment с reviewers; в `Jenkins` — input step. Для высокочастотных деплоев (несколько раз в день) ручной approval на каждый деплой становится узким местом — тогда оставляют approval только для критичных изменений (схема БД, инфраструктура) или используют автоматический деплой с жёсткими проверками в [[pipeline-design-interview|pipeline]] и автоматическим откатом по метрикам.
+В `GitLab`: protected environments с required approvals; в `GitHub Actions` — environment с reviewers; в `Jenkins` — input step. Для высокочастотных деплоев (несколько раз в день) ручной approval на каждый деплой становится узким местом — тогда оставляют approval только для критичных изменений (схема БД, инфраструктура) или используют автоматический деплой с жёсткими проверками в [pipeline](pipeline-design-interview.md) и автоматическим откатом по метрикам.
 
 ## Q19. Как деплоить приложение с зависимостями от внешних сервисов?
 
@@ -924,7 +924,7 @@ spec:
     API_KEY: AgCtr84KLQWP+QiSzZRRA7...
 ```
 
-**Практика:** в GitOps (Argo CD, Flux) конфигурация хранится в [[git-interview|Git]]; смена коммита триггерит синхронизацию. Один источник правды на окружение (каталог `overlays/prod/`) устраняет расхождения.
+**Практика:** в GitOps (Argo CD, Flux) конфигурация хранится в [Git](../devops/git-interview.md); смена коммита триггерит синхронизацию. Один источник правды на окружение (каталог `overlays/prod/`) устраняет расхождения.
 
 ## Q24. (!) Что такое deployment strategies в GitOps (Argo CD, Flux)?
 
@@ -974,7 +974,7 @@ spec:
 
 Метрики после деплоя: error rate, latency (p50, p99), throughput; сравнение с периодом до деплоя или с baseline. Деплой считают неудачным при: падении smoke test; превышении порога ошибок/latency в окне после деплоя (5-15 минут); ручном репорте инцидента.
 
-Инструменты: [[observability-interview|Prometheus + Grafana]], Datadog, Argo Rollouts / Flagger с автоматическим rollback. Дополнительно: [[metrics-tracing-interview|трассировка запросов]] (`Jaeger`, `Zipkin`) — сравнить latency до и после; логи ошибок — новые стектрейсы после деплоя.
+Инструменты: [Prometheus + Grafana](../monitoring/observability-interview.md), Datadog, Argo Rollouts / Flagger с автоматическим rollback. Дополнительно: [трассировка запросов](../monitoring/metrics-tracing-interview.md) (`Jaeger`, `Zipkin`) — сравнить latency до и после; логи ошибок — новые стектрейсы после деплоя.
 
 В pipeline — этап «мониторинг после деплоя» (5-10 минут) с автоматическим откатом при нарушении условий. Окно наблюдения задают по опыту; слишком короткое может пропустить постепенную деградацию, слишком длинное — задержать откат.
 
@@ -984,7 +984,7 @@ spec:
 
 Планирование: выбор окна с учётом нагрузки и мониторинга; уведомление стейкхолдеров; подготовка rollback-плана; при необходимости — автоматизация в рамках окна. В высоконагруженных системах стремятся к деплою без окон (continuous deployment с Canary / Rolling).
 
-**Практика:** зафиксировать окно в runbook (например, «вторник/четверг 02:00-04:00 UTC»); перед окном — чек-лист (образ собран, тесты зелёные, rollback-план готов). При CD без окон — деплой в любое время с Canary + [[metrics-tracing-interview|Prometheus]].
+**Практика:** зафиксировать окно в runbook (например, «вторник/четверг 02:00-04:00 UTC»); перед окном — чек-лист (образ собран, тесты зелёные, rollback-план готов). При CD без окон — деплой в любое время с Canary + [Prometheus](../monitoring/metrics-tracing-interview.md).
 
 ## Q27. Как организовать деплой с нулевым даунтаймом для stateful приложений?
 
@@ -1088,7 +1088,7 @@ public ResponseEntity<?> checkout(@RequestBody CheckoutRequest request) {
 **Идемпотентность:** повторный запуск деплоя с теми же артефактами даёт тот же результат (не дублирует ресурсы, не ломает состояние).
 
 Достигается:
-- **Декларативные манифесты** — [[kubernetes-interview|Kubernetes]] `apply` идемпотентен (desired state, не императивные команды)
+- **Декларативные манифесты** — [Kubernetes](../devops/kubernetes-interview.md) `apply` идемпотентен (desired state, не императивные команды)
 - **Terraform** — `plan + apply` воспроизводим
 - **Helm** — `helm upgrade --install` идемпотентен
 - **Миграции БД** — идемпотентные скрипты (`IF NOT EXISTS`)
@@ -1298,7 +1298,7 @@ Workflow: обновление образа → Argo Rollouts создаёт pre
 
 ## Q33. (!) Как использовать Helm для управления деплоями?
 
-**Helm** — менеджер пакетов для [[kubernetes-interview|Kubernetes]]. Позволяет шаблонизировать манифесты, управлять версиями релизов и выполнять откат.
+**Helm** — менеджер пакетов для [Kubernetes](../devops/kubernetes-interview.md). Позволяет шаблонизировать манифесты, управлять версиями релизов и выполнять откат.
 
 **Структура Helm chart:**
 
@@ -1992,17 +1992,17 @@ ORDER BY 1;
 
 ## See also
 
-- [[pipeline-design-interview|Проектирование CI/CD пайплайнов]] — этапы, инструменты, fail fast
-- [[kubernetes-interview|Kubernetes]] — Deployment, rollout, HPA и ArgoCD
-- [[docker-interview|Docker]] — образы, multi-stage build, registry
-- [[observability-interview|Observability]] — мониторинг canary и метрики деплоя
-- [[metrics-tracing-interview|Метрики и трассировка]] — health checks и алерты при деплое
-- [[git-interview|Git]] — trunk-based development и feature flags
-- [[test-automation-interview|Test Automation]] — smoke-тесты и acceptance-тесты после деплоя
+- [Проектирование CI/CD пайплайнов](pipeline-design-interview.md) — этапы, инструменты, fail fast
+- [Kubernetes](../devops/kubernetes-interview.md) — Deployment, rollout, HPA и ArgoCD
+- [Docker](../devops/docker-interview.md) — образы, multi-stage build, registry
+- [Observability](../monitoring/observability-interview.md) — мониторинг canary и метрики деплоя
+- [Метрики и трассировка](../monitoring/metrics-tracing-interview.md) — health checks и алерты при деплое
+- [Git](../devops/git-interview.md) — trunk-based development и feature flags
+- [Test Automation](../testing/test-automation-interview.md) — smoke-тесты и acceptance-тесты после деплоя
 
-- [[pipeline-design-interview|Дизайн пайплайнов]]
-- [[ai-agents-interview|AI Agents]]
-- [[embeddings-interview|Embeddings]]
-- [[llm-basics-interview|LLM Basics]]
-- [[llm-integration-patterns-interview|LLM Integration Patterns]]
-- [[mlops-interview|MLOps]]
+- [Дизайн пайплайнов](pipeline-design-interview.md)
+- [AI Agents](../ai-ml/ai-agents-interview.md)
+- [Embeddings](../ai-ml/embeddings-interview.md)
+- [LLM Basics](../ai-ml/llm-basics-interview.md)
+- [LLM Integration Patterns](../ai-ml/llm-integration-patterns-interview.md)
+- [MLOps](../ai-ml/mlops-interview.md)

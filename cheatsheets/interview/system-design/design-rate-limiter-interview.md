@@ -687,20 +687,20 @@ Retry-After: 60
 
 ## See also
 
-- [[system-design-interview|System Design]] — общие принципы
-- [[api-gateway-interview|API Gateway]] — where rate limiter lives
-- [[caching-strategies-interview|Caching]] — Redis patterns
-- [[redis-interview|Redis]] — INCR, Lua, sorted sets
-- [[distributed-systems-interview|Distributed Systems]] — consistency trade-offs
-- [[resilience-patterns-interview|Resilience Patterns]] — circuit breaker, backpressure
-- [[scalability-patterns-interview|Scalability Patterns]] — load management
-- [[load-balancing-interview|Load Balancing]] — request distribution
-- [[http-rest-interview|HTTP/REST]] — 429, Retry-After
-- [[design-url-shortener-interview|Design URL Shortener]] — rate limiter component
+- [System Design](system-design-interview.md) — общие принципы
+- [API Gateway](../architecture/api-gateway-interview.md) — where rate limiter lives
+- [Caching](../architecture/caching-strategies-interview.md) — Redis patterns
+- [Redis](../databases/redis-interview.md) — INCR, Lua, sorted sets
+- [Distributed Systems](../architecture/distributed-systems-interview.md) — consistency trade-offs
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — circuit breaker, backpressure
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — load management
+- [Load Balancing](../architecture/load-balancing-interview.md) — request distribution
+- [HTTP/REST](../api/http-rest-interview.md) — 429, Retry-After
+- [Design URL Shortener](design-url-shortener-interview.md) — rate limiter component
 
-- [[design-chat-system-interview|Design Chat System]]
-- [[design-feed-system-interview|Design Feed System]]
-- [[design-payment-system-interview|Design Payment System]]
-- [[design-search-interview|Design Search System]]
-- [[design-url-shortener-interview|Design URL Shortener]]
-- [[system-design-interview|System Design]]
+- [Design Chat System](design-chat-system-interview.md)
+- [Design Feed System](design-feed-system-interview.md)
+- [Design Payment System](design-payment-system-interview.md)
+- [Design Search System](design-search-interview.md)
+- [Design URL Shortener](design-url-shortener-interview.md)
+- [System Design](system-design-interview.md)

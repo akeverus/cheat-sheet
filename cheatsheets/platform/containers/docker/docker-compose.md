@@ -23,7 +23,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[containerization-overview|Containerization — обзор]]
+- [Containerization — обзор](../containerization-overview.md)
 ## Содержание
 
 - [Основы Docker Compose](#основы-docker-compose)
@@ -1166,7 +1166,7 @@ services:
           cpus: '0.5'
 ```
 ## См. также
-- [[docker-basics|Docker Basics]] — основы **Docker**
-- [[docker-advanced|Docker Advanced]] — продвинутые концепции **Docker**
-- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
-- [[terraform|Terraform]] — инфраструктура как код
+- [Docker Basics](docker-basics.md) — основы **Docker**
+- [Docker Advanced](docker-advanced.md) — продвинутые концепции **Docker**
+- [Kubernetes](../kubernetes/kubernetes-basics.md) — оркестрация контейнеров
+- [Terraform](../../iac/terraform/terraform.md) — инфраструктура как код

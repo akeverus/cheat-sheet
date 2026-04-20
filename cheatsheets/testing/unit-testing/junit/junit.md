@@ -19,7 +19,7 @@ updated: "2026-04-20"
 - [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/)
 - [JUnit 5 API](https://junit.org/junit5/docs/current/api/)
 - [Baeldung — JUnit 5](https://www.baeldung.com/junit-5)
-- [[mockito]] · [[assertj]] · [[testcontainers]]
+- [mockito](mockito.md) · [assertj](assertj.md) · [testcontainers](../../integration-testing/testcontainers/testcontainers.md)
 
 ## Содержание
 
@@ -474,7 +474,7 @@ CSV: путь вида `resources = "/data.csv"` — файл в `src/test/resou
 
 ## См. также
 
-- [[junit-advanced|JUnit Advanced]] · [[mockito]] · [[assertj]] · [[hamcrest]] · [[testing-tools-overview|Обзор инструментов тестирования]]
+- [JUnit Advanced](junit-advanced.md) · [mockito](mockito.md) · [assertj](assertj.md) · [hamcrest](hamcrest.md) · [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md)
 
 
 ## Заключение

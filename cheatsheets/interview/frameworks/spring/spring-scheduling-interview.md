@@ -627,14 +627,14 @@ public class HeavyScheduledJob {
 
 ## See also
 
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация `TaskSchedulingAutoConfiguration`, `spring.task.scheduling.*`
-- [[spring-framework-interview|Spring Framework]] — `@EnableScheduling`, `SchedulingConfigurer`, `ThreadPoolTaskScheduler`
-- [[spring-aop-interview|Spring AOP]] — `@Scheduled` реализован через AOP; проблема self-invocation неактуальна для scheduling
-- [[kafka-interview|Apache Kafka]] — альтернатива: delayed messages для одноразовых задач по времени
-- [[redis-interview|Redis]] — ShedLock с Redis-провайдером как distributed lock
-- [[spring-data-jpa-interview|Spring Data JPA]] — ShedLock с JDBC-провайдером (lock table в реляционной БД)
-- [[kubernetes-interview|Kubernetes]] — CronJob как альтернатива `@Scheduled` в k8s; один pod vs replica
-- [[distributed-systems-interview|Распределённые системы]] — проблема distributed scheduling, distributed lock
-- [[unit-testing-interview|Unit Testing]] — Awaitility, `@SpyBean`, тестирование временных задач
-- [[docker-interview|Docker]] — несколько реплик одного Docker-контейнера и проблема дублирования задач
-- [[spring-scheduling|Шпаргалка: Spring Scheduling: Полное руководство по]] — теория
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация `TaskSchedulingAutoConfiguration`, `spring.task.scheduling.*`
+- [Spring Framework](spring-framework-interview.md) — `@EnableScheduling`, `SchedulingConfigurer`, `ThreadPoolTaskScheduler`
+- [Spring AOP](spring-aop-interview.md) — `@Scheduled` реализован через AOP; проблема self-invocation неактуальна для scheduling
+- [Apache Kafka](../../messaging/kafka-interview.md) — альтернатива: delayed messages для одноразовых задач по времени
+- [Redis](../../databases/redis-interview.md) — ShedLock с Redis-провайдером как distributed lock
+- [Spring Data JPA](spring-data-jpa-interview.md) — ShedLock с JDBC-провайдером (lock table в реляционной БД)
+- [Kubernetes](../../devops/kubernetes-interview.md) — CronJob как альтернатива `@Scheduled` в k8s; один pod vs replica
+- [Распределённые системы](../../architecture/distributed-systems-interview.md) — проблема distributed scheduling, distributed lock
+- [Unit Testing](../../testing/unit-testing-interview.md) — Awaitility, `@SpyBean`, тестирование временных задач
+- [Docker](../../devops/docker-interview.md) — несколько реплик одного Docker-контейнера и проблема дублирования задач
+- [Шпаргалка: Spring Scheduling: Полное руководство по](../../../frameworks/java-frameworks/spring/spring-scheduling.md) — теория

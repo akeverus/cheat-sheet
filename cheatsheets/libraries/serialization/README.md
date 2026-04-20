@@ -18,14 +18,14 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[jackson]] — ObjectMapper, аннотации, модули, kotlin-module, интеграция со Spring
-- [[java-gson|Gson (Java)]] — type adapters, `@SerializedName`, streaming API
+- [jackson](jackson.md) — ObjectMapper, аннотации, модули, kotlin-module, интеграция со Spring
+- [Gson (Java)](java-gson.md) — type adapters, `@SerializedName`, streaming API
 
 ### Соседние разделы
-- [[README|Libraries]]
-- [[README|Java-библиотеки]]
-- [[README|Kotlin-библиотеки]] — `kotlinx.serialization` как альтернатива
-- [[README|API]]
+- [Libraries](../../basics/README.md)
+- [Java-библиотеки](../../basics/README.md)
+- [Kotlin-библиотеки](../../basics/README.md) — `kotlinx.serialization` как альтернатива
+- [API](../../basics/README.md)
 
 ### Внешние ресурсы
 - [Jackson Project](https://github.com/FasterXML/jackson)
@@ -62,11 +62,11 @@ updated: "2026-04-20"
 
 - **Spring Boot + JSON (дефолт):** `jackson.md` целиком, начиная с "ObjectMapper" и «Аннотации».
 - **Android-проект:** `java-gson.md` + секция "Type Adapters".
-- **Kotlin-multiplatform:** сравнить с [[kotlin-kotlinx-serialization|kotlinx.serialization]].
+- **Kotlin-multiplatform:** сравнить с [kotlinx.serialization](../kotlin/kotlin-kotlinx-serialization.md).
 - **Оптимизация hot-path:** секции "Streaming API" и "Performance" в `jackson.md`.
 
 ## Куда идти дальше
 
-- REST-контракты — [[README|development/api/rest]]
-- Kotlin-сериализация — [[kotlin-kotlinx-serialization|libraries/kotlin/kotlin-kotlinx-serialization.md]]
-- Protobuf/gRPC — [[java-protobuf|libraries/java/java-protobuf.md]]
+- REST-контракты — [development/api/rest](../../basics/README.md)
+- Kotlin-сериализация — [libraries/kotlin/kotlin-kotlinx-serialization.md](../kotlin/kotlin-kotlinx-serialization.md)
+- Protobuf/gRPC — [libraries/java/java-protobuf.md](../java/java-protobuf.md)

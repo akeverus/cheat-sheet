@@ -24,7 +24,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[maven|Maven (основы)]]
+- [Maven (основы)](../maven/maven.md)
 ## Содержание
 
 - [Продвинутая конфигурация проекта](#продвинутая-конфигурация-проекта)
@@ -1258,7 +1258,7 @@ tasks.named("release") {
 afterReleaseBuild.dependsOn("publish")
 ```
 ## См. также
-- [[maven-advanced|Maven Advanced]] — альтернативная система сборки
-- [[spring-boot|Spring Boot]] — **Java** фреймворк
-- [[kotlin-basics|Kotlin]] — язык программирования
-- [[docker-basics|Docker]] — контейнеризация
+- [Maven Advanced](../maven/maven-advanced.md) — альтернативная система сборки
+- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Java** фреймворк
+- [Kotlin](../../../languages/kotlin/kotlin-basics.md) — язык программирования
+- [Docker](../../../platform/containers/docker/docker-basics.md) — контейнеризация

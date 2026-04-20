@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Luhn Algorithm — Wikipedia](https://en.wikipedia.org/wiki/Luhn_algorithm)
 
 ### См. также
-- [[regex-token-replacement|Работа с регулярными выражениями]]
-- [[README|Алгоритмы со строками]]
+- [Работа с регулярными выражениями](../strings/regex-token-replacement.md)
+- [Алгоритмы со строками](../../basics/README.md)
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)](frequency-histogram-apache-commons.md)
 ## Содержание
 
 - [Обзор](#обзор)

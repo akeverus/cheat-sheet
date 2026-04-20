@@ -23,8 +23,8 @@ updated: "2026-04-20"
 - [Vavr User Guide](https://docs.vavr.io/) — руководство пользователя
 
 ### См. также
-- [[java-streams-fp|Java Streams и FP]] — **Java Streams** и функциональное программирование
-- [[strategy|Strategy]] — функциональные паттерны
+- [Java Streams и FP](../../languages/java/java-streams-fp.md) — **Java Streams** и функциональное программирование
+- [Strategy](../../patterns/behavioral/strategy.md) — функциональные паттерны
 
 ## Содержание
 
@@ -1117,7 +1117,7 @@ public class VavrDebugger {
 - [Vavr Examples](https://github.com/vavr-io/vavr/tree/master/vavr-examples)
 
 ## См. также
-- [[java-streams-fp|Java Streams]] — **Java** 8 **Streams**
-- [[README|Паттерны]] — Функциональные паттерны
-- [[scala-collections|Scala Collections]] — **Scala** коллекции
+- [Java Streams](../../languages/java/java-streams-fp.md) — **Java** 8 **Streams**
+- [Паттерны](../../basics/README.md) — Функциональные паттерны
+- [Scala Collections](../../languages/scala/scala-collections.md) — **Scala** коллекции
 

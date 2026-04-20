@@ -32,10 +32,10 @@ updated: "2026-04-20"
 - [MySQL Enterprise Monitor](https://dev.mysql.com/doc/mysql-monitor/en/)
 
 ### См. также
-- [[mysql-basics|mysql-basics.md]] — основы **MySQL**
-- [[mysql-queries|mysql-queries.md]] — запросы и оптимизация **SQL**
-- [[mysql-performance|mysql-performance.md]] — производительность сервера
-- [[postgres-indexes|PostgreSQL]] — сравнение с **PostgreSQL**
+- [mysql-basics.md](mysql-basics.md) — основы **MySQL**
+- [mysql-queries.md](mysql-queries.md) — запросы и оптимизация **SQL**
+- [mysql-performance.md](mysql-performance.md) — производительность сервера
+- [PostgreSQL](../postgresql/postgres-indexes.md) — сравнение с **PostgreSQL**
 
 ## Содержание
 
@@ -1293,9 +1293,9 @@ ALTER TABLE bulk_updated_table ENGINE=InnoDB;
 - **MySQL `Enterprise` Monitor** — коммерческий мониторинг
 
 **Следующие темы:**
-- [[mysql-performance]] — производительность и тюнинг **MySQL**
-- [[mysql-replication]] — репликация и высокая доступность
-- [[mysql-admin]] — администрирование и обслуживание **MySQL**
+- [mysql-performance](mysql-performance.md) — производительность и тюнинг **MySQL**
+- [mysql-replication](mysql-replication.md) — репликация и высокая доступность
+- [mysql-admin](mysql-admin.md) — администрирование и обслуживание **MySQL**
 
 Правильная индексация — это искусство баланса между скоростью чтения и эффективностью записи!
 

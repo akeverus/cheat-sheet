@@ -24,11 +24,11 @@ updated: "2026-04-20"
 - [Kotlin Collections Guide](https://www.baeldung.com/kotlin/collections-api)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-collections-list|Списки (List)]]
-- [[kotlin-collections-set|Множества (Set)]]
-- [[kotlin-collections-operations|Операции над коллекциями]]
-- [[java-collections-map|Java Collections Map]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Списки (List)](kotlin-collections-list.md)
+- [Множества (Set)](kotlin-collections-set.md)
+- [Операции над коллекциями](kotlin-collections-operations.md)
+- [Java Collections Map](../java/java-collections-map.md)
 
 ## Содержание
 

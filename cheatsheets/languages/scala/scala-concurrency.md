@@ -26,12 +26,12 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [Akka Documentation](https://akka.io/docs/)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-akka|Akka Actors]]
-- [[scala-fp-basics|Функциональное программирование]]
+- [Основы Scala](scala-basics.md)
+- [Akka Actors](../../libraries/scala/scala-akka.md)
+- [Функциональное программирование](scala-fp-basics.md)
 
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
 ## Содержание
 
 - [Введение в конкурентность](#введение-в-конкурентность)

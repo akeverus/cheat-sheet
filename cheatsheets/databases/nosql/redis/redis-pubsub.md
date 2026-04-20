@@ -24,12 +24,12 @@ related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 - [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/) — Pub/Sub
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-streams|redis-streams.md]] — потоки
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-streams.md](redis-streams.md) — потоки
 
-- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
-- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [Quarkus: Redis — Caching и Data Structures](../../../frameworks/java-frameworks/quarkus/quarkus-redis.md)
+- [Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache](../../../frameworks/java-frameworks/micronaut/micronaut-redis.md)
+- [Quarkus: Cache — Кеширование данных](../../../frameworks/java-frameworks/quarkus/quarkus-cache.md)
 ## Содержание
 
 - [Введение в Pub/Sub](#введение-в-pubsub)

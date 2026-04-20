@@ -442,8 +442,8 @@ array[0] = "z";
 
 ## См. также
 
-- [[java-annotations-reflection|Java Annotations и Reflection]]
-- [[java-basics|Java: основы]]
-- [[java-collections-list|Java Collections: List]]
-- [[java-collections-map|Java Collections: Map]]
-- [[java-collections-modification|Java Collections: модификация]]
+- [Java Annotations и Reflection](java-annotations-reflection.md)
+- [Java: основы](java-basics.md)
+- [Java Collections: List](java-collections-list.md)
+- [Java Collections: Map](java-collections-map.md)
+- [Java Collections: модификация](java-collections-modification.md)

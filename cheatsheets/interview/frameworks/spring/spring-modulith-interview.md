@@ -271,11 +271,11 @@ Hexagonal Architecture: `internal/` — адаптеры и реализации
 
 ## See also
 
-- [[spring-events-interview|Spring Events]] — ApplicationEventPublisher/Listener, основа взаимодействия модулей
-- [[spring-boot-interview|Spring Boot]] — auto-configuration, основа для Spring Modulith
-- [[microservices-interview|Microservices]] — переход модульного монолита к микросервисам
-- [[ddd-interview|Domain-Driven Design]] — bounded contexts, aggregate roots — концепции модулей
-- [[hexagonal-architecture-interview|Hexagonal Architecture]] — internal/ как адаптеры и реализации
-- [[spring-testing-interview|Spring Testing]] — @ApplicationModuleTest изоляция при тестировании
-- [[clean-architecture-interview|Clean Architecture]] — separation of concerns на уровне пакетов
-- [[spring-kafka-interview|Spring Kafka]] — Kafka как замена ApplicationEvents при переходе к микросервисам
+- [Spring Events](spring-events-interview.md) — ApplicationEventPublisher/Listener, основа взаимодействия модулей
+- [Spring Boot](spring-boot-interview.md) — auto-configuration, основа для Spring Modulith
+- [Microservices](../../architecture/microservices-interview.md) — переход модульного монолита к микросервисам
+- [Domain-Driven Design](../../architecture/ddd-interview.md) — bounded contexts, aggregate roots — концепции модулей
+- [Hexagonal Architecture](../../architecture/hexagonal-architecture-interview.md) — internal/ как адаптеры и реализации
+- [Spring Testing](spring-testing-interview.md) — @ApplicationModuleTest изоляция при тестировании
+- [Clean Architecture](../../architecture/clean-architecture-interview.md) — separation of concerns на уровне пакетов
+- [Spring Kafka](spring-kafka-interview.md) — Kafka как замена ApplicationEvents при переходе к микросервисам

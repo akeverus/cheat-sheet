@@ -18,7 +18,7 @@ updated: "2026-04-13"
 
 Полное покрытие `Apache Kafka` для интервью: архитектура кластера, топики и партиции, `Producer` / `Consumer`, `Consumer Groups`, репликация и отказоустойчивость, гарантии доставки, `Spring Kafka`, `Kafka Streams`, `KRaft`, мониторинг и администрирование.
 
-**`Apache Kafka`** — распределённая платформа потоковой обработки данных, де-факто стандарт для event-driven архитектур. Знание Kafka — обязательное требование для backend/platform-инженеров, особенно в контексте [[microservices-interview|микросервисов]] и [[event-driven-patterns-interview|event-driven паттернов]].
+**`Apache Kafka`** — распределённая платформа потоковой обработки данных, де-факто стандарт для event-driven архитектур. Знание Kafka — обязательное требование для backend/platform-инженеров, особенно в контексте [микросервисов](../architecture/microservices-interview.md) и [event-driven паттернов](../architecture/event-driven-patterns-interview.md).
 
 ## Полезные ссылки
 
@@ -129,9 +129,9 @@ updated: "2026-04-13"
 `Apache Kafka` — это распределённая платформа потоковой обработки данных, работающая по модели `publish-subscribe`. Kafka обеспечивает высокую пропускную способность, отказоустойчивость и низкую задержку при передаче сообщений.
 
 **Основные сценарии использования:**
-- **Event Streaming** — обмен событиями между [[microservices-interview|микросервисами]]
+- **Event Streaming** — обмен событиями между [микросервисами](../architecture/microservices-interview.md)
 - **Data Pipeline** — перенос данных между системами (CDC, ETL)
-- **Log Aggregation** — централизованный сбор логов (см. [[observability-interview|Observability]])
+- **Log Aggregation** — централизованный сбор логов (см. [Observability](../monitoring/observability-interview.md))
 - **Stream Processing** — обработка данных в реальном времени (`Kafka Streams`, `Apache Flink`)
 - **Event Sourcing** — хранение потока событий как источника истины
 
@@ -887,7 +887,7 @@ public class KafkaStreamsConfig {
 **Популярные коннекторы:**
 - `Debezium` — CDC из баз данных (`PostgreSQL`, `MySQL`, `MongoDB`)
 - `JDBC Source/Sink` — чтение/запись через JDBC
-- `Elasticsearch Sink` — индексация в [[elasticsearch-interview|Elasticsearch]]
+- `Elasticsearch Sink` — индексация в [Elasticsearch](../databases/elasticsearch-interview.md)
 - `S3 Sink` — сохранение в S3
 - `FileStream` — работа с файлами
 
@@ -916,7 +916,7 @@ graph LR
 - `FULL` — обе стороны совместимы
 - `NONE` — без проверок
 
-**Зачем на собеседовании:** показывает понимание проблем эволюции контрактов в [[event-driven-patterns-interview|event-driven архитектуре]].
+**Зачем на собеседовании:** показывает понимание проблем эволюции контрактов в [event-driven архитектуре](../architecture/event-driven-patterns-interview.md).
 
 ## Q36. (!) Что такое `Consumer Lag` и как его измерить?
 
@@ -932,7 +932,7 @@ Consumer Lag:                 30 сообщений
 1. **CLI:** `kafka-consumer-groups.sh --describe --group my-group`
 2. **JMX-метрики:** `kafka.consumer:type=consumer-fetch-manager-metrics,client-id=*`
 3. **Burrow** — LinkedIn tool для мониторинга lag
-4. **Prometheus + kafka-exporter** — экспорт метрик для [[metrics-tracing-interview|Grafana]]
+4. **Prometheus + kafka-exporter** — экспорт метрик для [Grafana](../monitoring/metrics-tracing-interview.md)
 
 **Что делать при растущем lag:**
 - Увеличить количество consumer'ов (до числа партиций)
@@ -1113,7 +1113,7 @@ orders → orders-retry-0 → orders-retry-1 → orders-DLT
 - Consumer lag — главная метрика
 - `UnderReplicatedPartitions` → алерт
 - Мониторьте JVM-метрики брокеров
-- Используйте [[observability-interview|distributed tracing]] с `spring-kafka` + `Micrometer`
+- Используйте [distributed tracing](../monitoring/observability-interview.md) с `spring-kafka` + `Micrometer`
 
 **Операции:**
 - Автоматизируйте partition reassignment при добавлении брокеров
@@ -1548,20 +1548,20 @@ groups:
 
 ## See also
 
-- [[distributed-systems-interview|Распределённые системы]] — CAP, репликация, отказоустойчивость, консенсус
-- [[event-driven-patterns-interview|Event-driven паттерны]] — Outbox, Saga, Event Sourcing, CQRS
-- [[microservices-interview|Микросервисы]] — асинхронная коммуникация, сервисная шина событий
-- [[spring-cloud-interview|Spring Cloud]] — Spring Cloud Stream, интеграция с Kafka в облачных приложениях
-- [[caching-strategies-interview|Стратегии кэширования]] — взаимодействие кэша и event-driven пайплайнов
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]] — применение Kafka как журнала событий в event sourcing
-- [[rxjava-interview|RxJava / Reactive]] — сравнение реактивных потоков и Kafka Streams
-- [[kubernetes-interview|Kubernetes]] — деплой Kafka в Kubernetes, Strimzi Operator
-- [[docker-interview|Docker и контейнеризация]] — контейнеризация Kafka-брокеров
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — CAP, репликация, отказоустойчивость, консенсус
+- [Event-driven паттерны](../architecture/event-driven-patterns-interview.md) — Outbox, Saga, Event Sourcing, CQRS
+- [Микросервисы](../architecture/microservices-interview.md) — асинхронная коммуникация, сервисная шина событий
+- [Spring Cloud](../frameworks/spring/spring-cloud-interview.md) — Spring Cloud Stream, интеграция с Kafka в облачных приложениях
+- [Стратегии кэширования](../architecture/caching-strategies-interview.md) — взаимодействие кэша и event-driven пайплайнов
+- [CQRS и Event Sourcing](../architecture/cqrs-event-sourcing-interview.md) — применение Kafka как журнала событий в event sourcing
+- [RxJava / Reactive](../reactive/rxjava-interview.md) — сравнение реактивных потоков и Kafka Streams
+- [Kubernetes](../devops/kubernetes-interview.md) — деплой Kafka в Kubernetes, Strimzi Operator
+- [Docker и контейнеризация](../devops/docker-interview.md) — контейнеризация Kafka-брокеров
 
-- [[aws-sqs-sns-interview|AWS SQS и SNS]]
-- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
-- [[nats-interview|NATS]]
-- [[pulsar-interview|Apache Pulsar]]
-- [[rabbitmq-interview|RabbitMQ]]
-- [[redpanda-interview|Redpanda]]
-- [[kafka|Шпаргалка: Apache Kafka для Java]] — теория
+- [AWS SQS и SNS](aws-sqs-sns-interview.md)
+- [Сравнение Message Brokers](message-brokers-comparison-interview.md)
+- [NATS](nats-interview.md)
+- [Apache Pulsar](pulsar-interview.md)
+- [RabbitMQ](rabbitmq-interview.md)
+- [Redpanda](redpanda-interview.md)
+- [Шпаргалка: Apache Kafka для Java](../../development/messaging/kafka/kafka.md) — теория

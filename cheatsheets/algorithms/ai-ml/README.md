@@ -17,16 +17,16 @@ updated: "2026-04-20"
 
 ## Содержание
 
-- [[ai-libraries|Обзор AI библиотек]]
-- [[logistic-regression|Логистическая регрессия]]
-- [[genetic-algorithms|Генетические алгоритмы]]
-- [[ant-colony-optimization|Ant Colony Optimization]]
-- [[minimax]]
-- [[recommender-systems|Recommender Systems]]
-- [[opennlp]]
-- [[deeplearning4j]]
-- [[cnn-deeplearning4j|CNN + Deeplearning4j]]
-- [[spark-mllib|Spark MLlib]]
-- [[hyperloglog]]
-- [[jenetics]]
+- [Обзор AI библиотек](ai-libraries.md)
+- [Логистическая регрессия](logistic-regression.md)
+- [Генетические алгоритмы](genetic-algorithms.md)
+- [Ant Colony Optimization](ant-colony-optimization.md)
+- [minimax](minimax.md)
+- [Recommender Systems](recommender-systems.md)
+- [opennlp](opennlp.md)
+- [deeplearning4j](deeplearning4j.md)
+- [CNN + Deeplearning4j](cnn-deeplearning4j.md)
+- [Spark MLlib](spark-mllib.md)
+- [hyperloglog](hyperloglog.md)
+- [jenetics](jenetics.md)
 

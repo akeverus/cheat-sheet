@@ -783,20 +783,20 @@ for attempt in range(5):
 
 ## See also
 
-- [[system-design-interview|System Design]] — общие принципы
-- [[saga-pattern-interview|Saga Pattern]] — distributed transactions
-- [[distributed-systems-interview|Distributed Systems]] — consistency, partition
-- [[consistency-patterns-interview|Consistency Patterns]] — strong vs eventual
-- [[cap-theorem-interview|CAP Theorem]] — trade-offs
-- [[application-security-interview|Application Security]] — PCI, encryption
-- [[secrets-management-interview|Secrets Management]] — vault, keys
-- [[resilience-patterns-interview|Resilience Patterns]] — retries, circuit breaker
-- [[observability-interview|Observability]] — tracing, logs
-- [[event-driven-patterns-interview|Event-Driven Patterns]] — webhooks, sagas
+- [System Design](system-design-interview.md) — общие принципы
+- [Saga Pattern](../architecture/saga-pattern-interview.md) — distributed transactions
+- [Distributed Systems](../architecture/distributed-systems-interview.md) — consistency, partition
+- [Consistency Patterns](../architecture/consistency-patterns-interview.md) — strong vs eventual
+- [CAP Theorem](../architecture/cap-theorem-interview.md) — trade-offs
+- [Application Security](../security/application-security-interview.md) — PCI, encryption
+- [Secrets Management](../security/secrets-management-interview.md) — vault, keys
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, circuit breaker
+- [Observability](../monitoring/observability-interview.md) — tracing, logs
+- [Event-Driven Patterns](../architecture/event-driven-patterns-interview.md) — webhooks, sagas
 
-- [[design-chat-system-interview|Design Chat System]]
-- [[design-feed-system-interview|Design Feed System]]
-- [[design-rate-limiter-interview|Design Rate Limiter]]
-- [[design-search-interview|Design Search System]]
-- [[design-url-shortener-interview|Design URL Shortener]]
-- [[system-design-interview|System Design]]
+- [Design Chat System](design-chat-system-interview.md)
+- [Design Feed System](design-feed-system-interview.md)
+- [Design Rate Limiter](design-rate-limiter-interview.md)
+- [Design Search System](design-search-interview.md)
+- [Design URL Shortener](design-url-shortener-interview.md)
+- [System Design](system-design-interview.md)

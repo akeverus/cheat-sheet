@@ -19,14 +19,14 @@ OrientDB — мультимодельная NoSQL СУБД, которая в о
 ## Полезные ссылки
 
 ### Основные документы
-- [[orientdb-basics|OrientDB: Основы]] — модель, установка, работа с графами, интеграция с Java
+- [OrientDB: Основы](orientdb-basics.md) — модель, установка, работа с графами, интеграция с Java
 
 ### Соседние разделы
-- [[README|Графовые БД]]
-- [[README|Neo4j]] — нативная графовая альтернатива
-- [[README|NoSQL]]
+- [Графовые БД](../../../basics/README.md)
+- [Neo4j](../../../basics/README.md) — нативная графовая альтернатива
+- [NoSQL](../../../basics/README.md)
 - [MongoDB](../../nosql/mongodb/)
-- [[README|Базы данных]]
+- [Базы данных](../../../basics/README.md)
 
 ### Внешние ресурсы
 - [OrientDB Documentation](https://orientdb.org/docs/)
@@ -43,7 +43,7 @@ OrientDB — мультимодельная NoSQL СУБД, которая в о
 
 ## Что внутри раздела
 
-[[orientdb-basics]] покрывает:
+[orientdb-basics](orientdb-basics.md) покрывает:
 
 - Мультимодельную концепцию (document + graph + key-value + object)
 - Установку через Docker
@@ -76,11 +76,11 @@ OrientDB — мультимодельная NoSQL СУБД, которая в о
 
 - **Ознакомление (30-60 мин):** `orientdb-basics.md` целиком.
 - **Сравнение с Neo4j:** `orientdb-basics.md` + `../neo4j/neo4j-basics.md`, сравнить Cypher и Extended SQL на одинаковых запросах.
-- **Выбор хранилища:** этот README + раздел «vs альтернативы» + [[README|графовые БД]].
+- **Выбор хранилища:** этот README + раздел «vs альтернативы» + [графовые БД](../../../basics/README.md).
 
 ## Куда идти дальше
 
-- Сравнение графовых БД — [[README|графовые БД]]
-- Обзор NoSQL — [[README|databases/nosql/]]
-- Проектирование данных — [[README|databases/README.md]]
-- Интервью по БД — [[database-architecture-interview|interview/databases/]]
+- Сравнение графовых БД — [графовые БД](../../../basics/README.md)
+- Обзор NoSQL — [databases/nosql/](../../../basics/README.md)
+- Проектирование данных — [databases/README.md](../../../basics/README.md)
+- Интервью по БД — [interview/databases/](../../../interview/databases/database-architecture-interview.md)

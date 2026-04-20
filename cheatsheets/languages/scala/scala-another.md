@@ -25,12 +25,12 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-ty
 - [Scala Style Guide](https://docs.scala-lang.org/style/)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-fp-advanced|Продвинутое функциональное программирование]]
-- [[scala-type-system|Система типов]]
+- [Основы Scala](scala-basics.md)
+- [Продвинутое функциональное программирование](scala-fp-advanced.md)
+- [Система типов](scala-type-system.md)
 
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
 ## Содержание
 
 - [Паттерны проектирования](#паттерны-проектирования)

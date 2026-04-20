@@ -18,18 +18,18 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[microservices]] — микросервисная архитектура: принципы, паттерны, API Gateway, Service Discovery, Circuit Breaker
+- [microservices](microservices.md) — микросервисная архитектура: принципы, паттерны, API Gateway, Service Discovery, Circuit Breaker
 
 ### Соседние разделы
-- [[README|Родительский раздел: Architecture]]
-- [[README|Design Principles]] — SRP, DIP и их отражение в границах сервисов
-- [[README|System Design]] — проектирование конкретных систем
-- [[README|ADR]] — фиксация выбранного стиля
+- [Родительский раздел: Architecture](../../basics/README.md)
+- [Design Principles](../../basics/README.md) — SRP, DIP и их отражение в границах сервисов
+- [System Design](../../basics/README.md) — проектирование конкретных систем
+- [ADR](../../basics/README.md) — фиксация выбранного стиля
 - [Enterprise Patterns](../enterprise-patterns/) — DDD, CQRS, Event Sourcing
-- [[README|Design Patterns]]
-- [[README|Messaging]] — коммуникация между сервисами
-- [[README|Kubernetes]] — runtime для микросервисов
-- [[README|Observability]]
+- [Design Patterns](../../basics/README.md)
+- [Messaging](../../basics/README.md) — коммуникация между сервисами
+- [Kubernetes](../../basics/README.md) — runtime для микросервисов
+- [Observability](../../basics/README.md)
 
 ### Внешние ресурсы
 - [Microservices — Martin Fowler](https://martinfowler.com/articles/microservices.html)
@@ -72,12 +72,12 @@ updated: "2026-04-20"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Определение и признаки микросервисов | [[microservices#введение-в-микросервисы]] |
-| Монолит vs микросервисы | [[microservices#монолит-vs-микросервисы]] |
-| Принципы проектирования (SRP, DDD, API-first) | [[microservices#принципы-проектирования]] |
-| Паттерны: API Gateway, Service Discovery, Circuit Breaker | [[microservices#паттерны-микросервисов]] |
+| Определение и признаки микросервисов | [microservices](microservices.md#введение-в-микросервисы) |
+| Монолит vs микросервисы | [microservices](microservices.md#монолит-vs-микросервисы) |
+| Принципы проектирования (SRP, DDD, API-first) | [microservices](microservices.md#принципы-проектирования) |
+| Паттерны: API Gateway, Service Discovery, Circuit Breaker | [microservices](microservices.md#паттерны-микросервисов) |
 | Event-Driven, CQRS, Event Sourcing | [architecture/enterprise-patterns/](../enterprise-patterns/) |
-| ADR для архитектурного выбора | [[README|architecture/architectural-decision-records/]] |
+| ADR для архитектурного выбора | [architecture/architectural-decision-records/](../../basics/README.md) |
 
 ## Маршруты чтения
 
@@ -87,7 +87,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Принципы, на которых строятся границы сервисов — [[README|architecture/design-principles/]]
-- System Design и масштабирование — [[README|architecture/system-design/]]
-- Паттерны коммуникации и устойчивости — [[README|patterns/]]
-- Инфраструктура для микросервисов — [[README|platform/containers/kubernetes/]], [[README|monitoring/]]
+- Принципы, на которых строятся границы сервисов — [architecture/design-principles/](../../basics/README.md)
+- System Design и масштабирование — [architecture/system-design/](../../basics/README.md)
+- Паттерны коммуникации и устойчивости — [patterns/](../../basics/README.md)
+- Инфраструктура для микросервисов — [platform/containers/kubernetes/](../../basics/README.md), [monitoring/](../../basics/README.md)

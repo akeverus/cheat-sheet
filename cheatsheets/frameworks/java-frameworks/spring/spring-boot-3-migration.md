@@ -449,8 +449,8 @@ ObservedAspect observedAspect(ObservationRegistry registry) {
 
 ## См. также
 
-- [[spring-boot|Spring Boot]]
-- [[spring-security|Spring Security]]
-- [[spring-data-jpa|Spring Data JPA]]
-- [[spring-core|Spring Core]]
-- [[spring-core|Spring Core]]
+- [Spring Boot](../../spring/spring-boot.md)
+- [Spring Security](spring-security.md)
+- [Spring Data JPA](spring-data-jpa.md)
+- [Spring Core](../../spring/spring-core.md)
+- [Spring Core](../../spring/spring-core.md)

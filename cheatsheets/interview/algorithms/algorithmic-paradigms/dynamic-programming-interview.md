@@ -802,7 +802,7 @@ int tsp(int[][] dist) {
 
 Пример: Knapsack — `O(n · W)`. Если `W = 10⁹`, то это `10¹⁰` — экспоненциально по числу битов в `W` (`log₂ W = 30`).
 
-Подробнее — в [[complexity-analysis-interview|Анализ сложности]].
+Подробнее — в [Анализ сложности](../complexity/complexity-analysis-interview.md).
 
 ## Q31. (!) Чем DP отличается от Greedy?
 
@@ -817,7 +817,7 @@ int tsp(int[][] dist) {
 **Coin Change:** для `[1, 5, 10, 25]` greedy работает, для `[1, 3, 4]` — нет (нужен DP).
 **Activity Selection:** greedy оптимален.
 
-Подробнее — в [[greedy-algorithms-interview|Greedy]].
+Подробнее — в [Greedy](greedy-algorithms-interview.md).
 
 ## Q32. (!) Чем DP отличается от Divide and Conquer?
 
@@ -830,7 +830,7 @@ int tsp(int[][] dist) {
 
 D&C — это «решить и забыть», DP — «решить и запомнить, чтобы не повторять».
 
-Подробнее — в [[divide-and-conquer-interview|Divide and Conquer]].
+Подробнее — в [Divide and Conquer](divide-and-conquer-interview.md).
 
 ## Q33. (!) Как распознать DP-задачу на интервью?
 
@@ -851,22 +851,22 @@ D&C — это «решить и забыть», DP — «решить и зап
 
 ## See also
 
-- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
-- [[recursion-interview|Рекурсия]] — DP начинается с рекурсии
-- [[greedy-algorithms-interview|Greedy алгоритмы]] — альтернатива DP
-- [[divide-and-conquer-interview|Divide and Conquer]] — без перекрытий
-- [[backtracking-interview|Backtracking]] — DP через мемоизацию состояний
-- [[arrays-strings-interview|Массивы и строки]] — Kadane, Edit Distance
-- [[trees-interview|Деревья]] — DP на деревьях (House Robber III)
-- [[graphs-interview|Графы]] — Bellman-Ford, Floyd-Warshall — это DP
-- [[two-pointers-sliding-window-interview|Two Pointers]] — иногда альтернатива DP
-- [[complexity-analysis-interview|Анализ сложности]] — pseudo-polynomial
-- [[hash-tables-interview|Хеш-таблицы]] — мемоизация через HashMap
+- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
+- [Рекурсия](recursion-interview.md) — DP начинается с рекурсии
+- [Greedy алгоритмы](greedy-algorithms-interview.md) — альтернатива DP
+- [Divide and Conquer](divide-and-conquer-interview.md) — без перекрытий
+- [Backtracking](backtracking-interview.md) — DP через мемоизацию состояний
+- [Массивы и строки](../data-structures/arrays-strings-interview.md) — Kadane, Edit Distance
+- [Деревья](../data-structures/trees-interview.md) — DP на деревьях (House Robber III)
+- [Графы](../data-structures/graphs-interview.md) — Bellman-Ford, Floyd-Warshall — это DP
+- [Two Pointers](two-pointers-sliding-window-interview.md) — иногда альтернатива DP
+- [Анализ сложности](../complexity/complexity-analysis-interview.md) — pseudo-polynomial
+- [Хеш-таблицы](../data-structures/hash-tables-interview.md) — мемоизация через HashMap
 
-- [[backtracking-interview|Backtracking]]
-- [[divide-and-conquer-interview|Divide and Conquer]]
-- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
-- [[recursion-interview|Рекурсия]]
-- [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]
-- [[algorithms-interview|Алгоритмы (обзор)]]
-- [[dynamic-programming|Шпаргалка: Динамическое программирование]] — теория
+- [Backtracking](backtracking-interview.md)
+- [Divide and Conquer](divide-and-conquer-interview.md)
+- [Жадные алгоритмы (Greedy)](greedy-algorithms-interview.md)
+- [Рекурсия](recursion-interview.md)
+- [Two Pointers и Sliding Window](two-pointers-sliding-window-interview.md)
+- [Алгоритмы (обзор)](../algorithms-interview.md)
+- [Шпаргалка: Динамическое программирование](../../../algorithms/algorithmic-paradigms/dynamic-programming.md) — теория

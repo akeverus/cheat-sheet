@@ -26,7 +26,7 @@ updated: "2026-04-20"
 - [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [[postgres-queries]] — [[postgres-structure]].
+См. также: [postgres-queries](postgres-queries.md) — [postgres-structure](postgres-structure.md).
 
 ## Содержание
 
@@ -759,8 +759,8 @@ COMMIT;
 
 ## См. также
 
-- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
-- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
-- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
-- [[postgres-design|PostgreSQL: проектирование и нормализация]]
-- [[postgres-extensions|PostgreSQL: Расширения]]
+- [PostgreSQL: администрирование и обслуживание](postgres-admin.md)
+- [PostgreSQL: Резервное копирование и восстановление](postgres-backup-restore.md)
+- [PostgreSQL: Полное руководство по основам и мониторингу](postgres-basics.md)
+- [PostgreSQL: проектирование и нормализация](postgres-design.md)
+- [PostgreSQL: Расширения](postgres-extensions.md)

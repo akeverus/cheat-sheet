@@ -19,12 +19,12 @@ updated: "2026-04-20"
 - [First non-repeating character — GeeksforGeeks](https://www.geeksforgeeks.org/given-a-string-find-its-first-non-repeating-character/)
 
 ### См. также
-- [[word-count|Подсчет слов]] — подсчёт слов
-- [[palindrome-check|Проверка палиндромов]] — палиндромы
+- [Подсчет слов](word-count.md) — подсчёт слов
+- [Проверка палиндромов](palindrome-check.md) — палиндромы
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

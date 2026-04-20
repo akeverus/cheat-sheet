@@ -13,6 +13,7 @@
 | `cheatsheet-regenerate-toc.py` | Перегенерация блока `## Содержание` из реальных заголовков с GFM-совместимым slugify. | ✓ |
 | `cheatsheet-add-wikilinks.py` | Дополняет `### См. также` до 5 wikilinks по пересечению тегов frontmatter. | ✓ |
 | `cheatsheet-autofix-all.py` | Единая точка входа: прогоняет все 3 прохода + regenerate-toc по порядку. | ✓ |
+| `seed-options.py` | Оффлайн-сид `answer_options` через Claude (Anthropic SDK) с prompt-caching на системном промпте. Батчит вопросы без опций, пишет в SQLite одной транзакцией. Требует `pip install anthropic` и `ANTHROPIC_API_KEY`. Обёртка — `./gradlew :quiz-app:seedOptions`. | ✓ |
 
 ## Запуск
 

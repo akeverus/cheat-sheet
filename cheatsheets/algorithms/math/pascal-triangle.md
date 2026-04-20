@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Pascal's Triangle](https://www.geeksforgeeks.org/pascal-triangle/)
 
 ### См. также
-- [[factorial-calculation|Вычисление факториала]] — факториал
-- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
+- [Вычисление факториала](factorial-calculation.md) — факториал
+- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

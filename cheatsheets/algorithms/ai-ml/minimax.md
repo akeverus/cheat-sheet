@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Game Theory (Stanford/Coursera)](https://www.coursera.org/learn/game-theory-1)
 
 ### См. также
-- [[monte-carlo-tree-search-tic-tac-toe|Monte Carlo Tree Search]]
-- [[README|Задачи и алгоритмы]] — обзор разделов
+- [Monte Carlo Tree Search](../trees/monte-carlo-tree-search-tic-tac-toe.md)
+- [Задачи и алгоритмы](../../basics/README.md) — обзор разделов
 
-- [[logistic-regression|Логистическая регрессия]]
-- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
-- [[ai-libraries|Обзор ИИ библиотек]]
+- [Логистическая регрессия](logistic-regression.md)
+- [Реализация CNN с помощью Deeplearning4j](cnn-deeplearning4j.md)
+- [Обзор ИИ библиотек](ai-libraries.md)
 ## Содержание
 
 - [Обзор](#обзор)

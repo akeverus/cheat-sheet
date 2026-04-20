@@ -232,7 +232,7 @@ def call_openai(prompt):
 
 **Зачем:** не **душить** вмёртвый сервис, экономить ресурсы, fail fast.
 
-Подробнее — в [[resilience-patterns-interview|Resilience Patterns]].
+Подробнее — в [Resilience Patterns](../architecture/resilience-patterns-interview.md).
 
 ## Q7. (!) Fallback между providers (Claude → GPT)?
 
@@ -561,7 +561,7 @@ rag_pipeline (2.5s)
 
 **Tools:** OpenTelemetry, LangSmith, Langfuse, Phoenix.
 
-Подробнее — [[observability-interview|Observability]].
+Подробнее — [Observability](../monitoring/observability-interview.md).
 
 ## Q22. Helicone, Langfuse, LangSmith?
 
@@ -731,22 +731,22 @@ audit_log({
 
 ## See also
 
-- [[llm-basics-interview|LLM Basics]] — основа
-- [[rag-interview|RAG]] — popular pattern
-- [[prompt-engineering-interview|Prompt Engineering]] — prompts design
-- [[ai-agents-interview|AI Agents]] — autonomous LLM systems
-- [[mlops-interview|MLOps]] — operations
-- [[model-serving-interview|Model Serving]] — для self-hosted
-- [[caching-strategies-interview|Caching]] — semantic cache
-- [[resilience-patterns-interview|Resilience Patterns]] — circuit breaker
-- [[observability-interview|Observability]] — tracing, metrics
-- [[microservices-interview|Микросервисы]] — gateway pattern
-- [[application-security-interview|Application Security]] — prompt injection
-- [[api-gateway-interview|API Gateway]] — generalized pattern
+- [LLM Basics](llm-basics-interview.md) — основа
+- [RAG](rag-interview.md) — popular pattern
+- [Prompt Engineering](prompt-engineering-interview.md) — prompts design
+- [AI Agents](ai-agents-interview.md) — autonomous LLM systems
+- [MLOps](mlops-interview.md) — operations
+- [Model Serving](model-serving-interview.md) — для self-hosted
+- [Caching](../architecture/caching-strategies-interview.md) — semantic cache
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — circuit breaker
+- [Observability](../monitoring/observability-interview.md) — tracing, metrics
+- [Микросервисы](../architecture/microservices-interview.md) — gateway pattern
+- [Application Security](../security/application-security-interview.md) — prompt injection
+- [API Gateway](../architecture/api-gateway-interview.md) — generalized pattern
 
-- [[ai-agents-interview|AI Agents]]
-- [[embeddings-interview|Embeddings]]
-- [[llm-basics-interview|LLM Basics]]
-- [[mlops-interview|MLOps]]
-- [[model-serving-interview|Model Serving]]
-- [[prompt-engineering-interview|Prompt Engineering]]
+- [AI Agents](ai-agents-interview.md)
+- [Embeddings](embeddings-interview.md)
+- [LLM Basics](llm-basics-interview.md)
+- [MLOps](mlops-interview.md)
+- [Model Serving](model-serving-interview.md)
+- [Prompt Engineering](prompt-engineering-interview.md)

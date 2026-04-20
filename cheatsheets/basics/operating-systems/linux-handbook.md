@@ -17,7 +17,7 @@ related:
 ---
 # Linux и Bash: практический справочник
 
-Рабочий справочник по `Linux` для backend/DevOps инженера. Фокус — реальные задачи: диагностика, troubleshooting, systemd-сервисы, сеть, shell-скрипты. Для теории ядра и OS-концепций см. [[operating-systems-basics]].
+Рабочий справочник по `Linux` для backend/DevOps инженера. Фокус — реальные задачи: диагностика, troubleshooting, systemd-сервисы, сеть, shell-скрипты. Для теории ядра и OS-концепций см. [operating-systems-basics](operating-systems-basics.md).
 
 ## Полезные ссылки
 
@@ -33,11 +33,11 @@ related:
 - [ArchWiki](https://wiki.archlinux.org/) — один из лучших источников по настройке Linux
 
 ### См. также
-- [[operating-systems-basics]] — теория OS, процессы, память, file systems
-- [[linux-interview]] — вопросы на собеседовании по Linux
-- [[docker-basics]] — контейнеры поверх Linux namespaces и cgroups
-- [[kubernetes-basics]] — оркестрация Linux-хостов
-- [[git-basics]] — git как Linux CLI
+- [operating-systems-basics](operating-systems-basics.md) — теория OS, процессы, память, file systems
+- [linux-interview](../../interview/devops/linux-interview.md) — вопросы на собеседовании по Linux
+- [docker-basics](../../platform/containers/docker/docker-basics.md) — контейнеры поверх Linux namespaces и cgroups
+- [kubernetes-basics](../../platform/containers/kubernetes/kubernetes-basics.md) — оркестрация Linux-хостов
+- [git-basics](../git-basics.md) — git как Linux CLI
 
 ## Содержание
 

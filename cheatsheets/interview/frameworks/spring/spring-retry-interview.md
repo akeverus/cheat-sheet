@@ -66,7 +66,7 @@ updated: "2026-04-20"
 
 **Основной принцип:** при получении заданного исключения метод вызывается повторно заданное число раз с настраиваемой паузой между попытками.
 
-**Итог:** Spring Retry = простой retry. Для Circuit Breaker, Bulkhead и Rate Limiter — используй [[resilience4j-interview|Resilience4j]].
+**Итог:** Spring Retry = простой retry. Для Circuit Breaker, Bulkhead и Rate Limiter — используй [Resilience4j](resilience4j-interview.md).
 
 ## Q2. Как подключить Spring Retry?
 
@@ -223,7 +223,7 @@ policy.setPolicyMap(Map.of(
 
 ## Q8. Что такое CircuitBreakerRetryPolicy?
 
-`CircuitBreakerRetryPolicy` — встроенный Circuit Breaker в Spring Retry (в отличие от полноценного [[resilience4j-interview|Resilience4j CB]]). Подходит для простых случаев.
+`CircuitBreakerRetryPolicy` — встроенный Circuit Breaker в Spring Retry (в отличие от полноценного [Resilience4j CB](resilience4j-interview.md)). Подходит для простых случаев.
 
 ```java
 CircuitBreakerRetryPolicy circuitBreakerPolicy = new CircuitBreakerRetryPolicy(
@@ -236,13 +236,13 @@ RetryTemplate template = new RetryTemplate();
 template.setRetryPolicy(circuitBreakerPolicy);
 ```
 
-**Ограничения Spring Retry CB:** нет метрик, нет HALF_OPEN состояния, нет Spring Boot auto-configuration. Для production используй [[resilience4j-interview|Resilience4j]].
+**Ограничения Spring Retry CB:** нет метрик, нет HALF_OPEN состояния, нет Spring Boot auto-configuration. Для production используй [Resilience4j](resilience4j-interview.md).
 
 ## Q9. (!) Почему @Retryable не работает при self-invocation?
 
 `@Retryable` работает через **Spring AOP proxy**: прокси обёртывает bean снаружи, а вызов `this.method()` обходит прокси и попадает напрямую в реальный объект — retry не срабатывает.
 
-Это та же проблема, что с `@Transactional`. Подробнее в [[spring-aop-interview|Spring AOP]].
+Это та же проблема, что с `@Transactional`. Подробнее в [Spring AOP](spring-aop-interview.md).
 
 ```java
 @Service
@@ -489,17 +489,17 @@ class PaymentServiceTest {
 
 **Когда Spring Retry:** простые сценарии retry, уже используешь Spring Batch/Integration (они используют Spring Retry внутри), не нужен CB.
 
-**Когда Resilience4j:** production microservices, нужен Circuit Breaker + метрики + observability. Подробнее в [[resilience4j-interview|Resilience4j]].
+**Когда Resilience4j:** production microservices, нужен Circuit Breaker + метрики + observability. Подробнее в [Resilience4j](resilience4j-interview.md).
 
 ---
 
 ## See also
 
-- [[resilience4j-interview|Resilience4j]] — полноценная fault tolerance: CB, RateLimiter, Bulkhead
-- [[spring-transaction-interview|Spring @Transactional]] — совместное использование с @Retryable
-- [[spring-aop-interview|Spring AOP]] — механизм proxy, self-invocation проблема
-- [[spring-webflux-interview|Spring WebFlux]] — реактивный retry через Reactor
-- [[spring-testing-interview|Spring Testing]] — тестирование @Retryable в @SpringBootTest
-- [[spring-batch-interview|Spring Batch]] — Spring Retry встроен в retry step
-- [[micrometer-interview|Micrometer]] — метрики retry через RetryListener + MeterRegistry
-- [[distributed-systems-interview|Distributed Systems]] — теория: retry паттерны, idempotency
+- [Resilience4j](resilience4j-interview.md) — полноценная fault tolerance: CB, RateLimiter, Bulkhead
+- [Spring @Transactional](spring-transaction-interview.md) — совместное использование с @Retryable
+- [Spring AOP](spring-aop-interview.md) — механизм proxy, self-invocation проблема
+- [Spring WebFlux](spring-webflux-interview.md) — реактивный retry через Reactor
+- [Spring Testing](spring-testing-interview.md) — тестирование @Retryable в @SpringBootTest
+- [Spring Batch](spring-batch-interview.md) — Spring Retry встроен в retry step
+- [Micrometer](../../monitoring/micrometer-interview.md) — метрики retry через RetryListener + MeterRegistry
+- [Distributed Systems](../../architecture/distributed-systems-interview.md) — теория: retry паттерны, idempotency

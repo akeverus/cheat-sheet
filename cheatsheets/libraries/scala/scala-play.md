@@ -25,12 +25,12 @@ related: ["scala/scala-basics.md", "scala/scala-slick.md"]
 - [Play Framework Documentation](https://www.playframework.com/documentation)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-slick|Работа с базами данных]]
+- [Основы Scala](../../languages/scala/scala-basics.md)
+- [Работа с базами данных](scala-slick.md)
 
-- [[scala-http4s|Scala http4s]]
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
+- [Scala http4s](../../languages/scala/scala-http4s.md)
+- [Scala DSL](../../languages/scala/scala-dsl.md)
+- [Shapeless в Scala](../../languages/scala/scala-shapeless.md)
 ## Содержание
 
 - [Введение в Play Framework](#введение-в-play-framework)

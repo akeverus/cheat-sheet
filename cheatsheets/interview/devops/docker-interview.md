@@ -17,7 +17,7 @@ updated: "2026-04-13"
 
 Вопросы и ответы по `Docker`: контейнеры, образы, `Dockerfile`, `multi-stage` сборка, `Compose`, тома, сети, безопасность, оптимизация для `Java` / `Spring Boot`.
 
-**`Docker`** — платформа для разработки, доставки и запуска приложений в контейнерах. Контейнеры изолируют приложение и его зависимости от хоста и друг от друга, используют ядро ОС хоста и не требуют полноценной виртуальной машины. `Docker` стал стандартом де-факто для упаковки и доставки приложений в [[microservices-interview|микросервисной архитектуре]] и является основой для оркестраторов вроде [[kubernetes-interview|Kubernetes]].
+**`Docker`** — платформа для разработки, доставки и запуска приложений в контейнерах. Контейнеры изолируют приложение и его зависимости от хоста и друг от друга, используют ядро ОС хоста и не требуют полноценной виртуальной машины. `Docker` стал стандартом де-факто для упаковки и доставки приложений в [микросервисной архитектуре](../architecture/microservices-interview.md) и является основой для оркестраторов вроде [Kubernetes](kubernetes-interview.md).
 
 ## Полезные ссылки
 
@@ -203,7 +203,7 @@ CMD ["python", "/myapp/app.py"]  # Layer 4: команда запуска
 - Disk I/O — ограничение скорости чтения/записи
 - Сеть — приоритизация трафика
 
-Без `namespace` контейнер видел бы все процессы и сеть хоста. Без `cgroups` — мог бы потребить все ресурсы. В [[kubernetes-interview|Kubernetes]] эти механизмы используются для `resource limits` и `requests` подов.
+Без `namespace` контейнер видел бы все процессы и сеть хоста. Без `cgroups` — мог бы потребить все ресурсы. В [Kubernetes](kubernetes-interview.md) эти механизмы используются для `resource limits` и `requests` подов.
 
 ## Q6. (!) Опишите жизненный цикл контейнера `Docker`
 
@@ -399,7 +399,7 @@ jib {
 }
 ```
 
-Подробнее о сборке и деплое образов — в [[pipeline-design-interview|вопросах по CI/CD пайплайнам]].
+Подробнее о сборке и деплое образов — в [вопросах по CI/CD пайплайнам](../cicd/pipeline-design-interview.md).
 
 ## Q14. Что такое `Spring Boot Layered Jars` и как они оптимизируют `Docker`-образы?
 
@@ -613,7 +613,7 @@ docker run --rm \
 - **Bind mounts** для конфигов: `-v ./config:/app/config`
 - **Регулярные бэкапы** томов
 
-В production **никогда** не использовать `docker compose down -v` без бэкапа. Для [[kubernetes-interview|Kubernetes]] аналог — `PersistentVolumeClaim`.
+В production **никогда** не использовать `docker compose down -v` без бэкапа. Для [Kubernetes](kubernetes-interview.md) аналог — `PersistentVolumeClaim`.
 
 ## Q24. (!) Какие сетевые драйверы поддерживает `Docker`?
 
@@ -834,7 +834,7 @@ HEALTHCHECK --interval=30s CMD wget -qO- http://localhost:8080/actuator/health |
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-jar", "app.jar"]
 ```
 
-Подробнее о безопасности приложений — в [[application-security-interview|вопросах по Application Security]].
+Подробнее о безопасности приложений — в [вопросах по Application Security](../security/application-security-interview.md).
 
 ## Q32. Как запускать контейнеры от непривилегированного пользователя?
 
@@ -910,7 +910,7 @@ services:
         delay: 5s
 ```
 
-Для production: `unless-stopped` или `on-failure` с лимитом попыток. В [[kubernetes-interview|Kubernetes]] аналог — `restartPolicy` в Pod spec (`Always`, `OnFailure`, `Never`).
+Для production: `unless-stopped` или `on-failure` с лимитом попыток. В [Kubernetes](kubernetes-interview.md) аналог — `restartPolicy` в Pod spec (`Always`, `OnFailure`, `Never`).
 
 ## Q35. Как ограничить ресурсы контейнера (`CPU`, память)?
 
@@ -993,7 +993,7 @@ docker logs --tail 100 container_id # последние 100 строк
 docker run --log-driver=json-file --log-opt max-size=10m --log-opt max-file=3 myapp:1.0
 ```
 
-**Best practice**: ограничивать размер лог-файлов (`max-size`, `max-file`), иначе логи заполнят диск. Для production — централизованное логирование (`ELK`, `Loki`). Подробнее — в [[observability-interview|вопросах по наблюдаемости]] и [[logging-strategies-interview|стратегиях логирования]].
+**Best practice**: ограничивать размер лог-файлов (`max-size`, `max-file`), иначе логи заполнят диск. Для production — централизованное логирование (`ELK`, `Loki`). Подробнее — в [вопросах по наблюдаемости](../monitoring/observability-interview.md) и [стратегиях логирования](../monitoring/logging-strategies-interview.md).
 
 ## Q38. (!) Как отлаживать проблемы с контейнером?
 
@@ -1197,18 +1197,18 @@ trivy-scan:
 
 ## See also
 
-- [[kubernetes-interview|Kubernetes]] — оркестрация контейнеров на основе Docker-образов
-- [[pipeline-design-interview|Проектирование CI/CD пайплайнов]] — сборка и деплой образов
-- [[deployment-strategies-interview|Стратегии деплоя]] — blue-green, canary с контейнерами
-- [[microservices-interview|Микросервисная архитектура]] — Docker как основа микросервисов
-- [[git-interview|Git]] — версионирование Dockerfile и конфигурационных файлов
-- [[gradle-maven-interview|Gradle и Maven]] — Gradle Docker Plugin и Jib для сборки образов
-- [[spring-boot-interview|Spring Boot]] — контейнеризация Spring Boot приложений с Buildpacks
-- [[observability-interview|Наблюдаемость]] — логирование и мониторинг контейнеров
+- [Kubernetes](kubernetes-interview.md) — оркестрация контейнеров на основе Docker-образов
+- [Проектирование CI/CD пайплайнов](../cicd/pipeline-design-interview.md) — сборка и деплой образов
+- [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — blue-green, canary с контейнерами
+- [Микросервисная архитектура](../architecture/microservices-interview.md) — Docker как основа микросервисов
+- [Git](git-interview.md) — версионирование Dockerfile и конфигурационных файлов
+- [Gradle и Maven](gradle-maven-interview.md) — Gradle Docker Plugin и Jib для сборки образов
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — контейнеризация Spring Boot приложений с Buildpacks
+- [Наблюдаемость](../monitoring/observability-interview.md) — логирование и мониторинг контейнеров
 
-- [[ansible-interview|Ansible]]
-- [[argocd-interview|ArgoCD и GitOps]]
-- [[consul-interview|HashiCorp Consul]]
-- [[git-interview|Git]]
-- [[gradle-maven-interview|Gradle и Maven]]
-- [[helm-interview|Helm]]
+- [Ansible](ansible-interview.md)
+- [ArgoCD и GitOps](argocd-interview.md)
+- [HashiCorp Consul](consul-interview.md)
+- [Git](git-interview.md)
+- [Gradle и Maven](gradle-maven-interview.md)
+- [Helm](helm-interview.md)

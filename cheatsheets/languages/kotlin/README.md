@@ -15,15 +15,15 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[kotlin-basics|Kotlin Basics]]
-[[kotlin-sealed-classes|Kotlin Sealed Classes]]
-[[kotlin-value-classes|Kotlin Value Classes]]
+[Kotlin Basics](kotlin-basics.md)
+[Kotlin Sealed Classes](kotlin-sealed-classes.md)
+[Kotlin Value Classes](kotlin-value-classes.md)
 
 ## Содержание
 
-- [[kotlin-basics|Kotlin Basics]]
-- [[kotlin-collections-list|Kotlin Collections]]
-- [[kotlin-concurrency-basics|Kotlin Concurrency]]
-- [[kotlin-fp-basics|Kotlin FP Basics]]
-- [[kotlin-testing|Kotlin Testing]]
-- [[kotlin-spring|Kotlin Spring]]
+- [Kotlin Basics](kotlin-basics.md)
+- [Kotlin Collections](kotlin-collections-list.md)
+- [Kotlin Concurrency](kotlin-concurrency-basics.md)
+- [Kotlin FP Basics](kotlin-fp-basics.md)
+- [Kotlin Testing](kotlin-testing.md)
+- [Kotlin Spring](kotlin-spring.md)

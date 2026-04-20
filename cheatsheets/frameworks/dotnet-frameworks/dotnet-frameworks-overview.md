@@ -26,13 +26,13 @@ updated: "2026-04-20"
 - [NuGet](https://www.nuget.org/) — пакеты
 
 ### См. также
-- [[README|Frameworks README]] — раздел фреймворков
-- [[README|Java Frameworks]] — **Spring**, **Quarkus**, **Micronaut**
+- [Frameworks README](../../basics/README.md) — раздел фреймворков
+- [Java Frameworks](../../basics/README.md) — **Spring**, **Quarkus**, **Micronaut**
 
-- [[python-frameworks-overview|Python Frameworks — обзор]]
-- [[kotlin-frameworks-overview|Kotlin Frameworks — обзор]]
-- [[go-frameworks-overview|Go Frameworks — обзор (редирект)]]
-- [[scala-frameworks-overview|Scala Frameworks — обзор]]
+- [Python Frameworks — обзор](../python-frameworks/python-frameworks-overview.md)
+- [Kotlin Frameworks — обзор](../kotlin-frameworks/kotlin-frameworks-overview.md)
+- [Go Frameworks — обзор (редирект)](../go-frameworks/go-frameworks-overview.md)
+- [Scala Frameworks — обзор](../scala-frameworks/scala-frameworks-overview.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -244,4 +244,4 @@ dotnet publish -c Release -o ./publish
 
 ## Заключение
 
-Экосистема **.NET** предоставляет **ASP.NET Core**, **EF Core**, **Blazor**, **MAUI** для веб-приложений, данных и кроссплатформенного **UI**. Используйте **DI**, конфигурацию из окружения, миграции в **CI** и единообразное оформление **API**. См. [[README|Frameworks README]].
+Экосистема **.NET** предоставляет **ASP.NET Core**, **EF Core**, **Blazor**, **MAUI** для веб-приложений, данных и кроссплатформенного **UI**. Используйте **DI**, конфигурацию из окружения, миграции в **CI** и единообразное оформление **API**. См. [Frameworks README](../../basics/README.md).

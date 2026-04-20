@@ -19,7 +19,7 @@ updated: "2026-04-13"
 
 Полное покрытие `Hibernate ORM`: маппинги, `Session`, lazy loading, N+1, кэширование, состояния entity, `Criteria API`, `JPQL`, транзакции, блокировки, наследование, batch processing.
 
-Краткое введение: **Hibernate** — самая популярная реализация спецификации `JPA` для работы с реляционными БД в `Java`. На собеседовании проверяют глубокое понимание маппингов, жизненного цикла сущностей, механизмов кэширования, стратегий загрузки, N+1 проблемы, управления транзакциями и блокировок. Знание `Hibernate` тесно связано с [[spring-data-jpa-interview|Spring Data JPA]] и [[sql-interview|SQL]].
+Краткое введение: **Hibernate** — самая популярная реализация спецификации `JPA` для работы с реляционными БД в `Java`. На собеседовании проверяют глубокое понимание маппингов, жизненного цикла сущностей, механизмов кэширования, стратегий загрузки, N+1 проблемы, управления транзакциями и блокировок. Знание `Hibernate` тесно связано с [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) и [SQL](sql-interview.md).
 
 ## Полезные ссылки
 
@@ -217,7 +217,7 @@ try (Session session = sf.openSession()) {
 }
 ```
 
-В `Spring` управление `Session` берёт на себя фреймворк через `@Transactional` — подробнее в [[spring-data-jpa-interview|Spring Data JPA]].
+В `Spring` управление `Session` берёт на себя фреймворк через `@Transactional` — подробнее в [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md).
 
 ## Q5. Является ли `Session` потокобезопасной?
 
@@ -685,7 +685,7 @@ SELECT * FROM books WHERE author_id = 2;
 -- ... и так N раз
 ```
 
-Эта проблема — одна из главных причин performance-проблем в `Hibernate`-приложениях. Подробнее о запросах в [[sql-interview|вопросах по SQL]].
+Эта проблема — одна из главных причин performance-проблем в `Hibernate`-приложениях. Подробнее о запросах в [вопросах по SQL](sql-interview.md).
 
 ## Q21. (!) Как решить проблему N+1?
 
@@ -784,7 +784,7 @@ Order order = entityManager.find(Order.class, orderId, hints);
 - **`fetchgraph`** — загружает ТОЛЬКО указанные атрибуты (остальные LAZY)
 - **`loadgraph`** — загружает указанные + атрибуты с дефолтным EAGER
 
-В [[spring-data-jpa-interview|Spring Data JPA]] Entity Graph используется через аннотацию `@EntityGraph` на методе репозитория.
+В [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) Entity Graph используется через аннотацию `@EntityGraph` на методе репозитория.
 
 ## Q24. (!) В чём разница между `First Level Cache` и `Second Level Cache`?
 
@@ -973,7 +973,7 @@ List<User> users = entityManager.createQuery(cq).getResultList();
 predicates.add(cb.like(root.get(User_.name), "%" + nameFilter + "%"));
 ```
 
-В [[spring-data-jpa-interview|Spring Data JPA]] для динамических запросов чаще используют `Specification` API, который оборачивает `Criteria API`.
+В [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) для динамических запросов чаще используют `Specification` API, который оборачивает `Criteria API`.
 
 ## Q30. Что такое `NamedQuery`?
 
@@ -1027,7 +1027,7 @@ List<Object[]> results = entityManager.createNativeQuery(
 )
 ```
 
-Подробнее о SQL-оптимизации — в [[sql-interview|вопросах по SQL]].
+Подробнее о SQL-оптимизации — в [вопросах по SQL](sql-interview.md).
 
 ## Q32. Подвержен ли `Hibernate` `SQL Injection`?
 
@@ -1154,7 +1154,7 @@ public class UserService {
 }
 ```
 
-**Уровни изоляции** задаются через `@Transactional(isolation = Isolation.READ_COMMITTED)`. Подробнее об уровнях изоляции — в [[database-architecture-interview|вопросах по архитектуре БД]].
+**Уровни изоляции** задаются через `@Transactional(isolation = Isolation.READ_COMMITTED)`. Подробнее об уровнях изоляции — в [вопросах по архитектуре БД](database-architecture-interview.md).
 
 ## Q36. (!) Что такое `Batch Processing` в `Hibernate`?
 
@@ -1301,7 +1301,7 @@ spring:
 - `update` — обновить схему (только для разработки!)
 - `create-drop` — пересоздать при старте и удалить при остановке (тесты)
 
-Подробнее о конфигурации — в [[spring-boot-interview|вопросах по Spring Boot]].
+Подробнее о конфигурации — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
 
 ## Q41. В чём разница между `getCurrentSession()` и `openSession()`?
 
@@ -1918,16 +1918,16 @@ void shouldUseSecondLevelCache() {
 
 ## See also
 
-- [[spring-data-jpa-interview|Spring Data JPA]] — репозитории, query methods, спецификации
-- [[sql-interview|SQL]] — SQL-запросы, оптимизация, индексы
-- [[database-architecture-interview|Архитектура баз данных]] — архитектура СУБД, MVCC, WAL
-- [[database-transactions-interview|Транзакции и уровни изоляции]] — ACID, MVCC, блокировки
-- [[spring-framework-interview|Spring Framework]] — IoC/DI, AOP, управление транзакциями
-- [[jvm-interview|JVM]] — управление памятью, GC, производительность
+- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — репозитории, query methods, спецификации
+- [SQL](sql-interview.md) — SQL-запросы, оптимизация, индексы
+- [Архитектура баз данных](database-architecture-interview.md) — архитектура СУБД, MVCC, WAL
+- [Транзакции и уровни изоляции](database-transactions-interview.md) — ACID, MVCC, блокировки
+- [Spring Framework](../frameworks/spring/spring-framework-interview.md) — IoC/DI, AOP, управление транзакциями
+- [JVM](../jvm/jvm-interview.md) — управление памятью, GC, производительность
 
-- [[cassandra-interview|Apache Cassandra]]
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
-- [[database-architecture-interview|Database Architecture]]
-- [[database-transactions-interview|Транзакции и уровни изоляции]]
-- [[dynamodb-interview|DynamoDB]]
+- [Apache Cassandra](cassandra-interview.md)
+- [ClickHouse](clickhouse-interview.md)
+- [CockroachDB](cockroachdb-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [Транзакции и уровни изоляции](database-transactions-interview.md)
+- [DynamoDB](dynamodb-interview.md)

@@ -13,12 +13,12 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[enterprise-patterns-overview|Enterprise Patterns Overview]]
+[Enterprise Patterns Overview](enterprise-patterns-overview.md)
 
 
 ### См. также
-- [[operating-systems-basics|Операционные системы]]
-- [[linux-handbook|Linux и Bash: практический справочник]]
+- [Операционные системы](../../basics/operating-systems/operating-systems-basics.md)
+- [Linux и Bash: практический справочник](../../basics/operating-systems/linux-handbook.md)
 ## Содержание
 
-- [[enterprise-patterns-overview|Обзор Enterprise Patterns]]
+- [Обзор Enterprise Patterns](enterprise-patterns-overview.md)

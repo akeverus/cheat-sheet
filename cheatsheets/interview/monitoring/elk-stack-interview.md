@@ -591,7 +591,7 @@ PUT _index_template/logs-template
 
 В **2025** — Loki gaining traction для **cost-conscious** teams.
 
-Подробнее — в [[loki-grafana-interview|Loki + Grafana]].
+Подробнее — в [Loki + Grafana](loki-grafana-interview.md).
 
 ## Q25. Когда выбрать ELK?
 
@@ -631,23 +631,23 @@ PUT _index_template/logs-template
 
 ## See also
 
-- [[opentelemetry-interview|OpenTelemetry]] — modern standard
-- [[loki-grafana-interview|Loki + Grafana]] — alternative для logs
-- [[jaeger-zipkin-interview|Jaeger / Zipkin]] — для traces
-- [[prometheus-grafana-interview|Prometheus + Grafana]] — для metrics
-- [[elasticsearch-interview|Elasticsearch]] — deep dive в ES
-- [[observability-interview|Observability]] — общая концепция
-- [[logging-interview|Logging]] — application logging
-- [[logging-strategies-interview|Стратегии логирования]] — best practices
-- [[microservices-interview|Микросервисы]] — где logs critical
-- [[kubernetes-interview|Kubernetes]] — log shipping в K8s
-- [[kafka-interview|Apache Kafka]] — buffer для ingest
-- [[application-security-interview|Application Security]] — SIEM
+- [OpenTelemetry](opentelemetry-interview.md) — modern standard
+- [Loki + Grafana](loki-grafana-interview.md) — alternative для logs
+- [Jaeger / Zipkin](jaeger-zipkin-interview.md) — для traces
+- [Prometheus + Grafana](prometheus-grafana-interview.md) — для metrics
+- [Elasticsearch](../databases/elasticsearch-interview.md) — deep dive в ES
+- [Observability](observability-interview.md) — общая концепция
+- [Logging](../logging/logging-interview.md) — application logging
+- [Стратегии логирования](logging-strategies-interview.md) — best practices
+- [Микросервисы](../architecture/microservices-interview.md) — где logs critical
+- [Kubernetes](../devops/kubernetes-interview.md) — log shipping в K8s
+- [Apache Kafka](../messaging/kafka-interview.md) — buffer для ingest
+- [Application Security](../security/application-security-interview.md) — SIEM
 
-- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
-- [[logging-strategies-interview|Стратегии логирования]]
-- [[loki-grafana-interview|Loki и Grafana]]
-- [[metrics-tracing-interview|Метрики и трейсинг]]
-- [[observability-interview|Observability]]
-- [[opentelemetry-interview|OpenTelemetry]]
-- [[elk-stack|Шпаргалка: ELK Stack]] — теория
+- [Jaeger и Zipkin](jaeger-zipkin-interview.md)
+- [Стратегии логирования](logging-strategies-interview.md)
+- [Loki и Grafana](loki-grafana-interview.md)
+- [Метрики и трейсинг](metrics-tracing-interview.md)
+- [Observability](observability-interview.md)
+- [OpenTelemetry](opentelemetry-interview.md)
+- [Шпаргалка: ELK Stack](../../monitoring/logging/elk-stack.md) — теория

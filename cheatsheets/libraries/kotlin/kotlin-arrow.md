@@ -22,8 +22,8 @@ updated: "2026-04-20"
 - [Arrow Documentation](https://arrow-kt.io/docs/) — документация
 
 ### См. также
-- [[java-vavr|Vavr]] — **Vavr** для функционального программирования в **Java**
-- [[kotlin-kotlinx-coroutines|Kotlin Coroutines]] — **Kotlin Coroutines**
+- [Vavr](../java/java-vavr.md) — **Vavr** для функционального программирования в **Java**
+- [Kotlin Coroutines](kotlin-kotlinx-coroutines.md) — **Kotlin Coroutines**
 
 ## Содержание
 
@@ -982,7 +982,7 @@ val rateLimited = IO { processRequest() }
 - [Arrow Optics](https://arrow-kt.io/docs/optics/)
 
 ## См. также
-- [[kotlin-kotlinx-coroutines|Kotlin Coroutines]] — Асинхронное программирование в **Kotlin**
-- [[kotlin-fp-basics|Functional Programming]] — Функциональное программирование в **Kotlin**
-- [[README|Паттерны проектирования]] — Паттерны для обработки ошибок
+- [Kotlin Coroutines](kotlin-kotlinx-coroutines.md) — Асинхронное программирование в **Kotlin**
+- [Functional Programming](../../languages/kotlin/kotlin-fp-basics.md) — Функциональное программирование в **Kotlin**
+- [Паттерны проектирования](../../basics/README.md) — Паттерны для обработки ошибок
 

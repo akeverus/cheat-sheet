@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Visualgo: Bubble Sort](https://visualgo.net/)
 
 ### См. также
-- [[merge-sort|merge-sort.md]] — сортировка слиянием
-- [[quick-sort|quick-sort.md]] — быстрая сортировка
+- [merge-sort.md](merge-sort.md) — сортировка слиянием
+- [quick-sort.md](quick-sort.md) — быстрая сортировка
 
-- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
-- [[selection-sort|Сортировка выбором (Selection Sort)]]
-- [[radix-sort|Поразрядная сортировка (Radix Sort)]]
+- [Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)](bead-sort.md)
+- [Сортировка выбором (Selection Sort)](selection-sort.md)
+- [Поразрядная сортировка (Radix Sort)](radix-sort.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

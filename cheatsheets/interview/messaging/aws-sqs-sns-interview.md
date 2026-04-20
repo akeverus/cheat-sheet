@@ -420,7 +420,7 @@ Events:
 
 **Подвох:** SQS visibility timeout должен быть **>> Lambda timeout** (recommend 6x).
 
-Подробнее — в [[aws-lambda-interview|AWS Lambda]].
+Подробнее — в [AWS Lambda](../cloud/aws-lambda-interview.md).
 
 ## Q18. (!) EventBridge vs SQS/SNS?
 
@@ -531,22 +531,22 @@ Existing Kafka ecosystem?
 
 ## See also
 
-- [[kafka-interview|Apache Kafka]] — alternative
-- [[rabbitmq-interview|RabbitMQ]] — другой alternative
-- [[nats-interview|NATS]] — lightweight alternative
-- [[pulsar-interview|Apache Pulsar]] — cloud-native alternative
-- [[message-brokers-comparison-interview|Message Brokers Comparison]] — overview
-- [[aws-interview|AWS]] — context
-- [[aws-lambda-interview|AWS Lambda]] — common consumer
-- [[serverless-interview|Serverless]] — SQS triggers
-- [[event-driven-patterns-interview|Event-driven Patterns]] — concepts
-- [[microservices-interview|Микросервисы]] — decoupling
-- [[saga-pattern-interview|Saga Pattern]] — SQS for sagas
-- [[resilience-patterns-interview|Resilience Patterns]] — retries, DLQ
+- [Apache Kafka](kafka-interview.md) — alternative
+- [RabbitMQ](rabbitmq-interview.md) — другой alternative
+- [NATS](nats-interview.md) — lightweight alternative
+- [Apache Pulsar](pulsar-interview.md) — cloud-native alternative
+- [Message Brokers Comparison](message-brokers-comparison-interview.md) — overview
+- [AWS](../cloud/aws-interview.md) — context
+- [AWS Lambda](../cloud/aws-lambda-interview.md) — common consumer
+- [Serverless](../cloud/serverless-interview.md) — SQS triggers
+- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — concepts
+- [Микросервисы](../architecture/microservices-interview.md) — decoupling
+- [Saga Pattern](../architecture/saga-pattern-interview.md) — SQS for sagas
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, DLQ
 
-- [[kafka-interview|Apache Kafka]]
-- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
-- [[nats-interview|NATS]]
-- [[pulsar-interview|Apache Pulsar]]
-- [[rabbitmq-interview|RabbitMQ]]
-- [[redpanda-interview|Redpanda]]
+- [Apache Kafka](kafka-interview.md)
+- [Сравнение Message Brokers](message-brokers-comparison-interview.md)
+- [NATS](nats-interview.md)
+- [Apache Pulsar](pulsar-interview.md)
+- [RabbitMQ](rabbitmq-interview.md)
+- [Redpanda](redpanda-interview.md)

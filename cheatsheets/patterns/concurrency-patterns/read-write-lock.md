@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java ReentrantReadWriteLock](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantReadWriteLock.html)
 
 ### См. также
-- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
-- [[README|CQRS / DDD]] — **CQRS** и **DDD**
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
+- [CQRS / DDD](../../basics/README.md) — **CQRS** и **DDD**
 
-- [[double-checked-locking|Двойная проверка блокировки (Double-Checked Locking)]]
-- [[active-object|Активный объект (Active Object)]]
-- [[thread-pool|Пул потоков (Thread Pool)]]
+- [Двойная проверка блокировки (Double-Checked Locking)](double-checked-locking.md)
+- [Активный объект (Active Object)](active-object.md)
+- [Пул потоков (Thread Pool)](thread-pool.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

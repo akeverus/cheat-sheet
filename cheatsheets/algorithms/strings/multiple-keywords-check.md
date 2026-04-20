@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Check if string contains multiple keywords](https://www.geeksforgeeks.org/check-if-a-string-contains-multiple-keywords/)
 
 ### См. также
-- [[regex-token-replacement|Работа с регулярными выражениями]] — regex
-- [[word-count|Подсчет слов]] — word count
+- [Работа с регулярными выражениями](regex-token-replacement.md) — regex
+- [Подсчет слов](word-count.md) — word count
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

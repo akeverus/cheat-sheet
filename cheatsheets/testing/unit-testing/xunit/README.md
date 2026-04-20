@@ -19,14 +19,14 @@ xUnit.net — современный фреймворк тестирования
 ## Полезные ссылки
 
 ### Основные документы
-- [[xunit|xUnit.net]] — Fact/Theory, фикстуры, параллельность, CI/CD
+- [xUnit.net](xunit.md) — Fact/Theory, фикстуры, параллельность, CI/CD
 
 ### Соседние разделы
-- [[README|Unit Testing]]
-- [[README|JUnit]]
-- [[README|pytest]]
-- [[README|Jest]]
-- [[testing-tools-overview|Testing Tools Overview]]
+- [Unit Testing](../../../basics/README.md)
+- [JUnit](../../../basics/README.md)
+- [pytest](../../../basics/README.md)
+- [Jest](../../../basics/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
 
 ### Внешние ресурсы
 - [xUnit.net Getting Started](https://xunit.net/docs/getting-started/netcore/cmdline)
@@ -45,11 +45,11 @@ xUnit.net — современный фреймворк тестирования
 
 | Тема | Где читать |
 |------|-----------|
-| `[Fact]` и `[Theory]`, параметризация | [[xunit]] |
-| Фикстуры: `IClassFixture<T>`, `ICollectionFixture<T>` | [[xunit]] |
-| Ассерты: `Assert.*` и FluentAssertions | [[xunit]] |
-| Параллельность и изоляция | [[xunit]] |
-| CI/CD, `dotnet test` | [[xunit]] |
+| `[Fact]` и `[Theory]`, параметризация | [xunit](xunit.md) |
+| Фикстуры: `IClassFixture<T>`, `ICollectionFixture<T>` | [xunit](xunit.md) |
+| Ассерты: `Assert.*` и FluentAssertions | [xunit](xunit.md) |
+| Параллельность и изоляция | [xunit](xunit.md) |
+| CI/CD, `dotnet test` | [xunit](xunit.md) |
 
 ## Когда использовать: сравнение unit-фреймворков
 
@@ -70,6 +70,6 @@ xUnit — оптимален для новых .NET-проектов: чиста
 
 ## Куда идти дальше
 
-- Обзор unit-тестирования — [[README]]
-- Java-аналог — [[README]]
-- JS-аналог — [[README]]
+- Обзор unit-тестирования — [README](../../../basics/README.md)
+- Java-аналог — [README](../../../basics/README.md)
+- JS-аналог — [README](../../../basics/README.md)

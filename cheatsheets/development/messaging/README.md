@@ -15,15 +15,15 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[kafka-advanced|Kafka Advanced]]
-[[README|RabbitMQ]]
-[[nats]]
+[Kafka Advanced](kafka/kafka-advanced.md)
+[RabbitMQ](../../basics/README.md)
+[nats](nats/nats.md)
 
 ## Содержание
 
-- [[kafka]]
-- [[kafka-advanced|Kafka Advanced]]
-- [[rabbitmq]]
-- [[rabbitmq-advanced|RabbitMQ Advanced]]
-- [[activemq]]
-- [[nats]]
+- [kafka](kafka/kafka.md)
+- [Kafka Advanced](kafka/kafka-advanced.md)
+- [rabbitmq](rabbitmq/rabbitmq.md)
+- [RabbitMQ Advanced](rabbitmq/rabbitmq-advanced.md)
+- [activemq](activemq/activemq.md)
+- [nats](nats/nats.md)

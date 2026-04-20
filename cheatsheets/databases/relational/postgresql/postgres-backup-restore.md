@@ -25,11 +25,11 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshootin
 - [PostgreSQL Backup and Restore](https://www.postgresql.org/docs/current/backup.html) — резервное копирование
 
 ### См. также
-- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
-- [[postgres-replication|postgres-replication.md]] — репликация
+- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
+- [postgres-replication.md](postgres-replication.md) — репликация
 
-- [[postgres-high-availability|PostgreSQL: Высокая доступность]]
-- [[postgres-security|PostgreSQL: Безопасность]]
+- [PostgreSQL: Высокая доступность](postgres-high-availability.md)
+- [PostgreSQL: Безопасность](postgres-security.md)
 ## Содержание
 
 - [Резервное копирование и восстановление PostgreSQL](#резервное-копирование-и-восстановление-postgresql)

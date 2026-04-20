@@ -24,13 +24,13 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[junit-advanced|JUnit Advanced]] — расширения JUnit
-- [[assertj|AssertJ]] — утверждения
-- [[rest-assured|REST Assured]] — тестирование API
-- [[spring-testing|Spring Testing]] — тестирование Spring
+- [JUnit Advanced](../../unit-testing/junit/junit-advanced.md) — расширения JUnit
+- [AssertJ](../../unit-testing/junit/assertj.md) — утверждения
+- [REST Assured](../../integration-testing/rest-assured.md) — тестирование API
+- [Spring Testing](../../../frameworks/java-frameworks/spring/spring-testing.md) — тестирование Spring
 
 
-- [[ui-testing-overview|UI Testing — обзор]]
+- [UI Testing — обзор](../ui-testing-overview.md)
 ## Содержание
 
 - [Введение в Selenium](#введение-в-selenium)

@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [Java Annotation Processing](https://docs.oracle.com/javase/8/docs/api/javax/annotation/processing/package-summary.html)
 
 ### См. также
-- [[java-annotations-reflection|Java Annotations & Reflection]] — аннотации и рефлексия
-- [[strategy|Strategy]] — **Strategy Pattern**
+- [Java Annotations & Reflection](../../languages/java/java-annotations-reflection.md) — аннотации и рефлексия
+- [Strategy](strategy.md) — **Strategy Pattern**
 - [Алгоритмы и структуры данных](../../algorithms/) — алгоритмы
 
-- [[iterator|Итератор (Iterator)]]
-- [[interpreter|Интерпретатор (Interpreter)]]
-- [[state|Состояние (State)]]
+- [Итератор (Iterator)](iterator.md)
+- [Интерпретатор (Interpreter)](interpreter.md)
+- [Состояние (State)](state.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

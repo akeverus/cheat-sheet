@@ -22,13 +22,13 @@ updated: "2026-04-20"
 - [PostgreSQL — Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 - [MySQL — InnoDB Transaction Isolation Levels](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html)
 
-См. также: [[sql-basics]] — [[postgres-transactions]].
+См. также: [sql-basics](sql-basics.md) — [postgres-transactions](../relational/postgresql/postgres-transactions.md).
 
 
 ### См. также
-- [[spring-data-jpa|Spring Data JPA/Hibernate]]
-- [[spring-data-jdbc|Spring Data JDBC: Полное руководство по работе с базами данных]]
-- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
+- [Spring Data JPA/Hibernate](../../frameworks/java-frameworks/spring/spring-data-jpa.md)
+- [Spring Data JDBC: Полное руководство по работе с базами данных](../../frameworks/java-frameworks/spring/spring-data-jdbc.md)
+- [Hibernate: JPQL, HQL и Criteria API](../orm/hibernate-jpql-criteria.md)
 ## Содержание
 
 - [ACID](#acid)
@@ -287,4 +287,4 @@ public void longOperation() { }
 
 ## См. также
 
-- [[sql-basics|SQL: Основы]]
+- [SQL: Основы](sql-basics.md)

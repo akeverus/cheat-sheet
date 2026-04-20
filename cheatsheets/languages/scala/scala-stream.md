@@ -26,12 +26,12 @@ related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 - [Scala Stream API](https://www.scala-lang.org/api/current/scala/collection/immutable/Stream.html)
 
 ### См. также
-- [[scala-collections-list|Списки (List)]]
-- [[scala-collections|Обзор коллекций]]
+- [Списки (List)](scala-collections-list.md)
+- [Обзор коллекций](scala-collections.md)
 
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
-- [[scala-collections-vector|Scala Collections — Vector]]
-- [[scala-fp-advanced|Scala Functional Programming — Advanced]]
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
+- [Scala Collections — Vector](scala-collections-vector.md)
+- [Scala Functional Programming — Advanced](scala-fp-advanced.md)
 ## Содержание
 
 - [Введение в Stream](#введение-в-stream)

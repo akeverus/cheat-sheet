@@ -447,11 +447,11 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 
 ## See also
 
-- [[spring-webflux-interview|Spring WebFlux]] — WebClient в реактивном стеке
-- [[spring-framework-interview|Spring Framework]] — архитектура Spring, MessageConverters
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация HTTP-клиентов
-- [[http-rest-interview|HTTP & REST]] — HTTP-методы, статус-коды, заголовки
-- [[spring-security-interview|Spring Security]] — OAuth2 с RestClient/WebClient
-- [[spring-testing-interview|Spring Testing]] — MockServer, WireMock для тестирования HTTP-клиентов
-- [[grpc-interview|gRPC]] — альтернатива REST для межсервисного взаимодействия
-- [[microservices-interview|Микросервисы]] — паттерны межсервисного взаимодействия
+- [Spring WebFlux](spring-webflux-interview.md) — WebClient в реактивном стеке
+- [Spring Framework](spring-framework-interview.md) — архитектура Spring, MessageConverters
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация HTTP-клиентов
+- [HTTP & REST](../../api/http-rest-interview.md) — HTTP-методы, статус-коды, заголовки
+- [Spring Security](spring-security-interview.md) — OAuth2 с RestClient/WebClient
+- [Spring Testing](spring-testing-interview.md) — MockServer, WireMock для тестирования HTTP-клиентов
+- [gRPC](../../api/grpc-interview.md) — альтернатива REST для межсервисного взаимодействия
+- [Микросервисы](../../architecture/microservices-interview.md) — паттерны межсервисного взаимодействия

@@ -23,12 +23,12 @@ related: ["scala/scala-basics.md"]
 - [SBT Documentation](https://www.scala-sbt.org/documentation.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
+- [Основы Scala](scala-basics.md)
 
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
-- [[scala-collections|Scala Collections]]
-- [[scala-type-classes|Type Classes в Scala]]
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
+- [Scala Collections](scala-collections.md)
+- [Type Classes в Scala](scala-type-classes.md)
 ## Содержание
 
 - [Введение в SBT](#введение-в-sbt)

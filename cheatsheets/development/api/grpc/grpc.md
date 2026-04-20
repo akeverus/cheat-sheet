@@ -26,13 +26,13 @@ updated: "2026-04-20"
 - [gRPC Tutorial](https://www.baeldung.com/grpc-introduction)
 
 ### См. также
-- [[graphql|GraphQL]] — **GraphQL**
-- [[spring-boot|Spring Boot]] — **Spring Boot**
-- [[jackson|Jackson]] — **JSON** обработка
+- [GraphQL](../graphql/graphql.md) — **GraphQL**
+- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Spring Boot**
+- [Jackson](../../../libraries/serialization/jackson.md) — **JSON** обработка
 
-- [[rest-api-best-practices|REST API Best Practices]]
-- [[openapi-swagger|OpenAPI/Swagger]]
-- [[grpc-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [REST API Best Practices](../rest/rest-api-best-practices.md)
+- [OpenAPI/Swagger](../api-tools/swagger/openapi-swagger.md)
+- [Вопросы на собеседовании](../../../interview/api/grpc-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в gRPC](#введение-в-grpc)

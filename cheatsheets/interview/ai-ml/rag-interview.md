@@ -275,7 +275,7 @@ vector = response.data[0].embedding  # 3072-dim вектор
 - **Voyage AI** (specialized для RAG)
 - **Open-source:** sentence-transformers (`all-MiniLM-L6-v2`, `bge-large`)
 
-Подробнее — в [[embeddings-interview|Embeddings]].
+Подробнее — в [Embeddings](embeddings-interview.md).
 
 ## Q11. (!) Vector search (similarity search)?
 
@@ -300,7 +300,7 @@ for result in results:
 - **Dot product** — быстрее (если вектора нормализованы — равно cosine)
 - **Euclidean distance** — менее частая
 
-**Под капотом** — ANN (Approximate Nearest Neighbor) algorithms: HNSW, IVF, ScaNN. Подробнее — [[vector-databases-interview|Vector Databases]].
+**Под капотом** — ANN (Approximate Nearest Neighbor) algorithms: HNSW, IVF, ScaNN. Подробнее — [Vector Databases](vector-databases-interview.md).
 
 ## Q12. (!) k (число retrieved docs) — как выбрать?
 
@@ -580,7 +580,7 @@ def agentic_rag(query):
             return llm.answer(query, context)
 ```
 
-Подробнее — в [[ai-agents-interview|AI Agents]].
+Подробнее — в [AI Agents](ai-agents-interview.md).
 
 ## Q26. (!) Как тестировать RAG систему?
 
@@ -670,21 +670,21 @@ result = evaluate(
 
 ## See also
 
-- [[llm-basics-interview|LLM Basics]] — основа
-- [[vector-databases-interview|Vector Databases]] — storage для embeddings
-- [[embeddings-interview|Embeddings]] — основа vector search
-- [[prompt-engineering-interview|Prompt Engineering]] — для RAG prompts
-- [[ai-agents-interview|AI Agents]] — agentic RAG
-- [[llm-integration-patterns-interview|LLM Integration Patterns]] — production
-- [[mlops-interview|MLOps]] — operations для RAG
-- [[model-serving-interview|Model Serving]] — для embedding models
-- [[caching-strategies-interview|Caching]] — для embeddings cache
-- [[microservices-interview|Микросервисы]] — где RAG живёт
-- [[elasticsearch-interview|Elasticsearch]] — для hybrid search
+- [LLM Basics](llm-basics-interview.md) — основа
+- [Vector Databases](vector-databases-interview.md) — storage для embeddings
+- [Embeddings](embeddings-interview.md) — основа vector search
+- [Prompt Engineering](prompt-engineering-interview.md) — для RAG prompts
+- [AI Agents](ai-agents-interview.md) — agentic RAG
+- [LLM Integration Patterns](llm-integration-patterns-interview.md) — production
+- [MLOps](mlops-interview.md) — operations для RAG
+- [Model Serving](model-serving-interview.md) — для embedding models
+- [Caching](../architecture/caching-strategies-interview.md) — для embeddings cache
+- [Микросервисы](../architecture/microservices-interview.md) — где RAG живёт
+- [Elasticsearch](../databases/elasticsearch-interview.md) — для hybrid search
 
-- [[ai-agents-interview|AI Agents]]
-- [[embeddings-interview|Embeddings]]
-- [[llm-basics-interview|LLM Basics]]
-- [[llm-integration-patterns-interview|LLM Integration Patterns]]
-- [[mlops-interview|MLOps]]
-- [[model-serving-interview|Model Serving]]
+- [AI Agents](ai-agents-interview.md)
+- [Embeddings](embeddings-interview.md)
+- [LLM Basics](llm-basics-interview.md)
+- [LLM Integration Patterns](llm-integration-patterns-interview.md)
+- [MLOps](mlops-interview.md)
+- [Model Serving](model-serving-interview.md)

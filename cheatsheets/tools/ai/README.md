@@ -15,7 +15,7 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-- [[README|Общий индекс инструментов]]
+- [Общий индекс инструментов](../../basics/README.md)
 
 ## Содержание
 
@@ -35,13 +35,13 @@ updated: "2026-04-20"
 
 ## Список инструментов
 
-- [[cursor-basics|Cursor]] — AI-first IDE на базе VS Code.
-- [[copilot-basics|GitHub Copilot]] — ассистент разработки от GitHub.
-- [[claude-basics|Claude для разработки]] — использование моделей Claude в IDE и инструментах.
-- [[windsurf-basics|Windsurf]] — IDE с глубокой интеграцией Codeium и агентами.
-- [[cody-basics|Cody]] — ассистент от Sourcegraph с привязкой к коду репозитория.
-- [[aider-basics|Aider]] — CLI-помощник, редактирующий код через git-патчи.
-- [[openclaw-basics|OpenClaw]] — open-source AI automation framework и ассистент для разработчиков.
+- [Cursor](cursor/cursor-basics.md) — AI-first IDE на базе VS Code.
+- [GitHub Copilot](copilot/copilot-basics.md) — ассистент разработки от GitHub.
+- [Claude для разработки](claude/claude-basics.md) — использование моделей Claude в IDE и инструментах.
+- [Windsurf](windsurf/windsurf-basics.md) — IDE с глубокой интеграцией Codeium и агентами.
+- [Cody](cody/cody-basics.md) — ассистент от Sourcegraph с привязкой к коду репозитория.
+- [Aider](aider/aider-basics.md) — CLI-помощник, редактирующий код через git-патчи.
+- [OpenClaw](openclaw/openclaw-basics.md) — open-source AI automation framework и ассистент для разработчиков.
 
 ## Как выбирать инструмент под задачу
 

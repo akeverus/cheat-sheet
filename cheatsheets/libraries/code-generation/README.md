@@ -18,14 +18,14 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[java-lombok|Lombok]] — `@Data`, `@Builder`, `@Slf4j` и ловушки
-- [[java-mapstruct|MapStruct]] — type-safe маппинг DTO/entity
+- [Lombok](../java/java-lombok.md) — `@Data`, `@Builder`, `@Slf4j` и ловушки
+- [MapStruct](../java/java-mapstruct.md) — type-safe маппинг DTO/entity
 
 ### Соседние разделы
-- [[README|Libraries]]
-- [[README|Java-библиотеки]]
-- [[README|Тестирование]]
-- [[spring-boot|Spring Boot]] — где Lombok/MapStruct чаще всего применяются
+- [Libraries](../../basics/README.md)
+- [Java-библиотеки](../../basics/README.md)
+- [Тестирование](../../basics/README.md)
+- [Spring Boot](../../frameworks/spring/spring-boot.md) — где Lombok/MapStruct чаще всего применяются
 
 ### Внешние ресурсы
 - [Project Lombok](https://projectlombok.org/)
@@ -71,6 +71,6 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Java-утилиты — [[README|libraries/java]]
-- Сериализация — [[README|libraries/serialization]]
-- Spring-интеграция — [[README|frameworks/java-frameworks/spring]]
+- Java-утилиты — [libraries/java](../../basics/README.md)
+- Сериализация — [libraries/serialization](../../basics/README.md)
+- Spring-интеграция — [frameworks/java-frameworks/spring](../../basics/README.md)

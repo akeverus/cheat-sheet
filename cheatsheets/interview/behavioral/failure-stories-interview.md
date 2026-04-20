@@ -1,12 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Истории о неудачах"
-description: "Истории о неудачах на поведенческом интервью: как описывать провалы, брать ownership, демонстрировать growth mindset и уроки. 22 вопроса с примерами ответов."
+description: "Истории о неудачах на поведенческом интервью: описание провалов, ownership, growth mindset, уроки из ошибок"
 tags:
   - interview
   - behavioral
-  - failure
-  - growth-mindset
-  - ownership
+  - failure-stories-interview
+aliases:
+  - "Failure Stories interview"
+  - "Failure Stories собеседование"
+  - "growth mindset interview"
+  - "ownership behavioral"
+  - "lessons learned interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -190,9 +194,9 @@ updated: "2026-04-20"
 
 ## See also
 
-- [[behavioral-interview|Behavioral Interview]]
-- [[star-method-interview|STAR Method]]
-- [[conflict-stories-interview|Conflict Stories]]
-- [[leadership-stories-interview|Leadership Stories]]
-- [[culture-fit-interview|Culture Fit]]
-- [[team-leadership-interview|Team Leadership]]
+- [Behavioral Interview](behavioral-interview.md)
+- [STAR Method](star-method-interview.md)
+- [Conflict Stories](conflict-stories-interview.md)
+- [Leadership Stories](leadership-stories-interview.md)
+- [Culture Fit](culture-fit-interview.md)
+- [Team Leadership](../leadership/team-leadership-interview.md)

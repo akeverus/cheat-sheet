@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Coprime numbers](https://www.geeksforgeeks.org/check-two-numbers-co-prime-not/)
 
 ### См. также
-- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
-- [[least-common-multiple|Наименьшее общее кратное]] — НОК
+- [Наибольший общий делитель](greatest-common-divisor.md) — НОД
+- [Наименьшее общее кратное](least-common-multiple.md) — НОК
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[lat-lon-to-2d-point|Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)](lat-lon-to-2d-point.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

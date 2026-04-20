@@ -553,13 +553,13 @@ Kafka подходит когда:
 
 ## See also
 
-- [[spring-kafka-interview|Spring Kafka]] — интеграция Kafka в Spring
-- [[spring-integration-interview|Spring Integration]] — EIP паттерны в Spring
-- [[rabbitmq-interview|RabbitMQ]] — основы AMQP, exchanges, queues, routing keys
-- [[kafka-interview|Apache Kafka]] — основы Kafka, partitions, consumer groups
-- [[messaging-interview|Message Brokers Comparison]] — Kafka vs RabbitMQ vs NATS
-- [[spring-transaction-interview|Spring @Transactional]] — транзакции JMS
-- [[spring-boot-interview|Spring Boot]] — auto-configuration для JMS/AMQP
-- [[event-driven-patterns-interview|Event-Driven Patterns]] — паттерны асинхронной коммуникации
-- [[resilience4j-interview|Resilience4j]] — circuit breaker для message consumers
-- [[spring-retry-interview|Spring Retry]] — retry для message listeners
+- [Spring Kafka](spring-kafka-interview.md) — интеграция Kafka в Spring
+- [Spring Integration](spring-integration-interview.md) — EIP паттерны в Spring
+- [RabbitMQ](../../messaging/rabbitmq-interview.md) — основы AMQP, exchanges, queues, routing keys
+- [Apache Kafka](../../messaging/kafka-interview.md) — основы Kafka, partitions, consumer groups
+- [Message Brokers Comparison](../../messaging/message-brokers-comparison-interview.md) — Kafka vs RabbitMQ vs NATS
+- [Spring @Transactional](spring-transaction-interview.md) — транзакции JMS
+- [Spring Boot](spring-boot-interview.md) — auto-configuration для JMS/AMQP
+- [Event-Driven Patterns](../../architecture/event-driven-patterns-interview.md) — паттерны асинхронной коммуникации
+- [Resilience4j](resilience4j-interview.md) — circuit breaker для message consumers
+- [Spring Retry](spring-retry-interview.md) — retry для message listeners

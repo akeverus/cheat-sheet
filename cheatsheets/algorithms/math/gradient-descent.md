@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Gradient Descent Algorithm](https://www.geeksforgeeks.org/gradient-descent-algorithm-and-its-variants/)
 
 ### См. также
-- [[k-means-clustering-java|Кластеризация K-средних]] — K-means
-- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
+- [Кластеризация K-средних](k-means-clustering-java.md) — K-means
+- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

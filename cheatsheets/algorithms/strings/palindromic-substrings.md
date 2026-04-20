@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Count All Palindromic Subsequence — GeeksforGeeks](https://www.geeksforgeeks.org/count-palindromic-subsequence-given-string/)
 
 ### См. также
-- [[palindrome-check|Проверка палиндромов]] — палиндромы
-- [[string-permutations|Перестановки строк]] — перестановки
+- [Проверка палиндромов](palindrome-check.md) — палиндромы
+- [Перестановки строк](string-permutations.md) — перестановки
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

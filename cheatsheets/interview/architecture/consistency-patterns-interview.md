@@ -2012,16 +2012,16 @@ String lua = "if redis.call('get', KEYS[1]) == ARGV[1] then " +
 
 ## See also
 
-- [[distributed-systems-interview|Распределённые системы]] — репликация, шардирование, консенсус и сетевые разделы
-- [[cap-theorem-interview|CAP-теорема]] — выбор между согласованностью и доступностью при partition
-- [[microservices-interview|Микросервисная архитектура]] — согласованность данных между микросервисами
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]] — eventual consistency через проекции и Event Sourcing
-- [[event-driven-patterns-interview|Event-Driven паттерны]] — Outbox Pattern, Saga и асинхронная согласованность
-- [[database-architecture-interview|Архитектура баз данных]] — уровни изоляции транзакций и MVCC
+- [Распределённые системы](distributed-systems-interview.md) — репликация, шардирование, консенсус и сетевые разделы
+- [CAP-теорема](cap-theorem-interview.md) — выбор между согласованностью и доступностью при partition
+- [Микросервисная архитектура](microservices-interview.md) — согласованность данных между микросервисами
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) — eventual consistency через проекции и Event Sourcing
+- [Event-Driven паттерны](event-driven-patterns-interview.md) — Outbox Pattern, Saga и асинхронная согласованность
+- [Архитектура баз данных](../databases/database-architecture-interview.md) — уровни изоляции транзакций и MVCC
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[cap-theorem-interview|CAP-теорема]]
-- [[clean-architecture-interview|Clean Architecture]]
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]]
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [CAP-теорема](cap-theorem-interview.md)
+- [Clean Architecture](clean-architecture-interview.md)
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md)

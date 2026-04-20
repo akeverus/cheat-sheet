@@ -29,7 +29,7 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
 
-См. также: [[kubernetes-basics|Kubernetes]] — [[docker-containers|Docker Containers]].
+См. также: [Kubernetes](../kubernetes/kubernetes-basics.md) — [Docker Containers](docker-containers.md).
 
 ## Содержание
 
@@ -2707,7 +2707,7 @@ Error response from daemon: conflict: unable to remove repository reference "pos
 
 ## См. также
 
-- [[docker-advanced|Docker Advanced]]
-- [[docker-compose|Docker Compose]]
-- [[docker-containers|Docker: работа с контейнерами]]
-- [[docker-spring-boot|Docker и Spring Boot]]
+- [Docker Advanced](docker-advanced.md)
+- [Docker Compose](docker-compose.md)
+- [Docker: работа с контейнерами](docker-containers.md)
+- [Docker и Spring Boot](docker-spring-boot.md)

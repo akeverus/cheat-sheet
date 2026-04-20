@@ -25,10 +25,10 @@ updated: "2026-04-20"
 - [**Spring AI** Tutorials](https://www.baeldung.com/spring-ai)
 
 ### См. также
-- [[spring-boot|Spring Boot]] — базовый фреймворк
+- [Spring Boot](../../spring/spring-boot.md) — базовый фреймворк
 
-- [[spring-websocket|Spring WebSocket]]
-- [[spring-integration|Spring Integration]]
+- [Spring WebSocket](spring-websocket.md)
+- [Spring Integration](spring-integration.md)
 ## Содержание
 
 - [Введение в Spring AI](#введение-в-spring-ai)

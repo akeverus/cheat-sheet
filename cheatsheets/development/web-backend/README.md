@@ -17,20 +17,20 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основной документ
-- [[backend-basics|Основы backend-разработки]]
+- [Основы backend-разработки](backend-basics.md)
 
 ### Смежные разделы репозитория
 
 Backend — это мост между множеством доменов:
 
-- [[README|REST API]], [[README|GraphQL]], [[README|gRPC]] — протоколы
-- [[README|Spring Boot]] — основной стек в репозитории
-- [[README|Базы данных]], [[README|SQL]], [[README|ORM]] — persistence
-- [[README|Messaging]] — асинхронная интеграция
-- [[README|Безопасность приложения]], [[README|OAuth2/OIDC]]
-- [[README|Docker]], [[README|Kubernetes]], [[README|CI/CD]]
-- [[README|Мониторинг]], [[README|Логирование]], [[README|Трейсинг]]
-- [[README|Тестирование]]
+- [REST API](../../basics/README.md), [GraphQL](../../basics/README.md), [gRPC](../../basics/README.md) — протоколы
+- [Spring Boot](../../basics/README.md) — основной стек в репозитории
+- [Базы данных](../../basics/README.md), [SQL](../../basics/README.md), [ORM](../../basics/README.md) — persistence
+- [Messaging](../../basics/README.md) — асинхронная интеграция
+- [Безопасность приложения](../../basics/README.md), [OAuth2/OIDC](../../basics/README.md)
+- [Docker](../../basics/README.md), [Kubernetes](../../basics/README.md), [CI/CD](../../basics/README.md)
+- [Мониторинг](../../basics/README.md), [Логирование](../../basics/README.md), [Трейсинг](../../basics/README.md)
+- [Тестирование](../../basics/README.md)
 
 ### Внешние ресурсы
 - [System Design Primer](https://github.com/donnemartin/system-design-primer)
@@ -59,17 +59,17 @@ flowchart TD
 
 | Слой / практика | Файл |
 |-----------------|------|
-| Архитектура backend, слои | [[backend-basics#архитектура-типичного-backend]] |
-| REST API-контракт, OpenAPI | [[README|development/api/rest/]] |
-| Spring Web, `@RestController` | [[README|frameworks/java-frameworks/spring/]] |
-| JDBC / JPA / Hibernate | [[README|databases/orm/]] |
-| Аутентификация (JWT, OAuth2) | [[README|security/application/]] |
+| Архитектура backend, слои | [backend-basics](backend-basics.md#архитектура-типичного-backend) |
+| REST API-контракт, OpenAPI | [development/api/rest/](../../basics/README.md) |
+| Spring Web, `@RestController` | [frameworks/java-frameworks/spring/](../../basics/README.md) |
+| JDBC / JPA / Hibernate | [databases/orm/](../../basics/README.md) |
+| Аутентификация (JWT, OAuth2) | [security/application/](../../basics/README.md) |
 | Кэширование (Caffeine, Redis) | [databases/nosql/redis/](../../databases/nosql/redis/) |
-| Очереди (Kafka, RabbitMQ) | [[README|development/messaging/]] |
-| Валидация (Bean Validation) | [[backend-basics]] |
-| Логирование и метрики | [[README|monitoring/]] |
-| Контейнеризация и деплой | [[README|platform/containers/]] |
-| Тестирование | [[README|testing/]] |
+| Очереди (Kafka, RabbitMQ) | [development/messaging/](../../basics/README.md) |
+| Валидация (Bean Validation) | [backend-basics](backend-basics.md) |
+| Логирование и метрики | [monitoring/](../../basics/README.md) |
+| Контейнеризация и деплой | [platform/containers/](../../basics/README.md) |
+| Тестирование | [testing/](../../basics/README.md) |
 
 ## Чек-лист production backend
 
@@ -94,7 +94,7 @@ flowchart TD
 
 ## Куда идти дальше
 
-- Проектирование систем — [[README|architecture/system-design/]]
-- Паттерны интеграции — [[README|patterns/]]
-- Масштабирование и HA — [[README|architecture/]]
-- DevOps-практики — [[README|platform/ci-cd/]]
+- Проектирование систем — [architecture/system-design/](../../basics/README.md)
+- Паттерны интеграции — [patterns/](../../basics/README.md)
+- Масштабирование и HA — [architecture/](../../basics/README.md)
+- DevOps-практики — [platform/ci-cd/](../../basics/README.md)

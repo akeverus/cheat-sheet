@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java Object.clone()](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone())
 
 ### См. также
-- [[java-basics|Java Basics]] — **Java Basics**
-- [[java-concurrency-basics|Java Concurrency]] — многопоточность и память
-- [[factory-method|Factory Method]] — **Factory Method Pattern**
+- [Java Basics](../../languages/java/java-basics.md) — **Java Basics**
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — многопоточность и память
+- [Factory Method](factory-method.md) — **Factory Method Pattern**
 
-- [[singleton|Одиночка (Singleton)]]
-- [[builder|Строитель (Builder)]]
+- [Одиночка (Singleton)](singleton.md)
+- [Строитель (Builder)](builder.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

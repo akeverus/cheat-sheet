@@ -26,8 +26,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[api-documentation-basics|API Documentation: Основы]]
-- [[openapi-swagger-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [API Documentation: Основы](api-documentation-basics.md)
+- [Вопросы на собеседовании](../../../../interview/api/openapi-swagger-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Основы OpenAPI](#основы-openapi)
@@ -1848,8 +1848,8 @@ components:
 - Документируйте безопасность (securitySchemes); генерируйте клиенты и серверы из спецификации.
 - Регулярно валидируйте спецификацию и синхронизируйте с реализацией **API**.
 ## См. также
-- [[rest-api-design|rest-api-design.md]] — основы **REST API**
-- [[rest-api-best-practices|rest-api-best-practices.md]] — лучшие практики **REST**
-- [[graphql|GraphQL]] — альтернативный подход к **API**
-- [[grpc|gRPC]] — высокопроизводительные **API**
+- [rest-api-design.md](../../rest/rest-api-design.md) — основы **REST API**
+- [rest-api-best-practices.md](../../rest/rest-api-best-practices.md) — лучшие практики **REST**
+- [GraphQL](../../graphql/graphql.md) — альтернативный подход к **API**
+- [gRPC](../../grpc/grpc.md) — высокопроизводительные **API**
 - [Security](../../../../security/) — безопасность **API**

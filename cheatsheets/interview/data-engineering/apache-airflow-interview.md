@@ -627,15 +627,15 @@ helm install airflow apache-airflow/airflow
 
 ## See also
 
-- [[apache-spark-interview|Apache Spark]] — Airflow часто оркестрирует Spark jobs
-- [[apache-flink-interview|Apache Flink]] — vs Airflow (streaming vs batch)
-- [[kafka-streams-interview|Kafka Streams]] — другой стиль (event-driven)
-- [[dbt-interview|dbt]] — часто оркестрируется через Airflow
-- [[stream-processing-interview|Stream Processing]] — Airflow для batch, не streaming
-- [[data-warehousing-interview|Data Warehousing]] — main use case Airflow
-- [[data-lake-lakehouse-interview|Data Lake / Lakehouse]] — pipelines в lake/warehouse
-- [[kubernetes-interview|Kubernetes]] — KubernetesExecutor
-- [[microservices-interview|Микросервисы]] — Airflow vs scheduled jobs
-- [[postgresql-interview|PostgreSQL]] — metadata DB
-- [[docker-interview|Docker]] — деплой Airflow
+- [Apache Spark](apache-spark-interview.md) — Airflow часто оркестрирует Spark jobs
+- [Apache Flink](apache-flink-interview.md) — vs Airflow (streaming vs batch)
+- [Kafka Streams](kafka-streams-interview.md) — другой стиль (event-driven)
+- [dbt](dbt-interview.md) — часто оркестрируется через Airflow
+- [Stream Processing](stream-processing-interview.md) — Airflow для batch, не streaming
+- [Data Warehousing](data-warehousing-interview.md) — main use case Airflow
+- [Data Lake / Lakehouse](data-lake-lakehouse-interview.md) — pipelines в lake/warehouse
+- [Kubernetes](../devops/kubernetes-interview.md) — KubernetesExecutor
+- [Микросервисы](../architecture/microservices-interview.md) — Airflow vs scheduled jobs
+- [PostgreSQL](../databases/postgresql-interview.md) — metadata DB
+- [Docker](../devops/docker-interview.md) — деплой Airflow
 - [[python-interview|Python]] — DAG = Python код (когда добавим)

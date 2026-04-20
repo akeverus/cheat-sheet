@@ -25,11 +25,11 @@ updated: "2026-04-20"
 - [MongoDB CRUD with Spring Boot](https://www.baeldung.com/spring-data-mongodb-tutorial) — **Spring Data MongoDB**
 
 ### См. также
-- [[mongodb-basics|Основы]] — **MongoDB**
-- [[mongodb-queries|Запросы]] — продвинутые запросы
+- [Основы](mongodb-basics.md) — **MongoDB**
+- [Запросы](mongodb-queries.md) — продвинутые запросы
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-aggregation|MongoDB: Aggregation Framework — Полное руководство по агрегации данных]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: Aggregation Framework — Полное руководство по агрегации данных](mongodb-aggregation.md)
 ## Содержание
 
 - [Обзор CRUD операций](#обзор-crud-операций)
@@ -1262,7 +1262,7 @@ CRUD операции в MongoDB предоставляют гибкий и мо
 
 
 Следующие темы:
-- [[mongodb-queries|Запросы и фильтры]]
-- [[mongodb-indexes|Индексы]]
+- [Запросы и фильтры](mongodb-queries.md)
+- [Индексы](mongodb-indexes.md)
 
 

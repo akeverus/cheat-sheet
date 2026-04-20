@@ -18,17 +18,17 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[distributed-tracing|Distributed Tracing (концепции)]] — Span, Trace, Context Propagation, W3C Trace Context
-- [[opentelemetry]] — единый vendor-neutral стандарт SDK + collector
-- [[jaeger]] — CNCF-бэкенд для трейсов, UI, Spring Boot интеграция
-- [[zipkin]] — альтернативный бэкенд, Sleuth-интеграция
+- [Distributed Tracing (концепции)](distributed-tracing.md) — Span, Trace, Context Propagation, W3C Trace Context
+- [opentelemetry](opentelemetry.md) — единый vendor-neutral стандарт SDK + collector
+- [jaeger](jaeger.md) — CNCF-бэкенд для трейсов, UI, Spring Boot интеграция
+- [zipkin](zipkin.md) — альтернативный бэкенд, Sleuth-интеграция
 
 ### Соседние разделы
-- [[README|Monitoring]]
-- [[README|Metrics]] — Prometheus + Grafana
-- [[README|Logging]] — корреляция `trace_id` с логами
-- [[README|Alerting]]
-- [[README|APM]]
+- [Monitoring](../../basics/README.md)
+- [Metrics](../../basics/README.md) — Prometheus + Grafana
+- [Logging](../../basics/README.md) — корреляция `trace_id` с логами
+- [Alerting](../../basics/README.md)
+- [APM](../../basics/README.md)
 
 ### Внешние ресурсы
 - [OpenTelemetry Project](https://opentelemetry.io/)
@@ -58,31 +58,31 @@ flowchart LR
 
 | Задача | Инструмент |
 |--------|-----------|
-| Vendor-neutral SDK, на долгий срок | [[opentelemetry]] |
-| CNCF OSS backend с UI | [[jaeger]] |
-| Простой backend, Sleuth + Spring Cloud | [[zipkin]] |
-| Базовая теория, Span/Trace/Baggage | [[distributed-tracing|Distributed Tracing]] |
-| Grafana Tempo (дешёвое хранилище) | связка OTel -> Tempo + [[grafana]] |
-| Платный all-in-one APM | [[README]] (Datadog, New Relic) |
+| Vendor-neutral SDK, на долгий срок | [opentelemetry](opentelemetry.md) |
+| CNCF OSS backend с UI | [jaeger](jaeger.md) |
+| Простой backend, Sleuth + Spring Cloud | [zipkin](zipkin.md) |
+| Базовая теория, Span/Trace/Baggage | [Distributed Tracing](distributed-tracing.md) |
+| Grafana Tempo (дешёвое хранилище) | связка OTel -> Tempo + [grafana](../metrics/grafana.md) |
+| Платный all-in-one APM | [README](../../basics/README.md) (Datadog, New Relic) |
 
 ## Связки стека
 
 - **OpenTelemetry SDK + OTel Collector + Jaeger/Zipkin/Tempo** — vendor-neutral путь.
 - **Spring Boot + Micrometer Tracing + Zipkin/Jaeger** — стандарт для Spring с 3.x.
 - **Prometheus + Jaeger + ELK** — три столпа observability, связка по `trace_id` во всех трёх.
-- **Grafana** ([[grafana]]) умеет визуализировать трейсы (Tempo) рядом с метриками и логами (Loki).
+- **Grafana** ([grafana](../metrics/grafana.md)) умеет визуализировать трейсы (Tempo) рядом с метриками и логами (Loki).
 - **Kubernetes** — OTel Operator автоматически инструментирует поды через auto-instrumentation.
-- **Alertmanager** ([[alertmanager]]) работает на метриках, производных от трейсов (например, p99 latency из span-ов).
+- **Alertmanager** ([alertmanager](../alerting/alertmanager.md)) работает на метриках, производных от трейсов (например, p99 latency из span-ов).
 
 ## Маршруты чтения
 
-- **Концепции за час:** [[distributed-tracing]] -> W3C Trace Context (внешняя ссылка).
-- **Быстрый старт Spring Boot:** [[opentelemetry]] -> [[jaeger]].
-- **Миграция с Sleuth:** [[zipkin]] -> Micrometer Tracing -> OpenTelemetry.
+- **Концепции за час:** [distributed-tracing](distributed-tracing.md) -> W3C Trace Context (внешняя ссылка).
+- **Быстрый старт Spring Boot:** [opentelemetry](opentelemetry.md) -> [jaeger](jaeger.md).
+- **Миграция с Sleuth:** [zipkin](zipkin.md) -> Micrometer Tracing -> OpenTelemetry.
 
 ## Куда идти дальше
 
-- Метрики — [[README]]
-- Логирование — [[README]]
-- Observability — [[observability-guide]]
-- APM-платформы — [[README]]
+- Метрики — [README](../../basics/README.md)
+- Логирование — [README](../../basics/README.md)
+- Observability — [observability-guide](../observability-guide.md)
+- APM-платформы — [README](../../basics/README.md)

@@ -30,12 +30,12 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[spring-boot|**Spring Boot**]] — основы **Spring Boot**
-- [[spring-hibernate|**Spring Hibernate**]] — интеграция **Hibernate**
-- [[spring-hibernate|Spring Hibernate]] — Hibernate ORM интеграция
+- [**Spring Boot**](../../spring/spring-boot.md) — основы **Spring Boot**
+- [**Spring Hibernate**](spring-hibernate.md) — интеграция **Hibernate**
+- [Spring Hibernate](spring-hibernate.md) — Hibernate ORM интеграция
 
-- [[spring-data-jdbc|Spring Data JDBC: Полное руководство по работе с базами данных]]
-- [[spring-data-jpa-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Spring Data JDBC: Полное руководство по работе с базами данных](spring-data-jdbc.md)
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-data-jpa-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Программная настройка источника данных](#программная-настройка-источника-данных)

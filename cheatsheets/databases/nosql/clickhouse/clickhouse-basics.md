@@ -39,8 +39,8 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 - [Tabix](https://tabix.io/) — **ClickHouse GUI**
 
 ### См. также
-- [[postgres-basics|PostgreSQL Basics]] — сравнение с реляционными БД
-- [[redis-basics|Redis Basics]] — другая высокопроизводительная БД
+- [PostgreSQL Basics](../../relational/postgresql/postgres-basics.md) — сравнение с реляционными БД
+- [Redis Basics](../redis/redis-basics.md) — другая высокопроизводительная БД
 
 ## Содержание
 
@@ -1042,7 +1042,7 @@ SHOW GRANTS FOR analyst;
 
 
 **Следующие темы:**
-- [[clickhouse-tables|Таблицы и движки]]
-- [[clickhouse-queries|Запросы и аналитика]]
-- [[clickhouse-indexes|Индексы и оптимизация]]
+- [Таблицы и движки](clickhouse-tables.md)
+- [Запросы и аналитика](clickhouse-queries.md)
+- [Индексы и оптимизация](clickhouse-indexes.md)
 

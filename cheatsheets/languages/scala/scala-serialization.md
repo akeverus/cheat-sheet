@@ -24,12 +24,12 @@ related: ["scala/scala-basics.md", "scala/scala-json.md"]
 - [Scala Pickling](https://github.com/scala/pickling)
 
 ### См. также
-- [[scala-basics|Основы Scala]] — базовый справочник **Scala**
-- [[scala-circe|Circe (JSON)]] — **JSON** в **Scala**
+- [Основы Scala](scala-basics.md) — базовый справочник **Scala**
+- [Circe (JSON)](../../libraries/scala/scala-circe.md) — **JSON** в **Scala**
 
-- [[micronaut-serialization|Micronaut: Serialization — JSON, XML и Custom Serializers]]
-- [[go-stdlib-json|Go: стандартная библиотека — JSON]]
-- [[java-jackson|Jackson: JSON-сериализация в Java]]
+- [Micronaut: Serialization — JSON, XML и Custom Serializers](../../frameworks/java-frameworks/micronaut/micronaut-serialization.md)
+- [Go: стандартная библиотека — JSON](../go/go-stdlib-json.md)
+- [Jackson: JSON-сериализация в Java](../../libraries/java/java-jackson.md)
 ## Содержание
 
 - [Введение в сериализацию](#введение-в-сериализацию)

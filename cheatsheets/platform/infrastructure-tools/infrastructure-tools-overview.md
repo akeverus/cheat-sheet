@@ -25,9 +25,9 @@ updated: "2026-04-20"
 
 ## См. также
 
-- [[README|Platform]] — **Terraform Advanced**, **Ansible Advanced**, **Nginx Advanced**, **Packer**, **Vagrant**, **Consul**
-- [[iac-overview|Infrastructure as Code]] — основы **Terraform** и **Ansible**
-- [[README|CI/CD]]
+- [Platform](../../basics/README.md) — **Terraform Advanced**, **Ansible Advanced**, **Nginx Advanced**, **Packer**, **Vagrant**, **Consul**
+- [Infrastructure as Code](../iac/iac-overview.md) — основы **Terraform** и **Ansible**
+- [CI/CD](../../basics/README.md)
 
 ## Содержание
 
@@ -148,7 +148,7 @@ resource "aws_instance" "app" {
 - Переменные и выходы выносить в **variables.tf** и **outputs.tf**; секреты — через переменные окружения или **vault**, не в коде.
 - Регулярно выполнять `terraform plan` в `CI` и применять через контролируемый процесс (MR, pipeline).
 
-Подробнее: [[terraform-advanced|Terraform Advanced]], [[terraform]].
+Подробнее: [Terraform Advanced](../iac/terraform/terraform-advanced.md), [terraform](../iac/terraform/terraform.md).
 
 
 ## Ansible — конфигурационное управление
@@ -221,7 +221,7 @@ resource "aws_instance" "app" {
 - Переменные по приоритету: **defaults** в **role**, затем **group_vars**/**host_vars**, затем командная строка.
 - Теги для выборочного запуска частей **playbook**.
 
-Подробнее: [[ansible-advanced|Ansible Advanced]], [[ansible]].
+Подробнее: [Ansible Advanced](../iac/ansible/ansible-advanced.md), [ansible](../iac/ansible/ansible.md).
 
 
 ## Packer — создание образов
@@ -280,7 +280,7 @@ build {
 - Использовать **Ansible provisioner** для сложной настройки вместо длинных **shell**-скриптов.
 - Хранить описание в репозитории; сборку запускать из `CI` (при коммите в main или по расписанию).
 
-Подробнее: [[packer]].
+Подробнее: [packer](../iac/packer/packer.md).
 
 
 ## Vagrant — окружения для разработки
@@ -306,7 +306,7 @@ end
 
 Команды: `vagrant up`, `vagrant ssh`, `vagrant halt`, `vagrant destroy`. **Box** можно собрать через **Packer**.
 
-Подробнее: [[vagrant]].
+Подробнее: [vagrant](vagrant.md).
 
 
 ## Consul — Service Discovery и конфигурация
@@ -322,7 +322,7 @@ end
 
 Интеграция с приложением: через **Consul client API** или **sidecar** (например, Envoy). **Spring Cloud Consul** предоставляет интеграцию для **Java**.
 
-Подробнее: [[consul]].
+Подробнее: [consul](consul.md).
 
 
 ## Nginx — веб-сервер и reverse proxy
@@ -370,7 +370,7 @@ server {
 }
 ```
 
-Подробнее: [[nginx-advanced|Nginx Advanced]].
+Подробнее: [Nginx Advanced](nginx-advanced.md).
 
 
 ## Сравнение и комбинирование инструментов
@@ -424,4 +424,4 @@ server {
 | **Consul** | `consul agent -dev`, `consul catalog services`, `consul kv get key` |
 | **Nginx** | `nginx -t` (проверка конфига), `nginx -s reload` |
 
-Документ в совокупности с разделами [[README|Platform]], [[iac-overview|IaC]], [[README|CI/CD]] и практик эксплуатации.
+Документ в совокупности с разделами [Platform](../../basics/README.md), [IaC](../iac/iac-overview.md), [CI/CD](../../basics/README.md) и практик эксплуатации.

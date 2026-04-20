@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Interpreter Pattern in Kotlin](https://refactoring.guru/design-patterns/interpreter)
 
 ### См. также
-- [[visitor|Visitor (Посетитель)]]
-- [[command|Command (Команда)]]
+- [Visitor (Посетитель)](visitor.md)
+- [Command (Команда)](command.md)
 
-- [[iterator|Итератор (Iterator)]]
-- [[state|Состояние (State)]]
-- [[memento|Хранитель (Memento)]]
+- [Итератор (Iterator)](iterator.md)
+- [Состояние (State)](state.md)
+- [Хранитель (Memento)](memento.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

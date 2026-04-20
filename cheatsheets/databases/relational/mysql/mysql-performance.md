@@ -32,12 +32,12 @@ updated: "2026-04-20"
 - [Grafana + Prometheus](https://grafana.com/docs/grafana/latest/datasources/prometheus/)
 
 ### См. также
-- [[mysql-basics|Основы]] — **MySQL**
-- [[mysql-indexes|Индексы]] — индексы и их оптимизация
-- [[mysql-queries|Запросы]] — оптимизация запросов
-- [[mysql-replication|Репликация]] — репликация и высокая доступность
+- [Основы](mysql-basics.md) — **MySQL**
+- [Индексы](mysql-indexes.md) — индексы и их оптимизация
+- [Запросы](mysql-queries.md) — оптимизация запросов
+- [Репликация](mysql-replication.md) — репликация и высокая доступность
 
-- [[postgres-indexes|PostgreSQL: типы индексов]]
+- [PostgreSQL: типы индексов](../postgresql/postgres-indexes.md)
 ## Содержание
 
 - [Методология оптимизации](#методология-оптимизации)

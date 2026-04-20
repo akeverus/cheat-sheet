@@ -24,12 +24,12 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 - [PostgreSQL Performance Tips](https://www.postgresql.org/docs/current/performance-tips.html) — рекомендации по производительности
 
 ### См. также
-- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
-- [[postgres-monitoring|postgres-monitoring.md]] — мониторинг
+- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
+- [postgres-monitoring.md](postgres-monitoring.md) — мониторинг
 
-- [[clickhouse-performance|ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу]]
-- [[postgres-transactions|PostgreSQL: транзакции, MVCC и блокировки]]
-- [[postgres-partitioning|PostgreSQL: партиционирование]]
+- [ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу](../../nosql/clickhouse/clickhouse-performance.md)
+- [PostgreSQL: транзакции, MVCC и блокировки](postgres-transactions.md)
+- [PostgreSQL: партиционирование](postgres-partitioning.md)
 ## Содержание
 
 - [Введение в оптимизацию PostgreSQL](#введение-в-оптимизацию-postgresql)

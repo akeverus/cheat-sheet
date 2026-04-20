@@ -203,7 +203,7 @@ for (int i = 0; i < array.length; i++) {
 - **Latency** p50/p95/p99 — основной SLI для пользователя
 - **Throughput** (RPS) — нагрузка в момент снятия профиля
 - **CPU utilization** — общая загрузка и по ядрам
-- **GC pauses** — частота и длительность пауз (см. [[memory-management-interview|Memory Management]])
+- **GC pauses** — частота и длительность пауз (см. [Memory Management](memory-management-interview.md))
 - **Error rate** — процент ошибок
 - **Heap usage** — утилизация памяти
 
@@ -487,7 +487,7 @@ perf script | stackcollapse-perf.pl | flamegraph.pl > perf-flamegraph.svg
 
 Системный подход:
 
-**1. Зафиксировать окно деградации** — связать с метриками (см. [[metrics-tracing-interview|метрики и трассировка]]):
+**1. Зафиксировать окно деградации** — связать с метриками (см. [метрики и трассировка](../monitoring/metrics-tracing-interview.md)):
 
 ```bash
 # Быстрая проверка: что делает JVM прямо сейчас
@@ -584,7 +584,7 @@ graph LR
 
 ## Q17. (!) Как профилировать allocation и memory pressure?
 
-Чрезмерные аллокации создают давление на `GC`, увеличивают паузы и ухудшают latency. Подробнее о влиянии GC на производительность — в [[memory-management-interview|Memory Management]].
+Чрезмерные аллокации создают давление на `GC`, увеличивают паузы и ухудшают latency. Подробнее о влиянии GC на производительность — в [Memory Management](memory-management-interview.md).
 
 **Инструменты:**
 
@@ -794,7 +794,7 @@ public class MetricsCollector {
 
 ## Q22. (!) Как анализировать GC и связать его с профилированием?
 
-Детальный анализ GC описан в [[memory-management-interview|Memory Management]] и [[jvm-performance-tuning-interview|JVM Performance Tuning]]. Здесь — интеграция с profiling.
+Детальный анализ GC описан в [Memory Management](memory-management-interview.md) и [JVM Performance Tuning](jvm-performance-tuning-interview.md). Здесь — интеграция с profiling.
 
 **Включение GC-логов:**
 
@@ -1027,7 +1027,7 @@ java -javaagent:/opt/dd-java-agent.jar \
 
 ## Q28. Как профилировать сервис в Kubernetes/Docker?
 
-Профилирование в контейнерной среде имеет свои нюансы. Подробнее о `Kubernetes` — в [[kubernetes-interview|Kubernetes]].
+Профилирование в контейнерной среде имеет свои нюансы. Подробнее о `Kubernetes` — в [Kubernetes](../devops/kubernetes-interview.md).
 
 **Проблемы:**
 - `cgroup` limits — JVM может не видеть реальные лимиты CPU/memory
@@ -1077,7 +1077,7 @@ jcmd 1 VM.info | grep "container"
 
 ## Q29. Как связать profiling с Prometheus/Grafana и алертингом?
 
-Интеграция профилирования в операционный цикл (см. [[metrics-tracing-interview|метрики и трассировка]]):
+Интеграция профилирования в операционный цикл (см. [метрики и трассировка](../monitoring/metrics-tracing-interview.md)):
 
 ```mermaid
 graph TD
@@ -1169,7 +1169,7 @@ graph TB
 
 **1. Симптом:** "p99 вырос после релиза X".
 
-**2. Диагностика:** "По метрикам в [[observability-interview|Grafana]] нашли окно деградации, сняли `JFR` + `async-profiler`".
+**2. Диагностика:** "По метрикам в [Grafana](../monitoring/observability-interview.md) нашли окно деградации, сняли `JFR` + `async-profiler`".
 
 **3. Находка:** "Lock contention в connection pool + лишние аллокации в сериализации JSON".
 
@@ -1738,16 +1738,16 @@ management.metrics.enable.reactor: true
 
 ## See also
 
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — настройка JVM-параметров
-- [[memory-management-interview|Memory Management]] — управление памятью и GC
-- [[jvm-interview|JVM Fundamentals]] — основы JVM
-- [[metrics-tracing-interview|Метрики и трассировка]] — Prometheus, distributed tracing
-- [[observability-interview|Observability]] — наблюдаемость систем
-- [[kubernetes-interview|Kubernetes]] — оркестрация контейнеров
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md) — настройка JVM-параметров
+- [Memory Management](memory-management-interview.md) — управление памятью и GC
+- [JVM Fundamentals](../jvm/jvm-interview.md) — основы JVM
+- [Метрики и трассировка](../monitoring/metrics-tracing-interview.md) — Prometheus, distributed tracing
+- [Observability](../monitoring/observability-interview.md) — наблюдаемость систем
+- [Kubernetes](../devops/kubernetes-interview.md) — оркестрация контейнеров
 
-- [[caching-performance-interview|Caching Performance]]
-- [[database-performance-interview|Database Performance]]
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
-- [[memory-management-interview|Memory Management]]
-- [[network-performance-interview|Network Performance]]
-- [[performance-testing-interview|Performance Testing]]
+- [Caching Performance](caching-performance-interview.md)
+- [Database Performance](database-performance-interview.md)
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md)
+- [Memory Management](memory-management-interview.md)
+- [Network Performance](network-performance-interview.md)
+- [Performance Testing](performance-testing-interview.md)

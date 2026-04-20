@@ -17,10 +17,10 @@ updated: "2026-04-20"
 
 ## Содержание
 
-- [[mysql-basics|MySQL Basics]]
-- [[mysql-admin|MySQL Admin]]
-- [[mysql-design|MySQL Design]]
-- [[mysql-indexes|MySQL Indexes]]
-- [[mysql-performance|MySQL Performance]]
-- [[mysql-queries|MySQL Queries]]
-- [[mysql-replication|MySQL Replication]]
+- [MySQL Basics](mysql-basics.md)
+- [MySQL Admin](mysql-admin.md)
+- [MySQL Design](mysql-design.md)
+- [MySQL Indexes](mysql-indexes.md)
+- [MySQL Performance](mysql-performance.md)
+- [MySQL Queries](mysql-queries.md)
+- [MySQL Replication](mysql-replication.md)

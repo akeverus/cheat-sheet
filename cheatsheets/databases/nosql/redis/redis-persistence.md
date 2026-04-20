@@ -24,12 +24,12 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Redis Persistence](https://redis.io/docs/management/persistence/) — персистентность RDB и AOF
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-replication|redis-replication.md]] — репликация
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-replication.md](redis-replication.md) — репликация
 
-- [[redis-troubleshooting|Redis: Решение проблем]]
-- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [Redis: Решение проблем](redis-troubleshooting.md)
+- [Quarkus: Redis — Caching и Data Structures](../../../frameworks/java-frameworks/quarkus/quarkus-redis.md)
+- [Quarkus: Cache — Кеширование данных](../../../frameworks/java-frameworks/quarkus/quarkus-cache.md)
 ## Содержание
 
 - [Введение в персистентность Redis](#введение-в-персистентность-redis)

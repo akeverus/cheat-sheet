@@ -26,13 +26,13 @@ Jackson — де-факто стандартная библиотека сери
 - [Jackson Release Notes](https://github.com/FasterXML/jackson/wiki/Jackson-Releases) — что в какой версии
 
 ### См. также
-- [[spring-boot|spring-boot]] — автоконфигурация Jackson
-- [[spring-rest|spring-rest]] — JSON в REST-контроллерах
-- [[java-bean-validation|java-bean-validation]] — валидация десериализованных DTO
-- [[java-mapstruct|java-mapstruct]] — маппинг после десериализации
-- [[java-lombok|java-lombok]] — DTO с Lombok
-- [[spring-mvc|spring-mvc]] — обработка HTTP-запросов
-- [[java-jackson-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [spring-boot](../../frameworks/spring/spring-boot.md) — автоконфигурация Jackson
+- [spring-rest](../../frameworks/java-frameworks/spring/spring-rest.md) — JSON в REST-контроллерах
+- [java-bean-validation](java-bean-validation.md) — валидация десериализованных DTO
+- [java-mapstruct](java-mapstruct.md) — маппинг после десериализации
+- [java-lombok](java-lombok.md) — DTO с Lombok
+- [spring-mvc](../../frameworks/java-frameworks/spring/spring-mvc.md) — обработка HTTP-запросов
+- [Вопросы на собеседовании](../../interview/programming-languages/java/java-jackson-interview.md) — подготовка к интервью
 
 ## Содержание
 
@@ -580,11 +580,11 @@ mapper.registerModule(new BlackbirdModule());  // Java 11+, замена Afterbu
 
 ## См. также
 
-- [[spring-boot|spring-boot]] — автоконфигурация ObjectMapper
-- [[spring-rest|spring-rest]] — JSON в REST-контроллерах
-- [[spring-mvc|spring-mvc]] — MessageConverter для Jackson
-- [[java-bean-validation|java-bean-validation]] — валидация после десериализации
-- [[java-mapstruct|java-mapstruct]] — маппинг entity DTO
-- [[java-lombok|java-lombok]] — DTO с Lombok
-- [[java-protobuf|java-protobuf]] — бинарная сериализация как альтернатива
-- [[java-basics|java-basics]] — базовые концепции Java
+- [spring-boot](../../frameworks/spring/spring-boot.md) — автоконфигурация ObjectMapper
+- [spring-rest](../../frameworks/java-frameworks/spring/spring-rest.md) — JSON в REST-контроллерах
+- [spring-mvc](../../frameworks/java-frameworks/spring/spring-mvc.md) — MessageConverter для Jackson
+- [java-bean-validation](java-bean-validation.md) — валидация после десериализации
+- [java-mapstruct](java-mapstruct.md) — маппинг entity DTO
+- [java-lombok](java-lombok.md) — DTO с Lombok
+- [java-protobuf](java-protobuf.md) — бинарная сериализация как альтернатива
+- [java-basics](../../languages/java/java-basics.md) — базовые концепции Java

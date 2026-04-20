@@ -30,9 +30,9 @@ updated: "2026-04-20"
 - [Avoiding Alert Fatigue](https://prometheus.io/docs/practices/alerting/)
 
 ### См. также
-- [[prometheus|Prometheus]] — Prometheus-метрики
-- [[grafana|Grafana]] — алерты в Grafana
-- [[centralized-logging|Централизованное логирование]] — логи для алертов
+- [Prometheus](../metrics/prometheus.md) — Prometheus-метрики
+- [Grafana](../metrics/grafana.md) — алерты в Grafana
+- [Централизованное логирование](../logging/centralized-logging.md) — логи для алертов
 
 ## Содержание
 
@@ -273,7 +273,7 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 
 `pagerduty_configs`: `routing_key` (Integration Key Events API v2), `send_resolved: true`, при необходимости `description` и `details` из шаблонов.
 
-Подробнее: [[alertmanager]], [[slack-alerting|Slack Alerting]], [[pagerduty]].
+Подробнее: [alertmanager](alertmanager.md), [Slack Alerting](slack-alerting.md), [pagerduty](pagerduty.md).
 
 ## Лучшие практики
 

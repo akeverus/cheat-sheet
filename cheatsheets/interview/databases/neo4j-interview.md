@@ -533,7 +533,7 @@ YIELD totalCost, nodeIds
 RETURN totalCost, [n in nodeIds | gds.util.asNode(n).name]
 ```
 
-Подробнее — в [[graphs-interview|Графы]].
+Подробнее — в [Графы](../algorithms/data-structures/graphs-interview.md).
 
 ## Q22. PageRank, centrality?
 
@@ -721,15 +721,15 @@ graph TD
 
 ## See also
 
-- [[graphs-interview|Графы (алгоритмы)]] — algorithms
-- [[postgresql-interview|PostgreSQL]] — для сравнения relational
-- [[mongodb-interview|MongoDB]] — document DB
-- [[cassandra-interview|Cassandra]] — wide-column
-- [[database-architecture-interview|Database Architecture]] — NoSQL context
-- [[redis-interview|Redis]] — for caching
-- [[microservices-interview|Микросервисы]] — graph DB per service
-- [[caching-strategies-interview|Caching]] — graph queries cache
+- [Графы (алгоритмы)](../algorithms/data-structures/graphs-interview.md) — algorithms
+- [PostgreSQL](postgresql-interview.md) — для сравнения relational
+- [MongoDB](mongodb-interview.md) — document DB
+- [Cassandra](cassandra-interview.md) — wide-column
+- [Database Architecture](database-architecture-interview.md) — NoSQL context
+- [Redis](redis-interview.md) — for caching
+- [Микросервисы](../architecture/microservices-interview.md) — graph DB per service
+- [Caching](../architecture/caching-strategies-interview.md) — graph queries cache
 - [[recommendations-interview|Recommendations]] — если будем добавлять
 - [[fraud-detection-interview|Fraud Detection]] — если будем добавлять
-- [[ai-agents-interview|AI Agents]] — knowledge graphs для agents
-- [[rag-interview|RAG]] — GraphRAG
+- [AI Agents](../ai-ml/ai-agents-interview.md) — knowledge graphs для agents
+- [RAG](../ai-ml/rag-interview.md) — GraphRAG

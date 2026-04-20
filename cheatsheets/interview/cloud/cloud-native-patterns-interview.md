@@ -240,7 +240,7 @@ def call_payment_service(order):
 
 **Tools:** Hystrix (legacy), Resilience4j, Polly (.NET), built-in service meshes.
 
-Подробнее — в [[resilience-patterns-interview|Resilience Patterns]].
+Подробнее — в [Resilience Patterns](../architecture/resilience-patterns-interview.md).
 
 ## Q9. (!) Retry с exponential backoff?
 
@@ -495,7 +495,7 @@ spec:
 
 **Все three** complement each other. Production system needs all.
 
-Подробнее — в [[observability-interview|Observability]].
+Подробнее — в [Observability](../monitoring/observability-interview.md).
 
 ## Q21. OpenTelemetry?
 
@@ -559,7 +559,7 @@ Time 5: If issues, instant rollback (switch back)
 
 **В K8s:** через services (route к blue или green selector).
 
-Подробнее — в [[deployment-strategies-interview|Deployment Strategies]].
+Подробнее — в [Deployment Strategies](../cicd/deployment-strategies-interview.md).
 
 ## Q24. (!) Canary deployment?
 
@@ -721,18 +721,18 @@ LOG_LEVEL=info
 
 ## See also
 
-- [[aws-interview|AWS]] — primary cloud
-- [[gcp-interview|GCP]] — alternative
-- [[azure-interview|Azure]] — alternative
-- [[serverless-interview|Serverless]] — cloud-native compute
-- [[microservices-interview|Микросервисы]] — main architecture
-- [[kubernetes-interview|Kubernetes]] — orchestration
-- [[docker-interview|Docker]] — containerization
-- [[resilience-patterns-interview|Resilience Patterns]] — circuit breaker, retry
-- [[deployment-strategies-interview|Deployment Strategies]] — blue-green, canary
-- [[observability-interview|Observability]] — three pillars
-- [[event-driven-patterns-interview|Event-driven Patterns]] — natural fit
-- [[scalability-patterns-interview|Scalability Patterns]] — horizontal scaling
-- [[application-security-interview|Application Security]] — secrets, mTLS
+- [AWS](aws-interview.md) — primary cloud
+- [GCP](gcp-interview.md) — alternative
+- [Azure](azure-interview.md) — alternative
+- [Serverless](serverless-interview.md) — cloud-native compute
+- [Микросервисы](../architecture/microservices-interview.md) — main architecture
+- [Kubernetes](../devops/kubernetes-interview.md) — orchestration
+- [Docker](../devops/docker-interview.md) — containerization
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — circuit breaker, retry
+- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — blue-green, canary
+- [Observability](../monitoring/observability-interview.md) — three pillars
+- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — natural fit
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — horizontal scaling
+- [Application Security](../security/application-security-interview.md) — secrets, mTLS
 - [[gitops-interview|GitOps]] — если будем добавлять
-- [[argocd-interview|ArgoCD]] — GitOps tool
+- [ArgoCD](../devops/argocd-interview.md) — GitOps tool

@@ -26,12 +26,12 @@ related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 - [Scala For Comprehensions](https://docs.scala-lang.org/tour/for-comprehensions.html)
 
 ### См. также
-- [[scala-fp-basics|Функциональное программирование]]
-- [[scala-collections|Коллекции]]
+- [Функциональное программирование](scala-fp-basics.md)
+- [Коллекции](scala-collections.md)
 
-- [[scala-fp-advanced|Scala Functional Programming — Advanced]]
-- [[scala-collections-list|Scala Collections — List]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [Scala Functional Programming — Advanced](scala-fp-advanced.md)
+- [Scala Collections — List](scala-collections-list.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
 ## Содержание
 
 - [Введение в For-comprehensions](#введение-в-for-comprehensions)

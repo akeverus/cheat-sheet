@@ -507,11 +507,11 @@ flowOf(1, 2, 3)
 
 ## See also
 
-- [[kotlin-coroutines-interview|Kotlin Coroutines]] — suspend функции, CoroutineScope, Job, Dispatcher
-- [[kotlin-interview|Kotlin]] — основы языка, null safety, data classes
-- [[spring-webflux-interview|Spring WebFlux]] — реактивный стек Spring, Mono/Flux vs Flow
-- [[reactive-streams-interview|Reactive Streams]] — спецификация backpressure (Publisher/Subscriber/Subscription)
-- [[project-reactor-interview|Project Reactor]] — Reactor (Java): Mono, Flux — аналог Flow
-- [[rxjava-interview|RxJava]] — сравнение Flow vs Observable/Flowable
-- [[kotlin-serialization-interview|Kotlin Serialization]] — сериализация данных в Flow pipeline
-- [[spring-r2dbc-interview|Spring R2DBC]] — реактивная работа с БД, возвращает Flow
+- [Kotlin Coroutines](kotlin-coroutines-interview.md) — suspend функции, CoroutineScope, Job, Dispatcher
+- [Kotlin](kotlin-interview.md) — основы языка, null safety, data classes
+- [Spring WebFlux](../../frameworks/spring/spring-webflux-interview.md) — реактивный стек Spring, Mono/Flux vs Flow
+- [Reactive Streams](../../reactive/reactive-streams-interview.md) — спецификация backpressure (Publisher/Subscriber/Subscription)
+- [Project Reactor](../../reactive/project-reactor-interview.md) — Reactor (Java): Mono, Flux — аналог Flow
+- [RxJava](../../reactive/rxjava-interview.md) — сравнение Flow vs Observable/Flowable
+- [Kotlin Serialization](kotlin-serialization-interview.md) — сериализация данных в Flow pipeline
+- [Spring R2DBC](../../frameworks/spring/spring-r2dbc-interview.md) — реактивная работа с БД, возвращает Flow

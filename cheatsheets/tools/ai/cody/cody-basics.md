@@ -31,9 +31,9 @@ Sourcegraph Cody — AI-ассистент, тесно интегрирован�
 
 
 ### См. также
-- [[aider-basics|Aider: основы]]
-- [[openclaw-basics|OpenClaw: основы]]
-- [[copilot-basics|GitHub Copilot: основы]]
+- [Aider: основы](../aider/aider-basics.md)
+- [OpenClaw: основы](../openclaw/openclaw-basics.md)
+- [GitHub Copilot: основы](../copilot/copilot-basics.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -207,6 +207,6 @@ Cody использует:
 
 ## См. также
 
-- [[cursor-basics|Cursor: основы]]
-- [[claude-basics|Claude Code: основы]]
+- [Cursor: основы](../cursor/cursor-basics.md)
+- [Claude Code: основы](../claude/claude-basics.md)
 

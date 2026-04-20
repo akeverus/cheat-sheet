@@ -18,13 +18,13 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[grpc]] — полное руководство: Protocol Buffers, виды сервисов, Spring Boot интеграция
+- [grpc](grpc.md) — полное руководство: Protocol Buffers, виды сервисов, Spring Boot интеграция
 
 ### Соседние разделы
-- [[README|Родительский раздел: API]]
-- [[README|REST API]] — альтернатива для внешних/публичных API
-- [[README|GraphQL]] — альтернатива для разнородных клиентов
-- [[README|Messaging]] — асинхронная альтернатива RPC
+- [Родительский раздел: API](../../../basics/README.md)
+- [REST API](../../../basics/README.md) — альтернатива для внешних/публичных API
+- [GraphQL](../../../basics/README.md) — альтернатива для разнородных клиентов
+- [Messaging](../../../basics/README.md) — асинхронная альтернатива RPC
 - [Spring Boot](../../../frameworks/java-frameworks/spring/)
 
 ### Внешние ресурсы
@@ -74,12 +74,12 @@ updated: "2026-04-20"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Protocol Buffers: сообщения, сервисы, кодогенерация | [[grpc#protocol-buffers]] |
-| 4 вида RPC (unary, server-stream, client-stream, bidi) | [[grpc#типы-сервисов]] |
-| Spring Boot интеграция | [[grpc]] |
-| Interceptors, metadata, deadline, retries | [[grpc]] |
-| TLS, auth, mTLS | [[grpc]] |
-| gRPC-Web для браузера | [[grpc]] |
+| Protocol Buffers: сообщения, сервисы, кодогенерация | [grpc](grpc.md#protocol-buffers) |
+| 4 вида RPC (unary, server-stream, client-stream, bidi) | [grpc](grpc.md#типы-сервисов) |
+| Spring Boot интеграция | [grpc](grpc.md) |
+| Interceptors, metadata, deadline, retries | [grpc](grpc.md) |
+| TLS, auth, mTLS | [grpc](grpc.md) |
+| gRPC-Web для браузера | [grpc](grpc.md) |
 
 ## Подводные камни
 
@@ -96,7 +96,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- REST для внешних API — [[README]]
-- GraphQL для разнородных клиентов — [[README]]
-- Асинхронная интеграция через брокеры — [[README]]
-- Observability и мониторинг — [[README]]
+- REST для внешних API — [README](../../../basics/README.md)
+- GraphQL для разнородных клиентов — [README](../../../basics/README.md)
+- Асинхронная интеграция через брокеры — [README](../../../basics/README.md)
+- Observability и мониторинг — [README](../../../basics/README.md)

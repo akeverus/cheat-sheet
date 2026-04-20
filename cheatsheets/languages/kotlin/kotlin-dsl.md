@@ -24,13 +24,13 @@ updated: "2026-04-20"
 - [Kotlin DSL Tutorial](https://www.baeldung.com/kotlin/dsl)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-fp-basics|Функциональное программирование]]
-- [[kotlin-metaprogramming|Метапрограммирование]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Функциональное программирование](kotlin-fp-basics.md)
+- [Метапрограммирование](kotlin-metaprogramming.md)
 
-- [[kotlin-performance|Kotlin Performance]]
-- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
-- [[kotlin-dsl-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Kotlin Performance](kotlin-performance.md)
+- [Sealed классы и интерфейсы в Kotlin](kotlin-sealed-classes.md)
+- [Вопросы на собеседовании](../../interview/programming-languages/kotlin/kotlin-dsl-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в DSL](#введение-в-dsl)

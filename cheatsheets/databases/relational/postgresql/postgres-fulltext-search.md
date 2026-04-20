@@ -24,12 +24,12 @@ related: ["databases/postgres-queries.md", "databases/postgres-indexes.md"]
 - [PostgreSQL Full Text Search](https://www.postgresql.org/docs/current/textsearch.html) — полнотекстовый поиск
 
 ### См. также
-- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
-- [[postgres-queries|postgres-queries.md]] — запросы
+- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
+- [postgres-queries.md](postgres-queries.md) — запросы
 
-- [[postgres-high-availability|PostgreSQL: Высокая доступность]]
-- [[postgres-security|PostgreSQL: Безопасность]]
-- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [PostgreSQL: Высокая доступность](postgres-high-availability.md)
+- [PostgreSQL: Безопасность](postgres-security.md)
+- [PostgreSQL: Резервное копирование и восстановление](postgres-backup-restore.md)
 ## Содержание
 
 - [Введение в полнотекстовый поиск](#введение-в-полнотекстовый-поиск)

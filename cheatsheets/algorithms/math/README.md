@@ -17,16 +17,16 @@ updated: "2026-04-20"
 
 ## Содержание
 
-- [[factorial-calculation|Факториал]]
-- [[fibonacci-sequence|Числа Фибоначчи]]
-- [[greatest-common-divisor|Наибольший общий делитель]]
-- [[least-common-multiple|Наименьшее общее кратное]]
-- [[perfect-square-check|Проверка на идеальный квадрат]]
-- [[matrix-multiplication|Умножение матриц]]
-- [[standard-deviation|Стандартное отклонение]]
-- [[circle-area-calculation|Площадь круга]]
-- [[line-intersection|Пересечение линий]]
-- [[distance-between-points|Distance Between Points]]
+- [Факториал](factorial-calculation.md)
+- [Числа Фибоначчи](fibonacci-sequence.md)
+- [Наибольший общий делитель](greatest-common-divisor.md)
+- [Наименьшее общее кратное](least-common-multiple.md)
+- [Проверка на идеальный квадрат](perfect-square-check.md)
+- [Умножение матриц](matrix-multiplication.md)
+- [Стандартное отклонение](standard-deviation.md)
+- [Площадь круга](circle-area-calculation.md)
+- [Пересечение линий](line-intersection.md)
+- [Distance Between Points](distance-between-points.md)
 
 Полный набор материалов см. в файлах текущей папки.
 

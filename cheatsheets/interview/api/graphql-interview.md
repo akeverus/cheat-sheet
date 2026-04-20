@@ -817,10 +817,10 @@ spring:
 - Критично HTTP-кэширование (CDN, прокси)
 - Загрузка/скачивание файлов как основной сценарий
 - Команда не имеет опыта с `GraphQL`
-- Микросервисная коммуникация (здесь лучше подходит [[grpc-interview|gRPC]])
+- Микросервисная коммуникация (здесь лучше подходит [gRPC](grpc-interview.md))
 - Публичный API с широкой аудиторией (REST более распространён)
 
-**Гибридный подход** на практике распространён: `REST` для простых CRUD-операций и загрузки файлов, `GraphQL` для сложных запросов к данным, [[grpc-interview|gRPC]] для inter-service коммуникации.
+**Гибридный подход** на практике распространён: `REST` для простых CRUD-операций и загрузки файлов, `GraphQL` для сложных запросов к данным, [gRPC](grpc-interview.md) для inter-service коммуникации.
 
 ---
 
@@ -1434,7 +1434,7 @@ sequenceDiagram
     G-->>C: {success: true}
 ```
 
-**Рекомендация:** используйте signed URL для файлов. `GraphQL` оптимизирован для структурированных данных, а не для бинарных потоков. Подробнее о работе с REST-эндпоинтами для загрузки файлов -- в [[http-rest-interview|вопросах по HTTP & REST]].
+**Рекомендация:** используйте signed URL для файлов. `GraphQL` оптимизирован для структурированных данных, а не для бинарных потоков. Подробнее о работе с REST-эндпоинтами для загрузки файлов -- в [вопросах по HTTP & REST](http-rest-interview.md).
 
 ---
 
@@ -1485,7 +1485,7 @@ public WebGraphQlInterceptor batchLimitInterceptor() {
 }
 ```
 
-**Альтернатива батчингу:** `@defer` и `@stream` директивы (экспериментальные), которые позволяют серверу отправлять части ответа по мере готовности, не дожидаясь завершения всех резолверов. Подробнее об оптимизации API-запросов -- в [[microservices-interview|вопросах по микросервисам]].
+**Альтернатива батчингу:** `@defer` и `@stream` директивы (экспериментальные), которые позволяют серверу отправлять части ответа по мере готовности, не дожидаясь завершения всех резолверов. Подробнее об оптимизации API-запросов -- в [вопросах по микросервисам](../architecture/microservices-interview.md).
 
 ## Q31. (!) Как работают GraphQL Subscriptions и как их реализовать в Spring?
 
@@ -2099,16 +2099,16 @@ GraphQL или REST — на внешнем слое (developer experience), gRP
 
 ## See also
 
-- [[http-rest-interview|HTTP и REST]] — сравнение REST и GraphQL: когда использовать каждый подход, over-fetching vs under-fetching, версионирование
-- [[grpc-interview|gRPC]] — альтернатива GraphQL для высокопроизводительного межсервисного взаимодействия с типизированными контрактами
-- [[microservices-interview|Микросервисная архитектура]] — GraphQL Federation как способ объединить несколько GraphQL-сервисов за одним endpoint
-- [[api-gateway-interview|API Gateway]] — GraphQL-слой часто размещается за Gateway: аутентификация, rate limiting, маршрутизация
-- [[spring-boot-interview|Spring Boot]] — интеграция Spring for GraphQL: аннотации `@QueryMapping`, `@MutationMapping`, контроллеры и DataLoader
+- [HTTP и REST](http-rest-interview.md) — сравнение REST и GraphQL: когда использовать каждый подход, over-fetching vs under-fetching, версионирование
+- [gRPC](grpc-interview.md) — альтернатива GraphQL для высокопроизводительного межсервисного взаимодействия с типизированными контрактами
+- [Микросервисная архитектура](../architecture/microservices-interview.md) — GraphQL Federation как способ объединить несколько GraphQL-сервисов за одним endpoint
+- [API Gateway](../architecture/api-gateway-interview.md) — GraphQL-слой часто размещается за Gateway: аутентификация, rate limiting, маршрутизация
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция Spring for GraphQL: аннотации `@QueryMapping`, `@MutationMapping`, контроллеры и DataLoader
 
-- [[api-design-best-practices-interview|API Design Best Practices]]
-- [[api-versioning-interview|API Versioning]]
-- [[grpc-interview|gRPC]]
-- [[http-rest-interview|HTTP и REST]]
-- [[openapi-swagger-interview|OpenAPI / Swagger]]
-- [[rest-maturity-interview|Richardson Maturity Model (REST)]]
-- [[graphql|Шпаргалка: GraphQL для Java]] — теория
+- [API Design Best Practices](api-design-best-practices-interview.md)
+- [API Versioning](api-versioning-interview.md)
+- [gRPC](grpc-interview.md)
+- [HTTP и REST](http-rest-interview.md)
+- [OpenAPI / Swagger](openapi-swagger-interview.md)
+- [Richardson Maturity Model (REST)](rest-maturity-interview.md)
+- [Шпаргалка: GraphQL для Java](../../development/api/graphql/graphql.md) — теория

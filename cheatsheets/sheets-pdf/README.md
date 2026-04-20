@@ -24,8 +24,8 @@
 
 ## См. также
 
-- [[CHEATSHEETS_ARCHITECTURE_AND_RULES|Архитектура и правила cheatsheets]]
-- [[java-basics|Java Basics]]
-- [[postgres-basics|PostgreSQL Basics]]
-- [[spring-boot|Spring Boot]]
-- [[algorithms|Алгоритмы]]
+- [Архитектура и правила cheatsheets](../CHEATSHEETS_ARCHITECTURE_AND_RULES.md)
+- [Java Basics](../languages/java/java-basics.md)
+- [PostgreSQL Basics](../databases/relational/postgresql/postgres-basics.md)
+- [Spring Boot](../frameworks/spring/spring-boot.md)
+- [Алгоритмы](../algorithms/problems/algorithms.md)

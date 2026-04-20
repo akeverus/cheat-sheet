@@ -23,14 +23,14 @@ updated: "2026-04-20"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/) — **Java** API и руководства
 
 ### См. также
-- [[README|Решение задач]] — решение задач
-- [[README|Обзор алгоритмов]] — алгоритмы
-- [[dynamic-programming|Динамическое программирование]] — **DP**
-- [[greedy-algorithms|Практический кейс]] — жадный выбор при ограничениях API
+- [Решение задач](../../basics/README.md) — решение задач
+- [Обзор алгоритмов](../../basics/README.md) — алгоритмы
+- [Динамическое программирование](dynamic-programming.md) — **DP**
+- [Практический кейс](../problems/greedy-algorithms.md) — жадный выбор при ограничениях API
 
-- [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
-- [[backtracking|Поиск с возвратом (Backtracking)]]
-- [[greedy-algorithms-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Методы ветвей и границ (Branch and Bound)](branch-and-bound.md)
+- [Поиск с возвратом (Backtracking)](backtracking.md)
+- [Вопросы на собеседовании](../../interview/algorithms/algorithmic-paradigms/greedy-algorithms-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в жадные алгоритмы](#введение-в-жадные-алгоритмы)

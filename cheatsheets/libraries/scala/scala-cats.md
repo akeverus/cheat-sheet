@@ -22,10 +22,10 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[scala-akka|Akka]]
-- [[scala-slick|Slick]]
-- [[scala-doobie|Doobie]]
-- [[scala-zio|ZIO]]
+- [Akka](scala-akka.md)
+- [Slick](scala-slick.md)
+- [Doobie](scala-doobie.md)
+- [ZIO](scala-zio.md)
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
@@ -1227,5 +1227,5 @@ val withoutMin = heap.remove // Heap without minimum
 ```
 ## См. также
 - [Обзор библиотек](../) — **Scala** библиотеки
-- [[README|Паттерны]] — Функциональные паттерны
+- [Паттерны](../../basics/README.md) — Функциональные паттерны
 

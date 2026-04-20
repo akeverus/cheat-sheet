@@ -905,8 +905,8 @@ val result = source.via(expandFlow).take(100).runWith(Sink.seq)
 
 ## См. также
 
-- [[scala-another|Scala Additional Topics]]
-- [[scala-basics|Scala: основы]]
-- [[scala-cats-effect|Cats Effect в Scala]]
-- [[scala-collections-array|Scala Collections — Array]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [Scala Additional Topics](scala-another.md)
+- [Scala: основы](scala-basics.md)
+- [Cats Effect в Scala](scala-cats-effect.md)
+- [Scala Collections — Array](scala-collections-array.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)

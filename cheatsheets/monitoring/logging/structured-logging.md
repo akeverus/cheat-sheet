@@ -27,12 +27,12 @@ updated: "2026-04-20"
 - [SLF4J Structured Arguments](https://www.slf4j.org/manual.html#structured-data)
 
 ### См. также
-- [[logging-basics|Основы логирования]]
-- [[centralized-logging|Централизованное логирование]]
-- [[java-spring-cloud-sleuth|Spring Cloud Sleuth]]
+- [Основы логирования](logging-basics.md)
+- [Централизованное логирование](centralized-logging.md)
+- [Spring Cloud Sleuth](../../libraries/java/java-spring-cloud-sleuth.md)
 
-- [[slf4j|SLF4J для Java]]
-- [[log-aggregation|Агрегация логов для Java]]
+- [SLF4J для Java](slf4j.md)
+- [Агрегация логов для Java](log-aggregation.md)
 ## Содержание
 
 - [Введение в структурированное логирование](#введение-в-структурированное-логирование)

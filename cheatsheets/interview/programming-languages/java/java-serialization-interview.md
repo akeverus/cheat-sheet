@@ -122,7 +122,7 @@ graph LR
 - **Персистентность** — сохранение состояния приложения (сессии, чекпоинты)
 - **RMI** — удалённый вызов методов между JVM
 - **Кэширование** — сохранение объектов в распределённых кэшах (`Redis`, `Hazelcast`)
-- **Очереди сообщений** — передача объектов через [[kafka-interview|Kafka]], `RabbitMQ`
+- **Очереди сообщений** — передача объектов через [Kafka](../../messaging/kafka-interview.md), `RabbitMQ`
 
 Важно понимать, что бинарная Java-сериализация привязана к платформе и к версии класса. Для межсистемного обмена и современных сервисов чаще применяют альтернативы: `JSON`, `XML`, `Protocol Buffers` — они не выполняют произвольный код при десериализации и обычно безопаснее.
 
@@ -355,7 +355,7 @@ public class Singleton implements Serializable {
 }
 ```
 
-Без `readResolve` десериализация синглтона создаст **второй экземпляр**, нарушив контракт единственности. Это одна из причин, почему `enum`-синглтоны считаются более надёжным подходом (см. [[design-patterns-interview|паттерны проектирования]]).
+Без `readResolve` десериализация синглтона создаст **второй экземпляр**, нарушив контракт единственности. Это одна из причин, почему `enum`-синглтоны считаются более надёжным подходом (см. [паттерны проектирования](../../design-patterns/design-patterns-interview.md)).
 
 ## Q10. (!) Как использовать custom `writeObject`/`readObject`?
 
@@ -543,7 +543,7 @@ for (int i = 0; i < 100; i++) {
 }
 ```
 
-Подробнее о [[application-security-interview|безопасности приложений]].
+Подробнее о [безопасности приложений](../../security/application-security-interview.md).
 
 ## Q16. (!) Что такое gadget chain и как работают атаки десериализации?
 
@@ -638,7 +638,7 @@ graph TD
     style F fill:#ffcdd2
 ```
 
-Подробнее о защите от OWASP-уязвимостей: [[owasp-top10-interview|OWASP Top 10]] (A8:2017 — Insecure Deserialization).
+Подробнее о защите от OWASP-уязвимостей: [OWASP Top 10](../../security/owasp-top10-interview.md) (A8:2017 — Insecure Deserialization).
 
 ## Q19. (!) Как сериализуются `record` классы в `Java`?
 
@@ -916,7 +916,7 @@ User parsed = User.parseFrom(bytes);       // десериализация
 | Схема | Обязательна (.proto) | Нет (класс = схема) | Опциональна (JSON Schema) |
 | Эволюция | Отличная (backward/forward) | Плохая | Средняя |
 
-Используется в [[kafka-interview|Kafka]], `gRPC`, внутренних API между микросервисами.
+Используется в [Kafka](../../messaging/kafka-interview.md), `gRPC`, внутренних API между микросервисами.
 
 ## Q27. Что такое `Apache Avro` и чем он отличается от `Protobuf`?
 
@@ -943,7 +943,7 @@ User parsed = User.parseFrom(bytes);       // десериализация
 | Размер сообщения | Компактный (без тегов полей) | Компактный (с тегами) |
 | Лучший сценарий | Потоковая обработка, Data Lake | RPC, API между сервисами |
 
-`Avro` особенно популярен в связке с `Confluent Schema Registry` и [[kafka-interview|Apache Kafka]] для эволюции схем событий.
+`Avro` особенно популярен в связке с `Confluent Schema Registry` и [Apache Kafka](../../messaging/kafka-interview.md) для эволюции схем событий.
 
 ## Q28. Что такое `Kryo` и когда его выбирают?
 
@@ -1034,7 +1034,7 @@ graph LR
     style B fill:#e1f5fe
 ```
 
-В микросервисах используют: `JSON` (для REST API), `Protobuf` (для gRPC), `Avro` (для event streaming с [[kafka-interview|Kafka]]). Подробнее о сериализации в контексте обмена сообщениями: [[kafka-interview|Apache Kafka]].
+В микросервисах используют: `JSON` (для REST API), `Protobuf` (для gRPC), `Avro` (для event streaming с [Kafka](../../messaging/kafka-interview.md)). Подробнее о сериализации в контексте обмена сообщениями: [Apache Kafka](../../messaging/kafka-interview.md).
 
 ## Q31. Как организовать версионирование схем в микросервисной архитектуре?
 
@@ -1097,7 +1097,7 @@ graph TB
     style J fill:#fff9c4
 ```
 
-Подробнее о [[kafka-interview|паттернах обмена сообщениями в Kafka]] и [[design-patterns-interview|паттернах проектирования]].
+Подробнее о [паттернах обмена сообщениями в Kafka](../../messaging/kafka-interview.md) и [паттернах проектирования](../../design-patterns/design-patterns-interview.md).
 
 ## Q33. (!) Десериализация как вектор атаки — OWASP и реальные эксплойты
 
@@ -1567,18 +1567,18 @@ public record Money(BigDecimal amount, Currency currency) implements Serializabl
 
 ## See also
 
-- [[java-io-nio-interview|Java IO / NIO]] — `ObjectInputStream`/`ObjectOutputStream`, потоки байт и объекты
-- [[java-core-interview|Java Core]] — контракт `equals`/`hashCode` и его роль при десериализации объектов
-- [[java-exceptions-interview|Java Exceptions]] — `InvalidClassException`, `StreamCorruptedException` — типичные ошибки сериализации
-- [[java-oop-interview|ООП в Java]] — `Serialization Proxy Pattern`, `readResolve()`, инварианты классов
-- [[java-types-interview|Java Types]] — как `records` и `sealed classes` (Java 16-17) влияют на сериализацию
-- [[java-17-21-interview|Java 17-21]] — сериализация `records` и `sealed classes` — новые подходы
-- [[design-patterns-interview|Паттерны проектирования]] — `Serialization Proxy`, `Builder` для безопасной десериализации
-- [[spring-framework-interview|Spring Framework]] — `@JsonIgnore`, `@JsonProperty`, Jackson-интеграция в Spring
+- [Java IO / NIO](java-io-nio-interview.md) — `ObjectInputStream`/`ObjectOutputStream`, потоки байт и объекты
+- [Java Core](java-core-interview.md) — контракт `equals`/`hashCode` и его роль при десериализации объектов
+- [Java Exceptions](java-exceptions-interview.md) — `InvalidClassException`, `StreamCorruptedException` — типичные ошибки сериализации
+- [ООП в Java](java-oop-interview.md) — `Serialization Proxy Pattern`, `readResolve()`, инварианты классов
+- [Java Types](java-types-interview.md) — как `records` и `sealed classes` (Java 16-17) влияют на сериализацию
+- [Java 17-21](java-17-21-interview.md) — сериализация `records` и `sealed classes` — новые подходы
+- [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — `Serialization Proxy`, `Builder` для безопасной десериализации
+- [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — `@JsonIgnore`, `@JsonProperty`, Jackson-интеграция в Spring
 
-- [[java-17-21-interview|Java 17-21]]
-- [[java-8-interview|Java 8]]
-- [[java-annotations-interview|Java Annotations]]
-- [[java-collections-interview|Java Collections]]
-- [[java-concurrency-interview|Java Concurrency]]
-- [[java-conditional-statements-interview|Java Conditional Statements]]
+- [Java 17-21](java-17-21-interview.md)
+- [Java 8](java-8-interview.md)
+- [Java Annotations](java-annotations-interview.md)
+- [Java Collections](java-collections-interview.md)
+- [Java Concurrency](java-concurrency-interview.md)
+- [Java Conditional Statements](java-conditional-statements-interview.md)

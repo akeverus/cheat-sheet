@@ -508,7 +508,7 @@ If-Match: "abc123"
 - **User-facing** — OAuth + JWT
 - **Public APIs** — API keys (simple) или OAuth (advanced)
 
-Подробнее — в [[oauth2-interview|OAuth2]], [[jwt-interview|JWT]].
+Подробнее — в [OAuth2](../security/oauth2-interview.md), [JWT](../security/jwt-interview.md).
 
 ## Q19. API key best practices?
 
@@ -610,7 +610,7 @@ paths:
 
 **Best practice:** **API spec first, then implement**. OpenAPI = source of truth.
 
-Подробнее — в [[openapi-swagger-interview|OpenAPI / Swagger]].
+Подробнее — в [OpenAPI / Swagger](openapi-swagger-interview.md).
 
 ## Q23. Examples и SDKs?
 
@@ -655,7 +655,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 - Escape HTML/JS если HTML rendering possible
 - Sanitize file names в URLs
 
-Подробнее — в [[application-security-interview|Application Security]].
+Подробнее — в [Application Security](../security/application-security-interview.md).
 
 ## Q26. CORS?
 
@@ -727,7 +727,7 @@ Content-Encoding: gzip
 - Self-discovering hypermedia clients
 - Strict REST compliance (rare)
 
-См. [[rest-maturity-interview|REST Maturity]].
+См. [REST Maturity](rest-maturity-interview.md).
 
 ## Q30. Webhooks design?
 
@@ -750,22 +750,22 @@ Content-Encoding: gzip
 
 ## See also
 
-- [[rest-maturity-interview|REST Maturity]] — RMM context
-- [[api-versioning-interview|API Versioning]]
-- [[http-rest-interview|HTTP & REST]] — основа
-- [[graphql-interview|GraphQL]] — alternative
-- [[grpc-interview|gRPC]] — alternative
-- [[openapi-swagger-interview|OpenAPI / Swagger]] — documentation
-- [[oauth2-interview|OAuth2]] — auth
-- [[jwt-interview|JWT]] — auth tokens
-- [[microservices-interview|Микросервисы]] — APIs everywhere
-- [[api-gateway-interview|API Gateway]] — routing, rate limiting
-- [[caching-strategies-interview|Caching]] — HTTP caching
-- [[application-security-interview|Application Security]] — input validation, HTTPS
+- [REST Maturity](rest-maturity-interview.md) — RMM context
+- [API Versioning](api-versioning-interview.md)
+- [HTTP & REST](http-rest-interview.md) — основа
+- [GraphQL](graphql-interview.md) — alternative
+- [gRPC](grpc-interview.md) — alternative
+- [OpenAPI / Swagger](openapi-swagger-interview.md) — documentation
+- [OAuth2](../security/oauth2-interview.md) — auth
+- [JWT](../security/jwt-interview.md) — auth tokens
+- [Микросервисы](../architecture/microservices-interview.md) — APIs everywhere
+- [API Gateway](../architecture/api-gateway-interview.md) — routing, rate limiting
+- [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
+- [Application Security](../security/application-security-interview.md) — input validation, HTTPS
 
-- [[api-versioning-interview|API Versioning]]
-- [[graphql-interview|GraphQL]]
-- [[grpc-interview|gRPC]]
-- [[http-rest-interview|HTTP и REST]]
-- [[openapi-swagger-interview|OpenAPI / Swagger]]
-- [[rest-maturity-interview|Richardson Maturity Model (REST)]]
+- [API Versioning](api-versioning-interview.md)
+- [GraphQL](graphql-interview.md)
+- [gRPC](grpc-interview.md)
+- [HTTP и REST](http-rest-interview.md)
+- [OpenAPI / Swagger](openapi-swagger-interview.md)
+- [Richardson Maturity Model (REST)](rest-maturity-interview.md)

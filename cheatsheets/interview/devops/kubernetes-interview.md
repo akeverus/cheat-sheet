@@ -178,7 +178,7 @@ graph TB
 | `kube-proxy` | Сетевые правила, маршрутизация трафика к подам через `iptables`/`IPVS` |
 | Container Runtime | `containerd`, `CRI-O` — запускает контейнеры |
 
-Подробнее о распределённых системах — в [[distributed-systems-interview|вопросах по распределённым системам]].
+Подробнее о распределённых системах — в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
 
 ## Q3. Что такое `etcd` и какова его роль?
 
@@ -201,7 +201,7 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot.db \
   --key=/etc/etcd/server.key
 ```
 
-Подробнее о консенсусе — в [[cap-theorem-interview|CAP-теореме]] и [[consistency-patterns-interview|паттернах согласованности]].
+Подробнее о консенсусе — в [CAP-теореме](../architecture/cap-theorem-interview.md) и [паттернах согласованности](../architecture/consistency-patterns-interview.md).
 
 ## Q4. (!) Чем виртуализация отличается от контейнеризации?
 
@@ -231,7 +231,7 @@ graph LR
     end
 ```
 
-Подробнее о контейнеризации — в [[docker-interview|вопросах по Docker]].
+Подробнее о контейнеризации — в [вопросах по Docker](docker-interview.md).
 
 ## Q5. В чём разница между `Kubernetes` и `Docker Swarm`?
 
@@ -546,7 +546,7 @@ strategy:
 | **Canary** | Постепенное перенаправление % трафика на новую версию | `Argo Rollouts`, `Flagger`, `Istio` |
 | **A/B Testing** | Маршрутизация по заголовкам/cookies | `Istio`, `Nginx Ingress` |
 
-Подробнее — в [[deployment-strategies-interview|стратегиях деплоя]].
+Подробнее — в [стратегиях деплоя](../cicd/deployment-strategies-interview.md).
 
 ## Q15. Как выполнить откат `Deployment`?
 
@@ -1237,7 +1237,7 @@ roleRef:
 - Избегайте wildcard (`*`) в правилах
 - Регулярно аудируйте `RoleBinding` / `ClusterRoleBinding`
 
-Подробнее — в [[application-security-interview|безопасности приложений]].
+Подробнее — в [безопасности приложений](../security/application-security-interview.md).
 
 ## Q34. Что такое `Namespace` и `Resource Quota`?
 
@@ -1451,7 +1451,7 @@ kubectl config set-context --current --namespace=production  # Задать name
 | `Zipkin` | Распределённый трейсинг |
 | `OpenTelemetry` | Унифицированный сбор метрик, логов и трейсов |
 
-Подробнее — в [[observability-interview|Observability]] и [[metrics-tracing-interview|метриках и трейсинге]].
+Подробнее — в [Observability](../monitoring/observability-interview.md) и [метриках и трейсинге](../monitoring/metrics-tracing-interview.md).
 
 ## Q39. (!) Какие механизмы обеспечения высокой доступности предоставляет `Kubernetes`?
 
@@ -1492,7 +1492,7 @@ spec:
             topologyKey: kubernetes.io/hostname
 ```
 
-Подробнее — в [[scalability-patterns-interview|паттернах масштабируемости]] и [[load-balancing-interview|балансировке нагрузки]].
+Подробнее — в [паттернах масштабируемости](../architecture/scalability-patterns-interview.md) и [балансировке нагрузки](../architecture/load-balancing-interview.md).
 
 ## Q40. Что такое `OpenShift`?
 
@@ -1511,7 +1511,7 @@ spec:
 
 ## Q41. (!) Как настроить `Spring Boot` приложение для работы в `Kubernetes`?
 
-Интеграция [[spring-boot-interview|Spring Boot]] с `Kubernetes` включает настройку health probes, конфигурации и Dockerfile.
+Интеграция [Spring Boot](../frameworks/spring/spring-boot-interview.md) с `Kubernetes` включает настройку health probes, конфигурации и Dockerfile.
 
 ### 1. Зависимости (build.gradle)
 
@@ -1882,14 +1882,14 @@ kubectl kustomize k8s/overlays/prod
 ## See also
 
 
-- [[docker-interview|Docker]] — контейнеризация, основа для K8s: образы, слои, Dockerfile best practices
-- [[microservices-interview|Микросервисы]] — архитектурный паттерн, для которого создан K8s: service mesh, sidecar
-- [[deployment-strategies-interview|Стратегии деплоя]] — blue/green, canary и другие подходы в Kubernetes
-- [[observability-interview|Observability]] — мониторинг и трейсинг в K8s: Prometheus Operator, Fluentd, Jaeger
-- [[spring-boot-interview|Spring Boot]] — интеграция Java-приложений с K8s: liveness/readiness probes, graceful shutdown
-- [[pipeline-design-interview|Дизайн CI/CD пайплайнов]] — GitOps и ArgoCD: деплой через Kubernetes манифесты
-- [[ansible-interview|Ansible]]
-- [[argocd-interview|ArgoCD и GitOps]]
-- [[consul-interview|HashiCorp Consul]]
-- [[git-interview|Git]]
-- [[gradle-maven-interview|Gradle и Maven]]
+- [Docker](docker-interview.md) — контейнеризация, основа для K8s: образы, слои, Dockerfile best practices
+- [Микросервисы](../architecture/microservices-interview.md) — архитектурный паттерн, для которого создан K8s: service mesh, sidecar
+- [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — blue/green, canary и другие подходы в Kubernetes
+- [Observability](../monitoring/observability-interview.md) — мониторинг и трейсинг в K8s: Prometheus Operator, Fluentd, Jaeger
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция Java-приложений с K8s: liveness/readiness probes, graceful shutdown
+- [Дизайн CI/CD пайплайнов](../cicd/pipeline-design-interview.md) — GitOps и ArgoCD: деплой через Kubernetes манифесты
+- [Ansible](ansible-interview.md)
+- [ArgoCD и GitOps](argocd-interview.md)
+- [HashiCorp Consul](consul-interview.md)
+- [Git](git-interview.md)
+- [Gradle и Maven](gradle-maven-interview.md)

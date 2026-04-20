@@ -1,12 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Менторство инженеров"
-description: "Практические вопросы и ответы по менторству: 1:1, планы развития, обратная связь, карьерный рост, обучение vs указание."
+description: "Менторство инженеров: 1:1 встречи, планы развития, обратная связь, карьерный рост, обучение vs указание, growth mindset"
 tags:
   - interview
   - leadership
-  - mentoring
-  - career-development
-  - feedback
+  - mentoring-interview
+aliases:
+  - "Mentoring interview"
+  - "Mentoring собеседование"
+  - "1:1 meetings interview"
+  - "career development interview"
+  - "engineering mentorship"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -321,10 +325,10 @@ I: «...автор не понял, что именно нужно исправ�
 
 ## See also
 
-- [[team-leadership-interview|Team Leadership]]
-- [[code-review-practices-interview|Code Review Practices]]
-- [[behavioral-interview|Behavioral]]
-- [[technical-decisions-interview|Technical Decisions]]
-- [[conflict-resolution-interview|Conflict Resolution]]
-- [[tech-interviewing-interview|Conducting Technical Interviews]]
-- [[estimations-planning-interview|Estimation & Planning]]
+- [Team Leadership](team-leadership-interview.md)
+- [Code Review Practices](code-review-practices-interview.md)
+- [Behavioral](../behavioral/behavioral-interview.md)
+- [Technical Decisions](technical-decisions-interview.md)
+- [Conflict Resolution](conflict-resolution-interview.md)
+- [Conducting Technical Interviews](tech-interviewing-interview.md)
+- [Estimation & Planning](estimations-planning-interview.md)

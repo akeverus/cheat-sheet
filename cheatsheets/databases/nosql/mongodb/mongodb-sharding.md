@@ -25,12 +25,12 @@ updated: "2026-04-20"
 - [MongoDB Sharding](https://www.baeldung.com/java-mongodb-sharding)
 
 ### См. также
-- [[mongodb-replication|Репликация]] — основа шардирования
-- [[mongodb-performance|Производительность]] — шардированные кластеры
+- [Репликация](mongodb-replication.md) — основа шардирования
+- [Производительность](mongodb-performance.md) — шардированные кластеры
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
-- [[mongodb-queries|MongoDB: Запросы и операторы — Полное руководство по поиску документов]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](mongodb-crud.md)
+- [MongoDB: Запросы и операторы — Полное руководство по поиску документов](mongodb-queries.md)
 ## Содержание
 
 - [Введение в шардирование MongoDB](#введение-в-шардирование-mongodb)

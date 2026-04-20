@@ -1506,16 +1506,16 @@ WHERE installed_version IS NOT NULL;
 ## See also
 
 
-- [[sql-interview|SQL]]
-- [[database-architecture-interview|Database Architecture]]
-- [[database-transactions-interview|Транзакции и уровни изоляции]]
-- [[hibernate-interview|Hibernate]]
-- [[cassandra-interview|Apache Cassandra]]
-- [[redis-interview|Redis]]
-- [[mongodb-interview|MongoDB]]
-- [[elasticsearch-interview|Elasticsearch]]
-- [[flyway-liquibase-interview|Flyway и Liquibase]]
-- [[spring-data-jpa-interview|Spring Data JPA]]
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
-- [[dynamodb-interview|DynamoDB]]
+- [SQL](sql-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [Транзакции и уровни изоляции](database-transactions-interview.md)
+- [Hibernate](hibernate-interview.md)
+- [Apache Cassandra](cassandra-interview.md)
+- [Redis](redis-interview.md)
+- [MongoDB](mongodb-interview.md)
+- [Elasticsearch](elasticsearch-interview.md)
+- [Flyway и Liquibase](flyway-liquibase-interview.md)
+- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md)
+- [ClickHouse](clickhouse-interview.md)
+- [CockroachDB](cockroachdb-interview.md)
+- [DynamoDB](dynamodb-interview.md)

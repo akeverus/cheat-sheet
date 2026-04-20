@@ -23,7 +23,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[containerization-overview|Containerization — обзор]]
+- [Containerization — обзор](../containerization-overview.md)
 ## Содержание
 
 - [Архитектура кластера](#архитектура-кластера)
@@ -1235,7 +1235,7 @@ velero backup create myapp-backup --include-namespaces production
 velero restore create --from-backup myapp-backup
 ```
 ## См. также
-- [[docker-basics|Docker Basics]] — контейнеризация
-- [[terraform|Terraform]] — инфраструктура как код
-- [[ansible|Ansible]] — конфигурационное управление
-- [[prometheus|Prometheus]] — мониторинг
+- [Docker Basics](../docker/docker-basics.md) — контейнеризация
+- [Terraform](../../iac/terraform/terraform.md) — инфраструктура как код
+- [Ansible](../../iac/ansible/ansible.md) — конфигурационное управление
+- [Prometheus](../../../monitoring/metrics/prometheus.md) — мониторинг

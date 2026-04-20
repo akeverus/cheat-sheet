@@ -23,12 +23,12 @@ related: ["scala/scala-basics.md", "scala/scala-play.md"]
 - [Typesafe Config](https://github.com/lightbend/config)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-play|Play Framework]]
+- [Основы Scala](scala-basics.md)
+- [Play Framework](../../libraries/scala/scala-play.md)
 
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
-- [[scala-collections|Scala Collections]]
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
+- [Scala Collections](scala-collections.md)
 ## Содержание
 
 - [Введение в конфигурацию](#введение-в-конфигурацию)

@@ -19,14 +19,14 @@ Packer — open-source инструмент HashiCorp для сборки **gold
 ## Полезные ссылки
 
 ### Основные документы
-- [[packer-basics]] — установка, первый шаблон, builders
-- [[packer]] — полное руководство: multi-cloud, provisioners, variables, post-processors
+- [packer-basics](packer-basics.md) — установка, первый шаблон, builders
+- [packer](packer.md) — полное руководство: multi-cloud, provisioners, variables, post-processors
 
 ### Соседние разделы
-- [[README|platform/iac/]] — родительский раздел IaC
-- [[README|platform/iac/terraform/]] — развёртывание того, что собрал Packer
-- [[README|platform/iac/ansible/]] — Ansible как provisioner внутри Packer
-- [[README|platform/containers/docker/]] — альтернатива для контейнерных workload'ов
+- [platform/iac/](../../../basics/README.md) — родительский раздел IaC
+- [platform/iac/terraform/](../../../basics/README.md) — развёртывание того, что собрал Packer
+- [platform/iac/ansible/](../../../basics/README.md) — Ansible как provisioner внутри Packer
+- [platform/containers/docker/](../../../basics/README.md) — альтернатива для контейнерных workload'ов
 
 ### Внешние ресурсы
 - [Packer Documentation](https://developer.hashicorp.com/packer/docs)
@@ -46,12 +46,12 @@ Packer — open-source инструмент HashiCorp для сборки **gold
 
 | Тема | Файл |
 |------|------|
-| Установка, HCL-шаблон | [[packer-basics]] |
-| Builders: AWS, Azure, GCP, Docker, VMware | [[packer]] |
-| Provisioners: shell, Ansible, Chef | [[packer]] |
-| Variables и template functions | [[packer]] |
-| Post-processors (Docker push, vagrant, manifest) | [[packer]] |
-| Multi-cloud и parallel builds | [[packer]] |
+| Установка, HCL-шаблон | [packer-basics](packer-basics.md) |
+| Builders: AWS, Azure, GCP, Docker, VMware | [packer](packer.md) |
+| Provisioners: shell, Ansible, Chef | [packer](packer.md) |
+| Variables и template functions | [packer](packer.md) |
+| Post-processors (Docker push, vagrant, manifest) | [packer](packer.md) |
+| Multi-cloud и parallel builds | [packer](packer.md) |
 
 ## Packer vs Terraform/Ansible/Docker
 
@@ -80,7 +80,7 @@ Packer и Docker решают похожую задачу («упакуй окр
 
 ## Куда идти дальше
 
-- Deploy собранных образов — [[README]]
-- Configuration management — [[README]]
-- Контейнерная альтернатива — [[README]]
-- Обзор IaC-подходов — [[iac-overview]]
+- Deploy собранных образов — [README](../../../basics/README.md)
+- Configuration management — [README](../../../basics/README.md)
+- Контейнерная альтернатива — [README](../../../basics/README.md)
+- Обзор IaC-подходов — [iac-overview](../iac-overview.md)

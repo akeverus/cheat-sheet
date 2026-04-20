@@ -1,11 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Code Smells"
-description: "Краткие ответы про запахи кода: каталог Фаулера, long methods, god classes, feature envy, primitive obsession, shotgun surgery, обнаружение и устранение."
+description: "Запахи кода по Фаулеру: long methods, god classes, feature envy, primitive obsession, shotgun surgery, обнаружение и рефакторинг"
 tags:
   - interview
   - code-quality
-  - code-smells
-  - refactoring
+  - code-smells-interview
+aliases:
+  - "Code Smells interview"
+  - "Code Smells собеседование"
+  - "refactoring smells interview"
+  - "Fowler code smells"
+  - "запахи кода вопросы"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -558,10 +563,10 @@ BigDecimal rounded = amount.setScale(2, RoundingMode.FLOOR);
 
 ## See also
 
-- [[code-review-interview|Code Review]]
-- [[refactoring-patterns-interview|Refactoring Patterns]]
-- [[technical-debt-interview|Technical Debt]]
-- [[clean-code-practices-interview|Clean Code Practices]]
-- [[static-analysis-interview|Static Analysis]]
-- [[design-patterns-interview|Design Patterns]]
-- [[java-core-interview|Java Core]]
+- [Code Review](code-review-interview.md)
+- [Refactoring Patterns](refactoring-patterns-interview.md)
+- [Technical Debt](technical-debt-interview.md)
+- [Clean Code Practices](clean-code-practices-interview.md)
+- [Static Analysis](static-analysis-interview.md)
+- [Design Patterns](../design-patterns/design-patterns-interview.md)
+- [Java Core](../programming-languages/java/java-core-interview.md)

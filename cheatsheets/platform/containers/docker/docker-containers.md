@@ -26,12 +26,12 @@ updated: "2026-04-20"
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
 ### См. также
-- [[docker-basics|Docker: основы]] — установка и базовые команды **Docker**
+- [Docker: основы](docker-basics.md) — установка и базовые команды **Docker**
 
-- [[containerization-overview|Containerization — обзор]]
-- [[docker-spring-boot|Docker и Spring Boot]]
-- [[docker-advanced|Docker Advanced]]
-- [[docker-compose|Docker Compose]]
+- [Containerization — обзор](../containerization-overview.md)
+- [Docker и Spring Boot](docker-spring-boot.md)
+- [Docker Advanced](docker-advanced.md)
+- [Docker Compose](docker-compose.md)
 ## Содержание
 
 - [Список контейнеров](#список-контейнеров)

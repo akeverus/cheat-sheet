@@ -606,21 +606,21 @@ Real-world: enterprise reports save **70-90%** moving к Loki.
 
 ## See also
 
-- [[opentelemetry-interview|OpenTelemetry]] — modern standard
-- [[elk-stack-interview|ELK Stack]] — alternative для logs
-- [[jaeger-zipkin-interview|Jaeger / Zipkin]] — для traces (alternative Tempo)
-- [[prometheus-grafana-interview|Prometheus + Grafana]] — для metrics (alternative Mimir)
-- [[observability-interview|Observability]] — общая концепция
-- [[logging-interview|Logging]] — application logging
-- [[logging-strategies-interview|Стратегии логирования]] — best practices
-- [[microservices-interview|Микросервисы]] — где Loki shines
-- [[kubernetes-interview|Kubernetes]] — log discovery
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — observability
-- [[caching-strategies-interview|Caching]] — для query performance
+- [OpenTelemetry](opentelemetry-interview.md) — modern standard
+- [ELK Stack](elk-stack-interview.md) — alternative для logs
+- [Jaeger / Zipkin](jaeger-zipkin-interview.md) — для traces (alternative Tempo)
+- [Prometheus + Grafana](prometheus-grafana-interview.md) — для metrics (alternative Mimir)
+- [Observability](observability-interview.md) — общая концепция
+- [Logging](../logging/logging-interview.md) — application logging
+- [Стратегии логирования](logging-strategies-interview.md) — best practices
+- [Микросервисы](../architecture/microservices-interview.md) — где Loki shines
+- [Kubernetes](../devops/kubernetes-interview.md) — log discovery
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability
+- [Caching](../architecture/caching-strategies-interview.md) — для query performance
 
-- [[elk-stack-interview|ELK Stack]]
-- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
-- [[logging-strategies-interview|Стратегии логирования]]
-- [[metrics-tracing-interview|Метрики и трейсинг]]
-- [[observability-interview|Observability]]
-- [[opentelemetry-interview|OpenTelemetry]]
+- [ELK Stack](elk-stack-interview.md)
+- [Jaeger и Zipkin](jaeger-zipkin-interview.md)
+- [Стратегии логирования](logging-strategies-interview.md)
+- [Метрики и трейсинг](metrics-tracing-interview.md)
+- [Observability](observability-interview.md)
+- [OpenTelemetry](opentelemetry-interview.md)

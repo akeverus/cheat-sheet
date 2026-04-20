@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [PostgreSQL Wiki — Don't Do This](https://wiki.postgresql.org/wiki/Don't_Do_This) — типичные ошибки
 
 ### См. также
-- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
-- [[postgres-monitoring|postgres-monitoring.md]] — мониторинг
+- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
+- [postgres-monitoring.md](postgres-monitoring.md) — мониторинг
 
 
-- [[postgres-indexes|PostgreSQL: типы индексов]]
-- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
-- [[postgres-queries|PostgreSQL: запросы и агрегаты]]
+- [PostgreSQL: типы индексов](postgres-indexes.md)
+- [PostgreSQL: администрирование и обслуживание](postgres-admin.md)
+- [PostgreSQL: запросы и агрегаты](postgres-queries.md)
 ## Содержание
 
 - [Введение](#введение)

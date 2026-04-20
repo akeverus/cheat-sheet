@@ -19,15 +19,15 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[openapi-swagger]] — полный референс OpenAPI 3.x: структура, объекты, security
-- [[api-documentation-basics]] — практика: lifecycle, versioning, CI-валидация
+- [openapi-swagger](openapi-swagger.md) — полный референс OpenAPI 3.x: структура, объекты, security
+- [api-documentation-basics](api-documentation-basics.md) — практика: lifecycle, versioning, CI-валидация
 
 ### Соседние разделы
-- [[README|Родительский раздел: API Tools]]
-- [[README|API Documentation]] — общая точка входа в документирование
-- [[README|API Testing]] — контрактные и интеграционные тесты
-- [[README|Postman]] — импорт спецификации в коллекцию
-- [[README|REST API]] — дизайн API, который описываем
+- [Родительский раздел: API Tools](../../../../basics/README.md)
+- [API Documentation](../../../../basics/README.md) — общая точка входа в документирование
+- [API Testing](../../../../basics/README.md) — контрактные и интеграционные тесты
+- [Postman](../../../../basics/README.md) — импорт спецификации в коллекцию
+- [REST API](../../../../basics/README.md) — дизайн API, который описываем
 - [Spring Boot](../../../../frameworks/java-frameworks/spring/) — springdoc-openapi для Spring
 
 ### Внешние ресурсы
@@ -86,7 +86,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Тестирование API по OpenAPI — [[README]]
-- Процесс и практика документации — [[README]]
-- REST API design — [[README]]
-- GraphQL как альтернативная модель контракта — [[README]]
+- Тестирование API по OpenAPI — [README](../../../../basics/README.md)
+- Процесс и практика документации — [README](../../../../basics/README.md)
+- REST API design — [README](../../../../basics/README.md)
+- GraphQL как альтернативная модель контракта — [README](../../../../basics/README.md)

@@ -1668,16 +1668,16 @@ await expect(page).toHaveURL('/confirmation');
 
 ## See also
 
-- [[metrics-tracing-interview|Метрики и трейсинг]] — детальные вопросы по `Prometheus`, `Micrometer`, `OpenTelemetry` и distributed tracing
-- [[logging-strategies-interview|Стратегии логирования]] — архитектурные решения: sampling, retention, централизованное логирование, стоимость хранения
-- [[logging-interview|Logging]] — инструментальные вопросы: `SLF4J`, `Logback`, `MDC`, `ELK`, structured logging на практике
-- [[distributed-systems-interview|Распределённые системы]] — контекст, в котором observability особенно критична: CAP, консистентность, failure modes
-- [[microservices-interview|Микросервисы]] — архитектурные паттерны, где трассировка и correlation ID обязательны
-- [[kubernetes-interview|Kubernetes]] — сбор метрик и логов в кластере: `kube-state-metrics`, Fluentd, Prometheus Operator
+- [Метрики и трейсинг](metrics-tracing-interview.md) — детальные вопросы по `Prometheus`, `Micrometer`, `OpenTelemetry` и distributed tracing
+- [Стратегии логирования](logging-strategies-interview.md) — архитектурные решения: sampling, retention, централизованное логирование, стоимость хранения
+- [Logging](../logging/logging-interview.md) — инструментальные вопросы: `SLF4J`, `Logback`, `MDC`, `ELK`, structured logging на практике
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — контекст, в котором observability особенно критична: CAP, консистентность, failure modes
+- [Микросервисы](../architecture/microservices-interview.md) — архитектурные паттерны, где трассировка и correlation ID обязательны
+- [Kubernetes](../devops/kubernetes-interview.md) — сбор метрик и логов в кластере: `kube-state-metrics`, Fluentd, Prometheus Operator
 
-- [[elk-stack-interview|ELK Stack]]
-- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
-- [[logging-strategies-interview|Стратегии логирования]]
-- [[loki-grafana-interview|Loki и Grafana]]
-- [[metrics-tracing-interview|Метрики и трейсинг]]
-- [[opentelemetry-interview|OpenTelemetry]]
+- [ELK Stack](elk-stack-interview.md)
+- [Jaeger и Zipkin](jaeger-zipkin-interview.md)
+- [Стратегии логирования](logging-strategies-interview.md)
+- [Loki и Grafana](loki-grafana-interview.md)
+- [Метрики и трейсинг](metrics-tracing-interview.md)
+- [OpenTelemetry](opentelemetry-interview.md)

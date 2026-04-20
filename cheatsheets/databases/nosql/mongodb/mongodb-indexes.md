@@ -25,12 +25,12 @@ updated: "2026-04-20"
 - [MongoDB Indexes](https://www.baeldung.com/spring-data-mongodb-index-annotation)
 
 ### См. также
-- [[mongodb-queries|Запросы]] — оптимизация запросов
-- [[mongodb-performance|Производительность]] — производительность и мониторинг
+- [Запросы](mongodb-queries.md) — оптимизация запросов
+- [Производительность](mongodb-performance.md) — производительность и мониторинг
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
-- [[mongodb-aggregation|MongoDB: Aggregation Framework — Полное руководство по агрегации данных]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](mongodb-crud.md)
+- [MongoDB: Aggregation Framework — Полное руководство по агрегации данных](mongodb-aggregation.md)
 ## Содержание
 
 - [Введение в индексы MongoDB](#введение-в-индексы-mongodb)

@@ -23,10 +23,10 @@ JPQL — объектно-ориентированный язык запросо
 - [Hibernate Query Language (hibernate.org)](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#hql) — официальная документация
 
 ### См. также
-- [[orm-basics|ORM Basics]] — базовые концепции JPA и EntityManager
-- [[hibernate-relationships|Hibernate Relationships]] — связи, LAZY/EAGER, N+1
-- [[spring-data-jpa-interview|Spring Data JPA]] — `@Query`, Specification, QueryDSL
-- [[hibernate-caching|Hibernate Caching]] — кэширование L1, L2 и Query Cache
+- [ORM Basics](orm-basics.md) — базовые концепции JPA и EntityManager
+- [Hibernate Relationships](hibernate-relationships.md) — связи, LAZY/EAGER, N+1
+- [Spring Data JPA](../../interview/frameworks/spring/spring-data-jpa-interview.md) — `@Query`, Specification, QueryDSL
+- [Hibernate Caching](hibernate-caching.md) — кэширование L1, L2 и Query Cache
 
 ## Содержание
 
@@ -725,10 +725,10 @@ em.createQuery("SELECT o FROM Order o JOIN o.items i WHERE i.name = :name", Orde
 
 ## См. также
 
-- [[orm-basics|ORM Basics]] — базовые концепции JPA и EntityManager
-- [[hibernate-relationships|Hibernate Relationships]] — связи, LAZY/EAGER, N+1
-- [[hibernate-interview|Hibernate Interview]] — типовые вопросы на собеседовании
-- [[hibernate-caching|Hibernate Caching]] — кэширование L1, L2 и Query Cache
-- [[spring-data-jpa-interview|Spring Data JPA]] — `@Query`, Specification, QueryDSL
-- [[database-transactions-interview|Database Transactions]] — изоляция, блокировки, deadlock
-- [[java-jdbc|JDBC]] — PreparedStatement и нативные запросы
+- [ORM Basics](orm-basics.md) — базовые концепции JPA и EntityManager
+- [Hibernate Relationships](hibernate-relationships.md) — связи, LAZY/EAGER, N+1
+- [Hibernate Interview](../../interview/databases/hibernate-interview.md) — типовые вопросы на собеседовании
+- [Hibernate Caching](hibernate-caching.md) — кэширование L1, L2 и Query Cache
+- [Spring Data JPA](../../interview/frameworks/spring/spring-data-jpa-interview.md) — `@Query`, Specification, QueryDSL
+- [Database Transactions](../../interview/databases/database-transactions-interview.md) — изоляция, блокировки, deadlock
+- [JDBC](../../languages/java/java-jdbc.md) — PreparedStatement и нативные запросы

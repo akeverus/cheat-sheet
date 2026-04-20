@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Effective Java — Item 2](https://www.oreilly.com/library/view/effective-java/9780134686097/)
 
 ### См. также
-- [[factory-method|Factory Method]] — **Factory Method Pattern**
-- [[spring-framework-interview|Spring Core]] — конфигурация и бины
-- [[java-basics|Java Basics]] — основы **Java**
+- [Factory Method](factory-method.md) — **Factory Method Pattern**
+- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — конфигурация и бины
+- [Java Basics](../../languages/java/java-basics.md) — основы **Java**
 
-- [[singleton|Одиночка (Singleton)]]
-- [[creational-patterns|Порождающие паттерны проектирования (Creational Patterns)]]
+- [Одиночка (Singleton)](singleton.md)
+- [Порождающие паттерны проектирования (Creational Patterns)](creational-patterns.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

@@ -19,14 +19,14 @@ TestNG — фреймворк для тестирования на JVM (Java и 
 ## Полезные ссылки
 
 ### Основные документы
-- [[testng]] — аннотации, группы, DataProvider, параллельный запуск
+- [testng](testng.md) — аннотации, группы, DataProvider, параллельный запуск
 
 ### Соседние разделы
-- [[README|Unit Testing]]
-- [[README|JUnit]]
-- [[README|Selenium]]
-- [[testing-tools-overview|Testing Tools Overview]]
-- [[java-mockito|Mockito]]
+- [Unit Testing](../../../basics/README.md)
+- [JUnit](../../../basics/README.md)
+- [Selenium](../../../basics/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [Mockito](../../../libraries/testing-libraries/java-mockito.md)
 
 ### Внешние ресурсы
 - [TestNG Official](https://testng.org/doc/documentation-main.html)
@@ -44,11 +44,11 @@ TestNG — фреймворк для тестирования на JVM (Java и 
 
 | Тема | Где читать |
 |------|-----------|
-| Аннотации `@Test`, `@Before*`/`@After*` | [[testng]] |
-| Группы и зависимости методов | [[testng]] |
-| Параметры: `@Parameters` из XML, `@DataProvider` | [[testng]] |
-| Параллельное выполнение, XML-suite | [[testng]] |
-| Assertions, retry, listeners, Allure | [[testng]] |
+| Аннотации `@Test`, `@Before*`/`@After*` | [testng](testng.md) |
+| Группы и зависимости методов | [testng](testng.md) |
+| Параметры: `@Parameters` из XML, `@DataProvider` | [testng](testng.md) |
+| Параллельное выполнение, XML-suite | [testng](testng.md) |
+| Assertions, retry, listeners, Allure | [testng](testng.md) |
 
 ## Когда использовать: TestNG vs JUnit
 
@@ -72,6 +72,6 @@ TestNG лучше для UI/QA-автоматизации с группами, �
 
 ## Куда идти дальше
 
-- Обзор unit-тестирования — [[README]]
-- JUnit 5 — [[README]]
-- Selenium — [[README]]
+- Обзор unit-тестирования — [README](../../../basics/README.md)
+- JUnit 5 — [README](../../../basics/README.md)
+- Selenium — [README](../../../basics/README.md)

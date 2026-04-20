@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Visualgo: Selection Sort](https://visualgo.net/)
 
 ### См. также
-- [[bubble-sort|Пузырьковая сортировка]] — bubble sort
-- [[shell-sort|Сортировка Шелла]] — shell sort
-- [[quick-sort|Быстрая сортировка]] — quick sort
+- [Пузырьковая сортировка](bubble-sort.md) — bubble sort
+- [Сортировка Шелла](shell-sort.md) — shell sort
+- [Быстрая сортировка](quick-sort.md) — quick sort
 
-- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
-- [[radix-sort|Поразрядная сортировка (Radix Sort)]]
+- [Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)](bead-sort.md)
+- [Поразрядная сортировка (Radix Sort)](radix-sort.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -24,11 +24,11 @@ updated: "2026-04-20"
 - [Kotlin Collections Guide](https://www.baeldung.com/kotlin/collections-api)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-collections-list|Списки (List)]]
-- [[kotlin-collections-map|Словари (Map)]]
-- [[kotlin-collections-operations|Операции над коллекциями]]
-- [[java-streams-fp|Java Streams]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Списки (List)](kotlin-collections-list.md)
+- [Словари (Map)](kotlin-collections-map.md)
+- [Операции над коллекциями](kotlin-collections-operations.md)
+- [Java Streams](../java/java-streams-fp.md)
 
 ## Содержание
 

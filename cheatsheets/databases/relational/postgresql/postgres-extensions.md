@@ -24,12 +24,12 @@ related: ["databases/postgres-performance-tuning.md", "databases/postgres-replic
 - [PostgreSQL Extensions](https://www.postgresql.org/docs/current/extend-extensions.html) — раздел про расширения
 
 ### См. также
-- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
-- [[postgres-admin|postgres-admin.md]] — администрирование
+- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
+- [postgres-admin.md](postgres-admin.md) — администрирование
 
-- [[postgres-high-availability|PostgreSQL: Высокая доступность]]
-- [[postgres-security|PostgreSQL: Безопасность]]
-- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [PostgreSQL: Высокая доступность](postgres-high-availability.md)
+- [PostgreSQL: Безопасность](postgres-security.md)
+- [PostgreSQL: Резервное копирование и восстановление](postgres-backup-restore.md)
 ## Содержание
 
 - [Введение в расширения PostgreSQL](#введение-в-расширения-postgresql)

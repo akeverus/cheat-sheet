@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Baeldung: Dining Philosophers](https://www.baeldung.com/)
 
 ### См. также
-- [[maze-solver|Решение лабиринтов]] — maze solver
-- [[a-star-pathfinding|Поиск пути A*]] — A*
+- [Решение лабиринтов](maze-solver.md) — maze solver
+- [Поиск пути A*](a-star-pathfinding.md) — A*
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

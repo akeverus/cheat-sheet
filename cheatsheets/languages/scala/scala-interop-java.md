@@ -24,12 +24,12 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
 - [Scala Java Interop](https://docs.scala-lang.org/scala3/book/scala-for-java-devs.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[java-basics|Основы Java]]
+- [Основы Scala](scala-basics.md)
+- [Основы Java](../java/java-basics.md)
 
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
-- [[scala-collections|Scala Collections]]
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
+- [Scala Collections](scala-collections.md)
 ## Содержание
 
 - [Введение в Interop](#введение-в-interop)

@@ -22,31 +22,31 @@ updated: "2026-04-20"
 Инструменты для коммуникации, управления проектами и совместной работы в команде.
 
 - [Confluence](collaboration/confluence/) — документация и база знаний
-  - [[confluence-basics|Основы Confluence]]
+  - [Основы Confluence](collaboration/confluence/confluence-basics.md)
 - [Jira](collaboration/jira/) — управление проектами и задачами
-  - [[jira-basics|Основы Jira]]
+  - [Основы Jira](collaboration/jira/jira-basics.md)
 - [Mattermost](collaboration/mattermost/) — корпоративный мессенджер
-  - [[mattermost-basics|Основы Mattermost]]
+  - [Основы Mattermost](collaboration/mattermost/mattermost-basics.md)
 - [Slack](collaboration/slack/) — коммуникационная платформа для команд
-  - [[slack-basics|Основы Slack]]
+  - [Основы Slack](collaboration/slack/slack-basics.md)
 - [Telegram](collaboration/telegram/) — мессенджер для общения
-  - [[telegram-basics|Основы Telegram]]
+  - [Основы Telegram](collaboration/telegram/telegram-basics.md)
 
 ### [AI-инструменты для разработки](ai/)
 
 Инструменты с поддержкой генерации и понимания кода, интеграцией с IDE и репозиториями, помогающие ускорять разработку, рефакторинг и разбор legacy-кода.
 
 - [Cursor](ai/cursor/) — AI-first IDE на базе VS Code
-  - [[cursor-basics|Cursor: основы]]
+  - [Cursor: основы](ai/cursor/cursor-basics.md)
 - [GitHub Copilot](ai/copilot/) — ассистент разработки от GitHub
-  - [[copilot-basics|GitHub Copilot: основы]]
+  - [GitHub Copilot: основы](ai/copilot/copilot-basics.md)
 - [Claude для разработки](ai/claude/) — использование моделей Claude в разработке
-  - [[claude-basics|Claude: основы для разработчика]]
+  - [Claude: основы для разработчика](ai/claude/claude-basics.md)
 - [Windsurf](ai/windsurf/) — IDE с глубокой AI-интеграцией (Codeium)
-  - [[windsurf-basics|Windsurf: основы]]
+  - [Windsurf: основы](ai/windsurf/windsurf-basics.md)
 - [Cody](ai/cody/) — ассистент от Sourcegraph с привязкой к коду в репозитории
-  - [[cody-basics|Cody: основы]]
+  - [Cody: основы](ai/cody/cody-basics.md)
 - [Aider](ai/aider/) — CLI-помощник, редактирующий код через git-патчи
-  - [[aider-basics|Aider: основы]]
+  - [Aider: основы](ai/aider/aider-basics.md)
 - [OpenClaw](ai/openclaw/) — open-source AI automation framework и ассистент для разработчиков
-  - [[openclaw-basics|OpenClaw: основы]]
+  - [OpenClaw: основы](ai/openclaw/openclaw-basics.md)

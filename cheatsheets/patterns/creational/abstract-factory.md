@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Spring Abstract Factory](https://docs.spring.io/spring-framework/reference/core/beans/java.html)
 
 ### См. также
-- [[factory-method|Factory Method]] — **Factory Method Pattern**
-- [[spring-framework-interview|Spring Core]] — **IoC** и бины
-- [[java-basics|Java Basics]] — **Java Basics**
+- [Factory Method](factory-method.md) — **Factory Method Pattern**
+- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — **IoC** и бины
+- [Java Basics](../../languages/java/java-basics.md) — **Java Basics**
 
-- [[singleton|Одиночка (Singleton)]]
-- [[builder|Строитель (Builder)]]
+- [Одиночка (Singleton)](singleton.md)
+- [Строитель (Builder)](builder.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

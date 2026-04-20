@@ -17,7 +17,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[java-exceptions-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Вопросы на собеседовании](../../interview/programming-languages/java/java-exceptions-interview.md) — подготовка к интервью
 
 ## Полезные ссылки
 
@@ -1485,8 +1485,8 @@ public class ExceptionTesting {
 
 ## См. также
 
-- [[java-annotations-reflection|Java Annotations и Reflection]]
-- [[java-basics|Java: основы]]
-- [[java-collections-converting|Java Collections: конвертирование]]
-- [[java-collections-list|Java Collections: List]]
-- [[java-collections-map|Java Collections: Map]]
+- [Java Annotations и Reflection](java-annotations-reflection.md)
+- [Java: основы](java-basics.md)
+- [Java Collections: конвертирование](java-collections-converting.md)
+- [Java Collections: List](java-collections-list.md)
+- [Java Collections: Map](java-collections-map.md)

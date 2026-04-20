@@ -24,12 +24,12 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 - [Scala Type System](https://docs.scala-lang.org/tour/unified-types.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-fp-advanced|Продвинутое ФП]]
+- [Основы Scala](scala-basics.md)
+- [Продвинутое ФП](scala-fp-advanced.md)
 
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
-- [[scala-collections|Scala Collections]]
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
+- [Scala Collections](scala-collections.md)
 ## Содержание
 
 - [Введение в систему типов](#введение-в-систему-типов)

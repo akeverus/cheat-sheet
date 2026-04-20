@@ -14,7 +14,7 @@ updated: "2026-04-20"
 
 Bean Validation — стандарт Jakarta EE для декларативной проверки объектов через аннотации на полях, геттерах, параметрах и возвращаемых значениях методов. Референсная имплементация — Hibernate Validator. Спецификация 3.0 переехала в пакет `jakarta.validation` (Jakarta EE 9+), 2.0 и ниже — `javax.validation`.
 
-На практике используется в каждом Spring Boot сервисе для валидации DTO в контроллерах, параметров сервисов и сущностей JPA. В связке со Spring MVC срабатывает через `@Valid` / `@Validated` и автоматически формирует `400 Bad Request` при нарушениях. Подробнее об интеграции см. в [[spring-validation]] и [[spring-rest]].
+На практике используется в каждом Spring Boot сервисе для валидации DTO в контроллерах, параметров сервисов и сущностей JPA. В связке со Spring MVC срабатывает через `@Valid` / `@Validated` и автоматически формирует `400 Bad Request` при нарушениях. Подробнее об интеграции см. в [spring-validation](../../frameworks/java-frameworks/spring/spring-validation.md) и [spring-rest](../../frameworks/java-frameworks/spring/spring-rest.md).
 
 ## Полезные ссылки
 
@@ -25,12 +25,12 @@ Bean Validation — стандарт Jakarta EE для декларативно�
 - [Spring Validation](https://docs.spring.io/spring-framework/reference/core/validation/beanvalidation.html) — интеграция со Spring
 
 ### См. также
-- [[spring-validation|spring-validation]] — Spring Validation и интеграция
-- [[spring-rest|spring-rest]] — валидация в REST-контроллерах
-- [[spring-boot|spring-boot]] — автоконфигурация Hibernate Validator
-- [[java-jackson|java-jackson]] — десериализация и валидация входных JSON
-- [[spring-data-jpa|spring-data-jpa]] — валидация сущностей перед persist
-- [[java-basics|java-basics]] — базовые концепции Java
+- [spring-validation](../../frameworks/java-frameworks/spring/spring-validation.md) — Spring Validation и интеграция
+- [spring-rest](../../frameworks/java-frameworks/spring/spring-rest.md) — валидация в REST-контроллерах
+- [spring-boot](../../frameworks/spring/spring-boot.md) — автоконфигурация Hibernate Validator
+- [java-jackson](java-jackson.md) — десериализация и валидация входных JSON
+- [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — валидация сущностей перед persist
+- [java-basics](../../languages/java/java-basics.md) — базовые концепции Java
 
 ## Содержание
 
@@ -354,7 +354,7 @@ public boolean isValid(String value, ConstraintValidatorContext ctx) {
 
 ## Интеграция со Spring
 
-Spring Boot автоконфигурирует `LocalValidatorFactoryBean` при наличии `spring-boot-starter-validation`. Использует Hibernate Validator под капотом и регистрирует бины `Validator` и `MethodValidationPostProcessor`. Базовая настройка описана в [[spring-boot]].
+Spring Boot автоконфигурирует `LocalValidatorFactoryBean` при наличии `spring-boot-starter-validation`. Использует Hibernate Validator под капотом и регистрирует бины `Validator` и `MethodValidationPostProcessor`. Базовая настройка описана в [spring-boot](../../frameworks/spring/spring-boot.md).
 
 ### Валидация в контроллерах
 
@@ -574,7 +574,7 @@ public class RegisterDto {
 
 ## Лучшие практики
 
-- **Валидируй DTO, а не entity.** Entity валидирует JPA перед persist (см. [[spring-data-jpa]]), но основной контроль — на границе API.
+- **Валидируй DTO, а не entity.** Entity валидирует JPA перед persist (см. [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md)), но основной контроль — на границе API.
 - **Не смешивай бизнес-правила и формат.** Bean Validation — для формата (длина, regex, not-null). Бизнес-правила (уникальность email в БД, баланс > 0) — в сервисе.
 - **`@NotBlank` для `String`, `@NotEmpty` для коллекций, `@NotNull` для чисел/boxed.** Частая ошибка: `@NotEmpty` на `int` — не скомпилируется в runtime.
 - **Null — не ошибка в `ConstraintValidator`.** Композируется через `@NotNull` отдельно.
@@ -598,11 +598,11 @@ public class RegisterDto {
 
 ## См. также
 
-- [[spring-validation|spring-validation]] — валидация в Spring Framework
-- [[spring-boot|spring-boot]] — автоконфигурация Validator
-- [[spring-rest|spring-rest]] — валидация REST-контроллеров
-- [[java-jackson|java-jackson]] — десериализация JSON перед валидацией
-- [[spring-data-jpa|spring-data-jpa]] — валидация сущностей в JPA
-- [[java-mapstruct|java-mapstruct]] — маппинг DTO entity
-- [[java-lombok|java-lombok]] — генерация геттеров/сеттеров для DTO
-- [[java-exceptions|java-exceptions]] — обработка ошибок валидации
+- [spring-validation](../../frameworks/java-frameworks/spring/spring-validation.md) — валидация в Spring Framework
+- [spring-boot](../../frameworks/spring/spring-boot.md) — автоконфигурация Validator
+- [spring-rest](../../frameworks/java-frameworks/spring/spring-rest.md) — валидация REST-контроллеров
+- [java-jackson](java-jackson.md) — десериализация JSON перед валидацией
+- [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — валидация сущностей в JPA
+- [java-mapstruct](java-mapstruct.md) — маппинг DTO entity
+- [java-lombok](java-lombok.md) — генерация геттеров/сеттеров для DTO
+- [java-exceptions](../../languages/java/java-exceptions.md) — обработка ошибок валидации

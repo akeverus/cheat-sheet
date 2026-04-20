@@ -18,18 +18,18 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[application-security]] — обзорный файл AppSec (аутентификация, авторизация, токены)
-- [[web-security]] — OWASP Top 10, XSS, CSRF, SQL Injection, SSRF
-- [[api-security]] — JWT, API Keys, rate limiting, контроль доступа к API
-- [[owasp-top-10]] — полный разбор OWASP Top 10 (2021) с примерами кода
-- [[jwt-oauth2]] — JWT, OAuth2 grants, OIDC, Spring Resource Server
+- [application-security](application-security.md) — обзорный файл AppSec (аутентификация, авторизация, токены)
+- [web-security](web-security.md) — OWASP Top 10, XSS, CSRF, SQL Injection, SSRF
+- [api-security](api-security.md) — JWT, API Keys, rate limiting, контроль доступа к API
+- [owasp-top-10](owasp-top-10.md) — полный разбор OWASP Top 10 (2021) с примерами кода
+- [jwt-oauth2](jwt-oauth2.md) — JWT, OAuth2 grants, OIDC, Spring Resource Server
 
 ### Соседние разделы
-- [[README|security/]] — корень раздела безопасности
-- [[README|security/data/]] — шифрование, хеширование паролей, secrets
-- [[README|security/infrastructure/]] — сетевой периметр, Kubernetes, hardening
-- [[README|security/testing/]] — SAST/DAST/SCA, пентесты
-- [[README|security/tools/]] — инструменты сканирования и защиты
+- [security/](../../basics/README.md) — корень раздела безопасности
+- [security/data/](../../basics/README.md) — шифрование, хеширование паролей, secrets
+- [security/infrastructure/](../../basics/README.md) — сетевой периметр, Kubernetes, hardening
+- [security/testing/](../../basics/README.md) — SAST/DAST/SCA, пентесты
+- [security/tools/](../../basics/README.md) — инструменты сканирования и защиты
 
 ### Внешние ресурсы
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/) — актуальный список критичных уязвимостей
@@ -50,15 +50,15 @@ updated: "2026-04-20"
 
 | Тема | Где читать |
 |------|-----------|
-| Аутентификация и сессии | [[application-security]] |
-| Авторизация, RBAC/ABAC | [[application-security]] |
-| JWT в деталях, атаки, Spring | [[jwt-oauth2]] |
-| OAuth2 grant types, OIDC | [[jwt-oauth2]] |
-| OWASP Top 10 (2021) с кодом | [[owasp-top-10]] |
-| XSS, CSRF, SQLi, SSRF | [[web-security]] |
-| Rate limiting, API keys | [[api-security]] |
-| Secrets management | [[secrets-management]] |
-| Шифрование и хеширование | [[data-security]] |
+| Аутентификация и сессии | [application-security](application-security.md) |
+| Авторизация, RBAC/ABAC | [application-security](application-security.md) |
+| JWT в деталях, атаки, Spring | [jwt-oauth2](jwt-oauth2.md) |
+| OAuth2 grant types, OIDC | [jwt-oauth2](jwt-oauth2.md) |
+| OWASP Top 10 (2021) с кодом | [owasp-top-10](owasp-top-10.md) |
+| XSS, CSRF, SQLi, SSRF | [web-security](web-security.md) |
+| Rate limiting, API keys | [api-security](api-security.md) |
+| Secrets management | [secrets-management](../data/secrets-management.md) |
+| Шифрование и хеширование | [data-security](../data/data-security.md) |
 
 ## OWASP Top 10 как ориентир
 
@@ -80,7 +80,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Тестирование безопасности — [[README]]
-- Инструменты SAST/DAST/SCA — [[README]]
-- Безопасность данных (шифрование, пароли) — [[README]]
-- Контейнерная и сетевая безопасность — [[README]]
+- Тестирование безопасности — [README](../../basics/README.md)
+- Инструменты SAST/DAST/SCA — [README](../../basics/README.md)
+- Безопасность данных (шифрование, пароли) — [README](../../basics/README.md)
+- Контейнерная и сетевая безопасность — [README](../../basics/README.md)

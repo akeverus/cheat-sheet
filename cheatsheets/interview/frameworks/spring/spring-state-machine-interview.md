@@ -1,15 +1,35 @@
 ---
-title: "Spring State Machine — Interview"
-description: "Вопросы на собеседовании по Spring State Machine: конфигурация, состояния, переходы, guards, actions, persistence, UML-диаграммы."
+title: "Вопросы на собеседовании: Spring State Machine"
+description: "Spring State Machine (FSM): конфигурация состояний и переходов, Guards, Actions, Extended State, persistence, UML-диаграммы"
 tags:
   - interview
   - spring
-  - state-machine
-  - fsm
+  - spring-state-machine-interview
+aliases:
+  - "Spring State Machine interview"
+  - "Spring State Machine собеседование"
+  - "Spring FSM interview"
+  - "Spring workflow interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Spring State Machine — Interview
+# Вопросы на собеседовании: `Spring State Machine`
+
+`Spring State Machine` — фреймворк для реализации конечных автоматов (FSM) на Spring. Подходит для моделирования workflow, order lifecycle, approval processes, payment state transitions. Спрашивается в контексте stateful систем.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Spring State Machine Docs](https://docs.spring.io/spring-statemachine/docs/current/reference/) — официальная документация
+- [Baeldung: Spring State Machine](https://www.baeldung.com/spring-state-machine) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 ## Q1. Что такое State Machine и когда её применять?
 
@@ -455,8 +475,13 @@ public class OrderEventHandler {
 
 ## See also
 
-- [[spring-state-machine|Spring State Machine]] — полный cheatsheet
-- [[spring-events-interview|Spring Events Interview]] — события в Spring
-- [[spring-integration-interview|Spring Integration Interview]] — enterprise интеграция
-- [[saga-pattern-interview|Saga Pattern Interview]] — распределённые транзакции
-- [[cqrs-event-sourcing-interview|CQRS & Event Sourcing Interview]] — event-driven архитектура
+- [Spring Events](spring-events-interview.md) — ApplicationEvents, альтернатива для простых случаев
+- [Spring Integration](spring-integration-interview.md) — EIP, роутинг как альтернативный подход
+- [Saga Pattern](../../architecture/saga-pattern-interview.md) — распределённые транзакции, использование state machines
+- [CQRS & Event Sourcing](../../architecture/cqrs-event-sourcing-interview.md) — event-driven архитектура для сложных workflow
+- [Domain-Driven Design](../../architecture/ddd-interview.md) — aggregate root как контекст state machine
+- [Spring Framework](spring-framework-interview.md) — основа Spring Boot
+- [Spring @Transactional](spring-transaction-interview.md) — транзакции при переходах
+- [Spring Modulith](spring-modulith-interview.md) — модульный подход к workflow
+- [Spring Batch](spring-batch-interview.md) — batch jobs с state-driven пошаговой обработкой
+- [Microservices](../../architecture/microservices-interview.md) — state machines в межсервисной координации

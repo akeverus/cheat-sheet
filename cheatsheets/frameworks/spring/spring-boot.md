@@ -25,9 +25,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[quarkus-basics|Quarkus: Основы]]
-- [[javalin-basics|Javalin: Основы]]
-- [[dropwizard-basics|Dropwizard: Основы]]
+- [Quarkus: Основы](../java-frameworks/quarkus/quarkus-basics.md)
+- [Javalin: Основы](../java-frameworks/javalin/javalin-basics.md)
+- [Dropwizard: Основы](../java-frameworks/dropwizard/dropwizard-basics.md)
 ## Содержание
 
 - [Автоконфигурация](#автоконфигурация)
@@ -732,5 +732,5 @@ ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
 
 ## См. также
 
-- [[spring-core|Spring Framework: Core]]
-- [[spring-data|Spring Data: JPA, JDBC и работа с данными]]
+- [Spring Framework: Core](spring-core.md)
+- [Spring Data: JPA, JDBC и работа с данными](spring-data.md)

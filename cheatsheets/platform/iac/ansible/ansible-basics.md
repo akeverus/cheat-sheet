@@ -1,6 +1,6 @@
 ---
 title: "Основы Ansible (редирект)"
-description: "Основной документ по теме: [[ansible|Ansible]]."
+description: "Основной документ по теме: [Ansible](ansible.md)."
 tags:
   - platform
   - iac
@@ -12,16 +12,16 @@ updated: "2026-04-20"
 ---
 # Основы Ansible (редирект)
 
-Основной документ по теме: **[[ansible]]**.
+Основной документ по теме: **[ansible](ansible.md)**.
 
 В нём: архитектура, inventory, playbooks, роли, шаблоны Jinja2, Ansible Vault, AWX, тестирование (Molecule), troubleshooting и лучшие практики.
 
-Продвинутые enterprise-паттерны: **[[ansible-advanced|Ansible Advanced]]**.
+Продвинутые enterprise-паттерны: **[Ansible Advanced](ansible-advanced.md)**.
 
 ## Полезные ссылки
 
-[[ansible]]
-[[ansible-advanced|Ansible Advanced]]
+[ansible](ansible.md)
+[Ansible Advanced](ansible-advanced.md)
 
 ## Содержание
 
@@ -29,5 +29,5 @@ updated: "2026-04-20"
 
 ## См. также
 
-- [[ansible-advanced|Ansible Advanced]]
-- [[ansible|Ansible]]
+- [Ansible Advanced](ansible-advanced.md)
+- [Ansible](ansible.md)

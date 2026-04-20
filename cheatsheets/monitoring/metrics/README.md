@@ -18,17 +18,17 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[prometheus]] — pull-модель, PromQL, recording rules, Java client
-- [[grafana]] — дашборды, алертинг, интеграция со Spring Boot
-- [[micrometer]] — vendor-neutral API метрик для JVM
-- [[statsd]] — лёгкий UDP-демон для push-модели
+- [prometheus](prometheus.md) — pull-модель, PromQL, recording rules, Java client
+- [grafana](grafana.md) — дашборды, алертинг, интеграция со Spring Boot
+- [micrometer](micrometer.md) — vendor-neutral API метрик для JVM
+- [statsd](statsd.md) — лёгкий UDP-демон для push-модели
 
 ### Соседние разделы
-- [[README|Monitoring]]
-- [[README|Alerting]] — алерты на метрики (Alertmanager)
-- [[README|Tracing]] — корреляция трейсов и метрик
-- [[README|Logging]] — derived metrics из логов
-- [[README|APM]]
+- [Monitoring](../../basics/README.md)
+- [Alerting](../../basics/README.md) — алерты на метрики (Alertmanager)
+- [Tracing](../../basics/README.md) — корреляция трейсов и метрик
+- [Logging](../../basics/README.md) — derived metrics из логов
+- [APM](../../basics/README.md)
 
 ### Внешние ресурсы
 - [Prometheus](https://prometheus.io/docs/)
@@ -59,21 +59,21 @@ flowchart LR
 
 | Задача | Документ / инструмент |
 |--------|-----------------------|
-| Сбор метрик из JVM-приложения | [[micrometer]] + Spring Boot Actuator |
-| Хранилище и запросы | [[prometheus]] + PromQL |
-| Дашборды | [[grafana]] |
-| Push-модель (UDP) для коротких задач/legacy | [[statsd]] |
-| Long-term storage | Thanos / VictoriaMetrics (см. [[prometheus]]) |
-| Алерты на метрики | [[alertmanager]] |
+| Сбор метрик из JVM-приложения | [micrometer](micrometer.md) + Spring Boot Actuator |
+| Хранилище и запросы | [prometheus](prometheus.md) + PromQL |
+| Дашборды | [grafana](grafana.md) |
+| Push-модель (UDP) для коротких задач/legacy | [statsd](statsd.md) |
+| Long-term storage | Thanos / VictoriaMetrics (см. [prometheus](prometheus.md)) |
+| Алерты на метрики | [alertmanager](../alerting/alertmanager.md) |
 
 ## Связки стека
 
 - **Spring Boot + Micrometer + Prometheus** — базовая связка для любого Java-сервиса: Micrometer собирает, Actuator выставляет `/actuator/prometheus`, Prometheus скрейпит.
-- **Prometheus + Alertmanager** ([[alertmanager]]) — правила в Prometheus, маршрутизация в Alertmanager.
+- **Prometheus + Alertmanager** ([alertmanager](../alerting/alertmanager.md)) — правила в Prometheus, маршрутизация в Alertmanager.
 - **Prometheus + Grafana** — дашборды с PromQL-запросами; Grafana Unified Alerting как альтернатива Alertmanager.
-- **OpenTelemetry Metrics** ([[opentelemetry]]) — альтернатива Micrometer с общим SDK для трейсов/метрик/логов.
-- **ELK + Prometheus Exporter** — derived metrics из логов (см. [[README]]).
-- **Kubernetes** — `kube-prometheus-stack`, node-exporter, cAdvisor ([[infrastructure-monitoring]]).
+- **OpenTelemetry Metrics** ([opentelemetry](../tracing/opentelemetry.md)) — альтернатива Micrometer с общим SDK для трейсов/метрик/логов.
+- **ELK + Prometheus Exporter** — derived metrics из логов (см. [README](../../basics/README.md)).
+- **Kubernetes** — `kube-prometheus-stack`, node-exporter, cAdvisor ([infrastructure-monitoring](../infrastructure-monitoring.md)).
 
 ## Маршруты чтения
 
@@ -83,8 +83,8 @@ flowchart LR
 
 ## Куда идти дальше
 
-- Алерты — [[README]]
-- Трейсинг — [[README]]
-- Логирование — [[README]]
-- Observability — [[observability-guide]]
-- Инфраструктурный мониторинг — [[infrastructure-monitoring]]
+- Алерты — [README](../../basics/README.md)
+- Трейсинг — [README](../../basics/README.md)
+- Логирование — [README](../../basics/README.md)
+- Observability — [observability-guide](../observability-guide.md)
+- Инфраструктурный мониторинг — [infrastructure-monitoring](../infrastructure-monitoring.md)

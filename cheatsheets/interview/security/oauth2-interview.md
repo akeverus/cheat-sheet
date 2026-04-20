@@ -119,7 +119,7 @@ sequenceDiagram
     RS->>C: Защищённые данные
 ```
 
-Важно: `OAuth2` — протокол **авторизации**, не аутентификации. Аутентификацию добавляет [[authentication-authorization-patterns-interview|OIDC (OpenID Connect)]] поверх `OAuth2`.
+Важно: `OAuth2` — протокол **авторизации**, не аутентификации. Аутентификацию добавляет [OIDC (OpenID Connect)](authentication-authorization-patterns-interview.md) поверх `OAuth2`.
 
 ## Q2. (!) Какие роли определены в `OAuth2`?
 
@@ -132,7 +132,7 @@ sequenceDiagram
 | **Authorization Server** | Выдаёт токены после аутентификации | Keycloak, Okta, Google OAuth |
 | **Resource Server** | Хранит защищённые ресурсы, проверяет токены | REST API сервис |
 
-Authorization Server и Resource Server могут быть одним сервером (например, в монолите) или разными (типично в [[microservices-interview|микросервисах]]).
+Authorization Server и Resource Server могут быть одним сервером (например, в монолите) или разными (типично в [микросервисах](../architecture/microservices-interview.md)).
 
 ## Q3. (!) Чем отличается авторизация от аутентификации в контексте `OAuth2`?
 
@@ -146,7 +146,7 @@ Authorization Server и Resource Server могут быть одним серв�
 
 `OAuth2` **сам по себе не аутентифицирует**. Он предполагает, что Authorization Server уже выполнил аутентификацию. `OIDC` расширяет `OAuth2`, добавляя `ID Token` для подтверждения личности.
 
-Подробнее: [[authentication-authorization-patterns-interview|Паттерны аутентификации и авторизации]].
+Подробнее: [Паттерны аутентификации и авторизации](authentication-authorization-patterns-interview.md).
 
 ## Q4. Какие типы клиентов определены в `OAuth2`?
 
@@ -328,7 +328,7 @@ public WebClient serviceB(OAuth2AuthorizedClientManager clientManager) {
 }
 ```
 
-Важно: нет участия пользователя, нет `refresh_token`. Используется только для **конфиденциальных клиентов**, которые могут безопасно хранить `client_secret`. Типичное применение в [[microservices-interview|микросервисах]]: сервис авторизации, межсервисные вызовы.
+Важно: нет участия пользователя, нет `refresh_token`. Используется только для **конфиденциальных клиентов**, которые могут безопасно хранить `client_secret`. Типичное применение в [микросервисах](../architecture/microservices-interview.md): сервис авторизации, межсервисные вызовы.
 
 ## Q9. Как работает `Device Authorization Flow`?
 
@@ -480,7 +480,7 @@ RSASHA256(
 | `HS256` | Симметричный (HMAC) | Только для доверенных сервисов |
 | `none` | Без подписи | **Никогда не использовать!** |
 
-Подробнее о безопасности токенов: [[application-security-interview|Безопасность приложений]].
+Подробнее о безопасности токенов: [Безопасность приложений](application-security-interview.md).
 
 ## Q14. Чем `JWT` отличается от opaque token?
 
@@ -493,7 +493,7 @@ RSASHA256(
 | **Размер** | Больше (содержит claims) | Компактнее |
 | **Утечка данных** | Claims видны (Base64, не шифрование!) | Нет данных |
 
-Рекомендация: `JWT` — для [[microservices-interview|микросервисов]] (масштабируемость), opaque — когда нужен мгновенный отзыв или токен содержит чувствительные данные.
+Рекомендация: `JWT` — для [микросервисов](../architecture/microservices-interview.md) (масштабируемость), opaque — когда нужен мгновенный отзыв или токен содержит чувствительные данные.
 
 ## Q15. Как ресурсный сервер валидирует `JWT`?
 
@@ -672,7 +672,7 @@ graph TD
 2. В ответе получаете `ID Token` с данными пользователя
 3. `Access Token` для вызова Google API
 
-Подробнее: [[authentication-authorization-patterns-interview|Паттерны аутентификации и авторизации]].
+Подробнее: [Паттерны аутентификации и авторизации](authentication-authorization-patterns-interview.md).
 
 ## Q21. Какова структура `ID Token` в `OIDC`?
 
@@ -809,7 +809,7 @@ public class SecurityConfig {
 }
 ```
 
-Подробнее о конфигурации: [[spring-security-interview|Spring Security]].
+Подробнее о конфигурации: [Spring Security](../frameworks/spring/spring-security-interview.md).
 
 ## Q24. (!) Как настроить `Resource Server` с JWT в `Spring Security`?
 
@@ -932,7 +932,7 @@ public WebClient webClient(OAuth2AuthorizedClientManager clientManager) {
 }
 ```
 
-Подробнее о межсервисном взаимодействии: [[microservices-interview|Микросервисы]], [[spring-security-interview|Spring Security]].
+Подробнее о межсервисном взаимодействии: [Микросервисы](../architecture/microservices-interview.md), [Spring Security](../frameworks/spring/spring-security-interview.md).
 
 ## Q26. Как настроить `Spring Authorization Server`?
 
@@ -1017,7 +1017,7 @@ public class AuthServerConfig {
 | **Client Impersonation** | Подделка client_id | Client authentication (secret, mTLS) |
 | **Scope Escalation** | Запрос больших scope, чем разрешено | Валидация scope на Authorization Server |
 
-Подробнее об угрозах: [[owasp-top10-interview|OWASP Top 10]], [[application-security-interview|Безопасность приложений]].
+Подробнее об угрозах: [OWASP Top 10](owasp-top10-interview.md), [Безопасность приложений](application-security-interview.md).
 
 ## Q28. Как работает `state` parameter и зачем он нужен?
 
@@ -2191,18 +2191,18 @@ public Map<String, Object> profile(@AuthenticationPrincipal Jwt jwt) {
 
 ## See also
 
-- [[spring-security-interview|Spring Security]] — конфигурация OAuth2 Resource Server, фильтры
-- [[authentication-authorization-patterns-interview|Паттерны аутентификации и авторизации]] — RBAC, ABAC, SSO, MFA
-- [[http-rest-interview|HTTP и REST]] — HTTPS, CORS, заголовки безопасности
-- [[application-security-interview|Безопасность приложений]] — AppSec принципы, Defense in Depth
-- [[owasp-top10-interview|OWASP Top 10]] — Auth Failures (A07), уязвимости токенов
-- [[microservices-interview|Микросервисы]] — JWT propagation, API Gateway, service-to-service auth
-- [[distributed-systems-interview|Распределённые системы]] — безопасность в распределённых архитектурах
-- [[kubernetes-interview|Kubernetes]] — Secrets, ServiceAccount, Workload Identity
+- [Spring Security](../frameworks/spring/spring-security-interview.md) — конфигурация OAuth2 Resource Server, фильтры
+- [Паттерны аутентификации и авторизации](authentication-authorization-patterns-interview.md) — RBAC, ABAC, SSO, MFA
+- [HTTP и REST](../api/http-rest-interview.md) — HTTPS, CORS, заголовки безопасности
+- [Безопасность приложений](application-security-interview.md) — AppSec принципы, Defense in Depth
+- [OWASP Top 10](owasp-top10-interview.md) — Auth Failures (A07), уязвимости токенов
+- [Микросервисы](../architecture/microservices-interview.md) — JWT propagation, API Gateway, service-to-service auth
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — безопасность в распределённых архитектурах
+- [Kubernetes](../devops/kubernetes-interview.md) — Secrets, ServiceAccount, Workload Identity
 
-- [[application-security-interview|Application Security]]
-- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
-- [[jwt-interview|JWT]]
-- [[mtls-interview|mTLS (Mutual TLS)]]
-- [[owasp-top10-interview|OWASP Top 10]]
-- [[secrets-management-interview|Secrets Management]]
+- [Application Security](application-security-interview.md)
+- [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
+- [JWT](jwt-interview.md)
+- [mTLS (Mutual TLS)](mtls-interview.md)
+- [OWASP Top 10](owasp-top10-interview.md)
+- [Secrets Management](secrets-management-interview.md)

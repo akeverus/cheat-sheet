@@ -22,12 +22,12 @@ updated: "2026-04-20"
 - [ConcurrentLinkedQueue (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentLinkedQueue.html)
 
 ### См. также
-- [[collections-complexity|Временная сложность коллекций]] — Big O коллекций **Java**
-- [[java-concurrency-basics|Многопоточность в Java]]
+- [Временная сложность коллекций](collections-complexity.md) — Big O коллекций **Java**
+- [Многопоточность в Java](../../languages/java/java-concurrency-basics.md)
 
-- [[linked-list-middle|Поиск среднего элемента связного списка (Linked List)]]
-- [[collections-big-o|Практические примеры нотации Big O]]
-- [[linked-list-reverse|Реверс связанного списка (Linked List)]]
+- [Поиск среднего элемента связного списка (Linked List)](linked-list-middle.md)
+- [Практические примеры нотации Big O](collections-big-o.md)
+- [Реверс связанного списка (Linked List)](linked-list-reverse.md)
 ## Содержание
 
 - [Обзор](#обзор)

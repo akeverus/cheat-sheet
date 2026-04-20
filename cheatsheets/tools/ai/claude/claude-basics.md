@@ -29,9 +29,9 @@ Claude Code — это AI-ассистент от Anthropic, ориентиро�
 
 
 ### См. также
-- [[windsurf-basics|Windsurf: основы]]
-- [[aider-basics|Aider: основы]]
-- [[openclaw-basics|OpenClaw: основы]]
+- [Windsurf: основы](../windsurf/windsurf-basics.md)
+- [Aider: основы](../aider/aider-basics.md)
+- [OpenClaw: основы](../openclaw/openclaw-basics.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -490,6 +490,6 @@ A: Ответ зависит от политики Anthropic и вашей ко�
 
 ## См. также
 
-- [[cursor-basics|Cursor: основы]]
-- [[copilot-basics|GitHub Copilot: основы]]
+- [Cursor: основы](../cursor/cursor-basics.md)
+- [GitHub Copilot: основы](../copilot/copilot-basics.md)
 

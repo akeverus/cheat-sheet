@@ -22,14 +22,14 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[rest-assured|REST Assured]]
-- [[wiremock|WireMock]]
-- [[testcontainers|Testcontainers]]
+- [REST Assured](../rest-assured.md)
+- [WireMock](../wiremock.md)
+- [Testcontainers](../testcontainers/testcontainers.md)
 
 
-- [[database-testing|Тестирование базы данных (Database Testing)]]
-- [[cucumber|Cucumber для Java]]
-- [[contract-testing-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Тестирование базы данных (Database Testing)](../database-testing/database-testing.md)
+- [Cucumber для Java](../../cucumber.md)
+- [Вопросы на собеседовании](../../../interview/testing/contract-testing-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Зачем контрактное тестирование](#зачем-контрактное-тестирование)

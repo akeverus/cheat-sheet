@@ -18,15 +18,15 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[graphql]] — комплексное руководство: SDL, резолверы, Spring GraphQL, Apollo, subscriptions, federation
+- [graphql](graphql.md) — комплексное руководство: SDL, резолверы, Spring GraphQL, Apollo, subscriptions, federation
 
 ### Соседние разделы
-- [[README|Родительский раздел: API]]
-- [[README|REST API]] — ключевая альтернатива
-- [[README|gRPC]] — альтернатива для service-to-service
-- [[README|API Tools]] — Insomnia, Postman с поддержкой GraphQL
+- [Родительский раздел: API](../../../basics/README.md)
+- [REST API](../../../basics/README.md) — ключевая альтернатива
+- [gRPC](../../../basics/README.md) — альтернатива для service-to-service
+- [API Tools](../../../basics/README.md) — Insomnia, Postman с поддержкой GraphQL
 - [Spring Boot](../../../frameworks/java-frameworks/spring/) — Spring GraphQL
-- [[README|Web Backend]]
+- [Web Backend](../../../basics/README.md)
 
 ### Внешние ресурсы
 - [GraphQL Specification](https://spec.graphql.org/)
@@ -75,13 +75,13 @@ updated: "2026-04-20"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Schema Definition Language (SDL), типы, queries, mutations | [[graphql#schema-definition-language-sdl]] |
-| Резолверы и data fetching | [[graphql]] |
-| Spring GraphQL | [[graphql#spring-boot-интеграция]] |
-| DataLoader и решение N+1 | [[graphql]] |
-| Subscriptions (реактивные подписки) | [[graphql#subscriptions]] |
-| Federation (Apollo Federation, DGS) | [[graphql#federation]] |
-| Security: depth/complexity limit | [[graphql]] |
+| Schema Definition Language (SDL), типы, queries, mutations | [graphql](graphql.md#schema-definition-language-sdl) |
+| Резолверы и data fetching | [graphql](graphql.md) |
+| Spring GraphQL | [graphql](graphql.md#spring-boot-интеграция) |
+| DataLoader и решение N+1 | [graphql](graphql.md) |
+| Subscriptions (реактивные подписки) | [graphql](graphql.md#subscriptions) |
+| Federation (Apollo Federation, DGS) | [graphql](graphql.md#federation) |
+| Security: depth/complexity limit | [graphql](graphql.md) |
 
 ## Типичные подводные камни
 
@@ -99,7 +99,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- REST как базовый стиль API — [[README]]
-- gRPC для service-to-service — [[README]]
-- Документирование контракта — [[README]]
-- Тестирование API — [[README]]
+- REST как базовый стиль API — [README](../../../basics/README.md)
+- gRPC для service-to-service — [README](../../../basics/README.md)
+- Документирование контракта — [README](../../../basics/README.md)
+- Тестирование API — [README](../../../basics/README.md)

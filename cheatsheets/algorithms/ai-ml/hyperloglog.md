@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [HyperLogLog (stream-lib GitHub)](https://github.com/addthis/stream-lib)
 
 ### См. также
-- [[collections-big-o|Практические примеры Big O]]
-- [[collections-complexity|Временная сложность коллекций]] — Big O коллекций
+- [Практические примеры Big O](../data-structures/collections-big-o.md)
+- [Временная сложность коллекций](../data-structures/collections-complexity.md) — Big O коллекций
 
-- [[logistic-regression|Логистическая регрессия]]
-- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
-- [[ai-libraries|Обзор ИИ библиотек]]
+- [Логистическая регрессия](logistic-regression.md)
+- [Реализация CNN с помощью Deeplearning4j](cnn-deeplearning4j.md)
+- [Обзор ИИ библиотек](ai-libraries.md)
 ## Содержание
 
 - [Обзор](#обзор)

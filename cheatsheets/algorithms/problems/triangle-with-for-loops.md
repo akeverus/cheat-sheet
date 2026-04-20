@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [Apache Commons Lang StringUtils](https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/StringUtils.html)
 
 ### См. также
-- [[README|Задачи и алгоритмы]]
-- [[README|Алгоритмы со строками]]
+- [Задачи и алгоритмы](../../basics/README.md)
+- [Алгоритмы со строками](../../basics/README.md)
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
-- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
+- [Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)](frequency-histogram-apache-commons.md)
 ## Содержание
 
 - [Обзор](#обзор)

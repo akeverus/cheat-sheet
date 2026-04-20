@@ -13,51 +13,51 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[README|API]]
-[[README|Build Tools]]
-[[README|Messaging]]
-[[README|Web Backend]]
+[API](../basics/README.md)
+[Build Tools](../basics/README.md)
+[Messaging](../basics/README.md)
+[Web Backend](../basics/README.md)
 
 ## Быстрая навигация
 
-- [[README|API]] — проектирование, контракты, инструменты
-- [[README|Инструменты сборки]] — Gradle и Maven
-- [[README|Мессенджинг]] — брокеры сообщений и паттерны интеграции
-- [[README|Web Backend]] — базовые backend-практики
-- [[README|Platform: CI/CD]] — пайплайны, delivery, legacy-контекст Travis
-- [[README|Platform: Containers]] — Docker/Kubernetes для окружений и деплоя
+- [API](../basics/README.md) — проектирование, контракты, инструменты
+- [Инструменты сборки](../basics/README.md) — Gradle и Maven
+- [Мессенджинг](../basics/README.md) — брокеры сообщений и паттерны интеграции
+- [Web Backend](../basics/README.md) — базовые backend-практики
+- [Platform: CI/CD](../basics/README.md) — пайплайны, delivery, legacy-контекст Travis
+- [Platform: Containers](../basics/README.md) — Docker/Kubernetes для окружений и деплоя
 
 ## API
 
-- [[README|Обзор API]]
-- [[README|Инструменты API]]
-  - [[api-documentation-basics|Документирование API]]
-  - [[api-testing-basics|Тестирование API]]
-  - [[insomnia-basics|Insomnia]]
-  - [[postman-basics|Postman]]
-  - [[openapi-swagger|Swagger]]
-- [[graphql]]
-- [[grpc]]
-- [[rest-api-best-practices|REST]]
+- [Обзор API](../basics/README.md)
+- [Инструменты API](../basics/README.md)
+  - [Документирование API](api/api-tools/swagger/api-documentation-basics.md)
+  - [Тестирование API](api/api-tools/api-testing/api-testing-basics.md)
+  - [Insomnia](api/api-tools/insomnia/insomnia-basics.md)
+  - [Postman](api/api-tools/postman/postman-basics.md)
+  - [Swagger](api/api-tools/swagger/openapi-swagger.md)
+- [graphql](api/graphql/graphql.md)
+- [grpc](api/grpc/grpc.md)
+- [REST](api/rest/rest-api-best-practices.md)
 
 ## Инструменты сборки
 
-- [[README|Обзор Build Tools]]
-- [[gradle]]
-- [[maven]]
+- [Обзор Build Tools](../basics/README.md)
+- [gradle](build-tools/gradle/gradle.md)
+- [maven](build-tools/maven/maven.md)
 
 ## Мессенджинг
 
-- [[README|Обзор Messaging]]
-- [[activemq]]
-- [[kafka]]
-- [[nats]]
-- [[README|RabbitMQ]]
+- [Обзор Messaging](../basics/README.md)
+- [activemq](messaging/activemq/activemq.md)
+- [kafka](messaging/kafka/kafka.md)
+- [nats](messaging/nats/nats.md)
+- [RabbitMQ](../basics/README.md)
 
 ## Web Backend
 
-- [[README|Обзор Web Backend]]
-- [[backend-basics|Основы backend]]
+- [Обзор Web Backend](../basics/README.md)
+- [Основы backend](web-backend/backend-basics.md)
 
 ## Рекомендуемый маршрут
 

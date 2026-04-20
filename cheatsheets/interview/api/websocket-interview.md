@@ -1511,13 +1511,13 @@ session.sendMessage(new TextMessage("ping"));
 ## See also
 
 
-- [[http-rest-interview|HTTP & REST]]
-- [[grpc-interview|gRPC]]
-- [[spring-webflux-interview|Spring WebFlux]]
-- [[kafka-interview|Apache Kafka]]
-- [[spring-boot-interview|Spring Boot]]
-- [[system-design-interview|System Design]]
-- [[api-design-best-practices-interview|API Design Best Practices]]
-- [[api-versioning-interview|API Versioning]]
-- [[graphql-interview|GraphQL]]
-- [[openapi-swagger-interview|OpenAPI / Swagger]]
+- [HTTP & REST](http-rest-interview.md)
+- [gRPC](grpc-interview.md)
+- [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md)
+- [Apache Kafka](../messaging/kafka-interview.md)
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md)
+- [System Design](../system-design/system-design-interview.md)
+- [API Design Best Practices](api-design-best-practices-interview.md)
+- [API Versioning](api-versioning-interview.md)
+- [GraphQL](graphql-interview.md)
+- [OpenAPI / Swagger](openapi-swagger-interview.md)

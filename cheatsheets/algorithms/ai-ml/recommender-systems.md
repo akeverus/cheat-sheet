@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Slope One (Wikipedia)](https://en.wikipedia.org/wiki/Slope_One) — алгоритм **Slope One**
 
 ### См. также
-- [[ai-libraries|Обзор ИИ библиотек]] — машинное обучение
-- [[README|Задачи и алгоритмы]] — обзор разделов
+- [Обзор ИИ библиотек](ai-libraries.md) — машинное обучение
+- [Задачи и алгоритмы](../../basics/README.md) — обзор разделов
 
-- [[logistic-regression|Логистическая регрессия]]
-- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
-- [[jenetics|Руководство по Jenetics]]
+- [Логистическая регрессия](logistic-regression.md)
+- [Реализация CNN с помощью Deeplearning4j](cnn-deeplearning4j.md)
+- [Руководство по Jenetics](jenetics.md)
 ## Содержание
 
 - [Обзор](#обзор)

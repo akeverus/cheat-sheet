@@ -39,7 +39,7 @@ related: ["databases/postgres-basics.md", "databases/postgres-joins.md", "databa
 - [PostgreSQL Best Practices](https://www.postgresql.org/docs/)
 - [Data Modeling Techniques](https://www.postgresql.org/docs/)
 
-См. также: [[postgres-basics]] — [[postgres-joins]] — [[postgres-indexes]] — [[postgres-types]].
+См. также: [postgres-basics](postgres-basics.md) — [postgres-joins](postgres-joins.md) — [postgres-indexes](postgres-indexes.md) — [postgres-types](postgres-types.md).
 
 ## Содержание
 
@@ -1908,8 +1908,8 @@ $$ `LANGUAGE` plpgsql;
 
 ## См. также
 
-- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
-- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
-- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
-- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
-- [[postgres-extensions|PostgreSQL: Расширения]]
+- [PostgreSQL: администрирование и обслуживание](postgres-admin.md)
+- [PostgreSQL: Резервное копирование и восстановление](postgres-backup-restore.md)
+- [PostgreSQL: Полное руководство по основам и мониторингу](postgres-basics.md)
+- [PostgreSQL: операции с данными (CRUD)](postgres-data-ops.md)
+- [PostgreSQL: Расширения](postgres-extensions.md)

@@ -24,8 +24,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[iac-overview|Infrastructure as Code (IaC) — обзор]]
-- [[ansible-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Infrastructure as Code (IaC) — обзор](../iac-overview.md)
+- [Вопросы на собеседовании](../../../interview/devops/ansible-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Основы Ansible](#основы-ansible)
@@ -1176,7 +1176,7 @@ ansible-playbook --list-tasks playbook.yml
 ansible-playbook --list-hosts playbook.yml
 ```
 ## См. также
-- [[ansible-advanced|Ansible Advanced]] — продвинутые паттерны Ansible
-- [[terraform|Terraform]] — инфраструктура как код
-- [[docker-basics|Docker]] — контейнеризация
-- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
+- [Ansible Advanced](ansible-advanced.md) — продвинутые паттерны Ansible
+- [Terraform](../terraform/terraform.md) — инфраструктура как код
+- [Docker](../../containers/docker/docker-basics.md) — контейнеризация
+- [Kubernetes](../../containers/kubernetes/kubernetes-basics.md) — оркестрация контейнеров

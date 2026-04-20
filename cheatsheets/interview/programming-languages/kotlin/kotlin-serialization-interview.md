@@ -1080,7 +1080,7 @@ data class User(val name: String, val age: Int = 25)
 | **Kotlin-совместимость** | Нативная | Не знает о nullable, default values |
 | **Производительность** | Compile-time генерация | Рефлексия + ObjectStream overhead |
 
-Java Serialization используется в legacy-коде (`RMI`, `HttpSession`), но для новых проектов и обмена данными по сети — `kotlinx.serialization` безопаснее и гибче. Подробнее о проблемах Java Serialization — в [[java-serialization-interview|вопросах по сериализации Java]].
+Java Serialization используется в legacy-коде (`RMI`, `HttpSession`), но для новых проектов и обмена данными по сети — `kotlinx.serialization` безопаснее и гибче. Подробнее о проблемах Java Serialization — в [вопросах по сериализации Java](../java/java-serialization-interview.md).
 
 ## Q34. Какие исключения выбрасывает kotlinx.serialization и как их обрабатывать?
 
@@ -1826,18 +1826,18 @@ val protoBuf = ProtoBuf { encodeDefaults = false }
 
 ## See also
 
-- [[kotlin-interview|Основы Kotlin]] — sealed class, data class, value class как основа сериализации
-- [[kotlin-interop-java-interview|Kotlin и Java interop]] — совместимость kotlinx.serialization с Jackson/Gson
-- [[kotlin-coroutines-interview|Корутины Kotlin]] — асинхронная сериализация в Ktor с Flow
-- [[kotlin-collections-interview|Коллекции в Kotlin]] — сериализация List, Set, Map
-- [[kotlin-dsl-interview|DSL в Kotlin]] — JsonElement DSL для программного построения JSON
-- [[kotlin-exceptions-interview|Исключения в Kotlin]] — SerializationException и обработка ошибок
-- [[java-core-interview|Java Core]] — сравнение с Java Serializable и Externalizable
-- [[spring-boot-interview|Spring Boot]] — интеграция kotlinx.serialization с Spring MVC/WebFlux
+- [Основы Kotlin](kotlin-interview.md) — sealed class, data class, value class как основа сериализации
+- [Kotlin и Java interop](kotlin-interop-java-interview.md) — совместимость kotlinx.serialization с Jackson/Gson
+- [Корутины Kotlin](kotlin-coroutines-interview.md) — асинхронная сериализация в Ktor с Flow
+- [Коллекции в Kotlin](kotlin-collections-interview.md) — сериализация List, Set, Map
+- [DSL в Kotlin](kotlin-dsl-interview.md) — JsonElement DSL для программного построения JSON
+- [Исключения в Kotlin](kotlin-exceptions-interview.md) — SerializationException и обработка ошибок
+- [Java Core](../java/java-core-interview.md) — сравнение с Java Serializable и Externalizable
+- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — интеграция kotlinx.serialization с Spring MVC/WebFlux
 
-- [[kotlin-collections-interview|Kotlin коллекции]]
-- [[kotlin-coroutines-interview|Kotlin Coroutines]]
-- [[kotlin-dsl-interview|DSL в Kotlin]]
-- [[kotlin-exceptions-interview|исключения в Kotlin]]
-- [[kotlin-interop-java-interview|интероп Kotlin и Java]]
-- [[kotlin-interview|Kotlin]]
+- [Kotlin коллекции](kotlin-collections-interview.md)
+- [Kotlin Coroutines](kotlin-coroutines-interview.md)
+- [DSL в Kotlin](kotlin-dsl-interview.md)
+- [исключения в Kotlin](kotlin-exceptions-interview.md)
+- [интероп Kotlin и Java](kotlin-interop-java-interview.md)
+- [Kotlin](kotlin-interview.md)

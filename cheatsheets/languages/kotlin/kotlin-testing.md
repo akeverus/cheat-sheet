@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Kotlin Testing Tutorial](https://www.baeldung.com/kotlin/junit-5-kotlin)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-concurrency-basics|Корутины]]
-- [[kotlin-another|Общее тестирование]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Корутины](kotlin-concurrency-basics.md)
+- [Общее тестирование](kotlin-another.md)
 
-- [[kotlin-performance|Kotlin Performance]]
-- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
+- [Kotlin Performance](kotlin-performance.md)
+- [Kotlin Functional Programming: Basics](kotlin-fp-basics.md)
 ## Содержание
 
 - [Введение в тестирование Kotlin](#введение-в-тестирование-kotlin)

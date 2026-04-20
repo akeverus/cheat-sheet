@@ -22,15 +22,15 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[junit|JUnit]] — тест-раннер
-- [[java-basics|Java Basics]] — основы Java
-- [[java-testcontainers|Testcontainers]] — интеграционные тесты
+- [JUnit](junit.md) — тест-раннер
+- [Java Basics](../../../languages/java/java-basics.md) — основы Java
+- [Testcontainers](../../../libraries/java/java-testcontainers.md) — интеграционные тесты
 - [Unit Testing](../) — юнит-тестирование
-- [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) — обзор инструментов
 
 
-- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
-- [[mockito-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest](../../../frameworks/java-frameworks/quarkus/quarkus-testing.md)
+- [Вопросы на собеседовании](../../../interview/testing/mockito-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Mockito](#введение-в-mockito)

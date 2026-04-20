@@ -19,18 +19,18 @@ Kubernetes (k8s) — оркестратор контейнеров: распре
 ## Полезные ссылки
 
 ### Основные документы
-- [[kubernetes-basics]] — концепции, kubectl, Deployment/StatefulSet/Service
-- [[kubernetes-networking]] — Service, Ingress, NetworkPolicy, DNS
-- [[kubernetes-storage]] — PV, PVC, StorageClass, CSI
-- [[kubernetes-security]] — RBAC, Pod Security Standards, secrets
-- [[kubernetes-advanced]] — CRD, operators, HPA/VPA, scheduling
+- [kubernetes-basics](kubernetes-basics.md) — концепции, kubectl, Deployment/StatefulSet/Service
+- [kubernetes-networking](kubernetes-networking.md) — Service, Ingress, NetworkPolicy, DNS
+- [kubernetes-storage](kubernetes-storage.md) — PV, PVC, StorageClass, CSI
+- [kubernetes-security](kubernetes-security.md) — RBAC, Pod Security Standards, secrets
+- [kubernetes-advanced](kubernetes-advanced.md) — CRD, operators, HPA/VPA, scheduling
 
 ### Соседние разделы
-- [[README|platform/containers/]] — родительский раздел
-- [[README|platform/containers/docker/]] — сборка образов
-- [[kubernetes-cloud|platform/cloud-providers/kubernetes-cloud.md]] — EKS/GKE/AKS
-- [[README|platform/ci-cd/]] — deploy через ArgoCD/Flux
-- [[README|security/infrastructure/]] — hardening кластера
+- [platform/containers/](../../../basics/README.md) — родительский раздел
+- [platform/containers/docker/](../../../basics/README.md) — сборка образов
+- [platform/cloud-providers/kubernetes-cloud.md](../../cloud-providers/kubernetes-cloud.md) — EKS/GKE/AKS
+- [platform/ci-cd/](../../../basics/README.md) — deploy через ArgoCD/Flux
+- [security/infrastructure/](../../../basics/README.md) — hardening кластера
 
 ### Внешние ресурсы
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
@@ -51,14 +51,14 @@ Kubernetes (k8s) — оркестратор контейнеров: распре
 
 | Тема | Файл |
 |------|------|
-| Архитектура кластера, API-server | [[kubernetes-basics]] |
-| Pod, Deployment, StatefulSet, Job | [[kubernetes-basics]] |
-| Service, Ingress, NetworkPolicy | [[kubernetes-networking]] |
-| PV, PVC, StorageClass | [[kubernetes-storage]] |
-| RBAC, ServiceAccount, PSS | [[kubernetes-security]] |
-| CRD, operators | [[kubernetes-advanced]] |
-| HPA, VPA, Cluster Autoscaler | [[kubernetes-advanced]] |
-| Helm, Kustomize (кратко) | [[kubernetes-advanced]] |
+| Архитектура кластера, API-server | [kubernetes-basics](kubernetes-basics.md) |
+| Pod, Deployment, StatefulSet, Job | [kubernetes-basics](kubernetes-basics.md) |
+| Service, Ingress, NetworkPolicy | [kubernetes-networking](kubernetes-networking.md) |
+| PV, PVC, StorageClass | [kubernetes-storage](kubernetes-storage.md) |
+| RBAC, ServiceAccount, PSS | [kubernetes-security](kubernetes-security.md) |
+| CRD, operators | [kubernetes-advanced](kubernetes-advanced.md) |
+| HPA, VPA, Cluster Autoscaler | [kubernetes-advanced](kubernetes-advanced.md) |
+| Helm, Kustomize (кратко) | [kubernetes-advanced](kubernetes-advanced.md) |
 
 ## Docker vs Kubernetes: различия
 
@@ -88,7 +88,7 @@ Docker собирает образ — Kubernetes его запускает. Э�
 
 ## Куда идти дальше
 
-- Docker и сборка образов — [[README]]
-- Managed K8s у облачных провайдеров — [[kubernetes-cloud]]
-- GitOps и деплой — [[README]]
-- Security и RBAC — [[README]]
+- Docker и сборка образов — [README](../../../basics/README.md)
+- Managed K8s у облачных провайдеров — [kubernetes-cloud](../../cloud-providers/kubernetes-cloud.md)
+- GitOps и деплой — [README](../../../basics/README.md)
+- Security и RBAC — [README](../../../basics/README.md)

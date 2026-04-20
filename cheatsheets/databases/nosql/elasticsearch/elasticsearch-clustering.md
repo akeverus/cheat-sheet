@@ -33,12 +33,12 @@ updated: "2026-04-20"
 - [Hot-Warm-Cold Architecture](https://www.elastic.co/guide/en/elasticsearch/reference/current/data-tiers.html)
 
 ### См. также
-- [[elasticsearch-basics|Основы]] — **Elasticsearch**
-- [[elasticsearch-performance|Производительность]] — производительность
-- [[elasticsearch-indexing|Индексация]] — индексация документов
+- [Основы](elasticsearch-basics.md) — **Elasticsearch**
+- [Производительность](elasticsearch-performance.md) — производительность
+- [Индексация](elasticsearch-indexing.md) — индексация документов
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](../mongodb/mongodb-crud.md)
 ## Содержание
 
 - [Архитектура кластера](#архитектура-кластера)

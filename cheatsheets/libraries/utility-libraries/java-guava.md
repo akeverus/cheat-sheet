@@ -28,10 +28,10 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[java-apache-commons|Apache Commons: Обширная коллекция Java утилит]]
-- [[jackson|Jackson: JSON сериализация в Java]]
-- [[java-gson|Gson]]
-- [[java-junit5|JUnit 5]]
+- [Apache Commons: Обширная коллекция Java утилит](java-apache-commons.md)
+- [Jackson: JSON сериализация в Java](../serialization/jackson.md)
+- [Gson](../serialization/java-gson.md)
+- [JUnit 5](../testing-libraries/java-junit5.md)
 ## Содержание
 
 - [Введение в Guava](#введение-в-guava)

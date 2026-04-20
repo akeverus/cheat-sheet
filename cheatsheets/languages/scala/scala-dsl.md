@@ -23,12 +23,12 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 - [Scala DSL](https://docs.scala-lang.org/overviews/core/string-interpolation.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-implicit|Implicit]]
+- [Основы Scala](scala-basics.md)
+- [Implicit](scala-implicit.md)
 
-- [[scala-shapeless|Shapeless в Scala]]
-- [[scala-collections|Scala Collections]]
-- [[scala-type-classes|Type Classes в Scala]]
+- [Shapeless в Scala](scala-shapeless.md)
+- [Scala Collections](scala-collections.md)
+- [Type Classes в Scala](scala-type-classes.md)
 ## Содержание
 
 - [Введение в DSL](#введение-в-dsl)

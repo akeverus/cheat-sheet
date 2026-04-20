@@ -19,17 +19,17 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Документы репозитория по теме
-- [[log-aggregation|Агрегация логов]] — основной документ раздела (Kafka, Flink, Spark, Disruptor, RxJava/Reactor)
-- [[centralized-logging|Централизованное логирование]] — доставка логов в центральное хранилище
-- [[structured-logging|Структурированное логирование]] — формат для последующей агрегации
-- [[elk-stack|ELK Stack]] — хранение и поиск после агрегации
-- [[README|Fluentd]] — shipper-слой перед агрегатором
+- [Агрегация логов](../log-aggregation.md) — основной документ раздела (Kafka, Flink, Spark, Disruptor, RxJava/Reactor)
+- [Централизованное логирование](../centralized-logging.md) — доставка логов в центральное хранилище
+- [Структурированное логирование](../structured-logging.md) — формат для последующей агрегации
+- [ELK Stack](../elk-stack.md) — хранение и поиск после агрегации
+- [Fluentd](../../../basics/README.md) — shipper-слой перед агрегатором
 
 ### Соседние разделы
-- [[README|Logging (корень)]]
-- [[README|Monitoring]]
-- [[README|Metrics]] — derived metrics из логов
-- [[README|Messaging]] — Kafka/RabbitMQ
+- [Logging (корень)](../../../basics/README.md)
+- [Monitoring](../../../basics/README.md)
+- [Metrics](../../../basics/README.md) — derived metrics из логов
+- [Messaging](../../../basics/README.md) — Kafka/RabbitMQ
 
 ### Внешние ресурсы
 - [Apache Kafka](https://kafka.apache.org/)
@@ -66,20 +66,20 @@ flowchart LR
 ## Типичные связки стека
 
 - **App -> Fluent Bit -> Kafka -> Flink -> Elasticsearch** — классическая схема с буфером и enrichment.
-- **App -> Logback Kafka appender -> Kafka Streams -> Grafana Loki** ([[grafana]]) — лёгкий стек.
+- **App -> Logback Kafka appender -> Kafka Streams -> Grafana Loki** ([grafana](../../metrics/grafana.md)) — лёгкий стек.
 - **App -> Disruptor -> async Logback -> файл** — in-process агрегация для минимизации влияния на hot-path.
 - **Kafka -> Spark Streaming -> ClickHouse** — cost-effective аналитика по большим объёмам.
-- Алерты по потоку строятся на выходе stream processor либо в [[alertmanager]] на derived-метриках.
+- Алерты по потоку строятся на выходе stream processor либо в [alertmanager](../../alerting/alertmanager.md) на derived-метриках.
 
 ## Маршруты чтения
 
-- **Начало:** [[log-aggregation]] — основной Java-ориентированный документ.
-- **Stream-подход:** Kafka Streams / Flink + [[README|../../messaging/README.md]].
-- **Оптимизация in-process:** Disruptor -> [[log4j]] async logger.
+- **Начало:** [log-aggregation](../log-aggregation.md) — основной Java-ориентированный документ.
+- **Stream-подход:** Kafka Streams / Flink + [../../messaging/README.md](../../../basics/README.md).
+- **Оптимизация in-process:** Disruptor -> [log4j](../log4j.md) async logger.
 
 ## Куда идти дальше
 
-- Hot-path логирование — [[log4j]], [[logback]]
-- Fluentd-pipeline — [[README]]
-- ELK — [[elk-stack]]
-- Метрики из логов -> Prometheus — [[prometheus]]
+- Hot-path логирование — [log4j](../log4j.md), [logback](../logback.md)
+- Fluentd-pipeline — [README](../../../basics/README.md)
+- ELK — [elk-stack](../elk-stack.md)
+- Метрики из логов -> Prometheus — [prometheus](../../metrics/prometheus.md)

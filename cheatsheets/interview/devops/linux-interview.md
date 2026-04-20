@@ -749,13 +749,13 @@ app    hard    nofile    65536
 
 ## See also
 
-- [[docker-interview]] — Linux cgroups и namespaces как фундамент контейнеров
-- [[kubernetes-interview]] — `OOMKilled`, лимиты памяти, cgroup v2 в подах
-- [[git-interview]] — git как Linux CLI, hooks через shell
-- [[gradle-maven-interview]] — сборка Java в Linux-окружении
-- [[argocd-interview]] — GitOps и процесс выката в Linux-инфраструктуре
-- [[logging-interview]] — journald, syslog, структурированные логи в Linux
-- [[observability-interview]] — мониторинг CPU, memory, disk, network в Linux
-- [[memory-management-interview]] — OS memory model, swap, page cache
-- [[application-security-interview]] — Linux hardening, SELinux, capabilities
-- [[terraform-interview]] — управление Linux-хостами как кодом
+- [docker-interview](docker-interview.md) — Linux cgroups и namespaces как фундамент контейнеров
+- [kubernetes-interview](kubernetes-interview.md) — `OOMKilled`, лимиты памяти, cgroup v2 в подах
+- [git-interview](git-interview.md) — git как Linux CLI, hooks через shell
+- [gradle-maven-interview](gradle-maven-interview.md) — сборка Java в Linux-окружении
+- [argocd-interview](argocd-interview.md) — GitOps и процесс выката в Linux-инфраструктуре
+- [logging-interview](../logging/logging-interview.md) — journald, syslog, структурированные логи в Linux
+- [observability-interview](../monitoring/observability-interview.md) — мониторинг CPU, memory, disk, network в Linux
+- [memory-management-interview](../performance/memory-management-interview.md) — OS memory model, swap, page cache
+- [application-security-interview](../security/application-security-interview.md) — Linux hardening, SELinux, capabilities
+- [terraform-interview](terraform-interview.md) — управление Linux-хостами как кодом

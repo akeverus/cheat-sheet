@@ -17,16 +17,16 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основной документ
-- [[operating-systems-basics|Операционные системы: основы]]
-- [[linux-handbook|Linux и Bash: практический справочник]] — рабочий справочник: команды, права, systemd, production-troubleshooting
+- [Операционные системы: основы](operating-systems-basics.md)
+- [Linux и Bash: практический справочник](linux-handbook.md) — рабочий справочник: команды, права, systemd, production-troubleshooting
 
 ### Соседние разделы
-- [[README|Computer Science]]
-- [[README|Компьютерные сети]]
-- [[README|Паттерны конкурентности]]
-- [[README|Docker]]
-- [[README|Kubernetes]]
-- [[README|Java: concurrency]]
+- [Computer Science](../README.md)
+- [Компьютерные сети](../README.md)
+- [Паттерны конкурентности](../README.md)
+- [Docker](../README.md)
+- [Kubernetes](../README.md)
+- [Java: concurrency](../README.md)
 
 ### Внешние ресурсы
 - [Linux Kernel Documentation](https://www.kernel.org/doc/html/latest/)
@@ -55,7 +55,7 @@ updated: "2026-04-20"
 
 ## Что внутри документа
 
-[[operating-systems-basics]] содержит:
+[operating-systems-basics](operating-systems-basics.md) содержит:
 
 - Архитектуры ядра: monolithic (Linux), microkernel (MINIX, L4), hybrid (Darwin, NT)
 - Жизненный цикл процесса: создание, планирование, выход, очистка
@@ -70,11 +70,11 @@ updated: "2026-04-20"
 
 - **Fundamentals для backend (1 ч):** `Процессы/потоки Планирование Виртуальная память I/O`.
 - **Диагностика prod-инцидента:** `Решение проблем Память/OOM I/O` + утилиты из таблицы.
-- **Подготовка к собеседованию:** вся карта + [[README|patterns/concurrency-patterns/]].
+- **Подготовка к собеседованию:** вся карта + [patterns/concurrency-patterns/](../README.md).
 
 ## Куда идти дальше
 
-- Java Memory Model и GC — [[README|languages/java/]]
-- Контейнеры: namespaces, cgroups — [[README|platform/containers/docker/]]
-- Observability процессов — [[README|monitoring/metrics/]]
-- Системные вызовы и сетевой стек — [[README|basics/networks/]]
+- Java Memory Model и GC — [languages/java/](../README.md)
+- Контейнеры: namespaces, cgroups — [platform/containers/docker/](../README.md)
+- Observability процессов — [monitoring/metrics/](../README.md)
+- Системные вызовы и сетевой стек — [basics/networks/](../README.md)

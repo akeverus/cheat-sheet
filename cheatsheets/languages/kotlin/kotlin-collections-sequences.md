@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Kotlin Sequences Guide](https://www.baeldung.com/kotlin/sequences)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-collections-list|Списки (List)]]
-- [[kotlin-collections-operations|Операции над коллекциями]]
-- [[java-streams-fp|Java Streams]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Списки (List)](kotlin-collections-list.md)
+- [Операции над коллекциями](kotlin-collections-operations.md)
+- [Java Streams](../java/java-streams-fp.md)
 
-- [[kotlin-performance|Kotlin Performance]]
+- [Kotlin Performance](kotlin-performance.md)
 ## Содержание
 
 - [Введение в Sequences](#введение-в-sequences)

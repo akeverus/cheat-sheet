@@ -20,7 +20,7 @@ updated: "2026-04-13"
 
 Вопросы и ответы по инструментам сборки `Gradle` и `Maven`: жизненный цикл сборки, структура `POM`, `build.gradle`, управление зависимостями, плагины, профили, `multi-module` проекты, `Gradle Daemon`, `build cache`, `version catalogs`, `convention plugins`, `BOM`.
 
-**`Gradle`** и **`Maven`** — два основных инструмента сборки в экосистеме `Java`/`JVM`. `Maven` — стандарт де-факто с конвенциональным подходом и XML-конфигурацией (`pom.xml`). `Gradle` — более современный инструмент с `Groovy`/`Kotlin` DSL, инкрементальной сборкой и гибкой моделью задач. Знание обоих инструментов — обязательное требование для backend-разработчиков и [[pipeline-design-interview|проектировщиков CI/CD пайплайнов]].
+**`Gradle`** и **`Maven`** — два основных инструмента сборки в экосистеме `Java`/`JVM`. `Maven` — стандарт де-факто с конвенциональным подходом и XML-конфигурацией (`pom.xml`). `Gradle` — более современный инструмент с `Groovy`/`Kotlin` DSL, инкрементальной сборкой и гибкой моделью задач. Знание обоих инструментов — обязательное требование для backend-разработчиков и [проектировщиков CI/CD пайплайнов](../cicd/pipeline-design-interview.md).
 
 ## Полезные ссылки
 
@@ -271,7 +271,7 @@ mvn compile
 | `install` | Установка в локальный репозиторий (`~/.m2/repository`) |
 | `deploy` | Публикация в удалённый репозиторий (`Nexus`, `Artifactory`) |
 
-> На собеседовании часто спрашивают: **в чём разница между `install` и `deploy`**. `install` копирует артефакт в локальный `~/.m2`, а `deploy` публикует его в удалённый [[pipeline-design-interview|корпоративный репозиторий]].
+> На собеседовании часто спрашивают: **в чём разница между `install` и `deploy`**. `install` копирует артефакт в локальный `~/.m2`, а `deploy` публикует его в удалённый [корпоративный репозиторий](../cicd/pipeline-design-interview.md).
 
 ## Q6. (!) Как Maven управляет зависимостями?
 
@@ -666,7 +666,7 @@ mvn install -rf persistence
 | Расширяемость | Только через плагины | Плагины + inline-код в билд-скрипте |
 | Использование | Энтерпрайз, `Spring Boot` starter | `Android`, `Spring` (сам фреймворк), `Kotlin` |
 
-Минимальный `build.gradle.kts` для [[spring-boot-interview|Spring Boot]] проекта:
+Минимальный `build.gradle.kts` для [Spring Boot](../frameworks/spring/spring-boot-interview.md) проекта:
 
 ```kotlin
 plugins {
@@ -932,7 +932,7 @@ zipStorePath=wrapper/dists
 ./gradlew --version
 ```
 
-Wrapper **обязательно коммитится** в репозиторий (включая `gradle-wrapper.jar`). Это позволяет собирать проект на CI без предустановленного `Gradle` — [[pipeline-design-interview|CI/CD пайплайн]] использует wrapper.
+Wrapper **обязательно коммитится** в репозиторий (включая `gradle-wrapper.jar`). Это позволяет собирать проект на CI без предустановленного `Gradle` — [CI/CD пайплайн](../cicd/pipeline-design-interview.md) использует wrapper.
 
 ## Q21. (!) Какие конфигурации зависимостей есть в Gradle?
 
@@ -969,7 +969,7 @@ dependencies {
 }
 ```
 
-> Ключевое отличие `api` от `implementation`: если модуль A зависит от модуля B, и B объявил зависимость C как `api`, то A **видит** C в compile classpath. Если `implementation` — **не видит**. Это важно для [[spring-boot-interview|модульности]] и скорости сборки.
+> Ключевое отличие `api` от `implementation`: если модуль A зависит от модуля B, и B объявил зависимость C как `api`, то A **видит** C в compile classpath. Если `implementation` — **не видит**. Это важно для [модульности](../frameworks/spring/spring-boot-interview.md) и скорости сборки.
 
 ## Q22. Как исключить транзитивные зависимости в Gradle?
 
@@ -1298,7 +1298,7 @@ org.gradle.configureondemand=true
 
 ### Выбирайте Maven, если:
 - Команда привыкла к `Maven` и нет причин мигрировать
-- Проект простой, стандартный (микросервис с [[spring-boot-interview|Spring Boot]])
+- Проект простой, стандартный (микросервис с [Spring Boot](../frameworks/spring/spring-boot-interview.md))
 - Важна предсказуемость — `Maven` делает одно и то же всегда одинаково
 - Нужна максимальная поддержка в корпоративных инструментах
 
@@ -1419,7 +1419,7 @@ mvn clean install -pl module-name -am
 ```
 
 Общие рекомендации:
-- Используйте [[docker-interview|Docker layer caching]] для зависимостей в CI
+- Используйте [Docker layer caching](docker-interview.md) для зависимостей в CI
 - Настройте корпоративный `Nexus`/`Artifactory` как зеркало Maven Central
 - Минимизируйте число плагинов, выполняемых на каждой сборке
 - В CI используйте `build cache` (`Gradle`) или кэш `~/.m2` между пайплайнами
@@ -2000,16 +2000,16 @@ public class TestUserBuilder {
 
 ## See also
 
-- [[docker-interview|Docker]] — контейнеризация и сборка образов через `Gradle`/`Maven` плагины (jib, dockerfile-maven)
-- [[pipeline-design-interview|Дизайн пайплайнов]] — интеграция `Gradle`/`Maven` в CI/CD: кэширование зависимостей, параллельные сборки
-- [[spring-boot-interview|Spring Boot]] — `Spring Boot Gradle Plugin` и `spring-boot-starter-parent`, BOM управление версиями
-- [[deployment-strategies-interview|Стратегии деплоя]] — артефакты сборки в процессе деплоя: JAR, WAR, Docker image
-- [[kubernetes-interview|Kubernetes]] — деплой артефактов в кластер, Helm-чарты и сборочные пайплайны
-- [[git-interview|Git]] — управление версиями кода: теги, ветки, интеграция с CI/CD сборками
+- [Docker](docker-interview.md) — контейнеризация и сборка образов через `Gradle`/`Maven` плагины (jib, dockerfile-maven)
+- [Дизайн пайплайнов](../cicd/pipeline-design-interview.md) — интеграция `Gradle`/`Maven` в CI/CD: кэширование зависимостей, параллельные сборки
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — `Spring Boot Gradle Plugin` и `spring-boot-starter-parent`, BOM управление версиями
+- [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — артефакты сборки в процессе деплоя: JAR, WAR, Docker image
+- [Kubernetes](kubernetes-interview.md) — деплой артефактов в кластер, Helm-чарты и сборочные пайплайны
+- [Git](git-interview.md) — управление версиями кода: теги, ветки, интеграция с CI/CD сборками
 
-- [[ansible-interview|Ansible]]
-- [[argocd-interview|ArgoCD и GitOps]]
-- [[consul-interview|HashiCorp Consul]]
-- [[docker-interview|Docker]]
-- [[git-interview|Git]]
-- [[helm-interview|Helm]]
+- [Ansible](ansible-interview.md)
+- [ArgoCD и GitOps](argocd-interview.md)
+- [HashiCorp Consul](consul-interview.md)
+- [Docker](docker-interview.md)
+- [Git](git-interview.md)
+- [Helm](helm-interview.md)

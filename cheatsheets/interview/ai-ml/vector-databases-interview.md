@@ -132,7 +132,7 @@ Brute force search: ~500 ms на CPU (slow)
 - 1536 dims (`text-embedding-3-small`) — стандарт OpenAI
 - 3072 dims (`text-embedding-3-large`) — лучшее качество
 
-Подробнее — в [[embeddings-interview|Embeddings]].
+Подробнее — в [Embeddings](embeddings-interview.md).
 
 ## Q4. (!) Cosine similarity vs Dot product vs Euclidean?
 
@@ -675,21 +675,21 @@ Local development / prototype?
 
 ## See also
 
-- [[embeddings-interview|Embeddings]] — что хранится в vector DB
-- [[rag-interview|RAG]] — главное применение
-- [[llm-basics-interview|LLM Basics]] — context для AI
-- [[postgresql-interview|PostgreSQL]] — pgvector
-- [[elasticsearch-interview|Elasticsearch]] — hybrid search
-- [[redis-interview|Redis]] — Redis Stack vector search
-- [[caching-strategies-interview|Caching]] — embeddings cache
-- [[microservices-interview|Микросервисы]] — где vector DB живёт
-- [[distributed-systems-interview|Распределённые системы]] — sharding, replication
-- [[mlops-interview|MLOps]] — embedding model versioning
-- [[scalability-patterns-interview|Scalability Patterns]] — для больших scales
+- [Embeddings](embeddings-interview.md) — что хранится в vector DB
+- [RAG](rag-interview.md) — главное применение
+- [LLM Basics](llm-basics-interview.md) — context для AI
+- [PostgreSQL](../databases/postgresql-interview.md) — pgvector
+- [Elasticsearch](../databases/elasticsearch-interview.md) — hybrid search
+- [Redis](../databases/redis-interview.md) — Redis Stack vector search
+- [Caching](../architecture/caching-strategies-interview.md) — embeddings cache
+- [Микросервисы](../architecture/microservices-interview.md) — где vector DB живёт
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — sharding, replication
+- [MLOps](mlops-interview.md) — embedding model versioning
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — для больших scales
 
-- [[ai-agents-interview|AI Agents]]
-- [[embeddings-interview|Embeddings]]
-- [[llm-basics-interview|LLM Basics]]
-- [[llm-integration-patterns-interview|LLM Integration Patterns]]
-- [[mlops-interview|MLOps]]
-- [[model-serving-interview|Model Serving]]
+- [AI Agents](ai-agents-interview.md)
+- [Embeddings](embeddings-interview.md)
+- [LLM Basics](llm-basics-interview.md)
+- [LLM Integration Patterns](llm-integration-patterns-interview.md)
+- [MLOps](mlops-interview.md)
+- [Model Serving](model-serving-interview.md)

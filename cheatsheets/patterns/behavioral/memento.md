@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java Cloneable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Cloneable.html)
 
 ### См. также
-- [[java-collections-list|Java Collections]] — **Java Collections**
-- [[command|Command]] — **Command Pattern**
-- [[state|State]] — **State Pattern**
+- [Java Collections](../../languages/java/java-collections-list.md) — **Java Collections**
+- [Command](command.md) — **Command Pattern**
+- [State](state.md) — **State Pattern**
 
-- [[iterator|Итератор (Iterator)]]
-- [[visitor|Посетитель (Visitor)]]
+- [Итератор (Iterator)](iterator.md)
+- [Посетитель (Visitor)](visitor.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

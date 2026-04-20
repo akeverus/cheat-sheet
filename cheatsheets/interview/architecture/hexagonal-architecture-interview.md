@@ -2315,21 +2315,21 @@ public Mono<OrderId> placeOrder(PlaceOrderCommand cmd) {
 
 ## See also
 
-- [[clean-architecture-interview|Clean Architecture]] -- концепция, пересекающаяся с Hexagonal; Dependency Rule, Use Case Interactors, Interface Adapters
-- [[ddd-interview|Domain-Driven Design]] -- тактические и стратегические паттерны DDD, агрегаты, Bounded Context -- естественный компаньон гексагона
-- [[microservices-interview|Микросервисы]] -- применение гексагональной архитектуры в микросервисной среде, сервис как гексагон
-- [[distributed-systems-interview|Распределённые системы]] -- адаптеры как границы надёжности, Circuit Breaker на Driven Port
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]] -- разделение Query и Command Use Cases в гексагоне
-- [[event-driven-patterns-interview|Event-driven паттерны]] -- доменные события через Driven Port, Transactional Outbox
-- [[resilience-patterns-interview|Паттерны отказоустойчивости]] -- Retry, Circuit Breaker и Fallback в Secondary адаптерах
-- [[design-patterns-interview|Паттерны проектирования]] -- SOLID, Dependency Inversion, Adapter и Strategy в основе гексагона
-- [[scalability-patterns-interview|Паттерны масштабируемости]] -- горизонтальное масштабирование гексагональных сервисов
-- [[spring-boot-interview|Spring Boot]] -- практическая реализация гексагональной архитектуры со Spring IoC, Spring Data, Spring Web
+- [Clean Architecture](clean-architecture-interview.md) -- концепция, пересекающаяся с Hexagonal; Dependency Rule, Use Case Interactors, Interface Adapters
+- [Domain-Driven Design](ddd-interview.md) -- тактические и стратегические паттерны DDD, агрегаты, Bounded Context -- естественный компаньон гексагона
+- [Микросервисы](microservices-interview.md) -- применение гексагональной архитектуры в микросервисной среде, сервис как гексагон
+- [Распределённые системы](distributed-systems-interview.md) -- адаптеры как границы надёжности, Circuit Breaker на Driven Port
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) -- разделение Query и Command Use Cases в гексагоне
+- [Event-driven паттерны](event-driven-patterns-interview.md) -- доменные события через Driven Port, Transactional Outbox
+- [Паттерны отказоустойчивости](resilience-patterns-interview.md) -- Retry, Circuit Breaker и Fallback в Secondary адаптерах
+- [Паттерны проектирования](../design-patterns/design-patterns-interview.md) -- SOLID, Dependency Inversion, Adapter и Strategy в основе гексагона
+- [Паттерны масштабируемости](scalability-patterns-interview.md) -- горизонтальное масштабирование гексагональных сервисов
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) -- практическая реализация гексагональной архитектуры со Spring IoC, Spring Data, Spring Web
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[cap-theorem-interview|CAP-теорема]]
-- [[clean-architecture-interview|Clean Architecture]]
-- [[consistency-patterns-interview|Паттерны согласованности]]
-- [[hexagonal-architecture|Шпаргалка: Hexagonal Architecture (Ports & Adapters]] — теория
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [CAP-теорема](cap-theorem-interview.md)
+- [Clean Architecture](clean-architecture-interview.md)
+- [Паттерны согласованности](consistency-patterns-interview.md)
+- [Шпаргалка: Hexagonal Architecture (Ports & Adapters](../../architecture/hexagonal-architecture.md) — теория

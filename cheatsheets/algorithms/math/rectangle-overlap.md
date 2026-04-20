@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Point (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/awt/Point.html)
 
 ### См. также
-- [[line-intersection|Поиск пересечения двух линий]] — пересечение линий
-- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
+- [Поиск пересечения двух линий](line-intersection.md) — пересечение линий
+- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
 
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
-- [[lat-lon-to-2d-point|Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)]]
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
+- [Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)](lat-lon-to-2d-point.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

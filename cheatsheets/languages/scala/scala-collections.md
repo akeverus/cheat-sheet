@@ -840,12 +840,12 @@ val result = lines.take(1000).toList
 - [Scala Collections Documentation](https://docs.scala-lang.org/overviews/collections-2.13/overview.html)
 - [Scala Collections API](https://www.scala-lang.org/api/current/scala/collection/index.html)
 
-> **Примечание**: Это базовая информация о коллекциях **Scala**. Для более детального изучения см. разделы [[scala-collections-list|List]], [[scala-collections-set|Set]], [[scala-collections-map|Map]] и официальную документацию по коллекциям.
+> **Примечание**: Это базовая информация о коллекциях **Scala**. Для более детального изучения см. разделы [List](scala-collections-list.md), [Set](scala-collections-set.md), [Map](scala-collections-map.md) и официальную документацию по коллекциям.
 
 ## См. также
 
-- [[scala-akka-streams|Akka Streams в Scala]]
-- [[scala-another|Scala Additional Topics]]
-- [[scala-basics|Scala: основы]]
-- [[scala-cats-effect|Cats Effect в Scala]]
-- [[scala-collections-array|Scala Collections — Array]]
+- [Akka Streams в Scala](scala-akka-streams.md)
+- [Scala Additional Topics](scala-another.md)
+- [Scala: основы](scala-basics.md)
+- [Cats Effect в Scala](scala-cats-effect.md)
+- [Scala Collections — Array](scala-collections-array.md)

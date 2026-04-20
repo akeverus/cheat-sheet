@@ -23,10 +23,10 @@ updated: "2026-04-20"
 - [Hibernate Caching (hibernate.org)](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#caching) — официальная документация
 
 ### См. также
-- [[orm-basics|ORM Basics]] — базовые концепции JPA и Hibernate
-- [[hibernate-relationships|Hibernate Relationships]] — связи между сущностями
-- [[hibernate-interview|Hibernate Interview]] — типовые вопросы на собеседовании
-- [[hibernate-jpql-criteria|Hibernate JPQL/Criteria]] — запросы в Hibernate и JPA
+- [ORM Basics](orm-basics.md) — базовые концепции JPA и Hibernate
+- [Hibernate Relationships](hibernate-relationships.md) — связи между сущностями
+- [Hibernate Interview](../../interview/databases/hibernate-interview.md) — типовые вопросы на собеседовании
+- [Hibernate JPQL/Criteria](hibernate-jpql-criteria.md) — запросы в Hibernate и JPA
 
 ## Содержание
 
@@ -517,10 +517,10 @@ Query Cache кэширует только идентификаторы. Сами
 
 ## См. также
 
-- [[orm-basics|ORM Basics]] — базовые концепции JPA и Hibernate
-- [[hibernate-relationships|Hibernate Relationships]] — связи и стратегии загрузки
-- [[hibernate-interview|Hibernate Interview]] — типовые вопросы на собеседовании
-- [[hibernate-jpql-criteria|Hibernate JPQL/Criteria]] — запросы в Hibernate и JPA
-- [[spring-data-jpa-interview|Spring Data JPA]] — репозитории и транзакции в Spring
-- [[database-transactions-interview|Database Transactions]] — изоляция и уровни транзакций
-- [[java-jdbc|JDBC]] — низкоуровневая работа с БД
+- [ORM Basics](orm-basics.md) — базовые концепции JPA и Hibernate
+- [Hibernate Relationships](hibernate-relationships.md) — связи и стратегии загрузки
+- [Hibernate Interview](../../interview/databases/hibernate-interview.md) — типовые вопросы на собеседовании
+- [Hibernate JPQL/Criteria](hibernate-jpql-criteria.md) — запросы в Hibernate и JPA
+- [Spring Data JPA](../../interview/frameworks/spring/spring-data-jpa-interview.md) — репозитории и транзакции в Spring
+- [Database Transactions](../../interview/databases/database-transactions-interview.md) — изоляция и уровни транзакций
+- [JDBC](../../languages/java/java-jdbc.md) — низкоуровневая работа с БД

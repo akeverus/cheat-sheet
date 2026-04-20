@@ -640,13 +640,13 @@ spring:
 
 ## See also
 
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация, starter-cache
-- [[spring-framework-interview|Spring Framework]] — AOP-прокси, механизм работы аннотаций
-- [[spring-aop-interview|Spring AOP]] — self-invocation problem, прокси-механизм
-- [[redis-interview|Redis]] — Redis как провайдер кэша, TTL, persistence
-- [[spring-data-jpa-interview|Spring Data JPA]] — кэширование второго уровня Hibernate vs Spring Cache
-- [[spring-webflux-interview|Spring WebFlux]] — ограничения Spring Cache в реактивном стеке
-- [[performance-testing-interview|Performance Testing]] — замер эффективности кэша
-- [[caching-performance-interview|Caching Performance]] — стратегии кэширования, eviction policies
-- [[database-performance-interview|Database Performance]] — когда кэш вместо БД
-- [[spring-cache|Шпаргалка: Spring Cache: Полное руководство по кеши]] — теория
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация, starter-cache
+- [Spring Framework](spring-framework-interview.md) — AOP-прокси, механизм работы аннотаций
+- [Spring AOP](spring-aop-interview.md) — self-invocation problem, прокси-механизм
+- [Redis](../../databases/redis-interview.md) — Redis как провайдер кэша, TTL, persistence
+- [Spring Data JPA](spring-data-jpa-interview.md) — кэширование второго уровня Hibernate vs Spring Cache
+- [Spring WebFlux](spring-webflux-interview.md) — ограничения Spring Cache в реактивном стеке
+- [Performance Testing](../../performance/performance-testing-interview.md) — замер эффективности кэша
+- [Caching Performance](../../performance/caching-performance-interview.md) — стратегии кэширования, eviction policies
+- [Database Performance](../../performance/database-performance-interview.md) — когда кэш вместо БД
+- [Шпаргалка: Spring Cache: Полное руководство по кеши](../../../frameworks/java-frameworks/spring/spring-cache.md) — теория

@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Baeldung: Finite State Machines](https://www.baeldung.com/cs-finite-state-machines)
 
 ### См. также
-- [[README|Регулярные выражения]] — алгоритмы со строками
-- [[state-machine-with-enums|Конечный автомат с enum]] — state machine с enum
+- [Регулярные выражения](../../basics/README.md) — алгоритмы со строками
+- [Конечный автомат с enum](state-machine-with-enums.md) — state machine с enum
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

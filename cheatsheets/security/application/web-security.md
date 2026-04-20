@@ -27,10 +27,10 @@ updated: "2026-04-20"
 - [Web.dev Security](https://web.dev/security/) — практические рекомендации по безопасности веб‑приложений
 
 ### См. также
-- [[application-security|Application Security]] — аутентификация, авторизация, токены
-- [[api-security|API Security]] — защита `REST`/`GraphQL API`
-- [[secrets-management|Secrets Management]] — управление секретами
-- [[security-testing|Security Testing]] — `SAST`, `DAST`, `SCA` и пентесты
+- [Application Security](application-security.md) — аутентификация, авторизация, токены
+- [API Security](api-security.md) — защита `REST`/`GraphQL API`
+- [Secrets Management](../data/secrets-management.md) — управление секретами
+- [Security Testing](../testing/security-testing.md) — `SAST`, `DAST`, `SCA` и пентесты
 
 
 ## Содержание
@@ -148,7 +148,7 @@ updated: "2026-04-20"
 - В каждом эндпоинте — сверять `userId` из токена с владельцем ресурса.
 - Админка — отключить в проде или защитить дополнительной авторизацией + `VPN`/`IP`-фильтрация.
 
-Подробнее — в [[application-security|Application Security]].
+Подробнее — в [Application Security](application-security.md).
 
 
 ## Ошибки конфигурации и утечка данных

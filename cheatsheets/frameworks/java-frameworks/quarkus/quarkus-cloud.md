@@ -912,8 +912,8 @@ spec:
 
 ## См. также
 
-- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
-- [[quarkus-basics|Quarkus: Основы]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]
-- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]
+- [Quarkus: Actuator — Health Checks и Metrics](quarkus-actuator.md)
+- [Quarkus: Основы](quarkus-basics.md)
+- [Quarkus: Cache — Кеширование данных](quarkus-cache.md)
+- [Quarkus: Core — CDI, Bean Scopes и Configuration](quarkus-core.md)
+- [Quarkus: Data Access — Hibernate ORM, Panache и Repositories](quarkus-data.md)

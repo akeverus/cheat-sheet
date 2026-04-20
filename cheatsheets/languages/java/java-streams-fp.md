@@ -23,8 +23,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[java-collections-converting|Java Collections: конвертирование]]
-- [[java-reactive-project-reactor|Java Reactive: Project Reactor]]
+- [Java Collections: конвертирование](java-collections-converting.md)
+- [Java Reactive: Project Reactor](java-reactive-project-reactor.md)
 ## Содержание
 
 - [Основы функционального программирования](#основы-функционального-программирования)
@@ -1434,6 +1434,6 @@ public class StreamPerformanceDemo {
 **`reduce()` или `collect()`?**
 `reduce()` — для свёртки в одно значение, `collect()` — для построения структур (списки, мапы, группировки).
 ## См. также
-- [[java-exceptions|Java Exceptions]] — обработка исключений
-- [[java-annotations-reflection|Java Annotations]] — аннотации и рефлексия
-- [[java-collections-list|Java Collections]] — коллекции **Java**
+- [Java Exceptions](java-exceptions.md) — обработка исключений
+- [Java Annotations](java-annotations-reflection.md) — аннотации и рефлексия
+- [Java Collections](java-collections-list.md) — коллекции **Java**

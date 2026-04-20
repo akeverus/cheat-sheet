@@ -19,12 +19,12 @@ OpenClaw — open-source фреймворк для автономных AI-аг�
 ## Полезные ссылки
 
 ### Основные документы
-- [[openclaw-basics]] — установка, CLI, задачи, агенты, хуки, интеграции
+- [openclaw-basics](openclaw-basics.md) — установка, CLI, задачи, агенты, хуки, интеграции
 
 ### Соседние разделы
-- [[README|tools/ai/]] — родительский раздел
-- [[README|tools/ai/aider/]] — более простая CLI-альтернатива
-- [[README|tools/ai/cursor/]] — агенты в IDE
+- [tools/ai/](../../../basics/README.md) — родительский раздел
+- [tools/ai/aider/](../../../basics/README.md) — более простая CLI-альтернатива
+- [tools/ai/cursor/](../../../basics/README.md) — агенты в IDE
 
 ### Внешние ресурсы
 - [OpenClaw GitHub](https://github.com/open-claw/openclaw)
@@ -52,13 +52,13 @@ OpenClaw — open-source фреймворк для автономных AI-аг�
 
 | Инструмент | Нативная IDE | Агентский режим | Локальные модели | Цена |
 |------------|--------------|-----------------|------------------|------|
-| [[README|OpenClaw]] | Нет (CLI/framework) | Да (автономные агенты, multi-step) | Да (Ollama, GGUF) | Open source |
-| [[README|Aider]] | Нет (CLI) | Частичный (architect/editor) | Да (Ollama) | Open source + API |
-| [[README|Claude Code]] | VS Code, JetBrains, CLI | Да | Нет | Подписка |
-| [[README|Cursor]] | Cursor | Да (Agent, Background Agent) | Да (BYOK) | Free + Pro |
-| [[README|GitHub Copilot]] | VS Code, JetBrains, Neovim | Да (Copilot Agent) | Нет | Подписка |
-| [[README|Windsurf]] | Windsurf | Да (Cascade) | Нет | Free + Pro |
-| [[README|Cody]] | VS Code, JetBrains | Частичный | Enterprise | Free + Pro/Enterprise |
+| [OpenClaw](../../../basics/README.md) | Нет (CLI/framework) | Да (автономные агенты, multi-step) | Да (Ollama, GGUF) | Open source |
+| [Aider](../../../basics/README.md) | Нет (CLI) | Частичный (architect/editor) | Да (Ollama) | Open source + API |
+| [Claude Code](../../../basics/README.md) | VS Code, JetBrains, CLI | Да | Нет | Подписка |
+| [Cursor](../../../basics/README.md) | Cursor | Да (Agent, Background Agent) | Да (BYOK) | Free + Pro |
+| [GitHub Copilot](../../../basics/README.md) | VS Code, JetBrains, Neovim | Да (Copilot Agent) | Нет | Подписка |
+| [Windsurf](../../../basics/README.md) | Windsurf | Да (Cascade) | Нет | Free + Pro |
+| [Cody](../../../basics/README.md) | VS Code, JetBrains | Частичный | Enterprise | Free + Pro/Enterprise |
 
 ## Когда использовать
 
@@ -74,7 +74,7 @@ OpenClaw — open-source фреймворк для автономных AI-аг�
 
 ## Куда идти дальше
 
-- Более простой CLI-вариант — [[README]]
-- Агенты в IDE — [[README]]
-- IDE-ассистент с длинным контекстом — [[README]]
-- Обзор и выбор AI-инструмента — [[README]]
+- Более простой CLI-вариант — [README](../../../basics/README.md)
+- Агенты в IDE — [README](../../../basics/README.md)
+- IDE-ассистент с длинным контекстом — [README](../../../basics/README.md)
+- Обзор и выбор AI-инструмента — [README](../../../basics/README.md)

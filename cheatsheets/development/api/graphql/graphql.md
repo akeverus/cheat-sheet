@@ -38,12 +38,12 @@ updated: "2026-04-20"
 - [GraphQL Security](https://graphql.org/learn/authorization/) — безопасность
 
 ### См. также
-- [[rest-api-design|rest-api-design.md]] — дизайн **REST API**
-- [[grpc|grpc.md]] — **gRPC**
-- [[spring-graphql|Spring GraphQL]] — интеграция **Spring GraphQL**
-- [[README|PostgreSQL]] — базы данных для **GraphQL**
-- [[README|Мониторинг]] — мониторинг и **observability**
-- [[graphql-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [rest-api-design.md](../rest/rest-api-design.md) — дизайн **REST API**
+- [grpc.md](../grpc/grpc.md) — **gRPC**
+- [Spring GraphQL](../../../frameworks/java-frameworks/spring/spring-graphql.md) — интеграция **Spring GraphQL**
+- [PostgreSQL](../../../basics/README.md) — базы данных для **GraphQL**
+- [Мониторинг](../../../basics/README.md) — мониторинг и **observability**
+- [Вопросы на собеседовании](../../../interview/api/graphql-interview.md) — подготовка к интервью
 
 ## Содержание
 

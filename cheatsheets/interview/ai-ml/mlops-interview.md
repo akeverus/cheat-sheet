@@ -625,22 +625,22 @@ Prompts = код. Version в Git или dedicated tools.
 
 ## See also
 
-- [[llm-basics-interview|LLM Basics]] — основа для LLMOps
-- [[llm-integration-patterns-interview|LLM Integration Patterns]] — production patterns
-- [[model-serving-interview|Model Serving]] — deployment
-- [[rag-interview|RAG]] — operationalization RAG
-- [[ai-agents-interview|AI Agents]] — operations
-- [[apache-airflow-interview|Airflow]] — orchestration ML pipelines
-- [[apache-spark-interview|Spark]] — для feature engineering
-- [[data-warehousing-interview|Data Warehousing]] — feature storage
-- [[observability-interview|Observability]] — monitoring
-- [[pipeline-design-interview|Pipeline Design]] — CI/CD
-- [[microservices-interview|Микросервисы]] — где models live
-- [[git-interview|Git]] — version control
+- [LLM Basics](llm-basics-interview.md) — основа для LLMOps
+- [LLM Integration Patterns](llm-integration-patterns-interview.md) — production patterns
+- [Model Serving](model-serving-interview.md) — deployment
+- [RAG](rag-interview.md) — operationalization RAG
+- [AI Agents](ai-agents-interview.md) — operations
+- [Airflow](../data-engineering/apache-airflow-interview.md) — orchestration ML pipelines
+- [Spark](../data-engineering/apache-spark-interview.md) — для feature engineering
+- [Data Warehousing](../data-engineering/data-warehousing-interview.md) — feature storage
+- [Observability](../monitoring/observability-interview.md) — monitoring
+- [Pipeline Design](../cicd/pipeline-design-interview.md) — CI/CD
+- [Микросервисы](../architecture/microservices-interview.md) — где models live
+- [Git](../devops/git-interview.md) — version control
 
-- [[ai-agents-interview|AI Agents]]
-- [[embeddings-interview|Embeddings]]
-- [[llm-basics-interview|LLM Basics]]
-- [[llm-integration-patterns-interview|LLM Integration Patterns]]
-- [[model-serving-interview|Model Serving]]
-- [[prompt-engineering-interview|Prompt Engineering]]
+- [AI Agents](ai-agents-interview.md)
+- [Embeddings](embeddings-interview.md)
+- [LLM Basics](llm-basics-interview.md)
+- [LLM Integration Patterns](llm-integration-patterns-interview.md)
+- [Model Serving](model-serving-interview.md)
+- [Prompt Engineering](prompt-engineering-interview.md)

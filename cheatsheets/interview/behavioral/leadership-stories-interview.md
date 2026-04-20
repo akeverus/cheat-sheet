@@ -1,12 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Истории о лидерстве"
-description: "Лидерские истории на поведенческом интервью: лидерство без формальных полномочий, драйв изменений, влияние на решения, вдохновение команды. 22 вопроса с примерами."
+description: "Лидерские истории на поведенческом интервью: лидерство без формальных полномочий, driving changes, влияние, вдохновение команды"
 tags:
   - interview
   - behavioral
-  - leadership
-  - influence
-  - soft-skills
+  - leadership-stories-interview
+aliases:
+  - "Leadership Stories interview"
+  - "Leadership behavioral interview"
+  - "influence interview"
+  - "tech lead stories"
+  - "истории о лидерстве"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -185,9 +189,9 @@ updated: "2026-04-20"
 
 ## See also
 
-- [[behavioral-interview|Behavioral Interview]]
-- [[star-method-interview|STAR Method]]
-- [[conflict-stories-interview|Conflict Stories]]
-- [[failure-stories-interview|Failure Stories]]
-- [[culture-fit-interview|Culture Fit]]
-- [[team-leadership-interview|Team Leadership]]
+- [Behavioral Interview](behavioral-interview.md)
+- [STAR Method](star-method-interview.md)
+- [Conflict Stories](conflict-stories-interview.md)
+- [Failure Stories](failure-stories-interview.md)
+- [Culture Fit](culture-fit-interview.md)
+- [Team Leadership](../leadership/team-leadership-interview.md)

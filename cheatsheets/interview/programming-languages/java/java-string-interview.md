@@ -170,7 +170,7 @@ public final class String { ... }
 Причины:
 1. **Безопасность**: если бы можно было создать подкласс `String`, злоумышленник мог бы переопределить методы и, например, изменять URL/путь к файлу после проверки безопасности
 2. **Гарантия иммутабельности**: подкласс мог бы добавить мутабельные поля и нарушить контракт неизменяемости
-3. **Корректность `hashCode()`**: кэширование `hashCode` работает только при гарантии неизменности, что важно для использования в `HashMap`/`HashSet` (см. [[java-collections-interview|Java Collections]])
+3. **Корректность `hashCode()`**: кэширование `hashCode` работает только при гарантии неизменности, что важно для использования в `HashMap`/`HashSet` (см. [Java Collections](java-collections-interview.md))
 4. **Оптимизации JVM**: `final` позволяет JVM применять агрессивные оптимизации
 
 ## Q5. (!) Каковы преимущества иммутабельности `String`?
@@ -178,7 +178,7 @@ public final class String { ... }
 Иммутабельность `String` -- одно из ключевых архитектурных решений в Java:
 
 1. **`String Pool`**: пул строк возможен только потому, что строки не меняются после создания -- иначе изменение одной ссылки затронуло бы все остальные
-2. **Потокобезопасность**: неизменяемые объекты inherently thread-safe -- не нужна синхронизация (подробнее в [[java-concurrency-interview|Java Concurrency]])
+2. **Потокобезопасность**: неизменяемые объекты inherently thread-safe -- не нужна синхронизация (подробнее в [Java Concurrency](java-concurrency-interview.md))
 3. **Безопасность**: строка не может быть изменена после проверки (например, имя файла, URL, SQL-запрос)
 4. **Кэширование `hashCode`**: вычисляется один раз и кэшируется в поле `hash`, что ускоряет работу с `HashMap`/`HashSet`
 5. **Безопасность как ключ**: строки широко используются как ключи в `Map` и элементы `Set` -- мутация ключа сломала бы структуру данных
@@ -244,7 +244,7 @@ StringBuffer sb = new StringBuffer(); // потокобезопасный
 // НЕ StringBuilder — он НЕ потокобезопасный
 ```
 
-Подробнее о потокобезопасности и `happens-before` -- в [[java-concurrency-interview|Java Concurrency]].
+Подробнее о потокобезопасности и `happens-before` -- в [Java Concurrency](java-concurrency-interview.md).
 
 ## Q9. (!) Что такое `String Pool` и где он расположен?
 
@@ -278,7 +278,7 @@ graph TB
 - **Java 7+**: перемещён в основной `Heap` -- строки из пула подлежат сборке мусора
 - **Java 8**: `PermGen` заменён на `Metaspace`, но `String Pool` уже был в `Heap`
 
-Размер пула настраивается через `-XX:StringTableSize` (по умолчанию ~60013 в Java 11+). Подробнее об управлении памятью JVM -- в [[jvm-interview|JVM]] и [[memory-management-interview|Управление памятью]].
+Размер пула настраивается через `-XX:StringTableSize` (по умолчанию ~60013 в Java 11+). Подробнее об управлении памятью JVM -- в [JVM](../../jvm/jvm-interview.md) и [Управление памятью](../../performance/memory-management-interview.md).
 
 ## Q10. (!) Как `String` хранится в памяти?
 
@@ -492,7 +492,7 @@ StringBuffer sbuf = new StringBuffer();
 // synchronized методы: append(), insert(), delete()...
 ```
 
-**На практике** `StringBuffer` почти не используется. Для многопоточных сценариев лучше собрать строку в каждом потоке отдельно и объединить результаты. Подробнее -- в [[java-concurrency-interview|Java Concurrency]].
+**На практике** `StringBuffer` почти не используется. Для многопоточных сценариев лучше собрать строку в каждом потоке отдельно и объединить результаты. Подробнее -- в [Java Concurrency](java-concurrency-interview.md).
 
 ## Q20. (!) Как эффективно конкатенировать много строк?
 
@@ -754,7 +754,7 @@ public static boolean areAnagramsFast(String s1, String s2) {
 }
 ```
 
-Подробнее об алгоритмических задачах -- в [[algorithms-interview|Алгоритмы]].
+Подробнее об алгоритмических задачах -- в [Алгоритмы](../../algorithms/algorithms-interview.md).
 
 ## Q31. Как перевернуть `String`?
 
@@ -997,18 +997,18 @@ try {
 
 ## See also
 
-- [[java-core-interview|Java Core]] — базовые вопросы: `equals()`/`hashCode()` для `String`, `Comparable`
-- [[java-oop-interview|Java OOP]] — иммутабельность, `final` классы, почему `String` нельзя наследовать
-- [[java-collections-interview|Java Collections]] — `String` как ключ `HashMap`: контракт `hashCode`/`equals`
-- [[java-concurrency-interview|Java Concurrency]] — иммутабельность `String` и потокобезопасность, `StringBuffer`
-- [[java-stream-interview|Java Stream API]] — методы `String.chars()`, `String.lines()` возвращают стримы
-- [[java-types-interview|Java Types]] — `String` vs примитивы, `char[]`, `CharSequence` иерархия
-- [[java-17-21-interview|Java 17-21]] — text blocks (Java 15+), форматирование ``, `String.formatted()`
-- [[jvm-interview|JVM]] — `String Pool` в `Metaspace`, `intern()`, влияние на GC и память
+- [Java Core](java-core-interview.md) — базовые вопросы: `equals()`/`hashCode()` для `String`, `Comparable`
+- [Java OOP](java-oop-interview.md) — иммутабельность, `final` классы, почему `String` нельзя наследовать
+- [Java Collections](java-collections-interview.md) — `String` как ключ `HashMap`: контракт `hashCode`/`equals`
+- [Java Concurrency](java-concurrency-interview.md) — иммутабельность `String` и потокобезопасность, `StringBuffer`
+- [Java Stream API](java-stream-interview.md) — методы `String.chars()`, `String.lines()` возвращают стримы
+- [Java Types](java-types-interview.md) — `String` vs примитивы, `char[]`, `CharSequence` иерархия
+- [Java 17-21](java-17-21-interview.md) — text blocks (Java 15+), форматирование ``, `String.formatted()`
+- [JVM](../../jvm/jvm-interview.md) — `String Pool` в `Metaspace`, `intern()`, влияние на GC и память
 
-- [[java-17-21-interview|Java 17-21]]
-- [[java-8-interview|Java 8]]
-- [[java-annotations-interview|Java Annotations]]
-- [[java-collections-interview|Java Collections]]
-- [[java-concurrency-interview|Java Concurrency]]
-- [[java-conditional-statements-interview|Java Conditional Statements]]
+- [Java 17-21](java-17-21-interview.md)
+- [Java 8](java-8-interview.md)
+- [Java Annotations](java-annotations-interview.md)
+- [Java Collections](java-collections-interview.md)
+- [Java Concurrency](java-concurrency-interview.md)
+- [Java Conditional Statements](java-conditional-statements-interview.md)

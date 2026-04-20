@@ -19,11 +19,11 @@ updated: "2026-04-20"
 
 ## Содержание
 
-- [[mongodb-basics|MongoDB Basics]]
-- [[mongodb-crud|MongoDB CRUD]]
-- [[mongodb-queries|MongoDB Queries]]
-- [[mongodb-aggregation|MongoDB Aggregation]]
-- [[mongodb-indexes|MongoDB Indexes]]
-- [[mongodb-performance|MongoDB Performance]] (каноничный документ)
-- [[mongodb-replication|MongoDB Replication]]
-- [[mongodb-sharding|MongoDB Sharding]]
+- [MongoDB Basics](mongodb-basics.md)
+- [MongoDB CRUD](mongodb-crud.md)
+- [MongoDB Queries](mongodb-queries.md)
+- [MongoDB Aggregation](mongodb-aggregation.md)
+- [MongoDB Indexes](mongodb-indexes.md)
+- [MongoDB Performance](mongodb-performance.md) (каноничный документ)
+- [MongoDB Replication](mongodb-replication.md)
+- [MongoDB Sharding](mongodb-sharding.md)

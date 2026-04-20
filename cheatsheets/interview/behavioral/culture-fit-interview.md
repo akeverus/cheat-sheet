@@ -1,12 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Culture Fit"
-description: "Culture fit на поведенческом интервью: вопросы про ценности, стиль работы, мотивацию, совместимость с командой и компанией. 22 вопроса с примерами хороших ответов."
+description: "Culture fit на поведенческом интервью: ценности, стиль работы, мотивация, совместимость с командой и компанией"
 tags:
   - interview
   - behavioral
-  - culture-fit
-  - values
-  - motivation
+  - culture-fit-interview
+aliases:
+  - "Culture Fit interview"
+  - "Culture Fit собеседование"
+  - "values interview"
+  - "team compatibility interview"
+  - "motivation interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -182,9 +186,9 @@ Culture fit — не про «нравится ли ты нам». Это про
 
 ## See also
 
-- [[behavioral-interview|Behavioral Interview]]
-- [[star-method-interview|STAR Method]]
-- [[conflict-stories-interview|Conflict Stories]]
-- [[failure-stories-interview|Failure Stories]]
-- [[leadership-stories-interview|Leadership Stories]]
-- [[team-leadership-interview|Team Leadership]]
+- [Behavioral Interview](behavioral-interview.md)
+- [STAR Method](star-method-interview.md)
+- [Conflict Stories](conflict-stories-interview.md)
+- [Failure Stories](failure-stories-interview.md)
+- [Leadership Stories](leadership-stories-interview.md)
+- [Team Leadership](../leadership/team-leadership-interview.md)

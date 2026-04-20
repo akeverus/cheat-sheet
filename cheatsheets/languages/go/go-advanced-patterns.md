@@ -1246,8 +1246,8 @@ func (eb *EventBus) Publish(event Event) {
 
 ## См. также
 
-- [[go-basics|Go: основы]]
-- [[go-benchmarking|Go: бенчмаркинг]]
-- [[go-best-practices|Go: лучшие практики]]
-- [[go-build|Go: сборка и развертывание]]
-- [[go-collections|Go: коллекции]]
+- [Go: основы](go-basics.md)
+- [Go: бенчмаркинг](go-benchmarking.md)
+- [Go: лучшие практики](go-best-practices.md)
+- [Go: сборка и развертывание](go-build.md)
+- [Go: коллекции](go-collections.md)

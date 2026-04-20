@@ -19,9 +19,9 @@ OrientDB — мультимодельная NoSQL БД, поддерживающ
 - [OrientDB Documentation](https://orientdb.org/docs/3.2.x/) — официальная документация
 
 ### См. также
-- [[neo4j-basics|Neo4j]] — графовая БД с языком Cypher
-- [[mongodb-basics|MongoDB]] — документная NoSQL БД
-- [[cassandra-basics|Apache Cassandra]] — wide-column NoSQL
+- [Neo4j](../neo4j/neo4j-basics.md) — графовая БД с языком Cypher
+- [MongoDB](../../nosql/mongodb/mongodb-basics.md) — документная NoSQL БД
+- [Apache Cassandra](../../nosql/cassandra/cassandra-basics.md) — wide-column NoSQL
 
 ## Содержание
 

@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [In-Place Algorithm — GeeksforGeeks](https://www.geeksforgeeks.org/in-place-algorithm/)
 
 ### См. также
-- [[quick-sort|quick-sort.md]] — быстрая сортировка
-- [[heap-sort|heap-sort.md]] — сортировка кучей
-- [[bubble-sort|Пузырьковая сортировка]] — сортировка обменами
+- [quick-sort.md](quick-sort.md) — быстрая сортировка
+- [heap-sort.md](heap-sort.md) — сортировка кучей
+- [Пузырьковая сортировка](bubble-sort.md) — сортировка обменами
 
-- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
-- [[selection-sort|Сортировка выбором (Selection Sort)]]
+- [Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)](bead-sort.md)
+- [Сортировка выбором (Selection Sort)](selection-sort.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

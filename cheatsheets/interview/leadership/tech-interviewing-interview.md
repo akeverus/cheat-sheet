@@ -1,13 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Проведение технических интервью"
-description: "Практические вопросы по проведению технических интервью: составление вопросов, оценка кандидатов, избегание предвзятости, структурированные интервью."
+description: "Проведение технических интервью: составление вопросов, оценка кандидатов, избегание предвзятости, структурированные интервью, hiring process"
 tags:
   - interview
   - leadership
-  - hiring
-  - interviewing
-  - bias
-  - structured-interview
+  - tech-interviewing-interview
+aliases:
+  - "Tech Interviewing interview"
+  - "Conducting interviews"
+  - "Hiring process interview"
+  - "Structured interviews"
+  - "проведение интервью"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -285,10 +288,10 @@ updated: "2026-04-20"
 
 ## See also
 
-- [[team-leadership-interview|Team Leadership]]
-- [[code-review-practices-interview|Code Review Practices]]
-- [[behavioral-interview|Behavioral]]
-- [[technical-decisions-interview|Technical Decisions]]
-- [[mentoring-interview|Mentoring]]
-- [[conflict-resolution-interview|Conflict Resolution]]
-- [[estimations-planning-interview|Estimation & Planning]]
+- [Team Leadership](team-leadership-interview.md)
+- [Code Review Practices](code-review-practices-interview.md)
+- [Behavioral](../behavioral/behavioral-interview.md)
+- [Technical Decisions](technical-decisions-interview.md)
+- [Mentoring](mentoring-interview.md)
+- [Conflict Resolution](conflict-resolution-interview.md)
+- [Estimation & Planning](estimations-planning-interview.md)

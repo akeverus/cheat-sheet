@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: GCD of two numbers](https://www.geeksforgeeks.org/c-program-find-gcd-hcf-two-numbers/)
 
 ### См. также
-- [[least-common-multiple|Наименьшее общее кратное]] — НОК
-- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
+- [Наименьшее общее кратное](least-common-multiple.md) — НОК
+- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Bead Sort](https://www.geeksforgeeks.org/bead-sort-natural-sorting-algorithm/)
 
 ### См. также
-- [[bubble-sort|bubble-sort.md]] — пузырьковая сортировка (`Bubble Sort`)
-- [[counting-sort|counting-sort.md]] — сортировка подсчётом (`Counting Sort`)
+- [bubble-sort.md](bubble-sort.md) — пузырьковая сортировка (`Bubble Sort`)
+- [counting-sort.md](counting-sort.md) — сортировка подсчётом (`Counting Sort`)
 
-- [[selection-sort|Сортировка выбором (Selection Sort)]]
-- [[radix-sort|Поразрядная сортировка (Radix Sort)]]
-- [[heap-sort|Сортировка кучей (Heap Sort)]]
+- [Сортировка выбором (Selection Sort)](selection-sort.md)
+- [Поразрядная сортировка (Radix Sort)](radix-sort.md)
+- [Сортировка кучей (Heap Sort)](heap-sort.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

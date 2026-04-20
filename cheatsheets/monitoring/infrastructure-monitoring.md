@@ -25,8 +25,8 @@ updated: "2026-04-20"
 - [Google — SRE Book (Monitoring)](https://sre.google/sre-book/monitoring-distributed-systems/)
 
 ### См. также
-- [[prometheus|Prometheus]] — сбор метрик
-- [[alertmanager|Alertmanager]] — алертинг
+- [Prometheus](metrics/prometheus.md) — сбор метрик
+- [Alertmanager](alerting/alertmanager.md) — алертинг
 - [Monitoring](./) — раздел мониторинга
 
 ## Содержание
@@ -164,7 +164,7 @@ docker run -d --name cadvisor \
 
 ## Алертинг
 
-Правила алертинга задаются в **Prometheus** (или в системе мониторинга). Примеры: **InstanceDown** (up == 0), **HighMemoryUsage** (доля использованной памяти > 90%), **DiskSpaceLow** (свободно < 10%), **HighCPU** (load или использование CPU выше порога). Алерты направляются в **Alertmanager** и далее в **Slack**, **PagerDuty** и т.д. См. [[alertmanager]].
+Правила алертинга задаются в **Prometheus** (или в системе мониторинга). Примеры: **InstanceDown** (up == 0), **HighMemoryUsage** (доля использованной памяти > 90%), **DiskSpaceLow** (свободно < 10%), **HighCPU** (load или использование CPU выше порога). Алерты направляются в **Alertmanager** и далее в **Slack**, **PagerDuty** и т.д. См. [alertmanager](alerting/alertmanager.md).
 
 
 ## Лучшие практики
@@ -230,13 +230,13 @@ docker run -d --name cadvisor \
 
 ### См. также (повтор)
 
-- [[prometheus]] — сбор и хранение метрик
-- [[alertmanager]] — алертинг
+- [prometheus](metrics/prometheus.md) — сбор и хранение метрик
+- [alertmanager](alerting/alertmanager.md) — алертинг
 - [Monitoring](./) — раздел мониторинга
 
 
 ## Заключение
 
-**Infrastructure Monitoring** — основа наблюдаемости: метрики хостов и контейнеров через **Node Exporter** и **cAdvisor**, сбор в **Prometheus**, визуализация в **Grafana**, алертинг через **Alertmanager**. Настройте scrape для всех узлов и контейнеров, определите ключевые метрики и пороги алертов, следуйте лучшим практикам по меткам и интервалам. См. [Node Exporter](https://github.com/prometheus/node_exporter), [cAdvisor](https://github.com/google/cadvisor), [[prometheus]], [[alertmanager]].
+**Infrastructure Monitoring** — основа наблюдаемости: метрики хостов и контейнеров через **Node Exporter** и **cAdvisor**, сбор в **Prometheus**, визуализация в **Grafana**, алертинг через **Alertmanager**. Настройте scrape для всех узлов и контейнеров, определите ключевые метрики и пороги алертов, следуйте лучшим практикам по меткам и интервалам. См. [Node Exporter](https://github.com/prometheus/node_exporter), [cAdvisor](https://github.com/google/cadvisor), [prometheus](metrics/prometheus.md), [alertmanager](alerting/alertmanager.md).
 
 

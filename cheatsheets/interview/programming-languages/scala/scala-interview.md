@@ -166,7 +166,7 @@ Scala лаконичнее и менее ceremonial.
 **Scala** — для тех, кому нужна **максимальная** выразительность системы типов.
 **Kotlin** — для тех, кто хочет **удобную замену Java** с минимальной learning curve.
 
-Подробнее — в [[kotlin-interview|Kotlin]].
+Подробнее — в [Kotlin](../kotlin/kotlin-interview.md).
 
 ## Q4. (!) Что нового в Scala 3?
 
@@ -524,7 +524,7 @@ val add5 = adder(5)
 add5(10) // 15
 ```
 
-Подробнее — в [[kotlin-interview|Kotlin]] (похожий синтаксис).
+Подробнее — в [Kotlin](../kotlin/kotlin-interview.md) (похожий синтаксис).
 
 ## Q18. (!) Чем Scala отличается в функциональной парадигме от Java?
 
@@ -616,7 +616,7 @@ def factNotTail(n: Int): Int =
   else n * factNotTail(n - 1) // не tail call (умножение после)
 ```
 
-`@tailrec` — компилятор **проверяет** что метод действительно tail-recursive, иначе ошибка компиляции. Подробнее — в [[recursion-interview|Рекурсия]].
+`@tailrec` — компилятор **проверяет** что метод действительно tail-recursive, иначе ошибка компиляции. Подробнее — в [Рекурсия](../../algorithms/algorithmic-paradigms/recursion-interview.md).
 
 ## Q22. (!) Что такое implicit (Scala 2)?
 
@@ -1050,22 +1050,22 @@ val grouped = users.groupBy("age").count()
 
 ## See also
 
-- [[java-core-interview|Java Core]] — основа JVM, интероп
-- [[kotlin-interview|Kotlin]] — современная альтернатива
-- [[java-collections-interview|Java Collections]] — конвертации
-- [[java-stream-interview|Java Stream API]] — vs Scala collections
-- [[java-concurrency-interview|Java Concurrency]] — Future базис
-- [[recursion-interview|Рекурсия]] — @tailrec
-- [[design-patterns-interview|Паттерны проектирования]] — type classes, monads
-- [[apache-spark-interview|Apache Spark]] — главное применение Scala
-- [[ktor-interview|Ktor]] — Kotlin аналог http4s
-- [[microservices-interview|Микросервисы]] — Akka, ZIO HTTP
-- [[event-driven-patterns-interview|Event-driven паттерны]] — Akka actors
-- [[jvm-interview|JVM]] — где runs Scala
+- [Java Core](../java/java-core-interview.md) — основа JVM, интероп
+- [Kotlin](../kotlin/kotlin-interview.md) — современная альтернатива
+- [Java Collections](../java/java-collections-interview.md) — конвертации
+- [Java Stream API](../java/java-stream-interview.md) — vs Scala collections
+- [Java Concurrency](../java/java-concurrency-interview.md) — Future базис
+- [Рекурсия](../../algorithms/algorithmic-paradigms/recursion-interview.md) — @tailrec
+- [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — type classes, monads
+- [Apache Spark](../../data-engineering/apache-spark-interview.md) — главное применение Scala
+- [Ktor](../../frameworks/jvm-alternatives/ktor-interview.md) — Kotlin аналог http4s
+- [Микросервисы](../../architecture/microservices-interview.md) — Akka, ZIO HTTP
+- [Event-driven паттерны](../../architecture/event-driven-patterns-interview.md) — Akka actors
+- [JVM](../../jvm/jvm-interview.md) — где runs Scala
 
-- [[go-concurrency-interview|Go Concurrency]]
-- [[go-generics-interview|Go Generics]]
-- [[go-interview|Go]]
-- [[go-memory-gc-interview|Go Memory и GC]]
-- [[go-modules-interview|Go Modules]]
-- [[go-stdlib-interview|Go Standard Library]]
+- [Go Concurrency](../go/go-concurrency-interview.md)
+- [Go Generics](../go/go-generics-interview.md)
+- [Go](../go/go-interview.md)
+- [Go Memory и GC](../go/go-memory-gc-interview.md)
+- [Go Modules](../go/go-modules-interview.md)
+- [Go Standard Library](../go/go-stdlib-interview.md)

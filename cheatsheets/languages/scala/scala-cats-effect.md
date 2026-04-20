@@ -998,8 +998,8 @@ val result = asyncIO.unsafeRunSync()
 
 ## См. также
 
-- [[scala-akka-streams|Akka Streams в Scala]]
-- [[scala-another|Scala Additional Topics]]
-- [[scala-basics|Scala: основы]]
-- [[scala-collections-array|Scala Collections — Array]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [Akka Streams в Scala](scala-akka-streams.md)
+- [Scala Additional Topics](scala-another.md)
+- [Scala: основы](scala-basics.md)
+- [Scala Collections — Array](scala-collections-array.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)

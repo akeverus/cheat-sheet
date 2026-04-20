@@ -36,11 +36,11 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
 - [Performance Monitoring](https://clickhouse.com/docs/en/operations/monitoring)
 
 ### См. также
-- [[clickhouse-replication|Репликация]] — кластеры и репликация
-- [[clickhouse-indexes|Индексы]] — индексы и партиционирование
+- [Репликация](clickhouse-replication.md) — кластеры и репликация
+- [Индексы](clickhouse-indexes.md) — индексы и партиционирование
 
-- [[redis-performance|Redis: Производительность]]
-- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [Redis: Производительность](../redis/redis-performance.md)
+- [PostgreSQL: Полное руководство по основам и мониторингу](../../relational/postgresql/postgres-basics.md)
 ## Содержание
 
 - [Введение в оптимизацию производительности](#введение-в-оптимизацию-производительности)
@@ -845,5 +845,5 @@ ORDER BY read_bytes DESC;
 
 
 **Следующие темы:**
-- [[clickhouse-integration|Интеграции и экосистема]]
+- [Интеграции и экосистема](clickhouse-integration.md)
 

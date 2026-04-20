@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [POSA Pattern Language](https://www.dre.vanderbilt.edu/~schmidt/posa/) — **Patterns for Concurrent and Networked Objects**
 
 ### См. также
-- [[command|Command]] — **Command** паттерн
-- [[producer-consumer|Producer-Consumer]] — **Producer-Consumer** паттерн
-- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
+- [Command](../behavioral/command.md) — **Command** паттерн
+- [Producer-Consumer](producer-consumer.md) — **Producer-Consumer** паттерн
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
 
-- [[double-checked-locking|Двойная проверка блокировки (Double-Checked Locking)]]
-- [[read-write-lock|Блокировка чтения-записи (Read-Write Lock)]]
+- [Двойная проверка блокировки (Double-Checked Locking)](double-checked-locking.md)
+- [Блокировка чтения-записи (Read-Write Lock)](read-write-lock.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

@@ -21,10 +21,10 @@ SpringDoc автоматически генерирует OpenAPI 3.x специ
 - [Springdoc OpenAPI](https://springdoc.org/) — официальный сайт библиотеки springdoc-openapi
 
 ### См. также
-- [[spring-boot|Spring Boot]] — базовый фреймворк
-- [[spring-rest|Spring REST]] — Spring MVC REST-контроллеры
-- [[spring-security|Spring Security]] — защита API, интеграция с Swagger UI
-- [[spring-webflux|Spring WebFlux]] — реактивный стек, отдельная зависимость springdoc
+- [Spring Boot](../../spring/spring-boot.md) — базовый фреймворк
+- [Spring REST](spring-rest.md) — Spring MVC REST-контроллеры
+- [Spring Security](spring-security.md) — защита API, интеграция с Swagger UI
+- [Spring WebFlux](spring-webflux.md) — реактивный стек, отдельная зависимость springdoc
 
 ## Содержание
 

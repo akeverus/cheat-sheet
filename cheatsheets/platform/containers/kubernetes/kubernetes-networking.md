@@ -23,7 +23,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[containerization-overview|Containerization — обзор]]
+- [Containerization — обзор](../containerization-overview.md)
 ## Содержание
 
 - [Основные концепции сети](#основные-концепции-сети)
@@ -1051,7 +1051,7 @@ data:
 - **Service `Mesh`:** внедряйте **Istio**/**Linkerd** при необходимости **mTLS**, **observability** и продвинутой маршрутизации; учитывайте накладные расходы.
 - **DNS и `Load Balancing`:** используйте внутренние **DNS**-имена сервисов; настройте **readiness**/**liveness** для корректного исключения подов из балансировки.
 ## См. также
-- [[kubernetes-advanced|Kubernetes Advanced]] — продвинутые концепции **K8s**
-- [[docker-basics|Docker Basics]] — контейнеризация
-- [[kubernetes-storage|Kubernetes Storage]] — хранение данных в **K8s**
-- [[prometheus|Prometheus]] — мониторинг
+- [Kubernetes Advanced](kubernetes-advanced.md) — продвинутые концепции **K8s**
+- [Docker Basics](../docker/docker-basics.md) — контейнеризация
+- [Kubernetes Storage](kubernetes-storage.md) — хранение данных в **K8s**
+- [Prometheus](../../../monitoring/metrics/prometheus.md) — мониторинг

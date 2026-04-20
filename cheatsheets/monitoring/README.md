@@ -18,45 +18,45 @@ updated: "2026-04-20"
 
 ## Обзорные документы
 
-- [[observability-guide|Руководство по Observability]] — три столпа: метрики, логи, трейсы
-- [[monitoring-best-practices|Лучшие практики мониторинга]] — золотые сигналы, алертинг, организация
-- [[infrastructure-monitoring|Мониторинг инфраструктуры]] — серверы, контейнеры, сеть (Node Exporter, cAdvisor)
+- [Руководство по Observability](observability-guide.md) — три столпа: метрики, логи, трейсы
+- [Лучшие практики мониторинга](monitoring-best-practices.md) — золотые сигналы, алертинг, организация
+- [Мониторинг инфраструктуры](infrastructure-monitoring.md) — серверы, контейнеры, сеть (Node Exporter, cAdvisor)
 
 ## Метрики (`metrics/`)
 
-- [[prometheus]] — сбор метрик, PromQL, алертинг, Java Client, Micrometer
-- [[grafana]] — визуализация, дашборды, панели, Spring Boot интеграция
-- [[micrometer]] — vendor-neutral API метрик для JVM
-- [[statsd]] — лёгкий демон для приёма метрик по UDP
+- [prometheus](metrics/prometheus.md) — сбор метрик, PromQL, алертинг, Java Client, Micrometer
+- [grafana](metrics/grafana.md) — визуализация, дашборды, панели, Spring Boot интеграция
+- [micrometer](metrics/micrometer.md) — vendor-neutral API метрик для JVM
+- [statsd](metrics/statsd.md) — лёгкий демон для приёма метрик по UDP
 
 ## Логирование (`logging/`)
 
-- [[logging-basics|Основы логирования]] — уровни, фреймворки (JUL, SLF4J, Logback)
-- [[slf4j]] — фасад логирования, MDC, Markers
-- [[logback]] — конфигурация, appenders, фильтры
-- [[log4j]] — Apache Log4j 2, async logging
-- [[structured-logging|Структурированное логирование]] — JSON-логи, correlation ID
-- [[logging-best-practices|Лучшие практики логирования]] — принципы, производительность, безопасность
-- [[centralized-logging|Централизованное логирование]] — ELK, Fluentd, CloudWatch
-- [[log-aggregation|Агрегация логов]] — обработка, фильтрация, трансформация
-- [[elk-stack|ELK Stack]] — Elasticsearch, Logstash, Kibana
+- [Основы логирования](logging/logging-basics.md) — уровни, фреймворки (JUL, SLF4J, Logback)
+- [slf4j](logging/slf4j.md) — фасад логирования, MDC, Markers
+- [logback](logging/logback.md) — конфигурация, appenders, фильтры
+- [log4j](logging/log4j.md) — Apache Log4j 2, async logging
+- [Структурированное логирование](logging/structured-logging.md) — JSON-логи, correlation ID
+- [Лучшие практики логирования](logging/logging-best-practices.md) — принципы, производительность, безопасность
+- [Централизованное логирование](logging/centralized-logging.md) — ELK, Fluentd, CloudWatch
+- [Агрегация логов](logging/log-aggregation.md) — обработка, фильтрация, трансформация
+- [ELK Stack](logging/elk-stack.md) — Elasticsearch, Logstash, Kibana
 
 ## Трейсинг (`tracing/`)
 
-- [[distributed-tracing|Distributed Tracing]] — концепции, Span, Trace, Context Propagation
-- [[opentelemetry]] — единый стандарт телеметрии
-- [[jaeger]] — распределённый трейсинг для Java
-- [[zipkin]] — система трейсинга, интеграция с Spring Boot
+- [Distributed Tracing](tracing/distributed-tracing.md) — концепции, Span, Trace, Context Propagation
+- [opentelemetry](tracing/opentelemetry.md) — единый стандарт телеметрии
+- [jaeger](tracing/jaeger.md) — распределённый трейсинг для Java
+- [zipkin](tracing/zipkin.md) — система трейсинга, интеграция с Spring Boot
 
 ## Алертинг (`alerting/`)
 
-- [[alerting|Alerting (обзор)]] — системы алертинга, каналы уведомлений
-- [[alertmanager]] — маршрутизация, группировка, inhibition
-- [[pagerduty]] — инцидент-менеджмент и on-call
-- [[slack-alerting|Slack Alerting]] — уведомления в Slack
+- [Alerting (обзор)](alerting/alerting.md) — системы алертинга, каналы уведомлений
+- [alertmanager](alerting/alertmanager.md) — маршрутизация, группировка, inhibition
+- [pagerduty](alerting/pagerduty.md) — инцидент-менеджмент и on-call
+- [Slack Alerting](alerting/slack-alerting.md) — уведомления в Slack
 
 ## APM (`apm/`)
 
-- [[datadog]] — унифицированная платформа мониторинга
-- [[elastic-apm|Elastic APM]] — APM на Elastic Stack
-- [[new-relic|New Relic]] — мониторинг производительности приложений
+- [datadog](apm/datadog.md) — унифицированная платформа мониторинга
+- [Elastic APM](apm/elastic-apm.md) — APM на Elastic Stack
+- [New Relic](apm/new-relic.md) — мониторинг производительности приложений

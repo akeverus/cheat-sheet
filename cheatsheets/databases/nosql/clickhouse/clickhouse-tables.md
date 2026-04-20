@@ -34,11 +34,11 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 - [ClickHouse Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
 
 ### См. также
-- [[clickhouse-basics|Основы]] — **ClickHouse**
-- [[clickhouse-queries|Запросы]] — работа с данными
+- [Основы](clickhouse-basics.md) — **ClickHouse**
+- [Запросы](clickhouse-queries.md) — работа с данными
 
-- [[clickhouse-replication|ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость]]
-- [[clickhouse-integration|ClickHouse: Интеграции и экосистема — Подключение внешних систем и инструментов]]
+- [ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость](clickhouse-replication.md)
+- [ClickHouse: Интеграции и экосистема — Подключение внешних систем и инструментов](clickhouse-integration.md)
 ## Содержание
 
 - [Создание таблиц](#создание-таблиц)
@@ -938,6 +938,6 @@ SYSTEM RESTORE REPLICA table_name;
 
 
 **Следующие темы:**
-- [[clickhouse-queries|Запросы и аналитика]]
-- [[clickhouse-indexes|Индексы и оптимизация]]
+- [Запросы и аналитика](clickhouse-queries.md)
+- [Индексы и оптимизация](clickhouse-indexes.md)
 

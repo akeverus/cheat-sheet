@@ -664,8 +664,8 @@ public class UserController {
 
 ## См. также
 
-- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
-- [[micronaut-basics|Micronaut: Основы]]
-- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
-- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
-- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]
+- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](micronaut-actuator.md)
+- [Micronaut: Основы](micronaut-basics.md)
+- [Micronaut: Batch Processing — Job Processing и Scheduling](micronaut-batch.md)
+- [Micronaut: Caching — Cache Abstraction и Redis Cache](micronaut-cache.md)
+- [Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing](micronaut-cloud.md)

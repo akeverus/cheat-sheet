@@ -448,14 +448,14 @@ If mutation score < 60% → fail build
 
 ## See also
 
-- [[unit-testing-interview|Unit Testing]] — context
-- [[test-strategies-interview|Test Strategies]]
-- [[property-based-testing-interview|Property-based Testing]]
-- [[load-testing-interview|Load Testing]]
+- [Unit Testing](unit-testing-interview.md) — context
+- [Test Strategies](test-strategies-interview.md)
+- [Property-based Testing](property-based-testing-interview.md)
+- [Load Testing](load-testing-interview.md)
 - [[code-quality-interview|Code Quality]] — если будем добавлять
-- [[code-review-interview|Code Review]]
-- [[refactoring-patterns-interview|Refactoring]]
-- [[mockito-interview|Mockito]] — Java mocking
-- [[integration-testing-interview|Integration Testing]]
-- [[test-automation-interview|Test Automation]]
-- [[pipeline-design-interview|Pipeline Design]] — CI integration
+- [Code Review](../code-quality/code-review-interview.md)
+- [Refactoring](../code-quality/refactoring-patterns-interview.md)
+- [Mockito](mockito-interview.md) — Java mocking
+- [Integration Testing](integration-testing-interview.md)
+- [Test Automation](test-automation-interview.md)
+- [Pipeline Design](../cicd/pipeline-design-interview.md) — CI integration

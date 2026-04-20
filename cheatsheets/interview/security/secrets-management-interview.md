@@ -150,7 +150,7 @@ vault read database/creds/my-role
 # Returns NEW user/password, expires in 1 hour
 ```
 
-Подробнее — в [[vault-interview|Vault]].
+Подробнее — в [Vault](../devops/vault-interview.md).
 
 ## Q5. (!) AWS Secrets Manager?
 
@@ -593,25 +593,25 @@ spec:
 
 ## See also
 
-- [[vault-interview|HashiCorp Vault]] — main tool
-- [[zero-trust-interview|Zero Trust]] — context
-- [[mtls-interview|mTLS]] — alternative auth
-- [[supply-chain-security-interview|Supply Chain Security]]
-- [[application-security-interview|Application Security]] — общая
-- [[oauth2-interview|OAuth2]] — token management
-- [[jwt-interview|JWT]] — short-lived tokens
-- [[aws-interview|AWS]] — Secrets Manager, Parameter Store
-- [[gcp-interview|GCP]] — Secret Manager
-- [[azure-interview|Azure]] — Key Vault
-- [[kubernetes-interview|Kubernetes]] — Secrets, ESO
-- [[microservices-interview|Микросервисы]] — context
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
-- [[git-interview|Git]] — secret scanning
+- [HashiCorp Vault](../devops/vault-interview.md) — main tool
+- [Zero Trust](zero-trust-interview.md) — context
+- [mTLS](mtls-interview.md) — alternative auth
+- [Supply Chain Security](supply-chain-security-interview.md)
+- [Application Security](application-security-interview.md) — общая
+- [OAuth2](oauth2-interview.md) — token management
+- [JWT](jwt-interview.md) — short-lived tokens
+- [AWS](../cloud/aws-interview.md) — Secrets Manager, Parameter Store
+- [GCP](../cloud/gcp-interview.md) — Secret Manager
+- [Azure](../cloud/azure-interview.md) — Key Vault
+- [Kubernetes](../devops/kubernetes-interview.md) — Secrets, ESO
+- [Микросервисы](../architecture/microservices-interview.md) — context
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
+- [Git](../devops/git-interview.md) — secret scanning
 
-- [[application-security-interview|Application Security]]
-- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
-- [[jwt-interview|JWT]]
-- [[mtls-interview|mTLS (Mutual TLS)]]
-- [[oauth2-interview|OAuth2]]
-- [[owasp-top10-interview|OWASP Top 10]]
-- [[secrets-management|Шпаргалка: Управление секретами (Secrets Management]] — теория
+- [Application Security](application-security-interview.md)
+- [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
+- [JWT](jwt-interview.md)
+- [mTLS (Mutual TLS)](mtls-interview.md)
+- [OAuth2](oauth2-interview.md)
+- [OWASP Top 10](owasp-top10-interview.md)
+- [Шпаргалка: Управление секретами (Secrets Management](../../security/data/secrets-management.md) — теория

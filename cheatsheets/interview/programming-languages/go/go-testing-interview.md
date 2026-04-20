@@ -694,7 +694,7 @@ func TestRepo(t *testing.T) {
 
 Аналог Java testcontainers — поднимает Docker-контейнер на время теста. Slow, но **реальный** integration test.
 
-Подробнее — в [[testcontainers-interview|Testcontainers]].
+Подробнее — в [Testcontainers](../../testing/testcontainers-interview.md).
 
 ## Q26. (!) Где запускать тесты — рядом с кодом или в отдельной директории?
 
@@ -749,20 +749,20 @@ Race detector замедляет тесты в 5-10 раз. Включай в **
 
 ## See also
 
-- [[go-interview|Go (базовый)]] — основы
-- [[go-concurrency-interview|Go Concurrency]] — race conditions
-- [[go-stdlib-interview|Go Standard Library]] — testing пакет
-- [[go-modules-interview|Go Modules]] — управление зависимостями (testify)
-- [[unit-testing-interview|Unit Testing]] — общие принципы
-- [[integration-testing-interview|Integration Testing]] — testcontainers
-- [[mockito-interview|Mockito]] — для сравнения с Java mocks
-- [[testcontainers-interview|Testcontainers]] — Docker в тестах
-- [[performance-testing-interview|Performance Testing]] — benchmarks
+- [Go (базовый)](go-interview.md) — основы
+- [Go Concurrency](go-concurrency-interview.md) — race conditions
+- [Go Standard Library](go-stdlib-interview.md) — testing пакет
+- [Go Modules](go-modules-interview.md) — управление зависимостями (testify)
+- [Unit Testing](../../testing/unit-testing-interview.md) — общие принципы
+- [Integration Testing](../../testing/integration-testing-interview.md) — testcontainers
+- [Mockito](../../testing/mockito-interview.md) — для сравнения с Java mocks
+- [Testcontainers](../../testing/testcontainers-interview.md) — Docker в тестах
+- [Performance Testing](../../performance/performance-testing-interview.md) — benchmarks
 
-- [[go-concurrency-interview|Go Concurrency]]
-- [[go-generics-interview|Go Generics]]
-- [[go-interview|Go]]
-- [[go-memory-gc-interview|Go Memory и GC]]
-- [[go-modules-interview|Go Modules]]
-- [[go-stdlib-interview|Go Standard Library]]
-- [[go-testing|Шпаргалка: Go: тестирование]] — теория
+- [Go Concurrency](go-concurrency-interview.md)
+- [Go Generics](go-generics-interview.md)
+- [Go](go-interview.md)
+- [Go Memory и GC](go-memory-gc-interview.md)
+- [Go Modules](go-modules-interview.md)
+- [Go Standard Library](go-stdlib-interview.md)
+- [Шпаргалка: Go: тестирование](../../../languages/go/go-testing.md) — теория

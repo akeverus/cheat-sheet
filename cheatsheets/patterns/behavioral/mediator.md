@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java PropertyChangeSupport](https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/beans/PropertyChangeSupport.html)
 
 ### См. также
-- [[java-collections-list|Java Collections]] — **Java Collections**
-- [[observer|Observer]] — **Observer Pattern**
-- [[command|Command]] — **Command Pattern**
+- [Java Collections](../../languages/java/java-collections-list.md) — **Java Collections**
+- [Observer](observer.md) — **Observer Pattern**
+- [Command](command.md) — **Command Pattern**
 
-- [[iterator|Итератор (Iterator)]]
-- [[visitor|Посетитель (Visitor)]]
+- [Итератор (Iterator)](iterator.md)
+- [Посетитель (Visitor)](visitor.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

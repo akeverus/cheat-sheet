@@ -21,9 +21,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[architecture-patterns|Архитектурные паттерны]]
-- [[soa|SOA (Service-Oriented Architecture)]]
-- [[ddd|Domain-Driven Design (DDD)]]
+- [Архитектурные паттерны](../architecture-patterns.md)
+- [SOA (Service-Oriented Architecture)](../soa.md)
+- [Domain-Driven Design (DDD)](../ddd.md)
 ## Содержание
 
 - [Что такое ADR](#что-такое-adr)
@@ -139,9 +139,9 @@ updated: "2026-04-20"
 5. **Доступность:** храните **ADR** в репозитории проекта
 ## См. также
 
-- [[design-principles|Design Principles]] — принципы проектирования
+- [Design Principles](../design-principles/design-principles.md) — принципы проектирования
 - [Enterprise Patterns](../enterprise-patterns/) — обзор enterprise-паттернов
-- [[system-design-basics|System Design Basics]] — основы проектирования систем
+- [System Design Basics](../system-design/system-design-basics.md) — основы проектирования систем
 
 
 ## Решение проблем

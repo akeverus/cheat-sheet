@@ -20,7 +20,7 @@ updated: "2026-04-20"
 
 - [Jest — Getting Started](https://jestjs.io/docs/getting-started) · [API Reference](https://jestjs.io/docs/api) · [Expect](https://jestjs.io/docs/expect)
 - [Testing Library — React](https://testing-library.com/docs/react-testing-library/intro/) · [Snapshot Testing](https://jestjs.io/docs/snapshot-testing) · [Mocking](https://jestjs.io/docs/mocking)
-- [Unit Testing](../) · [[junit]] · [[pytest]] · [[testing-tools-overview|Testing Tools Overview]]
+- [Unit Testing](../) · [junit](../junit/junit.md) · [pytest](../pytest/pytest.md) · [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
 
 ## Содержание
 
@@ -415,6 +415,6 @@ jobs:
 
 ## Заключение
 
-**Jest** — мощный фреймворк для тестирования **JavaScript** и **TypeScript** с встроенными моками, снапшотами и покрытием. Моки — для изоляции, снапшоты — для стабильного вывода, покрытие — для контроля качества. Для **React** — **React Testing Library**, для **Vue** — **Vue Test Utils**. Документация: [Jest](https://jestjs.io/docs/getting-started), [Unit Testing](../), [[pytest]], [[junit]].
+**Jest** — мощный фреймворк для тестирования **JavaScript** и **TypeScript** с встроенными моками, снапшотами и покрытием. Моки — для изоляции, снапшоты — для стабильного вывода, покрытие — для контроля качества. Для **React** — **React Testing Library**, для **Vue** — **Vue Test Utils**. Документация: [Jest](https://jestjs.io/docs/getting-started), [Unit Testing](../), [pytest](../pytest/pytest.md), [junit](../junit/junit.md).
 
 *Дата: 2026-02-06*

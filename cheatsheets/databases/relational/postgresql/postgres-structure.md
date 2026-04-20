@@ -26,7 +26,7 @@ updated: "2026-04-20"
 - [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [[postgres-design]] — [[postgres-data-ops]] — [[postgres-indexes]].
+См. также: [postgres-design](postgres-design.md) — [postgres-data-ops](postgres-data-ops.md) — [postgres-indexes](postgres-indexes.md).
 
 ## Содержание
 
@@ -131,7 +131,7 @@ ADD CONSTRAINT fk_articles_authors
 FOREIGN KEY (author_id) REFERENCES authors(id)
 ON DELETE SET NULL;
 ```
-- Индексы для ускорения выборок добавляйте отдельно (см. [[postgres-indexes]]).
+- Индексы для ускорения выборок добавляйте отдельно (см. [postgres-indexes](postgres-indexes.md)).
 
 ## Изменение таблиц
 - Добавить столбец: `ALTER TABLE t ADD COLUMN col TEXT;`
@@ -1030,8 +1030,8 @@ WHERE tablename = 'customers';
 
 ## См. также
 
-- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
-- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
-- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
-- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
-- [[postgres-design|PostgreSQL: проектирование и нормализация]]
+- [PostgreSQL: администрирование и обслуживание](postgres-admin.md)
+- [PostgreSQL: Резервное копирование и восстановление](postgres-backup-restore.md)
+- [PostgreSQL: Полное руководство по основам и мониторингу](postgres-basics.md)
+- [PostgreSQL: операции с данными (CRUD)](postgres-data-ops.md)
+- [PostgreSQL: проектирование и нормализация](postgres-design.md)

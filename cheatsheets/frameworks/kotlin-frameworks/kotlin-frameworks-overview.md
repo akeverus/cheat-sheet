@@ -22,9 +22,9 @@ updated: "2026-04-20"
 - [Exposed](https://github.com/JetBrains/Exposed)
 
 ### См. также
-- [[README|Frameworks README]] — раздел фреймворков
-- [[README|Java Frameworks]] — **Spring**, **Quarkus**
-- [[README|Kotlin (languages)]] — язык **Kotlin**
+- [Frameworks README](../../basics/README.md) — раздел фреймворков
+- [Java Frameworks](../../basics/README.md) — **Spring**, **Quarkus**
+- [Kotlin (languages)](../../basics/README.md) — язык **Kotlin**
 
 ## Содержание
 
@@ -83,7 +83,7 @@ fun main() {
 
 ## Spring с Kotlin
 
-**Spring Boot** полностью поддерживает **Kotlin**: **Kotlin DSL** для конфигурации, корутины (spring-boot-starter-webflux), **null-safety**. Многие проекты выбирают **Spring** для готовой экосистемы (Security, Data, Cloud) и пишут код на **Kotlin**. См. [[README|Spring]] и [[kotlin-spring|Kotlin Spring]].
+**Spring Boot** полностью поддерживает **Kotlin**: **Kotlin DSL** для конфигурации, корутины (spring-boot-starter-webflux), **null-safety**. Многие проекты выбирают **Spring** для готовой экосистемы (Security, Data, Cloud) и пишут код на **Kotlin**. См. [Spring](../../basics/README.md) и [Kotlin Spring](../../languages/kotlin/kotlin-spring.md).
 
 
 ## Exposed
@@ -162,6 +162,6 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 
 ## Заключение
 
-**Kotlin**-экосистема предлагает **Ktor** для легковесных асинхронных приложений и **Spring** для enterprise. **Exposed**, **kotlinx** и **Koin** дополняют стек. См. [[README|Frameworks README]] и [[README|Kotlin (languages)]].
+**Kotlin**-экосистема предлагает **Ktor** для легковесных асинхронных приложений и **Spring** для enterprise. **Exposed**, **kotlinx** и **Koin** дополняют стек. См. [Frameworks README](../../basics/README.md) и [Kotlin (languages)](../../basics/README.md).
 
 

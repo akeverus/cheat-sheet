@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Weka](https://waikato.github.io/weka-wiki/) — **Weka** (Machine Learning)
 
 ### См. также
-- [[genetic-algorithms|Генетические алгоритмы]] — генетические алгоритмы
-- [[deeplearning4j|Deeplearning4j]] — нейронные сети
-- [[opennlp|Apache OpenNLP]] — обработка естественного языка
+- [Генетические алгоритмы](genetic-algorithms.md) — генетические алгоритмы
+- [Deeplearning4j](deeplearning4j.md) — нейронные сети
+- [Apache OpenNLP](opennlp.md) — обработка естественного языка
 
-- [[logistic-regression|Логистическая регрессия]]
-- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
+- [Логистическая регрессия](logistic-regression.md)
+- [Реализация CNN с помощью Deeplearning4j](cnn-deeplearning4j.md)
 ## Содержание
 
 - [Обзор](#обзор)

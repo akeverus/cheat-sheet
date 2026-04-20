@@ -877,8 +877,8 @@ ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
 ## См. также
 
-- [[dropwizard-basics|Dropwizard: Основы]]
-- [[javalin-basics|Javalin: Основы]]
-- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
-- [[micronaut-basics|Micronaut: Основы]]
-- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [Dropwizard: Основы](../dropwizard/dropwizard-basics.md)
+- [Javalin: Основы](../javalin/javalin-basics.md)
+- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](../micronaut/micronaut-actuator.md)
+- [Micronaut: Основы](../micronaut/micronaut-basics.md)
+- [Micronaut: Batch Processing — Job Processing и Scheduling](../micronaut/micronaut-batch.md)

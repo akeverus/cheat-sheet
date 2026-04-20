@@ -22,13 +22,13 @@ updated: "2026-04-20"
 - [Spring Cloud Function](https://docs.spring.io/spring-cloud-function/docs/current/reference/html/)
 
 ### См. также
-- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
-- [[microservices|Микросервисы]] — микросервисная архитектура
-- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
+- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
+- [Микросервисы](software-architecture/microservices.md) — микросервисная архитектура
+- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
 
-- [[soa|SOA (Service-Oriented Architecture)]]
-- [[ddd|Domain-Driven Design (DDD)]]
-- [[serverless-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [SOA (Service-Oriented Architecture)](soa.md)
+- [Domain-Driven Design (DDD)](ddd.md)
+- [Вопросы на собеседовании](../interview/cloud/serverless-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Serverless Architecture](#введение-в-serverless-architecture)

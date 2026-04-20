@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Kotlin Flow Tutorial](https://www.baeldung.com/kotlin/flow)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-concurrency-basics|Корутины]]
-- [[kotlin-concurrency-advanced|Продвинутые темы корутин]]
-- [[kotlin-reactive-rxkotlin|RxKotlin]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Корутины](kotlin-concurrency-basics.md)
+- [Продвинутые темы корутин](kotlin-concurrency-advanced.md)
+- [RxKotlin](kotlin-reactive-rxkotlin.md)
 
-- [[kotlin-performance|Kotlin Performance]]
+- [Kotlin Performance](kotlin-performance.md)
 ## Содержание
 
 - [Введение в Flow](#введение-в-flow)

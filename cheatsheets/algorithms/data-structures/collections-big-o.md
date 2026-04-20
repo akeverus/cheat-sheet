@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [Big O Notation (Khan Academy)](https://www.khanacademy.org/computing/computer-science/algorithms/asymptotic-notation/a/big-o-notation)
 
 ### См. также
-- [[collections-complexity|Сложность коллекций]] — временная сложность
-- [[binary-search|Бинарный поиск]] — binary search
+- [Сложность коллекций](collections-complexity.md) — временная сложность
+- [Бинарный поиск](../searching/binary-search.md) — binary search
 - [Алгоритмы сортировки](../sorting/) — обзор сортировок
 
-- [[linked-list-middle|Поиск среднего элемента связного списка (Linked List)]]
-- [[linked-list-reverse|Реверс связанного списка (Linked List)]]
-- [[collections-lock-free|Введение в структуры данных без блокировок]]
+- [Поиск среднего элемента связного списка (Linked List)](linked-list-middle.md)
+- [Реверс связанного списка (Linked List)](linked-list-reverse.md)
+- [Введение в структуры данных без блокировок](collections-lock-free.md)
 ## Содержание
 
 - [Обзор](#обзор)

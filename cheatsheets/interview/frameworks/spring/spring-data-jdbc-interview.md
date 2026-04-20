@@ -491,12 +491,12 @@ public class OrderService {
 
 ## See also
 
-- [[spring-data-jpa-interview|Spring Data JPA]] — сравнение JPA vs JDBC, ORM-концепции
-- [[hibernate-interview|Hibernate]] — под капотом Spring Data JPA
-- [[spring-framework-interview|Spring Framework]] — транзакции, DI
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация Spring Data JDBC
-- [[database-transactions-interview|Транзакции БД]] — изоляция, оптимистичная блокировка
-- [[sql-interview|SQL]] — plain SQL в @Query Spring Data JDBC
-- [[flyway-liquibase-interview|Flyway / Liquibase]] — миграции схемы (обязательны для Spring Data JDBC)
-- [[ddd-interview|DDD]] — агрегаты, bounded contexts, aggregate root
-- [[spring-data-jdbc|Шпаргалка: Spring Data JDBC: Полное руководство по ]] — теория
+- [Spring Data JPA](spring-data-jpa-interview.md) — сравнение JPA vs JDBC, ORM-концепции
+- [Hibernate](../../databases/hibernate-interview.md) — под капотом Spring Data JPA
+- [Spring Framework](spring-framework-interview.md) — транзакции, DI
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация Spring Data JDBC
+- [Транзакции БД](../../databases/database-transactions-interview.md) — изоляция, оптимистичная блокировка
+- [SQL](../../databases/sql-interview.md) — plain SQL в @Query Spring Data JDBC
+- [Flyway / Liquibase](../../databases/flyway-liquibase-interview.md) — миграции схемы (обязательны для Spring Data JDBC)
+- [DDD](../../architecture/ddd-interview.md) — агрегаты, bounded contexts, aggregate root
+- [Шпаргалка: Spring Data JDBC: Полное руководство по](../../../frameworks/java-frameworks/spring/spring-data-jdbc.md) — теория

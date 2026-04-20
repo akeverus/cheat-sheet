@@ -369,7 +369,7 @@ int idx = Collections.binarySearch(linkedList, key);
 - Скопировать в массив + Binary Search — `O(n) + O(log n)`
 - TreeMap/TreeSet
 
-Подробнее — в [[linked-lists-interview|Связные списки]].
+Подробнее — в [Связные списки](../data-structures/linked-lists-interview.md).
 
 ## Q14. Exponential Search?
 
@@ -587,7 +587,7 @@ int bfsShortestPath(List<List<Integer>> adj, int start, int end) {
 }
 ```
 
-`O(V + E)`. Подробнее — в [[graphs-interview|Графы]].
+`O(V + E)`. Подробнее — в [Графы](../data-structures/graphs-interview.md).
 
 ## Q23. (!) DFS как алгоритм поиска?
 
@@ -615,7 +615,7 @@ boolean dfs(List<List<Integer>> adj, int u, int target, boolean[] visited) {
 - Load factor разумный (не > 1)
 - `equals()` работает быстро
 
-При плохом hashCode `HashMap` деградирует. Подробнее — в [[hash-tables-interview|Хеш-таблицы]].
+При плохом hashCode `HashMap` деградирует. Подробнее — в [Хеш-таблицы](../data-structures/hash-tables-interview.md).
 
 ## Q25. Поиск в TreeMap — O(log n)?
 
@@ -726,28 +726,28 @@ void testBinarySearchEdgeCases() {
 }
 ```
 
-Подробнее о тестировании — в [[unit-testing-interview|Unit Testing]].
+Подробнее о тестировании — в [Unit Testing](../../testing/unit-testing-interview.md).
 
 ---
 
 ## See also
 
-- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
-- [[sorting-algorithms-interview|Алгоритмы сортировки]] — Binary Search требует сортировки
-- [[arrays-strings-interview|Массивы и строки]] — поиск в массиве
-- [[linked-lists-interview|Связные списки]] — почему Binary Search неэффективен на linked list
-- [[trees-interview|Деревья]] — поиск в BST
-- [[hash-tables-interview|Хеш-таблицы]] — O(1) lookup
-- [[graphs-interview|Графы]] — BFS, DFS как поиск
-- [[divide-and-conquer-interview|Divide and Conquer]] — Binary Search как D&C
-- [[complexity-analysis-interview|Анализ сложности]] — почему O(log n)
-- [[two-pointers-sliding-window-interview|Two Pointers]] — альтернатива Binary Search
-- [[java-collections-interview|Java Collections]] — Arrays.binarySearch, Collections.binarySearch
-- [[unit-testing-interview|Unit Testing]] — testing edge cases
+- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
+- [Алгоритмы сортировки](sorting-algorithms-interview.md) — Binary Search требует сортировки
+- [Массивы и строки](../data-structures/arrays-strings-interview.md) — поиск в массиве
+- [Связные списки](../data-structures/linked-lists-interview.md) — почему Binary Search неэффективен на linked list
+- [Деревья](../data-structures/trees-interview.md) — поиск в BST
+- [Хеш-таблицы](../data-structures/hash-tables-interview.md) — O(1) lookup
+- [Графы](../data-structures/graphs-interview.md) — BFS, DFS как поиск
+- [Divide and Conquer](../algorithmic-paradigms/divide-and-conquer-interview.md) — Binary Search как D&C
+- [Анализ сложности](../complexity/complexity-analysis-interview.md) — почему O(log n)
+- [Two Pointers](../algorithmic-paradigms/two-pointers-sliding-window-interview.md) — альтернатива Binary Search
+- [Java Collections](../../programming-languages/java/java-collections-interview.md) — Arrays.binarySearch, Collections.binarySearch
+- [Unit Testing](../../testing/unit-testing-interview.md) — testing edge cases
 
-- [[sorting-algorithms-interview|Алгоритмы сортировки]]
-- [[backtracking-interview|Backtracking]]
-- [[divide-and-conquer-interview|Divide and Conquer]]
-- [[dynamic-programming-interview|Динамическое программирование]]
-- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
-- [[recursion-interview|Рекурсия]]
+- [Алгоритмы сортировки](sorting-algorithms-interview.md)
+- [Backtracking](../algorithmic-paradigms/backtracking-interview.md)
+- [Divide and Conquer](../algorithmic-paradigms/divide-and-conquer-interview.md)
+- [Динамическое программирование](../algorithmic-paradigms/dynamic-programming-interview.md)
+- [Жадные алгоритмы (Greedy)](../algorithmic-paradigms/greedy-algorithms-interview.md)
+- [Рекурсия](../algorithmic-paradigms/recursion-interview.md)

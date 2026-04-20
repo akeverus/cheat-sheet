@@ -22,13 +22,13 @@ updated: "2026-04-20"
 - [Playwright](https://playwright.dev/) — Playwright
 
 ### См. также
-- [[selenium|Selenium]] — Selenium WebDriver
+- [Selenium](selenium/selenium.md) — Selenium WebDriver
 - [Обзор тестирования](../) · [Юнит-тесты](../unit-testing/)
 
-- [[cucumber|Cucumber для Java]]
-- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
-- [[micronaut-testing|Micronaut: Testing — Unit Tests, Integration Tests и Mocking]]
-- [[spring-rest|Spring REST API: Полное руководство по разработке RESTful веб-сервисов]]
+- [Cucumber для Java](../cucumber.md)
+- [Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest](../../frameworks/java-frameworks/quarkus/quarkus-testing.md)
+- [Micronaut: Testing — Unit Tests, Integration Tests и Mocking](../../frameworks/java-frameworks/micronaut/micronaut-testing.md)
+- [Spring REST API: Полное руководство по разработке RESTful веб-сервисов](../../frameworks/java-frameworks/spring/spring-rest.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -47,7 +47,7 @@ UI-тестирование — это автоматизация взаимод
 
 ## Selenium WebDriver
 
-WebDriver даёт API для управления браузером (Chrome, Firefox, Edge): поиск элементов по id, CSS, XPath; действия (click, sendKeys); явные и неявные ожидания. Подробнее в [[selenium|отдельном руководстве по Selenium]].
+WebDriver даёт API для управления браузером (Chrome, Firefox, Edge): поиск элементов по id, CSS, XPath; действия (click, sendKeys); явные и неявные ожидания. Подробнее в [отдельном руководстве по Selenium](selenium/selenium.md).
 
 
 ## Playwright и Cypress
@@ -83,4 +83,4 @@ Playwright (Microsoft) — мультибраузерность, встроен�
 
 ## Заключение
 
-Автоматизацию браузерного сценария можно строить на Selenium, Playwright или Cypress. Подробные примеры и настройка — в [[selenium|руководстве по Selenium]] и в [общем обзоре тестирования](../).
+Автоматизацию браузерного сценария можно строить на Selenium, Playwright или Cypress. Подробные примеры и настройка — в [руководстве по Selenium](selenium/selenium.md) и в [общем обзоре тестирования](../).

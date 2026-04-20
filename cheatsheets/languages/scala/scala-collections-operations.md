@@ -23,12 +23,12 @@ related: ["scala/scala-collections.md", "scala/scala-collections-list.md"]
 - [Scala Collections Operations](https://docs.scala-lang.org/overviews/collections-2.13/overview.html)
 
 ### См. также
-- [[scala-collections|Обзор коллекций]]
-- [[scala-collections-list|Списки]]
-- [[scala-collections-grouping|Группировка]]
+- [Обзор коллекций](scala-collections.md)
+- [Списки](scala-collections-list.md)
+- [Группировка](scala-collections-grouping.md)
 
-- [[scala-collections-vector|Scala Collections — Vector]]
-- [[scala-collections-set|Scala Collections — Set]]
+- [Scala Collections — Vector](scala-collections-vector.md)
+- [Scala Collections — Set](scala-collections-set.md)
 ## Содержание
 
 - [Трансформации](#трансформации)

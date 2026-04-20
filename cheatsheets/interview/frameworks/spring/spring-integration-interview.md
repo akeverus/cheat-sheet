@@ -455,13 +455,13 @@ management:
 
 ## See also
 
-- [[spring-kafka-interview|Spring Kafka]] — Kafka как канал/адаптер в Spring Integration
-- [[spring-messaging-interview|Spring Messaging]] — JMS, RabbitMQ базовые абстракции
-- [[spring-batch-interview|Spring Batch]] — batch-обработка, часто используется совместно
-- [[event-driven-patterns-interview|Event-Driven Patterns]] — теория EIP паттернов
-- [[spring-modulith-interview|Spring Modulith]] — ApplicationEvents как альтернатива для монолита
-- [[spring-webflux-interview|Spring WebFlux]] — FluxMessageChannel как мост к реактивному стеку
-- [[kafka-interview|Apache Kafka]] — основы Kafka для KafkaMessageDrivenChannelAdapter
-- [[rabbitmq-interview|RabbitMQ]] — основы AMQP для RabbitMQ channel adapter
-- [[spring-transaction-interview|Spring @Transactional]] — транзакции в интеграционных потоках
-- [[spring-testing-interview|Spring Testing]] — тестирование Spring Integration потоков
+- [Spring Kafka](spring-kafka-interview.md) — Kafka как канал/адаптер в Spring Integration
+- [Spring Messaging](spring-messaging-interview.md) — JMS, RabbitMQ базовые абстракции
+- [Spring Batch](spring-batch-interview.md) — batch-обработка, часто используется совместно
+- [Event-Driven Patterns](../../architecture/event-driven-patterns-interview.md) — теория EIP паттернов
+- [Spring Modulith](spring-modulith-interview.md) — ApplicationEvents как альтернатива для монолита
+- [Spring WebFlux](spring-webflux-interview.md) — FluxMessageChannel как мост к реактивному стеку
+- [Apache Kafka](../../messaging/kafka-interview.md) — основы Kafka для KafkaMessageDrivenChannelAdapter
+- [RabbitMQ](../../messaging/rabbitmq-interview.md) — основы AMQP для RabbitMQ channel adapter
+- [Spring @Transactional](spring-transaction-interview.md) — транзакции в интеграционных потоках
+- [Spring Testing](spring-testing-interview.md) — тестирование Spring Integration потоков

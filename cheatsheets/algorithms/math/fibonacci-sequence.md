@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Program for Fibonacci numbers](https://www.geeksforgeeks.org/program-for-nth-fibonacci-number/)
 
 ### См. также
-- [[factorial-calculation|`factorial-calculation.md`]] — вычисление факториала
-- [[greatest-common-divisor|`greatest-common-divisor.md`]] — наибольший общий делитель (`НОД`)
+- [`factorial-calculation.md`](factorial-calculation.md) — вычисление факториала
+- [`greatest-common-divisor.md`](greatest-common-divisor.md) — наибольший общий делитель (`НОД`)
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

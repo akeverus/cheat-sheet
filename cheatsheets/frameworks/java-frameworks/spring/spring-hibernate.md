@@ -39,7 +39,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[spring-data-jpa|Spring Data JPA]] — Spring Data-абстракция поверх JPA/Hibernate
+- [Spring Data JPA](spring-data-jpa.md) — Spring Data-абстракция поверх JPA/Hibernate
 ## Содержание
 
 - [Введение в ORM и JPA](#введение-в-orm-и-jpa)
@@ -1952,6 +1952,6 @@ java -Dcom.sun.management.jmxremote \
 
 ## См. также
 
-- [[spring-data-jpa|**Spring Data JPA**]] — **Spring Data JPA** основы
-- [[spring-boot|**Spring Boot**]] — **Spring Boot** интеграция
-- [[spring-boot|Spring Boot]] — настройка datasource и JPA через Spring Boot
+- [**Spring Data JPA**](spring-data-jpa.md) — **Spring Data JPA** основы
+- [**Spring Boot**](../../spring/spring-boot.md) — **Spring Boot** интеграция
+- [Spring Boot](../../spring/spring-boot.md) — настройка datasource и JPA через Spring Boot

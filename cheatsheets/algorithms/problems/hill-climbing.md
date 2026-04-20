@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [Heuristic Search (Wikipedia)](https://en.wikipedia.org/wiki/Heuristic_(computer_science))
 
 ### См. также
-- [[multi-swarm|Multi-Swarm]]
-- [[genetic-algorithms|Генетические алгоритмы]] — генетические алгоритмы
+- [Multi-Swarm](multi-swarm.md)
+- [Генетические алгоритмы](../ai-ml/genetic-algorithms.md) — генетические алгоритмы
 - [Алгоритмы оптимизации](../algorithmic-paradigms/) — парадигмы
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
 ## Содержание
 
 - [Обзор](#обзор)

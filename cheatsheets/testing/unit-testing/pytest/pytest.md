@@ -28,9 +28,9 @@ updated: "2026-04-20"
 
 ### См. также
 - [Unit Testing](../) — юнит-тестирование
-- [[jest|Jest]] — фреймворк для **JavaScript**/**TypeScript**
-- [[junit|JUnit]] — фреймворк для **Java**
-- [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
+- [Jest](../jest/jest.md) — фреймворк для **JavaScript**/**TypeScript**
+- [JUnit](../junit/junit.md) — фреймворк для **Java**
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) — обзор инструментов
 
 ## Содержание
 
@@ -589,6 +589,6 @@ jobs:
 
 ## Заключение
 
-**pytest** — мощный фреймворк для тестирования **Python** с минимальным синтаксисом, фикстурами, параметризацией и богатой экосистемой плагинов. Используйте фикстуры для подготовки данных, параметризацию для множества сценариев, маркеры для категоризации тестов. Для углублённого изучения см. [pytest Documentation](https://docs.pytest.org/), [Unit Testing](../), [[jest]], [[junit]].
+**pytest** — мощный фреймворк для тестирования **Python** с минимальным синтаксисом, фикстурами, параметризацией и богатой экосистемой плагинов. Используйте фикстуры для подготовки данных, параметризацию для множества сценариев, маркеры для категоризации тестов. Для углублённого изучения см. [pytest Documentation](https://docs.pytest.org/), [Unit Testing](../), [jest](../jest/jest.md), [junit](../junit/junit.md).
 
 

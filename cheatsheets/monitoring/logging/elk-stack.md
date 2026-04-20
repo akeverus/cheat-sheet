@@ -23,9 +23,9 @@ ELK Stack (Elasticsearch, Logstash, Kibana) — набор инструмент�
 
 
 ### См. также
-- [[slf4j|SLF4J для Java]]
-- [[centralized-logging|Централизованное логирование для Java]]
-- [[elk-stack-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [SLF4J для Java](slf4j.md)
+- [Централизованное логирование для Java](centralized-logging.md)
+- [Вопросы на собеседовании](../../interview/monitoring/elk-stack-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Компоненты ELK Stack](#компоненты-elk-stack)
@@ -320,6 +320,6 @@ Watcher (X-Pack): создание watch с trigger (schedule), input (search п
 **Кластер Elasticsearch в статусе red или yellow.** Red — часть шардов недоступна: проверьте _cluster/allocation/explain и логи узлов; частые причины — диск заполнен, нехватка памяти, сбой узла. Yellow — реплики не размещены (норма для одного узла); для production добавьте узлы или настройте number_of_replicas после появления второго узла.
 ## См. также
 
-- [[prometheus|Prometheus]] — альтернативная система мониторинга
-- [[grafana|Grafana]] — визуализация
-- [[docker-basics|Docker]] — контейнеризация
+- [Prometheus](../metrics/prometheus.md) — альтернативная система мониторинга
+- [Grafana](../metrics/grafana.md) — визуализация
+- [Docker](../../platform/containers/docker/docker-basics.md) — контейнеризация

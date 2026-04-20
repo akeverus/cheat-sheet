@@ -29,9 +29,9 @@ updated: "2026-04-20"
 - [Scanner](https://portswigger.net/burp/documentation/desktop/tools/scanner)
 
 ### См. также
-- [[owasp-zap|OWASP ZAP]] — бесплатный сканер и прокси
-- [[sqlmap|sqlmap]] — автоматизация SQL-инъекций
-- [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
+- [OWASP ZAP](../owasp-zap/owasp-zap.md) — бесплатный сканер и прокси
+- [sqlmap](../sqlmap/sqlmap.md) — автоматизация SQL-инъекций
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) — обзор инструментов
 
 
 ## Содержание
@@ -363,4 +363,4 @@ Burp Suite Professional поддерживает **Burp Suite Headless** для 
 
 ## Заключение
 
-Burp Suite — стандартный инструмент для ручного и полуавтоматического тестирования безопасности веб-приложений. Proxy, Repeater и Intruder покрывают перехват, ручную проверку и фаззинг; Scanner (Professional) ускоряет поиск уязвимостей. Используйте scope, Session handling и расширения для эффективной работы. Дополнительно: [Burp Suite Documentation](https://portswigger.net/burp/documentation), [[owasp-zap|OWASP ZAP]], [[sqlmap]], [[testing-tools-overview|Testing Tools Overview]].
+Burp Suite — стандартный инструмент для ручного и полуавтоматического тестирования безопасности веб-приложений. Proxy, Repeater и Intruder покрывают перехват, ручную проверку и фаззинг; Scanner (Professional) ускоряет поиск уязвимостей. Используйте scope, Session handling и расширения для эффективной работы. Дополнительно: [Burp Suite Documentation](https://portswigger.net/burp/documentation), [OWASP ZAP](../owasp-zap/owasp-zap.md), [sqlmap](../sqlmap/sqlmap.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).

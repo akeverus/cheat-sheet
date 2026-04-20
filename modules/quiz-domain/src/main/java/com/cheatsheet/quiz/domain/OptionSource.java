@@ -14,12 +14,15 @@ public enum OptionSource {
     OPENAI,
 
     /** Вариант сгенерирован через DeepSeek API. */
-    DEEPSEEK;
+    DEEPSEEK,
+
+    /** Вариант сгенерирован Claude в рамках офлайн-сида (без похода в runtime-AI). */
+    CLAUDE;
 
     /**
      * Парсит строку в источник варианта. Для null, пустой или неизвестной строки возвращает {@link #OPENAI}.
      *
-     * @param value строка (например из БД: "OPENAI", "DEEPSEEK")
+     * @param value строка (например из БД: "OPENAI", "DEEPSEEK", "CLAUDE")
      * @return соответствующий источник или OPENAI по умолчанию
      */
     public static OptionSource fromString(String value) {
@@ -32,6 +35,8 @@ public enum OptionSource {
                 return OPENAI;
             case "DEEPSEEK":
                 return DEEPSEEK;
+            case "CLAUDE":
+                return CLAUDE;
             default:
                 return OPENAI;
         }

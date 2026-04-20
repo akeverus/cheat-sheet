@@ -645,22 +645,22 @@ spec:
 
 ## See also
 
-- [[consul-interview|Consul]] — другой HashiCorp tool
-- [[ansible-interview|Ansible]] — для secrets distribution
-- [[istio-service-mesh-interview|Istio]] — mTLS via Vault PKI
-- [[secrets-management-interview|Secrets Management]] — concepts
-- [[application-security-interview|Application Security]] — context
-- [[kubernetes-interview|Kubernetes]] — Vault в K8s
-- [[microservices-interview|Микросервисы]] — secrets для microservices
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — secrets management
-- [[aws-interview|AWS]] — Secrets Manager comparison
-- [[oauth2-interview|OAuth2]] — auth flows
-- [[jwt-interview|JWT]] — JWT auth
-- [[zero-trust-interview|Zero Trust]] — Vault key component
+- [Consul](consul-interview.md) — другой HashiCorp tool
+- [Ansible](ansible-interview.md) — для secrets distribution
+- [Istio](istio-service-mesh-interview.md) — mTLS via Vault PKI
+- [Secrets Management](../security/secrets-management-interview.md) — concepts
+- [Application Security](../security/application-security-interview.md) — context
+- [Kubernetes](kubernetes-interview.md) — Vault в K8s
+- [Микросервисы](../architecture/microservices-interview.md) — secrets для microservices
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — secrets management
+- [AWS](../cloud/aws-interview.md) — Secrets Manager comparison
+- [OAuth2](../security/oauth2-interview.md) — auth flows
+- [JWT](../security/jwt-interview.md) — JWT auth
+- [Zero Trust](../security/zero-trust-interview.md) — Vault key component
 
-- [[ansible-interview|Ansible]]
-- [[argocd-interview|ArgoCD и GitOps]]
-- [[consul-interview|HashiCorp Consul]]
-- [[docker-interview|Docker]]
-- [[git-interview|Git]]
-- [[gradle-maven-interview|Gradle и Maven]]
+- [Ansible](ansible-interview.md)
+- [ArgoCD и GitOps](argocd-interview.md)
+- [HashiCorp Consul](consul-interview.md)
+- [Docker](docker-interview.md)
+- [Git](git-interview.md)
+- [Gradle и Maven](gradle-maven-interview.md)

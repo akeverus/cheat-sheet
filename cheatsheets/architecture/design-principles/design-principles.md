@@ -20,9 +20,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[architecture-patterns|Архитектурные паттерны]]
-- [[soa|SOA (Service-Oriented Architecture)]]
-- [[ddd|Domain-Driven Design (DDD)]]
+- [Архитектурные паттерны](../architecture-patterns.md)
+- [SOA (Service-Oriented Architecture)](../soa.md)
+- [Domain-Driven Design (DDD)](../ddd.md)
 ## Содержание
 
 - [SOLID принципы](#solid-принципы)
@@ -347,8 +347,8 @@ class BankAccount {
 **YAGNI?** Не вводить абстракции «на будущее» без текущей потребности.
 ## См. также
 
-- [[solid-principles|SOLID — подробный справочник]] — SRP, OCP, LSP, ISP, DIP с примерами на Java
-- [[adr-template|Architectural Decision Records]] — шаблон ADR
+- [SOLID — подробный справочник](solid-principles.md) — SRP, OCP, LSP, ISP, DIP с примерами на Java
+- [Architectural Decision Records](../architectural-decision-records/adr-template.md) — шаблон ADR
 - [Enterprise Patterns](../enterprise-patterns/) — обзор enterprise-паттернов
 - [Design Patterns](../) — корневой раздел архитектуры
 

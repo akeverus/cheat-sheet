@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Visualgo: Counting Sort](https://visualgo.net/)
 
 ### См. также
-- [[radix-sort|Сортировка поразрядная]] — **radix sort**
-- [[bucket-sort|Сортировка блочная]] — **bucket sort**
+- [Сортировка поразрядная](radix-sort.md) — **radix sort**
+- [Сортировка блочная](bucket-sort.md) — **bucket sort**
 
-- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
-- [[selection-sort|Сортировка выбором (Selection Sort)]]
-- [[heap-sort|Сортировка кучей (Heap Sort)]]
+- [Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)](bead-sort.md)
+- [Сортировка выбором (Selection Sort)](selection-sort.md)
+- [Сортировка кучей (Heap Sort)](heap-sort.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

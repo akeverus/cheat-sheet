@@ -19,10 +19,10 @@ TimescaleDB — расширение PostgreSQL для хранения и об�
 - [TimescaleDB Documentation](https://docs.timescale.com/) — официальная документация
 
 ### См. также
-- [[influxdb-basics|InfluxDB]] — time-series БД без SQL
-- [[postgres-basics|PostgreSQL]] — основы PostgreSQL
-- [[postgres-queries|PostgreSQL: запросы]] — оконные функции, CTE
-- [[monitoring-best-practices|Мониторинг]] — использование time-series БД для метрик
+- [InfluxDB](../influxdb/influxdb-basics.md) — time-series БД без SQL
+- [PostgreSQL](../../relational/postgresql/postgres-basics.md) — основы PostgreSQL
+- [PostgreSQL: запросы](../../relational/postgresql/postgres-queries.md) — оконные функции, CTE
+- [Мониторинг](../../../monitoring/monitoring-best-practices.md) — использование time-series БД для метрик
 
 ## Содержание
 

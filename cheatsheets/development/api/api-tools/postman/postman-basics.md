@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Postman Documentation](https://learning.postman.com/docs/getting-started/introduction/) — официальная документация **Postman**
 
 ### См. также
-- [[api-testing-basics|API Testing]] — основы тестирования API
-- [[insomnia-basics|Insomnia]] — клиент **Insomnia**
+- [API Testing](../api-testing/api-testing-basics.md) — основы тестирования API
+- [Insomnia](../insomnia/insomnia-basics.md) — клиент **Insomnia**
 
-- [[grpc|gRPC]]
-- [[graphql|GraphQL для Java]]
-- [[rest-api-best-practices|REST API Best Practices]]
+- [gRPC](../../grpc/grpc.md)
+- [GraphQL для Java](../../graphql/graphql.md)
+- [REST API Best Practices](../../rest/rest-api-best-practices.md)
 ## Содержание
 
 - [Введение в Postman](#введение-в-postman)

@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Point2D.distance() (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/awt/geom/Point2D.html)
 
 ### См. также
-- [[circle-area-calculation|Вычисление площади круга]] — площадь круга
-- [[line-intersection|Пересечение линий]] — пересечение линий
+- [Вычисление площади круга](circle-area-calculation.md) — площадь круга
+- [Пересечение линий](line-intersection.md) — пересечение линий
 
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
-- [[lat-lon-to-2d-point|Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)]]
-- [[factorial-calculation|Вычисление факториала (Factorial Calculation)]]
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
+- [Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)](lat-lon-to-2d-point.md)
+- [Вычисление факториала (Factorial Calculation)](factorial-calculation.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

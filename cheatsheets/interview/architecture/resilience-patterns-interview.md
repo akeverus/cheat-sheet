@@ -140,7 +140,7 @@ graph LR
 | `Fallback` | Предоставляет альтернативный ответ при сбое | Запасной выход |
 | `Cache` | Возвращает кешированный результат при сбое | Копия документа |
 
-Подробнее про каждый паттерн можно прочитать в [[distributed-systems-interview|вопросах по распределённым системам]].
+Подробнее про каждый паттерн можно прочитать в [вопросах по распределённым системам](distributed-systems-interview.md).
 
 ## Q3. Чем отличается fault tolerance от fault avoidance?
 
@@ -151,7 +151,7 @@ graph LR
 | **Инструменты** | `Circuit Breaker`, `Retry`, `Bulkhead` | Code review, тестирование, статический анализ |
 | **Применимость** | Обязательно в распределённых системах | Везде, но недостаточно для распределённых систем |
 
-В [[microservices-interview|микросервисной архитектуре]] `fault tolerance` критически важен, потому что количество точек отказа растёт пропорционально числу сервисов и связей между ними.
+В [микросервисной архитектуре](microservices-interview.md) `fault tolerance` критически важен, потому что количество точек отказа растёт пропорционально числу сервисов и связей между ними.
 
 ## Q4. (!) Что такое паттерн Circuit Breaker и какую проблему он решает?
 
@@ -368,7 +368,7 @@ public InventoryResponse checkInventory(String sku) {
 }
 ```
 
-**Важно**: операция, оборачиваемая в `Retry`, должна быть **идемпотентной** -- повторный вызов не должен создавать дублирующий эффект (подробнее в [[distributed-systems-interview|вопросах по распределённым системам]]).
+**Важно**: операция, оборачиваемая в `Retry`, должна быть **идемпотентной** -- повторный вызов не должен создавать дублирующий эффект (подробнее в [вопросах по распределённым системам](distributed-systems-interview.md)).
 
 ## Q11. (!) Какие стратегии backoff существуют для повторных попыток?
 
@@ -1294,7 +1294,7 @@ private List<Product> degradedRecommendations(String userId, Exception ex) {
 }
 ```
 
-Graceful degradation -- это не только технический паттерн, но и **продуктовое решение**: нужно заранее определить, какие части системы критичны, а какие можно временно упростить. Подробнее о проектировании отказоустойчивых систем в [[distributed-systems-interview|вопросах по распределённым системам]].
+Graceful degradation -- это не только технический паттерн, но и **продуктовое решение**: нужно заранее определить, какие части системы критичны, а какие можно временно упростить. Подробнее о проектировании отказоустойчивых систем в [вопросах по распределённым системам](distributed-systems-interview.md).
 
 ## Q32. (!) Что такое chaos engineering и зачем он нужен?
 
@@ -1393,7 +1393,7 @@ WHERE id = ? AND version = ?
 - `SET status = 'PAID'` -- идемпотентно (повтор ничего не меняет)
 - `INCREMENT counter` -- НЕ идемпотентно (повтор увеличит дважды)
 
-Подробнее об идемпотентности в [[distributed-systems-interview|вопросах по распределённым системам]].
+Подробнее об идемпотентности в [вопросах по распределённым системам](distributed-systems-interview.md).
 
 ## Q34. (!) Как организовать health checks для Kubernetes liveness/readiness проб?
 
@@ -2054,18 +2054,18 @@ private List<Product> degradedRecommendations(Long userId, Exception e) {
 
 ## See also
 
-- [[microservices-interview|Микросервисы]] — паттерны отказоустойчивости как обязательная часть межсервисного взаимодействия
-- [[distributed-systems-interview|Распределённые системы]] — каскадные отказы, partial failures, CAP и устойчивость
-- [[api-gateway-interview|API Gateway]] — Circuit Breaker и Rate Limiter на уровне шлюза (Spring Cloud Gateway)
-- [[spring-cloud-interview|Spring Cloud]] — Spring Cloud Circuit Breaker, Resilience4j интеграция
-- [[spring-boot-interview|Spring Boot]] — `@CircuitBreaker`, `@Retry` аннотации Resilience4j в Spring Boot
-- [[load-balancing-interview|Балансировка нагрузки]] — взаимодействие балансировки и Circuit Breaker при недоступности инстанса
-- [[caching-strategies-interview|Стратегии кэширования]] — кэш как Fallback при недоступности upstream сервиса
-- [[kubernetes-interview|Kubernetes]] — liveness/readiness пробы как механизм отказоустойчивости на уровне оркестратора
+- [Микросервисы](microservices-interview.md) — паттерны отказоустойчивости как обязательная часть межсервисного взаимодействия
+- [Распределённые системы](distributed-systems-interview.md) — каскадные отказы, partial failures, CAP и устойчивость
+- [API Gateway](api-gateway-interview.md) — Circuit Breaker и Rate Limiter на уровне шлюза (Spring Cloud Gateway)
+- [Spring Cloud](../frameworks/spring/spring-cloud-interview.md) — Spring Cloud Circuit Breaker, Resilience4j интеграция
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — `@CircuitBreaker`, `@Retry` аннотации Resilience4j в Spring Boot
+- [Балансировка нагрузки](load-balancing-interview.md) — взаимодействие балансировки и Circuit Breaker при недоступности инстанса
+- [Стратегии кэширования](caching-strategies-interview.md) — кэш как Fallback при недоступности upstream сервиса
+- [Kubernetes](../devops/kubernetes-interview.md) — liveness/readiness пробы как механизм отказоустойчивости на уровне оркестратора
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[cap-theorem-interview|CAP-теорема]]
-- [[clean-architecture-interview|Clean Architecture]]
-- [[consistency-patterns-interview|Паттерны согласованности]]
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [CAP-теорема](cap-theorem-interview.md)
+- [Clean Architecture](clean-architecture-interview.md)
+- [Паттерны согласованности](consistency-patterns-interview.md)

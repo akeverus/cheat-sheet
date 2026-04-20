@@ -607,14 +607,14 @@ public class TestOrderCreatedListener {
 
 ## See also
 
-- [[spring-framework-interview|Spring Framework]] — ApplicationContext, BeanFactory, жизненный цикл бинов
-- [[spring-boot-interview|Spring Boot]] — ApplicationReadyEvent, ApplicationStartedEvent для startup логики
-- [[spring-aop-interview|Spring AOP]] — события реализованы без AOP, но часто используются вместе
-- [[spring-data-jpa-interview|Spring Data JPA]] — @DomainEvents, AbstractAggregateRoot, @AfterDomainEventPublication
-- [[spring-scheduling-interview|Spring Scheduling]] — @Scheduled vs события для периодических задач
-- [[event-driven-patterns-interview|Event-Driven Patterns]] — общие паттерны event-driven архитектуры
-- [[kafka-interview|Apache Kafka]] — для межсервисных событий с гарантией доставки
-- [[ddd-interview|Domain-Driven Design]] — domain events, aggregates, bounded context
-- [[distributed-systems-interview|Распределённые системы]] — transactional outbox, at-least-once delivery
-- [[unit-testing-interview|Unit Testing]] — @RecordApplicationEvents, ApplicationEvents, тестирование listeners
-- [[spring-events|Шпаргалка: Spring Events — события приложения]] — теория
+- [Spring Framework](spring-framework-interview.md) — ApplicationContext, BeanFactory, жизненный цикл бинов
+- [Spring Boot](spring-boot-interview.md) — ApplicationReadyEvent, ApplicationStartedEvent для startup логики
+- [Spring AOP](spring-aop-interview.md) — события реализованы без AOP, но часто используются вместе
+- [Spring Data JPA](spring-data-jpa-interview.md) — @DomainEvents, AbstractAggregateRoot, @AfterDomainEventPublication
+- [Spring Scheduling](spring-scheduling-interview.md) — @Scheduled vs события для периодических задач
+- [Event-Driven Patterns](../../architecture/event-driven-patterns-interview.md) — общие паттерны event-driven архитектуры
+- [Apache Kafka](../../messaging/kafka-interview.md) — для межсервисных событий с гарантией доставки
+- [Domain-Driven Design](../../architecture/ddd-interview.md) — domain events, aggregates, bounded context
+- [Распределённые системы](../../architecture/distributed-systems-interview.md) — transactional outbox, at-least-once delivery
+- [Unit Testing](../../testing/unit-testing-interview.md) — @RecordApplicationEvents, ApplicationEvents, тестирование listeners
+- [Шпаргалка: Spring Events — события приложения](../../../frameworks/java-frameworks/spring/spring-events.md) — теория

@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Stack Overflow — Gson](https://stackoverflow.com/questions/tagged/gson)
 
 ### См. также
-- [[jackson|Jackson]] — **Jackson** для **JSON** обработки
-- [[kotlin-kotlinx-serialization|Kotlinx Serialization]] — **JSON** библиотека для **Kotlin**
-- [[java-protobuf|Protocol Buffers]] — бинарная сериализация
+- [Jackson](jackson.md) — **Jackson** для **JSON** обработки
+- [Kotlinx Serialization](../kotlin/kotlin-kotlinx-serialization.md) — **JSON** библиотека для **Kotlin**
+- [Protocol Buffers](../java/java-protobuf.md) — бинарная сериализация
 
-- [[java-jackson|Jackson: JSON-сериализация в Java]]
-- [[java-junit5|JUnit 5]]
+- [Jackson: JSON-сериализация в Java](../java/java-jackson.md)
+- [JUnit 5](../testing-libraries/java-junit5.md)
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

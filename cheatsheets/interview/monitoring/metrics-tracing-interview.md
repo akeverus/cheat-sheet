@@ -16,7 +16,7 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему метрик и трейсинга для `Senior Java Developer`.
 
-**Метрики и трейсинг** — два из трёх столпов наблюдаемости (observability) наряду с логированием. Вопросы по этой теме регулярно встречаются на собеседованиях для senior-позиций, так как работа с `Prometheus`, `Micrometer`, `OpenTelemetry`, `Jaeger` и `Grafana` — повседневная задача в микросервисной архитектуре. Подробнее о наблюдаемости в целом — в [[observability-interview|вопросах по Observability]].
+**Метрики и трейсинг** — два из трёх столпов наблюдаемости (observability) наряду с логированием. Вопросы по этой теме регулярно встречаются на собеседованиях для senior-позиций, так как работа с `Prometheus`, `Micrometer`, `OpenTelemetry`, `Jaeger` и `Grafana` — повседневная задача в микросервисной архитектуре. Подробнее о наблюдаемости в целом — в [вопросах по Observability](observability-interview.md).
 
 ## Полезные ссылки
 
@@ -117,7 +117,7 @@ graph TD
     L --> E["ELK / Loki"]
 ```
 
-При инциденте: алерт по метрике (например, рост ошибок) -> открыть трейсы за период -> найти медленные/ошибочные запросы по `traceId` -> по `traceId` отфильтровать логи и локализовать причину. Подробнее о стратегиях логирования — в [[logging-strategies-interview|вопросах по логированию]]. Метрики не заменяют логи и трейсы — они дополняют друг друга.
+При инциденте: алерт по метрике (например, рост ошибок) -> открыть трейсы за период -> найти медленные/ошибочные запросы по `traceId` -> по `traceId` отфильтровать логи и локализовать причину. Подробнее о стратегиях логирования — в [вопросах по логированию](logging-strategies-interview.md). Метрики не заменяют логи и трейсы — они дополняют друг друга.
 
 ## Q2. (!) Что такое Prometheus и как он собирает метрики?
 
@@ -185,11 +185,11 @@ scrape_configs:
         regex: (.+)
 ```
 
-В [[kubernetes-interview|Kubernetes]] используют `ServiceMonitor` (`Prometheus Operator`) или аннотации на `Pods` / `Service` для автообнаружения целей.
+В [Kubernetes](../devops/kubernetes-interview.md) используют `ServiceMonitor` (`Prometheus Operator`) или аннотации на `Pods` / `Service` для автообнаружения целей.
 
 ## Q3. (!) Что такое Micrometer и как он связан с Prometheus?
 
-`Micrometer` — фасад для метрик в `Java` (аналог `SLF4J` для логов). Приложение регистрирует счётчики, gauge, таймеры через `Micrometer`; биндинг к `Prometheus` экспортирует их в формате, который `Prometheus` scrape'ит. В [[spring-boot-interview|Spring Boot]] `Micrometer` включён по умолчанию; зависимость `micrometer-registry-prometheus` и эндпоинт `/actuator/prometheus` дают готовый экспорт.
+`Micrometer` — фасад для метрик в `Java` (аналог `SLF4J` для логов). Приложение регистрирует счётчики, gauge, таймеры через `Micrometer`; биндинг к `Prometheus` экспортирует их в формате, который `Prometheus` scrape'ит. В [Spring Boot](../frameworks/spring/spring-boot-interview.md) `Micrometer` включён по умолчанию; зависимость `micrometer-registry-prometheus` и эндпоинт `/actuator/prometheus` дают готовый экспорт.
 
 **Зависимости в `build.gradle`:**
 
@@ -330,7 +330,7 @@ public class MetricsExamples {
 
 ## Q5. (!) Что такое распределённая трассировка и зачем она нужна?
 
-Распределённая трассировка — запись цепочки операций (spans) одного запроса при прохождении через несколько сервисов. Позволяет увидеть, где запрос провёл время (какой сервис или БД медленный), и выявить узкие места. Без трассировки в [[microservices-interview|микросервисах]] видно только латентность на границе; внутри цепочки вызовов — «чёрный ящик».
+Распределённая трассировка — запись цепочки операций (spans) одного запроса при прохождении через несколько сервисов. Позволяет увидеть, где запрос провёл время (какой сервис или БД медленный), и выявить узкие места. Без трассировки в [микросервисах](../architecture/microservices-interview.md) видно только латентность на границе; внутри цепочки вызовов — «чёрный ящик».
 
 ```mermaid
 gantt
@@ -707,7 +707,7 @@ rate(jvm_gc_pause_seconds_sum[5m]) / rate(jvm_gc_pause_seconds_count[5m]) > 0.5
 jvm_threads_deadlocked_threads > 0
 ```
 
-Подробнее о профилировании JVM — в [[jvm-performance-tuning-interview|вопросах по JVM Performance Tuning]].
+Подробнее о профилировании JVM — в [вопросах по JVM Performance Tuning](../performance/jvm-performance-tuning-interview.md).
 
 ## Q13. Что такое custom metrics и когда их добавлять?
 
@@ -1028,7 +1028,7 @@ graph TD
     end
 ```
 
-**Практика:** `Exemplars` в `Grafana` позволяют от точки на графике метрики перейти к конкретному трейсу. Подробнее о процессе расследования инцидентов — в [[observability-interview|вопросах по Observability]].
+**Практика:** `Exemplars` в `Grafana` позволяют от точки на графике метрики перейти к конкретному трейсу. Подробнее о процессе расследования инцидентов — в [вопросах по Observability](observability-interview.md).
 
 ## Q19. Что такое RED и USE методологии для метрик?
 
@@ -1106,7 +1106,7 @@ spec:
       interval: 15s
 ```
 
-**Практика:** альтернатива — `Pushgateway` для short-lived jobs (push вместо pull). В [[kubernetes-interview|Kubernetes]] — `ServiceMonitor` или аннотации на `Pods` для автообнаружения целей.
+**Практика:** альтернатива — `Pushgateway` для short-lived jobs (push вместо pull). В [Kubernetes](../devops/kubernetes-interview.md) — `ServiceMonitor` или аннотации на `Pods` для автообнаружения целей.
 
 ## Q21. Что такое exemplars и зачем они нужны?
 
@@ -1261,7 +1261,7 @@ receivers:
 14:23:45.234 [http-nio-8080-exec-1] INFO  c.e.PaymentService  [traceId=4bf92f3577b34da6, spanId=a3ce929d0e0e4736] - Processing payment
 ```
 
-По `traceId` можно отфильтровать все логи одного запроса в `ELK / Loki` — подробнее в [[logging-strategies-interview|вопросах по логированию]].
+По `traceId` можно отфильтровать все логи одного запроса в `ELK / Loki` — подробнее в [вопросах по логированию](logging-strategies-interview.md).
 
 ## Q24. Как уменьшить объём данных трассировки в prod?
 
@@ -2329,16 +2329,16 @@ rate(notifications_delivered_total[1h])
 
 ## See also
 
-- [[observability-interview|Observability]] — три столпа наблюдаемости, `SLI`/`SLO`/`SLA`, алертинг, `RED`/`USE` методы, `OpenTelemetry` Collector
-- [[logging-strategies-interview|Стратегии логирования]] — как связать логи с метриками: sampling, retention, централизованная агрегация
-- [[logging-interview|Logging]] — инструментальный слой: `MDC`, `traceId` в логах, связка логов с трейсами через `Logback`
-- [[microservices-interview|Микросервисная архитектура]] — паттерны, где метрики и трейсы обязательны: circuit breaker, bulkhead, saga
-- [[spring-boot-interview|Spring Boot]] — `Micrometer`, `Actuator`, `/actuator/prometheus`, интеграция с `OpenTelemetry` Java agent
-- [[kubernetes-interview|Kubernetes]] — `Prometheus Operator`, `kube-state-metrics`, `ServiceMonitor`, сбор метрик в кластере
+- [Observability](observability-interview.md) — три столпа наблюдаемости, `SLI`/`SLO`/`SLA`, алертинг, `RED`/`USE` методы, `OpenTelemetry` Collector
+- [Стратегии логирования](logging-strategies-interview.md) — как связать логи с метриками: sampling, retention, централизованная агрегация
+- [Logging](../logging/logging-interview.md) — инструментальный слой: `MDC`, `traceId` в логах, связка логов с трейсами через `Logback`
+- [Микросервисная архитектура](../architecture/microservices-interview.md) — паттерны, где метрики и трейсы обязательны: circuit breaker, bulkhead, saga
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — `Micrometer`, `Actuator`, `/actuator/prometheus`, интеграция с `OpenTelemetry` Java agent
+- [Kubernetes](../devops/kubernetes-interview.md) — `Prometheus Operator`, `kube-state-metrics`, `ServiceMonitor`, сбор метрик в кластере
 
-- [[elk-stack-interview|ELK Stack]]
-- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
-- [[logging-strategies-interview|Стратегии логирования]]
-- [[loki-grafana-interview|Loki и Grafana]]
-- [[observability-interview|Observability]]
-- [[opentelemetry-interview|OpenTelemetry]]
+- [ELK Stack](elk-stack-interview.md)
+- [Jaeger и Zipkin](jaeger-zipkin-interview.md)
+- [Стратегии логирования](logging-strategies-interview.md)
+- [Loki и Grafana](loki-grafana-interview.md)
+- [Observability](observability-interview.md)
+- [OpenTelemetry](opentelemetry-interview.md)

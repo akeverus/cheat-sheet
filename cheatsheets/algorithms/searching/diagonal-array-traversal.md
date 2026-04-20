@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Diagonal Traversal of Matrix](https://www.geeksforgeeks.org/zigzag-or-diagonal-traversal-of-matrix/)
 
 ### См. также
-- [[pairs-with-given-sum|Поиск пар с заданной суммой]] — pairs with sum
-- [[maximum-subarray|Максимальный подмассив]] — **Kadane**
+- [Поиск пар с заданной суммой](pairs-with-given-sum.md) — pairs with sum
+- [Максимальный подмассив](maximum-subarray.md) — **Kadane**
 
-- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
-- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
-- [[find-max-element|Поиск k-го по величине элемента (Find Kth Largest Element)]]
+- [k наибольших элементов (K Largest Elements)](k-largest-elements.md)
+- [Интерполяционный поиск (Interpolation Search)](interpolation-search.md)
+- [Поиск k-го по величине элемента (Find Kth Largest Element)](find-max-element.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

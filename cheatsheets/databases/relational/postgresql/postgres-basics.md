@@ -26,12 +26,12 @@ related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "data
 - [PostgreSQL Tutorial](https://www.postgresql.org/docs/current/tutorial.html) — введение
 
 ### См. также
-- [[postgres-design|postgres-design.md]] — проектирование БД
-- [[postgres-queries|postgres-queries.md]] — запросы
+- [postgres-design.md](postgres-design.md) — проектирование БД
+- [postgres-queries.md](postgres-queries.md) — запросы
 
-- [[postgres-performance-tuning|PostgreSQL: Тюнинг производительности]]
-- [[postgres-transactions|PostgreSQL: транзакции, MVCC и блокировки]]
-- [[postgres-partitioning|PostgreSQL: партиционирование]]
+- [PostgreSQL: Тюнинг производительности](postgres-performance-tuning.md)
+- [PostgreSQL: транзакции, MVCC и блокировки](postgres-transactions.md)
+- [PostgreSQL: партиционирование](postgres-partitioning.md)
 ## Содержание
 
 - [Введение в PostgreSQL](#введение-в-postgresql)

@@ -21,9 +21,9 @@ updated: "2026-04-20"
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
 
 ### См. также
-- [[README|Platform]] — раздел платформы
-- [[containerization-overview|Контейнеры]] — **Docker**, **Kubernetes**
-- [[iac-overview|IaC]] — **Infrastructure as Code**
+- [Platform](../../basics/README.md) — раздел платформы
+- [Контейнеры](containerization-overview.md) — **Docker**, **Kubernetes**
+- [IaC](../iac/iac-overview.md) — **Infrastructure as Code**
 
 ## Содержание
 
@@ -48,17 +48,17 @@ updated: "2026-04-20"
 
 ## Контейнеры и образы
 
-**Образ** — неизменяемый шаблон: файловая система и метаданные. **Контейнер** — запущенный экземпляр образа с изолированным пространством имён и cgroups (на Linux). Контейнеры разделяют ядро хоста, в отличие от виртуальных машин. Основной контент по **Docker** и **Kubernetes** — в [[containerization-overview|контейнеры]].
+**Образ** — неизменяемый шаблон: файловая система и метаданные. **Контейнер** — запущенный экземпляр образа с изолированным пространством имён и cgroups (на Linux). Контейнеры разделяют ядро хоста, в отличие от виртуальных машин. Основной контент по **Docker** и **Kubernetes** — в [контейнеры](containerization-overview.md).
 
 
 ## Docker
 
-**Docker** — платформа для сборки образов (Dockerfile, `docker build`), хранения в **registry** (Docker Hub), запуска контейнеров (`docker run`). **Docker Compose** — оркестрация многоконтейнерных приложений на одном хосте. См. [[docker-basics|Docker]], [[docker-advanced|Docker Advanced]], [[docker-compose|Docker Compose]].
+**Docker** — платформа для сборки образов (Dockerfile, `docker build`), хранения в **registry** (Docker Hub), запуска контейнеров (`docker run`). **Docker Compose** — оркестрация многоконтейнерных приложений на одном хосте. См. [Docker](docker/docker-basics.md), [Docker Advanced](docker/docker-advanced.md), [Docker Compose](docker/docker-compose.md).
 
 
 ## Kubernetes и оркестрация
 
-**Kubernetes** — оркестратор: **Pods**, **Deployments**, **Services**, **ConfigMaps**, **Secrets**, **Ingress**. Масштабирование, самовосстановление, обновления без даунтайма. **Helm** — пакетный менеджер для **Kubernetes** (charts). См. [[kubernetes-basics|Kubernetes]], [[kubernetes-advanced|Kubernetes Advanced]].
+**Kubernetes** — оркестратор: **Pods**, **Deployments**, **Services**, **ConfigMaps**, **Secrets**, **Ingress**. Масштабирование, самовосстановление, обновления без даунтайма. **Helm** — пакетный менеджер для **Kubernetes** (charts). См. [Kubernetes](kubernetes/kubernetes-basics.md), [Kubernetes Advanced](kubernetes/kubernetes-advanced.md).
 
 
 ## Runtime и стандарты
@@ -111,7 +111,7 @@ updated: "2026-04-20"
 
 ## Заключение
 
-Контейнеризация обеспечивает переносимость и единообразие окружения; **Docker** и **Kubernetes** — основа современного **devops**. Используйте минимальные образы, лимиты ресурсов и сканирование безопасности. См. [[containerization-overview|Контейнеры]] и [[iac-overview|IaC]].
+Контейнеризация обеспечивает переносимость и единообразие окружения; **Docker** и **Kubernetes** — основа современного **devops**. Используйте минимальные образы, лимиты ресурсов и сканирование безопасности. См. [Контейнеры](containerization-overview.md) и [IaC](../iac/iac-overview.md).
 
 **Дата:** 2026-02-03
 

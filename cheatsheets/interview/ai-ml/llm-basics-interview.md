@@ -275,7 +275,7 @@ Context = system_prompt + chat_history + user_message + model_response
 5. **Hierarchical processing** — суммаризировать частями, потом из summaries
 6. **Бо́льшая модель** — Gemini 1.5 Pro даёт 1M context
 
-**RAG** — самый используемый паттерн. Подробнее — в [[rag-interview|RAG]].
+**RAG** — самый используемый паттерн. Подробнее — в [RAG](rag-interview.md).
 
 ## Q12. (!) Temperature?
 
@@ -617,7 +617,7 @@ Cache hit — оплата как ~10% обычной цены.
 
 90% задач решаются prompt engineering + RAG.
 
-Подробнее — в [[prompt-engineering-interview|Prompt Engineering]] и [[rag-interview|RAG]].
+Подробнее — в [Prompt Engineering](prompt-engineering-interview.md) и [RAG](rag-interview.md).
 
 ## Q29. (!) Prompt injection — что это?
 
@@ -658,27 +658,27 @@ LLM может **выполнить инструкцию** из документ
 - Monitoring, logging
 - Content moderation API
 
-Подробнее о integration patterns — в [[llm-integration-patterns-interview|LLM Integration Patterns]].
+Подробнее о integration patterns — в [LLM Integration Patterns](llm-integration-patterns-interview.md).
 
 ---
 
 ## See also
 
-- [[rag-interview|RAG]] — main pattern для extending knowledge
-- [[vector-databases-interview|Vector Databases]] — для RAG
-- [[embeddings-interview|Embeddings]] — основа RAG
-- [[prompt-engineering-interview|Prompt Engineering]] — оптимизация prompts
-- [[llm-integration-patterns-interview|LLM Integration Patterns]] — production patterns
-- [[ai-agents-interview|AI Agents]] — autonomous LLM systems
-- [[mlops-interview|MLOps]] — operationalization
-- [[model-serving-interview|Model Serving]] — для self-hosted
-- [[application-security-interview|Application Security]] — prompt injection
-- [[caching-strategies-interview|Caching]] — LLM response caching
-- [[microservices-interview|Микросервисы]] — где интегрируем LLM
+- [RAG](rag-interview.md) — main pattern для extending knowledge
+- [Vector Databases](vector-databases-interview.md) — для RAG
+- [Embeddings](embeddings-interview.md) — основа RAG
+- [Prompt Engineering](prompt-engineering-interview.md) — оптимизация prompts
+- [LLM Integration Patterns](llm-integration-patterns-interview.md) — production patterns
+- [AI Agents](ai-agents-interview.md) — autonomous LLM systems
+- [MLOps](mlops-interview.md) — operationalization
+- [Model Serving](model-serving-interview.md) — для self-hosted
+- [Application Security](../security/application-security-interview.md) — prompt injection
+- [Caching](../architecture/caching-strategies-interview.md) — LLM response caching
+- [Микросервисы](../architecture/microservices-interview.md) — где интегрируем LLM
 
-- [[ai-agents-interview|AI Agents]]
-- [[embeddings-interview|Embeddings]]
-- [[llm-integration-patterns-interview|LLM Integration Patterns]]
-- [[mlops-interview|MLOps]]
-- [[model-serving-interview|Model Serving]]
-- [[prompt-engineering-interview|Prompt Engineering]]
+- [AI Agents](ai-agents-interview.md)
+- [Embeddings](embeddings-interview.md)
+- [LLM Integration Patterns](llm-integration-patterns-interview.md)
+- [MLOps](mlops-interview.md)
+- [Model Serving](model-serving-interview.md)
+- [Prompt Engineering](prompt-engineering-interview.md)

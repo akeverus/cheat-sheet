@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Check for balanced parentheses — GeeksforGeeks](https://www.geeksforgeeks.org/check-for-balanced-parentheses-in-an-expression/)
 
 ### См. также
-- [[palindrome-check|Проверка палиндромов]] — палиндромы
-- [[regex-token-replacement|Работа с регулярными выражениями]] — регулярные выражения
+- [Проверка палиндромов](palindrome-check.md) — палиндромы
+- [Работа с регулярными выражениями](regex-token-replacement.md) — регулярные выражения
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
-- [[large-text-string-search|Поиск строки в большом тексте (Large Text String Search)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
+- [Поиск строки в большом тексте (Large Text String Search)](large-text-string-search.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

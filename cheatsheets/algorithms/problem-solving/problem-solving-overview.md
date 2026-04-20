@@ -23,14 +23,14 @@ updated: "2026-04-20"
 - [Problem Solving Techniques in Java](https://www.baeldung.com/java-problem-solving) — техники решения задач
 
 ### См. также
-- [[README|Обзор алгоритмов]] — алгоритмы
+- [Обзор алгоритмов](../../basics/README.md) — алгоритмы
 - [Структуры данных](../data-structures/) — структуры данных
 - [Алгоритмические парадигмы](../algorithmic-paradigms/) — парадигмы
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
-- [[large-text-string-search|Поиск строки в большом тексте (Large Text String Search)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](../strings/roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](../strings/balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](../strings/suffix-tree-pattern-matching.md)
+- [Поиск строки в большом тексте (Large Text String Search)](../strings/large-text-string-search.md)
 ## Содержание
 
 - [Методология решения задач](#методология-решения-задач)

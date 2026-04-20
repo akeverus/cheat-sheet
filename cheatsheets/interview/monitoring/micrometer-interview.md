@@ -479,7 +479,7 @@ public TimedAspect timedAspect(MeterRegistry registry) {
 }
 ```
 
-**Ограничение:** как любой AOP proxy — не работает при self-invocation (подробнее в [[spring-aop-interview|Spring AOP]]).
+**Ограничение:** как любой AOP proxy — не работает при self-invocation (подробнее в [Spring AOP](../frameworks/spring/spring-aop-interview.md)).
 
 ## Q16. (!) Как настроить перцентили и гистограммы?
 
@@ -638,14 +638,14 @@ public class DatabaseHealthMetrics implements MeterBinder {
 
 ## See also
 
-- [[metrics-tracing-interview|Метрики и трейсинг]] — общий обзор метрик, трейсинга и логирования в observability
-- [[observability-interview|Observability]] — три столпа наблюдаемости: метрики, логи, трейсинг
-- [[prometheus-grafana-interview|Prometheus и Grafana]] — Prometheus scraping, PromQL, Grafana дашборды
-- [[opentelemetry-interview|OpenTelemetry]] — стандарт CNCF для трассировки, метрик и логов
-- [[spring-boot-actuator-interview|Spring Boot Actuator]] — health checks, info, metrics endpoint
-- [[spring-boot-interview|Spring Boot]] — auto-configuration, starter dependencies
-- [[spring-aop-interview|Spring AOP]] — механизм @Timed annotation (AOP proxy)
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — JVM метрики: GC, heap, threads
-- [[database-performance-interview|Database Performance]] — метрики пулов соединений HikariCP
-- [[jaeger-zipkin-interview|Jaeger и Zipkin]] — распределённый трейсинг рядом с метриками
-- [[micrometer|Шпаргалка: Micrometer]] — теория
+- [Метрики и трейсинг](metrics-tracing-interview.md) — общий обзор метрик, трейсинга и логирования в observability
+- [Observability](observability-interview.md) — три столпа наблюдаемости: метрики, логи, трейсинг
+- [Prometheus и Grafana](prometheus-grafana-interview.md) — Prometheus scraping, PromQL, Grafana дашборды
+- [OpenTelemetry](opentelemetry-interview.md) — стандарт CNCF для трассировки, метрик и логов
+- [Spring Boot Actuator](../frameworks/spring/spring-boot-actuator-interview.md) — health checks, info, metrics endpoint
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — auto-configuration, starter dependencies
+- [Spring AOP](../frameworks/spring/spring-aop-interview.md) — механизм @Timed annotation (AOP proxy)
+- [JVM Performance Tuning](../performance/jvm-performance-tuning-interview.md) — JVM метрики: GC, heap, threads
+- [Database Performance](../performance/database-performance-interview.md) — метрики пулов соединений HikariCP
+- [Jaeger и Zipkin](jaeger-zipkin-interview.md) — распределённый трейсинг рядом с метриками
+- [Шпаргалка: Micrometer](../../monitoring/metrics/micrometer.md) — теория

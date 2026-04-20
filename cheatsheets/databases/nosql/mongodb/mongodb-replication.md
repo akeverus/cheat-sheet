@@ -25,12 +25,12 @@ updated: "2026-04-20"
 - [MongoDB Replica Sets](https://www.baeldung.com/spring-data-mongodb-replica-set)
 
 ### См. также
-- [[mongodb-basics|Основы]] — **MongoDB**
-- [[mongodb-sharding|Шардирование]] — масштабирование
+- [Основы](mongodb-basics.md) — **MongoDB**
+- [Шардирование](mongodb-sharding.md) — масштабирование
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
-- [[mongodb-queries|MongoDB: Запросы и операторы — Полное руководство по поиску документов]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](mongodb-crud.md)
+- [MongoDB: Запросы и операторы — Полное руководство по поиску документов](mongodb-queries.md)
 ## Содержание
 
 - [Введение в репликацию MongoDB](#введение-в-репликацию-mongodb)

@@ -18,17 +18,17 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[rest-api-design]] — принципы REST, HTTP-методы, статус-коды, HATEOAS
-- [[rest-api-best-practices]] — пагинация, фильтры, rate-limit, error handling, versioning
+- [rest-api-design](rest-api-design.md) — принципы REST, HTTP-методы, статус-коды, HATEOAS
+- [rest-api-best-practices](rest-api-best-practices.md) — пагинация, фильтры, rate-limit, error handling, versioning
 
 ### Соседние разделы
-- [[README|Родительский раздел: API]]
-- [[README|GraphQL]] — альтернатива для разнородных клиентов
-- [[README|gRPC]] — альтернатива для service-to-service
-- [[README|API Tools]] — Postman, Insomnia, Swagger, тестирование
-- [[README|Swagger / OpenAPI]]
-- [[README|API Testing]]
-- [[README|Web Backend]]
+- [Родительский раздел: API](../../../basics/README.md)
+- [GraphQL](../../../basics/README.md) — альтернатива для разнородных клиентов
+- [gRPC](../../../basics/README.md) — альтернатива для service-to-service
+- [API Tools](../../../basics/README.md) — Postman, Insomnia, Swagger, тестирование
+- [Swagger / OpenAPI](../../../basics/README.md)
+- [API Testing](../../../basics/README.md)
+- [Web Backend](../../../basics/README.md)
 - [Spring Boot](../../../frameworks/java-frameworks/spring/)
 
 ### Внешние ресурсы
@@ -75,13 +75,13 @@ updated: "2026-04-20"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Принципы REST, уровни Ричардсона | [[rest-api-design#принципы-rest]] |
-| HTTP-методы и идемпотентность | [[rest-api-design#http-методы]] |
-| Статус-коды и Error handling | [[rest-api-best-practices#error-handling]] |
-| Пагинация, фильтры, сортировка | [[rest-api-best-practices#api-design-patterns]] |
-| Versioning стратегии | [[rest-api-best-practices#versioning-strategies]] |
-| HATEOAS и гиперссылки | [[rest-api-design]] |
-| Безопасность (auth, rate-limit) | [[rest-api-best-practices]] |
+| Принципы REST, уровни Ричардсона | [rest-api-design](rest-api-design.md#принципы-rest) |
+| HTTP-методы и идемпотентность | [rest-api-design](rest-api-design.md#http-методы) |
+| Статус-коды и Error handling | [rest-api-best-practices](rest-api-best-practices.md#error-handling) |
+| Пагинация, фильтры, сортировка | [rest-api-best-practices](rest-api-best-practices.md#api-design-patterns) |
+| Versioning стратегии | [rest-api-best-practices](rest-api-best-practices.md#versioning-strategies) |
+| HATEOAS и гиперссылки | [rest-api-design](rest-api-design.md) |
+| Безопасность (auth, rate-limit) | [rest-api-best-practices](rest-api-best-practices.md) |
 
 ## Чек-лист production REST API
 
@@ -104,8 +104,8 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- GraphQL как альтернатива — [[README]]
-- gRPC для межсервисной коммуникации — [[README]]
-- OpenAPI и документирование — [[README]]
-- Тестирование API — [[README]]
-- Backend-архитектура в целом — [[README]]
+- GraphQL как альтернатива — [README](../../../basics/README.md)
+- gRPC для межсервисной коммуникации — [README](../../../basics/README.md)
+- OpenAPI и документирование — [README](../../../basics/README.md)
+- Тестирование API — [README](../../../basics/README.md)
+- Backend-архитектура в целом — [README](../../../basics/README.md)

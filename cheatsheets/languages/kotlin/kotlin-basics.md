@@ -28,8 +28,8 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
 - [Kotlin API](https://kotlinlang.org/api/latest/jvm/stdlib/)
 
 ### См. также
-- [[java-basics|Java]] — основы Java
-- [[kotlin-concurrency-basics|Kotlin Coroutines]] — корутины
+- [Java](../java/java-basics.md) — основы Java
+- [Kotlin Coroutines](kotlin-concurrency-basics.md) — корутины
 
 ## Содержание
 
@@ -2149,9 +2149,9 @@ data class Person(var name: String, var age: Int) {
 - [Kotlin Documentation](https://kotlinlang.org/docs/)
 
 ### См. также (библиотеки)
-- [[kotlin-kotlinx-serialization|kotlinx.serialization]] — сериализация **JSON**, **Protobuf**, **CBOR**
-- [[kotlin-exposed|Exposed]] — **ORM** для **Kotlin**
-- [[kotlin-ktor|Ktor]] — веб-фреймворк
+- [kotlinx.serialization](../../libraries/kotlin/kotlin-kotlinx-serialization.md) — сериализация **JSON**, **Protobuf**, **CBOR**
+- [Exposed](../../libraries/kotlin/kotlin-exposed.md) — **ORM** для **Kotlin**
+- [Ktor](../../libraries/kotlin/kotlin-ktor.md) — веб-фреймворк
 
 ## Функции работы с коллекциями
 

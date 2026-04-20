@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Baeldung: Knapsack Problem](https://www.baeldung.com/)
 
 ### См. также
-- [[traveling-salesman-problem|Задача коммивояжера]] — TSP
-- [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
-- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
+- [Задача коммивояжера](traveling-salesman-problem.md) — TSP
+- [Жадные алгоритмы](greedy-algorithms.md) — жадные алгоритмы
+- [Наибольший общий делитель](../math/greatest-common-divisor.md) — НОД
 
-- [[optaplanner|OptaPlanner]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [OptaPlanner](optaplanner.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [OpenNLP Models](https://opennlp.apache.org/)
 
 ### См. также
-- [[ai-libraries|Обзор ИИ библиотек]] — **NLP** и библиотеки
-- [[README|Алгоритмы со строками]] — раздел strings
+- [Обзор ИИ библиотек](ai-libraries.md) — **NLP** и библиотеки
+- [Алгоритмы со строками](../../basics/README.md) — раздел strings
 
-- [[logistic-regression|Логистическая регрессия]]
-- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
-- [[jenetics|Руководство по Jenetics]]
+- [Логистическая регрессия](logistic-regression.md)
+- [Реализация CNN с помощью Deeplearning4j](cnn-deeplearning4j.md)
+- [Руководство по Jenetics](jenetics.md)
 ## Содержание
 
 - [Обзор](#обзор)

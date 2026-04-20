@@ -316,7 +316,7 @@ graph LR
 - Обязательный мониторинг: heap, non-heap memory, connection pools, thread count, open file descriptors
 - Полезно снимать `heap dump` в начале и конце теста для diff-анализа
 
-Подробнее о leak-диагностике — в [[memory-management-interview|вопросах по Memory Management]].
+Подробнее о leak-диагностике — в [вопросах по Memory Management](memory-management-interview.md).
 
 ## Q8. Что такое spike testing и когда он критичен?
 
@@ -406,7 +406,7 @@ export const options = {
 - Восстановления сети (network partition recovery)
 - Восстановления БД (failover к replica)
 
-Это на стыке с [[test-strategies-interview|Chaos Engineering]]: добавляете failure к нагрузке и измеряете время восстановления SLO.
+Это на стыке с [Chaos Engineering](../testing/test-strategies-interview.md): добавляете failure к нагрузке и измеряете время восстановления SLO.
 
 ## Q11. (!) Что такое throughput, latency и response time?
 
@@ -478,7 +478,7 @@ graph LR
 - SLA обычно формулируется в процентилях: "p99 < 300ms для 99.9% месяца"
 
 **Причины tail latency:**
-- GC паузы (см. [[jvm-performance-tuning-interview|JVM Performance Tuning]])
+- GC паузы (см. [JVM Performance Tuning](jvm-performance-tuning-interview.md))
 - Лок-контеншен
 - Cache miss + медленный fetch из БД
 - Network retry / timeout
@@ -546,7 +546,7 @@ export const options = {
 };
 ```
 
-Подробнее про SLO-based подход — в [[observability-interview|Observability]].
+Подробнее про SLO-based подход — в [Observability](../monitoring/observability-interview.md).
 
 ## Q15. Какие метрики ресурсов обязательно мониторить во время теста?
 
@@ -576,7 +576,7 @@ graph TB
 
 Если growing latency коррелирует с:
 - ростом CPU → узкое место в compute / алгоритмах
-- ростом GC time → вопрос [[jvm-performance-tuning-interview|JVM-тюнинга]] или allocation rate
+- ростом GC time → вопрос [JVM-тюнинга](jvm-performance-tuning-interview.md) или allocation rate
 - ростом DB pool saturation → узкое место в БД
 - ростом network retransmits → сетевая проблема
 
@@ -1419,7 +1419,7 @@ user00002,pass123,1002
 - Отдельный stage/perf-cluster, не shared с dev
 - Конфигурация ресурсов близкая к prod
 - Realistic data volume
-- Мониторинг настроен заранее (см. [[observability-interview|Observability]])
+- Мониторинг настроен заранее (см. [Observability](../monitoring/observability-interview.md))
 
 ## Q36. Как моделировать реалистичный user behavior?
 
@@ -1557,7 +1557,7 @@ graph LR
 | Двугорбое распределение | Hot/cold code path, cache hit/miss |
 | Throughput падает при росте VU | Backend bottleneck (DB pool, очередь) |
 | Error rate только на одном эндпоинте | Локальная проблема в handler |
-| Корреляция с Full GC | JVM-tuning (см. [[jvm-performance-tuning-interview|JVM Performance Tuning]]) |
+| Корреляция с Full GC | JVM-tuning (см. [JVM Performance Tuning](jvm-performance-tuning-interview.md)) |
 
 **Gatling HTML-отчёт** содержит: response time percentiles, RPS over time, requests per endpoint, response time distribution. Всё из коробки.
 
@@ -1616,7 +1616,7 @@ gatling {
 
 Связь через **общий label** (environment=perf, test_run_id=20261015-001) позволяет совмещать все дашборды за конкретный тест.
 
-Подробнее — в [[metrics-tracing-interview|Metrics & Tracing]] и [[observability-interview|Observability]].
+Подробнее — в [Metrics & Tracing](../monitoring/metrics-tracing-interview.md) и [Observability](../monitoring/observability-interview.md).
 
 ## Q40. (!) Какие anti-patterns и типичные ошибки в нагрузочном тестировании?
 
@@ -1711,20 +1711,20 @@ graph LR
 
 ## See also
 
-- [[application-profiling-interview|Application Profiling]] — JFR/async-profiler/flame graphs для поиска root cause под нагрузкой
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — GC, heap, allocation rate: что тюнить после perf-теста
-- [[memory-management-interview|Memory Management]] — soak-тесты и memory leaks, NMT, heap dump analysis
-- [[test-strategies-interview|Стратегии тестирования]] — где performance testing в общей стратегии, risk-based подход
-- [[test-automation-interview|Test Automation]] — интеграция нагрузочных тестов в автоматизированный pipeline
-- [[integration-testing-interview|Integration Testing]] — smoke-перекрытие с нагрузочными smoke-тестами
-- [[metrics-tracing-interview|Metrics & Tracing]] — Prometheus/Grafana/APM для observability во время нагрузки
-- [[observability-interview|Observability]] — SLI/SLO/SLA, error budgets, три pillars observability
-- [[scalability-patterns-interview|Scalability Patterns]] — горизонтальное масштабирование, которое проверяет scalability testing
-- [[kubernetes-interview|Kubernetes]] — k6-operator, HPA и проверка autoscaling через spike-тесты
+- [Application Profiling](application-profiling-interview.md) — JFR/async-profiler/flame graphs для поиска root cause под нагрузкой
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md) — GC, heap, allocation rate: что тюнить после perf-теста
+- [Memory Management](memory-management-interview.md) — soak-тесты и memory leaks, NMT, heap dump analysis
+- [Стратегии тестирования](../testing/test-strategies-interview.md) — где performance testing в общей стратегии, risk-based подход
+- [Test Automation](../testing/test-automation-interview.md) — интеграция нагрузочных тестов в автоматизированный pipeline
+- [Integration Testing](../testing/integration-testing-interview.md) — smoke-перекрытие с нагрузочными smoke-тестами
+- [Metrics & Tracing](../monitoring/metrics-tracing-interview.md) — Prometheus/Grafana/APM для observability во время нагрузки
+- [Observability](../monitoring/observability-interview.md) — SLI/SLO/SLA, error budgets, три pillars observability
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — горизонтальное масштабирование, которое проверяет scalability testing
+- [Kubernetes](../devops/kubernetes-interview.md) — k6-operator, HPA и проверка autoscaling через spike-тесты
 
-- [[application-profiling-interview|Application Profiling]]
-- [[caching-performance-interview|Caching Performance]]
-- [[database-performance-interview|Database Performance]]
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
-- [[memory-management-interview|Memory Management]]
-- [[network-performance-interview|Network Performance]]
+- [Application Profiling](application-profiling-interview.md)
+- [Caching Performance](caching-performance-interview.md)
+- [Database Performance](database-performance-interview.md)
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md)
+- [Memory Management](memory-management-interview.md)
+- [Network Performance](network-performance-interview.md)

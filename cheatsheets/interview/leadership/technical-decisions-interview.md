@@ -1,13 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Технические решения"
-description: "Практические вопросы по принятию технических решений: ADR, анализ компромиссов, RFC-процесс, построение консенсуса, обратимые и необратимые решения."
+description: "Принятие технических решений: ADR, RFC, анализ компромиссов, построение консенсуса, обратимые vs необратимые решения, архитектурные выборы"
 tags:
   - interview
   - leadership
-  - technical-decisions
-  - adr
-  - rfc
-  - architecture
+  - technical-decisions-interview
+aliases:
+  - "Technical Decisions interview"
+  - "ADR собеседование"
+  - "RFC process interview"
+  - "technical decision making"
+  - "architectural decisions interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -320,10 +323,10 @@ Performance    | 30% |     8     |     6     |     9
 
 ## See also
 
-- [[team-leadership-interview|Team Leadership]]
-- [[code-review-practices-interview|Code Review Practices]]
-- [[behavioral-interview|Behavioral]]
-- [[mentoring-interview|Mentoring]]
-- [[conflict-resolution-interview|Conflict Resolution]]
-- [[estimations-planning-interview|Estimation & Planning]]
-- [[tech-interviewing-interview|Conducting Technical Interviews]]
+- [Team Leadership](team-leadership-interview.md)
+- [Code Review Practices](code-review-practices-interview.md)
+- [Behavioral](../behavioral/behavioral-interview.md)
+- [Mentoring](mentoring-interview.md)
+- [Conflict Resolution](conflict-resolution-interview.md)
+- [Estimation & Planning](estimations-planning-interview.md)
+- [Conducting Technical Interviews](tech-interviewing-interview.md)

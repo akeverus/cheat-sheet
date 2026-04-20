@@ -29,12 +29,12 @@ Project Loom — это переосмысление конкурентност�
 
 ### См. также
 
-- [[java-concurrency-advanced|Java Concurrency Advanced]] — ExecutorService, CompletableFuture, Lock
-- [[java-memory-model|Java Memory Model]] — happens-before, volatile
-- [[java-17-21-interview|Java 17/21 Interview]] — вопросы на собеседовании
-- [[spring-webflux|Spring WebFlux]] — реактивная модель vs virtual threads
-- [[spring-boot|Spring Boot]] — конфигурация `spring.threads.virtual.enabled`
-- [[java-virtual-threads-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Java Concurrency Advanced](java-concurrency-advanced.md) — ExecutorService, CompletableFuture, Lock
+- [Java Memory Model](java-memory-model.md) — happens-before, volatile
+- [Java 17/21 Interview](../../interview/programming-languages/java/java-17-21-interview.md) — вопросы на собеседовании
+- [Spring WebFlux](../../frameworks/java-frameworks/spring/spring-webflux.md) — реактивная модель vs virtual threads
+- [Spring Boot](../../frameworks/spring/spring-boot.md) — конфигурация `spring.threads.virtual.enabled`
+- [Вопросы на собеседовании](../../interview/programming-languages/java/java-virtual-threads-interview.md) — подготовка к интервью
 
 ## Содержание
 

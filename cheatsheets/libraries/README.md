@@ -18,62 +18,62 @@ updated: "2026-04-20"
 
 ## Java
 
-- [[java-apache-httpclient|Apache HttpClient]]
-- [[java-apache-poi|Apache POI]]
-- [[java-hikaricp|HikariCP]]
-- [[java-jooq|jOOQ]]
-- [[java-micrometer|Micrometer]]
-- [[java-okhttp|OkHttp]]
-- [[java-opentelemetry|OpenTelemetry]]
-- [[java-protobuf|Protobuf]]
-- [[java-resilience4j|Resilience4j]]
-- [[java-rest-assured|REST Assured]]
-- [[java-retrofit|Retrofit]]
-- [[java-spring-cloud-sleuth|Spring Cloud Sleuth]]
-- [[java-testcontainers|Testcontainers]]
-- [[java-vavr|Vavr]]
-- [[java-wiremock|WireMock]]
+- [Apache HttpClient](java/java-apache-httpclient.md)
+- [Apache POI](java/java-apache-poi.md)
+- [HikariCP](java/java-hikaricp.md)
+- [jOOQ](java/java-jooq.md)
+- [Micrometer](java/java-micrometer.md)
+- [OkHttp](java/java-okhttp.md)
+- [OpenTelemetry](java/java-opentelemetry.md)
+- [Protobuf](java/java-protobuf.md)
+- [Resilience4j](java/java-resilience4j.md)
+- [REST Assured](java/java-rest-assured.md)
+- [Retrofit](java/java-retrofit.md)
+- [Spring Cloud Sleuth](java/java-spring-cloud-sleuth.md)
+- [Testcontainers](java/java-testcontainers.md)
+- [Vavr](java/java-vavr.md)
+- [WireMock](java/java-wiremock.md)
 
 ## Kotlin
 
-- [[kotlin-arrow|Arrow]]
-- [[kotlin-exposed|Exposed]]
-- [[kotlin-klaxon|Klaxon]]
-- [[kotlin-kodein|Kodein]]
-- [[kotlin-konfig|Konfig]]
-- [[kotlin-kotlinx-coroutines|Kotlinx Coroutines]]
-- [[kotlin-kotlinx-datetime|Kotlinx DateTime]]
-- [[kotlin-kotlinx-serialization|Kotlinx Serialization]]
-- [[kotlin-ktor|Ktor]]
-- [[kotlin-mockk|MockK]]
+- [Arrow](kotlin/kotlin-arrow.md)
+- [Exposed](kotlin/kotlin-exposed.md)
+- [Klaxon](kotlin/kotlin-klaxon.md)
+- [Kodein](kotlin/kotlin-kodein.md)
+- [Konfig](kotlin/kotlin-konfig.md)
+- [Kotlinx Coroutines](kotlin/kotlin-kotlinx-coroutines.md)
+- [Kotlinx DateTime](kotlin/kotlin-kotlinx-datetime.md)
+- [Kotlinx Serialization](kotlin/kotlin-kotlinx-serialization.md)
+- [Ktor](kotlin/kotlin-ktor.md)
+- [MockK](kotlin/kotlin-mockk.md)
 
 ## Scala
 
-- [[scala-akka|Akka]]
-- [[scala-cats|Cats]]
-- [[scala-circe|Circe]]
-- [[scala-doobie|Doobie]]
-- [[scala-play|Play]]
-- [[scala-scalatest|ScalaTest]]
-- [[scala-slick|Slick]]
-- [[scala-zio|ZIO]]
+- [Akka](scala/scala-akka.md)
+- [Cats](scala/scala-cats.md)
+- [Circe](scala/scala-circe.md)
+- [Doobie](scala/scala-doobie.md)
+- [Play](scala/scala-play.md)
+- [ScalaTest](scala/scala-scalatest.md)
+- [Slick](scala/scala-slick.md)
+- [ZIO](scala/scala-zio.md)
 
 ## Code generation
 
-- [[java-lombok|Lombok]]
-- [[java-mapstruct|MapStruct]]
+- [Lombok](java/java-lombok.md)
+- [MapStruct](java/java-mapstruct.md)
 
 ## Serialization
 
-- [[java-gson|Gson]]
-- [[jackson]]
+- [Gson](serialization/java-gson.md)
+- [jackson](serialization/jackson.md)
 
 ## Testing libraries
 
-- [[java-junit5|JUnit 5]]
-- [[java-mockito|Mockito]]
+- [JUnit 5](testing-libraries/java-junit5.md)
+- [Mockito](testing-libraries/java-mockito.md)
 
 ## Utility libraries
 
-- [[java-apache-commons|Apache Commons]]
-- [[java-guava|Guava]]
+- [Apache Commons](utility-libraries/java-apache-commons.md)
+- [Guava](utility-libraries/java-guava.md)

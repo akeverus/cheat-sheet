@@ -20,25 +20,25 @@ updated: "2026-04-20"
 
 | Подраздел | О чём |
 |-----------|------|
-| [[README|algorithmic-paradigms/]] | Divide & Conquer, DP, Greedy, Backtracking, Branch & Bound |
-| [[README|algorithms/]] | Обзор классических алгоритмов |
-| [[README|data-structures/]] | Массивы, списки, стеки, очереди, хэш-таблицы, heap, Union-Find, Bloom, LRU |
-| [[README|sorting/]] | Quick/Merge/Heap/Radix/Bucket, стабильность, in-place |
-| [[README|searching/]] | Линейный, бинарный, троичный, поиск в деревьях и графах |
-| [[README|graphs/]] | BFS/DFS, Dijkstra, Bellman-Ford, Floyd-Warshall, MST, топо-сорт, SCC |
-| [[README|trees/]] | BST, AVL, Red-Black, B/B+-деревья, Trie, Segment Tree, Fenwick |
-| [[README|strings/]] | KMP, Rabin-Karp, Boyer-Moore, Z-функция, суффиксные массивы |
-| [[README|math/]] | Арифметика, теория чисел, комбинаторика, теория вероятностей |
-| [[README|problem-solving/]] | Подходы к решению задач: паттерны, декомпозиция, шаблоны |
-| [[README|problems/]] | Коллекции задач по категориям |
-| [[README|ai-ml/]] | Базовые алгоритмы ML, метрики, оптимизация |
-| [[README|ai-collections/]] | Подборки задач и промптов для AI-ассистированной подготовки |
+| [algorithmic-paradigms/](../basics/README.md) | Divide & Conquer, DP, Greedy, Backtracking, Branch & Bound |
+| [algorithms/](../basics/README.md) | Обзор классических алгоритмов |
+| [data-structures/](../basics/README.md) | Массивы, списки, стеки, очереди, хэш-таблицы, heap, Union-Find, Bloom, LRU |
+| [sorting/](../basics/README.md) | Quick/Merge/Heap/Radix/Bucket, стабильность, in-place |
+| [searching/](../basics/README.md) | Линейный, бинарный, троичный, поиск в деревьях и графах |
+| [graphs/](../basics/README.md) | BFS/DFS, Dijkstra, Bellman-Ford, Floyd-Warshall, MST, топо-сорт, SCC |
+| [trees/](../basics/README.md) | BST, AVL, Red-Black, B/B+-деревья, Trie, Segment Tree, Fenwick |
+| [strings/](../basics/README.md) | KMP, Rabin-Karp, Boyer-Moore, Z-функция, суффиксные массивы |
+| [math/](../basics/README.md) | Арифметика, теория чисел, комбинаторика, теория вероятностей |
+| [problem-solving/](../basics/README.md) | Подходы к решению задач: паттерны, декомпозиция, шаблоны |
+| [problems/](../basics/README.md) | Коллекции задач по категориям |
+| [ai-ml/](../basics/README.md) | Базовые алгоритмы ML, метрики, оптимизация |
+| [ai-collections/](../basics/README.md) | Подборки задач и промптов для AI-ассистированной подготовки |
 
 ### Соседние разделы
-- [[README|Computer Science]]
-- [[README|Basics / programming]]
-- [[README|Design Patterns]]
-- [[README|Java]]
+- [Computer Science](../basics/README.md)
+- [Basics / programming](../basics/README.md)
+- [Design Patterns](../basics/README.md)
+- [Java](../basics/README.md)
 - [Interview](../interview/)
 
 ### Внешние ресурсы
@@ -109,7 +109,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Паттерны проектирования (как применять алгоритмы в коде) — [[README|patterns/]]
-- Системный дизайн и масштабирование — [[README|architecture/system-design/]]
-- Java Collections и их устройство — [[README|languages/java/]]
+- Паттерны проектирования (как применять алгоритмы в коде) — [patterns/](../basics/README.md)
+- Системный дизайн и масштабирование — [architecture/system-design/](../basics/README.md)
+- Java Collections и их устройство — [languages/java/](../basics/README.md)
 - Подготовка к Q&A — [interview/](../interview/)

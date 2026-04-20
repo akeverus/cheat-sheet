@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Event-Driven Architecture (Martin Fowler)](https://martinfowler.com/articles/201701-event-driven.html)
 
 ### См. также
-- [[architecture-patterns|Архитектурные паттерны]] — общие архитектурные паттерны
-- [[cqrs|CQRS]] — **CQRS** паттерн
-- [[event-sourcing|Event Sourcing]] — **Event Sourcing**
-- [[microservices|Микросервисы]] — микросервисная архитектура
-- [[kafka|Apache Kafka]] — **Apache Kafka**
-- [[rabbitmq|RabbitMQ]] — **RabbitMQ**
+- [Архитектурные паттерны](architecture-patterns.md) — общие архитектурные паттерны
+- [CQRS](cqrs.md) — **CQRS** паттерн
+- [Event Sourcing](event-sourcing.md) — **Event Sourcing**
+- [Микросервисы](software-architecture/microservices.md) — микросервисная архитектура
+- [Apache Kafka](../development/messaging/kafka/kafka.md) — **Apache Kafka**
+- [RabbitMQ](../development/messaging/rabbitmq/rabbitmq.md) — **RabbitMQ**
 
 ## Содержание
 

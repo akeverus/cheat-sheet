@@ -24,12 +24,12 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md", "databa
 - [Redis Troubleshooting](https://redis.io/docs/management/troubleshooting/) — диагностика
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-monitoring|redis-monitoring.md]] — мониторинг
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-monitoring.md](redis-monitoring.md) — мониторинг
 
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[spring-cache|Spring Cache: Полное руководство по кешированию]]
-- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
+- [Quarkus: Cache — Кеширование данных](../../../frameworks/java-frameworks/quarkus/quarkus-cache.md)
+- [Spring Cache: Полное руководство по кешированию](../../../frameworks/java-frameworks/spring/spring-cache.md)
+- [Hibernate: кэширование (L1, L2, Query Cache)](../../orm/hibernate-caching.md)
 ## Содержание
 
 - [Введение в troubleshooting Redis](#введение-в-troubleshooting-redis)

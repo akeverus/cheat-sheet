@@ -32,11 +32,11 @@ GitHub Actions — нативная CI/CD платформа внутри GitHub
 - [aws-actions/configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials) — OIDC federated auth
 
 ### Соседние разделы
-- [[README|CI/CD]]
-- [[jenkins]], [[gitlab-ci|GitLab CI]], [[circleci]], [[azure-devops|Azure DevOps]], [[travis-ci|Travis CI]], [[tekton]]
+- [CI/CD](../../basics/README.md)
+- [jenkins](jenkins.md), [GitLab CI](gitlab-ci.md), [circleci](circleci.md), [Azure DevOps](azure-devops.md), [Travis CI](travis-ci.md), [tekton](tekton.md)
 - [Docker](../containers/docker/)
 - [Kubernetes](../containers/kubernetes/)
-- [[secrets-management|Secrets Management]]
+- [Secrets Management](../../security/data/secrets-management.md)
 
 ## Содержание
 
@@ -453,8 +453,8 @@ jobs:
 
 ## См. также
 
-- [[azure-devops|Azure DevOps]]
-- [[circleci|CircleCI]]
-- [[gitlab-ci|GitLab CI/CD]]
-- [[jenkins|Jenkins]]
-- [[tekton|Tekton]]
+- [Azure DevOps](azure-devops.md)
+- [CircleCI](circleci.md)
+- [GitLab CI/CD](gitlab-ci.md)
+- [Jenkins](jenkins.md)
+- [Tekton](tekton.md)

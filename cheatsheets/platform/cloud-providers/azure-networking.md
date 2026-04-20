@@ -25,8 +25,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[kubernetes-cloud|Kubernetes в облаке]]
-- [[aws-iam|AWS IAM (Identity and Access Management)]]
+- [Kubernetes в облаке](kubernetes-cloud.md)
+- [AWS IAM (Identity and Access Management)](aws-iam.md)
 ## Содержание
 
 - [Virtual Networks (VNets)](#virtual-networks-vnets)
@@ -1286,6 +1286,6 @@ private-link-service:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[azure-basics|Azure Basics]] — основы **Azure**
-- [[azure-services|Azure Services]] — сервисы **Azure**
-- [[azure-devops|Azure DevOps CI/CD]] — **CI/CD** платформа
+- [Azure Basics](azure-basics.md) — основы **Azure**
+- [Azure Services](azure-services.md) — сервисы **Azure**
+- [Azure DevOps CI/CD](../ci-cd/azure-devops.md) — **CI/CD** платформа

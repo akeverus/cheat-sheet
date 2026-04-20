@@ -1325,8 +1325,8 @@ label-inheritance:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[aws-basics|AWS Basics]] — основы **AWS**
-- [[azure-basics|Azure Basics]] — основы **Azure**
-- [[gcp-services|GCP Services]] — сервисы **GCP**
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
-- [[kubernetes-advanced|Kubernetes Advanced]] — контейнерная оркестрация
+- [AWS Basics](aws-basics.md) — основы **AWS**
+- [Azure Basics](azure-basics.md) — основы **Azure**
+- [GCP Services](gcp-services.md) — сервисы **GCP**
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
+- [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) — контейнерная оркестрация

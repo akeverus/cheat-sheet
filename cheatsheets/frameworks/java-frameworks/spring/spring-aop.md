@@ -21,7 +21,7 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
 # Spring AOP: Полное руководство по аспектно-ориентированному программированию
 
 ### См. также
-- [[spring-aop-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-aop-interview.md) — подготовка к интервью
 
 ## Полезные ссылки
 
@@ -2216,8 +2216,8 @@ public class GrpcAspect {
 
 ## См. также
 
-- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
-- [[spring-ai|Spring AI]]
-- [[spring-batch|Spring Batch для Java]]
-- [[spring-boot|Spring Boot — Полное руководство]]
-- [[spring-cache|Spring Cache: Полное руководство по кешированию]]
+- [Spring Actuator: Полное руководство по мониторингу и управлению](spring-actuator.md)
+- [Spring AI](spring-ai.md)
+- [Spring Batch для Java](spring-batch.md)
+- [Spring Boot — Полное руководство](../../spring/spring-boot.md)
+- [Spring Cache: Полное руководство по кешированию](spring-cache.md)

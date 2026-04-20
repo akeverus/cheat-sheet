@@ -25,12 +25,12 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 - [PostgreSQL Security](https://www.postgresql.org/docs/current/security.html) — раздел по безопасности
 
 ### См. также
-- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
-- [[postgres-admin|postgres-admin.md]] — администрирование
+- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
+- [postgres-admin.md](postgres-admin.md) — администрирование
 
-- [[redis-security|Redis: Безопасность]]
-- [[tls-ssl|TLS / SSL: handshake, сертификаты, конфигурация]]
-- [[data-security|Безопасность данных (Data Security)]]
+- [Redis: Безопасность](../../nosql/redis/redis-security.md)
+- [TLS / SSL: handshake, сертификаты, конфигурация](../../../security/infrastructure/tls-ssl.md)
+- [Безопасность данных (Data Security)](../../../security/data/data-security.md)
 ## Содержание
 
 - [Введение в безопасность PostgreSQL](#введение-в-безопасность-postgresql)

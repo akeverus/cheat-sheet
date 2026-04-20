@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Borůvka's algorithm](https://www.geeksforgeeks.org/boruvkas-algorithm-greedy-algo-9/)
 
 ### См. также
-- [[prim-algorithm|`prim-algorithm.md`]] — алгоритм Прима (`Prim`)
-- [[kruskal-algorithm|`kruskal-algorithm.md`]] — алгоритм Крускала (`Kruskal`)
-- [[dijkstra|`../graphs/dijkstra.md`]] — алгоритм Дейкстры (`Dijkstra`)
+- [`prim-algorithm.md`](prim-algorithm.md) — алгоритм Прима (`Prim`)
+- [`kruskal-algorithm.md`](kruskal-algorithm.md) — алгоритм Крускала (`Kruskal`)
+- [`../graphs/dijkstra.md`](../graphs/dijkstra.md) — алгоритм Дейкстры (`Dijkstra`)
 
-- [[binary-search-tree-traversal|Обход бинарного дерева поиска (Binary Search Tree Traversal)]]
-- [[balanced-binary-tree-check|Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)]]
+- [Обход бинарного дерева поиска (Binary Search Tree Traversal)](binary-search-tree-traversal.md)
+- [Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)](balanced-binary-tree-check.md)
 ## Содержание
 
 - [История алгоритма](#история-алгоритма)

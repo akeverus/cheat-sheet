@@ -25,12 +25,12 @@ updated: "2026-04-20"
 - [MongoDB Aggregation Framework](https://www.baeldung.com/java-mongodb-aggregation)
 
 ### См. также
-- [[mongodb-queries|Запросы]] — основы запросов
-- [[mongodb-indexes|Производительность]] — оптимизация
+- [Запросы](mongodb-queries.md) — основы запросов
+- [Производительность](mongodb-indexes.md) — оптимизация
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
-- [[mongodb-performance|MongoDB: Производительность и оптимизация — Полное руководство по тюнингу и мониторингу]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](mongodb-crud.md)
+- [MongoDB: Производительность и оптимизация — Полное руководство по тюнингу и мониторингу](mongodb-performance.md)
 ## Содержание
 
 - [Введение в Aggregation Framework](#введение-в-aggregation-framework)

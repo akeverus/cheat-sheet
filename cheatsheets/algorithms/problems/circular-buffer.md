@@ -21,13 +21,13 @@ A **guide** to **implementing** a **circular buffer** (ring buffer) in **Java fo
 - [Disruptor Pattern](https://lmax-exchange.github.io/disruptor/)
 
 ### См. также
-- [[README|Задачи и алгоритмы]]
-- [[collections-lock-free|Thread-Safe Data Structures]]
+- [Задачи и алгоритмы](../../basics/README.md)
+- [Thread-Safe Data Structures](../data-structures/collections-lock-free.md)
 - [Структуры данных](../data-structures/)
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
 ## Содержание
 
 - [Обзор](#обзор)

@@ -21,7 +21,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[architecture-patterns|Архитектурные паттерны]]
+- [Архитектурные паттерны](../architecture-patterns.md)
 ## Содержание
 
 - [Основные принципы](#основные-принципы)
@@ -290,8 +290,8 @@ class URLShortener {
 
 ## См. также
 
-- [[adr-template|Architectural Decision Records]] — шаблон ADR
-- [[design-principles|Design Principles]] — принципы проектирования
-- [[enterprise-patterns-overview|Enterprise Patterns]] — обзор enterprise-паттернов
-- [[microservices|Microservices]] — микросервисная архитектура
+- [Architectural Decision Records](../architectural-decision-records/adr-template.md) — шаблон ADR
+- [Design Principles](../design-principles/design-principles.md) — принципы проектирования
+- [Enterprise Patterns](../enterprise-patterns/enterprise-patterns-overview.md) — обзор enterprise-паттернов
+- [Microservices](../software-architecture/microservices.md) — микросервисная архитектура
 

@@ -15,9 +15,9 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[docker-advanced|Docker Advanced]]
-[[docker-compose|Docker Compose]]
-[[kubernetes-advanced|Kubernetes Advanced]]
+[Docker Advanced](docker/docker-advanced.md)
+[Docker Compose](docker/docker-compose.md)
+[Kubernetes Advanced](kubernetes/kubernetes-advanced.md)
 
 ## Содержание
 
@@ -41,5 +41,5 @@ updated: "2026-04-20"
 
 ## См. также
 
-- [[README]] — интеграция контейнерной сборки в pipeline.
-- [[backend-basics|../../development/web-backend/backend-basics.md]] — backend-контекст для контейнеризации.
+- [README](../../basics/README.md) — интеграция контейнерной сборки в pipeline.
+- [../../development/web-backend/backend-basics.md](../../development/web-backend/backend-basics.md) — backend-контекст для контейнеризации.

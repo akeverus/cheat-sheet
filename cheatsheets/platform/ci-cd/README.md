@@ -13,9 +13,9 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[jenkins]]
-[[gitlab-ci|GitLab CI]]
-[[azure-devops|Azure DevOps]]
+[jenkins](jenkins.md)
+[GitLab CI](gitlab-ci.md)
+[Azure DevOps](azure-devops.md)
 
 ## Содержание
 
@@ -35,10 +35,10 @@ updated: "2026-04-20"
 
 - `Travis CI` в 2026 рассматривается как legacy-вариант; для новых проектов предпочтительны `GitHub Actions` или `GitLab CI`.
 - Перед миграцией зафиксировать эквиваленты: матрица версий, секреты, кэширование, release-джобы.
-- Детальный контекст и ограничения: [[travis-ci]].
+- Детальный контекст и ограничения: [travis-ci](travis-ci.md).
 
 ## См. также
 
-- [[travis-ci|travis-ci.md]] — исторический контекст и оговорки по Travis CI.
-- [[github-actions|github-actions.md]] — практики для современного workflow в GitHub.
-- [[gitlab-ci|gitlab-ci.md]] — альтернативный CI/CD контур для GitLab.
+- [travis-ci.md](travis-ci.md) — исторический контекст и оговорки по Travis CI.
+- [github-actions.md](github-actions.md) — практики для современного workflow в GitHub.
+- [gitlab-ci.md](gitlab-ci.md) — альтернативный CI/CD контур для GitLab.

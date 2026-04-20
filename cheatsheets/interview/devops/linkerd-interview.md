@@ -441,23 +441,23 @@ linkerd viz tap deploy/my-app
 
 ## See also
 
-- [[istio-service-mesh-interview|Istio]] — main конкурент
-- [[consul-interview|Consul Connect]] — multi-platform alternative
-- [[kubernetes-interview|Kubernetes]] — required platform
-- [[microservices-interview|Микросервисы]] — main use case
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
-- [[zero-trust-interview|Zero Trust]] — Linkerd enables
-- [[mtls-interview|mTLS]] — automatic
-- [[application-security-interview|Application Security]] — security
-- [[opentelemetry-interview|OpenTelemetry]] — observability
-- [[observability-interview|Observability]] — RED metrics
-- [[deployment-strategies-interview|Deployment Strategies]] — TrafficSplit
-- [[resilience-patterns-interview|Resilience Patterns]] — retries
-- [[networking-interview|Networking]] — L4/L7
+- [Istio](istio-service-mesh-interview.md) — main конкурент
+- [Consul Connect](consul-interview.md) — multi-platform alternative
+- [Kubernetes](kubernetes-interview.md) — required platform
+- [Микросервисы](../architecture/microservices-interview.md) — main use case
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
+- [Zero Trust](../security/zero-trust-interview.md) — Linkerd enables
+- [mTLS](../security/mtls-interview.md) — automatic
+- [Application Security](../security/application-security-interview.md) — security
+- [OpenTelemetry](../monitoring/opentelemetry-interview.md) — observability
+- [Observability](../monitoring/observability-interview.md) — RED metrics
+- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — TrafficSplit
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries
+- [Networking](../architecture/networking-interview.md) — L4/L7
 
-- [[ansible-interview|Ansible]]
-- [[argocd-interview|ArgoCD и GitOps]]
-- [[consul-interview|HashiCorp Consul]]
-- [[docker-interview|Docker]]
-- [[git-interview|Git]]
-- [[gradle-maven-interview|Gradle и Maven]]
+- [Ansible](ansible-interview.md)
+- [ArgoCD и GitOps](argocd-interview.md)
+- [HashiCorp Consul](consul-interview.md)
+- [Docker](docker-interview.md)
+- [Git](git-interview.md)
+- [Gradle и Maven](gradle-maven-interview.md)

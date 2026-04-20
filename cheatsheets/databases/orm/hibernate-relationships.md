@@ -14,7 +14,7 @@ updated: "2026-04-20"
 
 Связи — основной источник ошибок в Hibernate: неправильная сторона владения, утечки памяти через `EAGER`, `StackOverflowError` в `equals`, `N+1`, `MultipleBagFetchException`. Шпаргалка разбирает все типы ассоциаций, их направление, каскадирование и синхронизацию.
 
-Для базового обзора JPA-аннотаций см. [[orm-basics]]. Для практики в Spring-контексте — [[spring-data-jpa]].
+Для базового обзора JPA-аннотаций см. [orm-basics](orm-basics.md). Для практики в Spring-контексте — [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md).
 
 ## Полезные ссылки
 
@@ -29,10 +29,10 @@ updated: "2026-04-20"
 - [Vlad Mihalcea: MultipleBagFetchException](https://vladmihalcea.com/hibernate-multiplebagfetchexception/) — как лечить
 
 ### См. также
-- [[orm-basics]] — базовые JPA-аннотации и `EntityManager`
-- [[spring-data-jpa]] — репозитории поверх Hibernate
-- [[postgres-indexes]] — индексы на FK-колонках
-- [[java-jdbc]] — что происходит ниже Hibernate
+- [orm-basics](orm-basics.md) — базовые JPA-аннотации и `EntityManager`
+- [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — репозитории поверх Hibernate
+- [postgres-indexes](../relational/postgresql/postgres-indexes.md) — индексы на FK-колонках
+- [java-jdbc](../../languages/java/java-jdbc.md) — что происходит ниже Hibernate
 
 ## Содержание
 
@@ -411,7 +411,7 @@ public class User {
 }
 ```
 
-Подробнее про Lombok на сущностях — см. [[java-lombok]].
+Подробнее про Lombok на сущностях — см. [java-lombok](../../libraries/java/java-lombok.md).
 
 ## Наследование сущностей
 
@@ -540,19 +540,19 @@ LEFT JOIN FETCH i.product
 - `equals` / `hashCode` — по бизнес-ключу, `@NaturalId` помогает.
 - Не ставить `CascadeType.ALL` без причины — это взрывоопасно на `@ManyToOne`.
 - `Set` вместо `List` для `@ManyToMany` и `@OneToMany` с нетривиальной частотой изменений.
-- FK-колонки индексировать явно — см. [[postgres-indexes]] для PostgreSQL.
+- FK-колонки индексировать явно — см. [postgres-indexes](../relational/postgresql/postgres-indexes.md) для PostgreSQL.
 - Внешний ключ всегда `NOT NULL` + `ON DELETE` стратегия на уровне БД, если агрегат не допускает свободных детей.
 - Смотри `show_sql` / `p6spy` / `datasource-proxy` на этапе разработки, чтобы видеть все запросы Hibernate.
-- Для Spring-слоя — всё то же + репозитории поверх, см. [[spring-data-jpa]].
-- Поверх сущностей удобно класть валидацию через [[java-bean-validation]].
+- Для Spring-слоя — всё то же + репозитории поверх, см. [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md).
+- Поверх сущностей удобно класть валидацию через [java-bean-validation](../../libraries/java/java-bean-validation.md).
 
 ## См. также
 
-- [[orm-basics]] — обзор JPA и базовые аннотации
-- [[spring-data-jpa]] — репозитории и производные запросы
-- [[postgres-indexes]] — индексы на `FK`-колонках
-- [[postgres-transactions]] — транзакции и изоляция
-- [[java-jdbc]] — слой ниже Hibernate
-- [[java-hikaricp]] — пул соединений
-- [[java-bean-validation]] — `@NotNull`, `@Size` на сущностях
-- [[java-lombok]] — ловушки `@Data` на entity
+- [orm-basics](orm-basics.md) — обзор JPA и базовые аннотации
+- [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — репозитории и производные запросы
+- [postgres-indexes](../relational/postgresql/postgres-indexes.md) — индексы на `FK`-колонках
+- [postgres-transactions](../relational/postgresql/postgres-transactions.md) — транзакции и изоляция
+- [java-jdbc](../../languages/java/java-jdbc.md) — слой ниже Hibernate
+- [java-hikaricp](../../libraries/java/java-hikaricp.md) — пул соединений
+- [java-bean-validation](../../libraries/java/java-bean-validation.md) — `@NotNull`, `@Size` на сущностях
+- [java-lombok](../../libraries/java/java-lombok.md) — ловушки `@Data` на entity

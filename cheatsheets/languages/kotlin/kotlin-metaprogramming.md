@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Kotlin Annotation Processing](https://www.baeldung.com/kotlin/annotation-processing)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-dsl|DSL в Kotlin]]
+- [Основы Kotlin](kotlin-basics.md)
+- [DSL в Kotlin](kotlin-dsl.md)
 
-- [[kotlin-performance|Kotlin Performance]]
-- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
-- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
+- [Kotlin Performance](kotlin-performance.md)
+- [Kotlin Functional Programming: Basics](kotlin-fp-basics.md)
+- [Sealed классы и интерфейсы в Kotlin](kotlin-sealed-classes.md)
 ## Содержание
 
 - [Введение в метапрограммирование](#введение-в-метапрограммирование)

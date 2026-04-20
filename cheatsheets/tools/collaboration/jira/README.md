@@ -18,12 +18,12 @@ Jira — самый распространённый issue tracker для раз
 ## Полезные ссылки
 
 ### Основной документ
-- [[jira-basics|Основы Jira]] — UI, JQL, поля, workflow, Agile-доски, API
+- [Основы Jira](jira-basics.md) — UI, JQL, поля, workflow, Agile-доски, API
 
 ### Соседние разделы
-- [[README|Confluence]]
-- [[README|Slack]] — интеграции Jira Slack
-- [[README|GitLab/GitHub]] — ссылки коммитов на тикеты
+- [Confluence](../../../basics/README.md)
+- [Slack](../../../basics/README.md) — интеграции Jira Slack
+- [GitLab/GitHub](../../../basics/README.md) — ссылки коммитов на тикеты
 
 ### Внешние ресурсы
 - [Jira Cloud Platform REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/)
@@ -89,12 +89,12 @@ project = ABC AND updated >= -3d ORDER BY priority DESC
 
 ## Маршруты чтения
 
-- **Первый день:** [[jira-basics]] — как создать/двигать тикет, JQL-поиск, личный фильтр.
+- **Первый день:** [jira-basics](jira-basics.md) — как создать/двигать тикет, JQL-поиск, личный фильтр.
 - **Интеграция:** разделы про webhooks и REST API, связка с CI/CD.
 - **Настройка проекта:** workflow editor, permission schemes, automation.
 
 ## Куда идти дальше
 
-- Confluence для documentation — [[README|Confluence]]
-- Связка с чатом — [[README|Slack]] / [[README|Mattermost]]
-- Связка с pipeline — [[README|CI/CD]]
+- Confluence для documentation — [Confluence](../../../basics/README.md)
+- Связка с чатом — [Slack](../../../basics/README.md) / [Mattermost](../../../basics/README.md)
+- Связка с pipeline — [CI/CD](../../../basics/README.md)

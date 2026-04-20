@@ -19,13 +19,13 @@ Cursor — **AI-first IDE**, форк VS Code с глубокой интегра
 ## Полезные ссылки
 
 ### Основные документы
-- [[cursor-basics]] — установка, Tab/Inline Edit/Chat/Agent, правила проекта
+- [cursor-basics](cursor-basics.md) — установка, Tab/Inline Edit/Chat/Agent, правила проекта
 
 ### Соседние разделы
-- [[README|tools/ai/]] — родительский раздел
-- [[README|tools/ai/windsurf/]] — главный конкурент (тоже AI-first IDE)
-- [[README|tools/ai/copilot/]] — плагин для обычных IDE
-- [[README|tools/ai/claude/]] — ассистент без своего редактора
+- [tools/ai/](../../../basics/README.md) — родительский раздел
+- [tools/ai/windsurf/](../../../basics/README.md) — главный конкурент (тоже AI-first IDE)
+- [tools/ai/copilot/](../../../basics/README.md) — плагин для обычных IDE
+- [tools/ai/claude/](../../../basics/README.md) — ассистент без своего редактора
 
 ### Внешние ресурсы
 - [Cursor Documentation](https://cursor.com/docs/)
@@ -55,13 +55,13 @@ Cursor — **AI-first IDE**, форк VS Code с глубокой интегра
 
 | Инструмент | Нативная IDE | Агентский режим | Локальные модели | Цена |
 |------------|--------------|-----------------|------------------|------|
-| [[README|Cursor]] | Cursor (форк VS Code) | Да (Agent Mode, Background Agent) | Да (через custom API keys / локальные эндпоинты) | Free + Pro ($20/мес) + Business |
-| [[README|Windsurf]] | Windsurf | Да (Cascade) | Нет | Free + Pro |
-| [[README|Claude Code]] | VS Code, JetBrains, CLI | Да | Нет | Подписка Anthropic |
-| [[README|GitHub Copilot]] | VS Code, JetBrains, Neovim, Xcode | Да | Нет | Подписка GitHub |
-| [[README|Cody]] | VS Code, JetBrains | Частичный | Enterprise | Free + Pro/Enterprise |
-| [[README|Aider]] | Нет (CLI) | Частичный | Да | Open source + API |
-| [[README|OpenClaw]] | Нет (CLI) | Да | Да | Open source |
+| [Cursor](../../../basics/README.md) | Cursor (форк VS Code) | Да (Agent Mode, Background Agent) | Да (через custom API keys / локальные эндпоинты) | Free + Pro ($20/мес) + Business |
+| [Windsurf](../../../basics/README.md) | Windsurf | Да (Cascade) | Нет | Free + Pro |
+| [Claude Code](../../../basics/README.md) | VS Code, JetBrains, CLI | Да | Нет | Подписка Anthropic |
+| [GitHub Copilot](../../../basics/README.md) | VS Code, JetBrains, Neovim, Xcode | Да | Нет | Подписка GitHub |
+| [Cody](../../../basics/README.md) | VS Code, JetBrains | Частичный | Enterprise | Free + Pro/Enterprise |
+| [Aider](../../../basics/README.md) | Нет (CLI) | Частичный | Да | Open source + API |
+| [OpenClaw](../../../basics/README.md) | Нет (CLI) | Да | Да | Open source |
 
 ## Когда использовать
 
@@ -78,7 +78,7 @@ Cursor — **AI-first IDE**, форк VS Code с глубокой интегра
 
 ## Куда идти дальше
 
-- Прямой конкурент — [[README]]
-- Если не готовы менять IDE — [[README]], [[README]]
-- CLI-альтернатива — [[README]]
-- Автономные агенты — [[README]]
+- Прямой конкурент — [README](../../../basics/README.md)
+- Если не готовы менять IDE — [README](../../../basics/README.md), [README](../../../basics/README.md)
+- CLI-альтернатива — [README](../../../basics/README.md)
+- Автономные агенты — [README](../../../basics/README.md)

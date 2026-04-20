@@ -23,12 +23,12 @@ Insomnia — open-source REST/GraphQL/gRPC клиент от Kong. Просто�
 - [Plugins](https://insomnia.rest/plugins)
 
 ### Соседние разделы
-- [[README|Postman]] — альтернатива
-- [[README|API Testing]]
-- [[README|REST API]]
-- [[README|GraphQL]]
-- [[README|gRPC]]
-- [[README|OpenAPI / Swagger]]
+- [Postman](../../../../basics/README.md) — альтернатива
+- [API Testing](../../../../basics/README.md)
+- [REST API](../../../../basics/README.md)
+- [GraphQL](../../../../basics/README.md)
+- [gRPC](../../../../basics/README.md)
+- [OpenAPI / Swagger](../../../../basics/README.md)
 
 ### Полезные ресурсы
 - [Insomnia vs Postman](https://konghq.com/blog/product-releases/insomnia-vs-postman) — сравнение от Kong

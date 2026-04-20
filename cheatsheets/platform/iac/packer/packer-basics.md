@@ -1,6 +1,6 @@
 ---
 title: "Основы Packer (редирект)"
-description: "Основной документ по теме: [[packer|Packer]]."
+description: "Основной документ по теме: [Packer](packer.md)."
 tags:
   - platform
   - iac
@@ -12,24 +12,24 @@ updated: "2026-04-20"
 ---
 # Основы Packer (редирект)
 
-Основной документ по теме: **[[packer]]**.
+Основной документ по теме: **[packer](packer.md)**.
 
 В нём: основы Packer, установка, конфигурация, builders (AWS, Azure, GCP, Docker), provisioners, post-processors, CI/CD, enterprise-паттерны и лучшие практики.
 
 ## Полезные ссылки
 
-[[packer]]
+[packer](packer.md)
 
 
 ### См. также
-- [[iac-overview|Infrastructure as Code (IaC) — обзор]]
-- [[terraform-basics|Основы Terraform (редирект)]]
-- [[terraform|Terraform]]
-- [[terraform-advanced|Terraform Advanced]]
+- [Infrastructure as Code (IaC) — обзор](../iac-overview.md)
+- [Основы Terraform (редирект)](../terraform/terraform-basics.md)
+- [Terraform](../terraform/terraform.md)
+- [Terraform Advanced](../terraform/terraform-advanced.md)
 ## Содержание
 
 - [См. также](#см-также-1)
 
 ## См. также
 
-- [[packer|Packer]]
+- [Packer](packer.md)

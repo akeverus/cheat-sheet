@@ -19,14 +19,14 @@ Jest — фреймворк для юнит- и интеграционных т�
 ## Полезные ссылки
 
 ### Основные документы
-- [[jest]] — ассерты, моки, снапшоты, покрытие, CI/CD
+- [jest](jest.md) — ассерты, моки, снапшоты, покрытие, CI/CD
 
 ### Соседние разделы
-- [[README|Unit Testing]]
-- [[README|JUnit]]
-- [[README|pytest]]
-- [[README|xUnit.net]]
-- [[testing-tools-overview|Testing Tools Overview]]
+- [Unit Testing](../../../basics/README.md)
+- [JUnit](../../../basics/README.md)
+- [pytest](../../../basics/README.md)
+- [xUnit.net](../../../basics/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
 
 ### Внешние ресурсы
 - [Jest Docs](https://jestjs.io/docs/getting-started)
@@ -44,11 +44,11 @@ Jest — фреймворк для юнит- и интеграционных т�
 
 | Тема | Где читать |
 |------|-----------|
-| `describe`, `test`, `expect` и матчеры | [[jest]] |
-| Моки и шпионы: `jest.fn()`, `jest.mock()`, `spyOn` | [[jest]] |
-| Snapshot-тестирование | [[jest]] |
-| Таймеры, асинхронность, `async/await` | [[jest]] |
-| Покрытие (Istanbul), CI/CD | [[jest]] |
+| `describe`, `test`, `expect` и матчеры | [jest](jest.md) |
+| Моки и шпионы: `jest.fn()`, `jest.mock()`, `spyOn` | [jest](jest.md) |
+| Snapshot-тестирование | [jest](jest.md) |
+| Таймеры, асинхронность, `async/await` | [jest](jest.md) |
+| Покрытие (Istanbul), CI/CD | [jest](jest.md) |
 
 ## Когда использовать: сравнение unit-фреймворков
 
@@ -69,6 +69,6 @@ Jest уникален тем, что моки и снапшоты «из кор�
 
 ## Куда идти дальше
 
-- Обзор unit-тестирования — [[README]]
-- Java-аналог — [[README]]
-- Python-аналог — [[README]]
+- Обзор unit-тестирования — [README](../../../basics/README.md)
+- Java-аналог — [README](../../../basics/README.md)
+- Python-аналог — [README](../../../basics/README.md)

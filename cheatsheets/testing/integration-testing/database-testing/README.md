@@ -18,14 +18,14 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[database-testing|Database Testing]] — подходы, @DataJpaTest, миграции, изоляция
+- [Database Testing](database-testing.md) — подходы, @DataJpaTest, миграции, изоляция
 
 ### Соседние разделы
-- [[README|Integration Testing]]
-- [[README|Testcontainers]]
-- [[README|Contract Testing]]
-- [[README|JUnit]]
-- [[README|Databases / SQL]]
+- [Integration Testing](../../../basics/README.md)
+- [Testcontainers](../../../basics/README.md)
+- [Contract Testing](../../../basics/README.md)
+- [JUnit](../../../basics/README.md)
+- [Databases / SQL](../../../basics/README.md)
 
 ### Внешние ресурсы
 - [Testcontainers](https://www.testcontainers.org/)
@@ -44,10 +44,10 @@ updated: "2026-04-20"
 
 | Тема | Где читать |
 |------|-----------|
-| Подходы: embedded vs реальная БД в контейнере | [[database-testing]] |
-| `@DataJpaTest`, `@SpringBootTest` | [[database-testing]] |
-| Изоляция: транзакции, `@Transactional`, `@Sql` | [[database-testing]] |
-| Миграции в тестах (Flyway, Liquibase) | [[database-testing]] |
+| Подходы: embedded vs реальная БД в контейнере | [database-testing](database-testing.md) |
+| `@DataJpaTest`, `@SpringBootTest` | [database-testing](database-testing.md) |
+| Изоляция: транзакции, `@Transactional`, `@Sql` | [database-testing](database-testing.md) |
+| Миграции в тестах (Flyway, Liquibase) | [database-testing](database-testing.md) |
 
 ## Когда использовать какой подход
 
@@ -62,6 +62,6 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Контейнерный запуск инфраструктуры — [[README]]
-- SQL и индексы — [[README]]
-- ORM и JPA — [[README]]
+- Контейнерный запуск инфраструктуры — [README](../../../basics/README.md)
+- SQL и индексы — [README](../../../basics/README.md)
+- ORM и JPA — [README](../../../basics/README.md)

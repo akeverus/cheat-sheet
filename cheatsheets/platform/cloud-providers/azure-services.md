@@ -12,7 +12,7 @@ updated: "2026-04-20"
 ---
 # Azure Services
 
-**Azure** предоставляет более `200` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **Azure**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [[azure-basics|Azure Basics]] более глубоким погружением в конкретные сервисы.
+**Azure** предоставляет более `200` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **Azure**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [Azure Basics](azure-basics.md) более глубоким погружением в конкретные сервисы.
 
 ## Полезные ссылки
 - [Azure Services Documentation](https://docs.microsoft.com/azure/)
@@ -23,8 +23,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[kubernetes-cloud|Kubernetes в облаке]]
-- [[aws-iam|AWS IAM (Identity and Access Management)]]
+- [Kubernetes в облаке](kubernetes-cloud.md)
+- [AWS IAM (Identity and Access Management)](aws-iam.md)
 ## Содержание
 
 - [Compute Services](#compute-services)
@@ -1781,8 +1781,8 @@ vm-security-policy:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[azure-basics|Azure Basics]] — основы **Azure**
-- [[azure-networking|Azure Networking]] — сеть в **Azure**
+- [Azure Basics](azure-basics.md) — основы **Azure**
+- [Azure Networking](azure-networking.md) — сеть в **Azure**
 - [Azure IAM](https://docs.microsoft.com/azure/active-directory/) — управление доступом
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
 - [Azure Resource Manager](https://docs.microsoft.com/azure/azure-resource-manager/management/) — управление ресурсами

@@ -1,15 +1,36 @@
 ---
-title: "Kotlin Sealed Classes — Interview"
-description: "Вопросы на собеседовании по Kotlin Sealed Classes и Sealed Interfaces: ограниченные иерархии, exhaustive when, ADT, сравнение с enum."
+title: "Вопросы на собеседовании: Kotlin Sealed Classes"
+description: "Kotlin Sealed Classes и Sealed Interfaces: ограниченные иерархии типов, exhaustive when, Algebraic Data Types, сравнение с enum и Java sealed classes"
 tags:
   - interview
   - kotlin
-  - sealed-classes
-  - adt
+  - kotlin-sealed-classes-interview
+aliases:
+  - "Kotlin Sealed Classes interview"
+  - "Kotlin Sealed собеседование"
+  - "Sealed Classes вопросы"
+  - "ADT Kotlin interview"
+  - "exhaustive when interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Kotlin Sealed Classes — Interview
+# Вопросы на собеседовании: `Kotlin Sealed Classes`
+
+`Sealed classes` в Kotlin — ограниченные иерархии типов, известные компилятору полностью на этапе сборки. Позволяют реализовать Algebraic Data Types (ADT) с exhaustive pattern matching через `when`. Важная тема для функционального Kotlin.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Kotlin Sealed Classes](https://kotlinlang.org/docs/sealed-classes.html) — официальная документация
+- [Baeldung: Kotlin Sealed Classes](https://www.baeldung.com/kotlin/sealed-classes) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 ## Q1. Что такое sealed class и какую проблему он решает?
 
@@ -470,8 +491,13 @@ sealed class Status {
 
 ## See also
 
-- [[kotlin-sealed-classes|Kotlin Sealed Classes]] — полный cheatsheet
-- [[kotlin-interview|Kotlin Interview]] — общие вопросы
-- [[kotlin-serialization-interview|Kotlin Serialization Interview]] — сериализация
-- [[kotlin-dsl-interview|Kotlin DSL Interview]] — DSL с sealed classes
-- [[spring-state-machine-interview|Spring State Machine Interview]] — FSM в Spring
+- [Kotlin](kotlin-interview.md) — основы языка, классы, объекты
+- [Kotlin Serialization](kotlin-serialization-interview.md) — сериализация sealed иерархий
+- [Kotlin DSL](kotlin-dsl-interview.md) — DSL с использованием sealed classes
+- [Kotlin Value Classes](kotlin-value-classes-interview.md) — inline value classes
+- [Kotlin Coroutines](kotlin-coroutines-interview.md) — Result как sealed result wrapper
+- [Kotlin Exceptions](kotlin-exceptions-interview.md) — sealed classes как альтернатива исключениям
+- [Kotlin Flow](kotlin-flow-interview.md) — Flow events как sealed типы
+- [Java Pattern Matching](../java/java-pattern-matching-interview.md) — Java аналог через sealed + pattern matching
+- [Java Records](../java/java-records-interview.md) — records + sealed для ADT в Java
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — sealed classes vs visitor pattern

@@ -33,10 +33,10 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 - [MV Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
 
 ### См. также
-- [[clickhouse-tables|Таблицы]] — создание таблиц и движков
-- [[clickhouse-queries|Запросы]] — агрегационные запросы
+- [Таблицы](clickhouse-tables.md) — создание таблиц и движков
+- [Запросы](clickhouse-queries.md) — агрегационные запросы
 
-- [[clickhouse-indexes|ClickHouse: Индексы и оптимизация — Полное руководство по индексации и партиционированию]]
+- [ClickHouse: Индексы и оптимизация — Полное руководство по индексации и партиционированию](clickhouse-indexes.md)
 ## Содержание
 
 - [Введение в материализованные представления](#введение-в-материализованные-представления)
@@ -861,6 +861,6 @@ SYSTEM RESTORE REPLICA mv_name;
 
 
 **Следующие темы:**
-- [[clickhouse-replication|Репликация и кластеры]]
-- [[clickhouse-performance|Производительность]]
+- [Репликация и кластеры](clickhouse-replication.md)
+- [Производительность](clickhouse-performance.md)
 

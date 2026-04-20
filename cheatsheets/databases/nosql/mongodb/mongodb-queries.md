@@ -25,11 +25,11 @@ updated: "2026-04-20"
 - [MongoDB Query Methods](https://www.baeldung.com/java-mongodb-query) — запросы из **Java**
 
 ### См. также
-- [[mongodb-crud|CRUD]] — основы **CRUD** операций
-- [[mongodb-indexes|Индексы]] — оптимизация запросов
+- [CRUD](mongodb-crud.md) — основы **CRUD** операций
+- [Индексы](mongodb-indexes.md) — оптимизация запросов
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-performance|MongoDB: Производительность и оптимизация — Полное руководство по тюнингу и мониторингу]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: Производительность и оптимизация — Полное руководство по тюнингу и мониторингу](mongodb-performance.md)
 ## Содержание
 
 - [Обзор системы запросов MongoDB](#обзор-системы-запросов-mongodb)
@@ -1262,7 +1262,7 @@ MongoDB queries сочетают простоту использования с 
 
 
 Следующие темы:
-- [[mongodb-indexes|Индексы]]
-- [[mongodb-aggregation|Aggregation Framework]]
+- [Индексы](mongodb-indexes.md)
+- [Aggregation Framework](mongodb-aggregation.md)
 
 

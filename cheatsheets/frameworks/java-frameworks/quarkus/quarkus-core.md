@@ -1295,8 +1295,8 @@ public void nativeImageConfig(BuildProducer<NativeImageResourceBuildItem> produc
 
 ## См. также
 
-- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
-- [[quarkus-basics|Quarkus: Основы]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
-- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]
+- [Quarkus: Actuator — Health Checks и Metrics](quarkus-actuator.md)
+- [Quarkus: Основы](quarkus-basics.md)
+- [Quarkus: Cache — Кеширование данных](quarkus-cache.md)
+- [Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh](quarkus-cloud.md)
+- [Quarkus: Data Access — Hibernate ORM, Panache и Repositories](quarkus-data.md)

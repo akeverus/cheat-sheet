@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [jOOQ](https://www.jooq.org/doc/) — **jOOQ type-safe SQL**
 
 ### См. также
-- [[spring-data-jpa|Spring Data JPA]] — интеграция **JPA** в **Spring**
-- [[java-jooq|jOOQ]] — **type-safe SQL** библиотека
+- [Spring Data JPA](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — интеграция **JPA** в **Spring**
+- [jOOQ](../../libraries/java/java-jooq.md) — **type-safe SQL** библиотека
 
-- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
-- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
-- [[hibernate-relationships|Hibernate: связи между сущностями]]
+- [Hibernate: JPQL, HQL и Criteria API](hibernate-jpql-criteria.md)
+- [Hibernate: кэширование (L1, L2, Query Cache)](hibernate-caching.md)
+- [Hibernate: связи между сущностями](hibernate-relationships.md)
 ## Содержание
 
 - [Введение в ORM](#введение-в-orm)

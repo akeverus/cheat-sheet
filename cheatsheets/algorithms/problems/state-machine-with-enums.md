@@ -21,13 +21,13 @@ A **guide** to **implementing finite state machines** in **Java using Enums**, *
 - [State Design Pattern](https://refactoring.guru/design-patterns/state)
 
 ### См. также
-- [[finite-automata-input-validation|Валидация конечным автоматом]]
+- [Валидация конечным автоматом](finite-automata-input-validation.md)
 - [Паттерны проектирования](../../patterns/)
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
-- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
+- [Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)](frequency-histogram-apache-commons.md)
 ## Содержание
 
 - [Обзор](#обзор)

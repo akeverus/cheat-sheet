@@ -288,7 +288,7 @@ spec:
 
 **Effect:** zero-config service-to-service auth.
 
-Подробнее — [[istio-service-mesh-interview|Istio]], [[linkerd-interview|Linkerd]].
+Подробнее — [Istio](../devops/istio-service-mesh-interview.md), [Linkerd](../devops/linkerd-interview.md).
 
 ## Q12. cert-manager (K8s)?
 
@@ -348,7 +348,7 @@ vault write pki/issue/my-role \
 - Programmatic issuance
 - Automation-friendly
 
-Подробнее — [[vault-interview|Vault]].
+Подробнее — [Vault](../devops/vault-interview.md).
 
 ## Q14. mTLS в Kafka, Redis, databases?
 
@@ -495,23 +495,23 @@ ssl_ca_file = '/path/ca.crt'
 
 ## See also
 
-- [[zero-trust-interview|Zero Trust]] — mTLS foundation
-- [[secrets-management-interview|Secrets Management]] — cert storage
-- [[supply-chain-security-interview|Supply Chain Security]]
-- [[application-security-interview|Application Security]] — общая
-- [[tls-ssl-interview|TLS / SSL]] — TLS basics
-- [[oauth2-interview|OAuth2]] — alternative for users
-- [[jwt-interview|JWT]] — combined с mTLS
-- [[istio-service-mesh-interview|Istio]] — auto mTLS
-- [[linkerd-interview|Linkerd]] — auto mTLS
-- [[vault-interview|Vault]] — PKI engine
-- [[microservices-interview|Микросервисы]] — context
-- [[networking-interview|Networking]] — protocol layers
-- [[kubernetes-interview|Kubernetes]] — cert-manager
+- [Zero Trust](zero-trust-interview.md) — mTLS foundation
+- [Secrets Management](secrets-management-interview.md) — cert storage
+- [Supply Chain Security](supply-chain-security-interview.md)
+- [Application Security](application-security-interview.md) — общая
+- [TLS / SSL](tls-ssl-interview.md) — TLS basics
+- [OAuth2](oauth2-interview.md) — alternative for users
+- [JWT](jwt-interview.md) — combined с mTLS
+- [Istio](../devops/istio-service-mesh-interview.md) — auto mTLS
+- [Linkerd](../devops/linkerd-interview.md) — auto mTLS
+- [Vault](../devops/vault-interview.md) — PKI engine
+- [Микросервисы](../architecture/microservices-interview.md) — context
+- [Networking](../architecture/networking-interview.md) — protocol layers
+- [Kubernetes](../devops/kubernetes-interview.md) — cert-manager
 
-- [[application-security-interview|Application Security]]
-- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
-- [[jwt-interview|JWT]]
-- [[oauth2-interview|OAuth2]]
-- [[owasp-top10-interview|OWASP Top 10]]
-- [[secrets-management-interview|Secrets Management]]
+- [Application Security](application-security-interview.md)
+- [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
+- [JWT](jwt-interview.md)
+- [OAuth2](oauth2-interview.md)
+- [OWASP Top 10](owasp-top10-interview.md)
+- [Secrets Management](secrets-management-interview.md)

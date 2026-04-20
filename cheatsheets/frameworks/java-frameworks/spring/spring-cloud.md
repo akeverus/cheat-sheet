@@ -25,13 +25,13 @@ updated: "2026-04-20"
 - [**Spring Cloud** Series](https://www.baeldung.com/spring-cloud-series)
 
 ### См. также
-- [[spring-boot|Spring Boot]] — базовый фреймворк для Spring Cloud
+- [Spring Boot](../../spring/spring-boot.md) — базовый фреймворк для Spring Cloud
 - [Мониторинг](../../../monitoring/) — мониторинг микросервисов
 
-- [[spring-websocket|Spring WebSocket]]
-- [[spring-integration|Spring Integration]]
-- [[spring-batch|Spring Batch для Java]]
-- [[spring-cloud-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Spring WebSocket](spring-websocket.md)
+- [Spring Integration](spring-integration.md)
+- [Spring Batch для Java](spring-batch.md)
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-cloud-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Spring Cloud](#введение-в-spring-cloud)

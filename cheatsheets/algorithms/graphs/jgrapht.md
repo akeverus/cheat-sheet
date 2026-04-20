@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [JGraphT GitHub](https://github.com/jgrapht/jgrapht)
 
 ### См. также
-- [[dijkstra|dijkstra.md]] — алгоритм Дейкстры
-- [[bfs|bfs.md]] — поиск в ширину
+- [dijkstra.md](dijkstra.md) — алгоритм Дейкстры
+- [bfs.md](bfs.md) — поиск в ширину
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](../strings/roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](../strings/balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](../strings/suffix-tree-pattern-matching.md)
 ## Содержание
 
 - [Введение](#введение)

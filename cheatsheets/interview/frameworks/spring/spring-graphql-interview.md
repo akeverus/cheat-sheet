@@ -576,13 +576,13 @@ logging:
 
 ## See also
 
-- [[graphql-interview|GraphQL]] — основы GraphQL (schema, queries, resolvers, N+1 проблема)
-- [[spring-webflux-interview|Spring WebFlux]] — реактивный стек для GraphQL subscriptions
-- [[spring-boot-interview|Spring Boot]] — auto-configuration, starter dependencies
-- [[spring-rest-client-interview|Spring REST Clients]] — REST как альтернатива GraphQL
-- [[spring-security-interview|Spring Security]] — интеграция безопасности с GraphQL
-- [[spring-testing-interview|Spring Testing]] — GraphQlTester для тестирования
-- [[spring-data-jpa-interview|Spring Data JPA]] — репозитории, используемые в resolvers
-- [[micrometer-interview|Micrometer]] — метрики graphql.* через Actuator
-- [[http-rest-interview|HTTP & REST]] — REST-обзор для сравнения
-- [[openapi-swagger-interview|OpenAPI/Swagger]] — документирование REST в противовес GraphQL introspection
+- [GraphQL](../../api/graphql-interview.md) — основы GraphQL (schema, queries, resolvers, N+1 проблема)
+- [Spring WebFlux](spring-webflux-interview.md) — реактивный стек для GraphQL subscriptions
+- [Spring Boot](spring-boot-interview.md) — auto-configuration, starter dependencies
+- [Spring REST Clients](spring-rest-client-interview.md) — REST как альтернатива GraphQL
+- [Spring Security](spring-security-interview.md) — интеграция безопасности с GraphQL
+- [Spring Testing](spring-testing-interview.md) — GraphQlTester для тестирования
+- [Spring Data JPA](spring-data-jpa-interview.md) — репозитории, используемые в resolvers
+- [Micrometer](../../monitoring/micrometer-interview.md) — метрики graphql.* через Actuator
+- [HTTP & REST](../../api/http-rest-interview.md) — REST-обзор для сравнения
+- [OpenAPI/Swagger](../../api/openapi-swagger-interview.md) — документирование REST в противовес GraphQL introspection

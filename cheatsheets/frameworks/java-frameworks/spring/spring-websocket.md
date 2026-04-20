@@ -32,11 +32,11 @@ related:
 - [Spring WebFlux WebSocket Client — Baeldung](https://www.baeldung.com/spring-5-reactive-websockets)
 
 ### См. также
-- [[spring-mvc]] — HTTP-часть приложения, с которой живёт WebSocket
-- [[spring-messaging]] — общая модель `Message` / `MessageChannel`
-- [[spring-security]] — security поверх WebSocket
-- [[spring-webflux]] — реактивный WebSocket API
-- [[spring-integration]] — если нужен EIP-конвейер вокруг сообщений
+- [spring-mvc](spring-mvc.md) — HTTP-часть приложения, с которой живёт WebSocket
+- [spring-messaging](spring-messaging.md) — общая модель `Message` / `MessageChannel`
+- [spring-security](spring-security.md) — security поверх WebSocket
+- [spring-webflux](spring-webflux.md) — реактивный WebSocket API
+- [spring-integration](spring-integration.md) — если нужен EIP-конвейер вокруг сообщений
 
 ## Содержание
 
@@ -152,7 +152,7 @@ public class NotificationController {
 
 | Тип | Что инжектится |
 |---|---|
-| DTO | payload (десериализация через [[spring-messaging|MessageConverter]]) |
+| DTO | payload (десериализация через [MessageConverter](spring-messaging.md)) |
 | `Principal` | аутентифицированный пользователь |
 | `@Header("x")` | конкретный STOMP-header |
 | `@Headers` | все headers как `Map` |
@@ -192,7 +192,7 @@ public class NotificationPublisher {
 template.convertAndSendToUser("alice", "/queue/private", payload);
 ```
 
-Внутри Spring превращает `/user/alice/queue/private` в конкретную сессию. Для работы нужен `Principal` в WebSocket-сессии — обычно приходит из [[spring-security]].
+Внутри Spring превращает `/user/alice/queue/private` в конкретную сессию. Для работы нужен `Principal` в WebSocket-сессии — обычно приходит из [spring-security](spring-security.md).
 
 ## Security
 
@@ -249,7 +249,7 @@ public void configureMessageBroker(MessageBrokerRegistry config) {
 }
 ```
 
-Поддерживаются RabbitMQ (с `rabbitmq_stomp` плагином) и ActiveMQ. Kafka напрямую не поддерживается — потребует custom bridge через [[spring-kafka]] `SimpMessagingTemplate`.
+Поддерживаются RabbitMQ (с `rabbitmq_stomp` плагином) и ActiveMQ. Kafka напрямую не поддерживается — потребует custom bridge через [spring-kafka](spring-kafka.md) `SimpMessagingTemplate`.
 
 ## Низкоуровневый WebSocketHandler
 
@@ -354,7 +354,7 @@ class WsIntegrationTest {
 
 ## Мониторинг и метрики
 
-Через [[spring-actuator]] и Micrometer:
+Через [spring-actuator](spring-actuator.md) и Micrometer:
 
 - `simp.events.sessions.connected` — активные сессии.
 - `simp.events.sessions.total` — total.

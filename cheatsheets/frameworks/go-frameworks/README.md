@@ -17,13 +17,13 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[go-frameworks-overview|Go Frameworks — обзор (редирект)]] — короткая карта со ссылкой на основной документ
-- [[go-web-frameworks|Go Web Frameworks]] — полное руководство по Gin/Echo/Chi/Fiber
+- [Go Frameworks — обзор (редирект)](go-frameworks-overview.md) — короткая карта со ссылкой на основной документ
+- [Go Web Frameworks](../../languages/go/go-web-frameworks.md) — полное руководство по Gin/Echo/Chi/Fiber
 
 ### Соседние разделы
-- [[README|Frameworks]]
-- [[README|Go (язык)]] — синтаксис, стандартная библиотека, конкурентность
-- [[README|Java Frameworks]]
+- [Frameworks](../../basics/README.md)
+- [Go (язык)](../../basics/README.md) — синтаксис, стандартная библиотека, конкурентность
+- [Java Frameworks](../../basics/README.md)
 
 ### Внешние ресурсы
 - [Gin](https://gin-gonic.com/)
@@ -72,6 +72,6 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Глубокий материал по Go — [[README|languages/go]]
-- Общие практики backend — [[README|development/web-backend]]
-- Контейнеризация Go-сервисов — [[README|platform/containers/docker]]
+- Глубокий материал по Go — [languages/go](../../basics/README.md)
+- Общие практики backend — [development/web-backend](../../basics/README.md)
+- Контейнеризация Go-сервисов — [platform/containers/docker](../../basics/README.md)

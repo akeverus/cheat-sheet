@@ -606,10 +606,10 @@ Flux<BigDecimal> sampledPrices = priceStream
 
 ## See also
 
-- [[project-reactor-interview|Project Reactor]]
-- [[reactive-streams-interview|Reactive Streams]]
-- [[rxjava-interview|RxJava]]
-- [[spring-webflux-interview|Spring WebFlux]]
-- [[spring-framework-interview|Spring Framework]]
-- [[reactive-testing-interview|Тестирование реактивного кода]]
-- [[distributed-systems-interview|Распределённые системы]]
+- [Project Reactor](project-reactor-interview.md)
+- [Reactive Streams](reactive-streams-interview.md)
+- [RxJava](rxjava-interview.md)
+- [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md)
+- [Spring Framework](../frameworks/spring/spring-framework-interview.md)
+- [Тестирование реактивного кода](reactive-testing-interview.md)
+- [Распределённые системы](../architecture/distributed-systems-interview.md)

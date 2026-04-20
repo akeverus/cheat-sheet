@@ -26,12 +26,12 @@ updated: "2026-04-20"
 - [Kotlin Flow Tutorial](https://www.baeldung.com/kotlin/flow)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-concurrency-basics|Основы корутин]]
-- [[kotlin-reactive|Реактивное программирование]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Основы корутин](kotlin-concurrency-basics.md)
+- [Реактивное программирование](kotlin-reactive.md)
 
-- [[kotlin-performance|Kotlin Performance]]
-- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
+- [Kotlin Performance](kotlin-performance.md)
+- [Kotlin Functional Programming: Basics](kotlin-fp-basics.md)
 ## Содержание
 
 - [Coroutine Context и Dispatchers (детально)](#coroutine-context-и-dispatchers-детально)

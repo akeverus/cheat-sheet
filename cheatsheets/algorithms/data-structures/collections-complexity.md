@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [JMH (OpenJDK)](https://github.com/openjdk/jmh)
 
 ### См. также
-- [[collections-big-o|Практические примеры Big O]]
-- [[collections-lock-free|Структуры данных без блокировок]]
-- [[README|Коллекции Java]]
+- [Практические примеры Big O](collections-big-o.md)
+- [Структуры данных без блокировок](collections-lock-free.md)
+- [Коллекции Java](../../basics/README.md)
 
-- [[linked-list-middle|Поиск среднего элемента связного списка (Linked List)]]
-- [[linked-list-reverse|Реверс связанного списка (Linked List)]]
+- [Поиск среднего элемента связного списка (Linked List)](linked-list-middle.md)
+- [Реверс связанного списка (Linked List)](linked-list-reverse.md)
 ## Содержание
 
 - [Обзор](#обзор)

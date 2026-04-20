@@ -25,9 +25,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[spring-messaging|Spring Messaging: Полное руководство по messaging системам]]
-- [[spring-graphql|Spring GraphQL: Полное руководство]]
-- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [Spring Messaging: Полное руководство по messaging системам](../java-frameworks/spring/spring-messaging.md)
+- [Spring GraphQL: Полное руководство](../java-frameworks/spring/spring-graphql.md)
+- [Spring Actuator: Полное руководство по мониторингу и управлению](../java-frameworks/spring/spring-actuator.md)
 ## Содержание
 
 - [IoC-контейнер и DI](#ioc-контейнер-и-di)
@@ -415,5 +415,5 @@ Spring Expression Language — выражения в аннотациях и к�
 
 ## См. также
 
-- [[spring-boot|Spring Boot]]
-- [[spring-data|Spring Data: JPA, JDBC и работа с данными]]
+- [Spring Boot](spring-boot.md)
+- [Spring Data: JPA, JDBC и работа с данными](spring-data.md)

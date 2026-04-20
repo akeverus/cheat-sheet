@@ -18,19 +18,19 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[creational-patterns|Обзор порождающих паттернов]] — общая карта группы
-- [[abstract-factory|Abstract Factory]] — семейство связанных объектов
-- [[builder]] — пошаговое построение сложного объекта
-- [[factory-method|Factory Method]] — делегирование создания подклассам
-- [[prototype]] — клонирование вместо конструирования
-- [[singleton]] — один экземпляр на приложение
+- [Обзор порождающих паттернов](creational-patterns.md) — общая карта группы
+- [Abstract Factory](abstract-factory.md) — семейство связанных объектов
+- [builder](builder.md) — пошаговое построение сложного объекта
+- [Factory Method](factory-method.md) — делегирование создания подклассам
+- [prototype](prototype.md) — клонирование вместо конструирования
+- [singleton](singleton.md) — один экземпляр на приложение
 
 ### Соседние разделы
-- [[README|Patterns]] — корень паттернов
-- [[README|Structural]]
-- [[README|Behavioral]]
-- [[README|Concurrency]]
-- [[design-patterns-interview|Design Patterns Interview]]
+- [Patterns](../../basics/README.md) — корень паттернов
+- [Structural](../../basics/README.md)
+- [Behavioral](../../basics/README.md)
+- [Concurrency](../../basics/README.md)
+- [Design Patterns Interview](../../interview/design-patterns/design-patterns-interview.md)
 
 ### Внешние ресурсы
 - [Refactoring.Guru: Creational Patterns](https://refactoring.guru/design-patterns/creational-patterns)
@@ -75,12 +75,12 @@ updated: "2026-04-20"
 ## Маршруты чтения
 
 - **Быстрый старт (1.5 ч):** `Singleton` -> `Factory Method` -> `Builder`.
-- **Подготовка к собеседованию:** обзор + все пять паттернов + раздел [[design-patterns-interview|Design Patterns Interview]].
+- **Подготовка к собеседованию:** обзор + все пять паттернов + раздел [Design Patterns Interview](../../interview/design-patterns/design-patterns-interview.md).
 - **Проектирование API/SDK:** `Builder` -> `Abstract Factory` -> `Prototype` для immutable DTO и клиентских конфигураций.
 
 ## Куда идти дальше
 
-- Поведенческие паттерны — [[README]]
-- Структурные паттерны — [[README]]
-- Spring IoC и бины — [[spring-core]]
-- Вопросы на собеседовании — [[design-patterns-interview]]
+- Поведенческие паттерны — [README](../../basics/README.md)
+- Структурные паттерны — [README](../../basics/README.md)
+- Spring IoC и бины — [spring-core](../../frameworks/spring/spring-core.md)
+- Вопросы на собеседовании — [design-patterns-interview](../../interview/design-patterns/design-patterns-interview.md)

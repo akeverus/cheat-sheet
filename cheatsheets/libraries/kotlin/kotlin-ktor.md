@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Ktor Tutorial](https://ktor.io/docs/creating-http-apis.html)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-concurrency-basics|Корутины и асинхронность]]
-- [[kotlin-another|Дополнительные темы Kotlin]]
+- [Основы Kotlin](../../languages/kotlin/kotlin-basics.md)
+- [Корутины и асинхронность](../../languages/kotlin/kotlin-concurrency-basics.md)
+- [Дополнительные темы Kotlin](../../languages/kotlin/kotlin-another.md)
 
-- [[kotlin-konfig|Konfig]]
-- [[kotlin-exposed|Kotlin Exposed]]
+- [Konfig](kotlin-konfig.md)
+- [Kotlin Exposed](kotlin-exposed.md)
 ## Содержание
 
 - [Введение в Ktor](#введение-в-ktor)

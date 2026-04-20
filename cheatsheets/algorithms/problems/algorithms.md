@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Структуры данных](../data-structures/) — обзор разделов
 - [Задачи и алгоритмы](./) — обзор разделов
 
-- [[a-star-pathfinding|Поиск пути A* (A* Pathfinding Algorithm)]]
-- [[branch-prediction|Предсказание ветвления (Branch Prediction)]]
-- [[calculator-implementation|Calculator Implementation]]
-- [[circular-buffer|Circular Buffer]]
-- [[combinatorial-problems-overview|Обзор комбинаторных задач (Combinatorial Problems Overview)]]
-- [[algorithms-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Поиск пути A* (A* Pathfinding Algorithm)](a-star-pathfinding.md)
+- [Предсказание ветвления (Branch Prediction)](branch-prediction.md)
+- [Calculator Implementation](calculator-implementation.md)
+- [Circular Buffer](circular-buffer.md)
+- [Обзор комбинаторных задач (Combinatorial Problems Overview)](combinatorial-problems-overview.md)
+- [Вопросы на собеседовании](../../interview/algorithms/algorithms-interview.md) — подготовка к интервью
 
 ## Содержание
 

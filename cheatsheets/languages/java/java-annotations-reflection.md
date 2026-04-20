@@ -23,9 +23,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[java-collections-converting|Java Collections: конвертирование]]
-- [[java-reactive-project-reactor|Java Reactive: Project Reactor]]
-- [[java-reactive-rxjava|Java Reactive: RxJava]]
+- [Java Collections: конвертирование](java-collections-converting.md)
+- [Java Reactive: Project Reactor](java-reactive-project-reactor.md)
+- [Java Reactive: RxJava](java-reactive-rxjava.md)
 ## Содержание
 
 - [Основы аннотаций](#основы-аннотаций)
@@ -1388,5 +1388,5 @@ public class SecureReflection {
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[java-exceptions|Java Exceptions]] — обработка исключений
-- [[spring-aop|Spring AOP]] — аспектно-ориентированное программирование
+- [Java Exceptions](java-exceptions.md) — обработка исключений
+- [Spring AOP](../../frameworks/java-frameworks/spring/spring-aop.md) — аспектно-ориентированное программирование

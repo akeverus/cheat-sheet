@@ -11,7 +11,7 @@ updated: "2026-04-20"
 ---
 # Spring (legacy)
 
-> **Внимание:** это legacy-папка. Основной, актуальный контент по Spring живёт в **[[README|frameworks/java-frameworks/spring/]]** — там разделённые документы по Spring Core, Boot, MVC, WebFlux, Data JPA, Security, Cloud, Kafka, Actuator и другим модулям.
+> **Внимание:** это legacy-папка. Основной, актуальный контент по Spring живёт в **[frameworks/java-frameworks/spring/](../../basics/README.md)** — там разделённые документы по Spring Core, Boot, MVC, WebFlux, Data JPA, Security, Cloud, Kafka, Actuator и другим модулям.
 
 Здесь остались исторические файлы трёх базовых тем (`spring-core.md`, `spring-boot.md`, `spring-data.md`) — они сохранены для обратной совместимости ссылок, но не развиваются. При любых правках добавляйте материал в каноничный раздел.
 
@@ -20,24 +20,24 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Каноничный раздел (используйте его)
-- [[README|Spring (актуальный раздел)]] — полный индекс
-- [[spring-core|Spring Core]]
-- [[spring-boot|Spring Boot]]
-- [[spring-mvc|Spring MVC]]
-- [[spring-webflux|Spring WebFlux]]
-- [[spring-data-jpa|Spring Data JPA]]
-- [[spring-security|Spring Security]]
-- [[spring-cloud|Spring Cloud]]
-- [[spring-actuator|Spring Actuator]]
+- [Spring (актуальный раздел)](../../basics/README.md) — полный индекс
+- [Spring Core](spring-core.md)
+- [Spring Boot](spring-boot.md)
+- [Spring MVC](../java-frameworks/spring/spring-mvc.md)
+- [Spring WebFlux](../java-frameworks/spring/spring-webflux.md)
+- [Spring Data JPA](../java-frameworks/spring/spring-data-jpa.md)
+- [Spring Security](../java-frameworks/spring/spring-security.md)
+- [Spring Cloud](../java-frameworks/spring/spring-cloud.md)
+- [Spring Actuator](../java-frameworks/spring/spring-actuator.md)
 
 ### Legacy-файлы в этой папке
-- [[spring-core]]
-- [[spring-boot]]
-- [[spring-data]]
+- [spring-core](spring-core.md)
+- [spring-boot](spring-boot.md)
+- [spring-data](spring-data.md)
 
 ### Соседние разделы
-- [[README|Java Frameworks]]
-- [[README|Frameworks]]
+- [Java Frameworks](../../basics/README.md)
+- [Frameworks](../../basics/README.md)
 
 ### Внешние ресурсы
 - [Spring Framework Reference](https://docs.spring.io/spring-framework/reference/)
@@ -60,14 +60,14 @@ updated: "2026-04-20"
 
 | Тема legacy | Актуальный документ |
 |-------------|---------------------|
-| `spring-core.md` | [[spring-core]] |
-| `spring-boot.md` | [[spring-boot]] |
-| `spring-data.md` | [[spring-data-jpa]] + [[spring-data-jdbc|spring-data-jdbc.md]] + [[spring-r2dbc|spring-r2dbc.md]] |
-| Остальные модули | см. [[README]] |
+| `spring-core.md` | [spring-core](spring-core.md) |
+| `spring-boot.md` | [spring-boot](spring-boot.md) |
+| `spring-data.md` | [spring-data-jpa](../java-frameworks/spring/spring-data-jpa.md) + [spring-data-jdbc.md](../java-frameworks/spring/spring-data-jdbc.md) + [spring-r2dbc.md](../java-frameworks/spring/spring-r2dbc.md) |
+| Остальные модули | см. [README](../../basics/README.md) |
 
 ## Маршруты чтения
 
-- **Вы попали сюда по ссылке:** идите в [[README|каноничный раздел]] — там структура актуальна.
+- **Вы попали сюда по ссылке:** идите в [каноничный раздел](../../basics/README.md) — там структура актуальна.
 - **Архивный материал:** используйте файлы в этой папке только как исторический референс, не как руководство к действию.
 
 ## Что делать с legacy-ссылками

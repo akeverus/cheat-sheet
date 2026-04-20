@@ -121,13 +121,13 @@ graph LR
 
 ## Q2. (!) Что такое `Spring MVC`?
 
-**Spring MVC** — реализация паттерна `Model-View-Controller` в [[spring-framework-interview|Spring Framework]]:
+**Spring MVC** — реализация паттерна `Model-View-Controller` в [Spring Framework](spring-framework-interview.md):
 
 - **Model** — данные и бизнес-логика (сервисы, DTO, доменные объекты)
 - **View** — отображение (`Thymeleaf`, `JSP`, `JSON` через `Jackson`)
 - **Controller** — обработка запросов, вызов сервисов, передача данных в модель и выбор представления
 
-`Spring MVC` предоставляет: маршрутизацию по аннотациям (`@RequestMapping`), автоматическое связывание данных из запроса в объекты, интеграцию с `Bean Validation`, Content Negotiation, гибкую обработку исключений и тесную интеграцию с `DI` и `AOP` контейнера `Spring`. В [[spring-boot-interview|Spring Boot]] веб-слой автоконфигурируется через `spring-boot-starter-web`.
+`Spring MVC` предоставляет: маршрутизацию по аннотациям (`@RequestMapping`), автоматическое связывание данных из запроса в объекты, интеграцию с `Bean Validation`, Content Negotiation, гибкую обработку исключений и тесную интеграцию с `DI` и `AOP` контейнера `Spring`. В [Spring Boot](spring-boot-interview.md) веб-слой автоконфигурируется через `spring-boot-starter-web`.
 
 ## Q3. Как получить `ServletContext` и `ServletConfig` внутри бина?
 
@@ -215,7 +215,7 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-Отличие от Servlet `Filter`: интерцепторы работают на уровне `Spring MVC` (имеют доступ к `HandlerMethod`), а фильтры — на уровне сервлет-контейнера (работают до `DispatcherServlet`). Подробнее о фильтрах и безопасности — в [[spring-security-interview|Spring Security]].
+Отличие от Servlet `Filter`: интерцепторы работают на уровне `Spring MVC` (имеют доступ к `HandlerMethod`), а фильтры — на уровне сервлет-контейнера (работают до `DispatcherServlet`). Подробнее о фильтрах и безопасности — в [Spring Security](spring-security-interview.md).
 
 ## Q6. Что такое `@ModelAttribute`?
 
@@ -365,7 +365,7 @@ public record UserCreateDto(
 ) {}
 ```
 
-Для кастомных правил — собственная аннотация с `ConstraintValidator`. Для групповой валидации — `@Validated(OnCreate.class)` вместо `@Valid`. Подробнее о паттернах валидации — в [[spring-boot-interview|Spring Boot]].
+Для кастомных правил — собственная аннотация с `ConstraintValidator`. Для групповой валидации — `@Validated(OnCreate.class)` вместо `@Valid`. Подробнее о паттернах валидации — в [Spring Boot](spring-boot-interview.md).
 
 ## Q12. (!) Что такое `BindingResult`?
 
@@ -548,7 +548,7 @@ public class UserForm {
 }
 ```
 
-Философия `Spring` — контроллеры и сервисы тоже по возможности должны оставаться POJO: бизнес-логика не зависит от `javax.servlet.*`, что упрощает тестирование (см. [[unit-testing-interview|модульное тестирование]]).
+Философия `Spring` — контроллеры и сервисы тоже по возможности должны оставаться POJO: бизнес-логика не зависит от `javax.servlet.*`, что упрощает тестирование (см. [модульное тестирование](../../testing/unit-testing-interview.md)).
 
 ## Q19. Что такое архитектуры модели 1 и модели 2?
 
@@ -774,7 +774,7 @@ spring:
 
 Контроллер возвращает имя: `return "userList"` → `ViewResolver` подставит префикс/суффикс → `/templates/userList.html`. В чисто REST-приложениях с `@RestController` шаблоны не используются — ответ формируется через `HttpMessageConverter` (JSON/XML).
 
-В современных приложениях `Thymeleaf` — стандартный выбор (поддержка layout-фрагментов, интеграция с [[spring-security-interview|Spring Security]], рендеринг без сервера).
+В современных приложениях `Thymeleaf` — стандартный выбор (поддержка layout-фрагментов, интеграция с [Spring Security](spring-security-interview.md), рендеринг без сервера).
 
 ## Q27. (!) В чём разница между `@RequestBody` и `@RequestParam`?
 
@@ -800,7 +800,7 @@ public Page<User> search(@RequestParam(defaultValue = "") String name,
 public void delete(@PathVariable Long id) { ... }
 ```
 
-Для подробностей о [[http-rest-interview|HTTP и REST]] — смотрите соответствующий раздел.
+Для подробностей о [HTTP и REST](../../api/http-rest-interview.md) — смотрите соответствующий раздел.
 
 ## Q28. Как организовать валидацию входных данных?
 
@@ -922,8 +922,8 @@ class UserControllerTest {
 
 - `@WebMvcTest` — срез: только контроллер, фильтры, `ControllerAdvice`; сервисы подменяются `@MockBean`
 - `@SpringBootTest` + `@AutoConfigureMockMvc` — полный контекст с MockMvc
-- `@WithMockUser` — тестирование с [[spring-security-interview|аутентификацией]]
-- Для подробностей о тестировании — [[unit-testing-interview|модульное тестирование]] и [[integration-testing-interview|интеграционное тестирование]]
+- `@WithMockUser` — тестирование с [аутентификацией](spring-security-interview.md)
+- Для подробностей о тестировании — [модульное тестирование](../../testing/unit-testing-interview.md) и [интеграционное тестирование](../../testing/integration-testing-interview.md)
 
 ## Q31. (!) Как устроен pipeline обработки запроса в `DispatcherServlet`?
 
@@ -1763,21 +1763,21 @@ public Flux<ServerSentEvent<String>> streamEvents() {
 
 ## See also
 
-- [[spring-framework-interview|Spring Framework]] — IoC-контейнер и DI как основа MVC
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация веб-слоя
-- [[spring-webflux-interview|Spring WebFlux]] — реактивная альтернатива для высоких нагрузок
-- [[spring-security-interview|Spring Security]] — защита HTTP-эндпоинтов и фильтры
-- [[spring-data-jpa-interview|Spring Data JPA]] — интеграция с репозиториями в контроллерах
-- [[spring-cloud-interview|Spring Cloud]] — Gateway и Load Balancer поверх MVC
-- [[spring-boot-actuator-interview|Spring Boot Actuator]] — мониторинг контроллеров и метрики
-- [[spring-batch-interview|Spring Batch]] — пакетные задачи, запускаемые через REST
-- [[http-rest-interview|HTTP и REST]] — протокол и архитектурный стиль для REST API
-- [[design-patterns-interview|Паттерны проектирования]] — Front Controller, MVC
+- [Spring Framework](spring-framework-interview.md) — IoC-контейнер и DI как основа MVC
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация веб-слоя
+- [Spring WebFlux](spring-webflux-interview.md) — реактивная альтернатива для высоких нагрузок
+- [Spring Security](spring-security-interview.md) — защита HTTP-эндпоинтов и фильтры
+- [Spring Data JPA](spring-data-jpa-interview.md) — интеграция с репозиториями в контроллерах
+- [Spring Cloud](spring-cloud-interview.md) — Gateway и Load Balancer поверх MVC
+- [Spring Boot Actuator](spring-boot-actuator-interview.md) — мониторинг контроллеров и метрики
+- [Spring Batch](spring-batch-interview.md) — пакетные задачи, запускаемые через REST
+- [HTTP и REST](../../api/http-rest-interview.md) — протокол и архитектурный стиль для REST API
+- [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — Front Controller, MVC
 
-- [[spring-aop-interview|Spring AOP]]
-- [[spring-batch-interview|Spring Batch]]
-- [[spring-boot-actuator-interview|Spring Boot Actuator]]
-- [[spring-boot-interview|Spring Boot]]
-- [[spring-cloud-interview|Spring Cloud]]
-- [[spring-data-jpa-interview|Spring Data JPA]]
-- [[spring-mvc|Шпаргалка: Spring MVC: Полное руководство по веб-фр]] — теория
+- [Spring AOP](spring-aop-interview.md)
+- [Spring Batch](spring-batch-interview.md)
+- [Spring Boot Actuator](spring-boot-actuator-interview.md)
+- [Spring Boot](spring-boot-interview.md)
+- [Spring Cloud](spring-cloud-interview.md)
+- [Spring Data JPA](spring-data-jpa-interview.md)
+- [Шпаргалка: Spring MVC: Полное руководство по веб-фр](../../../frameworks/java-frameworks/spring/spring-mvc.md) — теория

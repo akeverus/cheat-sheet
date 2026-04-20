@@ -21,13 +21,13 @@ A **guide** to **implementing** a **basic calculator** in **Java that supports a
 - [Switch Statement (Java Tutorial)](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/switch.html)
 
 ### См. также
-- [[README|Математические алгоритмы]] — раздел math
-- [[README|Алгоритмы со строками]] — раздел strings
+- [Математические алгоритмы](../../basics/README.md) — раздел math
+- [Алгоритмы со строками](../../basics/README.md) — раздел strings
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
-- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
+- [Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)](frequency-histogram-apache-commons.md)
 ## Содержание
 
 - [Обзор](#обзор)

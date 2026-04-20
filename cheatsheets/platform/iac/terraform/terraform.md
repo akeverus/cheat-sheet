@@ -16,7 +16,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[terraform-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Вопросы на собеседовании](../../../interview/devops/terraform-interview.md) — подготовка к интервью
 
 ## Полезные ссылки
 - [Официальная документация Terraform](https://developer.hashicorp.com/terraform/docs)
@@ -1297,8 +1297,8 @@ terraform validate
 terraform fmt -check
 ```
 ## См. также
-- [[terraform-advanced|Terraform Advanced]] — продвинутые паттерны Terraform
-- [[ansible|Ansible]] — конфигурационное управление
-- [[pulumi|Pulumi]] — инфраструктура как код на языках программирования
-- [[aws-basics|AWS]] — Amazon Web Services
-- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
+- [Terraform Advanced](terraform-advanced.md) — продвинутые паттерны Terraform
+- [Ansible](../ansible/ansible.md) — конфигурационное управление
+- [Pulumi](../pulumi/pulumi.md) — инфраструктура как код на языках программирования
+- [AWS](../../cloud-providers/aws-basics.md) — Amazon Web Services
+- [Kubernetes](../../containers/kubernetes/kubernetes-basics.md) — оркестрация контейнеров

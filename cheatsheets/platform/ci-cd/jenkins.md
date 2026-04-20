@@ -1416,8 +1416,8 @@ pipeline {
 }
 ```
 ## См. также
-- [[gitlab-ci|GitLab CI]] — альтернативная **CI/CD** платформа
-- [[github-actions|GitHub Actions]] — **CI/CD** в **GitHub**
-- [[docker-basics|Docker]] — контейнеризация
-- [[kubernetes-advanced|Kubernetes]] — оркестрация контейнеров
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
+- [GitLab CI](gitlab-ci.md) — альтернативная **CI/CD** платформа
+- [GitHub Actions](github-actions.md) — **CI/CD** в **GitHub**
+- [Docker](../containers/docker/docker-basics.md) — контейнеризация
+- [Kubernetes](../containers/kubernetes/kubernetes-advanced.md) — оркестрация контейнеров
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**

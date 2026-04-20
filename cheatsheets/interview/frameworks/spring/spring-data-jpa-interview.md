@@ -17,7 +17,7 @@ updated: "2026-04-13"
 
 Полное покрытие `Spring Data JPA`: репозитории, `@Query`, `Specifications`, проекции, аудит, пагинация, жизненный цикл сущностей, N+1, производительность.
 
-**`Spring Data JPA`** — подпроект `Spring Data`, который радикально упрощает работу с `JPA`-репозиториями. На собеседованиях это одна из самых частых тем для Java-backend-разработчиков: от базовых вопросов про иерархию репозиториев до глубоких — про N+1, блокировки и оптимизацию запросов. Тесно связан с [[hibernate-interview|Hibernate]] как реализацией `JPA`.
+**`Spring Data JPA`** — подпроект `Spring Data`, который радикально упрощает работу с `JPA`-репозиториями. На собеседованиях это одна из самых частых тем для Java-backend-разработчиков: от базовых вопросов про иерархию репозиториев до глубоких — про N+1, блокировки и оптимизацию запросов. Тесно связан с [Hibernate](../../databases/hibernate-interview.md) как реализацией `JPA`.
 
 ## Полезные ссылки
 
@@ -186,7 +186,7 @@ public class UserService {
 }
 ```
 
-На собеседовании важно показать, что `Spring Data JPA` — это не замена `JPA`, а надстройка. Под капотом используется [[hibernate-interview|Hibernate]] (или другая реализация `JPA`), `Spring Data` лишь генерирует реализацию репозиториев.
+На собеседовании важно показать, что `Spring Data JPA` — это не замена `JPA`, а надстройка. Под капотом используется [Hibernate](../../databases/hibernate-interview.md) (или другая реализация `JPA`), `Spring Data` лишь генерирует реализацию репозиториев.
 
 ## Q2. (!) Какова иерархия репозиториев в `Spring Data`?
 
@@ -1007,7 +1007,7 @@ public class Product extends AuditableEntity {
 
 При обновлении — меняются только `updatedAt` и `updatedBy`.
 
-Подробнее о [[spring-security-interview|Spring Security]] — аудит тесно связан с аутентификацией.
+Подробнее о [Spring Security](spring-security-interview.md) — аудит тесно связан с аутентификацией.
 
 ## Q19. (!) Какие состояния имеет сущность в `JPA`?
 
@@ -1145,7 +1145,7 @@ public class Order {
 
 ## Q21. Что такое `FlushMode` и когда его менять?
 
-`FlushMode` определяет, когда [[hibernate-interview|Hibernate]] синхронизирует persistence context с БД.
+`FlushMode` определяет, когда [Hibernate](../../databases/hibernate-interview.md) синхронизирует persistence context с БД.
 
 | FlushMode | Когда flush | Использование |
 |-----------|------------|---------------|
@@ -1969,7 +1969,7 @@ public class ProductService {
 }
 ```
 
-Подробнее о настройке [[spring-boot-interview|Spring Boot]] приложений и профилировании запросов через [[sql-interview|SQL]].
+Подробнее о настройке [Spring Boot](spring-boot-interview.md) приложений и профилировании запросов через [SQL](../../databases/sql-interview.md).
 
 ## Q36. (!) Как работают derived query methods и каков их синтаксис?
 
@@ -2483,21 +2483,21 @@ int auditAndUpdatePrices(
 
 ## See also
 
-- [[spring-framework-interview|Spring Framework]] — IoC и жизненный цикл бинов репозиториев
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация datasource и JPA
-- [[spring-mvc-interview|Spring MVC]] — контроллеры, использующие JPA-репозитории
-- [[spring-webflux-interview|Spring WebFlux]] — R2DBC как реактивная альтернатива JPA
-- [[spring-security-interview|Spring Security]] — UserDetailsService на основе JPA
-- [[spring-cloud-interview|Spring Cloud]] — репозитории в cloud-native микросервисах
-- [[spring-boot-actuator-interview|Spring Boot Actuator]] — health indicators для datasource
-- [[spring-batch-interview|Spring Batch]] — JpaPagingItemReader и batch-доступ к данным
-- [[hibernate-interview|Hibernate]] — ORM под капотом Spring Data JPA
-- [[database-architecture-interview|Архитектура баз данных]] — транзакции и производительность
+- [Spring Framework](spring-framework-interview.md) — IoC и жизненный цикл бинов репозиториев
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация datasource и JPA
+- [Spring MVC](spring-mvc-interview.md) — контроллеры, использующие JPA-репозитории
+- [Spring WebFlux](spring-webflux-interview.md) — R2DBC как реактивная альтернатива JPA
+- [Spring Security](spring-security-interview.md) — UserDetailsService на основе JPA
+- [Spring Cloud](spring-cloud-interview.md) — репозитории в cloud-native микросервисах
+- [Spring Boot Actuator](spring-boot-actuator-interview.md) — health indicators для datasource
+- [Spring Batch](spring-batch-interview.md) — JpaPagingItemReader и batch-доступ к данным
+- [Hibernate](../../databases/hibernate-interview.md) — ORM под капотом Spring Data JPA
+- [Архитектура баз данных](../../databases/database-architecture-interview.md) — транзакции и производительность
 
-- [[spring-aop-interview|Spring AOP]]
-- [[spring-batch-interview|Spring Batch]]
-- [[spring-boot-actuator-interview|Spring Boot Actuator]]
-- [[spring-boot-interview|Spring Boot]]
-- [[spring-cloud-interview|Spring Cloud]]
-- [[spring-framework-interview|Spring Framework]]
-- [[spring-data-jpa|Шпаргалка: Spring Data JPA/Hibernate]] — теория
+- [Spring AOP](spring-aop-interview.md)
+- [Spring Batch](spring-batch-interview.md)
+- [Spring Boot Actuator](spring-boot-actuator-interview.md)
+- [Spring Boot](spring-boot-interview.md)
+- [Spring Cloud](spring-cloud-interview.md)
+- [Spring Framework](spring-framework-interview.md)
+- [Шпаргалка: Spring Data JPA/Hibernate](../../../frameworks/java-frameworks/spring/spring-data-jpa.md) — теория

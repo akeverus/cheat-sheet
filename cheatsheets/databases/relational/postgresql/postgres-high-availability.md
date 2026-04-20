@@ -24,12 +24,12 @@ related: ["databases/postgres-replication.md", "databases/postgres-backup-restor
 - [PostgreSQL High Availability](https://www.postgresql.org/docs/current/high-availability.html) — высокая доступность
 
 ### См. также
-- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
-- [[postgres-replication|postgres-replication.md]] — репликация
+- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
+- [postgres-replication.md](postgres-replication.md) — репликация
 
-- [[redis-high-availability|Redis: Высокая доступность]]
-- [[redis-replication|Redis: Репликация]]
-- [[postgres-security|PostgreSQL: Безопасность]]
+- [Redis: Высокая доступность](../../nosql/redis/redis-high-availability.md)
+- [Redis: Репликация](../../nosql/redis/redis-replication.md)
+- [PostgreSQL: Безопасность](postgres-security.md)
 ## Содержание
 
 - [Введение в высокую доступность](#введение-в-высокую-доступность)

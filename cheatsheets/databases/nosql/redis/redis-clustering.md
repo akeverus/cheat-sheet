@@ -25,12 +25,12 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 - [Redis Cluster Specification](https://redis.io/docs/reference/cluster-spec/)
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-replication|redis-replication.md]] — репликация
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-replication.md](redis-replication.md) — репликация
 
-- [[redis-high-availability|Redis: Высокая доступность]]
-- [[clickhouse-replication|ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость]]
-- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
+- [Redis: Высокая доступность](redis-high-availability.md)
+- [ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость](../clickhouse/clickhouse-replication.md)
+- [Quarkus: Redis — Caching и Data Structures](../../../frameworks/java-frameworks/quarkus/quarkus-redis.md)
 ## Содержание
 
 - [Введение в Redis Cluster](#введение-в-redis-cluster)

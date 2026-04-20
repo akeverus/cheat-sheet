@@ -469,7 +469,7 @@ runtime.GC()
 
 Утечка 100K goroutines = **минимум 200 MB**.
 
-Подробнее — в [[go-concurrency-interview|Go Concurrency]].
+Подробнее — в [Go Concurrency](go-concurrency-interview.md).
 
 ## Q21. Что такое finalizer и зачем?
 
@@ -538,7 +538,7 @@ func handle(req string) {
 
 GC **может очистить пул** в любой момент (между циклами). Не используй для долгоживущих объектов.
 
-Подробнее — в [[go-concurrency-interview|Go Concurrency]].
+Подробнее — в [Go Concurrency](go-concurrency-interview.md).
 
 ## Q25. Pre-allocation slices/maps?
 
@@ -605,18 +605,18 @@ go build -gcflags="-m" main.go
 
 ## See also
 
-- [[go-interview|Go (базовый)]] — типы, pointers
-- [[go-concurrency-interview|Go Concurrency]] — goroutine stacks
-- [[go-stdlib-interview|Go Standard Library]] — runtime/pprof
-- [[memory-management-interview|Memory Management]] — общие концепции
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — для сравнения с JVM GC
-- [[application-profiling-interview|Application Profiling]] — pprof и аналоги
-- [[performance-testing-interview|Performance Testing]] — Go bench
-- [[microservices-interview|Микросервисы]] — где Go экономит память
+- [Go (базовый)](go-interview.md) — типы, pointers
+- [Go Concurrency](go-concurrency-interview.md) — goroutine stacks
+- [Go Standard Library](go-stdlib-interview.md) — runtime/pprof
+- [Memory Management](../../performance/memory-management-interview.md) — общие концепции
+- [JVM Performance Tuning](../../performance/jvm-performance-tuning-interview.md) — для сравнения с JVM GC
+- [Application Profiling](../../performance/application-profiling-interview.md) — pprof и аналоги
+- [Performance Testing](../../performance/performance-testing-interview.md) — Go bench
+- [Микросервисы](../../architecture/microservices-interview.md) — где Go экономит память
 
-- [[go-concurrency-interview|Go Concurrency]]
-- [[go-generics-interview|Go Generics]]
-- [[go-interview|Go]]
-- [[go-modules-interview|Go Modules]]
-- [[go-stdlib-interview|Go Standard Library]]
-- [[go-testing-interview|Go Testing]]
+- [Go Concurrency](go-concurrency-interview.md)
+- [Go Generics](go-generics-interview.md)
+- [Go](go-interview.md)
+- [Go Modules](go-modules-interview.md)
+- [Go Standard Library](go-stdlib-interview.md)
+- [Go Testing](go-testing-interview.md)

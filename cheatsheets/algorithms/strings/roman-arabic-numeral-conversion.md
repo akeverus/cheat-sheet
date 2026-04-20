@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Converting Roman Numerals to Decimal — GeeksforGeeks](https://www.geeksforgeeks.org/converting-roman-numerals-decimal-lying-1-3999/)
 
 ### См. также
-- [[word-count|Подсчет слов]] — подсчёт слов
-- [[caesar-cipher|Шифр Цезаря]] — шифрование
+- [Подсчет слов](word-count.md) — подсчёт слов
+- [Шифр Цезаря](caesar-cipher.md) — шифрование
 
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
-- [[large-text-string-search|Поиск строки в большом тексте (Large Text String Search)]]
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
+- [Поиск строки в большом тексте (Large Text String Search)](large-text-string-search.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

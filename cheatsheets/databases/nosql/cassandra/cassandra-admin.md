@@ -33,12 +33,12 @@ updated: "2026-04-20"
 - [Cassandra Logging](https://cassandra.apache.org/doc/latest/operating/logging.html)
 
 ### См. также
-- [[cassandra-basics|Основы]] — **Cassandra**
-- [[cassandra-clustering|Кластеризация]] — кластеризация
-- [[cassandra-performance|Производительность]] — производительность
-- [[cassandra-data-modeling|Моделирование]] — моделирование данных
+- [Основы](cassandra-basics.md) — **Cassandra**
+- [Кластеризация](cassandra-clustering.md) — кластеризация
+- [Производительность](cassandra-performance.md) — производительность
+- [Моделирование](cassandra-data-modeling.md) — моделирование данных
 
-- [[clickhouse|ClickHouse]]
+- [ClickHouse](../clickhouse/clickhouse.md)
 ## Содержание
 
 - [Ежедневное администрирование](#ежедневное-администрирование)

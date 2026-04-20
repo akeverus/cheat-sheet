@@ -19,11 +19,11 @@ Microsoft SQL Server — коммерческая реляционная СУБ�
 ## Полезные ссылки
 
 ### Основные документы
-- [[sql-server-basics|SQL Server: Основы]] — архитектура, установка, T-SQL, интеграция с Java
+- [SQL Server: Основы](sql-server-basics.md) — архитектура, установка, T-SQL, интеграция с Java
 
 ### Соседние разделы
-- [[README|Реляционные БД]]
-- [[README|Oracle]]
+- [Реляционные БД](../../../basics/README.md)
+- [Oracle](../../../basics/README.md)
 - [PostgreSQL](../postgresql/)
 - [MySQL](../mysql/)
 - [SQL-справочники](../../sql/)
@@ -45,7 +45,7 @@ Microsoft SQL Server — коммерческая реляционная СУБ�
 
 ## Что внутри раздела
 
-[[sql-server-basics]] покрывает:
+[sql-server-basics](sql-server-basics.md) покрывает:
 
 - Основные возможности SQL Server
 - Установку (включая Docker)
@@ -95,8 +95,8 @@ Microsoft SQL Server — коммерческая реляционная СУБ�
 
 ## Куда идти дальше
 
-- Реляционные БД в целом — [[README|databases/relational/README.md]]
+- Реляционные БД в целом — [databases/relational/README.md](../../../basics/README.md)
 - SQL-справочники — [databases/sql/](../../sql/)
-- Альтернативные СУБД — [PostgreSQL](../postgresql/), [[README|Oracle]]
-- Hibernate / JPA — [[hibernate-interview|interview/databases/hibernate-interview.md]]
-- Интервью по SQL — [[sql-interview|interview/databases/sql-interview.md]]
+- Альтернативные СУБД — [PostgreSQL](../postgresql/), [Oracle](../../../basics/README.md)
+- Hibernate / JPA — [interview/databases/hibernate-interview.md](../../../interview/databases/hibernate-interview.md)
+- Интервью по SQL — [interview/databases/sql-interview.md](../../../interview/databases/sql-interview.md)

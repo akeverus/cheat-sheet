@@ -26,7 +26,7 @@ Confluence — платформа для документации и знани�
 
 
 ### См. также
-- [[security-tools|Инструменты безопасности (Security Tools)]]
+- [Инструменты безопасности (Security Tools)](../../../security/tools/security-tools.md)
 ## Содержание
 
 - [Пространства и страницы](#пространства-и-страницы)
@@ -320,4 +320,4 @@ Space settings Permissions. View, Edit, Admin по группам/пользов
 
 ## Заключение
 
-Для углублённого изучения — [официальная документация Atlassian](https://www.atlassian.com/software/confluence). См. также: [[jira-basics|Jira]] — [[slack-basics|Slack]] — [[mattermost-basics|Mattermost]] — [[telegram-basics|Telegram]].
+Для углублённого изучения — [официальная документация Atlassian](https://www.atlassian.com/software/confluence). См. также: [Jira](../jira/jira-basics.md) — [Slack](../slack/slack-basics.md) — [Mattermost](../mattermost/mattermost-basics.md) — [Telegram](../telegram/telegram-basics.md).

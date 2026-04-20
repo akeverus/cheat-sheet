@@ -17,13 +17,13 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[dotnet-frameworks-overview|.NET Frameworks — обзор]] — ASP.NET Core, EF Core, Blazor, MAUI, CLI
+- [.NET Frameworks — обзор](dotnet-frameworks-overview.md) — ASP.NET Core, EF Core, Blazor, MAUI, CLI
 
 ### Соседние разделы
-- [[README|Frameworks]] — корневой индекс фреймворков
-- [[README|Java Frameworks]] — для кросс-платформенных сравнений
-- [[README|Go Frameworks]]
-- [[README|Python Frameworks]]
+- [Frameworks](../../basics/README.md) — корневой индекс фреймворков
+- [Java Frameworks](../../basics/README.md) — для кросс-платформенных сравнений
+- [Go Frameworks](../../basics/README.md)
+- [Python Frameworks](../../basics/README.md)
 
 ### Внешние ресурсы
 - [.NET Documentation](https://learn.microsoft.com/en-us/dotnet/)
@@ -75,6 +75,6 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Если нужен Java-аналог — [[README|Java Frameworks]]
-- Общие практики backend — [[README|development/web-backend]]
-- Контейнеризация — [[README|platform/containers]]
+- Если нужен Java-аналог — [Java Frameworks](../../basics/README.md)
+- Общие практики backend — [development/web-backend](../../basics/README.md)
+- Контейнеризация — [platform/containers](../../basics/README.md)

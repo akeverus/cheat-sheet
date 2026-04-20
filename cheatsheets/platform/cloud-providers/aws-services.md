@@ -12,7 +12,7 @@ updated: "2026-04-20"
 ---
 # AWS Services
 
-**AWS** (Amazon Web Services) предоставляет более `200` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **AWS**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [[aws-basics|AWS Basics]] более глубоким погружением в конкретные сервисы.
+**AWS** (Amazon Web Services) предоставляет более `200` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **AWS**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [AWS Basics](aws-basics.md) более глубоким погружением в конкретные сервисы.
 
 ## Полезные ссылки
 - [AWS Services Overview](https://aws.amazon.com/products/)
@@ -2372,7 +2372,7 @@ ssm-session-prefs:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[aws-basics|AWS Basics]] — основы **AWS**
-- [[aws-iam|AWS IAM]] — управление доступом
-- [[aws-networking|AWS Networking]] — сеть в **AWS**
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
+- [AWS Basics](aws-basics.md) — основы **AWS**
+- [AWS IAM](aws-iam.md) — управление доступом
+- [AWS Networking](aws-networking.md) — сеть в **AWS**
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**

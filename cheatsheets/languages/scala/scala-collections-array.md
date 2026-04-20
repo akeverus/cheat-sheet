@@ -24,12 +24,12 @@ related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 - [Scala Array API](https://www.scala-lang.org/api/current/scala/Array.html)
 
 ### См. также
-- [[scala-collections-list|Списки (List)]]
-- [[scala-interop-java|Взаимодействие с Java]]
+- [Списки (List)](scala-collections-list.md)
+- [Взаимодействие с Java](scala-interop-java.md)
 
-- [[scala-collections-vector|Scala Collections — Vector]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
-- [[scala-performance|Scala Performance]]
+- [Scala Collections — Vector](scala-collections-vector.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
+- [Scala Performance](scala-performance.md)
 ## Содержание
 
 - [Введение в Array](#введение-в-array)

@@ -28,13 +28,13 @@ updated: "2026-04-20"
 - [API Security Best Practices](https://owasp.org/www-project-api-security/) — лучшие практики от `OWASP`
 
 ### См. также
-- [[application-security|Application Security]] — аутентификация, авторизация, токены
-- [[web-security|Web Security]] — общие веб‑атаки и защита
-- [[secrets-management|Secrets Management]] — безопасное хранение ключей и токенов
+- [Application Security](application-security.md) — аутентификация, авторизация, токены
+- [Web Security](web-security.md) — общие веб‑атаки и защита
+- [Secrets Management](../data/secrets-management.md) — безопасное хранение ключей и токенов
 
 
-- [[jwt-oauth2|JWT и OAuth2 / OIDC]]
-- [[owasp-top-10|OWASP Top 10 (2021) — разбор категорий]]
+- [JWT и OAuth2 / OIDC](jwt-oauth2.md)
+- [OWASP Top 10 (2021) — разбор категорий](owasp-top-10.md)
 ## Содержание
 
 - [Модели аутентификации API](#модели-аутентификации-api)

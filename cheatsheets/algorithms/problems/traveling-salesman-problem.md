@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Baeldung: Simulated Annealing](https://www.baeldung.com/)
 
 ### См. также
-- [[knapsack-problem|Задача о рюкзаке]] — **knapsack**
-- [[a-star-pathfinding|Поиск пути A*]] — **A\*** pathfinding
-- [[dijkstra|Алгоритм Дейкстры]] — **Dijkstra**
+- [Задача о рюкзаке](knapsack-problem.md) — **knapsack**
+- [Поиск пути A*](a-star-pathfinding.md) — **A\*** pathfinding
+- [Алгоритм Дейкстры](../graphs/dijkstra.md) — **Dijkstra**
 
-- [[optaplanner|OptaPlanner]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [OptaPlanner](optaplanner.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

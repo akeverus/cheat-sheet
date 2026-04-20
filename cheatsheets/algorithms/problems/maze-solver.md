@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Baeldung: Maze Solver](https://www.baeldung.com/)
 
 ### См. также
-- [[a-star-pathfinding|Поиск пути A*]] — A*
-- [[dijkstra|Алгоритм Дейкстры]] — Dijkstra
-- [[bfs|Поиск в ширину (BFS)]]
+- [Поиск пути A*](a-star-pathfinding.md) — A*
+- [Алгоритм Дейкстры](../graphs/dijkstra.md) — Dijkstra
+- [Поиск в ширину (BFS)](../graphs/bfs.md)
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

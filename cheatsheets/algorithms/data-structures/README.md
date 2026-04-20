@@ -17,9 +17,9 @@ updated: "2026-04-20"
 
 ## Содержание
 
-- [[collections-big-o|Сложность коллекций (Big-O)]]
-- [[collections-complexity|Сложность коллекций]]
-- [[collections-lock-free|Lock-free коллекции]]
-- [[linked-list-middle|Середина связного списка]]
-- [[linked-list-reverse|Разворот связного списка]]
+- [Сложность коллекций (Big-O)](collections-big-o.md)
+- [Сложность коллекций](collections-complexity.md)
+- [Lock-free коллекции](collections-lock-free.md)
+- [Середина связного списка](linked-list-middle.md)
+- [Разворот связного списка](linked-list-reverse.md)
 

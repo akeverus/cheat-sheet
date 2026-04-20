@@ -30,12 +30,12 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
 - [pg_auto_failover Documentation](https://www.postgresql.org/docs/)
 
 ### См. также
-- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
-- [[postgres-high-availability|postgres-high-availability.md]] — высокая доступность
+- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
+- [postgres-high-availability.md](postgres-high-availability.md) — высокая доступность
 
-- [[redis-replication|Redis: Репликация]]
-- [[clickhouse-replication|ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость]]
-- [[redis-high-availability|Redis: Высокая доступность]]
+- [Redis: Репликация](../../nosql/redis/redis-replication.md)
+- [ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость](../../nosql/clickhouse/clickhouse-replication.md)
+- [Redis: Высокая доступность](../../nosql/redis/redis-high-availability.md)
 ## Содержание
 
 - [Введение в репликацию PostgreSQL](#введение-в-репликацию-postgresql)

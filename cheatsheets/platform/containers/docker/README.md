@@ -19,17 +19,17 @@ Docker — платформа для упаковки приложений в к
 ## Полезные ссылки
 
 ### Основные документы
-- [[docker-basics]] — установка, команды, образы, контейнеры, архитектура
-- [[docker-containers]] — глубокая работа с контейнерами
-- [[docker-compose]] — многоконтейнерные окружения
-- [[docker-advanced]] — сети, volumes, оптимизация, безопасность
-- [[docker-spring-boot]] — упаковка Spring Boot-приложений
+- [docker-basics](docker-basics.md) — установка, команды, образы, контейнеры, архитектура
+- [docker-containers](docker-containers.md) — глубокая работа с контейнерами
+- [docker-compose](docker-compose.md) — многоконтейнерные окружения
+- [docker-advanced](docker-advanced.md) — сети, volumes, оптимизация, безопасность
+- [docker-spring-boot](docker-spring-boot.md) — упаковка Spring Boot-приложений
 
 ### Соседние разделы
-- [[README|platform/containers/]] — родительский раздел (связка Docker + Kubernetes)
-- [[README|platform/containers/kubernetes/]] — оркестрация контейнеров
-- [[README|platform/ci-cd/]] — сборка образов в пайплайне
-- [[README|security/infrastructure/]] — hardening контейнеров
+- [platform/containers/](../../../basics/README.md) — родительский раздел (связка Docker + Kubernetes)
+- [platform/containers/kubernetes/](../../../basics/README.md) — оркестрация контейнеров
+- [platform/ci-cd/](../../../basics/README.md) — сборка образов в пайплайне
+- [security/infrastructure/](../../../basics/README.md) — hardening контейнеров
 
 ### Внешние ресурсы
 - [Docker Documentation](https://docs.docker.com/)
@@ -50,14 +50,14 @@ Docker — платформа для упаковки приложений в к
 
 | Тема | Файл |
 |------|------|
-| Основные команды (`docker run/build/ps`) | [[docker-basics]] |
-| Dockerfile, multi-stage | [[docker-basics]], [[docker-advanced]] |
-| Контейнеры и их жизненный цикл | [[docker-containers]] |
-| Compose для локального стека | [[docker-compose]] |
-| Volumes, bind mounts, tmpfs | [[docker-advanced]] |
-| Сети: bridge/host/overlay | [[docker-advanced]] |
-| Оптимизация размера образа | [[docker-advanced]] |
-| Упаковка Spring Boot | [[docker-spring-boot]] |
+| Основные команды (`docker run/build/ps`) | [docker-basics](docker-basics.md) |
+| Dockerfile, multi-stage | [docker-basics](docker-basics.md), [docker-advanced](docker-advanced.md) |
+| Контейнеры и их жизненный цикл | [docker-containers](docker-containers.md) |
+| Compose для локального стека | [docker-compose](docker-compose.md) |
+| Volumes, bind mounts, tmpfs | [docker-advanced](docker-advanced.md) |
+| Сети: bridge/host/overlay | [docker-advanced](docker-advanced.md) |
+| Оптимизация размера образа | [docker-advanced](docker-advanced.md) |
+| Упаковка Spring Boot | [docker-spring-boot](docker-spring-boot.md) |
 
 ## Docker и Kubernetes: связка и различия
 
@@ -80,11 +80,11 @@ Docker — это **runtime и build-toolchain** для одного хоста:
 
 - **Новичок (1 день):** `docker-basics.md` `docker-containers.md` `docker-compose.md`.
 - **Spring-разработчик:** `docker-basics.md` `docker-spring-boot.md` `docker-advanced.md` (multi-stage + layered jar).
-- **Production readiness:** `docker-advanced.md` + CIS Docker Benchmark + [[README|../../../security/infrastructure/]].
+- **Production readiness:** `docker-advanced.md` + CIS Docker Benchmark + [../../../security/infrastructure/](../../../basics/README.md).
 
 ## Куда идти дальше
 
-- Оркестрация — [[README]]
-- CI/CD-сборка образов — [[README]]
-- Security-hardening — [[README]]
-- Обзор контейнеризации — [[containerization-overview]]
+- Оркестрация — [README](../../../basics/README.md)
+- CI/CD-сборка образов — [README](../../../basics/README.md)
+- Security-hardening — [README](../../../basics/README.md)
+- Обзор контейнеризации — [containerization-overview](../containerization-overview.md)

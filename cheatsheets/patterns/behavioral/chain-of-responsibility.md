@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Chain of Responsibility Pattern in Kotlin](https://refactoring.guru/design-patterns/chain-of-responsibility)
 
 ### См. также
-- [[command|Command (Команда)]]
-- [[mediator|Mediator (Посредник)]]
+- [Command (Команда)](command.md)
+- [Mediator (Посредник)](mediator.md)
 
-- [[iterator|Итератор (Iterator)]]
-- [[visitor|Посетитель (Visitor)]]
-- [[interpreter|Интерпретатор (Interpreter)]]
+- [Итератор (Iterator)](iterator.md)
+- [Посетитель (Visitor)](visitor.md)
+- [Интерпретатор (Interpreter)](interpreter.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

@@ -24,12 +24,12 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 - [Redis High Availability](https://redis.io/docs/management/sentinel/) — Sentinel
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-replication|redis-replication.md]] — репликация
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-replication.md](redis-replication.md) — репликация
 
-- [[redis-clustering|Redis: Кластеризация]]
-- [[postgres-high-availability|PostgreSQL: Высокая доступность]]
-- [[postgres-replication|PostgreSQL: Репликация]]
+- [Redis: Кластеризация](redis-clustering.md)
+- [PostgreSQL: Высокая доступность](../../relational/postgresql/postgres-high-availability.md)
+- [PostgreSQL: Репликация](../../relational/postgresql/postgres-replication.md)
 ## Содержание
 
 - [Введение в высокую доступность](#введение-в-высокую-доступность)

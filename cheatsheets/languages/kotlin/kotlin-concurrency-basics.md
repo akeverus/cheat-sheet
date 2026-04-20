@@ -3962,8 +3962,8 @@ coroutineScope {
 
 ## См. также
 
-- [[kotlin-another|Kotlin Another]]
-- [[kotlin-basics|Основы Kotlin — Полное руководство]]
-- [[kotlin-collections-grouping|Kotlin Collections: Grouping and Aggregation]]
-- [[kotlin-collections-list|Kotlin Collections: List]]
-- [[kotlin-collections-map|Kotlin Collections: Map]]
+- [Kotlin Another](kotlin-another.md)
+- [Основы Kotlin — Полное руководство](kotlin-basics.md)
+- [Kotlin Collections: Grouping and Aggregation](kotlin-collections-grouping.md)
+- [Kotlin Collections: List](kotlin-collections-list.md)
+- [Kotlin Collections: Map](kotlin-collections-map.md)

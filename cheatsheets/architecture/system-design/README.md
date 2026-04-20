@@ -18,18 +18,18 @@ System Design — это навык проектировать системы, �
 ## Полезные ссылки
 
 ### Основные документы
-- [[system-design-basics]] — введение в проектирование масштабируемых систем
+- [system-design-basics](system-design-basics.md) — введение в проектирование масштабируемых систем
 
 ### Соседние разделы
-- [[README|Родительский раздел: Architecture]]
-- [[README|Software Architecture]] — стили (монолит, микросервисы)
-- [[README|Design Principles]] — SOLID, DRY, KISS
-- [[README|ADR]] — фиксация принятых решений
-- [[README|Design Patterns]] — строительные блоки
-- [[README|Databases]] — выбор хранилища
-- [[README|Web Backend]] — уровни backend
-- [[README|Messaging]] — асинхронная интеграция
-- [[README|Monitoring]] — метрики и SLO
+- [Родительский раздел: Architecture](../../basics/README.md)
+- [Software Architecture](../../basics/README.md) — стили (монолит, микросервисы)
+- [Design Principles](../../basics/README.md) — SOLID, DRY, KISS
+- [ADR](../../basics/README.md) — фиксация принятых решений
+- [Design Patterns](../../basics/README.md) — строительные блоки
+- [Databases](../../basics/README.md) — выбор хранилища
+- [Web Backend](../../basics/README.md) — уровни backend
+- [Messaging](../../basics/README.md) — асинхронная интеграция
+- [Monitoring](../../basics/README.md) — метрики и SLO
 
 ### Внешние ресурсы
 - [System Design Primer](https://github.com/donnemartin/system-design-primer)
@@ -59,23 +59,23 @@ System Design — это навык проектировать системы, �
 
 | Компонент | Зачем | Где читать глубже |
 |-----------|-------|-------------------|
-| Load Balancer | Распределить трафик, скрыть отказы инстансов | [[load-balancing-interview|interview/architecture/load-balancing-interview]] |
-| API Gateway | Единая точка входа, auth, rate-limit, routing | [[microservices|architecture/software-architecture/microservices.md]] |
-| Database (SQL/NoSQL) | Persistence, запросы, транзакции | [[README|databases/]] |
-| Cache (Redis, CDN) | Снизить latency и нагрузку на БД | [[caching-strategies-interview|interview/architecture/caching-strategies-interview]] |
-| Message Queue / Log | Асинхрон, buffering, fan-out | [[README|development/messaging/]] |
-| CDN | Раздача статики и edge-кэш | [[system-design-basics#cdn]] |
+| Load Balancer | Распределить трафик, скрыть отказы инстансов | [interview/architecture/load-balancing-interview](../../interview/architecture/load-balancing-interview.md) |
+| API Gateway | Единая точка входа, auth, rate-limit, routing | [architecture/software-architecture/microservices.md](../software-architecture/microservices.md) |
+| Database (SQL/NoSQL) | Persistence, запросы, транзакции | [databases/](../../basics/README.md) |
+| Cache (Redis, CDN) | Снизить latency и нагрузку на БД | [interview/architecture/caching-strategies-interview](../../interview/architecture/caching-strategies-interview.md) |
+| Message Queue / Log | Асинхрон, buffering, fan-out | [development/messaging/](../../basics/README.md) |
+| CDN | Раздача статики и edge-кэш | [system-design-basics](system-design-basics.md#cdn) |
 
 ## Карта тем
 
 | Тема | Где смотреть |
 |------|--------------|
-| Что такое System Design и зачем он нужен | [[system-design-basics#что-такое-system-design]] |
-| Масштабируемость, надёжность, производительность | [[system-design-basics#основные-принципы]] |
-| Компоненты: LB, API Gateway, БД, кэш, очередь, CDN | [[system-design-basics#компоненты-системы]] |
-| Процесс проектирования шаг за шагом | [[system-design-basics#процесс-проектирования]] |
-| CAP, консистентность | [[cap-theorem-interview|interview/architecture/cap-theorem-interview]] |
-| Scalability patterns | [[scalability-patterns-interview|interview/architecture/scalability-patterns-interview]] |
+| Что такое System Design и зачем он нужен | [system-design-basics](system-design-basics.md#что-такое-system-design) |
+| Масштабируемость, надёжность, производительность | [system-design-basics](system-design-basics.md#основные-принципы) |
+| Компоненты: LB, API Gateway, БД, кэш, очередь, CDN | [system-design-basics](system-design-basics.md#компоненты-системы) |
+| Процесс проектирования шаг за шагом | [system-design-basics](system-design-basics.md#процесс-проектирования) |
+| CAP, консистентность | [interview/architecture/cap-theorem-interview](../../interview/architecture/cap-theorem-interview.md) |
+| Scalability patterns | [interview/architecture/scalability-patterns-interview](../../interview/architecture/scalability-patterns-interview.md) |
 
 ## Маршруты чтения
 
@@ -85,7 +85,7 @@ System Design — это навык проектировать системы, �
 
 ## Куда идти дальше
 
-- Архитектурные стили — [[README|architecture/software-architecture/]]
+- Архитектурные стили — [architecture/software-architecture/](../../basics/README.md)
 - CAP, consistency patterns — [interview/architecture/](../../interview/architecture/)
-- Паттерны устойчивости (Circuit Breaker, Retry, Bulkhead) — [[README|patterns/]]
-- Наблюдаемость (метрики, трейсы, логи) — [[README|monitoring/]]
+- Паттерны устойчивости (Circuit Breaker, Retry, Bulkhead) — [patterns/](../../basics/README.md)
+- Наблюдаемость (метрики, трейсы, логи) — [monitoring/](../../basics/README.md)

@@ -23,14 +23,14 @@ updated: "2026-04-20"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/) — **Java** API и руководства
 
 ### См. также
-- [[README|Решение задач]] — решение задач
-- [[README|Обзор алгоритмов]] — алгоритмы
-- [[dynamic-programming|Динамическое программирование]] — **DP**
-- [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
+- [Решение задач](../../basics/README.md) — решение задач
+- [Обзор алгоритмов](../../basics/README.md) — алгоритмы
+- [Динамическое программирование](dynamic-programming.md) — **DP**
+- [Жадные алгоритмы](../problems/greedy-algorithms.md) — жадные алгоритмы
 
-- [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
-- [[backtracking|Поиск с возвратом (Backtracking)]]
-- [[divide-and-conquer-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Методы ветвей и границ (Branch and Bound)](branch-and-bound.md)
+- [Поиск с возвратом (Backtracking)](backtracking.md)
+- [Вопросы на собеседовании](../../interview/algorithms/algorithmic-paradigms/divide-and-conquer-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Divide and Conquer](#введение-в-divide-and-conquer)

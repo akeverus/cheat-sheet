@@ -16,16 +16,16 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-- [[spring-boot|Spring Boot]]
-- [[rest-api-best-practices|REST API Best Practices]]
+- [Spring Boot](../../frameworks/spring/spring-boot.md)
+- [REST API Best Practices](../api/rest/rest-api-best-practices.md)
 - [Базы данных](../../databases/) — обзор разделов **databases**
 - [Platform](../../platform/) — контейнеры, CI/CD
 
 ## См. также
 
-- [[README|API]] — REST, OpenAPI
-- [[README|Frameworks]] — Spring и Java-фреймворки
-- [[README|Security]] — OAuth2, Spring Security
+- [API](../../basics/README.md) — REST, OpenAPI
+- [Frameworks](../../basics/README.md) — Spring и Java-фреймворки
+- [Security](../../basics/README.md) — OAuth2, Spring Security
 
 ## Содержание
 
@@ -217,7 +217,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 Сущность **JPA** описывает таблицу и связи. Миграции схемы — **Flyway**/**Liquibase**; не менять схему вручную в продовой БД. Для тяжёлых запросов использовать проекции, **DTO** и при необходимости нативный **SQL** или **QueryDSL**.
 
-Подробнее: [[spring-data-jpa|Spring Data JPA]], [[postgres-basics|PostgreSQL]].
+Подробнее: [Spring Data JPA](../../frameworks/java-frameworks/spring/spring-data-jpa.md), [PostgreSQL](../../databases/relational/postgresql/postgres-basics.md).
 
 
 ## Аутентификация и авторизация
@@ -227,7 +227,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 В **Spring Security** настраивают цепочку фильтров: аутентификация (например, `JWT` или сессия), затем проверка прав в методах (`@PreAuthorize`, `@Secured`) или в фильтрах. Пароли хранят только в виде хешей (bcrypt). Токены (JWT) подписывают и при необходимости шифруют; срок жизни ограничивать.
 
-Подробнее: [[spring-security|Spring Security]].
+Подробнее: [Spring Security](../../frameworks/java-frameworks/spring/spring-security.md).
 
 
 ## Кэширование
@@ -256,7 +256,7 @@ public void deleteById(Long id) {
 
 В **Spring**: `RabbitTemplate`, `KafkaTemplate`; слушатели `@RabbitListener`, `@KafkaListener`. Обеспечить идемпотентность обработки и повтор при сбоях.
 
-Подробнее: [[README|Messaging]] — Kafka, RabbitMQ.
+Подробнее: [Messaging](../../basics/README.md) — Kafka, RabbitMQ.
 
 
 ## Валидация и обработка ошибок
@@ -300,7 +300,7 @@ public void deleteById(Long id) {
 
 **Когда уместен:** сложные графы данных, мобильные клиенты с ограниченным трафиком, необходимость гибкого запроса полей. **Когда предпочтительнее `REST`:** простые **CRUD**, кэширование на уровне **HTTP**, стандартизация в команде на **REST**.
 
-В **Spring**: зависимость `spring-boot-starter-graphql`, описание схемы (SDL), резолверы (Query, Mutation). Подробнее: [[graphql]].
+В **Spring**: зависимость `spring-boot-starter-graphql`, описание схемы (SDL), резолверы (Query, Mutation). Подробнее: [graphql](../api/graphql/graphql.md).
 
 ### Валидация входящих данных (Bean Validation)
 

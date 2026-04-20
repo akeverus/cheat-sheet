@@ -1,16 +1,37 @@
 ---
-title: "Spring AI — Interview"
-description: "Вопросы на собеседовании по Spring AI: ChatClient, EmbeddingModel, VectorStore, RAG-pipeline, Function Calling, тестирование."
+title: "Вопросы на собеседовании: Spring AI"
+description: "Spring AI для интеграции LLM: ChatClient, EmbeddingModel, VectorStore, Function Calling, RAG pipeline, Advisors, тестирование с поддержкой OpenAI/Anthropic/Ollama"
 tags:
   - interview
   - spring
-  - ai
-  - llm
-  - rag
+  - spring-ai-interview
+aliases:
+  - "Spring AI interview"
+  - "Spring AI собеседование"
+  - "Spring AI вопросы"
+  - "LLM Spring Boot interview"
+  - "ChatClient interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Spring AI — Interview
+# Вопросы на собеседовании: `Spring AI`
+
+`Spring AI` — официальный модуль экосистемы Spring для интеграции AI-моделей. Унифицированный API поверх разных провайдеров (OpenAI, Anthropic, Vertex AI, Mistral, Ollama). Предоставляет `ChatClient`, `EmbeddingModel`, `VectorStore` и поддержку RAG. Горячая тема в 2024-2025 интервью.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Spring AI Docs](https://docs.spring.io/spring-ai/reference/) — официальная документация
+- [Spring AI GitHub](https://github.com/spring-projects/spring-ai) — репозиторий с примерами
+- [Baeldung: Spring AI](https://www.baeldung.com/spring-ai) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 ## Q1. Что такое Spring AI и какие задачи он решает?
 
@@ -538,8 +559,13 @@ public Function<OrderSearchRequest, OrderSearchResult> searchOrders(OrderReposit
 
 ## See also
 
-- [[spring-ai|Spring AI]] — полный cheatsheet
-- [[rag-interview|RAG Interview]] — вопросы по RAG
-- [[llm-basics-interview|LLM Basics Interview]] — основы LLM
-- [[vector-databases-interview|Vector Databases Interview]] — хранилища векторов
-- [[ai-agents-interview|AI Agents Interview]] — паттерны AI агентов
+- [LLM Basics](../../ai-ml/llm-basics-interview.md) — основы работы LLM, prompting, context window
+- [RAG](../../ai-ml/rag-interview.md) — Retrieval-Augmented Generation, основной паттерн Spring AI
+- [Vector Databases](../../ai-ml/vector-databases-interview.md) — PostgreSQL pgvector, Chroma, Pinecone
+- [Embeddings](../../ai-ml/embeddings-interview.md) — векторные представления текста
+- [AI Agents](../../ai-ml/ai-agents-interview.md) — паттерны агентов, ReAct, Chain of Thought
+- [LLM Integration Patterns](../../ai-ml/llm-integration-patterns-interview.md) — интеграция LLM в приложения
+- [Prompt Engineering](../../ai-ml/prompt-engineering-interview.md) — работа с промптами
+- [Spring Boot](spring-boot-interview.md) — auto-configuration для Spring AI
+- [Spring WebFlux](spring-webflux-interview.md) — streaming ответов через Flux
+- [PostgreSQL](../../databases/postgresql-interview.md) — pgvector как VectorStore

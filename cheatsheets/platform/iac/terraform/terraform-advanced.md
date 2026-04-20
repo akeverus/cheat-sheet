@@ -1372,8 +1372,8 @@ resource "aws_iam_role_policy" "application" {
 }
 ```
 ## См. также
-- [[terraform|Terraform: основы]] — общий справочник Terraform
-- [[terraform-basics|Terraform Basics]] — краткое введение
-- [[aws-basics|AWS]] — Amazon Web Services
-- [[ansible-basics|Ansible]] — конфигурационное управление
-- [[docker-basics|Docker]] — контейнеризация
+- [Terraform: основы](terraform.md) — общий справочник Terraform
+- [Terraform Basics](terraform-basics.md) — краткое введение
+- [AWS](../../cloud-providers/aws-basics.md) — Amazon Web Services
+- [Ansible](../ansible/ansible-basics.md) — конфигурационное управление
+- [Docker](../../containers/docker/docker-basics.md) — контейнеризация

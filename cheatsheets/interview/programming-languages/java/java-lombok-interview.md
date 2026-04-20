@@ -788,14 +788,14 @@ class Order extends BaseEntity {
 
 ## See also
 
-- [[java-annotations-interview|Java Annotations]] — Lombok реализован через JSR 269 annotation processing, AST трансформация
-- [[java-initialization-interview|Java Initialization]] — конструкторы, init-блоки, final поля — всё это затрагивает @Builder, @Value
-- [[java-mapstruct-interview|MapStruct]] — интеграция Lombok+MapStruct, порядок annotation processors
-- [[java-jackson-interview|Jackson]] — @Accessors(fluent=true) ломает Jackson; @JsonProperty взаимодействие
-- [[java-core-interview|Java Core]] — equals/hashCode контракт, который Lombok реализует
-- [[java-oop-interview|Java OOP]] — наследование, @SuperBuilder, callSuper в @EqualsAndHashCode
-- [[spring-data-jpa-interview|Spring Data JPA]] — проблемы @Data/@EqualsAndHashCode на JPA-сущностях
-- [[spring-boot-interview|Spring Boot]] — @RequiredArgsConstructor + final fields = рекомендованный Spring DI
-- [[unit-testing-interview|Unit Testing]] — lombok.addLombokGeneratedAnnotation для исключения из JaCoCo
-- [[design-patterns-interview|Design Patterns]] — Builder (Q11-Q14), Delegate (@Delegate), Value Object (@Value)
-- [[java-lombok|Шпаргалка: Lombok: Автоматизация boilerplate кода в]] — теория
+- [Java Annotations](java-annotations-interview.md) — Lombok реализован через JSR 269 annotation processing, AST трансформация
+- [Java Initialization](java-initialization-interview.md) — конструкторы, init-блоки, final поля — всё это затрагивает @Builder, @Value
+- [MapStruct](java-mapstruct-interview.md) — интеграция Lombok+MapStruct, порядок annotation processors
+- [Jackson](java-jackson-interview.md) — @Accessors(fluent=true) ломает Jackson; @JsonProperty взаимодействие
+- [Java Core](java-core-interview.md) — equals/hashCode контракт, который Lombok реализует
+- [Java OOP](java-oop-interview.md) — наследование, @SuperBuilder, callSuper в @EqualsAndHashCode
+- [Spring Data JPA](../../frameworks/spring/spring-data-jpa-interview.md) — проблемы @Data/@EqualsAndHashCode на JPA-сущностях
+- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — @RequiredArgsConstructor + final fields = рекомендованный Spring DI
+- [Unit Testing](../../testing/unit-testing-interview.md) — lombok.addLombokGeneratedAnnotation для исключения из JaCoCo
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — Builder (Q11-Q14), Delegate (@Delegate), Value Object (@Value)
+- [Шпаргалка: Lombok: Автоматизация boilerplate кода в](../../../libraries/java/java-lombok.md) — теория

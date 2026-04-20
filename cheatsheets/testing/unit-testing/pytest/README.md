@@ -19,14 +19,14 @@ pytest — основной фреймворк для тестирования �
 ## Полезные ссылки
 
 ### Основные документы
-- [[pytest]] — фикстуры, параметризация, маркеры, плагины
+- [pytest](pytest.md) — фикстуры, параметризация, маркеры, плагины
 
 ### Соседние разделы
-- [[README|Unit Testing]]
-- [[README|Jest]]
-- [[README|JUnit]]
-- [[README|xUnit.net]]
-- [[testing-tools-overview|Testing Tools Overview]]
+- [Unit Testing](../../../basics/README.md)
+- [Jest](../../../basics/README.md)
+- [JUnit](../../../basics/README.md)
+- [xUnit.net](../../../basics/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
 
 ### Внешние ресурсы
 - [pytest Docs](https://docs.pytest.org/)
@@ -44,11 +44,11 @@ pytest — основной фреймворк для тестирования �
 
 | Тема | Где читать |
 |------|-----------|
-| Структура теста, обнаружение тестов | [[pytest]] |
-| Фикстуры: области видимости, autouse, параметризация | [[pytest]] |
-| `parametrize`, маркеры, skip/xfail | [[pytest]] |
-| Плагины: pytest-cov, pytest-mock, pytest-asyncio | [[pytest]] |
-| CI/CD, `conftest.py`, отчёты | [[pytest]] |
+| Структура теста, обнаружение тестов | [pytest](pytest.md) |
+| Фикстуры: области видимости, autouse, параметризация | [pytest](pytest.md) |
+| `parametrize`, маркеры, skip/xfail | [pytest](pytest.md) |
+| Плагины: pytest-cov, pytest-mock, pytest-asyncio | [pytest](pytest.md) |
+| CI/CD, `conftest.py`, отчёты | [pytest](pytest.md) |
 
 ## Когда использовать: сравнение unit-фреймворков
 
@@ -69,6 +69,6 @@ pytest — выбор по умолчанию для Python: самый коро
 
 ## Куда идти дальше
 
-- Обзор unit-тестирования — [[README]]
-- JS-аналог — [[README]]
-- Java-аналог — [[README]]
+- Обзор unit-тестирования — [README](../../../basics/README.md)
+- JS-аналог — [README](../../../basics/README.md)
+- Java-аналог — [README](../../../basics/README.md)

@@ -24,7 +24,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[azure-services|Azure Services]]
+- [Azure Services](azure-services.md)
 ## Содержание
 
 - [VPC (Virtual Private Cloud)](#vpc-virtual-private-cloud)
@@ -1389,7 +1389,7 @@ network-acl-alarms:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[aws-basics|AWS Basics]] — основы **AWS**
-- [[aws-services|AWS Services]] — сервисы **AWS**
-- [[aws-iam|AWS IAM]] — управление доступом
-- [[terraform-basics|Terraform]] — **IaC** инструмент
+- [AWS Basics](aws-basics.md) — основы **AWS**
+- [AWS Services](aws-services.md) — сервисы **AWS**
+- [AWS IAM](aws-iam.md) — управление доступом
+- [Terraform](../iac/terraform/terraform-basics.md) — **IaC** инструмент

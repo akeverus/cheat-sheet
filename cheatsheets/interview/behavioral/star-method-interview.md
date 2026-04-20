@@ -1,11 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Метод STAR"
-description: "Метод STAR на поведенческом интервью: структура ответа Situation-Task-Action-Result, типичные ошибки, примеры хороших и плохих ответов. 22 вопроса с разбором."
+description: "Метод STAR на поведенческом интервью: структура Situation-Task-Action-Result, типичные ошибки, примеры хороших и плохих ответов"
 tags:
   - interview
   - behavioral
-  - star-method
-  - soft-skills
+  - star-method-interview
+aliases:
+  - "STAR method interview"
+  - "STAR method собеседование"
+  - "behavioral interview technique"
+  - "Situation Task Action Result"
+  - "метод STAR вопросы"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -232,9 +237,9 @@ Growth mindset видно через:
 
 ## See also
 
-- [[behavioral-interview|Behavioral Interview]]
-- [[conflict-stories-interview|Conflict Stories]]
-- [[failure-stories-interview|Failure Stories]]
-- [[leadership-stories-interview|Leadership Stories]]
-- [[culture-fit-interview|Culture Fit]]
-- [[team-leadership-interview|Team Leadership]]
+- [Behavioral Interview](behavioral-interview.md)
+- [Conflict Stories](conflict-stories-interview.md)
+- [Failure Stories](failure-stories-interview.md)
+- [Leadership Stories](leadership-stories-interview.md)
+- [Culture Fit](culture-fit-interview.md)
+- [Team Leadership](../leadership/team-leadership-interview.md)

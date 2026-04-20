@@ -25,12 +25,12 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Redis Monitoring](https://redis.io/docs/management/monitoring/) — мониторинг
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-performance|redis-performance.md]] — производительность
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-performance.md](redis-performance.md) — производительность
 
-- [[prometheus|Prometheus]]
-- [[grafana|Grafana]]
-- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [Prometheus](../../../monitoring/metrics/prometheus.md)
+- [Grafana](../../../monitoring/metrics/grafana.md)
+- [Quarkus: Actuator — Health Checks и Metrics](../../../frameworks/java-frameworks/quarkus/quarkus-actuator.md)
 ## Содержание
 
 - [Введение в мониторинг Redis](#введение-в-мониторинг-redis)

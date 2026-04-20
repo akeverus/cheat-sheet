@@ -32,10 +32,10 @@ updated: "2026-04-20"
 - [Cassandra Medusa](https://github.com/thelastpickle/cassandra-medusa)
 
 ### См. также
-- [[mysql-basics|MySQL]] — сравнение с реляционными БД
-- [[mongodb-basics|MongoDB]] — сравнение с документными БД
-- [[cassandra-data-modeling|cassandra-data-modeling.md]] — моделирование данных в **Cassandra**
-- [[cassandra-clustering|cassandra-clustering.md]] — кластеризация и масштабирование
+- [MySQL](../../relational/mysql/mysql-basics.md) — сравнение с реляционными БД
+- [MongoDB](../mongodb/mongodb-basics.md) — сравнение с документными БД
+- [cassandra-data-modeling.md](cassandra-data-modeling.md) — моделирование данных в **Cassandra**
+- [cassandra-clustering.md](cassandra-clustering.md) — кластеризация и масштабирование
 
 ## Содержание
 
@@ -2226,11 +2226,11 @@ nodetool describecluster
 **Cassandra** — это зрелая, проверенная временем технология, используемая крупнейшими компаниями мира для решения самых сложных задач хранения и обработки данных.
 
 **Следующие темы:**
-- [[cassandra-data-modeling]] — моделирование данных в **Cassandra**
-- [[cassandra-queries]] — **CQL** запросы и оптимизация
-- [[cassandra-clustering]] — кластеризация и масштабирование
-- [[cassandra-performance]] — производительность и тюнинг
-- [[cassandra-admin]] — администрирование **Cassandra**
+- [cassandra-data-modeling](cassandra-data-modeling.md) — моделирование данных в **Cassandra**
+- [cassandra-queries](cassandra-queries.md) — **CQL** запросы и оптимизация
+- [cassandra-clustering](cassandra-clustering.md) — кластеризация и масштабирование
+- [cassandra-performance](cassandra-performance.md) — производительность и тюнинг
+- [cassandra-admin](cassandra-admin.md) — администрирование **Cassandra**
 
 Правильное использование **Cassandra** требует глубокого понимания распределенных систем и особенностей модели данных!
 

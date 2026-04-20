@@ -387,8 +387,8 @@ public class UserPartitioner implements Partitioner {
 
 ## См. также
 
-- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
-- [[micronaut-basics|Micronaut: Основы]]
-- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
-- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]
-- [[micronaut-core|Micronaut: Core — Dependency Injection и Bean Management]]
+- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](micronaut-actuator.md)
+- [Micronaut: Основы](micronaut-basics.md)
+- [Micronaut: Caching — Cache Abstraction и Redis Cache](micronaut-cache.md)
+- [Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing](micronaut-cloud.md)
+- [Micronaut: Core — Dependency Injection и Bean Management](micronaut-core.md)

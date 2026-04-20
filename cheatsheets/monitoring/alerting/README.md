@@ -18,17 +18,17 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[alerting|Alerting (обзор)]] — концепции, каналы, частые ошибки
-- [[alertmanager]] — маршрутизация, группировка, silence, inhibition
-- [[pagerduty]] — инцидент-менеджмент и on-call ротации
-- [[slack-alerting|Slack Alerting]] — форматирование, threads, mention-политика
+- [Alerting (обзор)](alerting.md) — концепции, каналы, частые ошибки
+- [alertmanager](alertmanager.md) — маршрутизация, группировка, silence, inhibition
+- [pagerduty](pagerduty.md) — инцидент-менеджмент и on-call ротации
+- [Slack Alerting](slack-alerting.md) — форматирование, threads, mention-политика
 
 ### Соседние разделы
-- [[README|Monitoring]] — корень раздела
-- [[README|Metrics]] — Prometheus, Grafana, Micrometer
-- [[README|Logging]] — структурированные логи как источник алертов
-- [[README|Tracing]] — корреляция алерта с трейсом
-- [[README|APM]] — альтернативные источники алертов
+- [Monitoring](../../basics/README.md) — корень раздела
+- [Metrics](../../basics/README.md) — Prometheus, Grafana, Micrometer
+- [Logging](../../basics/README.md) — структурированные логи как источник алертов
+- [Tracing](../../basics/README.md) — корреляция алерта с трейсом
+- [APM](../../basics/README.md) — альтернативные источники алертов
 
 ### Внешние ресурсы
 - [Google SRE: Alerting on SLOs](https://sre.google/workbook/alerting-on-slos/)
@@ -56,20 +56,20 @@ flowchart LR
 
 | Задача | Инструмент |
 |--------|-----------|
-| Правила на Prometheus-метрики (rate/latency/error) | Prometheus + [[alertmanager]] |
-| Правила поверх Grafana Unified Alerting | Grafana (см. [[grafana]]) + [[alertmanager]] |
-| Маршрутизация, группировка, silence | [[alertmanager]] |
-| On-call, эскалации, schedule | [[pagerduty]] |
-| Уведомления команде в чат | [[slack-alerting|Slack Alerting]] |
-| Общие принципы и антипаттерны | [[alerting|Alerting (обзор)]] |
+| Правила на Prometheus-метрики (rate/latency/error) | Prometheus + [alertmanager](alertmanager.md) |
+| Правила поверх Grafana Unified Alerting | Grafana (см. [grafana](../metrics/grafana.md)) + [alertmanager](alertmanager.md) |
+| Маршрутизация, группировка, silence | [alertmanager](alertmanager.md) |
+| On-call, эскалации, schedule | [pagerduty](pagerduty.md) |
+| Уведомления команде в чат | [Slack Alerting](slack-alerting.md) |
+| Общие принципы и антипаттерны | [Alerting (обзор)](alerting.md) |
 
 ## Связки с экосистемой
 
-- **Prometheus** ([[prometheus]]) отправляет алерты в Alertmanager через `alerting.alertmanagers`.
-- **Grafana** ([[grafana]]) может использовать внешний Alertmanager или собственный Unified Alerting.
-- **ELK** ([[elk-stack]]) — ElastAlert / Watcher для алертов на логи.
-- **Jaeger/OTel** ([[jaeger]]) — алерты по аномалиям в трейсах через APM.
-- **Kubernetes** ([[README]]) — kube-prometheus-stack содержит готовые алерты для control plane и нод.
+- **Prometheus** ([prometheus](../metrics/prometheus.md)) отправляет алерты в Alertmanager через `alerting.alertmanagers`.
+- **Grafana** ([grafana](../metrics/grafana.md)) может использовать внешний Alertmanager или собственный Unified Alerting.
+- **ELK** ([elk-stack](../logging/elk-stack.md)) — ElastAlert / Watcher для алертов на логи.
+- **Jaeger/OTel** ([jaeger](../tracing/jaeger.md)) — алерты по аномалиям в трейсах через APM.
+- **Kubernetes** ([README](../../basics/README.md)) — kube-prometheus-stack содержит готовые алерты для control plane и нод.
 
 ## Маршруты чтения
 
@@ -79,7 +79,7 @@ flowchart LR
 
 ## Куда идти дальше
 
-- Метрики и дашборды — [[README]]
-- Практики мониторинга — [[monitoring-best-practices]]
-- Observability в целом — [[observability-guide]]
-- Логи и трейсы для расследования инцидента — [[README]], [[README]]
+- Метрики и дашборды — [README](../../basics/README.md)
+- Практики мониторинга — [monitoring-best-practices](../monitoring-best-practices.md)
+- Observability в целом — [observability-guide](../observability-guide.md)
+- Логи и трейсы для расследования инцидента — [README](../../basics/README.md), [README](../../basics/README.md)

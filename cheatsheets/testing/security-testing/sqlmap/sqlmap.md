@@ -26,9 +26,9 @@ updated: "2026-04-20"
 - [OWASP — SQL Injection](https://owasp.org/www-community/attacks/SQL_Injection)
 
 ### См. также
-- [[burp-suite|Burp Suite]] — платформа для тестирования безопасности
-- [[owasp-zap|OWASP ZAP]] — сканер и прокси
-- [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
+- [Burp Suite](../burp-suite/burp-suite.md) — платформа для тестирования безопасности
+- [OWASP ZAP](../owasp-zap/owasp-zap.md) — сканер и прокси
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) — обзор инструментов
 
 ## Содержание
 
@@ -388,5 +388,5 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 
 ## Заключение
 
-**sqlmap** — стандартный инструмент автоматизации тестирования на SQL-инъекции. Используйте **-u** или **-r** (запрос из Burp/ZAP), **--cookie** и **--tamper** для аутентификации и обхода WAF; **--dbs**, **--tables**, **--dump** для извлечения данных. Применяйте только на разрешённых целях. Для углублённого изучения см. [sqlmap Wiki](https://github.com/sqlmapproject/sqlmap/wiki), [[burp-suite|Burp Suite]], [[owasp-zap|OWASP ZAP]], [[testing-tools-overview|Testing Tools Overview]].
+**sqlmap** — стандартный инструмент автоматизации тестирования на SQL-инъекции. Используйте **-u** или **-r** (запрос из Burp/ZAP), **--cookie** и **--tamper** для аутентификации и обхода WAF; **--dbs**, **--tables**, **--dump** для извлечения данных. Применяйте только на разрешённых целях. Для углублённого изучения см. [sqlmap Wiki](https://github.com/sqlmapproject/sqlmap/wiki), [Burp Suite](../burp-suite/burp-suite.md), [OWASP ZAP](../owasp-zap/owasp-zap.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).
 

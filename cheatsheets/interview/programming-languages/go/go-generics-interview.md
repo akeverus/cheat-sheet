@@ -659,19 +659,19 @@ constraints.Ordered
 
 ## See also
 
-- [[go-interview|Go (базовый)]] — основы языка
-- [[go-stdlib-interview|Go Standard Library]] — slices, maps пакеты
-- [[go-concurrency-interview|Go Concurrency]] — generic channels (нет, но channel of T)
-- [[java-generics-interview|Java Generics]] — для сравнения erasure
-- [[java-collections-interview|Java Collections]] — Java generic коллекции
-- [[kotlin-interview|Kotlin]] — generics в Kotlin
-- [[scala-interview|Scala]] — самые мощные generics на JVM
-- [[design-patterns-interview|Design Patterns]] — где generics упрощают
+- [Go (базовый)](go-interview.md) — основы языка
+- [Go Standard Library](go-stdlib-interview.md) — slices, maps пакеты
+- [Go Concurrency](go-concurrency-interview.md) — generic channels (нет, но channel of T)
+- [Java Generics](../java/java-generics-interview.md) — для сравнения erasure
+- [Java Collections](../java/java-collections-interview.md) — Java generic коллекции
+- [Kotlin](../kotlin/kotlin-interview.md) — generics в Kotlin
+- [Scala](../scala/scala-interview.md) — самые мощные generics на JVM
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — где generics упрощают
 
-- [[go-concurrency-interview|Go Concurrency]]
-- [[go-interview|Go]]
-- [[go-memory-gc-interview|Go Memory и GC]]
-- [[go-modules-interview|Go Modules]]
-- [[go-stdlib-interview|Go Standard Library]]
-- [[go-testing-interview|Go Testing]]
-- [[go-generics|Шпаргалка: Go: Generics]] — теория
+- [Go Concurrency](go-concurrency-interview.md)
+- [Go](go-interview.md)
+- [Go Memory и GC](go-memory-gc-interview.md)
+- [Go Modules](go-modules-interview.md)
+- [Go Standard Library](go-stdlib-interview.md)
+- [Go Testing](go-testing-interview.md)
+- [Шпаргалка: Go: Generics](../../../languages/go/go-generics.md) — теория

@@ -19,12 +19,12 @@ updated: "2026-04-20"
 - [REST Assured Documentation](https://rest-assured.io/) — документация
 - [REST Assured GitHub](https://github.com/rest-assured/rest-assured) — исходный код
 - [Given-When-Then](https://martinfowler.com/bliki/GivenWhenThen.html) — BDD-подход
-- См. также: [[junit-advanced|JUnit Advanced]], [[wiremock]], [[spring-testing|Spring Testing]]
+- См. также: [JUnit Advanced](../unit-testing/junit/junit-advanced.md), [wiremock](wiremock.md), [Spring Testing](../../frameworks/java-frameworks/spring/spring-testing.md)
 
 
 ### См. также
-- [[contract-testing|Контрактное тестирование (Contract Testing)]]
-- [[database-testing|Тестирование базы данных (Database Testing)]]
+- [Контрактное тестирование (Contract Testing)](contract-testing/contract-testing.md)
+- [Тестирование базы данных (Database Testing)](database-testing/database-testing.md)
 ## Содержание
 
 - [Введение в REST Assured](#введение-в-rest-assured)
@@ -419,4 +419,4 @@ REST Assured даёт удобный fluent API для тестирования 
 
 ## См. также
 
-- [[wiremock|WireMock для Java]]
+- [WireMock для Java](wiremock.md)

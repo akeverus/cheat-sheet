@@ -832,7 +832,7 @@ Go runtime (написан на Go + немного assembly) включает:
 
 Runtime встроен в каждый бинарник (нет отдельной "VM" как JVM). Поэтому Go binaries относительно большие (5-15 MB для simple app).
 
-Подробнее о goroutines — в [[go-concurrency-interview|Go Concurrency]].
+Подробнее о goroutines — в [Go Concurrency](go-concurrency-interview.md).
 
 ## Q30. Cross-compilation — как работает?
 
@@ -927,7 +927,7 @@ func slowOperation(ctx context.Context) ([]byte, error) {
 
 **Идиома:** первый параметр функции — `ctx context.Context`. Передавай везде, где может быть долгая операция.
 
-Подробнее — в [[go-concurrency-interview|Go Concurrency]].
+Подробнее — в [Go Concurrency](go-concurrency-interview.md).
 
 ## Q34. (!) Где Go используют в production?
 
@@ -985,23 +985,23 @@ func slowOperation(ctx context.Context) ([]byte, error) {
 
 ## See also
 
-- [[go-concurrency-interview|Go Concurrency]] — goroutines, channels, sync
-- [[go-memory-gc-interview|Go Memory & GC]] — память и сборщик мусора
-- [[go-generics-interview|Go Generics]] — Go 1.18+ generics
-- [[go-stdlib-interview|Go Standard Library]] — net/http, encoding, и т.д.
-- [[go-testing-interview|Go Testing]] — unit tests, benchmarks
-- [[go-modules-interview|Go Modules]] — управление зависимостями
-- [[java-core-interview|Java Core]] — для сравнения
-- [[kotlin-interview|Kotlin]] — другой современный язык
-- [[microservices-interview|Микросервисы]] — Go хорош для них
-- [[docker-interview|Docker]] — написан на Go
-- [[kubernetes-interview|Kubernetes]] — написан на Go
-- [[grpc-interview|gRPC]] — популярная пара с Go
-- [[performance-testing-interview|Performance Testing]] — Go бенчмарки
+- [Go Concurrency](go-concurrency-interview.md) — goroutines, channels, sync
+- [Go Memory & GC](go-memory-gc-interview.md) — память и сборщик мусора
+- [Go Generics](go-generics-interview.md) — Go 1.18+ generics
+- [Go Standard Library](go-stdlib-interview.md) — net/http, encoding, и т.д.
+- [Go Testing](go-testing-interview.md) — unit tests, benchmarks
+- [Go Modules](go-modules-interview.md) — управление зависимостями
+- [Java Core](../java/java-core-interview.md) — для сравнения
+- [Kotlin](../kotlin/kotlin-interview.md) — другой современный язык
+- [Микросервисы](../../architecture/microservices-interview.md) — Go хорош для них
+- [Docker](../../devops/docker-interview.md) — написан на Go
+- [Kubernetes](../../devops/kubernetes-interview.md) — написан на Go
+- [gRPC](../../api/grpc-interview.md) — популярная пара с Go
+- [Performance Testing](../../performance/performance-testing-interview.md) — Go бенчмарки
 
-- [[go-concurrency-interview|Go Concurrency]]
-- [[go-generics-interview|Go Generics]]
-- [[go-memory-gc-interview|Go Memory и GC]]
-- [[go-modules-interview|Go Modules]]
-- [[go-stdlib-interview|Go Standard Library]]
-- [[go-testing-interview|Go Testing]]
+- [Go Concurrency](go-concurrency-interview.md)
+- [Go Generics](go-generics-interview.md)
+- [Go Memory и GC](go-memory-gc-interview.md)
+- [Go Modules](go-modules-interview.md)
+- [Go Standard Library](go-stdlib-interview.md)
+- [Go Testing](go-testing-interview.md)

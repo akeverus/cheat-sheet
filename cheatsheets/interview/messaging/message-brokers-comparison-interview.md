@@ -129,7 +129,7 @@ updated: "2026-04-19"
 
 **Best for:** event streaming, big data pipelines, log aggregation, event sourcing.
 
-Подробнее — в [[kafka-interview|Apache Kafka]].
+Подробнее — в [Apache Kafka](kafka-interview.md).
 
 ## Q4. (!) RabbitMQ — характеристики?
 
@@ -150,7 +150,7 @@ updated: "2026-04-19"
 
 **Best for:** enterprise messaging, complex routing, RPC, transactional workloads.
 
-Подробнее — в [[rabbitmq-interview|RabbitMQ]].
+Подробнее — в [RabbitMQ](rabbitmq-interview.md).
 
 ## Q5. (!) NATS — характеристики?
 
@@ -170,7 +170,7 @@ updated: "2026-04-19"
 
 **Best for:** microservices, IoT, edge computing, low-latency messaging.
 
-Подробнее — в [[nats-interview|NATS]].
+Подробнее — в [NATS](nats-interview.md).
 
 ## Q6. (!) Apache Pulsar — характеристики?
 
@@ -190,7 +190,7 @@ updated: "2026-04-19"
 
 **Best for:** multi-tenant SaaS, multi-region, cloud-native architectures.
 
-Подробнее — в [[pulsar-interview|Apache Pulsar]].
+Подробнее — в [Apache Pulsar](pulsar-interview.md).
 
 ## Q7. (!) Redpanda — характеристики?
 
@@ -208,7 +208,7 @@ updated: "2026-04-19"
 
 **Best for:** Kafka users wanting better performance and easier ops.
 
-Подробнее — в [[redpanda-interview|Redpanda]].
+Подробнее — в [Redpanda](redpanda-interview.md).
 
 ## Q8. AWS SQS/SNS/EventBridge?
 
@@ -218,7 +218,7 @@ updated: "2026-04-19"
 
 **Best for:** AWS-native apps, serverless, decoupling microservices.
 
-Подробнее — в [[aws-sqs-sns-interview|AWS SQS/SNS]].
+Подробнее — в [AWS SQS/SNS](aws-sqs-sns-interview.md).
 
 ## Q9. Apache ActiveMQ?
 
@@ -550,16 +550,16 @@ IoT devices → MQTT broker / NATS leaf → Central NATS / Kafka
 ## See also
 
 
-- [[kafka-interview|Apache Kafka]]
-- [[rabbitmq-interview|RabbitMQ]]
-- [[nats-interview|NATS]]
-- [[pulsar-interview|Apache Pulsar]]
-- [[redpanda-interview|Redpanda]]
-- [[aws-sqs-sns-interview|AWS SQS/SNS]]
-- [[event-driven-patterns-interview|Event-driven Patterns]]
-- [[microservices-interview|Микросервисы]]
-- [[stream-processing-interview|Stream Processing]]
-- [[saga-pattern-interview|Saga Pattern]]
-- [[distributed-systems-interview|Распределённые системы]]
-- [[cap-theorem-interview|CAP Theorem]]
-- [[scalability-patterns-interview|Scalability Patterns]]
+- [Apache Kafka](kafka-interview.md)
+- [RabbitMQ](rabbitmq-interview.md)
+- [NATS](nats-interview.md)
+- [Apache Pulsar](pulsar-interview.md)
+- [Redpanda](redpanda-interview.md)
+- [AWS SQS/SNS](aws-sqs-sns-interview.md)
+- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md)
+- [Микросервисы](../architecture/microservices-interview.md)
+- [Stream Processing](../data-engineering/stream-processing-interview.md)
+- [Saga Pattern](../architecture/saga-pattern-interview.md)
+- [Распределённые системы](../architecture/distributed-systems-interview.md)
+- [CAP Theorem](../architecture/cap-theorem-interview.md)
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md)

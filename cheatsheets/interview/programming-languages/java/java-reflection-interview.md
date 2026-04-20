@@ -543,13 +543,13 @@ int max = (int) staticMh.invoke(3, 7);  // 7
 
 ## See also
 
-- [[java-annotations-interview|Java Annotations]] — @Retention(RUNTIME) как условие доступа через рефлексию
-- [[java-core-interview|Java Core]] — ClassLoader, class loading mechanism
-- [[java-initialization-interview|Java Initialization]] — `<clinit>`, `Class.forName()` инициализирует класс
-- [[java-generics-interview|Java Generics]] — type erasure и как его обойти через `ParameterizedType`
-- [[java-concurrency-interview|Java Concurrency]] — MethodHandle как thread-safe механизм вызова
-- [[spring-aop-interview|Spring AOP]] — JDK Dynamic Proxy через `java.lang.reflect.Proxy`
-- [[spring-framework-interview|Spring Framework]] — DI через рефлексию, BeanFactory, @Autowired
-- [[spring-data-jpa-interview|Spring Data JPA]] — Hibernate использует рефлексию для маппинга Entity
-- [[java-jackson-interview|Jackson]] — ObjectMapper использует рефлексию для сериализации
-- [[jvm-interview|JVM]] — classloading, bytecode, invokedynamic, MethodHandle как JVM-уровень
+- [Java Annotations](java-annotations-interview.md) — @Retention(RUNTIME) как условие доступа через рефлексию
+- [Java Core](java-core-interview.md) — ClassLoader, class loading mechanism
+- [Java Initialization](java-initialization-interview.md) — `<clinit>`, `Class.forName()` инициализирует класс
+- [Java Generics](java-generics-interview.md) — type erasure и как его обойти через `ParameterizedType`
+- [Java Concurrency](java-concurrency-interview.md) — MethodHandle как thread-safe механизм вызова
+- [Spring AOP](../../frameworks/spring/spring-aop-interview.md) — JDK Dynamic Proxy через `java.lang.reflect.Proxy`
+- [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — DI через рефлексию, BeanFactory, @Autowired
+- [Spring Data JPA](../../frameworks/spring/spring-data-jpa-interview.md) — Hibernate использует рефлексию для маппинга Entity
+- [Jackson](java-jackson-interview.md) — ObjectMapper использует рефлексию для сериализации
+- [JVM](../../jvm/jvm-interview.md) — classloading, bytecode, invokedynamic, MethodHandle как JVM-уровень

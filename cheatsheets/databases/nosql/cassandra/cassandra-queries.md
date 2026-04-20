@@ -32,12 +32,12 @@ updated: "2026-04-20"
 - [Cassandra Python Driver](https://docs.datastax.com/en/developer/python-driver/)
 
 ### См. также
-- [[cassandra-basics|Основы]] — **Cassandra**
-- [[cassandra-data-modeling|Моделирование]] — моделирование данных
-- [[cassandra-clustering|Кластеризация]] — кластеризация и масштабирование
-- [[cassandra-performance|Производительность]] — производительность и оптимизация
+- [Основы](cassandra-basics.md) — **Cassandra**
+- [Моделирование](cassandra-data-modeling.md) — моделирование данных
+- [Кластеризация](cassandra-clustering.md) — кластеризация и масштабирование
+- [Производительность](cassandra-performance.md) — производительность и оптимизация
 
-- [[clickhouse|ClickHouse]]
+- [ClickHouse](../clickhouse/clickhouse.md)
 ## Содержание
 
 - [Основы CQL](#основы-cql)

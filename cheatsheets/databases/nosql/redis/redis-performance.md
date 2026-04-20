@@ -24,12 +24,12 @@ related: ["databases/redis-basics.md", "databases/redis-clustering.md"]
 - [Redis Optimization](https://redis.io/docs/management/optimization/) — оптимизация
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-monitoring|redis-monitoring.md]] — мониторинг
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-monitoring.md](redis-monitoring.md) — мониторинг
 
-- [[go-performance|Go: производительность]]
-- [[scala-performance|Scala Performance]]
-- [[clickhouse-performance|ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу]]
+- [Go: производительность](../../../languages/go/go-performance.md)
+- [Scala Performance](../../../languages/scala/scala-performance.md)
+- [ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу](../clickhouse/clickhouse-performance.md)
 ## Содержание
 
 - [Введение в оптимизацию производительности Redis](#введение-в-оптимизацию-производительности-redis)

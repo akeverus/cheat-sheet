@@ -17,9 +17,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[operating-systems-basics|Операционные системы]]
-- [[linux-handbook|Linux и Bash: практический справочник]]
+- [Операционные системы](../../basics/operating-systems/operating-systems-basics.md)
+- [Linux и Bash: практический справочник](../../basics/operating-systems/linux-handbook.md)
 ## Содержание
 
-- [[influxdb-basics|InfluxDB Basics]]
-- [[timescaledb-basics|TimescaleDB Basics]]
+- [InfluxDB Basics](influxdb/influxdb-basics.md)
+- [TimescaleDB Basics](timescaledb/timescaledb-basics.md)

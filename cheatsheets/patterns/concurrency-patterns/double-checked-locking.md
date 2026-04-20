@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java Concurrency in Practice](https://jcip.net/) — книга по многопоточности
 
 ### См. также
-- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
-- [[singleton|Singleton]] — **Singleton Pattern**
-- [[java-concurrency-advanced|JVM Memory / volatile]] — память и **volatile**
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
+- [Singleton](../creational/singleton.md) — **Singleton Pattern**
+- [JVM Memory / volatile](../../languages/java/java-concurrency-advanced.md) — память и **volatile**
 
-- [[read-write-lock|Блокировка чтения-записи (Read-Write Lock)]]
-- [[active-object|Активный объект (Active Object)]]
+- [Блокировка чтения-записи (Read-Write Lock)](read-write-lock.md)
+- [Активный объект (Active Object)](active-object.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

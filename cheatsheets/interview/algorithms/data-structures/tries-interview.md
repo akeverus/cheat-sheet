@@ -768,27 +768,27 @@ Patricia Trie для 0010, 0011, 1011:
 
 Это паттерн в **LSM-trees (LevelDB, RocksDB, Cassandra)** — Bloom filter перед каждым SSTable.
 
-Подробнее о Bloom filter — в [[hash-tables-interview|Hash Tables]].
+Подробнее о Bloom filter — в [Hash Tables](hash-tables-interview.md).
 
 ---
 
 ## See also
 
-- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
-- [[trees-interview|Деревья]] — Trie как специализированное дерево
-- [[hash-tables-interview|Хеш-таблицы]] — Bloom filter, alternative для membership
-- [[graphs-interview|Графы]] — Kruskal использует Union-Find, cycle detection
-- [[arrays-strings-interview|Массивы и строки]] — KMP и Rabin-Karp как альтернативы
-- [[recursion-interview|Рекурсия]] — DFS обход Trie
-- [[backtracking-interview|Backtracking]] — Word Search через Trie
-- [[complexity-analysis-interview|Анализ сложности]] — амортизированный O(α(n))
-- [[java-collections-interview|Java Collections]] — нет встроенного Trie, но есть TreeMap
-- [[redis-interview|Redis]] — radix tree для streams
-- [[postgresql-interview|PostgreSQL]] — GIN/SP-GiST индексы используют tree-like structures
+- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
+- [Деревья](trees-interview.md) — Trie как специализированное дерево
+- [Хеш-таблицы](hash-tables-interview.md) — Bloom filter, alternative для membership
+- [Графы](graphs-interview.md) — Kruskal использует Union-Find, cycle detection
+- [Массивы и строки](arrays-strings-interview.md) — KMP и Rabin-Karp как альтернативы
+- [Рекурсия](../algorithmic-paradigms/recursion-interview.md) — DFS обход Trie
+- [Backtracking](../algorithmic-paradigms/backtracking-interview.md) — Word Search через Trie
+- [Анализ сложности](../complexity/complexity-analysis-interview.md) — амортизированный O(α(n))
+- [Java Collections](../../programming-languages/java/java-collections-interview.md) — нет встроенного Trie, но есть TreeMap
+- [Redis](../../databases/redis-interview.md) — radix tree для streams
+- [PostgreSQL](../../databases/postgresql-interview.md) — GIN/SP-GiST индексы используют tree-like structures
 
-- [[arrays-strings-interview|Массивы и строки]]
-- [[graphs-interview|Графы]]
-- [[hash-tables-interview|Хеш-таблицы]]
-- [[heaps-interview|Кучи (Heaps)]]
-- [[linked-lists-interview|Связные списки]]
-- [[stacks-queues-interview|Стеки и очереди]]
+- [Массивы и строки](arrays-strings-interview.md)
+- [Графы](graphs-interview.md)
+- [Хеш-таблицы](hash-tables-interview.md)
+- [Кучи (Heaps)](heaps-interview.md)
+- [Связные списки](linked-lists-interview.md)
+- [Стеки и очереди](stacks-queues-interview.md)

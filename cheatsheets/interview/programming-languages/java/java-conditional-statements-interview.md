@@ -17,7 +17,7 @@ updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Java Conditional Statements`
 
-Условные конструкции и управление потоком выполнения -- одна из базовых тем на собеседовании по `Java`. Вопросы охватывают классические `if/else` и `switch`, современные `switch expression` (`Java 14+`), `pattern matching` (`Java 16-21`), `sealed classes`, циклы, обработку исключений и best practices. Тема тесно связана с [[java-core-interview|Java Core]], [[java-oop-interview|ООП в Java]] и [[java-types-interview|системой типов Java]].
+Условные конструкции и управление потоком выполнения -- одна из базовых тем на собеседовании по `Java`. Вопросы охватывают классические `if/else` и `switch`, современные `switch expression` (`Java 14+`), `pattern matching` (`Java 16-21`), `sealed classes`, циклы, обработку исключений и best practices. Тема тесно связана с [Java Core](java-core-interview.md), [ООП в Java](java-oop-interview.md) и [системой типов Java](java-types-interview.md).
 
 ## Полезные ссылки
 
@@ -423,7 +423,7 @@ if (!(obj instanceof String s)) {
 s.toUpperCase();
 ```
 
-Это первый шаг к полноценному pattern matching, продолженный в [[java-oop-interview|sealed classes]] и `switch` (`Java 21`).
+Это первый шаг к полноценному pattern matching, продолженный в [sealed classes](java-oop-interview.md) и `switch` (`Java 21`).
 
 ## Q11. (!) Что такое `pattern matching for switch` (`Java 21`)?
 
@@ -586,7 +586,7 @@ classDiagram
 **Преимущества связки `sealed` + `switch`:**
 - При добавлении нового подтипа (`Pentagon`) -- ошибка компиляции во всех switch
 - Заменяет паттерн `Visitor` для простых случаев
-- Более безопасная альтернатива `default` ветке -- подробнее в [[java-oop-interview|вопросах по ООП]]
+- Более безопасная альтернатива `default` ветке -- подробнее в [вопросах по ООП](java-oop-interview.md)
 
 ## Q16. Что такое `record patterns` (`Java 21`) и деконструкция записей?
 
@@ -637,7 +637,7 @@ String sound(Animal animal) {
 }
 ```
 
-Это снижает визуальный шум и делает явным, какие компоненты используются. Подробнее о `record` и `var` -- в [[java-core-interview|Java Core]].
+Это снижает визуальный шум и делает явным, какие компоненты используются. Подробнее о `record` и `var` -- в [Java Core](java-core-interview.md).
 
 ## Q18. Какие типы циклов поддерживает `Java`?
 
@@ -666,7 +666,7 @@ do {
 } while (!result.isSuccess() && attempt < 3);
 ```
 
-Начиная с `Java 5`, также доступен **enhanced for** (`for-each`) для коллекций и массивов. С `Java 8` многие циклы заменяются на [[java-stream-interview|Stream API]].
+Начиная с `Java 5`, также доступен **enhanced for** (`for-each`) для коллекций и массивов. С `Java 8` многие циклы заменяются на [Stream API](java-stream-interview.md).
 
 ## Q19. Что такое расширенный цикл `for-each`?
 
@@ -800,7 +800,7 @@ graph TD
 3. Если брошено -- ищется первый подходящий `catch` (по типу исключения)
 4. Блок `finally` выполняется **всегда** (за редкими исключениями -- см. Q25)
 
-Подробнее об иерархии исключений -- в [[java-exceptions-interview|вопросах по исключениям]].
+Подробнее об иерархии исключений -- в [вопросах по исключениям](java-exceptions-interview.md).
 
 ## Q25. В каких ситуациях блок `finally` может не выполниться?
 
@@ -929,14 +929,14 @@ public void processOrder(Order order) {
 ```
 
 **Альтернативы для сложных ветвлений:**
-- Паттерн [[design-patterns-interview|Strategy]] -- вынос каждой ветки в отдельный класс
+- Паттерн [Strategy](../../design-patterns/design-patterns-interview.md) -- вынос каждой ветки в отдельный класс
 - `Map<Key, Handler>` -- таблица стратегий
 - `Optional` для цепочек проверок на `null`
 - `switch expression` с pattern matching для проверки по типу
 
 ## Q30. Как заменить цепочку `if-else` паттерном `Strategy`?
 
-Когда `if-else` выбирает поведение по типу или ключу, это признак необходимости паттерна [[design-patterns-interview|Strategy]]:
+Когда `if-else` выбирает поведение по типу или ключу, это признак необходимости паттерна [Strategy](../../design-patterns/design-patterns-interview.md):
 
 ```java
 // Плохо — if-else, нарушает Open-Closed Principle
@@ -1019,7 +1019,7 @@ switch (errorCode) {  // 200, 404, 500 — разреженные
 
 ## Q33. Как использовать условия в `Stream API` (`filter`, `takeWhile`, `dropWhile`)?
 
-Подробнее о Stream API -- в [[java-stream-interview|отдельном разделе]].
+Подробнее о Stream API -- в [отдельном разделе](java-stream-interview.md).
 
 | Метод | Версия | Описание |
 |---|---|---|
@@ -1511,17 +1511,17 @@ sealed interface State permits Idle, Running, Paused, Stopped {}
 
 ## See also
 
-- [[java-core-interview|Java Core]] — базовые концепции языка
-- [[java-oop-interview|ООП в Java]] — наследование, полиморфизм, sealed classes
-- [[java-types-interview|Система типов Java]] — примитивы, обёртки, автобоксинг
-- [[java-exceptions-interview|Исключения в Java]] — try-catch, checked/unchecked
-- [[java-stream-interview|Stream API]] — функциональные условия, предикаты
-- [[java-8-interview|Java 8+]] — лямбды, Optional, функциональные интерфейсы
-- [[design-patterns-interview|Паттерны проектирования]] — Strategy, State вместо ветвлений
+- [Java Core](java-core-interview.md) — базовые концепции языка
+- [ООП в Java](java-oop-interview.md) — наследование, полиморфизм, sealed classes
+- [Система типов Java](java-types-interview.md) — примитивы, обёртки, автобоксинг
+- [Исключения в Java](java-exceptions-interview.md) — try-catch, checked/unchecked
+- [Stream API](java-stream-interview.md) — функциональные условия, предикаты
+- [Java 8+](java-8-interview.md) — лямбды, Optional, функциональные интерфейсы
+- [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — Strategy, State вместо ветвлений
 
-- [[java-17-21-interview|Java 17-21]]
-- [[java-8-interview|Java 8]]
-- [[java-annotations-interview|Java Annotations]]
-- [[java-collections-interview|Java Collections]]
-- [[java-concurrency-interview|Java Concurrency]]
-- [[java-core-interview|Java Core]]
+- [Java 17-21](java-17-21-interview.md)
+- [Java 8](java-8-interview.md)
+- [Java Annotations](java-annotations-interview.md)
+- [Java Collections](java-collections-interview.md)
+- [Java Concurrency](java-concurrency-interview.md)
+- [Java Core](java-core-interview.md)

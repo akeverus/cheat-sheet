@@ -260,14 +260,14 @@ try {
 
 ## Ссылки на разделы репозитория
 
-- **SOLID** — [[solid-principles]].
+- **SOLID** — [solid-principles](../architecture/design-principles/solid-principles.md).
 - **Паттерны** — [patterns](../patterns/).
 - **Тестирование** — [testing](../testing/).
 - **Алгоритмы** — [algorithms](../algorithms/).
 - **Структуры данных** — [data-structures](../algorithms/).
-- **Git** — [[git-basics]].
-- **Сети** — [[networks-basics|networks/networks-basics]].
-- **ОС** — [[operating-systems-basics|operating-systems/operating-systems-basics]].
+- **Git** — [git-basics](git-basics.md).
+- **Сети** — [networks/networks-basics](networks/networks-basics.md).
+- **ОС** — [operating-systems/operating-systems-basics](operating-systems/operating-systems-basics.md).
 
 
 ## Рекомендуемая литература
@@ -788,7 +788,7 @@ public void processOrder(Order order) {
 - **Google `Java Style` Guide** — [google.github.io/styleguide/javaguide.html](https://google.github.io/styleguide/javaguide.html).
 - **Effective Java** (Joshua Bloch) — [oreilly.com](https://www.oreilly.com/library/view/clean-code-a/9780136083238/).
 - **Refactoring** (Martin Fowler) — [refactoring.com](https://refactoring.com/).
-- **SOLID** — [[solid-principles]].
+- **SOLID** — [solid-principles](../architecture/design-principles/solid-principles.md).
 - **Паттерны** — [patterns](../patterns/).
 - **Тестирование** — [testing](../testing/).
 
@@ -1111,7 +1111,7 @@ private void writeToStream(List<OrderDto> dtos, OutputStream out) throws IOExcep
 - **Effective Java** (Joshua Bloch) — практики **Java**, объекты, методы, исключения, параллелизм.
 - **Refactoring** (Martin Fowler) — приёмы рефакторинга, **code smells**, тесты.
 - **The `Pragmatic` Programmer** (Hunt, Thomas) — практики разработки, **DRY**, **KISS**, **YAGNI**.
-- **SOLID** — [[solid-principles]].
+- **SOLID** — [solid-principles](../architecture/design-principles/solid-principles.md).
 - **Паттерны** — [patterns](../patterns/).
 - **Тестирование** — [testing](../testing/).
 
@@ -1349,14 +1349,14 @@ public void processOrder(Order order) {
 
 ## Ссылки на разделы репозитория (полный список)
 
-- **SOLID** — [[solid-principles]].
+- **SOLID** — [solid-principles](../architecture/design-principles/solid-principles.md).
 - **Паттерны** — [patterns](../patterns/).
 - **Тестирование** — [testing](../testing/).
 - **Алгоритмы** — [algorithms](../algorithms/).
 - **Структуры данных** — [data-structures](../algorithms/).
-- **Git** — [[git-basics]].
-- **Сети** — [[networks-basics|networks/networks-basics]].
-- **ОС** — [[operating-systems-basics|operating-systems/operating-systems-basics]].
+- **Git** — [git-basics](git-basics.md).
+- **Сети** — [networks/networks-basics](networks/networks-basics.md).
+- **ОС** — [operating-systems/operating-systems-basics](operating-systems/operating-systems-basics.md).
 
 
 ## Рекомендуемая литература (финальный список)
@@ -1429,4 +1429,4 @@ public void processOrder(Order order) {
 
 ## См. также
 
-- [[git-basics|Основы Git]]
+- [Основы Git](git-basics.md)

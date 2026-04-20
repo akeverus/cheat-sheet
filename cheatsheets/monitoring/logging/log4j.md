@@ -22,12 +22,12 @@ updated: "2026-04-20"
 - [Log4j 2 GitHub](https://github.com/apache/logging-log4j2)
 
 ### См. также
-- [[logging-basics|Основы логирования]]
-- [[logback|Logback]]
-- [[slf4j|SLF4J]]
+- [Основы логирования](logging-basics.md)
+- [Logback](logback.md)
+- [SLF4J](slf4j.md)
 
-- [[centralized-logging|Централизованное логирование для Java]]
-- [[log-aggregation|Агрегация логов для Java]]
+- [Централизованное логирование для Java](centralized-logging.md)
+- [Агрегация логов для Java](log-aggregation.md)
 ## Содержание
 
 - [Введение в Log4j](#введение-в-log4j)

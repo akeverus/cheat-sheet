@@ -1,16 +1,35 @@
 ---
-title: "Spring Session — Interview"
-description: "Вопросы на собеседовании по Spring Session: Redis/JDBC/MongoDB session store, кластеризация, интеграция с Spring Security, события сессий."
+title: "Вопросы на собеседовании: Spring Session"
+description: "Spring Session для внешнего хранения HTTP-сессий: Redis/JDBC/MongoDB store, sticky sessions, кластеризация, интеграция со Spring Security, события"
 tags:
   - interview
   - spring
-  - session
-  - redis
-  - clustering
+  - spring-session-interview
+aliases:
+  - "Spring Session interview"
+  - "Spring Session собеседование"
+  - "Spring Session Redis interview"
+  - "distributed sessions interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Spring Session — Interview
+# Вопросы на собеседовании: `Spring Session`
+
+`Spring Session` — механизм хранения HTTP-сессий вне приложения (Redis, JDBC, MongoDB, Hazelcast). Позволяет масштабировать stateful приложения горизонтально без sticky sessions и обеспечивает session replication между инстансами. Спрашивается в контексте микросервисов и session clustering.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Spring Session Docs](https://docs.spring.io/spring-session/reference/) — официальная документация
+- [Baeldung: Spring Session](https://www.baeldung.com/spring-session) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 ## Q1. Что такое Spring Session и какую проблему он решает?
 
@@ -382,8 +401,13 @@ DELETE /actuator/sessions/{sessionId}
 
 ## See also
 
-- [[spring-session|Spring Session]] — полный cheatsheet
-- [[spring-security-interview|Spring Security Interview]] — аутентификация и авторизация
-- [[redis-interview|Redis Interview]] — Redis как хранилище сессий
-- [[spring-boot-interview|Spring Boot Interview]] — общие вопросы Spring Boot
-- [[jwt-interview|JWT Interview]] — stateless альтернатива
+- [Spring Security](spring-security-interview.md) — аутентификация и авторизация, интеграция с сессиями
+- [Redis](../../databases/redis-interview.md) — Redis как наиболее популярное хранилище сессий
+- [Spring Boot](spring-boot-interview.md) — auto-configuration для Spring Session
+- [JWT](../../security/jwt-interview.md) — stateless альтернатива session-based auth
+- [OAuth2](../../security/oauth2-interview.md) — OAuth2 вместо сессий в микросервисах
+- [Load Balancing](../../architecture/load-balancing-interview.md) — sticky sessions vs external session store
+- [Scalability Patterns](../../architecture/scalability-patterns-interview.md) — horizontal scaling с shared сессиями
+- [Microservices](../../architecture/microservices-interview.md) — session sharing между инстансами
+- [Auth Patterns](../../security/authentication-authorization-patterns-interview.md) — session vs token-based аутентификация
+- [MongoDB](../../databases/mongodb-interview.md) — MongoDB как альтернативное хранилище сессий

@@ -25,9 +25,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[java-basics|Java: основы]]
-- [[redis-basics|Redis: Основы]]
-- [[computer-science-basics|Основы Computer Science]]
+- [Java: основы](../languages/java/java-basics.md)
+- [Redis: Основы](../databases/nosql/redis/redis-basics.md)
+- [Основы Computer Science](computer-science/computer-science-basics.md)
 ## Содержание
 
 - [Основные команды](#основные-команды)
@@ -928,7 +928,7 @@ git config --global alias.undo "reset --soft HEAD~1"
 
 ## Ссылки на смежные разделы
 
-- **Собеседования по Git** — [[git-interview|../../interview/devops/git-interview.md]].
+- **Собеседования по Git** — [../../interview/devops/git-interview.md](../interview/devops/git-interview.md).
 
 ## Конфликтные маркеры и стратегия diff3
 
@@ -1200,7 +1200,7 @@ git checkout -b local-feature origin/feature-branch
 
 ## Ссылки на разделы репозитория
 
-- **Собеседования по Git** — [[git-interview|../../interview/devops/git-interview.md]].
+- **Собеседования по Git** — [../../interview/devops/git-interview.md](../interview/devops/git-interview.md).
 - **Основы алгоритмов** — [../algorithms/README.md](../algorithms/).
 - **Основы структур данных** — [../algorithms/data-structures/README.md](../algorithms/data-structures/).
 
@@ -1453,4 +1453,4 @@ git branch recovered <hash-from-reflog>
 
 ## См. также
 
-- [[clean-code|Принципы чистого кода]]
+- [Принципы чистого кода](clean-code.md)

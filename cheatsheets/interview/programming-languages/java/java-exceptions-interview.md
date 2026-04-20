@@ -253,7 +253,7 @@ public void process(String value) {
 }
 ```
 
-На собеседовании важно упомянуть дискуссию о checked exceptions: многие фреймворки (включая `Spring`) предпочитают unchecked-исключения для снижения boilerplate-кода. В `Kotlin`, например, checked exceptions вообще отсутствуют (подробнее в [[kotlin-exceptions-interview|вопросах по Kotlin Exceptions]]).
+На собеседовании важно упомянуть дискуссию о checked exceptions: многие фреймворки (включая `Spring`) предпочитают unchecked-исключения для снижения boilerplate-кода. В `Kotlin`, например, checked exceptions вообще отсутствуют (подробнее в [вопросах по Kotlin Exceptions](../kotlin/kotlin-exceptions-interview.md)).
 
 ## Q6. (!) В чём разница между `Exception` и `Error`?
 
@@ -331,7 +331,7 @@ java.lang.Thread.run(Thread.java:829)
 Полезные советы:
 - Стек формируется при **создании** исключения (`new`), а не при `throw`
 - Создание стека — **дорогая операция**; для исключений, которые бросаются часто, можно переопределить `fillInStackTrace()` и вернуть `this` для оптимизации
-- Используйте `log.error("message", ex)` вместо `ex.printStackTrace()` — подробнее в [[logging-interview|вопросах по логированию]]
+- Используйте `log.error("message", ex)` вместо `ex.printStackTrace()` — подробнее в [вопросах по логированию](../../logging/logging-interview.md)
 
 ## Q10. Зачем создавать подклассы `Exception`?
 
@@ -535,7 +535,7 @@ files.forEach(unchecked(path -> Files.readString(path)));
 
 3. **Sneaky throws** (трюк со стиранием типов — см. Q18)
 
-Подробнее о лямбдах — в [[java-8-interview|вопросах по Java 8]].
+Подробнее о лямбдах — в [вопросах по Java 8](java-8-interview.md).
 
 ## Q16. Как переопределить метод, выбрасывающий `Exception`?
 
@@ -562,7 +562,7 @@ class Child extends Parent {
 
 Причина: вызывающий код работает с типом `Parent` и обрабатывает только `IOException`. Если бы `Child` мог бросать `SQLException`, обработчик бы его не поймал.
 
-Это связано с принципом подстановки Лисков (LSP) — подробнее в [[java-oop-interview|вопросах по Java OOP]].
+Это связано с принципом подстановки Лисков (LSP) — подробнее в [вопросах по Java OOP](java-oop-interview.md).
 
 ## Q17. Будет ли компилироваться следующий код?
 
@@ -804,7 +804,7 @@ CompletableFuture.supplyAsync(() -> riskyOperation())
     .thenAccept(result -> process(result));
 ```
 
-Подробнее — в [[java-concurrency-interview|вопросах по Java Concurrency]].
+Подробнее — в [вопросах по Java Concurrency](java-concurrency-interview.md).
 
 ## Q26. Что такое `UncaughtExceptionHandler`?
 
@@ -852,7 +852,7 @@ exception.printStackTrace(); // идёт в System.err, не в лог-файл
 - Логировать И пробрасывать — двойное логирование одной ошибки
 - Логировать только `getMessage()` без стек-трейса
 
-Подробнее — в [[logging-interview|вопросах по логированию]].
+Подробнее — в [вопросах по логированию](../../logging/logging-interview.md).
 
 ## Q28. Как тестировать код, выбрасывающий исключения?
 
@@ -895,7 +895,7 @@ void shouldNotThrow() {
 }
 ```
 
-Подробнее о тестировании — в [[unit-testing-interview|вопросах по модульному тестированию]].
+Подробнее о тестировании — в [вопросах по модульному тестированию](../../testing/unit-testing-interview.md).
 
 ## Q29. Что такое `getCause()` и `initCause()`?
 
@@ -953,7 +953,7 @@ public void setName(String name) {
 - Не ловить в бизнес-коде — после OOM состояние JVM непредсказуемо
 - Диагностика: `-XX:+HeapDumpOnOutOfMemoryError` для автоматического heap dump
 - Профилактика: мониторинг памяти, поиск утечек (Eclipse MAT, VisualVM), увеличение `-Xmx`
-- Подробнее — в [[memory-management-interview|вопросах по управлению памятью]]
+- Подробнее — в [вопросах по управлению памятью](../../performance/memory-management-interview.md)
 
 **`StackOverflowError`:**
 - Причина: слишком глубокая рекурсия (обычно бесконечная)
@@ -1048,7 +1048,7 @@ public record ErrorResponse(int status, String message, LocalDateTime timestamp)
 2. `@ExceptionHandler` в `@ControllerAdvice` / `@RestControllerAdvice`
 3. Дефолтный обработчик Spring
 
-Подробнее — в [[spring-boot-interview|вопросах по Spring Boot]] и [[spring-mvc-interview|Spring MVC]].
+Подробнее — в [вопросах по Spring Boot](../../frameworks/spring/spring-boot-interview.md) и [Spring MVC](../../frameworks/spring/spring-mvc-interview.md).
 
 ## Q34. Антипаттерны обработки исключений
 
@@ -1575,18 +1575,18 @@ problem.setInstance(URI.create(request.getRequestURI()));
 
 ## See also
 
-- [[java-core-interview|Java Core]] — базовые вопросы по Java
-- [[java-8-interview|Java 8]] — лямбды, `Stream API`, `Optional`
-- [[java-io-nio-interview|Java I/O и NIO]] — ввод-вывод и работа с ресурсами
-- [[java-concurrency-interview|Java Concurrency]] — многопоточность и обработка ошибок в потоках
-- [[java-oop-interview|Java OOP]] — наследование и полиморфизм (контракт `throws`)
-- [[spring-boot-interview|Spring Boot]] — `@ExceptionHandler`, `@ControllerAdvice`
-- [[logging-interview|Логирование]] — логирование исключений
+- [Java Core](java-core-interview.md) — базовые вопросы по Java
+- [Java 8](java-8-interview.md) — лямбды, `Stream API`, `Optional`
+- [Java I/O и NIO](java-io-nio-interview.md) — ввод-вывод и работа с ресурсами
+- [Java Concurrency](java-concurrency-interview.md) — многопоточность и обработка ошибок в потоках
+- [Java OOP](java-oop-interview.md) — наследование и полиморфизм (контракт `throws`)
+- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — `@ExceptionHandler`, `@ControllerAdvice`
+- [Логирование](../../logging/logging-interview.md) — логирование исключений
 
-- [[java-17-21-interview|Java 17-21]]
-- [[java-8-interview|Java 8]]
-- [[java-annotations-interview|Java Annotations]]
-- [[java-collections-interview|Java Collections]]
-- [[java-concurrency-interview|Java Concurrency]]
-- [[java-conditional-statements-interview|Java Conditional Statements]]
-- [[java-exceptions|Шпаргалка: Java: обработка исключений]] — теория
+- [Java 17-21](java-17-21-interview.md)
+- [Java 8](java-8-interview.md)
+- [Java Annotations](java-annotations-interview.md)
+- [Java Collections](java-collections-interview.md)
+- [Java Concurrency](java-concurrency-interview.md)
+- [Java Conditional Statements](java-conditional-statements-interview.md)
+- [Шпаргалка: Java: обработка исключений](../../../languages/java/java-exceptions.md) — теория

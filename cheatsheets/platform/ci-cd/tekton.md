@@ -23,7 +23,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[travis-ci|Travis CI]]
+- [Travis CI](travis-ci.md)
 ## Содержание
 
 - [Основы Tekton](#основы-tekton)
@@ -1527,7 +1527,7 @@ spec:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[jenkins|Jenkins]] — **Traditional CI/CD**
-- [[gitlab-ci|GitLab CI]]
-- [[kubernetes-advanced|Kubernetes Advanced]] — **Container orchestration**
-- [[kubernetes-networking|Kubernetes Networking]] — **Service mesh**
+- [Jenkins](jenkins.md) — **Traditional CI/CD**
+- [GitLab CI](gitlab-ci.md)
+- [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) — **Container orchestration**
+- [Kubernetes Networking](../containers/kubernetes/kubernetes-networking.md) — **Service mesh**

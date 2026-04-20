@@ -25,12 +25,12 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - [Redis Scripting](https://redis.io/docs/manual/programmability/eval-intro/) — Lua-скрипты
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-transactions|redis-transactions.md]] — транзакции
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-transactions.md](redis-transactions.md) — транзакции
 
-- [[redis|Redis — Полное руководство по in-memory базе данных]]
-- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [Redis — Полное руководство по in-memory базе данных](redis.md)
+- [Quarkus: Redis — Caching и Data Structures](../../../frameworks/java-frameworks/quarkus/quarkus-redis.md)
+- [Quarkus: Cache — Кеширование данных](../../../frameworks/java-frameworks/quarkus/quarkus-cache.md)
 ## Содержание
 
 - [Введение в Lua Scripting](#введение-в-lua-scripting)

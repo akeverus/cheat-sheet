@@ -725,7 +725,7 @@ val combined = listOf(1, 2) + listOf(3, 4) // [1, 2, 3, 4]
 val without = listOf(1, 2, 3) - 2          // [1, 3]
 ```
 
-Подробнее о совместимости — в [[kotlin-interop-java-interview|вопросах по Kotlin/Java Interop]].
+Подробнее о совместимости — в [вопросах по Kotlin/Java Interop](kotlin-interop-java-interview.md).
 
 ## Q22. Как в Kotlin работать с Java-коллекциями (взаимодействие, nullability)?
 
@@ -752,7 +752,7 @@ javaMethod(kotlinList)  // OK
 - Используйте `toList()` для создания безопасной копии
 - Без аннотаций в `Java` — считайте элементы nullable (`List<String?>`)
 
-Подробнее — в [[kotlin-interop-java-interview|вопросах по Kotlin/Java Interop]] и [[java-collections-interview|Java Collections]].
+Подробнее — в [вопросах по Kotlin/Java Interop](kotlin-interop-java-interview.md) и [Java Collections](../java/java-collections-interview.md).
 
 ## Q23. Что такое ArrayDeque в Kotlin?
 
@@ -834,7 +834,7 @@ fun observeChanges(): Flow<Change> = callbackFlow {
 }
 ```
 
-**Принцип**: выбирайте самый простой контракт, покрывающий задачу. `List` → `Sequence` → `Flow` — по мере роста сложности. Подробнее о `Flow` — в [[kotlin-coroutines-interview|вопросах по Kotlin Coroutines]].
+**Принцип**: выбирайте самый простой контракт, покрывающий задачу. `List` → `Sequence` → `Flow` — по мере роста сложности. Подробнее о `Flow` — в [вопросах по Kotlin Coroutines](kotlin-coroutines-interview.md).
 
 ## Q26. Как работают `scan`, `runningFold` и `runningReduce`?
 
@@ -1567,12 +1567,12 @@ val stats: List<Stats> = numbers.scan(Stats(0, 0, 0.0)) { acc, n ->
 
 ## See also
 
-- [[kotlin-interview|Основы Kotlin]] — null-safety, классы, scope-функции, inline
-- [[kotlin-coroutines-interview|Kotlin Coroutines]] — Flow как альтернатива Sequence для асинхронных потоков
-- [[kotlin-interop-java-interview|Kotlin / Java Interop]] — как Kotlin-коллекции видны из Java
-- [[kotlin-dsl-interview|DSL в Kotlin]] — buildList/buildMap как пример type-safe builders
-- [[kotlin-exceptions-interview|Исключения в Kotlin]] — обработка ошибок при работе с коллекциями
-- [[kotlin-serialization-interview|Сериализация в Kotlin]] — сериализация списков и Map
-- [[java-collections-interview|Java Collections]] — основа Kotlin-коллекций на уровне JVM
-- [[java-concurrency-interview|Java Concurrency]] — потокобезопасные коллекции для сравнения
-- [[design-patterns-interview|Design Patterns]] — итератор, компоновщик над коллекциями
+- [Основы Kotlin](kotlin-interview.md) — null-safety, классы, scope-функции, inline
+- [Kotlin Coroutines](kotlin-coroutines-interview.md) — Flow как альтернатива Sequence для асинхронных потоков
+- [Kotlin / Java Interop](kotlin-interop-java-interview.md) — как Kotlin-коллекции видны из Java
+- [DSL в Kotlin](kotlin-dsl-interview.md) — buildList/buildMap как пример type-safe builders
+- [Исключения в Kotlin](kotlin-exceptions-interview.md) — обработка ошибок при работе с коллекциями
+- [Сериализация в Kotlin](kotlin-serialization-interview.md) — сериализация списков и Map
+- [Java Collections](../java/java-collections-interview.md) — основа Kotlin-коллекций на уровне JVM
+- [Java Concurrency](../java/java-concurrency-interview.md) — потокобезопасные коллекции для сравнения
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — итератор, компоновщик над коллекциями

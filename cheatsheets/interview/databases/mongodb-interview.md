@@ -19,7 +19,7 @@ updated: "2026-04-13"
 
 Вопросы и ответы по `MongoDB`: документная модель, `BSON`, индексы, агрегации, репликация, шардирование, транзакции, `Spring Data MongoDB`, оптимизация.
 
-**MongoDB** — документоориентированная `NoSQL` БД, хранящая данные в `BSON`-документах. На собеседовании спрашивают про модель данных, индексы, агрегационный `pipeline`, репликацию, шардирование, транзакции и интеграцию с `Java`/`Spring`. Подробнее о выборе типа БД — в [[database-architecture-interview|архитектуре баз данных]].
+**MongoDB** — документоориентированная `NoSQL` БД, хранящая данные в `BSON`-документах. На собеседовании спрашивают про модель данных, индексы, агрегационный `pipeline`, репликацию, шардирование, транзакции и интеграцию с `Java`/`Spring`. Подробнее о выборе типа БД — в [архитектуре баз данных](database-architecture-interview.md).
 
 ## Полезные ссылки
 
@@ -130,7 +130,7 @@ updated: "2026-04-13"
 - Прототипирование — быстрый старт без миграций
 - Иерархические / вложенные данные (JSON-документы)
 
-**Когда НЕ выбирать:** сложные связи между сущностями (лучше РСУБД), строгие `ACID`-транзакции на множестве коллекций, аналитические запросы по колонкам. Подробнее о выборе типа БД — в [[database-architecture-interview|архитектуре баз данных]] и [[cap-theorem-interview|CAP-теореме]].
+**Когда НЕ выбирать:** сложные связи между сущностями (лучше РСУБД), строгие `ACID`-транзакции на множестве коллекций, аналитические запросы по колонкам. Подробнее о выборе типа БД — в [архитектуре баз данных](database-architecture-interview.md) и [CAP-теореме](../architecture/cap-theorem-interview.md).
 
 ## Q2. В чём отличие `MongoDB` от реляционных баз данных?
 
@@ -144,7 +144,7 @@ updated: "2026-04-13"
 | Язык запросов | `MQL` (JSON-like) | `SQL` |
 | Нормализация | Денормализация (embedding) | Нормализация (3NF) |
 
-Подробнее о `SQL` — в [[sql-interview|вопросах по SQL]].
+Подробнее о `SQL` — в [вопросах по SQL](sql-interview.md).
 
 ## Q3. (!) Что такое `BSON` и чем он отличается от `JSON`?
 
@@ -441,7 +441,7 @@ db.products.createIndex({ "attributes.$**": 1 })
 db.posts.createIndex({ tags: 1 })
 ```
 
-**Важно:** каждый индекс замедляет запись. Не создавайте лишних индексов — анализируйте паттерны запросов. Подробнее об индексах реляционных БД — в [[sql-interview|вопросах по SQL]].
+**Важно:** каждый индекс замедляет запись. Не создавайте лишних индексов — анализируйте паттерны запросов. Подробнее об индексах реляционных БД — в [вопросах по SQL](sql-interview.md).
 
 ## Q13. (!) Как работает составной индекс и правило `ESR`?
 
@@ -519,7 +519,7 @@ db.articles.find({ $text: { $search: "\"replica set\"" } })
 db.articles.find({ $text: { $search: "MongoDB -deprecated" } })
 ```
 
-**Ограничения:** один текстовый индекс на коллекцию; не поддерживает fuzzy-поиск, нет синонимов (есть в `Atlas Search`). Для продвинутого полнотекстового поиска рекомендуется [[elasticsearch-interview|Elasticsearch]].
+**Ограничения:** один текстовый индекс на коллекцию; не поддерживает fuzzy-поиск, нет синонимов (есть в `Atlas Search`). Для продвинутого полнотекстового поиска рекомендуется [Elasticsearch](elasticsearch-interview.md).
 
 ## Q16. Что такое `TTL`-индекс?
 
@@ -698,7 +698,7 @@ graph TB
 - `Priority` узла влияет на шансы стать `primary` (0 = никогда не станет)
 - `Election` занимает обычно **1-2 секунды** (до 12 в худшем случае)
 
-**Рекомендация для production:** минимум 3 узла; для geo-distributed — 5 узлов (2+2+1 по дата-центрам). Подробнее о распределённых системах — в [[distributed-systems-interview|вопросах по распределённым системам]].
+**Рекомендация для production:** минимум 3 узла; для geo-distributed — 5 узлов (2+2+1 по дата-центрам). Подробнее о распределённых системах — в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
 
 ## Q21. (!) Что такое `Write Concern` и `Read Concern`?
 
@@ -995,7 +995,7 @@ public class UserService {
 - `MongoRepository` — `CRUD`, простые запросы, пагинация
 - `MongoTemplate` — агрегации, `bulkOps`, сложные update, `upsert`, программная логика
 
-Подробнее о `Spring Data` — в [[spring-data-jpa-interview|вопросах по Spring Data JPA]] (аналогичный подход для РСУБД).
+Подробнее о `Spring Data` — в [вопросах по Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) (аналогичный подход для РСУБД).
 
 ## Q31. Какие аннотации используются в `Spring Data MongoDB`?
 
@@ -1205,7 +1205,7 @@ public class MongoConfig extends AbstractMongoClientConfiguration {
 }
 ```
 
-Для подключения к нескольким базам данных потребуется несколько `MongoTemplate` с разными `MongoDatabaseFactory`. Подробнее — в [[spring-boot-interview|вопросах по Spring Boot]].
+Для подключения к нескольким базам данных потребуется несколько `MongoTemplate` с разными `MongoDatabaseFactory`. Подробнее — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
 
 ## Q35. (!) Как оптимизировать запросы в `MongoDB`?
 
@@ -1283,9 +1283,9 @@ collection.watch().resumeAfter(savedResumeToken);
 ```
 
 **Применение:**
-- Инвалидация кэша ([[redis-interview|Redis]])
-- Синхронизация с поисковым движком ([[elasticsearch-interview|Elasticsearch]])
-- Event-driven архитектура (публикация событий в [[kafka-interview|Kafka]])
+- Инвалидация кэша ([Redis](redis-interview.md))
+- Синхронизация с поисковым движком ([Elasticsearch](elasticsearch-interview.md))
+- Event-driven архитектура (публикация событий в [Kafka](../messaging/kafka-interview.md))
 - Аудит изменений
 
 **Требования:** `Replica Set` или шардированный кластер. В шардированном кластере порядок между шардами **не гарантируется**.
@@ -1316,7 +1316,7 @@ db.setProfilingLevel(1, { slowms: 100 })
 db.system.profile.find({ millis: { $gt: 500 } }).sort({ ts: -1 })
 ```
 
-В `Spring Boot` — мониторинг через `Micrometer`: метрики пула соединений и латентности экспортируются в `Prometheus` при наличии `micrometer-registry-prometheus`. Подробнее — в [[observability-interview|вопросах по Observability]] и [[metrics-tracing-interview|метриках и трейсинге]].
+В `Spring Boot` — мониторинг через `Micrometer`: метрики пула соединений и латентности экспортируются в `Prometheus` при наличии `micrometer-registry-prometheus`. Подробнее — в [вопросах по Observability](../monitoring/observability-interview.md) и [метриках и трейсинге](../monitoring/metrics-tracing-interview.md).
 
 ## Q38. Как выполнять миграции данных?
 
@@ -1390,20 +1390,20 @@ db.createUser({
 - **Audit log** — журнал действий для compliance
 - Регулярное обновление версии
 
-Подробнее о безопасности — в [[application-security-interview|вопросах по безопасности приложений]].
+Подробнее о безопасности — в [вопросах по безопасности приложений](../security/application-security-interview.md).
 
 ## Q40. Когда `MongoDB` -- плохой выбор?
 
 **Сценарии, где `MongoDB` не оптимальна:**
 
-1. **Сложные связи между сущностями** — множество `JOIN`-ов и связей many-to-many эффективнее в РСУБД (см. [[sql-interview|SQL]])
+1. **Сложные связи между сущностями** — множество `JOIN`-ов и связей many-to-many эффективнее в РСУБД (см. [SQL](sql-interview.md))
 2. **Строгие `ACID`-транзакции** — хотя транзакции есть, overhead велик; для финансовых систем РСУБД надёжнее
 3. **Аналитические запросы по колонкам** — колоночные БД (`ClickHouse`, `Cassandra`) эффективнее для OLAP
 4. **Небольшие данные с фиксированной схемой** — нет преимуществ перед `PostgreSQL`
 5. **Сильная нормализация** — `MongoDB` оптимизирована для денормализации
-6. **Полнотекстовый поиск** — встроенный поиск ограничен; [[elasticsearch-interview|Elasticsearch]] мощнее
+6. **Полнотекстовый поиск** — встроенный поиск ограничен; [Elasticsearch](elasticsearch-interview.md) мощнее
 
-**Вопрос на собеседовании:** "Расскажите о проекте, где вы выбрали `MongoDB`, и как обосновали выбор?" — ожидают конкретные критерии: паттерны доступа, требования к масштабируемости, структура данных, [[cap-theorem-interview|CAP]]-компромиссы и альтернативы, которые рассматривали.
+**Вопрос на собеседовании:** "Расскажите о проекте, где вы выбрали `MongoDB`, и как обосновали выбор?" — ожидают конкретные критерии: паттерны доступа, требования к масштабируемости, структура данных, [CAP](../architecture/cap-theorem-interview.md)-компромиссы и альтернативы, которые рассматривали.
 
 ## Q41. (!) Как работает `$lookup` с вложенным `pipeline` и `$unwind`?
 
@@ -1813,18 +1813,18 @@ db.products.aggregate([
 
 ## See also
 
-- [[sql-interview|SQL]] — реляционные запросы и сравнение с NoSQL
-- [[database-architecture-interview|Архитектура баз данных]] — выбор типа БД, CAP-теорема
-- [[elasticsearch-interview|Elasticsearch]] — полнотекстовый поиск и аналитика
-- [[redis-interview|Redis]] — кэширование и in-memory хранилище
-- [[cassandra-interview|Cassandra]] — другая NoSQL БД (колоночная модель)
-- [[cap-theorem-interview|CAP-теорема]] — компромиссы распределённых систем
-- [[hibernate-interview|Hibernate / JPA]] — ORM для реляционных БД
+- [SQL](sql-interview.md) — реляционные запросы и сравнение с NoSQL
+- [Архитектура баз данных](database-architecture-interview.md) — выбор типа БД, CAP-теорема
+- [Elasticsearch](elasticsearch-interview.md) — полнотекстовый поиск и аналитика
+- [Redis](redis-interview.md) — кэширование и in-memory хранилище
+- [Cassandra](cassandra-interview.md) — другая NoSQL БД (колоночная модель)
+- [CAP-теорема](../architecture/cap-theorem-interview.md) — компромиссы распределённых систем
+- [Hibernate / JPA](hibernate-interview.md) — ORM для реляционных БД
 
-- [[cassandra-interview|Apache Cassandra]]
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
-- [[database-architecture-interview|Database Architecture]]
-- [[database-transactions-interview|Транзакции и уровни изоляции]]
-- [[dynamodb-interview|DynamoDB]]
-- [[mongodb|Шпаргалка: MongoDB: Полное руководство по документо]] — теория
+- [Apache Cassandra](cassandra-interview.md)
+- [ClickHouse](clickhouse-interview.md)
+- [CockroachDB](cockroachdb-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [Транзакции и уровни изоляции](database-transactions-interview.md)
+- [DynamoDB](dynamodb-interview.md)
+- [Шпаргалка: MongoDB: Полное руководство по документо](../../databases/nosql/mongodb/mongodb.md) — теория

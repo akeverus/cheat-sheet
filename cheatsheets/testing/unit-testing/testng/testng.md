@@ -22,12 +22,12 @@ updated: "2026-04-20"
 - [TestNG — Parameters and DataProviders](https://testng.org/doc/documentation-main.html#parameters)
 - [Baeldung — TestNG](https://www.baeldung.com/testng)
 - [Allure TestNG](https://docs.qameta.io/allure/#_testng)
-- [Unit Testing](../) · [[junit]] · [[java-mockito|Mockito]] · [[selenium]]
+- [Unit Testing](../) · [junit](../junit/junit.md) · [Mockito](../../../libraries/testing-libraries/java-mockito.md) · [selenium](../../ui-testing/selenium/selenium.md)
 
 
 ### См. также
-- [[pytest|pytest]]
-- [[assertj|AssertJ для Java]]
+- [pytest](../pytest/pytest.md)
+- [AssertJ для Java](../junit/assertj.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -466,4 +466,4 @@ public void expectException() {
 
 ## Заключение
 
-**TestNG** — мощный фреймворк для тестирования на JVM с группами, зависимостями, параметризацией и гибкой конфигурацией через XML. Используйте группы для smoke/regression, DataProvider для параметризованных сценариев, конфигурационные методы для подготовки и очистки. Документация: [TestNG — Official Documentation](https://testng.org/doc/documentation-main.html); см. также [Unit Testing](../), [[junit]].
+**TestNG** — мощный фреймворк для тестирования на JVM с группами, зависимостями, параметризацией и гибкой конфигурацией через XML. Используйте группы для smoke/regression, DataProvider для параметризованных сценариев, конфигурационные методы для подготовки и очистки. Документация: [TestNG — Official Documentation](https://testng.org/doc/documentation-main.html); см. также [Unit Testing](../), [junit](../junit/junit.md).

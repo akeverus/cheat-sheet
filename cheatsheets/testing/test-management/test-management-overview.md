@@ -23,13 +23,13 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[testing-tools-overview|Testing Tools Overview]]
-- [[junit|JUnit]]
-- [[pytest|pytest]]
+- [Testing Tools Overview](../testing-tools/testing-tools-overview.md)
+- [JUnit](../unit-testing/junit/junit.md)
+- [pytest](../unit-testing/pytest/pytest.md)
 
 
-- [[cucumber|Cucumber для Java]]
-- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
+- [Cucumber для Java](../cucumber.md)
+- [Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest](../../frameworks/java-frameworks/quarkus/quarkus-testing.md)
 ## Содержание
 
 - [Основные концепции](#основные-концепции)

@@ -17,11 +17,11 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[operating-systems-basics|Операционные системы]]
-- [[linux-handbook|Linux и Bash: практический справочник]]
+- [Операционные системы](../../basics/operating-systems/operating-systems-basics.md)
+- [Linux и Bash: практический справочник](../../basics/operating-systems/linux-handbook.md)
 ## Содержание
 
-- [[bfs|BFS (поиск в ширину)]]
-- [[dijkstra|Алгоритм Дейкстры]]
-- [[jgrapht]]
+- [BFS (поиск в ширину)](bfs.md)
+- [Алгоритм Дейкстры](dijkstra.md)
+- [jgrapht](jgrapht.md)
 

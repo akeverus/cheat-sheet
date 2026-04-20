@@ -27,12 +27,12 @@ Project Lombok — annotation processor, который на этапе комп
 - [Lombok GitHub](https://github.com/projectlombok/lombok) — исходники и issues
 
 ### См. также
-- [[java-bean-validation]] — Lombok в DTO с валидацией
-- [[java-mapstruct]] — совместное использование
-- [[java-jackson]] — сериализация Lombok-классов
-- [[spring-data-jpa]] — подводные камни с JPA
-- [[java-basics]] — базовые концепции Java
-- [[spring-boot]] — Lombok в Spring-проектах
+- [java-bean-validation](java-bean-validation.md) — Lombok в DTO с валидацией
+- [java-mapstruct](java-mapstruct.md) — совместное использование
+- [java-jackson](java-jackson.md) — сериализация Lombok-классов
+- [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — подводные камни с JPA
+- [java-basics](../../languages/java/java-basics.md) — базовые концепции Java
+- [spring-boot](../../frameworks/spring/spring-boot.md) — Lombok в Spring-проектах
 
 ## Содержание
 
@@ -597,7 +597,7 @@ lombok.log.fieldName = logger
 - **`@ToString.Exclude` на lazy-полях** — иначе при `log.info("{}", entity)` будет N+1 или `LazyInitializationException`.
 - **`lombok.config` в корне репозитория** — общие правила для команды.
 - **Проверяй Delombok перед отдачей в legacy-код.** Если команда не готова к Lombok — покажи, что получится в чистом Java.
-- **Combo Lombok + MapStruct + Bean Validation** — самая частая связка. Не забудь `lombok-mapstruct-binding` (см. [[java-mapstruct]]).
+- **Combo Lombok + MapStruct + Bean Validation** — самая частая связка. Не забудь `lombok-mapstruct-binding` (см. [java-mapstruct](java-mapstruct.md)).
 
 ## Решение проблем
 
@@ -616,10 +616,10 @@ lombok.log.fieldName = logger
 
 ## См. также
 
-- [[java-bean-validation]] — валидация в DTO с Lombok
-- [[java-mapstruct]] — маппинг DTO entity
-- [[java-jackson]] — сериализация Lombok-классов
-- [[spring-boot]] — Lombok в Spring-проектах
-- [[spring-data-jpa]] — подводные камни с JPA
-- [[java-basics]] — базовые концепции
-- [[java-exceptions]] — checked vs unchecked, `@SneakyThrows`
+- [java-bean-validation](java-bean-validation.md) — валидация в DTO с Lombok
+- [java-mapstruct](java-mapstruct.md) — маппинг DTO entity
+- [java-jackson](java-jackson.md) — сериализация Lombok-классов
+- [spring-boot](../../frameworks/spring/spring-boot.md) — Lombok в Spring-проектах
+- [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — подводные камни с JPA
+- [java-basics](../../languages/java/java-basics.md) — базовые концепции
+- [java-exceptions](../../languages/java/java-exceptions.md) — checked vs unchecked, `@SneakyThrows`

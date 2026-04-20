@@ -20,13 +20,13 @@ Spring Events — встроенный механизм pub/sub внутри о�
 - [Spring Events (docs.spring.io)](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#context-functionality-events) — официальная документация по событиям Spring
 
 ### См. также
-- [[spring-boot|Spring Boot]] — базовый фреймворк
-- [[spring-modulith|Spring Modulith]] — модульный монолит с поддержкой событий
-- [[spring-core|Spring Core]] — ядро Spring Framework
-- [[spring-data-jpa|Spring Data JPA]] — JPA-интеграция, доменные события
-- [[spring-testing|Spring Testing]] — тестирование Spring-приложений
-- [[spring-kafka|Spring Kafka]] — асинхронный обмен сообщениями
-- [[spring-events-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Spring Boot](../../spring/spring-boot.md) — базовый фреймворк
+- [Spring Modulith](spring-modulith.md) — модульный монолит с поддержкой событий
+- [Spring Core](../../spring/spring-core.md) — ядро Spring Framework
+- [Spring Data JPA](spring-data-jpa.md) — JPA-интеграция, доменные события
+- [Spring Testing](spring-testing.md) — тестирование Spring-приложений
+- [Spring Kafka](spring-kafka.md) — асинхронный обмен сообщениями
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-events-interview.md) — подготовка к интервью
 
 ## Содержание
 

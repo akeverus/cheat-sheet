@@ -93,15 +93,15 @@ flowchart TD
 - [MongoDB with Spring Boot](https://www.baeldung.com/spring-data-mongodb-tutorial)
 
 ### См. также
-- [[mongodb-basics|Основы]] — **MongoDB**
-- [[mongodb-crud|CRUD]] — **CRUD** операции
-- [[mongodb-queries|Запросы]] — запросы и фильтры
-- [[mongodb-indexes|Индексы]] — индексы и оптимизация
-- [[mongodb-aggregation|Aggregation]] — **Aggregation Framework**
-- [[mongodb-replication|Репликация]] — репликация
-- [[mongodb-sharding|Шардирование]] — шардирование
-- [[mongodb-performance|Производительность]] — производительность
-- [[mongodb-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Основы](mongodb-basics.md) — **MongoDB**
+- [CRUD](mongodb-crud.md) — **CRUD** операции
+- [Запросы](mongodb-queries.md) — запросы и фильтры
+- [Индексы](mongodb-indexes.md) — индексы и оптимизация
+- [Aggregation](mongodb-aggregation.md) — **Aggregation Framework**
+- [Репликация](mongodb-replication.md) — репликация
+- [Шардирование](mongodb-sharding.md) — шардирование
+- [Производительность](mongodb-performance.md) — производительность
+- [Вопросы на собеседовании](../../../interview/databases/mongodb-interview.md) — подготовка к интервью
 
 ## Содержание
 

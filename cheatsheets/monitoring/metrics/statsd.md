@@ -26,13 +26,13 @@ StatsD — лёгкий демон для приёма метрик по UDP (с
 - [Etsy — Measure Anything, Measure Everything](https://codeascraft.com/2011/02/15/measure-anything-measure-everything/)
 
 ### См. также
-- [[micrometer|Micrometer]] — метрики в JVM, экспорт в StatsD
-- [[prometheus|Prometheus]] — сбор и хранение метрик
-- [[infrastructure-monitoring|Infrastructure monitoring]] — обзор мониторинга
+- [Micrometer](micrometer.md) — метрики в JVM, экспорт в StatsD
+- [Prometheus](prometheus.md) — сбор и хранение метрик
+- [Infrastructure monitoring](../infrastructure-monitoring.md) — обзор мониторинга
 - [Monitoring](../) — раздел мониторинга
 
-- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
-- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [Quarkus: Actuator — Health Checks и Metrics](../../frameworks/java-frameworks/quarkus/quarkus-actuator.md)
+- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](../../frameworks/java-frameworks/micronaut/micronaut-actuator.md)
 ## Содержание
 
 - [Введение](#введение)

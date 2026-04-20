@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Check if a string is palindrome — GeeksforGeeks](https://www.geeksforgeeks.org/c-program-check-given-string-palindrome/)
 
 ### См. также
-- [[palindromic-substrings|Палиндромные подстроки]] — подстроки-палиндромы
-- [[string-permutations|Перестановки строк]] — перестановки
+- [Палиндромные подстроки](palindromic-substrings.md) — подстроки-палиндромы
+- [Перестановки строк](string-permutations.md) — перестановки
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

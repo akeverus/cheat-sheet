@@ -24,12 +24,12 @@ related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 - [Redis Replication](https://redis.io/docs/management/replication/) — репликация
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-persistence|redis-persistence.md]] — персистентность
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-persistence.md](redis-persistence.md) — персистентность
 
-- [[redis-high-availability|Redis: Высокая доступность]]
-- [[postgres-replication|PostgreSQL: Репликация]]
-- [[redis-clustering|Redis: Кластеризация]]
+- [Redis: Высокая доступность](redis-high-availability.md)
+- [PostgreSQL: Репликация](../../relational/postgresql/postgres-replication.md)
+- [Redis: Кластеризация](redis-clustering.md)
 ## Содержание
 
 - [Введение в репликацию Redis](#введение-в-репликацию-redis)

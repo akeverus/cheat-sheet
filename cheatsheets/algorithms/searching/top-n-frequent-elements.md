@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Find k most frequent in array](https://www.geeksforgeeks.org/find-k-numbers-occurrences-given-array/)
 
 ### См. также
-- [[k-largest-elements|K наибольших элементов]] — k largest
-- [[kth-smallest-in-two-sorted-arrays|Поиск k-го по величине элемента]] — k-th smallest
+- [K наибольших элементов](k-largest-elements.md) — k largest
+- [Поиск k-го по величине элемента](kth-smallest-in-two-sorted-arrays.md) — k-th smallest
 
-- [[maximum-subarray|Максимальный подмассив (Maximum Subarray Problem)]]
-- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
-- [[find-max-element|Поиск k-го по величине элемента (Find Kth Largest Element)]]
+- [Максимальный подмассив (Maximum Subarray Problem)](maximum-subarray.md)
+- [Интерполяционный поиск (Interpolation Search)](interpolation-search.md)
+- [Поиск k-го по величине элемента (Find Kth Largest Element)](find-max-element.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

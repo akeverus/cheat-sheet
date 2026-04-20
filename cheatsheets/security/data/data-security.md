@@ -11,7 +11,7 @@ updated: "2026-04-20"
 ---
 # Безопасность данных (Data Security)
 
-Data security — защита данных от несанкционированного доступа, модификации и потери через технические (шифрование, хэширование, маскирование) и организационные (классификация, минимизация, retention) меры. Работает в связке с [[secrets-management|Secrets Management]] и [[application-security|Application Security]].
+Data security — защита данных от несанкционированного доступа, модификации и потери через технические (шифрование, хэширование, маскирование) и организационные (классификация, минимизация, retention) меры. Работает в связке с [Secrets Management](secrets-management.md) и [Application Security](../application/application-security.md).
 
 Главная мысль: ценность данных не одинакова. Классифицируйте сначала, защищайте соразмерно. Для PII и платёжных данных — регуляторные требования (GDPR, PCI-DSS), и ошибки здесь стоят миллионы и репутацию.
 
@@ -31,11 +31,11 @@ Data security — защита данных от несанкционирова�
 - [Tink (Google)](https://developers.google.com/tink) — безопасное crypto-API
 
 ### Соседние разделы
-- [[secrets-management|Secrets Management]]
-- [[application-security|Application Security]]
+- [Secrets Management](secrets-management.md)
+- [Application Security](../application/application-security.md)
 - [Infrastructure Security](../infrastructure/)
-- [[security-practices|Security Practices]]
-- [[networks-basics|TLS и сертификаты]]
+- [Security Practices](../security-practices.md)
+- [TLS и сертификаты](../../basics/networks/networks-basics.md)
 
 ## Содержание
 
@@ -182,7 +182,7 @@ DEK --[KMS KEK]--> encrypted DEK
 - Паролей: политика 90-365 дней (но современные гайды: не менять без причины, лучше MFA).
 - TLS-сертификаты: ≤398 дней, auto-rotate через Let's Encrypt/cert-manager.
 
-Подробнее — [[secrets-management|Secrets Management]].
+Подробнее — [Secrets Management](secrets-management.md).
 
 ## Маскирование и токенизация
 
@@ -275,4 +275,4 @@ public class SensitiveDataMasker extends MessageConverter {
 
 ## См. также
 
-- [[secrets-management|Управление секретами (Secrets Management)]]
+- [Управление секретами (Secrets Management)](secrets-management.md)

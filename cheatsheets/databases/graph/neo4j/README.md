@@ -19,14 +19,14 @@ Neo4j — нативная графовая база данных с property gr
 ## Полезные ссылки
 
 ### Основные документы
-- [[neo4j-basics|Neo4j: Основы]] — архитектура, Cypher, установка, интеграция с Java
+- [Neo4j: Основы](neo4j-basics.md) — архитектура, Cypher, установка, интеграция с Java
 
 ### Соседние разделы
-- [[README|Графовые БД]]
-- [[README|OrientDB]] — мультимодельная альтернатива
-- [[README|NoSQL]]
-- [[README|Базы данных]]
-- [[README|Spring Data]] — есть Spring Data Neo4j
+- [Графовые БД](../../../basics/README.md)
+- [OrientDB](../../../basics/README.md) — мультимодельная альтернатива
+- [NoSQL](../../../basics/README.md)
+- [Базы данных](../../../basics/README.md)
+- [Spring Data](../../../basics/README.md) — есть Spring Data Neo4j
 
 ### Внешние ресурсы
 - [Neo4j Documentation](https://neo4j.com/docs/)
@@ -44,7 +44,7 @@ Neo4j — нативная графовая база данных с property gr
 
 ## Что внутри раздела
 
-[[neo4j-basics]] покрывает:
+[neo4j-basics](neo4j-basics.md) покрывает:
 
 - Property graph модель: узлы (nodes), связи (relationships), свойства, метки (labels)
 - Установка через Docker и Desktop
@@ -80,11 +80,11 @@ Neo4j — нативная графовая база данных с property gr
 
 - **Быстрый старт (1-2 часа):** `neo4j-basics.md` секции установки и Cypher попробовать запросы на sample-датасете.
 - **Backend-интеграция:** Cypher Java Driver Spring Data Neo4j собственный прототип.
-- **Дизайн графа:** моделирование узлов/связей индексы производительность [[README|архитектура БД]].
+- **Дизайн графа:** моделирование узлов/связей индексы производительность [архитектура БД](../../../basics/README.md).
 
 ## Куда идти дальше
 
-- Сравнение графовых БД — [[README|графовые БД]]
-- Обзор всех СУБД — [[README|databases/README.md]]
-- Проектирование данных и нормализация — [[README|databases/relational/README.md]]
-- Интервью по базам данных — [[database-architecture-interview|interview/databases/database-architecture-interview.md]]
+- Сравнение графовых БД — [графовые БД](../../../basics/README.md)
+- Обзор всех СУБД — [databases/README.md](../../../basics/README.md)
+- Проектирование данных и нормализация — [databases/relational/README.md](../../../basics/README.md)
+- Интервью по базам данных — [interview/databases/database-architecture-interview.md](../../../interview/databases/database-architecture-interview.md)

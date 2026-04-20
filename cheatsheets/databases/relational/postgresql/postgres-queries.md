@@ -26,7 +26,7 @@ updated: "2026-04-20"
 - [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [[postgres-data-ops]] — [[postgres-joins]] — [[postgres-indexes]].
+См. также: [postgres-data-ops](postgres-data-ops.md) — [postgres-joins](postgres-joins.md) — [postgres-indexes](postgres-indexes.md).
 
 ## Содержание
 
@@ -1036,8 +1036,8 @@ SELECT * FROM tree;
 
 ## См. также
 
-- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
-- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
-- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
-- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
-- [[postgres-design|PostgreSQL: проектирование и нормализация]]
+- [PostgreSQL: администрирование и обслуживание](postgres-admin.md)
+- [PostgreSQL: Резервное копирование и восстановление](postgres-backup-restore.md)
+- [PostgreSQL: Полное руководство по основам и мониторингу](postgres-basics.md)
+- [PostgreSQL: операции с данными (CRUD)](postgres-data-ops.md)
+- [PostgreSQL: проектирование и нормализация](postgres-design.md)

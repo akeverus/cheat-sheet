@@ -27,15 +27,15 @@ updated: "2026-04-20"
 - [Jaeger — OpenTelemetry](https://www.jaegertracing.io/docs/latest/deployment/#collector) — экспорт в Jaeger
 
 ### См. также
-- [[jaeger|Jaeger]] — Jaeger и интеграция с OpenTelemetry
+- [Jaeger](jaeger.md) — Jaeger и интеграция с OpenTelemetry
 - [Distributed Tracing](../) — раздел трейсинга
-- [[prometheus|Prometheus]] — метрики
+- [Prometheus](../metrics/prometheus.md) — метрики
 - [Monitoring README](../) — обзор мониторинга
 
-- [[distributed-tracing|Распределённое трассирование]]
-- [[zipkin|Zipkin]]
-- [[go-observability|Go: наблюдаемость]]
-- [[opentelemetry-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Распределённое трассирование](distributed-tracing.md)
+- [Zipkin](zipkin.md)
+- [Go: наблюдаемость](../../languages/go/go-observability.md)
+- [Вопросы на собеседовании](../../interview/monitoring/opentelemetry-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение](#введение)
@@ -127,4 +127,4 @@ updated: "2026-04-20"
 | Baggage | Ключ-значение, распространяемые по цепочке запросов |
 | W3C Trace Context | Стандарт заголовков для передачи trace context |
 
-См. [[jaeger]], [Distributed Tracing](../), [Monitoring README](../).
+См. [jaeger](jaeger.md), [Distributed Tracing](../), [Monitoring README](../).

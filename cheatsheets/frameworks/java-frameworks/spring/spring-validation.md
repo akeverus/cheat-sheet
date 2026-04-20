@@ -19,7 +19,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 
 ### См. также
-- [[spring-validation-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-validation-interview.md) — подготовка к интервью
 
 ## Полезные ссылки
 
@@ -644,8 +644,8 @@ public class GlobalExceptionHandler {
 
 ## См. также
 
-- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
-- [[spring-ai|Spring AI]]
-- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
-- [[spring-batch|Spring Batch для Java]]
-- [[spring-boot|Spring Boot — Полное руководство]]
+- [Spring Actuator: Полное руководство по мониторингу и управлению](spring-actuator.md)
+- [Spring AI](spring-ai.md)
+- [Spring AOP: Полное руководство по аспектно-ориентированному программированию](spring-aop.md)
+- [Spring Batch для Java](spring-batch.md)
+- [Spring Boot — Полное руководство](../../spring/spring-boot.md)

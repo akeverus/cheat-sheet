@@ -33,12 +33,12 @@ updated: "2026-04-20"
 - [Azure Monitor](https://docs.microsoft.com/en-us/azure/azure-monitor/)
 
 ### См. также
-- [[logging-basics|Основы логирования]]
-- [[structured-logging|Структурированное логирование]]
-- [[log-aggregation|Агрегация логов]]
+- [Основы логирования](logging-basics.md)
+- [Структурированное логирование](structured-logging.md)
+- [Агрегация логов](log-aggregation.md)
 
-- [[slf4j|SLF4J для Java]]
-- [[logback|Logback для Java]]
+- [SLF4J для Java](slf4j.md)
+- [Logback для Java](logback.md)
 ## Содержание
 
 - [Введение в централизованное логирование](#введение-в-централизованное-логирование)

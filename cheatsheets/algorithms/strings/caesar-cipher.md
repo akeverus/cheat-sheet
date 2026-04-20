@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Caesar Cipher — GeeksforGeeks](https://www.geeksforgeeks.org/caesar-cipher-in-cryptography/)
 
 ### См. также
-- [[pangram-check|Проверка панграмм]] — панграммы
-- [[regex-token-replacement|Работа с регулярными выражениями]] — регулярные выражения
+- [Проверка панграмм](pangram-check.md) — панграммы
+- [Работа с регулярными выражениями](regex-token-replacement.md) — регулярные выражения
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

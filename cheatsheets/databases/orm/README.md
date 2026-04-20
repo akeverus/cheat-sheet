@@ -17,14 +17,14 @@ Object-Relational Mapping — прослойка, превращающая ре�
 ## Полезные ссылки
 
 ### Основной документ
-- [[orm-basics|Основы ORM]]
+- [Основы ORM](orm-basics.md)
 
 ### Соседние разделы
-- [[README|SQL]]
-- [[README|Реляционные СУБД]]
-- [[README|Spring Data JPA]]
-- [[README|Java-библиотеки (jOOQ, MapStruct)]]
-- [[README|Тестирование БД]]
+- [SQL](../../basics/README.md)
+- [Реляционные СУБД](../../basics/README.md)
+- [Spring Data JPA](../../basics/README.md)
+- [Java-библиотеки (jOOQ, MapStruct)](../../basics/README.md)
+- [Тестирование БД](../../basics/README.md)
 
 ### Внешние ресурсы
 - [Hibernate ORM User Guide](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html)
@@ -75,13 +75,13 @@ Object-Relational Mapping — прослойка, превращающая ре�
 
 ## Маршруты чтения
 
-- **Junior backend:** [[orm-basics]] [[README|Spring Data JPA]].
-- **Миграция с JDBC:** концепции mapping persistence context lazy loading [[orm-basics#лучшие-практики]].
+- **Junior backend:** [orm-basics](orm-basics.md) [Spring Data JPA](../../basics/README.md).
+- **Миграция с JDBC:** концепции mapping persistence context lazy loading [orm-basics](orm-basics.md#лучшие-практики).
 - **Перф-оптимизация:** N+1 кэш L2 batch fetching native queries.
 
 ## Куда идти дальше
 
-- Оптимизация SQL и индексы — [[README|databases/sql/]], [[README|databases/relational/postgresql/]]
-- Hibernate-специфика, Session API — [[README|libraries/java/]]
-- Тестирование JPA-слоя с Testcontainers — [[README|testing/integration-testing/testcontainers/]]
-- Паттерны DAO/Repository — [[README|patterns/]]
+- Оптимизация SQL и индексы — [databases/sql/](../../basics/README.md), [databases/relational/postgresql/](../../basics/README.md)
+- Hibernate-специфика, Session API — [libraries/java/](../../basics/README.md)
+- Тестирование JPA-слоя с Testcontainers — [testing/integration-testing/testcontainers/](../../basics/README.md)
+- Паттерны DAO/Repository — [patterns/](../../basics/README.md)

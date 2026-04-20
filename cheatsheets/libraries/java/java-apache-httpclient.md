@@ -33,8 +33,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[java-http-clients|HTTP-клиенты в Java]]
-- [[java-jackson|Jackson: JSON-сериализация в Java]]
+- [HTTP-клиенты в Java](java-http-clients.md)
+- [Jackson: JSON-сериализация в Java](java-jackson.md)
 ## Содержание
 
 - [Введение в Apache HttpClient](#введение-в-apache-httpclient)
@@ -858,7 +858,7 @@ CloseableHttpClient httpClient = HttpClients.custom()
 - [Migration Guide](https://hc.apache.org/httpcomponents-client-5.3.x/migration-guide/index.html)
 
 ## См. также
-- [[java-okhttp|OkHttp]] — Альтернативный **HTTP** клиент
-- [[java-retrofit|Retrofit]] — **Type-safe HTTP** клиент
-- [[spring-webflux|WebClient]] — **Reactive HTTP** клиент
+- [OkHttp](java-okhttp.md) — Альтернативный **HTTP** клиент
+- [Retrofit](java-retrofit.md) — **Type-safe HTTP** клиент
+- [WebClient](../../frameworks/java-frameworks/spring/spring-webflux.md) — **Reactive HTTP** клиент
 

@@ -988,8 +988,8 @@ public class SchemaVersioningService {
 
 ## См. также
 
-- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
-- [[quarkus-basics|Quarkus: Основы]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
-- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]
+- [Quarkus: Actuator — Health Checks и Metrics](quarkus-actuator.md)
+- [Quarkus: Основы](quarkus-basics.md)
+- [Quarkus: Cache — Кеширование данных](quarkus-cache.md)
+- [Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh](quarkus-cloud.md)
+- [Quarkus: Core — CDI, Bean Scopes и Configuration](quarkus-core.md)

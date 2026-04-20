@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Kotlin Performance Tips](https://kotlinlang.org/docs/performance.html)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-concurrency-basics|Корутины]]
-- [[java-basics|Java: основы]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Корутины](kotlin-concurrency-basics.md)
+- [Java: основы](../java/java-basics.md)
 
-- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
-- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
+- [Kotlin Functional Programming: Basics](kotlin-fp-basics.md)
+- [Sealed классы и интерфейсы в Kotlin](kotlin-sealed-classes.md)
 ## Содержание
 
 - [Введение в производительность Kotlin](#введение-в-производительность-kotlin)

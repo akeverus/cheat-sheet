@@ -23,12 +23,12 @@ updated: "2026-04-20"
 
 ### См. также
 - [NoSQL](../../nosql/) — обзор **NoSQL**
-- [[orientdb-basics|OrientDB]] — графовая БД **OrientDB**
+- [OrientDB](../orientdb/orientdb-basics.md) — графовая БД **OrientDB**
 
-- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
-- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
-- [[orm-basics|ORM: Object-Relational Mapping]]
-- [[hibernate-relationships|Hibernate: связи между сущностями]]
+- [Hibernate: JPQL, HQL и Criteria API](../../orm/hibernate-jpql-criteria.md)
+- [Hibernate: кэширование (L1, L2, Query Cache)](../../orm/hibernate-caching.md)
+- [ORM: Object-Relational Mapping](../../orm/orm-basics.md)
+- [Hibernate: связи между сущностями](../../orm/hibernate-relationships.md)
 ## Содержание
 
 - [Введение в Neo4j](#введение-в-neo4j)

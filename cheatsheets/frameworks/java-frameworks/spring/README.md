@@ -15,17 +15,17 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[spring-boot|Spring Boot]]
-[[spring-core|Spring Core]]
-[[spring-security|Spring Security]]
+[Spring Boot](../../spring/spring-boot.md)
+[Spring Core](../../spring/spring-core.md)
+[Spring Security](spring-security.md)
 
 ## Содержание
 
-- [[spring-core|Spring Core]]
-- [[spring-boot|Spring Boot]]
-- [[spring-mvc|Spring MVC]]
-- [[spring-security|Spring Security]]
-- [[spring-data-jpa|Spring Data JPA]]
-- [[spring-cloud|Spring Cloud]]
-- [[spring-batch|Spring Batch]]
-- [[spring-integration|Spring Integration]]
+- [Spring Core](../../spring/spring-core.md)
+- [Spring Boot](../../spring/spring-boot.md)
+- [Spring MVC](spring-mvc.md)
+- [Spring Security](spring-security.md)
+- [Spring Data JPA](spring-data-jpa.md)
+- [Spring Cloud](spring-cloud.md)
+- [Spring Batch](spring-batch.md)
+- [Spring Integration](spring-integration.md)

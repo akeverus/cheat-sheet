@@ -24,9 +24,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[nginx-advanced|Nginx Advanced]]
-- [[infrastructure-tools-overview|Обзор инфраструктурных инструментов]]
-- [[consul-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Nginx Advanced](nginx-advanced.md)
+- [Обзор инфраструктурных инструментов](infrastructure-tools-overview.md)
+- [Вопросы на собеседовании](../../interview/devops/consul-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Основы Consul](#основы-consul)
@@ -1027,6 +1027,6 @@ fi
 echo "Checklist complete"
 ```
 ## См. также
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
-- [[docker-basics|Docker]] — контейнеризация
-- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
+- [Docker](../containers/docker/docker-basics.md) — контейнеризация
+- [Kubernetes](../containers/kubernetes/kubernetes-basics.md) — оркестрация контейнеров

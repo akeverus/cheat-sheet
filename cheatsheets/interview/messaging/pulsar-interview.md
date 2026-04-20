@@ -493,23 +493,23 @@ Less common than KoP. RabbitMQ migrations less frequent.
 
 ## See also
 
-- [[kafka-interview|Apache Kafka]] — main конкурент
-- [[nats-interview|NATS]] — другая alternative
-- [[rabbitmq-interview|RabbitMQ]] — enterprise messaging
-- [[message-brokers-comparison-interview|Message Brokers Comparison]] — overview
-- [[kafka-streams-interview|Kafka Streams]] — vs Pulsar Functions
-- [[apache-flink-interview|Apache Flink]] — stream processing
-- [[event-driven-patterns-interview|Event-driven Patterns]] — context
-- [[microservices-interview|Микросервисы]] — primary use case
-- [[stream-processing-interview|Stream Processing]] — context
-- [[distributed-systems-interview|Распределённые системы]] — BookKeeper, replication
-- [[scalability-patterns-interview|Scalability Patterns]] — separated storage/compute
-- [[caching-strategies-interview|Caching]] — для acceleration
-- [[saga-pattern-interview|Saga Pattern]] — for choreographed sagas
+- [Apache Kafka](kafka-interview.md) — main конкурент
+- [NATS](nats-interview.md) — другая alternative
+- [RabbitMQ](rabbitmq-interview.md) — enterprise messaging
+- [Message Brokers Comparison](message-brokers-comparison-interview.md) — overview
+- [Kafka Streams](../data-engineering/kafka-streams-interview.md) — vs Pulsar Functions
+- [Apache Flink](../data-engineering/apache-flink-interview.md) — stream processing
+- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — context
+- [Микросервисы](../architecture/microservices-interview.md) — primary use case
+- [Stream Processing](../data-engineering/stream-processing-interview.md) — context
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — BookKeeper, replication
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — separated storage/compute
+- [Caching](../architecture/caching-strategies-interview.md) — для acceleration
+- [Saga Pattern](../architecture/saga-pattern-interview.md) — for choreographed sagas
 
-- [[aws-sqs-sns-interview|AWS SQS и SNS]]
-- [[kafka-interview|Apache Kafka]]
-- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
-- [[nats-interview|NATS]]
-- [[rabbitmq-interview|RabbitMQ]]
-- [[redpanda-interview|Redpanda]]
+- [AWS SQS и SNS](aws-sqs-sns-interview.md)
+- [Apache Kafka](kafka-interview.md)
+- [Сравнение Message Brokers](message-brokers-comparison-interview.md)
+- [NATS](nats-interview.md)
+- [RabbitMQ](rabbitmq-interview.md)
+- [Redpanda](redpanda-interview.md)

@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Introduction to Ant Colony Optimization](https://www.baeldung.com/java-ant-colony-optimization)
 
 ### См. также
-- [[genetic-algorithms|Генетические алгоритмы]]
-- [[hill-climbing|Hill Climbing]]
-- [[multi-swarm|Multi-Swarm Optimization]]
+- [Генетические алгоритмы](genetic-algorithms.md)
+- [Hill Climbing](../problems/hill-climbing.md)
+- [Multi-Swarm Optimization](../problems/multi-swarm.md)
 
-- [[logistic-regression|Логистическая регрессия]]
-- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
+- [Логистическая регрессия](logistic-regression.md)
+- [Реализация CNN с помощью Deeplearning4j](cnn-deeplearning4j.md)
 ## Содержание
 
 - [Введение](#введение)

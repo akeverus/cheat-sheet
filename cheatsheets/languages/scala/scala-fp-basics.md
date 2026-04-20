@@ -25,12 +25,12 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Scala Functional Programming](https://docs.scala-lang.org/overviews/scala-book/first-look-at-types.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-fp-advanced|Продвинутое функциональное программирование]]
-- [[scala-collections|Коллекции Scala]]
+- [Основы Scala](scala-basics.md)
+- [Продвинутое функциональное программирование](scala-fp-advanced.md)
+- [Коллекции Scala](scala-collections.md)
 
-- [[scala-collections-list|Scala Collections — List]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [Scala Collections — List](scala-collections-list.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
 ## Содержание
 
 - [Введение в ФП](#введение-в-фп)

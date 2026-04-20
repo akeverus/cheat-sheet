@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Math.pow() (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html#pow-double-double-)
 
 ### См. также
-- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
-- [[circle-area-calculation|Вычисление площади круга]] — площадь круга
+- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
+- [Вычисление площади круга](circle-area-calculation.md) — площадь круга
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
-- [[lat-lon-to-2d-point|Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
+- [Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)](lat-lon-to-2d-point.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

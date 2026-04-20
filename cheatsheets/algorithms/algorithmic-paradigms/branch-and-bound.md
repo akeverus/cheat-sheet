@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/) — **Java** API и руководства
 
 ### См. также
-- [[README|Решение задач]] — решение задач
-- [[backtracking|Поиск с возвратом]] — backtracking
-- [[dynamic-programming|Динамическое программирование]] — **DP**
+- [Решение задач](../../basics/README.md) — решение задач
+- [Поиск с возвратом](backtracking.md) — backtracking
+- [Динамическое программирование](dynamic-programming.md) — **DP**
 
-- [[greedy-algorithms|Жадные алгоритмы (Greedy Algorithms)]]
-- [[divide-and-conquer|Разделяй и властвуй (Divide and Conquer)]]
+- [Жадные алгоритмы (Greedy Algorithms)](../problems/greedy-algorithms.md)
+- [Разделяй и властвуй (Divide and Conquer)](divide-and-conquer.md)
 ## Содержание
 
 - [Введение в Branch and Bound](#введение-в-branch-and-bound)

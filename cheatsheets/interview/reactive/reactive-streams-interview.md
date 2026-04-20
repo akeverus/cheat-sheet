@@ -536,11 +536,11 @@ sequenceDiagram
 
 ## See also
 
-- [[project-reactor-interview|Project Reactor]] — реализация `Reactive Streams` от Pivotal
-- [[rxjava-interview|RxJava]] — альтернативная реализация от Netflix
+- [Project Reactor](project-reactor-interview.md) — реализация `Reactive Streams` от Pivotal
+- [RxJava](rxjava-interview.md) — альтернативная реализация от Netflix
 - [[reactor-vs-rxjava-interview|Reactor vs RxJava]] — сравнение двух главных реализаций
-- [[reactive-patterns-interview|Реактивные паттерны]] — hot/cold, операторы, debugging
-- [[webflux-interview|Spring WebFlux]] — применение Reactive Streams в Spring
-- [[reactive-testing-interview|Тестирование реактивного кода]] — StepVerifier, TestPublisher
-- [[java-concurrency-interview|Java Concurrency]] — базовая многопоточность
-- [[event-driven-patterns-interview|Event-Driven паттерны]] — архитектурный контекст
+- [Реактивные паттерны](reactive-patterns-interview.md) — hot/cold, операторы, debugging
+- [Spring WebFlux](webflux-interview.md) — применение Reactive Streams в Spring
+- [Тестирование реактивного кода](reactive-testing-interview.md) — StepVerifier, TestPublisher
+- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — базовая многопоточность
+- [Event-Driven паттерны](../architecture/event-driven-patterns-interview.md) — архитектурный контекст

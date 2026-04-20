@@ -31,11 +31,11 @@ updated: "2026-04-20"
 - [Cerebro](https://github.com/lmenezes/cerebro) — **Elasticsearch admin** **UI**
 
 ### См. также
-- [[elasticsearch-indexing|Индексация]] — индексация документов
-- [[elasticsearch-queries|Запросы]] — поиск и запросы
-- [[elasticsearch-aggregations|Агрегации]] — агрегации
-- [[elasticsearch-clustering|Кластеризация]] — кластеризация
-- [[elasticsearch-performance|Производительность]] — производительность
+- [Индексация](elasticsearch-indexing.md) — индексация документов
+- [Запросы](elasticsearch-queries.md) — поиск и запросы
+- [Агрегации](elasticsearch-aggregations.md) — агрегации
+- [Кластеризация](elasticsearch-clustering.md) — кластеризация
+- [Производительность](elasticsearch-performance.md) — производительность
 
 ## Содержание
 

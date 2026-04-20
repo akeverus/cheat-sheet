@@ -18,13 +18,13 @@ updated: "2026-04-20"
 > Файл **сознательно сжат**: здесь только то, что нужно разработчику в 80 % случаев.
 > Детали — в соседних документах:
 >
-> - [[web-security|Web Security]] — `OWASP Top 10`, `XSS`, `CSRF`, `SQL Injection`
-> - [[api-security|API Security]] — `JWT`, `API Keys`, `Rate Limiting`
-> - [[secrets-management|Secrets Management]] — `Vault`, `KMS`, `Kubernetes Secrets`
-> - [[security-testing|Security Testing]] — `SAST`, `DAST`, `SCA`, пентесты
+> - [Web Security](web-security.md) — `OWASP Top 10`, `XSS`, `CSRF`, `SQL Injection`
+> - [API Security](api-security.md) — `JWT`, `API Keys`, `Rate Limiting`
+> - [Secrets Management](../data/secrets-management.md) — `Vault`, `KMS`, `Kubernetes Secrets`
+> - [Security Testing](../testing/security-testing.md) — `SAST`, `DAST`, `SCA`, пентесты
 
 ### См. также
-- [[application-security-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Вопросы на собеседовании](../../interview/security/application-security-interview.md) — подготовка к интервью
 
 ## Полезные ссылки
 
@@ -232,7 +232,7 @@ updated: "2026-04-20"
 
 ## См. также
 
-- [[api-security|Безопасность API]]
-- [[jwt-oauth2|JWT и OAuth2 / OIDC]]
-- [[owasp-top-10|OWASP Top 10 (2021) — разбор категорий]]
-- [[web-security|Веб‑безопасность (Web Security)]]
+- [Безопасность API](api-security.md)
+- [JWT и OAuth2 / OIDC](jwt-oauth2.md)
+- [OWASP Top 10 (2021) — разбор категорий](owasp-top-10.md)
+- [Веб‑безопасность (Web Security)](web-security.md)

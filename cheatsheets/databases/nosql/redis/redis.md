@@ -25,13 +25,13 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
 - [Redis Commands](https://redis.io/commands/) — справочник команд
 
 ### См. также
-- [[redis-data-structures|redis-data-structures.md]] — структуры данных
-- [[redis-persistence|redis-persistence.md]] — персистентность
+- [redis-data-structures.md](redis-data-structures.md) — структуры данных
+- [redis-persistence.md](redis-persistence.md) — персистентность
 
-- [[redis-basics|Redis: Основы]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
-- [[redis-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Redis: Основы](redis-basics.md)
+- [Quarkus: Cache — Кеширование данных](../../../frameworks/java-frameworks/quarkus/quarkus-cache.md)
+- [Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache](../../../frameworks/java-frameworks/micronaut/micronaut-redis.md)
+- [Вопросы на собеседовании](../../../interview/databases/redis-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Redis](#введение-в-redis)

@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [RxKotlin Tutorial](https://www.baeldung.com/kotlin/rxkotlin)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-concurrency-basics|Корутины]]
-- [[kotlin-reactive-flow|Kotlin Flow]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Корутины](kotlin-concurrency-basics.md)
+- [Kotlin Flow](kotlin-reactive-flow.md)
 
-- [[kotlin-performance|Kotlin Performance]]
-- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
+- [Kotlin Performance](kotlin-performance.md)
+- [Kotlin Functional Programming: Basics](kotlin-fp-basics.md)
 ## Содержание
 
 - [Введение в RxKotlin](#введение-в-rxkotlin)

@@ -25,8 +25,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[scala-slick|Slick]]
-- [[scala-doobie|Doobie]]
+- [Slick](scala-slick.md)
+- [Doobie](scala-doobie.md)
 ## Содержание
 
 - [Основные концепции Akka](#основные-концепции-akka)
@@ -1595,7 +1595,7 @@ class ScalaStyleActor extends Actor {
 }
 ```
 ## См. также
-- [[scala-zio|ZIO]] — Альтернативная библиотека для функционального программирования
-- [[scala-cats|Cats]] — Функциональная библиотека для **Scala**
-- [[README|Паттерны]] — Функциональные паттерны
+- [ZIO](scala-zio.md) — Альтернативная библиотека для функционального программирования
+- [Cats](scala-cats.md) — Функциональная библиотека для **Scala**
+- [Паттерны](../../basics/README.md) — Функциональные паттерны
 

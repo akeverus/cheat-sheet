@@ -1272,8 +1272,8 @@ export const monitoringEnabled = enableMonitoring;
 export const prometheusUrl = monitoringResources.prometheus?.status?.apply(s => s.deployed?.release?.info?.firstDeployed);
 ```
 ## См. также
-- [[terraform|Terraform]] — декларативная инфраструктура как код
-- [[ansible|Ansible]] — конфигурационное управление
-- [[aws-basics|AWS]] — **Amazon Web Services**
-- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
-- [[docker-basics|Docker]] — контейнеризация
+- [Terraform](../terraform/terraform.md) — декларативная инфраструктура как код
+- [Ansible](../ansible/ansible.md) — конфигурационное управление
+- [AWS](../../cloud-providers/aws-basics.md) — **Amazon Web Services**
+- [Kubernetes](../../containers/kubernetes/kubernetes-basics.md) — оркестрация контейнеров
+- [Docker](../../containers/docker/docker-basics.md) — контейнеризация

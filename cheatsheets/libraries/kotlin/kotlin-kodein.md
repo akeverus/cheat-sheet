@@ -22,10 +22,10 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[kotlin-konfig|Konfig]]
-- [[kotlin-exposed|Kotlin Exposed]]
-- [[kotlin-kotlinx-coroutines|kotlinx.coroutines]]
-- [[kotlin-arrow|Arrow]]
+- [Konfig](kotlin-konfig.md)
+- [Kotlin Exposed](kotlin-exposed.md)
+- [kotlinx.coroutines](kotlin-kotlinx-coroutines.md)
+- [Arrow](kotlin-arrow.md)
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
@@ -987,5 +987,5 @@ val kodein = DI {
 ```
 ## См. также
 - [Обзор библиотек](../) — DI для **Java**/**Kotlin**
-- [[spring-core|Spring]] — DI в **Spring**
+- [Spring](../../frameworks/spring/spring-core.md) — DI в **Spring**
 

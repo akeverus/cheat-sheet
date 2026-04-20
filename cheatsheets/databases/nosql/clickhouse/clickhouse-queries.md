@@ -33,11 +33,11 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 - [Playground](https://play.clickhouse.com/)
 
 ### См. также
-- [[clickhouse-tables|Таблицы]] — создание таблиц
-- [[clickhouse-indexes|Индексы]] — оптимизация запросов
+- [Таблицы](clickhouse-tables.md) — создание таблиц
+- [Индексы](clickhouse-indexes.md) — оптимизация запросов
 
-- [[clickhouse-basics|ClickHouse: Основы колоночной аналитической базы данных]]
-- [[clickhouse-replication|ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость]]
+- [ClickHouse: Основы колоночной аналитической базы данных](clickhouse-basics.md)
+- [ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость](clickhouse-replication.md)
 ## Содержание
 
 - [Вставка данных](#вставка-данных)
@@ -1370,6 +1370,6 @@ ORDER BY total_read_bytes DESC;
 
 
 **Следующие темы:**
-- [[clickhouse-indexes|Индексы и оптимизация]]
-- [[clickhouse-materialized-views|Материализованные представления]]
+- [Индексы и оптимизация](clickhouse-indexes.md)
+- [Материализованные представления](clickhouse-materialized-views.md)
 

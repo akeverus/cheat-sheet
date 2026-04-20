@@ -22,12 +22,12 @@ updated: "2026-04-20"
 - [Java Spliterator](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Spliterator.html)
 
 ### См. также
-- [[java-collections-list|Java Collections]] — **Java Collections**
-- [[java-streams-fp|Stream API]] — **Stream API**
-- [[visitor|Visitor]] — **Visitor Pattern**
+- [Java Collections](../../languages/java/java-collections-list.md) — **Java Collections**
+- [Stream API](../../languages/java/java-streams-fp.md) — **Stream API**
+- [Visitor](visitor.md) — **Visitor Pattern**
 
-- [[interpreter|Интерпретатор (Interpreter)]]
-- [[state|Состояние (State)]]
+- [Интерпретатор (Interpreter)](interpreter.md)
+- [Состояние (State)](state.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

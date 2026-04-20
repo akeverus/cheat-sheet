@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Kotlin Functional Programming](https://www.baeldung.com/kotlin/functional-programming)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-fp-advanced|Продвинутое функциональное программирование]]
-- [[kotlin-collections-operations|Операции над коллекциями]]
+- [Основы Kotlin](kotlin-basics.md)
+- [Продвинутое функциональное программирование](kotlin-fp-advanced.md)
+- [Операции над коллекциями](kotlin-collections-operations.md)
 
-- [[kotlin-performance|Kotlin Performance]]
-- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
+- [Kotlin Performance](kotlin-performance.md)
+- [Sealed классы и интерфейсы в Kotlin](kotlin-sealed-classes.md)
 ## Содержание
 
 - [Введение в ФП](#введение-в-фп)

@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [LinkedHashMap (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedHashMap.html)
 
 ### См. также
-- [[traveling-salesman-problem|Задача коммивояжера]] — TSP
+- [Задача коммивояжера](traveling-salesman-problem.md) — TSP
 - [Бинарное дерево](../trees/) — бинарное дерево
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
-- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
-- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
+- [Валидация банковских карт (Credit Card Validation)](credit-card-validation.md)
+- [Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)](frequency-histogram-apache-commons.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

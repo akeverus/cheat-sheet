@@ -19,12 +19,12 @@ Aider — CLI-инструмент для парного программиро�
 ## Полезные ссылки
 
 ### Основные документы
-- [[aider-basics]] — установка, первая сессия, работа с git, примеры промптов
+- [aider-basics](aider-basics.md) — установка, первая сессия, работа с git, примеры промптов
 
 ### Соседние разделы
-- [[README|tools/ai/]] — родительский раздел AI-инструментов
-- [[README|tools/ai/claude/]] — IDE-ассистент с длинным контекстом
-- [[README|tools/ai/cursor/]] — AI-first IDE
+- [tools/ai/](../../../basics/README.md) — родительский раздел AI-инструментов
+- [tools/ai/claude/](../../../basics/README.md) — IDE-ассистент с длинным контекстом
+- [tools/ai/cursor/](../../../basics/README.md) — AI-first IDE
 
 ### Внешние ресурсы
 - [Aider Documentation](https://aider.chat/)
@@ -51,13 +51,13 @@ Aider — CLI-инструмент для парного программиро�
 
 | Инструмент | Нативная IDE | Агентский режим | Локальные модели | Цена |
 |------------|--------------|-----------------|------------------|------|
-| [[README|Aider]] | Нет (CLI) | Частичный (architect/editor) | Да (Ollama, любые OpenAI-совместимые) | Open source + оплата провайдеру |
-| [[README|Claude Code]] | VS Code, JetBrains, CLI | Да (agent, terminal-tools) | Нет (Anthropic API) | Подписка Anthropic |
-| [[README|Cody]] | VS Code, JetBrains | Частичный (commands) | Enterprise: да, Cloud: нет | Free + Pro/Enterprise |
-| [[README|GitHub Copilot]] | VS Code, JetBrains, Neovim, Xcode | Да (Copilot Agent, Spaces) | Нет | Подписка GitHub |
-| [[README|Cursor]] | Cursor (форк VS Code) | Да (Agent, Background Agent) | Да (через custom API keys) | Free + Pro |
-| [[README|OpenClaw]] | Нет (CLI) | Да (автономные агенты) | Да (Ollama, GGUF) | Open source |
-| [[README|Windsurf]] | Windsurf (свой IDE) | Да (Cascade) | Нет | Free + Pro |
+| [Aider](../../../basics/README.md) | Нет (CLI) | Частичный (architect/editor) | Да (Ollama, любые OpenAI-совместимые) | Open source + оплата провайдеру |
+| [Claude Code](../../../basics/README.md) | VS Code, JetBrains, CLI | Да (agent, terminal-tools) | Нет (Anthropic API) | Подписка Anthropic |
+| [Cody](../../../basics/README.md) | VS Code, JetBrains | Частичный (commands) | Enterprise: да, Cloud: нет | Free + Pro/Enterprise |
+| [GitHub Copilot](../../../basics/README.md) | VS Code, JetBrains, Neovim, Xcode | Да (Copilot Agent, Spaces) | Нет | Подписка GitHub |
+| [Cursor](../../../basics/README.md) | Cursor (форк VS Code) | Да (Agent, Background Agent) | Да (через custom API keys) | Free + Pro |
+| [OpenClaw](../../../basics/README.md) | Нет (CLI) | Да (автономные агенты) | Да (Ollama, GGUF) | Open source |
+| [Windsurf](../../../basics/README.md) | Windsurf (свой IDE) | Да (Cascade) | Нет | Free + Pro |
 
 ## Когда использовать
 
@@ -73,7 +73,7 @@ Aider — CLI-инструмент для парного программиро�
 
 ## Куда идти дальше
 
-- Обзор и сравнение всех AI-инструментов — [[README]]
-- IDE-интеграция с длинным контекстом — [[README]]
-- AI-first IDE — [[README]], [[README]]
-- Автономные агенты — [[README]]
+- Обзор и сравнение всех AI-инструментов — [README](../../../basics/README.md)
+- IDE-интеграция с длинным контекстом — [README](../../../basics/README.md)
+- AI-first IDE — [README](../../../basics/README.md), [README](../../../basics/README.md)
+- Автономные агенты — [README](../../../basics/README.md)

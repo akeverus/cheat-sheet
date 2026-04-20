@@ -698,14 +698,14 @@ public class SearchController {
 
 ## See also
 
-- [[spring-mvc-interview|Spring MVC]] — `@Valid` в контроллерах, `BindingResult`, обработка ошибок
-- [[spring-boot-interview|Spring Boot]] — `spring-boot-starter-validation`, автоконфигурация `ValidationAutoConfiguration`
-- [[spring-framework-interview|Spring Framework]] — `@Validated` как AOP-триггер, `MethodValidationPostProcessor`
-- [[spring-aop-interview|Spring AOP]] — `@Validated` работает через AOP-прокси; self-invocation проблема
-- [[spring-security-interview|Spring Security]] — `@PreAuthorize` рядом с `@Validated` — порядок применения
-- [[java-annotations-interview|Java Annotations]] — `@Constraint`, `@Target`, `@Retention` для кастомных constraints
-- [[java-exceptions-interview|Java Exceptions]] — `ConstraintViolationException`, `MethodArgumentNotValidException`
-- [[http-rest-interview|HTTP & REST]] — возврат `400 Bad Request` с деталями ошибок, RFC 7807 Problem Details
-- [[spring-data-jpa-interview|Spring Data JPA]] — валидация Entity перед persist через `@PrePersist`/Hibernate Validator
-- [[unit-testing-interview|Unit Testing]] — тестирование валидационных ограничений через `ValidatorFactory`
-- [[spring-validation|Шпаргалка: Spring Validation: Полное руководство по]] — теория
+- [Spring MVC](spring-mvc-interview.md) — `@Valid` в контроллерах, `BindingResult`, обработка ошибок
+- [Spring Boot](spring-boot-interview.md) — `spring-boot-starter-validation`, автоконфигурация `ValidationAutoConfiguration`
+- [Spring Framework](spring-framework-interview.md) — `@Validated` как AOP-триггер, `MethodValidationPostProcessor`
+- [Spring AOP](spring-aop-interview.md) — `@Validated` работает через AOP-прокси; self-invocation проблема
+- [Spring Security](spring-security-interview.md) — `@PreAuthorize` рядом с `@Validated` — порядок применения
+- [Java Annotations](../../programming-languages/java/java-annotations-interview.md) — `@Constraint`, `@Target`, `@Retention` для кастомных constraints
+- [Java Exceptions](../../programming-languages/java/java-exceptions-interview.md) — `ConstraintViolationException`, `MethodArgumentNotValidException`
+- [HTTP & REST](../../api/http-rest-interview.md) — возврат `400 Bad Request` с деталями ошибок, RFC 7807 Problem Details
+- [Spring Data JPA](spring-data-jpa-interview.md) — валидация Entity перед persist через `@PrePersist`/Hibernate Validator
+- [Unit Testing](../../testing/unit-testing-interview.md) — тестирование валидационных ограничений через `ValidatorFactory`
+- [Шпаргалка: Spring Validation: Полное руководство по](../../../frameworks/java-frameworks/spring/spring-validation.md) — теория

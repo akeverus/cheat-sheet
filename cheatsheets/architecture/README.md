@@ -13,25 +13,25 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[architecture-patterns|Architecture Patterns]]
-[[design-principles|Design Principles]]
-[[system-design-basics|System Design]]
+[Architecture Patterns](architecture-patterns.md)
+[Design Principles](design-principles/design-principles.md)
+[System Design](system-design/system-design-basics.md)
 
 ## Содержание
 
 ### Паттерны и подходы (в корне раздела)
 
-- [[architecture-patterns|Архитектурные паттерны]] — обзор архитектурных паттернов
-- [[event-driven|Event-Driven Architecture]] — событийно-ориентированная архитектура
-- [[event-sourcing|Event Sourcing]] — хранение состояния как потока событий
-- [[cqrs]] — разделение команд и запросов
-- [[ddd|Domain-Driven Design (DDD)]] — предметно-ориентированное проектирование
+- [Архитектурные паттерны](architecture-patterns.md) — обзор архитектурных паттернов
+- [Event-Driven Architecture](event-driven.md) — событийно-ориентированная архитектура
+- [Event Sourcing](event-sourcing.md) — хранение состояния как потока событий
+- [cqrs](cqrs.md) — разделение команд и запросов
+- [Domain-Driven Design (DDD)](ddd.md) — предметно-ориентированное проектирование
 
 ### Стили архитектуры
 
-- [[soa]] — сервисно-ориентированная архитектура
-- [[serverless]] — бессерверные вычисления
-- **Микросервисы** — [software-architecture/](software-architecture/) (в т.ч. [[microservices|microservices.md]])
+- [soa](soa.md) — сервисно-ориентированная архитектура
+- [serverless](serverless.md) — бессерверные вычисления
+- **Микросервисы** — [software-architecture/](software-architecture/) (в т.ч. [microservices.md](software-architecture/microservices.md))
 
 ### Подпапки
 

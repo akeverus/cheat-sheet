@@ -15,14 +15,14 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[scala-basics|Scala Basics]]
-[[scala-monads|Scala Monads]]
-[[scala-futures|Scala Futures]]
+[Scala Basics](scala-basics.md)
+[Scala Monads](scala-monads.md)
+[Scala Futures](scala-futures.md)
 
 ## Содержание
 
-- [[scala-basics|Scala Basics]]
-- [[scala-collections|Scala Collections]]
-- [[scala-fp-basics|Scala FP Basics]]
-- [[scala-concurrency|Scala Concurrency]]
-- [[scala-another|Scala Another]]
+- [Scala Basics](scala-basics.md)
+- [Scala Collections](scala-collections.md)
+- [Scala FP Basics](scala-fp-basics.md)
+- [Scala Concurrency](scala-concurrency.md)
+- [Scala Another](scala-another.md)

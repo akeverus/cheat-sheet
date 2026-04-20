@@ -1082,8 +1082,8 @@ logger.Error("error message")
 
 ## См. также
 
-- [[go-advanced-patterns|Go: продвинутые паттерны]]
-- [[go-basics|Go: основы]]
-- [[go-benchmarking|Go: бенчмаркинг]]
-- [[go-build|Go: сборка и развертывание]]
-- [[go-collections|Go: коллекции]]
+- [Go: продвинутые паттерны](go-advanced-patterns.md)
+- [Go: основы](go-basics.md)
+- [Go: бенчмаркинг](go-benchmarking.md)
+- [Go: сборка и развертывание](go-build.md)
+- [Go: коллекции](go-collections.md)

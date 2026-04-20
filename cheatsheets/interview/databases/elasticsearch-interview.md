@@ -121,7 +121,7 @@ updated: "2026-04-13"
 | **Автодополнение** | Suggest API для подсказок при вводе |
 | **Аналитика** | Агрегации по большим объёмам данных в реальном времени |
 
-`Elasticsearch` широко применяется в электронной коммерции, системах мониторинга, CMS и поисковых платформах. Подробнее о распределённых системах в [[distributed-systems-interview|вопросах по распределённым системам]].
+`Elasticsearch` широко применяется в электронной коммерции, системах мониторинга, CMS и поисковых платформах. Подробнее о распределённых системах в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
 
 ## Q2. (!) Какие основные компоненты архитектуры `Elasticsearch`?
 
@@ -168,7 +168,7 @@ graph TB
 | Масштабирование | Горизонтальное (шарды) | Вертикальное + read-replicas |
 | Основное применение | Поиск, аналитика, логи | OLTP, транзакционные данные |
 
-**Важно на собеседовании:** `Elasticsearch` не заменяет реляционную БД. Типичный паттерн — основное хранилище в [[sql-interview|реляционной БД]], а `ES` используется как вторичный индекс для полнотекстового поиска.
+**Важно на собеседовании:** `Elasticsearch` не заменяет реляционную БД. Типичный паттерн — основное хранилище в [реляционной БД](sql-interview.md), а `ES` используется как вторичный индекс для полнотекстового поиска.
 
 ## Q4. В чём разница между `Elasticsearch` и `Apache Lucene`?
 
@@ -206,7 +206,7 @@ graph LR
 | **`Kibana`** | Визуализация: дашборды, графики, `Discover` для просмотра логов |
 | **`Beats`** | Лёгкие агенты-шипперы: `Filebeat` (логи), `Metricbeat` (метрики), `Packetbeat` (сеть) |
 
-В современных проектах `Filebeat` часто отправляет логи напрямую в `Elasticsearch`, минуя `Logstash`, если не нужна сложная обработка. Подробнее о паттернах логирования — в [[kafka-interview|вопросах по Kafka]], где `Kafka` используется как буфер между приложениями и `ES`.
+В современных проектах `Filebeat` часто отправляет логи напрямую в `Elasticsearch`, минуя `Logstash`, если не нужна сложная обработка. Подробнее о паттернах логирования — в [вопросах по Kafka](../messaging/kafka-interview.md), где `Kafka` используется как буфер между приложениями и `ES`.
 
 ## Q6. (!) Какие преимущества и ограничения у `Elasticsearch`?
 
@@ -565,7 +565,7 @@ shard_number = hash(_routing) % number_of_primary_shards
 - Не более 20 шардов на 1 ГБ heap JVM
 - Слишком много мелких шардов (oversharding) — overhead на координацию; слишком мало — невозможность масштабирования
 
-Подробнее о шардировании — в [[distributed-systems-interview|вопросах по распределённым системам]].
+Подробнее о шардировании — в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
 
 ## Q17. (!) Что такое `Replication` и зачем она нужна?
 
@@ -941,7 +941,7 @@ POST /products/_bulk
 - Рекомендуемый размер batch — 5-15 МБ (не число документов, а размер тела запроса)
 - Для массовой загрузки отключите `refresh_interval` и `number_of_replicas: 0`, после загрузки верните
 
-**`Elasticsearch` не поддерживает транзакции в смысле ACID.** `Bulk API` — не транзакция: нет rollback при ошибке отдельной операции. Для consistency между `ES` и основной БД используют паттерн [[database-architecture-interview|outbox pattern]] или eventual consistency через очереди сообщений ([[kafka-interview|Kafka]]).
+**`Elasticsearch` не поддерживает транзакции в смысле ACID.** `Bulk API` — не транзакция: нет rollback при ошибке отдельной операции. Для consistency между `ES` и основной БД используют паттерн [outbox pattern](database-architecture-interview.md) или eventual consistency через очереди сообщений ([Kafka](../messaging/kafka-interview.md)).
 
 ## Q30. Как работает механизм оптимистической блокировки?
 
@@ -1012,7 +1012,7 @@ spring:
     socket-timeout: 30s
 ```
 
-Подробнее об интеграции Spring с данными — в [[spring-data-jpa-interview|вопросах по Spring Data JPA]].
+Подробнее об интеграции Spring с данными — в [вопросах по Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md).
 
 ## Q32. Как писать запросы через `ElasticsearchOperations` и `NativeQuery`?
 
@@ -1228,7 +1228,7 @@ graph LR
 
 **Рекомендации:**
 - Использовать `ILM` для автоматической ротации и удаления старых логов
-- `Kafka` как буфер между приложениями и `ES` — защита от потери логов при перегрузке (подробнее — [[kafka-interview|вопросы по Kafka]])
+- `Kafka` как буфер между приложениями и `ES` — защита от потери логов при перегрузке (подробнее — [вопросы по Kafka](../messaging/kafka-interview.md))
 - Index per day: `logs-2026.04.12` с rollover
 - `Filebeat` вместо прямой отправки из приложения — разделение ответственности
 
@@ -1849,17 +1849,17 @@ GET /alerts/_search
 
 ## See also
 
-- [[mongodb-interview|MongoDB]] — другая NoSQL БД, документо-ориентированная
-- [[database-architecture-interview|Архитектура БД]] — общие принципы проектирования, выбор типа хранилища
-- [[redis-interview|Redis]] — кэширование и in-memory хранилище
-- [[distributed-systems-interview|Распределённые системы]] — консистентность, репликация, шардирование
-- [[kafka-interview|Apache Kafka]] — потоковая обработка данных, часто используется с ES
-- [[cassandra-interview|Cassandra]] — совместное использование для hot/cold данных
-- [[sql-interview|SQL]] — сравнение реляционных и поисковых движков
+- [MongoDB](mongodb-interview.md) — другая NoSQL БД, документо-ориентированная
+- [Архитектура БД](database-architecture-interview.md) — общие принципы проектирования, выбор типа хранилища
+- [Redis](redis-interview.md) — кэширование и in-memory хранилище
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — консистентность, репликация, шардирование
+- [Apache Kafka](../messaging/kafka-interview.md) — потоковая обработка данных, часто используется с ES
+- [Cassandra](cassandra-interview.md) — совместное использование для hot/cold данных
+- [SQL](sql-interview.md) — сравнение реляционных и поисковых движков
 
-- [[cassandra-interview|Apache Cassandra]]
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
-- [[database-architecture-interview|Database Architecture]]
-- [[database-transactions-interview|Транзакции и уровни изоляции]]
-- [[dynamodb-interview|DynamoDB]]
+- [Apache Cassandra](cassandra-interview.md)
+- [ClickHouse](clickhouse-interview.md)
+- [CockroachDB](cockroachdb-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [Транзакции и уровни изоляции](database-transactions-interview.md)
+- [DynamoDB](dynamodb-interview.md)

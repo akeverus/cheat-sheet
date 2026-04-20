@@ -776,14 +776,14 @@ void logMethod_shouldLogCallInfo() throws Throwable {
 
 ## See also
 
-- [[spring-framework-interview|Spring Framework]] — IoC, DI, BeanFactory, ApplicationContext — основа, на которой работает AOP
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация AopAutoConfiguration, @EnableAspectJAutoProxy
-- [[spring-data-jpa-interview|Spring Data JPA]] — @Transactional работает через AOP; N+1, транзакционный контекст
-- [[spring-security-interview|Spring Security]] — @Secured, @PreAuthorize — security через AOP
-- [[spring-mvc-interview|Spring MVC]] — обработка запросов, фильтры vs. AOP (разные уровни перехвата)
-- [[design-patterns-interview|Design Patterns]] — Proxy паттерн (JDK/CGLIB), Decorator паттерн
-- [[java-annotations-interview|Java Annotations]] — @Aspect, @Pointcut, @Before как retention=RUNTIME аннотации
-- [[java-core-interview|Java Core]] — java.lang.reflect.Proxy, dynamic proxy механизм
-- [[unit-testing-interview|Unit Testing]] — тестирование аспектов через mock ProceedingJoinPoint
-- [[spring-boot-actuator-interview|Spring Boot Actuator]] — @Timed из Micrometer как AOP-based метрика
-- [[spring-aop|Шпаргалка: Spring AOP: Полное руководство по аспект]] — теория
+- [Spring Framework](spring-framework-interview.md) — IoC, DI, BeanFactory, ApplicationContext — основа, на которой работает AOP
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация AopAutoConfiguration, @EnableAspectJAutoProxy
+- [Spring Data JPA](spring-data-jpa-interview.md) — @Transactional работает через AOP; N+1, транзакционный контекст
+- [Spring Security](spring-security-interview.md) — @Secured, @PreAuthorize — security через AOP
+- [Spring MVC](spring-mvc-interview.md) — обработка запросов, фильтры vs. AOP (разные уровни перехвата)
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — Proxy паттерн (JDK/CGLIB), Decorator паттерн
+- [Java Annotations](../../programming-languages/java/java-annotations-interview.md) — @Aspect, @Pointcut, @Before как retention=RUNTIME аннотации
+- [Java Core](../../programming-languages/java/java-core-interview.md) — java.lang.reflect.Proxy, dynamic proxy механизм
+- [Unit Testing](../../testing/unit-testing-interview.md) — тестирование аспектов через mock ProceedingJoinPoint
+- [Spring Boot Actuator](spring-boot-actuator-interview.md) — @Timed из Micrometer как AOP-based метрика
+- [Шпаргалка: Spring AOP: Полное руководство по аспект](../../../frameworks/java-frameworks/spring/spring-aop.md) — теория

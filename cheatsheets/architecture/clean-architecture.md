@@ -19,10 +19,10 @@ Clean Architecture (Роберт Мартин, «Дядя Боб») — архи
 - [Clean Architecture (Robert C. Martin)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) — оригинальная статья дяди Боба
 
 ### См. также
-- [[hexagonal-architecture|Hexagonal Architecture]] — архитектура «Порты и адаптеры»
-- [[solid-principles|SOLID]] — принципы, лежащие в основе
-- [[creational-patterns|Паттерны создания]] — паттерны GoF
-- [[microservices|Микросервисная архитектура]] — применение Clean Architecture в микросервисах
+- [Hexagonal Architecture](hexagonal-architecture.md) — архитектура «Порты и адаптеры»
+- [SOLID](design-principles/solid-principles.md) — принципы, лежащие в основе
+- [Паттерны создания](../patterns/creational/creational-patterns.md) — паттерны GoF
+- [Микросервисная архитектура](software-architecture/microservices.md) — применение Clean Architecture в микросервисах
 
 ## Содержание
 
@@ -262,8 +262,8 @@ Domain и Use Case тесты — быстрые, изолированные, б
 
 ## See also
 
-- [[hexagonal-architecture|Hexagonal Architecture]] — порты и адаптеры (схожая идея)
-- [[ddd|Domain-Driven Design]] — модели предметной области
-- [[solid-principles|SOLID]] — принципы, лежащие в основе
-- [[clean-architecture-interview|Clean Architecture Interview]] — вопросы на собеседовании
-- [[spring-modulith|Spring Modulith]] — модульный монолит
+- [Hexagonal Architecture](hexagonal-architecture.md) — порты и адаптеры (схожая идея)
+- [Domain-Driven Design](ddd.md) — модели предметной области
+- [SOLID](design-principles/solid-principles.md) — принципы, лежащие в основе
+- [Clean Architecture Interview](../interview/architecture/clean-architecture-interview.md) — вопросы на собеседовании
+- [Spring Modulith](../frameworks/java-frameworks/spring/spring-modulith.md) — модульный монолит

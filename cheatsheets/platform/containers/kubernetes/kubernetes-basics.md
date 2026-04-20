@@ -28,7 +28,7 @@ updated: "2026-04-20"
 - [Kubernetes Tutorial](https://kubernetes.io/docs/tutorials/)
 
 ### См. также
-- [[containerization-overview|Containerization — обзор]]
+- [Containerization — обзор](../containerization-overview.md)
 ## Содержание
 
 - [Mesos vs Kubernetes](#mesos-vs-kubernetes)
@@ -2334,7 +2334,7 @@ $ kubectl rollout undo deployment/<deployment-name>
 
 ## См. также
 
-- [[kubernetes-advanced|Kubernetes Advanced]]
-- [[kubernetes-networking|Kubernetes Networking]]
-- [[kubernetes-security|Kubernetes Security]]
-- [[kubernetes-storage|Kubernetes Storage]]
+- [Kubernetes Advanced](kubernetes-advanced.md)
+- [Kubernetes Networking](kubernetes-networking.md)
+- [Kubernetes Security](kubernetes-security.md)
+- [Kubernetes Storage](kubernetes-storage.md)

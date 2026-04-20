@@ -913,8 +913,8 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 ## См. также
 
-- [[go-advanced-patterns|Go: продвинутые паттерны]]
-- [[go-basics|Go: основы]]
-- [[go-benchmarking|Go: бенчмаркинг]]
-- [[go-best-practices|Go: лучшие практики]]
-- [[go-build|Go: сборка и развертывание]]
+- [Go: продвинутые паттерны](go-advanced-patterns.md)
+- [Go: основы](go-basics.md)
+- [Go: бенчмаркинг](go-benchmarking.md)
+- [Go: лучшие практики](go-best-practices.md)
+- [Go: сборка и развертывание](go-build.md)

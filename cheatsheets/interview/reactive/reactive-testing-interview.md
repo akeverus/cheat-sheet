@@ -761,10 +761,10 @@ class UserServiceTest {
 
 ## See also
 
-- [[project-reactor-interview|Project Reactor]]
-- [[reactive-streams-interview|Reactive Streams]]
-- [[rxjava-interview|RxJava]]
-- [[spring-webflux-interview|Spring WebFlux]]
-- [[spring-framework-interview|Spring Framework]]
-- [[reactive-patterns-interview|Reactive Patterns]]
+- [Project Reactor](project-reactor-interview.md)
+- [Reactive Streams](reactive-streams-interview.md)
+- [RxJava](rxjava-interview.md)
+- [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md)
+- [Spring Framework](../frameworks/spring/spring-framework-interview.md)
+- [Reactive Patterns](reactive-patterns-interview.md)
 - [[testing-interview|Тестирование]]

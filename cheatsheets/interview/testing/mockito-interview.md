@@ -1317,18 +1317,18 @@ class MyTest { ... }
 
 ## See also
 
-- [[unit-testing-interview|Unit Testing]] — основы модульного тестирования, пирамида тестов, лучшие практики
-- [[integration-testing-interview|Integration Testing]] — интеграционные тесты, Testcontainers, Spring Boot Test
-- [[test-strategies-interview|Стратегии тестирования]] — TDD, BDD, пирамида тестов, выбор стратегии
-- [[test-automation-interview|Test Automation]] — автоматизация тестирования, CI/CD интеграция, инструменты
-- [[testcontainers-interview|Testcontainers]] — реальные зависимости в тестах: PostgreSQL, Kafka, Redis
-- [[spring-boot-interview|Spring Boot]] — тестирование Spring Boot приложений, @SpringBootTest, TestRestTemplate
-- [[java-core-interview|Java Core]] — основы Java, необходимые для понимания работы Mockito
+- [Unit Testing](unit-testing-interview.md) — основы модульного тестирования, пирамида тестов, лучшие практики
+- [Integration Testing](integration-testing-interview.md) — интеграционные тесты, Testcontainers, Spring Boot Test
+- [Стратегии тестирования](test-strategies-interview.md) — TDD, BDD, пирамида тестов, выбор стратегии
+- [Test Automation](test-automation-interview.md) — автоматизация тестирования, CI/CD интеграция, инструменты
+- [Testcontainers](testcontainers-interview.md) — реальные зависимости в тестах: PostgreSQL, Kafka, Redis
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — тестирование Spring Boot приложений, @SpringBootTest, TestRestTemplate
+- [Java Core](../programming-languages/java/java-core-interview.md) — основы Java, необходимые для понимания работы Mockito
 
-- [[chaos-engineering-interview|Chaos Engineering]]
-- [[contract-testing-interview|Contract Testing]]
-- [[integration-testing-interview|Integration Testing]]
-- [[load-testing-interview|Load Testing]]
-- [[mutation-testing-interview|Mutation Testing]]
-- [[property-based-testing-interview|Property-based Testing]]
-- [[mockito|Шпаргалка: Mockito]] — теория
+- [Chaos Engineering](chaos-engineering-interview.md)
+- [Contract Testing](contract-testing-interview.md)
+- [Integration Testing](integration-testing-interview.md)
+- [Load Testing](load-testing-interview.md)
+- [Mutation Testing](mutation-testing-interview.md)
+- [Property-based Testing](property-based-testing-interview.md)
+- [Шпаргалка: Mockito](../../testing/unit-testing/junit/mockito.md) — теория

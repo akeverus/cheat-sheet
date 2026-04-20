@@ -43,7 +43,7 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 - [Full Text Search Tutorial](https://www.postgresql.org/docs/)
 - [PostgreSQL Extensions](https://www.postgresql.org/docs/)
 
-См. также: [[postgres-basics]] — [[postgres-design]] — [[postgres-joins]].
+См. также: [postgres-basics](postgres-basics.md) — [postgres-design](postgres-design.md) — [postgres-joins](postgres-joins.md).
 
 ## Содержание
 
@@ -2189,8 +2189,8 @@ PostgreSQL предоставляет богатый набор типов да�
 
 ## См. также
 
-- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
-- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
-- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
-- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
-- [[postgres-design|PostgreSQL: проектирование и нормализация]]
+- [PostgreSQL: администрирование и обслуживание](postgres-admin.md)
+- [PostgreSQL: Резервное копирование и восстановление](postgres-backup-restore.md)
+- [PostgreSQL: Полное руководство по основам и мониторингу](postgres-basics.md)
+- [PostgreSQL: операции с данными (CRUD)](postgres-data-ops.md)
+- [PostgreSQL: проектирование и нормализация](postgres-design.md)

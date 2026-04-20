@@ -826,8 +826,8 @@ val (logs, result) = loggedResult.run
 
 ## См. также
 
-- [[scala-akka-streams|Akka Streams в Scala]]
-- [[scala-another|Scala Additional Topics]]
-- [[scala-basics|Scala: основы]]
-- [[scala-cats-effect|Cats Effect в Scala]]
-- [[scala-collections-array|Scala Collections — Array]]
+- [Akka Streams в Scala](scala-akka-streams.md)
+- [Scala Additional Topics](scala-another.md)
+- [Scala: основы](scala-basics.md)
+- [Cats Effect в Scala](scala-cats-effect.md)
+- [Scala Collections — Array](scala-collections-array.md)

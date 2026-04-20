@@ -401,23 +401,23 @@ rpk topic create my-topic
 
 ## See also
 
-- [[kafka-interview|Apache Kafka]] — main conkurent (Redpanda compatible)
-- [[kafka-streams-interview|Kafka Streams]] — works against Redpanda
-- [[nats-interview|NATS]] — another lightweight alternative
-- [[pulsar-interview|Apache Pulsar]] — another alternative
-- [[message-brokers-comparison-interview|Message Brokers Comparison]] — overview
-- [[event-driven-patterns-interview|Event-driven Patterns]] — context
-- [[microservices-interview|Микросервисы]] — primary use case
-- [[stream-processing-interview|Stream Processing]] — context
-- [[scylladb-interview|ScyllaDB]] — same Seastar framework
-- [[distributed-systems-interview|Распределённые системы]] — Raft, consensus
-- [[scalability-patterns-interview|Scalability Patterns]] — shard-per-core
-- [[performance-testing-interview|Performance Testing]] — benchmarking
-- [[opentelemetry-interview|OpenTelemetry]] — Redpanda metrics
+- [Apache Kafka](kafka-interview.md) — main conkurent (Redpanda compatible)
+- [Kafka Streams](../data-engineering/kafka-streams-interview.md) — works against Redpanda
+- [NATS](nats-interview.md) — another lightweight alternative
+- [Apache Pulsar](pulsar-interview.md) — another alternative
+- [Message Brokers Comparison](message-brokers-comparison-interview.md) — overview
+- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — context
+- [Микросервисы](../architecture/microservices-interview.md) — primary use case
+- [Stream Processing](../data-engineering/stream-processing-interview.md) — context
+- [ScyllaDB](../databases/scylladb-interview.md) — same Seastar framework
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — Raft, consensus
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — shard-per-core
+- [Performance Testing](../performance/performance-testing-interview.md) — benchmarking
+- [OpenTelemetry](../monitoring/opentelemetry-interview.md) — Redpanda metrics
 
-- [[aws-sqs-sns-interview|AWS SQS и SNS]]
-- [[kafka-interview|Apache Kafka]]
-- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
-- [[nats-interview|NATS]]
-- [[pulsar-interview|Apache Pulsar]]
-- [[rabbitmq-interview|RabbitMQ]]
+- [AWS SQS и SNS](aws-sqs-sns-interview.md)
+- [Apache Kafka](kafka-interview.md)
+- [Сравнение Message Brokers](message-brokers-comparison-interview.md)
+- [NATS](nats-interview.md)
+- [Apache Pulsar](pulsar-interview.md)
+- [RabbitMQ](rabbitmq-interview.md)

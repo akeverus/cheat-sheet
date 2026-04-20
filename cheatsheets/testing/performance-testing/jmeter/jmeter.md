@@ -21,7 +21,7 @@ updated: "2026-04-20"
 |-----|--------|
 | Официально | [Apache JMeter](https://jmeter.apache.org/), [User's Manual](https://jmeter.apache.org/usermanual/index.html) |
 | Практики | [Building a Test Plan](https://jmeter.apache.org/usermanual/build-test-plan.html), [Best Practices](https://jmeter.apache.org/usermanual/best-practices.html) |
-| Обзор | [[gatling]], [[k6]], [[artillery]], [[testing-tools-overview|Testing Tools Overview]] |
+| Обзор | [gatling](../gatling/gatling.md), [k6](../k6/k6.md), [artillery](../artillery/artillery.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) |
 
 
 ## Содержание
@@ -309,4 +309,4 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 ## Заключение
 
-Apache JMeter — инструмент нагрузочного и функционального тестирования с поддержкой многих протоколов. Построение плана в GUI и запуск в CLI дают удобство отладки и минимальные накладные расходы при нагрузке. Используйте переменные и свойства для параметризации и CI; отключайте тяжёлые Listeners в прогонах и выделяйте достаточный heap. Дальше: [JMeter User's Manual](https://jmeter.apache.org/usermanual/index.html), [[gatling]], [[k6]], [[artillery]], [[testing-tools-overview|Testing Tools Overview]].
+Apache JMeter — инструмент нагрузочного и функционального тестирования с поддержкой многих протоколов. Построение плана в GUI и запуск в CLI дают удобство отладки и минимальные накладные расходы при нагрузке. Используйте переменные и свойства для параметризации и CI; отключайте тяжёлые Listeners в прогонах и выделяйте достаточный heap. Дальше: [JMeter User's Manual](https://jmeter.apache.org/usermanual/index.html), [gatling](../gatling/gatling.md), [k6](../k6/k6.md), [artillery](../artillery/artillery.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).

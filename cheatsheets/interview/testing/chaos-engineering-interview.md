@@ -123,7 +123,7 @@ updated: "2026-04-17"
 ### Зачем это бизнесу
 
 - Снижение MTTR и частоты инцидентов
-- Валидация resilience-паттернов ([[resilience-patterns-interview|circuit breaker, retry, bulkhead]])
+- Валидация resilience-паттернов ([circuit breaker, retry, bulkhead](../architecture/resilience-patterns-interview.md))
 - Тренировка команды реагирования на инциденты
 - Проверка runbooks и алертинга
 
@@ -204,7 +204,7 @@ graph TB
 - **Kill switch**: возможность немедленной остановки (`chaosctl stop`, удаление CR)
 - **Time box**: эксперимент длится минуты, не часы
 - **Feature flag**: завернуть chaos-инъекцию в флаг для включения/выключения
-- **Canary**: направлять хаос на отдельную группу пользователей ([[deployment-strategies-interview|canary deployment]])
+- **Canary**: направлять хаос на отдельную группу пользователей ([canary deployment](../cicd/deployment-strategies-interview.md))
 
 ### Пример в Chaos Mesh
 
@@ -228,7 +228,7 @@ duration: "60s"
 
 **Fault Injection** — подмножество техник, используемых в Chaos Engineering, но без формализма принципов (гипотеза, steady state, blast radius).
 
-`Chaos Engineering` — это **процесс и дисциплина**, fault injection — **инструмент**. Можно использовать fault injection в unit-тестах ([[unit-testing-interview|unit-тесты]]) без всякого хаоса.
+`Chaos Engineering` — это **процесс и дисциплина**, fault injection — **инструмент**. Можно использовать fault injection в unit-тестах ([unit-тесты](unit-testing-interview.md)) без всякого хаоса.
 
 ## Q6. Запускать эксперименты в проде или на staging?
 
@@ -336,7 +336,7 @@ graph BT
     B --> C[Chaos Kong<br/>1 Region]
 ```
 
-Каждый уровень требует своего уровня зрелости архитектуры: Chaos Monkey — резилентные сервисы; Gorilla — multi-AZ; Kong — multi-region active-active. Смотри также [[distributed-systems-interview|распределённые системы]].
+Каждый уровень требует своего уровня зрелости архитектуры: Chaos Monkey — резилентные сервисы; Gorilla — multi-AZ; Kong — multi-region active-active. Смотри также [распределённые системы](../architecture/distributed-systems-interview.md).
 
 ## Q10. (!) Какие типы хаос-экспериментов существуют?
 
@@ -385,7 +385,7 @@ graph TB
 
 - p95/p99 latency downstream-сервиса до и после инъекции
 - Срабатывание таймаутов (должны быть короче, чем latency инъекции)
-- Активация [[resilience-patterns-interview|circuit breaker]]
+- Активация [circuit breaker](../architecture/resilience-patterns-interview.md)
 - Успешный fallback в кэш или default value
 
 ### Типичные находки
@@ -555,7 +555,7 @@ void whenRedisDown_fallbackToDatabase() {
 - Bulkhead не даёт одной зависимости утянуть весь пул потоков
 - Клиент использует retry с jitter и exponential backoff
 
-Смотри [[resilience-patterns-interview|resilience-паттерны]] для подробностей по circuit breaker, bulkhead, timeout.
+Смотри [resilience-паттерны](../architecture/resilience-patterns-interview.md) для подробностей по circuit breaker, bulkhead, timeout.
 
 ## Q16. (!) Как подключить `Chaos Monkey` к Spring Boot приложению?
 
@@ -923,7 +923,7 @@ kubectl describe podchaos pod-failure-example
 kubectl delete podchaos pod-failure-example   # kill switch
 ```
 
-Смотри [[kubernetes-interview|Kubernetes-вопросы]] про pod lifecycle и readiness probes.
+Смотри [Kubernetes-вопросы](../devops/kubernetes-interview.md) про pod lifecycle и readiness probes.
 
 ## Q23. Как сделать `NetworkChaos` для симуляции задержек?
 
@@ -991,7 +991,7 @@ spec:
 ### Где это важно
 
 - Проверить таймауты и retry-стратегию
-- Тестировать [[consistency-patterns-interview|eventual consistency]] при partition
+- Тестировать [eventual consistency](../architecture/consistency-patterns-interview.md) при partition
 - Валидировать health checks и readiness probes под latency
 - Отладить race conditions в распределённых алгоритмах
 
@@ -1398,7 +1398,7 @@ Runbook обязателен: без него эксперимент превр�
 - **Customer Impact** — сколько пользователей / запросов затронуто
 - **SLO Burn Rate** — на сколько сгорел error budget
 
-Хороший post-mortem становится знанием команды, плохой — бюрократией. Смотри также [[behavioral-interview|blameless culture]] в поведенческих вопросах.
+Хороший post-mortem становится знанием команды, плохой — бюрократией. Смотри также [blameless culture](../behavioral/behavioral-interview.md) в поведенческих вопросах.
 
 ## Q33. (!) Что такое `abort condition` и когда останавливать эксперимент?
 
@@ -1467,7 +1467,7 @@ graph TB
 - **Dashboard** со steady state метриками (p50, p95, p99, error rate, throughput)
 - **Alerts** на SLO-burn
 - **Logs aggregation** (ELK / Loki) с correlation ID
-- **Distributed tracing** ([[observability-interview|OpenTelemetry]]): чтобы видеть, как latency одного сервиса влияет на всю цепочку
+- **Distributed tracing** ([OpenTelemetry](../monitoring/observability-interview.md)): чтобы видеть, как latency одного сервиса влияет на всю цепочку
 - **Event marker** на графиках: "в 14:00 запустили chaos experiment X"
 
 ### Типичный провал
@@ -1478,7 +1478,7 @@ graph TB
 
 Эксперимент, который нельзя проанализировать, — бессмысленный. Поэтому подготовка к первому GameDay часто включает доработку observability. Это полезный побочный эффект практики.
 
-Смотри подробнее [[metrics-tracing-interview|метрики и трейсинг]] и [[observability-interview|observability]].
+Смотри подробнее [метрики и трейсинг](../monitoring/metrics-tracing-interview.md) и [observability](../monitoring/observability-interview.md).
 
 ## Q35. Как `Chaos Engineering` связан с `error budget` и SLO?
 
@@ -1585,7 +1585,7 @@ spec:
 - Новые deploy проверяются против того же набора экспериментов
 - Zero-maintenance chaos (не зависит от доступности людей)
 
-Смотри [[pipeline-design-interview|дизайн pipeline]] про этапы CI/CD.
+Смотри [дизайн pipeline](../cicd/pipeline-design-interview.md) про этапы CI/CD.
 
 ## Q37. (!) Что такое `Chaos Maturity Model` (CMM)?
 
@@ -1665,7 +1665,7 @@ graph TB
     D --> D1[Каждая команда имеет<br/>своего chaos engineer]
 ```
 
-Маленькая компания: один SRE + вовлечённые service owners. Крупная: платформенная команда + "chaos champions" в каждом squad. Смотри также [[behavioral-interview|вопросы по лидерству]].
+Маленькая компания: один SRE + вовлечённые service owners. Крупная: платформенная команда + "chaos champions" в каждом squad. Смотри также [вопросы по лидерству](../behavioral/behavioral-interview.md).
 
 ## Q39. Как убедить бизнес и руководство внедрять Chaos Engineering?
 
@@ -1729,7 +1729,7 @@ Pod-kill на `mode: all` в проде = самоDDoS. Всегда начин�
 
 ### 8. Chaos вместо тестов
 
-Chaos не заменяет [[unit-testing-interview|unit]] и [[integration-testing-interview|integration-тесты]]. Это **дополнение** для distributed-специфики.
+Chaos не заменяет [unit](unit-testing-interview.md) и [integration-тесты](integration-testing-interview.md). Это **дополнение** для distributed-специфики.
 
 ### 9. Полагаться только на Chaos Monkey
 
@@ -1801,7 +1801,7 @@ Chaos — это **валидация** resilience-паттернов. Патт�
 
 | Паттерн | Эксперимент, который его валидирует |
 |---------|-------------------------------------|
-| [[resilience-patterns-interview|Circuit Breaker]] | Latency injection в dependency |
+| [Circuit Breaker](../architecture/resilience-patterns-interview.md) | Latency injection в dependency |
 | Retry с backoff | 5xx на 50% запросов к зависимости |
 | Timeout | Slow downstream (Toxiproxy latency 10s) |
 | Bulkhead | Thread pool saturation в одной зависимости |
@@ -1825,7 +1825,7 @@ graph LR
 
 "У нас есть circuit breaker" → "мы не проверяли, как он переходит в half-open в продакшене". Теоретический паттерн без chaos — это паттерн, в который нельзя верить.
 
-Смотри [[resilience-patterns-interview|паттерны надёжности]] и [[microservices-interview|микросервисные паттерны]] для полного обзора.
+Смотри [паттерны надёжности](../architecture/resilience-patterns-interview.md) и [микросервисные паттерны](../architecture/microservices-interview.md) для полного обзора.
 
 ## Q44. (!) Best practices и чек-лист перед экспериментом
 
@@ -1874,7 +1874,7 @@ graph LR
 
 ### Культурные практики
 
-- Blameless post-mortems (смотри [[behavioral-interview|культура]])
+- Blameless post-mortems (смотри [культура](../behavioral/behavioral-interview.md))
 - Chaos Champion в каждой команде
 - Ежемесячные GameDays
 - Learning-oriented, а не audit-oriented
@@ -1887,22 +1887,22 @@ graph LR
 
 ## See also
 
-- [[test-strategies-interview|Стратегии тестирования]] — куда chaos вписывается в общий ландшафт тестирования
-- [[test-automation-interview|Автоматизация тестов]] — интеграция chaos в CI/CD
-- [[integration-testing-interview|Integration Testing]] — Toxiproxy и fault injection в интеграционных тестах
-- [[unit-testing-interview|Unit Testing]] — разница между unit-уровнем моков и chaos
-- [[resilience-patterns-interview|Resilience Patterns]] — circuit breaker, retry, bulkhead, которые валидирует chaos
-- [[distributed-systems-interview|Distributed Systems]] — теоретическая база проблем, которые chaos воспроизводит
-- [[microservices-interview|Микросервисы]] — основной контекст применения chaos
-- [[observability-interview|Observability]] — обязательный prerequisite для chaos
-- [[metrics-tracing-interview|Метрики и трейсинг]] — без них невозможно анализировать эксперименты
-- [[kubernetes-interview|Kubernetes]] — платформа для Chaos Mesh и Litmus
-- [[deployment-strategies-interview|Стратегии деплоя]] — canary/blue-green как способ ограничить blast radius
-- [[pipeline-design-interview|Pipeline Design]] — встраивание chaos в CI/CD
+- [Стратегии тестирования](test-strategies-interview.md) — куда chaos вписывается в общий ландшафт тестирования
+- [Автоматизация тестов](test-automation-interview.md) — интеграция chaos в CI/CD
+- [Integration Testing](integration-testing-interview.md) — Toxiproxy и fault injection в интеграционных тестах
+- [Unit Testing](unit-testing-interview.md) — разница между unit-уровнем моков и chaos
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — circuit breaker, retry, bulkhead, которые валидирует chaos
+- [Distributed Systems](../architecture/distributed-systems-interview.md) — теоретическая база проблем, которые chaos воспроизводит
+- [Микросервисы](../architecture/microservices-interview.md) — основной контекст применения chaos
+- [Observability](../monitoring/observability-interview.md) — обязательный prerequisite для chaos
+- [Метрики и трейсинг](../monitoring/metrics-tracing-interview.md) — без них невозможно анализировать эксперименты
+- [Kubernetes](../devops/kubernetes-interview.md) — платформа для Chaos Mesh и Litmus
+- [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — canary/blue-green как способ ограничить blast radius
+- [Pipeline Design](../cicd/pipeline-design-interview.md) — встраивание chaos в CI/CD
 
-- [[contract-testing-interview|Contract Testing]]
-- [[integration-testing-interview|Integration Testing]]
-- [[load-testing-interview|Load Testing]]
-- [[mockito-interview|Mockito]]
-- [[mutation-testing-interview|Mutation Testing]]
-- [[property-based-testing-interview|Property-based Testing]]
+- [Contract Testing](contract-testing-interview.md)
+- [Integration Testing](integration-testing-interview.md)
+- [Load Testing](load-testing-interview.md)
+- [Mockito](mockito-interview.md)
+- [Mutation Testing](mutation-testing-interview.md)
+- [Property-based Testing](property-based-testing-interview.md)

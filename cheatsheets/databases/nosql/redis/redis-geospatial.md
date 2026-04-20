@@ -24,12 +24,12 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - [Redis Geospatial](https://redis.io/docs/data-types/geospatial/) — геоданные
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-data-structures|redis-data-structures.md]] — структуры данных
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-data-structures.md](redis-data-structures.md) — структуры данных
 
-- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
+- [Quarkus: Redis — Caching и Data Structures](../../../frameworks/java-frameworks/quarkus/quarkus-redis.md)
+- [Quarkus: Cache — Кеширование данных](../../../frameworks/java-frameworks/quarkus/quarkus-cache.md)
+- [Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache](../../../frameworks/java-frameworks/micronaut/micronaut-redis.md)
 ## Содержание
 
 - [Введение в геопространственные данные](#введение-в-геопространственные-данные)

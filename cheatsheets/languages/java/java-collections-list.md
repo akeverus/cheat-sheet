@@ -22,12 +22,12 @@ updated: "2026-04-20"
 - [Google Guava](https://github.com/google/guava/wiki) — расширенные коллекции
 
 ### См. также
-- [[java-apache-commons|Apache Commons Collections]] — расширенные коллекции, **Bag**, **BidiMap**, **CollectionUtils**
-- [[java-guava|Google Guava]] — **Multimap**, **ImmutableList**, **FluentIterable**
+- [Apache Commons Collections](../../libraries/utility-libraries/java-apache-commons.md) — расширенные коллекции, **Bag**, **BidiMap**, **CollectionUtils**
+- [Google Guava](../../libraries/utility-libraries/java-guava.md) — **Multimap**, **ImmutableList**, **FluentIterable**
 
-- [[java-collections-converting|Java Collections: конвертирование]]
-- [[java-reactive-project-reactor|Java Reactive: Project Reactor]]
-- [[java-reactive-rxjava|Java Reactive: RxJava]]
+- [Java Collections: конвертирование](java-collections-converting.md)
+- [Java Reactive: Project Reactor](java-reactive-project-reactor.md)
+- [Java Reactive: RxJava](java-reactive-rxjava.md)
 ## Содержание
 
 - [Руководство по LinkedList](#руководство-по-linkedlist)

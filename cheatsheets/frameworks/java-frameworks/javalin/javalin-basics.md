@@ -2172,8 +2172,8 @@ public void testUserAPI() {
 
 ## См. также
 
-- [[dropwizard-basics|Dropwizard: Основы]]
-- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
-- [[micronaut-basics|Micronaut: Основы]]
-- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
-- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [Dropwizard: Основы](../dropwizard/dropwizard-basics.md)
+- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](../micronaut/micronaut-actuator.md)
+- [Micronaut: Основы](../micronaut/micronaut-basics.md)
+- [Micronaut: Batch Processing — Job Processing и Scheduling](../micronaut/micronaut-batch.md)
+- [Micronaut: Caching — Cache Abstraction и Redis Cache](../micronaut/micronaut-cache.md)

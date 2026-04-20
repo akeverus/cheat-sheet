@@ -28,9 +28,9 @@ Cursor — это **AI-first IDE**, форк VS Code с глубокой инт�
 
 
 ### См. также
-- [[copilot-basics|GitHub Copilot: основы]]
-- [[claude-basics|Claude Code: основы]]
-- [[windsurf-basics|Windsurf: основы]]
+- [GitHub Copilot: основы](../copilot/copilot-basics.md)
+- [Claude Code: основы](../claude/claude-basics.md)
+- [Windsurf: основы](../windsurf/windsurf-basics.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -502,8 +502,8 @@ A: Конкретный список зависит от настроек и т�
 
 ## См. также
 
-- [[spring-ai|Spring AI]]
-- [[slack-basics|Инструменты для совместной работы: Slack]]
+- [Spring AI](../../../frameworks/java-frameworks/spring/spring-ai.md)
+- [Инструменты для совместной работы: Slack](../../collaboration/slack/slack-basics.md)
 
 
 ## Подробные примеры промптов

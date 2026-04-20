@@ -32,14 +32,14 @@ updated: "2026-04-20"
 - [Backpressure in Reactive Streams](https://www.reactive-streams.org/) — **Backpressure** объяснение
 
 ### См. также
-- [[spring-boot|Spring Boot]] — **Spring Boot** основы
-- [[spring-mvc|Spring MVC]] — **Spring MVC** (blocking)
+- [Spring Boot](../../spring/spring-boot.md) — **Spring Boot** основы
+- [Spring MVC](spring-mvc.md) — **Spring MVC** (blocking)
 - [Мониторинг](../../../monitoring/) — мониторинг реактивных приложений
 
-- [[spring-websocket|Spring WebSocket]]
-- [[spring-integration|Spring Integration]]
-- [[spring-batch|Spring Batch для Java]]
-- [[spring-webflux-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Spring WebSocket](spring-websocket.md)
+- [Spring Integration](spring-integration.md)
+- [Spring Batch для Java](spring-batch.md)
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-webflux-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Spring WebFlux](#введение-в-spring-webflux)

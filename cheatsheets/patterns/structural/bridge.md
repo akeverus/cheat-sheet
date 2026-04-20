@@ -19,10 +19,10 @@ updated: "2026-04-20"
 - [Bridge Pattern (Refactoring.Guru)](https://refactoring.guru/design-patterns/bridge) — описание паттерна с примерами
 
 ### См. также
-- [[structural-patterns|Структурные паттерны]] — обзор структурных паттернов
-- [[adapter|Adapter Pattern]] — схожий структурный паттерн
-- [[composite|Composite Pattern]] — паттерн-дерево
-- [[decorator|Decorator Pattern]] — добавление поведения через декоратор
+- [Структурные паттерны](structural-patterns.md) — обзор структурных паттернов
+- [Adapter Pattern](adapter.md) — схожий структурный паттерн
+- [Composite Pattern](composite.md) — паттерн-дерево
+- [Decorator Pattern](decorator.md) — добавление поведения через декоратор
 
 ## Содержание
 
@@ -215,7 +215,7 @@ public void doWork() { ... }
 
 ## See also
 
-- [[adapter|Adapter]] — адаптирует существующий интерфейс
-- [[structural-patterns|Структурные паттерны]] — обзор
-- [[design-patterns-interview|Design Patterns Interview]] — вопросы на собеседовании
-- [[decorator|Decorator]] — добавляет поведение через обёртку
+- [Adapter](adapter.md) — адаптирует существующий интерфейс
+- [Структурные паттерны](structural-patterns.md) — обзор
+- [Design Patterns Interview](../../interview/design-patterns/design-patterns-interview.md) — вопросы на собеседовании
+- [Decorator](decorator.md) — добавляет поведение через обёртку

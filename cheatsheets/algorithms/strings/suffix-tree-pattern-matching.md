@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Suffix Tree — GeeksforGeeks](https://www.geeksforgeeks.org/pattern-searching-using-suffix-tree/)
 
 ### См. также
-- [[large-text-string-search|Поиск строк в больших текстах]] — поиск в больших текстах
-- [[multiple-keywords-check|Проверка нескольких ключевых слов]] — несколько ключевых слов
+- [Поиск строк в больших текстах](large-text-string-search.md) — поиск в больших текстах
+- [Проверка нескольких ключевых слов](multiple-keywords-check.md) — несколько ключевых слов
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[regex-token-replacement|Замена токенов по регулярным выражениям (Regex Token Replacement)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Замена токенов по регулярным выражениям (Regex Token Replacement)](regex-token-replacement.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

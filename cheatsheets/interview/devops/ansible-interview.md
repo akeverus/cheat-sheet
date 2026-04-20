@@ -676,23 +676,23 @@ Terraform creates EC2 → Ansible installs nginx, copies config
 
 ## See also
 
-- [[vault-interview|HashiCorp Vault]] — secrets integration
-- [[consul-interview|Consul]] — dynamic inventory source
-- [[terraform-interview|Terraform]] — для infrastructure
-- [[docker-interview|Docker]] — Ansible deploys containers
-- [[kubernetes-interview|Kubernetes]] — Ansible can manage k8s
-- [[git-interview|Git]] — playbooks в git
-- [[microservices-interview|Микросервисы]] — deploy with Ansible
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
-- [[deployment-strategies-interview|Deployment Strategies]] — Ansible для deploys
-- [[pipeline-design-interview|Pipeline Design]] — CI/CD
-- [[secrets-management-interview|Secrets Management]] — Ansible Vault
-- [[application-security-interview|Application Security]] — secure playbooks
+- [HashiCorp Vault](vault-interview.md) — secrets integration
+- [Consul](consul-interview.md) — dynamic inventory source
+- [Terraform](terraform-interview.md) — для infrastructure
+- [Docker](docker-interview.md) — Ansible deploys containers
+- [Kubernetes](kubernetes-interview.md) — Ansible can manage k8s
+- [Git](git-interview.md) — playbooks в git
+- [Микросервисы](../architecture/microservices-interview.md) — deploy with Ansible
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
+- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — Ansible для deploys
+- [Pipeline Design](../cicd/pipeline-design-interview.md) — CI/CD
+- [Secrets Management](../security/secrets-management-interview.md) — Ansible Vault
+- [Application Security](../security/application-security-interview.md) — secure playbooks
 
-- [[argocd-interview|ArgoCD и GitOps]]
-- [[consul-interview|HashiCorp Consul]]
-- [[docker-interview|Docker]]
-- [[git-interview|Git]]
-- [[gradle-maven-interview|Gradle и Maven]]
-- [[helm-interview|Helm]]
-- [[ansible|Шпаргалка: Ansible]] — теория
+- [ArgoCD и GitOps](argocd-interview.md)
+- [HashiCorp Consul](consul-interview.md)
+- [Docker](docker-interview.md)
+- [Git](git-interview.md)
+- [Gradle и Maven](gradle-maven-interview.md)
+- [Helm](helm-interview.md)
+- [Шпаргалка: Ansible](../../platform/iac/ansible/ansible.md) — теория

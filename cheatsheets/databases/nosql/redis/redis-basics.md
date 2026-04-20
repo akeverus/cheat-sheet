@@ -1970,8 +1970,8 @@ spec:
 
 ## См. также
 
-- [[redis-clustering|Redis: Кластеризация]]
-- [[redis-data-structures|Redis: Структуры данных]]
-- [[redis-geospatial|Redis: Геопространственные данные]]
-- [[redis-high-availability|Redis: Высокая доступность]]
-- [[redis-lua-scripting|Redis: Lua Scripting]]
+- [Redis: Кластеризация](redis-clustering.md)
+- [Redis: Структуры данных](redis-data-structures.md)
+- [Redis: Геопространственные данные](redis-geospatial.md)
+- [Redis: Высокая доступность](redis-high-availability.md)
+- [Redis: Lua Scripting](redis-lua-scripting.md)

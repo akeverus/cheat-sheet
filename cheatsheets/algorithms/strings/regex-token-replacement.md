@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Matcher (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html)
 
 ### См. также
-- [[balanced-parentheses|Работа со скобками]] — сбалансированные скобки
-- [[palindrome-check|Проверка палиндромов]] — палиндромы
+- [Работа со скобками](balanced-parentheses.md) — сбалансированные скобки
+- [Проверка палиндромов](palindrome-check.md) — палиндромы
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
-- [[large-text-string-search|Поиск строки в большом тексте (Large Text String Search)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
+- [Поиск строки в большом тексте (Large Text String Search)](large-text-string-search.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

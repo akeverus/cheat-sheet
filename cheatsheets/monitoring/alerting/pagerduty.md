@@ -26,14 +26,14 @@ PagerDuty — платформа управления инцидентами и 
 - [Best Practices](https://support.pagerduty.com/docs/best-practices)
 
 ### См. также
-- [[alertmanager|Alertmanager]] — маршрутизация алертов в PagerDuty
-- [[slack-alerting|Slack Alerting]] — уведомления в Slack
+- [Alertmanager](alertmanager.md) — маршрутизация алертов в PagerDuty
+- [Slack Alerting](slack-alerting.md) — уведомления в Slack
 - [Alerting](../) — раздел алертинга
 - [Monitoring](../) — обзор мониторинга
 
-- [[alerting|Системы алертинга для Java]]
-- [[redis-monitoring|Redis: Мониторинг]]
-- [[monitoring-best-practices|Лучшие практики мониторинга]]
+- [Системы алертинга для Java](alerting.md)
+- [Redis: Мониторинг](../../databases/nosql/redis/redis-monitoring.md)
+- [Лучшие практики мониторинга](../monitoring-best-practices.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -133,7 +133,7 @@ receivers:
 
 В route направить критичные алерты (по метке severity: critical) в этот receiver. Alertmanager при срабатывании отправит trigger; при переходе алерта в resolved (если send_resolved: true) отправит resolve. Dedup_key формируется из меток алерта, поэтому один алерт не создаёт множество инцидентов.
 
-Подробнее: [[alertmanager]].
+Подробнее: [alertmanager](alertmanager.md).
 
 ## Лучшие практики
 

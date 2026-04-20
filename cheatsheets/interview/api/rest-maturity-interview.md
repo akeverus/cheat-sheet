@@ -447,19 +447,19 @@ GOOD: DELETE /users/123
 
 ## See also
 
-- [[http-rest-interview|HTTP & REST]] — основа
-- [[graphql-interview|GraphQL]] — alternative
-- [[grpc-interview|gRPC]] — alternative
-- [[api-versioning-interview|API Versioning]] — versioning concerns
-- [[api-design-best-practices-interview|API Design Best Practices]]
-- [[openapi-swagger-interview|OpenAPI / Swagger]] — documentation
-- [[microservices-interview|Микросервисы]] — APIs context
-- [[api-gateway-interview|API Gateway]] — context
-- [[caching-strategies-interview|Caching]] — HTTP caching
+- [HTTP & REST](http-rest-interview.md) — основа
+- [GraphQL](graphql-interview.md) — alternative
+- [gRPC](grpc-interview.md) — alternative
+- [API Versioning](api-versioning-interview.md) — versioning concerns
+- [API Design Best Practices](api-design-best-practices-interview.md)
+- [OpenAPI / Swagger](openapi-swagger-interview.md) — documentation
+- [Микросервисы](../architecture/microservices-interview.md) — APIs context
+- [API Gateway](../architecture/api-gateway-interview.md) — context
+- [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
 
-- [[api-design-best-practices-interview|API Design Best Practices]]
-- [[api-versioning-interview|API Versioning]]
-- [[graphql-interview|GraphQL]]
-- [[grpc-interview|gRPC]]
-- [[http-rest-interview|HTTP и REST]]
-- [[openapi-swagger-interview|OpenAPI / Swagger]]
+- [API Design Best Practices](api-design-best-practices-interview.md)
+- [API Versioning](api-versioning-interview.md)
+- [GraphQL](graphql-interview.md)
+- [gRPC](grpc-interview.md)
+- [HTTP и REST](http-rest-interview.md)
+- [OpenAPI / Swagger](openapi-swagger-interview.md)

@@ -11,22 +11,22 @@ updated: "2026-04-20"
 ---
 # Testing Libraries
 
-Раздел собирает базовые Java-библиотеки для unit-тестов: **JUnit 5** (Jupiter) — современный тестовый фреймворк JVM со своим расширяемым API, и **Mockito** — индустриальный стандарт для моков и стабов. Вместе они покрывают подавляющее большинство unit-тестов в Java-проектах; для Kotlin параллельно живёт [[kotlin-mockk|MockK]].
+Раздел собирает базовые Java-библиотеки для unit-тестов: **JUnit 5** (Jupiter) — современный тестовый фреймворк JVM со своим расширяемым API, и **Mockito** — индустриальный стандарт для моков и стабов. Вместе они покрывают подавляющее большинство unit-тестов в Java-проектах; для Kotlin параллельно живёт [MockK](../kotlin/kotlin-mockk.md).
 
 Для кого: Java-разработчики, пишущие unit/integration-тесты; инженеры, мигрирующие с JUnit 4 на Jupiter; те, кто хочет грамотно применять `@MockBean`, `@Spy`, parameterized/dynamic tests, Extensions.
 
 ## Полезные ссылки
 
 ### Основные документы
-- [[java-junit5|JUnit 5]] — Jupiter, Assertions, Lifecycle, Extensions, Parameterized/Dynamic tests
-- [[java-mockito|Mockito]] — моки, стабы, verify, `@Spy`, argument captors
+- [JUnit 5](java-junit5.md) — Jupiter, Assertions, Lifecycle, Extensions, Parameterized/Dynamic tests
+- [Mockito](java-mockito.md) — моки, стабы, verify, `@Spy`, argument captors
 
 ### Соседние разделы
-- [[README|Libraries]]
-- [[README|Java-библиотеки]] — Testcontainers, WireMock, REST-Assured
-- [[kotlin-mockk|MockK (Kotlin)]]
-- [[README|Testing (методология)]]
-- [[README|Unit testing]]
+- [Libraries](../../basics/README.md)
+- [Java-библиотеки](../../basics/README.md) — Testcontainers, WireMock, REST-Assured
+- [MockK (Kotlin)](../kotlin/kotlin-mockk.md)
+- [Testing (методология)](../../basics/README.md)
+- [Unit testing](../../basics/README.md)
 
 ### Внешние ресурсы
 - [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/)
@@ -47,26 +47,26 @@ updated: "2026-04-20"
 - Extensions API (`@ExtendWith`) и интеграция со Spring
 - Mockito: `when/thenReturn`, `verify`, `ArgumentCaptor`, `@Spy` vs `@Mock`
 - MockitoExtension для Jupiter
-- Spring Boot интеграция (`@MockBean`, `@SpyBean`) — см. [[spring-testing]]
+- Spring Boot интеграция (`@MockBean`, `@SpyBean`) — см. [spring-testing](../../frameworks/java-frameworks/spring/spring-testing.md)
 
 ## Границы библиотек
 
 - **JUnit 5** — запуск тестов, assertions, параметризация.
 - **Mockito** — изоляция зависимостей через моки.
 - **AssertJ / Hamcrest** — fluent-assertions поверх JUnit (из коробки нет в этой папке, но часто добавляется).
-- **Testcontainers** — тесты с реальными зависимостями (см. [[java-testcontainers]]).
-- **WireMock** — HTTP-моки (см. [[java-wiremock]]).
-- **REST-Assured** — E2E для REST (см. [[java-rest-assured]]).
+- **Testcontainers** — тесты с реальными зависимостями (см. [java-testcontainers](../java/java-testcontainers.md)).
+- **WireMock** — HTTP-моки (см. [java-wiremock](../java/java-wiremock.md)).
+- **REST-Assured** — E2E для REST (см. [java-rest-assured](../java/java-rest-assured.md)).
 
 ## Маршруты чтения
 
 - **Быстрый старт:** `java-junit5.md` (Основы + Assertions) `java-mockito.md` (Основы + verify).
 - **Миграция с JUnit 4:** секции "Jupiter vs Vintage" и таблица соответствий аннотаций.
 - **Parameterized и dynamic:** соответствующие секции `java-junit5.md` — сильно сокращают дубли тестов.
-- **Spring-контекст:** `java-mockito.md` [[spring-testing]].
+- **Spring-контекст:** `java-mockito.md` [spring-testing](../../frameworks/java-frameworks/spring/spring-testing.md).
 
 ## Куда идти дальше
 
-- Интеграционные тесты — [[java-testcontainers|libraries/java/java-testcontainers.md]]
-- Методология тестирования — [[README|testing/]]
-- Kotlin-моки — [[kotlin-mockk|MockK]]
+- Интеграционные тесты — [libraries/java/java-testcontainers.md](../java/java-testcontainers.md)
+- Методология тестирования — [testing/](../../basics/README.md)
+- Kotlin-моки — [MockK](../kotlin/kotlin-mockk.md)

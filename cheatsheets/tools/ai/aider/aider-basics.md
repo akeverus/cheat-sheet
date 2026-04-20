@@ -373,9 +373,9 @@ A: Безопасность зависит от:
 ## Полезные ссылки
 
 ### См. также
-- [[cursor-basics|Cursor: основы]]
-- [[claude-basics|Claude Code: основы]]
-- [[windsurf-basics|Windsurf: основы]]
-- [[copilot-basics|GitHub Copilot: основы]]
-- [[cody-basics|Cody: основы]]
+- [Cursor: основы](../cursor/cursor-basics.md)
+- [Claude Code: основы](../claude/claude-basics.md)
+- [Windsurf: основы](../windsurf/windsurf-basics.md)
+- [GitHub Copilot: основы](../copilot/copilot-basics.md)
+- [Cody: основы](../cody/cody-basics.md)
 

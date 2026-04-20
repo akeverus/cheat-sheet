@@ -20,12 +20,12 @@ Spring Retry автоматически повторяет выполнение 
 - [Spring Retry (GitHub)](https://github.com/spring-projects/spring-retry) — официальный репозиторий
 
 ### См. также
-- [[spring-boot|Spring Boot]] — базовый фреймворк
-- [[spring-cloud|Spring Cloud]] — интеграция с Resilience4j через Spring Cloud Circuit Breaker
-- [[spring-webflux|Spring WebFlux]] — реактивный retry через Reactor
-- [[spring-kafka|Spring Kafka]] — retry при обработке сообщений
-- [[spring-batch|Spring Batch]] — повторные попытки в batch-обработке
-- [[spring-retry-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Spring Boot](../../spring/spring-boot.md) — базовый фреймворк
+- [Spring Cloud](spring-cloud.md) — интеграция с Resilience4j через Spring Cloud Circuit Breaker
+- [Spring WebFlux](spring-webflux.md) — реактивный retry через Reactor
+- [Spring Kafka](spring-kafka.md) — retry при обработке сообщений
+- [Spring Batch](spring-batch.md) — повторные попытки в batch-обработке
+- [Вопросы на собеседовании](../../../interview/frameworks/spring/spring-retry-interview.md) — подготовка к интервью
 
 ## Содержание
 

@@ -356,11 +356,11 @@ graph LR
 3. `Payment Service` слушает `ItemsReserved`, списывает деньги, публикует `PaymentCharged` или `PaymentFailed`
 4. При `PaymentFailed`: `Inventory Service` слушает и отменяет резерв (`ItemsReleased`); `Order Service` слушает и отменяет заказ
 
-Подробнее про брокеры сообщений -- в [[event-driven-patterns-interview|event-driven паттернах]].
+Подробнее про брокеры сообщений -- в [event-driven паттернах](event-driven-patterns-interview.md).
 
 ## Q11. Как события связывают шаги хореографии?
 
-Каждое событие -- триггер для следующего сервиса. Связь через `publish-subscribe` в брокере ([[kafka-interview|Kafka]], [[rabbitmq-interview|RabbitMQ]]), с `correlation-id` = `sagaId` или `orderId` для связывания событий одной Saga.
+Каждое событие -- триггер для следующего сервиса. Связь через `publish-subscribe` в брокере ([Kafka](../messaging/kafka-interview.md), [RabbitMQ](../messaging/rabbitmq-interview.md)), с `correlation-id` = `sagaId` или `orderId` для связывания событий одной Saga.
 
 ```java
 @Component
@@ -579,7 +579,7 @@ public class Order {
 
 **Вывод:** в микросервисах `2PC` практически не используется. Saga -- стандарт, несмотря на сложность.
 
-Подробнее про проблемы 2PC -- в [[consistency-patterns-interview|consistency patterns]] и [[distributed-systems-interview|distributed systems]].
+Подробнее про проблемы 2PC -- в [consistency patterns](consistency-patterns-interview.md) и [distributed systems](distributed-systems-interview.md).
 
 ## Q23. Почему 2PC плохо работает в микросервисах?
 
@@ -761,7 +761,7 @@ public void publishOutbox() {
 }
 ```
 
-Альтернатива -- `Debezium` + Kafka Connect: CDC читает транзакционный лог и автоматически публикует изменения таблицы outbox в Kafka. Такой подход используют `Eventuate Tram CDC` и многие production-решения. Подробнее -- в [[event-driven-patterns-interview|event-driven паттернах]].
+Альтернатива -- `Debezium` + Kafka Connect: CDC читает транзакционный лог и автоматически публикует изменения таблицы outbox в Kafka. Такой подход используют `Eventuate Tram CDC` и многие production-решения. Подробнее -- в [event-driven паттернах](event-driven-patterns-interview.md).
 
 ## Q27. (!) Как реализовать Saga на Axon Framework?
 
@@ -823,7 +823,7 @@ public class CreateOrderSaga {
 - `@EndSaga` помечает завершение -- state удаляется
 - Таймауты через `EventScheduler.schedule` -- подписка на `SchedulerEvent`
 
-Подробнее про Axon и CQRS/ES -- в [[cqrs-event-sourcing-interview|вопросах по CQRS и Event Sourcing]].
+Подробнее про Axon и CQRS/ES -- в [вопросах по CQRS и Event Sourcing](cqrs-event-sourcing-interview.md).
 
 ## Q28. Как использовать Eventuate Tram для orchestration Saga?
 
@@ -980,7 +980,7 @@ public class SagaRecoveryJob {
 - **Циклические зависимости** -- событие из A триггерит B, из B -- C, из C -- снова A
 
 **Как избежать:**
-- Стабильные контракты событий/команд + `Schema Registry` с backward compatibility ([[kafka-interview|schema registry]])
+- Стабильные контракты событий/команд + `Schema Registry` с backward compatibility ([schema registry](../messaging/kafka-interview.md))
 - Оркестратор общается только через async-commands, не знает internals
 - Версионирование команд и событий
 - Правило: изменение одного сервиса не должно требовать deploy других
@@ -1045,7 +1045,7 @@ WHERE id=? AND version=?
 **4. Conditional compensation:**
 - Перед компенсацией проверяем, что шаг действительно был выполнен (иначе nop)
 
-Подробнее про идемпотентность consumer'ов -- в [[event-driven-patterns-interview|event-driven паттернах]] и [[kafka-interview|Kafka]].
+Подробнее про идемпотентность consumer'ов -- в [event-driven паттернах](event-driven-patterns-interview.md) и [Kafka](../messaging/kafka-interview.md).
 
 ## Q35. Как бороться с out-of-order сообщениями в хореографии?
 
@@ -1179,7 +1179,7 @@ public void on(ReserveItemsTimeoutEvent event) {
 
 **Bulkhead:** отдельные thread pool'ы для каждого participant, чтобы тормозящий участник не выжрал все threads оркестратора.
 
-Подробнее про circuit breaker -- в [[resilience-patterns-interview|resilience patterns]].
+Подробнее про circuit breaker -- в [resilience patterns](resilience-patterns-interview.md).
 
 ## Q40. Как Saga взаимодействует с CQRS и Event Sourcing?
 
@@ -1200,7 +1200,7 @@ graph LR
     ES --> P[Projection / Read Model]
 ```
 
-В `Axon Framework` всё это работает нативно: Saga -- first-class citizen наряду с Aggregate и Projection. Детали -- в [[cqrs-event-sourcing-interview|CQRS + Event Sourcing]].
+В `Axon Framework` всё это работает нативно: Saga -- first-class citizen наряду с Aggregate и Projection. Детали -- в [CQRS + Event Sourcing](cqrs-event-sourcing-interview.md).
 
 ## Q41. Как версионировать Saga при изменении бизнес-процесса?
 
@@ -1264,20 +1264,20 @@ Saga может длиться намного больше, чем HTTP-request.
 
 ## See also
 
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]] -- Saga как неотъемлемая часть CQRS/ES архитектур, orchestration с Axon Framework
-- [[event-driven-patterns-interview|Event-driven паттерны]] -- брокеры, идемпотентность, Outbox, choreography -- основа для Saga
-- [[microservices-interview|Микросервисная архитектура]] -- Saga в контексте микросервисов, сравнение с 2PC, Bounded Context
-- [[consistency-patterns-interview|Паттерны согласованности]] -- eventual consistency, ACID vs BASE, CAP
-- [[distributed-systems-interview|Распределённые системы]] -- 2PC, 3PC, FLP, консенсус, проблемы распределённых транзакций
-- [[resilience-patterns-interview|Паттерны отказоустойчивости]] -- Circuit Breaker, Retry, Timeout, Bulkhead для шагов Saga
-- [[cap-theorem-interview|CAP-теорема]] -- теоретическая основа выбора между consistency и availability
-- [[kafka-interview|Kafka]] -- партицирование для порядка событий, Schema Registry, Kafka как транспорт для Saga
-- [[ddd-interview|DDD]] -- агрегаты, bounded context, domain events -- фундамент для проектирования Saga
-- [[scalability-patterns-interview|Паттерны масштабирования]] -- independent scaling, eventual consistency как способ масштабирования
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) -- Saga как неотъемлемая часть CQRS/ES архитектур, orchestration с Axon Framework
+- [Event-driven паттерны](event-driven-patterns-interview.md) -- брокеры, идемпотентность, Outbox, choreography -- основа для Saga
+- [Микросервисная архитектура](microservices-interview.md) -- Saga в контексте микросервисов, сравнение с 2PC, Bounded Context
+- [Паттерны согласованности](consistency-patterns-interview.md) -- eventual consistency, ACID vs BASE, CAP
+- [Распределённые системы](distributed-systems-interview.md) -- 2PC, 3PC, FLP, консенсус, проблемы распределённых транзакций
+- [Паттерны отказоустойчивости](resilience-patterns-interview.md) -- Circuit Breaker, Retry, Timeout, Bulkhead для шагов Saga
+- [CAP-теорема](cap-theorem-interview.md) -- теоретическая основа выбора между consistency и availability
+- [Kafka](../messaging/kafka-interview.md) -- партицирование для порядка событий, Schema Registry, Kafka как транспорт для Saga
+- [DDD](ddd-interview.md) -- агрегаты, bounded context, domain events -- фундамент для проектирования Saga
+- [Паттерны масштабирования](scalability-patterns-interview.md) -- independent scaling, eventual consistency как способ масштабирования
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[cap-theorem-interview|CAP-теорема]]
-- [[clean-architecture-interview|Clean Architecture]]
-- [[consistency-patterns-interview|Паттерны согласованности]]
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [CAP-теорема](cap-theorem-interview.md)
+- [Clean Architecture](clean-architecture-interview.md)
+- [Паттерны согласованности](consistency-patterns-interview.md)

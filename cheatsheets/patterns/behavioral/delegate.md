@@ -29,12 +29,12 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[decorator|Decorator]]
-- [[proxy|Proxy]]
+- [Decorator](../structural/decorator.md)
+- [Proxy](../structural/proxy.md)
 
-- [[iterator|Итератор (Iterator)]]
-- [[visitor|Посетитель (Visitor)]]
-- [[interpreter|Интерпретатор (Interpreter)]]
+- [Итератор (Iterator)](iterator.md)
+- [Посетитель (Visitor)](visitor.md)
+- [Интерпретатор (Interpreter)](interpreter.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

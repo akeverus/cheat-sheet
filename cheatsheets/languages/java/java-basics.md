@@ -29,11 +29,11 @@ updated: "2026-04-20"
 - [Java Tutorial](https://docs.oracle.com/javase/tutorial/)
 
 ### См. также
-- [[java-concurrency-basics|Java Concurrency Basics]]
-- [[java-collections-list|Java Collections List]]
-- [[java-collections-map|Java Collections Map]]
-- [[java-concurrency-advanced|Java Concurrency Advanced]]
-- [[ansible|Раздел Platform — Ansible]] — инфраструктура и инструменты
+- [Java Concurrency Basics](java-concurrency-basics.md)
+- [Java Collections List](java-collections-list.md)
+- [Java Collections Map](java-collections-map.md)
+- [Java Concurrency Advanced](java-concurrency-advanced.md)
+- [Раздел Platform — Ansible](../../platform/iac/ansible/ansible.md) — инфраструктура и инструменты
 
 ## Содержание
 

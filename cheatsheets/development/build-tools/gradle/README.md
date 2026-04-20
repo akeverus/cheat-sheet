@@ -18,16 +18,16 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[gradle]] — основы: структура проекта, команды, wrapper
-- [[gradle-advanced]] — многомодульность, version catalogs, build cache, convention plugins, CI/CD
+- [gradle](gradle.md) — основы: структура проекта, команды, wrapper
+- [gradle-advanced](gradle-advanced.md) — многомодульность, version catalogs, build cache, convention plugins, CI/CD
 
 ### Соседние разделы
-- [[README|Родительский раздел: Build Tools]]
-- [[README|Maven]] — основной конкурент
+- [Родительский раздел: Build Tools](../../../basics/README.md)
+- [Maven](../../../basics/README.md) — основной конкурент
 - [Spring Boot](../../../frameworks/java-frameworks/spring/) — `spring-boot-gradle-plugin`
-- [[README|CI/CD]]
-- [[README|Testing]]
-- [[README|Docker]] — `jib`, `bootBuildImage`
+- [CI/CD](../../../basics/README.md)
+- [Testing](../../../basics/README.md)
+- [Docker](../../../basics/README.md) — `jib`, `bootBuildImage`
 
 ### Внешние ресурсы
 - [Gradle User Manual](https://docs.gradle.org/current/userguide/userguide.html)
@@ -63,13 +63,13 @@ updated: "2026-04-20"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Установка, wrapper, структура | [[gradle#установка]] |
-| build.gradle.kts / плагины / задачи | [[gradle]] |
-| Version catalogs (`libs.versions.toml`) | [[gradle-advanced#version-catalogs]] |
-| Многомодульные проекты и composite builds | [[gradle-advanced#много-модульные-проекты]] |
-| Build cache и configuration cache | [[gradle-advanced#build-cache]] |
-| Convention plugins, `buildSrc` | [[gradle-advanced]] |
-| Spring Boot, Kotlin, Testing плагины | [[gradle-advanced#spring-boot]] |
+| Установка, wrapper, структура | [gradle](gradle.md#установка) |
+| build.gradle.kts / плагины / задачи | [gradle](gradle.md) |
+| Version catalogs (`libs.versions.toml`) | [gradle-advanced](gradle-advanced.md#version-catalogs) |
+| Многомодульные проекты и composite builds | [gradle-advanced](gradle-advanced.md#много-модульные-проекты) |
+| Build cache и configuration cache | [gradle-advanced](gradle-advanced.md#build-cache) |
+| Convention plugins, `buildSrc` | [gradle-advanced](gradle-advanced.md) |
+| Spring Boot, Kotlin, Testing плагины | [gradle-advanced](gradle-advanced.md#spring-boot) |
 
 ## Чек-лист production-grade Gradle-проекта
 
@@ -91,7 +91,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Maven как альтернатива — [[README]]
-- Контейнеризация Java-приложений — [[README]]
-- CI/CD пайплайны — [[README]]
-- Тестирование — [[README]]
+- Maven как альтернатива — [README](../../../basics/README.md)
+- Контейнеризация Java-приложений — [README](../../../basics/README.md)
+- CI/CD пайплайны — [README](../../../basics/README.md)
+- Тестирование — [README](../../../basics/README.md)

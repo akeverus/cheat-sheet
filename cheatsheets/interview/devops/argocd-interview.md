@@ -1417,13 +1417,13 @@ metadata:
 ## See also
 
 
-- [[kubernetes-interview|Kubernetes]]
-- [[helm-interview|Helm]]
-- [[terraform-interview|Terraform]]
-- [[pipeline-design-interview|CI/CD пайплайны]]
-- [[deployment-strategies-interview|Стратегии деплоя]]
-- [[docker-interview|Docker]]
-- [[ansible-interview|Ansible]]
-- [[consul-interview|HashiCorp Consul]]
-- [[git-interview|Git]]
-- [[gradle-maven-interview|Gradle и Maven]]
+- [Kubernetes](kubernetes-interview.md)
+- [Helm](helm-interview.md)
+- [Terraform](terraform-interview.md)
+- [CI/CD пайплайны](../cicd/pipeline-design-interview.md)
+- [Стратегии деплоя](../cicd/deployment-strategies-interview.md)
+- [Docker](docker-interview.md)
+- [Ansible](ansible-interview.md)
+- [HashiCorp Consul](consul-interview.md)
+- [Git](git-interview.md)
+- [Gradle и Maven](gradle-maven-interview.md)

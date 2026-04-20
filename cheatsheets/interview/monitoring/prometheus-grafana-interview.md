@@ -1272,17 +1272,17 @@ scrape_configs:
 
 ## See also
 
-- [[observability-interview|Observability]] — три столпа observability: метрики, логи, трейсы; связь с Prometheus и Grafana
-- [[metrics-tracing-interview|Метрики и трейсинг]] — концепции метрик, RED/USE методы, distributed tracing
-- [[logging-strategies-interview|Стратегии логирования]] — структурированные логи, ELK стек, Grafana Loki
-- [[spring-boot-actuator-interview|Spring Boot Actuator]] — endpoints, health checks, metrics через Actuator
-- [[kubernetes-interview|Kubernetes]] — мониторинг кластера, kube-state-metrics, node-exporter в K8s
-- [[distributed-systems-interview|Распределённые системы]] — мониторинг распределённых систем, latency, availability
-- [[microservices-interview|Микросервисная архитектура]] — мониторинг микросервисов, golden signals, circuit breaker metrics
+- [Observability](observability-interview.md) — три столпа observability: метрики, логи, трейсы; связь с Prometheus и Grafana
+- [Метрики и трейсинг](metrics-tracing-interview.md) — концепции метрик, RED/USE методы, distributed tracing
+- [Стратегии логирования](logging-strategies-interview.md) — структурированные логи, ELK стек, Grafana Loki
+- [Spring Boot Actuator](../frameworks/spring/spring-boot-actuator-interview.md) — endpoints, health checks, metrics через Actuator
+- [Kubernetes](../devops/kubernetes-interview.md) — мониторинг кластера, kube-state-metrics, node-exporter в K8s
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — мониторинг распределённых систем, latency, availability
+- [Микросервисная архитектура](../architecture/microservices-interview.md) — мониторинг микросервисов, golden signals, circuit breaker metrics
 
-- [[elk-stack-interview|ELK Stack]]
-- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
-- [[logging-strategies-interview|Стратегии логирования]]
-- [[loki-grafana-interview|Loki и Grafana]]
-- [[metrics-tracing-interview|Метрики и трейсинг]]
-- [[observability-interview|Observability]]
+- [ELK Stack](elk-stack-interview.md)
+- [Jaeger и Zipkin](jaeger-zipkin-interview.md)
+- [Стратегии логирования](logging-strategies-interview.md)
+- [Loki и Grafana](loki-grafana-interview.md)
+- [Метрики и трейсинг](metrics-tracing-interview.md)
+- [Observability](observability-interview.md)

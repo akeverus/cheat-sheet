@@ -512,13 +512,13 @@ class StackMachine(RuleBasedStateMachine):
 
 ## See also
 
-- [[unit-testing-interview|Unit Testing]] — context
-- [[mutation-testing-interview|Mutation Testing]] — также quality-focused
-- [[test-strategies-interview|Test Strategies]]
-- [[load-testing-interview|Load Testing]]
-- [[chaos-engineering-interview|Chaos Engineering]] — similar mindset (find unknowns)
+- [Unit Testing](unit-testing-interview.md) — context
+- [Mutation Testing](mutation-testing-interview.md) — также quality-focused
+- [Test Strategies](test-strategies-interview.md)
+- [Load Testing](load-testing-interview.md)
+- [Chaos Engineering](chaos-engineering-interview.md) — similar mindset (find unknowns)
 - [[code-quality-interview|Code Quality]]
-- [[mockito-interview|Mockito]] — Java mocking
-- [[integration-testing-interview|Integration Testing]]
-- [[scala-interview|Scala]] — ScalaCheck
+- [Mockito](mockito-interview.md) — Java mocking
+- [Integration Testing](integration-testing-interview.md)
+- [Scala](../programming-languages/scala/scala-interview.md) — ScalaCheck
 - [[python-interview|Python]] — Hypothesis

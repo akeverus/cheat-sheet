@@ -430,11 +430,11 @@ allValid.validate("user@example.com");  // true
 
 ## See also
 
-- [[java-8-interview|Java 8]] — лямбды, Stream API, Optional как нововведения Java 8
-- [[java-stream-interview|Java Stream API]] — Function, Predicate, Consumer в Stream
-- [[java-optional-interview|Java Optional]] — Supplier в orElseGet, Consumer в ifPresent
-- [[java-concurrency-interview|Java Concurrency]] — Callable, Runnable в многопоточности
-- [[java-core-interview|Java Core]] — интерфейсы, default методы Java 8
-- [[java-generics-interview|Java Generics]] — типизация функциональных интерфейсов
-- [[java-17-21-interview|Java 17-21]] — новые возможности, records с функциональными интерфейсами
-- [[design-patterns-interview|Design Patterns]] — Strategy pattern через функциональные интерфейсы
+- [Java 8](java-8-interview.md) — лямбды, Stream API, Optional как нововведения Java 8
+- [Java Stream API](java-stream-interview.md) — Function, Predicate, Consumer в Stream
+- [Java Optional](java-optional-interview.md) — Supplier в orElseGet, Consumer в ifPresent
+- [Java Concurrency](java-concurrency-interview.md) — Callable, Runnable в многопоточности
+- [Java Core](java-core-interview.md) — интерфейсы, default методы Java 8
+- [Java Generics](java-generics-interview.md) — типизация функциональных интерфейсов
+- [Java 17-21](java-17-21-interview.md) — новые возможности, records с функциональными интерфейсами
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — Strategy pattern через функциональные интерфейсы

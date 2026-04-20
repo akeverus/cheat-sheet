@@ -26,12 +26,12 @@ related: ["scala/scala-fp-advanced.md", "scala/scala-cats.md", "scala/scala-play
 - [http4s GitHub](https://github.com/http4s/http4s)
 
 ### См. также
-- [[scala-fp-advanced|Продвинутое функциональное программирование]]
-- [[scala-cats|Cats]]
-- [[scala-play|Play Framework]]
+- [Продвинутое функциональное программирование](scala-fp-advanced.md)
+- [Cats](../../libraries/scala/scala-cats.md)
+- [Play Framework](../../libraries/scala/scala-play.md)
 
-- [[scala-collections-list|Scala Collections — List]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [Scala Collections — List](scala-collections-list.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
 ## Содержание
 
 - [Введение в http4s](#введение-в-http4s)

@@ -25,12 +25,12 @@ related: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 - [Redis Streams](https://redis.io/docs/data-types/streams/) — потоки
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-pubsub|redis-pubsub.md]] — Pub/Sub
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-pubsub.md](redis-pubsub.md) — Pub/Sub
 
-- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
-- [[redis-data-structures|Redis: Структуры данных]]
-- [[micronaut-kafka|Micronaut: Kafka Integration — Producers, Consumers и Streams]]
+- [Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache](../../../frameworks/java-frameworks/micronaut/micronaut-redis.md)
+- [Redis: Структуры данных](redis-data-structures.md)
+- [Micronaut: Kafka Integration — Producers, Consumers и Streams](../../../frameworks/java-frameworks/micronaut/micronaut-kafka.md)
 ## Содержание
 
 - [Введение в Redis Streams](#введение-в-redis-streams)

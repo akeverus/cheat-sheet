@@ -331,7 +331,7 @@ public class OrderService {
 }
 ```
 
-Аналогично `@Transactional` — см. [[spring-aop-interview|Spring AOP]].
+Аналогично `@Transactional` — см. [Spring AOP](spring-aop-interview.md).
 
 ## Q10. (!) Как @Async взаимодействует с @Transactional?
 
@@ -427,7 +427,7 @@ public class UserAggregateService {
 }
 ```
 
-Подробнее в [[java-completable-future-interview|Java CompletableFuture]].
+Подробнее в [Java CompletableFuture](../../programming-languages/java/java-completable-future-interview.md).
 
 ## Q13. Как передать контекст (SecurityContext, MDC) в @Async?
 
@@ -548,12 +548,12 @@ public CompletableFuture<Order> fetchOrderProgrammatic(Long id) {
 
 ## See also
 
-- [[java-completable-future-interview|Java CompletableFuture]] — API для асинхронной композиции, thenApply/thenCompose/allOf
-- [[spring-scheduling-interview|Spring Scheduling]] — @Scheduled, часто используется вместе с @Async
-- [[spring-aop-interview|Spring AOP]] — механизм proxy, self-invocation, ограничения
-- [[spring-transaction-interview|Spring @Transactional]] — взаимодействие с @Async: новый поток = новая транзакция
-- [[spring-events-interview|Spring Events]] — @TransactionalEventListener + @Async комбинация
-- [[java-concurrency-interview|Java Concurrency]] — ThreadPoolExecutor, основа для TaskExecutor
-- [[spring-testing-interview|Spring Testing]] — тестирование @Async с SyncTaskExecutor и Awaitility
-- [[java-virtual-threads-interview|Virtual Threads]] — Virtual Threads как альтернатива TaskExecutor для IO-bound задач
-- [[spring-webflux-interview|Spring WebFlux]] — реактивный стек как альтернатива @Async
+- [Java CompletableFuture](../../programming-languages/java/java-completable-future-interview.md) — API для асинхронной композиции, thenApply/thenCompose/allOf
+- [Spring Scheduling](spring-scheduling-interview.md) — @Scheduled, часто используется вместе с @Async
+- [Spring AOP](spring-aop-interview.md) — механизм proxy, self-invocation, ограничения
+- [Spring @Transactional](spring-transaction-interview.md) — взаимодействие с @Async: новый поток = новая транзакция
+- [Spring Events](spring-events-interview.md) — @TransactionalEventListener + @Async комбинация
+- [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — ThreadPoolExecutor, основа для TaskExecutor
+- [Spring Testing](spring-testing-interview.md) — тестирование @Async с SyncTaskExecutor и Awaitility
+- [Virtual Threads](../../programming-languages/java/java-virtual-threads-interview.md) — Virtual Threads как альтернатива TaskExecutor для IO-bound задач
+- [Spring WebFlux](spring-webflux-interview.md) — реактивный стек как альтернатива @Async

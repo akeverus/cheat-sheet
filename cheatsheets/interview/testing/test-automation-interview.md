@@ -23,9 +23,9 @@ updated: "2026-04-13"
 ## Роль документа в связке testing
 
 - Этот файл отвечает за **automation-уровень**: инструменты, framework, flaky management, CI/CD orchestration.
-- За принципы unit-тестов и качество локальных проверок отвечает [[unit-testing-interview|Unit Testing]].
-- За проверку реальных интеграций и окружений отвечает [[integration-testing-interview|Integration Testing]].
-- За стратегию "что и почему автоматизируем" отвечает [[test-strategies-interview|Стратегии тестирования]].
+- За принципы unit-тестов и качество локальных проверок отвечает [Unit Testing](unit-testing-interview.md).
+- За проверку реальных интеграций и окружений отвечает [Integration Testing](integration-testing-interview.md).
+- За стратегию "что и почему автоматизируем" отвечает [Стратегии тестирования](test-strategies-interview.md).
 
 ## Полезные ссылки
 
@@ -176,7 +176,7 @@ graph TB
 
 **Антипаттерн -- "Перевёрнутая пирамида"** (Ice Cream Cone): много E2E-тестов, мало unit. Результат -- медленный CI, flaky-тесты, высокая стоимость поддержки.
 
-Подробнее о каждом уровне -- в [[unit-testing-interview|вопросах по Unit Testing]] и [[integration-testing-interview|вопросах по Integration Testing]].
+Подробнее о каждом уровне -- в [вопросах по Unit Testing](unit-testing-interview.md) и [вопросах по Integration Testing](integration-testing-interview.md).
 
 ## Q3. Какие инструменты используются для автоматизации тестирования в Java?
 
@@ -230,7 +230,7 @@ dependencies {
 | Техническая сложность | 15% | Автоматизируемо | Нужен человек (UX) |
 | Время ручного теста | 10% | > 10 мин | < 1 мин |
 
-**Правило**: начинать автоматизацию с `happy path` критичных сценариев, затем расширять на граничные случаи. Подробнее о стратегии выбора -- в [[test-strategies-interview|Стратегии тестирования]].
+**Правило**: начинать автоматизацию с `happy path` критичных сценариев, затем расширять на граничные случаи. Подробнее о стратегии выбора -- в [Стратегии тестирования](test-strategies-interview.md).
 
 ## Q5. Как измерить ROI автоматизации тестирования?
 
@@ -667,7 +667,7 @@ void shouldMatchUserSchema() {
 }
 ```
 
-Это особенно важно в [[microservices-interview|микросервисной архитектуре]], где API-контракты являются границами между сервисами.
+Это особенно важно в [микросервисной архитектуре](../architecture/microservices-interview.md), где API-контракты являются границами между сервисами.
 
 ## Q16. Что такое `Contract Testing` и зачем он нужен?
 
@@ -751,7 +751,7 @@ class SecurityApiTest extends BaseApiTest {
 }
 ```
 
-Подробнее об OAuth2/JWT -- в [[authentication-authorization-patterns-interview|Паттерны аутентификации и авторизации]].
+Подробнее об OAuth2/JWT -- в [Паттерны аутентификации и авторизации](../security/authentication-authorization-patterns-interview.md).
 
 ---
 
@@ -801,7 +801,7 @@ static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16"
 // @DynamicPropertySource больше не нужен!
 ```
 
-Подробнее об интеграционном тестировании -- в [[integration-testing-interview|Integration Testing]].
+Подробнее об интеграционном тестировании -- в [Integration Testing](integration-testing-interview.md).
 
 ## Q19. Как организовать тестовые данные?
 
@@ -1101,7 +1101,7 @@ pipeline {
 }
 ```
 
-Подробнее о проектировании пайплайнов -- в [[pipeline-design-interview|Проектирование пайплайнов]].
+Подробнее о проектировании пайплайнов -- в [Проектирование пайплайнов](../cicd/pipeline-design-interview.md).
 
 ## Q25. (!) Что такое `Continuous Testing`?
 
@@ -1329,7 +1329,7 @@ dependencyCheck {
 }
 ```
 
-Подробнее о безопасности -- в [[application-security-interview|Application Security]] и [[owasp-top10-interview|OWASP Top 10]].
+Подробнее о безопасности -- в [Application Security](../security/application-security-interview.md) и [OWASP Top 10](../security/owasp-top10-interview.md).
 
 ## Q34. Как автоматизировать тестирование мобильных приложений?
 
@@ -1431,7 +1431,7 @@ services:
       retries: 5
 ```
 
-Подробнее о контейнеризации -- в [[docker-interview|Docker]] и [[kubernetes-interview|Kubernetes]].
+Подробнее о контейнеризации -- в [Docker](../devops/docker-interview.md) и [Kubernetes](../devops/kubernetes-interview.md).
 
 ## Q37. Как автоматизировать `Smoke Testing`?
 
@@ -1612,7 +1612,7 @@ graph TB
 - **Мониторинг test health** -- дашборд с pass rate, execution time, flaky rate
 - **Ownership** -- каждый тест должен иметь владельца (команду)
 
-## Q43. Как организовать тестирование [[microservices-interview|микросервисов]]?
+## Q43. Как организовать тестирование [микросервисов](../architecture/microservices-interview.md)?
 
 ```mermaid
 graph TB
@@ -1672,7 +1672,7 @@ class InMemoryUserRepository implements UserRepository {
 }
 ```
 
-Подробнее о моках и стабах -- в [[unit-testing-interview|Unit Testing]].
+Подробнее о моках и стабах -- в [Unit Testing](unit-testing-interview.md).
 
 ## Q45. Best practices для автоматизации тестирования?
 
@@ -2184,19 +2184,19 @@ void shouldQueryGraphQLWithRestAssured() {
 
 ## See also
 
-- [[unit-testing-interview|Unit Testing]] — модульное тестирование, моки и стабы
-- [[integration-testing-interview|Integration Testing]] — интеграционное тестирование Spring Boot
-- [[test-strategies-interview|Стратегии тестирования]] — стратегии тестирования, пирамида, TDD/BDD
-- [[testcontainers-interview|Testcontainers]] — Docker-контейнеры для интеграционных тестов
-- [[kubernetes-interview|Kubernetes]] — запуск автотестов в Kubernetes pods и CI/CD
-- [[pipeline-design-interview|Проектирование пайплайнов]] — CI/CD пайплайны
-- [[deployment-strategies-interview|Стратегии деплоя]] — деплой и тестирование в CI/CD
-- [[docker-interview|Docker]] — контейнеризация для тестовых окружений
-- [[code-review-interview|Code Review]] — код-ревью и качество кода
+- [Unit Testing](unit-testing-interview.md) — модульное тестирование, моки и стабы
+- [Integration Testing](integration-testing-interview.md) — интеграционное тестирование Spring Boot
+- [Стратегии тестирования](test-strategies-interview.md) — стратегии тестирования, пирамида, TDD/BDD
+- [Testcontainers](testcontainers-interview.md) — Docker-контейнеры для интеграционных тестов
+- [Kubernetes](../devops/kubernetes-interview.md) — запуск автотестов в Kubernetes pods и CI/CD
+- [Проектирование пайплайнов](../cicd/pipeline-design-interview.md) — CI/CD пайплайны
+- [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — деплой и тестирование в CI/CD
+- [Docker](../devops/docker-interview.md) — контейнеризация для тестовых окружений
+- [Code Review](../code-quality/code-review-interview.md) — код-ревью и качество кода
 
-- [[chaos-engineering-interview|Chaos Engineering]]
-- [[contract-testing-interview|Contract Testing]]
-- [[integration-testing-interview|Integration Testing]]
-- [[load-testing-interview|Load Testing]]
-- [[mockito-interview|Mockito]]
-- [[mutation-testing-interview|Mutation Testing]]
+- [Chaos Engineering](chaos-engineering-interview.md)
+- [Contract Testing](contract-testing-interview.md)
+- [Integration Testing](integration-testing-interview.md)
+- [Load Testing](load-testing-interview.md)
+- [Mockito](mockito-interview.md)
+- [Mutation Testing](mutation-testing-interview.md)

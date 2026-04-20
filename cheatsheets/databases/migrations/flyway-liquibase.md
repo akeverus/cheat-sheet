@@ -21,9 +21,9 @@ updated: "2026-04-20"
 - [Liquibase Documentation](https://docs.liquibase.com/) — официальная документация Liquibase
 
 ### См. также
-- [[postgres-basics|PostgreSQL: основы]] — PostgreSQL как целевая БД миграций
-- [[spring-boot|Spring Boot]] — интеграция с автоконфигурацией
-- [[flyway-liquibase-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [PostgreSQL: основы](../relational/postgresql/postgres-basics.md) — PostgreSQL как целевая БД миграций
+- [Spring Boot](../../frameworks/spring/spring-boot.md) — интеграция с автоконфигурацией
+- [Вопросы на собеседовании](../../interview/databases/flyway-liquibase-interview.md) — подготовка к интервью
 
 ## Содержание
 
@@ -368,8 +368,8 @@ class MigrationTest {
 
 ## См. также
 
-- [[spring-data-jpa|Spring Data JPA]]
-- [[spring-boot|Spring Boot]]
-- [[postgres-basics|PostgreSQL Basics]]
-- [[hibernate-interview|Hibernate]]
-- [[database-transactions-interview|Database Transactions]]
+- [Spring Data JPA](../../frameworks/java-frameworks/spring/spring-data-jpa.md)
+- [Spring Boot](../../frameworks/spring/spring-boot.md)
+- [PostgreSQL Basics](../relational/postgresql/postgres-basics.md)
+- [Hibernate](../../interview/databases/hibernate-interview.md)
+- [Database Transactions](../../interview/databases/database-transactions-interview.md)

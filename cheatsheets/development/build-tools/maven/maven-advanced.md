@@ -23,7 +23,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[maven|Maven (основы)]]
+- [Maven (основы)](maven.md)
 ## Содержание
 
 - [Продвинутая конфигурация проекта](#продвинутая-конфигурация-проекта)
@@ -1463,7 +1463,7 @@ enterprise-project/
 </plugin>
 ```
 ## См. также
-- [[gradle-advanced|Gradle Advanced]] — альтернативная система сборки
-- [[spring-boot|Spring Boot]] — **Java** фреймворк
-- [[jenkins|Jenkins]] — CI/CD сервер
-- [[github-actions|GitHub Actions]] — CI/CD платформа
+- [Gradle Advanced](../gradle/gradle-advanced.md) — альтернативная система сборки
+- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Java** фреймворк
+- [Jenkins](../../../platform/ci-cd/jenkins.md) — CI/CD сервер
+- [GitHub Actions](../../../platform/ci-cd/github-actions.md) — CI/CD платформа

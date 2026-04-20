@@ -18,14 +18,14 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[java-apache-commons|Apache Commons]] — lang3, collections4, io, csv, codec
-- [[java-guava|Google Guava]] — коллекции, Preconditions, Cache, Multimap, EventBus
+- [Apache Commons](java-apache-commons.md) — lang3, collections4, io, csv, codec
+- [Google Guava](java-guava.md) — коллекции, Preconditions, Cache, Multimap, EventBus
 
 ### Соседние разделы
-- [[README|Libraries]]
-- [[README|Java-библиотеки]]
-- [[README|Code generation]] — Lombok заменяет часть boilerplate
-- [[README|Java (язык)]]
+- [Libraries](../../basics/README.md)
+- [Java-библиотеки](../../basics/README.md)
+- [Code generation](../../basics/README.md) — Lombok заменяет часть boilerplate
+- [Java (язык)](../../basics/README.md)
 
 ### Внешние ресурсы
 - [Apache Commons](https://commons.apache.org/)
@@ -72,6 +72,6 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Функциональные расширения — [[java-vavr|Vavr]]
-- Java-библиотеки — [[README|libraries/java]]
-- Язык Java — [[README|languages/java]]
+- Функциональные расширения — [Vavr](../java/java-vavr.md)
+- Java-библиотеки — [libraries/java](../../basics/README.md)
+- Язык Java — [languages/java](../../basics/README.md)

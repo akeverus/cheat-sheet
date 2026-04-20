@@ -12,7 +12,7 @@ updated: "2026-04-20"
 ---
 # GCP Services
 
-**Google Cloud Platform** предоставляет более `150` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **GCP**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [[gcp-basics|GCP Basics]] более глубоким погружением в конкретные сервисы.
+**Google Cloud Platform** предоставляет более `150` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **GCP**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [GCP Basics](gcp-basics.md) более глубоким погружением в конкретные сервисы.
 
 ## Полезные ссылки
 - [Google Cloud Documentation](https://cloud.google.com/docs)
@@ -1834,8 +1834,8 @@ scheduler-pubsub-job:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[aws-basics|AWS Basics]] — основы **AWS**
-- [[azure-basics|Azure Basics]] — основы **Azure**
-- [[gcp-basics|GCP Basics]] — основы **GCP**
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
-- [[kubernetes-advanced|Kubernetes Advanced]] — контейнерная оркестрация
+- [AWS Basics](aws-basics.md) — основы **AWS**
+- [Azure Basics](azure-basics.md) — основы **Azure**
+- [GCP Basics](gcp-basics.md) — основы **GCP**
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
+- [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) — контейнерная оркестрация

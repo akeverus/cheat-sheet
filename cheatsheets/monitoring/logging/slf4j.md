@@ -26,12 +26,12 @@ updated: "2026-04-20"
 - [SLF4J Cookbook](https://www.slf4j.org/cookbook.html)
 
 ### См. также
-- [[logging-basics|Основы логирования]]
-- [[logback|Logback]] — реализация SLF4J
-- [[log4j|Log4j]] — реализация Log4j
+- [Основы логирования](logging-basics.md)
+- [Logback](logback.md) — реализация SLF4J
+- [Log4j](log4j.md) — реализация Log4j
 
-- [[centralized-logging|Централизованное логирование для Java]]
-- [[log-aggregation|Агрегация логов для Java]]
+- [Централизованное логирование для Java](centralized-logging.md)
+- [Агрегация логов для Java](log-aggregation.md)
 ## Содержание
 
 - [Введение в SLF4J](#введение-в-slf4j)

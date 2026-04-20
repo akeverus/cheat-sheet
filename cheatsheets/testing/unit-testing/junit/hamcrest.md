@@ -22,7 +22,7 @@ updated: "2026-04-20"
 |-----|--------|
 | Документация | [Hamcrest Tutorial](http://hamcrest.org/JavaHamcrest/tutorial), [Javadoc](http://hamcrest.org/JavaHamcrest/javadoc/) |
 | GitHub | [hamcrest/JavaHamcrest](https://github.com/hamcrest/JavaHamcrest) |
-| См. также | [[junit]], [[assertj]], [[mockito]] |
+| См. также | [junit](junit.md), [assertj](assertj.md), [mockito](mockito.md) |
 
 ## Содержание
 
@@ -414,8 +414,8 @@ Hamcrest — зрелая библиотека матчеров для Java-те
 
 ## См. также
 
-- [[assertj|AssertJ для Java]]
-- [[junit-advanced|JUnit Advanced для Java]]
-- [[junit|JUnit 5]]
-- [[mockito-advanced|Mockito Advanced для Java]]
-- [[mockito|Mockito]]
+- [AssertJ для Java](assertj.md)
+- [JUnit Advanced для Java](junit-advanced.md)
+- [JUnit 5](junit.md)
+- [Mockito Advanced для Java](mockito-advanced.md)
+- [Mockito](mockito.md)

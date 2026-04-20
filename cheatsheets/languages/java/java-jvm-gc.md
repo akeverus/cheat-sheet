@@ -25,12 +25,12 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[java-memory-model|Java Memory Model]] — happens-before, volatile, synchronized
-- [[java-concurrency-basics|Java Concurrency]] — потоки, пулы, синхронизация
+- [Java Memory Model](java-memory-model.md) — happens-before, volatile, synchronized
+- [Java Concurrency](java-concurrency-basics.md) — потоки, пулы, синхронизация
 
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[spring-cache|Spring Cache: Полное руководство по кешированию]]
-- [[java-basics|Java: основы]]
+- [Quarkus: Cache — Кеширование данных](../../frameworks/java-frameworks/quarkus/quarkus-cache.md)
+- [Spring Cache: Полное руководство по кешированию](../../frameworks/java-frameworks/spring/spring-cache.md)
+- [Java: основы](java-basics.md)
 ## Содержание
 
 - [Архитектура JVM](#архитектура-jvm)

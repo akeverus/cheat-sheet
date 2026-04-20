@@ -32,8 +32,8 @@ Windsurf — это IDE от Codeium, изначально спроектиро�
 
 
 ### См. также
-- [[aider-basics|Aider: основы]]
-- [[openclaw-basics|OpenClaw: основы]]
+- [Aider: основы](../aider/aider-basics.md)
+- [OpenClaw: основы](../openclaw/openclaw-basics.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -251,7 +251,7 @@ Web Search в Cascade позволяет:
 
 ## См. также
 
-- [[cursor-basics|Cursor: основы]]
-- [[copilot-basics|GitHub Copilot: основы]]
-- [[claude-basics|Claude Code: основы]]
+- [Cursor: основы](../cursor/cursor-basics.md)
+- [GitHub Copilot: основы](../copilot/copilot-basics.md)
+- [Claude Code: основы](../claude/claude-basics.md)
 

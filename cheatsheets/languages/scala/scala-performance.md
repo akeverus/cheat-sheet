@@ -27,12 +27,12 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Scala Performance](https://docs.scala-lang.org/overviews/collections-2.13/performance-characteristics.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-collections|Коллекции]]
+- [Основы Scala](scala-basics.md)
+- [Коллекции](scala-collections.md)
 
-- [[go-performance|Go: производительность]]
-- [[redis-performance|Redis: Производительность]]
-- [[scala-collections-vector|Scala Collections — Vector]]
+- [Go: производительность](../go/go-performance.md)
+- [Redis: Производительность](../../databases/nosql/redis/redis-performance.md)
+- [Scala Collections — Vector](scala-collections-vector.md)
 ## Содержание
 
 - [Введение в производительность](#введение-в-производительность)

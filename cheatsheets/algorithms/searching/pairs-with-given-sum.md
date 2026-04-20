@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Find pairs with given sum](https://www.geeksforgeeks.org/find-pair-with-given-sum-in-array/)
 
 ### См. также
-- [[diagonal-array-traversal|Перебор массива по диагонали]] — diagonal traversal
-- [[maximum-subarray|Максимальный подмассив]] — алгоритм Kadane (`Kadane`)
+- [Перебор массива по диагонали](diagonal-array-traversal.md) — diagonal traversal
+- [Максимальный подмассив](maximum-subarray.md) — алгоритм Kadane (`Kadane`)
 
-- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
-- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
-- [[find-max-element|Поиск k-го по величине элемента (Find Kth Largest Element)]]
+- [k наибольших элементов (K Largest Elements)](k-largest-elements.md)
+- [Интерполяционный поиск (Interpolation Search)](interpolation-search.md)
+- [Поиск k-го по величине элемента (Find Kth Largest Element)](find-max-element.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

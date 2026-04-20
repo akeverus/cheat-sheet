@@ -18,12 +18,12 @@ Confluence — командная wiki от Atlassian. Основной носи
 ## Полезные ссылки
 
 ### Основной документ
-- [[confluence-basics|Основы Confluence]] — spaces, страницы, макросы, CQL, шаблоны, API
+- [Основы Confluence](confluence-basics.md) — spaces, страницы, макросы, CQL, шаблоны, API
 
 ### Соседние разделы
-- [[README|Jira]] — макросы jira-issues в Confluence
-- [[README|Architecture Decision Records]]
-- [[README|Slack/Mattermost]] — интеграции notifications
+- [Jira](../../../basics/README.md) — макросы jira-issues в Confluence
+- [Architecture Decision Records](../../../basics/README.md)
+- [Slack/Mattermost](../../../basics/README.md) — интеграции notifications
 
 ### Внешние ресурсы
 - [Confluence Cloud REST API](https://developer.atlassian.com/cloud/confluence/rest/v2/intro/)
@@ -122,12 +122,12 @@ title ~ "ADR-*" ORDER BY title ASC
 
 ## Маршруты чтения
 
-- **Новичок:** [[confluence-basics]] — навигация, поиск, редактирование, вставка макросов.
+- **Новичок:** [confluence-basics](confluence-basics.md) — навигация, поиск, редактирование, вставка макросов.
 - **Автор доков:** шаблоны, Page Properties, CQL-отчёты.
 - **Owner пространства:** permission schemes, templates, housekeeping.
 
 ## Куда идти дальше
 
-- [[README|ADR templates]]
-- [[README|Jira Confluence integration]]
+- [ADR templates](../../../basics/README.md)
+- [Jira Confluence integration](../../../basics/README.md)
 - [AI-ассистенты для поиска в wiki](../../ai/)

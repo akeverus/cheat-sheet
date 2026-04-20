@@ -692,13 +692,13 @@ message_status: (message_id, user_id, status, timestamp)
 
 ## See also
 
-- [[system-design-interview|System Design]] — general principles
-- [[design-feed-system-interview|Design Feed System]] — similar fan-out patterns
+- [System Design](system-design-interview.md) — general principles
+- [Design Feed System](design-feed-system-interview.md) — similar fan-out patterns
 - [[websockets-interview|WebSockets]] — transport layer
 - [[messaging-interview|Messaging]] — Kafka, brokers
-- [[cassandra-interview|Cassandra]] — message storage
-- [[redis-interview|Redis]] — presence, pub/sub
-- [[distributed-systems-interview|Distributed Systems]] — ordering, consistency
-- [[scalability-patterns-interview|Scalability Patterns]] — horizontal scaling
-- [[load-balancing-interview|Load Balancing]] — sticky sessions
-- [[caching-strategies-interview|Caching]] — presence, contact info
+- [Cassandra](../databases/cassandra-interview.md) — message storage
+- [Redis](../databases/redis-interview.md) — presence, pub/sub
+- [Distributed Systems](../architecture/distributed-systems-interview.md) — ordering, consistency
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — horizontal scaling
+- [Load Balancing](../architecture/load-balancing-interview.md) — sticky sessions
+- [Caching](../architecture/caching-strategies-interview.md) — presence, contact info

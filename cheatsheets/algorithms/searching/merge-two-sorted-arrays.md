@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Merge Two Sorted Arrays](https://www.geeksforgeeks.org/merge-two-sorted-arrays/)
 
 ### См. также
-- [[binary-search|Бинарный поиск]] — binary search
-- [[maximum-subarray|Максимальный подмассив]] — алгоритм Kadane (`Kadane`)
-- [[merge-sort|Сортировка слиянием]] — merge sort
+- [Бинарный поиск](binary-search.md) — binary search
+- [Максимальный подмассив](maximum-subarray.md) — алгоритм Kadane (`Kadane`)
+- [Сортировка слиянием](../sorting/merge-sort.md) — merge sort
 
-- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
-- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
+- [k наибольших элементов (K Largest Elements)](k-largest-elements.md)
+- [Интерполяционный поиск (Interpolation Search)](interpolation-search.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

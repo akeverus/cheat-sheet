@@ -24,7 +24,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[consul|Consul]]
+- [Consul](consul.md)
 ## Содержание
 
 - [Продвинутая архитектура](#продвинутая-архитектура)
@@ -1019,7 +1019,7 @@ http {
 - **Кэширование:** задавайте `proxy_cache_path` и ключи кэша; используйте `proxy_cache_valid` и условное кэширование; не кэшируйте персональные данные без учёта ключа.
 - **Мониторинг:** логируйте `request_time`, `upstream_*`; используйте **stub_status** или **OpenResty**/**nginx-plus** для метрик; интегрируйте с **Prometheus**/**Grafana**.
 ## См. также
-- [[docker-basics|Docker]] — контейнеризация
-- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
-- [[prometheus|Prometheus]] — мониторинг
+- [Docker](../containers/docker/docker-basics.md) — контейнеризация
+- [Kubernetes](../containers/kubernetes/kubernetes-basics.md) — оркестрация контейнеров
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
+- [Prometheus](../../monitoring/metrics/prometheus.md) — мониторинг

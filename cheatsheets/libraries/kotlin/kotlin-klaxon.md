@@ -22,8 +22,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[kotlin-konfig|Konfig]]
-- [[kotlin-exposed|Kotlin Exposed]]
+- [Konfig](kotlin-konfig.md)
+- [Kotlin Exposed](kotlin-exposed.md)
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
@@ -1465,7 +1465,7 @@ val parsed = Parser.default().parse(StringReader(json)) as JsonObject
 val name = parsed.string("name")
 ```
 ## См. также
-- [[kotlin-kotlinx-serialization|kotlinx.serialization]] — Официальная **Kotlin** сериализация
-- [[java-gson|Gson]] — **Google JSON** библиотека
-- [[jackson|Jackson]] — **Jackson JSON** процессор
+- [kotlinx.serialization](kotlin-kotlinx-serialization.md) — Официальная **Kotlin** сериализация
+- [Gson](../serialization/java-gson.md) — **Google JSON** библиотека
+- [Jackson](../serialization/jackson.md) — **Jackson JSON** процессор
 

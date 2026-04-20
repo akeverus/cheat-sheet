@@ -236,7 +236,7 @@ response = client.chat.completions.create(
 # [{"function": {"name": "search_documents", "arguments": '{"query": "vacation policy"}'}}]
 ```
 
-Подробнее — в [[prompt-engineering-interview|Prompt Engineering]].
+Подробнее — в [Prompt Engineering](prompt-engineering-interview.md).
 
 ## Q7. (!) Какие tools предоставляют agentам?
 
@@ -717,13 +717,13 @@ response = client.messages.create(
 
 ## See also
 
-- [[llm-basics-interview|LLM Basics]] — основа agents
-- [[prompt-engineering-interview|Prompt Engineering]] — function calling
-- [[rag-interview|RAG]] — knowledge для agents
-- [[llm-integration-patterns-interview|LLM Integration Patterns]] — production
-- [[mlops-interview|MLOps]] — agent operations
-- [[microservices-interview|Микросервисы]] — agents как services
-- [[event-driven-patterns-interview|Event-driven]] — agent communication
-- [[application-security-interview|Application Security]] — agent risks
-- [[saga-pattern-interview|Saga Pattern]] — multi-step transactions
+- [LLM Basics](llm-basics-interview.md) — основа agents
+- [Prompt Engineering](prompt-engineering-interview.md) — function calling
+- [RAG](rag-interview.md) — knowledge для agents
+- [LLM Integration Patterns](llm-integration-patterns-interview.md) — production
+- [MLOps](mlops-interview.md) — agent operations
+- [Микросервисы](../architecture/microservices-interview.md) — agents как services
+- [Event-driven](../architecture/event-driven-patterns-interview.md) — agent communication
+- [Application Security](../security/application-security-interview.md) — agent risks
+- [Saga Pattern](../architecture/saga-pattern-interview.md) — multi-step transactions
 - [[testing-strategies-interview|Test Strategies]] — нестандартное тестирование

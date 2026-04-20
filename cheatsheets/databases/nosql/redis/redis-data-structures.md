@@ -1628,8 +1628,8 @@ public class `CacheAsideCache` {
 
 ## См. также
 
-- [[redis-basics|Redis: Основы]]
-- [[redis-clustering|Redis: Кластеризация]]
-- [[redis-geospatial|Redis: Геопространственные данные]]
-- [[redis-high-availability|Redis: Высокая доступность]]
-- [[redis-lua-scripting|Redis: Lua Scripting]]
+- [Redis: Основы](redis-basics.md)
+- [Redis: Кластеризация](redis-clustering.md)
+- [Redis: Геопространственные данные](redis-geospatial.md)
+- [Redis: Высокая доступность](redis-high-availability.md)
+- [Redis: Lua Scripting](redis-lua-scripting.md)

@@ -1429,8 +1429,8 @@ stages:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[jenkins|Jenkins]] — альтернативная **CI/CD** платформа
-- [[gitlab-ci|GitLab CI]]
-- [[github-actions|GitHub Actions]] — **CI/CD** в **GitHub**
-- [[azure-basics|Azure Basics]] — **Microsoft Azure**
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
+- [Jenkins](jenkins.md) — альтернативная **CI/CD** платформа
+- [GitLab CI](gitlab-ci.md)
+- [GitHub Actions](github-actions.md) — **CI/CD** в **GitHub**
+- [Azure Basics](../cloud-providers/azure-basics.md) — **Microsoft Azure**
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**

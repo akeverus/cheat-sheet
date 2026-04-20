@@ -749,10 +749,10 @@ public class LegacyIntegrationService {
 
 ## See also
 
-- [[project-reactor-interview|Project Reactor]]
-- [[reactive-streams-interview|Reactive Streams]]
-- [[rxjava-interview|RxJava]]
-- [[reactive-patterns-interview|Reactive Patterns]]
-- [[reactive-testing-interview|Тестирование реактивного кода]]
-- [[spring-framework-interview|Spring Framework]]
-- [[spring-boot-interview|Spring Boot]]
+- [Project Reactor](project-reactor-interview.md)
+- [Reactive Streams](reactive-streams-interview.md)
+- [RxJava](rxjava-interview.md)
+- [Reactive Patterns](reactive-patterns-interview.md)
+- [Тестирование реактивного кода](reactive-testing-interview.md)
+- [Spring Framework](../frameworks/spring/spring-framework-interview.md)
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md)

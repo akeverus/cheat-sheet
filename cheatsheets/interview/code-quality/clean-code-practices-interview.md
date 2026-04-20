@@ -1,14 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Clean Code Practices"
-description: "Краткие ответы про чистый код: именование, функции, SOLID, DRY/KISS/YAGNI, комментарии, форматирование — принципы Роберта Мартина и практика."
+description: "Принципы чистого кода: именование, SOLID, DRY/KISS/YAGNI, функции, комментарии, форматирование по Роберту Мартину и практика инженеров"
 tags:
   - interview
   - code-quality
-  - clean-code
-  - solid
-  - dry
-  - kiss
-  - refactoring
+  - clean-code-practices-interview
+aliases:
+  - "Clean Code interview"
+  - "Clean Code собеседование"
+  - "SOLID principles interview"
+  - "Robert Martin Clean Code"
+  - "чистый код вопросы"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -660,10 +662,10 @@ findUser(id)
 
 ## See also
 
-- [[code-review-interview|Code Review]]
-- [[code-smells-interview|Code Smells]]
-- [[refactoring-patterns-interview|Refactoring Patterns]]
-- [[technical-debt-interview|Technical Debt]]
-- [[static-analysis-interview|Static Analysis]]
-- [[design-patterns-interview|Design Patterns]]
-- [[java-core-interview|Java Core]]
+- [Code Review](code-review-interview.md)
+- [Code Smells](code-smells-interview.md)
+- [Refactoring Patterns](refactoring-patterns-interview.md)
+- [Technical Debt](technical-debt-interview.md)
+- [Static Analysis](static-analysis-interview.md)
+- [Design Patterns](../design-patterns/design-patterns-interview.md)
+- [Java Core](../programming-languages/java/java-core-interview.md)

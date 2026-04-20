@@ -27,12 +27,12 @@ updated: "2026-04-20"
 - [MongoDB Performance Tuning](https://www.baeldung.com/spring-data-mongodb-performance)
 
 ### См. также
-- [[mongodb-indexes|Индексы]] — индексы и оптимизация запросов
-- [[mongodb-aggregation|Aggregation]] — **Aggregation Framework**
+- [Индексы](mongodb-indexes.md) — индексы и оптимизация запросов
+- [Aggregation](mongodb-aggregation.md) — **Aggregation Framework**
 
-- [[clickhouse|ClickHouse]]
-- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
-- [[mongodb-queries|MongoDB: Запросы и операторы — Полное руководство по поиску документов]]
+- [ClickHouse](../clickhouse/clickhouse.md)
+- [MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов](mongodb-crud.md)
+- [MongoDB: Запросы и операторы — Полное руководство по поиску документов](mongodb-queries.md)
 ## Содержание
 
 - [Введение в оптимизацию производительности MongoDB](#введение-в-оптимизацию-производительности-mongodb)

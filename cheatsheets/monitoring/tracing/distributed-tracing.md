@@ -24,8 +24,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[jaeger|Jaeger для Java]]
-- [[zipkin|Zipkin]]
+- [Jaeger для Java](jaeger.md)
+- [Zipkin](zipkin.md)
 ## Содержание
 
 - [Основные концепции](#основные-концепции)
@@ -178,6 +178,6 @@ Baggage — пары ключ-значение, передаваемые по в
 **Нужно ли трассировать все запросы?** Нет. В production обычно сэмплируют 1–10%; при необходимости всегда сэмплировать запросы с ошибками или к критичным операциям через кастомный sampler.
 ## См. также
 
-- [[prometheus|Prometheus]] — метрики и мониторинг
-- [[grafana|Grafana]] — визуализация
-- [[java-micrometer|Micrometer]] — метрики JVM
+- [Prometheus](../metrics/prometheus.md) — метрики и мониторинг
+- [Grafana](../metrics/grafana.md) — визуализация
+- [Micrometer](../../libraries/java/java-micrometer.md) — метрики JVM

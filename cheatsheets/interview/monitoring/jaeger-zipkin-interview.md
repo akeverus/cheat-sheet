@@ -106,7 +106,7 @@ Trace abc123
 
 Spans имеют **timestamps, duration, attributes, events, status**.
 
-Подробнее — в [[opentelemetry-interview|OpenTelemetry]].
+Подробнее — в [OpenTelemetry](opentelemetry-interview.md).
 
 ## Q3. Зачем нужен tracing backend?
 
@@ -484,22 +484,22 @@ Legacy Zipkin already?
 
 ## See also
 
-- [[opentelemetry-interview|OpenTelemetry]] — современный стандарт
-- [[loki-grafana-interview|Loki + Grafana]] — для logs
-- [[elk-stack-interview|ELK Stack]] — alternative для logs
-- [[prometheus-grafana-interview|Prometheus + Grafana]] — для metrics
-- [[observability-interview|Observability]] — общая концепция
-- [[metrics-tracing-interview|Метрики и трейсинг]] — concepts
-- [[microservices-interview|Микросервисы]] — где tracing critical
-- [[kubernetes-interview|Kubernetes]] — Jaeger в K8s
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — observability pillar
-- [[cassandra-interview|Cassandra]] — Jaeger storage
-- [[elasticsearch-interview|Elasticsearch]] — Jaeger storage
-- [[performance-testing-interview|Performance Testing]] — найти slow paths
+- [OpenTelemetry](opentelemetry-interview.md) — современный стандарт
+- [Loki + Grafana](loki-grafana-interview.md) — для logs
+- [ELK Stack](elk-stack-interview.md) — alternative для logs
+- [Prometheus + Grafana](prometheus-grafana-interview.md) — для metrics
+- [Observability](observability-interview.md) — общая концепция
+- [Метрики и трейсинг](metrics-tracing-interview.md) — concepts
+- [Микросервисы](../architecture/microservices-interview.md) — где tracing critical
+- [Kubernetes](../devops/kubernetes-interview.md) — Jaeger в K8s
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability pillar
+- [Cassandra](../databases/cassandra-interview.md) — Jaeger storage
+- [Elasticsearch](../databases/elasticsearch-interview.md) — Jaeger storage
+- [Performance Testing](../performance/performance-testing-interview.md) — найти slow paths
 
-- [[elk-stack-interview|ELK Stack]]
-- [[logging-strategies-interview|Стратегии логирования]]
-- [[loki-grafana-interview|Loki и Grafana]]
-- [[metrics-tracing-interview|Метрики и трейсинг]]
-- [[observability-interview|Observability]]
-- [[opentelemetry-interview|OpenTelemetry]]
+- [ELK Stack](elk-stack-interview.md)
+- [Стратегии логирования](logging-strategies-interview.md)
+- [Loki и Grafana](loki-grafana-interview.md)
+- [Метрики и трейсинг](metrics-tracing-interview.md)
+- [Observability](observability-interview.md)
+- [OpenTelemetry](opentelemetry-interview.md)

@@ -297,7 +297,7 @@ boolean hasCycle(ListNode head) {
 
 `O(n)` время, `O(1)` память. Альтернатива — `HashSet<ListNode>` — `O(n)` память.
 
-Подробнее — в [[linked-lists-interview|Связные списки]].
+Подробнее — в [Связные списки](../data-structures/linked-lists-interview.md).
 
 ## Q12. (!) Найти middle node за один проход?
 
@@ -778,20 +778,20 @@ int slidingWindow(int[] arr, ...) {
 
 ## See also
 
-- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
-- [[arrays-strings-interview|Массивы и строки]] — основа для большинства задач
-- [[linked-lists-interview|Связные списки]] — Floyd cycle detection
-- [[hash-tables-interview|Хеш-таблицы]] — для подсчёта в окне
-- [[stacks-queues-interview|Стеки и очереди]] — monotonic deque в Sliding Window Max
-- [[searching-algorithms-interview|Алгоритмы поиска]] — родственная техника
-- [[sorting-algorithms-interview|Алгоритмы сортировки]] — Two Pointers в merge
-- [[dynamic-programming-interview|DP]] — иногда альтернатива
-- [[recursion-interview|Рекурсия]] — итеративная альтернатива
-- [[complexity-analysis-interview|Анализ сложности]] — снижение O(n²) → O(n)
+- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
+- [Массивы и строки](../data-structures/arrays-strings-interview.md) — основа для большинства задач
+- [Связные списки](../data-structures/linked-lists-interview.md) — Floyd cycle detection
+- [Хеш-таблицы](../data-structures/hash-tables-interview.md) — для подсчёта в окне
+- [Стеки и очереди](../data-structures/stacks-queues-interview.md) — monotonic deque в Sliding Window Max
+- [Алгоритмы поиска](../sorting-searching/searching-algorithms-interview.md) — родственная техника
+- [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — Two Pointers в merge
+- [DP](dynamic-programming-interview.md) — иногда альтернатива
+- [Рекурсия](recursion-interview.md) — итеративная альтернатива
+- [Анализ сложности](../complexity/complexity-analysis-interview.md) — снижение O(n²) → O(n)
 
-- [[backtracking-interview|Backtracking]]
-- [[divide-and-conquer-interview|Divide and Conquer]]
-- [[dynamic-programming-interview|Динамическое программирование]]
-- [[greedy-algorithms-interview|Жадные алгоритмы (Greedy)]]
-- [[recursion-interview|Рекурсия]]
-- [[algorithms-interview|Алгоритмы (обзор)]]
+- [Backtracking](backtracking-interview.md)
+- [Divide and Conquer](divide-and-conquer-interview.md)
+- [Динамическое программирование](dynamic-programming-interview.md)
+- [Жадные алгоритмы (Greedy)](greedy-algorithms-interview.md)
+- [Рекурсия](recursion-interview.md)
+- [Алгоритмы (обзор)](../algorithms-interview.md)

@@ -17,8 +17,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[operating-systems-basics|Операционные системы]]
-- [[linux-handbook|Linux и Bash: практический справочник]]
+- [Операционные системы](../../basics/operating-systems/operating-systems-basics.md)
+- [Linux и Bash: практический справочник](../../basics/operating-systems/linux-handbook.md)
 ## Содержание
 
-- [[sql-basics|SQL Basics]]
+- [SQL Basics](sql-basics.md)

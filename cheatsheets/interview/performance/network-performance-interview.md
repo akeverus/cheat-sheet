@@ -1158,20 +1158,20 @@ curl -o /dev/null -s -w "dns:%{time_namelookup} conn:%{time_connect} tls:%{time_
 
 ## See also
 
-- [[database-performance-interview|Database Performance]] — client-server network matters
-- [[caching-performance-interview|Caching Performance]] — Redis RTT, CDN
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — GC causes tail latency
-- [[application-profiling-interview|Application Profiling]] — measure time in network calls
-- [[load-balancing-interview|Load Balancing]] — network path impacts
-- [[api-gateway-interview|API Gateway]] — edge network layer
-- [[http-rest-interview|HTTP/REST]] — protocol details
-- [[grpc-interview|gRPC]] — HTTP/2, streaming
-- [[resilience-patterns-interview|Resilience Patterns]] — timeouts, retries
-- [[observability-interview|Observability]] — network metrics и tracing
+- [Database Performance](database-performance-interview.md) — client-server network matters
+- [Caching Performance](caching-performance-interview.md) — Redis RTT, CDN
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md) — GC causes tail latency
+- [Application Profiling](application-profiling-interview.md) — measure time in network calls
+- [Load Balancing](../architecture/load-balancing-interview.md) — network path impacts
+- [API Gateway](../architecture/api-gateway-interview.md) — edge network layer
+- [HTTP/REST](../api/http-rest-interview.md) — protocol details
+- [gRPC](../api/grpc-interview.md) — HTTP/2, streaming
+- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — timeouts, retries
+- [Observability](../monitoring/observability-interview.md) — network metrics и tracing
 
-- [[application-profiling-interview|Application Profiling]]
-- [[caching-performance-interview|Caching Performance]]
-- [[database-performance-interview|Database Performance]]
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
-- [[memory-management-interview|Memory Management]]
-- [[performance-testing-interview|Performance Testing]]
+- [Application Profiling](application-profiling-interview.md)
+- [Caching Performance](caching-performance-interview.md)
+- [Database Performance](database-performance-interview.md)
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md)
+- [Memory Management](memory-management-interview.md)
+- [Performance Testing](performance-testing-interview.md)

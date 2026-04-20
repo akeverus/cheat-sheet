@@ -12,19 +12,19 @@ updated: "2026-04-20"
 ---
 # Maven (основы)
 
-**Apache Maven** — система управления проектами и сборки с открытым исходным кодом; использует декларативную модель (POM — Project Object Model) для зависимостей и плагинов. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [[maven-advanced]].
+**Apache Maven** — система управления проектами и сборки с открытым исходным кодом; использует декларативную модель (POM — Project Object Model) для зависимостей и плагинов. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [maven-advanced](maven-advanced.md).
 
 ## Полезные ссылки
 
 - [Официальная документация Maven](https://maven.apache.org/guides/)
 - [Maven Getting Started](https://maven.apache.org/guides/getting-started/)
-- **См. также:** [[maven-advanced]] — продвинутые концепции, многомодульные проекты, **CI/CD**, **Dependency locking**; [README.md](../) — обзор раздела Build Tools.
+- **См. также:** [maven-advanced](maven-advanced.md) — продвинутые концепции, многомодульные проекты, **CI/CD**, **Dependency locking**; [README.md](../) — обзор раздела Build Tools.
 
 
 ### См. также
-- [[gradle-advanced|Gradle Advanced]]
-- [[quarkus-dev-services|Quarkus: Dev Services — Автоматические сервисы для разработки]]
-- [[backend-basics|Основы backend-разработки]]
+- [Gradle Advanced](../gradle/gradle-advanced.md)
+- [Quarkus: Dev Services — Автоматические сервисы для разработки](../../../frameworks/java-frameworks/quarkus/quarkus-dev-services.md)
+- [Основы backend-разработки](../../web-backend/backend-basics.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -94,6 +94,6 @@ updated: "2026-04-20"
 
 ## См. также
 
-- [[maven-advanced|maven-advanced.md]] — многомодульные проекты, **Reactor**, **Dependency locking**, **CI/CD**, **Troubleshooting**.
-- [[gradle|gradle.md]] — основы **Gradle**.
+- [maven-advanced.md](maven-advanced.md) — многомодульные проекты, **Reactor**, **Dependency locking**, **CI/CD**, **Troubleshooting**.
+- [gradle.md](../gradle/gradle.md) — основы **Gradle**.
 - [README.md](../) — обзор раздела **Build Tools**.

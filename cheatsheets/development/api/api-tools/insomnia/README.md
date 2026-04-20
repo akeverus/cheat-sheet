@@ -18,16 +18,16 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[insomnia-basics]] — основы: запросы, окружения, коллекции
+- [insomnia-basics](insomnia-basics.md) — основы: запросы, окружения, коллекции
 
 ### Соседние разделы
-- [[README|Родительский раздел: API Tools]]
-- [[README|Postman]] — более богатый конкурент
-- [[README|API Testing]] — виды тестов и инструменты
-- [[README|Swagger / OpenAPI]] — импорт спецификаций
-- [[README|REST API]]
-- [[README|GraphQL]]
-- [[README|gRPC]]
+- [Родительский раздел: API Tools](../../../../basics/README.md)
+- [Postman](../../../../basics/README.md) — более богатый конкурент
+- [API Testing](../../../../basics/README.md) — виды тестов и инструменты
+- [Swagger / OpenAPI](../../../../basics/README.md) — импорт спецификаций
+- [REST API](../../../../basics/README.md)
+- [GraphQL](../../../../basics/README.md)
+- [gRPC](../../../../basics/README.md)
 
 ### Внешние ресурсы
 - [Insomnia Documentation](https://docs.insomnia.rest/)
@@ -71,7 +71,7 @@ Insomnia — «ежедневный нож» инженера, не замена
 
 ## Куда идти дальше
 
-- Postman-альтернатива с более богатой автоматизацией — [[README]]
-- Как тестировать API систематически — [[README]]
-- Документирование API — [[README]]
-- REST, GraphQL, gRPC — [[README]], [[README]], [[README]]
+- Postman-альтернатива с более богатой автоматизацией — [README](../../../../basics/README.md)
+- Как тестировать API систематически — [README](../../../../basics/README.md)
+- Документирование API — [README](../../../../basics/README.md)
+- REST, GraphQL, gRPC — [README](../../../../basics/README.md), [README](../../../../basics/README.md), [README](../../../../basics/README.md)

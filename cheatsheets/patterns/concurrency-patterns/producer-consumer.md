@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java Concurrency in Practice](https://jcip.net/) — книга по многопоточности
 
 ### См. также
-- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
-- [[rabbitmq|RabbitMQ]] — **Message Queues**
-- [[kafka|Kafka]] — **Event Streaming**
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
+- [RabbitMQ](../../development/messaging/rabbitmq/rabbitmq.md) — **Message Queues**
+- [Kafka](../../development/messaging/kafka/kafka.md) — **Event Streaming**
 
-- [[double-checked-locking|Двойная проверка блокировки (Double-Checked Locking)]]
-- [[read-write-lock|Блокировка чтения-записи (Read-Write Lock)]]
+- [Двойная проверка блокировки (Double-Checked Locking)](double-checked-locking.md)
+- [Блокировка чтения-записи (Read-Write Lock)](read-write-lock.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

@@ -26,14 +26,14 @@ Alertmanager — компонент экосистемы Prometheus: маршр�
 - [Grafana — Alerting](https://grafana.com/docs/grafana/latest/alerting/)
 
 ### См. также
-- [[prometheus|Prometheus]] — сбор метрик
+- [Prometheus](../metrics/prometheus.md) — сбор метрик
 - [Alerting](../) — раздел алертинга
-- [[slack-alerting|Slack Alerting]] — уведомления в Slack
-- [[pagerduty|PagerDuty]] — инцидент-менеджмент
+- [Slack Alerting](slack-alerting.md) — уведомления в Slack
+- [PagerDuty](pagerduty.md) — инцидент-менеджмент
 - [Monitoring](../) — обзор мониторинга
 
-- [[alerting|Системы алертинга для Java]]
-- [[redis-monitoring|Redis: Мониторинг]]
+- [Системы алертинга для Java](alerting.md)
+- [Redis: Мониторинг](../../databases/nosql/redis/redis-monitoring.md)
 ## Содержание
 
 - [Введение](#введение)

@@ -360,7 +360,7 @@ val name: String? = javaObject.getName()
 
 3. **Аннотируйте `Java`-код** аннотациями `@Nullable`/`@NotNull` — тогда `Kotlin`-компилятор увидит точный тип вместо platform type.
 
-Подробнее о nullability — в [[kotlin-interview|вопросах по основам Kotlin]].
+Подробнее о nullability — в [вопросах по основам Kotlin](kotlin-interview.md).
 
 ## Q7. (!) Как работают nullability-аннотации `@Nullable`/`@NotNull` на границе `Kotlin` и `Java`?
 
@@ -524,7 +524,7 @@ try {
 }
 ```
 
-Без `@Throws` `Java`-код может только ловить `Exception` или `Throwable`, что менее точно. Подробнее об обработке ошибок — в [[kotlin-exceptions-interview|вопросах по исключениям Kotlin]].
+Без `@Throws` `Java`-код может только ловить `Exception` или `Throwable`, что менее точно. Подробнее об обработке ошибок — в [вопросах по исключениям Kotlin](kotlin-exceptions-interview.md).
 
 ## Q12. (!) Что такое SAM-conversion при интеропе `Kotlin` и `Java`?
 
@@ -625,7 +625,7 @@ fun copy(from: Source<Any>, to: Sink<Any>) { /* ... */ }
 void copy(Source<? extends Object> from, Sink<? super Object> to)
 ```
 
-**PECS** из `Java` (Producer Extends, Consumer Super) и `out`/`in` из `Kotlin` — это один и тот же принцип. На собеседовании стоит показать понимание обоих подходов. Подробнее о дженериках — в [[java-generics-interview|вопросах по дженерикам Java]].
+**PECS** из `Java` (Producer Extends, Consumer Super) и `out`/`in` из `Kotlin` — это один и тот же принцип. На собеседовании стоит показать понимание обоих подходов. Подробнее о дженериках — в [вопросах по дженерикам Java](../java/java-generics-interview.md).
 
 ## Q15. Когда нужны `@JvmSuppressWildcards` и `@JvmWildcard`?
 
@@ -707,7 +707,7 @@ List<String> mutable = MyKt.getMutableNames();
 mutable.add("Charlie");      // OK
 ```
 
-> **Частая ошибка на собеседованиях:** считать, что `Kotlin` read-only коллекции immutable. Они не immutable — просто интерфейс не содержит мутирующих методов. Под капотом может быть `MutableList`, и `Java`-код может его мутировать. Подробнее — в [[kotlin-collections-interview|вопросах по коллекциям Kotlin]].
+> **Частая ошибка на собеседованиях:** считать, что `Kotlin` read-only коллекции immutable. Они не immutable — просто интерфейс не содержит мутирующих методов. Под капотом может быть `MutableList`, и `Java`-код может его мутировать. Подробнее — в [вопросах по коллекциям Kotlin](kotlin-collections-interview.md).
 
 ## Q17. `Java Streams` vs `Kotlin Sequences`: в чём разница и когда что использовать?
 
@@ -923,7 +923,7 @@ fun fetchUserMono(id: Long): Mono<User> = mono {
 }
 ```
 
-> **Best practice:** держать `suspend`-функции внутри `Kotlin`-слоя, а для `Java`-потребителей публиковать адаптеры: `CompletableFuture`, `Mono` или синхронные обёртки. Подробнее — в [[kotlin-coroutines-interview|вопросах по корутинам Kotlin]].
+> **Best practice:** держать `suspend`-функции внутри `Kotlin`-слоя, а для `Java`-потребителей публиковать адаптеры: `CompletableFuture`, `Mono` или синхронные обёртки. Подробнее — в [вопросах по корутинам Kotlin](kotlin-coroutines-interview.md).
 
 ## Q22. Как из `Kotlin` вызывать перегруженные методы `Java`?
 
@@ -989,7 +989,7 @@ try {
 
 **В обратную сторону**: `Kotlin`-функции по умолчанию не объявляют `throws` в байткоде. Чтобы `Java`-код мог ловить конкретные checked exceptions, используйте `@Throws` (см. Q11).
 
-Подробнее об обработке ошибок — в [[kotlin-exceptions-interview|вопросах по исключениям Kotlin]].
+Подробнее об обработке ошибок — в [вопросах по исключениям Kotlin](kotlin-exceptions-interview.md).
 
 ## Q24. Как из `Java` работать с `sealed class`/`sealed interface` из `Kotlin`?
 
@@ -1721,20 +1721,20 @@ val objects: List<Any> = readOnly // OK — ковариантность раб�
 
 ## See also
 
-- [[kotlin-interview|Основы Kotlin]] — базовые конструкции Kotlin, которые влияют на интероп
-- [[kotlin-collections-interview|Коллекции Kotlin]] — как read-only/mutable разделение работает из Java
-- [[kotlin-coroutines-interview|Корутины Kotlin]] — вызов suspend-функций из Java через CompletableFuture
-- [[kotlin-exceptions-interview|Исключения в Kotlin]] — аннотация @Throws для корректного интеропа
-- [[kotlin-dsl-interview|DSL в Kotlin]] — как DSL выглядит при вызове из Java-кода
-- [[kotlin-serialization-interview|Сериализация в Kotlin]] — использование kotlinx.serialization в Java-проектах
-- [[java-core-interview|Java Core]] — базовые концепции Java для понимания интеропа
-- [[java-concurrency-interview|Java Concurrency]] — использование Java-примитивов синхронизации из Kotlin
-- [[spring-boot-interview|Spring Boot]] — смешанные Kotlin+Java проекты в Spring
+- [Основы Kotlin](kotlin-interview.md) — базовые конструкции Kotlin, которые влияют на интероп
+- [Коллекции Kotlin](kotlin-collections-interview.md) — как read-only/mutable разделение работает из Java
+- [Корутины Kotlin](kotlin-coroutines-interview.md) — вызов suspend-функций из Java через CompletableFuture
+- [Исключения в Kotlin](kotlin-exceptions-interview.md) — аннотация @Throws для корректного интеропа
+- [DSL в Kotlin](kotlin-dsl-interview.md) — как DSL выглядит при вызове из Java-кода
+- [Сериализация в Kotlin](kotlin-serialization-interview.md) — использование kotlinx.serialization в Java-проектах
+- [Java Core](../java/java-core-interview.md) — базовые концепции Java для понимания интеропа
+- [Java Concurrency](../java/java-concurrency-interview.md) — использование Java-примитивов синхронизации из Kotlin
+- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — смешанные Kotlin+Java проекты в Spring
 
-- [[kotlin-collections-interview|Kotlin коллекции]]
-- [[kotlin-coroutines-interview|Kotlin Coroutines]]
-- [[kotlin-dsl-interview|DSL в Kotlin]]
-- [[kotlin-exceptions-interview|исключения в Kotlin]]
-- [[kotlin-interview|Kotlin]]
-- [[kotlin-serialization-interview|сериализация в Kotlin]]
-- [[kotlin-interop-java|Шпаргалка: Kotlin Interop with Java]] — теория
+- [Kotlin коллекции](kotlin-collections-interview.md)
+- [Kotlin Coroutines](kotlin-coroutines-interview.md)
+- [DSL в Kotlin](kotlin-dsl-interview.md)
+- [исключения в Kotlin](kotlin-exceptions-interview.md)
+- [Kotlin](kotlin-interview.md)
+- [сериализация в Kotlin](kotlin-serialization-interview.md)
+- [Шпаргалка: Kotlin Interop with Java](../../../languages/kotlin/kotlin-interop-java.md) — теория

@@ -636,13 +636,13 @@ public SecurityFilterChain authServerChain(HttpSecurity http) throws Exception {
 
 ## См. также
 
-- [[application-security|Application Security]] — основы аутентификации и авторизации
-- [[api-security|API Security]] — защита API с токенами
-- [[owasp-top-10|OWASP Top 10]] — контекст уязвимостей (A02, A07)
-- [[web-security|Web Security]] — CSRF и cookie для сессий
-- [[secrets-management|Secrets Management]] — хранение ключей подписи
-- [[spring-security|Spring Security]] — настройка фреймворка
-- [[spring-security-interview|Spring Security для собеседований]]
-- [[jwt-interview|JWT на собеседовании]]
-- [[oauth2-interview|OAuth2 на собеседовании]]
-- [[tls-ssl|TLS/SSL]] — транспортная защита
+- [Application Security](application-security.md) — основы аутентификации и авторизации
+- [API Security](api-security.md) — защита API с токенами
+- [OWASP Top 10](owasp-top-10.md) — контекст уязвимостей (A02, A07)
+- [Web Security](web-security.md) — CSRF и cookie для сессий
+- [Secrets Management](../data/secrets-management.md) — хранение ключей подписи
+- [Spring Security](../../frameworks/java-frameworks/spring/spring-security.md) — настройка фреймворка
+- [Spring Security для собеседований](../../interview/frameworks/spring/spring-security-interview.md)
+- [JWT на собеседовании](../../interview/security/jwt-interview.md)
+- [OAuth2 на собеседовании](../../interview/security/oauth2-interview.md)
+- [TLS/SSL](../infrastructure/tls-ssl.md) — транспортная защита

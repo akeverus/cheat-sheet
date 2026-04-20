@@ -530,7 +530,7 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 - **K8s + many features** → Istio
 - **K8s + simplicity** → Linkerd
 
-Подробнее — в [[istio-service-mesh-interview|Istio]] и [[linkerd-interview|Linkerd]].
+Подробнее — в [Istio](istio-service-mesh-interview.md) и [Linkerd](linkerd-interview.md).
 
 ## Q23. (!) Когда выбрать Consul?
 
@@ -567,23 +567,23 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 
 ## See also
 
-- [[vault-interview|HashiCorp Vault]] — same vendor, integration
-- [[istio-service-mesh-interview|Istio]] — service mesh alternative
-- [[linkerd-interview|Linkerd]] — service mesh alternative
-- [[ansible-interview|Ansible]] — config management
-- [[kubernetes-interview|Kubernetes]] — built-in discovery
-- [[microservices-interview|Микросервисы]] — service discovery context
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
-- [[distributed-systems-interview|Распределённые системы]] — Raft, gossip
-- [[networking-interview|Networking]] — context
-- [[application-security-interview|Application Security]] — mTLS, ACLs
-- [[zero-trust-interview|Zero Trust]] — Connect implements
-- [[load-balancing-interview|Load Balancing]] — Consul + LB integration
+- [HashiCorp Vault](vault-interview.md) — same vendor, integration
+- [Istio](istio-service-mesh-interview.md) — service mesh alternative
+- [Linkerd](linkerd-interview.md) — service mesh alternative
+- [Ansible](ansible-interview.md) — config management
+- [Kubernetes](kubernetes-interview.md) — built-in discovery
+- [Микросервисы](../architecture/microservices-interview.md) — service discovery context
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — Raft, gossip
+- [Networking](../architecture/networking-interview.md) — context
+- [Application Security](../security/application-security-interview.md) — mTLS, ACLs
+- [Zero Trust](../security/zero-trust-interview.md) — Connect implements
+- [Load Balancing](../architecture/load-balancing-interview.md) — Consul + LB integration
 
-- [[ansible-interview|Ansible]]
-- [[argocd-interview|ArgoCD и GitOps]]
-- [[docker-interview|Docker]]
-- [[git-interview|Git]]
-- [[gradle-maven-interview|Gradle и Maven]]
-- [[helm-interview|Helm]]
-- [[consul|Шпаргалка: Consul]] — теория
+- [Ansible](ansible-interview.md)
+- [ArgoCD и GitOps](argocd-interview.md)
+- [Docker](docker-interview.md)
+- [Git](git-interview.md)
+- [Gradle и Maven](gradle-maven-interview.md)
+- [Helm](helm-interview.md)
+- [Шпаргалка: Consul](../../platform/infrastructure-tools/consul.md) — теория

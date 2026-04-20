@@ -30,11 +30,11 @@ related:
 - [Spring Integration Java DSL — Baeldung](https://www.baeldung.com/spring-integration-java-dsl)
 
 ### См. также
-- [[spring-core]] — IoC-контейнер, bean lifecycle
-- [[spring-messaging]] — `Message`, `MessageChannel` на уровне Spring
-- [[spring-kafka]] — Kafka-adapter для Spring Integration
-- [[spring-mvc]] — HTTP-inbound adapters и gateways
-- [[spring-batch]] — связка batch + integration для ETL
+- [spring-core](../../spring/spring-core.md) — IoC-контейнер, bean lifecycle
+- [spring-messaging](spring-messaging.md) — `Message`, `MessageChannel` на уровне Spring
+- [spring-kafka](spring-kafka.md) — Kafka-adapter для Spring Integration
+- [spring-mvc](spring-mvc.md) — HTTP-inbound adapters и gateways
+- [spring-batch](spring-batch.md) — связка batch + integration для ETL
 
 ## Содержание
 
@@ -62,7 +62,7 @@ related:
 - Распределение сообщений по нескольким потребителям по content-based правилам.
 - Агрегация ответов от N сервисов в одно итоговое сообщение.
 
-Если поток — чистый Kafka consumer/producer без разветвлений и обогащений, достаточно [[spring-kafka]]. Если есть хотя бы два трансформера/роутер/splitter — Spring Integration экономит много boilerplate.
+Если поток — чистый Kafka consumer/producer без разветвлений и обогащений, достаточно [spring-kafka](spring-kafka.md). Если есть хотя бы два трансформера/роутер/splitter — Spring Integration экономит много boilerplate.
 
 ## Основные понятия
 
@@ -98,7 +98,7 @@ flowchart LR
 | `PriorityChannel` | очередь с приоритетом | редко; когда есть приоритеты сообщений |
 | `RendezvousChannel` | sync handoff, ждёт ровно одного потребителя | backpressure |
 | `ExecutorChannel` | асинхронная доставка через `TaskExecutor` | parallel fan-out |
-| `FluxMessageChannel` | reactive (Reactor `Flux`) | мост в [[spring-webflux]] |
+| `FluxMessageChannel` | reactive (Reactor `Flux`) | мост в [spring-webflux](spring-webflux.md) |
 
 ```java
 @Bean public MessageChannel ordersInput() { return new DirectChannel(); }
@@ -308,7 +308,7 @@ class OrdersFlowTest {
 
 ## Мониторинг
 
-- Метрики через [[spring-actuator]]: `/actuator/metrics/spring.integration.channel.send`, `.receive`, `.timer`.
+- Метрики через [spring-actuator](spring-actuator.md): `/actuator/metrics/spring.integration.channel.send`, `.receive`, `.timer`.
 - JMX: `@EnableIntegrationManagement` публикует MBean-ы для каждого канала/endpoint.
 - Micrometer — автоматические теги `name`, `type` на каналах.
 
@@ -318,12 +318,12 @@ class OrdersFlowTest {
 
 - Несколько внешних систем, между которыми нужен конвейер с преобразованиями.
 - EIP-паттерны: splitter+aggregator, scatter-gather, content-based router.
-- ETL-поток без батчевой логики (иначе — [[spring-batch]]).
+- ETL-поток без батчевой логики (иначе — [spring-batch](spring-batch.md)).
 
 **Не использовать:**
 
-- Один прямой Kafka consumer без разветвлений — достаточно [[spring-kafka]] + [[spring-messaging]].
+- Один прямой Kafka consumer без разветвлений — достаточно [spring-kafka](spring-kafka.md) + [spring-messaging](spring-messaging.md).
 - Вся логика уже помещается в один контроллер / сервис.
 - Команда не знакома с EIP — порог входа выше, чем кажется.
 
-**Итог:** берите Spring Integration, когда поток имеет ≥3 шагов и хотя бы один splitter/router/aggregator; иначе — обойдётесь прямыми клиентами и [[spring-kafka]]/[[spring-mvc]].
+**Итог:** берите Spring Integration, когда поток имеет ≥3 шагов и хотя бы один splitter/router/aggregator; иначе — обойдётесь прямыми клиентами и [spring-kafka](spring-kafka.md)/[spring-mvc](spring-mvc.md).

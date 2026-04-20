@@ -269,11 +269,11 @@ try (BufferedReader reader = new BufferedReader(
 }
 ```
 
-Мост между ними — `InputStreamReader` и `OutputStreamWriter`, которые преобразуют байты в символы и обратно с указанной кодировкой. Подробнее о кодировках см. [[java-core-interview|Java Core]].
+Мост между ними — `InputStreamReader` и `OutputStreamWriter`, которые преобразуют байты в символы и обратно с указанной кодировкой. Подробнее о кодировках см. [Java Core](java-core-interview.md).
 
 ## Q7. Как работает паттерн `Decorator` в иерархии `Java IO`?
 
-Иерархия `Java IO` — классический пример паттерна [[design-patterns-interview|Decorator]]. Базовые потоки оборачиваются дополнительными слоями, каждый из которых добавляет функциональность:
+Иерархия `Java IO` — классический пример паттерна [Decorator](../../design-patterns/design-patterns-interview.md). Базовые потоки оборачиваются дополнительными слоями, каждый из которых добавляет функциональность:
 
 ```java
 // Каждый слой добавляет своё поведение
@@ -339,7 +339,7 @@ try (Scanner scanner = new Scanner(path, StandardCharsets.UTF_8)) {
 }
 ```
 
-Для работы с `Stream<String>` используется [[java-stream-interview|Java Stream API]].
+Для работы с `Stream<String>` используется [Java Stream API](java-stream-interview.md).
 
 ## Q9. Какие классы используются для работы с сетевыми соединениями в `Java IO`?
 
@@ -571,7 +571,7 @@ try (FileChannel outChannel = FileChannel.open(Path.of("out.bin"),
 
 ## Q16. (!) Как работает механизм `Selector` в `Java NIO`?
 
-`Selector` позволяет одному потоку мониторить несколько каналов и реагировать на готовность к операциям ввода-вывода. Это реализация паттерна **Reactor** (подробнее в [[design-patterns-interview|Design Patterns]]).
+`Selector` позволяет одному потоку мониторить несколько каналов и реагировать на готовность к операциям ввода-вывода. Это реализация паттерна **Reactor** (подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)).
 
 ```mermaid
 graph TD
@@ -708,7 +708,7 @@ public class NioEchoServer {
 }
 ```
 
-В реальных проектах вместо написания NIO-серверов вручную используют `Netty` или `Spring WebFlux`, которые строятся поверх NIO, но предоставляют удобный API. Подробнее в [[java-concurrency-interview|Java Concurrency]].
+В реальных проектах вместо написания NIO-серверов вручную используют `Netty` или `Spring WebFlux`, которые строятся поверх NIO, но предоставляют удобный API. Подробнее в [Java Concurrency](java-concurrency-interview.md).
 
 ## Q19. (!) Что такое `NIO.2` и чем он отличается от классического `NIO`?
 
@@ -1078,7 +1078,7 @@ try (FileChannel channel = FileChannel.open(largePath, StandardOpenOption.READ))
 }
 ```
 
-Для работы со `Stream<String>` см. [[java-stream-interview|Java Stream API]].
+Для работы со `Stream<String>` см. [Java Stream API](java-stream-interview.md).
 
 ## Q29. (!) Что такое `AsynchronousFileChannel` и как он работает?
 
@@ -1236,11 +1236,11 @@ try (BufferedReader reader = new BufferedReader(
 }
 ```
 
-Важно: **всегда** указывайте кодировку явно. Конструкторы `FileReader(String)` и `FileWriter(String)` до Java 18 использовали кодировку платформы (`file.encoding`), что приводило к багам при переносе между ОС. Подробнее о `String` см. [[java-string-interview|Java String]].
+Важно: **всегда** указывайте кодировку явно. Конструкторы `FileReader(String)` и `FileWriter(String)` до Java 18 использовали кодировку платформы (`file.encoding`), что приводило к багам при переносе между ОС. Подробнее о `String` см. [Java String](java-string-interview.md).
 
 ## Q33. Какие классы используются для сериализации и десериализации объектов?
 
-Подробнее о сериализации см. [[java-serialization-interview|Java Serialization]].
+Подробнее о сериализации см. [Java Serialization](java-serialization-interview.md).
 
 ```java
 // Сериализация
@@ -1312,7 +1312,7 @@ try (FileSystem zipFs = FileSystems.newFileSystem(Path.of("archive.zip"))) {
 
 ## Q35. (!) Как правильно закрывать ресурсы (`try-with-resources`)?
 
-Все ресурсы, реализующие `AutoCloseable`, нужно закрывать для освобождения дескрипторов. `try-with-resources` (Java 7+) — единственно правильный способ. Подробнее об обработке ошибок см. [[java-exceptions-interview|Java Exceptions]].
+Все ресурсы, реализующие `AutoCloseable`, нужно закрывать для освобождения дескрипторов. `try-with-resources` (Java 7+) — единственно правильный способ. Подробнее об обработке ошибок см. [Java Exceptions](java-exceptions-interview.md).
 
 ```java
 // Правильно: try-with-resources
@@ -1457,7 +1457,7 @@ producer.start();
 consumer.start();
 ```
 
-Применение: связь «производитель–потребитель» без временных файлов или `BlockingQueue`. На практике `Pipe` используется редко — чаще берут `BlockingQueue` из [[java-concurrency-interview|Java Concurrency]].
+Применение: связь «производитель–потребитель» без временных файлов или `BlockingQueue`. На практике `Pipe` используется редко — чаще берут `BlockingQueue` из [Java Concurrency](java-concurrency-interview.md).
 
 ## Q40. Что такое `HttpClient` (`Java` 11+) и когда его использовать?
 
@@ -1508,18 +1508,18 @@ HttpResponse<Path> fileResponse = client.send(
 
 ## See also
 
-- [[java-concurrency-interview|Java Concurrency]] — `Selector`, `AsynchronousChannel`, `CompletableFuture` — неблокирующий I/O и многопоточность
-- [[java-core-interview|Java Core]] — `try-with-resources`, `AutoCloseable` — идиоматическое закрытие потоков и каналов
-- [[java-serialization-interview|Java Serialization]] — сериализация объектов через `ObjectInputStream`/`ObjectOutputStream`
-- [[java-stream-interview|Java Stream API]] — `Files.lines()`, `Files.walk()` возвращают `Stream<String>`/`Stream<Path>`
-- [[java-exceptions-interview|Java Exceptions]] — иерархия `IOException`: `FileNotFoundException`, `SocketException`, обработка ошибок I/O
-- [[java-17-21-interview|Java 17-21]] — `Virtual Threads` и NIO: Project Loom меняет подходы к блокирующему I/O
-- [[spring-framework-interview|Spring Framework]] — `ResourceLoader`, `MultipartFile`, `WebClient` — Spring-абстракции над Java NIO
+- [Java Concurrency](java-concurrency-interview.md) — `Selector`, `AsynchronousChannel`, `CompletableFuture` — неблокирующий I/O и многопоточность
+- [Java Core](java-core-interview.md) — `try-with-resources`, `AutoCloseable` — идиоматическое закрытие потоков и каналов
+- [Java Serialization](java-serialization-interview.md) — сериализация объектов через `ObjectInputStream`/`ObjectOutputStream`
+- [Java Stream API](java-stream-interview.md) — `Files.lines()`, `Files.walk()` возвращают `Stream<String>`/`Stream<Path>`
+- [Java Exceptions](java-exceptions-interview.md) — иерархия `IOException`: `FileNotFoundException`, `SocketException`, обработка ошибок I/O
+- [Java 17-21](java-17-21-interview.md) — `Virtual Threads` и NIO: Project Loom меняет подходы к блокирующему I/O
+- [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — `ResourceLoader`, `MultipartFile`, `WebClient` — Spring-абстракции над Java NIO
 
-- [[java-17-21-interview|Java 17-21]]
-- [[java-8-interview|Java 8]]
-- [[java-annotations-interview|Java Annotations]]
-- [[java-collections-interview|Java Collections]]
-- [[java-concurrency-interview|Java Concurrency]]
-- [[java-conditional-statements-interview|Java Conditional Statements]]
-- [[java-io-nio|Шпаргалка: Java IO/NIO: работа с файлами и потоками]] — теория
+- [Java 17-21](java-17-21-interview.md)
+- [Java 8](java-8-interview.md)
+- [Java Annotations](java-annotations-interview.md)
+- [Java Collections](java-collections-interview.md)
+- [Java Concurrency](java-concurrency-interview.md)
+- [Java Conditional Statements](java-conditional-statements-interview.md)
+- [Шпаргалка: Java IO/NIO: работа с файлами и потоками](../../../languages/java/java-io-nio.md) — теория

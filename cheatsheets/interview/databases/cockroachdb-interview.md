@@ -495,23 +495,23 @@ CREATE INVERTED INDEX ON orders (data);
 
 ## See also
 
-- [[postgresql-interview|PostgreSQL]] — main compatibility target
-- [[scylladb-interview|ScyllaDB]] — distributed wide-column (for сравнения)
-- [[cassandra-interview|Cassandra]] — wide-column NoSQL
-- [[mongodb-interview|MongoDB]] — document
-- [[dynamodb-interview|DynamoDB]] — managed NoSQL
-- [[database-architecture-interview|Database Architecture]] — distributed SQL context
-- [[distributed-systems-interview|Распределённые системы]] — Raft, consensus
-- [[cap-theorem-interview|CAP Theorem]] — consistency vs availability
-- [[microservices-interview|Микросервисы]] — где CockroachDB fits
-- [[scalability-patterns-interview|Scalability Patterns]] — horizontal scaling
-- [[consistency-patterns-interview|Паттерны согласованности]] — strong consistency
-- [[gcp-interview|GCP]] — Spanner alternative
-- [[aws-interview|AWS]] — Aurora alternative
+- [PostgreSQL](postgresql-interview.md) — main compatibility target
+- [ScyllaDB](scylladb-interview.md) — distributed wide-column (for сравнения)
+- [Cassandra](cassandra-interview.md) — wide-column NoSQL
+- [MongoDB](mongodb-interview.md) — document
+- [DynamoDB](dynamodb-interview.md) — managed NoSQL
+- [Database Architecture](database-architecture-interview.md) — distributed SQL context
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — Raft, consensus
+- [CAP Theorem](../architecture/cap-theorem-interview.md) — consistency vs availability
+- [Микросервисы](../architecture/microservices-interview.md) — где CockroachDB fits
+- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — horizontal scaling
+- [Паттерны согласованности](../architecture/consistency-patterns-interview.md) — strong consistency
+- [GCP](../cloud/gcp-interview.md) — Spanner alternative
+- [AWS](../cloud/aws-interview.md) — Aurora alternative
 
-- [[cassandra-interview|Apache Cassandra]]
-- [[clickhouse-interview|ClickHouse]]
-- [[database-architecture-interview|Database Architecture]]
-- [[database-transactions-interview|Транзакции и уровни изоляции]]
-- [[dynamodb-interview|DynamoDB]]
-- [[elasticsearch-interview|Elasticsearch]]
+- [Apache Cassandra](cassandra-interview.md)
+- [ClickHouse](clickhouse-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [Транзакции и уровни изоляции](database-transactions-interview.md)
+- [DynamoDB](dynamodb-interview.md)
+- [Elasticsearch](elasticsearch-interview.md)

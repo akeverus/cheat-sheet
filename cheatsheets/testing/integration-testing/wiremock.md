@@ -24,7 +24,7 @@ updated: "2026-04-20"
 | Java API | [WireMock Java](https://wiremock.org/docs/java-usage/) |
 | Stateful | [Stateful Behaviour](https://wiremock.org/docs/stateful-behaviour/) |
 
-**См. также:** [[junit-advanced|JUnit Advanced]], [[mockito-advanced|Mockito Advanced]], [[spring-testing|Spring Testing]], [[rest-assured|REST Assured]].
+**См. также:** [JUnit Advanced](../unit-testing/junit/junit-advanced.md), [Mockito Advanced](../unit-testing/junit/mockito-advanced.md), [Spring Testing](../../frameworks/java-frameworks/spring/spring-testing.md), [REST Assured](rest-assured.md).
 
 
 ## Содержание
@@ -397,8 +397,8 @@ apiClient.postData("test");
 **Когда уместен:** тестирование HTTP-клиентов, микросервисов, контрактов, отказоустойчивости, разработка без доступа к внешним сервисам.
 **Когда не нужен:** чистые unit-тесты без HTTP (достаточно Mockito), тесты, требующие реального интеграционного окружения или не-HTTP протоколов.
 
-**Дальше:** [[rest-assured|REST Assured]] — тестирование REST API.
+**Дальше:** [REST Assured](rest-assured.md) — тестирование REST API.
 
 ## См. также
 
-- [[rest-assured|REST Assured для Java]]
+- [REST Assured для Java](rest-assured.md)

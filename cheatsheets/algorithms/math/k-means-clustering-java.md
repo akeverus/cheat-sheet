@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Baeldung: K-Means Clustering](https://www.baeldung.com/)
 
 ### См. также
-- [[gradient-descent|Градиентный спуск]] — градиентный спуск
-- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
+- [Градиентный спуск](gradient-descent.md) — градиентный спуск
+- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

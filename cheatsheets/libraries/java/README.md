@@ -18,44 +18,44 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### HTTP / RPC
-- [[java-http-clients|HTTP-клиенты в Java — обзор и сравнение]]
-- [[java-apache-httpclient|Apache HttpClient]]
-- [[java-okhttp|OkHttp]]
-- [[java-retrofit|Retrofit]]
+- [HTTP-клиенты в Java — обзор и сравнение](java-http-clients.md)
+- [Apache HttpClient](java-apache-httpclient.md)
+- [OkHttp](java-okhttp.md)
+- [Retrofit](java-retrofit.md)
 
 ### Persistence
-- [[java-hikaricp|HikariCP]] — connection pool
-- [[java-jooq|jOOQ]] — type-safe SQL DSL
+- [HikariCP](java-hikaricp.md) — connection pool
+- [jOOQ](java-jooq.md) — type-safe SQL DSL
 
 ### Observability
-- [[java-micrometer|Micrometer]]
-- [[java-opentelemetry|OpenTelemetry]]
-- [[java-spring-cloud-sleuth|Spring Cloud Sleuth]]
+- [Micrometer](java-micrometer.md)
+- [OpenTelemetry](java-opentelemetry.md)
+- [Spring Cloud Sleuth](java-spring-cloud-sleuth.md)
 
 ### Resilience
-- [[java-resilience4j|Resilience4j]] — Circuit Breaker, Retry, Rate Limiter
+- [Resilience4j](java-resilience4j.md) — Circuit Breaker, Retry, Rate Limiter
 
 ### Testing
-- [[java-testcontainers|Testcontainers]]
-- [[java-wiremock|WireMock]]
-- [[java-rest-assured|REST-Assured]]
+- [Testcontainers](java-testcontainers.md)
+- [WireMock](java-wiremock.md)
+- [REST-Assured](java-rest-assured.md)
 
 ### Serialization / DTO
-- [[java-jackson|Jackson]] — JSON сериализация/десериализация
-- [[java-mapstruct|MapStruct]] — compile-time маппинг DTO entity
-- [[java-lombok|Lombok]] — кодогенерация (getters/setters/builder/logger)
-- [[java-bean-validation|Bean Validation]] — JSR-380, аннотации валидации
+- [Jackson](java-jackson.md) — JSON сериализация/десериализация
+- [MapStruct](java-mapstruct.md) — compile-time маппинг DTO entity
+- [Lombok](java-lombok.md) — кодогенерация (getters/setters/builder/logger)
+- [Bean Validation](java-bean-validation.md) — JSR-380, аннотации валидации
 
 ### Другое
-- [[java-vavr|Vavr]] — функциональные коллекции и Try/Either
-- [[java-apache-poi|Apache POI]] — Excel/Word
-- [[java-protobuf|Protobuf]] — бинарная сериализация
+- [Vavr](java-vavr.md) — функциональные коллекции и Try/Either
+- [Apache POI](java-apache-poi.md) — Excel/Word
+- [Protobuf](java-protobuf.md) — бинарная сериализация
 
 ### Соседние разделы
-- [[README|Libraries]]
-- [[README|Utility libraries]], [[README|Serialization]], [[README|Testing libraries]], [[README|Code generation]]
-- [[README|Spring]]
-- [[README|Monitoring]], [[README|Testing]]
+- [Libraries](../../basics/README.md)
+- [Utility libraries](../../basics/README.md), [Serialization](../../basics/README.md), [Testing libraries](../../basics/README.md), [Code generation](../../basics/README.md)
+- [Spring](../../basics/README.md)
+- [Monitoring](../../basics/README.md), [Testing](../../basics/README.md)
 
 ## Содержание
 
@@ -88,9 +88,9 @@ updated: "2026-04-20"
 
 ## Когда выбирать что
 
-- **HTTP:** обзор всех вариантов — [[java-http-clients]]. OkHttp — default для Android/Kotlin; Apache HttpClient — enterprise/прокси/NTLM; Retrofit — нужен типизированный DSL; Spring `RestClient`/`WebClient` — Spring-сервисы.
+- **HTTP:** обзор всех вариантов — [java-http-clients](java-http-clients.md). OkHttp — default для Android/Kotlin; Apache HttpClient — enterprise/прокси/NTLM; Retrofit — нужен типизированный DSL; Spring `RestClient`/`WebClient` — Spring-сервисы.
 - **Pool:** HikariCP — индустриальный стандарт; альтернативы (Tomcat JDBC, DBCP2) — legacy.
-- **ORM vs SQL:** jOOQ — когда нужен SQL-контроль и реляционная модель; Hibernate — для богатых агрегатов (см. [[README|databases/orm]]).
+- **ORM vs SQL:** jOOQ — когда нужен SQL-контроль и реляционная модель; Hibernate — для богатых агрегатов (см. [databases/orm](../../basics/README.md)).
 - **Observability:** Micrometer Prometheus/VictoriaMetrics; OpenTelemetry — единый стандарт trace/metric/log (Sleuth deprecated в Spring Boot 3).
 - **Resilience:** Resilience4j заменил Hystrix; Spring Cloud CircuitBreaker — это abstraction поверх него.
 
@@ -102,7 +102,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Утилитарные библиотеки — [[README|utility-libraries]]
-- Сериализация — [[README|serialization]]
-- Наблюдаемость — [[README|monitoring]]
-- Тестирование — [[README|testing]]
+- Утилитарные библиотеки — [utility-libraries](../../basics/README.md)
+- Сериализация — [serialization](../../basics/README.md)
+- Наблюдаемость — [monitoring](../../basics/README.md)
+- Тестирование — [testing](../../basics/README.md)

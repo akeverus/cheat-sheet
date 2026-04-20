@@ -484,13 +484,13 @@ class MyRuntimeHintsTest {
 
 ## See also
 
-- [[jvm-interview|JVM]] — как работает JVM: ClassLoader, JIT, GC, memory model
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — JIT оптимизации, GC tuning — противоположность native
-- [[spring-boot-interview|Spring Boot]] — auto-configuration, Spring Boot 3 features
-- [[spring-framework-interview|Spring Framework]] — AOT context и BeanFactory в Spring 6
-- [[java-17-21-interview|Java 17-21]] — Java 17 требование для Spring Boot 3, virtual threads
-- [[java-virtual-threads-interview|Virtual Threads]] — альтернатива native для снижения resource overhead
-- [[kubernetes-interview|Kubernetes]] — развёртывание native контейнеров с fast startup
-- [[docker-interview|Docker]] — minimal Docker images для native executables
-- [[cloud-native-patterns-interview|Cloud Native Patterns]] — паттерны для cloud где native image выигрывает
-- [[micrometer-interview|Micrometer]] — observability в native Spring Boot приложениях
+- [JVM](jvm-interview.md) — как работает JVM: ClassLoader, JIT, GC, memory model
+- [JVM Performance Tuning](../performance/jvm-performance-tuning-interview.md) — JIT оптимизации, GC tuning — противоположность native
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — auto-configuration, Spring Boot 3 features
+- [Spring Framework](../frameworks/spring/spring-framework-interview.md) — AOT context и BeanFactory в Spring 6
+- [Java 17-21](../programming-languages/java/java-17-21-interview.md) — Java 17 требование для Spring Boot 3, virtual threads
+- [Virtual Threads](../programming-languages/java/java-virtual-threads-interview.md) — альтернатива native для снижения resource overhead
+- [Kubernetes](../devops/kubernetes-interview.md) — развёртывание native контейнеров с fast startup
+- [Docker](../devops/docker-interview.md) — minimal Docker images для native executables
+- [Cloud Native Patterns](../cloud/cloud-native-patterns-interview.md) — паттерны для cloud где native image выигрывает
+- [Micrometer](../monitoring/micrometer-interview.md) — observability в native Spring Boot приложениях

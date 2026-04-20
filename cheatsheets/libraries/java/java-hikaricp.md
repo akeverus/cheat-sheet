@@ -1472,8 +1472,8 @@ public class HikariConnectionPoolTest {
 
 ## См. также
 
-- [[java-apache-httpclient|Apache HttpClient: Мощный HTTP клиент для Java]]
-- [[java-apache-poi|Apache POI]]
-- [[java-bean-validation|Bean Validation (JSR-380 / Jakarta Validation 3.0)]]
-- [[java-http-clients|HTTP-клиенты в Java]]
-- [[java-jackson|Jackson: JSON-сериализация в Java]]
+- [Apache HttpClient: Мощный HTTP клиент для Java](java-apache-httpclient.md)
+- [Apache POI](java-apache-poi.md)
+- [Bean Validation (JSR-380 / Jakarta Validation 3.0)](java-bean-validation.md)
+- [HTTP-клиенты в Java](java-http-clients.md)
+- [Jackson: JSON-сериализация в Java](java-jackson.md)

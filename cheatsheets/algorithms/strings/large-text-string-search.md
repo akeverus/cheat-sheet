@@ -21,12 +21,12 @@ updated: "2026-04-20"
 
 ### См. также
 - [Поиск с использованием дерева суффиксов](./) — раздел strings
-- [[multiple-keywords-check|Проверка нескольких ключевых слов]] — multiple keywords
+- [Проверка нескольких ключевых слов](multiple-keywords-check.md) — multiple keywords
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
-- [[regex-token-replacement|Замена токенов по регулярным выражениям (Regex Token Replacement)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
+- [Замена токенов по регулярным выражениям (Regex Token Replacement)](regex-token-replacement.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

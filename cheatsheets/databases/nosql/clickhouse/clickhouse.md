@@ -16,7 +16,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[clickhouse-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Вопросы на собеседовании](../../../interview/databases/clickhouse-interview.md) — подготовка к интервью
 
 ## Полезные ссылки
 
@@ -740,8 +740,8 @@ EXPLAIN PLAN SELECT * FROM mytable WHERE value > 100;
 
 ## См. также
 
-- [[clickhouse-basics|ClickHouse: Основы колоночной аналитической базы данных]]
-- [[clickhouse-indexes|ClickHouse: Индексы и оптимизация — Полное руководство по индексации и партиционированию]]
-- [[clickhouse-integration|ClickHouse: Интеграции и экосистема — Подключение внешних систем и инструментов]]
-- [[clickhouse-materialized-views|ClickHouse: Материализованные представления — Предварительно вычисленные агрегаты и трансформации]]
-- [[clickhouse-performance|ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу]]
+- [ClickHouse: Основы колоночной аналитической базы данных](clickhouse-basics.md)
+- [ClickHouse: Индексы и оптимизация — Полное руководство по индексации и партиционированию](clickhouse-indexes.md)
+- [ClickHouse: Интеграции и экосистема — Подключение внешних систем и инструментов](clickhouse-integration.md)
+- [ClickHouse: Материализованные представления — Предварительно вычисленные агрегаты и трансформации](clickhouse-materialized-views.md)
+- [ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу](clickhouse-performance.md)

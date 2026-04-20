@@ -33,12 +33,12 @@ updated: "2026-04-20"
 - [Aggregation Profiler](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-profile.html)
 
 ### См. также
-- [[elasticsearch-basics|Основы]] — **Elasticsearch**
-- [[elasticsearch-queries|Запросы]] — поиск и запросы
-- [[elasticsearch-clustering|Кластеризация]] — кластеризация
-- [[elasticsearch-performance|Производительность]] — производительность
+- [Основы](elasticsearch-basics.md) — **Elasticsearch**
+- [Запросы](elasticsearch-queries.md) — поиск и запросы
+- [Кластеризация](elasticsearch-clustering.md) — кластеризация
+- [Производительность](elasticsearch-performance.md) — производительность
 
-- [[clickhouse|ClickHouse]]
+- [ClickHouse](../clickhouse/clickhouse.md)
 ## Содержание
 
 - [Основы агрегаций](#основы-агрегаций)

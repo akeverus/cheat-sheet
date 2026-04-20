@@ -30,12 +30,12 @@ updated: "2026-04-20"
 ### См. также
 - [GraphQL](https://graphql.org/) — **GraphQL**
 - [gRPC](https://grpc.io/) — **gRPC**
-- [[spring-rest|Spring REST]] — **Spring REST**
+- [Spring REST](../../../frameworks/java-frameworks/spring/spring-rest.md) — **Spring REST**
 
-- [[micronaut-http|Micronaut: HTTP — Controllers, Routing и Request Handling]]
-- [[java-http-clients|HTTP-клиенты в Java]]
-- [[spring-boot|Spring Boot — Полное руководство]]
-- [[quarkus-openapi|Quarkus: OpenAPI — API Documentation]]
+- [Micronaut: HTTP — Controllers, Routing и Request Handling](../../../frameworks/java-frameworks/micronaut/micronaut-http.md)
+- [HTTP-клиенты в Java](../../../libraries/java/java-http-clients.md)
+- [Spring Boot — Полное руководство](../../../frameworks/spring/spring-boot.md)
+- [Quarkus: OpenAPI — API Documentation](../../../frameworks/java-frameworks/quarkus/quarkus-openapi.md)
 ## Содержание
 
 - [Принципы REST](#принципы-rest)

@@ -216,7 +216,7 @@ public record Point(int x, int y) {
   ```
 - **Дополнительный** — только при обязательной делегации через `this(...)` в canonical.
 
-Подробнее в [[java-17-21-interview]] и [[java-oop-interview]].
+Подробнее в [java-17-21-interview](java-17-21-interview.md) и [java-oop-interview](java-oop-interview.md).
 
 ## Q7. (!) Что такое `static`-блок инициализации?
 
@@ -410,7 +410,7 @@ public Foo(int);  // <init>
 - `Foo.class` литерал.
 - `ClassLoader.loadClass()` без `initialize=true`.
 
-Подробнее о classloader в [[jvm-interview]].
+Подробнее о classloader в [jvm-interview](../../jvm/jvm-interview.md).
 
 ## Q15. Что напечатает код с наследованием и init-блоками?
 
@@ -721,7 +721,7 @@ public record Range(int from, int to) {
 }
 ```
 
-Подробнее о `record` — в [[java-17-21-interview]].
+Подробнее о `record` — в [java-17-21-interview](java-17-21-interview.md).
 
 ## Q27. Как устроена инициализация `enum`?
 
@@ -758,13 +758,13 @@ public enum Singleton {
 
 ## See also
 
-- [[java-oop-interview]] — SOLID, наследование, композиция, анонимные классы и лямбды
-- [[java-core-interview]] — основы Java, `Object`, `equals/hashCode`, final, ссылки
-- [[java-17-21-interview]] — `record`, `sealed`, pattern matching, Java 16+ новинки в nested классах
-- [[java-types-interview]] — примитивы, boxing/unboxing, autoboxing и инициализация
-- [[java-modules-interview]] — JPMS, видимость пакетов и влияние на рефлексивный доступ к классам
-- [[java-concurrency-interview]] — `final`-поля и JMM, безопасная публикация объектов
-- [[java-serialization-interview]] — `serialVersionUID`, `readObject`, инициализация при десериализации
-- [[jvm-interview]] — загрузка классов, `<clinit>`, `<init>`, ClassLoader, Metaspace
-- [[java-annotations-interview]] — `@PostConstruct` и порядок инициализации бинов в Spring
-- [[java-exceptions-interview]] — `ExceptionInInitializerError`, ошибки в static-блоках
+- [java-oop-interview](java-oop-interview.md) — SOLID, наследование, композиция, анонимные классы и лямбды
+- [java-core-interview](java-core-interview.md) — основы Java, `Object`, `equals/hashCode`, final, ссылки
+- [java-17-21-interview](java-17-21-interview.md) — `record`, `sealed`, pattern matching, Java 16+ новинки в nested классах
+- [java-types-interview](java-types-interview.md) — примитивы, boxing/unboxing, autoboxing и инициализация
+- [java-modules-interview](java-modules-interview.md) — JPMS, видимость пакетов и влияние на рефлексивный доступ к классам
+- [java-concurrency-interview](java-concurrency-interview.md) — `final`-поля и JMM, безопасная публикация объектов
+- [java-serialization-interview](java-serialization-interview.md) — `serialVersionUID`, `readObject`, инициализация при десериализации
+- [jvm-interview](../../jvm/jvm-interview.md) — загрузка классов, `<clinit>`, `<init>`, ClassLoader, Metaspace
+- [java-annotations-interview](java-annotations-interview.md) — `@PostConstruct` и порядок инициализации бинов в Spring
+- [java-exceptions-interview](java-exceptions-interview.md) — `ExceptionInInitializerError`, ошибки в static-блоках

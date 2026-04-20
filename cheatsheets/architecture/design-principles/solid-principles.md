@@ -437,13 +437,13 @@ public double area(Shape s) {
 ## Ссылки на разделы репозитория
 
 - **Паттерны** — [patterns](../../patterns/).
-- **Чистый код** — [[clean-code]].
+- **Чистый код** — [clean-code](../../basics/clean-code.md).
 - **Тестирование** — [testing](../../testing/).
 - **Алгоритмы** — [algorithms](../../algorithms/).
-- **Git** — [[git-basics]].
-- **Сети** — [[networks-basics]].
-- **ОС** — [[operating-systems-basics]].
-- **Принципы проектирования** — [[design-principles]].
+- **Git** — [git-basics](../../basics/git-basics.md).
+- **Сети** — [networks-basics](../../basics/networks/networks-basics.md).
+- **ОС** — [operating-systems-basics](../../basics/operating-systems/operating-systems-basics.md).
+- **Принципы проектирования** — [design-principles](design-principles.md).
 
 
 ## Рекомендуемая литература
@@ -955,7 +955,7 @@ void register_shouldSaveValidUser() {
 
 ## Ссылки на документы репозитория (SOLID)
 
-- **Паттерны:** [patterns](../../patterns/), **Чистый код:** [[clean-code]], **Тестирование:** [testing](../../testing/), **Алгоритмы:** [algorithms](../../algorithms/), **Git:** [[git-basics]].
+- **Паттерны:** [patterns](../../patterns/), **Чистый код:** [clean-code](../../basics/clean-code.md), **Тестирование:** [testing](../../testing/), **Алгоритмы:** [algorithms](../../algorithms/), **Git:** [git-basics](../../basics/git-basics.md).
 
 
 ## Рекомендуемая литература (расширенная, SOLID)
@@ -1192,7 +1192,7 @@ public class UserValidator {
 
 ## Ссылки на смежные документы (SOLID, расширенный список)
 
-- **Паттерны:** [patterns](../../patterns/), **Чистый код:** [[clean-code]], **Тестирование:** [testing](../../testing/), **Алгоритмы:** [algorithms](../../algorithms/), **Git:** [[git-basics]], **Сети:** [[networks-basics|networks]], **ОС:** [[operating-systems-basics|operating-systems]].
+- **Паттерны:** [patterns](../../patterns/), **Чистый код:** [clean-code](../../basics/clean-code.md), **Тестирование:** [testing](../../testing/), **Алгоритмы:** [algorithms](../../algorithms/), **Git:** [git-basics](../../basics/git-basics.md), **Сети:** [networks](../../basics/networks/networks-basics.md), **ОС:** [operating-systems](../../basics/operating-systems/operating-systems-basics.md).
 
 
 ## Рекомендуемая литература (SOLID, полный список)
@@ -1326,4 +1326,4 @@ public class UserValidator {
 
 ## См. также
 
-- [[design-principles|Принципы проектирования программного обеспечения]]
+- [Принципы проектирования программного обеспечения](design-principles.md)

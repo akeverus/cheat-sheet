@@ -693,7 +693,7 @@ public JpaCursorItemReader<Order> jpaCursorReader(EntityManagerFactory emf) {
 }
 ```
 
-> **Совет:** при работе с `JPA` читателями учитывайте, что сущности попадают в persistence context. Для read-only операций используйте проекции или `@Transactional(readOnly = true)`, чтобы избежать dirty checking. Подробнее в [[spring-data-jpa-interview|Spring Data JPA]].
+> **Совет:** при работе с `JPA` читателями учитывайте, что сущности попадают в persistence context. Для read-only операций используйте проекции или `@Transactional(readOnly = true)`, чтобы избежать dirty checking. Подробнее в [Spring Data JPA](spring-data-jpa-interview.md).
 
 ## Q16. Как читать и писать плоские файлы (CSV, TSV)?
 
@@ -1331,7 +1331,7 @@ public class WeekdayDecider implements JobExecutionDecider {
 
 ## Q28. (!) Как интегрировать Spring Batch со Spring Boot?
 
-`Spring Boot` значительно упрощает настройку `Spring Batch` через автоконфигурацию. Подробнее об автоконфигурации — в [[spring-boot-interview|Spring Boot]].
+`Spring Boot` значительно упрощает настройку `Spring Batch` через автоконфигурацию. Подробнее об автоконфигурации — в [Spring Boot](spring-boot-interview.md).
 
 **Шаг 1: Зависимость**
 
@@ -1546,7 +1546,7 @@ void shouldFilterInvalidRecords() {
 }
 ```
 
-**End-to-end тест с Testcontainers** (подробнее про Testcontainers — в [[spring-data-jpa-interview|Spring Data JPA]]):
+**End-to-end тест с Testcontainers** (подробнее про Testcontainers — в [Spring Data JPA](spring-data-jpa-interview.md)):
 
 ```java
 @SpringBatchTest
@@ -1609,7 +1609,7 @@ public class BatchMonitoringService {
 | `spring.batch.item.process` | Количество обработанных элементов |
 | `spring.batch.chunk.write` | Количество записанных chunk |
 
-Эти метрики доступны через [[spring-boot-actuator-interview|Spring Boot Actuator]] эндпоинт `/actuator/metrics`.
+Эти метрики доступны через [Spring Boot Actuator](spring-boot-actuator-interview.md) эндпоинт `/actuator/metrics`.
 
 **`Spring Cloud Task`** — расширение для управления короткоживущими микросервисами (задачами):
 
@@ -1627,7 +1627,7 @@ public class BatchTaskApplication {
 }
 ```
 
-> **В enterprise** рекомендуется комбинировать: `Spring Batch` для бизнес-логики обработки, `Spring Cloud Task` для lifecycle-управления, `Micrometer` + `Prometheus`/`Grafana` для метрик и алертов. Подробнее о мониторинге в [[spring-boot-actuator-interview|Spring Boot Actuator]].
+> **В enterprise** рекомендуется комбинировать: `Spring Batch` для бизнес-логики обработки, `Spring Cloud Task` для lifecycle-управления, `Micrometer` + `Prometheus`/`Grafana` для метрик и алертов. Подробнее о мониторинге в [Spring Boot Actuator](spring-boot-actuator-interview.md).
 
 ## Q32. (!) Как настроить `JobParameters` и обеспечить уникальность запуска?
 
@@ -2676,21 +2676,21 @@ public class BatchMetricsListener implements JobExecutionListener {
 
 ## See also
 
-- [[spring-framework-interview|Spring Framework]] — IoC-контейнер и жизненный цикл бинов Batch
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация и запуск batch-заданий
-- [[spring-mvc-interview|Spring MVC]] — REST-эндпоинты для запуска и мониторинга заданий
-- [[spring-webflux-interview|Spring WebFlux]] — реактивные альтернативы для потоковой обработки
-- [[spring-security-interview|Spring Security]] — защита REST-триггеров batch-заданий
-- [[spring-data-jpa-interview|Spring Data JPA]] — JpaPagingItemReader и репозитории в Batch
-- [[spring-cloud-interview|Spring Cloud]] — оркестрация задач через Spring Cloud Task
-- [[spring-boot-actuator-interview|Spring Boot Actuator]] — метрики и мониторинг batch-заданий
-- [[database-architecture-interview|Архитектура баз данных]] — JobRepository и metadata-схемы
-- [[distributed-systems-interview|Распределённые системы]] — партиционирование и параллельная обработка
+- [Spring Framework](spring-framework-interview.md) — IoC-контейнер и жизненный цикл бинов Batch
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация и запуск batch-заданий
+- [Spring MVC](spring-mvc-interview.md) — REST-эндпоинты для запуска и мониторинга заданий
+- [Spring WebFlux](spring-webflux-interview.md) — реактивные альтернативы для потоковой обработки
+- [Spring Security](spring-security-interview.md) — защита REST-триггеров batch-заданий
+- [Spring Data JPA](spring-data-jpa-interview.md) — JpaPagingItemReader и репозитории в Batch
+- [Spring Cloud](spring-cloud-interview.md) — оркестрация задач через Spring Cloud Task
+- [Spring Boot Actuator](spring-boot-actuator-interview.md) — метрики и мониторинг batch-заданий
+- [Архитектура баз данных](../../databases/database-architecture-interview.md) — JobRepository и metadata-схемы
+- [Распределённые системы](../../architecture/distributed-systems-interview.md) — партиционирование и параллельная обработка
 
-- [[spring-aop-interview|Spring AOP]]
-- [[spring-boot-actuator-interview|Spring Boot Actuator]]
-- [[spring-boot-interview|Spring Boot]]
-- [[spring-cloud-interview|Spring Cloud]]
-- [[spring-data-jpa-interview|Spring Data JPA]]
-- [[spring-framework-interview|Spring Framework]]
-- [[spring-batch|Шпаргалка: Spring Batch для Java]] — теория
+- [Spring AOP](spring-aop-interview.md)
+- [Spring Boot Actuator](spring-boot-actuator-interview.md)
+- [Spring Boot](spring-boot-interview.md)
+- [Spring Cloud](spring-cloud-interview.md)
+- [Spring Data JPA](spring-data-jpa-interview.md)
+- [Spring Framework](spring-framework-interview.md)
+- [Шпаргалка: Spring Batch для Java](../../../frameworks/java-frameworks/spring/spring-batch.md) — теория

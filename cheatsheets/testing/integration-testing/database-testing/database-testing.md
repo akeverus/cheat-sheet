@@ -23,13 +23,13 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [[testcontainers|Testcontainers]]
-- [[contract-testing|Contract Testing]]
-- [[junit|JUnit]]
-- [[testing-tools-overview|Testing Tools Overview]]
+- [Testcontainers](../testcontainers/testcontainers.md)
+- [Contract Testing](../contract-testing/contract-testing.md)
+- [JUnit](../../unit-testing/junit/junit.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
 
 
-- [[rest-assured|REST Assured для Java]]
+- [REST Assured для Java](../rest-assured.md)
 ## Содержание
 
 - [Зачем тестировать БД](#зачем-тестировать-бд)

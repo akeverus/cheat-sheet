@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Write a program to print all permutations of a given string — GeeksforGeeks](https://www.geeksforgeeks.org/write-a-c-program-to-print-all-permutations-of-a-given-string/)
 
 ### См. также
-- [[palindrome-check|Проверка палиндромов]] — палиндромы
-- [[levenshtein-distance|Расстояние Левенштейна]] — расстояние редактирования
+- [Проверка палиндромов](palindrome-check.md) — палиндромы
+- [Расстояние Левенштейна](levenshtein-distance.md) — расстояние редактирования
 
-- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
-- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
-- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
+- [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
+- [Поиск по суффиксному дереву (Suffix Tree Pattern Matching)](suffix-tree-pattern-matching.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

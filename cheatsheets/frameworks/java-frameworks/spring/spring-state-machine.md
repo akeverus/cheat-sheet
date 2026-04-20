@@ -1260,8 +1260,8 @@ public class RedisPersistenceConfig extends StateMachineConfigurerAdapter<States
 
 ## См. также
 
-- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
-- [[spring-ai|Spring AI]]
-- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
-- [[spring-batch|Spring Batch для Java]]
-- [[spring-boot|Spring Boot — Полное руководство]]
+- [Spring Actuator: Полное руководство по мониторингу и управлению](spring-actuator.md)
+- [Spring AI](spring-ai.md)
+- [Spring AOP: Полное руководство по аспектно-ориентированному программированию](spring-aop.md)
+- [Spring Batch для Java](spring-batch.md)
+- [Spring Boot — Полное руководство](../../spring/spring-boot.md)

@@ -27,12 +27,12 @@ related: ["scala/scala-concurrency.md", "scala/scala-akka.md", "scala/scala-fp-a
 - [Akka Streams Documentation](https://doc.akka.io/docs/akka/current/stream/index.html)
 
 ### См. также
-- [[scala-concurrency|Конкурентность в Scala]]
-- [[scala-akka|Akka Actors]]
+- [Конкурентность в Scala](scala-concurrency.md)
+- [Akka Actors](../../libraries/scala/scala-akka.md)
 
-- [[micronaut-reactive|Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams]]
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
+- [Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams](../../frameworks/java-frameworks/micronaut/micronaut-reactive.md)
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
 ## Содержание
 
 - [Введение в реактивное программирование](#введение-в-реактивное-программирование)

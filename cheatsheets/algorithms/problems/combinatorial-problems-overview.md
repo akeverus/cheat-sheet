@@ -20,9 +20,9 @@ updated: "2026-04-20"
 - [Baeldung: Combinatorial Problems](https://www.baeldung.com/)
 
 ### См. также
-- [[README|Перестановки строк]] — алгоритмы со строками
-- [[factorial-calculation|Вычисление факториала]] — факториал
-- [[pascal-triangle|Треугольник Паскаля]] — треугольник Паскаля
+- [Перестановки строк](../../basics/README.md) — алгоритмы со строками
+- [Вычисление факториала](../math/factorial-calculation.md) — факториал
+- [Треугольник Паскаля](../math/pascal-triangle.md) — треугольник Паскаля
 
 ## Содержание
 

@@ -23,12 +23,12 @@ related: ["databases/clickhouse-performance.md", "databases/clickhouse-replicati
 - [ClickHouse Documentation](https://clickhouse.com/docs/)
 
 ### См. также
-- [[clickhouse-performance|clickhouse-performance.md]] — оптимизация и производительность
-- [[clickhouse-replication|clickhouse-replication.md]] — кластеры и репликация
+- [clickhouse-performance.md](clickhouse-performance.md) — оптимизация и производительность
+- [clickhouse-replication.md](clickhouse-replication.md) — кластеры и репликация
 
-- [[clickhouse-materialized-views|ClickHouse: Материализованные представления — Предварительно вычисленные агрегаты и трансформации]]
-- [[clickhouse|ClickHouse]]
-- [[clickhouse-basics|ClickHouse: Основы колоночной аналитической базы данных]]
+- [ClickHouse: Материализованные представления — Предварительно вычисленные агрегаты и трансформации](clickhouse-materialized-views.md)
+- [ClickHouse](clickhouse.md)
+- [ClickHouse: Основы колоночной аналитической базы данных](clickhouse-basics.md)
 ## Содержание
 
 - [Введение в интеграции](#введение-в-интеграции)

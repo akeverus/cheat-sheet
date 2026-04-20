@@ -27,9 +27,9 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[monitoring-best-practices|Лучшие практики мониторинга]]
-- [[observability-guide|Руководство по Observability]]
-- [[infrastructure-monitoring|Infrastructure Monitoring (обзор)]]
+- [Лучшие практики мониторинга](../monitoring-best-practices.md)
+- [Руководство по Observability](../observability-guide.md)
+- [Infrastructure Monitoring (обзор)](../infrastructure-monitoring.md)
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
@@ -260,5 +260,5 @@ APM — метрики приложения (транзакции, эндпои�
 
 ## См. также
 
-- [[datadog|Datadog APM]]
-- [[elastic-apm|Elastic APM]]
+- [Datadog APM](datadog.md)
+- [Elastic APM](elastic-apm.md)

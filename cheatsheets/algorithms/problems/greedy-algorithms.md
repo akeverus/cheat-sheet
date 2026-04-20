@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Baeldung: Greedy Algorithms](https://www.baeldung.com/)
 
 ### См. также
-- [[knapsack-problem|Задача о рюкзаке]] — knapsack
-- [[traveling-salesman-problem|Задача коммивояжера]] — TSP
-- [[greedy-algorithms|Обзор жадной парадигмы]] — теория и классические задачи
+- [Задача о рюкзаке](knapsack-problem.md) — knapsack
+- [Задача коммивояжера](traveling-salesman-problem.md) — TSP
+- [Обзор жадной парадигмы](greedy-algorithms.md) — теория и классические задачи
 
-- [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
-- [[backtracking|Поиск с возвратом (Backtracking)]]
+- [Методы ветвей и границ (Branch and Bound)](../algorithmic-paradigms/branch-and-bound.md)
+- [Поиск с возвратом (Backtracking)](../algorithmic-paradigms/backtracking.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -13,17 +13,17 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[README|Relational]]
-[[README|NoSQL]]
-[[README|SQL]]
-[[README|ORM]]
+[Relational](../basics/README.md)
+[NoSQL](../basics/README.md)
+[SQL](../basics/README.md)
+[ORM](../basics/README.md)
 
 ## Содержание
 
-- **Инструменты БД** — [[README]]
-- **Графовые БД** — [[README]]
-- **NoSQL** — [[README]]
-- **ORM** — [[README]]
-- **Реляционные БД** — [[README]]
-- **SQL** — [[README]]
-- **Временные Ряды** — [[README]]
+- **Инструменты БД** — [README](../basics/README.md)
+- **Графовые БД** — [README](../basics/README.md)
+- **NoSQL** — [README](../basics/README.md)
+- **ORM** — [README](../basics/README.md)
+- **Реляционные БД** — [README](../basics/README.md)
+- **SQL** — [README](../basics/README.md)
+- **Временные Ряды** — [README](../basics/README.md)

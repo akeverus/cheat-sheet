@@ -721,23 +721,23 @@ Vert.x — **зрелая** технология (с 2012), но более ни
 
 ## See also
 
-- [[ktor-interview|Ktor]] — другой lightweight JVM toolkit
-- [[quarkus-interview|Quarkus]] — построен на Vert.x
-- [[micronaut-interview|Micronaut]] — compile-time альтернатива
-- [[spring-webflux-interview|Spring WebFlux]] — реактивный аналог
-- [[spring-boot-interview|Spring Boot]] — традиционный конкурент
-- [[project-reactor-interview|Project Reactor]] — другая reactive lib
-- [[rxjava-interview|RxJava]] — bridge для Vert.x
-- [[kotlin-coroutines-interview|Kotlin Coroutines]] — bridge для Vert.x
-- [[microservices-interview|Микросервисы]] — основное применение
-- [[event-driven-patterns-interview|Event-driven паттерны]] — фундамент Vert.x
-- [[kafka-interview|Apache Kafka]] — vs Event Bus для distributed messaging
-- [[hibernate-interview|Hibernate]] — vs Hibernate Reactive (на Vert.x)
-- [[networking-interview|Сетевые протоколы]] — Netty under the hood
+- [Ktor](ktor-interview.md) — другой lightweight JVM toolkit
+- [Quarkus](quarkus-interview.md) — построен на Vert.x
+- [Micronaut](micronaut-interview.md) — compile-time альтернатива
+- [Spring WebFlux](../spring/spring-webflux-interview.md) — реактивный аналог
+- [Spring Boot](../spring/spring-boot-interview.md) — традиционный конкурент
+- [Project Reactor](../../reactive/project-reactor-interview.md) — другая reactive lib
+- [RxJava](../../reactive/rxjava-interview.md) — bridge для Vert.x
+- [Kotlin Coroutines](../../programming-languages/kotlin/kotlin-coroutines-interview.md) — bridge для Vert.x
+- [Микросервисы](../../architecture/microservices-interview.md) — основное применение
+- [Event-driven паттерны](../../architecture/event-driven-patterns-interview.md) — фундамент Vert.x
+- [Apache Kafka](../../messaging/kafka-interview.md) — vs Event Bus для distributed messaging
+- [Hibernate](../../databases/hibernate-interview.md) — vs Hibernate Reactive (на Vert.x)
+- [Сетевые протоколы](../../architecture/networking-interview.md) — Netty under the hood
 
-- [[ktor-interview|Ktor]]
-- [[micronaut-interview|Micronaut]]
-- [[quarkus-interview|Quarkus]]
-- [[spring-aop-interview|Spring AOP]]
-- [[spring-batch-interview|Spring Batch]]
-- [[spring-boot-actuator-interview|Spring Boot Actuator]]
+- [Ktor](ktor-interview.md)
+- [Micronaut](micronaut-interview.md)
+- [Quarkus](quarkus-interview.md)
+- [Spring AOP](../spring/spring-aop-interview.md)
+- [Spring Batch](../spring/spring-batch-interview.md)
+- [Spring Boot Actuator](../spring/spring-boot-actuator-interview.md)

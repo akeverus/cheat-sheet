@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Visualgo: Heap Sort](https://visualgo.net/)
 
 ### См. также
-- [[quick-sort|Быстрая сортировка]] — **quick sort**
-- [[merge-sort|Сортировка слиянием]] — **merge sort**
+- [Быстрая сортировка](quick-sort.md) — **quick sort**
+- [Сортировка слиянием](merge-sort.md) — **merge sort**
 
-- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
-- [[selection-sort|Сортировка выбором (Selection Sort)]]
-- [[radix-sort|Поразрядная сортировка (Radix Sort)]]
+- [Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)](bead-sort.md)
+- [Сортировка выбором (Selection Sort)](selection-sort.md)
+- [Поразрядная сортировка (Radix Sort)](radix-sort.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -1,12 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Разрешение конфликтов"
-description: "Практические вопросы по разрешению конфликтов: технические разногласия, кросс-командные конфликты, управление стейкхолдерами, деэскалация."
+description: "Разрешение конфликтов: технические разногласия, кросс-командные конфликты, управление стейкхолдерами, деэскалация, конструктивный диалог"
 tags:
   - interview
   - leadership
-  - conflict-resolution
-  - stakeholder-management
-  - de-escalation
+  - conflict-resolution-interview
+aliases:
+  - "Conflict Resolution interview"
+  - "Conflict Resolution собеседование"
+  - "stakeholder management interview"
+  - "de-escalation interview"
+  - "разрешение конфликтов"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -266,10 +270,10 @@ updated: "2026-04-20"
 
 ## See also
 
-- [[team-leadership-interview|Team Leadership]]
-- [[code-review-practices-interview|Code Review Practices]]
-- [[behavioral-interview|Behavioral]]
-- [[technical-decisions-interview|Technical Decisions]]
-- [[mentoring-interview|Mentoring]]
-- [[estimations-planning-interview|Estimation & Planning]]
-- [[tech-interviewing-interview|Conducting Technical Interviews]]
+- [Team Leadership](team-leadership-interview.md)
+- [Code Review Practices](code-review-practices-interview.md)
+- [Behavioral](../behavioral/behavioral-interview.md)
+- [Technical Decisions](technical-decisions-interview.md)
+- [Mentoring](mentoring-interview.md)
+- [Estimation & Planning](estimations-planning-interview.md)
+- [Conducting Technical Interviews](tech-interviewing-interview.md)

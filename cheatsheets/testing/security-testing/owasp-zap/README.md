@@ -21,14 +21,14 @@ OWASP ZAP (Zed Attack Proxy) — открытый инструмент тест�
 ## Полезные ссылки
 
 ### Основные документы
-- [[owasp-zap|OWASP ZAP]] — Proxy, Scanner, Fuzzer, API, Automation Framework
+- [OWASP ZAP](owasp-zap.md) — Proxy, Scanner, Fuzzer, API, Automation Framework
 
 ### Соседние разделы
-- [[README|Security Testing]]
-- [[README|Burp Suite]]
-- [[README|sqlmap]]
-- [[testing-tools-overview|Testing Tools Overview]]
-- [[README|Security]]
+- [Security Testing](../../../basics/README.md)
+- [Burp Suite](../../../basics/README.md)
+- [sqlmap](../../../basics/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [Security](../../../basics/README.md)
 
 ### Внешние ресурсы
 - [zaproxy.org](https://www.zaproxy.org/)
@@ -46,11 +46,11 @@ OWASP ZAP (Zed Attack Proxy) — открытый инструмент тест�
 
 | Тема | Где читать |
 |------|-----------|
-| Proxy: перехват, HTTPS-сертификат | [[owasp-zap]] |
-| Scanner: passive / active, policies | [[owasp-zap]] |
-| Fuzzer, payloads | [[owasp-zap]] |
-| REST API, Automation Framework | [[owasp-zap]] |
-| Скрипты Zest/Python, отчёты | [[owasp-zap]] |
+| Proxy: перехват, HTTPS-сертификат | [owasp-zap](owasp-zap.md) |
+| Scanner: passive / active, policies | [owasp-zap](owasp-zap.md) |
+| Fuzzer, payloads | [owasp-zap](owasp-zap.md) |
+| REST API, Automation Framework | [owasp-zap](owasp-zap.md) |
+| Скрипты Zest/Python, отчёты | [owasp-zap](owasp-zap.md) |
 
 ## Когда использовать
 
@@ -65,6 +65,6 @@ OWASP ZAP (Zed Attack Proxy) — открытый инструмент тест�
 
 ## Куда идти дальше
 
-- Обзор security testing — [[README]]
-- Коммерческая альтернатива — [[README]]
-- Специализированный SQLi — [[README]]
+- Обзор security testing — [README](../../../basics/README.md)
+- Коммерческая альтернатива — [README](../../../basics/README.md)
+- Специализированный SQLi — [README](../../../basics/README.md)

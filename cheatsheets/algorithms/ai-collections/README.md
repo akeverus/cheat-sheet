@@ -28,12 +28,12 @@ updated: "2026-04-20"
 - `prompt-templates-for-algorithms.md` — промпты для AI-генерации задач и решений
 
 ### Соседние разделы
-- [[README|Алгоритмы]]
-- [[README|Алгоритмические парадигмы]]
-- [[README|Структуры данных]]
-- [[README|Задачи и решения]]
-- [[README|AI/ML алгоритмы]]
-- [[TOC|Interview cheatsheets]]
+- [Алгоритмы](../../basics/README.md)
+- [Алгоритмические парадигмы](../../basics/README.md)
+- [Структуры данных](../../basics/README.md)
+- [Задачи и решения](../../basics/README.md)
+- [AI/ML алгоритмы](../../basics/README.md)
+- [Interview cheatsheets](../../interview/TOC.md)
 
 ### Внешние ресурсы
 - [LeetCode](https://leetcode.com/) — каталог задач
@@ -53,11 +53,11 @@ updated: "2026-04-20"
 
 | Планируемая тема | Где лежит фундамент |
 |------------------|---------------------|
-| Подборки задач по паттернам | [[README|algorithms/algorithmic-paradigms/]] |
-| Разбор классических задач | [[README|algorithms/problems/]] |
-| Структуры данных и их задачи | [[README|algorithms/data-structures/]] |
-| Графовые задачи | [[README|algorithms/graphs/]] |
-| Подготовка к интервью | [[algorithms-interview|interview/algorithms/]] |
+| Подборки задач по паттернам | [algorithms/algorithmic-paradigms/](../../basics/README.md) |
+| Разбор классических задач | [algorithms/problems/](../../basics/README.md) |
+| Структуры данных и их задачи | [algorithms/data-structures/](../../basics/README.md) |
+| Графовые задачи | [algorithms/graphs/](../../basics/README.md) |
+| Подготовка к интервью | [interview/algorithms/](../../interview/algorithms/algorithms-interview.md) |
 
 ## Когда брать этот раздел
 
@@ -85,7 +85,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Теория алгоритмов — [[README|algorithms/README.md]]
-- Решённые задачи — [[README|algorithms/problems/]]
-- Структуры данных — [[README|algorithms/data-structures/]]
-- Подготовка к интервью — [[TOC|interview/TOC.md]]
+- Теория алгоритмов — [algorithms/README.md](../../basics/README.md)
+- Решённые задачи — [algorithms/problems/](../../basics/README.md)
+- Структуры данных — [algorithms/data-structures/](../../basics/README.md)
+- Подготовка к интервью — [interview/TOC.md](../../interview/TOC.md)

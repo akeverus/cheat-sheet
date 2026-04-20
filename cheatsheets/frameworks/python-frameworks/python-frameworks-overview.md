@@ -22,13 +22,13 @@ updated: "2026-04-20"
 - [Flask](https://flask.palletsprojects.com/)
 
 ### См. также
-- [[README|Frameworks README]] — раздел фреймворков
-- [[README|Java Frameworks]] — **Spring**, **Quarkus**
+- [Frameworks README](../../basics/README.md) — раздел фреймворков
+- [Java Frameworks](../../basics/README.md) — **Spring**, **Quarkus**
 
-- [[dotnet-frameworks-overview|.NET Frameworks — обзор]]
-- [[kotlin-frameworks-overview|Kotlin Frameworks — обзор]]
-- [[go-frameworks-overview|Go Frameworks — обзор (редирект)]]
-- [[scala-frameworks-overview|Scala Frameworks — обзор]]
+- [.NET Frameworks — обзор](../dotnet-frameworks/dotnet-frameworks-overview.md)
+- [Kotlin Frameworks — обзор](../kotlin-frameworks/kotlin-frameworks-overview.md)
+- [Go Frameworks — обзор (редирект)](../go-frameworks/go-frameworks-overview.md)
+- [Scala Frameworks — обзор](../scala-frameworks/scala-frameworks-overview.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -190,6 +190,6 @@ def get_item(id):
 
 ## Заключение
 
-**Python**-экосистема предлагает **Django** для полноценных приложений, **FastAPI** для современного **API**, **Flask** для гибкости. Выбор по требованиям к **ORM**, админке и асинхронности. См. [[README|Frameworks README]].
+**Python**-экосистема предлагает **Django** для полноценных приложений, **FastAPI** для современного **API**, **Flask** для гибкости. Выбор по требованиям к **ORM**, админке и асинхронности. См. [Frameworks README](../../basics/README.md).
 
 

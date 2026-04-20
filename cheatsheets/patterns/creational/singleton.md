@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Effective Java — Item 3](https://www.oreilly.com/library/view/effective-java/9780134686097/)
 
 ### См. также
-- [[double-checked-locking|Double-Checked Locking]] — Double-Checked Locking
-- [[java-basics|Java Basics]] — Java Basics
-- [[spring-framework-interview|Spring Core]] — IoC и бины
+- [Double-Checked Locking](../concurrency-patterns/double-checked-locking.md) — Double-Checked Locking
+- [Java Basics](../../languages/java/java-basics.md) — Java Basics
+- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — IoC и бины
 
-- [[builder|Строитель (Builder)]]
-- [[creational-patterns|Порождающие паттерны проектирования (Creational Patterns)]]
+- [Строитель (Builder)](builder.md)
+- [Порождающие паттерны проектирования (Creational Patterns)](creational-patterns.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

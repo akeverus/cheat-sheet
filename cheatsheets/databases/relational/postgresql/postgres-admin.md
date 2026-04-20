@@ -26,7 +26,7 @@ updated: "2026-04-20"
 - [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [[postgres-basics]] — [[postgres-indexes]] — [[postgres-transactions]].
+См. также: [postgres-basics](postgres-basics.md) — [postgres-indexes](postgres-indexes.md) — [postgres-transactions](postgres-transactions.md).
 
 ## Содержание
 
@@ -489,8 +489,8 @@ auto_explain.log_min_duration = '500ms'
 
 ## См. также
 
-- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
-- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
-- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
-- [[postgres-design|PostgreSQL: проектирование и нормализация]]
-- [[postgres-extensions|PostgreSQL: Расширения]]
+- [PostgreSQL: Резервное копирование и восстановление](postgres-backup-restore.md)
+- [PostgreSQL: Полное руководство по основам и мониторингу](postgres-basics.md)
+- [PostgreSQL: операции с данными (CRUD)](postgres-data-ops.md)
+- [PostgreSQL: проектирование и нормализация](postgres-design.md)
+- [PostgreSQL: Расширения](postgres-extensions.md)

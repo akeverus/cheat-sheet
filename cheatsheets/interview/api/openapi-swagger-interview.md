@@ -1259,19 +1259,19 @@ springdoc:
 
 ## See also
 
-- [[http-rest-interview|HTTP и REST]] — семантика HTTP, REST-принципы, CORS, кэширование
-- [[grpc-interview|gRPC]] — бинарный протокол, Protocol Buffers, стриминг, сравнение с REST
-- [[graphql-interview|GraphQL]] — схема, резолверы, N+1 проблема, подписки
-- [[websocket-interview|WebSocket]] — двунаправленная связь, STOMP, масштабирование
-- [[spring-boot-interview|Spring Boot]] — автоконфигурация, стартеры, Actuator
-- [[spring-security-interview|Spring Security]] — аутентификация, авторизация, OAuth2, JWT
-- [[spring-mvc-interview|Spring MVC]] — контроллеры, фильтры, перехватчики, DispatcherServlet
-- [[api-gateway-interview|API Gateway]] — маршрутизация, rate limiting, аутентификация на уровне шлюза
+- [HTTP и REST](http-rest-interview.md) — семантика HTTP, REST-принципы, CORS, кэширование
+- [gRPC](grpc-interview.md) — бинарный протокол, Protocol Buffers, стриминг, сравнение с REST
+- [GraphQL](graphql-interview.md) — схема, резолверы, N+1 проблема, подписки
+- [WebSocket](websocket-interview.md) — двунаправленная связь, STOMP, масштабирование
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — автоконфигурация, стартеры, Actuator
+- [Spring Security](../frameworks/spring/spring-security-interview.md) — аутентификация, авторизация, OAuth2, JWT
+- [Spring MVC](../frameworks/spring/spring-mvc-interview.md) — контроллеры, фильтры, перехватчики, DispatcherServlet
+- [API Gateway](../architecture/api-gateway-interview.md) — маршрутизация, rate limiting, аутентификация на уровне шлюза
 
-- [[api-design-best-practices-interview|API Design Best Practices]]
-- [[api-versioning-interview|API Versioning]]
-- [[graphql-interview|GraphQL]]
-- [[grpc-interview|gRPC]]
-- [[http-rest-interview|HTTP и REST]]
-- [[rest-maturity-interview|Richardson Maturity Model (REST)]]
-- [[openapi-swagger|Шпаргалка: OpenAPI/Swagger]] — теория
+- [API Design Best Practices](api-design-best-practices-interview.md)
+- [API Versioning](api-versioning-interview.md)
+- [GraphQL](graphql-interview.md)
+- [gRPC](grpc-interview.md)
+- [HTTP и REST](http-rest-interview.md)
+- [Richardson Maturity Model (REST)](rest-maturity-interview.md)
+- [Шпаргалка: OpenAPI/Swagger](../../development/api/api-tools/swagger/openapi-swagger.md) — теория

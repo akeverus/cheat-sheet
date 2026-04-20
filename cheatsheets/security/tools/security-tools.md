@@ -27,13 +27,13 @@ updated: "2026-04-20"
 - [Vulnerability Scanning Tools](https://owasp.org/www-community/Vulnerability_Scanning_Tools) — сравнение сканеров уязвимостей
 
 ### См. также
-- [[security-testing|Security Testing]] — когда и как запускать тесты безопасности
-- [[security-practices|Security Practices]] — как встроить всё это в процессы
+- [Security Testing](../testing/security-testing.md) — когда и как запускать тесты безопасности
+- [Security Practices](../security-practices.md) — как встроить всё это в процессы
 
 
-- [[spring-boot|Spring Boot — Полное руководство]]
-- [[quarkus-security|Quarkus: Security — Authentication, Authorization и OAuth2]]
-- [[micronaut-security|Micronaut: Security — Authentication и Authorization]]
+- [Spring Boot — Полное руководство](../../frameworks/spring/spring-boot.md)
+- [Quarkus: Security — Authentication, Authorization и OAuth2](../../frameworks/java-frameworks/quarkus/quarkus-security.md)
+- [Micronaut: Security — Authentication и Authorization](../../frameworks/java-frameworks/micronaut/micronaut-security.md)
 ## Содержание
 
 - [Карта категорий](#карта-категорий)

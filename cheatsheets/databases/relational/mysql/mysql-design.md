@@ -31,9 +31,9 @@ updated: "2026-04-20"
 - [ERwin Data Modeler](https://www.erwin.com/) — моделирование данных
 
 ### См. также
-- [[mysql-basics|mysql-basics.md]] — основы **MySQL**
-- [[mysql-indexes|mysql-indexes.md]] — индексы и оптимизация
-- [[postgres-design|PostgreSQL]] — сравнение с **PostgreSQL**
+- [mysql-basics.md](mysql-basics.md) — основы **MySQL**
+- [mysql-indexes.md](mysql-indexes.md) — индексы и оптимизация
+- [PostgreSQL](../postgresql/postgres-design.md) — сравнение с **PostgreSQL**
 
 ## Содержание
 
@@ -3055,11 +3055,11 @@ class Migration {
 Правильное проектирование базы данных — это фундамент успешного приложения. Инвестиции в качественное проектирование на начальном этапе многократно окупаются в процессе эксплуатации системы.
 
 **Следующие темы:**
-- [[mysql-queries]] — запросы и оптимизация **SQL**
-- [[mysql-indexes]] — индексы и производительность
-- [[mysql-replication]] — репликация и высокая доступность
-- [[mysql-performance]] — производительность и тюнинг
-- [[mysql-admin]] — администрирование и обслуживание
+- [mysql-queries](mysql-queries.md) — запросы и оптимизация **SQL**
+- [mysql-indexes](mysql-indexes.md) — индексы и производительность
+- [mysql-replication](mysql-replication.md) — репликация и высокая доступность
+- [mysql-performance](mysql-performance.md) — производительность и тюнинг
+- [mysql-admin](mysql-admin.md) — администрирование и обслуживание
 
 Проектирование баз данных — это баланс между идеальной нормализацией и практическими требованиями производительности и удобства использования.
 

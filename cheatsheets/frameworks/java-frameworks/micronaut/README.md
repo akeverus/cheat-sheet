@@ -18,23 +18,23 @@ Micronaut — JVM-фреймворк от команды Grails, ориенти�
 ## Полезные ссылки
 
 ### Основные документы
-- [[micronaut-basics|Micronaut: основы]] — введение, архитектура, первое приложение
-- [[micronaut-core|Micronaut Core]] — DI, beans, AOP
-- [[micronaut-http|Micronaut HTTP]], [[micronaut-openapi|Micronaut OpenAPI]]
-- [[micronaut-data|Micronaut Data]], [[micronaut-mongodb|Micronaut MongoDB]], [[micronaut-flyway|Micronaut Flyway]]
-- [[micronaut-reactive|Micronaut Reactive]], [[micronaut-websocket|Micronaut WebSocket]], [[micronaut-grpc|Micronaut gRPC]]
-- [[micronaut-kafka|Micronaut Kafka]], [[micronaut-jms|Micronaut JMS]], [[micronaut-redis|Micronaut Redis]]
-- [[micronaut-security|Micronaut Security]], [[micronaut-validation|Micronaut Validation]]
-- [[micronaut-serialization|Micronaut Serialization]], [[micronaut-views|Micronaut Views]]
-- [[micronaut-graalvm|Micronaut GraalVM]], [[micronaut-cloud|Micronaut Cloud]]
-- [[micronaut-testing|Micronaut Testing]], [[micronaut-actuator|Micronaut Actuator]]
-- [[micronaut-cache|Micronaut Cache]], [[micronaut-retry|Micronaut Retry]], [[micronaut-scheduling|Micronaut Scheduling]]
-- [[micronaut-batch|Micronaut Batch]], [[micronaut-mail|Micronaut Mail]]
-- [[micronaut-i18n|Micronaut i18n]], [[micronaut-multitenancy|Micronaut Multitenancy]], [[micronaut-logging|Micronaut Logging]]
+- [Micronaut: основы](micronaut-basics.md) — введение, архитектура, первое приложение
+- [Micronaut Core](micronaut-core.md) — DI, beans, AOP
+- [Micronaut HTTP](micronaut-http.md), [Micronaut OpenAPI](micronaut-openapi.md)
+- [Micronaut Data](micronaut-data.md), [Micronaut MongoDB](micronaut-mongodb.md), [Micronaut Flyway](micronaut-flyway.md)
+- [Micronaut Reactive](micronaut-reactive.md), [Micronaut WebSocket](micronaut-websocket.md), [Micronaut gRPC](micronaut-grpc.md)
+- [Micronaut Kafka](micronaut-kafka.md), [Micronaut JMS](micronaut-jms.md), [Micronaut Redis](micronaut-redis.md)
+- [Micronaut Security](micronaut-security.md), [Micronaut Validation](micronaut-validation.md)
+- [Micronaut Serialization](micronaut-serialization.md), [Micronaut Views](micronaut-views.md)
+- [Micronaut GraalVM](micronaut-graalvm.md), [Micronaut Cloud](micronaut-cloud.md)
+- [Micronaut Testing](micronaut-testing.md), [Micronaut Actuator](micronaut-actuator.md)
+- [Micronaut Cache](micronaut-cache.md), [Micronaut Retry](micronaut-retry.md), [Micronaut Scheduling](micronaut-scheduling.md)
+- [Micronaut Batch](micronaut-batch.md), [Micronaut Mail](micronaut-mail.md)
+- [Micronaut i18n](micronaut-i18n.md), [Micronaut Multitenancy](micronaut-multitenancy.md), [Micronaut Logging](micronaut-logging.md)
 
 ### Соседние разделы
-- [[README|Java Frameworks]] — обзор и сравнение
-- [[README|Spring]], [[README|Quarkus]], [[README|Vert.x]]
+- [Java Frameworks](../../../basics/README.md) — обзор и сравнение
+- [Spring](../../../basics/README.md), [Quarkus](../../../basics/README.md), [Vert.x](../../../basics/README.md)
 
 ### Внешние ресурсы
 - [Micronaut Documentation](https://docs.micronaut.io/latest/guide/)
@@ -68,15 +68,15 @@ Micronaut — JVM-фреймворк от команды Grails, ориенти�
 
 | Слой | Документ |
 |------|----------|
-| Ядро и DI | [[micronaut-basics]], [[micronaut-core]] |
-| HTTP / REST | [[micronaut-http]], [[micronaut-openapi]], [[micronaut-views]] |
-| Persistence | [[micronaut-data]], [[micronaut-mongodb]], [[micronaut-flyway]] |
-| Messaging | [[micronaut-kafka]], [[micronaut-jms]] |
-| Reactive / RPC | [[micronaut-reactive]], [[micronaut-grpc]], [[micronaut-websocket]] |
-| Security & Validation | [[micronaut-security]], [[micronaut-validation]] |
-| Native & Cloud | [[micronaut-graalvm]], [[micronaut-cloud]] |
-| Ops | [[micronaut-actuator]], [[micronaut-logging]], [[micronaut-cache]], [[micronaut-retry]] |
-| DX / Testing | [[micronaut-testing]] |
+| Ядро и DI | [micronaut-basics](micronaut-basics.md), [micronaut-core](micronaut-core.md) |
+| HTTP / REST | [micronaut-http](micronaut-http.md), [micronaut-openapi](micronaut-openapi.md), [micronaut-views](micronaut-views.md) |
+| Persistence | [micronaut-data](micronaut-data.md), [micronaut-mongodb](micronaut-mongodb.md), [micronaut-flyway](micronaut-flyway.md) |
+| Messaging | [micronaut-kafka](micronaut-kafka.md), [micronaut-jms](micronaut-jms.md) |
+| Reactive / RPC | [micronaut-reactive](micronaut-reactive.md), [micronaut-grpc](micronaut-grpc.md), [micronaut-websocket](micronaut-websocket.md) |
+| Security & Validation | [micronaut-security](micronaut-security.md), [micronaut-validation](micronaut-validation.md) |
+| Native & Cloud | [micronaut-graalvm](micronaut-graalvm.md), [micronaut-cloud](micronaut-cloud.md) |
+| Ops | [micronaut-actuator](micronaut-actuator.md), [micronaut-logging](micronaut-logging.md), [micronaut-cache](micronaut-cache.md), [micronaut-retry](micronaut-retry.md) |
+| DX / Testing | [micronaut-testing](micronaut-testing.md) |
 
 ## Маршруты чтения
 
@@ -87,6 +87,6 @@ Micronaut — JVM-фреймворк от команды Grails, ориенти�
 
 ## Куда идти дальше
 
-- Сравнение с соседями — [[README]]
-- GraalVM native image — [[micronaut-graalvm]]
-- Kotlin-экосистема — [[README]]
+- Сравнение с соседями — [README](../../../basics/README.md)
+- GraalVM native image — [micronaut-graalvm](micronaut-graalvm.md)
+- Kotlin-экосистема — [README](../../../basics/README.md)

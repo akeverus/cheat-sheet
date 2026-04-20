@@ -26,14 +26,14 @@ updated: "2026-04-20"
 - [Alertmanager — Slack configuration](https://prometheus.io/docs/alerting/latest/configuration/#slack_config)
 
 ### См. также
-- [[alertmanager|Alertmanager]] — маршрутизация алертов в Slack
-- [[pagerduty|PagerDuty]] — инцидент-менеджмент, интеграция со Slack
+- [Alertmanager](alertmanager.md) — маршрутизация алертов в Slack
+- [PagerDuty](pagerduty.md) — инцидент-менеджмент, интеграция со Slack
 - [Alerting](../) — раздел алертинга
 - [Monitoring](../) — обзор мониторинга
 
-- [[alerting|Системы алертинга для Java]]
-- [[redis-monitoring|Redis: Мониторинг]]
-- [[monitoring-best-practices|Лучшие практики мониторинга]]
+- [Системы алертинга для Java](alerting.md)
+- [Redis: Мониторинг](../../databases/nosql/redis/redis-monitoring.md)
+- [Лучшие практики мониторинга](../monitoring-best-practices.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -100,7 +100,7 @@ receivers:
 - **send_resolved** — отправлять уведомление при переходе алерта в resolved.
 - **title**, **text** — Go templates; данные: .Alerts, .CommonLabels, .CommonAnnotations, .Status.
 
-Глобальный webhook можно задать в `global.slack_api_url`. Подробнее: [[alertmanager]].
+Глобальный webhook можно задать в `global.slack_api_url`. Подробнее: [alertmanager](alertmanager.md).
 
 ## Форматирование и Block Kit
 

@@ -17,10 +17,10 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[operating-systems-basics|Операционные системы]]
+- [Операционные системы](../../basics/operating-systems/operating-systems-basics.md)
 ## Содержание
 
-- [[jmeter]]
-- [[k6]]
-- [[gatling]]
-- [[artillery]]
+- [jmeter](jmeter/jmeter.md)
+- [k6](k6/k6.md)
+- [gatling](gatling/gatling.md)
+- [artillery](artillery/artillery.md)

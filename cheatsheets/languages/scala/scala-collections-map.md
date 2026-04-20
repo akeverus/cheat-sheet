@@ -25,12 +25,12 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Scala Collections Overview](https://docs.scala-lang.org/overviews/collections-2.13/overview.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-collections-list|Списки (List)]]
-- [[scala-collections-set|Множества (Set)]]
-- [[scala-collections|Обзор коллекций]]
+- [Основы Scala](scala-basics.md)
+- [Списки (List)](scala-collections-list.md)
+- [Множества (Set)](scala-collections-set.md)
+- [Обзор коллекций](scala-collections.md)
 
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
 ## Содержание
 
 - [Введение в Map](#введение-в-map)

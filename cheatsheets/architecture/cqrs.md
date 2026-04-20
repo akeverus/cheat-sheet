@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Axon Framework](https://docs.axondb.io/)
 
 ### См. также
-- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
-- [[event-sourcing|Event Sourcing]] — **Event Sourcing**
-- [[ddd|Domain-Driven Design]] — **Domain-Driven Design**
-- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
+- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
+- [Event Sourcing](event-sourcing.md) — **Event Sourcing**
+- [Domain-Driven Design](ddd.md) — **Domain-Driven Design**
+- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
 
-- [[soa|SOA (Service-Oriented Architecture)]]
+- [SOA (Service-Oriented Architecture)](soa.md)
 ## Содержание
 
 - [Введение в CQRS](#введение-в-cqrs)

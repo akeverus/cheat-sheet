@@ -1571,20 +1571,20 @@ Mono<Result> result = Mono.fromCallable(() -> blockingOperation())
 
 ## See also
 
-- [[rxjava-interview|RxJava]] — альтернативная реактивная библиотека, похожая концепция `Observable`/`Flowable`
-- [[spring-webflux-interview|Spring WebFlux]] — реактивный веб-стек на основе `Project Reactor`
-- [[java-concurrency-interview|Java Concurrency]] — основы многопоточности и асинхронного программирования в `Java`
-- [[java-stream-interview|Java Stream API]] — синхронный аналог для работы с коллекциями, схожий API
-- [[kafka-interview|Apache Kafka]] — типичный источник данных для реактивных приложений
-- [[spring-boot-interview|Spring Boot]] — экосистема, в которой используется `Spring WebFlux`
-- [[spring-data-jpa-interview|Spring Data JPA]] — сравнение с реактивными репозиториями `R2DBC`
-- [[java-8-interview|Java 8]] — `CompletableFuture` как альтернативный подход к асинхронности
-- [[kotlin-coroutines-interview|Kotlin Coroutines]] — сравнение с корутинами как альтернативой реактивному программированию
-- [[distributed-systems-interview|Распределённые системы]] — реактивное программирование в контексте микросервисов
+- [RxJava](rxjava-interview.md) — альтернативная реактивная библиотека, похожая концепция `Observable`/`Flowable`
+- [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md) — реактивный веб-стек на основе `Project Reactor`
+- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — основы многопоточности и асинхронного программирования в `Java`
+- [Java Stream API](../programming-languages/java/java-stream-interview.md) — синхронный аналог для работы с коллекциями, схожий API
+- [Apache Kafka](../messaging/kafka-interview.md) — типичный источник данных для реактивных приложений
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — экосистема, в которой используется `Spring WebFlux`
+- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — сравнение с реактивными репозиториями `R2DBC`
+- [Java 8](../programming-languages/java/java-8-interview.md) — `CompletableFuture` как альтернативный подход к асинхронности
+- [Kotlin Coroutines](../programming-languages/kotlin/kotlin-coroutines-interview.md) — сравнение с корутинами как альтернативой реактивному программированию
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — реактивное программирование в контексте микросервисов
 
-- [[reactive-patterns-interview|Reactive Patterns]]
-- [[reactive-streams-interview|Reactive Streams]]
-- [[reactive-testing-interview|Тестирование реактивного кода]]
-- [[rxjava-interview|RxJava]]
-- [[webflux-interview|Spring WebFlux]]
-- [[ai-agents-interview|AI Agents]]
+- [Reactive Patterns](reactive-patterns-interview.md)
+- [Reactive Streams](reactive-streams-interview.md)
+- [Тестирование реактивного кода](reactive-testing-interview.md)
+- [RxJava](rxjava-interview.md)
+- [Spring WebFlux](webflux-interview.md)
+- [AI Agents](../ai-ml/ai-agents-interview.md)

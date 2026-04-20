@@ -28,11 +28,11 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[jackson|Jackson: JSON сериализация в Java]]
-- [[java-gson|Gson]]
-- [[java-junit5|JUnit 5]]
-- [[java-mockito|Mockito]]
-- [[java-mapstruct-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Jackson: JSON сериализация в Java](../serialization/jackson.md)
+- [Gson](../serialization/java-gson.md)
+- [JUnit 5](../testing-libraries/java-junit5.md)
+- [Mockito](../testing-libraries/java-mockito.md)
+- [Вопросы на собеседовании](../../interview/programming-languages/java/java-mapstruct-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в MapStruct](#введение-в-mapstruct)
@@ -1250,4 +1250,4 @@ public class UserMapperDecorator implements UserMapper {
 
 ## См. также
 
-- [[java-lombok|Lombok: Автоматизация boilerplate кода в Java]]
+- [Lombok: Автоматизация boilerplate кода в Java](../java/java-lombok.md)

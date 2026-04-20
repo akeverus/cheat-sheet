@@ -520,7 +520,7 @@ case result := <-doWork():
 }
 ```
 
-Подробнее — в [[go-concurrency-interview|Go Concurrency]].
+Подробнее — в [Go Concurrency](go-concurrency-interview.md).
 
 ## Q18. (!) errors.New, errors.Is, errors.As?
 
@@ -841,19 +841,19 @@ maps.Clone(m)
 
 ## See also
 
-- [[go-interview|Go (базовый)]] — основы языка
-- [[go-concurrency-interview|Go Concurrency]] — context, sync
-- [[go-memory-gc-interview|Go Memory & GC]] — pprof
-- [[go-generics-interview|Go Generics]] — slices/maps пакеты
-- [[go-testing-interview|Go Testing]] — testing пакет
-- [[http-rest-interview|HTTP & REST]] — net/http
-- [[postgresql-interview|PostgreSQL]] — database/sql + lib/pq
-- [[logging-interview|Logging]] — slog vs zap vs zerolog
-- [[microservices-interview|Микросервисы]] — Go использует stdlib для большинства задач
+- [Go (базовый)](go-interview.md) — основы языка
+- [Go Concurrency](go-concurrency-interview.md) — context, sync
+- [Go Memory & GC](go-memory-gc-interview.md) — pprof
+- [Go Generics](go-generics-interview.md) — slices/maps пакеты
+- [Go Testing](go-testing-interview.md) — testing пакет
+- [HTTP & REST](../../api/http-rest-interview.md) — net/http
+- [PostgreSQL](../../databases/postgresql-interview.md) — database/sql + lib/pq
+- [Logging](../../logging/logging-interview.md) — slog vs zap vs zerolog
+- [Микросервисы](../../architecture/microservices-interview.md) — Go использует stdlib для большинства задач
 
-- [[go-concurrency-interview|Go Concurrency]]
-- [[go-generics-interview|Go Generics]]
-- [[go-interview|Go]]
-- [[go-memory-gc-interview|Go Memory и GC]]
-- [[go-modules-interview|Go Modules]]
-- [[go-testing-interview|Go Testing]]
+- [Go Concurrency](go-concurrency-interview.md)
+- [Go Generics](go-generics-interview.md)
+- [Go](go-interview.md)
+- [Go Memory и GC](go-memory-gc-interview.md)
+- [Go Modules](go-modules-interview.md)
+- [Go Testing](go-testing-interview.md)

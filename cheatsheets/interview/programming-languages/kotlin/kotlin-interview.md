@@ -124,7 +124,7 @@ updated: "2026-04-13"
 | **Корутины** | Встроенная поддержка асинхронного программирования |
 | **Multiplatform** | Один код для JVM, JS, iOS, Desktop |
 
-`Kotlin` компилируется в `JVM`-байткод, полностью совместимый с экосистемой Java: [[spring-boot-interview|Spring Boot]], `Hibernate`, `Gradle` (Kotlin DSL). Это позволяет постепенно мигрировать Java-проекты на Kotlin.
+`Kotlin` компилируется в `JVM`-байткод, полностью совместимый с экосистемой Java: [Spring Boot](../../frameworks/spring/spring-boot-interview.md), `Hibernate`, `Gradle` (Kotlin DSL). Это позволяет постепенно мигрировать Java-проекты на Kotlin.
 
 ## Q2. (!) В чём ключевые отличия Kotlin от Java?
 
@@ -147,7 +147,7 @@ data class User(val name: String, val age: Int)
 // equals, hashCode, toString, getters, constructor...
 ```
 
-Подробнее о совместимости — [[kotlin-interop-java-interview|интероп Kotlin и Java]].
+Подробнее о совместимости — [интероп Kotlin и Java](kotlin-interop-java-interview.md).
 
 ## Q3. Какова система типов в Kotlin?
 
@@ -291,7 +291,7 @@ fun isPositive(n: Int) = n > 0
 val positives = listOf(-1, 2, -3, 4).filter(::isPositive)
 ```
 
-Функциональный тип с `receiver` — основа для DSL (подробнее в [[kotlin-dsl-interview|DSL в Kotlin]]):
+Функциональный тип с `receiver` — основа для DSL (подробнее в [DSL в Kotlin](kotlin-dsl-interview.md)):
 
 ```kotlin
 // Тип: String.() -> Unit — лямбда с receiver String
@@ -324,7 +324,7 @@ val triple = multiplier(3)
 println(triple(5))  // 15
 ```
 
-Стандартная библиотека `Kotlin` активно использует HOF: `map`, `filter`, `reduce`, `fold`, `groupBy`, `flatMap` и др. (подробнее в [[kotlin-collections-interview|коллекциях Kotlin]]).
+Стандартная библиотека `Kotlin` активно использует HOF: `map`, `filter`, `reduce`, `fold`, `groupBy`, `flatMap` и др. (подробнее в [коллекциях Kotlin](kotlin-collections-interview.md)).
 
 ## Q9. (!) Что такое функции расширения и как они работают?
 
@@ -770,7 +770,7 @@ fun printAll(list: List<*>) {
 }
 ```
 
-Подробнее о generics — [[java-generics-interview|Generics в Java]].
+Подробнее о generics — [Generics в Java](../java/java-generics-interview.md).
 
 ## Q25. Что такое `reified` type parameters?
 
@@ -1007,7 +1007,7 @@ println(readOnlyView) // [1, 2, 3, 4] — сюрприз!
 val immutable = underlying.toList()
 ```
 
-Подробнее — [[kotlin-collections-interview|Kotlin коллекции]].
+Подробнее — [Kotlin коллекции](kotlin-collections-interview.md).
 
 ## Q33. В чём разница между `Sequence` и `Iterable`?
 
@@ -1057,7 +1057,7 @@ val uniqueTags = allTags.toSet()         // [kotlin, jvm, spring]
 
 ## Q35. (!) Что такое корутины и чем они отличаются от потоков?
 
-Корутины — легковесные «потоки» для асинхронного программирования. Подробные вопросы — в [[kotlin-coroutines-interview|Kotlin Coroutines]].
+Корутины — легковесные «потоки» для асинхронного программирования. Подробные вопросы — в [Kotlin Coroutines](kotlin-coroutines-interview.md).
 
 ```mermaid
 graph LR
@@ -1111,7 +1111,7 @@ scope.launch {
 | `Dispatchers.Main` | UI-поток | Обновление UI (Android) |
 | `Dispatchers.Unconfined` | Текущий поток | Тесты, специальные случаи |
 
-Подробнее — [[kotlin-coroutines-interview|Kotlin Coroutines]].
+Подробнее — [Kotlin Coroutines](kotlin-coroutines-interview.md).
 
 ## Q37. В чём разница между `launch` и `async`?
 
@@ -1142,7 +1142,7 @@ coroutineScope {
 
 ## Q38. (!) Какая польза от `@JvmStatic`, `@JvmOverloads` и `@JvmField`?
 
-Аннотации для улучшения совместимости Kotlin-кода с Java (подробнее — [[kotlin-interop-java-interview|интероп Kotlin и Java]]).
+Аннотации для улучшения совместимости Kotlin-кода с Java (подробнее — [интероп Kotlin и Java](kotlin-interop-java-interview.md)).
 
 ```kotlin
 class Config {
@@ -1399,20 +1399,20 @@ button.addClickListener { doSomething() }
 
 ## See also
 
-- [[kotlin-coroutines-interview|Kotlin Coroutines]] — подробные вопросы по корутинам и Flow
-- [[kotlin-collections-interview|Kotlin коллекции]] — List, Set, Map, Sequence и операции
-- [[kotlin-exceptions-interview|Исключения в Kotlin]] — обработка ошибок, Result, sealed hierarchy
-- [[kotlin-dsl-interview|DSL в Kotlin]] — domain-specific languages и type-safe builders
-- [[kotlin-interop-java-interview|Интероп Kotlin и Java]] — @JvmStatic, platform types, SAM
-- [[kotlin-serialization-interview|Сериализация в Kotlin]] — `kotlinx.serialization` и форматы
-- [[java-core-interview|Java Core]] — основы Java для сравнения с Kotlin
-- [[java-concurrency-interview|Java Concurrency]] — многопоточность JVM, сравнение с корутинами
-- [[spring-boot-interview|Spring Boot]] — Kotlin со Spring Boot и Spring Data
-- [[design-patterns-interview|Design Patterns]] — паттерны, реализованные на Kotlin
+- [Kotlin Coroutines](kotlin-coroutines-interview.md) — подробные вопросы по корутинам и Flow
+- [Kotlin коллекции](kotlin-collections-interview.md) — List, Set, Map, Sequence и операции
+- [Исключения в Kotlin](kotlin-exceptions-interview.md) — обработка ошибок, Result, sealed hierarchy
+- [DSL в Kotlin](kotlin-dsl-interview.md) — domain-specific languages и type-safe builders
+- [Интероп Kotlin и Java](kotlin-interop-java-interview.md) — @JvmStatic, platform types, SAM
+- [Сериализация в Kotlin](kotlin-serialization-interview.md) — `kotlinx.serialization` и форматы
+- [Java Core](../java/java-core-interview.md) — основы Java для сравнения с Kotlin
+- [Java Concurrency](../java/java-concurrency-interview.md) — многопоточность JVM, сравнение с корутинами
+- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — Kotlin со Spring Boot и Spring Data
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — паттерны, реализованные на Kotlin
 
-- [[kotlin-collections-interview|Kotlin коллекции]]
-- [[kotlin-coroutines-interview|Kotlin Coroutines]]
-- [[kotlin-dsl-interview|DSL в Kotlin]]
-- [[kotlin-exceptions-interview|исключения в Kotlin]]
-- [[kotlin-interop-java-interview|интероп Kotlin и Java]]
-- [[kotlin-serialization-interview|сериализация в Kotlin]]
+- [Kotlin коллекции](kotlin-collections-interview.md)
+- [Kotlin Coroutines](kotlin-coroutines-interview.md)
+- [DSL в Kotlin](kotlin-dsl-interview.md)
+- [исключения в Kotlin](kotlin-exceptions-interview.md)
+- [интероп Kotlin и Java](kotlin-interop-java-interview.md)
+- [сериализация в Kotlin](kotlin-serialization-interview.md)

@@ -203,7 +203,7 @@ graph LR
 - Запрещают `mixed content` (HTTPS-страница не может грузить HTTP-ресурсы)
 - Применяют `HTTPS-Only Mode`, автоматически переводя HTTP на HTTPS
 
-См. подробнее в [[http-rest-interview|вопросах по HTTP/REST]].
+См. подробнее в [вопросах по HTTP/REST](../api/http-rest-interview.md).
 
 ## Q6. (!) Как устроен `TLS 1.2` handshake?
 
@@ -1594,7 +1594,7 @@ keytool -importcert -alias api-example-com \
 
 **HTTP-заголовки:**
 - [ ] `Strict-Transport-Security: max-age=31536000; includeSubDomains` (желательно `preload`)
-- [ ] `Content-Security-Policy` (см. [[application-security-interview|application-security]])
+- [ ] `Content-Security-Policy` (см. [application-security](application-security-interview.md))
 - [ ] `X-Content-Type-Options: nosniff`
 - [ ] `Referrer-Policy: strict-origin-when-cross-origin`
 
@@ -1617,21 +1617,21 @@ keytool -importcert -alias api-example-com \
 
 ## See also
 
-- [[application-security-interview|Application Security]] — шифрование, защита от атак, security headers в контексте TLS
-- [[authentication-authorization-patterns-interview|Authentication & Authorization Patterns]] — mTLS как способ аутентификации, связь с OAuth2
-- [[oauth2-interview|OAuth2]] — OAuth2 работает поверх TLS, токены передаются в защищённом канале
-- [[jwt-interview|JWT]] — JWT подписи и асимметричная криптография пересекается с X.509
-- [[owasp-top10-interview|OWASP Top 10]] — A02 Cryptographic Failures напрямую про TLS misconfiguration
-- [[http-rest-interview|HTTP / REST]] — HTTPS как транспорт для REST API, HSTS и security-заголовки
-- [[networking-interview|Networking]] — TLS на сетевом стеке, OSI, TCP-связь
-- [[spring-security-interview|Spring Security]] — X.509 аутентификация, настройка HTTPS в Spring
-- [[microservices-interview|Microservices]] — service mesh и mTLS для внутренних вызовов
-- [[kubernetes-interview|Kubernetes]] — cert-manager, Ingress TLS, mTLS в Istio
+- [Application Security](application-security-interview.md) — шифрование, защита от атак, security headers в контексте TLS
+- [Authentication & Authorization Patterns](authentication-authorization-patterns-interview.md) — mTLS как способ аутентификации, связь с OAuth2
+- [OAuth2](oauth2-interview.md) — OAuth2 работает поверх TLS, токены передаются в защищённом канале
+- [JWT](jwt-interview.md) — JWT подписи и асимметричная криптография пересекается с X.509
+- [OWASP Top 10](owasp-top10-interview.md) — A02 Cryptographic Failures напрямую про TLS misconfiguration
+- [HTTP / REST](../api/http-rest-interview.md) — HTTPS как транспорт для REST API, HSTS и security-заголовки
+- [Networking](../architecture/networking-interview.md) — TLS на сетевом стеке, OSI, TCP-связь
+- [Spring Security](../frameworks/spring/spring-security-interview.md) — X.509 аутентификация, настройка HTTPS в Spring
+- [Microservices](../architecture/microservices-interview.md) — service mesh и mTLS для внутренних вызовов
+- [Kubernetes](../devops/kubernetes-interview.md) — cert-manager, Ingress TLS, mTLS в Istio
 
-- [[application-security-interview|Application Security]]
-- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
-- [[jwt-interview|JWT]]
-- [[mtls-interview|mTLS (Mutual TLS)]]
-- [[oauth2-interview|OAuth2]]
-- [[owasp-top10-interview|OWASP Top 10]]
-- [[tls-ssl|Шпаргалка: TLS / SSL: handshake, сертификаты, конфи]] — теория
+- [Application Security](application-security-interview.md)
+- [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
+- [JWT](jwt-interview.md)
+- [mTLS (Mutual TLS)](mtls-interview.md)
+- [OAuth2](oauth2-interview.md)
+- [OWASP Top 10](owasp-top10-interview.md)
+- [Шпаргалка: TLS / SSL: handshake, сертификаты, конфи](../../security/infrastructure/tls-ssl.md) — теория

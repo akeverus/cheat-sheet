@@ -15,16 +15,16 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[[README|Spring]]
+[Spring](../../basics/README.md)
 [Quarkus](quarkus/)
 [Micronaut](micronaut/)
 [Javalin](javalin/)
 
 ## Содержание
 
-- [[README|Spring]]
-- [[quarkus-basics|Quarkus]]
-- [[micronaut-basics|Micronaut]]
-- [[vertx-basics|Vert.x]]
-- [[javalin-basics|Javalin]]
-- [[dropwizard-basics|Dropwizard]]
+- [Spring](../../basics/README.md)
+- [Quarkus](quarkus/quarkus-basics.md)
+- [Micronaut](micronaut/micronaut-basics.md)
+- [Vert.x](vertx/vertx-basics.md)
+- [Javalin](javalin/javalin-basics.md)
+- [Dropwizard](dropwizard/dropwizard-basics.md)

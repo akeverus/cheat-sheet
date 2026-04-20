@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Exposed Tutorial](https://github.com/JetBrains/Exposed/wiki/Getting-Started)
 
 ### См. также
-- [[kotlin-basics|Основы Kotlin]]
-- [[kotlin-dsl|DSL в Kotlin]]
-- [[postgres-basics|Основы PostgreSQL]]
+- [Основы Kotlin](../../languages/kotlin/kotlin-basics.md)
+- [DSL в Kotlin](../../languages/kotlin/kotlin-dsl.md)
+- [Основы PostgreSQL](../../databases/relational/postgresql/postgres-basics.md)
 
-- [[kotlin-konfig|Konfig]]
-- [[kotlin-kotlinx-coroutines|kotlinx.coroutines]]
+- [Konfig](kotlin-konfig.md)
+- [kotlinx.coroutines](kotlin-kotlinx-coroutines.md)
 ## Содержание
 
 - [Введение в Exposed](#введение-в-exposed)

@@ -28,12 +28,12 @@ related: ["scala/scala-fp-basics.md", "scala/scala-basics.md"]
 - [Scalaz Documentation](https://scalaz.github.io/scalaz/)
 
 ### См. также
-- [[scala-fp-basics|Основы функционального программирования]]
-- [[scala-basics|Основы Scala]]
+- [Основы функционального программирования](scala-fp-basics.md)
+- [Основы Scala](scala-basics.md)
 
-- [[scala-for-comprehensions|Scala For Comprehensions]]
-- [[scala-collections-list|Scala Collections — List]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [Scala For Comprehensions](scala-for-comprehensions.md)
+- [Scala Collections — List](scala-collections-list.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
 ## Содержание
 
 - [Functors](#functors)

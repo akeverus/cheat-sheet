@@ -732,20 +732,20 @@ def my_pipeline():
 
 ## See also
 
-- [[apache-airflow-interview|Apache Airflow]] — частая пара (orchestration + dbt)
-- [[apache-spark-interview|Apache Spark]] — для ETL до dbt в warehouse
-- [[data-warehousing-interview|Data Warehousing]] — где работает dbt
-- [[data-lake-lakehouse-interview|Data Lake / Lakehouse]] — modern context
-- [[postgresql-interview|PostgreSQL]] — один из targets
-- [[sql-interview|SQL]] — основа dbt models
-- [[stream-processing-interview|Stream Processing]] — vs batch dbt
-- [[microservices-interview|Микросервисы]] — другой паттерн (event-driven)
-- [[git-interview|Git]] — обязательный для dbt projects
-- [[unit-testing-interview|Unit Testing]] — концепции тестов
+- [Apache Airflow](apache-airflow-interview.md) — частая пара (orchestration + dbt)
+- [Apache Spark](apache-spark-interview.md) — для ETL до dbt в warehouse
+- [Data Warehousing](data-warehousing-interview.md) — где работает dbt
+- [Data Lake / Lakehouse](data-lake-lakehouse-interview.md) — modern context
+- [PostgreSQL](../databases/postgresql-interview.md) — один из targets
+- [SQL](../databases/sql-interview.md) — основа dbt models
+- [Stream Processing](stream-processing-interview.md) — vs batch dbt
+- [Микросервисы](../architecture/microservices-interview.md) — другой паттерн (event-driven)
+- [Git](../devops/git-interview.md) — обязательный для dbt projects
+- [Unit Testing](../testing/unit-testing-interview.md) — концепции тестов
 
-- [[apache-airflow-interview|Apache Airflow]]
-- [[apache-flink-interview|Apache Flink]]
-- [[apache-spark-interview|Apache Spark]]
-- [[data-lake-lakehouse-interview|Data Lake и Lakehouse]]
-- [[data-warehousing-interview|Data Warehousing]]
-- [[kafka-streams-interview|Kafka Streams]]
+- [Apache Airflow](apache-airflow-interview.md)
+- [Apache Flink](apache-flink-interview.md)
+- [Apache Spark](apache-spark-interview.md)
+- [Data Lake и Lakehouse](data-lake-lakehouse-interview.md)
+- [Data Warehousing](data-warehousing-interview.md)
+- [Kafka Streams](kafka-streams-interview.md)

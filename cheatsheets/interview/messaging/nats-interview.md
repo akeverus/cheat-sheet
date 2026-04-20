@@ -495,23 +495,23 @@ accounts: {
 
 ## See also
 
-- [[kafka-interview|Apache Kafka]] — main конкурент
-- [[rabbitmq-interview|RabbitMQ]] — другой конкурент
-- [[message-brokers-comparison-interview|Message Brokers Comparison]] — overview
-- [[pulsar-interview|Apache Pulsar]] — другая alternative
-- [[event-driven-patterns-interview|Event-driven Patterns]] — context
-- [[microservices-interview|Микросервисы]] — primary use case
-- [[stream-processing-interview|Stream Processing]] — context
-- [[distributed-systems-interview|Распределённые системы]] — RAFT, consensus
-- [[cap-theorem-interview|CAP Theorem]] — JetStream tradeoffs
-- [[grpc-interview|gRPC]] — alternative для RPC
-- [[saga-pattern-interview|Saga Pattern]] — NATS для sagas
-- [[caching-strategies-interview|Caching]] — NATS KV
+- [Apache Kafka](kafka-interview.md) — main конкурент
+- [RabbitMQ](rabbitmq-interview.md) — другой конкурент
+- [Message Brokers Comparison](message-brokers-comparison-interview.md) — overview
+- [Apache Pulsar](pulsar-interview.md) — другая alternative
+- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — context
+- [Микросервисы](../architecture/microservices-interview.md) — primary use case
+- [Stream Processing](../data-engineering/stream-processing-interview.md) — context
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — RAFT, consensus
+- [CAP Theorem](../architecture/cap-theorem-interview.md) — JetStream tradeoffs
+- [gRPC](../api/grpc-interview.md) — alternative для RPC
+- [Saga Pattern](../architecture/saga-pattern-interview.md) — NATS для sagas
+- [Caching](../architecture/caching-strategies-interview.md) — NATS KV
 
-- [[aws-sqs-sns-interview|AWS SQS и SNS]]
-- [[kafka-interview|Apache Kafka]]
-- [[message-brokers-comparison-interview|Сравнение Message Brokers]]
-- [[pulsar-interview|Apache Pulsar]]
-- [[rabbitmq-interview|RabbitMQ]]
-- [[redpanda-interview|Redpanda]]
-- [[nats|Шпаргалка: NATS]] — теория
+- [AWS SQS и SNS](aws-sqs-sns-interview.md)
+- [Apache Kafka](kafka-interview.md)
+- [Сравнение Message Brokers](message-brokers-comparison-interview.md)
+- [Apache Pulsar](pulsar-interview.md)
+- [RabbitMQ](rabbitmq-interview.md)
+- [Redpanda](redpanda-interview.md)
+- [Шпаргалка: NATS](../../development/messaging/nats/nats.md) — теория

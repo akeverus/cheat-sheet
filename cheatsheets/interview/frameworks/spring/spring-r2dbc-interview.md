@@ -1,16 +1,36 @@
 ---
-title: "Spring R2DBC — Interview"
-description: "Вопросы на собеседовании по Spring Data R2DBC: реактивные репозитории, транзакции, connection pool, тестирование, R2DBC vs JPA."
+title: "Вопросы на собеседовании: Spring Data R2DBC"
+description: "Spring Data R2DBC для реактивной работы с БД: ReactiveCrudRepository, R2dbcEntityTemplate, реактивные транзакции, DatabaseClient, миграции, интеграция с WebFlux"
 tags:
   - interview
   - spring
-  - r2dbc
-  - reactive
-  - database
+  - spring-r2dbc-interview
+aliases:
+  - "Spring R2DBC interview"
+  - "Spring R2DBC собеседование"
+  - "Spring Data R2DBC вопросы"
+  - "reactive database spring interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Spring R2DBC — Interview
+# Вопросы на собеседовании: `Spring Data R2DBC`
+
+`Spring Data R2DBC` — реактивная альтернатива JDBC для доступа к реляционным БД. Использует non-blocking драйверы (`r2dbc-postgresql`, `r2dbc-mysql`, `r2dbc-h2`), интегрируется с Spring WebFlux и возвращает `Mono`/`Flux` вместо синхронных типов. Часто спрашивается вместе с WebFlux.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Spring Data R2DBC](https://docs.spring.io/spring-data/r2dbc/docs/current/reference/html/) — официальная документация
+- [R2DBC Spec](https://r2dbc.io/) — спецификация Reactive Relational Database Connectivity
+- [Baeldung: Spring R2DBC](https://www.baeldung.com/spring-data-r2dbc) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 ## Q1. Что такое R2DBC и чем он отличается от JDBC?
 
@@ -491,8 +511,13 @@ public class OrderController {
 
 ## See also
 
-- [[spring-r2dbc|Spring Data R2DBC]] — полный cheatsheet
-- [[spring-webflux-interview|Spring WebFlux Interview]] — реактивный стек
-- [[spring-data-jpa-interview|Spring Data JPA Interview]] — альтернатива для блокирующих приложений
-- [[kafka-streams-interview|Kafka Streams Interview]] — реактивная потоковая обработка
-- [[spring-boot-interview|Spring Boot Interview]] — общие вопросы Spring Boot
+- [Spring WebFlux](spring-webflux-interview.md) — реактивный HTTP стек, идеально сочетается с R2DBC
+- [Spring Data JPA](spring-data-jpa-interview.md) — блокирующая альтернатива для синхронных приложений
+- [Spring Data JDBC](spring-data-jdbc-interview.md) — lightweight JDBC без реактивности
+- [Spring Boot](spring-boot-interview.md) — auto-configuration для R2DBC
+- [Project Reactor](../../reactive/project-reactor-interview.md) — Mono/Flux API используемый в R2DBC
+- [Reactive Streams](../../reactive/reactive-streams-interview.md) — спецификация backpressure
+- [Virtual Threads](../../programming-languages/java/java-virtual-threads-interview.md) — альтернатива реактивного подхода
+- [Database Transactions](../../databases/database-transactions-interview.md) — теория транзакций, изоляция
+- [PostgreSQL](../../databases/postgresql-interview.md) — r2dbc-postgresql драйвер
+- [Spring @Transactional](spring-transaction-interview.md) — реактивные транзакции через ReactiveTransactionManager

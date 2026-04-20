@@ -33,10 +33,10 @@ updated: "2026-04-20"
 - [Prometheus MySQL Exporter](https://github.com/prometheus/mysqld_exporter) и [Grafana](https://grafana.com/docs/)
 
 ### См. также
-- [[mysql-basics|mysql-basics.md]] — основы **MySQL**
-- [[mysql-performance|mysql-performance.md]] — производительность и тюнинг
-- [[mysql-replication|mysql-replication.md]] — репликация и высокая доступность
-- [[mysql-queries|mysql-queries.md]] — запросы и мониторинг
+- [mysql-basics.md](mysql-basics.md) — основы **MySQL**
+- [mysql-performance.md](mysql-performance.md) — производительность и тюнинг
+- [mysql-replication.md](mysql-replication.md) — репликация и высокая доступность
+- [mysql-queries.md](mysql-queries.md) — запросы и мониторинг
 
 ## Содержание
 
@@ -1711,8 +1711,8 @@ volumes:
 Администрирование **MySQL** — это комплексная дисциплина, требующая глубокого понимания базы данных, операционной системы, сетевых технологий и принципов высокой доступности. Правильное администрирование обеспечивает надежность, производительность и безопасность критически важных систем.
 
 **Следующие темы:**
-- [[mysql-performance]] — мониторинг и тюнинг
-- [[mysql-replication]] — высокая доступность
+- [mysql-performance](mysql-performance.md) — мониторинг и тюнинг
+- [mysql-replication](mysql-replication.md) — высокая доступность
 - Резервное копирование — см. документацию **MySQL**
 
 Профессиональное администрирование — это сочетание технических навыков, системного мышления и постоянного обучения!

@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Introduction to Deeplearning4j](https://www.baeldung.com/deeplearning4j)
 
 ### См. также
-- [[cnn-deeplearning4j|CNN с Deeplearning4j]]
-- [[deeplearning4j|Deeplearning4j]]
-- [[spark-mllib|Spark MLlib]]
+- [CNN с Deeplearning4j](cnn-deeplearning4j.md)
+- [Deeplearning4j](deeplearning4j.md)
+- [Spark MLlib](spark-mllib.md)
 
-- [[ai-libraries|Обзор ИИ библиотек]]
-- [[jenetics|Руководство по Jenetics]]
+- [Обзор ИИ библиотек](ai-libraries.md)
+- [Руководство по Jenetics](jenetics.md)
 ## Содержание
 
 - [Введение в машинное обучение](#введение-в-машинное-обучение)

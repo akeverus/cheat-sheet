@@ -29,10 +29,10 @@ GitHub Copilot — это AI-ассистент разработки от GitHub
 
 
 ### См. также
-- [[claude-basics|Claude Code: основы]]
-- [[windsurf-basics|Windsurf: основы]]
-- [[aider-basics|Aider: основы]]
-- [[openclaw-basics|OpenClaw: основы]]
+- [Claude Code: основы](../claude/claude-basics.md)
+- [Windsurf: основы](../windsurf/windsurf-basics.md)
+- [Aider: основы](../aider/aider-basics.md)
+- [OpenClaw: основы](../openclaw/openclaw-basics.md)
 ## Содержание
 
 - [Введение](#введение)
@@ -442,7 +442,7 @@ A: Copilot понимает и русский, и английский, но ч�
 
 ## См. также
 
-- [[cursor-basics|Cursor: основы]] — AI-first IDE, альтернативный/дополняющий подход.
+- [Cursor: основы](../cursor/cursor-basics.md) — AI-first IDE, альтернативный/дополняющий подход.
 - Внутренние гайды по стилю и архитектуре проекта (если есть).
 
 

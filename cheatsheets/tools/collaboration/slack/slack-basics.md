@@ -26,7 +26,7 @@ Slack — мессенджер для команд: каналы по темам
 
 
 ### См. также
-- [[security-tools|Инструменты безопасности (Security Tools)]]
+- [Инструменты безопасности (Security Tools)](../../../security/tools/security-tools.md)
 ## Содержание
 
 - [Каналы и организация](#каналы-и-организация)
@@ -350,4 +350,4 @@ Workspace — организация/команда в Slack; свои кана�
 
 ## Заключение
 
-Для углублённого изучения — [Slack Help Center](https://slack.com/help) и [Slack API](https://api.slack.com/). См. также: [[jira-basics|Jira]] — [[confluence-basics|Confluence]] — [[mattermost-basics|Mattermost]] — [[telegram-basics|Telegram]].
+Для углублённого изучения — [Slack Help Center](https://slack.com/help) и [Slack API](https://api.slack.com/). См. также: [Jira](../jira/jira-basics.md) — [Confluence](../confluence/confluence-basics.md) — [Mattermost](../mattermost/mattermost-basics.md) — [Telegram](../telegram/telegram-basics.md).

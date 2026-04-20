@@ -19,7 +19,7 @@ updated: "2026-04-20"
 - [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
 - [Docker Security](https://docs.docker.com/engine/security/)
 - [BuildKit](https://docs.docker.com/build/buildkit/)
-- [[docker-compose|Docker Compose]]
+- [Docker Compose](docker-compose.md)
 - [Docker Swarm](https://docs.docker.com/engine/swarm/)
 
 ## Содержание
@@ -1054,7 +1054,7 @@ docker history myapp:latest
 dive myapp:latest
 ```
 ## См. также
-- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
-- [[terraform|Terraform]] — инфраструктура как код
-- [[ansible|Ansible]] — конфигурационное управление
-- [[prometheus|Prometheus]] — мониторинг
+- [Kubernetes](../kubernetes/kubernetes-basics.md) — оркестрация контейнеров
+- [Terraform](../../iac/terraform/terraform.md) — инфраструктура как код
+- [Ansible](../../iac/ansible/ansible.md) — конфигурационное управление
+- [Prometheus](../../../monitoring/metrics/prometheus.md) — мониторинг

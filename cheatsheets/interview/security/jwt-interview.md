@@ -1641,15 +1641,15 @@ public JwtDecoder jwtDecoder() {
 
 ## See also
 
-- [[oauth2-interview|OAuth2]] — протокол авторизации, в котором JWT используется как формат Access Token
-- [[spring-security-interview|Spring Security]] — настройка JWT-аутентификации, Resource Server, фильтры безопасности
-- [[authentication-authorization-patterns-interview|Паттерны аутентификации]] — сравнение JWT с сессиями, SSO, SAML
-- [[application-security-interview|Application Security]] — общие принципы безопасности приложений, XSS, CSRF
-- [[owasp-top10-interview|OWASP Top 10]] — классификация уязвимостей, в т.ч. связанных с аутентификацией
+- [OAuth2](oauth2-interview.md) — протокол авторизации, в котором JWT используется как формат Access Token
+- [Spring Security](../frameworks/spring/spring-security-interview.md) — настройка JWT-аутентификации, Resource Server, фильтры безопасности
+- [Паттерны аутентификации](authentication-authorization-patterns-interview.md) — сравнение JWT с сессиями, SSO, SAML
+- [Application Security](application-security-interview.md) — общие принципы безопасности приложений, XSS, CSRF
+- [OWASP Top 10](owasp-top10-interview.md) — классификация уязвимостей, в т.ч. связанных с аутентификацией
 
-- [[application-security-interview|Application Security]]
-- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
-- [[mtls-interview|mTLS (Mutual TLS)]]
-- [[oauth2-interview|OAuth2]]
-- [[owasp-top10-interview|OWASP Top 10]]
-- [[secrets-management-interview|Secrets Management]]
+- [Application Security](application-security-interview.md)
+- [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
+- [mTLS (Mutual TLS)](mtls-interview.md)
+- [OAuth2](oauth2-interview.md)
+- [OWASP Top 10](owasp-top10-interview.md)
+- [Secrets Management](secrets-management-interview.md)

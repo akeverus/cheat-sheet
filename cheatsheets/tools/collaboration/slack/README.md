@@ -13,18 +13,18 @@ updated: "2026-04-20"
 
 Slack — SaaS-платформа корпоративного чата: каналы (public/private/shared), треды, emoji-реакции, файлы, интеграции. Огромная экосистема (2000+ приложений в marketplace). Для инженера важны: incoming webhooks для notifications, Bolt SDK для ботов, Events API для реакций на события, slash-commands для ChatOps.
 
-Альтернативы: [[README|Mattermost]] для self-hosted, [[README|Telegram]] для более лёгких сценариев и ботов.
+Альтернативы: [Mattermost](../../../basics/README.md) для self-hosted, [Telegram](../../../basics/README.md) для более лёгких сценариев и ботов.
 
 ## Полезные ссылки
 
 ### Основной документ
-- [[slack-basics|Основы Slack]] — UI, API, боты, webhooks
+- [Основы Slack](slack-basics.md) — UI, API, боты, webhooks
 
 ### Соседние разделы
-- [[README|Mattermost]]
-- [[README|Telegram]]
-- [[README|Alerting]] — алерты в Slack
-- [[README|CI/CD]] — нотификации билдов
+- [Mattermost](../../../basics/README.md)
+- [Telegram](../../../basics/README.md)
+- [Alerting](../../../basics/README.md) — алерты в Slack
+- [CI/CD](../../../basics/README.md) — нотификации билдов
 
 ### Внешние ресурсы
 - [Slack API docs](https://api.slack.com/)
@@ -143,12 +143,12 @@ app.command('/deploy', async ({ command, ack, respond }) => {
 
 ## Маршруты чтения
 
-- **Разработчик:** [[slack-basics]] Block Kit incoming webhook для своего сервиса.
+- **Разработчик:** [slack-basics](slack-basics.md) Block Kit incoming webhook для своего сервиса.
 - **DevOps:** ChatOps + PagerDuty integration + Alertmanager-webhook.
 - **Admin:** workspace settings, retention, SSO, app governance.
 
 ## Куда идти дальше
 
-- [[README|Mattermost]] для self-hosted
-- [[README|Alerting]] — routing в Slack
-- [[README|CI/CD]] — webhook после билда
+- [Mattermost](../../../basics/README.md) для self-hosted
+- [Alerting](../../../basics/README.md) — routing в Slack
+- [CI/CD](../../../basics/README.md) — webhook после билда

@@ -32,10 +32,10 @@ updated: "2026-04-20"
 - [pt-query-digest](https://docs.percona.com/percona-toolkit/pt-query-digest.html)
 
 ### См. также
-- [[mysql-basics|mysql-basics.md]] — основы **MySQL**
-- [[mysql-design|mysql-design.md]] — проектирование баз данных
-- [[mysql-indexes|mysql-indexes.md]] — индексы и производительность
-- [[postgres-queries|PostgreSQL]] — сравнение с **PostgreSQL**
+- [mysql-basics.md](mysql-basics.md) — основы **MySQL**
+- [mysql-design.md](mysql-design.md) — проектирование баз данных
+- [mysql-indexes.md](mysql-indexes.md) — индексы и производительность
+- [PostgreSQL](../postgresql/postgres-queries.md) — сравнение с **PostgreSQL**
 
 ## Содержание
 
@@ -4741,10 +4741,10 @@ public class QueryValidationService {
 Оптимизация **MySQL** — это непрерывный процесс. Важно не только решать текущие проблемы производительности, но и предотвращать их возникновение в будущем через правильное проектирование и архитектурные решения.
 
 **Следующие темы:**
-- [[mysql-indexes]] — индексы и оптимизация
-- [[mysql-performance]] — производительность и тюнинг
-- [[mysql-replication]] — репликация и высокая доступность
-- [[mysql-admin]] — администрирование и обслуживание
+- [mysql-indexes](mysql-indexes.md) — индексы и оптимизация
+- [mysql-performance](mysql-performance.md) — производительность и тюнинг
+- [mysql-replication](mysql-replication.md) — репликация и высокая доступность
+- [mysql-admin](mysql-admin.md) — администрирование и обслуживание
 
 Эффективные запросы — это основа производительности любой базы данных!
 

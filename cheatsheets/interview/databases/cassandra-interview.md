@@ -119,7 +119,7 @@ updated: "2026-04-13"
 - **Peer-to-peer** архитектура — все узлы равноправны
 - **Линейная масштабируемость** — удвоение узлов удваивает пропускную способность
 - **Tunable consistency** — настраиваемый уровень консистентности per-query
-- **AP-система** в терминах [[cap-theorem-interview|CAP-теоремы]] (Availability + Partition tolerance)
+- **AP-система** в терминах [CAP-теоремы](../architecture/cap-theorem-interview.md) (Availability + Partition tolerance)
 - Оптимизирована для **записи** (write-optimized, `LSM-tree`)
 
 **Когда выбирать Cassandra:**
@@ -332,7 +332,7 @@ PRIMARY KEY ((user_id, region), created_at, event_id)
 
 ## Q9. (!) Как правильно моделировать данные в `Cassandra`?
 
-В отличие от реляционных БД, моделирование в `Cassandra` идёт **от запросов, а не от сущностей** (query-driven design). Сначала определяются запросы приложения, затем под них проектируются таблицы. Подробнее о проектировании распределённых систем — в [[distributed-systems-interview|вопросах по распределённым системам]].
+В отличие от реляционных БД, моделирование в `Cassandra` идёт **от запросов, а не от сущностей** (query-driven design). Сначала определяются запросы приложения, затем под них проектируются таблицы. Подробнее о проектировании распределённых систем — в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
 
 **Принципы моделирования:**
 
@@ -708,7 +708,7 @@ CREATE KEYSPACE prod_keyspace WITH replication = {
 
 ## Q21. (!) Какие уровни консистентности (`Consistency Levels`) существуют?
 
-`Consistency Level` (CL) определяет, сколько реплик должны подтвердить операцию чтения/записи, чтобы она считалась успешной. Это механизм **tunable consistency** — подробнее в [[cap-theorem-interview|CAP-теореме]].
+`Consistency Level` (CL) определяет, сколько реплик должны подтвердить операцию чтения/записи, чтобы она считалась успешной. Это механизм **tunable consistency** — подробнее в [CAP-теореме](../architecture/cap-theorem-interview.md).
 
 | CL | Запись: сколько подтверждений | Чтение: сколько ответов | Когда использовать |
 |----|------------------------------|------------------------|--------------------|
@@ -984,7 +984,7 @@ WHERE page_url = '/home' AND date = '2026-04-12';
 
 ## Q31. (!) Как подключить `Spring Data Cassandra` к проекту?
 
-**Spring Data Cassandra** — модуль Spring Data для работы с `Cassandra` через репозитории и `CassandraTemplate`. Подробнее о Spring Data — в [[spring-data-jpa-interview|вопросах по Spring Data JPA]] (общие концепции репозиториев).
+**Spring Data Cassandra** — модуль Spring Data для работы с `Cassandra` через репозитории и `CassandraTemplate`. Подробнее о Spring Data — в [вопросах по Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) (общие концепции репозиториев).
 
 **Зависимость (Gradle):**
 
@@ -1306,7 +1306,7 @@ nodetool cleanup
 | Аналитика | Через Spark | Aggregation Pipeline | Нет | Через MapReduce/Spark |
 | Сценарий | IoT, логи, time-series | CRUD, каталоги | Кэш, сессии | Большие таблицы на HDFS |
 
-Подробнее о [[mongodb-interview|MongoDB]] и [[redis-interview|Redis]] — в соответствующих разделах.
+Подробнее о [MongoDB](mongodb-interview.md) и [Redis](redis-interview.md) — в соответствующих разделах.
 
 ## Q39. Какие основные анти-паттерны при работе с `Cassandra`?
 
@@ -1683,17 +1683,17 @@ cdc_free_space_check_interval_ms: 250
 
 ## See also
 
-- [[mongodb-interview|MongoDB]] — другая NoSQL БД, документная модель
-- [[redis-interview|Redis]] — in-memory хранилище, часто используется вместе с Cassandra как кэш
-- [[distributed-systems-interview|Распределённые системы]] — фундаментальные концепции, на которых построена Cassandra
-- [[cap-theorem-interview|CAP-теорема]] — Cassandra как AP-система
-- [[database-architecture-interview|Архитектура баз данных]] — сравнение подходов к хранению данных
-- [[kafka-interview|Apache Kafka]] — интеграция через Kafka Connect для CDC и потоковой обработки
-- [[elasticsearch-interview|Elasticsearch]] — часто используется вместе с Cassandra для полнотекстового поиска
+- [MongoDB](mongodb-interview.md) — другая NoSQL БД, документная модель
+- [Redis](redis-interview.md) — in-memory хранилище, часто используется вместе с Cassandra как кэш
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — фундаментальные концепции, на которых построена Cassandra
+- [CAP-теорема](../architecture/cap-theorem-interview.md) — Cassandra как AP-система
+- [Архитектура баз данных](database-architecture-interview.md) — сравнение подходов к хранению данных
+- [Apache Kafka](../messaging/kafka-interview.md) — интеграция через Kafka Connect для CDC и потоковой обработки
+- [Elasticsearch](elasticsearch-interview.md) — часто используется вместе с Cassandra для полнотекстового поиска
 
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
-- [[database-architecture-interview|Database Architecture]]
-- [[database-transactions-interview|Транзакции и уровни изоляции]]
-- [[dynamodb-interview|DynamoDB]]
-- [[elasticsearch-interview|Elasticsearch]]
+- [ClickHouse](clickhouse-interview.md)
+- [CockroachDB](cockroachdb-interview.md)
+- [Database Architecture](database-architecture-interview.md)
+- [Транзакции и уровни изоляции](database-transactions-interview.md)
+- [DynamoDB](dynamodb-interview.md)
+- [Elasticsearch](elasticsearch-interview.md)

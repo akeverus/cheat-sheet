@@ -1564,18 +1564,18 @@ nodetool tablestats keyspace.table | grep "SSTable count"
 
 ## See also
 
-- [[microservices-interview|Микросервисная архитектура]] — паттерны межсервисного взаимодействия и отказоустойчивости
-- [[cap-theorem-interview|CAP-теорема]] — ограничения распределённых систем: C, A, P компромиссы
-- [[consistency-patterns-interview|Паттерны согласованности]] — 2PC, Saga, Outbox, eventual consistency
-- [[event-driven-patterns-interview|Event-Driven паттерны]] — асинхронное взаимодействие в распределённых системах
-- [[resilience-patterns-interview|Паттерны отказоустойчивости]] — Circuit Breaker, Retry, Bulkhead
-- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]] — CQRS и Event Sourcing для масштабируемых систем
+- [Микросервисная архитектура](microservices-interview.md) — паттерны межсервисного взаимодействия и отказоустойчивости
+- [CAP-теорема](cap-theorem-interview.md) — ограничения распределённых систем: C, A, P компромиссы
+- [Паттерны согласованности](consistency-patterns-interview.md) — 2PC, Saga, Outbox, eventual consistency
+- [Event-Driven паттерны](event-driven-patterns-interview.md) — асинхронное взаимодействие в распределённых системах
+- [Паттерны отказоустойчивости](resilience-patterns-interview.md) — Circuit Breaker, Retry, Bulkhead
+- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) — CQRS и Event Sourcing для масштабируемых систем
 
 В обычных корпоративных распределённых системах Byzantine faults не рассматривают: предполагается, что узлы принадлежат одной доверенной среде (datacenter). Достаточно crash fault tolerance через `Raft`/`Paxos`.
 
-- [[api-gateway-interview|API Gateway]]
-- [[bff-pattern-interview|BFF Pattern]]
-- [[caching-strategies-interview|Стратегии кэширования]]
-- [[cap-theorem-interview|CAP-теорема]]
-- [[clean-architecture-interview|Clean Architecture]]
-- [[consistency-patterns-interview|Паттерны согласованности]]
+- [API Gateway](api-gateway-interview.md)
+- [BFF Pattern](bff-pattern-interview.md)
+- [Стратегии кэширования](caching-strategies-interview.md)
+- [CAP-теорема](cap-theorem-interview.md)
+- [Clean Architecture](clean-architecture-interview.md)
+- [Паттерны согласованности](consistency-patterns-interview.md)

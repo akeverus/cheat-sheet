@@ -326,7 +326,7 @@ WHERE metadata @> '{"role": "admin"}'::jsonb;
 -- H2 не поддерживает оператор @> для JSONB
 ```
 
-**Рекомендация**: используйте `H2` только для простых CRUD-тестов, где SQL-диалект не важен. Для всего остального — `Testcontainers`. Подробнее о подходах к тестированию в [[integration-testing-interview|Integration Testing]].
+**Рекомендация**: используйте `H2` только для простых CRUD-тестов, где SQL-диалект не важен. Для всего остального — `Testcontainers`. Подробнее о подходах к тестированию в [Integration Testing](integration-testing-interview.md).
 
 ## Q9. Как поднять `Kafka`-контейнер для тестов?
 
@@ -1030,7 +1030,7 @@ test:
 - **`TESTCONTAINERS_RYUK_DISABLED=true`**: отключить Ryuk в CI (контейнеры удалятся с runner'ом)
 - Singleton-паттерн — чтобы не перезапускать контейнеры для каждого тест-класса
 
-Подробнее о CI/CD pipeline в [[test-automation-interview|Test Automation]].
+Подробнее о CI/CD pipeline в [Test Automation](test-automation-interview.md).
 
 ## Q26. Какие есть способы ускорить тесты с `Testcontainers`?
 
@@ -1504,9 +1504,9 @@ class ProductControllerTest extends BaseIntegrationTest {
 
 Благодаря `static` полям с аннотацией `@Container`, контейнеры запускаются один раз и переиспользуются всеми подклассами — это эквивалент Singleton Container паттерна, но организованный через наследование.
 
-Подробнее — в [[testcontainers-interview|Q19: Singleton Containers паттерн]].
+Подробнее — в [Q19: Singleton Containers паттерн](testcontainers-interview.md).
 
-**На собеседовании** стоит показать, что вы понимаете trade-off: `Testcontainers` даёт уверенность в интеграции ценой скорости и инфраструктурных требований. Хороший инженер знает, где провести границу между unit и интеграционными тестами (подробнее в [[test-strategies-interview|Стратегии тестирования]]).
+**На собеседовании** стоит показать, что вы понимаете trade-off: `Testcontainers` даёт уверенность в интеграции ценой скорости и инфраструктурных требований. Хороший инженер знает, где провести границу между unit и интеграционными тестами (подробнее в [Стратегии тестирования](test-strategies-interview.md)).
 
 ---
 
@@ -2040,19 +2040,19 @@ void shouldSendAndReceiveMessage() {
 
 ## See also
 
-- [[integration-testing-interview|Integration Testing]] — интеграционное тестирование в Spring Boot: `@SpringBootTest`, test slices
-- [[unit-testing-interview|Unit Testing]] — модульные тесты и моки: когда Testcontainers не нужен
-- [[test-strategies-interview|Стратегии тестирования]] — пирамида тестов и место Testcontainers в ней
-- [[test-automation-interview|Test Automation]] — автоматизация и запуск тестов с контейнерами в CI/CD
-- [[spring-data-jpa-interview|Spring Data JPA]] — тестирование репозиториев с `@DataJpaTest` + Testcontainers
-- [[spring-boot-interview|Spring Boot]] — конфигурация, auto-configuration, профили
-- [[docker-interview|Docker]] — контейнеризация: образы, сети, volumes, которые использует Testcontainers
-- [[kubernetes-interview|Kubernetes]] — запуск тестов с Testcontainers в Kubernetes CI runner'ах
+- [Integration Testing](integration-testing-interview.md) — интеграционное тестирование в Spring Boot: `@SpringBootTest`, test slices
+- [Unit Testing](unit-testing-interview.md) — модульные тесты и моки: когда Testcontainers не нужен
+- [Стратегии тестирования](test-strategies-interview.md) — пирамида тестов и место Testcontainers в ней
+- [Test Automation](test-automation-interview.md) — автоматизация и запуск тестов с контейнерами в CI/CD
+- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — тестирование репозиториев с `@DataJpaTest` + Testcontainers
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация, auto-configuration, профили
+- [Docker](../devops/docker-interview.md) — контейнеризация: образы, сети, volumes, которые использует Testcontainers
+- [Kubernetes](../devops/kubernetes-interview.md) — запуск тестов с Testcontainers в Kubernetes CI runner'ах
 
-- [[chaos-engineering-interview|Chaos Engineering]]
-- [[contract-testing-interview|Contract Testing]]
-- [[integration-testing-interview|Integration Testing]]
-- [[load-testing-interview|Load Testing]]
-- [[mockito-interview|Mockito]]
-- [[mutation-testing-interview|Mutation Testing]]
-- [[testcontainers|Шпаргалка: Testcontainers (Testcontainers)]] — теория
+- [Chaos Engineering](chaos-engineering-interview.md)
+- [Contract Testing](contract-testing-interview.md)
+- [Integration Testing](integration-testing-interview.md)
+- [Load Testing](load-testing-interview.md)
+- [Mockito](mockito-interview.md)
+- [Mutation Testing](mutation-testing-interview.md)
+- [Шпаргалка: Testcontainers (Testcontainers)](../../testing/integration-testing/testcontainers/testcontainers.md) — теория

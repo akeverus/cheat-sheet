@@ -283,7 +283,7 @@ graph LR
 -XX:MaxTenuringThreshold=15        # сколько Minor GC объект выдержит в Survivor
 ```
 
-Если в Old Generation слишком быстро попадают временные объекты (высокий promotion rate), растут паузы — подробнее в [[jvm-performance-tuning-interview|вопросах по JVM tuning]].
+Если в Old Generation слишком быстро попадают временные объекты (высокий promotion rate), растут паузы — подробнее в [вопросах по JVM tuning](jvm-performance-tuning-interview.md).
 
 ## Q7. (!) Что такое GC roots и как сборщик определяет, какие объекты живы?
 
@@ -983,7 +983,7 @@ class CorrectSingleton {
 | `VarHandle.setRelease()` | Release fence | Лёгкий аналог volatile write |
 | `VarHandle.getAcquire()` | Acquire fence | Лёгкий аналог volatile read |
 
-Подробнее о многопоточности — в [[java-concurrency-interview|вопросах по Java Concurrency]].
+Подробнее о многопоточности — в [вопросах по Java Concurrency](../programming-languages/java/java-concurrency-interview.md).
 
 ## Q27. (!) Что такое false sharing и как с ним бороться?
 
@@ -1232,7 +1232,7 @@ jcmd <pid> JFR.start duration=60s filename=/tmp/recording.jfr  # JFR запис�
 ./asprof -e alloc -d 30 -f alloc.html <pid>
 ```
 
-Принцип: в production минимальный overhead (`JFR`, `jcmd`), в dev — максимальная детализация (`MAT`, `JProfiler`). Подробнее — в [[application-profiling-interview|вопросах по профилированию]].
+Принцип: в production минимальный overhead (`JFR`, `jcmd`), в dev — максимальная детализация (`MAT`, `JProfiler`). Подробнее — в [вопросах по профилированию](application-profiling-interview.md).
 
 ## Q34. Как читать GC-логи и не делать ложных выводов?
 
@@ -1269,7 +1269,7 @@ jcmd <pid> JFR.start duration=60s filename=/tmp/recording.jfr  # JFR запис�
 
 ## Q35. (!) Какие метрики памяти обязательны на дашборде?
 
-Минимальный набор метрик для мониторинга памяти JVM через [[metrics-tracing-interview|Micrometer/Prometheus]]:
+Минимальный набор метрик для мониторинга памяти JVM через [Micrometer/Prometheus](../monitoring/metrics-tracing-interview.md):
 
 ```yaml
 # Grafana dashboard: минимальный набор
@@ -1389,7 +1389,7 @@ graph TD
 - Старый JDK (< 10) без `-XX:+UseContainerSupport` → JVM видит всю память хоста
 - `MaxRAMPercentage=100` → гарантированный OOM-kill
 
-Подробнее о контейнерах — в [[docker-interview|вопросах по Docker]] и [[kubernetes-interview|Kubernetes]].
+Подробнее о контейнерах — в [вопросах по Docker](../devops/docker-interview.md) и [Kubernetes](../devops/kubernetes-interview.md).
 
 ## Q39. Как отвечать на memory-вопросы на senior-раунде?
 
@@ -1413,17 +1413,17 @@ graph TD
 
 ## See also
 
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — GC-флаги, escape analysis, JIT warm-up
-- [[application-profiling-interview|Application Profiling]] — JFR, heap/thread dumps, allocation profiling
-- [[jvm-interview|JVM Fundamentals]] — архитектура JVM, ClassLoader, байткод
-- [[java-concurrency-interview|Java Concurrency]] — многопоточность, volatile, memory model
-- [[java-collections-interview|Java Collections]] — коллекции и их влияние на allocation rate
-- [[docker-interview|Docker]] — container memory limits и cgroups
-- [[kubernetes-interview|Kubernetes]] — resource requests/limits и OOM killer в поде
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md) — GC-флаги, escape analysis, JIT warm-up
+- [Application Profiling](application-profiling-interview.md) — JFR, heap/thread dumps, allocation profiling
+- [JVM Fundamentals](../jvm/jvm-interview.md) — архитектура JVM, ClassLoader, байткод
+- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — многопоточность, volatile, memory model
+- [Java Collections](../programming-languages/java/java-collections-interview.md) — коллекции и их влияние на allocation rate
+- [Docker](../devops/docker-interview.md) — container memory limits и cgroups
+- [Kubernetes](../devops/kubernetes-interview.md) — resource requests/limits и OOM killer в поде
 
-- [[application-profiling-interview|Application Profiling]]
-- [[caching-performance-interview|Caching Performance]]
-- [[database-performance-interview|Database Performance]]
-- [[jvm-performance-tuning-interview|JVM Performance Tuning]]
-- [[network-performance-interview|Network Performance]]
-- [[performance-testing-interview|Performance Testing]]
+- [Application Profiling](application-profiling-interview.md)
+- [Caching Performance](caching-performance-interview.md)
+- [Database Performance](database-performance-interview.md)
+- [JVM Performance Tuning](jvm-performance-tuning-interview.md)
+- [Network Performance](network-performance-interview.md)
+- [Performance Testing](performance-testing-interview.md)

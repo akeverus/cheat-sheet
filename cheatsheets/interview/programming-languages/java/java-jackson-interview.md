@@ -705,7 +705,7 @@ public User publicView(@PathVariable Long id) { /* ... */ }
 public User internalView(@PathVariable Long id) { /* ... */ }
 ```
 
-**Когда использовать:** 2-3 view одной модели. При 5+ view — проще завести отдельные DTO с [[spring-validation|валидацией]] и [[java-annotations-interview|маппингом]].
+**Когда использовать:** 2-3 view одной модели. При 5+ view — проще завести отдельные DTO с [валидацией](../../../frameworks/java-frameworks/spring/spring-validation.md) и [маппингом](java-annotations-interview.md).
 
 ## Q30. (!) Частые ошибки и как их диагностировать?
 
@@ -741,14 +741,14 @@ Jackson — быстрый и зрелый. Типовые цифры (JMH, пр
 
 ## See also
 
-- [[spring-mvc-interview]] — как Jackson работает с `HttpMessageConverter` в REST
-- [[spring-webflux-interview]] — реактивная (де)сериализация через Jackson в WebFlux
-- [[spring-boot-interview]] — `spring.jackson.*` настройки и auto-configuration
-- [[java-serialization-interview]] — `Serializable`, разница с JSON-сериализацией
-- [[java-annotations-interview]] — механика аннотаций, которую использует Jackson
-- [[java-generics-interview]] — type erasure и `TypeReference`
-- [[java-17-21-interview]] — `record` и Jackson (canonical constructor, `ParameterNamesModule`)
-- [[http-rest-interview]] — JSON как формат REST-ответов
-- [[openapi-swagger-interview]] — описание типов в OpenAPI vs Jackson-аннотации
-- [[application-security-interview]] — Jackson-CVE через Default Typing, safe deserialization
-- [[java-jackson|Шпаргалка: Jackson: JSON-сериализация в Java]] — теория
+- [spring-mvc-interview](../../frameworks/spring/spring-mvc-interview.md) — как Jackson работает с `HttpMessageConverter` в REST
+- [spring-webflux-interview](../../frameworks/spring/spring-webflux-interview.md) — реактивная (де)сериализация через Jackson в WebFlux
+- [spring-boot-interview](../../frameworks/spring/spring-boot-interview.md) — `spring.jackson.*` настройки и auto-configuration
+- [java-serialization-interview](java-serialization-interview.md) — `Serializable`, разница с JSON-сериализацией
+- [java-annotations-interview](java-annotations-interview.md) — механика аннотаций, которую использует Jackson
+- [java-generics-interview](java-generics-interview.md) — type erasure и `TypeReference`
+- [java-17-21-interview](java-17-21-interview.md) — `record` и Jackson (canonical constructor, `ParameterNamesModule`)
+- [http-rest-interview](../../api/http-rest-interview.md) — JSON как формат REST-ответов
+- [openapi-swagger-interview](../../api/openapi-swagger-interview.md) — описание типов в OpenAPI vs Jackson-аннотации
+- [application-security-interview](../../security/application-security-interview.md) — Jackson-CVE через Default Typing, safe deserialization
+- [Шпаргалка: Jackson: JSON-сериализация в Java](../../../libraries/java/java-jackson.md) — теория

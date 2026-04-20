@@ -251,7 +251,7 @@ PEP allows or denies based on PDP response.
 
 **Vault PKI** — issues short-lived certs.
 
-Подробнее — в [[mtls-interview|mTLS]].
+Подробнее — в [mTLS](mtls-interview.md).
 
 ## Q11. Service mesh roles (Istio, Linkerd)?
 
@@ -284,7 +284,7 @@ spec:
 # Then explicit allows
 ```
 
-Подробнее — [[istio-service-mesh-interview|Istio]], [[linkerd-interview|Linkerd]].
+Подробнее — [Istio](../devops/istio-service-mesh-interview.md), [Linkerd](../devops/linkerd-interview.md).
 
 ## Q12. (!) ZTNA vs VPN?
 
@@ -453,23 +453,23 @@ Compromised device → block
 
 ## See also
 
-- [[mtls-interview|mTLS]] — foundation
-- [[secrets-management-interview|Secrets Management]] — context
-- [[supply-chain-security-interview|Supply Chain Security]]
-- [[application-security-interview|Application Security]] — общая
-- [[oauth2-interview|OAuth2]] — auth flows
-- [[jwt-interview|JWT]] — tokens
-- [[istio-service-mesh-interview|Istio]] — service mesh ZT
-- [[linkerd-interview|Linkerd]] — service mesh ZT
-- [[vault-interview|Vault]] — secrets для ZT
-- [[microservices-interview|Микросервисы]] — context
-- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
-- [[kubernetes-interview|Kubernetes]] — NetworkPolicies
-- [[authentication-authorization-patterns-interview|Authentication & Authorization]]
+- [mTLS](mtls-interview.md) — foundation
+- [Secrets Management](secrets-management-interview.md) — context
+- [Supply Chain Security](supply-chain-security-interview.md)
+- [Application Security](application-security-interview.md) — общая
+- [OAuth2](oauth2-interview.md) — auth flows
+- [JWT](jwt-interview.md) — tokens
+- [Istio](../devops/istio-service-mesh-interview.md) — service mesh ZT
+- [Linkerd](../devops/linkerd-interview.md) — service mesh ZT
+- [Vault](../devops/vault-interview.md) — secrets для ZT
+- [Микросервисы](../architecture/microservices-interview.md) — context
+- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
+- [Kubernetes](../devops/kubernetes-interview.md) — NetworkPolicies
+- [Authentication & Authorization](authentication-authorization-patterns-interview.md)
 
-- [[application-security-interview|Application Security]]
-- [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
-- [[jwt-interview|JWT]]
-- [[mtls-interview|mTLS (Mutual TLS)]]
-- [[oauth2-interview|OAuth2]]
-- [[owasp-top10-interview|OWASP Top 10]]
+- [Application Security](application-security-interview.md)
+- [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
+- [JWT](jwt-interview.md)
+- [mTLS (Mutual TLS)](mtls-interview.md)
+- [OAuth2](oauth2-interview.md)
+- [OWASP Top 10](owasp-top10-interview.md)

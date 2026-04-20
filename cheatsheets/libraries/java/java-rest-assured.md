@@ -23,8 +23,8 @@ updated: "2026-04-20"
 - [REST Assured Documentation](https://github.com/rest-assured/rest-assured/wiki) — документация
 
 ### См. также
-- [[README|Интеграционное тестирование]] — интеграционное тестирование
-- [[java-wiremock|WireMock]] — **WireMock** для мокирования **API**
+- [Интеграционное тестирование](../../basics/README.md) — интеграционное тестирование
+- [WireMock](java-wiremock.md) — **WireMock** для мокирования **API**
 
 ## Содержание
 
@@ -646,10 +646,10 @@ public void testCreateUser() {
 - [Официальная документация REST Assured](https://rest-assured.io/)
 - [GitHub репозиторий](https://github.com/rest-assured/rest-assured)
 - [Spring Boot интеграция](https://docs.spring.io/spring-boot/docs/current/reference/html/io.html#io.testing.rest-assured)
-- [[hamcrest|Hamcrest matchers]]
+- [Hamcrest matchers](../../testing/unit-testing/junit/hamcrest.md)
 
 ## См. также
-- [[java-wiremock|WireMock]] — для **mock**-серверов
-- [[java-testcontainers|Testcontainers]] — для интеграционных тестов
-- [[junit-advanced|JUnit Advanced]] — для **unit** тестирования
+- [WireMock](java-wiremock.md) — для **mock**-серверов
+- [Testcontainers](java-testcontainers.md) — для интеграционных тестов
+- [JUnit Advanced](../../testing/unit-testing/junit/junit-advanced.md) — для **unit** тестирования
 

@@ -180,7 +180,7 @@ public record Point(double x, double y) {
 }
 ```
 
-Подробнее об ограничениях наследования — в [[java-oop-interview|вопросах по Java OOP]].
+Подробнее об ограничениях наследования — в [вопросах по Java OOP](java-oop-interview.md).
 
 ---
 
@@ -281,7 +281,7 @@ graph TD
     style D fill:#bfb,stroke:#333
 ```
 
-**Правила размещения:** подклассы sealed-класса должны находиться в том же модуле (для модульного проекта) или в том же пакете (для немодульного). Подробнее о модулях — в [[java-modules-interview|вопросах по Java Modules]].
+**Правила размещения:** подклассы sealed-класса должны находиться в том же модуле (для модульного проекта) или в том же пакете (для немодульного). Подробнее о модулях — в [вопросах по Java Modules](java-modules-interview.md).
 
 ---
 
@@ -574,7 +574,7 @@ String html = """
         """.formatted(userName);
 ```
 
-Подробнее о строках — в [[java-string-interview|вопросах по Java String]].
+Подробнее о строках — в [вопросах по Java String](java-string-interview.md).
 
 ---
 
@@ -662,7 +662,7 @@ graph TD
 - Могут создаваться миллионами
 - При блокирующей операции (I/O) — поток "открепляется" от carrier thread, освобождая его
 
-Подробнее о потоках и конкурентности — в [[java-concurrency-interview|вопросах по Java Concurrency]].
+Подробнее о потоках и конкурентности — в [вопросах по Java Concurrency](java-concurrency-interview.md).
 
 ---
 
@@ -1070,7 +1070,7 @@ seq.getLast();      // последний элемент
 seq.reversed();     // обратный вид коллекции
 ```
 
-Подробнее о коллекциях — в [[java-collections-interview|вопросах по Java Collections]].
+Подробнее о коллекциях — в [вопросах по Java Collections](java-collections-interview.md).
 
 ---
 
@@ -1267,13 +1267,13 @@ int pages = Math.ceilDiv(totalItems, pageSize);
 "Hello, %s!".formatted("World");
 ```
 
-Подробнее о стримах — в [[java-stream-interview|вопросах по Java Stream API]].
+Подробнее о стримах — в [вопросах по Java Stream API](java-stream-interview.md).
 
 ---
 
 ## Q30. Что такое сильная инкапсуляция внутренних API JDK?
 
-**Strong encapsulation of JDK internals** (JEP 403, Java 17) — финальный шаг инкапсуляции внутренних API JDK, начатой в Java 9 с введением [[java-modules-interview|модульной системы]].
+**Strong encapsulation of JDK internals** (JEP 403, Java 17) — финальный шаг инкапсуляции внутренних API JDK, начатой в Java 9 с введением [модульной системы](java-modules-interview.md).
 
 **Что изменилось:**
 - Внутренние API (`sun.misc.*`, `com.sun.*`, `jdk.internal.*`) больше недоступны через рефлексию по умолчанию
@@ -1404,7 +1404,7 @@ a.method(b.value);
 // Cannot invoke "B.getValue()" because "b" is null
 ```
 
-> Эта функция особенно полезна при отладке цепочек вызовов и длинных выражений. Рекомендуется использовать вместе с [[java-exceptions-interview|правильной обработкой исключений]].
+> Эта функция особенно полезна при отладке цепочек вызовов и длинных выражений. Рекомендуется использовать вместе с [правильной обработкой исключений](java-exceptions-interview.md).
 
 ---
 
@@ -1999,19 +1999,19 @@ java --enable-preview --source 21 hello.java
 
 ## See also
 
-- [[java-core-interview|Java Core]] — базовые вопросы по Java: `Object`, `equals/hashCode`, `Comparable`
-- [[java-concurrency-interview|Java Concurrency]] — многопоточность и виртуальные потоки (`Virtual Threads`, `StructuredTaskScope`)
-- [[java-8-interview|Java 8]] — лямбды, стримы, `Optional` — фундамент для понимания современных Java-фич
-- [[java-stream-interview|Java Stream API]] — `Gatherers` API (Java 22+), параллельные стримы, `Collectors`
-- [[java-collections-interview|Java Collections]] — `SequencedCollection`, `SequencedMap` появились в Java 21
-- [[java-modules-interview|Java Modules]] — модульная система `JPMS` (Java 9+), `jlink`, `ServiceLoader`
-- [[java-types-interview|Java Types]] — `records`, `sealed classes`, `var` — ключевые нововведения Java 16-21
-- [[java-generics-interview|Java Generics]] — обобщения и `type inference`, взаимодействие с `records`
-- [[jvm-interview|JVM]] — устройство JVM, влияние `Virtual Threads` на планировщик, `GC` и `Project Loom`
+- [Java Core](java-core-interview.md) — базовые вопросы по Java: `Object`, `equals/hashCode`, `Comparable`
+- [Java Concurrency](java-concurrency-interview.md) — многопоточность и виртуальные потоки (`Virtual Threads`, `StructuredTaskScope`)
+- [Java 8](java-8-interview.md) — лямбды, стримы, `Optional` — фундамент для понимания современных Java-фич
+- [Java Stream API](java-stream-interview.md) — `Gatherers` API (Java 22+), параллельные стримы, `Collectors`
+- [Java Collections](java-collections-interview.md) — `SequencedCollection`, `SequencedMap` появились в Java 21
+- [Java Modules](java-modules-interview.md) — модульная система `JPMS` (Java 9+), `jlink`, `ServiceLoader`
+- [Java Types](java-types-interview.md) — `records`, `sealed classes`, `var` — ключевые нововведения Java 16-21
+- [Java Generics](java-generics-interview.md) — обобщения и `type inference`, взаимодействие с `records`
+- [JVM](../../jvm/jvm-interview.md) — устройство JVM, влияние `Virtual Threads` на планировщик, `GC` и `Project Loom`
 
-- [[java-8-interview|Java 8]]
-- [[java-annotations-interview|Java Annotations]]
-- [[java-collections-interview|Java Collections]]
-- [[java-concurrency-interview|Java Concurrency]]
-- [[java-conditional-statements-interview|Java Conditional Statements]]
-- [[java-core-interview|Java Core]]
+- [Java 8](java-8-interview.md)
+- [Java Annotations](java-annotations-interview.md)
+- [Java Collections](java-collections-interview.md)
+- [Java Concurrency](java-concurrency-interview.md)
+- [Java Conditional Statements](java-conditional-statements-interview.md)
+- [Java Core](java-core-interview.md)

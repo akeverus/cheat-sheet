@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Baeldung: A* Pathfinding](https://www.baeldung.com/)
 
 ### См. также
-- [[traveling-salesman-problem|Задача коммивояжера]] — TSP
-- [[maze-solver|Решение лабиринтов]] — maze solver
-- [[dijkstra|Алгоритм Дейкстры]] — Dijkstra
+- [Задача коммивояжера](traveling-salesman-problem.md) — TSP
+- [Решение лабиринтов](maze-solver.md) — maze solver
+- [Алгоритм Дейкстры](../graphs/dijkstra.md) — Dijkstra
 
-- [[optaplanner|OptaPlanner]]
-- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [OptaPlanner](optaplanner.md)
+- [Задача о рюкзаке (Knapsack Problem)](knapsack-problem.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

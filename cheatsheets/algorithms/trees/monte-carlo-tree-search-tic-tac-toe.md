@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [MCTS Visualization](https://www.geeksforgeeks.org/monte-carlo-tree-search-mcts/) — визуализация
 
 ### См. также
-- [[binary-tree|`binary-tree.md`]] — бинарное дерево (`binary tree`)
-- [[binary-search-tree-traversal|`binary-search-tree-traversal.md`]] — обходы бинарного дерева поиска (`traversals`)
+- [`binary-tree.md`](binary-tree.md) — бинарное дерево (`binary tree`)
+- [`binary-search-tree-traversal.md`](binary-search-tree-traversal.md) — обходы бинарного дерева поиска (`traversals`)
 
-- [[boruvka-algorithm|Алгоритм Борувки (Borůvka's Algorithm)]]
-- [[prim-algorithm|Алгоритм Прима (Prim's Algorithm)]]
-- [[balanced-binary-tree-check|Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)]]
+- [Алгоритм Борувки (Borůvka's Algorithm)](boruvka-algorithm.md)
+- [Алгоритм Прима (Prim's Algorithm)](prim-algorithm.md)
+- [Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)](balanced-binary-tree-check.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -22,13 +22,13 @@ BDD-фреймворк для написания автотестов на ес�
 
 ### См. также
 
-- [[junit-advanced|JUnit Advanced]]
-- [[rest-assured|REST Assured]]
-- [[selenium|Selenium]]
+- [JUnit Advanced](unit-testing/junit/junit-advanced.md)
+- [REST Assured](integration-testing/rest-assured.md)
+- [Selenium](ui-testing/selenium/selenium.md)
 
 
-- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
-- [[micronaut-testing|Micronaut: Testing — Unit Tests, Integration Tests и Mocking]]
+- [Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest](../frameworks/java-frameworks/quarkus/quarkus-testing.md)
+- [Micronaut: Testing — Unit Tests, Integration Tests и Mocking](../frameworks/java-frameworks/micronaut/micronaut-testing.md)
 ## Содержание
 
 - [Зачем Cucumber](#зачем-cucumber)

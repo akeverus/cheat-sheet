@@ -26,14 +26,14 @@ updated: "2026-04-20"
 - [Scala Tutorial](https://www.baeldung.com/scala)
 
 ### См. также (библиотеки)
-- [[scala-scalatest|ScalaTest]] — тестирование **Scala** кода
-- [[scala-circe|Circe]] — работа с **JSON**
-- [[scala-cats|Cats]] — типоклассы и ФП
-- [[scala-zio|ZIO]] — эффекты и ресурсы
-- [[scala-akka|Akka]] — акторы и потоки
-- [[scala-play|Play Framework]] — веб-фреймворк
-- [[scala-slick|Slick]] — работа с БД
-- [[scala-doobie|Doobie]] — функциональный доступ к БД
+- [ScalaTest](../../libraries/scala/scala-scalatest.md) — тестирование **Scala** кода
+- [Circe](../../libraries/scala/scala-circe.md) — работа с **JSON**
+- [Cats](../../libraries/scala/scala-cats.md) — типоклассы и ФП
+- [ZIO](../../libraries/scala/scala-zio.md) — эффекты и ресурсы
+- [Akka](../../libraries/scala/scala-akka.md) — акторы и потоки
+- [Play Framework](../../libraries/scala/scala-play.md) — веб-фреймворк
+- [Slick](../../libraries/scala/scala-slick.md) — работа с БД
+- [Doobie](../../libraries/scala/scala-doobie.md) — функциональный доступ к БД
 
 ## Содержание
 
@@ -1588,7 +1588,7 @@ class UserRepository extends Repository[User] {
 - [Scala Exercises](https://www.scala-exercises.org/)
 - [Baeldung Scala Tutorial](https://www.baeldung.com/scala)
 
-> **Примечание**: Это базовая информация о **Scala**. Для более детального изучения см. раздел [[scala-collections|Scala Collections]] и официальную документацию.
+> **Примечание**: Это базовая информация о **Scala**. Для более детального изучения см. раздел [Scala Collections](scala-collections.md) и официальную документацию.
 
 ## Лучшие практики
 

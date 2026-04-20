@@ -24,12 +24,12 @@ updated: "2026-04-20"
 - [Introduction to Deeplearning4j](https://www.baeldung.com/deeplearning4j)
 
 ### См. также
-- [[deeplearning4j|Deeplearning4j]]
-- [[logistic-regression|Логистическая регрессия]]
-- [[spark-mllib|Spark MLlib]]
+- [Deeplearning4j](deeplearning4j.md)
+- [Логистическая регрессия](logistic-regression.md)
+- [Spark MLlib](spark-mllib.md)
 
-- [[ai-libraries|Обзор ИИ библиотек]]
-- [[jenetics|Руководство по Jenetics]]
+- [Обзор ИИ библиотек](ai-libraries.md)
+- [Руководство по Jenetics](jenetics.md)
 ## Содержание
 
 - [Введение в CNN](#введение-в-cnn)

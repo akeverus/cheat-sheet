@@ -102,7 +102,7 @@ updated: "2026-04-13"
 
 ## Q1. (!) Что такое `Annotation` в Java?
 
-Аннотации (`Annotations`) -- механизм метапрограммирования в `Java`, позволяющий добавлять метаданные к элементам кода (классам, методам, полям, параметрам) без изменения их семантики. Введены в `Java 5` (JSR 175), стали неотъемлемой частью современной разработки, особенно в [[java-core-interview|Java Core]] и фреймворках типа `Spring`.
+Аннотации (`Annotations`) -- механизм метапрограммирования в `Java`, позволяющий добавлять метаданные к элементам кода (классам, методам, полям, параметрам) без изменения их семантики. Введены в `Java 5` (JSR 175), стали неотъемлемой частью современной разработки, особенно в [Java Core](java-core-interview.md) и фреймворках типа `Spring`.
 
 Аннотации предоставляют информацию, которую используют:
 - **Компилятор** -- `@Override` гарантирует правильное переопределение метода
@@ -257,7 +257,7 @@ public @interface InvalidAnnotation {
 
 Аннотации применяются к классам, конструкторам, полям, методам, параметрам, локальным переменным, пакетам (через `package-info.java`) и другим аннотациям.
 
-Начиная с [[java-8-interview|Java 8]], добавлены `TYPE_USE` и `TYPE_PARAMETER`:
+Начиная с [Java 8](java-8-interview.md), добавлены `TYPE_USE` и `TYPE_PARAMETER`:
 
 ```java
 // TYPE_USE -- аннотация на использовании типа
@@ -476,7 +476,7 @@ Map<@NonNull String, @NonNull Integer> map;   // ключ и значение
 @NonNull String @NonNull [] array;            // тип массива и элемента
 ```
 
-`TYPE_PARAMETER` аннотирует **объявление** параметра типа, подробнее в [[java-generics-interview|вопросах по дженерикам]]:
+`TYPE_PARAMETER` аннотирует **объявление** параметра типа, подробнее в [вопросах по дженерикам](java-generics-interview.md):
 
 ```java
 @Target(ElementType.TYPE_PARAMETER)
@@ -677,7 +677,7 @@ try (ScanResult result = new ClassGraph()
 
 ## Q19. Как получить аннотации параметров метода?
 
-Начиная с [[java-8-interview|Java 8]], API `Parameter` позволяет работать с аннотациями параметров. Флаг компиляции `-parameters` сохраняет имена параметров.
+Начиная с [Java 8](java-8-interview.md), API `Parameter` позволяет работать с аннотациями параметров. Флаг компиляции `-parameters` сохраняет имена параметров.
 
 ```java
 public void process(@NotNull @Valid User user,
@@ -1202,7 +1202,7 @@ public class Order {
 
 ## Q34. Что такое `@SafeVarargs` и `@FunctionalInterface`?
 
-`@SafeVarargs` подавляет предупреждения о **heap pollution** при использовании varargs с [[java-generics-interview|дженериками]]. Применяется только к `final`, `static` или `private` методам и конструкторам:
+`@SafeVarargs` подавляет предупреждения о **heap pollution** при использовании varargs с [дженериками](java-generics-interview.md). Применяется только к `final`, `static` или `private` методам и конструкторам:
 
 ```java
 @SafeVarargs
@@ -1214,7 +1214,7 @@ public static <T> List<T> listOf(T... elements) {
 // "Possible heap pollution from parameterized vararg type"
 ```
 
-`@FunctionalInterface` гарантирует, что интерфейс содержит ровно один абстрактный метод (подробнее в [[java-8-interview|вопросах по Java 8]]):
+`@FunctionalInterface` гарантирует, что интерфейс содержит ровно один абстрактный метод (подробнее в [вопросах по Java 8](java-8-interview.md)):
 
 ```java
 @FunctionalInterface
@@ -1685,17 +1685,17 @@ public @org.springframework.lang.NonNull User getUser(
 
 ## See also
 
-- [[java-core-interview|Java Core]] — базовые концепции: рефлексия, `Class<?>`, метаданные классов — основа работы с аннотациями
-- [[java-8-interview|Java 8]] — лямбды и функциональные интерфейсы, часто аннотируются `@FunctionalInterface`
-- [[java-generics-interview|Java Generics]] — дженерики в аннотациях (`@Qualifier`, `@Bean`), типобезопасность элементов
-- [[java-oop-interview|Java OOP]] — наследование аннотаций через `@Inherited`, применение в иерархиях классов
-- [[jvm-interview|JVM]] — `RetentionPolicy.RUNTIME` и Metaspace, overhead рефлексии аннотаций
-- [[java-modules-interview|Java Modules]] — Annotation Processors в модульном контексте, `opens` для доступа к аннотациям
-- [[spring-framework-interview|Spring Framework]] — аннотации как основа Spring IoC: `@Component`, `@Autowired`, `@Transactional`
+- [Java Core](java-core-interview.md) — базовые концепции: рефлексия, `Class<?>`, метаданные классов — основа работы с аннотациями
+- [Java 8](java-8-interview.md) — лямбды и функциональные интерфейсы, часто аннотируются `@FunctionalInterface`
+- [Java Generics](java-generics-interview.md) — дженерики в аннотациях (`@Qualifier`, `@Bean`), типобезопасность элементов
+- [Java OOP](java-oop-interview.md) — наследование аннотаций через `@Inherited`, применение в иерархиях классов
+- [JVM](../../jvm/jvm-interview.md) — `RetentionPolicy.RUNTIME` и Metaspace, overhead рефлексии аннотаций
+- [Java Modules](java-modules-interview.md) — Annotation Processors в модульном контексте, `opens` для доступа к аннотациям
+- [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — аннотации как основа Spring IoC: `@Component`, `@Autowired`, `@Transactional`
 
-- [[java-17-21-interview|Java 17-21]]
-- [[java-8-interview|Java 8]]
-- [[java-collections-interview|Java Collections]]
-- [[java-concurrency-interview|Java Concurrency]]
-- [[java-conditional-statements-interview|Java Conditional Statements]]
-- [[java-core-interview|Java Core]]
+- [Java 17-21](java-17-21-interview.md)
+- [Java 8](java-8-interview.md)
+- [Java Collections](java-collections-interview.md)
+- [Java Concurrency](java-concurrency-interview.md)
+- [Java Conditional Statements](java-conditional-statements-interview.md)
+- [Java Core](java-core-interview.md)

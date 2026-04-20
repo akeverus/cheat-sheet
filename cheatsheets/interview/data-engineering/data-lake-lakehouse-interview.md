@@ -606,21 +606,21 @@ spark.readStream.format("kafka")...load() \
 
 ## See also
 
-- [[data-warehousing-interview|Data Warehousing]] — alternative storage
-- [[apache-spark-interview|Apache Spark]] — primary engine для Lakehouse
-- [[apache-flink-interview|Apache Flink]] — streaming + Iceberg/Hudi
-- [[kafka-interview|Apache Kafka]] — source для streaming
-- [[dbt-interview|dbt]] — может работать в Lakehouse контексте
-- [[apache-airflow-interview|Apache Airflow]] — orchestration
-- [[stream-processing-interview|Stream Processing]] — стрим данные → lake
-- [[postgresql-interview|PostgreSQL]] — source для CDC
-- [[microservices-interview|Микросервисы]] — produce events → lake
-- [[caching-strategies-interview|Caching]] — для acceleration
-- [[distributed-systems-interview|Распределённые системы]] — concepts
+- [Data Warehousing](data-warehousing-interview.md) — alternative storage
+- [Apache Spark](apache-spark-interview.md) — primary engine для Lakehouse
+- [Apache Flink](apache-flink-interview.md) — streaming + Iceberg/Hudi
+- [Apache Kafka](../messaging/kafka-interview.md) — source для streaming
+- [dbt](dbt-interview.md) — может работать в Lakehouse контексте
+- [Apache Airflow](apache-airflow-interview.md) — orchestration
+- [Stream Processing](stream-processing-interview.md) — стрим данные → lake
+- [PostgreSQL](../databases/postgresql-interview.md) — source для CDC
+- [Микросервисы](../architecture/microservices-interview.md) — produce events → lake
+- [Caching](../architecture/caching-strategies-interview.md) — для acceleration
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — concepts
 
-- [[apache-airflow-interview|Apache Airflow]]
-- [[apache-flink-interview|Apache Flink]]
-- [[apache-spark-interview|Apache Spark]]
-- [[data-warehousing-interview|Data Warehousing]]
-- [[dbt-interview|dbt]]
-- [[kafka-streams-interview|Kafka Streams]]
+- [Apache Airflow](apache-airflow-interview.md)
+- [Apache Flink](apache-flink-interview.md)
+- [Apache Spark](apache-spark-interview.md)
+- [Data Warehousing](data-warehousing-interview.md)
+- [dbt](dbt-interview.md)
+- [Kafka Streams](kafka-streams-interview.md)

@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [Java PropertyChangeListener](https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/beans/PropertyChangeListener.html)
 
 ### См. также
-- [[java-concurrency-basics|Java Concurrency]] — Java Concurrency
-- [[spring-framework-interview|Spring Core]] — события и ApplicationEvent
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — Java Concurrency
+- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — события и ApplicationEvent
 - [Kotlin Delegates](https://kotlinlang.org/docs/delegation.html) — делегаты и observable
 
-- [[iterator|Итератор (Iterator)]]
-- [[visitor|Посетитель (Visitor)]]
-- [[interpreter|Интерпретатор (Interpreter)]]
+- [Итератор (Iterator)](iterator.md)
+- [Посетитель (Visitor)](visitor.md)
+- [Интерпретатор (Interpreter)](interpreter.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

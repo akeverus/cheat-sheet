@@ -22,11 +22,11 @@ updated: "2026-04-20"
 - [Pulumi](https://www.pulumi.com/docs/)
 
 ### См. также
-- [[README|Platform]] — раздел инфраструктуры
-- [[terraform-basics|Terraform Basics]] — практическая работа с Terraform
-- [[ansible-basics|Ansible Basics]] — автоматизация конфигурации
-- [[pulumi-basics|Pulumi Basics]] — IaC на языках программирования
-- [[containerization-overview|Containerization]] — контейнеризация
+- [Platform](../../basics/README.md) — раздел инфраструктуры
+- [Terraform Basics](terraform/terraform-basics.md) — практическая работа с Terraform
+- [Ansible Basics](ansible/ansible-basics.md) — автоматизация конфигурации
+- [Pulumi Basics](pulumi/pulumi-basics.md) — IaC на языках программирования
+- [Containerization](../containers/containerization-overview.md) — контейнеризация
 
 ## Содержание
 
@@ -45,29 +45,29 @@ updated: "2026-04-20"
 
 ## Введение
 
-**Infrastructure as Code** — описание и управление инфраструктурой (серверы, сети, облачные ресурсы) в виде кода: версионирование, повторяемость, ревью. **Terraform** — декларативный **HCL**, мульти-провайдер. **Ansible** — императивный **YAML**, конфигурация и оркестрация. **Pulumi** — **IaC** на языках программирования (TypeScript, Python, Go). **Packer** — сборка образов для облаков и **VM**. Основы — в [[iac-overview|обзоре IaC]].
+**Infrastructure as Code** — описание и управление инфраструктурой (серверы, сети, облачные ресурсы) в виде кода: версионирование, повторяемость, ревью. **Terraform** — декларативный **HCL**, мульти-провайдер. **Ansible** — императивный **YAML**, конфигурация и оркестрация. **Pulumi** — **IaC** на языках программирования (TypeScript, Python, Go). **Packer** — сборка образов для облаков и **VM**. Основы — в [обзоре IaC](iac-overview.md).
 
 **Ключевые понятия:** **state**, **idempotency**, **provider**, **module**, **playbook**, **role**, **template**.
 
 
 ## Terraform
 
-**Terraform** (HashiCorp) — декларативное описание ресурсов в **HCL**. **State** хранит текущее состояние; `terraform plan` / `apply` приводят инфраструктуру к описанному виду. Провайдеры: **AWS**, **GCP**, **Azure**, **Kubernetes** и др. Модули для переиспользования. См. [[terraform-basics|Terraform Basics]], [[terraform-advanced|Terraform Advanced]].
+**Terraform** (HashiCorp) — декларативное описание ресурсов в **HCL**. **State** хранит текущее состояние; `terraform plan` / `apply` приводят инфраструктуру к описанному виду. Провайдеры: **AWS**, **GCP**, **Azure**, **Kubernetes** и др. Модули для переиспользования. См. [Terraform Basics](terraform/terraform-basics.md), [Terraform Advanced](terraform/terraform-advanced.md).
 
 
 ## Ansible
 
-**Ansible** — императивный подход: **playbooks** (YAML), **roles**, **inventory**. Без агентов (SSH); идемпотентность через модули. Конфигурация серверов, развёртывание приложений, оркестрация. См. [[ansible-basics|Ansible Basics]], [[ansible-advanced|Ansible Advanced]].
+**Ansible** — императивный подход: **playbooks** (YAML), **roles**, **inventory**. Без агентов (SSH); идемпотентность через модули. Конфигурация серверов, развёртывание приложений, оркестрация. См. [Ansible Basics](ansible/ansible-basics.md), [Ansible Advanced](ansible/ansible-advanced.md).
 
 
 ## Pulumi
 
-**Pulumi** — **IaC** на языках программирования: **TypeScript**, **Python**, **Go**, **C#**. Объектная модель и IDE-поддержка; state в **Pulumi Cloud** или в выбранном бэкенде. Поддержка облаков и **Kubernetes**. См. [[pulumi-basics|Pulumi Basics]].
+**Pulumi** — **IaC** на языках программирования: **TypeScript**, **Python**, **Go**, **C#**. Объектная модель и IDE-поддержка; state в **Pulumi Cloud** или в выбранном бэкенде. Поддержка облаков и **Kubernetes**. См. [Pulumi Basics](pulumi/pulumi-basics.md).
 
 
 ## Packer
 
-**Packer** — сборка образов (AMI, GCP, Azure, Docker и др.) из конфигурации и провижинеров (Shell, Ansible). Один шаблон — несколько платформ. См. [[packer-basics|Packer Basics]], [[packer]].
+**Packer** — сборка образов (AMI, GCP, Azure, Docker и др.) из конфигурации и провижинеров (Shell, Ansible). Один шаблон — несколько платформ. См. [Packer Basics](packer/packer-basics.md), [packer](packer/packer.md).
 
 
 ## Сравнение и выбор
@@ -127,7 +127,7 @@ updated: "2026-04-20"
 
 ## Заключение
 
-**IaC** обеспечивает повторяемость и контроль версий инфраструктуры. **Terraform**, **Ansible**, **Pulumi**, **Packer** покрывают создание ресурсов, конфигурацию и образы. См. [[iac-overview|обзор IaC]] и [[containerization-overview|Containerization]].
+**IaC** обеспечивает повторяемость и контроль версий инфраструктуры. **Terraform**, **Ansible**, **Pulumi**, **Packer** покрывают создание ресурсов, конфигурацию и образы. См. [обзор IaC](iac-overview.md) и [Containerization](../containers/containerization-overview.md).
 
 **Дата:** 2026-02-11
 

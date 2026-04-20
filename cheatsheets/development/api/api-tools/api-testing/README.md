@@ -18,17 +18,17 @@ API-тестирование проверяет поведение систем�
 ## Полезные ссылки
 
 ### Основные документы
-- [[api-testing-basics]] — виды тестов, инструменты, чек-лист перед релизом
+- [api-testing-basics](api-testing-basics.md) — виды тестов, инструменты, чек-лист перед релизом
 
 ### Соседние разделы
-- [[README|Родительский раздел: API Tools]]
-- [[README|Postman]] — сборка коллекций и Newman
-- [[README|Insomnia]]
-- [[README|Swagger / OpenAPI]] — контракт как источник тестов
-- [[README|API Documentation]]
-- [[README|REST API]]
+- [Родительский раздел: API Tools](../../../../basics/README.md)
+- [Postman](../../../../basics/README.md) — сборка коллекций и Newman
+- [Insomnia](../../../../basics/README.md)
+- [Swagger / OpenAPI](../../../../basics/README.md) — контракт как источник тестов
+- [API Documentation](../../../../basics/README.md)
+- [REST API](../../../../basics/README.md)
 - [REST Assured для Java](../../../../libraries/java/)
-- [[README|Testing (общий раздел)]]
+- [Testing (общий раздел)](../../../../basics/README.md)
 
 ### Внешние ресурсы
 - [REST Assured](https://rest-assured.io/)
@@ -82,7 +82,7 @@ API-тестирование проверяет поведение систем�
 
 ## Куда идти дальше
 
-- Postman-коллекции и Newman — [[README]]
-- Swagger/OpenAPI как источник тестов — [[README]]
-- REST API design — [[README]]
-- Общие практики тестирования — [[README]]
+- Postman-коллекции и Newman — [README](../../../../basics/README.md)
+- Swagger/OpenAPI как источник тестов — [README](../../../../basics/README.md)
+- REST API design — [README](../../../../basics/README.md)
+- Общие практики тестирования — [README](../../../../basics/README.md)

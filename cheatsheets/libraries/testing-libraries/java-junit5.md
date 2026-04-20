@@ -22,8 +22,8 @@ updated: "2026-04-20"
 - [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/) — руководство пользователя
 
 ### См. также
-- [[mockito|Mockito]] — **Mockito** для мокирования
-- [[README|Unit-тестирование]] — **Unit** тестирование
+- [Mockito](../../testing/unit-testing/junit/mockito.md) — **Mockito** для мокирования
+- [Unit-тестирование](../../basics/README.md) — **Unit** тестирование
 
 ## Содержание
 
@@ -1209,7 +1209,7 @@ public class PropertyBasedTest {
 - [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing)
 
 ## См. также
-- [[mockito]], [[mockito-advanced|Mockito Advanced]] — моки и стабы
-- [[assertj|AssertJ]] — **Fluent assertions**
+- [mockito](../../testing/unit-testing/junit/mockito.md), [Mockito Advanced](../../testing/unit-testing/junit/mockito-advanced.md) — моки и стабы
+- [AssertJ](../../testing/unit-testing/junit/assertj.md) — **Fluent assertions**
 - [Testcontainers](https://www.testcontainers.org/) — интеграционные тесты
 

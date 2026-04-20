@@ -18,15 +18,15 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Основные документы
-- [[nats]] — архитектура, Core pub-sub, JetStream, KV/Object store, Java-клиент, мониторинг
+- [nats](nats.md) — архитектура, Core pub-sub, JetStream, KV/Object store, Java-клиент, мониторинг
 
 ### Соседние разделы
-- [[README|Родительский раздел: Messaging]]
-- [[README|Kafka]] — альтернатива для event log / streaming
-- [[README|ActiveMQ]] — JMS-альтернатива
+- [Родительский раздел: Messaging](../../../basics/README.md)
+- [Kafka](../../../basics/README.md) — альтернатива для event log / streaming
+- [ActiveMQ](../../../basics/README.md) — JMS-альтернатива
 - [RabbitMQ](../rabbitmq/) — классический AMQP-брокер
 - [Spring Boot](../../../frameworks/java-frameworks/spring/)
-- [[README|Microservices]]
+- [Microservices](../../../basics/README.md)
 
 ### Внешние ресурсы
 - [NATS Documentation](https://docs.nats.io/)
@@ -77,14 +77,14 @@ updated: "2026-04-20"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Архитектура кластера, самотчистый протокол | [[nats#архитектура]] |
-| Core Pub/Sub и Request-Reply | [[nats#core-messaging-patterns]] |
-| JetStream: streams, consumers, ack, replay | [[nats#jetstream-persistent-messaging]] |
-| Key-Value Store | [[nats#key-value-store]] |
-| Object Store | [[nats#object-store]] |
-| Java-клиент | [[nats#java-клиент]] |
-| Monitoring / Observability | [[nats#monitoring-и-observability]] |
-| Service Mesh интеграция | [[nats#service-mesh-integration]] |
+| Архитектура кластера, самотчистый протокол | [nats](nats.md#архитектура) |
+| Core Pub/Sub и Request-Reply | [nats](nats.md#core-messaging-patterns) |
+| JetStream: streams, consumers, ack, replay | [nats](nats.md#jetstream-persistent-messaging) |
+| Key-Value Store | [nats](nats.md#key-value-store) |
+| Object Store | [nats](nats.md#object-store) |
+| Java-клиент | [nats](nats.md#java-клиент) |
+| Monitoring / Observability | [nats](nats.md#monitoring-и-observability) |
+| Service Mesh интеграция | [nats](nats.md#service-mesh-integration) |
 
 ## JetStream: когда он нужен
 
@@ -105,7 +105,7 @@ Core NATS — «fire and forget» (at-most-once): нет подтвержден�
 
 ## Куда идти дальше
 
-- Kafka для event log и streaming — [[README]]
+- Kafka для event log и streaming — [README](../../../basics/README.md)
 - RabbitMQ для гибкого routing — [../rabbitmq/](../rabbitmq/)
-- ActiveMQ для JMS-сценариев — [[README]]
-- Микросервисная архитектура — [[README]]
+- ActiveMQ для JMS-сценариев — [README](../../../basics/README.md)
+- Микросервисная архитектура — [README](../../../basics/README.md)

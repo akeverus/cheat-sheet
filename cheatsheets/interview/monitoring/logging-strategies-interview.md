@@ -91,8 +91,8 @@ updated: "2026-04-13"
 ## Роль документа в связке interview
 
 Этот файл фокусируется на стратегии: как выбирать формат логов, политику хранения, sampling, безопасность и стоимость.
-Для инструментальных вопросов и быстрых «как настроить» используйте [[logging-interview|файл по логированию]].
-Для связи логов с метриками и трейсами смотрите [[metrics-tracing-interview|Метрики и трейсинг]] и [[observability-interview|Observability]].
+Для инструментальных вопросов и быстрых «как настроить» используйте [файл по логированию](../logging/logging-interview.md).
+Для связи логов с метриками и трейсами смотрите [Метрики и трейсинг](metrics-tracing-interview.md) и [Observability](observability-interview.md).
 
 ## Как отвечать на вопросы про logging strategy
 
@@ -178,7 +178,7 @@ logging:
 </configuration>
 ```
 
-В [[spring-boot-interview|Spring Boot]] профили активируются через `spring.profiles.active` или переменную окружения `SPRING_PROFILES_ACTIVE`.
+В [Spring Boot](../frameworks/spring/spring-boot-interview.md) профили активируются через `spring.profiles.active` или переменную окружения `SPRING_PROFILES_ACTIVE`.
 
 ## Q3. (!) Что такое структурированное логирование (JSON) и когда его применять?
 
@@ -265,7 +265,7 @@ implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
 Хранение: на диске узла с ограничением по месту; отправка в центральное хранилище (`ELK`, `Loki`, облако) с последующим удалением локальных файлов. `Retention` в агрегаторе задаётся отдельно (индексы `Elasticsearch`, политики в `Loki`).
 
-В [[docker-interview|Docker]] и [[kubernetes-interview|Kubernetes]] приложение пишет в stdout, а сбором логов занимается платформа (`Fluentd`, `Filebeat` как DaemonSet).
+В [Docker](../devops/docker-interview.md) и [Kubernetes](../devops/kubernetes-interview.md) приложение пишет в stdout, а сбором логов занимается платформа (`Fluentd`, `Filebeat` как DaemonSet).
 
 ## Q5. (!) Что такое correlation id и как его использовать в микросервисах?
 
@@ -366,7 +366,7 @@ implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 ```
 
-В `ELK` или `Grafana` можно перейти от трейса к логам по `traceId` и наоборот. Подробнее о трассировке в [[metrics-tracing-interview|Метрики и трейсинг]].
+В `ELK` или `Grafana` можно перейти от трейса к логам по `traceId` и наоборот. Подробнее о трассировке в [Метрики и трейсинг](metrics-tracing-interview.md).
 
 ## Q7. (!) Что такое MDC и как его применять в многопоточном коде?
 
@@ -558,7 +558,7 @@ public class SamplingTurboFilter extends TurboFilter {
 </configuration>
 ```
 
-Эквивалент в `application.yml` для [[spring-boot-interview|Spring Boot]]:
+Эквивалент в `application.yml` для [Spring Boot](../frameworks/spring/spring-boot-interview.md):
 
 ```yaml
 logging:
@@ -643,7 +643,7 @@ graph LR
 - **PLG** (`Promtail` + `Loki` + `Grafana`) — легковеснее, индексирует только метки
 - **Облачные** — `CloudWatch`, `Datadog`, `Splunk`
 
-Агенты (`Filebeat`, `Fluentd`, `Promtail`) или прямой вывод приложения отправляют логи в агрегатор. Подробнее о связи с метриками в [[metrics-tracing-interview|Метрики и трейсинг]].
+Агенты (`Filebeat`, `Fluentd`, `Promtail`) или прямой вывод приложения отправляют логи в агрегатор. Подробнее о связи с метриками в [Метрики и трейсинг](metrics-tracing-interview.md).
 
 ## Q13. (!) Как интегрировать логи с ELK (Elasticsearch, Logstash, Kibana)?
 
@@ -832,7 +832,7 @@ public class ReactiveLogUtils {
 }
 ```
 
-Подробнее о реактивном программировании в [[spring-webflux-interview|Spring WebFlux]].
+Подробнее о реактивном программировании в [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md).
 
 ## Q16. Что такое retention политика для логов и как её задать?
 
@@ -1172,7 +1172,7 @@ rate(log_events_total{level="ERROR", service="order-service"}[5m])
 {service="order-service"} |= "ERROR" | json | traceId != ""
 ```
 
-Бизнес-события: логировать и увеличивать метрику для единого представления. Подробнее в [[metrics-tracing-interview|Метрики и трейсинг]].
+Бизнес-события: логировать и увеличивать метрику для единого представления. Подробнее в [Метрики и трейсинг](metrics-tracing-interview.md).
 
 ## Q24. Что такое централизованное логирование и какие риски?
 
@@ -1472,7 +1472,7 @@ public Order createOrder(OrderRequest request) {
 }
 ```
 
-Финальная проверка стратегии: переход «метрика -> трейс -> лог» должен занимать минуты и быть воспроизводимым для on-call. Подробнее о полной [[observability-interview|наблюдаемости систем]].
+Финальная проверка стратегии: переход «метрика -> трейс -> лог» должен занимать минуты и быть воспроизводимым для on-call. Подробнее о полной [наблюдаемости систем](observability-interview.md).
 
 ## Q31. Как собирать логи в Kubernetes с Fluentd / Fluent Bit?
 
@@ -2012,17 +2012,17 @@ void jsonLogShouldNotContainPassword(CapturedOutput output) {
 
 ## See also
 
-- [[logging-interview|Logging]] — инструментальные вопросы: `SLF4J`, `Logback`, `MDC`, настройка аппендеров и энкодеров
-- [[metrics-tracing-interview|Метрики и трейсинг]] — как метрики и трейсы дополняют логи в полной observability-картине
-- [[observability-interview|Observability]] — три столпа (логи, метрики, трейсы), `SLI`/`SLO`/`SLA`, алертинг
-- [[distributed-systems-interview|Распределённые системы]] — correlation ID, fault tolerance, сценарии потери сообщений
-- [[microservices-interview|Микросервисы]] — где централизованное логирование обязательно и как его организовать
-- [[spring-boot-interview|Spring Boot]] — конфигурация `logback-spring.xml`, профили, `spring-boot-starter-logging`
-- [[kubernetes-interview|Kubernetes]] — `stdout`/`stderr` стратегия, Fluentd/Fluent Bit, агрегация логов в кластере
+- [Logging](../logging/logging-interview.md) — инструментальные вопросы: `SLF4J`, `Logback`, `MDC`, настройка аппендеров и энкодеров
+- [Метрики и трейсинг](metrics-tracing-interview.md) — как метрики и трейсы дополняют логи в полной observability-картине
+- [Observability](observability-interview.md) — три столпа (логи, метрики, трейсы), `SLI`/`SLO`/`SLA`, алертинг
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — correlation ID, fault tolerance, сценарии потери сообщений
+- [Микросервисы](../architecture/microservices-interview.md) — где централизованное логирование обязательно и как его организовать
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация `logback-spring.xml`, профили, `spring-boot-starter-logging`
+- [Kubernetes](../devops/kubernetes-interview.md) — `stdout`/`stderr` стратегия, Fluentd/Fluent Bit, агрегация логов в кластере
 
-- [[elk-stack-interview|ELK Stack]]
-- [[jaeger-zipkin-interview|Jaeger и Zipkin]]
-- [[loki-grafana-interview|Loki и Grafana]]
-- [[metrics-tracing-interview|Метрики и трейсинг]]
-- [[observability-interview|Observability]]
-- [[opentelemetry-interview|OpenTelemetry]]
+- [ELK Stack](elk-stack-interview.md)
+- [Jaeger и Zipkin](jaeger-zipkin-interview.md)
+- [Loki и Grafana](loki-grafana-interview.md)
+- [Метрики и трейсинг](metrics-tracing-interview.md)
+- [Observability](observability-interview.md)
+- [OpenTelemetry](opentelemetry-interview.md)

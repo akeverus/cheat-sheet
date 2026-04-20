@@ -32,10 +32,10 @@ updated: "2026-04-20"
 - [Elasticsearch SQL](https://www.elastic.co/guide/en/elasticsearch/reference/current/xpack-sql.html)
 
 ### См. также
-- [[elasticsearch-basics|Основы]] — **Elasticsearch**
-- [[elasticsearch-indexing|Индексация]] — индексация документов
-- [[elasticsearch-aggregations|Агрегации]] — агрегации
-- [[elasticsearch-performance|Производительность]] — производительность
+- [Основы](elasticsearch-basics.md) — **Elasticsearch**
+- [Индексация](elasticsearch-indexing.md) — индексация документов
+- [Агрегации](elasticsearch-aggregations.md) — агрегации
+- [Производительность](elasticsearch-performance.md) — производительность
 
 ## Содержание
 

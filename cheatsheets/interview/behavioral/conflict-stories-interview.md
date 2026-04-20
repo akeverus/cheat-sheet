@@ -1,11 +1,16 @@
 ---
 title: "Вопросы на собеседовании: Конфликтные истории"
-description: "Конфликтные истории на поведенческом интервью: разногласия с коллегами, менеджерами, стейкхолдерами. Примеры хороших и плохих ответов по методу STAR. 22 вопроса."
+description: "Конфликтные истории на поведенческом интервью: разногласия с коллегами, менеджерами, стейкхолдерами, ответы по методу STAR"
 tags:
   - interview
   - behavioral
-  - conflict
-  - soft-skills
+  - conflict-stories-interview
+aliases:
+  - "Conflict Stories interview"
+  - "Conflict behavioral interview"
+  - "Disagreement stories"
+  - "конфликты на интервью"
+  - "behavioral conflict questions"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
@@ -188,9 +193,9 @@ updated: "2026-04-20"
 
 ## See also
 
-- [[behavioral-interview|Behavioral Interview]]
-- [[star-method-interview|STAR Method]]
-- [[failure-stories-interview|Failure Stories]]
-- [[leadership-stories-interview|Leadership Stories]]
-- [[culture-fit-interview|Culture Fit]]
-- [[team-leadership-interview|Team Leadership]]
+- [Behavioral Interview](behavioral-interview.md)
+- [STAR Method](star-method-interview.md)
+- [Failure Stories](failure-stories-interview.md)
+- [Leadership Stories](leadership-stories-interview.md)
+- [Culture Fit](culture-fit-interview.md)
+- [Team Leadership](../leadership/team-leadership-interview.md)

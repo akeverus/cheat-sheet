@@ -23,8 +23,8 @@ updated: "2026-04-20"
 - [WireMock Documentation](https://wiremock.org/docs/) — документация
 
 ### См. также
-- [[README|Интеграционное тестирование]] — интеграционное тестирование
-- [[java-rest-assured|REST Assured]] — **REST Assured** для тестирования **API**
+- [Интеграционное тестирование](../../basics/README.md) — интеграционное тестирование
+- [REST Assured](java-rest-assured.md) — **REST Assured** для тестирования **API**
 
 ## Содержание
 
@@ -367,7 +367,7 @@ public class `ApiMockDsl` {
 - [JUnit 5 расширение](https://wiremock.org/docs/junit-jupiter/)
 
 ## См. также
-- [[java-rest-assured|REST Assured]] — тестирование **REST API**
-- [[java-testcontainers|Testcontainers]] — интеграционные тесты с реальными контейнерами
-- [[mockito-advanced|Mockito]] — юнит-тестирование
+- [REST Assured](java-rest-assured.md) — тестирование **REST API**
+- [Testcontainers](java-testcontainers.md) — интеграционные тесты с реальными контейнерами
+- [Mockito](../../testing/unit-testing/junit/mockito-advanced.md) — юнит-тестирование
 

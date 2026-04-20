@@ -28,10 +28,10 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[jackson|Jackson: JSON сериализация в Java]]
-- [[java-gson|Gson]]
-- [[java-junit5|JUnit 5]]
-- [[java-lombok-interview|Вопросы на собеседовании]] — подготовка к интервью
+- [Jackson: JSON сериализация в Java](../serialization/jackson.md)
+- [Gson](../serialization/java-gson.md)
+- [JUnit 5](../testing-libraries/java-junit5.md)
+- [Вопросы на собеседовании](../../interview/programming-languages/java/java-lombok-interview.md) — подготовка к интервью
 ## Содержание
 
 - [Введение в Lombok](#введение-в-lombok)
@@ -981,8 +981,8 @@ public class User {
 **Lombok** особенно полезен в **enterprise** проектах с большим количеством **boilerplate** кода, где он может значительно сократить объем кода и улучшить его читаемость.
 
 
-[⬆ Наверх](../) | [[java-guava|Следующий: Guava]]
+[⬆ Наверх](../) | [Следующий: Guava](../utility-libraries/java-guava.md)
 
 ## См. также
 
-- [[java-mapstruct|MapStruct: Маппинг объектов в Java]]
+- [MapStruct: Маппинг объектов в Java](../java/java-mapstruct.md)

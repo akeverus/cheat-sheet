@@ -24,11 +24,11 @@ updated: "2026-04-20"
 - [Задачи и алгоритмы](./) — обзор разделов
 - [Алгоритмы сортировки](../sorting/) — обзор сортировок
 
-- [[a-star-pathfinding|Поиск пути A* (A* Pathfinding Algorithm)]]
-- [[algorithms|Хеширование и хеш-функции (Hashing and Hash Functions)]]
-- [[calculator-implementation|Calculator Implementation]]
-- [[circular-buffer|Circular Buffer]]
-- [[combinatorial-problems-overview|Обзор комбинаторных задач (Combinatorial Problems Overview)]]
+- [Поиск пути A* (A* Pathfinding Algorithm)](a-star-pathfinding.md)
+- [Хеширование и хеш-функции (Hashing and Hash Functions)](algorithms.md)
+- [Calculator Implementation](calculator-implementation.md)
+- [Circular Buffer](circular-buffer.md)
+- [Обзор комбинаторных задач (Combinatorial Problems Overview)](combinatorial-problems-overview.md)
 
 ## Содержание
 

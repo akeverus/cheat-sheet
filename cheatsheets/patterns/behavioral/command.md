@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [Java Callable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Callable.html)
 
 ### См. также
-- [[java-concurrency-basics|Java Concurrency]] — Java Concurrency
-- [[spring-data-jpa-interview|Spring Data JPA]] — транзакции
-- [[strategy|Strategy]] — Strategy
+- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — Java Concurrency
+- [Spring Data JPA](../../interview/frameworks/spring/spring-data-jpa-interview.md) — транзакции
+- [Strategy](strategy.md) — Strategy
 
-- [[iterator|Итератор (Iterator)]]
-- [[visitor|Посетитель (Visitor)]]
+- [Итератор (Iterator)](iterator.md)
+- [Посетитель (Visitor)](visitor.md)
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

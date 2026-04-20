@@ -27,7 +27,7 @@ updated: "2026-04-20"
 | Quick Start | [Quick Start](https://gatling.io/docs/gatling/quickstart/) |
 | Cheat Sheet | [Gatling Cheat Sheet](https://gatling.io/docs/gatling/reference/current/cheat-sheet/) |
 
-**См. также:** [[jmeter]], [[k6]], [[artillery]], [[testing-tools-overview|Обзор инструментов тестирования]].
+**См. также:** [jmeter](../jmeter/jmeter.md), [k6](../k6/k6.md), [artillery](../artillery/artillery.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).
 
 
 ## Содержание
@@ -393,4 +393,4 @@ Gatling — сценарии в коде, меньше ресурсов на п�
 
 ## Заключение
 
-**Gatling** — инструмент нагрузочного тестирования с описанием сценариев в коде (Scala/Java). Низкие накладные расходы и удобные HTML-отчёты делают его удобным выбором для HTTP/API и CI/CD. Используйте **baseUrl**, **check** и **feed** для параметризации; задавайте реалистичный **inject** (ramp-up, think time). Дальше: [Gatling Documentation](https://gatling.io/docs/gatling/), [[jmeter]], [[k6]], [[artillery]], [[testing-tools-overview|Обзор инструментов тестирования]].
+**Gatling** — инструмент нагрузочного тестирования с описанием сценариев в коде (Scala/Java). Низкие накладные расходы и удобные HTML-отчёты делают его удобным выбором для HTTP/API и CI/CD. Используйте **baseUrl**, **check** и **feed** для параметризации; задавайте реалистичный **inject** (ramp-up, think time). Дальше: [Gatling Documentation](https://gatling.io/docs/gatling/), [jmeter](../jmeter/jmeter.md), [k6](../k6/k6.md), [artillery](../artillery/artillery.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).

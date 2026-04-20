@@ -702,12 +702,12 @@ public String importFromUrl(@RequestParam String url) throws IOException {
 
 ## См. также
 
-- [[application-security|Application Security]] — аутентификация и авторизация
-- [[web-security|Web Security]] — XSS, CSRF, CSP в деталях
-- [[api-security|API Security]] — защита REST/GraphQL
-- [[jwt-oauth2|JWT и OAuth2]] — токены и делегированная авторизация
-- [[secrets-management|Secrets Management]] — Vault, KMS, ротация ключей
-- [[data-security|Data Security]] — шифрование и хеширование
-- [[security-testing|Security Testing]] — SAST, DAST, пентест
-- [[spring-security|Spring Security]] — фреймворк в Java
-- [[spring-security-interview|Spring Security для собеседований]]
+- [Application Security](application-security.md) — аутентификация и авторизация
+- [Web Security](web-security.md) — XSS, CSRF, CSP в деталях
+- [API Security](api-security.md) — защита REST/GraphQL
+- [JWT и OAuth2](jwt-oauth2.md) — токены и делегированная авторизация
+- [Secrets Management](../data/secrets-management.md) — Vault, KMS, ротация ключей
+- [Data Security](../data/data-security.md) — шифрование и хеширование
+- [Security Testing](../testing/security-testing.md) — SAST, DAST, пентест
+- [Spring Security](../../frameworks/java-frameworks/spring/spring-security.md) — фреймворк в Java
+- [Spring Security для собеседований](../../interview/frameworks/spring/spring-security-interview.md)

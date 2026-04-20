@@ -1197,8 +1197,8 @@ public class KubernetesHealthIndicator implements HealthIndicator {
 
 ## См. также
 
-- [[spring-ai|Spring AI]]
-- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
-- [[spring-batch|Spring Batch для Java]]
-- [[spring-boot|Spring Boot — Полное руководство]]
-- [[spring-cache|Spring Cache: Полное руководство по кешированию]]
+- [Spring AI](spring-ai.md)
+- [Spring AOP: Полное руководство по аспектно-ориентированному программированию](spring-aop.md)
+- [Spring Batch для Java](spring-batch.md)
+- [Spring Boot — Полное руководство](../../spring/spring-boot.md)
+- [Spring Cache: Полное руководство по кешированию](spring-cache.md)

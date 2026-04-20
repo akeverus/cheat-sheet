@@ -17,19 +17,19 @@ updated: "2026-04-20"
 
 ## Содержание
 
-- [[balanced-parentheses|Balanced Parentheses]]
-- [[caesar-cipher|Caesar Cipher]]
-- [[first-non-repeating-character|First Non-Repeating Character]]
-- [[large-text-string-search|Large Text String Search]]
-- [[levenshtein-distance|Levenshtein Distance]]
-- [[longest-word-search|Longest Word Search]]
-- [[multiple-keywords-check|Multiple Keywords Check]]
-- [[palindrome-check|Palindrome Check]]
-- [[palindromic-substrings|Palindromic Substrings]]
-- [[pangram-check|Pangram Check]]
-- [[regex-token-replacement|Regex Token Replacement]]
-- [[roman-arabic-numeral-conversion|Roman-Arabic Numeral Conversion]]
-- [[string-permutations|String Permutations]]
-- [[suffix-tree-pattern-matching|Suffix Tree Pattern Matching]]
-- [[word-count|Word Count]]
+- [Balanced Parentheses](balanced-parentheses.md)
+- [Caesar Cipher](caesar-cipher.md)
+- [First Non-Repeating Character](first-non-repeating-character.md)
+- [Large Text String Search](large-text-string-search.md)
+- [Levenshtein Distance](levenshtein-distance.md)
+- [Longest Word Search](longest-word-search.md)
+- [Multiple Keywords Check](multiple-keywords-check.md)
+- [Palindrome Check](palindrome-check.md)
+- [Palindromic Substrings](palindromic-substrings.md)
+- [Pangram Check](pangram-check.md)
+- [Regex Token Replacement](regex-token-replacement.md)
+- [Roman-Arabic Numeral Conversion](roman-arabic-numeral-conversion.md)
+- [String Permutations](string-permutations.md)
+- [Suffix Tree Pattern Matching](suffix-tree-pattern-matching.md)
+- [Word Count](word-count.md)
 

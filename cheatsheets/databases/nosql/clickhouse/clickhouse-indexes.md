@@ -34,10 +34,10 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
 - [System Tables](https://clickhouse.com/docs/en/operations/system-tables)
 
 ### См. также
-- [[clickhouse-queries|Запросы]] — оптимизация запросов
-- [[clickhouse-performance|Производительность]] — производительность и мониторинг
+- [Запросы](clickhouse-queries.md) — оптимизация запросов
+- [Производительность](clickhouse-performance.md) — производительность и мониторинг
 
-- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [PostgreSQL: Полное руководство по основам и мониторингу](../../relational/postgresql/postgres-basics.md)
 ## Содержание
 
 - [Введение в индексацию](#введение-в-индексацию)
@@ -1055,6 +1055,6 @@ ORDER BY event_time DESC;
 
 
 **Следующие темы:**
-- [[clickhouse-materialized-views|Материализованные представления]]
-- [[clickhouse-replication|Репликация и кластеры]]
+- [Материализованные представления](clickhouse-materialized-views.md)
+- [Репликация и кластеры](clickhouse-replication.md)
 

@@ -24,12 +24,12 @@ related: ["scala/scala-basics.md", "scala/scala-type-system.md"]
 - [Scala Reflection](https://docs.scala-lang.org/overviews/reflection/overview.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-type-system|Система типов]]
+- [Основы Scala](scala-basics.md)
+- [Система типов](scala-type-system.md)
 
-- [[go-reflection|Go: рефлексия]]
-- [[scala-dsl|Scala DSL]]
-- [[scala-shapeless|Shapeless в Scala]]
+- [Go: рефлексия](../go/go-reflection.md)
+- [Scala DSL](scala-dsl.md)
+- [Shapeless в Scala](scala-shapeless.md)
 ## Содержание
 
 - [Введение в Reflection](#введение-в-reflection)

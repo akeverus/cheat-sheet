@@ -25,12 +25,12 @@ related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
 - [Redis Transactions](https://redis.io/docs/manual/transactions/) — транзакции
 
 ### См. также
-- [[redis-basics|redis-basics.md]] — основы Redis
-- [[redis-lua-scripting|redis-lua-scripting.md]] — Lua-скрипты
+- [redis-basics.md](redis-basics.md) — основы Redis
+- [redis-lua-scripting.md](redis-lua-scripting.md) — Lua-скрипты
 
-- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
-- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
-- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
+- [Quarkus: Redis — Caching и Data Structures](../../../frameworks/java-frameworks/quarkus/quarkus-redis.md)
+- [Quarkus: Cache — Кеширование данных](../../../frameworks/java-frameworks/quarkus/quarkus-cache.md)
+- [Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache](../../../frameworks/java-frameworks/micronaut/micronaut-redis.md)
 ## Содержание
 
 - [Введение в транзакции Redis](#введение-в-транзакции-redis)

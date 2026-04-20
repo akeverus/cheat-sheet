@@ -33,13 +33,13 @@ updated: "2026-04-20"
 - [Tracing in Microservices](https://www.jaegertracing.io/docs/latest/)
 
 ### См. также
-- [[grafana|Grafana]] — визуализация метрик
-- [[distributed-tracing|Distributed Tracing]] — общие концепции
+- [Grafana](../metrics/grafana.md) — визуализация метрик
+- [Distributed Tracing](distributed-tracing.md) — общие концепции
 - [Monitoring README](../) — основы **Observability**
 
-- [[zipkin|Zipkin]]
-- [[opentelemetry|OpenTelemetry]]
-- [[go-observability|Go: наблюдаемость]]
+- [Zipkin](zipkin.md)
+- [OpenTelemetry](opentelemetry.md)
+- [Go: наблюдаемость](../../languages/go/go-observability.md)
 ## Содержание
 
 - [Введение в Jaeger](#введение-в-jaeger)

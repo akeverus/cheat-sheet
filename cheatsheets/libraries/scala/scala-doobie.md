@@ -20,7 +20,7 @@ updated: "2026-04-20"
 - [Doobie Examples](https://github.com/tpolecat/doobie/tree/series/0.9.x/modules/example)
 - [Cats Effect](https://typelevel.org/cats-effect/)
 - [FS2](https://fs2.io/)
-- [[java-hikaricp|HikariCP]]
+- [HikariCP](../java/java-hikaricp.md)
 
 ## Содержание
 
@@ -1498,8 +1498,8 @@ def findById(id: Long): IO[Option[User]] = {
 }
 ```
 ## См. также
-- [[scala-cats|Cats]] — Функциональная библиотека
-- [[scala-slick|Slick]] — Альтернативная **database library**
-- [[scala-play|Play Framework]] — **Web framework**
-- [[postgres-basics|PostgreSQL]] — **Database**
+- [Cats](scala-cats.md) — Функциональная библиотека
+- [Slick](scala-slick.md) — Альтернативная **database library**
+- [Play Framework](scala-play.md) — **Web framework**
+- [PostgreSQL](../../databases/relational/postgresql/postgres-basics.md) — **Database**
 

@@ -19,12 +19,12 @@ TimescaleDB — расширение PostgreSQL, которое добавляе
 ## Полезные ссылки
 
 ### Основные документы
-- [[timescaledb-basics|TimescaleDB: Основы]] — hypertables, SQL для time-series, интеграция
+- [TimescaleDB: Основы](timescaledb-basics.md) — hypertables, SQL для time-series, интеграция
 
 ### Соседние разделы
-- [[README|Time-series базы]]
-- [[README|InfluxDB]]
-- [[README|ClickHouse]]
+- [Time-series базы](../../../basics/README.md)
+- [InfluxDB](../../../basics/README.md)
+- [ClickHouse](../../../basics/README.md)
 - [PostgreSQL](../../relational/postgresql/)
 - [SQL-справочники](../../sql/)
 
@@ -45,7 +45,7 @@ TimescaleDB — расширение PostgreSQL, которое добавляе
 
 ## Что внутри раздела
 
-[[timescaledb-basics]] покрывает:
+[timescaledb-basics](timescaledb-basics.md) покрывает:
 
 - Что такое расширение TimescaleDB и как оно живёт поверх PostgreSQL
 - Установку через Docker
@@ -96,8 +96,8 @@ TimescaleDB — расширение PostgreSQL, которое добавляе
 
 ## Куда идти дальше
 
-- Time-series в целом — [[README|databases/time-series/README.md]]
+- Time-series в целом — [databases/time-series/README.md](../../../basics/README.md)
 - PostgreSQL как основа — [databases/relational/postgresql/](../../relational/postgresql/)
-- InfluxDB как альтернатива — [[README]]
-- ClickHouse для гипер-объёмов — [[README]]
-- Мониторинг приложений — [[README|monitoring/README.md]]
+- InfluxDB как альтернатива — [README](../../../basics/README.md)
+- ClickHouse для гипер-объёмов — [README](../../../basics/README.md)
+- Мониторинг приложений — [monitoring/README.md](../../../basics/README.md)

@@ -1,6 +1,6 @@
 ---
 title: "Gradle (основы)"
-description: "Gradle — система автоматизации сборки с открытым исходным кодом; использует Groovy или Kotlin DSL для описания сборки. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [[gradle-advanced|gradle-advanced.md]]."
+description: "Gradle — система автоматизации сборки с открытым исходным кодом; использует Groovy или Kotlin DSL для описания сборки. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [gradle-advanced.md](gradle-advanced.md)."
 tags:
   - development
   - build-tools
@@ -12,13 +12,13 @@ updated: "2026-04-20"
 ---
 # Gradle (основы)
 
-**Gradle** — система автоматизации сборки с открытым исходным кодом; использует **Groovy** или **Kotlin DSL** для описания сборки. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [[gradle-advanced]].
+**Gradle** — система автоматизации сборки с открытым исходным кодом; использует **Groovy** или **Kotlin DSL** для описания сборки. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [gradle-advanced](gradle-advanced.md).
 
 ## Полезные ссылки
 
 - [Официальная документация Gradle](https://docs.gradle.org/)
 - [Gradle User Manual](https://docs.gradle.org/current/userguide/userguide.html)
-- **См. также:** [[gradle-advanced]] — продвинутые концепции, многомодульные проекты, **CI/CD**, **Version Catalogs**, **Docker**; [README.md](../) — обзор раздела Build Tools.
+- **См. также:** [gradle-advanced](gradle-advanced.md) — продвинутые концепции, многомодульные проекты, **CI/CD**, **Version Catalogs**, **Docker**; [README.md](../) — обзор раздела Build Tools.
 
 ## Содержание
 
@@ -88,6 +88,6 @@ tasks.test {
 
 ## См. также
 
-- [[gradle-advanced|gradle-advanced.md]] — многомодульные проекты, **Version Catalogs**, **Spring Boot**, **Kotlin**, **CI/CD**, **Dependency locking**, **Troubleshooting**.
-- [[maven|maven.md]] — основы **Maven**.
+- [gradle-advanced.md](gradle-advanced.md) — многомодульные проекты, **Version Catalogs**, **Spring Boot**, **Kotlin**, **CI/CD**, **Dependency locking**, **Troubleshooting**.
+- [maven.md](../maven/maven.md) — основы **Maven**.
 - [README.md](../) — обзор раздела **Build Tools**.

@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Program to find LCM](https://www.geeksforgeeks.org/program-to-find-lcm-of-two-numbers/)
 
 ### См. также
-- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
-- [[factorial-calculation|Вычисление факториала]] — факториал
+- [Наибольший общий делитель](greatest-common-divisor.md) — НОД
+- [Вычисление факториала](factorial-calculation.md) — факториал
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

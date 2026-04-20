@@ -20,12 +20,12 @@ updated: "2026-04-20"
 - [Math (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html)
 
 ### См. также
-- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
-- [[rectangle-overlap|Проверка перекрытия двух прямоугольников]] — перекрытие прямоугольников
+- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
+- [Проверка перекрытия двух прямоугольников](rectangle-overlap.md) — перекрытие прямоугольников
 
-- [[line-intersection|Пересечение прямых (Line Intersection)]]
-- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
-- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [Пересечение прямых (Line Intersection)](line-intersection.md)
+- [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
+- [Взаимно простые числа (Coprime Numbers)](coprime-numbers.md)
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

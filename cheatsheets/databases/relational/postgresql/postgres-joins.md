@@ -26,13 +26,13 @@ updated: "2026-04-20"
 - [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [[postgres-queries]] — [[postgres-design]].
+См. также: [postgres-queries](postgres-queries.md) — [postgres-design](postgres-design.md).
 
 
 ### См. также
-- [[postgres-indexes|PostgreSQL: типы индексов]]
-- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
-- [[postgres-monitoring|PostgreSQL: Мониторинг]]
+- [PostgreSQL: типы индексов](postgres-indexes.md)
+- [PostgreSQL: администрирование и обслуживание](postgres-admin.md)
+- [PostgreSQL: Мониторинг](postgres-monitoring.md)
 ## Содержание
 
 - [Схема данных для примеров](#схема-данных-для-примеров)

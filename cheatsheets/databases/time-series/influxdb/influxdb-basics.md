@@ -21,13 +21,13 @@ updated: "2026-04-20"
 - [InfluxDB GitHub](https://github.com/influxdata/influxdb) — репозиторий проекта
 
 ### См. также
-- [[timescaledb-basics|TimescaleDB]] — **TimescaleDB**
+- [TimescaleDB](../timescaledb/timescaledb-basics.md) — **TimescaleDB**
 - [NoSQL](../../nosql/) — **NoSQL** базы данных
 
-- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
-- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
-- [[orm-basics|ORM: Object-Relational Mapping]]
-- [[hibernate-relationships|Hibernate: связи между сущностями]]
+- [Hibernate: JPQL, HQL и Criteria API](../../orm/hibernate-jpql-criteria.md)
+- [Hibernate: кэширование (L1, L2, Query Cache)](../../orm/hibernate-caching.md)
+- [ORM: Object-Relational Mapping](../../orm/orm-basics.md)
+- [Hibernate: связи между сущностями](../../orm/hibernate-relationships.md)
 ## Содержание
 
 - [Введение в InfluxDB](#введение-в-influxdb)

@@ -22,13 +22,13 @@ updated: "2026-04-20"
 - [Java Programming Basics](https://www.baeldung.com/java-tutorial) — основы **Java** программирования
 
 ### См. также
-- [[computer-science-basics|Computer Science]]
+- [Computer Science](../computer-science/computer-science-basics.md)
 - [Алгоритмы и структуры данных](../../algorithms/)
 
-- [[clean-code|Принципы чистого кода]]
-- [[git-basics|Основы Git]]
-- [[java-basics|Java: основы]]
-- [[redis-basics|Redis: Основы]]
+- [Принципы чистого кода](../clean-code.md)
+- [Основы Git](../git-basics.md)
+- [Java: основы](../../languages/java/java-basics.md)
+- [Redis: Основы](../../databases/nosql/redis/redis-basics.md)
 ## Содержание
 
 - [Введение в программирование](#введение-в-программирование)

@@ -21,12 +21,12 @@ updated: "2026-04-20"
 - [EventStore](https://www.eventstore.com/docs)
 
 ### См. также
-- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
-- [[cqrs|CQRS]] — **CQRS** паттерн
-- [[ddd|Domain-Driven Design]] — **Domain-Driven Design**
-- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
+- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
+- [CQRS](cqrs.md) — **CQRS** паттерн
+- [Domain-Driven Design](ddd.md) — **Domain-Driven Design**
+- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
 
-- [[soa|SOA (Service-Oriented Architecture)]]
+- [SOA (Service-Oriented Architecture)](soa.md)
 ## Содержание
 
 - [Введение в Event Sourcing](#введение-в-event-sourcing)

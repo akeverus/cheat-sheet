@@ -23,12 +23,12 @@ updated: "2026-04-20"
 - [Creational Design Patterns in Java](https://www.baeldung.com/creational-design-patterns)
 
 ### См. также
-- [[builder|Builder Pattern]]
-- [[abstract-factory|Abstract Factory Pattern]]
+- [Builder Pattern](builder.md)
+- [Abstract Factory Pattern](abstract-factory.md)
 
-- [[singleton|Одиночка (Singleton)]]
-- [[prototype|Прототип (Prototype)]]
-- [[factory-method|Фабричный метод (Factory Method)]]
+- [Одиночка (Singleton)](singleton.md)
+- [Прототип (Prototype)](prototype.md)
+- [Фабричный метод (Factory Method)](factory-method.md)
 ## Содержание
 
 - [Описание](#описание)

@@ -27,8 +27,8 @@ Mattermost — открытая платформа для командной к�
 
 
 ### См. также
-- [[telegram-basics|Telegram: основы]]
-- [[security-tools|Инструменты безопасности (Security Tools)]]
+- [Telegram: основы](../telegram/telegram-basics.md)
+- [Инструменты безопасности (Security Tools)](../../../security/tools/security-tools.md)
 ## Содержание
 
 - [Развёртывание и варианты](#развёртывание-и-варианты)
@@ -330,4 +330,4 @@ System Console Integrations Bot Accounts Add Bot Account. Скопируйте t
 
 ## Заключение
 
-Mattermost даёт командам полноценный корпоративный мессенджер с каналами, потоками, вебхуками и ботами при полном контроле над развёртыванием и данными. Для углублённой настройки и разработки интеграций используйте [официальную документацию](https://docs.mattermost.com/) и [API](https://api.mattermost.com/). См. также: [[slack-basics|Slack]], [[jira-basics|Jira]], [[confluence-basics|Confluence]].
+Mattermost даёт командам полноценный корпоративный мессенджер с каналами, потоками, вебхуками и ботами при полном контроле над развёртыванием и данными. Для углублённой настройки и разработки интеграций используйте [официальную документацию](https://docs.mattermost.com/) и [API](https://api.mattermost.com/). См. также: [Slack](../slack/slack-basics.md), [Jira](../jira/jira-basics.md), [Confluence](../confluence/confluence-basics.md).

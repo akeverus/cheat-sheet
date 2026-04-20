@@ -23,7 +23,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[azure-services|Azure Services]]
+- [Azure Services](azure-services.md)
 ## Содержание
 
 - [Основы IAM](#основы-iam)
@@ -1059,7 +1059,7 @@ aws cloudwatch put-metric-alarm \
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [[aws-basics|AWS Basics]] — основы **AWS**
-- [[aws-services|AWS Services]] — сервисы **AWS**
-- [[aws-networking|AWS Networking]] — сеть в **AWS**
-- [[README|Security]] — управление ключами и доступом
+- [AWS Basics](aws-basics.md) — основы **AWS**
+- [AWS Services](aws-services.md) — сервисы **AWS**
+- [AWS Networking](aws-networking.md) — сеть в **AWS**
+- [Security](../../basics/README.md) — управление ключами и доступом

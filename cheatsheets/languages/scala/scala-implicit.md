@@ -23,12 +23,12 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 - [Scala Implicit](https://docs.scala-lang.org/tour/implicit-parameters.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-fp-advanced|Продвинутое ФП]]
+- [Основы Scala](scala-basics.md)
+- [Продвинутое ФП](scala-fp-advanced.md)
 
-- [[scala-collections-list|Scala Collections — List]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
-- [[scala-collections-vector|Scala Collections — Vector]]
+- [Scala Collections — List](scala-collections-list.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
+- [Scala Collections — Vector](scala-collections-vector.md)
 ## Содержание
 
 - [Введение в Implicit](#введение-в-implicit)

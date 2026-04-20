@@ -1,15 +1,37 @@
 ---
-title: "Java Records — Interview"
-description: "Вопросы на собеседовании по Java Records (JEP 395): семантика, compact constructor, валидация, сериализация, pattern matching, ограничения."
+title: "Вопросы на собеседовании: Java Records"
+description: "Java Records (JEP 395, Java 16+): canonical/compact constructor, валидация, сериализация, pattern matching, интеграция со Spring, algebraic data types"
 tags:
   - interview
   - java
-  - records
-  - java-17
+  - java-records-interview
+aliases:
+  - "Java Records interview"
+  - "Java Records собеседование"
+  - "Java Records вопросы"
+  - "Java 16 records interview"
+  - "data classes Java"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Java Records — Interview
+# Вопросы на собеседовании: `Java Records`
+
+`Java Records` (JEP 395, stable в Java 16) — компактный синтаксис для immutable data carriers. Автоматически генерирует конструктор, `equals`/`hashCode`/`toString` и accessor методы. Стандарт для DTO в современной Java и часто спрашиваются в интервью.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [JEP 395: Records](https://openjdk.org/jeps/395) — JEP с описанием records
+- [Oracle Records Tutorial](https://docs.oracle.com/en/java/javase/21/language/records.html) — официальный туториал
+- [Baeldung: Java Records](https://www.baeldung.com/java-record-keyword) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 ## Q1. Что такое record в Java и зачем он нужен?
 
@@ -459,8 +481,13 @@ public record Config(String name, int timeout, boolean enabled) {
 
 ## See also
 
-- [[java-17-21-interview|Java 17-21 Interview]] — modern Java features
-- [[java-oop-interview|Java OOP Interview]] — классы и объекты
-- [[java-serialization-interview|Java Serialization Interview]] — сериализация
-- [[kotlin-sealed-classes-interview|Kotlin Sealed Classes]] — Kotlin аналог
-- [[java-core-interview|Java Core Interview]] — общие вопросы
+- [Java 17-21](java-17-21-interview.md) — все новшества Java 17-21, sealed classes
+- [Java Pattern Matching](java-pattern-matching-interview.md) — record patterns, deconstruction
+- [Java OOP](java-oop-interview.md) — классы и объекты, наследование
+- [Java Serialization](java-serialization-interview.md) — сериализация records
+- [Java Generics](java-generics-interview.md) — generic records
+- [Java Lombok](java-lombok-interview.md) — сравнение records и Lombok @Value
+- [Java Core](java-core-interview.md) — основы Java
+- [Java Jackson](java-jackson-interview.md) — serialization/deserialization records
+- [Java Stream](java-stream-interview.md) — работа records в Stream API
+- [Kotlin](../kotlin/kotlin-interview.md) — сравнение с Kotlin data classes

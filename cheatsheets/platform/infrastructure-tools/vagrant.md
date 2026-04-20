@@ -23,8 +23,8 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[consul|Consul]]
-- [[nginx-advanced|Nginx Advanced]]
+- [Consul](consul.md)
+- [Nginx Advanced](nginx-advanced.md)
 ## Содержание
 
 - [Основы Vagrant](#основы-vagrant)
@@ -1234,7 +1234,7 @@ make ssh
 См. раздел «Решение проблем» выше и [официальную документацию Vagrant](https://www.vagrantup.com/docs).
 ```
 ## См. также
-- [[docker-basics|Docker]] — контейнеризация
-- [[ansible-basics|Ansible]] — **Configuration Management**
-- [[terraform-basics|Terraform]] — **Infrastructure as Code**
+- [Docker](../containers/docker/docker-basics.md) — контейнеризация
+- [Ansible](../iac/ansible/ansible-basics.md) — **Configuration Management**
+- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
 - [Jenkins](https://www.jenkins.io/doc/) — **CI/CD Pipeline**

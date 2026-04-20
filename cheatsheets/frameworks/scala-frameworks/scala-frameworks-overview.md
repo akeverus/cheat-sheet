@@ -23,9 +23,9 @@ updated: "2026-04-20"
 - [http4s](https://http4s.org/)
 
 ### См. также
-- [[README|Frameworks README]] — раздел фреймворков
-- [[README|Java Frameworks]] — **Spring**, **Quarkus**
-- [[README|Scala (languages)]] — язык **Scala**
+- [Frameworks README](../../basics/README.md) — раздел фреймворков
+- [Java Frameworks](../../basics/README.md) — **Spring**, **Quarkus**
+- [Scala (languages)](../../basics/README.md) — язык **Scala**
 
 ## Содержание
 
@@ -71,7 +71,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents)
 }
 ```
 
-**Маршруты** задаются в `conf/routes`. См. [[scala-play|Play]].
+**Маршруты** задаются в `conf/routes`. См. [Play](../../libraries/scala/scala-play.md).
 
 
 ## Akka и Akka HTTP
@@ -87,7 +87,7 @@ val route = path("api" / "items" / LongNumber) { id =>
 Http().newServerAt("0.0.0.0", 8080).bind(route)
 ```
 
-**Особенности:** полностью асинхронный, интеграция с **Akka** акторами и потоками. См. [[scala-akka|Akka]].
+**Особенности:** полностью асинхронный, интеграция с **Akka** акторами и потоками. См. [Akka](../../libraries/scala/scala-akka.md).
 
 
 ## ZIO и ZIO HTTP
@@ -105,7 +105,7 @@ val app = Routes(
 Server.serve(app).provide(Server.defaultWithPort(8080))
 ```
 
-**Особенности:** типобезопасные зависимости, тестируемость, интеграция с **ZIO** экосистемой. См. [[scala-zio|ZIO]].
+**Особенности:** типобезопасные зависимости, тестируемость, интеграция с **ZIO** экосистемой. См. [ZIO](../../libraries/scala/scala-zio.md).
 
 
 ## http4s и Cats Effect
@@ -122,7 +122,7 @@ val routes = HttpRoutes.of[IO] {
 BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).resource
 ```
 
-**Особенности:** tagless final, **IO**-ориентированность, совместимость с **Cats** экосистемой. См. [[scala-http4s|http4s]].
+**Особенности:** tagless final, **IO**-ориентированность, совместимость с **Cats** экосистемой. См. [http4s](../../languages/scala/scala-http4s.md).
 
 
 ## Tapir
@@ -178,6 +178,6 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 
 ## Заключение
 
-**Scala**-экосистема предлагает **Play** для классического веб, **Akka HTTP** для реактивных сценариев, **ZIO** и **http4s** для функционального стека. **Tapir** объединяет описание **API** для разных бэкендов. См. [[README|Frameworks README]] и [[README|Scala (languages)]].
+**Scala**-экосистема предлагает **Play** для классического веб, **Akka HTTP** для реактивных сценариев, **ZIO** и **http4s** для функционального стека. **Tapir** объединяет описание **API** для разных бэкендов. См. [Frameworks README](../../basics/README.md) и [Scala (languages)](../../basics/README.md).
 
 

@@ -26,12 +26,12 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [Scala Pattern Matching](https://docs.scala-lang.org/tour/pattern-matching.html)
 
 ### См. также
-- [[scala-basics|Основы Scala]]
-- [[scala-fp-basics|Функциональное программирование]]
+- [Основы Scala](scala-basics.md)
+- [Функциональное программирование](scala-fp-basics.md)
 
-- [[scala-collections-list|Scala Collections — List]]
-- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
-- [[scala-collections-vector|Scala Collections — Vector]]
+- [Scala Collections — List](scala-collections-list.md)
+- [Scala Collections — Grouping and Aggregation](scala-collections-grouping.md)
+- [Scala Collections — Vector](scala-collections-vector.md)
 ## Содержание
 
 - [Введение в Pattern Matching](#введение-в-pattern-matching)

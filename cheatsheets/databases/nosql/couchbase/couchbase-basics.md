@@ -18,10 +18,10 @@ Couchbase — распределённая NoSQL БД, совмещающая ke
 - [Couchbase Documentation](https://docs.couchbase.com/) — официальная документация
 
 ### См. также
-- [[mongodb-basics|MongoDB]] — документная NoSQL БД
-- [[redis-basics|Redis]] — key-value хранилище
-- [[cassandra-basics|Apache Cassandra]] — wide-column NoSQL
-- [[mongodb-crud|MongoDB CRUD]] — паттерны работы с документами
+- [MongoDB](../mongodb/mongodb-basics.md) — документная NoSQL БД
+- [Redis](../redis/redis-basics.md) — key-value хранилище
+- [Apache Cassandra](../cassandra/cassandra-basics.md) — wide-column NoSQL
+- [MongoDB CRUD](../mongodb/mongodb-crud.md) — паттерны работы с документами
 
 ## Содержание
 
