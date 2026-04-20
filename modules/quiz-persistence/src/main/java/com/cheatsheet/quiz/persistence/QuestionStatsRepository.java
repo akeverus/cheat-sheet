@@ -278,6 +278,25 @@ public class QuestionStatsRepository {
     public record TopicCoverage(String topic, long total) {}
 
     /**
+     * Возвращает прогноз по дням на ближайшие N дней: сколько вопросов станет due в каждый день.
+     *
+     * @param nowEpoch epoch-секунды «сейчас»
+     * @param days     горизонт (обычно 7)
+     */
+    public List<ForecastDay> findReviewForecast(long nowEpoch, int days) {
+        long endEpoch = nowEpoch + (long) days * 86_400L;
+        return jdbcTemplate.query(
+                "SELECT DATE(next_review_at, 'unixepoch') AS day, COUNT(*) AS cnt " +
+                        "FROM review_state " +
+                        "WHERE next_review_at >= ? AND next_review_at < ? " +
+                        "GROUP BY day ORDER BY day",
+                (rs, rowNum) -> new ForecastDay(rs.getString("day"), rs.getLong("cnt")),
+                nowEpoch, endEpoch);
+    }
+
+    public record ForecastDay(String day, long count) {}
+
+    /**
      * Возвращает полный дамп прогресса для экспорта (JSON/CSV).
      */
     public List<ProgressExportRow> findProgressForExport() {

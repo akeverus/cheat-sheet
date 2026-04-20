@@ -29,6 +29,7 @@ import java.util.List;
 public class StatsPageService {
     private static final int COVERAGE_GAP_THRESHOLD = 5;
     private static final int COVERAGE_GAP_LIMIT = 10;
+    private static final int FORECAST_DAYS = 7;
 
     InterviewFacade facade;
     QuestionRepository questionRepository;
@@ -56,6 +57,9 @@ public class StatsPageService {
                 filter.topic(), selectedGroup, query != null && !query.isBlank());
         List<QuestionStatsRepository.TopicCoverage> coverageGaps =
                 questionStatsRepository.findTopicCoverageGaps(COVERAGE_GAP_THRESHOLD, COVERAGE_GAP_LIMIT);
+        long nowEpoch = System.currentTimeMillis() / 1000L;
+        List<QuestionStatsRepository.ForecastDay> forecast =
+                questionStatsRepository.findReviewForecast(nowEpoch, FORECAST_DAYS);
         return new StatsPageState(
                 stats,
                 topics,
@@ -66,7 +70,8 @@ public class StatsPageService {
                 searchService.search(query, searchLimit),
                 topicStats,
                 topicStatsJson,
-                coverageGaps
+                coverageGaps,
+                forecast
         );
     }
 
@@ -81,14 +86,15 @@ public class StatsPageService {
             List<SearchService.SearchItem> searchResults,
             List<TopicStats> topicStats,
             String topicStatsJson,
-            List<QuestionStatsRepository.TopicCoverage> coverageGaps
+            List<QuestionStatsRepository.TopicCoverage> coverageGaps,
+            List<QuestionStatsRepository.ForecastDay> reviewForecast
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
                               List<SearchService.SearchItem> searchResults,
                               List<TopicStats> topicStats, String topicStatsJson) {
             this(stats, topics, groups, selectedGroup, filter, searchQuery, searchResults,
-                    topicStats, topicStatsJson, List.of());
+                    topicStats, topicStatsJson, List.of(), List.of());
         }
     }
 }

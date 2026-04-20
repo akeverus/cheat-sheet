@@ -147,6 +147,21 @@
     <p id="table-sort-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
 </section>
 
+<section class="card review-forecast" th:if="${reviewForecast != null and !reviewForecast.isEmpty()}">
+    <h3>Прогноз повторений на 7 дней</h3>
+    <p class="review-forecast-hint">Сколько вопросов прилетит в каждый день. Помогает распределить нагрузку.</p>
+    <ul class="forecast-list" th:with="maxCnt=${#aggregates.max(reviewForecast.![count])}">
+        <li th:each="day : ${reviewForecast}" class="forecast-row">
+            <span class="forecast-day" th:text="${day.day()}">2026-04-20</span>
+            <span class="forecast-bar" role="img" th:aria-label="${day.count() + ' вопросов'}">
+                <span class="forecast-bar-fill"
+                      th:style="'width:' + ${day.count() * 100 / (maxCnt > 0 ? maxCnt : 1)} + '%'"></span>
+            </span>
+            <span class="forecast-count" th:text="${day.count()}">0</span>
+        </li>
+    </ul>
+</section>
+
 <section class="card coverage-gaps" th:if="${coverageGaps != null and !coverageGaps.isEmpty()}">
     <h3>Пробелы в банке вопросов</h3>
     <p class="coverage-gaps-hint">Темы, где меньше 5 вопросов — сгенерируй ещё, чтобы банк был равномерным.</p>

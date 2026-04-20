@@ -152,6 +152,7 @@ public class MvcModelAttributeMapper {
         model.addAttribute("topicStats", state.topicStats());
         model.addAttribute("topicStatsJson", state.topicStatsJson());
         model.addAttribute("coverageGaps", state.coverageGaps());
+        model.addAttribute("reviewForecast", state.reviewForecast());
     }
 
     /**
