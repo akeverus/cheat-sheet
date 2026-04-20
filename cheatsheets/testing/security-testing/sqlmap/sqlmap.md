@@ -122,7 +122,7 @@ python sqlmap.py -u "http://example.com/login" --data="username=admin&password=t
 
 ### Запрос из файла (Burp/ZAP)
 
-Сохранить запрос из **Burp** (HTTP history → ПКМ → Copy to file) или **ZAP** (Copy as cURL или сохранить вручную) в файл `request.txt`. Запуск:
+Сохранить запрос из **Burp** (HTTP history ПКМ Copy to file) или **ZAP** (Copy as cURL или сохранить вручную) в файл `request.txt`. Запуск:
 
 ```bash
 python sqlmap.py -r request.txt
@@ -215,7 +215,7 @@ Tamper-скрипты преобразуют payload перед отправко
 - **space2comment** — замена пробелов на комментарии `//`.
 - **space2plus** — замена пробелов на `+`.
 - **between** — замена `>` на `BETWEEN 0 AND #` (обход фильтра `>`).
-- **randomcase** — случайный регистр ключевых слов (SELECT → SeLeCt).
+- **randomcase** — случайный регистр ключевых слов (SELECT SeLeCt).
 - **charencode** — кодирование символов (например, в CHAR()).
 - **base64encode** — кодирование payload в Base64 (для отдельных параметров).
 - **equaltolike** — замена `=` на `LIKE` (обход фильтра `=`).
@@ -255,14 +255,14 @@ python sqlmap.py -u "http://example.com/page?id=1" -D mydb -T users -C username,
 ### Burp
 
 1. В Burp перехватить запрос с параметром (например, `id=1`).
-2. ПКМ → **Save to file** (или Copy) → сохранить в `request.txt`.
+2. ПКМ **Save to file** (или Copy) сохранить в `request.txt`.
 3. Запустить sqlmap: `python sqlmap.py -r request.txt`.
 4. При необходимости указать прокси Burp для просмотра запросов в Burp: `--proxy=http://127.0.0.1:8080`.
 
 ### ZAP
 
 1. В ZAP в **History** найти запрос с параметром.
-2. ПКМ → **Copy as cURL** или сохранить запрос вручную в файл.
+2. ПКМ **Copy as cURL** или сохранить запрос вручную в файл.
 3. Если скопирован cURL: вставить в файл `request.txt` (формат raw HTTP) или запустить sqlmap с **-r** и вставить содержимое запроса в файл в формате HTTP (первая строка `GET /page?id=1 HTTP/1.1`, затем заголовки, пустая строка, тело если есть).
 4. Запустить sqlmap: `python sqlmap.py -r request.txt`.
 
@@ -300,7 +300,7 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 
 **sqlmap или ручная проверка?** sqlmap ускоряет обнаружение и извлечение после первичного выявления подозрительного параметра. Для первичного поиска — Burp/ZAP, затем передать запрос в sqlmap.
 
-**POST с JSON?** Сохранить запрос из Burp/ZAP в файл → `-r request.txt`. Либо `--data='{"id":1}' -p id`.
+**POST с JSON?** Сохранить запрос из Burp/ZAP в файл `-r request.txt`. Либо `--data='{"id":1}' -p id`.
 
 **Обход WAF?** `--tamper` (space2comment, randomcase, between, charencode); `--random-agent`; повышать `--level`/`--risk`.
 
@@ -363,12 +363,12 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 
 | Tamper | Назначение |
 |--------|------------|
-| **space2comment** | Пробелы → /**/ |
-| **space2plus** | Пробелы → + |
+| **space2comment** | Пробелы /**/ |
+| **space2plus** | Пробелы + |
 | **randomcase** | Случайный регистр ключевых слов |
-| **between** | > → BETWEEN 0 AND # |
+| **between** | > BETWEEN 0 AND # |
 | **charencode** | Кодирование символов (CHAR) |
-| **equaltolike** | = → LIKE |
+| **equaltolike** | = LIKE |
 
 
 ## Заключение

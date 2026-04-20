@@ -645,7 +645,7 @@ database.runCommand(new Document("compact", "users"));
 
 ### 1. ESR (Equality, `Sort`, Range) правило
 
-При создании **compound** индексов следовать порядку: **Equality** → **Sort** → **Range**.
+При создании **compound** индексов следовать порядку: **Equality** **Sort** **Range**.
 
 ```javascript
 // Хороший индекс для ESR
@@ -1033,7 +1033,7 @@ public class IndexMonitorService {
 ### Ключевые принципы:
 
 1. **Анализ перед созданием**: Изучайте паттерны запросов
-2. **ESR правило**: **Equality** → **Sort** → **Range** порядок полей
+2. **ESR правило**: **Equality** **Sort** **Range** порядок полей
 3. **Не переусердствуйте**: Каждый индекс имеет стоимость
 4. **Мониторинг**: Регулярно проверяйте использование индексов
 5. **Обслуживание**: Перестраивайте и удаляйте ненужные индексы
@@ -1063,7 +1063,7 @@ public class IndexMonitorService {
 4. **Мониторьте производительность запросов**
 5. **Тестируйте индексы на staging окружении**
 
-Эффективная индексация — это баланс между скоростью чтения и записи, использованием памяти и места на диске. Регулярный мониторинг и оптимизация индексов критически важны для поддержания высокой производительности **MongoDB** в **production**. 🚀
+Эффективная индексация — это баланс между скоростью чтения и записи, использованием памяти и места на диске. Регулярный мониторинг и оптимизация индексов критически важны для поддержания высокой производительности **MongoDB** в **production**.
 
 ## Полезные ссылки
 
@@ -1100,71 +1100,71 @@ public class IndexMonitorService {
 
 Самый простой тип индекса, создаваемый на одном поле документа.
 
-```java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ``````java
 // `Java` + `Spring implementation available`
-``````java
+```
 // Java + Spring implementation available
 ```text
 

@@ -108,11 +108,11 @@ Redis — in-memory хранилище данных с поддержкой бо
 
 ## Маршруты чтения
 
-- **Junior backend (полдня):** `redis-basics.md` → `redis-data-structures.md` → простейший кэш в своём приложении.
-- **Production-готовность:** `persistence` → `replication` → `high-availability` → `monitoring` → `security`.
-- **Нагрузочные режимы:** `clustering` → `performance` → `troubleshooting`.
-- **Event-driven:** `streams` → `pubsub` → сравнение с Kafka в `development/messaging/`.
-- **Сложные паттерны:** `lua-scripting` → `transactions` → идемпотентные операции.
+- **Junior backend (полдня):** `redis-basics.md` `redis-data-structures.md` простейший кэш в своём приложении.
+- **Production-готовность:** `persistence` `replication` `high-availability` `monitoring` `security`.
+- **Нагрузочные режимы:** `clustering` `performance` `troubleshooting`.
+- **Event-driven:** `streams` `pubsub` сравнение с Kafka в `development/messaging/`.
+- **Сложные паттерны:** `lua-scripting` `transactions` идемпотентные операции.
 
 ## Куда идти дальше
 

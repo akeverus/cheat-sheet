@@ -44,7 +44,7 @@ related: ["micronaut-cache.md", "micronaut-messaging.md"]
   - [Redis Transactions](#redis-transactions)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте connection pooling](#1-используйте-connection-pooling)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [2. Настраивайте timeout правильно](#2-настраивайте-timeout-правильно)
   - [3. Используйте pub/sub для событий](#3-используйте-pubsub-для-событий)
   - [4. Используйте distributed locks для критических секций](#4-используйте-distributed-locks-для-критических-секций)

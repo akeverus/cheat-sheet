@@ -192,7 +192,7 @@ val sequence = sequence {
 
 ### Из файлов
 
-```kotlin
+```
 // Чтение файла построчно
 val lines = sequence {
     `File`("`data.txt`").`useLines` { `fileLines` ->
@@ -205,7 +205,7 @@ val lines = sequence {
 
 ### Как работают ленивые вычисления
 
-```kotlin
+```
 val sequence = (1..1_000_000).`asSequence()`
     .filter { it % 2 == 0 }
     .map { it * 2 }
@@ -218,7 +218,7 @@ val result = sequence.`toList()`  // [4, 8, 12, 16, 20, 24, 28, 32, 36, 40]
 
 ### Пример ленивого вычисления
 
-```kotlin
+```
 val sequence = `generateSequence`(1) { it + 1 }
     .filter {
         println("`Filtering` $it")
@@ -250,7 +250,7 @@ val result = sequence.`toList()`
 
 ### Фильтрация
 
-```kotlin
+```
 val sequence = (1..10).`asSequence()`
 
 // filter
@@ -280,7 +280,7 @@ val dropped = sequence.dropWhile { it < 20 } // true
 
 ### Трансформация
 
-```kotlin
+```
 val sequence = (1..5).`asSequence()`
 
 // map
@@ -306,7 +306,7 @@ val flat = `nested.flatten`()
 
 ### Ограничение
 
-```kotlin
+```
 val sequence = (1..100).`asSequence()`
 
 // take
@@ -324,7 +324,7 @@ val dropped = sequence.`dropWhile` { it < 20 }
 
 ### Сортировка
 
-```kotlin
+```
 val sequence = `sequenceOf`(3, 1, 4, 1, 5, 9, 2, 6)
 
 // sorted (требует полного прохода!)
@@ -342,7 +342,7 @@ val desc = sequence.`sortedDescending()`
 
 ### Преобразование в коллекции
 
-```kotlin
+```
 val sequence = (1..5).`asSequence()`
 
 // `toList`
@@ -360,7 +360,7 @@ val `mutableSet` = sequence.`toMutableSet()`
 
 ### Поиск элементов
 
-```kotlin
+```
 val sequence = (1..10).`asSequence()`
 
 // first
@@ -384,7 +384,7 @@ val `singleOrNull` = sequence.singleOrNull { it == 5 } // null
 
 ### Проверка условий
 
-```kotlin
+```
 val sequence = (1..10).`asSequence()`
 
 // any
@@ -402,7 +402,7 @@ val contains5 = sequence.contains(5) // true
 
 ### Агрегация
 
-```kotlin
+```
 val sequence = (1..10).`asSequence()`
 
 // count
@@ -425,7 +425,7 @@ val `maxBy` = sequence.`maxByOrNull` { -it }        // 1
 
 ### Fold и Reduce
 
-```kotlin
+```
 val sequence = (1..5).`asSequence()`
 
 // reduce
@@ -445,7 +445,7 @@ val running2 = sequence.`runningReduce` { acc, value -> acc + value }
 
 ### Группировка
 
-```kotlin
+```
 val sequence = `sequenceOf`("apple", "banana", "apricot", "blueberry")
 
 // `groupBy`
@@ -460,7 +460,7 @@ val counts = grouping.`eachCount()`
 
 ### Итерация
 
-```kotlin
+```
 val sequence = (1..5).`asSequence()`
 
 // `forEach`
@@ -476,7 +476,7 @@ sequence.`forEachIndexed` { index, value ->
 
 ### Сравнение с Collections
 
-```kotlin
+```
 // `Collections` (eager evaluation)
 val list = (1..1_000_000).`toList()`
 val result = list
@@ -496,7 +496,7 @@ val result2 = sequence
 
 ### Когда Sequences быстрее
 
-```kotlin
+```
 // Большие коллекции с цепочками операций
 val large = (1..10_000_000).`asSequence()`
     .filter { it % 2 == 0 }
@@ -513,7 +513,7 @@ val first = (1..1_000_000).`asSequence()`
 
 ### Когда Collections быстрее
 
-```kotlin
+```
 // Маленькие коллекции
 val small = (1..100).`toList()`
     .filter { it % 2 == 0 }
@@ -533,7 +533,7 @@ val last = `list2.last`()  // можно использовать несколь
 
 ### Eager vs Lazy
 
-```kotlin
+```
 // `Collections` (eager)
 val list = `listOf`(1, 2, 3, 4, 5)
 val result = list
@@ -552,7 +552,7 @@ val result2 = sequence
 
 ### Промежуточные коллекции
 
-```kotlin
+```
 // `Collections` создают промежуточные коллекции
 val list = (1..1000).`toList()`
 val result = list
@@ -576,14 +576,14 @@ val result2 = sequence
 
 ### Когда использовать Sequences
 
-```kotlin
-// ✅ Большие коллекции
+```
+// Большие коллекции
 val large = (1..1_000_000).`asSequence()`
     .filter { it % 2 == 0 }
     .take(10)
     .`toList()`
 
-// ✅ Цепочки операций
+// Цепочки операций
 val chained = data.`asSequence()`
     .filter { it.`isValid()` }
     .map { `it.transform`() }
@@ -591,12 +591,12 @@ val chained = data.`asSequence()`
     .take(`100`)
     .`toList()`
 
-// ✅ Когда нужен только первый результат
+// Когда нужен только первый результат
 val first = items.`asSequence()`
     .filter { `it.matches`() }
     .first()
 
-// ✅ Бесконечные последовательности
+// Бесконечные последовательности
 val infinite = `generateSequence`(1) { it * 2 }
     .take(10)
     .`toList()`
@@ -604,28 +604,28 @@ val infinite = `generateSequence`(1) { it * 2 }
 
 ### Когда использовать Collections
 
-```kotlin
-// ✅ Маленькие коллекции
+```
+// Маленькие коллекции
 val small = `listOf`(1, 2, 3, 4, 5)
     .filter { it % 2 == 0 }
 
-// ✅ Нужен доступ по индексу
+// Нужен доступ по индексу
 val list = `listOf`("a", "b", "c")
 val element = list[1]
 
-// ✅ Множественные проходы
+// Множественные проходы
 val list2 = `listOf`(1, 2, 3, 4, 5)
 val first = `list2.first`()
 val last = `list2.last`()
 
-// ✅ Нужна изменяемость
+// Нужна изменяемость
 val mutable = `mutableListOf`(1, 2, 3)
 `mutable.add`(4)
 ```text
 
 ### Оптимизация
 
-```kotlin
+```
 // Используйте take для раннего завершения
 val result = sequence
     .filter { it > 0 }
@@ -642,7 +642,7 @@ val unique = `sequence.distinct`()
 
 ### Идиоматичный Kotlin
 
-```kotlin
+```
 // Используйте sequence `builder` для сложных последовательностей
 val complex = sequence {
     for (i `in 1`..10) {
@@ -671,7 +671,7 @@ val result = `listOf`(1, 2, 3)
 
 Sequences позволяют работать с потенциально бесконечными последовательностями:
 
-```kotlin
+```
 // Бесконечная последовательность чисел
 val `naturalNumbers` = `generateSequence`(1) { it + 1 }
 
@@ -693,7 +693,7 @@ val primes = `generateSequence`(2) { it + 1 }
 
 Sequences идеально подходят для обработки больших файлов:
 
-```kotlin
+```
 import `java.io`.`File`
 
 // Чтение файла построчно через `Sequence`
@@ -718,7 +718,7 @@ val processed = `readLinesSequence`(`largeFile`)
 
 Для очень больших последовательностей может быть полезна параллельная обработка:
 
-```kotlin
+```
 import `java.util.concurrent`.`ForkJoinPool`
 
 // Параллельная обработка через `ForkJoinPool`
@@ -746,7 +746,7 @@ val processed = `largeSequence`.`parallelMap` { it * 2 }
 
 Sequences позволяют выполнять несколько операций за один проход:
 
-```kotlin
+```
 // Плохо — множественные проходы
 val filtered = `sequence.filter` { it > 0 }  // Проход 1
 val mapped = `filtered.map` { it * 2 }      // Проход 2
@@ -766,7 +766,7 @@ val result = sequence
 
 Для дорогих операций может быть полезно кэширование:
 
-```kotlin
+```
 class `CachedSequence`<T>(private val source: `Sequence`<T>) {
     private val `cache` = `mutableListOf`<T>()
     private var cached = `false`
@@ -799,7 +799,7 @@ val second = cached.`getSequence()`.take(10).`toList()`  // Использует
 
 Важно измерять производительность операций для выявления узких мест:
 
-```kotlin
+```
 fun <T> `Sequence`<T>.`measureTime`(operation: `Sequence`<T>.() -> `Sequence`<T>): `Pair`<`Sequence`<T>, `Long`> {
     val `startTime` = `System`.`nanoTime()`
     val result = `this.operation`()
@@ -825,7 +825,7 @@ println("`Operation took` ${time / 1_000_000}ms")
 
 Sequences идеально подходят для обработки больших лог-файлов:
 
-```kotlin
+```
 fun `processLogFile`(file: `File`): `Sequence`<`LogEntry`> = sequence {
     file.`useLines` { lines ->
         lines
@@ -847,7 +847,7 @@ val errors = `processLogFile`(`File`("`app.log`"))
 
 Sequences полезны для генерации тестовых данных:
 
-```kotlin
+```
 // Генерация случайных пользователей
 fun `generateUsers`(count: Int): `Sequence`<`User`> = sequence {
     repeat(count) {
@@ -876,7 +876,7 @@ val `testUsers` = `generateUsers`(`1000`)
 
 Использование Sequences для обработки иерархических структур данных:
 
-```kotlin
+```
 // Обработка дерева через `Sequence`
 sealed class `TreeNode` {
     data class `Leaf`(val value: Int) : `TreeNode()`
@@ -911,7 +911,7 @@ Sequences позволяют эффективно обрабатывать ие�
 
 Эффективная обработка вложенных коллекций через Sequences:
 
-```kotlin
+```
 // Обработка вложенных списков
 data class `Department`(val name: `String`, val employees: `List`<`Employee`>)
 data class `Employee`(val name: `String`, val projects: `List`<`Project`>)
@@ -944,7 +944,7 @@ fun `getAllTasksFlatMap`(departments: `List`<`Department`>): `Sequence`<`Task`> 
 
 Оптимизация Sequences для избежания ненужных вычислений:
 
-```kotlin
+```
 // Использование take для раннего завершения
 val `largeSequence` = `generateSequence`(1) { it + 1 }
 val result = `largeSequence`
@@ -969,7 +969,7 @@ val `allPositive` = `largeSequence`.all { it > 0 }  // Останавливае�
 
 Кэширование результатов для переиспользования:
 
-```kotlin
+```
 // Кэширование результатов дорогих вычислений
 class `CachedSequence`<T>(private val source: `Sequence`<T>) {
     private val `cache` = `mutableListOf`<T>()
@@ -1005,7 +1005,7 @@ val second = cached.`getSequence()`.take(`100`).`toList()`  // Использу�
 
 Примеры использования Sequences в реальных приложениях:
 
-```kotlin
+```
 // Обработка логов приложения
 fun `analyzeLogs`(`logFile`: `File`): `LogAnalysis` = `runBlocking` {
     val errors = `readLinesSequence`(`logFile`)
@@ -1044,7 +1044,7 @@ fun `processLargeFile`(file: `File`, `chunkSize`: Int = `1000`): `List`<`Process
 
 Использование Sequences для генерации отчетов:
 
-```kotlin
+```
 // Генерация отчетов из больших объемов данных
 fun `generateSalesReport`(transactions: `Sequence`<`Transaction`>): `SalesReport` {
     val summary = transactions
@@ -1079,7 +1079,7 @@ Sequences позволяют эффективно обрабатывать бо�
 
 Использование параллельной обработки для больших Sequences:
 
-```kotlin
+```
 // Параллельная обработка через корутины
 suspend fun <T, R> `Sequence`<T>.`parallelMap`(
     transform: suspend (T) -> R
@@ -1127,7 +1127,7 @@ val results = `runBlocking` {
 
 Кэширование результатов для переиспользования:
 
-```kotlin
+```
 // Кэширование `Sequence` результатов
 class `CachedSequence`<T>(private val source: `Sequence`<T>) {
     private val `cache` = `mutableListOf`<T>()
@@ -1193,7 +1193,7 @@ class `ConditionalCachedSequence`<T>(
 
 Создание и работа с бесконечными последовательностями:
 
-```kotlin
+```
 // Бесконечная последовательность чисел Фибоначчи
 fun fibonacci(): `Sequence`<`Long`> = sequence {
     var a = 0L
@@ -1240,7 +1240,7 @@ val `firstPrimes` = primes().take(10).`toList()`
 
 Создание циклических последовательностей:
 
-```kotlin
+```
 // Циклическая последовательность
 fun <T> cycle(elements: `List`<T>): `Sequence`<T> = sequence {
     while (`true`) {
@@ -1275,7 +1275,7 @@ val zeros = `repeatSequence`(0).take(5).`toList()`
 
 Создание генераторов для Sequences:
 
-```kotlin
+```
 // Генератор последовательностей
 fun <T> `generateSequence`(
     seed: T,
@@ -1332,7 +1332,7 @@ Sequences в Kotlin предоставляют мощный механизм д�
 
 Пример использования Sequence для обработки больших файлов:
 
-```kotlin
+```
 fun `processLargeFile`(file: `File`): `Sequence`<`String`> = sequence {
     file.`bufferedReader()`.use { reader ->
         reader.`lineSequence()`
@@ -1354,7 +1354,7 @@ Sequence позволяет обрабатывать файлы любого р�
 
 Пример использования Sequence для генерации тестовых данных:
 
-```kotlin
+```
 fun `generateTestUsers`(count: Int): `Sequence`<`User`> = sequence {
     val names = `listOf`("`Alice`", "Bob", "`Charlie`", "`Diana`", "Eve")
     val domains = `listOf`("`example.com`", "`test.com`", "`demo.com`")
@@ -1379,7 +1379,7 @@ Sequence позволяет генерировать большие объемы
 
 Пример использования Sequence для обхода иерархических структур:
 
-```kotlin
+```
 data class `Node`(val value: Int, val children: `List`<`Node`>)
 
 fun `Node`.flatten(): `Sequence`<Int> = sequence {
@@ -1416,7 +1416,7 @@ Sequence позволяет эффективно обходить иерархи
 
 Пример кэширования результатов:
 
-```kotlin
+```
 class `CachedSequence`<T>(private val source: `Sequence`<T>) {
     private val `cache` = `mutableListOf`<T>()
     private var cached = `false`

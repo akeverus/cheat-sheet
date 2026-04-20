@@ -29,7 +29,7 @@ MapStruct — annotation processor для Java, который на этапе �
 - [[java-jackson|java-jackson]] — JSON-сериализация после маппинга
 - [[java-lombok|java-lombok]] — совместное использование с Lombok
 - [[spring-rest|spring-rest]] — маппинг в REST-контроллерах
-- [[spring-data-jpa|spring-data-jpa]] — entity ↔ DTO
+- [[spring-data-jpa|spring-data-jpa]] — entity DTO
 - [[java-basics|java-basics]] — базовые концепции Java
 
 ## Содержание
@@ -85,7 +85,7 @@ dependencies {
 </build>
 ```
 
-В IDEA: включить annotation processing — `Settings → Build → Compiler → Annotation Processors → Enable annotation processing`.
+В IDEA: включить annotation processing — `Settings Build Compiler Annotation Processors Enable annotation processing`.
 
 ## Первый маппер
 
@@ -167,7 +167,7 @@ public interface OrderMapper {
 
 ## Вложенные объекты
 
-### Плоский → вложенный
+### Плоский вложенный
 
 ```java
 public class PersonFlat {
@@ -187,7 +187,7 @@ public interface PersonMapper {
 }
 ```
 
-### Вложенный → плоский
+### Вложенный плоский
 
 ```java
 @Mapping(source = "address.street", target = "street")
@@ -505,7 +505,7 @@ public interface UserMapper {
 | `Unmapped target property: "..."` | Поле target не замаплено | Указать `@Mapping` или `ignore = true`, либо `unmappedTargetPolicy = IGNORE` |
 | `Can't map property "X a" to "Y b"` | Типы не совпадают | Добавить конвертер: метод с нужной сигнатурой или `qualifiedByName` |
 | `NullPointerException` внутри маппера | `nullValueCheckStrategy = ON_IMPLICIT_CONVERSION` | Переключить на `ALWAYS` в `@Mapper` |
-| Генерация не запускается | Annotation processing выключен | В IDEA: Settings → Annotation Processors → Enable |
+| Генерация не запускается | Annotation processing выключен | В IDEA: Settings Annotation Processors Enable |
 | `MapStructImpl` не в classpath | Классы не попали в jar | Проверить, что `build/generated/.../annotationProcessor` в source sets |
 | Lombok-поля не видны MapStruct | Нет `lombok-mapstruct-binding` | Добавить зависимость |
 | `@Mapper(componentModel = "spring")` не регистрирует бин | Missing DI/Spring context | Проверить `@ComponentScan`, annotation processing |
@@ -519,7 +519,7 @@ public interface UserMapper {
 - **Избегай `expression` для сложной логики** — вынеси в default method + `qualifiedByName`.
 - **`@MapperConfig` для общих настроек** — не дублируй `componentModel` и policy.
 - **Проверяй сгенерированный код** — `build/generated/sources/annotationProcessor/`. Помогает понять, что именно делает маппер.
-- **Не маппь всё подряд — только DTO ↔ entity / DTO ↔ DTO.** Бизнес-логике маппер не нужен.
+- **Не маппь всё подряд — только DTO entity / DTO DTO.** Бизнес-логике маппер не нужен.
 - `@BeanMapping(ignoreByDefault = true)` — явный whitelist полей для public DTO, меньше утечек данных.
 - **Тестируй мапперы как обычные классы** — `UserMapperImpl` — обычный Java-класс без мокирования.
 
@@ -538,6 +538,6 @@ void toDtoMapsFullName() {
 - [[java-jackson|java-jackson]] — сериализация DTO в JSON
 - [[java-lombok|java-lombok]] — совместное использование
 - [[spring-rest|spring-rest]] — маппинг в контроллерах
-- [[spring-data-jpa|spring-data-jpa]] — маппинг entity ↔ DTO
+- [[spring-data-jpa|spring-data-jpa]] — маппинг entity DTO
 - [[java-basics|java-basics]] — базовые концепции
 - [[java-streams-fp|java-streams-fp]] — маппинг коллекций через Stream API

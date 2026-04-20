@@ -72,7 +72,7 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Выбор стека для команды:** `security-tools.md` → категория за категорией → сопоставить с бюджетом и compliance.
+- **Выбор стека для команды:** `security-tools.md` категория за категорией сопоставить с бюджетом и compliance.
 - **Настройка пайплайна:** `security-tools.md` + `../testing/security-testing.md` + `../../platform/ci-cd/`.
 - **Runtime-мониторинг кластера:** категории Container scanning + Runtime security + SIEM.
 

@@ -40,7 +40,7 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
   - [Custom Endpoint](#custom-endpoint)
 - [Лучшие практики](#лучшие-практики)
   - [1. Настраивайте security для endpoints](#1-настраивайте-security-для-endpoints)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [2. Используйте health indicators](#2-используйте-health-indicators)
   - [3. Собирайте метрики для важных операций](#3-собирайте-метрики-для-важных-операций)
 - [Info Endpoint](#info-endpoint)

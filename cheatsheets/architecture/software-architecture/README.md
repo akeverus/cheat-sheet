@@ -81,9 +81,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Junior/architect-start (1 день):** `microservices.md` → `design-principles/` → `patterns/`.
-- **Выбор стиля для нового сервиса:** чек-лист выше → `microservices.md` раздел «когда использовать» → ADR.
-- **Декомпозиция монолита:** DDD (bounded contexts) → strangler fig pattern → messaging.
+- **Junior/architect-start (1 день):** `microservices.md` `design-principles/` `patterns/`.
+- **Выбор стиля для нового сервиса:** чек-лист выше `microservices.md` раздел «когда использовать» ADR.
+- **Декомпозиция монолита:** DDD (bounded contexts) strangler fig pattern messaging.
 
 ## Куда идти дальше
 

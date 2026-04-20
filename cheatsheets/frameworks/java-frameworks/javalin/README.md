@@ -68,7 +68,7 @@ Javalin — минималистичный веб-фреймворк для Java
 
 ## Маршруты чтения
 
-- **Прототип за час:** `javalin-basics.md` → разделы "Простой HTTP сервер" + "JSON" + "WebSocket".
+- **Прототип за час:** `javalin-basics.md` разделы «Простой HTTP сервер» + «JSON» + «WebSocket».
 - **Kotlin-проект:** `javalin-basics.md` + [[kotlin-ktor|Ktor]] для сравнения.
 - **Миграция с Spring:** секции «Контекст» + "middleware" + чек-лист расхождений в `../README.md`.
 

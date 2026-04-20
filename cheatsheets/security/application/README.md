@@ -73,7 +73,7 @@ updated: "2026-04-20"
 
 ## Маршруты чтения
 
-- **Junior (1 час):** `application-security.md` — общие концепты → `owasp-top-10.md` — обзор категорий.
+- **Junior (1 час):** `application-security.md` — общие концепты `owasp-top-10.md` — обзор категорий.
 - **Backend-разработчик на ревью PR:** `owasp-top-10.md` как чек-лист + `api-security.md` для API-эндпоинтов + `jwt-oauth2.md` для токенов.
 - **Интеграция с IdP:** `jwt-oauth2.md` — Authorization Code + PKCE, Spring Resource Server.
 - **Security-чемпион команды:** все пять документов + `../testing/security-testing.md` + `../tools/security-tools.md`.

@@ -182,7 +182,7 @@ public class RtTransition implements Transition {
 
 ## Пример: Валидатор JSON
 
-Упрощённый валидатор формата `{"key":"value"}`: состояния start → openBrace → key → colon → value → comma/closeBrace; closeBrace — финальное.
+Упрощённый валидатор формата `{"key":"value"}`: состояния start openBrace key colon value comma/closeBrace; closeBrace — финальное.
 
 ```java
 public class JsonStateMachineBuilder {

@@ -216,7 +216,7 @@ JWTVerifier verifier = JWT.require(Algorithm.RSA256(publicKey, null))
     .build(); // не принимает токены с другими alg
 ```
 
-### Key confusion (RSA → HMAC)
+### Key confusion (RSA HMAC)
 
 Токен был с `RS256`. Атакующий делает `HS256`, где ключом берёт публичный RSA-ключ сервера. Если библиотека не различает — проходит.
 
@@ -224,7 +224,7 @@ JWTVerifier verifier = JWT.require(Algorithm.RSA256(publicKey, null))
 
 ### Утечка секретного ключа
 
-`HS256` с простым секретом → brute-force за часы.
+`HS256` с простым секретом brute-force за часы.
 
 Защита:
 
@@ -240,7 +240,7 @@ Access token попадает в `Referer`, логи прокси, браузе�
 
 ### Слишком долгий TTL
 
-`access token` на неделю → украли и год эксплуатируют.
+`access token` на неделю украли и год эксплуатируют.
 
 Защита: короткий `access` (минуты) + отзываемый `refresh`.
 

@@ -54,7 +54,7 @@ Dropwizard — "opinionated" Java-фреймворк для быстрой сб�
 - Нужен «скучный» и предсказуемый стек: никакой автомагии, только явные bundle и factory.
 - Команда уже знает JAX-RS (Jersey) и не хочет переучиваться на Spring MVC.
 - Важны метрики и health endpoints «из коробки» без Actuator.
-- **Не подходит**, если нужен AOT/native (→ Quarkus, Micronaut) или реактивный стек (→ Vert.x, WebFlux).
+- **Не подходит**, если нужен AOT/native ( Quarkus, Micronaut) или реактивный стек ( Vert.x, WebFlux).
 
 ## Сравнение с соседями
 

@@ -759,15 +759,15 @@ GEOHASH cities Palermo
 
 ### Рекомендации по выбору
 
-1. **Простые значения** → **Strings**
-2. **Упорядоченные коллекции** → **Lists**
-3. **Уникальные значения** → **Sets**
-4. **Объекты с полями** → **Hashes**
-5. **Рейтинги и сортировка** → **Sorted Sets**
-6. **Логи и события** → **Streams**
-7. **Битовые операции** → **Bitmaps**
-8. **Приблизительный подсчет** → **HyperLogLog**
-9. **Географические данные** → **Geospatial**
+1. **Простые значения** **Strings**
+2. **Упорядоченные коллекции** **Lists**
+3. **Уникальные значения** **Sets**
+4. **Объекты с полями** **Hashes**
+5. **Рейтинги и сортировка** **Sorted Sets**
+6. **Логи и события** **Streams**
+7. **Битовые операции** **Bitmaps**
+8. **Приблизительный подсчет** **HyperLogLog**
+9. **Географические данные** **Geospatial**
 
 ## Advanced Patterns and Examples
 
@@ -1181,7 +1181,7 @@ public class ActivityTracker {
 
 ### Choosing the Right Data Structure
 
-```redis
+```
 # Плохо: Множество отдельных ключей
 `SET` user:1000:name "`John`"
 `SET` user:1000:email "john`@example`.com"
@@ -1199,7 +1199,7 @@ public class ActivityTracker {
 
 ### Memory-Efficient Patterns
 
-```redis
+```
 # Использование небольших хэшей для группировки
 # Вместо множества ключей user:1000:field1, user:1000:field2
 # Используйте один хэш user:1000 с полями field1, field2
@@ -1217,7 +1217,7 @@ public class ActivityTracker {
 
 ### Operation Complexity
 
-```redis
+```
 # `O(1)` операции
 `GET` key
 `SET` key value
@@ -1247,7 +1247,7 @@ public class ActivityTracker {
 
 ### E-Commerce: Shopping Cart
 
-```java
+```
 // `Java` пример корзины покупок
 public class `ShoppingCart` {
     private `JedisPool jedisPool`;
@@ -1290,7 +1290,7 @@ public class `ShoppingCart` {
 
 ### Social Media: Followers System
 
-```java
+```
 // `Java` пример системы подписчиков
 public class `FollowersSystem` {
     private `JedisPool jedisPool`;
@@ -1351,7 +1351,7 @@ public class `FollowersSystem` {
 
 ### Analytics: Page View Counter
 
-```java
+```
 // `Java` пример счетчика просмотров страниц
 public class `PageViewCounter` {
     private `JedisPool jedisPool`;
@@ -1396,7 +1396,7 @@ public class `PageViewCounter` {
 
 ### Gaming: Player Statistics
 
-```java
+```
 // `Java` пример статистики игроков
 public class `PlayerStats` {
     private `JedisPool jedisPool`;
@@ -1450,7 +1450,7 @@ public class `PlayerStats` {
 
 ### Time-Series with Sorted Sets
 
-```redis
+```
 # Хранение временных рядов
 # Используем timestamp как score
 `ZADD` temperature:2023-01-16 `1642320000` "25.5"
@@ -1466,7 +1466,7 @@ public class `PlayerStats` {
 
 ### Rate Limiting with Sorted Sets
 
-```lua
+```
 -- Lua скрипт для rate limiting
 local key = `KEYS`[1]
 local window = tonumber(`ARGV`[1])
@@ -1495,7 +1495,7 @@ end
 
 ### Distributed Lock with Strings
 
-```lua
+```
 -- Lua скрипт для distributed lock
 local `lock_key` = `KEYS`[1]
 local `lock_value` = `ARGV`[1]
@@ -1513,7 +1513,7 @@ end
 
 ### Cache-Aside Pattern
 
-```java
+```
 // `Java` пример `cache-aside` pattern
 public class `CacheAsideCache` {
     private `JedisPool jedisPool`;
@@ -1566,7 +1566,7 @@ public class `CacheAsideCache` {
 
 ### Memory Efficiency
 
-```redis
+```
 # Использование небольших хэшей
 # Вместо:
 `SET` user:1000:name "`John`"
@@ -1585,7 +1585,7 @@ public class `CacheAsideCache` {
 
 ### Performance Optimization
 
-```redis
+```
 # Использование `Pipeline` для множественных операций
 # Вместо:
 `SET` key1 "value1"
@@ -1609,7 +1609,7 @@ public class `CacheAsideCache` {
 
 ### Issue: Large Sets/Lists
 
-```redis
+```
 # Проблема: Большие множества или списки замедляют операции
 # Решение: Разбить на несколько меньших структур
 
@@ -1623,7 +1623,7 @@ public class `CacheAsideCache` {
 
 ### Issue: Memory Usage
 
-```redis
+```
 # Проблема: Высокое использование памяти
 # Решение: Использовать более эффективные структуры данных
 
@@ -1635,7 +1635,7 @@ public class `CacheAsideCache` {
 
 ### Issue: Slow Operations
 
-```redis
+```
 # Проблема: Медленные операции
 # Решение: Проверить сложность операций
 

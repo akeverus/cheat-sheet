@@ -72,7 +72,7 @@ GitHub Copilot — один из самых распространённых AI-
 
 ## Маршруты чтения
 
-- **Первый день:** `copilot-basics.md` → установка в IDE → inline → Chat.
+- **Первый день:** `copilot-basics.md` установка в IDE inline Chat.
 - **Команда:** + custom instructions в репо + Spaces для shared-контекстов + Copilot Agent для рутинных задач.
 - **Автоматизация:** `gh copilot` в CLI + GitHub Actions с Copilot-интеграцией.
 

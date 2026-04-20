@@ -155,7 +155,7 @@ val context: CoroutineContext = Dispatchers.Default + CoroutineName("MyCoroutine
 
 ### Композиция контекста
 
-```kotlin
+```
 // Объединение контекстов
 val context1 = `Dispatchers`.`Default`
 val context2 = `CoroutineName`("`MyCoroutine`")
@@ -171,7 +171,7 @@ val `withoutName` = combined.`minusKey`(`CoroutineName`.Key)
 
 ### Dispatchers - детальное использование
 
-```kotlin
+```
 import `kotlinx.coroutines`.*
 
 // `Dispatchers`.`Default` - для `CPU`-интенсивных задач
@@ -200,7 +200,7 @@ val `customDispatcher` = `Executors`.`newFixedThreadPool`(4).`asCoroutineDispatc
 
 ### Переключение Dispatchers
 
-```kotlin
+```
 suspend fun example() {
     // Начинаем в `Main`
     `withContext`(`Dispatchers`.`Main`) {
@@ -224,7 +224,7 @@ suspend fun example() {
 
 ### CoroutineName
 
-```kotlin
+```
 // Именование корутин для отладки
 val job = `CoroutineScope`(`Dispatchers`.`Default` + `CoroutineName`("`DataProcessing`")).launch {
     println(`coroutineContext`[`CoroutineName`]) // CoroutineName(DataProcessing)
@@ -240,7 +240,7 @@ suspend fun process() {
 
 ### ExceptionHandler в контексте
 
-```kotlin
+```
 val `exceptionHandler` = `CoroutineExceptionHandler` { context, exception ->
     println("`Caught exception`: $exception in context: $context")
 }
@@ -262,7 +262,7 @@ Structured Concurrency (структурированная конкурентн�
 
 Основной принцип структурированной конкурентности - это создание scope для корутин, который автоматически управляет их жизненным циклом. Функция `coroutineScope` создает такой scope и гарантирует, что все запущенные в нем корутины завершатся до выхода из функции.
 
-```kotlin
+```
 import `kotlinx.coroutines`.*
 
 // Структурированная конкурентность

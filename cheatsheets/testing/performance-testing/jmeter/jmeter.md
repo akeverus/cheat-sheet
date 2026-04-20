@@ -126,7 +126,7 @@ Assertion вешается на Sampler (или контроллер — тог�
 
 ## Pre- и Post-процессоры
 
-- **JSON Extractor** — значение по JSONPath в переменную (например, `$.access_token` → `token`).
+- **JSON Extractor** — значение по JSONPath в переменную (например, `$.access_token` `token`).
 - **Regular Expression Extractor** — извлечение по regex из тела/заголовков.
 - **HTTP Header Manager** — заголовки запроса (глобально или для Sampler).
 - **JSR223 PreProcessor / PostProcessor** — скрипт Groovy до/после Sampler (расчёт переменных, разбор ответа). Предпочтительнее BeanShell.
@@ -136,8 +136,8 @@ Assertion вешается на Sampler (или контроллер — тог�
 
 ### Минимальный план (GUI)
 
-1. Test Plan → Thread Group (потоки: 10, ramp-up: 5, loop: 2).
-2. Под Thread Group → HTTP Request (Server: `example.com`, Path: `/`).
+1. Test Plan Thread Group (потоки: 10, ramp-up: 5, loop: 2).
+2. Под Thread Group HTTP Request (Server: `example.com`, Path: `/`).
 3. Listener: View Results Tree (отладка) или Summary Report (сводка).
 4. Запуск: Run (Ctrl+R).
 
@@ -186,7 +186,7 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 - **Встроенные:** `__threadNum`, `__threadGroupName`, `__Random(min,max)`, `__time()`, `__FileToString(path,,)`, `__UUID()`, `__counter(FALSE,)`.
 - **Свойства:** `${__P(propName, default)}` — из **-J** или user.properties. Пример: в Thread Group — `${__P(threads,10)}`, запуск: `jmeter -n -t plan.jmx -Jthreads=100 -l out.jtl`.
 
-Полный список функций: **Options → Function Helper Dialog** в GUI.
+Полный список функций: **Options Function Helper Dialog** в GUI.
 
 
 ## Пример: логин и запрос с токеном
@@ -235,7 +235,7 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 **JMeter или Gatling/k6?** JMeter — GUI, много протоколов из коробки, низкий порог входа. Gatling/k6 — сценарии в коде, меньше ресурсов на поток, удобные отчёты. Выбор по команде и требованиям.
 
-**API с авторизацией?** HTTP Header Manager — заголовок `Authorization: Bearer ${token}`. Токен — первый запрос (логин), JSON Extractor или JSR223 PostProcessor → переменная.
+**API с авторизацией?** HTTP Header Manager — заголовок `Authorization: Bearer ${token}`. Токен — первый запрос (логин), JSON Extractor или JSR223 PostProcessor переменная.
 
 **Тело запроса из файла?** В Body Data: `${__FileToString(path/to/file.json,,)}` или чтение в JSR223 PreProcessor.
 

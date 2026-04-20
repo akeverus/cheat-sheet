@@ -43,7 +43,7 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
   - [1. Используйте JWT для stateless authentication](#1-используйте-jwt-для-stateless-authentication)
   - [2. Валидируйте все входные данные](#2-валидируйте-все-входные-данные)
   - [3. Используйте HTTPS в production](#3-используйте-https-в-production)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
 - [Custom Authentication](#custom-authentication)
   - [Custom Identity Provider](#custom-identity-provider)
 - [Security Annotations](#security-annotations)

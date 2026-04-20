@@ -76,9 +76,9 @@ API-тестирование проверяет поведение систем�
 
 ## Маршруты чтения
 
-- **Бэкенд без тестов API (1 неделя):** `api-testing-basics.md` → написать 10-20 REST Assured тестов → добавить в CI.
-- **Зрелость contract-first:** OpenAPI → Schemathesis в PR → Pact между сервисами.
-- **Перед высокой нагрузкой:** k6 baseline → выявить bottleneck → профилирование БД/кода.
+- **Бэкенд без тестов API (1 неделя):** `api-testing-basics.md` написать 10-20 REST Assured тестов добавить в CI.
+- **Зрелость contract-first:** OpenAPI Schemathesis в PR Pact между сервисами.
+- **Перед высокой нагрузкой:** k6 baseline выявить bottleneck профилирование БД/кода.
 
 ## Куда идти дальше
 

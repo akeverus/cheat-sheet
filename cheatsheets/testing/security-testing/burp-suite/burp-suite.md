@@ -92,16 +92,16 @@ updated: "2026-02-11"
 
 ### Настройка браузера для Proxy
 
-1. В Burp: **Proxy → Options** — включён **Proxy listener** (по умолчанию `127.0.0.1:8080`).
+1. В Burp: **Proxy Options** — включён **Proxy listener** (по умолчанию `127.0.0.1:8080`).
 2. В браузере: ручной HTTP/HTTPS-прокси на `127.0.0.1`, порт `8080`.
-3. Установить **CA-сертификат Burp** для HTTPS: в браузере открыть `http://burp` или **Proxy → Options → Import / export CA certificate** → установить в доверенные корневые центры.
+3. Установить **CA-сертификат Burp** для HTTPS: в браузере открыть `http://burp` или **Proxy Options Import / export CA certificate** установить в доверенные корневые центры.
 
 После настройки весь трафик идёт через Burp; при **Intercept is on** запросы останавливаются для просмотра и правки.
 
 ### Проверка
 
-- Открыть любой HTTPS-сайт в браузере — в **Proxy → HTTP history** должны появиться запросы.
-- Отправить запрос из истории в **Repeater** (ПКМ → Send to Repeater) и нажать **Send** — должен прийти ответ.
+- Открыть любой HTTPS-сайт в браузере — в **Proxy HTTP history** должны появиться запросы.
+- Отправить запрос из истории в **Repeater** (ПКМ Send to Repeater) и нажать **Send** — должен прийти ответ.
 
 
 ## Proxy
@@ -118,16 +118,16 @@ updated: "2026-02-11"
 
 ### WebSockets
 
-- **Proxy → Options** — включить перехват сообщений WebSocket; история в **WebSockets history**.
+- **Proxy Options** — включить перехват сообщений WebSocket; история в **WebSockets history**.
 
 ### Match and Replace
 
-- **Proxy → Options → Match and Replace** — правила автоподстановки в запросах/ответах (User-Agent, удаление токена, подстановка Cookie и т.д.).
+- **Proxy Options Match and Replace** — правила автоподстановки в запросах/ответах (User-Agent, удаление токена, подстановка Cookie и т.д.).
 
 ### Invisible proxy и Scope
 
-- **Target → Scope** — что входит в область тестирования (in scope / out of scope); в Proxy и Scanner можно показывать только in-scope.
-- **Proxy → Options → Intercept Client Requests** — какие запросы перехватывать (по URL, методу); можно исключить статику (картинки, CSS).
+- **Target Scope** — что входит в область тестирования (in scope / out of scope); в Proxy и Scanner можно показывать только in-scope.
+- **Proxy Options Intercept Client Requests** — какие запросы перехватывать (по URL, методу); можно исключить статику (картинки, CSS).
 
 
 ## Scanner
@@ -137,7 +137,7 @@ updated: "2026-02-11"
 ### Запуск сканирования
 
 1. **Target** — добавить в scope нужный хост/URL или использовать карту из трафика.
-2. **Dashboard → New scan** — URL, **Crawl and audit** (обход + проверки) или только **Crawl**; выбрать **Scan configuration**.
+2. **Dashboard New scan** — URL, **Crawl and audit** (обход + проверки) или только **Crawl**; выбрать **Scan configuration**.
 3. Результаты в **Dashboard**; по завершении — список **issues** (уязвимости и информационные находки).
 
 ### Scan configurations
@@ -148,7 +148,7 @@ updated: "2026-02-11"
 ### Issues
 
 - У каждой находки: тип, серьёзность (Severity), описание, путь, параметр, рекомендации, доказательство (request/response).
-- **Report → Export** — HTML или формат для трекера.
+- **Report Export** — HTML или формат для трекера.
 
 ### Live scan и Insertion points
 
@@ -160,10 +160,10 @@ updated: "2026-02-11"
 
 **Repeater** — ручная отправка HTTP-запросов с редактированием. Запрос берётся из Proxy history, Scanner или вводится вручную; после изменений — **Send**; ответ показывается рядом.
 
-- **Вкладки** — несколько вкладок (Request 1, Request 2, …) для сравнения вариантов; переименование: ПКМ → **Rename**.
+- **Вкладки** — несколько вкладок (Request 1, Request 2, …) для сравнения вариантов; переименование: ПКМ **Rename**.
 - **История и комментарии** — история в текущей вкладке; можно добавлять комментарии к запросу.
 - **Представления** — Raw, Pretty (JSON/HTML), Render (ответ как HTML в мини-браузере).
-- **Send group** — сгруппировать вкладки и отправить все запросы группы по порядку (например, логин → запрос с токеном).
+- **Send group** — сгруппировать вкладки и отправить все запросы группы по порядку (например, логин запрос с токеном).
 
 
 ## Intruder
@@ -181,7 +181,7 @@ updated: "2026-02-11"
 
 ### Позиции (Positions)
 
-- Выделить значение в запросе → **Add §** — создаётся пара маркеров **§value§**; между ними подставляется payload.
+- Выделить значение в запросе **Add §** — создаётся пара маркеров **§value§**; между ними подставляется payload.
 - **Clear §** — снять все; **Auto §** — автоматические позиции по параметрам (query, body, cookie).
 
 ### Payloads
@@ -204,28 +204,28 @@ updated: "2026-02-11"
 
 ### Decoder
 
-- Кодирование и декодирование: текст, hex, Base64, URL и т.д.; **Decode** или **Encode**; цепочка операций (например, Base64 decode → URL decode).
+- Кодирование и декодирование: текст, hex, Base64, URL и т.д.; **Decode** или **Encode**; цепочка операций (например, Base64 decode URL decode).
 - Используется для расшифровки токенов, анализа JWT, подготовки payload для Repeater/Intruder.
 
 ### Comparer
 
-- Сравнение двух запросов или двух ответов (побайтово или по словам). Данные из Proxy history или Repeater (ПКМ → Send to Comparer). Удобно для отличий при разных параметрах (подбор пароля, проверка timing-атак).
+- Сравнение двух запросов или двух ответов (побайтово или по словам). Данные из Proxy history или Repeater (ПКМ Send to Comparer). Удобно для отличий при разных параметрах (подбор пароля, проверка timing-атак).
 
 
 ## Расширения (BApp, Store)
 
 ### BApp Store
 
-- **Extender → BApp Store** — встроенные расширения PortSwigger: Logger++, Autorize, Software Vulnerability Scanner и др. Установка одной кнопкой.
+- **Extender BApp Store** — встроенные расширения PortSwigger: Logger++, Autorize, Software Vulnerability Scanner и др. Установка одной кнопкой.
 
 ### Extensions (Store)
 
-- **Extender → Extensions → Add** — из BApp Store или из файла (Java JAR или Python через Jython/CPython).
+- **Extender Extensions Add** — из BApp Store или из файла (Java JAR или Python через Jython/CPython).
 - Python-расширения требуют Jython или встроенного Python; скрипты могут обрабатывать запросы/ответы, добавлять вкладки, вызывать API Burp.
 
 ### Макросы и Session handling
 
-- **Project → Settings → Sessions → Session handling rules** — правила подстановки сессии (повторный логин по макросу при истечении сессии). **Macros** — записанная последовательность запросов (логин + получение токена); правило запускает макрос при редиректе на логин, коде 401 и т.д.
+- **Project Settings Sessions Session handling rules** — правила подстановки сессии (повторный логин по макросу при истечении сессии). **Macros** — записанная последовательность запросов (логин + получение токена); правило запускает макрос при редиректе на логин, коде 401 и т.д.
 - Удобно для сканирования и Intruder на приложениях с короткой сессией или защитой от CSRF.
 
 
@@ -233,7 +233,7 @@ updated: "2026-02-11"
 
 ### Scanner (Professional)
 
-- **Issue → Report → Export** — отчёт по одной находке или по всем в HTML; request/response, рекомендации. Интеграция с Jira, GitHub через плагины или экспорт в CSV/JSON.
+- **Issue Report Export** — отчёт по одной находке или по всем в HTML; request/response, рекомендации. Интеграция с Jira, GitHub через плагины или экспорт в CSV/JSON.
 
 ### Proxy history и Repeater
 
@@ -241,7 +241,7 @@ updated: "2026-02-11"
 
 ### Файл проекта
 
-- **Project → Save project** — сохранение состояния (история, настройки, расширения); **Open project** — продолжить работу.
+- **Project Save project** — сохранение состояния (история, настройки, расширения); **Open project** — продолжить работу.
 
 
 ## Лучшие практики
@@ -263,12 +263,12 @@ updated: "2026-02-11"
 | Проблема | Возможная причина | Решение |
 |----------|-------------------|---------|
 | Браузер не открывает страницы через Burp | Прокси не настроен или порт занят | Проверить Proxy listener (8080); в браузере 127.0.0.1:8080; закрыть другие прокси |
-| HTTPS не расшифровывается | CA-сертификат не установлен | Proxy → Options → CA certificate → установить в доверенные корневые центры |
+| HTTPS не расшифровывается | CA-сертификат не установлен | Proxy Options CA certificate установить в доверенные корневые центры |
 | Запросы не перехватываются | Intercept выключен или фильтр исключает | Включить Intercept is on; проверить Intercept Client Requests |
 | Scanner не находит уязвимости | Scope не задан, проверки выключены, нужен логин | Добавить URL в scope; включить проверки в Scan configuration; настроить Session handling / Macros |
 | Intruder слишком долго работает | Много позиций или payload (Cluster bomb) | Уменьшить набор; Sniper или Pitchfork; лимит запросов |
 | OutOfMemoryError | Большая история, много данных | Увеличить heap Java (-Xmx); очистить HTTP history; сохранить и перезапустить |
-| Расширение не загружается | Несовместимая версия Java/Python | Extender → Errors; обновить Jython/CPython; проверить версию Burp |
+| Расширение не загружается | Несовместимая версия Java/Python | Extender Errors; обновить Jython/CPython; проверить версию Burp |
 
 ### Вопросы и ответы
 
@@ -279,7 +279,7 @@ Community — бесплатно: Proxy, Repeater, Intruder, Decoder, Comparer, 
 Получить токен (логин через браузер или Repeater), подставить в заголовок `Authorization: Bearer <token>` в Repeater или задать правило подстановки заголовка в Session handling из макроса.
 
 **Как снизить риск блокировки по IP в Intruder?**
-Включить **throttle** (задержка между запросами), уменьшить число потоков; при необходимости — прокси-лист (Intruder → Options → Request Engine); тестировать на тестовой среде с отключённым rate limit.
+Включить **throttle** (задержка между запросами), уменьшить число потоков; при необходимости — прокси-лист (Intruder Options Request Engine); тестировать на тестовой среде с отключённым rate limit.
 
 **Запуск Burp в headless/CI?**
 Burp Suite Professional поддерживает **Burp Suite Headless** для сканирования без GUI; в CI запускают headless и парсят отчёты. Community не имеет официального headless; альтернатива — OWASP ZAP с API и скриптами для CI.

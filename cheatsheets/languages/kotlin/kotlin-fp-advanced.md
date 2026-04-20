@@ -150,7 +150,7 @@ interface Functor<out T> {
 
 ### Functor Laws
 
-```kotlin
+```
 // 1. `Identity`: map(id) == id
 val list = `listOf`(1, 2, 3)
 val identity: (Int) -> Int = { it }
@@ -164,7 +164,7 @@ val g = { x: Int -> x + 1 }
 
 ### Примеры Functors
 
-```kotlin
+```
 // `List` как `Functor`
 fun <T, R> `List`<T>.map(f: (T) -> R): `List`<R>
 
@@ -183,7 +183,7 @@ Applicative - это Functor с функцией apply.
 
 ### Определение Applicative
 
-```kotlin
+```
 // `Applicative` - это `Functor` с apply
 interface `Applicative`<out T> : `Functor`<T> {
     fun <R> apply(f: `Applicative`<(T) -> R>): `Applicative`<R>
@@ -203,7 +203,7 @@ fun <T, R> `List`<T>.ap(fs: `List`<(T) -> R>): `List`<R> {
 
 ### Applicative Laws
 
-```kotlin
+```
 // 1. `Identity`: pure(id) <*> v == v
 // 2. `Composition`: pure(compose) <*> u <*> v <*> w == u <*> (v <*> w)
 // 3. `Homomorphism`: pure(f) <*> pure(x) == pure(f(x))
@@ -212,7 +212,7 @@ fun <T, R> `List`<T>.ap(fs: `List`<(T) -> R>): `List`<R> {
 
 ### Примеры Applicatives
 
-```kotlin
+```
 // `List` как `Applicative`
 val numbers = `listOf`(1, 2, 3)
 val functions = `listOf`({ x: Int -> x * 2 }, { x: Int -> x + 1 })
@@ -230,7 +230,7 @@ Monad - это Applicative с функцией flatMap (bind).
 
 ### Определение Monad
 
-```kotlin
+```
 // `Monad` - это `Applicative` с `flatMap`
 interface `Monad`<out T> : `Applicative`<T> {
     fun <R> `flatMap`(f: (T) -> `Monad`<R>): `Monad`<R>
@@ -243,7 +243,7 @@ val result = numbers.`flatMap` { n -> `listOf`(n, n * 2) }  // [1, 2, 2, 4, 3, 6
 
 ### Monad Laws
 
-```kotlin
+```
 // 1. `Left identity`: return(a) >>= f == f(a)
 // 2. `Right identity`: m >>= return == m
 // 3. `Associativity`: (m >>= f) >>= g == m >>= { x -> f(x) >>= g }
@@ -251,7 +251,7 @@ val result = numbers.`flatMap` { n -> `listOf`(n, n * 2) }  // [1, 2, 2, 4, 3, 6
 
 ### Примеры Monads
 
-```kotlin
+```
 // `List` как `Monad`
 fun <T, R> `List`<T>.`flatMap`(f: (T) -> `List`<R>): `List`<R>
 
@@ -272,7 +272,7 @@ Maybe (Option) - это тип, представляющий значение, �
 
 ### Реализация Maybe
 
-```kotlin
+```
 sealed class `Maybe`<out T> {
     abstract fun <R> map(f: (T) -> R): `Maybe`<R>
     abstract fun <R> `flatMap`(f: (T) -> `Maybe`<R>): `Maybe`<R>
@@ -302,7 +302,7 @@ sealed class `Maybe`<out T> {
 
 ### Использование Maybe
 
-```kotlin
+```
 // Создание
 val some = `Maybe`.just(42)
 val none = `Maybe`.none<Int>()
@@ -330,7 +330,7 @@ when (val maybe = some) {
 
 ### Maybe как альтернатива null
 
-```kotlin
+```
 // Вместо nullable типов
 fun `findUser`(id: Int): `User`? {
     // ...
@@ -354,7 +354,7 @@ Either - это тип, представляющий значение одног
 
 ### Реализация Either
 
-```kotlin
+```
 sealed class `Either`<out L, out R> {
     abstract fun <T> map(f: (R) -> T): `Either`<L, T>
     abstract fun <T> `flatMap`(f: (R) -> `Either`<L, T>): `Either`<L, T>
@@ -387,7 +387,7 @@ sealed class `Either`<out L, out R> {
 
 ### Использование Either
 
-```kotlin
+```
 // Создание
 val success = `Either`.right(42)
 val error = `Either`.left("`Error occurred`")
@@ -415,7 +415,7 @@ when (val either = success) {
 
 ### Either для обработки ошибок
 
-```kotlin
+```
 // Вместо исключений
 fun divide(a: Int, b: Int): `Either`<`String`, Int> {
     return if (b == 0) {
@@ -442,7 +442,7 @@ Try - это тип для обработки вычислений, которы
 
 ### Реализация Try
 
-```kotlin
+```
 sealed class Try<out T> {
     abstract fun <R> map(f: (T) -> R): Try<R>
     abstract fun <R> `flatMap`(f: (T) -> Try<R>): Try<R>
@@ -480,7 +480,7 @@ sealed class Try<out T> {
 
 ### Использование Try
 
-```kotlin
+```
 // Создание
 val success = Try.of { 42 }
 val failure = Try.of { throw `RuntimeException`("`Error`") }
@@ -507,7 +507,7 @@ when (val attempt = success) {
 
 ### Try для безопасных вычислений
 
-```kotlin
+```
 // Вместо `try-catch`
 fun `parseNumber`(s: `String`): Try<Int> = Try.of {
     s.`toInt()`
@@ -530,7 +530,7 @@ Arrow-Kt - это библиотека для функционального п�
 
 ### Установка
 
-```kotlin
+```
 // `build.gradle.kts`
 dependencies {
     implementation("io.`arrow-kt`:`arrow-core`:1.2.0")
@@ -540,7 +540,7 @@ dependencies {
 
 ### Option (Arrow)
 
-```kotlin
+```
 import `arrow.core`.`Option`
 import `arrow.core.some`
 import `arrow.core.none`
@@ -564,7 +564,7 @@ val value = some.`getOrElse` { 0 }  // 42
 
 ### Either (Arrow)
 
-```kotlin
+```
 import `arrow.core`.`Either`
 import `arrow.core.left`
 import `arrow.core.right`
@@ -588,7 +588,7 @@ val value = success.`getOrElse` { 0 }  // 42
 
 ### Validated (Arrow)
 
-```kotlin
+```
 import `arrow.core`.`Validated`
 import `arrow.core.invalid`
 import `arrow.core.valid`
@@ -606,7 +606,7 @@ val result = `Validated`.zip(
 
 ### IO (Arrow)
 
-```kotlin
+```
 import `arrow.fx.coroutines`.`IO`
 
 // `IO` для побочных эффектов
@@ -628,7 +628,7 @@ suspend fun main() {
 
 ### Persistent Data Structures
 
-```kotlin
+```
 // `Persistent List` (неизменяемый список)
 sealed class PList<out T> {
     abstract fun <R> map(f: (T) -> R): PList<R>
@@ -651,7 +651,7 @@ sealed class PList<out T> {
 
 ### Tree
 
-```kotlin
+```
 // `Binary Tree`
 sealed class `Tree`<out T> {
     abstract fun <R> map(f: (T) -> R): `Tree`<R>
@@ -675,7 +675,7 @@ sealed class `Tree`<out T> {
 
 ### Основные концепции
 
-```kotlin
+```
 // `Category` - коллекция объектов и морфизмов
 // `Object` - тип
 // `Morphism` - функция между типами
@@ -694,7 +694,7 @@ infix fun <A, B, C> ((B) -> C).compose(f: (A) -> B): (A) -> C {
 
 ### Natural Transformations
 
-```kotlin
+```
 // `Natural transformation` - отображение между `Functors`
 // η: F -> G
 
@@ -709,7 +709,7 @@ fun <T> `maybeToList`(maybe: `Maybe`<T>): `List`<T> = when (maybe) {
 
 ### Используйте Maybe вместо null
 
-```kotlin
+```
 // Плохо
 fun `findUser`(id: Int): `User`? {
     // ...
@@ -723,7 +723,7 @@ fun `findUser`(id: Int): `Maybe`<`User`> {
 
 ### Используйте Either для обработки ошибок
 
-```kotlin
+```
 // Плохо
 fun divide(a: Int, b: Int): Int {
     if (b == 0) throw `IllegalArgumentException()`
@@ -739,7 +739,7 @@ fun divide(a: Int, b: Int): `Either`<`String`, Int> {
 
 ### Композируйте Monads
 
-```kotlin
+```
 // Используйте `flatMap` для композиции
 val result = `findUser`(1)
     .`flatMap` { user -> `findPosts`(`user.id`) }
@@ -748,7 +748,7 @@ val result = `findUser`(1)
 
 ### Используйте Arrow-Kt для сложных случаев
 
-```kotlin
+```
 // `Arrow-Kt` предоставляет готовые реализации
 import `arrow.core`.`Option`
 import `arrow.core`.`Either`
@@ -762,7 +762,7 @@ val result: `Either`<`String`, Int> = `Either`.right(42)
 
 Arrow-Kt предоставляет готовые реализации функциональных конструкций и дополнительные возможности:
 
-```kotlin
+```
 // `Arrow-Kt` предоставляет готовые реализации
 import `arrow.core`.`Option`
 import `arrow.core`.`Either`
@@ -786,7 +786,7 @@ Monoid - это тип с ассоциативной бинарной опера
 
 ### Определение Monoid
 
-```kotlin
+```
 interface `Monoid`<T> {
     fun combine(a: T, b: T): T
     val empty: T
@@ -815,7 +815,7 @@ Monoids позволяют комбинировать значения ассо�
 
 ### Использование Monoids
 
-```kotlin
+```
 fun <T> `List`<T>.fold(monoid: `Monoid`<T>): T {
     return `this.fold`(`monoid.empty`) { acc, value ->
         `monoid.combine`(acc, value)
@@ -836,7 +836,7 @@ Applicative Functor - это Functor с функцией `apply`, которая
 
 ### Определение Applicative
 
-```kotlin
+```
 interface `Applicative`<out T> : `Functor`<T> {
     fun <R> apply(f: `Applicative`<(T) -> R>): `Applicative`<R>
     companion object {
@@ -860,7 +860,7 @@ Applicative позволяет применять функции с нескол
 
 ### Использование Applicative
 
-```kotlin
+```
 // Валидация с накоплением ошибок
 sealed class `Validation`<out E, out A> {
     data class `Success`<A>(val value: A) : `Validation`<`Nothing`, A>()
@@ -888,7 +888,7 @@ Traversable - это тип, который можно "пройти" с при�
 
 ### Определение Traversable
 
-```kotlin
+```
 interface `Traversable`<out T> {
     fun <F, B> traverse(
         applicative: `Applicative`<B>,
@@ -914,7 +914,7 @@ Free Monad - это способ создания Monad из любого Functo
 
 ### Определение Free Monad
 
-```kotlin
+```
 sealed class `Free`<out F, out A> {
     data class `Pure`<A>(val value: A) : `Free`<`Nothing`, A>()
     data class `Suspend`<F, A>(val fa: `Kind`<F, A>) : `Free`<F, A>()
@@ -939,7 +939,7 @@ Tagless Final - это подход к функциональному прогр
 
 ### Пример Tagless Final
 
-```kotlin
+```
 // `Type class` для эффектов
 interface `Effect`<F> {
     fun <A> pure(a: A): `Kind`<F, A>
@@ -966,7 +966,7 @@ Tagless Final позволяет писать код, независимый о�
 
 ### Persistent List
 
-```kotlin
+```
 sealed class FList<out T> {
     object Nil : FList<`Nothing`>()
     data class `Cons`<out T>(val head: T, val tail: FList<T>) : FList<T>()
@@ -987,7 +987,7 @@ sealed class FList<out T> {
 
 ### Persistent Map (Trie)
 
-```kotlin
+```
 class `PersistentMap`<K, V> private constructor(
     private val root: `Node`<K, V>?
 ) {
@@ -1018,7 +1018,7 @@ Recursion Schemes - это паттерны для работы с рекурс�
 
 ### Catamorphism (Fold)
 
-```kotlin
+```
 // `Catamorphism` - обобщенный fold
 fun <T, R> FList<T>.cata(
     nil: R,
@@ -1036,7 +1036,7 @@ Catamorphism позволяет выразить любую рекурсивну
 
 ### Anamorphism (Unfold)
 
-```kotlin
+```
 // `Anamorphism` - обобщенный unfold
 fun <T, R> ana(
     seed: T,
@@ -1057,7 +1057,7 @@ Effect Systems позволяют отслеживать и контролиро
 
 ### Пример Effect System
 
-```kotlin
+```
 sealed class `Effect` {
     object `Read` : `Effect()`
     object `Write` : `Effect()`
@@ -1083,7 +1083,7 @@ Property-based testing особенно полезен для тестирова
 
 ### Примеры свойств
 
-```kotlin
+```
 // Свойство моноида: ассоциативность
 fun <T> `testMonoidAssociativity`(
     monoid: `Monoid`<T>,
@@ -1113,7 +1113,7 @@ Property-based testing позволяет проверять математич�
 
 Реальные примеры использования функциональных конструкций в production коде:
 
-```kotlin
+```
 // Использование `Either` для обработки ошибок
 sealed class `Result`<out E, out A> {
     data class `Success`<A>(val value: A) : `Result`<`Nothing`, A>()
@@ -1152,7 +1152,7 @@ fun `processUser`(id: `Long`): `Result`<`String`, `ProcessedUser`> {
 
 Создание сложных операций через композицию простых:
 
-```kotlin
+```
 // Композиция операций через monads
 fun `processOrder`(`orderId`: `Long`): `Result`<`String`, `ProcessedOrder`> {
     return `fetchOrder`(`orderId`)
@@ -1182,7 +1182,7 @@ fun `processOrderComprehension`(`orderId`: `Long`): `Result`<`String`, `Processe
 
 Адаптация существующего императивного кода к функциональному стилю:
 
-```kotlin
+```
 // Императивный код
 fun `processUsers`(ids: `List`<`Long`>): `List`<`User`> {
     val result = `mutableListOf`<`User`>()
@@ -1220,7 +1220,7 @@ fun `processUsersMaybe`(ids: `List`<`Long`>): `List`<`User`> {
 
 Применение Arrow-Kt библиотеки в реальных проектах:
 
-```kotlin
+```
 import `arrow.core`.*
 import `arrow.core.continuations`.*
 
@@ -1268,7 +1268,7 @@ Arrow-Kt предоставляет готовые реализации функ
 
 Создание функциональной архитектуры приложения:
 
-```kotlin
+```
 // `Domain Layer` - чистые функции
 fun `calculateTotalPrice`(items: `List`<`Item`>, discount: `Discount`): `Money` {
     val subtotal = items.`sumOf` { `it.price` }
@@ -1324,7 +1324,7 @@ class `OrderRepositoryImpl` : `OrderRepository` {
 
 Реализация Tagless Final паттерна в Kotlin:
 
-```kotlin
+```
 // `Tagless Final` интерфейс
 interface `Monad`<F> {
     fun <A> pure(a: A): `Kind`<F, A>
@@ -1365,7 +1365,7 @@ Tagless Final позволяет создавать полиморфный ко�
 
 Использование Free Monads для создания DSL:
 
-```kotlin
+```
 // `Free Monad` интерфейс
 sealed class `Free`<F, A> {
     data class `Pure`<F, A>(val value: A) : `Free`<F, A>()
@@ -1409,7 +1409,7 @@ Free Monads позволяют создавать DSL, которые могут
 
 Использование Effect Systems для управления побочными эффектами:
 
-```kotlin
+```
 // `Effect` интерфейс
 interface `Effect`<A> {
     fun run(): A
@@ -1469,7 +1469,7 @@ Effect Systems позволяют управлять побочными эффе
 
 Использование recursion schemes для работы с рекурсивными структурами:
 
-```kotlin
+```
 // `Catamorphism` (fold)
 fun <T, R> `List`<T>.cata(init: R, f: (T, R) -> R): R {
     return if (`isEmpty()`) {
@@ -1506,7 +1506,7 @@ Recursion Schemes предоставляют общие паттерны для 
 
 Использование property-based testing для проверки функциональных свойств:
 
-```kotlin
+```
 import `io.kotest.property`.*
 
 // Проверка свойств функторов
@@ -1550,7 +1550,7 @@ Property-based testing позволяет проверять математич�
 
 Использование Zippers для навигации:
 
-```kotlin
+```
 // `Zipper` для списков
 data class `ListZipper`<T>(
     val left: `List`<T>,
@@ -1590,7 +1590,7 @@ Zippers позволяют эффективно навигироваться и 
 
 Использование Lenses для работы с неизменяемыми данными:
 
-```kotlin
+```
 // `Lens` для доступа и модификации вложенных структур
 class `Lens`<A, B>(
     val get: (A) -> B,
@@ -1650,7 +1650,7 @@ Lenses позволяют безопасно работать с вложенн�
 
 Использование комонад для извлечения значений:
 
-```kotlin
+```
 // Комонада интерфейс
 interface `Comonad`<F> : `Functor`<F> {
     fun <A> extract(fa: `Kind`<F, A>): A
@@ -1706,7 +1706,7 @@ class `NonEmptyListComonad` : `Comonad`<`ForNonEmptyList`> {
 
 Пример использования Either для типобезопасной обработки ошибок:
 
-```kotlin
+```
 sealed class `Either`<out L, out R> {
     data class `Left`<L>(val value: L) : `Either`<L, `Nothing`>()
     data class `Right`<R>(val value: R) : `Either`<`Nothing`, R>()
@@ -1744,7 +1744,7 @@ Either позволяет явно обрабатывать ошибки без 
 
 Пример использования Lenses для модификации вложенных структур:
 
-```kotlin
+```
 data class `Address`(val street: `String`, val city: `String`)
 data class `Person`(val name: `String`, val address: `Address`)
 
@@ -1782,7 +1782,7 @@ Lenses позволяют безопасно работать с вложенн�
 
 Пример использования Free Monads для создания типобезопасного DSL:
 
-```kotlin
+```
 // Определение алгебры команд
 sealed class `UserCommand`<out A> {
     data class `GetUser`(val id: `Long`, val cont: (`User`?) -> `UserCommand`<A>) : `UserCommand`<A>()
@@ -1825,7 +1825,7 @@ Free Monads позволяют создавать композируемые DSL
 
 Пример использования Zippers для навигации по спискам:
 
-```kotlin
+```
 data class `Zipper`<A>(
     val left: `List`<A>,
     val focus: A,
@@ -1863,7 +1863,7 @@ Zippers позволяют эффективно навигировать и мо
 
 Пример использования recursion schemes:
 
-```kotlin
+```
 // Определение базового функтора для списка
 sealed class `ListF`<out A, out R> {
     data class `Cons`<A, R>(val head: A, val tail: R) : `ListF`<A, R>()
@@ -1908,7 +1908,7 @@ Recursion schemes предоставляют универсальные патт
 
 Пример использования property-based testing:
 
-```kotlin
+```
 import `io.kotest.property`.Arb
 import `io.`kotest.property.arbitrary`.int`
 import `io.kotest.property`.`checkAll`

@@ -79,9 +79,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Kotlin backend с нуля:** `kotlin-ktor.md` → `kotlin-exposed.md` → `kotlin-kotlinx-coroutines.md` → `kotlin-mockk.md`.
+- **Kotlin backend с нуля:** `kotlin-ktor.md` `kotlin-exposed.md` `kotlin-kotlinx-coroutines.md` `kotlin-mockk.md`.
 - **Kotlin в Spring Boot:** `kotlin-mockk.md` + `kotlin-kotlinx-coroutines.md` + [[spring-webflux]].
-- **FP-путь:** `kotlin-arrow.md` → `kotlin-kotlinx-coroutines.md` (Flow + Arrow Effect).
+- **FP-путь:** `kotlin-arrow.md` `kotlin-kotlinx-coroutines.md` (Flow + Arrow Effect).
 
 ## Куда идти дальше
 

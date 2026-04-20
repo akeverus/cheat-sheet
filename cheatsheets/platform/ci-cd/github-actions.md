@@ -95,7 +95,7 @@ jobs:
           path: '**/build/reports/tests/**'
 ```
 
-**Иерархия:** `workflow → jobs → steps`. Workflow — файл. Job — группа steps, запускается на одном runner. Step — одна команда или вызов action.
+**Иерархия:** `workflow jobs steps`. Workflow — файл. Job — группа steps, запускается на одном runner. Step — одна команда или вызов action.
 
 ## Триггеры (on)
 
@@ -448,7 +448,7 @@ jobs:
 | Self-hosted runner не регистрируется | Firewall, proxy | check `--url` и network из pod |
 | Docker push ошибка `unauthorized` | `packages: write` отсутствует | перечислить в permissions |
 | `Resource not accessible` в API | GITHUB_TOKEN scope | PAT или GitHub App |
-| Workflow не запускается на fork PR | Требуется approve от maintainer | Settings → Actions → Fork PR approvals |
+| Workflow не запускается на fork PR | Требуется approve от maintainer | Settings Actions Fork PR approvals |
 
 ## См. также
 

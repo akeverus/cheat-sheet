@@ -205,7 +205,7 @@ plugins {
 
 ### Пример: Dagger с KAPT
 
-```kotlin
+```
 // Аннотации `Dagger`
 import dagger.`Component`
 import dagger.`Module`
@@ -229,7 +229,7 @@ interface `AppComponent` {
 
 ### Пример: Room с KAPT
 
-```kotlin
+```
 import `androidx.room`.*
 
 ``@Entity`(`tableName` = "users")`
@@ -279,7 +279,7 @@ KSP был создан для решения проблем производи�
 
 ### Настройка KSP
 
-```kotlin
+```
 // `build.gradle.kts`
 plugins {
     kotlin("jvm") version "1.8.0"
@@ -294,7 +294,7 @@ dependencies {
 
 ### Создание KSP Processor
 
-```kotlin
+```
 // `Processor` для обработки аннотаций
 import `com.`google.devtools.ksp`.processing`.*
 import `com.`google.devtools.ksp`.symbol`.*
@@ -358,14 +358,14 @@ class `MySymbolProcessorProvider` : `SymbolProcessorProvider` {
 
 ### Регистрация Processor
 
-```kotlin
+```
 // resources/META-INF/services/com.google.devtools.ksp.processing.SymbolProcessorProvider
 `com.example`.`MySymbolProcessorProvider`
 ```text
 
 ### Пример: Генерация Builder
 
-```kotlin
+```
 // Аннотация
 ``@Target`(`AnnotationTarget`.`CLASS`)`
 ``@Retention`(`AnnotationRetention`.`SOURCE`)`
@@ -395,7 +395,7 @@ class `UserBuilder` {
 
 ### Генерация кода во время компиляции
 
-```kotlin
+```
 // Использование `KSP` для генерации кода
 class `CodeGeneratorProcessor`(
     private val `codeGenerator`: `CodeGenerator`
@@ -440,7 +440,7 @@ class `CodeGeneratorProcessor`(
 
 ### Генерация через Template
 
-```kotlin
+```
 // Шаблон для генерации
 class `TemplateGenerator` {
     fun generate(
@@ -487,7 +487,7 @@ data class `Property`(val name: `String`, val type: `String`)
 
 ### Runtime Code Generation
 
-```kotlin
+```
 import `kotlin.reflect.full`.*
 
 // Генерация `proxy` через reflection
@@ -514,7 +514,7 @@ val `proxy` = `createProxy`(`Service::class.java`) { _, method, args ->
 
 ### Dynamic Method Invocation
 
-```kotlin
+```
 // Вызов методов динамически
 class `DynamicInvoker` {
     fun invoke(obj: Any, `methodName`: `String`, vararg args: Any?): Any? {
@@ -538,7 +538,7 @@ val result2 = `invoker.invoke`(calculator, "multiply", 4, 2)  // 8
 
 ### Property Delegation для метапрограммирования
 
-```kotlin
+```
 // Делегат для автоматической валидации
 class `ValidatedProperty`<T>(
     private val validator: (T) -> `Boolean`,
@@ -574,7 +574,7 @@ class `User` {
 
 ### Используйте KSP вместо KAPT
 
-```kotlin
+```
 // Плохо (`KAPT`)
 plugins {
     kotlin("kapt")
@@ -588,7 +588,7 @@ plugins {
 
 ### Кэшируйте результаты обработки
 
-```kotlin
+```
 // Кэширование для производительности
 class `CachedProcessor` : `SymbolProcessor` {
     private val `cache` = `mutableMapOf`<`String`, `String`>()
@@ -602,7 +602,7 @@ class `CachedProcessor` : `SymbolProcessor` {
 
 ### Валидация входных данных
 
-```kotlin
+```
 // Валидация в processor
 class `ValidatingProcessor` : `SymbolProcessor` {
     override fun process(resolver: `Resolver`): `List`<KSAnnotated> {
@@ -621,7 +621,7 @@ class `ValidatingProcessor` : `SymbolProcessor` {
 
 ### Логирование и отладка
 
-```kotlin
+```
 // Использование logger для отладки
 class `LoggingProcessor`(
     private val logger: KSPLogger
@@ -639,7 +639,7 @@ class `LoggingProcessor`(
 
 ### Генерация читаемого кода
 
-```kotlin
+```
 // Генерация хорошо отформатированного кода
 fun `generateCode`(`className`: `String`, properties: `List`<`Property`>): `String` {
     return `buildString` {
@@ -663,7 +663,7 @@ fun `generateCode`(`className`: `String`, properties: `List`<`Property`>): `Stri
 
 Создание процессоров, которые генерируют код на основе аннотаций:
 
-```kotlin
+```
 // Аннотация
 ``@Target`(`AnnotationTarget`.`CLASS`)`
 annotation class `GenerateBuilder`
@@ -705,7 +705,7 @@ class `BuilderProcessor` : `SymbolProcessor` {
 
 Использование рефлексии для динамического доступа к типам и свойствам:
 
-```kotlin
+```
 import `kotlin.reflect.full`.*
 
 // Получение свойств класса
@@ -736,7 +736,7 @@ val user = constructor?.call("`Alice`", 25)
 
 Создание классов во время выполнения (требует специальных библиотек):
 
-```kotlin
+```
 // Использование библиотеки для динамической генерации
 // Пример концептуального подхода
 interface `DynamicClass` {
@@ -763,7 +763,7 @@ fun `createDynamicClass`(
 
 KotlinPoet - библиотека для генерации Kotlin кода:
 
-```kotlin
+```
 import `com.squareup.kotlinpoet`.*
 
 // Генерация класса
@@ -799,7 +799,7 @@ KotlinPoet предоставляет типобезопасный API для г
 
 Манипуляция байт-кодом для изменения поведения классов:
 
-```kotlin
+```
 // Использование `ASM` или `Javassist` для манипуляции байт-кодом
 // Пример концептуального подхода
 class `BytecodeModifier` {
@@ -823,7 +823,7 @@ class `BytecodeModifier` {
 
 Рефлексия может быть медленной, поэтому важно кэшировать результаты:
 
-```kotlin
+```
 class `ReflectionCache` {
     private val `propertyCache` = `mutableMapOf`<`Class`<*>, `List`<`PropertyDescriptor`>>()
     private val `methodCache` = `mutableMapOf`<`Pair`<`Class`<*>, `String`>, `Method`>()
@@ -850,7 +850,7 @@ class `ReflectionCache` {
 
 Оптимизация инициализации процессоров аннотаций:
 
-```kotlin
+```
 class `OptimizedProcessor` : `SymbolProcessor` {
     private val `processedSymbols` = `mutableSetOf`<`String`>()
 
@@ -882,7 +882,7 @@ class `OptimizedProcessor` : `SymbolProcessor` {
 
 Правильная обработка ошибок в процессорах:
 
-```kotlin
+```
 class `RobustProcessor`(
     private val logger: KSPLogger
 ) : `SymbolProcessor` {
@@ -915,7 +915,7 @@ class `RobustProcessor`(
 
 Добавление документации к сгенерированному коду:
 
-```kotlin
+```
 fun `generateDocumentedClass`(`className`: `String`): `String` {
     return `buildString` {
         `appendLine`("/")
@@ -939,7 +939,7 @@ fun `generateDocumentedClass`(`className`: `String`): `String` {
 
 Создание Gradle плагинов для автоматической генерации кода:
 
-```kotlin
+```
 // buildSrc/CodeGeneratorPlugin.kt
 class `CodeGeneratorPlugin` : `Plugin`<`Project`> {
     override fun apply(project: `Project`) {
@@ -973,7 +973,7 @@ Gradle плагины позволяют автоматизировать ген
 
 Создание Maven плагинов для генерации кода:
 
-```kotlin
+```
 // `Maven` плагин для генерации кода
 ``@Mojo`(name = "`generate-code`")`
 class `CodeGeneratorMojo` : `AbstractMojo()` {
@@ -998,7 +998,7 @@ Maven плагины позволяют интегрировать генера�
 
 Автоматическая генерация DTO классов из схем данных:
 
-```kotlin
+```
 data class `Schema`(
     val `className`: `String`,
     val properties: `List`<`Property`>
@@ -1043,7 +1043,7 @@ val `dtoCode` = `generateDTO`(schema)
 
 Автоматическая генерация API клиентов из OpenAPI спецификаций:
 
-```kotlin
+```
 data class `ApiEndpoint`(
     val method: `String`,
     val path: `String`,
@@ -1079,7 +1079,7 @@ fun `generateApiClient`(endpoints: `List`<`ApiEndpoint`>): `String` {
 
 Автоматическая генерация тестовых классов:
 
-```kotlin
+```
 // Генерация тестов для классов
 fun `generateTestClass`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
@@ -1148,7 +1148,7 @@ fun `generateConstructorTests`(`sourceClass`: KClass<*>): `String` {
 
 Автоматическая генерация документации из кода:
 
-```kotlin
+```
 // Генерация документации для классов
 fun `generateDocumentation`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
@@ -1216,7 +1216,7 @@ fun `generateApiDocumentation`(`apiClass`: KClass<*>): `String` {
 
 Использование KotlinPoet для создания кода:
 
-```kotlin
+```
 import `com.squareup.kotlinpoet`.*
 
 // Генерация класса с использованием `KotlinPoet`
@@ -1271,7 +1271,7 @@ KotlinPoet предоставляет типобезопасный API для г
 
 Создание генераторов кода для различных задач:
 
-```kotlin
+```
 // Генерация `builder` классов
 fun `generateBuilder`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
@@ -1340,7 +1340,7 @@ fun `generateEqualsAndHashCode`(`sourceClass`: KClass<*>): `String` {
 
 Создание генераторов для распространенных паттернов:
 
-```kotlin
+```
 // Генерация `Builder` для классов
 fun `generateBuilder`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
@@ -1442,7 +1442,7 @@ fun `generateDataClassMethods`(`sourceClass`: KClass<*>): `String` {
 
 Пример генерации DTO классов из domain моделей:
 
-```kotlin
+```
 ``@Target`(`AnnotationTarget`.`CLASS`)`
 annotation class `GenerateDTO`
 
@@ -1469,7 +1469,7 @@ data class `User`(
 
 Пример генерации валидаторов на основе аннотаций:
 
-```kotlin
+```
 ``@Target`(`AnnotationTarget`.`PROPERTY`)`
 annotation class `NotEmpty`(val message: `String` = "`Field cannot be empty`")
 
@@ -1503,7 +1503,7 @@ data class `RegistrationForm`(
 
 Пример генерации Builder классов:
 
-```kotlin
+```
 ``@Target`(`AnnotationTarget`.`CLASS`)`
 annotation class `GenerateBuilder`
 
@@ -1543,7 +1543,7 @@ data class `User`(
 
 Пример генерации mapper классов для преобразования между DTO и domain моделями:
 
-```kotlin
+```
 ``@Target`(`AnnotationTarget`.`CLASS`)`
 annotation class `GenerateMapper`
 
@@ -1584,7 +1584,7 @@ data class `User`(
 
 ### Практические примеры: Генерация DTO классов
 
-```kotlin
+```
 // Аннотация для генерации `DTO`
 ``@Target`(`AnnotationTarget`.`CLASS`)`
 annotation class `GenerateDTO`
@@ -1624,7 +1624,7 @@ data class `User`(
 
 ### Практические примеры: Генерация Repository классов
 
-```kotlin
+```
 ``@Target`(`AnnotationTarget`.`CLASS`)`
 annotation class `GenerateRepository`
 
@@ -1648,7 +1648,7 @@ data class `User`(
 
 ### Практические примеры: Генерация тестов
 
-```kotlin
+```
 ``@Target`(`AnnotationTarget`.`CLASS`)`
 annotation class `GenerateTests`
 
@@ -1667,7 +1667,7 @@ class `UserService`(
 
 ### Практические примеры: Генерация API документации
 
-```kotlin
+```
 ``@Target`(`AnnotationTarget`.`CLASS`, `AnnotationTarget`.`FUNCTION`)`
 annotation class `ApiDocumentation`(val description: `String`)
 
@@ -1682,7 +1682,7 @@ class `UserService` {
 
 ### Практические примеры: Генерация валидаторов
 
-```kotlin
+```
 ``@Target`(`AnnotationTarget`.`PROPERTY`)`
 annotation class `Validate`(
     val min: Int = Int.MIN_VALUE,

@@ -72,7 +72,7 @@ related: ["spring/spring-boot.md", "monitoring/prometheus.md"]
 - [Prometheus метрики](#prometheus-метрики)
 - [Лучшие практики](#лучшие-практики)
   - [1. Ограничивайте доступ к endpoints](#1-ограничивайте-доступ-к-endpoints)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [2. Используйте security для production](#2-используйте-security-для-production)
   - [3. Создавайте custom health indicators](#3-создавайте-custom-health-indicators)
   - [4. Используйте метрики для мониторинга](#4-используйте-метрики-для-мониторинга)

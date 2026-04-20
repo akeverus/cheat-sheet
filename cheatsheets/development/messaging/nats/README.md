@@ -63,7 +63,7 @@ updated: "2026-04-17"
 
 | Критерий | NATS | Kafka | RabbitMQ | ActiveMQ |
 |----------|------|-------|----------|----------|
-| Модель | Subject pub-sub + JetStream | Partitioned log | Exchange → Queue | JMS Queue/Topic |
+| Модель | Subject pub-sub + JetStream | Partitioned log | Exchange Queue | JMS Queue/Topic |
 | Latency | Sub-ms (самый быстрый) | Низкая-средняя | Низкая | Средняя |
 | Footprint | ~15 MB бинарь, минимум ресурсов | Большой (JVM, brokers) | Средний (Erlang VM) | Средний (JVM) |
 | Persistence | JetStream (отдельный слой) | Встроенный append-log | Встроенный | Встроенный |
@@ -99,9 +99,9 @@ Core NATS — «fire and forget» (at-most-once): нет подтвержден�
 
 ## Маршруты чтения
 
-- **Первое приложение (1 день):** `nats.md` — pub/sub и request-reply → Java-клиент → локальный `nats-server`.
-- **Переход от потерь к гарантиям:** Core → JetStream → durable consumer с ack.
-- **Замена Redis для KV:** NATS KV → сравнить SLA, latency, persistence vs Redis — принять решение по нагрузке.
+- **Первое приложение (1 день):** `nats.md` — pub/sub и request-reply Java-клиент локальный `nats-server`.
+- **Переход от потерь к гарантиям:** Core JetStream durable consumer с ack.
+- **Замена Redis для KV:** NATS KV сравнить SLA, latency, persistence vs Redis — принять решение по нагрузке.
 
 ## Куда идти дальше
 

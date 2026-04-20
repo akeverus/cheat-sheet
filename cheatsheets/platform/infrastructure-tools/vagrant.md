@@ -1199,7 +1199,7 @@ tmp/
 - 50GB свободного места на диске
 
 ## Quick Start
-```bash
+```
 # Клонирование репозитория
 git clone https://github.com/hashicorp/enterprise-vagrant.git
 cd `enterprise-vagrant`

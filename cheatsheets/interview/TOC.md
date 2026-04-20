@@ -11,7 +11,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **206**.
+Всего файлов: **212**.
 
 ## Быстрые маршруты подготовки
 
@@ -103,6 +103,11 @@ updated: "2026-04-20"
 ## behavioral
 
 - [Вопросы на собеседовании: Поведенческие (`Behavioral`)](behavioral/behavioral-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: Метод STAR](behavioral/star-method-interview.md) — `22` вопроса
+- [Вопросы на собеседовании: Конфликтные истории](behavioral/conflict-stories-interview.md) — `22` вопроса
+- [Вопросы на собеседовании: Истории о неудачах](behavioral/failure-stories-interview.md) — `22` вопроса
+- [Вопросы на собеседовании: Истории о лидерстве](behavioral/leadership-stories-interview.md) — `22` вопроса
+- [Вопросы на собеседовании: Culture Fit](behavioral/culture-fit-interview.md) — `22` вопроса
 
 ## cicd
 
@@ -253,6 +258,8 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Java Initialization`](programming-languages/java/java-initialization-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `Java IO / NIO`](programming-languages/java/java-io-nio-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Jackson` (JSON)](programming-languages/java/java-jackson-interview.md) — `31` вопрос
+- [Вопросы на собеседовании: `Lombok`](programming-languages/java/java-lombok-interview.md) — `27` вопросов
+- [Вопросы на собеседовании: `MapStruct`](programming-languages/java/java-mapstruct-interview.md) — `28` вопросов
 - [Вопросы на собеседовании: `Java Modules` (JPMS)](programming-languages/java/java-modules-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `OOP` & `Java`](programming-languages/java/java-oop-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Java Serialization`](programming-languages/java/java-serialization-interview.md) — `40` вопросов
@@ -288,7 +295,11 @@ updated: "2026-04-20"
 ## reactive
 
 - [Вопросы на собеседовании: `Project Reactor`](reactive/project-reactor-interview.md) — `47` вопросов
+- [Вопросы на собеседовании: `Reactive Streams`](reactive/reactive-streams-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `RxJava`](reactive/rxjava-interview.md) — `46` вопросов
+- [Вопросы на собеседовании: `Spring WebFlux`](reactive/webflux-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: Reactive Patterns](reactive/reactive-patterns-interview.md) — `26` вопросов
+- [Вопросы на собеседовании: Тестирование реактивного кода](reactive/reactive-testing-interview.md) — `28` вопросов
 
 ## security
 

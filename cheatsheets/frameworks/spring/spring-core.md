@@ -392,7 +392,7 @@ Spring Expression Language — выражения в аннотациях и к�
 
 | Ошибка | Причина | Решение |
 |--------|---------|---------|
-| Circular dependency | A → B → A | Рефакторинг (вынести общий интерфейс), `@Lazy` как workaround |
+| Circular dependency | A B A | Рефакторинг (вынести общий интерфейс), `@Lazy` как workaround |
 | `@Transactional` не работает | Self-invocation (вызов из того же класса) | Вынести в отдельный бин, или использовать `TransactionTemplate` |
 | `@Async` не работает | Self-invocation | Вынести в отдельный бин |
 | Prototype в Singleton | Prototype создаётся один раз | `ObjectProvider`, `@Lookup`, `Provider<T>` |

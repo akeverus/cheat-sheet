@@ -54,7 +54,7 @@ Object-Relational Mapping — прослойка, превращающая ре�
 |-----------|-----------|
 | Mapping (`@Entity`, `@Table`, `@Column`) | Как класс становится строкой |
 | Persistence Context | «Снимок» сущностей в памяти, dirty checking |
-| Жизненный цикл сущности | Transient → Managed → Detached → Removed |
+| Жизненный цикл сущности | Transient Managed Detached Removed |
 | Lazy/Eager loading | Когда JOIN, когда отдельный SELECT |
 | N+1 проблема | Симптом, причина, `JOIN FETCH`/`@BatchSize`/EntityGraph |
 | Cascade | Как каскадируются операции по связям |
@@ -75,9 +75,9 @@ Object-Relational Mapping — прослойка, превращающая ре�
 
 ## Маршруты чтения
 
-- **Junior backend:** [[orm-basics]] → [[README|Spring Data JPA]].
-- **Миграция с JDBC:** концепции mapping → persistence context → lazy loading → [[orm-basics#лучшие-практики]].
-- **Перф-оптимизация:** N+1 → кэш L2 → batch fetching → native queries.
+- **Junior backend:** [[orm-basics]] [[README|Spring Data JPA]].
+- **Миграция с JDBC:** концепции mapping persistence context lazy loading [[orm-basics#лучшие-практики]].
+- **Перф-оптимизация:** N+1 кэш L2 batch fetching native queries.
 
 ## Куда идти дальше
 

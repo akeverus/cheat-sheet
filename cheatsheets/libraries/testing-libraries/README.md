@@ -60,10 +60,10 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Быстрый старт:** `java-junit5.md` (Основы + Assertions) → `java-mockito.md` (Основы + verify).
+- **Быстрый старт:** `java-junit5.md` (Основы + Assertions) `java-mockito.md` (Основы + verify).
 - **Миграция с JUnit 4:** секции "Jupiter vs Vintage" и таблица соответствий аннотаций.
 - **Parameterized и dynamic:** соответствующие секции `java-junit5.md` — сильно сокращают дубли тестов.
-- **Spring-контекст:** `java-mockito.md` → [[spring-testing]].
+- **Spring-контекст:** `java-mockito.md` [[spring-testing]].
 
 ## Куда идти дальше
 

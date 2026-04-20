@@ -84,7 +84,7 @@ dependencies {
 </dependency>
 ```
 
-В IntelliJ IDEA: плагин встроен, но нужно включить annotation processing — `Settings → Build → Compiler → Annotation Processors → Enable`.
+В IntelliJ IDEA: плагин встроен, но нужно включить annotation processing — `Settings Build Compiler Annotation Processors Enable`.
 
 ## Базовые аннотации
 
@@ -466,7 +466,7 @@ java -jar lombok.jar delombok src/main/java -d target/delombok
 ./gradlew delombok
 ```
 
-В IntelliJ — `Refactor → Delombok` на выбранном файле / папке.
+В IntelliJ — `Refactor Delombok` на выбранном файле / папке.
 
 ## Подводные камни с JPA
 
@@ -482,7 +482,7 @@ public class Order {
 ```
 
 Проблемы:
-- `equals()` инициализирует lazy-коллекции → N+1
+- `equals()` инициализирует lazy-коллекции N+1
 - Два объекта с одинаковым id, но разным состоянием коллекций могут быть не равны
 - Hibernate proxy vs реальный объект — разный `getClass()`, разные хеши
 
@@ -597,7 +597,7 @@ lombok.log.fieldName = logger
 
 | Проблема | Причина | Решение |
 |----------|---------|---------|
-| IDEA не видит геттеры/сеттеры | Annotation processing выключен | Settings → Annotation Processors → Enable |
+| IDEA не видит геттеры/сеттеры | Annotation processing выключен | Settings Annotation Processors Enable |
 | `cannot find symbol: method getName()` при сборке | Lombok не в `annotationProcessor` | Добавить в `annotationProcessor` (Gradle) |
 | `@Builder` игнорирует дефолты | Забыт `@Builder.Default` | Добавить аннотацию на поле |
 | `@EqualsAndHashCode` бесконечно рекурсит | Bidirectional связь | `@EqualsAndHashCode.Exclude` на обратной связи |
@@ -611,7 +611,7 @@ lombok.log.fieldName = logger
 ## См. также
 
 - [[java-bean-validation]] — валидация в DTO с Lombok
-- [[java-mapstruct]] — маппинг DTO ↔ entity
+- [[java-mapstruct]] — маппинг DTO entity
 - [[java-jackson]] — сериализация Lombok-классов
 - [[spring-boot]] — Lombok в Spring-проектах
 - [[spring-data-jpa]] — подводные камни с JPA

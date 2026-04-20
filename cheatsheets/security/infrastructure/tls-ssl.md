@@ -366,7 +366,7 @@ keytool -genkeypair -alias tomcat \
 
 В проде сертификат получается из `Vault`/`cert-manager`/`Let's Encrypt`, не генерируется вручную.
 
-HTTP → HTTPS redirect:
+HTTP HTTPS redirect:
 
 ```java
 @Bean

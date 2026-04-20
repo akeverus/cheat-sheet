@@ -74,7 +74,7 @@ updated: "2026-02-11"
 
 ## Жизненный цикл и фазы
 
-Основные фазы по порядку: `validate` → `compile` → `test` → `package` → `verify` → `install` → `deploy`. Вызов фазы выполняет её и все предыдущие (например, `mvn package` запускает `compile`, `test`, затем `package`).
+Основные фазы по порядку: `validate` `compile` `test` `package` `verify` `install` `deploy`. Вызов фазы выполняет её и все предыдущие (например, `mvn package` запускает `compile`, `test`, затем `package`).
 
 ## Основные команды
 

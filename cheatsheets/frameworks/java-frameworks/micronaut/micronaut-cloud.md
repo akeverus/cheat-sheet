@@ -54,7 +54,7 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
   - [Service Configuration](#service-configuration)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте Service Discovery](#1-используйте-service-discovery)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [2. Настройте Circuit Breaker](#2-настройте-circuit-breaker)
   - [3. Используйте Distributed Tracing](#3-используйте-distributed-tracing)
   - [4. Настройте Health Checks](#4-настройте-health-checks)

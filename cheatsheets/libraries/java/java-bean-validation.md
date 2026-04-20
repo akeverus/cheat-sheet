@@ -582,7 +582,7 @@ public class RegisterDto {
 | Валидация вложенного объекта не запускается | Нет `@Valid` на поле | Добавить `@Valid` перед типом вложенного объекта |
 | `jakarta.el.ExpressionFactory not found` | Отсутствует `jakarta.el` | Добавить `jakarta.el:4.0.2` (Spring Boot starter включает автоматически) |
 | `NoSuchMethodError: javax.validation.*` в Boot 3 | Старая зависимость с `javax.*` | Перейти на `jakarta.validation.*`, обновить библиотеки |
-| `MethodArgumentNotValidException` возвращает 500 вместо 400 | Кастомный handler перехватывает все исключения | Явно обработать `MethodArgumentNotValidException` → 400 |
+| `MethodArgumentNotValidException` возвращает 500 вместо 400 | Кастомный handler перехватывает все исключения | Явно обработать `MethodArgumentNotValidException` 400 |
 | Пустая строка `""` проходит `@NotNull` | `@NotNull` проверяет только `null` | Использовать `@NotBlank` для `String` |
 
 ## См. также
@@ -592,6 +592,6 @@ public class RegisterDto {
 - [[spring-rest|spring-rest]] — валидация REST-контроллеров
 - [[java-jackson|java-jackson]] — десериализация JSON перед валидацией
 - [[spring-data-jpa|spring-data-jpa]] — валидация сущностей в JPA
-- [[java-mapstruct|java-mapstruct]] — маппинг DTO ↔ entity
+- [[java-mapstruct|java-mapstruct]] — маппинг DTO entity
 - [[java-lombok|java-lombok]] — генерация геттеров/сеттеров для DTO
 - [[java-exceptions|java-exceptions]] — обработка ошибок валидации

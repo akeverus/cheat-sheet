@@ -46,9 +46,9 @@ Slack — SaaS-платформа корпоративного чата: кан�
 
 | Тип | Когда |
 |-----|-------|
-| Incoming Webhook | однонаправленно: сервис → канал |
-| Outgoing Webhook (legacy) | канал → сервис (устарело, лучше Events API) |
-| Slash Commands | пользователь: `/command args` → ваш endpoint |
+| Incoming Webhook | однонаправленно: сервис канал |
+| Outgoing Webhook (legacy) | канал сервис (устарело, лучше Events API) |
+| Slash Commands | пользователь: `/command args` ваш endpoint |
 | Events API | реакция на события (message, app_mention, reaction_added) |
 | Interactive Components | кнопки, меню, модалки (Block Kit) |
 | Socket Mode | WebSocket вместо public endpoint (удобно за firewall) |
@@ -128,7 +128,7 @@ app.command('/deploy', async ({ command, ack, respond }) => {
 - **RBAC:** проверка user.id против whitelist, role membership в Okta.
 - **Audit-log:** каждое действие логируется с channel/user/ts.
 - **Двухэтапное подтверждение:** кнопка Confirm перед разрушительным действием.
-- **Нотификации on-call:** PagerDuty ↔ Slack DM + канал `#oncall-active`.
+- **Нотификации on-call:** PagerDuty Slack DM + канал `#oncall-active`.
 - **Incident channel automation:** бот создаёт `#incident-<id>` при page, приглашает on-call rotation, открывает Google Doc для post-mortem.
 
 ## Best practices
@@ -143,7 +143,7 @@ app.command('/deploy', async ({ command, ack, respond }) => {
 
 ## Маршруты чтения
 
-- **Разработчик:** [[slack-basics]] → Block Kit → incoming webhook для своего сервиса.
+- **Разработчик:** [[slack-basics]] Block Kit incoming webhook для своего сервиса.
 - **DevOps:** ChatOps + PagerDuty integration + Alertmanager-webhook.
 - **Admin:** workspace settings, retention, SSO, app governance.
 

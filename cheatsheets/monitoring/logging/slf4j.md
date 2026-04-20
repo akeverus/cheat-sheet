@@ -49,7 +49,7 @@ SLF4J (Simple Logging Facade for Java) — фасад для логирован�
 
 Преимущества: единый API (facade), выбор реализации в runtime, bridging для миграции, оптимизированная обработка параметров, MDC и Markers, отсутствие лишних зависимостей.
 
-Архитектура: слой приложения → SLF4J API → binding (logback-classic, log4j-slf4j2-impl, slf4j-jul) → конкретная реализация (Logback, Log4j, JUL).
+Архитектура: слой приложения SLF4J API binding (logback-classic, log4j-slf4j2-impl, slf4j-jul) конкретная реализация (Logback, Log4j, JUL).
 
 ## Logger API
 
@@ -151,9 +151,9 @@ logger.info(AUDIT, "User {} performed {}", userId, action);
 
 Чтобы старые библиотеки, использующие Log4j 1.x, JCL или java.util.logging, писали в SLF4J, добавьте соответствующий мост и исключите оригинальную библиотеку логирования:
 
-- Log4j 1.x → SLF4J: `log4j-over-slf4j` (и убрать `log4j`).
-- Commons Logging → SLF4J: `jcl-over-slf4j` (и убрать `commons-logging`).
-- JUL → SLF4J: `jul-to-slf4j` + вызов `SLF4JBridgeHandler.install()` при старте.
+- Log4j 1.x SLF4J: `log4j-over-slf4j` (и убрать `log4j`).
+- Commons Logging SLF4J: `jcl-over-slf4j` (и убрать `commons-logging`).
+- JUL SLF4J: `jul-to-slf4j` + вызов `SLF4JBridgeHandler.install()` при старте.
 
 После этого весь вывод идёт через SLF4J и вашу реализацию (например, Logback).
 

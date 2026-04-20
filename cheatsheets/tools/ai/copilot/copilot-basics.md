@@ -104,7 +104,7 @@ Copilot помогает:
 
 ### Установка в JetBrains IDE
 
-1. Откройте `Settings` → `Plugins`.
+1. Откройте `Settings` `Plugins`.
 2. Найдите `GitHub Copilot` и установите плагин.
 3. Перезапустите IDE.
 4. При необходимости авторизуйтесь в GitHub внутри IDE.
@@ -339,7 +339,7 @@ Copilot может:
 
 ### Ключевые параметры настроек
 
-В VS Code (Settings → Extensions → GitHub Copilot) можно настроить:
+В VS Code (Settings Extensions GitHub Copilot) можно настроить:
 
 - **Включение/выключение** Copilot по умолчанию;
 - **Показывать ли предложения автоматически**, или только по запросу;

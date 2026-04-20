@@ -50,7 +50,7 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
   - [3. Используйте async для больших объемов](#3-используйте-async-для-больших-объемов)
   - [4. Валидируйте email адреса](#4-валидируйте-email-адреса)
   - [5. Используйте конфигурацию из properties](#5-используйте-конфигурацию-из-properties)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
 - [Email Queue](#email-queue)
   - [Queue-based Email Sending](#queue-based-email-sending)
 - [Email Tracking](#email-tracking)

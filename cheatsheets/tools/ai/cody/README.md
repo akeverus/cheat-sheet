@@ -70,7 +70,7 @@ Cody — AI-ассистент от Sourcegraph, чья ключевая осо�
 
 ## Маршруты чтения
 
-- **Onboarding (1-2 часа):** `cody-basics.md` → установка в IDE → Chat → Commands → подключение репозитория.
+- **Onboarding (1-2 часа):** `cody-basics.md` установка в IDE Chat Commands подключение репозитория.
 - **Командное внедрение:** `cody-basics.md` + настройка Prompt Library + политики контекста на уровне организации.
 
 ## Куда идти дальше

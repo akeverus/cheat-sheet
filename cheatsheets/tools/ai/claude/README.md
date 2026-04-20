@@ -71,7 +71,7 @@ Claude Code — AI-ассистент Anthropic, встраиваемый в VS 
 
 ## Маршруты чтения
 
-- **Первый день:** `claude-basics.md` → раздел Установка → Chat + диффы → Plan Mode на простой задаче.
+- **Первый день:** `claude-basics.md` раздел Установка Chat + диффы Plan Mode на простой задаче.
 - **Продвинутый:** `claude-basics.md` полностью + CLI + hooks + skills в `~/.claude/`.
 - **Команда:** `claude-basics.md` + организация custom instructions и shared skills.
 

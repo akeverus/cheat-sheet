@@ -62,8 +62,8 @@ k6 — оптимален, когда важны скорость разрабо
 
 ## Маршруты чтения
 
-- **Быстрый старт (30 мин):** введение → установка → первый `default` экспорт → thresholds.
-- **Production-setup (2 ч):** весь документ + scenarios → Grafana/Prometheus → CI/CD → k6-operator.
+- **Быстрый старт (30 мин):** введение установка первый `default` экспорт thresholds.
+- **Production-setup (2 ч):** весь документ + scenarios Grafana/Prometheus CI/CD k6-operator.
 
 ## Куда идти дальше
 

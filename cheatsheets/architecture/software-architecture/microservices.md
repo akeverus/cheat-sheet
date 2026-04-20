@@ -429,7 +429,7 @@ plugins:
 ```java
 Client → Service Registry → Service Instances
 Client → Service Instance (direct call)
-```java
+```
 
 **Преимущества:**
 - Прямое взаимодействие
@@ -446,7 +446,7 @@ Client → Service Instance (direct call)
 ```java
 Client → Load Balancer → Service Registry → Service Instances
 Client → Load Balancer → Service Instance
-```java
+```
 
 **Преимущества:**
 - Клиент не знает о **Registry**
@@ -483,17 +483,17 @@ Client → Load Balancer → Service Instance
 **Closed (Закрыт):**
 - Нормальная работа
 - Мониторинг ошибок
-- При превышении **threshold** → **Open**
+- При превышении **threshold** **Open**
 
 **Open (Открыт):**
 - Запросы блокируются немедленно
 - Возвращается ошибка без вызова сервиса
-- По истечении **timeout** → **Half-Open**
+- По истечении **timeout** **Half-Open**
 
 **Half-Open** (Полуоткрыт):**
 - Пробные запросы для проверки восстановления
-- При успехе → **Closed**
-- При ошибке → **Open**
+- При успехе **Closed**
+- При ошибке **Open**
 
 ### Реализация (Resilience4j)
 
@@ -559,7 +559,7 @@ CircuitBreakerConfig config = CircuitBreakerConfig.custom()
 ```java
 Events: OrderCreated → PaymentReceived → OrderShipped → OrderDelivered
 Current State: Order { status: "DELIVERED", ... }
-```java
+```
 
 **Преимущества:**
 - Полная история
@@ -604,7 +604,7 @@ Current State: Order { status: "DELIVERED", ... }
 Order Service → OrderCreated event
 Payment Service → listens → PaymentProcessed event
 Inventory Service → listens → InventoryReserved event
-```java
+```
 
 **Преимущества:**
 - Децентрализация
@@ -624,7 +624,7 @@ Orchestrator:
   2. Call Payment Service
   3. Call Inventory Service
   4. If any fails → compensate
-```java
+```
 
 **Преимущества:**
 - Централизованное управление

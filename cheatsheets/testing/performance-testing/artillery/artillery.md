@@ -250,7 +250,7 @@ scenarios:
 ### Краткие ответы
 
 - **Artillery или k6?** — Artillery: YAML + Node.js, низкий порог входа. k6: JavaScript, встроенные thresholds, интеграция с Grafana. Выбор по предпочтениям команды и отчётам.
-- **API с авторизацией?** — Запрос логина → capture извлечь access_token в переменную token → в следующих запросах заголовок `Authorization: "Bearer {{ token }}"`.
+- **API с авторизацией?** — Запрос логина capture извлечь access_token в переменную token в следующих запросах заголовок `Authorization: "Bearer {{ token }}"`.
 - **Тело запроса из файла?** — В processor (beforeRequest или beforeScenario) прочитать файл и подставить в context.request.body или в userContext.vars.
 - **gRPC?** — Стандартно нет; есть плагины (artillery-engine-grpc) или вызов gRPC-клиента из processor. Для нативной поддержки часто выбирают k6 или Gatling.
 - **Ограничить длительность?** — Суммарная duration фаз задаёт длительность; можно фазу с rampTo: 0 или pause для завершения.

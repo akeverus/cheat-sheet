@@ -53,7 +53,7 @@ Alertmanager принимает алерты от Prometheus Server (или др
 
 **Зачем Alertmanager:** группировка (много алертов в одно уведомление), маршрутизация по меткам (разные receivers), подавление (inhibition, silence), дедупликация, повторная отправка по repeat_interval.
 
-**Основные концепции:** Alert (метки, аннотации), Route (дерево правил → receiver), Receiver (Slack, email, PagerDuty, webhook), Group (алерты с одинаковыми group_by), Inhibition, Silence.
+**Основные концепции:** Alert (метки, аннотации), Route (дерево правил receiver), Receiver (Slack, email, PagerDuty, webhook), Group (алерты с одинаковыми group_by), Inhibition, Silence.
 
 ## Установка и настройка
 
@@ -194,7 +194,7 @@ alerting:
 ## Лучшие практики
 
 1. Группировка: `group_by: ['alertname', 'job']`, не по instance без необходимости.
-2. Метка severity (critical, warning, info) и маршрутизация: critical → PagerDuty, остальные → Slack.
+2. Метка severity (critical, warning, info) и маршрутизация: critical PagerDuty, остальные Slack.
 3. В правилах Prometheus задавать summary, description, runbook_url.
 4. resolve_timeout согласовать с интервалом отправки Prometheus.
 5. Silence для плановых работ; не заглушать шумные алерты долгим silence — править правило в Prometheus.
@@ -207,7 +207,7 @@ alerting:
 |--------|-------------------|----------|
 | Алерты не приходят в Slack/email | Неверный receiver, webhook или SMTP | Проверить api_url, smtp_*, логи Alertmanager; проверить маршрут по меткам алерта |
 | Дублирование уведомлений | Несколько Alertmanager без кластеризации | Включить HA с --cluster.peer или оставить один экземпляр |
-| Алерты не доходят до Alertmanager | Prometheus не настроен или сеть | Проверить prometheus.yml → alerting.alertmanagers, доступность порта 9093, логи Prometheus |
+| Алерты не доходят до Alertmanager | Prometheus не настроен или сеть | Проверить prometheus.yml alerting.alertmanagers, доступность порта 9093, логи Prometheus |
 | Silence не срабатывает | Матчеры не совпадают с метками алертов | Сверить метки алерта в UI Alertmanager с matchers silence |
 | Слишком много/мало групп | Неверный group_by или group_wait | Настроить group_by (меньше меток — больше групп; не включать instance без нужды) |
 | Ошибка загрузки конфига | Синтаксис YAML, неверное поле | `amtool check-config alertmanager.yml` или логи при старте |
@@ -240,7 +240,7 @@ Inhibition задаётся в конфиге статически (если A �
 | Термин | Описание |
 |--------|----------|
 | Alert | Уведомление от Prometheus (метки, аннотации, время) |
-| Route | Правило маршрутизации; дерево match/match_re → receiver |
+| Route | Правило маршрутизации; дерево match/match_re receiver |
 | Receiver | Канал уведомлений (Slack, email, PagerDuty, webhook) |
 | Group | Алерты с одинаковыми group_by; одно уведомление на группу |
 | Inhibition | При активном алерте A не отправлять алерты B |

@@ -58,7 +58,7 @@ updated: "2026-02-11"
 
 ### Структуры данных
 
-Объекты представляются векторами признаков (атрибут → число). Запись — описание плюс карта признаков; центроид — точка в том же пространстве признаков.
+Объекты представляются векторами признаков (атрибут число). Запись — описание плюс карта признаков; центроид — точка в том же пространстве признаков.
 
 ```java
 // Запись: описание + карта признаков (атрибут → значение) для кластеризации
@@ -103,7 +103,7 @@ public class Centroid {
 ```
 
 ```text
-```java
+```
 public interface Distance {
     double calculate(Map<String, Double> f1, Map<String, Double> f2);
 }
@@ -286,7 +286,7 @@ public static Map<Centroid, List<Record>> fit(
 Пример на данных Last.fm: топ исполнители, топ теги, теги по исполнителям; записи — вектор признаков по тегам. Кластеризация по 7 кластерам, евклидово расстояние, до 1000 итераций.
 
 ```text
-```java
+```
 List<String> artists = getTop100Artists();
 Set<String> topTags = getTop100Tags();
 List<Record> records = datasetWithTaggedArtists(artists, topTags);
@@ -362,7 +362,7 @@ for (int k = 2; k <= 16; k++) {
 ## Kotlin Implementation
 
 ```text
-```kotlin
+```
 // Запись и центроид в том же формате, что в Java
 data class RecordK(
     val description: String,
@@ -401,7 +401,7 @@ class EuclideanDistanceK : DistanceK {
 ```
 
 ```text
-```kotlin
+```
 object KMeansK {
     fun fit(
         records: List<RecordK>,
@@ -531,7 +531,7 @@ object ErrorsK {
 ### Пример использования
 
 ```text
-```kotlin
+```
 fun main() {
     val records = listOf(
         RecordK("Point 1", mapOf("x" to 1.0, "y" to 2.0)),

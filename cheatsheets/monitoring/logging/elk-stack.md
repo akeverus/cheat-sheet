@@ -38,7 +38,7 @@ ELK Stack (Elasticsearch, Logstash, Kibana) — набор инструмент�
 ## Компоненты ELK Stack
 
 - **Elasticsearch** — поисковый движок и хранилище (индексы, документы, запросы).
-- **Logstash** — приём, парсинг, обогащение и отправка логов в Elasticsearch (pipeline: input → filter → output).
+- **Logstash** — приём, парсинг, обогащение и отправка логов в Elasticsearch (pipeline: input filter output).
 - **Kibana** — UI для поиска, визуализаций и дашбордов.
 - **Beats** (Filebeat, Metricbeat и др.) — лёгкие агенты сбора логов и метрик с хостов.
 
@@ -146,7 +146,7 @@ output {
 - **date** — разбор даты в @timestamp.
 - **mutate** — lowercase, rename, remove_field, convert и т.д.
 - **json** — парсинг JSON из поля (source/target).
-- **geoip** — обогащение по IP (source → target).
+- **geoip** — обогащение по IP (source target).
 - **metrics** — счётчики/агрегаты (meter, flush_interval).
 
 ## Kibana
@@ -280,7 +280,7 @@ Watcher (X-Pack): создание watch с trigger (schedule), input (search п
 
 | Проблема | Действие |
 |----------|----------|
-| Kibana не видит индексы или поля | Проверить индексный паттерн (Stack Management → Index Patterns): имя типа logs-*, поле времени @timestamp. После смены маппинга обновить паттерн или визуализации. |
+| Kibana не видит индексы или поля | Проверить индексный паттерн (Stack Management Index Patterns): имя типа logs-*, поле времени @timestamp. После смены маппинга обновить паттерн или визуализации. |
 | Logstash падает с out of memory | Увеличить heap в jvm.options; снизить pipeline.batch.size и pipeline.workers в logstash.yml; упростить или перенести тяжёлые фильтры на Filebeat. |
 | Кластер Elasticsearch red или yellow | Red: часть шардов недоступна — _cluster/allocation/explain, логи узлов (диск, память, сбой узла). Yellow: реплики не размещены (норма для одного узла); для production добавить узлы. |
 
@@ -296,7 +296,7 @@ Watcher (X-Pack): создание watch с trigger (schedule), input (search п
 
 ## Частые вопросы
 
-**Kibana не видит индексы или поля.** Проверьте индексный паттерн (Stack Management → Index Patterns): он должен совпадать с именем индекса (например, logs-*). Поле времени — @timestamp. После смены маппинга может потребоваться обновить паттерн или пересоздать визуализации.
+**Kibana не видит индексы или поля.** Проверьте индексный паттерн (Stack Management Index Patterns): он должен совпадать с именем индекса (например, logs-*). Поле времени — @timestamp. После смены маппинга может потребоваться обновить паттерн или пересоздать визуализации.
 
 **Logstash падает с out of memory.** Увеличьте heap в jvm.options (-Xmx/-Xms). Снизьте pipeline.batch.size и pipeline.workers в logstash.yml. Проверьте тяжёлые фильтры (grok, geoip) и по возможности перенесите парсинг на Filebeat.
 

@@ -164,7 +164,7 @@ Producers → Topics (Partitions) → Consumers (Consumer Groups)
 
 ### Когда использовать Kafka?
 
-#### ✅ Идеально подходит для:
+#### Идеально подходит для:
 - **Event-driven архитектура** — асинхронная коммуникация
 - **`Big Data` pipelines** — **ingestion** и **processing** больших данных
 - **Log aggregation** — сбор и анализ логов
@@ -173,7 +173,7 @@ Producers → Topics (Partitions) → Consumers (Consumer Groups)
 - **Event sourcing** — хранение истории состояний
 - **CDC (Change Data Capture)** — синхронизация баз данных
 
-#### ❌ Не подходит для:
+#### Не подходит для:
 - **Request-response** — использовать **REST**/**gRPC**
 - **Транзакции** — **ACID** транзакции лучше в базах данных
 - **Файловый storage** — использовать **object storage**
@@ -817,7 +817,7 @@ kafka-consumer-groups --list --bootstrap-server localhost:9092
 ### Multi-node кластер
 
 #### 3-node кластер
-```yaml
+```
 version: '3.8'
 services:
   zookeeper:
@@ -850,7 +850,7 @@ services:
 ### KRaft mode (Kafka без Zookeeper)
 
 #### KRaft конфигурация
-```properties
+```
 # `Enable KRaft mode`
 `process.roles`=broker,controller
 `node.id`=1
@@ -872,7 +872,7 @@ listeners=`PLAINTEXT`://localhost:9092,`CONTROLLER`://:9093
 
 1. Обязательные настройки подключения:
 
-```java
+```
 `@Configuration`
 public class `KafkaProducerConfig` {
 
@@ -1001,7 +1001,7 @@ TRANSACTIONAL_ID_CONFIG:
 - Требует enable.idempotence=true
 
 #### Синхронная отправка
-```java
+```
 // Синхронная отправка через KafkaTemplate.send().get() с ожиданием результата
 `@Service`
 public class `SyncProducerService` {
@@ -1032,7 +1032,7 @@ public class `SyncProducerService` {
 ```text
 
 #### Асинхронная отправка
-```java
+```
 // Асинхронная отправка через CompletableFuture без блокировки потока
 `@Service`
 public class `AsyncProducerService` {
@@ -1081,7 +1081,7 @@ public class `AsyncProducerService` {
 ### Advanced Producer Features
 
 #### Custom Serializer
-```java
+```
 // Кастомный сериализатор: DTO UserEvent и UserEventSerializer в JSON для Kafka
 public class `UserEvent` {
     private `String userId`;
@@ -1137,7 +1137,7 @@ public class `CustomSerializerConfig` {
 ```text
 
 #### Partitioning стратегии
-```java
+```
 `@Service`
 public class `PartitionedProducerService` {
 
@@ -1194,7 +1194,7 @@ public class `UserIdPartitioner` implements `Partitioner` {
 ```text
 
 #### Transactional Producer
-```java
+```
 `@Configuration`
 public class `TransactionalProducerConfig` {
 
@@ -1255,7 +1255,7 @@ public class `TransactionalProducerService` {
 
 1. Обязательные настройки подключения:
 
-```java
+```
 `@Configuration`
 public class `KafkaConsumerConfig` {
 
@@ -1404,7 +1404,7 @@ AckMode в Spring Kafka:
 - MANUAL_IMMEDIATE - немедленное подтверждение без ожидания транзакции
 
 Конфигурация для высокой производительности:
-```java
+```
 // High-throughput consumer
 configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1000);
 configProps.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1024 * 1024); // 1MB
@@ -1413,7 +1413,7 @@ configProps.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 2 * 1024 * 1024
 ```text
 
 Конфигурация для низкой latency:
-```java
+```
 // `Low-latency` consumer
 `configProps`.put(`ConsumerConfig`.MAX_POLL_RECORDS_CONFIG, 10);
 `configProps`.put(`ConsumerConfig`.FETCH_MIN_BYTES_CONFIG, 1);
@@ -1421,7 +1421,7 @@ configProps.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, 2 * 1024 * 1024
 ```text
 
 #### Message Listener
-```java
+```
 `@Service`
 public class `UserEventConsumer` {
 
@@ -1461,7 +1461,7 @@ public class `UserEventConsumer` {
 ```text
 
 #### Batch Consumer
-```java
+```
 `@Service`
 public class `BatchUserEventConsumer` {
 
@@ -1522,7 +1522,7 @@ public class `BatchConsumerConfig` {
 ### Consumer Groups и Rebalancing
 
 #### Multiple Consumer Groups
-```java
+```
 `@Service`
 public class `UserEventConsumers` {
 
@@ -1553,7 +1553,7 @@ public class `UserEventConsumers` {
 ```text
 
 #### Manual Consumer
-```java
+```
 `@Service`
 public class `ManualConsumerService` {
 
@@ -1604,7 +1604,7 @@ public class `ManualConsumerService` {
 ### Error Handling
 
 #### Dead Letter Topic (DLT)
-```java
+```
 `@Configuration`
 public class `ErrorHandlingConfig` {
 
@@ -1668,7 +1668,7 @@ public class `ErrorHandlingConsumer` {
 ### Spring Boot авто-конфигурация
 
 #### Application Properties
-```yaml
+```
 spring:
   kafka:
     `bootstrap-servers`: localhost:9092
@@ -1692,7 +1692,7 @@ spring:
 ```text
 
 #### Авто-конфигурированные бины
-```java
+```
 `@Service`
 public class `AutoConfiguredProducer` {
 
@@ -1728,7 +1728,7 @@ public class `AutoConfiguredConsumer` {
 ### Advanced Spring Kafka
 
 #### Custom MessageConverter
-```java
+```
 `@Configuration`
 public class `MessageConverterConfig` {
 
@@ -1772,7 +1772,7 @@ public class `JsonConsumer` {
 ```text
 
 #### @KafkaListener аннотации
-```java
+```
 `@Service`
 public class `AdvancedKafkaListeners` {
 
@@ -1834,7 +1834,7 @@ public class `FilterConfig` {
 ### Basic Stream Processing
 
 #### Word Count пример
-```java
+```
 `@Configuration`
 public class `KafkaStreamsConfig` {
 
@@ -1856,7 +1856,7 @@ public class `KafkaStreamsConfig` {
 ```text
 
 #### Stream Builder
-```java
+```
 `@Configuration`
 public class `StreamProcessingConfig` {
 
@@ -1908,7 +1908,7 @@ public class `StreamProcessingConfig` {
 ### Advanced Stream Operations
 
 #### Windowing и Aggregation
-```java
+```
 `@Service`
 public class `UserActivityProcessor` {
 
@@ -1946,7 +1946,7 @@ public class `UserActivityProcessor` {
 ```text
 
 #### Joins и State Stores
-```java
+```
 `@Service`
 public class `OrderProcessor` {
 
@@ -1984,7 +1984,7 @@ public class `OrderProcessor` {
 ```text
 
 #### Custom State Stores
-```java
+```
 `@Configuration`
 public class `CustomStoreConfig` {
 
@@ -2051,7 +2051,7 @@ public class `UserSessionTransformer` implements `Transformer`<`String`, `UserEv
 ### Source Connectors
 
 #### JDBC Source Connector
-```json
+```
 {
   "name": "`jdbc-source-connector`",
   "config": {
@@ -2074,7 +2074,7 @@ public class `UserSessionTransformer` implements `Transformer`<`String`, `UserEv
 ```text
 
 #### Debezium CDC Connector
-```json
+```
 {
   "name": "`postgres-cdc-connector`",
   "config": {
@@ -2100,7 +2100,7 @@ public class `UserSessionTransformer` implements `Transformer`<`String`, `UserEv
 ### Sink Connectors
 
 #### JDBC Sink Connector
-```json
+```
 {
   "name": "`jdbc-sink-connector`",
   "config": {
@@ -2124,7 +2124,7 @@ public class `UserSessionTransformer` implements `Transformer`<`String`, `UserEv
 ```text
 
 #### Elasticsearch Sink Connector
-```json
+```
 {
   "name": "`elasticsearch-sink-connector`",
   "config": {
@@ -2148,7 +2148,7 @@ public class `UserSessionTransformer` implements `Transformer`<`String`, `UserEv
 ### Custom Connectors
 
 #### Custom Source Connector
-```java
+```
 public class `CustomSourceConnector` extends `SourceConnector` {
 
     `@Override`
@@ -2228,7 +2228,7 @@ public class `CustomSourceTask` extends `SourceTask` {
 ### SSL/TLS шифрование
 
 #### SSL конфигурация
-```properties
+```
 # `Producer SSL` settings
 `security.protocol`=`SSL`
 `ssl.truststore.location`=/path/to/truststore.jks
@@ -2244,7 +2244,7 @@ public class `CustomSourceTask` extends `SourceTask` {
 ```text
 
 #### Spring Boot SSL конфигурация
-```yaml
+```
 spring:
   kafka:
     security:
@@ -2260,7 +2260,7 @@ spring:
 ### SASL аутентификация
 
 #### SASL/PLAIN
-```properties
+```
 `security.protocol`=SASL_SSL
 `sasl.mechanism`=`PLAIN`
 `sasl.jaas.config`=`org.`apache.`kafka.common`.security`.plain`.`PlainLoginModule` required \
@@ -2269,7 +2269,7 @@ spring:
 ```text
 
 #### SASL/SCRAM
-```properties
+```
 `security.protocol`=SASL_SSL
 `sasl.mechanism`=`SCRAM-`SHA`-256`
 `sasl.jaas.config`=`org.`apache.`kafka.common`.security`.scram`.`ScramLoginModule` required \
@@ -2280,7 +2280,7 @@ spring:
 ### ACL авторизация
 
 #### ACL команды
-```bash
+```
 # `Create topic with ACL`
 `kafka-acls` --`bootstrap-server` localhost:9092 \
   --`command-config admin.properties` \
@@ -2306,7 +2306,7 @@ spring:
 ```text
 
 #### ACL конфигурация
-```properties
+```
 # `Server properties`
 `authorizer.class.name`=`kafka.security.authorizer`.`AclAuthorizer`
 `allow.`everyone.`if.no`.acl`.found`=`false`
@@ -2322,7 +2322,7 @@ spring:
 ### Metrics
 
 #### JMX метрики
-```java
+```
 `@Configuration`
 public class `MetricsConfig` {
 
@@ -2378,7 +2378,7 @@ public class `KafkaMetricsService` {
 ### Consumer Lag мониторинг
 
 #### Lag метрики
-```java
+```
 `@Service`
 public class `ConsumerLagMonitor` {
 
@@ -2422,7 +2422,7 @@ public class `ConsumerLagMonitor` {
 ### Kafka Admin Client
 
 #### Topic управление
-```java
+```
 `@Service`
 public class `KafkaAdminService` {
 
@@ -2490,7 +2490,7 @@ public class `KafkaAdminService` {
 ### Producer оптимизация
 
 #### Batch настройки
-```properties
+```
 # `Producer batch settings`
 `batch.size`=16384                    # 16KB batch size
 `linger.ms`=5                         # `Wait 5ms for more` records
@@ -2500,7 +2500,7 @@ public class `KafkaAdminService` {
 ```text
 
 #### Throughput vs Latency
-```java
+```
 `@Configuration`
 public class `OptimizedProducerConfig` {
 
@@ -2542,7 +2542,7 @@ public class `OptimizedProducerConfig` {
 ### Consumer оптимизация
 
 #### Consumer настройки
-```properties
+```
 # `Consumer performance settings`
 `fetch.min.bytes`=1024                # `Min fetch size`
 `fetch.max.bytes`=52428800            # 50MB max fetch size
@@ -2552,7 +2552,7 @@ public class `OptimizedProducerConfig` {
 ```text
 
 #### Parallel Processing
-```java
+```
 `@Configuration`
 public class `ParallelConsumerConfig` {
 
@@ -2607,7 +2607,7 @@ public class `ParallelMessageProcessor` {
 ### Cluster оптимизация
 
 #### Broker настройки
-```properties
+```
 # `Broker performance settings`
 `num.io.threads`=8                    # `IO` threads
 `num.network.threads`=3               # `Network threads`
@@ -2623,7 +2623,7 @@ public class `ParallelMessageProcessor` {
 ```text
 
 #### Topic оптимизация
-```java
+```
 `@Service`
 public class `TopicOptimizationService` {
 
@@ -2678,7 +2678,7 @@ public class `TopicOptimizationService` {
 ### Модульное тестирование
 
 #### Producer тестирование
-```java
+```
 `@SpringBootTest`
 ``@ExtendWith`(`MockitoExtension`.class)`
 public class `ProducerServiceTest` {
@@ -2731,7 +2731,7 @@ public class `ProducerServiceTest` {
 ```text
 
 #### Consumer тестирование
-```java
+```
 `@SpringBootTest`
 ``@ExtendWith`(`MockitoExtension`.class)`
 public class `ConsumerServiceTest` {
@@ -2780,7 +2780,7 @@ public class `ConsumerServiceTest` {
 ### Интеграционное тестирование
 
 #### Embedded Kafka
-```java
+```
 `@SpringBootTest`
 `@EmbeddedKafka`(partitions = 1,
                `brokerProperties` = {"listeners=`PLAINTEXT`://localhost:9092", "port=9092"},
@@ -2814,7 +2814,7 @@ public class `KafkaIntegrationTest` {
 ```text
 
 #### Testcontainers
-```java
+```
 `@SpringBootTest`
 `@Testcontainers`
 public class `KafkaContainerTest` {
@@ -2864,7 +2864,7 @@ public class `KafkaContainerTest` {
 ```text
 
 Решение:
-```properties
+```
 # `Increase buffer memory`
 `buffer.memory`=67108864  # 64MB
 
@@ -2891,7 +2891,7 @@ public class `KafkaContainerTest` {
 ```text
 
 Решение:
-```java
+```
 // `Increase consumer instances`
 `factory`.`setConcurrency`(5);
 
@@ -2915,7 +2915,7 @@ public void `processBatch`(`List`<`ConsumerRecord`<`String`, `String`>> records)
 ```text
 
 Решение:
-```properties
+```
 # `Increase session timeout`
 `session.timeout.ms`=30000
 
@@ -2944,7 +2944,7 @@ public void `processBatch`(`List`<`ConsumerRecord`<`String`, `String`>> records)
 ```text
 
 Решение:
-```properties
+```
 # `Increase threads`
 `num.io.threads`=16
 `num.network.threads`=8
@@ -2960,7 +2960,7 @@ public void `processBatch`(`List`<`ConsumerRecord`<`String`, `String`>> records)
 ### Debug инструменты
 
 #### Consumer Group состояние
-```bash
+```
 # `List consumer groups`
 `kafka-consumer-groups` --`bootstrap-server` localhost:9092 --list
 
@@ -2979,7 +2979,7 @@ public void `processBatch`(`List`<`ConsumerRecord`<`String`, `String`>> records)
 ```text
 
 #### Topic информация
-```bash
+```
 # `Describe topic`
 `kafka-topics` --`bootstrap-server` localhost:9092 \
   --describe \
@@ -2996,7 +2996,7 @@ public void `processBatch`(`List`<`ConsumerRecord`<`String`, `String`>> records)
 ```text
 
 #### Log анализ
-```bash
+```
 # `Consumer lag analysis`
 `kafka-run-class kafka.tools`.`ConsumerLag` \
   --`broker-list` localhost:9092 \
@@ -3013,7 +3013,7 @@ public void `processBatch`(`List`<`ConsumerRecord`<`String`, `String`>> records)
 ### Архитектурные рекомендации
 
 #### 1. Schema Design
-```protobuf
+```
 // `Use schema registry for` message schemas
 syntax = "proto3";
 
@@ -3056,7 +3056,7 @@ message `UserCreated` {
 ```text
 
 #### 3. Partition Strategy
-```java
+```
 public class `SmartPartitioner` implements `Partitioner` {
 
     `@Override`
@@ -3087,7 +3087,7 @@ public class `SmartPartitioner` implements `Partitioner` {
 ### Производительность
 
 #### 4. Message Size Optimization
-```java
+```
 public class `MessageOptimizer` {
 
     public byte[] `compressMessage`(`Object message`) {
@@ -3103,7 +3103,7 @@ public class `MessageOptimizer` {
 ```text
 
 #### 5. Batch Processing
-```java
+```
 `@Service`
 public class `BatchProcessor` {
 
@@ -3135,7 +3135,7 @@ public class `BatchProcessor` {
 ### Мониторинг
 
 #### 6. Health Checks
-```java
+```
 `@Component`
 public class `KafkaHealthIndicator` implements `HealthIndicator` {
 
@@ -3167,7 +3167,7 @@ public class `KafkaHealthIndicator` implements `HealthIndicator` {
 ```text
 
 #### 7. Alerting Rules
-```yaml
+```
 # `Prometheus alerting rules for Kafka`
 groups:
   - name: kafka
@@ -3200,7 +3200,7 @@ groups:
 ### Безопасность
 
 #### 8. Лучшие практики безопасности
-```java
+```
 `@Configuration`
 public class `KafkaSecurityConfig` {
 
@@ -3247,7 +3247,7 @@ public class `KafkaSecurityConfig` {
 ### Масштабирование
 
 #### 9. Horizontal Scaling
-```java
+```
 `@Configuration`
 public class `ScalingConfig` {
 
@@ -3284,7 +3284,7 @@ public class `ScalingConfig` {
 ```text
 
 #### 10. Cluster Management
-```java
+```
 `@Service`
 public class `ClusterManager` {
 
@@ -3333,22 +3333,22 @@ Apache Kafka — это мощная и гибкая платформа для �
 
 #### Event Sourcing
 ```
-**Commands** → **Events** (Kafka) → **Event Handlers** → **Projections**
+**Commands** **Events** (Kafka) **Event Handlers** **Projections**
 ```text
 
 #### CQRS
 ```
-**Commands** → **Write Model** → **Events** (Kafka) → **Read Models**
+**Commands** **Write Model** **Events** (Kafka) **Read Models**
 ```text
 
 #### Saga Pattern
 ```
-**Service** A → **Event** → **Service** B → **Event** → **Service** C → **Compensation**
+**Service** A **Event** **Service** B **Event** **Service** C **Compensation**
 ```text
 
 #### Event-Driven Microservices
 ```
-**API Gateway** → **Commands** (Kafka) → **Services** → **Events** (Kafka) → **Subscribers**
+**API Gateway** **Commands** (Kafka) **Services** **Events** (Kafka) **Subscribers**
 ```text
 
 ### Когда выбирать Kafka:

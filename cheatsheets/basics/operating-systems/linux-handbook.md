@@ -239,11 +239,11 @@ nohup ./script.sh &   # игнорировать SIGHUP при logout
 | 1 | `SIGHUP` | terminate | да | перечитать конфиг (nginx) |
 | 2 | `SIGINT` | terminate | да | `Ctrl+C` |
 | 3 | `SIGQUIT` | core dump | да | `Ctrl+\`, thread dump JVM |
-| 9 | `SIGKILL` | kill | ❌ нет | жёсткий kill |
+| 9 | `SIGKILL` | kill | нет | жёсткий kill |
 | 15 | `SIGTERM` | terminate | да | graceful shutdown (по умолчанию `kill`) |
 | 17 | `SIGCHLD` | ignore | да | умер child |
 | 18 | `SIGCONT` | resume | да | возобновить остановленный |
-| 19 | `SIGSTOP` | stop | ❌ нет | пауза |
+| 19 | `SIGSTOP` | stop | нет | пауза |
 
 ```bash
 kill 12345            # = SIGTERM
@@ -436,18 +436,18 @@ log ERROR "failed: $?"
 cat /var/log/app.log | grep ERROR | awk '{print $4}' | sort | uniq -c | sort -rn | head
 ```
 
-Каждая команда — отдельный процесс, stdout левого → stdin правого. С `set -o pipefail` pipe упадёт при ошибке любой команды.
+Каждая команда — отдельный процесс, stdout левого stdin правого. С `set -o pipefail` pipe упадёт при ошибке любой команды.
 
 ### Subshell vs source
 
 | Что | Изменения переменных/cwd видны в родителе? |
 |---|---|
-| `./script.sh` / `bash script.sh` | ❌ нет (subshell) |
-| `(cmd1; cmd2)` | ❌ нет (явный subshell) |
-| `$(cmd)` / `` `cmd` `` | ❌ нет (command substitution) |
-| `source script.sh` / `. script.sh` | ✅ да |
-| `cmd1; cmd2` | ✅ да |
-| `{ cmd1; cmd2; }` | ✅ да (group в текущем shell) |
+| `./script.sh` / `bash script.sh` | нет (subshell) |
+| `(cmd1; cmd2)` | нет (явный subshell) |
+| `$(cmd)` / `` `cmd` `` | нет (command substitution) |
+| `source script.sh` / `. script.sh` | да |
+| `cmd1; cmd2` | да |
+| `{ cmd1; cmd2; }` | да (group в текущем shell) |
 
 ### trap — cleanup при выходе
 
@@ -885,8 +885,8 @@ wget https://example.com/file.tgz
 
 | Контекст | Bash |
 |---|---|
-| Login shell (SSH, `su -`, tty) | `/etc/profile` → `~/.bash_profile` → `~/.bash_login` → `~/.profile` |
-| Interactive non-login (новый терминал) | `/etc/bash.bashrc` → `~/.bashrc` |
+| Login shell (SSH, `su -`, tty) | `/etc/profile` `~/.bash_profile` `~/.bash_login` `~/.profile` |
+| Interactive non-login (новый терминал) | `/etc/bash.bashrc` `~/.bashrc` |
 | Non-interactive (`bash script.sh`) | `$BASH_ENV`, если задан |
 | Logout | `~/.bash_logout` |
 

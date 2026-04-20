@@ -150,7 +150,7 @@ RabbitMQ:                   ActiveMQ:
 
 ### Когда использовать RabbitMQ?
 
-#### ✅ Идеально подходит для:
+#### Идеально подходит для:
 - **Request-response** — **RPC** через **messaging**
 - **Task queues** — распределение задач между **workers**
 - **Event notification** — **publish-subscribe** паттерн
@@ -159,7 +159,7 @@ RabbitMQ:                   ActiveMQ:
 - **Legacy integration** — поддержка различных протоколов
 - **Microservices** — асинхронная коммуникация
 
-#### ❌ Не подходит для:
+#### Не подходит для:
 - **High-throughput** — >100K **msg**/**sec** (используйте Kafka)
 - **Big data** — **large message payloads**
 - **Real-time analytics** — **stream processing**
@@ -3729,21 +3729,21 @@ sequenceDiagram
 
 ### Когда выбирать RabbitMQ:
 
-✅ **Требуется гарантированная доставка** — **at-least-once** или **exactly-once**
-✅ **Complex routing logic** — **topic**, **headers exchanges**
-✅ **Request-response pattern** — **RPC** через **messaging**
-✅ **Legacy system integration** — поддержка различных протоколов
-✅ **Enterprise requirements** — надежность, мониторинг, управление
-✅ **Clustering needs** — высокая доступность
-✅ **Message persistence** — сохранение сообщений при сбоях
+**Требуется гарантированная доставка** — **at-least-once** или **exactly-once**
+**Complex routing logic** — **topic**, **headers exchanges**
+**Request-response pattern** — **RPC** через **messaging**
+**Legacy system integration** — поддержка различных протоколов
+**Enterprise requirements** — надежность, мониторинг, управление
+**Clustering needs** — высокая доступность
+**Message persistence** — сохранение сообщений при сбоях
 
 ### Когда НЕ выбирать:
 
-❌ **High-throughput streaming** — используйте **Kafka** (>100K msg/sec)
-❌ **Big data processing** — **Kafka** лучше для больших объемов
-❌ **Simple `fire-and`-forget** — **Kafka** или **Redis pub**/**sub** проще
-❌ **Real-time analytics** — **Kafka Streams** или **Apache Flink**
-❌ **Large message payloads** — накладные расходы на **routing**
+**High-throughput streaming** — используйте **Kafka** (>100K msg/sec)
+**Big data processing** — **Kafka** лучше для больших объемов
+**Simple `fire-and`-forget** — **Kafka** или **Redis pub**/**sub** проще
+**Real-time analytics** — **Kafka Streams** или **Apache Flink**
+**Large message payloads** — накладные расходы на **routing**
 
 ### Рекомендации по внедрению:
 
@@ -3788,6 +3788,6 @@ sequenceDiagram
 6. **Reliability** — **acknowledgments**, **confirmations**, **clustering**
 7. **Operations** — **health checks**, **metrics**, **alerting**, **backups**
 
-**RabbitMQ** остается одним из лучших выборов для **message-oriented middleware** в **enterprise** системах. Его зрелость, надежность и богатая экосистема делают его отличным фундаментом для построения масштабируемых и надежных распределенных систем. 🚀
+**RabbitMQ** остается одним из лучших выборов для **message-oriented middleware** в **enterprise** системах. Его зрелость, надежность и богатая экосистема делают его отличным фундаментом для построения масштабируемых и надежных распределенных систем.
 
 **Далее: `Testing frameworks` (JUnit, Mockito, AssertJ)**

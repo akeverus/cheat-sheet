@@ -1851,7 +1851,7 @@ components:
 
 **Проблема:** `openapi-generator generate` не находит generator или выдаёт ошибку `Generator 'xxx' not found`.
 
-**Причины:** Устаревшая версия **OpenAPI Generator**; generator переименован (например, `java` → `java-client`); не установлен отдельный генератор для конкретного стека.
+**Причины:** Устаревшая версия **OpenAPI Generator**; generator переименован (например, `java` `java-client`); не установлен отдельный генератор для конкретного стека.
 
 **Решение:** Обновить до актуальной версии (`openapi-generator-cli` или Maven plugin); проверить список: `openapi-generator list`; использовать корректный идентификатор из [списка генераторов](https://openapi-generator.tech/docs/generators/); для **Java** с **Retrofit** — `java-retrofit2`, для **Spring** — `spring`.
 

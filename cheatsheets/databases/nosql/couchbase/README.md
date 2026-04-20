@@ -77,9 +77,9 @@ Couchbase — распределённая NoSQL-СУБД, которая сов
 
 ## Маршруты чтения
 
-- **Ознакомление (1 час):** `couchbase-basics.md` → поднять в Docker → попробовать N1QL.
-- **Замена связки MongoDB + Redis:** basics → сравнить примеры с MongoDB → оценить эксплуатацию.
-- **Интеграция со Spring:** basics → Spring Data Couchbase → репозитории в своём проекте.
+- **Ознакомление (1 час):** `couchbase-basics.md` поднять в Docker попробовать N1QL.
+- **Замена связки MongoDB + Redis:** basics сравнить примеры с MongoDB оценить эксплуатацию.
+- **Интеграция со Spring:** basics Spring Data Couchbase репозитории в своём проекте.
 
 ## Куда идти дальше
 

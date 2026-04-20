@@ -98,8 +98,8 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Первый REST-сервис (1 день):** `rest-api-design.md` → `rest-api-best-practices.md` главы error handling, pagination, versioning → OpenAPI → Swagger UI.
-- **Аудит существующего API:** чек-лист выше → Spectral → diff против прошлой версии → исправление несовместимостей.
+- **Первый REST-сервис (1 день):** `rest-api-design.md` `rest-api-best-practices.md` главы error handling, pagination, versioning OpenAPI Swagger UI.
+- **Аудит существующего API:** чек-лист выше Spectral diff против прошлой версии исправление несовместимостей.
 - **Собеседование по REST:** `rest-api-design.md` + `interview/api/http-rest-interview.md`.
 
 ## Куда идти дальше

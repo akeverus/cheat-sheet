@@ -70,9 +70,9 @@ updated: "2026-02-11"
 
 ## Архитектура агрегации
 
-**Streaming:** источники логов → ingestion (Filebeat, Fluent Bit, Logstash) → очередь (Kafka, RabbitMQ, Kinesis) → обработка (Flink, Spark Streaming, Kafka Streams) → хранилище (Elasticsearch, S3, Redshift).
+**Streaming:** источники логов ingestion (Filebeat, Fluent Bit, Logstash) очередь (Kafka, RabbitMQ, Kinesis) обработка (Flink, Spark Streaming, Kafka Streams) хранилище (Elasticsearch, S3, Redshift).
 
-**Batch:** сырые логи (файлы, БД, S3) → MapReduce/Spark/Hive → отчёты, дашборды, хранилище аналитики.
+**Batch:** сырые логи (файлы, БД, S3) MapReduce/Spark/Hive отчёты, дашборды, хранилище аналитики.
 
 ## Kafka для логирования
 
@@ -150,7 +150,7 @@ errorCounts.toStream()
 
 ### Apache Flink (схема)
 
-KafkaSource с WatermarkStrategy forBoundedOutOfOrderness → map(parseLogEntry) → filter(level == ERROR) → keyBy(LogEntry::getService) → window(TumblingEventTimeWindows.of(5 min)) → aggregate(ErrorCountAggregator) → addSink(ElasticsearchSink). В AggregateFunction: createAccumulator (ErrorStats), add (инкремент счётчика, сбор типов ошибок), getResult, merge для слияния при checkpoint.
+KafkaSource с WatermarkStrategy forBoundedOutOfOrderness map(parseLogEntry) filter(level == ERROR) keyBy(LogEntry::getService) window(TumblingEventTimeWindows.of(5 min)) aggregate(ErrorCountAggregator) addSink(ElasticsearchSink). В AggregateFunction: createAccumulator (ErrorStats), add (инкремент счётчика, сбор типов ошибок), getResult, merge для слияния при checkpoint.
 
 ## Batch processing
 
@@ -205,7 +205,7 @@ Response time: накопление значений в окне, расчёт �
 
 ## Data enrichment
 
-Добавление контекста к логам: lookup пользователя (userId → email, role), GeoIP по clientIP, hostname/region сервера. Для бизнес-логов — обогащение по orderId/customerId (статус заказа, тип клиента). Выполнять в фильтре Logstash или в потоковом/батч-процессоре перед записью в хранилище.
+Добавление контекста к логам: lookup пользователя (userId email, role), GeoIP по clientIP, hostname/region сервера. Для бизнес-логов — обогащение по orderId/customerId (статус заказа, тип клиента). Выполнять в фильтре Logstash или в потоковом/батч-процессоре перед записью в хранилище.
 
 ### Пример обогащения в коде
 

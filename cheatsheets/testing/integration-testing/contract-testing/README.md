@@ -56,7 +56,7 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Быстрый старт (30 мин):** introduction в `contract-testing.md` → пример Pact consumer → Pact provider.
+- **Быстрый старт (30 мин):** introduction в `contract-testing.md` пример Pact consumer Pact provider.
 - **Внедрение в команде (2 ч):** весь документ + Pact Broker + can-i-deploy.
 
 ## Куда идти дальше

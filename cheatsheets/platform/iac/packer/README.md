@@ -74,8 +74,8 @@ Packer и Docker решают похожую задачу («упакуй окр
 
 ## Маршруты чтения
 
-- **Быстрый старт:** `packer-basics.md` → собрать свой первый AMI.
-- **Продакшн:** `packer.md` → multi-cloud + Ansible как provisioner + CI.
+- **Быстрый старт:** `packer-basics.md` собрать свой первый AMI.
+- **Продакшн:** `packer.md` multi-cloud + Ansible как provisioner + CI.
 - **Интеграция с Terraform:** `packer.md` + `../terraform/` — передача AMI ID через data sources.
 
 ## Куда идти дальше

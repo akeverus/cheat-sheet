@@ -71,9 +71,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Kotlin-first backend за день:** `kotlin-frameworks-overview.md` → [[kotlin-ktor|Ktor]] → [[kotlin-exposed|Exposed]].
+- **Kotlin-first backend за день:** `kotlin-frameworks-overview.md` [[kotlin-ktor|Ktor]] [[kotlin-exposed|Exposed]].
 - **Kotlin поверх Spring:** раздел "Spring с Kotlin" в overview + [[README|Spring]].
-- **Мигрант с Java:** `kotlin-frameworks-overview.md` → сравнение с Java Frameworks.
+- **Мигрант с Java:** `kotlin-frameworks-overview.md` сравнение с Java Frameworks.
 
 ## Куда идти дальше
 

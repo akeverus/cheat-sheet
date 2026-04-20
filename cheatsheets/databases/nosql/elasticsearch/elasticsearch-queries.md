@@ -2012,15 +2012,15 @@ index.search.slowlog.threshold.query.trace: 500ms
 3. **Error handling** — **timeouts** и **circuit breakers**
 4. **Relevance tuning** — **scoring** и **ranking optimization**
 
-Эффективное использование **Elasticsearch** требует глубокого понимания **Query DSL** и принципов работы поисковых систем. Правильное проектирование запросов обеспечивает высокую производительность и точность поиска. 🎯
+Эффективное использование **Elasticsearch** требует глубокого понимания **Query DSL** и принципов работы поисковых систем. Правильное проектирование запросов обеспечивает высокую производительность и точность поиска.
 
 **Продолжение следует:**
-- ✅ **elasticsearch-basics.md** (завершен)
-- ✅ **elasticsearch-indexing.md** (завершен)
-- ✅ **elasticsearch-queries.md** (завершен)
-- 🔄 **elasticsearch-aggregations.md**
-- 🔄 **elasticsearch-clustering.md**
-- 🔄 **elasticsearch-performance.md**
+- **elasticsearch-basics.md** (завершен)
+- **elasticsearch-indexing.md** (завершен)
+- **elasticsearch-queries.md** (завершен)
+- **elasticsearch-aggregations.md**
+- **elasticsearch-clustering.md**
+- **elasticsearch-performance.md**
 
 ## Решение проблем
 
@@ -2032,6 +2032,6 @@ index.search.slowlog.threshold.query.trace: 500ms
 
 **Неожиданные или пустые результаты:** проверьте маппинг полей (keyword vs text), анализаторы и синонимы. Убедитесь, что индекс не пуст и запрос не фильтрует все документы. Используйте `explain: true` для отладки релевантности.
 
-Следующий файл — **elasticsearch-aggregations.md**! 🚀
+Следующий файл — **elasticsearch-aggregations.md**!
 
 

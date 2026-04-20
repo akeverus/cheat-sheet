@@ -61,14 +61,14 @@ WebSocket оправдан, когда сервер должен **инициа�
 
 | Кейс | WebSocket | Альтернатива |
 |---|---|---|
-| Чат | ✅ | — |
-| Live-уведомления (десятки/сек) | ✅ | SSE |
-| Dashboard с обновлениями раз в 30 сек | ❌ | polling / SSE |
-| Collaborative editing (CRDT/OT) | ✅ | — |
-| Event log для админов | ⚠️ | SSE |
-| Стриминг видео | ❌ | WebRTC / HLS |
+| Чат | | — |
+| Live-уведомления (десятки/сек) | | SSE |
+| Dashboard с обновлениями раз в 30 сек | | polling / SSE |
+| Collaborative editing (CRDT/OT) | | — |
+| Event log для админов | | SSE |
+| Стриминг видео | | WebRTC / HLS |
 
-Если нужно только server→client — часто проще `Server-Sent Events (SSE)`: обычный HTTP, работает через любые прокси, не нужен sticky session.
+Если нужно только serverclient — часто проще `Server-Sent Events (SSE)`: обычный HTTP, работает через любые прокси, не нужен sticky session.
 
 ## WebSocket vs STOMP vs SockJS
 
@@ -186,7 +186,7 @@ public class NotificationPublisher {
 
 ## User destinations
 
-Персональная доставка адресных сообщений. Клиент подписывается на `/user/queue/private`, Spring автоматически резолвит userId → session и доставит сообщение только этому юзеру (даже если у него несколько вкладок).
+Персональная доставка адресных сообщений. Клиент подписывается на `/user/queue/private`, Spring автоматически резолвит userId session и доставит сообщение только этому юзеру (даже если у него несколько вкладок).
 
 ```java
 template.convertAndSendToUser("alice", "/queue/private", payload);
@@ -249,7 +249,7 @@ public void configureMessageBroker(MessageBrokerRegistry config) {
 }
 ```
 
-Поддерживаются RabbitMQ (с `rabbitmq_stomp` плагином) и ActiveMQ. Kafka напрямую не поддерживается — потребует custom bridge через [[spring-kafka]] → `SimpMessagingTemplate`.
+Поддерживаются RabbitMQ (с `rabbitmq_stomp` плагином) и ActiveMQ. Kafka напрямую не поддерживается — потребует custom bridge через [[spring-kafka]] `SimpMessagingTemplate`.
 
 ## Низкоуровневый WebSocketHandler
 
@@ -363,9 +363,9 @@ class WsIntegrationTest {
 
 Ключевые «сигналы» в production:
 
-- Резкий рост сессий → утечка (клиенты не закрывают).
-- Queue latency растёт → broker перегружен.
-- Ошибки handshake → CORS/Origin/Auth.
+- Резкий рост сессий утечка (клиенты не закрывают).
+- Queue latency растёт broker перегружен.
+- Ошибки handshake CORS/Origin/Auth.
 
 ## Частые ошибки
 

@@ -76,13 +76,13 @@ API-документация — это контракт между команд
 4. Contract-тесты в PR: реальный API должен отвечать по спеке.
 5. Publish в портал для потребителей (Confluence, Backstage, Redocly).
 
-Версионирование: семантическое (MAJOR.MINOR.PATCH), breaking changes → новый MAJOR (`/v2`), backward-compatible → MINOR. Deprecation минимум 6 месяцев с `Sunset`-заголовком.
+Версионирование: семантическое (MAJOR.MINOR.PATCH), breaking changes новый MAJOR (`/v2`), backward-compatible MINOR. Deprecation минимум 6 месяцев с `Sunset`-заголовком.
 
 ## Маршруты чтения
 
-- **Первый API с документацией:** OpenAPI по шаблону → springdoc → Swagger UI → линт Spectral.
+- **Первый API с документацией:** OpenAPI по шаблону springdoc Swagger UI линт Spectral.
 - **Зрелый lifecycle:** добавить diff против прошлой версии, contract-тесты, портал для потребителей.
-- **Аудит legacy:** сгенерировать OAS из реального трафика (mitm) → привести в соответствие → интегрировать в CI.
+- **Аудит legacy:** сгенерировать OAS из реального трафика (mitm) привести в соответствие интегрировать в CI.
 
 ## Куда идти дальше
 

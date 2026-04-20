@@ -122,7 +122,7 @@ public long factorialUsingStreamsSafe(int n) {
 
 ## Подход 3: Рекурсия
 
-Базовый случай: n == 0 или 1 → 1; иначе n * factorial(n−1). Стек вызовов O(n); для больших n возможен StackOverflowError.
+Базовый случай: n == 0 или 1 1; иначе n * factorial(n−1). Стек вызовов O(n); для больших n возможен StackOverflowError.
 
 ```java
 // Рекурсия: базовый случай 0/1, иначе n * factorial(n-1)

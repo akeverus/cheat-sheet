@@ -145,10 +145,10 @@ echo "test.counter:1|c" | nc -u -w0 localhost 8125
 
 | Бэкенд        | Назначение |
 |---------------|------------|
-| Graphite      | Классический бэкенд; Carbon принимает метрики по TCP на порту 2003. Иерархия имён (точки → пути). |
+| Graphite | Классический бэкенд; Carbon принимает метрики по TCP на порту 2003. Иерархия имён (точки пути). |
 | Console       | Вывод в консоль (отладка). |
 | InfluxDB      | Пересылка в InfluxDB по HTTP или UDP. |
-| Prometheus    | Официального бэкенда StatsD → Prometheus нет; используют **statsd_exporter**: приложение шлёт в statsd_exporter по UDP; Prometheus скрапит statsd_exporter. |
+| Prometheus | Официального бэкенда StatsD Prometheus нет; используют **statsd_exporter**: приложение шлёт в statsd_exporter по UDP; Prometheus скрапит statsd_exporter. |
 | Datadog       | Бэкенд/расширение для отправки в Datadog. |
 
 
@@ -208,7 +208,7 @@ send_metric("app.latency_ms", 45, "ms")
 
 ## Частые вопросы
 
-**В чём разница между StatsD и Graphite?** StatsD — демон приёма и агрегации метрик по UDP; он не хранит данные, а пересылает их в бэкенд. Graphite — система хранения (Carbon) и визуализации (Graphite web). Типичный стек: приложение → StatsD → Graphite (Carbon).
+**В чём разница между StatsD и Graphite?** StatsD — демон приёма и агрегации метрик по UDP; он не хранит данные, а пересылает их в бэкенд. Graphite — система хранения (Carbon) и визуализации (Graphite web). Типичный стек: приложение StatsD Graphite (Carbon).
 
 **Можно ли использовать StatsD с Prometheus?** Напрямую Prometheus не принимает протокол StatsD. Используют statsd_exporter: приложение шлёт метрики в statsd_exporter по UDP; statsd_exporter экспортирует метрики в формате Prometheus; Prometheus делает scrape statsd_exporter.
 
@@ -230,7 +230,7 @@ send_metric("app.latency_ms", 45, "ms")
 | Flush interval | Интервал (мс) отправки агрегатов в бэкенд |
 | Backend | Система приёма агрегированных метрик (Graphite, InfluxDB и т.д.) |
 | Sample rate | Частота сэмплирования (0–1); StatsD экстраполирует счётчики |
-| statsd_exporter | Конвертер StatsD → Prometheus (приложение → exporter → Prometheus scrape) |
+| statsd_exporter | Конвертер StatsD Prometheus (приложение exporter Prometheus scrape) |
 
 ### Итоговые таблицы
 

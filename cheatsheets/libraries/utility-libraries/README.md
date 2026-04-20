@@ -66,9 +66,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Новый проект на Java 21:** сперва проверь stdlib → таблица выше → затем конкретный раздел Commons/Guava.
+- **Новый проект на Java 21:** сперва проверь stdlib таблица выше затем конкретный раздел Commons/Guava.
 - **Legacy-код:** `java-apache-commons.md` — частая зависимость в старых проектах.
-- **Кэширование / EventBus:** `java-guava.md` (секции Cache, EventBus) → рассмотреть [Caffeine](https://github.com/ben-manes/caffeine) как замену Guava Cache.
+- **Кэширование / EventBus:** `java-guava.md` (секции Cache, EventBus) рассмотреть [Caffeine](https://github.com/ben-manes/caffeine) как замену Guava Cache.
 
 ## Куда идти дальше
 

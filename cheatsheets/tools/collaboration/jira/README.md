@@ -11,7 +11,7 @@ updated: "2026-04-17"
 ---
 # Jira
 
-Jira — самый распространённый issue tracker для разработки. Модель: проект → issue (с типом Epic/Story/Task/Bug/Subtask) → поля и workflow. Две главные методологии, поддерживаемые из коробки: Scrum (спринты, backlog) и Kanban (WIP-лимиты, поток).
+Jira — самый распространённый issue tracker для разработки. Модель: проект issue (с типом Epic/Story/Task/Bug/Subtask) поля и workflow. Две главные методологии, поддерживаемые из коробки: Scrum (спринты, backlog) и Kanban (WIP-лимиты, поток).
 
 Для разработчика минимум: уметь писать и двигать тикеты, использовать JQL для поиска, понимать workflow-переходы. Для лида — настраивать фильтры, доски, роадмапы, автоматизации.
 
@@ -22,7 +22,7 @@ Jira — самый распространённый issue tracker для раз
 
 ### Соседние разделы
 - [[README|Confluence]]
-- [[README|Slack]] — интеграции Jira ↔ Slack
+- [[README|Slack]] — интеграции Jira Slack
 - [[README|GitLab/GitHub]] — ссылки коммитов на тикеты
 
 ### Внешние ресурсы
@@ -45,7 +45,7 @@ Jira — самый распространённый issue tracker для раз
 |--------|-----------|
 | Project | корневой контейнер, настраиваются типы issues, workflow, permissions |
 | Issue Type | Epic, Story, Task, Bug, Subtask, кастомные |
-| Workflow | машина состояний issue (Open → In Progress → Done) |
+| Workflow | машина состояний issue (Open In Progress Done) |
 | Sprint | ограниченный по времени промежуток для Scrum |
 | Backlog | список неначатых задач |
 | Board | визуализация (Scrum/Kanban) |
@@ -81,11 +81,11 @@ project = ABC AND updated >= -3d ORDER BY priority DESC
 
 ## Типовые задачи
 
-- **Создать Subtask из Story:** в тикете → `+` → Subtask. Наследует Epic Link.
+- **Создать Subtask из Story:** в тикете `+` Subtask. Наследует Epic Link.
 - **Связать коммит:** `git commit -m "ABC-123: fix login"` — GitLab/GitHub добавит ссылку в тикет.
-- **Массовое обновление:** JQL → Tools → Bulk Change → Transition.
-- **Автоматизация:** rule «When issue moves to Done → comment in Slack channel #team».
-- **Выгрузка отчёта:** JQL → Export → CSV/XLSX/JSON или REST API `/rest/api/3/search?jql=...`.
+- **Массовое обновление:** JQL Tools Bulk Change Transition.
+- **Автоматизация:** rule «When issue moves to Done comment in Slack channel #team».
+- **Выгрузка отчёта:** JQL Export CSV/XLSX/JSON или REST API `/rest/api/3/search?jql=...`.
 
 ## Маршруты чтения
 

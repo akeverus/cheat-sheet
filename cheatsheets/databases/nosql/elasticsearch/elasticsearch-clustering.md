@@ -2303,16 +2303,16 @@ curl -X GET "localhost:9200/_nodes/stats/indices/search?pretty"
 3. **Backup strategies** — надежное резервное копирование
 4. **Documentation** — подробная документация процедур и архитектуры
 
-Управление **Elasticsearch** кластером требует глубокого понимания распределенных систем и постоянного внимания к деталям. Правильная архитектура, мониторинг и процедуры обслуживания обеспечивают высокую производительность, надежность и масштабируемость системы. 🎯
+Управление **Elasticsearch** кластером требует глубокого понимания распределенных систем и постоянного внимания к деталям. Правильная архитектура, мониторинг и процедуры обслуживания обеспечивают высокую производительность, надежность и масштабируемость системы.
 
 **Продолжение следует:**
-- ✅ **elasticsearch-basics.md** (завершен)
-- ✅ **elasticsearch-indexing.md** (завершен)
-- ✅ **elasticsearch-queries.md** (завершен)
-- ✅ **elasticsearch-aggregations.md** (завершен)
-- ✅ **elasticsearch-clustering.md** (завершен)
-- 🔄 **elasticsearch-performance.md**
+- **elasticsearch-basics.md** (завершен)
+- **elasticsearch-indexing.md** (завершен)
+- **elasticsearch-queries.md** (завершен)
+- **elasticsearch-aggregations.md** (завершен)
+- **elasticsearch-clustering.md** (завершен)
+- **elasticsearch-performance.md**
 
-Последний файл — **elasticsearch-performance.md**! 🚀
+Последний файл — **elasticsearch-performance.md**!
 
 

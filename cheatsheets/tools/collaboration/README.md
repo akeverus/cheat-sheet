@@ -38,13 +38,13 @@ updated: "2026-04-17"
 
 ## Содержание
 
-- [Карта «задача → инструмент»](#карта-задача--инструмент)
+- [Карта «задача инструмент»](#карта-задача--инструмент)
 - [Сравнение чат-платформ](#сравнение-чат-платформ)
 - [Интеграционные паттерны](#интеграционные-паттерны)
 - [Маршруты чтения](#маршруты-чтения)
 - [Куда идти дальше](#куда-идти-дальше)
 
-## Карта «задача → инструмент»
+## Карта «задача инструмент»
 
 | Задача | Инструмент |
 |--------|-----------|
@@ -60,31 +60,31 @@ updated: "2026-04-17"
 | Критерий | Slack | Mattermost | Telegram |
 |----------|-------|-----------|----------|
 | Хостинг | SaaS | self-hosted / SaaS | SaaS |
-| Корпоративный фокус | ✅ | ✅ | ❌ (личный, но работает) |
-| On-premise | Enterprise Grid | ✅ native | ❌ |
+| Корпоративный фокус | | | (личный, но работает) |
+| On-premise | Enterprise Grid | native | |
 | Бот API | Slack Bolt, Events API | REST + Webhooks | Bot API + MTProto |
-| Нити / треды | ✅ | ✅ | частично |
+| Нити / треды | | | частично |
 | Интеграции | 2000+ marketplace | 70+ native + webhooks | через бота |
-| Шифрование E2E | ❌ | ❌ (в pro) | Secret Chats |
+| Шифрование E2E | | (в pro) | Secret Chats |
 | Цена | per-user, платно выше 10 чел. | free self-hosted | бесплатно |
 | Типичное применение | корпоративные команды | компании с compliance | стартапы, DevRel, боты |
 
 ## Интеграционные паттерны
 
-- **CI/CD → чат**: pipeline finished/failed → webhook в канал команды. Incoming webhook в Slack/Mattermost, Bot API в Telegram.
-- **Alerting → чат**: Alertmanager/PagerDuty → канал on-call. Включай кнопки acknowledge/resolve.
-- **Чат → Jira**: slash-команды (`/jira create`) или интеграции для создания тикета из сообщения.
+- **CI/CD чат**: pipeline finished/failed webhook в канал команды. Incoming webhook в Slack/Mattermost, Bot API в Telegram.
+- **Alerting чат**: Alertmanager/PagerDuty канал on-call. Включай кнопки acknowledge/resolve.
+- **Чат Jira**: slash-команды (`/jira create`) или интеграции для создания тикета из сообщения.
 - **Bot для рутин**: daily standup, ротация on-call, poll.
 - **ChatOps**: операции над инфраструктурой через команды в чате (deploy, rollback, restart), с RBAC и audit-log.
 
 ## Маршруты чтения
 
-- **Новичок в команде:** `Jira` (как заводить/двигать тикеты) → `Confluence` (как искать доки) → `Slack/Mattermost` (правила общения).
+- **Новичок в команде:** `Jira` (как заводить/двигать тикеты) `Confluence` (как искать доки) `Slack/Mattermost` (правила общения).
 - **Инженер-интегратор:** API каждого инструмента, webhooks, custom bots.
-- **DevOps / SRE:** ChatOps, Alertmanager → Slack/Mattermost, on-call rotation bot.
+- **DevOps / SRE:** ChatOps, Alertmanager Slack/Mattermost, on-call rotation bot.
 
 ## Куда идти дальше
 
 - Интеграция с AI-ассистентами в чате — [tools/ai/](../ai/)
-- Автоматизация pipeline → чат — [[README|platform/ci-cd/]]
+- Автоматизация pipeline чат — [[README|platform/ci-cd/]]
 - Мониторинг и алертинг — [[README|monitoring/alerting/]]

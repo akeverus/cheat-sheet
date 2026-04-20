@@ -31,8 +31,6 @@ updated: "2026-04-20"
 ### См. также
 - [[orm-basics]] — базовые JPA-аннотации и `EntityManager`
 - [[spring-data-jpa]] — репозитории поверх Hibernate
-- [[hibernate-caching]] — кэши L1/L2 и взаимодействие со связями
-- [[hibernate-jpql-criteria]] — `JOIN FETCH` и запросы по связям
 - [[postgres-indexes]] — индексы на FK-колонках
 - [[java-jdbc]] — что происходит ниже Hibernate
 
@@ -472,7 +470,7 @@ for (Order o : orders) {
 }
 ```
 
-**Решение:** `JOIN FETCH`, `EntityGraph`, `@BatchSize`. Подробнее — [[hibernate-jpql-criteria]].
+**Решение:** `JOIN FETCH`, `EntityGraph`, `@BatchSize`.
 
 ```java
 em.createQuery("SELECT o FROM Order o LEFT JOIN FETCH o.items", Order.class);
@@ -546,8 +544,6 @@ LEFT JOIN FETCH i.product
 
 - [[orm-basics]] — обзор JPA и базовые аннотации
 - [[spring-data-jpa]] — репозитории и производные запросы
-- [[hibernate-caching]] — кэш L1/L2 и коллекции в кэше
-- [[hibernate-jpql-criteria]] — `JOIN FETCH`, criteria, native queries
 - [[postgres-indexes]] — индексы на `FK`-колонках
 - [[postgres-transactions]] — транзакции и изоляция
 - [[java-jdbc]] — слой ниже Hibernate

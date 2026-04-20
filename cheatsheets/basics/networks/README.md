@@ -66,9 +66,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Fundamentals (45 мин):** `OSI → TCP handshake → IP-адресация → HTTP → DNS`.
+- **Fundamentals (45 мин):** `OSI TCP handshake IP-адресация HTTP DNS`.
 - **Подготовка к собесу по системному дизайну (2 ч):** вся карта тем + разделы в `architecture/system-design/`.
-- **Диагностика prod-инцидента:** `Решение проблем` → инструменты → `monitoring/tracing/` для корреляции.
+- **Диагностика prod-инцидента:** `Решение проблем` инструменты `monitoring/tracing/` для корреляции.
 
 ## Куда идти дальше
 

@@ -369,7 +369,7 @@ cat /var/lib/filebeat/registry/filebeat/data.json | jq '.[] | select(.source | c
 ## Лучшие практики
 
 1. Единый формат логов (JSON) и обязательные поля: @timestamp, level, message, service, correlationId.
-2. Retention через ILM: hot → warm → delete по возрасту и размеру.
+2. Retention через ILM: hot warm delete по возрасту и размеру.
 3. Индекс-шаблоны с mappings и настройками по умолчанию для всех лог-индексов.
 4. Мониторинг пайплайна: здоровье кластера ES, статистика пайплайнов Logstash, метрики Filebeat (harvester, queue).
 

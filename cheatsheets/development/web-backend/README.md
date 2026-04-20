@@ -88,8 +88,8 @@ flowchart TD
 
 ## Маршруты чтения
 
-- **Junior backend (1 день):** `backend-basics.md` → `REST API` → `Spring Boot` → `SQL` → `Testing`.
-- **Подготовка к system design интервью:** `backend-basics.md` → `architecture/system-design/` → `architecture/scalability-patterns`.
+- **Junior backend (1 день):** `backend-basics.md` `REST API` `Spring Boot` `SQL` `Testing`.
+- **Подготовка к system design интервью:** `backend-basics.md` `architecture/system-design/` `architecture/scalability-patterns`.
 - **Production readiness review:** чек-лист выше + `monitoring/` + `security/application/`.
 
 ## Куда идти дальше

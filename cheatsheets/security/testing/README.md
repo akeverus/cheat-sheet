@@ -77,7 +77,7 @@ SAST даёт много false positive, но ловит проблемы ран
 
 ## Маршруты чтения
 
-- **Начало для команды без security-процессов:** `security-testing.md` → включите SCA + secret scanning → дальше SAST → DAST.
+- **Начало для команды без security-процессов:** `security-testing.md` включите SCA + secret scanning дальше SAST DAST.
 - **Перед ISO/SOC 2 аудитом:** `security-testing.md` + `../security-practices.md` + ownership по процессам.
 - **Разбор инцидента:** `../application/` + `../testing/security-testing.md` для выбора следующих проверок.
 

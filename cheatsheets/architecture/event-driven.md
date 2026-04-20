@@ -375,7 +375,7 @@ public class AnalyticsConsumer {
         analyticsService.trackOrderCreated(event.getOrderId(), event.getAmount());
     }
 }
-```java
+```
 
 **Competing Consumers**
 Несколько **consumers** в одной группе конкурируют за обработку событий. Используется для распределения нагрузки.

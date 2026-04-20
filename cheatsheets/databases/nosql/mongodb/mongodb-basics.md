@@ -656,7 +656,7 @@ db.serverStatus().wiredTiger
 
 ### Запуск с конфигурацией
 
-```bash
+```
 # Запуск с конфигурационным файлом
 mongod --config /etc/`mongod.conf`
 
@@ -682,7 +682,7 @@ mongod --config /etc/`mongod.conf` --validate
 
 MongoDB хранит данные в формате BSON (Binary JSON):
 
-```javascript
+```
 // Пример `BSON` документа
 {
   _id: `ObjectId`("507f1f77bcf86cd799439011"),
@@ -722,7 +722,7 @@ MongoDB хранит данные в формате BSON (Binary JSON):
 ObjectId — это 12-байтовый BSON тип, который гарантированно уникален в коллекции:
 
 Структура ObjectId: 4 байта timestamp, 3 байта machine, 2 байта pid, 3 байта counter.
-```text
+```
 
 ```javascript
 // Создание `ObjectId`
@@ -732,7 +732,7 @@ var `objectId` = `ObjectId`("507f1f77bcf86cd799439011"); // Из строки
 // Получение компонентов
 `objectId`.`getTimestamp()`; // Дата создания
 `objectId`.`toString()`;     // Строковое представление
-```text
+```
 
 ### Встроенные документы vs Ссылки
 
@@ -750,7 +750,7 @@ var `objectId` = `ObjectId`("507f1f77bcf86cd799439011"); // Из строки
     country: "`USA`"
   }
 }
-```text
+```
 
 #### References (нормализация)
 ```javascript
@@ -771,7 +771,7 @@ var `objectId` = `ObjectId`("507f1f77bcf86cd799439011"); // Из строки
   `zipCode`: "12345",
   country: "`USA`"
 }
-```text
+```
 
 ## Работа с MongoDB Shell
 
@@ -789,7 +789,7 @@ mongo --host localhost --`port 27017` -u admin -p password --`authenticationData
 
 # Подключение к replica set
 mongo "mongodb://host1:27017,host2:27017,host3:27017/mydb?`replicaSet`=rs0"
-```text
+```
 
 ### Основные команды MongoDB Shell
 
@@ -806,7 +806,7 @@ db
 
 // Создать базу данных (создается при первом использовании)
 use newdb
-```text
+```
 
 #### Работа с коллекциями
 ```javascript
@@ -828,7 +828,7 @@ db.`createCollection`("logs", {
 
 // Получить статистику коллекции
 `db.users.stats`()
-```text
+```
 
 ### CRUD операции в MongoDB Shell
 
@@ -847,7 +847,7 @@ db.`createCollection`("logs", {
   { name: "`Jane Doe`", email: "jane`@example`.com", age: 28 },
   { name: "`Bob Smith`", email: "bob`@example`.com", age: 35 }
 ])
-```text
+```
 
 #### Read (Чтение)
 ```javascript
@@ -867,7 +867,7 @@ db.`createCollection`("logs", {
 `db.users.find`()
   .sort({ age: -1 })
   .limit(5)
-```text
+```
 
 #### Update (Обновление)
 ```javascript
@@ -894,7 +894,7 @@ db.`createCollection`("logs", {
     `updatedAt`: new `Date()`
   }
 )
-```text
+```
 
 #### Delete (Удаление)
 ```javascript
@@ -906,7 +906,7 @@ db.`createCollection`("logs", {
 
 // Удалить все документы
 `db.users`.`deleteMany`({})
-```text
+```
 
 ### Индексы в MongoDB Shell
 
@@ -925,7 +925,7 @@ db.`createCollection`("logs", {
 
 // Удалить индекс
 `db.users`.`dropIndex`("`email_1`")
-```text
+```
 
 ### Агрегация в MongoDB Shell
 
@@ -952,7 +952,7 @@ db.`createCollection`("logs", {
   { $unwind: "$customer" },
   { $project: { `customerName`: "$`customer.name`", total: 1 } }
 ])
-```text
+```
 
 ## Работа с базами данных
 
@@ -971,7 +971,7 @@ use ecommerce
 
 // Проверка создания
 show dbs
-```text
+```
 
 ### Системные базы данных
 
@@ -989,7 +989,7 @@ use local
 
 // Показать только пользовательские базы данных
 show dbs  // Не покажет admin, config, local если они пустые
-```text
+```
 
 ### Управление базами данных
 
@@ -1009,7 +1009,7 @@ db.`adminCommand`({
 // Удалить базу данных
 use mydb
 db.`dropDatabase()`
-```text
+```
 
 ## Коллекции и документы
 
@@ -1022,7 +1022,7 @@ db.`createCollection`("users")
 
 // Автоматическое создание при вставке
 `db.products`.`insertOne`({ name: "`Product 1`", price: `10.99` })
-```text
+```
 
 #### Capped Collections
 ```javascript
@@ -1035,7 +1035,7 @@ db.`createCollection`("logs", {
 
 // `Capped` коллекции автоматически удаляют старые документы
 // Подходят для логов, кэша, очередей
-```text
+```
 
 #### Time Series Collections (MongoDB 5.0+)
 ```javascript
@@ -1057,7 +1057,7 @@ db.`sensor_readings`.`insertMany`([
     humidity: `65.2`
   }
 ])
-```text
+```
 
 ### Управление коллекциями
 
@@ -1075,7 +1075,7 @@ db.`runCommand`({ validate: "users" })
 
 // Компакт коллекции
 db.`runCommand`({ compact: "users" })
-```text
+```
 
 ### Документы
 
@@ -1111,7 +1111,7 @@ db.`createCollection`("users", {
 
 // Проверка уровня валидации
 db.`getCollectionInfos`({ name: "users" })[0].`options.validator`
-```text
+```
 
 ## Структура данных
 
@@ -1136,7 +1136,7 @@ db.`getCollectionInfos`({ name: "users" })[0].`options.validator`
   },
   `createdAt`: ISODate("2023-01-01")
 }
-```text
+```
 
 #### References (Many-to-Many)
 ```javascript
@@ -1158,7 +1158,7 @@ db.`getCollectionInfos`({ name: "users" })[0].`options.validator`
   content: "`Great tutorial`!",
   `createdAt`: ISODate("2023-01-01")
 }
-```text
+```
 
 #### Массивы в документах
 ```javascript
@@ -1182,7 +1182,7 @@ db.`getCollectionInfos`({ name: "users" })[0].`options.validator`
     }
   ]
 }
-```text
+```
 
 ### Нормализация vs Денормализация
 
@@ -1201,7 +1201,7 @@ db.`getCollectionInfos`({ name: "users" })[0].`options.validator`
   products: [`ObjectId`("..."), `ObjectId`("...")],
   total: `299.99`
 })
-```text
+```
 
 #### Денормализация (оптимизация для чтения)
 ```javascript
@@ -1222,7 +1222,7 @@ db.`getCollectionInfos`({ name: "users" })[0].`options.validator`
   ],
   total: `999.99`
 })
-```text
+```
 
 ### Atomic Operations
 
@@ -1251,7 +1251,7 @@ db.`getCollectionInfos`({ name: "users" })[0].`options.validator`
     }
   }
 )
-```text
+```
 
 ## MongoDB Compass
 
@@ -1272,7 +1272,7 @@ sudo rpm -i `mongodb-compass-1`.35.0.`x86_64`.rpm
 
 # `macOS`
 brew install --cask `mongodb-compass`
-```text
+```
 
 ### Подключение к MongoDB
 
@@ -1329,7 +1329,7 @@ brew install --cask `mongodb-compass`
   `userId`: `ObjectId`("..."),
   posts: [/1000+ постов /]  // Слишком большой документ
 }
-```text
+```
 
 #### Оптимальный размер документов
 - Максимальный размер документа: 16MB
@@ -1352,7 +1352,7 @@ brew install --cask `mongodb-compass`
   { level: 1, `createdAt`: 1 },
   { `partialFilterExpression`: { level: "`ERROR`" } }
 )
-```text
+```
 
 #### Избегайте избыточного индексирования
 - Каждый индекс занимает место и замедляет вставку
@@ -1375,7 +1375,7 @@ brew install --cask `mongodb-compass`
     .build();
 
 `MongoClient` client = `MongoClients`.create(settings);
-```text
+```
 
 ### 4. Обработка ошибок
 
@@ -1397,7 +1397,7 @@ try {
         `console.log`("`Unexpected error`:", error);
     }
 }
-```text
+```
 
 ### 5. Производительность
 
@@ -1414,7 +1414,7 @@ try {
     .sort({ `createdAt`: -1 })
     .limit(20)
     .skip(0)  // Но избегайте большого skip
-```text
+```
 
 #### Мониторинг ресурсов
 ```javascript
@@ -1428,7 +1428,7 @@ db.`serverStatus()`.opcounters  // Операции по типам
 // - Недостаток памяти
 // - Большое количество соединений
 // - Медленные запросы
-```text
+```
 
 ### 6. Безопасность
 
@@ -1446,7 +1446,7 @@ db.`createUser`({
     { role: "`readWrite`", db: "mydb" }
   ]
 })
-```text
+```
 
 #### Шифрование данных
 ```javascript
@@ -1456,7 +1456,7 @@ net:
     mode: `requireSSL`
     PEMKeyFile: /etc/ssl/`mongodb.pem`
     CAFile: /etc/ssl/`ca.pem`
-```text
+```
 
 ### 7. Backup и Recovery
 
@@ -1470,7 +1470,7 @@ mongodump --db mydb --gzip --out /backup/
 
 # `Point-in-time` recovery
 mongodump --db mydb --oplog
-```text
+```
 
 #### Тестирование восстановления
 ```bash
@@ -1480,7 +1480,7 @@ mongorestore --db mydb /backup/mydb
 # Проверяйте целостность данных после restore
 `db.users.count`()
 db.`runCommand`({ validate: "users" })
-```text
+```
 
 MongoDB — это мощная и гибкая NoSQL база данных, которая отлично подходит для современных приложений, требующих быстрой разработки и масштабируемости.
 
@@ -1502,23 +1502,23 @@ MongoDB — это мощная и гибкая NoSQL база данных, к�
 
 ### Когда использовать MongoDB:
 
-✅ Современные веб-приложения — JSON API, микросервисы
-✅ Big Data и аналитика — гибкая схема для разнообразных данных
-✅ Content Management — хранение контента и метаданных
-✅ IoT приложения — обработка сенсорных данных
-✅ Real-time приложения — быстрая вставка и чтение
-✅ Прототипирование — быстрая итерация без схемы
+Современные веб-приложения — JSON API, микросервисы
+Big Data и аналитика — гибкая схема для разнообразных данных
+Content Management — хранение контента и метаданных
+IoT приложения — обработка сенсорных данных
+Real-time приложения — быстрая вставка и чтение
+Прототипирование — быстрая итерация без схемы
 
 ### Когда НЕ использовать MongoDB:
 
-❌ Сложные транзакции — если нужны ACID транзакции между многими таблицами
-❌ Комплексные JOIN — если требуется много связей между данными
-❌ Строгая схема — если важна целостность данных на уровне схемы
-❌ SQL знания — если команда предпочитает реляционные базы данных
+Сложные транзакции — если нужны ACID транзакции между многими таблицами
+Комплексные JOIN — если требуется много связей между данными
+Строгая схема — если важна целостность данных на уровне схемы
+SQL знания — если команда предпочитает реляционные базы данных
 
 MongoDB продолжает развиваться и улучшаться. С выходом новых версий добавляются новые возможности: улучшенные транзакции, time series коллекции, encrypted storage и многое другое.
 
-Для успешной работы с MongoDB важно понимать принципы data modeling, правильно использовать индексы и мониторить производительность. С правильным подходом MongoDB может значительно ускорить разработку и обеспечить высокую производительность приложений. 🚀
+Для успешной работы с MongoDB важно понимать принципы data modeling, правильно использовать индексы и мониторить производительность. С правильным подходом MongoDB может значительно ускорить разработку и обеспечить высокую производительность приложений.
 
 ## Введение в MongoDB
 
@@ -1576,8 +1576,5 @@ flowchart TD
 ### Преимущества MongoDB
 
 #### Гибкость схемы
-```java
-// Пример интеграции с Java и Spring Data MongoDB доступен в соответствующих разделах
-```text
 
-```
+Пример интеграции с Java и Spring Data MongoDB доступен в соответствующих разделах.

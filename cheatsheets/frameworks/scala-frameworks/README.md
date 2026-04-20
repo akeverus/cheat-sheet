@@ -70,8 +70,8 @@ updated: "2026-04-17"
 ## Маршруты чтения
 
 - **Обзор экосистемы:** `scala-frameworks-overview.md` целиком.
-- **FP-путь:** `scala-frameworks-overview.md` (ZIO/http4s) → [[scala-cats]] → [[scala-zio]].
-- **Enterprise/реактивный путь:** `scala-frameworks-overview.md` (Play/Akka) → [[scala-akka]].
+- **FP-путь:** `scala-frameworks-overview.md` (ZIO/http4s) [[scala-cats]] [[scala-zio]].
+- **Enterprise/реактивный путь:** `scala-frameworks-overview.md` (Play/Akka) [[scala-akka]].
 
 ## Куда идти дальше
 

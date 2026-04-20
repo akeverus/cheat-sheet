@@ -719,7 +719,7 @@ ORDER BY typname;
 ### Составные типы (Composite Types)
 
 Создание составного типа:
-```sql
+```
 -- Создание типа для адреса
 `CREATE TYPE` address `AS` (
     street `VARCHAR`(`100`),
@@ -778,7 +778,7 @@ ORDER BY typname;
 ```text
 
 Функции для работы с составными типами:
-```sql
+```
 -- Функция для создания адреса
 `CREATE OR REPLACE FUNCTION create_address`(
     `p_street VARCHAR`,
@@ -809,7 +809,7 @@ $$ `LANGUAGE` plpgsql;
 ### Перечисления с дополнительными атрибутами
 
 Расширенные enum с использованием доменов:
-```sql
+```
 -- Создание базового enum
 `CREATE TYPE user_status AS ENUM` ('active', 'inactive', 'suspended', 'banned');
 
@@ -875,7 +875,7 @@ $$ `LANGUAGE` plpgsql;
 ### Установка и управление расширениями
 
 Базовые операции с расширениями:
-```sql
+```
 -- Просмотр доступных расширений
 `SELECT` name, `default_version`, `installed_version`, comment
 `FROM pg_available_extensions`
@@ -898,7 +898,7 @@ $$ `LANGUAGE` plpgsql;
 
 Расширения для работы с типами данных:
 
-```sql
+```
 -- hstore для хранения пар ключ-значение
 `CREATE EXTENSION` hstore;
 
@@ -959,7 +959,7 @@ $$ `LANGUAGE` plpgsql;
 ```text
 
 Пример простого расширения:
-```sql
+```
 -- `my_extension`.control
 comment = '`My custom PostgreSQL extension`'
 `default_version` = '1.0'
@@ -967,7 +967,7 @@ comment = '`My custom PostgreSQL extension`'
 relocatable = `true`
 ```text
 
-```sql
+```
 -- `my_extension`.sql
 -- Создание типа
 `CREATE TYPE` rgb `AS` (
@@ -1006,7 +1006,7 @@ $$ `LANGUAGE` plpgsql `IMMUTABLE`;
 ```text
 
 Установка расширения:
-```sql
+```
 -- Создание расширения в базе данных
 `CREATE EXTENSION my_extension`;
 
@@ -1018,7 +1018,7 @@ $$ `LANGUAGE` plpgsql `IMMUTABLE`;
 
 ### Многомерные массивы
 
-```sql
+```
 -- Создание таблицы с многомерным массивом
 `CREATE TABLE matrix_data` (
     id `SERIAL PRIMARY KEY`,
@@ -1108,7 +1108,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### Массивы с пользовательскими типами
 
-```sql
+```
 -- Создание типа для точки
 `CREATE TYPE` point `AS` (
     x double precision,
@@ -1162,7 +1162,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### Индексация массивов
 
-```sql
+```
 -- `GIN` индекс для массивов
 `CREATE INDEX idx_tags_gin ON` articles `USING GIN` (tags);
 
@@ -1191,7 +1191,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### JSON Schema валидация
 
-```sql
+```
 -- Установка расширения для `JSON Schema`
 `CREATE EXTENSION IF NOT EXISTS pg_jsonschema`;
 
@@ -1242,7 +1242,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### JSONB в OLAP кубах
 
-```sql
+```
 -- Создание `OLAP` куба на `JSONB`
 `CREATE TABLE sales_cube` (
     id `SERIAL PRIMARY KEY`,
@@ -1303,7 +1303,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### JSONB для поиска и фильтрации
 
-```sql
+```
 -- Продвинутые `JSONB` запросы
 `CREATE TABLE products_catalog` (
     id `SERIAL PRIMARY KEY`,
@@ -1396,7 +1396,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### Продвинутые диапазонные типы
 
-```sql
+```
 -- Создание таблицы с диапазонами
 `CREATE TABLE room_bookings` (
     id `SERIAL PRIMARY KEY`,
@@ -1451,7 +1451,7 @@ $$ `LANGUAGE` plpgsql;
 
 #### Настройка поиска на русском языке
 
-```sql
+```
 -- Создание конфигурации для русского языка
 `CREATE TEXT SEARCH CONFIGURATION russian_config` (`COPY` = russian);
 
@@ -1537,7 +1537,7 @@ $$ `LANGUAGE` plpgsql;
 
 #### Расширенный полнотекстовый поиск
 
-```sql
+```
 -- Создание таблицы для поиска по документам
 `CREATE TABLE` documents (
     id `SERIAL PRIMARY KEY`,
@@ -1614,7 +1614,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### Продвинутые техники работы с UUID
 
-```sql
+```
 -- Создание таблицы с `UUID`
 `CREATE TABLE distributed_entities` (
     id `UUID PRIMARY KEY DEFAULT gen_random_uuid`(),
@@ -1714,7 +1714,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### Генерация последовательностей и серий
 
-```sql
+```
 -- Создание умной последовательности
 `CREATE OR REPLACE FUNCTION generate_smart_id`(`entity_type TEXT`)
 `RETURNS BIGINT AS` $$
@@ -1774,7 +1774,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### Оптимизация JSONB
 
-```sql
+```
 -- Создание эффективных индексов для `JSONB`
 `CREATE TABLE user_events` (
     id `SERIAL PRIMARY KEY`,
@@ -1824,7 +1824,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### Оптимизация массивов
 
-```sql
+```
 -- Создание таблицы с массивами
 `CREATE TABLE` articles (
     id `SERIAL PRIMARY KEY`,
@@ -1905,7 +1905,7 @@ $$ `LANGUAGE` sql `IMMUTABLE`;
 
 ### Кэширование и материализованные представления
 
-```sql
+```
 -- Материализованное представление для статистики
 `CREATE MATERIALIZED VIEW article_stats AS`
 `SELECT`
@@ -1949,7 +1949,7 @@ $$ `LANGUAGE` plpgsql;
 
 ### Spring Boot интеграция
 
-```java
+```
 `@Configuration`
 public class `DatabaseConfig` {
 
@@ -2039,7 +2039,7 @@ public class `Article` {
 
 ### Hibernate типы
 
-```java
+```
 // Пользовательский тип для `JSONB`
 ``@TypeDef`(name = "jsonb", `typeClass` = `JsonBinaryType`.class)`
 
@@ -2092,7 +2092,7 @@ public class `UserStatusConverter` implements `AttributeConverter`<`UserStatus`,
 
 ### JDBC работа с расширенными типами
 
-```java
+```
 public class `PostgreSQLAdvancedTypesDemo` {
 
     private final `DataSource dataSource`;

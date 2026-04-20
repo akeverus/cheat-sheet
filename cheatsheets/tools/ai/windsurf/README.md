@@ -71,7 +71,7 @@ Windsurf — AI-first IDE от Codeium. В отличие от «редакто�
 
 ## Маршруты чтения
 
-- **Первый день:** `windsurf-basics.md` → Autocomplete + Command + Cascade на простой задаче.
+- **Первый день:** `windsurf-basics.md` Autocomplete + Command + Cascade на простой задаче.
 - **Неделя:** Cascade для многошаговых задач + web search + команды в терминале.
 
 ## Куда идти дальше

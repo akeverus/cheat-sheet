@@ -53,7 +53,7 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 - [Programmatic Validation](#programmatic-validation)
   - [Manual Validation](#manual-validation)
   - [5. Используйте интернационализацию для сообщений](#5-используйте-интернационализацию-для-сообщений)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
 - [Validation Performance](#validation-performance)
   - [Lazy Validation](#lazy-validation)
   - [Validation Caching](#validation-caching)

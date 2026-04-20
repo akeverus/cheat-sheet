@@ -1240,7 +1240,7 @@ public class UserMapperDecorator implements UserMapper {
 **MapStruct** рекомендуется как основной инструмент для маппинга объектов в **enterprise Java** приложениях, особенно когда важны производительность и **type safety**.
 
 
-[⬆️ Наверх](../)
+[⬆ Наверх](../)
 
 ## См. также
 

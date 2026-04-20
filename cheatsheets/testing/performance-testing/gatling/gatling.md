@@ -242,7 +242,7 @@ val scn = scenario("With CSV")
 
 ## Пример: авторизация и API
 
-Логин → извлечь токен через **check** → использовать в заголовке в последующих запросах:
+Логин извлечь токен через **check** использовать в заголовке в последующих запросах:
 
 ```scala
 val scn = scenario("Auth and API")
@@ -331,7 +331,7 @@ Gatling — сценарии в коде, меньше ресурсов на п�
 Базовые сценарии можно писать по примерам; для сложной логики пригодится Scala. Есть **Gatling Java DSL** для Java.
 
 **Как тестировать API с авторизацией?**
-Логин → в `check` извлечь токен (`jsonPath("$.access_token").saveAs("token")`) → в `httpProtocol` или в запросах `header("Authorization", "Bearer ${token}")`.
+Логин в `check` извлечь токен (`jsonPath("$.access_token").saveAs("token")`) в `httpProtocol` или в запросах `header("Authorization", "Bearer ${token}")`.
 
 **Тело запроса из файла?**
 **ElFileBody("path/to/body.json")** или **RawFileBody(...)** в **body(...)**; в файле с ElFileBody можно использовать **${variable}**.

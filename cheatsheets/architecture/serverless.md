@@ -526,7 +526,7 @@ functions:
   processOrder:
     handler: com.example.OrderProcessor
     provisionedConcurrency: 2
-```java
+```
 
 **2. Оптимизация размера функции**
 
@@ -545,7 +545,7 @@ functions:
         </dependency>
     </dependencies>
 </plugin>
-```java
+```
 
 **3. Инициализация вне handler**
 
@@ -566,7 +566,7 @@ public class OrderProcessor implements RequestHandler<OrderEvent, OrderResult> {
         return orderService.processOrder(event);
     }
 }
-```java
+```
 
 **4. Использование `GraalVM Native` Image**
 

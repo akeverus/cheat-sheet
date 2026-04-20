@@ -37,7 +37,7 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
 - [Лучшие практики](#лучшие-практики)
   - [1. Всегда настраивайте health checks](#1-всегда-настраивайте-health-checks)
   - [2. Используйте metrics для мониторинга](#2-используйте-metrics-для-мониторинга)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [3. Создавайте кастомные health checks для критических компонентов](#3-создавайте-кастомные-health-checks-для-критических-компонентов)
 - [Startup Health Check](#startup-health-check)
   - [Startup Probe](#startup-probe)

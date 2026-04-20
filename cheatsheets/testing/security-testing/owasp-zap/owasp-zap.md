@@ -82,17 +82,17 @@ updated: "2026-02-11"
 
 | Шаг | Действие |
 |-----|-----------|
-| 1 | ZAP: **Edit → Options → Local Proxies** — порт по умолчанию `127.0.0.1:8080` |
-| 2 | Браузер: ручной HTTP/HTTPS прокси → `127.0.0.1`, порт `8080` |
-| 3 | Установить CA-сертификат ZAP для HTTPS: открыть `http://zap` в браузере или **Edit → Options → Dynamic SSL Certificates** → установить в доверенные |
+| 1 | ZAP: **Edit Options Local Proxies** — порт по умолчанию `127.0.0.1:8080` |
+| 2 | Браузер: ручной HTTP/HTTPS прокси `127.0.0.1`, порт `8080` |
+| 3 | Установить CA-сертификат ZAP для HTTPS: открыть `http://zap` в браузере или **Edit Options Dynamic SSL Certificates** установить в доверенные |
 
 
 ## Proxy
 
 - **Breakpoints** — в панели **Break** включить перехват запросов/ответов; редактировать и нажать **Submit** или **Drop**.
-- **History** — все запросы и ответы; фильтры по хосту, методу, статусу. Действия: **Resend**, **Fuzz**, **Attack → Active Scan**.
-- **Sites** — дерево хостов и путей; ПКМ по узлу → **Include in Context** для задания области сканирования.
-- **Context** — набор URL (in scope) и настроек; в **Context → Authentication** задаётся форма входа (Form-based, JSON, HTTP Auth); **Session Management** — как определять активную сессию (cookie, заголовок).
+- **History** — все запросы и ответы; фильтры по хосту, методу, статусу. Действия: **Resend**, **Fuzz**, **Attack Active Scan**.
+- **Sites** — дерево хостов и путей; ПКМ по узлу **Include in Context** для задания области сканирования.
+- **Context** — набор URL (in scope) и настроек; в **Context Authentication** задаётся форма входа (Form-based, JSON, HTTP Auth); **Session Management** — как определять активную сессию (cookie, заголовок).
 
 
 ## Scanner (активный и пассивный)
@@ -104,18 +104,18 @@ updated: "2026-02-11"
 
 ### Активное сканирование
 
-- **Attack → Active Scan** — для выбранного узла/URL отправляются запросы с payload (SQLi, XSS, Path Traversal и др.).
-- **Analyze → Scan Policy** — какие проверки выполнять, уровень агрессивности; на продакшене можно отключить деструктивные проверки.
+- **Attack Active Scan** — для выбранного узла/URL отправляются запросы с payload (SQLi, XSS, Path Traversal и др.).
+- **Analyze Scan Policy** — какие проверки выполнять, уровень агрессивности; на продакшене можно отключить деструктивные проверки.
 - В **Alerts**: тип, риск, URL, параметр, доказательство (request/response), рекомендации.
 
 ### Spider
 
-- **Attack → Spider** — обход по ссылкам и формам, расширение дерева **Sites**. Может использовать аутентификацию из контекста. В настройках: глубина, лимит узлов, таймауты, исключения.
+- **Attack Spider** — обход по ссылкам и формам, расширение дерева **Sites**. Может использовать аутентификацию из контекста. В настройках: глубина, лимит узлов, таймауты, исключения.
 
 
 ## Fuzzer
 
-- Выделить запрос в **History** → ПКМ → **Attack → Fuzz**. Выбрать позиции (параметры, заголовки, тело) и загрузить списки payload (файл или встроенные).
+- Выделить запрос в **History** ПКМ **Attack Fuzz**. Выбрать позиции (параметры, заголовки, тело) и загрузить списки payload (файл или встроенные).
 - **Fuzz type:** Sniper (одна позиция), Pitchfork/Cluster bomb (несколько списков). **Message Processors** — кодирование (URL, Base64 и т.д.) перед подстановкой.
 - Результаты в таблице: статус, длина, время; удобно искать аномалии по разным payload.
 
@@ -124,7 +124,7 @@ updated: "2026-02-11"
 
 ### REST API
 
-- По умолчанию `http://127.0.0.1:8080`. Ключ API: **Edit → Options → API**. Справка: **Help → API** или [zaproxy.org/docs/api](https://www.zaproxy.org/docs/api/).
+- По умолчанию `http://127.0.0.1:8080`. Ключ API: **Edit Options API**. Справка: **Help API** или [zaproxy.org/docs/api](https://www.zaproxy.org/docs/api/).
 
 Основные вызовы:
 
@@ -175,14 +175,14 @@ jobs:
 
 ## Скрипты (Zest, Python)
 
-- **Zest** — встроенный скриптовый язык; запись через **ZAP → Record** или вручную. Подстановка CSRF-токена, вызов API ZAP, условная логика.
+- **Zest** — встроенный скриптовый язык; запись через **ZAP Record** или вручную. Подстановка CSRF-токена, вызов API ZAP, условная логика.
 - **Jython (Python 2)** и **Graal.js (JavaScript)** в панели **Scripts**. Типы: Proxy, Stand Alone, **Targeted**, **Active Rule**, **Passive Rule**. Active Rule — своя проверка активного сканера; Passive Rule — своя проверка пассивного (анализ ответа, при необходимости `helper.newAlert()`).
 
 
 ## Отчёты и экспорт
 
-- **Report → Generate HTML Report** — отчёт по алертам (описание, риск, URL, доказательство, рекомендации).
-- **Report → Export** — JSON, XML для Jira, GitHub Issues или парсинга в CI.
+- **Report Generate HTML Report** — отчёт по алертам (описание, риск, URL, доказательство, рекомендации).
+- **Report Export** — JSON, XML для Jira, GitHub Issues или парсинга в CI.
 - В Automation Framework в конфиге задаётся каталог и формат отчёта (HTML, JSON, SARIF); артефакты публикуются в пайплайне.
 
 
@@ -203,11 +203,11 @@ jobs:
 | Проблема | Причина | Решение |
 |----------|---------|---------|
 | Браузер не открывает страницы через ZAP | Прокси не настроен или порт занят | Local Proxies 8080; в браузере 127.0.0.1:8080 |
-| HTTPS не расшифровывается | CA ZAP не установлен | Options → Dynamic SSL Certificates → установить в доверенные |
+| HTTPS не расшифровывается | CA ZAP не установлен | Options Dynamic SSL Certificates установить в доверенные |
 | Запросы не перехватываются | Выключены Breakpoints или фильтр | Включить Break, проверить настройки перехвата |
 | Active Scan не находит уязвимости | Нет контекста/аутентификации | Добавить URL в контекст; настроить Authentication |
 | ZAP не стартует | Нет Java или неверная версия | Java 11+; проверить `java -version` |
-| API не отвечает | ZAP не запущен или неверный ключ | Запустить ZAP; проверить Options → API |
+| API не отвечает | ZAP не запущен или неверный ключ | Запустить ZAP; проверить Options API |
 | Spider не находит страницы | Нужны CSRF/капча | Session Management; скрипты для подстановки CSRF |
 | OutOfMemoryError | Много запросов/сессия | Увеличить `-Xmx`; очистить History; перезапуск |
 
@@ -217,7 +217,7 @@ jobs:
 - **API с Bearer-токеном?** В контексте **Authentication** — HTTP Header или Session Management с макросом/скриптом, добавляющим `Authorization: Bearer <token>` (токен из запроса логина). Либо вручную заголовок в запросах.
 - **ZAP в CI?** Docker-образ ZAP + Automation Framework (YAML): запуск контейнера, передача конфига и URL; по завершении — отчёт в артефактах. Либо headless: `zap.sh -cmd -quickurl ... -quickout ...`.
 - **WebSocket?** Да: Options — перехват WebSocket; сообщения в панели **WebSockets**. Активное сканирование WebSocket ограничено; для глубоких проверок — скрипты.
-- **Экспорт алертов?** **Report → Generate HTML Report** или **Report → Export** (JSON/XML). Дополнения — SARIF, CSV, интеграция с Jira/GitHub.
+- **Экспорт алертов?** **Report Generate HTML Report** или **Report Export** (JSON/XML). Дополнения — SARIF, CSV, интеграция с Jira/GitHub.
 
 
 ## Глоссарий

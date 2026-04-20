@@ -54,7 +54,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
   - [Authentication](#authentication)
   - [4. Используйте метаданные для передачи контекста](#4-используйте-метаданные-для-передачи-контекста)
   - [5. Настраивайте SSL для production](#5-настраивайте-ssl-для-production)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
 - [gRPC Performance Optimization](#grpc-performance-optimization)
   - [Connection Pooling](#connection-pooling)
   - [Message Compression](#message-compression)

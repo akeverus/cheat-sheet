@@ -155,17 +155,17 @@ dependencies {
 
 #### IntelliJ IDEA
 1. **Установка плагина:**
-   - **File** → **Settings** → **Plugins**
+ - **File** **Settings** **Plugins**
    - Поиск "**Lombok**"
    - Установка и перезапуск **IDE**
 
 2. **Annotation `Processing`:**
-   - **File** → **Settings** → **Build**, **Execution**, **Deployment** → **Compiler** → **Annotation Processors**
+ - **File** **Settings** **Build**, **Execution**, **Deployment** **Compiler** **Annotation Processors**
    - Включить "**Enable annotation processing**"
 
 #### Eclipse
 1. **Установка плагина:**
-   - **Help** → **Eclipse Marketplace**
+ - **Help** **Eclipse Marketplace**
    - Поиск "**Lombok**"
    - Установка
 
@@ -978,7 +978,7 @@ public class User {
 **Lombok** особенно полезен в **enterprise** проектах с большим количеством **boilerplate** кода, где он может значительно сократить объем кода и улучшить его читаемость.
 
 
-[⬆️ Наверх](../) | [[java-guava|Следующий: Guava]]
+[⬆ Наверх](../) | [[java-guava|Следующий: Guava]]
 
 ## См. также
 

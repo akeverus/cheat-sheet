@@ -47,7 +47,7 @@ Deploy-вариант: standalone binary, Docker-compose, Kubernetes-опера�
 |----------|-------|-----------|
 | Скорость старта | минут | требует разворачивания |
 | Data residency | по регионам SaaS | вы сами решаете |
-| Air-gapped deploy | ❌ | ✅ |
+| Air-gapped deploy | | |
 | Цена per-user | ≈7$/мес | free SE, $10/мес EE |
 | Ecosystem | 2000+ apps | ≈70 + custom |
 | Совместимость slash/webhook | родное | по Slack-совместимому API |
@@ -74,7 +74,7 @@ flowchart LR
 
 ## Incoming/Outgoing Webhooks
 
-**Incoming** (сервис → канал):
+**Incoming** (сервис канал):
 
 ```bash
 curl -X POST -H 'Content-Type: application/json' \
@@ -84,7 +84,7 @@ curl -X POST -H 'Content-Type: application/json' \
 
 Совместим со Slack-форматом — в большинстве случаев можно переиспользовать Slack-интеграции.
 
-**Outgoing** (канал → сервис):
+**Outgoing** (канал сервис):
 
 - Триггер: trigger words в канале
 - Callback: ваш HTTPS endpoint принимает POST с `token`, `text`, `user_id`
@@ -113,7 +113,7 @@ curl -X POST -H 'Content-Type: application/json' \
 
 ## Маршруты чтения
 
-- **Инженер:** [[mattermost-basics]] → webhooks → slash.
+- **Инженер:** [[mattermost-basics]] webhooks slash.
 - **DevOps:** deploy в K8s (Operator), HA, backup/restore.
 - **Админ:** SSO, compliance, retention policies, GDPR-экспорт.
 

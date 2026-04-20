@@ -60,7 +60,7 @@ Burp Suite от PortSwigger — промышленная платформа дл
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 ч):** введение → Proxy + browser → Repeater → Intruder.
+- **Быстрый старт (1 ч):** введение Proxy + browser Repeater Intruder.
 - **Пентест веб-приложения (1 день):** весь документ + Web Security Academy labs.
 
 ## Куда идти дальше

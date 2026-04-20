@@ -97,7 +97,7 @@ app.MapGet("/api/items/{id}", (int id) => new { Id = id, Name = $"Item {id}" });
 app.Run();
 ```
 
-**Middleware:** порядок важен. Типичная цепочка: **Exception Handling** → **HTTPS Redirection** → **Static Files** → **Routing** → **CORS** → **Authentication** → **Authorization** → **Endpoints**.
+**Middleware:** порядок важен. Типичная цепочка: **Exception Handling** **HTTPS Redirection** **Static Files** **Routing** **CORS** **Authentication** **Authorization** **Endpoints**.
 
 **Регистрация сервисов:**
 

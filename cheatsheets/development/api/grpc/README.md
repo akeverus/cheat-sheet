@@ -62,7 +62,7 @@ updated: "2026-04-17"
 Подходит:
 - межсервисная коммуникация в микросервисах с высокой нагрузкой и жёсткими SLA на latency;
 - стриминг (server-streaming — подписка на обновления, bidirectional — чаты, realtime-обработка);
-- язык-нейтральные контракты: proto → клиенты на Java, Go, Python, C++ без расхождений;
+- язык-нейтральные контракты: proto клиенты на Java, Go, Python, C++ без расхождений;
 - мобильные клиенты, где важен размер payload и батарея.
 
 Не подходит:
@@ -90,9 +90,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Первый сервис (1 день):** `grpc.md` — proto → кодогенерация → unary service → клиент.
-- **Production-ready:** interceptors (logging, metrics, auth) → TLS → deadline/retries → gRPC-aware LB.
-- **Streaming-use case:** выбрать тип (server/bidi) → backpressure → тайм-ауты.
+- **Первый сервис (1 день):** `grpc.md` — proto кодогенерация unary service клиент.
+- **Production-ready:** interceptors (logging, metrics, auth) TLS deadline/retries gRPC-aware LB.
+- **Streaming-use case:** выбрать тип (server/bidi) backpressure тайм-ауты.
 
 ## Куда идти дальше
 

@@ -1428,7 +1428,7 @@ public class JacksonTroubleshooting {
 **Jackson** рекомендуется как основной выбор для большинства **Java** проектов, особенно **enterprise** приложений с **complex JSON processing requirements**.
 
 
-[⬆️ Наверх](../)
+[⬆ Наверх](../)
 
 ## См. также
 

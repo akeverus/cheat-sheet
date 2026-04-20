@@ -66,7 +66,7 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Быстрый старт:** `languages/go/go-web-frameworks.md` → раздел Gin.
+- **Быстрый старт:** `languages/go/go-web-frameworks.md` раздел Gin.
 - **Выбор стека:** таблица выше + раздел «Сравнение» в полном документе.
 - **Миграция с Spring:** `go-frameworks-overview.md` + раздел сравнения с JVM.
 

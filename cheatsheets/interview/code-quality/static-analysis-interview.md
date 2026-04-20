@@ -1,0 +1,532 @@
+---
+title: "Вопросы на собеседовании: Static Analysis"
+description: "Краткие ответы про статический анализ: SonarQube, SpotBugs, PMD, Checkstyle, метрики качества, quality gates, интеграция в CI/CD."
+tags:
+  - interview
+  - code-quality
+  - static-analysis
+  - sonarqube
+  - spotbugs
+  - pmd
+difficulty: "intermediate"
+updated: "2026-04-20"
+---
+# Вопросы на собеседовании: Static Analysis
+
+Дата последнего обновления: 2026-04-20
+
+Краткие ответы про инструменты статического анализа: принципы работы, популярные инструменты для Java, метрики, quality gates и интеграция в CI/CD.
+
+## Содержание
+
+- [See also](#see-also)
+
+**Основы**
+- [Q1. Что такое статический анализ кода и зачем он нужен?](#q1-что-такое-статический-анализ-кода-и-зачем-он-нужен)
+- [Q2. Чем статический анализ отличается от динамического?](#q2-чем-статический-анализ-отличается-от-динамического)
+- [Q3. Какие классы проблем находит статический анализ?](#q3-какие-классы-проблем-находит-статический-анализ)
+- [Q4. Что такое false positive и false negative в статическом анализе?](#q4-что-такое-false-positive-и-false-negative-в-статическом-анализе)
+
+**SonarQube**
+- [Q5. Что такое SonarQube и из каких компонентов состоит?](#q5-что-такое-sonarqube-и-из-каких-компонентов-состоит)
+- [Q6. Что такое Quality Gate в SonarQube?](#q6-что-такое-quality-gate-в-sonarqube)
+- [Q7. Какие метрики отслеживает SonarQube?](#q7-какие-метрики-отслеживает-sonarqube)
+- [Q8. Что такое Technical Debt Ratio в SonarQube?](#q8-что-такое-technical-debt-ratio-в-sonarqube)
+- [Q9. Что такое SonarQube issues: Bug, Vulnerability, Code Smell, Security Hotspot?](#q9-что-такое-sonarqube-issues-bug-vulnerability-code-smell-security-hotspot)
+- [Q10. Как интегрировать SonarQube в Maven/Gradle-сборку?](#q10-как-интегрировать-sonarqube-в-mavengradle-сборку)
+
+**SpotBugs**
+- [Q11. Что такое SpotBugs и чем он отличается от FindBugs?](#q11-что-такое-spotbugs-и-чем-он-отличается-от-findbugs)
+- [Q12. Какие категории багов находит SpotBugs?](#q12-какие-категории-багов-находит-spotbugs)
+- [Q13. Что такое SpotBugs плагин Find Security Bugs?](#q13-что-такое-spotbugs-плагин-find-security-bugs)
+
+**PMD**
+- [Q14. Что такое PMD и чем он отличается от SpotBugs?](#q14-что-такое-pmd-и-чем-он-отличается-от-spotbugs)
+- [Q15. Какие наборы правил есть в PMD для Java?](#q15-какие-наборы-правил-есть-в-pmd-для-java)
+- [Q16. Что такое CPD в PMD?](#q16-что-такое-cpd-в-pmd)
+
+**Checkstyle**
+- [Q17. Что такое Checkstyle и какова его основная задача?](#q17-что-такое-checkstyle-и-какова-его-основная-задача)
+- [Q18. Чем Sun Checks отличается от Google Checks в Checkstyle?](#q18-чем-sun-checks-отличается-от-google-checks-в-checkstyle)
+
+**Метрики кода**
+- [Q19. Что такое цикломатическая сложность (Cyclomatic Complexity)?](#q19-что-такое-цикломатическая-сложность-cyclomatic-complexity)
+- [Q20. Что такое Cognitive Complexity (SonarQube)?](#q20-что-такое-cognitive-complexity-sonarqube)
+- [Q21. Что такое метрики связности (LCOM, CBO, DIT)?](#q21-что-такое-метрики-связности-lcom-cbo-dit)
+
+**CI/CD интеграция**
+- [Q22. Как встроить статический анализ в CI/CD пайплайн?](#q22-как-встроить-статический-анализ-в-cicd-пайплайн)
+- [Q23. Что такое SonarQube PR Decoration?](#q23-что-такое-sonarqube-pr-decoration)
+- [Q24. Как обработать унаследованный код с тысячами warnings?](#q24-как-обработать-унаследованный-код-с-тысячами-warnings)
+- [Q25. Как настроить suppression для false positives?](#q25-как-настроить-suppression-для-false-positives)
+
+**Практика**
+- [Q26. Какой стек статического анализа вы бы выбрали для нового Java-проекта?](#q26-какой-стек-статического-анализа-вы-бы-выбрали-для-нового-java-проекта)
+
+---
+
+## Q1. Что такое статический анализ кода и зачем он нужен?
+
+**Статический анализ** — проверка кода без его выполнения. Инструменты анализируют AST (Abstract Syntax Tree), байткод или IR (промежуточное представление).
+
+Зачем:
+- Нахождение багов до запуска и до code review.
+- Обеспечение единого стиля в команде.
+- Отслеживание метрик качества в динамике.
+- Обнаружение уязвимостей безопасности (SQL injection, XSS, null dereference).
+
+Статический анализ не заменяет тесты, но находит целые классы проблем дешевле.
+
+---
+
+## Q2. Чем статический анализ отличается от динамического?
+
+| Аспект | Статический | Динамический |
+|--------|------------|--------------|
+| Когда | Без запуска кода | Во время выполнения |
+| Покрытие | Весь код | Только исполняемые пути |
+| Скорость | Быстро | Медленно (нужны тесты) |
+| Ложные срабатывания | Выше | Ниже |
+| Примеры | SonarQube, PMD, SpotBugs | JaCoCo, VisualVM, Java Flight Recorder |
+
+---
+
+## Q3. Какие классы проблем находит статический анализ?
+
+- **Потенциальные баги:** NullPointerException, resource leak, бесконечный цикл.
+- **Уязвимости безопасности:** SQL injection, hardcoded passwords, небезопасная сериализация.
+- **Code smells:** длинные методы, god classes, дублирование.
+- **Стилистические нарушения:** форматирование, соглашения об именовании.
+- **Нарушения метрик:** высокая цикломатическая сложность, глубокое наследование.
+
+---
+
+## Q4. Что такое false positive и false negative в статическом анализе?
+
+- **False positive** — инструмент сообщает о проблеме, которой нет. Понижает доверие к анализатору, «шум».
+- **False negative** — реальная проблема не обнаружена. Опаснее: создаёт ложное ощущение безопасности.
+
+Большинство инструментов настроены на минимизацию false negatives за счёт некоторого количества false positives. Задача команды — настроить правила под свой контекст.
+
+---
+
+## Q5. Что такое SonarQube и из каких компонентов состоит?
+
+**SonarQube** — платформа непрерывного контроля качества кода. Анализирует код через **SonarScanner**, хранит результаты в базе данных, предоставляет веб-интерфейс.
+
+Компоненты:
+- **SonarQube Server** — обрабатывает результаты, хранит историю, UI.
+- **SonarScanner** — запускается в CI, анализирует проект, отправляет отчёт на сервер.
+- **SonarLint** — IDE-плагин для анализа «на лету» без запуска сервера.
+- **Quality Profile** — набор активных правил для языка.
+- **Quality Gate** — набор условий, при невыполнении которых сборка считается провалившейся.
+
+---
+
+## Q6. Что такое Quality Gate в SonarQube?
+
+**Quality Gate** — набор пороговых условий, определяющих, прошёл ли код проверку качества. Если хотя бы одно условие не выполнено — статус `FAILED`.
+
+Стандартный Sonar Way Quality Gate включает условия на **новый код** (new code period):
+- Coverage on new code ≥ 80%
+- Duplicated lines on new code < 3%
+- Maintainability Rating = A
+- Reliability Rating = A
+- Security Rating = A
+
+```yaml
+# Пример условий в CI (через SonarQube API check)
+- name: SonarQube Quality Gate check
+  uses: sonarsource/sonarqube-quality-gate-action@master
+  env:
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+```
+
+---
+
+## Q7. Какие метрики отслеживает SonarQube?
+
+| Метрика | Описание |
+|---------|----------|
+| **Bugs** | Потенциальные ошибки, влияющие на поведение |
+| **Vulnerabilities** | Уязвимости безопасности |
+| **Code Smells** | Проблемы поддерживаемости |
+| **Coverage** | Покрытие тестами (из отчёта JaCoCo) |
+| **Duplications** | % дублированных строк |
+| **Cyclomatic Complexity** | Сложность кода |
+| **Cognitive Complexity** | Читаемость кода |
+| **Technical Debt** | Расчётное время на исправление всех Code Smells |
+| **Reliability/Security/Maintainability Rating** | Рейтинг A–E |
+
+---
+
+## Q8. Что такое Technical Debt Ratio в SonarQube?
+
+**Technical Debt Ratio** = (Technical Debt / Development Cost) × 100%
+
+- **Development Cost** — оценочное время разработки всего кода (SonarQube считает по количеству строк).
+- **Technical Debt** — суммарное время на исправление всех Code Smells.
+
+Рейтинги:
+- **A** ≤ 5%
+- **B** 6–10%
+- **C** 11–20%
+- **D** 21–50%
+- **E** > 50%
+
+---
+
+## Q9. Что такое SonarQube issues: Bug, Vulnerability, Code Smell, Security Hotspot?
+
+| Тип | Описание |
+|-----|----------|
+| **Bug** | Дефект, который, вероятно, вызовет некорректное поведение во время выполнения |
+| **Vulnerability** | Слабое место, которое может быть использовано злоумышленником |
+| **Code Smell** | Проблема поддерживаемости, не влияющая напрямую на работоспособность |
+| **Security Hotspot** | Код, требующий ручной проверки на предмет безопасности (не обязательно уязвимость) |
+
+Security Hotspot нужно вручную пометить как `Reviewed` (Safe / Fixed / Acknowledged) — иначе Quality Gate может не пройти.
+
+---
+
+## Q10. Как интегрировать SonarQube в Maven/Gradle-сборку?
+
+**Maven:**
+```xml
+<!-- pom.xml properties -->
+<properties>
+    <sonar.host.url>https://sonarqube.example.com</sonar.host.url>
+    <sonar.projectKey>my-project</sonar.projectKey>
+</properties>
+```
+```bash
+mvn verify sonar:sonar -Dsonar.token=$SONAR_TOKEN
+```
+
+**Gradle:**
+```groovy
+// build.gradle
+plugins {
+    id "org.sonarqube" version "4.4.1.3373"
+}
+sonar {
+    properties {
+        property "sonar.projectKey", "my-project"
+        property "sonar.host.url", "https://sonarqube.example.com"
+        property "sonar.token", System.getenv("SONAR_TOKEN")
+    }
+}
+```
+```bash
+./gradlew sonar
+```
+
+---
+
+## Q11. Что такое SpotBugs и чем он отличается от FindBugs?
+
+**SpotBugs** — преемник FindBugs (проект умер в 2012). Анализирует байткод Java, ищет паттерны потенциальных багов.
+
+Отличия от FindBugs:
+- Активно поддерживается.
+- Поддержка Java 11+.
+- Расширяем через плагины (Find Security Bugs, fb-contrib).
+- Интегрируется с SonarQube через плагин.
+
+---
+
+## Q12. Какие категории багов находит SpotBugs?
+
+| Категория | Примеры |
+|-----------|---------|
+| **Correctness** | Null dereference, infinite loops, wrong comparisons |
+| **Bad practice** | Ignored exceptions, equals/hashCode inconsistency |
+| **Performance** | Использование String вместо StringBuilder в цикле |
+| **Security** | SQL injection, HTTP response splitting |
+| **Multithreaded correctness** | Deadlocks, race conditions |
+| **Dodgy code** | Потенциально опасные приведения типов |
+
+```xml
+<!-- Maven интеграция -->
+<plugin>
+    <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-maven-plugin</artifactId>
+    <version>4.8.3.0</version>
+    <executions>
+        <execution>
+            <goals><goal>check</goal></goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
+---
+
+## Q13. Что такое SpotBugs плагин Find Security Bugs?
+
+**Find Security Bugs** — плагин к SpotBugs для поиска уязвимостей OWASP Top 10 в Java-приложениях.
+
+Находит: SQL injection, command injection, XSS, path traversal, insecure random, hardcoded credentials, небезопасную десериализацию, weak crypto.
+
+```xml
+<plugin>
+    <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-maven-plugin</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>com.h3xstream.findsecbugs</groupId>
+            <artifactId>findsecbugs-plugin</artifactId>
+            <version>1.12.0</version>
+        </dependency>
+    </dependencies>
+</plugin>
+```
+
+---
+
+## Q14. Что такое PMD и чем он отличается от SpotBugs?
+
+**PMD** анализирует **исходный код** (AST), а не байткод. Ориентирован на code smells, стиль и best practices.
+
+| | PMD | SpotBugs |
+|--|-----|----------|
+| Анализ | AST (исходник) | Байткод |
+| Фокус | Стиль, design, code smells | Потенциальные баги |
+| Настройка | Правила в XML ruleset | Детекторы |
+| CPD | Да (поиск дублей) | Нет |
+
+---
+
+## Q15. Какие наборы правил есть в PMD для Java?
+
+| Ruleset | Что проверяет |
+|---------|--------------|
+| `bestpractices` | Рекомендуемые практики Java (switch без default, etc.) |
+| `codestyle` | Форматирование, именование |
+| `design` | God classes, coupling, закон Деметры |
+| `errorprone` | Потенциальные ошибки (clone, equals, etc.) |
+| `multithreading` | Проблемы многопоточности |
+| `performance` | Неэффективное использование коллекций, String |
+| `security` | Базовые проверки безопасности |
+
+---
+
+## Q16. Что такое CPD в PMD?
+
+**CPD (Copy-Paste Detector)** — встроенный в PMD инструмент поиска дублированного кода. Работает на основе токенизации, нечувствителен к переименованиям переменных.
+
+```bash
+# Запуск CPD
+mvn pmd:cpd
+
+# Порог минимального количества токенов (по умолчанию 100)
+<configuration>
+    <minimumTokens>50</minimumTokens>
+</configuration>
+```
+
+---
+
+## Q17. Что такое Checkstyle и какова его основная задача?
+
+**Checkstyle** — инструмент для проверки соответствия кода coding style guidelines. Работает с исходным кодом, конфигурируется через XML.
+
+Основная задача: обеспечить единый стиль во всей команде — форматирование, именование, структура файлов, документация (Javadoc).
+
+Checkstyle намеренно не занимается поиском багов — для этого SpotBugs и PMD.
+
+---
+
+## Q18. Чем Sun Checks отличается от Google Checks в Checkstyle?
+
+| Аспект | Sun Checks | Google Checks |
+|--------|-----------|---------------|
+| Отступы | 4 пробела | 2 пробела |
+| Длина строки | 80 символов | 100 символов |
+| Фигурные скобки | Обязательны | Обязательны |
+| Импорты | Strict ordering | Группировки |
+| Происхождение | Java Coding Conventions | Google Java Style Guide |
+
+---
+
+## Q19. Что такое цикломатическая сложность (Cyclomatic Complexity)?
+
+**Цикломатическая сложность** (McCabe, 1976) — метрика количества линейно-независимых путей через код.
+
+Формула: CC = E - N + 2P, где E — рёбра графа, N — узлы, P — компоненты.
+
+Практически: CC = 1 + количество ветвлений (`if`, `while`, `for`, `case`, `&&`, `||`, `?:`, `catch`).
+
+| CC | Интерпретация |
+|----|--------------|
+| 1–10 | Простой, хорошо тестируемый метод |
+| 11–20 | Умеренная сложность, требует внимания |
+| 21–50 | Высокая сложность, трудно тестировать |
+| > 50 | Нетестируемый код, обязательный рефакторинг |
+
+```java
+// CC = 4: if + while + if + else
+void process(List<Integer> items) {
+    if (items == null) return;  // +1
+    int i = 0;
+    while (i < items.size()) {  // +1
+        if (items.get(i) > 0) { // +1
+            System.out.println(items.get(i));
+        } else {                 // +1
+            System.out.println("negative");
+        }
+        i++;
+    }
+}
+```
+
+---
+
+## Q20. Что такое Cognitive Complexity (SonarQube)?
+
+**Cognitive Complexity** — метрика SonarQube (Grady Campbell, 2018), измеряет насколько трудно **читать** код человеку, а не количество путей.
+
+Отличие от цикломатической:
+- Вложенные структуры наказываются сильнее (каждый уровень вложения добавляет штраф).
+- `break`, `continue` с меткой увеличивают сложность.
+- Линейные цепочки `&&`/`||` считаются как 1.
+
+```java
+// Cyclomatic CC = 4, но Cognitive CC выше из-за вложенности
+void process(List<Item> items) {
+    for (Item item : items) {          // +1
+        if (item.isActive()) {         // +2 (вложено)
+            if (item.hasDiscount()) {  // +3 (вложено глубже)
+                applyDiscount(item);
+            }
+        }
+    }
+}
+```
+
+---
+
+## Q21. Что такое метрики связности (LCOM, CBO, DIT)?
+
+| Метрика | Расшифровка | Что показывает |
+|---------|-------------|---------------|
+| **LCOM** | Lack of Cohesion of Methods | Насколько методы класса связаны через общие поля. Высокий LCOM → God Class или Data Class |
+| **CBO** | Coupling Between Objects | Количество других классов, с которыми класс взаимодействует. Высокий CBO → хрупкость к изменениям |
+| **DIT** | Depth of Inheritance Tree | Глубина иерархии наследования. DIT > 4 — признак over-engineering |
+| **RFC** | Response for a Class | Количество методов, которые могут быть вызваны в ответ на сообщение классу |
+
+---
+
+## Q22. Как встроить статический анализ в CI/CD пайплайн?
+
+Рекомендуемая стратегия — **fail fast**:
+
+```yaml
+# GitHub Actions пример
+name: Quality Check
+on: [push, pull_request]
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # нужно для SonarQube blame info
+      - name: Build and test
+        run: ./gradlew build jacocoTestReport
+      - name: SonarQube Scan
+        run: ./gradlew sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SpotBugs
+        run: ./gradlew spotbugsMain
+      - name: PMD
+        run: ./gradlew pmdMain
+```
+
+Практика: блокировать merge PR при падении Quality Gate.
+
+---
+
+## Q23. Что такое SonarQube PR Decoration?
+
+**PR Decoration** — функция SonarQube, добавляющая комментарии непосредственно в PR на GitHub/GitLab/Bitbucket с результатами анализа нового кода.
+
+Показывает:
+- Список новых issues в изменённых файлах.
+- Статус Quality Gate для PR.
+- Покрытие новых строк.
+
+Требует: настройку ALM Integration в SonarQube и соответствующие токены доступа.
+
+---
+
+## Q24. Как обработать унаследованный код с тысячами warnings?
+
+Стратегии:
+
+1. **New Code Focus** — настроить SonarQube на анализ только нового кода (since previous version / since X days). Quality Gate применяется только к новому коду.
+2. **Postrait** — зафиксировать текущее состояние как baseline, не допускать новых нарушений.
+3. **Boy Scout Rule** — исправлять нарушения в файлах, которые касаешься в рамках текущей задачи.
+4. **Suppress + Document** — пометить осознанные исключения с комментарием.
+
+```java
+// Осознанное подавление с пояснением
+@SuppressWarnings("squid:S2095")  // SonarQube: resource leak
+// Ресурс закрывается в другом месте (lifecycle управляется Spring)
+private Connection connection;
+```
+
+---
+
+## Q25. Как настроить suppression для false positives?
+
+**SonarQube:**
+```java
+@SuppressWarnings("java:S1135")  // «TODO» комментарии — игнорируем намеренно
+// TODO: удалить после релиза 2.0
+```
+
+**PMD:**
+```java
+@SuppressWarnings("PMD.AvoidCatchingGenericException")
+void process() throws Exception { ... }
+```
+
+**SpotBugs:**
+```java
+@SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH",
+                    justification = "null проверяется выше по стеку")
+void handle(String value) { ... }
+```
+
+**Общий принцип:** suppression всегда с `justification` — почему это осознанное решение.
+
+---
+
+## Q26. Какой стек статического анализа вы бы выбрали для нового Java-проекта?
+
+Рекомендуемый минимум:
+
+| Инструмент | Роль |
+|------------|------|
+| **SonarQube / SonarCloud** | Центральная платформа: метрики, Quality Gate, история |
+| **SpotBugs + Find Security Bugs** | Поиск потенциальных багов и уязвимостей в байткоде |
+| **Checkstyle** | Единый стиль кода (Google Java Style или своя конфигурация) |
+| **SonarLint** (IDE) | Мгновенная обратная связь при написании кода |
+
+PMD можно добавить если нужен CPD и расширенный набор design-правил.
+
+Стратегия: все инструменты в CI, блокировка merge при падении Quality Gate, SonarLint у каждого разработчика в IDE.
+
+---
+
+## See also
+
+- [[code-review-interview|Code Review]]
+- [[code-smells-interview|Code Smells]]
+- [[code-coverage-interview|Code Coverage]]
+- [[technical-debt-interview|Technical Debt]]
+- [[refactoring-patterns-interview|Refactoring Patterns]]
+- [[clean-code-practices-interview|Clean Code Practices]]
+- [[java-core-interview|Java Core]]

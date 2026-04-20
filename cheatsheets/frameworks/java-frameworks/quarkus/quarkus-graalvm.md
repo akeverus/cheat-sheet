@@ -38,7 +38,7 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
   - [1. Используйте @RegisterForReflection](#1-используйте-registerforreflection)
   - [2. Минимизируйте использование reflection](#2-минимизируйте-использование-reflection)
   - [3. Тестируйте native image](#3-тестируйте-native-image)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
 - [Native Image Build Options](#native-image-build-options)
   - [Build Configuration](#build-configuration)
 - [application.properties](#applicationproperties)

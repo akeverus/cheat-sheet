@@ -1847,15 +1847,15 @@ class BulkProcessorRetryPolicy implements RetryPolicy {
 3. **Hardware upgrades** — **Vertical scaling**
 4. **Architecture patterns** — **Hot-warm-cold**
 
-Оптимальная стратегия индексации обеспечивает высокую производительность, надежность и масштабируемость **Elasticsearch** кластера. Регулярный мониторинг и тюнинг — ключ к поддержанию эффективной работы системы. 🎯
+Оптимальная стратегия индексации обеспечивает высокую производительность, надежность и масштабируемость **Elasticsearch** кластера. Регулярный мониторинг и тюнинг — ключ к поддержанию эффективной работы системы.
 
 **Продолжение следует:**
-- ✅ **elasticsearch-basics.md** (завершен)
-- ✅ **elasticsearch-indexing.md** (завершен)
-- 🔄 **elasticsearch-queries.md**
-- 🔄 **elasticsearch-aggregations.md**
-- 🔄 **elasticsearch-clustering.md**
-- 🔄 **elasticsearch-performance.md**
+- **elasticsearch-basics.md** (завершен)
+- **elasticsearch-indexing.md** (завершен)
+- **elasticsearch-queries.md**
+- **elasticsearch-aggregations.md**
+- **elasticsearch-clustering.md**
+- **elasticsearch-performance.md**
 
 ## Решение проблем
 
@@ -1867,6 +1867,6 @@ class BulkProcessorRetryPolicy implements RetryPolicy {
 
 **Высокое использование памяти при индексации:** уменьшите размер bulk-батча, увеличьте heap для узлов данных. Проверьте размер полей и отключите индексацию для полей, по которым не ищут (`index: false`).
 
-Следующий файл — **elasticsearch-queries.md**! 🚀
+Следующий файл — **elasticsearch-queries.md**!
 
 

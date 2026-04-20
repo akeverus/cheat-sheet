@@ -89,9 +89,9 @@ Microsoft SQL Server — коммерческая реляционная СУБ�
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 час):** `sql-server-basics.md` → поднять контейнер через Docker → первый T-SQL запрос.
-- **Миграция с другой СУБД:** `sql-server-basics.md` → сравнение T-SQL с PL/SQL / PL/pgSQL → тестовая миграция схемы.
-- **Backend-разработчик на Java:** основы → JDBC (mssql-jdbc) → интеграция с Spring Data JPA.
+- **Быстрый старт (1 час):** `sql-server-basics.md` поднять контейнер через Docker первый T-SQL запрос.
+- **Миграция с другой СУБД:** `sql-server-basics.md` сравнение T-SQL с PL/SQL / PL/pgSQL тестовая миграция схемы.
+- **Backend-разработчик на Java:** основы JDBC (mssql-jdbc) интеграция с Spring Data JPA.
 
 ## Куда идти дальше
 

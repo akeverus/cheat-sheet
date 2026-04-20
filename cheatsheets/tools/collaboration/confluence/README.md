@@ -11,7 +11,7 @@ updated: "2026-04-17"
 ---
 # Confluence
 
-Confluence — командная wiki от Atlassian. Основной носитель документации, ADR, runbooks, дизайн-документов. Модель: Space → Page tree. Страницы имеют версионирование, комментарии, метки, шаблоны, макросы (в т.ч. интеграции с Jira — live issue list, roadmap, burndown).
+Confluence — командная wiki от Atlassian. Основной носитель документации, ADR, runbooks, дизайн-документов. Модель: Space Page tree. Страницы имеют версионирование, комментарии, метки, шаблоны, макросы (в т.ч. интеграции с Jira — live issue list, roadmap, burndown).
 
 Для инженера минимум: создавать/править страницы, использовать шаблоны, искать через CQL. Для архитекторов/лидов — организация структуры пространства, шаблоны ADR/RFC, периодический audit на актуальность.
 
@@ -129,5 +129,5 @@ title ~ "ADR-*" ORDER BY title ASC
 ## Куда идти дальше
 
 - [[README|ADR templates]]
-- [[README|Jira ↔ Confluence integration]]
+- [[README|Jira Confluence integration]]
 - [AI-ассистенты для поиска в wiki](../../ai/)

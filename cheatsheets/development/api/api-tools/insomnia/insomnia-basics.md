@@ -84,10 +84,10 @@ choco install insomnia-rest-api-client
 
 ## Быстрый старт: REST
 
-1. `Ctrl+N` → новый request.
+1. `Ctrl+N` новый request.
 2. Выбрать метод (GET/POST/PUT/DELETE/PATCH), вписать URL.
 3. Вкладки: **Body** (JSON, form-data, file, GraphQL), **Auth** (Basic, Bearer, OAuth 2.0, AWS IAM, NTLM), **Query**, **Headers**, **Docs**.
-4. `Send` → ответ в правой панели: body (JSON viewer с поиском), headers, cookies, timeline (actual raw request/response).
+4. `Send` ответ в правой панели: body (JSON viewer с поиском), headers, cookies, timeline (actual raw request/response).
 
 ```text
 # URL с параметрами
@@ -147,9 +147,9 @@ Authorization: Bearer {% response 'body', 'req_auth_login', '$.accessToken', 'ne
 
 ## GraphQL
 
-1. Body type → **GraphQL Query**.
+1. Body type **GraphQL Query**.
 2. Вставьте query; справа — поле для variables (JSON).
-3. Schema introspection: кнопка **Schema** → Refresh. Автокомплит и подсветка.
+3. Schema introspection: кнопка **Schema** Refresh. Автокомплит и подсветка.
 
 ```graphql
 query GetUser($id: ID!) {
@@ -170,7 +170,7 @@ Variables:
 
 1. Создать **gRPC Request**.
 2. Указать `.proto` файл (или protobuf-reflection endpoint).
-3. Выбрать service и method → появится Body JSON.
+3. Выбрать service и method появится Body JSON.
 4. Unary / Server streaming / Client streaming / Bidi — Insomnia поддерживает все.
 
 ## WebSocket и SSE
@@ -180,7 +180,7 @@ Variables:
 
 ## Импорт OpenAPI
 
-`Import/Export` → выбрать файл `openapi.yaml`/`.json` → Insomnia создаст collection с requests для каждого endpoint, использует servers как environment. Поддерживаются OpenAPI 3.0/3.1, Swagger 2.0, Insomnia v4 (JSON), Postman v2.1, HAR, cURL.
+`Import/Export` выбрать файл `openapi.yaml`/`.json` Insomnia создаст collection с requests для каждого endpoint, использует servers как environment. Поддерживаются OpenAPI 3.0/3.1, Swagger 2.0, Insomnia v4 (JSON), Postman v2.1, HAR, cURL.
 
 Для design-first подхода есть **Design mode**: редактор OpenAPI-спецификации с preview и валидацией.
 
@@ -233,11 +233,11 @@ inso lint spec api-spec.yaml
 | Offline | форк Insomnium, в main — требует login | Scratch Pad до sign-in, после — cloud |
 | UI | минималистичный | перегружен (monitors, mocks, flows) |
 | Git Sync | native | ограниченный (Postman API + code) |
-| OpenAPI Design | ✅ встроенный редактор | ✅ |
-| gRPC | ✅ | ✅ |
-| Mock servers | через плагин | ✅ native |
+| OpenAPI Design | встроенный редактор | |
+| gRPC | | |
+| Mock servers | через плагин | native |
 | Collection Runner | inso CLI | Newman |
-| Монетизация | Pro $5/мес (team sync) | Free → $19-49/мес |
+| Монетизация | Pro $5/мес (team sync) | Free $19-49/мес |
 | Плагины | JS, hot-reload | JS sandbox, pre/post-scripts |
 | Memory footprint | ~200 MB | ~500 MB |
 
@@ -245,7 +245,7 @@ inso lint spec api-spec.yaml
 
 ## Best practices
 
-- **Имена запросов:** `METHOD /path description` → `POST /users create user`. Проще искать.
+- **Имена запросов:** `METHOD /path description` `POST /users create user`. Проще искать.
 - **Folders** по доменам: `auth/`, `users/`, `orders/`.
 - **Base URL в env** — не хардкодьте.
 - **Chaining через `response` tag** вместо копипасты token.

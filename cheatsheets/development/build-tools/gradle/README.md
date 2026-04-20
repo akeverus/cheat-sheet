@@ -85,8 +85,8 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Первый проект на Gradle (1 день):** `gradle.md` → собрать простой Spring Boot проект → понять wrapper и основные задачи.
-- **Переход с Maven:** `gradle-advanced.md` секция version catalogs → дерево зависимостей → плагины замены `maven-*`.
+- **Первый проект на Gradle (1 день):** `gradle.md` собрать простой Spring Boot проект понять wrapper и основные задачи.
+- **Переход с Maven:** `gradle-advanced.md` секция version catalogs дерево зависимостей плагины замены `maven-*`.
 - **Оптимизация большого монорепо:** `gradle-advanced.md` — build cache + composite builds + convention plugins.
 
 ## Куда идти дальше

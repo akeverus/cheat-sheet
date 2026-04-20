@@ -151,7 +151,7 @@ fun <T> List<T>.filter(predicate: (T) -> Boolean): List<T> {
 
 ### Функции как возвращаемые значения
 
-```kotlin
+```
 // Функция, возвращающая функцию
 fun `createMultiplier`(factor: Int): (Int) -> Int {
     return { value -> value * factor }
@@ -167,7 +167,7 @@ println(triple(5))   // 15
 
 ### Комбинирование
 
-```kotlin
+```
 // Функция, принимающая и возвращающая функции
 fun <T, R> `List`<T>.map(transform: (T) -> R): `List`<R> {
     val result = `mutableListOf`<R>()
@@ -192,7 +192,7 @@ Lambda expressions (лямбда-выражения) - это анонимные
 
 Синтаксис лямбда-выражений в Kotlin гибкий и позволяет использовать различные сокращения в зависимости от контекста. Понимание полной и сокращенной форм помогает писать более читаемый код.
 
-```kotlin
+```
 // Полная форма
 val add: (Int, Int) -> Int = { a: Int, b: Int -> a + b }
 ```text

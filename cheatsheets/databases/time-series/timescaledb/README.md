@@ -90,9 +90,9 @@ TimescaleDB — расширение PostgreSQL, которое добавляе
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 час):** `timescaledb-basics.md` → запустить в Docker → создать hypertable → INSERT + `time_bucket()`.
-- **Миграция с InfluxDB:** basics → соответствие понятий (measurement → table, tag → column) → оценка объёмов.
-- **Проектирование схемы:** таблицы бизнес-данных + hypertable для событий → индексы → continuous aggregates.
+- **Быстрый старт (1 час):** `timescaledb-basics.md` запустить в Docker создать hypertable INSERT + `time_bucket()`.
+- **Миграция с InfluxDB:** basics соответствие понятий (measurement table, tag column) оценка объёмов.
+- **Проектирование схемы:** таблицы бизнес-данных + hypertable для событий индексы continuous aggregates.
 
 ## Куда идти дальше
 

@@ -69,7 +69,7 @@ Secrets management — системное решение для хранения
 | SSH-ключ | годы | Vault SSH engine |
 | Cloud IAM-ключ | ≤90d (или workload identity) | cloud |
 
-Каждый секрет имеет этапы: **создание → хранение → раздача → использование → ротация → отзыв → уничтожение**. Пропуск любого этапа — дыра.
+Каждый секрет имеет этапы: **создание хранение раздача использование ротация отзыв уничтожение**. Пропуск любого этапа — дыра.
 
 ## Модель зрелости
 
@@ -227,11 +227,11 @@ vault read database/creds/readonly
 | Env var (`DB_PASS=...`) | виден процессам, попадает в дампы |
 | Файл `.env` | риск коммита, читаем всем |
 | Файл 0600 | ок, но требует init-скрипта |
-| Vault Agent sidecar → файл | автоматическое обновление, audit |
+| Vault Agent sidecar файл | автоматическое обновление, audit |
 | Direct API к Vault/SM | корректно, но надо уметь auth |
 | Kubernetes projected volume | volumes монтируются кратко |
 
-**Best practice в K8s:** External Secrets Operator или Vault CSI Driver → файл в tmpfs (0400, owner = app user) → приложение читает при старте и refreshes.
+**Best practice в K8s:** External Secrets Operator или Vault CSI Driver файл в tmpfs (0400, owner = app user) приложение читает при старте и refreshes.
 
 ## Обнаружение утечек в CI
 

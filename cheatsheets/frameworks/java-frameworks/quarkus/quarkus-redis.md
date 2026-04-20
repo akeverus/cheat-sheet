@@ -46,7 +46,7 @@ related: ["quarkus-cache.md", "quarkus-reactive.md"]
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте reactive для неблокирующих операций](#1-используйте-reactive-для-неблокирующих-операций)
   - [2. Настраивайте connection pooling](#2-настраивайте-connection-pooling)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [3. Используйте подходящие data structures](#3-используйте-подходящие-data-structures)
   - [4. Используйте expiration для временных данных](#4-используйте-expiration-для-временных-данных)
 - [Sorted Sets](#sorted-sets)

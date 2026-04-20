@@ -698,7 +698,7 @@ em.persist(u); // id проставится автоматически
 - `setFetchSize()` для выборок > 10K строк — иначе OOM.
 - **Явно `autoCommit=false`** для бизнес-транзакций, commit/rollback в `finally`.
 - **Логируйте SQL и параметры** через `p6spy` или `datasource-proxy` — драйвер сам этого не умеет.
-- **Мерьте pool** через метрики (`HikariDataSource` → Micrometer).
+- **Мерьте pool** через метрики (`HikariDataSource` Micrometer).
 - **Не смешивайте** `PreparedStatement.executeQuery()` с `executeUpdate()` — поведение разное, не те методы.
 - **Timezone** — для `TIMESTAMP WITH TIME ZONE` используйте `OffsetDateTime`/`Instant`, не `java.util.Date`.
 

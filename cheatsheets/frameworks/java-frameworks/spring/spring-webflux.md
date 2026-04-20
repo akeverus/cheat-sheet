@@ -41,8 +41,8 @@ updated: "2026-02-11"
 - [Введение в Spring WebFlux](#введение-в-spring-webflux)
   - [Почему WebFlux?](#почему-webflux)
   - [Когда использовать WebFlux?](#когда-использовать-webflux)
-    - [✅ Идеально подходит для:](#идеально-подходит-для)
-    - [❌ Не подходит для:](#не-подходит-для)
+ - [ Идеально подходит для:](#идеально-подходит-для)
+ - [ Не подходит для:](#не-подходит-для)
   - [Архитектурные преимущества](#архитектурные-преимущества)
     - [Non-blocking I/O](#non-blocking-io)
     - [Backpressure handling](#backpressure-handling)
@@ -191,7 +191,7 @@ updated: "2026-02-11"
 
 ### Когда использовать WebFlux?
 
-#### ✅ Идеально подходит для:
+#### Идеально подходит для:
 - **High-concurrency applications** — приложения с высокой одновременной нагрузкой
 - **Microservices** — асинхронная коммуникация между сервисами
 - **Real-time applications** — **WebSocket**, **Server-Sent Events**
@@ -200,7 +200,7 @@ updated: "2026-02-11"
 - **Cloud-native applications** — масштабируемые облачные приложения
 - **Reactive systems** — системы построенные на **reactive** принципах
 
-#### ❌ Не подходит для:
+#### Не подходит для:
 - **`Simple CRUD` applications** — используйте **Spring MVC**
 - **Blocking operations** — если весь код блокирующий
 - **Small applications** — **overhead** не оправдан
@@ -3089,23 +3089,23 @@ public class PerformanceMonitor {
 
 ### Когда использовать WebFlux:
 
-✅ **High-throughput applications** — приложения с высокой нагрузкой
-✅ **Microservices** — асинхронная коммуникация между сервисами
-✅ **Real-time features** — **WebSocket**, **Server-Sent Events**
-✅ **Streaming data** — обработка потоков данных
-✅ **I/O bound applications** — интенсивные I/O операции
-✅ **Reactive databases** — **MongoDB**, **Cassandra**, **Redis reactive clients**
-✅ **Cloud-native** — масштабируемые облачные приложения
+**High-throughput applications** — приложения с высокой нагрузкой
+**Microservices** — асинхронная коммуникация между сервисами
+**Real-time features** — **WebSocket**, **Server-Sent Events**
+**Streaming data** — обработка потоков данных
+**I/O bound applications** — интенсивные I/O операции
+**Reactive databases** — **MongoDB**, **Cassandra**, **Redis reactive clients**
+**Cloud-native** — масштабируемые облачные приложения
 
 ### Когда НЕ использовать:
 
-❌ **Simple CRUD** — используйте **Spring MVC** для простых задач
-❌ **Blocking operations** — весь код должен быть реактивным
-❌ **Small applications** — **overhead** не оправдан
-❌ **Legacy blocking APIs** — сложная интеграция
-❌ **`Simple REST` APIs** — **Spring MVC** проще для базовых задач
-❌ **File uploads** — **Spring MVC** лучше для больших файлов
-❌ **Synchronous clients** — требуют адаптации
+**Simple CRUD** — используйте **Spring MVC** для простых задач
+**Blocking operations** — весь код должен быть реактивным
+**Small applications** — **overhead** не оправдан
+**Legacy blocking APIs** — сложная интеграция
+**`Simple REST` APIs** — **Spring MVC** проще для базовых задач
+**File uploads** — **Spring MVC** лучше для больших файлов
+**Synchronous clients** — требуют адаптации
 
 ### Production considerations:
 
@@ -3128,6 +3128,6 @@ public class PerformanceMonitor {
 7. **Configuration tuning** — оптимизация **thread pools** и **connections**
 8. **Backpressure strategies** — **buffer**, **drop**, **latest**, **error**
 
-**Spring WebFlux** представляет собой будущее веб-разработки в экосистеме **Spring**. Он позволяет создавать высокопроизводительные, масштабируемые приложения, которые могут эффективно работать под высокой нагрузкой. Правильное использование реактивного программирования открывает новые возможности для создания современных **distributed** систем. 🚀
+**Spring WebFlux** представляет собой будущее веб-разработки в экосистеме **Spring**. Он позволяет создавать высокопроизводительные, масштабируемые приложения, которые могут эффективно работать под высокой нагрузкой. Правильное использование реактивного программирования открывает новые возможности для создания современных **distributed** систем.
 
 **Далее: `Spring Integration` (enterprise integration patterns)**

@@ -87,15 +87,15 @@ updated: "2026-04-17"
 
 - **N+1 запросы.** Каждый резолвер делает отдельный вызов в БД — решается DataLoader-ом (батчинг по id).
 - **Запросы любой глубины.** DoS через вложенные `friends.friends.friends`. Защита: query depth + complexity analysis.
-- **Кэш на HTTP.** GraphQL обычно POST → нет HTTP-кэша. Использовать APQ (Automatic Persisted Queries) + CDN.
+- **Кэш на HTTP.** GraphQL обычно POST нет HTTP-кэша. Использовать APQ (Automatic Persisted Queries) + CDN.
 - **Версионирование.** В GraphQL нет `/v2`: эволюция через добавление полей и `@deprecated`.
 - **Observability.** Нужно метрировать на уровне полей/резолверов, не только HTTP.
 
 ## Маршруты чтения
 
-- **Первое знакомство (1 день):** `graphql.md` разделы SDL → резолверы → Spring GraphQL → DataLoader.
-- **Миграция с REST:** построить GraphQL поверх REST через резолверы → постепенно переносить клиентов.
-- **Federation / микросервисы:** Apollo Federation или Netflix DGS → subgraphs → единый gateway.
+- **Первое знакомство (1 день):** `graphql.md` разделы SDL резолверы Spring GraphQL DataLoader.
+- **Миграция с REST:** построить GraphQL поверх REST через резолверы постепенно переносить клиентов.
+- **Federation / микросервисы:** Apollo Federation или Netflix DGS subgraphs единый gateway.
 
 ## Куда идти дальше
 

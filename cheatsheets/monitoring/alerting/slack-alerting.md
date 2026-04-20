@@ -51,7 +51,7 @@ Slack используется как канал доставки уведомл
 
 ## Incoming Webhooks
 
-Incoming Webhook — отправка сообщения в Slack одним HTTP POST на уникальный URL. URL создаётся в настройках приложения Slack (Incoming Webhooks → Add New Webhook to Workspace), привязан к каналу. Тело запроса — JSON с полем `text`, опционально `blocks` (Block Kit), `attachments`.
+Incoming Webhook — отправка сообщения в Slack одним HTTP POST на уникальный URL. URL создаётся в настройках приложения Slack (Incoming Webhooks Add New Webhook to Workspace), привязан к каналу. Тело запроса — JSON с полем `text`, опционально `blocks` (Block Kit), `attachments`.
 
 **Минимальный пример:**
 
@@ -100,7 +100,7 @@ receivers:
 
 Slack поддерживает **mrkdwn**: `*жирный*`, `_курсив_`, `` `код` ``, `<URL|текст>` (ссылка). В шаблонах Alertmanager можно использовать эту разметку для имён алертов и ссылок на runbook.
 
-**Block Kit** — конструктор сообщений из блоков (header, section, кнопки). Отправка через Incoming Webhook или chat.postMessage с полем `blocks`. Alertmanager по умолчанию не поддерживает Block Kit (только title, text, color в attachments); для полноценного Block Kit нужен промежуточный сервис: Alertmanager → webhook вашего сервиса → преобразование в blocks → Slack.
+**Block Kit** — конструктор сообщений из блоков (header, section, кнопки). Отправка через Incoming Webhook или chat.postMessage с полем `blocks`. Alertmanager по умолчанию не поддерживает Block Kit (только title, text, color в attachments); для полноценного Block Kit нужен промежуточный сервис: Alertmanager webhook вашего сервиса преобразование в blocks Slack.
 
 Пример простого сообщения с блоками:
 
@@ -151,7 +151,7 @@ Slack поддерживает **mrkdwn**: `*жирный*`, `_курсив_`, `
 ## Частые вопросы
 
 **Как создать Incoming Webhook в Slack?**
-Slack → Settings → Integrations → Apps → Build (или Browse). Создать приложение → Incoming Webhooks → On → Add New Webhook to Workspace → выбрать канал → скопировать URL.
+Slack Settings Integrations Apps Build (или Browse). Создать приложение Incoming Webhooks On Add New Webhook to Workspace выбрать канал скопировать URL.
 
 **Можно ли отправлять в личные сообщения (DM)?**
 Incoming Webhook по умолчанию привязан к каналу. Для DM нужен Slack API (chat.postMessage с channel: user_id) и Bot Token с правом chat:write.

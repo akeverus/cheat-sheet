@@ -537,7 +537,7 @@ Terraform: `grafana_dashboard`, `grafana_data_source`, `grafana_alert_notificati
 
 **Как подставить в дашборд список сервисов из Prometheus?** Создать переменную типа Query, datasource — Prometheus, query: `label_values(up, job)` или `label_values(http_requests_total, service)`. В панелях использовать `{job=~"$job"}`.
 
-**Почему алерт не уходит в Slack/PagerDuty?** Проверить конфигурацию канала (URL, ключ), состояние алерта в «Alerting» → «Alert rules», логи Grafana при срабатывании.
+**Почему алерт не уходит в Slack/PagerDuty?** Проверить конфигурацию канала (URL, ключ), состояние алерта в «Alerting» «Alert rules», логи Grafana при срабатывании.
 
 **Grafana или Alertmanager для алертов?** Grafana удобна для правил поверх дашбордов и быстрого порога; Alertmanager даёт группировку, inhibition, маршрутизацию по severity. Часто используют оба.
 

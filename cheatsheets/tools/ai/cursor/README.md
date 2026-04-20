@@ -72,7 +72,7 @@ Cursor — **AI-first IDE**, форк VS Code с глубокой интегра
 
 ## Маршруты чтения
 
-- **Первый день:** `cursor-basics.md` → Tab + Inline Edit + Chat на реальной задаче.
+- **Первый день:** `cursor-basics.md` Tab + Inline Edit + Chat на реальной задаче.
 - **Неделя:** + Agent Mode + .cursorrules в репо + Background Agent для длинных задач.
 - **Команда:** shared rules, Workspace-настройки, политика выбора моделей.
 

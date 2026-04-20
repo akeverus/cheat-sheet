@@ -90,10 +90,10 @@ ClickHouse — колоночная OLAP-СУБД, созданная для а�
 
 ## Маршруты чтения
 
-- **Быстрый старт (2 часа):** `clickhouse-basics.md` → `clickhouse-tables.md` → первый INSERT+SELECT в Docker.
-- **Разработчик аналитического сервиса:** basics → tables → queries → materialized-views → integration.
-- **Production-инженер:** replication → performance → integration (Kafka Engine) → monitoring.
-- **Оптимизация существующего кластера:** performance → indexes → materialized-views.
+- **Быстрый старт (2 часа):** `clickhouse-basics.md` `clickhouse-tables.md` первый INSERT+SELECT в Docker.
+- **Разработчик аналитического сервиса:** basics tables queries materialized-views integration.
+- **Production-инженер:** replication performance integration (Kafka Engine) monitoring.
+- **Оптимизация существующего кластера:** performance indexes materialized-views.
 
 ## Куда идти дальше
 

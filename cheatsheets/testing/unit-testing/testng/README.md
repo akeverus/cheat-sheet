@@ -67,7 +67,7 @@ TestNG лучше для UI/QA-автоматизации с группами, �
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 ч):** `@Test` → `@BeforeClass/@AfterClass` → `@DataProvider` → XML-suite.
+- **Быстрый старт (1 ч):** `@Test` `@BeforeClass/@AfterClass` `@DataProvider` XML-suite.
 - **UI-автоматизация (1 день):** весь документ + Selenium + Allure + parallel.
 
 ## Куда идти дальше

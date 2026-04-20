@@ -67,7 +67,7 @@ flowchart TB
     end
 ```
 
-**ClassLoader** загружает `.class` файлы (Bootstrap → Extension → Application).
+**ClassLoader** загружает `.class` файлы (Bootstrap Extension Application).
 
 **Execution Engine**:
 - **Interpreter** — построчное выполнение байткода (медленно, но быстрый старт)
@@ -103,7 +103,7 @@ Heap
 ## Жизненный цикл объекта
 
 1. Объект создаётся в **Eden**
-2. При Minor GC живые объекты копируются в **Survivor** (S0 ↔ S1)
+2. При Minor GC живые объекты копируются в **Survivor** (S0 S1)
 3. При каждом GC `age++`; при `age ≥ MaxTenuringThreshold` объект переходит в **Old Gen**
 4. Когда Old Gen заполнен — **Major GC**
 5. Если памяти не хватает даже после Full GC — `OutOfMemoryError`
@@ -254,7 +254,7 @@ jcmd <pid> VM.native_memory summary
 
 | Проблема | Симптомы | Диагностика | Решение |
 |----------|---------|-------------|---------|
-| Memory Leak | Old Gen монотонно растёт, Full GC не освобождает | Heap dump → MAT/VisualVM → dominator tree | Найти удерживающие ссылки (кеши, listeners, static collections) |
+| Memory Leak | Old Gen монотонно растёт, Full GC не освобождает | Heap dump MAT/VisualVM dominator tree | Найти удерживающие ссылки (кеши, listeners, static collections) |
 | GC Thrashing | CPU 100% на GC, приложение не отвечает | `jstat -gcutil`, GC log | Увеличить heap, проверить allocation rate, оптимизировать объекты |
 | Long GC Pauses | Latency spikes | GC log, `-Xlog:gc*` | Перейти на ZGC, уменьшить Old Gen pressure |
 | Metaspace OOM | `OutOfMemoryError: Metaspace` | `jcmd VM.native_memory` | Утечка classloader-ов (hot deploy, groovy scripts), увеличить лимит |

@@ -67,8 +67,8 @@ public interface Cache<K, V> {
 ```
 
 ```text
-```java
-// LRUCache: map ключ→узел списка, двусвязный список для порядка LRU
+```
+// LRUCache: map ключузел списка, двусвязный список для порядка LRU
 import java.util.HashMap;
 import java.util.Map;
 
@@ -119,7 +119,7 @@ public boolean put(K key, V value) {
 #### Метод get
 
 ```text
-```java
+```
 public Optional<V> get(K key) {
     LinkedListNode<CacheElement<K, V>> linkedListNode = this.linkedListNodeMap.get(key);
 
@@ -134,7 +134,7 @@ public Optional<V> get(K key) {
 Вспомогательные методы: отцепляем узел и добавляем в голову (`updateAndMoveToFront`), обёртка `moveToFront`.
 
 ```text
-```java
+```
 public LinkedListNode<T> updateAndMoveToFront(LinkedListNode<T> node, T newValue) {
     if (node.isEmpty() || (this != (node.getListReference()))) {
         return dummyNode;
@@ -158,7 +158,7 @@ public LinkedListNode<T> moveToFront(LinkedListNode<T> node) {
 ReentrantReadWriteLock: readLock для get, writeLock для put/evict; при необходимости ConcurrentHashMap. Блокировку снимать в finally.
 
 ```text
-```java
+```
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -228,7 +228,7 @@ class LRUCacheK<K, V>(private val capacity: Int) {
 ```
 
 ```text
-```kotlin
+```
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -295,7 +295,7 @@ get/put/evict — O(1). Память O(n) для n элементов кэша (
 ### Вариант 1: LinkedHashMap
 
 ```text
-```java
+```
 // accessOrder=true + removeEldestEntry — встроенный LRU
 import java.util.LinkedHashMap;
 import java.util.Map;

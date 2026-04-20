@@ -57,8 +57,8 @@ updated: "2026-02-11"
     - [REST API типичный сценарий](#rest-api-типичный-сценарий)
     - [GraphQL решение](#graphql-решение)
   - [Когда использовать GraphQL?](#когда-использовать-graphql)
-    - [✅ Идеально подходит для:](#идеально-подходит-для)
-    - [❌ Не подходит для:](#не-подходит-для)
+ - [ Идеально подходит для:](#идеально-подходит-для)
+ - [ Не подходит для:](#не-подходит-для)
 - [Schema Definition Language](#schema-definition-language)
   - [Основы SDL](#основы-sdl)
     - [Типы данных](#типы-данных)
@@ -325,14 +325,14 @@ query GetUserWithPosts($userId: ID!) {
 
 ### Когда использовать GraphQL?
 
-#### ✅ Идеально подходит для:
+#### Идеально подходит для:
 - **Mobile приложения** — Снижение сетевого трафика
 - **Microservices архитектура** — Единый **API gateway**
 - **Complex data relationships** — Связанные данные
 - **Rapidly evolving APIs** — Частые изменения требований
 - **Multiple clients** — Разные представления данных
 
-#### ❌ Не подходит для:
+#### Не подходит для:
 - `Simple CRUD APIs` — **Overhead** не оправдан
 - **File uploads** — Лучше использовать **REST**
 - **Real-time messaging** — Использовать **WebSocket**/**STOMP**
@@ -3391,24 +3391,24 @@ public class GraphQLDebugController {
 
 ### Когда использовать GraphQL:
 
-✅ **Mobile applications** — Снижение сетевого трафика
-✅ **Microservices architecture** — Единый **API gateway**
-✅ **Complex data relationships** — Связи между сущностями
-✅ **Rapidly evolving APIs** — Частые изменения требований
-✅ **Multiple clients** — Разные представления данных
-✅ **Real-time features** — **Subscriptions** для **live updates**
-✅ **API composition** — **Federation** для **distributed systems**
-✅ **Strong typing** — **Type-safe API contracts**
+**Mobile applications** — Снижение сетевого трафика
+**Microservices architecture** — Единый **API gateway**
+**Complex data relationships** — Связи между сущностями
+**Rapidly evolving APIs** — Частые изменения требований
+**Multiple clients** — Разные представления данных
+**Real-time features** — **Subscriptions** для **live updates**
+**API composition** — **Federation** для **distributed systems**
+**Strong typing** — **Type-safe API contracts**
 
 ### Когда НЕ использовать:
 
-❌ `Simple CRUD APIs` — **Overhead** не оправдан
-❌ **File uploads** — Лучше использовать **REST**
-❌ **Real-time messaging** — Использовать **WebSocket**/**STOMP**
-❌ **Caching at CDN** — **GraphQL** сложнее кешировать
-❌ **Legacy systems** — Требует значительных изменений
-❌ **Simple clients** — **REST** проще для **basic needs**
-❌ **Rate limiting** — Сложнее реализовать на уровне запросов
+`Simple CRUD APIs` — **Overhead** не оправдан
+**File uploads** — Лучше использовать **REST**
+**Real-time messaging** — Использовать **WebSocket**/**STOMP**
+**Caching at CDN** — **GraphQL** сложнее кешировать
+**Legacy systems** — Требует значительных изменений
+**Simple clients** — **REST** проще для **basic needs**
+**Rate limiting** — Сложнее реализовать на уровне запросов
 
 ### Best practices:
 
@@ -3441,6 +3441,6 @@ public class GraphQLDebugController {
 - **Event streams** — потоки событий
 - **Collaboration** — **multi-user interactions**
 
-**GraphQL** представляет собой значительный шаг вперед в эволюции **API design**. Он сочетает преимущества **REST** с гибкостью и мощью современных подходов, обеспечивая отличную **developer experience** и эффективную коммуникацию между **frontend** и **backend**. 🚀
+**GraphQL** представляет собой значительный шаг вперед в эволюции **API design**. Он сочетает преимущества **REST** с гибкостью и мощью современных подходов, обеспечивая отличную **developer experience** и эффективную коммуникацию между **frontend** и **backend**.
 
 **Далее: `Kafka` (message streaming)**

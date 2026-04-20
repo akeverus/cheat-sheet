@@ -52,7 +52,7 @@ updated: "2026-04-17"
 ## Содержание
 
 - [Базовые сложности](#базовые-сложности)
-- [Карта «задача → алгоритм/структура»](#карта-задача--алгоритмструктура)
+- [Карта «задача алгоритм/структура»](#карта-задача--алгоритмструктура)
 - [Маршруты чтения](#маршруты-чтения)
 - [Куда идти дальше](#куда-идти-дальше)
 
@@ -75,7 +75,7 @@ updated: "2026-04-17"
 | Timsort | O(n) | O(n log n) | O(n log n) | O(n) |
 | Radix | O(nk) | O(nk) | O(nk) | O(n+k) |
 
-## Карта «задача → алгоритм/структура»
+## Карта «задача алгоритм/структура»
 
 | Задача | Инструмент |
 |--------|-----------|
@@ -102,9 +102,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Интервью junior (1 неделя):** `data-structures` → `sorting` → `searching` → `problems/easy`.
+- **Интервью junior (1 неделя):** `data-structures` `sorting` `searching` `problems/easy`.
 - **Интервью mid/senior (2-3 недели):** весь раздел + `algorithmic-paradigms` (DP, Graph), `problems/medium+hard`.
-- **Углубление систем:** `data-structures` (Bloom, HLL, consistent hashing) → `architecture/system-design/`.
+- **Углубление систем:** `data-structures` (Bloom, HLL, consistent hashing) `architecture/system-design/`.
 - **Конкурсное программирование:** `math` + `strings` (суффиксные структуры) + `graphs` (Tarjan, SCC, flow).
 
 ## Куда идти дальше

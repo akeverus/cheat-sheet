@@ -160,7 +160,7 @@ class HTML {
 
 ### Расширенный HTML Builder
 
-```kotlin
+```
 // Базовый элемент
 open class Tag(val name: `String`) {
     val children = `mutableListOf`<Tag>()
@@ -262,7 +262,7 @@ println(page)
 
 ### Улучшенный Builder с операторами
 
-```kotlin
+```
 // Оператор invoke для более естественного синтаксиса
 operator fun Tag.invoke(init: Tag.() -> `Unit`) {
     init()
@@ -279,7 +279,7 @@ val div = Div().apply {
 
 ### Полнофункциональный HTML Builder
 
-```kotlin
+```
 // Базовый элемент с поддержкой всех `HTML` тегов
 open class `Element`(val name: `String`) {
     val children = `mutableListOf`<Any>()
@@ -374,7 +374,7 @@ val page = html {
 
 ### SQL Builder
 
-```kotlin
+```
 // `SQL Query Builder`
 class `Query` {
     private var select: `String` = "*"
@@ -457,7 +457,7 @@ println(sql)
 
 ### Улучшенный SQL Builder
 
-```kotlin
+```
 // Более типобезопасный `SQL Builder`
 class `Table`(val name: `String`) {
     fun column(name: `String`): `Column` = `Column`(this, name)
@@ -523,7 +523,7 @@ val (sql, params) = query {
 
 ### Конфигурационный DSL
 
-```kotlin
+```
 // Конфигурация приложения
 class `Config` {
     val database = `DatabaseConfig()`
@@ -592,7 +592,7 @@ val `appConfig` = config {
 
 ### Gradle-like DSL
 
-```kotlin
+```
 // `Gradle`-подобный `DSL`
 class `Project` {
     val dependencies = `Dependencies()`
@@ -659,7 +659,7 @@ val build = project {
 
 ### Тестовый DSL
 
-```kotlin
+```
 // `DSL` для написания тестов
 class `TestSuite`(val name: `String`) {
     private val tests = `mutableListOf`<`Test`>()
@@ -673,9 +673,9 @@ class `TestSuite`(val name: `String`) {
         tests.`forEach` { test ->
             try {
                 `test.block`()
-                println("  ✓ ${`test.name`}")
+ println(" ${`test.name`}")
             } catch (e: `Exception`) {
-                println("  ✗ ${`test.name`}: ${`e.message`}")
+ println(" ${`test.name`}: ${`e.message`}")
             }
         }
     }
@@ -704,7 +704,7 @@ val `myTests` = suite("`My Tests`") {
 
 ### BDD-style DSL
 
-```kotlin
+```
 // `BDD` (`Behavior`-`Driven Development`) `DSL`
 class `Feature`(val name: `String`) {
     private val scenarios = `mutableListOf`<`Scenario`>()
@@ -777,7 +777,7 @@ val `calculatorFeature` = feature("`Calculator`") {
 
 ### REST API DSL
 
-```kotlin
+```
 // `DSL` для описания `REST API`
 class Api {
     private val routes = `mutableListOf`<`Route`>()
@@ -835,7 +835,7 @@ val `myApi` = api {
 
 ### Routing DSL
 
-```kotlin
+```
 // Маршрутизация `DSL`
 class `Router` {
     private val routes = `mutableListOf`<`RouteDefinition`>()
@@ -893,7 +893,7 @@ val `appRouter` = router {
 
 ### Используйте Extension Functions
 
-```kotlin
+```
 // Вместо вложенных функций используйте extension functions
 fun html(init: `HTML`.() -> `Unit`): `HTML` {
     val html = `HTML()`
@@ -906,7 +906,7 @@ fun html(init: `HTML`.() -> `Unit`): `HTML` {
 
 ### Поддерживайте Fluent Interface
 
-```kotlin
+```
 // Возвращайте this для цепочки вызовов
 class `Builder` {
     fun `setA`(value: `String`): `Builder` {
@@ -928,7 +928,7 @@ val `builder` = `Builder()`
 
 ### Используйте Infix Functions
 
-```kotlin
+```
 // `Infix` функции для более естественного синтаксиса
 infix fun `String`.`should be`(expected: `String`) {
     if (this != expected) {
@@ -942,7 +942,7 @@ infix fun `String`.`should be`(expected: `String`) {
 
 ### Валидация в DSL
 
-```kotlin
+```
 // Добавляйте валидацию в `builder`
 class `Config` {
     var port: Int = `8080`
@@ -967,7 +967,7 @@ val config = config {
 
 Создание DSL, которые используют контекст выполнения для дополнительной функциональности:
 
-```kotlin
+```
 class DSLContext {
     var `currentScope`: `String` = "global"
     val variables = `mutableMapOf`<`String`, Any>()
@@ -991,7 +991,7 @@ val config = dsl {
 
 Добавление валидации в DSL для проверки корректности конфигурации:
 
-```kotlin
+```
 class `ConfigDSL` {
     var port: Int = `8080`
         set(value) {
@@ -1023,7 +1023,7 @@ fun config(init: `ConfigDSL`.() -> `Unit`): `ConfigDSL` {
 
 Создание DSL, которые можно расширять через extension функции:
 
-```kotlin
+```
 // Базовый `DSL`
 class `BaseDSL` {
     fun `baseOperation()` { }
@@ -1053,7 +1053,7 @@ base {
 
 Использование ленивой инициализации для оптимизации DSL:
 
-```kotlin
+```
 class `LazyDSL` {
     private val _elements = `mutableListOf`<`Element`>()
     val elements: `List`<`Element`> by lazy { _elements.`toList()` }
@@ -1074,7 +1074,7 @@ fun `lazyDSL`(init: `LazyDSL`.() -> `Unit`): `LazyDSL` {
 
 Кэширование результатов вычислений в DSL:
 
-```kotlin
+```
 class `CachedDSL` {
     private val `cache` = `mutableMapOf`<`String`, Any>()
 
@@ -1097,7 +1097,7 @@ fun `cachedDSL`(init: `CachedDSL`.() -> `Unit`): `CachedDSL` {
 
 Тестирование DSL как обычного кода:
 
-```kotlin
+```
 `@Test`
 fun `testDSL()` {
     val result = html {
@@ -1116,7 +1116,7 @@ DSL можно тестировать как обычный код, что уп�
 
 Тестирование DSL в контексте реального использования:
 
-```kotlin
+```
 `@Test`
 fun `testDSLIntegration()` {
     val config = config {
@@ -1137,7 +1137,7 @@ fun `testDSLIntegration()` {
 
 DSL для конфигурации подключения к базе данных:
 
-```kotlin
+```
 class `DatabaseConfig` {
     var host: `String` = "localhost"
     var port: Int = `5432`
@@ -1170,7 +1170,7 @@ DSL для конфигурации делает настройку систем
 
 DSL для определения API маршрутов:
 
-```kotlin
+```
 class `RouteBuilder` {
     private val routes = `mutableListOf`<`Route`>()
 
@@ -1208,7 +1208,7 @@ DSL для маршрутизации делает определение API б
 
 Создание DSL для конфигурации приложений:
 
-```kotlin
+```
 class `AppConfig` {
     var database: `DatabaseConfig`? = `null`
     var server: `ServerConfig`? = `null`
@@ -1277,7 +1277,7 @@ DSL для конфигурации делает настройку прилож
 
 Создание DSL для написания тестов:
 
-```kotlin
+```
 class `TestContext` {
     val `setupActions` = `mutableListOf`<() -> `Unit`>()
     val assertions = `mutableListOf`<() -> `Unit`>()
@@ -1331,7 +1331,7 @@ DSL для тестов делает тесты более читаемыми и
 
 Создание DSL для валидации данных:
 
-```kotlin
+```
 class `ValidationContext`<T>(private val value: T) {
     val errors = `mutableListOf`<`String`>()
 
@@ -1380,7 +1380,7 @@ DSL для валидации делает проверку данных бол�
 
 Создание DSL для написания тестов:
 
-```kotlin
+```
 // `DSL` для тестирования
 class `TestContext` {
     private val `setupActions` = `mutableListOf`<() -> `Unit`>()
@@ -1441,7 +1441,7 @@ DSL для тестирования делает тесты более чита�
 
 Создание DSL для мокирования зависимостей:
 
-```kotlin
+```
 // `DSL` для создания моков
 class `MockContext` {
     private val mocks = `mutableMapOf`<`Class`<*>, Any>()
@@ -1486,7 +1486,7 @@ DSL для мокирования упрощает создание и наст�
 
 Создание DSL с проверкой на этапе компиляции:
 
-```kotlin
+```
 // `Type-safe DSL` с проверкой на этапе компиляции
 `@DslMarker`
 annotation class `ConfigDsl`
@@ -1560,7 +1560,7 @@ Type-safe DSL с проверкой на этапе компиляции пре�
 
 Создание DSL для работы с базами данных:
 
-```kotlin
+```
 // `DSL` для `SQL` запросов
 class `QueryBuilder` {
     private val select = `mutableListOf`<`String`>()
@@ -1635,7 +1635,7 @@ DSL для баз данных делает SQL запросы более чит
 
 Создание DSL для валидации форм:
 
-```kotlin
+```
 class `FormValidator` {
     private val validators = `mutableListOf`<() -> `ValidationResult`>()
 
@@ -1713,7 +1713,7 @@ DSL для валидации форм делает проверку данны�
 
 Создание DSL для асинхронных операций:
 
-```kotlin
+```
 // `DSL` для асинхронных операций
 class `AsyncDSL` {
     private val operations = `mutableListOf`<suspend () -> `Unit`>()
@@ -1758,7 +1758,7 @@ DSL для асинхронных операций делает код боле�
 
 Создание DSL для управления ресурсами:
 
-```kotlin
+```
 // `DSL` для работы с ресурсами
 class `ResourceDSL`<T : `AutoCloseable`> {
     private var resource: T? = `null`
@@ -1800,7 +1800,7 @@ DSL для ресурсов упрощает управление жизненн
 
 Создание DSL для сложных асинхронных сценариев:
 
-```kotlin
+```
 // `DSL` для параллельных операций
 class `ParallelDSL` {
     private val operations = `mutableListOf`<suspend () -> `Unit`>()
@@ -1886,7 +1886,7 @@ DSL для параллельных операций делает код бол�
 
 Создание DSL для конфигурации приложения:
 
-```kotlin
+```
 class `AppConfig` {
     var database: `DatabaseConfig`? = `null`
     var server: `ServerConfig`? = `null`
@@ -1923,7 +1923,7 @@ DSL для конфигурации делает настройку прилож
 
 Создание DSL для написания тестов:
 
-```kotlin
+```
 class `TestContext` {
     val assertions = `mutableListOf`<() -> `Unit`>()
 
@@ -1953,7 +1953,7 @@ DSL для тестов делает написание тестов более 
 
 Пример создания DSL для генерации HTML:
 
-```kotlin
+```
 class `HTML` {
     val children = `mutableListOf`<`Element`>()
 
@@ -2006,7 +2006,7 @@ DSL для HTML делает генерацию разметки типобез�
 
 Пример создания DSL для построения SQL запросов:
 
-```kotlin
+```
 class `QueryBuilder` {
     private var select: `String` = "*"
     private var from: `String`? = `null`

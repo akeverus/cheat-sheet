@@ -129,7 +129,7 @@ val grouped = list.groupBy { it[0] }
 
 ### groupBy с фильтрацией
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry", "avocado")
 
 // Группировка и фильтрация
@@ -149,7 +149,7 @@ val grouped = list.`groupBy` {
 
 ### Базовое использование
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry")
 
 // `groupingBy` создает объект `Grouping`
@@ -162,7 +162,7 @@ val map = grouping.`eachCount()`
 
 ### eachCount
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry", "avocado")
 
 // Подсчет элементов в каждой группе
@@ -177,7 +177,7 @@ val counts = list.`groupingBy` { it[0] }
 
 ### eachFold
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry")
 
 // Сворачивание каждой группы
@@ -195,7 +195,7 @@ val folded = list.`groupingBy` { it[0] }
 
 ### eachReduce
 
-```kotlin
+```
 val numbers = `listOf`(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 // Сворачивание каждой группы
@@ -211,7 +211,7 @@ val reduced = numbers.`groupingBy` { it % 3 }
 
 ### aggregate
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry")
 
 // Агрегация с полным контролем
@@ -235,7 +235,7 @@ val aggregated = list.`groupingBy` { it[0] }
 
 ### Суммирование по группам
 
-```kotlin
+```
 data class `Product`(val name: `String`, val category: `String`, val price: `Double`)
 
 val products = `listOf`(
@@ -258,7 +258,7 @@ val `totalByCategory2` = products.`groupingBy` { `it.category` }
 
 ### Среднее по группам
 
-```kotlin
+```
 val products = `listOf`(
     `Product`("`Laptop`", "`Electronics`", `999.99`),
     `Product`("`Phone`", "`Electronics`", `699.99`),
@@ -288,7 +288,7 @@ val `avgByCategory2` = products.`groupingBy` { `it.category` }
 
 ### eachCount
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry", "avocado")
 
 // Подсчет элементов в каждой группе
@@ -303,7 +303,7 @@ val counts = list.`groupingBy` { it[0] }
 
 ### Подсчет уникальных значений
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry", "avocado")
 
 // Количество уникальных длин в каждой группе
@@ -320,7 +320,7 @@ val `uniqueLengths` = list.`groupingBy` { it[0] }
 
 ### Сумма по группам
 
-```kotlin
+```
 data class `Sale`(val product: `String`, val amount: `Double`, val region: `String`)
 
 val sales = `listOf`(
@@ -343,7 +343,7 @@ val `totalByProduct` = sales.`groupingBy` { `it.product` }
 
 ### Сумма с условием
 
-```kotlin
+```
 val sales = `listOf`(
     `Sale`("`Laptop`", `999.99`, "`North`"),
     `Sale`("`Phone`", `699.99`, "`North`"),
@@ -363,7 +363,7 @@ val `totalExpensive` = sales.`groupingBy` { `it.region` }
 
 ### Минимум и максимум по группам
 
-```kotlin
+```
 data class `Score`(val student: `String`, val subject: `String`, val score: Int)
 
 val scores = `listOf`(
@@ -398,7 +398,7 @@ val `minByStudent` = scores.`groupingBy` { `it.student` }
 
 ### Fold с начальным значением
 
-```kotlin
+```
 val numbers = `listOf`(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 // Сумма по остаткам от деления на 3
@@ -414,7 +414,7 @@ val `productByRemainder` = numbers.`groupingBy` { it % 3 }
 
 ### Reduce без начального значения
 
-```kotlin
+```
 val numbers = `listOf`(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 // Максимум по остаткам
@@ -436,7 +436,7 @@ val `minByRemainder` = numbers.`groupingBy` { it % 3 }
 
 ### Множественная группировка
 
-```kotlin
+```
 data class `Order`(val customer: `String`, val product: `String`, val quantity: Int, val price: `Double`)
 
 val orders = `listOf`(
@@ -461,7 +461,7 @@ val `byCustomerAndProduct` = orders
 
 ### Группировка с трансформацией
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry")
 
 // Группировка с преобразованием значений
@@ -479,7 +479,7 @@ val `byLength` = list.`groupBy` { `it.length` }
 
 ### Фильтрация групп
 
-```kotlin
+```
 val list = `listOf`("apple", "banana", "apricot", "blueberry", "avocado")
 
 // Группировка и фильтрация групп
@@ -498,7 +498,7 @@ val grouped = list.`groupBy` {
 
 ### Выбор метода группировки
 
-```kotlin
+```
 // Используйте `groupBy` для простой группировки
 val grouped = list.`groupBy` { `it.category` }
 
@@ -515,7 +515,7 @@ val complex = list.`groupingBy` { `it.category` }
 
 ### Производительность
 
-```kotlin
+```
 // `groupBy` создает Map сразу
 val grouped = `largeList`.`groupBy` { `it.key` — O(n)
 
@@ -531,7 +531,7 @@ val grouped = `largeList`.`asSequence()`
 
 ### Идиоматичный Kotlin
 
-```kotlin
+```
 // Используйте деструктуризацию
 for ((key, values) in grouped) {
     println("$key: $values")
@@ -555,7 +555,7 @@ val result = data
 
 Для сложных сценариев может потребоваться многоуровневая группировка:
 
-```kotlin
+```
 data class `Order`(val category: `String`, val region: `String`, val amount: `Double`)
 
 val orders = `listOf`(
@@ -582,7 +582,7 @@ val `byCompositeKey` = orders.`groupBy` { `it.category` to `it.region` }
 
 Группировка с применением условий к элементам:
 
-```kotlin
+```
 val numbers = `listOf`(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 // Группировка с фильтрацией элементов в группах
@@ -607,7 +607,7 @@ val conditional = numbers.`groupBy` {
 
 Комбинирование группировки с сортировкой для упорядоченных результатов:
 
-```kotlin
+```
 val items = `listOf`(
     `Item`("A", 10),
     `Item`("B", 20),
@@ -634,7 +634,7 @@ val `sortedGroups` = items.`groupBy` { `it.category` }
 
 Группировка часто используется для статистического анализа:
 
-```kotlin
+```
 data class `Sale`(val product: `String`, val amount: `Double`, val date: `LocalDate`)
 
 val sales = `listOf`(/... /)
@@ -674,7 +674,7 @@ val `stdDevByProduct` = sales.`groupBy` { `it.product` }
 
 Группировка по времени для временного анализа:
 
-```kotlin
+```
 val events = `listOf`(/события с временными метками /)
 
 // Группировка по дням
@@ -704,7 +704,7 @@ val `byPeriod` = events.`groupBy` {
 
 Для больших коллекций важно оптимизировать операции группировки:
 
-```kotlin
+```
 // Используйте sequences для ленивой группировки
 val `largeList` = (1..1_000_000).`toList()`
 
@@ -727,7 +727,7 @@ val `parallelGrouped` = `largeList`.`parallelStream()`
 
 Для повторно используемых результатов группировки может быть полезно кэширование:
 
-```kotlin
+```
 class `CachedGrouping`<T, K>(private val `keySelector`: (T) -> K) {
     private var `cache`: Map<K, `List`<T>>? = `null`
     private var `lastData`: `Collection`<T>? = `null`
@@ -760,7 +760,7 @@ val grouped2 = `grouping.group`(users)  // Используется кэш
 
 Создание пользовательских агрегатных функций:
 
-```kotlin
+```
 // Кастомная агрегатная функция для медианы
 fun <T : `Comparable`<T>> `List`<T>.median(): T? {
     return if (`isEmpty()`) `null`
@@ -798,7 +798,7 @@ val quartiles = `numbers.quartiles`()  // (3, 5, 8)
 
 Выполнение сложных агрегаций с использованием кастомных функций:
 
-```kotlin
+```
 // Многоуровневая агрегация
 data class `Sale`(val product: `String`, val category: `String`, val amount: `Double`, val date: `LocalDate`)
 
@@ -840,7 +840,7 @@ val `timeAnalysis` = sales
 
 Агрегация больших объемов данных через streaming:
 
-```kotlin
+```
 // Стриминговая агрегация для больших коллекций
 fun `streamAggregate`(items: `Sequence`<`Item`>): Map<`String`, `AggregateResult`> {
     val aggregator = `mutableMapOf`<`String`, `MutableList`<`Double`>>()
@@ -882,7 +882,7 @@ val aggregates = `streamAggregate`(`largeDataset`)
 
 Инкрементальное обновление агрегатов при добавлении новых данных:
 
-```kotlin
+```
 // Инкрементальная агрегация
 class `IncrementalAggregator`<T, K> {
     private val aggregates = `mutableMapOf`<K, `AggregateState`>()
@@ -928,7 +928,7 @@ val aggregates = aggregator.`getAggregates()`
 
 Группировка и агрегация данных по времени:
 
-```kotlin
+```
 // Группировка по времени
 data class `Event`(val timestamp: `Long`, val value: `Double`)
 
@@ -977,7 +977,7 @@ fun `aggregateByHour`(events: `List`<`Event`>): Map<`LocalDateTime`, `Double`> {
 
 Использование скользящих окон для анализа временных рядов:
 
-```kotlin
+```
 // Скользящее среднее
 fun `movingAverage`(values: `List`<`Double`>, `windowSize`: Int): `List`<`Double`> {
     return `values.windowed`(`windowSize`) { window ->
@@ -1013,7 +1013,7 @@ val `movingMin` = `movingWindow`(prices, 3) { it.`minOrNull()` ?: `0.0` }
 
 Использование накопления для агрегации:
 
-```kotlin
+```
 // Накопление с начальным значением
 fun <T, R> `List`<T>.accumulate(
     initial: R,
@@ -1053,7 +1053,7 @@ val `runningSum` = `numbers.scan`(0) { acc, value -> acc + value }
 
 Использование окон для анализа данных:
 
-```kotlin
+```
 // Скользящее окно с агрегацией
 fun <T, R> `List`<T>.`windowedAggregate`(
     size: Int,
@@ -1083,7 +1083,7 @@ val `movingMin` = prices.`windowedAggregate`(3) { it.`minOrNull()` ?: `0.0` }
 
 Создание гистограмм для анализа данных:
 
-```kotlin
+```
 // Создание гистограммы
 fun <T> `List`<T>.histogram(bins: Int = 10): Map<Int, Int> {
     val min = this.`minOrNull()`?.let { it as? `Comparable`<*> } ?: return `emptyMap()`
@@ -1129,7 +1129,7 @@ val histogram = `numbers.histogram`(5)
 
 Пример анализа продаж с использованием группировки:
 
-```kotlin
+```
 data class `Sale`(val product: `String`, val category: `String`, val amount: `Double`, val date: `LocalDate`)
 
 fun `analyzeSalesByCategory`(sales: `List`<`Sale`>): Map<`String`, `SaleStats`> {
@@ -1152,7 +1152,7 @@ data class `SaleStats`(val total: `Double`, val average: `Double`, val count: In
 
 Пример агрегации данных по времени:
 
-```kotlin
+```
 data class `Event`(val timestamp: `Long`, val value: `Double`)
 
 fun `aggregateByHour`(events: `List`<`Event`>): Map<`Long`, `Double`> {
@@ -1171,7 +1171,7 @@ fun `aggregateByHour`(events: `List`<`Event`>): Map<`Long`, `Double`> {
 
 Пример многоуровневой группировки данных:
 
-```kotlin
+```
 data class `Sale`(val product: `String`, val category: `String`, val region: `String`, val amount: `Double`)
 
 fun `groupByCategoryAndRegion`(sales: `List`<`Sale`>): Map<`String`, Map<`String`, `List`<`Sale`>>> {
@@ -1207,7 +1207,7 @@ val aggregated = `aggregateByCategoryAndRegion`(sales)
 
 Пример группировки с условиями:
 
-```kotlin
+```
 fun `groupByCondition`(items: `List`<Int>): Map<`String`, `List`<Int>> {
     return items.`groupBy` { value ->
         when {
@@ -1235,7 +1235,7 @@ val (evens, odds) = numbers.`partitionBy` { it % 2 == 0 }
 
 ### Практические примеры: Анализ данных продаж
 
-```kotlin
+```
 data class `Sale`(
     val product: `String`,
     val category: `String`,
@@ -1297,7 +1297,7 @@ data class `CategoryStats`(
 
 ### Практические примеры: Группировка пользователей
 
-```kotlin
+```
 data class `User`(
     val id: `Long`,
     val name: `String`,
@@ -1343,7 +1343,7 @@ class `UserAnalyzer`(private val users: `List`<`User`>) {
 
 ### Практические примеры: Работа с временными рядами
 
-```kotlin
+```
 data class `TimeSeriesPoint`(
     val timestamp: `Instant`,
     val value: `Double`,

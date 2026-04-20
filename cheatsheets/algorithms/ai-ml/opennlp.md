@@ -308,10 +308,10 @@ public void givenEnglishDictionary_whenLemmatize_thenLemmasAreDetected() throws 
 Как мы видим, мы получаем лемму для каждой фишки. «О» означает, что лемма не может быть определена, так как слово является именем собственным. Итак, у нас нет леммы для «Джон» и «Пенни».
 
 **Но мы определили леммы для других слов предложения:**
-- **has** → **have**
-- a → a
-- **sister** → **sister**
-- **named** → **name**
+- **has** **have**
+- a a
+- **sister** **sister**
+- **named** **name**
 
 ## Чанкинг
 

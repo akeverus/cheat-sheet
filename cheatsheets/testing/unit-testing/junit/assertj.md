@@ -113,9 +113,9 @@ dependencies {
 - **IDE не видит методы** — добавьте static import: `import static org.assertj.core.api.Assertions.*;`
 
 **Миграция с JUnit/Hamcrest:**
-`assertEquals("John", user.getName())` → `assertThat(user.getName()).isEqualTo("John")`
-`assertTrue(list.size() > 0)` → `assertThat(list).isNotEmpty()`
-`assertThat(str, containsString("@"))` → `assertThat(str).contains("@")`
+`assertEquals("John", user.getName())` `assertThat(user.getName()).isEqualTo("John")`
+`assertTrue(list.size() > 0)` `assertThat(list).isNotEmpty()`
+`assertThat(str, containsString("@"))` `assertThat(str).contains("@")`
 
 
 ## Базовое использование

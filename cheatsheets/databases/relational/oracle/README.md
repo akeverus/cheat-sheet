@@ -79,9 +79,9 @@ Oracle Database — корпоративная реляционная СУБД, 
 
 ## Маршруты чтения
 
-- **Переход с PostgreSQL/MySQL на Oracle:** `oracle-basics.md` → разделы про sequences, PL/SQL, tablespaces → отличия SQL-диалекта.
-- **Developer, который пишет SQL к Oracle:** SQL-диалект → индексы → оптимизация запросов → трейсы (10046).
-- **Junior DBA:** архитектура → процессы → redo/undo → backup & recovery.
+- **Переход с PostgreSQL/MySQL на Oracle:** `oracle-basics.md` разделы про sequences, PL/SQL, tablespaces отличия SQL-диалекта.
+- **Developer, который пишет SQL к Oracle:** SQL-диалект индексы оптимизация запросов трейсы (10046).
+- **Junior DBA:** архитектура процессы redo/undo backup & recovery.
 
 ## Куда идти дальше
 

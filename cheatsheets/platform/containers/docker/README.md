@@ -78,8 +78,8 @@ Docker — это **runtime и build-toolchain** для одного хоста:
 
 ## Маршруты чтения
 
-- **Новичок (1 день):** `docker-basics.md` → `docker-containers.md` → `docker-compose.md`.
-- **Spring-разработчик:** `docker-basics.md` → `docker-spring-boot.md` → `docker-advanced.md` (multi-stage + layered jar).
+- **Новичок (1 день):** `docker-basics.md` `docker-containers.md` `docker-compose.md`.
+- **Spring-разработчик:** `docker-basics.md` `docker-spring-boot.md` `docker-advanced.md` (multi-stage + layered jar).
 - **Production readiness:** `docker-advanced.md` + CIS Docker Benchmark + [[README|../../../security/infrastructure/]].
 
 ## Куда идти дальше

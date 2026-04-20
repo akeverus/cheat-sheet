@@ -80,10 +80,10 @@ Micronaut — JVM-фреймворк от команды Grails, ориенти�
 
 ## Маршруты чтения
 
-- **Быстрый старт:** `micronaut-basics.md` → `micronaut-http.md` → `micronaut-data.md` → `micronaut-testing.md`.
-- **Переход со Spring Boot:** `micronaut-basics.md` (секция сравнения) → `micronaut-core.md` → `micronaut-security.md`.
-- **Native image для FaaS:** `micronaut-graalvm.md` → `micronaut-cloud.md`.
-- **Reactive и события:** `micronaut-reactive.md` → `micronaut-kafka.md` → `micronaut-grpc.md`.
+- **Быстрый старт:** `micronaut-basics.md` `micronaut-http.md` `micronaut-data.md` `micronaut-testing.md`.
+- **Переход со Spring Boot:** `micronaut-basics.md` (секция сравнения) `micronaut-core.md` `micronaut-security.md`.
+- **Native image для FaaS:** `micronaut-graalvm.md` `micronaut-cloud.md`.
+- **Reactive и события:** `micronaut-reactive.md` `micronaut-kafka.md` `micronaut-grpc.md`.
 
 ## Куда идти дальше
 

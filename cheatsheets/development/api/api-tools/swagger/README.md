@@ -54,7 +54,7 @@ updated: "2026-04-17"
 - **Автодокументация.** Swagger UI и Redoc рендерят человекочитаемую страницу.
 - **Контракт-тесты.** Schemathesis и Dredd проверяют, что API реально соответствует спеке.
 - **Mock-сервер.** Prism, Stoplight и OpenAPI Generator поднимают мок по спеке.
-- **Версионирование.** Diff между версиями OAS → детекция breaking changes.
+- **Версионирование.** Diff между версиями OAS детекция breaking changes.
 
 ## Ключевые инструменты экосистемы
 
@@ -80,9 +80,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Первое знакомство (1 ч):** `api-documentation-basics.md` → `openapi-swagger.md` — структура и Info/Paths.
-- **Встраивание в Spring Boot:** `springdoc-openapi` → Swagger UI → ручной тюнинг аннотаций.
-- **Строгий contract-first:** OAS в репо → Spectral → diff в CI → Schemathesis → кодогенерация клиентов.
+- **Первое знакомство (1 ч):** `api-documentation-basics.md` `openapi-swagger.md` — структура и Info/Paths.
+- **Встраивание в Spring Boot:** `springdoc-openapi` Swagger UI ручной тюнинг аннотаций.
+- **Строгий contract-first:** OAS в репо Spectral diff в CI Schemathesis кодогенерация клиентов.
 
 ## Куда идти дальше
 

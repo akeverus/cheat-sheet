@@ -291,7 +291,7 @@ mvn pact:publish -Dpact.broker.baseUrl=https://broker.example.com
 | Несовпадение тела ответа | Изменилась схема у provider | Обновить контракт у consumer или поправить provider |
 | Stub Runner не стартует | Нет артефакта со стабами | Проверить координаты (groupId/artifactId/version) |
 | SCC не генерирует тесты | Неверный базовый класс | Проверить `baseClassForTests` в плагине |
-| Pact Broker → 401 | Нет токена | Настроить `PACT_BROKER_TOKEN` |
+| Pact Broker 401 | Нет токена | Настроить `PACT_BROKER_TOKEN` |
 | `can-i-deploy` блокирует | Не все потребители верифицировали | Запустить верификацию от всех потребителей |
 
 

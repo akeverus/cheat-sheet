@@ -65,7 +65,7 @@ Ansible — инструмент автоматизации от Red Hat: опи
 | Pulumi | Imperative (Python/TS/Go/Java) | Да (Pulumi Cloud/S3) | Те же, что у Terraform | Provision с полноценным ЯП |
 | Packer | Procedural (HCL/JSON) | Нет (артефакт = образ) | Builders (AWS AMI, Docker, VMware) | Сборка golden image |
 
-Типичный пайплайн: **Terraform** поднимает VPC+VM → **Packer** готовит базовый образ → **Ansible** тонко настраивает запущенные машины.
+Типичный пайплайн: **Terraform** поднимает VPC+VM **Packer** готовит базовый образ **Ansible** тонко настраивает запущенные машины.
 
 ## Когда использовать
 
@@ -77,8 +77,8 @@ Ansible — инструмент автоматизации от Red Hat: опи
 
 ## Маршруты чтения
 
-- **Быстрый старт (пара часов):** `ansible-basics.md` → написать inventory + playbook на install nginx.
-- **Полный курс:** `ansible-basics.md` → `ansible.md` → `ansible-advanced.md`.
+- **Быстрый старт (пара часов):** `ansible-basics.md` написать inventory + playbook на install nginx.
+- **Полный курс:** `ansible-basics.md` `ansible.md` `ansible-advanced.md`.
 - **Продакшн:** все три документа + Molecule-тесты + интеграция с `platform/ci-cd/`.
 
 ## Куда идти дальше

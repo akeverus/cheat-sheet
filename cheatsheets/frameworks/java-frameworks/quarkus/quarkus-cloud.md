@@ -38,7 +38,7 @@ related: ["quarkus-core.md", "quarkus-graalvm.md"]
   - [OpenTelemetry Configuration](#opentelemetry-configuration)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте health checks](#1-используйте-health-checks)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [2. Настройте metrics](#2-настройте-metrics)
   - [3. Используйте distributed tracing](#3-используйте-distributed-tracing)
 - [Kubernetes Deployment Strategies](#kubernetes-deployment-strategies)

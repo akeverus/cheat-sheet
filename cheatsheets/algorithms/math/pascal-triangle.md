@@ -160,7 +160,7 @@ public void printPascalTriangle(int n) {
 
 ### Получение конкретного элемента
 
-Рекурсия: C(row,col) = C(row-1,col-1) + C(row-1,col); база — col==0 или col==row → 1.
+Рекурсия: C(row,col) = C(row-1,col-1) + C(row-1,col); база — col==0 или col==row 1.
 
 ```java
 public int getPascalValue(int row, int col) {

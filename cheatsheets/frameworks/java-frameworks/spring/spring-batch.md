@@ -42,8 +42,8 @@ updated: "2026-02-11"
 - [Введение в Spring Batch](#введение-в-spring-batch)
   - [Почему Spring Batch?](#почему-spring-batch)
   - [Когда использовать Spring Batch?](#когда-использовать-spring-batch)
-    - [✅ Идеально подходит для:](#идеально-подходит-для)
-    - [❌ Не подходит для:](#не-подходит-для)
+ - [ Идеально подходит для:](#идеально-подходит-для)
+ - [ Не подходит для:](#не-подходит-для)
   - [Основные возможности](#основные-возможности)
     - [Transaction Management](#transaction-management)
     - [Job Repository](#job-repository)
@@ -195,7 +195,7 @@ updated: "2026-02-11"
 
 ### Когда использовать Spring Batch?
 
-#### ✅ Идеально подходит для:
+#### Идеально подходит для:
 - **ETL процессы** — извлечение, трансформация, загрузка данных
 - **Data Migration** — миграция данных между системами
 - **Report Generation** — генерация сложных отчетов
@@ -205,7 +205,7 @@ updated: "2026-02-11"
 - **Scheduled Tasks** — регулярные пакетные операции
 - **Data Validation** — валидация больших объемов данных
 
-#### ❌ Не подходит для:
+#### Не подходит для:
 - **Real-time Processing** — используйте **Kafka Streams** или **Spring Integration**
 - **Simple CRUD** — используйте обычные **Spring Data** репозитории
 - **User Interactions** — используйте **Spring MVC**/**WebFlux**
@@ -2618,23 +2618,23 @@ public class MemoryMonitor {
 
 ### Когда использовать Spring Batch:
 
-✅ **ETL operations** — извлечение, трансформация, загрузка данных
-✅ **Data migration** — миграция между системами
-✅ **Report generation** — генерация сложных отчетов
-✅ **File processing** — обработка больших **CSV**/**XML**/**JSON** файлов
-✅ **Database updates** — массовые обновления
-✅ **Integration tasks** — интеграция с внешними системами
-✅ **Scheduled processing** — регулярные **batch** операции
-✅ **Guaranteed delivery** — надежная обработка каждого элемента
+**ETL operations** — извлечение, трансформация, загрузка данных
+**Data migration** — миграция между системами
+**Report generation** — генерация сложных отчетов
+**File processing** — обработка больших **CSV**/**XML**/**JSON** файлов
+**Database updates** — массовые обновления
+**Integration tasks** — интеграция с внешними системами
+**Scheduled processing** — регулярные **batch** операции
+**Guaranteed delivery** — надежная обработка каждого элемента
 
 ### Когда НЕ использовать:
 
-❌ **Real-time processing** — используйте **Kafka Streams** или **WebFlux**
-❌ **Simple CRUD** — используйте обычные репозитории
-❌ **User interactions** — используйте **Spring MVC**
-❌ **Small datasets** — **overhead** не оправдан
-❌ **Streaming data** — используйте **Kafka** или **WebSocket**
-❌ **Simple workflows** — используйте @**Scheduled** методы
+**Real-time processing** — используйте **Kafka Streams** или **WebFlux**
+**Simple CRUD** — используйте обычные репозитории
+**User interactions** — используйте **Spring MVC**
+**Small datasets** — **overhead** не оправдан
+**Streaming data** — используйте **Kafka** или **WebSocket**
+**Simple workflows** — используйте @**Scheduled** методы
 
 ### Production considerations:
 
@@ -2655,6 +2655,6 @@ public class MemoryMonitor {
 6. **Operations** — **restart procedures**, **maintenance tasks**
 7. **Documentation** — **job descriptions**, **parameter documentation**
 
-**Spring Batch** является **industrial standard** для **enterprise batch processing**. Его зрелость, надежность и интеграция с **Spring** делают его идеальным выбором для критически важных пакетных операций в **enterprise** системах. 🚀
+**Spring Batch** является **industrial standard** для **enterprise batch processing**. Его зрелость, надежность и интеграция с **Spring** делают его идеальным выбором для критически важных пакетных операций в **enterprise** системах.
 
 **Далее: `Spring Integration` (enterprise integration patterns)**

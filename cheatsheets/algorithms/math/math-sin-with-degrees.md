@@ -89,7 +89,7 @@ double degrees90 = Math.toDegrees(halfPi);  // 90.0
 
 ## Вычисление синуса
 
-Угол в градусах → `Math.toRadians(degrees)` → `Math.sin(radians)`. Если угол уже в радианах, вызываем `Math.sin` напрямую.
+Угол в градусах `Math.toRadians(degrees)` `Math.sin(radians)`. Если угол уже в радианах, вызываем `Math.sin` напрямую.
 
 ```java
 // Проверка: sin(30°) через toRadians и через явные радианы дают один результат
@@ -232,7 +232,7 @@ public class Trigonometry {
 
 ### Вариант 2: Преобразование углов
 
-Конвертер градусы ↔ радианы и нормализация угла в [0, 360).
+Конвертер градусы радианы и нормализация угла в [0, 360).
 
 ```java
 public class AngleConverter {

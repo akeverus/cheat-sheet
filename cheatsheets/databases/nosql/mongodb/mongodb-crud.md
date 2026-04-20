@@ -112,13 +112,13 @@ updated: "2026-02-11"
 
 | Операция | **Atomic** | **Isolated** | **Consistent** | **Durable** |
 |----------|--------|----------|------------|---------|
-| **insertOne** | ✓ | ✓ | ✓ | ✓ |
-| **updateOne** | ✓ | ✓ | ✓ | ✓ |
-| **deleteOne** | ✓ | ✓ | ✓ | ✓ |
-| **findOneAndUpdate** | ✓ | ✓ | ✓ | ✓ |
-| **findOneAndDelete** | ✓ | ✓ | ✓ | ✓ |
-| **Bulk operations** | ✓ | ✓ | ✓ | ✓ |
-| **Multi-document** tx | ✓ | ✓ | ✓ | ✓ |
+| **insertOne** | | | | |
+| **updateOne** | | | | |
+| **deleteOne** | | | | |
+| **findOneAndUpdate** | | | | |
+| **findOneAndDelete** | | | | |
+| **Bulk operations** | | | | |
+| **Multi-document** tx | | | | |
 
 ### Производительность операций
 
@@ -135,7 +135,7 @@ updated: "2026-02-11"
 - **Connection pooling**: Переиспользование соединений
 - **Async operations**: Неблокирующие операции в драйверах
 
-Схема операций **CRUD** в **MongoDB** (insert → find → update → remove).
+Схема операций **CRUD** в **MongoDB** (insert find update remove).
 
 ```mermaid
 flowchart LR
@@ -786,7 +786,7 @@ public class BookService {
 
 ### Удаление всех документов
 
-```java
+```
 `@Service`
 public class `BookService` {
 
@@ -815,7 +815,7 @@ public class `BookService` {
 
 ### Write Concern уровни
 
-```java
+```
 `@Configuration`
 public class `MongoConfig` {
 

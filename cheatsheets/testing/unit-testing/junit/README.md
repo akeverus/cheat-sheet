@@ -71,7 +71,7 @@ JUnit 5 — выбор по умолчанию для большинства Jav
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 ч):** `junit.md` → `assertj.md` → `mockito.md`.
+- **Быстрый старт (1 ч):** `junit.md` `assertj.md` `mockito.md`.
 - **Боевой проект (1 день):** весь раздел + Testcontainers + Spring Testing.
 
 ## Куда идти дальше

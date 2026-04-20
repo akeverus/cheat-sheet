@@ -62,7 +62,7 @@ Selenium — лучший выбор, когда команда уже на JVM/
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 ч):** введение → WebDriver setup → первый тест → explicit waits.
+- **Быстрый старт (1 ч):** введение WebDriver setup первый тест explicit waits.
 - **Боевой suite (1 день):** весь документ + Page Object + parallel + Selenoid/Grid.
 
 ## Куда идти дальше

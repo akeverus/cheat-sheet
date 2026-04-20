@@ -559,22 +559,22 @@ Obsidian callouts (`> [!note]`, `> [!warning]`, `> [!tip]`) допустимы, 
 
 **Хорошо** (Mermaid):
 ````markdown
-```mermaid
+```
 flowchart LR
     Client --> Server --> Database
 ```text
-````
+```
 
 **Исключение.** Очень простые ASCII-структуры (дерево каталогов, план файла) — допустимы в блоке ```` ```text ```` и только если они **реально** нужны:
 
 ````markdown
-```text
+```
 cheatsheets/
 ├── algorithms/
 ├── databases/
 └── CHEATSHEETS_ARCHITECTURE_AND_RULES.md
 ```text
-````
+```
 
 #### Длина строки и пробелы
 

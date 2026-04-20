@@ -50,7 +50,7 @@ related: ["quarkus-core.md", "quarkus-actuator.md"]
 - [Logging Best Practices](#logging-best-practices)
   - [4. Проверяйте уровень перед логированием](#4-проверяйте-уровень-перед-логированием)
   - [5. Используйте правильные appenders](#5-используйте-правильные-appenders)
-- [✅ Хорошо — для production](#хорошо-для-production)
+- [ Хорошо — для production](#хорошо-для-production)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 

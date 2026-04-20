@@ -328,13 +328,13 @@ flowchart TD
 
 **Кратко:**
 
-- **Нет Spring, Java 11+** → `java.net.http.HttpClient` (стандарт) или OkHttp (удобнее).
-- **Spring Boot 3.2+ MVC** → `RestClient`.
-- **Spring Boot 2.x MVC** → `RestTemplate` сейчас, план миграции на `RestClient` после апгрейда.
-- **Spring WebFlux** → `WebClient`.
-- **Микросервисы + Spring Cloud** → `OpenFeign` + `Resilience4j` (см. [[java-resilience4j|Resilience4j]]).
-- **Android/Kotlin** → OkHttp + Retrofit.
-- **Enterprise с NTLM/сложным TLS/прокси** → Apache HttpClient 5.
+- **Нет Spring, Java 11+** `java.net.http.HttpClient` (стандарт) или OkHttp (удобнее).
+- **Spring Boot 3.2+ MVC** `RestClient`.
+- **Spring Boot 2.x MVC** `RestTemplate` сейчас, план миграции на `RestClient` после апгрейда.
+- **Spring WebFlux** `WebClient`.
+- **Микросервисы + Spring Cloud** `OpenFeign` + `Resilience4j` (см. [[java-resilience4j|Resilience4j]]).
+- **Android/Kotlin** OkHttp + Retrofit.
+- **Enterprise с NTLM/сложным TLS/прокси** Apache HttpClient 5.
 
 ## Типовые задачи
 

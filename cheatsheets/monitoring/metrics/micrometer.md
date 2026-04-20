@@ -258,7 +258,7 @@ MeterFilter позволяет добавлять общие теги, пере�
 
 **Зависимости Maven (выборка):** micrometer-core (ядро), micrometer-registry-prometheus, micrometer-registry-statsd, micrometer-registry-graphite, micrometer-registry-influx, micrometer-registry-jmx. В Spring Boot обычно достаточно micrometer-registry-prometheus; micrometer-core подтягивается транзитивно.
 
-**Типы Meter и вывод в Prometheus:** Counter → name_total; Timer → name_seconds (histogram/summary), name_seconds_count, name_seconds_sum; Gauge → name; DistributionSummary → name_count, name_sum, name (histogram/summary); LongTaskTimer → name_active_count, name_duration_seconds.
+**Типы Meter и вывод в Prometheus:** Counter name_total; Timer name_seconds (histogram/summary), name_seconds_count, name_seconds_sum; Gauge name; DistributionSummary name_count, name_sum, name (histogram/summary); LongTaskTimer name_active_count, name_duration_seconds.
 
 
 **Заключение.** Micrometer — фасад для метрик в JVM-приложениях с экспортом в Prometheus, Graphite, InfluxDB, StatsD и др. Используйте Counter, Timer, Gauge, DistributionSummary для инструментирования; в Spring Boot подключите micrometer-registry-prometheus и откройте /actuator/prometheus для Prometheus. Соблюдайте правила именования и ограничивайте кардинальность тегов. См. [Micrometer Docs](https://micrometer.io/docs), [Spring Boot Metrics](https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.metrics).

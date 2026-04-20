@@ -83,10 +83,10 @@ Quarkus — Kubernetes-native Java фреймворк от Red Hat, ориент
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 день):** `quarkus-basics.md` → `quarkus-rest.md` → `quarkus-data.md` → `quarkus-testing.md`.
-- **Переход со Spring Boot:** `quarkus-basics.md` → сравнение в [[README]] → `quarkus-core.md` → `quarkus-data.md` → `quarkus-security.md`.
-- **Native image для прода:** `quarkus-graalvm.md` → `quarkus-cloud.md` → `quarkus-actuator.md`.
-- **Reactive-пайплайны:** `quarkus-reactive.md` → `quarkus-kafka.md` → `quarkus-grpc.md`.
+- **Быстрый старт (1 день):** `quarkus-basics.md` `quarkus-rest.md` `quarkus-data.md` `quarkus-testing.md`.
+- **Переход со Spring Boot:** `quarkus-basics.md` сравнение в [[README]] `quarkus-core.md` `quarkus-data.md` `quarkus-security.md`.
+- **Native image для прода:** `quarkus-graalvm.md` `quarkus-cloud.md` `quarkus-actuator.md`.
+- **Reactive-пайплайны:** `quarkus-reactive.md` `quarkus-kafka.md` `quarkus-grpc.md`.
 
 ## Куда идти дальше
 

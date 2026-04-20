@@ -64,7 +64,7 @@ PagerDuty — облачный сервис для управления инци
 ## Регистрация и настройка
 
 1. Зарегистрироваться на [pagerduty.com](https://www.pagerduty.com/), создать организацию и при необходимости team.
-2. Создать Service: Services → New Service — имя, Escalation Policy, Alert Grouping.
+2. Создать Service: Services New Service — имя, Escalation Policy, Alert Grouping.
 3. Добавить Integration к сервису: тип Events API v2. Получить Routing Key (Integration Key).
 4. Настроить Escalation Policy: уровни (например, Level 1 — онколл по расписанию), таймеры эскалации (например, 15 минут без ответа).
 5. Создать Schedule и добавить пользователей в слоты; привязать Escalation Policy к Schedule для Level 1.

@@ -80,9 +80,9 @@ RabbitMQ — открытый брокер сообщений, реализую�
 
 ## Маршруты чтения
 
-- **Базовое использование в микросервисе (1 ч):** [[rabbitmq]] → настройка Spring AMQP → publisher confirms → DLX.
-- **Production deployment (3 ч):** [[rabbitmq-advanced]] → quorum queues → мониторинг → runbook.
-- **Миграция с Kafka → RabbitMQ:** exchange types → routing → retention → DLX.
+- **Базовое использование в микросервисе (1 ч):** [[rabbitmq]] настройка Spring AMQP publisher confirms DLX.
+- **Production deployment (3 ч):** [[rabbitmq-advanced]] quorum queues мониторинг runbook.
+- **Миграция с Kafka RabbitMQ:** exchange types routing retention DLX.
 
 ## Куда идти дальше
 

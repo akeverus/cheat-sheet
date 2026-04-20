@@ -78,8 +78,8 @@ Terraform выигрывает за счёт **зрелости экосисте
 
 ## Маршруты чтения
 
-- **Первый день:** `terraform-basics.md` → развернуть S3 bucket + VPC.
-- **Полный курс:** `terraform-basics.md` → `terraform.md` → `terraform-advanced.md`.
+- **Первый день:** `terraform-basics.md` развернуть S3 bucket + VPC.
+- **Полный курс:** `terraform-basics.md` `terraform.md` `terraform-advanced.md`.
 - **Production-ready:** + remote state (S3 + DynamoDB lock) + tfsec в CI + модули из Registry.
 
 ## Куда идти дальше

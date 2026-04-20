@@ -63,7 +63,7 @@ Jira — система учёта задач и проектов. Исполь�
 
 ## Рабочий процесс
 
-Рабочий процесс — набор статусов и переходов (например: Open → In Progress → Code Review → Done). Переходы могут требовать заполнения полей, разрешений. Типовой поток: создание → в работе → ревью → закрытие.
+Рабочий процесс — набор статусов и переходов (например: Open In Progress Code Review Done). Переходы могут требовать заполнения полей, разрешений. Типовой поток: создание в работе ревью закрытие.
 
 
 ## JQL и фильтры
@@ -202,22 +202,22 @@ public class JiraClientService {
 }
 ```
 
-**Использование:** вызов `createIssue("MYPROJ", "Task", "Заголовок", "Описание")` создаёт задачу; `searchByJql("project = MYPROJ AND resolution = Unresolved ORDER BY updated DESC", 20)` — возвращает список открытых задач. API Token создаётся в [Atlassian Account → Security → API tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
+**Использование:** вызов `createIssue("MYPROJ", "Task", "Заголовок", "Описание")` создаёт задачу; `searchByJql("project = MYPROJ AND resolution = Unresolved ORDER BY updated DESC", 20)` — возвращает список открытых задач. API Token создаётся в [Atlassian Account Security API tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
 
 
 ## Кейсы использования с n8n
 
 n8n позволяет строить сценарии без кода: триггер (расписание, webhook, событие из приложения) и действия (запрос к Jira API, отправка в Slack и т.д.). Ниже — кейсы с Jira и n8n.
 
-### Кейс 1: Новая задача в Jira → уведомление в Slack
+### Кейс 1: Новая задача в Jira уведомление в Slack
 
-- **Триггер:** Webhook (n8n даёт URL; в Jira → Settings → System → WebHooks добавляется webhook на событие «Issue created» с URL n8n).
+- **Триггер:** Webhook (n8n даёт URL; в Jira Settings System WebHooks добавляется webhook на событие «Issue created» с URL n8n).
 - **Шаг 2:** в n8n отфильтровать по проекту/типу (например, только Story в MYPROJ).
 - **Шаг 3:** узел Slack — отправить в канал сообщение с ключом задачи, названием и ссылкой `https://your-domain.atlassian.net/browse/{{ $json.issue.key }}`.
 
 Итог: при создании задачи в Jira в Slack автоматически появляется уведомление.
 
-### Кейс 2: Ежедневный отчёт по задачам (JQL → Slack)
+### Кейс 2: Ежедневный отчёт по задачам (JQL Slack)
 
 - **Триггер:** узел Schedule (Cron: каждый день в 9:00).
 - **Шаг 2:** узел Jira — операция Search с JQL вида `project = MYPROJ AND assignee = currentUser() AND resolution = Unresolved ORDER BY priority DESC`.
@@ -266,7 +266,7 @@ Work In Progress — максимум задач в столбце (часто �
 Scrum: фиксированные спринты, бэклог, планирование, ретро. Kanban: непрерывный поток, без спринтов, акцент на WIP и cycle time.
 
 **Как связать задачу с другой?**
-В задаче: Links → Add link → «Blocks», «Is blocked by», «Relates to» и др.
+В задаче: Links Add link «Blocks», «Is blocked by», «Relates to» и др.
 
 **Как найти все свои открытые задачи?**
 JQL: `assignee = currentUser() AND resolution = Unresolved ORDER BY priority DESC`. Сохранить как фильтр.

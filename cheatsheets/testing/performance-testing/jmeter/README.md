@@ -12,7 +12,7 @@ updated: "2026-04-17"
 ---
 # Apache JMeter
 
-Apache JMeter — зрелый инструмент нагрузочного, стрессового и функционального тестирования. Поддерживает HTTP/HTTPS, JDBC, JMS, SOAP, LDAP, TCP. План теста (Test Plan) строится в GUI как дерево Thread Group → Samplers → Listeners → Assertions, а прогоняется в non-GUI (CLI) для минимального overhead.
+Apache JMeter — зрелый инструмент нагрузочного, стрессового и функционального тестирования. Поддерживает HTTP/HTTPS, JDBC, JMS, SOAP, LDAP, TCP. План теста (Test Plan) строится в GUI как дерево Thread Group Samplers Listeners Assertions, а прогоняется в non-GUI (CLI) для минимального overhead.
 
 Применяйте, когда нужен максимально широкий набор протоколов (не только HTTP), богатая экосистема плагинов и готовый распределённый запуск (master/slaves). JMeter остаётся стандартом де-факто в enterprise-окружениях и QA-отделах, где GUI-конструктор ускоряет сборку сложных планов.
 
@@ -62,7 +62,7 @@ JMeter — лучший выбор для enterprise-стека, кросс-пр
 
 ## Маршруты чтения
 
-- **Быстрый старт (30 мин):** введение → первый Test Plan → запуск в non-GUI → HTML-отчёт.
+- **Быстрый старт (30 мин):** введение первый Test Plan запуск в non-GUI HTML-отчёт.
 - **Production-setup (3 ч):** весь документ + распределённый запуск + JSR223 + CI/CD.
 
 ## Куда идти дальше

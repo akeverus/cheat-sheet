@@ -61,7 +61,7 @@ Telegram — мессенджер с двумя API: **Bot API** (HTTPS-обёр
 
 ## Быстрый старт: notifications
 
-1. `@BotFather` → `/newbot` → получите `TOKEN`.
+1. `@BotFather` `/newbot` получите `TOKEN`.
 2. Добавьте бота в канал/группу, сделайте админом.
 3. Узнайте `chat_id`:
 
@@ -111,7 +111,7 @@ Telegram шлёт POST с `Update`; в header `X-Telegram-Bot-Api-Secret-Token` 
 
 ### 1. Alerting-бот
 
-- Prometheus/Grafana → webhook → Telegram bot → канал `@team-alerts`.
+- Prometheus/Grafana webhook Telegram bot канал `@team-alerts`.
 - [alertmanager-telegram-bot](https://github.com/metalmatze/alertmanager-bot).
 
 ### 2. Inline-кнопки
@@ -133,7 +133,7 @@ Telegram шлёт POST с `Update`; в header `X-Telegram-Bot-Api-Secret-Token` 
 
 ### 3. Команды (commands)
 
-У BotFather → `/setcommands` → список. Пример: `/status`, `/restart`, `/logs`.
+У BotFather `/setcommands` список. Пример: `/status`, `/restart`, `/logs`.
 
 ### 4. Mini Apps (Web Apps)
 
@@ -158,7 +158,7 @@ HTML-страница, которая открывается внутри Telegr
 
 ## Маршруты чтения
 
-- **Новичок:** [[telegram-basics]] → @BotFather → первый sendMessage.
+- **Новичок:** [[telegram-basics]] @BotFather первый sendMessage.
 - **DevOps:** alerting-бот + callback buttons + ChatOps.
 - **Продуктовик:** Mini Apps, Payment API, inline-режим.
 

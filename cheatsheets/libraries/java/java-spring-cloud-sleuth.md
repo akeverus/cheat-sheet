@@ -2371,7 +2371,7 @@ public class BadPerformanceTracing {
 **Spring Cloud Sleuth** рекомендуется как основной выбор для **distributed tracing** в **Spring Boot** приложениях, особенно в микросервисных архитектурах.
 
 
-[⬆️ Наверх](../)
+[⬆ Наверх](../)
 
 ## См. также
 

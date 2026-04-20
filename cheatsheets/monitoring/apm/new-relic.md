@@ -194,10 +194,10 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 
 | Сигнал | Где смотреть в New Relic |
 |--------|---------------------------|
-| Latency | APM → Transactions → duration (avg, p95, p99) |
-| Traffic | APM → Throughput (RPM) |
-| Errors | APM → Errors, Error rate в транзакциях |
-| Saturation | Infrastructure → CPU, Memory, Disk |
+| Latency | APM Transactions duration (avg, p95, p99) |
+| Traffic | APM Throughput (RPM) |
+| Errors | APM Errors, Error rate в транзакциях |
+| Saturation | Infrastructure CPU, Memory, Disk |
 
 
 ## Глоссарий

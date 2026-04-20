@@ -434,7 +434,7 @@ public class SparkStreamingService {
 
 ```java
 // ClickHouse Python example replaced with Java Spring
-``````java
+```
 // `JDBC` драйвер
 <dependency>
     <`groupId`>com.clickhouse</groupId>
@@ -471,7 +471,7 @@ pstmt.`executeBatch`();
 
 ### Go
 
-```java
+```
 <!-- `Maven dependency for ClickHouse Java client` -->
 <dependency>
     <`groupId`>com.clickhouse</groupId>
@@ -587,7 +587,7 @@ public class `ClickHouseGoStyleService` {
 
 ### Node.js
 
-```java
+```
 `@Configuration`
 public class `ClickHouseConfig` {
 
@@ -664,7 +664,7 @@ public class `ClickHouseService` {
 
 ### AWS
 
-```sql
+```
 -- `ClickHouse` в `AWS`
 -- Использование `S3` для бэкапов
 `CREATE TABLE events_backup` (
@@ -689,7 +689,7 @@ public class `ClickHouseService` {
 
 ### Google Cloud Platform
 
-```sql
+```
 -- `BigQuery` federation
 `SELECT` *
 `FROM` bigquery('`my-project`.`my-dataset`.`my-table`', '`service-account-key`.json');
@@ -718,7 +718,7 @@ public class `ClickHouseService` {
 
 ### Azure
 
-```sql
+```
 -- `Azure Blob Storage`
 `CREATE TABLE azure_backup` (
     id `UInt64`,
@@ -746,7 +746,7 @@ public class `ClickHouseService` {
 
 ### Apache NiFi
 
-```xml
+```
 <!-- `NiFi` процессор для `ClickHouse` -->
 <processor>
     <id>`clickhouse-processor`</id>
@@ -766,7 +766,7 @@ public class `ClickHouseService` {
 
 ### Apache Flink
 
-```java
+```
 // `Flink ClickHouse` sink
 `DataStream`<`Event`> events = ...;
 
@@ -783,7 +783,7 @@ events.`addSink`(new `ClickHouseSink`<>(
 
 ### dbt (Data Build Tool)
 
-```yaml
+```
 # dbt `profiles.yml`
 clickhouse:
   target: dev
@@ -798,7 +798,7 @@ clickhouse:
       schema: default
 ```text
 
-```sql
+```
 -- dbt модель
 {{ config(
     materialized='table',
@@ -820,7 +820,7 @@ clickhouse:
 
 ### Prometheus
 
-```yaml
+```
 # `prometheus.yml`
 `scrape_configs`:
   - `job_name`: 'clickhouse'
@@ -841,7 +841,7 @@ rate(`clickhouse_query_total`[5m])
 
 ### ELK Stack
 
-```json
+```
 // `Logstash` конфигурация
 input {
   clickhouse {
@@ -863,7 +863,7 @@ output {
 
 ### Jaeger/OpenTelemetry
 
-```java
+```
 // `OpenTelemetry` интеграция
 `ClickHouseSpanExporter` exporter = new `ClickHouseSpanExporter`(
     "jdbc:clickhouse://`clickhouse-host`:8123/default"
@@ -893,7 +893,7 @@ output {
    - Grafana: Для визуализации и мониторинга
 
 2. Оптимизируйте конвейеры данных
-   ```sql
+   ```
    — Используйте буферные таблицы
    `CREATE TABLE events_queue` (
        timestamp `DateTime`,
@@ -923,7 +923,7 @@ output {
 ### Безопасность интеграций
 
 1. Аутентификация и авторизация
-   ```sql
+   ```
    — Создание пользователей для интеграций
    `CREATE USER etl_user IDENTIFIED BY` '`secure_password`';
    `GRANT SELECT`, `INSERT ON` events `TO etl_user`;
@@ -933,7 +933,7 @@ output {
    ```text
 
 2. Шифрование данных
-   ```xml
+   ```
    <!-- `TLS` для внешних подключений -->
    <https_port>8123</https_port>
    <certificateFile>server.crt</certificateFile>
@@ -941,7 +941,7 @@ output {
    ```text
 
 3. Ограничения ресурсов
-   ```sql
+   ```
    — Ограничения для пользователей
    `CREATE USER api_user IDENTIFIED BY` 'password'
    `SETTINGS`
@@ -953,7 +953,7 @@ output {
 ### Производительность интеграций
 
 1. Batch операции
-   ```java
+   ```
 // `ClickHouse Python example replaced with Java Spring`
 ```text
 

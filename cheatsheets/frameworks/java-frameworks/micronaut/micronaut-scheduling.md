@@ -48,7 +48,7 @@ related: ["micronaut-core.md", "micronaut-reactive.md"]
   - [2. Обрабатывайте ошибки](#2-обрабатывайте-ошибки)
   - [3. Используйте async для долгих задач](#3-используйте-async-для-долгих-задач)
   - [4. Настраивайте thread pool правильно](#4-настраивайте-thread-pool-правильно)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [5. Используйте conditional scheduling](#5-используйте-conditional-scheduling)
 - [Dynamic Scheduling](#dynamic-scheduling)
   - [Programmatic Scheduling](#programmatic-scheduling)

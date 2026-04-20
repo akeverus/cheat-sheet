@@ -67,13 +67,13 @@ updated: "2026-04-17"
 
 | Критерий | Kafka | ActiveMQ | RabbitMQ | NATS |
 |----------|-------|----------|----------|------|
-| Модель | Partitioned log | JMS Queue/Topic | Exchange → Queue | Subject / JetStream |
+| Модель | Partitioned log | JMS Queue/Topic | Exchange Queue | Subject / JetStream |
 | Throughput | Очень высокий (100k-1M+/брокер) | Средний | Средний | Очень высокий |
 | Latency | Низкая-средняя (ms) | Средняя | Низкая | Sub-ms |
 | Хранение | Дни/недели/годы (tiered) | До потребления | До потребления | JetStream — persist |
 | Replay | Да (offset) | Нет | Нет | JetStream — да |
 | Ordering | Per-partition (строгий) | Per-queue | Per-queue | Subject order |
-| Routing | Тема + ключ → партиция | Селекторы JMS | Мощный routing (topic, direct, fanout) | Wildcard subjects |
+| Routing | Тема + ключ партиция | Селекторы JMS | Мощный routing (topic, direct, fanout) | Wildcard subjects |
 | Транзакции | Idempotent + transactional producer | JMS XA | Publisher confirms | JetStream ack |
 | Ops-сложность | Высокая (Zookeeper/KRaft, брокеры, репликация) | Средняя | Средняя | Низкая |
 | Типовой кейс | Events, streaming, analytics | Enterprise JMS, request-reply | Сложный routing, RPC | IoT, microservices, low-latency |
@@ -107,10 +107,10 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Первый producer/consumer (1 день):** `kafka.md` — основы + Spring Kafka → простой producer и `@KafkaListener`.
-- **Event-driven миграция с REST:** `kafka.md` — топики как контракт → schema registry → idempotent producer → DLT.
-- **Streaming / analytics:** Kafka Streams или Flink → state stores → exactly-once → `kafka-advanced.md`.
-- **Production hardening:** security → lag monitoring → multi-region (MirrorMaker 2) → tiered storage.
+- **Первый producer/consumer (1 день):** `kafka.md` — основы + Spring Kafka простой producer и `@KafkaListener`.
+- **Event-driven миграция с REST:** `kafka.md` — топики как контракт schema registry idempotent producer DLT.
+- **Streaming / analytics:** Kafka Streams или Flink state stores exactly-once `kafka-advanced.md`.
+- **Production hardening:** security lag monitoring multi-region (MirrorMaker 2) tiered storage.
 
 ## Куда идти дальше
 

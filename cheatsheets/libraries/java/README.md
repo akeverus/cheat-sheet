@@ -42,7 +42,7 @@ updated: "2026-04-20"
 
 ### Serialization / DTO
 - [[java-jackson|Jackson]] — JSON сериализация/десериализация
-- [[java-mapstruct|MapStruct]] — compile-time маппинг DTO ↔ entity
+- [[java-mapstruct|MapStruct]] — compile-time маппинг DTO entity
 - [[java-lombok|Lombok]] — кодогенерация (getters/setters/builder/logger)
 - [[java-bean-validation|Bean Validation]] — JSR-380, аннотации валидации
 
@@ -82,7 +82,7 @@ updated: "2026-04-20"
 | Office-форматы | Apache POI |
 | Бинарная сериализация | Protobuf |
 | JSON сериализация | Jackson |
-| DTO ↔ entity маппинг | MapStruct |
+| DTO entity маппинг | MapStruct |
 | Кодогенерация POJO / logger | Lombok |
 | Валидация DTO (JSR-380) | Bean Validation (Hibernate Validator) |
 
@@ -91,14 +91,14 @@ updated: "2026-04-20"
 - **HTTP:** обзор всех вариантов — [[java-http-clients]]. OkHttp — default для Android/Kotlin; Apache HttpClient — enterprise/прокси/NTLM; Retrofit — нужен типизированный DSL; Spring `RestClient`/`WebClient` — Spring-сервисы.
 - **Pool:** HikariCP — индустриальный стандарт; альтернативы (Tomcat JDBC, DBCP2) — legacy.
 - **ORM vs SQL:** jOOQ — когда нужен SQL-контроль и реляционная модель; Hibernate — для богатых агрегатов (см. [[README|databases/orm]]).
-- **Observability:** Micrometer → Prometheus/VictoriaMetrics; OpenTelemetry — единый стандарт trace/metric/log (Sleuth deprecated в Spring Boot 3).
+- **Observability:** Micrometer Prometheus/VictoriaMetrics; OpenTelemetry — единый стандарт trace/metric/log (Sleuth deprecated в Spring Boot 3).
 - **Resilience:** Resilience4j заменил Hystrix; Spring Cloud CircuitBreaker — это abstraction поверх него.
 
 ## Маршруты чтения
 
-- **Production-чеклист сервиса:** HikariCP → Micrometer → Resilience4j → OpenTelemetry.
-- **Test pyramid:** REST-Assured (E2E) → WireMock (контрактные) → Testcontainers (интеграционные).
-- **Legacy-миграция:** Sleuth → OpenTelemetry; Hystrix → Resilience4j; Apache HttpClient 4 → 5.
+- **Production-чеклист сервиса:** HikariCP Micrometer Resilience4j OpenTelemetry.
+- **Test pyramid:** REST-Assured (E2E) WireMock (контрактные) Testcontainers (интеграционные).
+- **Legacy-миграция:** Sleuth OpenTelemetry; Hystrix Resilience4j; Apache HttpClient 4 5.
 
 ## Куда идти дальше
 

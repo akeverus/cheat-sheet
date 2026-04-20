@@ -39,7 +39,7 @@ related: ["quarkus-core.md", "quarkus-security.md"]
   - [1. Используйте Panache для упрощения](#1-используйте-panache-для-упрощения)
   - [2. Используйте @Transactional правильно](#2-используйте-transactional-правильно)
   - [3. Используйте миграции](#3-используйте-миграции)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
 - [Panache Query Methods](#panache-query-methods)
   - [Query Methods](#query-methods)
   - [Custom Queries](#custom-queries)

@@ -72,16 +72,16 @@ updated: "2026-04-17"
 ## Типичные проблемы Maven и как их лечить
 
 - **Медленная сборка.** Использовать `-T 1C` (parallel), inclemental modules `-pl`, mvnd (Maven Daemon). Для кэша — Gradle Enterprise Develocity Maven plugin.
-- **Конфликты версий (dependency hell).** `mvn dependency:tree` → `<dependencyManagement>` с BOM → enforcer-rules (`dependencyConvergence`).
+- **Конфликты версий (dependency hell).** `mvn dependency:tree` `<dependencyManagement>` с BOM enforcer-rules (`dependencyConvergence`).
 - **Непрозрачные плагины.** `mvn help:effective-pom`, `mvn help:effective-settings`.
 - **Дрифт версий.** `versions-maven-plugin` + `<dependencyManagement>` + lock-файлы (Maven Dependency Lock).
 - **Отсутствие reproducible builds.** Указать `maven.build.timestamp`, зафиксировать версии плагинов.
 
 ## Маршруты чтения
 
-- **Первый проект (1 день):** `maven.md` → собрать Spring Boot через `mvn spring-boot:run` → `mvn package`.
+- **Первый проект (1 день):** `maven.md` собрать Spring Boot через `mvn spring-boot:run` `mvn package`.
 - **Enterprise-монорепо:** `maven-advanced.md` — reactor + BOM + профили + enforcer.
-- **Миграция на Gradle:** снять список плагинов Maven → найти аналоги → постепенный переход (сначала один модуль).
+- **Миграция на Gradle:** снять список плагинов Maven найти аналоги постепенный переход (сначала один модуль).
 
 ## Куда идти дальше
 

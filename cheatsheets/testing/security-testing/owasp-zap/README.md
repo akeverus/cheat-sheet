@@ -60,7 +60,7 @@ OWASP ZAP (Zed Attack Proxy) — открытый инструмент тест�
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 ч):** введение → Proxy + browser → passive scan → отчёт.
+- **Быстрый старт (1 ч):** введение Proxy + browser passive scan отчёт.
 - **DAST в CI (1 день):** весь документ + Automation Framework + Docker baseline scan в GitLab/Jenkins.
 
 ## Куда идти дальше

@@ -1876,15 +1876,15 @@ curl -X GET "localhost:9200/logs-*/_search" \
 4. **E-commerce analytics** — **product performance**, **user behavior**
 5. **IoT analytics** — **sensor data aggregation**, **anomaly detection**
 
-Агрегации **Elasticsearch** позволяют превращать сырые данные в **actionable insights**, обеспечивая мощную аналитику для принятия решений. Правильное проектирование и оптимизация агрегаций критически важны для масштабируемых и производительных аналитических систем. 🎯
+Агрегации **Elasticsearch** позволяют превращать сырые данные в **actionable insights**, обеспечивая мощную аналитику для принятия решений. Правильное проектирование и оптимизация агрегаций критически важны для масштабируемых и производительных аналитических систем.
 
 **Продолжение следует:**
-- ✅ **elasticsearch-basics.md** (завершен)
-- ✅ **elasticsearch-indexing.md** (завершен)
-- ✅ **elasticsearch-queries.md** (завершен)
-- ✅ **elasticsearch-aggregations.md** (завершен)
-- 🔄 **elasticsearch-clustering.md**
-- 🔄 **elasticsearch-performance.md**
+- **elasticsearch-basics.md** (завершен)
+- **elasticsearch-indexing.md** (завершен)
+- **elasticsearch-queries.md** (завершен)
+- **elasticsearch-aggregations.md** (завершен)
+- **elasticsearch-clustering.md**
+- **elasticsearch-performance.md**
 
 ## Решение проблем
 
@@ -1896,6 +1896,6 @@ curl -X GET "localhost:9200/logs-*/_search" \
 
 **Таймауты:** разбейте агрегацию на несколько запросов или используйте асинхронный search с длинным таймаутом. Оптимизируйте запрос — уберите лишние под-агрегации и уменьшите размер бакетов.
 
-Следующий файл — **elasticsearch-clustering.md**! 🚀
+Следующий файл — **elasticsearch-clustering.md**!
 
 

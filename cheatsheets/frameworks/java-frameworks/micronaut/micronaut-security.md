@@ -48,7 +48,7 @@ related: ["micronaut-core.md", "micronaut-http.md"]
   - [1. Используйте JWT для Stateless Applications](#1-используйте-jwt-для-stateless-applications)
   - [2. Валидируйте входные данные](#2-валидируйте-входные-данные)
   - [3. Используйте HTTPS в Production](#3-используйте-https-в-production)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [4. Ограничивайте время жизни токенов](#4-ограничивайте-время-жизни-токенов)
   - [5. Используйте Role-based Access Control](#5-используйте-role-based-access-control)
 - [LDAP Authentication](#ldap-authentication)

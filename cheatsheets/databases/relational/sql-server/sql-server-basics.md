@@ -232,11 +232,11 @@ ELSE
 
 | Уровень | Грязное чтение | Неповторяемое | Фантомы | Блокировки |
 |---------|---------------|---------------|---------|------------|
-| READ UNCOMMITTED | ✅ | ✅ | ✅ | минимальные |
-| READ COMMITTED (default) | ❌ | ✅ | ✅ | shared при чтении |
-| REPEATABLE READ | ❌ | ❌ | ✅ | shared до конца tx |
-| SERIALIZABLE | ❌ | ❌ | ❌ | range locks |
-| SNAPSHOT (MVCC) | ❌ | ❌ | ❌ | без блокировок, row-versioning |
+| READ UNCOMMITTED | | | | минимальные |
+| READ COMMITTED (default) | | | | shared при чтении |
+| REPEATABLE READ | | | | shared до конца tx |
+| SERIALIZABLE | | | | range locks |
+| SNAPSHOT (MVCC) | | | | без блокировок, row-versioning |
 
 Включите `READ_COMMITTED_SNAPSHOT` и/или `ALLOW_SNAPSHOT_ISOLATION` на БД для MVCC-поведения, как в PostgreSQL.
 

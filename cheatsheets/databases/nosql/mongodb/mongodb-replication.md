@@ -1089,7 +1089,7 @@ db.createUser({
 - **Игнорирование сетевых проблем** — **heartbeat timeouts**
 - **Неправильные write concerns** — слишком строгие или слабые
 
-**Replica Sets** обеспечивают надёжную основу для **production MongoDB** развёртываний. Понимание принципов репликации, правильная конфигурация и регулярное обслуживание гарантируют высокую доступность и надёжность системы. 🚀
+**Replica Sets** обеспечивают надёжную основу для **production MongoDB** развёртываний. Понимание принципов репликации, правильная конфигурация и регулярное обслуживание гарантируют высокую доступность и надёжность системы.
 
 ## Полезные ссылки
 
@@ -1136,7 +1136,7 @@ db.createUser({
 
 ### Базовая архитектура
 
-```mermaid
+```
 flowchart TB
     subgraph RS["Replica Set (Production)"]
         P["Primary Node<br/>Data Center 1"]
@@ -1177,7 +1177,7 @@ Primary + Secondary (не рекомендуется для production)
 
 ### 1. Подготовка серверов
 
-```bash
+```
 # Создание директорий для данных
 mkdir -p /data/db/rs0-1 /data/db/rs0-2 /data/db/rs0-3
 
@@ -1189,7 +1189,7 @@ mongod --replSet rs0 --port 27019 --dbpath /data/db/rs0-3 --logpath /data/db/rs0
 
 ### 2. Инициализация Replica Set
 
-```java
+```
 // Java + Spring implementation available
 ```text
 

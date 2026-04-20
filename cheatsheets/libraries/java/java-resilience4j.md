@@ -1793,7 +1793,7 @@ public class ResilienceHealthContributor implements HealthContributor {
 **Resilience4j** рекомендуется как основной выбор для современных **Java** приложений, требующих высокой надежности и **fault tolerance**.
 
 
-[⬆️ Наверх](../)
+[⬆ Наверх](../)
 
 ## См. также
 

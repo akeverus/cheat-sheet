@@ -43,7 +43,7 @@ related: ["quarkus-basics.md", "quarkus-testing.md"]
   - [Resource Limits](#resource-limits)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте Dev Services для разработки](#1-используйте-dev-services-для-разработки)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [2. Отключайте в production](#2-отключайте-в-production)
   - [3. Используйте отдельные контейнеры для тестов](#3-используйте-отдельные-контейнеры-для-тестов)
 - [Dev Services Configuration](#dev-services-configuration)

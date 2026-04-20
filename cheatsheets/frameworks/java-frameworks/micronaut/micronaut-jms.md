@@ -44,7 +44,7 @@ related: ["micronaut-reactive.md", "micronaut-kafka.md"]
   - [Transactional Consumer](#transactional-consumer)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте connection pooling](#1-используйте-connection-pooling)
-- [✅ Хорошо](#хорошо)
+- [ Хорошо](#хорошо)
   - [2. Обрабатывайте ошибки](#2-обрабатывайте-ошибки)
   - [3. Используйте transactions для критических операций](#3-используйте-transactions-для-критических-операций)
 - [Message Selectors](#message-selectors)

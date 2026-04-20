@@ -65,7 +65,7 @@ xUnit — оптимален для новых .NET-проектов: чиста
 
 ## Маршруты чтения
 
-- **Быстрый старт (1 ч):** введение → `dotnet test` → Fact/Theory → FluentAssertions.
+- **Быстрый старт (1 ч):** введение `dotnet test` Fact/Theory FluentAssertions.
 - **Боевой проект (1 день):** весь документ + фикстуры + parallel + CI/CD.
 
 ## Куда идти дальше

@@ -62,7 +62,7 @@ updated: "2026-04-17"
 
 | Критерий | ActiveMQ | Kafka | RabbitMQ | NATS |
 |----------|----------|-------|----------|------|
-| Модель | Queue / Topic (JMS) | Log (partitioned) | Exchange → Queue | Subject / JetStream |
+| Модель | Queue / Topic (JMS) | Log (partitioned) | Exchange Queue | Subject / JetStream |
 | Надёжность | Persistent, transactions | Log, replication | Persistent, mirrors | Core at-most-once; JetStream persist |
 | Throughput | Средний (10-50k msg/s) | Очень высокий (100k-1M+) | Средний | Очень высокий (lightweight) |
 | Latency | Средняя | Низкая-средняя | Низкая | Очень низкая (sub-ms) |
@@ -96,9 +96,9 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Первый Spring JMS-потребитель:** `activemq.md` → Spring JMS `@JmsListener` → очередь точка-точка.
+- **Первый Spring JMS-потребитель:** `activemq.md` Spring JMS `@JmsListener` очередь точка-точка.
 - **Миграция с RabbitMQ:** перевести exchange-binding на селекторы JMS; учесть ordering.
-- **Production hardening:** persistent store → DLQ → HA-конфигурация → мониторинг.
+- **Production hardening:** persistent store DLQ HA-конфигурация мониторинг.
 
 ## Куда идти дальше
 

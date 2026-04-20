@@ -51,7 +51,7 @@ System Design — это навык проектировать системы, �
 
 1. **Требования.** Функциональные (что делает) + нефункциональные (RPS, latency, доступность, объём данных).
 2. **Оценка масштаба.** QPS (средний/пиковый), storage за N лет, bandwidth, connection pool.
-3. **Высокоуровневая архитектура.** Клиент → LB → App → БД/Cache/Queue → CDN.
+3. **Высокоуровневая архитектура.** Клиент LB App БД/Cache/Queue CDN.
 4. **Углубление.** Схема БД, шардирование, стратегия кэша, API, failure modes.
 5. **Trade-offs.** CAP, консистентность vs доступность, push vs pull, sync vs async.
 
@@ -79,9 +79,9 @@ System Design — это навык проектировать системы, �
 
 ## Маршруты чтения
 
-- **Подготовка к system-design-интервью (3-5 дней):** `system-design-basics.md` → `interview/architecture/*` → проработать 5-10 классических задач (URL shortener, newsfeed, chat).
-- **Проектирование нового сервиса:** требования → capacity planning → выбор компонентов → ADR (`architectural-decision-records/`).
-- **Recovery после инцидента:** пересмотреть single points of failure → добавить резервирование → обновить SLO и runbook.
+- **Подготовка к system-design-интервью (3-5 дней):** `system-design-basics.md` `interview/architecture/*` проработать 5-10 классических задач (URL shortener, newsfeed, chat).
+- **Проектирование нового сервиса:** требования capacity planning выбор компонентов ADR (`architectural-decision-records/`).
+- **Recovery после инцидента:** пересмотреть single points of failure добавить резервирование обновить SLO и runbook.
 
 ## Куда идти дальше
 

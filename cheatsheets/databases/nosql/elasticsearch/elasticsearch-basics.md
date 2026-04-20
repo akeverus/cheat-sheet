@@ -1758,7 +1758,7 @@ public class ProductService {
 
 **Сколько шардов на индекс?** Ориентир — один шард до десятков ГБ; слишком много мелких шардов даёт накладные расходы. Для начала один primary shard на индекс; масштабировать при росте.
 
-**Как обеспечить консистентность с основной БД?** Реализовать синхронизацию (CDC, логирование, очереди): события из БД → обновление/индексация в ES. Понимать, что поиск в ES с задержкой (near real-time) — норма.
+**Как обеспечить консистентность с основной БД?** Реализовать синхронизацию (CDC, логирование, очереди): события из БД обновление/индексация в ES. Понимать, что поиск в ES с задержкой (near real-time) — норма.
 
 ## Заключение
 
@@ -1800,16 +1800,16 @@ public class ProductService {
 3. **Security hardening** — Аутентификация, авторизация, шифрование
 4. **Operational excellence** — **Backup**, **monitoring**, **automation**
 
-**Elasticsearch** — отличный выбор для приложений, требующих мощного поиска, аналитики и масштабируемого хранения данных. С правильной архитектурой и настройкой он обеспечивает высокую производительность и надежность в **production** средах. 🎯
+**Elasticsearch** — отличный выбор для приложений, требующих мощного поиска, аналитики и масштабируемого хранения данных. С правильной архитектурой и настройкой он обеспечивает высокую производительность и надежность в **production** средах.
 
 **Следующие файлы `Elasticsearch`:**
-- ✅ **elasticsearch-basics.md** (завершен)
-- 🔄 **elasticsearch-indexing.md**
-- 🔄 **elasticsearch-queries.md**
-- 🔄 **elasticsearch-aggregations.md**
-- 🔄 **elasticsearch-clustering.md**
-- 🔄 **elasticsearch-performance.md**
+- **elasticsearch-basics.md** (завершен)
+- **elasticsearch-indexing.md**
+- **elasticsearch-queries.md**
+- **elasticsearch-aggregations.md**
+- **elasticsearch-clustering.md**
+- **elasticsearch-performance.md**
 
-Продолжение следует... 🚀
+Продолжение следует...
 
 

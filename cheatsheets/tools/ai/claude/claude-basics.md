@@ -111,7 +111,7 @@ Claude Code позиционируется как «AI coding agent»:
 
 ### Установка в JetBrains IDE
 
-1. Откройте `Settings` → `Plugins`.
+1. Откройте `Settings` `Plugins`.
 2. Найдите `Claude Code` (или `Anthropic Claude Code`) в JetBrains Marketplace.
 3. Установите плагин и перезапустите IDE.
 4. После перезапуска появятся:

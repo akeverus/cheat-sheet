@@ -553,7 +553,7 @@ mapper.registerModule(new BlackbirdModule());  // Java 11+, замена Afterbu
 | `Cannot construct instance of ...: no Creators` | Нет default-конструктора или `@JsonCreator` | Добавить no-arg конструктор или `@JsonCreator` |
 | Даты приходят как числа | Включён `WRITE_DATES_AS_TIMESTAMPS` | Отключить через feature или `spring.jackson.serialization.write-dates-as-timestamps: false` |
 | Неизвестное поле валит сериализацию | `FAIL_ON_UNKNOWN_PROPERTIES = true` | Поставить `@JsonIgnoreProperties(ignoreUnknown = true)` или выключить feature |
-| Циклические ссылки → `StackOverflow` | Bidirectional JPA-связи | `@JsonManagedReference` / `@JsonBackReference` или DTO |
+| Циклические ссылки `StackOverflow` | Bidirectional JPA-связи | `@JsonManagedReference` / `@JsonBackReference` или DTO |
 | Password попадает в response | Нет `@JsonIgnore` | `@JsonIgnore` на поле или `@JsonProperty(access = WRITE_ONLY)` |
 | `LocalDateTime` приходит, но формат другой | Локальный `@JsonFormat` override | Проверить per-field `pattern`, `timezone` |
 | `JsonMappingException: (was java.lang.NullPointerException)` внутри getter | NPE в геттере | Защитить геттер или использовать `@JsonIgnore` |
@@ -566,7 +566,7 @@ mapper.registerModule(new BlackbirdModule());  // Java 11+, замена Afterbu
 - [[spring-rest|spring-rest]] — JSON в REST-контроллерах
 - [[spring-mvc|spring-mvc]] — MessageConverter для Jackson
 - [[java-bean-validation|java-bean-validation]] — валидация после десериализации
-- [[java-mapstruct|java-mapstruct]] — маппинг entity ↔ DTO
+- [[java-mapstruct|java-mapstruct]] — маппинг entity DTO
 - [[java-lombok|java-lombok]] — DTO с Lombok
 - [[java-protobuf|java-protobuf]] — бинарная сериализация как альтернатива
 - [[java-basics|java-basics]] — базовые концепции Java

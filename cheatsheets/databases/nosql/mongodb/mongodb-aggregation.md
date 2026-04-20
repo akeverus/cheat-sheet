@@ -58,7 +58,7 @@ updated: "2026-02-11"
 
 **Aggregation Framework** — это инструмент **MongoDB** для обработки, анализа и трансформации данных. Он позволяет выполнять сложные аналитические запросы, подобные **SQL GROUP** `BY`, **JOIN** и другим операциям реляционных баз данных.
 
-Схема пайплайна **Aggregation Framework**: входная коллекция → стадии → результат.
+Схема пайплайна **Aggregation Framework**: входная коллекция стадии результат.
 
 ```mermaid
 flowchart LR
@@ -683,7 +683,7 @@ public class `LimitSkipService` {
 
 Группирует документы по ключу и выполняет агрегационные функции.
 
-```java
+```
 @Service
 public class GroupAggregationService {
 
@@ -751,7 +751,7 @@ public class GroupAggregationService {
 
 ### Анализ продаж по категориям и времени
 
-```java
+```
 @Service
 public class SalesAnalyticsService {
 
@@ -846,7 +846,7 @@ public class SalesAnalyticsService {
 
 ### Использование индексов
 
-```java
+```
 @Configuration
 public class AggregationIndexConfig {
 
@@ -875,7 +875,7 @@ public class AggregationIndexConfig {
 
 ### Оптимизация производительности
 
-```java
+```
 @Service
 public class OptimizedAggregationService {
 
@@ -966,7 +966,7 @@ public class OptimizedAggregationService {
 
 ### Мониторинг и отладка
 
-```java
+```
 @Service
 public class AggregationMonitoringService {
 

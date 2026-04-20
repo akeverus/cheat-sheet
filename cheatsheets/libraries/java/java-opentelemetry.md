@@ -1830,7 +1830,7 @@ public class BadPropagationService {
 **OpenTelemetry** рекомендуется как основной выбор для **observability** в современных **distributed** системах и микросервисных архитектурах.
 
 
-[⬆️ Наверх](../)
+[⬆ Наверх](../)
 
 ## См. также
 

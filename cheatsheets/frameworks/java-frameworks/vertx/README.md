@@ -55,7 +55,7 @@ Eclipse Vert.x — реактивный event-driven toolkit для JVM. Арх�
 - Нужен максимальный throughput I/O-bound сервиса при малом числе потоков.
 - Проектируется API gateway, шлюз протоколов, стриминговый прокси.
 - Важна языковая гибкость (Kotlin/Scala на одном ядре).
-- **Не подходит**, если команда хочет императивный blocking-стиль или много готовых starters → бери Spring Boot; если нужен полный AOT/native → Quarkus.
+- **Не подходит**, если команда хочет императивный blocking-стиль или много готовых starters бери Spring Boot; если нужен полный AOT/native Quarkus.
 
 ## Сравнение с соседями
 
@@ -69,9 +69,9 @@ Eclipse Vert.x — реактивный event-driven toolkit для JVM. Арх�
 
 ## Маршруты чтения
 
-- **Быстрый старт:** `vertx-basics.md` → "HTTP Server" + "Event Bus" + "AsyncResult и Future".
-- **Проектирование API gateway:** `vertx-basics.md` → расширение через Vert.x Web + Kafka client.
-- **Квест "а что под Quarkus":** `vertx-basics.md` → [[quarkus-reactive|Quarkus Reactive]].
+- **Быстрый старт:** `vertx-basics.md` "HTTP Server" + "Event Bus" + "AsyncResult и Future".
+- **Проектирование API gateway:** `vertx-basics.md` расширение через Vert.x Web + Kafka client.
+- **Квест "а что под Quarkus":** `vertx-basics.md` [[quarkus-reactive|Quarkus Reactive]].
 
 ## Куда идти дальше
 
