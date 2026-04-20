@@ -503,6 +503,7 @@
     }
     initCollapsibleSidebar();
     initDangerousFormGuard();
+    initFlashcardShortcuts();
   });
 
   function apiPost(url, formData) {
@@ -1504,5 +1505,31 @@ function initDangerousFormGuard() {
         e.preventDefault();
       }
     });
+  });
+}
+
+function initFlashcardShortcuts() {
+  const phase = document.querySelector('.flashcard-phase');
+  if (!phase) return;
+  const revealBtn = phase.querySelector('.flashcard-reveal-btn');
+  const gradeBtns = phase.querySelectorAll('.flashcard-grade-btn');
+  document.addEventListener('keydown', (event) => {
+    if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) {
+      return;
+    }
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (revealBtn && (event.key === ' ' || event.key === 'Enter')) {
+      event.preventDefault();
+      revealBtn.click();
+      return;
+    }
+    if (gradeBtns.length > 0 && event.key >= '1' && event.key <= '4') {
+      const idx = parseInt(event.key, 10) - 1;
+      const btn = gradeBtns[idx];
+      if (btn) {
+        event.preventDefault();
+        btn.click();
+      }
+    }
   });
 }
