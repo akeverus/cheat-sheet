@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: WebSocket — Real-time Communication и STOMP
+# Micronaut: WebSocket - Real-time Communication и STOMP
 
 ## Полезные ссылки
 

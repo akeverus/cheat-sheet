@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 ---
 
-# ClickHouse: Запросы и аналитика — Полное руководство по SQL запросам
+# ClickHouse: Запросы и аналитика - Полное руководство по SQL запросам
 
 Комплексное руководство по запросам **ClickHouse**: **SELECT**, агрегация, оконные функции и аналитические возможности.
 

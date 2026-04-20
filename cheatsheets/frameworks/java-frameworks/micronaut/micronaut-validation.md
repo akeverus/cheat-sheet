@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
-# Micronaut: Validation — Bean Validation и Custom Validators
+# Micronaut: Validation - Bean Validation и Custom Validators
 
 ## Полезные ссылки
 

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Elasticsearch: Индексация документов — Управление данными и индексацией
+# Elasticsearch: Индексация документов - Управление данными и индексацией
 
 Комплексное руководство по индексации документов в **Elasticsearch**: **bulk operations**, **update strategies**, **routing**, **versioning** и оптимизация производительности индексации.
 

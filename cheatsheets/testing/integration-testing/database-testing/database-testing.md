@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Тестирование базы данных (`Database Testing`)
+# Тестирование базы данных (Database Testing)
 
 Проверка работы приложения с БД: схема, миграции, репозитории, транзакции, изоляция данных. Основные инструменты: `Testcontainers`, `H2`, `Flyway`, `Liquibase`, `@DataJpaTest`, `@SpringBootTest`.
 

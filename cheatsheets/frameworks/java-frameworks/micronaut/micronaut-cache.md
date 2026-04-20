@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-redis.md"]
 ---
 
-# Micronaut: Caching — Cache Abstraction и Redis Cache
+# Micronaut: Caching - Cache Abstraction и Redis Cache
 
 ## Полезные ссылки
 

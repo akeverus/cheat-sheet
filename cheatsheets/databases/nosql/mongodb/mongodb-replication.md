@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# MongoDB: Репликация — Replica Sets для высокой доступности и отказоустойчивости
+# MongoDB: Репликация - Replica Sets для высокой доступности и отказоустойчивости
 
 Полное руководство по репликации в **MongoDB**: **Replica Sets**, настройка, управление, **Read Preferences** и **Write Concerns**.
 

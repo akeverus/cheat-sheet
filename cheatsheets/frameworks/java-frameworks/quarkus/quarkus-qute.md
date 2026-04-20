@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Qute — Templating Engine
+# Quarkus: Qute - Templating Engine
 
 ## Полезные ссылки
 

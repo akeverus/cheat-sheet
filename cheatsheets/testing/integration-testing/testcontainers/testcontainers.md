@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Testcontainers (`Testcontainers`)
+# Testcontainers (Testcontainers)
 
 Библиотека для запуска реальных Docker-контейнеров в интеграционных тестах (Java, JUnit). БД, очереди, веб-серверы, произвольные образы; изоляция, повторяемость, совместимость с CI/CD.
 

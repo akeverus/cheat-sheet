@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-cache.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Redis — Caching и Data Structures
+# Quarkus: Redis - Caching и Data Structures
 
 ## Полезные ссылки
 

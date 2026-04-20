@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: REST — RESTEasy Reactive и JAX-RS
+# Quarkus: REST - RESTEasy Reactive и JAX-RS
 
 ## Полезные ссылки
 

@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-data.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: MongoDB — NoSQL Database
+# Quarkus: MongoDB - NoSQL Database
 
 ## Полезные ссылки
 

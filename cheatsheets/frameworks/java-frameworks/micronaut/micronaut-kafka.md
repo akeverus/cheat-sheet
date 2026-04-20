@@ -17,7 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-reactive.md", "micronaut-messaging.md"]
 ---
 
-# Micronaut: Kafka Integration — Producers, Consumers и Streams
+# Micronaut: Kafka Integration - Producers, Consumers и Streams
 
 ## Полезные ссылки
 

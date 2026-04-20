@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: Scheduling — Task Scheduling и Async Execution
+# Micronaut: Scheduling - Task Scheduling и Async Execution
 
 ## Полезные ссылки
 

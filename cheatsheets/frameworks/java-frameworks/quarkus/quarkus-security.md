@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Security — Authentication, Authorization и OAuth2
+# Quarkus: Security - Authentication, Authorization и OAuth2
 
 ## Полезные ссылки
 

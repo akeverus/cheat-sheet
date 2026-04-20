@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: Mail — Email Sending и Templates
+# Micronaut: Mail - Email Sending и Templates
 
 ## Полезные ссылки
 

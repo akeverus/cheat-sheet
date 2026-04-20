@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 ---
 
-# Scala Collections — Array
+# Scala Collections - Array
 
 Кратко: полное руководство по **Array** в **Scala**: массивы, операции, производительность, взаимодействие с **Java**.
 

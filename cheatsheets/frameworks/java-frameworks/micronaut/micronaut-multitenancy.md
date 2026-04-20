@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-data.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Multitenancy — Multi-tenant Applications
+# Micronaut: Multitenancy - Multi-tenant Applications
 
 ## Полезные ссылки
 

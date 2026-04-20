@@ -17,7 +17,7 @@ updated: "2026-02-11"
 related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/kotlin-reactive.md"]
 ---
 
-# Kotlin: основы
+# Основы Kotlin - Полное руководство
 
 Краткое руководство по языку Kotlin: синтаксис, null-safety, классы, корутины, функциональное программирование.
 

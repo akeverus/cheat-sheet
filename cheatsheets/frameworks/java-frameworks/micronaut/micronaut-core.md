@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Core — Dependency Injection и Bean Management
+# Micronaut: Core - Dependency Injection и Bean Management
 
 ## Полезные ссылки
 

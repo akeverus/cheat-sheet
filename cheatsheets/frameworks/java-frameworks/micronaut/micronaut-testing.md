@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Testing — Unit Tests, Integration Tests и Mocking
+# Micronaut: Testing - Unit Tests, Integration Tests и Mocking
 
 ## Полезные ссылки
 

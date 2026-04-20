@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Spring `AI`
+# Spring AI
 
 Кратко: **Spring** `AI` - фреймворк для интеграции искусственного интеллекта в **Spring** приложения. Поддержка различных `AI` моделей, промпты, **embedding**, **vector stores**, **RAG**.
 

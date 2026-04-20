@@ -15,7 +15,7 @@ next: ["spring/spring-boot.md", "interview/spring-data-jpa.md"]
 updated: "2026-02-06"
 ---
 
-# Spring Data JPA / Hibernate
+# Spring Data JPA/Hibernate
 
 ## Полезные ссылки
 

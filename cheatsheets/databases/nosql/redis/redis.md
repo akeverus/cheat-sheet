@@ -105,7 +105,7 @@ flowchart TD
 #### Linux (Ubuntu/Debian)
 
 ```bash
-# Обновление пакетов
+# Redis - Полное руководство по in-memory базе данных
 sudo apt update
 
 # Установка Redis

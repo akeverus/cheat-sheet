@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-rest.md", "quarkus-testing.md"]
 ---
 
-# Quarkus: Reactive — Mutiny и Reactive Messaging
+# Quarkus: Reactive - Mutiny и Reactive Messaging
 
 ## Полезные ссылки
 

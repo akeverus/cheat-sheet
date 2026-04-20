@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams
+# Micronaut: Reactive Programming - RxJava, Reactor и Reactive Streams
 
 ## Полезные ссылки
 

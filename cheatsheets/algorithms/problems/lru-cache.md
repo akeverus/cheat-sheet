@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Реализация LRU-кэша (`LRU Cache`)
+# Реализация LRU-кэша (LRU Cache)
 
 Кэш с вытеснением наименее недавно использованных элементов (Least Recently Used): HashMap + двусвязный список для get/put за O(1), потокобезопасный вариант с ReentrantReadWriteLock, вариант на LinkedHashMap и с TTL.
 

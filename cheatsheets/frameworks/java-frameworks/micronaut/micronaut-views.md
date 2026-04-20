@@ -17,7 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-mail.md"]
 ---
 
-# Micronaut: Views — Template Engines и View Rendering
+# Micronaut: Views - Template Engines и View Rendering
 
 ## Полезные ссылки
 

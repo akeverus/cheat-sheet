@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
-# Scala Functional Programming — Basics
+# Scala Functional Programming - Basics
 
 Кратко: основы функционального программирования в **Scala**: **Higher-Order Functions**, **Lambda Expressions**, **Currying**, **Partial Functions**, **Immutability**, **Pure Functions**.
 

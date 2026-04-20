@@ -784,7 +784,7 @@ events.`addSink`(new `ClickHouseSink`<>(
 ### dbt (Data Build Tool)
 
 ```
-# dbt `profiles.yml`
+# ClickHouse: Интеграции и экосистема - Подключение внешних систем и инструментов
 clickhouse:
   target: dev
   outputs:

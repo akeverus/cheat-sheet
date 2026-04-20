@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Scheduling — Планирование задач
+# Quarkus: Scheduling - Планирование задач
 
 ## Полезные ссылки
 

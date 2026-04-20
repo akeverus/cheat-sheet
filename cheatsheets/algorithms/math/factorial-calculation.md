@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Вычисление факториала (`Factorial Calculation`)
+# Вычисление факториала (Factorial Calculation)
 
 Факториал n (n!) — произведение 1×2×…×n; 0! = 1. В документе описаны цикл, рекурсия, Stream API, Apache Commons Math, Guava и работа с `BigInteger` в `Java` и Kotlin.
 

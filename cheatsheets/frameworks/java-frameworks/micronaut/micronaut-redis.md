@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-cache.md", "micronaut-messaging.md"]
 ---
 
-# Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache
+# Micronaut: Redis Integration - RedisTemplate, Pub/Sub и Cache
 
 ## Полезные ссылки
 

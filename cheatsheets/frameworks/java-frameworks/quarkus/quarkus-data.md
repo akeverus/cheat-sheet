@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-security.md"]
 ---
 
-# Quarkus: Data Access — Hibernate ORM, Panache и Repositories
+# Quarkus: Data Access - Hibernate ORM, Panache и Repositories
 
 ## Полезные ссылки
 

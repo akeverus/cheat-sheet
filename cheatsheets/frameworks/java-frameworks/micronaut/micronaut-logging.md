@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-actuator.md"]
 ---
 
-# Micronaut: Logging — Logback, SLF4J и Structured Logging
+# Micronaut: Logging - Logback, SLF4J и Structured Logging
 
 ## Полезные ссылки
 

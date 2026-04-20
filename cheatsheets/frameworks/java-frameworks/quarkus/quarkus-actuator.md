@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-cloud.md"]
 ---
 
-# Quarkus: Actuator — Health Checks и Metrics
+# Quarkus: Actuator - Health Checks и Metrics
 
 ## Полезные ссылки
 

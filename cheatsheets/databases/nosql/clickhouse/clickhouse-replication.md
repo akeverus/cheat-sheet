@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-views.md"]
 ---
 
-# ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость
+# ClickHouse: Репликация и кластеры - Отказоустойчивость и масштабируемость
 
 Комплексное руководство по репликации **ClickHouse**: **ReplicatedMergeTree**, кластеры, **ZooKeeper**, отказоустойчивость и распределенные запросы.
 

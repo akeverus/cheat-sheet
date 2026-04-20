@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# AWS IAM (`Identity and Access Management`)
+# AWS IAM (Identity and Access Management)
 
 **AWS IAM** — это сервис для управления доступом к **AWS** ресурсам. **IAM** позволяет создавать и управлять пользователями, группами, ролями и политиками для безопасного контроля доступа к **AWS** сервисам и ресурсам. Этот документ охватывает **best practices**, **advanced** паттерны и **enterprise** сценарии использования **IAM**.
 

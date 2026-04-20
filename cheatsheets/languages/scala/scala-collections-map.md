@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
-# Scala Collections — Map
+# Scala Collections - Map
 
 Кратко: руководство по работе со словарями в **Scala**: **Map**, **HashMap**, **SortedMap**, операции и лучшие практики.
 

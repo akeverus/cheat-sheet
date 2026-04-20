@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Обзор комбинаторных задач (`Combinatorial Problems Overview`)
+# Обзор комбинаторных задач (Combinatorial Problems Overview)
 
 Обзор трёх типов задач: перестановки (n!), набор мощности — powerset (2^n подмножеств), k-комбинации C(n,k). Рекурсивные алгоритмы с откатом (backtracking), примеры на Java и Kotlin.
 

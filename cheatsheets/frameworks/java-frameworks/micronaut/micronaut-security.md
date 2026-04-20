@@ -17,7 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
-# Micronaut: Security — Authentication и Authorization
+# Micronaut: Security - Authentication и Authorization
 
 ## Полезные ссылки
 

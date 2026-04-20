@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Безопасность `API`
+# Безопасность API
 
 Аутентификация и авторизация для `REST`/`GraphQL API`, `JWT` и `API Keys`, `Rate Limiting`, защита от типовых атак (`IDOR`, инъекции, злоупотребление `API`).
 

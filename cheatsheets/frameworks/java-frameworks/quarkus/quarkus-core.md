@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-basics.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Core — CDI, Bean Scopes и Configuration
+# Quarkus: Core - CDI, Bean Scopes и Configuration
 
 ## Полезные ссылки
 

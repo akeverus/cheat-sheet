@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 ---
 
-# Scala Collections — Vector
+# Scala Collections - Vector
 
 Кратко: полное руководство по **Vector** в **Scala**: эффективная структура данных для произвольного доступа, операции, производительность.
 

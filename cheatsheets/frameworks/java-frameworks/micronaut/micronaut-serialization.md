@@ -17,7 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-kafka.md"]
 ---
 
-# Micronaut: Serialization — JSON, XML и Custom Serializers
+# Micronaut: Serialization - JSON, XML и Custom Serializers
 
 ## Полезные ссылки
 

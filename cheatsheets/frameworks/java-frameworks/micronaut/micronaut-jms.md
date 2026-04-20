@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-reactive.md", "micronaut-kafka.md"]
 ---
 
-# Micronaut: JMS Integration — Message Queues и Topics
+# Micronaut: JMS Integration - Message Queues и Topics
 
 ## Полезные ссылки
 

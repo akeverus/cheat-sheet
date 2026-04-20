@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Mail — Отправка email
+# Quarkus: Mail - Отправка email
 
 ## Полезные ссылки
 

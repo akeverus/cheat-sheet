@@ -17,7 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: Data Access — JDBC, JPA и Repositories
+# Micronaut: Data Access - JDBC, JPA и Repositories
 
 ## Полезные ссылки
 

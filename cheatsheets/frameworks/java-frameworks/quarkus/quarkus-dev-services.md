@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-basics.md", "quarkus-testing.md"]
 ---
 
-# Quarkus: Dev Services — Автоматические сервисы для разработки
+# Quarkus: Dev Services - Автоматические сервисы для разработки
 
 ## Полезные ссылки
 

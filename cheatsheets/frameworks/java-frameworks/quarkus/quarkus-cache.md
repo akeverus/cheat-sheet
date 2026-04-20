@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-redis.md"]
 ---
 
-# Quarkus: Cache — Кеширование данных
+# Quarkus: Cache - Кеширование данных
 
 ## Полезные ссылки
 

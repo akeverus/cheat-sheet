@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-data.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: MongoDB Integration — Repositories и Queries
+# Micronaut: MongoDB Integration - Repositories и Queries
 
 ## Полезные ссылки
 

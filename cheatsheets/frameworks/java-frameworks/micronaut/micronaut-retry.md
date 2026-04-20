@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
-# Micronaut: Retry — Retry Logic и Circuit Breaker
+# Micronaut: Retry - Retry Logic и Circuit Breaker
 
 ## Полезные ссылки
 

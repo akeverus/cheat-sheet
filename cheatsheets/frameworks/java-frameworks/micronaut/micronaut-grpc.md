@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: gRPC Integration — RPC Communication
+# Micronaut: gRPC Integration - RPC Communication
 
 ## Полезные ссылки
 

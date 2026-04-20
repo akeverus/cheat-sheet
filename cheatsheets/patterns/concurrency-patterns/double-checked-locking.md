@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Двойная проверка блокировки (`Double-Checked Locking`)
+# Двойная проверка блокировки (Double-Checked Locking)
 
 **Double-Checked Locking** — это паттерн оптимизации для **lazy initialization** в многопоточной среде, который минимизирует использование синхронизации.
 

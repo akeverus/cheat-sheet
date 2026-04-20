@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-data.md"]
 ---
 
-# Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest
+# Quarkus: Testing - Unit Tests, Integration Tests и @QuarkusTest
 
 ## Полезные ссылки
 

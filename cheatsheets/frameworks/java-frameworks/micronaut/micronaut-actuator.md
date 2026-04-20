@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
-# Micronaut: Actuator — Health Checks, Metrics и Endpoints
+# Micronaut: Actuator - Health Checks, Metrics и Endpoints
 
 ## Полезные ссылки
 

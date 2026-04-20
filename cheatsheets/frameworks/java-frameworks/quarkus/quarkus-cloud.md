@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-graalvm.md"]
 ---
 
-# Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh
+# Quarkus: Cloud Native - Kubernetes, OpenShift и Service Mesh
 
 ## Полезные ссылки
 

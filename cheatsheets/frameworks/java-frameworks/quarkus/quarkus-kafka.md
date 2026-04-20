@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 ---
 
-# Quarkus: Kafka — Reactive Messaging и Event Streaming
+# Quarkus: Kafka - Reactive Messaging и Event Streaming
 
 ## Полезные ссылки
 

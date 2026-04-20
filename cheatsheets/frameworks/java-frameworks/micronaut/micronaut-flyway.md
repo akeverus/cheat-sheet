@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-data.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: Flyway — Database Migrations
+# Micronaut: Flyway - Database Migrations
 
 ## Полезные ссылки
 

@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-reactive.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: HTTP — Controllers, Routing и Request Handling
+# Micronaut: HTTP - Controllers, Routing и Request Handling
 
 ## Полезные ссылки
 

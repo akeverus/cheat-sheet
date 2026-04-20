@@ -14,7 +14,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: gRPC — Remote Procedure Calls
+# Quarkus: gRPC - Remote Procedure Calls
 
 ## Полезные ссылки
 

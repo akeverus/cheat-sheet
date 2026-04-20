@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-views.md"]
 ---
 
-# Micronaut: Internationalization — i18n и Localization
+# Micronaut: Internationalization - i18n и Localization
 
 ## Полезные ссылки
 

@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-cloud.md", "micronaut-performance.md"]
 ---
 
-# Micronaut: GraalVM Native Images — Compilation и Optimization
+# Micronaut: GraalVM Native Images - Compilation и Optimization
 
 ## Полезные ссылки
 

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Повтор с экспоненциальной задержкой и джиттером (`Retry with Exponential Backoff and Jitter`)
+# Повтор с экспоненциальной задержкой и джиттером (Retry with Exponential Backoff and Jitter)
 
 Повторы с растущими паузами (exponential backoff) и джиттером снижают нагрузку на сервис и предотвращают «стадный» эффект синхронных повторов в распределённых системах.
 

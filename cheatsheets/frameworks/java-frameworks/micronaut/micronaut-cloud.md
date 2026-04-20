@@ -17,7 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing
+# Micronaut: Cloud Native - Service Discovery, Configuration и Distributed Tracing
 
 ## Полезные ссылки
 

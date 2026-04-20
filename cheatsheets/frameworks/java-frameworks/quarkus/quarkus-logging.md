@@ -14,7 +14,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-actuator.md"]
 ---
 
-# Quarkus: Logging — Логирование
+# Quarkus: Logging - Логирование
 
 ## Полезные ссылки
 

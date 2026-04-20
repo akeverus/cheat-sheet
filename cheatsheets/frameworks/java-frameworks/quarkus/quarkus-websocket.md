@@ -14,7 +14,7 @@ updated: "2026-02-11"
 related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: WebSocket — Real-time Communication
+# Quarkus: WebSocket - Real-time Communication
 
 ## Полезные ссылки
 

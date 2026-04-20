@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-scheduling.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Batch Processing — Job Processing и Scheduling
+# Micronaut: Batch Processing - Job Processing и Scheduling
 
 ## Полезные ссылки
 

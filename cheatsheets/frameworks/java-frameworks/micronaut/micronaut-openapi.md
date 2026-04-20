@@ -16,7 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: OpenAPI — API Documentation и Swagger
+# Micronaut: OpenAPI - API Documentation и Swagger
 
 ## Полезные ссылки
 

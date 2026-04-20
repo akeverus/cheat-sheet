@@ -17,7 +17,7 @@ next: ["spring/spring-data-jpa.md", "spring/spring-security.md"]
 updated: "2026-02-06"
 ---
 
-# Spring Boot
+# Spring Boot - Полное руководство
 
 ## Полезные ссылки
 

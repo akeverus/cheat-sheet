@@ -14,7 +14,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Validation — Bean Validation
+# Quarkus: Validation - Bean Validation
 
 ## Полезные ссылки
 

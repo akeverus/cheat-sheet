@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
-# Scala Collections — List
+# Scala Collections - List
 
 Кратко: руководство по работе со списками в **Scala**: **List**, **ListBuffer**, операции и лучшие практики.
 

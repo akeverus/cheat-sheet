@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Поиск k-го по величине элемента (`Find Kth Largest Element`)
+# Поиск k-го по величине элемента (Find Kth Largest Element)
 
 ## Полезные ссылки
 

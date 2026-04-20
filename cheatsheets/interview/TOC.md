@@ -11,7 +11,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **212**.
+Всего файлов: **226**.
 
 ## Быстрые маршруты подготовки
 
@@ -128,6 +128,10 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: Code review](code-quality/code-review-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: Паттерны рефакторинга](code-quality/refactoring-patterns-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: Технический долг](code-quality/technical-debt-interview.md) — `40` вопросов
+- [Вопросы на собеседовании: Code Smells](code-quality/code-smells-interview.md) — `27` вопросов
+- [Вопросы на собеседовании: Static Analysis](code-quality/static-analysis-interview.md) — `26` вопросов
+- [Вопросы на собеседовании: Code Coverage](code-quality/code-coverage-interview.md) — `25` вопросов
+- [Вопросы на собеседовании: Clean Code Practices](code-quality/clean-code-practices-interview.md) — `27` вопросов
 
 ## data-engineering
 
@@ -205,6 +209,11 @@ updated: "2026-04-20"
 
 - [Вопросы на собеседовании: Практики code review](leadership/code-review-practices-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: Лидерство в команде](leadership/team-leadership-interview.md) — `40` вопросов
+- [Вопросы на собеседовании: Менторство инженеров](leadership/mentoring-interview.md) — `25` вопросов
+- [Вопросы на собеседовании: Технические решения](leadership/technical-decisions-interview.md) — `22` вопроса
+- [Вопросы на собеседовании: Оценка и планирование](leadership/estimations-planning-interview.md) — `20` вопросов
+- [Вопросы на собеседовании: Проведение технических интервью](leadership/tech-interviewing-interview.md) — `20` вопросов
+- [Вопросы на собеседовании: Разрешение конфликтов](leadership/conflict-resolution-interview.md) — `20` вопросов
 
 ## logging
 

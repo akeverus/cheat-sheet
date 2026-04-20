@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
-# Scala Collections — Set
+# Scala Collections - Set
 
 Кратко: руководство по работе с множествами в **Scala**: **Set**, **HashSet**, **SortedSet**, операции и лучшие практики.
 

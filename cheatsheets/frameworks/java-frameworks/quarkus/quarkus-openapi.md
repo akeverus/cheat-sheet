@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-rest.md", "quarkus-security.md"]
 ---
 
-# Quarkus: OpenAPI — API Documentation
+# Quarkus: OpenAPI - API Documentation
 
 ## Полезные ссылки
 

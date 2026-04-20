@@ -15,7 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-cloud.md"]
 ---
 
-# Quarkus: GraalVM — Native Image и Compilation
+# Quarkus: GraalVM - Native Image и Compilation
 
 ## Полезные ссылки
 
