@@ -107,6 +107,17 @@ public class AppProperties {
      */
     private boolean trustForwardedForHeader = false;
 
+    /**
+     * @return true, если хотя бы у одного из AI-провайдеров задан API-ключ
+     */
+    public boolean isAiEnabled() {
+        OpenAi openai = getOpenai();
+        DeepSeek deepseek = getDeepseek();
+        boolean openaiSet = openai != null && openai.getApiKey() != null && !openai.getApiKey().isBlank();
+        boolean deepseekSet = deepseek != null && deepseek.getApiKey() != null && !deepseek.getApiKey().isBlank();
+        return openaiSet || deepseekSet;
+    }
+
     // ========== Вложенные классы конфигурации ==========
 
     /**
@@ -131,10 +142,6 @@ public class AppProperties {
         /** Максимальное количество вопросов в сессии (защита от DoS). */
         @Min(1) @Max(500)
         private int maxSessionCount = 200;
-
-        /** Удалять ли все варианты ответов при старте приложения (для перегенерации через AI).
-         *  По умолчанию {@code false} — безопасно для production. Включайте только для dev-среды. */
-        private boolean resetOnStartup = false;
 
         /** Дефолтное число вопросов в экзамене. */
         @Min(1) @Max(200)

@@ -3,8 +3,6 @@ package com.cheatsheet.quiz.infrastructure.bootstrap;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.feature.interview.service.core.PreloadService;
-import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
-import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.cheatsheet.quiz.service.imports.QuestionImportService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Component;
  * <p>Выполняет:</p>
  * <ol>
  *   <li>Импорт вопросов из markdown-файлов ({@link QuestionImportService});</li>
- *   <li>Условный сброс банка вариантов ответов ({@code app.interview.reset-on-startup});</li>
  *   <li>Запуск фоновой предзагрузки вариантов ответов ({@link PreloadService}).</li>
  * </ol>
  */
@@ -31,8 +28,6 @@ import org.springframework.stereotype.Component;
 public class StartupRunner implements ApplicationRunner {
 
     private final QuestionImportService questionImportService;
-    private final AnswerOptionRepository answerOptionRepository;
-    private final OptionCache optionCache;
     private final PreloadService preloadService;
     private final AppProperties appProperties;
 
@@ -43,14 +38,6 @@ public class StartupRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         log.info("Запуск импорта вопросов и предзагрузки вариантов...");
         questionImportService.importAll();
-
-        if (appProperties.getInterview().isResetOnStartup()) {
-            int deleted = answerOptionRepository.deleteAll();
-            optionCache.invalidateAll();
-            log.info("Сброс банка ответов: удалено {} записей, кэш очищен", deleted);
-        } else {
-            log.info("Сброс банка ответов отключён (app.interview.reset-on-startup=false)");
-        }
 
         if (appProperties.getPreload().isStartupPreload()) {
             preloadService.preloadNext(new InterviewFilter(null, null, null));
