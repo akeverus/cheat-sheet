@@ -22,7 +22,7 @@ updated: "2026-02-11"
 - [MockK Documentation](https://mockk.io/doc/) — документация
 
 ### См. также
-- [Mockito](../testing-libraries/java-mockito.md) — **Mockito** для **Java**
+- [[java-mockito|Mockito]] — **Mockito** для **Java**
 - [Unit-тестирование с MockK](../../testing/unit-testing/README.md) — **Unit** тестирование с **MockK**
 
 ## Содержание
@@ -1238,7 +1238,7 @@ fun `advanced coroutine testing`() = runTest {
 - [Kotlin Testing](https://kotlinlang.org/docs/jvm-test-using-junit.html)
 
 ## См. также
-- [JUnit 5](../testing-libraries/java-junit5.md) — Тестирование с **JUnit** 5
-- [Kotlin Coroutines](kotlin-kotlinx-coroutines.md) — Асинхронное программирование
-- [AssertJ](../../testing/unit-testing/junit/assertj.md) — **Assertions** для тестов
+- [[java-junit5|JUnit 5]] — Тестирование с **JUnit** 5
+- [[kotlin-kotlinx-coroutines|Kotlin Coroutines]] — Асинхронное программирование
+- [[assertj|AssertJ]] — **Assertions** для тестов
 

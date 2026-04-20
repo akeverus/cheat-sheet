@@ -21,7 +21,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [Регулярные выражения](../strings/README.md) — алгоритмы со строками
-- [Конечный автомат с enum](state-machine-with-enums.md) — state machine с enum
+- [[state-machine-with-enums|Конечный автомат с enum]] — state machine с enum
 
 ## Содержание
 

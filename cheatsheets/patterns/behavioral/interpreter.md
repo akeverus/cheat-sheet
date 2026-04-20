@@ -24,8 +24,8 @@ updated: "2026-02-11"
 - [Interpreter Pattern in Kotlin](https://refactoring.guru/design-patterns/interpreter)
 
 ### См. также
-- [Visitor (Посетитель)](visitor.md)
-- [Command (Команда)](command.md)
+- [[visitor|Visitor (Посетитель)]]
+- [[command|Command (Команда)]]
 
 ## Содержание
 

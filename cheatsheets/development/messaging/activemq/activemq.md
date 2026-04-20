@@ -22,10 +22,10 @@ updated: "2026-02-11"
 - [ActiveMQ Configuration](https://activemq.apache.org/components/classic/documentation/configuration) — конфигурация
 
 ### См. также
-- [RabbitMQ](../rabbitmq/rabbitmq.md) — альтернативный **message broker**
-- [Kafka](../kafka/kafka.md) — **high-throughput** messaging
-- [NATS](../nats/nats.md) — **cloud-native** мессенджинг
-- [Event-Driven Architecture](../../../architecture/event-driven.md) — **event-driven** паттерны
+- [[rabbitmq|RabbitMQ]] — альтернативный **message broker**
+- [[kafka|Kafka]] — **high-throughput** messaging
+- [[nats|NATS]] — **cloud-native** мессенджинг
+- [[event-driven|Event-Driven Architecture]] — **event-driven** паттерны
 
 ## Содержание
 

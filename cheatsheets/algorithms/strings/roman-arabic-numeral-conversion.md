@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Converting Roman Numerals to Decimal — GeeksforGeeks](https://www.geeksforgeeks.org/converting-roman-numerals-decimal-lying-1-3999/)
 
 ### См. также
-- [Подсчет слов](word-count.md) — подсчёт слов
-- [Шифр Цезаря](caesar-cipher.md) — шифрование
+- [[word-count|Подсчет слов]] — подсчёт слов
+- [[caesar-cipher|Шифр Цезаря]] — шифрование
 
 ## Содержание
 

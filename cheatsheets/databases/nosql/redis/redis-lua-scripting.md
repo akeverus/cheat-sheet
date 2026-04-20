@@ -25,8 +25,8 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - [Redis Scripting](https://redis.io/docs/manual/programmability/eval-intro/) — Lua-скрипты
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-transactions.md](redis-transactions.md) — транзакции
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-transactions|redis-transactions.md]] — транзакции
 
 ## Содержание
 

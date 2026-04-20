@@ -1777,8 +1777,8 @@ vm-security-policy:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [Azure Basics](azure-basics.md) — основы **Azure**
-- [Azure Networking](azure-networking.md) — сеть в **Azure**
+- [[azure-basics|Azure Basics]] — основы **Azure**
+- [[azure-networking|Azure Networking]] — сеть в **Azure**
 - [Azure IAM](https://docs.microsoft.com/azure/active-directory/) — управление доступом
-- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
+- [[terraform-basics|Terraform]] — **Infrastructure as Code**
 - [Azure Resource Manager](https://docs.microsoft.com/azure/azure-resource-manager/management/) — управление ресурсами

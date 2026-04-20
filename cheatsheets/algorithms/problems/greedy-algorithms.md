@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [`Baeldung`: `Greedy Algorithms`](https://www.baeldung.com/)
 
 ### См. также
-- [Задача о рюкзаке](knapsack-problem.md) — knapsack
-- [Задача коммивояжера](traveling-salesman-problem.md) — TSP
-- [Обзор жадной парадигмы](greedy-algorithms.md) — теория и классические задачи
+- [[knapsack-problem|Задача о рюкзаке]] — knapsack
+- [[traveling-salesman-problem|Задача коммивояжера]] — TSP
+- [[greedy-algorithms|Обзор жадной парадигмы]] — теория и классические задачи
 
 ## Содержание
 

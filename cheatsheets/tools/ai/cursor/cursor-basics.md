@@ -500,8 +500,8 @@ A: Конкретный список зависит от настроек и т�
 
 ## См. также
 
-- [Spring AI](../../../frameworks/java-frameworks/spring/spring-ai.md)
-- [Инструменты для совместной работы: Slack](../../collaboration/slack/slack-basics.md)
+- [[spring-ai|Spring AI]]
+- [[slack-basics|Инструменты для совместной работы: Slack]]
 
 ---
 

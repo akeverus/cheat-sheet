@@ -33,10 +33,10 @@ updated: "2026-02-11"
 - [Cassandra Logging](https://cassandra.apache.org/doc/latest/operating/logging.html)
 
 ### См. также
-- [Основы](cassandra-basics.md) — **Cassandra**
-- [Кластеризация](cassandra-clustering.md) — кластеризация
-- [Производительность](cassandra-performance.md) — производительность
-- [Моделирование](cassandra-data-modeling.md) — моделирование данных
+- [[cassandra-basics|Основы]] — **Cassandra**
+- [[cassandra-clustering|Кластеризация]] — кластеризация
+- [[cassandra-performance|Производительность]] — производительность
+- [[cassandra-data-modeling|Моделирование]] — моделирование данных
 
 ## Содержание
 

@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [Creational Design Patterns in Java](https://www.baeldung.com/creational-design-patterns)
 
 ### См. также
-- [Builder Pattern](builder.md)
-- [Abstract Factory Pattern](abstract-factory.md)
+- [[builder|Builder Pattern]]
+- [[abstract-factory|Abstract Factory Pattern]]
 
 ## Содержание
 

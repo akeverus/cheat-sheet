@@ -25,9 +25,9 @@ StatsD — лёгкий демон для приёма метрик по UDP (с
 - [Etsy — Measure Anything, Measure Everything](https://codeascraft.com/2011/02/15/measure-anything-measure-everything/)
 
 ### См. также
-- [Micrometer](micrometer.md) — метрики в JVM, экспорт в StatsD
-- [Prometheus](prometheus.md) — сбор и хранение метрик
-- [Infrastructure monitoring](../infrastructure-monitoring.md) — обзор мониторинга
+- [[micrometer|Micrometer]] — метрики в JVM, экспорт в StatsD
+- [[prometheus|Prometheus]] — сбор и хранение метрик
+- [[infrastructure-monitoring|Infrastructure monitoring]] — обзор мониторинга
 - [Monitoring](../) — раздел мониторинга
 
 ## Содержание

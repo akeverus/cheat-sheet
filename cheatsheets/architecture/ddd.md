@@ -21,10 +21,10 @@ updated: "2026-02-11"
 - [Spring Data](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/) — поддержка **DDD**
 
 ### См. также
-- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
-- [CQRS](cqrs.md) — **CQRS** паттерн
-- [Event Sourcing](event-sourcing.md) — **Event Sourcing**
-- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
+- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
+- [[cqrs|CQRS]] — **CQRS** паттерн
+- [[event-sourcing|Event Sourcing]] — **Event Sourcing**
+- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
 
 ## Содержание
 

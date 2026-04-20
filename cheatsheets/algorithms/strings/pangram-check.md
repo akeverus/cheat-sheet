@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Pangram Checking — GeeksforGeeks](https://www.geeksforgeeks.org/pangram-checking/)
 
 ### См. также
-- [Шифр Цезаря](caesar-cipher.md) — шифрование
-- [Подсчет слов](word-count.md) — подсчёт слов
+- [[caesar-cipher|Шифр Цезаря]] — шифрование
+- [[word-count|Подсчет слов]] — подсчёт слов
 
 ## Содержание
 

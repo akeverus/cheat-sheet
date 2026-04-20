@@ -83,8 +83,8 @@ updated: "2026-02-11"
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
 
-- [AWS Services](aws-services.md) — обзор сервисов **AWS**
-- [AWS Networking](aws-networking.md) — сеть в **AWS**
-- [AWS IAM](aws-iam.md) — управление доступом и идентификацией
-- [AWS — основы](aws-basics.md) — основы **AWS** в разделе **DevOps**
+- [[aws-services|AWS Services]] — обзор сервисов **AWS**
+- [[aws-networking|AWS Networking]] — сеть в **AWS**
+- [[aws-iam|AWS IAM]] — управление доступом и идентификацией
+- [[aws-basics|AWS — основы]] — основы **AWS** в разделе **DevOps**
 

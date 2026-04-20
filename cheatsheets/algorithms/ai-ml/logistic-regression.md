@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Introduction to Deeplearning4j](https://www.baeldung.com/deeplearning4j)
 
 ### См. также
-- [CNN с Deeplearning4j](cnn-deeplearning4j.md)
-- [Deeplearning4j](deeplearning4j.md)
-- [Spark MLlib](spark-mllib.md)
+- [[cnn-deeplearning4j|CNN с Deeplearning4j]]
+- [[deeplearning4j|Deeplearning4j]]
+- [[spark-mllib|Spark MLlib]]
 
 ## Содержание
 

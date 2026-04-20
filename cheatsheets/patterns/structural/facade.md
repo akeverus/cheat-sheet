@@ -26,8 +26,8 @@ updated: "2026-02-11"
 - [Facade Pattern in Kotlin](https://www.baeldung.com/kotlin-facade-pattern)
 
 ### См. также
-- [Composite Pattern](composite.md)
-- [Flyweight Pattern](flyweight.md)
+- [[composite|Composite Pattern]]
+- [[flyweight|Flyweight Pattern]]
 
 ## Содержание
 

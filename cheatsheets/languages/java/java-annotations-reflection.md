@@ -1380,5 +1380,5 @@ public class SecureReflection {
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [Java Exceptions](java-exceptions.md) — обработка исключений
-- [Spring AOP](../../frameworks/java-frameworks/spring/spring-aop.md) — аспектно-ориентированное программирование
+- [[java-exceptions|Java Exceptions]] — обработка исключений
+- [[spring-aop|Spring AOP]] — аспектно-ориентированное программирование

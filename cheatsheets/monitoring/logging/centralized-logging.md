@@ -33,9 +33,9 @@ updated: "2026-02-11"
 - [Azure Monitor](https://docs.microsoft.com/en-us/azure/azure-monitor/)
 
 ### См. также
-- [Основы логирования](logging-basics.md)
-- [Структурированное логирование](structured-logging.md)
-- [Агрегация логов](log-aggregation.md)
+- [[logging-basics|Основы логирования]]
+- [[structured-logging|Структурированное логирование]]
+- [[log-aggregation|Агрегация логов]]
 
 ## Содержание
 

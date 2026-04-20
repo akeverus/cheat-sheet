@@ -24,8 +24,8 @@ updated: "2026-02-11"
 - [Chain of Responsibility Pattern in Kotlin](https://refactoring.guru/design-patterns/chain-of-responsibility)
 
 ### См. также
-- [Command (Команда)](command.md)
-- [Mediator (Посредник)](mediator.md)
+- [[command|Command (Команда)]]
+- [[mediator|Mediator (Посредник)]]
 
 ## Содержание
 

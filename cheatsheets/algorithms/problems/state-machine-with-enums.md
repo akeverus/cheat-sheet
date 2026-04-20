@@ -23,7 +23,7 @@ A **guide** to **implementing finite state machines** in **Java using Enums**, *
 - [`State Design Pattern`](https://refactoring.guru/design-patterns/state)
 
 ### См. также
-- [Валидация конечным автоматом](finite-automata-input-validation.md)
+- [[finite-automata-input-validation|Валидация конечным автоматом]]
 - [Паттерны проектирования](../../patterns/)
 
 ## Содержание

@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [`Baeldung`: `Simulated Annealing`](https://www.baeldung.com/)
 
 ### См. также
-- [Задача о рюкзаке](knapsack-problem.md) — **knapsack**
-- [Поиск пути A*](a-star-pathfinding.md) — **A\*** pathfinding
-- [Алгоритм Дейкстры](../graphs/dijkstra.md) — **Dijkstra**
+- [[knapsack-problem|Задача о рюкзаке]] — **knapsack**
+- [[a-star-pathfinding|Поиск пути A*]] — **A\*** pathfinding
+- [[dijkstra|Алгоритм Дейкстры]] — **Dijkstra**
 
 ## Содержание
 

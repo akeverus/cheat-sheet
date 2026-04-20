@@ -98,10 +98,11 @@ public class Centroid {
 
 Ближайший центроид определяем по метрике расстояния. Евклидово расстояние: √(Σ(p_i − q_i)²). Интерфейс `Distance` позволяет подставлять другие метрики (например, косинусное сходство).
 
-```text
+```
 √((p1 - p2)² + (q1 - q2)²)
 ```
 
+```
 ```java
 public interface Distance {
     double calculate(Map<String, Double> f1, Map<String, Double> f2);
@@ -131,6 +132,7 @@ public class EuclideanDistance implements Distance {
 
 Метод `fit`: принимает список записей, k, метрику расстояния и максимум итераций; возвращает карту центроид → список записей кластера.
 
+```
 ```java
 public class KMeans {
     private static final Random random = new Random();
@@ -283,6 +285,7 @@ public static Map<Centroid, List<Record>> fit(
 
 Пример на данных Last.fm: топ исполнители, топ теги, теги по исполнителям; записи — вектор признаков по тегам. Кластеризация по 7 кластерам, евклидово расстояние, до 1000 итераций.
 
+```
 ```java
 List<String> artists = getTop100Artists();
 Set<String> topTags = getTop100Tags();
@@ -313,6 +316,7 @@ clusters.forEach((key, value) -> {
 
 Число k задаётся заранее; его можно подобрать по домену или по эвристикам (метод локтя, силуэт). Метод локтя: считаем SSE (сумма квадратов расстояний от точек до своих центроидов) для k = 2, 3, …; на графике SSE от k ищем «локоть» — место, где прирост качества замедляется.
 
+```
 ```java
 // SSE = сумма квадратов расстояний от каждой точки до центроида своего кластера
 public static double sse(
@@ -336,6 +340,7 @@ public static double sse(
     return sum;
 }
 
+```
 ```java
 // Подбор k: запуск K-Means для k=2..16, сбор SSE для графика «локтя»
 List<Record> records = /* набор данных */;
@@ -352,10 +357,11 @@ for (int k = 2; k <= 16; k++) {
     double sse = Errors.sse(clusters, distance);
     sumOfSquaredErrors.add(sse);
 }
-```text
+```
 
 ## Kotlin Implementation
 
+```
 ```kotlin
 // Запись и центроид в том же формате, что в Java
 data class RecordK(
@@ -370,10 +376,11 @@ data class CentroidK(
 interface DistanceK {
     fun calculate(f1: Map<String, Double>, f2: Map<String, Double>): Double
 }
-```text
+```
 
 ### Евклидово расстояние
 
+```
 ```kotlin
 class EuclideanDistanceK : DistanceK {
     override fun calculate(f1: Map<String, Double>, f2: Map<String, Double>): Double {
@@ -391,8 +398,9 @@ class EuclideanDistanceK : DistanceK {
         return Math.sqrt(sum)
     }
 }
-```text
+```
 
+```
 ```kotlin
 object KMeansK {
     fun fit(
@@ -498,10 +506,11 @@ object KMeansK {
         return CentroidK(average)
     }
 }
-```text
+```
 
 ### Оптимизация количества кластеров
 
+```
 ```kotlin
 object ErrorsK {
     fun sse(clusters: Map<CentroidK, List<RecordK>>, distance: DistanceK): Double {
@@ -517,10 +526,11 @@ object ErrorsK {
         return sum
     }
 }
-```text
+```
 
 ### Пример использования
 
+```
 ```kotlin
 fun main() {
     val records = listOf(
@@ -534,7 +544,7 @@ fun main() {
     
     println("Clusters: ${clusters.size}")
 }
-```text
+```
 
 ## Сложность
 
@@ -575,3 +585,5 @@ K-Means уместен, когда число кластеров можно за
 ## Заключение
 
 В документе описаны неконтролируемая кластеризация и алгоритм K-Means: структуры данных, евклидово расстояние, основной цикл в Java и Kotlin, подбор k методом локтя (SSE) и практические рекомендации.
+
+```

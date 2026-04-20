@@ -29,8 +29,8 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 - [ClickHouse Table Engines](https://www.baeldung.com/clickhouse-table-engines)
 
 ### См. также
-- [Основы](clickhouse-basics.md) — **ClickHouse**
-- [Запросы](clickhouse-queries.md) — работа с данными
+- [[clickhouse-basics|Основы]] — **ClickHouse**
+- [[clickhouse-queries|Запросы]] — работа с данными
 
 ## Содержание
 

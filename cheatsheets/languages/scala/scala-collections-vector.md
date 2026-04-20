@@ -24,8 +24,8 @@ related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 - [Scala Vector API](https://www.scala-lang.org/api/current/scala/collection/immutable/Vector.html)
 
 ### См. также
-- [Списки (List)](scala-collections-list.md)
-- [Обзор коллекций](scala-collections.md)
+- [[scala-collections-list|Списки (List)]]
+- [[scala-collections|Обзор коллекций]]
 
 ## Содержание
 

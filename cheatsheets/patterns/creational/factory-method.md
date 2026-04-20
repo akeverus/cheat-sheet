@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Spring FactoryBean](https://docs.spring.io/spring-framework/reference/core/beans/java/factory-bean.html)
 
 ### См. также
-- [Abstract Factory](abstract-factory.md) — Abstract Factory
-- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — IoC и бины
-- [Java Basics](../../languages/java/java-basics.md) — Java Basics
+- [[abstract-factory|Abstract Factory]] — Abstract Factory
+- [[spring-framework-interview|Spring Core]] — IoC и бины
+- [[java-basics|Java Basics]] — Java Basics
 
 ## Содержание
 

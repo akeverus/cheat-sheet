@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [OkHttp Documentation](https://square.github.io/okhttp/features/) — документация
 
 ### См. также
-- [Apache HttpClient](java-apache-httpclient.md) — **Apache HttpClient**
-- [Retrofit](java-retrofit.md) — **Retrofit** (использует OkHttp)
+- [[java-apache-httpclient|Apache HttpClient]] — **Apache HttpClient**
+- [[java-retrofit|Retrofit]] — **Retrofit** (использует OkHttp)
 
 ## Содержание
 
@@ -817,7 +817,7 @@ logging.`setLevel`(`HttpLoggingInterceptor`.`Level`.`BODY`);
 - [Spring Boot Integration](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-webclient)
 
 ## См. также
-- [Apache HttpClient](java-apache-httpclient.md) — альтернативный **HTTP** клиент
-- [Retrofit](java-retrofit.md) — type-safe **HTTP** клиент
-- [WebClient](../../frameworks/java-frameworks/spring/spring-webflux.md) — реактивный **HTTP** клиент
+- [[java-apache-httpclient|Apache HttpClient]] — альтернативный **HTTP** клиент
+- [[java-retrofit|Retrofit]] — type-safe **HTTP** клиент
+- [[spring-webflux|WebClient]] — реактивный **HTTP** клиент
 

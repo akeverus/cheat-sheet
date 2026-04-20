@@ -32,8 +32,8 @@ updated: "2026-02-11"
 - [Backpressure in Reactive Streams](https://www.reactive-streams.org/) — **Backpressure** объяснение
 
 ### См. также
-- [Spring Boot](spring-boot.md) — **Spring Boot** основы
-- [Spring MVC](spring-mvc.md) — **Spring MVC** (**blocking**)
+- [[spring-boot|Spring Boot]] — **Spring Boot** основы
+- [[spring-mvc|Spring MVC]] — **Spring MVC** (**blocking**)
 - [Мониторинг](../../../monitoring/) — мониторинг реактивных приложений
 
 ## Содержание

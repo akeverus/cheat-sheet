@@ -66,6 +66,7 @@ public interface Cache<K, V> {
 }
 ```
 
+```
 ```java
 // LRUCache: map ключ→узел списка, двусвязный список для порядка LRU
 import java.util.HashMap;
@@ -86,6 +87,7 @@ public class LRUCache<K, V> implements Cache<K, V> {
 
 #### Метод put
 
+```
 ```java
 public boolean put(K key, V value) {
     CacheElement<K, V> item = new CacheElement<>(key, value);
@@ -116,6 +118,7 @@ public boolean put(K key, V value) {
 
 #### Метод get
 
+```
 ```java
 public Optional<V> get(K key) {
     LinkedListNode<CacheElement<K, V>> linkedListNode = this.linkedListNodeMap.get(key);
@@ -130,6 +133,7 @@ public Optional<V> get(K key) {
 
 Вспомогательные методы: отцепляем узел и добавляем в голову (`updateAndMoveToFront`), обёртка `moveToFront`.
 
+```
 ```java
 public LinkedListNode<T> updateAndMoveToFront(LinkedListNode<T> node, T newValue) {
     if (node.isEmpty() || (this != (node.getListReference()))) {
@@ -139,19 +143,21 @@ public LinkedListNode<T> updateAndMoveToFront(LinkedListNode<T> node, T newValue
     add(newValue);
     return head;
 }
-```text
+```
 
 
+```
 ```java
 public LinkedListNode<T> moveToFront(LinkedListNode<T> node) {
     return node.isEmpty() ? dummyNode : updateAndMoveToFront(node, node.getElement());
 }
-```text
+```
 
 ### Потокобезопасная версия
 
 ReentrantReadWriteLock: readLock для get, writeLock для put/evict; при необходимости ConcurrentHashMap. Блокировку снимать в finally.
 
+```
 ```java
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -186,12 +192,13 @@ public class LRUCache<K, V> implements Cache<K, V> {
         }
     }
 }
-```text
+```
 
 ## Kotlin Implementation
 
 LinkedHashMap с `accessOrder = true` и переопределением `removeEldestEntry` даёт LRU за одну строку; для потокобезопасности — ReentrantReadWriteLock или @Synchronized.
 
+```
 ```kotlin
 // LinkedHashMap(capacity, 0.75f, true) + removeEldestEntry { size > capacity }
 class LRUCacheK<K, V>(private val capacity: Int) {
@@ -218,8 +225,9 @@ class LRUCacheK<K, V>(private val capacity: Int) {
     @Synchronized
     fun clear() = cache.clear()
 }
-```text
+```
 
+```
 ```kotlin
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -248,10 +256,11 @@ class ThreadSafeLRUCacheK<K, V>(private val capacity: Int) {
     
     fun clear() = lock.write { cache.clear() }
 }
-```text
+```
 
 ### Пример использования
 
+```
 ```kotlin
 fun main() {
     val cache = LRUCacheK<Int, String>(3)
@@ -267,7 +276,7 @@ fun main() {
     println(cache.get(2)) // null
     println(cache.get(4)) // "Four"
 }
-```text
+```
 
 ## Сложность
 
@@ -285,6 +294,7 @@ get/put/evict — O(1). Память O(n) для n элементов кэша (
 
 ### Вариант 1: LinkedHashMap
 
+```
 ```java
 // accessOrder=true + removeEldestEntry — встроенный LRU
 import java.util.LinkedHashMap;
@@ -303,10 +313,11 @@ public class LRUCacheLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
         return size() > capacity;
     }
 }
-```text
+```
 
 ### Вариант 2: LRU с TTL
 
+```
 ```java
 public class LRUCacheWithTTL<K, V> extends LRUCache<K, V> {
     private final Map<K, Long> timestamps;
@@ -330,7 +341,7 @@ public class LRUCacheWithTTL<K, V> extends LRUCache<K, V> {
         return super.get(key);
     }
 }
-```text
+```
 
 ## Когда использовать
 
@@ -359,3 +370,5 @@ LRU уместен при ограниченном размере кэша, ко
 ## Заключение
 
 В документе описана реализация LRU-кэша: HashMap + двусвязный список для O(1), потокобезопасный вариант, вариант на LinkedHashMap и с TTL. Для продакшена часто удобнее Caffeine или Guava Cache.
+
+```

@@ -23,8 +23,8 @@ related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 - [Scala For Comprehensions](https://docs.scala-lang.org/tour/for-comprehensions.html)
 
 ### См. также
-- [Функциональное программирование](scala-fp-basics.md)
-- [Коллекции](scala-collections.md)
+- [[scala-fp-basics|Функциональное программирование]]
+- [[scala-collections|Коллекции]]
 
 ## Содержание
 

@@ -24,8 +24,8 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
 - [Scala Java Interop](https://docs.scala-lang.org/scala3/book/scala-for-java-devs.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Основы Java](../java/java-basics.md)
+- [[scala-basics|Основы Scala]]
+- [[java-basics|Основы Java]]
 
 ## Содержание
 

@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Game Theory (Stanford/Coursera)](https://www.coursera.org/learn/game-theory-1)
 
 ### См. также
-- [Monte Carlo Tree Search](../trees/monte-carlo-tree-search-tic-tac-toe.md)
+- [[monte-carlo-tree-search-tic-tac-toe|Monte Carlo Tree Search]]
 - [Задачи и алгоритмы](../problems/README.md) — обзор разделов
 
 ## Содержание

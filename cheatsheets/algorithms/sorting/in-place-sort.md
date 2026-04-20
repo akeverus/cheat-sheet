@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [In-Place Algorithm — GeeksforGeeks](https://www.geeksforgeeks.org/in-place-algorithm/)
 
 ### См. также
-- [quick-sort.md](quick-sort.md) — быстрая сортировка
-- [heap-sort.md](heap-sort.md) — сортировка кучей
-- [Пузырьковая сортировка](bubble-sort.md) — сортировка обменами
+- [[quick-sort|quick-sort.md]] — быстрая сортировка
+- [[heap-sort|heap-sort.md]] — сортировка кучей
+- [[bubble-sort|Пузырьковая сортировка]] — сортировка обменами
 
 ## Содержание
 

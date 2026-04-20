@@ -28,10 +28,10 @@ updated: "2026-02-11"
 - [`Web.dev` Security](https://web.dev/security/) — практические рекомендации по безопасности веб‑приложений
 
 ### См. также
-- [Application Security](application-security.md) — аутентификация, авторизация, токены
-- [API Security](api-security.md) — защита `REST`/`GraphQL API`
-- [Secrets Management](../data/secrets-management.md) — управление секретами
-- [Security Testing](../testing/security-testing.md) — `SAST`, `DAST`, `SCA` и пентесты
+- [[application-security|Application Security]] — аутентификация, авторизация, токены
+- [[api-security|API Security]] — защита `REST`/`GraphQL API`
+- [[secrets-management|Secrets Management]] — управление секретами
+- [[security-testing|Security Testing]] — `SAST`, `DAST`, `SCA` и пентесты
 
 ---
 

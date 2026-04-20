@@ -24,13 +24,13 @@ updated: "2026-02-11"
 - [Kotlin Collections Guide](https://www.baeldung.com/kotlin/collections-api)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Списки (List)](kotlin-collections-list.md)
-- [Множества (Set)](kotlin-collections-set.md)
-- [Словари (Map)](kotlin-collections-map.md)
-- [Последовательности (Sequences)](kotlin-collections-sequences.md)
-- [Группировка и агрегация](kotlin-collections-grouping.md)
-- [Java Streams](../java/java-streams-fp.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-collections-list|Списки (List)]]
+- [[kotlin-collections-set|Множества (Set)]]
+- [[kotlin-collections-map|Словари (Map)]]
+- [[kotlin-collections-sequences|Последовательности (Sequences)]]
+- [[kotlin-collections-grouping|Группировка и агрегация]]
+- [[java-streams-fp|Java Streams]]
 
 ## Содержание
 

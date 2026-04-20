@@ -1022,6 +1022,6 @@ fi
 echo "Checklist complete"
 ```
 ## См. также
-- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
-- [Docker](../containers/docker/docker-basics.md) — контейнеризация
-- [Kubernetes](../containers/kubernetes/kubernetes-basics.md) — оркестрация контейнеров
+- [[terraform-basics|Terraform]] — **Infrastructure as Code**
+- [[docker-basics|Docker]] — контейнеризация
+- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров

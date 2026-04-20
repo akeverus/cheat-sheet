@@ -30,8 +30,8 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 - [ClickHouse Replication](https://www.baeldung.com/clickhouse-replication)
 
 ### См. также
-- [Таблицы](clickhouse-tables.md) — движки таблиц
-- [Материализованные представления](clickhouse-materialized-views.md) — в кластерах
+- [[clickhouse-tables|Таблицы]] — движки таблиц
+- [[clickhouse-materialized-views|Материализованные представления]] — в кластерах
 
 ## Содержание
 

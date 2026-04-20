@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [`Visualgo`: `Heap Sort`](https://visualgo.net/)
 
 ### См. также
-- [Быстрая сортировка](quick-sort.md) — **quick sort**
-- [Сортировка слиянием](merge-sort.md) — **merge sort**
+- [[quick-sort|Быстрая сортировка]] — **quick sort**
+- [[merge-sort|Сортировка слиянием]] — **merge sort**
 
 ## Содержание
 

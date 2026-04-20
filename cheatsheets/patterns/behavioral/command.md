@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java Callable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Callable.html)
 
 ### См. также
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — Java Concurrency
-- [Spring Data JPA](../../interview/frameworks/spring/spring-data-jpa-interview.md) — транзакции
-- [Strategy](strategy.md) — Strategy
+- [[java-concurrency-basics|Java Concurrency]] — Java Concurrency
+- [[spring-data-jpa-interview|Spring Data JPA]] — транзакции
+- [[strategy|Strategy]] — Strategy
 
 ## Содержание
 

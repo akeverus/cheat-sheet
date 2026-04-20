@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Introduction to Deeplearning4j](https://www.baeldung.com/deeplearning4j)
 
 ### См. также
-- [Deeplearning4j](deeplearning4j.md)
-- [Логистическая регрессия](logistic-regression.md)
-- [Spark MLlib](spark-mllib.md)
+- [[deeplearning4j|Deeplearning4j]]
+- [[logistic-regression|Логистическая регрессия]]
+- [[spark-mllib|Spark MLlib]]
 
 ## Содержание
 

@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Swarm Intelligence (Wikipedia)](https://en.wikipedia.org/wiki/Swarm_intelligence)
 
 ### См. также
-- [Hill-Climbing](hill-climbing.md)
-- [Генетические алгоритмы](../ai-ml/genetic-algorithms.md) — генетические алгоритмы
+- [[hill-climbing|Hill-Climbing]]
+- [[genetic-algorithms|Генетические алгоритмы]] — генетические алгоритмы
 - [Алгоритмы оптимизации](../algorithmic-paradigms/) — парадигмы
 
 ## Содержание

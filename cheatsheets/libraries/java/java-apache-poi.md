@@ -22,7 +22,7 @@ updated: "2026-02-11"
 - [Apache POI Documentation](https://poi.apache.org/components/spreadsheet/) — документация
 
 ### См. также
-- [Apache Commons](../utility-libraries/java-apache-commons.md) — **Apache Commons** для работы с файлами
+- [[java-apache-commons|Apache Commons]] — **Apache Commons** для работы с файлами
 
 ## Содержание
 
@@ -1349,7 +1349,7 @@ public class PoiDebugger {
 - [POI Examples](https://poi.apache.org/components/spreadsheet/examples.html)
 
 ## См. также
-- [Jackson](../serialization/jackson.md) — **JSON** сериализация
+- [[jackson|Jackson]] — **JSON** сериализация
 - [Обзор библиотек](../) — **CSV** и прочие библиотеки
-- [Spring Batch](../../frameworks/java-frameworks/spring/spring-batch.md) — Пакетная обработка
+- [[spring-batch|Spring Batch]] — Пакетная обработка
 

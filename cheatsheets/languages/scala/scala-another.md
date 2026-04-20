@@ -25,9 +25,9 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-ty
 - [Scala Style Guide](https://docs.scala-lang.org/style/)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Продвинутое функциональное программирование](scala-fp-advanced.md)
-- [Система типов](scala-type-system.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-fp-advanced|Продвинутое функциональное программирование]]
+- [[scala-type-system|Система типов]]
 
 ## Содержание
 

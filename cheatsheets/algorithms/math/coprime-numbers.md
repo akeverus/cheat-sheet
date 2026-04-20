@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Coprime numbers](https://www.geeksforgeeks.org/check-two-numbers-co-prime-not/)
 
 ### См. также
-- [Наибольший общий делитель](greatest-common-divisor.md) — НОД
-- [Наименьшее общее кратное](least-common-multiple.md) — НОК
+- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
+- [[least-common-multiple|Наименьшее общее кратное]] — НОК
 
 ## Содержание
 

@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [TimescaleDB GitHub](https://github.com/timescale/timescaledb) — репозиторий проекта
 
 ### См. также
-- [InfluxDB](../influxdb/influxdb-basics.md) — **InfluxDB** временные ряды
-- [PostgreSQL](../../relational/postgresql/postgres-basics.md) — основы **PostgreSQL**
+- [[influxdb-basics|InfluxDB]] — **InfluxDB** временные ряды
+- [[postgres-basics|PostgreSQL]] — основы **PostgreSQL**
 
 ## Содержание
 

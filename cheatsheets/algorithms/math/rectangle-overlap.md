@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Point (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/awt/Point.html)
 
 ### См. также
-- [Поиск пересечения двух линий](line-intersection.md) — пересечение линий
-- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
+- [[line-intersection|Поиск пересечения двух линий]] — пересечение линий
+- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
 
 ## Содержание
 

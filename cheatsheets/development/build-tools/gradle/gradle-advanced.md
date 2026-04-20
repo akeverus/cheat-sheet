@@ -1277,7 +1277,7 @@ tasks.named("release") {
 afterReleaseBuild.dependsOn("publish")
 ```
 ## См. также
-- [Maven Advanced](../maven/maven-advanced.md) — альтернативная система сборки
-- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Java** фреймворк
-- [Kotlin](../../../languages/kotlin/kotlin-basics.md) — язык программирования
-- [Docker](../../../platform/containers/docker/docker-basics.md) — контейнеризация
+- [[maven-advanced|Maven Advanced]] — альтернативная система сборки
+- [[spring-boot|Spring Boot]] — **Java** фреймворк
+- [[kotlin-basics|Kotlin]] — язык программирования
+- [[docker-basics|Docker]] — контейнеризация

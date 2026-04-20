@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [jOOQ](https://www.jooq.org/doc/) — **jOOQ type-safe SQL**
 
 ### См. также
-- [Spring Data JPA](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — интеграция **JPA** в **Spring**
-- [jOOQ](../../libraries/java/java-jooq.md) — **type-safe SQL** библиотека
+- [[spring-data-jpa|Spring Data JPA]] — интеграция **JPA** в **Spring**
+- [[java-jooq|jOOQ]] — **type-safe SQL** библиотека
 
 ## Содержание
 

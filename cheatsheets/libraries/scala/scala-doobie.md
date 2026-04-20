@@ -1498,8 +1498,8 @@ def findById(id: Long): IO[Option[User]] = {
 }
 ```
 ## См. также
-- [Cats](scala-cats.md) — Функциональная библиотека
-- [Slick](scala-slick.md) — Альтернативная **database library**
-- [Play Framework](scala-play.md) — **Web framework**
-- [PostgreSQL](../../databases/relational/postgresql/postgres-basics.md) — **Database**
+- [[scala-cats|Cats]] — Функциональная библиотека
+- [[scala-slick|Slick]] — Альтернативная **database library**
+- [[scala-play|Play Framework]] — **Web framework**
+- [[postgres-basics|PostgreSQL]] — **Database**
 

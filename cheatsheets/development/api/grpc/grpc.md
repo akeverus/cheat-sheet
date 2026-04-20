@@ -25,9 +25,9 @@ updated: "2026-02-11"
 - [gRPC Tutorial](https://www.baeldung.com/grpc-introduction)
 
 ### См. также
-- [GraphQL](../graphql/graphql.md) — **GraphQL**
-- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Spring Boot**
-- [Jackson](../../../libraries/serialization/jackson.md) — **JSON** обработка
+- [[graphql|GraphQL]] — **GraphQL**
+- [[spring-boot|Spring Boot]] — **Spring Boot**
+- [[jackson|Jackson]] — **JSON** обработка
 
 ## Содержание
 

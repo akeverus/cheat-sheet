@@ -24,8 +24,8 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Scala Performance](https://docs.scala-lang.org/overviews/collections-2.13/performance-characteristics.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Коллекции](scala-collections.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-collections|Коллекции]]
 
 ## Содержание
 

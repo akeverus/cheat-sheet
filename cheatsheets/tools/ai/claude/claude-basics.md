@@ -497,6 +497,6 @@ A: Ответ зависит от политики Anthropic и вашей ко�
 
 ## См. также
 
-- [Cursor: основы](../cursor/cursor-basics.md)
-- [GitHub Copilot: основы](../copilot/copilot-basics.md)
+- [[cursor-basics|Cursor: основы]]
+- [[copilot-basics|GitHub Copilot: основы]]
 

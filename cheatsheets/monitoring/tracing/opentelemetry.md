@@ -26,9 +26,9 @@ updated: "2026-02-11"
 - [Jaeger — OpenTelemetry](https://www.jaegertracing.io/docs/latest/deployment/#collector) — экспорт в Jaeger
 
 ### См. также
-- [Jaeger](jaeger.md) — Jaeger и интеграция с OpenTelemetry
+- [[jaeger|Jaeger]] — Jaeger и интеграция с OpenTelemetry
 - [Distributed Tracing](../) — раздел трейсинга
-- [Prometheus](../metrics/prometheus.md) — метрики
+- [[prometheus|Prometheus]] — метрики
 - [Monitoring README](../) — обзор мониторинга
 
 ## Содержание

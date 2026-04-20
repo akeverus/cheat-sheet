@@ -26,8 +26,8 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Redis Security](https://redis.io/docs/management/security/) — безопасность
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-basics.md](redis-basics.md) — основы и администрирование
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-basics|redis-basics.md]] — основы и администрирование
 
 ## Содержание
 

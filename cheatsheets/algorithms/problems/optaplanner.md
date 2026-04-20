@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [`OptaPlanner GitHub`](https://www.optaplanner.org/)
 
 ### См. также
-- [Жадные алгоритмы](greedy-algorithms.md) — жадные алгоритмы
+- [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
 - [Алгоритмы оптимизации](../algorithmic-paradigms/) — парадигмы
 
 ## Содержание

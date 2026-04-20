@@ -24,10 +24,10 @@ updated: "2026-02-11"
 
 ### См. также
 
-- [REST API Best Practices](../../rest/rest-api-best-practices.md) — проектирование REST API
-- [OpenAPI/Swagger](openapi-swagger.md) — инструменты и интеграция
-- [API Testing Basics](../api-testing/api-testing-basics.md) — контрактные и интеграционные тесты
-- [GraphQL](../../graphql/graphql.md) — альтернативный подход к API-контракту
+- [[rest-api-best-practices|REST API Best Practices]] — проектирование REST API
+- [[openapi-swagger|OpenAPI/Swagger]] — инструменты и интеграция
+- [[api-testing-basics|API Testing Basics]] — контрактные и интеграционные тесты
+- [[graphql|GraphQL]] — альтернативный подход к API-контракту
 
 ## Содержание
 

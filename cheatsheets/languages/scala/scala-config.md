@@ -23,8 +23,8 @@ related: ["scala/scala-basics.md", "scala/scala-play.md"]
 - [Typesafe Config](https://github.com/lightbend/config)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Play Framework](../../libraries/scala/scala-play.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-play|Play Framework]]
 
 ## Содержание
 

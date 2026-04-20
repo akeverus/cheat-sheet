@@ -18,9 +18,9 @@ updated: "2026-02-11"
 - [GeeksforGeeks: K'th Smallest/Largest in Unsorted Array](https://www.geeksforgeeks.org/kth-smallestlargest-element-unsorted-array/)
 
 ### См. также
-- [Максимальный подмассив](maximum-subarray.md) — **Kadane**
-- [K наибольших элементов](k-largest-elements.md) — k largest
-- [Быстрая сортировка](../sorting/quick-sort.md) — quick sort
+- [[maximum-subarray|Максимальный подмассив]] — **Kadane**
+- [[k-largest-elements|K наибольших элементов]] — k largest
+- [[quick-sort|Быстрая сортировка]] — quick sort
 
 ## Содержание
 

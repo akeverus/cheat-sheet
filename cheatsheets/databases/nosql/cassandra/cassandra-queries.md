@@ -32,10 +32,10 @@ updated: "2026-02-11"
 - [Cassandra Python Driver](https://docs.datastax.com/en/developer/python-driver/)
 
 ### См. также
-- [Основы](cassandra-basics.md) — **Cassandra**
-- [Моделирование](cassandra-data-modeling.md) — моделирование данных
-- [Кластеризация](cassandra-clustering.md) — кластеризация и масштабирование
-- [Производительность](cassandra-performance.md) — производительность и оптимизация
+- [[cassandra-basics|Основы]] — **Cassandra**
+- [[cassandra-data-modeling|Моделирование]] — моделирование данных
+- [[cassandra-clustering|Кластеризация]] — кластеризация и масштабирование
+- [[cassandra-performance|Производительность]] — производительность и оптимизация
 
 ## Содержание
 

@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Java PropertyChangeListener](https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/beans/PropertyChangeListener.html)
 
 ### См. также
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — Java Concurrency
-- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — события и ApplicationEvent
+- [[java-concurrency-basics|Java Concurrency]] — Java Concurrency
+- [[spring-framework-interview|Spring Core]] — события и ApplicationEvent
 - [Kotlin Delegates](https://kotlinlang.org/docs/delegation.html) — делегаты и observable
 
 ## Содержание

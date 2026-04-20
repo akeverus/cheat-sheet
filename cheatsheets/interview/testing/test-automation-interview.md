@@ -2180,6 +2180,7 @@ void shouldQueryGraphQLWithRestAssured() {
         .body("errors", nullValue());  // GraphQL всегда возвращает 200, ошибки в поле errors
 }
 12. **Автоматизируйте правильные тесты** -- не всё нужно автоматизировать
+```
 
 ---
 

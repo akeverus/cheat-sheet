@@ -26,9 +26,9 @@ updated: "2026-02-11"
 - [MySQL Connector/J](https://dev.mysql.com/doc/connector-j/en/) — **JDBC** драйвер
 
 ### См. также
-- [PostgreSQL](../postgresql/postgres-basics.md) — сравнение с **PostgreSQL**
-- [mysql-design.md](mysql-design.md) — проектирование баз данных
-- [mysql-queries.md](mysql-queries.md) — **SQL** запросы в **MySQL**
+- [[postgres-basics|PostgreSQL]] — сравнение с **PostgreSQL**
+- [[mysql-design|mysql-design.md]] — проектирование баз данных
+- [[mysql-queries|mysql-queries.md]] — **SQL** запросы в **MySQL**
 
 ## Содержание
 

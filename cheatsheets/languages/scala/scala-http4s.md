@@ -26,9 +26,9 @@ related: ["scala/scala-fp-advanced.md", "scala/scala-cats.md", "scala/scala-play
 - [http4s GitHub](https://github.com/http4s/http4s)
 
 ### См. также
-- [Продвинутое функциональное программирование](scala-fp-advanced.md)
-- [Cats](../../libraries/scala/scala-cats.md)
-- [Play Framework](../../libraries/scala/scala-play.md)
+- [[scala-fp-advanced|Продвинутое функциональное программирование]]
+- [[scala-cats|Cats]]
+- [[scala-play|Play Framework]]
 
 ## Содержание
 

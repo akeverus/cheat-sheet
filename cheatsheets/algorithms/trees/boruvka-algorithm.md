@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Borůvka's algorithm](https://www.geeksforgeeks.org/boruvkas-algorithm-greedy-algo-9/)
 
 ### См. также
-- [`prim-algorithm.md`](prim-algorithm.md) — алгоритм Прима (`Prim`)
-- [`kruskal-algorithm.md`](kruskal-algorithm.md) — алгоритм Крускала (`Kruskal`)
-- [`../graphs/dijkstra.md`](../graphs/dijkstra.md) — алгоритм Дейкстры (`Dijkstra`)
+- [[prim-algorithm|`prim-algorithm.md`]] — алгоритм Прима (`Prim`)
+- [[kruskal-algorithm|`kruskal-algorithm.md`]] — алгоритм Крускала (`Kruskal`)
+- [[dijkstra|`../graphs/dijkstra.md`]] — алгоритм Дейкстры (`Dijkstra`)
 
 ## Содержание
 

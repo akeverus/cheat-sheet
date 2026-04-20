@@ -32,10 +32,10 @@ updated: "2026-02-11"
 - [JMX Monitoring](https://cassandra.apache.org/doc/latest/operating/metrics.html)
 
 ### См. также
-- [cassandra-basics.md](cassandra-basics.md) — основы **Cassandra**
-- [cassandra-data-modeling.md](cassandra-data-modeling.md) — моделирование данных
-- [cassandra-clustering.md](cassandra-clustering.md) — кластеризация
-- [cassandra-admin.md](cassandra-admin.md) — администрирование
+- [[cassandra-basics|cassandra-basics.md]] — основы **Cassandra**
+- [[cassandra-data-modeling|cassandra-data-modeling.md]] — моделирование данных
+- [[cassandra-clustering|cassandra-clustering.md]] — кластеризация
+- [[cassandra-admin|cassandra-admin.md]] — администрирование
 
 ## Содержание
 

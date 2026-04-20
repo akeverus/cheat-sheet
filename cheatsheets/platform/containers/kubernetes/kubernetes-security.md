@@ -1052,8 +1052,8 @@ spec:
           restartPolicy: Never
 ```
 ## См. также
-- [Kubernetes Advanced](kubernetes-advanced.md) — продвинутые концепции **K8s**
-- [Kubernetes Networking](kubernetes-networking.md) — сетевая подсистема
-- [Kubernetes Storage](kubernetes-storage.md) — хранение данных
-- [Prometheus](../../../monitoring/metrics/prometheus.md) — мониторинг
-- [Terraform](../../iac/terraform/terraform.md) — **Infrastructure as Code**
+- [[kubernetes-advanced|Kubernetes Advanced]] — продвинутые концепции **K8s**
+- [[kubernetes-networking|Kubernetes Networking]] — сетевая подсистема
+- [[kubernetes-storage|Kubernetes Storage]] — хранение данных
+- [[prometheus|Prometheus]] — мониторинг
+- [[terraform|Terraform]] — **Infrastructure as Code**

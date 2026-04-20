@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Matcher (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Matcher.html)
 
 ### См. также
-- [Работа со скобками](balanced-parentheses.md) — сбалансированные скобки
-- [Проверка палиндромов](palindrome-check.md) — палиндромы
+- [[balanced-parentheses|Работа со скобками]] — сбалансированные скобки
+- [[palindrome-check|Проверка палиндромов]] — палиндромы
 
 ## Содержание
 

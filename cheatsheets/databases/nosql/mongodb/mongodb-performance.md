@@ -27,8 +27,8 @@ updated: "2026-02-11"
 - [MongoDB Performance Tuning](https://www.baeldung.com/spring-data-mongodb-performance)
 
 ### См. также
-- [Индексы](mongodb-indexes.md) — индексы и оптимизация запросов
-- [Aggregation](mongodb-aggregation.md) — **Aggregation Framework**
+- [[mongodb-indexes|Индексы]] — индексы и оптимизация запросов
+- [[mongodb-aggregation|Aggregation]] — **Aggregation Framework**
 
 ## Содержание
 

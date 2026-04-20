@@ -29,9 +29,9 @@ updated: "2026-02-11"
 - [Reactor](https://projectreactor.io/)
 
 ### См. также
-- [Основы логирования](logging-basics.md)
-- [Централизованное логирование](centralized-logging.md)
-- [Структурированное логирование](structured-logging.md)
+- [[logging-basics|Основы логирования]]
+- [[centralized-logging|Централизованное логирование]]
+- [[structured-logging|Структурированное логирование]]
 
 ## Содержание
 

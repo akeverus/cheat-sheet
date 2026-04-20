@@ -22,9 +22,9 @@ BDD-фреймворк для написания автотестов на ес�
 
 ### См. также
 
-- [JUnit Advanced](unit-testing/junit/junit-advanced.md)
-- [REST Assured](integration-testing/rest-assured.md)
-- [Selenium](ui-testing/selenium/selenium.md)
+- [[junit-advanced|JUnit Advanced]]
+- [[rest-assured|REST Assured]]
+- [[selenium|Selenium]]
 
 ---
 

@@ -21,7 +21,7 @@ LSH — хеширование, при котором похожие объек�
 - [Locality-Sensitive Hashing (Wikipedia)](https://en.wikipedia.org/wiki/Locality-sensitive_hashing)
 
 ### См. также
-- [Хеширование и хеш-функции](algorithms.md) — хеширование
+- [[algorithms|Хеширование и хеш-функции]] — хеширование
 - [Алгоритмы поиска](../searching/) — обзор разделов
 
 ## Содержание

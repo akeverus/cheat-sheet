@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Interpolation Search](https://www.geeksforgeeks.org/interpolation-search/)
 
 ### См. также
-- [`binary-search.md`](binary-search.md) — бинарный поиск (`binary search`)
-- [`maximum-subarray.md`](maximum-subarray.md) — максимальный подмассив (`Kadane`)
+- [[binary-search|`binary-search.md`]] — бинарный поиск (`binary search`)
+- [[maximum-subarray|`maximum-subarray.md`]] — максимальный подмассив (`Kadane`)
 
 ## Содержание
 

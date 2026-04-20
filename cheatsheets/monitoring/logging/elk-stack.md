@@ -303,6 +303,6 @@ Watcher (X-Pack): создание watch с trigger (schedule), input (search п
 **Кластер Elasticsearch в статусе red или yellow.** Red — часть шардов недоступна: проверьте _cluster/allocation/explain и логи узлов; частые причины — диск заполнен, нехватка памяти, сбой узла. Yellow — реплики не размещены (норма для одного узла); для production добавьте узлы или настройте number_of_replicas после появления второго узла.
 ## См. также
 
-- [Prometheus](../metrics/prometheus.md) — альтернативная система мониторинга
-- [Grafana](../metrics/grafana.md) — визуализация
-- [Docker](../../platform/containers/docker/docker-basics.md) — контейнеризация
+- [[prometheus|Prometheus]] — альтернативная система мониторинга
+- [[grafana|Grafana]] — визуализация
+- [[docker-basics|Docker]] — контейнеризация

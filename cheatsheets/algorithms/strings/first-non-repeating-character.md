@@ -19,8 +19,8 @@ updated: "2026-02-11"
 - [First non-repeating character — GeeksforGeeks](https://www.geeksforgeeks.org/given-a-string-find-its-first-non-repeating-character/)
 
 ### См. также
-- [Подсчет слов](word-count.md) — подсчёт слов
-- [Проверка палиндромов](palindrome-check.md) — палиндромы
+- [[word-count|Подсчет слов]] — подсчёт слов
+- [[palindrome-check|Проверка палиндромов]] — палиндромы
 
 ## Содержание
 

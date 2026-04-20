@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Big O Notation (Khan Academy)](https://www.khanacademy.org/computing/computer-science/algorithms/asymptotic-notation/a/big-o-notation)
 
 ### См. также
-- [Сложность коллекций](collections-complexity.md) — временная сложность
-- [Бинарный поиск](../searching/binary-search.md) — binary search
+- [[collections-complexity|Сложность коллекций]] — временная сложность
+- [[binary-search|Бинарный поиск]] — binary search
 - [Алгоритмы сортировки](../sorting/) — обзор сортировок
 
 ## Содержание

@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [MongoDB Query Methods](https://www.baeldung.com/java-mongodb-query) — запросы из **Java**
 
 ### См. также
-- [CRUD](mongodb-crud.md) — основы **CRUD** операций
-- [Индексы](mongodb-indexes.md) — оптимизация запросов
+- [[mongodb-crud|CRUD]] — основы **CRUD** операций
+- [[mongodb-indexes|Индексы]] — оптимизация запросов
 
 ## Содержание
 

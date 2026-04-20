@@ -25,10 +25,10 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Scala Collections Overview](https://docs.scala-lang.org/overviews/collections-2.13/overview.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Списки (List)](scala-collections-list.md)
-- [Словари (Map)](scala-collections-map.md)
-- [Обзор коллекций](scala-collections.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-collections-list|Списки (List)]]
+- [[scala-collections-map|Словари (Map)]]
+- [[scala-collections|Обзор коллекций]]
 
 ## Содержание
 

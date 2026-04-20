@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [PostgreSQL Wiki — Don't Do This](https://wiki.postgresql.org/wiki/Don't_Do_This) — типичные ошибки
 
 ### См. также
-- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
-- [postgres-monitoring.md](postgres-monitoring.md) — мониторинг
+- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
+- [[postgres-monitoring|postgres-monitoring.md]] — мониторинг
 
 ---
 

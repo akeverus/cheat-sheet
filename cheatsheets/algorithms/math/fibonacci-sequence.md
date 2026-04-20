@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Program for Fibonacci numbers](https://www.geeksforgeeks.org/program-for-nth-fibonacci-number/)
 
 ### См. также
-- [`factorial-calculation.md`](factorial-calculation.md) — вычисление факториала
-- [`greatest-common-divisor.md`](greatest-common-divisor.md) — наибольший общий делитель (`НОД`)
+- [[factorial-calculation|`factorial-calculation.md`]] — вычисление факториала
+- [[greatest-common-divisor|`greatest-common-divisor.md`]] — наибольший общий делитель (`НОД`)
 
 ## Содержание
 

@@ -28,7 +28,7 @@ updated: "2026-02-11"
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
 ### См. также
-- [Docker: основы](docker-basics.md) — установка и базовые команды **Docker**
+- [[docker-basics|Docker: основы]] — установка и базовые команды **Docker**
 
 ## Содержание
 

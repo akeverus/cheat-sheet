@@ -25,8 +25,8 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
 - [Redis Commands](https://redis.io/commands/) — справочник команд
 
 ### См. также
-- [redis-data-structures.md](redis-data-structures.md) — структуры данных
-- [redis-persistence.md](redis-persistence.md) — персистентность
+- [[redis-data-structures|redis-data-structures.md]] — структуры данных
+- [[redis-persistence|redis-persistence.md]] — персистентность
 
 ## Содержание
 

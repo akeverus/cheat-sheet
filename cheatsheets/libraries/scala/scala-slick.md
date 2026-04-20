@@ -1440,8 +1440,8 @@ db.run {
 }
 ```
 ## См. также
-- [Play Framework](scala-play.md) — **Web framework**
-- [PostgreSQL](../../databases/relational/postgresql/postgres-basics.md) — **Database**
-- [MySQL](../../databases/relational/mysql/mysql-basics.md) — **Database**
+- [[scala-play|Play Framework]] — **Web framework**
+- [[postgres-basics|PostgreSQL]] — **Database**
+- [[mysql-basics|MySQL]] — **Database**
 - [Паттерны](../../patterns/README.md) — **Patterns**
 

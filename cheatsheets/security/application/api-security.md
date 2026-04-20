@@ -29,9 +29,9 @@ updated: "2026-02-11"
 - [`API` Security Best Practices](https://owasp.org/www-project-api-security/) — лучшие практики от `OWASP`
 
 ### См. также
-- [Application Security](application-security.md) — аутентификация, авторизация, токены
-- [Web Security](web-security.md) — общие веб‑атаки и защита
-- [Secrets Management](../data/secrets-management.md) — безопасное хранение ключей и токенов
+- [[application-security|Application Security]] — аутентификация, авторизация, токены
+- [[web-security|Web Security]] — общие веб‑атаки и защита
+- [[secrets-management|Secrets Management]] — безопасное хранение ключей и токенов
 
 ---
 

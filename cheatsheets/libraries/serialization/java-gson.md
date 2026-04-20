@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Stack Overflow — Gson](https://stackoverflow.com/questions/tagged/gson)
 
 ### См. также
-- [Jackson](jackson.md) — **Jackson** для **JSON** обработки
-- [Kotlinx Serialization](../kotlin/kotlin-kotlinx-serialization.md) — **JSON** библиотека для **Kotlin**
-- [Protocol Buffers](../java/java-protobuf.md) — бинарная сериализация
+- [[jackson|Jackson]] — **Jackson** для **JSON** обработки
+- [[kotlin-kotlinx-serialization|Kotlinx Serialization]] — **JSON** библиотека для **Kotlin**
+- [[java-protobuf|Protocol Buffers]] — бинарная сериализация
 
 ## Содержание
 

@@ -25,7 +25,7 @@ related: ["scala/scala-basics.md"]
 - [Logback Documentation](https://logback.qos.ch/documentation.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
+- [[scala-basics|Основы Scala]]
 
 ## Содержание
 

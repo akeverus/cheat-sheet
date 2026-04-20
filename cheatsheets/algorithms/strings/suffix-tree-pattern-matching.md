@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Suffix Tree — GeeksforGeeks](https://www.geeksforgeeks.org/pattern-searching-using-suffix-tree/)
 
 ### См. также
-- [Поиск строк в больших текстах](large-text-string-search.md) — поиск в больших текстах
-- [Проверка нескольких ключевых слов](multiple-keywords-check.md) — несколько ключевых слов
+- [[large-text-string-search|Поиск строк в больших текстах]] — поиск в больших текстах
+- [[multiple-keywords-check|Проверка нескольких ключевых слов]] — несколько ключевых слов
 
 ## Содержание
 

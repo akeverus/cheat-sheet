@@ -22,9 +22,9 @@ updated: "2026-02-11"
 
 ### См. также
 
-- [REST Assured](../rest-assured.md)
-- [WireMock](../wiremock.md)
-- [Testcontainers](../testcontainers/testcontainers.md)
+- [[rest-assured|REST Assured]]
+- [[wiremock|WireMock]]
+- [[testcontainers|Testcontainers]]
 
 ---
 

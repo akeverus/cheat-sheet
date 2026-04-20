@@ -29,8 +29,8 @@ updated: "2026-02-11"
 
 ### См. также
 
-- [Decorator](../structural/decorator.md)
-- [Proxy](../structural/proxy.md)
+- [[decorator|Decorator]]
+- [[proxy|Proxy]]
 
 ## Содержание
 

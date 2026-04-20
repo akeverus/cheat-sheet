@@ -1461,7 +1461,7 @@ val parsed = Parser.default().parse(StringReader(json)) as JsonObject
 val name = parsed.string("name")
 ```
 ## См. также
-- [kotlinx.serialization](kotlin-kotlinx-serialization.md) — Официальная **Kotlin** сериализация
-- [Gson](../serialization/java-gson.md) — **Google JSON** библиотека
-- [Jackson](../serialization/jackson.md) — **Jackson JSON** процессор
+- [[kotlin-kotlinx-serialization|kotlinx.serialization]] — Официальная **Kotlin** сериализация
+- [[java-gson|Gson]] — **Google JSON** библиотека
+- [[jackson|Jackson]] — **Jackson JSON** процессор
 

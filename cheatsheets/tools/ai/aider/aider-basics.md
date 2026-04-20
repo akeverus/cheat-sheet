@@ -379,6 +379,6 @@ A: Безопасность зависит от:
 
 ## См. также
 
-- [Cursor: основы](../cursor/cursor-basics.md)
-- [Claude Code: основы](../claude/claude-basics.md)
+- [[cursor-basics|Cursor: основы]]
+- [[claude-basics|Claude Code: основы]]
 

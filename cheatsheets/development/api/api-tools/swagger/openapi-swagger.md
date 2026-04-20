@@ -1887,8 +1887,8 @@ components:
 - Документируйте безопасность (**securitySchemes**); генерируйте клиенты и серверы из спецификации.
 - Регулярно валидируйте спецификацию и синхронизируйте с реализацией **API**.
 ## См. также
-- [rest-api-design.md](../../rest/rest-api-design.md) — основы **REST API**
-- [rest-api-best-practices.md](../../rest/rest-api-best-practices.md) — лучшие практики **REST**
-- [GraphQL](../../graphql/graphql.md) — альтернативный подход к **API**
-- [gRPC](../../grpc/grpc.md) — высокопроизводительные **API**
+- [[rest-api-design|rest-api-design.md]] — основы **REST API**
+- [[rest-api-best-practices|rest-api-best-practices.md]] — лучшие практики **REST**
+- [[graphql|GraphQL]] — альтернативный подход к **API**
+- [[grpc|gRPC]] — высокопроизводительные **API**
 - [Security](../../../../security/) — безопасность **API**

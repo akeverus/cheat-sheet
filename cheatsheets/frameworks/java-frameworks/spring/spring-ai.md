@@ -25,9 +25,9 @@ updated: "2026-02-11"
 - [**Spring AI** Tutorials](https://www.baeldung.com/spring-ai)
 
 ### См. также
-- [**Java** Basics](../../../languages/java/java-basics.md) — основы **Java**
-- [**Spring Boot**](spring-boot.md) — **Spring Boot**
-- [Jackson](../../../libraries/serialization/jackson.md) — **JSON** обработка
+- [[java-basics|**Java** Basics]] — основы **Java**
+- [[spring-boot|**Spring Boot**]] — **Spring Boot**
+- [[jackson|Jackson]] — **JSON** обработка
 
 ## Содержание
 

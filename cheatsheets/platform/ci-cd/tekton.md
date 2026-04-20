@@ -1523,7 +1523,7 @@ spec:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [Jenkins](jenkins.md) — **Traditional CI/CD**
-- [GitLab CI](gitlab-ci.md)
-- [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) — **Container orchestration**
-- [Kubernetes Networking](../containers/kubernetes/kubernetes-networking.md) — **Service mesh**
+- [[jenkins|Jenkins]] — **Traditional CI/CD**
+- [[gitlab-ci|GitLab CI]]
+- [[kubernetes-advanced|Kubernetes Advanced]] — **Container orchestration**
+- [[kubernetes-networking|Kubernetes Networking]] — **Service mesh**

@@ -24,10 +24,10 @@ updated: "2026-02-11"
 
 ## См. также
 
-- [PostgreSQL Basics](../relational/postgresql/postgres-basics.md)
+- [[postgres-basics|PostgreSQL Basics]]
 - [MySQL](../relational/mysql/README.md)
 - [MongoDB](../nosql/mongodb/README.md)
-- [REST API Design](../../development/api/rest/rest-api-design.md)
+- [[rest-api-design|REST API Design]]
 
 ## Содержание
 

@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Spring Abstract Factory](https://docs.spring.io/spring-framework/reference/core/beans/java.html)
 
 ### См. также
-- [Factory Method](factory-method.md) — **Factory Method Pattern**
-- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — **IoC** и бины
-- [Java Basics](../../languages/java/java-basics.md) — **Java Basics**
+- [[factory-method|Factory Method]] — **Factory Method Pattern**
+- [[spring-framework-interview|Spring Core]] — **IoC** и бины
+- [[java-basics|Java Basics]] — **Java Basics**
 
 ## Содержание
 

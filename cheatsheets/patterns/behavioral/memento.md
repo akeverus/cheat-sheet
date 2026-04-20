@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java Cloneable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Cloneable.html)
 
 ### См. также
-- [Java Collections](../../languages/java/java-collections-list.md) — **Java Collections**
-- [Command](command.md) — **Command Pattern**
-- [State](state.md) — **State Pattern**
+- [[java-collections-list|Java Collections]] — **Java Collections**
+- [[command|Command]] — **Command Pattern**
+- [[state|State]] — **State Pattern**
 
 ## Содержание
 

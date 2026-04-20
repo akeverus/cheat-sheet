@@ -22,8 +22,8 @@ updated: "2026-02-11"
 
 ### См. также
 - [Platform](../README.md) — раздел платформы
-- [Контейнеры](containerization-overview.md) — **Docker**, **Kubernetes**
-- [IaC](../iac/iac-overview.md) — **Infrastructure as Code**
+- [[containerization-overview|Контейнеры]] — **Docker**, **Kubernetes**
+- [[iac-overview|IaC]] — **Infrastructure as Code**
 
 ## Содержание
 

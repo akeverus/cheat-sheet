@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [OrientDB Documentation](https://orientdb.org/docs/) — официальная документация **OrientDB**
 
 ### См. также
-- [Neo4j](../neo4j/neo4j-basics.md) — графовая БД **Neo4j**
+- [[neo4j-basics|Neo4j]] — графовая БД **Neo4j**
 - [NoSQL](../../nosql/) — обзор **NoSQL**
 
 ## Содержание

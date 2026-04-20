@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Java Collections (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/package-summary.html)
 
 ### См. также
-- [`linked-list-middle.md`](linked-list-middle.md) — поиск среднего элемента связанного списка (`Linked List`)
+- [[linked-list-middle|`linked-list-middle.md`]] — поиск среднего элемента связанного списка (`Linked List`)
 - [`../problems/README.md`](../problems/README.md) — задачи и алгоритмы, обзор разделов
 
 ## Содержание

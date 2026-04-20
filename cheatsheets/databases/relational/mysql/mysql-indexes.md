@@ -32,10 +32,10 @@ updated: "2026-02-11"
 - [MySQL Enterprise Monitor](https://dev.mysql.com/doc/mysql-monitor/en/)
 
 ### См. также
-- [mysql-basics.md](mysql-basics.md) — основы **MySQL**
-- [mysql-queries.md](mysql-queries.md) — запросы и оптимизация **SQL**
-- [mysql-performance.md](mysql-performance.md) — производительность сервера
-- [PostgreSQL](../postgresql/postgres-indexes.md) — сравнение с **PostgreSQL**
+- [[mysql-basics|mysql-basics.md]] — основы **MySQL**
+- [[mysql-queries|mysql-queries.md]] — запросы и оптимизация **SQL**
+- [[mysql-performance|mysql-performance.md]] — производительность сервера
+- [[postgres-indexes|PostgreSQL]] — сравнение с **PostgreSQL**
 
 ## Содержание
 

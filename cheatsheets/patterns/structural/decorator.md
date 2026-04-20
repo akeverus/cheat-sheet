@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java Collections Unmodifiable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#unmodifiableCollection(java.util.Collection))
 
 ### См. также
-- [Adapter](adapter.md) — **Adapter Pattern**
-- [Spring AOP](../../frameworks/java-frameworks/spring/spring-aop.md) — **Spring AOP**
-- [Java I/O NIO](../../languages/java/java-io-nio.md) — Java I/O
+- [[adapter|Adapter]] — **Adapter Pattern**
+- [[spring-aop|Spring AOP]] — **Spring AOP**
+- [[java-io-nio|Java I/O NIO]] — Java I/O
 - [Kotlin Delegation](https://kotlinlang.org/docs/delegation.html) — делегирование и декораторы
 
 ## Содержание

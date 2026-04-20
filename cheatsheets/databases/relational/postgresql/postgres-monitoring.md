@@ -19,8 +19,8 @@ updated: "2026-02-11"
 - [PostgreSQL Monitoring](https://www.postgresql.org/docs/current/monitoring.html) — мониторинг
 
 ### См. также
-- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
-- [postgres-performance-tuning.md](postgres-performance-tuning.md) — тюнинг производительности
+- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
+- [[postgres-performance-tuning|postgres-performance-tuning.md]] — тюнинг производительности
 
 Мониторинг **PostgreSQL** включает отслеживание производительности, использование ресурсов, активность базы данных и метрики для обеспечения оптимальной работы и раннего обнаружения проблем.
 

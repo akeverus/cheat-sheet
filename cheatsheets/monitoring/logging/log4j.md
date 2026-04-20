@@ -22,9 +22,9 @@ updated: "2026-02-11"
 - [Log4j 2 GitHub](https://github.com/apache/logging-log4j2)
 
 ### См. также
-- [Основы логирования](logging-basics.md)
-- [Logback](logback.md)
-- [SLF4J](slf4j.md)
+- [[logging-basics|Основы логирования]]
+- [[logback|Logback]]
+- [[slf4j|SLF4J]]
 
 ## Содержание
 

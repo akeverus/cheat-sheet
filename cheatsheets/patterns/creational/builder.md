@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Effective Java - Item 2](https://www.oreilly.com/library/view/effective-java/9780134686097/)
 
 ### См. также
-- [Factory Method](factory-method.md) — **Factory Method Pattern**
-- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — конфигурация и бины
-- [Java Basics](../../languages/java/java-basics.md) — основы **Java**
+- [[factory-method|Factory Method]] — **Factory Method Pattern**
+- [[spring-framework-interview|Spring Core]] — конфигурация и бины
+- [[java-basics|Java Basics]] — основы **Java**
 
 ## Содержание
 

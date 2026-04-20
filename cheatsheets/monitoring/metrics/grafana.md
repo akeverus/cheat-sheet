@@ -25,10 +25,10 @@ Grafana — платформа для аналитики и интерактив
 
 ### См. также
 
-- [Prometheus](prometheus.md) — сбор метрик
-- [Micrometer](micrometer.md) — метрики JVM
-- [Alerting](../alerting/alerting.md) — система алертинга
-- [Distributed Tracing](../tracing/distributed-tracing.md) — распределённое трассирование
+- [[prometheus|Prometheus]] — сбор метрик
+- [[micrometer|Micrometer]] — метрики JVM
+- [[alerting|Alerting]] — система алертинга
+- [[distributed-tracing|Distributed Tracing]] — распределённое трассирование
 
 ## Содержание
 

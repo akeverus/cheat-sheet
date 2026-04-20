@@ -27,10 +27,10 @@ updated: "2026-02-11"
 - [JUL: java.util.logging](https://docs.oracle.com/javase/8/docs/api/java/util/logging/package-summary.html)
 
 ### См. также
-- [Logback](logback.md) — конфигурация Logback
-- [SLF4J](slf4j.md) — SLF4J facade
-- [Структурированное логирование](structured-logging.md)
-- [Distributed Tracing](../tracing/distributed-tracing.md)
+- [[logback|Logback]] — конфигурация Logback
+- [[slf4j|SLF4J]] — SLF4J facade
+- [[structured-logging|Структурированное логирование]]
+- [[distributed-tracing|Distributed Tracing]]
 
 ## Содержание
 

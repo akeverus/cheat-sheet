@@ -29,8 +29,8 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
 - [ClickHouse Indexing](https://www.baeldung.com/clickhouse-indexes)
 
 ### См. также
-- [Запросы](clickhouse-queries.md) — оптимизация запросов
-- [Производительность](clickhouse-performance.md) — производительность и мониторинг
+- [[clickhouse-queries|Запросы]] — оптимизация запросов
+- [[clickhouse-performance|Производительность]] — производительность и мониторинг
 
 ## Содержание
 

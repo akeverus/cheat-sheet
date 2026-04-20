@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [`Enum` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html)
 
 ### См. также
-- [Комбинаторные задачи](combinatorial-problems-overview.md) — комбинаторика
+- [[combinatorial-problems-overview|Комбинаторные задачи]] — комбинаторика
 - [Перестановки строк](../strings/README.md) — алгоритмы со строками
 
 ## Содержание

@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Count All Palindromic Subsequence — GeeksforGeeks](https://www.geeksforgeeks.org/count-palindromic-subsequence-given-string/)
 
 ### См. также
-- [Проверка палиндромов](palindrome-check.md) — палиндромы
-- [Перестановки строк](string-permutations.md) — перестановки
+- [[palindrome-check|Проверка палиндромов]] — палиндромы
+- [[string-permutations|Перестановки строк]] — перестановки
 
 ## Содержание
 

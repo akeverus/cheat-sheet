@@ -25,8 +25,8 @@ updated: "2026-02-11"
 ### См. также
 - [Решение задач](../problem-solving/README.md) — решение задач
 - [Обзор алгоритмов](../algorithms/README.md) — алгоритмы
-- [Динамическое программирование](dynamic-programming.md) — **DP**
-- [Жадные алгоритмы](greedy-algorithms.md) — жадные алгоритмы
+- [[dynamic-programming|Динамическое программирование]] — **DP**
+- [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
 
 ## Содержание
 

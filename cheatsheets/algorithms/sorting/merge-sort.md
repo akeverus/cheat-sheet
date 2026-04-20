@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [`Visualgo`: `Merge Sort`](https://visualgo.net/)
 
 ### См. также
-- [quick-sort.md](quick-sort.md) — быстрая сортировка
-- [bubble-sort.md](bubble-sort.md) — пузырьковая сортировка
+- [[quick-sort|quick-sort.md]] — быстрая сортировка
+- [[bubble-sort|bubble-sort.md]] — пузырьковая сортировка
 
 ## Содержание
 

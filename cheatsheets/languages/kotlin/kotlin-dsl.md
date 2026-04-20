@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Kotlin DSL Tutorial](https://www.baeldung.com/kotlin/dsl)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Функциональное программирование](kotlin-fp-basics.md)
-- [Метапрограммирование](kotlin-metaprogramming.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-fp-basics|Функциональное программирование]]
+- [[kotlin-metaprogramming|Метапрограммирование]]
 
 ## Содержание
 

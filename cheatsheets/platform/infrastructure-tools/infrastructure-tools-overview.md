@@ -26,7 +26,7 @@ updated: "2026-02-11"
 ## См. также
 
 - [Platform](../README.md) — **Terraform Advanced**, **Ansible Advanced**, **Nginx Advanced**, **Packer**, **Vagrant**, **Consul**
-- [Infrastructure as Code](../iac/iac-overview.md) — основы **Terraform** и **Ansible**
+- [[iac-overview|Infrastructure as Code]] — основы **Terraform** и **Ansible**
 - [CI/CD](../ci-cd/README.md)
 
 ## Содержание

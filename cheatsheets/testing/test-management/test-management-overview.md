@@ -23,9 +23,9 @@ updated: "2026-02-11"
 
 ### См. также
 
-- [Testing Tools Overview](../testing-tools/testing-tools-overview.md)
-- [JUnit](../unit-testing/junit/junit.md)
-- [pytest](../unit-testing/pytest/pytest.md)
+- [[testing-tools-overview|Testing Tools Overview]]
+- [[junit|JUnit]]
+- [[pytest|pytest]]
 
 ---
 

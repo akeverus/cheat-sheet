@@ -24,8 +24,8 @@ related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 - [Redis Replication](https://redis.io/docs/management/replication/) — репликация
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-persistence.md](redis-persistence.md) — персистентность
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-persistence|redis-persistence.md]] — персистентность
 
 ## Содержание
 

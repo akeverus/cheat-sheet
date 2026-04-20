@@ -24,8 +24,8 @@ updated: "2026-02-11"
 - [Kotlin Annotation Processing](https://www.baeldung.com/kotlin/annotation-processing)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [DSL в Kotlin](kotlin-dsl.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-dsl|DSL в Kotlin]]
 
 ## Содержание
 

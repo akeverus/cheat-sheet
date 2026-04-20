@@ -24,8 +24,8 @@ updated: "2026-02-11"
 
 ### См. также
 - [Решение задач](../problem-solving/README.md) — решение задач
-- [Поиск с возвратом](backtracking.md) — backtracking
-- [Динамическое программирование](dynamic-programming.md) — **DP**
+- [[backtracking|Поиск с возвратом]] — backtracking
+- [[dynamic-programming|Динамическое программирование]] — **DP**
 
 ## Содержание
 

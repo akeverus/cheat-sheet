@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Math.PI (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html#PI)
 
 ### См. также
-- [Вычисление расстояния между точками](distance-between-points.md) — расстояние между точками
-- [Пересечение прямоугольников](rectangle-overlap.md) — перекрытие прямоугольников
+- [[distance-between-points|Вычисление расстояния между точками]] — расстояние между точками
+- [[rectangle-overlap|Пересечение прямоугольников]] — перекрытие прямоугольников
 
 ## Содержание
 

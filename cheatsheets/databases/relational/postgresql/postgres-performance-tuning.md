@@ -24,8 +24,8 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 - [PostgreSQL Performance Tips](https://www.postgresql.org/docs/current/performance-tips.html) — рекомендации по производительности
 
 ### См. также
-- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
-- [postgres-monitoring.md](postgres-monitoring.md) — мониторинг
+- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
+- [[postgres-monitoring|postgres-monitoring.md]] — мониторинг
 
 ## Содержание
 

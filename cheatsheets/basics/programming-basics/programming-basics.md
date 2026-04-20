@@ -22,7 +22,7 @@ updated: "2026-02-11"
 - [Java Programming Basics](https://www.baeldung.com/java-tutorial) — основы **Java** программирования
 
 ### См. также
-- [Computer Science](../computer-science/computer-science-basics.md)
+- [[computer-science-basics|Computer Science]]
 - [Алгоритмы и структуры данных](../../algorithms/)
 
 ## Содержание

@@ -89,6 +89,6 @@ updated: "2026-02-11"
 
 ## См. также
 
-- [maven-advanced.md](maven-advanced.md) — многомодульные проекты, **Reactor**, **Dependency locking**, **CI/CD**, **Troubleshooting**.
-- [gradle.md](../gradle/gradle.md) — основы **Gradle**.
+- [[maven-advanced|maven-advanced.md]] — многомодульные проекты, **Reactor**, **Dependency locking**, **CI/CD**, **Troubleshooting**.
+- [[gradle|gradle.md]] — основы **Gradle**.
 - [README.md](../) — обзор раздела **Build Tools**.

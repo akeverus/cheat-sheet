@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java State Pattern in JDK](https://docs.oracle.com/javase/tutorial/)
 
 ### См. также
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
+- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
 - [Spring State Machine](https://spring.io/projects/spring-statemachine) — **Spring State Machine**
-- [Strategy](strategy.md) — **Strategy Pattern**
+- [[strategy|Strategy]] — **Strategy Pattern**
 
 ## Содержание
 

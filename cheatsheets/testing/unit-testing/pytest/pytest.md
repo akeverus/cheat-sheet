@@ -28,9 +28,9 @@ updated: "2026-02-11"
 
 ### См. также
 - [Unit Testing](../) — юнит-тестирование
-- [Jest](../jest/jest.md) — фреймворк для **JavaScript**/**TypeScript**
-- [JUnit](../junit/junit.md) — фреймворк для **Java**
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) — обзор инструментов
+- [[jest|Jest]] — фреймворк для **JavaScript**/**TypeScript**
+- [[junit|JUnit]] — фреймворк для **Java**
+- [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
 
 ## Содержание
 

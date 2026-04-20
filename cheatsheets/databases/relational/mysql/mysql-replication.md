@@ -32,10 +32,10 @@ updated: "2026-02-11"
 - [Percona XtraBackup](https://docs.percona.com/percona-xtrabackup/8.0/)
 
 ### См. также
-- [Основы](mysql-basics.md) — **MySQL**
-- [Производительность](mysql-performance.md) — производительность сервера
-- [Администрирование](mysql-admin.md) — администрирование **MySQL**
-- [Высокая доступность и инфраструктура](mysql-replication.md) — инфраструктура
+- [[mysql-basics|Основы]] — **MySQL**
+- [[mysql-performance|Производительность]] — производительность сервера
+- [[mysql-admin|Администрирование]] — администрирование **MySQL**
+- [[mysql-replication|Высокая доступность и инфраструктура]] — инфраструктура
 
 ## Содержание
 

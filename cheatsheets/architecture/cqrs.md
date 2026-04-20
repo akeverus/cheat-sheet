@@ -21,10 +21,10 @@ updated: "2026-02-11"
 - [Axon Framework](https://docs.axondb.io/)
 
 ### См. также
-- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
-- [Event Sourcing](event-sourcing.md) — **Event Sourcing**
-- [Domain-Driven Design](ddd.md) — **Domain-Driven Design**
-- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
+- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
+- [[event-sourcing|Event Sourcing]] — **Event Sourcing**
+- [[ddd|Domain-Driven Design]] — **Domain-Driven Design**
+- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
 
 ## Содержание
 

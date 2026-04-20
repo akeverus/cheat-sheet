@@ -25,8 +25,8 @@ updated: "2026-04-11"
 
 ### См. также
 
-- [Java Memory Model](java-memory-model.md) — happens-before, volatile, synchronized
-- [Java Concurrency](java-concurrency-basics.md) — потоки, пулы, синхронизация
+- [[java-memory-model|Java Memory Model]] — happens-before, volatile, synchronized
+- [[java-concurrency-basics|Java Concurrency]] — потоки, пулы, синхронизация
 
 ## Содержание
 

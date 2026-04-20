@@ -23,7 +23,7 @@ related: ["scala/scala-basics.md"]
 - [SBT Documentation](https://www.scala-sbt.org/documentation.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
+- [[scala-basics|Основы Scala]]
 
 ## Содержание
 

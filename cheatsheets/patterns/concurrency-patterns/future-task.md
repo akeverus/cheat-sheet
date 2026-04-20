@@ -22,9 +22,9 @@ updated: "2026-02-11"
 - [Java FutureTask](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/FutureTask.html)
 
 ### См. также
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
-- [Producer-Consumer](producer-consumer.md) — **Producer-Consumer Pattern**
-- [CompletableFuture / асинхронность](../../languages/java/java-concurrency-advanced.md) — асинхронное программирование
+- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
+- [[producer-consumer|Producer-Consumer]] — **Producer-Consumer Pattern**
+- [[java-concurrency-advanced|CompletableFuture / асинхронность]] — асинхронное программирование
 
 ## Содержание
 

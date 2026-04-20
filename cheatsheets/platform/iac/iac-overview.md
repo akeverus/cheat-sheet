@@ -23,10 +23,10 @@ updated: "2026-02-11"
 
 ### См. также
 - [Platform](../README.md) — раздел инфраструктуры
-- [Terraform Basics](terraform/terraform-basics.md) — практическая работа с Terraform
-- [Ansible Basics](ansible/ansible-basics.md) — автоматизация конфигурации
-- [Pulumi Basics](pulumi/pulumi-basics.md) — IaC на языках программирования
-- [Containerization](../containers/containerization-overview.md) — контейнеризация
+- [[terraform-basics|Terraform Basics]] — практическая работа с Terraform
+- [[ansible-basics|Ansible Basics]] — автоматизация конфигурации
+- [[pulumi-basics|Pulumi Basics]] — IaC на языках программирования
+- [[containerization-overview|Containerization]] — контейнеризация
 
 ## Содержание
 

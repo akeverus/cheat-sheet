@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Couchbase Documentation](https://docs.couchbase.com/) — официальная документация **Couchbase**
 
 ### См. также
-- [MongoDB](../mongodb/mongodb-basics.md) — документная **NoSQL** БД
-- [Redis](../redis/redis-basics.md) — **key-value** хранилище
+- [[mongodb-basics|MongoDB]] — документная **NoSQL** БД
+- [[redis-basics|Redis]] — **key-value** хранилище
 
 ## Содержание
 

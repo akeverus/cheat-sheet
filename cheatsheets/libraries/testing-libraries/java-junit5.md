@@ -22,7 +22,7 @@ updated: "2026-02-11"
 - [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/) — руководство пользователя
 
 ### См. также
-- [Mockito](../../testing/unit-testing/junit/mockito.md) — **Mockito** для мокирования
+- [[mockito|Mockito]] — **Mockito** для мокирования
 - [Unit-тестирование](../../testing/unit-testing/README.md) — **Unit** тестирование
 
 ## Содержание
@@ -1209,6 +1209,6 @@ public class PropertyBasedTest {
 
 ## См. также
 - [Mockito](../../testing/unit-testing/junit/mockito.md), [Mockito Advanced](../../testing/unit-testing/junit/mockito-advanced.md) — моки и стабы
-- [AssertJ](../../testing/unit-testing/junit/assertj.md) — **Fluent assertions**
+- [[assertj|AssertJ]] — **Fluent assertions**
 - [Testcontainers](https://www.testcontainers.org/) — интеграционные тесты
 

@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Kotlin Performance Tips](https://kotlinlang.org/docs/performance.html)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Корутины](kotlin-concurrency-basics.md)
-- [Java: основы](../java/java-basics.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-concurrency-basics|Корутины]]
+- [[java-basics|Java: основы]]
 
 ## Содержание
 

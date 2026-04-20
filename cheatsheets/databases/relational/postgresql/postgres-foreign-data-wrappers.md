@@ -24,8 +24,8 @@ related: ["databases/postgres-queries.md", "databases/postgres-performance-tunin
 - [PostgreSQL postgres_fdw](https://www.postgresql.org/docs/current/postgres-fdw.html) — расширение postgres_fdw
 
 ### См. также
-- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
-- [postgres-queries.md](postgres-queries.md) — запросы
+- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
+- [[postgres-queries|postgres-queries.md]] — запросы
 
 ## Содержание
 

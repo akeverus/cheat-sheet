@@ -28,10 +28,10 @@ Prometheus — система мониторинга и алертинга с о
 - [Spring Boot Actuator](https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html)
 
 ### См. также
-- [Grafana](grafana.md) — визуализация метрик
-- [Micrometer](micrometer.md) — метрики в приложениях
-- [Observability](../observability-guide.md) — основы Observability
-- [Distributed Tracing](../tracing/distributed-tracing.md) — трассировка
+- [[grafana|Grafana]] — визуализация метрик
+- [[micrometer|Micrometer]] — метрики в приложениях
+- [[observability-guide|Observability]] — основы Observability
+- [[distributed-tracing|Distributed Tracing]] — трассировка
 
 ## Содержание
 

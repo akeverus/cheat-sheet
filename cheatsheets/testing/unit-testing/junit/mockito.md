@@ -22,11 +22,11 @@ updated: "2026-02-11"
 
 ### См. также
 
-- [JUnit](junit.md) — тест-раннер
-- [Java Basics](../../../languages/java/java-basics.md) — основы Java
-- [Testcontainers](../../../libraries/java/java-testcontainers.md) — интеграционные тесты
+- [[junit|JUnit]] — тест-раннер
+- [[java-basics|Java Basics]] — основы Java
+- [[java-testcontainers|Testcontainers]] — интеграционные тесты
 - [Unit Testing](../) — юнит-тестирование
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) — обзор инструментов
+- [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
 
 ---
 

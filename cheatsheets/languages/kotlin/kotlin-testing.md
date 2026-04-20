@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Kotlin Testing Tutorial](https://www.baeldung.com/kotlin/junit-5-kotlin)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Корутины](kotlin-concurrency-basics.md)
-- [Общее тестирование](kotlin-another.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-concurrency-basics|Корутины]]
+- [[kotlin-another|Общее тестирование]]
 
 ## Содержание
 

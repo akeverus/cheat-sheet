@@ -26,8 +26,8 @@ updated: "2026-02-11"
 - [Alertmanager — Slack configuration](https://prometheus.io/docs/alerting/latest/configuration/#slack_config)
 
 ### См. также
-- [Alertmanager](alertmanager.md) — маршрутизация алертов в Slack
-- [PagerDuty](pagerduty.md) — инцидент-менеджмент, интеграция со Slack
+- [[alertmanager|Alertmanager]] — маршрутизация алертов в Slack
+- [[pagerduty|PagerDuty]] — инцидент-менеджмент, интеграция со Slack
 - [Alerting](../) — раздел алертинга
 - [Monitoring](../) — обзор мониторинга
 

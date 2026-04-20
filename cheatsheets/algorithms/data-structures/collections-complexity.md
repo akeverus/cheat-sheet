@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [JMH (OpenJDK)](https://github.com/openjdk/jmh)
 
 ### См. также
-- [Практические примеры Big O](collections-big-o.md)
-- [Структуры данных без блокировок](collections-lock-free.md)
+- [[collections-big-o|Практические примеры Big O]]
+- [[collections-lock-free|Структуры данных без блокировок]]
 - [Коллекции Java](../../languages/java/README.md)
 
 ## Содержание

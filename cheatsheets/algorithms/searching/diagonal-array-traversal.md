@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Diagonal Traversal of Matrix](https://www.geeksforgeeks.org/zigzag-or-diagonal-traversal-of-matrix/)
 
 ### См. также
-- [Поиск пар с заданной суммой](pairs-with-given-sum.md) — pairs with sum
-- [Максимальный подмассив](maximum-subarray.md) — **Kadane**
+- [[pairs-with-given-sum|Поиск пар с заданной суммой]] — pairs with sum
+- [[maximum-subarray|Максимальный подмассив]] — **Kadane**
 
 ## Содержание
 

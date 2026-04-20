@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Kotlin Functional Programming](https://www.baeldung.com/kotlin/functional-programming)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Продвинутое функциональное программирование](kotlin-fp-advanced.md)
-- [Операции над коллекциями](kotlin-collections-operations.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-fp-advanced|Продвинутое функциональное программирование]]
+- [[kotlin-collections-operations|Операции над коллекциями]]
 
 ## Содержание
 

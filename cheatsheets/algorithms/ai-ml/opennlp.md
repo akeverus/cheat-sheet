@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [OpenNLP Models](https://opennlp.apache.org/)
 
 ### См. также
-- [Обзор ИИ библиотек](ai-libraries.md) — **NLP** и библиотеки
+- [[ai-libraries|Обзор ИИ библиотек]] — **NLP** и библиотеки
 - [Алгоритмы со строками](../strings/README.md) — раздел strings
 
 ## Содержание

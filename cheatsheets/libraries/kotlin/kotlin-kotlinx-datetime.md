@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [kotlinx.datetime API](https://kotlinlang.org/api/kotlinx-datetime/kotlinx-datetime/) — **API** документация
 
 ### См. также
-- [Kotlin basics](../../languages/kotlin/kotlin-basics.md) — работа с датами в **Kotlin**
-- [Java Time API](../../languages/java/java-basics.md) — **Java Time API**
+- [[kotlin-basics|Kotlin basics]] — работа с датами в **Kotlin**
+- [[java-basics|Java Time API]] — **Java Time API**
 
 ## Содержание
 
@@ -1241,7 +1241,7 @@ val nextBusinessDay = businessCalendar.nextBusinessDay(date)
 - [Migration from Java Time](https://github.com/Kotlin/kotlinx-datetime/blob/master/docs/migration.md)
 
 ## См. также
-- [Kotlin Basics](../../languages/kotlin/kotlin-basics.md) — Основы **Kotlin**
-- [Java Date/Time API](../../languages/java/java-basics.md) — **Java Date**/**Time API**
-- [Spring Boot](../../frameworks/spring/spring-boot.md) — **Spring Boot** и время
+- [[kotlin-basics|Kotlin Basics]] — Основы **Kotlin**
+- [[java-basics|Java Date/Time API]] — **Java Date**/**Time API**
+- [[spring-boot|Spring Boot]] — **Spring Boot** и время
 

@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [MongoDB CRUD with Spring Boot](https://www.baeldung.com/spring-data-mongodb-tutorial) — **Spring Data MongoDB**
 
 ### См. также
-- [Основы](mongodb-basics.md) — **MongoDB**
-- [Запросы](mongodb-queries.md) — продвинутые запросы
+- [[mongodb-basics|Основы]] — **MongoDB**
+- [[mongodb-queries|Запросы]] — продвинутые запросы
 
 ## Содержание
 

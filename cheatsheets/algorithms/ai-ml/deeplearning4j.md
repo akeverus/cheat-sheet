@@ -24,9 +24,9 @@ Deeplearning4j (DL4J) — это современная и библиотека 
 - [Introduction to Deeplearning4j](https://www.baeldung.com/deeplearning4j)
 
 ### См. также
-- [CNN с Deeplearning4j](cnn-deeplearning4j.md)
-- [Логистическая регрессия](logistic-regression.md)
-- [Spark MLlib](spark-mllib.md)
+- [[cnn-deeplearning4j|CNN с Deeplearning4j]]
+- [[logistic-regression|Логистическая регрессия]]
+- [[spark-mllib|Spark MLlib]]
 
 ## Содержание
 

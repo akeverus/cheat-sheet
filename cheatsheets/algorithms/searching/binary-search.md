@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [`Visualgo`: `Binary Search`](https://visualgo.net/)
 
 ### См. также
-- [`interpolation-search.md`](interpolation-search.md) — интерполяционный поиск (`interpolation search`)
-- [`merge-two-sorted-arrays.md`](merge-two-sorted-arrays.md) — объединение отсортированных массивов (`merge two sorted`)
+- [[interpolation-search|`interpolation-search.md`]] — интерполяционный поиск (`interpolation search`)
+- [[merge-two-sorted-arrays|`merge-two-sorted-arrays.md`]] — объединение отсортированных массивов (`merge two sorted`)
 
 ## Содержание
 

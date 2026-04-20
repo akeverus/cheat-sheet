@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java PropertyChangeSupport](https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/java/beans/PropertyChangeSupport.html)
 
 ### См. также
-- [Java Collections](../../languages/java/java-collections-list.md) — **Java Collections**
-- [Observer](observer.md) — **Observer Pattern**
-- [Command](command.md) — **Command Pattern**
+- [[java-collections-list|Java Collections]] — **Java Collections**
+- [[observer|Observer]] — **Observer Pattern**
+- [[command|Command]] — **Command Pattern**
 
 ## Содержание
 

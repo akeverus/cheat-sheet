@@ -23,7 +23,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [Интеграционное тестирование](../../testing/integration-testing/README.md) — интеграционное тестирование
-- [REST Assured](java-rest-assured.md) — **REST Assured** для тестирования **API**
+- [[java-rest-assured|REST Assured]] — **REST Assured** для тестирования **API**
 
 ## Содержание
 
@@ -365,7 +365,7 @@ public class `ApiMockDsl` {
 - [JUnit 5 расширение](https://wiremock.org/docs/junit-jupiter/)
 
 ## См. также
-- [REST Assured](java-rest-assured.md) — тестирование **REST API**
-- [Testcontainers](java-testcontainers.md) — интеграционные тесты с реальными контейнерами
-- [Mockito](../../testing/unit-testing/junit/mockito-advanced.md) — юнит-тестирование
+- [[java-rest-assured|REST Assured]] — тестирование **REST API**
+- [[java-testcontainers|Testcontainers]] — интеграционные тесты с реальными контейнерами
+- [[mockito-advanced|Mockito]] — юнит-тестирование
 

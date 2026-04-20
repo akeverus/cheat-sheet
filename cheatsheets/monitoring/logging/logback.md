@@ -22,9 +22,9 @@ updated: "2026-02-11"
 - [Logback GitHub](https://github.com/qos-ch/logback)
 
 ### См. также
-- [Основы логирования](logging-basics.md)
-- [SLF4J](slf4j.md)
-- [Структурированное логирование](structured-logging.md)
+- [[logging-basics|Основы логирования]]
+- [[slf4j|SLF4J]]
+- [[structured-logging|Структурированное логирование]]
 
 ## Содержание
 

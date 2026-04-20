@@ -27,9 +27,9 @@ updated: "2026-02-11"
 - [SLF4J Structured Arguments](https://www.slf4j.org/manual.html#structured-data)
 
 ### См. также
-- [Основы логирования](logging-basics.md)
-- [Централизованное логирование](centralized-logging.md)
-- [Spring Cloud Sleuth](../../libraries/java/java-spring-cloud-sleuth.md)
+- [[logging-basics|Основы логирования]]
+- [[centralized-logging|Централизованное логирование]]
+- [[java-spring-cloud-sleuth|Spring Cloud Sleuth]]
 
 ## Содержание
 

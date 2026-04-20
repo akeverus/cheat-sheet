@@ -853,7 +853,7 @@ CloseableHttpClient httpClient = HttpClients.custom()
 - [Migration Guide](https://hc.apache.org/httpcomponents-client-5.3.x/migration-guide/index.html)
 
 ## См. также
-- [OkHttp](java-okhttp.md) — Альтернативный **HTTP** клиент
-- [Retrofit](java-retrofit.md) — **Type-safe HTTP** клиент
-- [WebClient](../../frameworks/java-frameworks/spring/spring-webflux.md) — **Reactive HTTP** клиент
+- [[java-okhttp|OkHttp]] — Альтернативный **HTTP** клиент
+- [[java-retrofit|Retrofit]] — **Type-safe HTTP** клиент
+- [[spring-webflux|WebClient]] — **Reactive HTTP** клиент
 

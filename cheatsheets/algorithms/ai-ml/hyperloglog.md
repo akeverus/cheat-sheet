@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [HyperLogLog (stream-lib GitHub)](https://github.com/addthis/stream-lib)
 
 ### См. также
-- [Практические примеры Big O](../data-structures/collections-big-o.md)
-- [Временная сложность коллекций](../data-structures/collections-complexity.md) — Big O коллекций
+- [[collections-big-o|Практические примеры Big O]]
+- [[collections-complexity|Временная сложность коллекций]] — Big O коллекций
 
 ## Содержание
 

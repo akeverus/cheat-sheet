@@ -23,7 +23,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [NoSQL](../../nosql/) — обзор **NoSQL**
-- [OrientDB](../orientdb/orientdb-basics.md) — графовая БД **OrientDB**
+- [[orientdb-basics|OrientDB]] — графовая БД **OrientDB**
 
 ## Содержание
 

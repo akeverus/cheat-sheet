@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: GCD of two numbers](https://www.geeksforgeeks.org/c-program-find-gcd-hcf-two-numbers/)
 
 ### См. также
-- [Наименьшее общее кратное](least-common-multiple.md) — НОК
-- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
+- [[least-common-multiple|Наименьшее общее кратное]] — НОК
+- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
 
 ## Содержание
 

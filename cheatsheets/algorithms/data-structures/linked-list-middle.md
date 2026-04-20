@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [`Optional` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html)
 
 ### См. также
-- [Реверс Linked List](linked-list-reverse.md)
+- [[linked-list-reverse|Реверс Linked List]]
 - [Задачи и алгоритмы](../problems/README.md) — обзор разделов
 
 ## Содержание

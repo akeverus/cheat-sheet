@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [MongoDB Aggregation Framework](https://www.baeldung.com/java-mongodb-aggregation)
 
 ### См. также
-- [Запросы](mongodb-queries.md) — основы запросов
-- [Производительность](mongodb-indexes.md) — оптимизация
+- [[mongodb-queries|Запросы]] — основы запросов
+- [[mongodb-indexes|Производительность]] — оптимизация
 
 ## Содержание
 

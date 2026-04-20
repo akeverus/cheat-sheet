@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Caesar Cipher — GeeksforGeeks](https://www.geeksforgeeks.org/caesar-cipher-in-cryptography/)
 
 ### См. также
-- [Проверка панграмм](pangram-check.md) — панграммы
-- [Работа с регулярными выражениями](regex-token-replacement.md) — регулярные выражения
+- [[pangram-check|Проверка панграмм]] — панграммы
+- [[regex-token-replacement|Работа с регулярными выражениями]] — регулярные выражения
 
 ## Содержание
 

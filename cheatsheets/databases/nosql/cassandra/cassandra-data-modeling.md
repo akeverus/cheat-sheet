@@ -32,10 +32,10 @@ updated: "2026-02-11"
 - [Cassandra Designer](https://www.datastax.com/resources/tools/cassandra-data-modeler)
 
 ### См. также
-- [Основы](cassandra-basics.md) — **Cassandra**
-- [Запросы](cassandra-queries.md) — **CQL** запросы и оптимизация
-- [Кластеризация](cassandra-clustering.md) — кластеризация и масштабирование
-- [MongoDB Basics](../mongodb/mongodb-basics.md) — сравнение с документными БД
+- [[cassandra-basics|Основы]] — **Cassandra**
+- [[cassandra-queries|Запросы]] — **CQL** запросы и оптимизация
+- [[cassandra-clustering|Кластеризация]] — кластеризация и масштабирование
+- [[mongodb-basics|MongoDB Basics]] — сравнение с документными БД
 
 ## Содержание
 

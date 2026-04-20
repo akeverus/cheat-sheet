@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [RxKotlin Tutorial](https://www.baeldung.com/kotlin/rxkotlin)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Корутины](kotlin-concurrency-basics.md)
-- [Kotlin Flow](kotlin-reactive-flow.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-concurrency-basics|Корутины]]
+- [[kotlin-reactive-flow|Kotlin Flow]]
 
 ## Содержание
 

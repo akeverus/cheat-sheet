@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [JGraphT GitHub](https://github.com/jgrapht/jgrapht)
 
 ### См. также
-- [dijkstra.md](dijkstra.md) — алгоритм Дейкстры
-- [bfs.md](bfs.md) — поиск в ширину
+- [[dijkstra|dijkstra.md]] — алгоритм Дейкстры
+- [[bfs|bfs.md]] — поиск в ширину
 
 ## Содержание
 

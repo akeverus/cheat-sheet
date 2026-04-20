@@ -1282,6 +1282,6 @@ private-link-service:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [Azure Basics](azure-basics.md) — основы **Azure**
-- [Azure Services](azure-services.md) — сервисы **Azure**
-- [Azure DevOps CI/CD](../ci-cd/azure-devops.md) — **CI/CD** платформа
+- [[azure-basics|Azure Basics]] — основы **Azure**
+- [[azure-services|Azure Services]] — сервисы **Azure**
+- [[azure-devops|Azure DevOps CI/CD]] — **CI/CD** платформа

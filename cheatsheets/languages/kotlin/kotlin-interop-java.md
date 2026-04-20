@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [Kotlin Java Interop Tutorial](https://www.baeldung.com/kotlin/java-interop)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Основы Java](../java/java-basics.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[java-basics|Основы Java]]
 
 ## Содержание
 

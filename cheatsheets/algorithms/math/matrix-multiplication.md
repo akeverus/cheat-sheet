@@ -24,8 +24,8 @@ updated: "2026-02-11"
 - [Colt](https://dst.lbl.gov/ACSSoftware/colt/) — библиотека Colt
 
 ### См. также
-- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
-- [Вычисление площади круга](circle-area-calculation.md) — площадь круга
+- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
+- [[circle-area-calculation|Вычисление площади круга]] — площадь круга
 
 ## Содержание
 

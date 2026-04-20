@@ -23,8 +23,8 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 - [Scala DSL](https://docs.scala-lang.org/overviews/core/string-interpolation.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Implicit](scala-implicit.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-implicit|Implicit]]
 
 ## Содержание
 

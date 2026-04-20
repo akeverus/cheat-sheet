@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Joda-Time (joda.org)](https://www.joda.org/joda-time/)
 
 ### См. также
-- [Стандартное отклонение](standard-deviation.md) — стандартное отклонение
-- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
+- [[standard-deviation|Стандартное отклонение]] — стандартное отклонение
+- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
 
 ## Содержание
 

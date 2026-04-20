@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Check if string contains multiple keywords](https://www.geeksforgeeks.org/check-if-a-string-contains-multiple-keywords/)
 
 ### См. также
-- [Работа с регулярными выражениями](regex-token-replacement.md) — regex
-- [Подсчет слов](word-count.md) — word count
+- [[regex-token-replacement|Работа с регулярными выражениями]] — regex
+- [[word-count|Подсчет слов]] — word count
 
 ## Содержание
 

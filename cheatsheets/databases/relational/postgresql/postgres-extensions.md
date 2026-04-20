@@ -24,8 +24,8 @@ related: ["databases/postgres-performance-tuning.md", "databases/postgres-replic
 - [PostgreSQL Extensions](https://www.postgresql.org/docs/current/extend-extensions.html) — раздел про расширения
 
 ### См. также
-- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
-- [postgres-admin.md](postgres-admin.md) — администрирование
+- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
+- [[postgres-admin|postgres-admin.md]] — администрирование
 
 ## Содержание
 

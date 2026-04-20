@@ -1145,7 +1145,7 @@ spec:
 - **Бэкапы:** регулярные снапшоты **Volume Snapshot**; тесты восстановления; для критичных данных — репликация на другой кластер или облако.
 - **Безопасность:** ограничение доступа к **CSI** и томам по **RBAC**; шифрование томов (**at-rest**) где возможно; не монтировать чувствительные тома в **read-only** где не нужно.
 ## См. также
-- [Kubernetes Advanced](kubernetes-advanced.md) — продвинутые концепции **K8s**
-- [Kubernetes Networking](kubernetes-networking.md) — сетевая подсистема
-- [Terraform](../../iac/terraform/terraform.md) — **Infrastructure as Code**
-- [Docker Basics](../docker/docker-basics.md) — контейнеризация
+- [[kubernetes-advanced|Kubernetes Advanced]] — продвинутые концепции **K8s**
+- [[kubernetes-networking|Kubernetes Networking]] — сетевая подсистема
+- [[terraform|Terraform]] — **Infrastructure as Code**
+- [[docker-basics|Docker Basics]] — контейнеризация

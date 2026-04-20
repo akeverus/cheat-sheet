@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Structural Design Patterns in Java (Baeldung)](https://www.baeldung.com/structural-design-patterns)
 
 ### См. также
-- [Порождающие паттерны](../creational/creational-patterns.md) — обзор креативных паттернов
-- [Поведенческие паттерны](../behavioral/behavioral-patterns.md) — обзор поведенческих паттернов
+- [[creational-patterns|Порождающие паттерны]] — обзор креативных паттернов
+- [[behavioral-patterns|Поведенческие паттерны]] — обзор поведенческих паттернов
 - [Все паттерны](../) — обзор порождающих, структурных и поведенческих паттернов
 
 ## Содержание

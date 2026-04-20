@@ -21,10 +21,10 @@ updated: "2026-02-11"
 - [Postman](https://learning.postman.com/docs/getting-started/introduction/) — **Postman** для тестирования **API**
 
 ### См. также
-- [REST Assured](../../../../libraries/java/java-rest-assured.md) — библиотека **REST Assured**
-- [Postman](../postman/postman-basics.md) — основы **Postman**
-- [Insomnia](../insomnia/insomnia-basics.md) — основы **Insomnia**
-- [API Documentation](../swagger/api-documentation-basics.md) — основы документации **API**
+- [[java-rest-assured|REST Assured]] — библиотека **REST Assured**
+- [[postman-basics|Postman]] — основы **Postman**
+- [[insomnia-basics|Insomnia]] — основы **Insomnia**
+- [[api-documentation-basics|API Documentation]] — основы документации **API**
 
 ## Содержание
 

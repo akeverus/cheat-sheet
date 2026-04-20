@@ -28,8 +28,8 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
 - [Kotlin API](https://kotlinlang.org/api/latest/jvm/stdlib/)
 
 ### См. также
-- [Java](../java/java-basics.md) — основы Java
-- [Kotlin Coroutines](kotlin-concurrency-basics.md) — корутины
+- [[java-basics|Java]] — основы Java
+- [[kotlin-concurrency-basics|Kotlin Coroutines]] — корутины
 
 ## Содержание
 

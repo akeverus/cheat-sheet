@@ -1270,7 +1270,7 @@ class CalculatorSpec extends AnyFlatSpec with Matchers {
 }
 ```
 ## См. также
-- [JUnit](../testing-libraries/java-junit5.md) — **Java testing framework**
+- [[java-junit5|JUnit]] — **Java testing framework**
 - [Библиотеки](../) — **Alternative Scala testing library**
-- [Play Framework](scala-play.md) — **Web framework testing**
+- [[scala-play|Play Framework]] — **Web framework testing**
 

@@ -1232,7 +1232,7 @@ velero backup create myapp-backup --include-namespaces production
 velero restore create --from-backup myapp-backup
 ```
 ## См. также
-- [Docker Basics](../docker/docker-basics.md) — контейнеризация
-- [Terraform](../../iac/terraform/terraform.md) — инфраструктура как код
-- [Ansible](../../iac/ansible/ansible.md) — конфигурационное управление
-- [Prometheus](../../../monitoring/metrics/prometheus.md) — мониторинг
+- [[docker-basics|Docker Basics]] — контейнеризация
+- [[terraform|Terraform]] — инфраструктура как код
+- [[ansible|Ansible]] — конфигурационное управление
+- [[prometheus|Prometheus]] — мониторинг

@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Pascal's Triangle](https://www.geeksforgeeks.org/pascal-triangle/)
 
 ### См. также
-- [Вычисление факториала](factorial-calculation.md) — факториал
-- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
+- [[factorial-calculation|Вычисление факториала]] — факториал
+- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
 
 ## Содержание
 

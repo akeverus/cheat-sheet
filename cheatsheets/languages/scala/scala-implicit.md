@@ -23,8 +23,8 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 - [Scala Implicit](https://docs.scala-lang.org/tour/implicit-parameters.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Продвинутое ФП](scala-fp-advanced.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-fp-advanced|Продвинутое ФП]]
 
 ## Содержание
 

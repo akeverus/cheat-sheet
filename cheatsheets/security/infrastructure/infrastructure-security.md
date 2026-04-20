@@ -30,9 +30,9 @@ updated: "2026-02-11"
 - [`Kubernetes` Security Best Practices](https://kubernetes.io/docs/concepts/security/pod-security-standards/) — стандарты безопасности подов
 
 ### См. также
-- [Data Security](../data/data-security.md) — безопасность данных и шифрование
-- [Secrets Management](../data/secrets-management.md) — управление секретами
-- [Security Practices](../security-practices.md) — практики безопасности
+- [[data-security|Data Security]] — безопасность данных и шифрование
+- [[secrets-management|Secrets Management]] — управление секретами
+- [[security-practices|Security Practices]] — практики безопасности
 
 ---
 

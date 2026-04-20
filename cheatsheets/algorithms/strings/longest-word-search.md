@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Find the longest word in a sentence — GeeksforGeeks](https://www.geeksforgeeks.org/find-longest-word-given-string/)
 
 ### См. также
-- [Подсчет слов](word-count.md) — подсчёт слов
-- [Поиск первого неповторяющегося символа](first-non-repeating-character.md) — первый неповторяющийся символ
+- [[word-count|Подсчет слов]] — подсчёт слов
+- [[first-non-repeating-character|Поиск первого неповторяющегося символа]] — первый неповторяющийся символ
 
 ## Содержание
 

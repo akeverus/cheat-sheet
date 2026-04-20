@@ -24,9 +24,9 @@ updated: "2026-02-11"
 
 ### См. также
 
-- [JUnit Advanced](junit-advanced.md)
-- [Mockito Advanced](mockito-advanced.md)
-- [Spring Testing](../../../frameworks/java-frameworks/spring/spring-testing.md)
+- [[junit-advanced|JUnit Advanced]]
+- [[mockito-advanced|Mockito Advanced]]
+- [[spring-testing|Spring Testing]]
 
 ## Содержание
 

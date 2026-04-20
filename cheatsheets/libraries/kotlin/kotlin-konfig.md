@@ -1149,7 +1149,7 @@ object StructuredConfig : Configuration {
 }
 ```
 ## См. также
-- [Spring Boot](../../frameworks/spring/spring-boot.md) — **Spring** конфигурация
+- [[spring-boot|Spring Boot]] — **Spring** конфигурация
 - [Библиотеки](../) — **HOCON** (**Human-Optimized Config Object Notation**)
 - [Platform](../../platform/) — Инфраструктура и переменные окружения
 

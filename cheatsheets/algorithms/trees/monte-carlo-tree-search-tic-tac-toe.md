@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [MCTS Visualization](https://www.geeksforgeeks.org/monte-carlo-tree-search-mcts/) — визуализация
 
 ### См. также
-- [`binary-tree.md`](binary-tree.md) — бинарное дерево (`binary tree`)
-- [`binary-search-tree-traversal.md`](binary-search-tree-traversal.md) — обходы бинарного дерева поиска (`traversals`)
+- [[binary-tree|`binary-tree.md`]] — бинарное дерево (`binary tree`)
+- [[binary-search-tree-traversal|`binary-search-tree-traversal.md`]] — обходы бинарного дерева поиска (`traversals`)
 
 ## Содержание
 

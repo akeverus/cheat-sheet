@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Check if given number is perfect square](https://www.geeksforgeeks.org/check-if-given-number-is-perfect-square-in-cpp/)
 
 ### См. также
-- [Наибольший общий делитель](greatest-common-divisor.md) — НОД
-- [Вычисление факториала](factorial-calculation.md) — факториал
+- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
+- [[factorial-calculation|Вычисление факториала]] — факториал
 
 ## Содержание
 

@@ -31,9 +31,9 @@ updated: "2026-02-11"
 - [ERwin Data Modeler](https://www.erwin.com/) — моделирование данных
 
 ### См. также
-- [mysql-basics.md](mysql-basics.md) — основы **MySQL**
-- [mysql-indexes.md](mysql-indexes.md) — индексы и оптимизация
-- [PostgreSQL](../postgresql/postgres-design.md) — сравнение с **PostgreSQL**
+- [[mysql-basics|mysql-basics.md]] — основы **MySQL**
+- [[mysql-indexes|mysql-indexes.md]] — индексы и оптимизация
+- [[postgres-design|PostgreSQL]] — сравнение с **PostgreSQL**
 
 ## Содержание
 

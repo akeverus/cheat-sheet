@@ -1054,7 +1054,7 @@ docker history myapp:latest
 dive myapp:latest
 ```
 ## См. также
-- [Kubernetes](../kubernetes/kubernetes-basics.md) — оркестрация контейнеров
-- [Terraform](../../iac/terraform/terraform.md) — инфраструктура как код
-- [Ansible](../../iac/ansible/ansible.md) — конфигурационное управление
-- [Prometheus](../../../monitoring/metrics/prometheus.md) — мониторинг
+- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
+- [[terraform|Terraform]] — инфраструктура как код
+- [[ansible|Ansible]] — конфигурационное управление
+- [[prometheus|Prometheus]] — мониторинг

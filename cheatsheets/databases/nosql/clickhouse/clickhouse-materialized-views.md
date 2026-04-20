@@ -29,8 +29,8 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 - [ClickHouse Materialized Views](https://www.baeldung.com/clickhouse-materialized-views)
 
 ### См. также
-- [Таблицы](clickhouse-tables.md) — создание таблиц и движков
-- [Запросы](clickhouse-queries.md) — агрегационные запросы
+- [[clickhouse-tables|Таблицы]] — создание таблиц и движков
+- [[clickhouse-queries|Запросы]] — агрегационные запросы
 
 ## Содержание
 

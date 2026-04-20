@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [InfluxDB GitHub](https://github.com/influxdata/influxdb) — репозиторий проекта
 
 ### См. также
-- [TimescaleDB](../timescaledb/timescaledb-basics.md) — **TimescaleDB**
+- [[timescaledb-basics|TimescaleDB]] — **TimescaleDB**
 - [NoSQL](../../nosql/) — **NoSQL** базы данных
 
 ## Содержание

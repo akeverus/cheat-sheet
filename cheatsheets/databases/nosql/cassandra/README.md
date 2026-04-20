@@ -18,7 +18,7 @@ updated: "2026-02-11"
 ### См. также
 - [`../README.md`](../README.md) — индекс NoSQL-раздела
 - [`../../README.md`](../../README.md) — индекс databases-раздела
-- [`../../../../CHEATSHEETS_ARCHITECTURE_AND_RULES.md`](../../../CHEATSHEETS_ARCHITECTURE_AND_RULES.md) — архитектурные и форматные правила
+- [[CHEATSHEETS_ARCHITECTURE_AND_RULES|`../../../../CHEATSHEETS_ARCHITECTURE_AND_RULES.md`]] — архитектурные и форматные правила
 
 ## Содержание
 

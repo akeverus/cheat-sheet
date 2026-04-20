@@ -33,10 +33,10 @@ updated: "2026-02-11"
 - [Prometheus MySQL Exporter](https://github.com/prometheus/mysqld_exporter) и [Grafana](https://grafana.com/docs/)
 
 ### См. также
-- [mysql-basics.md](mysql-basics.md) — основы **MySQL**
-- [mysql-performance.md](mysql-performance.md) — производительность и тюнинг
-- [mysql-replication.md](mysql-replication.md) — репликация и высокая доступность
-- [mysql-queries.md](mysql-queries.md) — запросы и мониторинг
+- [[mysql-basics|mysql-basics.md]] — основы **MySQL**
+- [[mysql-performance|mysql-performance.md]] — производительность и тюнинг
+- [[mysql-replication|mysql-replication.md]] — репликация и высокая доступность
+- [[mysql-queries|mysql-queries.md]] — запросы и мониторинг
 
 ## Содержание
 

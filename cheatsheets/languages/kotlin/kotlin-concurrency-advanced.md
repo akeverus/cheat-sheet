@@ -26,9 +26,9 @@ updated: "2026-02-11"
 - [Kotlin Flow Tutorial](https://www.baeldung.com/kotlin/flow)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Основы корутин](kotlin-concurrency-basics.md)
-- [Реактивное программирование](kotlin-reactive.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-concurrency-basics|Основы корутин]]
+- [[kotlin-reactive|Реактивное программирование]]
 
 ## Содержание
 

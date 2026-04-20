@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [**Spring Cloud** Series](https://www.baeldung.com/spring-cloud-series)
 
 ### См. также
-- [Микросервисы](../../../architecture/software-architecture/microservices.md) — микросервисная архитектура
-- [**Spring Boot**](spring-boot.md) — **Spring Boot** основы
+- [[microservices|Микросервисы]] — микросервисная архитектура
+- [[spring-boot|**Spring Boot**]] — **Spring Boot** основы
 - [Мониторинг](../../../monitoring/) — мониторинг микросервисов
 
 ## Содержание

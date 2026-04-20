@@ -32,10 +32,10 @@ updated: "2026-02-11"
 - [pt-query-digest](https://docs.percona.com/percona-toolkit/pt-query-digest.html)
 
 ### См. также
-- [mysql-basics.md](mysql-basics.md) — основы **MySQL**
-- [mysql-design.md](mysql-design.md) — проектирование баз данных
-- [mysql-indexes.md](mysql-indexes.md) — индексы и производительность
-- [PostgreSQL](../postgresql/postgres-queries.md) — сравнение с **PostgreSQL**
+- [[mysql-basics|mysql-basics.md]] — основы **MySQL**
+- [[mysql-design|mysql-design.md]] — проектирование баз данных
+- [[mysql-indexes|mysql-indexes.md]] — индексы и производительность
+- [[postgres-queries|PostgreSQL]] — сравнение с **PostgreSQL**
 
 ## Содержание
 

@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Program to find LCM](https://www.geeksforgeeks.org/program-to-find-lcm-of-two-numbers/)
 
 ### См. также
-- [Наибольший общий делитель](greatest-common-divisor.md) — НОД
-- [Вычисление факториала](factorial-calculation.md) — факториал
+- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
+- [[factorial-calculation|Вычисление факториала]] — факториал
 
 ## Содержание
 

@@ -25,12 +25,12 @@ MapStruct — annotation processor для Java, который на этапе �
 - [MapStruct IDE Support](https://mapstruct.org/documentation/ide-support/) — настройка IDEA
 
 ### См. также
-- [java-bean-validation](java-bean-validation.md) — валидация DTO
-- [java-jackson](java-jackson.md) — JSON-сериализация после маппинга
-- [java-lombok](../code-generation/java-lombok.md) — совместное использование с Lombok
-- [spring-rest](../../frameworks/java-frameworks/spring/spring-rest.md) — маппинг в REST-контроллерах
-- [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — entity ↔ DTO
-- [java-basics](../../languages/java/java-basics.md) — базовые концепции Java
+- [[java-bean-validation|java-bean-validation]] — валидация DTO
+- [[java-jackson|java-jackson]] — JSON-сериализация после маппинга
+- [[java-lombok|java-lombok]] — совместное использование с Lombok
+- [[spring-rest|spring-rest]] — маппинг в REST-контроллерах
+- [[spring-data-jpa|spring-data-jpa]] — entity ↔ DTO
+- [[java-basics|java-basics]] — базовые концепции Java
 
 ## Содержание
 
@@ -534,10 +534,10 @@ void toDtoMapsFullName() {
 
 ## См. также
 
-- [java-bean-validation](java-bean-validation.md) — валидация DTO после маппинга
-- [java-jackson](java-jackson.md) — сериализация DTO в JSON
-- [java-lombok](../code-generation/java-lombok.md) — совместное использование
-- [spring-rest](../../frameworks/java-frameworks/spring/spring-rest.md) — маппинг в контроллерах
-- [spring-data-jpa](../../frameworks/java-frameworks/spring/spring-data-jpa.md) — маппинг entity ↔ DTO
-- [java-basics](../../languages/java/java-basics.md) — базовые концепции
-- [java-streams-fp](../../languages/java/java-streams-fp.md) — маппинг коллекций через Stream API
+- [[java-bean-validation|java-bean-validation]] — валидация DTO после маппинга
+- [[java-jackson|java-jackson]] — сериализация DTO в JSON
+- [[java-lombok|java-lombok]] — совместное использование
+- [[spring-rest|spring-rest]] — маппинг в контроллерах
+- [[spring-data-jpa|spring-data-jpa]] — маппинг entity ↔ DTO
+- [[java-basics|java-basics]] — базовые концепции
+- [[java-streams-fp|java-streams-fp]] — маппинг коллекций через Stream API

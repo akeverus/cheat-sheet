@@ -26,8 +26,8 @@ PagerDuty — платформа управления инцидентами и 
 - [Best Practices](https://support.pagerduty.com/docs/best-practices)
 
 ### См. также
-- [Alertmanager](alertmanager.md) — маршрутизация алертов в PagerDuty
-- [Slack Alerting](slack-alerting.md) — уведомления в Slack
+- [[alertmanager|Alertmanager]] — маршрутизация алертов в PagerDuty
+- [[slack-alerting|Slack Alerting]] — уведомления в Slack
 - [Alerting](../) — раздел алертинга
 - [Monitoring](../) — обзор мониторинга
 

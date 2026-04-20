@@ -88,6 +88,6 @@ tasks.test {
 
 ## См. также
 
-- [gradle-advanced.md](gradle-advanced.md) — многомодульные проекты, **Version Catalogs**, **Spring Boot**, **Kotlin**, **CI/CD**, **Dependency locking**, **Troubleshooting**.
-- [maven.md](../maven/maven.md) — основы **Maven**.
+- [[gradle-advanced|gradle-advanced.md]] — многомодульные проекты, **Version Catalogs**, **Spring Boot**, **Kotlin**, **CI/CD**, **Dependency locking**, **Troubleshooting**.
+- [[maven|maven.md]] — основы **Maven**.
 - [README.md](../) — обзор раздела **Build Tools**.

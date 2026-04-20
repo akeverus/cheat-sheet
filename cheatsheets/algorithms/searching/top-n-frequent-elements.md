@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Find k most frequent in array](https://www.geeksforgeeks.org/find-k-numbers-occurrences-given-array/)
 
 ### См. также
-- [K наибольших элементов](k-largest-elements.md) — k largest
-- [Поиск k-го по величине элемента](kth-smallest-in-two-sorted-arrays.md) — k-th smallest
+- [[k-largest-elements|K наибольших элементов]] — k largest
+- [[kth-smallest-in-two-sorted-arrays|Поиск k-го по величине элемента]] — k-th smallest
 
 ## Содержание
 

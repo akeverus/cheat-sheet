@@ -30,8 +30,8 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
 - [ClickHouse Performance Tuning](https://www.baeldung.com/clickhouse-performance)
 
 ### См. также
-- [Репликация](clickhouse-replication.md) — кластеры и репликация
-- [Индексы](clickhouse-indexes.md) — индексы и партиционирование
+- [[clickhouse-replication|Репликация]] — кластеры и репликация
+- [[clickhouse-indexes|Индексы]] — индексы и партиционирование
 
 ## Содержание
 

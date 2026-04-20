@@ -37,12 +37,12 @@ updated: "2026-02-11"
 - [Burrow](https://github.com/linkedin/Burrow) — **Consumer lag** мониторинг
 
 ### См. также
-- [REST API](../../api/rest/rest-api-best-practices.md) — практики проектирования **REST API**
-- [gRPC](../../api/grpc/grpc.md) — **gRPC**
+- [[rest-api-best-practices|REST API]] — практики проектирования **REST API**
+- [[grpc|gRPC]] — **gRPC**
 - [RabbitMQ](../rabbitmq/README.md) — **RabbitMQ**
 - [Spring Frameworks](../../../frameworks/java-frameworks/spring/README.md) — экосистема **Spring**
-- [PostgreSQL](../../../databases/relational/postgresql/postgres-basics.md) — БД для **Kafka**
-- [Observability](../../../monitoring/tracing/distributed-tracing.md) — мониторинг и трейсинг
+- [[postgres-basics|PostgreSQL]] — БД для **Kafka**
+- [[distributed-tracing|Observability]] — мониторинг и трейсинг
 
 ## Содержание
 

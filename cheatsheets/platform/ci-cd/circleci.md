@@ -1358,8 +1358,8 @@ workflows:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [Jenkins](jenkins.md) — альтернативная **CI/CD** платформа
-- [GitLab CI](gitlab-ci.md)
-- [GitHub Actions](github-actions.md) — **CI/CD** в **GitHub**
-- [Docker](../containers/docker/docker-basics.md) — контейнеризация
-- [Kubernetes](../containers/kubernetes/kubernetes-advanced.md) — оркестрация контейнеров
+- [[jenkins|Jenkins]] — альтернативная **CI/CD** платформа
+- [[gitlab-ci|GitLab CI]]
+- [[github-actions|GitHub Actions]] — **CI/CD** в **GitHub**
+- [[docker-basics|Docker]] — контейнеризация
+- [[kubernetes-advanced|Kubernetes]] — оркестрация контейнеров

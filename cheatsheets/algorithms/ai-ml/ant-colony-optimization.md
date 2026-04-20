@@ -25,9 +25,9 @@ updated: "2026-02-11"
 - [Introduction to Ant Colony Optimization](https://www.baeldung.com/java-ant-colony-optimization)
 
 ### См. также
-- [Генетические алгоритмы](genetic-algorithms.md)
-- [Hill Climbing](../problems/hill-climbing.md)
-- [Multi-Swarm Optimization](../problems/multi-swarm.md)
+- [[genetic-algorithms|Генетические алгоритмы]]
+- [[hill-climbing|Hill Climbing]]
+- [[multi-swarm|Multi-Swarm Optimization]]
 
 ## Содержание
 

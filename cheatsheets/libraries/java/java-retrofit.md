@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [Retrofit Documentation](https://square.github.io/retrofit/2.x/retrofit/) — документация
 
 ### См. также
-- [OkHttp](java-okhttp.md) — **OkHttp** для **HTTP** запросов
-- [REST Assured](java-rest-assured.md) — **REST Assured** для тестирования **API**
+- [[java-okhttp|OkHttp]] — **OkHttp** для **HTTP** запросов
+- [[java-rest-assured|REST Assured]] — **REST Assured** для тестирования **API**
 
 ## Содержание
 
@@ -1074,7 +1074,7 @@ Retrofit retrofit = new Retrofit.Builder()
 - [OkHttp документация](https://square.github.io/okhttp/)
 
 ## См. также
-- [OkHttp](java-okhttp.md) — **HTTP** клиент для **Retrofit**
-- [Gson](../serialization/java-gson.md) — **JSON** библиотека для **Retrofit**
+- [[java-okhttp|OkHttp]] — **HTTP** клиент для **Retrofit**
+- [[java-gson|Gson]] — **JSON** библиотека для **Retrofit**
 - [Обзор библиотек](../) — Реактивное программирование (**RxJava** и др.)
 

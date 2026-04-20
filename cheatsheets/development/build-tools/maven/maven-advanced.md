@@ -1467,7 +1467,7 @@ enterprise-project/
 </plugin>
 ```
 ## См. также
-- [Gradle Advanced](../gradle/gradle-advanced.md) — альтернативная система сборки
-- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Java** фреймворк
-- [Jenkins](../../../platform/ci-cd/jenkins.md) — CI/CD сервер
-- [GitHub Actions](../../../platform/ci-cd/github-actions.md) — CI/CD платформа
+- [[gradle-advanced|Gradle Advanced]] — альтернативная система сборки
+- [[spring-boot|Spring Boot]] — **Java** фреймворк
+- [[jenkins|Jenkins]] — CI/CD сервер
+- [[github-actions|GitHub Actions]] — CI/CD платформа

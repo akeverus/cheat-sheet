@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Gradient Descent Algorithm](https://www.geeksforgeeks.org/gradient-descent-algorithm-and-its-variants/)
 
 ### См. также
-- [Кластеризация K-средних](k-means-clustering-java.md) — K-means
-- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
+- [[k-means-clustering-java|Кластеризация K-средних]] — K-means
+- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
 
 ## Содержание
 

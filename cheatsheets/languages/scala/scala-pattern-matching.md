@@ -23,8 +23,8 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [Scala Pattern Matching](https://docs.scala-lang.org/tour/pattern-matching.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Функциональное программирование](scala-fp-basics.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-fp-basics|Функциональное программирование]]
 
 ## Содержание
 

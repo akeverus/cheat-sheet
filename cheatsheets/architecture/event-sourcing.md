@@ -21,10 +21,10 @@ updated: "2026-02-11"
 - [EventStore](https://www.eventstore.com/docs)
 
 ### См. также
-- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
-- [CQRS](cqrs.md) — **CQRS** паттерн
-- [Domain-Driven Design](ddd.md) — **Domain-Driven Design**
-- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
+- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
+- [[cqrs|CQRS]] — **CQRS** паттерн
+- [[ddd|Domain-Driven Design]] — **Domain-Driven Design**
+- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
 
 ## Содержание
 

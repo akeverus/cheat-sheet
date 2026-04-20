@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [`Visualgo`: `Dijkstra`](https://visualgo.net/)
 
 ### См. также
-- [bfs.md](bfs.md) — поиск в ширину
-- [jgrapht.md](jgrapht.md) — библиотека JGraphT
+- [[bfs|bfs.md]] — поиск в ширину
+- [[jgrapht|jgrapht.md]] — библиотека JGraphT
 
 ## Содержание
 

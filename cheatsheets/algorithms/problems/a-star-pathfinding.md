@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [`Baeldung`: A* `Pathfinding`](https://www.baeldung.com/)
 
 ### См. также
-- [Задача коммивояжера](traveling-salesman-problem.md) — TSP
-- [Решение лабиринтов](maze-solver.md) — maze solver
-- [Алгоритм Дейкстры](../graphs/dijkstra.md) — Dijkstra
+- [[traveling-salesman-problem|Задача коммивояжера]] — TSP
+- [[maze-solver|Решение лабиринтов]] — maze solver
+- [[dijkstra|Алгоритм Дейкстры]] — Dijkstra
 
 ## Содержание
 

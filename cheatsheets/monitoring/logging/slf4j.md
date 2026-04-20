@@ -26,9 +26,9 @@ updated: "2026-02-11"
 - [SLF4J Cookbook](https://www.slf4j.org/cookbook.html)
 
 ### См. также
-- [Основы логирования](logging-basics.md)
-- [Logback](logback.md) — реализация SLF4J
-- [Log4j](log4j.md) — реализация Log4j
+- [[logging-basics|Основы логирования]]
+- [[logback|Logback]] — реализация SLF4J
+- [[log4j|Log4j]] — реализация Log4j
 
 ## Содержание
 

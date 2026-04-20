@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [MongoDB Indexes](https://www.baeldung.com/spring-data-mongodb-index-annotation)
 
 ### См. также
-- [Запросы](mongodb-queries.md) — оптимизация запросов
-- [Производительность](mongodb-performance.md) — производительность и мониторинг
+- [[mongodb-queries|Запросы]] — оптимизация запросов
+- [[mongodb-performance|Производительность]] — производительность и мониторинг
 
 ## Содержание
 
@@ -1071,8 +1071,8 @@ public class IndexMonitorService {
 - [MongoDB Indexes](https://www.baeldung.com/spring-data-mongodb-index-annotation)
 
 ### См. также
-- [Запросы](mongodb-queries.md) — оптимизация запросов
-- [Производительность](mongodb-performance.md) — производительность и мониторинг
+- [[mongodb-queries|Запросы]] — оптимизация запросов
+- [[mongodb-performance|Производительность]] — производительность и мониторинг
 
 ```
 
@@ -1163,3 +1163,4 @@ public class IndexMonitorService {
 // Java + Spring implementation available
 ```
 
+```

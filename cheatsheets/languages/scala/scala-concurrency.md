@@ -26,9 +26,9 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [Akka Documentation](https://akka.io/docs/)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Akka Actors](../../libraries/scala/scala-akka.md)
-- [Функциональное программирование](scala-fp-basics.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-akka|Akka Actors]]
+- [[scala-fp-basics|Функциональное программирование]]
 
 ## Содержание
 

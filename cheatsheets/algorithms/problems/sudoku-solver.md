@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [`Baeldung`: `Sudoku Solver`](https://www.baeldung.com/)
 
 ### См. также
-- [Задача коммивояжера](traveling-salesman-problem.md) — **TSP**
-- [Задача о рюкзаке](knapsack-problem.md) — **knapsack**
+- [[traveling-salesman-problem|Задача коммивояжера]] — **TSP**
+- [[knapsack-problem|Задача о рюкзаке]] — **knapsack**
 - [Бинарное дерево](../trees/) — бинарное дерево
 
 ## Содержание

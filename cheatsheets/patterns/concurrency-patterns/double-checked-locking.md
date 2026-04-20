@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java Concurrency in Practice](https://jcip.net/) — книга по многопоточности
 
 ### См. также
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
-- [Singleton](../creational/singleton.md) — **Singleton Pattern**
-- [JVM Memory / volatile](../../languages/java/java-concurrency-advanced.md) — память и **volatile**
+- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
+- [[singleton|Singleton]] — **Singleton Pattern**
+- [[java-concurrency-advanced|JVM Memory / volatile]] — память и **volatile**
 
 ## Содержание
 

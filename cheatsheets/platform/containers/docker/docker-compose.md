@@ -1161,7 +1161,7 @@ services:
           cpus: '0.5'
 ```
 ## См. также
-- [Docker Basics](docker-basics.md) — основы **Docker**
-- [Docker Advanced](docker-advanced.md) — продвинутые концепции **Docker**
-- [Kubernetes](../kubernetes/kubernetes-basics.md) — оркестрация контейнеров
-- [Terraform](../../iac/terraform/terraform.md) — инфраструктура как код
+- [[docker-basics|Docker Basics]] — основы **Docker**
+- [[docker-advanced|Docker Advanced]] — продвинутые концепции **Docker**
+- [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров
+- [[terraform|Terraform]] — инфраструктура как код

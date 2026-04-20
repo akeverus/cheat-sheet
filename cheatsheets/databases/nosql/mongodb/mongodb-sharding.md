@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [MongoDB Sharding](https://www.baeldung.com/java-mongodb-sharding)
 
 ### См. также
-- [Репликация](mongodb-replication.md) — основа шардирования
-- [Производительность](mongodb-performance.md) — шардированные кластеры
+- [[mongodb-replication|Репликация]] — основа шардирования
+- [[mongodb-performance|Производительность]] — шардированные кластеры
 
 ## Содержание
 

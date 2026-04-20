@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Spring Cloud](https://spring.io/projects/spring-cloud) — **Spring Cloud**
 
 ### См. также
-- [Микросервисы](software-architecture/microservices.md) — микросервисная архитектура
-- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
-- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
+- [[microservices|Микросервисы]] — микросервисная архитектура
+- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
+- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
 
 ## Содержание
 

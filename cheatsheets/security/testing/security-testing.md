@@ -29,8 +29,8 @@ updated: "2026-02-11"
 - [`SAST` Tools Comparison](https://owasp.org/www-community/Source_Code_Analysis_Tools) — сравнение инструментов статического анализа
 
 ### См. также
-- [Security Practices](../security-practices.md) — процессы и практики безопасности
-- [Security Tools](../tools/security-tools.md) — конкретные инструменты безопасности
+- [[security-practices|Security Practices]] — процессы и практики безопасности
+- [[security-tools|Security Tools]] — конкретные инструменты безопасности
 
 ---
 

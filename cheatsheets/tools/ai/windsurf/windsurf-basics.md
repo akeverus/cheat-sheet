@@ -256,7 +256,7 @@ Web Search в Cascade позволяет:
 
 ## См. также
 
-- [Cursor: основы](../cursor/cursor-basics.md)
-- [GitHub Copilot: основы](../copilot/copilot-basics.md)
-- [Claude Code: основы](../claude/claude-basics.md)
+- [[cursor-basics|Cursor: основы]]
+- [[copilot-basics|GitHub Copilot: основы]]
+- [[claude-basics|Claude Code: основы]]
 

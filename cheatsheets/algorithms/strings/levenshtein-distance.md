@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Edit Distance (Levenshtein) — GeeksforGeeks](https://www.geeksforgeeks.org/edit-distance-dp-5/)
 
 ### См. также
-- [Перестановки строк](string-permutations.md) — перестановки
-- [Проверка палиндромов](palindrome-check.md) — палиндромы
+- [[string-permutations|Перестановки строк]] — перестановки
+- [[palindrome-check|Проверка палиндромов]] — палиндромы
 
 ## Содержание
 

@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [Oracle Learning Library](https://education.oracle.com/) — обучающие материалы
 
 ### См. также
-- [PostgreSQL](../postgresql/postgres-basics.md) — основы **PostgreSQL**
-- [MySQL](../mysql/mysql-basics.md) — основы **MySQL**
+- [[postgres-basics|PostgreSQL]] — основы **PostgreSQL**
+- [[mysql-basics|MySQL]] — основы **MySQL**
 
 ## Содержание
 

@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [Protocol Buffers Documentation](https://protobuf.dev/docs/) — документация
 
 ### См. также
-- [Jackson](../serialization/jackson.md) — **Jackson** для **JSON**
-- [Gson](../serialization/java-gson.md) — **Gson** для **JSON**
+- [[jackson|Jackson]] — **Jackson** для **JSON**
+- [[java-gson|Gson]] — **Gson** для **JSON**
 
 ## Содержание
 
@@ -1154,7 +1154,7 @@ public class ZeroCopySerializer {
 - [Proto3 Language Guide](https://protobuf.dev/programming-guides/proto3/)
 
 ## См. также
-- [gRPC](../../development/api/grpc/grpc.md) — **gRPC** для **Java**
-- [Gson](../serialization/java-gson.md) — **JSON** сериализация
-- [Jackson](../serialization/jackson.md) — **JSON** обработка
+- [[grpc|gRPC]] — **gRPC** для **Java**
+- [[java-gson|Gson]] — **JSON** сериализация
+- [[jackson|Jackson]] — **JSON** обработка
 

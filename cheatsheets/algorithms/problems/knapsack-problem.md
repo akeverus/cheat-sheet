@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [`Baeldung`: `Knapsack Problem`](https://www.baeldung.com/)
 
 ### См. также
-- [Задача коммивояжера](traveling-salesman-problem.md) — TSP
-- [Жадные алгоритмы](greedy-algorithms.md) — жадные алгоритмы
-- [Наибольший общий делитель](../math/greatest-common-divisor.md) — НОД
+- [[traveling-salesman-problem|Задача коммивояжера]] — TSP
+- [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
+- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
 
 ## Содержание
 

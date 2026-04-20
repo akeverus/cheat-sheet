@@ -24,8 +24,8 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 - [Scala Collections Documentation](https://docs.scala-lang.org/overviews/collections-2.13/overview.html)
 
 ### См. также
-- [Обзор коллекций](scala-collections.md)
-- [Операции над коллекциями](scala-collections-operations.md)
+- [[scala-collections|Обзор коллекций]]
+- [[scala-collections-operations|Операции над коллекциями]]
 
 ## Содержание
 

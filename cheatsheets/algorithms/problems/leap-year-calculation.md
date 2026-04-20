@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Java Year Documentation](https://docs.oracle.com/javase/8/docs/api/java/time/Year.html)
 
 ### См. также
-- [Вычисление возраста](../math/age-calculation.md) — вычисление возраста
-- [Расстояние между точками](../math/distance-between-points.md) — вычисление расстояния
+- [[age-calculation|Вычисление возраста]] — вычисление возраста
+- [[distance-between-points|Расстояние между точками]] — вычисление расстояния
 
 ## Содержание
 

@@ -1007,7 +1007,7 @@ val json = user.asJson.noSpaces
 val parsed = decode[User](json) // Either[Error, User]
 ```
 ## См. также
-- [Play Framework](scala-play.md) — **Web framework** с **JSON** поддержкой
-- [Cats](scala-cats.md) — Функциональная библиотека
+- [[scala-play|Play Framework]] — **Web framework** с **JSON** поддержкой
+- [[scala-cats|Cats]] — Функциональная библиотека
 - [Паттерны](../../patterns/README.md) — Функциональные паттерны
 

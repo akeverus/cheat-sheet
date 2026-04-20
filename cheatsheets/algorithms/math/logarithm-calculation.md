@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Math.log10() (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html#log10-double-)
 
 ### См. также
-- [Вычисление факториала](factorial-calculation.md) — факториал
-- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
+- [[factorial-calculation|Вычисление факториала]] — факториал
+- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
 
 ## Содержание
 

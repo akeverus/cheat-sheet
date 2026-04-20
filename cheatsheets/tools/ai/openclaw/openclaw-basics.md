@@ -427,6 +427,6 @@ A: OpenClaw:
 
 ## См. также
 
-- [Aider: основы](../aider/aider-basics.md)
-- [Cursor: основы](../cursor/cursor-basics.md)
+- [[aider-basics|Aider: основы]]
+- [[cursor-basics|Cursor: основы]]
 

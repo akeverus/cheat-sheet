@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java Collections.sort()](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#sort(java.util.List))
 
 ### См. также
-- [Java Collections](../../languages/java/java-collections-list.md) — коллекции Java
-- [Stream API](../../languages/java/java-streams-fp.md) — Stream API
-- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — IoC и бины
+- [[java-collections-list|Java Collections]] — коллекции Java
+- [[java-streams-fp|Stream API]] — Stream API
+- [[spring-framework-interview|Spring Core]] — IoC и бины
 
 ## Содержание
 

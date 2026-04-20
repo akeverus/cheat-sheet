@@ -26,9 +26,9 @@ updated: "2026-02-11"
 - [`SANS Incident Handler's Handbook`](https://www.sans.org/reading-room/whitepapers/incident/incident-handlers-handbook-33901) — руководство по реагированию на инциденты
 
 ### См. также
-- [Security Testing](testing/security-testing.md) — `SAST`, `DAST`, `SCA`, пентесты
-- [Security Tools](tools/security-tools.md) — обзор инструментов
-- [Application Security](application/application-security.md) — аутентификация/авторизация
+- [[security-testing|Security Testing]] — `SAST`, `DAST`, `SCA`, пентесты
+- [[security-tools|Security Tools]] — обзор инструментов
+- [[application-security|Application Security]] — аутентификация/авторизация
 
 ---
 

@@ -1461,8 +1461,8 @@ accelerate_connect_timeout = 5.0
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [Ansible: основы](ansible.md) — общий справочник Ansible
-- [Ansible Basics](ansible-basics.md) — краткое введение
-- [Terraform](../terraform/terraform-basics.md) — Infrastructure as Code
-- [Docker](../../containers/docker/docker-basics.md) — контейнеризация
-- [Kubernetes](../../containers/kubernetes/kubernetes-advanced.md) — оркестрация контейнеров
+- [[ansible|Ansible: основы]] — общий справочник Ansible
+- [[ansible-basics|Ansible Basics]] — краткое введение
+- [[terraform-basics|Terraform]] — Infrastructure as Code
+- [[docker-basics|Docker]] — контейнеризация
+- [[kubernetes-advanced|Kubernetes]] — оркестрация контейнеров

@@ -24,8 +24,8 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Redis Persistence](https://redis.io/docs/management/persistence/) — персистентность RDB и AOF
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-replication.md](redis-replication.md) — репликация
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-replication|redis-replication.md]] — репликация
 
 ## Содержание
 

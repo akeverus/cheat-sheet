@@ -23,7 +23,7 @@ related: ["scala/scala-basics.md", "scala/scala-metaprogramming.md"]
 - [Scala Macros](https://docs.scala-lang.org/overviews/macros/overview.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
+- [[scala-basics|Основы Scala]]
 
 ## Содержание
 

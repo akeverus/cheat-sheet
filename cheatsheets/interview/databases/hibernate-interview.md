@@ -1914,6 +1914,7 @@ void shouldUseSecondLevelCache() {
     assertThat(stats.getSecondLevelCacheHitCount()).isEqualTo(1);
     assertThat(stats.getSecondLevelCacheMissCount()).isEqualTo(1);
 }
+```
 
 ---
 

@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [Spring WebSocket Reference](https://docs.spring.io/spring-framework/reference/web/websocket.html)
 
 ### См. также
-- [Spring MVC](spring-mvc.md) — **MVC** в **Spring**
-- [Spring Security](spring-security.md) — безопасность **WebSocket**
-- [Spring Messaging](spring-messaging.md) — брокер сообщений
+- [[spring-mvc|Spring MVC]] — **MVC** в **Spring**
+- [[spring-security|Spring Security]] — безопасность **WebSocket**
+- [[spring-messaging|Spring Messaging]] — брокер сообщений
 
 ## Содержание
 

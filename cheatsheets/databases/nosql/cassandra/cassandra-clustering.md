@@ -30,9 +30,9 @@ updated: "2026-02-11"
 - [Cassandra Reaper](https://cassandra-reaper.io/)
 
 ### См. также
-- [cassandra-data-modeling.md](cassandra-data-modeling.md) — моделирование данных в **Cassandra**
-- [cassandra-queries.md](cassandra-queries.md) — **CQL** запросы
-- [cassandra-admin.md](cassandra-admin.md) — администрирование
+- [[cassandra-data-modeling|cassandra-data-modeling.md]] — моделирование данных в **Cassandra**
+- [[cassandra-queries|cassandra-queries.md]] — **CQL** запросы
+- [[cassandra-admin|cassandra-admin.md]] — администрирование
 - [README.md](./) — обзор **Cassandra**
 
 ## Содержание

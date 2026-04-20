@@ -33,9 +33,9 @@ updated: "2026-02-11"
 - [Beats](https://www.elastic.co/guide/en/beats/libbeat/current/index.html) — легковесные **shippers**
 
 ### См. также
-- [Основы](elasticsearch-basics.md) — **Elasticsearch**
-- [Запросы](elasticsearch-queries.md) — поиск и запросы
-- [Производительность](elasticsearch-performance.md) — производительность
+- [[elasticsearch-basics|Основы]] — **Elasticsearch**
+- [[elasticsearch-queries|Запросы]] — поиск и запросы
+- [[elasticsearch-performance|Производительность]] — производительность
 
 ## Содержание
 

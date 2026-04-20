@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Slope One (Wikipedia)](https://en.wikipedia.org/wiki/Slope_One) — алгоритм **Slope One**
 
 ### См. также
-- [Обзор ИИ библиотек](ai-libraries.md) — машинное обучение
+- [[ai-libraries|Обзор ИИ библиотек]] — машинное обучение
 - [Задачи и алгоритмы](../problems/README.md) — обзор разделов
 
 ## Содержание

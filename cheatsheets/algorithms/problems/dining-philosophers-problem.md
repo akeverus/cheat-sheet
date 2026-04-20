@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [`Baeldung`: `Dining Philosophers`](https://www.baeldung.com/)
 
 ### См. также
-- [Решение лабиринтов](maze-solver.md) — maze solver
-- [Поиск пути A*](a-star-pathfinding.md) — A*
+- [[maze-solver|Решение лабиринтов]] — maze solver
+- [[a-star-pathfinding|Поиск пути A*]] — A*
 
 ## Содержание
 

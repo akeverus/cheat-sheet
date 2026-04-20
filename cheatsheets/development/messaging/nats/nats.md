@@ -1318,6 +1318,6 @@ public class ProductionNATSConfig {
 }
 ```
 ## См. также
-- [RabbitMQ](../rabbitmq/rabbitmq.md) — надёжная система сообщений
-- [Kafka](../kafka/kafka.md) — потоковая обработка данных
-- [Spring Cloud](../../../frameworks/java-frameworks/spring/spring-cloud.md) — облачные стримы
+- [[rabbitmq|RabbitMQ]] — надёжная система сообщений
+- [[kafka|Kafka]] — потоковая обработка данных
+- [[spring-cloud|Spring Cloud]] — облачные стримы

@@ -24,8 +24,8 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 - [Redis High Availability](https://redis.io/docs/management/sentinel/) — Sentinel
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-replication.md](redis-replication.md) — репликация
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-replication|redis-replication.md]] — репликация
 
 ## Содержание
 

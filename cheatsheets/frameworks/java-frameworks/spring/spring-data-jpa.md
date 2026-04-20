@@ -30,10 +30,10 @@ updated: "2026-02-06"
 
 ### См. также
 
-- [**Spring Boot**](spring-boot.md) — основы **Spring Boot**
-- [**Spring Hibernate**](spring-hibernate.md) — интеграция **Hibernate**
-- [**PostgreSQL**](../../../databases/relational/postgresql/postgres-basics.md) — работа с **PostgreSQL**
-- [**Maven**](../../../development/build-tools/maven/maven-advanced.md) — система сборки
+- [[spring-boot|**Spring Boot**]] — основы **Spring Boot**
+- [[spring-hibernate|**Spring Hibernate**]] — интеграция **Hibernate**
+- [[postgres-basics|**PostgreSQL**]] — работа с **PostgreSQL**
+- [[maven-advanced|**Maven**]] — система сборки
 
 ## Содержание
 

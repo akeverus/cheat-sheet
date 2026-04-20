@@ -25,8 +25,8 @@ related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
 - [Redis Transactions](https://redis.io/docs/manual/transactions/) — транзакции
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-lua-scripting.md](redis-lua-scripting.md) — Lua-скрипты
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-lua-scripting|redis-lua-scripting.md]] — Lua-скрипты
 
 ## Содержание
 

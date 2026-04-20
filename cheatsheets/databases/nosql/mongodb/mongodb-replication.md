@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [MongoDB Replica Sets](https://www.baeldung.com/spring-data-mongodb-replica-set)
 
 ### См. также
-- [Основы](mongodb-basics.md) — **MongoDB**
-- [Шардирование](mongodb-sharding.md) — масштабирование
+- [[mongodb-basics|Основы]] — **MongoDB**
+- [[mongodb-sharding|Шардирование]] — масштабирование
 
 ## Содержание
 
@@ -1111,8 +1111,8 @@ db.createUser({
 - [MongoDB Replica Sets](https://www.baeldung.com/spring-data-mongodb-replica-set)
 
 ### См. также
-- [Основы](mongodb-basics.md) — **MongoDB**
-- [Шардирование](mongodb-sharding.md) — масштабирование
+- [[mongodb-basics|Основы]] — **MongoDB**
+- [[mongodb-sharding|Шардирование]] — масштабирование
 
 ```
 
@@ -1205,3 +1205,4 @@ mongod --replSet rs0 --port 27019 --dbpath /data/db/rs0-3 --logpath /data/db/rs0
 // Java + Spring implementation available
 ```
 
+```

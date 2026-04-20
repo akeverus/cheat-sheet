@@ -26,9 +26,9 @@ Micrometer — фасад (vendor-neutral API) для сбора метрик в
 - [Prometheus — Java client (Micrometer)](https://prometheus.io/docs/instrumenting/clientlibs/)
 
 ### См. также
-- [Prometheus](prometheus.md) — сбор и хранение метрик
-- [StatsD](statsd.md) — сбор метрик через StatsD
-- [Infrastructure monitoring](../infrastructure-monitoring.md) — обзор мониторинга
+- [[prometheus|Prometheus]] — сбор и хранение метрик
+- [[statsd|StatsD]] — сбор метрик через StatsD
+- [[infrastructure-monitoring|Infrastructure monitoring]] — обзор мониторинга
 - [Monitoring](../) — раздел мониторинга
 
 ## Содержание

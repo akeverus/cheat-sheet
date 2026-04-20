@@ -23,7 +23,7 @@ updated: "2026-02-11"
 - [Introduction to Computer Networking](https://www.baeldung.com/cs/networking-basics) — введение в сетевые технологии
 
 ### См. также
-- [Computer Science](../computer-science/computer-science-basics.md)
+- [[computer-science-basics|Computer Science]]
 - [Операционные системы](../operating-systems/)
 
 ## Содержание

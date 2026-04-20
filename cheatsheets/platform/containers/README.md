@@ -56,4 +56,4 @@ updated: "2026-02-11"
 ## См. также
 
 - [../ci-cd/README.md](../ci-cd/README.md) — интеграция контейнерной сборки в pipeline.
-- [../../development/web-backend/backend-basics.md](../../development/web-backend/backend-basics.md) — backend-контекст для контейнеризации.
+- [[backend-basics|../../development/web-backend/backend-basics.md]] — backend-контекст для контейнеризации.

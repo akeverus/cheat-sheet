@@ -25,9 +25,9 @@ updated: "2026-02-11"
 - [Arrow-Kt Tutorial](https://www.baeldung.com/kotlin/arrow-kt)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Основы функционального программирования](kotlin-fp-basics.md)
-- [Операции над коллекциями](kotlin-collections-operations.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-fp-basics|Основы функционального программирования]]
+- [[kotlin-collections-operations|Операции над коллекциями]]
 
 ## Содержание
 

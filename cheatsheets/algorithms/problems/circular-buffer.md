@@ -24,7 +24,7 @@ A **guide** to **implementing** a **circular buffer** (**ring buffer**) in **Jav
 
 ### См. также
 - [Задачи и алгоритмы](../README.md)
-- [Thread-Safe Data Structures](../data-structures/collections-lock-free.md)
+- [[collections-lock-free|Thread-Safe Data Structures]]
 - [Структуры данных](../data-structures/)
 
 ## Содержание

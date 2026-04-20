@@ -23,9 +23,9 @@ updated: "2026-02-11"
 - [`Visualgo`: `Shell Sort`](https://visualgo.net/)
 
 ### См. также
-- [Сортировка выбором](selection-sort.md) — selection sort
-- [Быстрая сортировка](quick-sort.md) — quick sort
-- [Сортировка слиянием](merge-sort.md) — merge sort
+- [[selection-sort|Сортировка выбором]] — selection sort
+- [[quick-sort|Быстрая сортировка]] — quick sort
+- [[merge-sort|Сортировка слиянием]] — merge sort
 
 ## Содержание
 

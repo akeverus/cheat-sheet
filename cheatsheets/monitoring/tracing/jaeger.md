@@ -32,8 +32,8 @@ updated: "2026-02-11"
 - [Tracing in Microservices](https://www.jaegertracing.io/docs/latest/)
 
 ### См. также
-- [Grafana](../metrics/grafana.md) — визуализация метрик
-- [Distributed Tracing](distributed-tracing.md) — общие концепции
+- [[grafana|Grafana]] — визуализация метрик
+- [[distributed-tracing|Distributed Tracing]] — общие концепции
 - [Monitoring README](../) — основы **Observability**
 
 ## Содержание

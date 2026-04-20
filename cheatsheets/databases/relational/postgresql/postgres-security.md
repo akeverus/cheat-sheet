@@ -25,8 +25,8 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 - [PostgreSQL Security](https://www.postgresql.org/docs/current/security.html) — раздел по безопасности
 
 ### См. также
-- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
-- [postgres-admin.md](postgres-admin.md) — администрирование
+- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
+- [[postgres-admin|postgres-admin.md]] — администрирование
 
 ## Содержание
 

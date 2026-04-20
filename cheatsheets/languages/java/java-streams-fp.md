@@ -1431,6 +1431,6 @@ public class StreamPerformanceDemo {
 **`reduce()` или `collect()`?**  
 `reduce()` — для свёртки в одно значение, `collect()` — для построения структур (списки, мапы, группировки).
 ## См. также
-- [Java Exceptions](java-exceptions.md) — обработка исключений
-- [Java Annotations](java-annotations-reflection.md) — аннотации и рефлексия
-- [Java Collections](java-collections-list.md) — коллекции **Java**
+- [[java-exceptions|Java Exceptions]] — обработка исключений
+- [[java-annotations-reflection|Java Annotations]] — аннотации и рефлексия
+- [[java-collections-list|Java Collections]] — коллекции **Java**

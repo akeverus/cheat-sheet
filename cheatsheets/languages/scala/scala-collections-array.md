@@ -24,8 +24,8 @@ related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 - [Scala Array API](https://www.scala-lang.org/api/current/scala/Array.html)
 
 ### См. также
-- [Списки (List)](scala-collections-list.md)
-- [Взаимодействие с Java](scala-interop-java.md)
+- [[scala-collections-list|Списки (List)]]
+- [[scala-interop-java|Взаимодействие с Java]]
 
 ## Содержание
 

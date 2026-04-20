@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [POSA Pattern Language](https://www.dre.vanderbilt.edu/~schmidt/posa/) — **Patterns for Concurrent and Networked Objects**
 
 ### См. также
-- [Command](../behavioral/command.md) — **Command** паттерн
-- [Producer-Consumer](producer-consumer.md) — **Producer-Consumer** паттерн
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
+- [[command|Command]] — **Command** паттерн
+- [[producer-consumer|Producer-Consumer]] — **Producer-Consumer** паттерн
+- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
 
 ## Содержание
 

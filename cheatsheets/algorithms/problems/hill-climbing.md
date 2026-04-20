@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Heuristic Search (Wikipedia)](https://en.wikipedia.org/wiki/Heuristic_(computer_science))
 
 ### См. также
-- [Multi-Swarm](multi-swarm.md)
-- [Генетические алгоритмы](../ai-ml/genetic-algorithms.md) — генетические алгоритмы
+- [[multi-swarm|Multi-Swarm]]
+- [[genetic-algorithms|Генетические алгоритмы]] — генетические алгоритмы
 - [Алгоритмы оптимизации](../algorithmic-paradigms/) — парадигмы
 
 ## Содержание

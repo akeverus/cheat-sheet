@@ -29,8 +29,8 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 - [ClickHouse SQL Queries](https://www.baeldung.com/clickhouse-queries)
 
 ### См. также
-- [Таблицы](clickhouse-tables.md) — создание таблиц
-- [Индексы](clickhouse-indexes.md) — оптимизация запросов
+- [[clickhouse-tables|Таблицы]] — создание таблиц
+- [[clickhouse-indexes|Индексы]] — оптимизация запросов
 
 ## Содержание
 

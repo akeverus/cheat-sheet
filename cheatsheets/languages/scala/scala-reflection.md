@@ -24,8 +24,8 @@ related: ["scala/scala-basics.md", "scala/scala-type-system.md"]
 - [Scala Reflection](https://docs.scala-lang.org/overviews/reflection/overview.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Система типов](scala-type-system.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-type-system|Система типов]]
 
 ## Содержание
 

@@ -23,7 +23,7 @@ updated: "2026-02-11"
 - [Operating System Concepts](https://www.os-book.com/OS10/) — основные концепции ОС
 
 ### См. также
-- [Computer Science](../computer-science/computer-science-basics.md)
+- [[computer-science-basics|Computer Science]]
 - [Компьютерные сети](../networks/)
 
 ## Содержание

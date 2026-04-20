@@ -19,9 +19,9 @@ updated: "2026-02-11"
 - [GeeksforGeeks: K-th element of two sorted Arrays](https://www.geeksforgeeks.org/k-th-element-two-sorted-arrays/)
 
 ### См. также
-- [Бинарный поиск](binary-search.md) — binary search
-- [Объединение двух отсортированных массивов](merge-two-sorted-arrays.md) — merge two sorted
-- [Объединение отсортированных последовательностей](merge-sorted-sequences.md) — merge K sorted
+- [[binary-search|Бинарный поиск]] — binary search
+- [[merge-two-sorted-arrays|Объединение двух отсортированных массивов]] — merge two sorted
+- [[merge-sorted-sequences|Объединение отсортированных последовательностей]] — merge K sorted
 
 ## Содержание
 

@@ -1393,8 +1393,8 @@ azure-cost-tags:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [AWS Services](aws-services.md) — сервисы **AWS**
-- [Azure Services](azure-services.md) — сервисы **Azure**
-- [GCP Services](gcp-services.md) — сервисы **GCP**
-- [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) — **Kubernetes**
-- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
+- [[aws-services|AWS Services]] — сервисы **AWS**
+- [[azure-services|Azure Services]] — сервисы **Azure**
+- [[gcp-services|GCP Services]] — сервисы **GCP**
+- [[kubernetes-advanced|Kubernetes Advanced]] — **Kubernetes**
+- [[terraform-basics|Terraform]] — **Infrastructure as Code**

@@ -28,8 +28,8 @@ updated: "2026-02-11"
 - [Vulnerability Scanning Tools](https://owasp.org/www-community/Vulnerability_Scanning_Tools) — сравнение сканеров уязвимостей
 
 ### См. также
-- [Security Testing](../testing/security-testing.md) — когда и как запускать тесты безопасности
-- [Security Practices](../security-practices.md) — как встроить всё это в процессы
+- [[security-testing|Security Testing]] — когда и как запускать тесты безопасности
+- [[security-practices|Security Practices]] — как встроить всё это в процессы
 
 ---
 

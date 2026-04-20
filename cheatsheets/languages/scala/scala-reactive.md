@@ -27,8 +27,8 @@ related: ["scala/scala-concurrency.md", "scala/scala-akka.md", "scala/scala-fp-a
 - [Akka Streams Documentation](https://doc.akka.io/docs/akka/current/stream/index.html)
 
 ### См. также
-- [Конкурентность в Scala](scala-concurrency.md)
-- [Akka Actors](../../libraries/scala/scala-akka.md)
+- [[scala-concurrency|Конкурентность в Scala]]
+- [[scala-akka|Akka Actors]]
 
 ## Содержание
 

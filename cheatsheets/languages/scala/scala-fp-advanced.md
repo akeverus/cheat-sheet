@@ -28,8 +28,8 @@ related: ["scala/scala-fp-basics.md", "scala/scala-basics.md"]
 - [Scalaz Documentation](https://scalaz.github.io/scalaz/)
 
 ### См. также
-- [Основы функционального программирования](scala-fp-basics.md)
-- [Основы Scala](scala-basics.md)
+- [[scala-fp-basics|Основы функционального программирования]]
+- [[scala-basics|Основы Scala]]
 
 ## Содержание
 

@@ -26,8 +26,8 @@ updated: "2026-02-11"
 - [MongoDB with Spring Boot](https://www.baeldung.com/spring-data-mongodb-tutorial)
 
 ### См. также
-- [PostgreSQL](../../relational/postgresql/postgres-basics.md) — сравнение с реляционными базами данных
-- [Redis](../redis/redis-basics.md) — другая **NoSQL** база данных
+- [[postgres-basics|PostgreSQL]] — сравнение с реляционными базами данных
+- [[redis-basics|Redis]] — другая **NoSQL** база данных
 
 ## Содержание
 
@@ -1622,3 +1622,4 @@ MongoDB была разработана для решения проблем т�
 // Пример интеграции с Java и Spring Data MongoDB доступен в соответствующих разделах
 ```
 
+```

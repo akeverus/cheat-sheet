@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [`Baeldung`: `Maze Solver`](https://www.baeldung.com/)
 
 ### См. также
-- [Поиск пути A*](a-star-pathfinding.md) — A*
-- [Алгоритм Дейкстры](../graphs/dijkstra.md) — Dijkstra
-- [Поиск в ширину (BFS)](../graphs/bfs.md)
+- [[a-star-pathfinding|Поиск пути A*]] — A*
+- [[dijkstra|Алгоритм Дейкстры]] — Dijkstra
+- [[bfs|Поиск в ширину (BFS)]]
 
 ## Содержание
 

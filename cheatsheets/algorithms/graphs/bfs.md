@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [`Visualgo`: `BFS`](https://visualgo.net/)
 
 ### См. также
-- [dijkstra.md](dijkstra.md) — алгоритм Дейкстры
-- [jgrapht.md](jgrapht.md) — библиотека JGraphT
+- [[dijkstra|dijkstra.md]] — алгоритм Дейкстры
+- [[jgrapht|jgrapht.md]] — библиотека JGraphT
 
 ## Содержание
 

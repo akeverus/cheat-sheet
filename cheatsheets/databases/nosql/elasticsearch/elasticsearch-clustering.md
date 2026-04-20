@@ -33,9 +33,9 @@ updated: "2026-02-11"
 - [Hot-Warm-Cold Architecture](https://www.elastic.co/guide/en/elasticsearch/reference/current/data-tiers.html)
 
 ### См. также
-- [Основы](elasticsearch-basics.md) — **Elasticsearch**
-- [Производительность](elasticsearch-performance.md) — производительность
-- [Индексация](elasticsearch-indexing.md) — индексация документов
+- [[elasticsearch-basics|Основы]] — **Elasticsearch**
+- [[elasticsearch-performance|Производительность]] — производительность
+- [[elasticsearch-indexing|Индексация]] — индексация документов
 
 ## Содержание
 

@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Check if a string is palindrome — GeeksforGeeks](https://www.geeksforgeeks.org/c-program-check-given-string-palindrome/)
 
 ### См. также
-- [Палиндромные подстроки](palindromic-substrings.md) — подстроки-палиндромы
-- [Перестановки строк](string-permutations.md) — перестановки
+- [[palindromic-substrings|Палиндромные подстроки]] — подстроки-палиндромы
+- [[string-permutations|Перестановки строк]] — перестановки
 
 ## Содержание
 

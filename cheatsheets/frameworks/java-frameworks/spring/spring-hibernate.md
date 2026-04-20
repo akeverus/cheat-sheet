@@ -1957,7 +1957,7 @@ java -Dcom.sun.management.jmxremote \
 
 ## См. также
 
-- [**Spring Data JPA**](spring-data-jpa.md) — **Spring Data JPA** основы
-- [**Spring Boot**](spring-boot.md) — **Spring Boot** интеграция
-- [**PostgreSQL**](../../../databases/relational/postgresql/postgres-basics.md) — Работа с **PostgreSQL**
-- [**Maven**](../../../development/build-tools/maven/maven-advanced.md) — Система сборки **Maven**
+- [[spring-data-jpa|**Spring Data JPA**]] — **Spring Data JPA** основы
+- [[spring-boot|**Spring Boot**]] — **Spring Boot** интеграция
+- [[postgres-basics|**PostgreSQL**]] — Работа с **PostgreSQL**
+- [[maven-advanced|**Maven**]] — Система сборки **Maven**

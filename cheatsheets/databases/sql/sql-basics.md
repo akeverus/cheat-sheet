@@ -24,9 +24,9 @@ updated: "2026-02-11"
 
 ### См. также
 
-- [PostgreSQL Queries](../relational/postgresql/postgres-queries.md) — практики запросов в PostgreSQL
-- [MySQL Queries](../relational/mysql/mysql-queries.md) — практики запросов в MySQL
-- [PostgreSQL Indexes](../relational/postgresql/postgres-indexes.md) — проектирование индексов
+- [[postgres-queries|PostgreSQL Queries]] — практики запросов в PostgreSQL
+- [[mysql-queries|MySQL Queries]] — практики запросов в MySQL
+- [[postgres-indexes|PostgreSQL Indexes]] — проектирование индексов
 
 ## Содержание
 

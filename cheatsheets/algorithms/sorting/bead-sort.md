@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Bead Sort](https://www.geeksforgeeks.org/bead-sort-natural-sorting-algorithm/)
 
 ### См. также
-- [bubble-sort.md](bubble-sort.md) — пузырьковая сортировка (`Bubble Sort`)
-- [counting-sort.md](counting-sort.md) — сортировка подсчётом (`Counting Sort`)
+- [[bubble-sort|bubble-sort.md]] — пузырьковая сортировка (`Bubble Sort`)
+- [[counting-sort|counting-sort.md]] — сортировка подсчётом (`Counting Sort`)
 
 ## Содержание
 

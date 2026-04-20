@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Effective Java - Item 3](https://www.oreilly.com/library/view/effective-java/9780134686097/)
 
 ### См. также
-- [Double-Checked Locking](../concurrency-patterns/double-checked-locking.md) — Double-Checked Locking
-- [Java Basics](../../languages/java/java-basics.md) — Java Basics
-- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — IoC и бины
+- [[double-checked-locking|Double-Checked Locking]] — Double-Checked Locking
+- [[java-basics|Java Basics]] — Java Basics
+- [[spring-framework-interview|Spring Core]] — IoC и бины
 
 ## Содержание
 

@@ -23,7 +23,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [Интеграционное тестирование](../../testing/integration-testing/README.md) — интеграционное тестирование
-- [WireMock](java-wiremock.md) — **WireMock** для мокирования **API**
+- [[java-wiremock|WireMock]] — **WireMock** для мокирования **API**
 
 ## Содержание
 
@@ -647,7 +647,7 @@ public void testCreateUser() {
 - [Hamcrest matchers](../../testing/unit-testing/junit/hamcrest.md)
 
 ## См. также
-- [WireMock](java-wiremock.md) — для **mock**-серверов
-- [Testcontainers](java-testcontainers.md) — для интеграционных тестов
-- [JUnit Advanced](../../testing/unit-testing/junit/junit-advanced.md) — для **unit** тестирования
+- [[java-wiremock|WireMock]] — для **mock**-серверов
+- [[java-testcontainers|Testcontainers]] — для интеграционных тестов
+- [[junit-advanced|JUnit Advanced]] — для **unit** тестирования
 

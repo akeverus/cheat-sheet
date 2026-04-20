@@ -1056,7 +1056,7 @@ aws cloudwatch put-metric-alarm \
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [AWS Basics](aws-basics.md) — основы **AWS**
-- [AWS Services](aws-services.md) — сервисы **AWS**
-- [AWS Networking](aws-networking.md) — сеть в **AWS**
+- [[aws-basics|AWS Basics]] — основы **AWS**
+- [[aws-services|AWS Services]] — сервисы **AWS**
+- [[aws-networking|AWS Networking]] — сеть в **AWS**
 - [Security](../../security/README.md) — управление ключами и доступом

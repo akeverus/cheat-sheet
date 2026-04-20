@@ -30,9 +30,9 @@ updated: "2026-02-11"
 - [Scanner](https://portswigger.net/burp/documentation/desktop/tools/scanner)
 
 ### См. также
-- [OWASP ZAP](../owasp-zap/owasp-zap.md) — бесплатный сканер и прокси
-- [sqlmap](../sqlmap/sqlmap.md) — автоматизация SQL-инъекций
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) — обзор инструментов
+- [[owasp-zap|OWASP ZAP]] — бесплатный сканер и прокси
+- [[sqlmap|sqlmap]] — автоматизация SQL-инъекций
+- [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
 
 ---
 

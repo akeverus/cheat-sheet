@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Pattern (Java Platform SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html)
 
 ### См. также
-- [`first-non-repeating-character.md`](first-non-repeating-character.md) — поиск первого неповторяющегося символа
-- [`regex-token-replacement.md`](regex-token-replacement.md) — работа с регулярными выражениями
+- [[first-non-repeating-character|`first-non-repeating-character.md`]] — поиск первого неповторяющегося символа
+- [[regex-token-replacement|`regex-token-replacement.md`]] — работа с регулярными выражениями
 
 ## Содержание
 

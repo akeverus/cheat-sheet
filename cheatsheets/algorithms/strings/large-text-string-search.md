@@ -21,7 +21,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [Поиск с использованием дерева суффиксов](./) — раздел strings
-- [Проверка нескольких ключевых слов](multiple-keywords-check.md) — multiple keywords
+- [[multiple-keywords-check|Проверка нескольких ключевых слов]] — multiple keywords
 
 ## Содержание
 

@@ -24,8 +24,8 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
 - [PostgreSQL Replication](https://www.postgresql.org/docs/current/warm-standby.html) — репликация и standby
 
 ### См. также
-- [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
-- [postgres-high-availability.md](postgres-high-availability.md) — высокая доступность
+- [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
+- [[postgres-high-availability|postgres-high-availability.md]] — высокая доступность
 
 ## Содержание
 

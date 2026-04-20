@@ -25,8 +25,8 @@ updated: "2026-02-11"
 - [Google — SRE Book (Monitoring)](https://sre.google/sre-book/monitoring-distributed-systems/)
 
 ### См. также
-- [Prometheus](metrics/prometheus.md) — сбор метрик
-- [Alertmanager](alerting/alertmanager.md) — алертинг
+- [[prometheus|Prometheus]] — сбор метрик
+- [[alertmanager|Alertmanager]] — алертинг
 - [Monitoring](./) — раздел мониторинга
 
 ## Содержание

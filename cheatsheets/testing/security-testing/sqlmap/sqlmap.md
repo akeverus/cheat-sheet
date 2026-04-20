@@ -26,9 +26,9 @@ updated: "2026-02-11"
 - [OWASP — SQL Injection](https://owasp.org/www-community/attacks/SQL_Injection)
 
 ### См. также
-- [Burp Suite](../burp-suite/burp-suite.md) — платформа для тестирования безопасности
-- [OWASP ZAP](../owasp-zap/owasp-zap.md) — сканер и прокси
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) — обзор инструментов
+- [[burp-suite|Burp Suite]] — платформа для тестирования безопасности
+- [[owasp-zap|OWASP ZAP]] — сканер и прокси
+- [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
 
 ## Содержание
 

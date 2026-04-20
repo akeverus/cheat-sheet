@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java Concurrency in Practice](https://jcip.net/) — книга по многопоточности
 
 ### См. также
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
-- [RabbitMQ](../../development/messaging/rabbitmq/rabbitmq.md) — **Message Queues**
-- [Kafka](../../development/messaging/kafka/kafka.md) — **Event Streaming**
+- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
+- [[rabbitmq|RabbitMQ]] — **Message Queues**
+- [[kafka|Kafka]] — **Event Streaming**
 
 ## Содержание
 

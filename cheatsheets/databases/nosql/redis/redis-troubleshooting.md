@@ -24,8 +24,8 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md", "databa
 - [Redis Troubleshooting](https://redis.io/docs/management/troubleshooting/) — диагностика
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-monitoring.md](redis-monitoring.md) — мониторинг
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-monitoring|redis-monitoring.md]] — мониторинг
 
 ## Содержание
 

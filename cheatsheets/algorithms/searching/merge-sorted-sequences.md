@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Merge K sorted arrays](https://www.geeksforgeeks.org/merge-k-sorted-arrays/)
 
 ### См. также
-- [Объединение двух отсортированных массивов](merge-two-sorted-arrays.md) — merge two
-- [K-й элемент в двух отсортированных массивах](kth-smallest-in-two-sorted-arrays.md) — k-th smallest
-- [Сортировка слиянием](../sorting/merge-sort.md) — merge sort
+- [[merge-two-sorted-arrays|Объединение двух отсортированных массивов]] — merge two
+- [[kth-smallest-in-two-sorted-arrays|K-й элемент в двух отсортированных массивах]] — k-th smallest
+- [[merge-sort|Сортировка слиянием]] — merge sort
 
 ## Содержание
 

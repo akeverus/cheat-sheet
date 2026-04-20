@@ -25,8 +25,8 @@ updated: "2026-02-11"
 ### См. также
 - [`../problem-solving/README.md`](../problem-solving/README.md) — решение задач
 - [`../algorithms/README.md`](../algorithms/README.md) — алгоритмы
-- [`dynamic-programming.md`](dynamic-programming.md) — динамическое программирование (`DP`)
-- [`divide-and-conquer.md`](divide-and-conquer.md) — разделяй и властвуй (`divide and conquer`)
+- [[dynamic-programming|`dynamic-programming.md`]] — динамическое программирование (`DP`)
+- [[divide-and-conquer|`divide-and-conquer.md`]] — разделяй и властвуй (`divide and conquer`)
 
 ## Содержание
 

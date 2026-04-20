@@ -24,8 +24,8 @@ related: ["scala/scala-basics.md", "scala/scala-slick.md"]
 - [Play Framework Documentation](https://www.playframework.com/documentation)
 
 ### См. также
-- [Основы Scala](../../languages/scala/scala-basics.md)
-- [Работа с базами данных](scala-slick.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-slick|Работа с базами данных]]
 
 ## Содержание
 

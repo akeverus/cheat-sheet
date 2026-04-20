@@ -24,10 +24,10 @@ updated: "2026-02-11"
 - [Spring Kotlin Tutorial](https://www.baeldung.com/kotlin/spring-boot-kotlin)
 
 ### См. также
-- [Основы Kotlin](kotlin-basics.md)
-- [Корутины](kotlin-concurrency-basics.md)
-- [Spring Boot](../../frameworks/spring/spring-boot.md)
-- [Spring Core](../../frameworks/spring/spring-core.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-concurrency-basics|Корутины]]
+- [[spring-boot|Spring Boot]]
+- [[spring-core|Spring Core]]
 
 ## Содержание
 

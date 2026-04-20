@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Program for factorial of a number](https://www.geeksforgeeks.org/program-for-factorial-of-a-number/)
 
 ### См. также
-- [Ряд Фибоначчи](fibonacci-sequence.md) — ряд Фибоначчи
-- [Наибольший общий делитель](greatest-common-divisor.md) — НОД
+- [[fibonacci-sequence|Ряд Фибоначчи]] — ряд Фибоначчи
+- [[greatest-common-divisor|Наибольший общий делитель]] — НОД
 
 ## Содержание
 

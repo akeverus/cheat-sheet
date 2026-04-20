@@ -27,8 +27,8 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [Scala Try](https://www.scala-lang.org/api/current/scala/util/Try.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Функциональное программирование](scala-fp-basics.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-fp-basics|Функциональное программирование]]
 
 ## Содержание
 

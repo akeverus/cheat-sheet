@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Math.toRadians() (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html#toRadians-double-)
 
 ### См. также
-- [Вычисление площади круга](circle-area-calculation.md) — площадь круга
-- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
+- [[circle-area-calculation|Вычисление площади круга]] — площадь круга
+- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
 
 ## Содержание
 

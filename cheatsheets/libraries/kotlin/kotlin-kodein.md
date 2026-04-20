@@ -980,5 +980,5 @@ val kodein = DI {
 ```
 ## См. также
 - [Обзор библиотек](../) — DI для **Java**/**Kotlin**
-- [Spring](../../frameworks/spring/spring-core.md) — DI в **Spring**
+- [[spring-core|Spring]] — DI в **Spring**
 

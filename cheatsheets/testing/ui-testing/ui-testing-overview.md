@@ -22,7 +22,7 @@ updated: "2026-02-11"
 - [Playwright](https://playwright.dev/) — Playwright
 
 ### См. также
-- [Selenium](selenium/selenium.md) — Selenium WebDriver
+- [[selenium|Selenium]] — Selenium WebDriver
 - [Обзор тестирования](../) · [Юнит-тесты](../unit-testing/)
 
 ## Содержание

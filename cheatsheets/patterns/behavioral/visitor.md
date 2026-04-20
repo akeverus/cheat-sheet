@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Java Annotation Processing](https://docs.oracle.com/javase/8/docs/api/javax/annotation/processing/package-summary.html)
 
 ### См. также
-- [Java Annotations & Reflection](../../languages/java/java-annotations-reflection.md) — аннотации и рефлексия
-- [Strategy](strategy.md) — **Strategy Pattern**
+- [[java-annotations-reflection|Java Annotations & Reflection]] — аннотации и рефлексия
+- [[strategy|Strategy]] — **Strategy Pattern**
 - [Алгоритмы и структуры данных](../../algorithms/) — алгоритмы
 
 ## Содержание

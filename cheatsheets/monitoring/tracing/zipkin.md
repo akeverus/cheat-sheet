@@ -27,9 +27,9 @@ updated: "2026-02-11"
 - [Micrometer Tracing](https://micrometer.io/docs/tracing) — абстракция трейсинга в **Spring Boot 3**
 
 ### См. также
-- [Jaeger](jaeger.md) — альтернативная система трейсинга
-- [OpenTelemetry](opentelemetry.md) — единый стандарт телеметрии и экспорт в **Zipkin**
-- [Distributed Tracing](distributed-tracing.md) — общие концепции распределённого трейсинга
+- [[jaeger|Jaeger]] — альтернативная система трейсинга
+- [[opentelemetry|OpenTelemetry]] — единый стандарт телеметрии и экспорт в **Zipkin**
+- [[distributed-tracing|Distributed Tracing]] — общие концепции распределённого трейсинга
 - [Monitoring README](../) — обзор мониторинга и **observability**
 
 ## Содержание

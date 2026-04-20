@@ -1834,8 +1834,8 @@ scheduler-pubsub-job:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [AWS Basics](aws-basics.md) — основы **AWS**
-- [Azure Basics](azure-basics.md) — основы **Azure**
-- [GCP Basics](gcp-basics.md) — основы **GCP**
-- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
-- [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) — контейнерная оркестрация
+- [[aws-basics|AWS Basics]] — основы **AWS**
+- [[azure-basics|Azure Basics]] — основы **Azure**
+- [[gcp-basics|GCP Basics]] — основы **GCP**
+- [[terraform-basics|Terraform]] — **Infrastructure as Code**
+- [[kubernetes-advanced|Kubernetes Advanced]] — контейнерная оркестрация

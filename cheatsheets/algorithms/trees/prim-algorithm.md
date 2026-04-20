@@ -23,9 +23,9 @@ updated: "2026-02-11"
 - [`Visualgo`: `Minimum Spanning Tree`](https://visualgo.net/)
 
 ### См. также
-- [`kruskal-algorithm.md`](kruskal-algorithm.md) — алгоритм Крускала (`Kruskal`)
-- [`boruvka-algorithm.md`](boruvka-algorithm.md) — алгоритм Борувки (`Borůvka`)
-- [`../graphs/dijkstra.md`](../graphs/dijkstra.md) — алгоритм Дейкстры (`Dijkstra`)
+- [[kruskal-algorithm|`kruskal-algorithm.md`]] — алгоритм Крускала (`Kruskal`)
+- [[boruvka-algorithm|`boruvka-algorithm.md`]] — алгоритм Борувки (`Borůvka`)
+- [[dijkstra|`../graphs/dijkstra.md`]] — алгоритм Дейкстры (`Dijkstra`)
 
 ## Содержание
 

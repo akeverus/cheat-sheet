@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [`Visualgo`: `Radix Sort`](https://visualgo.net/)
 
 ### См. также
-- [Сортировка подсчётом](counting-sort.md) — counting sort
-- [Сортировка блочная](bucket-sort.md) — bucket sort
+- [[counting-sort|Сортировка подсчётом]] — counting sort
+- [[bucket-sort|Сортировка блочная]] — bucket sort
 
 ## Содержание
 

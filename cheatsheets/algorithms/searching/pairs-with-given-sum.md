@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Find pairs with given sum](https://www.geeksforgeeks.org/find-pair-with-given-sum-in-array/)
 
 ### См. также
-- [Перебор массива по диагонали](diagonal-array-traversal.md) — diagonal traversal
-- [Максимальный подмассив](maximum-subarray.md) — алгоритм Kadane (`Kadane`)
+- [[diagonal-array-traversal|Перебор массива по диагонали]] — diagonal traversal
+- [[maximum-subarray|Максимальный подмассив]] — алгоритм Kadane (`Kadane`)
 
 ## Содержание
 

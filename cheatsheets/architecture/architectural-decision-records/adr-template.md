@@ -145,9 +145,9 @@ updated: "2026-02-11"
 5. **Доступность:** храните **ADR** в репозитории проекта
 ## См. также
 
-- [Design Principles](../design-principles/design-principles.md) — принципы проектирования
+- [[design-principles|Design Principles]] — принципы проектирования
 - [Enterprise Patterns](../enterprise-patterns/) — обзор enterprise-паттернов
-- [System Design Basics](../system-design/system-design-basics.md) — основы проектирования систем
+- [[system-design-basics|System Design Basics]] — основы проектирования систем
 
 
 ## Решение проблем

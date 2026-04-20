@@ -34,9 +34,9 @@ updated: "2026-02-11"
 - [Profile API](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-profile.html)
 
 ### См. также
-- [Основы](elasticsearch-basics.md) — **Elasticsearch**
-- [Кластеризация](elasticsearch-clustering.md) — кластеризация
-- [Индексация](elasticsearch-indexing.md) — индексация документов
+- [[elasticsearch-basics|Основы]] — **Elasticsearch**
+- [[elasticsearch-clustering|Кластеризация]] — кластеризация
+- [[elasticsearch-indexing|Индексация]] — индексация документов
 
 ## Содержание
 

@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Point2D.distance() (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/awt/geom/Point2D.html)
 
 ### См. также
-- [Вычисление площади круга](circle-area-calculation.md) — площадь круга
-- [Пересечение линий](line-intersection.md) — пересечение линий
+- [[circle-area-calculation|Вычисление площади круга]] — площадь круга
+- [[line-intersection|Пересечение линий]] — пересечение линий
 
 ## Содержание
 

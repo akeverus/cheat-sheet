@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [`ConcurrentLinkedQueue` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentLinkedQueue.html)
 
 ### См. также
-- [Временная сложность коллекций](collections-complexity.md) — Big O коллекций **Java**
-- [Многопоточность в Java](../../languages/java/java-concurrency-basics.md)
+- [[collections-complexity|Временная сложность коллекций]] — Big O коллекций **Java**
+- [[java-concurrency-basics|Многопоточность в Java]]
 
 ## Содержание
 

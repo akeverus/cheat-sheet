@@ -161,6 +161,6 @@ Baggage — пары ключ-значение, передаваемые по в
 **Нужно ли трассировать все запросы?** Нет. В production обычно сэмплируют 1–10%; при необходимости всегда сэмплировать запросы с ошибками или к критичным операциям через кастомный sampler.
 ## См. также
 
-- [Prometheus](../metrics/prometheus.md) — метрики и мониторинг
-- [Grafana](../metrics/grafana.md) — визуализация
-- [Micrometer](../../libraries/java/java-micrometer.md) — метрики JVM
+- [[prometheus|Prometheus]] — метрики и мониторинг
+- [[grafana|Grafana]] — визуализация
+- [[java-micrometer|Micrometer]] — метрики JVM

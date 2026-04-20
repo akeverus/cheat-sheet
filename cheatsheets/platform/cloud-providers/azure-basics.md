@@ -1309,8 +1309,8 @@ advisor-recommendations:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [Azure Services](azure-services.md) — сервисы **Azure**
-- [AWS Basics](aws-basics.md) — основы **AWS**
-- [GCP Basics](gcp-basics.md) — основы **GCP**
-- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
+- [[azure-services|Azure Services]] — сервисы **Azure**
+- [[aws-basics|AWS Basics]] — основы **AWS**
+- [[gcp-basics|GCP Basics]] — основы **GCP**
+- [[terraform-basics|Terraform]] — **Infrastructure as Code**
 - [Azure Resource Manager](https://docs.microsoft.com/azure/azure-resource-manager/management/) — управление ресурсами

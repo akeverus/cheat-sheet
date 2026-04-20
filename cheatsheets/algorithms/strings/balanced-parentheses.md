@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Check for balanced parentheses — GeeksforGeeks](https://www.geeksforgeeks.org/check-for-balanced-parentheses-in-an-expression/)
 
 ### См. также
-- [Проверка палиндромов](palindrome-check.md) — палиндромы
-- [Работа с регулярными выражениями](regex-token-replacement.md) — регулярные выражения
+- [[palindrome-check|Проверка палиндромов]] — палиндромы
+- [[regex-token-replacement|Работа с регулярными выражениями]] — регулярные выражения
 
 ## Содержание
 

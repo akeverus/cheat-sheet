@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Write a program to print all permutations of a given string — GeeksforGeeks](https://www.geeksforgeeks.org/write-a-c-program-to-print-all-permutations-of-a-given-string/)
 
 ### См. также
-- [Проверка палиндромов](palindrome-check.md) — палиндромы
-- [Расстояние Левенштейна](levenshtein-distance.md) — расстояние редактирования
+- [[palindrome-check|Проверка палиндромов]] — палиндромы
+- [[levenshtein-distance|Расстояние Левенштейна]] — расстояние редактирования
 
 ## Содержание
 

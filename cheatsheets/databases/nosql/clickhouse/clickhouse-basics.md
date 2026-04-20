@@ -29,8 +29,8 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 - [Introduction to ClickHouse](https://www.baeldung.com/clickhouse)
 
 ### См. также
-- [PostgreSQL Basics](../../relational/postgresql/postgres-basics.md) — сравнение с реляционными БД
-- [Redis Basics](../redis/redis-basics.md) — другая высокопроизводительная БД
+- [[postgres-basics|PostgreSQL Basics]] — сравнение с реляционными БД
+- [[redis-basics|Redis Basics]] — другая высокопроизводительная БД
 
 ## Содержание
 

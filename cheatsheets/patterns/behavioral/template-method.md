@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java Inheritance](https://docs.oracle.com/javase/tutorial/java/IandI/subclasses.html)
 
 ### См. также
-- [Java Basics](../../languages/java/java-basics.md) — **Java OOP**
-- [Spring Core](../../interview/frameworks/spring/spring-framework-interview.md) — **Spring Framework**
-- [Strategy](strategy.md) — **Strategy Pattern**
+- [[java-basics|Java Basics]] — **Java OOP**
+- [[spring-framework-interview|Spring Core]] — **Spring Framework**
+- [[strategy|Strategy]] — **Strategy Pattern**
 
 ## Содержание
 

@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Merge Two Sorted Arrays](https://www.geeksforgeeks.org/merge-two-sorted-arrays/)
 
 ### См. также
-- [Бинарный поиск](binary-search.md) — binary search
-- [Максимальный подмассив](maximum-subarray.md) — алгоритм Kadane (`Kadane`)
-- [Сортировка слиянием](../sorting/merge-sort.md) — merge sort
+- [[binary-search|Бинарный поиск]] — binary search
+- [[maximum-subarray|Максимальный подмассив]] — алгоритм Kadane (`Kadane`)
+- [[merge-sort|Сортировка слиянием]] — merge sort
 
 ## Содержание
 

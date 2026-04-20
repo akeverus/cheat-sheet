@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Postman Documentation](https://learning.postman.com/docs/getting-started/introduction/) — официальная документация **Postman**
 
 ### См. также
-- [API Testing](../api-testing/api-testing-basics.md) — основы тестирования API
-- [Insomnia](../insomnia/insomnia-basics.md) — клиент **Insomnia**
+- [[api-testing-basics|API Testing]] — основы тестирования API
+- [[insomnia-basics|Insomnia]] — клиент **Insomnia**
 
 ## Содержание
 

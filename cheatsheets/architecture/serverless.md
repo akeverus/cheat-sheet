@@ -22,9 +22,9 @@ updated: "2026-02-11"
 - [Spring Cloud Function](https://docs.spring.io/spring-cloud-function/docs/current/reference/html/)
 
 ### См. также
-- [Event-Driven Architecture](event-driven.md) — **Event-Driven Architecture**
-- [Микросервисы](software-architecture/microservices.md) — микросервисная архитектура
-- [Архитектурные паттерны](architecture-patterns.md) — архитектурные паттерны
+- [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
+- [[microservices|Микросервисы]] — микросервисная архитектура
+- [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
 
 ## Содержание
 

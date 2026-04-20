@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Java ReentrantReadWriteLock](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantReadWriteLock.html)
 
 ### См. также
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
+- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
 - [CQRS / DDD](../../architecture/enterprise-patterns/README.md) — **CQRS** и **DDD**
 
 ## Содержание

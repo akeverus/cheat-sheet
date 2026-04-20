@@ -2043,8 +2043,8 @@ function parseSize(sizeString) {
 - Применяйте аутентификацию и авторизацию (**OAuth2**, `API keys`); валидируйте входные данные.
 - Документируйте **API** (**OpenAPI/Swagger**); пишите тесты и мониторьте метрики и логи.
 ## См. также
-- [REST API Design](rest-api-design.md) — основы **REST API**
-- [GraphQL](../graphql/graphql.md) — альтернативный подход к **API**
-- [gRPC](../grpc/grpc.md) — высокопроизводительные **API**
+- [[rest-api-design|REST API Design]] — основы **REST API**
+- [[graphql|GraphQL]] — альтернативный подход к **API**
+- [[grpc|gRPC]] — высокопроизводительные **API**
 - [OpenAPI / Swagger](https://spec.openapis.org/oas/latest.html) — **API** документация
 - [Security](../../../security/) — безопасность **API**

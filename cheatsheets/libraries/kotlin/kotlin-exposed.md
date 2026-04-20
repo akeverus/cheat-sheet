@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Exposed Tutorial](https://github.com/JetBrains/Exposed/wiki/Getting-Started)
 
 ### См. также
-- [Основы Kotlin](../../languages/kotlin/kotlin-basics.md)
-- [DSL в Kotlin](../../languages/kotlin/kotlin-dsl.md)
-- [Основы PostgreSQL](../../databases/relational/postgresql/postgres-basics.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-dsl|DSL в Kotlin]]
+- [[postgres-basics|Основы PostgreSQL]]
 
 ## Содержание
 

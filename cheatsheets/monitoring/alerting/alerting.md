@@ -30,9 +30,9 @@ updated: "2026-02-11"
 - [Avoiding Alert Fatigue](https://prometheus.io/docs/practices/alerting/)
 
 ### См. также
-- [Prometheus](../metrics/prometheus.md) — Prometheus-метрики
-- [Grafana](../metrics/grafana.md) — алерты в Grafana
-- [Централизованное логирование](../logging/centralized-logging.md) — логи для алертов
+- [[prometheus|Prometheus]] — Prometheus-метрики
+- [[grafana|Grafana]] — алерты в Grafana
+- [[centralized-logging|Централизованное логирование]] — логи для алертов
 
 ## Содержание
 

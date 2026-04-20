@@ -23,8 +23,8 @@ updated: "2026-02-11"
 - [`Visualgo`: `Counting Sort`](https://visualgo.net/)
 
 ### См. также
-- [Сортировка поразрядная](radix-sort.md) — **radix sort**
-- [Сортировка блочная](bucket-sort.md) — **bucket sort**
+- [[radix-sort|Сортировка поразрядная]] — **radix sort**
+- [[bucket-sort|Сортировка блочная]] — **bucket sort**
 
 ## Содержание
 

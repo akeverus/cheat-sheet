@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Find k largest elements](https://www.geeksforgeeks.org/k-largestor-smallest-elements-in-an-array/)
 
 ### См. также
-- [Поиск k-го по величине элемента](kth-smallest-in-two-sorted-arrays.md) — k-th smallest
-- [N самых частых элементов](top-n-frequent-elements.md) — top N frequent
+- [[kth-smallest-in-two-sorted-arrays|Поиск k-го по величине элемента]] — k-th smallest
+- [[top-n-frequent-elements|N самых частых элементов]] — top N frequent
 
 ## Содержание
 

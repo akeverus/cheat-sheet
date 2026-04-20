@@ -33,11 +33,11 @@ JDBC (`Java Database Connectivity`) — низкоуровневый API для 
 - [JDBC Transactions](https://www.baeldung.com/java-jdbc-transactions)
 
 ### См. также
-- [Java: основы](java-basics.md)
-- [Java: исключения и SQLException](java-exceptions.md)
-- [HikariCP: пул соединений](../../libraries/java/java-hikaricp.md)
-- [Spring Data JDBC](../../frameworks/java-frameworks/spring/spring-data-jdbc.md)
-- [Spring Data JPA](../../frameworks/java-frameworks/spring/spring-data-jpa.md)
+- [[java-basics|Java: основы]]
+- [[java-exceptions|Java: исключения и SQLException]]
+- [[java-hikaricp|HikariCP: пул соединений]]
+- [[spring-data-jdbc|Spring Data JDBC]]
+- [[spring-data-jpa|Spring Data JPA]]
 
 ## Содержание
 
@@ -734,12 +734,12 @@ em.persist(u); // id проставится автоматически
 
 ## См. также
 
-- [Java: основы](java-basics.md)
-- [Java: исключения](java-exceptions.md)
-- [HikariCP: пул соединений](../../libraries/java/java-hikaricp.md)
-- [jOOQ: type-safe SQL DSL](../../libraries/java/java-jooq.md)
-- [Spring Data JDBC](../../frameworks/java-frameworks/spring/spring-data-jdbc.md)
-- [Spring Data JPA](../../frameworks/java-frameworks/spring/spring-data-jpa.md)
-- [Hibernate через Spring](../../frameworks/java-frameworks/spring/spring-hibernate.md)
-- [ORM: базовые концепции](../../databases/orm/orm-basics.md)
-- [Testcontainers — интеграционные тесты БД](../../libraries/java/java-testcontainers.md)
+- [[java-basics|Java: основы]]
+- [[java-exceptions|Java: исключения]]
+- [[java-hikaricp|HikariCP: пул соединений]]
+- [[java-jooq|jOOQ: type-safe SQL DSL]]
+- [[spring-data-jdbc|Spring Data JDBC]]
+- [[spring-data-jpa|Spring Data JPA]]
+- [[spring-hibernate|Hibernate через Spring]]
+- [[orm-basics|ORM: базовые концепции]]
+- [[java-testcontainers|Testcontainers — интеграционные тесты БД]]

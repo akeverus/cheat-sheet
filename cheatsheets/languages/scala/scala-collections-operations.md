@@ -23,9 +23,9 @@ related: ["scala/scala-collections.md", "scala/scala-collections-list.md"]
 - [Scala Collections Operations](https://docs.scala-lang.org/overviews/collections-2.13/overview.html)
 
 ### См. также
-- [Обзор коллекций](scala-collections.md)
-- [Списки](scala-collections-list.md)
-- [Группировка](scala-collections-grouping.md)
+- [[scala-collections|Обзор коллекций]]
+- [[scala-collections-list|Списки]]
+- [[scala-collections-grouping|Группировка]]
 
 ## Содержание
 

@@ -1113,7 +1113,7 @@ public class KafkaPerformanceMonitor {
 - **Schema `Registry`:** используйте **Schema Registry** для эволюции схем; совместимость (**backward/forward**) при изменении схем; не храните сырые байты без версии схемы.
 - **Безопасность и мониторинг:** включайте **SSL**/**TLS** и **SASL** в **prod**; мониторьте **lag**, **throughput**, ошибки; настройте алерты на отставание **consumer groups** и сбои брокеров.
 ## См. также
-- [RabbitMQ](../rabbitmq/rabbitmq.md) — альтернативная система сообщений
-- [Spring Kafka](../../../frameworks/java-frameworks/spring/spring-kafka.md) — **Spring** интеграция
-- [Kafka (основы и Connect)](kafka.md) — **ETL** для **Kafka**
-- [Prometheus](../../../monitoring/metrics/prometheus.md) — мониторинг инфраструктуры
+- [[rabbitmq|RabbitMQ]] — альтернативная система сообщений
+- [[spring-kafka|Spring Kafka]] — **Spring** интеграция
+- [[kafka|Kafka (основы и Connect)]] — **ETL** для **Kafka**
+- [[prometheus|Prometheus]] — мониторинг инфраструктуры

@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Google Guava](https://github.com/google/guava/wiki) — расширенные коллекции
 
 ### См. также
-- [Apache Commons Collections](../../libraries/utility-libraries/java-apache-commons.md) — расширенные коллекции, **Bag**, **BidiMap**, **CollectionUtils**
-- [Google Guava](../../libraries/utility-libraries/java-guava.md) — **Multimap**, **ImmutableList**, **FluentIterable**
+- [[java-apache-commons|Apache Commons Collections]] — расширенные коллекции, **Bag**, **BidiMap**, **CollectionUtils**
+- [[java-guava|Google Guava]] — **Multimap**, **ImmutableList**, **FluentIterable**
 
 ## Содержание
 

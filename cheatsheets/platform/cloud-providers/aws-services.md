@@ -2372,7 +2372,7 @@ ssm-session-prefs:
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [AWS Basics](aws-basics.md) — основы **AWS**
-- [AWS IAM](aws-iam.md) — управление доступом
-- [AWS Networking](aws-networking.md) — сеть в **AWS**
-- [Terraform](../iac/terraform/terraform-basics.md) — **Infrastructure as Code**
+- [[aws-basics|AWS Basics]] — основы **AWS**
+- [[aws-iam|AWS IAM]] — управление доступом
+- [[aws-networking|AWS Networking]] — сеть в **AWS**
+- [[terraform-basics|Terraform]] — **Infrastructure as Code**

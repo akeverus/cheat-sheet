@@ -23,7 +23,7 @@ updated: "2026-02-11"
 - [`Luhn Algorithm` - `Wikipedia`](https://en.wikipedia.org/wiki/Luhn_algorithm)
 
 ### См. также
-- [Работа с регулярными выражениями](../strings/regex-token-replacement.md)
+- [[regex-token-replacement|Работа с регулярными выражениями]]
 - [Алгоритмы со строками](../strings/README.md)
 
 ## Содержание

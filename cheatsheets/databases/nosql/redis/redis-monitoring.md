@@ -25,8 +25,8 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Redis Monitoring](https://redis.io/docs/management/monitoring/) — мониторинг
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-performance.md](redis-performance.md) — производительность
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-performance|redis-performance.md]] — производительность
 
 ## Содержание
 

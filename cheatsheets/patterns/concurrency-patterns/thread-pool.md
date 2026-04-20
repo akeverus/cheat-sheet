@@ -22,9 +22,9 @@ updated: "2026-02-11"
 - [Java Executors](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html)
 
 ### См. также
-- [Java Concurrency](../../languages/java/java-concurrency-basics.md) — **Java Concurrency**
-- [Producer-Consumer](producer-consumer.md) — **Producer-Consumer Pattern**
-- [Пул потоков и Executors](../../languages/java/java-concurrency-basics.md) — в **Java Concurrency**
+- [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
+- [[producer-consumer|Producer-Consumer]] — **Producer-Consumer Pattern**
+- [[java-concurrency-basics|Пул потоков и Executors]] — в **Java Concurrency**
 
 ## Содержание
 

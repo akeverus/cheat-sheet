@@ -24,8 +24,8 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - [Redis Geospatial](https://redis.io/docs/data-types/geospatial/) — геоданные
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-data-structures.md](redis-data-structures.md) — структуры данных
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-data-structures|redis-data-structures.md]] — структуры данных
 
 ## Содержание
 

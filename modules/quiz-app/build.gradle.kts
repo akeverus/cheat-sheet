@@ -20,13 +20,9 @@ dependencies {
 
     // --- Flyway миграции ---
     implementation(libs.flyway.core)
-    implementation(libs.flyway.database.postgresql)
 
     // --- SQLite ---
     implementation(libs.sqlite.jdbc)
-
-    // --- PostgreSQL (профиль postgres, Docker) ---
-    runtimeOnly(libs.postgresql)
 
     // --- Jackson (поддержка Java Time) ---
     implementation(libs.jackson.datatype.jsr310)
@@ -60,9 +56,6 @@ dependencies {
     // --- Тесты ---
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.security.test)
-    testImplementation(libs.spring.boot.testcontainers)
-    testImplementation(libs.testcontainers.junit.jupiter)
-    testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.archunit.junit5)
     testCompileOnly(libs.lombok)
     testAnnotationProcessor(libs.lombok)

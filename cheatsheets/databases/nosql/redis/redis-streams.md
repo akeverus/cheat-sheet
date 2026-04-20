@@ -25,8 +25,8 @@ related: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 - [Redis Streams](https://redis.io/docs/data-types/streams/) — потоки
 
 ### См. также
-- [redis-basics.md](redis-basics.md) — основы Redis
-- [redis-pubsub.md](redis-pubsub.md) — Pub/Sub
+- [[redis-basics|redis-basics.md]] — основы Redis
+- [[redis-pubsub|redis-pubsub.md]] — Pub/Sub
 
 ## Содержание
 

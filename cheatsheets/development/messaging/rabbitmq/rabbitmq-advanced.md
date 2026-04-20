@@ -952,7 +952,7 @@ scrape_configs:
       - targets: ['rabbitmq-exporter:9419']
 ```
 ## См. также
-- [Kafka](../kafka/kafka.md) — альтернативная система сообщений
-- [Spring Integration](../../../frameworks/java-frameworks/spring/spring-integration.md) — интеграционные паттерны
-- [Prometheus](../../../monitoring/metrics/prometheus.md) — система мониторинга
-- [Docker](../../../platform/containers/docker/docker-basics.md) — контейнеризация
+- [[kafka|Kafka]] — альтернативная система сообщений
+- [[spring-integration|Spring Integration]] — интеграционные паттерны
+- [[prometheus|Prometheus]] — система мониторинга
+- [[docker-basics|Docker]] — контейнеризация

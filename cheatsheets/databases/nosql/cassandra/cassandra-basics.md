@@ -32,10 +32,10 @@ updated: "2026-02-11"
 - [Cassandra Medusa](https://github.com/thelastpickle/cassandra-medusa)
 
 ### См. также
-- [MySQL](../../relational/mysql/mysql-basics.md) — сравнение с реляционными БД
-- [MongoDB](../mongodb/mongodb-basics.md) — сравнение с документными БД
-- [cassandra-data-modeling.md](cassandra-data-modeling.md) — моделирование данных в **Cassandra**
-- [cassandra-clustering.md](cassandra-clustering.md) — кластеризация и масштабирование
+- [[mysql-basics|MySQL]] — сравнение с реляционными БД
+- [[mongodb-basics|MongoDB]] — сравнение с документными БД
+- [[cassandra-data-modeling|cassandra-data-modeling.md]] — моделирование данных в **Cassandra**
+- [[cassandra-clustering|cassandra-clustering.md]] — кластеризация и масштабирование
 
 ## Содержание
 

@@ -23,8 +23,8 @@ related: ["databases/clickhouse-performance.md", "databases/clickhouse-replicati
 - [ClickHouse Documentation](https://clickhouse.com/docs/)
 
 ### См. также
-- [clickhouse-performance.md](clickhouse-performance.md) — оптимизация и производительность
-- [clickhouse-replication.md](clickhouse-replication.md) — кластеры и репликация
+- [[clickhouse-performance|clickhouse-performance.md]] — оптимизация и производительность
+- [[clickhouse-replication|clickhouse-replication.md]] — кластеры и репликация
 
 ## Содержание
 
@@ -957,3 +957,4 @@ output {
 // `ClickHouse Python example replaced with Java Spring`
 ```
 
+```

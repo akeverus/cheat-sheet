@@ -20,9 +20,9 @@ updated: "2026-02-11"
 - [**Spring Integration** Reference](https://docs.spring.io/spring-integration/reference/)
 
 ### См. также
-- [**Spring Core**](spring-core.md)
-- [**Spring Messaging**](spring-messaging.md)
-- [**Spring Kafka**](spring-kafka.md)
+- [[spring-core|**Spring Core**]]
+- [[spring-messaging|**Spring Messaging**]]
+- [[spring-kafka|**Spring Kafka**]]
 
 ## Содержание
 

@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [Point (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/awt/Point.html)
 
 ### См. также
-- [Проверка перекрытия двух прямоугольников](rectangle-overlap.md) — перекрытие прямоугольников
-- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
+- [[rectangle-overlap|Проверка перекрытия двух прямоугольников]] — перекрытие прямоугольников
+- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
 
 ## Содержание
 

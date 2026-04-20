@@ -23,9 +23,9 @@ updated: "2026-02-11"
 - [`Visualgo`: `Selection Sort`](https://visualgo.net/)
 
 ### См. также
-- [Пузырьковая сортировка](bubble-sort.md) — bubble sort
-- [Сортировка Шелла](shell-sort.md) — shell sort
-- [Быстрая сортировка](quick-sort.md) — quick sort
+- [[bubble-sort|Пузырьковая сортировка]] — bubble sort
+- [[shell-sort|Сортировка Шелла]] — shell sort
+- [[quick-sort|Быстрая сортировка]] — quick sort
 
 ## Содержание
 

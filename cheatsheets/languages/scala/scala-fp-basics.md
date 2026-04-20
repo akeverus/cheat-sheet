@@ -25,9 +25,9 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Scala Functional Programming](https://docs.scala-lang.org/overviews/scala-book/first-look-at-types.html)
 
 ### См. также
-- [Основы Scala](scala-basics.md)
-- [Продвинутое функциональное программирование](scala-fp-advanced.md)
-- [Коллекции Scala](scala-collections.md)
+- [[scala-basics|Основы Scala]]
+- [[scala-fp-advanced|Продвинутое функциональное программирование]]
+- [[scala-collections|Коллекции Scala]]
 
 ## Содержание
 

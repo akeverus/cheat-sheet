@@ -23,10 +23,10 @@ updated: "2026-02-11"
 
 ### См. также
 
-- [Testcontainers](../testcontainers/testcontainers.md)
-- [Contract Testing](../contract-testing/contract-testing.md)
-- [JUnit](../../unit-testing/junit/junit.md)
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [[testcontainers|Testcontainers]]
+- [[contract-testing|Contract Testing]]
+- [[junit|JUnit]]
+- [[testing-tools-overview|Testing Tools Overview]]
 
 ---
 

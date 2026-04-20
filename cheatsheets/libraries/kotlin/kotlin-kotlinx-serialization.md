@@ -22,9 +22,9 @@ updated: "2026-02-11"
 - [kotlinx.serialization API](https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-core/kotlinx.serialization.html) — **API** документация
 
 ### См. также
-- [Jackson](../serialization/jackson.md) — **Jackson** для **JSON**
-- [Gson](../serialization/java-gson.md) — **Gson** для **JSON**
-- [Protobuf](../java/java-protobuf.md) — **Protobuf**
+- [[jackson|Jackson]] — **Jackson** для **JSON**
+- [[java-gson|Gson]] — **Gson** для **JSON**
+- [[java-protobuf|Protobuf]] — **Protobuf**
 
 ## Содержание
 
@@ -1352,7 +1352,7 @@ val json = Json.encodeToString(data)
 - [Kotlin Blog — Serialization](https://blog.jetbrains.com/kotlin/tag/serialization/)
 
 ## См. также
-- [Kotlin Basics](../../languages/kotlin/kotlin-basics.md) — Основы **Kotlin**
-- [Jackson](../serialization/jackson.md) — Альтернативная сериализация
-- [Gson](../serialization/java-gson.md) — Другая **JSON** библиотека
+- [[kotlin-basics|Kotlin Basics]] — Основы **Kotlin**
+- [[jackson|Jackson]] — Альтернативная сериализация
+- [[java-gson|Gson]] — Другая **JSON** библиотека
 

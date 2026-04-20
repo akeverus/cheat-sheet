@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Java Streams Adapters](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html)
 
 ### См. также
-- [Spring AOP](../../frameworks/java-frameworks/spring/spring-aop.md) — **Spring AOP**
-- [Java Collections](../../languages/java/java-collections-list.md) — **Java Collections**
-- [Decorator](decorator.md) — **Decorator Pattern**
+- [[spring-aop|Spring AOP]] — **Spring AOP**
+- [[java-collections-list|Java Collections]] — **Java Collections**
+- [[decorator|Decorator]] — **Decorator Pattern**
 
 ## Содержание
 

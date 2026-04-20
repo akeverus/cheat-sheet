@@ -24,8 +24,8 @@ related: ["scala/scala-basics.md", "scala/scala-json.md"]
 - [Scala Pickling](https://github.com/scala/pickling)
 
 ### См. также
-- [Основы Scala](scala-basics.md) — базовый справочник **Scala**
-- [Circe (JSON)](../../libraries/scala/scala-circe.md) — **JSON** в **Scala**
+- [[scala-basics|Основы Scala]] — базовый справочник **Scala**
+- [[scala-circe|Circe (JSON)]] — **JSON** в **Scala**
 
 ## Содержание
 

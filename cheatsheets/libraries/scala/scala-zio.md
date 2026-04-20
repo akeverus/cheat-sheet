@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [ZIO Documentation](https://zio.dev/reference/) — Документация
 
 ### См. также
-- [Cats](scala-cats.md) — **Cats** для функционального программирования
-- [Akka](scala-akka.md) — **Akka** для конкурентного программирования
+- [[scala-cats|Cats]] — **Cats** для функционального программирования
+- [[scala-akka|Akka]] — **Akka** для конкурентного программирования
 
 ## Содержание
 
@@ -1250,7 +1250,7 @@ object ZIOSpec2 extends ZIOSpecDefault {
 - [ZIO Discord](https://discord.gg/2ccFBr4A6j)
 
 ## См. также
-- [Cats](scala-cats.md) — Альтернативная функциональная библиотека
-- [Akka](scala-akka.md) — Фреймворк для конкурентного программирования
+- [[scala-cats|Cats]] — Альтернативная функциональная библиотека
+- [[scala-akka|Akka]] — Фреймворк для конкурентного программирования
 - [Паттерны](../../patterns/README.md) — Функциональные паттерны
 

@@ -30,7 +30,7 @@ updated: "2026-02-06"
 ### См. также
 - [GraphQL](https://graphql.org/) — **GraphQL**
 - [gRPC](https://grpc.io/) — **gRPC**
-- [Spring REST](../../../frameworks/java-frameworks/spring/spring-rest.md) — **Spring REST**
+- [[spring-rest|Spring REST]] — **Spring REST**
 
 ## Содержание
 

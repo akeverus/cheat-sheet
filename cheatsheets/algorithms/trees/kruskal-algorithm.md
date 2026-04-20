@@ -23,9 +23,9 @@ updated: "2026-02-11"
 - [`Visualgo`: `Minimum Spanning Tree`](https://visualgo.net/)
 
 ### См. также
-- [`prim-algorithm.md`](prim-algorithm.md) — алгоритм Прима (`Prim`)
-- [`boruvka-algorithm.md`](boruvka-algorithm.md) — алгоритм Борувки (`Borůvka`)
-- [`../graphs/dijkstra.md`](../graphs/dijkstra.md) — алгоритм Дейкстры (`Dijkstra`)
+- [[prim-algorithm|`prim-algorithm.md`]] — алгоритм Прима (`Prim`)
+- [[boruvka-algorithm|`boruvka-algorithm.md`]] — алгоритм Борувки (`Borůvka`)
+- [[dijkstra|`../graphs/dijkstra.md`]] — алгоритм Дейкстры (`Dijkstra`)
 
 ## Содержание
 

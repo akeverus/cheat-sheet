@@ -270,9 +270,9 @@ class OrderSaga {
 **Saga vs 2PC?** 2PC плохо масштабируется. Saga — локальные транзакции + компенсации.
 ## См. также
 
-- [Architectural Decision Records](../architectural-decision-records/adr-template.md) — шаблон ADR
-- [Design Principles](../design-principles/design-principles.md) — принципы проектирования
-- [System Design Basics](../system-design/system-design-basics.md) — основы проектирования систем
-- [Microservices](../software-architecture/microservices.md) — микросервисная архитектура
+- [[adr-template|Architectural Decision Records]] — шаблон ADR
+- [[design-principles|Design Principles]] — принципы проектирования
+- [[system-design-basics|System Design Basics]] — основы проектирования систем
+- [[microservices|Microservices]] — микросервисная архитектура
 
 ---

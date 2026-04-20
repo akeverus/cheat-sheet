@@ -21,9 +21,9 @@ updated: "2026-02-11"
 - [Jenetics GitHub](https://github.com/jenetics/jenetics)
 
 ### См. также
-- [Генетические алгоритмы](genetic-algorithms.md) — генетические алгоритмы
-- [Multi-Swarm](../problems/multi-swarm.md)
-- [Hill-Climbing](../problems/hill-climbing.md)
+- [[genetic-algorithms|Генетические алгоритмы]] — генетические алгоритмы
+- [[multi-swarm|Multi-Swarm]]
+- [[hill-climbing|Hill-Climbing]]
 
 ## Содержание
 

@@ -39,13 +39,13 @@ updated: "2026-04-20"
 - [Retrofit Tutorial](https://www.baeldung.com/retrofit)
 
 ### См. также
-- [Apache HttpClient: полное руководство](java-apache-httpclient.md)
-- [OkHttp](java-okhttp.md)
-- [Retrofit](java-retrofit.md)
-- [Spring MVC REST](../../frameworks/java-frameworks/spring/spring-rest.md)
-- [Spring WebFlux](../../frameworks/java-frameworks/spring/spring-webflux.md)
-- [Project Reactor (Mono/Flux)](../../languages/java/java-reactive-project-reactor.md)
-- [Resilience4j — Retry и Circuit Breaker](java-resilience4j.md)
+- [[java-apache-httpclient|Apache HttpClient: полное руководство]]
+- [[java-okhttp|OkHttp]]
+- [[java-retrofit|Retrofit]]
+- [[spring-rest|Spring MVC REST]]
+- [[spring-webflux|Spring WebFlux]]
+- [[java-reactive-project-reactor|Project Reactor (Mono/Flux)]]
+- [[java-resilience4j|Resilience4j — Retry и Circuit Breaker]]
 
 ## Содержание
 
@@ -607,14 +607,14 @@ ErrorDecoder decoder() {
 
 ## См. также
 
-- [Apache HttpClient — полное руководство](java-apache-httpclient.md)
-- [OkHttp](java-okhttp.md)
-- [Retrofit](java-retrofit.md)
-- [Project Reactor (Mono/Flux)](../../languages/java/java-reactive-project-reactor.md)
-- [Spring WebFlux](../../frameworks/java-frameworks/spring/spring-webflux.md)
-- [Spring MVC REST](../../frameworks/java-frameworks/spring/spring-rest.md)
-- [Spring Cloud](../../frameworks/java-frameworks/spring/spring-cloud.md)
-- [Resilience4j: Retry, Circuit Breaker](java-resilience4j.md)
-- [OpenTelemetry — распределённый трейсинг](java-opentelemetry.md)
-- [WireMock — мокирование HTTP в тестах](java-wiremock.md)
-- [Java JDBC](../../languages/java/java-jdbc.md) — соседняя тема про работу с БД
+- [[java-apache-httpclient|Apache HttpClient — полное руководство]]
+- [[java-okhttp|OkHttp]]
+- [[java-retrofit|Retrofit]]
+- [[java-reactive-project-reactor|Project Reactor (Mono/Flux)]]
+- [[spring-webflux|Spring WebFlux]]
+- [[spring-rest|Spring MVC REST]]
+- [[spring-cloud|Spring Cloud]]
+- [[java-resilience4j|Resilience4j: Retry, Circuit Breaker]]
+- [[java-opentelemetry|OpenTelemetry — распределённый трейсинг]]
+- [[java-wiremock|WireMock — мокирование HTTP в тестах]]
+- [[java-jdbc|Java JDBC]] — соседняя тема про работу с БД

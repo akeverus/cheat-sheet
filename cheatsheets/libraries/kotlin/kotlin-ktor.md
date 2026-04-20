@@ -24,9 +24,9 @@ updated: "2026-02-11"
 - [Ktor Tutorial](https://ktor.io/docs/creating-http-apis.html)
 
 ### См. также
-- [Основы Kotlin](../../languages/kotlin/kotlin-basics.md)
-- [Корутины и асинхронность](../../languages/kotlin/kotlin-concurrency-basics.md)
-- [Дополнительные темы Kotlin](../../languages/kotlin/kotlin-another.md)
+- [[kotlin-basics|Основы Kotlin]]
+- [[kotlin-concurrency-basics|Корутины и асинхронность]]
+- [[kotlin-another|Дополнительные темы Kotlin]]
 
 ## Содержание
 
