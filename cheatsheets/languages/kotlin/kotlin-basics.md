@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md"]
 next: ["kotlin/kotlin-concurrency-basics.md", "kotlin/kotlin-reactive.md", "kotlin/kotlin-another.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/kotlin-reactive.md"]
 ---
 
@@ -33,10 +33,20 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
 
 ## Содержание
 
-- [Практика миграции Kotlin 1.7/1.8 -> 1.9 -> 2.x](#практика-миграции-kotlin-1718---19---2x)
+- [Практика миграции Kotlin 1.7/1.8 -> 1.9 -> 2.x](#практика-миграции-kotlin-1718-19-2x)
 - [Введение в Kotlin](#введение-в-kotlin)
   - [Основные особенности Kotlin](#основные-особенности-kotlin)
   - [История версий Kotlin](#история-версий-kotlin)
+    - [Kotlin 1.0 (2016)](#kotlin-10-2016)
+    - [Kotlin 1.1 (2016)](#kotlin-11-2016)
+    - [Kotlin 1.2 (2017)](#kotlin-12-2017)
+    - [Kotlin 1.3 (2018)](#kotlin-13-2018)
+    - [Kotlin 1.4 (2020)](#kotlin-14-2020)
+    - [Kotlin 1.5 (2021)](#kotlin-15-2021)
+    - [Kotlin 1.6 (2021)](#kotlin-16-2021)
+    - [Kotlin 1.7 (2022)](#kotlin-17-2022)
+    - [Kotlin 1.8 (2022)](#kotlin-18-2022)
+    - [Kotlin 1.9 (2023)](#kotlin-19-2023)
 - [Основы синтаксиса](#основы-синтаксиса)
   - [Переменные и типы данных](#переменные-и-типы-данных)
   - [Null Safety](#null-safety)
@@ -54,6 +64,7 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
   - [Инлайновые функции (Inline Functions)](#инлайновые-функции-inline-functions)
   - [Оператор перегрузка (Operator Overloading)](#оператор-перегрузка-operator-overloading)
   - [Reflection API](#reflection-api)
+- [Дополнительные ссылки по разделам (legacy)](#дополнительные-ссылки-по-разделам-legacy)
 - [Ссылки по расширенным темам](#ссылки-по-расширенным-темам)
   - [См. также (библиотеки)](#см-также-библиотеки)
 - [Функции работы с коллекциями](#функции-работы-с-коллекциями)
@@ -122,7 +133,7 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
   - [Any — корневой тип](#any-корневой-тип)
   - [Unit — тип возвращаемого значения](#unit-тип-возвращаемого-значения)
   - [Nothing — тип без значений](#nothing-тип-без-значений)
-  - [Nullable типы](#nullable-типы)
+  - [Nullable типы](#nullable-типы-1)
   - [Smart Casts (Умные приведения)](#smart-casts-умные-приведения)
 - [Type Aliases (Псевдонимы типов)](#type-aliases-псевдонимы-типов)
   - [Базовое использование](#базовое-использование)
@@ -141,6 +152,9 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
   - [Class Delegation (Делегирование класса)](#class-delegation-делегирование-класса)
   - [Property Delegation (Делегирование свойств)](#property-delegation-делегирование-свойств)
   - [Стандартные делегаты](#стандартные-делегаты-1)
+    - [Lazy](#lazy)
+    - [Observable](#observable)
+    - [Map Delegation](#map-delegation)
 - [Infix Functions (Инфиксные функции)](#infix-functions-инфиксные-функции)
   - [Определение infix функций](#определение-infix-функций)
   - [Требования к infix функциям](#требования-к-infix-функциям)
@@ -182,6 +196,9 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
   - [Top-level элементы](#top-level-элементы)
 - [Расширенное покрытие Generics](#расширенное-покрытие-generics)
   - [Variance (Вариантность)](#variance-вариантность)
+    - [Invariance (Инвариантность)](#invariance-инвариантность)
+    - [Covariance (Ковариантность) — out](#covariance-ковариантность-out)
+    - [Contravariance (Контравариантность) — in](#contravariance-контравариантность-in)
   - [Star Projections (Звездные проекции)](#star-projections-звездные-проекции)
   - [Upper Bounds (Верхние границы)](#upper-bounds-верхние-границы)
   - [Reified Type Parameters (Овеществленные параметры типов)](#reified-type-parameters-овеществленные-параметры-типов)
@@ -203,7 +220,7 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
   - [Аннотации для Java Interop](#аннотации-для-java-interop)
 - [Multiplatform Projects (Мультиплатформенные проекты)](#multiplatform-projects-мультиплатформенные-проекты)
   - [Общие концепции](#общие-концепции)
-  - [Expect/Actual механизм](#expect-actual-механизм)
+  - [Expect/Actual механизм](#expectactual-механизм)
   - [Структура проекта](#структура-проекта)
   - [Общие типы](#общие-типы)
   - [Платформенно-специфичные API](#платформенно-специфичные-api)

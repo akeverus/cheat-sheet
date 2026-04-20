@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["java-basics.md"]
 next: ["spring/spring-rest.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 ---
 
 # REST API Design
@@ -34,7 +34,6 @@ updated: "2026-02-06"
 
 ## Содержание
 
-- [REST API Design (лучшие практики)](#rest-api-design-лучшие-практики)
 - [Принципы REST](#принципы-rest)
   - [Основные принципы](#основные-принципы)
   - [Uniform Interface](#uniform-interface)
@@ -50,39 +49,24 @@ updated: "2026-02-06"
   - [5xx Server Error](#5xx-server-error)
 - [URI дизайн](#uri-дизайн)
   - [Правила именования](#правила-именования)
-- [ Правильно](#правильно)
-- [ Неправильно](#неправильно)
   - [Иерархия ресурсов](#иерархия-ресурсов)
-- [Плоские ресурсы](#плоские-ресурсы)
-- [Вложенные ресурсы](#вложенные-ресурсы)
-- [Не вложенные — отдельные ресурсы](#не-вложенные-отдельные-ресурсы)
   - [Query параметры](#query-параметры)
-- [Фильтрация](#фильтрация)
-- [Сортировка](#сортировка)
-- [Пагинация](#пагинация)
-- [Поиск](#поиск)
   - [Matrix параметры](#matrix-параметры)
-- [Для сложных запросов](#для-сложных-запросов)
 - [Версионирование](#версионирование)
   - [Способы версионирования](#способы-версионирования)
     - [1. URI Versioning](#1-uri-versioning)
-- [Версия в пути](#версия-в-пути)
-- [Префикс API](#префикс-api)
     - [2. Query Parameter Versioning](#2-query-parameter-versioning)
     - [3. Header Versioning](#3-header-versioning)
     - [4. Content Negotiation](#4-content-negotiation)
     - [5. Media Type Versioning](#5-media-type-versioning)
   - [Рекомендации](#рекомендации)
+- [Пагинация](#пагинация)
   - [Offset-based Pagination](#offset-based-pagination)
   - [Cursor-based Pagination](#cursor-based-pagination)
   - [Keyset Pagination](#keyset-pagination)
 - [Фильтрация и сортировка](#фильтрация-и-сортировка)
   - [Фильтры](#фильтры)
-- [Простые фильтры](#простые-фильтры)
-- [Диапазоны](#диапазоны)
-- [Массивы](#массивы)
-- [Одиночная сортировка](#одиночная-сортировка)
-- [Множественная сортировка](#множественная-сортировка)
+  - [Сортировка](#сортировка)
   - [Реализация в Spring Boot](#реализация-в-spring-boot)
 - [HATEOAS](#hateoas)
   - [Spring HATEOAS](#spring-hateoas)
@@ -95,11 +79,7 @@ updated: "2026-02-06"
   - [Spring Boot OpenAPI](#spring-boot-openapi)
 - [Безопасность](#безопасность)
   - [Authentication](#authentication)
-- [Basic Authentication](#basic-authentication)
-- [Bearer Token](#bearer-token)
-- [API Key](#api-key)
   - [Rate Limiting](#rate-limiting)
-- [application.yml](#applicationyml)
   - [CORS](#cors)
   - [Input Validation](#input-validation)
 - [Производительность](#производительность)
@@ -112,6 +92,11 @@ updated: "2026-02-06"
   - [API Testing with REST Assured](#api-testing-with-rest-assured)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
+  - [404 на корректных URI](#404-на-корректных-uri)
+  - [Нестабильное кэширование ETag/Last-Modified](#нестабильное-кэширование-etaglast-modified)
+  - [Ошибки валидации без деталей](#ошибки-валидации-без-деталей)
+  - [Просадки при offset-based пагинации](#просадки-при-offset-based-пагинации)
+  - [Клиент не знает доступные действия](#клиент-не-знает-доступные-действия)
 - [Примеры](#примеры)
   - [Полный REST API с Spring Boot](#полный-rest-api-с-spring-boot)
   - [DTO классы](#dto-классы)

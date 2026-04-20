@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kotlin + Spring
 
@@ -61,6 +61,7 @@ updated: "2026-02-11"
   - [Null Safety](#null-safety)
   - [Корутины](#корутины)
   - [Extension функции](#extension-функции)
+  - [Extension функции](#extension-функции-1)
 - [Работа с Spring Data](#работа-с-spring-data)
   - [JPA Entities](#jpa-entities)
   - [Spring Data Repositories](#spring-data-repositories)
@@ -71,6 +72,8 @@ updated: "2026-02-11"
 - [Spring Boot Actuator](#spring-boot-actuator)
   - [Настройка Actuator](#настройка-actuator)
 - [Тестирование Spring приложений](#тестирование-spring-приложений)
+  - [Unit тесты](#unit-тесты-1)
+  - [Integration тесты](#integration-тесты-1)
 - [Spring Cloud с Kotlin](#spring-cloud-с-kotlin)
   - [Service Discovery](#service-discovery)
   - [Circuit Breaker](#circuit-breaker)
@@ -83,6 +86,7 @@ updated: "2026-02-11"
 - [Мониторинг и метрики](#мониторинг-и-метрики)
   - [Custom Actuator Endpoints](#custom-actuator-endpoints)
   - [Метрики с Micrometer](#метрики-с-micrometer)
+- [Продвинутые техники Spring](#продвинутые-техники-spring-1)
   - [Работа с Spring AOP](#работа-с-spring-aop)
   - [Работа с Spring Events](#работа-с-spring-events)
   - [Работа с Spring Profiles](#работа-с-spring-profiles)
@@ -95,11 +99,13 @@ updated: "2026-02-11"
 - [Дополнительные техники Spring](#дополнительные-техники-spring)
   - [Работа с Spring Cache](#работа-с-spring-cache)
   - [Работа с Spring Transaction](#работа-с-spring-transaction)
+- [Дополнительные техники Spring](#дополнительные-техники-spring-1)
   - [Работа с Spring Batch](#работа-с-spring-batch)
   - [Работа с Spring Integration](#работа-с-spring-integration)
+- [Дополнительные техники Spring](#дополнительные-техники-spring-2)
   - [Работа с Spring WebFlux](#работа-с-spring-webflux)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 - [Итоговые рекомендации](#итоговые-рекомендации)

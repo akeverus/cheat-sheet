@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Обзор ИИ библиотек
 
@@ -31,17 +31,42 @@ updated: "2026-02-11"
 
 - [Обзор](#обзор)
 - [Семантические сети и рассуждения](#семантические-сети-и-рассуждения)
+  - [Apache Jena](#apache-jena)
+  - [PowerLoom](#powerloom)
+  - [d3web](#d3web)
+  - [Eye](#eye)
+  - [Tweety](#tweety)
+  - [OptaPlanner](#optaplanner)
 - [Нейронные сети и глубокое обучение](#нейронные-сети-и-глубокое-обучение)
+  - [Neuroph](#neuroph)
+  - [Deeplearning4j](#deeplearning4j)
+  - [Deep Java Library](#deep-java-library)
 - [Обработка естественного языка](#обработка-естественного-языка)
+  - [Apache OpenNLP](#apache-opennlp)
+  - [Stanford CoreNLP](#stanford-corenlp)
 - [Машинное обучение](#машинное-обучение)
+  - [Java-ML](#java-ml)
+  - [RapidMiner](#rapidminer)
+  - [Weka](#weka)
+  - [Encog](#encog)
+  - [Spark MLlib](#spark-mllib)
 - [Генетические алгоритмы](#генетические-алгоритмы)
-- [Сравнительная таблица и выбор](#сравнительная-таблица)
+  - [Jenetics](#jenetics)
+  - [Watchmaker Framework](#watchmaker-framework)
+  - [ECJ 23](#ecj-23)
+  - [JGAP](#jgap)
+  - [Eva](#eva)
+- [Инструменты разработки](#инструменты-разработки)
+  - [Spring Roo](#spring-roo)
+  - [Acceleo](#acceleo)
+- [Сравнительная таблица](#сравнительная-таблица)
+- [Выбор библиотеки](#выбор-библиотеки)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Резюме](#резюме)
 - [Реализация на Kotlin](#реализация-на-kotlin)
-
+  - [Примеры использования библиотек](#примеры-использования-библиотек)
 
 ## Обзор
 

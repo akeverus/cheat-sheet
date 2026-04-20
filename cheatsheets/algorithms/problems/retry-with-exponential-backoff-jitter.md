@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Повтор с экспоненциальной задержкой и джиттером (Retry with Exponential Backoff and Jitter)
 
@@ -26,14 +26,23 @@ updated: "2026-02-11"
 - [Проблема простых повторов](#проблема-простых-повторов)
 - [Exponential Backoff](#exponential-backoff)
 - [Реализация на Java](#реализация-на-java)
+  - [Implementing Exponential Backoff](#implementing-exponential-backoff)
 - [Thundering Herd и джиттер](#thundering-herd-и-джиттер)
+  - [Добавление джиттера](#добавление-джиттера)
+  - [Full Jitter](#full-jitter)
+  - [Equal Jitter](#equal-jitter)
+  - [Decorrelated Jitter](#decorrelated-jitter)
 - [Resilience4j Implementation](#resilience4j-implementation)
 - [Полный пример](#полный-пример)
+  - [Custom Jitter Implementation](#custom-jitter-implementation)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Резюме](#резюме)
 - [Реализация на Kotlin](#реализация-на-kotlin)
+  - [Exponential Backoff with Resilience4j](#exponential-backoff-with-resilience4j)
+  - [Пример использования](#пример-использования)
+- [См. также](#см-также)
 
 ## Обзор
 

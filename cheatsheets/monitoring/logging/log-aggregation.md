@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Агрегация логов для Java
 
@@ -36,16 +36,30 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Введение в агрегацию логов](#введение-в-агрегацию-логов)
+  - [Почему важна агрегация логов?](#почему-важна-агрегация-логов)
+  - [Типы агрегации](#типы-агрегации)
 - [Архитектура агрегации](#архитектура-агрегации)
 - [Kafka для логирования](#kafka-для-логирования)
+  - [Топики и партиционирование](#топики-и-партиционирование)
+  - [Producer (высокий throughput)](#producer-высокий-throughput)
 - [Stream processing](#stream-processing)
+  - [Kafka Streams — агрегация ошибок по сервису](#kafka-streams-агрегация-ошибок-по-сервису)
+  - [Apache Flink (схема)](#apache-flink-схема)
 - [Batch processing](#batch-processing)
+  - [Apache Spark](#apache-spark)
 - [Real-time и windowing](#real-time-и-windowing)
+  - [In-memory tumbling (идея)](#in-memory-tumbling-идея)
 - [Error aggregation](#error-aggregation)
+  - [Stack trace clustering (идея)](#stack-trace-clustering-идея)
 - [Performance metrics](#performance-metrics)
+  - [Перцентили (идея)](#перцентили-идея)
 - [Data enrichment](#data-enrichment)
+  - [Пример обогащения в коде](#пример-обогащения-в-коде)
 - [Storage optimization](#storage-optimization)
+  - [Индекс для агрегатов (ES)](#индекс-для-агрегатов-es)
 - [Лучшие практики](#лучшие-практики)
+  - [Fault tolerance (схема)](#fault-tolerance-схема)
+  - [Метрики пайплайна](#метрики-пайплайна)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 

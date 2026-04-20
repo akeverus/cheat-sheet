@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: Mail — Email Sending и Templates](#micronaut-mail-email-sending-и-templates)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Mail](#настройка-mail)
@@ -50,7 +49,6 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
   - [3. Используйте async для больших объемов](#3-используйте-async-для-больших-объемов)
   - [4. Валидируйте email адреса](#4-валидируйте-email-адреса)
   - [5. Используйте конфигурацию из properties](#5-используйте-конфигурацию-из-properties)
-- [ Хорошо](#хорошо)
 - [Email Queue](#email-queue)
   - [Queue-based Email Sending](#queue-based-email-sending)
 - [Email Tracking](#email-tracking)
@@ -70,6 +68,7 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
   - [Bounce Detection](#bounce-detection)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

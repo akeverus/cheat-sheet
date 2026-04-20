@@ -11,7 +11,7 @@ tags:
 difficulty: "beginner"
 prerequisites: ["java/java-basics.md"]
 next: ["javalin-routing.md", "javalin-websocket.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spark/spark-basics.md", "spring/spring-rest.md"]
 ---
 
@@ -106,6 +106,7 @@ related: ["spark/spark-basics.md", "spring/spring-rest.md"]
   - [Common Issues](#common-issues)
 - [Advanced Features](#advanced-features)
   - [Custom Response Mappers](#custom-response-mappers)
+  - [Route Groups](#route-groups-1)
   - [Content Negotiation](#content-negotiation)
 - [Лучшие практики](#лучшие-практики)
   - [1. Структура проекта](#1-структура-проекта)
@@ -141,22 +142,34 @@ related: ["spark/spark-basics.md", "spring/spring-rest.md"]
 - [Detailed Examples](#detailed-examples)
   - [Complete Application Structure](#complete-application-structure)
   - [Service Layer Implementation](#service-layer-implementation)
+  - [Advanced Patterns](#advanced-patterns-1)
     - [Request/Response Interceptors](#requestresponse-interceptors)
+    - [Database Integration](#database-integration-1)
     - [Authentication Middleware](#authentication-middleware)
     - [Caching Strategy](#caching-strategy)
     - [Dependency Injection Pattern](#dependency-injection-pattern)
+- [Production Deployment](#production-deployment-1)
   - [Docker Configuration](#docker-configuration)
   - [Environment Configuration](#environment-configuration)
   - [Health Check Endpoint](#health-check-endpoint)
   - [Metrics Integration](#metrics-integration)
+- [Advanced Features](#advanced-features-1)
   - [WebSocket Support](#websocket-support)
   - [Server-Sent Events (SSE)](#server-sent-events-sse)
+  - [File Upload](#file-upload-1)
+- [Решение проблем](#решение-проблем-1)
+  - [Common Issues](#common-issues-1)
 - [Migration Guide](#migration-guide)
   - [From Spark Java](#from-spark-java)
   - [From Spring Boot](#from-spring-boot)
+- [Real-World Examples](#real-world-examples-1)
   - [RESTful API with CRUD Operations](#restful-api-with-crud-operations)
   - [API Versioning](#api-versioning)
 - [Testing Strategies](#testing-strategies)
+  - [Unit Testing](#unit-testing-1)
+  - [Integration Testing](#integration-testing-1)
+- [Лучшие практики (сводка)](#лучшие-практики-сводка)
+- [См. также](#см-также)
 
 ## Введение в Javalin
 

@@ -9,7 +9,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---
 
@@ -28,7 +28,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 
 ## Содержание
 
-- [Scala Pattern Matching](#scala-pattern-matching)
 - [Введение в Pattern Matching](#введение-в-pattern-matching)
   - [Основные преимущества](#основные-преимущества)
 - [Базовые паттерны](#базовые-паттерны)
@@ -56,17 +55,22 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
   - [Практический пример: Обработка AST](#практический-пример-обработка-ast)
   - [Pattern Matching в циклах](#pattern-matching-в-циклах)
   - [@ (as-pattern)](#as-pattern)
+- [Лучшие практики](#лучшие-практики-1)
+  - [Использование sealed traits для безопасности](#использование-sealed-traits-для-безопасности-1)
+  - [Избегание catch-all паттернов](#избегание-catch-all-паттернов-1)
   - [Использование guards для сложных условий](#использование-guards-для-сложных-условий)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные техники Pattern Matching](#дополнительные-техники-pattern-matching)
   - [Использование Extractors](#использование-extractors)
+  - [Pattern Matching с регулярными выражениями](#pattern-matching-с-регулярными-выражениями-1)
   - [Исчерпывающий Pattern Matching](#исчерпывающий-pattern-matching)
   - [Практические примеры: Pattern Matching для парсинга JSON](#практические-примеры-pattern-matching-для-парсинга-json)
   - [Практические примеры: Pattern Matching для обработки AST](#практические-примеры-pattern-matching-для-обработки-ast)
   - [Практические примеры: Pattern Matching для обработки сообщений](#практические-примеры-pattern-matching-для-обработки-сообщений)
   - [Практические примеры: Pattern Matching с регулярными выражениями](#практические-примеры-pattern-matching-с-регулярными-выражениями)
+  - [Практические примеры: Pattern Matching для обработки AST](#практические-примеры-pattern-matching-для-обработки-ast-1)
   - [Использование с различными типами для обработки данных](#использование-с-различными-типами-для-обработки-данных)
   - [Использование с различными типами для обработки коллекций](#использование-с-различными-типами-для-обработки-коллекций)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)

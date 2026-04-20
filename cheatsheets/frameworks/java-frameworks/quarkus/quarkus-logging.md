@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-actuator.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-actuator.md"]
 ---
 
@@ -28,7 +28,6 @@ related: ["quarkus-core.md", "quarkus-actuator.md"]
 - [Basic Logging](#basic-logging)
   - [Simple Logging](#simple-logging)
   - [Log Levels](#log-levels)
-- [application.properties](#applicationproperties)
 - [Structured Logging](#structured-logging)
   - [JSON Logging](#json-logging)
   - [Structured Log Messages](#structured-log-messages)
@@ -44,15 +43,16 @@ related: ["quarkus-core.md", "quarkus-actuator.md"]
   - [Custom Formatters](#custom-formatters)
 - [Logging Performance](#logging-performance)
   - [Log Level Optimization](#log-level-optimization)
-- [Production — только важные логи](#production-только-важные-логи)
-- [Development — подробные логи](#development-подробные-логи)
   - [Structured Logging Performance](#structured-logging-performance)
 - [Logging Best Practices](#logging-best-practices)
+  - [1. Используйте правильные уровни логирования](#1-используйте-правильные-уровни-логирования-1)
+  - [2. Используйте structured logging](#2-используйте-structured-logging-1)
+  - [3. Используйте MDC для контекста](#3-используйте-mdc-для-контекста-1)
   - [4. Проверяйте уровень перед логированием](#4-проверяйте-уровень-перед-логированием)
   - [5. Используйте правильные appenders](#5-используйте-правильные-appenders)
-- [ Хорошо — для production](#хорошо-для-production)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

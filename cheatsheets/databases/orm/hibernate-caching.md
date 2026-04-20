@@ -22,8 +22,8 @@ updated: "2026-04-20"
 ## Содержание
 
 - [Обзор архитектуры кэша](#обзор-архитектуры-кэша)
-- [L1 — First Level Cache](#l1--first-level-cache)
-- [L2 — Second Level Cache](#l2--second-level-cache)
+- [L1 — First Level Cache](#l1-first-level-cache)
+- [L2 — Second Level Cache](#l2-second-level-cache)
 - [Query Cache](#query-cache)
 - [Провайдеры: EHCache](#провайдеры-ehcache)
 - [Провайдеры: Redis (Redisson)](#провайдеры-redis-redisson)
@@ -33,8 +33,6 @@ updated: "2026-04-20"
 - [Практические советы](#практические-советы)
 - [Типичные ошибки](#типичные-ошибки)
 - [См. также](#см-также)
-
----
 
 ## Обзор архитектуры кэша
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Apache HttpClient: Мощный HTTP клиент для Java
 
@@ -72,7 +72,7 @@ updated: "2026-02-11"
 - [Migration Guide](#migration-guide)
   - [From HttpClient 4.x to 5.x](#from-httpclient-4x-to-5x)
   - [From URLConnection](#from-urlconnection)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Monitoring](#monitoring)
 - [Advanced Features](#advanced-features)

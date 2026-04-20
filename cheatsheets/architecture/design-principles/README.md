@@ -7,7 +7,7 @@ tags:
   - architecture
   - design-principles
 type: "index"
-updated: "2026-04-17"
+updated: "2026-04-20"
 ---
 # Design Principles
 

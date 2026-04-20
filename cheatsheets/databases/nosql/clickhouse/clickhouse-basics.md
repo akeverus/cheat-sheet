@@ -10,7 +10,7 @@ tags:
   - big-data
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 ---
 
@@ -24,9 +24,19 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 - [ClickHouse Documentation](https://clickhouse.com/docs)
 - [ClickHouse Getting Started](https://clickhouse.com/docs/en/getting-started)
 - [ClickHouse GitHub](https://github.com/ClickHouse/ClickHouse)
+- [Best Practices](https://clickhouse.com/docs/en/guides/best-practices)
 
 ### Обучающие материалы
 - [Introduction to ClickHouse](https://www.baeldung.com/clickhouse)
+
+### Сообщество
+- [ClickHouse Slack](https://clickhouse.com/slack)
+- [Stack Overflow](https://stackoverflow.com/questions/tagged/clickhouse)
+
+### Инструменты
+- [ClickHouse Client](https://clickhouse.com/docs/en/interfaces/cli)
+- [DBeaver](https://dbeaver.io/) — **SQL** клиент
+- [Tabix](https://tabix.io/) — **ClickHouse GUI**
 
 ### См. также
 - [[postgres-basics|PostgreSQL Basics]] — сравнение с реляционными БД
@@ -34,7 +44,6 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 
 ## Содержание
 
-- [ClickHouse: Основы колоночной аналитической базы данных](#clickhouse-основы-колоночной-аналитической-базы-данных)
 - [Введение в ClickHouse](#введение-в-clickhouse)
   - [Исторический контекст](#исторический-контекст)
   - [Почему ClickHouse уникален?](#почему-clickhouse-уникален)
@@ -75,7 +84,6 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
   - [Будущее ClickHouse](#будущее-clickhouse)
     - [Развивающиеся возможности](#развивающиеся-возможности)
     - [Performance улучшения](#performance-улучшения)
-- [Лучшие практики](#лучшие-практики)
 - [Основные характеристики](#основные-характеристики)
   - [Производительность](#производительность)
   - [Масштабируемость](#масштабируемость)
@@ -98,29 +106,13 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 - [Установка и запуск](#установка-и-запуск)
   - [Системные требования](#системные-требования)
   - [Установка на Linux (Ubuntu/Debian)](#установка-на-linux-ubuntudebian)
-- [Добавление репозитория](#добавление-репозитория)
-- [Добавление ключа](#добавление-ключа)
-- [Установка](#установка)
   - [Установка на macOS](#установка-на-macos)
-- [Используя Homebrew](#используя-homebrew)
-- [Или используя Docker](#или-используя-docker)
   - [Установка на Docker](#установка-на-docker)
-- [Запуск контейнера](#запуск-контейнера)
-- [Запуск клиента](#запуск-клиента)
   - [Запуск ClickHouse](#запуск-clickhouse)
-- [Запуск сервера](#запуск-сервера)
-- [Проверка статуса](#проверка-статуса)
-- [Просмотр логов](#просмотр-логов)
   - [Конфигурация](#конфигурация)
 - [Подключение к ClickHouse](#подключение-к-clickhouse)
   - [Использование clickhouse-client](#использование-clickhouse-client)
-- [Подключение к локальному серверу](#подключение-к-локальному-серверу)
-- [Подключение с параметрами](#подключение-с-параметрами)
-- [Выполнение SQL файла](#выполнение-sql-файла)
-- [Выполнение одиночного запроса](#выполнение-одиночного-запроса)
   - [Подключение через HTTP](#подключение-через-http)
-- [Используя curl](#используя-curl)
-- [С авторизацией](#с-авторизацией)
   - [Графические интерфейсы](#графические-интерфейсы)
     - [ClickHouse GUI Tools](#clickhouse-gui-tools)
   - [Подключение из приложений](#подключение-из-приложений)
@@ -139,6 +131,7 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
     - [Эффективное сжатие](#эффективное-сжатие)
     - [Кэширование](#кэширование)
   - [Недостатки колоночного хранения](#недостатки-колоночного-хранения)
+    - [OLTP операции](#oltp-операции-1)
     - [Память](#память)
 - [Работа с базами данных](#работа-с-базами-данных)
   - [Создание и управление базами данных](#создание-и-управление-базами-данных)
@@ -147,6 +140,7 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
   - [Сильные стороны ClickHouse:](#сильные-стороны-clickhouse)
   - [Ограничения:](#ограничения)
   - [Следующие шаги:](#следующие-шаги)
+- [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 
 ## Введение в ClickHouse
@@ -1029,23 +1023,6 @@ SHOW GRANTS FOR analyst;
 - **Настройка кластера** для **production**
 
 **ClickHouse** продолжает развиваться и становится стандартом для аналитики больших данных в современной инфраструктуре.
-
-## Полезные ссылки
-
-### Официальная документация
-- [ClickHouse Documentation](https://clickhouse.com/docs)
-- [Getting Started](https://clickhouse.com/docs/en/getting-started)
-- [Best Practices](https://clickhouse.com/docs/en/guides/best-practices)
-
-### Сообщество
-- [ClickHouse GitHub](https://github.com/ClickHouse/ClickHouse)
-- [ClickHouse Slack](https://clickhouse.com/slack)
-- [Stack Overflow](https://stackoverflow.com/questions/tagged/clickhouse)
-
-### Инструменты
-- [ClickHouse Client](https://clickhouse.com/docs/en/interfaces/cli)
-- [DBeaver](https://dbeaver.io/) — **SQL** клиент
-- [Tabix](https://tabix.io/) — **ClickHouse GUI**
 
 ## Лучшие практики
 

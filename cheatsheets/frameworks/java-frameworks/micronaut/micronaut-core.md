@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md"]
 next: ["micronaut-http.md", "micronaut-data.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 
 ## Содержание
 
-- [Micronaut: Core — Dependency Injection и Bean Management](#micronaut-core-dependency-injection-и-bean-management)
 - [Введение](#введение)
   - [Преимущества Compile-time DI](#преимущества-compile-time-di)
   - [Архитектура DI в Micronaut](#архитектура-di-в-micronaut)
@@ -69,8 +68,7 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
   - [Circular Dependencies](#circular-dependencies)
   - [Bean Execution Order](#bean-execution-order)
   - [Environment-specific Configuration](#environment-specific-configuration)
-- [application.yml](#applicationyml)
-- [application-prod.yml](#application-prodyml)
+  - [Configuration Validation](#configuration-validation-1)
 - [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)
@@ -82,9 +80,13 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 - [AOP (Aspect-Oriented Programming)](#aop-aspect-oriented-programming)
   - [Method Interceptors](#method-interceptors)
   - [Custom Annotations](#custom-annotations)
+- [Bean Factories](#bean-factories-1)
   - [Factory Beans](#factory-beans)
+- [Conditional Beans](#conditional-beans-1)
+  - [Conditional Bean Creation](#conditional-bean-creation-1)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

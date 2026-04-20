@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: Scheduling — Планирование задач](#quarkus-scheduling-планирование-задач)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Basic Scheduling](#basic-scheduling)
@@ -51,23 +50,23 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
   - [Retry Logic](#retry-logic)
 - [Task Coordination](#task-coordination)
   - [Distributed Scheduling](#distributed-scheduling)
-- [application.properties](#applicationproperties)
   - [Task Locking](#task-locking)
 - [Monitoring и Metrics](#monitoring-и-metrics)
   - [Task Metrics](#task-metrics)
-  - [4. Используйте блокировку для критических задач](#4-используйте-блокировку-для-критических-задач)
-  - [5. Мониторьте выполнение задач](#5-мониторьте-выполнение-задач)
 - [Advanced Scheduling Patterns](#advanced-scheduling-patterns)
   - [Job Queue Pattern](#job-queue-pattern)
   - [Priority Scheduling](#priority-scheduling)
+  - [Distributed Scheduling](#distributed-scheduling-1)
 - [Task Monitoring and Metrics](#task-monitoring-and-metrics)
   - [Execution Time Tracking](#execution-time-tracking)
   - [Task Success/Failure Tracking](#task-successfailure-tracking)
+- [Advanced Scheduling Patterns](#advanced-scheduling-patterns-1)
   - [Conditional Task Execution](#conditional-task-execution)
   - [Task Dependencies](#task-dependencies)
   - [Dynamic Schedule Configuration](#dynamic-schedule-configuration)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

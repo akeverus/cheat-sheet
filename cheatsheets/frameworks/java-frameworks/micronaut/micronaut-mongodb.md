@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
 next: ["micronaut-data.md", "micronaut-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-data.md", "micronaut-reactive.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-data.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: MongoDB Integration — Repositories и Queries](#micronaut-mongodb-integration-repositories-и-queries)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка MongoDB](#настройка-mongodb)
@@ -60,6 +59,7 @@ related: ["micronaut-data.md", "micronaut-reactive.md"]
   - [Replica Set Configuration](#replica-set-configuration)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

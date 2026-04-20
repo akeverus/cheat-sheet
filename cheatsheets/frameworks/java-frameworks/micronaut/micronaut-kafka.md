@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-reactive.md"]
 next: ["micronaut-reactive.md", "micronaut-cloud.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-messaging.md"]
 ---
 
@@ -26,7 +26,6 @@ related: ["micronaut-reactive.md", "micronaut-messaging.md"]
 
 ## Содержание
 
-- [Micronaut: Kafka Integration — Producers, Consumers и Streams](#micronaut-kafka-integration-producers-consumers-и-streams)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Kafka](#настройка-kafka)
@@ -53,7 +52,6 @@ related: ["micronaut-reactive.md", "micronaut-messaging.md"]
   - [Custom Deserializer](#custom-deserializer)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте правильные сериализаторы](#1-используйте-правильные-сериализаторы)
-- [ Хорошо](#хорошо)
   - [2. Настраивайте consumer groups правильно](#2-настраивайте-consumer-groups-правильно)
   - [3. Обрабатывайте ошибки](#3-обрабатывайте-ошибки)
   - [4. Используйте batch processing для больших объемов](#4-используйте-batch-processing-для-больших-объемов)
@@ -74,6 +72,7 @@ related: ["micronaut-reactive.md", "micronaut-messaging.md"]
   - [Partition Assignment](#partition-assignment)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-kafka.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-kafka.md"]
 ---
 
@@ -26,7 +26,6 @@ related: ["micronaut-http.md", "micronaut-kafka.md"]
 
 ## Содержание
 
-- [Micronaut: Serialization — JSON, XML и Custom Serializers](#micronaut-serialization-json-xml-и-custom-serializers)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Serialization](#настройка-serialization)
@@ -56,6 +55,7 @@ related: ["micronaut-http.md", "micronaut-kafka.md"]
   - [Custom Module](#custom-module)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

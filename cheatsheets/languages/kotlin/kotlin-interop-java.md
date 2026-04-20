@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kotlin Interop with Java
 
@@ -39,6 +39,7 @@ updated: "2026-02-11"
   - [SAM Conversions](#sam-conversions)
   - [Проверяемые исключения](#проверяемые-исключения)
 - [Вызов Kotlin из Java](#вызов-kotlin-из-java)
+  - [Базовое использование](#базовое-использование-1)
   - [Top-level функции](#top-level-функции)
   - [Extension функции](#extension-функции)
 - [Nullability аннотации](#nullability-аннотации)
@@ -53,6 +54,8 @@ updated: "2026-02-11"
 - [Data классы](#data-классы)
   - [Использование в Java](#использование-в-java)
   - [Component функции](#component-функции)
+- [Extension функции](#extension-функции-1)
+  - [Использование в Java](#использование-в-java-1)
 - [Лучшие практики](#лучшие-практики)
   - [Используйте аннотации для nullability](#используйте-аннотации-для-nullability)
   - [Используйте @JvmOverloads для default параметров](#используйте-jvmoverloads-для-default-параметров)
@@ -65,7 +68,9 @@ updated: "2026-02-11"
   - [Type Erasure в Java](#type-erasure-в-java)
   - [Reified Generics](#reified-generics)
 - [Sealed классы и интерфейсы](#sealed-классы-и-интерфейсы)
+  - [Использование в Java](#использование-в-java-2)
 - [Inline классы (Value классы)](#inline-классы-value-классы)
+  - [Использование в Java](#использование-в-java-3)
 - [Корутины и Java](#корутины-и-java)
   - [Вызов suspend функций из Java](#вызов-suspend-функций-из-java)
   - [Создание оберток для Java](#создание-оберток-для-java)
@@ -91,14 +96,17 @@ updated: "2026-02-11"
   - [Использование Java коллекций из Kotlin](#использование-java-коллекций-из-kotlin)
   - [Использование Java Optional](#использование-java-optional)
   - [Использование Java 8+ функциональных интерфейсов](#использование-java-8-функциональных-интерфейсов)
+- [Миграция с Java на Kotlin](#миграция-с-java-на-kotlin-1)
+  - [Стратегия миграции](#стратегия-миграции-1)
   - [Совместимость при миграции](#совместимость-при-миграции)
 - [Дополнительные техники Interop](#дополнительные-техники-interop)
   - [Работа с Java Streams](#работа-с-java-streams)
   - [Работа с Java Optional](#работа-с-java-optional)
+- [Дополнительные техники Interop](#дополнительные-техники-interop-1)
   - [Работа с Java Reflection](#работа-с-java-reflection)
   - [Работа с Java Annotations](#работа-с-java-annotations)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 - [Итоговые рекомендации](#итоговые-рекомендации)

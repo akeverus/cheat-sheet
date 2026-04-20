@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-reactive.md"]
 next: ["micronaut-reactive.md", "micronaut-kafka.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-kafka.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-reactive.md", "micronaut-kafka.md"]
 
 ## Содержание
 
-- [Micronaut: JMS Integration — Message Queues и Topics](#micronaut-jms-integration-message-queues-и-topics)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка JMS](#настройка-jms)
@@ -44,7 +43,6 @@ related: ["micronaut-reactive.md", "micronaut-kafka.md"]
   - [Transactional Consumer](#transactional-consumer)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте connection pooling](#1-используйте-connection-pooling)
-- [ Хорошо](#хорошо)
   - [2. Обрабатывайте ошибки](#2-обрабатывайте-ошибки)
   - [3. Используйте transactions для критических операций](#3-используйте-transactions-для-критических-операций)
 - [Message Selectors](#message-selectors)
@@ -61,6 +59,7 @@ related: ["micronaut-reactive.md", "micronaut-kafka.md"]
   - [Message TTL](#message-ttl)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

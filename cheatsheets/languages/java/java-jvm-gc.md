@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["java-basics.md"]
 next: ["java-memory-model.md", "java-concurrency-basics.md"]
-updated: "2026-04-11"
+updated: "2026-04-20"
 ---
 
 # JVM: архитектура и сборка мусора
@@ -32,11 +32,22 @@ updated: "2026-04-11"
 
 - [Архитектура JVM](#архитектура-jvm)
 - [Области памяти](#области-памяти)
+  - [Структура Heap (поколенческая модель)](#структура-heap-поколенческая-модель)
 - [Жизненный цикл объекта](#жизненный-цикл-объекта)
 - [Сборщики мусора](#сборщики-мусора)
+  - [Serial GC (-XX:+UseSerialGC)](#serial-gc-xxuseserialgc)
+  - [Parallel GC (-XX:+UseParallelGC)](#parallel-gc-xxuseparallelgc)
+  - [G1 GC (-XX:+UseG1GC)](#g1-gc-xxuseg1gc)
+  - [ZGC (-XX:+UseZGC)](#zgc-xxusezgc)
+  - [Shenandoah GC (-XX:+UseShenandoahGC)](#shenandoah-gc-xxuseshenandoahgc)
 - [Выбор GC](#выбор-gc)
 - [Ключевые JVM-флаги](#ключевые-jvm-флаги)
+  - [Память](#память)
+  - [GC](#gc)
+  - [Диагностика](#диагностика)
 - [Диагностика и мониторинг](#диагностика-и-мониторинг)
+  - [Команды](#команды)
+  - [Метрики для мониторинга](#метрики-для-мониторинга)
 - [Типичные проблемы и решения](#типичные-проблемы-и-решения)
 - [Антипаттерны](#антипаттерны)
 

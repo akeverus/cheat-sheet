@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # REST API Best Practices
 
@@ -52,7 +52,6 @@ updated: "2026-02-11"
   - [Asynchronous Processing](#asynchronous-processing)
 - [Documentation](#documentation)
   - [API Documentation Standards](#api-documentation-standards)
-- [API documentation structure](#api-documentation-structure)
   - [Interactive Documentation](#interactive-documentation)
 - [Testing Strategies](#testing-strategies)
   - [Unit Testing](#unit-testing)
@@ -67,6 +66,11 @@ updated: "2026-02-11"
   - [API Deprecation Process](#api-deprecation-process)
   - [API Governance](#api-governance)
 - [Решение проблем](#решение-проблем)
+  - [CORS блокирует запросы с фронтенда](#cors-блокирует-запросы-с-фронтенда)
+  - [Rate limit превышен — клиент не знает, когда повторять](#rate-limit-превышен-клиент-не-знает-когда-повторять)
+  - [Несогласованные форматы ошибок между endpoints](#несогласованные-форматы-ошибок-между-endpoints)
+  - [Токен аутентификации не работает после деплоя](#токен-аутентификации-не-работает-после-деплоя)
+  - [Breaking changes при версионировании](#breaking-changes-при-версионировании)
 - [Лучшие практики (сводка)](#лучшие-практики-сводка)
 - [См. также](#см-также)
 

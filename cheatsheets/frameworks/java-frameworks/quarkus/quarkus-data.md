@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-security.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-security.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-core.md", "quarkus-security.md"]
 
 ## Содержание
 
-- [Quarkus: Data Access — Hibernate ORM, Panache и Repositories](#quarkus-data-access-hibernate-orm-panache-и-repositories)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Hibernate ORM](#hibernate-orm)
@@ -39,7 +38,6 @@ related: ["quarkus-core.md", "quarkus-security.md"]
   - [1. Используйте Panache для упрощения](#1-используйте-panache-для-упрощения)
   - [2. Используйте @Transactional правильно](#2-используйте-transactional-правильно)
   - [3. Используйте миграции](#3-используйте-миграции)
-- [ Хорошо](#хорошо)
 - [Panache Query Methods](#panache-query-methods)
   - [Query Methods](#query-methods)
   - [Custom Queries](#custom-queries)
@@ -51,23 +49,24 @@ related: ["quarkus-core.md", "quarkus-security.md"]
   - [Liquibase Configuration](#liquibase-configuration)
 - [Reactive Data Access](#reactive-data-access)
   - [Reactive Panache](#reactive-panache)
-  - [4. Оптимизируйте запросы](#4-оптимизируйте-запросы)
 - [Advanced Panache Features](#advanced-panache-features)
+  - [Panache Query Methods](#panache-query-methods-1)
+  - [Custom Queries](#custom-queries-1)
   - [Native Queries](#native-queries)
+- [Entity Relationships](#entity-relationships-1)
   - [One-to-Many Bidirectional](#one-to-many-bidirectional)
   - [Many-to-Many](#many-to-many)
   - [Eager vs Lazy Loading](#eager-vs-lazy-loading)
 - [Transaction Management](#transaction-management)
   - [Programmatic Transactions](#programmatic-transactions)
   - [Transaction Propagation](#transaction-propagation)
+- [Database Migrations](#database-migrations-1)
   - [Flyway Migrations](#flyway-migrations)
   - [Liquibase Migrations](#liquibase-migrations)
 - [Performance Optimization](#performance-optimization)
   - [Query Optimization](#query-optimization)
   - [Batch Operations](#batch-operations)
   - [Caching](#caching)
-- [application.properties](#applicationproperties)
-  - [5. Используйте lazy loading где возможно](#5-используйте-lazy-loading-где-возможно)
 - [JDBC](#jdbc)
   - [Direct JDBC Access](#direct-jdbc-access)
   - [Reactive JDBC](#reactive-jdbc)
@@ -76,9 +75,6 @@ related: ["quarkus-core.md", "quarkus-security.md"]
   - [Reactive Connection Pooling](#reactive-connection-pooling)
 - [Multiple Data Sources](#multiple-data-sources)
   - [Multiple Databases](#multiple-databases)
-- [Primary database](#primary-database)
-- [Secondary database](#secondary-database)
-  - [6. Настраивайте connection pooling](#6-настраивайте-connection-pooling)
 - [Advanced Data Access Patterns](#advanced-data-access-patterns)
   - [CQRS Pattern](#cqrs-pattern)
   - [Event Sourcing](#event-sourcing)
@@ -100,6 +96,7 @@ related: ["quarkus-core.md", "quarkus-security.md"]
   - [Transaction Timeout](#transaction-timeout)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

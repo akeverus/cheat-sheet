@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # OkHttp
 
@@ -63,10 +63,11 @@ updated: "2026-02-11"
 - [Migration Guide](#migration-guide)
   - [From Apache HttpClient](#from-apache-httpclient)
   - [From Java URLConnection](#from-java-urlconnection)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

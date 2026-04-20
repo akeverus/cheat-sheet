@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Prometheus
 
@@ -35,15 +35,24 @@ Prometheus — система мониторинга и алертинга с о
 
 ## Содержание
 
-- [Основы](#основы-prometheus)
-- [Конфигурация](#конфигурация-prometheus)
-- [PromQL — язык запросов](#promql--язык-запросов)
+- [Основы Prometheus](#основы-prometheus)
+  - [Типы метрик](#типы-метрик)
+  - [Установка](#установка)
+- [Конфигурация Prometheus](#конфигурация-prometheus)
+  - [prometheus.yml](#prometheusyml)
+  - [Service Discovery](#service-discovery)
+- [PromQL — язык запросов](#promql-язык-запросов)
+  - [Операторы и функции](#операторы-и-функции)
+  - [Примеры по приложению](#примеры-по-приложению)
 - [Recording Rules](#recording-rules)
 - [Alerting Rules](#alerting-rules)
 - [Java Client для Prometheus](#java-client-для-prometheus)
-- [Micrometer и Spring Boot](#micrometer-интеграция)
+  - [Maven и базовое использование](#maven-и-базовое-использование)
+- [Micrometer интеграция](#micrometer-интеграция)
 - [Метрики JVM](#метрики-jvm)
 - [Интеграция с другими языками](#интеграция-с-другими-языками)
+  - [Node.js (prom-client)](#nodejs-prom-client)
+  - [Go (prometheus client_golang)](#go-prometheus-client_golang)
 - [Визуализация и дашборды](#визуализация-и-дашборды)
 - [Лучшие практики](#лучшие-практики)
 - [Мониторинг Prometheus](#мониторинг-prometheus)

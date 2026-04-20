@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Testcontainers: Интеграционное тестирование с Docker
 
@@ -37,13 +37,7 @@ updated: "2026-02-11"
   - [Maven](#maven)
   - [Gradle](#gradle)
   - [Требования](#требования)
-- [Docker должен быть установлен и запущен](#docker-должен-быть-установлен-и-запущен)
-- [Для Linux может потребоваться Docker без sudo](#для-linux-может-потребоваться-docker-без-sudo)
   - [Базовая конфигурация](#базовая-конфигурация)
-- [Кастомный Docker host](#кастомный-docker-host)
-- [Таймауты](#таймауты)
-- [Пул образов](#пул-образов)
-- [Логирование](#логирование)
 - [Database containers](#database-containers)
   - [PostgreSQL](#postgresql)
   - [MySQL](#mysql)
@@ -65,13 +59,12 @@ updated: "2026-02-11"
 - [Best practices](#best-practices)
   - [1. Правильная организация тестов](#1-правильная-организация-тестов)
   - [2. Управление ресурсами](#2-управление-ресурсами)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
 - [Заключение](#заключение)
   - [Преимущества Testcontainers](#преимущества-testcontainers)
   - [Основные паттерны использования](#основные-паттерны-использования)
   - [Когда использовать Testcontainers](#когда-использовать-testcontainers)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
+- [См. также](#см-также)
 
 ## Введение в Testcontainers
 

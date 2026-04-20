@@ -11,7 +11,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-replication.md"]
 next: ["databases/redis-performance.md", "databases/redis-security.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 ---
 
@@ -35,6 +35,9 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 - [Настройка Redis Cluster](#настройка-redis-cluster)
   - [Минимальная конфигурация](#минимальная-конфигурация)
   - [Создание кластера](#создание-кластера)
+    - [Шаг 1: Подготовка конфигураций](#шаг-1-подготовка-конфигураций)
+    - [Шаг 2: Запуск узлов](#шаг-2-запуск-узлов)
+    - [Шаг 3: Создание кластера](#шаг-3-создание-кластера)
   - [Подключение к кластеру](#подключение-к-кластеру)
 - [Работа с кластером](#работа-с-кластером)
   - [Базовые операции](#базовые-операции)
@@ -65,7 +68,7 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 - [Advanced Cluster Operations](#advanced-cluster-operations)
   - [Slot Migration](#slot-migration)
   - [Cluster Rebalancing](#cluster-rebalancing)
-  - [Import/Export данных](#import-export-данных)
+  - [Import/Export данных](#importexport-данных)
 - [Cluster Topology](#cluster-topology)
   - [Understanding Cluster Topology](#understanding-cluster-topology)
   - [Slot Distribution](#slot-distribution)

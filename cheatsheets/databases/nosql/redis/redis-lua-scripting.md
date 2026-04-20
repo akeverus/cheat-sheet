@@ -12,7 +12,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 next: ["databases/redis-pubsub.md", "databases/redis-transactions.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 ---
 
@@ -36,10 +36,10 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
   - [EVAL команда](#eval-команда)
   - [EVALSHA команда](#evalsha-команда)
 - [Основные функции Redis в Lua](#основные-функции-redis-в-lua)
-  - [redis.call()](#redis-call)
-  - [redis.pcall()](#redis-pcall)
-  - [redis.error_reply()](#redis-errorreply)
-  - [redis.status_reply()](#redis-statusreply)
+  - [redis.call()](#rediscall)
+  - [redis.pcall()](#redispcall)
+  - [redis.error_reply()](#rediserror_reply)
+  - [redis.status_reply()](#redisstatus_reply)
 - [Практические примеры](#практические-примеры)
   - [Атомарный перевод денег](#атомарный-перевод-денег)
   - [Rate Limiting](#rate-limiting)

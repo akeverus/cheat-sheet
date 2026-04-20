@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: ["spring-boot.md", "spring-data.md"]
-updated: "2026-04-12"
+updated: "2026-04-20"
 ---
 
 # Spring Framework: Core
@@ -27,14 +27,22 @@ updated: "2026-04-12"
 
 - [IoC-контейнер и DI](#ioc-контейнер-и-di)
 - [Способы внедрения зависимостей](#способы-внедрения-зависимостей)
+  - [Constructor Injection (рекомендуется)](#constructor-injection-рекомендуется)
+  - [Setter Injection](#setter-injection)
+  - [Field Injection (не рекомендуется)](#field-injection-не-рекомендуется)
+  - [Разрешение неоднозначности](#разрешение-неоднозначности)
 - [Bean Scope](#bean-scope)
 - [Жизненный цикл Bean](#жизненный-цикл-bean)
 - [Конфигурация](#конфигурация)
+  - [Java Config (рекомендуется)](#java-config-рекомендуется)
+  - [Component Scanning](#component-scanning)
+  - [Properties](#properties)
 - [Profiles и условная конфигурация](#profiles-и-условная-конфигурация)
 - [AOP](#aop)
 - [Events](#events)
 - [SpEL](#spel)
 - [Типичные ошибки](#типичные-ошибки)
+- [См. также](#см-также)
 
 ## IoC-контейнер и DI
 

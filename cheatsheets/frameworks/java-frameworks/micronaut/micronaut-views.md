@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-mail.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-mail.md"]
 ---
 
@@ -26,7 +26,6 @@ related: ["micronaut-http.md", "micronaut-mail.md"]
 
 ## Содержание
 
-- [Micronaut: Views — Template Engines и View Rendering](#micronaut-views-template-engines-и-view-rendering)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Views](#настройка-views)
@@ -58,6 +57,7 @@ related: ["micronaut-http.md", "micronaut-mail.md"]
   - [Custom Resolver](#custom-resolver)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

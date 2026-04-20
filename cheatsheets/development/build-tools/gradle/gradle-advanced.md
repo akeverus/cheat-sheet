@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Gradle Advanced
 
@@ -28,16 +28,7 @@ updated: "2026-02-11"
   - [Много-модульные проекты](#много-модульные-проекты)
     - [Настройка композитной сборки](#настройка-композитной-сборки)
     - [Version Catalogs](#version-catalogs)
-- [gradle/libs.versions.toml](#gradlelibsversionstoml)
-- [Spring Boot](#spring-boot)
-- [Kotlin](#kotlin)
-- [Testing](#testing)
     - [Gradle.properties для больших проектов](#gradleproperties-для-больших-проектов)
-- [gradle.properties](#gradleproperties)
-- [Build cache](#build-cache)
-- [Version management](#version-management)
-- [Repository credentials](#repository-credentials)
-- [Custom properties](#custom-properties)
   - [Продвинутые плагины](#продвинутые-плагины)
     - [Кастомный плагин](#кастомный-плагин)
     - [Convention Plugin](#convention-plugin)
@@ -47,9 +38,6 @@ updated: "2026-02-11"
 - [Управление зависимостями](#управление-зависимостями)
   - [Продвинутые конфигурации зависимостей](#продвинутые-конфигурации-зависимостей)
   - [Dependency locking](#dependency-locking)
-- [Создание lock файла](#создание-lock-файла)
-- [Проверка на изменения зависимостей](#проверка-на-изменения-зависимостей)
-- [Lock файл для production builds](#lock-файл-для-production-builds)
 - [Тестирование и качество кода](#тестирование-и-качество-кода)
   - [Продвинутые тестовые конфигурации](#продвинутые-тестовые-конфигурации)
   - [Mutation testing](#mutation-testing)
@@ -59,21 +47,11 @@ updated: "2026-02-11"
 - [Производительность и оптимизация](#производительность-и-оптимизация)
   - [Build cache и incremental builds](#build-cache-и-incremental-builds)
   - [Memory и performance tuning](#memory-и-performance-tuning)
-- [Memory settings](#memory-settings)
-- [Performance settings](#performance-settings)
 - [CI/CD интеграция](#cicd-интеграция)
   - [Jenkins pipeline](#jenkins-pipeline)
   - [GitHub Actions](#github-actions)
-- [.github/workflows/ci.yml](#githubworkflowsciyml)
 - [Решение проблем](#решение-проблем)
   - [Распространенные проблемы](#распространенные-проблемы)
-- [Очистка кэша](#очистка-кэша)
-- [Debug build](#debug-build)
-- [Debug dependency resolution](#debug-dependency-resolution)
-- [Debug task execution](#debug-task-execution)
-- [Memory issues](#memory-issues)
-- [Network issues](#network-issues)
-- [Configuration cache issues](#configuration-cache-issues)
   - [Performance monitoring](#performance-monitoring)
 - [Лучшие практики](#лучшие-практики)
   - [Enterprise project structure](#enterprise-project-structure)

@@ -7,7 +7,7 @@ tags:
   - dropwizard
   - java-frameworks
 type: "index"
-updated: "2026-04-17"
+updated: "2026-04-20"
 ---
 # Dropwizard
 

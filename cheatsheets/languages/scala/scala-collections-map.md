@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-collections-list.md", "scala/scala-collections-set.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
@@ -32,7 +32,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 
 ## Содержание
 
-- [Scala Collections — Map](#scala-collections-map)
 - [Введение в Map](#введение-в-map)
   - [Основные характеристики](#основные-характеристики)
   - [Immutable vs Mutable](#immutable-vs-mutable)
@@ -45,6 +44,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Mutable Map](#mutable-map)
 - [HashMap](#hashmap)
 - [SortedMap](#sortedmap)
+- [Основные операции](#основные-операции-1)
   - [Map — преобразование значений](#map-преобразование-значений)
   - [Filter — фильтрация элементов](#filter-фильтрация-элементов)
   - [FlatMap — преобразование и разворачивание](#flatmap-преобразование-и-разворачивание)
@@ -67,8 +67,8 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
   - [Предпочтение immutable Map](#предпочтение-immutable-map)
   - [Безопасный доступ к значениям](#безопасный-доступ-к-значениям)
   - [Использование Map для кэширования](#использование-map-для-кэширования)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Практические примеры использования](#практические-примеры-использования)
   - [Реализация кэша](#реализация-кэша)

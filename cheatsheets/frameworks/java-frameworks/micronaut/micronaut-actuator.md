@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-cloud.md", "micronaut-testing.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
 
 ## Содержание
 
-- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](#micronaut-actuator-health-checks-metrics-и-endpoints)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Actuator](#настройка-actuator)
@@ -40,7 +39,6 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
   - [Custom Endpoint](#custom-endpoint)
 - [Лучшие практики](#лучшие-практики)
   - [1. Настраивайте security для endpoints](#1-настраивайте-security-для-endpoints)
-- [ Хорошо](#хорошо)
   - [2. Используйте health indicators](#2-используйте-health-indicators)
   - [3. Собирайте метрики для важных операций](#3-собирайте-метрики-для-важных-операций)
 - [Info Endpoint](#info-endpoint)
@@ -59,6 +57,7 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
   - [Bean Information](#bean-information)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

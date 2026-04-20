@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-testing.md", "micronaut-cloud.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-http.md", "micronaut-data.md"]
 
 ## Содержание
 
-- [Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams](#micronaut-reactive-programming-rxjava-reactor-и-reactive-streams)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Reactive Streams](#reactive-streams)
@@ -36,11 +35,14 @@ related: ["micronaut-http.md", "micronaut-data.md"]
   - [Reactive Services](#reactive-services)
   - [Error Handling](#error-handling)
 - [Project Reactor](#project-reactor)
+  - [Настройка](#настройка-1)
   - [Reactive Controllers с Reactor](#reactive-controllers-с-reactor)
   - [Reactive Services с Reactor](#reactive-services-с-reactor)
 - [Reactive HTTP Client](#reactive-http-client)
+  - [Настройка](#настройка-2)
   - [Использование Reactive HTTP Client](#использование-reactive-http-client)
 - [Reactive Database Access (R2DBC)](#reactive-database-access-r2dbc)
+  - [Настройка](#настройка-3)
   - [Reactive Repository](#reactive-repository)
   - [Использование Reactive Repository](#использование-reactive-repository)
 - [Backpressure](#backpressure)
@@ -68,11 +70,13 @@ related: ["micronaut-http.md", "micronaut-data.md"]
 - [Hot vs Cold Publishers](#hot-vs-cold-publishers)
   - [Cold Publisher](#cold-publisher)
   - [Hot Publisher](#hot-publisher)
+- [Reactive Testing](#reactive-testing-1)
   - [Testing Reactive Streams](#testing-reactive-streams)
 - [Reactive Error Handling](#reactive-error-handling)
   - [Error Recovery Strategies](#error-recovery-strategies)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

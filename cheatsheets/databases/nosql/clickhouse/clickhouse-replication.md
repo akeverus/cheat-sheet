@@ -11,7 +11,7 @@ tags:
   - replicatedmergetree
 difficulty: "advanced"
 prerequisites: ["databases/clickhouse-tables.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-views.md"]
 ---
 
@@ -25,9 +25,15 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 - [Replication](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/replication)
 - [ReplicatedMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/replicatedmergetree)
 - [Distributed DDL](https://clickhouse.com/docs/en/sql-reference/statements/system#distributed-ddl)
+- [Cluster Setup](https://clickhouse.com/docs/en/guides/sre/configuring-replication)
+- [Replication Best Practices](https://clickhouse.com/docs/en/guides/best-practices)
 
 ### Обучающие материалы
 - [ClickHouse Replication](https://www.baeldung.com/clickhouse-replication)
+
+### Инструменты
+- [ClickHouse Keeper](https://clickhouse.com/docs/en/operations/keeper) — альтернатива **ZooKeeper**
+- [Cluster Monitoring](https://clickhouse.com/docs/en/operations/monitoring)
 
 ### См. также
 - [[clickhouse-tables|Таблицы]] — движки таблиц
@@ -46,9 +52,6 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
     - [ZooKeeper Cluster](#zookeeper-cluster)
 - [ZooKeeper для координации](#zookeeper-для-координации)
   - [Установка ZooKeeper](#установка-zookeeper)
-- [На Ubuntu/Debian](#на-ubuntudebian)
-- [Настройка кластера (zoo.cfg)](#настройка-кластера-zoocfg)
-- [Запуск](#запуск)
   - [Конфигурация ClickHouse для ZooKeeper](#конфигурация-clickhouse-для-zookeeper)
   - [Структура данных в ZooKeeper](#структура-данных-в-zookeeper)
 - [ReplicatedMergeTree движок](#replicatedmergetree-движок)
@@ -69,8 +72,9 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
   - [Мониторинг отказов](#мониторинг-отказов)
 - [Мониторинг кластера](#мониторинг-кластера)
   - [Метрики репликации](#метрики-репликации)
+  - [Мониторинг кластера](#мониторинг-кластера-1)
   - [Диагностика проблем](#диагностика-проблем)
-- [Best Practices](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
   - [Проектирование кластера](#проектирование-кластера)
   - [Конфигурация ZooKeeper](#конфигурация-zookeeper)
   - [Оптимизация репликации](#оптимизация-репликации)
@@ -79,6 +83,9 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
   - [Ключевые компоненты:](#ключевые-компоненты)
   - [Преимущества:](#преимущества)
   - [Следующие темы:](#следующие-темы)
+  - [Официальная документация](#официальная-документация-1)
+  - [Руководства](#руководства)
+  - [Инструменты](#инструменты)
 
 ## Введение в репликацию ClickHouse
 
@@ -768,21 +775,6 @@ GROUP BY database, table;
 - **Мониторинг** — глубокий анализ метрик
 
 Репликация **ClickHouse** позволяет создавать надежные и масштабируемые аналитические системы.
-
-## Полезные ссылки
-
-### Официальная документация
-- [Replication](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/replication)
-- [ReplicatedMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/replicatedmergetree)
-- [Distributed DDL](https://clickhouse.com/docs/en/sql-reference/statements/system#distributed-ddl)
-
-### Руководства
-- [Cluster Setup](https://clickhouse.com/docs/en/guides/sre/configuring-replication)
-- [Replication Best Practices](https://clickhouse.com/docs/en/guides/best-practices)
-
-### Инструменты
-- [ClickHouse Keeper](https://clickhouse.com/docs/en/operations/keeper) — альтернатива **ZooKeeper**
-- [Cluster Monitoring](https://clickhouse.com/docs/en/operations/monitoring)
 
 
 **Следующие темы:**

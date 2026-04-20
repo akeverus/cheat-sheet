@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-redis.md", "spring/spring-mongodb.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
@@ -37,6 +37,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [Кастомные ключи](#кастомные-ключи)
   - [Кеширование списков](#кеширование-списков)
 - [@CacheEvict](#cacheevict)
+  - [Базовое использование](#базовое-использование-1)
   - [beforeInvocation](#beforeinvocation)
 - [@CachePut](#cacheput)
 - [@Caching](#caching)
@@ -44,8 +45,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [Настройка Redis Cache Manager](#настройка-redis-cache-manager)
   - [Использование Redis Cache](#использование-redis-cache)
   - [Конфигурация через application.properties](#конфигурация-через-applicationproperties)
-- [Redis Configuration](#redis-configuration)
-- [Cache Configuration](#cache-configuration)
 - [EhCache](#ehcache)
   - [Настройка EhCache](#настройка-ehcache)
 - [Caffeine Cache](#caffeine-cache)
@@ -59,6 +58,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [5. Мониторьте производительность кеша](#5-мониторьте-производительность-кеша)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Cache
 

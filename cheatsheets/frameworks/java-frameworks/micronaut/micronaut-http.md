@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-data.md", "micronaut-security.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-testing.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-reactive.md", "micronaut-testing.md"]
 
 ## Содержание
 
-- [Micronaut: HTTP — Controllers, Routing и Request Handling](#micronaut-http-controllers-routing-и-request-handling)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Controllers](#controllers)
@@ -78,8 +77,11 @@ related: ["micronaut-reactive.md", "micronaut-testing.md"]
 - [HTTP Client Configuration](#http-client-configuration)
   - [Client Configuration](#client-configuration)
   - [Custom HTTP Client](#custom-http-client)
+- [Content Negotiation](#content-negotiation-1)
+  - [Content Negotiation](#content-negotiation-2)
 - [HTTP/2 Support](#http2-support)
   - [HTTP/2 Configuration](#http2-configuration)
+- [Request/Response Interceptors](#requestresponse-interceptors-1)
   - [Custom Interceptors](#custom-interceptors)
 - [HTTP Compression](#http-compression)
   - [Compression Configuration](#compression-configuration)
@@ -87,6 +89,7 @@ related: ["micronaut-reactive.md", "micronaut-testing.md"]
   - [Cache Headers](#cache-headers)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # AWS Networking
 
@@ -52,7 +52,7 @@ updated: "2026-02-11"
   - [Health Checks и Failover](#health-checks-и-failover)
 - [CloudFront (CDN)](#cloudfront-cdn)
   - [Distribution Configuration](#distribution-configuration)
-  - [Lambda@Edge](#lambda@edge)
+  - [Lambda@Edge](#lambdaedge)
   - [CloudFront Functions](#cloudfront-functions)
 - [Direct Connect и VPN](#direct-connect-и-vpn)
   - [Direct Connect](#direct-connect)

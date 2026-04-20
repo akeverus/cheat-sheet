@@ -6,7 +6,7 @@ tags:
   - ci-cd
   - github-actions
 difficulty: "intermediate"
-updated: "2026-04-17"
+updated: "2026-04-20"
 ---
 # GitHub Actions
 
@@ -55,6 +55,7 @@ GitHub Actions — нативная CI/CD платформа внутри GitHub
 - [Security hardening](#security-hardening)
 - [Best practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
+- [См. также](#см-также)
 
 ## Базовая структура workflow
 

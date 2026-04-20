@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Java Concurrency: Advanced
 
@@ -44,7 +44,6 @@ updated: "2026-02-11"
   - [Изменения в Java 9](#изменения-в-java-9)
 - [Руководство по CyclicBarrier](#руководство-по-cyclicbarrier)
 - [Руководство по ThreadLocalRandom](#руководство-по-threadlocalrandom)
-- [Run complete. Total time: 00:00:36](#run-complete-total-time-000036)
   - [Внутренняя реализация](#внутренняя-реализация)
 - [CyclicBarrier против CountDownLatch](#cyclicbarrier-против-countdownlatch)
   - [Основные различия](#основные-различия)
@@ -54,6 +53,7 @@ updated: "2026-02-11"
   - [Важные замечания](#важные-замечания)
   - [Дизайн с учетом прерывания](#дизайн-с-учетом-прерывания)
 - [Лучшие практики](#лучшие-практики)
+- [См. также](#см-также)
 
 ## Демон поток
 

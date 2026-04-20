@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Централизованное логирование для Java
 
@@ -40,13 +40,32 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Введение в централизованное логирование](#введение-в-централизованное-логирование)
+  - [Почему централизованное логирование?](#почему-централизованное-логирование)
+  - [Архитектура](#архитектура)
+- [ELK Stack](#elk-stack-1)
+  - [Elasticsearch](#elasticsearch)
+  - [Logstash](#logstash)
+  - [Kibana](#kibana)
 - [Fluentd и Fluent Bit](#fluentd-и-fluent-bit)
+  - [Fluentd](#fluentd)
+  - [Fluent Bit](#fluent-bit)
+- [Облачные решения](#облачные-решения-1)
+  - [AWS CloudWatch](#aws-cloudwatch)
+  - [Google Cloud Logging](#google-cloud-logging)
+  - [Azure Monitor](#azure-monitor)
 - [Log shipping](#log-shipping)
+  - [Filebeat](#filebeat)
 - [Хранение и ротация](#хранение-и-ротация)
+  - [ILM в Elasticsearch](#ilm-в-elasticsearch)
+  - [Ротация файлов (Logback)](#ротация-файлов-logback)
 - [Поиск и анализ](#поиск-и-анализ)
+  - [Запросы Elasticsearch](#запросы-elasticsearch)
 - [Мониторинг и алертинг](#мониторинг-и-алертинг)
+  - [Watcher (пример)](#watcher-пример)
 - [Безопасность](#безопасность)
+  - [Санитизация в коде](#санитизация-в-коде)
 - [Производительность](#производительность)
+  - [Команды диагностики](#команды-диагностики)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)

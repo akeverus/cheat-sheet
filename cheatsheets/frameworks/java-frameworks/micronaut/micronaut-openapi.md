@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-testing.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
 
 ## Содержание
 
-- [Micronaut: OpenAPI — API Documentation и Swagger](#micronaut-openapi-api-documentation-и-swagger)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка OpenAPI](#настройка-openapi)
@@ -40,7 +39,6 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
   - [Accessing Swagger UI](#accessing-swagger-ui)
 - [Code Generation](#code-generation)
   - [Client Generation](#client-generation)
-- [Генерация клиентского кода из OpenAPI спецификации](#генерация-клиентского-кода-из-openapi-спецификации)
 - [Лучшие практики](#лучшие-практики)
   - [1. Документируйте все endpoints](#1-документируйте-все-endpoints)
   - [2. Используйте примеры в схемах](#2-используйте-примеры-в-схемах)
@@ -61,6 +59,7 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
   - [Advanced Configuration](#advanced-configuration)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

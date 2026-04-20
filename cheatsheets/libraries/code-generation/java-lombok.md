@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Lombok: Автоматизация boilerplate кода в Java
 
@@ -70,9 +70,7 @@ updated: "2026-02-11"
   - [@Delegate](#delegate)
 - [Интеграция с IDE](#интеграция-с-ide)
   - [Lombok Configuration](#lombok-configuration)
-- [Настройки Lombok для всего проекта](#настройки-lombok-для-всего-проекта)
   - [Настройки для конкретных директорий](#настройки-для-конкретных-директорий)
-- [Настройки только для тестов](#настройки-только-для-тестов)
   - [Lombok MapStruct Integration](#lombok-mapstruct-integration)
 - [Best practices](#best-practices)
   - [1. Использование @Data разумно](#1-использование-data-разумно)
@@ -82,12 +80,11 @@ updated: "2026-02-11"
   - [5. @NonNull для валидации](#5-nonnull-для-валидации)
   - [6. @Cleanup для ресурсов](#6-cleanup-для-ресурсов)
   - [7. Избегайте @Data для JPA сущностей](#7-избегайте-data-для-jpa-сущностей)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
 - [Заключение](#заключение)
   - [Когда использовать Lombok](#когда-использовать-lombok)
   - [Альтернативы](#альтернативы)
   - [Советы по миграции](#советы-по-миграции)
+- [См. также](#см-также)
 
 ## Введение в Lombok
 

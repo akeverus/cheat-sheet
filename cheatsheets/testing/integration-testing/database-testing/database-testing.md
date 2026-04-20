@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Тестирование базы данных (Database Testing)
 
@@ -34,16 +34,28 @@ updated: "2026-02-11"
 - [Зачем тестировать БД](#зачем-тестировать-бд)
 - [Подходы](#подходы)
 - [Подключение](#подключение)
+  - [Testcontainers + PostgreSQL (Maven)](#testcontainers-postgresql-maven)
+  - [H2 (Maven)](#h2-maven)
+  - [Тестовый профиль (application-test.yml)](#тестовый-профиль-application-testyml)
 - [Базовое использование](#базовое-использование)
+  - [@DataJpaTest с Testcontainers](#datajpatest-с-testcontainers)
+  - [@SpringBootTest с Testcontainers](#springboottest-с-testcontainers)
+  - [Инициализация данных](#инициализация-данных)
 - [Изоляция данных и транзакции](#изоляция-данных-и-транзакции)
 - [Миграции в тестах](#миграции-в-тестах)
 - [Дополнительные приёмы](#дополнительные-приёмы)
+  - [Testcontainers с init-скриптом](#testcontainers-с-init-скриптом)
+  - [Нативные запросы через EntityManager](#нативные-запросы-через-entitymanager)
+  - [MySQL через Testcontainers](#mysql-через-testcontainers)
 - [CI/CD](#cicd)
+  - [GitHub Actions](#github-actions)
+  - [GitLab CI](#gitlab-ci)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Итоговые таблицы](#итоговые-таблицы)
-
+  - [Основные аннотации](#основные-аннотации)
+  - [Когда что использовать](#когда-что-использовать)
 
 ## Зачем тестировать БД
 

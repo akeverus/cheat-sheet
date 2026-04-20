@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # PostgreSQL: Мониторинг
 
@@ -27,7 +27,6 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [PostgreSQL: Мониторинг](#postgresql-мониторинг)
 - [Введение](#введение)
 - [Встроенные статистические представления](#встроенные-статистические-представления)
   - [pg_stat_activity](#pg_stat_activity)
@@ -52,18 +51,12 @@ updated: "2026-02-11"
   - [Неиспользуемые индексы](#неиспользуемые-индексы)
 - [Prometheus и Grafana](#prometheus-и-grafana)
   - [PostgreSQL Exporter](#postgresql-exporter)
-- [Установка PostgreSQL Exporter](#установка-postgresql-exporter)
-- [Создание пользователя для мониторинга](#создание-пользователя-для-мониторинга)
   - [Конфигурация](#конфигурация)
-- [postgres_exporter.yml](#postgres_exporteryml)
   - [Prometheus Configuration](#prometheus-configuration)
-- [prometheus.yml](#prometheusyml)
   - [Grafana Dashboard](#grafana-dashboard)
 - [Алерты и уведомления](#алерты-и-уведомления)
   - [Prometheus Alert Rules](#prometheus-alert-rules)
-- [alerts.yml](#alertsyml)
   - [Настройка Alertmanager](#настройка-alertmanager)
-- [alertmanager.yml](#alertmanageryml)
   - [Регулярный мониторинг](#регулярный-мониторинг)
   - [Оптимизация запросов](#оптимизация-запросов)
   - [Мониторинг репликации](#мониторинг-репликации)
@@ -83,9 +76,6 @@ updated: "2026-02-11"
   - [Monitoring Dashboard Queries](#monitoring-dashboard-queries)
 - [Integration with External Tools](#integration-with-external-tools)
   - [pgBadger Integration](#pgbadger-integration)
-- [Настройка логирования для pgBadger](#настройка-логирования-для-pgbadger)
-- [В postgresql.conf:](#в-postgresqlconf)
-- [Генерация отчета](#генерация-отчета)
   - [Custom Exporter for Prometheus](#custom-exporter-for-prometheus)
 - [Решение проблем](#решение-проблем)
 

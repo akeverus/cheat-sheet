@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-rest.md"]
 next: ["api/graphql.md", "spring/spring-webflux.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
 ---
 
@@ -31,7 +31,6 @@ related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
 - [Настройка Spring GraphQL](#настройка-spring-graphql)
   - [Зависимости](#зависимости)
   - [Конфигурация](#конфигурация)
-- [GraphQL Configuration](#graphql-configuration)
 - [Schema Definition](#schema-definition)
   - [Базовый Schema](#базовый-schema)
 - [Query Resolvers](#query-resolvers)
@@ -48,8 +47,6 @@ related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
   - [Custom Exception Handler](#custom-exception-handler)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте правильные типы данных](#1-используйте-правильные-типы-данных)
-- [ Хорошо](#хорошо)
-- [ Плохо](#плохо)
   - [2. Используйте Input типы для мутаций](#2-используйте-input-типы-для-мутаций)
   - [3. Обрабатывайте ошибки](#3-обрабатывайте-ошибки)
   - [4. Используйте DataLoader для N+1 проблем](#4-используйте-dataloader-для-n1-проблем)
@@ -93,6 +90,7 @@ related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
   - [Авторизация на уровне полей](#авторизация-на-уровне-полей)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring GraphQL
 

@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring-boot", "java-basics", "databases"]
 next: ["spring-data-jpa.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 ---
 
 # Spring Data JPA + Hibernate: ORM и работа с данными
@@ -39,12 +39,10 @@ updated: "2026-02-06"
 
 ## Содержание
 
-- [Spring Data JPA + Hibernate: ORM и работа с данными](#spring-data-jpa-hibernate-orm-и-работа-с-данными)
 - [Введение в ORM и JPA](#введение-в-orm-и-jpa)
   - [Что такое ORM?](#что-такое-orm)
   - [JPA vs Hibernate](#jpa-vs-hibernate)
   - [Настройка проекта](#настройка-проекта)
-- [application.yml](#applicationyml)
 - [Маппинг сущностей](#маппинг-сущностей)
   - [Базовая сущность](#базовая-сущность)
   - [Аннотации JPA](#аннотации-jpa)
@@ -77,7 +75,6 @@ updated: "2026-02-06"
 - [Кэширование](#кэширование)
   - [First Level Cache (L1)](#first-level-cache-l1)
   - [Second Level Cache (L2)](#second-level-cache-l2)
-- [Ehcache 3](#ehcache-3)
   - [Query Cache](#query-cache)
 - [Транзакции](#транзакции)
   - [Декларативные транзакции](#декларативные-транзакции)
@@ -88,7 +85,6 @@ updated: "2026-02-06"
   - [Пагинация](#пагинация)
   - [Batch операции](#batch-операции)
   - [Оптимизация Hibernate](#оптимизация-hibernate)
-- [Enable SQL logging](#enable-sql-logging)
   - [Индексы и статистика](#индексы-и-статистика)
 - [Миграции базы данных](#миграции-базы-данных)
   - [Flyway](#flyway)
@@ -113,11 +109,7 @@ updated: "2026-02-06"
     - [Hibernate Statistics](#hibernate-statistics)
     - [SQL Logging](#sql-logging)
     - [VisualVM для профилирования](#visualvm-для-профилирования)
-- [Запуск приложения с JMX](#запуск-приложения-с-jmx)
   - [Полезные команды](#полезные-команды)
-- [Проверка структуры БД](#проверка-структуры-бд)
-- [Генерация schema](#генерация-schema)
-- [Вывод всех entities](#вывод-всех-entities)
 - [Заключение](#заключение)
 - [См. также](#см-также)
 

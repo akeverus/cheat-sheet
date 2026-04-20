@@ -44,7 +44,7 @@ updated: "2026-04-20"
 - [ManyToOne и OneToMany](#manytoone-и-onetomany)
   - [ManyToOne: владеющая сторона](#manytoone-владеющая-сторона)
   - [Bidirectional OneToMany с mappedBy](#bidirectional-onetomany-с-mappedby)
-  - [Unidirectional OneToMany — антипаттерн](#unidirectional-onetomany--антипаттерн)
+  - [Unidirectional OneToMany — антипаттерн](#unidirectional-onetomany-антипаттерн)
   - [orphanRemoval](#orphanremoval)
 - [ManyToMany](#manytomany)
   - [Классический JoinTable](#классический-jointable)
@@ -55,7 +55,13 @@ updated: "2026-04-20"
 - [equals и hashCode](#equals-и-hashcode)
 - [Наследование сущностей](#наследование-сущностей)
 - [Типичные ошибки](#типичные-ошибки)
+  - [N+1 при обходе коллекции](#n1-при-обходе-коллекции)
+  - [MultipleBagFetchException](#multiplebagfetchexception)
+  - [StackOverflowError в toString / equals](#stackoverflowerror-в-tostring-equals)
+  - [LazyInitializationException](#lazyinitializationexception)
+  - [Cartesian product](#cartesian-product)
 - [Лучшие практики](#лучшие-практики)
+- [См. также](#см-также-1)
 
 ## Направление ассоциации
 

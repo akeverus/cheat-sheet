@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Slack Alerting
 
@@ -42,6 +42,9 @@ updated: "2026-02-11"
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Глоссарий и таблицы](#глоссарий-и-таблицы)
+  - [Поля slack_configs (Alertmanager)](#поля-slack_configs-alertmanager)
+  - [Сравнение способов отправки](#сравнение-способов-отправки)
+  - [Данные в шаблоне Alertmanager](#данные-в-шаблоне-alertmanager)
 
 ## Введение
 

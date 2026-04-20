@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Java Collections: Map
 
@@ -73,6 +73,7 @@ updated: "2026-02-11"
   - [Фабричные методы Java 9](#фабричные-методы-java-9)
   - [Инициализация с помощью Guava](#инициализация-с-помощью-guava)
 - [Лучшие практики](#лучшие-практики)
+- [См. также](#см-также)
 
 ## Руководство по HashMap
 

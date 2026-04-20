@@ -7,7 +7,7 @@ tags:
   - architecture
   - adr
 type: "index"
-updated: "2026-04-17"
+updated: "2026-04-20"
 ---
 # Architectural Decision Records (ADR)
 

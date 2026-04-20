@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-collections-set.md", "scala/scala-collections-map.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
@@ -35,7 +35,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 
 ## Содержание
 
-- [Scala Collections — List](#scala-collections-list)
 - [Введение в List](#введение-в-list)
   - [Основные характеристики](#основные-характеристики)
   - [Immutable vs Mutable](#immutable-vs-mutable)
@@ -47,6 +46,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
   - [Основные операции](#основные-операции)
   - [Добавление элементов](#добавление-элементов)
 - [Mutable ListBuffer](#mutable-listbuffer)
+- [Основные операции](#основные-операции-1)
   - [Map — преобразование элементов](#map-преобразование-элементов)
   - [Filter — фильтрация элементов](#filter-фильтрация-элементов)
   - [FlatMap — преобразование и разворачивание](#flatmap-преобразование-и-разворачивание)
@@ -74,6 +74,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
   - [Реализация стека и очереди](#реализация-стека-и-очереди)
   - [Обработка больших списков](#обработка-больших-списков)
   - [Работа с вложенными списками](#работа-с-вложенными-списками)
+  - [Обработка больших списков](#обработка-больших-списков-1)
   - [Рекурсивная обработка списков](#рекурсивная-обработка-списков)
 - [Продвинутые техники работы с List](#продвинутые-техники-работы-с-list)
   - [Оптимизация производительности List](#оптимизация-производительности-list)

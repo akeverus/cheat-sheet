@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Обзор инфраструктурных инструментов
 
@@ -31,7 +31,6 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [См. также](#см-также)
 - [Введение](#введение)
 - [Terraform — Infrastructure as Code](#terraform-infrastructure-as-code)
   - [Основные концепции](#основные-концепции)

@@ -10,7 +10,7 @@ tags:
   - secondary-indexes
 difficulty: "advanced"
 prerequisites: ["databases/clickhouse-queries.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.md"]
 ---
 
@@ -24,9 +24,14 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
 - [Indexes](https://clickhouse.com/docs/en/optimize/skipping-indexes)
 - [Partitioning](https://clickhouse.com/docs/en/guides/best-practices#partitioning)
 - [Query Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
+- [Index Best Practices](https://clickhouse.com/docs/en/guides/best-practices)
 
 ### Обучающие материалы
 - [ClickHouse Indexing](https://www.baeldung.com/clickhouse-indexes)
+
+### Инструменты
+- [ClickHouse Benchmark](https://clickhouse.com/docs/en/operations/utilities/clickhouse-benchmark)
+- [System Tables](https://clickhouse.com/docs/en/operations/system-tables)
 
 ### См. также
 - [[clickhouse-queries|Запросы]] — оптимизация запросов
@@ -64,9 +69,11 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
   - [Материализация вычислений](#материализация-вычислений)
 - [Мониторинг индексов](#мониторинг-индексов)
   - [Системные таблицы для анализа](#системные-таблицы-для-анализа)
-  - [Решение проблем](#решение-проблем)
-- [Best Practices](#лучшие-практики)
+- [Решение проблем](#решение-проблем)
+- [Лучшие практики](#лучшие-практики)
   - [Проектирование первичного ключа](#проектирование-первичного-ключа)
+  - [Вторичные индексы](#вторичные-индексы-1)
+  - [Партиционирование](#партиционирование-1)
   - [Мониторинг и обслуживание](#мониторинг-и-обслуживание)
   - [Ключевые принципы:](#ключевые-принципы)
   - [Рекомендации:](#рекомендации)
@@ -1044,21 +1051,6 @@ ORDER BY event_time DESC;
 - **Производительность** — глубокий тюнинг и оптимизация
 
 **ClickHouse** предоставляет мощные инструменты для оптимизации, но требует тщательного планирования и мониторинга. Продвинутые стратегии индексации позволяют добиться максимальной производительности даже с петабайтами данных.
-
-## Полезные ссылки
-
-### Официальная документация
-- [Indexes](https://clickhouse.com/docs/en/optimize/skipping-indexes)
-- [Partitioning](https://clickhouse.com/docs/en/guides/best-practices#partitioning)
-- [Query Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
-
-### Руководства
-- [Index Best Practices](https://clickhouse.com/docs/en/guides/best-practices)
-- [Partitioning Guide](https://clickhouse.com/docs/en/guides/best-practices#partitioning)
-
-### Инструменты
-- [ClickHouse Benchmark](https://clickhouse.com/docs/en/operations/utilities/clickhouse-benchmark)
-- [System Tables](https://clickhouse.com/docs/en/operations/system-tables)
 
 
 **Следующие темы:**

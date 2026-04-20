@@ -9,7 +9,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-fp-basics.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 ---
 
@@ -28,7 +28,6 @@ related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 
 ## Содержание
 
-- [Scala For Comprehensions](#scala-for-comprehensions)
 - [Введение в For-comprehensions](#введение-в-for-comprehensions)
   - [Основные преимущества](#основные-преимущества)
 - [Базовые For-comprehensions](#базовые-for-comprehensions)
@@ -51,8 +50,8 @@ related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
   - [Использование for-comprehensions с различными типами](#использование-for-comprehensions-с-различными-типами)
   - [Комбинирование различных типов](#комбинирование-различных-типов)
   - [Избегание излишней вложенности](#избегание-излишней-вложенности)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные техники работы с For-comprehensions](#дополнительные-техники-работы-с-for-comprehensions)
   - [Работа с вложенными For-comprehensions](#работа-с-вложенными-for-comprehensions)

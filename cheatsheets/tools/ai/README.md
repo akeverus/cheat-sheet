@@ -6,7 +6,7 @@ tags:
   - index
   - ai-tools
 type: "index"
-updated: "2026-03-16"
+updated: "2026-04-20"
 ---
 
 # AI-инструменты для разработки

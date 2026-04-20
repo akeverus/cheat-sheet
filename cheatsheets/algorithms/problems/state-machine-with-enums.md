@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # State Machine with Enums
 
@@ -26,7 +26,6 @@ A **guide** to **implementing finite state machines** in **Java using Enums**, *
 
 ## Содержание
 
-- [State Machine with Enums](#state-machine-with-enums)
 - [Обзор](#обзор)
 - [What are Java Enums?](#what-are-java-enums)
 - [Basic Enum Example](#basic-enum-example)

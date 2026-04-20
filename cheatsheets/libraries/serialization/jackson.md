@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Jackson: JSON сериализация в Java
 
@@ -57,13 +57,10 @@ updated: "2026-02-11"
 - [Интеграция с Spring Boot](#интеграция-с-spring-boot)
   - [Автоматическая конфигурация](#автоматическая-конфигурация)
   - [Spring Boot Properties](#spring-boot-properties)
-- [application.yml](#applicationyml)
 - [Лучшие практики](#лучшие-практики)
   - [1. Переиспользование ObjectMapper](#1-переиспользование-objectmapper)
   - [2. Обработка ошибок](#2-обработка-ошибок)
   - [3. Производительность](#3-производительность)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
 - [Заключение](#заключение)
   - [Преимущества Jackson](#преимущества-jackson)
   - [Когда использовать Jackson](#когда-использовать-jackson)
@@ -84,6 +81,7 @@ updated: "2026-02-11"
 - [Модульная архитектура](#модульная-архитектура)
   - [Создание собственных модулей](#создание-собственных-модулей)
   - [Dynamic Module Loading](#dynamic-module-loading)
+- [Производительность и оптимизация](#производительность-и-оптимизация-1)
   - [Buffer Recycling](#buffer-recycling)
   - [Memory-Mapped Files](#memory-mapped-files)
 - [Интеграция с другими технологиями](#интеграция-с-другими-технологиями)
@@ -94,10 +92,11 @@ updated: "2026-02-11"
   - [Property-based Testing с Jackson](#property-based-testing-с-jackson)
 - [Миграция и обновление](#миграция-и-обновление)
   - [Migration Guide (Jackson 2.x)](#migration-guide-jackson-2x)
-- [Troubleshooting и дебаггинг](#troubleshooting-и-дебаггинг)
+- [Решение проблем и дебаггинг](#решение-проблем-и-дебаггинг)
   - [Debug Logging](#debug-logging)
   - [Common Issues и Solutions](#common-issues-и-solutions)
 - [Альтернативы](#альтернативы)
+- [См. также](#см-также)
 
 ## Введение в Jackson
 

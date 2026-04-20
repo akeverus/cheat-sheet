@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kotlin Ktor
 
@@ -68,6 +68,7 @@ updated: "2026-02-11"
   - [Custom Plugins](#custom-plugins)
   - [Content Negotiation](#content-negotiation)
   - [Status Pages](#status-pages)
+- [Аутентификация и авторизация](#аутентификация-и-авторизация-1)
   - [JWT Authentication](#jwt-authentication)
   - [Session Authentication](#session-authentication)
 - [Работа с базами данных](#работа-с-базами-данных)
@@ -92,15 +93,19 @@ updated: "2026-02-11"
 - [Масштабирование Ktor приложений](#масштабирование-ktor-приложений)
   - [Горизонтальное масштабирование](#горизонтальное-масштабирование)
   - [Load Balancing](#load-balancing)
+- [Продвинутые техники Ktor](#продвинутые-техники-ktor-1)
   - [Кастомные плагины и middleware](#кастомные-плагины-и-middleware)
   - [Работа с WebSockets](#работа-с-websockets)
+- [Продвинутые техники Ktor](#продвинутые-техники-ktor-2)
   - [Работа с файлами и загрузками](#работа-с-файлами-и-загрузками)
   - [Работа с сессиями](#работа-с-сессиями)
 - [Дополнительные техники Ktor](#дополнительные-техники-ktor)
   - [Работа с Content Negotiation](#работа-с-content-negotiation)
   - [Работа с Status Pages](#работа-с-status-pages)
+- [Дополнительные техники Ktor](#дополнительные-техники-ktor-1)
   - [Работа с HTTP клиентом](#работа-с-http-клиентом)
   - [Работа с multipart запросами](#работа-с-multipart-запросами)
+- [Дополнительные техники Ktor](#дополнительные-техники-ktor-2)
   - [Работа с middleware](#работа-с-middleware)
 - [Лучшие практики](#лучшие-практики)
 - [Практические примеры использования](#практические-примеры-использования)

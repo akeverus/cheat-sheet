@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kodein
 
@@ -47,6 +47,7 @@ updated: "2026-02-11"
   - [Integration Testing](#integration-testing)
   - [Property Testing](#property-testing)
 - [Лучшие практики](#лучшие-практики)
+  - [Module Organization](#module-organization-1)
   - [Error Handling](#error-handling)
   - [Performance Optimization](#performance-optimization)
 - [Отладка и устранение неполадок](#отладка-и-устранение-неполадок)

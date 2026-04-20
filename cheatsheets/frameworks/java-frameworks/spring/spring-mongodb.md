@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-data-jpa.md"]
 next: ["databases/mongodb.md", "spring/spring-data-jpa.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongodb.md"]
 ---
 
@@ -30,7 +30,6 @@ related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongo
 - [Настройка Spring Data MongoDB](#настройка-spring-data-mongodb)
   - [Зависимости](#зависимости)
   - [Конфигурация](#конфигурация)
-- [MongoDB Configuration](#mongodb-configuration)
   - [Java Configuration](#java-configuration)
 - [Document Entity](#document-entity)
   - [Базовый Document](#базовый-document)
@@ -69,7 +68,6 @@ related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongo
   - [Health Check](#health-check)
 - [Оптимизация производительности](#оптимизация-производительности)
   - [Connection Pooling](#connection-pooling)
-- [MongoDB Connection Pool Configuration](#mongodb-connection-pool-configuration)
   - [Read Preferences](#read-preferences)
   - [Write Concerns](#write-concerns)
 - [Безопасность](#безопасность)
@@ -79,6 +77,7 @@ related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongo
   - [Embedded MongoDB](#embedded-mongodb)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Data MongoDB
 

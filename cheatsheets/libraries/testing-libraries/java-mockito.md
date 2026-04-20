@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Mockito
 
@@ -31,14 +31,14 @@ updated: "2026-02-11"
 - [Основные возможности](#основные-возможности)
   - [Создание Mock объектов](#создание-mock-объектов)
   - [Stubbing методов](#stubbing-методов)
-  - [Матчеры аргументов](#argument-matchers)
+  - [Argument Matchers](#argument-matchers)
   - [Verification (проверка вызовов)](#verification-проверка-вызовов)
 - [Продвинутые возможности](#продвинутые-возможности)
   - [Spy объекты](#spy-объекты)
   - [BDD стиль тестирования](#bdd-стиль-тестирования)
   - [@Mock и @InjectMocks аннотации](#mock-и-injectmocks-аннотации)
-  - [Захват аргументов](#capturing-arguments)
-  - [Пользовательский Answer](#custom-answer)
+  - [Capturing Arguments](#capturing-arguments)
+  - [Custom Answer](#custom-answer)
 - [Интеграция с Spring Boot](#интеграция-с-spring-boot)
   - [MockMvc для Controller тестирования](#mockmvc-для-controller-тестирования)
   - [Testing Service Layer](#testing-service-layer)
@@ -46,7 +46,7 @@ updated: "2026-02-11"
 - [Паттерны тестирования](#паттерны-тестирования)
   - [Test Data Builders](#test-data-builders)
   - [Behavior Verification Patterns](#behavior-verification-patterns)
-- [Продвинутые возможности](#продвинутые-возможности)
+- [Продвинутые возможности](#продвинутые-возможности-1)
   - [Deep Stubbing](#deep-stubbing)
   - [Strict vs Lenient Mocks](#strict-vs-lenient-mocks)
   - [Mock Settings и Options](#mock-settings-и-options)
@@ -59,11 +59,11 @@ updated: "2026-02-11"
   - [Mockito + JUnit 5](#mockito-junit-5)
   - [Mockito + Testcontainers](#mockito-testcontainers)
 - [Лучшие практики](#лучшие-практики)
-  - [Структура тестов](#test-structure)
-  - [Рекомендации Mock vs Spy](#mock-vs-spy-guidelines)
+  - [Test Structure](#test-structure)
+  - [Mock vs Spy Guidelines](#mock-vs-spy-guidelines)
 - [Решение проблем](#решение-проблем)
-  - [Типичные проблемы](#common-issues)
-  - [Отладка тестов Mockito](#debugging-mockito-tests)
+  - [Common Issues](#common-issues)
+  - [Debugging Mockito Tests](#debugging-mockito-tests)
 - [Руководство по миграции](#руководство-по-миграции)
   - [From EasyMock to Mockito](#from-easymock-to-mockito)
   - [From JMock to Mockito](#from-jmock-to-mockito)
@@ -71,6 +71,7 @@ updated: "2026-02-11"
   - [Mockito 3.x to 4.x Migration](#mockito-3x-to-4x-migration)
 - [Экспериментальные возможности](#экспериментальные-возможности)
   - [Mockito 5.x Features (Future)](#mockito-5x-features-future)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

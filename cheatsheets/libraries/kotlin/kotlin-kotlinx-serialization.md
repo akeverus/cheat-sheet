@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # kotlinx.serialization
 
@@ -65,12 +65,12 @@ updated: "2026-02-11"
 - [Testing](#testing)
   - [Unit Testing сериализации](#unit-testing-сериализации)
   - [Integration Testing](#integration-testing)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [Структура проекта](#структура-проекта)
   - [Кастомные сериализаторы](#кастомные-сериализаторы)
   - [Конфигурация JSON](#конфигурация-json)
   - [Error Handling](#error-handling)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging сериализации](#debugging-сериализации)
 - [Migration Guide](#migration-guide)
@@ -81,6 +81,7 @@ updated: "2026-02-11"
   - [Inline Classes и Value Classes](#inline-classes-и-value-classes)
   - [Context Receivers (Kotlin 1.6.20+)](#context-receivers-kotlin-1620)
   - [Unsigned Types Support](#unsigned-types-support)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-akka.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---
 
@@ -32,7 +32,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 
 ## Содержание
 
-- [Scala Concurrency](#scala-concurrency)
 - [Введение в конкурентность](#введение-в-конкурентность)
 - [Futures](#futures)
   - [Создание Futures](#создание-futures)
@@ -55,14 +54,16 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [Обработка ошибок в Futures](#обработка-ошибок-в-futures)
 - [Таймауты и отмена](#таймауты-и-отмена)
 - [Продвинутые техники конкурентности](#продвинутые-техники-конкурентности)
+  - [ExecutionContext](#executioncontext-1)
   - [Координация Future](#координация-future)
   - [Обработка ошибок в Future](#обработка-ошибок-в-future)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Расширенные техники конкурентности](#расширенные-техники-конкурентности)
   - [Работа с ExecutionContext](#работа-с-executioncontext)
   - [Координация множественных Future](#координация-множественных-future)
+  - [Обработка ошибок в Future](#обработка-ошибок-в-future-1)
   - [Практические примеры: Координация множественных Future](#практические-примеры-координация-множественных-future)
   - [Практические примеры: Таймауты и отмена](#практические-примеры-таймауты-и-отмена)
   - [Практические примеры: Работа с ExecutionContext](#практические-примеры-работа-с-executioncontext)

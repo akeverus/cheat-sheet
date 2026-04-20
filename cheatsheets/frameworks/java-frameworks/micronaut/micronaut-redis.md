@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-cache.md"]
 next: ["micronaut-cache.md", "micronaut-data.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-cache.md", "micronaut-messaging.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-cache.md", "micronaut-messaging.md"]
 
 ## Содержание
 
-- [Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache](#micronaut-redis-integration-redistemplate-pubsub-и-cache)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Redis](#настройка-redis)
@@ -44,13 +43,14 @@ related: ["micronaut-cache.md", "micronaut-messaging.md"]
   - [Redis Transactions](#redis-transactions)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте connection pooling](#1-используйте-connection-pooling)
-- [ Хорошо](#хорошо)
   - [2. Настраивайте timeout правильно](#2-настраивайте-timeout-правильно)
   - [3. Используйте pub/sub для событий](#3-используйте-pubsub-для-событий)
   - [4. Используйте distributed locks для критических секций](#4-используйте-distributed-locks-для-критических-секций)
   - [5. Обрабатывайте ошибки Redis](#5-обрабатывайте-ошибки-redis)
 - [Set Operations](#set-operations)
+  - [Set Operations](#set-operations-1)
 - [Sorted Set Operations](#sorted-set-operations)
+  - [Sorted Set Operations](#sorted-set-operations-1)
 - [Lua Scripts](#lua-scripts)
   - [Executing Lua Scripts](#executing-lua-scripts)
 - [Redis Cluster](#redis-cluster)
@@ -67,6 +67,7 @@ related: ["micronaut-cache.md", "micronaut-messaging.md"]
   - [HyperLogLog Operations](#hyperloglog-operations)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

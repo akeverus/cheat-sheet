@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-messaging.md"]
 next: ["messaging/kafka.md", "spring/spring-cloud.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "messaging/kafka.md"]
 ---
 
@@ -31,12 +31,12 @@ related: ["spring/spring-boot.md", "messaging/kafka.md"]
 - [Настройка Spring Kafka](#настройка-spring-kafka)
   - [Зависимости](#зависимости)
   - [Конфигурация](#конфигурация)
-- [Kafka Configuration](#kafka-configuration)
 - [KafkaTemplate (Producer)](#kafkatemplate-producer)
   - [Базовое использование](#базовое-использование)
   - [Отправка объектов](#отправка-объектов)
   - [Асинхронная отправка с Callback](#асинхронная-отправка-с-callback)
 - [@KafkaListener (Consumer)](#kafkalistener-consumer)
+  - [Базовое использование](#базовое-использование-1)
   - [Получение объектов](#получение-объектов)
   - [Несколько topics](#несколько-topics)
   - [Фильтрация сообщений](#фильтрация-сообщений)
@@ -74,6 +74,7 @@ related: ["spring/spring-boot.md", "messaging/kafka.md"]
   - [Compression](#compression)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring for Apache Kafka
 

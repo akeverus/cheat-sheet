@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Protocol Buffers (Protobuf)
 
@@ -30,8 +30,6 @@ updated: "2026-02-11"
 - [Основные возможности](#основные-возможности)
   - [Определение схемы (.proto файлы)](#определение-схемы-proto-файлы)
   - [Генерация Java кода](#генерация-java-кода)
-- [Генерация Java классов из .proto файла](#генерация-java-классов-из-proto-файла)
-- [Или через Maven/Gradle плагин](#или-через-mavengradle-плагин)
   - [Базовое использование](#базовое-использование)
   - [Работа с JSON](#работа-с-json)
 - [Продвинутые возможности](#продвинутые-возможности)
@@ -70,16 +68,17 @@ updated: "2026-02-11"
   - [Protobuf vs JSON vs XML](#protobuf-vs-json-vs-xml)
 - [Migration и Best Practices](#migration-и-best-practices)
   - [Migration from JSON](#migration-from-json)
-  - [Best Practices](#best-practices)
+  - [Лучшие практики](#лучшие-практики)
 - [Advanced Features](#advanced-features)
   - [Dynamic Messages](#dynamic-messages)
   - [Custom Code Generation](#custom-code-generation)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)
 - [Experimental Features](#experimental-features)
   - [Proto4 (предварительная версия)](#proto4-предварительная-версия)
   - [Zero-copy сериализация](#zero-copy-сериализация)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

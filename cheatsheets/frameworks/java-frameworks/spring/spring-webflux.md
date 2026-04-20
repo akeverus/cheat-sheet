@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Spring WebFlux для Java
 
@@ -41,8 +41,8 @@ updated: "2026-02-11"
 - [Введение в Spring WebFlux](#введение-в-spring-webflux)
   - [Почему WebFlux?](#почему-webflux)
   - [Когда использовать WebFlux?](#когда-использовать-webflux)
- - [ Идеально подходит для:](#идеально-подходит-для)
- - [ Не подходит для:](#не-подходит-для)
+    - [Идеально подходит для:](#идеально-подходит-для)
+    - [Не подходит для:](#не-подходит-для)
   - [Архитектурные преимущества](#архитектурные-преимущества)
     - [Non-blocking I/O](#non-blocking-io)
     - [Backpressure handling](#backpressure-handling)
@@ -128,22 +128,12 @@ updated: "2026-02-11"
 - [Production deployment](#production-deployment)
   - [Configuration management](#configuration-management)
     - [Environment-specific configuration](#environment-specific-configuration)
-- [application-prod.yaml](#application-prodyaml)
     - [Docker configuration](#docker-configuration)
-- [Install required packages](#install-required-packages)
-- [Create app user](#create-app-user)
-- [Set working directory](#set-working-directory)
-- [Copy application](#copy-application)
-- [Change ownership](#change-ownership)
-- [Switch to non-root user](#switch-to-non-root-user)
-- [Health check](#health-check)
-- [JVM tuning for containers](#jvm-tuning-for-containers)
-- [Start application](#start-application)
     - [Kubernetes deployment](#kubernetes-deployment)
   - [Monitoring и alerting](#monitoring-и-alerting)
     - [Micrometer metrics](#micrometer-metrics)
     - [Custom metrics](#custom-metrics)
-- [Best practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [Application design](#application-design)
     - [1. Choose appropriate return types](#1-choose-appropriate-return-types)
     - [2. Handle blocking operations properly](#2-handle-blocking-operations-properly)
@@ -166,8 +156,10 @@ updated: "2026-02-11"
     - [Performance monitoring](#performance-monitoring)
 - [Заключение](#заключение)
   - [Ключевые возможности:](#ключевые-возможности)
+  - [Архитектурные преимущества:](#архитектурные-преимущества-1)
     - [Performance:](#performance)
     - [Scalability:](#scalability)
+  - [Когда использовать WebFlux:](#когда-использовать-webflux-1)
   - [Когда НЕ использовать:](#когда-не-использовать)
   - [Production considerations:](#production-considerations)
   - [Best practices summary:](#best-practices-summary)

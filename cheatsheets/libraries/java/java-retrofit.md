@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Retrofit
 
@@ -67,13 +67,14 @@ updated: "2026-02-11"
   - [Compression](#compression)
 - [Migration и Best Practices](#migration-и-best-practices)
   - [Migration from HttpUrlConnection](#migration-from-httpurlconnection)
-  - [Best Practices](#best-practices)
+  - [Лучшие практики](#лучшие-практики)
 - [Experimental Features](#experimental-features)
   - [Kotlin Coroutines Support](#kotlin-coroutines-support)
   - [Kotlin Serialization](#kotlin-serialization)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

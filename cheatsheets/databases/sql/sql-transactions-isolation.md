@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["sql-basics.md"]
 next: ["../relational/postgresql/postgres-transactions.md"]
-updated: "2026-04-10"
+updated: "2026-04-20"
 ---
 
 # SQL: транзакции и уровни изоляции
@@ -40,6 +40,7 @@ updated: "2026-04-10"
 - [Deadlock](#deadlock)
 - [Spring @Transactional](#spring-transactional)
 - [Практические рекомендации](#практические-рекомендации)
+- [См. также](#см-также)
 
 ## ACID
 

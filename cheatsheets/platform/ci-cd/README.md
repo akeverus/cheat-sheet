@@ -5,7 +5,7 @@ tags:
   - meta
   - index
 type: "index"
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # CI/CD
 
@@ -19,13 +19,9 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [[jenkins]]
-- [[gitlab-ci|GitLab CI]]
-- [[github-actions|GitHub Actions]]
-- [[circleci]]
-- [[azure-devops|Azure DevOps]]
-- [[tekton]]
-- [[travis-ci|Travis CI]] (legacy/исторический контекст)
+- [Быстрый маршрут: pipeline с нуля](#быстрый-маршрут-pipeline-с-нуля)
+- [Legacy: миграция с Travis CI](#legacy-миграция-с-travis-ci)
+- [См. также](#см-также)
 
 ## Быстрый маршрут: pipeline с нуля
 

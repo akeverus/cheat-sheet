@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md", "java/java-concurrency-basics.md"]
 next: ["vertx-core.md", "vertx-web.md", "vertx-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus/quarkus-reactive.md", "spring/spring-webflux.md"]
 ---
 
@@ -52,7 +52,13 @@ related: ["quarkus/quarkus-reactive.md", "spring/spring-webflux.md"]
   - [Получение конфигурации в Verticle](#получение-конфигурации-в-verticle)
 - [Обработка ошибок](#обработка-ошибок)
 - [Антипаттерны](#антипаттерны)
+  - [1. Не блокировать Event Loop](#1-не-блокировать-event-loop)
+  - [2. Использовать Worker Verticles для блокирующего кода](#2-использовать-worker-verticles-для-блокирующего-кода)
+  - [3. Закрывать ресурсы в stop()](#3-закрывать-ресурсы-в-stop)
+  - [4. Использовать Future для композиции](#4-использовать-future-для-композиции)
 - [WebSocket](#websocket)
+  - [WebSocket Server](#websocket-server)
+  - [WebSocket Client](#websocket-client)
 - [Работа с БД](#работа-с-бд)
   - [PostgreSQL Client](#postgresql-client)
   - [Prepared Queries](#prepared-queries)
@@ -72,7 +78,15 @@ related: ["quarkus/quarkus-reactive.md", "spring/spring-webflux.md"]
   - [Docker](#docker)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
+  - [Blocked thread detected](#blocked-thread-detected)
+  - [Event loop не отвечает](#event-loop-не-отвечает)
+  - [OutOfMemory при большом количестве соединений](#outofmemory-при-большом-количестве-соединений)
+  - [Ошибки подключения к БД в кластере](#ошибки-подключения-к-бд-в-кластере)
+  - [Verticle не развёртывается](#verticle-не-развёртывается)
 - [Заключение](#заключение)
+  - [Ключевые преимущества](#ключевые-преимущества)
+  - [Когда использовать Vert.x](#когда-использовать-vertx)
+- [См. также](#см-также)
 
 ## Введение в Vert.x
 

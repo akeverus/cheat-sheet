@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-reactive.md"]
 next: ["quarkus-reactive.md", "quarkus-messaging.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 ---
 
@@ -24,17 +24,11 @@ related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 
 ## Содержание
 
-- [Quarkus: Kafka — Reactive Messaging и Event Streaming](#quarkus-kafka-reactive-messaging-и-event-streaming)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Конфигурация Kafka](#конфигурация-kafka)
   - [Basic Configuration](#basic-configuration)
-- [Kafka broker](#kafka-broker)
-- [Consumer configuration](#consumer-configuration)
-- [Producer configuration](#producer-configuration)
   - [Advanced Configuration](#advanced-configuration)
-- [Consumer settings](#consumer-settings)
-- [Producer settings](#producer-settings)
 - [Message Producer](#message-producer)
   - [Basic Producer](#basic-producer)
   - [Producer с Payload](#producer-с-payload)
@@ -45,7 +39,6 @@ related: ["quarkus-reactive.md", "quarkus-messaging.md"]
   - [Consumer с Message](#consumer-с-message)
 - [Serialization](#serialization)
   - [JSON Serialization](#json-serialization)
-- [application.properties](#applicationproperties)
   - [Custom Serializer](#custom-serializer)
   - [Custom Deserializer](#custom-deserializer)
 - [Error Handling](#error-handling)
@@ -61,7 +54,6 @@ related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте reactive messaging](#1-используйте-reactive-messaging)
   - [2. Обрабатывайте ошибки](#2-обрабатывайте-ошибки)
-- [ Хорошо](#хорошо)
   - [3. Настраивайте serialization](#3-настраивайте-serialization)
   - [4. Используйте ключи для партиционирования](#4-используйте-ключи-для-партиционирования)
   - [5. Настраивайте retry и timeout](#5-настраивайте-retry-и-timeout)
@@ -81,20 +73,13 @@ related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 - [Error Recovery](#error-recovery)
   - [Retry with Exponential Backoff](#retry-with-exponential-backoff)
   - [Circuit Breaker](#circuit-breaker)
-  - [6. Используйте transactions для exactly-once](#6-используйте-transactions-для-exactly-once)
-  - [7. Мониторьте производительность](#7-мониторьте-производительность)
+- [Advanced Kafka Patterns](#advanced-kafka-patterns-1)
   - [Event Sourcing](#event-sourcing)
   - [CQRS Pattern](#cqrs-pattern)
   - [Saga Pattern](#saga-pattern)
 - [Kafka Performance Tuning](#kafka-performance-tuning)
   - [Producer Performance](#producer-performance)
-- [Batch settings](#batch-settings)
-- [Compression](#compression)
-- [Buffer memory](#buffer-memory)
   - [Consumer Performance](#consumer-performance)
-- [Fetch settings](#fetch-settings)
-- [Max poll records](#max-poll-records)
-- [Session timeout](#session-timeout)
   - [Partitioning Strategy](#partitioning-strategy)
 - [Kafka Monitoring](#kafka-monitoring)
   - [Consumer Lag Monitoring](#consumer-lag-monitoring)
@@ -102,14 +87,16 @@ related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 - [Error Recovery Patterns](#error-recovery-patterns)
   - [Circuit Breaker Pattern](#circuit-breaker-pattern)
   - [Dead Letter Queue Pattern](#dead-letter-queue-pattern)
-- [DLQ configuration](#dlq-configuration)
+  - [Retry with Exponential Backoff](#retry-with-exponential-backoff-1)
 - [Kafka Streams Integration](#kafka-streams-integration)
+  - [Stream Processing](#stream-processing-1)
   - [Windowed Aggregations](#windowed-aggregations)
 - [Kafka Schema Evolution](#kafka-schema-evolution)
   - [Schema Compatibility](#schema-compatibility)
   - [Schema Versioning](#schema-versioning)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

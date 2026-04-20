@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # REST Assured
 
@@ -50,13 +50,14 @@ updated: "2026-02-11"
   - [Object Mapping](#object-mapping)
   - [Extract Response Data](#extract-response-data)
   - [Specification Reuse](#specification-reuse)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [Test Organization](#test-organization)
   - [Data-Driven Tests](#data-driven-tests)
   - [Custom Matchers](#custom-matchers)
 - [Integration с другими инструментами](#integration-с-другими-инструментами)
   - [Cucumber Integration](#cucumber-integration)
   - [Allure Reporting](#allure-reporting)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

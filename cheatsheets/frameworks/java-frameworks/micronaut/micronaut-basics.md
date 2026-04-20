@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md", "kotlin/kotlin-basics.md"]
 next: ["micronaut-reactive.md", "micronaut-testing.md", "micronaut-security.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
 ---
 
@@ -40,22 +40,12 @@ related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
   - [Сравнение с Spring Boot](#сравнение-с-spring-boot)
 - [Установка и настройка](#установка-и-настройка)
   - [Создание проекта](#создание-проекта)
-- [Используя Micronaut CLI](#используя-micronaut-cli)
-- [С features](#с-features)
-- [Для Kotlin](#для-kotlin)
-- [Для Groovy](#для-groovy)
   - [Структура проекта](#структура-проекта)
   - [Gradle (рекомендуется)](#gradle-рекомендуется)
   - [Maven](#maven)
   - [Application Class](#application-class)
 - [Configuration](#configuration)
   - [application.yml](#applicationyml)
-- [Database](#database)
-- [JPA](#jpa)
-- [Kafka](#kafka)
-- [Redis](#redis)
-- [Logging](#logging)
-- [Custom configuration](#custom-configuration)
   - [Configuration Classes](#configuration-classes)
 - [HTTP Controllers](#http-controllers)
   - [Basic Controller](#basic-controller)
@@ -78,7 +68,6 @@ related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
 - [Security](#security)
   - [JWT Authentication](#jwt-authentication)
   - [Security Configuration](#security-configuration)
-- [JWT configuration](#jwt-configuration)
   - [Custom Security](#custom-security)
 - [Observability](#observability)
   - [Health Checks](#health-checks)
@@ -87,18 +76,17 @@ related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
 - [Deployment](#deployment)
   - [Docker](#docker)
   - [Native Image](#native-image)
-- [Build native image](#build-native-image)
-- [Or with Maven](#or-with-maven)
-- [Run native binary](#run-native-binary)
   - [Kubernetes](#kubernetes)
 - [Лучшие практики](#лучшие-практики)
   - [Application Structure](#application-structure)
   - [Performance](#performance)
+  - [Security](#security-1)
   - [Development](#development)
 - [Migration from Spring Boot](#migration-from-spring-boot)
   - [Key Differences](#key-differences)
   - [Migration Steps](#migration-steps)
 - [Решение проблем](#решение-проблем)
+- [См. также](#см-также)
 
 ## Введение в Micronaut
 

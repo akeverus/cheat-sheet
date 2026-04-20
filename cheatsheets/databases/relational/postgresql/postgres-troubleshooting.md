@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # PostgreSQL: Решение проблем
 
@@ -27,7 +27,6 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [PostgreSQL: Решение проблем](#postgresql-решение-проблем)
 - [Введение](#введение)
 - [Блокировки и Deadlocks](#блокировки-и-deadlocks)
   - [Обнаружение блокировок](#обнаружение-блокировок)
@@ -63,7 +62,7 @@ updated: "2026-02-11"
   - [Системные метрики](#системные-метрики)
   - [Анализ производительности](#анализ-производительности)
   - [Инструменты диагностики](#инструменты-диагностики)
-- [Best Practices](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
   - [Регулярная диагностика](#регулярная-диагностика)
   - [Предотвращение проблем](#предотвращение-проблем)
 - [Advanced Troubleshooting Techniques](#advanced-troubleshooting-techniques)
@@ -73,10 +72,6 @@ updated: "2026-02-11"
   - [Анализ медленных запросов](#анализ-медленных-запросов)
 - [Common Issues and Solutions](#common-issues-and-solutions)
   - [Issue 1: Database Won't Start](#issue-1-database-wont-start)
-- [Проверить логи](#проверить-логи)
-- [Проверить права на директорию данных](#проверить-права-на-директорию-данных)
-- [Проверить доступность порта](#проверить-доступность-порта)
-- [Проверить конфигурацию](#проверить-конфигурацию)
   - [Issue 2: Connection Refused](#issue-2-connection-refused)
   - [Issue 3: Out of Disk Space](#issue-3-out-of-disk-space)
   - [Issue 4: High CPU Usage](#issue-4-high-cpu-usage)
@@ -88,16 +83,15 @@ updated: "2026-02-11"
 - [Diagnostic Tools and Scripts](#diagnostic-tools-and-scripts)
   - [Health Check Script](#health-check-script)
   - [Automated Problem Detection](#automated-problem-detection)
+- [Troubleshooting Workflows](#troubleshooting-workflows)
   - [Workflow 1: Database Performance Degradation](#workflow-1-database-performance-degradation)
   - [Workflow 2: Connection Issues](#workflow-2-connection-issues)
   - [Workflow 3: Disk Space Issues](#workflow-3-disk-space-issues)
 - [Real-World Troubleshooting Scenarios](#real-world-troubleshooting-scenarios)
   - [Scenario 1: Sudden Performance Drop](#scenario-1-sudden-performance-drop)
   - [Scenario 2: Database Corruption](#scenario-2-database-corruption)
-- [Проверить целостность данных](#проверить-целостность-данных)
-- [Проверить логи на ошибки](#проверить-логи-на-ошибки)
-- [Выполнить VACUUM FULL для восстановления](#выполнить-vacuum-full-для-восстановления)
   - [Scenario 3: Replication Failure](#scenario-3-replication-failure)
+- [Best Practices Summary](#best-practices-summary)
   - [Регулярный мониторинг](#регулярный-мониторинг)
   - [Проактивное решение проблем](#проактивное-решение-проблем)
   - [Документация проблем](#документация-проблем)
@@ -117,13 +111,9 @@ updated: "2026-02-11"
   - [Baseline Comparison](#baseline-comparison)
 - [Emergency Procedures](#emergency-procedures)
   - [Database Unresponsive](#database-unresponsive)
-- [Шаг 1: Проверить процесс PostgreSQL](#шаг-1-проверить-процесс-postgresql)
-- [Шаг 2: Проверить логи](#шаг-2-проверить-логи)
-- [Шаг 3: Проверить использование ресурсов](#шаг-3-проверить-использование-ресурсов)
-- [Шаг 4: Принудительно завершить проблемные процессы](#шаг-4-принудительно-завершить-проблемные-процессы)
-- [Шаг 5: Перезапустить PostgreSQL](#шаг-5-перезапустить-postgresql)
   - [Data Corruption Recovery](#data-corruption-recovery)
   - [Emergency Maintenance Mode](#emergency-maintenance-mode)
+- [Troubleshooting Checklist](#troubleshooting-checklist)
   - [Daily Checks](#daily-checks)
   - [Weekly Checks](#weekly-checks)
   - [Monthly Checks](#monthly-checks)

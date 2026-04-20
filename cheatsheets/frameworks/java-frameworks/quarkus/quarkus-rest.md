@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: REST — RESTEasy Reactive и JAX-RS](#quarkus-rest-resteasy-reactive-и-jax-rs)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [RESTEasy Reactive](#resteasy-reactive)
@@ -45,6 +44,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
   - [Path Variables](#path-variables)
   - [Path Parameter Validation](#path-parameter-validation)
 - [Query Parameters](#query-parameters)
+  - [Query Parameters](#query-parameters-1)
   - [Multiple Query Parameters](#multiple-query-parameters)
 - [Request/Response Entities](#requestresponse-entities)
   - [JSON Serialization](#json-serialization)
@@ -61,7 +61,6 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 - [CORS Configuration](#cors-configuration)
   - [CORS Filter](#cors-filter)
   - [CORS через конфигурацию](#cors-через-конфигурацию)
-- [application.properties](#applicationproperties)
 - [Request/Response Interceptors](#requestresponse-interceptors)
   - [Method Interceptor](#method-interceptor)
 - [Validation](#validation)
@@ -70,14 +69,11 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 - [OpenAPI Integration](#openapi-integration)
   - [OpenAPI Configuration](#openapi-configuration)
   - [OpenAPI Annotations](#openapi-annotations)
-  - [4. Используйте правильные HTTP методы](#4-используйте-правильные-http-методы)
-  - [5. Используйте правильные статус коды](#5-используйте-правильные-статус-коды)
 - [REST Client](#rest-client)
   - [Declarative REST Client](#declarative-rest-client)
   - [Reactive REST Client](#reactive-rest-client)
 - [Response Caching](#response-caching)
   - [HTTP Caching](#http-caching)
-  - [6. Используйте REST Client для внешних API](#6-используйте-rest-client-для-внешних-api)
 - [Advanced REST Patterns](#advanced-rest-patterns)
   - [Rate Limiting](#rate-limiting)
   - [Request Caching](#request-caching)
@@ -96,6 +92,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
   - [Async REST Client](#async-rest-client)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

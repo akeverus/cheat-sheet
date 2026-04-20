@@ -7,7 +7,7 @@ tags:
   - mattermost
   - collaboration
 type: "index"
-updated: "2026-04-17"
+updated: "2026-04-20"
 ---
 # Mattermost
 

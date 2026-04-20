@@ -12,7 +12,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 next: ["databases/redis-troubleshooting.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 ---
 

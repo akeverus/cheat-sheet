@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md", "spring/spring-boot.md"]
 next: ["dropwizard-core.md", "dropwizard-jersey.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "micronaut/micronaut-basics.md"]
 ---
 
@@ -75,7 +75,15 @@ related: ["spring/spring-boot.md", "micronaut/micronaut-basics.md"]
   - [Graceful Shutdown](#graceful-shutdown)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
+  - [Out of Memory](#out-of-memory)
+  - [Connection Pool Exhaustion](#connection-pool-exhaustion)
+  - [Медленные запросы](#медленные-запросы)
+  - [Порт занят при запуске](#порт-занят-при-запуске)
+  - [Jersey exception mapper не срабатывает](#jersey-exception-mapper-не-срабатывает)
 - [Заключение](#заключение)
+  - [Ключевые преимущества](#ключевые-преимущества)
+  - [Когда использовать Dropwizard](#когда-использовать-dropwizard)
+- [См. также](#см-также)
 
 ## Введение в Dropwizard
 

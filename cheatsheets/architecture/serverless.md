@@ -7,7 +7,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Serverless Architecture
 
@@ -40,7 +40,6 @@ updated: "2026-02-11"
 - [AWS Lambda](#aws-lambda)
   - [Создание Lambda функции на Java](#создание-lambda-функции-на-java)
   - [Конфигурация Lambda](#конфигурация-lambda)
-- [serverless.yml для Serverless Framework](#serverlessyml-для-serverless-framework)
   - [Использование Spring Boot с Lambda](#использование-spring-boot-с-lambda)
 - [Azure Functions](#azure-functions)
   - [Создание Azure Function на Java](#создание-azure-function-на-java)
@@ -58,7 +57,6 @@ updated: "2026-02-11"
   - [Scheduled Trigger](#scheduled-trigger)
 - [Cold Start проблема](#cold-start-проблема)
   - [Стратегии уменьшения Cold Start](#стратегии-уменьшения-cold-start)
-- [serverless.yml](#serverlessyml)
 - [Лучшие практики](#лучшие-практики)
   - [1. Идемпотентность функций](#1-идемпотентность-функций)
   - [2. Обработка ошибок](#2-обработка-ошибок)

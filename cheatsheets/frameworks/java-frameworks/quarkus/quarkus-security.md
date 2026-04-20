@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
 next: ["quarkus-rest.md", "quarkus-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: Security — Authentication, Authorization и OAuth2](#quarkus-security-authentication-authorization-и-oauth2)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Basic Security](#basic-security)
@@ -43,7 +42,6 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
   - [1. Используйте JWT для stateless authentication](#1-используйте-jwt-для-stateless-authentication)
   - [2. Валидируйте все входные данные](#2-валидируйте-все-входные-данные)
   - [3. Используйте HTTPS в production](#3-используйте-https-в-production)
-- [ Хорошо](#хорошо)
 - [Custom Authentication](#custom-authentication)
   - [Custom Identity Provider](#custom-identity-provider)
 - [Security Annotations](#security-annotations)
@@ -53,10 +51,8 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
 - [OAuth2 Resource Server](#oauth2-resource-server)
   - [Resource Server Configuration](#resource-server-configuration)
   - [Resource Server Endpoint](#resource-server-endpoint)
-  - [4. Используйте принцип наименьших привилегий](#4-используйте-принцип-наименьших-привилегий)
 - [OAuth2 Client](#oauth2-client)
   - [OAuth2 Client Configuration](#oauth2-client-configuration)
-- [application.properties](#applicationproperties)
   - [OAuth2 Client Resource](#oauth2-client-resource)
 - [Security Context Propagation](#security-context-propagation)
   - [Async Security Context](#async-security-context)
@@ -70,8 +66,6 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
   - [Security Headers Filter](#security-headers-filter)
 - [Rate Limiting](#rate-limiting)
   - [Rate Limiting Filter](#rate-limiting-filter)
-  - [5. Хешируйте пароли](#5-хешируйте-пароли)
-  - [6. Используйте security headers](#6-используйте-security-headers)
 - [Advanced Security Patterns](#advanced-security-patterns)
   - [Multi-Factor Authentication](#multi-factor-authentication)
   - [Security Audit Logging](#security-audit-logging)
@@ -80,9 +74,11 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
   - [Security Event Logging](#security-event-logging)
   - [Failed Authentication Tracking](#failed-authentication-tracking)
 - [Advanced Authorization Patterns](#advanced-authorization-patterns)
+  - [Dynamic Role Assignment](#dynamic-role-assignment-1)
   - [Resource-Based Authorization](#resource-based-authorization)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

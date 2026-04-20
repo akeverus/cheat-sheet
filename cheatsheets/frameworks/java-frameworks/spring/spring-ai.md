@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Spring AI
 
@@ -37,7 +37,6 @@ updated: "2026-02-11"
 - [Установка и настройка](#установка-и-настройка)
   - [Maven зависимости](#maven-зависимости)
   - [Конфигурация](#конфигурация)
-- [application.yml](#applicationyml)
 - [Chat Client](#chat-client)
   - [Базовое использование](#базовое-использование)
   - [Конфигурация Chat Client](#конфигурация-chat-client)

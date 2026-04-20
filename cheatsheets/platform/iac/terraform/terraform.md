@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Terraform
 
@@ -27,14 +27,25 @@ updated: "2026-02-11"
 - [Основы Terraform](#основы-terraform)
   - [Архитектура Terraform](#архитектура-terraform)
   - [Установка и настройка](#установка-и-настройка)
+    - [Linux/macOS](#linuxmacos)
+    - [Windows](#windows)
+    - [Docker](#docker)
 - [Структура проекта](#структура-проекта)
   - [Базовая структура](#базовая-структура)
   - [Файлы конфигурации](#файлы-конфигурации)
+    - [main.tf](#maintf)
+    - [variables.tf](#variablestf)
+    - [outputs.tf](#outputstf)
 - [Работа с состояниями](#работа-с-состояниями)
   - [Backend конфигурации](#backend-конфигурации)
+    - [S3 Backend](#s3-backend)
+    - [Remote Backend](#remote-backend)
   - [Управление состоянием](#управление-состоянием)
 - [Модули](#модули)
   - [Создание модуля](#создание-модуля)
+    - [modules/vpc/main.tf](#modulesvpcmaintf)
+    - [modules/vpc/variables.tf](#modulesvpcvariablestf)
+    - [Использование модуля](#использование-модуля)
 - [Рабочие процессы](#рабочие-процессы)
   - [Основные команды](#основные-команды)
   - [Продвинутые команды](#продвинутые-команды)

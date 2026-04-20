@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring-core.md"]
 next: ["spring-data.md", "spring-security.md"]
-updated: "2026-04-12"
+updated: "2026-04-20"
 ---
 
 # Spring Boot
@@ -49,6 +49,7 @@ updated: "2026-04-12"
   - [Fat JAR](#fat-jar)
   - [Layered JAR для Docker](#layered-jar-для-docker)
 - [Типичные ошибки](#типичные-ошибки)
+- [См. также](#см-также)
 
 ## Автоконфигурация
 

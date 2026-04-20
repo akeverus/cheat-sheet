@@ -11,7 +11,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["java-concurrency-basics.md"]
 next: ["java-concurrency-advanced.md"]
-updated: "2026-04-10"
+updated: "2026-04-20"
 ---
 
 # Java Memory Model (JMM)
@@ -33,7 +33,7 @@ JMM (JSR-133, Java 5+) определяет правила видимости з
 - [volatile](#volatile)
   - [Что гарантирует volatile](#что-гарантирует-volatile)
   - [Чего volatile НЕ гарантирует](#чего-volatile-не-гарантирует)
-  - [Типичное применение](#типичное-применение-volatile)
+  - [Типичное применение volatile](#типичное-применение-volatile)
 - [synchronized](#synchronized)
   - [Гарантии synchronized](#гарантии-synchronized)
   - [Intrinsic lock (monitor)](#intrinsic-lock-monitor)
@@ -45,6 +45,7 @@ JMM (JSR-133, Java 5+) определяет правила видимости з
 - [Практические паттерны](#практические-паттерны)
 - [Типичные ошибки](#типичные-ошибки)
 - [Лучшие практики](#лучшие-практики)
+- [См. также](#см-также)
 
 ## Три проблемы многопоточности
 

@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md"]
 next: ["quarkus-basics.md", "quarkus-rest.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-basics.md", "quarkus-rest.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-basics.md", "quarkus-rest.md"]
 
 ## Содержание
 
-- [Quarkus: Core — CDI, Bean Scopes и Configuration](#quarkus-core-cdi-bean-scopes-и-configuration)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [CDI Basics](#cdi-basics)
@@ -40,9 +39,6 @@ related: ["quarkus-basics.md", "quarkus-rest.md"]
   - [Using Configuration](#using-configuration)
 - [Profiles](#profiles)
   - [Profile Configuration](#profile-configuration)
-- [Default profile](#default-profile)
-- [Development profile](#development-profile)
-- [Production profile](#production-profile)
   - [Conditional Beans](#conditional-beans)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте constructor injection](#1-используйте-constructor-injection)
@@ -73,12 +69,8 @@ related: ["quarkus-basics.md", "quarkus-rest.md"]
   - [Stereotypes](#stereotypes)
   - [Decorators](#decorators)
   - [Alternatives](#alternatives)
-- [application.properties](#applicationproperties)
 - [Configuration Sources](#configuration-sources)
   - [Multiple Configuration Files](#multiple-configuration-files)
-- [application.properties (основной)](#applicationproperties-основной)
-- [application-dev.properties](#application-devproperties)
-- [application-prod.properties](#application-prodproperties)
   - [Environment Variables](#environment-variables)
   - [System Properties](#system-properties)
 - [Build-Time vs Runtime](#build-time-vs-runtime)
@@ -94,31 +86,35 @@ related: ["quarkus-basics.md", "quarkus-rest.md"]
 - [Bean Validation Integration](#bean-validation-integration)
   - [Method Validation](#method-validation)
 - [Configuration Validation](#configuration-validation)
-  - [4. Минимизируйте использование @Produces](#4-минимизируйте-использование-produces)
-  - [5. Используйте events для слабой связанности](#5-используйте-events-для-слабой-связанности)
+  - [Configuration Validation](#configuration-validation-1)
 - [Build-Time vs Runtime Optimization](#build-time-vs-runtime-optimization)
   - [Build-Time Processing](#build-time-processing)
   - [Runtime Processing](#runtime-processing)
+- [Bean Validation Integration](#bean-validation-integration-1)
   - [Method Parameter Validation](#method-parameter-validation)
   - [Return Value Validation](#return-value-validation)
-  - [6. Используйте build-time processing где возможно](#6-используйте-build-time-processing-где-возможно)
 - [Advanced CDI Patterns](#advanced-cdi-patterns)
   - [Decorator Pattern](#decorator-pattern)
   - [Observer Pattern](#observer-pattern)
   - [Strategy Pattern with CDI](#strategy-pattern-with-cdi)
 - [Configuration Management](#configuration-management)
   - [Dynamic Configuration](#dynamic-configuration)
+  - [Configuration Validation](#configuration-validation-2)
 - [Advanced Bean Lifecycle](#advanced-bean-lifecycle)
   - [Application Startup Events](#application-startup-events)
   - [Bean Initialization Order](#bean-initialization-order)
 - [Configuration Patterns](#configuration-patterns)
   - [Environment-Specific Configuration](#environment-specific-configuration)
   - [Configuration Reload](#configuration-reload)
+- [Bean Validation Integration](#bean-validation-integration-2)
+  - [Method Parameter Validation](#method-parameter-validation-1)
+  - [Return Value Validation](#return-value-validation-1)
 - [Build-Time Optimization](#build-time-optimization)
   - [Build Steps](#build-steps)
   - [Native Image Configuration](#native-image-configuration)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

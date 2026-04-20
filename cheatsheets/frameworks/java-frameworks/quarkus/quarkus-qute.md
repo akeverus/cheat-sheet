@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-rest.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 
 ## Содержание
 
-- [Quarkus: Qute — Templating Engine](#quarkus-qute-templating-engine)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Basic Templates](#basic-templates)
@@ -47,10 +46,14 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
   - [Reactive Templates](#reactive-templates)
   - [Template Inheritance](#template-inheritance)
 - [Qute Best Practices](#qute-best-practices)
+  - [1. Используйте type-safe templates](#1-используйте-type-safe-templates-1)
+  - [2. Валидируйте данные](#2-валидируйте-данные-1)
+  - [3. Используйте fragments для переиспользования](#3-используйте-fragments-для-переиспользования-1)
   - [4. Используйте includes для компонентов](#4-используйте-includes-для-компонентов)
   - [5. Оптимизируйте для production](#5-оптимизируйте-для-production)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

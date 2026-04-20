@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Arrow
 
@@ -52,7 +52,7 @@ updated: "2026-02-11"
 - [Testing с Arrow](#testing-с-arrow)
   - [Testing Either](#testing-either)
   - [Testing Validated](#testing-validated)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [Error Handling Patterns](#error-handling-patterns)
   - [Type Safety Improvements](#type-safety-improvements)
   - [Performance Considerations](#performance-considerations)
@@ -60,12 +60,13 @@ updated: "2026-02-11"
   - [From try-catch to Either](#from-try-catch-to-either)
   - [From null checks to Option](#from-null-checks-to-option)
   - [From CompletableFuture to IO](#from-completablefuture-to-io)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging Arrow Code](#debugging-arrow-code)
 - [Experimental Features](#experimental-features)
   - [Arrow Meta (compile-time)](#arrow-meta-compile-time)
   - [Arrow Fx Toolkit](#arrow-fx-toolkit)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

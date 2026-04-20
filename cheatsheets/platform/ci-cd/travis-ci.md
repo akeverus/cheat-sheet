@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Travis CI
 
@@ -58,7 +58,7 @@ updated: "2026-02-11"
   - [Audit и compliance](#audit-и-compliance)
   - [Custom workers](#custom-workers)
 - [Миграция и Troubleshooting](#миграция-и-troubleshooting)
-  - [Миграция с Travis CI .org на .com](#миграция-с-travis-ci-org-на-com-исторический-контекст)
+  - [Миграция с Travis CI .org на .com (исторический контекст)](#миграция-с-travis-ci-org-на-com-исторический-контекст)
   - [Troubleshooting распространенных проблем](#troubleshooting-распространенных-проблем)
   - [Performance optimization](#performance-optimization)
   - [Migration guide от других CI/CD систем](#migration-guide-от-других-cicd-систем)

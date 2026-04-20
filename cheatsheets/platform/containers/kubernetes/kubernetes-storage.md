@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kubernetes Storage
 
@@ -28,6 +28,8 @@ updated: "2026-02-11"
   - [EmptyDir](#emptydir)
   - [HostPath](#hostpath)
   - [Persistent Volumes и Claims](#persistent-volumes-и-claims)
+    - [Static Provisioning](#static-provisioning)
+    - [Dynamic Provisioning](#dynamic-provisioning)
 - [Storage Classes](#storage-classes)
   - [AWS EBS](#aws-ebs)
   - [GCP Persistent Disk](#gcp-persistent-disk)

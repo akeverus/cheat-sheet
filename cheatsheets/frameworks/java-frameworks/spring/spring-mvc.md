@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-rest.md", "spring/spring-security.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
@@ -76,6 +76,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [5. Используйте правильные HTTP методы](#5-используйте-правильные-http-методы)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring MVC
 

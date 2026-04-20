@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-persistence.md", "databases/redis-replication.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
@@ -83,35 +83,15 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [Рекомендации по выбору](#рекомендации-по-выбору)
 - [Advanced Patterns and Examples](#advanced-patterns-and-examples)
   - [Strings: Advanced Use Cases](#strings-advanced-use-cases)
+    - [Caching with Expiration](#caching-with-expiration)
+    - [Distributed Counters](#distributed-counters)
   - [Lists: Queue Implementation](#lists-queue-implementation)
   - [Sets: Tag System](#sets-tag-system)
   - [Hashes: User Profile Management](#hashes-user-profile-management)
   - [Sorted Sets: Leaderboard Implementation](#sorted-sets-leaderboard-implementation)
   - [Streams: Event Logging System](#streams-event-logging-system)
   - [Bitmaps: User Activity Tracking](#bitmaps-user-activity-tracking)
-- [Memory Optimization](#memory-optimization)
-  - [Choosing the Right Data Structure](#choosing-the-right-data-structure)
-  - [Memory-Efficient Patterns](#memory-efficient-patterns)
-- [Performance Considerations](#performance-considerations)
-  - [Operation Complexity](#operation-complexity)
-  - [Лучшие практики](#лучшие-практики)
-- [Real-World Integration Examples](#real-world-integration-examples)
-  - [E-Commerce: Shopping Cart](#e-commerce-shopping-cart)
-  - [Social Media: Followers System](#social-media-followers-system)
-  - [Analytics: Page View Counter](#analytics-page-view-counter)
-  - [Gaming: Player Statistics](#gaming-player-statistics)
-- [Advanced Data Structure Patterns](#advanced-data-structure-patterns)
-  - [Time-Series with Sorted Sets](#time-series-with-sorted-sets)
-  - [Rate Limiting with Sorted Sets](#rate-limiting-with-sorted-sets)
-  - [Distributed Lock with Strings](#distributed-lock-with-strings)
-  - [Cache-Aside Pattern](#cache-aside-pattern)
-- [Лучшие практики](#лучшие-практики-1)
-  - [Memory Efficiency](#memory-efficiency)
-  - [Performance Optimization](#performance-optimization)
-- [Решение проблем](#решение-проблем)
-  - [Issue: Large Sets/Lists](#issue-large-sets-lists)
-  - [Issue: Memory Usage](#issue-memory-usage)
-  - [Issue: Slow Operations](#issue-slow-operations)
+- [См. также](#см-также)
 
 ## Введение в структуры данных Redis
 

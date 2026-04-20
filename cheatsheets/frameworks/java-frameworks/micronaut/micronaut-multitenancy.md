@@ -12,7 +12,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
 next: ["micronaut-data.md", "micronaut-security.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-data.md", "micronaut-security.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-data.md", "micronaut-security.md"]
 
 ## Содержание
 
-- [Micronaut: Multitenancy — Multi-tenant Applications](#micronaut-multitenancy-multi-tenant-applications)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Multitenancy](#настройка-multitenancy)
@@ -44,7 +43,6 @@ related: ["micronaut-data.md", "micronaut-security.md"]
   - [1. Всегда проверяйте tenant ID](#1-всегда-проверяйте-tenant-id)
   - [2. Изолируйте данные на уровне БД](#2-изолируйте-данные-на-уровне-бд)
   - [3. Используйте connection pooling per tenant](#3-используйте-connection-pooling-per-tenant)
-- [ Хорошо](#хорошо)
 - [Tenant Context](#tenant-context)
   - [Tenant Context Provider](#tenant-context-provider)
 - [Database per Tenant](#database-per-tenant)
@@ -59,6 +57,7 @@ related: ["micronaut-data.md", "micronaut-security.md"]
   - [Tenant-based Security](#tenant-based-security)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

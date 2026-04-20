@@ -7,7 +7,7 @@ tags:
   - languages
   - java
 type: "index"
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Java
 

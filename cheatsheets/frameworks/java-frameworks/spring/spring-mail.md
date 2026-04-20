@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-mvc.md"]
 next: ["spring/spring-messaging.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
 ---
 
@@ -30,8 +30,6 @@ related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
 - [Настройка Spring Mail](#настройка-spring-mail)
   - [Зависимости](#зависимости)
   - [Конфигурация](#конфигурация)
-- [SMTP Configuration](#smtp-configuration)
-- [Default sender](#default-sender)
   - [Java Configuration](#java-configuration)
 - [Отправка простых сообщений](#отправка-простых-сообщений)
   - [Базовое использование](#базовое-использование)
@@ -51,7 +49,6 @@ related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
   - [3. Используйте асинхронную отправку для больших объемов](#3-используйте-асинхронную-отправку-для-больших-объемов)
   - [4. Валидируйте email адреса](#4-валидируйте-email-адреса)
   - [5. Используйте конфигурацию из properties](#5-используйте-конфигурацию-из-properties)
-- [ Хорошо](#хорошо)
 - [Retry механизм](#retry-механизм)
   - [Retry при ошибках отправки](#retry-при-ошибках-отправки)
 - [Очередь отправки](#очередь-отправки)
@@ -75,6 +72,7 @@ related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
   - [Batch Sending](#batch-sending)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Mail
 

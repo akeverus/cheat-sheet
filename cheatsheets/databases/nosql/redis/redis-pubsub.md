@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-streams.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 ---
 
@@ -30,14 +30,33 @@ related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 ## Содержание
 
 - [Введение в Pub/Sub](#введение-в-pubsub)
+  - [Основные концепции](#основные-концепции)
 - [Базовое использование](#базовое-использование)
+  - [Публикация сообщений](#публикация-сообщений)
+  - [Подписка на каналы](#подписка-на-каналы)
+  - [Pattern Subscription](#pattern-subscription)
 - [Программное использование](#программное-использование)
+  - [Java Publisher](#java-publisher)
+  - [Java Subscriber](#java-subscriber)
 - [Мониторинг Pub/Sub](#мониторинг-pubsub)
+  - [Команды мониторинга](#команды-мониторинга)
 - [Use Cases](#use-cases)
+  - [Event Broadcasting](#event-broadcasting)
+  - [Real-Time Notifications](#real-time-notifications)
 - [Лучшие практики](#лучшие-практики)
 - [Advanced Pub/Sub Patterns](#advanced-pubsub-patterns)
+  - [Message Routing](#message-routing)
+  - [Fan-Out Pattern](#fan-out-pattern)
+  - [Request-Response Pattern](#request-response-pattern)
+- [Advanced Pub/Sub Patterns](#advanced-pubsub-patterns-1)
+  - [Message Queue Pattern](#message-queue-pattern)
+  - [Topic-Based Routing](#topic-based-routing)
+  - [Event Sourcing Pattern](#event-sourcing-pattern)
 - [Performance Optimization](#performance-optimization)
+  - [Connection Pooling for Pub/Sub](#connection-pooling-for-pubsub)
 - [Advanced Pub/Sub Patterns (Java версии)](#advanced-pubsub-patterns-java-версии)
+  - [Message Queue Pattern (Java)](#message-queue-pattern-java)
+  - [Message Batching (Java)](#message-batching-java)
 
 ## Введение в Pub/Sub
 

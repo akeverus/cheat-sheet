@@ -9,7 +9,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 ---
 
@@ -28,7 +28,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 
 ## Содержание
 
-- [Scala Implicit](#scala-implicit)
 - [Введение в Implicit](#введение-в-implicit)
   - [Основные применения](#основные-применения)
 - [Implicit параметры](#implicit-параметры)

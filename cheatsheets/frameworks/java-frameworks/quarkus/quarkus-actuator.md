@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-cloud.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-cloud.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
 
 ## Содержание
 
-- [Quarkus: Actuator — Health Checks и Metrics](#quarkus-actuator-health-checks-и-metrics)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Health Checks](#health-checks)
@@ -32,12 +31,10 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
   - [Readiness Check](#readiness-check)
 - [Metrics](#metrics)
   - [Micrometer Integration](#micrometer-integration)
-- [application.properties](#applicationproperties)
   - [Custom Metrics](#custom-metrics)
 - [Лучшие практики](#лучшие-практики)
   - [1. Всегда настраивайте health checks](#1-всегда-настраивайте-health-checks)
   - [2. Используйте metrics для мониторинга](#2-используйте-metrics-для-мониторинга)
-- [ Хорошо](#хорошо)
   - [3. Создавайте кастомные health checks для критических компонентов](#3-создавайте-кастомные-health-checks-для-критических-компонентов)
 - [Startup Health Check](#startup-health-check)
   - [Startup Probe](#startup-probe)
@@ -47,8 +44,6 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
 - [Info Endpoint](#info-endpoint)
   - [Application Info](#application-info)
   - [Custom Info](#custom-info)
-  - [4. Используйте таймеры для измерения производительности](#4-используйте-таймеры-для-измерения-производительности)
-  - [5. Настраивайте info endpoint](#5-настраивайте-info-endpoint)
 - [Advanced Health Check Patterns](#advanced-health-check-patterns)
   - [Composite Health Checks](#composite-health-checks)
   - [Async Health Checks](#async-health-checks)
@@ -60,6 +55,7 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
   - [Custom Metrics Endpoint](#custom-metrics-endpoint)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

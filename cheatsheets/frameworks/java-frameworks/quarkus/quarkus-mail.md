@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
@@ -52,8 +52,6 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
   - [Bulk Email](#bulk-email)
 - [Email Queue](#email-queue)
   - [Queued Email](#queued-email)
-  - [4. Валидируйте email адреса](#4-валидируйте-email-адреса)
-  - [5. Используйте очереди для массовой отправки](#5-используйте-очереди-для-массовой-отправки)
 - [Email Templates with Qute](#email-templates-with-qute)
   - [Template-based Emails](#template-based-emails)
   - [Template Example](#template-example)
@@ -61,10 +59,12 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
   - [Queue-based Email Sending](#queue-based-email-sending)
   - [Email Delivery Tracking](#email-delivery-tracking)
 - [Email Delivery Optimization](#email-delivery-optimization)
+  - [Batch Email Sending](#batch-email-sending-1)
   - [Email Rate Limiting](#email-rate-limiting)
   - [Email Template Caching](#email-template-caching)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

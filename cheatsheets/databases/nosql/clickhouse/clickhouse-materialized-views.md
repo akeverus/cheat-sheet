@@ -10,7 +10,7 @@ tags:
   - data-processing
 difficulty: "intermediate"
 prerequisites: ["databases/clickhouse-tables.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 ---
 
@@ -24,9 +24,13 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 - [Materialized Views](https://clickhouse.com/docs/en/guides/developer/cascading-materialized-views)
 - [AggregatingMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/aggregatingmergetree)
 - [SummingMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/summingmergetree)
+- [Materialized Views Best Practices](https://clickhouse.com/docs/en/guides/best-practices)
+- [Real-time Analytics](https://clickhouse.com/docs/en/guides/developer/cascading-materialized-views)
+- [Common Patterns](https://clickhouse.com/docs/en/guides/best-practices)
 
 ### Обучающие материалы
 - [ClickHouse Materialized Views](https://www.baeldung.com/clickhouse-materialized-views)
+- [MV Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
 
 ### См. также
 - [[clickhouse-tables|Таблицы]] — создание таблиц и движков
@@ -65,14 +69,14 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
   - [Метрики производительности](#метрики-производительности)
   - [Диагностика проблем](#диагностика-проблем)
   - [Обслуживание MV](#обслуживание-mv)
-- [Best Practices](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
   - [Проектирование MV](#проектирование-mv)
   - [Оптимизация производительности](#оптимизация-производительности)
   - [Управление жизненным циклом](#управление-жизненным-циклом)
   - [Распространенные ошибки](#распространенные-ошибки)
   - [Ключевые преимущества:](#ключевые-преимущества)
   - [Основные движки MV:](#основные-движки-mv)
-  - [Лучшие практики:](#лучшие-практики)
+  - [Лучшие практики:](#лучшие-практики-1)
   - [Следующие темы:](#следующие-темы)
 
 ## Введение в материализованные представления
@@ -853,21 +857,6 @@ SYSTEM RESTORE REPLICA mv_name;
 - **Интеграции** — подключение внешних систем
 
 Материализованные представления позволяют создавать высокопроизводительные аналитические системы с минимальными усилиями по поддержке.
-
-## Полезные ссылки
-
-### Официальная документация
-- [Materialized Views](https://clickhouse.com/docs/en/guides/developer/cascading-materialized-views)
-- [AggregatingMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/aggregatingmergetree)
-- [SummingMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/summingmergetree)
-
-### Руководства
-- [Materialized Views Best Practices](https://clickhouse.com/docs/en/guides/best-practices)
-- [Real-time Analytics](https://clickhouse.com/docs/en/guides/developer/cascading-materialized-views)
-
-### Примеры
-- [MV Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
-- [Common Patterns](https://clickhouse.com/docs/en/guides/best-practices)
 
 
 **Следующие темы:**

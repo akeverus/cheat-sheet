@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Circular Buffer
 
@@ -27,7 +27,6 @@ A **guide** to **implementing** a **circular buffer** (ring buffer) in **Java fo
 
 ## Содержание
 
-- [Circular Buffer](#circular-buffer)
 - [Обзор](#обзор)
 - [Что такое кольцевой буфер?](#что-такое-кольцевой-буфер)
 - [Implementation Approach](#implementation-approach)
@@ -45,6 +44,8 @@ A **guide** to **implementing** a **circular buffer** (ring buffer) in **Java fo
   - [Basic Circular Buffer](#basic-circular-buffer)
   - [Thread-Safe Implementation](#thread-safe-implementation)
   - [Producer-Consumer Example](#producer-consumer-example)
+- [Thread-Safe Implementation](#thread-safe-implementation-1)
+- [Producer-Consumer Example](#producer-consumer-example-1)
 - [Complexity Analysis](#complexity-analysis)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)

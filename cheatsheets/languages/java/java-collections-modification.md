@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Java Collections: модификация
 
@@ -48,13 +48,16 @@ updated: "2026-02-11"
   - [Использование flatMap()](#использование-flatmap)
 - [Поиск максимального/минимального значения коллекции](#поиск-максимальногоминимального-значения-коллекции)
   - [Использование Collections.max() и Collections.min()](#использование-collectionsmax-и-collectionsmin)
+  - [Использование Stream API](#использование-stream-api-1)
 - [Руководство по Iterator](#руководство-по-iterator)
   - [ListIterator](#listiterator)
 - [Удаление элементов из коллекций](#удаление-элементов-из-коллекций)
   - [Использование Iterator.remove()](#использование-iteratorremove)
   - [Использование Collection.removeIf() (Java 8+)](#использование-collectionremoveif-java-8)
+  - [Использование Stream API](#использование-stream-api-2)
   - [Обратное удаление](#обратное-удаление)
 - [Лучшие практики](#лучшие-практики)
+- [См. также](#см-также)
 
 ## Сбор элементов Stream в List
 

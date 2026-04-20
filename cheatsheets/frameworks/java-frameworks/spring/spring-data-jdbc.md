@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "databases/postgres-basics.md"]
 next: ["spring/spring-data-jpa.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "databases/postgres-basics.md", "java/java-basics.md"]
 ---
 
@@ -33,7 +33,6 @@ related: ["spring/spring-boot.md", "databases/postgres-basics.md", "java/java-ba
 
 ## Содержание
 
-- [Spring Data JDBC: Полное руководство по работе с базами данных](#spring-data-jdbc-полное-руководство-по-работе-с-базами-данных)
 - [Руководство по JDBC](#руководство-по-jdbc)
   - [Драйверы JDBC](#драйверы-jdbc)
   - [Подключение к базе данных](#подключение-к-базе-данных)
@@ -84,16 +83,17 @@ related: ["spring/spring-boot.md", "databases/postgres-basics.md", "java/java-ba
   - [Транзакции](#транзакции)
   - [Аудит](#аудит)
   - [Интеграция с Spring Boot](#интеграция-с-spring-boot)
-- [application.yml](#applicationyml)
   - [Тестирование](#тестирование)
   - [Производительность](#производительность)
-  - [Лучшие практики](#best-practices)
+  - [Лучшие практики](#лучшие-практики)
     - [1. Выбор между Spring Data JDBC и JPA](#1-выбор-между-spring-data-jdbc-и-jpa)
     - [2. Правильное использование транзакций](#2-правильное-использование-транзакций)
     - [3. Оптимизация запросов](#3-оптимизация-запросов)
     - [4. Безопасность](#4-безопасность)
     - [5. Мониторинг и метрики](#5-мониторинг-и-метрики)
-- [Заключение](#заключение)
+  - [Заключение](#заключение)
+- [См. также](#см-также)
+
 ## Руководство по JDBC
 
 В этой статье мы рассмотрим **JDBC (Java Database Connectivity),** который представляет собой **API** для подключения и выполнения запросов к базе данных**.

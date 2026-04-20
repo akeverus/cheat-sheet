@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Быстрая сортировка (Quick Sort)
 
@@ -47,7 +47,6 @@ updated: "2026-02-11"
 - [Что выбрать: Quick Sort vs Merge Sort vs Heap Sort](#что-выбрать-quick-sort-vs-merge-sort-vs-heap-sort)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
-
 
 ## Описание алгоритма
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # kotlinx.datetime
 
@@ -58,7 +58,7 @@ updated: "2026-02-11"
   - [Unit Testing с datetime](#unit-testing-с-datetime)
   - [Testing с фиксированным временем](#testing-с-фиксированным-временем)
   - [Integration Testing](#integration-testing)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [Immutable DateTime Operations](#immutable-datetime-operations)
   - [Null Safety с datetime](#null-safety-с-datetime)
   - [Time Zone Handling](#time-zone-handling)
@@ -70,13 +70,14 @@ updated: "2026-02-11"
   - [From Java Time to kotlinx.datetime](#from-java-time-to-kotlinxdatetime)
   - [From ThreeTenABP to kotlinx.datetime](#from-threetenabp-to-kotlinxdatetime)
   - [From Joda-Time to kotlinx.datetime](#from-joda-time-to-kotlinxdatetime)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging datetime](#debugging-datetime)
 - [Experimental Features](#experimental-features)
   - [Kotlin 1.6+ Duration API](#kotlin-16-duration-api)
   - [Contextual Time Operations](#contextual-time-operations)
   - [Advanced Calendar Operations](#advanced-calendar-operations)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

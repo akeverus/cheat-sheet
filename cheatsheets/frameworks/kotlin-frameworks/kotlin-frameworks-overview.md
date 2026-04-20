@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kotlin Frameworks — обзор
 
@@ -40,7 +40,6 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [Глоссарий](#глоссарий)
 - [Заключение](#заключение)
-
 
 ## Введение
 

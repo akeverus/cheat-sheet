@@ -8,7 +8,7 @@ tags:
   - performance-testing
   - k6
 type: "index"
-updated: "2026-04-17"
+updated: "2026-04-20"
 ---
 # k6
 

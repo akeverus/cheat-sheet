@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "../java/java-basics.md"]
 ---
 
@@ -29,7 +29,6 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
 
 ## Содержание
 
-- [Scala Java Interoperability](#scala-java-interoperability)
 - [Введение в Interop](#введение-в-interop)
   - [Основные принципы](#основные-принципы)
 - [Использование Java библиотек](#использование-java-библиотек)
@@ -48,8 +47,8 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
   - [Использование Java Streams из Scala](#использование-java-streams-из-scala)
   - [Использование Scala Futures с Java CompletableFuture](#использование-scala-futures-с-java-completablefuture)
   - [Использование Java Optional с Scala Option](#использование-java-optional-с-scala-option)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Расширенные техники Interop](#расширенные-техники-interop)
   - [Использование Java Reflection из Scala](#использование-java-reflection-из-scala)
@@ -66,6 +65,7 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
   - [Практические примеры: Использование Java Reflection](#практические-примеры-использование-java-reflection)
   - [Практические примеры: Использование Java Annotations](#практические-примеры-использование-java-annotations)
   - [Практические примеры: Использование Java NIO для асинхронного I/O](#практические-примеры-использование-java-nio-для-асинхронного-io)
+- [Заключение](#заключение-1)
   - [Использование с различными Java библиотеками](#использование-с-различными-java-библиотеками)
   - [Использование с Java NIO для работы с файлами](#использование-с-java-nio-для-работы-с-файлами)
   - [Использование с Java Streams для обработки данных](#использование-с-java-streams-для-обработки-данных)

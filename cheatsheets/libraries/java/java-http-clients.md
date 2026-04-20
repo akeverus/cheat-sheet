@@ -51,7 +51,7 @@ updated: "2026-04-20"
 
 - [Зачем вообще HTTP-клиент](#зачем-вообще-http-клиент)
 - [Варианты и позиционирование](#варианты-и-позиционирование)
-  - [java.net.http.HttpClient (JDK 11+)](#javanethhttphttpclient-jdk-11)
+  - [java.net.http.HttpClient (JDK 11+)](#javanethttphttpclient-jdk-11)
   - [RestTemplate (Spring)](#resttemplate-spring)
   - [WebClient (Spring WebFlux)](#webclient-spring-webflux)
   - [RestClient (Spring 6.1+)](#restclient-spring-61)
@@ -73,7 +73,7 @@ updated: "2026-04-20"
 - [Обработка ошибок](#обработка-ошибок)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Зачем вообще HTTP-клиент
 

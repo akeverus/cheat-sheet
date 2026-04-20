@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # PagerDuty
 
@@ -43,6 +43,9 @@ PagerDuty — платформа управления инцидентами и 
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Глоссарий и таблицы](#глоссарий-и-таблицы)
+  - [Events API v2 — поля тела запроса](#events-api-v2-поля-тела-запроса)
+  - [Severity в payload](#severity-в-payload)
+  - [Настройка Alertmanager (фрагмент)](#настройка-alertmanager-фрагмент)
 
 ## Введение
 

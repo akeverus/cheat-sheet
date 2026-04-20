@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: gRPC Integration — RPC Communication](#micronaut-grpc-integration-rpc-communication)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка gRPC](#настройка-grpc)
@@ -59,6 +58,7 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
   - [Load Balancing Configuration](#load-balancing-configuration)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

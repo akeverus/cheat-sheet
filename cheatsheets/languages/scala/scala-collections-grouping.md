@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-collections.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 ---
 
@@ -29,7 +29,6 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 
 ## Содержание
 
-- [Scala Collections — Grouping and Aggregation](#scala-collections-grouping-and-aggregation)
 - [Группировка](#группировка)
   - [groupBy](#groupby)
   - [Группировка с трансформацией](#группировка-с-трансформацией)
@@ -54,6 +53,7 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
   - [Избегание создания промежуточных коллекций](#избегание-создания-промежуточных-коллекций)
   - [Использование подходящих типов для ключей](#использование-подходящих-типов-для-ключей)
 - [Продвинутые техники группировки и агрегации](#продвинутые-техники-группировки-и-агрегации)
+  - [Многоуровневая группировка](#многоуровневая-группировка-1)
   - [Агрегация с условиями](#агрегация-с-условиями)
   - [Временные ряды и агрегация](#временные-ряды-и-агрегация)
   - [Практические примеры: Анализ данных продаж](#практические-примеры-анализ-данных-продаж)

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # ELK Stack
 
@@ -25,15 +25,27 @@ ELK Stack (Elasticsearch, Logstash, Kibana) — набор инструмент�
 
 - [Компоненты ELK Stack](#компоненты-elk-stack)
 - [Elasticsearch](#elasticsearch)
+  - [Установка и запуск](#установка-и-запуск)
+  - [Конфигурация (elasticsearch.yml)](#конфигурация-elasticsearchyml)
+  - [Индексы и CRUD](#индексы-и-crud)
 - [Logstash](#logstash)
+  - [Pipeline (logstash.conf)](#pipeline-logstashconf)
+  - [Фильтры (кратко)](#фильтры-кратко)
 - [Kibana](#kibana)
+  - [kibana.yml](#kibanayml)
+  - [Индексный паттерн и Saved Objects](#индексный-паттерн-и-saved-objects)
 - [Filebeat (Beats)](#filebeat-beats)
+  - [filebeat.yml](#filebeatyml)
 - [Архитектуры развёртывания](#архитектуры-развёртывания)
+  - [Docker Compose (сокращённо)](#docker-compose-сокращённо)
 - [ILM и безопасность](#ilm-и-безопасность)
+  - [ILM политика (пример)](#ilm-политика-пример)
+  - [Безопасность](#безопасность)
 - [Мониторинг и производительность](#мониторинг-и-производительность)
 - [Решение проблем](#решение-проблем)
 - [Лучшие практики](#лучшие-практики)
 - [Частые вопросы](#частые-вопросы)
+- [См. также](#см-также)
 
 ## Компоненты ELK Stack
 

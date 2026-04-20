@@ -191,6 +191,7 @@ updated: "2026-04-20"
 
 ## frameworks/spring
 
+- [Вопросы на собеседовании: `Spring AOP`](frameworks/spring/spring-aop-interview.md) — `22` вопроса
 - [Вопросы на собеседовании: `Spring Batch`](frameworks/spring/spring-batch-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Boot Actuator`](frameworks/spring/spring-boot-actuator-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Boot`](frameworks/spring/spring-boot-interview.md) — `42` вопроса

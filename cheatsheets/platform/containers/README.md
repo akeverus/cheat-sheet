@@ -7,7 +7,7 @@ tags:
   - platform
   - containers
 type: "index"
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Platform Containers
 
@@ -21,23 +21,9 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [[containerization-overview|Обзор контейнеризации]]
-
-### Раздел Docker
-
-- [[docker-basics|Docker Basics]]
-- [[docker-containers|Docker Containers]]
-- [[docker-compose|Docker Compose]]
-- [[docker-spring-boot|Docker for Spring Boot]]
-- [[docker-advanced|Docker Advanced]]
-
-### Раздел Kubernetes
-
-- [[kubernetes-basics|Kubernetes Basics]]
-- [[kubernetes-networking|Kubernetes Networking]]
-- [[kubernetes-storage|Kubernetes Storage]]
-- [[kubernetes-security|Kubernetes Security]]
-- [[kubernetes-advanced|Kubernetes Advanced]]
+- [Быстрый маршрут](#быстрый-маршрут)
+- [Практический маршрут: развернуть backend-сервис](#практический-маршрут-развернуть-backend-сервис)
+- [См. также](#см-также)
 
 ## Быстрый маршрут
 

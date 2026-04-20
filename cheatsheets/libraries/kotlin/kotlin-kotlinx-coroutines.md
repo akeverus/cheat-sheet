@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # kotlinx.coroutines
 
@@ -60,7 +60,7 @@ updated: "2026-02-11"
   - [Structured Concurrency](#structured-concurrency)
   - [Resource Management](#resource-management)
   - [Memory-efficient Flow Processing](#memory-efficient-flow-processing)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [Error Handling Patterns](#error-handling-patterns)
   - [Cancellation Best Practices](#cancellation-best-practices)
   - [Testing Patterns](#testing-patterns)
@@ -74,6 +74,7 @@ updated: "2026-02-11"
 - [Experimental Features](#experimental-features)
   - [Kotlin 1.7+ Features](#kotlin-17-features)
   - [SharedFlow и StateFlow](#sharedflow-и-stateflow)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

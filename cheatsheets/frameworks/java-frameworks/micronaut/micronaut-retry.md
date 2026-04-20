@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-core.md", "micronaut-cloud.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
 
 ## Содержание
 
-- [Micronaut: Retry — Retry Logic и Circuit Breaker](#micronaut-retry-retry-logic-и-circuit-breaker)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Retry](#настройка-retry)
@@ -55,6 +54,7 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
   - [State Monitoring](#state-monitoring)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

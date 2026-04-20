@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Временная сложность коллекций Java
 
@@ -29,14 +29,40 @@ updated: "2026-02-11"
 
 - [Обзор](#обзор)
 - [Реализация на Java](#реализация-на-java)
+  - [List коллекции](#list-коллекции)
+    - [ArrayList](#arraylist)
+  - [Бенчмарк ArrayList](#бенчмарк-arraylist)
+    - [CopyOnWriteArrayList](#copyonwritearraylist)
+- [LinkedList](#linkedlist)
+- [Map коллекции](#map-коллекции)
+- [HashMap и его варианты](#hashmap-и-его-варианты)
+- [TreeMap и ConcurrentSkipListMap](#treemap-и-concurrentskiplistmap)
+- [Set коллекции](#set-коллекции)
+  - [Временная сложность Set операций](#временная-сложность-set-операций)
 - [Сравнительная таблица](#сравнительная-таблица)
+  - [List операции](#list-операции)
+  - [Map операции](#map-операции)
+  - [Set операции](#set-операции)
 - [Рекомендации по выбору коллекции](#рекомендации-по-выбору-коллекции)
+  - [Когда использовать ArrayList:](#когда-использовать-arraylist)
+  - [Когда использовать LinkedList:](#когда-использовать-linkedlist)
+  - [Когда использовать HashMap:](#когда-использовать-hashmap)
+  - [Когда использовать TreeMap:](#когда-использовать-treemap)
+  - [Когда использовать HashSet:](#когда-использовать-hashset)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Резюме](#резюме)
 - [Реализация на Kotlin](#реализация-на-kotlin)
-
+  - [List Collections](#list-collections)
+    - [ArrayList](#arraylist-1)
+    - [LinkedList](#linkedlist-1)
+  - [Map Collections](#map-collections)
+    - [HashMap](#hashmap)
+    - [TreeMap](#treemap)
+  - [Set Collections](#set-collections)
+    - [HashSet](#hashset)
+    - [TreeSet](#treeset)
 
 ## Обзор
 

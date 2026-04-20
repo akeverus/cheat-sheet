@@ -14,7 +14,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md", "java/java-basics.md"]
 next: ["databases/mongodb.md", "databases/clickhouse.md", "infrastructure/docker-basics.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastructure/kubernetes-basics.md"]
 ---
 
@@ -36,43 +36,12 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
 - [Установка и первоначальная настройка](#установка-и-первоначальная-настройка)
   - [Установка Redis](#установка-redis)
     - [Linux (Ubuntu/Debian)](#linux-ubuntudebian)
-- [Обновление пакетов](#обновление-пакетов)
-- [Проверка статуса](#проверка-статуса)
-- [Управление службой](#управление-службой)
     - [macOS (с Homebrew)](#macos-с-homebrew)
-- [Запуск Redis](#запуск-redis)
-- [Или запуск вручную](#или-запуск-вручную)
     - [Docker](#docker)
-- [Запуск Redis в Docker](#запуск-redis-в-docker)
-- [С кастомной конфигурацией](#с-кастомной-конфигурацией)
-- [С паролем](#с-паролем)
   - [Конфигурационный файл](#конфигурационный-файл)
-- [/etc/redis/redis.conf](#etcredisredisconf)
-- [Сеть](#сеть)
-- [Общие настройки](#общие-настройки)
-- [Snapshots (RDB)](#snapshots-rdb)
-- [Append Only File (AOF)](#append-only-file-aof)
-- [Безопасность](#безопасность)
-- [requirepass yourpassword](#requirepass-yourpassword)
-- [Память](#память)
-- [Репликация (для slave)](#репликация-для-slave)
-- [slaveof <masterip> <masterport>](#slaveof-masterip-masterport)
-- [masterauth <master-password>](#masterauth-master-password)
-- [Кластеризация](#кластеризация)
-- [cluster-enabled yes](#cluster-enabled-yes)
-- [cluster-config-file nodes.conf](#cluster-config-file-nodesconf)
-- [cluster-node-timeout 5000](#cluster-node-timeout-5000)
-- [Lua скриптинг](#lua-скриптинг)
   - [Подключение к Redis](#подключение-к-redis)
     - [Redis CLI](#redis-cli)
-- [Подключение к локальному Redis](#подключение-к-локальному-redis)
-- [Подключение к удаленному Redis](#подключение-к-удаленному-redis)
-- [Подключение с паролем](#подключение-с-паролем)
-- [Выполнение команды напрямую](#выполнение-команды-напрямую)
-- [Интерактивная сессия](#интерактивная-сессия)
     - [Программные подключения](#программные-подключения)
-      - [Java с Jedis](#java-с-jedis)
-      - [Python с redis-py](#python-с-redis-py)
 
 ## Введение в Redis
 

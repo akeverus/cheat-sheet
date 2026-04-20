@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
 next: ["quarkus-rest.md", "quarkus-security.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-rest.md", "quarkus-security.md"]
 ---
 
@@ -37,7 +37,6 @@ related: ["quarkus-rest.md", "quarkus-security.md"]
   - [OAuth2 Security](#oauth2-security)
 - [Code Generation](#code-generation)
   - [Client Generation](#client-generation)
-- [Генерация клиента из OpenAPI спецификации](#генерация-клиента-из-openapi-спецификации)
 - [Лучшие практики](#лучшие-практики)
   - [1. Документируйте все endpoints](#1-документируйте-все-endpoints)
   - [2. Используйте аннотации для параметров](#2-используйте-аннотации-для-параметров)
@@ -54,10 +53,9 @@ related: ["quarkus-rest.md", "quarkus-security.md"]
 - [Swagger UI Customization](#swagger-ui-customization)
   - [Custom Theme](#custom-theme)
   - [Custom Configuration](#custom-configuration)
-  - [4. Используйте примеры](#4-используйте-примеры)
-  - [5. Организуйте endpoints по тегам](#5-организуйте-endpoints-по-тегам)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

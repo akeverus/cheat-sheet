@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-design.md", "databases/postgres-types.md"]
 next: ["databases/postgres-transactions.md", "databases/postgres-indexes.md", "databases/postgres-partitioning.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "databases/postgres-queries.md"]
 ---
 
@@ -36,8 +36,16 @@ related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "data
   - [Архитектура PostgreSQL](#архитектура-postgresql)
 - [Установка и первоначальная настройка](#установка-и-первоначальная-настройка)
   - [Установка PostgreSQL](#установка-postgresql)
+    - [Linux (Ubuntu/Debian)](#linux-ubuntudebian)
+    - [macOS (с Homebrew)](#macos-с-homebrew)
+    - [Docker](#docker)
   - [Первоначальная настройка](#первоначальная-настройка)
+    - [Создание пользователя и базы данных](#создание-пользователя-и-базы-данных)
+    - [Настройка postgresql.conf](#настройка-postgresqlconf)
+    - [Настройка pg_hba.conf](#настройка-pg_hbaconf)
   - [Подключение к PostgreSQL](#подключение-к-postgresql)
+    - [Использование psql](#использование-psql)
+    - [Программное подключение](#программное-подключение)
 - [Лучшие практики](#лучшие-практики)
 
 ## Введение в PostgreSQL

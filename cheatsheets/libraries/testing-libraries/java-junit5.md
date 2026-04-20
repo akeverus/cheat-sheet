@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # JUnit 5
 
@@ -59,14 +59,15 @@ updated: "2026-02-11"
 - [Integration с другими инструментами](#integration-с-другими-инструментами)
   - [Mockito Integration](#mockito-integration)
   - [Testcontainers Integration](#testcontainers-integration)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [Test Naming Conventions](#test-naming-conventions)
   - [Test Data Management](#test-data-management)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging Tests](#debugging-tests)
 - [Experimental Features](#experimental-features)
   - [JUnit 6 Preview Features](#junit-6-preview-features)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

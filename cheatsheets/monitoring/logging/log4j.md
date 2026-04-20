@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Log4j для Java
 
@@ -29,15 +29,15 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Введение в Log4j](#введение-в-log4j)
-- [Архитектура](#архитектура-log4j)
+- [Архитектура Log4j](#архитектура-log4j)
 - [Configuration](#configuration)
 - [Appenders](#appenders)
-- [Layouts и паттерны](#layouts)
+- [Layouts](#layouts)
 - [Filters](#filters)
-- [ThreadContext](#context-и-thread-context)
+- [Context и Thread Context](#context-и-thread-context)
 - [Async logging](#async-logging)
 - [Security](#security)
-- [Миграция с Log4j 1.x](#migration-from-log4j-1x)
+- [Migration from Log4j 1.x](#migration-from-log4j-1x)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)

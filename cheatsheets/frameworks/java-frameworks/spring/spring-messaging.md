@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-core.md"]
 next: ["spring/spring-kafka.md", "messaging/kafka.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
 ---
 
@@ -25,19 +25,18 @@ related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
 
 ## Содержание
 
-- [Spring Messaging: Полное руководство по messaging системам](#spring-messaging-полное-руководство-по-messaging-системам)
 - [Введение в Spring Messaging](#введение-в-spring-messaging)
   - [Основные возможности](#основные-возможности)
   - [Архитектура Spring Messaging](#архитектура-spring-messaging)
 - [JMS (Java Message Service)](#jms-java-message-service)
   - [Настройка JMS](#настройка-jms)
-- [ActiveMQ Configuration](#activemq-configuration)
   - [Отправка сообщений](#отправка-сообщений)
   - [Получение сообщений](#получение-сообщений)
   - [Конфигурация JMS](#конфигурация-jms)
 - [RabbitMQ](#rabbitmq)
   - [Настройка RabbitMQ](#настройка-rabbitmq)
-- [RabbitMQ Configuration](#rabbitmq-configuration)
+  - [Отправка сообщений](#отправка-сообщений-1)
+  - [Получение сообщений](#получение-сообщений-1)
   - [Конфигурация RabbitMQ](#конфигурация-rabbitmq)
 - [Message Converters](#message-converters)
   - [JSON Converter](#json-converter)
@@ -83,6 +82,7 @@ related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
   - [Spring Cloud Stream](#spring-cloud-stream)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Messaging
 

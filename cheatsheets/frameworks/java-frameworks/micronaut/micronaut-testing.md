@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-cloud.md", "micronaut-graalvm.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-http.md", "micronaut-data.md"]
 
 ## Содержание
 
-- [Micronaut: Testing — Unit Tests, Integration Tests и Mocking](#micronaut-testing-unit-tests-integration-tests-и-mocking)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Testing](#настройка-testing)
@@ -69,11 +68,13 @@ related: ["micronaut-http.md", "micronaut-data.md"]
   - [Test Data Builders](#test-data-builders)
 - [Test Utilities](#test-utilities)
   - [Test Helpers](#test-helpers)
+- [Test Execution Order](#test-execution-order-1)
   - [Test Ordering](#test-ordering)
 - [Test Parallelization](#test-parallelization)
   - [Parallel Test Execution](#parallel-test-execution)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

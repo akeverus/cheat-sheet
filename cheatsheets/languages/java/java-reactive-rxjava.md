@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Java Reactive: RxJava
 
@@ -62,6 +62,7 @@ updated: "2026-02-11"
   - [retry](#retry)
   - [retryWhen](#retrywhen)
 - [Разница между flatMap и switchMap](#разница-между-flatmap-и-switchmap)
+  - [flatMap](#flatmap-1)
   - [switchMap](#switchmap)
 - [Руководство по filter](#руководство-по-filter)
   - [Дополнительные фильтрующие операторы](#дополнительные-фильтрующие-операторы)
@@ -76,6 +77,7 @@ updated: "2026-02-11"
 - [Руководство по настройке нескольких Subscribers на один Observable](#руководство-по-настройке-нескольких-subscribers-на-один-observable)
   - [using](#using)
 - [Лучшие практики](#лучшие-практики)
+- [См. также](#см-также)
 
 ## Руководство по RxJava
 

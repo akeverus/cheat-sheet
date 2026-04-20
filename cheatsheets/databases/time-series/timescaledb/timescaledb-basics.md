@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # TimescaleDB: PostgreSQL для временных рядов
 
@@ -29,7 +29,6 @@ updated: "2026-02-11"
 - [Введение в TimescaleDB](#введение-в-timescaledb)
   - [Основные возможности](#основные-возможности)
 - [Установка](#установка)
-- [Docker установка](#docker-установка)
 - [Создание hypertable](#создание-hypertable)
 - [Запросы временных рядов](#запросы-временных-рядов)
 - [Интеграция с Java](#интеграция-с-java)

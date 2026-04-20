@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-data.md"]
 next: ["quarkus-data.md", "quarkus-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-data.md", "quarkus-reactive.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-data.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: MongoDB — NoSQL Database](#quarkus-mongodb-nosql-database)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Configuration](#configuration)
@@ -41,7 +40,7 @@ related: ["quarkus-data.md", "quarkus-reactive.md"]
   - [Reactive Operations](#reactive-operations)
 - [Aggregation](#aggregation)
   - [Aggregation Pipeline](#aggregation-pipeline)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [1. Используйте Panache для упрощения](#1-используйте-panache-для-упрощения)
   - [2. Используйте reactive для неблокирующих операций](#2-используйте-reactive-для-неблокирующих-операций)
   - [3. Индексируйте часто используемые поля](#3-индексируйте-часто-используемые-поля)
@@ -54,8 +53,6 @@ related: ["quarkus-data.md", "quarkus-reactive.md"]
   - [Watching Changes](#watching-changes)
 - [GridFS](#gridfs)
   - [File Storage](#file-storage)
-  - [4. Используйте aggregation для сложных запросов](#4-используйте-aggregation-для-сложных-запросов)
-  - [5. Используйте change streams для real-time обновлений](#5-используйте-change-streams-для-real-time-обновлений)
 - [MongoDB Performance Optimization](#mongodb-performance-optimization)
   - [Query Optimization](#query-optimization)
   - [Index Management](#index-management)
@@ -67,8 +64,10 @@ related: ["quarkus-data.md", "quarkus-reactive.md"]
   - [Real-time Change Monitoring](#real-time-change-monitoring)
   - [Change Stream Filters](#change-stream-filters)
 - [MongoDB GridFS](#mongodb-gridfs)
+  - [File Storage](#file-storage-1)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

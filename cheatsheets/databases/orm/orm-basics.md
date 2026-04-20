@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # ORM: Object-Relational Mapping
 
@@ -27,7 +27,6 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [ORM: Object-Relational Mapping](#orm-object-relational-mapping)
 - [Введение в ORM](#введение-в-orm)
   - [Что такое ORM?](#что-такое-orm)
   - [Преимущества и недостатки](#преимущества-и-недостатки)
@@ -40,7 +39,7 @@ updated: "2026-02-11"
   - [Mapping аннотации](#mapping-аннотации)
 - [Spring Data JPA](#spring-data-jpa)
   - [Repository интерфейсы](#repository-интерфейсы)
-- [Best Practices](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
 
 ## Введение в ORM
 

@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-core.md", "micronaut-actuator.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-actuator.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-core.md", "micronaut-actuator.md"]
 
 ## Содержание
 
-- [Micronaut: Logging — Logback, SLF4J и Structured Logging](#micronaut-logging-logback-slf4j-и-structured-logging)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Logging](#настройка-logging)
@@ -57,6 +56,7 @@ related: ["micronaut-core.md", "micronaut-actuator.md"]
   - [Log Aggregation Setup](#log-aggregation-setup)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

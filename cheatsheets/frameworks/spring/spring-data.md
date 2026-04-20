@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring-core.md"]
 next: ["spring-security.md"]
-updated: "2026-04-12"
+updated: "2026-04-20"
 ---
 
 # Spring Data: JPA, JDBC и работа с данными
@@ -29,14 +29,31 @@ updated: "2026-04-12"
 
 - [Иерархия репозиториев](#иерархия-репозиториев)
 - [Query-методы](#query-методы)
+  - [Derived Queries (по имени метода)](#derived-queries-по-имени-метода)
+  - [@Query (JPQL и native SQL)](#query-jpql-и-native-sql)
+  - [Проекции](#проекции)
 - [Связи сущностей](#связи-сущностей)
+  - [@ManyToOne / @OneToMany](#manytoone-onetomany)
+  - [@ManyToMany](#manytomany)
+  - [Fetch Types и Cascade](#fetch-types-и-cascade)
 - [Проблема N+1 и решения](#проблема-n1-и-решения)
+  - [JOIN FETCH](#join-fetch)
+  - [@EntityGraph](#entitygraph)
+  - [@BatchSize (Hibernate)](#batchsize-hibernate)
 - [Пагинация и сортировка](#пагинация-и-сортировка)
 - [Аудит](#аудит)
 - [Транзакции](#транзакции)
+  - [Основы @Transactional](#основы-transactional)
+  - [Propagation](#propagation)
+  - [Isolation](#isolation)
+  - [rollbackFor и readOnly](#rollbackfor-и-readonly)
+  - [Self-invocation (критическая ловушка)](#self-invocation-критическая-ловушка)
 - [Spring Data JDBC](#spring-data-jdbc)
 - [Specifications и QueryDSL](#specifications-и-querydsl)
+  - [Specifications (Criteria API)](#specifications-criteria-api)
+  - [QueryDSL](#querydsl)
 - [Типичные ошибки](#типичные-ошибки)
+- [См. также](#см-также)
 
 ## Иерархия репозиториев
 

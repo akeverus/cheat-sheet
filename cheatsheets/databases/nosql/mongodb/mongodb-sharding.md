@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # MongoDB: Шардирование - Горизонтальное масштабирование и распределение данных
 
@@ -43,7 +43,6 @@ updated: "2026-02-11"
   - [Выбор Shard Key](#выбор-shard-key)
     - [Характеристики хорошего shard key](#характеристики-хорошего-shard-key)
     - [Типы shard keys](#типы-shard-keys)
-      - [Ranged Sharding (Диапазонное шардирование)](#ranged-sharding-диапазонное-шардирование)
 
 ## Введение в шардирование MongoDB
 

@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-scheduling.md"]
 next: ["micronaut-scheduling.md", "micronaut-data.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-scheduling.md", "micronaut-data.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-scheduling.md", "micronaut-data.md"]
 
 ## Содержание
 
-- [Micronaut: Batch Processing — Job Processing и Scheduling](#micronaut-batch-processing-job-processing-и-scheduling)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Batch Processing](#настройка-batch-processing)
@@ -57,6 +56,7 @@ related: ["micronaut-scheduling.md", "micronaut-data.md"]
   - [Partitioned Job](#partitioned-job)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

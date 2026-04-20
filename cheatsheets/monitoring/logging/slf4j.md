@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # SLF4J для Java
 
@@ -34,6 +34,8 @@ updated: "2026-02-11"
 
 - [Введение в SLF4J](#введение-в-slf4j)
 - [Logger API](#logger-api)
+  - [Получение Logger](#получение-logger)
+  - [Уровни логирования](#уровни-логирования)
 - [Parameterized logging](#parameterized-logging)
 - [MDC (Mapped Diagnostic Context)](#mdc-mapped-diagnostic-context)
 - [Markers](#markers)

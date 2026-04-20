@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Maven Advanced
 
@@ -48,21 +48,14 @@ updated: "2026-02-11"
 - [CI/CD интеграция](#cicd-интеграция)
   - [Jenkins pipeline](#jenkins-pipeline)
   - [GitHub Actions](#github-actions)
-- [.github/workflows/ci.yml](#githubworkflowsciyml)
 - [Решение проблем](#решение-проблем)
   - [Распространенные проблемы](#распространенные-проблемы)
-- [Очистка локального репозитория](#очистка-локального-репозитория)
-- [Debug build](#debug-build)
-- [Debug dependency resolution](#debug-dependency-resolution)
-- [Debug plugin execution](#debug-plugin-execution)
-- [Check for updates](#check-for-updates)
-- [Analyze dependencies](#analyze-dependencies)
-- [Fix dependency versions](#fix-dependency-versions)
-- [Memory issues](#memory-issues)
-- [Network issues](#network-issues)
-- [SSL certificate issues](#ssl-certificate-issues)
   - [Build analysis](#build-analysis)
 - [Лучшие практики](#лучшие-практики)
+  - [Структура и организация](#структура-и-организация)
+  - [Производительность](#производительность)
+  - [Качество и безопасность](#качество-и-безопасность)
+  - [CI/CD](#cicd)
   - [Enterprise POM structure](#enterprise-pom-structure)
   - [Quality gates](#quality-gates)
 - [См. также](#см-также)

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # ZIO
 
@@ -65,6 +65,7 @@ updated: "2026-02-11"
   - [From Future-based code](#from-future-based-code)
 - [Experimental Features](#experimental-features)
   - [ZIO 2.x Features](#zio-2x-features)
+- [См. также](#см-также-1)
 
 ## Основные концепции ZIO
 

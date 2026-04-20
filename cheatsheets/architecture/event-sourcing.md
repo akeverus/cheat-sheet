@@ -7,7 +7,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Event Sourcing
 
@@ -43,6 +43,7 @@ updated: "2026-02-11"
   - [Event Replay](#event-replay)
   - [Snapshots](#snapshots)
 - [Версионирование событий](#версионирование-событий)
+  - [Версионирование событий](#версионирование-событий-1)
 - [Миграция событий](#миграция-событий)
   - [Upcaster для миграции событий](#upcaster-для-миграции-событий)
 - [Интеграция с CQRS](#интеграция-с-cqrs)

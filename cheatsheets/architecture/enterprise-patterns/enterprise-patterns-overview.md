@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Enterprise Patterns — обзор
 
@@ -21,10 +21,7 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Enterprise Patterns — Обзор](#enterprise-patterns--обзор)
 - [Что такое Enterprise Patterns](#что-такое-enterprise-patterns)
-- [Решение проблем](#решение-проблем)
-- [Частые вопросы](#частые-вопросы)
 - [Основные категории паттернов](#основные-категории-паттернов)
   - [Паттерны представления данных](#паттерны-представления-данных)
     - [Repository Pattern](#repository-pattern)
@@ -39,6 +36,8 @@ updated: "2026-02-11"
     - [Circuit Breaker Pattern](#circuit-breaker-pattern)
     - [Saga Pattern](#saga-pattern)
 - [Когда использовать Enterprise Patterns](#когда-использовать-enterprise-patterns)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
 ## Что такое Enterprise Patterns

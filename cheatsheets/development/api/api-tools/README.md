@@ -7,7 +7,7 @@ tags:
   - development
   - api-tools
 type: "index"
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Development API Tools
 
@@ -19,11 +19,7 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [[api-testing-basics|API Testing]]
-- [[api-documentation-basics|API Documentation Basics]]
-- [[openapi-swagger|Swagger/OpenAPI]]
-- [[postman-basics|Postman]]
-- [[insomnia-basics|Insomnia]]
+- [Как выбрать инструмент](#как-выбрать-инструмент)
 
 ## Как выбрать инструмент
 

@@ -11,7 +11,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 ---
 
@@ -29,7 +29,6 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 
 ## Содержание
 
-- [Redis: Высокая доступность](#redis-высокая-доступность)
 - [Введение в высокую доступность](#введение-в-высокую-доступность)
   - [Компоненты HA](#компоненты-ha)
 - [Архитектура высокой доступности](#архитектура-высокой-доступности)
@@ -37,42 +36,15 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
   - [Redis Cluster](#redis-cluster)
 - [Настройка Sentinel для HA](#настройка-sentinel-для-ha)
   - [Минимальная конфигурация](#минимальная-конфигурация)
-- [sentinel.conf](#sentinelconf)
-- [Мониторинг master](#мониторинг-master)
-- [Пароль](#пароль)
-- [Время для определения недоступности](#время-для-определения-недоступности)
-- [Время для failover](#время-для-failover)
-- [Параллельные синхронизации](#параллельные-синхронизации)
   - [Production конфигурация](#production-конфигурация)
-- [Production настройки Sentinel](#production-настройки-sentinel)
 - [Disaster Recovery](#disaster-recovery)
   - [Backup Strategy](#backup-strategy)
-- [disaster_recovery_backup.sh](#disaster_recovery_backupsh)
-- [RDB backup](#rdb-backup)
-- [AOF backup](#aof-backup)
-- [Загрузка в облако](#загрузка-в-облако)
   - [Recovery Procedures](#recovery-procedures)
-- [disaster_recovery.sh](#disaster_recoverysh)
-- [Остановить Redis](#остановить-redis)
-- [Восстановить данные](#восстановить-данные)
-- [Запустить Redis](#запустить-redis)
-- [Проверить восстановление](#проверить-восстановление)
   - [Конфигурация](#конфигурация)
   - [Мониторинг](#мониторинг)
 - [Advanced HA Configurations](#advanced-ha-configurations)
   - [Multi-Region Setup](#multi-region-setup)
-- [Архитектура с несколькими регионами](#архитектура-с-несколькими-регионами)
-- [Region 1: Master + Sentinel](#region-1-master-sentinel)
-- [Region 2: Slave + Sentinel](#region-2-slave-sentinel)
-- [Region 3: Slave + Sentinel](#region-3-slave-sentinel)
-- [Конфигурация для географического распределения](#конфигурация-для-географического-распределения)
   - [Automatic Failover Testing](#automatic-failover-testing)
-- [test_failover.sh](#test_failoversh)
-- [Проверить текущий master](#проверить-текущий-master)
-- [Остановить master](#остановить-master)
-- [Ждать failover](#ждать-failover)
-- [Проверить новый master](#проверить-новый-master)
-- [Восстановить старый master](#восстановить-старый-master)
   - [Health Check Endpoints](#health-check-endpoints)
 
 ## Введение в высокую доступность

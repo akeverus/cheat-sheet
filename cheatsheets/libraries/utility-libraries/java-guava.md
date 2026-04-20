@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Google Guava: Утилиты для Java
 
@@ -77,8 +77,6 @@ updated: "2026-02-11"
   - [3. Кэширование](#3-кэширование)
   - [4. Event-driven архитектура](#4-event-driven-архитектура)
   - [5. Работа со строками](#5-работа-со-строками)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
 - [Заключение](#заключение)
   - [Преимущества Guava](#преимущества-guava)
   - [Когда использовать Guava](#когда-использовать-guava)

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Печать треугольников с помощью циклов for (Triangle with For Loops)
 
@@ -26,7 +26,7 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Печать треугольников с помощью циклов for](#печать-треугольников-с-помощью-циклов-for)
+- [Обзор](#обзор)
 - [Java Implementation](#java-implementation)
   - [Right-Angled Triangle (Java)](#right-angled-triangle-java)
   - [Isosceles Triangle (Java)](#isosceles-triangle-java)
@@ -36,7 +36,10 @@ updated: "2026-02-11"
   - [Summary Table](#summary-table)
 - [Complete Example](#complete-example)
 - [Kotlin Implementation](#kotlin-implementation)
+  - [Right-Angled Triangle (Kotlin)](#right-angled-triangle-kotlin)
+  - [Isosceles Triangle (Kotlin)](#isosceles-triangle-kotlin)
   - [Using String.repeat()](#using-stringrepeat)
+  - [Using Substring Method (Kotlin)](#using-substring-method-kotlin)
   - [Example Usage](#example-usage)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)

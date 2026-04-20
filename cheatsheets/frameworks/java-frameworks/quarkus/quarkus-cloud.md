@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-graalvm.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-graalvm.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-core.md", "quarkus-graalvm.md"]
 
 ## Содержание
 
-- [Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh](#quarkus-cloud-native-kubernetes-openshift-и-service-mesh)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Kubernetes](#kubernetes)
@@ -38,7 +37,6 @@ related: ["quarkus-core.md", "quarkus-graalvm.md"]
   - [OpenTelemetry Configuration](#opentelemetry-configuration)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте health checks](#1-используйте-health-checks)
-- [ Хорошо](#хорошо)
   - [2. Настройте metrics](#2-настройте-metrics)
   - [3. Используйте distributed tracing](#3-используйте-distributed-tracing)
 - [Kubernetes Deployment Strategies](#kubernetes-deployment-strategies)
@@ -47,12 +45,13 @@ related: ["quarkus-core.md", "quarkus-graalvm.md"]
   - [Canary Deployment](#canary-deployment)
 - [Health Checks](#health-checks)
   - [Liveness и Readiness Probes](#liveness-и-readiness-probes)
-- [application.properties](#applicationproperties)
   - [Custom Health Checks](#custom-health-checks)
 - [Metrics и Monitoring](#metrics-и-monitoring)
   - [Micrometer Integration](#micrometer-integration)
   - [Custom Metrics](#custom-metrics)
   - [Prometheus ServiceMonitor](#prometheus-servicemonitor)
+- [Distributed Tracing](#distributed-tracing-1)
+  - [OpenTelemetry Configuration](#opentelemetry-configuration-1)
   - [Custom Spans](#custom-spans)
   - [Jaeger Configuration](#jaeger-configuration)
 - [Service Mesh Integration](#service-mesh-integration)
@@ -65,25 +64,25 @@ related: ["quarkus-core.md", "quarkus-graalvm.md"]
   - [HPA Configuration](#hpa-configuration)
 - [Resource Management](#resource-management)
   - [Resource Limits](#resource-limits)
-  - [1. Всегда настраивайте health checks](#1-всегда-настраивайте-health-checks)
-  - [2. Используйте resource limits](#2-используйте-resource-limits)
-  - [3. Настраивайте distributed tracing](#3-настраивайте-distributed-tracing)
-  - [4. Используйте ConfigMaps для конфигурации](#4-используйте-configmaps-для-конфигурации)
-  - [5. Настраивайте HPA для автоматического масштабирования](#5-настраивайте-hpa-для-автоматического-масштабирования)
 - [Service Discovery](#service-discovery)
   - [Kubernetes Service Discovery](#kubernetes-service-discovery)
   - [Consul Service Discovery](#consul-service-discovery)
 - [Configuration Management](#configuration-management)
   - [External Configuration](#external-configuration)
-  - [6. Используйте service discovery](#6-используйте-service-discovery)
+  - [ConfigMaps и Secrets](#configmaps-и-secrets-1)
 - [Advanced Cloud Patterns](#advanced-cloud-patterns)
+  - [Blue-Green Deployment](#blue-green-deployment-1)
+  - [Canary Deployment](#canary-deployment-1)
+  - [Service Mesh Integration](#service-mesh-integration-1)
 - [Kubernetes Resource Management](#kubernetes-resource-management)
   - [Resource Limits and Requests](#resource-limits-and-requests)
   - [Pod Disruption Budget](#pod-disruption-budget)
+- [Service Mesh Integration](#service-mesh-integration-2)
   - [Circuit Breaker Configuration](#circuit-breaker-configuration)
   - [Retry Policy](#retry-policy)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Структурированное логирование для Java
 
@@ -35,7 +35,13 @@ updated: "2026-02-11"
 
 - [Введение в структурированное логирование](#введение-в-структурированное-логирование)
 - [JSON logging](#json-logging)
+  - [Logback (Logstash Logback Encoder)](#logback-logstash-logback-encoder)
+  - [Log4j 2 JSON](#log4j-2-json)
+  - [Structured logging в коде (SLF4J)](#structured-logging-в-коде-slf4j)
 - [Correlation IDs](#correlation-ids)
+  - [Spring MVC interceptor](#spring-mvc-interceptor)
+  - [Прокидывание в исходящие вызовы (RestTemplate, WebClient)](#прокидывание-в-исходящие-вызовы-resttemplate-webclient)
+  - [Асинхронные задачи (MDC в новом потоке)](#асинхронные-задачи-mdc-в-новом-потоке)
 - [Distributed tracing и context propagation](#distributed-tracing-и-context-propagation)
 - [Log levels и custom fields](#log-levels-и-custom-fields)
 - [Performance и log aggregation](#performance-и-log-aggregation)

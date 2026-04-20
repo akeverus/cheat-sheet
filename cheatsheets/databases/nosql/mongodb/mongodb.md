@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md", "java/java-basics.md"]
 next: ["databases/redis.md", "spring/spring-data-jpa.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/java-basics.md"]
 ---
 
@@ -104,27 +104,10 @@ flowchart TD
 
 ## Содержание
 
-- [MongoDB: Полное руководство по документо-ориентированной NoSQL базе данных](#mongodb-полное-руководство-по-документо-ориентированной-nosql-базе-данных)
-- [Введение в MongoDB](#введение-в-mongodb)
-  - [Архитектура MongoDB](#архитектура-mongodb)
-  - [Основные характеристики MongoDB](#основные-характеристики-mongodb)
-  - [Преимущества MongoDB](#преимущества-mongodb)
-  - [Недостатки MongoDB](#недостатки-mongodb)
-  - [Варианты использования MongoDB](#варианты-использования-mongodb)
-  - [Сравнение с реляционными базами данных](#сравнение-с-реляционными-базами-данных)
 - [Установка и настройка MongoDB](#установка-и-настройка-mongodb)
   - [Установка на Ubuntu/Debian](#установка-на-ubuntudebian)
-- [Импорт публичного ключа MongoDB](#импорт-публичного-ключа-mongodb)
-- [Создание списка источников](#создание-списка-источников)
-- [Обновление пакетов и установка](#обновление-пакетов-и-установка)
-- [Запуск MongoDB](#запуск-mongodb)
-- [Проверка статуса](#проверка-статуса)
-- [Проверка версии](#проверка-версии)
   - [Установка через Docker](#установка-через-docker)
-- [Запуск MongoDB в Docker](#запуск-mongodb-в-docker)
-- [Проверка](#проверка)
   - [Конфигурационный файл MongoDB](#конфигурационный-файл-mongodb)
-- [/etc/mongod.conf](#etcmongodconf)
 - [Основные концепции MongoDB](#основные-концепции-mongodb)
   - [Терминология](#терминология)
   - [Документы и BSON](#документы-и-bson)
@@ -162,11 +145,12 @@ flowchart TD
   - [Spring Boot конфигурация](#spring-boot-конфигурация)
   - [Entity и Repository](#entity-и-repository)
   - [Service слой](#service-слой)
-- [Best Practices](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
   - [1. Дизайн схемы](#1-дизайн-схемы)
     - [Embedded vs References](#embedded-vs-references)
   - [2. Индексирование](#2-индексирование)
   - [3. Производительность](#3-производительность)
+    - [Оптимизация запросов](#оптимизация-запросов-1)
     - [Connection management](#connection-management)
   - [4. Безопасность](#4-безопасность)
   - [5. Мониторинг](#5-мониторинг)

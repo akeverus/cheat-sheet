@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 ---
 
@@ -38,7 +38,7 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - [Поиск в радиусе](#поиск-в-радиусе)
   - [GEORADIUS](#georadius)
   - [GEORADIUSBYMEMBER](#georadiusbymember)
-  - [GEOSEARCH (Redis 6.2+)](#geosearch-redis-6-2)
+  - [GEOSEARCH (Redis 6.2+)](#geosearch-redis-62)
 - [Геохэши](#геохэши)
   - [Получение геохэша](#получение-геохэша)
 - [Программное использование](#программное-использование)
@@ -52,6 +52,8 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
   - [Geospatial Indexing](#geospatial-indexing)
   - [Performance Optimization](#performance-optimization)
   - [Real-World Use Cases](#real-world-use-cases)
+    - [Location-Based Services](#location-based-services)
+    - [Delivery Optimization](#delivery-optimization)
 
 ## Введение в геопространственные данные
 

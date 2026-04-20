@@ -12,7 +12,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
 next: ["databases/postgres-monitoring.md", "databases/postgres-troubleshooting.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 ---
 
@@ -35,23 +35,38 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 - [Роли и привилегии](#роли-и-привилегии)
   - [Создание ролей](#создание-ролей)
   - [Управление привилегиями](#управление-привилегиями)
+    - [Привилегии на уровне базы данных](#привилегии-на-уровне-базы-данных)
+    - [Привилегии на уровне схемы](#привилегии-на-уровне-схемы)
+    - [Привилегии на уровне таблицы](#привилегии-на-уровне-таблицы)
+    - [Привилегии на уровне столбца](#привилегии-на-уровне-столбца)
   - [Управление ролями](#управление-ролями)
 - [Row Level Security (RLS)](#row-level-security-rls)
   - [Включение RLS](#включение-rls)
   - [Создание политик](#создание-политик)
+    - [Политика для SELECT](#политика-для-select)
+    - [Политика для INSERT](#политика-для-insert)
+    - [Политика для UPDATE](#политика-для-update)
+    - [Политика для DELETE](#политика-для-delete)
   - [Сложные политики](#сложные-политики)
   - [Управление политиками](#управление-политиками)
-- [SSL/TLS соединения](#ssl-tls-соединения)
+- [SSL/TLS соединения](#ssltls-соединения)
   - [Настройка SSL на сервере](#настройка-ssl-на-сервере)
+    - [Генерация сертификатов](#генерация-сертификатов)
+    - [Настройка postgresql.conf](#настройка-postgresqlconf)
+    - [Настройка pg_hba.conf](#настройка-pg_hbaconf)
   - [Настройка SSL на клиенте](#настройка-ssl-на-клиенте)
   - [Режимы sslmode](#режимы-sslmode)
 - [Аудит и логирование](#аудит-и-логирование)
   - [Настройка логирования](#настройка-логирования)
+    - [postgresql.conf](#postgresqlconf)
   - [pgAudit расширение](#pgaudit-расширение)
   - [Аудит через триггеры](#аудит-через-триггеры)
 - [Шифрование данных](#шифрование-данных)
   - [Шифрование на уровне приложения](#шифрование-на-уровне-приложения)
+    - [Использование pgcrypto](#использование-pgcrypto)
+    - [Шифрование данных](#шифрование-данных-1)
   - [Шифрование на уровне диска](#шифрование-на-уровне-диска)
+    - [Transparent Data Encryption (TDE)](#transparent-data-encryption-tde)
 - [Лучшие практики безопасности](#лучшие-практики-безопасности)
   - [Управление доступом](#управление-доступом)
   - [Защита паролей](#защита-паролей)
@@ -75,7 +90,7 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
   - [Multi-Tenant Isolation](#multi-tenant-isolation)
   - [Hierarchical Access Control](#hierarchical-access-control)
   - [Time-Based RLS](#time-based-rls)
-- [SSL/TLS Advanced Configuration](#ssl-tls-advanced-configuration)
+- [SSL/TLS Advanced Configuration](#ssltls-advanced-configuration)
   - [Client Certificate Authentication](#client-certificate-authentication)
   - [Certificate Generation for Clients](#certificate-generation-for-clients)
   - [SSL Connection Monitoring](#ssl-connection-monitoring)

@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-mvc.md", "spring/spring-rest.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ## Содержание
 
-- [Spring Validation: Полное руководство по валидации данных](#spring-validation-полное-руководство-по-валидации-данных)
 - [Введение в Spring Validation](#введение-в-spring-validation)
   - [Основные возможности](#основные-возможности)
   - [Архитектура валидации](#архитектура-валидации)
@@ -59,6 +58,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [5. Обрабатывайте ошибки валидации централизованно](#5-обрабатывайте-ошибки-валидации-централизованно)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Validation
 

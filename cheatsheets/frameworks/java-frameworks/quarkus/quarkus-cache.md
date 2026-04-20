@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-redis.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-redis.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-core.md", "quarkus-redis.md"]
 
 ## Содержание
 
-- [Quarkus: Cache — Кеширование данных](#quarkus-cache-кеширование-данных)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Caffeine Cache](#caffeine-cache)
@@ -43,12 +42,9 @@ related: ["quarkus-core.md", "quarkus-redis.md"]
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте кеш для дорогих операций](#1-используйте-кеш-для-дорогих-операций)
   - [2. Настраивайте TTL правильно](#2-настраивайте-ttl-правильно)
-- [ Хорошо](#хорошо)
   - [3. Используйте @CacheKey для правильной инвалидации](#3-используйте-cachekey-для-правильной-инвалидации)
+- [Cache Configuration](#cache-configuration-1)
   - [Multiple Caches](#multiple-caches)
-- [application.properties](#applicationproperties)
-- [Users cache](#users-cache)
-- [Products cache](#products-cache)
   - [Cache Statistics](#cache-statistics)
 - [Cache Strategies](#cache-strategies)
   - [Write-Behind Pattern](#write-behind-pattern)
@@ -61,20 +57,24 @@ related: ["quarkus-core.md", "quarkus-redis.md"]
 - [Cache Performance](#cache-performance)
   - [Cache Hit Rate Optimization](#cache-hit-rate-optimization)
   - [Cache Size Management](#cache-size-management)
-  - [4. Мониторьте hit rate](#4-мониторьте-hit-rate)
-  - [5. Используйте distributed cache для масштабирования](#5-используйте-distributed-cache-для-масштабирования)
 - [Cache Warming Strategies](#cache-warming-strategies)
+  - [Preloading Cache](#preloading-cache-1)
   - [Lazy Loading with Cache](#lazy-loading-with-cache)
 - [Cache Performance Optimization](#cache-performance-optimization)
   - [Hit Rate Optimization](#hit-rate-optimization)
-- [Динамическая настройка размера кеша](#динамическая-настройка-размера-кеша)
+  - [Cache Size Management](#cache-size-management-1)
+- [Advanced Cache Patterns](#advanced-cache-patterns-1)
   - [Cache Stampede Prevention](#cache-stampede-prevention)
   - [Cache Coherence](#cache-coherence)
 - [Cache Monitoring and Metrics](#cache-monitoring-and-metrics)
+  - [Cache Statistics](#cache-statistics-1)
   - [Cache Metrics Integration](#cache-metrics-integration)
 - [Advanced Cache Strategies](#advanced-cache-strategies)
+  - [Cache-Aside Pattern](#cache-aside-pattern-1)
+  - [Write-Through Pattern](#write-through-pattern-1)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Spring Batch для Java
 
@@ -42,8 +42,8 @@ updated: "2026-02-11"
 - [Введение в Spring Batch](#введение-в-spring-batch)
   - [Почему Spring Batch?](#почему-spring-batch)
   - [Когда использовать Spring Batch?](#когда-использовать-spring-batch)
- - [ Идеально подходит для:](#идеально-подходит-для)
- - [ Не подходит для:](#не-подходит-для)
+    - [Идеально подходит для:](#идеально-подходит-для)
+    - [Не подходит для:](#не-подходит-для)
   - [Основные возможности](#основные-возможности)
     - [Transaction Management](#transaction-management)
     - [Job Repository](#job-repository)
@@ -52,9 +52,7 @@ updated: "2026-02-11"
     - [Job](#job)
     - [Step](#step)
     - [Execution Context](#execution-context)
-- [H2 (для разработки)](#h2-для-разработки)
-- [PostgreSQL (для production)](#postgresql-для-production)
-- [Batch конфигурация](#batch-конфигурация)
+  - [Job Repository](#job-repository-1)
 - [Job и Step конфигурация](#job-и-step-конфигурация)
   - [Basic Job Configuration](#basic-job-configuration)
     - [Java-based Configuration](#java-based-configuration)
@@ -140,10 +138,7 @@ updated: "2026-02-11"
 - [Production Deployment](#production-deployment)
   - [Configuration Management](#configuration-management)
     - [Environment-specific Properties](#environment-specific-properties)
-- [application-prod.yaml](#application-prodyaml)
     - [Docker Deployment](#docker-deployment)
-- [Create directories](#create-directories)
-- [Create non-root user](#create-non-root-user)
     - [Kubernetes Deployment](#kubernetes-deployment)
   - [Monitoring и Alerting](#monitoring-и-alerting)
     - [Spring Boot Actuator](#spring-boot-actuator)
@@ -152,9 +147,11 @@ updated: "2026-02-11"
   - [Job Design](#job-design)
     - [1. Job Naming Convention](#1-job-naming-convention)
     - [2. Parameter Management](#2-parameter-management)
+  - [Error Handling](#error-handling-1)
     - [3. Comprehensive Error Handling](#3-comprehensive-error-handling)
   - [Performance](#performance)
     - [4. Chunk Size Optimization](#4-chunk-size-optimization)
+  - [Testing](#testing-1)
     - [5. Test Coverage](#5-test-coverage)
   - [Operations](#operations)
     - [6. Operational Readiness](#6-operational-readiness)
@@ -172,6 +169,7 @@ updated: "2026-02-11"
   - [Архитектурные преимущества:](#архитектурные-преимущества)
     - [Reliability:](#reliability)
     - [Scalability:](#scalability)
+  - [Когда использовать Spring Batch:](#когда-использовать-spring-batch-1)
   - [Когда НЕ использовать:](#когда-не-использовать)
   - [Production considerations:](#production-considerations)
   - [Best practices summary:](#best-practices-summary)

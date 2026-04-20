@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-security.md", "micronaut-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
@@ -26,7 +26,6 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
 
 ## Содержание
 
-- [Micronaut: Data Access — JDBC, JPA и Repositories](#micronaut-data-access-jdbc-jpa-и-repositories)
 - [Введение](#введение)
   - [Доступные опции](#доступные-опции)
 - [Micronaut Data JDBC](#micronaut-data-jdbc)
@@ -37,6 +36,7 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
   - [Custom Queries](#custom-queries)
   - [Join Queries](#join-queries)
 - [Micronaut Data JPA](#micronaut-data-jpa)
+  - [Настройка](#настройка-1)
   - [JPA Entity](#jpa-entity)
   - [JPA Repository](#jpa-repository)
 - [Transactions](#transactions)
@@ -76,6 +76,7 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
   - [Custom Result Mappers](#custom-result-mappers)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

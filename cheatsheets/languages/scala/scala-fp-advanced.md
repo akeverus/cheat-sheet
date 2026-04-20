@@ -12,7 +12,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["scala/scala-fp-basics.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-fp-basics.md", "scala/scala-basics.md"]
 ---
 
@@ -33,7 +33,6 @@ related: ["scala/scala-fp-basics.md", "scala/scala-basics.md"]
 
 ## Содержание
 
-- [Scala Functional Programming — Advanced](#scala-functional-programming-advanced)
 - [Functors](#functors)
   - [Определение Functor](#определение-functor)
   - [Примеры Functors](#примеры-functors)

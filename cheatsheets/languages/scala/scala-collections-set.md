@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-collections-list.md", "scala/scala-collections-map.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
@@ -32,7 +32,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 
 ## Содержание
 
-- [Scala Collections — Set](#scala-collections-set)
 - [Введение в Set](#введение-в-set)
   - [Основные характеристики](#основные-характеристики)
   - [Immutable vs Mutable](#immutable-vs-mutable)
@@ -45,6 +44,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Mutable Set](#mutable-set)
 - [HashSet](#hashset)
 - [SortedSet](#sortedset)
+- [Основные операции](#основные-операции-1)
   - [Map — преобразование элементов](#map-преобразование-элементов)
   - [Filter — фильтрация элементов](#filter-фильтрация-элементов)
   - [FlatMap — преобразование и разворачивание](#flatmap-преобразование-и-разворачивание)
@@ -65,8 +65,8 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
   - [Предпочтение immutable Set](#предпочтение-immutable-set)
   - [Использование Set для дедупликации](#использование-set-для-дедупликации)
   - [Использование Set для проверки принадлежности](#использование-set-для-проверки-принадлежности)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Практические примеры использования](#практические-примеры-использования)
   - [Дедупликация данных](#дедупликация-данных)

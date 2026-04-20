@@ -14,7 +14,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "java/java-basics.md"]
 next: ["spring/spring-security.md", "spring/spring-boot.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behavioral.md"]
 ---
 
@@ -34,7 +34,6 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
 
 ## Содержание
 
-- [Spring AOP: Полное руководство по аспектно-ориентированному программированию](#spring-aop-полное-руководство-по-аспектно-ориентированному-программированию)
 - [Введение в Spring AOP](#введение-в-spring-aop)
   - [Основные понятия](#основные-понятия)
   - [Точка соединения и Pointcut](#точка-соединения-и-pointcut)
@@ -51,6 +50,8 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
   - [this и target PCD](#this-и-target-pcd)
   - [args PCD](#args-pcd)
   - [@target PCD](#target-pcd)
+  - [@args PCD](#args-pcd-1)
+  - [@within PCD](#within-pcd-1)
   - [@annotation PCD](#annotation-pcd)
   - [Комбинирование выражений Pointcut](#комбинирование-выражений-pointcut)
 - [Введение в AspectJ](#введение-в-aspectj)
@@ -86,7 +87,7 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
   - [Интеграция с Micrometer](#интеграция-с-micrometer)
 - [Тестирование аспектов](#тестирование-аспектов)
   - [Модульное тестирование](#модульное-тестирование)
-- [Best practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [1. Правильное именование](#1-правильное-именование)
   - [2. Избегайте сложных pointcut выражений](#2-избегайте-сложных-pointcut-выражений)
   - [3. Используйте абстрактные аспекты](#3-используйте-абстрактные-аспекты)
@@ -113,6 +114,10 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
   - [AOP с gRPC](#aop-с-grpc)
 - [Заключение и рекомендации](#заключение-и-рекомендации)
   - [Когда использовать AOP](#когда-использовать-aop)
+  - [Лучшие практики](#лучшие-практики-1)
+  - [Производительность](#производительность-1)
+- [См. также](#см-также)
+
 ## Введение в Spring AOP
 
 **AOP (Aspect-Oriented Programming)** — это парадигма программирования, которая помогает разделить сквозные задачи (cross-cutting concerns) от бизнес-логики.

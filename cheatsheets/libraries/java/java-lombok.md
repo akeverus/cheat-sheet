@@ -45,7 +45,9 @@ Project Lombok — annotation processor, который на этапе комп
   - [@Data и @Value](#data-и-value)
 - [@Builder](#builder)
   - [@Builder.Default](#builderdefault)
-  - [@SuperBuilder](#superbuilder)
+  - [toBuilder — «скопировать с изменениями»](#tobuilder-скопировать-с-изменениями)
+  - [@Singular для коллекций](#singular-для-коллекций)
+  - [@SuperBuilder для наследования](#superbuilder-для-наследования)
 - [Логгеры](#логгеры)
 - [Продвинутые аннотации](#продвинутые-аннотации)
   - [@Accessors](#accessors)
@@ -57,10 +59,14 @@ Project Lombok — annotation processor, который на этапе комп
   - [@FieldDefaults](#fielddefaults)
 - [Delombok](#delombok)
 - [Подводные камни с JPA](#подводные-камни-с-jpa)
+  - [@EqualsAndHashCode + lazy loading](#equalsandhashcode-lazy-loading)
+  - [@ToString + lazy](#tostring-lazy)
+  - [@Builder + @NoArgsConstructor](#builder-noargsconstructor)
 - [Lombok vs Records](#lombok-vs-records)
 - [Конфигурация lombok.config](#конфигурация-lombokconfig)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
+- [См. также](#см-также-1)
 
 ## Установка
 

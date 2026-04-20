@@ -9,7 +9,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 ---
 
@@ -28,7 +28,6 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 
 ## Содержание
 
-- [Scala DSL](#scala-dsl)
 - [Введение в DSL](#введение-в-dsl)
   - [Основные техники](#основные-техники)
 - [Type-Safe Builders](#type-safe-builders)
@@ -48,9 +47,10 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
   - [Комбинаторные парсеры](#комбинаторные-парсеры)
   - [Embedded DSL](#embedded-dsl)
   - [External DSL](#external-dsl)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
+- [Продвинутые техники создания DSL](#продвинутые-техники-создания-dsl-1)
   - [Internal DSL с использованием макросов](#internal-dsl-с-использованием-макросов)
   - [External DSL с парсерами](#external-dsl-с-парсерами)
   - [Fluent Interfaces (расширенные)](#fluent-interfaces-расширенные)

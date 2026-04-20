@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
 next: ["quarkus-rest.md", "quarkus-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
@@ -23,7 +23,6 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: WebSocket — Real-time Communication](#quarkus-websocket-real-time-communication)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Server Endpoints](#server-endpoints)
@@ -48,8 +47,6 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
   - [Custom Encoders/Decoders](#custom-encodersdecoders)
 - [Connection Management](#connection-management)
   - [Session Management](#session-management)
-  - [4. Используйте encoders/decoders для сложных объектов](#4-используйте-encodersdecoders-для-сложных-объектов)
-  - [5. Защищайте WebSocket endpoints](#5-защищайте-websocket-endpoints)
 - [WebSocket Performance Optimization](#websocket-performance-optimization)
   - [Connection Pooling](#connection-pooling)
   - [Message Batching](#message-batching)
@@ -57,9 +54,11 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
   - [Message Queue Pattern](#message-queue-pattern)
   - [Heartbeat Pattern](#heartbeat-pattern)
 - [WebSocket Connection Pooling](#websocket-connection-pooling)
+  - [Connection Management](#connection-management-1)
   - [Message Queue for WebSocket](#message-queue-for-websocket)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

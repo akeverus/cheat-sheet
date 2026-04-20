@@ -10,7 +10,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-type-system.md"]
 ---
 
@@ -31,7 +31,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-ty
 
 ## Содержание
 
-- [Scala Additional Topics](#scala-additional-topics)
 - [Паттерны проектирования](#паттерны-проектирования)
   - [Strategy Pattern](#strategy-pattern)
   - [Observer Pattern](#observer-pattern)
@@ -64,8 +63,8 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-ty
 - [Архитектурные паттерны (расширенные)](#архитектурные-паттерны-расширенные)
   - [Event-Driven Architecture](#event-driven-architecture)
   - [CQRS (Command Query Responsibility Segregation)](#cqrs-command-query-responsibility-segregation)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 - [Дополнительные паттерны и техники](#дополнительные-паттерны-и-техники)

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Monads в Scala
 
@@ -41,7 +41,7 @@ updated: "2026-02-11"
   - [Реализация Writer Monad](#реализация-writer-monad)
   - [Реализация Reader Monad](#реализация-reader-monad)
 - [Monad Transformers](#monad-transformers)
-  - [**OptionT** для **Future**[**Option**[A]]](#optiont-для-futureoptiona)
+  - [OptionT для Future[Option[A]]](#optiont-для-futureoptiona)
 - [Best practices](#best-practices)
   - [1. Используйте for-comprehension для читаемости](#1-используйте-for-comprehension-для-читаемости)
   - [2. Избегайте вложенных Monads когда возможно](#2-избегайте-вложенных-monads-когда-возможно)
@@ -49,8 +49,8 @@ updated: "2026-02-11"
   - [Практические примеры: Writer Monad с Cats](#практические-примеры-writer-monad-с-cats)
   - [Практические примеры: Reader Monad с Cats](#практические-примеры-reader-monad-с-cats)
   - [Практические примеры: Free Monad](#практические-примеры-free-monad)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
   - [Практические примеры: IO Monad](#практические-примеры-io-monad)
   - [Практические примеры: Validation Monad](#практические-примеры-validation-monad)
@@ -59,6 +59,7 @@ updated: "2026-02-11"
   - [Использование с различными типами для обработки ошибок](#использование-с-различными-типами-для-обработки-ошибок)
   - [Использование с различными типами для валидации](#использование-с-различными-типами-для-валидации)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Burp Suite
 
@@ -37,20 +37,51 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Введение](#введение)
+  - [Зачем Burp Suite](#зачем-burp-suite)
+  - [Основные концепции](#основные-концепции)
 - [Установка и настройка](#установка-и-настройка)
+  - [Требования](#требования)
+  - [Установка](#установка)
+  - [Настройка браузера для Proxy](#настройка-браузера-для-proxy)
+  - [Проверка](#проверка)
 - [Proxy](#proxy)
+  - [Intercept](#intercept)
+  - [HTTP history](#http-history)
+  - [WebSockets](#websockets)
+  - [Match and Replace](#match-and-replace)
+  - [Invisible proxy и Scope](#invisible-proxy-и-scope)
 - [Scanner](#scanner)
+  - [Запуск сканирования](#запуск-сканирования)
+  - [Scan configurations](#scan-configurations)
+  - [Issues](#issues)
+  - [Live scan и Insertion points](#live-scan-и-insertion-points)
 - [Repeater](#repeater)
 - [Intruder](#intruder)
+  - [Режимы (Attack type)](#режимы-attack-type)
+  - [Позиции (Positions)](#позиции-positions)
+  - [Payloads](#payloads)
+  - [Запуск и анализ](#запуск-и-анализ)
+  - [Пример](#пример)
 - [Decoder и Comparer](#decoder-и-comparer)
+  - [Decoder](#decoder)
+  - [Comparer](#comparer)
 - [Расширения (BApp, Store)](#расширения-bapp-store)
+  - [BApp Store](#bapp-store)
+  - [Extensions (Store)](#extensions-store)
+  - [Макросы и Session handling](#макросы-и-session-handling)
 - [Отчёты и экспорт](#отчёты-и-экспорт)
+  - [Scanner (Professional)](#scanner-professional)
+  - [Proxy history и Repeater](#proxy-history-и-repeater)
+  - [Файл проекта](#файл-проекта)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем и FAQ](#решение-проблем-и-faq)
+  - [Таблица типичных проблем](#таблица-типичных-проблем)
+  - [Вопросы и ответы](#вопросы-и-ответы)
 - [Глоссарий](#глоссарий)
 - [Итоговые таблицы](#итоговые-таблицы)
+  - [Инструменты Burp](#инструменты-burp)
+  - [Ключевые настройки Proxy](#ключевые-настройки-proxy)
 - [Заключение](#заключение)
-
 
 ## Введение
 

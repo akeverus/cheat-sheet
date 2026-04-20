@@ -11,7 +11,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 next: ["databases/redis-security.md", "databases/redis-monitoring.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-clustering.md"]
 ---
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Контрактное тестирование (Contract Testing)
 
@@ -32,13 +32,27 @@ updated: "2026-02-11"
 - [Зачем контрактное тестирование](#зачем-контрактное-тестирование)
 - [Основные концепции](#основные-концепции)
 - [Pact: подключение и примеры](#pact-подключение-и-примеры)
+  - [Maven](#maven)
+  - [Consumer-тест](#consumer-тест)
+  - [Provider-верификация](#provider-верификация)
+  - [Pact matchers (гибкое сопоставление)](#pact-matchers-гибкое-сопоставление)
 - [Spring Cloud Contract: подключение и примеры](#spring-cloud-contract-подключение-и-примеры)
+  - [Maven (provider)](#maven-provider)
+  - [Контракт (Groovy)](#контракт-groovy)
+  - [Контракт (YAML)](#контракт-yaml)
+  - [Consumer (Stub Runner)](#consumer-stub-runner)
 - [CI/CD и Pact Broker](#cicd-и-pact-broker)
+  - [Pact Broker](#pact-broker)
+  - [Пайплайн](#пайплайн)
+  - [Публикация контракта](#публикация-контракта)
+  - [Spring Cloud Contract (без Pact Broker)](#spring-cloud-contract-без-pact-broker)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Итоговые таблицы](#итоговые-таблицы)
-
+  - [Pact vs Spring Cloud Contract](#pact-vs-spring-cloud-contract)
+  - [Pact JVM: основные аннотации](#pact-jvm-основные-аннотации)
+  - [SCC: ключевые компоненты](#scc-ключевые-компоненты)
 
 ## Зачем контрактное тестирование
 

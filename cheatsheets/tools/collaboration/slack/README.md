@@ -7,7 +7,7 @@ tags:
   - slack
   - collaboration
 type: "index"
-updated: "2026-04-17"
+updated: "2026-04-20"
 ---
 # Slack
 
@@ -35,9 +35,9 @@ Slack — SaaS-платформа корпоративного чата: кан�
 ## Содержание
 
 - [Типы интеграций](#типы-интеграций)
-- [Incoming Webhook — быстрый старт](#incoming-webhook--быстрый-старт)
+- [Incoming Webhook — быстрый старт](#incoming-webhook-быстрый-старт)
 - [Bot с Bolt](#bot-с-bolt)
-- [ChatOps — паттерны](#chatops--паттерны)
+- [ChatOps — паттерны](#chatops-паттерны)
 - [Best practices](#best-practices)
 - [Маршруты чтения](#маршруты-чтения)
 - [Куда идти дальше](#куда-идти-дальше)

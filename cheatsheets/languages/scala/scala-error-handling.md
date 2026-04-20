@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---
 
@@ -32,7 +32,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 
 ## Содержание
 
-- [Scala Error Handling](#scala-error-handling)
 - [Введение в обработку ошибок](#введение-в-обработку-ошибок)
 - [Option](#option)
 - [Either](#either)
@@ -55,10 +54,11 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
   - [Error Accumulation](#error-accumulation)
   - [Error Recovery](#error-recovery)
   - [Error Transformation](#error-transformation)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные техники обработки ошибок](#дополнительные-техники-обработки-ошибок)
+  - [Комбинирование Option, Either и Try](#комбинирование-option-either-и-try-1)
   - [Накопление ошибок с Validated](#накопление-ошибок-с-validated)
   - [Восстановление после ошибок](#восстановление-после-ошибок)
   - [Практические примеры: Композиция обработки ошибок](#практические-примеры-композиция-обработки-ошибок)

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kotlin Reactive
 
@@ -52,6 +52,7 @@ updated: "2026-02-11"
   - [Интеграция](#интеграция)
 - [Руководство по Kovenant](#руководство-по-kovenant)
   - [Что такое Promise?](#что-такое-promise)
+  - [Добавление зависимости](#добавление-зависимости-1)
   - [Создание Promise](#создание-promise)
   - [Использование Promise](#использование-promise)
   - [Цепочки Promise](#цепочки-promise)
@@ -98,13 +99,16 @@ updated: "2026-02-11"
 - [Дополнительные реактивные паттерны](#дополнительные-реактивные-паттерны)
   - [Event Sourcing с реактивными потоками](#event-sourcing-с-реактивными-потоками)
   - [CQRS с реактивными потоками](#cqrs-с-реактивными-потоками)
+- [Дополнительные реактивные паттерны](#дополнительные-реактивные-паттерны-1)
   - [Saga Pattern](#saga-pattern)
   - [Outbox Pattern](#outbox-pattern)
+- [Дополнительные реактивные паттерны](#дополнительные-реактивные-паттерны-2)
   - [Materialized Views Pattern](#materialized-views-pattern)
   - [Reactive Caching Pattern](#reactive-caching-pattern)
+- [Дополнительные реактивные паттерны](#дополнительные-реактивные-паттерны-3)
   - [Reactive Streams Specification](#reactive-streams-specification)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 - [Итоговые рекомендации](#итоговые-рекомендации)
@@ -113,6 +117,7 @@ updated: "2026-02-11"
   - [Реактивная обработка событий](#реактивная-обработка-событий)
   - [Реализация Circuit Breaker Pattern](#реализация-circuit-breaker-pattern)
   - [Реализация Retry Pattern](#реализация-retry-pattern)
+- [См. также](#см-также)
 
 ## Руководство по RxKotlin
 

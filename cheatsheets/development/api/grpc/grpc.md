@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # gRPC
 
@@ -50,7 +50,6 @@ updated: "2026-02-11"
 - [Spring Boot и gRPC](#spring-boot-и-grpc)
   - [Зависимости](#зависимости)
   - [Конфигурация сервера](#конфигурация-сервера)
-- [application.yml](#applicationyml)
   - [gRPC Service с Spring](#grpc-service-с-spring)
   - [gRPC Client с Spring](#grpc-client-с-spring)
 - [Streaming](#streaming)

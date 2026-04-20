@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Ansible
 
@@ -27,6 +27,9 @@ updated: "2026-02-11"
 - [Основы Ansible](#основы-ansible)
   - [Архитектура Ansible](#архитектура-ansible)
   - [Установка](#установка)
+    - [Linux](#linux)
+    - [macOS](#macos)
+    - [Windows](#windows)
   - [Базовая конфигурация](#базовая-конфигурация)
 - [Inventory](#inventory)
   - [Статический inventory](#статический-inventory)
@@ -35,6 +38,10 @@ updated: "2026-02-11"
 - [Playbooks](#playbooks)
   - [Структура playbook](#структура-playbook)
   - [Основные модули](#основные-модули)
+    - [Package management](#package-management)
+    - [File operations](#file-operations)
+    - [Service management](#service-management)
+    - [User management](#user-management)
 - [Roles](#roles)
   - [Структура роли](#структура-роли)
   - [Создание роли](#создание-роли)

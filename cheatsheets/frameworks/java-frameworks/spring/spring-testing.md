@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-security.md", "spring/spring-data-jpa.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
@@ -36,8 +36,10 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [Настройка контекста](#настройка-контекста)
   - [Использование профилей](#использование-профилей)
 - [@WebMvcTest](#webmvctest)
+  - [Базовое использование](#базовое-использование-1)
   - [Тестирование с валидацией](#тестирование-с-валидацией)
 - [@DataJpaTest](#datajpatest)
+  - [Базовое использование](#базовое-использование-2)
   - [Использование SQL скриптов](#использование-sql-скриптов)
 - [MockMvc](#mockmvc)
   - [Базовые операции](#базовые-операции)
@@ -70,6 +72,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [Тестирование с WireMock](#тестирование-с-wiremock)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Testing
 

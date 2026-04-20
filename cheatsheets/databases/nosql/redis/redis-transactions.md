@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-lua-scripting.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
 ---
 

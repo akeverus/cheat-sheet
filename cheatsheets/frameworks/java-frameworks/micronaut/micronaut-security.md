@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-reactive.md", "micronaut-testing.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
@@ -26,7 +26,6 @@ related: ["micronaut-core.md", "micronaut-http.md"]
 
 ## Содержание
 
-- [Micronaut: Security — Authentication и Authorization](#micronaut-security-authentication-и-authorization)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Security](#настройка-security)
@@ -48,7 +47,6 @@ related: ["micronaut-core.md", "micronaut-http.md"]
   - [1. Используйте JWT для Stateless Applications](#1-используйте-jwt-для-stateless-applications)
   - [2. Валидируйте входные данные](#2-валидируйте-входные-данные)
   - [3. Используйте HTTPS в Production](#3-используйте-https-в-production)
-- [ Хорошо](#хорошо)
   - [4. Ограничивайте время жизни токенов](#4-ограничивайте-время-жизни-токенов)
   - [5. Используйте Role-based Access Control](#5-используйте-role-based-access-control)
 - [LDAP Authentication](#ldap-authentication)
@@ -72,11 +70,13 @@ related: ["micronaut-core.md", "micronaut-http.md"]
   - [Security Event Listeners](#security-event-listeners)
 - [Password Policies](#password-policies)
   - [Password Validation](#password-validation)
+- [Security Headers](#security-headers-1)
   - [Security Headers Configuration](#security-headers-configuration)
 - [Role-based Access Control](#role-based-access-control)
   - [RBAC Implementation](#rbac-implementation)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

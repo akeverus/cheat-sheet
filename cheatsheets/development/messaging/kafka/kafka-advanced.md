@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kafka Advanced
 
@@ -25,13 +25,7 @@ updated: "2026-02-11"
 
 - [Продвинутая архитектура](#продвинутая-архитектура)
   - [Multi-region deployment](#multi-region-deployment)
-- [MirrorMaker 2.0 — репликация топиков между кластерами (source/target, offset sync)](#mirrormaker-20-репликация-топиков-между-кластерами-sourcetarget-offset-sync)
   - [Tiered Storage](#tiered-storage)
-- [server.properties для tiered storage](#serverproperties-для-tiered-storage)
-- [Включение tiered storage (Kafka 3.6+)](#включение-tiered-storage-kafka-36)
-- [Конфигурация S3 для remote storage](#конфигурация-s3-для-remote-storage)
-- [Credentials](#credentials)
-- [Tiering policy](#tiering-policy)
 - [Продвинутые продюсеры](#продвинутые-продюсеры)
   - [Idempotent и transactional producers](#idempotent-и-transactional-producers)
   - [Custom partitioning](#custom-partitioning)
@@ -44,37 +38,20 @@ updated: "2026-02-11"
 - [Kafka Connect](#kafka-connect)
   - [Custom connector](#custom-connector)
   - [Connector configuration](#connector-configuration)
-- [Source connector configuration](#source-connector-configuration)
-- [Sink connector configuration](#sink-connector-configuration)
 - [Schema Registry](#schema-registry)
   - [Schema evolution](#schema-evolution)
   - [Schema validation](#schema-validation)
 - [Security](#security)
   - [SASL/SSL authentication](#saslssl-authentication)
-- [Producer configuration with SASL/SSL](#producer-configuration-with-saslssl)
-- [ACL configuration](#acl-configuration)
   - [ACL management](#acl-management)
-- [Create ACLs](#create-acls)
-- [List ACLs](#list-acls)
-- [Remove ACLs](#remove-acls)
 - [Monitoring и Observability](#monitoring-и-observability)
   - [JMX metrics](#jmx-metrics)
   - [Custom monitoring](#custom-monitoring)
 - [Производительность и оптимизация](#производительность-и-оптимизация)
   - [Broker optimization](#broker-optimization)
-- [server.properties optimizations](#serverproperties-optimizations)
-- [JVM settings](#jvm-settings)
   - [Client optimization](#client-optimization)
 - [Решение проблем](#решение-проблем)
   - [Распространенные проблемы](#распространенные-проблемы)
-- [Check broker logs](#check-broker-logs)
-- [Check consumer lag](#check-consumer-lag)
-- [Check topic details](#check-topic-details)
-- [Check partition distribution](#check-partition-distribution)
-- [Check broker metrics](#check-broker-metrics)
-- [Reset consumer offsets](#reset-consumer-offsets)
-- [Check connectivity](#check-connectivity)
-- [Validate configuration](#validate-configuration)
   - [Performance debugging](#performance-debugging)
 - [Лучшие практики](#лучшие-практики)
 - [См. также](#см-также)

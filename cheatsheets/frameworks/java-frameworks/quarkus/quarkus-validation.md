@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-rest.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
@@ -23,7 +23,6 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 
 ## Содержание
 
-- [Quarkus: Validation — Bean Validation](#quarkus-validation-bean-validation)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Basic Validation](#basic-validation)
@@ -52,15 +51,15 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
   - [Internationalization](#internationalization)
 - [Programmatic Validation](#programmatic-validation)
   - [Manual Validation](#manual-validation)
-  - [5. Используйте интернационализацию для сообщений](#5-используйте-интернационализацию-для-сообщений)
-- [ Хорошо](#хорошо)
 - [Validation Performance](#validation-performance)
   - [Lazy Validation](#lazy-validation)
   - [Validation Caching](#validation-caching)
 - [Advanced Validation Patterns](#advanced-validation-patterns)
   - [Async Validation](#async-validation)
+  - [Conditional Validation](#conditional-validation-1)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

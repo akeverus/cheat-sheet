@@ -15,7 +15,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-security.md", "api/rest-api-design.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.md"]
 ---
 
@@ -36,7 +36,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.m
 
 ## Содержание
 
-- [Spring REST API: Полное руководство по разработке RESTful веб-сервисов](#spring-rest-api-полное-руководство-по-разработке-restful-веб-сервисов)
 - [Создание веб-приложения](#создание-веб-приложения)
   - [Настройка проекта](#настройка-проекта)
   - [Создание контроллера](#создание-контроллера)
@@ -70,6 +69,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.m
 - [Преобразование Entity в DTO](#преобразование-entity-в-dto)
   - [Использование ModelMapper](#использование-modelmapper)
   - [Конфигурация ModelMapper](#конфигурация-modelmapper)
+  - [Преобразование Entity в DTO](#преобразование-entity-в-dto-1)
   - [Кастомное преобразование](#кастомное-преобразование)
   - [Использование в контроллере](#использование-в-контроллере)
   - [Преимущества использования DTO](#преимущества-использования-dto)
@@ -110,7 +110,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.m
   - [SSE (Server-Sent Events)](#sse-server-sent-events)
 - [Асинхронные операции](#асинхронные-операции)
   - [CompletableFuture в REST контроллерах](#completablefuture-в-rest-контроллерах)
-- [Best practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [1. Правильная структура URL](#1-правильная-структура-url)
   - [2. HTTP статус коды](#2-http-статус-коды)
   - [3. Content Negotiation](#3-content-negotiation)
@@ -119,6 +119,8 @@ related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.m
   - [6. Performance optimization](#6-performance-optimization)
   - [7. Error handling patterns](#7-error-handling-patterns)
   - [8. Documentation best practices](#8-documentation-best-practices)
+- [См. также](#см-также)
+
 ## Создание веб-приложения
 
 ### Настройка проекта

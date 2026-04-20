@@ -11,7 +11,7 @@ tags:
   - configuration
 difficulty: "advanced"
 prerequisites: ["databases/clickhouse-replication.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.md"]
 ---
 
@@ -25,9 +25,15 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
 - [Performance Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
 - [Configuration Parameters](https://clickhouse.com/docs/en/operations/configuration-files)
 - [System Tables](https://clickhouse.com/docs/en/operations/system-tables)
+- [Hardware Requirements](https://clickhouse.com/docs/en/operations/requirements)
+- [Tuning Guide](https://clickhouse.com/docs/en/operations/optimizing-performance)
 
 ### Обучающие материалы
 - [ClickHouse Performance Tuning](https://www.baeldung.com/clickhouse-performance)
+
+### Инструменты
+- [ClickHouse Benchmark](https://clickhouse.com/docs/en/operations/utilities/clickhouse-benchmark)
+- [Performance Monitoring](https://clickhouse.com/docs/en/operations/monitoring)
 
 ### См. также
 - [[clickhouse-replication|Репликация]] — кластеры и репликация
@@ -41,26 +47,10 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
 - [Аппаратное обеспечение](#аппаратное-обеспечение)
   - [Рекомендации по оборудованию](#рекомендации-по-оборудованию)
     - [CPU](#cpu)
-- [Оптимальная конфигурация CPU](#оптимальная-конфигурация-cpu)
-- [Проверка CPU](#проверка-cpu)
     - [Память (RAM)](#память-ram)
-- [Минимум: 32GB для небольших кластеров](#минимум-32gb-для-небольших-кластеров)
-- [Рекомендуется: 128GB+ для production](#рекомендуется-128gb-для-production)
-- [Максимум: Ограничено только ОС](#максимум-ограничено-только-ос)
-- [Проверка памяти](#проверка-памяти)
     - [Дисковая подсистема](#дисковая-подсистема)
-- [Рекомендации:](#рекомендации)
-- [Проверка дисков](#проверка-дисков)
     - [Сеть](#сеть)
-- [Для кластеров:](#для-кластеров)
-- [Проверка сети](#проверка-сети)
   - [Оптимизация Linux](#оптимизация-linux)
-- [Отключение SWAP (критично для ClickHouse)](#отключение-swap-критично-для-clickhouse)
-- [Настройка vm.max_map_count](#настройка-vmmax_map_count)
-- [Настройка ulimits](#настройка-ulimits)
-- [Отключение transparent huge pages](#отключение-transparent-huge-pages)
-- [Настройка I/O scheduler](#настройка-io-scheduler)
-- [Настройка dirty pages](#настройка-dirty-pages)
 - [Конфигурация сервера](#конфигурация-сервера)
   - [Основные параметры конфигурации](#основные-параметры-конфигурации)
   - [Оптимизация MergeTree](#оптимизация-mergetree)
@@ -87,7 +77,9 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
   - [Высокое использование CPU](#высокое-использование-cpu)
   - [Проблемы с памятью](#проблемы-с-памятью)
   - [Дисковые проблемы](#дисковые-проблемы)
-- [Best Practices](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
+  - [Конфигурация сервера](#конфигурация-сервера-1)
+  - [Оптимизация запросов](#оптимизация-запросов-1)
   - [Мониторинг и обслуживание](#мониторинг-и-обслуживание)
   - [Производственные настройки](#производственные-настройки)
   - [Ключевые факторы успеха:](#ключевые-факторы-успеха)
@@ -848,21 +840,6 @@ ORDER BY read_bytes DESC;
 - **Расширенные возможности** — специализированные движки
 
 **ClickHouse** — высокопроизводительная система, требующая тщательной настройки для достижения максимальной производительности.
-
-## Полезные ссылки
-
-### Официальная документация
-- [Performance Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
-- [Configuration Parameters](https://clickhouse.com/docs/en/operations/configuration-files)
-- [System Tables](https://clickhouse.com/docs/en/operations/system-tables)
-
-### Руководства
-- [Hardware Requirements](https://clickhouse.com/docs/en/operations/requirements)
-- [Tuning Guide](https://clickhouse.com/docs/en/operations/optimizing-performance)
-
-### Инструменты
-- [ClickHouse Benchmark](https://clickhouse.com/docs/en/operations/utilities/clickhouse-benchmark)
-- [Performance Monitoring](https://clickhouse.com/docs/en/operations/monitoring)
 
 
 **Следующие темы:**

@@ -8,7 +8,7 @@ tags:
   - collaboration
   - bots
 type: "index"
-updated: "2026-04-17"
+updated: "2026-04-20"
 ---
 # Telegram
 
@@ -40,6 +40,11 @@ Telegram — мессенджер с двумя API: **Bot API** (HTTPS-обёр
 - [Быстрый старт: notifications](#быстрый-старт-notifications)
 - [Webhook vs Long Polling](#webhook-vs-long-polling)
 - [Типовые паттерны](#типовые-паттерны)
+  - [1. Alerting-бот](#1-alerting-бот)
+  - [2. Inline-кнопки](#2-inline-кнопки)
+  - [3. Команды (commands)](#3-команды-commands)
+  - [4. Mini Apps (Web Apps)](#4-mini-apps-web-apps)
+  - [5. Payment API](#5-payment-api)
 - [Best practices и лимиты](#best-practices-и-лимиты)
 - [Маршруты чтения](#маршруты-чтения)
 - [Куда идти дальше](#куда-идти-дальше)

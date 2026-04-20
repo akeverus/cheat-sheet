@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # UI Testing — обзор
 
@@ -31,11 +31,10 @@ updated: "2026-02-11"
 - [Selenium WebDriver](#selenium-webdriver)
 - [Playwright и Cypress](#playwright-и-cypress)
 - [Паттерны (Page Object)](#паттерны-page-object)
-- [Рекомендации](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [FAQ](#faq)
 - [Заключение](#заключение)
-
 
 ## Введение
 

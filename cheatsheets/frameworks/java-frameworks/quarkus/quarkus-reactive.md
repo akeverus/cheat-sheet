@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
 next: ["quarkus-rest.md", "quarkus-testing.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-rest.md", "quarkus-testing.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-rest.md", "quarkus-testing.md"]
 
 ## Содержание
 
-- [Quarkus: Reactive — Mutiny и Reactive Messaging](#quarkus-reactive-mutiny-и-reactive-messaging)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Mutiny Basics](#mutiny-basics)
@@ -60,21 +59,15 @@ related: ["quarkus-rest.md", "quarkus-testing.md"]
 - [Performance Optimization](#performance-optimization)
   - [Оптимизация потоков](#оптимизация-потоков)
   - [Connection Pooling](#connection-pooling)
-- [application.properties](#applicationproperties)
 - [Testing Reactive Code](#testing-reactive-code)
   - [Тестирование Uni](#тестирование-uni)
   - [Тестирование Multi](#тестирование-multi)
-  - [1. Всегда обрабатывайте ошибки](#1-всегда-обрабатывайте-ошибки)
-  - [2. Используйте правильный тип для операций](#2-используйте-правильный-тип-для-операций)
-  - [3. Избегайте блокирующих операций](#3-избегайте-блокирующих-операций)
-  - [4. Используйте backpressure для больших потоков](#4-используйте-backpressure-для-больших-потоков)
-  - [5. Настраивайте timeout для внешних вызовов](#5-настраивайте-timeout-для-внешних-вызовов)
 - [Reactive Context Propagation](#reactive-context-propagation)
   - [Context Propagation](#context-propagation)
 - [Reactive Error Recovery](#reactive-error-recovery)
   - [Circuit Breaker Pattern](#circuit-breaker-pattern)
 - [Reactive Backpressure](#reactive-backpressure)
-  - [6. Используйте circuit breaker для внешних сервисов](#6-используйте-circuit-breaker-для-внешних-сервисов)
+  - [Backpressure Handling](#backpressure-handling-1)
 - [Advanced Reactive Patterns](#advanced-reactive-patterns)
   - [Parallel Processing](#parallel-processing)
   - [Reactive Caching](#reactive-caching)
@@ -92,6 +85,7 @@ related: ["quarkus-rest.md", "quarkus-testing.md"]
   - [Latency Tracking](#latency-tracking)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-cache.md"]
 next: ["spring/spring-mongodb.md", "databases/redis.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md"]
 ---
 
@@ -30,7 +30,6 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
 - [Настройка Spring Data Redis](#настройка-spring-data-redis)
   - [Зависимости](#зависимости)
   - [Конфигурация](#конфигурация)
-- [Redis Configuration](#redis-configuration)
   - [Java Configuration](#java-configuration)
 - [RedisTemplate](#redistemplate)
   - [Базовые операции](#базовые-операции)
@@ -54,7 +53,6 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
   - [1. Используйте правильные сериализаторы](#1-используйте-правильные-сериализаторы)
   - [2. Настраивайте TTL для кеша](#2-настраивайте-ttl-для-кеша)
   - [3. Используйте connection pooling](#3-используйте-connection-pooling)
-- [ Хорошо](#хорошо)
   - [4. Обрабатывайте ошибки подключения](#4-обрабатывайте-ошибки-подключения)
   - [5. Используйте транзакции для критических операций](#5-используйте-транзакции-для-критических-операций)
 - [Redis Streams](#redis-streams)
@@ -63,11 +61,9 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
   - [Consumer Groups](#consumer-groups)
 - [Redis Cluster](#redis-cluster)
   - [Настройка Cluster](#настройка-cluster)
-- [Redis Cluster Configuration](#redis-cluster-configuration)
   - [Работа с Cluster](#работа-с-cluster)
 - [Redis Sentinel](#redis-sentinel)
   - [Настройка Sentinel](#настройка-sentinel)
-- [Redis Sentinel Configuration](#redis-sentinel-configuration)
 - [Продвинутые операции](#продвинутые-операции)
   - [Pipeline Operations](#pipeline-operations)
   - [Lua Scripts](#lua-scripts)
@@ -85,6 +81,7 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
   - [SSL/TLS Configuration](#ssltls-configuration)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Data Redis
 

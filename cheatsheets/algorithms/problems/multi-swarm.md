@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Мульти-рой (Multi-Swarm)
 
@@ -39,7 +39,6 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [Реализация на Kotlin](#реализация-на-kotlin)
 - [Резюме](#резюме)
-
 
 ## Обзор
 

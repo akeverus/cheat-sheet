@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Logback для Java
 
@@ -29,15 +29,16 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Введение в Logback](#введение-в-logback)
-- [Архитектура](#архитектура)
+- [Архитектура Logback](#архитектура-logback)
 - [Configuration](#configuration)
+  - [Spring Boot](#spring-boot)
 - [Appenders](#appenders)
 - [Encoders и Layouts](#encoders-и-layouts)
 - [Filters](#filters)
 - [MDC и Markers](#mdc-и-markers)
-- [Переменные и условия](#variable-substitution)
-- [JMX](#jmx-configuration)
-- [Производительность](#performance-tuning)
+- [Variable substitution](#variable-substitution)
+- [JMX configuration](#jmx-configuration)
+- [Performance tuning](#performance-tuning)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)

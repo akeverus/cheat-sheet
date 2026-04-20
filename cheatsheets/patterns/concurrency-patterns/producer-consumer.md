@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Производитель-потребитель (Producer-Consumer)
 
@@ -52,7 +52,7 @@ updated: "2026-02-11"
   - [3. Monitoring и Metrics](#3-monitoring-и-metrics)
   - [4. Testing](#4-testing)
 - [Решение проблем](#решение-проблем)
-- [Частые вопросы](#частые-вопросы)
+- [FAQ](#faq)
 - [Заключение](#заключение)
 
 ## Суть и запомнить

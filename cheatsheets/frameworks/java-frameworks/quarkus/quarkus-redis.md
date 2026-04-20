@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-cache.md"]
 next: ["quarkus-cache.md", "quarkus-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-cache.md", "quarkus-reactive.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-cache.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: Redis — Caching и Data Structures](#quarkus-redis-caching-и-data-structures)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Configuration](#configuration)
@@ -46,14 +45,12 @@ related: ["quarkus-cache.md", "quarkus-reactive.md"]
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте reactive для неблокирующих операций](#1-используйте-reactive-для-неблокирующих-операций)
   - [2. Настраивайте connection pooling](#2-настраивайте-connection-pooling)
-- [ Хорошо](#хорошо)
   - [3. Используйте подходящие data structures](#3-используйте-подходящие-data-structures)
   - [4. Используйте expiration для временных данных](#4-используйте-expiration-для-временных-данных)
 - [Sorted Sets](#sorted-sets)
 - [Advanced Patterns](#advanced-patterns)
   - [Distributed Lock](#distributed-lock)
   - [Rate Limiting](#rate-limiting)
-  - [5. Используйте pipelines для batch операций](#5-используйте-pipelines-для-batch-операций)
 - [Redis Clustering](#redis-clustering)
   - [Cluster Configuration](#cluster-configuration)
   - [Cluster Operations](#cluster-operations)
@@ -62,6 +59,7 @@ related: ["quarkus-cache.md", "quarkus-reactive.md"]
   - [Connection Pool Tuning](#connection-pool-tuning)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-redis.md", "micronaut-data.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-redis.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-core.md", "micronaut-redis.md"]
 
 ## Содержание
 
-- [Micronaut: Caching — Cache Abstraction и Redis Cache](#micronaut-caching-cache-abstraction-и-redis-cache)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Cache](#настройка-cache)
@@ -48,12 +47,12 @@ related: ["micronaut-core.md", "micronaut-redis.md"]
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте правильные ключи кэша](#1-используйте-правильные-ключи-кэша)
   - [2. Настраивайте TTL правильно](#2-настраивайте-ttl-правильно)
-- [ Хорошо](#хорошо)
   - [3. Очищайте кэш при обновлении данных](#3-очищайте-кэш-при-обновлении-данных)
   - [4. Используйте async cache для неблокирующих операций](#4-используйте-async-cache-для-неблокирующих-операций)
   - [5. Мониторьте производительность кэша](#5-мониторьте-производительность-кэша)
 - [Cache Configuration](#cache-configuration)
   - [Multiple Cache Managers](#multiple-cache-managers)
+  - [Cache Configuration](#cache-configuration-1)
 - [Cache Patterns](#cache-patterns)
   - [Cache-Aside Pattern](#cache-aside-pattern)
   - [Write-Through Pattern](#write-through-pattern)
@@ -63,12 +62,15 @@ related: ["micronaut-core.md", "micronaut-redis.md"]
   - [Event-based Invalidation](#event-based-invalidation)
 - [Cache Warming](#cache-warming)
   - [Cache Preloading](#cache-preloading)
+- [Cache Statistics](#cache-statistics-1)
   - [Cache Hit/Miss Ratio](#cache-hitmiss-ratio)
 - [Cache Synchronization](#cache-synchronization)
   - [Distributed Cache Sync](#distributed-cache-sync)
+- [Cache Preloading](#cache-preloading-1)
   - [Cache Warmup](#cache-warmup)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

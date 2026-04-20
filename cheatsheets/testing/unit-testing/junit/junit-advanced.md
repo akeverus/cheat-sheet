@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # JUnit Advanced для Java
 
@@ -40,7 +40,7 @@ updated: "2026-02-11"
 - [Решение проблем](#решение-проблем)
 - [FAQ](#faq)
 - [Заключение](#заключение)
-
+- [См. также](#см-также)
 
 ## Жизненный цикл тестов
 

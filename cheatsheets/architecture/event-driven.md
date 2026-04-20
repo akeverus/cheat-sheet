@@ -7,7 +7,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Event-Driven Architecture
 
@@ -44,7 +44,6 @@ updated: "2026-02-11"
 - [Event Bus и Message Brokers](#event-bus-и-message-brokers)
   - [Выбор Message Broker](#выбор-message-broker)
   - [Spring Cloud Stream](#spring-cloud-stream)
-- [application.yml](#applicationyml)
 - [Event Sourcing vs Event Streaming](#event-sourcing-vs-event-streaming)
   - [Event Sourcing](#event-sourcing)
   - [Event Streaming](#event-streaming)

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Grafana
 
@@ -33,15 +33,40 @@ Grafana — платформа для аналитики и интерактив
 ## Содержание
 
 - [Основы Grafana](#основы-grafana)
+  - [Архитектура Grafana](#архитектура-grafana)
+  - [Установка и запуск](#установка-и-запуск)
+    - [Docker](#docker)
+    - [Kubernetes](#kubernetes)
+    - [Конфигурация](#конфигурация)
 - [Data Sources](#data-sources)
+  - [Prometheus](#prometheus)
+  - [Elasticsearch](#elasticsearch)
+  - [InfluxDB](#influxdb)
+  - [PostgreSQL](#postgresql)
 - [Создание дашбордов](#создание-дашбордов)
+  - [Структура дашборда](#структура-дашборда)
+  - [Переменные шаблонов](#переменные-шаблонов)
 - [Типы панелей](#типы-панелей)
+  - [Graph Panel](#graph-panel)
+  - [Table Panel](#table-panel)
+  - [Gauge Panel](#gauge-panel)
+  - [Stat Panel](#stat-panel)
+  - [Heatmap Panel](#heatmap-panel)
 - [Spring Boot интеграция](#spring-boot-интеграция)
 - [JVM и метрики приложения](#jvm-и-метрики-приложения)
+  - [JVM Memory](#jvm-memory)
+  - [GC](#gc)
+  - [Threads](#threads)
+  - [HTTP и ошибки](#http-и-ошибки)
+  - [БД (HikariCP)](#бд-hikaricp)
 - [Alerting](#alerting)
+  - [Настройка алертов](#настройка-алертов)
+  - [Notification Channels](#notification-channels)
 - [Плагины и расширения](#плагины-и-расширения)
 - [Управление пользователями и доступом](#управление-пользователями-и-доступом)
 - [Provisioning](#provisioning)
+  - [Дашборды через файлы](#дашборды-через-файлы)
+  - [Data Sources через файлы](#data-sources-через-файлы)
 - [API и автоматизация](#api-и-автоматизация)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Java Annotations и Reflection
 
@@ -43,6 +43,8 @@ updated: "2026-02-11"
 - [Performance и best practices](#performance-и-best-practices)
   - [Кэширование reflection данных](#кэширование-reflection-данных)
   - [Безопасность reflection](#безопасность-reflection)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
 ## Основы аннотаций

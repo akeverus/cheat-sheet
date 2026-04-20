@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Команда (Command)
 
@@ -29,12 +29,25 @@ updated: "2026-02-11"
 
 - [Суть и запомнить](#суть-и-запомнить)
 - [Что такое Command?](#что-такое-command)
+  - [Основные характеристики](#основные-характеристики)
+  - [Проблемы, которые решает](#проблемы-которые-решает)
 - [Когда использовать Command?](#когда-использовать-command)
+  - [Подходящие сценарии](#подходящие-сценарии)
+  - [Признаки необходимости](#признаки-необходимости)
 - [Структура паттерна](#структура-паттерна)
+  - [Компоненты](#компоненты)
 - [Реализация на Java](#реализация-на-java)
+  - [Классический Command](#классический-command)
+  - [Command с историей(Undo/Redo)](#command-с-историейundoredo)
+  - [Java Runnable и Callable](#java-runnable-и-callable)
 - [Продвинутые реализации](#продвинутые-реализации)
+  - [1. Command с Composite и Macro](#1-command-с-composite-и-macro)
 - [Примеры использования](#примеры-использования)
+  - [1. GUI Action Commands](#1-gui-action-commands)
+  - [2. Database Transaction Commands](#2-database-transaction-commands)
 - [Лучшие практики](#лучшие-практики)
+  - [1. Thread Safety](#1-thread-safety)
+  - [2. Testing Command Pattern](#2-testing-command-pattern)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)

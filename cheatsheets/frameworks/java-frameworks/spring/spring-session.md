@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-security.md"]
 next: ["spring/spring-redis.md", "spring/spring-security.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "spring/spring-security.md"]
 ---
 
@@ -25,22 +25,20 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 
 ## Содержание
 
-- [Spring Session: Полное руководство по управлению сессиями](#spring-session-полное-руководство-по-управлению-сессиями)
 - [Введение в Spring Session](#введение-в-spring-session)
   - [Основные возможности](#основные-возможности)
   - [Архитектура Spring Session](#архитектура-spring-session)
 - [Redis Session](#redis-session)
   - [Настройка Redis Session](#настройка-redis-session)
-- [Redis Session Configuration](#redis-session-configuration)
   - [Конфигурация через Java](#конфигурация-через-java)
   - [Использование Session](#использование-session)
 - [JDBC Session](#jdbc-session)
   - [Настройка JDBC Session](#настройка-jdbc-session)
-- [JDBC Session Configuration](#jdbc-session-configuration)
   - [Схема БД](#схема-бд)
+  - [Конфигурация через Java](#конфигурация-через-java-1)
 - [MongoDB Session](#mongodb-session)
   - [Настройка MongoDB Session](#настройка-mongodb-session)
-- [MongoDB Session Configuration](#mongodb-session-configuration)
+  - [Конфигурация через Java](#конфигурация-через-java-2)
 - [Интеграция с Spring Security](#интеграция-с-spring-security)
   - [Security Session Configuration](#security-session-configuration)
   - [Concurrent Session Control](#concurrent-session-control)
@@ -58,11 +56,10 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
   - [2. Настраивайте timeout](#2-настраивайте-timeout)
   - [3. Обрабатывайте session events](#3-обрабатывайте-session-events)
   - [4. Используйте правильный store type](#4-используйте-правильный-store-type)
-- [ Хорошо — для кластеризации](#хорошо-для-кластеризации)
-- [ Хорошо — для простых приложений](#хорошо-для-простых-приложений)
   - [5. Настраивайте security](#5-настраивайте-security)
 - [WebSocket Session](#websocket-session)
   - [WebSocket Session Management](#websocket-session-management)
+- [Продвинутые возможности](#продвинутые-возможности-1)
   - [Custom Session Repository](#custom-session-repository)
   - [Session Indexing](#session-indexing)
   - [Session Flush Mode](#session-flush-mode)
@@ -81,17 +78,20 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
   - [Session Health Check](#session-health-check)
 - [Продвинутые паттерны](#продвинутые-паттерны)
   - [Session Clustering с Hazelcast](#session-clustering-с-hazelcast)
+  - [Session Replication](#session-replication-1)
   - [Session Serialization Customization](#session-serialization-customization)
   - [Session Attribute Filtering](#session-attribute-filtering)
   - [Session Timeout Management](#session-timeout-management)
   - [Session Statistics](#session-statistics)
   - [Session Cleanup Job](#session-cleanup-job)
+- [Продвинутые паттерны](#продвинутые-паттерны-1)
   - [Session Replication между регионами](#session-replication-между-регионами)
   - [Session Compression](#session-compression)
   - [Session Analytics](#session-analytics)
   - [Session Rate Limiting](#session-rate-limiting)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Session
 

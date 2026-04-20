@@ -57,7 +57,7 @@ JDBC (`Java Database Connectivity`) — низкоуровневый API для 
   - [Fetch size и пагинация курсором](#fetch-size-и-пагинация-курсором)
 - [Batch updates](#batch-updates)
 - [Транзакции](#транзакции)
-  - [Commit / rollback](#commit--rollback)
+  - [Commit / rollback](#commit-rollback)
   - [Isolation levels](#isolation-levels)
   - [Savepoints](#savepoints)
 - [LOB: BLOB и CLOB](#lob-blob-и-clob)
@@ -72,7 +72,7 @@ JDBC (`Java Database Connectivity`) — низкоуровневый API для 
 - [JDBC vs JdbcTemplate vs JPA](#jdbc-vs-jdbctemplate-vs-jpa)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Что такое JDBC
 

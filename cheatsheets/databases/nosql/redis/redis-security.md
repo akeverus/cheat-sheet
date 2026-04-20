@@ -13,7 +13,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-monitoring.md", "databases/redis-troubleshooting.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
@@ -41,9 +41,9 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [Категории команд](#категории-команд)
   - [Управление пользователями](#управление-пользователями)
   - [Паттерны ключей](#паттерны-ключей)
-- [SSL/TLS](#ssl-tls)
-  - [Настройка SSL/TLS на сервере](#настройка-ssl-tls-на-сервере)
-  - [Подключение с SSL/TLS](#подключение-с-ssl-tls)
+- [SSL/TLS](#ssltls)
+  - [Настройка SSL/TLS на сервере](#настройка-ssltls-на-сервере)
+  - [Подключение с SSL/TLS](#подключение-с-ssltls)
 - [Ограничение доступа](#ограничение-доступа)
   - [Bind и Protected Mode](#bind-и-protected-mode)
   - [Firewall](#firewall)
@@ -61,7 +61,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [Обновления](#обновления)
 - [Advanced Security Configuration](#advanced-security-configuration)
   - [ACL Best Practices](#acl-best-practices)
-  - [SSL/TLS Configuration](#ssl-tls-configuration)
+  - [SSL/TLS Configuration](#ssltls-configuration)
   - [Network Security](#network-security)
 - [Security Monitoring](#security-monitoring)
   - [Audit Logging](#audit-logging)
@@ -74,7 +74,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [Monitoring and Alerting](#monitoring-and-alerting)
 - [Advanced Security Configuration](#advanced-security-configuration-1)
   - [ACL Best Practices](#acl-best-practices-1)
-  - [SSL/TLS Configuration](#ssl-tls-configuration-1)
+  - [SSL/TLS Configuration](#ssltls-configuration-1)
   - [Network Security](#network-security-1)
 - [Security Monitoring](#security-monitoring-1)
   - [Audit Logging](#audit-logging-1)

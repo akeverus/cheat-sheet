@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Docker и Spring Boot
 
@@ -33,6 +33,7 @@ updated: "2026-02-11"
 - [Доступ к журналам Spring Boot](#доступ-к-журналам-spring-boot)
 - [Запуск Spring Boot с PostgreSQL в Docker Compose](#запуск-spring-boot-с-postgresql-в-docker-compose)
 - [Повторное использование слоев Docker с Spring Boot](#повторное-использование-слоев-docker-с-spring-boot)
+- [См. также](#см-также)
 
 ## Контейнеризация приложения Spring Boot
 

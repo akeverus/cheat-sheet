@@ -10,7 +10,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md"]
 next: []
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 ---
 
@@ -29,7 +29,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 
 ## Содержание
 
-- [Scala Type System](#scala-type-system)
 - [Введение в систему типов](#введение-в-систему-типов)
   - [Основные характеристики](#основные-характеристики)
 - [Типы данных](#типы-данных)
@@ -57,16 +56,19 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
   - [Type Erasure и Manifest](#type-erasure-и-manifest)
   - [Практический пример: Type-Safe Builder](#практический-пример-type-safe-builder)
   - [Практический пример: Tagged Types](#практический-пример-tagged-types)
+- [Лучшие практики](#лучшие-практики-1)
+  - [Использование явных типов для публичных API](#использование-явных-типов-для-публичных-api-1)
   - [Использование variance правильно](#использование-variance-правильно)
   - [Использование type bounds для ограничений](#использование-type-bounds-для-ограничений)
 - [Дополнительные темы](#дополнительные-темы)
   - [Type-level вычисления](#type-level-вычисления)
   - [Singleton Types](#singleton-types)
   - [Match Types](#match-types)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные продвинутые возможности системы типов](#дополнительные-продвинутые-возможности-системы-типов)
+  - [Type Erasure и Manifest](#type-erasure-и-manifest-1)
   - [Type Tags (расширенные)](#type-tags-расширенные)
   - [Structural Types (расширенные)](#structural-types-расширенные)
   - [Type Projections (расширенные)](#type-projections-расширенные)

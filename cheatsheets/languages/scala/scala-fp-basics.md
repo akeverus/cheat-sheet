@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-fp-advanced.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
@@ -31,7 +31,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 
 ## Содержание
 
-- [Scala Functional Programming — Basics](#scala-functional-programming-basics)
 - [Введение в ФП](#введение-в-фп)
 - [Higher-Order Functions](#higher-order-functions)
   - [Функции как параметры](#функции-как-параметры)

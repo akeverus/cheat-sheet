@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Валидация банковских карт (Credit Card Validation)
 
@@ -26,7 +26,6 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Credit Card Validation](#credit-card-validation)
 - [Обзор](#обзор)
 - [Primary Account Number (PAN)](#primary-account-number-pan)
 - [Major Industry Identifier](#major-industry-identifier)
@@ -45,6 +44,8 @@ updated: "2026-02-11"
   - [Пример использования](#пример-использования)
 - [Limitations](#limitations)
 - [Лучшие практики](#лучшие-практики)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 
 ## Обзор

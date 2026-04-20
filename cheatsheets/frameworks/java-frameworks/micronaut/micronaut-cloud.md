@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-graalvm.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
@@ -26,7 +26,6 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 
 ## Содержание
 
-- [Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing](#micronaut-cloud-native-service-discovery-configuration-и-distributed-tracing)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Service Discovery](#service-discovery)
@@ -45,6 +44,7 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
   - [Jaeger](#jaeger)
   - [Использование Tracing](#использование-tracing)
 - [Health Checks](#health-checks)
+  - [Настройка](#настройка-1)
   - [Custom Health Indicators](#custom-health-indicators)
 - [Metrics](#metrics)
   - [Micrometer Integration](#micrometer-integration)
@@ -54,7 +54,6 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
   - [Service Configuration](#service-configuration)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте Service Discovery](#1-используйте-service-discovery)
-- [ Хорошо](#хорошо)
   - [2. Настройте Circuit Breaker](#2-настройте-circuit-breaker)
   - [3. Используйте Distributed Tracing](#3-используйте-distributed-tracing)
   - [4. Настройте Health Checks](#4-настройте-health-checks)
@@ -67,19 +66,27 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
   - [Load Balancer Configuration](#load-balancer-configuration)
 - [Service Mesh Integration](#service-mesh-integration)
   - [Istio Integration](#istio-integration)
+- [Distributed Configuration](#distributed-configuration-1)
   - [Configuration Refresh](#configuration-refresh)
   - [Configuration Properties](#configuration-properties)
 - [Service Mesh](#service-mesh)
   - [Istio Sidecar](#istio-sidecar)
   - [Envoy Configuration](#envoy-configuration)
 - [Configuration Management](#configuration-management)
+  - [Configuration Refresh](#configuration-refresh-1)
+  - [Configuration Properties](#configuration-properties-1)
+- [Service Mesh](#service-mesh-1)
+  - [Istio Sidecar](#istio-sidecar-1)
+  - [Envoy Configuration](#envoy-configuration-1)
 - [Kubernetes Integration](#kubernetes-integration)
   - [Kubernetes Deployment](#kubernetes-deployment)
   - [Kubernetes Service](#kubernetes-service)
+- [Distributed Tracing](#distributed-tracing-1)
   - [Tracing Configuration](#tracing-configuration)
   - [Custom Spans](#custom-spans)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

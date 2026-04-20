@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-reactive.md", "micronaut-testing.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-reactive.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-core.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: Scheduling — Task Scheduling и Async Execution](#micronaut-scheduling-task-scheduling-и-async-execution)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Scheduling](#настройка-scheduling)
@@ -48,7 +47,6 @@ related: ["micronaut-core.md", "micronaut-reactive.md"]
   - [2. Обрабатывайте ошибки](#2-обрабатывайте-ошибки)
   - [3. Используйте async для долгих задач](#3-используйте-async-для-долгих-задач)
   - [4. Настраивайте thread pool правильно](#4-настраивайте-thread-pool-правильно)
-- [ Хорошо](#хорошо)
   - [5. Используйте conditional scheduling](#5-используйте-conditional-scheduling)
 - [Dynamic Scheduling](#dynamic-scheduling)
   - [Programmatic Scheduling](#programmatic-scheduling)
@@ -65,8 +63,11 @@ related: ["micronaut-core.md", "micronaut-reactive.md"]
   - [Retry Configuration](#retry-configuration)
 - [Job Scheduling](#job-scheduling)
   - [Job Scheduling with Quartz](#job-scheduling-with-quartz)
+- [Scheduled Task Dependencies](#scheduled-task-dependencies-1)
+  - [Task Chaining](#task-chaining-1)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

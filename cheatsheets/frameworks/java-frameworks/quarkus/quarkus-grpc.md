@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
@@ -23,7 +23,6 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: gRPC — Remote Procedure Calls](#quarkus-grpc-remote-procedure-calls)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Service Definition](#service-definition)
@@ -32,7 +31,6 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
   - [Service Implementation](#service-implementation)
 - [gRPC Client](#grpc-client)
   - [Client Configuration](#client-configuration)
-- [application.properties](#applicationproperties)
   - [Client Usage](#client-usage)
 - [Streaming](#streaming)
   - [Server Streaming](#server-streaming)
@@ -52,9 +50,6 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 - [Security](#security)
   - [gRPC Security](#grpc-security)
   - [Authentication](#authentication)
-  - [4. Используйте метаданные для передачи контекста](#4-используйте-метаданные-для-передачи-контекста)
-  - [5. Настраивайте SSL для production](#5-настраивайте-ssl-для-production)
-- [ Хорошо](#хорошо)
 - [gRPC Performance Optimization](#grpc-performance-optimization)
   - [Connection Pooling](#connection-pooling)
   - [Message Compression](#message-compression)
@@ -64,6 +59,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
   - [Retry Pattern](#retry-pattern)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

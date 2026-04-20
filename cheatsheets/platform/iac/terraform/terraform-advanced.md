@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Terraform Advanced
 
@@ -26,6 +26,10 @@ updated: "2026-02-11"
 
 - [Продвинутая архитектура Terraform](#продвинутая-архитектура-terraform)
   - [Модульная архитектура](#модульная-архитектура)
+    - [Структура enterprise проекта](#структура-enterprise-проекта)
+    - [Композитные модули](#композитные-модули)
+    - [Переменные модуля](#переменные-модуля)
+    - [Выходы модуля](#выходы-модуля)
 - [Продвинутые паттерны Terraform](#продвинутые-паттерны-terraform)
   - [Dynamic blocks и for_each](#dynamic-blocks-и-for_each)
   - [Conditional resources](#conditional-resources)

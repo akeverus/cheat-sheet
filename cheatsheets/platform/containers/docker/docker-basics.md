@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["devops/os.md"]
 next: ["devops/docker-containers.md", "devops/docker-spring-boot.md", "infrastructure/kubernetes-basics.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 ---
 
@@ -93,16 +93,16 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
   - [Kubernetes Deployment с Docker образами](#kubernetes-deployment-с-docker-образами)
   - [Helm Chart для приложения](#helm-chart-для-приложения)
 - [Best practices для production](#best-practices-для-production)
-  - [Многостадийная сборка](#1-многостадийная-сборка)
-  - [Security scanning](#2-security-scanning)
-  - [Image optimization](#3-image-optimization)
-  - [Health checks](#4-health-checks)
-  - [Resource management](#5-resource-management)
-  - [Logging best practices](#6-logging-best-practices)
-  - [Secrets management](#7-secrets-management)
-  - [Networking best practices](#8-networking-best-practices)
-  - [Backup и restore](#9-backup-и-restore)
-  - [Monitoring и alerting](#10-monitoring-и-alerting)
+  - [1. Многостадийная сборка](#1-многостадийная-сборка)
+  - [2. Security scanning](#2-security-scanning)
+  - [3. Image optimization](#3-image-optimization)
+  - [4. Health checks](#4-health-checks)
+  - [5. Resource management](#5-resource-management)
+  - [6. Logging best practices](#6-logging-best-practices)
+  - [7. Secrets management](#7-secrets-management)
+  - [8. Networking best practices](#8-networking-best-practices)
+  - [9. Backup и restore](#9-backup-и-restore)
+  - [10. Monitoring и alerting](#10-monitoring-и-alerting)
 - [Установка ограничений памяти и ЦП](#установка-ограничений-памяти-и-цп)
 - [Получение информации о сети](#получение-информации-о-сети)
 - [Руководство по Docker Compose](#руководство-по-docker-compose)
@@ -112,6 +112,7 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 - [Советы по созданию эффективных образов](#советы-по-созданию-эффективных-образов)
 - [Разница между образами и контейнерами](#разница-между-образами-и-контейнерами)
 - [Удаление образов](#удаление-образов)
+- [См. также](#см-также)
 
 ## Введение в Docker
 

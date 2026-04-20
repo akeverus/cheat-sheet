@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Apache POI
 
@@ -52,7 +52,7 @@ updated: "2026-02-11"
 - [Performance Optimization](#performance-optimization)
   - [Memory Management](#memory-management)
   - [Streaming для больших отчетов](#streaming-для-больших-отчетов)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [File Handling](#file-handling)
   - [Error Handling](#error-handling)
   - [Security Considerations](#security-considerations)
@@ -61,9 +61,10 @@ updated: "2026-02-11"
   - [From Apache POI 3.x to 5.x](#from-apache-poi-3x-to-5x)
 - [Experimental Features](#experimental-features)
   - [POI 6.0+ Features](#poi-60-features)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

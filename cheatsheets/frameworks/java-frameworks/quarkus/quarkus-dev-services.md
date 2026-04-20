@@ -11,7 +11,7 @@ tags:
 difficulty: "beginner"
 prerequisites: ["quarkus/quarkus-basics.md"]
 next: ["quarkus-basics.md", "quarkus-testing.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-basics.md", "quarkus-testing.md"]
 ---
 
@@ -24,12 +24,10 @@ related: ["quarkus-basics.md", "quarkus-testing.md"]
 
 ## Содержание
 
-- [Quarkus: Dev Services — Автоматические сервисы для разработки](#quarkus-dev-services-автоматические-сервисы-для-разработки)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Database Dev Services](#database-dev-services)
   - [PostgreSQL Dev Service](#postgresql-dev-service)
-- [application.properties](#applicationproperties)
   - [MySQL Dev Service](#mysql-dev-service)
   - [MongoDB Dev Service](#mongodb-dev-service)
 - [Message Broker Dev Services](#message-broker-dev-services)
@@ -43,34 +41,22 @@ related: ["quarkus-basics.md", "quarkus-testing.md"]
   - [Resource Limits](#resource-limits)
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте Dev Services для разработки](#1-используйте-dev-services-для-разработки)
-- [ Хорошо](#хорошо)
   - [2. Отключайте в production](#2-отключайте-в-production)
   - [3. Используйте отдельные контейнеры для тестов](#3-используйте-отдельные-контейнеры-для-тестов)
 - [Dev Services Configuration](#dev-services-configuration)
   - [Multiple Services](#multiple-services)
-- [PostgreSQL](#postgresql)
-- [Redis](#redis)
-- [Kafka](#kafka)
   - [Service Isolation](#service-isolation)
-- [Каждый проект получает свои контейнеры](#каждый-проект-получает-свои-контейнеры)
   - [Shared Services](#shared-services)
-- [Использование одного контейнера для всех проектов](#использование-одного-контейнера-для-всех-проектов)
 - [Dev Services Lifecycle](#dev-services-lifecycle)
   - [Container Management](#container-management)
-- [Dev Services автоматически:](#dev-services-автоматически)
-- [1. Запускает контейнеры при старте приложения](#1-запускает-контейнеры-при-старте-приложения)
-- [2. Останавливает контейнеры при остановке приложения](#2-останавливает-контейнеры-при-остановке-приложения)
-- [3. Переиспользует контейнеры при повторном запуске](#3-переиспользует-контейнеры-при-повторном-запуске)
   - [Container Persistence](#container-persistence)
-- [Данные сохраняются между перезапусками](#данные-сохраняются-между-перезапусками)
 - [Advanced Dev Services](#advanced-dev-services)
   - [Custom Service Configuration](#custom-service-configuration)
   - [Volume Mounts](#volume-mounts)
   - [Health Checks](#health-checks)
-  - [4. Настраивайте ресурсы](#4-настраивайте-ресурсы)
-  - [5. Используйте reuse для ускорения](#5-используйте-reuse-для-ускорения)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

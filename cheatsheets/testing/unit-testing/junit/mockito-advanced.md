@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Mockito Advanced для Java
 
@@ -28,6 +28,7 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Advanced matchers](#advanced-matchers)
+  - [Hamcrest и кастомные матчеры](#hamcrest-и-кастомные-матчеры)
 - [Verification modes](#verification-modes)
 - [Spies и partial mocking](#spies-и-partial-mocking)
 - [Custom answers](#custom-answers)
@@ -35,12 +36,14 @@ updated: "2026-02-11"
 - [Argument captors](#argument-captors)
 - [Mock injection](#mock-injection)
 - [Spring Boot integration](#spring-boot-integration)
-- [Тестирование void-методов](#testing-void-methods)
-- [Тестирование исключений](#exception-testing)
-- [Асинхронный mocking](#async-mocking)
+- [Testing void methods](#testing-void-methods)
+- [Exception testing](#exception-testing)
+- [Async mocking](#async-mocking)
 - [Решение проблем и FAQ](#решение-проблем-и-faq)
+  - [Частые ошибки](#частые-ошибки)
+  - [Краткие советы](#краткие-советы)
 - [Заключение](#заключение)
-
+- [См. также](#см-также)
 
 ## Advanced matchers
 

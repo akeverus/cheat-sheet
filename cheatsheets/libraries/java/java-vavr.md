@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Vavr
 
@@ -69,7 +69,7 @@ updated: "2026-02-11"
   - [From Java Optional to Vavr Option](#from-java-optional-to-vavr-option)
   - [From Java Stream to Vavr Collections](#from-java-stream-to-vavr-collections)
   - [From try-catch to Try](#from-try-catch-to-try)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [When to use Vavr](#when-to-use-vavr)
   - [Error Handling Patterns](#error-handling-patterns)
 - [Advanced Features](#advanced-features)
@@ -77,9 +77,10 @@ updated: "2026-02-11"
   - [Trampoline для stack-safe recursion](#trampoline-для-stack-safe-recursion)
 - [Experimental Features](#experimental-features)
   - [Vavr 1.0 Features (Future)](#vavr-10-features-future)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

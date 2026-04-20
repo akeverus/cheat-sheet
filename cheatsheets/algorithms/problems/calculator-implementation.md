@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Calculator Implementation
 
@@ -26,7 +26,6 @@ A **guide** to **implementing** a **basic calculator** in **Java that supports a
 
 ## Содержание
 
-- [Calculator Implementation](#calculator-implementation)
 - [Обзор](#обзор)
 - [Displaying Calculator Information](#displaying-calculator-information)
 - [Reading User Input](#reading-user-input)
@@ -41,6 +40,7 @@ A **guide** to **implementing** a **basic calculator** in **Java that supports a
   - [Alternative Implementation with Method](#alternative-implementation-with-method)
 - [Kotlin Implementation](#kotlin-implementation)
   - [Basic Calculator](#basic-calculator)
+  - [Using If-Else](#using-if-else-1)
 - [Data Type Considerations](#data-type-considerations)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)

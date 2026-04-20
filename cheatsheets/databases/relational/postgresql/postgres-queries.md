@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # PostgreSQL: запросы и агрегаты
 
@@ -30,7 +30,6 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [PostgreSQL: запросы и агрегаты](#postgresql-запросы-и-агрегаты)
 - [DISTINCT](#distinct)
 - [ORDER BY](#order-by)
 - [LIMIT / OFFSET](#limit-offset)
@@ -78,8 +77,9 @@ updated: "2026-02-11"
 - [Дополнительные техники запросов](#дополнительные-техники-запросов)
   - [Оконные функции (Window Functions)](#оконные-функции-window-functions)
   - [Common Table Expressions (CTE)](#common-table-expressions-cte)
-- [Best Practices](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
+- [См. также](#см-также)
 
 ## DISTINCT
 

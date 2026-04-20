@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # MockK
 
@@ -56,18 +56,19 @@ updated: "2026-02-11"
   - [Test Data Builders](#test-data-builders)
 - [Performance Testing](#performance-testing)
   - [Benchmarking Mocks](#benchmarking-mocks)
-- [Troubleshooting](#troubleshooting)
+- [Решение проблем](#решение-проблем)
   - [Common Issues](#common-issues)
   - [Debugging MockK Tests](#debugging-mockk-tests)
 - [Migration Guide](#migration-guide)
   - [From Mockito to MockK](#from-mockito-to-mockk)
   - [From EasyMock to MockK](#from-easymock-to-mockk)
   - [From PowerMock to MockK](#from-powermock-to-mockk)
-- [Best Practices](#best-practices)
+- [Лучшие практики](#лучшие-практики)
   - [When to use MockK](#when-to-use-mockk)
   - [Anti-patterns to avoid](#anti-patterns-to-avoid)
 - [Experimental Features](#experimental-features)
   - [MockK 2.0+ Features (Future)](#mockk-20-features-future)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

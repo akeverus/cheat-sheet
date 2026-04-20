@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 next: ["spring/spring-webflux.md", "spring/spring-data-jdbc.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 ---
 
@@ -24,14 +24,12 @@ related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 
 ## Содержание
 
-- [Spring Data R2DBC: Полное руководство по реактивным базам данных](#spring-data-r2dbc-полное-руководство-по-реактивным-базам-данных)
 - [Введение в Spring Data R2DBC](#введение-в-spring-data-r2dbc)
   - [Основные возможности](#основные-возможности)
   - [Архитектура R2DBC](#архитектура-r2dbc)
 - [Настройка R2DBC](#настройка-r2dbc)
   - [Зависимости](#зависимости)
   - [Конфигурация](#конфигурация)
-- [R2DBC Configuration](#r2dbc-configuration)
   - [Java Configuration](#java-configuration)
 - [Reactive Repositories](#reactive-repositories)
   - [Entity Definition](#entity-definition)
@@ -45,6 +43,7 @@ related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
   - [Transaction Configuration](#transaction-configuration)
 - [Connection Pooling](#connection-pooling)
   - [Pool Configuration](#pool-configuration)
+- [Custom Queries](#custom-queries-1)
   - [@Query Annotation](#query-annotation)
   - [Native Queries](#native-queries)
 - [Мониторинг и метрики](#мониторинг-и-метрики)
@@ -88,6 +87,7 @@ related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
   - [Reactive Transactions with Retry](#reactive-transactions-with-retry)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Data R2DBC
 

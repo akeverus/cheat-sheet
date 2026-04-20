@@ -10,7 +10,7 @@ tags:
   - window-functions
 difficulty: "intermediate"
 prerequisites: ["databases/clickhouse-tables.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 ---
 
@@ -24,9 +24,13 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 - [SQL Reference](https://clickhouse.com/docs/en/sql-reference)
 - [Query Syntax](https://clickhouse.com/docs/en/sql-reference/statements/select)
 - [Functions](https://clickhouse.com/docs/en/sql-reference/functions)
+- [Query Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
+- [SQL for Analytics](https://clickhouse.com/docs/en/guides/best-practices)
 
 ### Обучающие материалы
 - [ClickHouse SQL Queries](https://www.baeldung.com/clickhouse-queries)
+- [ClickHouse Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
+- [Playground](https://play.clickhouse.com/)
 
 ### См. также
 - [[clickhouse-tables|Таблицы]] — создание таблиц
@@ -39,6 +43,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
   - [Примеры вставки](#примеры-вставки)
 - [Базовые SELECT запросы](#базовые-select-запросы)
   - [Простые запросы](#простые-запросы)
+  - [DISTINCT — уникальные значения](#distinct-уникальные-значения)
 - [Условия WHERE](#условия-where)
   - [Операторы сравнения](#операторы-сравнения)
   - [Логические операторы](#логические-операторы)
@@ -54,12 +59,14 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
   - [Агрегаты с условиями](#агрегаты-с-условиями)
 - [Группировка данных](#группировка-данных)
   - [GROUP BY](#group-by)
+  - [HAVING — фильтрация групп](#having-фильтрация-групп)
   - [WITH ROLLUP, CUBE, TOTALS](#with-rollup-cube-totals)
 - [Оконные функции](#оконные-функции)
   - [ROW_NUMBER, RANK, DENSE_RANK](#row_number-rank-dense_rank)
   - [LAG и LEAD](#lag-и-lead)
   - [FIRST_VALUE, LAST_VALUE](#first_value-last_value)
   - [NTH_VALUE](#nth_value)
+  - [NTILE — разделение на группы](#ntile-разделение-на-группы)
   - [Скользящие агрегаты](#скользящие-агрегаты)
 - [JOIN операции](#join-операции)
   - [INNER JOIN](#inner-join)
@@ -83,7 +90,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
   - [PREWHERE для фильтрации](#prewhere-для-фильтрации)
   - [SAMPLE для приближенных расчетов](#sample-для-приближенных-расчетов)
   - [UNION ALL для объединения](#union-all-для-объединения)
-- [Best Practices](#лучшие-практики)
+- [Лучшие практики](#лучшие-практики)
   - [Производительность запросов](#производительность-запросов)
   - [Аналитические запросы](#аналитические-запросы)
   - [Мониторинг и отладка](#мониторинг-и-отладка)
@@ -1348,21 +1355,6 @@ ORDER BY total_read_bytes DESC;
 - **Производительность** — тюнинг и мониторинг
 
 **ClickHouse** продолжает развиваться и становится стандартом для аналитики больших данных в современной инфраструктуре.
-
-## Полезные ссылки
-
-### Официальная документация
-- [SQL Reference](https://clickhouse.com/docs/en/sql-reference)
-- [Query Syntax](https://clickhouse.com/docs/en/sql-reference/statements/select)
-- [Functions](https://clickhouse.com/docs/en/sql-reference/functions)
-
-### Руководства
-- [Query Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
-- [SQL for Analytics](https://clickhouse.com/docs/en/guides/best-practices)
-
-### Примеры
-- [ClickHouse Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
-- [Playground](https://play.clickhouse.com/)
 
 ## Решение проблем
 

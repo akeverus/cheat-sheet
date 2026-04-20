@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-http.md", "micronaut-data.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["micronaut-core.md", "micronaut-http.md"]
 
 ## Содержание
 
-- [Micronaut: Validation — Bean Validation и Custom Validators](#micronaut-validation-bean-validation-и-custom-validators)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Validation](#настройка-validation)
@@ -69,6 +68,7 @@ related: ["micronaut-core.md", "micronaut-http.md"]
   - [Request Validation](#request-validation)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

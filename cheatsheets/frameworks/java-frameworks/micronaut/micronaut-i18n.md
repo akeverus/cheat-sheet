@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-views.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-views.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-http.md", "micronaut-views.md"]
 
 ## Содержание
 
-- [Micronaut: Internationalization — i18n и Localization](#micronaut-internationalization-i18n-и-localization)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка i18n](#настройка-i18n)
@@ -42,7 +41,6 @@ related: ["micronaut-http.md", "micronaut-views.md"]
 - [Лучшие практики](#лучшие-практики)
   - [1. Используйте ключи вместо текста](#1-используйте-ключи-вместо-текста)
   - [2. Группируйте сообщения по функциональности](#2-группируйте-сообщения-по-функциональности)
-- [ Хорошо](#хорошо)
   - [3. Предоставляйте fallback для отсутствующих переводов](#3-предоставляйте-fallback-для-отсутствующих-переводов)
 - [Locale-aware Formatting](#locale-aware-formatting)
   - [Number Formatting](#number-formatting)
@@ -56,6 +54,7 @@ related: ["micronaut-http.md", "micronaut-views.md"]
   - [Custom Resource Bundle](#custom-resource-bundle)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

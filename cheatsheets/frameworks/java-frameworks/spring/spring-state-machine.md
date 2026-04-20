@@ -10,7 +10,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-core.md"]
 next: ["spring/spring-integration.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "spring/spring-core.md"]
 ---
 
@@ -23,7 +23,6 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
 
 ## Содержание
 
-- [Spring State Machine: Полное руководство по state machines](#spring-state-machine-полное-руководство-по-state-machines)
 - [Введение в Spring State Machine](#введение-в-spring-state-machine)
   - [Основные возможности](#основные-возможности)
   - [Архитектура State Machine](#архитектура-state-machine)
@@ -73,6 +72,7 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
 - [Интеграция с другими компонентами](#интеграция-с-другими-компонентами)
   - [State Machine + Spring Integration](#state-machine-spring-integration)
   - [State Machine + Spring Batch](#state-machine-spring-batch)
+- [Продвинутые паттерны](#продвинутые-паттерны-1)
   - [State Machine Builder](#state-machine-builder)
   - [Extended State Variables](#extended-state-variables)
   - [State Machine Interceptors](#state-machine-interceptors)
@@ -82,6 +82,7 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
   - [State Machine Persistence with Redis](#state-machine-persistence-with-redis)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring State Machine
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # NATS
 
@@ -24,7 +24,6 @@ updated: "2026-02-11"
 
 - [Основы NATS](#основы-nats)
   - [Архитектура](#архитектура)
-- [docker-compose.yml для NATS кластера](#docker-composeyml-для-nats-кластера)
   - [Java клиент](#java-клиент)
 - [Core Messaging Patterns](#core-messaging-patterns)
   - [Publish-Subscribe (Pub-Sub)](#publish-subscribe-pub-sub)
@@ -48,13 +47,6 @@ updated: "2026-02-11"
   - [Batch operations](#batch-operations)
 - [Решение проблем](#решение-проблем)
   - [Распространенные проблемы](#распространенные-проблемы)
-- [Проверка статуса кластера](#проверка-статуса-кластера)
-- [Мониторинг подключений](#мониторинг-подключений)
-- [Просмотр подписок](#просмотр-подписок)
-- [Проверка JetStream](#проверка-jetstream)
-- [Тестирование подключения](#тестирование-подключения)
-- [Проверка latency](#проверка-latency)
-- [Debug logging](#debug-logging)
   - [Health checks](#health-checks)
 - [Лучшие практики](#лучшие-практики)
   - [Production configuration](#production-configuration)

@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "databases/postgres-basics.md"]
 next: ["spring/spring-boot.md", "interview/spring-data-jpa.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 ---
 
 # Spring Data JPA/Hibernate
@@ -37,7 +37,6 @@ updated: "2026-02-06"
 
 ## Содержание
 
-- [Spring Data JPA/Hibernate](#spring-data-jpahibernate)
 - [Программная настройка источника данных](#программная-настройка-источника-данных)
   - [Тестирование](#тестирование)
 - [Руководство по JPA](#руководство-по-jpa)
@@ -77,6 +76,7 @@ updated: "2026-02-06"
 - [Руководство по @Embedded и @Embeddable](#руководство-по-embedded-и-embeddable)
   - [Переопределение атрибутов столбцов](#переопределение-атрибутов-столбцов)
 - [@NotNull против @Column (nullable = false)](#notnull-против-column-nullable-false)
+  - [Различия](#различия-1)
 - [Определение уникальных ограничений](#определение-уникальных-ограничений)
   - [Использование @Column(unique = true)](#использование-columnunique-true)
   - [Использование @UniqueConstraint](#использование-uniqueconstraint)

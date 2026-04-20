@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Java Concurrency: основы
 
@@ -67,6 +67,7 @@ updated: "2026-02-11"
 - [Руководство по методы wait() и notify()](#руководство-по-методы-wait-и-notify)
   - [Пример: Sender-Receiver](#пример-sender-receiver)
 - [Разница между Runnable и Callable](#разница-между-runnable-и-callable)
+  - [Runnable](#runnable-1)
   - [Callable](#callable)
   - [Обработка исключений](#обработка-исключений)
 - [Разница между wait() и sleep()](#разница-между-wait-и-sleep)
@@ -84,6 +85,7 @@ updated: "2026-02-11"
   - [Использование ManagementFactory](#использование-managementfactory)
   - [Использование Thread.activeCount()](#использование-threadactivecount)
 - [Лучшие практики](#лучшие-практики)
+- [См. также](#см-также)
 
 ## Обзор java.util.concurrent
 

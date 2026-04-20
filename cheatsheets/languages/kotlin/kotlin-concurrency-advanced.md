@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Kotlin Concurrency: Advanced
 
@@ -34,19 +34,13 @@ updated: "2026-02-11"
 
 - [Coroutine Context и Dispatchers (детально)](#coroutine-context-и-dispatchers-детально)
   - [CoroutineContext — детальное понимание](#coroutinecontext-детальное-понимание)
-  - [Композиция контекста](#композиция-контекста)
-  - [Dispatchers — детальное использование](#dispatchers-детальное-использование)
-  - [Переключение Dispatchers](#переключение-dispatchers)
-  - [CoroutineName](#coroutinename)
-  - [ExceptionHandler в контексте](#exceptionhandler-в-контексте)
-- [Structured Concurrency](#structured-concurrency)
-  - [Принципы Structured Concurrency](#принципы-structured-concurrency)
   - [Отмена в Structured Concurrency](#отмена-в-structured-concurrency)
   - [SupervisorScope](#supervisorscope)
   - [Иерархия корутин](#иерархия-корутин)
 - [Coroutine Scopes](#coroutine-scopes)
   - [GlobalScope](#globalscope)
   - [CoroutineScope](#coroutinescope)
+  - [SupervisorScope](#supervisorscope-1)
   - [LifecycleScope (Android)](#lifecyclescope-android)
   - [ViewModelScope (Android)](#viewmodelscope-android)
 - [Job и Deferred](#job-и-deferred)
@@ -117,12 +111,13 @@ updated: "2026-02-11"
   - [Работа с Channel и Flow вместе](#работа-с-channel-и-flow-вместе)
 - [Дополнительные техники](#дополнительные-техники)
   - [Работа с корутинами и Actor Model](#работа-с-корутинами-и-actor-model)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+- [Решение проблем](#решение-проблем)
+- [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 - [Итоговые рекомендации](#итоговые-рекомендации)
 - [Практические примеры использования](#практические-примеры-использования)
+  - [Создание пользовательских операторов Flow](#создание-пользовательских-операторов-flow-1)
   - [Координация нескольких Flow](#координация-нескольких-flow)
   - [Использование SupervisorJob для независимых корутин](#использование-supervisorjob-для-независимых-корутин)
   - [Использование Mutex для синхронизации](#использование-mutex-для-синхронизации)

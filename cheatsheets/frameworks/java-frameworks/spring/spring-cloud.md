@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Spring Cloud
 
@@ -36,18 +36,13 @@ updated: "2026-02-11"
   - [Версии и совместимость](#версии-и-совместимость)
 - [Service Discovery (Eureka)](#service-discovery-eureka)
   - [Eureka Server](#eureka-server)
-- [application.yml](#applicationyml)
   - [Eureka Client](#eureka-client)
   - [Использование Service Discovery](#использование-service-discovery)
 - [Config Server](#config-server)
+  - [Config Server](#config-server-1)
   - [Структура репозитория конфигураций](#структура-репозитория-конфигураций)
-- [config-repo/application.yml](#config-repoapplicationyml)
-- [config-repo/user-service.yml](#config-repouser-serviceyml)
-- [config-repo/user-service-dev.yml](#config-repouser-service-devyml)
   - [Config Client](#config-client)
-- [bootstrap.yml (важно! не application.yml)](#bootstrapyml-важно-не-applicationyml)
   - [Refresh конфигурации](#refresh-конфигурации)
-- [Обновление конфигурации](#обновление-конфигурации)
 - [API Gateway (Zuul/Gateway)](#api-gateway-zuulgateway)
   - [Spring Cloud Gateway](#spring-cloud-gateway)
   - [Кастомные фильтры](#кастомные-фильтры)
@@ -61,7 +56,6 @@ updated: "2026-02-11"
 - [Spring Cloud Sleuth](#spring-cloud-sleuth)
 - [Spring Cloud Stream](#spring-cloud-stream)
 - [Spring Cloud Bus](#spring-cloud-bus)
-- [Обновление конфигурации всех инстансов](#обновление-конфигурации-всех-инстансов)
 - [Spring Cloud Security](#spring-cloud-security)
 - [Spring Cloud Kubernetes](#spring-cloud-kubernetes)
 - [Миграция на Spring Cloud 2023](#миграция-на-spring-cloud-2023)
@@ -71,7 +65,6 @@ updated: "2026-02-11"
 - [Лучшие практики](#лучшие-практики)
 - [Примеры](#примеры)
   - [Полный микросервис с Spring Cloud](#полный-микросервис-с-spring-cloud)
-- [docker-compose.yml для разработки](#docker-composeyml-для-разработки)
   - [Eureka Server с аутентификацией](#eureka-server-с-аутентификацией)
   - [Config Server с аутентификацией](#config-server-с-аутентификацией)
   - [Circuit Breaker с метриками](#circuit-breaker-с-метриками)

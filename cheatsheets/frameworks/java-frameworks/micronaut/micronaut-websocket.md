@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-reactive.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: WebSocket — Real-time Communication и STOMP](#micronaut-websocket-real-time-communication-и-stomp)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка WebSocket](#настройка-websocket)
@@ -63,6 +62,7 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
   - [Keep-alive Mechanism](#keep-alive-mechanism)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

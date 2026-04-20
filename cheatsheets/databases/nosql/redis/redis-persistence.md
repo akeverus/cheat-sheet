@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-replication.md", "databases/redis-backup-restore.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
@@ -34,12 +34,16 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [Выбор стратегии персистентности](#выбор-стратегии-персистентности)
 - [RDB (Redis Database Backup)](#rdb-redis-database-backup)
   - [Настройка RDB](#настройка-rdb)
+    - [Конфигурация в redis.conf](#конфигурация-в-redisconf)
+    - [Ручное сохранение](#ручное-сохранение)
   - [Процесс создания RDB](#процесс-создания-rdb)
   - [Оптимизация RDB](#оптимизация-rdb)
   - [Восстановление из RDB](#восстановление-из-rdb)
   - [Преимущества и недостатки RDB](#преимущества-и-недостатки-rdb)
 - [AOF (Append Only File)](#aof-append-only-file)
   - [Настройка AOF](#настройка-aof)
+    - [Конфигурация в redis.conf](#конфигурация-в-redisconf-1)
+    - [Политики синхронизации](#политики-синхронизации)
   - [Формат AOF](#формат-aof)
   - [Перезапись AOF](#перезапись-aof)
   - [Процесс перезаписи AOF](#процесс-перезаписи-aof)
@@ -76,7 +80,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Advanced Persistence Configuration](#advanced-persistence-configuration)
   - [Tuning RDB Performance](#tuning-rdb-performance)
   - [Tuning AOF Performance](#tuning-aof-performance)
-  - [Disk I/O Optimization](#disk-i-o-optimization)
+  - [Disk I/O Optimization](#disk-io-optimization)
 - [Persistence Strategies by Use Case](#persistence-strategies-by-use-case)
   - [High Availability Setup](#high-availability-setup)
   - [Performance-Optimized Setup](#performance-optimized-setup)
@@ -90,7 +94,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [Recovery Procedures](#recovery-procedures)
 - [Performance Benchmarks](#performance-benchmarks)
   - [RDB vs AOF Performance](#rdb-vs-aof-performance)
-  - [Disk I/O Impact](#disk-i-o-impact)
+  - [Disk I/O Impact](#disk-io-impact)
 - [Advanced Backup Strategies](#advanced-backup-strategies)
   - [Incremental Backups](#incremental-backups)
   - [Point-in-Time Recovery](#point-in-time-recovery)

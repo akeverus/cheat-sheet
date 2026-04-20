@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Порождающие паттерны проектирования (Creational Patterns)
 
@@ -30,9 +30,9 @@ updated: "2026-02-11"
 
 - [Описание](#описание)
 - [Singleton](#singleton)
-  - [Когда использовать Singleton](#когда-использовать-шаблон-проектирования-singleton)
+  - [Когда использовать шаблон проектирования Singleton](#когда-использовать-шаблон-проектирования-singleton)
 - [Factory Method](#factory-method)
-  - [Когда использовать Factory Method](#когда-использовать-шаблон-проектирования-factory-method)
+  - [Когда использовать шаблон проектирования Factory Method](#когда-использовать-шаблон-проектирования-factory-method)
 - [Abstract Factory](#abstract-factory)
   - [Когда использовать Abstract Factory](#когда-использовать-abstract-factory)
 - [Builder](#builder)

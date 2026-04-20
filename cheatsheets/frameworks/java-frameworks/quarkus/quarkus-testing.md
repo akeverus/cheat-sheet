@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-data.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-data.md"]
 ---
 
@@ -24,7 +24,6 @@ related: ["quarkus-core.md", "quarkus-data.md"]
 
 ## Содержание
 
-- [Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest](#quarkus-testing-unit-tests-integration-tests-и-quarkustest)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Unit Tests](#unit-tests)
@@ -48,7 +47,6 @@ related: ["quarkus-core.md", "quarkus-data.md"]
   - [Mocking Reactive Services](#mocking-reactive-services)
 - [Test Profiles](#test-profiles)
   - [Использование Test Profiles](#использование-test-profiles)
-- [application-test.properties](#application-testproperties)
   - [Custom Test Profile](#custom-test-profile)
 - [Database Testing](#database-testing)
   - [Testing with H2](#testing-with-h2)
@@ -58,23 +56,24 @@ related: ["quarkus-core.md", "quarkus-data.md"]
   - [Testing Security](#testing-security)
 - [Performance Testing](#performance-testing)
   - [Load Testing](#load-testing)
-  - [1. Разделяйте unit и integration тесты](#1-разделяйте-unit-и-integration-тесты)
-  - [2. Используйте Testcontainers для внешних зависимостей](#2-используйте-testcontainers-для-внешних-зависимостей)
-  - [3. Мокируйте только внешние зависимости](#3-мокируйте-только-внешние-зависимости)
-  - [4. Используйте тестовые профили для конфигурации](#4-используйте-тестовые-профили-для-конфигурации)
-  - [5. Очищайте данные между тестами](#5-очищайте-данные-между-тестами)
 - [Contract Testing](#contract-testing)
   - [Pact Testing](#pact-testing)
+- [Performance Testing](#performance-testing-1)
   - [JMeter Integration](#jmeter-integration)
-  - [6. Используйте contract testing для микросервисов](#6-используйте-contract-testing-для-микросервисов)
+- [Advanced Testing Patterns](#advanced-testing-patterns-1)
   - [Test Data Builders](#test-data-builders)
   - [Parameterized Tests](#parameterized-tests)
   - [Test Fixtures](#test-fixtures)
+- [Advanced Testing Patterns](#advanced-testing-patterns-2)
   - [Test Containers for Integration Testing](#test-containers-for-integration-testing)
   - [Contract Testing with Pact](#contract-testing-with-pact)
+  - [Performance Testing](#performance-testing-2)
 - [Test Data Management](#test-data-management)
+  - [Test Data Builders](#test-data-builders-1)
+  - [Test Fixtures](#test-fixtures-1)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

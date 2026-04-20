@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Micrometer
 
@@ -35,6 +35,9 @@ Micrometer — фасад (vendor-neutral API) для сбора метрик в
 
 - [Введение](#введение)
 - [Установка и настройка](#установка-и-настройка)
+  - [Maven (Prometheus)](#maven-prometheus)
+  - [Gradle](#gradle)
+  - [Базовое использование (без Spring)](#базовое-использование-без-spring)
 - [Registry и Meter](#registry-и-meter)
 - [Counter, Timer, Gauge, DistributionSummary](#counter-timer-gauge-distributionsummary)
 - [Интеграция с Spring Boot](#интеграция-с-spring-boot)
@@ -43,8 +46,8 @@ Micrometer — фасад (vendor-neutral API) для сбора метрик в
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
-- [Глоссарий и итоговые таблицы](#глоссарий)
-
+- [Глоссарий](#глоссарий)
+  - [Итоговые таблицы](#итоговые-таблицы)
 
 ## Введение
 

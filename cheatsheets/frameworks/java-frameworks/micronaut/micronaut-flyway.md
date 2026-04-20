@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
 next: ["micronaut-data.md", "micronaut-testing.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["micronaut-data.md", "micronaut-testing.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["micronaut-data.md", "micronaut-testing.md"]
 
 ## Содержание
 
-- [Micronaut: Flyway — Database Migrations](#micronaut-flyway-database-migrations)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Flyway](#настройка-flyway)
@@ -40,7 +39,6 @@ related: ["micronaut-data.md", "micronaut-testing.md"]
   - [1. Используйте правильные имена миграций](#1-используйте-правильные-имена-миграций)
   - [2. Не изменяйте уже примененные миграции](#2-не-изменяйте-уже-примененные-миграции)
   - [3. Тестируйте миграции на тестовой БД](#3-тестируйте-миграции-на-тестовой-бд)
-- [ Хорошо](#хорошо)
 - [Flyway Callbacks](#flyway-callbacks)
   - [Callback Hooks](#callback-hooks)
 - [Multiple Databases](#multiple-databases)
@@ -48,20 +46,17 @@ related: ["micronaut-data.md", "micronaut-testing.md"]
 - [Flyway Baseline](#flyway-baseline)
   - [Baseline Configuration](#baseline-configuration)
   - [Baseline Migration](#baseline-migration)
-- [Создание baseline для существующей БД](#создание-baseline-для-существующей-бд)
 - [Flyway Clean](#flyway-clean)
   - [Clean Operation](#clean-operation)
-- [Очистка схемы БД (осторожно!)](#очистка-схемы-бд-осторожно)
 - [Flyway Validate](#flyway-validate)
   - [Validation](#validation)
-- [Проверка миграций](#проверка-миграций)
   - [Validation Configuration](#validation-configuration)
 - [Flyway Info](#flyway-info)
   - [Migration Info](#migration-info)
-- [Информация о миграциях](#информация-о-миграциях)
   - [Info Service](#info-service)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение
 

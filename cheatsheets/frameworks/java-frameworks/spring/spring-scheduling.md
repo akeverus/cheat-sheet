@@ -12,7 +12,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-batch.md", "spring/spring-integration.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
@@ -25,7 +25,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ## Содержание
 
-- [Spring Scheduling: Полное руководство по планированию задач](#spring-scheduling-полное-руководство-по-планированию-задач)
 - [Введение в Spring Scheduling](#введение-в-spring-scheduling)
   - [Основные возможности](#основные-возможности)
   - [Архитектура Scheduling](#архитектура-scheduling)
@@ -83,6 +82,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [Task Prioritization](#task-prioritization)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Scheduling
 

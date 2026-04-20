@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Infrastructure as Code (IaC) — обзор
 
@@ -36,6 +36,7 @@ updated: "2026-02-11"
 - [Pulumi](#pulumi)
 - [Packer](#packer)
 - [Сравнение и выбор](#сравнение-и-выбор)
+  - [Практический decision guide](#практический-decision-guide)
 - [Лучшие практики](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)

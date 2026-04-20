@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Фабричный метод (Factory Method)
 
@@ -27,6 +27,7 @@ updated: "2026-02-11"
 
 ## Содержание
 
+- [Суть и запомнить](#суть-и-запомнить)
 - [Что такое Factory Method?](#что-такое-factory-method)
   - [Основные характеристики](#основные-характеристики)
   - [Проблемы, которые решает](#проблемы-которые-решает)
@@ -40,8 +41,17 @@ updated: "2026-02-11"
   - [Параметризованный Factory Method](#параметризованный-factory-method)
   - [Factory Method с шаблонным методом](#factory-method-с-шаблонным-методом)
 - [Продвинутые реализации](#продвинутые-реализации)
+  - [1. Generic Factory Method](#1-generic-factory-method)
+  - [2. ServiceLoader Factory](#2-serviceloader-factory)
+  - [3. Builder + Factory Method](#3-builder-factory-method)
 - [Примеры использования](#примеры-использования)
+  - [1. Spring Bean Factory](#1-spring-bean-factory)
+  - [2. HTTP Client Factory](#2-http-client-factory)
+  - [3. Message Factory](#3-message-factory)
 - [Лучшие практики](#лучшие-практики)
+  - [1. Выбор между Factory Method и Abstract Factory](#1-выбор-между-factory-method-и-abstract-factory)
+  - [2. Обработка ошибок в фабриках](#2-обработка-ошибок-в-фабриках)
+  - [3. Тестирование фабрик](#3-тестирование-фабрик)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)

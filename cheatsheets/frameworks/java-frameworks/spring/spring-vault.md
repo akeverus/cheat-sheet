@@ -11,7 +11,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-security.md"]
 next: ["spring/spring-security.md"]
-updated: "2026-02-11"
+updated: "2026-04-20"
 related: ["spring/spring-boot.md", "spring/spring-security.md"]
 ---
 
@@ -24,14 +24,12 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 
 ## Содержание
 
-- [Spring Vault: Полное руководство по управлению секретами](#spring-vault-полное-руководство-по-управлению-секретами)
 - [Введение в Spring Vault](#введение-в-spring-vault)
   - [Основные возможности](#основные-возможности)
   - [Архитектура Spring Vault](#архитектура-spring-vault)
 - [Настройка Spring Vault](#настройка-spring-vault)
   - [Зависимости](#зависимости)
   - [Конфигурация](#конфигурация)
-- [Vault Configuration](#vault-configuration)
   - [Java Configuration](#java-configuration)
 - [Аутентификация](#аутентификация)
   - [Token Authentication](#token-authentication)
@@ -81,6 +79,7 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
   - [Vault Audit Logging](#vault-audit-logging)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
+- [См. также](#см-также)
 
 ## Введение в Spring Vault
 

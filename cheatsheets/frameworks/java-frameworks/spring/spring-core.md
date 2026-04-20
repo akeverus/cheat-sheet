@@ -13,7 +13,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md"]
 next: ["spring/spring-data-jpa.md", "spring/spring-boot.md", "spring/spring-aop.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["java/java-basics.md", "spring/spring-boot.md", "spring/spring-aop.md"]
 ---
 
@@ -55,10 +55,6 @@ flowchart TD
 
 ## Содержание
 
-- [Spring Core: Inversion of Control и Dependency Injection](#spring-core-inversion-of-control-и-dependency-injection)
-- [Введение в Spring Framework](#введение-в-spring-framework)
-  - [Основные возможности Spring Core](#основные-возможности-spring-core)
-  - [Архитектура Spring Core](#архитектура-spring-core)
 - [Inversion of Control (IoC) и Dependency Injection (DI)](#inversion-of-control-ioc-и-dependency-injection-di)
   - [Что такое Inversion of Control?](#что-такое-inversion-of-control)
   - [Преимущества IoC](#преимущества-ioc)
@@ -92,7 +88,9 @@ flowchart TD
     - [5. Application (Только для веб-приложений)](#5-application-только-для-веб-приложений)
     - [6. Custom Scopes](#6-custom-scopes)
   - [Bean Definition](#bean-definition)
+    - [XML конфигурация](#xml-конфигурация-1)
     - [Java конфигурация](#java-конфигурация)
+    - [Аннотационная конфигурация](#аннотационная-конфигурация-1)
   - [BeanFactory.getBean()](#beanfactorygetbean)
   - [Lazy и Eager инициализация](#lazy-и-eager-инициализация)
     - [Eager Initialization (По умолчанию)](#eager-initialization-по-умолчанию)
@@ -103,8 +101,6 @@ flowchart TD
   - [Bean Post Processors](#bean-post-processors)
   - [Property Sources и Environment](#property-sources-и-environment)
   - [Profiles для разных сред](#profiles-для-разных-сред)
-- [application.properties](#applicationproperties)
-- [Через переменные окружения](#через-переменные-окружения)
   - [Conditional Configuration](#conditional-configuration)
 - [Лучшие практики и решение проблем](#лучшие-практики-и-решение-проблем)
   - [Лучшие практики Spring Core](#лучшие-практики-spring-core)
@@ -137,6 +133,7 @@ flowchart TD
   - [Когда использовать ApplicationContext?](#когда-использовать-applicationcontext)
 - [Введение в Inversion of Control и Dependency Injection](#введение-в-inversion-of-control-и-dependency-injection)
   - [Инверсия управления (IoC)](#инверсия-управления-ioc)
+  - [Преимущества IoC](#преимущества-ioc-1)
   - [Dependency Injection (DI)](#dependency-injection-di)
   - [Традиционный подход (плохой)](#традиционный-подход-плохой)
   - [Подход с Dependency Injection (хороший)](#подход-с-dependency-injection-хороший)
@@ -165,6 +162,7 @@ flowchart TD
 - [Что такое Bean?](#что-такое-bean)
   - [Определение Bean](#определение-bean)
   - [IoC Container](#ioc-container)
+  - [Пример](#пример-1)
   - [Традиционный подход](#традиционный-подход)
   - [Подход с Spring](#подход-с-spring)
 - [Руководство по Spring Bean Scopes](#руководство-по-spring-bean-scopes)
@@ -176,7 +174,10 @@ flowchart TD
   - [WebSocket Scope](#websocket-scope)
 - [Руководство по BeanFactory.getBean()](#руководство-по-beanfactorygetbean)
   - [Способы получения бинов](#способы-получения-бинов)
+  - [Проверка наличия бина](#проверка-наличия-бина-1)
+  - [Получение всех бинов определенного типа](#получение-всех-бинов-определенного-типа-1)
   - [Предупреждение](#предупреждение)
+- [См. также](#см-также)
 
 ## Inversion of Control (IoC) и Dependency Injection (DI)
 

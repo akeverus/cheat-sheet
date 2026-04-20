@@ -12,7 +12,7 @@ tags:
   - cloud
 difficulty: "intermediate"
 prerequisites: ["databases/clickhouse-performance.md"]
-updated: "2026-02-06"
+updated: "2026-04-20"
 related: ["databases/clickhouse-performance.md", "databases/clickhouse-replication.md"]
 ---
 
@@ -43,30 +43,6 @@ related: ["databases/clickhouse-performance.md", "databases/clickhouse-replicati
   - [Spark Structured Streaming](#spark-structured-streaming)
 - [Интеграция с Apache Airflow](#интеграция-с-apache-airflow)
   - [ClickHouse Hook для Airflow](#clickhouse-hook-для-airflow)
-  - [Go](#go)
-  - [Node.js](#nodejs)
-- [Облачные сервисы](#облачные-сервисы)
-  - [AWS](#aws)
-  - [Google Cloud Platform](#google-cloud-platform)
-  - [Azure](#azure)
-- [ETL и потоковая обработка](#etl-и-потоковая-обработка)
-  - [Apache NiFi](#apache-nifi)
-  - [Apache Flink](#apache-flink)
-  - [dbt (Data Build Tool)](#dbt-data-build-tool)
-- [dbt profiles.yml](#dbt-profilesyml)
-- [Мониторинг и observability](#мониторинг-и-observability)
-  - [Prometheus](#prometheus)
-- [prometheus.yml](#prometheusyml)
-- [Запросы в Grafana](#запросы-в-grafana)
-- [ClickHouse queries per second](#clickhouse-queries-per-second)
-- [Memory usage](#memory-usage)
-- [Disk usage](#disk-usage)
-  - [ELK Stack](#elk-stack)
-  - [Jaeger/OpenTelemetry](#jaegeropentelemetry)
-- [Best Practices](#лучшие-практики)
-  - [Проектирование интеграций](#проектирование-интеграций)
-  - [Безопасность интеграций](#безопасность-интеграций)
-  - [Производительность интеграций](#производительность-интеграций)
 
 ## Введение в интеграции
 

@@ -8,7 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites: []
 next: []
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Spring Cloud Sleuth: Distributed Tracing для Spring
 
@@ -36,7 +36,6 @@ updated: "2026-02-11"
   - [Maven](#maven)
   - [Gradle](#gradle)
   - [Базовая конфигурация](#базовая-конфигурация)
-- [application.yml](#applicationyml)
   - [Конфигурация sampling](#конфигурация-sampling)
 - [Основы Tracing](#основы-tracing)
   - [Автоматическое tracing](#автоматическое-tracing)
@@ -55,10 +54,7 @@ updated: "2026-02-11"
 - [Интеграция с внешними системами](#интеграция-с-внешними-системами)
   - [Zipkin](#zipkin)
   - [Jaeger](#jaeger)
-- [Для OpenTelemetry с Jaeger](#для-opentelemetry-с-jaeger)
   - [OpenTelemetry Collector](#opentelemetry-collector)
-- [OpenTelemetry](#opentelemetry)
-- [OTLP exporter](#otlp-exporter)
   - [Кастомный экспортер](#кастомный-экспортер)
 - [Мониторинг и отладка](#мониторинг-и-отладка)
   - [Tracing endpoint](#tracing-endpoint)
@@ -69,13 +65,12 @@ updated: "2026-02-11"
   - [2. Правильное именование span](#2-правильное-именование-span)
   - [3. Обработка ошибок и исключений](#3-обработка-ошибок-и-исключений)
   - [4. Производительность и оптимизация](#4-производительность-и-оптимизация)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
 - [Заключение](#заключение)
   - [Преимущества Spring Cloud Sleuth](#преимущества-spring-cloud-sleuth)
   - [Основные паттерны использования](#основные-паттерны-использования)
   - [Когда использовать Spring Cloud Sleuth](#когда-использовать-spring-cloud-sleuth)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
+- [См. также](#см-также)
 
 ## Введение в Spring Cloud Sleuth
 
