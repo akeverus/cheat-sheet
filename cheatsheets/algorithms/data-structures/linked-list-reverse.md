@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`LinkedList` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html)
+- [LinkedList (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html)
 - [Java Collections (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/package-summary.html)
 
 ### См. также

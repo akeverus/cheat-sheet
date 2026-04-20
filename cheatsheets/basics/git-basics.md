@@ -126,16 +126,16 @@ updated: "2026-02-11"
 
 - **Инициализация и клонирование**
   - `git init` — создать репозиторий.
-  - `**git clone** <**url**>` — клонировать удалённый репозиторий.
+  - `git clone <url>` — клонировать удалённый репозиторий.
 
 - **Состояние и коммиты**
   - `git status` — текущее состояние (ветка, изменения).
-  - `**git add** <**file**>` / `**git add** .` — добавить файлы в индекс.
-  - `**git commit** -m "**message**"` — зафиксировать коммит.
-  - `**git log** --**oneline**` — краткая история коммитов.
+  - `git add <file>` / `git add .` — добавить файлы в индекс.
+  - `git commit -m "message"` — зафиксировать коммит.
+  - `git log --oneline` — краткая история коммитов.
 
 - **Удалённый репозиторий**
-  - `**git remote** -v` — список **remote**.
+  - `git remote -v` — список **remote**.
   - `git fetch origin` — забрать изменения без слияния.
   - `git pull origin main` — **fetch** + **merge** в текущую ветку.
   - `git push origin main` — отправить коммиты в **origin**.
@@ -146,7 +146,7 @@ updated: "2026-02-11"
 - **Создание и переключение**
   - `git branch feature-x` — создать ветку.
   - `git checkout feature-x` / `git switch feature-x` — переключиться.
-  - `**git checkout** -b **feature-x` / `git switch** -c **feature-x**` — создать и переключиться.
+  - `git checkout -b feature-x` / `git switch -c feature-x` — создать и переключиться.
 
 - **Слияние**
   - `git merge other-branch` — влить другую ветку в текущую.
@@ -172,20 +172,20 @@ git rebase main   # коммиты feature переиграются поверх
 
 - **Конфликты при merge/rebase**
   - В файлах появятся маркеры `<<<<<<<`, `=======`, `>>>>>>>`.
-  - Исправить вручную, затем `git add` и `git commit` (merge) или `**git rebase** --**continue**` (rebase).
-  - Отмена **merge**: `**git merge** --**abort**`. Отмена **rebase**: `**git rebase** --**abort**`.
+  - Исправить вручную, затем `git add` и `git commit` (merge) или `git rebase --continue` (rebase).
+  - Отмена **merge**: `git merge --abort`. Отмена **rebase**: `git rebase --abort`.
 
 - **Отмена изменений**
-  - `**git checkout** -- <**file**>` / `**git restore** <**file**>` — откатить изменения в файле (до последнего коммита).
-  - `**git reset** --**soft HEAD**~1` — убрать последний коммит, оставив изменения в индексе.
-  - `**git reset** --**hard HEAD**~1` — убрать последний коммит и изменения (осторожно).
+  - `git checkout -- <file>` / `git restore <file>` — откатить изменения в файле (до последнего коммита).
+  - `git reset --soft HEAD~1` — убрать последний коммит, оставив изменения в индексе.
+  - `git reset --hard HEAD~1` — убрать последний коммит и изменения (осторожно).
 
 
 ## Типовой workflow
 
-1. Обновить основную ветку: `**git checkout main** && **git pull**`.
+1. Обновить основную ветку: `git checkout main && git pull`.
 2. Создать ветку для задачи: `git checkout -b feature-xxx`.
-3. Делать коммиты: `git add`, `**git commit** -m "описание"`.
+3. Делать коммиты: `git add`, `git commit -m "описание"`.
 4. Периодически подтягивать **main**: `git merge main` или `git rebase main`.
 5. Отправить ветку: `git push -u origin feature-xxx`.
 6. Создать **Pull Request** / **Merge Request**, пройти ревью, смержить в **main**.
@@ -196,8 +196,8 @@ git rebase main   # коммиты feature переиграются поверх
 
 - Осмысленные сообщения коммитов: что и зачем изменено.
 - Маленькие атомарные коммиты: проще ревью и откат.
-- Не коммитить лишнее: использовать `.**gitignore**`; секреты — в переменных окружения или **vault**.
-- В общих ветках не делать **force-push**; в личных ветках — при необходимости `**git push** --**force-with-lease**`.
+- Не коммитить лишнее: использовать `.gitignore`; секреты — в переменных окружения или **vault**.
+- В общих ветках не делать **force-push**; в личных ветках — при необходимости `git push --force-with-lease`.
 
 
 ## Рабочая директория, индекс и репозиторий
@@ -222,7 +222,7 @@ git diff commit1 commit2
 
 ## .gitignore
 
-Файл `.gitignore` задаёт шаблоны файлов и каталогов, которые **Git** не отслеживает. Синтаксис: одна строка — один шаблон; `#` — комментарий; `*` — любое количество символов; `?` — один символ; `**/` — любой уровень вложенности.
+Файл `.gitignore` задаёт шаблоны файлов и каталогов, которые **Git** не отслеживает. Синтаксис: одна строка — один шаблон; `#` — комментарий; `*` — любое количество символов; `?` — один символ; `/` — любой уровень вложенности.
 
 ```gitignore
 # Сборки и артефакты
@@ -248,7 +248,7 @@ temp/
 secrets/
 ```
 
-После добавления правил в `.**gitignore` уже отслеживаемые файлы нужно убрать из индекса: `git** rm --**cached** <**file**>` (файл останется на диске).
+После добавления правил в `.gitignore` уже отслеживаемые файлы нужно убрать из индекса: `git rm --cached <file>` (файл останется на диске).
 
 
 ## Просмотр истории и различий
@@ -427,7 +427,7 @@ git rebase -i HEAD~3
 - **fixup** — объединить с предыдущим, сообщение предыдущего сохранится
 - **drop** — удалить коммит
 
-После сохранения **Git** применяет коммиты по порядку. При конфликтах: разрешить, `git add`, затем `**git rebase** --**continue`. Отмена: `git rebase** --**abort**`.
+После сохранения **Git** применяет коммиты по порядку. При конфликтах: разрешить, `git add`, затем `git rebase --continue`. Отмена: `git rebase --abort`.
 
 
 ## Удалённые репозитории (remote)
@@ -624,41 +624,41 @@ git config --global alias.last "log -1 HEAD"
 **Merge** создаёт коммит слияния и сохраняет историю обеих веток. **Rebase** переносит коммиты одной ветки поверх другой, история становится линейной, но хеши коммитов меняются. **Rebase** не используют для общих веток (main, develop), чтобы не переписывать историю для всех.
 
 **Когда использовать `force-push`?**
-Только в своей личной ветке после **rebase** или **amend**. Предпочтительно `**git push** --**force-with-lease**`, чтобы не перезаписать чужие коммиты, если кто-то успел запушить в ту же ветку.
+Только в своей личной ветке после **rebase** или **amend**. Предпочтительно `git push --force-with-lease`, чтобы не перезаписать чужие коммиты, если кто-то успел запушить в ту же ветку.
 
 **Как откатить уже запушенный коммит?**
 Если коммит ещё не в общей ветке — можно сделать **reset** и **force-push** (в личной ветке). Если уже в **main** — безопаснее `git revert`, создав новый коммит, отменяющий изменения.
 
 **Что делать при конфликте при pull?**
-Разрешить конфликты в файлах, затем `git add` и `git commit` (pull уже создал merge-коммит при конфликте) или при **pull** с **rebase** — `git add` и `**git rebase** --**continue**`.
+Разрешить конфликты в файлах, затем `git add` и `git commit` (pull уже создал merge-коммит при конфликте) или при **pull** с **rebase** — `git add` и `git rebase --continue`.
 
 **Как удалить ветку локально и на remote?**
-Локально: `**git branch** -d **branch-name**` (или `-D` для принудительного удаления). На **remote**: `**git push origin** --**delete branch-name**`.
+Локально: `git branch -d branch-name` (или `-D` для принудительного удаления). На **remote**: `git push origin --delete branch-name`.
 
 
 ## Типовые сценарии
 
 **Создать ветку от определённого коммита:**
-`**git checkout** -b **new-branch** <**commit-hash**>`
+`git checkout -b new-branch <commit-hash>`
 
 **Обновить ветку из main (merge):**
-`**git checkout feature** && **git merge main**`
+`git checkout feature && git merge main`
 
 **Обновить ветку из main (rebase):**
-`**git checkout feature** && **git rebase main**`
+`git checkout feature && git rebase main`
 
 **Синхронизировать с remote:**
-`**git fetch origin** && **git checkout main** && **git pull origin main**`
+`git fetch origin && git checkout main && git pull origin main`
 
-**Восстановить удалённую ветку (**если есть в **reflog**):**
-`**git checkout** -b **restored-branch** <**commit-from-reflog**>`
+**Восстановить удалённую ветку (если есть в reflog):**
+`git checkout -b restored-branch <commit-from-reflog>`
 
 
 ## Сообщения коммитов (соглашения)
 
 Распространённый формат: краткий заголовок (до 50 символов) + при необходимости тело коммита.
 
-- **Conventional `Commits`:** тип(область): описание. Типы: **feat**, **fix**, **docs**, **style**, **refactor**, **test**, **chore**. Пример: `**feat(auth): **add OAuth2 login**`.
+- **Conventional `Commits`:** тип(область): описание. Типы: **feat**, **fix**, **docs**, **style**, **refactor**, **test**, **chore**. Пример: `feat(auth): add OAuth2 login`.
 - **Imperative mood:** «**Add feature**» вместо «**Added feature**».
 - В теле коммита — зачем сделано изменение, а не что именно изменено (что видно в diff).
 
@@ -666,7 +666,7 @@ git config --global alias.last "log -1 HEAD"
 ## Безопасность и секреты
 
 - Никогда не коммитить пароли, ключи **API**, токены. Использовать переменные окружения или секрет-хранилища (Vault, `AWS Secrets` Manager).
-- Проверять `.**gitignore**` перед первым коммитом; при утечке — ротировать секреты и при необходимости очистить историю (git `filter-branch` или `BFG Repo-Cleaner`; осторожно, переписывает историю).
+- Проверять `.gitignore` перед первым коммитом; при утечке — ротировать секреты и при необходимости очистить историю (git `filter-branch` или `BFG Repo-Cleaner`; осторожно, переписывает историю).
 
 
 ## Рекомендуемая литература и ресурсы
@@ -797,7 +797,7 @@ git restore --source=HEAD~1 file.txt
 
 ## Сравнение с другими системами контроля версий
 
-**Централизованные (**SVN**, **Perforce**):** один сервер, клиенты получают только последние версии файлов. Коммит требует доступа к серверу. В **Git** каждый клон — полная копия истории; работа офлайн возможна; коммиты локальные, синхронизация через **push**/**pull**.
+**Централизованные (SVN, Perforce):** один сервер, клиенты получают только последние версии файлов. Коммит требует доступа к серверу. В **Git** каждый клон — полная копия истории; работа офлайн возможна; коммиты локальные, синхронизация через **push**/**pull**.
 
 **Распределённость Git:** при падении сервера любой клон может стать новым «источником правды». Ветвление и слияние — быстрые локальные операции.
 
@@ -837,7 +837,7 @@ git commit -m "Squash merge feature X"
 `git branch feature-branch` (создать ветку от текущего main). `git reset --hard origin/main` (откатить main к состоянию на сервере). `git checkout feature-branch` — коммит останется в **feature-branch**.
 
 **Потеряли коммиты после reset:**
-`git reflog` — найти хеш нужного коммита. `**git checkout** -b **recovered-branch** <**hash**>` или `**git reset** --**hard** <**hash**>`.
+`git reflog` — найти хеш нужного коммита. `git checkout -b recovered-branch <hash>` или `git reset --hard <hash>`.
 
 
 ## Конфигурация для конкретного репозитория
@@ -883,20 +883,20 @@ git config --global alias.undo "reset --soft HEAD~1"
 
 ## Дополнительные сценарии
 
-**Обновить ветку из другой ветки (**не **main**):**
-`**git checkout feature** && **git merge other-branch**` или `git rebase other-branch`.
+**Обновить ветку из другой ветки (не main):**
+`git checkout feature && git merge other-branch` или `git rebase other-branch`.
 
 **Синхронизировать fork с upstream:**
-`**git remote add upstream** <**original-repo-url**>`. `git fetch upstream`. `git merge upstream/main`. `git push origin main`.
+`git remote add upstream <original-repo-url>`. `git fetch upstream`. `git merge upstream/main`. `git push origin main`.
 
 **Удалить все локальные ветки, которые уже смержены в main:**
-`**git branch** --**merged main** | **grep** -v **main** | **xargs git branch** -d`.
+`git branch --merged main | grep -v main | xargs git branch -d`.
 
 **Найти коммит по сообщению:**
-`**git log** --**all** --**grep**="текст"`.
+`git log --all --grep="текст"`.
 
 **Показать изменения между тегами:**
-`**git log v1.0..v2.0** --**oneline**`.
+`git log v1.0..v2.0 --oneline`.
 
 
 ## Краткая шпаргалка команд
@@ -975,7 +975,7 @@ git config --global core.excludesfile ~/.gitignore_global
 
 **Рекомендуется перед каждым коммитом вручную или через **hook** проверять:**
 - `git status` — что именно попадает в коммит.
-- `**git diff** --**staged**` — итоговый патч коммита.
+- `git diff --staged` — итоговый патч коммита.
 - Запуск тестов и линтера (локально или в CI).
 
 
@@ -1176,8 +1176,8 @@ git checkout -b local-feature origin/feature-branch
 
 ## Безопасность: проверка перед push
 
-- Убедиться, что не пушите секреты: `**git diff** --**staged**` и поиск по ключевым словам (password, secret, key, token).
-- В общих ветках не делать `**git push** --**force` без крайней необходимости; в личных — предпочитать `git push** --**force-with-lease**`.
+- Убедиться, что не пушите секреты: `git diff --staged` и поиск по ключевым словам (password, secret, key, token).
+- В общих ветках не делать `git push --force` без крайней необходимости; в личных — предпочитать `git push --force-with-lease`.
 - Перед **merge** в **main** убедиться, что `CI` прошёл и ревью одобрено.
 
 
@@ -1205,22 +1205,22 @@ git checkout -b local-feature origin/feature-branch
 `git stash show -p stash@{0} | git apply` — применить патч из **stash** без удаления **stash**. Или `git checkout stash@{0} -- path/to/file` — восстановить только один файл из **stash**.
 
 **Переименовать ветку на remote:**
-Локально: `**git branch** -m **old-name new-name**`. Удалить старую на **remote**: `**git push origin** --**delete old-name`. Запушить новую: `git push** -u **origin new-name**`.
+Локально: `git branch -m old-name new-name`. Удалить старую на **remote**: `git push origin --delete old-name`. Запушить новую: `git push -u origin new-name`.
 
 **Сравнить два коммита по файлам:**
-`**git diff** --**name-status commit1 commit2**` — список файлов с статусом (A/M/D и т.д.).
+`git diff --name-status commit1 commit2` — список файлов с статусом (A/M/D и т.д.).
 
 **Показать, кто изменил каждую строку файла (с датой):**
-`**git blame** -`L 1`,50 **file.txt` — первые 50 строк. `git blame** -w **file.txt**` — игнорировать пробелы при определении автора.
+`git blame -`L 1`,50 file.txt` — первые 50 строк. `git blame -w file.txt` — игнорировать пробелы при определении автора.
 
 **Создать архив только из подкаталога:**
 `git archive HEAD -- docs/ | gzip > docs.tar.gz` — только каталог **docs** в архиве.
 
 **Найти ветку, содержащую коммит:**
-`**git branch** -a --**contains** <**commit-hash**>`.
+`git branch -a --contains <commit-hash>`.
 
 **Удалить все локальные ветки, кроме текущей и main:**
-`**git branch** | **grep** -v "**main**\|*" | **xargs git branch** -D` (осторожно: удалит все перечисленные ветки).
+`git branch | grep -v "main\|*" | xargs git branch -D` (осторожно: удалит все перечисленные ветки).
 
 **Показать разницу между рабочим деревом и конкретным коммитом:**
 `git diff <commit-hash>`.
@@ -1253,11 +1253,11 @@ git config --global pull.rebase false
 ## Краткий чек-лист перед push
 
 - [ ] `git status` — нет ли лишних файлов в коммите.
-- [ ] `**git diff** --**staged**` — итоговый патч корректен.
+- [ ] `git diff --staged` — итоговый патч корректен.
 - [ ] Нет секретов и паролей в коде.
 - [ ] Сообщение коммита осмысленное.
 - [ ] В общих ветках не делаете **force-push**.
-- [ ] После **rebase**/**amend** в личной ветке используете `**git push** --**force-with-lease**`.
+- [ ] После **rebase**/**amend** в личной ветке используете `git push --force-with-lease`.
 
 
 ## Итоговая таблица: когда какую команду использовать
@@ -1289,9 +1289,9 @@ git config --global pull.rebase false
 **Fetch** забирает изменения с **remote** в локальные ссылки (origin/main и т.д.), но не меняет рабочую директорию и текущую ветку. Позволяет посмотреть изменения перед **merge**/**rebase**.
 
 **Что такое upstream?**
-**Upstream** — удалённая ветка, с которой связана локальная (при push/pull). Устанавливается при первом **push** с `-u`: `**git push** -u **origin feature**`.
+**Upstream** — удалённая ветка, с которой связана локальная (при push/pull). Устанавливается при первом **push** с `-u`: `git push -u origin feature`.
 
-**Как откатить push (**если коммит уже в **remote**)?**
+**Как откатить push (если коммит уже в remote)?**
 В общих ветках — только через **revert** (создать новый коммит, отменяющий изменения). В личной ветке — **reset** и **force-push**, если никто не успел подтянуть ветку.
 
 **Что такое squash при merge?**
@@ -1365,9 +1365,9 @@ git branch recovered <hash-from-reflog>
 
 ## Краткая справка: типовой рабочий день
 
-1. `**git checkout main** && **git pull**` — обновить **main**.
+1. `git checkout main && git pull` — обновить **main**.
 2. `git checkout -b feature-xxx` — создать ветку для задачи.
-3. Редактирование, `git add`, `**git commit** -m "описание"`.
+3. Редактирование, `git add`, `git commit -m "описание"`.
 4. При необходимости: `git merge main` или `git rebase main`.
 5. `git push -u origin feature-xxx`.
 6. Создать **PR/MR**, пройти ревью, смержить.
@@ -1380,35 +1380,35 @@ git branch recovered <hash-from-reflog>
 Открыть файл, найти маркеры `<<<<<<<`, `=======`, `>>>>>>>`, оставить нужный код или объединить вручную, удалить маркеры. Затем `git add file` и `git commit`.
 
 **Конфликт при rebase:**
-Разрешить конфликт в файлах, `git add`, затем `**git rebase** --**continue`. Если нужно пропустить коммит — `git rebase** --**skip**`. Отменить весь **rebase** — `**git rebase** --**abort**`.
+Разрешить конфликт в файлах, `git add`, затем `git rebase --continue`. Если нужно пропустить коммит — `git rebase --skip`. Отменить весь **rebase** — `git rebase --abort`.
 
 **Конфликт при `cherry-pick`:**
-Разрешить конфликт, `git add`, затем `**git cherry-pick** --**continue`. Отменить — `git cherry-pick** --**abort**`.
+Разрешить конфликт, `git add`, затем `git cherry-pick --continue`. Отменить — `git cherry-pick --abort`.
 
 
 ## Дополнительные сценарии: восстановление
 
-**Восстановить удалённую ветку (**если знаете хеш или видите в **reflog**):**
-`**git checkout** -b **restored-branch** <**commit-hash**>`.
+**Восстановить удалённую ветку (если знаете хеш или видите в reflog):**
+`git checkout -b restored-branch <commit-hash>`.
 
 **Восстановить файл из другого коммита:**
 `git checkout <commit-hash> -- <file>` или `git restore --source=<commit-hash> <file>`.
 
 **Отменить последний коммит, оставив изменения в рабочей директории:**
-`**git reset HEAD**~1` (mixed по умолчанию).
+`git reset HEAD~1` (mixed по умолчанию).
 
 ## Дополнительные команды (краткий список)
 
-- `**git status** -s` — краткий статус (одна строка на файл).
-- `**git diff** --**cached` — то же, что `git diff** --**staged**`.
-- `**git log** -1` — показать только последний коммит.
-- `**git branch** -a` — все ветки (локальные и удалённые).
+- `git status -s` — краткий статус (одна строка на файл).
+- `git diff --cached` — то же, что `git diff --staged`.
+- `git log -1` — показать только последний коммит.
+- `git branch -a` — все ветки (локальные и удалённые).
 - `git remote show origin` — подробная информация об **origin** и ветках.
-- `**git tag** -d **v1.0**` — удалить локальный тег.
-- `**git push origin** --**delete v1.0**` — удалить тег на **remote**.
+- `git tag -d v1.0` — удалить локальный тег.
+- `git push origin --delete v1.0` — удалить тег на **remote**.
 - `git stash drop` — удалить последний **stash**.
 - `git stash list` — список **stash**.
-- `**git reflog expire** --**expire**=**now** --**all**` — очистить **reflog** (осторожно).
+- `git reflog expire --expire=now --all` — очистить **reflog** (осторожно).
 
 ## Резюме по разделам
 

@@ -73,7 +73,7 @@ updated: "2026-02-11"
 
 ## Terraform — Infrastructure as Code
 
-**Terraform** описывает инфраструктуру в **HCL**-файлах (.tf). Провайдеры (**AWS**, **Azure**, **GCP**, **Kubernetes** и др.) создают и обновляют ресурсы. Состояние хранится в **state**-файле (локально или в удалённом backend — S3, Terraform Cloud).
+**Terraform** описывает инфраструктуру в **HCL**-файлах (.tf). Провайдеры (AWS, Azure, GCP, Kubernetes и др.) создают и обновляют ресурсы. Состояние хранится в **state**-файле (локально или в удалённом backend — S3, Terraform Cloud).
 
 ### Основные концепции
 
@@ -140,7 +140,7 @@ resource "aws_instance" "app" {
 }
 ```
 
-Команды: `terraform init`, `terraform plan`, `terraform apply`, `terraform destroy`. **State** в **production** хранить в удалённом **backend** с блокировкой (**S3 + DynamoDB**, **Terraform Cloud**).
+Команды: `terraform init`, `terraform plan`, `terraform apply`, `terraform destroy`. **State** в **production** хранить в удалённом **backend** с блокировкой (S3 + DynamoDB, Terraform Cloud).
 
 ### Best Practices для Terraform
 
@@ -213,7 +213,7 @@ resource "aws_instance" "app" {
         state: restarted
 ```
 
-Запуск: `**ansible-playbook** -i **inventory playbook.yml**`. Для секретов использовать **Ansible Vault** или внешний **vault**.
+Запуск: `ansible-playbook -i inventory playbook.yml`. Для секретов использовать **Ansible Vault** или внешний **vault**.
 
 ### Best Practices для Ansible
 
@@ -227,7 +227,7 @@ resource "aws_instance" "app" {
 
 ## Packer — создание образов
 
-**Packer** создаёт образы ВМ (**AMI**, **Azure Image**, **GCP image**, **Vagrant box**, **Docker image**) из одного описания. **Builder** определяет тип образа; **provisioners** (**shell**, **Ansible** и др.) настраивают ОС внутри образа.
+**Packer** создаёт образы ВМ (AMI, Azure Image, GCP image, Vagrant box, Docker image) из одного описания. **Builder** определяет тип образа; **provisioners** (shell, Ansible и др.) настраивают ОС внутри образа.
 
 ### Пример: AMI с Java и приложением
 
@@ -273,7 +273,7 @@ build {
 }
 ```
 
-Команды: `**packer init** .`, `**packer build** .`. Образы можно тегировать и распространять по окружениям.
+Команды: `packer init .`, `packer build .`. Образы можно тегировать и распространять по окружениям.
 
 ### Best Practices для Packer
 
@@ -305,14 +305,14 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-Команды: `**vagrant** up`, `vagrant ssh`, `vagrant halt`, `vagrant destroy`. **Box** можно собрать через **Packer**.
+Команды: `vagrant up`, `vagrant ssh`, `vagrant halt`, `vagrant destroy`. **Box** можно собрать через **Packer**.
 
 Подробнее: [[vagrant]].
 
 
 ## Consul — Service Discovery и конфигурация
 
-**Consul** (HashiCorp) даёт: **service discovery** (регистрация сервисов и **DNS** / **HTTP** lookup), **health checks**, `KV` **store** для конфигурации. Режимы: **server** и **client**; клиенты приложений обращаются к локальному **agent**.
+**Consul** (HashiCorp) даёт: **service discovery** (регистрация сервисов и DNS / HTTP lookup), **health checks**, `KV` **store** для конфигурации. Режимы: **server** и **client**; клиенты приложений обращаются к локальному **agent**.
 
 ### Основные возможности
 

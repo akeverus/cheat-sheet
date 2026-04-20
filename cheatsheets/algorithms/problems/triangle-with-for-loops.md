@@ -17,8 +17,8 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Java `Control Flow` Statements`](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/flow.html)
-- [`Apache `Commons Lang` StringUtils`](https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/StringUtils.html)
+- [Java Control Flow Statements](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/flow.html)
+- [Apache Commons Lang StringUtils](https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/StringUtils.html)
 
 ### См. также
 - [[README|Задачи и алгоритмы]]
@@ -129,7 +129,7 @@ return result.toString();
 
 **Actually**, we **have another way**, **consisting** of **only one for loop** — it **uses the Apache Commons Lang** 3 **library**.
 
-**We're **going** to **use** a **for loop** to **iterate through the rows** of **the triangle**, as we **did** in **the previous examples**. **Then** we'll **use the** `**StringUtils.repeat**()` **method** to **generate the necessary characters for each row**:**
+**We're **going** to **use** a **for loop** to **iterate through the rows** of **the triangle**, as we **did** in **the previous examples**. **Then** we'll **use the** `StringUtils.repeat()` **method** to **generate the necessary characters for each row**:**
 
 ```java
 import org.apache.commons.lang3.StringUtils;
@@ -149,9 +149,9 @@ return result.toString();
 
 ### Using Substring Method (Java)
 
-`Or we` **can** do a **clever trick with the** `**substring**()` **method**.
+`Or we` **can** do a **clever trick with the** `substring()` **method**.
 
-We **can extract the described** `**StringUtils.repeat**()` **methods** to **create** a **helper string**, **and then apply the** `**String.substring**()` **method** to it. **The helper string** is a **concatenation** of **the maximum number** of **spaces and the maximum number** of **stars** we **need** to **print the rows** of **the triangle**.
+We **can extract the described** `StringUtils.repeat()` **methods** to **create** a **helper string**, **and then apply the** `String.substring()` **method** to it. **The helper string** is a **concatenation** of **the maximum number** of **spaces and the maximum number** of **stars** we **need** to **print the rows** of **the triangle**.
 
 **Looking** at **the previous examples**, we **notice that** we **need** a **maximum** of N — 1 **spaces for the first row and** a **maximum** of N × 2 — 1 **stars for the last row**:**
 
@@ -160,7 +160,7 @@ String helperString = StringUtils.repeat(' ', N - 1) + StringUtils.repeat('*', N
 // For N = 5, helperString = "    *"
 ```
 
-**For example**, **when** N = 5 **and** r = 3, we **need** to **print** "**", **which** is **included** in **the helperString variable**. **All** we **need** to do is **find the right formula for the** `**substring**()` **method**.
+**For example**, **when** N = 5 **and** r = 3, we **need** to **print** "**", **which** is **included** in **the helperString variable**. **All** we **need** to do is **find the right formula for the** `substring()` **method**.
 
 **Now let**'s **look** at **the complete example**:**
 
@@ -187,7 +187,7 @@ return result.toString();
 
 **The second example** is **similar** — **with the only difference that** we **have two inner loops**, **which are sequential and don**'t **increase the time complexity**.
 
-**However**, in **the third example**, we **use only** a **for loop with** N **steps**. **But** at **each step**, we **call either the** `**StringUtils.repeat**()` **method** or **the** `**substring**()` **method** of **the helper string**, **each** of **which has** `O(N)` **complexity**. **Thus**, **the overall time complexity remains the same**.
+**However**, in **the third example**, we **use only** a **for loop with** N **steps**. **But** at **each step**, we **call either the** `StringUtils.repeat()` **method** or **the** `substring()` **method** of **the helper string**, **each** of **which has** `O(N)` **complexity**. **Thus**, **the overall time complexity remains the same**.
 
 **Finally**, if we **talk about auxiliary space**, we **can quickly understand that for all examples**, **the complexity remains** in **the StringBuilder variable**. By **adding the entire triangle** to **the result variable**, we **can**'t **have complexity less than** `O(N²)`.
 

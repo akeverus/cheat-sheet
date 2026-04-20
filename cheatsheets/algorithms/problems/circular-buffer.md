@@ -17,7 +17,7 @@ A **guide** to **implementing** a **circular buffer** (ring buffer) in **Java fo
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Java `Concurrency` Utilities`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html)
+- [Java Concurrency Utilities](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html)
 - [Disruptor Pattern](https://lmax-exchange.github.io/disruptor/)
 
 ### См. также

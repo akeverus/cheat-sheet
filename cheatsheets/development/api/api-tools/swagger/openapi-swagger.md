@@ -1853,7 +1853,7 @@ components:
 
 **Причины:** Устаревшая версия **OpenAPI Generator**; generator переименован (например, `java` → `java-client`); не установлен отдельный генератор для конкретного стека.
 
-**Решение:** Обновить до актуальной версии (`openapi-generator-cli` или **Maven** plugin); проверить список: `openapi-generator list`; использовать корректный идентификатор из [списка генераторов](https://openapi-generator.tech/docs/generators/); для **Java** с **Retrofit** — `java-retrofit2`, для **Spring** — `spring`.
+**Решение:** Обновить до актуальной версии (`openapi-generator-cli` или Maven plugin); проверить список: `openapi-generator list`; использовать корректный идентификатор из [списка генераторов](https://openapi-generator.tech/docs/generators/); для **Java** с **Retrofit** — `java-retrofit2`, для **Spring** — `spring`.
 
 ### Спецификация не валидируется Spectral
 
@@ -1869,7 +1869,7 @@ components:
 
 **Причины:** Спецификация устарела; сервер возвращает дополнительные поля; используется `oneOf`/`anyOf` без явного `discriminator`; разные схемы для одного endpoint в разных версиях.
 
-**Решение:** Синхронизировать **OpenAPI** с кодом через аннотации (**Spring** `@Operation`, **FastAPI** и т.д.) или генерировать спецификацию из реализации; добавить тесты контракта (**Pact**, **Schemathesis**); документировать `additionalProperties` если сервер отдаёт лишние поля.
+**Решение:** Синхронизировать **OpenAPI** с кодом через аннотации (Spring `@Operation`, FastAPI и т.д.) или генерировать спецификацию из реализации; добавить тесты контракта (Pact, Schemathesis); документировать `additionalProperties` если сервер отдаёт лишние поля.
 
 ### Swagger UI не отображает схемы
 

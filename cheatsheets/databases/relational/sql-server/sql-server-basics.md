@@ -466,3 +466,11 @@ ALTER DATABASE shop SET ENCRYPTION ON;
 | Статистики | `UPDATE STATISTICS tbl WITH FULLSCAN` |
 | Текущая версия | `SELECT @@VERSION` |
 | Включить MVCC | `ALTER DATABASE shop SET READ_COMMITTED_SNAPSHOT ON` |
+
+## См. также
+
+- [[mysql-admin|MySQL: Администрирование и обслуживание — Полное руководство по управлению MySQL]]
+- [[mysql-basics|MySQL: Основы — Полное руководство по реляционной базе данных]]
+- [[mysql-design|MySQL: Проектирование баз данных — Полное руководство по проектированию схем]]
+- [[mysql-indexes|MySQL: Индексы и оптимизация производительности — Полное руководство по индексации]]
+- [[mysql-performance|MySQL: Производительность и тюнинг — Полное руководство по оптимизации]]

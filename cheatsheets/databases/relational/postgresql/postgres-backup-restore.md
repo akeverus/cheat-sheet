@@ -69,7 +69,7 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshootin
   - [Backup Status Monitoring](#backup-status-monitoring)
   - [Automated Backup Alerts](#automated-backup-alerts)
 - [Disaster Recovery Planning](#disaster-recovery-planning)
-  - [`DR` Plan Template](#dr-plan-template)
+  - [DR Plan Template](#dr-plan-template)
   - [Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO)](#recovery-time-objectives-rto-and-recovery-point-objectives-rpo)
 - [Backup Compression and Optimization](#backup-compression-and-optimization)
   - [Advanced Compression Strategies](#advanced-compression-strategies)

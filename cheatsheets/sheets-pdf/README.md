@@ -21,3 +21,11 @@
 - Запрещено добавлять PDF без индексации в `INDEX.yaml`.
 - Переименование файла требует обновления поля `file` в `INDEX.yaml`.
 - `related_cheatsheets` должен указывать на существующие разделы.
+
+## См. также
+
+- [[CHEATSHEETS_ARCHITECTURE_AND_RULES|Архитектура и правила cheatsheets]]
+- [[java-basics|Java Basics]]
+- [[postgres-basics|PostgreSQL Basics]]
+- [[spring-boot|Spring Boot]]
+- [[algorithms|Алгоритмы]]

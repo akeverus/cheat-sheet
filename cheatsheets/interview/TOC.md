@@ -11,7 +11,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **205**.
+Всего файлов: **206**.
 
 ## Быстрые маршруты подготовки
 
@@ -252,6 +252,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Java Generics`](programming-languages/java/java-generics-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Java Initialization`](programming-languages/java/java-initialization-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `Java IO / NIO`](programming-languages/java/java-io-nio-interview.md) — `40` вопросов
+- [Вопросы на собеседовании: `Jackson` (JSON)](programming-languages/java/java-jackson-interview.md) — `31` вопрос
 - [Вопросы на собеседовании: `Java Modules` (JPMS)](programming-languages/java/java-modules-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `OOP` & `Java`](programming-languages/java/java-oop-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Java Serialization`](programming-languages/java/java-serialization-interview.md) — `40` вопросов

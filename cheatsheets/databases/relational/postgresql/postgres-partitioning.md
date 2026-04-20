@@ -29,7 +29,7 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 ### Официальная документация PostgreSQL
 
 - [PostgreSQL Partitioning](https://www.postgresql.org/docs/)
-- [`PostgreSQL CREATE TABLE` - `Partitioning`](https://www.postgresql.org/docs/)
+- [PostgreSQL CREATE TABLE - Partitioning](https://www.postgresql.org/docs/)
 - [PostgreSQL Partitioning Best Practices](https://www.postgresql.org/docs/)
 - [Partitioning and Constraint Exclusion](https://www.postgresql.org/docs/)
 
@@ -158,7 +158,7 @@ CREATE TABLE events_2024_q2 PARTITION OF events
 ```sql
 CREATE INDEX ON events_2024_q1 (created_at);
 ```
-- Для одинаковых индексов на всех партициях используйте `**CREATE INDEX** `ON` **ONLY parent** ...` в новых версиях (PostgreSQL 11+ создаёт индексы на дочерних автоматически).
+- Для одинаковых индексов на всех партициях используйте `CREATE INDEX `ON` ONLY parent ...` в новых версиях (PostgreSQL 11+ создаёт индексы на дочерних автоматически).
 
 ## ATTACH/DETACH
 - **Добавить новую партицию:**
@@ -342,7 +342,7 @@ ORDER BY tablename;
 
 **Основные характеристики:**
 - Данные распределяются по диапазонам значений.
-- Каждая партиция имеет диапазон `**FROM** ... TO`.
+- Каждая партиция имеет диапазон `FROM ... TO`.
 - Диапазоны не должны пересекаться, но могут иметь дыры.
 - Рекомендуется для временных данных (даты, временные метки).
 

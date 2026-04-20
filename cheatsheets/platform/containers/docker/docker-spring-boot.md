@@ -400,7 +400,7 @@ docker run --name=demo-container docker.io/library/spring-boot-docker:0.0.1-SNAP
 logging.file.path=logs
 ```
 
-**Чтение логов через `**tail** -f` внутри контейнера:**
+**Чтение логов через `tail -f` внутри контейнера:**
 
 ```bash
 docker exec -it demo-container tail -f /workspace/logs/spring.log > $HOME/spring.log
@@ -435,7 +435,7 @@ docker ps
 docker logs -f 877bb028a143
 ```
 
-В **Swarm** использовать `**docker service** ps` и `docker service logs`.
+В **Swarm** использовать `docker service ps` и `docker service logs`.
 
 **Настройка лог-драйвера **GELF** (Graylog) глобально `daemon.json`:**
 
@@ -477,7 +477,7 @@ Failed to determine a suitable driver class
 ./mvnw clean package -DskipTests
 ```
 
-**JAR** в `target` с именем `**docker-`spring-`boot-postgres`-0`.0.1-`SNAPSHOT`.jar**`. Копируем в образ:**
+**JAR** в `target` с именем `docker-`spring-`boot-postgres`-0`.0.1-`SNAPSHOT`.jar`. Копируем в образ:**
 
 ```bash
 cp target/docker-spring-boot-postgres-0.0.1-SNAPSHOT.jar src/main/docker
@@ -518,9 +518,9 @@ services:
 ```
 
 **Разбор:**
-- Образ приложения `**docker-`spring-boot`-postgres**:**latest**`, собирается из **Dockerfile**.
-- `**container_name**: **app**`, зависит от `db`.
-- Подключение к PostgreSQL (контейнер **compose-postgres**), креды, **Hibernate ddl-auto**=**update**.
+- Образ приложения `docker-`spring-boot`-postgres:latest`, собирается из **Dockerfile**.
+- `container_name: app`, зависит от `db`.
+- Подключение к PostgreSQL (контейнер compose-postgres), креды, **Hibernate ddl-auto**=**update**.
 - Сервис db: образ **postgres**:13.1-**alpine**, имя контейнера db, креды **compose-postgres**.
 
 **Запуск:**

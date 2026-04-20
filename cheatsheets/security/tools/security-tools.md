@@ -23,7 +23,7 @@ updated: "2026-02-11"
 - [SonarQube](https://www.sonarqube.org/) — платформа статического анализа
 
 ### Ресурсы
-- [`OWASP` Source Code Analysis Tools](https://owasp.org/www-community/Source_Code_Analysis_Tools) — сравнение `SAST`-инструментов
+- [OWASP Source Code Analysis Tools](https://owasp.org/www-community/Source_Code_Analysis_Tools) — сравнение `SAST`-инструментов
 - [Vulnerability Scanning Tools](https://owasp.org/www-community/Vulnerability_Scanning_Tools) — сравнение сканеров уязвимостей
 
 ### См. также

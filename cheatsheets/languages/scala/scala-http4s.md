@@ -136,7 +136,7 @@ related: ["scala/scala-fp-advanced.md", "scala/scala-cats.md", "scala/scala-play
 
 ### Request и Response
 
-В **http4s HTTP** запросы и ответы представлены как неизменяемые типы `**Request**[F]` и `**Response**[F]`, где `F` - это тип эффекта (обычно `IO` из `Cats` Effect).
+В **http4s HTTP** запросы и ответы представлены как неизменяемые типы `Request[F]` и `Response[F]`, где `F` - это тип эффекта (обычно `IO` из `Cats` Effect).
 
 ```scala
 import org.http4s._
@@ -158,7 +158,7 @@ val response = Response[IO](
 
 ### HttpRoutes
 
-`**HttpRoutes**[F]` представляет функцию, которая принимает `**Request**[F]` и возвращает `**OptionT**[F, **Response**[F]]`. `OptionT` используется для представления опционального результата, что позволяет комбинировать несколько маршрутов.
+`HttpRoutes[F]` представляет функцию, которая принимает `Request[F]` и возвращает `OptionT[F, Response[F]]`. `OptionT` используется для представления опционального результата, что позволяет комбинировать несколько маршрутов.
 
 ```scala
 import org.http4s._
@@ -179,7 +179,7 @@ val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
 
 ### HttpApp
 
-`**HttpApp**[F]` представляет полное **HTTP** приложение, которое всегда возвращает `**Response**[F]` (в отличие от `HttpRoutes`, который возвращает `OptionT`).
+`HttpApp[F]` представляет полное **HTTP** приложение, которое всегда возвращает `Response[F]` (в отличие от `HttpRoutes`, который возвращает `OptionT`).
 
 ```scala
 import org.http4s._

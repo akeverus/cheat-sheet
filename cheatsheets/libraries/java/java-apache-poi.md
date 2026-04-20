@@ -1343,7 +1343,7 @@ public class PoiDebugger {
 
 
 ## Полезные ссылки
-- [Официальная документация `Apache POI`](https://poi.apache.org/)
+- [Официальная документация Apache POI](https://poi.apache.org/)
 - [POI Quick Guide](https://poi.apache.org/components/spreadsheet/quick-guide.html)
 - [GitHub репозиторий](https://github.com/apache/poi)
 - [POI Examples](https://poi.apache.org/components/spreadsheet/examples.html)

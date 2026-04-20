@@ -36,7 +36,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Аутентификация](#аутентификация)
   - [Простая аутентификация (Password)](#простая-аутентификация-password)
   - [Генерация безопасных паролей](#генерация-безопасных-паролей)
-- [ACL (Access `Control` List)](#acl-access-control-list)
+- [ACL (Access Control List)](#acl-access-control-list)
   - [Создание пользователей](#создание-пользователей)
   - [Категории команд](#категории-команд)
   - [Управление пользователями](#управление-пользователями)

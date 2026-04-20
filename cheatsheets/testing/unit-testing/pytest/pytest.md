@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # pytest
 
-Кратко: **pytest** — фреймворк для тестирования приложений на **Python**. Минимальный синтаксис (`assert` без обёрток), фикстуры (`@pytest.fixture`), параметризация (`@pytest.mark.parametrize`), маркеры, богатая экосистема плагинов (**pytest-cov**, **pytest-mock**, **pytest-asyncio**, **pytest-django**). Поддерживает **unittest**-совместимость и **doctest**.
+Кратко: **pytest** — фреймворк для тестирования приложений на **Python**. Минимальный синтаксис (`assert` без обёрток), фикстуры (`@pytest.fixture`), параметризация (`@pytest.mark.parametrize`), маркеры, богатая экосистема плагинов (pytest-cov, pytest-mock, pytest-asyncio, pytest-django). Поддерживает **unittest**-совместимость и **doctest**.
 
 ## Полезные ссылки
 
@@ -54,7 +54,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**pytest** — основной фреймворк для тестирования приложений на **Python**. Минимальный синтаксис (обычный `assert` без обёрток), мощные фикстуры (`@pytest.fixture`), параметризация (`@pytest.mark.parametrize`), маркеры, богатая экосистема плагинов (**pytest-cov**, **pytest-mock**, **pytest-asyncio**, **pytest-django**, **pytest-html** и др.). Поддерживает **unittest**-совместимость и **doctest**.
+**pytest** — основной фреймворк для тестирования приложений на **Python**. Минимальный синтаксис (обычный `assert` без обёрток), мощные фикстуры (`@pytest.fixture`), параметризация (`@pytest.mark.parametrize`), маркеры, богатая экосистема плагинов (pytest-cov, pytest-mock, pytest-asyncio, pytest-django, pytest-html и др.). Поддерживает **unittest**-совместимость и **doctest**.
 
 ### Зачем pytest
 
@@ -382,7 +382,7 @@ async def test_async():
     assert result is not None
 ```
 
-В **pytest.ini**: `asyncio_mode = auto` (для **pytest-asyncio** 0.21+).
+В **pytest.ini**: `asyncio_mode = auto` (для pytest-asyncio 0.21+).
 
 
 ## Асинхронные тесты

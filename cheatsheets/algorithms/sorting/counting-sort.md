@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Counting Sort](https://www.geeksforgeeks.org/counting-sort/)
 
 ### Визуализация
-- [`Visualgo`: `Counting Sort`](https://visualgo.net/)
+- [Visualgo: Counting Sort](https://visualgo.net/)
 
 ### См. также
 - [[radix-sort|Сортировка поразрядная]] — **radix sort**

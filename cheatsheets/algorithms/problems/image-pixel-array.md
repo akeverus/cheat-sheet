@@ -17,11 +17,17 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`BufferedImage` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/awt/image/BufferedImage.html)
+- [BufferedImage (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/awt/image/BufferedImage.html)
 - [Raster (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/awt/image/Raster.html) — `Raster` и `DataBuffer`
 
 ### См. также
 - [Задачи и алгоритмы](./) — обзор разделов
+
+- [[a-star-pathfinding|Поиск пути A* (A* Pathfinding Algorithm)]]
+- [[algorithms|Хеширование и хеш-функции (Hashing and Hash Functions)]]
+- [[branch-prediction|Предсказание ветвления (Branch Prediction)]]
+- [[calculator-implementation|Calculator Implementation]]
+- [[circular-buffer|Circular Buffer]]
 
 ## Содержание
 

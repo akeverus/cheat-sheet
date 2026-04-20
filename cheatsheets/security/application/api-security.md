@@ -18,14 +18,14 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`OWASP` API Security Top 10](https://owasp.org/www-project-api-security/) — основные уязвимости `API`
-- [`OAuth 2.0` (`RFC 6749`)](https://datatracker.ietf.org/doc/html/rfc6749) — стандарт протокола делегированной авторизации
-- [`JWT` (`RFC 7519`)](https://datatracker.ietf.org/doc/html/rfc7519) — стандарт формата `JSON Web Token`
-- [`OpenAPI` Specification](https://swagger.io/specification/) — спецификация для описания `REST API`
+- [OWASP API Security Top 10](https://owasp.org/www-project-api-security/) — основные уязвимости `API`
+- [OAuth 2.0 (RFC 6749)](https://datatracker.ietf.org/doc/html/rfc6749) — стандарт протокола делегированной авторизации
+- [JWT (RFC 7519)](https://datatracker.ietf.org/doc/html/rfc7519) — стандарт формата `JSON Web Token`
+- [OpenAPI Specification](https://swagger.io/specification/) — спецификация для описания `REST API`
 
 ### Ресурсы
-- [`OWASP` API Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html) — краткие рекомендации по безопасности `REST API`
-- [`API` Security Best Practices](https://owasp.org/www-project-api-security/) — лучшие практики от `OWASP`
+- [OWASP API Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html) — краткие рекомендации по безопасности `REST API`
+- [API Security Best Practices](https://owasp.org/www-project-api-security/) — лучшие практики от `OWASP`
 
 ### См. также
 - [[application-security|Application Security]] — аутентификация, авторизация, токены

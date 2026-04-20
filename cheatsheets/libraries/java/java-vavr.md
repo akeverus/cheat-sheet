@@ -1109,7 +1109,7 @@ public class VavrDebugger {
 
 
 ## Полезные ссылки
-- [Официальная документация `Vavr`](https://www.vavr.io/)
+- [Официальная документация Vavr](https://www.vavr.io/)
 - [Vavr User Guide](https://www.vavr.io/vavr-docs/)
 - [GitHub репозиторий](https://github.com/vavr-io/vavr)
 - [Vavr Examples](https://github.com/vavr-io/vavr/tree/master/vavr-examples)

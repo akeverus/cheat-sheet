@@ -375,33 +375,33 @@ public class BatchConfiguration {
 
 **Разбор конфигурации:**
 
-**`@**EnableBatchProcessing**` — включает **Spring Batch** и создает необходимые бины:**
+**`@EnableBatchProcessing` — включает **Spring Batch** и создает необходимые бины:**
 - **JobBuilderFactory** для создания **job**'ов
 - **StepBuilderFactory** для создания **step**'ов
 - **JobRepository** для хранения метаданных
 - **JobLauncher** для запуска **job**'ов
 
-**`**jobBuilderFactory.get("`importUserJob`")` — создает **job** с именем "**importUserJob**":**
+**`jobBuilderFactory.get("`importUserJob`")` — создает **job** с именем "**importUserJob**":**
 - Имя используется для идентификации **job**'а
 - Должно быть уникальным в приложении
 
-**`.**incrementer(**new `RunIdIncrementer`(**))` — добавляет **incrementer** параметров:**
+**`.incrementer(new `RunIdIncrementer`())` — добавляет **incrementer** параметров:**
 - Каждый запуск получает новый `ID`
 - Позволяет запускать один **job** многократно
 - Параметры хранятся в **BATCH_JOB_EXECUTION_PARAMS**
 
-**`.**listener(listener)` — добавляет слушатель событий **job**'а:**
+**`.listener(listener)` — добавляет слушатель событий **job**'а:**
 - **JobCompletionNotificationListener** получает уведомления о завершении
 - Может логировать, отправлять **email**, вызывать другие системы
 
-**`.**flow(step1)` — определяет последовательность выполнения:**
+**`.flow(step1)` — определяет последовательность выполнения:**
 - **step1** будет выполнен первым
-- Можно добавить условия и ветвления (**.on(**).to().**from**())
+- Можно добавить условия и ветвления (**.on().to().**from**())
 
-**`.**end**()` — завершает определение **job**'а:**
+**`.end()` — завершает определение **job**'а:**
 - Возвращает **JobBuilder** для финального **build**()
 
-**`.**build**()` — создает экземпляр **Job**:**
+**`.build()` — создает экземпляр **Job**:**
 - Валидирует конфигурацию
 - Регистрирует **job** в **JobRegistry**
 
@@ -446,7 +446,7 @@ public Job job(JobBuilderFactory jobBuilderFactory, Step step) {
 - **String** — текстовые значения ("`inputFile`", "`outputPath`")
 - **Long** — числовые значения (100L, 1000L)
 - **Double** — дробные числа (`1.5`, `99.99`)
-- **Date** — даты и время (**new `Date`(**), **run date**)
+- **Date** — даты и время (**new `Date`(), **run date**)
 
 **Идентифицирующие vs Неидентифицирующие:**
 ```java
@@ -554,24 +554,24 @@ public FlatFileItemReader<Person> personCsvReader(
 
 **Конфигурация параметров:**
 
-**`.**name("`personCsvReader`")` — уникальное имя **reader**'а:**
+**`.name("`personCsvReader`")` — уникальное имя **reader**'а:**
 - Используется для логирования и мониторинга
 - Должно быть уникальным в **job**'е
 
-**`.**resource(**new `FileSystemResource`(inputFile**))` — источник файла:**
+**`.resource(new `FileSystemResource`(inputFile))` — источник файла:**
 - **FileSystemResource** для локальных файлов
 - **ClassPathResource** для файлов в **classpath**
 - **UrlResource** для удаленных файлов
 
-**`.**delimited**()` — указывает на разделители:**
+**`.delimited()` — указывает на разделители:**
 - По умолчанию запятая
 - Можно указать **custom delimiter**: .**delimiter("|")
 
-**`.**names(new `String`[]{"`firstName`", "`lastName`", "email", "age"})` — имена полей:**
+**`.names(new `String`[]{"`firstName`", "`lastName`", "email", "age"})` — имена полей:**
 - Должны соответствовать заголовкам **CSV**
 - Используются для **mapping** в объект
 
-**`.**fieldSetMapper**(...)` — преобразование полей в объект:**
+**`.fieldSetMapper(...)` — преобразование полей в объект:**
 - **BeanWrapperFieldSetMapper** использует **setters**
 - Можно реализовать **custom FieldSetMapper**
 
@@ -595,10 +595,10 @@ public FlatFileItemReader<Person> personFixedWidthReader() {
 
 **Fixed `Width` параметры:**
 
-**`.**fixedLength**()` — указывает на фиксированную ширину полей:**
+**`.fixedLength()` — указывает на фиксированную ширину полей:**
 - Каждое поле имеет фиксированную позицию и длину
 
-**`.**columns(**new `Range`[]{new `Range`(1, 20**), **new Range**(21, 40), **new Range**(41, 60)})` — диапазоны колонок:**
+**`.columns(new `Range`[]{new `Range`(1, 20), new Range(21, 40), new Range(41, 60)})` — диапазоны колонок:**
 - **Range**(1, 20) — символы с 1 по 20
 - **Range**(21, 40) — символы с 21 по 40
 - **Range**(41, 60) — символы с 41 по 60
@@ -624,19 +624,19 @@ public JdbcCursorItemReader<Person> personJdbcReader(
 
 **JDBC `Reader` параметры:**
 
-**`.**dataSource(dataSource)` — источник данных:**
+**`.dataSource(dataSource)` — источник данных:**
 - **DataSource** для подключения к базе данных
 - Поддерживает **connection pooling**
 
-**`.**sql("`SELECT` ...")` — **SQL** запрос:**
+**`.sql("`SELECT` ...")` — **SQL** запрос:**
 - Может содержать параметры (?)
 - Должен возвращать **ResultSet** подходящий для **mapping**
 
-**`.**parameters(new `Object`[]{`lastUpdate`})` — параметры запроса:**
+**`.parameters(new `Object`[]{`lastUpdate`})` — параметры запроса:**
 - Передаются в **prepared statement**
 - Могут быть получены из **job parameters**
 
-**`.**rowMapper**(...)` — **mapping** строк в объекты:**
+**`.rowMapper(...)` — **mapping** строк в объекты:**
 - **BeanPropertyRowMapper** использует **column names**
 - Можно реализовать **custom RowMapper**
 
@@ -656,15 +656,15 @@ public JpaCursorItemReader<Person> personJpaReader() {
 
 **JPA `Reader` особенности:**
 
-**`.**entityManagerFactory(entityManagerFactory)` — **JPA EntityManagerFactory**:**
+**`.entityManagerFactory(entityManagerFactory)` — **JPA EntityManagerFactory**:**
 - Использует **JPA** для чтения данных
 - Поддерживает **lazy loading**
 
-**`.**queryString("`SELECT` p `FROM Person p`...")` — **JPQL** запрос:**
+**`.queryString("`SELECT` p `FROM Person p`...")` — **JPQL** запрос:**
 - Использует **JPA entity names**
 - Поддерживает **joins** и **complex queries**
 
-**`.**parameterValues**(...)` — параметры запроса:**
+**`.parameterValues(...)` — параметры запроса:**
 - **Map** с именами параметров
 - Поддерживает все **JPA** типы параметров
 
@@ -737,14 +737,14 @@ public JdbcBatchItemWriter<Person> personJdbcWriter() {
 
 **JDBC `Writer` параметры:**
 
-**`.**dataSource(dataSource)` — **DataSource** для подключения:**
+**`.dataSource(dataSource)` — **DataSource** для подключения:**
 - Использует **JDBC batch updates** для производительности
 
-**`.**sql("`INSERT INTO`...")` — **SQL** для вставки:**
+**`.sql("`INSERT INTO`...")` — **SQL** для вставки:**
 - **Prepared statement** с параметрами
 - Поддерживает **INSERT**, **UPDATE**, **DELETE**
 
-**`.**itemPreparedStatementSetter**(...)` — настройка параметров:**
+**`.itemPreparedStatementSetter(...)` — настройка параметров:**
 - Вызывается для каждого **item**'а
 - Устанавливает значения в **prepared statement**
 
@@ -786,18 +786,18 @@ public FlatFileItemWriter<Person> personCsvWriter(
 
 **CSV `Writer` параметры:**
 
-**`.**delimited**()` — разделитель полей:**
+**`.delimited()` — разделитель полей:**
 - По умолчанию запятая
 - Можно указать **custom delimiter**
 
-**`.**names**(...)` — имена полей для записи:**
+**`.names(...)` — имена полей для записи:**
 - Должны соответствовать **getter**'ам объекта
 
-**`.**headerCallback**(...)` — заголовок файла:**
+**`.headerCallback(...)` — заголовок файла:**
 - Записывается в начало файла
 - Полезно для **CSV** с заголовками
 
-**`.**footerCallback**(...)` — **footer** файла:**
+**`.footerCallback(...)` — **footer** файла:**
 - Записывается в конец файла
 - Можно использовать для статистики
 
@@ -1033,16 +1033,16 @@ public Step faultTolerantStep(StepBuilderFactory stepBuilderFactory) {
 
 **Skip `Logic` параметры:**
 
-**`.**skipLimit**(5)` — максимальное количество пропусков:**
+**`.skipLimit(5)` — максимальное количество пропусков:**
 - После превышения лимита **step fails**
 - Можно использовать **percentage**: **skipLimit(10%)
 
-**`.**skip(Exception.class)` — какие исключения пропускать:**
+**`.skip(Exception.class)` — какие исключения пропускать:**
 - **ValidationException** — бизнес-логика ошибки
 - **DataIntegrityViolationException** — `DB` **constraint violations**
 - **Custom exceptions**
 
-**`.**skipPolicy**(...)` — **custom** политика пропусков:**
+**`.skipPolicy(...)` — **custom** политика пропусков:**
 - Реализует **SkipPolicy interface**
 - Позволяет **complex** логику принятия решения
 
@@ -1088,20 +1088,20 @@ public Step retryStep(StepBuilderFactory stepBuilderFactory) {
 
 **Retry `Logic` параметры:**
 
-**`.**retryLimit**(3)` — максимальное количество попыток:**
+**`.retryLimit(3)` — максимальное количество попыток:**
 - 1 **initial** + 3 **retries** = 4 **total attempts**
 - После исчерпания **retry step fails**
 
-**`.**retry(Exception.class)` — какие исключения повторять:**
+**`.retry(Exception.class)` — какие исключения повторять:**
 - **IOException** — **network** проблемы
 - **HttpServerErrorException** — временные **server** ошибки
 - **TimeoutException** — **timeout**'ы
 
-**`.**retryPolicy**(...)` — **custom** политика повторений:**
+**`.retryPolicy(...)` — **custom** политика повторений:**
 - **Complex** логика принятия решения
 - **State-based retry logic**
 
-**`.**backOffPolicy**(...)` — стратегия задержки:**
+**`.backOffPolicy(...)` — стратегия задержки:**
 - **Fixed backoff** — фиксированная задержка
 - **Exponential backoff** — экспоненциальная задержка
 - **Random backoff** — случайная задержка
@@ -1410,11 +1410,11 @@ public TaskExecutor taskExecutor() {
 
 **Multi-threading параметры:**
 
-**`.**taskExecutor(**taskExecutor(**))` — **thread pool** для выполнения:**
+**`.taskExecutor(taskExecutor())` — **thread pool** для выполнения:**
 - **ThreadPoolTaskExecutor** для управления потоками
 - **SimpleAsyncTaskExecutor** для **unlimited threads** (не рекомендуется)
 
-**`.**throttleLimit**(4)` — максимум одновременных **chunk**'ов:**
+**`.throttleLimit(4)` — максимум одновременных **chunk**'ов:**
 - Ограничивает **parallelism** для контроля ресурсов
 - Предотвращает перегрузку системы
 

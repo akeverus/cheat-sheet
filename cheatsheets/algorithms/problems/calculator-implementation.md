@@ -17,7 +17,7 @@ A **guide** to **implementing** a **basic calculator** in **Java that supports a
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Scanner` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/Scanner.html)
+- [Scanner (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/Scanner.html)
 - [Switch Statement (Java Tutorial)](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/switch.html)
 
 ### См. также

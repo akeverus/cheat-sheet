@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Baeldung`: `Combinatorial Problems`](https://www.baeldung.com/)
+- [Baeldung: Combinatorial Problems](https://www.baeldung.com/)
 
 ### См. также
 - [[README|Перестановки строк]] — алгоритмы со строками

@@ -21,7 +21,7 @@ updated: "2026-02-06"
 
 ### Спецификации
 - [RFC 7231 — Semantics](https://tools.ietf.org/html/rfc7231)
-- [`RFC 3986` - `URI Generic Syntax`](https://tools.ietf.org/html/rfc3986)
+- [RFC 3986 - URI Generic Syntax](https://tools.ietf.org/html/rfc3986)
 - [JSON:API Specification](https://jsonapi.org/)
 
 ### Обучающие материалы
@@ -167,7 +167,7 @@ DELETE /users/123   # Удалить пользователя
 - **GET**: Безопасен (не изменяет состояние)
 - **HEAD**: Безопасен
 - **OPTIONS**: Безопасен
-- **POST** / **PUT** / **PATCH** / **DELETE**: не идемпотентны (кроме **PUT** на один и тот же URI)
+- **POST** / **PUT** / **PATCH** / **DELETE**: не идемпотентны (кроме PUT на один и тот же URI)
 
 ## Статус коды
 
@@ -1072,7 +1072,7 @@ public class UserApiTest {
 
 **Причины:** Несогласованность trailing slash (`/users/123` vs `/users/123/`); неправильная настройка роутинга; конфликт с catch-all route.
 
-**Решение:** Выбрать единый стиль (без trailing slash — рекомендуется); настроить редирект `301` с другого варианта; проверять порядок объявления маршрутов; использовать `@GetMapping` с явным `path` вместо `/**`.
+**Решение:** Выбрать единый стиль (без trailing slash — рекомендуется); настроить редирект `301` с другого варианта; проверять порядок объявления маршрутов; использовать `@GetMapping` с явным `path` вместо `/`.
 
 ### Нестабильное кэширование ETag/Last-Modified
 
@@ -1088,7 +1088,7 @@ public class UserApiTest {
 
 **Причины:** Обработка `MethodArgumentNotValidException` без маппинга `FieldError`; централизованный handler возвращает обобщённый текст.
 
-**Решение:** Возвращать структурированные ошибки (**RFC 7807** или формат с `field`, `message`); использовать `@Valid` и `BindingResult`; в `@ControllerAdvice` собирать `fieldErrors` из `ex.getBindingResult().getFieldErrors()`.
+**Решение:** Возвращать структурированные ошибки (RFC 7807 или формат с `field`, `message`); использовать `@Valid` и `BindingResult`; в `@ControllerAdvice` собирать `fieldErrors` из `ex.getBindingResult().getFieldErrors()`.
 
 ### Просадки при offset-based пагинации
 

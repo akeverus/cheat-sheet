@@ -98,7 +98,7 @@ updated: "2026-02-11"
 
 ### Архитектура
 
-Схема взаимодействия клиента и сервера **gRPC** (**HTTP/2**, `Protocol Buffers`).
+Схема взаимодействия клиента и сервера **gRPC** (HTTP/2, `Protocol Buffers`).
 
 ```mermaid
 flowchart LR

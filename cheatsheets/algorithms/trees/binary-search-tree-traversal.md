@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Tree Traversals (Inorder, Preorder, Postorder)](https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/)
 
 ### Визуализация
-- [`Visualgo`: `Binary Tree Traversal`](https://visualgo.net/)
+- [Visualgo: Binary Tree Traversal](https://visualgo.net/)
 
 ### См. также
 - [[binary-tree|`binary-tree.md`]] — бинарное дерево (`binary tree`)

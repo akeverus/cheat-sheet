@@ -2128,7 +2128,7 @@ docker run -m 512m nginx
 docker run -m 512m --memory-reservation=256m nginx
 ```
 
-По умолчанию доступ к вычислительной мощности хост-машины неограничен. Мы можем установить лимит процессоров, используя параметр `--**cpus**`.
+По умолчанию доступ к вычислительной мощности хост-машины неограничен. Мы можем установить лимит процессоров, используя параметр `--cpus`.
 
 **Давайте ограничим наш контейнер, чтобы использовать не более двух процессоров:**
 
@@ -2430,7 +2430,7 @@ services:
     image: wurstmeister/zookeeper
 ```
 
-Переменные среды можно задавать статически и через `${...}`. Источники: `.**env**`, окружение ОС, **Dockerfile**.
+Переменные среды можно задавать статически и через `${...}`. Источники: `.env`, окружение ОС, **Dockerfile**.
 
 **Масштабирование и **Swarm**:**
 
@@ -2456,8 +2456,8 @@ services:
 **Команды **Compose**:**
 
 - `docker-compose up` / `start`
-- `**docker-compose** -f **custom.yml start**`
-- `**docker-compose** up -d`
+- `docker-compose -f custom.yml start`
+- `docker-compose up -d`
 - `docker-compose stop`
 - `docker-compose down`
 
@@ -2514,7 +2514,7 @@ docker run -v data-volume:/var/opt/project bash:latest \
 docker run -v data-volume:/var/opt/project bash -c "ls /var/opt/project"
 ```
 
-**Опция `--**mount**`:**
+**Опция `--mount`:**
 
 ```bash
 docker run --mount 'type=volume,src=data-volume,dst=/var/opt/project,volume-driver=local,readonly' \
@@ -2642,7 +2642,7 @@ docker start <container_id>
 docker container rm <container_id>
 ```
 
-Приостановленный контейнер показывает статус `(Paused)` в `**docker** ps`.
+Приостановленный контейнер показывает статус `(Paused)` в `docker ps`.
 
 ## Удаление образов
 
@@ -2702,7 +2702,7 @@ docker image rm postgres:13-beta2-alpine
 Error response from daemon: conflict: unable to remove repository reference "postgres:13-beta2-alpine" (must force) - container 527bfd4cfb89 is using its referenced image cac2ee40fa5a
 ```
 
-Останавливаем и удаляем контейнер, затем удаляем образ. Если нужно — `**docker image** rm -f`.
+Останавливаем и удаляем контейнер, затем удаляем образ. Если нужно — `docker image rm -f`.
 
 ## См. также
 

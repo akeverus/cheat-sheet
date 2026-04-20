@@ -120,7 +120,7 @@ related: ["databases/postgres-basics.md", "databases/postgres-joins.md", "databa
 ## Внешние ключи и связи
 - Внешний ключ (FK) указывает на ключ в родительской таблице (обычно PK).
 - Типы связей: `1:1`, `1:N`, `M:N` (через промежуточную таблицу с составным `PK` из двух FK).
-- Пример `M:N`: `articles` ↔ `tags` через `**article_tags(article_id, tag_id)`.
+- Пример `M:N`: `articles` ↔ `tags` через `article_tags(article_id, tag_id)`.
 
 ## Ссылочная целостность
 - **Аномалии:**
@@ -128,15 +128,15 @@ related: ["databases/postgres-basics.md", "databases/postgres-joins.md", "databa
   - Вставка: `FK` указывает в никуда.
   - Обновление: несогласованные дубли значений.
 - **Стратегии:**
-  - `ON **DELETE CASCADE**` — жёстко удалять дочерние строки.
-  - `ON **DELETE SET NULL**` — допускать отсутствие связи, если `FK` **nullable**.
+  - `ON DELETE CASCADE` — жёстко удалять дочерние строки.
+  - `ON DELETE SET NULL` — допускать отсутствие связи, если `FK` **nullable**.
   - Вставки в дочерние таблицы — либо с валидным `FK`, либо с `NULL` (если разрешено).
 
 ## Нормализация и функциональные зависимости
 - Функциональная зависимость: `A → B` если значение `A` однозначно задаёт `B`; детерминант — атрибут слева.
 - 1NF: нет повторяющихся групп, атрибуты атомарны, одна сущность на таблицу.
 - 2NF: таблица в 1NF, все неключевые атрибуты полностью зависят от полного составного `PK` (нет частичных зависимостей).
-- 3NF (BCNF): таблица в 2NF, нет транзитивных зависимостей неключевых атрибутов от `PK` (**A→B** и **B→C** ⇒ вынести **B** и **C** в отдельную таблицу).
+- 3NF (BCNF): таблица в 2NF, нет транзитивных зависимостей неключевых атрибутов от `PK` (A→B и B→C ⇒ вынести B и C в отдельную таблицу).
 - 4NF: убрать многозначные зависимости (скрытые M:N внутри одной таблицы).
 - 5NF: дальнейшее декомпозиция для устранения избыточности, когда таблицу можно собрать из более мелких без потерь.
 - Практика: при обнаружении частичных/транзитивных зависимостей вынести атрибуты в отдельные таблицы с `FK` на детерминант. Если данных много — добавьте индексы на `FK` и часто фильтруемые поля.
@@ -154,12 +154,12 @@ CREATE TABLE users (
   email email_addr NOT NULL UNIQUE
 );
 ```
-- **CHECK**‑ограничения полезны для бизнес-правил (**например, `amount > 0`, `status `IN` (...**)`).
+- **CHECK**‑ограничения полезны для бизнес-правил (**например, `amount > 0`, `status `IN` (...)`).
 
 ## Практические советы по моделированию
 - Минимизируйте широкие таблицы: группируйте редко используемые поля в отдельные сущности.
 - Не бойтесь **surrogate** ключей (`BIGSERIAL`, `UUID`) для стабильности связей; естественные ключи делайте **UNIQUE**.
-- Добавляйте `created_at`, `updated_at` на изменяемых сущностях; используйте `**DEFAULT now**()` где нужно.
+- Добавляйте `created_at`, `updated_at` на изменяемых сущностях; используйте `DEFAULT now()` где нужно.
 - Для связей M:N создавайте промежуточную таблицу с `PK` из двух `FK` и индексами на оба.
 - Храните истории/аудит отдельно (append-only), не смешивайте с актуальными данными.
 - Планируйте индексы под частые фильтры и **JOIN**; для статусов/дат — составные `(status, `created_at` DESC)`.
@@ -168,13 +168,13 @@ CREATE TABLE users (
 ## Пример разбиения сущностей
 - Сущности: `users`, `orders`, `order_items`, `products`.
 - **Ключи:**
-  - `**users(id bigserial pk, email unique)`.
-  - `**products(**id bigserial pk, sku unique, price numeric(12,2**))`.
-  - `**orders(id bigserial pk, `user_id` fk users, status, created_at)`.
-  - `**order_items(**order_id fk orders, `product_id` fk products, qty int, price numeric(12,2**), pk (order_id, product_id))`.
+  - `users(id bigserial pk, email unique)`.
+  - `products(id bigserial pk, sku unique, price numeric(12,2))`.
+  - `orders(id bigserial pk, `user_id` fk users, status, created_at)`.
+  - `order_items(order_id fk orders, `product_id` fk products, qty int, price numeric(12,2), pk (order_id, product_id))`.
 - **Интеграция:**
-  - Внешние ключи с `ON **DELETE CASCADE**` на `order_items`.
-  - Индексы: `**orders(user_id, created_at)`, `**order_items(product_id)`.
+  - Внешние ключи с `ON DELETE CASCADE` на `order_items`.
+  - Индексы: `orders(user_id, created_at)`, `order_items(product_id)`.
 
 ## Мультиарендность и RLS
 - **Подходы:**
@@ -190,13 +190,13 @@ USING (tenant_id = current_setting('app.tenant_id')::int);
 - Устанавливайте `app.tenant_id` при подключении через `SET LOCAL`.
 
 ## Софт-делит, аудит и версионирование
-- Софт-делит: колонка `deleted_at` + частичные индексы `**WHERE deleted_at** `IS` **NULL**`.
+- Софт-делит: колонка `deleted_at` + частичные индексы `WHERE deleted_at `IS` NULL`.
 - Аудит: отдельная таблица `*_audit` с `changed_by`, `changed_at`.
 - Версионирование записей: стратегия **SCD2** — таблица истории с `valid_from`, `valid_to`, `is_current`.
 
 ## Конвенции именования и ERD
-- Имена таблиц — множественное, **snake_case** (`order_items`), `PK` — `id`, `FK` — `<**table**>_id`.
-- Ограничения: `pk_<**table**>`, `fk_<**table**>__<**ref**>`, `chk_<**table**>__<**field**>`.
+- Имена таблиц — множественное, **snake_case** (`order_items`), `PK` — `id`, `FK` — `<table>_id`.
+- Ограничения: `pk_<table>`, `fk_<table>__<ref>`, `chk_<table>__<field>`.
 - Делайте **ERD** (dbdiagram.io, sqldbm) и держите в репо; обновляйте при изменениях схемы.
 
 ## Денормализация осознанно

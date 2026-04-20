@@ -2157,3 +2157,10 @@ public void testUserAPI() {
 6. **Logging**: Логируйте все важные события
 7. **Testing**: Пишите **unit** и **integration** тесты
 
+## См. также
+
+- [[dropwizard-basics|Dropwizard: Основы]]
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]

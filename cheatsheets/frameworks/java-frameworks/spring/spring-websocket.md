@@ -114,10 +114,10 @@ Destination prefixes:
 
 | Префикс | Что это |
 |---|---|
-| `/app/**` | входящее сообщение от клиента — попадает в `@MessageMapping` |
-| `/topic/**` | broadcast, подписчики получают всё |
-| `/queue/**` | point-to-point, обычно с user-destinations |
-| `/user/**` | персональное сообщение конкретному пользователю |
+| `/app/` | входящее сообщение от клиента — попадает в `@MessageMapping` |
+| `/topic/` | broadcast, подписчики получают всё |
+| `/queue/` | point-to-point, обычно с user-destinations |
+| `/user/` | персональное сообщение конкретному пользователю |
 
 Клиент на JavaScript (stomp.js over SockJS):
 
@@ -374,7 +374,7 @@ class WsIntegrationTest {
 | `403` при подключении | Origin не в `setAllowedOrigins` | явно перечислить домены |
 | SockJS падает при scaling | нет sticky sessions | настроить `ip_hash` / session affinity |
 | Сообщение не доходит до конкретного пользователя | нет `Principal` в сессии | пропустить Spring Security до WS-handshake |
-| `/user/**` подписки не работают | разные userId на разных вкладках (anonymous) | использовать стабильный login / JWT `sub` |
+| `/user/` подписки не работают | разные userId на разных вкладках (anonymous) | использовать стабильный login / JWT `sub` |
 | Broker relay отваливается | heartbeat не настроены | `setSystemHeartbeatSendInterval` |
 | «Sent bytes too high» | клиент шлёт большие payload | `setMessageSizeLimit` + валидация |
 

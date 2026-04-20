@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Prim's MST](https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/)
 
 ### Визуализация
-- [`Visualgo`: `Minimum Spanning Tree`](https://visualgo.net/)
+- [Visualgo: Minimum Spanning Tree](https://visualgo.net/)
 
 ### См. также
 - [[kruskal-algorithm|`kruskal-algorithm.md`]] — алгоритм Крускала (`Kruskal`)

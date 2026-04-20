@@ -144,7 +144,7 @@ interface Functor<out T> {
 
 // **Optional** — это **Functor**
 **sealed class Maybe**<**out** T> : **Functor**<T> {
-    **abstract override fun** <R> **map(**f: (T**) -> R): **Maybe**<R>
+    **abstract override fun** <R> **map(**f: (T) -> R): **Maybe**<R>
 }
 ```text
 

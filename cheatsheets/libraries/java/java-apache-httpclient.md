@@ -118,7 +118,7 @@ updated: "2026-02-11"
 
 ### Основные компоненты
 
-Пример: создание **HTTP**-клиента и выполнение **GET**-запроса (**Java 11+** или **Apache HttpComponents**).
+Пример: создание **HTTP**-клиента и выполнение **GET**-запроса (Java 11+ или Apache HttpComponents).
 
 ```java
 // Основные интерфейсы
@@ -847,7 +847,7 @@ CloseableHttpClient httpClient = HttpClients.custom()
 
 
 ## Полезные ссылки
-- [Официальная документация `Apache HttpClient`](https://hc.apache.org/httpcomponents-client-5.3.x/)
+- [Официальная документация Apache HttpClient](https://hc.apache.org/httpcomponents-client-5.3.x/)
 - [HttpClient 4.x документация](https://hc.apache.org/httpcomponents-client-4.5.x/)
 - [GitHub репозиторий](https://github.com/apache/httpcomponents-client)
 - [Migration Guide](https://hc.apache.org/httpcomponents-client-5.3.x/migration-guide/index.html)

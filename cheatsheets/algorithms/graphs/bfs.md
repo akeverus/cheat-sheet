@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Breadth First Search — GeeksforGeeks](https://www.geeksforgeeks.org/breadth-first-search-or-bfs-for-a-graph/)
 
 ### Визуализация
-- [`Visualgo`: `BFS`](https://visualgo.net/)
+- [Visualgo: BFS](https://visualgo.net/)
 
 ### См. также
 - [[dijkstra|dijkstra.md]] — алгоритм Дейкстры

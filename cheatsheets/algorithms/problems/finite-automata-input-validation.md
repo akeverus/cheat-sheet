@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Baeldung`: Finite State Machines](https://www.baeldung.com/cs-finite-state-machines)
+- [Baeldung: Finite State Machines](https://www.baeldung.com/cs-finite-state-machines)
 
 ### См. также
 - [[README|Регулярные выражения]] — алгоритмы со строками

@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Baeldung`: `Dining Philosophers`](https://www.baeldung.com/)
+- [Baeldung: Dining Philosophers](https://www.baeldung.com/)
 
 ### См. также
 - [[maze-solver|Решение лабиринтов]] — maze solver

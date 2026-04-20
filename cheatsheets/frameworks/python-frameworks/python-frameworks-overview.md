@@ -170,7 +170,7 @@ def get_item(id):
 
 **Django или FastAPI?** **Django** — полноценный веб-стек и админка. **FastAPI** — быстрый **API**, асинхронность, **OpenAPI**. Часто комбинируют: админка на **Django**, публичный **API** на **FastAPI**.
 
-**WSGI vs ASGI?** **WSGI** — синхронный стандарт (**Gunicorn**, **uWSGI**). **ASGI** — асинхронный (**Uvicorn**, **Daphne**). Новые проекты на **FastAPI** используют **ASGI**.
+**WSGI vs ASGI?** **WSGI** — синхронный стандарт (Gunicorn, uWSGI). **ASGI** — асинхронный (Uvicorn, Daphne). Новые проекты на **FastAPI** используют **ASGI**.
 
 
 ## Глоссарий

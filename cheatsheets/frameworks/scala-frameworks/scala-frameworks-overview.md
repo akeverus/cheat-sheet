@@ -161,7 +161,7 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 
 **Play или Akka HTTP?** **Play** — выше уровень, встроенная поддержка форм, шаблонов, **WS**. **Akka HTTP** — низкоуровневый, максимальный контроль, **Streams**.
 
-**ZIO или Cats Effect?** Оба — функциональные runtimes. **ZIO** — всё в одном (включая **ZIO HTTP**). **Cats Effect** + **http4s** — модульный стек. Выбор часто по предпочтениям команды.
+**ZIO или Cats Effect?** Оба — функциональные runtimes. **ZIO** — всё в одном (включая ZIO HTTP). **Cats Effect** + **http4s** — модульный стек. Выбор часто по предпочтениям команды.
 
 
 ## Глоссарий

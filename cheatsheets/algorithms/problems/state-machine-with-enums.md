@@ -111,7 +111,7 @@ public enum LeaveRequestState {
 
 **Note the use** of a **semicolon** at **the end** of **the last enumeration constant**. **The semicolon** is **required when** we **have one** or **more methods following the constants**.
 
-**In **this case**, we've **extended the first example with the** `**responsiblePerson**()` **method**. **This tells** us **the person responsible for performing each action**. `So if we` **try** to **check the person responsible for the Escalated state**, it **will give** us "**Team Leader**":**
+**In **this case**, we've **extended the first example with the** `responsiblePerson()` **method**. **This tells** us **the person responsible for performing each action**. `So if we` **try** to **check the person responsible for the Escalated state**, it **will give** us "**Team Leader**":**
 
 ```java
 LeaveRequestState state = LeaveRequestState.Escalated;
@@ -186,7 +186,7 @@ public enum LeaveRequestState {
 }
 ```
 
-In **this example**, **the finite state machine transitions are implemented using abstract enumeration methods**. **More precisely**, by **using** `**nextState**()` **for each enumeration constant**, we **specify the transition** to **the next state**. If **needed**, we **can also implement** a `**previousState**()` **method**.
+In **this example**, **the finite state machine transitions are implemented using abstract enumeration methods**. **More precisely**, by **using** `nextState()` **for each enumeration constant**, we **specify the transition** to **the next state**. If **needed**, we **can also implement** a `previousState()` **method**.
 
 ## Testing the State Machine
 
@@ -208,7 +208,7 @@ public void testStateTransitions() {
 }
 ```
 
-We **start the leave request** in **the initial state Submitted**. **Then** we **verify the transitions between states using the** `**nextState**()` **method** we **implemented above**.
+We **start the leave request** in **the initial state Submitted**. **Then** we **verify the transitions between states using the** `nextState()` **method** we **implemented above**.
 
 **Note that since Approved** is a **final state**, no **other transition can occur**.
 

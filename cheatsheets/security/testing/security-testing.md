@@ -18,14 +18,14 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`OWASP` Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — руководство по тестированию веб‑безопасности
+- [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — руководство по тестированию веб‑безопасности
 - [OWASP ZAP](https://www.zaproxy.org/) — инструмент для динамического тестирования безопасности
-- [`OWASP` Dependency-Check](https://owasp.org/www-project-dependency-check/) — инструмент для анализа зависимостей на уязвимости
-- [`NIST` Cybersecurity Framework](https://www.nist.gov/cyberframework) — фреймворк для управления кибербезопасностью
+- [OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/) — инструмент для анализа зависимостей на уязвимости
+- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework) — фреймворк для управления кибербезопасностью
 
 ### Ресурсы
-- [`OWASP` Testing Guide](https://owasp.org/www-project-web-security-testing-guide/latest/) — подробное руководство по тестированию безопасности
-- [`SAST` Tools Comparison](https://owasp.org/www-community/Source_Code_Analysis_Tools) — сравнение инструментов статического анализа
+- [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/latest/) — подробное руководство по тестированию безопасности
+- [SAST Tools Comparison](https://owasp.org/www-community/Source_Code_Analysis_Tools) — сравнение инструментов статического анализа
 
 ### См. также
 - [[security-practices|Security Practices]] — процессы и практики безопасности

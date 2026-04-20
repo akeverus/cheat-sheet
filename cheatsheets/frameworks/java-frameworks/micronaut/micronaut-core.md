@@ -203,7 +203,7 @@ public class UserService {
 
 ### Provider Injection
 
-Для получения зависимостей лениво или для работы с **generic types** используется `**Provider**<T>`.
+Для получения зависимостей лениво или для работы с **generic types** используется `Provider<T>`.
 
 ```java
 import jakarta.inject.Provider;
@@ -227,7 +227,7 @@ public class OrderService {
 
 ### Optional Dependencies
 
-Для опциональных зависимостей используется `@**Nullable` или `Optional**<T>`.
+Для опциональных зависимостей используется `@Nullable` или `Optional<T>`.
 
 ```java
 import jakarta.inject.Singleton;
@@ -561,7 +561,7 @@ public class ApplicationLifecycleListener
 
 ### @ConfigurationProperties
 
-Для типобезопасной конфигурации используется `@**ConfigurationProperties**`.
+Для типобезопасной конфигурации используется `@ConfigurationProperties`.
 
 ```java
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -652,7 +652,7 @@ app:
 
 ### @EachProperty для Collections
 
-Для конфигурации коллекций используется `@**EachProperty**`.
+Для конфигурации коллекций используется `@EachProperty`.
 
 ```java
 import io.micronaut.context.annotation.EachProperty;
@@ -734,7 +734,7 @@ public class Application {
 
 ### Environment Variables
 
-Переменные окружения автоматически доступны через `${**ENV_VAR**}` синтаксис.
+Переменные окружения автоматически доступны через `${ENV_VAR}` синтаксис.
 
 ```yaml
 database:
@@ -745,7 +745,7 @@ database:
 
 ### @Value Annotation
 
-Для инъекции отдельных значений используется `@**Value**`.
+Для инъекции отдельных значений используется `@Value`.
 
 ```java
 import io.micronaut.context.annotation.Value;
@@ -1166,8 +1166,8 @@ public class MailConfiguration {
 
 ### Common Issues
 
-1. **Bean not found**: Проверьте, что класс имеет аннотацию `@**Singleton**` или другой **scope**
-2. **Circular dependency**: Используйте `**Provider**<T>` для разрыва цикла
+1. **Bean not found**: Проверьте, что класс имеет аннотацию `@Singleton` или другой **scope**
+2. **Circular dependency**: Используйте `Provider<T>` для разрыва цикла
 3. **Configuration not loaded**: Проверьте пути к конфигурационным файлам и **property sources**
 4. **Bean not injected**: Убедитесь, что зависимость доступна в контексте
 

@@ -328,7 +328,7 @@ public class EmailService {
 </dependency>
 ```
 
-**Шаблон (**templates**/**email**/**welcome.html**):**
+**Шаблон (templates/email/welcome.html):**
 
 ```html
 <!DOCTYPE html>
@@ -393,7 +393,7 @@ public class EmailService {
 </dependency>
 ```
 
-**Шаблон (**templates**/**email**/**order-confirmation.ftl**):**
+**Шаблон (templates/email/order-confirmation.ftl):**
 
 ```html
 <!DOCTYPE html>

@@ -44,7 +44,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Kotlin** на **JVM** часто используют с **Spring Boot** (полная экосистема) или с **Ktor** (легковесный асинхронный фреймворк от **JetBrains**). **Exposed** — **DSL** для работы с БД; **kotlinx.coroutines**, **kotlinx.serialization** — стандартные решения для асинхронности и **JSON**. Документ даёт обзор основных фреймворков и связей с языком **Kotlin**.
+**Kotlin** на **JVM** часто используют с **Spring Boot** (полная экосистема) или с **Ktor** (легковесный асинхронный фреймворк от JetBrains). **Exposed** — **DSL** для работы с БД; **kotlinx.coroutines**, **kotlinx.serialization** — стандартные решения для асинхронности и **JSON**. Документ даёт обзор основных фреймворков и связей с языком **Kotlin**.
 
 **Ключевые понятия:** **Ktor**, **Exposed**, **coroutines**, **serialization**, **Koin**, **Spring Boot**.
 
@@ -84,7 +84,7 @@ fun main() {
 
 ## Spring с Kotlin
 
-**Spring Boot** полностью поддерживает **Kotlin**: **Kotlin DSL** для конфигурации, корутины (spring-boot-starter-webflux), **null-safety**. Многие проекты выбирают **Spring** для готовой экосистемы (**Security**, **Data**, **Cloud**) и пишут код на **Kotlin**. См. [[README|Spring]] и [[kotlin-spring|Kotlin Spring]].
+**Spring Boot** полностью поддерживает **Kotlin**: **Kotlin DSL** для конфигурации, корутины (spring-boot-starter-webflux), **null-safety**. Многие проекты выбирают **Spring** для готовой экосистемы (Security, Data, Cloud) и пишут код на **Kotlin**. См. [[README|Spring]] и [[kotlin-spring|Kotlin Spring]].
 
 
 ## Exposed
@@ -121,7 +121,7 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 | Подход | Когда использовать |
 |--------|--------------------|
 | **Ktor** | Легковесный асинхронный **API**, чистый **Kotlin**, корутины |
-| **Spring Boot** | Enterprise, готовые модули (**Security**, **Data**, **Cloud**), большая команда |
+| **Spring Boot** | Enterprise, готовые модули (Security, Data, Cloud), большая команда |
 | **Exposed** | Простая работа с БД без **JPA**, **DSL** |
 
 
@@ -129,7 +129,7 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 
 - Использовать корутины для асинхронности; не блокировать диспетчер по умолчанию.
 - **Ktor**: выносить плагины и маршруты в отдельные модули.
-- **Exposed**: использовать транзакции и миграции (например, **Flyway**).
+- **Exposed**: использовать транзакции и миграции (например, Flyway).
 - **kotlinx.serialization**: задавать имена полей и стратегии по умолчанию для **API**.
 
 
@@ -137,7 +137,7 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 
 | Проблема | Действие |
 |----------|----------|
-| **Ktor** не стартует | Проверить порт и плагины (ContentNegotiation для **JSON**) |
+| **Ktor** не стартует | Проверить порт и плагины (ContentNegotiation для JSON) |
 | **Exposed** исключения | Проверить драйвер БД и строку подключения |
 | Корутины не отменяются | Использовать `CoroutineScope` с `Job` и отмена при завершении |
 
@@ -158,7 +158,7 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 | **kotlinx.coroutines** | Библиотека корутин для **Kotlin** |
 | **kotlinx.serialization** | Сериализация **JSON** и др. для **Kotlin** |
 | **Koin** | Лёгкий **DI** контейнер для **Kotlin** |
-| **Content Negotiation** | Согласование формата ответа (**JSON**, **XML**) |
+| **Content Negotiation** | Согласование формата ответа (JSON, XML) |
 
 
 ## Заключение

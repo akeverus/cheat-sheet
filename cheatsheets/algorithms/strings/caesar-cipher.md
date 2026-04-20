@@ -368,7 +368,7 @@ for (int offset = 0; offset < chiSquares.length; offset++) {
 return probableOffset;
 ```
 
-**Метод `**observedLettersFrequencies**()` просто подсчитывает количество букв от a до z в переданном сообщении:**
+**Метод `observedLettersFrequencies()` просто подсчитывает количество букв от a до z в переданном сообщении:**
 
 ```java
 long[] observedLettersFrequencies(String message) {

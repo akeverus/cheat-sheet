@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Baeldung`: A* `Pathfinding`](https://www.baeldung.com/)
+- [Baeldung: A* Pathfinding](https://www.baeldung.com/)
 
 ### См. также
 - [[traveling-salesman-problem|Задача коммивояжера]] — TSP

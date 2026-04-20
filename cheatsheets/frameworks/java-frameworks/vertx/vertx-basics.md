@@ -860,3 +860,11 @@ ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 - WebSocket приложения
 - Микросервисы с реактивным стеком
 - Real-time системы
+
+## См. также
+
+- [[dropwizard-basics|Dropwizard: Основы]]
+- [[javalin-basics|Javalin: Основы]]
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]

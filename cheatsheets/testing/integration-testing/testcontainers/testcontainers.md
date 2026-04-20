@@ -311,7 +311,7 @@ class MyApplicationIntegrationTest {
 ## Лучшие практики
 
 1. Используйте **специализированные модули** (PostgreSQL, Kafka и т.д.) вместо GenericContainer, когда они есть.
-2. **Один контейнер на класс** (**@Container** + **static**) — баланс скорости и изоляции.
+2. **Один контейнер на класс** (@Container + static) — баланс скорости и изоляции.
 3. Фиксируйте **версии образов** (например, `postgres:15-alpine`), не `latest`.
 4. Инициализацию схемы — через **withInitScript** или миграции (Flyway/Liquibase).
 5. В тестах не хранить чувствительные данные продакшена.
@@ -413,7 +413,7 @@ class MyApplicationIntegrationTest {
 4. **@DynamicPropertySource** (Spring Boot) — подстановка URL и кредов.
 5. **waitingFor** — ожидание готовности сервиса.
 6. **DockerComposeContainer** — несколько сервисов из одного compose-файла.
-7. Сеть (**withNetwork**, **withNetworkAliases**), **dependsOn** — связанные контейнеры.
+7. Сеть (withNetwork, withNetworkAliases), **dependsOn** — связанные контейнеры.
 8. Переиспользование, CI/CD, отладка (таблица выше).
 
 

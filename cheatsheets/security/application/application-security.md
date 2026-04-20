@@ -28,14 +28,14 @@ updated: "2026-02-11"
 
 ### Официальная документация
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/) — основные классы уязвимостей
-- [`OWASP` Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — лаконичные шпаргалки
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — лаконичные шпаргалки
 - [OAuth 2.0](https://oauth.net/2/) — спецификация `OAuth2`
 - [OpenID Connect](https://openid.net/connect/) — спецификация `OIDC`
-- [`JWT` (`RFC 7519`)](https://datatracker.ietf.org/doc/html/rfc7519) — стандарт `JSON Web Token`
+- [JWT (RFC 7519)](https://datatracker.ietf.org/doc/html/rfc7519) — стандарт `JSON Web Token`
 
 ### Ресурсы
-- [`Spring Security` Reference](https://docs.spring.io/spring-security/reference/)
-- [`OWASP` Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
+- [Spring Security Reference](https://docs.spring.io/spring-security/reference/)
+- [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
 
 
 ## Содержание

@@ -208,7 +208,7 @@ mongosh "mongodb://localhost:27017/mydb" --file script.js
 ### Концепция
 
 - Каждая миграция — один файл (или один `Java`-класс).
-- Имя файла определяет порядок: `V{**version**}__{**description**}.**sql**`, например `V1__create_users_table.sql`.
+- Имя файла определяет порядок: `V{version}__{description}.sql`, например `V1__create_users_table.sql`.
 - **Flyway** хранит историю в служебной таблице `flyway_schema_history` и выполняет только новые миграции.
 
 ### Пример структуры каталога
@@ -383,7 +383,7 @@ spring:
           tableName: users
 ```
 
-Команда `**liquibase rollback** <**tag**>` откатывает базу к указанному тегу.
+Команда `liquibase rollback <tag>` откатывает базу к указанному тегу.
 
 ### Лучшие практики для Liquibase
 
@@ -410,7 +410,7 @@ spring:
 
 ### Медленные запросы (PostgreSQL)
 
-- Включение логирования медленных запросов в `postgresql.conf`: `**log_min_duration_statement** = 1000` (мс).
+- Включение логирования медленных запросов в `postgresql.conf`: `log_min_duration_statement = 1000` (мс).
 - Расширение **pg_stat_statements** даёт агрегированную статистику по тексту запроса (время, вызовы, строки).
 
 ### Метрики и дашборды
@@ -512,7 +512,7 @@ mongorestore --uri="mongodb://localhost:27017/mydb" /backup/mydb
 </plugin>
 ```
 
-Команды: `**mvn flyway**:**migrate`, `mvn flyway**:**info`, `mvn flyway**:**validate**`.
+Команды: `mvn flyway:migrate`, `mvn flyway:info`, `mvn flyway:validate`.
 
 ### Настройка Liquibase в Maven
 
@@ -528,7 +528,7 @@ mongorestore --uri="mongodb://localhost:27017/mydb" /backup/mydb
 </plugin>
 ```
 
-В `liquibase.properties`: `changeLogFile`, `url`, `username`, `password`. Команды: `**mvn liquibase**:**update`, `mvn liquibase**:**rollback** -**Dliquibase.rollbackTag**=**pre-release**`.
+В `liquibase.properties`: `changeLogFile`, `url`, `username`, `password`. Команды: `mvn liquibase:update`, `mvn liquibase:rollback -Dliquibase.rollbackTag=pre-release`.
 
 ### Пример полного набора миграций Flyway (V1–V5)
 
@@ -573,7 +573,7 @@ CREATE INDEX idx_users_name_lower ON users(LOWER(name));
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 ```
 
-В `postgresql.conf`: `**shared_preload_libraries** = '**pg_stat_statements**'`, при необходимости задать `pg_stat_statements.max` и перезапустить кластер.
+В `postgresql.conf`: `shared_preload_libraries = 'pg_stat_statements'`, при необходимости задать `pg_stat_statements.max` и перезапустить кластер.
 
 **Пример анализа тяжёлых запросов:**
 

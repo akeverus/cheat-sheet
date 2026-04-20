@@ -19,7 +19,7 @@ updated: "2026-02-11"
 ### Официальная документация
 - [Java Concurrency Tutorial](https://docs.oracle.com/javase/tutorial/essential/concurrency/)
 - [java.util.concurrent.atomic (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)
-- [`ConcurrentLinkedQueue` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentLinkedQueue.html)
+- [ConcurrentLinkedQueue (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentLinkedQueue.html)
 
 ### См. также
 - [[collections-complexity|Временная сложность коллекций]] — Big O коллекций **Java**
@@ -173,7 +173,7 @@ public class ABAExample {
 
 Другая альтернатива — выборка и добавление. Эта операция увеличивает переменную в основной памяти на заданное значение. Опять же, важным моментом является то, что операция происходит атомарно, что означает, что никакие другие потоки не могут вмешиваться.
 
-**Java** предоставляет реализацию выборки и добавления в своих атомарных классах. Примеры: `**AtomicInteger.incrementAndGet**()`, который увеличивает значение и возвращает новое значение; и `**AtomicInteger.getAndIncrement**()`, который возвращает старое значение, а затем увеличивает значение.
+**Java** предоставляет реализацию выборки и добавления в своих атомарных классах. Примеры: `AtomicInteger.incrementAndGet()`, который увеличивает значение и возвращает новое значение; и `AtomicInteger.getAndIncrement()`, который возвращает старое значение, а затем увеличивает значение.
 
 ## Реализация очереди без блокировок
 
@@ -301,7 +301,7 @@ public T get() {
 }
 ```
 
-Опять же, важная часть, на которую следует обратить внимание, - это выделенная строка. Операция **CAS** гарантирует, что мы перемещаем текущую головку только в том случае, если за это время не был удален никакой другой узел.
+Опять же, важная часть, на которую следует обратить внимание, — это выделенная строка. Операция **CAS** гарантирует, что мы перемещаем текущую головку только в том случае, если за это время не был удален никакой другой узел.
 
 ### ConcurrentLinkedQueue
 

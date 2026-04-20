@@ -132,7 +132,7 @@ class HTML {
 В этом примере `body` - это функция, которая принимает **lambda** с **receiver** типа `Body`. **Lambda** выполняется в контексте созданного объекта `Body`, что позволяет обращаться к его методам и свойствам напрямую. Это создает естественный синтаксис для построения иерархических структур.
 
 **class Body** {
-    **fun div(**init: Div.(**) -> **Unit**) {
+    **fun div(**init: Div.() -> **Unit**) {
         **val div** = **Div**()
         **div.init**()
     }
@@ -143,7 +143,7 @@ class HTML {
 }
 
 // Использование
-**fun html(**init: `HTML`.(**) -> **Unit**): **HTML** {
+**fun html(**init: `HTML`.() -> **Unit**): **HTML** {
     **val html** = **HTML**()
     **html.init**()
     **return html**

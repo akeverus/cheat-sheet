@@ -176,7 +176,7 @@ val sequence = sequence {
 // С циклом
 **val sequence2** = **sequence** {
     **for** (i `in 1`..10) {
-        **yield**(**i * i**)
+        **yield**(i * i)
     }
 }
 

@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [GeeksforGeeks: Radix Sort](https://www.geeksforgeeks.org/radix-sort/)
 
 ### Визуализация
-- [`Visualgo`: `Radix Sort`](https://visualgo.net/)
+- [Visualgo: Radix Sort](https://visualgo.net/)
 
 ### См. также
 - [[counting-sort|Сортировка подсчётом]] — counting sort
@@ -350,9 +350,9 @@ fun main() {
 
 ### Временная сложность
 
-- **Лучший случай:** `O(**d * (n + b**)`)
-- **Средний случай:** `O(**d * (n + b**)`)
-- **Худший случай:** `O(**d * (n + b**)`)
+- **Лучший случай:** `O(d * (n + b)`)
+- **Средний случай:** `O(d * (n + b)`)
+- **Худший случай:** `O(d * (n + b)`)
 
 **где:**
 - d — количество цифр в максимальном числе

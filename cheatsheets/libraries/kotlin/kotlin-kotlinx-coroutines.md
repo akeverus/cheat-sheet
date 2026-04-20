@@ -1345,7 +1345,7 @@ class UserPreferences {
 
 
 ## Полезные ссылки
-- [Официальная документация `kotlinx.coroutines`](https://github.com/Kotlin/kotlinx.coroutines)
+- [Официальная документация kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines)
 - [Kotlin Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html)
 - [Flow Documentation](https://kotlinlang.org/docs/flow.html)
 - [Channels Guide](https://kotlinlang.org/docs/channels.html)

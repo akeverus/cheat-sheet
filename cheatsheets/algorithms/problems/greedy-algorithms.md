@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Baeldung`: `Greedy Algorithms`](https://www.baeldung.com/)
+- [Baeldung: Greedy Algorithms](https://www.baeldung.com/)
 
 ### См. также
 - [[knapsack-problem|Задача о рюкзаке]] — knapsack

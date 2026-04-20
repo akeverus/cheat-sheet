@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Dijkstra's Algorithm — GeeksforGeeks](https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/)
 
 ### Визуализация
-- [`Visualgo`: `Dijkstra`](https://visualgo.net/)
+- [Visualgo: Dijkstra](https://visualgo.net/)
 
 ### См. также
 - [[bfs|bfs.md]] — поиск в ширину
@@ -124,7 +124,7 @@ public static Graph calculateShortestPathFromSource(Graph graph, Node source) {
 }
 ```
 
-**Метод `**getLowestDistanceNode**()` возвращает узел с наименьшим расстоянием от набора неустановленных узлов, а метод `**calculateMinimumDistance**()` сравнивает фактическое расстояние с вновь рассчитанным при следовании по вновь исследованному пути:**
+**Метод `getLowestDistanceNode()` возвращает узел с наименьшим расстоянием от набора неустановленных узлов, а метод `calculateMinimumDistance()` сравнивает фактическое расстояние с вновь рассчитанным при следовании по вновь исследованному пути:**
 
 ```java
 private static Node getLowestDistanceNode(Set<Node> unsettledNodes) {

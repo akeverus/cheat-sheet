@@ -17,8 +17,8 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Baeldung`: `LRU Cache`](https://www.baeldung.com/)
-- [`LinkedHashMap` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedHashMap.html)
+- [Baeldung: LRU Cache](https://www.baeldung.com/)
+- [LinkedHashMap (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedHashMap.html)
 
 ### См. также
 - [[traveling-salesman-problem|Задача коммивояжера]] — TSP

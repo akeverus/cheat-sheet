@@ -1068,7 +1068,7 @@ Retrofit retrofit = new Retrofit.Builder()
 
 
 ## Полезные ссылки
-- [Официальная документация `Retrofit`](https://square.github.io/retrofit/)
+- [Официальная документация Retrofit](https://square.github.io/retrofit/)
 - [GitHub репозиторий](https://github.com/square/retrofit)
 - [Retrofit samples](https://github.com/square/retrofit/tree/master/samples)
 - [OkHttp документация](https://square.github.io/okhttp/)
@@ -1076,5 +1076,5 @@ Retrofit retrofit = new Retrofit.Builder()
 ## См. также
 - [[java-okhttp|OkHttp]] — **HTTP** клиент для **Retrofit**
 - [[java-gson|Gson]] — **JSON** библиотека для **Retrofit**
-- [Обзор библиотек](../) — Реактивное программирование (**RxJava** и др.)
+- [Обзор библиотек](../) — Реактивное программирование (RxJava и др.)
 

@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Enum` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html)
+- [Enum (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html)
 
 ### См. также
 - [[combinatorial-problems-overview|Комбинаторные задачи]] — комбинаторика

@@ -974,7 +974,7 @@ val rateLimited = IO { processRequest() }
 
 
 ## Полезные ссылки
-- [Официальная документация `Arrow`](https://arrow-kt.io/)
+- [Официальная документация Arrow](https://arrow-kt.io/)
 - [Arrow GitHub](https://github.com/arrow-kt/arrow)
 - [Arrow Core](https://arrow-kt.io/docs/core/)
 - [Arrow Fx](https://arrow-kt.io/docs/effects/fx/)

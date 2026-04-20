@@ -17,8 +17,8 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`PriorityQueue` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/PriorityQueue.html)
-- [`Baeldung`: `Stream Median`](https://www.baeldung.com/)
+- [PriorityQueue (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/PriorityQueue.html)
+- [Baeldung: Stream Median](https://www.baeldung.com/)
 
 ### См. также
 - [Бинарное дерево](../trees/) — бинарное дерево
@@ -196,8 +196,8 @@ class MedianOfIntegerStreamBalanced {
 ### Временная сложность операций с кучей
 
 - **find-min/`find-max`:** `O(1)`
-- **delete-min/`delete-max`:** `O(**log(n**)`)
-- **insert:** `O(**log(n**)`)
+- **delete-min/`delete-max`:** `O(log(n)`)
+- **insert:** `O(log(n)`)
 
 Таким образом, операция **getMedian** может быть выполнена за время `O(1)`, поскольку для нее требуются только функции **find-min** и **find-max**. Временная сложность операции добавления составляет `O(log n)`.
 

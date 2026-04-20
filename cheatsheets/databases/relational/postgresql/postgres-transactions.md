@@ -34,9 +34,9 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 
 ### Дополнительные ресурсы
 
-- [`PostgreSQL Wiki` - `Locking`](https://www.postgresql.org/docs/)
-- [`Baeldung` - `PostgreSQL Transactions`](https://www.postgresql.org/docs/)
-- [PGCon — `Advanced PostgreSQL Internals`](https://www.postgresql.org/docs/)
+- [PostgreSQL Wiki - Locking](https://www.postgresql.org/docs/)
+- [Baeldung - PostgreSQL Transactions](https://www.postgresql.org/docs/)
+- [PGCon — Advanced PostgreSQL Internals](https://www.postgresql.org/docs/)
 
 См. также: [[postgres-basics]] — [[postgres-design]] — [[postgres-indexes]] — [[postgres-admin]].
 
@@ -232,7 +232,7 @@ SELECT pg_cancel_backend(<pid>);
 
 3. **ROW EXCLUSIVE** — Используется при `INSERT`, `UPDATE`, `DELETE`. Совместима с **ACCESS SHARE**, **ROW SHARE**. Блокирует **SHARE**, **SHARE ROW EXCLUSIVE**, **EXCLUSIVE**, **ACCESS EXCLUSIVE**.
 
-4. **SHARE `UPDATE` EXCLUSIVE** — Используется при `VACUUM`, `CREATE INDEX CONCURRENTLY`, `**ALTER TABLE** ... **VALIDATE CONSTRAINT**`. Блокирует **SHARE UPDATE EXCLUSIVE**, **SHARE**, **SHARE ROW EXCLUSIVE**, **EXCLUSIVE**, **ACCESS EXCLUSIVE**.
+4. **SHARE `UPDATE` EXCLUSIVE** — Используется при `VACUUM`, `CREATE INDEX CONCURRENTLY`, `ALTER TABLE ... VALIDATE CONSTRAINT`. Блокирует **SHARE UPDATE EXCLUSIVE**, **SHARE**, **SHARE ROW EXCLUSIVE**, **EXCLUSIVE**, **ACCESS EXCLUSIVE**.
 
 5. **SHARE** — Используется при `CREATE INDEX` (без CONCURRENTLY). Совместима с **ACCESS SHARE**, **ROW SHARE**. Блокирует **ROW EXCLUSIVE** и выше.
 
@@ -258,7 +258,7 @@ COMMIT;
 **Типы строковых блокировок:**
 - **FOR UPDATE** — Эксклюзивная блокировка строки для обновления. Блокирует другие `FOR UPDATE` и `FOR SHARE`.
 - **FOR SHARE** — Разделяемая блокировка строки для чтения. Совместима с другими `FOR SHARE`, блокирует `FOR UPDATE`.
-- **FOR `NO KEY` UPDATE** — Более слабая версия `FOR UPDATE`, которая не блокирует `**SELECT** ... **FOR KEY SHARE**`.
+- **FOR `NO KEY` UPDATE** — Более слабая версия `FOR UPDATE`, которая не блокирует `SELECT ... FOR KEY SHARE`.
 
 **Пример строковых блокировок:**
 ```sql
@@ -421,7 +421,7 @@ ORDER BY waiting_duration DESC;
 ### Поиск дедлоков
 
 **Детектирование дедлоков:**
-**PostgreSQL** автоматически обнаруживает дедлоки и откатывает одну из транзакций. Информация о дедлоках записывается в лог при настройке `**log_lock_waits** = on` и `deadlock_timeout`.
+**PostgreSQL** автоматически обнаруживает дедлоки и откатывает одну из транзакций. Информация о дедлоках записывается в лог при настройке `log_lock_waits = on` и `deadlock_timeout`.
 
 **Проверка логов на дедлоки:**
 ```sql
@@ -510,7 +510,7 @@ LIMIT 10;
 
 **Статус в `PostgreSQL`:** Исключено. **PostgreSQL** не поддерживает уровень изоляции `READ UNCOMMITTED`.
 
-**Пример (**не возможен в **PostgreSQL**):**
+**Пример (не возможен в PostgreSQL):**
 ```text
 T1: BEGIN; UPDATE accounts SET balance = 1000 WHERE id = 1; -- НЕ COMMIT
 T2: BEGIN; SELECT balance FROM accounts WHERE id = 1; -- Видит 1000 (грязное чтение)
@@ -632,7 +632,7 @@ END LOOP;
 
 5. **Избегайте долгих транзакций:**
    - Держите транзакции короткими.
-   - Не оставляйте транзакции в состоянии `**idle** in **transaction**`.
+   - Не оставляйте транзакции в состоянии `idle in transaction`.
    - Используйте таймауты для автоматического отката долгих транзакций.
 
 ### Мониторинг и диагностика
@@ -642,8 +642,8 @@ END LOOP;
    - Настройте алерты на долгие ожидания блокировок.
 
 2. **Логирование блокировок:**
-   - Включите `**log_lock_waits** = on` в `postgresql.conf`.
-   - Установите `**deadlock_timeout** = 1s` для быстрого обнаружения дедлоков.
+   - Включите `log_lock_waits = on` в `postgresql.conf`.
+   - Установите `deadlock_timeout = 1s` для быстрого обнаружения дедлоков.
 
 3. **Используйте расширения:**
    - `pg_stat_statements` для поиска медленных запросов, которые могут удерживать блокировки.
@@ -660,16 +660,16 @@ END LOOP;
    - Настройте `autovacuum_vacuum_cost_limit` для «горячих» таблиц.
 
 3. **Использование `SKIP LOCKED`:**
-   - Для очередей задач используйте `**SELECT** ... **FOR UPDATE SKIP LOCKED**`.
+   - Для очередей задач используйте `SELECT ... FOR UPDATE SKIP LOCKED`.
    - Это позволяет нескольким воркерам обрабатывать разные строки параллельно.
 
 4. **Минимизация блокировок при `DDL`:**
    - Используйте `CREATE INDEX CONCURRENTLY` вместо `CREATE INDEX`.
-   - Используйте `**ALTER TABLE** ... **ADD COLUMN**` с `DEFAULT` для быстрого добавления столбцов (в новых версиях PostgreSQL).
+   - Используйте `ALTER TABLE ... ADD COLUMN` с `DEFAULT` для быстрого добавления столбцов (в новых версиях PostgreSQL).
 
 ### Типичные проблемы и решения
 
-1. **Проблема:** Долгие транзакции в `**idle** in **transaction**`.
+1. **Проблема:** Долгие транзакции в `idle in transaction`.
    - **Решение:** Используйте таймауты, мониторьте и завершайте такие сессии.
 
 2. **Проблема:** Дедлоки при обновлении нескольких таблиц.

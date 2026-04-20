@@ -58,7 +58,7 @@ GRANT CONNECT ON DATABASE mydb TO appuser;
 GRANT USAGE ON SCHEMA public TO appuser;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO appuser;
 ```
-- Новые таблицы: `**ALTER DEFAULT PRIVILEGES** `IN` **SCHEMA public GRANT SELECT** `ON` **TABLES** `TO` **appuser**;`
+- Новые таблицы: `ALTER DEFAULT PRIVILEGES `IN` SCHEMA public GRANT SELECT `ON` TABLES `TO` appuser;`
 
 ## Резервное копирование и восстановление
 - **Логический дамп:**
@@ -67,7 +67,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO appuser;
 pg_dump -Fc -d mydb -f mydb.dump
 pg_restore -d mydb_restored mydb.dump
 ```
-- Параллельный дамп (быстрее на крупных базах): `**pg_dump** -`j 4` -Fd -d **mydb** -f **dumpdir**`
+- Параллельный дамп (быстрее на крупных базах): `pg_dump -`j 4` -Fd -d mydb -f dumpdir`
 
 ## VACUUM и ANALYZE
 
@@ -268,7 +268,7 @@ LIMIT 20;
 
 2. **autovacuum_vacuum_threshold** (по умолчанию: 50):
    - Минимальное количество мертвых строк, при котором запускается **VACUUM**.
-   - **VACUUM** запустится, если: `**n_dead_tup** > **autovacuum_vacuum_threshold** + **autovacuum_vacuum_scale_factor** * **n_live_tup**`.
+   - **VACUUM** запустится, если: `n_dead_tup > autovacuum_vacuum_threshold + autovacuum_vacuum_scale_factor * n_live_tup`.
 
 3. **autovacuum_analyze_scale_factor** (по умолчанию: 0.1):
    - Доля измененных строк, при которой запускается **ANALYZE**.
@@ -321,7 +321,7 @@ autovacuum_vacuum_cost_delay = 20ms
 **Проблемы с autovacuum:**
 
 1. **Autovacuum не запускается:**
-   - Проверьте, включен ли **autovacuum**: `**SHOW autovacuum**;`
+   - Проверьте, включен ли **autovacuum**: `SHOW autovacuum;`
    - Проверьте логи на ошибки.
    - Убедитесь, что нет долгих транзакций, блокирующих **autovacuum**.
 
@@ -388,7 +388,7 @@ ORDER BY dead_pct DESC
 LIMIT 20;
 ```
 
-**Более точная оценка раздувания (**требует расширения **pgstattuple**):**
+**Более точная оценка раздувания (требует расширения pgstattuple):**
 ```sql
 -- Установить расширение (требует прав superuser)
 CREATE EXTENSION IF NOT EXISTS pgstattuple;
@@ -458,11 +458,11 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 
 ## Полезные команды psql
 - `\l` — список баз; `\c db` — подключиться.
-- `\dt` — таблицы; `\dn` — схемы; `\d **table**` — описание таблицы.
-- `\i **file.sql**` — выполнить скрипт; `\**timing**` — показать время выполнения.
+- `\dt` — таблицы; `\dn` — схемы; `\d table` — описание таблицы.
+- `\i file.sql` — выполнить скрипт; `\timing` — показать время выполнения.
 
 ## Безопасность: pg_hba.conf и SSL
-- В `pg_hba.conf` задавайте доступ по принципу наименьших прав; предпочитайте **scram-sha-256** (вместо **md5**).
+- В `pg_hba.conf` задавайте доступ по принципу наименьших прав; предпочитайте **scram-sha-256** (вместо md5).
 - Включите **SSL**, если клиенты вне защищённой сети; выдайте серверный сертификат и **client cert** при необходимости.
 - Закройте **superuser**-доступ из внешних сетей; создавайте роль с минимальными привилегиями для приложения.
 
@@ -486,7 +486,7 @@ auto_explain.log_min_duration = '500ms'
 
 ## Репликация (очень кратко)
 - **Для горячего **standby**:**
-  - Включить **WAL**-архив/**replication**: `**wal_level** = **replica**`, `max_wal_senders`, `**hot_standby** = on`.
+  - Включить **WAL**-архив/**replication**: `wal_level = replica`, `max_wal_senders`, `hot_standby = on`.
   - На **standby** выполнить `pg_ctl promote` (или соответствующую команду).
   - Следить за лагом: `pg_stat_replication`, поля `write_lag`, `flush_lag`, `replay_lag`.
 - Для потоковой реплики не забывайте о бэкапах: реплика — не бэкап.

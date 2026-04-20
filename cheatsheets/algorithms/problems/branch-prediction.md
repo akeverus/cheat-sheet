@@ -24,6 +24,12 @@ updated: "2026-02-11"
 - [Задачи и алгоритмы](./) — обзор разделов
 - [Алгоритмы сортировки](../sorting/) — обзор сортировок
 
+- [[a-star-pathfinding|Поиск пути A* (A* Pathfinding Algorithm)]]
+- [[algorithms|Хеширование и хеш-функции (Hashing and Hash Functions)]]
+- [[calculator-implementation|Calculator Implementation]]
+- [[circular-buffer|Circular Buffer]]
+- [[combinatorial-problems-overview|Обзор комбинаторных задач (Combinatorial Problems Overview)]]
+
 ## Содержание
 
 - [Обзор](#обзор)

@@ -86,7 +86,7 @@ updated: "2026-02-11"
 Базовая сериализация объекта в **JSON** и десериализация **JSON** в объект через **Gson**.
 
 ```java
-/**
+/
  * Демонстрация базовой сериализации и десериализации через Gson
  * Gson автоматически преобразует Java объекты в JSON и обратно
  */
@@ -110,7 +110,7 @@ System.out.println(user.getName());  // Jane
 
 ### Работа с коллекциями
 ```java
-/**
+/
  * Демонстрация работы с коллекциями через Gson
  * Gson автоматически обрабатывает List, Set, Map и другие коллекции
  */
@@ -133,14 +133,14 @@ List<String> names = gson.fromJson(json, new TypeToken<List<String>>(){}.getType
 // Сериализация Map - преобразование карты в JSON объект
 Map<String, Integer> map = new HashMap<>();
 // Gson автоматически преобразует Map в JSON объект где ключи - это свойства объекта
-**map.put(**"`Alice`", 25**);
-**map.put(**"Bob", 30**);
-**String jsonMap** = **gson.`toJson`(**map**);
-**System.`out.println`(**jsonMap**); // {"**Alice**":25,"**Bob**":30}
+map.put("`Alice`", 25);
+map.put("Bob", 30);
+String jsonMap = gson.`toJson`(map);
+System.`out.println`(jsonMap); // {"Alice":25,"Bob":30}
 
-// Десериализация **Map**
-**String jsonMap** = "{\"**Alice**\":25,\"**Bob**\":30}";
-**Map**<**String**, **Integer**> **map** = **gson.`fromJson`(**jsonMap, new `TypeToken`<Map<`String`, `Integer`>>(**){}.**getType**());
+// Десериализация Map
+String jsonMap = "{\"Alice\":25,\"Bob\":30}";
+Map<String, Integer> map = gson.`fromJson`(jsonMap, new `TypeToken`<Map<`String`, `Integer`>>(){}.getType());
 ```
 
 ### Работа с массивами

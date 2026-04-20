@@ -87,9 +87,9 @@ trait Monad[M[_]] {
 
 **Monad** должна удовлетворять трем законам:**
 
-1. **Left identity**: `**pure**(a).**flatMap**(f) == f(a)`
-2. **Right identity**: `**m.`flatMap`(pure) == m`
-3. **Associativity**: `**m.flatMap**(f).**flatMap**(g) == **m.`flatMap`(**x => f(x**).**flatMap**(g))`
+1. **Left identity**: `pure(a).flatMap(f) == f(a)`
+2. **Right identity**: `m.`flatMap`(pure) == m`
+3. **Associativity**: `m.flatMap(f).flatMap(g) == m.`flatMap`(x => f(x).flatMap(g))`
 
 ## Option Monad
 

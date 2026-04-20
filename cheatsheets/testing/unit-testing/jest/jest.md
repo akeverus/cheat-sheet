@@ -107,7 +107,7 @@ module.exports = {
 };
 ```
 
-Для **TypeScript** — `preset: 'ts-jest'` и `testMatch: ['**/*.test.ts', '**/*.spec.ts']`.
+Для **TypeScript** — `preset: 'ts-jest'` и `testMatch: ['/*.test.ts', '/*.spec.ts']`.
 
 Проверка: `npx jest --version`.
 
@@ -233,7 +233,7 @@ coverageThreshold: {
 }
 ```
 
-Исключение файлов: `collectCoverageFrom: ['src/**/*.js', '!src/**/*.test.js']`.
+Исключение файлов: `collectCoverageFrom: ['src//*.js', '!src//*.test.js']`.
 
 
 ## Таймеры и асинхронность

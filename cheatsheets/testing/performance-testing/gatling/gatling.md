@@ -51,7 +51,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Gatling** — открытый инструмент нагрузочного тестирования на **Scala** с **DSL** для описания сценариев. Сценарии задаются в коде (**Simulation**, **Scenario**, **exec**, **http**); запуск — из командной строки или через **sbt**/Gradle/Maven. Отчёты — HTML по умолчанию; поддержка **InfluxDB** и **Grafana** для дашбордов в реальном времени.
+**Gatling** — открытый инструмент нагрузочного тестирования на **Scala** с **DSL** для описания сценариев. Сценарии задаются в коде (Simulation, Scenario, exec, http); запуск — из командной строки или через **sbt**/Gradle/Maven. Отчёты — HTML по умолчанию; поддержка **InfluxDB** и **Grafana** для дашбордов в реальном времени.
 
 ### Зачем Gatling
 
@@ -149,7 +149,7 @@ class BasicSimulation extends Simulation {
 
 | Элемент | Описание |
 |---------|----------|
-| **get(url)** / **post(url)** | Метод и путь (относительно **baseUrl** или абсолютный). |
+| **get(url)** / **post(url)** | Метод и путь (относительно baseUrl или абсолютный). |
 | **header(name, value)** | Заголовок запроса. |
 | **body(StringBody("...")).asJson** | Тело запроса (JSON). |
 | **queryParam(name, value)** | Query-параметр. |
@@ -203,7 +203,7 @@ class BasicSimulation extends Simulation {
 - **Активные пользователи** — число одновременно работающих виртуальных пользователей.
 - **Неуспешные запросы** — по **check** или коду ответа.
 
-HTML-отчёт генерируется по умолчанию. Для метрик в реальном времени настраивают **InfluxDB** и дашборд **Grafana** (через **gatling.conf** / logback).
+HTML-отчёт генерируется по умолчанию. Для метрик в реальном времени настраивают **InfluxDB** и дашборд **Grafana** (через gatling.conf / logback).
 
 
 ## Параметризация и переменные
@@ -233,7 +233,7 @@ val scn = scenario("With CSV")
 |-------------|----------|
 | **repeat(n)** | Повторить блок n раз. |
 | **during(d)** | Выполнять блок в течение d. |
-| **doIf(condition)** / **doIfEquals(key, value)** | Выполнить блок при условии (по **session**). |
+| **doIf(condition)** / **doIfEquals(key, value)** | Выполнить блок при условии (по session). |
 | **randomSwitch(percent1 -> chain1, ...)** | Случайное ветвление по процентам. |
 | **tryMax(n)** | Повторить блок до n раз до успешного **check**. |
 
@@ -277,9 +277,9 @@ val scn = scenario("Auth and API")
 
 Основное в **gatling.conf** (src/test/resources):
 
-- **gatling.core.outputDirectoryBase** — каталог отчётов (по умолчанию **target/gatling**).
+- **gatling.core.outputDirectoryBase** — каталог отчётов (по умолчанию target/gatling).
 - **gatling.core.runDescription** — описание прогона в отчёте.
-- **gatling.http.enableGA** — отключить анонимную статистику (в CI лучше **false**).
+- **gatling.http.enableGA** — отключить анонимную статистику (в CI лучше false).
 
 Переопределение: **-Dgatling.core.outputDirectoryBase=/path/to/reports**.
 
@@ -331,7 +331,7 @@ Gatling — сценарии в коде, меньше ресурсов на п�
 Базовые сценарии можно писать по примерам; для сложной логики пригодится Scala. Есть **Gatling Java DSL** для Java.
 
 **Как тестировать API с авторизацией?**
-Логин → в **check** извлечь токен (**jsonPath("$.access_token").saveAs("token")**) → в **httpProtocol** или в запросах **header("Authorization", "Bearer ${token}")**.
+Логин → в `check` извлечь токен (`jsonPath("$.access_token").saveAs("token")`) → в `httpProtocol` или в запросах `header("Authorization", "Bearer ${token}")`.
 
 **Тело запроса из файла?**
 **ElFileBody("path/to/body.json")** или **RawFileBody(...)** в **body(...)**; в файле с ElFileBody можно использовать **${variable}**.

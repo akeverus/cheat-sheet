@@ -100,7 +100,7 @@ updated: "2026-02-11"
 
 ### Установка ClickHouse
 
-**Linux (**Ubuntu**/**Debian**):**
+**Linux (Ubuntu/Debian):**
 ```bash
 # Установка ClickHouse из репозитория (apt, ключ, пакеты clickhouse-server, clickhouse-client)
 sudo apt-get install -y apt-transport-https ca-certificates dirmngr

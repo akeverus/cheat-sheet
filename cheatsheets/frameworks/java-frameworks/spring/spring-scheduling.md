@@ -130,7 +130,7 @@ public class SchedulingConfig {
 
 ### Spring Boot Auto-Configuration
 
-**В **Spring Boot scheduling** включается автоматически при использовании `@**EnableScheduling**`:**
+**В **Spring Boot scheduling** включается автоматически при использовании `@EnableScheduling`:**
 
 ```java
 @SpringBootApplication

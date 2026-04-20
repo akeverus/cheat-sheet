@@ -18,15 +18,15 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Kubernetes` Security](https://kubernetes.io/docs/concepts/security/) — безопасность `Kubernetes`
-- [`CIS` Benchmarks](https://www.cisecurity.org/cis-benchmarks/) — бенчмарки безопасности для различных систем
-- [`NIST` Cybersecurity Framework](https://www.nist.gov/cyberframework) — фреймворк для управления кибербезопасностью
-- [`AWS` Security Best Practices](https://aws.amazon.com/security/security-resources/) — лучшие практики безопасности `AWS`
-- [`Azure` Security Documentation](https://docs.microsoft.com/en-us/azure/security/) — документация по безопасности `Azure`
+- [Kubernetes Security](https://kubernetes.io/docs/concepts/security/) — безопасность `Kubernetes`
+- [CIS Benchmarks](https://www.cisecurity.org/cis-benchmarks/) — бенчмарки безопасности для различных систем
+- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework) — фреймворк для управления кибербезопасностью
+- [AWS Security Best Practices](https://aws.amazon.com/security/security-resources/) — лучшие практики безопасности `AWS`
+- [Azure Security Documentation](https://docs.microsoft.com/en-us/azure/security/) — документация по безопасности `Azure`
 
 ### Ресурсы
-- [`OWASP` Container Security](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html) — рекомендации по безопасности контейнеров
-- [`Kubernetes` Security Best Practices](https://kubernetes.io/docs/concepts/security/pod-security-standards/) — стандарты безопасности подов
+- [OWASP Container Security](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html) — рекомендации по безопасности контейнеров
+- [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/pod-security-standards/) — стандарты безопасности подов
 
 ### См. также
 - [[data-security|Data Security]] — безопасность данных и шифрование

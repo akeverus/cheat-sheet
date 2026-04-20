@@ -229,7 +229,7 @@ fun processData(data: String): String {
 // String result = UtilsKt.processData("hello");
 ```
 
-Имя класса формируется из имени файла с суффиксом "Kt". Это можно изменить через аннотацию `@**JvmName**`.
+Имя класса формируется из имени файла с суффиксом "Kt". Это можно изменить через аннотацию `@JvmName`.
 
 ### Extension функции
 
@@ -265,7 +265,7 @@ val name: String = javaClass.name  // Non-null
 val description: String? = javaClass.description  // Nullable
 ```
 
-Аннотации `@**Nullable**` и `@**NotNull**` (из различных библиотек) помогают **Kotlin** компилятору правильно определить **nullability** типов, что улучшает безопасность кода.
+Аннотации `@Nullable` и `@NotNull` (из различных библиотек) помогают **Kotlin** компилятору правильно определить **nullability** типов, что улучшает безопасность кода.
 
 ### @JvmNullable и @JvmNonnull
 
@@ -287,7 +287,7 @@ fun processNullable(value: String?): String? { }
 
 ### @JvmOverloads
 
-**Для создания перегруженных методов в **Java** используется `@**JvmOverloads**`:**
+**Для создания перегруженных методов в **Java** используется `@JvmOverloads`:**
 
 ```kotlin
 @JvmOverloads
@@ -303,7 +303,7 @@ fun createUser(
 // createUser("Alice", "alice@example.com", 25);
 ```
 
-`@**JvmOverloads**` генерирует перегруженные методы для каждого параметра с **default** значением, что делает **Kotlin** функции удобными для использования из **Java**.
+`@JvmOverloads` генерирует перегруженные методы для каждого параметра с **default** значением, что делает **Kotlin** функции удобными для использования из **Java**.
 
 ## Companion Objects
 
@@ -324,11 +324,11 @@ class MyClass {
 // MyClass instance = MyClass.Companion.create();
 ```
 
-**Companion object** доступен через `Companion` в **Java**. Для более удобного доступа можно использовать `@**JvmStatic**` и `@**JvmField**`.
+**Companion object** доступен через `Companion` в **Java**. Для более удобного доступа можно использовать `@JvmStatic` и `@JvmField`.
 
 ### @JvmStatic
 
-**`@**JvmStatic**` делает методы **companion object** статическими в **Java**:**
+**`@JvmStatic` делает методы **companion object** статическими в **Java**:**
 
 ```kotlin
 class MyClass {
@@ -346,7 +346,7 @@ class MyClass {
 
 ### @JvmField
 
-**`@**JvmField**` делает поля публичными без **getters**/**setters**:**
+**`@JvmField` делает поля публичными без **getters**/**setters**:**
 
 ```kotlin
 class MyClass {
@@ -360,7 +360,7 @@ class MyClass {
 // String constant = MyClass.CONSTANT;
 ```
 
-`@**JvmField**` полезен для констант и полей, которые должны быть доступны как обычные поля в **Java**, а не через методы.
+`@JvmField` полезен для констант и полей, которые должны быть доступны как обычные поля в **Java**, а не через методы.
 
 ## Data классы
 
@@ -414,7 +414,7 @@ fun String.removeSpaces(): String {
 // String result = ExtensionFunctionsKt.removeSpaces("hello world");
 ```
 
-Имя класса формируется из имени файла. Для изменения имени используется `@**file**:**JvmName("`Utils`")` в начале файла.
+Имя класса формируется из имени файла. Для изменения имени используется `@file:JvmName("`Utils`")` в начале файла.
 
 ## Лучшие практики
 
@@ -435,7 +435,7 @@ public String getName() { }
 
 ### Используйте @JvmOverloads для default параметров
 
-**Если функция будет использоваться из **Java**, используйте `@**JvmOverloads**`:**
+**Если функция будет использоваться из **Java**, используйте `@JvmOverloads`:**
 
 ```kotlin
 @JvmOverloads
@@ -459,7 +459,7 @@ companion object {
 
 ### Используйте @JvmName для переименования
 
-**Для изменения имени класса, в который компилируются **top-level** функции, используйте `@**JvmName**`:**
+**Для изменения имени класса, в который компилируются **top-level** функции, используйте `@JvmName`:**
 
 ```kotlin
 @file:JvmName("StringUtils")
@@ -472,7 +472,7 @@ fun String.removeSpaces(): String {
 // String result = StringUtils.removeSpaces("hello world");
 ```
 
-`@**JvmName**` позволяет создать более удобное **API** для **Java** кода, особенно когда имена файлов не подходят для использования в **Java**.
+`@JvmName` позволяет создать более удобное **API** для **Java** кода, особенно когда имена файлов не подходят для использования в **Java**.
 
 ## Обработка исключений
 
@@ -522,7 +522,7 @@ fun readFile(path: String): String {
 // }
 ```
 
-Аннотация `@**Throws**` указывает **Java** компилятору, что метод может выбросить исключение, что делает код более безопасным при использовании из **Java**.
+Аннотация `@Throws` указывает **Java** компилятору, что метод может выбросить исключение, что делает код более безопасным при использовании из **Java**.
 
 ## Generics и Type Erasure
 
@@ -679,7 +679,7 @@ interface MyInterface {
 }
 ```
 
-`@**JvmDefault**` позволяет использовать **default** методы в интерфейсах, что делает их совместимыми с **Java** 8+.
+`@JvmDefault` позволяет использовать **default** методы в интерфейсах, что делает их совместимыми с **Java** 8+.
 
 ## Миграция с Java на Kotlin
 
@@ -712,7 +712,7 @@ class User {
 }
 ```
 
-Использование `@**JvmField**` и других аннотаций позволяет сохранить совместимость **API** при миграции.
+Использование `@JvmField` и других аннотаций позволяет сохранить совместимость **API** при миграции.
 
 ## Работа с коллекциями
 

@@ -1148,7 +1148,7 @@ public class ZeroCopySerializer {
 
 
 ## Полезные ссылки
-- [Официальная документация `Protocol Buffers`](https://protobuf.dev/)
+- [Официальная документация Protocol Buffers](https://protobuf.dev/)
 - [Protocol Buffers Guide](https://protobuf.dev/getting-started/javatutorial/)
 - [gRPC Documentation](https://grpc.io/docs/)
 - [Proto3 Language Guide](https://protobuf.dev/programming-guides/proto3/)

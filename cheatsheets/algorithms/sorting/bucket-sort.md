@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Bucket Sort — GeeksforGeeks](https://www.geeksforgeeks.org/bucket-sort-2/)
 
 ### Визуализация
-- [`Visualgo`: `Bucket Sort`](https://visualgo.net/)
+- [Visualgo: Bucket Sort](https://visualgo.net/)
 
 ### См. также
 - [[counting-sort|counting-sort.md]] — сортировка подсчётом

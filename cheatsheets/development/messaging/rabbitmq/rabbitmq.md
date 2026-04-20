@@ -3765,8 +3765,8 @@ sequenceDiagram
 
 #### Topic Exchange:
 - **Иерархическая маршрутизация** — `user.us.registration`, `order.eu.urgent`
-- **Multi-level categorization** — `**event.`user.login`.success`, `event.`order.payment`.failed**`
-- **Geographic routing** — `**data.`us-east`.insert`, `data.`eu-west`.update**`
+- **Multi-level categorization** — `event.`user.login`.success`, `event.`order.payment`.failed`
+- **Geographic routing** — `data.`us-east`.insert`, `data.`eu-west`.update`
 
 #### Headers Exchange:
 - **Complex conditions** — **region**=us **AND priority**=**high**
@@ -3790,4 +3790,4 @@ sequenceDiagram
 
 **RabbitMQ** остается одним из лучших выборов для **message-oriented middleware** в **enterprise** системах. Его зрелость, надежность и богатая экосистема делают его отличным фундаментом для построения масштабируемых и надежных распределенных систем. 🚀
 
-**Далее: `Testing frameworks` (**JUnit**, **Mockito**, **AssertJ**)**
+**Далее: `Testing frameworks` (JUnit, Mockito, AssertJ)**

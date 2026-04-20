@@ -19,12 +19,12 @@ updated: "2026-02-11"
 
 ### Официальная документация
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/) — базовый список уязвимостей веб‑приложений
-- [`OWASP` Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — краткие шпаргалки по защите от различных типов атак
-- [`OWASP` Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — руководство по тестированию веб‑безопасности
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — краткие шпаргалки по защите от различных типов атак
+- [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — руководство по тестированию веб‑безопасности
 
 ### Ресурсы
-- [`MDN` Web Security](https://developer.mozilla.org/en-US/docs/Web/Security) — документация по веб‑безопасности от `Mozilla`
-- [`Web.dev` Security](https://web.dev/security/) — практические рекомендации по безопасности веб‑приложений
+- [MDN Web Security](https://developer.mozilla.org/en-US/docs/Web/Security) — документация по веб‑безопасности от `Mozilla`
+- [Web.dev Security](https://web.dev/security/) — практические рекомендации по безопасности веб‑приложений
 
 ### См. также
 - [[application-security|Application Security]] — аутентификация, авторизация, токены

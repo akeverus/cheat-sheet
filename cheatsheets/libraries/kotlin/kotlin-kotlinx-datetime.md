@@ -1235,7 +1235,7 @@ val nextBusinessDay = businessCalendar.nextBusinessDay(date)
 
 
 ## Полезные ссылки
-- [Официальная документация `kotlinx.datetime`](https://github.com/Kotlin/kotlinx-datetime)
+- [Официальная документация kotlinx.datetime](https://github.com/Kotlin/kotlinx-datetime)
 - [Kotlin DateTime Guide](https://kotlinlang.org/docs/datetime.html)
 - [Kotlin Blog — DateTime](https://blog.jetbrains.com/kotlin/tag/datetime/)
 - [Migration from Java Time](https://github.com/Kotlin/kotlinx-datetime/blob/master/docs/migration.md)

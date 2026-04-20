@@ -1346,7 +1346,7 @@ val json = Json.encodeToString(data)
 
 
 ## Полезные ссылки
-- [Официальная документация `kotlinx.serialization`](https://github.com/Kotlin/kotlinx.serialization)
+- [Официальная документация kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)
 - [Kotlin Serialization Guide](https://kotlinlang.org/docs/serialization.html)
 - [Serialization Samples](https://github.com/Kotlin/kotlinx.serialization/tree/master/sample)
 - [Kotlin Blog — Serialization](https://blog.jetbrains.com/kotlin/tag/serialization/)

@@ -1232,7 +1232,7 @@ fun `advanced coroutine testing`() = runTest {
 
 
 ## Полезные ссылки
-- [Официальная документация `MockK`](https://mockk.io/)
+- [Официальная документация MockK](https://mockk.io/)
 - [MockK GitHub](https://github.com/mockk/mockk)
 - [MockK Wiki](https://github.com/mockk/mockk/wiki)
 - [Kotlin Testing](https://kotlinlang.org/docs/jvm-test-using-junit.html)

@@ -790,3 +790,11 @@ database:
 - Микросервисная архитектура
 - Требования к метрикам и observability
 - Production-ready развёртывание
+
+## См. также
+
+- [[javalin-basics|Javalin: Основы]]
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]

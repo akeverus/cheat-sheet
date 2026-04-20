@@ -94,7 +94,7 @@ FROM authors;
 SELECT * FROM authors
 WHERE city = 'London' AND name LIKE 'A%';
 ```
-- Операторы: `=`, `<>`, `<`, `>`, `BETWEEN`, `LIKE`, `IN`, `IS **NULL**`.
+- Операторы: `=`, `<>`, `<`, `>`, `BETWEEN`, `LIKE`, `IN`, `IS NULL`.
 
 ## UPDATE
 ```sql
@@ -127,7 +127,7 @@ INSERT INTO authors (name, city) VALUES
  ('Bob','Paris'),
  ('Cato','Rome');
 ```
-- Для очень больших объёмов используйте `**COPY** ... **FROM STDIN**` или **pg_dump** формат **CSV**.
+- Для очень больших объёмов используйте `COPY ... FROM STDIN` или **pg_dump** формат **CSV**.
 
 ## UPSERT (ON CONFLICT)
 - **Уникальный ключ по **email**:**
@@ -139,7 +139,7 @@ VALUES ('a@b.com','Ada')
 ON CONFLICT (email)
 DO UPDATE SET name = EXCLUDED.name, updated_at = now();
 ```
-- Вариант без обновления: `DO **NOTHING**`.
+- Вариант без обновления: `DO NOTHING`.
 
 ## Транзакции и безопасность данных
 - **Объединяйте связанные операции в транзакцию:**
@@ -164,7 +164,7 @@ FROM '/path/authors.csv' WITH (FORMAT csv, HEADER true);
 - Для **JSON**/бинарных форматов можно использовать `PROGRAM` или `STDIN`.
 
 ## Блокировки при DML
-- `**SELECT** ... **FOR UPDATE**|**FOR SHARE**|**FOR** `NO` **KEY UPDATE**` — берёт блокировки строк.
+- `SELECT ... FOR UPDATE|FOR SHARE|FOR `NO` KEY UPDATE` — берёт блокировки строк.
 - Избегайте долгих транзакций с `FOR UPDATE`, чтобы не блокировать других.
 - Частичные обновления лучше делать с индексами, чтобы не сканировать всю таблицу.
 - Проверяйте конфликт: `FOR UPDATE NOWAIT` или `SKIP LOCKED` для очередей.
@@ -445,7 +445,7 @@ WHERE (Manufacturer = 'Samsung' OR Price > 30000) AND ProductCount > 2;
 
 ### `IS` NULL и `IS` NOT NULL
 
-**Ряд столбцов может допускать значение `NULL`.** Это значение не эквивалентно пустой строке `''`. `NULL` представляет полное отсутствие какого-либо значения. И для проверки на наличие подобного значения применяется оператор `IS **NULL**`.
+**Ряд столбцов может допускать значение `NULL`.** Это значение не эквивалентно пустой строке `''`. `NULL` представляет полное отсутствие какого-либо значения. И для проверки на наличие подобного значения применяется оператор `IS NULL`.
 
 ```sql
 -- Найти строки с NULL значением
@@ -506,7 +506,7 @@ SET Price = (SELECT AVG(Price) FROM Products)
 WHERE Price IS NULL;
 ```
 
-**UPDATE с использованием `JOIN` (**в **PostgreSQL** через **FROM**):**
+**UPDATE с использованием `JOIN` (в PostgreSQL через FROM):**
 ```sql
 -- Обновить товары на основе данных из другой таблицы
 UPDATE Products p
@@ -575,7 +575,7 @@ WHERE NOT EXISTS (
 );
 ```
 
-**DELETE с использованием `JOIN` (**через **USING**):**
+**DELETE с использованием `JOIN` (через USING):**
 ```sql
 DELETE FROM Products p
 USING Products_Backup pb
@@ -585,7 +585,7 @@ WHERE p.Id = pb.Id
 
 ### CASCADE удаление
 
-**При удалении строк из главной таблицы, если установлено `ON **DELETE CASCADE**`, автоматически удаляются связанные строки из зависимой таблицы:**
+**При удалении строк из главной таблицы, если установлено `ON DELETE CASCADE`, автоматически удаляются связанные строки из зависимой таблицы:**
 
 ```sql
 -- Если в OrderItems установлено ON DELETE CASCADE

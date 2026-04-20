@@ -99,7 +99,7 @@ updated: "2026-02-11"
 
 ### Maven зависимости
 
-Ниже — **Maven**-зависимости **Spring AI** (**core**, **OpenAI**, **Chroma**, **PDF reader**) в формате **XML**.
+Ниже — **Maven**-зависимости **Spring AI** (core, OpenAI, Chroma, PDF reader) в формате **XML**.
 ```xml
 <dependencies>
     <!-- Core Spring AI -->

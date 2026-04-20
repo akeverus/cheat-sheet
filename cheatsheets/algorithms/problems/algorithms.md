@@ -23,6 +23,12 @@ updated: "2026-02-11"
 - [Структуры данных](../data-structures/) — обзор разделов
 - [Задачи и алгоритмы](./) — обзор разделов
 
+- [[a-star-pathfinding|Поиск пути A* (A* Pathfinding Algorithm)]]
+- [[branch-prediction|Предсказание ветвления (Branch Prediction)]]
+- [[calculator-implementation|Calculator Implementation]]
+- [[circular-buffer|Circular Buffer]]
+- [[combinatorial-problems-overview|Обзор комбинаторных задач (Combinatorial Problems Overview)]]
+
 ## Содержание
 
 - [Обзор](#обзор)

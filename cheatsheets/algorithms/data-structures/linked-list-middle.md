@@ -17,8 +17,8 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`LinkedList` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html)
-- [`Optional` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html)
+- [LinkedList (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedList.html)
+- [Optional (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html)
 
 ### См. также
 - [[linked-list-reverse|Реверс Linked List]]

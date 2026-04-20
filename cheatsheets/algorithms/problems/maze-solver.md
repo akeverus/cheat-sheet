@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Baeldung`: `Maze Solver`](https://www.baeldung.com/)
+- [Baeldung: Maze Solver](https://www.baeldung.com/)
 
 ### См. также
 - [[a-star-pathfinding|Поиск пути A*]] — A*
