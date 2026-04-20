@@ -1483,12 +1483,6 @@
     block.classList.toggle('hidden');
   };
 
-  window.toggleDetails = function toggleDetails() {
-    const details = document.getElementById('details');
-    if (!details) return;
-    details.classList.toggle('hidden');
-  };
-
   window.submitAnswer = function submitAnswer() {
     const activeForm = document.getElementById('interview-form');
     if (activeForm) {
