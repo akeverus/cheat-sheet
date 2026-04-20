@@ -42,7 +42,12 @@ class QuestionRepositoryTest {
                     code_snippet TEXT,
                     diagram_mermaid TEXT,
                     regen_count INTEGER NOT NULL DEFAULT 0,
-                    takeaway TEXT
+                    takeaway TEXT,
+                    difficulty TEXT NOT NULL DEFAULT 'MEDIUM',
+                    short_explanation TEXT,
+                    detailed_explanation TEXT,
+                    common_mistake TEXT,
+                    tags TEXT
                 )
                 """);
         jdbcTemplate.execute("""
