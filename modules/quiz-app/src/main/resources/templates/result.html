@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeMermaid=true, includeChart=false)}"></head>
+<head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeMermaid=${aiEnabled}, includeChart=false)}"></head>
 <body class="result-page">
 <a class="skip-link" href="#main-content">Перейти к результату</a>
 <header th:replace="~{fragments/header :: header(pageTitle='Результат — Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
@@ -40,6 +40,7 @@
                     <span class="topic-badge" th:if="${result.question.topic != null}"
                           th:text="${@topicUtils.displayName(result.question.topic)}">topic</span>
                     <button type="button" class="btn-regenerate" title="Удалить варианты и перегенерировать через LLM"
+                            th:if="${aiEnabled}"
                             th:data-question-id="${result.question.id}" id="btn-regenerate" aria-label="Перегенерировать варианты ответа">🔄</button>
                     <span th:if="${result.question.regenCount() > 0}" class="regen-badge"
                           th:text="${result.question.regenCount()}"
@@ -94,7 +95,7 @@
             </div>
         </div>
 
-        <div class="question-side" th:if="${diagram != null or (result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null)}">
+        <div class="question-side" th:if="${aiEnabled and (diagram != null or (result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null))}">
             <div th:if="${diagram != null}" class="question-diagram">
                 <div class="mermaid" th:text="${diagram}">diagram code</div>
             </div>

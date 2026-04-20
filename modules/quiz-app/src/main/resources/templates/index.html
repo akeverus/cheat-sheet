@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Подготовка к собеседованию', includeMermaid=true, includeChart=false)}"></head>
+<head th:replace="~{fragments/head :: head(title='Подготовка к собеседованию', includeMermaid=${aiEnabled}, includeChart=false)}"></head>
 <body class="focus-page">
 <a class="skip-link" href="#main-content">Перейти к вопросу</a>
 <header th:replace="~{fragments/header :: header(pageTitle='Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=false)}"></header>
@@ -73,9 +73,11 @@
                     th:title="${current.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"
                     th:aria-label="${current.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'">★</button>
             <button type="button" class="btn-hint" id="btn-hint"
+                    th:if="${aiEnabled}"
                     th:data-question-id="${current.question.id}"
                     title="Подсказка" aria-label="Подсказка">💡</button>
             <button type="button" class="btn-regenerate" title="Перегенерировать варианты через LLM"
+                    th:if="${aiEnabled}"
                     th:data-question-id="${current.question.id}" id="btn-regenerate" aria-label="Перегенерировать варианты ответа">🔄</button>
         </div>
     </div>
@@ -190,7 +192,7 @@
             )}"></div>
         </div>
 
-        <aside class="training-side" th:if="${diagram != null or (current.question.questionType != null and current.question.questionType.name() == 'CODE' and current.question.codeSnippet() != null)}">
+        <aside class="training-side" th:if="${aiEnabled and (diagram != null or (current.question.questionType != null and current.question.questionType.name() == 'CODE' and current.question.codeSnippet() != null))}">
             <details class="question-support">
                 <summary>Код и схема (по запросу)</summary>
                 <div th:if="${diagram != null}" class="question-diagram">
