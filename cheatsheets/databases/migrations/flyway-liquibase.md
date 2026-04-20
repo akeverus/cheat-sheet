@@ -134,7 +134,6 @@ public class FlywayMigrationCallback implements FlywayCallback {
 }
 ```
 
----
 
 ## Liquibase
 
@@ -267,7 +266,6 @@ liquibase validate            # проверить changelog на ошибки
 liquibase generateChangeLog   # сгенерировать changelog из существующей БД
 ```
 
----
 
 ## Flyway vs Liquibase — сравнение
 
@@ -282,7 +280,6 @@ liquibase generateChangeLog   # сгенерировать changelog из сущ
 | **CI/CD** | Простая интеграция через CLI / Maven / Gradle | То же + DATABASECHANGELOGLOCK для concurrency |
 | **Tracking table** | `flyway_schema_history` | `databasechangelog` + `databasechangeloglock` |
 
----
 
 ## Spring Boot — интеграция
 
@@ -344,7 +341,6 @@ class MigrationTest {
 }
 ```
 
----
 
 ## Best practices
 
@@ -356,7 +352,6 @@ class MigrationTest {
 - **Не коммитить `baseline-on-migrate: true` в прод-конфиг** — опасно для существующих БД
 - **Lock timeout** — в Liquibase настраивать `changeLogLockWaitTimeInMinutes`, чтобы CI не висел бесконечно при зависшем локе
 
----
 
 ## Типичные ошибки
 
@@ -370,7 +365,6 @@ class MigrationTest {
 | `FlywayException: Found non-empty schema(s)` | `baseline-on-migrate=false` на существующей БД | Установить `baseline-on-migrate: true` один раз |
 | Hibernate падает после миграции | `ddl-auto: create-drop` затирает схему | Переключить на `validate` или `none` |
 
----
 
 ## См. также
 

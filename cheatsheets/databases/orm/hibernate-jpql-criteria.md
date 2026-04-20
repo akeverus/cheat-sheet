@@ -64,7 +64,6 @@ JPQL — объектно-ориентированный язык запросо
 - HQL — нужны Hibernate-специфичные функции (например, `FILTER`, `elements()`).
 - Criteria API — динамические фильтры (поисковые формы, pagination API).
 
----
 
 ## Базовые JPQL-запросы
 
@@ -137,7 +136,6 @@ em.createQuery("SELECT u FROM User u WHERE u.deletedAt IS NULL", User.class)
   .getResultList();
 ```
 
----
 
 ## Джойны (JOIN, JOIN FETCH)
 
@@ -218,7 +216,6 @@ em.createQuery(
     User.class).getResultList();
 ```
 
----
 
 ## Подзапросы
 
@@ -256,7 +253,6 @@ em.createQuery(
   .getResultList();
 ```
 
----
 
 ## Именованные запросы
 
@@ -309,7 +305,6 @@ Long count = em.createNamedQuery("User.countActive", Long.class)
 )
 ```
 
----
 
 ## Пагинация и сортировка
 
@@ -365,7 +360,6 @@ em.createQuery(
   .getResultList();
 ```
 
----
 
 ## Проекции и DTO
 
@@ -422,7 +416,6 @@ for (Tuple t : tuples) {
 }
 ```
 
----
 
 ## Criteria API
 
@@ -500,7 +493,6 @@ cq.multiselect(root.get("status"), count, sum)
 List<Object[]> results = em.createQuery(cq).getResultList();
 ```
 
----
 
 ## Динамические запросы через Criteria
 
@@ -535,7 +527,6 @@ public List<Product> searchProducts(String name, Double minPrice, Double maxPric
 }
 ```
 
----
 
 ## Criteria Tuple и мультиселект
 
@@ -574,7 +565,6 @@ cq.select(cb.construct(
 List<UserSummaryDto> dtos = em.createQuery(cq).getResultList();
 ```
 
----
 
 ## UPDATE и DELETE через JPQL
 
@@ -611,7 +601,6 @@ em.createQuery("UPDATE Product p SET p.active = false WHERE p.stock = 0")
 em.clear(); // сбросить L1 после bulk-операции
 ```
 
----
 
 ## Практические советы
 
@@ -683,7 +672,6 @@ Boolean exists = em.createQuery(
   .setParameter("e", email).getSingleResult();
 ```
 
----
 
 ## Типичные ошибки
 
@@ -734,7 +722,6 @@ em.createQuery("SELECT o FROM Order o WHERE o.user.email = :email", Order.class)
 em.createQuery("SELECT o FROM Order o JOIN o.items i WHERE i.name = :name", Order.class);
 ```
 
----
 
 ## См. также
 

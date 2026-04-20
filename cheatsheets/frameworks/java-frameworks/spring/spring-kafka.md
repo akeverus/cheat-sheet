@@ -78,7 +78,7 @@ related: ["spring/spring-boot.md", "messaging/kafka.md"]
   - [Compression](#compression)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Введение в Spring for Apache Kafka
 

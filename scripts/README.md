@@ -12,6 +12,7 @@
 | `cheatsheet-autofix-v3.py` | Третий проход: жирный внутри inline-кода, расширенные тире, сложные случаи скобок. | ✓ |
 | `cheatsheet-regenerate-toc.py` | Перегенерация блока `## Содержание` из реальных заголовков с GFM-совместимым slugify. | ✓ |
 | `cheatsheet-add-wikilinks.py` | Дополняет `### См. также` до 5 wikilinks по пересечению тегов frontmatter. | ✓ |
+| `cheatsheet-autofix-all.py` | Единая точка входа: прогоняет все 3 прохода + regenerate-toc по порядку. | ✓ |
 
 ## Запуск
 
@@ -19,12 +20,13 @@
 # Валидация — 0 нарушений = всё чисто
 python3 scripts/cheatsheet-lint.py cheatsheets
 
-# Автоправки (запускать последовательно для полной зачистки)
+# Полная зачистка одной командой (3 прохода + TOC)
+python3 scripts/cheatsheet-autofix-all.py cheatsheets
+
+# Или по отдельности (для отладки)
 python3 scripts/cheatsheet-autofix.py cheatsheets
 python3 scripts/cheatsheet-autofix-v2.py cheatsheets
 python3 scripts/cheatsheet-autofix-v3.py cheatsheets
-
-# Пересборка TOC
 python3 scripts/cheatsheet-regenerate-toc.py cheatsheets
 
 # Дополнить wikilinks до 5 в ### См. также
@@ -36,17 +38,32 @@ python3 scripts/cheatsheet-autofix-v2.py cheatsheets --only postgres
 
 ## CI / pre-commit
 
-Добавить в `.git/hooks/pre-commit`:
+### GitHub Actions
+
+Настроен workflow `.github/workflows/cheatsheet-lint.yml` — запускается на push/PR при изменении `cheatsheets/**` или `scripts/cheatsheet-lint.py`.
+
+### pre-commit framework
+
+Установить [pre-commit](https://pre-commit.com/):
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Конфигурация в `.pre-commit-config.yaml`. При каждом `git commit` прогонит lint.
+
+### Shell hook вручную
+
+Альтернатива — в `.git/hooks/pre-commit`:
 
 ```bash
 #!/bin/bash
 python3 scripts/cheatsheet-lint.py cheatsheets --summary || {
-  echo "Cheatsheet lint failed. Run scripts/cheatsheet-autofix*.py to fix."
+  echo "Cheatsheet lint failed. Run scripts/cheatsheet-autofix-all.py to fix."
   exit 1
 }
 ```
-
-Или в Gradle-задачу/GitHub Actions.
 
 ## Что НЕ делают скрипты
 

@@ -1,15 +1,58 @@
 ---
-title: "Spring Kafka — Interview"
-description: "Вопросы на собеседовании по Spring Kafka: KafkaTemplate, @KafkaListener, Consumer Groups, обработка ошибок, транзакции, тестирование."
+title: "Вопросы на собеседовании: Spring Kafka"
+description: "Spring Kafka для работы с Apache Kafka: KafkaTemplate, @KafkaListener, Consumer Groups, DLT, транзакции, тестирование с EmbeddedKafka"
 tags:
   - interview
   - spring
-  - kafka
-  - messaging
+  - spring-kafka-interview
+aliases:
+  - "Spring Kafka interview"
+  - "Spring Kafka собеседование"
+  - "Spring Kafka вопросы"
+  - "kafka spring boot interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Spring Kafka — Interview
+# Вопросы на собеседовании: `Spring Kafka`
+
+`Spring Kafka` — интеграция Apache Kafka в экосистему Spring. Предоставляет `KafkaTemplate` для отправки, `@KafkaListener` для потребления, поддержку транзакций и Dead Letter Topics. Часто задаётся в интервью рядом с основами Kafka.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Spring Kafka Docs](https://docs.spring.io/spring-kafka/docs/current/reference/html/) — официальная документация
+- [Baeldung: Spring Kafka](https://www.baeldung.com/spring-kafka) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
+
+**Основы**
+- [Q1. (!) Что такое Spring Kafka и ключевые абстракции?](#q1-что-такое-spring-kafka-и-ключевые-абстракции)
+- [Q2. Как настроить KafkaTemplate и отправить сообщение?](#q2-как-настроить-kafkatemplate-и-отправить-сообщение)
+- [Q3. Как написать Kafka Consumer с @KafkaListener?](#q3-как-написать-kafka-consumer-с-kafkalistener)
+- [Q4. (!) Что такое Consumer Group?](#q4-что-такое-consumer-group)
+
+**Обработка ошибок**
+- [Q5. (!) Как обрабатывать ошибки в @KafkaListener?](#q5-как-обрабатывать-ошибки-в-kafkalistener)
+- [Q6. Что такое Dead Letter Topic (DLT)?](#q6-что-такое-dead-letter-topic-dlt)
+
+**Конфигурация и особенности**
+- [Q7. Как работают транзакции в Spring Kafka?](#q7-как-работают-транзакции-в-spring-kafka)
+- [Q8. Как настроить конкурентное чтение?](#q8-как-настроить-конкурентное-чтение)
+- [Q9. Как управлять offset коммитами?](#q9-как-управлять-offset-коммитами)
+- [Q10. Как работает сериализация/десериализация?](#q10-как-работает-сериализациядесериализация)
+
+**Тестирование и специальные случаи**
+- [Q11. Как тестировать Spring Kafka без реального брокера?](#q11-как-тестировать-spring-kafka-без-реального-брокера)
+- [Q12. Что такое Kafka Streams в контексте Spring?](#q12-что-такое-kafka-streams-в-контексте-spring)
+- [Q13. Какие стратегии обеспечения порядка сообщений?](#q13-какие-стратегии-обеспечения-порядка-сообщений)
+- [Q14. Как настроить idempotent producer?](#q14-как-настроить-idempotent-producer)
+- [Q15. Как работает Pause/Resume для @KafkaListener?](#q15-как-работает-pauseresume-для-kafkalistener)
 
 ## Q1. Что такое Spring Kafka и какие ключевые абстракции он предоставляет?
 
@@ -388,8 +431,13 @@ public void handle(ConsumerRecord<String, OrderEvent> record,
 
 ## See also
 
-- [[spring-kafka|Spring Kafka]] — полный cheatsheet
-- [[kafka-interview|Apache Kafka Interview]] — вопросы по Kafka
-- [[spring-boot-interview|Spring Boot Interview]] — общие вопросы
-- [[spring-webflux-interview|Spring WebFlux Interview]] — реактивный стек
-- [[spring-modulith-interview|Spring Modulith Interview]] — события в модульном монолите
+- [[kafka-interview|Apache Kafka]] — основы Kafka: partitions, offsets, consumer groups, delivery semantics
+- [[spring-boot-interview|Spring Boot]] — auto-configuration, Spring Boot starters
+- [[spring-transaction-interview|Spring @Transactional]] — транзакции Kafka + JPA через ChainedKafkaTransactionManager
+- [[spring-retry-interview|Spring Retry]] — retry в Kafka listeners через DefaultErrorHandler
+- [[spring-modulith-interview|Spring Modulith]] — ApplicationEvents как альтернатива Kafka в монолите
+- [[spring-webflux-interview|Spring WebFlux]] — реактивный стек с ReactiveKafkaConsumerTemplate
+- [[spring-testing-interview|Spring Testing]] — @EmbeddedKafka для интеграционных тестов
+- [[messaging-interview|Message Brokers]] — сравнение Kafka, RabbitMQ, Pulsar
+- [[spring-events-interview|Spring Events]] — ApplicationEventPublisher как лёгкая альтернатива
+- [[resilience4j-interview|Resilience4j]] — circuit breaker для Kafka producers

@@ -25,8 +25,6 @@ updated: "2026-04-20"
 
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
-
-
 ### См. также
 - [[containerization-overview|Containerization — обзор]]
 ## Содержание

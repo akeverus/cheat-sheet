@@ -1,16 +1,62 @@
 ---
-title: "Java Virtual Threads — Interview"
-description: "Вопросы на собеседовании по Java Virtual Threads (Project Loom): carrier threads, pinning, Structured Concurrency, Spring Boot."
+title: "Вопросы на собеседовании: Java Virtual Threads"
+description: "Java Virtual Threads (Project Loom): carrier threads, pinning, Structured Concurrency, ScopedValue, интеграция с Spring Boot и JDBC"
 tags:
   - interview
   - java
-  - virtual-threads
-  - concurrency
-  - java21
+  - java-virtual-threads-interview
+aliases:
+  - "Virtual Threads interview"
+  - "Virtual Threads собеседование"
+  - "Virtual Threads вопросы"
+  - "Project Loom interview"
+  - "Java 21 Virtual Threads"
 difficulty: "advanced"
 updated: "2026-04-20"
 ---
-# Java Virtual Threads — Interview
+# Вопросы на собеседовании: `Java Virtual Threads`
+
+`Virtual Threads` (Project Loom) — лёгкие потоки JVM, ставшие стандартом в Java 21. Позволяют писать blocking-стиль код с non-blocking производительностью — миллионы потоков вместо тысяч, без перехода на reactive.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [JEP 444: Virtual Threads](https://openjdk.org/jeps/444) — JEP, описывающий Virtual Threads
+- [Spring Boot: Virtual Threads](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.task-execution-and-scheduling) — интеграция в Spring Boot 3.2+
+- [Baeldung: Virtual Threads](https://www.baeldung.com/java-virtual-thread-vs-thread) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
+
+**Основы**
+- [Q1. (!) Что такое виртуальные потоки и зачем они нужны?](#q1-что-такое-виртуальные-потоки-virtual-threads-и-зачем-они-нужны)
+- [Q2. Как создать виртуальный поток?](#q2-как-создать-виртуальный-поток)
+- [Q3. (!) Что такое carrier thread?](#q3-что-такое-carrier-thread-и-как-виртуальный-поток-с-ним-связан)
+- [Q4. (!) Что такое pinning и как его избежать?](#q4-что-такое-pinning-и-как-его-избежать)
+
+**Применение**
+- [Q5. Для каких задач VT подходят, а для каких нет?](#q5-для-каких-задач-virtual-threads-подходят-а-для-каких-нет)
+- [Q6. Как включить Virtual Threads в Spring Boot?](#q6-как-включить-virtual-threads-в-spring-boot)
+- [Q7. Влияет ли ThreadLocal на Virtual Threads?](#q7-влияет-ли-использование-threadlocal-на-virtual-threads)
+
+**Structured Concurrency**
+- [Q8. Что такое Structured Concurrency?](#q8-что-такое-structured-concurrency)
+
+**Сравнения**
+- [Q9. Чем VT отличаются от корутин Kotlin?](#q9-чем-virtual-threads-отличаются-от-корутин-kotlin)
+- [Q10. Как VT взаимодействуют с JDBC?](#q10-как-виртуальные-потоки-взаимодействуют-с-jdbc)
+- [Q14. Как VT соотносятся с Reactive Streams?](#q14-как-виртуальные-потоки-соотносятся-с-reactive-streams-webflux)
+
+**Диагностика и производительность**
+- [Q11. Как отлаживать Virtual Threads?](#q11-как-отлаживать-virtual-threads)
+- [Q12. Каков накладной расход создания VT?](#q12-каков-накладной-расход-создания-виртуального-потока)
+- [Q13. Почему не нужен пул виртуальных потоков?](#q13-почему-не-нужен-пул-виртуальных-потоков)
+- [Q15. Thread.sleep() в VT vs Platform Thread?](#q15-что-такое-threadsleep-в-контексте-vt-и-чем-отличается-от-platform-thread)
 
 ## Q1. Что такое виртуальные потоки (Virtual Threads) и зачем они нужны?
 
@@ -262,10 +308,17 @@ Thread.ofPlatform().start(() -> {
 
 Это же касается `Object.wait()`, `LockSupport.park()`, blocking I/O — все они корректно демонтируют VT.
 
+---
+
 ## See also
 
-- [[java-virtual-threads|Java Virtual Threads]] — полный cheatsheet
-- [[java-concurrency-interview|Java Concurrency Interview]] — основы многопоточности
-- [[java-17-21-interview|Java 17–21 Interview]] — все новшества Java 21
-- [[spring-boot-interview|Spring Boot Interview]] — Spring Boot + Virtual Threads
-- [[reactive-patterns-interview|Reactive Patterns Interview]] — альтернативный подход
+- [[java-concurrency-interview|Java Concurrency]] — основы многопоточности, synchronized, locks, Executor
+- [[java-17-21-interview|Java 17-21]] — все новшества Java 17-21, records, sealed classes
+- [[java-completable-future-interview|Java CompletableFuture]] — async composition на любых потоках (включая VT)
+- [[spring-boot-interview|Spring Boot]] — включение Virtual Threads через spring.threads.virtual.enabled
+- [[spring-async-interview|Spring @Async]] — @Async работает с Virtual Threads в Spring Boot 3.2+
+- [[spring-webflux-interview|Spring WebFlux]] — альтернативный реактивный подход (не-блокирующий)
+- [[kotlin-coroutines-interview|Kotlin Coroutines]] — сравнение с корутинами Kotlin
+- [[reactive-patterns-interview|Reactive Patterns]] — reactive streams как альтернатива VT
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — настройка JVM при использовании VT
+- [[java-concurrency-interview|Thread Pools]] — ThreadPoolExecutor концепции (почему не нужны для VT)

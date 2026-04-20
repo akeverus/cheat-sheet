@@ -1,16 +1,56 @@
 ---
-title: "Spring Modulith — Interview"
-description: "Вопросы на собеседовании по Spring Modulith: модульный монолит, изоляция, ApplicationEvents, тестирование модулей."
+title: "Вопросы на собеседовании: Spring Modulith"
+description: "Spring Modulith для модульных монолитов: определение модулей, изоляция, @ApplicationModuleListener, персистентность событий, тестирование, переход к микросервисам"
 tags:
   - interview
   - spring
-  - modulith
-  - modular-monolith
-  - architecture
+  - spring-modulith-interview
+aliases:
+  - "Spring Modulith interview"
+  - "Spring Modulith собеседование"
+  - "Spring Modulith вопросы"
+  - "modular monolith interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Spring Modulith — Interview
+# Вопросы на собеседовании: `Spring Modulith`
+
+`Spring Modulith` — библиотека для построения модульных монолитов на Spring Boot. Обеспечивает явные границы между модулями, верифицирует зависимости и предоставляет event-driven взаимодействие через `ApplicationEvents`.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Spring Modulith Docs](https://docs.spring.io/spring-modulith/docs/current/reference/html/) — официальная документация
+- [Baeldung: Spring Modulith](https://www.baeldung.com/spring-modulith) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
+
+**Основы**
+- [Q1. (!) Что такое Spring Modulith и какую проблему он решает?](#q1-что-такое-spring-modulith-и-какую-проблему-он-решает)
+- [Q2. Как Spring Modulith определяет модуль?](#q2-как-spring-modulith-определяет-модуль)
+- [Q3. Как проверить соблюдение архитектурных правил?](#q3-как-проверить-соблюдение-архитектурных-правил)
+- [Q4. (!) Как модули должны взаимодействовать между собой?](#q4-как-модули-должны-взаимодействовать-между-собой)
+- [Q5. Что такое @ApplicationModuleListener?](#q5-что-такое-applicationmodulelistener)
+
+**Персистентность и тестирование**
+- [Q6. Как работает персистентность событий?](#q6-как-работает-персистентность-событий)
+- [Q7. (!) Как тестировать отдельный модуль в изоляции?](#q7-как-тестировать-отдельный-модуль-в-изоляции)
+- [Q8. Какие режимы bootstrap существуют в @ApplicationModuleTest?](#q8-какие-режимы-bootstrap-существуют-в-applicationmoduletest)
+- [Q9. Что такое Scenarios API?](#q9-что-такое-scenarios-api)
+
+**Архитектура и продвинутые темы**
+- [Q10. Как визуализировать зависимости между модулями?](#q10-как-визуализировать-зависимости-между-модулями)
+- [Q11. (!) Когда использовать Spring Modulith, а когда — микросервисы?](#q11-когда-использовать-spring-modulith-а-когда--микросервисы)
+- [Q12. Как Spring Modulith помогает при переходе к микросервисам?](#q12-как-spring-modulith-помогает-при-переходе-к-микросервисам)
+- [Q13. Что такое Named Interface?](#q13-что-такое-named-interface)
+- [Q14. Как включить Spring Modulith в существующий проект?](#q14-как-включить-spring-modulith-в-существующий-проект)
+- [Q15. Как Spring Modulith соотносится с Hexagonal Architecture и DDD?](#q15-как-spring-modulith-соотносится-с-hexagonal-architecture-и-ddd)
 
 ## Q1. Что такое Spring Modulith и какую проблему он решает?
 
@@ -231,8 +271,11 @@ Hexagonal Architecture: `internal/` — адаптеры и реализации
 
 ## See also
 
-- [[spring-modulith|Spring Modulith]] — полный cheatsheet
-- [[spring-events-interview|Spring Events Interview]] — ApplicationEvents
-- [[spring-boot-interview|Spring Boot Interview]] — общие вопросы
-- [[microservices-interview|Microservices Interview]] — переход к микросервисам
-- [[ddd-interview|DDD Interview]] — bounded contexts
+- [[spring-events-interview|Spring Events]] — ApplicationEventPublisher/Listener, основа взаимодействия модулей
+- [[spring-boot-interview|Spring Boot]] — auto-configuration, основа для Spring Modulith
+- [[microservices-interview|Microservices]] — переход модульного монолита к микросервисам
+- [[ddd-interview|Domain-Driven Design]] — bounded contexts, aggregate roots — концепции модулей
+- [[hexagonal-architecture-interview|Hexagonal Architecture]] — internal/ как адаптеры и реализации
+- [[spring-testing-interview|Spring Testing]] — @ApplicationModuleTest изоляция при тестировании
+- [[clean-architecture-interview|Clean Architecture]] — separation of concerns на уровне пакетов
+- [[spring-kafka-interview|Spring Kafka]] — Kafka как замена ApplicationEvents при переходе к микросервисам

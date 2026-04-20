@@ -23,8 +23,6 @@ updated: "2026-04-20"
 > - [[secrets-management|Secrets Management]] — `Vault`, `KMS`, `Kubernetes Secrets`
 > - [[security-testing|Security Testing]] — `SAST`, `DAST`, `SCA`, пентесты
 
-
-
 ### См. также
 - [[application-security-interview|Вопросы на собеседовании]] — подготовка к интервью
 
@@ -66,7 +64,7 @@ updated: "2026-04-20"
   - [Cookie-based сессии](#cookie-based-сессии)
 - [Решение проблем](#решение-проблем)
 - [Минимальный чек-лист для прикладного кода](#минимальный-чек-лист-для-прикладного-кода)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Введение
 

@@ -20,8 +20,6 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
 
 # Spring AOP: Полное руководство по аспектно-ориентированному программированию
 
-
-
 ### См. также
 - [[spring-aop-interview|Вопросы на собеседовании]] — подготовка к интервью
 
@@ -120,7 +118,7 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
   - [Когда использовать AOP](#когда-использовать-aop)
   - [Лучшие практики](#лучшие-практики-1)
   - [Производительность](#производительность-1)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Введение в Spring AOP
 

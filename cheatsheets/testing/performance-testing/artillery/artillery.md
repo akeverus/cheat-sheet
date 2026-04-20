@@ -27,8 +27,6 @@ updated: "2026-04-20"
 
 **См. также:** [[jmeter]], [[gatling]], [[k6]], [[testing-tools-overview|Обзор инструментов тестирования]].
 
-
-
 ### См. также
 - [[cucumber|Cucumber для Java]]
 ## Содержание

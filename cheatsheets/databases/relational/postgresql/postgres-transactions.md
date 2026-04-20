@@ -34,8 +34,8 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 
 ### Дополнительные ресурсы
 
-- [PostgreSQL Wiki - Locking](https://www.postgresql.org/docs/)
-- [Baeldung - PostgreSQL Transactions](https://www.postgresql.org/docs/)
+- [PostgreSQL Wiki — Locking](https://www.postgresql.org/docs/)
+- [Baeldung — PostgreSQL Transactions](https://www.postgresql.org/docs/)
 - [PGCon — Advanced PostgreSQL Internals](https://www.postgresql.org/docs/)
 
 См. также: [[postgres-basics]] — [[postgres-design]] — [[postgres-indexes]] — [[postgres-admin]].

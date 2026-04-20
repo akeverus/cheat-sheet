@@ -29,7 +29,7 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 ### Официальная документация PostgreSQL
 
 - [PostgreSQL Partitioning](https://www.postgresql.org/docs/)
-- [PostgreSQL CREATE TABLE - Partitioning](https://www.postgresql.org/docs/)
+- [PostgreSQL CREATE TABLE — Partitioning](https://www.postgresql.org/docs/)
 - [PostgreSQL Partitioning Best Practices](https://www.postgresql.org/docs/)
 - [Partitioning and Constraint Exclusion](https://www.postgresql.org/docs/)
 

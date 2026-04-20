@@ -81,7 +81,6 @@ updated: "2026-04-20"
 - Запуск коллекций через **Newman** (CLI) в **CI/CD**
 - Создание **Mock-серверов** для разработки без бэкенда
 
----
 
 ## HTTP-методы
 
@@ -97,7 +96,6 @@ Accept: application/json
 
 Параметры задаются во вкладке **Params** — Postman автоматически добавляет их к URL.
 
----
 
 ### POST
 
@@ -117,7 +115,6 @@ Authorization: Bearer {{access_token}}
 
 Для отправки файлов используйте **Body → form-data** с типом `File`.
 
----
 
 ### PUT
 
@@ -135,7 +132,6 @@ Authorization: Bearer {{access_token}}
 }
 ```
 
----
 
 ### PATCH
 
@@ -151,7 +147,6 @@ Authorization: Bearer {{access_token}}
 }
 ```
 
----
 
 ### DELETE
 
@@ -173,7 +168,6 @@ Content-Type: application/json
 }
 ```
 
----
 
 ## Заголовки и авторизация
 
@@ -200,7 +194,6 @@ Content-Type: application/json
 
 Авторизацию можно задать на уровне **коллекции** — все запросы внутри наследуют её автоматически (`Inherit auth from parent`).
 
----
 
 ## Environments и Variables
 
@@ -267,7 +260,6 @@ Postman предоставляет генераторы данных через 
 | `{{$randomFullName}}` | Случайное имя |
 | `{{$isoTimestamp}}` | ISO 8601 дата |
 
----
 
 ## Коллекции
 
@@ -317,7 +309,6 @@ Users API
 - Поделиться коллекцией: **Share** → скопировать ссылку или добавить участника
 - **Publish Docs** — публичная документация с примерами прямо из коллекции
 
----
 
 ## Pre-request Scripts
 
@@ -370,7 +361,6 @@ pm.environment.set("random_email", `user_${pm.variables.replaceIn("{{$randomInt}
 pm.environment.set("request_id", pm.variables.replaceIn("{{$guid}}"));
 ```
 
----
 
 ## Tests (автоматические проверки)
 
@@ -477,7 +467,6 @@ if (pm.response.json().hasMore === false) {
 postman.setNextRequest("GET Refresh Token"); // прыгнуть к запросу по имени
 ```
 
----
 
 ## Newman — CLI-запуск
 
@@ -550,7 +539,6 @@ newman run "https://api.getpostman.com/collections/{{collection_id}}?apikey={{po
       --reporter-htmlextra-export report.html
 ```
 
----
 
 ## Mock Servers
 
@@ -558,7 +546,7 @@ newman run "https://api.getpostman.com/collections/{{collection_id}}?apikey={{po
 
 Принцип работы:
 
-- Для каждого запроса в коллекции создаётся **пример ответа** (вкладка **Examples**)
+- Для каждого запроса в коллекции создаётся **пример ответа** (вкладка Examples)
 - Mock Server возвращает этот пример при обращении к нему
 - URL мок-сервера выдаётся Postman-ом и выглядит как `https://<id>.mock.pstmn.io`
 
@@ -576,4 +564,3 @@ newman run "https://api.getpostman.com/collections/{{collection_id}}?apikey={{po
 
 Ограничения бесплатного плана: 1000 вызовов / месяц на мок-сервер.
 
----

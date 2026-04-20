@@ -21,7 +21,7 @@ updated: "2026-04-20"
 
 ### Спецификации
 - [RFC 7231 — Semantics](https://tools.ietf.org/html/rfc7231)
-- [RFC 3986 - URI Generic Syntax](https://tools.ietf.org/html/rfc3986)
+- [RFC 3986 — URI Generic Syntax](https://tools.ietf.org/html/rfc3986)
 - [JSON:API Specification](https://jsonapi.org/)
 
 ### Обучающие материалы

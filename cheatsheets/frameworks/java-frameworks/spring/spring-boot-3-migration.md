@@ -65,7 +65,6 @@ Spring Boot 3.x — major-релиз с несколькими breaking changes:
 - **Hibernate 6.x** — смена поставщика JPA, изменения в маппинге типов.
 - **Micrometer Observation API** — замена `Metrics` + `Tracing` на единый `ObservationRegistry`.
 
----
 
 ## Пошаговый план миграции
 
@@ -150,7 +149,6 @@ logging:
 ./mvnw test
 ```
 
----
 
 ## javax → jakarta: таблица замен
 
@@ -175,7 +173,6 @@ import javax.validation.constraints.*;→     import jakarta.validation.constrai
 import javax.servlet.http.HttpServletRequest; → import jakarta.servlet.http.HttpServletRequest;
 ```
 
----
 
 ## Spring Security 6.x
 
@@ -244,7 +241,6 @@ public SecurityFilterChain jwtFilterChain(HttpSecurity http) throws Exception {
 }
 ```
 
----
 
 ## Spring Data JPA 3.x
 
@@ -271,7 +267,6 @@ private String longText;
 List<Order> findByStatus(String status);
 ```
 
----
 
 ## AOT Processing
 
@@ -307,7 +302,6 @@ public class MyRuntimeHints implements RuntimeHintsRegistrar {
 }
 ```
 
----
 
 ## GraalVM Native Image
 
@@ -350,7 +344,6 @@ graalvmNative.binaries.main.imageName = 'my-app'
 - Ряд библиотек не поддерживают Native (Groovy, некоторые AOP-сценарии)
 - Время сборки: 2–10 минут
 
----
 
 ## Actuator и Observability
 
@@ -420,7 +413,6 @@ ObservedAspect observedAspect(ObservationRegistry registry) {
 }
 ```
 
----
 
 ## Типичные ошибки при миграции
 
@@ -435,7 +427,6 @@ ObservedAspect observedAspect(ObservationRegistry registry) {
 | `management.info.contributors.enabled` не работает                  | В Boot 3.x переименованы свойства                           | Использовать `management.info.env.enabled=true`                              |
 | Тесты падают с `NullPointerException` в SecurityContext              | Изменился порядок фильтров                                  | Обновить `@WithMockUser` / `SecurityMockMvcConfigurers`                      |
 
----
 
 ## Чек-лист миграции
 
@@ -455,7 +446,6 @@ ObservedAspect observedAspect(ObservationRegistry registry) {
 14. Проверить логи запуска на `WARN` и `DEPRECATED` сообщения
 15. Обновить CI/CD pipeline: указать JDK 17+, обновить Docker base image
 
----
 
 ## См. также
 

@@ -11,7 +11,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **244**.
+Всего файлов: **258**.
 
 ## Быстрые маршруты подготовки
 
@@ -209,13 +209,24 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Spring Transactions`](frameworks/spring/spring-transaction-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Validation`](frameworks/spring/spring-validation-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring WebFlux`](frameworks/spring/spring-webflux-interview.md) — `43` вопроса
-- [Вопросы на собеседовании: `Spring Retry`](frameworks/spring/spring-retry-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Retry`](frameworks/spring/spring-retry-interview.md) — `17` вопросов
 - [Вопросы на собеседовании: `Spring Modulith`](frameworks/spring/spring-modulith-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Kafka`](frameworks/spring/spring-kafka-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring R2DBC`](frameworks/spring/spring-r2dbc-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring GraphQL`](frameworks/spring/spring-graphql-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring AI`](frameworks/spring/spring-ai-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring State Machine`](frameworks/spring/spring-state-machine-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Integration`](frameworks/spring/spring-integration-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Session`](frameworks/spring/spring-session-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Vault`](frameworks/spring/spring-vault-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Messaging`](frameworks/spring/spring-messaging-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Resilience4j`](frameworks/spring/resilience4j-interview.md) — `20` вопросов
+- [Вопросы на собеседовании: `Spring @Async`](frameworks/spring/spring-async-interview.md) — `15` вопросов
 
 ## jvm
 
 - [Вопросы на собеседовании: `JVM`](jvm/jvm-interview.md) — `40` вопросов
+- [Вопросы на собеседовании: `GraalVM Native Image`](jvm/graalvm-native-interview.md) — `15` вопросов
 
 ## leadership
 
@@ -318,6 +329,8 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: интероп `Kotlin` и `Java`](programming-languages/kotlin/kotlin-interop-java-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `Kotlin`](programming-languages/kotlin/kotlin-interview.md) — `45` вопросов
 - [Вопросы на собеседовании: сериализация в `Kotlin`](programming-languages/kotlin/kotlin-serialization-interview.md) — `43` вопроса
+- [Вопросы на собеседовании: `Kotlin Flow`](programming-languages/kotlin/kotlin-flow-interview.md) — `17` вопросов
+- [Вопросы на собеседовании: `Kotlin Sealed Classes`](programming-languages/kotlin/kotlin-sealed-classes-interview.md) — `15` вопросов
 
 ## reactive
 
@@ -358,6 +371,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Integration Testing`](testing/integration-testing-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Load Testing`](testing/load-testing-interview.md) — `22` вопроса
 - [Вопросы на собеседовании: `Mockito`](testing/mockito-interview.md) — `45` вопросов
+- [Вопросы на собеседовании: `JUnit 5`](testing/junit-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Mutation Testing`](testing/mutation-testing-interview.md) — `20` вопросов
 - [Вопросы на собеседовании: `Property-Based Testing`](testing/property-based-testing-interview.md) — `21` вопрос
 - [Вопросы на собеседовании: `Test Automation`](testing/test-automation-interview.md) — `50` вопросов

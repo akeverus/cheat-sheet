@@ -86,7 +86,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
   - [Task Prioritization](#task-prioritization)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Введение в Spring Scheduling
 

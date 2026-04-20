@@ -17,8 +17,8 @@ updated: "2026-04-20"
 ## Полезные ссылки
 
 ### Официальная документация
-- [ISO/IEC 7812 - Identification cards](https://www.iso.org/standard/70486.html)
-- [Luhn Algorithm - Wikipedia](https://en.wikipedia.org/wiki/Luhn_algorithm)
+- [ISO/IEC 7812 — Identification cards](https://www.iso.org/standard/70486.html)
+- [Luhn Algorithm — Wikipedia](https://en.wikipedia.org/wiki/Luhn_algorithm)
 
 ### См. также
 - [[regex-token-replacement|Работа с регулярными выражениями]]
