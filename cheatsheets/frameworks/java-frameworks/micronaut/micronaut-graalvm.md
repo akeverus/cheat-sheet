@@ -12,7 +12,6 @@ tags:
 difficulty: "advanced"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: []
-
 updated: "2026-04-20"
 related: ["micronaut-cloud.md", "micronaut-performance.md"]
 ---

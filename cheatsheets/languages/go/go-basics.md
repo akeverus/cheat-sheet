@@ -10,7 +10,6 @@ tags:
   - backend
 difficulty: "beginner"
 prerequisites: []
-
 next: ["go/go-advanced-patterns.md"]
 updated: "2026-04-20"
 ---

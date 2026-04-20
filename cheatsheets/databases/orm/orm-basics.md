@@ -7,11 +7,9 @@ tags:
   - orm-basics
 difficulty: "intermediate"
 prerequisites: []
-
 next:
   - hibernate-relationships
   - hibernate-caching
-
 updated: "2026-04-20"
 ---
 # ORM: Object-Relational Mapping

@@ -13,7 +13,6 @@ prerequisites:
 next:
   - redis-security
   - postgres-security
-
 updated: "2026-04-20"
 ---
 # TLS / SSL: handshake, сертификаты, конфигурация

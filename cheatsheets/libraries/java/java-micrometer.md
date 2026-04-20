@@ -8,9 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites:
   - java-lombok
-
 next: []
-
 updated: "2026-04-20"
 ---
 # Micrometer: Метрики и мониторинг в Java

@@ -7,10 +7,8 @@ tags:
   - distributed-tracing
 difficulty: "intermediate"
 prerequisites: []
-
 next:
   - go-observability
-
 updated: "2026-04-20"
 ---
 # Распределённое трассирование

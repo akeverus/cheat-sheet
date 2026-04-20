@@ -7,10 +7,8 @@ tags:
   - java-io-nio
 difficulty: "intermediate"
 prerequisites: []
-
 next:
   - java-memory-model
-
 updated: "2026-04-20"
 ---
 # Java IO/NIO: работа с файлами и потоками

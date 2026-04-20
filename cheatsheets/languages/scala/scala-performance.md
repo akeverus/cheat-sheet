@@ -13,7 +13,6 @@ next:
   - redis-performance
   - go-performance
   - postgres-performance-tuning
-
 updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---

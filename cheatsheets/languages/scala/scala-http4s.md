@@ -11,7 +11,6 @@ tags:
 difficulty: "advanced"
 prerequisites: ["scala/scala-fp-advanced.md", "scala/scala-cats.md"]
 next: []
-
 updated: "2026-04-20"
 related: ["scala/scala-fp-advanced.md", "scala/scala-cats.md", "scala/scala-play.md"]
 ---

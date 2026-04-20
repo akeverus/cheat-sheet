@@ -13,7 +13,6 @@ next:
   - scala-implicit
   - scala-http4s
   - scala-fp-advanced
-
 updated: "2026-04-20"
 related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 ---

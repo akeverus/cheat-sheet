@@ -12,7 +12,6 @@ tags:
 difficulty: "advanced"
 prerequisites: ["scala/scala-fp-basics.md"]
 next: []
-
 updated: "2026-04-20"
 related: ["scala/scala-fp-basics.md", "scala/scala-basics.md"]
 ---

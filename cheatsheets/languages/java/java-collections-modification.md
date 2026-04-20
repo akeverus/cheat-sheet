@@ -7,10 +7,8 @@ tags:
   - java-collections-modification
 difficulty: "intermediate"
 prerequisites: []
-
 next:
   - java-memory-model
-
 updated: "2026-04-20"
 ---
 # Java Collections: модификация

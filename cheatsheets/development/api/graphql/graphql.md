@@ -8,9 +8,7 @@ tags:
 difficulty: "intermediate"
 prerequisites:
   - insomnia-basics
-
 next: []
-
 updated: "2026-04-20"
 ---
 # GraphQL для Java
