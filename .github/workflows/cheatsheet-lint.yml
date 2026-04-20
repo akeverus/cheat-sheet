@@ -1,0 +1,35 @@
+name: Cheatsheet Lint
+
+on:
+  push:
+    paths:
+      - 'cheatsheets/**'
+      - 'scripts/cheatsheet-lint.py'
+  pull_request:
+    paths:
+      - 'cheatsheets/**'
+      - 'scripts/cheatsheet-lint.py'
+
+jobs:
+  lint:
+    name: Lint cheatsheets
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run cheatsheet lint
+        run: python3 scripts/cheatsheet-lint.py cheatsheets
+
+      - name: Summary
+        if: failure()
+        run: |
+          echo "## Lint failures" >> $GITHUB_STEP_SUMMARY
+          python3 scripts/cheatsheet-lint.py cheatsheets 2>&1 | \
+            grep -E "^\s+cheatsheets/" | head -50 >> $GITHUB_STEP_SUMMARY || true
+          echo "Run \`python3 scripts/cheatsheet-autofix*.py cheatsheets\` to fix." >> $GITHUB_STEP_SUMMARY
