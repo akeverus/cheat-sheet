@@ -68,7 +68,7 @@ updated: "2026-04-20"
   - [Network ACL Monitoring](#network-acl-monitoring)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## VPC (`Virtual Private Cloud`)
 

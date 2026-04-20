@@ -76,7 +76,7 @@ updated: "2026-04-20"
   - [Production deployment](#production-deployment)
   - [Monitoring dashboard](#monitoring-dashboard)
   - [Security checklist](#security-checklist)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основы Consul
 

@@ -63,7 +63,7 @@ updated: "2026-04-20"
   - [From Play JSON to Circe](#from-play-json-to-circe)
   - [From Spray JSON to Circe](#from-spray-json-to-circe)
   - [From Argonaut to Circe](#from-argonaut-to-circe)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основы Circe
 

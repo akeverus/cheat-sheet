@@ -199,6 +199,5 @@ g.V().has('name', 'Alice').repeat(out('Follows')).times(2).path().by('name')
 ## See also
 
 - [[neo4j-basics|Neo4j]] — графовая БД с языком Cypher
-- [[nosql-overview|NoSQL — обзор]] — сравнение NoSQL движков
 - [[mongodb-basics|MongoDB]] — документная NoSQL БД
-- [[graph-databases-interview|Graph Databases Interview]] — вопросы по графовым БД
+- [[cassandra-basics|Apache Cassandra]] — wide-column NoSQL

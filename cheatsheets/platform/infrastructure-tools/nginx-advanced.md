@@ -60,7 +60,7 @@ updated: "2026-04-20"
   - [Performance monitoring](#performance-monitoring)
   - [Common issues resolution](#common-issues-resolution)
 - [Лучшие практики](#лучшие-практики)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Продвинутая архитектура
 

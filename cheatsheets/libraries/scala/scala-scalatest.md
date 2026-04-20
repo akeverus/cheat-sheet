@@ -66,7 +66,7 @@ updated: "2026-04-20"
 - [Руководство по миграции](#руководство-по-миграции)
   - [From JUnit to ScalaTest](#from-junit-to-scalatest)
   - [From Specs2 to ScalaTest](#from-specs2-to-scalatest)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основы ScalaTest
 

@@ -277,6 +277,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Lombok`](programming-languages/java/java-lombok-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `MapStruct`](programming-languages/java/java-mapstruct-interview.md)
 - [Вопросы на собеседовании: `Java Reflection`](programming-languages/java/java-reflection-interview.md) — `16` вопросов — `28` вопросов
+- [Вопросы на собеседовании: `Java Functional Interfaces`](programming-languages/java/java-functional-interface-interview.md) — `14` вопросов
 - [Вопросы на собеседовании: `Java Modules` (JPMS)](programming-languages/java/java-modules-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `Java Optional`](programming-languages/java/java-optional-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `OOP` & `Java`](programming-languages/java/java-oop-interview.md) — `43` вопроса

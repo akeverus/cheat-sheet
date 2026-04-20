@@ -83,7 +83,7 @@ updated: "2026-04-20"
   - [Custom Protocol](#custom-protocol)
   - [NTLM Authentication](#ntlm-authentication)
 - [Best practices](#best-practices)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Введение в Apache HttpClient
 

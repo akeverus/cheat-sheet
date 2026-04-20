@@ -26,17 +26,33 @@ updated: "2026-04-20"
 
 - [Ключевые изменения](#ключевые-изменения)
 - [Пошаговый план миграции](#пошаговый-план-миграции)
-- [javax → jakarta: таблица замен](#javax--jakarta-таблица-замен)
+  - [Шаг 1 — Обновить JDK](#шаг-1-обновить-jdk)
+  - [Шаг 2 — Обновить Spring Boot](#шаг-2-обновить-spring-boot)
+  - [Шаг 3 — Заменить javax → jakarta](#шаг-3-заменить-javax-jakarta)
+  - [Шаг 4 — Пересмотреть Security конфигурацию](#шаг-4-пересмотреть-security-конфигурацию)
+  - [Шаг 5 — Проверить Hibernate / Spring Data](#шаг-5-проверить-hibernate-spring-data)
+  - [Шаг 6 — Запустить полный набор тестов](#шаг-6-запустить-полный-набор-тестов)
+- [javax → jakarta: таблица замен](#javax-jakarta-таблица-замен)
+  - [Пример замены импортов](#пример-замены-импортов)
 - [Spring Security 6.x](#spring-security-6x)
+  - [Главное изменение — удалён WebSecurityConfigurerAdapter](#главное-изменение-удалён-websecurityconfigureradapter)
+  - [Изменения DSL](#изменения-dsl)
+  - [Пример JWT-конфигурации в Security 6](#пример-jwt-конфигурации-в-security-6)
 - [Spring Data JPA 3.x](#spring-data-jpa-3x)
+  - [Hibernate 6 — изменения в типах](#hibernate-6-изменения-в-типах)
+  - [Query Hints](#query-hints)
 - [AOT Processing](#aot-processing)
 - [GraalVM Native Image](#graalvm-native-image)
+  - [Базовый пример сборки](#базовый-пример-сборки)
+  - [reflect-config.json (ручные подсказки)](#reflect-configjson-ручные-подсказки)
+  - [Ограничения Native Image](#ограничения-native-image)
 - [Actuator и Observability](#actuator-и-observability)
+  - [Новый формат /actuator/info](#новый-формат-actuatorinfo)
+  - [Micrometer Observation API](#micrometer-observation-api)
+  - [@Observed на методах](#observed-на-методах)
 - [Типичные ошибки при миграции](#типичные-ошибки-при-миграции)
 - [Чек-лист миграции](#чек-лист-миграции)
 - [См. также](#см-также)
-
----
 
 ## Ключевые изменения
 

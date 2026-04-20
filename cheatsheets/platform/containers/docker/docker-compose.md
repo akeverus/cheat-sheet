@@ -68,7 +68,7 @@ updated: "2026-04-20"
   - [Распространенные проблемы](#распространенные-проблемы)
   - [Debug режим](#debug-режим)
   - [Performance optimization](#performance-optimization)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основы Docker Compose
 

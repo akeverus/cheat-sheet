@@ -60,7 +60,7 @@ updated: "2026-04-20"
   - [Network performance tuning](#network-performance-tuning)
   - [Load balancing optimization](#load-balancing-optimization)
 - [Лучшие практики](#лучшие-практики)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основные концепции сети
 

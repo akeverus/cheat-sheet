@@ -54,7 +54,7 @@ updated: "2026-04-20"
   - [Health checks](#health-checks)
 - [Лучшие практики](#лучшие-практики)
   - [Production configuration](#production-configuration)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основы NATS
 

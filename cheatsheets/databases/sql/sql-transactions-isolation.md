@@ -45,7 +45,7 @@ updated: "2026-04-20"
 - [Deadlock](#deadlock)
 - [Spring @Transactional](#spring-transactional)
 - [Практические рекомендации](#практические-рекомендации)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## ACID
 

@@ -67,7 +67,7 @@ updated: "2026-04-20"
   - [Makefile automation](#makefile-automation)
   - [Version control](#version-control)
   - [Documentation](#documentation)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основы Vagrant
 

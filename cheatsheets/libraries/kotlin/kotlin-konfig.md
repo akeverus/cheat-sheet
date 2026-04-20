@@ -61,7 +61,7 @@ updated: "2026-04-20"
   - [From Environment Variables to Konfig](#from-environment-variables-to-konfig)
 - [Экспериментальные возможности](#экспериментальные-возможности)
   - [Konfig 2.0+ Features (Future)](#konfig-20-features-future)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

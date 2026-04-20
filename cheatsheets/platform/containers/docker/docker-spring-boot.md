@@ -36,7 +36,7 @@ updated: "2026-04-20"
 - [Доступ к журналам Spring Boot](#доступ-к-журналам-spring-boot)
 - [Запуск Spring Boot с PostgreSQL в Docker Compose](#запуск-spring-boot-с-postgresql-в-docker-compose)
 - [Повторное использование слоев Docker с Spring Boot](#повторное-использование-слоев-docker-с-spring-boot)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Контейнеризация приложения Spring Boot
 

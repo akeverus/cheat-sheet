@@ -54,7 +54,7 @@ updated: "2026-04-20"
 - [Best practices](#best-practices)
   - [Production configuration](#production-configuration)
   - [Monitoring dashboard](#monitoring-dashboard)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Кластеризация и высокая доступность
 

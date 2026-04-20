@@ -63,7 +63,7 @@ updated: "2026-04-20"
   - [From Gson to Klaxon](#from-gson-to-klaxon)
   - [From Jackson to Klaxon](#from-jackson-to-klaxon)
   - [From org.json to Klaxon](#from-orgjson-to-klaxon)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основные возможности
 

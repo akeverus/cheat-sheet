@@ -60,7 +60,7 @@ updated: "2026-04-20"
   - [Enterprise project structure](#enterprise-project-structure)
   - [Quality gates](#quality-gates)
   - [Release management](#release-management)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Продвинутая конфигурация проекта
 

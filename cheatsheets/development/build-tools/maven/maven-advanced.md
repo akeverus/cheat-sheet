@@ -61,7 +61,7 @@ updated: "2026-04-20"
   - [CI/CD](#cicd)
   - [Enterprise POM structure](#enterprise-pom-structure)
   - [Quality gates](#quality-gates)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Продвинутая конфигурация проекта
 

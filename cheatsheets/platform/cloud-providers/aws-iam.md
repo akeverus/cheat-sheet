@@ -66,7 +66,7 @@ updated: "2026-04-20"
   - [Security Best Practices Audit](#security-best-practices-audit)
   - [Performance Optimization](#performance-optimization)
 - [Частые вопросы](#частые-вопросы)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основы IAM
 

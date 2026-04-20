@@ -102,7 +102,7 @@ updated: "2026-04-20"
   - [Debug Logging](#debug-logging)
   - [Common Issues и Solutions](#common-issues-и-solutions)
 - [Альтернативы](#альтернативы)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Введение в Jackson
 

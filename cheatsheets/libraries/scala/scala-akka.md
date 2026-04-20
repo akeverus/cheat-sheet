@@ -70,7 +70,7 @@ updated: "2026-04-20"
 - [Руководство по миграции](#руководство-по-миграции)
   - [From Akka Classic to Typed](#from-akka-classic-to-typed)
   - [From Java to Scala](#from-java-to-scala)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Основные концепции Akka
 

@@ -58,7 +58,7 @@ updated: "2026-04-20"
   - [Specifications (Criteria API)](#specifications-criteria-api)
   - [QueryDSL](#querydsl)
 - [Типичные ошибки](#типичные-ошибки)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Иерархия репозиториев
 
