@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.api.controller;
 
 import com.cheatsheet.quiz.api.dto.request.interview.StartSessionRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
+import com.cheatsheet.quiz.feature.admin.service.AdminMaintenanceService;
 import com.cheatsheet.quiz.feature.interview.controller.InterviewMvcController;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewFlowMvcService;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewPageMvcService;
@@ -26,6 +27,8 @@ class InterviewMvcControllerTest {
     @Mock
     private InterviewFlowMvcService interviewFlowMvcService;
     @Mock
+    private AdminMaintenanceService adminMaintenanceService;
+    @Mock
     private HttpSession session;
     @Mock
     private Model model;
@@ -34,7 +37,7 @@ class InterviewMvcControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new InterviewMvcController(interviewPageMvcService, interviewFlowMvcService);
+        controller = new InterviewMvcController(interviewPageMvcService, interviewFlowMvcService, adminMaintenanceService);
     }
 
     @Test

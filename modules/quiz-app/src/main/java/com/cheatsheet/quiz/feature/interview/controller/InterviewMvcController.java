@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.feature.interview.controller;
 
 import com.cheatsheet.quiz.api.dto.request.interview.StartSessionRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
+import com.cheatsheet.quiz.feature.admin.service.AdminMaintenanceService;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewFlowMvcService;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewPageMvcService;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * MVC-контроллер test flow: старт/завершение сессии, ответы и статистика.
@@ -30,6 +32,7 @@ import org.springframework.validation.annotation.Validated;
 public class InterviewMvcController {
     InterviewPageMvcService interviewPageMvcService;
     InterviewFlowMvcService interviewFlowMvcService;
+    AdminMaintenanceService adminMaintenanceService;
 
     @GetMapping("/")
     public String index(
@@ -215,6 +218,13 @@ public class InterviewMvcController {
                 session,
                 model
         );
+    }
+
+    @PostMapping("/settings/reset-options")
+    public String resetOptions(RedirectAttributes redirectAttributes) {
+        int deleted = adminMaintenanceService.clearOptions();
+        redirectAttributes.addFlashAttribute("resetDeleted", deleted);
+        return "redirect:/settings";
     }
 
     @GetMapping("/stats")
