@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Batch Processing - Job Processing и Scheduling"
+title: "Micronaut: Batch Processing — Job Processing и Scheduling"
 description: "Полное руководство по batch processing в Micronaut: job processing, scheduling, chunk processing и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-scheduling.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Batch Processing - Job Processing и Scheduling
+# Micronaut: Batch Processing — Job Processing и Scheduling
 
 ## Полезные ссылки
 

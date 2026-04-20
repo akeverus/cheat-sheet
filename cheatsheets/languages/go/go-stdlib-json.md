@@ -1,5 +1,5 @@
 ---
-title: "Go: стандартная библиотека - JSON"
+title: "Go: стандартная библиотека — JSON"
 description: "Полное руководство по работе с JSON в Go: marshaling, unmarshaling, custom marshaling, JSON tags, streaming"
 tags:
   - go
@@ -12,7 +12,7 @@ prerequisites: ["go/go-basics.md"]
 updated: "2026-04-20"
 ---
 
-# Go: стандартная библиотека - JSON
+# Go: стандартная библиотека — JSON
 
 ## Полезные ссылки
 

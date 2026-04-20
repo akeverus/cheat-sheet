@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: GraalVM - Native Image и Compilation"
+title: "Quarkus: GraalVM — Native Image и Compilation"
 description: "Полное руководство по GraalVM Native Image в Quarkus: native compilation, reflection configuration, optimization и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-cloud.md"]
 ---
 
-# Quarkus: GraalVM - Native Image и Compilation
+# Quarkus: GraalVM — Native Image и Compilation
 
 ## Полезные ссылки
 

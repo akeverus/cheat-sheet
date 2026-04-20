@@ -22,6 +22,12 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
 ### Официальная документация
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/) — официальная документация
 - [PostgreSQL Replication](https://www.postgresql.org/docs/current/warm-standby.html) — репликация и standby
+- [PostgreSQL Streaming Replication](https://www.postgresql.org/docs/)
+- [PostgreSQL Logical Replication](https://www.postgresql.org/docs/)
+
+### Инструменты
+- [Patroni Documentation](https://www.postgresql.org/docs/)
+- [pg_auto_failover Documentation](https://www.postgresql.org/docs/)
 
 ### См. также
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
@@ -1365,10 +1371,4 @@ SELECT * FROM logical_replication_status;
 2. **Настроить параллельную репликацию** на **Standby**
 3. **Использовать синхронную репликацию** только при необходимости
 4. **Мониторить производительность** сети между серверами
-
-
-- [PostgreSQL Streaming Replication](https://www.postgresql.org/docs/)
-- [PostgreSQL Logical Replication](https://www.postgresql.org/docs/)
-- [Patroni Documentation](https://www.postgresql.org/docs/)
-- [pg_auto_failover Documentation](https://www.postgresql.org/docs/)
 

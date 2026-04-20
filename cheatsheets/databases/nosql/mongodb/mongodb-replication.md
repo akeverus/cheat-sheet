@@ -1,5 +1,5 @@
 ---
-title: "MongoDB: Репликация - Replica Sets для высокой доступности и отказоустойчивости"
+title: "MongoDB: Репликация — Replica Sets для высокой доступности и отказоустойчивости"
 description: "Полное руководство по репликации в MongoDB: Replica Sets, настройка, управление, Read Preferences и Write Concerns."
 tags:
   - databases
@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-04-20"
 ---
-# MongoDB: Репликация - Replica Sets для высокой доступности и отказоустойчивости
+# MongoDB: Репликация — Replica Sets для высокой доступности и отказоустойчивости
 
 Полное руководство по репликации в **MongoDB**: **Replica Sets**, настройка, управление, **Read Preferences** и **Write Concerns**.
 
@@ -1092,20 +1092,6 @@ db.createUser({
 - **Неправильные write concerns** — слишком строгие или слабые
 
 **Replica Sets** обеспечивают надёжную основу для **production MongoDB** развёртываний. Понимание принципов репликации, правильная конфигурация и регулярное обслуживание гарантируют высокую доступность и надёжность системы.
-
-## Полезные ссылки
-
-### Официальная документация
-- [MongoDB Replication](https://www.mongodb.com/docs/manual/replication/)
-- [Replica Set Configuration](https://www.mongodb.com/docs/manual/reference/replica-configuration/)
-- [Read Preferences](https://www.mongodb.com/docs/manual/core/read-preference/)
-
-### Обучающие материалы
-- [MongoDB Replica Sets](https://www.baeldung.com/spring-data-mongodb-replica-set)
-
-### См. также
-- [[mongodb-basics|Основы]] — **MongoDB**
-- [[mongodb-sharding|Шардирование]] — масштабирование
 
 ```text
 

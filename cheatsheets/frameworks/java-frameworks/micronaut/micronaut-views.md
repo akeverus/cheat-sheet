@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Views - Template Engines и View Rendering"
+title: "Micronaut: Views — Template Engines и View Rendering"
 description: "Полное руководство по Views в Micronaut: template engines, view rendering, Thymeleaf, Freemarker, Velocity и best practices"
 tags:
   - micronaut
@@ -17,7 +17,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-mail.md"]
 ---
 
-# Micronaut: Views - Template Engines и View Rendering
+# Micronaut: Views — Template Engines и View Rendering
 
 ## Полезные ссылки
 

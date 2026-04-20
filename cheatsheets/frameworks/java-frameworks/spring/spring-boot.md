@@ -1,5 +1,5 @@
 ---
-title: "Spring Boot - Полное руководство"
+title: "Spring Boot — Полное руководство"
 description: "Комплексное руководство по Spring Boot: авто-конфигурация, стартеры, REST API, безопасность, базы данных, микросервисы, развертывание, мониторинг и best practices"
 tags:
   - spring-boot
@@ -17,7 +17,7 @@ next: ["spring/spring-data-jpa.md", "spring/spring-security.md"]
 updated: "2026-04-20"
 ---
 
-# Spring Boot - Полное руководство
+# Spring Boot — Полное руководство
 
 ## Полезные ссылки
 

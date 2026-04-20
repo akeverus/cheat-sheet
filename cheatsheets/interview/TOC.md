@@ -200,6 +200,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Spring Framework`](frameworks/spring/spring-framework-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Spring MVC`](frameworks/spring/spring-mvc-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Security`](frameworks/spring/spring-security-interview.md) — `43` вопроса
+- [Вопросы на собеседовании: `Spring Validation`](frameworks/spring/spring-validation-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring WebFlux`](frameworks/spring/spring-webflux-interview.md) — `43` вопроса
 
 ## jvm

@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: gRPC - Remote Procedure Calls"
+title: "Quarkus: gRPC — Remote Procedure Calls"
 description: "Полное руководство по gRPC в Quarkus: service definition, client/server, streaming, interceptors и best practices"
 tags:
   - quarkus
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: gRPC - Remote Procedure Calls
+# Quarkus: gRPC — Remote Procedure Calls
 
 ## Полезные ссылки
 

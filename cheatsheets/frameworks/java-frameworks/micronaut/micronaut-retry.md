@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Retry - Retry Logic и Circuit Breaker"
+title: "Micronaut: Retry — Retry Logic и Circuit Breaker"
 description: "Полное руководство по retry logic в Micronaut: retry annotations, circuit breakers, exponential backoff и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
-# Micronaut: Retry - Retry Logic и Circuit Breaker
+# Micronaut: Retry — Retry Logic и Circuit Breaker
 
 ## Полезные ссылки
 

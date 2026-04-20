@@ -1,5 +1,5 @@
 ---
-title: "Scala Collections - Array"
+title: "Scala Collections — Array"
 description: "Полное руководство по Array в Scala: массивы, операции, производительность, взаимодействие с Java"
 tags:
   - scala
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 ---
 
-# Scala Collections - Array
+# Scala Collections — Array
 
 Кратко: полное руководство по **Array** в **Scala**: массивы, операции, производительность, взаимодействие с **Java**.
 

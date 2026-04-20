@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Scheduling - Планирование задач"
+title: "Quarkus: Scheduling — Планирование задач"
 description: "Полное руководство по планированию задач в Quarkus: @Scheduled, cron expressions, async scheduling, job management и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Scheduling - Планирование задач
+# Quarkus: Scheduling — Планирование задач
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "ClickHouse: Интеграции и экосистема - Подключение внешних систем и инструментов"
+title: "ClickHouse: Интеграции и экосистема — Подключение внешних систем и инструментов"
 description: "Комплексное руководство по интеграциям ClickHouse: Kafka, Spark, Airflow, BI инструменты, языки программирования и облачные сервисы"
 tags:
   - clickhouse
@@ -760,7 +760,7 @@ events.`addSink`(new `ClickHouseSink`<>(
 ### dbt (Data Build Tool)
 
 ```
-# ClickHouse: Интеграции и экосистема - Подключение внешних систем и инструментов
+# ClickHouse: Интеграции и экосистема — Подключение внешних систем и инструментов
 clickhouse:
   target: dev
   outputs:

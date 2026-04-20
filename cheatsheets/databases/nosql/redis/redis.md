@@ -1,5 +1,5 @@
 ---
-title: "Redis - Полное руководство по in-memory базе данных"
+title: "Redis — Полное руководство по in-memory базе данных"
 description: "Комплексное руководство по Redis: установка, типы данных, команды, кластеризация, Lua скриптинг, производительность и enterprise использование"
 tags:
   - redis
@@ -74,7 +74,7 @@ flowchart TD
 #### Linux (Ubuntu/Debian)
 
 ```bash
-# Redis - Полное руководство по in-memory базе данных
+# Redis — Полное руководство по in-memory базе данных
 sudo apt update
 
 # Установка Redis

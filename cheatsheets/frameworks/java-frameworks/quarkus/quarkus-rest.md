@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: REST - RESTEasy Reactive и JAX-RS"
+title: "Quarkus: REST — RESTEasy Reactive и JAX-RS"
 description: "Полное руководство по REST в Quarkus: RESTEasy Reactive, JAX-RS, controllers, filters, exception handling и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: REST - RESTEasy Reactive и JAX-RS
+# Quarkus: REST — RESTEasy Reactive и JAX-RS
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Validation - Bean Validation"
+title: "Quarkus: Validation — Bean Validation"
 description: "Полное руководство по валидации в Quarkus: Bean Validation, custom validators, groups, method validation и best practices"
 tags:
   - quarkus
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Validation - Bean Validation
+# Quarkus: Validation — Bean Validation
 
 ## Полезные ссылки
 

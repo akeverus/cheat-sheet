@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Internationalization - i18n и Localization"
+title: "Micronaut: Internationalization — i18n и Localization"
 description: "Полное руководство по интернационализации в Micronaut: i18n, localization, message bundles, locale resolution и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-views.md"]
 ---
 
-# Micronaut: Internationalization - i18n и Localization
+# Micronaut: Internationalization — i18n и Localization
 
 ## Полезные ссылки
 

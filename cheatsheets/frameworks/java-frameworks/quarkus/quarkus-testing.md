@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Testing - Unit Tests, Integration Tests и @QuarkusTest"
+title: "Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest"
 description: "Полное руководство по тестированию в Quarkus: unit tests, integration tests, @QuarkusTest, mocking и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-data.md"]
 ---
 
-# Quarkus: Testing - Unit Tests, Integration Tests и @QuarkusTest
+# Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest
 
 ## Полезные ссылки
 

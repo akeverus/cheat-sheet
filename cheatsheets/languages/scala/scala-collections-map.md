@@ -1,5 +1,5 @@
 ---
-title: "Scala Collections - Map"
+title: "Scala Collections — Map"
 description: "Полное руководство по работе со словарями в Scala: Map, HashMap, SortedMap, операции и лучшие практики"
 tags:
   - scala
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
-# Scala Collections - Map
+# Scala Collections — Map
 
 Кратко: руководство по работе со словарями в **Scala**: **Map**, **HashMap**, **SortedMap**, операции и лучшие практики.
 

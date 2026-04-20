@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Redis - Caching и Data Structures"
+title: "Quarkus: Redis — Caching и Data Structures"
 description: "Полное руководство по работе с Redis в Quarkus: caching, data structures, pub/sub, transactions, reactive Redis и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-cache.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Redis - Caching и Data Structures
+# Quarkus: Redis — Caching и Data Structures
 
 ## Полезные ссылки
 

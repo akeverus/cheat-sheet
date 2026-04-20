@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: MongoDB Integration - Repositories и Queries"
+title: "Micronaut: MongoDB Integration — Repositories и Queries"
 description: "Полное руководство по интеграции с MongoDB в Micronaut: repositories, queries, aggregation, GridFS и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-data.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: MongoDB Integration - Repositories и Queries
+# Micronaut: MongoDB Integration — Repositories и Queries
 
 ## Полезные ссылки
 

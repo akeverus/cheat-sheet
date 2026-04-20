@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Actuator - Health Checks, Metrics и Endpoints"
+title: "Micronaut: Actuator — Health Checks, Metrics и Endpoints"
 description: "Полное руководство по Micronaut Actuator: health checks, metrics, endpoints, monitoring и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
-# Micronaut: Actuator - Health Checks, Metrics и Endpoints
+# Micronaut: Actuator — Health Checks, Metrics и Endpoints
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Multitenancy - Multi-tenant Applications"
+title: "Micronaut: Multitenancy — Multi-tenant Applications"
 description: "Полное руководство по multitenancy в Micronaut: tenant resolution, data isolation, routing и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-data.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Multitenancy - Multi-tenant Applications
+# Micronaut: Multitenancy — Multi-tenant Applications
 
 ## Полезные ссылки
 

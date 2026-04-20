@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Qute - Templating Engine"
+title: "Quarkus: Qute — Templating Engine"
 description: "Полное руководство по Qute в Quarkus: шаблонизация, теги, инклюды, fragments, type-safe templates и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Qute - Templating Engine
+# Quarkus: Qute — Templating Engine
 
 ## Полезные ссылки
 

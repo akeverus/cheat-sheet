@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Actuator - Health Checks и Metrics"
+title: "Quarkus: Actuator — Health Checks и Metrics"
 description: "Полное руководство по Actuator в Quarkus: health checks, metrics, info endpoints, custom endpoints и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-cloud.md"]
 ---
 
-# Quarkus: Actuator - Health Checks и Metrics
+# Quarkus: Actuator — Health Checks и Metrics
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "Scala Functional Programming - Advanced"
+title: "Scala Functional Programming — Advanced"
 description: "Продвинутое функциональное программирование в Scala: Monads, Functors, Applicatives, Cats, Scalaz, Functional Data Structures"
 tags:
   - scala
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["scala/scala-fp-basics.md", "scala/scala-basics.md"]
 ---
 
-# Scala Functional Programming - Advanced
+# Scala Functional Programming — Advanced
 
 Кратко: продвинутое функциональное программирование в **Scala**: **Monads**, **Functors**, **Applicatives**, **Cats**, **Scalaz**, **Functional Data Structures** и другие продвинутые концепции.
 

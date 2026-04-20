@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: HTTP - Controllers, Routing и Request Handling"
+title: "Micronaut: HTTP — Controllers, Routing и Request Handling"
 description: "Полное руководство по созданию HTTP контроллеров, роутинга, обработки запросов и ответов в Micronaut"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: HTTP - Controllers, Routing и Request Handling
+# Micronaut: HTTP — Controllers, Routing и Request Handling
 
 ## Полезные ссылки
 

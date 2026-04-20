@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: OpenAPI - API Documentation"
+title: "Quarkus: OpenAPI — API Documentation"
 description: "Полное руководство по OpenAPI в Quarkus: API documentation, Swagger UI, code generation, security schemes и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-rest.md", "quarkus-security.md"]
 ---
 
-# Quarkus: OpenAPI - API Documentation
+# Quarkus: OpenAPI — API Documentation
 
 ## Полезные ссылки
 

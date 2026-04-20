@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Data Access - JDBC, JPA и Repositories"
+title: "Micronaut: Data Access — JDBC, JPA и Repositories"
 description: "Полное руководство по работе с базами данных в Micronaut: JDBC, JPA, Micronaut Data, транзакции и миграции"
 tags:
   - micronaut
@@ -17,7 +17,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: Data Access - JDBC, JPA и Repositories
+# Micronaut: Data Access — JDBC, JPA и Repositories
 
 ## Полезные ссылки
 

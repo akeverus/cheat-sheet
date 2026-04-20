@@ -1,5 +1,5 @@
 ---
-title: "Elasticsearch: Индексация документов - Управление данными и индексацией"
+title: "Elasticsearch: Индексация документов — Управление данными и индексацией"
 description: "Комплексное руководство по индексации документов в Elasticsearch: bulk operations, update strategies, routing, versioning и оптимизация производительности индексации."
 tags:
   - databases
@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-04-20"
 ---
-# Elasticsearch: Индексация документов - Управление данными и индексацией
+# Elasticsearch: Индексация документов — Управление данными и индексацией
 
 Комплексное руководство по индексации документов в **Elasticsearch**: **bulk operations**, **update strategies**, **routing**, **versioning** и оптимизация производительности индексации.
 

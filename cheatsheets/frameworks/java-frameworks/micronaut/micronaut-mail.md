@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Mail - Email Sending и Templates"
+title: "Micronaut: Mail — Email Sending и Templates"
 description: "Полное руководство по отправке email в Micronaut: email sending, templates, attachments, HTML email и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: Mail - Email Sending и Templates
+# Micronaut: Mail — Email Sending и Templates
 
 ## Полезные ссылки
 

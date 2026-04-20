@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: WebSocket - Real-time Communication и STOMP"
+title: "Micronaut: WebSocket — Real-time Communication и STOMP"
 description: "Полное руководство по WebSocket в Micronaut: real-time коммуникации, STOMP, SockJS, чаты, уведомления и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: WebSocket - Real-time Communication и STOMP
+# Micronaut: WebSocket — Real-time Communication и STOMP
 
 ## Полезные ссылки
 

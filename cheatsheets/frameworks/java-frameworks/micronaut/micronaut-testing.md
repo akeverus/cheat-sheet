@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Testing - Unit Tests, Integration Tests и Mocking"
+title: "Micronaut: Testing — Unit Tests, Integration Tests и Mocking"
 description: "Полное руководство по тестированию в Micronaut: unit tests, integration tests, mocking, test containers и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Testing - Unit Tests, Integration Tests и Mocking
+# Micronaut: Testing — Unit Tests, Integration Tests и Mocking
 
 ## Полезные ссылки
 

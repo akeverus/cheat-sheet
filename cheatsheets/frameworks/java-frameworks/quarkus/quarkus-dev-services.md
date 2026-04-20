@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Dev Services - Автоматические сервисы для разработки"
+title: "Quarkus: Dev Services — Автоматические сервисы для разработки"
 description: "Полное руководство по Dev Services в Quarkus: автоматический запуск баз данных, брокеров сообщений, Redis и других сервисов для разработки"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-basics.md", "quarkus-testing.md"]
 ---
 
-# Quarkus: Dev Services - Автоматические сервисы для разработки
+# Quarkus: Dev Services — Автоматические сервисы для разработки
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "Основы Kotlin - Полное руководство"
+title: "Основы Kotlin — Полное руководство"
 description: "Комплексное руководство по языку Kotlin: от основ до продвинутых концепций, включая Kotlin 1.9+, DSL, корутины, инлайновые функции"
 tags:
   - kotlin
@@ -17,7 +17,7 @@ updated: "2026-04-20"
 related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/kotlin-reactive.md"]
 ---
 
-# Основы Kotlin - Полное руководство
+# Основы Kotlin — Полное руководство
 
 Краткое руководство по языку Kotlin: синтаксис, null-safety, классы, корутины, функциональное программирование.
 

@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Kafka - Reactive Messaging и Event Streaming"
+title: "Quarkus: Kafka — Reactive Messaging и Event Streaming"
 description: "Полное руководство по работе с Kafka в Quarkus: reactive messaging, producers, consumers, serialization, error handling и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 ---
 
-# Quarkus: Kafka - Reactive Messaging и Event Streaming
+# Quarkus: Kafka — Reactive Messaging и Event Streaming
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Security - Authentication, Authorization и OAuth2"
+title: "Quarkus: Security — Authentication, Authorization и OAuth2"
 description: "Полное руководство по безопасности в Quarkus: authentication, authorization, OAuth2, JWT, Keycloak и best practices"
 tags:
   - quarkus
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Security - Authentication, Authorization и OAuth2
+# Quarkus: Security — Authentication, Authorization и OAuth2
 
 ## Полезные ссылки
 

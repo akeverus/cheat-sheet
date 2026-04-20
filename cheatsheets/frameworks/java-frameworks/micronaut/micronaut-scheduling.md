@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Scheduling - Task Scheduling и Async Execution"
+title: "Micronaut: Scheduling — Task Scheduling и Async Execution"
 description: "Полное руководство по планированию задач в Micronaut: @Scheduled, task scheduling, async execution и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: Scheduling - Task Scheduling и Async Execution
+# Micronaut: Scheduling — Task Scheduling и Async Execution
 
 ## Полезные ссылки
 

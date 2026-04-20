@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Logging - Logback, SLF4J и Structured Logging"
+title: "Micronaut: Logging — Logback, SLF4J и Structured Logging"
 description: "Полное руководство по логированию в Micronaut: Logback, SLF4J, structured logging, MDC и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-actuator.md"]
 ---
 
-# Micronaut: Logging - Logback, SLF4J и Structured Logging
+# Micronaut: Logging — Logback, SLF4J и Structured Logging
 
 ## Полезные ссылки
 

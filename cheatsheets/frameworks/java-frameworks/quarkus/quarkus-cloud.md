@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Cloud Native - Kubernetes, OpenShift и Service Mesh"
+title: "Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh"
 description: "Полное руководство по cloud-native функциям Quarkus: Kubernetes, OpenShift, service mesh, distributed tracing и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-graalvm.md"]
 ---
 
-# Quarkus: Cloud Native - Kubernetes, OpenShift и Service Mesh
+# Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: JMS Integration - Message Queues и Topics"
+title: "Micronaut: JMS Integration — Message Queues и Topics"
 description: "Полное руководство по интеграции с JMS в Micronaut: message queues, topics, producers, consumers и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-kafka.md"]
 ---
 
-# Micronaut: JMS Integration - Message Queues и Topics
+# Micronaut: JMS Integration — Message Queues и Topics
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Core - Dependency Injection и Bean Management"
+title: "Micronaut: Core — Dependency Injection и Bean Management"
 description: "Детальное руководство по compile-time dependency injection, bean scopes, lifecycle и конфигурации в Micronaut"
 tags:
   - micronaut
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Core - Dependency Injection и Bean Management
+# Micronaut: Core — Dependency Injection и Bean Management
 
 ## Полезные ссылки
 

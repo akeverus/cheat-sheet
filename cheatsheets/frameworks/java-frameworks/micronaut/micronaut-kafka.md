@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Kafka Integration - Producers, Consumers и Streams"
+title: "Micronaut: Kafka Integration — Producers, Consumers и Streams"
 description: "Полное руководство по интеграции с Apache Kafka в Micronaut: producers, consumers, streams, transactions и best practices"
 tags:
   - micronaut
@@ -17,7 +17,7 @@ updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-messaging.md"]
 ---
 
-# Micronaut: Kafka Integration - Producers, Consumers и Streams
+# Micronaut: Kafka Integration — Producers, Consumers и Streams
 
 ## Полезные ссылки
 

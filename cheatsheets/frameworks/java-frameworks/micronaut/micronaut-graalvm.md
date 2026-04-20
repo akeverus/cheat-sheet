@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: GraalVM Native Images - Compilation и Optimization"
+title: "Micronaut: GraalVM Native Images — Compilation и Optimization"
 description: "Полное руководство по созданию native images с GraalVM в Micronaut: настройка, компиляция, оптимизация и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-cloud.md", "micronaut-performance.md"]
 ---
 
-# Micronaut: GraalVM Native Images - Compilation и Optimization
+# Micronaut: GraalVM Native Images — Compilation и Optimization
 
 ## Полезные ссылки
 

@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: OpenAPI - API Documentation и Swagger"
+title: "Micronaut: OpenAPI — API Documentation и Swagger"
 description: "Полное руководство по OpenAPI в Micronaut: API documentation, Swagger UI, code generation и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: OpenAPI - API Documentation и Swagger
+# Micronaut: OpenAPI — API Documentation и Swagger
 
 ## Полезные ссылки
 

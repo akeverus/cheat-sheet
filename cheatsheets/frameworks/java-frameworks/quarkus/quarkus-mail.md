@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Mail - Отправка email"
+title: "Quarkus: Mail — Отправка email"
 description: "Полное руководство по отправке email в Quarkus: SMTP, HTML emails, attachments, templates и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Mail - Отправка email
+# Quarkus: Mail — Отправка email
 
 ## Полезные ссылки
 

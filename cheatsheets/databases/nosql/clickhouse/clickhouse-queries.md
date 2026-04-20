@@ -1,5 +1,5 @@
 ---
-title: "ClickHouse: Запросы и аналитика - Полное руководство по SQL запросам"
+title: "ClickHouse: Запросы и аналитика — Полное руководство по SQL запросам"
 description: "Комплексное руководство по запросам ClickHouse: SELECT, агрегация, оконные функции и аналитические возможности"
 tags:
   - clickhouse
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 ---
 
-# ClickHouse: Запросы и аналитика - Полное руководство по SQL запросам
+# ClickHouse: Запросы и аналитика — Полное руководство по SQL запросам
 
 Комплексное руководство по запросам **ClickHouse**: **SELECT**, агрегация, оконные функции и аналитические возможности.
 

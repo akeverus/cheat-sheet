@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Security - Authentication и Authorization"
+title: "Micronaut: Security — Authentication и Authorization"
 description: "Полное руководство по безопасности в Micronaut: JWT, OAuth2, authentication, authorization и security best practices"
 tags:
   - micronaut
@@ -17,7 +17,7 @@ updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
-# Micronaut: Security - Authentication и Authorization
+# Micronaut: Security — Authentication и Authorization
 
 ## Полезные ссылки
 

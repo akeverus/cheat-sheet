@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: gRPC Integration - RPC Communication"
+title: "Micronaut: gRPC Integration — RPC Communication"
 description: "Полное руководство по интеграции с gRPC в Micronaut: RPC communication, streaming, interceptors и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: gRPC Integration - RPC Communication
+# Micronaut: gRPC Integration — RPC Communication
 
 ## Полезные ссылки
 

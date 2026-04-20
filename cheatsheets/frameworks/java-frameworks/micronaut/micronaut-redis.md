@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Redis Integration - RedisTemplate, Pub/Sub и Cache"
+title: "Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache"
 description: "Полное руководство по интеграции с Redis в Micronaut: RedisTemplate, pub/sub, cache, transactions и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-cache.md", "micronaut-messaging.md"]
 ---
 
-# Micronaut: Redis Integration - RedisTemplate, Pub/Sub и Cache
+# Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache
 
 ## Полезные ссылки
 

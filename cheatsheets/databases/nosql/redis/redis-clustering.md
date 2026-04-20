@@ -22,6 +22,7 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 ### Официальная документация
 - [Redis Documentation](https://redis.io/docs/) — официальная документация
 - [Redis Cluster Tutorial](https://redis.io/docs/management/scaling/) — кластеризация
+- [Redis Cluster Specification](https://redis.io/docs/reference/cluster-spec/)
 
 ### См. также
 - [[redis-basics|redis-basics.md]] — основы Redis
@@ -976,8 +977,4 @@ tcp-keepalive 300
 # Уменьшить таймаут для быстрого обнаружения сбоев
 cluster-node-timeout 3000
 ```
-
-
-- [Redis Cluster Tutorial](https://redis.io/docs/manual/scaling/)
-- [Redis Cluster Specification](https://redis.io/docs/reference/cluster-spec/)
 

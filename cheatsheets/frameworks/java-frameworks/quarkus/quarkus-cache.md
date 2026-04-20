@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Cache - Кеширование данных"
+title: "Quarkus: Cache — Кеширование данных"
 description: "Полное руководство по кешированию в Quarkus: Caffeine, Redis, cache annotations, cache configuration и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-redis.md"]
 ---
 
-# Quarkus: Cache - Кеширование данных
+# Quarkus: Cache — Кеширование данных
 
 ## Полезные ссылки
 

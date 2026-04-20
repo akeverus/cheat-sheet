@@ -1,5 +1,5 @@
 ---
-title: "Go: стандартная библиотека - I/O"
+title: "Go: стандартная библиотека — I/O"
 description: "Полное руководство по работе с I/O в Go: io.Reader, io.Writer, bufio, os, path/filepath"
 tags:
   - go
@@ -13,7 +13,7 @@ prerequisites: ["go/go-basics.md"]
 updated: "2026-04-20"
 ---
 
-# Go: стандартная библиотека - I/O
+# Go: стандартная библиотека — I/O
 
 ## Полезные ссылки
 

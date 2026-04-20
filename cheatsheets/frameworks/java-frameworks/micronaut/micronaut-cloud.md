@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Cloud Native - Service Discovery, Configuration и Distributed Tracing"
+title: "Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing"
 description: "Полное руководство по cloud-native возможностям Micronaut: service discovery, distributed configuration, circuit breaker, tracing"
 tags:
   - micronaut
@@ -17,7 +17,7 @@ updated: "2026-04-20"
 related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Cloud Native - Service Discovery, Configuration и Distributed Tracing
+# Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing
 
 ## Полезные ссылки
 

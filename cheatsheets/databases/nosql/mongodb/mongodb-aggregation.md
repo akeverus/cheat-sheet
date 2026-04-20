@@ -1,5 +1,5 @@
 ---
-title: "MongoDB: Aggregation Framework - Полное руководство по агрегации данных"
+title: "MongoDB: Aggregation Framework — Полное руководство по агрегации данных"
 description: "Комплексное руководство по Aggregation Framework в MongoDB: стадии, операторы, оптимизация и практические примеры."
 tags:
   - databases
@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-04-20"
 ---
-# MongoDB: Aggregation Framework - Полное руководство по агрегации данных
+# MongoDB: Aggregation Framework — Полное руководство по агрегации данных
 
 Комплексное руководство по **Aggregation Framework** в **MongoDB**: стадии, операторы, оптимизация и практические примеры.
 

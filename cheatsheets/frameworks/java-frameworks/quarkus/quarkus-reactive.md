@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Reactive - Mutiny и Reactive Messaging"
+title: "Quarkus: Reactive — Mutiny и Reactive Messaging"
 description: "Полное руководство по reactive программированию в Quarkus: Mutiny, reactive messaging, reactive streams и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-rest.md", "quarkus-testing.md"]
 ---
 
-# Quarkus: Reactive - Mutiny и Reactive Messaging
+# Quarkus: Reactive — Mutiny и Reactive Messaging
 
 ## Полезные ссылки
 

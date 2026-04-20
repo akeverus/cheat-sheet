@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Data Access - Hibernate ORM, Panache и Repositories"
+title: "Quarkus: Data Access — Hibernate ORM, Panache и Repositories"
 description: "Полное руководство по работе с данными в Quarkus: Hibernate ORM, Panache, repositories, transactions, Flyway/Liquibase и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-security.md"]
 ---
 
-# Quarkus: Data Access - Hibernate ORM, Panache и Repositories
+# Quarkus: Data Access — Hibernate ORM, Panache и Repositories
 
 ## Полезные ссылки
 

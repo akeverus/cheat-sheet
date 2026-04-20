@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Serialization - JSON, XML и Custom Serializers"
+title: "Micronaut: Serialization — JSON, XML и Custom Serializers"
 description: "Полное руководство по сериализации в Micronaut: JSON, XML, custom serializers, Jackson, Gson и best practices"
 tags:
   - micronaut
@@ -17,7 +17,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-kafka.md"]
 ---
 
-# Micronaut: Serialization - JSON, XML и Custom Serializers
+# Micronaut: Serialization — JSON, XML и Custom Serializers
 
 ## Полезные ссылки
 

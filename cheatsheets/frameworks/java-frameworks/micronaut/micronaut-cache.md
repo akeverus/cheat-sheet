@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Caching - Cache Abstraction и Redis Cache"
+title: "Micronaut: Caching — Cache Abstraction и Redis Cache"
 description: "Полное руководство по кэшированию в Micronaut: cache abstraction, Redis cache, EhCache, Caffeine и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-redis.md"]
 ---
 
-# Micronaut: Caching - Cache Abstraction и Redis Cache
+# Micronaut: Caching — Cache Abstraction и Redis Cache
 
 ## Полезные ссылки
 

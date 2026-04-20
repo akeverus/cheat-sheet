@@ -1,5 +1,5 @@
 ---
-title: "ClickHouse: Таблицы и движки - Полное руководство по созданию и управлению таблицами"
+title: "ClickHouse: Таблицы и движки — Полное руководство по созданию и управлению таблицами"
 description: "Комплексное руководство по таблицам ClickHouse: движки таблиц, типы данных, создание и оптимизация таблиц"
 tags:
   - clickhouse
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 ---
 
-# ClickHouse: Таблицы и движки - Полное руководство по созданию и управлению таблицами
+# ClickHouse: Таблицы и движки — Полное руководство по созданию и управлению таблицами
 
 Комплексное руководство по таблицам **ClickHouse**: движки таблиц, типы данных, создание и оптимизация таблиц.
 
@@ -24,9 +24,14 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 - [Table Engines](https://clickhouse.com/docs/en/engines/table-engines)
 - [Data Types](https://clickhouse.com/docs/en/sql-reference/data-types)
 - [Creating Tables](https://clickhouse.com/docs/en/sql-reference/statements/create/table)
+- [Table Design](https://clickhouse.com/docs/en/guides/sre/configuring-schema)
+- [Schema Design](https://clickhouse.com/docs/en/guides/best-practices)
+- [Performance Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
+- [Real-world Schemas](https://clickhouse.com/docs/en/guides/best-practices)
 
 ### Обучающие материалы
 - [ClickHouse Table Engines](https://www.baeldung.com/clickhouse-table-engines)
+- [ClickHouse Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
 
 ### См. также
 - [[clickhouse-basics|Основы]] — **ClickHouse**
@@ -931,21 +936,6 @@ SYSTEM RESTORE REPLICA table_name;
 - **Тестируйте производительность** разных конфигураций
 - **Мониторьте использование** ресурсов
 - **Планируйте рост** данных
-
-## Полезные ссылки
-
-### Официальная документация
-- [Table Engines](https://clickhouse.com/docs/en/engines/table-engines)
-- [Data Types](https://clickhouse.com/docs/en/sql-reference/data-types)
-- [Table Design](https://clickhouse.com/docs/en/guides/sre/configuring-schema)
-
-### Руководства
-- [Schema Design](https://clickhouse.com/docs/en/guides/best-practices)
-- [Performance Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
-
-### Примеры
-- [ClickHouse Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
-- [Real-world Schemas](https://clickhouse.com/docs/en/guides/best-practices)
 
 
 **Следующие темы:**

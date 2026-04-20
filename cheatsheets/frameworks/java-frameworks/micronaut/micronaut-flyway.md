@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Flyway - Database Migrations"
+title: "Micronaut: Flyway — Database Migrations"
 description: "Полное руководство по Flyway в Micronaut: database migrations, versioning, rollback и best practices"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-data.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: Flyway - Database Migrations
+# Micronaut: Flyway — Database Migrations
 
 ## Полезные ссылки
 

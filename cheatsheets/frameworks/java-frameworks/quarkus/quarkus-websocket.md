@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: WebSocket - Real-time Communication"
+title: "Quarkus: WebSocket — Real-time Communication"
 description: "Полное руководство по WebSocket в Quarkus: server endpoints, client endpoints, message handling, broadcasting и best practices"
 tags:
   - quarkus
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: WebSocket - Real-time Communication
+# Quarkus: WebSocket — Real-time Communication
 
 ## Полезные ссылки
 

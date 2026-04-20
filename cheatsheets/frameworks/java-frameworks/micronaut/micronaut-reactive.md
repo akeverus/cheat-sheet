@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Reactive Programming - RxJava, Reactor и Reactive Streams"
+title: "Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams"
 description: "Полное руководство по реактивному программированию в Micronaut: RxJava, Project Reactor, Reactive Streams и async operations"
 tags:
   - micronaut
@@ -16,7 +16,7 @@ updated: "2026-04-20"
 related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Reactive Programming - RxJava, Reactor и Reactive Streams
+# Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams
 
 ## Полезные ссылки
 

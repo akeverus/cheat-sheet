@@ -1,5 +1,5 @@
 ---
-title: "Scala Collections - List"
+title: "Scala Collections — List"
 description: "Полное руководство по работе со списками в Scala: List, ListBuffer, операции, производительность и лучшие практики"
 tags:
   - scala
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
-# Scala Collections - List
+# Scala Collections — List
 
 Кратко: руководство по работе со списками в **Scala**: **List**, **ListBuffer**, операции и лучшие практики.
 

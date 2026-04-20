@@ -1,5 +1,5 @@
 ---
-title: "Micronaut: Validation - Bean Validation и Custom Validators"
+title: "Micronaut: Validation — Bean Validation и Custom Validators"
 description: "Полное руководство по валидации в Micronaut: Bean Validation, custom validators, группировка валидации и best practices"
 tags:
   - micronaut
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
-# Micronaut: Validation - Bean Validation и Custom Validators
+# Micronaut: Validation — Bean Validation и Custom Validators
 
 ## Полезные ссылки
 

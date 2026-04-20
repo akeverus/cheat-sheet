@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Core - CDI, Bean Scopes и Configuration"
+title: "Quarkus: Core — CDI, Bean Scopes и Configuration"
 description: "Полное руководство по Quarkus Core: CDI, bean scopes, configuration, profiles, dependency injection и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-basics.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Core - CDI, Bean Scopes и Configuration
+# Quarkus: Core — CDI, Bean Scopes и Configuration
 
 ## Полезные ссылки
 

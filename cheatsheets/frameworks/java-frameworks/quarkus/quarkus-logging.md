@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: Logging - Логирование"
+title: "Quarkus: Logging — Логирование"
 description: "Полное руководство по логированию в Quarkus: SLF4J, Logback, structured logging, MDC, log levels и best practices"
 tags:
   - quarkus
@@ -14,7 +14,7 @@ updated: "2026-04-20"
 related: ["quarkus-core.md", "quarkus-actuator.md"]
 ---
 
-# Quarkus: Logging - Логирование
+# Quarkus: Logging — Логирование
 
 ## Полезные ссылки
 

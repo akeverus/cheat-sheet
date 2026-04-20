@@ -1,5 +1,5 @@
 ---
-title: "Quarkus: MongoDB - NoSQL Database"
+title: "Quarkus: MongoDB — NoSQL Database"
 description: "Полное руководство по работе с MongoDB в Quarkus: Panache MongoDB, reactive MongoDB, queries, aggregation и best practices"
 tags:
   - quarkus
@@ -15,7 +15,7 @@ updated: "2026-04-20"
 related: ["quarkus-data.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: MongoDB - NoSQL Database
+# Quarkus: MongoDB — NoSQL Database
 
 ## Полезные ссылки
 
