@@ -191,14 +191,16 @@ public class QuestionStatsRepository {
                         "SUM(CASE WHEN rs.next_review_at <= ? THEN 1 ELSE 0 END) AS due, " +
                         "SUM(CASE WHEN rs.repetitions >= ? THEN 1 ELSE 0 END) AS learned, " +
                         "SUM(rs.correct_count) AS correct, SUM(rs.wrong_count) AS wrong, " +
-                        "SUM(q.regen_count) AS regen_sum " +
+                        "SUM(q.regen_count) AS regen_sum, " +
+                        "AVG(rs.ease_factor * rs.interval_days) AS maturity_score " +
                         "FROM questions q JOIN review_state rs ON rs.question_id = q.id " +
                         "GROUP BY q.topic ORDER BY q.topic",
                 (rs, rowNum) -> new TopicStats(
                         rs.getString("topic"), rs.getLong("total"),
                         rs.getLong("due"), rs.getLong("learned"),
                         rs.getLong("correct"), rs.getLong("wrong"),
-                        rs.getLong("regen_sum")),
+                        rs.getLong("regen_sum"),
+                        rs.getDouble("maturity_score")),
                 nowEpoch, learnedThreshold);
     }
 

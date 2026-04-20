@@ -6,7 +6,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
+import com.cheatsheet.quiz.domain.TopicStats;
+
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * Тесты {@link QuestionStatsRepository}, в том числе getAggregatedStats при пустой БД.
@@ -92,5 +97,25 @@ class QuestionStatsRepositoryTest {
         assertThat(stats.learned()).isZero();
         assertThat(stats.correct()).isZero();
         assertThat(stats.wrong()).isZero();
+    }
+
+    @Test
+    void findTopicStatsIncludesMaturityScore() {
+        long nowEpoch = System.currentTimeMillis() / 1000;
+
+        jdbcTemplate.update(
+                "INSERT INTO questions (slug, source_slug, file_path, topic, question_text, answer_markdown, source_hash) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "q1", "q1", "f.md", "java", "Q?", "A.", "h1");
+        jdbcTemplate.update(
+                "INSERT INTO review_state (question_id, repetitions, interval_days, ease_factor, " +
+                "next_review_at, last_result, correct_count, wrong_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                1L, 3, 10, 2.5, nowEpoch - 1, "CORRECT", 5, 1);
+
+        List<TopicStats> stats = repository.findTopicStats(nowEpoch, 3);
+
+        assertThat(stats).hasSize(1);
+        assertThat(stats.get(0).maturityScore()).isEqualTo(25.0, within(0.01));
+        // 2.5 * 10 = 25.0
     }
 }
