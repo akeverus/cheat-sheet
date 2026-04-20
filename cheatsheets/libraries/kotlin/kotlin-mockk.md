@@ -67,7 +67,7 @@ updated: "2026-02-11"
   - [When to use MockK](#when-to-use-mockk)
   - [Anti-patterns to avoid](#anti-patterns-to-avoid)
 - [Experimental Features](#experimental-features)
-  - [MockK 2.0+ **Features** (Future)](#mockk-20-features-future)
+  - [MockK 2.0+ Features (Future)](#mockk-20-features-future)
 
 ## Основные возможности
 

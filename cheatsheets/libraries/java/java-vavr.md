@@ -76,7 +76,7 @@ updated: "2026-02-11"
   - [Type classes и Higher-kinded types](#type-classes-и-higher-kinded-types)
   - [Trampoline для stack-safe recursion](#trampoline-для-stack-safe-recursion)
 - [Experimental Features](#experimental-features)
-  - [Vavr 1.0 **Features** (Future)](#vavr-10-features-future)
+  - [Vavr 1.0 Features (Future)](#vavr-10-features-future)
 - [Troubleshooting](#troubleshooting)
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)

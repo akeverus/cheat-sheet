@@ -54,7 +54,7 @@ updated: "2026-02-11"
   - [From Spring Configuration to Konfig](#from-spring-configuration-to-konfig)
   - [From Environment Variables to Konfig](#from-environment-variables-to-konfig)
 - [Экспериментальные возможности](#экспериментальные-возможности)
-  - [Konfig 2.0+ **Features** (Future)](#konfig-20-features-future)
+  - [Konfig 2.0+ Features (Future)](#konfig-20-features-future)
 - [См. также](#см-также)
 
 ## Основные возможности

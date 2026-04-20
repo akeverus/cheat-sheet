@@ -26,22 +26,22 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [**InfluxDB**: Основы временных рядов](#influxdb-основы-временных-рядов)
-- [Введение в **InfluxDB**](#введение-в-influxdb)
-  - [Почему **InfluxDB**?](#почему-influxdb)
-  - [Архитектура **InfluxDB**](#архитектура-influxdb)
+- [InfluxDB: Основы временных рядов](#influxdb-основы-временных-рядов)
+- [Введение в InfluxDB](#введение-в-influxdb)
+  - [Почему InfluxDB?](#почему-influxdb)
+  - [Архитектура InfluxDB](#архитектура-influxdb)
 - [Установка и настройка](#установка-и-настройка)
-  - [**Docker** установка](#docker-установка)
+  - [Docker установка](#docker-установка)
 - [Запуск InfluxDB в Docker](#запуск-influxdb-в-docker)
 - [Основы работы с данными](#основы-работы-с-данными)
   - [Запись данных](#запись-данных)
   - [Чтение данных](#чтение-данных)
-- [**InfluxQL** запросы](#influxql-запросы)
-  - [**SELECT** запросы](#select-запросы)
+- [InfluxQL запросы](#influxql-запросы)
+  - [SELECT запросы](#select-запросы)
   - [Агрегация](#агрегация)
-- [Интеграция с **Java**](#интеграция-с-java)
-  - [**InfluxDB Java Client**](#influxdb-java-client)
-- [**Best Practices**](#лучшие-практики)
+- [Интеграция с Java](#интеграция-с-java)
+  - [InfluxDB Java Client](#influxdb-java-client)
+- [Best Practices](#лучшие-практики)
 
 ## Введение в InfluxDB
 

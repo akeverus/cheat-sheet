@@ -30,10 +30,10 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Введение в **DSL**](#введение-в-dsl)
-  - [Преимущества **DSL**](#преимущества-dsl)
-  - [Типы **DSL** в **Kotlin**](#типы-dsl-в-kotlin)
-- [**Type-Safe Builders**](#type-safe-builders)
+- [Введение в DSL](#введение-в-dsl)
+  - [Преимущества DSL](#преимущества-dsl)
+  - [Типы DSL в Kotlin](#типы-dsl-в-kotlin)
+- [Type-Safe Builders](#type-safe-builders)
   - [Базовый пример](#базовый-пример)
   - [Расширенный HTML Builder](#расширенный-html-builder)
   - [Улучшенный Builder с операторами](#улучшенный-builder-с-операторами)

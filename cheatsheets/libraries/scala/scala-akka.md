@@ -55,7 +55,7 @@ updated: "2026-02-11"
   - [Testing Actors](#testing-actors)
   - [Testing Streams](#testing-streams)
 - [Интеграция с Spring Boot](#интеграция-с-spring-boot)
-  - [Akka в **Spring** приложении](#akka-в-spring-приложении)
+  - [Akka в Spring приложении](#akka-в-spring-приложении)
   - [Configuration](#configuration)
 - [Лучшие практики](#лучшие-практики)
   - [Actor Design](#actor-design)

@@ -115,18 +115,13 @@ related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
 
 ### Архитектура Micronaut
 
-```text
-# Архитектура Micronaut: приложение → Bean Context → контейнеры
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Application   │───▶│  Bean Context   │───▶│   Containers    │
-│    Code         │    │  (Compile-time) │    │   (Docker/K8s)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Controllers     │    │ Services        │    │ Native Image    │
-│ (HTTP)          │    │ (Business Logic)│    │ (GraalVM)       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```mermaid
+flowchart LR
+    App["Application Code"] --> BC["Bean Context (Compile-time)"]
+    BC --> Cont["Containers (Docker/K8s)"]
+    App --> Ctrl["Controllers (HTTP)"]
+    BC --> Svc["Services (Business Logic)"]
+    Cont --> Native["Native Image (GraalVM)"]
 ```
 
 ### Сравнение с Spring Boot

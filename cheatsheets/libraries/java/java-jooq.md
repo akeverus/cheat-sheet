@@ -47,7 +47,7 @@ updated: "2026-02-11"
   - [Простые SELECT запросы](#простые-select-запросы)
   - [SELECT с условиями](#select-с-условиями)
   - [ORDER BY и LIMIT](#order-by-и-limit)
-- [INSERT, UPDATE**, **DELETE](#insert-update-delete)
+- [INSERT, UPDATE, DELETE](#insert-update-delete)
   - [INSERT операции](#insert-операции)
   - [UPDATE операции](#update-операции)
   - [DELETE операции](#delete-операции)

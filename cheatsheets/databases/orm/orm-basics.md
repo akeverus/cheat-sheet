@@ -27,20 +27,20 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [**ORM**: **Object-Relational Mapping**](#orm-object-relational-mapping)
-- [Введение в **ORM**](#введение-в-orm)
-  - [Что такое **ORM**?](#что-такое-orm)
+- [ORM: Object-Relational Mapping](#orm-object-relational-mapping)
+- [Введение в ORM](#введение-в-orm)
+  - [Что такое ORM?](#что-такое-orm)
   - [Преимущества и недостатки](#преимущества-и-недостатки)
-- [**JPA** (Jakarta Persistence API)](#jpa-jakarta-persistence-api)
-  - [**Entity** классы](#entity-классы)
-  - [**EntityManager**](#entitymanager)
-  - [**JPQL** запросы](#jpql-запросы)
-- [**Hibernate**](#hibernate)
-  - [Конфигурация **Hibernate**](#конфигурация-hibernate)
-  - [**Mapping** аннотации](#mapping-аннотации)
-- [**Spring Data JPA**](#spring-data-jpa)
-  - [**Repository** интерфейсы](#repository-интерфейсы)
-- [**Best Practices**](#лучшие-практики)
+- [JPA (Jakarta Persistence API)](#jpa-jakarta-persistence-api)
+  - [Entity классы](#entity-классы)
+  - [EntityManager](#entitymanager)
+  - [JPQL запросы](#jpql-запросы)
+- [Hibernate](#hibernate)
+  - [Конфигурация Hibernate](#конфигурация-hibernate)
+  - [Mapping аннотации](#mapping-аннотации)
+- [Spring Data JPA](#spring-data-jpa)
+  - [Repository интерфейсы](#repository-интерфейсы)
+- [Best Practices](#лучшие-практики)
 
 ## Введение в ORM
 

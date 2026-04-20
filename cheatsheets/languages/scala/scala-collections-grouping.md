@@ -29,9 +29,9 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 
 ## Содержание
 
-- [**Scala Collections** — **Grouping and Aggregation**](#scala-collections-grouping-and-aggregation)
+- [Scala Collections — Grouping and Aggregation](#scala-collections-grouping-and-aggregation)
 - [Группировка](#группировка)
-  - [**groupBy**](#groupby)
+  - [groupBy](#groupby)
   - [Группировка с трансформацией](#группировка-с-трансформацией)
 - [Агрегация](#агрегация)
 - [Подсчет](#подсчет)
@@ -40,7 +40,7 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 - [Продвинутые операции](#продвинутые-операции)
   - [Многоуровневая группировка](#многоуровневая-группировка)
   - [Агрегация временных рядов](#агрегация-временных-рядов)
-  - [**groupMapReduce**](#groupmapreduce)
+  - [groupMapReduce](#groupmapreduce)
   - [Группировка с множественными ключами](#группировка-с-множественными-ключами)
   - [Группировка с сортировкой](#группировка-с-сортировкой)
   - [Агрегация с различными функциями](#агрегация-с-различными-функциями)

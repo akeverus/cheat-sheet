@@ -45,7 +45,7 @@ updated: "2026-02-11"
   - [Работа с изображениями](#работа-с-изображениями)
 - [Integration с Spring Boot](#integration-с-spring-boot)
   - [Excel Import/Export Service](#excel-importexport-service)
-  - [REST Controller для **Excel** операций](#rest-controller-для-excel-операций)
+  - [REST Controller для Excel операций](#rest-controller-для-excel-операций)
 - [Testing](#testing)
   - [Unit Testing Excel операций](#unit-testing-excel-операций)
   - [Integration Testing](#integration-testing)

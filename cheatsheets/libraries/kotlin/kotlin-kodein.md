@@ -57,7 +57,7 @@ updated: "2026-02-11"
   - [From Koin to Kodein](#from-koin-to-kodein)
   - [From Guice to Kodein](#from-guice-to-kodein)
 - [Экспериментальные возможности](#экспериментальные-возможности)
-  - [Kodein 8.0+ **Features** (Future)](#kodein-80-features-future)
+  - [Kodein 8.0+ Features (Future)](#kodein-80-features-future)
 - [См. также](#см-также)
 
 ## Основные возможности

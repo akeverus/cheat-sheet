@@ -1,102 +1,381 @@
 ---
 title: "Spring WebSocket"
-description: "Кратко: обзор поддержки WebSocket в Spring — двунаправленная связь между клиентом и сервером. STOMP, SockJS, конфигурация и типовые сценарии использования."
+description: "Полное руководство по Spring WebSocket: протокол, STOMP, SockJS, конфигурация, authentication, broker relay (RabbitMQ), scaling, user destinations, тестирование."
 tags:
   - frameworks
   - java-frameworks
   - spring-websocket
+  - stomp
+  - sockjs
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+prerequisites: ["spring-mvc.md"]
+next: ["spring-messaging.md", "spring-security.md"]
+updated: "2026-04-20"
+related:
+  - "spring-mvc.md"
+  - "spring-messaging.md"
+  - "spring-security.md"
 ---
 # Spring WebSocket
 
-Кратко: обзор поддержки **WebSocket** в **Spring** — двунаправленная связь между клиентом и сервером. **STOMP**, **SockJS**, конфигурация и типовые сценарии использования.
+`Spring WebSocket` даёт двунаправленную persistent-связь между браузером и сервером: чаты, live-уведомления, collaborative-editing, dashboard real-time обновления. Поверх чистого WebSocket обычно используют `STOMP` как messaging-протокол и `SockJS` как транспортный fallback.
 
 ## Полезные ссылки
 
 ### Официальная документация
 - [Spring WebSocket Reference](https://docs.spring.io/spring-framework/reference/web/websocket.html)
+- [STOMP Over WebSocket (протокол)](https://stomp.github.io/stomp-specification-1.2.html)
+- [RFC 6455 — The WebSocket Protocol](https://datatracker.ietf.org/doc/html/rfc6455)
+
+### Учебные ресурсы
+- [Intro to Spring WebSockets — Baeldung](https://www.baeldung.com/websockets-spring)
+- [Spring WebFlux WebSocket Client — Baeldung](https://www.baeldung.com/spring-5-reactive-websockets)
 
 ### См. также
-- [[spring-mvc|Spring MVC]] — **MVC** в **Spring**
-- [[spring-security|Spring Security]] — безопасность **WebSocket**
-- [[spring-messaging|Spring Messaging]] — брокер сообщений
+- [[spring-mvc]] — HTTP-часть приложения, с которой живёт WebSocket
+- [[spring-messaging]] — общая модель `Message` / `MessageChannel`
+- [[spring-security]] — security поверх WebSocket
+- [[spring-webflux]] — реактивный WebSocket API
+- [[spring-integration]] — если нужен EIP-конвейер вокруг сообщений
 
 ## Содержание
 
-- [Введение](#введение)
-- [Основные понятия](#основные-понятия)
-- [Базовая конфигурация](#базовая-конфигурация)
-- [Пример контроллера](#пример-контроллера)
-- [Лучшие практики](#лучшие-практики)
-- [Заключение](#заключение)
+- [Когда нужен WebSocket](#когда-нужен-websocket)
+- [WebSocket vs STOMP vs SockJS](#websocket-vs-stomp-vs-sockjs)
+- [Базовая конфигурация (STOMP)](#базовая-конфигурация-stomp)
+- [Контроллеры: @MessageMapping](#контроллеры-messagemapping)
+- [Отправка сервером (SimpMessagingTemplate)](#отправка-сервером-simpmessagingtemplate)
+- [User destinations](#user-destinations)
+- [Security](#security)
+- [Внешний broker (RabbitMQ/Kafka)](#внешний-broker-rabbitmqkafka)
+- [Низкоуровневый WebSocketHandler](#низкоуровневый-websockethandler)
+- [WebSocket в WebFlux](#websocket-в-webflux)
+- [Масштабирование и sticky sessions](#масштабирование-и-sticky-sessions)
+- [Тестирование](#тестирование)
+- [Мониторинг и метрики](#мониторинг-и-метрики)
+- [Частые ошибки](#частые-ошибки)
 
-## Введение
+## Когда нужен WebSocket
 
-**Spring** предоставляет поддержку **WebSocket** для организации полно дуплексной связи по одному **TCP**-соединению. Интегрируется с **STOMP** как подпротоколом и **SockJS** как **fallback** для сред без нативной поддержки **WebSocket**.
+WebSocket оправдан, когда сервер должен **инициативно** слать данные клиенту с задержкой <1 сек:
 
-## Основные понятия
+| Кейс | WebSocket | Альтернатива |
+|---|---|---|
+| Чат | ✅ | — |
+| Live-уведомления (десятки/сек) | ✅ | SSE |
+| Dashboard с обновлениями раз в 30 сек | ❌ | polling / SSE |
+| Collaborative editing (CRDT/OT) | ✅ | — |
+| Event log для админов | ⚠️ | SSE |
+| Стриминг видео | ❌ | WebRTC / HLS |
 
-- **WebSocket** — протокол полнодуплексной связи поверх одного **TCP**-соединения.
-- **STOMP** — простой текстовый протокол поверх **WebSocket** (подписки, назначения, фреймы).
-- **SockJS** — транспорты-заменители (long polling, streaming) при недоступности **WebSocket**.
-- **@MessageMapping** — обработка сообщений от клиента; **@SendTo** / **SimpMessagingTemplate** — отправка на клиентов.
+Если нужно только server→client — часто проще `Server-Sent Events (SSE)`: обычный HTTP, работает через любые прокси, не нужен sticky session.
 
-## Базовая конфигурация
+## WebSocket vs STOMP vs SockJS
 
-Включение **WebSocket** с **STOMP** и встроенным брокером сообщений:
+Три уровня:
+
+```mermaid
+graph TB
+    App[Application<br/>@MessageMapping] --> STOMP
+    STOMP[STOMP frames<br/>SUBSCRIBE / SEND / MESSAGE] --> WS
+    WS[WebSocket frames<br/>RFC 6455] --> TCP
+    STOMP -.SockJS fallback.-> HTTP[HTTP long-polling / streaming]
+    HTTP --> TCP[TCP/TLS]
+```
+
+- **WebSocket** — транспорт: одно persistent TCP-соединение, фреймы text/binary.
+- **STOMP** — messaging-протокол поверх WebSocket (подписки, destinations, headers). Spring предоставляет готовые аннотации для STOMP.
+- **SockJS** — клиентская библиотека, которая при недоступности WebSocket (старые прокси, некоторые корп-сети) откатывается к long-polling/streaming через HTTP.
+
+## Базовая конфигурация (STOMP)
 
 ```java
-// Включение WebSocket с брокером сообщений (STOMP)
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue");
-        config.setApplicationDestinationPrefixes("/app");
+        config.enableSimpleBroker("/topic", "/queue");   // in-memory broker
+        config.setApplicationDestinationPrefixes("/app"); // входящие @MessageMapping
+        config.setUserDestinationPrefix("/user");         // для адресных сообщений
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").withSockJS();
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins("https://app.example.com")
+                .withSockJS();
     }
 }
 ```
 
-**Endpoint** `/ws` — точка подключения; клиенты подписываются на **destinations** вида `/topic/notifications` или `/queue/private`. Сообщения, отправляемые с префиксом `/app`, маршрутизируются в методы с **@MessageMapping**.
+Destination prefixes:
 
-## Пример контроллера
+| Префикс | Что это |
+|---|---|
+| `/app/**` | входящее сообщение от клиента — попадает в `@MessageMapping` |
+| `/topic/**` | broadcast, подписчики получают всё |
+| `/queue/**` | point-to-point, обычно с user-destinations |
+| `/user/**` | персональное сообщение конкретному пользователю |
 
-Обработка входящего сообщения и рассылка подписчикам топика:
+Клиент на JavaScript (stomp.js over SockJS):
+
+```javascript
+const stomp = Stomp.over(new SockJS('/ws'));
+stomp.connect({}, () => {
+    stomp.subscribe('/topic/notifications', msg => console.log(JSON.parse(msg.body)));
+    stomp.send('/app/notify', {}, JSON.stringify({ text: 'hi' }));
+});
+```
+
+## Контроллеры: @MessageMapping
 
 ```java
-// Контроллер отправки уведомлений через WebSocket
 @Controller
 public class NotificationController {
 
-    @MessageMapping("/notify")
-    @SendTo("/topic/notifications")
-    public String send(String message) {
-        return message;
+    @MessageMapping("/notify")           // клиент шлёт на /app/notify
+    @SendTo("/topic/notifications")      // рассылается всем подписчикам
+    public Notification handle(ChatMessage msg, Principal principal) {
+        return new Notification(principal.getName(), msg.text(), Instant.now());
+    }
+
+    @SubscribeMapping("/initial")        // однократный reply при SUBSCRIBE
+    public List<Notification> initial() {
+        return repository.latest(50);
     }
 }
 ```
 
-Клиент подключается к `/ws` (SockJS), подписывается на `/topic/notifications` и отправляет сообщения на `/app/notify`. Для отправки с сервера без входящего сообщения используйте **SimpMessagingTemplate** (`convertAndSend("/topic/notifications", payload)`).
+Параметры метода:
 
-## Лучшие практики
+| Тип | Что инжектится |
+|---|---|
+| DTO | payload (десериализация через [[spring-messaging|MessageConverter]]) |
+| `Principal` | аутентифицированный пользователь |
+| `@Header("x")` | конкретный STOMP-header |
+| `@Headers` | все headers как `Map` |
+| `SimpMessageHeaderAccessor` | полный accessor (session id, destination) |
 
-- **Безопасность:** всегда подключайте **WebSocket** к **Spring Security** (транспорт, аутентификация при handshake); ограничивайте назначения (destinations) по ролям.
-- **Масштабирование:** при нескольких инстансах приложения используйте брокер сообщений (RabbitMQ, Redis) для рассылки между узлами; настраивайте **endpoint** с префиксом приложения.
-- **Надёжность:** обрабатывайте разрывы соединения (reconnect, heartbeat); на клиенте используйте **SockJS fallback** для совместимости.
-- **Нагрузка:** ограничивайте размер сообщений и частоту отправки; используйте **throttling** и квоты на подписки при необходимости.
-- **Мониторинг:** отслеживайте число активных сессий, очереди сообщений и ошибки **handshake** в метриках (Actuator, кастомные метрики).
+Возвращаемое значение:
 
+- `@SendTo("/topic/X")` — указать destination (default: `/topic/<method>-user<userId>`).
+- `@SendToUser("/queue/X")` — персонально отправителю.
+- `void` — ничего не рассылать.
 
-## Заключение
+## Отправка сервером (SimpMessagingTemplate)
 
-**Spring WebSocket** подходит для чатов, уведомлений в реальном времени, совместного редактирования и интерактивных панелей. Для масштабирования на несколько инстансов настройте внешний брокер (**RabbitMQ** или **Redis**) в **configureMessageBroker** и подключите **Spring Security** к **WebSocket** endpoint.
+Когда отправка не в ответ на входящее сообщение (например, из кафка-консьюмера, крон-задачи):
+
+```java
+@Service
+@RequiredArgsConstructor
+public class NotificationPublisher {
+    private final SimpMessagingTemplate template;
+
+    public void broadcast(Notification n) {
+        template.convertAndSend("/topic/notifications", n);
+    }
+
+    public void sendTo(String username, Notification n) {
+        template.convertAndSendToUser(username, "/queue/private", n);
+    }
+}
+```
+
+## User destinations
+
+Персональная доставка адресных сообщений. Клиент подписывается на `/user/queue/private`, Spring автоматически резолвит userId → session и доставит сообщение только этому юзеру (даже если у него несколько вкладок).
+
+```java
+template.convertAndSendToUser("alice", "/queue/private", payload);
+```
+
+Внутри Spring превращает `/user/alice/queue/private` в конкретную сессию. Для работы нужен `Principal` в WebSocket-сессии — обычно приходит из [[spring-security]].
+
+## Security
+
+Базовый подход — аутентификация при HTTP-handshake: WebSocket-соединение наследует `SecurityContext` от HTTP-сессии/токена.
+
+```java
+@Bean
+SecurityFilterChain ws(HttpSecurity http) throws Exception {
+    return http
+        .authorizeHttpRequests(a -> a.requestMatchers("/ws/**").authenticated()
+                                      .anyRequest().permitAll())
+        .oauth2ResourceServer(o -> o.jwt())
+        .build();
+}
+```
+
+Авторизация STOMP-команд через `AbstractSecurityWebSocketMessageBrokerConfigurer`:
+
+```java
+@Configuration
+public class WebSocketSecurity
+        extends AbstractSecurityWebSocketMessageBrokerConfigurer {
+
+    @Override
+    protected void configureInbound(MessageSecurityMetadataSourceRegistry messages) {
+        messages
+            .simpSubscribeDestMatchers("/topic/admin/**").hasRole("ADMIN")
+            .simpDestMatchers("/app/**").authenticated()
+            .anyMessage().denyAll();
+    }
+
+    @Override
+    protected boolean sameOriginDisabled() { return false; }   // оставить CSRF-защиту
+}
+```
+
+**Подводный камень:** для `SockJS` отключение `sameOriginDisabled` сломает xhr-streaming — используй proper `setAllowedOrigins(...)` вместо.
+
+## Внешний broker (RabbitMQ/Kafka)
+
+`enableSimpleBroker` держит очереди в памяти — не масштабируется за пределы одного инстанса. Для production с несколькими репликами используют **broker relay**: Spring превращается в клиента внешнего STOMP-broker, который и рассылает сообщения между инстансами.
+
+```java
+@Override
+public void configureMessageBroker(MessageBrokerRegistry config) {
+    config.enableStompBrokerRelay("/topic", "/queue")
+          .setRelayHost("rabbitmq.internal")
+          .setRelayPort(61613)
+          .setClientLogin("guest")
+          .setClientPasscode("guest")
+          .setSystemHeartbeatSendInterval(10_000)
+          .setSystemHeartbeatReceiveInterval(10_000);
+    config.setApplicationDestinationPrefixes("/app");
+}
+```
+
+Поддерживаются RabbitMQ (с `rabbitmq_stomp` плагином) и ActiveMQ. Kafka напрямую не поддерживается — потребует custom bridge через [[spring-kafka]] → `SimpMessagingTemplate`.
+
+## Низкоуровневый WebSocketHandler
+
+Если STOMP/подписки не нужны, можно работать с raw frames:
+
+```java
+@Configuration
+@EnableWebSocket
+public class RawConfig implements WebSocketConfigurer {
+    @Override
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry reg) {
+        reg.addHandler(new EchoHandler(), "/raw").setAllowedOrigins("*");
+    }
+}
+
+public class EchoHandler extends TextWebSocketHandler {
+    @Override
+    protected void handleTextMessage(WebSocketSession session, TextMessage msg) throws IOException {
+        session.sendMessage(new TextMessage("echo: " + msg.getPayload()));
+    }
+}
+```
+
+Полезно для бинарных протоколов, собственного sub-protocol или прокси.
+
+## WebSocket в WebFlux
+
+Реактивный API, без STOMP. Отдельный `WebSocketHandler`:
+
+```java
+public class ReactiveEcho implements WebSocketHandler {
+    @Override
+    public Mono<Void> handle(WebSocketSession session) {
+        return session.send(session.receive()
+                .map(WebSocketMessage::getPayloadAsText)
+                .map(t -> session.textMessage("echo: " + t)));
+    }
+}
+
+@Bean
+HandlerMapping wsMapping(ReactiveEcho h) {
+    return new SimpleUrlHandlerMapping(Map.of("/reactive-ws", h), -1);
+}
+
+@Bean
+WebSocketHandlerAdapter wsAdapter() { return new WebSocketHandlerAdapter(); }
+```
+
+Для клиентской части — `ReactorNettyWebSocketClient`.
+
+## Масштабирование и sticky sessions
+
+Одно WebSocket-соединение «прибито» к одному инстансу. При горизонтальном scaling важно:
+
+- **Sticky sessions** на load balancer (`ip_hash` в Nginx, cookie в k8s Ingress) — чтобы reconnect клиента попал на тот же узел, пока сессия не закроется.
+- **Broker relay** или событийная шина между узлами — чтобы `convertAndSend` на узле A дошло до подписчика на узле B.
+- Подсчёт сессий и bulk-рассылка — смотреть нагрузку на один узел (`Sessions`-метрика).
+
+Для SockJS с long-polling sticky-sessions **обязательны**: каждый long-poll запрос может прийти на другой узел, что приведёт к 404.
+
+## Тестирование
+
+**Unit-тест контроллера:**
+
+```java
+@Test
+void notifyBroadcasts() {
+    NotificationController c = new NotificationController(repo);
+    Notification n = c.handle(new ChatMessage("hi"), () -> "alice");
+    assertEquals("alice", n.from());
+}
+```
+
+**Integration-тест через STOMP-клиент:**
+
+```java
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+class WsIntegrationTest {
+
+    @LocalServerPort int port;
+
+    @Test
+    void chatFlow() throws Exception {
+        WebSocketStompClient client = new WebSocketStompClient(new StandardWebSocketClient());
+        client.setMessageConverter(new MappingJackson2MessageConverter());
+
+        CompletableFuture<Notification> received = new CompletableFuture<>();
+        StompSession session = client.connectAsync("ws://localhost:" + port + "/ws",
+                new StompSessionHandlerAdapter() {}).get(5, SECONDS);
+
+        session.subscribe("/topic/notifications", new StompFrameHandler() {
+            public Type getPayloadType(StompHeaders h) { return Notification.class; }
+            public void handleFrame(StompHeaders h, Object p) { received.complete((Notification) p); }
+        });
+
+        session.send("/app/notify", new ChatMessage("hi"));
+
+        assertThat(received.get(3, SECONDS).text()).isEqualTo("hi");
+    }
+}
+```
+
+## Мониторинг и метрики
+
+Через [[spring-actuator]] и Micrometer:
+
+- `simp.events.sessions.connected` — активные сессии.
+- `simp.events.sessions.total` — total.
+- Time на WebSocket-handshake.
+- Размер входящих/исходящих сообщений.
+
+Ключевые «сигналы» в production:
+
+- Резкий рост сессий → утечка (клиенты не закрывают).
+- Queue latency растёт → broker перегружен.
+- Ошибки handshake → CORS/Origin/Auth.
+
+## Частые ошибки
+
+| Симптом | Причина | Фикс |
+|---|---|---|
+| `403` при подключении | Origin не в `setAllowedOrigins` | явно перечислить домены |
+| SockJS падает при scaling | нет sticky sessions | настроить `ip_hash` / session affinity |
+| Сообщение не доходит до конкретного пользователя | нет `Principal` в сессии | пропустить Spring Security до WS-handshake |
+| `/user/**` подписки не работают | разные userId на разных вкладках (anonymous) | использовать стабильный login / JWT `sub` |
+| Broker relay отваливается | heartbeat не настроены | `setSystemHeartbeatSendInterval` |
+| «Sent bytes too high» | клиент шлёт большие payload | `setMessageSizeLimit` + валидация |
+
+**Итог:** для единственного инстанса — `enableSimpleBroker` + STOMP + SockJS. Для нескольких инстансов — обязательно broker relay (RabbitMQ) + sticky sessions на LB + security на handshake.

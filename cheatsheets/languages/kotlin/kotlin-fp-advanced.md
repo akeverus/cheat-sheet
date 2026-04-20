@@ -31,8 +31,8 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [**Functors**](#functors)
-  - [Определение **Functor**](#определение-functor)
+- [Functors](#functors)
+  - [Определение Functor](#определение-functor)
   - [Functor Laws](#functor-laws)
   - [Примеры Functors](#примеры-functors)
 - [Applicatives](#applicatives)

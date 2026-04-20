@@ -100,23 +100,15 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 
 ### Архитектура `DI` в Micronaut
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Compile-time Processing                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │  Annotation  │  │   Bean       │  │  Dependency  │  │
-│  │  Processors  │─▶│  Definitions │─▶│  Resolution  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────┐
-│              Runtime Execution                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │  Bean        │  │  Application │  │  Context     │  │
-│  │  Context     │─▶│  Context     │─▶│  Injection   │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph CT["Compile-time Processing"]
+        AP["Annotation Processors"] --> BD["Bean Definitions"] --> DR["Dependency Resolution"]
+    end
+    subgraph RT["Runtime Execution"]
+        BC["Bean Context"] --> AC["Application Context"] --> CI["Context Injection"]
+    end
+    CT --> RT
 ```
 
 ## Dependency Injection

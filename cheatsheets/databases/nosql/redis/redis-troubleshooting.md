@@ -29,22 +29,22 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md", "databa
 
 ## Содержание
 
-- [Введение в **troubleshooting Redis**](#введение-в-troubleshooting-redis)
+- [Введение в troubleshooting Redis](#введение-в-troubleshooting-redis)
   - [Области проблем](#области-проблем)
 - [Диагностика проблем](#диагностика-проблем)
   - [Проверка статуса сервера](#проверка-статуса-сервера)
   - [Проверка памяти](#проверка-памяти)
   - [Проверка производительности](#проверка-производительности)
-  - [**Issue** 1: **Out** of **Memory**](#issue-1-out-of-memory)
-  - [**Issue** 2: **Slow Performance**](#issue-2-slow-performance)
-  - [**Issue** 3: **Connection Issues**](#issue-3-connection-issues)
-- [**Advanced Troubleshooting**](#advanced-troubleshooting)
-  - [**Memory Issues**](#memory-issues)
-  - [**Performance Issues**](#performance-issues)
-  - [**Network Issues**](#network-issues)
-  - [**Replication Issues**](#replication-issues)
-- [**Diagnostic Scripts**](#diagnostic-scripts)
-  - [**Comprehensive Health Check**](#comprehensive-health-check)
+  - [Issue 1: Out of Memory](#issue-1-out-of-memory)
+  - [Issue 2: Slow Performance](#issue-2-slow-performance)
+  - [Issue 3: Connection Issues](#issue-3-connection-issues)
+- [Advanced Troubleshooting](#advanced-troubleshooting)
+  - [Memory Issues](#memory-issues)
+  - [Performance Issues](#performance-issues)
+  - [Network Issues](#network-issues)
+  - [Replication Issues](#replication-issues)
+- [Diagnostic Scripts](#diagnostic-scripts)
+  - [Comprehensive Health Check](#comprehensive-health-check)
 - [Лучшие практики](#лучшие-практики)
 
 ## Введение в troubleshooting Redis

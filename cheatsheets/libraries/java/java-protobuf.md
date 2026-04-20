@@ -67,7 +67,7 @@ updated: "2026-02-11"
   - [Unit Testing](#unit-testing)
   - [gRPC Testing](#grpc-testing)
 - [Performance Comparison](#performance-comparison)
-  - [Protobuf vs JSON** vs **XML](#protobuf-vs-json-vs-xml)
+  - [Protobuf vs JSON vs XML](#protobuf-vs-json-vs-xml)
 - [Migration и Best Practices](#migration-и-best-practices)
   - [Migration from JSON](#migration-from-json)
   - [Best Practices](#best-practices)

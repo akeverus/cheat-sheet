@@ -30,11 +30,11 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Введение в **Aggregation Framework**](#введение-в-aggregation-framework)
-  - [Преимущества **Aggregation Framework**](#преимущества-aggregation-framework)
-  - [Когда использовать **Aggregation**](#когда-использовать-aggregation)
-- [Основы **Aggregation Pipeline**](#основы-aggregation-pipeline)
-  - [Структура **Pipeline**](#структура-pipeline)
+- [Введение в Aggregation Framework](#введение-в-aggregation-framework)
+  - [Преимущества Aggregation Framework](#преимущества-aggregation-framework)
+  - [Когда использовать Aggregation](#когда-использовать-aggregation)
+- [Основы Aggregation Pipeline](#основы-aggregation-pipeline)
+  - [Структура Pipeline](#структура-pipeline)
   - [Пример простой агрегации](#пример-простой-агрегации)
 - [Стадии агрегации](#стадии-агрегации)
   - [Остальные стадии агрегации](#остальные-стадии-агрегации)
@@ -43,13 +43,13 @@ updated: "2026-02-11"
 - [Заключение](#заключение)
   - [Основные возможности:](#основные-возможности)
   - [Оптимизация:](#оптимизация)
-  - [**Best Practices**:](#лучшие-практики)
+  - [Best Practices:](#лучшие-практики)
 - [Комплексные примеры агрегации](#комплексные-примеры-агрегации)
   - [Анализ продаж по категориям и времени](#анализ-продаж-по-категориям-и-времени)
-- [Оптимизация **Aggregation Pipeline**](#оптимизация-aggregation-pipeline)
+- [Оптимизация Aggregation Pipeline](#оптимизация-aggregation-pipeline)
   - [Использование индексов](#использование-индексов)
   - [Оптимизация производительности](#оптимизация-производительности)
-  - [Проектирование **Aggregation Pipeline**](#проектирование-aggregation-pipeline)
+  - [Проектирование Aggregation Pipeline](#проектирование-aggregation-pipeline)
   - [Избегайте распространенных ошибок](#избегайте-распространенных-ошибок)
   - [Мониторинг и отладка](#мониторинг-и-отладка)
 - [Решение проблем](#решение-проблем)
@@ -60,13 +60,10 @@ updated: "2026-02-11"
 
 Схема пайплайна **Aggregation Framework**: входная коллекция → стадии → результат.
 
-```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Input Data    │ -> │  Aggregation   │ -> │  Output Data    │
-│   Collection    │    │   Pipeline     │    │   Results       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-      Documents           Stages (1-N)           Transformed
-                                                        Data
+```mermaid
+flowchart LR
+    A["Input Data<br/>Collection<br/>(Documents)"] --> B["Aggregation<br/>Pipeline<br/>(Stages 1-N)"]
+    B --> C["Output Data<br/>Results<br/>(Transformed Data)"]
 ```
 
 ### Преимущества Aggregation Framework

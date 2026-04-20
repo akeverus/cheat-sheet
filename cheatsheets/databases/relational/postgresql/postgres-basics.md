@@ -31,13 +31,13 @@ related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "data
 
 ## Содержание
 
-- [Введение в **PostgreSQL**](#введение-в-postgresql)
-  - [Основные возможности **PostgreSQL**](#основные-возможности-postgresql)
-  - [Архитектура **PostgreSQL**](#архитектура-postgresql)
+- [Введение в PostgreSQL](#введение-в-postgresql)
+  - [Основные возможности PostgreSQL](#основные-возможности-postgresql)
+  - [Архитектура PostgreSQL](#архитектура-postgresql)
 - [Установка и первоначальная настройка](#установка-и-первоначальная-настройка)
-  - [Установка **PostgreSQL**](#установка-postgresql)
+  - [Установка PostgreSQL](#установка-postgresql)
   - [Первоначальная настройка](#первоначальная-настройка)
-  - [Подключение к **PostgreSQL**](#подключение-к-postgresql)
+  - [Подключение к PostgreSQL](#подключение-к-postgresql)
 - [Лучшие практики](#лучшие-практики)
 
 ## Введение в PostgreSQL

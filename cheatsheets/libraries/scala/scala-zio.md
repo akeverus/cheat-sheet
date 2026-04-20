@@ -51,7 +51,7 @@ updated: "2026-02-11"
 - [ZIO Query](#zio-query)
   - [Compositional Data Access](#compositional-data-access)
 - [Интеграция с Spring Boot](#интеграция-с-spring-boot)
-  - [ZIO в **Spring** приложении](#zio-в-spring-приложении)
+  - [ZIO в Spring приложении](#zio-в-spring-приложении)
 - [Лучшие практики](#лучшие-практики)
   - [Error Handling](#error-handling)
   - [Resource Management](#resource-management)
