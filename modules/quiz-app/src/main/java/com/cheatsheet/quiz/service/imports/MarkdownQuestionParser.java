@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,12 +28,20 @@ import java.util.regex.Pattern;
  * ## Q1. Что такое Spring Boot?
  * Spring Boot — это фреймворк...
  *
+ * > [!mcq]
+ * > - [ ] Вариант A | Объяснение
+ * > - [x] Вариант B (правильный) | Объяснение
+ * > - [ ] Вариант C | Объяснение
+ * > - [ ] Вариант D | Объяснение
+ *
  * ## Q2 Что такое DI? (ВАЖНО)
  * Dependency Injection — это паттерн...
  * </pre>
  *
  * <p>Поддерживаются номера с точкой и без ({@code Q1.} и {@code Q1}).
- * Маркер {@code (ВАЖНО)} определяет приоритетность вопроса.</p>
+ * Маркер {@code (ВАЖНО)} определяет приоритетность вопроса.
+ * Блок {@code > [!mcq]} — варианты ответа (опционально): парсируются в {@link ParsedOption}
+ * и исключаются из хранимого {@code answer_markdown}.</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -44,6 +53,16 @@ public class MarkdownQuestionParser {
 
     /** Regex для извлечения code block: {@code ```lang ... ```}. */
     private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("```[a-zA-Z]*\\s*([\\s\\S]*?)```", Pattern.MULTILINE);
+
+    /** Regex начала MCQ callout-блока: {@code > [!mcq]}. */
+    private static final Pattern MCQ_CALLOUT_START = Pattern.compile("^>\\s*\\[!mcq\\]\\s*$", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Regex строки опции MCQ:
+     * {@code > - [ ] text} или {@code > - [x] text} с необязательным {@code | explanation}.
+     */
+    private static final Pattern MCQ_OPTION_LINE =
+            Pattern.compile("^>\\s*-\\s*\\[([ xX])\\]\\s*(.+?)(?:\\s*\\|\\s*(.+?))?\\s*$");
 
     /** Regex для удаления устаревшего маркера важности (case-insensitive): (важно). */
     private static final String REGEX_LEGACY_IMPORTANT = "(?iu)\\(важно\\)";
@@ -81,7 +100,6 @@ public class MarkdownQuestionParser {
             Matcher matcher = QUESTION_PATTERN.matcher(trimmed);
 
             if (matcher.matches()) {
-                // Начало нового вопроса — сохраняем предыдущий
                 if (current != null) {
                     current.answerMarkdown(answer.toString().trim());
                     questions.add(current.build());
@@ -96,13 +114,11 @@ public class MarkdownQuestionParser {
                 continue;
             }
 
-            // Накапливаем текст ответа
             if (current != null) {
                 answer.append(line).append('\n');
             }
         }
 
-        // Последний вопрос
         if (current != null) {
             current.answerMarkdown(answer.toString().trim());
             questions.add(current.build());
@@ -123,24 +139,41 @@ public class MarkdownQuestionParser {
     }
 
     /**
+     * Вариант ответа, распарсенный из {@code > [!mcq]} блока.
+     *
+     * @param text        текст варианта (inline markdown допустим)
+     * @param correct     {@code true} если это правильный вариант {@code [x]}
+     * @param explanation объяснение после {@code |} (может быть null)
+     */
+    public record ParsedOption(String text, boolean correct, String explanation) {}
+
+    /**
      * Распарсенный вопрос из markdown-файла.
      *
      * @param questionNumber номер вопроса (строка, например {@code "1"})
      * @param questionText   текст вопроса (без маркеров и номера)
-     * @param answerMarkdown полный текст ответа в markdown
+     * @param answerMarkdown полный текст ответа в markdown (без MCQ блока)
+     * @param rawAnswer      полный текст ответа включая MCQ блок (для хеширования)
      * @param important      {@code true} если помечен как ВАЖНО
      * @param questionType   тип вопроса (TEXT или CODE)
      * @param codeSnippet    первый блок кода из ответа (для типа CODE)
+     * @param options        варианты ответа из {@code > [!mcq]} блока (пустой список если нет)
      */
     @Builder(toBuilder = true)
     public record ParsedQuestion(
             String questionNumber,
             String questionText,
             String answerMarkdown,
+            String rawAnswer,
             boolean important,
             QuestionType questionType,
-            String codeSnippet
-    ) {}
+            String codeSnippet,
+            List<ParsedOption> options
+    ) {
+        public boolean hasMcqOptions() {
+            return options != null && !options.isEmpty();
+        }
+    }
 
     /**
      * Определяет тип вопроса и извлекает блок кода из answer_markdown.
@@ -161,8 +194,62 @@ public class MarkdownQuestionParser {
         return new CodeExtractionResult(QuestionType.TEXT, null);
     }
 
+    /**
+     * Извлекает {@code > [!mcq]} блок из rawAnswer.
+     * Возвращает answer без MCQ блока и список распарсенных опций.
+     */
+    private McqParseResult extractMcqFromAnswer(String rawAnswer) {
+        if (rawAnswer == null || rawAnswer.isBlank()) {
+            return new McqParseResult(rawAnswer == null ? "" : rawAnswer, Collections.emptyList());
+        }
+
+        String[] lines = rawAnswer.split("\n", -1);
+        List<ParsedOption> options = new ArrayList<>();
+        List<String> answerLines = new ArrayList<>();
+        boolean inMcq = false;
+
+        for (String line : lines) {
+            String trimmed = line.trim();
+
+            if (!inMcq && MCQ_CALLOUT_START.matcher(trimmed).matches()) {
+                inMcq = true;
+                continue;
+            }
+
+            if (inMcq) {
+                Matcher optMatcher = MCQ_OPTION_LINE.matcher(trimmed);
+                if (optMatcher.matches()) {
+                    boolean correct = optMatcher.group(1).equalsIgnoreCase("x");
+                    String text = optMatcher.group(2).trim();
+                    String explanation = optMatcher.group(3) != null ? optMatcher.group(3).trim() : null;
+                    options.add(new ParsedOption(text, correct, explanation));
+                    continue;
+                }
+                if (trimmed.startsWith(">")) {
+                    continue;
+                }
+                // Non-callout line — MCQ block ended
+                inMcq = false;
+                if (!trimmed.isEmpty()) {
+                    answerLines.add(line);
+                }
+            } else {
+                answerLines.add(line);
+            }
+        }
+
+        // Strip trailing blank lines
+        while (!answerLines.isEmpty() && answerLines.get(answerLines.size() - 1).isBlank()) {
+            answerLines.remove(answerLines.size() - 1);
+        }
+
+        return new McqParseResult(String.join("\n", answerLines), options);
+    }
+
     @Builder(toBuilder = true)
     private record CodeExtractionResult(QuestionType type, String codeSnippet) {}
+
+    private record McqParseResult(String answerWithoutMcq, List<ParsedOption> options) {}
 
     /** Внутренний builder для ParsedQuestion (для накопления answer). */
     private class ParsedQuestionBuilder {
@@ -182,10 +269,15 @@ public class MarkdownQuestionParser {
         }
 
         ParsedQuestion build() {
-            CodeExtractionResult extraction = extractCodeAndType(answerMarkdown);
+            McqParseResult mcq = extractMcqFromAnswer(answerMarkdown);
+            CodeExtractionResult extraction = extractCodeAndType(mcq.answerWithoutMcq());
             return new ParsedQuestion(
-                    questionNumber, questionText, answerMarkdown, important,
-                    extraction.type(), extraction.codeSnippet());
+                    questionNumber, questionText,
+                    mcq.answerWithoutMcq(),
+                    answerMarkdown,
+                    important,
+                    extraction.type(), extraction.codeSnippet(),
+                    mcq.options());
         }
     }
 }

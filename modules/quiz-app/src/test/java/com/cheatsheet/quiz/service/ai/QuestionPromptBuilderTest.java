@@ -61,8 +61,9 @@ class QuestionPromptBuilderTest {
     @Test
     void optionPromptContainsTopicAnchorAndNegationAndExplanationRules() {
         String prompt = com.cheatsheet.quiz.service.ai.prompt.AiPrompts.USER_PROMPT_TEMPLATE;
-        assertThat(prompt).contains("той же технической области");
-        assertThat(prompt).contains("простым отрицанием или инверсией");
-        assertThat(prompt).contains("1–2 предложения");
+        // v2 quality rules: Single-Delta, domain isolation, forbidden inversion pairs, explanation depth
+        assertThat(prompt).contains("Single-Delta");
+        assertThat(prompt).contains("Инверсионная пара");
+        assertThat(prompt).contains("2-4 предложения");
     }
 }

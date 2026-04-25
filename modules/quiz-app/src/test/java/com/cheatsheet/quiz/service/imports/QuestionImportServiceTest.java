@@ -61,14 +61,16 @@ class QuestionImportServiceTest {
         Path file = Files.createDirectories(root.resolve("topic")).resolve("sample.md");
         Files.writeString(file, "stub");
 
-        MarkdownQuestionParser.ParsedQuestion parsed = new MarkdownQuestionParser.ParsedQuestion(
-                "1",
-                "Что такое fallback-импорт?",
-                "Это путь без канонизации AI.",
-                false,
-                QuestionType.TEXT,
-                null
-        );
+        MarkdownQuestionParser.ParsedQuestion parsed = MarkdownQuestionParser.ParsedQuestion.builder()
+                .questionNumber("1")
+                .questionText("Что такое fallback-импорт?")
+                .answerMarkdown("Это путь без канонизации AI.")
+                .rawAnswer("Это путь без канонизации AI.")
+                .important(false)
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .options(List.of())
+                .build();
 
         when(interviewPathResolver.getBasePath()).thenReturn(root);
         when(parser.parse(file)).thenReturn(List.of(parsed));
@@ -132,14 +134,16 @@ class QuestionImportServiceTest {
         Path root = Files.createTempDirectory("question-import-recover-expansion");
         Path file = Files.createDirectories(root.resolve("topic")).resolve("sample.md");
         Files.writeString(file, "stub");
-        MarkdownQuestionParser.ParsedQuestion parsed = new MarkdownQuestionParser.ParsedQuestion(
-                "1",
-                "Как работает compare-and-swap?",
-                "CAS сравнивает ожидаемое и текущее значение атомарно.",
-                false,
-                QuestionType.TEXT,
-                null
-        );
+        MarkdownQuestionParser.ParsedQuestion parsed = MarkdownQuestionParser.ParsedQuestion.builder()
+                .questionNumber("1")
+                .questionText("Как работает compare-and-swap?")
+                .answerMarkdown("CAS сравнивает ожидаемое и текущее значение атомарно.")
+                .rawAnswer("CAS сравнивает ожидаемое и текущее значение атомарно.")
+                .important(false)
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .options(List.of())
+                .build();
         Question existing = new Question(
                 42L,
                 "topic/sample.md#Q1",

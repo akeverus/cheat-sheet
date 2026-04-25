@@ -6,8 +6,6 @@
     document.addEventListener('DOMContentLoaded', async function() {
         var els = document.querySelectorAll('.mermaid');
         for (var i = 0; i < els.length; i++) {
-            var container = els[i].closest('.question-diagram');
-            if (!container) continue;
             try {
                 var id = 'mmd-' + Math.random().toString(36).slice(2);
                 var res = await mermaid.render(id, els[i].textContent);
@@ -20,8 +18,9 @@
                     svg.style.maxHeight = '100%';
                 }
             } catch (e) {
-                container.remove();
-                /* mermaid may leave orphan error divs */
+                /* on error: remove enclosing .question-diagram if present, else the element itself */
+                var qd = els[i].closest('.question-diagram');
+                if (qd) qd.remove(); else els[i].remove();
                 document.querySelectorAll('[id^="dmmd-"]').forEach(function(n){n.remove()});
                 document.querySelectorAll('.error-icon').forEach(function(n){
                     var p = n.closest('div'); if(p) p.remove();

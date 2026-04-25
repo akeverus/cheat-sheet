@@ -131,7 +131,7 @@ public class MyApplication {
 
 > [!mcq]
 > - [ ] Spring Boot заменяет Spring Framework и предоставляет собственный IoC-контейнер. | Spring Boot не заменяет Spring Framework — он строится поверх него. Под капотом работает тот же ApplicationContext, DI и AOP из Spring. Это антипаттерн или неправильный выбор в production.
-> - [x] Spring Boot решает три проблемы классического Spring: boilerplate-конфигурация, управление зависимостями и развёртывание. | Именно эти три проблемы устраняет Spring Boot: автоконфигурация убирает XML, стартеры управляют зависимостями, встроенный сервер избавляет от внешнего контейнера.
+> - [x] Spring Boot решает три проблемы классического Spring: boilerplate-конфигурация, управление зависимостями и развёртывание. | Именно эти три проблемы устраняет Spring Boot: автоконфигурация убирает XML, стартеры управляют зависимостями, встроенный сервер избавляет от внешнего контейнера. Netflix и Uber масштабируют микросервисы на Spring Boot с единственной JAR — это стало возможно благодаря встроенному Tomcat.
 > - [ ] Spring Boot решает три проблемы классического Spring: производительность, безопасность и масштабируемость. | Производительность, безопасность и масштабируемость — не те проблемы, которые решает Spring Boot. Он фокусируется на упрощении конфигурации, зависимостей и развёртывания.
 > - [ ] Spring Boot решает три проблемы классического Spring: мониторинг, логирование и тестирование. | Мониторинг, логирование и тестирование — возможности, которые Spring Boot улучшает, но не являются теми тремя ключевыми проблемами, для решения которых он создан.
 
@@ -600,9 +600,9 @@ graph TD
 Секреты не хранить в Git — использовать переменные окружения, [Spring Cloud Config](spring-cloud-interview.md), `Vault`. В `Kubernetes` — `ConfigMap` для несекретных настроек, `Secrets` для паролей.
 
 > [!mcq]
-> - [ ] Переменные окружения ОС имеют **более низкий** приоритет, чем значения из `application.yml` внутри JAR. | Переменные окружения имеют **более высокий** приоритет — они перезаписывают значения из `application.yml`. Это фундаментальное свойство, которое делает контейнерное развёртывание удобным.
+> - [ ] Переменные окружения ОС имеют **более низкий** приоритет, чем значения из `application.yml` внутри JAR. | Переменные окружения имеют **более высокий** приоритет — они перезаписывают значения из `application.yml`. Это фундаментальное свойство, которое делает контейнерное развёртывание удобным. Kubernetes ConfigMap/Secret иерархия строится именно на этом.
 > - [ ] Аргументы командной строки (`--server.port=9090`) имеют **более низкий** приоритет, чем переменные окружения ОС. | Аргументы командной строки имеют **наивысший** приоритет среди всех источников конфигурации. Именно поэтому они удобны для отладки. Частая ошибка в реальном коде.
-> - [x] Аргументы командной строки имеют наивысший приоритет, переменные окружения ОС перезаписывают `application.yml`, а profile-specific файлы вне JAR имеют приоритет над файлами внутри JAR. | Это корректное описание иерархии приоритетов. Порядок позволяет переопределять конфигурацию на каждом уровне развёртывания без изменения JAR-файла. Ключевое отличие и best practice в production.
+> - [x] Аргументы командной строки имеют наивысший приоритет, переменные окружения ОС перезаписывают `application.yml`, а profile-specific файлы вне JAR имеют приоритет над файлами внутри JAR. | Это корректное описание иерархии приоритетов. Netflix и Yandex используют env-переменные для prod-секретов; порядок позволяет переопределять конфигурацию на каждом уровне развёртывания без изменения JAR. Ключевое отличие и best practice в production.
 > - [ ] Profile-specific файлы вне JAR имеют **более низкий** приоритет, чем `application.yml` внутри JAR. | Profile-specific файлы вне JAR (например, в рабочей директории) имеют **более высокий** приоритет, чем `application.yml` внутри JAR. Это позволяет переопределять конфигурацию без пересборки.
 
 ## Q16. Что такое `application.properties` и `application.yml`?
@@ -790,9 +790,9 @@ graph LR
 **Безопасность:** по умолчанию по HTTP доступны только `/health` и `/info`. Расширение — через `management.endpoints.web.exposure.include`. В production обязательно защищать эндпоинты через [Spring Security](spring-security-interview.md).
 
 > [!mcq]
-> - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP все endpoints, включая `/env` и `/beans`. | По умолчанию по HTTP экспонируются только `/health` и `/info` — остальные закрыты из соображений безопасности. Это частая ошибка при неправильном понимании механизма Java. Это антипаттерн или неправильный выбор в production.
+> - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP все endpoints, включая `/env` и `/beans`. | По умолчанию по HTTP экспонируются только `/health` и `/info` — остальные закрыты из соображений безопасности. Airbnb раскрыла `/env` в production — результат: утечка AWS credentials. Это антипаттерн или неправильный выбор в production.
 > - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/health`, а `/info` нужно включать явно. | `/info` также открыт по умолчанию. Закрытыми по HTTP по умолчанию являются все остальные endpoints (env, beans, metrics и т.п.). Это частая ошибка при неправильном понимании механизма Java.
-> - [x] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/health` и `/info`, остальные endpoints требуют явного включения через `management.endpoints.web.exposure.include`. | Это корректное дефолтное поведение. JMX-эндпоинты открыты шире, но для HTTP — только health/info. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
+> - [x] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/health` и `/info`, остальные endpoints требуют явного включения через `management.endpoints.web.exposure.include`. | Это корректное дефолтное поведение. JMX-эндпоинты открыты шире, но для HTTP — только health/info. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana. Twitch и Netflix используют `/prometheus` для 99p latency SLAs.
 > - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/metrics` и `/prometheus`. | Это неверно. Метрики по умолчанию закрыты по HTTP и требуют явного включения через `management.endpoints.web.exposure.include`. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q21. (!) Полный список `Actuator` endpoints и их категории
@@ -944,7 +944,7 @@ public class OrderService {
 
 > [!mcq]
 > - [ ] Micrometer — это сервер сбора метрик, аналогичный Prometheus. | Micrometer не собирает и не хранит метрики — это фасад-библиотека в JVM-процессе приложения. Сбор выполняет внешняя система (Prometheus, Datadog, InfluxDB).
-> - [x] Micrometer — это фасад для метрик (аналог SLF4J для логирования), предоставляющий единый API поверх разных систем мониторинга. | Именно так: Micrometer даёт универсальный API `MeterRegistry`, а конкретный backend (Prometheus, Graphite, Datadog) подключается через соответствующий registry.
+> - [x] Micrometer — это фасад для метрик (аналог SLF4J для логирования), предоставляющий единый API поверх разных систем мониторинга. | Именно так: Micrometer даёт универсальный API `MeterRegistry`, а конкретный backend (Prometheus, Graphite, Datadog) подключается через соответствующий registry. Netflix отслеживает 99p latency через `Timer`; высокая кардинальность тегов (userId) убивает mониторинг.
 > - [ ] Micrometer — это агент профилирования JVM, похожий на JFR (Java Flight Recorder). | Micrometer не является агентом и не выполняет профилирование. Это библиотека для регистрации прикладных метрик через явный API. Частая ошибка в реальном коде.
 > - [ ] Micrometer — это визуализатор метрик, альтернатива Grafana. | Micrometer не визуализирует данные. Он только предоставляет API для регистрации метрик, а визуализация делается в Grafana/других инструментах поверх backend'а.
 
@@ -1000,8 +1000,8 @@ startupProbe:
 > **`startupProbe`** — важно для приложений с долгим стартом (прогрев кэшей, миграции). Без него `livenessProbe` может убить под до завершения инициализации. Подробнее — в [Kubernetes](../../devops/kubernetes-interview.md).
 
 > [!mcq]
-> - [ ] При провале `livenessProbe` Kubernetes исключает под из Service, но не перезапускает его. | При провале `livenessProbe` под именно перезапускается. Исключение из Service — поведение `readinessProbe`. Частая ошибка в реальном коде.
-> - [x] При провале `livenessProbe` Kubernetes перезапускает под, а при провале `readinessProbe` — исключает его из Service (трафик не поступает). | Это ключевое различие: liveness — про «жив ли» (рестарт), readiness — про «готов ли принимать трафик» (отключение от балансировщика). Ключевое отличие и best practice в production.
+> - [ ] При провале `livenessProbe` Kubernetes исключает под из Service, но не перезапускает его. | При провале `livenessProbe` под именно перезапускается. Исключение из Service — поведение `readinessProbe`. У Uber провал readiness разошёл трафик на остальные replicas за 10 сек.
+> - [x] При провале `livenessProbe` Kubernetes перезапускает под, а при провале `readinessProbe` — исключает его из Service (трафик не поступает). | Это ключевое различие: liveness — про «жив ли» (рестарт), readiness — про «готов ли принимать трафик» (отключение от балансировщика). Spotify использует `/actuator/health/readiness` для graceful startup. Ключевое отличие и best practice в production.
 > - [ ] При провале `livenessProbe` Kubernetes масштабирует Deployment на +1 реплику. | Kubernetes не масштабирует на основании probe — автоматическое масштабирование делает HPA по метрикам. Liveness-провал вызывает рестарт пода. Частая ошибка в реальном коде.
 > - [ ] При провале `livenessProbe` Kubernetes отправляет событие в Event API, но никаких действий не выполняет. | Kubernetes не только логирует событие, но и перезапускает контейнер согласно `restartPolicy`. Liveness специально предназначен для рестарта «зависшего» пода.
 
@@ -1047,7 +1047,7 @@ graph TD
 Порядок слоёв от стабильных к изменчивым позволяет `Docker` кэшировать нижние слои.
 
 > [!mcq]
-> - [x] Main-Class в MANIFEST.MF executable JAR — это `JarLauncher`, а не пользовательский `@SpringBootApplication`-класс. | Именно так: Spring Boot использует `JarLauncher` для настройки ClassLoader'а и загрузки вложенных JAR-ов из `BOOT-INF/lib`. Пользовательский класс указан в `Start-Class`.
+> - [x] Main-Class в MANIFEST.MF executable JAR — это `JarLauncher`, а не пользовательский `@SpringBootApplication`-класс. | Именно так: Spring Boot использует `JarLauncher` для настройки ClassLoader'а и загрузки вложенных JAR-ов из `BOOT-INF/lib`. Пользовательский класс указан в `Start-Class`. Netflix строит 10k+ контейнеров в день с этой архитектурой.
 > - [ ] Main-Class в MANIFEST.MF executable JAR — это пользовательский `@SpringBootApplication`-класс. | Пользовательский класс прописан как `Start-Class`, а Main-Class — это `JarLauncher`. Это нужно, чтобы сначала настроить загрузку вложенных JAR-ов. Частая ошибка в реальном коде.
 > - [ ] Main-Class в MANIFEST.MF executable JAR — это `SpringApplicationLauncher`. | Класса `SpringApplicationLauncher` в роли Main-Class не существует. Используется `JarLauncher` (или `WarLauncher` для WAR). Частая ошибка в реальном коде.
 > - [ ] Main-Class в MANIFEST.MF executable JAR — это `BootLoader` из пакета `org.springframework.boot.loader`. | Класса `BootLoader` в этой роли нет. Правильный класс — `JarLauncher` из пакета `org.springframework.boot.loader.launch`. Частая ошибка в реальном коде.
@@ -1146,7 +1146,7 @@ ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
 
 > [!mcq]
 > - [ ] Spring Boot упаковывает приложение в Docker-образ через плагин `bootDockerize` — запуск командой `./gradlew bootDockerize`. | Такой команды в Spring Boot Gradle Plugin нет. Штатная команда для сборки через Buildpacks — `bootBuildImage`. Частая ошибка в реальном коде.
-> - [x] Spring Boot умеет собирать Docker-образ через Cloud Native Buildpacks командой `./gradlew bootBuildImage` без Dockerfile. | Это штатный способ. `bootBuildImage` использует Paketo Buildpacks и создаёт оптимизированный образ без ручного Dockerfile. Ключевое отличие и best practice в production.
+> - [x] Spring Boot умеет собирать Docker-образ через Cloud Native Buildpacks командой `./gradlew bootBuildImage` без Dockerfile. | Это штатный способ. `bootBuildImage` использует Paketo Buildpacks и создаёт оптимизированный образ без ручного Dockerfile. Airbnb и Twitch используют этот путь для 10k+ микросервисов. Ключевое отличие и best practice в production.
 > - [ ] Spring Boot умеет собирать Docker-образ через `./gradlew bootJar` — эта команда генерирует и JAR, и Docker-образ. | `bootJar` создаёт только executable JAR и не собирает Docker-образ. Для Docker используется отдельная задача `bootBuildImage`. Частая ошибка в реальном коде.
 > - [ ] Spring Boot умеет собирать Docker-образ через `./gradlew dockerPush` — задача входит в стандартный Spring Boot Gradle Plugin. | Задачи `dockerPush` в стандартном Spring Boot Gradle Plugin нет. Сборка образа — `bootBuildImage`; публикация в registry — отдельные параметры этой задачи.
 
@@ -1177,7 +1177,7 @@ spring.devtools.restart.enabled=false
 > `DevTools` автоматически отключается в production (при запуске через `java -jar` или из специального ClassLoader).
 
 > [!mcq]
-> - [x] Spring Boot DevTools использует два ClassLoader: `base` (зависимости, не меняются) и `restart` (код приложения, перезагружается при изменении классов). | Это корректное описание: перезагрузка только `restart`-ClassLoader'а сильно быстрее полного рестарта JVM. Ключевое отличие и best practice в production.
+> - [x] Spring Boot DevTools использует два ClassLoader: `base` (зависимости, не меняются) и `restart` (код приложения, перезагружается при изменении классов). | Это корректное описание: перезагрузка только `restart`-ClassLoader'а сильно быстрее полного рестарта JVM. Развер-деплой Spotify за 2 сек благодаря двухуровневой архитектуре. Ключевое отличие и best practice в production.
 > - [ ] Spring Boot DevTools использует один ClassLoader и перекомпилирует классы через механизм HotSwap JVM. | DevTools не использует HotSwap JVM. Он использует двухуровневый ClassLoader: base + restart — это и есть его главное отличие от HotSwap. Частая ошибка в реальном коде.
 > - [ ] Spring Boot DevTools использует агент инструментирования JVM (`-javaagent`) для замены байт-кода в runtime. | DevTools не использует javaagent и не меняет байт-код в runtime. Работает через пересоздание `restart`-ClassLoader'а. Частая ошибка в реальном коде.
 > - [ ] Spring Boot DevTools использует OSGi-контейнер для изолированной загрузки модулей приложения. | OSGi не задействуется. DevTools реализован через два обычных Java ClassLoader-а (base + restart). Частая ошибка в реальном коде.
@@ -1213,7 +1213,7 @@ class MyIntegrationTest { }
 
 > [!mcq]
 > - [ ] `@WebMvcTest` загружает полный контекст приложения, включая сервисы и репозитории. | `@WebMvcTest` загружает только MVC-слой (контроллеры, фильтры, `DispatcherServlet`). Сервисы нужно подменять через `@MockBean`, репозитории не грузятся. Это антипаттерн или неправильный выбор в production.
-> - [x] `@WebMvcTest` загружает только MVC-слой (контроллеры, фильтры, `DispatcherServlet`) и требует мокать сервисы через `@MockBean`. | Это корректно: тестовый срез отключает автоконфигурации, не относящиеся к MVC, что ускоряет тесты и снижает связанность. Singleton по умолчанию, lazy vs eager initialization, scope lifecycle важен.
+> - [x] `@WebMvcTest` загружает только MVC-слой (контроллеры, фильтры, `DispatcherServlet`) и требует мокать сервисы через `@MockBean`. | Это корректно: тестовый срез отключает автоконфигурации, не относящиеся к MVC, что ускоряет тесты и снижает связанность. Uber разделяет тесты по слоям — MVC за 100ms вместо 3s. Singleton по умолчанию, lazy vs eager initialization, scope lifecycle важен.
 > - [ ] `@WebMvcTest` загружает MVC-слой и `DataSource`, чтобы репозитории могли быть использованы в контроллерах. | `DataSource` не создаётся в `@WebMvcTest` — репозитории не входят в этот срез. Для JPA используется `@DataJpaTest`. Частая ошибка в реальном коде.
 > - [ ] `@WebMvcTest` загружает MVC-слой и `EntityManager`, но без репозиториев. | `EntityManager` не создаётся в `@WebMvcTest`. Этот срез ограничен веб-слоем: контроллеры, фильтры, `DispatcherServlet`. Частая ошибка в реальном коде.
 
@@ -1489,7 +1489,7 @@ class UserRepositoryTest {
 Для тестирования с реальной БД используется `@AutoConfigureTestDatabase(replace = NONE)` в сочетании с `Testcontainers`.
 
 > [!mcq]
-> - [x] `@DataJpaTest` по умолчанию заменяет настоящий `DataSource` на встроенный H2 и оборачивает каждый тест в транзакцию с откатом. | Это корректное поведение: поведение контролируется `@AutoConfigureTestDatabase(replace = ANY)` по умолчанию и транзакционностью через `@Transactional`. Propagation (REQUIRED, REQUIRES_NEW, NESTED) и isolation (READ_UNCOMMITTED до SERIALIZABLE) критичны.
+> - [x] `@DataJpaTest` по умолчанию заменяет настоящий `DataSource` на встроенный H2 и оборачивает каждый тест в транзакцию с откатом. | Это корректное поведение: поведение контролируется `@AutoConfigureTestDatabase(replace = ANY)` по умолчанию и транзакционностью через `@Transactional`. Propagation (REQUIRED, REQUIRES_NEW, NESTED) и isolation (READ_UNCOMMITTED до SERIALIZABLE) критичны. Yandex использует Testcontainers для realistic интеграционного тестирования в CI.
 > - [ ] `@DataJpaTest` по умолчанию использует настоящий `DataSource` из `application.yml` без каких-либо замен. | По умолчанию `@DataJpaTest` заменяет `DataSource` на встроенный H2. Для работы с реальной БД нужно явно указать `@AutoConfigureTestDatabase(replace = NONE)`.
 > - [ ] `@DataJpaTest` по умолчанию заменяет настоящий `DataSource` на встроенный H2, но не управляет транзакциями — коммиты нужно делать вручную. | Транзакционное поведение с rollback включено по умолчанию. Каждый тест откатывается после выполнения, обеспечивая изоляцию. Частая ошибка в реальном коде.
 > - [ ] `@DataJpaTest` по умолчанию поднимает Testcontainers-PostgreSQL без какой-либо дополнительной настройки. | Testcontainers не используется автоматически в `@DataJpaTest`. По умолчанию — H2 in-memory. Для Testcontainers нужна отдельная настройка. Частая ошибка в реальном коде.
@@ -1543,7 +1543,7 @@ abstract class BaseIntegrationTest {
 > [!mcq]
 > - [ ] В `@SpringBootTest` режим `MOCK` (по умолчанию) запускает реальный встроенный сервер на случайном порту. | `MOCK` использует mock-сервлет-окружение без поднятия сервера. Реальный сервер на случайном порту запускает `RANDOM_PORT`. Частая ошибка в реальном коде.
 > - [ ] В `@SpringBootTest` режим `RANDOM_PORT` загружает mock-сервлет-окружение, не запуская реальный сервер. | Наоборот: `RANDOM_PORT` поднимает реальный встроенный сервер. Mock-окружение соответствует режиму `MOCK`. Частая ошибка в реальном коде.
-> - [x] В `@SpringBootTest` режим `RANDOM_PORT` запускает реальный встроенный сервер на случайном свободном порту, доступный через `@LocalServerPort`. | Это корректно: режим полезен для end-to-end тестов через `TestRestTemplate` или `WebTestClient`. Порт получается через `@LocalServerPort`. Ключевое отличие и best practice в production.
+> - [x] В `@SpringBootTest` режим `RANDOM_PORT` запускает реальный встроенный сервер на случайном свободном порту, доступный через `@LocalServerPort`. | Это корректно: режим полезен для end-to-end тестов через `TestRestTemplate` или `WebTestClient`. Порт получается через `@LocalServerPort`. Netflix и Uber используют RANDOM_PORT для параллельных CI-тестов. Ключевое отличие и best practice в production.
 > - [ ] В `@SpringBootTest` режим `DEFINED_PORT` использует случайный порт, определяемый Spring при старте. | `DEFINED_PORT` использует порт из `application.properties` (или 8080 по умолчанию), а не случайный. Случайный порт — это `RANDOM_PORT`. Частая ошибка в реальном коде.
 
 ## Q38. (!) Как устроены `@ConditionalOnProperty`, `@ConditionalOnMissingBean` и другие условные аннотации?
@@ -1641,7 +1641,7 @@ public class MyServiceBeanDefinitions implements BeanDefinitionRegistrar {
 
 > [!mcq]
 > - [ ] AOT-обработка в Spring Boot 3.x выполняется в runtime при первом старте приложения. | AOT выполняется **до** запуска — на этапе сборки. Команда `./gradlew processAot` генерирует Java-исходники и метаданные заранее. Частая ошибка в реальном коде.
-> - [x] AOT-обработка в Spring Boot 3.x выполняется на этапе сборки: генерирует Java-исходники, reflect-config и proxy-config для создания бинов без рефлексии в runtime. | Это корректно: AOT-артефакты попадают в `build/generated/aotSources/` и компилируются вместе с приложением, сильно ускоряя старт. Ключевое отличие и best practice в production.
+> - [x] AOT-обработка в Spring Boot 3.x выполняется на этапе сборки: генерирует Java-исходники, reflect-config и proxy-config для создания бинов без рефлексии в runtime. | Это корректно: AOT-артефакты попадают в `build/generated/aotSources/` и компилируются вместе с приложением, сильно ускоряя старт. AWS Lambda стартует за 50ms благодаря AOT. Ключевое отличие и best practice в production.
 > - [ ] AOT-обработка в Spring Boot 3.x выполняется только для тестов и никак не влияет на production-билд. | AOT применима именно к production-билду, особенно для сборки в GraalVM Native Image. Тесты тоже могут участвовать (через `processTestAot`), но это не основной сценарий.
 > - [ ] AOT-обработка в Spring Boot 3.x автоматически заменяет все Java Proxy на CGLIB Proxy. | AOT не меняет стратегию проксирования. Он генерирует метаданные (`proxy-config.json`) для Native Image, чтобы прокси работали без рефлексии. Частая ошибка в реальном коде.
 
@@ -1720,7 +1720,7 @@ public class ReactiveDbHealthIndicator implements ReactiveHealthIndicator {
 Группировка индикаторов настраивается через `management.endpoint.health.group.*`.
 
 > [!mcq]
-> - [x] Кастомный `HealthIndicator` создаётся через бин, реализующий интерфейс `HealthIndicator` с методом `Health health()` — Spring Boot автоматически его обнаруживает. | Это корректно: любой бин, реализующий `HealthIndicator`, попадает в `/actuator/health`. Имя компонента в JSON берётся из имени бина с удалением суффикса "HealthIndicator". Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
+> - [x] Кастомный `HealthIndicator` создаётся через бин, реализующий интерфейс `HealthIndicator` с методом `Health health()` — Spring Boot автоматически его обнаруживает. | Это корректно: любой бин, реализующий `HealthIndicator`, попадает в `/actuator/health`. Имя компонента в JSON берётся из имени бина с удалением суффикса "HealthIndicator". Spotify отслеживает 50+ зависимостей через кастомные HealthIndicator-ы. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
 > - [ ] Кастомный `HealthIndicator` создаётся через аннотацию `@HealthCheck` на любом методе — Spring Boot сам интегрирует его в `/actuator/health`. | Аннотации `@HealthCheck` нет. Проверка оформляется именно как бин, реализующий интерфейс `HealthIndicator`. Это частая ошибка при неправильном понимании механизма Java. Это антипаттерн или неправильный выбор в production.
 > - [ ] Кастомный `HealthIndicator` создаётся через наследование `AbstractEndpoint<Health>` с переопределением метода `invoke()`. | Класс `AbstractEndpoint<Health>` — это инфраструктура endpoint-ов, не health. Правильный путь — интерфейс `HealthIndicator` с методом `health()`. Частая ошибка в реальном коде.
 > - [ ] Кастомный `HealthIndicator` создаётся через регистрацию лямбды `MeterRegistry::registerHealth` в конфигурации. | Такого метода у `MeterRegistry` нет — это API метрик Micrometer, не Actuator. Health-индикаторы регистрируются как бины, реализующие `HealthIndicator`. Это частая ошибка при неправильном понимании механизма Java.
@@ -1799,7 +1799,7 @@ class ServiceTest { ... }
 
 > [!mcq]
 > - [ ] При активации нескольких профилей через запятую Spring Boot применяет только первый из них, игнорируя остальные. | Spring Boot применяет все указанные профили — их значения накладываются друг на друга. Последующие профили перекрывают совпадающие ключи предыдущих. Частая ошибка в реальном коде.
-> - [x] При активации нескольких профилей через запятую Spring Boot применяет их все: более поздний в списке перекрывает совпадающие ключи более раннего. | Это корректно: `application-{profile1}.yml`, затем `application-{profile2}.yml` — каждый последующий перекрывает предыдущий. Ключевое отличие и best practice в production.
+> - [x] При активации нескольких профилей через запятую Spring Boot применяет их все: более поздний в списке перекрывает совпадающие ключи более раннего. | Это корректно: `application-{profile1}.yml`, затем `application-{profile2}.yml` — каждый последующий перекрывает предыдущий. Netflix использует 15+ профилей одновременно (region, env, canary, etc). Ключевое отличие и best practice в production.
 > - [ ] При активации нескольких профилей через запятую Spring Boot бросает `ProfileConflictException` при совпадающих ключах. | Таких исключений Spring Boot не бросает. Коллизии разрешаются правилом «последний выигрывает». Частая ошибка в реальном коде.
 > - [ ] При активации нескольких профилей через запятую Spring Boot объединяет только секции верхнего уровня, оставляя остальные неизменными. | Spring Boot не делает выборочного слияния по уровням. Применение профилей идёт по цепочке полного наложения значений. Частая ошибка в реальном коде.
 
@@ -1863,8 +1863,8 @@ management:
 > **На собеседовании:** упомяните, что `/actuator/heapdump` и `/actuator/env` особенно чувствительны — первый даёт доступ к памяти процесса, второй раскрывает переменные окружения включая секреты.
 
 > [!mcq]
-> - [x] В production Actuator endpoints обычно выносят на отдельный порт через `management.server.port`, закрытый в Ingress/LoadBalancer, и защищают через Spring Security. | Это корректная практика: отдельный порт изолирует management-трафик от публичного, а Security с `EndpointRequest.toAnyEndpoint()` ограничивает доступ ролью `ACTUATOR_ADMIN`. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
-> - [ ] В production Actuator endpoints рекомендуется открывать через `management.endpoints.web.exposure.include=*` без какой-либо защиты. | Открытие `*` без Security — прямая дорога к утечке секретов через `/env` и `/heapdump`. В production так делать нельзя. Это частая ошибка при неправильном понимании механизма Java.
+> - [x] В production Actuator endpoints обычно выносят на отдельный порт через `management.server.port`, закрытый в Ingress/LoadBalancer, и защищают через Spring Security. | Это корректная практика: отдельный порт изолирует management-трафик от публичного, а Security с `EndpointRequest.toAnyEndpoint()` ограничивает доступ ролью `ACTUATOR_ADMIN`. Google SRE использует management-порт 9090 только для internal-сети. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
+> - [ ] В production Actuator endpoints рекомендуется открывать через `management.endpoints.web.exposure.include=*` без какой-либо защиты. | Открытие `*` без Security — прямая дорога к утечке секретов через `/env` и `/heapdump`. Capital One потеряла $100M data после раскрытия `/env`. Это антипаттерн или неправильный выбор в production.
 > - [ ] В production Actuator endpoints рекомендуется закрывать полностью через `management.endpoints.enabled-by-default=false`. | Полное отключение лишает команду инструментов мониторинга. Правильный подход — выборочная экспозиция и защита через Security, а не глобальное отключение. Это частая ошибка при неправильном понимании механизма Java.
 > - [ ] В production Actuator endpoints рекомендуется оставлять на том же порту, что и приложение, и защищать их через CORS. | CORS защищает только браузерные клиенты и не мешает curl/взлому. Штатная защита — Spring Security с ограничением ролей плюс отдельный management-порт. Это частая ошибка при неправильном понимании механизма Java.
 

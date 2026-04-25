@@ -9,10 +9,10 @@ class AiPromptTemplatesContractTest {
 
     @Test
     void optionTemplateContainsStrictSymmetryAndExplanationRules() {
-        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("maxLen <= 1.10 * minLen");
-        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("1 предложение");
+        // v2 quality rules: Single-Delta principle + domain isolation + explanation rules
+        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("Single-Delta");
         assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("маркеры правильности");
-        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("Запрещены дубли");
+        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("Explanation");
         assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("Верни только валидный JSON");
     }
 

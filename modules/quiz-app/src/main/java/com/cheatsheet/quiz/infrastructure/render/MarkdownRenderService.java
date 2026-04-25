@@ -36,11 +36,18 @@ public class MarkdownRenderService {
     /** Safelist для HTML после markdown: только безопасные теги, без script/iframe/form. Подходит для th:utext. */
     private static final Safelist HTML_SAFELIST = Safelist.relaxed()
             .addTags("pre", "code", "table", "thead", "tbody", "tr", "th", "td")
-            .removeTags("script", "iframe", "object", "embed", "form");
+            .removeTags("script", "iframe", "object", "embed", "form")
+            .addAttributes("div", "class")   // mermaid diagrams: <div class="mermaid">
+            .addAttributes("code", "class"); // highlight.js language hints: <code class="language-java">
+
+    /** Паттерн для mermaid code-блоков: ```mermaid ... ```. */
+    private static final java.util.regex.Pattern MERMAID_BLOCK =
+            java.util.regex.Pattern.compile("```mermaid\\s*\n([\\s\\S]*?)```", java.util.regex.Pattern.MULTILINE);
 
     /**
      * Конвертирует markdown в HTML, санитизированный для безопасного отображения (th:utext / innerHTML).
      * Удаляются script, iframe, event-атрибуты и опасные теги.
+     * Mermaid-блоки (```mermaid) конвертируются в {@code <div class="mermaid">} для рендеринга mermaid.js.
      *
      * @param markdown исходный markdown
      * @return HTML, безопасный для вставки в страницу
@@ -49,9 +56,16 @@ public class MarkdownRenderService {
         if (markdown == null || markdown.isBlank()) {
             return "";
         }
-        Node document = PARSER.parse(markdown);
+        String processed = preprocessMermaid(markdown);
+        Node document = PARSER.parse(processed);
         String html = HTML_RENDERER.render(document);
         return Jsoup.clean(html, HTML_SAFELIST);
+    }
+
+    /** Заменяет ```mermaid ... ``` блоки на <div class="mermaid"> для рендеринга mermaid.js. */
+    private String preprocessMermaid(String markdown) {
+        return MERMAID_BLOCK.matcher(markdown).replaceAll(
+                mr -> "\n<div class=\"mermaid\">\n" + mr.group(1).trim() + "\n</div>\n\n");
     }
 
     /**

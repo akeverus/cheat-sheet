@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import com.cheatsheet.quiz.domain.OptionSource;
+
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -187,14 +190,12 @@ public class QuestionImportService {
         }
         AiQuestionClient.CanonicalQuestion value = canonical.get();
         QuestionType questionType = resolveQuestionType(parsed, value, relativePath);
-        return Optional.of(new MarkdownQuestionParser.ParsedQuestion(
-                parsed.questionNumber(),
-                value.questionText(),
-                value.answerMarkdown(),
-                parsed.important(),
-                questionType,
-                questionType == QuestionType.CODE ? value.codeSnippet() : null
-        ));
+        return Optional.of(parsed.toBuilder()
+                .questionText(value.questionText())
+                .answerMarkdown(value.answerMarkdown())
+                .questionType(questionType)
+                .codeSnippet(questionType == QuestionType.CODE ? value.codeSnippet() : null)
+                .build());
     }
 
     private QuestionType resolveQuestionType(
@@ -228,7 +229,7 @@ public class QuestionImportService {
      */
     private UpsertOutcome upsertQuestion(MarkdownQuestionParser.ParsedQuestion parsed, String relativePath, String topic) {
         String slug = relativePath + "#Q" + parsed.questionNumber();
-        String sourceHash = hashingService.sha256(parsed.questionText() + "\n" + parsed.answerMarkdown());
+        String sourceHash = hashingService.sha256(parsed.questionText() + "\n" + parsed.rawAnswer());
         Optional<Question> existing = questionRepository.findBySlug(slug);
 
         if (existing.isEmpty()) {
@@ -238,6 +239,9 @@ public class QuestionImportService {
             long id = questionRepository.insert(question);
             reviewStateRepository.insertIfAbsent(id, clock.instant().getEpochSecond());
             fullTextSearchRepository.upsert(id, question.questionText(), question.answerMarkdown());
+            if (parsed.hasMcqOptions()) {
+                upsertOptionsFromMd(id, parsed.options());
+            }
             return UpsertOutcome.INSERT;
         }
 
@@ -251,9 +255,16 @@ public class QuestionImportService {
             optionCache.invalidate(current.id());
             reviewStateRepository.reset(current.id(), clock.instant().getEpochSecond());
             fullTextSearchRepository.upsert(current.id(), updatedQuestion.questionText(), updatedQuestion.answerMarkdown());
+            if (parsed.hasMcqOptions()) {
+                upsertOptionsFromMd(current.id(), parsed.options());
+            }
             return UpsertOutcome.UPDATE;
         }
 
+        // UNCHANGED: restore MD options if they were manually deleted
+        if (parsed.hasMcqOptions() && answerOptionRepository.countByQuestionId(existing.get().id()) == 0) {
+            upsertOptionsFromMd(existing.get().id(), parsed.options());
+        }
         return UpsertOutcome.UNCHANGED;
     }
 
@@ -273,6 +284,18 @@ public class QuestionImportService {
             log.warn("Расширение вопроса {} не удалось: {}", baseQuestion.get().slug(), e.getMessage(), e);
             return 0;
         }
+    }
+
+    private void upsertOptionsFromMd(long questionId, List<MarkdownQuestionParser.ParsedOption> options) {
+        List<AnswerOptionRepository.AnswerOptionCreate> creates = new ArrayList<>(options.size());
+        for (int i = 0; i < options.size(); i++) {
+            MarkdownQuestionParser.ParsedOption opt = options.get(i);
+            creates.add(new AnswerOptionRepository.AnswerOptionCreate(
+                    opt.text(), opt.correct(), i,
+                    OptionSource.MARKDOWN.name(), opt.explanation(),
+                    1, 2));
+        }
+        answerOptionRepository.insertAll(questionId, creates);
     }
 
     /** Результат импорта одного файла. */
