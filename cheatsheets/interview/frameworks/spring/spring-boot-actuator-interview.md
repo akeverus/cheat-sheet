@@ -137,10 +137,10 @@ graph TB
 В контексте [микросервисной архитектуры](../../architecture/microservices-interview.md) `Actuator` является ключевым элементом [observability](../../monitoring/observability-interview.md)-стека — он предоставляет данные для систем мониторинга и оркестрации.
 
 > [!mcq]
-> - [ ] Spring Boot Actuator — это инструмент для автоматического тестирования REST API в production-среде. | Actuator не занимается тестированием API. Его задача — мониторинг и управление приложением через специальные эндпоинты.
-> - [x] Spring Boot Actuator — модуль, добавляющий production-ready возможности мониторинга и управления приложением через HTTP и JMX. | Именно так: Actuator предоставляет health checks, метрики, логирование и управляющие эндпоинты без необходимости самостоятельно их реализовывать.
-> - [ ] Spring Boot Actuator — это встроенный профилировщик кода, работающий в фоне и сохраняющий flame-графики в файл. | Profiling — не задача Actuator. Для профилирования используются отдельные инструменты (JFR, async-profiler). Actuator лишь экспонирует готовые метрики.
-> - [ ] Spring Boot Actuator — это библиотека для автоматического масштабирования подов в Kubernetes на основе метрик приложения. | Автомасштабированием управляет Kubernetes HPA, а не Actuator. Actuator лишь предоставляет метрики, которые HPA может читать через адаптер.
+> - [ ] Spring Boot Actuator — это инструмент для автоматического тестирования REST API в production-среде. | Actuator не занимается тестированием API. Его задача — мониторинг и управление приложением через специальные эндпоинты. Это антипаттерн или неправильный выбор в production.
+> - [x] Spring Boot Actuator — модуль, добавляющий production-ready возможности мониторинга и управления приложением через HTTP и JMX. | Именно так: Actuator предоставляет health checks, метрики, логирование и управляющие эндпоинты без необходимости самостоятельно их реализовывать. Metrics expose через /metrics, health через /health, используйте с Prometheus + Grafana.
+> - [ ] Spring Boot Actuator — это встроенный профилировщик кода, работающий в фоне и сохраняющий flame-графики в файл. | Profiling — не задача Actuator. Для профилирования используются отдельные инструменты (JFR, async-profiler). Actuator лишь экспонирует готовые метрики. Это антипаттерн или неправильный выбор в production.
+> - [ ] Spring Boot Actuator — это библиотека для автоматического масштабирования подов в Kubernetes на основе метрик приложения. | Автомасштабированием управляет Kubernetes HPA, а не Actuator. Actuator лишь предоставляет метрики, которые HPA может читать через адаптер. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -166,10 +166,10 @@ dependencies {
 После подключения `Actuator` автоматически регистрирует эндпоинты. По умолчанию через HTTP доступен только `/actuator/health`. Для открытия дополнительных эндпоинтов необходима конфигурация (см. Q5).
 
 > [!mcq]
-> - [ ] После добавления зависимости spring-boot-starter-actuator все эндпоинты автоматически открываются через HTTP без дополнительной конфигурации. | По умолчанию через HTTP открыт только /actuator/health. Остальные требуют явной экспозиции через management.endpoints.web.exposure.include.
-> - [ ] После добавления зависимости spring-boot-starter-actuator не открывается ни один HTTP-эндпоинт — требуется полная ручная конфигурация. | Это не так: /actuator/health открыт по умолчанию без какой-либо дополнительной настройки, что важно для Kubernetes-проб.
-> - [x] После добавления зависимости spring-boot-starter-actuator через HTTP открыт только /actuator/health; остальные эндпоинты нужно явно указать в exposure.include. | Это верное поведение по умолчанию. Оно безопасно: чувствительные эндпоинты (/env, /beans) не открываются случайно.
-> - [ ] После добавления зависимости spring-boot-starter-actuator через HTTP открыты /actuator/health и /actuator/info, а остальные — только через JMX. | /actuator/info по умолчанию закрыт через HTTP. Через JMX открыты health, info и несколько других, но не все.
+> - [ ] После добавления зависимости spring-boot-starter-actuator все эндпоинты автоматически открываются через HTTP без дополнительной конфигурации. | По умолчанию через HTTP открыт только /actuator/health. Остальные требуют явной экспозиции через management.endpoints.web.exposure.include. Это антипаттерн или неправильный выбор в production.
+> - [ ] После добавления зависимости spring-boot-starter-actuator не открывается ни один HTTP-эндпоинт — требуется полная ручная конфигурация. | Это не так: /actuator/health открыт по умолчанию без какой-либо дополнительной настройки, что важно для Kubernetes-проб. Это антипаттерн или неправильный выбор в production.
+> - [x] После добавления зависимости spring-boot-starter-actuator через HTTP открыт только /actuator/health; остальные эндпоинты нужно явно указать в exposure.include. | Это верное поведение по умолчанию. Оно безопасно: чувствительные эндпоинты (/env, /beans) не открываются случайно. Singleton по умолчанию, lazy vs eager initialization, scope lifecycle важен.
+> - [ ] После добавления зависимости spring-boot-starter-actuator через HTTP открыты /actuator/health и /actuator/info, а остальные — только через JMX. | /actuator/info по умолчанию закрыт через HTTP. Через JMX открыты health, info и несколько других, но не все. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -204,10 +204,10 @@ dependencies {
 Эндпоинты делятся на **technology-agnostic** (доступны и через HTTP, и через JMX) и **web-only** (`heapdump`, `logfile`, `prometheus`).
 
 > [!mcq]
-> - [ ] Эндпоинт /actuator/shutdown включён по умолчанию, но его нужно дополнительно открыть через exposure.include. | /actuator/shutdown отключён по умолчанию (enabled: false). Одной экспозиции недостаточно — нужно сначала включить его через management.endpoint.shutdown.enabled=true.
-> - [x] Эндпоинт /actuator/shutdown отключён по умолчанию и требует явного включения через management.endpoint.shutdown.enabled=true. | Это сделано намеренно: случайный доступ к shutdown мог бы положить приложение. Двойная защита — и enabled, и exposure — обязательна.
-> - [ ] Эндпоинт /actuator/shutdown доступен только через JMX и недоступен через HTTP независимо от конфигурации. | shutdown доступен через HTTP при правильной конфигурации. Он не является web-only или JMX-only эндпоинтом.
-> - [ ] Эндпоинт /actuator/heapdump доступен через JMX и HTTP одинаково, так как является technology-agnostic эндпоинтом. | heapdump — web-only эндпоинт. Через JMX нельзя передать бинарный HPROF-файл, поэтому он работает только через HTTP.
+> - [ ] Эндпоинт /actuator/shutdown включён по умолчанию, но его нужно дополнительно открыть через exposure.include. | /actuator/shutdown отключён по умолчанию (enabled: false). Одной экспозиции недостаточно — нужно сначала включить его через management.endpoint.shutdown.enabled=true. Это антипаттерн или неправильный выбор в production.
+> - [x] Эндпоинт /actuator/shutdown отключён по умолчанию и требует явного включения через management.endpoint.shutdown.enabled=true. | Это сделано намеренно: случайный доступ к shutdown мог бы положить приложение. Двойная защита — и enabled, и exposure — обязательна. Metrics expose через /metrics, health через /health, используйте с Prometheus + Grafana.
+> - [ ] Эндпоинт /actuator/shutdown доступен только через JMX и недоступен через HTTP независимо от конфигурации. | shutdown доступен через HTTP при правильной конфигурации. Он не является web-only или JMX-only эндпоинтом. Это антипаттерн или неправильный выбор в production.
+> - [ ] Эндпоинт /actuator/heapdump доступен через JMX и HTTP одинаково, так как является technology-agnostic эндпоинтом. | heapdump — web-only эндпоинт. Через JMX нельзя передать бинарный HPROF-файл, поэтому он работает только через HTTP. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -237,10 +237,10 @@ management:
 ```
 
 > [!mcq]
-> - [ ] Discovery endpoint /actuator возвращает список всех Spring-бинов в контексте в формате JSON с HATEOAS-ссылками. | Список бинов возвращает /actuator/beans. Discovery endpoint /actuator возвращает только список доступных Actuator-эндпоинтов с их URL.
-> - [ ] Discovery endpoint /actuator возвращает список всех HTTP-маршрутов приложения (@RequestMapping) в формате JSON. | Маршруты приложения отдаёт /actuator/mappings. Discovery endpoint ограничен ссылками на сами Actuator-эндпоинты.
-> - [x] Discovery endpoint /actuator возвращает список всех доступных Actuator-эндпоинтов с HATEOAS-ссылками на каждый из них. | Это и есть назначение /actuator: показать, что доступно, с готовыми href. Удобно для автообнаружения эндпоинтов мониторинг-системами.
-> - [ ] Discovery endpoint /actuator возвращает список всех переменных окружения приложения в формате JSON с HATEOAS-ссылками. | Переменные окружения отдаёт /actuator/env. Discovery endpoint — это только навигационный хаб по Actuator-эндпоинтам.
+> - [ ] Discovery endpoint /actuator возвращает список всех Spring-бинов в контексте в формате JSON с HATEOAS-ссылками. | Список бинов возвращает /actuator/beans. Discovery endpoint /actuator возвращает только список доступных Actuator-эндпоинтов с их URL. Это антипаттерн или неправильный выбор в production.
+> - [ ] Discovery endpoint /actuator возвращает список всех HTTP-маршрутов приложения (@RequestMapping) в формате JSON. | Маршруты приложения отдаёт /actuator/mappings. Discovery endpoint ограничен ссылками на сами Actuator-эндпоинты. Это антипаттерн или неправильный выбор в production.
+> - [x] Discovery endpoint /actuator возвращает список всех доступных Actuator-эндпоинтов с HATEOAS-ссылками на каждый из них. | Это и есть назначение /actuator: показать, что доступно, с готовыми href. Удобно для автообнаружения эндпоинтов мониторинг-системами. Metrics expose через /metrics, health через /health, используйте с Prometheus + Grafana.
+> - [ ] Discovery endpoint /actuator возвращает список всех переменных окружения приложения в формате JSON с HATEOAS-ссылками. | Переменные окружения отдаёт /actuator/env. Discovery endpoint — это только навигационный хаб по Actuator-эндпоинтам. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -285,9 +285,9 @@ management:
 Подробнее о безопасности эндпоинтов — в [вопросах по Spring Security](spring-security-interview.md) и Q26.
 
 > [!mcq]
-> - [ ] В YAML-конфигурации символ * для include не нужно заключать в кавычки, так как Spring Boot автоматически его экранирует. | Это неверно: YAML-парсер воспримет неэкранированный * как якорь и выдаст ошибку парсинга. Всегда используйте include: "*" в кавычках.
-> - [x] В YAML-конфигурации символ * для include обязательно нужно заключать в кавычки, иначе YAML-парсер воспримет его как якорь. | Верно. Без кавычек `include: *` — невалидный YAML. Используйте `include: "*"` или `include: '*'` для открытия всех эндпоинтов.
-> - [ ] В YAML-конфигурации символ * для include нужно экранировать обратным слешем: include: \*, иначе YAML-парсер выдаст ошибку. | Обратный слеш не является способом экранирования в YAML. Правильный способ — заключить значение в одинарные или двойные кавычки.
+> - [ ] В YAML-конфигурации символ * для include не нужно заключать в кавычки, так как Spring Boot автоматически его экранирует. | Это неверно: YAML-парсер воспримет неэкранированный * как якорь и выдаст ошибку парсинга. Всегда используйте include: "*" в кавычках. Частая ошибка в реальном коде.
+> - [x] В YAML-конфигурации символ * для include обязательно нужно заключать в кавычки, иначе YAML-парсер воспримет его как якорь. | Верно. Без кавычек `include: *` — невалидный YAML. Используйте `include: "*"` или `include: '*'` для открытия всех эндпоинтов. Ключевое отличие и best practice в production.
+> - [ ] В YAML-конфигурации символ * для include нужно экранировать обратным слешем: include: \*, иначе YAML-парсер выдаст ошибку. | Обратный слеш не является способом экранирования в YAML. Правильный способ — заключить значение в одинарные или двойные кавычки. Частая ошибка в реальном коде.
 > - [ ] В YAML-конфигурации символ * для include нужно передавать как список из одного элемента: include: ["*"] для корректной обработки. | Список ["*"] технически работает, но стандартная рекомендация — просто строка в кавычках: include: "*". Оба варианта валидны, но строка — идиоматична.
 
 ---
@@ -314,10 +314,10 @@ management:
 ```
 
 > [!mcq]
-> - [ ] Изменить базовый путь Actuator с /actuator на /management можно через свойство server.servlet.context-path=/management. | server.servlet.context-path меняет контекст всего приложения, а не только Actuator. Для Actuator используется management.endpoints.web.base-path.
-> - [ ] Изменить базовый путь Actuator с /actuator на /management можно через свойство management.server.base-path=/management. | management.server.base-path — несуществующее свойство. Правильное — management.endpoints.web.base-path.
-> - [x] Изменить базовый путь Actuator с /actuator на /management можно через свойство management.endpoints.web.base-path=/management. | Верно. После этого все эндпоинты будут доступны по /management/health, /management/metrics и т.д.
-> - [ ] Изменить базовый путь Actuator с /actuator на /management можно через свойство management.endpoint.web.base-path=/management. | management.endpoint (без s) — это конфигурация конкретного эндпоинта, а не всего веб-слоя. Нужно management.endpoints (с s) .web.base-path.
+> - [ ] Изменить базовый путь Actuator с /actuator на /management можно через свойство server.servlet.context-path=/management. | server.servlet.context-path меняет контекст всего приложения, а не только Actuator. Для Actuator используется management.endpoints.web.base-path. Это антипаттерн или неправильный выбор в production.
+> - [ ] Изменить базовый путь Actuator с /actuator на /management можно через свойство management.server.base-path=/management. | management.server.base-path — несуществующее свойство. Правильное — management.endpoints.web.base-path. Это антипаттерн или неправильный выбор в production.
+> - [x] Изменить базовый путь Actuator с /actuator на /management можно через свойство management.endpoints.web.base-path=/management. | Верно. После этого все эндпоинты будут доступны по /management/health, /management/metrics и т.д. Metrics expose через /metrics, health через /health, используйте с Prometheus + Grafana.
+> - [ ] Изменить базовый путь Actuator с /actuator на /management можно через свойство management.endpoint.web.base-path=/management. | management.endpoint (без s) — это конфигурация конкретного эндпоинта, а не всего веб-слоя. Нужно management.endpoints (с s) .web.base-path. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -352,10 +352,10 @@ management:
 ```
 
 > [!mcq]
-> - [ ] Эндпоинт может быть одновременно включён (enabled: true) и открыт через HTTP: это одно и то же свойство в Spring Boot Actuator. | Включённость и экспозиция — разные понятия. Enabled означает, что бин эндпоинта создан; exposed — что он доступен через HTTP/JMX. Эндпоинт может быть enabled, но не exposed.
-> - [x] Эндпоинт может быть включён (enabled: true), но не экспонирован — тогда бин создан, но через HTTP/JMX он недоступен. | Верно. Это двухуровневая модель: сначала включаем (создаём бин), потом открываем (добавляем в exposure.include). Полезно для fine-grained контроля.
-> - [ ] Эндпоинт может быть экспонирован (в exposure.include), но не включён — тогда он доступен через HTTP, но возвращает 404. | Нет: если эндпоинт отключён (enabled: false), он не регистрируется и HTTP-запрос к нему вернёт 404 или не будет обработан вовсе.
-> - [ ] Свойство endpoints.enabled-by-default=false отключает только JMX-доступ, оставляя HTTP-экспозицию без изменений. | enabled-by-default=false отключает создание бинов всех эндпоинтов для обоих транспортов. Это не транспортно-специфичное свойство.
+> - [ ] Эндпоинт может быть одновременно включён (enabled: true) и открыт через HTTP: это одно и то же свойство в Spring Boot Actuator. | Включённость и экспозиция — разные понятия. Enabled означает, что бин эндпоинта создан; exposed — что он доступен через HTTP/JMX. Эндпоинт может быть enabled, но не exposed. Это антипаттерн или неправильный выбор в production.
+> - [x] Эндпоинт может быть включён (enabled: true), но не экспонирован — тогда бин создан, но через HTTP/JMX он недоступен. | Верно. Это двухуровневая модель: сначала включаем (создаём бин), потом открываем (добавляем в exposure.include). Полезно для fine-grained контроля. Ключевое отличие и best practice в production.
+> - [ ] Эндпоинт может быть экспонирован (в exposure.include), но не включён — тогда он доступен через HTTP, но возвращает 404. | Нет: если эндпоинт отключён (enabled: false), он не регистрируется и HTTP-запрос к нему вернёт 404 или не будет обработан вовсе. Частая ошибка в реальном коде.
+> - [ ] Свойство endpoints.enabled-by-default=false отключает только JMX-доступ, оставляя HTTP-экспозицию без изменений. | enabled-by-default=false отключает создание бинов всех эндпоинтов для обоих транспортов. Это не транспортно-специфичное свойство. Частая ошибка в реальном коде.
 
 ---
 
@@ -386,8 +386,8 @@ management:
 
 > [!mcq]
 > - [ ] Уровень доступа read-only для эндпоинта означает, что к нему могут обращаться только пользователи с ролью ROLE_READ. | read-only — это не роль безопасности, а ограничение на тип операций: разрешены только @ReadOperation (GET), запрещены @WriteOperation (POST) и @DeleteOperation (DELETE).
-> - [ ] Уровень доступа unrestricted для эндпоинта означает, что он открыт всем без аутентификации, игнорируя Spring Security. | unrestricted лишь снимает ограничение по типу операций внутри Actuator. Spring Security по-прежнему применяется поверх и может требовать аутентификацию.
-> - [x] Уровень доступа read-only разрешает только @ReadOperation (GET), тогда как unrestricted разрешает все операции включая @WriteOperation и @DeleteOperation. | Верно. Это дополнительный слой защиты поверх Spring Security, введённый в Spring Boot 3.4 для тонкого контроля операций над эндпоинтами.
+> - [ ] Уровень доступа unrestricted для эндпоинта означает, что он открыт всем без аутентификации, игнорируя Spring Security. | unrestricted лишь снимает ограничение по типу операций внутри Actuator. Spring Security по-прежнему применяется поверх и может требовать аутентификацию. Это антипаттерн или неправильный выбор в production.
+> - [x] Уровень доступа read-only разрешает только @ReadOperation (GET), тогда как unrestricted разрешает все операции включая @WriteOperation и @DeleteOperation. | Верно. Это дополнительный слой защиты поверх Spring Security, введённый в Spring Boot 3.4 для тонкого контроля операций над эндпоинтами. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
 > - [ ] Уровень доступа none полностью удаляет бин эндпоинта из контекста Spring, эквивалентен enabled: false. | none запрещает доступ, но не удаляет бин. Бин по-прежнему существует в контексте. Эквивалент enabled: false — это именно enabled: false, а не access: none.
 
 ---
@@ -459,10 +459,10 @@ management:
 ```
 
 > [!mcq]
-> - [ ] Эндпоинт /health при статусе DOWN возвращает HTTP 404, чтобы load balancer мог исключить инстанс из ротации. | /health при DOWN возвращает HTTP 503 (Service Unavailable), а не 404. Код 404 означал бы, что эндпоинт не найден, что вводило бы в заблуждение.
-> - [ ] Эндпоинт /health при статусе UNKNOWN возвращает HTTP 503, потому что неизвестный статус считается ошибкой. | UNKNOWN возвращает HTTP 200, не 503. Статус UNKNOWN означает, что информация недоступна, но это не то же самое, что сбой.
-> - [ ] Эндпоинт /health при статусе OUT_OF_SERVICE возвращает HTTP 200, чтобы отличить плановое отключение от аварии. | OUT_OF_SERVICE возвращает HTTP 503. Различие между DOWN и OUT_OF_SERVICE — семантическое (авария vs. плановое), но HTTP-код одинаков.
-> - [x] Эндпоинт /health при статусах DOWN и OUT_OF_SERVICE возвращает HTTP 503, при UP и UNKNOWN — HTTP 200. | Верно. Это стандартное поведение: 503 говорит Kubernetes и load balancer'у исключить инстанс, а 200 — что он работает нормально.
+> - [ ] Эндпоинт /health при статусе DOWN возвращает HTTP 404, чтобы load balancer мог исключить инстанс из ротации. | /health при DOWN возвращает HTTP 503 (Service Unavailable), а не 404. Код 404 означал бы, что эндпоинт не найден, что вводило бы в заблуждение. Частая ошибка в реальном коде.
+> - [ ] Эндпоинт /health при статусе UNKNOWN возвращает HTTP 503, потому что неизвестный статус считается ошибкой. | UNKNOWN возвращает HTTP 200, не 503. Статус UNKNOWN означает, что информация недоступна, но это не то же самое, что сбой. Частая ошибка в реальном коде.
+> - [ ] Эндпоинт /health при статусе OUT_OF_SERVICE возвращает HTTP 200, чтобы отличить плановое отключение от аварии. | OUT_OF_SERVICE возвращает HTTP 503. Различие между DOWN и OUT_OF_SERVICE — семантическое (авария vs. плановое), но HTTP-код одинаков. Частая ошибка в реальном коде.
+> - [x] Эндпоинт /health при статусах DOWN и OUT_OF_SERVICE возвращает HTTP 503, при UP и UNKNOWN — HTTP 200. | Верно. Это стандартное поведение: 503 говорит Kubernetes и load balancer'у исключить инстанс, а 200 — что он работает нормально. Ключевое отличие и best practice в production.
 
 ---
 
@@ -521,10 +521,10 @@ public class ExternalServiceHealthIndicator implements HealthIndicator {
 Для реактивных приложений на [WebFlux](spring-webflux-interview.md) используется `ReactiveHealthIndicator`.
 
 > [!mcq]
-> - [ ] Кастомный HealthIndicator автоматически регистрируется в /health под именем класса полностью — ExternalServiceHealthIndicator. | Spring Boot обрезает суффикс HealthIndicator: класс ExternalServiceHealthIndicator будет называться externalService в ответе /health.
-> - [x] Кастомный HealthIndicator регистрируется в /health под именем, производным от класса без суффикса HealthIndicator, с первой строчной буквой. | Верно. ExternalServiceHealthIndicator → externalService. Это соглашение об именовании работает аналогично Spring MVC-контроллерам.
-> - [ ] Кастомный HealthIndicator регистрируется в /health под именем бина, которое нужно явно задать через аннотацию @HealthIndicator(name = "..."). | Аннотации @HealthIndicator не существует. Имя определяется автоматически от имени класса или от имени Spring-бина через @Component("myName").
-> - [ ] Кастомный HealthIndicator регистрируется в /health только если добавить его явно в список через management.health.indicators.include. | Регистрация происходит автоматически при наличии @Component. Никакой ручной настройки списка не требуется.
+> - [ ] Кастомный HealthIndicator автоматически регистрируется в /health под именем класса полностью — ExternalServiceHealthIndicator. | Spring Boot обрезает суффикс HealthIndicator: класс ExternalServiceHealthIndicator будет называться externalService в ответе /health. Частая ошибка в реальном коде.
+> - [x] Кастомный HealthIndicator регистрируется в /health под именем, производным от класса без суффикса HealthIndicator, с первой строчной буквой. | Верно. ExternalServiceHealthIndicator → externalService. Это соглашение об именовании работает аналогично Spring MVC-контроллерам. Ключевое отличие и best practice в production.
+> - [ ] Кастомный HealthIndicator регистрируется в /health под именем бина, которое нужно явно задать через аннотацию @HealthIndicator(name = "..."). | Аннотации @HealthIndicator не существует. Имя определяется автоматически от имени класса или от имени Spring-бина через @Component("myName"). Частая ошибка в реальном коде.
+> - [ ] Кастомный HealthIndicator регистрируется в /health только если добавить его явно в список через management.health.indicators.include. | Регистрация происходит автоматически при наличии @Component. Никакой ручной настройки списка не требуется. Частая ошибка в реальном коде.
 
 ---
 
@@ -569,10 +569,10 @@ graph LR
 ```
 
 > [!mcq]
-> - [ ] Health Groups позволяют объединить несколько Health Indicators и назначить им общую роль Spring Security для авторизации. | Health Groups — это группировка индикаторов для вынесения на отдельные URL-пути, а не механизм Spring Security. Авторизация настраивается отдельно через SecurityFilterChain.
-> - [x] Health Groups позволяют объединить несколько Health Indicators под отдельным путём (/health/liveness, /health/readiness), что критично для Kubernetes-проб. | Верно. Kubernetes liveness и readiness проверяют разные наборы индикаторов, и Health Groups дают для этого нужный инструмент прямо из коробки.
+> - [ ] Health Groups позволяют объединить несколько Health Indicators и назначить им общую роль Spring Security для авторизации. | Health Groups — это группировка индикаторов для вынесения на отдельные URL-пути, а не механизм Spring Security. Авторизация настраивается отдельно через SecurityFilterChain. Это антипаттерн или неправильный выбор в production.
+> - [x] Health Groups позволяют объединить несколько Health Indicators под отдельным путём (/health/liveness, /health/readiness), что критично для Kubernetes-проб. | Верно. Kubernetes liveness и readiness проверяют разные наборы индикаторов, и Health Groups дают для этого нужный инструмент прямо из коробки. Ключевое отличие и best practice в production.
 > - [ ] Health Groups позволяют задать приоритет выполнения Health Indicators: индикаторы в одной группе проверяются последовательно, а не параллельно. | Health Groups не влияют на порядок или параллельность выполнения индикаторов. Они лишь определяют, какие индикаторы включены в группу и по какому пути она доступна.
-> - [ ] Health Groups позволяют кэшировать результат проверки группы на заданный интервал, уменьшая нагрузку на зависимости. | Кэширование результатов /health настраивается отдельно через management.endpoint.health.cache.time-to-live и не является функцией Health Groups.
+> - [ ] Health Groups позволяют кэшировать результат проверки группы на заданный интервал, уменьшая нагрузку на зависимости. | Кэширование результатов /health настраивается отдельно через management.endpoint.health.cache.time-to-live и не является функцией Health Groups. Частая ошибка в реальном коде.
 
 ---
 

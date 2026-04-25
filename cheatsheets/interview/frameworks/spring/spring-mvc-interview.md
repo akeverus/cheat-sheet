@@ -122,7 +122,7 @@ graph LR
 > [!mcq]
 > - [x] `Front Controller` — единая точка входа, которая принимает все запросы и маршрутизирует их к обработчикам. | В Spring MVC эту роль играет `DispatcherServlet` — он централизует сквозную логику (безопасность, логирование, локализация) и вызывает нужный контроллер через `HandlerMapping`.
 > - [ ] `Front Controller` — обработчик одного конкретного URL, привязанный к методу контроллера. | Это описание endpoint handler'а или `@RequestMapping`-метода, а не паттерна Front Controller. Front Controller — единая точка входа, а не per-URL-обработчик.
-> - [ ] `Front Controller` — JSP-страница, которая отображает стартовую форму приложения. | Это путаница с view-компонентом. Front Controller — архитектурный паттерн маршрутизации, не имеющий отношения к конкретному шаблону отображения.
+> - [ ] `Front Controller` — JSP-страница, которая отображает стартовую форму приложения. | Это путаница с view-компонентом. Front Controller — архитектурный паттерн маршрутизации, не имеющий отношения к конкретному шаблону отображения. Частая ошибка в реальном коде.
 > - [ ] `Front Controller` — прокси-сервер перед приложением, выполняющий балансировку нагрузки. | Это описание reverse proxy / load balancer. Front Controller работает внутри приложения и маршрутизирует запросы к контроллерам, а не между инстансами сервиса.
 
 ## Q2. (!) Что такое `Spring MVC`?
@@ -136,10 +136,10 @@ graph LR
 `Spring MVC` предоставляет: маршрутизацию по аннотациям (`@RequestMapping`), автоматическое связывание данных из запроса в объекты, интеграцию с `Bean Validation`, Content Negotiation, гибкую обработку исключений и тесную интеграцию с `DI` и `AOP` контейнера `Spring`. В [Spring Boot](spring-boot-interview.md) веб-слой автоконфигурируется через `spring-boot-starter-web`.
 
 > [!mcq]
-> - [ ] `Spring MVC` — реактивный веб-фреймворк на базе `Project Reactor`, работающий поверх Netty. | Это описание `Spring WebFlux`, а не `Spring MVC`. MVC построен на блокирующем Servlet API, а не на Reactive Streams.
+> - [ ] `Spring MVC` — реактивный веб-фреймворк на базе `Project Reactor`, работающий поверх Netty. | Это описание `Spring WebFlux`, а не `Spring MVC`. MVC построен на блокирующем Servlet API, а не на Reactive Streams. Частая ошибка в реальном коде.
 > - [x] `Spring MVC` — реализация паттерна Model-View-Controller поверх Servlet API с `DispatcherServlet` в роли Front Controller. | MVC предоставляет маршрутизацию по `@RequestMapping`, data binding, интеграцию с Bean Validation и гибкую обработку исключений. Работает поверх стандартного Servlet API (Tomcat, Jetty).
-> - [ ] `Spring MVC` — модуль `Spring` для работы с базами данных через `JdbcTemplate` и `JPA`. | Это описание `Spring Data` или модуля `spring-jdbc`. `Spring MVC` — это веб-слой, а не слой доступа к данным.
-> - [ ] `Spring MVC` — библиотека клиентских HTTP-вызовов, включающая `RestTemplate` и `WebClient`. | Это путаница с клиентскими HTTP-абстракциями. `Spring MVC` — серверный веб-фреймворк, обрабатывающий входящие запросы, а не исходящие.
+> - [ ] `Spring MVC` — модуль `Spring` для работы с базами данных через `JdbcTemplate` и `JPA`. | Это описание `Spring Data` или модуля `spring-jdbc`. `Spring MVC` — это веб-слой, а не слой доступа к данным. Частая ошибка в реальном коде.
+> - [ ] `Spring MVC` — библиотека клиентских HTTP-вызовов, включающая `RestTemplate` и `WebClient`. | Это путаница с клиентскими HTTP-абстракциями. `Spring MVC` — серверный веб-фреймворк, обрабатывающий входящие запросы, а не исходящие. Частая ошибка в реальном коде.
 
 ## Q3. Как получить `ServletContext` и `ServletConfig` внутри бина?
 
@@ -166,7 +166,7 @@ public class MyComponent implements ServletContextAware {
 > [!mcq]
 > - [ ] Нужно вручную создать `new ServletContext()` в конструкторе бина и инициализировать его при старте. | `ServletContext` создаёт сервлет-контейнер (Tomcat/Jetty), а не приложение. Попытка создать его руками приведёт к несовместимости с реальным контекстом запросов.
 > - [ ] Единственный способ — через статический метод `RequestContextHolder.getServletContext()`. | `RequestContextHolder` отдаёт атрибуты текущего запроса, а не сам `ServletContext`. Для получения контекста используется DI или `ServletContextAware`, и такого статического метода нет.
-> - [x] Внедрить через `@Autowired` либо реализовать `ServletContextAware` / `ServletConfigAware`. | Контейнер передаст бину те же экземпляры, которые использует `DispatcherServlet`. Оба способа работают, DI предпочтительнее — меньше бойлерплейта.
+> - [x] Внедрить через `@Autowired` либо реализовать `ServletContextAware` / `ServletConfigAware`. | Контейнер передаст бину те же экземпляры, которые использует `DispatcherServlet`. Оба способа работают, DI предпочтительнее — меньше бойлерплейта. Ключевое отличие и best practice в production.
 > - [ ] Через `@Value("${servlet.context}")` из `application.yml`. | `@Value` достаёт строковые property, а не объектные ссылки на сервлетные абстракции. `ServletContext` не хранится в конфигурации — он создаётся контейнером.
 
 ## Q4. Что такое локализация?
@@ -243,9 +243,9 @@ public class WebConfig implements WebMvcConfigurer {
 
 > [!mcq]
 > - [x] `HandlerInterceptor` имеет методы `preHandle`, `postHandle` и `afterCompletion` и работает внутри `DispatcherServlet`. | `preHandle` возвращает `boolean` — если `false`, цепочка прерывается. `postHandle` вызывается до рендеринга View, `afterCompletion` — после полного завершения запроса (даже при исключении).
-> - [ ] `HandlerInterceptor` имеет только один метод `intercept()` и работает на уровне сервлет-контейнера. | Это описание Servlet `Filter` с его `doFilter()`. У `HandlerInterceptor` три метода, и он работает внутри `DispatcherServlet`, а не до него.
+> - [ ] `HandlerInterceptor` имеет только один метод `intercept()` и работает на уровне сервлет-контейнера. | Это описание Servlet `Filter` с его `doFilter()`. У `HandlerInterceptor` три метода, и он работает внутри `DispatcherServlet`, а не до него. Частая ошибка в реальном коде.
 > - [ ] `HandlerInterceptor` может изменять HTTP-статус ответа только в методе `preHandle`, возвращая новый код. | `preHandle` возвращает `boolean`, а не HTTP-код. Чтобы отдать кастомный статус, нужно вызывать `response.setStatus()` напрямую — это работает в любом из методов интерцептора.
-> - [ ] `HandlerInterceptor` регистрируется автоматически при наличии аннотации `@Component` без дополнительной конфигурации. | Недостаточно `@Component` — интерцептор нужно явно зарегистрировать через `WebMvcConfigurer.addInterceptors()`, указав пути и порядок применения.
+> - [ ] `HandlerInterceptor` регистрируется автоматически при наличии аннотации `@Component` без дополнительной конфигурации. | Недостаточно `@Component` — интерцептор нужно явно зарегистрировать через `WebMvcConfigurer.addInterceptors()`, указав пути и порядок применения. Частая ошибка в реальном коде.
 
 ## Q6. Что такое `@ModelAttribute`?
 
@@ -273,9 +273,9 @@ public List<Category> populateCategories() {
 При использовании на параметре `Spring` выполняет: создание объекта, привязку данных из запроса (`WebDataBinder`), валидацию (если стоит `@Valid`) и добавление в модель. Это основа форм-биндинга в `Spring MVC`.
 
 > [!mcq]
-> - [ ] `@ModelAttribute` работает только на параметрах методов и предназначен исключительно для связывания форм. | Это неполное описание. `@ModelAttribute` можно ставить и на методы — тогда он выполняется перед каждым обработчиком и добавляет атрибут в модель.
+> - [ ] `@ModelAttribute` работает только на параметрах методов и предназначен исключительно для связывания форм. | Это неполное описание. `@ModelAttribute` можно ставить и на методы — тогда он выполняется перед каждым обработчиком и добавляет атрибут в модель. Частая ошибка в реальном коде.
 > - [x] `@ModelAttribute` имеет двойное назначение: на параметре — биндинг запроса в объект, на методе — предзаполнение модели. | На параметре Spring создаёт объект, биндит параметры запроса через `WebDataBinder` и добавляет его в модель. На методе — вызывает его перед каждым handler'ом, чтобы заполнить модель общими данными (например, справочниками).
-> - [ ] `@ModelAttribute` — аннотация для автоматической валидации DTO без `@Valid`. | Валидация не запускается сама по себе. Нужен явный `@Valid` (или `@Validated`) рядом с `@ModelAttribute`, иначе ограничения Bean Validation не сработают.
+> - [ ] `@ModelAttribute` — аннотация для автоматической валидации DTO без `@Valid`. | Валидация не запускается сама по себе. Нужен явный `@Valid` (или `@Validated`) рядом с `@ModelAttribute`, иначе ограничения Bean Validation не сработают. Это антипаттерн или неправильный выбор в production.
 > - [ ] `@ModelAttribute` на методе возвращает объект, который попадает в HTTP-ответ как JSON. | В ответ попадает то, что возвращает `@RequestMapping`-метод. `@ModelAttribute`-метод наполняет модель для последующего рендеринга View, а не формирует HTTP-ответ напрямую.
 
 ## Q7. В чём разница между `Model`, `ModelMap` и `ModelAndView`?
@@ -304,8 +304,8 @@ public ModelAndView list() {
 На практике `Model` как параметр метода — самый чистый подход. `ModelAndView` полезен, когда имя View определяется условно внутри метода.
 
 > [!mcq]
-> - [ ] `Model`, `ModelMap` и `ModelAndView` — три имени одного и того же класса, отличаются только алиасами. | Это три разных типа. `Model` — интерфейс, `ModelMap` — класс-реализация `Map + Model`, `ModelAndView` — объект с моделью и именем View.
-> - [ ] `ModelAndView` содержит только имя View, а данные хранятся отдельно в `HttpServletRequest.attributes`. | `ModelAndView` по определению содержит и модель, и имя View в одном объекте — это его основное отличие от `Model`.
+> - [ ] `Model`, `ModelMap` и `ModelAndView` — три имени одного и того же класса, отличаются только алиасами. | Это три разных типа. `Model` — интерфейс, `ModelMap` — класс-реализация `Map + Model`, `ModelAndView` — объект с моделью и именем View. Частая ошибка в реальном коде.
+> - [ ] `ModelAndView` содержит только имя View, а данные хранятся отдельно в `HttpServletRequest.attributes`. | `ModelAndView` по определению содержит и модель, и имя View в одном объекте — это его основное отличие от `Model`. Частая ошибка в реальном коде.
 > - [x] `Model` — интерфейс только для данных, `ModelMap` — Map-реализация `Model`, `ModelAndView` — связка модель+имя View. | `Model` и `ModelMap` используются как параметры контроллера для наполнения модели, а имя View возвращается строкой. `ModelAndView` удобно возвращать из метода, когда имя View определяется условно.
 > - [ ] `ModelMap` отличается от `Model` только потокобезопасностью, остальное идентично. | `ModelMap` не потокобезопасен — это просто реализация, дополнительно предоставляющая стандартные Map-операции (`get`, `containsKey`). Отличие в API и типе, а не в concurrency.
 
@@ -326,7 +326,7 @@ model.put("user", user); // без chaining
 Предпочтительнее `addAttribute()` — типобезопасный, с защитой от `null`-ключей и fluent-интерфейсом.
 
 > [!mcq]
-> - [ ] `put()` и `addAttribute()` — полные синонимы, выбор чисто стилистический. | Есть семантические отличия: `put()` разрешает `null`-ключ, `addAttribute()` бросает исключение. Плюс `addAttribute()` поддерживает method chaining.
+> - [ ] `put()` и `addAttribute()` — полные синонимы, выбор чисто стилистический. | Есть семантические отличия: `put()` разрешает `null`-ключ, `addAttribute()` бросает исключение. Плюс `addAttribute()` поддерживает method chaining. Частая ошибка в реальном коде.
 > - [ ] `put()` быстрее `addAttribute()`, потому что не делает дополнительных проверок. | Разница в скорости не в пользу `put()` на практике несущественна. Главное отличие — семантика и API: `addAttribute()` валидирует ключ и возвращает `Model` для цепочки.
 > - [ ] `addAttribute()` сериализует значения в JSON автоматически, а `put()` оставляет как есть. | Ни один из методов не делает сериализацию. Оба просто кладут объект в модель — превращение в JSON или HTML происходит позже в `HttpMessageConverter` или View-layer.
 > - [x] `addAttribute()` запрещает `null`-ключ, поддерживает chaining и автоматическую генерацию имени по типу; `put()` — метод `Map`. | `addAttribute(value)` без имени генерирует его через `Conventions.getVariableName()` по типу объекта. Это и делает `addAttribute()` предпочтительным в контроллерах.
@@ -359,9 +359,9 @@ public String register(@ModelAttribute("user") @Valid User user,
 
 > [!mcq]
 > - [x] `WebDataBinder` автоматически сопоставляет имена полей формы с полями объекта и вызывает сеттеры. | Это классический data binding: Spring берёт параметры запроса по именам, конвертирует типы через `PropertyEditor` / `Converter` и проставляет значения через сеттеры. Для защиты от mass assignment используют `setAllowedFields()`.
-> - [ ] Spring разбирает форму вручную в контроллере — нужно вызывать `request.getParameter()` для каждого поля. | Это подход голого Servlet API. В Spring MVC весь биндинг делает `WebDataBinder` автоматически, не требуя ручного чтения параметров.
+> - [ ] Spring разбирает форму вручную в контроллере — нужно вызывать `request.getParameter()` для каждого поля. | Это подход голого Servlet API. В Spring MVC весь биндинг делает `WebDataBinder` автоматически, не требуя ручного чтения параметров. Частая ошибка в реальном коде.
 > - [ ] Связывание форм работает только с JSON-телом запроса, form-urlencoded не поддерживается. | Наоборот: `@ModelAttribute` обычно работает с `application/x-www-form-urlencoded` или `multipart/form-data`. JSON-тело обычно обрабатывается через `@RequestBody`.
-> - [ ] При ошибке биндинга Spring молча игнорирует поле и продолжает обработку без уведомлений. | Ошибки биндинга попадают в `BindingResult`. Если его нет в сигнатуре метода, Spring выбросит `BindException` или `MethodArgumentNotValidException`.
+> - [ ] При ошибке биндинга Spring молча игнорирует поле и продолжает обработку без уведомлений. | Ошибки биндинга попадают в `BindingResult`. Если его нет в сигнатуре метода, Spring выбросит `BindException` или `MethodArgumentNotValidException`. Частая ошибка в реальном коде.
 
 ## Q10. Что такое `@PathVariable`?
 
@@ -392,9 +392,9 @@ public Order getOrder(@PathVariable Map<String, String> vars) {
 Если имя переменной в шаблоне совпадает с именем параметра метода, `value` можно не указывать. `@PathVariable(required = false)` позволяет сделать переменную необязательной (тогда тип параметра должен быть `Optional` или nullable).
 
 > [!mcq]
-> - [ ] `@PathVariable` читает значение из query-string (`?id=42`) и подставляет в параметр метода. | Это описание `@RequestParam`. `@PathVariable` извлекает значение из сегмента URI-пути (`/users/{id}`), а не из query-параметров.
+> - [ ] `@PathVariable` читает значение из query-string (`?id=42`) и подставляет в параметр метода. | Это описание `@RequestParam`. `@PathVariable` извлекает значение из сегмента URI-пути (`/users/{id}`), а не из query-параметров. Частая ошибка в реальном коде.
 > - [x] `@PathVariable` извлекает значение из шаблона URI (`/users/{id}`) и подставляет в параметр метода. | Spring использует `UriTemplateHandler` для сопоставления сегмента пути с плейсхолдером. Можно связать по имени (если имена совпадают) или через `@PathVariable("id")`.
-> - [ ] `@PathVariable` работает только со `String`-параметрами, примитивные типы не поддерживаются. | Spring автоматически конвертирует значение через `Converter`/`Formatter`: `Long`, `Integer`, `UUID`, `enum` — всё работает из коробки.
+> - [ ] `@PathVariable` работает только со `String`-параметрами, примитивные типы не поддерживаются. | Spring автоматически конвертирует значение через `Converter`/`Formatter`: `Long`, `Integer`, `UUID`, `enum` — всё работает из коробки. Частая ошибка в реальном коде.
 > - [ ] `@PathVariable` обязательно требует `value`-атрибут, иначе биндинг упадёт с ошибкой. | Если имя переменной в шаблоне совпадает с именем параметра метода, `value` можно опустить — Spring свяжет их по имени. Явный `value` нужен только при несовпадении.
 
 ## Q11. (!) Что такое `Validation`?
@@ -429,7 +429,7 @@ public record UserCreateDto(
 
 > [!mcq]
 > - [ ] Валидация в `Spring MVC` реализована на собственном механизме Spring без JSR-спецификации. | Spring использует стандарт Bean Validation (JSR 380) через `Hibernate Validator` как референсную реализацию. Свой механизм (`Validator` из `org.springframework.validation`) существует, но Bean Validation — основной путь.
-> - [ ] Для запуска валидации достаточно поставить аннотации ограничений на DTO, `@Valid` не нужен. | Без `@Valid` (или `@Validated` на классе) Spring не запустит проверку ограничений. Аннотации на полях DTO сами по себе ничего не делают.
+> - [ ] Для запуска валидации достаточно поставить аннотации ограничений на DTO, `@Valid` не нужен. | Без `@Valid` (или `@Validated` на классе) Spring не запустит проверку ограничений. Аннотации на полях DTO сами по себе ничего не делают. Частая ошибка в реальном коде.
 > - [x] Bean Validation (JSR 380) + `@Valid` на аргументе контроллера запускает проверку через `Hibernate Validator`. | При нарушении ограничений Spring собирает ошибки в `BindingResult`. Если `BindingResult` в сигнатуре нет, выбрасывается `MethodArgumentNotValidException` (для `@RequestBody`) или `BindException` (для `@ModelAttribute`).
 > - [ ] Валидация применяется только к `@RequestBody`-параметрам, к `@ModelAttribute` не применяется. | `@Valid`/`@Validated` работает и для `@RequestBody`, и для `@ModelAttribute`, и для `@RequestPart`, и на полях `@Validated`-сервиса. Ограничение на `@RequestBody` — миф.
 
@@ -456,8 +456,8 @@ public String createUser(@Valid @ModelAttribute User user,
 
 > [!mcq]
 > - [ ] `BindingResult` может находиться в любом месте сигнатуры метода — Spring сам найдёт его по типу. | Spring требует, чтобы `BindingResult` шёл **сразу** после валидируемого аргумента. Иначе он не связывается с нужным объектом, и валидация всё равно бросит исключение.
-> - [ ] Наличие `BindingResult` отключает валидацию — ограничения игнорируются. | Валидация запускается и ошибки складываются в `BindingResult`. Разница только в том, выбрасывать исключение или отдать контроль контроллеру.
-> - [ ] `BindingResult` хранит только ошибки валидации, без ошибок биндинга типов. | Он хранит оба типа ошибок: `FieldError` от data binding (например, невалидный формат даты) и `ObjectError`/`FieldError` от Bean Validation.
+> - [ ] Наличие `BindingResult` отключает валидацию — ограничения игнорируются. | Валидация запускается и ошибки складываются в `BindingResult`. Разница только в том, выбрасывать исключение или отдать контроль контроллеру. Частая ошибка в реальном коде.
+> - [ ] `BindingResult` хранит только ошибки валидации, без ошибок биндинга типов. | Он хранит оба типа ошибок: `FieldError` от data binding (например, невалидный формат даты) и `ObjectError`/`FieldError` от Bean Validation. Это антипаттерн или неправильный выбор в production.
 > - [x] `BindingResult` хранит ошибки биндинга и валидации; должен идти сразу после валидируемого аргумента. | При наличии `BindingResult` исключение не выбрасывается — контроллер сам решает, что делать. Методы `hasErrors()`, `getFieldErrors()`, `getGlobalErrors()` позволяют инспектировать ошибки.
 
 ## Q13. Что такое аннотации `@RequestBody` и `@ResponseBody`?
@@ -487,7 +487,7 @@ public User getUser(@PathVariable Long id) {
 > - [x] `@RequestBody` десериализует тело запроса в объект через `HttpMessageConverter`; `@ResponseBody` — сериализует возвращаемый объект в тело ответа. | Цепочка `HttpMessageConverter`'ов (Jackson, Jaxb2, String) выбирается по `Content-Type` (для входа) и `Accept` (для выхода). В `@RestController` оба поведения включены автоматически.
 > - [ ] `@RequestBody` читает query-параметры запроса, `@ResponseBody` формирует заголовки ответа. | Нет. Query-параметры — это `@RequestParam`, заголовки — `@RequestHeader`/`@ResponseStatus`. `@RequestBody`/`@ResponseBody` работают именно с телом HTTP-сообщения.
 > - [ ] `@RequestBody` обязателен для всех POST-методов, без него запрос не дойдёт до контроллера. | Не обязателен. Можно принимать данные через `@RequestParam`, `@ModelAttribute` (form-urlencoded) или `@RequestPart` (multipart). `@RequestBody` нужен только для JSON/XML-тела.
-> - [ ] `@ResponseBody` работает только в `@RestController`, в обычном `@Controller` он игнорируется. | В обычном `@Controller` его можно ставить на отдельные методы — тогда их ответ пишется в тело напрямую, а не интерпретируется как имя View.
+> - [ ] `@ResponseBody` работает только в `@RestController`, в обычном `@Controller` он игнорируется. | В обычном `@Controller` его можно ставить на отдельные методы — тогда их ответ пишется в тело напрямую, а не интерпретируется как имя View. Частая ошибка в реальном коде.
 
 ## Q14. (!) В чём разница между `@Controller` и `@RestController`?
 
@@ -523,10 +523,10 @@ public class UserController {
 В одном `@Controller` можно комбинировать: часть методов возвращает View, а часть — с `@ResponseBody` отдаёт JSON. Но на практике смешивать не рекомендуется — лучше разделять по классам.
 
 > [!mcq]
-> - [ ] `@RestController` и `@Controller` — полные синонимы; отличаются только именем. | Функциональная разница есть: `@RestController` включает `@ResponseBody` на уровне класса, а `@Controller` — нет. Синонимами они не являются.
+> - [ ] `@RestController` и `@Controller` — полные синонимы; отличаются только именем. | Функциональная разница есть: `@RestController` включает `@ResponseBody` на уровне класса, а `@Controller` — нет. Синонимами они не являются. Частая ошибка в реальном коде.
 > - [x] `@RestController` = `@Controller` + `@ResponseBody` на уровне класса; методы сериализуются в тело ответа. | В `@RestController` `ViewResolver` не участвует — возвращаемый объект идёт через `HttpMessageConverter` (обычно Jackson → JSON). В `@Controller` строка интерпретируется как имя View.
-> - [ ] `@Controller` используется только для REST API, `@RestController` — только для возвращения HTML-страниц. | Всё наоборот. `@Controller` классически используется с View-рендерингом (Thymeleaf/JSP), а `@RestController` — для REST API с JSON.
-> - [ ] В `@RestController` нельзя использовать `Model` и `ModelAndView`, они не поддерживаются. | Технически можно, но бессмысленно — ViewResolver не включён, и `Model` не влияет на ответ. Однако сам факт объявления параметра не вызовет ошибки.
+> - [ ] `@Controller` используется только для REST API, `@RestController` — только для возвращения HTML-страниц. | Всё наоборот. `@Controller` классически используется с View-рендерингом (Thymeleaf/JSP), а `@RestController` — для REST API с JSON. Частая ошибка в реальном коде.
+> - [ ] В `@RestController` нельзя использовать `Model` и `ModelAndView`, они не поддерживаются. | Технически можно, но бессмысленно — ViewResolver не включён, и `Model` не влияет на ответ. Однако сам факт объявления параметра не вызовет ошибки. Частая ошибка в реальном коде.
 
 ## Q15. Что такое `@SessionAttributes` и `@SessionAttribute`?
 
@@ -596,9 +596,9 @@ public class WebConfig implements WebMvcConfigurer {
 ```
 
 > [!mcq]
-> - [ ] `@EnableWebMvc` необходим в каждом Spring Boot приложении — без него контроллеры не работают. | В Spring Boot `WebMvcAutoConfiguration` уже регистрирует всё нужное. `@EnableWebMvc` не обязателен и даже вреден — он отключит автоконфигурацию.
+> - [ ] `@EnableWebMvc` необходим в каждом Spring Boot приложении — без него контроллеры не работают. | В Spring Boot `WebMvcAutoConfiguration` уже регистрирует всё нужное. `@EnableWebMvc` не обязателен и даже вреден — он отключит автоконфигурацию. Частая ошибка в реальном коде.
 > - [ ] `@EnableWebMvc` включает только поддержку CORS и REST-конвертеров, остальное не трогает. | Аннотация регистрирует полный стек MVC: `HandlerMapping`, `HandlerAdapter`, `HttpMessageConverter`, валидаторы, форматтеры. Это не частичная, а полная замена конфигурации.
-> - [ ] `@EnableWebMvc` нужен исключительно для интеграции с `Spring Security` и без него `@Controller` не сработает. | Spring Security не требует этой аннотации. `@Controller` регистрируется обычным сканированием компонентов, независимо от `@EnableWebMvc`.
+> - [ ] `@EnableWebMvc` нужен исключительно для интеграции с `Spring Security` и без него `@Controller` не сработает. | Spring Security не требует этой аннотации. `@Controller` регистрируется обычным сканированием компонентов, независимо от `@EnableWebMvc`. Это антипаттерн или неправильный выбор в production.
 > - [x] `@EnableWebMvc` активирует полную Java-конфигурацию MVC; в Spring Boot его НЕ включают, чтобы не отключить автоконфигурацию. | Добавление `@EnableWebMvc` отключает `WebMvcAutoConfiguration`, что ломает дефолты (Jackson, статические ресурсы). В Spring Boot достаточно реализовать `WebMvcConfigurer` без этой аннотации.
 
 ## Q17. (!) Что такое `ViewResolver` и зачем он нужен?
@@ -629,8 +629,8 @@ graph LR
 
 > [!mcq]
 > - [x] `ViewResolver` преобразует логическое имя View (строка от контроллера) в объект `View` для рендеринга. | Реализации: `ThymeleafViewResolver`, `InternalResourceViewResolver` (JSP), `ContentNegotiatingViewResolver`. В REST-приложениях с `@RestController` ViewResolver не участвует — используется `HttpMessageConverter`.
-> - [ ] `ViewResolver` сериализует объект в JSON/XML перед отправкой клиенту. | Сериализация — задача `HttpMessageConverter` (Jackson, Jaxb2). `ViewResolver` работает только с View-технологиями (Thymeleaf, JSP, FreeMarker).
-> - [ ] `ViewResolver` определяет HTTP-статус ответа на основе результата работы контроллера. | HTTP-статус задаётся через `@ResponseStatus`, `ResponseEntity` или `HttpServletResponse`, а не ViewResolver. Резолвер отвечает только за выбор View.
+> - [ ] `ViewResolver` сериализует объект в JSON/XML перед отправкой клиенту. | Сериализация — задача `HttpMessageConverter` (Jackson, Jaxb2). `ViewResolver` работает только с View-технологиями (Thymeleaf, JSP, FreeMarker). Частая ошибка в реальном коде.
+> - [ ] `ViewResolver` определяет HTTP-статус ответа на основе результата работы контроллера. | HTTP-статус задаётся через `@ResponseStatus`, `ResponseEntity` или `HttpServletResponse`, а не ViewResolver. Резолвер отвечает только за выбор View. Частая ошибка в реальном коде.
 > - [ ] `ViewResolver` кэширует результаты рендеринга шаблонов в Redis для ускорения. | Кэш шаблонов есть внутри движков (Thymeleaf/Freemarker), но он in-memory и не имеет отношения к ViewResolver. Redis-кэш — это отдельный уровень и он не про View.
 
 ## Q18. Что такое `POJO`?
@@ -653,10 +653,10 @@ public class UserForm {
 Философия `Spring` — контроллеры и сервисы тоже по возможности должны оставаться POJO: бизнес-логика не зависит от `javax.servlet.*`, что упрощает тестирование (см. [модульное тестирование](../../testing/unit-testing-interview.md)).
 
 > [!mcq]
-> - [ ] `POJO` — класс, обязательно унаследованный от `java.lang.Object` и имеющий аннотацию `@Component`. | Аннотации делают класс Spring Bean, а не POJO. Философия POJO как раз о том, что объект не привязан к фреймворку — это отсутствие наследования от специальных классов.
-> - [x] `POJO` — обычный Java-объект без привязки к фреймворку: нет обязательного наследования или интерфейсов. | В Spring MVC POJO выступают в роли command object, DTO, entity. Их можно тестировать без Spring, легко сериализовать и переносить между слоями.
-> - [ ] `POJO` — класс, реализующий `Serializable` и имеющий публичные поля без геттеров. | Сериализация и публичные поля — не критерии POJO. Классические POJO-DTO имеют приватные поля и getter/setter, но это вопрос стиля, а не определения.
-> - [ ] `POJO` — класс, создаваемый через `BeanFactory.getBean()` с обязательным scope `singleton`. | POJO можно инстанцировать через `new` — это и есть суть паттерна. `BeanFactory` и scope — детали Spring контейнера, к POJO не относящиеся.
+> - [ ] `POJO` — класс, обязательно унаследованный от `java.lang.Object` и имеющий аннотацию `@Component`. | Аннотации делают класс Spring Bean, а не POJO. Философия POJO как раз о том, что объект не привязан к фреймворку — это отсутствие наследования от специальных классов. Это антипаттерн или неправильный выбор в production.
+> - [x] `POJO` — обычный Java-объект без привязки к фреймворку: нет обязательного наследования или интерфейсов. | В Spring MVC POJO выступают в роли command object, DTO, entity. Их можно тестировать без Spring, легко сериализовать и переносить между слоями. Ключевое отличие и best practice в production.
+> - [ ] `POJO` — класс, реализующий `Serializable` и имеющий публичные поля без геттеров. | Сериализация и публичные поля — не критерии POJO. Классические POJO-DTO имеют приватные поля и getter/setter, но это вопрос стиля, а не определения. Частая ошибка в реальном коде.
+> - [ ] `POJO` — класс, создаваемый через `BeanFactory.getBean()` с обязательным scope `singleton`. | POJO можно инстанцировать через `new` — это и есть суть паттерна. `BeanFactory` и scope — детали Spring контейнера, к POJO не относящиеся. Это антипаттерн или неправильный выбор в production.
 
 ## Q19. Что такое архитектуры модели 1 и модели 2?
 
@@ -682,10 +682,10 @@ graph TB
 `Spring MVC` реализует модель 2. Разделение ответственности даёт: независимое тестирование слоёв, переиспользование бизнес-логики, замену View-технологии без переписывания контроллеров.
 
 > [!mcq]
-> - [ ] Модель 1 — это REST API, модель 2 — это SOAP-сервисы. | Оба термина относятся к веб-архитектурам в Java, а не к стилю API. Разница не в протоколе (REST/SOAP), а в разделении логики и отображения.
-> - [ ] Модель 1 использует `DispatcherServlet`, модель 2 — чистые JSP без контроллеров. | Всё наоборот. Модель 2 — это MVC с `DispatcherServlet`; модель 1 — JSP-centric подход, где логика пишется прямо в JSP-страницах.
-> - [x] Модель 1 — JSP-centric (логика и отображение в одном файле); модель 2 — MVC-архитектура с разделением на Controller/Model/View. | Модель 2 (MVC) даёт независимое тестирование слоёв и замену View-технологии без переписывания контроллеров. Spring MVC реализует именно модель 2.
-> - [ ] Модель 1 — синхронная обработка, модель 2 — асинхронная с `DeferredResult`. | Оба термина про организацию кода, а не про синхронность. Асинхронность (Callable/DeferredResult) — отдельная тема внутри любой из моделей.
+> - [ ] Модель 1 — это REST API, модель 2 — это SOAP-сервисы. | Оба термина относятся к веб-архитектурам в Java, а не к стилю API. Разница не в протоколе (REST/SOAP), а в разделении логики и отображения. Частая ошибка в реальном коде.
+> - [ ] Модель 1 использует `DispatcherServlet`, модель 2 — чистые JSP без контроллеров. | Всё наоборот. Модель 2 — это MVC с `DispatcherServlet`; модель 1 — JSP-centric подход, где логика пишется прямо в JSP-страницах. Частая ошибка в реальном коде.
+> - [x] Модель 1 — JSP-centric (логика и отображение в одном файле); модель 2 — MVC-архитектура с разделением на Controller/Model/View. | Модель 2 (MVC) даёт независимое тестирование слоёв и замену View-технологии без переписывания контроллеров. Spring MVC реализует именно модель 2. Ключевое отличие и best practice в production.
+> - [ ] Модель 1 — синхронная обработка, модель 2 — асинхронная с `DeferredResult`. | Оба термина про организацию кода, а не про синхронность. Асинхронность (Callable/DeferredResult) — отдельная тема внутри любой из моделей. Частая ошибка в реальном коде.
 
 ## Q20. (!) Что такое `DispatcherServlet` и `ContextLoaderListener`?
 
@@ -718,8 +718,8 @@ graph TB
 В `Spring Boot` это абстрагировано: есть один контекст, а `DispatcherServlet` регистрируется автоматически как бин `DispatcherServletAutoConfiguration`.
 
 > [!mcq]
-> - [ ] `DispatcherServlet` — класс сервлет-контейнера Tomcat, не относящийся к Spring. | `DispatcherServlet` — часть Spring Web (`org.springframework.web.servlet.DispatcherServlet`). Tomcat лишь запускает его как обычный сервлет.
-> - [ ] `ContextLoaderListener` создаёт только дочерний контекст для `DispatcherServlet`. | `ContextLoaderListener` создаёт **корневой** `ApplicationContext` (сервисы, репозитории). Дочерний контекст создаёт сам `DispatcherServlet`.
+> - [ ] `DispatcherServlet` — класс сервлет-контейнера Tomcat, не относящийся к Spring. | `DispatcherServlet` — часть Spring Web (`org.springframework.web.servlet.DispatcherServlet`). Tomcat лишь запускает его как обычный сервлет. Частая ошибка в реальном коде.
+> - [ ] `ContextLoaderListener` создаёт только дочерний контекст для `DispatcherServlet`. | `ContextLoaderListener` создаёт **корневой** `ApplicationContext` (сервисы, репозитории). Дочерний контекст создаёт сам `DispatcherServlet`. Частая ошибка в реальном коде.
 > - [ ] `DispatcherServlet` работает только с одним контроллером и не поддерживает аннотации. | `DispatcherServlet` — Front Controller, обрабатывающий любой `@RequestMapping`-метод во всех контроллерах. Поддержка аннотаций — его основной режим работы.
 > - [x] `DispatcherServlet` — Front Controller, координирует обработку запроса; `ContextLoaderListener` создаёт корневой `ApplicationContext`. | В классических приложениях бины веб-слоя (в дочернем контексте `DispatcherServlet`) видят бины корневого контекста, но не наоборот. В Spring Boot это абстрагировано: один контекст и автоконфигурация `DispatcherServletAutoConfiguration`.
 

@@ -122,10 +122,10 @@ updated: "2026-04-25"
 Начиная с `Spring Security 6` конфигурация основана на бине `SecurityFilterChain` (устаревший `WebSecurityConfigurerAdapter` удалён).
 
 > [!mcq]
-> - [ ] Spring Security — библиотека для работы только с JWT-токенами и не поддерживает другие механизмы аутентификации. | Spring Security поддерживает множество механизмов: форма входа, HTTP Basic, JWT, OAuth2, LDAP. JWT — лишь один из способов. Утверждение неверно.
+> - [ ] Spring Security — библиотека для работы только с JWT-токенами и не поддерживает другие механизмы аутентификации. | Spring Security поддерживает множество механизмов: форма входа, HTTP Basic, JWT, OAuth2, LDAP. JWT — лишь один из способов. Утверждение неверно. Это антипаттерн или неправильный выбор в production.
 > - [x] Spring Security решает задачи аутентификации, авторизации, защиты от CSRF/XSS и управления сессиями. | Это полный перечень: аутентификация («кто ты»), авторизация («что можно»), защита от атак (CSRF, XSS, session fixation), управление сессиями и хеширование паролей. Именно это является де-факто стандартом в экосистеме Spring.
-> - [ ] Spring Security — библиотека для работы только с формой входа и не поддерживает другие механизмы аутентификации. | Spring Security поддерживает форму входа, HTTP Basic, JWT, OAuth2, LDAP и другие. Ограничение только формой входа — неверное утверждение.
-> - [ ] Spring Security решает задачи аутентификации и авторизации, но не обеспечивает защиту от CSRF/XSS и не управляет сессиями. | Spring Security включает встроенную защиту от CSRF (через CsrfFilter), XSS (заголовки безопасности) и управление сессиями. Это ключевые возможности фреймворка.
+> - [ ] Spring Security — библиотека для работы только с формой входа и не поддерживает другие механизмы аутентификации. | Spring Security поддерживает форму входа, HTTP Basic, JWT, OAuth2, LDAP и другие. Ограничение только формой входа — неверное утверждение. Это антипаттерн или неправильный выбор в production.
+> - [ ] Spring Security решает задачи аутентификации и авторизации, но не обеспечивает защиту от CSRF/XSS и не управляет сессиями. | Spring Security включает встроенную защиту от CSRF (через CsrfFilter), XSS (заголовки безопасности) и управление сессиями. Это ключевые возможности фреймворка. Это антипаттерн или неправильный выбор в production.
 
 ## Q2. (!) Как устроена архитектура фильтров `Spring Security`?
 
@@ -163,8 +163,8 @@ graph TD
 > [!mcq]
 > - [ ] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является UsernamePasswordAuthenticationFilter, напрямую получающий запрос от клиента. | Точкой входа является DelegatingFilterProxy, который делегирует в FilterChainProxy. UsernamePasswordAuthenticationFilter — один из многих фильтров внутри цепочки, а не входная точка.
 > - [x] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является DelegatingFilterProxy, делегирующий в FilterChainProxy. | DelegatingFilterProxy регистрируется в Servlet-контейнере и делегирует обработку в FilterChainProxy, который выбирает нужный SecurityFilterChain по URL. Это корректное описание архитектуры.
-> - [ ] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является SecurityFilterChain, напрямую получающий запрос от клиента. | SecurityFilterChain — это набор фильтров для определённого паттерна URL, но не точка входа. Точка входа — DelegatingFilterProxy → FilterChainProxy.
-> - [ ] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является FilterChainProxy, напрямую получающий запрос от клиента. | FilterChainProxy не является первой точкой входа — перед ним стоит DelegatingFilterProxy, который зарегистрирован в Servlet-контейнере и делегирует обработку в FilterChainProxy.
+> - [ ] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является SecurityFilterChain, напрямую получающий запрос от клиента. | SecurityFilterChain — это набор фильтров для определённого паттерна URL, но не точка входа. Точка входа — DelegatingFilterProxy → FilterChainProxy. Это антипаттерн или неправильный выбор в production.
+> - [ ] Spring Security реализован как цепочка Servlet-фильтров, где точкой входа является FilterChainProxy, напрямую получающий запрос от клиента. | FilterChainProxy не является первой точкой входа — перед ним стоит DelegatingFilterProxy, который зарегистрирован в Servlet-контейнере и делегирует обработку в FilterChainProxy. Это антипаттерн или неправильный выбор в production.
 
 ## Q3. (!) В чём разница между аутентификацией и авторизацией?
 
@@ -200,10 +200,10 @@ sequenceDiagram
 Подробнее о паттернах авторизации — в [вопросах по паттернам аутентификации и авторизации](../../security/authentication-authorization-patterns-interview.md).
 
 > [!mcq]
-> - [ ] Аутентификация отвечает на вопрос «что тебе можно?» и возвращает объект Authentication с ролями, тогда как авторизация отвечает на вопрос «кто ты?» и завершается кодом 403. | Аутентификация и авторизация перепутаны местами. Аутентификация — «кто ты», ошибка — 401. Авторизация — «что тебе можно», ошибка — 403.
+> - [ ] Аутентификация отвечает на вопрос «что тебе можно?» и возвращает объект Authentication с ролями, тогда как авторизация отвечает на вопрос «кто ты?» и завершается кодом 403. | Аутентификация и авторизация перепутаны местами. Аутентификация — «кто ты», ошибка — 401. Авторизация — «что тебе можно», ошибка — 403. Частая ошибка в реальном коде.
 > - [x] Аутентификация отвечает на вопрос «кто ты?» и завершается кодом 401 при ошибке, тогда как авторизация отвечает на вопрос «что тебе можно?» и завершается кодом 403 при отказе. | Это точное разграничение: аутентификация устанавливает личность (401 при неудаче), авторизация проверяет права (403 при отказе). Аутентификация всегда предшествует авторизации.
 > - [ ] Аутентификация отвечает на вопрос «кто ты?» и завершается кодом 403 при ошибке, тогда как авторизация отвечает на вопрос «что тебе можно?» и завершается кодом 401 при отказе. | Коды ошибок перепутаны. 401 Unauthorized означает отсутствие или неверные credentials (аутентификация), а 403 Forbidden означает нехватку прав (авторизация).
-> - [ ] Аутентификация отвечает на вопрос «кто ты?» и завершается кодом 401 при ошибке, тогда как авторизация отвечает на вопрос «что тебе можно?» и завершается кодом 401 при отказе. | Авторизация при отказе должна возвращать 403 Forbidden, а не 401 Unauthorized. 401 используется только при проблемах с идентификацией пользователя.
+> - [ ] Аутентификация отвечает на вопрос «кто ты?» и завершается кодом 401 при ошибке, тогда как авторизация отвечает на вопрос «что тебе можно?» и завершается кодом 401 при отказе. | Авторизация при отказе должна возвращать 403 Forbidden, а не 401 Unauthorized. 401 используется только при проблемах с идентификацией пользователя. Частая ошибка в реальном коде.
 
 ## Q4. (!) Как работает `SecurityFilterChain` и как его настроить?
 
@@ -254,9 +254,9 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 ```
 
 > [!mcq]
-> - [ ] SecurityFilterChain в Spring Security 6 конфигурируется наследованием от WebSecurityConfigurerAdapter и переопределением метода configure(HttpSecurity). | WebSecurityConfigurerAdapter удалён в Spring Security 6. Конфигурация ведётся через @Bean-метод, возвращающий SecurityFilterChain, без наследования.
+> - [ ] SecurityFilterChain в Spring Security 6 конфигурируется наследованием от WebSecurityConfigurerAdapter и переопределением метода configure(HttpSecurity). | WebSecurityConfigurerAdapter удалён в Spring Security 6. Конфигурация ведётся через @Bean-метод, возвращающий SecurityFilterChain, без наследования. Это антипаттерн или неправильный выбор в production.
 > - [x] SecurityFilterChain в Spring Security 6 конфигурируется через @Bean-метод, принимающий HttpSecurity и возвращающий результат вызова http.build(). | Это правильный подход: объявить @Bean public SecurityFilterChain filterChain(HttpSecurity http), настроить http через лямбды и вернуть http.build(). WebSecurityConfigurerAdapter больше не используется.
-> - [ ] SecurityFilterChain в Spring Security 6 конфигурируется через @Bean-метод, принимающий HttpSecurity и возвращающий результат вызова http.configure(). | Метод configure() не существует в HttpSecurity. Правильный метод для завершения конфигурации — http.build(), который возвращает готовый SecurityFilterChain.
+> - [ ] SecurityFilterChain в Spring Security 6 конфигурируется через @Bean-метод, принимающий HttpSecurity и возвращающий результат вызова http.configure(). | Метод configure() не существует в HttpSecurity. Правильный метод для завершения конфигурации — http.build(), который возвращает готовый SecurityFilterChain. Это антипаттерн или неправильный выбор в production.
 > - [ ] SecurityFilterChain в Spring Security 6 конфигурируется через @Bean-метод, принимающий WebSecurity и возвращающий результат вызова web.build(). | SecurityFilterChain принимает HttpSecurity, а не WebSecurity. WebSecurity используется для настройки WebSecurityCustomizer (например, исключения статических ресурсов), но не для основной цепочки фильтров.
 
 ## Q5. Что такое `SecurityContext` и `SecurityContextHolder`?
@@ -284,10 +284,10 @@ public UserDto currentUser(@AuthenticationPrincipal UserDetails user) {
 Для реактивного стека (`WebFlux`) используется `ReactiveSecurityContextHolder` — контекст в `Reactor Context`, не в `ThreadLocal` (подробнее в [Spring WebFlux](spring-webflux-interview.md)).
 
 > [!mcq]
-> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_GLOBAL, создавая единый контекст для всего приложения. | MODE_GLOBAL — редко используемая стратегия для специальных случаев. Стратегия по умолчанию — MODE_THREADLOCAL, которая хранит SecurityContext в ThreadLocal текущего потока.
-> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_INHERITABLETHREADLOCAL, автоматически передавая контекст дочерним потокам. | MODE_INHERITABLETHREADLOCAL — не стратегия по умолчанию, а дополнительная опция для передачи контекста в дочерние потоки. По умолчанию используется MODE_THREADLOCAL.
+> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_GLOBAL, создавая единый контекст для всего приложения. | MODE_GLOBAL — редко используемая стратегия для специальных случаев. Стратегия по умолчанию — MODE_THREADLOCAL, которая хранит SecurityContext в ThreadLocal текущего потока. Это антипаттерн или неправильный выбор в production.
+> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_INHERITABLETHREADLOCAL, автоматически передавая контекст дочерним потокам. | MODE_INHERITABLETHREADLOCAL — не стратегия по умолчанию, а дополнительная опция для передачи контекста в дочерние потоки. По умолчанию используется MODE_THREADLOCAL. Это антипаттерн или неправильный выбор в production.
 > - [x] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_THREADLOCAL, привязывая контекст к текущему потоку выполнения. | MODE_THREADLOCAL — стратегия по умолчанию: SecurityContext хранится в ThreadLocal и доступен только в текущем потоке. Это безопасно для servlet-контейнеров с моделью thread-per-request.
-> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_THREADLOCAL, при этом автоматически передавая контекст всем дочерним потокам. | MODE_THREADLOCAL не передаёт контекст дочерним потокам — это свойство MODE_INHERITABLETHREADLOCAL. При создании нового потока из пула SecurityContext недоступен.
+> - [ ] SecurityContextHolder по умолчанию хранит SecurityContext в стратегии MODE_THREADLOCAL, при этом автоматически передавая контекст всем дочерним потокам. | MODE_THREADLOCAL не передаёт контекст дочерним потокам — это свойство MODE_INHERITABLETHREADLOCAL. При создании нового потока из пула SecurityContext недоступен. Это антипаттерн или неправильный выбор в production.
 
 ## Q6. (!) Как работает процесс аутентификации (`AuthenticationManager`, `Provider`)?
 
@@ -346,10 +346,10 @@ public class CustomAuthProvider implements AuthenticationProvider {
 ```
 
 > [!mcq]
-> - [ ] Точкой входа в процесс аутентификации выступает `SecurityContextHolder` — его метод `authenticate()` вызывается фильтром. | `SecurityContextHolder` только хранит контекст (ThreadLocal), он не выполняет проверку credentials.
+> - [ ] Точкой входа в процесс аутентификации выступает `SecurityContextHolder` — его метод `authenticate()` вызывается фильтром. | `SecurityContextHolder` только хранит контекст (ThreadLocal), он не выполняет проверку credentials. Это антипаттерн или неправильный выбор в production.
 > - [x] Точкой входа в процесс аутентификации выступает `AuthenticationManager` — его метод `authenticate()` вызывается фильтром. | `AuthenticationManager` (обычно `ProviderManager`) делегирует вызов списку `AuthenticationProvider` и возвращает успешный `Authentication` или бросает исключение.
-> - [ ] Точкой входа в процесс аутентификации выступает `AuthenticationProvider` — его метод `authenticate()` вызывается фильтром. | `AuthenticationProvider` — это звено внутри цепочки, фильтр не вызывает его напрямую, только через `AuthenticationManager`.
-> - [ ] Точкой входа в процесс аутентификации выступает `UserDetailsService` — его метод `authenticate()` вызывается фильтром. | `UserDetailsService` только загружает `UserDetails` по имени и не содержит метода `authenticate()`.
+> - [ ] Точкой входа в процесс аутентификации выступает `AuthenticationProvider` — его метод `authenticate()` вызывается фильтром. | `AuthenticationProvider` — это звено внутри цепочки, фильтр не вызывает его напрямую, только через `AuthenticationManager`. Частая ошибка в реальном коде.
+> - [ ] Точкой входа в процесс аутентификации выступает `UserDetailsService` — его метод `authenticate()` вызывается фильтром. | `UserDetailsService` только загружает `UserDetails` по имени и не содержит метода `authenticate()`. Частая ошибка в реальном коде.
 
 ## Q7. Как реализовать `UserDetailsService` для загрузки из БД?
 
@@ -393,10 +393,10 @@ public AuthenticationManager authManager(HttpSecurity http,
 ```
 
 > [!mcq]
-> - [x] Интерфейс `UserDetailsService` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | Именно этот метод реализует провайдер для загрузки пользователя из БД; при отсутствии — бросается `UsernameNotFoundException`.
-> - [ ] Интерфейс `UserDetailsManager` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | `UserDetailsManager` расширяет `UserDetailsService` и добавляет CRUD-операции (`createUser`, `deleteUser`), это не тот же интерфейс.
-> - [ ] Интерфейс `AuthenticationProvider` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | `AuthenticationProvider` описывает `authenticate(Authentication)` и `supports(Class)` — это не загрузчик пользователя.
-> - [ ] Интерфейс `UserDetails` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | `UserDetails` — это DTO-подобный интерфейс пользователя (`getUsername`, `getPassword`), он не загружает сам себя.
+> - [x] Интерфейс `UserDetailsService` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | Именно этот метод реализует провайдер для загрузки пользователя из БД; при отсутствии — бросается `UsernameNotFoundException`. Ключевое отличие и best practice в production.
+> - [ ] Интерфейс `UserDetailsManager` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | `UserDetailsManager` расширяет `UserDetailsService` и добавляет CRUD-операции (`createUser`, `deleteUser`), это не тот же интерфейс. Частая ошибка в реальном коде.
+> - [ ] Интерфейс `AuthenticationProvider` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | `AuthenticationProvider` описывает `authenticate(Authentication)` и `supports(Class)` — это не загрузчик пользователя. Частая ошибка в реальном коде.
+> - [ ] Интерфейс `UserDetails` имеет единственный метод `loadUserByUsername(String)`, возвращающий `UserDetails`. | `UserDetails` — это DTO-подобный интерфейс пользователя (`getUsername`, `getPassword`), он не загружает сам себя. Частая ошибка в реальном коде.
 
 ## Q8. Как настроить хеширование паролей (`PasswordEncoder`)?
 
@@ -427,10 +427,10 @@ public PasswordEncoder passwordEncoder() {
 При логине `Spring` через `PasswordEncoder.matches()` сравнивает введённый пароль с хешем из БД. Хранить пароли в открытом виде (`{noop}`) допустимо **только** в тестах.
 
 > [!mcq]
-> - [ ] Рекомендованным общим `PasswordEncoder` является `NoOpPasswordEncoder`, имеющий адаптивную стоимость. | `NoOpPasswordEncoder` хранит пароли в открытом виде и помечен `@Deprecated` — использовать нельзя ни в каком случае, кроме тестов.
-> - [ ] Рекомендованным общим `PasswordEncoder` является `MessageDigestPasswordEncoder`, имеющий адаптивную стоимость. | MD5/SHA через `MessageDigestPasswordEncoder` быстры и уязвимы к rainbow-table атакам, не имеют настраиваемой стоимости.
+> - [ ] Рекомендованным общим `PasswordEncoder` является `NoOpPasswordEncoder`, имеющий адаптивную стоимость. | `NoOpPasswordEncoder` хранит пароли в открытом виде и помечен `@Deprecated` — использовать нельзя ни в каком случае, кроме тестов. Частая ошибка в реальном коде.
+> - [ ] Рекомендованным общим `PasswordEncoder` является `MessageDigestPasswordEncoder`, имеющий адаптивную стоимость. | MD5/SHA через `MessageDigestPasswordEncoder` быстры и уязвимы к rainbow-table атакам, не имеют настраиваемой стоимости. Частая ошибка в реальном коде.
 > - [x] Рекомендованным общим `PasswordEncoder` является `BCryptPasswordEncoder`, имеющий адаптивную стоимость. | `BCryptPasswordEncoder` использует настраиваемый cost factor (log-rounds), по умолчанию 10, и встроенную соль — baseline для парольного хеширования в Spring.
-> - [ ] Рекомендованным общим `PasswordEncoder` является `StandardPasswordEncoder`, имеющий адаптивную стоимость. | `StandardPasswordEncoder` (SHA-256+соль) объявлен deprecated, не адаптивен и не рекомендуется для нового кода.
+> - [ ] Рекомендованным общим `PasswordEncoder` является `StandardPasswordEncoder`, имеющий адаптивную стоимость. | `StandardPasswordEncoder` (SHA-256+соль) объявлен deprecated, не адаптивен и не рекомендуется для нового кода. Частая ошибка в реальном коде.
 
 ## Q9. Как настроить `form-based` аутентификацию?
 
@@ -464,10 +464,10 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 ```
 
 > [!mcq]
-> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `BasicAuthenticationFilter`. | `BasicAuthenticationFilter` парсит заголовок `Authorization: Basic <base64>`, а не параметры формы.
-> - [x] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `UsernamePasswordAuthenticationFilter`. | Именно этот фильтр извлекает параметры `username`/`password` из формы и создаёт `UsernamePasswordAuthenticationToken` для `AuthenticationManager`.
-> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `BearerTokenAuthenticationFilter`. | `BearerTokenAuthenticationFilter` работает с JWT/OAuth2-токенами из заголовка `Authorization: Bearer`.
-> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `RememberMeAuthenticationFilter`. | Этот фильтр восстанавливает аутентификацию по cookie `remember-me`, а не обрабатывает форму логина.
+> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `BasicAuthenticationFilter`. | `BasicAuthenticationFilter` парсит заголовок `Authorization: Basic <base64>`, а не параметры формы. Частая ошибка в реальном коде.
+> - [x] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `UsernamePasswordAuthenticationFilter`. | Именно этот фильтр извлекает параметры `username`/`password` из формы и создаёт `UsernamePasswordAuthenticationToken` для `AuthenticationManager`. Ключевое отличие и best practice в production.
+> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `BearerTokenAuthenticationFilter`. | `BearerTokenAuthenticationFilter` работает с JWT/OAuth2-токенами из заголовка `Authorization: Bearer`. Частая ошибка в реальном коде.
+> - [ ] За обработку POST-запроса `/login` в form-based аутентификации отвечает фильтр `RememberMeAuthenticationFilter`. | Этот фильтр восстанавливает аутентификацию по cookie `remember-me`, а не обрабатывает форму логина. Частая ошибка в реальном коде.
 
 ## Q10. Как настроить `HTTP Basic` аутентификацию?
 
@@ -486,10 +486,10 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 Credentials передаются в заголовке `Authorization: Basic <base64(user:pass)>`. В production обязательно использовать **HTTPS**, иначе пароль передаётся в открытом виде. Обычно используется для внутренних API или для простых интеграций; для публичных API предпочтительнее `JWT` или `OAuth2`.
 
 > [!mcq]
-> - [x] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Basic ...`. | Base64 — это кодирование, не шифрование: без HTTPS credentials легко декодируются, поэтому Basic используется только поверх TLS.
-> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Bearer ...`. | `Bearer` — схема для токенов (OAuth2/JWT), а не для имени/пароля.
-> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Digest ...`. | `Digest` — отдельная схема с хешированием nonce, не использует Base64 от пары user:pass.
-> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Proxy-Authorization: Basic ...`. | `Proxy-Authorization` предназначен для аутентификации на HTTP-прокси, а не на целевом ресурсе.
+> - [x] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Basic ...`. | Base64 — это кодирование, не шифрование: без HTTPS credentials легко декодируются, поэтому Basic используется только поверх TLS. Ключевое отличие и best practice в production.
+> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Bearer ...`. | `Bearer` — схема для токенов (OAuth2/JWT), а не для имени/пароля. Частая ошибка в реальном коде.
+> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Authorization: Digest ...`. | `Digest` — отдельная схема с хешированием nonce, не использует Base64 от пары user:pass. Частая ошибка в реальном коде.
+> - [ ] HTTP Basic передаёт логин и пароль как `base64(username:password)` в заголовке `Proxy-Authorization: Basic ...`. | `Proxy-Authorization` предназначен для аутентификации на HTTP-прокси, а не на целевом ресурсе. Частая ошибка в реальном коде.
 
 ## Q11. (!) Как интегрировать `Spring Security` с `JWT`?
 
@@ -537,10 +537,10 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http,
 ```
 
 > [!mcq]
-> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.ALWAYS`. | `ALWAYS` заставляет создавать HTTP-сессию на каждый запрос — это противоположность stateless-режиму.
-> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.IF_REQUIRED`. | Это дефолтная политика: сервер создаёт сессию при необходимости, что не подходит для чисто stateless REST.
-> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.NEVER`. | `NEVER` не создаёт сессию, но использует существующую если есть — это всё ещё не полный stateless.
-> - [x] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.STATELESS`. | `STATELESS` — сервер не создаёт и не использует HTTP-сессию; каждый запрос аутентифицируется заново по JWT.
+> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.ALWAYS`. | `ALWAYS` заставляет создавать HTTP-сессию на каждый запрос — это противоположность stateless-режиму. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.IF_REQUIRED`. | Это дефолтная политика: сервер создаёт сессию при необходимости, что не подходит для чисто stateless REST. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.NEVER`. | `NEVER` не создаёт сессию, но использует существующую если есть — это всё ещё не полный stateless. Это антипаттерн или неправильный выбор в production.
+> - [x] Для stateless JWT-API в `SecurityFilterChain` задают `SessionCreationPolicy.STATELESS`. | `STATELESS` — сервер не создаёт и не использует HTTP-сессию; каждый запрос аутентифицируется заново по JWT. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
 
 ## Q12. (!) Как написать `JWT`-фильтр (`JwtAuthenticationFilter`)?
 
@@ -590,10 +590,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 - При невалидном или отсутствующем токене — просто пропускает запрос дальше (авторизация сработает позже)
 
 > [!mcq]
-> - [x] Кастомный JWT-фильтр наследуется от `OncePerRequestFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | `OncePerRequestFilter` обеспечивает защиту от повторного запуска в forward/include и нужную сигнатуру с `HttpServletRequest`.
-> - [ ] Кастомный JWT-фильтр наследуется от `GenericFilterBean`, что гарантирует один вызов `doFilterInternal` на запрос. | `GenericFilterBean` — более низкоуровневый предок; сам по себе не защищает от повторного срабатывания на forward.
-> - [ ] Кастомный JWT-фильтр наследуется от `BasicAuthenticationFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | `BasicAuthenticationFilter` специализирован на HTTP Basic-схеме, наследоваться от него для JWT нелогично.
-> - [ ] Кастомный JWT-фильтр наследуется от `AbstractAuthenticationProcessingFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | Этот класс рассчитан на logging-in через specific URL (например, `/login`), не на per-request Bearer-токен.
+> - [x] Кастомный JWT-фильтр наследуется от `OncePerRequestFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | `OncePerRequestFilter` обеспечивает защиту от повторного запуска в forward/include и нужную сигнатуру с `HttpServletRequest`. Ключевое отличие и best practice в production.
+> - [ ] Кастомный JWT-фильтр наследуется от `GenericFilterBean`, что гарантирует один вызов `doFilterInternal` на запрос. | `GenericFilterBean` — более низкоуровневый предок; сам по себе не защищает от повторного срабатывания на forward. Это антипаттерн или неправильный выбор в production.
+> - [ ] Кастомный JWT-фильтр наследуется от `BasicAuthenticationFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | `BasicAuthenticationFilter` специализирован на HTTP Basic-схеме, наследоваться от него для JWT нелогично. Частая ошибка в реальном коде.
+> - [ ] Кастомный JWT-фильтр наследуется от `AbstractAuthenticationProcessingFilter`, что гарантирует один вызов `doFilterInternal` на запрос. | Этот класс рассчитан на logging-in через specific URL (например, `/login`), не на per-request Bearer-токен. Частая ошибка в реальном коде.
 
 ## Q13. Как реализовать endpoint выдачи `JWT`-токена?
 
@@ -635,10 +635,10 @@ public AuthenticationManager authenticationManager(
 ```
 
 > [!mcq]
-> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `SecurityContextHolder.authenticate()`. | У `SecurityContextHolder` нет метода `authenticate()`; это хранилище контекста, а не точка аутентификации.
-> - [x] В `/login`-endpoint для проверки пары логин/пароль вызывается `AuthenticationManager.authenticate()`. | Контроллер передаёт `UsernamePasswordAuthenticationToken` в `AuthenticationManager`, который делегирует проверку провайдерам.
-> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `UserDetailsService.authenticate()`. | `UserDetailsService` только загружает пользователя по имени; метода `authenticate` в нём нет.
-> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `PasswordEncoder.authenticate()`. | `PasswordEncoder` умеет только `encode` и `matches`, это компонент проверки пароля, а не точка входа аутентификации.
+> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `SecurityContextHolder.authenticate()`. | У `SecurityContextHolder` нет метода `authenticate()`; это хранилище контекста, а не точка аутентификации. Это антипаттерн или неправильный выбор в production.
+> - [x] В `/login`-endpoint для проверки пары логин/пароль вызывается `AuthenticationManager.authenticate()`. | Контроллер передаёт `UsernamePasswordAuthenticationToken` в `AuthenticationManager`, который делегирует проверку провайдерам. Ключевое отличие и best practice в production.
+> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `UserDetailsService.authenticate()`. | `UserDetailsService` только загружает пользователя по имени; метода `authenticate` в нём нет. Частая ошибка в реальном коде.
+> - [ ] В `/login`-endpoint для проверки пары логин/пароль вызывается `PasswordEncoder.authenticate()`. | `PasswordEncoder` умеет только `encode` и `matches`, это компонент проверки пароля, а не точка входа аутентификации. Частая ошибка в реальном коде.
 
 ## Q14. Как реализовать refresh-токен?
 
@@ -673,10 +673,10 @@ public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request)
 Для revocable-токенов лучше хранить refresh-токены в БД или `Redis` и проверять при обновлении. Подробнее об OAuth2-потоках — в [вопросах по OAuth2](../../security/oauth2-interview.md).
 
 > [!mcq]
-> - [x] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `Redis`/БД и проверяют при каждом обновлении. | Чистый JWT stateless — revoke не работает; revocation list в хранилище позволяет пометить токен как недействительный до `exp`.
-> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `SecurityContextHolder` и проверяют при каждом обновлении. | `SecurityContextHolder` — это ThreadLocal на запрос, он не рассчитан на долгосрочное хранение и не персистентен.
-> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `HttpSession` и проверяют при каждом обновлении. | `HttpSession` живёт на одном узле (если нет Spring Session), не подходит для распределённой revocation.
-> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в JWT-payload и проверяют при каждом обновлении. | JWT неизменяем после подписи — невозможно «отозвать» сам токен через его содержимое.
+> - [x] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `Redis`/БД и проверяют при каждом обновлении. | Чистый JWT stateless — revoke не работает; revocation list в хранилище позволяет пометить токен как недействительный до `exp`. Ключевое отличие и best practice в production.
+> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `SecurityContextHolder` и проверяют при каждом обновлении. | `SecurityContextHolder` — это ThreadLocal на запрос, он не рассчитан на долгосрочное хранение и не персистентен. Это антипаттерн или неправильный выбор в production.
+> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в `HttpSession` и проверяют при каждом обновлении. | `HttpSession` живёт на одном узле (если нет Spring Session), не подходит для распределённой revocation. Частая ошибка в реальном коде.
+> - [ ] Чтобы отозвать refresh-токен до истечения его срока, его хранят в JWT-payload и проверяют при каждом обновлении. | JWT неизменяем после подписи — невозможно «отозвать» сам токен через его содержимое. Частая ошибка в реальном коде.
 
 ## Q15. (!) Как настроить `OAuth2 Login` (вход через `Google`/`GitHub`)?
 
@@ -741,10 +741,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 ```
 
 > [!mcq]
-> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `UserDetailsService`. | `UserDetailsService` нужен для форм/Basic-логина (loadUserByUsername), а не для OAuth2-профилей.
+> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `UserDetailsService`. | `UserDetailsService` нужен для форм/Basic-логина (loadUserByUsername), а не для OAuth2-профилей. Частая ошибка в реальном коде.
 > - [x] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `DefaultOAuth2UserService`. | `DefaultOAuth2UserService.loadUser(OAuth2UserRequest)` — штатная точка, в которой можно обогатить/сохранить пользователя после получения данных от IdP.
-> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `AuthenticationManager`. | `AuthenticationManager` — интерфейс с одним методом `authenticate`, у него нет профильной обработки OAuth2.
-> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `OAuth2AuthorizationRequestResolver`. | Этот компонент управляет формированием authorization-request к IdP (например, добавляет параметры), а не обрабатывает профиль.
+> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `AuthenticationManager`. | `AuthenticationManager` — интерфейс с одним методом `authenticate`, у него нет профильной обработки OAuth2. Частая ошибка в реальном коде.
+> - [ ] Для кастомной пост-обработки профиля после OAuth2-входа расширяют `OAuth2AuthorizationRequestResolver`. | Этот компонент управляет формированием authorization-request к IdP (например, добавляет параметры), а не обрабатывает профиль. Частая ошибка в реальном коде.
 
 ## Q16. Как настроить `Spring Security` как `OAuth2 Resource Server`?
 
@@ -789,9 +789,9 @@ public JwtAuthenticationConverter jwtAuthConverter() {
 `Spring Security` автоматически валидирует подпись JWT через JWKS-endpoint провайдера.
 
 > [!mcq]
-> - [ ] Проверка подписи JWT в Resource Server выполняется через `UserDetailsService`. | `UserDetailsService` к JWKS и криптографии не имеет отношения — он работает с локальным хранилищем пользователей.
-> - [x] Проверка подписи JWT в Resource Server выполняется через `JwtDecoder`, который подтягивает ключи из JWKS-endpoint. | `NimbusJwtDecoder` настраивается через `jwk-set-uri` или `issuer-uri` и автоматически валидирует подпись, `iss`, `exp`, `nbf`.
-> - [ ] Проверка подписи JWT в Resource Server выполняется через `PasswordEncoder`. | `PasswordEncoder` — утилита для парольных хешей, к JWT не применяется.
+> - [ ] Проверка подписи JWT в Resource Server выполняется через `UserDetailsService`. | `UserDetailsService` к JWKS и криптографии не имеет отношения — он работает с локальным хранилищем пользователей. Частая ошибка в реальном коде.
+> - [x] Проверка подписи JWT в Resource Server выполняется через `JwtDecoder`, который подтягивает ключи из JWKS-endpoint. | `NimbusJwtDecoder` настраивается через `jwk-set-uri` или `issuer-uri` и автоматически валидирует подпись, `iss`, `exp`, `nbf`. Ключевое отличие и best practice в production.
+> - [ ] Проверка подписи JWT в Resource Server выполняется через `PasswordEncoder`. | `PasswordEncoder` — утилита для парольных хешей, к JWT не применяется. Частая ошибка в реальном коде.
 > - [ ] Проверка подписи JWT в Resource Server выполняется через `AuthenticationManager` без дополнительных компонентов. | `AuthenticationManager` лишь делегирует на `JwtAuthenticationProvider`, который требует корректно настроенный `JwtDecoder` — без него проверка невозможна.
 
 ## Q17. (!) Как настроить авторизацию по URL-паттернам?
@@ -828,10 +828,10 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 В `Spring Security 6` вместо `antMatchers()` используется `requestMatchers()` с `AntPathRequestMatcher` под капотом. Поддерживается также `MvcRequestMatcher` для точного соответствия маршрутам [Spring MVC](spring-mvc-interview.md).
 
 > [!mcq]
-> - [x] В Spring Security 6 для URL-авторизации применяется DSL `authorizeHttpRequests()` с вызовом `requestMatchers(...)`. | Устаревшие `authorizeRequests()` + `antMatchers()` удалены вместе с `WebSecurityConfigurerAdapter`; новый DSL даёт более точные матчеры.
-> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `authorizeRequests()` с вызовом `requestMatchers(...)`. | `authorizeRequests()` deprecated и удалён; вместо него `authorizeHttpRequests()`.
-> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `authorizeHttpRequests()` с вызовом `antMatchers(...)`. | `antMatchers()` удалён; используется `requestMatchers()` (внутри — `AntPathRequestMatcher`/`MvcRequestMatcher`).
-> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `httpSecurity()` с вызовом `matchers(...)`. | Метода `httpSecurity()` с таким DSL нет — конфигурация идёт через бин `SecurityFilterChain`.
+> - [x] В Spring Security 6 для URL-авторизации применяется DSL `authorizeHttpRequests()` с вызовом `requestMatchers(...)`. | Устаревшие `authorizeRequests()` + `antMatchers()` удалены вместе с `WebSecurityConfigurerAdapter`; новый DSL даёт более точные матчеры. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `authorizeRequests()` с вызовом `requestMatchers(...)`. | `authorizeRequests()` deprecated и удалён; вместо него `authorizeHttpRequests()`. Это антипаттерн или неправильный выбор в production.
+> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `authorizeHttpRequests()` с вызовом `antMatchers(...)`. | `antMatchers()` удалён; используется `requestMatchers()` (внутри — `AntPathRequestMatcher`/`MvcRequestMatcher`). Это антипаттерн или неправильный выбор в production.
+> - [ ] В Spring Security 6 для URL-авторизации применяется DSL `httpSecurity()` с вызовом `matchers(...)`. | Метода `httpSecurity()` с таким DSL нет — конфигурация идёт через бин `SecurityFilterChain`. Это антипаттерн или неправильный выбор в production.
 
 ## Q18. (!) Как работают `@PreAuthorize`, `@PostAuthorize` и `@Secured`?
 
@@ -884,10 +884,10 @@ public class ArticleService {
 | `@RolesAllowed` | Нет | До вызова | Нет |
 
 > [!mcq]
-> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableGlobalMethodSecurity(prePostEnabled = true)`. | `@EnableGlobalMethodSecurity` deprecated в Spring Security 6 — нужно использовать `@EnableMethodSecurity`.
-> - [x] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableMethodSecurity`. | Это правильная аннотация; по умолчанию `prePostEnabled=true`, `securedEnabled`/`jsr250Enabled` — `false`.
-> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableWebSecurity`. | `@EnableWebSecurity` активирует web-часть (`HttpSecurity`, `SecurityFilterChain`), но не method-security.
-> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableAuthenticationManager`. | Такой аннотации в Spring Security нет, это выдуманное имя.
+> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableGlobalMethodSecurity(prePostEnabled = true)`. | `@EnableGlobalMethodSecurity` deprecated в Spring Security 6 — нужно использовать `@EnableMethodSecurity`. Это антипаттерн или неправильный выбор в production.
+> - [x] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableMethodSecurity`. | Это правильная аннотация; по умолчанию `prePostEnabled=true`, `securedEnabled`/`jsr250Enabled` — `false`. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableWebSecurity`. | `@EnableWebSecurity` активирует web-часть (`HttpSecurity`, `SecurityFilterChain`), но не method-security. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для включения `@PreAuthorize`/`@PostAuthorize` в Spring Security 6 применяется аннотация `@EnableAuthenticationManager`. | Такой аннотации в Spring Security нет, это выдуманное имя. Это антипаттерн или неправильный выбор в production.
 
 ## Q19. Как использовать `@PreFilter` и `@PostFilter`?
 
@@ -914,10 +914,10 @@ public class DocumentService {
 **Осторожно**: `@PostFilter` загружает все данные из БД и потом фильтрует в памяти. Для больших коллекций лучше фильтровать в SQL-запросе.
 
 > [!mcq]
-> - [x] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `filterObject`. | Spring Security применяет выражение к каждому элементу коллекции, предоставляя его через `filterObject`.
-> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `returnObject`. | `returnObject` — это возвращаемое значение метода для `@PostAuthorize`, не элемент коллекции.
-> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `principal`. | `principal` — это `Authentication.getPrincipal()`, аутентифицированный пользователь, не элемент коллекции.
-> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `authentication`. | `authentication` — сам объект `Authentication`, а не элемент обрабатываемой коллекции.
+> - [x] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `filterObject`. | Spring Security применяет выражение к каждому элементу коллекции, предоставляя его через `filterObject`. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `returnObject`. | `returnObject` — это возвращаемое значение метода для `@PostAuthorize`, не элемент коллекции. Частая ошибка в реальном коде.
+> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `principal`. | `principal` — это `Authentication.getPrincipal()`, аутентифицированный пользователь, не элемент коллекции. Частая ошибка в реальном коде.
+> - [ ] Внутри SpEL в `@PreFilter`/`@PostFilter` текущий элемент коллекции доступен под именем `authentication`. | `authentication` — сам объект `Authentication`, а не элемент обрабатываемой коллекции. Частая ошибка в реальном коде.
 
 ## Q20. Как реализовать доступ на основе данных (domain object security)?
 
@@ -959,10 +959,10 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 Для сложных ACL-сценариев существует модуль `spring-security-acl` с таблицами разрешений в БД.
 
 > [!mcq]
-> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `AuthenticationProvider`. | `AuthenticationProvider` занимается процессом аутентификации, а не проверкой прав на конкретный объект.
-> - [x] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `PermissionEvaluator`. | Spring Security делегирует `hasPermission(...)` в зарегистрированный `PermissionEvaluator`, обычно через `DefaultMethodSecurityExpressionHandler`.
-> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `UserDetailsService`. | `UserDetailsService` только загружает пользователя по имени, выражения SpEL через него не проходят.
-> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `SecurityContextHolder`. | `SecurityContextHolder` — это хранилище контекста, а не обработчик SpEL-выражений.
+> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `AuthenticationProvider`. | `AuthenticationProvider` занимается процессом аутентификации, а не проверкой прав на конкретный объект. Частая ошибка в реальном коде.
+> - [x] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `PermissionEvaluator`. | Spring Security делегирует `hasPermission(...)` в зарегистрированный `PermissionEvaluator`, обычно через `DefaultMethodSecurityExpressionHandler`. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `UserDetailsService`. | `UserDetailsService` только загружает пользователя по имени, выражения SpEL через него не проходят. Частая ошибка в реальном коде.
+> - [ ] Выражение вида `hasPermission(#id, 'Article', 'WRITE')` в `@PreAuthorize` обрабатывается `SecurityContextHolder`. | `SecurityContextHolder` — это хранилище контекста, а не обработчик SpEL-выражений. Это антипаттерн или неправильный выбор в production.
 
 ## Q21. (!) Как настроить `CORS` в `Spring Security`?
 
@@ -998,10 +998,10 @@ public CorsConfigurationSource corsConfigurationSource() {
 На уровне контроллера можно использовать `@CrossOrigin`, но `SecurityFilterChain` конфигурация имеет приоритет. Подробнее о безопасности веб-приложений — в [вопросах по безопасности приложений](../../security/application-security-interview.md).
 
 > [!mcq]
-> - [x] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `CorsFilter` до `UsernamePasswordAuthenticationFilter`. | Метод `http.cors(...)` регистрирует CORS-фильтр до security-фильтров, поэтому preflight проходит без credentials.
-> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `CsrfFilter` до `UsernamePasswordAuthenticationFilter`. | `CsrfFilter` проверяет CSRF-токен, он не связан с CORS и не обрабатывает заголовки `Origin`.
-> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `BasicAuthenticationFilter` до `UsernamePasswordAuthenticationFilter`. | `BasicAuthenticationFilter` — это аутентификация HTTP Basic, он лишь будет возвращать 401 для preflight без креденшелов.
-> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `SecurityContextPersistenceFilter` до `UsernamePasswordAuthenticationFilter`. | Этот фильтр загружает/сохраняет `SecurityContext`, к обработке CORS он отношения не имеет.
+> - [x] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `CorsFilter` до `UsernamePasswordAuthenticationFilter`. | Метод `http.cors(...)` регистрирует CORS-фильтр до security-фильтров, поэтому preflight проходит без credentials. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `CsrfFilter` до `UsernamePasswordAuthenticationFilter`. | `CsrfFilter` проверяет CSRF-токен, он не связан с CORS и не обрабатывает заголовки `Origin`. Частая ошибка в реальном коде.
+> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `BasicAuthenticationFilter` до `UsernamePasswordAuthenticationFilter`. | `BasicAuthenticationFilter` — это аутентификация HTTP Basic, он лишь будет возвращать 401 для preflight без креденшелов. Частая ошибка в реальном коде.
+> - [ ] Чтобы preflight-запрос (`OPTIONS`) не получал 401, CORS должен обрабатываться фильтром `SecurityContextPersistenceFilter` до `UsernamePasswordAuthenticationFilter`. | Этот фильтр загружает/сохраняет `SecurityContext`, к обработке CORS он отношения не имеет. Это антипаттерн или неправильный выбор в production.
 
 ## Q22. (!) Как работает `CSRF`-защита и когда её отключать?
 
@@ -1038,10 +1038,10 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 В `Thymeleaf` CSRF-токен подставляется автоматически при использовании `th:action`. Подробнее об атаках — в [OWASP Top 10](../../security/owasp-top10-interview.md).
 
 > [!mcq]
-> - [ ] CSRF-защиту безопасно отключать, когда клиент аутентифицируется через cookie-сессию в браузере. | Cookie отправляется браузером автоматически — это и есть самый уязвимый для CSRF сценарий.
-> - [ ] CSRF-защиту безопасно отключать, когда форма логина открыта публично без TLS. | Отсутствие TLS — отдельная уязвимость; CSRF к ней добавляется, не устраняется.
-> - [x] CSRF-защиту безопасно отключать, когда API stateless и токен передаётся в заголовке `Authorization: Bearer`. | Заголовок `Authorization` не отправляется браузером автоматически при cross-site запросе, поэтому CSRF-атака невозможна.
-> - [ ] CSRF-защиту безопасно отключать, когда сервер обслуживает OAuth2 login через cookie. | OAuth2 login через сессионное cookie в браузере требует CSRF-защиты для callback-запросов.
+> - [ ] CSRF-защиту безопасно отключать, когда клиент аутентифицируется через cookie-сессию в браузере. | Cookie отправляется браузером автоматически — это и есть самый уязвимый для CSRF сценарий. Частая ошибка в реальном коде.
+> - [ ] CSRF-защиту безопасно отключать, когда форма логина открыта публично без TLS. | Отсутствие TLS — отдельная уязвимость; CSRF к ней добавляется, не устраняется. Частая ошибка в реальном коде.
+> - [x] CSRF-защиту безопасно отключать, когда API stateless и токен передаётся в заголовке `Authorization: Bearer`. | Заголовок `Authorization` не отправляется браузером автоматически при cross-site запросе, поэтому CSRF-атака невозможна. Ключевое отличие и best practice в production.
+> - [ ] CSRF-защиту безопасно отключать, когда сервер обслуживает OAuth2 login через cookie. | OAuth2 login через сессионное cookie в браузере требует CSRF-защиты для callback-запросов. Частая ошибка в реальном коде.
 
 ## Q23. Как управлять сессиями (session management)?
 
@@ -1080,10 +1080,10 @@ server:
 ```
 
 > [!mcq]
-> - [x] Для REST API с JWT рекомендуют `SessionCreationPolicy.STATELESS` — сервер не создаёт и не читает HTTP-сессию. | При `STATELESS` Spring Security не сохраняет `SecurityContext` в сессии, что экономит память и согласуется с per-request JWT.
-> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.ALWAYS` — сервер не создаёт и не читает HTTP-сессию. | `ALWAYS` принудительно создаёт сессию, это противоположность stateless-режиму.
-> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.IF_REQUIRED` — сервер не создаёт и не читает HTTP-сессию. | `IF_REQUIRED` — дефолт, сессия создаётся по требованию; для чистого JWT всё же лучше `STATELESS`.
-> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.NEVER` — сервер не создаёт и не читает HTTP-сессию. | `NEVER` не создаёт сессию, но использует существующую — это не полный stateless.
+> - [x] Для REST API с JWT рекомендуют `SessionCreationPolicy.STATELESS` — сервер не создаёт и не читает HTTP-сессию. | При `STATELESS` Spring Security не сохраняет `SecurityContext` в сессии, что экономит память и согласуется с per-request JWT. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.ALWAYS` — сервер не создаёт и не читает HTTP-сессию. | `ALWAYS` принудительно создаёт сессию, это противоположность stateless-режиму. Частая ошибка в реальном коде.
+> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.IF_REQUIRED` — сервер не создаёт и не читает HTTP-сессию. | `IF_REQUIRED` — дефолт, сессия создаётся по требованию; для чистого JWT всё же лучше `STATELESS`. Частая ошибка в реальном коде.
+> - [ ] Для REST API с JWT рекомендуют `SessionCreationPolicy.NEVER` — сервер не создаёт и не читает HTTP-сессию. | `NEVER` не создаёт сессию, но использует существующую — это не полный stateless. Частая ошибка в реальном коде.
 
 ## Q24. Как настроить `Remember Me`?
 
@@ -1111,10 +1111,10 @@ public PersistentTokenRepository persistentTokenRepository() {
 В форме входа нужен чекбокс с `name="remember-me"`. `Spring Security` создаёт cookie, по которому восстанавливает аутентификацию без повторного ввода пароля.
 
 > [!mcq]
-> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `JdbcUserDetailsManager`. | `JdbcUserDetailsManager` хранит пользователей, а не серии/токены remember-me.
-> - [x] Для persistent-стратегии Remember-Me в БД используется репозиторий `JdbcTokenRepositoryImpl`. | `JdbcTokenRepositoryImpl` хранит пары series/token в таблице `persistent_logins`, что позволяет инвалидировать cookie.
-> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `InMemoryTokenRepository`. | Такого стандартного класса нет; in-memory для remember-me хранится в Map, но это не persistent.
-> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `TokenBasedRememberMeServices`. | `TokenBasedRememberMeServices` — это сервис cookie-signature без БД, он противоположен persistent-подходу.
+> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `JdbcUserDetailsManager`. | `JdbcUserDetailsManager` хранит пользователей, а не серии/токены remember-me. Частая ошибка в реальном коде.
+> - [x] Для persistent-стратегии Remember-Me в БД используется репозиторий `JdbcTokenRepositoryImpl`. | `JdbcTokenRepositoryImpl` хранит пары series/token в таблице `persistent_logins`, что позволяет инвалидировать cookie. Ключевое отличие и best practice в production.
+> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `InMemoryTokenRepository`. | Такого стандартного класса нет; in-memory для remember-me хранится в Map, но это не persistent. Частая ошибка в реальном коде.
+> - [ ] Для persistent-стратегии Remember-Me в БД используется репозиторий `TokenBasedRememberMeServices`. | `TokenBasedRememberMeServices` — это сервис cookie-signature без БД, он противоположен persistent-подходу. Частая ошибка в реальном коде.
 
 ## Q25. Как обеспечить безопасность сессий в кластере?
 
@@ -1143,10 +1143,10 @@ public class SessionConfig {
 **Альтернатива**: stateless-архитектура с `JWT` — сессии не нужны, каждый запрос несёт токен. В этом случае кластеризация сессий не требуется, но нужен механизм отзыва токенов (blacklist в `Redis`).
 
 > [!mcq]
-> - [x] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `Redis`. | Spring Session сериализует `SecurityContext` в Redis, и любой узел восстанавливает его по cookie `SESSION`.
-> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `ThreadLocal`. | `ThreadLocal` локален для потока внутри одной JVM, по определению не шарится между узлами.
-> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `SecurityContextHolder`. | `SecurityContextHolder` — это ThreadLocal-обёртка, а не распределённое хранилище сессий.
-> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `InMemoryUserDetailsManager`. | Это in-memory хранилище пользователей, не сессий, и оно не реплицируется между узлами.
+> - [x] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `Redis`. | Spring Session сериализует `SecurityContext` в Redis, и любой узел восстанавливает его по cookie `SESSION`. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `ThreadLocal`. | `ThreadLocal` локален для потока внутри одной JVM, по определению не шарится между узлами. Частая ошибка в реальном коде.
+> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `SecurityContextHolder`. | `SecurityContextHolder` — это ThreadLocal-обёртка, а не распределённое хранилище сессий. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для шаринга сессий между узлами кластера используют `Spring Session` с бэкендом `InMemoryUserDetailsManager`. | Это in-memory хранилище пользователей, не сессий, и оно не реплицируется между узлами. Частая ошибка в реальном коде.
 
 ## Q26. Как обработать ошибки аутентификации и авторизации?
 
@@ -1192,10 +1192,10 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 Для form-based приложений вместо JSON используют редирект: `failureUrl("/login?error")` и `accessDeniedPage("/403")`.
 
 > [!mcq]
-> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AccessDeniedHandler`. | `AccessDeniedHandler` отвечает за 403: когда пользователь аутентифицирован, но не имеет прав.
-> - [x] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AuthenticationEntryPoint`. | `AuthenticationEntryPoint.commence(...)` вызывается, когда запрос попадает в защищённый ресурс без валидной аутентификации.
-> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AuthenticationSuccessHandler`. | Этот обработчик срабатывает на успешный логин, а не на отсутствие аутентификации.
-> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `LogoutSuccessHandler`. | `LogoutSuccessHandler` запускается после выхода пользователя, не имеет отношения к 401.
+> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AccessDeniedHandler`. | `AccessDeniedHandler` отвечает за 403: когда пользователь аутентифицирован, но не имеет прав. Частая ошибка в реальном коде.
+> - [x] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AuthenticationEntryPoint`. | `AuthenticationEntryPoint.commence(...)` вызывается, когда запрос попадает в защищённый ресурс без валидной аутентификации. Ключевое отличие и best practice в production.
+> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `AuthenticationSuccessHandler`. | Этот обработчик срабатывает на успешный логин, а не на отсутствие аутентификации. Частая ошибка в реальном коде.
+> - [ ] Для ответа `401 Unauthorized` неаутентифицированному пользователю настраивают `LogoutSuccessHandler`. | `LogoutSuccessHandler` запускается после выхода пользователя, не имеет отношения к 401. Частая ошибка в реальном коде.
 
 ## Q27. (!) Как защитить `REST API` с помощью `Spring Security`?
 
@@ -1243,10 +1243,10 @@ public class RestSecurityConfig {
 Подробнее о конфигурации [Spring Boot](spring-boot-interview.md) и структуре контроллеров — в [Spring MVC](spring-mvc-interview.md).
 
 > [!mcq]
-> - [x] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)`. | Это помещает JWT-проверку до стандартной username/password-аутентификации, чтобы запрос с Bearer-токеном не проваливался на неё.
-> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterAfter(jwtFilter, UsernamePasswordAuthenticationFilter.class)`. | После UsernamePasswordAuthenticationFilter уже поздно: неаутентифицированный запрос до этого фильтра может быть отклонён.
-> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterAt(jwtFilter, SecurityContextHolderFilter.class)`. | `addFilterAt` ставит фильтр на ту же позицию, что обычно неправильно для JWT-проверки токена.
-> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.filter(jwtFilter)`. | Метода `filter(...)` в `HttpSecurity` нет, это выдуманный API.
+> - [x] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)`. | Это помещает JWT-проверку до стандартной username/password-аутентификации, чтобы запрос с Bearer-токеном не проваливался на неё. Ключевое отличие и best practice в production.
+> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterAfter(jwtFilter, UsernamePasswordAuthenticationFilter.class)`. | После UsernamePasswordAuthenticationFilter уже поздно: неаутентифицированный запрос до этого фильтра может быть отклонён. Частая ошибка в реальном коде.
+> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.addFilterAt(jwtFilter, SecurityContextHolderFilter.class)`. | `addFilterAt` ставит фильтр на ту же позицию, что обычно неправильно для JWT-проверки токена. Это антипаттерн или неправильный выбор в production.
+> - [ ] Кастомный JWT-фильтр регистрируют в цепочке через `http.filter(jwtFilter)`. | Метода `filter(...)` в `HttpSecurity` нет, это выдуманный API. Это антипаттерн или неправильный выбор в production.
 
 ## Q28. Как настроить rate limiting?
 
@@ -1291,10 +1291,10 @@ http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class
 Для продакшена рекомендуется хранить счётчики в `Redis` (распределённый rate limiting) и использовать API Gateway (например, `Spring Cloud Gateway` с фильтром `RequestRateLimiter`).
 
 > [!mcq]
-> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `ThreadLocal`. | `ThreadLocal` локален для потока и JVM, в кластере такой счётчик не шарится между узлами.
-> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `InMemory Map`. | `Map` на каждом инстансе разная — в кластере клиент может обойти лимит, попав на разные узлы.
-> - [x] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `Redis`. | Redis атомарно инкрементирует ключи (`INCR`, `EXPIRE`) и виден всем узлам кластера — стандартный бэкенд для `Bucket4j`/`Spring Cloud Gateway`.
-> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `HttpSession`. | `HttpSession` привязан к одному клиенту и без Spring Session не кластеризуется; счётчики rate-limiting это не его задача.
+> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `ThreadLocal`. | `ThreadLocal` локален для потока и JVM, в кластере такой счётчик не шарится между узлами. Частая ошибка в реальном коде.
+> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `InMemory Map`. | `Map` на каждом инстансе разная — в кластере клиент может обойти лимит, попав на разные узлы. Частая ошибка в реальном коде.
+> - [x] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `Redis`. | Redis атомарно инкрементирует ключи (`INCR`, `EXPIRE`) и виден всем узлам кластера — стандартный бэкенд для `Bucket4j`/`Spring Cloud Gateway`. Ключевое отличие и best practice в production.
+> - [ ] Для распределённого rate limiting во многих инстансах лучше хранить счётчики в `HttpSession`. | `HttpSession` привязан к одному клиенту и без Spring Session не кластеризуется; счётчики rate-limiting это не его задача. Частая ошибка в реальном коде.
 
 ## Q29. (!) Как тестировать защищённые эндпоинты?
 
@@ -1352,10 +1352,10 @@ class ArticleControllerTest {
 Для интеграционных тестов с `@SpringBootTest` и `TestRestTemplate`/`WebTestClient` используйте реальные токены или мок `JwtDecoder`.
 
 > [!mcq]
-> - [x] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@WithMockUser`. | `@WithMockUser` создаёт `UsernamePasswordAuthenticationToken` и кладёт его в `SecurityContext` на время теста.
-> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@MockBean`. | `@MockBean` заменяет бин Spring-контекста на Mockito-мок — он не задаёт Authentication.
-> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@SpringBootTest`. | Это общая аннотация для загрузки контекста, она не предоставляет аутентификацию в SecurityContext.
-> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@AutoConfigureMockMvc`. | Эта аннотация настраивает `MockMvc`, но не подставляет пользователя в SecurityContext.
+> - [x] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@WithMockUser`. | `@WithMockUser` создаёт `UsernamePasswordAuthenticationToken` и кладёт его в `SecurityContext` на время теста. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@MockBean`. | `@MockBean` заменяет бин Spring-контекста на Mockito-мок — он не задаёт Authentication. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@SpringBootTest`. | Это общая аннотация для загрузки контекста, она не предоставляет аутентификацию в SecurityContext. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для теста MVC-контроллера с фиксированным пользователем и ролью используют аннотацию `@AutoConfigureMockMvc`. | Эта аннотация настраивает `MockMvc`, но не подставляет пользователя в SecurityContext. Это антипаттерн или неправильный выбор в production.
 
 ## Q30. Как настроить двухфакторную аутентификацию (2FA)?
 
@@ -1410,10 +1410,10 @@ public ResponseEntity<AuthResponse> verify2fa(
 Для TOTP используют библиотеки: `dev.samstevens.totp` (Java TOTP), `com.warrenstrange:googleauth`. Пользователь сканирует QR-код в Google Authenticator, Authy или аналогичном приложении.
 
 > [!mcq]
-> - [ ] 2FA в Spring Security реализуется через кастомный `UserDetailsService`, возвращающий «наполовину аутентифицированного» пользователя. | `UserDetailsService` просто загружает пользователя, он не делает шаг проверки TOTP-кода.
-> - [x] 2FA в Spring Security реализуется через кастомный `AuthenticationProvider` или дополнительный фильтр, проверяющий TOTP-код. | Отдельный провайдер/фильтр для второго шага возвращает полноценный Authentication только после валидного TOTP.
-> - [ ] 2FA в Spring Security реализуется через кастомный `PasswordEncoder`, который сравнивает пароль и TOTP-код. | `PasswordEncoder` только хеширует и сравнивает пароли, он ничего не знает про TOTP.
-> - [ ] 2FA в Spring Security реализуется через кастомный `AccessDeniedHandler`, принимающий TOTP-код. | `AccessDeniedHandler` отвечает за формирование 403-ответа, а не за процесс аутентификации.
+> - [ ] 2FA в Spring Security реализуется через кастомный `UserDetailsService`, возвращающий «наполовину аутентифицированного» пользователя. | `UserDetailsService` просто загружает пользователя, он не делает шаг проверки TOTP-кода. Это антипаттерн или неправильный выбор в production.
+> - [x] 2FA в Spring Security реализуется через кастомный `AuthenticationProvider` или дополнительный фильтр, проверяющий TOTP-код. | Отдельный провайдер/фильтр для второго шага возвращает полноценный Authentication только после валидного TOTP. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] 2FA в Spring Security реализуется через кастомный `PasswordEncoder`, который сравнивает пароль и TOTP-код. | `PasswordEncoder` только хеширует и сравнивает пароли, он ничего не знает про TOTP. Это антипаттерн или неправильный выбор в production.
+> - [ ] 2FA в Spring Security реализуется через кастомный `AccessDeniedHandler`, принимающий TOTP-код. | `AccessDeniedHandler` отвечает за формирование 403-ответа, а не за процесс аутентификации. Это антипаттерн или неправильный выбор в production.
 
 ## Q31. (!) Как работает `SecurityContext` в async-методах и `@Async`?
 
@@ -1489,10 +1489,10 @@ reportService.generateReport(ctx);
 | Явная передача | Любой сценарий | Boilerplate-код |
 
 > [!mcq]
-> - [x] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `DelegatingSecurityContextAsyncTaskExecutor`. | Она захватывает `SecurityContext` в submitter-потоке и устанавливает его в рабочий поток перед выполнением задачи.
-> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `InheritableThreadLocalSecurityContextHolder`. | `MODE_INHERITABLETHREADLOCAL` работает только при `new Thread()`, для пулов потоков он бесполезен.
-> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `ThreadLocalSecurityContextHolder`. | Стандартный `MODE_THREADLOCAL` вообще не передаёт контекст в другой поток.
-> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `SecurityContextPersistenceFilter`. | Это фильтр web-цепочки, он не имеет отношения к пулам `@Async`.
+> - [x] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `DelegatingSecurityContextAsyncTaskExecutor`. | Она захватывает `SecurityContext` в submitter-потоке и устанавливает его в рабочий поток перед выполнением задачи. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `InheritableThreadLocalSecurityContextHolder`. | `MODE_INHERITABLETHREADLOCAL` работает только при `new Thread()`, для пулов потоков он бесполезен. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `ThreadLocalSecurityContextHolder`. | Стандартный `MODE_THREADLOCAL` вообще не передаёт контекст в другой поток. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для пула потоков `@Async` контекст правильно пробрасывает обёртка `SecurityContextPersistenceFilter`. | Это фильтр web-цепочки, он не имеет отношения к пулам `@Async`. Это антипаттерн или неправильный выбор в production.
 
 ## Q32. (!) Как настроить `OAuth2 Resource Server` с `JWT` и кастомными клеймами?
 
@@ -1600,10 +1600,10 @@ public ProfileDto getProfile(@AuthenticationPrincipal Jwt jwt) {
 ```
 
 > [!mcq]
-> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `JwtDecoder`. | `JwtDecoder` только валидирует и парсит токен, он не отвечает за создание `GrantedAuthority`.
+> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `JwtDecoder`. | `JwtDecoder` только валидирует и парсит токен, он не отвечает за создание `GrantedAuthority`. Частая ошибка в реальном коде.
 > - [x] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `JwtAuthenticationConverter`. | `JwtGrantedAuthoritiesConverter` внутри `JwtAuthenticationConverter` позволяет задать `setAuthoritiesClaimName("roles")` и `setAuthorityPrefix("ROLE_")`.
-> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `BearerTokenResolver`. | `BearerTokenResolver` отвечает за извлечение токена из запроса, не за маппинг claim-ов.
-> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `JwkSetUriJwtDecoderBuilder`. | Это билдер для получения `JwtDecoder` с JWKS URI, не связан с маппингом authorities.
+> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `BearerTokenResolver`. | `BearerTokenResolver` отвечает за извлечение токена из запроса, не за маппинг claim-ов. Частая ошибка в реальном коде.
+> - [ ] Чтобы маппить claim `roles` из JWT в `GrantedAuthority` без префикса `SCOPE_`, настраивают бин `JwkSetUriJwtDecoderBuilder`. | Это билдер для получения `JwtDecoder` с JWKS URI, не связан с маппингом authorities. Частая ошибка в реальном коде.
 
 ## Q33. (!) Как работает `@PreAuthorize` с выражениями `SpEL` и кастомным `Permission Evaluator`?
 
@@ -1703,10 +1703,10 @@ public List<Document> getAllDocuments() {
 ```
 
 > [!mcq]
-> - [x] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `MethodSecurityExpressionHandler`. | `DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(...)` подключает эвалюатор к SpEL-контексту method-security.
-> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `WebSecurityExpressionHandler`. | Этот хендлер отвечает за URL-авторизацию (`authorizeHttpRequests`), а не за аннотации методов.
-> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `JwtAuthenticationConverter`. | Этот конвертер только строит `Authentication` из JWT, он не участвует в вычислении `hasPermission`.
-> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `AuthenticationEntryPoint`. | `AuthenticationEntryPoint` формирует 401-ответ, к SpEL не имеет отношения.
+> - [x] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `MethodSecurityExpressionHandler`. | `DefaultMethodSecurityExpressionHandler.setPermissionEvaluator(...)` подключает эвалюатор к SpEL-контексту method-security. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `WebSecurityExpressionHandler`. | Этот хендлер отвечает за URL-авторизацию (`authorizeHttpRequests`), а не за аннотации методов. Это антипаттерн или неправильный выбор в production.
+> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `JwtAuthenticationConverter`. | Этот конвертер только строит `Authentication` из JWT, он не участвует в вычислении `hasPermission`. Частая ошибка в реальном коде.
+> - [ ] Чтобы интегрировать кастомный `PermissionEvaluator` в `@PreAuthorize`, его регистрируют через бин `AuthenticationEntryPoint`. | `AuthenticationEntryPoint` формирует 401-ответ, к SpEL не имеет отношения. Частая ошибка в реальном коде.
 
 ## Q34. Как включить `Method Security` и в чём разница между `@PreAuthorize` и `@PostFilter`?
 
@@ -1751,10 +1751,10 @@ public void deleteDocuments(List<Document> documents) {
 - В `returnObject` — возвращаемое значение метода
 
 > [!mcq]
-> - [ ] Основной риск `@PostAuthorize` в том, что проверка происходит до выполнения метода, поэтому дорогой SQL-запрос выполняется впустую. | Наоборот: `@PostAuthorize` проверяет после выполнения, то есть SQL/побочные эффекты уже произошли.
-> - [x] Основной риск `@PostAuthorize` в том, что метод уже выполнился с побочными эффектами, прежде чем будет отказано в доступе. | Поскольку SpEL получает `returnObject`, вызов метода обязателен — для дорогих или мутирующих операций это критично.
-> - [ ] Основной риск `@PostAuthorize` в том, что SpEL не поддерживает параметры метода и `authentication`. | SpEL в `@PostAuthorize` видит и `#paramName`, и `returnObject`, и `authentication`; ограничений нет.
-> - [ ] Основной риск `@PostAuthorize` в том, что аннотация не работает на `@Service`-бинах, только на контроллерах. | `@PostAuthorize` применяется ко всем Spring-бинам при включённом `@EnableMethodSecurity`.
+> - [ ] Основной риск `@PostAuthorize` в том, что проверка происходит до выполнения метода, поэтому дорогой SQL-запрос выполняется впустую. | Наоборот: `@PostAuthorize` проверяет после выполнения, то есть SQL/побочные эффекты уже произошли. Частая ошибка в реальном коде.
+> - [x] Основной риск `@PostAuthorize` в том, что метод уже выполнился с побочными эффектами, прежде чем будет отказано в доступе. | Поскольку SpEL получает `returnObject`, вызов метода обязателен — для дорогих или мутирующих операций это критично. Ключевое отличие и best practice в production.
+> - [ ] Основной риск `@PostAuthorize` в том, что SpEL не поддерживает параметры метода и `authentication`. | SpEL в `@PostAuthorize` видит и `#paramName`, и `returnObject`, и `authentication`; ограничений нет. Частая ошибка в реальном коде.
+> - [ ] Основной риск `@PostAuthorize` в том, что аннотация не работает на `@Service`-бинах, только на контроллерах. | `@PostAuthorize` применяется ко всем Spring-бинам при включённом `@EnableMethodSecurity`. Это антипаттерн или неправильный выбор в production.
 
 ## Q35. Как одновременно настроить `CORS` и `CSRF` в `SecurityFilterChain`?
 
@@ -1825,10 +1825,10 @@ public class SecurityConfig {
 ```
 
 > [!mcq]
-> - [x] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `CookieCsrfTokenRepository.withHttpOnlyFalse()`. | Флаг `HttpOnly=false` разрешает JavaScript читать cookie `XSRF-TOKEN`, что нужно для double-submit-pattern.
-> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `HttpSessionCsrfTokenRepository`. | `HttpSessionCsrfTokenRepository` хранит токен в серверной сессии, JS-клиенту он напрямую недоступен.
-> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `LazyCsrfTokenRepository`. | `LazyCsrfTokenRepository` — обёртка над другим репозиторием для отложенной генерации, флаги cookie задаёт внутренний repo.
-> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `CookieCsrfTokenRepository.withHttpOnlyTrue()`. | При `HttpOnly=true` JavaScript не сможет прочитать cookie, и SPA не передаст токен в заголовке.
+> - [x] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `CookieCsrfTokenRepository.withHttpOnlyFalse()`. | Флаг `HttpOnly=false` разрешает JavaScript читать cookie `XSRF-TOKEN`, что нужно для double-submit-pattern. Ключевое отличие и best practice в production.
+> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `HttpSessionCsrfTokenRepository`. | `HttpSessionCsrfTokenRepository` хранит токен в серверной сессии, JS-клиенту он напрямую недоступен. Частая ошибка в реальном коде.
+> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `LazyCsrfTokenRepository`. | `LazyCsrfTokenRepository` — обёртка над другим репозиторием для отложенной генерации, флаги cookie задаёт внутренний repo. Это антипаттерн или неправильный выбор в production.
+> - [ ] Чтобы SPA-клиент мог читать CSRF-токен из cookie и отправлять его в заголовке `X-XSRF-TOKEN`, применяется `CookieCsrfTokenRepository.withHttpOnlyTrue()`. | При `HttpOnly=true` JavaScript не сможет прочитать cookie, и SPA не передаст токен в заголовке. Частая ошибка в реальном коде.
 
 ## Q36. Как ограничить доступ к `Actuator`-эндпоинтам через `SecurityFilterChain`?
 
@@ -1896,10 +1896,10 @@ public UserDetailsService actuatorUsers() {
 - Использовать `EndpointRequest.to(...)` вместо ручного матчинга путей — устойчиво к смене base-path
 
 > [!mcq]
-> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(new AntPathRequestMatcher("/api/**"))`. | Такой матчер закроет бизнес-API, а не Actuator; путь `/actuator/**` к нему не относится.
-> - [x] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(EndpointRequest.toAnyEndpoint())`. | `EndpointRequest.toAnyEndpoint()` корректно покрывает все Actuator-эндпоинты, включая кастомный base-path.
-> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(RequestMatcher.anyRequest())`. | `anyRequest()` заматчит вообще всё и сломает приоритет цепочек.
-> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(new RegexRequestMatcher("/actuator.*"))`. | Работоспособно, но ломается при смене `management.endpoints.web.base-path` и не покрывает `management.server.port`.
+> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(new AntPathRequestMatcher("/api/**"))`. | Такой матчер закроет бизнес-API, а не Actuator; путь `/actuator/**` к нему не относится. Это антипаттерн или неправильный выбор в production.
+> - [x] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(EndpointRequest.toAnyEndpoint())`. | `EndpointRequest.toAnyEndpoint()` корректно покрывает все Actuator-эндпоинты, включая кастомный base-path. Metrics expose через /metrics, health через /health, используйте с Prometheus + Grafana.
+> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(RequestMatcher.anyRequest())`. | `anyRequest()` заматчит вообще всё и сломает приоритет цепочек. Это антипаттерн или неправильный выбор в production.
+> - [ ] Чтобы выделить отдельный `SecurityFilterChain` именно для Actuator, в нём используют `securityMatcher(new RegexRequestMatcher("/actuator.*"))`. | Работоспособно, но ломается при смене `management.endpoints.web.base-path` и не покрывает `management.server.port`. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -1975,10 +1975,10 @@ public class SecurityConfig {
 | Несколько цепочек | Override + `@Order` | Несколько `@Bean SecurityFilterChain` с `@Order` |
 
 > [!mcq]
-> - [x] В Spring Security 6 конфигурация строится через регистрацию бина `SecurityFilterChain` вместо наследования от базового класса. | `WebSecurityConfigurerAdapter` удалён; вся настройка через компонентное программирование и `@Bean`-методы.
-> - [ ] В Spring Security 6 конфигурация строится через наследование `WebSecurityConfigurerAdapter` и переопределение `configure(HttpSecurity)`. | `WebSecurityConfigurerAdapter` deprecated с 5.7 и удалён в 6 — этот подход больше не работает.
-> - [ ] В Spring Security 6 конфигурация строится через наследование `AbstractSecurityConfigurer` и переопределение `configure(HttpSecurity)`. | Такого публичного API в Spring Security 6 нет, это фабрикат названия.
-> - [ ] В Spring Security 6 конфигурация строится через реализацию `SecurityConfigurer<HttpSecurity>` на своём конфиге. | Интерфейс `SecurityConfigurer` существует, но это низкоуровневый механизм, рядовому пользователю предлагается именно бин `SecurityFilterChain`.
+> - [x] В Spring Security 6 конфигурация строится через регистрацию бина `SecurityFilterChain` вместо наследования от базового класса. | `WebSecurityConfigurerAdapter` удалён; вся настройка через компонентное программирование и `@Bean`-методы. Singleton по умолчанию, lazy vs eager initialization, scope lifecycle важен.
+> - [ ] В Spring Security 6 конфигурация строится через наследование `WebSecurityConfigurerAdapter` и переопределение `configure(HttpSecurity)`. | `WebSecurityConfigurerAdapter` deprecated с 5.7 и удалён в 6 — этот подход больше не работает. Это антипаттерн или неправильный выбор в production.
+> - [ ] В Spring Security 6 конфигурация строится через наследование `AbstractSecurityConfigurer` и переопределение `configure(HttpSecurity)`. | Такого публичного API в Spring Security 6 нет, это фабрикат названия. Это антипаттерн или неправильный выбор в production.
+> - [ ] В Spring Security 6 конфигурация строится через реализацию `SecurityConfigurer<HttpSecurity>` на своём конфиге. | Интерфейс `SecurityConfigurer` существует, но это низкоуровневый механизм, рядовому пользователю предлагается именно бин `SecurityFilterChain`. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -2055,10 +2055,10 @@ spring:
 ```
 
 > [!mcq]
-> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло **подписывать** выдаваемые JWT. | Resource Server не выдаёт токены — он их проверяет; подписью занимается Authorization Server.
-> - [x] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло auto-discovery получить `jwks_uri` и валидировать входящие JWT. | По `issuer-uri` Spring Boot достаёт `.well-known/openid-configuration` и оттуда извлекает JWKS и валидатор `iss`.
-> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло редиректить на страницу логина провайдера. | Редирект на login — функция OAuth2 Client, а не Resource Server.
-> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло загружать `UserDetails` пользователя из БД провайдера. | Resource Server не трогает чужую БД, он валидирует токен и работает с его claim-ами.
+> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло **подписывать** выдаваемые JWT. | Resource Server не выдаёт токены — он их проверяет; подписью занимается Authorization Server. Это антипаттерн или неправильный выбор в production.
+> - [x] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло auto-discovery получить `jwks_uri` и валидировать входящие JWT. | По `issuer-uri` Spring Boot достаёт `.well-known/openid-configuration` и оттуда извлекает JWKS и валидатор `iss`. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло редиректить на страницу логина провайдера. | Редирект на login — функция OAuth2 Client, а не Resource Server. Это антипаттерн или неправильный выбор в production.
+> - [ ] Свойство `spring.security.oauth2.resourceserver.jwt.issuer-uri` нужно чтобы приложение могло загружать `UserDetails` пользователя из БД провайдера. | Resource Server не трогает чужую БД, он валидирует токен и работает с его claim-ами. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -2131,10 +2131,10 @@ public JwtDecoder jwtDecoder() {
 ```
 
 > [!mcq]
-> - [x] Bearer-токен из заголовка `Authorization` извлекает фильтр `BearerTokenAuthenticationFilter` и передаёт в `AuthenticationManager`. | Это штатный фильтр Spring Security OAuth2 Resource Server, работающий до авторизации.
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `BasicAuthenticationFilter` и передаёт в `AuthenticationManager`. | `BasicAuthenticationFilter` парсит только схему `Basic`, не `Bearer`.
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `UsernamePasswordAuthenticationFilter` и передаёт в `AuthenticationManager`. | Этот фильтр читает параметры формы, не `Authorization` header.
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `SecurityContextPersistenceFilter` и передаёт в `AuthenticationManager`. | Он загружает `SecurityContext` из хранилища (обычно сессии), к токенам отношения не имеет.
+> - [x] Bearer-токен из заголовка `Authorization` извлекает фильтр `BearerTokenAuthenticationFilter` и передаёт в `AuthenticationManager`. | Это штатный фильтр Spring Security OAuth2 Resource Server, работающий до авторизации. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `BasicAuthenticationFilter` и передаёт в `AuthenticationManager`. | `BasicAuthenticationFilter` парсит только схему `Basic`, не `Bearer`. Частая ошибка в реальном коде.
+> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `UsernamePasswordAuthenticationFilter` и передаёт в `AuthenticationManager`. | Этот фильтр читает параметры формы, не `Authorization` header. Частая ошибка в реальном коде.
+> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `SecurityContextPersistenceFilter` и передаёт в `AuthenticationManager`. | Он загружает `SecurityContext` из хранилища (обычно сессии), к токенам отношения не имеет. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -2194,10 +2194,10 @@ http.csrf(csrf -> csrf
 ```
 
 > [!mcq]
-> - [ ] Значение `SameSite=None` полностью заменяет CSRF-защиту для cookie-сессии. | `None` наоборот разрешает отправку cookie при cross-site запросах, что открывает путь CSRF.
-> - [x] Значение `SameSite=Strict` блокирует отправку cookie при cross-site запросах и существенно снижает поверхность CSRF. | При `Strict` браузер не шлёт cookie даже при навигации по ссылке с другого сайта — CSRF-атаки через forged-forms перестают работать.
-> - [ ] Значение `SameSite=Lax` запрещает отправку cookie при GET-навигации по ссылке. | `Lax` как раз разрешает cookie при top-level GET-навигации, блокируя лишь POST и subresource-запросы.
-> - [ ] Значение `SameSite=Strict` нужно использовать без флага `Secure`, чтобы работало и по HTTP. | Современные браузеры требуют `Secure` для cookie с `SameSite=None`, а для `Strict` `Secure` остаётся best-practice.
+> - [ ] Значение `SameSite=None` полностью заменяет CSRF-защиту для cookie-сессии. | `None` наоборот разрешает отправку cookie при cross-site запросах, что открывает путь CSRF. Частая ошибка в реальном коде.
+> - [x] Значение `SameSite=Strict` блокирует отправку cookie при cross-site запросах и существенно снижает поверхность CSRF. | При `Strict` браузер не шлёт cookie даже при навигации по ссылке с другого сайта — CSRF-атаки через forged-forms перестают работать. Ключевое отличие и best practice в production.
+> - [ ] Значение `SameSite=Lax` запрещает отправку cookie при GET-навигации по ссылке. | `Lax` как раз разрешает cookie при top-level GET-навигации, блокируя лишь POST и subresource-запросы. Частая ошибка в реальном коде.
+> - [ ] Значение `SameSite=Strict` нужно использовать без флага `Secure`, чтобы работало и по HTTP. | Современные браузеры требуют `Secure` для cookie с `SameSite=None`, а для `Strict` `Secure` остаётся best-practice. Частая ошибка в реальном коде.
 
 ---
 
@@ -2296,10 +2296,10 @@ void adminCanDeleteOrder() throws Exception {
 ```
 
 > [!mcq]
-> - [x] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(jwt().authorities(...))` из `SecurityMockMvcRequestPostProcessors`. | Post-processor строит мок `JwtAuthenticationToken` и кладёт его в `SecurityContext`, обходя настоящий `JwtDecoder`.
-> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(httpBasic(...))` из `SecurityMockMvcRequestPostProcessors`. | `httpBasic` добавляет заголовок Basic-auth, это не имитация JWT.
-> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(formLogin(...))` из `SecurityMockMvcRequestPostProcessors`. | `formLogin` симулирует POST на `/login`, к JWT отношения не имеет.
-> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(anonymous())` из `SecurityMockMvcRequestPostProcessors`. | `anonymous()` наоборот очищает `Authentication` — противоположный сценарий.
+> - [x] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(jwt().authorities(...))` из `SecurityMockMvcRequestPostProcessors`. | Post-processor строит мок `JwtAuthenticationToken` и кладёт его в `SecurityContext`, обходя настоящий `JwtDecoder`. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(httpBasic(...))` из `SecurityMockMvcRequestPostProcessors`. | `httpBasic` добавляет заголовок Basic-auth, это не имитация JWT. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(formLogin(...))` из `SecurityMockMvcRequestPostProcessors`. | `formLogin` симулирует POST на `/login`, к JWT отношения не имеет. Это антипаттерн или неправильный выбор в production.
+> - [ ] Для теста Resource Server со сформированным JWT в `MockMvc` используют `.with(anonymous())` из `SecurityMockMvcRequestPostProcessors`. | `anonymous()` наоборот очищает `Authentication` — противоположный сценарий. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -2383,10 +2383,10 @@ public class AsyncService {
 ```
 
 > [!mcq]
-> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `SecurityContextHolder.getContext()`. | В WebFlux нет ThreadLocal-контекста — `SecurityContextHolder` вернёт пустое значение или значение не того потока.
-> - [x] В WebFlux для получения текущего пользователя внутри `Mono` используют `ReactiveSecurityContextHolder.getContext()`. | В реактивном стеке контекст хранится в Reactor Context и пробрасывается автоматически; этот API возвращает `Mono<SecurityContext>`.
-> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `SubscriberContext.current()`. | Такого публичного метода нет; напрямую к Reactor Context обращаются через `Mono.deferContextual`, но не для Security.
-> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `InheritableThreadLocal` в `SecurityContextHolder`. | В реактивном pipeline поток меняется при каждом операторе, ThreadLocal не подходит.
+> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `SecurityContextHolder.getContext()`. | В WebFlux нет ThreadLocal-контекста — `SecurityContextHolder` вернёт пустое значение или значение не того потока. Это антипаттерн или неправильный выбор в production.
+> - [x] В WebFlux для получения текущего пользователя внутри `Mono` используют `ReactiveSecurityContextHolder.getContext()`. | В реактивном стеке контекст хранится в Reactor Context и пробрасывается автоматически; этот API возвращает `Mono<SecurityContext>`. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
+> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `SubscriberContext.current()`. | Такого публичного метода нет; напрямую к Reactor Context обращаются через `Mono.deferContextual`, но не для Security. Это антипаттерн или неправильный выбор в production.
+> - [ ] В WebFlux для получения текущего пользователя внутри `Mono` используют `InheritableThreadLocal` в `SecurityContextHolder`. | В реактивном pipeline поток меняется при каждом операторе, ThreadLocal не подходит. Это антипаттерн или неправильный выбор в production.
 
 ---
 
@@ -2452,10 +2452,10 @@ public class MethodSecurityConfig {}
 ```
 
 > [!mcq]
-> - [x] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — доступ к `returnObject` в SpEL-выражении. | `@PostAuthorize` позволяет проверить поля именно возвращаемого объекта (например, owner), что невозможно до выполнения метода.
-> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — поддержка параметров метода через `#paramName`. | Параметры `#paramName` доступны в обеих аннотациях — это не отличие.
-> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — способность работать без `@EnableMethodSecurity`. | Обе аннотации требуют включённого method-security, без него они игнорируются.
-> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — автоматическое повторное выполнение метода при отказе. | Никакого авторетрая нет: при отказе бросается `AccessDeniedException`, метод не повторяется.
+> - [x] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — доступ к `returnObject` в SpEL-выражении. | `@PostAuthorize` позволяет проверить поля именно возвращаемого объекта (например, owner), что невозможно до выполнения метода. Ключевое отличие и best practice в production.
+> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — поддержка параметров метода через `#paramName`. | Параметры `#paramName` доступны в обеих аннотациях — это не отличие. Частая ошибка в реальном коде.
+> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — способность работать без `@EnableMethodSecurity`. | Обе аннотации требуют включённого method-security, без него они игнорируются. Это антипаттерн или неправильный выбор в production.
+> - [ ] Ключевое отличие `@PostAuthorize` от `@PreAuthorize` — автоматическое повторное выполнение метода при отказе. | Никакого авторетрая нет: при отказе бросается `AccessDeniedException`, метод не повторяется. Частая ошибка в реальном коде.
 
 ---
 
