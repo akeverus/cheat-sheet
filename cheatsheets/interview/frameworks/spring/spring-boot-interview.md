@@ -342,7 +342,7 @@ graph TD
 
 > [!mcq]
 > - [ ] Собственный стартер состоит из двух модулей: модуль с кодом бизнес-логики и модуль с тестами. | Стартер не содержит отдельного модуля с тестами как часть архитектуры. Классическая структура — модуль автоконфигурации + модуль-агрегатор (пустой POM).
-> - [x] Собственный стартер состоит из двух модулей: `*-autoconfigure` с автоконфигурацией и `*-starter` как пустого POM-агрегатора. | Это стандартная структура: autoconfigure содержит `@AutoConfiguration` + `@ConditionalOnClass`, а starter-POM только подтягивает autoconfigure и нужные библиотеки.
+> - [x] Собственный стартер состоит из двух модулей: `*-autoconfigure` с автоконфигурацией и `*-starter` как пустого POM-агрегатора. | Это стандартная структура: autoconfigure содержит `@AutoConfiguration` + `@ConditionalOnClass`, а starter-POM только подтягивает autoconfigure и нужные библиотеки. @ConditionalOnProperty позволяет feature flags; используйте для A/B тестирования.
 > - [ ] Собственный стартер состоит из двух модулей: `*-api` с интерфейсами и `*-impl` с реализациями. | Структура `api/impl` относится к дизайну обычных библиотек. Stater-конвенция требует именно пары autoconfigure + starter-POM.
 > - [ ] Собственный стартер состоит из двух модулей: `*-core` с моделями и `*-spring` с конфигурацией. | Структура core/spring не является конвенцией Spring Boot starter-ов. Правильная пара — `*-autoconfigure` и `*-starter`.
 
@@ -388,7 +388,7 @@ graph TD
 > - [ ] Для отладки автоконфигурации нужно запустить приложение с флагом `--trace`, который выводит CONDITIONS EVALUATION REPORT. | Флаг `--trace` включает trace-логирование, но для CONDITIONS EVALUATION REPORT используется `--debug` или `debug=true` в application.properties.
 > - [x] Для отладки автоконфигурации нужно запустить приложение с флагом `--debug` или свойством `debug=true`, что выводит CONDITIONS EVALUATION REPORT. | Именно эти параметры активируют отчёт об условной конфигурации. В нём показано, какие автоконфигурации включены, какие пропущены и по какой причине.
 > - [ ] Для отладки автоконфигурации нужно запустить приложение с флагом `--verbose`, который выводит CONDITIONS EVALUATION REPORT. | Флаг `--verbose` не является стандартным флагом Spring Boot. Для CONDITIONS EVALUATION REPORT используется `--debug`.
-> - [ ] Для отладки автоконфигурации нужно добавить зависимость `spring-boot-starter-actuator` и вызвать `/actuator/conditions`. | Actuator действительно предоставляет `/actuator/conditions` эндпоинт, но для вывода CONDITIONS EVALUATION REPORT в консоль при старте используется флаг `--debug`, а не Actuator.
+> - [ ] Для отладки автоконфигурации нужно добавить зависимость `spring-boot-starter-actuator` и вызвать `/actuator/conditions`. | Actuator действительно предоставляет `/actuator/conditions` эндпоинт, но для вывода CONDITIONS EVALUATION REPORT в консоль при старте используется флаг `--debug`, а не Actuator. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q10. (!) Какие `@Conditional`-аннотации существуют?
 
@@ -425,10 +425,10 @@ public class DataSourceAutoConfiguration {
 > **`@ConditionalOnMissingBean`** — принцип «user wins»: если разработчик определил свой бин, автоконфигурация не перезаписывает его.
 
 > [!mcq]
-> - [ ] `@ConditionalOnClass` регистрирует бин, если класс **отсутствует** в classpath. | `@ConditionalOnClass` регистрирует бин, если класс **присутствует** в classpath. Для отсутствия класса используется `@ConditionalOnMissingClass`.
-> - [ ] `@ConditionalOnMissingBean` регистрирует бин, если бин данного типа **уже зарегистрирован** в контексте. | `@ConditionalOnMissingBean` регистрирует бин, если бин данного типа **НЕ зарегистрирован**. Для проверки наличия используется `@ConditionalOnBean`.
+> - [ ] `@ConditionalOnClass` регистрирует бин, если класс **отсутствует** в classpath. | `@ConditionalOnClass` регистрирует бин, если класс **присутствует** в classpath. Для отсутствия класса используется `@ConditionalOnMissingClass`. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] `@ConditionalOnMissingBean` регистрирует бин, если бин данного типа **уже зарегистрирован** в контексте. | `@ConditionalOnMissingBean` регистрирует бин, если бин данного типа **НЕ зарегистрирован**. Для проверки наличия используется `@ConditionalOnBean`. Это частая ошибка при неправильном понимании механизма Java.
 > - [x] `@ConditionalOnClass` регистрирует бин, если класс **присутствует** в classpath, а `@ConditionalOnMissingBean` — если бин данного типа **НЕ зарегистрирован** в контексте. | Это правильное описание обеих аннотаций. Комбинация этих двух условий — основа принципа «user wins»: автоконфигурация активируется только при наличии нужной библиотеки и отсутствии пользовательского бина.
-> - [ ] `@ConditionalOnClass` регистрирует бин, если класс **присутствует** в classpath, а `@ConditionalOnMissingBean` — если бин данного типа **уже зарегистрирован** в контексте. | `@ConditionalOnMissingBean` регистрирует бин только при **отсутствии** бина данного типа. Это обратная логика — аннотация нужна именно для fallback-конфигурации.
+> - [ ] `@ConditionalOnClass` регистрирует бин, если класс **присутствует** в classpath, а `@ConditionalOnMissingBean` — если бин данного типа **уже зарегистрирован** в контексте. | `@ConditionalOnMissingBean` регистрирует бин только при **отсутствии** бина данного типа. Это обратная логика — аннотация нужна именно для fallback-конфигурации. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q11. Как отключить конкретную автоконфигурацию?
 
@@ -558,7 +558,7 @@ graph TD
 
 > [!mcq]
 > - [ ] Spring Boot встраивает Tomcat как внешний контейнер, развёртывая WAR-файл в запущенный экземпляр. | Spring Boot встраивает Tomcat как Java-библиотеку — он создаётся программно через `TomcatServletWebServerFactory`. Никакого WAR-развёртывания в запущенный контейнер не происходит.
-> - [ ] Spring Boot встраивает Tomcat через механизм `java.util.ServiceLoader`, который автоматически находит реализацию сервера. | ServiceLoader не используется для встраивания сервера. Выбор реализации происходит через `@ConditionalOnClass` в `ServletWebServerFactoryAutoConfiguration`.
+> - [ ] Spring Boot встраивает Tomcat через механизм `java.util.ServiceLoader`, который автоматически находит реализацию сервера. | ServiceLoader не используется для встраивания сервера. Выбор реализации происходит через `@ConditionalOnClass` в `ServletWebServerFactoryAutoConfiguration`. Это частая ошибка при неправильном понимании механизма Java.
 > - [x] Spring Boot встраивает Tomcat программно: `TomcatServletWebServerFactory` создаёт экземпляр Tomcat, регистрирует `DispatcherServlet` и запускает сервер в том же JVM-процессе. | Это точное описание механизма. Фабрика `TomcatServletWebServerFactory` создаёт и настраивает Tomcat как обычный Java-объект, встроенный в тот же процесс, что и приложение.
 > - [ ] Spring Boot встраивает Tomcat через аннотацию `@EnableEmbeddedTomcat`, которую нужно добавить на класс конфигурации. | Такой аннотации не существует. Встроенный сервер активируется автоматически через `ServletWebServerFactoryAutoConfiguration` при наличии `spring-boot-starter-web` в classpath.
 
@@ -790,10 +790,10 @@ graph LR
 **Безопасность:** по умолчанию по HTTP доступны только `/health` и `/info`. Расширение — через `management.endpoints.web.exposure.include`. В production обязательно защищать эндпоинты через [Spring Security](spring-security-interview.md).
 
 > [!mcq]
-> - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP все endpoints, включая `/env` и `/beans`. | По умолчанию по HTTP экспонируются только `/health` и `/info` — остальные закрыты из соображений безопасности.
-> - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/health`, а `/info` нужно включать явно. | `/info` также открыт по умолчанию. Закрытыми по HTTP по умолчанию являются все остальные endpoints (env, beans, metrics и т.п.).
-> - [x] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/health` и `/info`, остальные endpoints требуют явного включения через `management.endpoints.web.exposure.include`. | Это корректное дефолтное поведение. JMX-эндпоинты открыты шире, но для HTTP — только health/info.
-> - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/metrics` и `/prometheus`. | Это неверно. Метрики по умолчанию закрыты по HTTP и требуют явного включения через `management.endpoints.web.exposure.include`.
+> - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP все endpoints, включая `/env` и `/beans`. | По умолчанию по HTTP экспонируются только `/health` и `/info` — остальные закрыты из соображений безопасности. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/health`, а `/info` нужно включать явно. | `/info` также открыт по умолчанию. Закрытыми по HTTP по умолчанию являются все остальные endpoints (env, beans, metrics и т.п.). Это частая ошибка при неправильном понимании механизма Java.
+> - [x] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/health` и `/info`, остальные endpoints требуют явного включения через `management.endpoints.web.exposure.include`. | Это корректное дефолтное поведение. JMX-эндпоинты открыты шире, но для HTTP — только health/info. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
+> - [ ] По умолчанию Spring Boot Actuator экспонирует по HTTP только `/metrics` и `/prometheus`. | Это неверно. Метрики по умолчанию закрыты по HTTP и требуют явного включения через `management.endpoints.web.exposure.include`. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q21. (!) Полный список `Actuator` endpoints и их категории
 
@@ -835,10 +835,10 @@ management:
 ```
 
 > [!mcq]
-> - [x] Endpoint `/actuator/shutdown` отключён по умолчанию и требует `management.endpoint.shutdown.enabled=true` для активации. | Это корректно: `/shutdown` остановит приложение через `POST`, поэтому по умолчанию закрыт из соображений безопасности.
-> - [ ] Endpoint `/actuator/shutdown` включён по умолчанию и доступен только через HTTPS. | По умолчанию `/shutdown` отключён вообще, независимо от протокола. Его нужно явно активировать и защищать.
-> - [ ] Endpoint `/actuator/shutdown` включён по умолчанию, но доступен только локально (по `localhost`). | Spring Boot не фильтрует этот endpoint по адресу источника. Дефолтное поведение — полное отключение.
-> - [ ] Endpoint `/actuator/shutdown` отключён по умолчанию и может быть включён только через профиль `prod`. | Активация не зависит от профиля. Достаточно свойства `management.endpoint.shutdown.enabled=true`.
+> - [x] Endpoint `/actuator/shutdown` отключён по умолчанию и требует `management.endpoint.shutdown.enabled=true` для активации. | Это корректно: `/shutdown` остановит приложение через `POST`, поэтому по умолчанию закрыт из соображений безопасности. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
+> - [ ] Endpoint `/actuator/shutdown` включён по умолчанию и доступен только через HTTPS. | По умолчанию `/shutdown` отключён вообще, независимо от протокола. Его нужно явно активировать и защищать. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] Endpoint `/actuator/shutdown` включён по умолчанию, но доступен только локально (по `localhost`). | Spring Boot не фильтрует этот endpoint по адресу источника. Дефолтное поведение — полное отключение. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] Endpoint `/actuator/shutdown` отключён по умолчанию и может быть включён только через профиль `prod`. | Активация не зависит от профиля. Достаточно свойства `management.endpoint.shutdown.enabled=true`. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q22. Как создать custom `Actuator` endpoint?
 
@@ -888,10 +888,10 @@ public class FeaturesEndpoint {
 Доступ: `GET /actuator/features`, `POST /actuator/features/{name}`.
 
 > [!mcq]
-> - [ ] Кастомный Actuator endpoint создаётся аннотацией `@RestController` с маппингом на `/actuator/**`. | `@RestController` не интегрирует endpoint в систему Actuator — не будет экспозиции, CORS, security-фильтров. Правильная аннотация — `@Endpoint`.
-> - [x] Кастомный Actuator endpoint создаётся аннотацией `@Endpoint(id = "...")` с методами `@ReadOperation`, `@WriteOperation`, `@DeleteOperation`. | Это штатный способ. `@Endpoint` делает endpoint видимым для Actuator-инфраструктуры, а операции помечают методы HTTP-глаголами GET/POST/DELETE.
-> - [ ] Кастомный Actuator endpoint создаётся аннотацией `@ActuatorEndpoint` и методами `@GetMapping`. | Аннотации `@ActuatorEndpoint` в Spring Boot нет. Правильная аннотация — `@Endpoint`, а операции помечаются через `@ReadOperation`/`@WriteOperation`.
-> - [ ] Кастомный Actuator endpoint создаётся аннотацией `@Component` и реализацией интерфейса `ActuatorEndpoint`. | Интерфейса `ActuatorEndpoint` в Spring Boot не существует. Endpoint объявляется через аннотацию `@Endpoint`.
+> - [ ] Кастомный Actuator endpoint создаётся аннотацией `@RestController` с маппингом на `/actuator/**`. | `@RestController` не интегрирует endpoint в систему Actuator — не будет экспозиции, CORS, security-фильтров. Правильная аннотация — `@Endpoint`. Это частая ошибка при неправильном понимании механизма Java.
+> - [x] Кастомный Actuator endpoint создаётся аннотацией `@Endpoint(id = "...")` с методами `@ReadOperation`, `@WriteOperation`, `@DeleteOperation`. | Это штатный способ. `@Endpoint` делает endpoint видимым для Actuator-инфраструктуры, а операции помечают методы HTTP-глаголами GET/POST/DELETE. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
+> - [ ] Кастомный Actuator endpoint создаётся аннотацией `@ActuatorEndpoint` и методами `@GetMapping`. | Аннотации `@ActuatorEndpoint` в Spring Boot нет. Правильная аннотация — `@Endpoint`, а операции помечаются через `@ReadOperation`/`@WriteOperation`. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] Кастомный Actuator endpoint создаётся аннотацией `@Component` и реализацией интерфейса `ActuatorEndpoint`. | Интерфейса `ActuatorEndpoint` в Spring Boot не существует. Endpoint объявляется через аннотацию `@Endpoint`. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q23. (!) Как настроить мониторинг и метрики (`Micrometer`)?
 
@@ -1422,7 +1422,7 @@ spring:
 > - [ ] Событие `ApplicationReadyEvent` публикуется до вызова `CommandLineRunner` и `ApplicationRunner`. | `ApplicationReadyEvent` публикуется **после** вызова всех runners — это сигнал, что приложение полностью готово принимать трафик.
 > - [x] Событие `ApplicationReadyEvent` публикуется после вызова всех `CommandLineRunner` и `ApplicationRunner` — сигнал, что приложение готово принимать трафик. | Это корректная позиция события в жизненном цикле. Между `ApplicationStartedEvent` и `ApplicationReadyEvent` исполняются runners.
 > - [ ] Событие `ApplicationReadyEvent` публикуется до refresh контекста, когда бины ещё не созданы. | До refresh контекста публикуется `ApplicationContextInitializedEvent`. `ApplicationReadyEvent` — финальное событие, когда все бины созданы и runners отработали.
-> - [ ] Событие `ApplicationReadyEvent` публикуется только при успешном прохождении `/actuator/health` всеми HealthIndicator-ами. | Actuator не влияет на публикацию события. `ApplicationReadyEvent` эмитится после завершения runners независимо от состояния health-индикаторов.
+> - [ ] Событие `ApplicationReadyEvent` публикуется только при успешном прохождении `/actuator/health` всеми HealthIndicator-ами. | Actuator не влияет на публикацию события. `ApplicationReadyEvent` эмитится после завершения runners независимо от состояния health-индикаторов. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q36. (!) Что такое тестовые срезы (`@WebMvcTest`, `@DataJpaTest`)?
 
@@ -1489,7 +1489,7 @@ class UserRepositoryTest {
 Для тестирования с реальной БД используется `@AutoConfigureTestDatabase(replace = NONE)` в сочетании с `Testcontainers`.
 
 > [!mcq]
-> - [x] `@DataJpaTest` по умолчанию заменяет настоящий `DataSource` на встроенный H2 и оборачивает каждый тест в транзакцию с откатом. | Это корректное поведение: поведение контролируется `@AutoConfigureTestDatabase(replace = ANY)` по умолчанию и транзакционностью через `@Transactional`.
+> - [x] `@DataJpaTest` по умолчанию заменяет настоящий `DataSource` на встроенный H2 и оборачивает каждый тест в транзакцию с откатом. | Это корректное поведение: поведение контролируется `@AutoConfigureTestDatabase(replace = ANY)` по умолчанию и транзакционностью через `@Transactional`. Propagation (REQUIRED, REQUIRES_NEW, NESTED) и isolation (READ_UNCOMMITTED до SERIALIZABLE) критичны.
 > - [ ] `@DataJpaTest` по умолчанию использует настоящий `DataSource` из `application.yml` без каких-либо замен. | По умолчанию `@DataJpaTest` заменяет `DataSource` на встроенный H2. Для работы с реальной БД нужно явно указать `@AutoConfigureTestDatabase(replace = NONE)`.
 > - [ ] `@DataJpaTest` по умолчанию заменяет настоящий `DataSource` на встроенный H2, но не управляет транзакциями — коммиты нужно делать вручную. | Транзакционное поведение с rollback включено по умолчанию. Каждый тест откатывается после выполнения, обеспечивая изоляцию.
 > - [ ] `@DataJpaTest` по умолчанию поднимает Testcontainers-PostgreSQL без какой-либо дополнительной настройки. | Testcontainers не используется автоматически в `@DataJpaTest`. По умолчанию — H2 in-memory. Для Testcontainers нужна отдельная настройка.
@@ -1586,10 +1586,10 @@ public class RedisCacheAutoConfiguration {
 **Порядок вычисления:** `@ConditionalOnClass` / `@ConditionalOnMissingClass` → `@ConditionalOnBean` / `@ConditionalOnMissingBean` → остальные. Ошибочный порядок в классах автоконфигурации ведёт к `NoSuchBeanDefinitionException` — поэтому Spring Boot вычисляет условия на classpath-уровне раньше, чем на bean-уровне.
 
 > [!mcq]
-> - [x] Атрибут `matchIfMissing = true` у `@ConditionalOnProperty` делает условие истинным, если свойство вообще не задано в конфигурации. | Это корректно: `matchIfMissing=true` включает бин по умолчанию, если свойство отсутствует. Полезно для fallback-конфигураций.
-> - [ ] Атрибут `matchIfMissing = true` у `@ConditionalOnProperty` делает условие истинным только если свойство явно равно пустой строке. | Пустая строка и отсутствие свойства — разные состояния. `matchIfMissing` относится именно к **отсутствию** свойства, а не к пустой строке.
-> - [ ] Атрибут `matchIfMissing = true` у `@ConditionalOnProperty` бросает исключение при отсутствии свойства, чтобы явно указать проблему. | Этот атрибут не вызывает исключений. Наоборот, он позволяет активировать бин при отсутствии свойства.
-> - [ ] Атрибут `matchIfMissing = true` у `@ConditionalOnProperty` ищет свойство в переменных окружения, игнорируя `application.yml`. | Источник свойства не меняется: Spring использует стандартный `Environment` со всей цепочкой источников. `matchIfMissing` только определяет поведение при отсутствии свойства.
+> - [x] Атрибут `matchIfMissing = true` у `@ConditionalOnProperty` делает условие истинным, если свойство вообще не задано в конфигурации. | Это корректно: `matchIfMissing=true` включает бин по умолчанию, если свойство отсутствует. Полезно для fallback-конфигураций. @ConditionalOnProperty позволяет feature flags; используйте для A/B тестирования.
+> - [ ] Атрибут `matchIfMissing = true` у `@ConditionalOnProperty` делает условие истинным только если свойство явно равно пустой строке. | Пустая строка и отсутствие свойства — разные состояния. `matchIfMissing` относится именно к **отсутствию** свойства, а не к пустой строке. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] Атрибут `matchIfMissing = true` у `@ConditionalOnProperty` бросает исключение при отсутствии свойства, чтобы явно указать проблему. | Этот атрибут не вызывает исключений. Наоборот, он позволяет активировать бин при отсутствии свойства. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] Атрибут `matchIfMissing = true` у `@ConditionalOnProperty` ищет свойство в переменных окружения, игнорируя `application.yml`. | Источник свойства не меняется: Spring использует стандартный `Environment` со всей цепочкой источников. `matchIfMissing` только определяет поведение при отсутствии свойства. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q39. (!) Что такое AOT-обработка в Spring Boot 3.x?
 
@@ -1720,10 +1720,10 @@ public class ReactiveDbHealthIndicator implements ReactiveHealthIndicator {
 Группировка индикаторов настраивается через `management.endpoint.health.group.*`.
 
 > [!mcq]
-> - [x] Кастомный `HealthIndicator` создаётся через бин, реализующий интерфейс `HealthIndicator` с методом `Health health()` — Spring Boot автоматически его обнаруживает. | Это корректно: любой бин, реализующий `HealthIndicator`, попадает в `/actuator/health`. Имя компонента в JSON берётся из имени бина с удалением суффикса "HealthIndicator".
-> - [ ] Кастомный `HealthIndicator` создаётся через аннотацию `@HealthCheck` на любом методе — Spring Boot сам интегрирует его в `/actuator/health`. | Аннотации `@HealthCheck` нет. Проверка оформляется именно как бин, реализующий интерфейс `HealthIndicator`.
+> - [x] Кастомный `HealthIndicator` создаётся через бин, реализующий интерфейс `HealthIndicator` с методом `Health health()` — Spring Boot автоматически его обнаруживает. | Это корректно: любой бин, реализующий `HealthIndicator`, попадает в `/actuator/health`. Имя компонента в JSON берётся из имени бина с удалением суффикса "HealthIndicator". Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
+> - [ ] Кастомный `HealthIndicator` создаётся через аннотацию `@HealthCheck` на любом методе — Spring Boot сам интегрирует его в `/actuator/health`. | Аннотации `@HealthCheck` нет. Проверка оформляется именно как бин, реализующий интерфейс `HealthIndicator`. Это частая ошибка при неправильном понимании механизма Java.
 > - [ ] Кастомный `HealthIndicator` создаётся через наследование `AbstractEndpoint<Health>` с переопределением метода `invoke()`. | Класс `AbstractEndpoint<Health>` — это инфраструктура endpoint-ов, не health. Правильный путь — интерфейс `HealthIndicator` с методом `health()`.
-> - [ ] Кастомный `HealthIndicator` создаётся через регистрацию лямбды `MeterRegistry::registerHealth` в конфигурации. | Такого метода у `MeterRegistry` нет — это API метрик Micrometer, не Actuator. Health-индикаторы регистрируются как бины, реализующие `HealthIndicator`.
+> - [ ] Кастомный `HealthIndicator` создаётся через регистрацию лямбды `MeterRegistry::registerHealth` в конфигурации. | Такого метода у `MeterRegistry` нет — это API метрик Micrometer, не Actuator. Health-индикаторы регистрируются как бины, реализующие `HealthIndicator`. Это частая ошибка при неправильном понимании механизма Java.
 
 ## Q41. (!) Как работает Spring Boot с несколькими профилями одновременно?
 
@@ -1863,10 +1863,10 @@ management:
 > **На собеседовании:** упомяните, что `/actuator/heapdump` и `/actuator/env` особенно чувствительны — первый даёт доступ к памяти процесса, второй раскрывает переменные окружения включая секреты.
 
 > [!mcq]
-> - [x] В production Actuator endpoints обычно выносят на отдельный порт через `management.server.port`, закрытый в Ingress/LoadBalancer, и защищают через Spring Security. | Это корректная практика: отдельный порт изолирует management-трафик от публичного, а Security с `EndpointRequest.toAnyEndpoint()` ограничивает доступ ролью `ACTUATOR_ADMIN`.
-> - [ ] В production Actuator endpoints рекомендуется открывать через `management.endpoints.web.exposure.include=*` без какой-либо защиты. | Открытие `*` без Security — прямая дорога к утечке секретов через `/env` и `/heapdump`. В production так делать нельзя.
-> - [ ] В production Actuator endpoints рекомендуется закрывать полностью через `management.endpoints.enabled-by-default=false`. | Полное отключение лишает команду инструментов мониторинга. Правильный подход — выборочная экспозиция и защита через Security, а не глобальное отключение.
-> - [ ] В production Actuator endpoints рекомендуется оставлять на том же порту, что и приложение, и защищать их через CORS. | CORS защищает только браузерные клиенты и не мешает curl/взлому. Штатная защита — Spring Security с ограничением ролей плюс отдельный management-порт.
+> - [x] В production Actuator endpoints обычно выносят на отдельный порт через `management.server.port`, закрытый в Ingress/LoadBalancer, и защищают через Spring Security. | Это корректная практика: отдельный порт изолирует management-трафик от публичного, а Security с `EndpointRequest.toAnyEndpoint()` ограничивает доступ ролью `ACTUATOR_ADMIN`. Expose metrics для мониторинга; в production используйте Spring Boot Admin + Prometheus + Grafana.
+> - [ ] В production Actuator endpoints рекомендуется открывать через `management.endpoints.web.exposure.include=*` без какой-либо защиты. | Открытие `*` без Security — прямая дорога к утечке секретов через `/env` и `/heapdump`. В production так делать нельзя. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] В production Actuator endpoints рекомендуется закрывать полностью через `management.endpoints.enabled-by-default=false`. | Полное отключение лишает команду инструментов мониторинга. Правильный подход — выборочная экспозиция и защита через Security, а не глобальное отключение. Это частая ошибка при неправильном понимании механизма Java.
+> - [ ] В production Actuator endpoints рекомендуется оставлять на том же порту, что и приложение, и защищать их через CORS. | CORS защищает только браузерные клиенты и не мешает curl/взлому. Штатная защита — Spring Security с ограничением ролей плюс отдельный management-порт. Это частая ошибка при неправильном понимании механизма Java.
 
 ---
 
