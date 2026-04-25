@@ -12,7 +12,7 @@ aliases:
   - "LangGraph interview"
   - "AutoGen interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AI Agents`
 
@@ -109,7 +109,12 @@ def agent(goal):
 - Workflow automation
 - Computer-use agents
 
-## Q2. (!) Workflows vs Agents — Anthropic классификация?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Workflows vs Agents — Anthropic классификация?
 
 Anthropic ("Building Effective Agents", 2024) разделяет:
 
@@ -131,7 +136,12 @@ Loop: LLM decides next action → execute → check result → continue
 
 **Best practice:** **start with workflows**, escalate to agent если нужна гибкость.
 
-## Q3. (!) Когда нужен agent, а когда хватает простого LLM?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Когда нужен agent, а когда хватает простого LLM?
 
 **Простой LLM:**
 - Single-turn QA
@@ -151,7 +161,12 @@ Loop: LLM decides next action → execute → check result → continue
 
 **Правило:** не делай agent если workflow достаточен. Agents **дороже, медленнее, менее надёжны**.
 
-## Q4. (!) ReAct (Reasoning + Acting)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) ReAct (Reasoning + Acting)?
 
 **ReAct** (Yao et al., 2022) — основной паттерн agent execution.
 
@@ -184,7 +199,12 @@ def react_agent(query, tools):
             history.append({"role": "tool", "content": result, "tool_call_id": call.id})
 ```
 
-## Q5. Plan-and-Execute?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Plan-and-Execute?
 
 **Plan-and-Execute** — сначала **полный план**, потом execution каждого шага.
 
@@ -200,7 +220,12 @@ def react_agent(query, tools):
 
 **Когда:** complex tasks where structure matters (research, data analysis).
 
-## Q6. (!) Tool use — function calling?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Tool use — function calling?
 
 **Tool definition:**
 
@@ -238,7 +263,12 @@ response = client.chat.completions.create(
 
 Подробнее — в [Prompt Engineering](prompt-engineering-interview.md).
 
-## Q7. (!) Какие tools предоставляют agentам?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Какие tools предоставляют agentам?
 
 **Common tools:**
 1. **Search** — internal docs, web search (Tavily, Perplexity, Brave)
@@ -258,7 +288,12 @@ response = client.chat.completions.create(
 - **Sandbox potentially dangerous** tools (code, file ops)
 - **Return structured results** — JSON/dict, not free text
 
-## Q8. (!) Code execution as tool?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Code execution as tool?
 
 **Code execution** — LLM пишет Python (или другой) код, выполняется в **sandbox**, результат обратно.
 
@@ -282,7 +317,12 @@ def execute_python(code: str) -> str:
 
 **Безопасность критична:** evil code может damage infrastructure.
 
-## Q9. Web search как tool?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Web search как tool?
 
 **Web search** для up-to-date информации (LLM training data часто месяцы старая).
 
@@ -306,7 +346,12 @@ def web_search(query: str, max_results: int = 5):
 
 **Pattern:** agent сначала search, потом fetches relevant pages для деталей.
 
-## Q10. (!) Что такое MCP (Model Context Protocol)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Что такое MCP (Model Context Protocol)?
 
 **Model Context Protocol (MCP)** — открытый стандарт от Anthropic (ноябрь 2024) для интеграции LLM с инструментами и data sources.
 
@@ -329,7 +374,12 @@ MCP Server (Github, PostgreSQL, Slack, ...)
 
 В **2025** — стандарт **быстро принимается** (OpenAI announced support, многие IDE).
 
-## Q11. (!) Short-term vs long-term memory?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Short-term vs long-term memory?
 
 **Short-term memory** — context текущей conversation.
 - В prompt history
@@ -354,7 +404,12 @@ prompt = f"User context: {context}\n\nMessage: {new_message}"
 
 **Tools:** Mem0, MemGPT, custom Postgres/Redis.
 
-## Q12. Conversation history truncation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Conversation history truncation?
 
 При длинных conversations — context window заполняется.
 
@@ -374,7 +429,12 @@ def truncate_history(history, max_tokens=8000):
     return history
 ```
 
-## Q13. Vector memory (RAG для memory)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Vector memory (RAG для memory)?
 
 **Memory как vector DB:**
 
@@ -394,7 +454,12 @@ relevant = vector_db.search(embed(current_query), filter={"user_id": user_id}, t
 
 Это **RAG для conversation history** вместо RAG для documents.
 
-## Q14. (!) Что такое multi-agent system?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Что такое multi-agent system?
 
 **Multi-agent** — **несколько LLM agents** взаимодействуют для решения задачи.
 
@@ -423,7 +488,12 @@ graph TD
 
 В **2025** — большинство production systems = single agent. Multi-agent — для сложных research/creative задач.
 
-## Q15. Supervisor pattern?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Supervisor pattern?
 
 **Supervisor agent** decides which **worker agent** должен handle subtask.
 
@@ -440,7 +510,12 @@ def supervisor(query):
 
 **Использование:** routing complex queries в правильную команду.
 
-## Q16. Hierarchical agents?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Hierarchical agents?
 
 ```
 Manager Agent
@@ -456,7 +531,12 @@ Manager Agent
 
 В **2025** — продвинутая, но experimental тема. Cost и complexity ограничивают adoption.
 
-## Q17. (!) Agent communication patterns?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Agent communication patterns?
 
 **Patterns:**
 
@@ -469,7 +549,12 @@ Manager Agent
 **LangGraph** использует **graph-based state** (shared state, agents как nodes).
 **AutoGen** использует **conversational** (agents talk to each other).
 
-## Q18. (!) LangGraph (LangChain)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) LangGraph (LangChain)?
 
 **LangGraph** — graph-based agent framework. State = node, agents = edges.
 
@@ -500,7 +585,12 @@ graph.set_entry_point("agent")
 
 В **2025** — самый популярный agent framework.
 
-## Q19. AutoGen (Microsoft)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. AutoGen (Microsoft)?
 
 **AutoGen** — multi-agent conversation framework.
 
@@ -520,7 +610,12 @@ user_proxy.initiate_chat(assistant, message="Solve this: ...")
 
 В **2025** — популярен в research и code generation.
 
-## Q20. CrewAI?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. CrewAI?
 
 **CrewAI** — фреймворк для **role-based** agent crews.
 
@@ -533,7 +628,12 @@ result = crew.kickoff()
 
 **Декларативный** подход. Подходит для линейных pipelines с clear roles.
 
-## Q21. Custom vs framework?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Custom vs framework?
 
 **Frameworks pros:**
 - Quick start
@@ -565,7 +665,12 @@ def agent(query, tools, max_iterations=10):
 
 **В 2025** — растёт мнение, что **custom код** для agents часто лучше than frameworks.
 
-## Q22. (!) Как тестировать agents?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Как тестировать agents?
 
 **Сложно**: agents nondeterministic, могут много путей к ответу.
 
@@ -587,7 +692,12 @@ for case in test_cases:
     assert llm_judge(trace.final_answer, case.expected) > 0.8
 ```
 
-## Q23. Trace evaluation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Trace evaluation?
 
 **Trace** = sequence of agent's thoughts, actions, observations.
 
@@ -607,7 +717,12 @@ Step 5: Final Answer "..."
 
 **LLM-as-judge:** другая LLM анализирует trace, scores quality.
 
-## Q24. (!) Какие риски / pitfalls в agents?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Какие риски / pitfalls в agents?
 
 1. **Endless loops** — agent повторяет одно и то же
 2. **Context explosion** — history растёт, costs explode
@@ -620,7 +735,12 @@ Step 5: Final Answer "..."
 9. **Unpredictable behavior** — different runs → different results
 10. **Hard to debug** — long traces, complex state
 
-## Q25. (!) Human-in-the-loop?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. (!) Human-in-the-loop?
 
 **HITL** — human approves critical actions перед execution.
 
@@ -644,7 +764,12 @@ def execute_tool_with_approval(tool_call):
 - **Sampling review** — 10% случайных action manually reviewed
 - **Confidence threshold** — high confidence auto, low → ask
 
-## Q26. Cost control для agents?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. Cost control для agents?
 
 ```python
 def agent_with_budget(query, max_cost_usd=0.50):
@@ -665,7 +790,12 @@ def agent_with_budget(query, max_cost_usd=0.50):
 - **Tool call limit** — max 20 tool calls
 - **Smaller model для planning**, large model только для critical generation
 
-## Q27. Latency в agents?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. Latency в agents?
 
 **Multi-step agents are SLOW.** Single LLM call ≈ 1-5 sec. 10 calls = 10-50 sec.
 
@@ -681,7 +811,12 @@ def agent_with_budget(query, max_cost_usd=0.50):
 - Estimated completion time
 - Allow cancel mid-execution
 
-## Q28. (!) Computer use — Claude (с 2024)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. (!) Computer use — Claude (с 2024)?
 
 **Computer use** (Claude 3.5 Sonnet+, October 2024) — Claude может **видеть screenshots**, **управлять mouse/keyboard**.
 
@@ -717,7 +852,12 @@ response = client.messages.create(
 
 ## See also
 
-- [LLM Basics](llm-basics-interview.md) — основа agents
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [LLM Basics](llm-basics-interview.md) — основа agents
 - [Prompt Engineering](prompt-engineering-interview.md) — function calling
 - [RAG](rag-interview.md) — knowledge для agents
 - [LLM Integration Patterns](llm-integration-patterns-interview.md) — production

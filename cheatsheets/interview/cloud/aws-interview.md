@@ -11,7 +11,7 @@ aliases:
   - "AWS собеседование"
   - "AWS basics interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS`
 
@@ -102,7 +102,12 @@ updated: "2026-04-19"
 
 200+ сервисов. Большинству бэкендеров знакомо ~20.
 
-## Q2. (!) Regions, Availability Zones, Edge Locations?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Regions, Availability Zones, Edge Locations?
 
 ```
 Region (us-east-1, eu-central-1)
@@ -119,7 +124,12 @@ Region (us-east-1, eu-central-1)
 
 **Best practice:** **Multi-AZ** для high availability (RDS Multi-AZ, EC2 across AZs).
 
-## Q3. AWS pricing model?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. AWS pricing model?
 
 **Pay-as-you-go** для большинства services:
 - **EC2:** per-hour или per-second (Linux)
@@ -136,7 +146,12 @@ Region (us-east-1, eu-central-1)
 
 **Critical:** **data transfer out** — самая частая cause неприятных счетов.
 
-## Q4. (!) EC2 — instance types, families?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) EC2 — instance types, families?
 
 **Instance families:**
 
@@ -155,7 +170,12 @@ Region (us-east-1, eu-central-1)
 
 **Graviton (ARM)** — обычно 20% дешевле + лучше perf/$. Default 2025.
 
-## Q5. (!) Reserved Instances, Spot Instances, Savings Plans?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Reserved Instances, Spot Instances, Savings Plans?
 
 | Тип | Discount | Commitment | Use case |
 |-----|----------|------------|----------|
@@ -174,7 +194,12 @@ Region (us-east-1, eu-central-1)
 
 **Не для:** databases, stateful long-running services.
 
-## Q6. AMI, EBS, instance store?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. AMI, EBS, instance store?
 
 **AMI (Amazon Machine Image)** — template для EC2 instances. Содержит OS, software, configs.
 
@@ -188,7 +213,12 @@ Region (us-east-1, eu-central-1)
 - **st1** — HDD throughput-optimized
 - **sc1** — HDD cold
 
-## Q7. (!) Auto Scaling Groups?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Auto Scaling Groups?
 
 **ASG** — автоматическое масштабирование EC2 instances based on metrics.
 
@@ -207,7 +237,12 @@ Metric: CPU < 30% → scale down (-1)
 
 **ASG за load balancer (ALB)** — auto-scale + traffic distribution.
 
-## Q8. Lambda — кратко (deep dive в отдельном файле)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Lambda — кратко (deep dive в отдельном файле)?
 
 **AWS Lambda** — serverless compute. Запускает код в response на events:
 - HTTP (API Gateway)
@@ -225,7 +260,12 @@ def handler(event, context):
 
 Подробнее — в [AWS Lambda](aws-lambda-interview.md).
 
-## Q9. (!) S3 — основные понятия?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) S3 — основные понятия?
 
 **S3 (Simple Storage Service)** — object storage. Стандарт de facto для cloud storage.
 
@@ -247,7 +287,12 @@ s3://my-bucket/path/to/file.json
 - Versioning support
 - Encryption at rest и in transit
 
-## Q10. (!) S3 storage classes?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) S3 storage classes?
 
 | Class | Latency | Cost (per GB/month) | Use case |
 |-------|---------|---------------------|----------|
@@ -263,7 +308,12 @@ s3://my-bucket/path/to/file.json
 
 **Cost difference:** 23x между Standard и Deep Archive. Optimization очень важна.
 
-## Q11. EBS vs EFS vs S3?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. EBS vs EFS vs S3?
 
 | Storage | Тип | Mount | Use case |
 |---------|-----|-------|----------|
@@ -274,7 +324,12 @@ s3://my-bucket/path/to/file.json
 
 **По размеру:** EBS limit 64 TiB per volume; EFS, S3 — petascale.
 
-## Q12. S3 versioning, lifecycle policies?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. S3 versioning, lifecycle policies?
 
 **Versioning** — каждое изменение → новая версия.
 
@@ -306,7 +361,12 @@ my-file.json (v3, current)
 }
 ```
 
-## Q13. (!) RDS — какие движки, особенности?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) RDS — какие движки, особенности?
 
 **RDS (Relational Database Service)** — managed реляционные БД.
 
@@ -327,7 +387,12 @@ my-file.json (v3, current)
 
 **Не managed:** schema design, queries, indexes — твоя ответственность.
 
-## Q14. (!) Aurora vs RDS PostgreSQL/MySQL?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Aurora vs RDS PostgreSQL/MySQL?
 
 **Aurora** — proprietary AWS engine, **PostgreSQL/MySQL compatible**.
 
@@ -345,7 +410,12 @@ my-file.json (v3, current)
 
 В **2025** — Aurora **default** для новых RDS workloads.
 
-## Q15. (!) DynamoDB — что особенного?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) DynamoDB — что особенного?
 
 **DynamoDB** — managed NoSQL, key-value + document store.
 
@@ -368,7 +438,12 @@ my-file.json (v3, current)
 - Use **GSI** (Global Secondary Indexes) для queries по non-PK
 - **Single-table design** для related data (вместо multiple tables)
 
-## Q16. ElastiCache (Redis, Memcached)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. ElastiCache (Redis, Memcached)?
 
 **ElastiCache** — managed Redis или Memcached.
 
@@ -388,7 +463,12 @@ my-file.json (v3, current)
 
 **ElastiCache for Redis OSS** vs **MemoryDB** (durable Redis-compatible) — для разных use cases.
 
-## Q17. Other DBs (DocumentDB, Neptune, Timestream)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Other DBs (DocumentDB, Neptune, Timestream)?
 
 **DocumentDB** — MongoDB-compatible (но не такой же).
 **Neptune** — graph database (Gremlin, SPARQL).
@@ -399,7 +479,12 @@ my-file.json (v3, current)
 
 В **2025** — выбор сильно зависит от use case. Для большинства — **Aurora** или **DynamoDB**.
 
-## Q18. (!) VPC, subnets, route tables?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) VPC, subnets, route tables?
 
 **VPC (Virtual Private Cloud)** — isolated network в AWS region.
 
@@ -422,7 +507,12 @@ VPC (10.0.0.0/16)
 
 **Best practice:** multi-AZ subnets, public ↔ private separation.
 
-## Q19. (!) Security Groups vs NACLs?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Security Groups vs NACLs?
 
 | Critterion | Security Groups | NACLs |
 |-----------|----------------|-------|
@@ -440,7 +530,12 @@ VPC (10.0.0.0/16)
 
 В большинстве случаев — только **Security Groups**. NACLs для специальных cases.
 
-## Q20. ALB, NLB, CLB?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. ALB, NLB, CLB?
 
 | LB | Layer | Use case |
 |----|-------|----------|
@@ -458,7 +553,12 @@ VPC (10.0.0.0/16)
 
 **ALB** — default для most web apps.
 
-## Q21. CloudFront CDN?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. CloudFront CDN?
 
 **CloudFront** — global CDN от AWS (600+ edge locations).
 
@@ -480,7 +580,12 @@ Client → CloudFront edge (cached) → S3 / ALB / Lambda@Edge / EC2
 
 **Cost:** обычно дешевле чем serving из S3 directly (нет outbound transfer charges).
 
-## Q22. Route53?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. Route53?
 
 **Route53** — managed DNS service.
 
@@ -501,7 +606,12 @@ yourdomain.com → ALB (us-east-1)
               (latency-based routing)
 ```
 
-## Q23. (!) NAT Gateway, Internet Gateway?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) NAT Gateway, Internet Gateway?
 
 **Internet Gateway (IGW):**
 - Attached к VPC
@@ -520,7 +630,12 @@ Private subnet: EC2 → NAT Gateway → IGW → Internet (outbound only)
 
 **Cost:** NAT Gateway **дорогой** ($0.045/hour + $0.045/GB processed). Surprise в bill.
 
-## Q24. (!) IAM — Users, Roles, Policies?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) IAM — Users, Roles, Policies?
 
 **IAM (Identity and Access Management)** — управление доступом.
 
@@ -546,7 +661,12 @@ Private subnet: EC2 → NAT Gateway → IGW → Internet (outbound only)
 - **Resource-based** — attached к resource (S3 bucket policy)
 - **Permission boundaries** — max permissions
 
-## Q25. (!) IAM роли для EC2/Lambda — best practice?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. (!) IAM роли для EC2/Lambda — best practice?
 
 **Используй IAM roles, не access keys в коде.**
 
@@ -564,7 +684,12 @@ client = boto3.client("s3")  # automatically uses instance role
 
 **Principle of least privilege:** только нужные permissions, не `s3:*`.
 
-## Q26. KMS, Secrets Manager, Parameter Store?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. KMS, Secrets Manager, Parameter Store?
 
 **KMS (Key Management Service)** — managed encryption keys. Используется S3, EBS, RDS encryption.
 
@@ -583,7 +708,12 @@ client = boto3.client("s3")  # automatically uses instance role
 - **Parameter Store** — config (environment variables)
 - **KMS** — encryption keys (через Secrets Manager / Parameter Store)
 
-## Q27. (!) SQS vs SNS vs EventBridge?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) SQS vs SNS vs EventBridge?
 
 | Service | Тип | Use case |
 |---------|-----|----------|
@@ -606,7 +736,12 @@ client = boto3.client("s3")  # automatically uses instance role
 
 **В 2025** — EventBridge **default** для event-driven, SQS для simple queues.
 
-## Q28. Kinesis vs MSK (Kafka)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Kinesis vs MSK (Kafka)?
 
 **Kinesis Data Streams** — AWS-native streaming. Похож на Kafka.
 
@@ -624,7 +759,12 @@ client = boto3.client("s3")  # automatically uses instance role
 - Уже Kafka стек / нужны Kafka tools → **MSK**
 - Tight AWS integration → **Kinesis**
 
-## Q29. (!) CloudWatch — metrics, logs, alarms?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q29. (!) CloudWatch — metrics, logs, alarms?
 
 **CloudWatch** — мониторинг для AWS.
 
@@ -651,7 +791,12 @@ cloudwatch.put_metric_data(
 
 **Стоимость:** logs ingestion может быть **очень дорогим**. Optimize log levels.
 
-## Q30. X-Ray для tracing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q30. X-Ray для tracing?
 
 **AWS X-Ray** — distributed tracing service.
 
@@ -671,7 +816,12 @@ Visualizes:
 
 **Альтернативы:** OpenTelemetry + Jaeger/Datadog/Honeycomb обычно лучше (vendor-neutral).
 
-## Q31. (!) Well-Architected Framework — 5 pillars?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q31. (!) Well-Architected Framework — 5 pillars?
 
 AWS framework для design good architectures.
 
@@ -684,7 +834,12 @@ AWS framework для design good architectures.
 
 **Well-Architected Tool** — automated review своей architecture.
 
-## Q32. (!) Multi-AZ vs Multi-Region?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q32. (!) Multi-AZ vs Multi-Region?
 
 **Multi-AZ:**
 - Replicas в **разных AZ** одного region
@@ -703,7 +858,12 @@ AWS framework для design good architectures.
 
 **Big firms** делают multi-region. Большинству хватает **multi-AZ**.
 
-## Q33. Cost optimization tips?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q33. Cost optimization tips?
 
 1. **Right-sizing** — не over-provision
 2. **Reserved Instances / Savings Plans** для steady workloads
@@ -718,7 +878,12 @@ AWS framework для design good architectures.
 
 **Tools:** Cost Explorer, Trusted Advisor, **Vantage** (3rd party), Spot Advisor.
 
-## Q34. (!) Какие частые ошибки в AWS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q34. (!) Какие частые ошибки в AWS?
 
 1. **Public S3 buckets** — data leaks (Capital One incident)
 2. **No MFA на root account**
@@ -752,7 +917,12 @@ AWS framework для design good architectures.
 - [Caching](../architecture/caching-strategies-interview.md) — CloudFront, ElastiCache
 - [Scalability](../architecture/scalability-patterns-interview.md) — Auto Scaling, multi-region
 
-- [AWS Lambda](aws-lambda-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS Lambda](aws-lambda-interview.md)
 - [Azure](azure-interview.md)
 - [Cloud-native Patterns](cloud-native-patterns-interview.md)
 - [GCP (Google Cloud Platform)](gcp-interview.md)

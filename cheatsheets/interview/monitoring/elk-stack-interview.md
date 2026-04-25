@@ -13,7 +13,7 @@ aliases:
   - "Filebeat interview"
   - "OpenSearch interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `ELK Stack`
 
@@ -98,7 +98,12 @@ updated: "2026-04-19"
 
 В **2010-х** — undisputed standard для log management. В **2020-х** — конкурент **Loki, ClickHouse, OpenSearch**.
 
-## Q2. (!) Архитектура ELK для логов?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Архитектура ELK для логов?
 
 ```mermaid
 graph LR
@@ -122,7 +127,12 @@ graph LR
 - **Kafka** между Filebeat и Logstash (buffer)
 - **Elastic Agent** (newer) — replaces Beats + Logstash
 
-## Q3. ELK vs EFK vs other stacks?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. ELK vs EFK vs other stacks?
 
 **ELK** — Elasticsearch + Logstash + Kibana + Filebeat.
 **EFK** — Elasticsearch + **Fluentd** + Kibana (popular в K8s, более flexible).
@@ -136,7 +146,12 @@ graph LR
 
 В **K8s** — **Fluentd / Fluent Bit** более популярны чем Filebeat (better ecosystem).
 
-## Q4. (!) Что такое Elasticsearch?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Что такое Elasticsearch?
 
 **Elasticsearch** — distributed search engine на **Apache Lucene**. Open-source (но license changed в 2021).
 
@@ -150,7 +165,12 @@ graph LR
 
 **Не just for logs:** general-purpose search engine. Но **logging** — main use case.
 
-## Q5. (!) Index, shards, replicas?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Index, shards, replicas?
 
 **Index** — namespace для documents (~ table в SQL).
 
@@ -173,7 +193,12 @@ my-logs-2025-04-19  (index)
 - Replicas: 1 (одна копия)
 - Don't over-shard (overhead)
 
-## Q6. (!) Document, mapping, types?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Document, mapping, types?
 
 **Document** — JSON record.
 
@@ -202,7 +227,12 @@ my-logs-2025-04-19  (index)
 
 **Types** — концепция removed в ES 7+. Один тип на index.
 
-## Q7. Cluster, nodes, master vs data?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Cluster, nodes, master vs data?
 
 **Cluster** — group of nodes (1+).
 
@@ -217,7 +247,12 @@ my-logs-2025-04-19  (index)
 
 **Split-brain** — нужно `discovery.zen.minimum_master_nodes = (N/2 + 1)`.
 
-## Q8. (!) Inverted index — как работает?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Inverted index — как работает?
 
 **Inverted index** — структура для **fast text search**.
 
@@ -240,7 +275,12 @@ doc2 → "the dog ran"
 
 Лежит в основе ES. Trade-off: **slow writes**, **fast reads**.
 
-## Q9. (!) Что такое Logstash?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Что такое Logstash?
 
 **Logstash** — server-side data processing pipeline. Ingest → transform → output.
 
@@ -279,7 +319,12 @@ output {
 
 **Heavyweight** (JVM, ~1 GB RAM). Из-за этого многие переходят на Fluent Bit (lighter).
 
-## Q10. Input, Filter, Output stages?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Input, Filter, Output stages?
 
 **Inputs** (50+):
 - file, syslog, beats, kafka, http, tcp, udp, ...
@@ -298,7 +343,12 @@ output {
 
 **Multiple pipelines** в одном Logstash instance.
 
-## Q11. Grok patterns для парсинга?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Grok patterns для парсинга?
 
 **Grok** — regex с named patterns для structured parsing.
 
@@ -325,7 +375,12 @@ output {
 
 **Подвох:** grok medленный для huge log volumes. Лучше — **structured logging from app** (JSON logs), no parsing нужен.
 
-## Q12. (!) Filebeat, Metricbeat, Packetbeat?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Filebeat, Metricbeat, Packetbeat?
 
 **Beats** — lightweight shippers (написаны на Go, ~50 MB RAM).
 
@@ -351,7 +406,12 @@ output.elasticsearch:
 # Or output.logstash для processing
 ```
 
-## Q13. Beats vs Logstash для shipping?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Beats vs Logstash для shipping?
 
 **Beats:**
 - Lightweight (50 MB RAM)
@@ -371,7 +431,12 @@ Apps → Filebeat (ship) → Kafka (buffer) → Logstash (transform) → Elastic
 
 В K8s — Fluent Bit / Fluentd часто заменяют **оба**.
 
-## Q14. (!) Что такое Kibana?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Что такое Kibana?
 
 **Kibana** — web UI для Elasticsearch.
 
@@ -387,7 +452,12 @@ Apps → Filebeat (ship) → Kafka (buffer) → Logstash (transform) → Elastic
 - **APM** — application monitoring
 - **Alerting** — rule-based alerts
 
-## Q15. KQL (Kibana Query Language)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. KQL (Kibana Query Language)?
 
 **KQL** — modern query language Kibana (с 7.0+).
 
@@ -406,7 +476,12 @@ service:order-* (wildcard)
 
 **Search via Kibana → Elasticsearch** REST API.
 
-## Q16. Dashboards, visualizations?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Dashboards, visualizations?
 
 **Visualization types:**
 - Line / area chart
@@ -426,7 +501,12 @@ service:order-* (wildcard)
 - Drill-down (click → filter to subset)
 - Don't overcrowd (10-15 panels max)
 
-## Q17. (!) ILM (Index Lifecycle Management)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) ILM (Index Lifecycle Management)?
 
 **ILM** — automation для managing indices через жизненный цикл.
 
@@ -473,7 +553,12 @@ Delete
 
 **Cost optimization** — старые data на cheaper storage.
 
-## Q18. Hot-Warm-Cold-Frozen architecture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Hot-Warm-Cold-Frozen architecture?
 
 **Hot nodes** — fast disks (NVMe SSD), recent indices, high I/O.
 **Warm nodes** — slower SSDs, indices > 7 days old.
@@ -489,7 +574,12 @@ Frozen (100 TB): только S3, ¢
 
 **Massive cost savings** для logs с long retention.
 
-## Q19. Index templates?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Index templates?
 
 **Template** — auto-applied settings + mappings для new indices matching pattern.
 
@@ -515,7 +605,12 @@ PUT _index_template/logs-template
 
 Когда new `logs-2025-04-19` index created → template auto-applied.
 
-## Q20. (!) Какие частые проблемы performance?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Какие частые проблемы performance?
 
 1. **Heavy queries** — wildcards, regex, аggregations на huge indices
 2. **Mapping explosion** — too many fields (deep nested objects)
@@ -528,7 +623,12 @@ PUT _index_template/logs-template
 9. **Replication лагает** — too few writes nodes
 10. **Cluster split-brain** — wrong master configuration
 
-## Q21. Sharding strategy — как выбрать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Sharding strategy — как выбрать?
 
 **Time-based indices:** один index per day (`logs-2025-04-19`).
 - Pros: easy retention (delete old indices)
@@ -544,7 +644,12 @@ PUT _index_template/logs-template
 - Per node: < 600 shards (heap memory)
 - For 100 GB/day, 30 days retention → ~10 indices × 5 shards × 2 (replica) = 100 shards
 
-## Q22. (!) Что такое OpenSearch и почему появился?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Что такое OpenSearch и почему появился?
 
 **OpenSearch** — fork Elasticsearch, создан **AWS** в **2021**.
 
@@ -559,7 +664,12 @@ PUT _index_template/logs-template
 
 **Compatible** с Elasticsearch APIs (mostly), но diverging.
 
-## Q23. OpenSearch vs Elasticsearch differences?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. OpenSearch vs Elasticsearch differences?
 
 | Критерий | OpenSearch | Elasticsearch |
 |----------|------------|---------------|
@@ -576,7 +686,12 @@ PUT _index_template/logs-template
 - **Want Elastic-supported, paid features** — Elasticsearch
 - Migration legacy ES → OpenSearch — обычно smooth
 
-## Q24. (!) Loki vs ELK?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Loki vs ELK?
 
 | Критерий | ELK | Loki |
 |----------|-----|------|
@@ -593,7 +708,12 @@ PUT _index_template/logs-template
 
 Подробнее — в [Loki + Grafana](loki-grafana-interview.md).
 
-## Q25. Когда выбрать ELK?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. Когда выбрать ELK?
 
 **Выбирай ELK когда:**
 - Need **fast complex queries** на logs
@@ -610,7 +730,12 @@ PUT _index_template/logs-template
 - Не нужен полный feature set
 - Operations team малая (ELK сложно ops)
 
-## Q26. Какие частые ошибки в ELK production?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. Какие частые ошибки в ELK production?
 
 1. **No ILM** — indices растут forever → cluster crash
 2. **No retention policy** — cost runaway
@@ -644,7 +769,12 @@ PUT _index_template/logs-template
 - [Apache Kafka](../messaging/kafka-interview.md) — buffer для ingest
 - [Application Security](../security/application-security-interview.md) — SIEM
 
-- [Jaeger и Zipkin](jaeger-zipkin-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Jaeger и Zipkin](jaeger-zipkin-interview.md)
 - [Стратегии логирования](logging-strategies-interview.md)
 - [Loki и Grafana](loki-grafana-interview.md)
 - [Метрики и трейсинг](metrics-tracing-interview.md)

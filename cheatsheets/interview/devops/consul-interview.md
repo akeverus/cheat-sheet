@@ -11,7 +11,7 @@ aliases:
   - "Service discovery interview"
   - "Consul собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `HashiCorp Consul`
 
@@ -83,6 +83,12 @@ updated: "2026-04-19"
 5. **DNS / HTTP interface** для queries
 6. **Multi-datacenter** native
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Применения:**
 - Service registry (microservices)
 - Configuration management
@@ -107,6 +113,12 @@ Discovery: "Service B is at 10.0.5.3:8080, 10.0.5.4:8080, ..."
 
 Service A connects к available instance.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Examples:**
 - Consul
 - etcd (used by Kubernetes)
@@ -134,6 +146,12 @@ Service A connects к available instance.
 - Failure detection
 - LAN gossip (per-DC) + WAN gossip (cross-DC)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```mermaid
 graph LR
     Server1[Server 1<br/>leader] --- Server2[Server 2]
@@ -169,6 +187,12 @@ consul services register service.hcl
 curl --request PUT --data @service.json http://localhost:8500/v1/agent/service/register
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 После registration — service queryable через DNS / HTTP API.
 
 ## Q5. (!) DNS interface?
@@ -188,6 +212,12 @@ dig @consul.local -p 8600 my-api.service.consul SRV
 
 **Apps use standard DNS** — no custom client library.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Integration с system DNS:** forward `*.consul` queries → Consul DNS port.
 
 ## Q6. HTTP API queries?
@@ -202,6 +232,12 @@ curl http://consul.local:8500/v1/health/service/my-api?tag=v1
 
 **Returns JSON** с service nodes, addresses, health status.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **SDKs:** Java, Go, Python, Ruby, Node, .NET.
 
 ## Q7. Service tags, metadata?
@@ -231,6 +267,12 @@ service {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Filter queries** by tags / meta.
 
 ## Q8. (!) Типы health checks?
@@ -268,6 +310,12 @@ check {
 
 **Check states:** passing, warning, critical.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Multiple checks** per service possible (logical AND).
 
 ## Q9. Auto-removal unhealthy services?
@@ -284,6 +332,12 @@ dig @consul.local my-api.connect.consul
 
 **Service deregistered** after node leaves cluster (gracefully) или fails (after timeout).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Critical health → traffic redirected** к healthy instances. Auto-failover **without external load balancer changes**.
 
 ## Q10. (!) Consul KV?
@@ -306,6 +360,12 @@ consul kv delete my-app/config/timeout
 - Service coordination
 - Leader election
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Strong consistency** через Raft (linearizable reads/writes).
 
 ## Q11. Watches, blocking queries?
@@ -319,6 +379,12 @@ curl http://consul.local:8500/v1/kv/my-app?wait=5m&index=42
 
 `index` — current modification index. Server holds connection until **change** или timeout.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Apps subscribe** к config changes — react в real-time без polling.
 
 ## Q12. Consul Template?
@@ -342,6 +408,12 @@ server {{.Address}}:{{.Port}};
 
 **Эффект:** when services change — file regenerated, nginx reloaded.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** dynamic Nginx upstream, load balancer config from service registry.
 
 ## Q13. (!) Что такое Consul Connect?
@@ -360,6 +432,12 @@ App A → Envoy sidecar (Connect proxy) → Envoy sidecar → App B
                        (mTLS)
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Vs Istio/Linkerd:** Consul Connect — **multi-platform** (works на VMs, K8s, hybrid). Istio/Linkerd — K8s-focused.
 
 ## Q14. Sidecar proxies (Envoy)?
@@ -384,6 +462,12 @@ service {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **App connects к localhost:5432** → Envoy proxy → secure tunnel → other service's Envoy → database.
 
 ## Q15. mTLS, intentions?
@@ -411,6 +495,12 @@ consul intention create -deny "*" "*"
 # Then explicitly allow needed services
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Zero-trust networking** — services need explicit permission.
 
 ## Q16. (!) Multi-DC support?
@@ -428,6 +518,12 @@ dig @consul.local -p 8600 my-api.service.us-east-1.consul
 
 **Service в другой DC** queryable via DNS / HTTP.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** multi-region apps, geo-distributed services.
 
 ## Q17. WAN federation?
@@ -445,6 +541,12 @@ retry_join_wan = ["consul-dc2.example.com"]
 - Cross-DC queries via DNS/API
 - ACL replication available
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Limitation:** KV не auto-replicated (по design — DCs autonomous).
 
 ## Q18. (!) Consul + K8s (Helm chart)?
@@ -460,6 +562,12 @@ helm install consul hashicorp/consul --set global.name=consul
 - Sync K8s services ↔ Consul registry
 - Connect injector (auto-add Envoy sidecar к pods)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** Consul Connect service mesh для K8s + non-K8s workloads.
 
 ## Q19. Consul-Terraform-Sync?
@@ -470,6 +578,12 @@ helm install consul hashicorp/consul --set global.name=consul
 Consul service change → Terraform run → update load balancer / firewall / DNS
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** auto-update F5 load balancer, AWS ALB target groups, DNS records when services scale.
 
 ## Q20. (!) Consul vs etcd vs ZooKeeper?
@@ -486,6 +600,12 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 | Consensus | Raft | Raft | ZAB |
 | Used in | Standalone, K8s | Kubernetes | Kafka, HBase, legacy |
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Consul** — broader feature set (DNS, health, mesh).
 **etcd** — focus on KV (Kubernetes use it).
 **ZooKeeper** — older, used by big data ecosystem.
@@ -509,6 +629,12 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 - Need feature-rich service mesh
 - Existing HashiCorp investment
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Когда K8s discovery достаточно:**
 - Pure K8s deployment
 - Single cluster
@@ -530,6 +656,12 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 - **K8s + many features** → Istio
 - **K8s + simplicity** → Linkerd
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Подробнее — в [Istio](istio-service-mesh-interview.md) и [Linkerd](linkerd-interview.md).
 
 ## Q23. (!) Когда выбрать Consul?
@@ -542,6 +674,12 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 - **Hybrid cloud** (on-prem + cloud)
 - Need **DNS interface** для service queries
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Не выбирай когда:**
 - Pure K8s — built-in discovery достаточно
 - Don't want operational overhead
@@ -580,6 +718,12 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 - [Zero Trust](../security/zero-trust-interview.md) — Connect implements
 - [Load Balancing](../architecture/load-balancing-interview.md) — Consul + LB integration
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Ansible](ansible-interview.md)
 - [ArgoCD и GitOps](argocd-interview.md)
 - [Docker](docker-interview.md)

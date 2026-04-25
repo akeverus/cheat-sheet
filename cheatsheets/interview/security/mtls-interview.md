@@ -11,7 +11,7 @@ aliases:
   - "mTLS собеседование"
   - "Two-way TLS"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `mTLS (Mutual TLS)`
 
@@ -78,6 +78,12 @@ updated: "2026-04-19"
 - **Both** verify each other
 - **Mutual authentication**
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Result:** server **knows** which client is connecting (cryptographically verified, not just IP/credentials).
 
 ## Q2. (!) TLS vs mTLS — отличия?
@@ -92,6 +98,12 @@ updated: "2026-04-19"
 | Complexity | Low | High |
 | PKI required | For CA | Full PKI |
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **TLS:** browser к bank.com (browser doesn't have cert).
 **mTLS:** bank-A.com к bank-B.com (both have organizational certs).
 
@@ -107,6 +119,12 @@ updated: "2026-04-19"
 6. **Healthcare** (HIPAA)
 7. **Government** (compliance requirements)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Benefits:**
 - **Strong authentication** (cryptographic, not passwords)
 - **No shared secrets** к leak (no API keys)
@@ -130,6 +148,12 @@ updated: "2026-04-19"
 
 **Both certs validated** through CA chain.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **TLS 1.3 simplifies** handshake (1-RTT vs 2-RTT TLS 1.2).
 
 ## Q5. X.509 certificates?
@@ -153,6 +177,12 @@ MIIDXTCCAkWgAwIBAgIJAK...
 -----END CERTIFICATE-----
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Verification:** check signature using CA's public key.
 
 ## Q6. Certificate Authority (CA) hierarchy?
@@ -176,6 +206,12 @@ Root CA (self-signed, trust anchor)
 - Used to **issue end certs**
 - **Allow easier revocation** (revoke Intermediate, not Root)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Chain of trust:** verify cert → check Issuer (Intermediate) → check that's signed by Root → trust.
 
 ## Q7. (!) Public Key Infrastructure (PKI)?
@@ -201,6 +237,12 @@ Root CA (self-signed, trust anchor)
 - Cloudflare PKI Toolkit
 - Custom (OpenSSL scripts)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Public PKI:**
 - Let's Encrypt (free)
 - DigiCert, Sectigo, GoDaddy (paid)
@@ -217,6 +259,12 @@ Root CA (self-signed, trust anchor)
 - ❌ Cost (или Let's Encrypt free)
 - **Required для:** public-facing apps
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **For mTLS** обычно использует **internal CA** (own PKI). Devices/services trust your CA, not public CAs.
 
 ## Q9. Certificate rotation?
@@ -233,6 +281,12 @@ Root CA (self-signed, trust anchor)
 - **Vault PKI + sidecar** (service certs)
 - **Service mesh** (Istio auto-rotates every 24h)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:**
 - **Short TTLs** (24 hours, days, не years)
 - **Auto-rotation**
@@ -259,6 +313,12 @@ spiffe://example.org/ns/payments/sa/payment-service
 - Vault
 - AWS, GCP, K8s
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Standard для service identity** в Zero Trust.
 
 ## Q11. (!) mTLS в service mesh (Istio, Linkerd)?
@@ -288,6 +348,12 @@ spec:
 
 **Effect:** zero-config service-to-service auth.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Подробнее — [Istio](../devops/istio-service-mesh-interview.md), [Linkerd](../devops/linkerd-interview.md).
 
 ## Q12. cert-manager (K8s)?
@@ -318,6 +384,12 @@ spec:
 
 **Auto-renewal** before expiration. Stores в K8s Secret.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Integrates с Istio** для mTLS certs.
 
 ## Q13. Vault PKI?
@@ -348,6 +420,12 @@ vault write pki/issue/my-role \
 - Programmatic issuance
 - Automation-friendly
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Подробнее — [Vault](../devops/vault-interview.md).
 
 ## Q14. mTLS в Kafka, Redis, databases?
@@ -382,6 +460,12 @@ ssl_ca_file = '/path/ca.crt'
 
 **MongoDB, Elasticsearch, MySQL** — all support mTLS.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** secure connections к data stores from app, prevent unauthorized access.
 
 ## Q15. (!) Когда использовать mTLS?
@@ -399,6 +483,12 @@ ssl_ca_file = '/path/ca.crt'
 - Mobile apps (cert distribution hard)
 - Quick prototypes (operational overhead)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Modern approach:** **service mesh** для internal mTLS, OAuth для external clients.
 
 ## Q16. Performance overhead?
@@ -416,6 +506,12 @@ ssl_ca_file = '/path/ca.crt'
 
 **В service mesh** — handshake **once per connection** between sidecars (long-lived). App-to-sidecar — localhost (no TLS).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Net overhead** в production: ~3-5% latency.
 
 ## Q17. (!) Common pitfalls?
@@ -431,6 +527,12 @@ ssl_ca_file = '/path/ca.crt'
 9. **Private key leaks** (committed к git, exposed in logs)
 10. **Hard к debug** (TLS errors cryptic)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Tools:** `openssl s_client`, `curl -v`, Wireshark для debugging.
 
 ## Q18. mTLS vs JWT?
@@ -447,6 +549,12 @@ ssl_ca_file = '/path/ca.crt'
 | Service-to-service | **Excellent** | Good |
 | User-facing | Difficult | **Excellent** |
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Often combined:**
 - **mTLS** между services (Zero Trust)
 - **JWT** для user identity propagation through services
@@ -467,6 +575,12 @@ ssl_ca_file = '/path/ca.crt'
 - **Privacy** (CA knows checks)
 - **OCSP Stapling** — server includes signed OCSP response с cert (no separate request)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Modern alternative: short-lived certs** (no revocation needed — just expire).
 
 ## Q20. (!) Short-lived certificates?
@@ -509,6 +623,12 @@ ssl_ca_file = '/path/ca.crt'
 - [Networking](../architecture/networking-interview.md) — protocol layers
 - [Kubernetes](../devops/kubernetes-interview.md) — cert-manager
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Application Security](application-security-interview.md)
 - [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
 - [JWT](jwt-interview.md)

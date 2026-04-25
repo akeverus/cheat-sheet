@@ -11,7 +11,7 @@ aliases:
   - "HATEOAS interview"
   - "REST levels interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Richardson Maturity Model (REST)`
 
@@ -73,7 +73,12 @@ updated: "2026-04-19"
 
 **Created by:** Leonard Richardson, popularized Martin Fowler.
 
-## Q2. (!) Зачем модель нужна?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Зачем модель нужна?
 
 **Differentiates** "REST API" claims:
 - Большинство называют REST даже Level 0-1
@@ -87,7 +92,12 @@ updated: "2026-04-19"
 
 **Не предписывает** — описательная модель, не prescriptive.
 
-## Q3. (!) Level 0: The Swamp of POX?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Level 0: The Swamp of POX?
 
 **POX = Plain Old XML.** RPC-style over HTTP.
 
@@ -110,7 +120,12 @@ POST /endpoint HTTP/1.1
 
 **Не RESTful at all** — но technically uses HTTP.
 
-## Q4. (!) Level 1: Resources?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Level 1: Resources?
 
 **Multiple URIs** для multiple resources.
 
@@ -129,7 +144,12 @@ POST /products      # not /endpoint
 
 **Большой шаг forward** от Level 0.
 
-## Q5. (!) Level 2: HTTP Verbs + Status Codes?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Level 2: HTTP Verbs + Status Codes?
 
 **Use HTTP semantics properly.**
 
@@ -158,7 +178,12 @@ DELETE /users/123     # delete
 
 **Большинство "REST APIs"** = **Level 2**. Reasonable balance practicality + REST.
 
-## Q6. (!) Level 3: Hypermedia Controls (HATEOAS)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Level 3: Hypermedia Controls (HATEOAS)?
 
 **HATEOAS = Hypermedia as the Engine of Application State.**
 
@@ -184,7 +209,12 @@ DELETE /users/123     # delete
 
 **Vs hardcoded URLs:** server controls navigation. Server can rename URLs, change resource layout — clients still work.
 
-## Q7. (!) Что такое HATEOAS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Что такое HATEOAS?
 
 **HATEOAS** = client navigates application state through hypermedia links provided by server.
 
@@ -200,7 +230,12 @@ DELETE /users/123     # delete
 - Discovers everything else through links
 - Server can evolve без breaking clients
 
-## Q8. (!) Hypermedia формат (HAL, JSON:API, Siren)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Hypermedia формат (HAL, JSON:API, Siren)?
 
 **HAL (Hypertext Application Language):**
 ```json
@@ -247,7 +282,12 @@ DELETE /users/123     # delete
 
 **Spring HATEOAS, RestEasy** — Java implementations.
 
-## Q9. Преимущества HATEOAS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Преимущества HATEOAS?
 
 1. **Decoupling** — clients знают только entry point
 2. **Server evolution** — change URLs без breaking clients
@@ -276,7 +316,12 @@ DELETE /users/123     # delete
 
 **Client knows what's possible** через links, not business logic duplication.
 
-## Q10. (!) Почему HATEOAS редко применяется?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Почему HATEOAS редко применяется?
 
 **Реальность 2025:** **Level 2** dominates. HATEOAS rarely.
 
@@ -292,7 +337,12 @@ DELETE /users/123     # delete
 
 **Consensus:** HATEOAS — academically pure, но pragmatic API design = Level 2 + OpenAPI docs.
 
-## Q11. (!) HTTP verbs: GET, POST, PUT, PATCH, DELETE?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) HTTP verbs: GET, POST, PUT, PATCH, DELETE?
 
 | Verb | Semantics | Idempotent | Safe |
 |------|-----------|------------|------|
@@ -311,7 +361,12 @@ DELETE /users/123     # delete
 - PUT: send **entire** resource, replaces
 - PATCH: send **changes** only
 
-## Q12. (!) HTTP status codes по категориям?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) HTTP status codes по категориям?
 
 **1xx — Informational** (rare)
 
@@ -343,7 +398,12 @@ DELETE /users/123     # delete
 
 **Don't use 200** для всего. Proper codes inform clients и proxies.
 
-## Q13. Idempotency версов?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Idempotency версов?
 
 **Idempotent verbs:** GET, HEAD, OPTIONS, PUT, DELETE.
 **Non-idempotent:** POST, (PATCH usually).
@@ -367,7 +427,12 @@ Idempotency-Key: 7f9c1d-...
 {"amount": 100}
 ```
 
-## Q14. Safe vs unsafe методы?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Safe vs unsafe методы?
 
 **Safe** — does not modify state. **GET, HEAD, OPTIONS**.
 
@@ -385,7 +450,12 @@ BAD:  GET /users/123/delete
 GOOD: DELETE /users/123
 ```
 
-## Q15. (!) Критика модели (Roy Fielding)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Критика модели (Roy Fielding)?
 
 **Roy Fielding** (REST creator, 2000 PhD thesis):
 > "If the engine of application state (and hence the API) is not being driven by hypertext, then it cannot be RESTful."
@@ -399,7 +469,12 @@ GOOD: DELETE /users/123
 
 **Most modern APIs** = Level 2 + OpenAPI/Swagger. Industry choose pragmatism over purity.
 
-## Q16. Pragmatic REST vs idealistic REST?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Pragmatic REST vs idealistic REST?
 
 **Pragmatic (RMM Level 2):**
 - HTTP verbs + status codes
@@ -414,7 +489,12 @@ GOOD: DELETE /users/123
 
 **Reality 2025:** **Pragmatic** dominates. **OpenAPI = de facto** API documentation standard, replaces some HATEOAS goals.
 
-## Q17. (!) GraphQL, gRPC vs REST?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) GraphQL, gRPC vs REST?
 
 **REST (RMM Level 2):**
 - HTTP-based
@@ -457,7 +537,12 @@ GOOD: DELETE /users/123
 - [API Gateway](../architecture/api-gateway-interview.md) — context
 - [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
 
-- [API Design Best Practices](api-design-best-practices-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [API Design Best Practices](api-design-best-practices-interview.md)
 - [API Versioning](api-versioning-interview.md)
 - [GraphQL](graphql-interview.md)
 - [gRPC](grpc-interview.md)

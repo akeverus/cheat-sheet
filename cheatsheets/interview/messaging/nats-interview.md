@@ -11,7 +11,7 @@ aliases:
   - "JetStream interview"
   - "NATS vs Kafka"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `NATS`
 
@@ -89,7 +89,12 @@ updated: "2026-04-19"
 - Real-time apps (chat, gaming)
 - Event-driven architectures
 
-## Q2. (!) NATS vs Kafka vs RabbitMQ?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) NATS vs Kafka vs RabbitMQ?
 
 | Критерий | NATS | Kafka | RabbitMQ |
 |----------|------|-------|----------|
@@ -108,7 +113,12 @@ updated: "2026-04-19"
 - **Complex routing** — RabbitMQ
 - **Lightweight, edge** — NATS
 
-## Q3. Архитектура NATS Server?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Архитектура NATS Server?
 
 **NATS Server** — single Go binary (~30 MB).
 
@@ -126,7 +136,12 @@ updated: "2026-04-19"
 
 Никаких external dependencies (Apache Kafka требует ZooKeeper, etc.).
 
-## Q4. (!) Subjects (вместо topics)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Subjects (вместо topics)?
 
 **Subject** — name для message routing. **Hierarchical**, dot-separated.
 
@@ -145,7 +160,12 @@ user.456.profile
 - Wildcards для multi-subject matching
 - No partitions concept (для Core NATS)
 
-## Q5. Wildcards в subjects (`*`, `>`)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Wildcards в subjects (`*`, `>`)?
 
 **`*`** — single-token wildcard.
 **`>`** — multi-token wildcard (must be last).
@@ -159,7 +179,12 @@ user.*.profile     — matches user.123.profile, user.456.profile
 
 **Use case:** subscribers можно подписаться на широкий range subjects.
 
-## Q6. (!) Pub/Sub patterns?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Pub/Sub patterns?
 
 **Publisher:**
 ```javascript
@@ -177,7 +202,12 @@ nc.subscribe("orders.*", msg => {
 
 **Core NATS:** if no subscribers — message **dropped** (at-most-once).
 
-## Q7. (!) Queue groups (load balancing)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Queue groups (load balancing)?
 
 **Queue group** — multiple consumers share same subject, only **ONE** receives each message (round-robin).
 
@@ -199,7 +229,12 @@ nc.publish("orders.process", data);
 
 **Combined с broadcast:** subscribers без queue + queue groups одновременно — каждая queue group получает 1 копию + non-queue subscribers получают каждое message.
 
-## Q8. Request-Reply?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Request-Reply?
 
 **RPC-like pattern** через NATS:
 
@@ -222,7 +257,12 @@ NATS uses **temporary subjects** для replies — auto-managed.
 
 **Sub-millisecond** latency (vs HTTP).
 
-## Q9. (!) Что такое JetStream?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Что такое JetStream?
 
 **JetStream** (с 2020) — persistence layer на NATS.
 
@@ -237,7 +277,12 @@ NATS uses **temporary subjects** для replies — auto-managed.
 
 JetStream нужен для **persistent messaging** workloads. Без JetStream — NATS лучше для realtime / fire-and-forget.
 
-## Q10. Streams в JetStream?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Streams в JetStream?
 
 **Stream** — persistent storage для messages matching subjects.
 
@@ -256,7 +301,12 @@ nats stream add ORDERS \
 - **File** — disk-based, durable
 - **Memory** — fast, ephemeral
 
-## Q11. (!) Consumers (durable, ephemeral)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Consumers (durable, ephemeral)?
 
 **Consumer** = view на stream messages.
 
@@ -275,7 +325,12 @@ nats consumer add ORDERS order-processor \
 - **Push** consumer — NATS sends messages к subscriber
 - **Pull** consumer — subscriber requests messages (better для batch processing)
 
-## Q12. Retention policies?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Retention policies?
 
 **Limits-based** (default):
 ```
@@ -292,7 +347,12 @@ max_bytes: 100GB
 retention: limits | interest | workqueue
 ```
 
-## Q13. Replication через RAFT?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Replication через RAFT?
 
 **JetStream** uses **RAFT consensus** для replication.
 
@@ -309,7 +369,12 @@ nats stream add ORDERS --replicas 3
 
 **Storage:** quorum write (majority must persist) before ACK.
 
-## Q14. Key-Value store (built-in)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Key-Value store (built-in)?
 
 **JetStream KV** — simple key-value store на JetStream streams.
 
@@ -328,7 +393,12 @@ nats kv watch my_kv  # subscribe to changes
 
 **Watch API** — real-time updates (analog etcd watch).
 
-## Q15. Object Store?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Object Store?
 
 **JetStream Object Store** — для **larger blobs** (files, images).
 
@@ -347,7 +417,12 @@ Splits objects в **chunks** (default 128 KB), stores в JetStream.
 
 **Не replacement** для S3 — для smaller objects, integrated с messaging.
 
-## Q16. NATS Mirroring и Sourcing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. NATS Mirroring и Sourcing?
 
 **Mirror** — exact replica другого stream.
 
@@ -366,7 +441,12 @@ nats stream add COMBINED --sources STREAM1 --sources STREAM2
 - Disaster recovery
 - Stream aggregation
 
-## Q17. (!) NATS clustering?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) NATS clustering?
 
 **Cluster** — multiple NATS Server instances connected как **full mesh**.
 
@@ -384,7 +464,12 @@ cluster {
 
 **Scale:** до tens of nodes per cluster.
 
-## Q18. Leaf nodes (edge)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Leaf nodes (edge)?
 
 **Leaf node** — NATS Server connected к main cluster as one-way leaf.
 
@@ -403,7 +488,12 @@ leafnodes {
 
 **Subjects scoped** — leaf нодa может только subjects из allowed accounts.
 
-## Q19. Super-cluster (multi-region)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Super-cluster (multi-region)?
 
 **Super-cluster** = multiple clusters connected в **mesh**.
 
@@ -418,7 +508,12 @@ Cluster A (us-east)  ←→  Cluster B (eu-west)
 
 **Multi-region** messaging без central broker.
 
-## Q20. Authentication (NATS auth, JWT)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Authentication (NATS auth, JWT)?
 
 **Auth methods:**
 - **Token** — simple shared token
@@ -437,7 +532,12 @@ resolver: URL  # or memory
 
 **Production best practice** — JWT-based с NSC tool для management.
 
-## Q21. Accounts (multi-tenancy)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Accounts (multi-tenancy)?
 
 **Account** = isolated namespace (subjects, streams, KVs).
 
@@ -455,7 +555,12 @@ accounts: {
 
 **Use case:** SaaS multi-tenant — каждый customer = separate account, isolated.
 
-## Q22. (!) Когда выбрать NATS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Когда выбрать NATS?
 
 **Выбирай когда:**
 - **Microservices** internal communication (replace HTTP/gRPC)
@@ -466,7 +571,12 @@ accounts: {
 - **Multi-region** without expensive Kafka MirrorMaker
 - Need **request-reply + pub/sub + persistent streams** в одном stack
 
-## Q23. Когда не выбирать NATS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Когда не выбирать NATS?
 
 **Не выбирай когда:**
 - Need **complex stream processing** (Kafka Streams better)
@@ -476,7 +586,12 @@ accounts: {
 - Team **already invested** в Kafka / RabbitMQ
 - Need **enterprise features** что NATS не имеет (some Kafka Enterprise features)
 
-## Q24. Какие частые проблемы?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. Какие частые проблемы?
 
 1. **JetStream config** — wrong storage type (memory) → data loss
 2. **Insufficient replicas** — single point failure
@@ -508,7 +623,12 @@ accounts: {
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — NATS для sagas
 - [Caching](../architecture/caching-strategies-interview.md) — NATS KV
 
-- [AWS SQS и SNS](aws-sqs-sns-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS SQS и SNS](aws-sqs-sns-interview.md)
 - [Apache Kafka](kafka-interview.md)
 - [Сравнение Message Brokers](message-brokers-comparison-interview.md)
 - [Apache Pulsar](pulsar-interview.md)

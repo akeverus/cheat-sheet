@@ -11,7 +11,7 @@ aliases:
   - "REST API versioning"
   - "GraphQL versioning"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `API Versioning`
 
@@ -83,7 +83,12 @@ API versioning — стратегия evolve APIs без breaking existing clien
 
 **Public APIs обязательно** versioned. **Internal APIs** sometimes skip (faster iteration).
 
-## Q2. (!) Что такое breaking change?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Что такое breaking change?
 
 **Breaking change** — modification, требующая action от existing clients.
 
@@ -100,7 +105,12 @@ API versioning — стратегия evolve APIs без breaking existing clien
 
 **При breaking change** → **new version** обязателен.
 
-## Q3. (!) Backwards-compatible changes — examples?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Backwards-compatible changes — examples?
 
 **Не breaking (safe в same version):**
 - **Add new optional field** к request (clients ignore)
@@ -118,7 +128,12 @@ Clients should:
 - Handle missing optional fields
 - Handle new error codes gracefully
 
-## Q4. (!) URI versioning?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) URI versioning?
 
 ```
 https://api.example.com/v1/users/123
@@ -138,7 +153,12 @@ https://api.example.com/v2/users/123
 
 **Most common** approach. Used by Twitter, GitHub (older), Stripe (older).
 
-## Q5. (!) Header versioning?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Header versioning?
 
 ```http
 GET /users/123
@@ -163,7 +183,12 @@ X-API-Version: 2
 
 **Used by:** GitHub (newer API).
 
-## Q6. (!) Query parameter versioning?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Query parameter versioning?
 
 ```
 https://api.example.com/users/123?version=2
@@ -180,7 +205,12 @@ https://api.example.com/users/123?api-version=2024-01-15
 
 **Used by:** Azure APIs (often), Stripe (date-based как parameter).
 
-## Q7. Content negotiation (Accept header)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Content negotiation (Accept header)?
 
 ```http
 GET /users/123
@@ -200,7 +230,12 @@ Accept: application/vnd.example.user.v2+json
 
 **Niche** — mostly academic.
 
-## Q8. Hostname-based?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Hostname-based?
 
 ```
 https://api-v1.example.com/users/123
@@ -217,7 +252,12 @@ https://api-v2.example.com/users/123
 
 **Used:** rare, when version-specific infra needed.
 
-## Q9. (!) Какой подход выбрать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Какой подход выбрать?
 
 **Recommendations:**
 
@@ -231,7 +271,12 @@ https://api-v2.example.com/users/123
 
 **Default 2025:** URI versioning (`/v1/`, `/v2/`) — most pragmatic для most cases.
 
-## Q10. Semantic versioning (SemVer)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Semantic versioning (SemVer)?
 
 `MAJOR.MINOR.PATCH` (e.g., `2.5.3`).
 
@@ -245,7 +290,12 @@ https://api-v2.example.com/users/123
 
 **Library semver**: SemVer применим к SDK / client libraries.
 
-## Q11. (!) Date-based versioning (Stripe approach)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Date-based versioning (Stripe approach)?
 
 **Stripe** uses date-based versions:
 
@@ -270,7 +320,12 @@ Stripe-Version: 2024-04-19
 
 **Stripe maintains** **all versions** ever published — clients pin к specific date, never broken.
 
-## Q12. (!) Per-account version pinning?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Per-account version pinning?
 
 **Stripe model:** каждый customer pinned к specific API version.
 
@@ -289,7 +344,12 @@ Account Z: latest (auto-upgrade)
 
 **Result:** Stripe can introduce breaking changes constantly **без breaking anyone**.
 
-## Q13. Webhook versioning?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Webhook versioning?
 
 **Webhooks** harder to version (server pushes, can't negotiate):
 
@@ -301,7 +361,12 @@ Account Z: latest (auto-upgrade)
 
 **Common pattern:** webhook payloads frozen forever, only add new event types.
 
-## Q14. (!) Не versions в GraphQL?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Не versions в GraphQL?
 
 **GraphQL philosophy:** **no versioning**.
 
@@ -324,7 +389,12 @@ type User {
 
 **Eventually** (years) — `username` removed (но disruption minimized — most clients moved).
 
-## Q15. Field deprecation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Field deprecation?
 
 ```graphql
 type Query {
@@ -344,7 +414,12 @@ type User {
 - Linters warn
 - API documentation shows deprecation notices
 
-## Q16. (!) Deprecation policy?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Deprecation policy?
 
 **Public API deprecation policy** обычно:
 
@@ -360,7 +435,12 @@ type User {
 - **GitHub:** ~12-18 months deprecation
 - **Twitter:** ~6 months deprecation
 
-## Q17. Sunset HTTP header?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Sunset HTTP header?
 
 **RFC 8594** — `Sunset` header indicates resource will be removed.
 
@@ -375,7 +455,12 @@ Link: <https://api.example.com/v3/users/123>; rel="successor-version"
 
 **Best practice:** include в every response для deprecated endpoints.
 
-## Q18. (!) Как gracefully deprecate API?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Как gracefully deprecate API?
 
 **Steps:**
 
@@ -391,7 +476,12 @@ Link: <https://api.example.com/v3/users/123>; rel="successor-version"
 
 **Don't surprise** users. Communicate, communicate, communicate.
 
-## Q19. (!) Versioning best practices?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Versioning best practices?
 
 1. **Default к backwards-compatible changes** (no new version needed)
 2. **Versioning strategy decided early** (changing later painful)
@@ -406,7 +496,12 @@ Link: <https://api.example.com/v3/users/123>; rel="successor-version"
 11. **Tolerant Reader** pattern на client side
 12. **Don't version internal APIs** if possible (faster iteration)
 
-## Q20. Multiple versions параллельно — операционные расходы?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Multiple versions параллельно — операционные расходы?
 
 **Cost of supporting multiple versions:**
 - **Code complexity** (branches per version)
@@ -427,7 +522,12 @@ Link: <https://api.example.com/v3/users/123>; rel="successor-version"
 
 ## See also
 
-- [REST Maturity](rest-maturity-interview.md) — context
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [REST Maturity](rest-maturity-interview.md) — context
 - [API Design Best Practices](api-design-best-practices-interview.md)
 - [HTTP & REST](http-rest-interview.md) — основа
 - [GraphQL](graphql-interview.md) — versioning approach differs

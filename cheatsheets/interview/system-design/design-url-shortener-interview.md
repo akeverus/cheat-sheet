@@ -11,7 +11,7 @@ aliases:
   - "bit.ly architecture"
   - "URL Shortener собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design URL Shortener`
 
@@ -86,7 +86,12 @@ updated: "2026-04-19"
 
 **Interview tip:** clarify с interviewer — scope matters greatly для design.
 
-## Q2. (!) Capacity estimation — сколько storage, QPS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Capacity estimation — сколько storage, QPS?
 
 **Assumptions (bit.ly-scale):**
 - 100M new URLs / month = ~40 writes/sec
@@ -116,7 +121,12 @@ updated: "2026-04-19"
 
 **Takeaway:** not a huge system, но requires careful caching для read latency.
 
-## Q3. (!) API endpoints и flow?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) API endpoints и flow?
 
 **POST /shorten**
 ```http
@@ -161,7 +171,12 @@ Location: https://very/long/url
 3. Found → cache + redirect
 4. Not found → 404
 
-## Q4. (!) Как генерировать short URL? (Base62, hash, counter)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Как генерировать short URL? (Base62, hash, counter)
 
 **Three main approaches:**
 
@@ -207,7 +222,12 @@ check_db_collision()
 
 **Picked approach:** counter + Base62 с key-range sharding, OR offline-generated random pool.
 
-## Q5. (!) Почему Base62, а не Base64?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Почему Base62, а не Base64?
 
 **Base62 alphabet:** `[a-zA-Z0-9]` — 62 chars.
 
@@ -243,7 +263,12 @@ def decode(s):
     return sum(ALPHABET.index(c) * 62**i for i, c in enumerate(reversed(s)))
 ```
 
-## Q6. Как избежать collisions?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Как избежать collisions?
 
 **В hash-based approach:**
 - Collision rate низкий, но ≠ 0
@@ -290,7 +315,12 @@ while True:
 - ~10M collisions at 6B codes
 - Must handle gracefully
 
-## Q7. (!) Database schema?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Database schema?
 
 **Simple:**
 
@@ -339,7 +369,12 @@ CREATE TABLE users (
 - Don't join clicks на each redirect (denormalized counter или async batch)
 - `click_count` eventually consistent (update from clicks stream every N sec)
 
-## Q8. SQL vs NoSQL — какой выбор?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. SQL vs NoSQL — какой выбор?
 
 **SQL (PostgreSQL/MySQL):**
 - Transactions (важно для counter?)
@@ -374,7 +409,12 @@ Table: urls
 - Kafka → Flink/Spark → data warehouse (BigQuery, Redshift)
 - Heavy aggregation off main path
 
-## Q9. (!) Как scale reads? (cache, CDN)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Как scale reads? (cache, CDN)
 
 **Read amplification problem:** 1 URL може serve billions of redirects.
 
@@ -412,7 +452,12 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 
 **80/20 rule:** 20% URLs get 80% traffic → cache effective.
 
-## Q10. (!) Cache strategy (write-through / lazy)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Cache strategy (write-through / lazy)?
 
 **Write-through:**
 - On shorten: write DB + Redis atomically
@@ -443,7 +488,12 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 - Nanosecond access
 - Invalidate periodically
 
-## Q11. Как shard DB?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Как shard DB?
 
 **Sharding strategies:**
 
@@ -476,7 +526,12 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 
 **DynamoDB:** hash-based partitioning built-in; auto-split hot partitions (>1000 WCU).
 
-## Q12. Custom aliases?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Custom aliases?
 
 **User requests:** `/myalias` instead of `/abc1234`.
 
@@ -500,7 +555,12 @@ INSERT INTO urls (short_code, long_url) VALUES ('myalias', '...');
 - Reserved list (trademarks, offensive)
 - Premium namespaces
 
-## Q13. TTL / expiration?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. TTL / expiration?
 
 **DB expiration:**
 - `expires_at` timestamp
@@ -524,7 +584,12 @@ SET short_code long_url EX 86400
 **Analytics consideration:**
 - Even expired URLs — preserve click history? Depends on product
 
-## Q14. Analytics (click tracking)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Analytics (click tracking)?
 
 **On redirect:**
 - Emit event async (don't block redirect)
@@ -559,7 +624,12 @@ SET short_code long_url EX 86400
 **Country lookup:**
 - IP → country via MaxMind GeoIP DB
 
-## Q15. (!) Reliability и single point of failure?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Reliability и single point of failure?
 
 **SPOFs to eliminate:**
 
@@ -588,7 +658,12 @@ SET short_code long_url EX 86400
 - 99.99% = ~50 min/year downtime
 - Requires multi-region для planned maintenance too
 
-## Q16. Security (spam, phishing)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Security (spam, phishing)?
 
 **Malicious use:** shortener obscures destination → phishing via trusted domain.
 
@@ -623,7 +698,12 @@ SET short_code long_url EX 86400
 
 **Terms of service:** clear prohibited use; disable on violation.
 
-## Q17. Rate limiting?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Rate limiting?
 
 **Why:** prevent abuse, DoS, cost control.
 
@@ -660,7 +740,12 @@ Retry-After: 60
 
 ## See also
 
-- [System Design](system-design-interview.md) — общие принципы
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [System Design](system-design-interview.md) — общие принципы
 - [Design Rate Limiter](design-rate-limiter-interview.md) — компонент
 - [Caching Strategies](../architecture/caching-strategies-interview.md) — Redis, CDN
 - [Database Architecture](../databases/database-architecture-interview.md) — SQL vs NoSQL

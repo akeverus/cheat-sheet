@@ -11,7 +11,7 @@ aliases:
   - "Graph database interview"
   - "Cypher interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Neo4j`
 
@@ -99,6 +99,12 @@ Alice --LIKES--> Pizza
 - Network topology
 - Identity / access management
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Top vendors:** Neo4j, Amazon Neptune, ArangoDB, JanusGraph.
 
 ## Q2. (!) Когда graph DB лучше реляционной?
@@ -127,6 +133,12 @@ RETURN friend.name
 - **Pattern matching** (find triangles, cycles)
 - **Frequent relationship traversals**
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Когда реляционная лучше:**
 - Tabular data
 - Simple aggregations
@@ -150,6 +162,12 @@ RETURN friend.name
 - W3C standard, used в semantic web (DBpedia, Wikidata)
 - Tools: SPARQL, RDF stores
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В **2025** **property graphs** — mainstream. RDF — semantic web niche.
 
 ## Q4. Что такое native graph storage?
@@ -165,6 +183,12 @@ RETURN friend.name
 - Joins для каждого hop
 - Performance degrades exponentially
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Neo4j** — native. **AWS Neptune, JanusGraph** — also native (different architectures).
 
 ## Q5. (!) Nodes, relationships, properties?
@@ -186,6 +210,12 @@ CREATE (alice)-[:FRIEND_OF {since: 2020}]->(bob)
 - 0+ properties (since, weight)
 - Two endpoints (start node, end node)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Property:**
 - Key-value pair
 - Types: String, Integer, Float, Boolean, Array
@@ -207,6 +237,12 @@ MATCH (n:Customer) RETURN n  -- all Customers
 
 **Multiple labels** — node может иметь несколько (Person + Customer + VIP).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Indexing per label:**
 ```cypher
 CREATE INDEX ON :Person(name)
@@ -234,6 +270,12 @@ MATCH (a)-[:KNOWS]->(b)
 MATCH (a)<-[:KNOWS]-(b)
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Directional choice** important для query performance and semantics.
 
 ## Q8. (!) Что такое Cypher?
@@ -254,6 +296,12 @@ LIMIT 10
 - `RETURN` ↔ `SELECT`
 - `ORDER BY`, `LIMIT` ↔ same
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Уникальное:** **ASCII-art patterns** для graph matching.
 
 ## Q9. (!) MATCH, WHERE, RETURN?
@@ -269,6 +317,12 @@ RETURN a.name, b.name
 **WHERE** — filter conditions.
 **RETURN** — what to return.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **OPTIONAL MATCH** — like LEFT JOIN (returns NULL if no match).
 ```cypher
 MATCH (a:Person {name: "Alice"})
@@ -299,6 +353,12 @@ MATCH (a)-[:KNOWS]->(b)-[:KNOWS]->(c)-[:KNOWS]->(a)
 RETURN a, b, c
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Powerful** для graph patterns.
 
 ## Q11. CREATE, MERGE, SET, DELETE?
@@ -321,6 +381,12 @@ MATCH (n:Person {name: "Alice"})
 SET n.age = 31, n.email = "alice@example.com"
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **DELETE** — remove nodes / relationships.
 ```cypher
 MATCH (n:Person {name: "Alice"})
@@ -347,6 +413,12 @@ MATCH path = shortestPath((a:Person {name: "Alice"})-[:KNOWS*]-(b:Person {name: 
 RETURN path
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Подвох:** unbounded `*` может explode. Always set max depth.
 
 ## Q13. WITH clause (chaining queries)?
@@ -361,6 +433,12 @@ MATCH (alice)-[:KNOWS]->(close)
 RETURN close
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 `WITH` similar к SQL **subqueries**. Used для:
 - Filtering aggregates
 - Limiting before next match
@@ -394,6 +472,12 @@ MATCH (p:Person {email: "alice@example.com"})
 -- С index → INDEX SEEK
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:** index on **search criteria** (entry points в graph traversal).
 
 ## Q15. Constraints (UNIQUE, NOT NULL)?
@@ -412,6 +496,12 @@ CREATE CONSTRAINT FOR (p:Person) REQUIRE p.age IS :: INTEGER
 CREATE CONSTRAINT FOR (p:Person) REQUIRE (p.firstName, p.lastName) IS UNIQUE
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Constraints** automatically create supporting index.
 
 ## Q16. Full-text search index?
@@ -429,6 +519,12 @@ ORDER BY score DESC
 
 Использует **Lucene** под капотом. Для text search across nodes.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Альтернатива:** OpenSearch / Elasticsearch для serious search workloads.
 
 ## Q17. (!) Query plan, EXPLAIN, PROFILE?
@@ -451,6 +547,12 @@ Expand          | 50   | 100
 ProduceResults  | 50   | 0
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Goal:** minimize DB hits. Look for `NodeByLabelScan` (full scan, slow) — обычно need index.
 
 ## Q18. (!) Index-free adjacency — что это?
@@ -467,6 +569,12 @@ Node Alice → list of pointers к connected nodes [Bob, Charlie, ...]
 - Relational join → hash table lookup или merge → log/linear
 - For deep traversals → exponentially slower
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Native graph storage** — главное performance edge Neo4j.
 
 ## Q19. Anchor patterns в Cypher?
@@ -483,6 +591,12 @@ MATCH (a:Person {name: "Alice"})-[:KNOWS]->(b) RETURN b
 
 После anchor — traverse relationships efficiently.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:** start с **most selective** node (smallest matching set).
 
 ## Q20. (!) Graph Data Science (GDS) library?
@@ -505,6 +619,12 @@ RETURN gds.util.asNode(nodeId).name AS name, score
 ORDER BY score DESC LIMIT 10
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Workflow:**
 1. **Project graph** в memory (subset для analysis)
 2. **Run algorithm** (mutate / write / stream)
@@ -533,6 +653,12 @@ YIELD totalCost, nodeIds
 RETURN totalCost, [n in nodeIds | gds.util.asNode(n).name]
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Подробнее — в [Графы](../algorithms/data-structures/graphs-interview.md).
 
 ## Q22. PageRank, centrality?
@@ -553,6 +679,12 @@ ORDER BY score DESC LIMIT 10
 - **Eigenvector** — connections к important nodes
 - **PageRank** — variant Eigenvector
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use cases:**
 - Influencer detection
 - Critical infrastructure
@@ -574,6 +706,12 @@ RETURN gds.util.asNode(nodeId).name, communityId
 - **Label Propagation** — fast, less precise
 - **Connected Components** — strongly/weakly connected
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use cases:**
 - Social network communities
 - Customer segmentation
@@ -591,6 +729,12 @@ LIMIT 10
 
 **Friend recommendation** через mutual friends.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В Facebook, LinkedIn — **People You May Know** features built на graph algorithms.
 
 ## Q25. (!) Recommendations engine?
@@ -606,6 +750,12 @@ RETURN rec.name, count(*) AS frequency
 ORDER BY frequency DESC LIMIT 10
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Movie recommendations:**
 ```cypher
 MATCH (user:User {name: "Alice"})-[:RATED {rating: 5}]->(movie)<-[:RATED {rating: 5}]-(other:User)
@@ -630,6 +780,12 @@ RETURN path
 - **Star** — many → 1 → many (intermediary)
 - **Hub** — single account с unusual connectivity
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Banks (Capital One, HSBC) используют graph DBs для fraud.
 
 ## Q27. Knowledge graphs?
@@ -648,6 +804,12 @@ Banks (Capital One, HSBC) используют graph DBs для fraud.
 - **Internal knowledge bases** (employees, projects, expertise)
 - **Healthcare** (drugs, diseases, interactions)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Semantic Web (RDF, SPARQL)** — formal alternative property graphs.
 
 ## Q28. (!) Neo4j editions (Community vs Enterprise vs Aura)?
@@ -671,6 +833,12 @@ Banks (Capital One, HSBC) используют graph DBs для fraud.
 - Pay-as-you-grow
 - Multi-region
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Choice:**
 - Hobby / open-source — Community
 - Production self-hosted — Enterprise
@@ -692,6 +860,12 @@ graph TD
 - **Core servers (3+)** — Raft consensus, accept writes
 - **Read replicas** — async replicas, read scaling
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Causal consistency** — bookmarks track ваши writes; subsequent reads guaranteed see them.
 
 ## Q30. (!) Альтернативы Neo4j?
@@ -721,6 +895,12 @@ graph TD
 
 ## See also
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Графы (алгоритмы)](../algorithms/data-structures/graphs-interview.md) — algorithms
 - [PostgreSQL](postgresql-interview.md) — для сравнения relational
 - [MongoDB](mongodb-interview.md) — document DB

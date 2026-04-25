@@ -11,7 +11,7 @@ aliases:
   - "Pulsar собеседование"
   - "Pulsar vs Kafka"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Apache Pulsar`
 
@@ -89,7 +89,12 @@ updated: "2026-04-19"
 
 **Применения:** event streaming, microservices, IoT, multi-region apps.
 
-## Q2. (!) Pulsar vs Kafka — основные отличия?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Pulsar vs Kafka — основные отличия?
 
 | Критерий | Pulsar | Kafka |
 |----------|--------|-------|
@@ -106,7 +111,12 @@ updated: "2026-04-19"
 
 **Pulsar** — modern architecture, but **Kafka dominates** market.
 
-## Q3. Cloud-native — что это значит?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Cloud-native — что это значит?
 
 **"Cloud-native"** для Pulsar:
 - **Brokers stateless** — can be added/removed easily
@@ -117,7 +127,12 @@ updated: "2026-04-19"
 
 **Kafka legacy:** brokers do compute + storage. Adding capacity = rebalancing partitions (slow).
 
-## Q4. (!) Brokers + Bookies (separated compute/storage)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Brokers + Bookies (separated compute/storage)?
 
 ```mermaid
 graph TD
@@ -148,7 +163,12 @@ graph TD
 
 vs Kafka где broker = compute + storage = rebalance hell при scaling.
 
-## Q5. (!) Apache BookKeeper?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Apache BookKeeper?
 
 **Apache BookKeeper** — distributed log storage system. Lower-level than Pulsar.
 
@@ -170,7 +190,12 @@ E=3, Q_w=2: 3 replicas, write needs 2 acks
 
 **Originally designed для Hadoop NameNode HA**. Now used in Pulsar, DistributedLog, Salesforce, Twitter.
 
-## Q6. ZooKeeper / Oxia роль?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. ZooKeeper / Oxia роль?
 
 **ZooKeeper** historically used by Pulsar для:
 - Cluster metadata
@@ -185,7 +210,12 @@ E=3, Q_w=2: 3 replicas, write needs 2 acks
 
 В **2025** — переход с ZK к Oxia для new deployments.
 
-## Q7. Topics, segments, ledgers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Topics, segments, ledgers?
 
 **Topic** = stream messages (как Kafka topic).
 
@@ -207,7 +237,12 @@ Topic → Segment 1 (ledger 1, bookies A,B,C)
 - Kafka partition = single broker storage (no automatic distribution)
 - Pulsar topic data = distributed across bookies из коробки
 
-## Q8. (!) Subscription types (Exclusive, Shared, Failover, Key_Shared)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Subscription types (Exclusive, Shared, Failover, Key_Shared)?
 
 **4 subscription types:**
 
@@ -235,7 +270,12 @@ key="user2" → always consumer B
 
 **vs Kafka:** Kafka only has consumer group (~ Failover-like с partition distribution).
 
-## Q9. (!) Чем Shared отличается от Kafka consumer group?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Чем Shared отличается от Kafka consumer group?
 
 **Kafka consumer group:**
 - Each partition assigned к ONE consumer
@@ -253,7 +293,12 @@ key="user2" → always consumer B
 
 **Trade-off:** Pulsar Shared не gives ordering guarantees per key (use Key_Shared для that).
 
-## Q10. (!) Tenants, namespaces, topics?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Tenants, namespaces, topics?
 
 ```
 persistent://tenant/namespace/topic
@@ -278,7 +323,12 @@ beta-corp/orders/created
 
 **Single Pulsar cluster** для many use cases. Vs Kafka — multiple clusters обычно.
 
-## Q11. Resource isolation между tenants?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Resource isolation между tenants?
 
 ```bash
 # Set resource quota
@@ -298,7 +348,12 @@ pulsar-admin namespaces set-max-consumers-per-subscription acme-corp/orders 50
 
 **Soft isolation:** advanced — assign brokers/bookies к specific tenants.
 
-## Q12. (!) Geo-replication в Pulsar?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Geo-replication в Pulsar?
 
 **Native multi-region** replication.
 
@@ -319,7 +374,12 @@ pulsar-admin namespaces set-clusters acme-corp/orders \
 - Multi-region apps (low latency local)
 - Compliance (data residency)
 
-## Q13. Replicated subscriptions?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Replicated subscriptions?
 
 **Cross-region** subscription state replication.
 
@@ -334,7 +394,12 @@ pulsar-admin topics set-replicated-subscription \
 
 Powerful для **active-active** multi-region setups.
 
-## Q14. (!) Pulsar Functions — что это?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Pulsar Functions — что это?
 
 **Pulsar Functions** — lightweight compute layer. Process messages without external system (Spark, Flink).
 
@@ -364,7 +429,12 @@ pulsar-admin functions create \
 
 **Не для:** complex stream processing — use Flink/Spark в этом случае.
 
-## Q15. Pulsar IO (connectors)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Pulsar IO (connectors)?
 
 **Pulsar IO** = pre-built connectors к external systems.
 
@@ -388,7 +458,12 @@ pulsar-admin sinks create \
 
 Аналог **Kafka Connect**, integrated в Pulsar.
 
-## Q16. (!) Tiered storage (S3, GCS)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Tiered storage (S3, GCS)?
 
 **Built-in offloading** старых ledgers к object storage.
 
@@ -407,7 +482,12 @@ pulsar-admin namespaces set-offload-policies acme-corp/orders \
 
 В **Kafka** — KIP-405 (Tiered Storage) introduces similar (с Kafka 3.6+, less mature).
 
-## Q17. Topic compaction?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Topic compaction?
 
 **Compaction** — keep only **latest message per key**.
 
@@ -422,7 +502,12 @@ pulsar-admin topics compact persistent://tenant/ns/topic
 
 **Compacted topics** can be replayed как latest snapshot.
 
-## Q18. (!) Kafka-on-Pulsar (KoP)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Kafka-on-Pulsar (KoP)?
 
 **KoP** — Pulsar broker exposing **Kafka wire protocol**.
 
@@ -436,7 +521,12 @@ Kafka Producer → Pulsar (KoP) → Pulsar storage
 
 Originally StreamNative project, now Apache Pulsar plugin.
 
-## Q19. AMQP-on-Pulsar (AoP)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. AMQP-on-Pulsar (AoP)?
 
 **Same idea для AMQP** (RabbitMQ protocol).
 
@@ -444,7 +534,12 @@ Originally StreamNative project, now Apache Pulsar plugin.
 
 Less common than KoP. RabbitMQ migrations less frequent.
 
-## Q20. (!) Когда выбрать Pulsar над Kafka?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Когда выбрать Pulsar над Kafka?
 
 **Выбирай Pulsar когда:**
 - **Multi-tenancy** требуется (SaaS, internal platform)
@@ -462,7 +557,12 @@ Less common than KoP. RabbitMQ migrations less frequent.
 - Team has no Pulsar experience
 - Need maximum compatibility (Kafka standard)
 
-## Q21. Какие минусы Pulsar?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Какие минусы Pulsar?
 
 1. **Operational complexity** — больше components (brokers + bookies + ZK/Oxia)
 2. **Smaller community / ecosystem** vs Kafka
@@ -474,7 +574,12 @@ Less common than KoP. RabbitMQ migrations less frequent.
 8. **Less integration с external tools** (Kafka has more)
 9. **Stream processing weaker** — Flink integration, but Kafka Streams more mature
 
-## Q22. Кто использует Pulsar?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. Кто использует Pulsar?
 
 - **Yahoo!** (creator) — internal messaging, IoT
 - **Tencent** — multiple use cases
@@ -507,7 +612,12 @@ Less common than KoP. RabbitMQ migrations less frequent.
 - [Caching](../architecture/caching-strategies-interview.md) — для acceleration
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — for choreographed sagas
 
-- [AWS SQS и SNS](aws-sqs-sns-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS SQS и SNS](aws-sqs-sns-interview.md)
 - [Apache Kafka](kafka-interview.md)
 - [Сравнение Message Brokers](message-brokers-comparison-interview.md)
 - [NATS](nats-interview.md)

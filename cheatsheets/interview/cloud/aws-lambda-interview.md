@@ -11,7 +11,7 @@ aliases:
   - "Serverless Lambda interview"
   - "FaaS interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS Lambda`
 
@@ -105,7 +105,12 @@ updated: "2026-04-19"
 - Webhooks
 - Frontend для микросервисов
 
-## Q2. (!) Lambda lifecycle (cold/warm start)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Lambda lifecycle (cold/warm start)?
 
 ```
 1. Init phase (cold start):
@@ -136,7 +141,12 @@ def handler(event, context):
     return db_client.get_item(...)
 ```
 
-## Q3. (!) Какие runtimes поддерживаются?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Какие runtimes поддерживаются?
 
 **Native runtimes:**
 - Python (3.9, 3.10, 3.11, 3.12, 3.13)
@@ -154,7 +164,12 @@ def handler(event, context):
 - **Java, .NET** — slower cold start, но **SnapStart** помогает
 - **Go, Rust** — через custom runtime / Container
 
-## Q4. Container images vs ZIP deployment?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. Container images vs ZIP deployment?
 
 **ZIP deployment:**
 - До 250 MB unzipped
@@ -176,7 +191,12 @@ def handler(event, context):
 
 **Default — ZIP** (faster, simpler).
 
-## Q5. (!) Что такое cold start?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Что такое cold start?
 
 **Cold start** — invocation, требующая создания **нового execution environment**.
 
@@ -202,7 +222,12 @@ def handler(event, context):
 - Code update (new version)
 - Configuration change
 
-## Q6. (!) Как уменьшить cold start?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Как уменьшить cold start?
 
 1. **Smaller deployment package** — меньше код = быстрее download/init
 2. **Lazy load** dependencies (import inside handler если редко нужно)
@@ -215,7 +240,12 @@ def handler(event, context):
 9. **SnapStart для Java** (5-10x faster cold start)
 10. **Pre-warming** через scheduled invocations (hack)
 
-## Q7. (!) SnapStart для Java?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) SnapStart для Java?
 
 **SnapStart** (с 2022) — Lambda берёт **snapshot** initialized environment после init phase, переиспользует.
 
@@ -233,7 +263,12 @@ def handler(event, context):
 
 В **2025** — SnapStart доступен для **Java, Python, .NET**.
 
-## Q8. Provisioned Concurrency?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Provisioned Concurrency?
 
 **Provisioned Concurrency (PC)** — pre-initialized envs, всегда warm.
 
@@ -256,7 +291,12 @@ aws lambda put-provisioned-concurrency-config \
 - Latency-sensitive APIs
 - Burst predictable workloads (start-of-day rush)
 
-## Q9. (!) Memory, CPU, timeout?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Memory, CPU, timeout?
 
 **Memory:** 128 MB - 10 GB (с инкрементом 1 MB).
 
@@ -276,7 +316,12 @@ aws lambda put-provisioned-concurrency-config \
 
 **Lambda Power Tuning** tool — automated benchmark optimal memory.
 
-## Q10. Environment variables?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Environment variables?
 
 ```python
 import os
@@ -297,7 +342,12 @@ ssm = boto3.client('ssm')
 db_url = ssm.get_parameter(Name='/myapp/prod/db_url', WithDecryption=True)['Parameter']['Value']
 ```
 
-## Q11. Lambda Layers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Lambda Layers?
 
 **Layer** — переиспользуемый код/dependencies, shared между Lambdas.
 
@@ -320,7 +370,12 @@ Layer 2: shared utilities — 5 MB
 - Custom utilities
 - Lambda Powertools
 
-## Q12. (!) ARM (Graviton2) vs x86?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) ARM (Graviton2) vs x86?
 
 **Graviton2 (ARM)** — AWS's ARM-based processor.
 
@@ -342,7 +397,12 @@ Architectures:
 
 **Default 2025:** **ARM** для new Lambdas (если deps support).
 
-## Q13. (!) API Gateway → Lambda?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) API Gateway → Lambda?
 
 **Самая частая** integration: HTTP request → API Gateway → Lambda → response.
 
@@ -377,7 +437,12 @@ def handler(event, context):
     }
 ```
 
-## Q14. Lambda Function URLs?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Lambda Function URLs?
 
 С 2022 — **Function URLs** = built-in HTTPS endpoint без API Gateway.
 
@@ -400,7 +465,12 @@ URL: `https://abc123.lambda-url.us-east-1.on.aws/`.
 
 **Для simple webhooks** или public endpoints — Function URLs идеальны.
 
-## Q15. (!) S3, DynamoDB Streams, Kinesis?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) S3, DynamoDB Streams, Kinesis?
 
 **S3 trigger:**
 ```
@@ -433,7 +503,12 @@ def handler(event, context):
 - BatchWindow — wait для batch fill
 - MaxRetries
 
-## Q16. (!) SQS как trigger?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) SQS как trigger?
 
 ```
 SQS message → Lambda → process → ack (delete from SQS)
@@ -461,7 +536,12 @@ def handler(event, context):
 
 **Подвох:** Lambda concurrency может быть **bottlenecked SQS visibility timeout**. Set visibility = 6 × Lambda timeout.
 
-## Q17. EventBridge?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. EventBridge?
 
 **EventBridge** — event bus с rules.
 
@@ -481,7 +561,12 @@ EventBridge rule:
 
 В **2025** — EventBridge **preferred** для complex event routing.
 
-## Q18. Step Functions для orchestration?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Step Functions для orchestration?
 
 **Step Functions** — visual workflow для chaining Lambdas / AWS services.
 
@@ -505,7 +590,12 @@ EventBridge rule:
 - **Express** — high volume, short (< 5 min), at-least-once
 - **Standard** — long workflows (until 1 year), exactly-once
 
-## Q19. (!) Что такое concurrent executions?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Что такое concurrent executions?
 
 **Concurrent executions** — Lambdas running **в один момент**.
 
@@ -517,7 +607,12 @@ EventBridge rule:
 
 **Per function** — без limit (использует account limit shared).
 
-## Q20. Reserved vs Provisioned concurrency?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Reserved vs Provisioned concurrency?
 
 **Reserved concurrency:**
 - **Limit** для конкретной function (макс concurrency)
@@ -537,7 +632,12 @@ aws lambda put-function-concurrency --function-name my-fn --reserved-concurrent-
 aws lambda put-provisioned-concurrency-config --function-name my-fn --qualifier prod --provisioned-concurrent-executions 10
 ```
 
-## Q21. (!) Что происходит при превышении concurrency limit?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) Что происходит при превышении concurrency limit?
 
 | Тип trigger | При throttling |
 |-------------|----------------|
@@ -548,7 +648,12 @@ aws lambda put-provisioned-concurrency-config --function-name my-fn --qualifier 
 
 **Best practice:** monitor concurrency metrics, set alarms на throttle errors.
 
-## Q22. (!) Какие лимиты у Lambda?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Какие лимиты у Lambda?
 
 | Limit | Value |
 |-------|-------|
@@ -566,7 +671,12 @@ aws lambda put-provisioned-concurrency-config --function-name my-fn --qualifier 
 
 **При превышении** — adapt architecture (split work, use Step Functions, switch to ECS).
 
-## Q23. Как обойти 15 min timeout?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Как обойти 15 min timeout?
 
 **Если задача > 15 min:**
 
@@ -578,7 +688,12 @@ aws lambda put-provisioned-concurrency-config --function-name my-fn --qualifier 
 
 **Common pattern:** Lambda triggers Fargate task для heavy work.
 
-## Q24. (!) Lambda в VPC?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Lambda в VPC?
 
 ```yaml
 VpcConfig:
@@ -592,7 +707,12 @@ VpcConfig:
 
 **В VPC:** Lambda gets ENI in subnet, нужен NAT Gateway для internet access.
 
-## Q25. Cold start в VPC — раньше проблема?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. Cold start в VPC — раньше проблема?
 
 **До 2019:** ENI attached at cold start → ~10-15 sec extra delay. **Очень болезненно**.
 
@@ -600,7 +720,12 @@ VpcConfig:
 
 В **2025** — Lambda в VPC **OK**. No more "избегайте VPC" advice.
 
-## Q26. (!) SAM, CDK, Serverless Framework?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. (!) SAM, CDK, Serverless Framework?
 
 **Tools для deploy Lambda:**
 
@@ -656,7 +781,12 @@ functions:
 
 В **2025** — **CDK** для serious AWS-only projects, **Serverless Framework** для multi-cloud.
 
-## Q27. Lambda versions, aliases, traffic shifting?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. Lambda versions, aliases, traffic shifting?
 
 **Versions** — immutable snapshots Lambda.
 ```
@@ -682,7 +812,12 @@ aws lambda update-alias --function-name my-fn --name prod \
 
 **Use case:** safe deploys через canary deployment.
 
-## Q28. (!) CloudWatch Logs / X-Ray для Lambda?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. (!) CloudWatch Logs / X-Ray для Lambda?
 
 **CloudWatch Logs** — automatic.
 - Log group: `/aws/lambda/<function-name>`
@@ -713,7 +848,12 @@ def handler(event, context):
     ...
 ```
 
-## Q29. Cost analysis Lambda?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q29. Cost analysis Lambda?
 
 **Pricing:**
 - **Per-invocation:** $0.20 per 1M invocations
@@ -735,7 +875,12 @@ def handler(event, context):
 - Data transfer
 - API Gateway costs
 
-## Q30. (!) Когда использовать Lambda, когда нет?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q30. (!) Когда использовать Lambda, когда нет?
 
 **Use Lambda:**
 - Event-driven processing (S3 uploads, DynamoDB streams)
@@ -756,7 +901,12 @@ def handler(event, context):
 
 **Break-even:** примерно **50K req/day** или constant load. Меньше — Lambda дешевле, больше — EC2.
 
-## Q31. Best practices?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q31. Best practices?
 
 1. **Keep functions small** — single responsibility
 2. **Init outside handler** — connection pools, SDK clients
@@ -769,7 +919,12 @@ def handler(event, context):
 9. **Right memory** через Power Tuning
 10. **CloudWatch Logs retention** — set TTL чтобы не платить лишнее
 
-## Q32. (!) Какие частые ошибки?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q32. (!) Какие частые ошибки?
 
 1. **Cold start surprises** — 30 sec timeout первого запроса
 2. **No DLQ** — failed messages потеряны
@@ -802,7 +957,12 @@ def handler(event, context):
 - [Application Security](../security/application-security-interview.md) — IAM roles
 - [JVM](../jvm/jvm-interview.md) — для Java на Lambda
 
-- [AWS](aws-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS](aws-interview.md)
 - [Azure](azure-interview.md)
 - [Cloud-native Patterns](cloud-native-patterns-interview.md)
 - [GCP (Google Cloud Platform)](gcp-interview.md)

@@ -11,7 +11,7 @@ aliases:
   - "Sidecar pattern interview"
   - "CNCF interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Cloud-native Patterns`
 
@@ -98,7 +98,12 @@ updated: "2026-04-19"
 
 **Не cloud-native:** lift-and-shift legacy apps в cloud (running monolith in EC2 — not cloud-native).
 
-## Q2. (!) 12-factor app principles?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) 12-factor app principles?
 
 **12-Factor App** (Heroku, 2012) — methodology для cloud-native apps.
 
@@ -120,7 +125,12 @@ updated: "2026-04-19"
 - Telemetry
 - Authentication and authorization
 
-## Q3. (!) Что такое CNCF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Что такое CNCF?
 
 **Cloud Native Computing Foundation** (CNCF) — vendor-neutral organization (часть Linux Foundation), управляющая cloud-native projects.
 
@@ -144,7 +154,12 @@ updated: "2026-04-19"
 
 100+ active projects. Standards de facto для cloud-native stack.
 
-## Q4. (!) Sidecar pattern?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Sidecar pattern?
 
 **Sidecar** — secondary container в одном pod, providing supplementary functionality.
 
@@ -172,7 +187,12 @@ Pod
 
 **Недостаток:** extra resources per pod.
 
-## Q5. Ambassador pattern?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Ambassador pattern?
 
 **Ambassador** — sidecar specifically для **outbound** connections.
 
@@ -187,7 +207,12 @@ App → Ambassador (handles retry, auth, monitoring) → External service
 
 App думает, что говорит с simple service (`localhost:8080`), ambassador handles complexity.
 
-## Q6. Adapter pattern?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Adapter pattern?
 
 **Adapter** — sidecar, **transforms** output app в standard format.
 
@@ -200,7 +225,12 @@ App (custom format) → Adapter → Standardized output
 - Legacy app outputs custom logs → adapter transforms к JSON для logging stack
 - App exports custom metrics → adapter exposes Prometheus format
 
-## Q7. Init containers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Init containers?
 
 **Init containers** — run **before** main container, complete and exit.
 
@@ -223,7 +253,12 @@ spec:
 
 Init container fails → pod restarts.
 
-## Q8. (!) Circuit breaker?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Circuit breaker?
 
 **Circuit breaker** — prevent cascade failures. Если downstream service failing → "open" circuit, fail fast.
 
@@ -242,7 +277,12 @@ def call_payment_service(order):
 
 Подробнее — в [Resilience Patterns](../architecture/resilience-patterns-interview.md).
 
-## Q9. (!) Retry с exponential backoff?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Retry с exponential backoff?
 
 ```python
 @retry(
@@ -263,7 +303,12 @@ def call_service():
 
 **Anti-pattern:** retry без jitter → 1000 clients hit failed service одновременно → bigger storm.
 
-## Q10. (!) Bulkhead?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Bulkhead?
 
 **Bulkhead** — isolate failures, prevent одной части affecting другую.
 
@@ -280,7 +325,12 @@ Service B: thread pool 5 (для analytics)
 
 **В K8s:** resource limits per pod (CPU, memory).
 
-## Q11. Timeout, deadline propagation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Timeout, deadline propagation?
 
 **Timeout** на каждый external call — обязательно.
 
@@ -299,7 +349,12 @@ Client request: 10 sec timeout
 
 В **gRPC** built-in. В REST — through headers (`X-Request-Deadline`).
 
-## Q12. Health checks (liveness, readiness, startup)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Health checks (liveness, readiness, startup)?
 
 **Kubernetes health checks:**
 
@@ -323,7 +378,12 @@ startupProbe:
 - Readiness — check dependencies (DB connection)
 - Startup — для apps что long warm-up
 
-## Q13. (!) Stateless apps — почему важно?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Stateless apps — почему важно?
 
 **Stateless app** — no local state. Each request handled independently.
 
@@ -342,7 +402,12 @@ startupProbe:
 
 **Если есть state в memory:** sticky sessions → less flexible scaling.
 
-## Q14. Session state externalization?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Session state externalization?
 
 **Bad:** session в memory сервера (only that instance can serve user).
 **Good:** session в shared store.
@@ -362,7 +427,12 @@ Option 2: Stateless via JWT
 
 В **2025** — обычно combine: JWT для access token (short-lived), refresh token + Redis для revocation.
 
-## Q15. (!) Leader election?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Leader election?
 
 **Leader election** — выбор одного instance для exclusive task в cluster.
 
@@ -394,7 +464,12 @@ leader_election = leaderelection.LeaderElection(
 )
 ```
 
-## Q16. Distributed locking?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Distributed locking?
 
 **Distributed lock** — coordinated mutex across multiple instances.
 
@@ -418,7 +493,12 @@ if acquire_lock("my-task"):
         redis.delete("my-task")
 ```
 
-## Q17. (!) Horizontal vs vertical scaling?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Horizontal vs vertical scaling?
 
 **Vertical (scale-up):**
 - Bigger machine (more CPU, RAM)
@@ -449,7 +529,12 @@ spec:
           averageUtilization: 70
 ```
 
-## Q18. Auto-scaling triggers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Auto-scaling triggers?
 
 **Common triggers:**
 - **CPU utilization** (> 70%)
@@ -463,7 +548,12 @@ spec:
 - Cloud queues (SQS, Service Bus, Pub/Sub)
 - Custom HTTP
 
-## Q19. Predictive vs reactive scaling?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Predictive vs reactive scaling?
 
 **Reactive:** scale **after** metric hits threshold. Lag of seconds-minutes.
 **Predictive:** scale **before** based on patterns / ML.
@@ -479,7 +569,12 @@ spec:
 
 В **2025** — большинство — **reactive** + ручное scheduled scaling для known patterns (start of business day).
 
-## Q20. (!) Three pillars: metrics, logs, traces?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Three pillars: metrics, logs, traces?
 
 **Metrics** — numerical, aggregated (counters, gauges, histograms).
 - Prometheus, Datadog, CloudWatch
@@ -497,7 +592,12 @@ spec:
 
 Подробнее — в [Observability](../monitoring/observability-interview.md).
 
-## Q21. OpenTelemetry?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. OpenTelemetry?
 
 **OpenTelemetry (OTel)** — CNCF standard для **vendor-neutral** observability.
 
@@ -517,7 +617,12 @@ Apps → OpenTelemetry SDK → OTel Collector → Backend (Datadog, Honeycomb, .
 
 В **2025** — OTel **the standard** для new projects. Заменяет vendor-specific instrumentation.
 
-## Q22. Service mesh (Istio, Linkerd)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. Service mesh (Istio, Linkerd)?
 
 **Service mesh** — infrastructure layer для service-to-service communication. Sidecar proxies (Envoy) handle:
 
@@ -542,7 +647,12 @@ graph LR
 
 В **2025** многие используют **only mTLS + telemetry** (через Linkerd or Cilium), without full Istio complexity.
 
-## Q23. (!) Blue-green deployment?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) Blue-green deployment?
 
 **Blue (current production)** + **Green (new version)** — оба running. Switch traffic от blue к green at once.
 
@@ -561,7 +671,12 @@ Time 5: If issues, instant rollback (switch back)
 
 Подробнее — в [Deployment Strategies](../cicd/deployment-strategies-interview.md).
 
-## Q24. (!) Canary deployment?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Canary deployment?
 
 **Canary** — gradually increase traffic к new version.
 
@@ -582,7 +697,12 @@ Day 5: 100%
 
 **Auto-rollback** на metric thresholds — best practice.
 
-## Q25. Feature flags?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. Feature flags?
 
 **Feature flags** — toggle features в runtime, без redeploy.
 
@@ -606,7 +726,12 @@ else:
 
 **Decoupling release из deploy** — modern best practice.
 
-## Q26. GitOps?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. GitOps?
 
 **GitOps** — declarative infrastructure через Git как source of truth.
 
@@ -634,7 +759,12 @@ Auto-syncs cluster к desired state в git
 - Approval через PR review
 - Self-healing (drift detection)
 
-## Q27. (!) Configuration management в cloud-native?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) Configuration management в cloud-native?
 
 **12-factor:** config через **env variables**.
 
@@ -656,7 +786,12 @@ LOG_LEVEL=info
 
 **Best practice:** **never commit secrets** в git. Use external store.
 
-## Q28. Secrets management?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Secrets management?
 
 **Tools:**
 - **HashiCorp Vault** — enterprise standard
@@ -673,7 +808,12 @@ LOG_LEVEL=info
 - **Encryption at rest** + in transit
 - **No secrets в env vars** в Docker images / git
 
-## Q29. (!) Какие частые анти-паттерны?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q29. (!) Какие частые анти-паттерны?
 
 1. **Distributed monolith** — microservices с tight coupling
 2. **Shared database** между services
@@ -690,7 +830,12 @@ LOG_LEVEL=info
 13. **Manual deployments** — no GitOps
 14. **No backups testing**
 
-## Q30. Cloud-native maturity model?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q30. Cloud-native maturity model?
 
 **Levels (CNCF Maturity Model):**
 
@@ -721,7 +866,12 @@ LOG_LEVEL=info
 
 ## See also
 
-- [AWS](aws-interview.md) — primary cloud
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS](aws-interview.md) — primary cloud
 - [GCP](gcp-interview.md) — alternative
 - [Azure](azure-interview.md) — alternative
 - [Serverless](serverless-interview.md) — cloud-native compute

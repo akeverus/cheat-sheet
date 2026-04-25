@@ -11,7 +11,7 @@ aliases:
   - "Distributed tracing backends"
   - "Tempo interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Jaeger и Zipkin`
 
@@ -89,7 +89,12 @@ User → API Gateway → Service A → Service B → Database
 - Capacity planning
 - Latency breakdown per service
 
-## Q2. (!) Span, trace, context — recap?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Span, trace, context — recap?
 
 **Trace** — все spans для одного request (связаны trace_id).
 **Span** — single operation (HTTP call, DB query, function).
@@ -108,7 +113,12 @@ Spans имеют **timestamps, duration, attributes, events, status**.
 
 Подробнее — в [OpenTelemetry](opentelemetry-interview.md).
 
-## Q3. Зачем нужен tracing backend?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Зачем нужен tracing backend?
 
 **Apps generate spans** → нужно где-то store, query, visualize.
 
@@ -121,7 +131,12 @@ Spans имеют **timestamps, duration, attributes, events, status**.
 
 **Без backend:** spans в memory app — теряются при restart.
 
-## Q4. (!) Что такое Jaeger?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Что такое Jaeger?
 
 **Jaeger** — open-source distributed tracing platform от **Uber** (2017). **CNCF graduated** project (2019).
 
@@ -134,7 +149,12 @@ Spans имеют **timestamps, duration, attributes, events, status**.
 
 **Use cases:** distributed tracing для микросервисов, debug latency, dependency analysis.
 
-## Q5. (!) Jaeger architecture (Agent, Collector, Query, UI)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Jaeger architecture (Agent, Collector, Query, UI)?
 
 ```mermaid
 graph LR
@@ -167,7 +187,12 @@ graph LR
 
 **В Jaeger v2 (2024+)** — Agent **deprecated**. Apps push к Collector via OTLP directly.
 
-## Q6. (!) Storage backends (Cassandra, Elasticsearch, Kafka)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Storage backends (Cassandra, Elasticsearch, Kafka)?
 
 | Backend | Pros | Cons |
 |---------|------|------|
@@ -182,7 +207,12 @@ graph LR
 
 **В 2025** — растёт adoption **ClickHouse** (faster, cheaper).
 
-## Q7. Jaeger v2 (с OTel)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Jaeger v2 (с OTel)?
 
 **Jaeger v2** (2024) — major rewrite на OpenTelemetry Collector.
 
@@ -195,7 +225,12 @@ graph LR
 
 В **2025** — Jaeger v2 — recommended. v1 в maintenance mode.
 
-## Q8. (!) Что такое Zipkin?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Что такое Zipkin?
 
 **Zipkin** — open-source tracing system от **Twitter** (2012). Один из first popular tracing systems.
 
@@ -206,7 +241,12 @@ graph LR
 
 **Status в 2025:** менее активная разработка чем Jaeger. Многие projects migrated на Jaeger / OTel.
 
-## Q9. Zipkin architecture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Zipkin architecture?
 
 ```
 App (Brave / Zipkin libs) → HTTP/Kafka → Zipkin Server → Storage
@@ -220,7 +260,12 @@ App (Brave / Zipkin libs) → HTTP/Kafka → Zipkin Server → Storage
 
 **Brave** — Java library для Zipkin instrumentation.
 
-## Q10. (!) Jaeger vs Zipkin?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Jaeger vs Zipkin?
 
 | Критерий | Jaeger | Zipkin |
 |----------|--------|--------|
@@ -236,7 +281,12 @@ App (Brave / Zipkin libs) → HTTP/Kafka → Zipkin Server → Storage
 
 **В 2025** для new projects — **Jaeger** или **OTel + Tempo / SigNoz**. Zipkin для legacy.
 
-## Q11. (!) Storage costs — почему traces дорогие?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Storage costs — почему traces дорогие?
 
 Each request → multiple spans → indexed by trace_id, service, time, attributes.
 
@@ -253,7 +303,12 @@ Each request → multiple spans → indexed by trace_id, service, time, attribut
 
 В **2025** — почти все systems sample к **1-10%** of traces.
 
-## Q12. Sampling strategies?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Sampling strategies?
 
 **Head sampling** (in-app):
 - **Probabilistic** — `1%` random
@@ -279,7 +334,12 @@ adaptive_sampling:
         sampling_rate: 0.1  # 10% для critical
 ```
 
-## Q13. Retention policies?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Retention policies?
 
 **Common retention:** 7-30 days.
 
@@ -292,7 +352,12 @@ adaptive_sampling:
 
 Cassandra TTL, Elasticsearch ILM (Index Lifecycle Management) — auto-purge old data.
 
-## Q14. (!) Jaeger UI — какие views?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Jaeger UI — какие views?
 
 **Search:**
 - By service, operation, tags
@@ -316,7 +381,12 @@ Cassandra TTL, Elasticsearch ILM (Index Lifecycle Management) — auto-purge old
 **Monitor (новое):**
 - Per-service stats (request rate, error rate, p95 latency) — RED metrics
 
-## Q15. Service map?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Service map?
 
 **Service dependency graph** — auto-generated visualization из traces.
 
@@ -339,7 +409,12 @@ graph LR
 
 В Jaeger — auto-generated. В Datadog, Honeycomb тоже.
 
-## Q16. Comparison view (compare traces)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Comparison view (compare traces)?
 
 Compare 2 traces (например, slow vs normal):
 - See span structure differences
@@ -348,7 +423,12 @@ Compare 2 traces (например, slow vs normal):
 
 Useful для performance debugging.
 
-## Q17. (!) Grafana Tempo?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Grafana Tempo?
 
 **Grafana Tempo** — Grafana's tracing backend. Major Jaeger competitor.
 
@@ -367,7 +447,12 @@ Useful для performance debugging.
 
 В **2025** — Tempo популярен в Grafana ecosystem (Loki + Tempo + Mimir + Grafana).
 
-## Q18. SigNoz, Aspecto, Lightstep?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. SigNoz, Aspecto, Lightstep?
 
 **SigNoz** — open-source full APM (traces + metrics + logs). ClickHouse-based. Self-hosted alternative Datadog. Растущая популярность.
 
@@ -377,7 +462,12 @@ Useful для performance debugging.
 
 **Honeycomb** — pioneer "wide events", powerful query language. Different paradigm от traditional APM.
 
-## Q19. Cloud SaaS (Datadog APM, NewRelic, Honeycomb)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Cloud SaaS (Datadog APM, NewRelic, Honeycomb)?
 
 | Vendor | Pros | Cons |
 |--------|------|------|
@@ -400,7 +490,12 @@ Useful для performance debugging.
 
 В **2025** trend: **OTel + self-hosted (Tempo, SigNoz)** для cost reduction. **Hybrid:** sample data in Datadog для UX, full data в self-hosted.
 
-## Q20. (!) Как migrate от Jaeger к OTel?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Как migrate от Jaeger к OTel?
 
 **До:** Jaeger client SDK в коде.
 
@@ -424,7 +519,12 @@ Tracer tracer = GlobalOpenTelemetry.getTracer("my-service");
 
 **Auto-instrumentation:** Java agent заменяет Jaeger libraries.
 
-## Q21. Можно ли отправлять OTLP в Jaeger?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Можно ли отправлять OTLP в Jaeger?
 
 **Да!** Jaeger Collector accepts OTLP (gRPC + HTTP) natively (с Jaeger v1.35+).
 
@@ -439,7 +539,12 @@ exporters:
 
 В **Jaeger v2** — OTLP **native protocol**. No conversion overhead.
 
-## Q22. (!) Какой backend выбрать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Какой backend выбрать?
 
 **Decision tree:**
 
@@ -467,7 +572,12 @@ Legacy Zipkin already?
 - **Self-host:** Jaeger v2 (mature) или SigNoz (growing)
 - **SaaS:** Datadog (polish) или Honeycomb (UX)
 
-## Q23. Какие частые проблемы?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Какие частые проблемы?
 
 1. **Storage explosion** — без sampling быстро уходишь на TBs
 2. **Slow queries** — Jaeger UI медленный на больших datasets
@@ -497,7 +607,12 @@ Legacy Zipkin already?
 - [Elasticsearch](../databases/elasticsearch-interview.md) — Jaeger storage
 - [Performance Testing](../performance/performance-testing-interview.md) — найти slow paths
 
-- [ELK Stack](elk-stack-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [ELK Stack](elk-stack-interview.md)
 - [Стратегии логирования](logging-strategies-interview.md)
 - [Loki и Grafana](loki-grafana-interview.md)
 - [Метрики и трейсинг](metrics-tracing-interview.md)

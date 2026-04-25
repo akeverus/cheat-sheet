@@ -12,7 +12,7 @@ aliases:
   - "Cosmos DB interview"
   - "AKS interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Azure`
 
@@ -92,7 +92,12 @@ updated: "2026-04-19"
 - Меньше features в open-source
 - Reliability — иногда issues (известные outages)
 
-## Q2. (!) Subscriptions, Resource Groups?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Subscriptions, Resource Groups?
 
 ```
 Tenant (Entra ID directory)
@@ -112,7 +117,12 @@ Tenant (Entra ID directory)
 
 **Преимущество:** Resource Groups позволяют **delete всё одновременно**.
 
-## Q3. Regions и Availability Zones?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Regions и Availability Zones?
 
 **Region** — geographical area (East US, West Europe). 60+ regions.
 
@@ -122,7 +132,12 @@ Tenant (Entra ID directory)
 
 **Не все regions** имеют AZ support (older regions).
 
-## Q4. (!) Azure VMs?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Azure VMs?
 
 **Azure Virtual Machines** — IaaS, аналог AWS EC2.
 
@@ -141,7 +156,12 @@ Tenant (Entra ID directory)
 - **Spot VMs** — up to 90% off
 - **Hybrid Benefit** — bring Windows/SQL Server licenses
 
-## Q5. (!) AKS (Azure Kubernetes Service)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) AKS (Azure Kubernetes Service)?
 
 **AKS** — managed Kubernetes на Azure.
 
@@ -155,7 +175,12 @@ Tenant (Entra ID directory)
 
 **vs GKE:** GKE считается слегка лучше matured, но AKS догнал. Для Microsoft shops AKS — natural choice.
 
-## Q6. (!) Azure Functions?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Azure Functions?
 
 **Azure Functions** — FaaS, аналог AWS Lambda.
 
@@ -185,7 +210,12 @@ public static IActionResult Run(
 
 **Durable Functions** — для stateful workflows (analog Step Functions).
 
-## Q7. (!) App Service?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) App Service?
 
 **App Service** — managed PaaS для веб-приложений.
 
@@ -204,7 +234,12 @@ public static IActionResult Run(
 
 В **2025** — App Service самый популярный для **classic web apps** на Azure.
 
-## Q8. Container Instances, Container Apps?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Container Instances, Container Apps?
 
 **Container Instances (ACI)** — single container, no orchestration. Quick container, no overhead.
 
@@ -218,7 +253,12 @@ public static IActionResult Run(
 
 **Container Apps** — equivalent GCP Cloud Run.
 
-## Q9. (!) Azure Storage account types?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Azure Storage account types?
 
 Azure Storage account — единый namespace для:
 - **Blob Storage** — objects (как S3)
@@ -233,7 +273,12 @@ Azure Storage account — единый namespace для:
 - **Premium File Shares**
 - **Premium Page Blobs** — для VMs
 
-## Q10. Blob Storage tiers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Blob Storage tiers?
 
 | Tier | Use case | Cost |
 |------|----------|------|
@@ -244,7 +289,12 @@ Azure Storage account — единый namespace для:
 
 **Lifecycle management** — auto-transition между tiers.
 
-## Q11. (!) Azure SQL Database?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Azure SQL Database?
 
 **Azure SQL Database** — managed Microsoft SQL Server.
 
@@ -260,7 +310,12 @@ Azure Storage account — единый namespace для:
 
 **Azure SQL** — hands down лучшее place для running SQL Server.
 
-## Q12. (!) Cosmos DB?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Cosmos DB?
 
 **Cosmos DB** — multi-model, globally distributed NoSQL. Crown jewel Azure.
 
@@ -283,7 +338,12 @@ Azure Storage account — единый namespace для:
 
 **Cost trap:** RU/s можно accidentally overprovision → expensive.
 
-## Q13. Database for PostgreSQL/MySQL?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Database for PostgreSQL/MySQL?
 
 **Azure Database for PostgreSQL/MySQL** — managed open-source DBs.
 
@@ -295,7 +355,12 @@ Azure Storage account — единый namespace для:
 
 С **2024** — **Azure Database for PostgreSQL Flexible Server** — main offering.
 
-## Q14. Azure Cache для Redis?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Azure Cache для Redis?
 
 **Azure Cache for Redis** — managed Redis. Аналог AWS ElastiCache, GCP Memorystore.
 
@@ -307,7 +372,12 @@ Azure Storage account — единый namespace для:
 
 С **2024** Microsoft anunciated **Azure Managed Redis** — preview новой версии.
 
-## Q15. (!) VNet, NSG?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) VNet, NSG?
 
 **VNet (Virtual Network)** — аналог AWS VPC.
 
@@ -322,7 +392,12 @@ VNet (10.0.0.0/16)
 
 **Application Security Groups (ASG)** — group VMs logically для firewall rules.
 
-## Q16. Application Gateway, Front Door?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Application Gateway, Front Door?
 
 **Application Gateway** — Layer 7 (HTTP) load balancer внутри region.
 - Path-based routing
@@ -338,7 +413,12 @@ VNet (10.0.0.0/16)
 **Load Balancer** — Layer 4 (TCP/UDP).
 **Traffic Manager** — DNS-based load balancing.
 
-## Q17. (!) Entra ID (бывший Azure AD)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Entra ID (бывший Azure AD)?
 
 **Microsoft Entra ID** (rebranded из Azure Active Directory в 2023) — identity provider.
 
@@ -359,7 +439,12 @@ az role assignment create --assignee user@contoso.com \
   --role "Storage Blob Data Reader" --scope /subscriptions/.../my-storage
 ```
 
-## Q18. Managed Identities?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Managed Identities?
 
 **Managed Identity** — auto-created Entra ID identity для Azure resource (VM, App Service, Function).
 
@@ -375,7 +460,12 @@ var blobClient = new BlobServiceClient(uri, credential);
 
 Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
-## Q19. (!) Synapse Analytics?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Synapse Analytics?
 
 **Azure Synapse Analytics** — unified analytics platform.
 
@@ -391,7 +481,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 В **2025** Synapse — Microsoft answer на BigQuery / Snowflake. Но reliability и UX issues есть. Многие выбирают **Microsoft Fabric** (новая объединённая платформа).
 
-## Q20. Azure Data Factory?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Azure Data Factory?
 
 **ADF** — managed ETL/ELT. Аналог AWS Glue, GCP Cloud Data Fusion.
 
@@ -404,7 +499,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 В **2025** — Microsoft pushes **Microsoft Fabric** (new unified platform), но ADF still in use.
 
-## Q21. Event Hubs vs Service Bus?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Event Hubs vs Service Bus?
 
 **Event Hubs** — high-throughput event streaming. Аналог Kafka.
 - Millions events/sec
@@ -422,7 +522,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 | Event Hubs | Streaming, telemetry, IoT |
 | Service Bus | Business messaging, transactions |
 
-## Q22. (!) Azure OpenAI Service?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Azure OpenAI Service?
 
 **Azure OpenAI Service** — exclusive Microsoft offering. Hosting OpenAI models (GPT-4, etc.) на Azure infrastructure.
 
@@ -437,7 +542,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 В **2025** — самый популярный enterprise way использовать OpenAI models.
 
-## Q23. Azure Machine Learning?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Azure Machine Learning?
 
 **Azure ML** — managed ML platform. Equivalent SageMaker, Vertex AI.
 
@@ -452,7 +562,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 В **2025** — конкурирует с Vertex AI, SageMaker. Tightly integrated с Azure DevOps, GitHub.
 
-## Q24. (!) Azure vs AWS — strengths?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Azure vs AWS — strengths?
 
 **Azure strengths:**
 - **Enterprise integration** — AD, Office 365
@@ -469,7 +584,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 - **Open-source ecosystem** — менее integrated
 - **Pricing** — confusing models (DTU, RU, ...)
 
-## Q25. (!) Когда выбирать Azure?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. (!) Когда выбирать Azure?
 
 **Выбирай Azure когда:**
 - **Уже Microsoft shop** (AD, Office 365, Windows servers)
@@ -506,7 +626,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 - [MLOps](../ai-ml/mlops-interview.md) — Azure ML
 - [OAuth2](../security/oauth2-interview.md) — Entra ID identity
 
-- [AWS](aws-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS](aws-interview.md)
 - [AWS Lambda](aws-lambda-interview.md)
 - [Cloud-native Patterns](cloud-native-patterns-interview.md)
 - [GCP (Google Cloud Platform)](gcp-interview.md)

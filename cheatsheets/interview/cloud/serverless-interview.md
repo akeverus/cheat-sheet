@@ -11,7 +11,7 @@ aliases:
   - "Serverless computing"
   - "Edge computing interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Serverless`
 
@@ -97,7 +97,12 @@ updated: "2026-04-19"
 - **Serverless analytics** — Athena, BigQuery
 - **Edge computing** — Cloudflare Workers, Vercel Edge
 
-## Q2. (!) Serverless ≠ no servers, что это значит?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Serverless ≠ no servers, что это значит?
 
 **Serverless** **НЕ** означает "нет серверов". Серверы есть — но **developer их не видит и не управляет**.
 
@@ -112,7 +117,12 @@ updated: "2026-04-19"
 - Containers (ECS, Cloud Run) — manage containers
 - **Serverless (Lambda)** — manage только функции
 
-## Q3. FaaS vs BaaS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. FaaS vs BaaS?
 
 **FaaS (Function-as-a-Service):**
 - Custom code в functions
@@ -129,7 +139,12 @@ updated: "2026-04-19"
 Frontend → BaaS auth (Auth0) → FaaS (Lambda business logic) → Database
 ```
 
-## Q4. (!) Сравнение Lambda vs Functions vs Cloud Run vs Cloud Functions?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Сравнение Lambda vs Functions vs Cloud Run vs Cloud Functions?
 
 | Service | Provider | Type | Timeout | Concurrency |
 |---------|----------|------|---------|-------------|
@@ -143,7 +158,12 @@ Frontend → BaaS auth (Auth0) → FaaS (Lambda business logic) → Database
 
 **Trend в 2025:** **serverless containers** (Cloud Run, Container Apps) gaining over pure FaaS благодаря flexibility (longer timeouts, more memory, multi-request per instance).
 
-## Q5. Pricing моделей FaaS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Pricing моделей FaaS?
 
 **Pricing components:**
 - **Per-invocation** ($0.20 per 1M for Lambda)
@@ -162,7 +182,12 @@ Always running EC2 t3.medium = $30/month (730 hours)
 
 **Trap:** **outbound data transfer** одинаково дорого для VMs и Lambda.
 
-## Q6. (!) Cold start — universal проблема?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Cold start — universal проблема?
 
 **Cold start** есть у всех FaaS / serverless containers.
 
@@ -184,7 +209,12 @@ Always running EC2 t3.medium = $30/month (730 hours)
 - Concurrency increase
 - Code update
 
-## Q7. Mitigations: pre-warming, provisioned concurrency, snapshots?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Mitigations: pre-warming, provisioned concurrency, snapshots?
 
 **Pre-warming:**
 - **Hack:** scheduled invocations every 5-10 min для keeping warm
@@ -205,7 +235,12 @@ Always running EC2 t3.medium = $30/month (730 hours)
 
 **Edge runtimes** (Cloudflare Workers) — based на V8 isolates, **near-zero** cold start.
 
-## Q8. (!) Преимущества serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Преимущества serverless?
 
 1. **No infrastructure management** — focus на business logic
 2. **Auto-scaling** — handles traffic spikes
@@ -217,7 +252,12 @@ Always running EC2 t3.medium = $30/month (730 hours)
 8. **Polyglot** — multiple languages
 9. **Microservices-friendly** — function = service
 
-## Q9. (!) Недостатки serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Недостатки serverless?
 
 1. **Cold starts** — latency variability
 2. **Vendor lock-in** — code привязан к provider's APIs
@@ -230,7 +270,12 @@ Always running EC2 t3.medium = $30/month (730 hours)
 9. **Network overhead** — каждый call goes through cloud
 10. **Testing harder** — local emulation imperfect
 
-## Q10. (!) Vendor lock-in — насколько критично?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Vendor lock-in — насколько критично?
 
 **Real lock-in:**
 - Lambda runtime API
@@ -246,7 +291,12 @@ Always running EC2 t3.medium = $30/month (730 hours)
 
 **Realistically:** migration между clouds painful even с mitigations. Choose primary cloud carefully, design business logic как portable.
 
-## Q11. (!) Что такое edge computing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Что такое edge computing?
 
 **Edge computing** — выполнение кода на **edge locations** (CDN nodes), близко к пользователю.
 
@@ -270,7 +320,12 @@ Edge:        User → Cloudflare edge (closest, ~10 km) → ...
 - Меньше memory
 - Limited APIs (no full Node.js / Python)
 
-## Q12. (!) Cloudflare Workers vs Lambda@Edge?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Cloudflare Workers vs Lambda@Edge?
 
 | Критерий | Cloudflare Workers | Lambda@Edge |
 |----------|-------------------|-------------|
@@ -287,7 +342,12 @@ Edge:        User → Cloudflare edge (closest, ~10 km) → ...
 
 **Lambda@Edge** — для AWS-stack apps, ограниченное.
 
-## Q13. Vercel Edge Functions, Deno Deploy, Fastly Compute@Edge?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Vercel Edge Functions, Deno Deploy, Fastly Compute@Edge?
 
 **Vercel Edge Functions** — built на Cloudflare Workers + Vercel infra. Tight integration с Next.js.
 
@@ -299,7 +359,12 @@ Edge:        User → Cloudflare edge (closest, ~10 km) → ...
 
 В **2025** — edge computing **mainstream**, особенно для frontend frameworks (Next.js, Remix).
 
-## Q14. (!) Event-driven serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Event-driven serverless?
 
 ```mermaid
 graph LR
@@ -322,7 +387,12 @@ graph LR
 
 Подробнее — в [Event-driven Patterns](../architecture/event-driven-patterns-interview.md).
 
-## Q15. Strangler pattern для legacy migration?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Strangler pattern для legacy migration?
 
 **Постепенная** миграция legacy monolith → serverless.
 
@@ -340,7 +410,12 @@ Eventually decommission monolith
 
 Serverless хорош для strangler — easy add new feature без trogging legacy.
 
-## Q16. (!) Serverless API gateway pattern?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Serverless API gateway pattern?
 
 ```
 Client → API Gateway → Lambda functions → Database
@@ -359,7 +434,12 @@ Client → API Gateway → Lambda functions → Database
 
 **HTTP API (cheaper)** обычно достаточно. **REST API** для advanced features.
 
-## Q17. Step Functions / Durable Functions для workflows?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Step Functions / Durable Functions для workflows?
 
 **Step Functions (AWS) / Durable Functions (Azure)** — orchestrate complex workflows.
 
@@ -384,7 +464,12 @@ Client → API Gateway → Lambda functions → Database
 
 Аналог: **Saga pattern** в serverless. Подробнее — [Saga Pattern](../architecture/saga-pattern-interview.md).
 
-## Q18. (!) Как работать с state?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Как работать с state?
 
 **Functions stateless** — state нужно хранить external.
 
@@ -397,7 +482,12 @@ Client → API Gateway → Lambda functions → Database
 
 **No `/tmp` for permanent state** — recreated на каждый cold start.
 
-## Q19. Database connections в serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Database connections в serverless?
 
 **Проблема:** каждая Lambda creates DB connection. 1000 concurrent Lambdas → 1000 DB connections → DB OOM.
 
@@ -423,7 +513,12 @@ def handler(event, context):
 
 **RDS Proxy** — managed connection pool для Lambda + RDS.
 
-## Q20. (!) Serverless Framework?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Serverless Framework?
 
 **Serverless Framework** (`serverless.com`) — multi-cloud deployment tool.
 
@@ -456,7 +551,12 @@ serverless remove
 
 **В 2025** — теряет долю в favor **CDK, SST, Terraform**. Остаётся popular для AWS Lambda.
 
-## Q21. SST (Serverless Stack), Pulumi, CDK?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. SST (Serverless Stack), Pulumi, CDK?
 
 **SST (Serverless Stack)** — modern AWS serverless framework. Built на CDK, focus на developer experience.
 
@@ -476,7 +576,12 @@ new Function(stack, "MyFunction", {
 - **Multi-cloud:** Pulumi или Terraform (declarative)
 - **Quick prototype:** Serverless Framework
 
-## Q22. SAM, Functions Core Tools?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. SAM, Functions Core Tools?
 
 **SAM (AWS Serverless Application Model)** — AWS's official IaC для serverless.
 
@@ -486,7 +591,12 @@ new Function(stack, "MyFunction", {
 
 Каждый cloud имеет native serverless tooling. SAM — самый mature.
 
-## Q23. (!) Когда serverless лучше containers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) Когда serverless лучше containers?
 
 **Serverless лучше:**
 - **Sporadic traffic** — pay-per-use win
@@ -497,7 +607,12 @@ new Function(stack, "MyFunction", {
 - **Glue code** — integrations
 - **Spike handling** — auto-scale без warning
 
-## Q24. (!) Когда containers лучше serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Когда containers лучше serverless?
 
 **Containers лучше:**
 - **High constant traffic** — cheaper compute
@@ -511,7 +626,12 @@ new Function(stack, "MyFunction", {
 
 **Hybrid:** часто containers (Cloud Run / Container Apps) — serverless **enough** + container flexibility.
 
-## Q25. Observability в serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. Observability в serverless?
 
 **Challenges:**
 - Distributed (множество functions)
@@ -527,7 +647,12 @@ new Function(stack, "MyFunction", {
 
 **OpenTelemetry** — standard для cross-cloud traces.
 
-## Q26. Testing serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. Testing serverless?
 
 **Unit tests:** test handler как обычная функция (no cloud dependencies).
 
@@ -544,7 +669,12 @@ new Function(stack, "MyFunction", {
 
 **Подвох:** local emulators **не perfect** — production behavior может отличаться.
 
-## Q27. (!) Cost analysis serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) Cost analysis serverless?
 
 **Cheap для:**
 - Spike traffic (auto-scale)
@@ -570,7 +700,12 @@ new Function(stack, "MyFunction", {
 Daily invocations × duration × memory + per-invocation cost + auxiliary services
 ```
 
-## Q28. Какие частые ошибки в serverless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Какие частые ошибки в serverless?
 
 1. **Cold start surprises** в production
 2. **Database connection storms** — без pooling
@@ -607,7 +742,12 @@ Daily invocations × duration × memory + per-invocation cost + auxiliary servic
 - [Scalability](../architecture/scalability-patterns-interview.md) — auto-scale benefits
 - [Application Security](../security/application-security-interview.md) — IAM, secrets
 
-- [AWS](aws-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS](aws-interview.md)
 - [AWS Lambda](aws-lambda-interview.md)
 - [Azure](azure-interview.md)
 - [Cloud-native Patterns](cloud-native-patterns-interview.md)

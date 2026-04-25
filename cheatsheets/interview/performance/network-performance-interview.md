@@ -11,7 +11,7 @@ aliases:
   - "HTTP Performance"
   - "Network Performance собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Network Performance`
 
@@ -111,7 +111,12 @@ updated: "2026-04-19"
 - For 100 requests sequentially: 7 seconds just для network
 - Parallelize (HTTP/2 multiplexing) → all within 1 RTT + transfer time
 
-## Q2. (!) Типичные RTT-значения?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Типичные RTT-значения?
 
 **Localhost:** 0.05 - 0.2 ms
 
@@ -152,7 +157,12 @@ updated: "2026-04-19"
 - `traceroute <host>` — per-hop latency
 - `mtr <host>` — continuous
 
-## Q3. (!) Что такое bandwidth-delay product?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Что такое bandwidth-delay product?
 
 **BDP = bandwidth × round-trip time**
 
@@ -187,7 +197,12 @@ net.ipv4.tcp_wmem = 4096 65536 16777216
 
 **Rule of thumb:** для 10 Gbps intercontinental → receive buffer ≥ 10MB.
 
-## Q4. (!) TCP slow start и congestion control?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) TCP slow start и congestion control?
 
 **TCP не шлёт full bandwidth на старте** — avoids congestion.
 
@@ -223,7 +238,12 @@ ip route change default via <gw> initcwnd 30
 ```
 Linux 3.10+ default 10; some tune higher (20-40) для better page load.
 
-## Q5. (!) TCP handshake overhead?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) TCP handshake overhead?
 
 **3-way handshake:**
 ```
@@ -265,7 +285,12 @@ Client → ACK → Server     (1.5 RTT; но data piggyback возможно)
 
 **SO_REUSEPORT:** load balance incoming connections across multiple processes; improves accept throughput.
 
-## Q6. Nagle algorithm и delayed ACK?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Nagle algorithm и delayed ACK?
 
 **Nagle's algorithm (1984):**
 - Buffer small writes until ACK received or full segment
@@ -301,7 +326,12 @@ socket.setTcpNoDelay(true);
 
 **HTTP clients:** usually disable Nagle для low-latency; bulk download OK either way.
 
-## Q7. BBR vs CUBIC congestion control?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. BBR vs CUBIC congestion control?
 
 **CUBIC (Linux default since 2.6.19):**
 - Loss-based: slow down on packet drop
@@ -346,7 +376,12 @@ sysctl net.ipv4.tcp_congestion_control
 ss -ti  # shows per-connection congestion info
 ```
 
-## Q8. (!) TLS handshake overhead?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) TLS handshake overhead?
 
 **TLS 1.2 handshake:**
 - 2 RTT (after TCP handshake)
@@ -389,7 +424,12 @@ curl -o /dev/null -s -w "%{time_connect} %{time_appconnect} %{time_starttransfer
 # time_connect — TCP handshake; time_appconnect — TLS handshake; time_starttransfer — first byte
 ```
 
-## Q9. TLS session resumption, 0-RTT?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. TLS session resumption, 0-RTT?
 
 **TLS 1.2 methods:**
 
@@ -429,7 +469,12 @@ curl -o /dev/null -s -w "%{time_connect} %{time_appconnect} %{time_starttransfer
 - Cross-region API calls: 50-100ms savings per request
 - Can push latency under 100ms for static content globally
 
-## Q10. (!) HTTP/1.1 vs HTTP/2 vs HTTP/3?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) HTTP/1.1 vs HTTP/2 vs HTTP/3?
 
 **HTTP/1.1 (1997):**
 - Text-based
@@ -474,7 +519,12 @@ curl -o /dev/null -s -w "%{time_connect} %{time_appconnect} %{time_starttransfer
 - UDP blocked на некоторых networks → HTTP/3 falls back to HTTP/2
 - Server Push — browsers disabled by 2022 (complexity, marginal benefit)
 
-## Q11. (!) Head-of-line blocking в HTTP/1.1 и HTTP/2?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Head-of-line blocking в HTTP/1.1 и HTTP/2?
 
 **HTTP/1.1:**
 - Request serialized: must finish response before next request on connection
@@ -509,7 +559,12 @@ curl -o /dev/null -s -w "%{time_connect} %{time_appconnect} %{time_starttransfer
 - Google: HTTP/3 improves search/YouTube mobile experience measurably
 - Cloudflare: default HTTP/3 where supported
 
-## Q12. (!) Keep-alive и connection reuse?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Keep-alive и connection reuse?
 
 **Keep-alive:** после response, connection stays open для next request.
 
@@ -555,7 +610,12 @@ HttpClientBuilder.create()
 
 **Anti-pattern:** creating new `HttpClient` per request (forgot pooling) → each = new TCP + TLS. Senior gotcha в Java.
 
-## Q13. HTTP/2 server push (и почему deprecated)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. HTTP/2 server push (и почему deprecated)?
 
 **Server Push (HTTP/2):**
 - Server proactively sends resources без client request
@@ -589,7 +649,12 @@ HttpClientBuilder.create()
 - Don't rely на HTTP/2 Push (deprecated)
 - Use Early Hints or link preload
 
-## Q14. QUIC — почему быстрее TCP?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. QUIC — почему быстрее TCP?
 
 **QUIC (Quick UDP Internet Connections) — HTTP/3 transport.**
 
@@ -636,7 +701,12 @@ HttpClientBuilder.create()
 - curl, browsers — standard
 - Mobile apps — library-dependent
 
-## Q15. (!) DNS lookup как latency source?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) DNS lookup как latency source?
 
 **DNS lookup:** resolve `api.example.com` → IP before connecting.
 
@@ -692,7 +762,12 @@ DNS + TCP + TLS done upfront.
 curl -o /dev/null -s -w "dns:%{time_namelookup} connect:%{time_connect} start:%{time_starttransfer}\n" https://api.site.com
 ```
 
-## Q16. (!) gzip vs brotli vs zstd?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) gzip vs brotli vs zstd?
 
 **Compression для HTTP responses:**
 
@@ -735,7 +810,12 @@ curl -o /dev/null -s -w "dns:%{time_namelookup} connect:%{time_connect} start:%{
 
 **Measure:** `Content-Length` vs raw size = compression ratio.
 
-## Q17. Content-Encoding negotiation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Content-Encoding negotiation?
 
 **Client indicates support:**
 ```
@@ -783,7 +863,12 @@ curl -H "Accept-Encoding: br, gzip" -I https://site.com/page
 # check Content-Encoding header
 ```
 
-## Q18. (!) Зачем CDN — latency math?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Зачем CDN — latency math?
 
 **Без CDN:**
 - Origin in us-east-1
@@ -830,7 +915,12 @@ curl -H "Accept-Encoding: br, gzip" -I https://site.com/page
 - Real-time (low TTL) — reduced benefit
 - But edge TLS termination still helps
 
-## Q19. (!) gRPC vs REST performance?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) gRPC vs REST performance?
 
 **gRPC:** RPC framework; protobuf + HTTP/2.
 
@@ -889,7 +979,12 @@ curl -H "Accept-Encoding: br, gzip" -I https://site.com/page
 - Internal hot paths — high ROI
 - Public API — rarely worth breaking contract
 
-## Q20. WebSockets — overhead и use cases?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. WebSockets — overhead и use cases?
 
 **WebSocket (RFC 6455):**
 - Full-duplex persistent connection over TCP
@@ -935,7 +1030,12 @@ curl -H "Accept-Encoding: br, gzip" -I https://site.com/page
 - Modern servers handle 100K+ concurrent WS per instance (Netty, Node.js, Go)
 - Memory per connection key; tune socket buffers
 
-## Q21. Server-Sent Events (SSE)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Server-Sent Events (SSE)?
 
 **SSE:** unidirectional server→client over HTTP.
 
@@ -987,7 +1087,12 @@ es.onmessage = (e) => console.log(e.data);
 
 **Common mistake:** assume "WebSocket always better." SSE often fits perfectly, simpler code.
 
-## Q22. (!) Tail latency — причины и борьба?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Tail latency — причины и борьба?
 
 **Tail latency:** p99, p99.9 latencies — worst few percent of requests.
 
@@ -1047,7 +1152,12 @@ es.onmessage = (e) => console.log(e.data);
 - **Don't just track p50!**
 - Alerts on p99 rises
 
-## Q23. (!) Linux sysctl tuning для high-throughput?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) Linux sysctl tuning для high-throughput?
 
 **Network stack tuning:**
 
@@ -1108,7 +1218,12 @@ net.netfilter.nf_conntrack_max = 1000000
 - Thread pool sizing
 - Connection pool limits
 
-## Q24. Debugging slow networks (tools)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. Debugging slow networks (tools)?
 
 **Latency and throughput:**
 - `ping <host>` — RTT, packet loss
@@ -1169,7 +1284,12 @@ curl -o /dev/null -s -w "dns:%{time_namelookup} conn:%{time_connect} tls:%{time_
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — timeouts, retries
 - [Observability](../monitoring/observability-interview.md) — network metrics и tracing
 
-- [Application Profiling](application-profiling-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Application Profiling](application-profiling-interview.md)
 - [Caching Performance](caching-performance-interview.md)
 - [Database Performance](database-performance-interview.md)
 - [JVM Performance Tuning](jvm-performance-tuning-interview.md)

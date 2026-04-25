@@ -11,7 +11,7 @@ aliases:
   - "Sliding window counter"
   - "Rate Limiter собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Rate Limiter`
 
@@ -81,7 +81,12 @@ updated: "2026-04-19"
 - 1000 req/hour per API key
 - 10 req/sec per endpoint globally
 
-## Q2. (!) Functional и non-functional requirements?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Functional и non-functional requirements?
 
 **Functional:**
 - Allow N requests в time window
@@ -102,7 +107,12 @@ updated: "2026-04-19"
 - Per-instance (fast, loose) vs shared Redis (accurate, adds RTT)
 - Memory per user (sliding window log expensive)
 
-## Q3. (!) Token bucket?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Token bucket?
 
 **Model:**
 - Bucket holds tokens
@@ -148,7 +158,12 @@ class TokenBucket:
 
 **Widely used:** AWS API Gateway, Nginx, Stripe, cloud services.
 
-## Q4. (!) Leaky bucket?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Leaky bucket?
 
 **Model:**
 - Requests queue
@@ -197,7 +212,12 @@ class LeakyBucket:
 
 **Vs token bucket:** leaky smooths; token allows bursts. Most APIs use token bucket.
 
-## Q5. (!) Fixed window counter?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Fixed window counter?
 
 **Model:**
 - Current window: minute/hour aligned
@@ -226,7 +246,12 @@ def allow(user_id, limit=100):
 
 **Used for:** simple systems, where burstiness OK (e.g., per-hour quotas).
 
-## Q6. (!) Sliding window log?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Sliding window log?
 
 **Model:**
 - Store timestamp of each request
@@ -262,7 +287,12 @@ def allow(user_id, limit=100, window=60):
 
 **Use:** critical correctness, low-volume APIs.
 
-## Q7. (!) Sliding window counter (hybrid)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Sliding window counter (hybrid)?
 
 **Model:**
 - Maintain 2 fixed-window counters (current + previous)
@@ -309,7 +339,12 @@ def allow(user_id, limit=100, window=60):
 
 **Best compromise** — Cloudflare uses this.
 
-## Q8. Сравнение алгоритмов?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Сравнение алгоритмов?
 
 | Algorithm | Accuracy | Memory | Bursts | Smoothness | Complexity |
 |-----------|----------|--------|--------|------------|------------|
@@ -325,7 +360,12 @@ def allow(user_id, limit=100, window=60):
 - **Leaky bucket** — traffic shaping, queue protection
 - **Sliding log** — strict compliance (quota billing)
 
-## Q9. (!) Distributed rate limiter — challenges?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Distributed rate limiter — challenges?
 
 **Problem:** N servers; user's requests hit different servers; must enforce global limit.
 
@@ -363,7 +403,12 @@ def allow(user_id, limit=100, window=60):
 
 **Envoy RL:** external Redis, caches rules.
 
-## Q10. (!) Redis-based implementation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Redis-based implementation?
 
 **Pattern 1: INCR + EXPIRE (fixed window):**
 ```python
@@ -432,7 +477,12 @@ ZCARD key
 
 **Scale:** Redis cluster, shard by key.
 
-## Q11. Lua script для atomicity?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Lua script для atomicity?
 
 **Problem:** non-atomic операции → race conditions.
 
@@ -464,7 +514,12 @@ redis.eval(script, 1, key, limit, ttl)
 - `bucket4j-redis` (Java) — distributed, Lua-based
 - `redis-cell` (Redis module) — дedicated rate limit commands
 
-## Q12. (!) Где размещать rate limiter? (edge, gateway, service)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Где размещать rate limiter? (edge, gateway, service)
 
 **Layers:**
 
@@ -504,7 +559,12 @@ redis.eval(script, 1, key, limit, ttl)
 - Distributed — fast, approximate
 - Match to use case
 
-## Q13. Rate limit granularity (user, IP, API key)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Rate limit granularity (user, IP, API key)?
 
 **Dimensions:**
 
@@ -540,7 +600,12 @@ limit = user.tier.limit_for(endpoint)
 
 **Metadata lookup:** user → tier → limit (cached).
 
-## Q14. Multiple buckets (per-endpoint + global)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Multiple buckets (per-endpoint + global)?
 
 **Problem:** user can DoS one endpoint with full limit, starving others.
 
@@ -561,7 +626,12 @@ User can do 100 searches + 50 profile fetches + 850 other = within 1000 total.
 
 **Cost:** multiple Redis calls per request; batch with pipeline.
 
-## Q15. (!) Response format (429)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Response format (429)?
 
 **Standard response:**
 ```http
@@ -597,7 +667,12 @@ Retry-After: 60
 
 **Include on 2xx too:** let clients monitor remaining.
 
-## Q16. (!) Что делать при Redis outage?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Что делать при Redis outage?
 
 **Fail-open (default for most):**
 - Redis unavailable → allow request (degraded mode)
@@ -624,7 +699,12 @@ Retry-After: 60
 
 **Design decision:** fail-open typical для SaaS (don't reject customers); fail-closed для billing/quota.
 
-## Q17. Hot user / hot key problem?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Hot user / hot key problem?
 
 **Hot user:** one user hits rate limit endpoint millions/sec.
 
@@ -658,7 +738,12 @@ Retry-After: 60
 - Very high-volume users → special tier
 - Dedicated resources, isolated
 
-## Q18. Rate limit vs quota?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Rate limit vs quota?
 
 **Rate limit:** short-term req/sec / req/min.
 - Smooths traffic
@@ -698,7 +783,12 @@ Retry-After: 60
 - [HTTP/REST](../api/http-rest-interview.md) — 429, Retry-After
 - [Design URL Shortener](design-url-shortener-interview.md) — rate limiter component
 
-- [Design Chat System](design-chat-system-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Design Chat System](design-chat-system-interview.md)
 - [Design Feed System](design-feed-system-interview.md)
 - [Design Payment System](design-payment-system-interview.md)
 - [Design Search System](design-search-interview.md)

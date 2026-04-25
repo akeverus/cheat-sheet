@@ -11,7 +11,7 @@ aliases:
   - "Slack architecture"
   - "Chat System собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Chat System`
 
@@ -85,7 +85,12 @@ updated: "2026-04-19"
 - **Ordering** (messages in correct sequence)
 - **Encryption** (E2E для privacy)
 
-## Q2. (!) Capacity estimation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Capacity estimation?
 
 **Assumptions:**
 - 1B active users (WhatsApp-scale)
@@ -116,7 +121,12 @@ updated: "2026-04-19"
 - Presence: user_id → server_id map → 1B × 16B = 16GB
 - Redis fits
 
-## Q3. (!) WebSockets vs long polling vs SSE?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) WebSockets vs long polling vs SSE?
 
 **WebSockets:** bidirectional persistent.
 - **Best** для chat (messages in+out)
@@ -145,7 +155,12 @@ updated: "2026-04-19"
 - Detect dead connection → reconnect
 - Exponential backoff
 
-## Q4. (!) Connection routing и load balancing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Connection routing и load balancing?
 
 **Challenge:** WebSockets are **stateful** — user's connection lives on one server. Messages для user X must route to that server.
 
@@ -180,7 +195,12 @@ Other user's WebSocket server publishes message for X
 - Clients reconnect → routed to new server
 - Update presence registry
 
-## Q5. Sticky session проблема?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Sticky session проблема?
 
 **Problem:** user reconnects → must go to same server? Or any?
 
@@ -204,7 +224,12 @@ On connect: SET user:X server:S2
 On disconnect: DEL user:X
 ```
 
-## Q6. (!) High-level architecture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) High-level architecture?
 
 ```
 Clients (mobile/web)
@@ -234,7 +259,12 @@ Clients (mobile/web)
 - **Notification Service:** push sender
 - **Search Service:** Elasticsearch for history search
 
-## Q7. (!) Message delivery flow?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Message delivery flow?
 
 **1:1 chat, both online:**
 
@@ -265,7 +295,12 @@ B ACKs → read receipt back to A
 - Message broker retries on failure
 - Persist before push — if push fails, still in storage
 
-## Q8. Message broker между серверами?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Message broker между серверами?
 
 **Why broker:**
 - Decouples sender server from recipient server
@@ -299,7 +334,12 @@ S1 publishes: PUBLISH user:X "msg"
 S3 (where X connected) SUBSCRIBE user:X → push to X's WS
 ```
 
-## Q9. (!) Schema для messages?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Schema для messages?
 
 **Simple (Cassandra):**
 
@@ -342,7 +382,12 @@ Allows "list conversations by recent activity."
 
 **Messages не индексируются по content в operational DB** — separate Elasticsearch.
 
-## Q10. (!) SQL vs NoSQL для chat?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) SQL vs NoSQL для chat?
 
 **Chat messages:**
 - **Write-heavy** (every msg)
@@ -372,7 +417,12 @@ Allows "list conversations by recent activity."
 - Messenger: HBase
 - Slack: MySQL (sharded)
 
-## Q11. Shard strategy?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Shard strategy?
 
 **Messages sharded by conversation_id:**
 - All messages 1 conversation → 1 partition
@@ -394,7 +444,12 @@ Allows "list conversations by recent activity."
 - Deleted messages → tombstones
 - TTL-based retention (keep 90 days, auto-expire)
 
-## Q12. (!) At-most-once, at-least-once, exactly-once?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) At-most-once, at-least-once, exactly-once?
 
 **At-most-once:**
 - Send, don't retry на failure
@@ -425,7 +480,12 @@ Allows "list conversations by recent activity."
 - Server delivers to recipient
 - Recipient ACK → sender "delivered"
 
-## Q13. (!) Read receipts и delivery receipts?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Read receipts и delivery receipts?
 
 **Events:**
 - **Sent:** message arrived at server (single check ✓)
@@ -456,7 +516,12 @@ message_status: (message_id, user_id, status, timestamp)
 - Multiply messages × participants = N-fold status records
 - Groups с 100 members → 100x status per message
 
-## Q14. Ordering guarantees?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Ordering guarantees?
 
 **Per-conversation ordering:**
 - Messages в один chat must be ordered consistently для all participants
@@ -477,7 +542,12 @@ message_status: (message_id, user_id, status, timestamp)
 - Shared sequence (conversation_id partition)
 - Everyone sees same order
 
-## Q15. (!) Online status / presence?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Online status / presence?
 
 **Data:**
 - user_id → status (online/away/offline) + last_seen
@@ -508,7 +578,12 @@ message_status: (message_id, user_id, status, timestamp)
 - No activity 5 min → "away"
 - Client reports activity (mouse move, typing)
 
-## Q16. Typing indicators?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Typing indicators?
 
 **Event:**
 - User typing → ephemeral event to conversation members
@@ -528,7 +603,12 @@ message_status: (message_id, user_id, status, timestamp)
 - Fire-and-forget (Redis pub/sub)
 - No persistence; OK to drop
 
-## Q17. Group chat design?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Group chat design?
 
 **Challenges beyond 1:1:**
 - 100 recipients → 100x fan-out
@@ -563,7 +643,12 @@ message_status: (message_id, user_id, status, timestamp)
 - Group service manages add/remove
 - Cache group members list
 
-## Q18. Push notifications для offline?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Push notifications для offline?
 
 **Offline detected:** presence shows offline → send push.
 
@@ -596,7 +681,12 @@ message_status: (message_id, user_id, status, timestamp)
 - APNs/FCM throttle per-app
 - Consolidation: one push "5 new messages" vs 5 pushes
 
-## Q19. (!) End-to-end encryption?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) End-to-end encryption?
 
 **E2E:** only sender + recipient can read; server can't.
 
@@ -628,7 +718,12 @@ message_status: (message_id, user_id, status, timestamp)
 **Telegram:** only "secret chats" E2E; regular chats server-side encrypted but readable.
 **Signal:** all E2E.
 
-## Q20. Media (images, video) handling?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Media (images, video) handling?
 
 **Not sent inline** (too big):
 
@@ -659,7 +754,12 @@ message_status: (message_id, user_id, status, timestamp)
 - S3 lifecycle policies
 - Delete после N years
 
-## Q21. Search in chat history?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Search in chat history?
 
 **Challenge:** E2E encryption → server can't search.
 
@@ -692,7 +792,12 @@ message_status: (message_id, user_id, status, timestamp)
 
 ## See also
 
-- [System Design](system-design-interview.md) — general principles
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [System Design](system-design-interview.md) — general principles
 - [Design Feed System](design-feed-system-interview.md) — similar fan-out patterns
 - [[websockets-interview|WebSockets]] — transport layer
 - [[messaging-interview|Messaging]] — Kafka, brokers

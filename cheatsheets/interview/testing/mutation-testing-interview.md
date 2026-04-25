@@ -11,7 +11,7 @@ aliases:
   - "Stryker interview"
   - "Mutant testing interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Mutation Testing`
 
@@ -80,7 +80,12 @@ updated: "2026-04-19"
 
 **Idea:** **if your tests can't detect small code changes, they don't really test anything.**
 
-## Q2. (!) Зачем mutation testing если есть coverage?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Зачем mutation testing если есть coverage?
 
 **Coverage:** what code lines executed by tests. **Doesn't measure quality.**
 
@@ -108,7 +113,12 @@ Test still passes (`assertNotNull(999)` true) → **survived mutant** → weak t
 
 **Mutation = quality of assertions**, не just execution coverage.
 
-## Q3. Mutant, killed, survived, equivalent?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Mutant, killed, survived, equivalent?
 
 **Mutant** — modified version code (по mutation operator).
 
@@ -118,7 +128,12 @@ Test still passes (`assertNotNull(999)` true) → **survived mutant** → weak t
 **Timeout** — mutant causes infinite loop.
 **Equivalent** — semantically same as original (cannot be killed). Annoying, see Q10.
 
-## Q4. (!) Какие mutations типичные?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Какие mutations типичные?
 
 **Common mutation operators:**
 
@@ -136,7 +151,12 @@ Test still passes (`assertNotNull(999)` true) → **survived mutant** → weak t
 
 **Each line с operator** → multiple mutants generated.
 
-## Q5. Conditional Boundary Mutator?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Conditional Boundary Mutator?
 
 ```java
 // Original
@@ -166,7 +186,12 @@ void testAdult() {
 
 **Boundary tests** (18, 17, 19) **kill** boundary mutants. Без них — survive.
 
-## Q6. Math Mutator?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Math Mutator?
 
 ```java
 // Original
@@ -188,7 +213,12 @@ void testTotal() {
 
 If test only `5*4=20` → `5+4=9` mutation **killed** (assertion fails).
 
-## Q7. Other mutators?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Other mutators?
 
 **Increment/Decrement:**
 ```java
@@ -218,7 +248,12 @@ log.info("Processing");  →  // removed
 
 **Each operator** generates множество mutants per line. **Total mutants** can be hundreds-thousands per project.
 
-## Q8. (!) Mutation score (kill rate)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Mutation score (kill rate)?
 
 ```
 Mutation Score = killed_mutants / (total_mutants - equivalent_mutants)
@@ -236,7 +271,12 @@ Mutation Score = killed_mutants / (total_mutants - equivalent_mutants)
 
 **Some teams aim 70-85%** в practice.
 
-## Q9. Surviving mutants — как анализировать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Surviving mutants — как анализировать?
 
 **Each survived mutant** = potential test gap.
 
@@ -256,7 +296,12 @@ SurvivedMutant: line 42
 
 **Action:** add boundary test для `MIN` (count == MIN should pass).
 
-## Q10. Equivalent mutants?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Equivalent mutants?
 
 **Equivalent mutant** — semantically same as original. **Cannot be killed**.
 
@@ -277,7 +322,12 @@ while (i <= 9) { i++; }  // SAME behavior!
 
 **Tools** report all surviving mutants — must filter equivalent ones manually.
 
-## Q11. (!) PIT для Java?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) PIT для Java?
 
 **PIT (Pitest)** — most popular Java mutation testing tool.
 
@@ -306,7 +356,12 @@ mvn org.pitest:pitest-maven:mutationCoverage
 
 **Performance:** PIT с PITest 1.6+ has **fast mode** — orders of magnitude faster.
 
-## Q12. (!) Stryker для JavaScript/TypeScript?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Stryker для JavaScript/TypeScript?
 
 **Stryker** — mutation testing для JS/TS/.NET/Scala.
 
@@ -331,7 +386,12 @@ npx stryker run
 
 **Stryker Dashboard** — track score над time.
 
-## Q13. mutmut для Python?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. mutmut для Python?
 
 ```bash
 pip install mutmut
@@ -343,7 +403,12 @@ mutmut html  # report
 
 **Slow** — Python тоже dynamic, mutation testing dynamic languages medленно.
 
-## Q14. Other tools (Mutil, Cosmic Ray)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Other tools (Mutil, Cosmic Ray)?
 
 - **Mutil** (Go) — Go mutation testing
 - **Cosmic Ray** (Python) — alternative mutmut
@@ -352,7 +417,12 @@ mutmut html  # report
 
 **Adoption** varies. **PIT (Java) и Stryker (JS)** — most mature.
 
-## Q15. (!) Mutation testing медленный — почему?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Mutation testing медленный — почему?
 
 **Process:** для каждого mutant — recompile (sometimes) + run all tests.
 
@@ -365,7 +435,12 @@ mutmut html  # report
 
 **Optimizations bring это к minutes** для most projects.
 
-## Q16. Optimization (incremental, in-process)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Optimization (incremental, in-process)?
 
 **Optimizations:**
 
@@ -378,7 +453,12 @@ mutmut html  # report
 
 **Modern PIT:** for **incremental** runs — minutes для large codebases.
 
-## Q17. (!) Когда mutation testing worth it?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Когда mutation testing worth it?
 
 **Worth it когда:**
 - **Critical code** (financial, safety-critical)
@@ -394,7 +474,12 @@ mutmut html  # report
 
 **Resources:** mutation testing requires CI time, engineering analysis.
 
-## Q18. Какой score целевой?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Какой score целевой?
 
 **No universal "right" score.** Depends на code criticality.
 
@@ -406,7 +491,12 @@ mutmut html  # report
 
 **Important:** **trend matters more than absolute number.** Score trending up = improving tests.
 
-## Q19. (!) Limitations и criticism?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Limitations и criticism?
 
 1. **Slow** даже с optimizations
 2. **Equivalent mutants** noise
@@ -419,7 +509,12 @@ mutmut html  # report
 
 **Use thoughtfully** — не replace human code review, exploratory testing, integration tests.
 
-## Q20. CI/CD integration?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. CI/CD integration?
 
 **Run на pull requests** (incremental):
 ```bash
@@ -448,7 +543,12 @@ If mutation score < 60% → fail build
 
 ## See also
 
-- [Unit Testing](unit-testing-interview.md) — context
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Unit Testing](unit-testing-interview.md) — context
 - [Test Strategies](test-strategies-interview.md)
 - [Property-based Testing](property-based-testing-interview.md)
 - [Load Testing](load-testing-interview.md)

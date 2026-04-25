@@ -11,7 +11,7 @@ aliases:
   - "Payment processing"
   - "Payment System собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Payment System`
 
@@ -89,7 +89,12 @@ updated: "2026-04-19"
 - Can't delete records
 - Must reconcile daily
 
-## Q2. (!) Capacity estimation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Capacity estimation?
 
 **Assumptions (mid-size like Stripe):**
 - 10M merchants
@@ -115,7 +120,12 @@ updated: "2026-04-19"
 - Includes: external network к PSP (Visa/Mastercard), 3DS redirects
 - Internal: < 500ms
 
-## Q3. (!) End-to-end payment flow?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) End-to-end payment flow?
 
 ```
 1. Customer initiates payment (Checkout page)
@@ -149,7 +159,12 @@ updated: "2026-04-19"
 - Bank declines → user sees error, can retry другой card
 - PSP outage → fallback (если have multiple)
 
-## Q4. (!) 3D Secure и challenge flow?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) 3D Secure и challenge flow?
 
 **3D Secure (3DS):** additional auth layer from card network (Visa Secure, Mastercard SecureCode).
 
@@ -177,7 +192,12 @@ updated: "2026-04-19"
 - Higher cart abandonment (extra step)
 - Liability shift: if 3DS completed, issuer liable for chargeback (not merchant)
 
-## Q5. Authorization vs capture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Authorization vs capture?
 
 **Auth (authorization):**
 - Bank reserves amount on card
@@ -211,7 +231,12 @@ POST /charges/{id}/void
 - Auth holds expire (5-30 days depending on card type)
 - Must capture before expiry or re-auth
 
-## Q6. (!) High-level architecture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) High-level architecture?
 
 ```
 Clients (merchants)
@@ -244,7 +269,12 @@ Clients (merchants)
 - Vault: PCI-compliant card data store
 - Processor integration: REST/SFTP к bank/PSP
 
-## Q7. (!) Double-entry ledger?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Double-entry ledger?
 
 **Core accounting principle:** every transaction touches two accounts, total = 0.
 
@@ -295,7 +325,12 @@ CREATE TABLE ledger_entries (
 - Can't "disappear" money
 - Easier reconciliation
 
-## Q8. Integration с payment providers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Integration с payment providers?
 
 **Options:**
 
@@ -334,7 +369,12 @@ Router picks provider по rules (currency, cost, health).
 - Each has own idempotency key format
 - We translate / maintain map
 
-## Q9. (!) Idempotency ключи — зачем и как?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Idempotency ключи — зачем и как?
 
 **Problem:** client times out → retries → two charges for same order.
 
@@ -379,7 +419,12 @@ def charge(idempotency_key, request):
 
 **Critical:** include idempotency key в ALL money-moving endpoints.
 
-## Q10. (!) Saga pattern для distributed flow?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Saga pattern для distributed flow?
 
 **Payment involves multiple services:** inventory reserve, payment charge, shipping arrange.
 
@@ -424,7 +469,12 @@ CREATED → INVENTORY_RESERVED → PAYMENT_CHARGED → SHIPPED → COMPLETED
 
 Log state transitions; can resume после crash.
 
-## Q11. (!) Eventually consistent vs strong consistency?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Eventually consistent vs strong consistency?
 
 **Where strong consistency required:**
 - Ledger balance (must not show false positive)
@@ -455,7 +505,12 @@ Log state transitions; can resume после crash.
 - Availability not 100% (decline transactions если DB partition)
 - Acceptable: lose few seconds of transactions vs corrupt ledger
 
-## Q12. (!) PCI-DSS compliance?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) PCI-DSS compliance?
 
 **PCI-DSS:** Payment Card Industry Data Security Standard.
 
@@ -491,7 +546,12 @@ Log state transitions; can resume после crash.
 - Logs in tamper-evident store
 - Annual pen-test
 
-## Q13. (!) Tokenization карт?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Tokenization карт?
 
 **Tokenization:** replace real PAN (Primary Account Number) с surrogate token.
 
@@ -521,7 +581,12 @@ Log state transitions; can resume после crash.
 - If app DB breached → attacker gets tokens, not cards
 - Scope reduction (PCI audits)
 
-## Q14. Fraud detection?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Fraud detection?
 
 **Goal:** identify fraudulent transactions before approval.
 
@@ -562,7 +627,12 @@ Log state transitions; can resume после crash.
 - False positives = lost revenue (legit customer blocked)
 - False negatives = chargeback cost + reputation
 
-## Q15. (!) Webhook delivery?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Webhook delivery?
 
 **Webhooks:** notify merchant about events (payment succeeded, refund processed).
 
@@ -601,7 +671,12 @@ Log state transitions; can resume после crash.
 - Exhausted retries → DLQ
 - Alert merchant via dashboard / email
 
-## Q16. Reconciliation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Reconciliation?
 
 **Daily process:** compare our records vs bank/processor records.
 
@@ -631,7 +706,12 @@ Log state transitions; can resume после crash.
 - Custom batch jobs (Spark, Airflow)
 - Vendors (Modern Treasury, Lockstep)
 
-## Q17. (!) Retry strategy?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Retry strategy?
 
 **Scenarios:**
 - Network timeout к PSP
@@ -672,7 +752,12 @@ for attempt in range(5):
 - Short sync retries (1-2) while user waits
 - Longer async (background)
 
-## Q18. Refunds, disputes, chargebacks?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Refunds, disputes, chargebacks?
 
 **Refund:** merchant initiates return money to customer.
 - Full or partial
@@ -704,7 +789,12 @@ for attempt in range(5):
 - Refund: merchant voluntary, cheap
 - Chargeback: forced by bank, expensive + damaging
 
-## Q19. (!) Testing payments (sandbox, mock)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Testing payments (sandbox, mock)?
 
 **Challenges:**
 - Can't test real transactions в production
@@ -741,7 +831,12 @@ for attempt in range(5):
 - Canary (1% traffic → monitor)
 - Gradual rollout
 
-## Q20. Observability для payments?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Observability для payments?
 
 **Metrics:**
 - Authorization success rate
@@ -794,7 +889,12 @@ for attempt in range(5):
 - [Observability](../monitoring/observability-interview.md) — tracing, logs
 - [Event-Driven Patterns](../architecture/event-driven-patterns-interview.md) — webhooks, sagas
 
-- [Design Chat System](design-chat-system-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Design Chat System](design-chat-system-interview.md)
 - [Design Feed System](design-feed-system-interview.md)
 - [Design Rate Limiter](design-rate-limiter-interview.md)
 - [Design Search System](design-search-interview.md)

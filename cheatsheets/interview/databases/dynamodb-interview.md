@@ -11,7 +11,7 @@ aliases:
   - "DynamoDB собеседование"
   - "Single-table design interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `DynamoDB`
 
@@ -94,6 +94,12 @@ updated: "2026-04-19"
 - **Built-in HA** (3 AZ replication)
 - **Pay-per-request** или provisioned
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Built по принципам Amazon Dynamo paper** (2007). Используется внутри Amazon (Cart, Prime, ad tech).
 
 ## Q2. (!) DynamoDB vs MongoDB / Cassandra?
@@ -110,6 +116,12 @@ updated: "2026-04-19"
 | Vendor lock-in | High | Low | Low |
 | Cost | Variable | Variable | Self-host: low |
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Когда DynamoDB:** AWS-native apps, predictable access patterns, want serverless.
 **Когда MongoDB:** flexible schema, complex queries, document model.
 **Когда Cassandra:** очень большой scale, multi-region, write-heavy.
@@ -124,6 +136,12 @@ updated: "2026-04-19"
 - **Multi-region writes** в существующих regions — Global Tables новые tables only
 - **Free-form queries** — relational DB лучше
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Подходит когда:**
 - Known access patterns
 - Need predictable performance at scale
@@ -152,6 +170,12 @@ SK: order_date     (sort within user)
 - **Sort key** → ordering within partition
 - **Same PK** → same partition → can `Query` efficiently
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practices:**
 - Choose PK с **high cardinality** (avoid hot partitions)
 - Use SK для one-to-many relationships within partition
@@ -171,6 +195,12 @@ SK: order_date     (sort within user)
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Каждый item — JSON document. **Schema flexibility** — items в одной table могут иметь разные attributes.
 
 ## Q6. (!) Какие data types?
@@ -191,6 +221,12 @@ SK: order_date     (sort within user)
 - `NS` — Number Set
 - `BS` — Binary Set
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```json
 {
   "user_id": {"S": "user#123"},
@@ -209,6 +245,12 @@ SK: order_date     (sort within user)
 - **Split** в multiple items (с composite key)
 - **Store payload в S3**, save reference в DynamoDB
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```python
 # Pattern: large body → S3, reference в DynamoDB
 {
@@ -235,6 +277,12 @@ GSI 2:
   → Query orders by status, sorted by date
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Особенности:**
 - **Eventually consistent** (default)
 - **Separate provisioned capacity** (или on-demand inherits)
@@ -265,6 +313,12 @@ LSI:
 | Capacity | Separate | Shared с main table |
 | Limit | 20 per table | 5 per table |
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **LSI rarely used.** GSI more flexible. Use LSI только если **strong consistency** critical.
 
 ## Q10. Sparse indexes?
@@ -291,6 +345,12 @@ GSI на `status`:
 {"PK": "order#2", ...}                  # closed, not in active GSI
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Query active orders → small GSI.
 
 ## Q11. (!) Что такое single-table design?
@@ -317,6 +377,12 @@ product#sku-1   | metadata         | PRODUCT | {name, price}
 - **Не intuitive** для SQL backgrounds
 - Updates / migrations harder
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В **2025** — single-table — recommended pattern для DynamoDB experts (Alex DeBrie).
 
 ## Q12. (!) Access patterns — почему важны?
@@ -336,6 +402,12 @@ product#sku-1   | metadata         | PRODUCT | {name, price}
 
 3. **Avoid `Scan`** (full table scan, slow + expensive)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Без upfront design** — DynamoDB performance terrible.
 
 ## Q13. Composite key strategies (PK/SK)?
@@ -356,6 +428,12 @@ PK: user#123 + SK: 2025-04-19#order#456
 ```
 Query orders by date range.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Inverted index:**
 ```
 GSI: PK = SK, SK = PK
@@ -376,6 +454,12 @@ Reverse lookup.
 - Reserved capacity discount available (до 76%)
 - **Auto-scaling** доступен (но reactive, lag)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:** **on-demand** для dev / unknown patterns. **Provisioned** для production с predictable load.
 
 ## Q15. RCU и WCU — что это?
@@ -399,6 +483,12 @@ RCU: 1000 = 1000 reads/sec для < 4 KB items
 WCU: 500 = 500 writes/sec для < 1 KB items
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 При throttling — `ProvisionedThroughputExceededException`.
 
 ## Q16. (!) Hot partition problem?
@@ -416,6 +506,12 @@ DynamoDB partitions data by **PK hash**. If one PK has много traffic → ph
 - Throttling, even though provisioned capacity high
 - Уneven request distribution
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Solutions:**
 - **Choose high-cardinality PK** (user_id, order_id — not status)
 - **Write sharding:** add suffix `(user_id)#1, (user_id)#2, ...` → distribute hot items
@@ -430,6 +526,12 @@ DynamoDB partitions data by **PK hash**. If one PK has много traffic → ph
 
 **Эффект:** smooths out short-term hot partition issues.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Не fix:** долгосрочные hot partitions всё равно need design fix.
 
 ## Q18. (!) GetItem, Query, Scan — отличия?
@@ -458,6 +560,12 @@ table.query(
     KeyConditionExpression=Key("PK").eq("user#123") & Key("SK").begins_with("order#")
 )
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 # Scan — slow!
 table.scan(FilterExpression=Attr("status").eq("ACTIVE"))
 ```
@@ -474,6 +582,12 @@ UPDATE "MyTable" SET status = 'ACTIVE' WHERE PK = 'user#123';
 
 Convenience layer над DynamoDB API. Internally compiles в Query/Scan/PutItem/...
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Не настоящий SQL:** все same constraints (no joins, scans expensive, etc.).
 
 ## Q20. Filter expressions?
@@ -489,6 +603,12 @@ table.query(
 
 **Подвох:** **filter не reduces read capacity**. Items still read, then filtered.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:** use **Key conditions** (efficient) over filters when possible. Add new GSI если нужен фильтр часто.
 
 ## Q21. Pagination в DynamoDB?
@@ -510,6 +630,12 @@ response = table.query(
 )
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **1 MB max** per response. Если результат больше — pagination needed.
 
 ## Q22. (!) DynamoDB Transactions?
@@ -528,6 +654,12 @@ client.transact_write_items(
 
 **TransactGetItems** — atomic read до 100 items.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Особенности:**
 - ACID (within DynamoDB)
 - Up to 4 MB / 100 items
@@ -553,6 +685,12 @@ table.update_item(
 )
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use cases:**
 - Idempotency (insert if not exists)
 - Optimistic locking
@@ -580,6 +718,12 @@ table.update_item(
 # Если version изменилась → ConditionalCheckFailed → retry
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 DynamoDB Mapper для DynamoDB Java SDK имеет built-in `@DynamoDbVersionAttribute`.
 
 ## Q25. (!) DynamoDB Streams?
@@ -602,6 +746,12 @@ DynamoDB Mapper для DynamoDB Java SDK имеет built-in `@DynamoDbVersionAt
 
 **Retention:** 24 hours.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use cases:**
 - Trigger Lambdas on data changes
 - Replicate to ElasticSearch / OpenSearch
@@ -629,6 +779,12 @@ def handler(event, context):
 
 **Подвох:** Lambda processes batch — partial failure handling требует `ReportBatchItemFailures`.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Подробнее — в [AWS Lambda](../cloud/aws-lambda-interview.md).
 
 ## Q27. (!) DAX (DynamoDB Accelerator)?
@@ -651,6 +807,12 @@ graph LR
 
 **Use case:** read-heavy workloads с frequent same-item access.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Не для:**
 - Strong consistency (DAX is eventually consistent)
 - Write-heavy (only cache reads)
@@ -674,6 +836,12 @@ Region ap-northeast-1: tables replicates
 - Low latency to multiple regions
 - Compliance (data residency)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Подвох:** **eventual consistency** between regions. Up to seconds delay.
 
 ## Q29. Backup и PITR?
@@ -694,6 +862,12 @@ aws dynamodb update-continuous-backups \
   --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:** PITR enabled для production.
 
 ## Q30. (!) Какие частые ошибки в DynamoDB production?
@@ -727,6 +901,12 @@ aws dynamodb update-continuous-backups \
 - [Микросервисы](../architecture/microservices-interview.md) — DynamoDB per microservice
 - [Event-driven](../architecture/event-driven-patterns-interview.md) — Streams
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Apache Cassandra](cassandra-interview.md)
 - [ClickHouse](clickhouse-interview.md)
 - [CockroachDB](cockroachdb-interview.md)

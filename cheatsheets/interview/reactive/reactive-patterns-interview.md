@@ -14,7 +14,7 @@ aliases:
   - "circuit breaker reactive"
   - "resilience4j reactor"
 difficulty: "advanced"
-updated: "2026-04-20"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Reactive Patterns
 
@@ -91,6 +91,12 @@ updated: "2026-04-20"
 
 **Аналогия:** электрический предохранитель — при коротком замыкании размыкает цепь, чтобы защитить остальное.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Три принципа применения:**
 - Быстрый отказ (`fail fast`) вместо долгого ожидания таймаута
 - Защита от каскадных отказов между сервисами
@@ -105,6 +111,12 @@ CLOSED ──(превышен порог ошибок)──> OPEN ──(пр�
                                          (пробный вызов провалился)──> OPEN
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - **CLOSED** — все запросы проходят, ошибки считаются
 - **OPEN** — все запросы немедленно отклоняются (`CallNotPermittedException`)
 - **HALF_OPEN** — пропускается ограниченное число пробных запросов для проверки
@@ -133,6 +145,12 @@ public class UserService {
         this.webClient = webClient;
     }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     public Mono<UserDto> findById(Long id) {
         return webClient.get()
                 .uri("/users/{id}", id)
@@ -158,6 +176,12 @@ public Mono<UserDto> findById(Long id) {
                     ex -> Mono.just(UserDto.unknown(id)));
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 private Mono<UserDto> getCachedUser(Long id) {
     return redisTemplate.opsForValue()
             .get("user:" + id)
@@ -180,6 +204,12 @@ Mono<OrderDto> orderWithRetry = orderService.createOrder(request)
                                 signal.failure().getMessage())));
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Параметры:**
 - `3` — максимум попыток после первой неудачи
 - `Duration.ofMillis(500)` — начальная задержка
@@ -195,6 +225,12 @@ Mono<OrderDto> orderWithRetry = orderService.createOrder(request)
 // retry — простое повторение (не рекомендуется для продакшена)
 flux.retry(3);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // retryWhen — полный контроль
 flux.retryWhen(
     Retry.fixedDelay(3, Duration.ofSeconds(2))
@@ -208,6 +244,12 @@ flux.retryWhen(
 
 Используется `.filter()` на `RetrySpec`.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```java
 flux.retryWhen(
     Retry.backoff(3, Duration.ofSeconds(1))
@@ -229,6 +271,12 @@ Mono<UserDto> userWithTimeout = userService.findById(id)
         .onErrorMap(TimeoutException.class,
                 ex -> new ServiceTimeoutException("User service timeout after 3s"));
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // timeout с fallback
 Mono<UserDto> withFallback = userService.findById(id)
         .timeout(Duration.ofSeconds(3),
@@ -245,6 +293,12 @@ Mono<UserDto> withFallback = userService.findById(id)
 Mono<String> response = externalService.call()
         .timeout(Duration.ofSeconds(5)); // отменить если не ответил за 5 сек
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // delaySubscription — ленивый старт (например, после прогрева)
 Mono<String> delayed = externalService.call()
         .delaySubscription(Duration.ofSeconds(2)); // подождать 2 сек перед первым запросом
@@ -258,6 +312,12 @@ Mono<String> delayed = externalService.call()
 - **Semaphore-based** — ограничивает число конкурентных вызовов (без очереди)
 - **Thread pool-based** — каждый сервис имеет свой пул потоков
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В реактивном мире Thread pool bulkhead менее применим — используют `Semaphore` bulkhead или ограничение конкурентности через `flatMap`.
 
 ## Q11. Как реализовать Bulkhead через Resilience4j?
@@ -278,6 +338,12 @@ public class ExternalApiService {
         this.webClient = webClient;
     }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     public Mono<ApiResponse> callApi(String request) {
         return webClient.post()
                 .uri("/api/process")
@@ -304,6 +370,12 @@ Flux<UserDto> users = Flux.fromIterable(ids)
 Flux<UserDto> orderedUsers = Flux.fromIterable(ids)
         .flatMapSequential(id -> userService.findById(id), 5);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Обработка батчей
 Flux<Void> processed = Flux.fromIterable(events)
         .buffer(100)   // батчи по 100
@@ -312,6 +384,12 @@ Flux<Void> processed = Flux.fromIterable(events)
 
 ## Q13. Что такое паттерн Scatter-Gather?
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 `Scatter-Gather` — рассылка запроса нескольким получателям (`scatter`) и агрегация ответов (`gather`). Используется для:
 - Параллельного вызова нескольких источников данных
 - Fan-out в поисковых системах (запрос к разным индексам)
@@ -342,6 +420,12 @@ public Mono<AggregatedPriceDto> getPrices(String sku) {
             .map(provider -> provider.getPrice(sku))
             .toList();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     return Mono.zipDelayError(priceSources, prices ->
             Arrays.stream(prices)
                   .map(p -> (PriceDto) p)
@@ -370,6 +454,12 @@ public Mono<UserProfileDto> getUserProfileWithFallbacks(Long userId) {
             .map(Optional::of)
             .onErrorResume(ex -> Mono.just(Optional.empty()));
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     return Mono.zip(user, orders, subscription)
             .map(tuple -> UserProfileDto.builder()
                     .user(tuple.getT1())
@@ -385,6 +475,12 @@ public Mono<UserProfileDto> getUserProfileWithFallbacks(Long userId) {
 
 В реактивных системах сага удобно выражается как цепочка `flatMap` + обработка ошибок с компенсацией:
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```
 createOrder → reserveStock → processPayment → sendNotification
     ↓                ↓               ↓
@@ -400,6 +496,12 @@ cancelOrder    releaseStock   refundPayment   (компенсация)
 @Service
 public class OrderSagaOrchestrator {
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     public Mono<OrderResult> executeOrderSaga(CreateOrderRequest request) {
         return orderService.createOrder(request)               // шаг 1
                 .flatMap(order ->
@@ -440,6 +542,12 @@ public Mono<Void> runWithCompensation(
                     .then(Mono.error(ex))); // всё равно пробрасываем исходную ошибку
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Использование
 public Mono<OrderResult> placeOrder(CreateOrderRequest req) {
     return orderService.createOrder(req)
@@ -456,6 +564,12 @@ public Mono<OrderResult> placeOrder(CreateOrderRequest req) {
 
 Когда producer быстрее consumer, Reactor предлагает несколько стратегий:
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 | Стратегия | Оператор | Поведение |
 |---|---|---|
 | Буферизация | `onBackpressureBuffer()` | Накапливать в очереди |
@@ -467,6 +581,12 @@ public Mono<OrderResult> placeOrder(CreateOrderRequest req) {
 
 Буферизует элементы, которые producer отправил быстрее, чем consumer успевает обработать.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```java
 Flux.interval(Duration.ofMillis(1))    // очень быстрый producer
         .onBackpressureBuffer(1000,         // буфер на 1000 элементов
@@ -489,6 +609,12 @@ Flux.interval(Duration.ofMillis(10))
         .flatMap(i -> heavyProcessing(i), 2)
         .subscribe();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // onBackpressureLatest — хранить только последнее значение (для котировок, датчиков)
 sensorFlux
         .onBackpressureLatest()
@@ -507,6 +633,12 @@ public class CachedUserService {
     private final ReactiveRedisTemplate<String, UserDto> redis;
     private final UserRepository userRepository;
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     public Mono<UserDto> findById(Long id) {
         String key = "user:" + id;
         return redis.opsForValue().get(key)      // 1. Проверить кэш
@@ -526,6 +658,12 @@ public class CachedUserService {
 
 `Fallback Chain` — последовательное переключение на следующий источник при ошибке предыдущего.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```java
 public Mono<ProductDto> findProduct(String sku) {
     return primaryCatalogService.findBySku(sku)        // 1. Основной источник
@@ -551,6 +689,12 @@ public Mono<UserDto> findUserWithHedging(Long id) {
     return Mono.firstWithValue(primary, secondary); // взять первый успешный
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Через Flux.firstWithValue для N источников
 public Mono<SearchResult> hedgedSearch(String query) {
     return Mono.firstWithValue(
@@ -572,6 +716,12 @@ public class CoalescingService {
 
     private final ConcurrentHashMap<Long, Mono<UserDto>> inFlight = new ConcurrentHashMap<>();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     public Mono<UserDto> findById(Long id) {
         return inFlight.computeIfAbsent(id,
                 key -> userRepository.findById(key)
@@ -606,6 +756,12 @@ Flux<BigDecimal> sampledPrices = priceStream
 
 ## See also
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Project Reactor](project-reactor-interview.md)
 - [Reactive Streams](reactive-streams-interview.md)
 - [RxJava](rxjava-interview.md)

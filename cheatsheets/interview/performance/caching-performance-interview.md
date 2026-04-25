@@ -11,7 +11,7 @@ aliases:
   - "Cache hit ratio"
   - "Caching Performance собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Caching Performance`
 
@@ -124,7 +124,12 @@ hit_ratio = hits / (hits + misses)
 
 **Export:** `redis_exporter` / `memcached_exporter` → Prometheus → Grafana.
 
-## Q2. (!) Hit ratio — что считается "хорошо"?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Hit ratio — что считается "хорошо"?
 
 **Зависит от use case:**
 
@@ -165,7 +170,12 @@ hit_ratio = hits / (hits + misses)
 - 100% hit можно achieve by caching garbage forever
 - Balance с freshness (stale serving)
 
-## Q3. (!) Как измерить cache impact на latency?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Как измерить cache impact на latency?
 
 **Метод 1: direct measurement:**
 ```java
@@ -216,7 +226,12 @@ Example:
 - Serialization
 - In-proc cache (Caffeine) — microseconds, essentially free
 
-## Q4. (!) LRU / LFU / TinyLFU — performance разница?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) LRU / LFU / TinyLFU — performance разница?
 
 **LRU (Least Recently Used):**
 - Evict oldest touched
@@ -252,7 +267,12 @@ Example:
 
 **Verdict:** на типичном Zipfian web workload — **TinyLFU superior** к LRU by 5-15% hit ratio.
 
-## Q5. (!) Redis `maxmemory-policy` — выбор?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Redis `maxmemory-policy` — выбор?
 
 **Policies:**
 
@@ -290,7 +310,12 @@ maxmemory-samples 10  # default 5; higher = better approximation
 
 **Monitor:** `evicted_keys` counter; spikes indicate under-provisioned.
 
-## Q6. Memory fragmentation Redis?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Memory fragmentation Redis?
 
 **Fragmentation ratio:**
 ```
@@ -329,7 +354,12 @@ active-defrag-cycle-max 75
 
 **Monitor:** alert if `mem_fragmentation_ratio > 1.5` for extended period.
 
-## Q7. (!) Thundering herd / cache stampede?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Thundering herd / cache stampede?
 
 **Scenario:**
 1. Hot key expires
@@ -384,7 +414,12 @@ now - (delta × β × ln(random())) >= expiry
 **5. Warmup:**
 - Pre-populate cache before releasing traffic
 
-## Q8. (!) Защита: mutex, probabilistic early expiration?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Защита: mutex, probabilistic early expiration?
 
 **Distributed mutex (Redis):**
 
@@ -445,7 +480,12 @@ def xfetch(key, ttl, compute_fn):
 | Stale-while-revalidate | Easy | High (for tolerant apps) | None blocked |
 | Warmup | Easy | High (if feasible) | One-time |
 
-## Q9. Request coalescing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Request coalescing?
 
 **Coalescing** — de-duplicate **concurrent identical requests** within single process.
 
@@ -494,7 +534,12 @@ public Value get(String key) {
 
 **Gotcha:** exception in one request → all sharing waiters fail. Often OK but know it.
 
-## Q10. (!) Как выбрать TTL?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Как выбрать TTL?
 
 **Factors:**
 
@@ -539,7 +584,12 @@ Example:
 
 **Gotcha:** too long TTL + no invalidation → user sees stale. Test: does 1-hour stale OK?
 
-## Q11. Jittered TTL (prevent mass expiration)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Jittered TTL (prevent mass expiration)?
 
 **Problem:**
 - 10,000 keys set at same time with TTL=60s
@@ -574,7 +624,12 @@ redis.set(key, val, ex=ttl)
 
 **Effect:** smooth rebuild rate instead of spike — DB usage graph changes from sawtooth to flat.
 
-## Q12. (!) Cold start — cache warming strategies?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Cold start — cache warming strategies?
 
 **Cold cache after:**
 - Deploy / restart
@@ -618,7 +673,12 @@ redis.set(key, val, ex=ttl)
 
 **K8s:** readiness probe returns healthy only после warmup. Otherwise load balancer sends traffic to cold pod.
 
-## Q13. Invalidation performance (patterns)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Invalidation performance (patterns)?
 
 **"There are only two hard things in Computer Science: cache invalidation and naming things."** — Phil Karlton.
 
@@ -667,7 +727,12 @@ redis.set(key, val, ex=ttl)
 - Add invalidation where staleness unacceptable
 - Not "invalidate everything on write" — be targeted
 
-## Q14. (!) L1 (in-proc) + L2 (Redis) — зачем?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) L1 (in-proc) + L2 (Redis) — зачем?
 
 **L1: in-process** (Caffeine, Guava, local HashMap):
 - Latency: nanoseconds-microseconds
@@ -711,7 +776,12 @@ Request → L1 (check in-proc) → L2 (check Redis) → DB
 - Low RPS (L1 overhead > benefit)
 - Every read needs exact latest value
 
-## Q15. Caffeine tuning?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Caffeine tuning?
 
 **Caffeine** — high-performance Java cache lib (SLF4J-style simplicity).
 
@@ -770,7 +840,12 @@ spring.cache.type: caffeine
 spring.cache.caffeine.spec: maximumSize=1000,expireAfterWrite=10m
 ```
 
-## Q16. (!) Redis cluster overhead vs single node?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Redis cluster overhead vs single node?
 
 **Single-node Redis:**
 - Lowest latency
@@ -823,7 +898,12 @@ spring.cache.caffeine.spec: maximumSize=1000,expireAfterWrite=10m
 - Partition at app layer (consistent hashing across Redis instances)
 - Redis Enterprise (commercial) — transparent sharding
 
-## Q17. Pipeline / MGET batching?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Pipeline / MGET batching?
 
 **Problem:** 100 Redis GETs = 100 RTTs (500ms + if cross-region).
 
@@ -871,7 +951,12 @@ res1, _, counter = p.execute()
 
 **Limit:** big pipelines consume memory (client + server); keep batches sensible (100-1000).
 
-## Q18. Serialization overhead (JSON vs MessagePack vs protobuf)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Serialization overhead (JSON vs MessagePack vs protobuf)?
 
 **Measurement** (1KB object):
 
@@ -913,7 +998,12 @@ res1, _, counter = p.execute()
 - If cache takes 0.5% of request time, 2× faster ser = 0.25% win
 - Profile before switching
 
-## Q19. (!) CDN hit ratio и cache headers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) CDN hit ratio и cache headers?
 
 **CDN hit ratio** — % of requests served from edge vs origin.
 
@@ -959,7 +1049,12 @@ res1, _, counter = p.execute()
 - HTML: `max-age=0, s-maxage=60` (clients always re-fetch, CDN caches briefly)
 - API: per-endpoint; often `private, max-age=0`
 
-## Q20. CDN tiered caching?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. CDN tiered caching?
 
 **Without tiered:**
 ```
@@ -998,7 +1093,12 @@ Other edges hit shield (shield pre-populated)
 
 **Cost:** enable costs slightly more (shield request billed), but offset by origin savings.
 
-## Q21. (!) Hot key problem?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) Hot key problem?
 
 **Hot key:** single key receiving disproportionate load (e.g., 80% of GETs для one product).
 
@@ -1038,7 +1138,12 @@ Other edges hit shield (shield pre-populated)
 
 **Real-world:** Twitter "Justin Bieber problem" — single user timeline caused hot shard; solution custom sharding.
 
-## Q22. (!) Big keys problem?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Big keys problem?
 
 **Big key:** single value very large (> 100KB, especially MB).
 
@@ -1083,7 +1188,12 @@ Other edges hit shield (shield pre-populated)
 
 **Monitor:** alert on `MEMORY USAGE > 1MB` for any key.
 
-## Q23. Cache not scaling — что проверить?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Cache not scaling — что проверить?
 
 **Symptoms:**
 - Latency rising with load
@@ -1155,7 +1265,12 @@ Other edges hit shield (shield pre-populated)
 - [Load Balancing](../architecture/load-balancing-interview.md) — session affinity, cache locality
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — caching as scale tool
 
-- [Application Profiling](application-profiling-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Application Profiling](application-profiling-interview.md)
 - [Database Performance](database-performance-interview.md)
 - [JVM Performance Tuning](jvm-performance-tuning-interview.md)
 - [Memory Management](memory-management-interview.md)

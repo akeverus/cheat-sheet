@@ -14,7 +14,7 @@ aliases:
   - "WebFlux reactive web"
   - "WebFlux interview questions"
 difficulty: "intermediate"
-updated: "2026-04-20"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring WebFlux`
 
@@ -109,6 +109,12 @@ public User getUser(@PathVariable Long id) {
     return userService.findById(id); // блокирует поток
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // WebFlux
 @GetMapping("/users/{id}")
 public Mono<User> getUser(@PathVariable Long id) {
@@ -130,6 +136,12 @@ public Mono<User> getUser(@PathVariable Long id) {
 - Есть блокирующие зависимости (JDBC, блокирующие клиенты)
 - Простые CRUD-операции с небольшим числом пользователей
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 > Не стоит смешивать блокирующий и реактивный I/O — выгода от WebFlux теряется при любом `block()` в event loop.
 
 ## Q3. Что такое событийный цикл (event loop) в WebFlux?
@@ -140,6 +152,12 @@ public Mono<User> getUser(@PathVariable Long id) {
 Запрос → event loop thread → реактивная цепочка → I/O callback → продолжение цепочки → ответ
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Важно: нельзя блокировать event loop (`Thread.sleep`, `block()`, JDBC) — это заморозит обработку всех соединений на данном потоке.
 
 ## Q4. Какие серверы поддерживает Spring WebFlux?
@@ -148,6 +166,12 @@ public Mono<User> getUser(@PathVariable Long id) {
 - **Undertow** — высокопроизводительный, поддерживает неблокирующий I/O
 - **Tomcat 8.5+** / **Jetty 9.3+** — через Servlet 3.1 Non-Blocking I/O
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```xml
 <!-- Заменить Netty на Tomcat -->
 <dependency>
@@ -189,6 +213,12 @@ public class UserController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<UserDto> create(@RequestBody @Valid Mono<CreateUserRequest> request) {
@@ -210,6 +240,12 @@ public Mono<UserDto> update(
     return requestMono.flatMap(req -> userService.update(id, req));
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Принять тело как Flux<DataBuffer> — стриминговая загрузка файла
 @PostMapping(value = "/upload", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 public Mono<Void> upload(@RequestBody Flux<DataBuffer> body) {
@@ -249,6 +285,12 @@ public class UserHandler {
                 .body(userService.findAll(), UserDto.class);
     }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     public Mono<ServerResponse> findById(ServerRequest request) {
         Long id = Long.parseLong(request.pathVariable("id"));
         return userService.findById(id)
@@ -279,6 +321,12 @@ public RouterFunction<ServerResponse> apiRoutes(
             .POST("", orderHandler::create)
             .build();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     return RouterFunctions.route()
             .nest(RequestPredicates.path("/api/v1/users"), () -> userRoutes)
             .nest(RequestPredicates.path("/api/v1/orders"), () -> orderRoutes)
@@ -300,6 +348,12 @@ public Mono<ServerResponse> create(ServerRequest request) {
                     .bodyValue(created));
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Доступ к заголовкам и query params
 public Mono<ServerResponse> search(ServerRequest request) {
     String query = request.queryParam("q").orElse("");
@@ -332,6 +386,12 @@ public class RequestLoggingFilter implements WebFilter {
     }
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Локальный фильтр — только для группы роутов
 RouterFunction<ServerResponse> protectedRoutes = RouterFunctions.route()
         .GET("/admin/stats", adminHandler::stats)
@@ -369,6 +429,12 @@ Mono<OrderDto> order = webClient.post()
         .retrieve()
         .bodyToMono(OrderDto.class);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // GET — список
 Flux<UserDto> users = webClient.get()
         .uri("/users")
@@ -388,6 +454,12 @@ HttpClient httpClient = HttpClient.create()
                 .addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
                 .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS)));
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 WebClient webClient = WebClient.builder()
         .clientConnector(new ReactorClientHttpConnector(httpClient))
         .baseUrl("https://api.example.com")
@@ -398,6 +470,12 @@ WebClient webClient = WebClient.builder()
 
 Используется оператор `retryWhen` из Project Reactor с настраиваемой стратегией.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```java
 Mono<UserDto> userWithRetry = webClient.get()
         .uri("/users/{id}", id)
@@ -424,6 +502,12 @@ Flux<UserDto> streamedUsers = webClient.get()
         .retrieve()
         .bodyToFlux(UserDto.class);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Обработка с backpressure
 streamedUsers
         .buffer(100)           // буферизация пачками по 100
@@ -450,6 +534,12 @@ ExchangeFilterFunction errorHandler = ExchangeFilterFunction.ofResponseProcessor
             return Mono.just(response);
         });
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 WebClient webClient = WebClient.builder()
         .filter(loggingFilter)
         .filter(errorHandler)
@@ -472,6 +562,12 @@ public Flux<ServerSentEvent<String>> streamEvents() {
                     .build());
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Или просто Flux<String> — WebFlux сам добавит SSE-заголовки
 @GetMapping(value = "/prices", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 public Flux<PriceDto> streamPrices() {
@@ -481,6 +577,12 @@ public Flux<PriceDto> streamPrices() {
 
 ## Q17. Чем SSE отличается от WebSocket?
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 | Аспект | SSE | WebSocket |
 |---|---|---|
 | Направление | Только сервер → клиент | Двунаправленное |
@@ -512,6 +614,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(ex.getMessage())));
     }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @ExceptionHandler(Exception.class)
     public Mono<ResponseEntity<ErrorResponse>> handleGeneral(Exception ex) {
         log.error("Unexpected error", ex);
@@ -531,6 +639,12 @@ public class GlobalExceptionHandler {
 @Order(-2) // Выше DefaultErrorWebExceptionHandler (порядок -1)
 public class CustomWebExceptionHandler implements WebExceptionHandler {
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
         if (ex instanceof AccessDeniedException) {
@@ -565,6 +679,12 @@ public static class UserNotFoundException extends RuntimeException {
     }
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // В WebClient — обработка статуса ответа
 webClient.get().uri("/users/{id}", id)
         .retrieve()
@@ -593,6 +713,12 @@ Mono<UserDto> userWithFallback = userService.findById(id)
         .onErrorResume(ex ->
                 Mono.just(UserDto.defaultUser()));  // крайний запасной вариант
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // onErrorMap — преобразование ошибки
 Mono<UserDto> withMappedError = userService.findById(id)
         .onErrorMap(DatabaseException.class,
@@ -609,6 +735,12 @@ Mono<UserDto> withMappedError = userService.findById(id)
 @EnableReactiveMethodSecurity
 public class SecurityConfig {
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
         return http
@@ -636,6 +768,12 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
 
     private final UserRepository userRepository;
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @Override
     public Mono<UserDetails> findByUsername(String username) {
         return userRepository.findByUsername(username)
@@ -662,6 +800,12 @@ public Mono<UserDto> getCurrentUser() {
             .flatMap(userRepository::findByUsername);
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // В контроллере через @AuthenticationPrincipal
 @GetMapping("/me")
 public Mono<UserDto> getMe(@AuthenticationPrincipal Mono<UserDetails> principal) {
@@ -682,6 +826,12 @@ public class AdminService {
         return userRepository.findAll().map(userMapper::toDto);
     }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
     public Mono<UserDto> getUserByUsername(String username) {
         return userRepository.findByUsername(username).map(userMapper::toDto);
@@ -703,6 +853,12 @@ public class WebFluxConfig implements WebFluxConfigurer {
     }
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Или через application.yml
 // spring.codec.max-in-memory-size: 10MB
 ```
@@ -719,6 +875,12 @@ public Mono<UserDto> getUser(@PathVariable Long id) {
     return Mono.just(user);
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // ПРАВИЛЬНО — переносим блокирующую работу на boundedElastic
 @GetMapping("/users/{id}")
 public Mono<UserDto> getUser(@PathVariable Long id) {
@@ -749,6 +911,12 @@ public class LegacyIntegrationService {
 
 ## See also
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Project Reactor](project-reactor-interview.md)
 - [Reactive Streams](reactive-streams-interview.md)
 - [RxJava](rxjava-interview.md)

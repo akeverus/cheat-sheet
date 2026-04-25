@@ -11,7 +11,7 @@ aliases:
   - "Configuration management interview"
   - "Ansible Playbook interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Ansible`
 
@@ -88,6 +88,12 @@ updated: "2026-04-19"
 - **Network automation** (Cisco, Juniper, etc.)
 - **Security automation**
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Key characteristics:**
 - **Agentless** (uses SSH, WinRM)
 - **YAML-based** playbooks
@@ -111,6 +117,12 @@ updated: "2026-04-19"
 - ❌ SSH overhead per task (slower for huge fleets)
 - ❌ Harder для **state monitoring** (no agent reporting back)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **В 2025** — agentless approach **doминирует** в new tools (Salt also has agentless mode).
 
 ## Q3. (!) Idempotency — что это и зачем?
@@ -135,6 +147,12 @@ updated: "2026-04-19"
 - **Convergent** — system reaches desired state
 - **No side effects** при partial failures
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Most Ansible modules idempotent**. Use `command` / `shell` carefully (not idempotent by default).
 
 ## Q4. (!) Inventory — статический и динамический?
@@ -175,6 +193,12 @@ keyed_groups:
 ansible-inventory -i aws_ec2.yml --list
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Cloud environments** обычно требуют dynamic inventory (instances ephemeral).
 
 ## Q5. (!) Playbook — структура?
@@ -213,6 +237,12 @@ ansible-inventory -i aws_ec2.yml --list
         state: restarted
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Run:**
 ```bash
 ansible-playbook -i inventory deploy.yml
@@ -249,6 +279,12 @@ roles/
     - app-deploy
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Reusable** across projects, shared via Galaxy.
 
 ## Q7. Modules?
@@ -280,6 +316,12 @@ roles/
     image: ami-...
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Custom modules** can be written в Python.
 
 ## Q8. Tasks, handlers?
@@ -309,6 +351,12 @@ handlers:
       state: restarted
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Эффект:** if either task changed → handler fires **once** at end (no double restart).
 
 ## Q9. (!) Variables (group_vars, host_vars, playbook)?
@@ -333,6 +381,12 @@ inventory/
     web1.yml        # для web1
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Override через CLI:**
 ```bash
 ansible-playbook deploy.yml -e "version=2.0"
@@ -359,6 +413,12 @@ ansible-playbook deploy.yml -e "version=2.0"
 
 **Disable** для speed: `gather_facts: no`.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Custom facts:** files в `/etc/ansible/facts.d/` на managed node.
 
 ## Q11. Templates (Jinja2)?
@@ -385,6 +445,12 @@ server {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Powerful** — variables, loops, conditionals, filters.
 
 ## Q12. (!) Ansible Vault?
@@ -419,6 +485,12 @@ ansible-playbook deploy.yml --vault-password-file ~/.vault_pass
 
 **Best practice:** vault file + vault-id для multiple environments.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Alternative:** integrate с **Vault** (HashiCorp) для centralized secrets.
 
 ## Q13. SSH best practices?
@@ -434,6 +506,12 @@ pipelining = True  # speed up
 ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practices:**
 - **SSH keys**, not passwords
 - **Bastion / jump hosts** для private networks
@@ -457,6 +535,12 @@ ansible all -a "uname -r"  # shell command
 - One-off actions
 - Inventory exploration
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Playbooks для:**
 - Repeatable tasks
 - Multi-step workflows
@@ -478,6 +562,12 @@ ansible-playbook deploy.yml --check
 ansible-playbook deploy.yml --check --diff
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:** run check + diff перед production deployment.
 
 ## Q16. Tags?
@@ -499,6 +589,12 @@ ansible-playbook deploy.yml --tags ssl
 ansible-playbook deploy.yml --skip-tags install
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** quick re-deploy только config (skip install steps).
 
 ## Q17. Parallel execution (forks)?
@@ -516,6 +612,12 @@ ansible-playbook deploy.yml --forks 100
 
 **Effect:** Ansible parallelizes tasks across **N hosts** simultaneously.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Tuning:**
 - Larger fleet → higher forks (but limit by SSH connection capacity)
 - Memory constrained — lower forks
@@ -541,6 +643,12 @@ collections:
   - name: community.general
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **40K+ roles** на Galaxy. Quality varies — check stars, recent updates.
 
 ## Q19. Collections (с Ansible 2.10)?
@@ -562,6 +670,12 @@ ansible-galaxy collection install community.kubernetes
 
 **Built-in `ansible.builtin`** collection — core modules.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Cloud collections:** `amazon.aws`, `google.cloud`, `azure.azcollection`.
 
 ## Q20. (!) AWX vs Ansible Tower vs Automation Platform?
@@ -586,6 +700,12 @@ ansible-galaxy collection install community.kubernetes
 helm install awx awx-operator/awx
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** centralized Ansible execution для team / enterprise.
 
 ## Q21. Workflows, schedules?
@@ -602,6 +722,12 @@ Stage 3: Deploy app
 Stage 4 (cleanup): Rollback
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Schedules:** cron-like для periodic playbook runs (compliance checks, backups).
 
 ## Q22. (!) Ansible vs Terraform?
@@ -620,6 +746,12 @@ Stage 4 (cleanup): Rollback
 - **Terraform** — provision infrastructure (VMs, networks, DBs)
 - **Ansible** — configure software на VMs
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```
 Terraform creates EC2 → Ansible installs nginx, copies config
 ```
@@ -638,10 +770,22 @@ Terraform creates EC2 → Ansible installs nginx, copies config
 
 **Ansible won** в 2010-2020s due to **simplicity + agentless**. Puppet и Chef — legacy в большинстве organizations.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **SaltStack** — fourth player, agent или agentless, fast.
 
 ## Q24. (!) Best practices?
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 1. **Idempotency** — always test re-running
 2. **Roles** — break large playbooks
 3. **Variables hierarchy** — defaults → group_vars → host_vars
@@ -689,6 +833,12 @@ Terraform creates EC2 → Ansible installs nginx, copies config
 - [Secrets Management](../security/secrets-management-interview.md) — Ansible Vault
 - [Application Security](../security/application-security-interview.md) — secure playbooks
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [ArgoCD и GitOps](argocd-interview.md)
 - [HashiCorp Consul](consul-interview.md)
 - [Docker](docker-interview.md)

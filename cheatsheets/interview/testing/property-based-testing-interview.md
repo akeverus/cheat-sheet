@@ -11,7 +11,7 @@ aliases:
   - "Hypothesis interview"
   - "jqwik interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Property-based Testing`
 
@@ -88,7 +88,12 @@ Hypothesis (Python) generates 100s of random lists, verifies property.
 
 **Если fails** — Hypothesis shrinks к minimal failing case (e.g., `[1, 0]`).
 
-## Q2. (!) Property-based vs example-based?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Property-based vs example-based?
 
 **Example-based** (traditional):
 ```python
@@ -111,7 +116,12 @@ You describe **what should be true**, framework finds inputs.
 
 **Both complement each other.** Examples for known cases, properties для general invariants.
 
-## Q3. (!) Зачем PBT?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Зачем PBT?
 
 **Reasons:**
 
@@ -126,7 +136,12 @@ You describe **what should be true**, framework finds inputs.
 - Cryptography flaws
 - File system inconsistencies
 
-## Q4. (!) Какие properties testable?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Какие properties testable?
 
 **Common categories:**
 
@@ -140,7 +155,12 @@ You describe **what should be true**, framework finds inputs.
 
 **For любой function** — есть properties.
 
-## Q5. Round-trip property?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Round-trip property?
 
 **`decode(encode(x)) == x`** для все x.
 
@@ -158,7 +178,12 @@ def test_json_roundtrip(d):
 
 **Found bugs:** JSON libraries failing on unicode, special floats.
 
-## Q6. Idempotency property?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Idempotency property?
 
 **`f(f(x)) == f(x)`** — calling twice = once.
 
@@ -173,7 +198,12 @@ def test_sort_idempotent(lst):
 - Normalization (canonical forms)
 - Cleanup operations
 
-## Q7. Invariant properties?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Invariant properties?
 
 **Property holds for all inputs.**
 
@@ -189,7 +219,12 @@ def test_sort_preserves_sum(lst):
 
 **Multiple invariants** caught different aspects.
 
-## Q8. (!) QuickCheck (originalpioneer)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) QuickCheck (originalpioneer)?
 
 **QuickCheck** — original PBT framework (Haskell, 2000, Koen Claessen и John Hughes).
 
@@ -212,7 +247,12 @@ main = quickCheck prop_reverse
 - proptest (Rust)
 - gopter (Go)
 
-## Q9. (!) Hypothesis (Python)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Hypothesis (Python)?
 
 **Hypothesis** — Python PBT framework. Most popular, mature.
 
@@ -240,7 +280,12 @@ def test_dict_operations(d):
 
 **Examples database** — failing cases saved, replayed на next run.
 
-## Q10. (!) jqwik (Java)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) jqwik (Java)?
 
 **jqwik** — modern Java PBT (replaces QuickCheck-Java).
 
@@ -269,7 +314,12 @@ void sortIsIdempotent(@ForAll @Size(max = 100) List<Integer> list) {
 
 **JUnit 5 compatible** — runs alongside @Test methods.
 
-## Q11. fast-check (JavaScript)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. fast-check (JavaScript)?
 
 ```javascript
 import fc from 'fast-check';
@@ -287,7 +337,12 @@ test('reverse is involutive', () => {
 
 **Used by:** ESLint, Babel, Apollo, large JS projects.
 
-## Q12. (!) Что такое generator?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Что такое generator?
 
 **Generator** = function producing random values.
 
@@ -308,7 +363,12 @@ st.lists(st.integers(), min_size=1, max_size=10)
 st.text(alphabet="abc", max_size=5)
 ```
 
-## Q13. Composing generators?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Composing generators?
 
 **Combine generators** для complex types:
 
@@ -337,7 +397,12 @@ st.integers().flatmap(lambda n: st.lists(st.integers(), min_size=n, max_size=n))
 # Lists of randomly chosen size
 ```
 
-## Q14. Custom generators?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Custom generators?
 
 **For domain types:**
 
@@ -358,7 +423,12 @@ def test_isbn_validates(isbn):
 - Complex valid objects
 - State machines (для stateful PBT)
 
-## Q15. (!) Что такое shrinking?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Что такое shrinking?
 
 **Shrinking** — when property fails, framework **simplifies** failing input.
 
@@ -380,7 +450,12 @@ def test_sort_property(lst):
 3. Until cannot shrink further
 4. Report **minimal counter-example**
 
-## Q16. Зачем shrinking важен?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Зачем shrinking важен?
 
 **Without shrinking:** debugging hard ("why is `[42, -7, 100, ...]` failing?").
 
@@ -390,7 +465,12 @@ def test_sort_property(lst):
 
 **Hypothesis особенно good** — shrinks complex types (dicts, custom objects).
 
-## Q17. (!) Examples reverse list, sorting, parsing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Examples reverse list, sorting, parsing?
 
 **Reverse:**
 ```python
@@ -420,7 +500,12 @@ def test_json(d):
     assert json.loads(json.dumps(d)) == d
 ```
 
-## Q18. Test integration с standard tests?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Test integration с standard tests?
 
 **PBT alongside example tests:**
 
@@ -444,7 +529,12 @@ class TestSort:
 - **Examples** для known boundary cases (specific docs)
 - **Properties** для general invariants
 
-## Q19. Stateful PBT (model-based)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Stateful PBT (model-based)?
 
 **Generate sequences of operations**, verify state remains consistent.
 
@@ -476,7 +566,12 @@ class StackMachine(RuleBasedStateMachine):
 
 **Found bugs in:** databases, distributed systems, complex state machines.
 
-## Q20. (!) Когда применять PBT?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Когда применять PBT?
 
 **Good fits:**
 - **Pure functions** (sort, parse, encode)
@@ -493,7 +588,12 @@ class StackMachine(RuleBasedStateMachine):
 
 **Mix PBT + example testing** — PBT не replacement.
 
-## Q21. (!) Limitations и criticism?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) Limitations и criticism?
 
 1. **Property design hard** — what to test?
 2. **False sense of coverage** — properties may miss issues
@@ -512,7 +612,12 @@ class StackMachine(RuleBasedStateMachine):
 
 ## See also
 
-- [Unit Testing](unit-testing-interview.md) — context
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Unit Testing](unit-testing-interview.md) — context
 - [Mutation Testing](mutation-testing-interview.md) — также quality-focused
 - [Test Strategies](test-strategies-interview.md)
 - [Load Testing](load-testing-interview.md)

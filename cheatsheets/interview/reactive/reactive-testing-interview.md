@@ -14,7 +14,7 @@ aliases:
   - "реактивное тестирование собеседование"
   - "WebTestClient interview"
 difficulty: "intermediate"
-updated: "2026-04-20"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Тестирование реактивного кода
 
@@ -97,6 +97,12 @@ updated: "2026-04-20"
 
 Mono<String> greeting = Mono.just("Hello, Reactor!");
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 StepVerifier.create(greeting)
         .expectNext("Hello, Reactor!")
         .verifyComplete();
@@ -116,6 +122,12 @@ StepVerifier.create(numbers)
 // Проверить с преобразованием
 Flux<String> words = Flux.just("apple", "banana", "cherry");
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 StepVerifier.create(words.map(String::toUpperCase))
         .expectNext("APPLE", "BANANA", "CHERRY")
         .verifyComplete();
@@ -142,6 +154,12 @@ StepVerifier.create(failing)
                 ex.getMessage().contains("wrong"))
         .verify();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Проверить через consumer
 StepVerifier.create(failing)
         .expectErrorSatisfies(ex -> {
@@ -171,6 +189,12 @@ StepVerifier.create(emptyFlux)
 Mono<String> withFallback = Mono.<String>empty()
         .switchIfEmpty(Mono.just("fallback"));
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 StepVerifier.create(withFallback)
         .expectNext("fallback")
         .verifyComplete();
@@ -193,6 +217,12 @@ StepVerifier.create(flux)
         .expectComplete()
         .verify();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // verify() используется явно с expectError
 StepVerifier.create(failingMono)
         .expectError(IllegalStateException.class)
@@ -216,6 +246,12 @@ StepVerifier.create(user)
 // Для Flux
 Flux<OrderDto> orders = orderService.findAll();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 StepVerifier.create(orders)
         .expectNextMatches(order -> order.status() == OrderStatus.PENDING)
         .expectNextMatches(order -> order.status() == OrderStatus.PROCESSING)
@@ -231,6 +267,12 @@ StepVerifier.create(bigFlux)
         .expectNextCount(1000)
         .verifyComplete();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Пропустить первые K, проверить следующие N
 StepVerifier.create(bigFlux)
         .expectNextCount(500)              // пропустить 500
@@ -246,6 +288,12 @@ StepVerifier.create(bigFlux)
 ```java
 Mono<UserProfileDto> profile = profileService.getProfile(1L);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 StepVerifier.create(profile)
         .assertNext(p -> {
             assertThat(p.user().id()).isEqualTo(1L);
@@ -275,6 +323,12 @@ StepVerifier.create(numbers)
                 list.stream().allMatch(n -> n % 2 == 0))
         .verifyComplete();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Или просто через consumeNextWith для одного элемента
 StepVerifier.create(Flux.just("a", "b"))
         .consumeNextWith(s -> assertThat(s).isEqualTo("a"))
@@ -292,6 +346,12 @@ Sinks.Many<String> sink = Sinks.many().multicast().onBackpressureBuffer();
 
 Flux<String> hotFlux = sink.asFlux();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 StepVerifier.create(hotFlux)
         .then(() -> sink.emitNext("event1", Sinks.EmitFailureHandler.FAIL_FAST))
         .expectNext("event1")
@@ -313,6 +373,12 @@ StepVerifier.create(Mono.delay(Duration.ofSeconds(5)))
         .expectNext(0L)
         .verifyComplete();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // С виртуальным временем — мгновенно
 StepVerifier.withVirtualTime(() -> Mono.delay(Duration.ofSeconds(5)))
         .thenAwait(Duration.ofSeconds(5))  // "промотать" время
@@ -332,6 +398,12 @@ StepVerifier.withVirtualTime(() ->
         .expectNext(0L, 1L, 2L)
         .verifyComplete();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // НЕПРАВИЛЬНО — publisher создан до withVirtualTime
 Flux<Long> alreadyCreated = Flux.interval(Duration.ofSeconds(1)).take(3); // НЕ ТАК
 StepVerifier.withVirtualTime(() -> alreadyCreated); // виртуальное время не работает
@@ -352,6 +424,12 @@ StepVerifier.withVirtualTime(() ->
         .expectNext("c")
         .verifyComplete();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // interval — периодические события
 StepVerifier.withVirtualTime(() ->
         Flux.interval(Duration.ofMinutes(1)).take(5))
@@ -370,6 +448,12 @@ StepVerifier.withVirtualTime(() ->
         .thenAwait(Duration.ofSeconds(10))  // промотать время до таймаута
         .verifyError(TimeoutException.class);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Тест: операция завершается РАНЬШЕ таймаута
 StepVerifier.withVirtualTime(() ->
         Mono.just("ok")
@@ -390,6 +474,12 @@ StepVerifier.withVirtualTime(() ->
 ```java
 TestPublisher<String> publisher = TestPublisher.create();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 StepVerifier.create(publisher.flux().map(String::toUpperCase))
         .then(() -> publisher.emit("hello", "world"))
         .expectNext("HELLO", "WORLD")
@@ -415,6 +505,12 @@ publisher.error(new RuntimeException("test error"));
 // emit = next + complete
 publisher.emit(1, 2, 3);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // В StepVerifier
 StepVerifier.create(publisher.flux())
         .then(() -> publisher.next(10))
@@ -440,6 +536,12 @@ StepVerifier.create(publisher.flux(), 1) // запросить только 1 э
         .thenCancel()
         .verify();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Проверить что подписчик сделал правильное число запросов
 publisher.assertMinRequested(1);
 publisher.assertMaxRequested(Long.MAX_VALUE);
@@ -458,6 +560,12 @@ TestPublisher<String> noncompliant = TestPublisher.createNoncompliant(
 TestPublisher<Integer> overflowing = TestPublisher.createNoncompliant(
         TestPublisher.Behavior.REQUEST_OVERFLOW);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Нарушение: эмитировать после complete
 TestPublisher<String> postComplete = TestPublisher.createNoncompliant(
         TestPublisher.Behavior.DEFER_CANCELLATION);
@@ -465,6 +573,12 @@ TestPublisher<String> postComplete = TestPublisher.createNoncompliant(
 
 ## Q19. Что такое WebTestClient?
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 `WebTestClient` — реактивный тестовый HTTP-клиент для `Spring WebFlux`. Поддерживает:
 - Тестирование без запуска сервера (через `bindToController`, `bindToRouterFunction`)
 - Тестирование реального сервера (`bindToServer`)
@@ -505,6 +619,12 @@ void routerFunction_test() {
             .bindToRouterFunction(userRoutes(userHandler))
             .build();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     client.get().uri("/api/v1/users")
             .exchange()
             .expectStatus().isOk();
@@ -542,6 +662,12 @@ webTestClient.get()
         .jsonPath("$.id").isEqualTo(1)
         .jsonPath("$.name").isEqualTo("Alice");
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Проверить статус ошибки
 webTestClient.get()
         .uri("/api/v1/users/999")
@@ -570,6 +696,12 @@ void streamEvents_shouldReturnSse() {
             .verify();
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Тест SSE с проверкой содержимого
 @Test
 void priceStream_shouldReceivePrices() {
@@ -603,6 +735,12 @@ StepVerifier.create(flux, 3)  // запросить только 3 элемен�
         .expectNext(6, 7, 8, 9, 10)
         .verifyComplete();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Проверить, что кастомный publisher не отправляет лишнего
 TestPublisher<Integer> controlled = TestPublisher.create();
 StepVerifier.create(controlled.flux(), 1)
@@ -630,6 +768,12 @@ void backpressureDrop_shouldDropExcessElements() {
             .thenCancel()
             .verify();
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     // Элементы 6-100 должны быть сброшены
     assertThat(dropped).containsExactlyElementsOf(
             IntStream.rangeClosed(6, 100).boxed().toList());
@@ -656,6 +800,12 @@ void good() {
             .verifyComplete();
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Если всё же нужен block() — добавить .publishOn(Schedulers.boundedElastic())
 // или использовать @SpringBootTest вне event loop
 ```
@@ -680,6 +830,12 @@ void good() {
             .verifyComplete(); // обязательно!
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Также: verifyError(Class), verifyErrorMessage(String)
 ```
 
@@ -699,6 +855,12 @@ class UserRepositoryTest {
     void save_shouldPersistUser() {
         User user = new User(null, "testuser", "test@example.com");
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         StepVerifier.create(
                 userRepository.save(user)
                         .flatMap(saved -> userRepository.findById(saved.id()))
@@ -761,6 +923,12 @@ class UserServiceTest {
 
 ## See also
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Project Reactor](project-reactor-interview.md)
 - [Reactive Streams](reactive-streams-interview.md)
 - [RxJava](rxjava-interview.md)

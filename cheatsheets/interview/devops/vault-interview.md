@@ -11,7 +11,7 @@ aliases:
   - "Vault собеседование"
   - "Secrets management interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `HashiCorp Vault`
 
@@ -84,6 +84,12 @@ updated: "2026-04-19"
 - **PKI** — issue TLS certificates
 - **Audit logs** — full traceability
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Применения:**
 - Replace hardcoded API keys, DB passwords
 - Issue short-lived DB credentials
@@ -111,6 +117,12 @@ vault read database/creds/my-role
 # Returns NEW user/password, expires in 1 hour
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Преимущество dynamic:** **breach impact limited** — credentials short-lived, revoked.
 
 ## Q3. Architecture (sealed/unsealed, storage backend)?
@@ -126,6 +138,12 @@ vault read database/creds/my-role
 - Backed by: **Integrated Storage (Raft, recommended)**, Consul, Filesystem, S3, MySQL, PostgreSQL, etc.
 - All data **encrypted** before write к backend
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Components:**
 - Vault Server
 - Storage backend
@@ -160,6 +178,12 @@ vault kv get kv/myapp/db
 vault kv get -version=1 kv/myapp/db
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **В 2025** — always KV v2 для new deployments.
 
 ## Q5. Database engine (dynamic DB credentials)?
@@ -187,6 +211,12 @@ vault read database/creds/readonly
 
 **Vault creates DB user**, application uses, Vault revokes after TTL.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Supported DBs:** PostgreSQL, MySQL, Mongo, Cassandra, Oracle, Redis, MS-SQL, и др.
 
 ## Q6. AWS engine (dynamic IAM credentials)?
@@ -207,6 +237,12 @@ vault read aws/creds/my-role
 
 Vault creates **IAM user** dynamically. Application uses, Vault revokes (deletes IAM user) after TTL.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** developer needs AWS access for 1 hour debugging. Vault provides ephemeral creds.
 
 ## Q7. (!) PKI engine (TLS certificates)?
@@ -231,6 +267,12 @@ vault write pki/issue/my-role \
 - Code signing
 - SSH CA для signing keys
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Cert-manager** в K8s integrates с Vault PKI.
 
 ## Q8. Transit engine (encryption-as-a-service)?
@@ -257,6 +299,12 @@ vault write transit/decrypt/my-key ciphertext="vault:v1:..."
 
 **Key rotation** automatic, transparent.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** PCI / HIPAA compliance, app encrypts data в DB через Vault.
 
 ## Q9. (!) Token authentication?
@@ -278,6 +326,12 @@ vault read kv/myapp/db
 - Renewable / revocable
 - Periodic / batch tokens
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Periodic tokens** — auto-renewed indefinitely if used regularly.
 
 ## Q10. AppRole?
@@ -307,6 +361,12 @@ vault write auth/approle/login \
 - **Role ID** — identifies app (long-lived)
 - **Secret ID** — credentials (short-lived)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Usage:** distribute Role ID via config, Secret ID separately (CI/CD secret, etc.).
 
 ## Q11. (!) Kubernetes auth?
@@ -330,6 +390,12 @@ vault write auth/kubernetes/login \
 
 **Pod gets token** → exchanges с Vault → gets Vault token → reads secrets.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice** для apps в K8s.
 
 ## Q12. AWS, Azure, GCP IAM auth?
@@ -350,6 +416,12 @@ vault login -method=aws role=my-app
 
 **Identity from cloud** verified by Vault — no shared secrets.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Same idea для Azure (managed identity) и GCP (service accounts).
 
 ## Q13. JWT/OIDC?
@@ -369,6 +441,12 @@ vault login -method=oidc
 
 **SSO** — users login через corporate SSO к Vault.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **JWT auth** — generic JWT tokens (not full OIDC flow).
 
 ## Q14. (!) Policies (HCL)?
@@ -394,6 +472,12 @@ path "kv/data/myapp/db" {
 - `sudo` — required для some root operations
 - `deny` — explicit deny
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Apply policy к token / role:**
 ```bash
 vault token create -policy=my-policy
@@ -412,6 +496,12 @@ Entity: alice
 
 **Group** = collection of entities.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Policies attached к entities/groups** — централизованное управление.
 
 ## Q16. (!) Sealing / unsealing?
@@ -435,6 +525,12 @@ vault operator unseal <key3>
 
 **Зачем:** даже если attacker compromises Vault server — данные encrypted, unseal keys distributed.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Restart** = sealed again. Production cluster needs unseal каждый restart.
 
 ## Q17. Auto-unseal (KMS)?
@@ -452,6 +548,12 @@ seal "awskms" {
 
 **Trade-off:** Vault dependent на cloud KMS. If KMS down → Vault sealed.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **В production** — recommended (operational simplicity).
 
 ## Q18. HA (Raft, Consul backend)?
@@ -474,6 +576,12 @@ storage "raft" {
 ha_storage "raft" { ... }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **В 2025** — Raft default. Consul backend obsolete для Vault.
 
 ## Q19. Backup / disaster recovery?
@@ -493,6 +601,12 @@ vault operator raft snapshot restore backup.snap
 - Multi-region active clusters
 - Local secrets reads
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Backups should be encrypted** (snapshots contain unencrypted data!).
 
 ## Q20. (!) Vault Agent?
@@ -525,6 +639,12 @@ template {
 - **Templates** — render secrets к files (e.g., env vars)
 - **Caching** — reduces Vault load
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 App reads file, не нужно знать про Vault.
 
 ## Q21. Vault Operator (Kubernetes)?
@@ -537,6 +657,12 @@ helm install vault hashicorp/vault \
   --set "server.ha.replicas=3"
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Features:**
 - HA Raft cluster
 - Auto-unseal с cloud KMS
@@ -561,6 +687,12 @@ vault.hashicorp.com/agent-inject-template-db: |
 
 **Effect:** sidecar fetches secrets, writes к shared volume, app reads from `/vault/secrets/db`.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **No Vault SDK** в app code — just file reads.
 
 ## Q23. External Secrets Operator?
@@ -586,10 +718,22 @@ spec:
 
 **Effect:** ESO fetches from Vault, creates K8s Secret. Apps use K8s Secret normally.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Vs Vault Agent injector:** ESO simpler если уже invested в K8s Secrets workflow.
 
 ## Q24. (!) Best practices?
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 1. **Auto-unseal** в production (cloud KMS)
 2. **HA cluster** (3+ Raft nodes)
 3. **TLS everywhere** (Vault API, between nodes)
@@ -618,6 +762,12 @@ spec:
 
 **Vault — most powerful, but complex ops.**
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **For multi-cloud / heavy use cases** — Vault wins. **For simple AWS apps** — Secrets Manager easier.
 
 ## Q26. License change (BSL) и OpenBao fork?
@@ -658,6 +808,12 @@ spec:
 - [JWT](../security/jwt-interview.md) — JWT auth
 - [Zero Trust](../security/zero-trust-interview.md) — Vault key component
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Ansible](ansible-interview.md)
 - [ArgoCD и GitOps](argocd-interview.md)
 - [HashiCorp Consul](consul-interview.md)

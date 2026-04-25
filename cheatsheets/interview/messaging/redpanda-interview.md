@@ -11,7 +11,7 @@ aliases:
   - "Redpanda vs Kafka"
   - "Kafka-compatible C++ streaming"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Redpanda`
 
@@ -82,7 +82,12 @@ updated: "2026-04-19"
 
 **Применения:** same as Kafka — event streaming, microservices, real-time analytics, log aggregation.
 
-## Q2. (!) Redpanda vs Kafka — отличия?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Redpanda vs Kafka — отличия?
 
 | Критерий | Apache Kafka | Redpanda |
 |----------|--------------|----------|
@@ -99,7 +104,12 @@ updated: "2026-04-19"
 | Adoption | Massive | Growing |
 | Ecosystem | Huge | Compatible но smaller native |
 
-## Q3. Single binary — что значит?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Single binary — что значит?
 
 **Apache Kafka deployment:**
 - Kafka brokers (Java)
@@ -115,7 +125,12 @@ updated: "2026-04-19"
 
 **Effect:** **massively simpler ops**. Container deployments easier. Less moving parts.
 
-## Q4. (!) C++ + Seastar (shard-per-core)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) C++ + Seastar (shard-per-core)?
 
 **Seastar** — same framework как **ScyllaDB**.
 
@@ -132,7 +147,12 @@ updated: "2026-04-19"
 
 **Result:** better CPU utilization, lower latency.
 
-## Q5. No JVM, no GC pauses?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. No JVM, no GC pauses?
 
 **Kafka** — JVM:
 - GC pauses (10-500 ms)
@@ -147,7 +167,12 @@ updated: "2026-04-19"
 
 Same advantage как **ScyllaDB vs Cassandra**.
 
-## Q6. (!) No ZooKeeper — Raft консенсус?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) No ZooKeeper — Raft консенсус?
 
 **Kafka historically** require ZooKeeper для:
 - Cluster metadata
@@ -163,7 +188,12 @@ Same advantage как **ScyllaDB vs Cassandra**.
 - Fewer components
 - Faster failover
 
-## Q7. Tiered storage?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Tiered storage?
 
 **Tiered storage** в Redpanda — old data offloaded к **object storage (S3, GCS, Azure Blob)**.
 
@@ -182,7 +212,12 @@ cloud_storage_region: us-east-1
 
 Same idea как **Pulsar tiered storage**, **Kafka Tiered Storage** (KIP-405).
 
-## Q8. (!) Kafka wire protocol compatibility?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Kafka wire protocol compatibility?
 
 **Redpanda implements** Kafka wire protocol.
 
@@ -199,7 +234,12 @@ producer.send('my-topic', b'message')
 
 **Some advanced features** не supported (Kafka transactions on Redpanda — supported недавно).
 
-## Q9. Kafka clients работают?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Kafka clients работают?
 
 **Да** — все mainstream Kafka clients:
 - Java (kafka-clients)
@@ -212,7 +252,12 @@ producer.send('my-topic', b'message')
 
 **ORM/connectors** (Debezium, Kafka Connect) — supported.
 
-## Q10. Schema Registry, Connect?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Schema Registry, Connect?
 
 **Schema Registry** — built into Redpanda (Avro, JSON Schema, Protobuf).
 
@@ -225,7 +270,12 @@ curl http://redpanda:8081/subjects
 
 **Redpanda Console** — UI для browsing topics, schemas, consumers.
 
-## Q11. (!) Performance claims (latency, throughput)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Performance claims (latency, throughput)?
 
 **Redpanda Data benchmark** results (vary):
 - **p50 latency:** 2-3 ms (vs Kafka 10-15 ms)
@@ -240,7 +290,12 @@ curl http://redpanda:8081/subjects
 
 **Independent benchmarks** generally confirm Redpanda is **faster** but margins less than vendor claims.
 
-## Q12. (!) Why faster than Kafka?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Why faster than Kafka?
 
 1. **C++ vs Java** — no JVM overhead
 2. **No GC pauses** — predictable latency
@@ -253,7 +308,12 @@ curl http://redpanda:8081/subjects
 
 **Result:** typically 3-10x lower latency, higher throughput per CPU.
 
-## Q13. WASM transforms?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. WASM transforms?
 
 **Redpanda WASM Data Transforms** (с 2023) — execute WebAssembly functions inside broker.
 
@@ -276,7 +336,12 @@ fn process(event: WriteEvent, writer: RecordWriter) -> Result<()> {
 
 Похоже на **Kafka Streams**, но **inside broker** (no separate process).
 
-## Q14. Built-in HTTP proxy?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Built-in HTTP proxy?
 
 **Pandaproxy** — HTTP REST API для Kafka topics.
 
@@ -297,7 +362,12 @@ curl http://redpanda:8082/consumers/my-group/instances/my-instance/records
 
 Same as **Confluent REST Proxy**, но built-in.
 
-## Q15. Console (UI)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Console (UI)?
 
 **Redpanda Console** — web UI для:
 - Browse topics, partitions
@@ -314,7 +384,12 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 
 Аналог **AKHQ, Kafdrop, Kowl** (предыдущая версия Console).
 
-## Q16. (!) Open source vs Enterprise vs Cloud?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Open source vs Enterprise vs Cloud?
 
 **Open source (Free):**
 - Source available (BSL license)
@@ -334,7 +409,12 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 
 В **2025** — растущая популярность managed Redpanda Cloud (alternative Confluent Cloud).
 
-## Q17. Source available license (BSL)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Source available license (BSL)?
 
 **Business Source License (BSL)** — same как CockroachDB.
 
@@ -348,7 +428,12 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 
 Похоже на **Elastic License**, **Cockroach License**.
 
-## Q18. (!) Когда выбрать Redpanda над Kafka?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Когда выбрать Redpanda над Kafka?
 
 **Выбирай Redpanda когда:**
 - **Lower latency** critical (financial, gaming, real-time)
@@ -365,7 +450,12 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 - Need **specific Kafka features** Redpanda lacks
 - Risk-averse organization
 
-## Q19. Когда не выбирать Redpanda?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Когда не выбирать Redpanda?
 
 1. **Bleeding edge needs** — Kafka has more features earlier
 2. **Specific tools** только Kafka (rare)
@@ -375,7 +465,12 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 6. **License concerns** (BSL вызывает opinions)
 7. **Want completely free, Apache** project (use Kafka)
 
-## Q20. Migration Kafka → Redpanda?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Migration Kafka → Redpanda?
 
 **Approaches:**
 
@@ -415,7 +510,12 @@ rpk topic create my-topic
 - [Performance Testing](../performance/performance-testing-interview.md) — benchmarking
 - [OpenTelemetry](../monitoring/opentelemetry-interview.md) — Redpanda metrics
 
-- [AWS SQS и SNS](aws-sqs-sns-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS SQS и SNS](aws-sqs-sns-interview.md)
 - [Apache Kafka](kafka-interview.md)
 - [Сравнение Message Brokers](message-brokers-comparison-interview.md)
 - [NATS](nats-interview.md)

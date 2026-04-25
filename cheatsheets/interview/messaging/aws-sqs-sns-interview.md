@@ -11,7 +11,7 @@ aliases:
   - "SQS SNS собеседование"
   - "AWS messaging interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS SQS и SNS`
 
@@ -82,7 +82,12 @@ updated: "2026-04-19"
 - Buffering для traffic spikes
 - Integration между AWS services
 
-## Q2. (!) Standard vs FIFO queues?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Standard vs FIFO queues?
 
 | Критерий | Standard | FIFO |
 |----------|----------|------|
@@ -97,7 +102,12 @@ updated: "2026-04-19"
 **Standard** — для most cases (idempotent processing).
 **FIFO** — когда **строгий order** и **exactly-once** critical (financial, ordering).
 
-## Q3. (!) Message lifecycle (send → receive → delete)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Message lifecycle (send → receive → delete)?
 
 ```
 1. Producer → SendMessage → SQS
@@ -112,7 +122,12 @@ updated: "2026-04-19"
 
 **Important:** **delete только после successful processing**.
 
-## Q4. (!) Visibility timeout?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Visibility timeout?
 
 **Visibility timeout** — period (default 30 sec) during which message **invisible** к other consumers после receive.
 
@@ -135,7 +150,12 @@ sqs.create_queue(QueueName='my-queue', Attributes={'VisibilityTimeout': '300'})
 sqs.change_message_visibility(QueueUrl=..., ReceiptHandle=..., VisibilityTimeout=600)
 ```
 
-## Q5. Long polling vs Short polling?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Long polling vs Short polling?
 
 **Short polling (default):**
 - Returns immediately (даже если queue empty)
@@ -157,7 +177,12 @@ sqs.receive_message(
 
 **Almost always use long polling** — cheaper, faster (no constant polling).
 
-## Q6. (!) Dead Letter Queue (DLQ)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Dead Letter Queue (DLQ)?
 
 **DLQ** — separate queue для messages that **failed processing** multiple times.
 
@@ -190,7 +215,12 @@ sqs.set_queue_attributes(
 
 **DLQ обязательна** для production queues.
 
-## Q7. Message attributes?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Message attributes?
 
 **Attributes** — metadata в message (separate from body).
 
@@ -212,7 +242,12 @@ sqs.send_message(
 
 **Limit:** 10 attributes per message.
 
-## Q8. (!) FIFO queues — deduplication, message groups?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) FIFO queues — deduplication, message groups?
 
 **Deduplication:**
 - Built-in window (5 minutes)
@@ -242,7 +277,12 @@ sqs.send_message(
 
 **Throughput** scales с number of message groups (300 msg/sec per group).
 
-## Q9. Delay queues?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Delay queues?
 
 **Delay** — postpone message visibility.
 
@@ -267,7 +307,12 @@ sqs.send_message(
 - Schedule processing
 - Rate limiting
 
-## Q10. Message size limit?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Message size limit?
 
 **Max message size:** **256 KB**.
 
@@ -281,7 +326,12 @@ sqs.send_message(MessageBody=json.dumps({'s3_ref': 's3://msg-bucket/msg-123'}))
 
 Extended Client library handles это automatically.
 
-## Q11. (!) Что такое SNS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Что такое SNS?
 
 **Amazon SNS (Simple Notification Service)** — managed pub/sub messaging.
 
@@ -298,7 +348,12 @@ Extended Client library handles это automatically.
 
 **Использование:** notifications, fanout, multi-subscriber events.
 
-## Q12. (!) Topic types (Standard vs FIFO)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Topic types (Standard vs FIFO)?
 
 | Standard SNS | FIFO SNS |
 |--------------|----------|
@@ -309,7 +364,12 @@ Extended Client library handles это automatically.
 
 **FIFO SNS** обычно used с FIFO SQS — full ordered + dedup pipeline.
 
-## Q13. Subscription protocols?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Subscription protocols?
 
 ```python
 # HTTPS endpoint
@@ -330,7 +390,12 @@ sns.subscribe(TopicArn=topic_arn, Protocol='sms', Endpoint='+1234567890')
 
 **Confirmation required** для HTTP/email/SMS.
 
-## Q14. (!) SNS message filtering?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) SNS message filtering?
 
 **Filter messages** so subscribers получают только matching messages.
 
@@ -362,7 +427,12 @@ sns.publish(
 
 **Эффект:** subscriber получает только matching messages → efficient routing без множества topics.
 
-## Q15. (!) Fanout pattern (SNS → SQS)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Fanout pattern (SNS → SQS)?
 
 ```mermaid
 graph LR
@@ -382,7 +452,12 @@ graph LR
 
 **Standard pattern** для AWS event-driven architecture.
 
-## Q16. (!) SNS + Lambda?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) SNS + Lambda?
 
 ```python
 # Lambda subscribed к SNS topic
@@ -400,7 +475,12 @@ def handler(event, context):
 
 **Подвох:** if Lambda fails — retried, after retries → DLQ (must configure).
 
-## Q17. SQS → Lambda triggers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. SQS → Lambda triggers?
 
 Lambda **automatically polls** SQS queue (с 2018):
 
@@ -422,7 +502,12 @@ Events:
 
 Подробнее — в [AWS Lambda](../cloud/aws-lambda-interview.md).
 
-## Q18. (!) EventBridge vs SQS/SNS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) EventBridge vs SQS/SNS?
 
 **EventBridge** (formerly CloudWatch Events) — modern event bus.
 
@@ -443,7 +528,12 @@ Events:
 
 В **2025** — EventBridge **default** для new event-driven systems.
 
-## Q19. EventBridge rules, schemas, replay?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. EventBridge rules, schemas, replay?
 
 **Rules** — match events, route к targets.
 
@@ -463,7 +553,12 @@ Events:
 
 **Archive + replay** — keep events для replay (recovery, testing).
 
-## Q20. (!) When SQS vs SNS vs EventBridge vs Kafka?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) When SQS vs SNS vs EventBridge vs Kafka?
 
 ```
 Need point-to-point queue с processing?
@@ -487,7 +582,12 @@ Existing Kafka ecosystem?
 
 **Modern AWS-native:** EventBridge для events + SQS для work queues.
 
-## Q21. Pricing (SQS, SNS)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Pricing (SQS, SNS)?
 
 **SQS:**
 - $0.40 per million requests (Standard)
@@ -508,7 +608,12 @@ Existing Kafka ecosystem?
 
 **Optimization:** batch operations (10 messages per API call).
 
-## Q22. Какие частые проблемы?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. Какие частые проблемы?
 
 1. **No DLQ** — failed messages потеряны
 2. **Visibility timeout слишком короткий** — duplicates
@@ -544,7 +649,12 @@ Existing Kafka ecosystem?
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — SQS for sagas
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, DLQ
 
-- [Apache Kafka](kafka-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Apache Kafka](kafka-interview.md)
 - [Сравнение Message Brokers](message-brokers-comparison-interview.md)
 - [NATS](nats-interview.md)
 - [Apache Pulsar](pulsar-interview.md)

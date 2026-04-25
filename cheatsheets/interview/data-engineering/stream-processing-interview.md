@@ -11,7 +11,7 @@ aliases:
   - "Real-time processing interview"
   - "Lambda kappa architecture"
 difficulty: "intermediate"
-updated: "2026-04-18"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Stream Processing`
 
@@ -94,7 +94,12 @@ Stream processing — обработка данных **в реальном вр
 - Alerting / monitoring
 - ETL pipelines (real-time)
 
-## Q2. (!) Stream vs Batch processing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Stream vs Batch processing?
 
 | Критерий | Stream | Batch |
 |----------|--------|-------|
@@ -107,7 +112,12 @@ Stream processing — обработка данных **в реальном вр
 
 **Тренд:** "**streaming as the unified model**" — batch как special case streaming (bounded vs unbounded).
 
-## Q3. (!) Bounded vs unbounded streams?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Bounded vs unbounded streams?
 
 **Bounded stream** — конечный, известный заранее (файл, table snapshot). По сути — batch.
 
@@ -120,7 +130,12 @@ Unbounded:  [e1, e2, e3, e4, e5, ...] ← never ends
 
 Это ключевое разделение. Stream processing engines обрабатывают оба, но **unbounded** требует watermarks, windows, state management.
 
-## Q4. Real-time vs Near-real-time?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. Real-time vs Near-real-time?
 
 | Тип | Latency | Examples |
 |-----|---------|----------|
@@ -132,7 +147,12 @@ Unbounded:  [e1, e2, e3, e4, e5, ...] ← never ends
 
 В **2024** большинство "streaming" приложений = **near-real-time** (1-10 sec OK). True real-time нужен реже.
 
-## Q5. (!) Event time vs Processing time?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Event time vs Processing time?
 
 | Time | Что значит |
 |------|------------|
@@ -150,7 +170,12 @@ Unbounded:  [e1, e2, e3, e4, e5, ...] ← never ends
 
 **В production** — почти всегда нужен **event time** для аналитики.
 
-## Q6. (!) Watermarks — концепция?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Watermarks — концепция?
 
 **Watermark** — мета-сообщение, заявляющее: "до этого event_time все события **уже обработаны**".
 
@@ -176,7 +201,12 @@ WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofSeconds(20))
 
 Допустима задержка 20 сек, после — события считаются late.
 
-## Q7. Late events — стратегии?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Late events — стратегии?
 
 **Late event** — событие, чей timestamp **раньше** текущего watermark (опоздало).
 
@@ -198,7 +228,12 @@ stream
   .process(...)
 ```
 
-## Q8. (!) Что такое window?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Что такое window?
 
 **Window** — finite chunk событий из infinite stream, для применения aggregation.
 
@@ -213,7 +248,12 @@ windows:        [e1 e2 e3] [e4 e5 e6] [e7 ...]
 - Aggregations (avg/sum)
 - Detection patterns
 
-## Q9. Tumbling, Sliding, Session, Global windows?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Tumbling, Sliding, Session, Global windows?
 
 **Tumbling** — фиксированные, не перекрываются:
 ```
@@ -240,7 +280,12 @@ e1 e2 e3 [gap] e4 e5 [gap] e6
 - [Kafka Streams](kafka-streams-interview.md)
 - [Spark](apache-spark-interview.md)
 
-## Q10. Allowed lateness?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Allowed lateness?
 
 ```scala
 .window(TumblingEventTimeWindows.of(Time.minutes(5)))
@@ -255,7 +300,12 @@ Window остаётся "open" ещё **2 минуты после закрыти
 
 **Подвох:** downstream должен уметь обрабатывать **обновления** результата (re-emit).
 
-## Q11. (!) Stateful processing — что и зачем?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Stateful processing — что и зачем?
 
 **Stateful** — operator помнит данные **между событиями**.
 
@@ -281,7 +331,12 @@ keyedStream.process(new KeyedProcessFunction[String, Event, Long] {
 })
 ```
 
-## Q12. Где хранится state?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Где хранится state?
 
 | Backend | Производительность | Размер |
 |---------|-------------------|--------|
@@ -298,7 +353,12 @@ keyedStream.process(new KeyedProcessFunction[String, Event, Long] {
 - Большой state → RocksDB
 - Очень большой / shared → external store
 
-## Q13. (!) Checkpointing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Checkpointing?
 
 **Checkpoint** — periodic snapshot всего state системы.
 
@@ -322,7 +382,12 @@ env.enableCheckpointing(60000) // every 60 seconds
 
 При **сбое** — restart с last checkpoint.
 
-## Q14. (!) At-most-once vs At-least-once vs Exactly-once?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) At-most-once vs At-least-once vs Exactly-once?
 
 | Семантика | Описание | Когда |
 |-----------|----------|-------|
@@ -336,7 +401,12 @@ env.enableCheckpointing(60000) // every 60 seconds
 - At-least-once проще, быстрее, но requires idempotency
 - Exactly-once сложнее, медленнее (transactions), но строже
 
-## Q15. (!) Как достичь exactly-once?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Как достичь exactly-once?
 
 **End-to-end exactly-once** требует **трёх** компонентов:
 
@@ -359,7 +429,12 @@ KafkaSink.<String>builder()
 
 Если sink не транзакционный (Elasticsearch) — нужно делать **idempotent writes** (с unique IDs).
 
-## Q16. Idempotent operations?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Idempotent operations?
 
 **Idempotent** — повторное выполнение даёт тот же результат.
 
@@ -379,7 +454,12 @@ INSERT INTO orders (user_id, amount) VALUES (1, 100); -- каждый раз н�
 - **UPSERT/MERGE** в БД
 - **Checkpoint** в receiver
 
-## Q17. (!) Backpressure — что это?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Backpressure — что это?
 
 **Backpressure** — медленный downstream operator замедляет upstream через накопление в buffers.
 
@@ -396,7 +476,12 @@ Source → Op1 → Op2 (SLOW)
 
 **Не теряем данные**, но throughput снижается до самого медленного operator.
 
-## Q18. Как обрабатывать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Как обрабатывать?
 
 1. **Profile** — найти slow operator (Flink Web UI, Spark UI)
 2. **Scale up** — больше parallelism
@@ -408,7 +493,12 @@ Source → Op1 → Op2 (SLOW)
 В **Kafka Streams** — добавить больше instances (consumer group rebalance).
 В **Flink** — увеличить parallelism slow operator.
 
-## Q19. Parallelism в streaming?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Parallelism в streaming?
 
 **Parallelism** — сколько параллельных subtasks обрабатывают stream.
 
@@ -430,7 +520,12 @@ stream.map(...).setParallelism(4) // override per operator
 - Sink parallelism может быть меньше (output groupping)
 - Stateful operators — параллелим по key
 
-## Q20. (!) Lambda Architecture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Lambda Architecture?
 
 **Lambda Architecture** (Nathan Marz, 2011) — параллельные **batch** и **speed** layers.
 
@@ -458,7 +553,12 @@ graph LR
 
 В **2024** — устаревший подход, заменяется Kappa.
 
-## Q21. (!) Kappa Architecture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) Kappa Architecture?
 
 **Kappa Architecture** (Jay Kreps, 2014) — **только** speed layer, без batch.
 
@@ -482,7 +582,12 @@ graph LR
 
 В **2024** Kappa дружит с **Flink** (unified batch + streaming) и **Lakehouse** (Delta/Iceberg). Заменяет Lambda.
 
-## Q22. (!) Lambda vs Kappa — что выбрать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Lambda vs Kappa — что выбрать?
 
 **Kappa**, если:
 - Источник = Kafka (replayable)
@@ -496,7 +601,12 @@ graph LR
 
 В **2024** — **Kappa** доминирует в новых проектах. **Lambda** остаётся в legacy.
 
-## Q23. (!) Flink vs Spark Streaming vs Kafka Streams?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) Flink vs Spark Streaming vs Kafka Streams?
 
 | Критерий | Flink | Spark Structured Streaming | Kafka Streams |
 |----------|-------|---------------------------|---------------|
@@ -512,7 +622,12 @@ graph LR
 - **Flink** — если нужна true streaming с low latency, complex state
 - **Spark Streaming** — если уже Spark в команде, latency 1+ сек OK
 
-## Q24. Apache Storm — почему deprecated?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. Apache Storm — почему deprecated?
 
 **Apache Storm** (2011) — первый popular stream processor.
 
@@ -529,7 +644,12 @@ graph LR
 
 В **2024** Storm — legacy. Heron (от Twitter) — преемник, тоже не получил широкого adoption.
 
-## Q25. (!) Streaming vs Message Queue (Kafka)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. (!) Streaming vs Message Queue (Kafka)?
 
 | Критерий | Stream Processor | Message Queue (Kafka) |
 |----------|-----------------|----------------------|
@@ -546,7 +666,12 @@ Producers → Kafka (transport) → Stream Processor (logic) → Sinks
 
 Kafka сам **не делает aggregations** — только хранит и доставляет messages. Подробнее — [Apache Kafka](../messaging/kafka-interview.md).
 
-## Q26. (!) Где stream processing в production?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. (!) Где stream processing в production?
 
 1. **Fraud detection** — банки, payments (Stripe, banks)
 2. **Real-time recommendations** — Netflix, Amazon
@@ -559,7 +684,12 @@ Kafka сам **не делает aggregations** — только хранит и
 9. **Geo-tracking** — Uber, Lyft
 10. **Real-time ML inference** — online predictions
 
-## Q27. Real-time ML inference?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. Real-time ML inference?
 
 ```
 events → feature extraction (streaming) → ML model serving → predictions
@@ -575,7 +705,12 @@ events → feature extraction (streaming) → ML model serving → predictions
 - **Feast** — feature store
 - **Flink ML** — embedded ML в Flink
 
-## Q28. (!) Какие частые pitfalls в streaming?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. (!) Какие частые pitfalls в streaming?
 
 1. **Wrong time semantics** — processing time где нужно event time → неправильные aggregations при out-of-order
 2. **Watermark too aggressive** — теряем late data
@@ -607,7 +742,12 @@ events → feature extraction (streaming) → ML model serving → predictions
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — consistency, replication
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — sagas через streaming
 
-- [Apache Airflow](apache-airflow-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Apache Airflow](apache-airflow-interview.md)
 - [Apache Flink](apache-flink-interview.md)
 - [Apache Spark](apache-spark-interview.md)
 - [Data Lake и Lakehouse](data-lake-lakehouse-interview.md)

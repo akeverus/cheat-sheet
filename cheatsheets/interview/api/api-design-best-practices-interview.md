@@ -11,7 +11,7 @@ aliases:
   - "REST API design"
   - "API patterns interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `API Design Best Practices`
 
@@ -111,7 +111,12 @@ API design — критическое skill. Хороший API: **intuitive, co
 
 **Exception:** **actions** не fitting CRUD (см. Q8).
 
-## Q2. (!) URL structure?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) URL structure?
 
 ```
 https://api.example.com/v1/users/123/orders?status=pending&limit=10
@@ -128,7 +133,12 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 - **Identifiers в path** (`/users/123`)
 - **Filters в query string** (`?status=active`)
 
-## Q3. snake_case vs camelCase в JSON?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. snake_case vs camelCase в JSON?
 
 **Choose ONE convention, stick to it.**
 
@@ -148,7 +158,12 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 **В Java backend** — внутри `firstName` (camelCase), serialize с Jackson `@JsonProperty("first_name")` если API uses snake.
 
-## Q4. Date/time format?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. Date/time format?
 
 **ISO 8601** — international standard:
 
@@ -164,7 +179,12 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 **В Java:** `Instant`, `OffsetDateTime`, `ZonedDateTime` (NOT `Date`).
 
-## Q5. (!) Resource hierarchy (parent/child)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Resource hierarchy (parent/child)?
 
 **Hierarchy via URL:**
 ```
@@ -183,7 +203,12 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 **Best practice:** **2 levels max** в nested URLs. Beyond — flat structure с filters.
 
-## Q6. Sub-resources vs flat structure?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Sub-resources vs flat structure?
 
 **Sub-resources** (nested):
 ```
@@ -203,7 +228,12 @@ POST /orders {"user_id": 123, ...}
 
 **Both can co-exist.** Stripe uses both: `/customers/cus_123/charges` и `/charges?customer=cus_123`.
 
-## Q7. (!) Bulk operations?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Bulk operations?
 
 **Need:** create / update / delete multiple resources в one call.
 
@@ -237,7 +267,12 @@ POST /users/bulk-create
 
 **JSON:API spec** имеет conventions для bulk.
 
-## Q8. Custom actions (verbs)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Custom actions (verbs)?
 
 Иногда action не CRUD (e.g., "publish article", "archive order").
 
@@ -263,7 +298,12 @@ POST /actions/cancel-order
 
 **Best practice:** **sub-resource** часто naturally fit. Limit к few cases (don't go RPC-style).
 
-## Q9. (!) Pagination strategies?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Pagination strategies?
 
 **Always paginate** collection endpoints (don't return 1 million items).
 
@@ -291,7 +331,12 @@ GET /events?since=2025-04-19T10:00:00Z&limit=100
 
 **Default limit** — 20-100 typical. Max — 100-1000.
 
-## Q10. (!) Cursor-based vs offset-based?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Cursor-based vs offset-based?
 
 **Offset-based** (`?offset=20&limit=10`):
 - ✅ **Easy to understand**
@@ -316,7 +361,12 @@ GET /events?since=2025-04-19T10:00:00Z&limit=100
 
 **Modern APIs** (Stripe, Shopify, GraphQL Relay) — cursor-based.
 
-## Q11. (!) Filtering и sorting?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Filtering и sorting?
 
 **Filtering:**
 ```
@@ -341,7 +391,12 @@ GET /users?filter=age=gt=18;status==active
 - Simple filters via query params
 - Complex filters → POST /search endpoint с JSON body
 
-## Q12. Field selection (sparse fieldsets)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Field selection (sparse fieldsets)?
 
 **Return only requested fields:**
 ```
@@ -366,7 +421,12 @@ GET /users?fields[user]=name,email
 
 **GraphQL** does this naturally.
 
-## Q13. (!) Error response format?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Error response format?
 
 **Consistent error format** critical.
 
@@ -395,7 +455,12 @@ GET /users?fields[user]=name,email
 
 **No stack traces** в production responses (security).
 
-## Q14. (!) Problem Details (RFC 7807)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Problem Details (RFC 7807)?
 
 **RFC 7807** — standard error format.
 
@@ -413,7 +478,12 @@ GET /users?fields[user]=name,email
 
 **Stripe, Spring Boot 3+** support this. Standardization simplifies tooling.
 
-## Q15. Validation errors?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Validation errors?
 
 **Multiple errors** в one response (don't fail-fast):
 
@@ -435,7 +505,12 @@ GET /users?fields[user]=name,email
 
 **Returns ALL errors** at once (better UX for forms).
 
-## Q16. (!) Idempotency keys?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Idempotency keys?
 
 **Make POST idempotent** через client-supplied key.
 
@@ -456,7 +531,12 @@ Idempotency-Key: 7f9c1d-...
 
 **Storage:** Redis с TTL (24h typical).
 
-## Q17. Optimistic concurrency (ETag)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Optimistic concurrency (ETag)?
 
 **ETag** — version identifier на resource.
 
@@ -483,7 +563,12 @@ If-Match: "abc123"
 
 **Alternative:** version fields (`{"version": 1, ...}`).
 
-## Q18. (!) Auth strategies (API key, JWT, OAuth)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Auth strategies (API key, JWT, OAuth)?
 
 **API Key:**
 - Simple, common для server-to-server
@@ -510,7 +595,12 @@ If-Match: "abc123"
 
 Подробнее — в [OAuth2](../security/oauth2-interview.md), [JWT](../security/jwt-interview.md).
 
-## Q19. API key best practices?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. API key best practices?
 
 1. **Prefix keys** (`sk_live_`, `pk_test_`) — identify type at glance
 2. **Long random** (32+ bytes)
@@ -525,7 +615,12 @@ If-Match: "abc123"
 
 **Stripe pattern:** `sk_live_abc123...` — prefix immediately tells whether secret/publishable/test/live.
 
-## Q20. (!) Rate limiting headers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Rate limiting headers?
 
 **Tell client about limits:**
 
@@ -554,7 +649,12 @@ Retry-After: 60
 - Backoff before hitting limit
 - Honor `Retry-After` после 429
 
-## Q21. Throttling vs hard limits?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Throttling vs hard limits?
 
 **Throttling** (soft) — slow down requests.
 **Hard limit** — reject (429).
@@ -574,7 +674,12 @@ Retry-After: 60
 
 **Tools:** API Gateway (Kong, Apigee), Nginx, Envoy, application code.
 
-## Q22. (!) OpenAPI / Swagger?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) OpenAPI / Swagger?
 
 **OpenAPI** (formerly Swagger) — standard для API documentation.
 
@@ -612,7 +717,12 @@ paths:
 
 Подробнее — в [OpenAPI / Swagger](openapi-swagger-interview.md).
 
-## Q23. Examples и SDKs?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Examples и SDKs?
 
 **Always provide:**
 - **Code examples** (curl, Python, JavaScript, Java, ...)
@@ -623,7 +733,12 @@ paths:
 
 **Auto-gen tools:** OpenAPI Generator, Speakeasy, Stainless.
 
-## Q24. (!) HTTPS only?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) HTTPS only?
 
 **Always.** No HTTP в production.
 
@@ -641,7 +756,12 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
 **TLS 1.2 minimum** (1.3 recommended).
 
-## Q25. Input validation, output encoding?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. Input validation, output encoding?
 
 **Input validation:**
 - Schema (OpenAPI или JSON Schema)
@@ -657,7 +777,12 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
 Подробнее — в [Application Security](../security/application-security-interview.md).
 
-## Q26. CORS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. CORS?
 
 **Cross-Origin Resource Sharing** — browser security.
 
@@ -672,7 +797,12 @@ Access-Control-Max-Age: 3600
 
 **Best practice:** specify exact origins, не `*` для authenticated APIs.
 
-## Q27. (!) Caching headers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) Caching headers?
 
 ```http
 # Tell client/CDN how long к cache
@@ -698,7 +828,12 @@ If-None-Match: "abc123"
 
 **Use case:** static-ish data (user profile, product catalog).
 
-## Q28. Compression (gzip, brotli)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Compression (gzip, brotli)?
 
 **Client requests:**
 ```http
@@ -716,7 +851,12 @@ Content-Encoding: gzip
 
 **Most frameworks** auto-handle compression.
 
-## Q29. (!) HATEOAS — нужно?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q29. (!) HATEOAS — нужно?
 
 **В большинстве** API — **нет**.
 
@@ -729,7 +869,12 @@ Content-Encoding: gzip
 
 См. [REST Maturity](rest-maturity-interview.md).
 
-## Q30. Webhooks design?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q30. Webhooks design?
 
 **Webhook** — server sends events к customer-provided URL.
 
@@ -763,7 +908,12 @@ Content-Encoding: gzip
 - [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
 - [Application Security](../security/application-security-interview.md) — input validation, HTTPS
 
-- [API Versioning](api-versioning-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [API Versioning](api-versioning-interview.md)
 - [GraphQL](graphql-interview.md)
 - [gRPC](grpc-interview.md)
 - [HTTP и REST](http-rest-interview.md)

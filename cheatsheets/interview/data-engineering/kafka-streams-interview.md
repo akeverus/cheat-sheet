@@ -11,7 +11,7 @@ aliases:
   - "KStream KTable interview"
   - "ksqlDB interview"
 difficulty: "intermediate"
-updated: "2026-04-18"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kafka Streams`
 
@@ -93,7 +93,12 @@ updated: "2026-04-18"
 
 **Применения:** event-driven микросервисы, real-time aggregations, joins streams, fraud detection в финтехе.
 
-## Q2. (!) Чем Kafka Streams отличается от Spark/Flink?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Чем Kafka Streams отличается от Spark/Flink?
 
 | Критерий | Kafka Streams | Spark/Flink |
 |----------|---------------|-------------|
@@ -108,7 +113,12 @@ updated: "2026-04-18"
 
 **Главная идея Kafka Streams:** "deploy в Kubernetes как обычный микросервис, не нужен Hadoop кластер".
 
-## Q3. (!) Application как отдельный процесс — почему?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Application как отдельный процесс — почему?
 
 В Kafka Streams **нет JobManager/Driver** — каждый instance твоего приложения = standalone JVM процесс.
 
@@ -129,7 +139,12 @@ updated: "2026-04-18"
 - Нет single point of failure (для координации)
 - Авто-failover через consumer rebalance
 
-## Q4. (!) Что такое topology в Kafka Streams?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Что такое topology в Kafka Streams?
 
 `Topology` — DAG операций (sources, processors, sinks).
 
@@ -151,7 +166,12 @@ streams.start();
 
 Topology может быть **визуализирована** через `topology.describe()`.
 
-## Q5. (!) Streams DSL vs Processor API?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Streams DSL vs Processor API?
 
 **Streams DSL** — высокоуровневый, с операциями `map/filter/groupBy/join`:
 
@@ -188,7 +208,12 @@ public class MyProcessor implements Processor<String, String, String, String> {
 
 В большинстве задач — DSL. Processor API — для специальных случаев.
 
-## Q6. (!) Чем KStream отличается от KTable?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Чем KStream отличается от KTable?
 
 **KStream** — поток **независимых событий** (insert-only). Каждая запись — фактическое событие.
 
@@ -207,7 +232,12 @@ KTable balances:
 **KStream** — для immutable facts (orders, clicks).
 **KTable** — для current state (user profiles, prices).
 
-## Q7. (!) GlobalKTable — когда использовать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) GlobalKTable — когда использовать?
 
 | Тип | Partitioning | Replication |
 |-----|-------------|-------------|
@@ -228,7 +258,12 @@ orders.join(users,
 **Преимущество:** join без repartitioning (любой instance имеет данные).
 **Недостаток:** не масштабируется (если table большая → OOM).
 
-## Q8. (!) Конвертации KStream ↔ KTable?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Конвертации KStream ↔ KTable?
 
 ```java
 // KStream → KTable
@@ -249,7 +284,12 @@ KTable<String, Order> latest = orders
     .reduce((oldVal, newVal) -> newVal);
 ```
 
-## Q9. (!) map, filter, flatMap, branch?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) map, filter, flatMap, branch?
 
 ```java
 KStream<String, String> stream = builder.stream("input");
@@ -275,7 +315,12 @@ Map<String, KStream<String, String>> branches = stream.split()
 
 **Подвох:** `map` (с изменением key) триггерит **repartitioning**. `mapValues` — нет.
 
-## Q10. (!) groupByKey vs groupBy?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) groupByKey vs groupBy?
 
 ```java
 // groupByKey — текущий key, без repartition
@@ -287,7 +332,12 @@ events.groupBy((k, v) -> v.userId)
 
 `groupBy` создаёт **internal repartition topic**. Дороже, но позволяет группировать по любому полю.
 
-## Q11. (!) Aggregate, Reduce, Count?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Aggregate, Reduce, Count?
 
 ```java
 // count — number of records per key
@@ -310,7 +360,12 @@ KTable<String, Stats> stats = events
 
 `aggregate` — самый мощный, может строить произвольный состояние per key.
 
-## Q12. (!) Joins — типы и семантика?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Joins — типы и семантика?
 
 ```java
 // KStream-KStream join (windowed!)
@@ -341,7 +396,12 @@ events.outerJoin(table, ...)
 | KStream-GlobalKTable | Нет | Не нужен |
 | KTable-KTable | Нет | Co-partition |
 
-## Q13. (!) Tumbling, Hopping, Session windows?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Tumbling, Hopping, Session windows?
 
 ```java
 // Tumbling — фиксированные, не перекрываются
@@ -360,7 +420,12 @@ events.groupByKey()
 
 В Kafka Streams "**hopping window**" — то, что в Flink/Spark называют sliding.
 
-## Q14. Sliding windows?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Sliding windows?
 
 С Kafka Streams 2.7+ — **SlidingWindows** (отдельная концепция):
 
@@ -370,7 +435,12 @@ SlidingWindows.ofTimeDifferenceWithNoGrace(Duration.ofMinutes(5))
 
 Создаёт window для **каждой пары** записей в пределах timeDifference. Полезно для pattern matching.
 
-## Q15. (!) Grace period для late events?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Grace period для late events?
 
 ```java
 TimeWindows.of(Duration.ofMinutes(5))
@@ -381,7 +451,12 @@ TimeWindows.of(Duration.ofMinutes(5))
 
 С Kafka Streams 2.5+ — **обязательно** указывать grace (default = `Long.MAX_VALUE`, но это плохая практика — grow state forever).
 
-## Q16. (!) Что такое state store?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Что такое state store?
 
 State store — **локальное** key-value хранилище для stateful operations (aggregations, joins).
 
@@ -401,7 +476,12 @@ StoreBuilder<KeyValueStore<String, Long>> storeBuilder = Stores.keyValueStoreBui
 builder.addStateStore(storeBuilder);
 ```
 
-## Q17. RocksDB как state backend?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. RocksDB как state backend?
 
 `RocksDB` — embedded LSM-tree key-value store от Facebook. По умолчанию в Kafka Streams.
 
@@ -423,7 +503,12 @@ public class CustomRocksDBConfig implements RocksDBConfigSetter {
 }
 ```
 
-## Q18. (!) Changelog topic — для чего?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Changelog topic — для чего?
 
 Каждый persistent state store имеет соответствующий **changelog topic** в Kafka.
 
@@ -442,7 +527,12 @@ my-app-store-changelog (compacted topic)
 
 Чем больше state → больше storage в Kafka. Это **trade-off** упрощённости.
 
-## Q19. (!) Interactive Queries?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Interactive Queries?
 
 `Interactive Queries` — **прямое чтение** state stores из приложения, без Kafka.
 
@@ -462,7 +552,12 @@ Long value = store.get("alice");
 
 **Применение:** Kafka Streams app становится **читаемым store** (как in-memory DB), без отдельного DB.
 
-## Q20. (!) Event time vs processing time?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Event time vs processing time?
 
 Kafka Streams поддерживает оба:
 
@@ -477,7 +572,12 @@ props.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG,
     WallclockTimestampExtractor.class); // processing time
 ```
 
-## Q21. TimestampExtractor?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. TimestampExtractor?
 
 ```java
 public class CustomExtractor implements TimestampExtractor {
@@ -491,7 +591,12 @@ public class CustomExtractor implements TimestampExtractor {
 
 Полезно когда event time — внутри payload, не в Kafka headers.
 
-## Q22. (!) Exactly-once семантика в Kafka Streams?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Exactly-once семантика в Kafka Streams?
 
 С Kafka Streams 0.11+ — **exactly-once** через **Kafka transactions**:
 
@@ -507,7 +612,12 @@ props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_
 
 **При необходимости:** `at_least_once` (default) — быстрее, возможны дубли.
 
-## Q23. Standby replicas?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Standby replicas?
 
 ```java
 props.put(StreamsConfig.NUM_STANDBY_REPLICAS_CONFIG, 1);
@@ -517,7 +627,12 @@ Standby instances держат **горячую копию** state stores. Пр�
 
 Trade-off: больше resources, но выше availability.
 
-## Q24. (!) Что происходит при сбое instance?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Что происходит при сбое instance?
 
 1. Kafka **детектирует** dead consumer (по timeout)
 2. **Rebalance** — partitions перераспределяются на живые instances
@@ -526,7 +641,12 @@ Trade-off: больше resources, но выше availability.
 
 Время recovery зависит от **размера state**. С standby replicas — быстро.
 
-## Q25. (!) Что такое ksqlDB?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. (!) Что такое ksqlDB?
 
 `ksqlDB` — SQL-like layer над Kafka Streams. Позволяет писать stream processing **на SQL** без Java-кода.
 
@@ -547,7 +667,12 @@ SELECT * FROM total_per_user EMIT CHANGES;
 
 **Применения:** простые трансформации без Java-кода, BI/аналитики, low-code stream processing.
 
-## Q26. (!) Kafka Streams vs Flink — когда что?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. (!) Kafka Streams vs Flink — когда что?
 
 | Критерий | Kafka Streams | Flink |
 |----------|---------------|-------|
@@ -572,7 +697,12 @@ SELECT * FROM total_per_user EMIT CHANGES;
 - Источники/sinks — не только Kafka
 - Огромный state, нужен fine-grained control
 
-## Q27. (!) Где Kafka Streams в production?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) Где Kafka Streams в production?
 
 - **Confluent (создатели)** — внутренние сервисы
 - **LinkedIn** — multiple use cases (Kafka родом из LinkedIn)
@@ -583,7 +713,12 @@ SELECT * FROM total_per_user EMIT CHANGES;
 
 В **банках и финтехе** Kafka Streams особенно популярен — простой deployment + exactly-once.
 
-## Q28. Какие минусы Kafka Streams?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Какие минусы Kafka Streams?
 
 1. **Только Kafka** — нельзя читать из других sources напрямую
 2. **State limited** by local disk — RocksDB растёт, нужно следить
@@ -612,7 +747,12 @@ SELECT * FROM total_per_user EMIT CHANGES;
 - [Data Warehousing](data-warehousing-interview.md) — обычно sink Kafka Streams
 - [Saga Pattern](../architecture/saga-pattern-interview.md) — Kafka Streams для choreographed sagas
 
-- [Apache Airflow](apache-airflow-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Apache Airflow](apache-airflow-interview.md)
 - [Apache Flink](apache-flink-interview.md)
 - [Apache Spark](apache-spark-interview.md)
 - [Data Lake и Lakehouse](data-lake-lakehouse-interview.md)

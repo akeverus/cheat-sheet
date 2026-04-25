@@ -12,7 +12,7 @@ aliases:
   - "jakarta migration interview"
   - "Java 17 Spring Boot interview"
 difficulty: "intermediate"
-updated: "2026-04-20"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Boot 3 Migration`
 
@@ -47,7 +47,12 @@ updated: "2026-04-20"
 
 Последующие версии: 3.1 (май 2023), 3.2 (ноябрь 2023, Virtual Threads), 3.3, 3.4.
 
-## Q2. Что такое миграция с javax на jakarta и почему она нужна?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. Что такое миграция с javax на jakarta и почему она нужна?
 
 В 2017 Oracle передала Java EE в Eclipse Foundation. Eclipse не смогла сохранить `javax.*` пакеты из-за trademark. Результат: вся платформа переименована в **Jakarta EE** с пакетами `jakarta.*`.
 
@@ -65,7 +70,12 @@ import jakarta.validation.constraints.NotNull;
 
 Затронутые библиотеки: JPA, Servlet API, JAX-RS, Bean Validation, JMS, Mail. Tomcat 10+, Jetty 11+, Hibernate 6+.
 
-## Q3. Как выполнить миграцию с Spring Boot 2.7 на 3.x?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Как выполнить миграцию с Spring Boot 2.7 на 3.x?
 
 ```text
 Последовательность:
@@ -93,7 +103,12 @@ import jakarta.validation.constraints.NotNull;
 </properties>
 ```
 
-## Q4. Какие javax-пакеты НЕ мигрировали на jakarta?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. Какие javax-пакеты НЕ мигрировали на jakarta?
 
 ```text
 ОСТАЛИСЬ javax.*:
@@ -115,7 +130,12 @@ import jakarta.validation.constraints.NotNull;
 
 Простое правило: **если пакет относится к Java SE (JDK) — остался javax; Java EE → jakarta**.
 
-## Q5. Что такое HTTP Interface Clients в Spring 6?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Что такое HTTP Interface Clients в Spring 6?
 
 Декларативный HTTP-клиент (аналог Feign), встроенный в Spring Framework 6:
 
@@ -158,7 +178,12 @@ WeatherClient weatherClient = HttpServiceProxyFactory
     .createClient(WeatherClient.class);
 ```
 
-## Q6. Что такое Problem Details (RFC 7807) в Spring Boot 3?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Что такое Problem Details (RFC 7807) в Spring Boot 3?
 
 Стандарт для JSON error responses в REST API:
 
@@ -202,7 +227,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 Content-Type: `application/problem+json`.
 
-## Q7. Что такое GraalVM Native Image и как Spring Boot 3 его поддерживает?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Что такое GraalVM Native Image и как Spring Boot 3 его поддерживает?
 
 **GraalVM Native Image** — AOT (ahead-of-time) компиляция JVM приложения в нативный executable:
 - Startup ~100ms (vs 2-5s для JVM)
@@ -247,7 +277,12 @@ public class MyHints implements RuntimeHintsRegistrar {
 }
 ```
 
-## Q8. Как работает AOT processing в Spring Boot 3?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Как работает AOT processing в Spring Boot 3?
 
 **AOT (Ahead-of-Time)** — анализ приложения на этапе сборки и генерация дополнительного кода для ускорения старта (особенно для GraalVM).
 
@@ -270,7 +305,12 @@ java -Dspring.aot.enabled=true -jar app.jar
 
 Преимущество: запуск на 30-50% быстрее даже без GraalVM native image.
 
-## Q9. Какие изменения в Observability?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Какие изменения в Observability?
 
 Spring Boot 3 предоставляет единый API для metrics + tracing через Micrometer:
 
@@ -316,7 +356,12 @@ management:
 
 Старый Sleuth удалён — мигрировать на `micrometer-tracing`.
 
-## Q10. Что нужно знать о поддержке Virtual Threads в Spring Boot 3.2+?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Что нужно знать о поддержке Virtual Threads в Spring Boot 3.2+?
 
 Spring Boot 3.2 добавил первоклассную поддержку Java 21 Virtual Threads:
 
@@ -346,7 +391,12 @@ public TomcatProtocolHandlerCustomizer<?> protocolHandlerVirtualThreadExecutorCu
 
 **Важно**: Virtual Threads помогают для I/O-bound workloads. CPU-bound — не даёт выигрыша.
 
-## Q11. Какие breaking changes в Spring Security 6?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Какие breaking changes в Spring Security 6?
 
 ```java
 // ДО (Spring Security 5, SB 2.x)
@@ -385,7 +435,12 @@ class SecurityConfig {
 - `antMatchers` → `requestMatchers`
 - Все настройки через лямбду Customizer
 
-## Q12. Что такое декларативный RestClient?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Что такое декларативный RestClient?
 
 Spring Boot 3.2 принёс `RestClient` — новый блокирующий HTTP-клиент с fluent API (замена `RestTemplate`):
 
@@ -422,7 +477,12 @@ Mono<Order> orderMono = client.get()
 
 **RestClient vs WebClient**: `RestClient` — блокирующий, проще; `WebClient` — реактивный, сложнее.
 
-## Q13. Какие изменения в auto-configuration?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Какие изменения в auto-configuration?
 
 ```java
 // ДО Spring Boot 2.x — META-INF/spring.factories
@@ -442,7 +502,12 @@ com.example.MyAutoConfiguration
 public class MyDataSourceAutoConfiguration { ... }
 ```
 
-## Q14. Что такое Configuration Properties Migrator?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Что такое Configuration Properties Migrator?
 
 ```xml
 <dependency>
@@ -462,7 +527,12 @@ The following properties have been renamed:
 
 После исправления properties удалите этот dependency.
 
-## Q15. Какие проблемы часто возникают при миграции?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Какие проблемы часто возникают при миграции?
 
 1. **Jakarta EE несовместимость библиотек**:
 ```text
@@ -500,7 +570,12 @@ management.metrics.export.*  → management.prometheus.*
 
 ## See also
 
-- [Spring Boot](spring-boot-interview.md) — основы Spring Boot, auto-configuration
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Spring Boot](spring-boot-interview.md) — основы Spring Boot, auto-configuration
 - [Spring Framework](spring-framework-interview.md) — Spring Framework 6 changes
 - [Spring Security](spring-security-interview.md) — breaking changes в Spring Security 6
 - [Java Virtual Threads](../../programming-languages/java/java-virtual-threads-interview.md) — поддержка в Spring Boot 3.2+

@@ -11,7 +11,7 @@ aliases:
   - "PLG stack interview"
   - "Grafana stack interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Loki и Grafana`
 
@@ -96,7 +96,12 @@ updated: "2026-04-19"
 - Слабее aggregations
 - Less mature ecosystem
 
-## Q2. (!) Loki philosophy — "index labels, not content"?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Loki philosophy — "index labels, not content"?
 
 **Traditional (ELK):**
 ```
@@ -118,7 +123,12 @@ Search: filter by labels first → grep through compressed chunks
 
 **Для большинства log queries** — labels достаточно (filter by service/env). Full-text grep — secondary use case.
 
-## Q3. (!) PLG (Promtail + Loki + Grafana) vs ELK?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) PLG (Promtail + Loki + Grafana) vs ELK?
 
 | Критерий | PLG (Loki) | ELK |
 |----------|-----------|-----|
@@ -133,7 +143,12 @@ Search: filter by labels first → grep through compressed chunks
 
 **Выбор:** simple log troubleshooting → Loki. Complex SIEM, analytics → ELK.
 
-## Q4. (!) Loki components?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Loki components?
 
 ```mermaid
 graph LR
@@ -158,7 +173,12 @@ graph LR
 
 **Single-binary mode** для small deployments.
 
-## Q5. Storage backends (S3, GCS, Cassandra)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Storage backends (S3, GCS, Cassandra)?
 
 **Loki поддерживает:**
 - **S3** (AWS) — most common
@@ -172,7 +192,12 @@ graph LR
 
 В **2025** для production — **S3-compatible object storage** + TSDB схема.
 
-## Q6. (!) Streams и chunks в Loki?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Streams и chunks в Loki?
 
 **Stream** — unique combination labels:
 ```
@@ -190,7 +215,12 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 
 **Index** — knows which chunks contain logs для labels matching query.
 
-## Q7. Monolithic vs Microservices vs Simple Scalable mode?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Monolithic vs Microservices vs Simple Scalable mode?
 
 **Monolithic (single binary):**
 - Все components в одном process
@@ -209,7 +239,12 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 
 В **2025** — **SSD mode** для majority workloads.
 
-## Q8. (!) Что такое labels в Loki?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Что такое labels в Loki?
 
 **Labels** = key-value pairs идентифицируют log stream.
 
@@ -227,7 +262,12 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 - **Indexing** (только labels indexed)
 - **Aggregation** (group by labels)
 
-## Q9. (!) Cardinality — главная проблема?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Cardinality — главная проблема?
 
 **Cardinality** = number of unique label combinations.
 
@@ -247,7 +287,12 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 
 **Cardinality blowup** = №1 cause production issues с Loki.
 
-## Q10. Static vs dynamic labels?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Static vs dynamic labels?
 
 **Static labels** — известны в config (job, env).
 
@@ -265,7 +310,12 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 
 **Best practice:** только bounded fields как labels.
 
-## Q11. (!) LogQL — query language?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) LogQL — query language?
 
 **LogQL** — Loki's query language. Inspired by **PromQL**.
 
@@ -292,7 +342,12 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 {app="my-app"} | json | level="error"
 ```
 
-## Q12. Log stream selectors?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Log stream selectors?
 
 **Stream selector** — `{label="value"}`. Filter streams (which to read).
 
@@ -311,7 +366,12 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 
 **Performance:** stream selectors **сильно** влияют на speed. Точнее — быстрее.
 
-## Q13. Filter expressions?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Filter expressions?
 
 После selector — **line filters**:
 
@@ -331,7 +391,12 @@ s3://loki-bucket/chunks/<stream-hash>/<start-end-timestamp>
 {app="my-app"} | json | level="error"        # filter on extracted field
 ```
 
-## Q14. (!) Metric queries (LogQL → metrics)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Metric queries (LogQL → metrics)?
 
 **Logs → metrics** — LogQL aggregations.
 
@@ -351,7 +416,12 @@ sum by (service) (count_over_time({env="prod"} |= "error" [1m]))
 
 Это даёт **Prometheus-style metrics из logs**. Можно использовать в Grafana dashboards и alerting.
 
-## Q15. (!) Promtail vs Alloy vs Fluent Bit?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Promtail vs Alloy vs Fluent Bit?
 
 **Promtail** — official Loki agent (Go).
 - Lightweight (~50 MB RAM)
@@ -372,7 +442,12 @@ sum by (service) (count_over_time({env="prod"} |= "error" [1m]))
 
 В **2025** — **Alloy** для Grafana stack. **Fluent Bit** для multi-vendor scenarios.
 
-## Q16. Pipeline stages в Promtail?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Pipeline stages в Promtail?
 
 **Stages:**
 - **regex** / **json** / **logfmt** — parse
@@ -396,7 +471,12 @@ pipeline_stages:
       format: RFC3339
 ```
 
-## Q17. K8s log discovery?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. K8s log discovery?
 
 **Promtail / Alloy в K8s** auto-discover pods через K8s API:
 
@@ -418,7 +498,12 @@ scrape_configs:
 
 **Alternative:** every pod stdout → DaemonSet collector reads.
 
-## Q18. (!) Что такое Grafana?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Что такое Grafana?
 
 **Grafana** — open-source visualization platform. Dashboards + alerting для observability data.
 
@@ -432,7 +517,12 @@ scrape_configs:
 
 **Standard tool** для observability dashboards.
 
-## Q19. Datasources в Grafana?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Datasources в Grafana?
 
 ```yaml
 datasources:
@@ -451,7 +541,12 @@ datasources:
 
 **Mixed datasources в одном dashboard** — например, latency metric (Prometheus) + related logs (Loki) + trace (Tempo).
 
-## Q20. Dashboards, panels, variables?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Dashboards, panels, variables?
 
 **Dashboard** = collection of panels.
 
@@ -475,7 +570,12 @@ ${service}  → multi-select services
 
 **Provisioning:** dashboards as code (JSON) committed в git.
 
-## Q21. Alerting в Grafana?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Alerting в Grafana?
 
 **Unified Alerting** (Grafana 8+):
 - Alert rules definable across multiple datasources
@@ -494,7 +594,12 @@ ${service}  → multi-select services
 
 **Alertmanager** (Prometheus) — alternative.
 
-## Q22. (!) Explore mode для troubleshooting?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Explore mode для troubleshooting?
 
 **Explore** — ad-hoc query mode (vs dashboards).
 
@@ -512,7 +617,12 @@ ${service}  → multi-select services
 
 **Drill-down** — clickable trace_ids → link к Tempo.
 
-## Q23. (!) Loki + Grafana + Tempo + Mimir?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) Loki + Grafana + Tempo + Mimir?
 
 **LGTM Stack** = Grafana's full observability stack.
 
@@ -529,7 +639,12 @@ ${service}  → multi-select services
 
 **Эпохальный** альтернатива expensive vendor stacks.
 
-## Q24. Correlation logs ↔ traces ↔ metrics?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. Correlation logs ↔ traces ↔ metrics?
 
 **Workflow:**
 
@@ -546,7 +661,12 @@ logger.info("Processing", extra={"trace_id": current_span.context.trace_id})
 
 В Grafana — **derived fields** позволяют clickable trace_id в logs panel.
 
-## Q25. (!) Cost comparison Loki vs ELK?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. (!) Cost comparison Loki vs ELK?
 
 **Example:** 1 TB logs/day, 7 days retention.
 
@@ -567,7 +687,12 @@ Real-world: enterprise reports save **70-90%** moving к Loki.
 
 **Cost trade-off:** queries slower (особенно full-text grep).
 
-## Q26. Какие частые проблемы в Loki production?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. Какие частые проблемы в Loki production?
 
 1. **High cardinality labels** — index blow up
 2. **Slow queries** — broad time range + grep
@@ -579,7 +704,12 @@ Real-world: enterprise reports save **70-90%** moving к Loki.
 8. **Promtail config errors** — silent log loss
 9. **No alerting** на ingestion failures
 
-## Q27. (!) Когда выбрать Loki?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) Когда выбрать Loki?
 
 **Выбирай Loki когда:**
 - **Cost** important
@@ -591,7 +721,12 @@ Real-world: enterprise reports save **70-90%** moving к Loki.
 
 **Best fit:** modern cloud-native shop, K8s, microservices, cost-conscious.
 
-## Q28. Когда не выбирать Loki?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Когда не выбирать Loki?
 
 **Не выбирай Loki когда:**
 - Need **complex full-text search** на all logs
@@ -618,7 +753,12 @@ Real-world: enterprise reports save **70-90%** moving к Loki.
 - [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability
 - [Caching](../architecture/caching-strategies-interview.md) — для query performance
 
-- [ELK Stack](elk-stack-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [ELK Stack](elk-stack-interview.md)
 - [Jaeger и Zipkin](jaeger-zipkin-interview.md)
 - [Стратегии логирования](logging-strategies-interview.md)
 - [Метрики и трейсинг](metrics-tracing-interview.md)

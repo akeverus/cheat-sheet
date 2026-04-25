@@ -12,7 +12,7 @@ aliases:
   - "Hibernate associations вопросы"
   - "JPA entity mapping interview"
 difficulty: "advanced"
-updated: "2026-04-20"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Hibernate Relationships`
 
@@ -60,6 +60,12 @@ public class OrderItem {
     Order order;
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // @ManyToMany — многие ко многим (Student ↔ Course)
 @Entity
 public class Student {
@@ -112,6 +118,12 @@ class OrderItem {
 
 **Best practice**: helper-методы для синхронизации:
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```java
 public void addItem(OrderItem item) {
     items.add(item);
@@ -151,6 +163,12 @@ Order order = em.find(Order.class, 1L);   // 1 SQL с JOIN customer
 Customer customer;
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Причина**: EAGER не умеет фильтроваться — загружает всегда, даже если не нужно. LAZY + JOIN FETCH в конкретных запросах — более гибкий подход.
 
 ## Q4. Что такое N+1 проблема и как её решить?
@@ -187,6 +205,12 @@ class Order {
     List<OrderItem> items;
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // 4. @Fetch(FetchMode.SUBSELECT) — подзапрос
 @OneToMany(mappedBy = "order")
 @Fetch(FetchMode.SUBSELECT)
@@ -221,6 +245,12 @@ em.persist(new Order().addItem(new OrderItem(...)));
 em.remove(order);
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Важно**: `CascadeType.ALL` не включает `orphanRemoval` — это отдельный атрибут.
 
 ## Q6. Что такое orphanRemoval?
@@ -239,6 +269,12 @@ order.getItems().remove(item);  // item УДАЛЁН из БД
 em.flush();
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Разница** с `CascadeType.REMOVE`:
 - `REMOVE` срабатывает при `em.remove(order)` — каскадно удаляет items.
 - `orphanRemoval` срабатывает при удалении item из коллекции.
@@ -290,6 +326,12 @@ class Enrollment {
     Integer grade;  // дополнительное поле
 }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 @Embeddable
 class EnrollmentId implements Serializable {
     Long studentId;
@@ -323,6 +365,12 @@ Set<Comment> comments;
 Map<String, Phone> phones;       // Phone.type → Phone
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Правило**: `Set` предпочтительнее `List` для bidirectional связей — избегает `MultipleBagFetchException` при JOIN FETCH двух коллекций.
 
 ## Q9. Как работает @OneToOne и какие есть варианты?
@@ -364,6 +412,12 @@ class UserProfile {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Проблема LAZY в @OneToOne**: при уникальности 1:1 Hibernate не может определить есть ли связь без SQL → часто делает EAGER даже с `LAZY`. Решение: `@OneToOne(optional = false)` + bytecode enhancement.
 
 ## Q10. Как работают JoinTable vs JoinColumn?
@@ -394,6 +448,12 @@ class Student {
 // SQL: CREATE TABLE student_course (student_id, course_id);
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 `@JoinColumn` — когда FK помещается в таблицу entity. `@JoinTable` — когда нужна отдельная таблица связей (обычно `@ManyToMany`).
 
 ## Q11. Как использовать @EntityGraph для оптимизации?
@@ -433,6 +493,12 @@ Map<String, Object> hints = Map.of("jakarta.persistence.fetchgraph", graph);
 Order order = em.find(Order.class, 1L, hints);
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **EntityGraph vs JOIN FETCH**: EntityGraph декларативнее и переиспользуется, JOIN FETCH — инлайн в запросе.
 
 ## Q12. Как работает @ElementCollection?
@@ -466,6 +532,12 @@ class Address {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Когда использовать**: для коллекций значений без собственной identity. Если нужна identity (ссылаются другие сущности) — используйте `@OneToMany`.
 
 ## Q13. Какие типичные ошибки при работе с связями?
@@ -525,6 +597,12 @@ class User { @Id @GeneratedValue Long id; ... }
 class User {
     @Id @GeneratedValue Long id;
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @Override
     public boolean equals(Object o) {
         return o instanceof User u && Objects.equals(id, u.id);
@@ -591,6 +669,12 @@ class OrderRepositoryTest {
         List<Order> orders = repository.findAll();
         orders.forEach(o -> o.getItems().size());
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         // Assert — ожидаем 1 (orders) + 5 (items), не 1+5 для N+1
         assertThat(stats.getPrepareStatementCount()).isLessThanOrEqualTo(2);
     }
@@ -621,6 +705,12 @@ class OrderRepositoryTest {
 
 ## See also
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Hibernate](hibernate-interview.md) — основы Hibernate, Session, entity states
 - [Hibernate Caching](hibernate-caching-interview.md) — L1/L2 cache, как relationships взаимодействуют с кэшем
 - [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — JPA repositories, JPQL, @EntityGraph

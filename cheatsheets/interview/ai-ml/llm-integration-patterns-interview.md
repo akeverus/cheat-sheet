@@ -11,7 +11,7 @@ aliases:
   - "LLM gateway interview"
   - "LiteLLM interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `LLM Integration Patterns`
 
@@ -101,7 +101,12 @@ graph LR
 
 **Применение:** в **enterprise**, где много LLM-feature → нужна centralization.
 
-## Q2. (!) Streaming responses — реализация?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Streaming responses — реализация?
 
 **OpenAI / Anthropic streaming:**
 
@@ -137,7 +142,12 @@ async def chat(req: ChatRequest):
 - Можно cancel mid-generation
 - Меньше timeout risks
 
-## Q3. (!) SSE (Server-Sent Events) для streaming?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) SSE (Server-Sent Events) для streaming?
 
 **SSE** — HTTP standard для server → client streaming.
 
@@ -172,7 +182,12 @@ evtSource.onmessage = (e) => {
 
 **OpenAI/Anthropic** возвращают SSE ответы.
 
-## Q4. WebSocket vs SSE для LLM?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. WebSocket vs SSE для LLM?
 
 | Критерий | SSE | WebSocket |
 |----------|-----|-----------|
@@ -184,7 +199,12 @@ evtSource.onmessage = (e) => {
 
 **Для LLM streaming — SSE** обычно достаточно (одностороннее: server → client). WebSocket если нужны interactive interruptions от клиента.
 
-## Q5. (!) Retry с exponential backoff?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Retry с exponential backoff?
 
 ```python
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
@@ -211,7 +231,12 @@ def call_llm(prompt):
 - HTTP 401, 403 (auth) — retry не поможет
 - HTTP 422 (validation)
 
-## Q6. (!) Circuit breaker для LLM API?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Circuit breaker для LLM API?
 
 **Circuit breaker:** если provider returning errors **много раз** → временно **stop calling** (open circuit), wait, try again.
 
@@ -234,7 +259,12 @@ def call_openai(prompt):
 
 Подробнее — в [Resilience Patterns](../architecture/resilience-patterns-interview.md).
 
-## Q7. (!) Fallback между providers (Claude → GPT)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Fallback между providers (Claude → GPT)?
 
 ```python
 def chat_with_fallback(messages):
@@ -256,7 +286,12 @@ def chat_with_fallback(messages):
 
 **Use case:** primary provider down → не положить product, использовать backup.
 
-## Q8. Timeouts — как настраивать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Timeouts — как настраивать?
 
 ```python
 client = OpenAI(timeout=30.0)  # default
@@ -271,7 +306,12 @@ response = client.chat.completions.create(timeout=60.0, ...)
 
 **Подвох:** **default timeouts** OpenAI/Anthropic SDK могут быть слишком высокими для UX.
 
-## Q9. (!) Model routing (small → large escalation)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Model routing (small → large escalation)?
 
 **Идея:** не использовать самую дорогую model для всего. Cascade:
 
@@ -293,7 +333,12 @@ def smart_route(query):
 
 **Эффект:** 50-80% cost saving для apps с varied complexity.
 
-## Q10. (!) Semantic caching?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Semantic caching?
 
 **Exact match cache:** key = full prompt, low hit rate.
 
@@ -321,7 +366,12 @@ def chat(query):
 
 **Tools:** GPTCache, Redis Vector Search.
 
-## Q11. Prompt caching (provider-side)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Prompt caching (provider-side)?
 
 **Anthropic, OpenAI** поддерживают auto cache prompt **prefixes**.
 
@@ -336,7 +386,12 @@ def chat(query):
 
 **Use case:** RAG с large static documents. Documents в начале prompt → cached. User question меняется → дешевле re-query.
 
-## Q12. Batching API requests?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Batching API requests?
 
 **Batch API** (OpenAI, Anthropic):
 - Async: submit batch, wait few hours, get results
@@ -359,7 +414,12 @@ result = client.batches.retrieve(batch.id)
 - Embedding generation (тоже batch)
 - Non-urgent summarizations
 
-## Q13. (!) Cost tracking per user / feature?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Cost tracking per user / feature?
 
 ```python
 def call_llm_with_tracking(user_id, feature, messages):
@@ -391,7 +451,12 @@ def call_llm_with_tracking(user_id, feature, messages):
 
 **Tools:** Helicone, Langfuse, custom Postgres + Grafana.
 
-## Q14. (!) Token bucket для LLM API?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Token bucket для LLM API?
 
 ```python
 from token_bucket import TokenBucket
@@ -408,7 +473,12 @@ def call_llm(prompt):
 
 **Per-token bucket:** track output tokens, не requests (since OpenAI имеет TPM limits тоже).
 
-## Q15. Per-user rate limits?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Per-user rate limits?
 
 ```python
 def rate_limit_user(user_id, max_per_min=10):
@@ -425,7 +495,12 @@ def rate_limit_user(user_id, max_per_min=10):
 - **Tiered pricing** (free: 10 RPM, premium: 100 RPM)
 - **Cost control** (budget per user)
 
-## Q16. Distributed rate limiting (Redis)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Distributed rate limiting (Redis)?
 
 ```python
 # Sliding window log
@@ -445,7 +520,12 @@ def is_allowed(user_id, max_per_min=10):
 
 **Tools:** `redis-py-cluster`, `aioredis`.
 
-## Q17. (!) Зачем abstraction над provider?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Зачем abstraction над provider?
 
 **Без abstraction:**
 ```python
@@ -474,7 +554,12 @@ gateway.chat(model="claude-opus-4", messages=[...])
 - **Fallback** между providers
 - **Centralized logging, caching**
 
-## Q18. (!) LiteLLM, OpenRouter, Portkey?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) LiteLLM, OpenRouter, Portkey?
 
 **LiteLLM** — Python SDK, унифицирует **100+ models**.
 
@@ -498,7 +583,12 @@ response = completion(
 - OpenRouter — если хочешь experimentation с разными models
 - Portkey/Helicone — для enterprise (governance, observability)
 
-## Q19. Model parameter normalization?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Model parameter normalization?
 
 ```python
 # Different providers — different params
@@ -514,7 +604,12 @@ google_params = {"temperature": 0.7, "top_k": 40}
 
 LiteLLM делает это automatically.
 
-## Q20. (!) Что трекать в LLM systems?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. (!) Что трекать в LLM systems?
 
 **Per-request:**
 - Model used
@@ -537,7 +632,12 @@ LiteLLM делает это automatically.
 - Feature usage
 - Cost per user
 
-## Q21. (!) Tracing prompt chains?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) Tracing prompt chains?
 
 **Trace** — запись всей цепочки вызовов в одном logical operation.
 
@@ -563,7 +663,12 @@ rag_pipeline (2.5s)
 
 Подробнее — [Observability](../monitoring/observability-interview.md).
 
-## Q22. Helicone, Langfuse, LangSmith?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. Helicone, Langfuse, LangSmith?
 
 **Helicone** (open-source/SaaS):
 - Просто **proxy** перед OpenAI API
@@ -584,7 +689,12 @@ rag_pipeline (2.5s)
 
 В **2025** — выбор зависит от стека. Без LangChain → Langfuse / Helicone.
 
-## Q23. Latency metrics: TTFT, TPOT?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. Latency metrics: TTFT, TPOT?
 
 | Метрика | Расшифровка | Описание |
 |---------|-------------|----------|
@@ -603,7 +713,12 @@ OpenAI / Anthropic typically:
 - TTFT: 0.5-3 sec
 - TPS: 50-150 tokens/sec
 
-## Q24. (!) Sync vs async LLM calls?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Sync vs async LLM calls?
 
 **Sync:**
 ```python
@@ -631,7 +746,12 @@ responses = await asyncio.gather(
 
 **Production rule:** **always use async** для LLM calls в web servers.
 
-## Q25. Background jobs для long generations?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. Background jobs для long generations?
 
 Если ответ модели **долгий** (минуты):
 
@@ -657,7 +777,12 @@ async def status(job_id):
 
 **Frontend:** poll status, или WebSocket notification.
 
-## Q26. (!) Content moderation pipeline?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. (!) Content moderation pipeline?
 
 **Pre-LLM moderation** (на input):
 ```python
@@ -682,7 +807,12 @@ if moderation.results[0].flagged:
 - Perspective API (Google)
 - Self-hosted classifiers
 
-## Q27. Audit logging?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. Audit logging?
 
 **Audit log** — immutable record каждого LLM interaction.
 
@@ -710,7 +840,12 @@ audit_log({
 
 **Storage:** S3 + Athena, BigQuery, Postgres + analytics tools.
 
-## Q28. (!) Какие частые проблемы LLM в production?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. (!) Какие частые проблемы LLM в production?
 
 1. **Cost runaway** — без monitoring → неприятный сюрприз
 2. **Rate limits** — API limits игнорируются
@@ -744,7 +879,12 @@ audit_log({
 - [Application Security](../security/application-security-interview.md) — prompt injection
 - [API Gateway](../architecture/api-gateway-interview.md) — generalized pattern
 
-- [AI Agents](ai-agents-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AI Agents](ai-agents-interview.md)
 - [Embeddings](embeddings-interview.md)
 - [LLM Basics](llm-basics-interview.md)
 - [MLOps](mlops-interview.md)

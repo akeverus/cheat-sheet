@@ -11,7 +11,7 @@ aliases:
   - "Service mesh Istio"
   - "Envoy proxy interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Istio Service Mesh`
 
@@ -95,6 +95,12 @@ graph LR
 
 **Code unaware** — proxies handle communication transparently.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Trade-off:** complexity vs functionality.
 
 ## Q2. (!) Что такое Istio?
@@ -113,6 +119,12 @@ graph LR
 - Observability (metrics, traces, logs)
 - Resilience (retries, circuit breaker, timeout)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Most powerful** service mesh, но и **самый сложный**.
 
 ## Q3. Архитектура (control plane vs data plane)?
@@ -138,6 +150,12 @@ graph TD
     E2 --- E3
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Pre-1.5 Istio** had multiple components (Pilot, Citadel, Galley) — consolidated в Istiod since.
 
 ## Q4. Sidecar pattern (Envoy)?
@@ -164,6 +182,12 @@ External → Pod IP → Envoy → App container
 App → Envoy → External service
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Cost:** ~50-100 MB RAM per sidecar, latency ~1-5 ms overhead.
 
 ## Q5. (!) Istio installation profiles?
@@ -182,6 +206,12 @@ istioctl install --set profile=ambient  # ambient mode
 - **empty** — only CRDs
 - **ambient** — sidecar-less mode (newer)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Customize:** `IstioOperator` CRD для fine-grained config.
 
 ## Q6. Sidecar injection (auto vs manual)?
@@ -200,6 +230,12 @@ istioctl kube-inject -f deploy.yaml | kubectl apply -f -
 
 **Init container** modifies iptables — redirect traffic к Envoy.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Disable per-pod:**
 ```yaml
 metadata:
@@ -234,6 +270,12 @@ spec:
             subset: v1
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Capabilities:**
 - Path-based routing (`/api/v1/*`)
 - Header-based routing
@@ -272,6 +314,12 @@ spec:
         version: v2
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Defines:**
 - **Subsets** (v1, v2 versions) — referenced by VirtualService
 - Load balancing strategy
@@ -305,6 +353,12 @@ spec:
 
 **Combined с VirtualService** (must specify `gateways: [my-gateway]`).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Replaces** Kubernetes Ingress (для mesh services).
 
 ## Q10. (!) Traffic splitting (canary, blue-green)?
@@ -344,6 +398,12 @@ http:
 
 **Powerful** для safe rollouts.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Tools на Istio:** Argo Rollouts, Flagger — automate canary с metrics.
 
 ## Q11. Retries, timeouts, circuit breaking?
@@ -369,6 +429,12 @@ http:
 
 **Circuit breaking** через DestinationRule outlierDetection (Q8).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **No code changes** — все configured через CRDs.
 
 ## Q12. Fault injection?
@@ -392,6 +458,12 @@ http:
 
 **Эффект:** 10% requests delayed 5s, 5% return 500.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** test client retry logic, error handling.
 
 ## Q13. Mirroring (shadow traffic)?
@@ -414,6 +486,12 @@ http:
 **v1 gets primary traffic** (response sent к user).
 **v2 receives copy** (responses ignored).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** test new version с production traffic безопасно.
 
 ## Q14. (!) Mutual TLS (mTLS)?
@@ -440,6 +518,12 @@ spec:
 - `PERMISSIVE` — accept both (для migration)
 - `DISABLE`
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Zero-trust networking** — каждый service authenticated.
 
 ## Q15. (!) Authorization Policies?
@@ -473,6 +557,12 @@ spec:
   {}  # empty → deny all
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Then explicit Allow policies.
 
 ## Q16. PeerAuthentication, RequestAuthentication?
@@ -492,6 +582,12 @@ spec:
       jwksUri: "https://auth.example.com/.well-known/jwks.json"
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Both layers** combined для zero-trust.
 
 ## Q17. JWT validation?
@@ -522,6 +618,12 @@ spec:
           values: ["admin"]
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Validation in Envoy** — fast, no app code.
 
 ## Q18. (!) Метрики (Prometheus)?
@@ -536,6 +638,12 @@ Envoy exposes metrics для Prometheus.
 
 **Labels:** source/destination service, response code, protocol, etc.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Used для:**
 - Service-level dashboards
 - Alerting (error rate, latency)
@@ -557,6 +665,12 @@ meshConfig:
 
 **Caveat:** **app code должен propagate headers** (B3, W3C) для cross-service traces. Istio не делает context propagation внутри app.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Подробнее — в [OpenTelemetry](../monitoring/opentelemetry-interview.md).
 
 ## Q20. Access logs?
@@ -571,6 +685,12 @@ meshConfig:
 
 **Envoy logs** every request → ship к ELK / Loki / Datadog.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Performance impact:** logging high-volume mesh = lots data. Sample обычно.
 
 ## Q21. Kiali (service mesh UI)?
@@ -589,6 +709,12 @@ kubectl apply -f kiali.yaml
 istioctl dashboard kiali
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Essential** для operating Istio (otherwise blind).
 
 ## Q22. (!) Ambient mode — sidecar-less?
@@ -618,6 +744,12 @@ graph TD
 - Newer (less mature)
 - Some features still в sidecar mode only
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В **2025** ambient mode **rapidly growing** — recommended для new Istio deployments.
 
 ## Q23. ztunnel, waypoint proxies?
@@ -634,6 +766,12 @@ graph TD
 - Provides **L7 features** (retries, traffic routing, RequestAuthn)
 - Optional (only if L7 needed)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Cost saving:** small mesh с only L4 needs → just ztunnels (cheaper than sidecars).
 
 ## Q24. (!) Istio vs Linkerd vs Consul Connect?
@@ -654,6 +792,12 @@ graph TD
 - **Simplicity, performance, K8s** → Linkerd
 - **Multi-platform, HashiCorp stack** → Consul Connect
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В **2025** — **Linkerd** часто preferred для simpler use cases. **Istio** для full feature set.
 
 ## Q25. Какие минусы Istio?
@@ -667,6 +811,12 @@ graph TD
 7. **Backwards compatibility** — sometimes breaks
 8. **Rich features unused** — most teams use 10% features
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Ambient mode** addresses many minuses (lower overhead).
 
 ## Q26. Когда использовать service mesh?
@@ -709,6 +859,12 @@ graph TD
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, circuit breaker
 - [Networking](../architecture/networking-interview.md) — L4/L7 concepts
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Ansible](ansible-interview.md)
 - [ArgoCD и GitOps](argocd-interview.md)
 - [HashiCorp Consul](consul-interview.md)

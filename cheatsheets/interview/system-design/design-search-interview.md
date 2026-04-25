@@ -11,7 +11,7 @@ aliases:
   - "Autocomplete design"
   - "Search System собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Search System`
 
@@ -86,7 +86,12 @@ updated: "2026-04-19"
 - NOT web crawler (Google-scale — separate topic)
 - Assume documents provided (products, articles)
 
-## Q2. (!) Capacity estimation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Capacity estimation?
 
 **Assumptions (e-commerce):**
 - 100M products indexed
@@ -112,7 +117,12 @@ updated: "2026-04-19"
 - Hot indices in RAM → faster
 - ~100 GB RAM across cluster for hot data
 
-## Q3. (!) Inverted index — что это?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Inverted index — что это?
 
 **Forward index:** doc → words (normal DB).
 ```
@@ -142,7 +152,12 @@ doc_2: "quick fox jumps"
 
 **Lucene:** implementation в Apache Lucene = basis for Elasticsearch, Solr.
 
-## Q4. (!) Tokenization, normalization, stemming?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Tokenization, normalization, stemming?
 
 **Pipeline при indexing:**
 
@@ -182,7 +197,12 @@ doc_2: "quick fox jumps"
 - Consistency mandatory
 - Misconfigured analyzer = terms в index don't match query tokens
 
-## Q5. Elasticsearch vs Lucene — разница?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Elasticsearch vs Lucene — разница?
 
 **Lucene:** Java library (индекс + search на одном машины).
 
@@ -213,7 +233,12 @@ doc_2: "quick fox jumps"
 - **Meilisearch** — lightweight typo-tolerant
 - **Algolia** — SaaS (fast, but $$$)
 
-## Q6. (!) High-level architecture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) High-level architecture?
 
 ```
 Data sources → [Indexing Pipeline] → [Index Service (Elasticsearch)] ← [Query Service]
@@ -235,7 +260,12 @@ Data sources → [Indexing Pipeline] → [Index Service (Elasticsearch)] ← [Qu
 - Index path: write-heavy, batch-friendly
 - Query path: read-heavy, latency-sensitive
 
-## Q7. (!) Indexing pipeline?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Indexing pipeline?
 
 **Batch indexing:**
 ```
@@ -273,7 +303,12 @@ Application → Kafka topic → Consumer → Index (ES)
 - ES bulk API: 500-5000 docs per request
 - Measure throughput vs latency
 
-## Q8. Near real-time индексация?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Near real-time индексация?
 
 **Elasticsearch:**
 - Documents indexed в in-memory buffer
@@ -296,7 +331,12 @@ Application → Kafka topic → Consumer → Index (ES)
 - Product catalog update: 5s delay OK
 - Chat search: near real-time critical
 
-## Q9. (!) Query flow (scatter-gather)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Query flow (scatter-gather)?
 
 **Distributed search:**
 ```
@@ -332,7 +372,12 @@ Return results
 - **search_timeout:** abort slow shards
 - **Pre-filtering:** narrow по индексу before scoring
 
-## Q10. (!) Relevance scoring: TF-IDF, BM25?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Relevance scoring: TF-IDF, BM25?
 
 **TF-IDF:**
 - TF (term frequency): more occurrences = more relevant
@@ -365,7 +410,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - Freshness decay
 - Popularity boost
 
-## Q11. Ranking beyond text (ML)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Ranking beyond text (ML)?
 
 **Text relevance только часть:**
 
@@ -399,7 +449,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - New ranker vs baseline
 - Metric: CTR, conversion, revenue
 
-## Q12. (!) Sharding стратегии?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Sharding стратегии?
 
 **Shard:** partition of index on one node.
 
@@ -430,7 +485,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - Multiple clusters searchable as one
 - Geo-distributed
 
-## Q13. Replication?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Replication?
 
 **Replica shard:** copy for HA + read scale.
 
@@ -456,7 +516,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - `index.number_of_replicas: 1-2` typically
 - More replicas = more storage + write cost, но better read scale
 
-## Q14. (!) Autocomplete / typeahead?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Autocomplete / typeahead?
 
 **Goal:** suggest completions as user types.
 
@@ -492,7 +557,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - On query logs → update scores
 - Periodic rebuild
 
-## Q15. (!) Typo tolerance / fuzzy match?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. (!) Typo tolerance / fuzzy match?
 
 **Goal:** "appel" finds "apple".
 
@@ -530,7 +600,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - More tolerance = more recall, less precision (irrelevant matches)
 - Tune по use case
 
-## Q16. Faceted search / filters?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Faceted search / filters?
 
 **Facets:** categorical breakdowns (brand, price range, rating).
 
@@ -565,7 +640,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - Aggregations cached (filter cache)
 - Cardinality (# unique values) affects speed
 
-## Q17. Semantic search / vector embeddings?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Semantic search / vector embeddings?
 
 **Problem:** lexical search (BM25) misses synonyms, semantic similarity.
 - Query "running shoes" won't match "jogging footwear"
@@ -600,7 +680,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - High-dim vector storage expensive
 - ANN index trade-off (approximate для speed)
 
-## Q18. (!) Analytics и learning-to-rank?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Analytics и learning-to-rank?
 
 **Query logs:**
 - Every search + click → event log
@@ -627,7 +712,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - User features (history, location) — input к ranker
 - Privacy considerations
 
-## Q19. Hot queries cache?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Hot queries cache?
 
 **20% queries = 80% volume** typically.
 
@@ -655,7 +745,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 - Hit ratio: track
 - Stale risk: acceptable lag vs freshness requirement
 
-## Q20. Index rebuild / rollover?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Index rebuild / rollover?
 
 **When needed:**
 - Schema change (new analyzer, new fields)
@@ -693,7 +788,12 @@ POST products/_rollover
 
 ## See also
 
-- [System Design](system-design-interview.md) — общие принципы
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [System Design](system-design-interview.md) — общие принципы
 - [Elasticsearch](../databases/elasticsearch-interview.md) — deep dive
 - [Design URL Shortener](design-url-shortener-interview.md) — read-heavy patterns
 - [Design Feed System](design-feed-system-interview.md) — ranking parallels

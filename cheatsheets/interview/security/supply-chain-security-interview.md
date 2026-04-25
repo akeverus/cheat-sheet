@@ -11,7 +11,7 @@ aliases:
   - "SLSA framework"
   - "Supply Chain собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Supply Chain Security`
 
@@ -98,6 +98,12 @@ Source code → Build → Artifact → Distribution → Install → Runtime
 - Docker Hub images with cryptominers
 - PyPI typosquatting (`requests` vs `reqeusts`)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Impact:** **downstream explosion** — 1 compromise → hundreds orgs.
 
 ## Q2. (!) Известные incidents (SolarWinds, log4shell, xz)?
@@ -126,6 +132,12 @@ Source code → Build → Artifact → Distribution → Install → Runtime
 
 **event-stream (2018):** NPM package transferred to attacker → malicious code to steal Bitcoin wallets.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Summary:** build-time, dependency, и **human** are all attack vectors.
 
 ## Q3. (!) Типы supply chain attacks?
@@ -167,6 +179,12 @@ Source code → Build → Artifact → Distribution → Install → Runtime
 **10. CDN / mirror attack:**
 - Tamper in distribution layer
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Controls:** SBOM, signing, SLSA, dependency review, pinned versions, reproducible builds.
 
 ## Q4. (!) Что такое SBOM?
@@ -200,6 +218,12 @@ Source code → Build → Artifact → Distribution → Install → Runtime
 
 **Generation:** automated at build time (not manually maintained).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Depth:** ideally **transitive + file-level hashes** (know exact bytes shipped).
 
 ## Q5. (!) SPDX vs CycloneDX?
@@ -231,6 +255,12 @@ Source code → Build → Artifact → Distribution → Install → Runtime
 
 **Pragmatic:** **both generated** сейчас (tooling supports обе) — CycloneDX чаще для security workflows, SPDX для legal/compliance.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Industry trend:** most orgs generate **both** (tools like `syft` support one-command for каждой).
 
 ## Q6. Как генерировать SBOM?
@@ -286,6 +316,12 @@ docker buildx build --sbom=true --push ...
     output-file: sbom.json
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Store as artifact** и **attach to release**; also push to dependency-track server для continuous monitoring.
 
 ## Q7. (!) Что такое SLSA framework?
@@ -311,6 +347,12 @@ docker buildx build --sbom=true --push ...
 
 **Adoption:** Google internal, GitHub Actions (SLSA L3 builder), Kubernetes.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Version:** 1.0 released 2023.
 
 ## Q8. (!) SLSA levels 1-4?
@@ -347,6 +389,12 @@ docker buildx build --sbom=true --push ...
 2. **L2** — move builds to trusted CI, sign artifacts
 3. **L3** — use SLSA generator, enforce provenance checks
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Consumers:** verify `slsa-verifier` checks provenance before deploying.
 
 ## Q9. (!) Зачем подписывать artifacts?
@@ -376,6 +424,12 @@ docker buildx build --sbom=true --push ...
 
 **Modern solution:** **keyless** signing (Sigstore).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Verification is key:** signed artifact без verification = still insecure. Enforce в deploy pipeline:
 ```bash
 cosign verify --certificate-identity=... --certificate-oidc-issuer=... image:tag
@@ -425,6 +479,12 @@ cosign verify \
   ghcr.io/myorg/app:1.0
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Hardcore trust:** verify identity matches expected GitHub workflow path → ensures artifact built by **your** CI, not attacker.
 
 ## Q11. Keyless signing (Fulcio, Rekor)?
@@ -462,6 +522,12 @@ cosign verify \
 cosign sign-blob --yes artifact.tar.gz  # no key file!
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Security win:** no "store the key safely" problem. Key never exists outside ephemeral CI job.
 
 ## Q12. In-toto attestations?
@@ -517,6 +583,12 @@ cosign attest --predicate scan.json --type vuln image:tag
 cosign verify-attestation --type cyclonedx --certificate-identity=... image:tag
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Chain of trust:** consumers build policy requiring specific predicates с specific builders → trusted artifact.
 
 ## Q13. (!) Dependabot vs Renovate?
@@ -554,6 +626,12 @@ cosign verify-attestation --type cyclonedx --certificate-identity=... image:tag
 - **Dependabot** — default для GitHub, small/medium repos, simplicity
 - **Renovate** — large monorepo, need customization, GitLab, многоязычный stack
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:**
 - Enable security updates (auto-PR on CVE)
 - Weekly schedule для version updates (avoid daily noise)
@@ -599,6 +677,12 @@ cosign verify-attestation --type cyclonedx --certificate-identity=... image:tag
 - **Registry**: Trivy scanning / ECR scan
 - **Runtime**: Falco + Kubescape
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **False positives:** all have some; VEX (CycloneDX) позволяет отметить "not exploitable".
 
 ## Q15. CVE vs GHSA database?
@@ -632,6 +716,12 @@ cosign verify-attestation --type cyclonedx --certificate-identity=... image:tag
 
 **Severity:** **CVSS score** (0-10) — computed by NVD / vendor. Но **CVSS often не reflects exploitability в твоём context** (VEX помогает).
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **CVSS 4.0 (2023):** improved, но adoption slow; CVSS 3.1 still dominant.
 
 ## Q16. (!) Reproducible builds?
@@ -670,6 +760,12 @@ cosign verify-attestation --type cyclonedx --certificate-identity=... image:tag
 
 **Real-world:** Bitcoin Core, Tor — reproducible; multiple devs rebuild, compare.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Limit:** не covers sources **itself** (source can be malicious even если reproducibly builds).
 
 ## Q17. Hermetic builds (Bazel, Nix)?
@@ -709,6 +805,12 @@ cosign verify-attestation --type cyclonedx --certificate-identity=... image:tag
 - Retrofitting existing Makefile project — large effort
 - Green-field: adopt Bazel/Nix from start
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **ROI:**
 - Huge monorepo (Google, Meta) — essential (cache hits 90%+)
 - Small repo — overkill
@@ -756,6 +858,12 @@ slsa-verifier verify-artifact myapp.tar.gz \
   --provenance-path myapp.intoto.jsonl
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Policy:** admission controller verifies provenance matches expected repo + branch.
 
 ## Q19. (!) GitHub Actions supply chain risks?
@@ -799,6 +907,12 @@ slsa-verifier verify-artifact myapp.tar.gz \
 - `GITHUB_TOKEN` default permissions broad
 - Minimize: `permissions: contents: read` в job
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Defense-in-depth:**
 - `allowed_actions` в org settings (allowlist)
 - Required reviewers on environment secrets
@@ -855,6 +969,12 @@ steps:
 
 **Supported:** AWS, GCP, Azure, HashiCorp Cloud, Vault, many others.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Best practice:** move all CI → cloud auth через OIDC; delete IAM user access keys.
 
 ## Q21. Pinned dependencies (hash vs version)?
@@ -906,6 +1026,12 @@ FROM ubuntu@sha256:abc123...  # pin by digest, not tag
 - No native hash pin; use **Maven Enforcer Plugin** with hash checking
 - Или **Gradle** dependency locking
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Risk без hash pins:**
 - Dependency substitution attacks
 - Subverted mirrors / caches
@@ -951,6 +1077,12 @@ FROM ubuntu@sha256:abc123...  # pin by digest, not tag
 **9. Pinned dependencies (q21):**
 - Mass version injection — detected at hash mismatch
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Real examples caught:**
 - `colors` package (2022) — maintainer self-sabotage; caught post-damage
 - PyPI mass typosquat (hundreds packages) — auto-detected by PyPI
@@ -1004,6 +1136,12 @@ FROM ubuntu@sha256:abc123...  # pin by digest, not tag
 - **Tier 2** (CMS, analytics) — medium
 - **Tier 3** (utility tools) — basic
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Budget:** security review takes **weeks** для Tier 1 — start early.
 
 ## Q24. Supply chain security roadmap?
@@ -1064,6 +1202,12 @@ FROM ubuntu@sha256:abc123...  # pin by digest, not tag
 - [Docker](../devops/docker-interview.md) — image signing, scanning
 - [Observability](../monitoring/observability-interview.md) — auditing supply chain events
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Application Security](application-security-interview.md)
 - [Authentication and Authorization Patterns](authentication-authorization-patterns-interview.md)
 - [JWT](jwt-interview.md)

@@ -11,7 +11,7 @@ aliases:
   - "Monolith migration"
   - "Strangler собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Strangler Fig Pattern`
 
@@ -88,7 +88,12 @@ Stage 3: [Service A | Service B | Monolith 60%]
 Stage N: [Service A | Service B | Service C | Service D]  (monolith gone)
 ```
 
-## Q2. (!) Зачем Strangler вместо big bang rewrite?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Зачем Strangler вместо big bang rewrite?
 
 **Big bang rewrite problems:**
 
@@ -123,7 +128,12 @@ Stage N: [Service A | Service B | Service C | Service D]  (monolith gone)
 
 **Industry consensus (Sam Newman, Fowler, Netflix blog):** strangler beats big bang in 95%+ cases.
 
-## Q3. (!) Как работает механика?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Как работает механика?
 
 **Essential components:**
 
@@ -155,7 +165,12 @@ Client → Proxy
 6. Remove code from monolith
 7. Repeat for next slice
 
-## Q4. (!) С чего начинать strangling?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) С чего начинать strangling?
 
 **Pick first slice carefully:**
 
@@ -190,7 +205,12 @@ Client → Proxy
 
 **Strategy:** deliver small early win → build team confidence + pattern.
 
-## Q5. (!) Какие функции выделять первыми?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Какие функции выделять первыми?
 
 **By coupling:**
 - Low: external-facing search → own service
@@ -209,7 +229,12 @@ Client → Proxy
 
 **Tip:** start с service where team has lowest risk tolerance. Perfect the migration process first on less critical stuff.
 
-## Q6. Data migration и shared DB?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Data migration и shared DB?
 
 **Hardest part.** Shared DB = tight coupling.
 
@@ -245,7 +270,12 @@ Client → Proxy
 - Kafka Connect
 - Custom ETL
 
-## Q7. Dual-write и consistency?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Dual-write и consistency?
 
 **Dual-write:** write к both old и new data store during migration.
 
@@ -282,7 +312,12 @@ Client → Proxy
 - Eventual OK для most
 - Strong required only для money/inventory — use careful tx patterns
 
-## Q8. (!) Proxy / facade layer?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Proxy / facade layer?
 
 **Router/proxy sits в front** of both systems, dispatches.
 
@@ -320,7 +355,12 @@ routes:
 - Auth token compatibility
 - Tracing propagation (same user, cross-system)
 
-## Q9. Где жить proxy (gateway, reverse proxy)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Где жить proxy (gateway, reverse proxy)?
 
 **Options:**
 
@@ -348,7 +388,12 @@ routes:
 
 **Typical:** API Gateway для public; service mesh для internal.
 
-## Q10. Feature flags для routing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Feature flags для routing?
 
 **Use feature flags** для per-request routing decisions:
 
@@ -382,7 +427,12 @@ if (featureFlag('new-user-service', user)) {
 - Audit log (who changed what)
 - Scheduled removal (flag cleanup policy — don't accumulate)
 
-## Q11. (!) Преимущества?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Преимущества?
 
 **1. Incremental progress:**
 - Value delivered continuously
@@ -412,7 +462,12 @@ if (featureFlag('new-user-service', user)) {
 - Old code removed as replaced
 - Cleaner codebase over time
 
-## Q12. (!) Недостатки и риски?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Недостатки и риски?
 
 **1. Long timeline:**
 - Years typically (not months)
@@ -450,7 +505,12 @@ if (featureFlag('new-user-service', user)) {
 - Team needs to adopt microservices mindset
 - Operations complexity grows
 
-## Q13. (!) Как rollback если не работает?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Как rollback если не работает?
 
 **Rollback per slice:**
 
@@ -483,7 +543,12 @@ if (featureFlag('new-user-service', user)) {
 - Dry-run tested (chaos game days)
 - On-call practiced
 
-## Q14. Testing parallel run (shadow)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Testing parallel run (shadow)?
 
 **Shadow mode:** send requests к both old и new; compare responses.
 
@@ -515,7 +580,12 @@ if (featureFlag('new-user-service', user)) {
 - Latency comparison
 - Error rate
 
-## Q15. Как долго занимает migration?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Как долго занимает migration?
 
 **Varies wildly:**
 
@@ -544,7 +614,12 @@ if (featureFlag('new-user-service', user)) {
 - Learn, document, refine process
 - Apply accelerated к rest
 
-## Q16. Когда считать migration complete?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Когда считать migration complete?
 
 **Signals:**
 
@@ -578,7 +653,12 @@ if (featureFlag('new-user-service', user)) {
 - Reflect on decomposition (microservices right?)
 - Avoid over-decomposing (distributed monolith)
 
-## Q17. Anti-corruption layer?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Anti-corruption layer?
 
 **Anti-corruption layer (ACL) — DDD term** — shield новой системы от legacy's bad model.
 
@@ -608,7 +688,12 @@ ACL:
 - Adds layer; not always necessary
 - Use только when legacy genuinely ugly
 
-## Q18. Branch by abstraction?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Branch by abstraction?
 
 **Alternative/complementary pattern:**
 
@@ -661,7 +746,12 @@ class StripePaymentProvider implements ... { ... }  // new
 - [Deployment Strategies](../cicd/deployment-strategies-interview.md) — canary, feature flags
 - [Consistency Patterns](consistency-patterns-interview.md) — during migration
 
-- [API Gateway](api-gateway-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [API Gateway](api-gateway-interview.md)
 - [BFF Pattern](bff-pattern-interview.md)
 - [Стратегии кэширования](caching-strategies-interview.md)
 - [CAP-теорема](cap-theorem-interview.md)

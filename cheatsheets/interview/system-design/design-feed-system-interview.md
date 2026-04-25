@@ -11,7 +11,7 @@ aliases:
   - "Feed architecture"
   - "Feed System собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Feed System`
 
@@ -83,7 +83,12 @@ updated: "2026-04-19"
 - Video streaming
 - Complex moderation
 
-## Q2. (!) Capacity estimation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Capacity estimation?
 
 **Twitter-scale assumptions:**
 - 500M active users
@@ -107,7 +112,12 @@ updated: "2026-04-19"
 **Bandwidth:**
 - Timeline load: 60K/s × 20KB (100 posts × 200B) = 1.2 GB/s
 
-## Q3. (!) Fan-out on write vs fan-out on read?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Fan-out on write vs fan-out on read?
 
 **Fan-out on write (push model):**
 - User posts → system writes copy to each follower's timeline
@@ -151,7 +161,12 @@ User B reads feed → fetch posts from each of 200 followed users → merge sort
 
 **Real:** hybrid (see Q5).
 
-## Q4. (!) Celebrity problem?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Celebrity problem?
 
 **Problem:** user with millions of followers (celebrity, brand).
 - Fan-out on write: 10M follower × every post = massive write amplification
@@ -182,7 +197,12 @@ user_feed = read_own_timeline_cache() + read_celebrity_posts(followed_celebritie
 merge_sort_by_time()
 ```
 
-## Q5. (!) Hybrid approach?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Hybrid approach?
 
 **Pragmatic production:**
 
@@ -208,7 +228,12 @@ merge_sort_by_time()
 - Huge scale + celebrities: hybrid
 - Very dynamic network (Twitter): heavy caching + hybrid
 
-## Q6. (!) Storage для user timeline?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Storage для user timeline?
 
 **Options:**
 
@@ -237,7 +262,12 @@ LIST user:42:timeline = [post_id_1, post_id_2, ...]
 **Space:**
 - Timeline cache (top 1M users × 1000 IDs × 8B) = 8GB — fits в memory
 
-## Q7. Redis sorted set для timeline?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Redis sorted set для timeline?
 
 **Sorted set:**
 ```
@@ -264,7 +294,12 @@ ZRANGE user:42:timeline 0 49 WITHSCORES
 - TTL on set или LRU eviction globally
 - Inactive users' timelines expire; regenerate on next visit
 
-## Q8. (!) Chronological vs algorithmic feed?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Chronological vs algorithmic feed?
 
 **Chronological (reverse chrono):**
 - Most recent first
@@ -289,7 +324,12 @@ ZRANGE user:42:timeline 0 49 WITHSCORES
 - Hybrid — users can switch
 - Recent + ranked sections
 
-## Q9. Ranking features и signals?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Ranking features и signals?
 
 **Typical features:**
 
@@ -313,7 +353,12 @@ score = affinity × weight × time_decay
 - Model: deep learning (DNN, transformer)
 - Train offline, serve online
 
-## Q10. ML pipeline для ranking?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. ML pipeline для ranking?
 
 **Architecture:**
 
@@ -347,7 +392,12 @@ Online:
 - GPU inference for deep models
 - Edge optimization (quantization, distillation)
 
-## Q11. (!) High-level architecture?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) High-level architecture?
 
 ```
 Clients
@@ -374,7 +424,12 @@ Clients
 [Analytics] — stream → Kafka → Flink → data warehouse
 ```
 
-## Q12. Пост creation flow?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Пост creation flow?
 
 1. User writes post → POST `/posts`
 2. Post Service:
@@ -397,7 +452,12 @@ Clients
 **Backpressure:**
 - Fanout lag monitored; scaling workers horizontally
 
-## Q13. Read (timeline fetch) flow?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Read (timeline fetch) flow?
 
 **User loads feed:**
 
@@ -421,7 +481,12 @@ Clients
 - Enriched posts cached (TTL 1 min)
 - User data cached (1 hr)
 
-## Q14. (!) Как handle millions of followers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Как handle millions of followers?
 
 **Options:**
 
@@ -449,7 +514,12 @@ Clients
 - Horizontally scaled, backed by Redis
 - Asynchronous; eventual consistency OK
 
-## Q15. Cache strategy?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Cache strategy?
 
 **Multi-layer caching:**
 
@@ -477,7 +547,12 @@ Clients
 - New user on login: async build initial timeline
 - Celebrity post: pre-push to top engaged followers
 
-## Q16. DB sharding?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. DB sharding?
 
 **Posts:**
 - By user_id (author): all user's posts co-located
@@ -500,7 +575,12 @@ Clients
 - If sharded by user_id, "posts from user X" = one shard (fast)
 - "Global feed, all users" = all shards (rare for per-user feed)
 
-## Q17. (!) Как справиться с viral posts?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Как справиться с viral posts?
 
 **Viral post:** millions of likes / comments → hot key problem.
 
@@ -532,7 +612,12 @@ Clients
 - "10 friends liked this" — show aggregate
 - Don't send 100K like events to every viewer
 
-## Q18. Feed freshness vs latency trade-off?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Feed freshness vs latency trade-off?
 
 **Freshness:** how recent are posts in feed.
 **Latency:** how fast feed loads.
@@ -560,7 +645,12 @@ Clients
 
 ## See also
 
-- [System Design](system-design-interview.md) — общие принципы
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [System Design](system-design-interview.md) — общие принципы
 - [Design Chat System](design-chat-system-interview.md) — fan-out parallels
 - [Caching](../architecture/caching-strategies-interview.md) — Redis, CDN
 - [Cassandra](../databases/cassandra-interview.md) — post storage

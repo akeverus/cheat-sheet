@@ -12,7 +12,7 @@ aliases:
   - "BigQuery interview"
   - "Cloud Run interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `GCP (Google Cloud Platform)`
 
@@ -93,7 +93,12 @@ updated: "2026-04-19"
 - Меньше regions (40 vs 33)
 - Меньшее enterprise adoption (но растёт)
 
-## Q2. (!) Regions, Zones, Multi-region?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Regions, Zones, Multi-region?
 
 ```
 Region (us-central1)
@@ -108,7 +113,12 @@ Region (us-central1)
 
 **Multi-region storage** в Cloud Storage — single namespace, replicated. AWS S3 не имеет аналога (хотя есть Cross-Region Replication).
 
-## Q3. Projects и organizations?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Projects и organizations?
 
 GCP имеет **проектную** организацию resources (vs AWS accounts):
 
@@ -125,7 +135,12 @@ Organization
 
 **Преимущество:** легче organize. **AWS** historically не имел org structure (потом добавили AWS Organizations).
 
-## Q4. (!) Compute Engine (GCE) — VMs?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Compute Engine (GCE) — VMs?
 
 **Compute Engine** — IaaS, аналог AWS EC2.
 
@@ -142,7 +157,12 @@ Organization
 - **Committed Use Discounts** — 1-3 years
 - **Spot VMs (Preemptible)** — до 91% off, могут быть прерваны
 
-## Q5. (!) GKE (Google Kubernetes Engine)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) GKE (Google Kubernetes Engine)?
 
 **GKE** — managed Kubernetes (Google создал K8s).
 
@@ -160,7 +180,12 @@ Organization
 
 Подробнее — в [Kubernetes](../devops/kubernetes-interview.md).
 
-## Q6. (!) Cloud Run — managed containers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Cloud Run — managed containers?
 
 **Cloud Run** — serverless containers. Просто deploy Docker image, GCP runs.
 
@@ -180,7 +205,12 @@ gcloud run deploy my-service --image gcr.io/my-project/my-image --port 8080
 
 **Cloud Run Jobs** — для batch-like tasks (без HTTP).
 
-## Q7. (!) Cloud Functions — FaaS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Cloud Functions — FaaS?
 
 **Cloud Functions** — аналог AWS Lambda.
 
@@ -202,7 +232,12 @@ gcloud functions deploy hello-http \
 
 **В 2025** — Cloud Functions теряет долю в favor **Cloud Run** (более flexible).
 
-## Q8. App Engine?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. App Engine?
 
 **App Engine** (с 2008) — original GCP PaaS. Deploy code, GCP manages everything.
 
@@ -211,7 +246,12 @@ gcloud functions deploy hello-http \
 
 В **2025** — App Engine **legacy**. Новые проекты выбирают **Cloud Run**.
 
-## Q9. (!) Cloud Storage — vs S3?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Cloud Storage — vs S3?
 
 **Cloud Storage** — object storage, аналог S3.
 
@@ -230,7 +270,12 @@ gcloud functions deploy hello-http \
 
 **Egress costs** — у GCP **дешевле** чем AWS для большинства случаев.
 
-## Q10. Persistent Disks?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Persistent Disks?
 
 **Persistent Disks** — block storage для GCE (аналог EBS).
 
@@ -247,7 +292,12 @@ gcloud functions deploy hello-http \
 - Можно snapshot live disk без consistency issues
 - Regional disks (replicated across 2 zones)
 
-## Q11. Filestore?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Filestore?
 
 **Filestore** — managed NFS (аналог AWS EFS).
 
@@ -259,7 +309,12 @@ gcloud functions deploy hello-http \
 
 Для shared filesystems между VMs.
 
-## Q12. (!) Cloud SQL?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Cloud SQL?
 
 **Cloud SQL** — managed реляционные БД.
 
@@ -277,7 +332,12 @@ gcloud functions deploy hello-http \
 
 В **GCP** также: **AlloyDB** (новое, 2022) — PostgreSQL-compatible с лучшим performance (~4x). Конкурент AWS Aurora.
 
-## Q13. (!) Cloud Spanner?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Cloud Spanner?
 
 **Cloud Spanner** — globally distributed, **strongly consistent** SQL database. Уникален для GCP.
 
@@ -298,7 +358,12 @@ gcloud functions deploy hello-http \
 
 В **2025** — единственный production globally-distributed SQL DB. Конкуренты (CockroachDB, YugabyteDB, TiDB) — open-source альтернативы.
 
-## Q14. Firestore?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Firestore?
 
 **Firestore** — NoSQL document database (NoSQL, аналог DynamoDB / MongoDB).
 
@@ -315,7 +380,12 @@ gcloud functions deploy hello-http \
 
 **Use cases:** mobile apps, real-time chat, collaborative apps.
 
-## Q15. Cloud Bigtable?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Cloud Bigtable?
 
 **Cloud Bigtable** — wide-column NoSQL (аналог HBase, Cassandra).
 
@@ -333,13 +403,23 @@ gcloud functions deploy hello-http \
 
 Реально для **large scale** (минимум $700/month за base cluster).
 
-## Q16. Memorystore (Redis, Memcached)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Memorystore (Redis, Memcached)?
 
 **Memorystore** — managed Redis или Memcached.
 
 Аналог AWS ElastiCache. Standard features.
 
-## Q17. (!) BigQuery — что особенного?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) BigQuery — что особенного?
 
 **BigQuery** — serverless DWH. Crown jewel GCP.
 
@@ -365,7 +445,12 @@ SELECT label, feature1, feature2 FROM `mydataset.training`;
 
 Подробнее — в [Data Warehousing](../data-engineering/data-warehousing-interview.md).
 
-## Q18. Dataflow (Apache Beam)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Dataflow (Apache Beam)?
 
 **Dataflow** — managed **Apache Beam** runtime.
 
@@ -388,7 +473,12 @@ pipeline.apply(PubsubIO.readStrings().fromTopic(topic))
 
 Подробнее — в [Flink](../data-engineering/apache-flink-interview.md) (для сравнения streaming).
 
-## Q19. Pub/Sub vs Kafka?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Pub/Sub vs Kafka?
 
 **Pub/Sub** — managed messaging. Аналог AWS SNS/SQS, Kafka.
 
@@ -411,7 +501,12 @@ pipeline.apply(PubsubIO.readStrings().fromTopic(topic))
 **Use Pub/Sub когда:** хочешь simple managed messaging.
 **Use Kafka когда:** нужен low latency, throughput >> 10K msg/sec, replay из historical offsets, ecosystem (Kafka Streams, Connect).
 
-## Q20. Dataproc (Hadoop/Spark)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Dataproc (Hadoop/Spark)?
 
 **Dataproc** — managed **Hadoop, Spark, Hive, Presto, Flink**.
 
@@ -425,7 +520,12 @@ pipeline.apply(PubsubIO.readStrings().fromTopic(topic))
 
 В **2025** — для new workloads чаще выбирают **Dataflow** или **Spark в Databricks**.
 
-## Q21. (!) VPC, subnets, firewalls?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) VPC, subnets, firewalls?
 
 **GCP VPC** уникальна:
 
@@ -442,7 +542,12 @@ my-vpc (global)
 
 **Преимущество:** один VPC для всех regions. **AWS** — VPC per region.
 
-## Q22. Cloud CDN, Cloud Load Balancing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. Cloud CDN, Cloud Load Balancing?
 
 **Cloud Load Balancing** — global, single anycast IP.
 - Auto-distributes traffic к closest region
@@ -456,7 +561,12 @@ my-vpc (global)
 
 Best-in-class networking — наследие Google Search infrastructure.
 
-## Q23. (!) IAM в GCP — отличия от AWS?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) IAM в GCP — отличия от AWS?
 
 **GCP IAM:**
 - **Roles** = collection of permissions (vs AWS Policies)
@@ -478,7 +588,12 @@ gcp set-iam-policy --member=user:alice@example.com \
 
 **vs AWS:** GCP проще для most cases. AWS более granular но сложнее.
 
-## Q24. Service accounts?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. Service accounts?
 
 **Service account** — non-human identity для services (apps, workloads).
 
@@ -496,7 +611,12 @@ gcloud compute instances create my-vm \
 - **Workload Identity** для GKE (no JSON keys в pods)
 - **Federated identities** для cross-cloud (AWS EKS → GCP via OIDC)
 
-## Q25. (!) Vertex AI?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. (!) Vertex AI?
 
 **Vertex AI** — unified ML platform GCP. Все ML services в одном месте.
 
@@ -512,7 +632,12 @@ gcloud compute instances create my-vm \
 
 В **2025** — VertexAI один из лидеров managed ML platforms (наряду с SageMaker, Azure ML).
 
-## Q26. Gemini API?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. Gemini API?
 
 **Gemini** — Google's frontier LLM (бывший Bard, PaLM 2). Конкурент GPT-4, Claude.
 
@@ -537,7 +662,12 @@ response = model.generate_content("Hello")
 
 Подробнее — в [LLM Basics](../ai-ml/llm-basics-interview.md).
 
-## Q27. (!) GCP vs AWS — strengths/weaknesses?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) GCP vs AWS — strengths/weaknesses?
 
 **GCP strengths:**
 - BigQuery (best DWH)
@@ -561,7 +691,12 @@ response = model.generate_content("Hello")
 - Best documentation/training
 - Most enterprise contracts
 
-## Q28. Когда выбирать GCP?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Когда выбирать GCP?
 
 **Выбирай GCP когда:**
 - **Heavy data analytics** — BigQuery лучший
@@ -596,7 +731,12 @@ response = model.generate_content("Hello")
 - [MLOps](../ai-ml/mlops-interview.md) — Vertex AI
 - [Application Security](../security/application-security-interview.md) — IAM
 
-- [AWS](aws-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AWS](aws-interview.md)
 - [AWS Lambda](aws-lambda-interview.md)
 - [Azure](azure-interview.md)
 - [Cloud-native Patterns](cloud-native-patterns-interview.md)

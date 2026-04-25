@@ -11,7 +11,7 @@ aliases:
   - "CDN compute"
   - "Edge Computing собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Edge Computing`
 
@@ -87,7 +87,12 @@ User → CDN Edge (runs edge function) → optionally → Origin
 
 **Key point:** edge function может answer без going к origin. Full roundtrip avoided.
 
-## Q2. (!) Edge vs CDN vs серверlessless?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Edge vs CDN vs серверlessless?
 
 **CDN:** static content caching at edge.
 - Stored objects (images, CSS, JS)
@@ -118,7 +123,12 @@ User → CDN Edge (runs edge function) → optionally → Origin
 | Runtime | — | Full OS | JS/Wasm only |
 | State | Static | External | KV / DO |
 
-## Q3. (!) Benefits и когда применять?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Benefits и когда применять?
 
 **Benefits:**
 
@@ -154,7 +164,12 @@ User → CDN Edge (runs edge function) → optionally → Origin
 - Long-running (> 30s) — not supported
 - Stateful applications с high consistency — hard
 
-## Q4. (!) Cloudflare Workers — как работает?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Cloudflare Workers — как работает?
 
 **V8 isolate** — lightweight JavaScript sandbox (same as Chrome tabs).
 
@@ -193,7 +208,12 @@ export default {
 
 **Languages:** JS, TS, WASM (Rust, C, Go → wasm)
 
-## Q5. (!) Lambda@Edge vs CloudFront Functions?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Lambda@Edge vs CloudFront Functions?
 
 **CloudFront Functions:**
 - Newer (2021)
@@ -225,7 +245,12 @@ export default {
 - Lambda@Edge: 2-5 min worldwide
 - CF Functions: faster
 
-## Q6. V8 isolates vs containers?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. V8 isolates vs containers?
 
 **V8 isolate (Workers):**
 - Light sandbox inside V8 engine
@@ -254,7 +279,12 @@ export default {
 
 **Modern trend:** hybrid — Workers for hot paths, Lambda для complex.
 
-## Q7. (!) Typical use cases?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Typical use cases?
 
 **1. Auth / JWT validation:**
 - Reject unauthorized requests at edge
@@ -299,7 +329,12 @@ export default {
 - Lightweight models at edge (Cloudflare AI, Vercel AI)
 - Low-latency completions
 
-## Q8. Auth/JWT validation at edge?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Auth/JWT validation at edge?
 
 **Flow:**
 ```
@@ -338,7 +373,12 @@ export default {
 - Token revocation hard (cache per edge) — short TTLs
 - Key rotation coordination
 
-## Q9. Image optimization, resize?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Image optimization, resize?
 
 **Requirement:** serve right size/format per device/connection.
 
@@ -376,7 +416,12 @@ Edge worker:
 - `Accept: image/avif` → AVIF (even smaller)
 - Fall back to JPEG for old browsers
 
-## Q10. A/B testing, personalization?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. A/B testing, personalization?
 
 **Problem:** A/B tests require dynamic content, but caching breaks that.
 
@@ -416,7 +461,12 @@ export default {
 - No client-side fetch needed (content ready on arrival)
 - No FOUC (flash of unstyled content)
 
-## Q11. (!) Как handle state at edge?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Как handle state at edge?
 
 **Challenge:** edge nodes stateless by default; 300+ POPs.
 
@@ -451,7 +501,12 @@ export default {
 - Chat room state: Durable Objects (strong consistency)
 - Counter across all nodes: Durable Objects or Redis atomic
 
-## Q12. Cloudflare Durable Objects?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Cloudflare Durable Objects?
 
 **Durable Object:** single-instance stateful service pinned к one POP.
 
@@ -492,7 +547,12 @@ export class ChatRoom {
 
 **Pricing:** $0.20 per million requests.
 
-## Q13. KV stores (Workers KV, DynamoDB Global)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. KV stores (Workers KV, DynamoDB Global)?
 
 **Workers KV:**
 - Eventually consistent key-value
@@ -522,7 +582,12 @@ export class ChatRoom {
 - Write frequency?
 - Complexity (KV vs SQL)?
 
-## Q14. (!) Ограничения edge runtime?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Ограничения edge runtime?
 
 **Cloudflare Workers:**
 - CPU: 10-30s (depending tier)
@@ -558,7 +623,12 @@ export class ChatRoom {
 - No disk — must use KV/DO/R2
 - Regional compliance (data residency)
 
-## Q15. Cold starts?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Cold starts?
 
 **Workers:**
 - Essentially zero (V8 isolate = μs)
@@ -578,7 +648,12 @@ export class ChatRoom {
 - After first request, POP keeps isolate/container warm ~5-15 min
 - Frequent traffic = always warm
 
-## Q16. Compute cost vs traditional?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Compute cost vs traditional?
 
 **Cloudflare Workers (2024):**
 - Paid: $5/mo, 10M requests included
@@ -604,7 +679,12 @@ export class ChatRoom {
 - Long-running requests
 - Stateful apps
 
-## Q17. (!) Debugging и observability?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Debugging и observability?
 
 **Logs:**
 - Cloudflare: `wrangler tail` live stream
@@ -631,7 +711,12 @@ export class ChatRoom {
 - Try/catch in worker; report to Sentry
 - Return graceful error response (don't 5xx)
 
-## Q18. Deployment strategies?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Deployment strategies?
 
 **Cloudflare Workers:**
 - `wrangler deploy` — instant, global (5-30s propagation)
@@ -675,7 +760,12 @@ routes: [
 - [Distributed Systems](distributed-systems-interview.md) — edge = distributed
 - [Observability](../monitoring/observability-interview.md) — debug edge workloads
 
-- [API Gateway](api-gateway-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [API Gateway](api-gateway-interview.md)
 - [BFF Pattern](bff-pattern-interview.md)
 - [Стратегии кэширования](caching-strategies-interview.md)
 - [CAP-теорема](cap-theorem-interview.md)

@@ -12,7 +12,7 @@ aliases:
   - "Hibernate queries interview"
   - "JPA Metamodel interview"
 difficulty: "advanced"
-updated: "2026-04-20"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Hibernate JPQL & Criteria API`
 
@@ -53,6 +53,12 @@ em.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class)
 CriteriaBuilder cb = em.getCriteriaBuilder();
 CriteriaQuery<User> cq = cb.createQuery(User.class);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // Native — raw SQL
 em.createNativeQuery("SELECT * FROM users WHERE email = ?", User.class)
 ```
@@ -70,6 +76,12 @@ em.createNativeQuery("SELECT * FROM users WHERE email = ?", User.class)
 //        ^^^^ entity     ^^^^^^^^ navigation через связь
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Отличия**:
 - `FROM User` — не таблица, а entity.
 - `u.orders` — навигация через `@OneToMany` связь.
@@ -98,6 +110,12 @@ query.setParameter(2, 18);
 // ПЛОХО — SQL injection
 em.createQuery("SELECT u FROM User u WHERE u.email = '" + userInput + "'");
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // ХОРОШО
 em.createQuery("SELECT u FROM User u WHERE u.email = :email")
     .setParameter("email", userInput);
@@ -124,6 +142,12 @@ em.createQuery("SELECT u FROM User u WHERE u.email = :email")
 // Эквивалентно: JOIN u.profile p WHERE p.country = 'USA'
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **JOIN FETCH vs JOIN**:
 - `JOIN` — для фильтрации, коллекции могут остаться lazy.
 - `JOIN FETCH` — для загрузки коллекций одним запросом (предотвращает N+1).
@@ -153,6 +177,12 @@ List<User> results = em.createQuery(cq).getResultList();
 - **Type-safety** важна.
 - **Reuse** — компоненты query можно переиспользовать.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Когда НЕ использовать**:
 - **Статичные запросы** — JPQL читаемее.
 - **Сложные queries** — становится крайне verbose.
@@ -202,6 +232,12 @@ cq.select(user)
 </dependency>
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Компилятор автоматически сгенерирует `*_.java` классы. Изменение поля `User.email` → изменение `User_.email` → ошибка компиляции там где использовалось старое имя.
 
 ## Q7. Как делать subqueries?
@@ -230,6 +266,12 @@ Root<Order> order = subquery.from(Order.class);
 subquery.select(order.get("user").get("id"))
         .where(cb.greaterThan(order.get("total"), 1000));
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 cq.select(user).where(user.get("id").in(subquery));
 ```
 
@@ -281,6 +323,12 @@ public class UserService {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Преимущество**: чистый код с динамическими фильтрами без if-else лестниц в Criteria API.
 
 ## Q9. Что такое @NamedQuery и когда его использовать?
@@ -315,6 +363,12 @@ Long count = em.createNamedQuery("User.countActive", Long.class)
 - **Централизованное хранение** — все queries в одном месте.
 - **Производительность** — query parse только один раз.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Недостатки**: отделены от места использования, в Spring Data JPA обычно используется `@Query` над методом репозитория.
 
 ## Q10. Как использовать native SQL запросы?
@@ -353,6 +407,12 @@ em.createNativeQuery(
 List<User> findRecentUsers(@Param("since") LocalDateTime since);
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Когда использовать**:
 - **Database-specific features** (PostgreSQL PIVOT, SQL Server CTE с рекурсией).
 - **Сложные CTE** — JPQL не поддерживает.
@@ -391,6 +451,12 @@ Map<String, Object> hints = Map.of("jakarta.persistence.fetchgraph", graph);
 User user = em.find(User.class, 1L, hints);
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **@EntityGraph vs JOIN FETCH**:
 - EntityGraph — декларативный, переиспользуемый.
 - JOIN FETCH — inline в запросе, более явный.
@@ -447,6 +513,12 @@ em.createQuery("FROM User u JOIN FETCH u.orders", User.class)
 // Без distinct — дубли пользователей с каждым его заказом
 em.createQuery("FROM User u JOIN FETCH u.orders", User.class)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 // С distinct — уникальные пользователи
 em.createQuery("SELECT DISTINCT u FROM User u JOIN FETCH u.orders", User.class)
 ```
@@ -494,6 +566,12 @@ public interface UserSummary {
 List<UserSummary> findByActive(boolean active);
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Применение**: когда нужно меньше данных чем в entity (оптимизация производительности, reports).
 
 ## Q14. Как реализовать pagination в JPA?
@@ -522,6 +600,12 @@ int totalPages = page.getTotalPages();
 List<User> content = page.getContent();
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Проблема pagination + JOIN FETCH** — см. Q12.4.
 
 ## Q15. Какие best practices при работе с JPA queries?
@@ -559,6 +643,12 @@ Optional<User> findActiveByEmail(@Param("email") String email);
 
 ## See also
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Hibernate](hibernate-interview.md) — основы Hibernate, Session, entity states
 - [Hibernate Relationships](hibernate-relationships-interview.md) — @OneToMany, @ManyToOne и JPQL JOIN FETCH
 - [Hibernate Caching](hibernate-caching-interview.md) — query cache, кэширование результатов JPQL

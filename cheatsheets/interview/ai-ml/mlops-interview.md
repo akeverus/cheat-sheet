@@ -12,7 +12,7 @@ aliases:
   - "Feature store interview"
   - "Model monitoring interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `MLOps`
 
@@ -97,7 +97,12 @@ updated: "2026-04-19"
 
 **Discipline появилась** с осознанием, что 80% ML моделей **никогда не доходят до production** или быстро deteriorate.
 
-## Q2. (!) ML lifecycle?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) ML lifecycle?
 
 ```mermaid
 graph LR
@@ -124,7 +129,12 @@ graph LR
 
 MLOps ovсенирует автоматизацию каждого этапа.
 
-## Q3. (!) DevOps vs MLOps — отличия?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) DevOps vs MLOps — отличия?
 
 | Критерий | DevOps | MLOps |
 |----------|--------|-------|
@@ -139,7 +149,12 @@ MLOps ovсенирует автоматизацию каждого этапа.
 
 **Ключевая разница:** ML модели **deteriorate** со временем (data меняется). DevOps app **стабильно** работает пока его не сломают.
 
-## Q4. (!) Что такое experiment tracking?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Что такое experiment tracking?
 
 Каждый ML training run = experiment с **разными hyperparameters, data, model architectures**. Tracking сохраняет:
 
@@ -156,7 +171,12 @@ MLOps ovсенирует автоматизацию каждого этапа.
 - **Collaboration** — share results с командой
 - **Audit** — что использовали для production model?
 
-## Q5. (!) MLflow — основной инструмент?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) MLflow — основной инструмент?
 
 **MLflow** (open-source, Databricks) — самый популярный для experiment tracking + model registry.
 
@@ -180,7 +200,12 @@ with mlflow.start_run():
 
 **Self-hosted** или managed (Databricks).
 
-## Q6. Weights & Biases (W&B)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Weights & Biases (W&B)?
 
 **Weights & Biases** — proprietary SaaS, focus на **experiment tracking**.
 
@@ -206,7 +231,12 @@ for epoch in range(10):
 
 В **academia / research** — W&B доминирует. В **enterprise** — MLflow часто чуть популярнее (open-source + Databricks).
 
-## Q7. (!) Что такое feature store?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Что такое feature store?
 
 **Feature store** — централизованное хранилище **features** для ML.
 
@@ -226,7 +256,12 @@ graph TD
 
 **Tools:** Feast (open-source), Tecton (managed), Hopsworks, Vertex AI Feature Store, SageMaker Feature Store.
 
-## Q8. (!) Online vs offline features?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Online vs offline features?
 
 **Offline features** — для training:
 - Большой volume, batch computation
@@ -241,7 +276,12 @@ graph TD
 
 **Feature store** управляет **синхронизацией** offline ↔ online (often через scheduled jobs).
 
-## Q9. Feast vs Tecton?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. Feast vs Tecton?
 
 | Critterion | Feast | Tecton |
 |-----------|-------|--------|
@@ -255,7 +295,12 @@ graph TD
 **Feast** — для startups / smaller teams.
 **Tecton** — для enterprise (founded by ex-Uber Michelangelo team).
 
-## Q10. Training-serving skew?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Training-serving skew?
 
 **Training-serving skew** — features в training computed по-разному vs в production inference.
 
@@ -270,7 +315,12 @@ graph TD
 - **Training data extraction точно как inference**
 - **Monitoring** — track distribution differences
 
-## Q11. (!) Model registry — для чего?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Model registry — для чего?
 
 **Model registry** — БД моделей с версионированием, stages, metadata.
 
@@ -297,7 +347,12 @@ client.transition_model_version_stage(
 
 **Tools:** MLflow Registry, W&B Artifacts, SageMaker Model Registry, Vertex AI Models.
 
-## Q12. Model versioning — стратегии?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Model versioning — стратегии?
 
 **Approaches:**
 
@@ -308,7 +363,12 @@ client.transition_model_version_stage(
 
 **Best practice:** combine — `model_v3_abc123_20250419`.
 
-## Q13. (!) Batch vs online inference?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Batch vs online inference?
 
 | Критерий | Batch | Online |
 |----------|-------|--------|
@@ -321,7 +381,12 @@ client.transition_model_version_stage(
 
 **Hybrid:** некоторые predictions precomputed batch + cached → fast online lookup.
 
-## Q14. (!) A/B testing моделей?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) A/B testing моделей?
 
 **A/B testing:** % traffic → model A, % → model B, compare metrics.
 
@@ -343,7 +408,12 @@ def predict(user_id, features):
 
 **Сложнее, чем кажется:** статистическая значимость, novelty effects, holdout groups.
 
-## Q15. Shadow deployment?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Shadow deployment?
 
 **Shadow:** new model **видит production traffic**, но **predictions не используются**. Сравниваем с production model offline.
 
@@ -358,7 +428,12 @@ def predict(features):
 
 **Зачем:** проверить new model на real traffic без risk. Перед actual A/B test.
 
-## Q16. Canary deployment?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Canary deployment?
 
 Postepenно увеличиваем % traffic на new model:
 
@@ -374,7 +449,12 @@ Day 5: 100%
 
 Аналог DevOps canary deployment, но с ML metrics.
 
-## Q17. (!) Что мониторить в production ML?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Что мониторить в production ML?
 
 **Operational:**
 - Latency (p50, p99)
@@ -396,7 +476,12 @@ Day 5: 100%
 - Drift score > threshold
 - Accuracy drop > 5%
 
-## Q18. (!) Data drift?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Data drift?
 
 **Data drift** — distribution of **input features** меняется со временем.
 
@@ -418,7 +503,12 @@ Production:    avg user_age = 28 (younger users)
 
 **Tools:** Evidently AI, NannyML, Arize, WhyLabs.
 
-## Q19. (!) Concept drift?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Concept drift?
 
 **Concept drift** — relationship X → Y меняется. Та же features → разный label.
 
@@ -433,7 +523,12 @@ Production:    avg user_age = 28 (younger users)
 
 **Mitigation:** **continuous retraining** на новых данных.
 
-## Q20. Tools для monitoring (Evidently, Arize, WhyLabs)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Tools для monitoring (Evidently, Arize, WhyLabs)?
 
 **Evidently AI** (open-source):
 - Data drift, target drift
@@ -452,7 +547,12 @@ Production:    avg user_age = 28 (younger users)
 
 **Custom:** Prometheus metrics + Grafana dashboards для simple cases.
 
-## Q21. (!) Что такое CI/CD для ML?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) Что такое CI/CD для ML?
 
 **CI (Continuous Integration):**
 - Тесты на каждый PR
@@ -481,7 +581,12 @@ stages:
   - monitor
 ```
 
-## Q22. Continuous Training?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. Continuous Training?
 
 **CT (Continuous Training):** автоматическая retrain pipeline на:
 - **Schedule** (each week)
@@ -504,7 +609,12 @@ def retrain_pipeline():
 
 **Подвох:** retraining может **ухудшить** model (bad new data, label drift). Auto-deploy только если metrics improve.
 
-## Q23. (!) Что такое LLMOps?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) Что такое LLMOps?
 
 **LLMOps** — MLOps **для LLM приложений**. Подкласс с своей спецификой.
 
@@ -523,7 +633,12 @@ def retrain_pipeline():
 - **Evaluation** (Ragas, TruLens, custom)
 - **Safety** (Moderation API, custom guards)
 
-## Q24. Отличия LLMOps от классического MLOps?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. Отличия LLMOps от классического MLOps?
 
 | Аспект | Classical MLOps | LLMOps |
 |--------|----------------|--------|
@@ -537,7 +652,12 @@ def retrain_pipeline():
 | Monitoring | Predictions, latency | + token usage, cost, hallucinations |
 | Security | Data privacy | + Prompt injection |
 
-## Q25. (!) Prompt versioning?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. (!) Prompt versioning?
 
 ```python
 # Prompt registry (LangSmith, Langfuse, custom DB)
@@ -562,7 +682,12 @@ response = llm(prompt.format(question=question))
 
 Prompts = код. Version в Git или dedicated tools.
 
-## Q26. LLM evaluation в production?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. LLM evaluation в production?
 
 **Метрики:**
 
@@ -581,7 +706,12 @@ Prompts = код. Version в Git или dedicated tools.
 
 **Tools:** Phoenix Arize, Langfuse, Helicone, custom.
 
-## Q27. (!) Уровни MLOps maturity?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) Уровни MLOps maturity?
 
 **Google ML maturity model:**
 
@@ -606,7 +736,12 @@ Prompts = код. Version в Git или dedicated tools.
 
 В **2025** большинство стартапов — Level 1 для critical ML, Level 0 для experiments.
 
-## Q28. Какие частые проблемы в MLOps?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Какие частые проблемы в MLOps?
 
 1. **Reproducibility** — могу repeat experiment? (часто нет)
 2. **Training-serving skew** — different feature definitions
@@ -638,7 +773,12 @@ Prompts = код. Version в Git или dedicated tools.
 - [Микросервисы](../architecture/microservices-interview.md) — где models live
 - [Git](../devops/git-interview.md) — version control
 
-- [AI Agents](ai-agents-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AI Agents](ai-agents-interview.md)
 - [Embeddings](embeddings-interview.md)
 - [LLM Basics](llm-basics-interview.md)
 - [LLM Integration Patterns](llm-integration-patterns-interview.md)

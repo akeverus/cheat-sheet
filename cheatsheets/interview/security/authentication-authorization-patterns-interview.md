@@ -12,7 +12,7 @@ aliases:
   - "JWT RBAC ABAC interview"
   - "OAuth2 OIDC паттерны"
 difficulty: "intermediate"
-updated: "2026-04-13"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Authentication` and `Authorization Patterns`
 
@@ -224,6 +224,12 @@ public class CertificateAuthConfig {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Плюсы:** высокая безопасность, двусторонняя аутентификация, не требует паролей.
 **Минусы:** сложность `PKI`-инфраструктуры, проблемы с мобильными устройствами.
 
@@ -311,6 +317,12 @@ public class ServiceAuthenticationService {
             .retrieve()
             .body(new ParameterizedTypeReference<>() {});
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         return (String) response.get("access_token");
     }
 }
@@ -463,6 +475,12 @@ public class TokenService {
             throw new TokenExpiredException("Refresh token expired");
         }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         User user = userService.findByUsername(entity.getUsername());
         refreshTokenRepository.delete(entity); // одноразовое использование
         return generateTokens(user);
@@ -614,6 +632,12 @@ public class OwnershipPolicy implements AccessPolicy {
 
 ### Сравнение `RBAC` и `ABAC`
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 | Аспект | `RBAC` | `ABAC` |
 |--------|--------|--------|
 | Гибкость | Средняя | Высокая |
@@ -645,6 +669,12 @@ graph LR
     D -->|Есть права| F[200 OK / Ресурс]
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В `Spring Security` аутентификация обрабатывается `AuthenticationManager`, а авторизация — `AccessDecisionManager` / `AuthorizationManager` (Spring Security 6+). Подробнее — в [Spring Security](../frameworks/spring/spring-security-interview.md).
 
 ## Q6. (!) Как реализовать безопасность в микросервисах?
@@ -745,6 +775,12 @@ public class AuthorizationController {
 @EnableRedisHttpSession(redisNamespace = "myapp:session")
 public class SessionConfig {
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @Bean
     public LettuceConnectionFactory connectionFactory() {
         return new LettuceConnectionFactory("redis-server", 6379);
@@ -796,6 +832,12 @@ public class SamlSecurityConfig {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Когда `SAML`:** корпоративные приложения, интеграция с `Active Directory / ADFS`, enterprise SSO.
 **Когда `OIDC` вместо `SAML`:** новые приложения, мобильные, `SPA`, `REST API`.
 
@@ -875,6 +917,12 @@ public class MfaController {
         MfaSession session = getMfaSession(request.getSessionId());
         User user = userService.findById(session.getUserId());
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         if (totpService.verifyTotp(user.getMfaSecret(), request.getCode())) {
             deleteMfaSession(request.getSessionId());
             return ResponseEntity.ok(new LoginResponse(jwtService.generateToken(user)));
@@ -966,6 +1014,12 @@ public class JwtSessionService {
             throw new TokenExpiredException("Refresh token expired");
         }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         User user = userService.findByUsername(entity.getUsername());
         refreshTokenRepository.delete(entity); // ротация: старый удаляется
         return createSession(user);
@@ -1041,6 +1095,12 @@ if (userRepository.findByUsername(username).isEmpty()) {
 // UserDetailsService всегда вызывает passwordEncoder.matches()
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Подробнее о защите от уязвимостей — в [OWASP Top 10](owasp-top10-interview.md) и [Application Security](application-security-interview.md).
 
 ## Q11. Как реализовать `API Gateway Security`?
@@ -1083,6 +1143,12 @@ public class AuthenticationGatewayFilter implements GlobalFilter, Ordered {
 
 Для `Rate Limiting` в gateway используется `Redis`:
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```java
 @Bean
 public RouteLocator routeLocator(RouteLocatorBuilder builder) {
@@ -1155,6 +1221,12 @@ public class UserController {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 `application.yml`:
 ```yaml
 spring:
@@ -1198,6 +1270,12 @@ sequenceDiagram
 | `OIDC` | `JSON` / `JWT` | Современные API, мобильные, `SPA` |
 | `CAS` | Ticket-based | Академические учреждения |
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В `Spring` — используется `spring-security-oauth2-client` для `OIDC` или `spring-security-saml2-service-provider` для `SAML`.
 
 ## Q14. Что такое `Claims-based` аутентификация?
@@ -1227,6 +1305,12 @@ public class ClaimsController {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Провайдер (`IdP`) включает claims в токен при аутентификации. Приложение доверяет подписи токена и использует claims для `RBAC` / `ABAC`. Это устраняет необходимость в запросах к БД при каждой авторизации.
 
 ## Q15. (!) Как обеспечить безопасность токенов (`JWT` refresh, rotation)?
@@ -1283,6 +1367,12 @@ public class SecureTokenService {
         entity.setUsed(true);
         repository.save(entity);
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         return generateTokens(entity.getUserId());
     }
 }
@@ -1315,6 +1405,12 @@ graph TB
 2. **Least privilege** — минимальные необходимые права
 3. **Assume breach** — проектировать как если бы сеть уже скомпрометирована
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Реализация в микросервисах:**
 - `mTLS` между всеми сервисами (`Istio`, `Linkerd`)
 - Короткоживущие токены (5-15 минут)
@@ -1357,6 +1453,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         response.setHeader("X-RateLimit-Remaining", String.valueOf(100 - count));
         chain.doFilter(request, response);
     }
@@ -1401,6 +1503,12 @@ server:
 - **Zero Trust** — сетевой уровень аутентификации
 - **IoT** — устройства с сертификатами
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Управление сертификатами** — основная сложность: выпуск, ротация (обычно 90 дней), отзыв (`CRL` / `OCSP`). В `Service Mesh` (`Istio`) — автоматически.
 
 ## Q19. Как реализовать аудит и логирование событий безопасности?
@@ -1441,6 +1549,12 @@ public class SecurityAuditListener {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Централизованное хранение в `Elasticsearch` / `SIEM`; алерты по аномалиям (множественные неудачи, необычная геолокация). Подробнее — в [Observability](../monitoring/observability-interview.md).
 
 ## Q20. Что такое `Context-based Access Control`?
@@ -1479,6 +1593,12 @@ public class ContextBasedAuthService {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Реализация: policy engine (`OPA` — Open Policy Agent, `AWS Verified Permissions`); проверка контекста при каждом запросе; кэширование решений для производительности.
 
 ## Q21. Как обеспечить безопасность в `Service Mesh`?
@@ -1512,6 +1632,12 @@ spec:
             paths: ["/api/orders/*/pay"]
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Подробнее о `Kubernetes` и инфраструктуре — в [Kubernetes](../devops/kubernetes-interview.md).
 
 ## Q22. Что такое `Identity Federation`?
@@ -1532,6 +1658,12 @@ graph LR
     Hub --> SP3[App 3]
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Ключевая задача — **маппинг атрибутов**: роли и groups из одного `IdP` могут не совпадать с другим. Нужна таблица маппинга claims.
 
 ## Q23. Как реализовать `Step-Up Authentication`?
@@ -1561,6 +1693,12 @@ public class TransferController {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Claim `acr` (`Authentication Context Class Reference`) в `JWT` указывает уровень аутентификации: `password-only`, `mfa`, `hardware-key`. `IdP` (`Keycloak`, `Auth0`) устанавливает этот claim при аутентификации.
 
 ## Q24. Что такое `Passwordless Authentication`?
@@ -1596,6 +1734,12 @@ public class MagicLinkController {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Преимущества:** нет фишинга паролей, удобство UX.
 **Недостатки:** зависимость от email/телефона, `Magic Link` уязвим к перехвату email.
 
@@ -1630,6 +1774,12 @@ public class GraphQLSecurityInstrumentation extends SimplePerformantInstrumentat
                 throw new AccessDeniedException("No access to salary field");
             }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
             return dataFetcher.get(environment);
         };
     }
@@ -1660,6 +1810,12 @@ public class PhotoController {
         return photoService.save(photo);
     }
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @PreAuthorize("hasAuthority('SCOPE_photos:delete')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
@@ -1706,6 +1862,12 @@ public class OrderSecurityService {
 
     private final OrderRepository orderRepository;
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     public boolean isOwner(Long orderId, Authentication auth) {
         return orderRepository.findById(orderId)
             .map(order -> order.getUserId().equals(auth.getName()))
@@ -1723,6 +1885,12 @@ public class OrderSecurityService {
 2. Токен включает `binding ID`, привязанный к соединению
 3. При предъявлении токена с другого соединения — отказ
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Практический статус:** поддержка ограничена (отменено в браузерах). Альтернативы:
 - **DPoP** (`Demonstrating Proof-of-Possession`, `RFC 9449`) — proof привязки токена к клиенту
 - Короткий TTL access token + refresh token rotation
@@ -1759,6 +1927,12 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Ключевые практики:** аутентификация при `CONNECT` (токен в заголовке), `TLS` (`wss://`), проверка прав на подписку к topic, rate limiting сообщений.
 
 ## Q30. (!) Что такое `Proof Key for Code Exchange` (`PKCE`)?
@@ -1820,6 +1994,12 @@ spring:
             scope: openid, profile
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Зачем нужен:** без `PKCE` перехваченный `authorization code` можно обменять на токен. С `PKCE` — нужен ещё `code_verifier`, который никогда не покидает клиент.
 
 ## Q31. Как реализовать `Dynamic Authorization`?
@@ -1862,6 +2042,12 @@ public class OrderApprovalPolicy implements Policy {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Для сложных правил используют **`OPA` (Open Policy Agent)** — policy engine с языком `Rego`, или **`AWS Verified Permissions`** — managed-сервис для fine-grained авторизации.
 
 ## Q32. (!) Как настроить `Spring Security` как `OAuth2 Resource Server`?
@@ -1915,6 +2101,12 @@ spring:
 
 ### Маппинг authorities из `JWT`
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 По умолчанию `Spring Security` берёт authorities из claim `scope`. Для кастомных claims (например, `roles` из `Keycloak`) нужен `JwtGrantedAuthoritiesConverter`.
 
 ## Q33. Как реализовать кастомный `PermissionEvaluator` в `Spring Security`?
@@ -1976,6 +2168,12 @@ public Order update(@PathVariable Long id, @RequestBody Order order) {
 @EnableMethodSecurity
 public class MethodSecurityConfig {
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @Bean
     static MethodSecurityExpressionHandler methodSecurityExpressionHandler(
             CustomPermissionEvaluator evaluator) {
@@ -2036,6 +2234,12 @@ public class MultiSecurityConfig {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Ключевое отличие `Spring Security 6`: `@EnableMethodSecurity` вместо `@EnableGlobalMethodSecurity`, lambda-DSL обязателен, `authorizeHttpRequests` вместо `authorizeRequests`.
 
 ## Q35. Как реализовать иерархию ролей в `Spring Security`?
@@ -2067,6 +2271,12 @@ public class RoleHierarchyConfig {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 С этой конфигурацией `@PreAuthorize("hasRole('USER')")` будет пропускать и `ADMIN`, и `MODERATOR`.
 
 ## Q36. Как хранить пароли безопасно в `Java`?
@@ -2101,6 +2311,12 @@ public class PasswordConfig {
 }
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Важно:** использовать `char[]` вместо `String` для паролей в памяти (можно обнулить после использования); `String` остаётся в пуле строк JVM.
 
 ## Q37. (!) Какие типичные ошибки при реализации `JWT`?
@@ -2130,6 +2346,12 @@ public JwtDecoder jwtDecoder() {
         new JwtTimestampValidator(Duration.ofSeconds(30)) // clock skew
     ));
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     return decoder;
 }
 ```
@@ -2177,6 +2399,12 @@ spring:
             - TokenRelay  # пробрасывает access token downstream
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Преимущества:** токены не доступны JavaScript (защита от `XSS`), `CSRF`-защита через cookies, централизованное управление токенами.
 
 ## Q39. Как интегрировать `Keycloak` со `Spring Boot`?
@@ -2218,6 +2446,12 @@ public JwtAuthenticationConverter keycloakJwtConverter() {
         @SuppressWarnings("unchecked")
         List<String> roles = (List<String>) realmAccess.get("roles");
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
         return roles.stream()
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
             .collect(Collectors.toSet());
@@ -2291,6 +2525,12 @@ class ResourceServerTest {
 
 ### Тестирование `OAuth2` логина
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```java
 @Test
 void oauth2LoginRedirects() throws Exception {
@@ -2402,6 +2642,12 @@ public class BlacklistJwtDecoder implements JwtDecoder {
 ✓ Веб-браузер — основной клиент
 ✓ Нет требований горизонтального масштабирования без shared state
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Выбирайте JWT, если:
 ✓ Микросервисная архитектура
 ✓ Mobile/SPA клиенты
@@ -2523,6 +2769,12 @@ public class ApiKeyService {
 
 ### Интеграция в SecurityFilterChain
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 ```java
 @Bean
 SecurityFilterChain apiSecurityChain(HttpSecurity http,
@@ -2625,6 +2877,12 @@ public class ZeroTrustAuthorizationManager
 
 ### Zero Trust checklist для Java-разработчика
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 | Принцип | Мера | Инструмент |
 |---------|------|-----------|
 | Verify explicitly | JWT на каждом сервисе | Spring Security Resource Server |
@@ -2750,6 +3008,12 @@ public class DocumentController {
 @EnableMethodSecurity(prePostEnabled = true)
 public class MethodSecurityConfig {
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
     @Bean
     MethodSecurityExpressionHandler methodSecurityExpressionHandler(
             DocumentPermissionEvaluator permissionEvaluator) {
@@ -2931,6 +3195,12 @@ spec:
 - [Архитектура баз данных](../databases/database-architecture-interview.md) — Row-Level Security, шифрование данных
 - [HTTP и REST](../api/http-rest-interview.md) — TLS, HTTPS, заголовки безопасности
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Application Security](application-security-interview.md)
 - [JWT](jwt-interview.md)
 - [mTLS (Mutual TLS)](mtls-interview.md)

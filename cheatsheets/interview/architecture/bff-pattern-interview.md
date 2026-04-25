@@ -11,7 +11,7 @@ aliases:
   - "BFF architecture"
   - "BFF собеседование"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `BFF Pattern`
 
@@ -81,7 +81,12 @@ updated: "2026-04-19"
 
 **Coined by SoundCloud engineers (2015):** solved problem where Android app needed different data shapes than web.
 
-## Q2. (!) Зачем BFF — проблема, которую решает?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Зачем BFF — проблема, которую решает?
 
 **Problems without BFF (generic API):**
 
@@ -112,7 +117,12 @@ updated: "2026-04-19"
 - Changes к client = change only its BFF
 - Clean contract per client
 
-## Q3. (!) BFF vs API Gateway?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) BFF vs API Gateway?
 
 **API Gateway:** general-purpose edge proxy.
 - Auth, rate limit, logging, routing
@@ -146,7 +156,12 @@ Client → API Gateway → BFF → Microservices
 - Just need routing/auth? API Gateway enough
 - Different responses per client? Add BFF
 
-## Q4. (!) Architecture с BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Architecture с BFF?
 
 ```
 Web browser ─────→ Web BFF (Node.js)
@@ -178,7 +193,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 3. BFF composes single response: `{user, feed, notifications: {unread: 5}}`
 4. Mobile renders; one round trip
 
-## Q5. Сколько BFF нужно?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. Сколько BFF нужно?
 
 **Count:** per **client experience**, not per technology.
 
@@ -198,7 +218,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 **Trick:** start с one BFF; split when diverging requirements cause friction.
 
-## Q6. Technology stack для BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Technology stack для BFF?
 
 **BFF should be lightweight, I/O-heavy:**
 - Node.js (typical — matches web/mobile team skills)
@@ -220,7 +245,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 - iOS team writes iOS BFF (usually Node или Kotlin)
 - Team owns end-to-end stack
 
-## Q7. (!) Что должен делать BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Что должен делать BFF?
 
 **Core responsibilities:**
 
@@ -254,7 +284,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 - Session state
 - Per-device preferences
 
-## Q8. (!) Что НЕ должен делать BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Что НЕ должен делать BFF?
 
 **Should not:**
 
@@ -281,7 +316,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 **Anti-pattern: "fat BFF"** — BFF becomes monolith over time, absorbing business logic. Refactor back к services.
 
-## Q9. (!) GraphQL as BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) GraphQL as BFF?
 
 **GraphQL naturally fits BFF role:**
 - Client specifies exact shape they want
@@ -311,7 +351,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 - Persisted queries (hash) — caches identified queries
 - DataLoader pattern — batches + dedupes backend calls
 
-## Q10. GraphQL Federation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. GraphQL Federation?
 
 **Federation:** multiple teams own parts of single GraphQL schema; composed into federated graph.
 
@@ -344,7 +389,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 - Federation: domain-driven decomposition
 - Can coexist (federated graph accessed by client-specific BFFs или directly)
 
-## Q11. (!) Преимущества BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) Преимущества BFF?
 
 **1. Client-specific optimization:**
 - Mobile: small payloads
@@ -375,7 +425,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 - BFF filters what client can see
 - Internal services expose more (trusted network)
 
-## Q12. (!) Недостатки BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Недостатки BFF?
 
 **1. Code duplication:**
 - Multiple BFFs may have similar aggregation
@@ -402,7 +457,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 **7. Coordination при schema changes:**
 - Add field → update all BFFs using it
 
-## Q13. Code duplication между BFFs?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Code duplication между BFFs?
 
 **Problem:** 3 BFFs make same call к User Service, handle errors same way.
 
@@ -433,7 +493,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 - Aggregation logic per-client = OK to duplicate
 - Attempt to unify → one BFF again
 
-## Q14. (!) Ownership — кто пишет BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Ownership — кто пишет BFF?
 
 **Common pattern:** **frontend / client team owns BFF.**
 
@@ -457,7 +522,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 - Domain teams: own microservices
 - Platform team: gateway, shared libs
 
-## Q15. Caching в BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Caching в BFF?
 
 **Layers:**
 
@@ -489,7 +559,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 - Medium: Redis
 - Rarely: always call service
 
-## Q16. BFF at edge (Cloudflare, Vercel)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. BFF at edge (Cloudflare, Vercel)?
 
 **Trend:** run BFF at edge for globally low latency.
 
@@ -521,7 +596,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 Client ←20ms→ Edge BFF (cached) ←150ms→ Services (cold path)
 ```
 
-## Q17. Testing BFF?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Testing BFF?
 
 **Unit tests:**
 - Resolver / handler functions
@@ -555,7 +635,12 @@ Client ←20ms→ Edge BFF (cached) ←150ms→ Services (cold path)
 
 ## See also
 
-- [API Gateway](api-gateway-interview.md) — related but different
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [API Gateway](api-gateway-interview.md) — related but different
 - [Microservices](microservices-interview.md) — BFF connects them
 - [Edge Computing](edge-computing-interview.md) — BFF at edge
 - [GraphQL](../api/graphql-interview.md) — often used as BFF

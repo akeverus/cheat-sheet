@@ -13,7 +13,7 @@ aliases:
   - "Locust interview"
   - "Performance testing tools"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Load Testing`
 
@@ -88,7 +88,12 @@ updated: "2026-04-19"
 - New deployment validation
 - Periodic regression testing
 
-## Q2. (!) Load vs stress vs spike vs soak vs scalability testing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Load vs stress vs spike vs soak vs scalability testing?
 
 | Type | Goal | Pattern |
 |------|------|---------|
@@ -101,7 +106,12 @@ updated: "2026-04-19"
 
 **Common pattern в production:** **all of these**, periodically.
 
-## Q3. Зачем load testing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. Зачем load testing?
 
 1. **Production-like behavior** detection (memory leaks, connection exhaustion)
 2. **Validate SLAs** before launch
@@ -113,7 +123,12 @@ updated: "2026-04-19"
 
 **Without load testing** → production failures, customer impact.
 
-## Q4. (!) Главные метрики (RPS, latency, errors)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. (!) Главные метрики (RPS, latency, errors)?
 
 **RPS (Requests per Second):** throughput.
 **Latency:** response time (per request).
@@ -132,7 +147,12 @@ updated: "2026-04-19"
 - **S**aturation — queue depth
 - **E**rrors
 
-## Q5. (!) Percentiles (p50, p95, p99) — почему важны?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Percentiles (p50, p95, p99) — почему важны?
 
 **Average latency misleading.** Few slow requests can be hidden.
 
@@ -156,7 +176,12 @@ p99 = 5000ms ← real user pain
 
 **SLA usually defined в percentiles:** "p95 < 200ms".
 
-## Q6. Throughput vs latency trade-off?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. Throughput vs latency trade-off?
 
 **Higher throughput** often = **higher latency** (queuing).
 
@@ -171,7 +196,12 @@ Example:
 
 **Capacity = max throughput где latency acceptable.**
 
-## Q7. (!) JMeter (legacy gold standard)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) JMeter (legacy gold standard)?
 
 **Apache JMeter** — most popular OSS load testing (с 1998!).
 
@@ -194,7 +224,12 @@ Example:
 jmeter -n -t test-plan.jmx -l results.jtl  # CLI mode
 ```
 
-## Q8. (!) k6 (modern)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) k6 (modern)?
 
 **k6** (by Grafana, formerly Load Impact) — modern load testing tool.
 
@@ -236,7 +271,12 @@ k6 run script.js
 
 В **2025** — k6 fastest-growing load testing tool.
 
-## Q9. (!) Gatling (Scala/Java)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Gatling (Scala/Java)?
 
 **Gatling** — Scala-based (DSL также Java/Kotlin since 3.7).
 
@@ -266,7 +306,12 @@ class BasicSimulation extends Simulation {
 
 **Gatling vs k6** — closely matched. Choice often по language preference.
 
-## Q10. Locust (Python)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. Locust (Python)?
 
 **Locust** — Python-based, code-driven.
 
@@ -294,7 +339,12 @@ class WebsiteUser(HttpUser):
 - **Lower performance** than k6/Gatling (Python GIL)
 - Less mature reporting
 
-## Q11. Сравнение JMeter vs k6 vs Gatling vs Locust?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Сравнение JMeter vs k6 vs Gatling vs Locust?
 
 | Critterion | JMeter | k6 | Gatling | Locust |
 |-----------|--------|-----|---------|--------|
@@ -313,7 +363,12 @@ class WebsiteUser(HttpUser):
 - **Enterprise legacy** — JMeter
 - **No-code GUI** — JMeter
 
-## Q12. (!) Как написать k6 test?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Как написать k6 test?
 
 ```javascript
 import http from 'k6/http';
@@ -363,7 +418,12 @@ export function teardown(data) {
 }
 ```
 
-## Q13. Stages (ramp-up, hold, ramp-down)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. Stages (ramp-up, hold, ramp-down)?
 
 ```javascript
 options = {
@@ -385,7 +445,12 @@ options = {
 - **Spike:** sudden increase
 - **Ramp-down:** verify recovery
 
-## Q14. Thresholds (pass/fail criteria)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. Thresholds (pass/fail criteria)?
 
 ```javascript
 options = {
@@ -402,7 +467,12 @@ options = {
 
 **Use case:** **performance budget** (perf SLAs enforced automatically).
 
-## Q15. Distributed load testing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Distributed load testing?
 
 **Why:** single load generator can't produce enough load.
 
@@ -421,7 +491,12 @@ options = {
 
 **Common pattern:** generate load from multiple regions для realistic geo-distribution.
 
-## Q16. (!) Capacity planning через load testing?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Capacity planning через load testing?
 
 **Process:**
 1. Define **SLA** (e.g., p95 < 200ms, error rate < 1%)
@@ -438,7 +513,12 @@ Headroom 50%: needs 1500 RPS capacity
 Required: 15 instances
 ```
 
-## Q17. Bottleneck analysis?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Bottleneck analysis?
 
 **Find** что limiting performance:
 - CPU? → scale CPU или optimize code
@@ -456,7 +536,12 @@ Required: 15 instances
 
 **Iteratively:** load test → identify bottleneck → optimize → repeat.
 
-## Q18. (!) Тестировать в production?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. (!) Тестировать в production?
 
 **Yes** — но carefully.
 
@@ -472,7 +557,12 @@ Required: 15 instances
 
 **Examples:** Netflix runs constant load tests в production (chaos engineering).
 
-## Q19. Realistic scenarios?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. Realistic scenarios?
 
 **Bad scenario:** all VUs hitting one endpoint repeatedly.
 
@@ -488,7 +578,12 @@ Required: 15 instances
 - **Production logs** → derive workload patterns
 - **User journey analytics** → script common flows
 
-## Q20. CI/CD integration?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. CI/CD integration?
 
 ```yaml
 # GitHub Actions
@@ -509,7 +604,12 @@ Required: 15 instances
 - **Pre-release** — comprehensive performance suite
 - **Production** — periodic synthetic monitoring
 
-## Q21. (!) Common mistakes?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) Common mistakes?
 
 1. **Testing only happy path** — error scenarios важны
 2. **No realistic data** (same user ID for всех)
@@ -522,7 +622,12 @@ Required: 15 instances
 9. **Ignoring percentiles** (only checking averages)
 10. **Coordinated omission** (Q22)
 
-## Q22. Coordinated omission?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. Coordinated omission?
 
 **Coordinated omission** — load testing tool **slows down** when system slow → underreports latency.
 
@@ -547,7 +652,12 @@ Required: 15 instances
 
 ## See also
 
-- [Performance Testing](../performance/performance-testing-interview.md) — общая концепция
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [Performance Testing](../performance/performance-testing-interview.md) — общая концепция
 - [Unit Testing](unit-testing-interview.md) — context
 - [Mutation Testing](mutation-testing-interview.md)
 - [Property-based Testing](property-based-testing-interview.md)

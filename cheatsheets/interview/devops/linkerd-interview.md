@@ -11,7 +11,7 @@ aliases:
   - "Service mesh Linkerd"
   - "Linkerd vs Istio"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Linkerd`
 
@@ -80,6 +80,12 @@ updated: "2026-04-19"
 - **Lower overhead** than Istio
 - **Opinionated** (less flexible, more usable)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **CNCF graduated** project (2021).
 
 ## Q2. (!) Linkerd vs Istio — main отличия?
@@ -100,6 +106,12 @@ updated: "2026-04-19"
 
 **Linkerd philosophy:** "do core things well, don't try to do everything."
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Istio philosophy:** "kitchen sink — every possible feature."
 
 ## Q3. История (Linkerd 1.x → 2.x)?
@@ -118,6 +130,12 @@ updated: "2026-04-19"
 - Continued evolution (2.15+ в 2025)
 - Multi-cluster, policy, и т.д.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 В **2025** — Linkerd 2.x **only supported version**. 1.x deprecated.
 
 ## Q4. (!) Control plane vs data plane?
@@ -139,6 +157,12 @@ graph TD
 
 **Data plane:** linkerd2-proxy sidecars.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Optional:**
 - **Linkerd Viz** — observability stack
 - **Linkerd Multicluster** — cross-cluster
@@ -159,6 +183,12 @@ graph TD
 - Retries, timeouts
 - Load balancing
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Won't replace** Envoy для general-purpose proxying. **Optimized для mesh sidecar** workload.
 
 ## Q6. (!) Ultralight sidecar?
@@ -173,6 +203,12 @@ graph TD
 
 **~3x cheaper** at scale.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Не nuance** — на small clusters difference negligible. На huge mesh — substantial.
 
 ## Q7. (!) Linkerd installation?
@@ -200,6 +236,12 @@ istioctl install --set profile=demo  # less validation
 # + many more steps for production
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Linkerd opinionated** — fewer choices, less to misconfigure.
 
 ## Q8. Sidecar injection (annotation)?
@@ -218,6 +260,12 @@ metadata:
     linkerd.io/inject: disabled
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 Existing pods need restart для injection.
 
 ## Q9. (!) Mutual TLS (automatic)?
@@ -235,6 +283,12 @@ linkerd viz tap deploy/my-app -n my-namespace
 # Shows :tls=true для encrypted traffic
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Vs Istio:** Istio mTLS configurable (PERMISSIVE, STRICT, DISABLE). Linkerd just **on**.
 
 ## Q10. Traffic split (canary, blue-green)?
@@ -256,6 +310,12 @@ spec:
 
 **90% к v1, 10% к v2.**
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Combined с Flagger** (CNCF) — automated progressive delivery (canary с metrics-based promotion).
 
 ## Q11. Retries и timeouts?
@@ -281,6 +341,12 @@ spec:
 - Timeouts
 - Latency / success rate metrics
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Less flexibility than Istio**, но 80% use cases covered.
 
 ## Q12. Service profiles?
@@ -303,6 +369,12 @@ spec:
 linkerd profile --open-api spec.yml my-service
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Provides per-route metrics** в Linkerd Viz.
 
 ## Q13. Multi-cluster meshes?
@@ -323,6 +395,12 @@ kubectl label svc/my-service mirror.linkerd.io/exported=true
 - Common CA трасstrap для cross-cluster mTLS
 - Identity preserved across clusters
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Use case:** geo-distributed apps, disaster recovery.
 
 ## Q14. (!) Built-in metrics + dashboards?
@@ -343,6 +421,12 @@ linkerd viz top deploy/my-app
 linkerd viz routes deploy/my-app
 ```
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Gold standard** — RED метрики (Rate, Errors, Duration) — exactly что Linkerd provides.
 
 ## Q15. Linkerd Viz (UI)?
@@ -360,6 +444,12 @@ linkerd viz dashboard
 - Live request inspection
 - Per-route stats
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Optional component** — main Linkerd works без него.
 
 ## Q16. Tap (live request inspection)?
@@ -375,6 +465,12 @@ linkerd viz tap deploy/my-app
 
 **Use case:** debug production issues, see live traffic.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Filtering:** `--path /api/users`, `--from <namespace>`, etc.
 
 ## Q17. (!) Когда выбрать Linkerd?
@@ -387,6 +483,12 @@ linkerd viz tap deploy/my-app
 - Need **just core mesh features** (mTLS, observability, traffic split)
 - **K8s-only** deployment
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Не выбирай когда:**
 - Need **advanced features** Istio имеет (sometimes)
 - Need **multi-platform** mesh (use Consul)
@@ -402,6 +504,12 @@ linkerd viz tap deploy/my-app
 6. **No L7 authz через JWT** (Istio better here)
 7. **Smaller ecosystem** (fewer plugins, blogs)
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Trade-off:** simplicity ↔ features. Linkerd выбирает simplicity.
 
 ## Q19. Performance benchmarks vs Istio?
@@ -416,6 +524,12 @@ linkerd viz tap deploy/my-app
 
 **CPU usage:** Linkerd ~30-50% lower CPU per service.
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 **Caveats:**
 - Vendor benchmarks (Buoyant) may be biased
 - Real-world results vary
@@ -455,6 +569,12 @@ linkerd viz tap deploy/my-app
 - [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries
 - [Networking](../architecture/networking-interview.md) — L4/L7
 
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение 2-3 предложения
+> - [ ] Вариант А | Почему неверно 2-3 предложения
+> - [ ] Вариант В | Почему неверно 2-3 предложения
+> - [ ] Вариант С | Почему неверно 2-3 предложения
 - [Ansible](ansible-interview.md)
 - [ArgoCD и GitOps](argocd-interview.md)
 - [HashiCorp Consul](consul-interview.md)

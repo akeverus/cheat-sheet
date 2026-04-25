@@ -11,7 +11,7 @@ aliases:
   - "OpenTelemetry собеседование"
   - "Distributed tracing standard"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `OpenTelemetry`
 
@@ -92,7 +92,12 @@ updated: "2026-04-19"
 
 **Цель:** **standardize** instrumentation — пишешь один раз, отправляешь куда угодно.
 
-## Q2. (!) Зачем OTel вместо vendor SDK?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Зачем OTel вместо vendor SDK?
 
 **Vendor-specific SDK (Datadog, New Relic):**
 - Tightly coupled к vendor
@@ -109,7 +114,12 @@ updated: "2026-04-19"
 
 **В 2025** — большинство vendors **support OTel input** (Datadog, NewRelic accept OTLP). OTel выиграл standards war.
 
-## Q3. (!) Three pillars: traces, metrics, logs?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Three pillars: traces, metrics, logs?
 
 **Traces** — request paths через services.
 - Stable in OTel
@@ -128,7 +138,12 @@ updated: "2026-04-19"
 
 В 2025 — **traces + metrics** mature, **logs** растёт.
 
-## Q4. История (OpenTracing + OpenCensus = OpenTelemetry)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. История (OpenTracing + OpenCensus = OpenTelemetry)?
 
 **OpenTracing** (2016) — спецификация tracing API. Ранний стандарт.
 **OpenCensus** (2017) — Google's tracing + metrics library.
@@ -139,7 +154,12 @@ updated: "2026-04-19"
 
 В **2025** — OpenTracing и OpenCensus **deprecated**. OTel — единственный mainstream standard.
 
-## Q5. (!) Components: API, SDK, Collector?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) Components: API, SDK, Collector?
 
 ```
 [App + OTel API] → [OTel SDK] → [OTel Collector] → [Backend(s)]
@@ -153,7 +173,12 @@ updated: "2026-04-19"
 - App code только зависит от API (минимальная dependency)
 - SDK можно swap (different sampling, exporting)
 
-## Q6. (!) OTel Collector — что и зачем?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) OTel Collector — что и зачем?
 
 **OTel Collector** — process, который **receives** телеметрию от apps, **processes** (filter, sample, transform), и **exports** к backends.
 
@@ -179,7 +204,12 @@ graph LR
 - **Gateway** — separate cluster, central
 - **Both** — Agent → Gateway
 
-## Q7. Receiver, Processor, Exporter в Collector?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. Receiver, Processor, Exporter в Collector?
 
 ```yaml
 # Collector config
@@ -226,7 +256,12 @@ service:
 
 **Pipelines** — соединяют receivers → processors → exporters.
 
-## Q8. Agent vs Gateway deployment?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. Agent vs Gateway deployment?
 
 **Agent (per-host):**
 - DaemonSet в K8s (pod на каждой node)
@@ -244,7 +279,12 @@ service:
 - Agent: local buffering, basic processing
 - Gateway: complex processing, fanout к backends
 
-## Q9. (!) Auto vs manual instrumentation?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. (!) Auto vs manual instrumentation?
 
 **Auto-instrumentation** — automatic для popular libraries (HTTP, DB, gRPC).
 
@@ -274,7 +314,12 @@ try (Scope scope = span.makeCurrent()) {
 
 **Best practice:** **auto** для infrastructure (HTTP, DB), **manual** для business logic (key operations).
 
-## Q10. (!) Java auto-instrumentation (javaagent)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Java auto-instrumentation (javaagent)?
 
 **Java agent** — JVM agent, instrumentates bytecode at startup.
 
@@ -303,7 +348,12 @@ java -javaagent:opentelemetry-javaagent.jar -jar app.jar
 
 **Без code changes!** Just attach agent.
 
-## Q11. Manual spans?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. Manual spans?
 
 ```java
 import io.opentelemetry.api.trace.Tracer;
@@ -335,7 +385,12 @@ try (Scope scope = span.makeCurrent()) {
 - Record exceptions
 - Set status (OK / ERROR)
 
-## Q12. Span attributes, events?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. Span attributes, events?
 
 **Attributes** — key-value pairs (как tags). Static info про span.
 
@@ -356,7 +411,12 @@ span.addEvent("Slow query detected", Attributes.of(
 
 **Standard attributes** — следуй [Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/) для interoperability.
 
-## Q13. (!) Trace, span, span context?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Trace, span, span context?
 
 **Trace** — collection of spans for one request.
 
@@ -376,7 +436,12 @@ Trace 0123456789abcdef0123456789abcdef
 │       └── Span: SELECT FROM accounts
 ```
 
-## Q14. (!) Context propagation (W3C Trace Context)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Context propagation (W3C Trace Context)?
 
 **Context propagation** — passing trace context между services через HTTP headers.
 
@@ -395,7 +460,12 @@ OTel SDKs **automatically** inject/extract при HTTP calls (with auto-instrume
 
 **For async** (Kafka): inject context в message headers, extract в consumer.
 
-## Q15. Sampling — head vs tail?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Sampling — head vs tail?
 
 **Не каждый** request нужно trace (cost). Sampling.
 
@@ -428,7 +498,12 @@ processors:
 
 **Best practice 2025:** tail sampling для **production** apps с high traffic.
 
-## Q16. (!) Metric instruments (Counter, Gauge, Histogram)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. (!) Metric instruments (Counter, Gauge, Histogram)?
 
 **Counter** — monotonically increasing.
 ```java
@@ -457,7 +532,12 @@ latency.record(245.5, Attributes.of(...));
 
 **Histogram** даёт percentiles (p50, p95, p99) на backend.
 
-## Q17. Aggregation, push vs pull?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. Aggregation, push vs pull?
 
 **Push** — SDK sends metrics к backend periodically.
 - OTLP push к Collector
@@ -472,7 +552,12 @@ latency.record(245.5, Attributes.of(...));
 
 **Aggregation periods:** how often metrics aggregated (default 60 sec).
 
-## Q18. Exemplars (linking metrics к traces)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Exemplars (linking metrics к traces)?
 
 **Exemplar** — sample trace ID attached к metric data point.
 
@@ -487,7 +572,12 @@ Bridging metrics → traces. Powerful debugging.
 
 Supported в Prometheus, Tempo, Datadog.
 
-## Q19. (!) OTel Logs — статус?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) OTel Logs — статус?
 
 **Logs** — newest pillar. **Stable since 2024** в OTel.
 
@@ -503,7 +593,12 @@ logger.info("Processing order {}", orderId);
 
 В **2025** — adoption растёт, но Logs всё ещё **более immature** чем traces/metrics.
 
-## Q20. Log correlation с traces?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Log correlation с traces?
 
 **Correlation** — log entry contains trace_id + span_id.
 
@@ -520,7 +615,12 @@ logger.info("Processing order {}", orderId);
 
 В **Datadog, Honeycomb, NewRelic** — UI links logs ↔ traces автоматически.
 
-## Q21. (!) Какие backends поддерживают OTel?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. (!) Какие backends поддерживают OTel?
 
 **Open-source:**
 - **Jaeger** — traces
@@ -545,7 +645,12 @@ logger.info("Processing order {}", orderId);
 
 В **2025** — practically **все** observability vendors accept OTLP. Standard wars завершены.
 
-## Q22. OTLP — wire protocol?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. OTLP — wire protocol?
 
 **OTLP (OpenTelemetry Protocol)** — wire format для transmission телеметрии.
 
@@ -569,7 +674,12 @@ exporters:
 
 OTLP — standard. Все vendor backends accept it.
 
-## Q23. (!) Можно ли менять backend без code change?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) Можно ли менять backend без code change?
 
 **Да!** Это main value OTel.
 
@@ -592,7 +702,12 @@ exporters:
 
 Это **революционный shift** vs vendor SDK era.
 
-## Q24. (!) Semantic conventions?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. (!) Semantic conventions?
 
 **Semantic Conventions** — standard names для attributes.
 
@@ -612,7 +727,12 @@ service.version = "1.2.3"
 
 **Manual:** import standard attribute keys из OTel package (`SemanticAttributes.HTTP_METHOD`).
 
-## Q25. Resource attributes?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. Resource attributes?
 
 **Resource** — info про **источник** телеметрии (service, host, container).
 
@@ -631,7 +751,12 @@ deployment.environment: production
 
 **В K8s:** OTel resource detector auto-fills from K8s API.
 
-## Q26. Что включить в traces (избежать noise)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. Что включить в traces (избежать noise)?
 
 **Включай:**
 - HTTP requests (auto)
@@ -649,7 +774,12 @@ deployment.environment: production
 
 **Sampling** для high-volume operations.
 
-## Q27. (!) Какие частые проблемы OTel в production?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) Какие частые проблемы OTel в production?
 
 1. **High overhead** — instrumentation eats 5-10% CPU. Sample aggressively.
 2. **Network costs** — sending все spans expensive. Use Collector batching.
@@ -660,7 +790,12 @@ deployment.environment: production
 7. **Auto-instrumentation conflicts** — несколько agents fighting.
 8. **Versioning** — SDK / Agent / API version mismatches.
 
-## Q28. Cost optimization для OTel?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. Cost optimization для OTel?
 
 1. **Sampling** — head + tail
 2. **Drop unnecessary spans** в Collector (filter processor)
@@ -692,7 +827,12 @@ deployment.environment: production
 - [Application Profiling](../performance/application-profiling-interview.md) — alternative для perf
 - [Spring Boot Actuator](../frameworks/spring/spring-boot-actuator-interview.md) — Actuator + OTel
 
-- [ELK Stack](elk-stack-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [ELK Stack](elk-stack-interview.md)
 - [Jaeger и Zipkin](jaeger-zipkin-interview.md)
 - [Стратегии логирования](logging-strategies-interview.md)
 - [Loki и Grafana](loki-grafana-interview.md)

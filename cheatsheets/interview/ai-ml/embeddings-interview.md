@@ -11,7 +11,7 @@ aliases:
   - "Sentence embeddings interview"
   - "Vector embeddings interview"
 difficulty: "intermediate"
-updated: "2026-04-19"
+updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Embeddings`
 
@@ -100,7 +100,12 @@ updated: "2026-04-19"
 - Anomaly detection
 - Classification (embeddings + linear layer)
 
-## Q2. (!) Зачем embeddings?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q2. (!) Зачем embeddings?
 
 **Без embeddings** (BM25 keyword search):
 ```
@@ -117,7 +122,12 @@ Match: 0.85
 
 **Embeddings улавливают семантику**, не только syntax. Это революция в search, recommendations.
 
-## Q3. (!) Как embedding model работает?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q3. (!) Как embedding model работает?
 
 **Архитектура:** transformer (encoder-only обычно).
 
@@ -133,7 +143,12 @@ Match: 0.85
 
 **Output:** vector нужного размера (обычно last hidden state с pooling — mean / [CLS] token).
 
-## Q4. Sparse vs dense embeddings?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q4. Sparse vs dense embeddings?
 
 **Dense embeddings** — small dim, all dimensions имеют значение (`[0.1, -0.5, 0.3, ...]`).
 **Sparse embeddings** — large dim (vocab size), most dimensions = 0 (`[0, 0, 0.7, 0, 0.3, ...]`).
@@ -149,7 +164,12 @@ Match: 0.85
 
 **Hybrid** = combine оба.
 
-## Q5. (!) OpenAI text-embedding-3?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q5. (!) OpenAI text-embedding-3?
 
 **OpenAI text-embedding-3** (2024):
 
@@ -174,7 +194,12 @@ response = client.embeddings.create(
 
 В 2025 — **default** для большинства случаев (best balance).
 
-## Q6. (!) Cohere embed-v3?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q6. (!) Cohere embed-v3?
 
 **Cohere Embed v3** (2023+):
 
@@ -198,7 +223,12 @@ response = co.embed(
 
 Часто **лучше OpenAI** на retrieval benchmarks.
 
-## Q7. (!) Voyage AI?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q7. (!) Voyage AI?
 
 **Voyage AI** — стартап, специализируется на embeddings. Использует Anthropic для рекомендаций.
 
@@ -215,7 +245,12 @@ response = co.embed(
 
 В **2025** — топ выбор для production RAG.
 
-## Q8. (!) Sentence Transformers (open-source)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q8. (!) Sentence Transformers (open-source)?
 
 **`sentence-transformers`** — Python library от UKP Lab.
 
@@ -242,7 +277,12 @@ embeddings = model.encode(["Hello", "World"])
 - Хуже proprietary в quality (отстают от OpenAI/Cohere)
 - Нужны GPU для perf
 
-## Q9. BGE, E5 модели?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q9. BGE, E5 модели?
 
 **BGE (BAAI General Embedding)** — open-source SOTA models от Beijing Academy of AI.
 
@@ -256,7 +296,12 @@ embeddings = model.encode(["Hello", "World"])
 
 В **2025** open-source качество подтянулось к proprietary.
 
-## Q10. (!) Как выбрать embedding model?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q10. (!) Как выбрать embedding model?
 
 **Decision factors:**
 
@@ -275,7 +320,12 @@ embeddings = model.encode(["Hello", "World"])
 - **Cost-sensitive:** OpenAI text-embedding-3-small
 - **Multilingual:** Cohere embed-multilingual-v3 / BGE-M3
 
-## Q11. (!) MTEB benchmark?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q11. (!) MTEB benchmark?
 
 **MTEB (Massive Text Embedding Benchmark)** — стандартный бенчмарк для embeddings. Hugging Face leaderboard.
 
@@ -298,7 +348,12 @@ embeddings = model.encode(["Hello", "World"])
 
 **Подвох:** MTEB не идеален. Лучше тестировать на **своих data**.
 
-## Q12. (!) Какие dimensions выбрать?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q12. (!) Какие dimensions выбрать?
 
 **Trade-off:**
 - **Малые (256-512):** быстро, дёшево storage, чуть хуже quality
@@ -318,7 +373,12 @@ Train на 3072d → truncate в любой меньший size без силь�
 
 **Best practice:** start с 512-1024d. Increase only если нужна квалити.
 
-## Q13. (!) Normalization — нужна ли?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q13. (!) Normalization — нужна ли?
 
 **Normalization** — превратить vector в unit-length (`||v|| = 1`).
 
@@ -336,7 +396,12 @@ normalized = vector / np.linalg.norm(vector)
 
 **Подвох:** если half embeddings normalized, half нет — поиск будет плохим. Согласованность критична.
 
-## Q14. (!) Cosine similarity vs dot product?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q14. (!) Cosine similarity vs dot product?
 
 ```
 cos(A, B) = (A · B) / (|A| × |B|)
@@ -354,7 +419,12 @@ cos(A, B) = A · B
 metric = "dot"  # вместо "cosine" если уже normalized
 ```
 
-## Q15. Token limit для embedding?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q15. Token limit для embedding?
 
 **Каждая embedding model имеет max input length:**
 
@@ -368,7 +438,12 @@ metric = "dot"  # вместо "cosine" если уже normalized
 
 **Подвох с Cohere/BGE:** **512 tokens** = ~400 английских слов. Длинные документы нужно chunk'ить.
 
-## Q16. Truncation длинных текстов?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q16. Truncation длинных текстов?
 
 Если текст > max_tokens:
 
@@ -382,7 +457,12 @@ metric = "dot"  # вместо "cosine" если уже normalized
 - Каждый chunk влезает в model limit
 - Embed каждый chunk отдельно
 
-## Q17. (!) Multilingual embeddings?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q17. (!) Multilingual embeddings?
 
 **Multilingual model** обучена на много языках, embeds разные языки в **одно общее space**.
 
@@ -401,7 +481,12 @@ emb("hello") ≈ emb("привет") ≈ emb("你好")
 - Cross-lingual search
 - Korean docs ↔ English query
 
-## Q18. Cross-lingual search?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q18. Cross-lingual search?
 
 С multilingual embeddings можно искать **на одном языке** в **другом**.
 
@@ -424,7 +509,12 @@ results = vector_db.search(query_emb)
 
 **Quality:** multilingual models обычно **немного хуже** чем monolingual specifically для одного языка, но **намного лучше** для cross-lingual.
 
-## Q19. (!) Image embeddings (CLIP)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q19. (!) Image embeddings (CLIP)?
 
 **CLIP (Contrastive Language-Image Pre-training)** — модель от OpenAI, embeds **изображения и текст в одно общее space**.
 
@@ -445,7 +535,12 @@ similarity = (image_features @ text_features.T)
 
 **Альтернативы:** SigLIP (лучше качество), BLIP-2, OpenCLIP (open-source).
 
-## Q20. Audio embeddings?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q20. Audio embeddings?
 
 **Models:**
 - **Whisper embeddings** — для speech
@@ -460,7 +555,12 @@ similarity = (image_features @ text_features.T)
 
 Менее зрелое, чем text embeddings.
 
-## Q21. Multimodal embeddings?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q21. Multimodal embeddings?
 
 **Multimodal embeddings** — единое space для **разных модальностей** (text + image + video).
 
@@ -476,7 +576,12 @@ similarity = (image_features @ text_features.T)
 
 В **2025** — растущая область, но менее зрелая чем text-only embeddings.
 
-## Q22. (!) Cost optimization для embeddings?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q22. (!) Cost optimization для embeddings?
 
 1. **Choose right model** — нужна ли large? Часто small достаточно.
 2. **Use small dimensions** (Matryoshka) — 1536 → 512 даёт ~3x economy
@@ -494,7 +599,12 @@ similarity = (image_features @ text_features.T)
 
 Очень дёшево по сравнению с LLM API.
 
-## Q23. (!) Caching embeddings?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q23. (!) Caching embeddings?
 
 ```python
 import hashlib
@@ -517,7 +627,12 @@ def get_embedding(text):
 - Embeddings обновляются часто
 - Storage cost > API cost (редко, обычно cache дешёвый)
 
-## Q24. Matryoshka embeddings (truncate dimensions)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q24. Matryoshka embeddings (truncate dimensions)?
 
 **Matryoshka representation learning (MRL)** — embeddings обучены так, что их **префиксы** тоже валидны.
 
@@ -539,7 +654,12 @@ emb_truncated = emb_full[:512]
 # Можно использовать! Quality чуть ниже
 ```
 
-## Q25. Quantization embeddings (binary, int8)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q25. Quantization embeddings (binary, int8)?
 
 Превращаем `float32` (4 bytes/dim) в:
 - **fp16** — 2 bytes/dim (2x economy)
@@ -558,7 +678,12 @@ binary_vec = (vec > 0).astype(np.uint8)  # 1 bit per dim
 
 В **2025** binary quantization стал популярным для **гигантских scales** (100M+ vectors).
 
-## Q26. (!) Когда fine-tuning embedding model?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q26. (!) Когда fine-tuning embedding model?
 
 **Когда нужен:**
 - **Domain-specific** vocabulary (medical, legal, code)
@@ -572,7 +697,12 @@ binary_vec = (vec > 0).astype(np.uint8)  # 1 bit per dim
 
 **Trade-off:** fine-tuning ~$500-5000 (training) + maintenance, vs $0 для использования off-the-shelf.
 
-## Q27. (!) Как fine-tune (sentence transformers)?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q27. (!) Как fine-tune (sentence transformers)?
 
 ```python
 from sentence_transformers import SentenceTransformer, InputExample, losses
@@ -600,7 +730,12 @@ model.save("my-fine-tuned-model")
 
 **Data preparation:** main работа — собрать **golden pairs** (query, relevant_doc).
 
-## Q28. (!) Применения embeddings помимо RAG?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q28. (!) Применения embeddings помимо RAG?
 
 1. **Semantic search** — поиск по смыслу, не keywords
 2. **Recommendations** — "похожие items" (Netflix, Amazon)
@@ -613,7 +748,12 @@ model.save("my-fine-tuned-model")
 9. **Plagiarism detection**
 10. **Knowledge graph construction** — entity linking
 
-## Q29. Какие частые проблемы?
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление## Q29. Какие частые проблемы?
 
 1. **Embedding drift** — модель updated, embeddings стали другие → re-embed всё
 2. **Query/doc model mismatch** — embedded разными models
@@ -641,7 +781,12 @@ model.save("my-fine-tuned-model")
 - [Elasticsearch](../databases/elasticsearch-interview.md) — vector search в ES
 - [Performance Testing](../performance/performance-testing-interview.md) — embedding latency
 
-- [AI Agents](ai-agents-interview.md)
+
+> [!mcq]
+> - [x] Правильный ответ | Объяснение концепции 2-3 предложения
+> - [ ] Неправильный вариант 1 | Почему ошибка в этом подходе
+> - [ ] Неправильный вариант 2 | Это смежное, но отличное понятие
+> - [ ] Неправильный вариант 3 | Противоположное направление- [AI Agents](ai-agents-interview.md)
 - [LLM Basics](llm-basics-interview.md)
 - [LLM Integration Patterns](llm-integration-patterns-interview.md)
 - [MLOps](mlops-interview.md)
