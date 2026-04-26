@@ -132,10 +132,10 @@ List<String> result = names.stream()
 ```
 
 > [!mcq]
-> - [ ] Stream хранит копию данных из коллекции и позволяет итерировать её несколько раз. | Stream не хранит данные — он описывает pipeline операций над источником. Хранение данных — задача Collection. Частая ошибка в реальном коде.
-> - [ ] Stream модифицирует исходную коллекцию при вызове filter или map. | filter и map возвращают новый Stream, не трогая источник. Иммутабельность источника — фундаментальный контракт Stream API. Частая ошибка в реальном коде.
-> - [x] Stream не хранит данные, не модифицирует источник и может быть использован только один раз. | Stream — декларативный pipeline без хранилища. Повторное использование после терминальной операции выбрасывает IllegalStateException. Checked - compile-time, Unchecked - runtime; используйте unchecked для фреймворков.
-> - [ ] Stream автоматически синхронизирует доступ к источнику при параллельной обработке. | parallelStream не синхронизирует источник — гонки данных на shared mutable state остаются на совести разработчика. Частая ошибка в реальном коде.
+> - [ ] Stream хранит копию данных из коллекции и позволяет итерировать её несколько раз. | Stream не storage. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает re-iteration, пишет `for (...) stream.forEach(...)` — IllegalStateException на втором вызове. Каждый запрос требует нового `list.stream()`.
+> - [ ] Stream модифицирует исходную коллекцию при вызове filter или map. | Source immutable. ❌ ПОСЛЕДСТВИЕ: ложные ожидания мутации приводят к попыткам "удалить из коллекции через filter" — `list.stream().filter(...).count()` НЕ удаляет; нужен `list.removeIf(...)` или `list = list.stream().filter(...).toList()`.
+> - [x] Stream не хранит данные, не модифицирует источник и может быть использован только один раз. | ✓ ПРИМЕНЯТЬ: воспринимайте Stream как одноразовый pipeline; для повторных операций — храните `Supplier<Stream<T>>` или работайте с `Collection`/`List`. Source-агностичность позволяет использовать `IntStream.range`, `Stream.generate`, `Files.lines` единообразно. 📋 ПРАВИЛО: "Stream = no storage + no mutation + one-shot; повторное use = IllegalStateException". 🔗 См. Q2 (pipeline), Q3 (lazy evaluation), Q5 (intermediate vs terminal).
+> - [ ] Stream автоматически синхронизирует доступ к источнику при параллельной обработке. | parallelStream не sync. ❌ ПОСЛЕДСТВИЕ: classical bug — `parallelStream().forEach(x -> sharedList.add(x))` приводит к race conditions, lost updates, потери элементов. Используйте `collect(toList())` который thread-safe.
 
 ## Q2. (!) Что такое stream pipeline и из чего он состоит?
 
@@ -170,10 +170,10 @@ List<String> result = List.of("alice", "bob", "charlie", "dave")
 ```
 
 > [!mcq]
-> - [ ] Stream pipeline выполняет операции горизонтально: сначала все элементы проходят filter, затем все — map. | Обработка вертикальная: каждый элемент проходит весь pipeline сверху вниз, а не операция обрабатывает сразу всё. Частая ошибка в реальном коде.
-> - [x] Stream pipeline состоит из source, промежуточных операций и одной терминальной операции; элементы обрабатываются вертикально. | Это точное описание: source → intermediate ops → terminal op. Вертикальная обработка позволяет short-circuit операциям завершиться раньше. Ключевое отличие и best practice в production.
-> - [ ] В pipeline может быть несколько терминальных операций, которые последовательно применяются к одному стриму. | Терминальная операция одна — после её вызова стрим закрывается. Попытка вызвать вторую завершится IllegalStateException. Это антипаттерн или неправильный выбор в production.
-> - [ ] Промежуточные операции pipeline сразу выполняются и возвращают новую коллекцию для следующей операции. | Промежуточные операции ленивые — они лишь строят описание pipeline. Реальное выполнение запускается только при вызове терминальной операции. Частая ошибка в реальном коде.
+> - [ ] Stream pipeline выполняет операции горизонтально: сначала все элементы проходят filter, затем все — map. | Vertical processing. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает horizontal — пишет `Stream.iterate(1, n -> n+1).filter(n -> n>1000).limit(5)`, удивляется почему быстро завершается без обработки 1000 элементов. На деле каждый элемент проходит весь pipeline.
+> - [x] Stream pipeline состоит из source, промежуточных операций и одной терминальной операции; элементы обрабатываются вертикально. | ✓ ПРИМЕНЯТЬ: vertical processing включает short-circuit оптимизации; `Stream.iterate(1, n -> n+1).map(n -> n*n).filter(n -> n>100).findFirst()` останавливается на первом подходящем — никаких лишних вычислений. Pipeline визуализируйте как matrix transposed. 📋 ПРАВИЛО: "pipeline = source → intermediate ops → ONE terminal op; вертикальная (per-element) обработка". 🔗 См. Q3 (lazy evaluation), Q5 (intermediate vs terminal), Q10 (short-circuit).
+> - [ ] В pipeline может быть несколько терминальных операций, которые последовательно применяются к одному стриму. | One terminal only. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.count(); stream.toList();` — второй вызов IllegalStateException. Создавайте новый stream для каждой terminal op.
+> - [ ] Промежуточные операции pipeline сразу выполняются и возвращают новую коллекцию для следующей операции. | Lazy. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `peek` для отладки, ждёт log output — без terminal operation peek не запускается, log пустой. peek полезен только в полном pipeline.
 
 ## Q3. (!) Что такое lazy evaluation и почему она важна?
 
@@ -199,10 +199,10 @@ List<String> result = lazy.toList(); // Теперь filter/map работают
 ```
 
 > [!mcq]
-> - [ ] Промежуточные операции выполняются сразу при добавлении в цепочку, чтобы JVM могла оптимизировать pipeline. | Промежуточные операции формируют только описание. Реальное выполнение откладывается до терминальной операции — это и есть суть lazy evaluation. Частая ошибка в реальном коде.
-> - [ ] Lazy evaluation означает, что терминальная операция выполняется асинхронно в фоновом потоке. | Ленивость касается момента начала обработки элементов, а не асинхронности. Терминальная операция выполняется в том потоке, который её вызвал. Частая ошибка в реальном коде.
-> - [x] Благодаря lazy evaluation промежуточные операции не выполняются до вызова терминальной, что позволяет short-circuit операциям завершаться раньше. | Это ключевой эффект ленивости: findFirst или limit могут остановить pipeline после нахождения результата, не обрабатывая оставшиеся элементы. Ключевое отличие и best practice в production.
-> - [ ] Lazy evaluation гарантирует, что каждый элемент обрабатывается в цепочке ровно один раз, даже при многократном вызове terminal операций. | Ленивость не влияет на количество обходов. Стрим вообще нельзя использовать повторно — каждый terminal закрывает стрим окончательно. Частая ошибка в реальном коде.
+> - [ ] Промежуточные операции выполняются сразу при добавлении в цепочку, чтобы JVM могла оптимизировать pipeline. | Lazy. ❌ ПОСЛЕДСТВИЕ: разработчик считает что `stream.filter(...)` сразу обходит коллекцию, ставит `peek` ожидая увидеть в логах — peek не запускается без terminal operation. Дебаггинг застревает.
+> - [ ] Lazy evaluation означает, что терминальная операция выполняется асинхронно в фоновом потоке. | Не async. ❌ ПОСЛЕДСТВИЕ: путаница lazy и async приводит к ложным ожиданиям — `stream.toList()` в main thread блокирует main thread. Для асинхронности — `CompletableFuture.supplyAsync(() -> stream.toList())`.
+> - [x] Благодаря lazy evaluation промежуточные операции не выполняются до вызова терминальной, что позволяет short-circuit операциям завершаться раньше. | ✓ ПРИМЕНЯТЬ: бесконечные стримы становятся практичными — `Stream.iterate(1, n -> n+1).filter(n -> n%17==0).limit(5)` работает; `findFirst` для первого совпадения экономит обходы; loop fusion (filter+map в одной итерации) — JIT оптимизация. 📋 ПРАВИЛО: "lazy = промежуточные ничего не делают до terminal; short-circuit + infinite streams + loop fusion бенефиты". 🔗 См. Q2 (pipeline), Q5 (intermediate vs terminal), Q10 (short-circuit).
+> - [ ] Lazy evaluation гарантирует, что каждый элемент обрабатывается в цепочке ровно один раз, даже при многократном вызове terminal операций. | Stream одноразовый. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает повторное использование stream после terminal — каждый terminal закрывает stream окончательно. Lazy не делает stream re-usable.
 
 ## Q4. Какие способы создания Stream существуют?
 
@@ -236,10 +236,10 @@ try (Stream<String> lines = Files.lines(Path.of("data.csv"))) {
 ```
 
 > [!mcq]
-> - [ ] Stream.generate(Math::random) является упорядоченным стримом, потому что элементы генерируются в порядке вызовов. | generate — неупорядоченный стрим: каждый элемент не зависит от предыдущего, порядок не гарантируется. Упорядоченным является Stream.iterate. Частая ошибка в реальном коде.
-> - [ ] Files.lines(path) загружает все строки файла в память при создании стрима. | Files.lines использует ленивое чтение: строки читаются по одной при обходе. Именно поэтому файл нужно закрывать через try-with-resources. Частая ошибка в реальном коде.
-> - [x] Stream.iterate(seed, hasNext, next) является упорядоченным конечным стримом с предикатом завершения (Java 9+). | Именно так работает трёхаргументный iterate из Java 9: генерирует элементы пока hasNext возвращает true, каждый зависит от предыдущего — стрим упорядочен и конечен.
-> - [ ] IntStream.range(0, 10) и IntStream.rangeClosed(0, 10) возвращают одинаковое количество элементов. | range(0, 10) возвращает 10 элементов [0..9], rangeClosed(0, 10) — 11 элементов [0..10]. Отличие в том, включён ли правый конец. Частая ошибка в реальном коде.
+> - [ ] Stream.generate(Math::random) является упорядоченным стримом, потому что элементы генерируются в порядке вызовов. | unordered. ❌ ПОСЛЕДСТВИЕ: parallelStream() с generate ведёт себя как ожидаемо в parallel mode — порядок не гарантирован. Для ordered infinite streams используйте `Stream.iterate(seed, next)`.
+> - [ ] Files.lines(path) загружает все строки файла в память при создании стрима. | Lazy чтение. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает eager load и not closing stream — file handle leak (особенно в Linux limited fd-pool). Критично: всегда `try-with-resources` для `Files.lines`.
+> - [x] Stream.iterate(seed, hasNext, next) является упорядоченным конечным стримом с предикатом завершения (Java 9+). | ✓ ПРИМЕНЯТЬ: для замены C-style for-loops в functional style — `Stream.iterate(1, i -> i <= 100, i -> i * 2)` вместо `for (int i=1; i<=100; i*=2)`; для генерации последовательностей с termination condition. До Java 9 нужно было `iterate(0, n -> n+1).limit(100)`. 📋 ПРАВИЛО: "Stream.iterate (Java 9+) с hasNext predicate = упорядоченный конечный stream; generate = unordered infinite". 🔗 См. Q1 (что такое stream), Q3 (lazy), Q10 (short-circuit на бесконечных).
+> - [ ] IntStream.range(0, 10) и IntStream.rangeClosed(0, 10) возвращают одинаковое количество элементов. | range exclusive end. ❌ ПОСЛЕДСТВИЕ: off-by-one ошибка — `IntStream.range(0, list.size())` (correct, 0..size-1) vs `IntStream.rangeClosed(0, list.size())` (wrong, IndexOutOfBoundsException на last+1).
 
 ## Q5. (!) В чём разница между intermediate и terminal операциями?
 
@@ -265,10 +265,10 @@ long count = stream.filter(s -> !s.isEmpty()).count();
 ```
 
 > [!mcq]
-> - [ ] filter является терминальной операцией, так как возвращает новый отфильтрованный список. | filter — промежуточная операция, возвращает Stream<T>. Терминальные операции заканчивают pipeline и возвращают результат (List, long, Optional и т.д.).
-> - [ ] После вызова count() на стриме можно вызвать toList(), чтобы собрать элементы. | После любой терминальной операции стрим закрыт. Попытка повторного использования выбросит IllegalStateException. Это антипаттерн или неправильный выбор в production.
-> - [x] findFirst и anyMatch являются short-circuit терминальными операциями и могут завершить pipeline раньше, не обработав все элементы. | Это их ключевое свойство: findFirst останавливается на первом подходящем, anyMatch — при первом true. Это делает их безопасными для бесконечных стримов.
-> - [ ] sorted является stateless операцией, так как только меняет порядок элементов, не создавая нового стрима. | sorted — stateful операция: она должна увидеть все элементы перед тем как вернуть хотя бы один, что требует буферизации. На бесконечном стриме sorted зависнет.
+> - [ ] filter является терминальной операцией, так как возвращает новый отфильтрованный список. | filter intermediate. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что `stream.filter(...)` вернёт List, пишет `var result = stream.filter(...)` — получает Stream<T>, не List. Нужен `.toList()` после.
+> - [ ] После вызова count() на стриме можно вызвать toList(), чтобы собрать элементы. | One-shot. ❌ ПОСЛЕДСТВИЕ: классическая ошибка тестирования — `assertThat(stream.count()).isEqualTo(3); var list = stream.toList();` — вторая операция бросает IllegalStateException. Создавайте новый stream.
+> - [x] findFirst и anyMatch являются short-circuit терминальными операциями и могут завершить pipeline раньше, не обработав все элементы. | ✓ ПРИМЕНЯТЬ: `findFirst` для поиска первого совпадения (`users.stream().filter(u->u.isAdmin()).findFirst()`); `anyMatch` для existence check; `noneMatch`/`allMatch` для validation. На больших коллекциях экономия времени linear → constant в лучшем случае. 📋 ПРАВИЛО: "short-circuit terminal: findFirst/findAny/anyMatch/allMatch/noneMatch; intermediate short-circuit: limit". 🔗 См. Q3 (lazy), Q10 (short-circuit подробно), Q6 (stateful vs stateless).
+> - [ ] sorted является stateless операцией, так как только меняет порядок элементов, не создавая нового стрима. | sorted stateful. ❌ ПОСЛЕДСТВИЕ: разработчик использует sorted на бесконечном stream — приложение зависает / OOM (sorted ждёт все элементы перед сортировкой). На finite streams тоже плохо параллелизуется.
 
 ## Q6. Чем отличаются stateless и stateful промежуточные операции?
 
@@ -292,10 +292,10 @@ Stream.generate(Math::random)
 ```
 
 > [!mcq]
-> - [x] stateful операции (sorted, distinct) могут буферизировать все элементы и плохо параллелизуются, в отличие от stateless (filter, map). | sorted требует накопить все элементы перед сортировкой. distinct хранит множество уже увиденных значений. Оба ухудшают параллелизм. Ключевое отличие и best practice в production.
-> - [ ] sorted является stateless операцией, так как не хранит состояние между элементами, а только сравнивает соседние. | sorted — stateful: требует буферизации всех элементов для сортировки. Сравнение соседних элементов — это merge sort implementation detail, не определение stateless.
-> - [ ] filter является stateful операцией, так как запоминает предыдущие элементы для проверки уникальности. | filter проверяет каждый элемент независимо по предикату, не запоминая предыдущие. Уникальность обеспечивает distinct, не filter. Частая ошибка в реальном коде.
-> - [ ] limit является stateless операцией, так как просто передаёт первые N элементов без буферизации. | limit относится к short-circuit stateful операциям: он должен хранить счётчик переданных элементов. Без состояния нельзя понять, когда останавливаться.
+> - [x] stateful операции (sorted, distinct) могут буферизировать все элементы и плохо параллелизуются, в отличие от stateless (filter, map). | ✓ ПРИМЕНЯТЬ: ставьте limit/filter ПЕРЕД sorted — `stream.filter(...).limit(10).sorted()` лучше чем `stream.sorted().limit(10)` (если порядок до filter не важен); distinct early для уменьшения работы; для bounded data — sorted OK, для streaming — избегайте. 📋 ПРАВИЛО: "stateless = filter/map/flatMap/peek (parallel-friendly); stateful = sorted/distinct/limit/skip (avoid early in pipeline)". 🔗 См. Q5 (intermediate vs terminal), Q9 (sorted/distinct/limit), Q14 (parallel streams).
+> - [ ] sorted является stateless операцией, так как не хранит состояние между элементами, а только сравнивает соседние. | sorted stateful. ❌ ПОСЛЕДСТВИЕ: разработчик использует `parallelStream().sorted()` ожидая хорошего scaling — на деле sorted имеет sequential bottleneck (collect всех элементов → merge sort), parallel speedup минимальный.
+> - [ ] filter является stateful операцией, так как запоминает предыдущие элементы для проверки уникальности. | filter stateless. ❌ ПОСЛЕДСТВИЕ: путаница concepts ведёт к попыткам использовать filter для distinct — на деле filter не помнит элементы. Для уникальности — `distinct()` или сложный `Predicate` с external Set (но избегайте side effects).
+> - [ ] limit является stateless операцией, так как просто передаёт первые N элементов без буферизации. | limit stateful (counter). ❌ ПОСЛЕДСТВИЕ: ложное представление о parallel performance — limit в parallel стримах sequential coordination, не scales. Для top-N — используйте `Comparator` + reduce или specialized libraries.
 
 ## Q7. (!) Когда использовать map, flatMap и filter?
 
@@ -326,10 +326,10 @@ List<String> activeUserEmails = users.stream()
 ```
 
 > [!mcq]
-> - [ ] map преобразует каждый элемент в Stream и «сплющивает» результат, flatMap преобразует каждый элемент 1:1. | Это перепутаны определения. map — преобразование 1:1, flatMap — преобразование 1:N с разворачиванием вложенных Stream-ов в плоский. Частая ошибка в реальном коде.
-> - [ ] filter изменяет тип элементов в стриме, отбрасывая неподходящие. | filter сохраняет тип элементов — он только выбирает подмножество. Тип меняют map и flatMap. Частая ошибка в реальном коде.
-> - [x] filter отбирает элементы по условию не меняя тип, map преобразует каждый элемент 1:1, flatMap преобразует элемент в Stream и разворачивает. | Точная характеристика всех трёх операций. Понимание соотношений 1:1 и 1:N — ключ к правильному выбору. Ключевое отличие и best practice в production.
-> - [ ] flatMap всегда возвращает больше элементов, чем было в исходном стриме. | flatMap может вернуть меньше элементов, если функция возвращает Stream.empty() для некоторых элементов. Количество элементов зависит от реализации. Частая ошибка в реальном коде.
+> - [ ] map преобразует каждый элемент в Stream и «сплющивает» результат, flatMap преобразует каждый элемент 1:1. | Перепутано. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `users.stream().map(u -> u.getOrders().stream())` ожидая plain Stream<Order>, получает Stream<Stream<Order>> — type mismatch на toList. Нужен flatMap.
+> - [ ] filter изменяет тип элементов в стриме, отбрасывая неподходящие. | filter same type. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что `filter(s -> s.length() > 5)` вернёт `Stream<Integer>` (длины) вместо `Stream<String>` — ложные ожидания приводят к compile errors при последующих map'ах.
+> - [x] filter отбирает элементы по условию не меняя тип, map преобразует каждый элемент 1:1, flatMap преобразует элемент в Stream и разворачивает. | ✓ ПРИМЕНЯТЬ: filter для отбора (`isActive`, `> threshold`); map для преобразования (`User → UserDto`, `Long → String`); flatMap для разворачивания вложенных коллекций (`User → orders`, `Optional<Optional<T>> → Optional<T>`). 📋 ПРАВИЛО: "filter = same type, less items; map = 1:1 transform; flatMap = 1:N flatten". 🔗 См. Q8 (flatMap подробно), Q5 (intermediate ops), Q1 (что такое stream).
+> - [ ] flatMap всегда возвращает больше элементов, чем было в исходном стриме. | Может меньше. ❌ ПОСЛЕДСТВИЕ: ложные ожидания о cardinality — `flatMap(u -> u.orders().stream())` вернёт меньше элементов если у некоторых users нет orders (`Stream.empty()`). flatMap = аналог `flatMap` в Optional.
 
 ## Q8. Как работает flatMap и чем он отличается от map?
 
@@ -356,10 +356,10 @@ List<Order> allOrders = customers.stream()
 ```
 
 > [!mcq]
-> - [ ] flatMap(Collection::stream) возвращает Stream<Stream<String>>, который затем нужно разворачивать вручную. | flatMap автоматически разворачивает Stream, полученный из функции. Результатом будет плоский Stream<String>, а не вложенный. Это антипаттерн или неправильный выбор в production.
-> - [x] flatMap разворачивает List<List<String>> в плоский Stream<String>, тогда как map оставил бы вложенную структуру Stream<List<String>>. | Это ключевое отличие. map вернул бы Stream<List<String>> — вложенность осталась бы. flatMap применяет Collection::stream к каждому List и склеивает результаты в один поток. Immutable, String pool экономит память, StringBuilder для конкатенации, intern() для pool.
-> - [ ] flatMap требует, чтобы функция возвращала непустой Stream, иначе бросает NoSuchElementException. | flatMap корректно обрабатывает Stream.empty() — пустые стримы просто не добавляют элементов в результат. Никакого исключения нет. Это антипаттерн или неправильный выбор в production.
-> - [ ] map и flatMap обе меняют тип элементов, но flatMap дополнительно изменяет количество элементов в стриме. | map преобразует тип 1:1, flatMap меняет и тип и количество через развёртку. Но главное отличие — структурное: flatMap убирает уровень вложенности Stream.
+> - [ ] flatMap(Collection::stream) возвращает Stream<Stream<String>>, который затем нужно разворачивать вручную. | flatMap auto-разворачивает. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет `.flatMap(Function.identity())` после flatMap "для разворачивания" — лишний boilerplate. flatMap уже flat.
+> - [x] flatMap разворачивает List<List<String>> в плоский Stream<String>, тогда как map оставил бы вложенную структуру Stream<List<String>>. | ✓ ПРИМЕНЯТЬ: для денормализации связей one-to-many — `customers.stream().flatMap(c -> c.orders().stream())` даёт все orders плоско; для Optional разворачивания — `Stream.of(opt1, opt2).flatMap(Optional::stream)` (Java 9+); для полей-коллекций в DTO. 📋 ПРАВИЛО: "flatMap = map + flatten; map для 1:1, flatMap для 1:N (или 1:0 при empty); structural: убирает один уровень вложенности". 🔗 См. Q7 (map vs flatMap vs filter), Q8 (flatMap подробно), java-8 Q21 (map vs flatMap в CompletableFuture).
+> - [ ] flatMap требует, чтобы функция возвращала непустой Stream, иначе бросает NoSuchElementException. | Empty OK. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет null-check в lambda (`c -> c.orders() == null ? Stream.empty() : c.orders().stream()`) — но если возвращает `Stream.empty()`, flatMap нормально пропустит, никаких exceptions.
+> - [ ] map и flatMap обе меняют тип элементов, но flatMap дополнительно изменяет количество элементов в стриме. | Структурно разные. ❌ ПОСЛЕДСТВИЕ: фокус только на cardinality пропускает главное — flatMap убирает уровень вложенности (Stream<Stream<T>> → Stream<T>), это структурное преобразование, не просто 1:N.
 
 ## Q9. В чём разница между sorted, distinct, limit и skip?
 
@@ -387,10 +387,10 @@ List<String> unique = names.stream()
 ```
 
 > [!mcq]
-> - [ ] distinct() является O(1) операцией, так как проверяет уникальность через последовательное сравнение элементов. | distinct использует внутренний Set и работает за O(n) в среднем. Каждый элемент добавляется в HashSet для проверки уникальности. Частая ошибка в реальном коде.
-> - [ ] sorted() является short-circuit операцией и может остановиться раньше при нахождении нужного элемента. | sorted — полностью stateful операция, она должна накопить все элементы перед сортировкой. Short-circuit поведение у sorted отсутствует. Частая ошибка в реальном коде.
-> - [ ] limit(n) пропускает первые n элементов и возвращает остальные. | limit оставляет первые n элементов и отбрасывает остальные. Пропускает первые n элементов — это skip(n). Частая ошибка в реальном коде.
-> - [x] sorted() буферизирует все элементы для сортировки за O(n log n), distinct() хранит внутренний Set для проверки уникальности. | Оба stateful: sorted нужен весь набор данных для сортировки, distinct поддерживает Set видённых значений. Именно поэтому они плохо работают на параллельных и бесконечных стримах.
+> - [ ] distinct() является O(1) операцией, так как проверяет уникальность через последовательное сравнение элементов. | O(n) с Set. ❌ ПОСЛЕДСТВИЕ: ложные ожидания performance — на больших streams distinct может стать bottleneck (memory для Set, hash collisions). Для больших scale — Bloom filter или approximate dedup (HyperLogLog).
+> - [ ] sorted() является short-circuit операцией и может остановиться раньше при нахождении нужного элемента. | Не short-circuit. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.sorted().findFirst()` думая что эффективно — на деле sorted обходит ВСЕ элементы перед findFirst. Для top-1 — `stream.min(comparator)` или `stream.reduce`.
+> - [ ] limit(n) пропускает первые n элементов и возвращает остальные. | limit = take, не skip. ❌ ПОСЛЕДСТВИЕ: путаница `limit` (`take`) и `skip` приводит к pagination bug — `stream.limit(pageSize).skip(offset)` вместо `stream.skip(offset).limit(pageSize)` даёт нулевые pages.
+> - [x] sorted() буферизирует все элементы для сортировки за O(n log n), distinct() хранит внутренний Set для проверки уникальности. | ✓ ПРИМЕНЯТЬ: оптимизация порядка операций — `filter` ПЕРЕД `sorted`/`distinct` сокращает работу; для пагинации — `comparator + skip + limit + toList` (но для больших offsets лучше DB-pagination); `LinkedHashSet` для preserve insertion order at distinct. 📋 ПРАВИЛО: "sorted O(n log n) + buffer all; distinct O(n) avg + Set storage; limit/skip O(1) per element + counter". 🔗 См. Q6 (stateful vs stateless), Q14 (parallel streams), Q10 (short-circuit).
 
 ## Q10. Что такое short-circuit операции и зачем они нужны?
 
@@ -418,10 +418,10 @@ Optional<Integer> firstEvenSquare = Stream.iterate(1, n -> n + 1)
 ```
 
 > [!mcq]
-> - [ ] allMatch завершается на первом true-элементе, не проверяя остальные. | allMatch завершается на первом false — при нахождении элемента, нарушающего условие. Если все true — обрабатываются все элементы. Частая ошибка в реальном коде.
-> - [ ] findFirst и findAny на бесконечном стриме без filter всегда вызывают OutOfMemoryError. | findFirst и findAny — short-circuit операции. На бесконечном стриме без filter они вернут первый элемент мгновенно, не пытаясь обработать остальные. Частая ошибка в реальном коде.
-> - [x] anyMatch завершается на первом true-элементе, allMatch — на первом false, что делает их безопасными для бесконечных стримов с filter. | Это точное описание short-circuit поведения. anyMatch(pred) на бесконечном стриме вернёт true, как только найдёт подходящий элемент. Ключевое отличие и best practice в production.
-> - [ ] noneMatch всегда обрабатывает все элементы стрима, так как не может знать заранее, нарушит ли следующий элемент условие. | noneMatch — short-circuit: при нахождении первого true-элемента сразу возвращает false. Не все элементы обрабатываются. Частая ошибка в реальном коде.
+> - [ ] allMatch завершается на первом true-элементе, не проверяя остальные. | allMatch на первом false. ❌ ПОСЛЕДСТВИЕ: путаница allMatch/anyMatch приводит к багам валидации — `users.stream().allMatch(User::isActive)` ожидает что найдёт хоть одного active, а на деле проверяет ВСЕХ.
+> - [ ] findFirst и findAny на бесконечном стриме без filter всегда вызывают OutOfMemoryError. | Short-circuit. ❌ ПОСЛЕДСТВИЕ: разработчик избегает infinite streams "из-за OOM риска" — на деле findFirst мгновенно возвращает первый элемент, без обхода. Безопасно для практически любого short-circuit terminal.
+> - [x] anyMatch завершается на первом true-элементе, allMatch — на первом false, что делает их безопасными для бесконечных стримов с filter. | ✓ ПРИМЕНЯТЬ: `anyMatch` для existence check (`stream.anyMatch(User::isAdmin)`); `allMatch` для validation (`stream.allMatch(User::isVerified)`); `noneMatch` для exclusion check (`stream.noneMatch(User::isBanned)`). На пустом stream: anyMatch=false, allMatch=true (vacuous truth), noneMatch=true. 📋 ПРАВИЛО: "anyMatch=∃, allMatch=∀, noneMatch=¬∃; все short-circuit; vacuous truth на empty: anyMatch=F, allMatch=T, noneMatch=T". 🔗 См. Q3 (lazy evaluation), Q5 (terminal ops), Q9 (sorted не short-circuit).
+> - [ ] noneMatch всегда обрабатывает все элементы стрима, так как не может знать заранее, нарушит ли следующий элемент условие. | noneMatch short-circuit. ❌ ПОСЛЕДСТВИЕ: разработчик не использует `noneMatch` ожидая performance penalty — на деле он останавливается на первом false (т.е. при нахождении matching), как и anyMatch.
 
 ## Q11. (!) Как работает collect и зачем нужны Collectors?
 
