@@ -1,9 +1,14 @@
 package com.cheatsheet.quiz.service.imports;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.QuestionType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -56,6 +61,46 @@ class MarkdownQuestionParserTest {
         assertThat(q.rawAnswer()).contains("[!mcq]");
         // explanations parsed correctly
         assertThat(q.options().get(0).explanation()).contains("Parallel был default до Java 8");
+    }
+
+    @Test
+    void warnsWithFileAndQuestionContextWhenSkippingExtraMcqBlocks() throws IOException {
+        Logger parserLogger = (Logger) LoggerFactory.getLogger(MarkdownQuestionParser.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        parserLogger.addAppender(appender);
+        try {
+            Path file = tempDir.resolve("transactions.md");
+            Files.writeString(file, """
+                    ## Q7. (!) dirty/non-repeatable/phantom?
+
+                    Текст ответа.
+
+                    > [!mcq]
+                    > - [x] правильный | объяснение
+                    > - [ ] неправильный 1 | объяснение
+                    > - [ ] неправильный 2 | объяснение
+                    > - [ ] неправильный 3 | объяснение
+
+                    > [!mcq]
+                    > - [ ] вариант A | объяснение
+                    > - [x] вариант B | объяснение
+                    > - [ ] вариант C | объяснение
+                    > - [ ] вариант D | объяснение
+                    """);
+
+            parser().parse(file);
+
+            assertThat(appender.list)
+                    .filteredOn(e -> e.getLevel() == Level.WARN)
+                    .anySatisfy(e -> {
+                        assertThat(e.getFormattedMessage()).contains("transactions.md");
+                        assertThat(e.getFormattedMessage()).contains("Q7");
+                        assertThat(e.getFormattedMessage()).contains("[!mcq]");
+                    });
+        } finally {
+            parserLogger.detachAppender(appender);
+        }
     }
 
     @Test

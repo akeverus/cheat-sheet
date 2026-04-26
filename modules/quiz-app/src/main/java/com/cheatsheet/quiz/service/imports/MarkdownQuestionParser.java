@@ -104,7 +104,7 @@ public class MarkdownQuestionParser {
             if (matcher.matches()) {
                 if (current != null) {
                     current.answerMarkdown(answer.toString().trim());
-                    questions.add(current.build());
+                    questions.add(current.build(filePath));
                 }
                 answer.setLength(0);
                 String number = matcher.group(1);
@@ -123,7 +123,7 @@ public class MarkdownQuestionParser {
 
         if (current != null) {
             current.answerMarkdown(answer.toString().trim());
-            questions.add(current.build());
+            questions.add(current.build(filePath));
         }
 
         return questions;
@@ -204,8 +204,11 @@ public class MarkdownQuestionParser {
      * Поддержка нескольких блоков нарушила бы партиальный unique index
      * {@code uq_answer_options_single_correct_per_question} в БД (V13). Авторам
      * cheatsheet-ов следует разнести такие наборы по отдельным {@code ## QN} заголовкам.</p>
+     *
+     * @param rawAnswer текст ответа с возможным MCQ блоком
+     * @param contextDescription человекочитаемое описание места парсинга для warning-лога
      */
-    private McqParseResult extractMcqFromAnswer(String rawAnswer) {
+    private McqParseResult extractMcqFromAnswer(String rawAnswer, String contextDescription) {
         if (rawAnswer == null || rawAnswer.isBlank()) {
             return new McqParseResult(rawAnswer == null ? "" : rawAnswer, Collections.emptyList());
         }
@@ -256,8 +259,9 @@ public class MarkdownQuestionParser {
         }
 
         if (extraBlocksSkipped > 0) {
-            log.warn("Найдено {} дополнительных [!mcq] блоков в одном вопросе — учтён только первый. "
-                    + "Разнесите варианты по отдельным '## QN' заголовкам.", extraBlocksSkipped);
+            log.warn("{}: пропущено {} дополнительных [!mcq] блоков, учтён только первый. "
+                    + "Разнесите варианты по отдельным '## QN' заголовкам.",
+                    contextDescription, extraBlocksSkipped);
         }
 
         // Strip trailing blank lines
@@ -290,8 +294,10 @@ public class MarkdownQuestionParser {
             this.answerMarkdown = answerMarkdown == null ? "" : answerMarkdown.trim();
         }
 
-        ParsedQuestion build() {
-            McqParseResult mcq = extractMcqFromAnswer(answerMarkdown);
+        ParsedQuestion build(Path sourceFile) {
+            String fileName = sourceFile == null ? "<unknown>" : sourceFile.getFileName().toString();
+            String context = fileName + "#Q" + questionNumber;
+            McqParseResult mcq = extractMcqFromAnswer(answerMarkdown, context);
             CodeExtractionResult extraction = extractCodeAndType(mcq.answerWithoutMcq());
             return new ParsedQuestion(
                     questionNumber, questionText,
