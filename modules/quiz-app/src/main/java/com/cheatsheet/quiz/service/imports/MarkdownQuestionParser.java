@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.service.imports;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.QuestionType;
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +46,7 @@ import java.util.regex.Pattern;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MarkdownQuestionParser {
 
@@ -195,8 +197,13 @@ public class MarkdownQuestionParser {
     }
 
     /**
-     * Извлекает {@code > [!mcq]} блок из rawAnswer.
-     * Возвращает answer без MCQ блока и список распарсенных опций.
+     * Извлекает первый {@code > [!mcq]} блок из rawAnswer.
+     *
+     * <p>Если в одном вопросе встречается несколько {@code > [!mcq]} блоков подряд,
+     * учитывается только первый — остальные пропускаются с warning-логом.
+     * Поддержка нескольких блоков нарушила бы партиальный unique index
+     * {@code uq_answer_options_single_correct_per_question} в БД (V13). Авторам
+     * cheatsheet-ов следует разнести такие наборы по отдельным {@code ## QN} заголовкам.</p>
      */
     private McqParseResult extractMcqFromAnswer(String rawAnswer) {
         if (rawAnswer == null || rawAnswer.isBlank()) {
@@ -207,11 +214,16 @@ public class MarkdownQuestionParser {
         List<ParsedOption> options = new ArrayList<>();
         List<String> answerLines = new ArrayList<>();
         boolean inMcq = false;
+        boolean firstBlockCaptured = false;
+        int extraBlocksSkipped = 0;
 
         for (String line : lines) {
             String trimmed = line.trim();
 
             if (!inMcq && MCQ_CALLOUT_START.matcher(trimmed).matches()) {
+                if (firstBlockCaptured) {
+                    extraBlocksSkipped++;
+                }
                 inMcq = true;
                 continue;
             }
@@ -219,10 +231,12 @@ public class MarkdownQuestionParser {
             if (inMcq) {
                 Matcher optMatcher = MCQ_OPTION_LINE.matcher(trimmed);
                 if (optMatcher.matches()) {
-                    boolean correct = optMatcher.group(1).equalsIgnoreCase("x");
-                    String text = optMatcher.group(2).trim();
-                    String explanation = optMatcher.group(3) != null ? optMatcher.group(3).trim() : null;
-                    options.add(new ParsedOption(text, correct, explanation));
+                    if (!firstBlockCaptured) {
+                        boolean correct = optMatcher.group(1).equalsIgnoreCase("x");
+                        String text = optMatcher.group(2).trim();
+                        String explanation = optMatcher.group(3) != null ? optMatcher.group(3).trim() : null;
+                        options.add(new ParsedOption(text, correct, explanation));
+                    }
                     continue;
                 }
                 if (trimmed.startsWith(">")) {
@@ -230,12 +244,20 @@ public class MarkdownQuestionParser {
                 }
                 // Non-callout line — MCQ block ended
                 inMcq = false;
+                if (!options.isEmpty()) {
+                    firstBlockCaptured = true;
+                }
                 if (!trimmed.isEmpty()) {
                     answerLines.add(line);
                 }
             } else {
                 answerLines.add(line);
             }
+        }
+
+        if (extraBlocksSkipped > 0) {
+            log.warn("Найдено {} дополнительных [!mcq] блоков в одном вопросе — учтён только первый. "
+                    + "Разнесите варианты по отдельным '## QN' заголовкам.", extraBlocksSkipped);
         }
 
         // Strip trailing blank lines

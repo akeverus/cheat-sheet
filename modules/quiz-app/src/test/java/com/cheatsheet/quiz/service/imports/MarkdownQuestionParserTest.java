@@ -59,6 +59,39 @@ class MarkdownQuestionParserTest {
     }
 
     @Test
+    void usesOnlyFirstMcqBlockWhenQuestionHasMultiple() throws IOException {
+        Path file = tempDir.resolve("multi-mcq.md");
+        Files.writeString(file, """
+                ## Q1. (!) dirty/non-repeatable/phantom?
+
+                Описание трёх аномалий.
+
+                > [!mcq]
+                > - [x] Dirty read — чтение незакоммиченных данных | Возможен на READ UNCOMMITTED
+                > - [ ] Dirty read — повторное чтение даёт другое значение | Это non-repeatable
+                > - [ ] Dirty read — появление новых строк | Это phantom
+                > - [ ] Dirty read — чтение старой версии MVCC | Не аномалия
+
+                > [!mcq]
+                > - [ ] Phantom предотвращается на READ COMMITTED | Нужен SERIALIZABLE
+                > - [x] Phantom — повторный SELECT с WHERE возвращает другой набор | Корректно
+                > - [ ] Phantom — чтение удалённой строки | Это не phantom
+                > - [ ] Phantom — чтение незакоммиченных данных | Это dirty
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = parser().parse(file);
+
+        assertThat(questions).hasSize(1);
+        MarkdownQuestionParser.ParsedQuestion q = questions.get(0);
+        // Только первый блок попал в опции
+        assertThat(q.options()).hasSize(4);
+        assertThat(q.options().stream().filter(MarkdownQuestionParser.ParsedOption::correct).count())
+                .as("ровно один правильный ответ — без нарушения uq_answer_options_single_correct_per_question")
+                .isEqualTo(1);
+        assertThat(q.options().get(0).text()).contains("Dirty read");
+    }
+
+    @Test
     void parsesImportantQuestionAndDetectsCodeSnippet() throws IOException {
         Path file = tempDir.resolve("questions.md");
         Files.writeString(file, """
