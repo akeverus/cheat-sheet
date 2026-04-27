@@ -124,4 +124,137 @@ class AiResponseParserTest {
                 "Как работает TTL в cache-aside"
         );
     }
+
+    @Test
+    void parseHints_returnsListWhenJsonValid() throws Exception {
+        String json = "{\"hints\":[\"Подумай о транзакции\",\"Проверь isolation\"]}";
+
+        var hints = AiResponseParser.parseHints(json, objectMapper);
+
+        assertThat(hints).containsExactly("Подумай о транзакции", "Проверь isolation");
+    }
+
+    @Test
+    void parseHints_returnsEmptyListWhenArrayMissing() throws Exception {
+        String json = "{\"other\":\"value\"}";
+
+        var hints = AiResponseParser.parseHints(json, objectMapper);
+
+        assertThat(hints).isEmpty();
+    }
+
+    @Test
+    void parseHints_skipsBlankEntries() throws Exception {
+        String json = "{\"hints\":[\"Полезный совет\",\"   \",\"\"]}";
+
+        var hints = AiResponseParser.parseHints(json, objectMapper);
+
+        assertThat(hints).containsExactly("Полезный совет");
+    }
+
+    @Test
+    void parseTakeaway_returnsTextFromJson() throws Exception {
+        String json = "{\"takeaway\":\"Главное: идемпотентность\"}";
+
+        var takeaway = AiResponseParser.parseTakeaway(json, objectMapper);
+
+        assertThat(takeaway).hasValueSatisfying(s -> assertThat(s).contains("идемпотентность"));
+    }
+
+    @Test
+    void parseTakeaway_returnsEmptyForBlankPayload() throws Exception {
+        String json = "{\"takeaway\":\"   \"}";
+
+        assertThat(AiResponseParser.parseTakeaway(json, objectMapper)).isEmpty();
+    }
+
+    @Test
+    void parseDiagram_returnsMermaidWhenNeededTrue() throws Exception {
+        String json = "{\"needed\":true,\"mermaid\":\"flowchart TD\\n A-->B\"}";
+
+        var diagram = AiResponseParser.parseDiagram(json, objectMapper);
+
+        assertThat(diagram).hasValueSatisfying(s -> assertThat(s).contains("flowchart"));
+    }
+
+    @Test
+    void parseDiagram_returnsEmptyWhenNeededFalse() throws Exception {
+        String json = "{\"needed\":false,\"mermaid\":\"unused\"}";
+
+        assertThat(AiResponseParser.parseDiagram(json, objectMapper)).isEmpty();
+    }
+
+    @Test
+    void parseDiagram_returnsEmptyWhenMermaidBlank() throws Exception {
+        String json = "{\"needed\":true,\"mermaid\":\"   \"}";
+
+        assertThat(AiResponseParser.parseDiagram(json, objectMapper)).isEmpty();
+    }
+
+    @Test
+    void parseCanonicalQuestion_handlesCodeQuestionType() throws Exception {
+        String json = """
+                {"questionText":"Что выведет код?",
+                 "answerMarkdown":"Code prints 42.",
+                 "questionType":"CODE",
+                 "codeSnippet":"System.out.println(42);"}
+                """;
+
+        var canonical = AiResponseParser.parseCanonicalQuestion(json, objectMapper);
+
+        assertThat(canonical).isPresent();
+        assertThat(canonical.get().questionType()).isEqualTo("CODE");
+        assertThat(canonical.get().codeSnippet()).contains("println");
+    }
+
+    @Test
+    void parseCanonicalQuestion_blankCodeSnippetForCodeTypeBecomesNull() throws Exception {
+        String json = """
+                {"questionText":"Q","answerMarkdown":"A",
+                 "questionType":"CODE","codeSnippet":"  "}
+                """;
+
+        var canonical = AiResponseParser.parseCanonicalQuestion(json, objectMapper);
+
+        assertThat(canonical.get().codeSnippet()).isNull();
+    }
+
+    @Test
+    void parseCanonicalQuestion_emptyForBlankQuestionText() throws Exception {
+        String json = "{\"questionText\":\"\",\"answerMarkdown\":\"A\"}";
+
+        assertThat(AiResponseParser.parseCanonicalQuestion(json, objectMapper)).isEmpty();
+    }
+
+    @Test
+    void truncate_keepsShortText() {
+        assertThat(AiResponseParser.truncate("hello", 10)).isEqualTo("hello");
+    }
+
+    @Test
+    void truncate_appendsEllipsisWhenLong() {
+        String result = AiResponseParser.truncate("abcdefghij", 5);
+        assertThat(result).isEqualTo("abcde...");
+    }
+
+    @Test
+    void truncate_returnsEmptyForNull() {
+        assertThat(AiResponseParser.truncate(null, 10)).isEmpty();
+    }
+
+    @Test
+    void preview_appendsEllipsisCharWhenLong() {
+        String result = AiResponseParser.preview("0123456789", 4);
+        assertThat(result).isEqualTo("0123…");
+    }
+
+    @Test
+    void preview_returnsEmptyForNull() {
+        assertThat(AiResponseParser.preview(null, 10)).isEmpty();
+    }
+
+    @Test
+    void stripCodeFences_returnsEmptyForNull() {
+        assertThat(AiResponseParser.stripCodeFences(null)).isEmpty();
+    }
 }
