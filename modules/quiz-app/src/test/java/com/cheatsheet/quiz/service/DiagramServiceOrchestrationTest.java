@@ -72,6 +72,46 @@ class DiagramServiceOrchestrationTest {
         verify(questionRepository, never()).updateDiagram(question.id(), "sanitized-first");
     }
 
+    @Test
+    void persistsValidatedDiagramWhenAiReturnsRelevant() {
+        Question question = questionWithDiagram(123L, null);
+        when(aiQuestionClient.generateDiagram(question.questionText(), question.answerMarkdown(), question.topic()))
+                .thenReturn(Optional.of("raw-mermaid"));
+        when(mermaidSanitizer.sanitizeMermaid("raw-mermaid")).thenReturn("graph TD\nA-->B");
+        when(mermaidValidator.isRelevantMermaid("graph TD\nA-->B",
+                question.questionText(), question.answerMarkdown()))
+                .thenReturn(true);
+
+        Optional<String> result = service.getOrGenerateDiagram(question);
+
+        assertThat(result).contains("graph TD\nA-->B");
+        verify(questionRepository).updateDiagram(123L, "graph TD\nA-->B");
+    }
+
+    @Test
+    void returnsEmptyWhenAiReturnsEmpty() {
+        Question question = questionWithDiagram(456L, null);
+        when(aiQuestionClient.generateDiagram(question.questionText(), question.answerMarkdown(), question.topic()))
+                .thenReturn(Optional.empty());
+
+        Optional<String> result = service.getOrGenerateDiagram(question);
+
+        assertThat(result).isEmpty();
+        verify(questionRepository, never()).updateDiagram(org.mockito.ArgumentMatchers.anyLong(), anyString());
+    }
+
+    @Test
+    void returnsEmptyAndLogsWhenGenerationThrows() {
+        Question question = questionWithDiagram(999L, null);
+        when(aiQuestionClient.generateDiagram(question.questionText(), question.answerMarkdown(), question.topic()))
+                .thenThrow(new RuntimeException("AI down"));
+
+        Optional<String> result = service.getOrGenerateDiagram(question);
+
+        assertThat(result).isEmpty();
+        verify(questionRepository, never()).updateDiagram(org.mockito.ArgumentMatchers.anyLong(), anyString());
+    }
+
     private Question questionWithDiagram(long id, String diagramMermaid) {
         return new Question(
                 id,
