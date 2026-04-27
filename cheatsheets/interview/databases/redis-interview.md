@@ -5,12 +5,16 @@ tags:
   - interview
   - databases
   - redis-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Redis"
   - "Redis interview"
   - "Redis собеседование"
-  - "Redis вопросы"
-  - "Spring Data Redis interview"
+prerequisites:
+  - "[[redis]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Redis`
@@ -156,10 +160,10 @@ redis-cli INFO server | head -5
 ```
 
 > [!mcq]
-> - [ ] Redis — это реляционная база данных с поддержкой SQL-запросов и хранением данных на диске | Redis не поддерживает SQL и хранит данные прежде всего в оперативной памяти, что отличает его от реляционных СУБД. Это антипаттерн или неправильный выбор в production.
-> - [x] Redis — это высокопроизводительное in-memory хранилище типа key-value, обеспечивающее латентность менее 1 мс | Именно так: данные хранятся в RAM, операции занимают sub-millisecond время, что делает Redis незаменимым для кэширования и сессий. In-memory, fast, persistence (RDB/AOF), pub/sub, streams, cluster для масштабирования.
-> - [ ] Redis — это документоориентированная NoSQL база данных, аналогичная MongoDB | MongoDB хранит документы в BSON-формате на диске; Redis хранит структуры данных в памяти и не является документоориентированным. Это антипаттерн или неправильный выбор в production.
-> - [ ] Redis — это колоночная база данных, оптимизированная для аналитических запросов типа OLAP | Колоночные БД (ClickHouse, Cassandra) оптимизированы для агрегаций по столбцам; Redis — key-value хранилище в памяти. Это антипаттерн или неправильный выбор в production.
+> - [ ] Redis — это реляционная база данных с поддержкой SQL-запросов и хранением данных на диске | Redis не поддерживает SQL и хранит данные прежде всего в оперативной памяти, что отличает его от реляционных СУБД. ❌ ПОСЛЕДСТВИЕ: разработчик пытается использовать Redis как primary database с complex JOIN queries — нет SQL, complex aggregations невозможны. Архитектурный mismatch, надо использовать PostgreSQL для relational + Redis для cache.
+> - [x] Redis — это высокопроизводительное in-memory хранилище типа key-value, обеспечивающее латентность менее 1 мс | Именно так: данные хранятся в RAM, операции занимают sub-millisecond время, что делает Redis незаменимым для кэширования и сессий. ✓ ПРИМЕНЯТЬ: distributed cache (Spring `@Cacheable` с Redis backend); session store (Spring Session Redis); rate limiter (INCR + EXPIRE); pub/sub messaging; leaderboards через Sorted Set; Twitter, Instagram, GitHub используют Redis для real-time features. 📋 ПРАВИЛО: «Redis = in-memory key-value, sub-1ms latency, RAM-based». 🔗 См. Q2 (data types), Q4 (use cases).
+> - [ ] Redis — это документоориентированная NoSQL база данных, аналогичная MongoDB | MongoDB хранит документы в BSON-формате на диске; Redis хранит структуры данных в памяти и не является документоориентированным. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает rich query API (find by complex JSON path) — Redis имеет только GET по key. Tries RedisJSON module — добавляет complexity vs использовать MongoDB напрямую.
+> - [ ] Redis — это колоночная база данных, оптимизированная для аналитических запросов типа OLAP | Колоночные БД (ClickHouse, Cassandra) оптимизированы для агрегаций по столбцам; Redis — key-value хранилище в памяти. ❌ ПОСЛЕДСТВИЕ: команда выбирает Redis для analytics workload (10TB data, complex queries), не помещается в RAM. Должны были использовать ClickHouse / BigQuery.
 
 ## Q2. (!) Какие типы данных поддерживает `Redis`?
 
@@ -209,16 +213,16 @@ redis-cli ZREVRANGE leaderboard 0 -1 WITHSCORES
 ```
 
 > [!mcq]
-> - [ ] Redis поддерживает только String, List и Hash — остальные типы являются расширениями через модули | String, List, Hash входят в базовый набор, но Sorted Set, Set, Stream, Bitmap, HyperLogLog, Geo — тоже нативные типы ядра Redis. Это антипаттерн или неправильный выбор в production.
-> - [ ] Redis поддерживает только String, так как все данные хранятся как строки в бинарном виде | Хотя внутри все значения бинарны, Redis предоставляет 10+ типов данных с разной семантикой и набором команд. Это антипаттерн или неправильный выбор в production.
-> - [ ] Redis поддерживает только пять типов: String, List, Hash, Set, Sorted Set — остальное недоступно без модулей | Stream появился в Redis 5.0 как нативный тип ядра, Bitmap и HyperLogLog тоже встроены без каких-либо модулей. Это антипаттерн или неправильный выбор в production.
-> - [x] Redis поддерживает 10+ нативных типов данных, включая String, List, Hash, Set, Sorted Set, Stream, Bitmap, HyperLogLog, Geo | Все перечисленные типы являются частью ядра Redis и не требуют дополнительных модулей — каждый оптимизирован под свой сценарий. In-memory, fast, persistence (RDB/AOF), pub/sub, streams, cluster для масштабирования.
+> - [ ] Redis поддерживает только String, List и Hash — остальные типы являются расширениями через модули | String, List, Hash входят в базовый набор, но Sorted Set, Set, Stream, Bitmap, HyperLogLog, Geo — тоже нативные типы ядра Redis. ❌ ПОСЛЕДСТВИЕ: разработчик ставит лишние Redis modules (RedisGears, RedisJSON), увеличивает image size, complicates deployment. Реально достаточно core types.
+> - [ ] Redis поддерживает только String, так как все данные хранятся как строки в бинарном виде | Хотя внутри все значения бинарны, Redis предоставляет 10+ типов данных с разной семантикой и набором команд. ❌ ПОСЛЕДСТВИЕ: команда хранит JSON в String и парсит на client side для каждого update. Должны были использовать Hash для partial updates через HSET — 10x более эффективно.
+> - [ ] Redis поддерживает только пять типов: String, List, Hash, Set, Sorted Set — остальное недоступно без модулей | Stream появился в Redis 5.0 как нативный тип ядра, Bitmap и HyperLogLog тоже встроены без каких-либо модулей. ❌ ПОСЛЕДСТВИЕ: команда не использует HyperLogLog для cardinality estimation, хранит каждый user в Set — memory expensive 100x. Реально HLL занимает 12KB для миллиардов uniques.
+> - [x] Redis поддерживает 10+ нативных типов данных, включая String, List, Hash, Set, Sorted Set, Stream, Bitmap, HyperLogLog, Geo | Все перечисленные типы являются частью ядра Redis и не требуют дополнительных модулей — каждый оптимизирован под свой сценарий. ✓ ПРИМЕНЯТЬ: leaderboards — Sorted Set; user profile — Hash; rate limiter counters — String INCR; recent items — List LPUSH/RTRIM; unique visitors — HyperLogLog (12KB constant size); ride-sharing nearest drivers — GEOADD/GEORADIUS. 📋 ПРАВИЛО: «выбирать тип под use case, не использовать только String». 🔗 См. Q1 (Redis overview), Q3 (single-threaded), Q4 (use cases).
 
 > [!mcq]
-> - [x] Sorted Set — это множество уникальных элементов, каждый из которых имеет числовой score, и элементы автоматически отсортированы по этому score | Именно так работает Sorted Set: уникальность элементов обеспечивается хеш-таблицей, порядок — skip list, доступ по диапазону score — O(log N). Ключевое отличие и best practice в production.
-> - [ ] Sorted Set — это упорядоченный список с дубликатами, аналогичный List, но с автоматической сортировкой по алфавиту | List — упорядоченный список с дубликатами, но не sorted. Sorted Set не допускает дубликатов и сортирует по числовому score. Частая ошибка в реальном коде.
-> - [ ] Sorted Set — это Hash, в котором ключи отсортированы в алфавитном порядке при обходе | Hash хранит поля-значения без какой-либо сортировки; Sorted Set — отдельный тип с числовыми score. Частая ошибка в реальном коде.
-> - [ ] Sorted Set — это Set с дополнительным индексом на вставку, позволяющим извлекать элементы в порядке добавления | Порядок в Sorted Set определяется числовым score, а не временем вставки. Частая ошибка в реальном коде.
+> - [x] Sorted Set — это множество уникальных элементов, каждый из которых имеет числовой score, и элементы автоматически отсортированы по этому score | Именно так работает Sorted Set: уникальность элементов обеспечивается хеш-таблицей, порядок — skip list, доступ по диапазону score — O(log N). ✓ ПРИМЕНЯТЬ: leaderboards (game ranking by points), priority queues (delayed jobs by execution timestamp), rate limiting (sliding window counters), trending topics (engagement score). Twitter trending uses Sorted Set; Redis Streams для time-series. 📋 ПРАВИЛО: «Sorted Set = ranked, score-based ordering, O(log N)». 🔗 См. Q2 (data types), Q4 (use cases).
+> - [ ] Sorted Set — это упорядоченный список с дубликатами, аналогичный List, но с автоматической сортировкой по алфавиту | List — упорядоченный список с дубликатами, но не sorted. Sorted Set не допускает дубликатов и сортирует по числовому score. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает duplicate elements в leaderboard. ZADD с тем же elementId перезаписывает score — топ дубликаты не работают как ожидается.
+> - [ ] Sorted Set — это Hash, в котором ключи отсортированы в алфавитном порядке при обходе | Hash хранит поля-значения без какой-либо сортировки; Sorted Set — отдельный тип с числовыми score. ❌ ПОСЛЕДСТВИЕ: разработчик пытается использовать HSCAN для sorted access — Hash не sortable. Tries to sort на client side — O(N log N) на каждый запрос. ZRANGE правильнее.
+> - [ ] Sorted Set — это Set с дополнительным индексом на вставку, позволяющим извлекать элементы в порядке добавления | Порядок в Sorted Set определяется числовым score, а не временем вставки. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает FIFO order, использует insertion timestamp как score, но забывает обновить — elements выходят в произвольном порядке.
 
 ## Q3. Как `Redis` обрабатывает команды (однопоточность)?
 
