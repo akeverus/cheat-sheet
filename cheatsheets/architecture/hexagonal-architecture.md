@@ -2,11 +2,15 @@
 title: "Hexagonal Architecture (Ports & Adapters)"
 description: "Hexagonal Architecture: порты, адаптеры, изоляция домена, применение в Java/Spring Boot."
 tags:
-  - architecture
-  - hexagonal-architecture
-  - ports-and-adapters
-  - design-patterns
+  - "architecture"
+  - "hexagonal-architecture"
+  - "ports-and-adapters"
+  - "design-patterns"
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Hexagonal Architecture (Ports & Adapters)"
+  - "hexagonal architecture"
 updated: "2026-04-20"
 ---
 # Hexagonal Architecture (Ports & Adapters)
@@ -285,6 +289,51 @@ class JpaProductRepositoryTest {
 - Больше кода и классов (mapping между слоями).
 - Избыточно для простых CRUD-сервисов.
 - Требует дисциплины команды.
+
+## Антипаттерны
+
+Типовые ошибки при внедрении Hexagonal:
+
+| Антипаттерн | Почему плохо | Как исправить |
+|---|---|---|
+| Один порт, у которого 20 методов | Превращается в God-интерфейс, одни клиенты используют половину | ISP: разделить на узкие порты по cases (`CreateOrderPort`, `CancelOrderPort`) |
+| Output port возвращает JPA-сущность | Domain протекает в инфраструктуру | Adapter маппит JPA в domain-объект; в port — только domain |
+| Driving adapter знает про Output ports напрямую | Нарушает направление зависимостей | REST-adapter общается с Application через Input port; Output ports внутри Application |
+| Spring-аннотации в port-интерфейсах (`@Cacheable`) | Привязка к Spring | Аннотации — на реализации (adapter или service), не на интерфейсе |
+| `domain` импортирует Spring | Domain должен быть pure-Java | Spring живёт в `infrastructure/`; домен зависит только от JDK + Lombok |
+| Маппинг inline в use case (`return new Dto(order.id(), ...)` ) | Use case становится грязным | Отдельный mapper-класс per adapter |
+
+## ArchUnit для контроля Ports & Adapters
+
+```java
+@AnalyzeClasses(packages = "com.example.shop")
+class HexagonalArchitectureTest {
+
+    @ArchTest
+    static final ArchRule domainHasNoSpringDependencies =
+            classes().that().resideInAPackage("..domain..")
+                    .should().onlyDependOnClassesThat().resideInAnyPackage(
+                            "..domain..", "java..", "lombok..");
+
+    @ArchTest
+    static final ArchRule applicationOnlyDependsOnDomain =
+            classes().that().resideInAPackage("..application..")
+                    .should().onlyDependOnClassesThat().resideInAnyPackage(
+                            "..application..", "..domain..", "java..", "lombok..",
+                            "org.springframework.stereotype..", "org.springframework.transaction..");
+
+    @ArchTest
+    static final ArchRule adaptersImplementPorts =
+            classes().that().resideInAPackage("..adapter.out..")
+                    .and().areAnnotatedWith("org.springframework.stereotype.Component")
+                    .or().areAnnotatedWith("org.springframework.stereotype.Repository")
+                    .should().implement(JavaClass.Predicates.resideInAPackage("..application.port.out.."));
+}
+```
+
+Без этих правил hexagonal быстро размывается: Spring проникает в
+domain, port-интерфейсы превращаются в utility-классы, маппинг
+расползается по контроллерам.
 
 ## See also
 
