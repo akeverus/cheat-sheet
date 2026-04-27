@@ -2,11 +2,14 @@
 title: "Clean Architecture"
 description: "Clean Architecture Роберта Мартина: слои, зависимости, Dependency Rule, применение в Java/Spring."
 tags:
-  - architecture
-  - clean-architecture
-  - solid
-  - design-patterns
+  - "architecture"
+  - "clean-architecture"
+  - "solid"
+  - "design-patterns"
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Clean Architecture"
 updated: "2026-04-20"
 ---
 # Clean Architecture
@@ -259,6 +262,88 @@ Domain и Use Case тесты — быстрые, изолированные, б
 - CRUD-приложения с тонкой логикой.
 - Прототипы и MVP.
 - Маленькие сервисы с одним-двумя сценариями.
+
+## Сравнение с другими архитектурами
+
+| Подход | Слои | Где живёт бизнес-логика | Зависимости |
+|---|---|---|---|
+| Layered (классический) | Controller → Service → Repository → DB | В Service | Сверху вниз; Service знает Repository (JPA) |
+| Clean Architecture | Frameworks → Adapters → Use Cases → Entities | В Entities + Use Cases | Только внутрь; внутренние слои не знают внешних |
+| Hexagonal (Ports & Adapters) | Adapters → Application → Domain | В Domain + Application | Domain в центре, изолирован через Ports |
+| Onion | Infrastructure → Application → Domain Services → Domain Model | В Domain Model | Кольца, наружу нельзя |
+
+Clean, Hexagonal и Onion — родственные: одна идея «зависимости только
+внутрь», разный уровень детализации. На практике их часто комбинируют,
+суть одна — изолировать домен от инфраструктуры.
+
+## Миграция от Layered к Clean
+
+Типовой путь, когда CRUD-приложение «выросло» и Service-слой стал
+неуправляемым:
+
+1. **Шаг 1 — выделить домен.** Создать `domain/` с чистыми классами
+   (POJO без JPA). Логика, охраняющая инварианты, переезжает в эти
+   классы из Service.
+2. **Шаг 2 — Use Cases.** Создать `application/usecase/` с `*UseCase`
+   интерфейсами. Service-методы переименовать и перенести как реализации.
+3. **Шаг 3 — Output Ports.** Из Service вытащить интерфейсы
+   `*Repository`, `*Gateway` в `application/port/out/`. JPA-реализации
+   ушли в `adapters/out/persistence/` и реализуют эти порты.
+4. **Шаг 4 — Mapping.** Между `domain.Order` (чистый) и
+   `infrastructure.OrderEntity` (JPA) — отдельный mapper в adapter.
+   Никаких `@Entity` в `domain/`.
+5. **Шаг 5 — DI.** Spring подключает реализации к интерфейсам
+   автоматически (через `@Component`). Конфигурация — в `infrastructure/`.
+
+Не пытайся мигрировать всё сразу. Применяй паттерн к новым use case-ам
+и постепенно переноси старые при изменениях.
+
+## Антипаттерны
+
+| Антипаттерн | Почему плохо | Как исправить |
+|---|---|---|
+| `@Entity` в domain-классах | Привязка домена к JPA, нельзя сменить ORM | Domain — чистый POJO, отдельная `*Entity` в `infrastructure/persistence/` |
+| Use Case вызывает Spring-аннотации (`@Cacheable`, `@Transactional`) на самом use case | Аспекты привязывают к Spring | Применять аспекты на adapter-слое или через контракт Use Case |
+| Use Case возвращает JPA Entity | Слой adapters протекает | Возвращать domain-объекты или dedicated DTO |
+| Adapters → Use Cases в обе стороны | Циклическая зависимость, нарушает Dependency Rule | Output ports наружу, input ports внутрь — проверить ArchUnit правилами |
+| Один большой "facade" Use Case со всем подряд | Use Case теряет смысл, превращается в Service | Один use case — одна бизнес-операция; делить по агрегатам |
+| Mapping между слоями раскидан по контроллерам и сервисам | Дублирование, рассинхронизация | Отдельные mapper-классы (`OrderMapper`) в каждом adapter |
+| Domain-логика в маппере | Нарушение SRP, маппер становится сервисом | Маппер — только конвертация; логика — в domain или use case |
+
+## ArchUnit для контроля зависимостей
+
+Без автоматического контроля Dependency Rule быстро размывается.
+ArchUnit позволяет зафиксировать правила как тесты:
+
+```java
+@AnalyzeClasses(packages = "com.example.shop")
+class CleanArchitectureRulesTest {
+
+    @ArchTest
+    static final ArchRule domainHasNoSpringDependencies =
+            classes().that().resideInAPackage("..domain..")
+                    .should().onlyDependOnClassesThat().resideInAnyPackage(
+                            "..domain..", "java..", "lombok..");
+
+    @ArchTest
+    static final ArchRule applicationDoesNotKnowAdapters =
+            noClasses().that().resideInAPackage("..application..")
+                    .should().dependOnClassesThat().resideInAPackage("..adapter..");
+
+    @ArchTest
+    static final ArchRule cleanLayers =
+            layeredArchitecture()
+                    .layer("Domain").definedBy("..domain..")
+                    .layer("Application").definedBy("..application..")
+                    .layer("Adapters").definedBy("..adapter..")
+                    .whereLayer("Domain").mayNotAccessAnyLayer()
+                    .whereLayer("Application").mayOnlyAccessLayers("Domain")
+                    .whereLayer("Adapters").mayOnlyAccessLayers("Application", "Domain");
+}
+```
+
+Эти правила превращают «договорённость» в зелёный/красный тест.
+В CI они защищают от ошибок ревью и эволюционных компромиссов.
 
 ## See also
 
