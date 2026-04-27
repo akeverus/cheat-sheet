@@ -3,8 +3,11 @@ package com.cheatsheet.quiz.api.exception;
 import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
 import com.cheatsheet.quiz.common.exception.GlobalExceptionHandler;
 import com.cheatsheet.quiz.api.dto.request.interview.QuestionIdRequest;
+import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
+import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
 import com.cheatsheet.quiz.service.ai.AiGenerationException;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.util.Set;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,7 +45,14 @@ class GlobalExceptionHandlerTest {
                         new ApiAdminValidationController(),
                         new ApiTypeMismatchController(),
                         new ApiConflictController(),
-                        new FaviconController()
+                        new FaviconController(),
+                        new ApiQuestionNotFoundController(),
+                        new UiQuestionNotFoundController(),
+                        new ApiOptionNotFoundController(),
+                        new ApiConstraintViolationController(),
+                        new ApiIllegalStateController(),
+                        new UiIllegalStateController(),
+                        new ApiGenericErrorController()
                 )
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -100,8 +113,57 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void faviconMissingReturnsNoContentWithoutServerError() throws Exception {
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/favicon.ico"))
+        mockMvc.perform(get("/favicon.ico"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void apiQuestionNotFoundReturns404WithType() throws Exception {
+        mockMvc.perform(get("/api/test/q-not-found"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.type").value(ApiErrorTypes.QUESTION_NOT_FOUND));
+    }
+
+    @Test
+    void uiQuestionNotFoundRedirectsToHome() throws Exception {
+        mockMvc.perform(get("/test/q-not-found"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void apiOptionNotFoundReturns404WithType() throws Exception {
+        mockMvc.perform(get("/api/test/o-not-found"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.type").value(ApiErrorTypes.OPTION_NOT_FOUND));
+    }
+
+    @Test
+    void apiConstraintViolationReturnsValidationError() throws Exception {
+        mockMvc.perform(get("/api/test/constraint-violation"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value(ApiErrorTypes.VALIDATION_ERROR));
+    }
+
+    @Test
+    void apiIllegalStateReturnsConflict() throws Exception {
+        mockMvc.perform(post("/api/test/illegal-state"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.type").value(ApiErrorTypes.QUESTION_STATE_INVALID));
+    }
+
+    @Test
+    void uiIllegalStateRedirectsToHome() throws Exception {
+        mockMvc.perform(post("/test/illegal-state"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void apiGenericErrorReturnsInternalServerError() throws Exception {
+        mockMvc.perform(post("/api/test/generic-error"))
+                .andExpect(status().isInternalServerError());
     }
 
     @RestController
@@ -160,6 +222,63 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/favicon.ico")
         String fail() throws NoResourceFoundException {
             throw new NoResourceFoundException(HttpMethod.GET, "/favicon.ico");
+        }
+    }
+
+    @RestController
+    static class ApiQuestionNotFoundController {
+        @GetMapping("/api/test/q-not-found")
+        String fail() {
+            throw new QuestionNotFoundException("Вопрос 42 не найден");
+        }
+    }
+
+    @Controller
+    static class UiQuestionNotFoundController {
+        @GetMapping("/test/q-not-found")
+        String fail() {
+            throw new QuestionNotFoundException("Вопрос 42 не найден");
+        }
+    }
+
+    @RestController
+    static class ApiOptionNotFoundController {
+        @GetMapping("/api/test/o-not-found")
+        String fail() {
+            throw new OptionNotFoundException("Вариант не найден");
+        }
+    }
+
+    @RestController
+    static class ApiConstraintViolationController {
+        @GetMapping("/api/test/constraint-violation")
+        String fail() {
+            // jakarta.validation.ConstraintViolationException с пустым набором — handler корректно отдаст 400
+            throw new ConstraintViolationException("validation failed", Set.of());
+        }
+    }
+
+    @RestController
+    static class ApiIllegalStateController {
+        @PostMapping("/api/test/illegal-state")
+        String fail() {
+            throw new IllegalStateException("Невозможный переход состояния");
+        }
+    }
+
+    @Controller
+    static class UiIllegalStateController {
+        @PostMapping("/test/illegal-state")
+        String fail() {
+            throw new IllegalStateException("Невозможный переход состояния");
+        }
+    }
+
+    @RestController
+    static class ApiGenericErrorController {
+        @PostMapping("/api/test/generic-error")
+        String fail() {
+            throw new RuntimeException("Неожиданная ошибка");
         }
     }
 }
