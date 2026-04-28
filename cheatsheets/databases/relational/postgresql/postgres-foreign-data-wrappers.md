@@ -5,14 +5,25 @@ tags:
   - postgresql
   - fdw
   - foreign-data-wrapper
-  - postgres_fdw
-  - file_fdw
+  - postgres-fdw
+  - file-fdw
   - external-data
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
-next: ["databases/postgres-extensions.md", "databases/postgres-replication.md"]
+aliases:
+  - "PostgreSQL"
+  - "Foreign Data Wrappers"
+  - "postgres foreign data wrappers"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-admin]]"
+related:
+  - "[[postgres-queries]]"
+  - "[[postgres-performance-tuning]]"
+next:
+  - "[[postgres-extensions]]"
+  - "[[postgres-replication]]"
 updated: "2026-04-20"
-related: ["databases/postgres-queries.md", "databases/postgres-performance-tuning.md"]
 ---
 
 # PostgreSQL: Foreign Data Wrappers

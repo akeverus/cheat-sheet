@@ -7,14 +7,20 @@ tags:
   - optimization
   - jvm
   - profiling
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Performance"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-collections]]"
 next:
-  - redis-performance
-  - go-performance
-  - postgres-performance-tuning
+  - "[[redis-performance]]"
+  - "[[go-performance]]"
+  - "[[postgres-performance-tuning]]"
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
 # Scala Performance

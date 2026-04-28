@@ -8,11 +8,21 @@ tags:
   - mockito
   - integration-tests
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-data.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus testing"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-data]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-data]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-data.md"]
 ---
 
 # Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest

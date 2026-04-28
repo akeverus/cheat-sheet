@@ -9,11 +9,19 @@ tags:
   - optimization
   - java
   - kotlin
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut graalvm"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-cloud]]"
+  - "[[micronaut-performance]]"
 next: []
 updated: "2026-04-20"
-related: ["micronaut-cloud.md", "micronaut-performance.md"]
 ---
 
 # Micronaut: GraalVM Native Images — Compilation и Optimization

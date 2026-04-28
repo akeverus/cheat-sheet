@@ -5,12 +5,15 @@ tags:
   - interview
   - leadership
   - code-review-practices-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Практики code review"
-  - "Code review practices interview"
   - "Код ревью практики"
   - "Процесс код ревью"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Практики `code review`

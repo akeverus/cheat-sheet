@@ -5,15 +5,16 @@ tags:
   - interview
   - devops
   - gradle-maven-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Gradle и Maven"
   - "Gradle interview"
   - "Maven interview"
-  - "Gradle собеседование"
-  - "Maven собеседование"
-  - "Вопросы по Gradle"
-  - "Вопросы по Maven"
-  - "Build tools interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[gradle]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Gradle` и `Maven`

@@ -8,6 +8,10 @@ tags:
   - logging
   - fluentd
 type: "index"
+aliases:
+  - "Fluentd"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Fluentd

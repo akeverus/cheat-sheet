@@ -5,8 +5,13 @@ tags:
   - libraries
   - kotlin
   - kotlin-kodein
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Kodein"
+  - "kotlin kodein"
+prerequisites:
+  - "[[kotlin-basics]]"
 next: []
 updated: "2026-04-20"
 ---

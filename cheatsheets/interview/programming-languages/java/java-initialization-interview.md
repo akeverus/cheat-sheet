@@ -5,15 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-initialization-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Class Initialization"
   - "Java initialization interview"
-  - "Java инициализация собеседование"
   - "Java конструкторы вопросы"
-  - "Java nested classes interview"
-  - "Java static block"
-  - "Java instance initializer"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Class Structure and Initialization`

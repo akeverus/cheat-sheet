@@ -6,6 +6,10 @@ tags:
   - index
   - dotnet-frameworks
 type: "index"
+aliases:
+  - ".NET Frameworks"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # .NET Frameworks

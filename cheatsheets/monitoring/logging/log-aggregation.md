@@ -5,9 +5,15 @@ tags:
   - monitoring
   - logging
   - log-aggregation
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Агрегация логов для Java"
+  - "log aggregation"
+prerequisites:
+  - "[[centralized-logging]]"
+next:
+  - "[[elk-stack]]"
 updated: "2026-04-20"
 ---
 # Агрегация логов для Java

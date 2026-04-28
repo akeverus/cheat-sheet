@@ -5,9 +5,14 @@ tags:
   - development
   - messaging
   - rabbitmq
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "RabbitMQ для Java"
+  - "rabbitmq"
 prerequisites: []
-next: []
+next:
+  - "[[spring-messaging]]"
 updated: "2026-04-20"
 ---
 # RabbitMQ для Java

@@ -7,6 +7,10 @@ tags:
   - scala
   - libraries
 type: "index"
+aliases:
+  - "Scala Libraries"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Scala Libraries

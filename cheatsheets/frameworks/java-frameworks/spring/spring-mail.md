@@ -8,11 +8,19 @@ tags:
   - smtp
   - thymeleaf
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-mvc.md"]
-next: ["spring/spring-messaging.md"]
+aliases:
+  - "Spring Mail"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-mvc]]"
+related:
+  - "[[spring-boot]]"
+  - "[[spring-scheduling]]"
+next:
+  - "[[spring-messaging]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
 ---
 
 # Spring Mail: Полное руководство по отправке email

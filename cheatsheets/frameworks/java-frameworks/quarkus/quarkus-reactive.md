@@ -8,11 +8,21 @@ tags:
   - reactive-messaging
   - streams
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
-next: ["quarkus-rest.md", "quarkus-testing.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus reactive"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-rest]]"
+related:
+  - "[[quarkus-rest]]"
+  - "[[quarkus-testing]]"
+next:
+  - "[[quarkus-rest]]"
+  - "[[quarkus-testing]]"
 updated: "2026-04-20"
-related: ["quarkus-rest.md", "quarkus-testing.md"]
 ---
 
 # Quarkus: Reactive — Mutiny и Reactive Messaging

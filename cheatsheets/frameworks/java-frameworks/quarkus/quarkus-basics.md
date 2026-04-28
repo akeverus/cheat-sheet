@@ -8,11 +8,24 @@ tags:
   - microservices
   - cloud-native
   - reactive
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java/java-basics.md", "spring/spring-boot.md"]
-next: ["quarkus-advanced.md", "kubernetes-basics.md"]
+aliases:
+  - "Quarkus"
+  - "Основы"
+  - "Quarkus: Основы"
+  - "quarkus basics"
+prerequisites:
+  - "[[java-basics]]"
+  - "[[spring-boot]]"
+related:
+  - "[[quarkus-reactive]]"
+  - "[[quarkus-testing]]"
+  - "[[quarkus-security]]"
+next:
+  - "[[quarkus-advanced]]"
+  - "[[kubernetes-basics]]"
 updated: "2026-04-20"
-related: ["quarkus-reactive.md", "quarkus-testing.md", "quarkus-security.md"]
 ---
 
 # Quarkus: Основы

@@ -5,9 +5,15 @@ tags:
   - patterns
   - behavioral
   - chain-of-responsibility
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Цепочка обязанностей"
+  - "Chain of Responsibility"
+prerequisites:
+  - "[[decorator]]"
+next:
+  - "[[command]]"
 updated: "2026-04-20"
 ---
 # Цепочка обязанностей (Chain of Responsibility)

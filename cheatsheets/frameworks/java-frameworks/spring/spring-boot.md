@@ -11,9 +11,16 @@ tags:
   - security
   - docker
   - kubernetes
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java/java-basics.md", "spring/spring-core.md"]
-next: ["spring/spring-data-jpa.md", "spring/spring-security.md"]
+aliases:
+  - "spring boot"
+prerequisites:
+  - "[[java-basics]]"
+  - "[[spring-core]]"
+next:
+  - "[[spring-data-jpa]]"
+  - "[[spring-security]]"
 updated: "2026-04-20"
 ---
 

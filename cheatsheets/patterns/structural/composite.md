@@ -5,9 +5,17 @@ tags:
   - patterns
   - structural
   - composite
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Компоновщик"
+  - "Composite"
+  - "Компоновщик (Composite)"
+prerequisites:
+  - "[[bridge]]"
+next:
+  - "[[decorator]]"
+  - "[[iterator]]"
 updated: "2026-04-20"
 ---
 # Компоновщик (Composite)

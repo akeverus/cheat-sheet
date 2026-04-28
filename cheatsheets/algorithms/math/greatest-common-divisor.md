@@ -5,9 +5,16 @@ tags:
   - algorithms
   - math
   - greatest-common-divisor
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Наибольший общий делитель"
+  - "Greatest Common Divisor"
+  - "GCD"
+  - "НОД"
 prerequisites: []
-next: []
+next:
+  - "[[coprime-numbers]]"
 updated: "2026-04-20"
 ---
 # Наибольший общий делитель (Greatest Common Divisor)

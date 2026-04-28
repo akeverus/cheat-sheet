@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Структуры данных"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Структуры данных

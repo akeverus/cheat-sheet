@@ -5,9 +5,17 @@ tags:
   - databases
   - relational
   - postgres-monitoring
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "PostgreSQL"
+  - "Мониторинг"
+  - "PostgreSQL: Мониторинг"
+  - "postgres monitoring"
+prerequisites:
+  - "[[postgres-basics]]"
+next:
+  - "[[prometheus]]"
 updated: "2026-04-20"
 ---
 # PostgreSQL: Мониторинг

@@ -5,7 +5,11 @@ tags:
   - basics
   - computer-science
   - computer-science-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Основы Computer Science"
+  - "computer science basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

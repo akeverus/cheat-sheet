@@ -5,13 +5,15 @@ tags:
   - interview
   - cicd
   - pipeline-design-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Дизайн пайплайнов"
   - "CI/CD pipeline interview"
   - "CI/CD собеседование"
-  - "Pipeline design interview"
-  - "Jenkins pipeline interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Дизайн пайплайнов

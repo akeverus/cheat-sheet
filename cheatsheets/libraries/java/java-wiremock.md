@@ -5,9 +5,13 @@ tags:
   - libraries
   - java
   - java-wiremock
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "WireMock"
+  - "java wiremock"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

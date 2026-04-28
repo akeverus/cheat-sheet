@@ -5,7 +5,10 @@ tags:
   - testing
   - unit-testing
   - testng
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "TestNG"
 prerequisites: []
 next: []
 updated: "2026-04-20"

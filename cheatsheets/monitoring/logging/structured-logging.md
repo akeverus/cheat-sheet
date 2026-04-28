@@ -5,9 +5,14 @@ tags:
   - monitoring
   - logging
   - structured-logging
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "structured logging"
+prerequisites:
+  - "[[logging-basics]]"
+next:
+  - "[[centralized-logging]]"
 updated: "2026-04-20"
 ---
 # Структурированное логирование для Java

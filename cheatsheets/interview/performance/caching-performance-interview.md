@@ -5,12 +5,15 @@ tags:
   - interview
   - performance
   - caching-performance-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Caching Performance"
   - "Caching Performance interview"
   - "Cache tuning"
-  - "Cache hit ratio"
-  - "Caching Performance собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Caching Performance`

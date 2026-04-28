@@ -8,6 +8,10 @@ tags:
   - unit-testing
   - jest
 type: "index"
+aliases:
+  - "Jest"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Jest

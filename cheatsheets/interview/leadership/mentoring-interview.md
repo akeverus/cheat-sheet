@@ -5,13 +5,15 @@ tags:
   - interview
   - leadership
   - mentoring-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Менторство инженеров"
   - "Mentoring interview"
   - "Mentoring собеседование"
-  - "1:1 meetings interview"
-  - "career development interview"
-  - "engineering mentorship"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Менторство инженеров

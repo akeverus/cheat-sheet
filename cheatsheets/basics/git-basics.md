@@ -4,7 +4,12 @@ description: "Ветки, коммиты, merge, rebase и типовой workfl
 tags:
   - basics
   - git-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Основы Git"
+  - "git basics"
+  - "Git"
 prerequisites: []
 next: []
 updated: "2026-04-20"

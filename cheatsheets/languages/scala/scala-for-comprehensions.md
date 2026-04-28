@@ -6,14 +6,20 @@ tags:
   - for-comprehensions
   - functional-programming
   - monads
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-fp-basics.md"]
+aliases:
+  - "Scala For Comprehensions"
+prerequisites:
+  - "[[scala-fp-basics]]"
+related:
+  - "[[scala-fp-basics]]"
+  - "[[scala-collections]]"
 next:
-  - scala-fp-advanced
-  - scala-implicit
-  - scala-http4s
+  - "[[scala-fp-advanced]]"
+  - "[[scala-implicit]]"
+  - "[[scala-http4s]]"
 updated: "2026-04-20"
-related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 ---
 
 # Scala For Comprehensions

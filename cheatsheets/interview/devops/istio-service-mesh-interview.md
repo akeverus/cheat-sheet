@@ -5,12 +5,15 @@ tags:
   - interview
   - devops
   - istio-service-mesh-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Istio Service Mesh"
   - "Istio interview"
   - "Istio собеседование"
-  - "Service mesh Istio"
-  - "Envoy proxy interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Istio Service Mesh`

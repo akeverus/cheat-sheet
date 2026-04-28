@@ -5,8 +5,15 @@ tags:
   - databases
   - relational
   - postgres-indexes
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "PostgreSQL"
+  - "типы индексов"
+  - "PostgreSQL: типы индексов"
+  - "postgres indexes"
+prerequisites:
+  - "[[postgres-basics]]"
 next: []
 updated: "2026-04-20"
 ---

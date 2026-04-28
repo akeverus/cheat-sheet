@@ -5,7 +5,11 @@ tags:
   - testing
   - ui-testing
   - selenium
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Selenium для Java"
+  - "selenium"
 prerequisites: []
 next: []
 updated: "2026-04-20"

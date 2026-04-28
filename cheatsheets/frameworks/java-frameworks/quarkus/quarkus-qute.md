@@ -8,11 +8,22 @@ tags:
   - templates
   - html
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-rest.md"]
+aliases:
+  - "Quarkus"
+  - "Qute — Templating Engine"
+  - "quarkus qute"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-rest]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-rest]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
 # Quarkus: Qute — Templating Engine

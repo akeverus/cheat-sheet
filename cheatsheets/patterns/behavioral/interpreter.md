@@ -5,8 +5,14 @@ tags:
   - patterns
   - behavioral
   - interpreter
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Интерпретатор"
+  - "Interpreter"
+  - "Интерпретатор (Interpreter)"
+prerequisites:
+  - "[[visitor]]"
 next: []
 updated: "2026-04-20"
 ---

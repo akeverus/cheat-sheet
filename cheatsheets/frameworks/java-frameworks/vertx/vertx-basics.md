@@ -9,11 +9,24 @@ tags:
   - async
   - non-blocking
   - event-driven
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java/java-basics.md", "java/java-concurrency-basics.md"]
-next: ["vertx-core.md", "vertx-web.md", "vertx-reactive.md"]
+aliases:
+  - "Vert.x"
+  - "Основы"
+  - "Vert.x: Основы"
+  - "vertx basics"
+prerequisites:
+  - "[[java-basics]]"
+  - "[[java-concurrency-basics]]"
+related:
+  - "[[quarkus-reactive]]"
+  - "[[spring-webflux]]"
+next:
+  - "[[vertx-core]]"
+  - "[[vertx-web]]"
+  - "[[vertx-reactive]]"
 updated: "2026-04-20"
-related: ["quarkus/quarkus-reactive.md", "spring/spring-webflux.md"]
 ---
 
 # Vert.x: Основы

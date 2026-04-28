@@ -6,6 +6,10 @@ tags:
   - index
   - ai-tools
 type: "index"
+aliases:
+  - "AI-инструменты для разработки"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 

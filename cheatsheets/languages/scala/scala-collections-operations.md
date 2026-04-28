@@ -6,11 +6,19 @@ tags:
   - collections
   - operations
   - functional-programming
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-collections.md"]
-next: ["scala/scala-collections-grouping.md"]
+aliases:
+  - "Scala Collections — Operations"
+  - "scala collections operations"
+prerequisites:
+  - "[[scala-collections]]"
+related:
+  - "[[scala-collections]]"
+  - "[[scala-collections-list]]"
+next:
+  - "[[scala-collections-grouping]]"
 updated: "2026-04-20"
-related: ["scala/scala-collections.md", "scala/scala-collections-list.md"]
 ---
 
 # Scala Collections — Operations

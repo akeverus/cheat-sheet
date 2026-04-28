@@ -5,13 +5,16 @@ tags:
   - interview
   - java
   - java-virtual-threads-interview
+type: "interview"
+difficulty: "advanced"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Java Virtual Threads"
   - "Virtual Threads interview"
   - "Virtual Threads собеседование"
-  - "Virtual Threads вопросы"
-  - "Project Loom interview"
-  - "Java 21 Virtual Threads"
-difficulty: "advanced"
+prerequisites:
+  - "[[java-virtual-threads]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Virtual Threads`

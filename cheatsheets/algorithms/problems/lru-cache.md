@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - lru-cache
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Реализация LRU-кэша"
+  - "LRU Cache"
 prerequisites: []
 next: []
 updated: "2026-04-20"

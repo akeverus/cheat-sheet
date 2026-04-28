@@ -5,8 +5,14 @@ tags:
   - patterns
   - structural
   - flyweight
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Приспособленец"
+  - "Flyweight"
+  - "Приспособленец (Flyweight)"
+prerequisites:
+  - "[[proxy]]"
 next: []
 updated: "2026-04-20"
 ---

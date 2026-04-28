@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Корпоративные паттерны"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Корпоративные паттерны
@@ -22,3 +26,4 @@ updated: "2026-04-20"
 ## Содержание
 
 - [Обзор Enterprise Patterns](enterprise-patterns-overview.md)
+- [Caching Patterns](caching-patterns.md) — стратегии кеширования: cache-aside, read/write-through, eviction, TTL, stampede

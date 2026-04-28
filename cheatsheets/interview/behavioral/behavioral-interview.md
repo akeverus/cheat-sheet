@@ -5,12 +5,15 @@ tags:
   - interview
   - behavioral
   - behavioral-interview
-aliases:
-  - "Поведенческие (Behavioral)"
-  - "Behavioral interview"
-  - "Поведенческое собеседование"
-  - "Soft skills interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Поведенческие"
+  - "Behavioral"
+  - "Поведенческие (Behavioral)"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Поведенческие (`Behavioral`)

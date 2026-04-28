@@ -8,11 +8,21 @@ tags:
   - metrics
   - monitoring
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-cloud.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus actuator"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-cloud]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-cloud]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-cloud.md"]
 ---
 
 # Quarkus: Actuator — Health Checks и Metrics

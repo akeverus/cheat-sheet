@@ -5,13 +5,16 @@ tags:
   - interview
   - devops
   - kubernetes-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Kubernetes"
   - "Kubernetes interview"
   - "Kubernetes собеседование"
-  - "K8s interview"
-  - "K8s вопросы"
-difficulty: "intermediate"
+prerequisites:
+  - "[[kubernetes-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kubernetes`

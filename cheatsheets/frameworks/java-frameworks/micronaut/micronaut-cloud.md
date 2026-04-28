@@ -10,11 +10,20 @@ tags:
   - tracing
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-graalvm.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut cloud"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-security]]"
+next:
+  - "[[micronaut-graalvm]]"
 updated: "2026-04-20"
-related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
 # Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing

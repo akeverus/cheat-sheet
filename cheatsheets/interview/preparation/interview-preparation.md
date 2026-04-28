@@ -5,13 +5,15 @@ tags:
   - interview
   - preparation
   - interview-preparation
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "interview preparation"
+  - "Вопросы на собеседовании"
+  - "Interview Preparation"
   - "подготовка к собеседованию"
   - "interview tips"
-  - "как пройти собеседование"
-  - "technical interview guide"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Interview Preparation`

@@ -5,7 +5,10 @@ tags:
   - platform
   - infrastructure-tools
   - nginx-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Nginx Advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"

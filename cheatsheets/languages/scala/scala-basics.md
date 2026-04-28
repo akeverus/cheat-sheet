@@ -5,9 +5,16 @@ tags:
   - languages
   - scala
   - scala-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Scala"
+  - "основы"
+  - "Scala: основы"
+  - "scala basics"
 prerequisites: []
-next: []
+next:
+  - "[[scala-collections]]"
 updated: "2026-04-20"
 ---
 # Scala: основы

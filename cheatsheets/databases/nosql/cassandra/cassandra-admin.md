@@ -5,9 +5,15 @@ tags:
   - databases
   - nosql
   - cassandra-admin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Cassandra"
+  - "cassandra admin"
+prerequisites:
+  - "[[cassandra-basics]]"
+next:
+  - "[[cassandra-clustering]]"
 updated: "2026-04-20"
 ---
 # Cassandra: Администрирование — Управление кластером и эксплуатация

@@ -5,9 +5,15 @@ tags:
   - algorithms
   - sorting
   - shell-sort
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Сортировка Шелла"
+  - "Shell Sort"
 prerequisites: []
-next: []
+next:
+  - "[[quick-sort]]"
+  - "[[merge-sort]]"
 updated: "2026-04-20"
 ---
 # Сортировка Шелла (Shell Sort)

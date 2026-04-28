@@ -5,8 +5,12 @@ tags:
   - platform
   - containers
   - kubernetes-storage
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Kubernetes Storage"
+prerequisites:
+  - "[[kubernetes-basics]]"
 next: []
 updated: "2026-04-20"
 ---

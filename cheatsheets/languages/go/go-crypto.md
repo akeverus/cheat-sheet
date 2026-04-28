@@ -8,8 +8,16 @@ tags:
   - encryption
   - hashing
   - tls
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "криптография"
+  - "Go: криптография"
+  - "go crypto"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

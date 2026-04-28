@@ -5,8 +5,13 @@ tags:
   - libraries
   - kotlin
   - kotlin-kotlinx-serialization
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "kotlinx.serialization"
+  - "kotlin kotlinx serialization"
+prerequisites:
+  - "[[kotlin-basics]]"
 next: []
 updated: "2026-04-20"
 ---

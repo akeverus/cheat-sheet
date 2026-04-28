@@ -5,14 +5,15 @@ tags:
   - interview
   - algorithms
   - graphs-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Графы"
   - "Graphs interview"
   - "Графы собеседование"
-  - "Graph algorithms interview"
-  - "BFS DFS interview"
-  - "Dijkstra interview"
-  - "Topological sort interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Графы`

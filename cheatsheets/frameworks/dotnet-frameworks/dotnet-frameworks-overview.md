@@ -5,7 +5,11 @@ tags:
   - frameworks
   - dotnet-frameworks
   - dotnet-frameworks-overview
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - ".NET Frameworks — обзор"
+  - "dotnet frameworks overview"
 prerequisites: []
 next: []
 updated: "2026-04-20"

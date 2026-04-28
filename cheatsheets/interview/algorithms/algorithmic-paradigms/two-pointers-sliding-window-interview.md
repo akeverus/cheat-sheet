@@ -5,13 +5,15 @@ tags:
   - interview
   - algorithms
   - two-pointers-sliding-window-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Two Pointers и Sliding Window"
   - "Two pointers interview"
   - "Sliding window interview"
-  - "Два указателя собеседование"
-  - "Скользящее окно собеседование"
-  - "Floyd cycle interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Two Pointers и Sliding Window`

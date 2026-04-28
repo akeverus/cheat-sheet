@@ -11,7 +11,13 @@ tags:
   - aot
   - spring-data
   - micrometer
-difficulty: advanced
+type: "reference"
+difficulty: "advanced"
+aliases:
+  - "spring boot 3 migration"
+prerequisites:
+  - "[[spring-boot]]"
+next: []
 updated: "2026-04-20"
 ---
 

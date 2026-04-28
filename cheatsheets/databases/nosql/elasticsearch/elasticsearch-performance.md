@@ -5,8 +5,13 @@ tags:
   - databases
   - nosql
   - elasticsearch-performance
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Elasticsearch"
+  - "elasticsearch performance"
+prerequisites:
+  - "[[elasticsearch-clustering]]"
 next: []
 updated: "2026-04-20"
 ---

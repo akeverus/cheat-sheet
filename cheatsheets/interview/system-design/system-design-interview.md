@@ -5,12 +5,16 @@ tags:
   - interview
   - system-design
   - system-design-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "System Design"
   - "System Design interview"
   - "System Design собеседование"
-  - "проектирование систем"
-  - "system design questions"
+prerequisites:
+  - "[[system-design-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `System Design`

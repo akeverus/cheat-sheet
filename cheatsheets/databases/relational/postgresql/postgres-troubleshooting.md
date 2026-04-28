@@ -5,9 +5,17 @@ tags:
   - databases
   - relational
   - postgres-troubleshooting
+type: "troubleshooting"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "PostgreSQL"
+  - "Решение проблем"
+  - "PostgreSQL: Решение проблем"
+  - "postgres troubleshooting"
+prerequisites:
+  - "[[postgres-basics]]"
+next:
+  - "[[postgres-monitoring]]"
 updated: "2026-04-20"
 ---
 # PostgreSQL: Решение проблем

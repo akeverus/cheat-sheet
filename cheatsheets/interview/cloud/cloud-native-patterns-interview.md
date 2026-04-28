@@ -5,12 +5,15 @@ tags:
   - interview
   - cloud
   - cloud-native-patterns-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Cloud-native patterns interview"
+  - "Вопросы на собеседовании"
+  - "Cloud-native Patterns"
   - "12-factor interview"
   - "Sidecar pattern interview"
-  - "CNCF interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Cloud-native Patterns`

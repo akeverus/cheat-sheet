@@ -5,7 +5,11 @@ tags:
   - libraries
   - kotlin
   - kotlin-kotlinx-coroutines
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "kotlinx.coroutines"
+  - "kotlin kotlinx coroutines"
 prerequisites: []
 next: []
 updated: "2026-04-20"

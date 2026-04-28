@@ -5,9 +5,17 @@ tags:
   - architecture
   - software-architecture
   - microservices
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Микросервисная архитектура"
+  - "microservices"
+  - "микросервисы"
+prerequisites:
+  - "[[distributed-systems-fundamentals]]"
+next:
+  - "[[saga-pattern]]"
+  - "[[resilience-patterns]]"
 updated: "2026-04-20"
 ---
 # Микросервисная архитектура

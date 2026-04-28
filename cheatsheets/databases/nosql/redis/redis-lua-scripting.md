@@ -9,11 +9,23 @@ tags:
   - evalsha
   - atomic
   - transactions
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
-next: ["databases/redis-pubsub.md", "databases/redis-transactions.md"]
+aliases:
+  - "Redis"
+  - "Lua Scripting"
+  - "Redis: Lua Scripting"
+  - "redis lua scripting"
+prerequisites:
+  - "[[redis-basics]]"
+  - "[[redis-data-structures]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-data-structures]]"
+next:
+  - "[[redis-pubsub]]"
+  - "[[redis-transactions]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 ---
 
 # Redis: Lua Scripting

@@ -5,9 +5,14 @@ tags:
   - algorithms
   - searching
   - merge-sorted-sequences
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Merge Sorted Sequences"
+prerequisites:
+  - "[[merge-sort]]"
+next:
+  - "[[merge-two-sorted-arrays]]"
 updated: "2026-04-20"
 ---
 # Слияние отсортированных последовательностей (Merge Sorted Sequences)

@@ -10,11 +10,21 @@ tags:
   - repositories
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
-next: ["micronaut-security.md", "micronaut-reactive.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut data"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-http]]"
+  - "[[micronaut-testing]]"
+next:
+  - "[[micronaut-security]]"
+  - "[[micronaut-reactive]]"
 updated: "2026-04-20"
-related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
 # Micronaut: Data Access — JDBC, JPA и Repositories

@@ -7,6 +7,10 @@ tags:
   - security
   - tools
 type: "index"
+aliases:
+  - "Security Tools"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Security Tools

@@ -5,7 +5,12 @@ tags:
   - algorithms
   - strings
   - caesar-cipher
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Шифр Цезаря"
+  - "Caesar Cipher"
+  - "Шифр Цезаря (Caesar Cipher)"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -9,9 +9,14 @@ tags:
   - channels
   - async
   - reactive
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["kotlin-basics.md"]
-next: ["kotlin-advanced.md"]
+aliases:
+  - "Kotlin Concurrency Basics"
+prerequisites:
+  - "[[kotlin-basics]]"
+next:
+  - "[[kotlin-advanced]]"
 updated: "2026-04-20"
 ---
 

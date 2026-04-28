@@ -7,6 +7,10 @@ tags:
   - monitoring
   - alerting
 type: "index"
+aliases:
+  - "Алертинг"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Алертинг

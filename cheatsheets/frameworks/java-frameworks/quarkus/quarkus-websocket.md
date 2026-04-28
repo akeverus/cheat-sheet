@@ -7,11 +7,21 @@ tags:
   - real-time
   - communication
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
-next: ["quarkus-rest.md", "quarkus-reactive.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus websocket"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-rest]]"
+related:
+  - "[[quarkus-rest]]"
+  - "[[quarkus-reactive]]"
+next:
+  - "[[quarkus-rest]]"
+  - "[[quarkus-reactive]]"
 updated: "2026-04-20"
-related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
 # Quarkus: WebSocket — Real-time Communication

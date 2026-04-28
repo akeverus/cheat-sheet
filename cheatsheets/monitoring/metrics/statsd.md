@@ -5,10 +5,13 @@ tags:
   - monitoring
   - metrics
   - statsd
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "StatsD"
 prerequisites: []
 next:
-  - go-observability
+  - "[[go-observability]]"
 updated: "2026-04-20"
 ---
 # StatsD

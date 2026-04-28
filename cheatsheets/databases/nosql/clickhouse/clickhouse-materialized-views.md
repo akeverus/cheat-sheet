@@ -8,10 +8,18 @@ tags:
   - optimization
   - real-time
   - data-processing
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/clickhouse-tables.md"]
+aliases:
+  - "ClickHouse"
+  - "clickhouse materialized views"
+prerequisites:
+  - "[[clickhouse-tables]]"
+related:
+  - "[[clickhouse-tables]]"
+  - "[[clickhouse-queries]]"
+next: []
 updated: "2026-04-20"
-related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 ---
 
 # ClickHouse: Материализованные представления — Предварительно вычисленные агрегаты и трансформации

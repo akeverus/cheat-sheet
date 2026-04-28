@@ -8,8 +8,16 @@ tags:
   - profiling
   - optimization
   - memory
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "производительность"
+  - "Go: производительность"
+  - "go performance"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

@@ -5,7 +5,13 @@ tags:
   - tools
   - collaboration
   - telegram-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Telegram"
+  - "основы"
+  - "Telegram: основы"
+  - "telegram basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,12 +5,16 @@ tags:
   - interview
   - devops
   - terraform-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Terraform"
   - "Terraform interview"
   - "Terraform собеседование"
-  - "Terraform вопросы"
-  - "IaC Terraform"
-difficulty: "intermediate"
+prerequisites:
+  - "[[terraform]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Terraform`

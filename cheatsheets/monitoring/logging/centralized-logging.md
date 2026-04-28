@@ -5,9 +5,15 @@ tags:
   - monitoring
   - logging
   - centralized-logging
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "centralized logging"
+prerequisites:
+  - "[[logging-basics]]"
+next:
+  - "[[log-aggregation]]"
+  - "[[elk-stack]]"
 updated: "2026-04-20"
 ---
 # Централизованное логирование для Java

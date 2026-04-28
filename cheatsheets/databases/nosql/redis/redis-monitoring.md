@@ -9,11 +9,22 @@ tags:
   - prometheus
   - grafana
   - health-checks
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/redis-basics.md", "databases/redis-performance.md"]
-next: ["databases/redis-troubleshooting.md"]
+aliases:
+  - "Redis"
+  - "Мониторинг"
+  - "Redis: Мониторинг"
+  - "redis monitoring"
+prerequisites:
+  - "[[redis-basics]]"
+  - "[[redis-performance]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-performance]]"
+next:
+  - "[[redis-troubleshooting]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
 # Redis: Мониторинг

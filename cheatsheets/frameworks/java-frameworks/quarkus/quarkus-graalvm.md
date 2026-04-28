@@ -8,11 +8,21 @@ tags:
   - compilation
   - optimization
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-cloud.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus graalvm"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-cloud]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-cloud]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-cloud.md"]
 ---
 
 # Quarkus: GraalVM — Native Image и Compilation

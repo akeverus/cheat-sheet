@@ -5,9 +5,15 @@ tags:
   - algorithms
   - trees
   - kruskal-algorithm
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Алгоритм Крускала"
+  - "Kruskal's Algorithm"
+  - "kruskal algorithm"
 prerequisites: []
-next: []
+next:
+  - "[[prim-algorithm]]"
 updated: "2026-04-20"
 ---
 # Алгоритм Крускала (Kruskal's Algorithm)

@@ -7,8 +7,17 @@ tags:
   - context
   - cancellation
   - timeout
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md", "go/go-concurrency.md"]
+aliases:
+  - "Go"
+  - "Context"
+  - "Go: Context"
+  - "go context"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-concurrency]]"
+next: []
 updated: "2026-04-20"
 ---
 

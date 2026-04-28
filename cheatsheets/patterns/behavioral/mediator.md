@@ -5,9 +5,16 @@ tags:
   - patterns
   - behavioral
   - mediator
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Посредник"
+  - "Mediator"
+  - "Посредник (Mediator)"
+prerequisites:
+  - "[[command]]"
+next:
+  - "[[observer]]"
 updated: "2026-04-20"
 ---
 # Посредник (Mediator)

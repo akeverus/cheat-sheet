@@ -5,13 +5,15 @@ tags:
   - interview
   - leadership
   - tech-interviewing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Tech Interviewing interview"
   - "Conducting interviews"
   - "Hiring process interview"
-  - "Structured interviews"
-  - "проведение интервью"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Проведение технических интервью

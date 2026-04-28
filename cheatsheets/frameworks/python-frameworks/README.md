@@ -6,6 +6,10 @@ tags:
   - index
   - python-frameworks
 type: "index"
+aliases:
+  - "Python Frameworks"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Python Frameworks

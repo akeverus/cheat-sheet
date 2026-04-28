@@ -8,7 +8,13 @@ tags:
   - claude-code
   - ide
   - assistant
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Claude Code"
+  - "основы"
+  - "Claude Code: основы"
+  - "claude basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

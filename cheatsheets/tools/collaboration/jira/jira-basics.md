@@ -5,7 +5,13 @@ tags:
   - tools
   - collaboration
   - jira-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Jira"
+  - "основы"
+  - "Jira: основы"
+  - "jira basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

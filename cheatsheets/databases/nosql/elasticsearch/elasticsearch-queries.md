@@ -5,8 +5,13 @@ tags:
   - databases
   - nosql
   - elasticsearch-queries
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Elasticsearch"
+  - "elasticsearch queries"
+prerequisites:
+  - "[[elasticsearch-basics]]"
 next: []
 updated: "2026-04-20"
 ---

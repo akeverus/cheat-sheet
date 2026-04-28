@@ -5,8 +5,13 @@ tags:
   - algorithms
   - searching
   - interpolation-search
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Интерполяционный поиск"
+  - "Interpolation Search"
+prerequisites:
+  - "[[binary-search]]"
 next: []
 updated: "2026-04-20"
 ---

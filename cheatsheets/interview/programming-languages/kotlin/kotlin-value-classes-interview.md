@@ -5,12 +5,16 @@ tags:
   - interview
   - kotlin
   - kotlin-value-classes-interview
-aliases:
-  - "Kotlin Value Classes interview"
-  - "Kotlin inline classes interview"
-  - "Value Classes собеседование"
-  - "inline class вопросы"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Kotlin Value Classes"
+  - "Kotlin Value Classes interview"
+  - "Value Classes собеседование"
+prerequisites:
+  - "[[kotlin-value-classes]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kotlin Value Classes`

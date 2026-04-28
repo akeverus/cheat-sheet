@@ -5,13 +5,16 @@ tags:
   - interview
   - testing
   - junit-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "JUnit 5"
   - "JUnit 5 interview"
   - "JUnit собеседование"
-  - "Jupiter interview"
-  - "JUnit вопросы"
-  - "Java unit testing interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[junit]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `JUnit 5`

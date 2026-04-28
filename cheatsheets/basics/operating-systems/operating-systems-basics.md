@@ -5,7 +5,11 @@ tags:
   - basics
   - operating-systems
   - operating-systems-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Операционные системы"
+  - "operating systems basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

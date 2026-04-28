@@ -7,13 +7,19 @@ tags:
   - linux
   - bash
   - devops
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["operating-systems-basics.md"]
+aliases:
+  - "Linux и Bash"
+  - "практический справочник"
+  - "linux handbook"
+prerequisites:
+  - "[[operating-systems-basics]]"
+related:
+  - "[[operating-systems-basics]]"
+  - "[[network-protocols]]"
 next: []
 updated: "2026-04-20"
-related:
-  - "operating-systems-basics.md"
-  - "../networks/network-protocols.md"
 ---
 # Linux и Bash: практический справочник
 

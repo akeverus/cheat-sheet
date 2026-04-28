@@ -5,8 +5,14 @@ tags:
   - platform
   - containers
   - docker-spring-boot
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Docker и Spring Boot"
+  - "docker spring boot"
+prerequisites:
+  - "[[docker-basics]]"
+  - "[[spring-boot]]"
 next: []
 updated: "2026-04-20"
 ---

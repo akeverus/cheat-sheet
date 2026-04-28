@@ -5,13 +5,16 @@ tags:
   - interview
   - spring
   - spring-ai-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring AI"
   - "Spring AI interview"
   - "Spring AI собеседование"
-  - "Spring AI вопросы"
-  - "LLM Spring Boot interview"
-  - "ChatClient interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-ai]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring AI`

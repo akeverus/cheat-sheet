@@ -7,6 +7,11 @@ tags:
   - architecture
   - adr
 type: "index"
+aliases:
+  - "Architectural Decision Records"
+  - "ADR"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Architectural Decision Records (ADR)

@@ -10,11 +10,23 @@ tags:
   - aop
   - java
   - framework
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java/java-basics.md"]
-next: ["spring/spring-data-jpa.md", "spring/spring-boot.md", "spring/spring-aop.md"]
+aliases:
+  - "Spring Core"
+  - "Spring"
+  - "Spring IoC"
+prerequisites:
+  - "[[java-basics]]"
+related:
+  - "[[java-basics]]"
+  - "[[spring-boot]]"
+  - "[[spring-aop]]"
+next:
+  - "[[spring-data-jpa]]"
+  - "[[spring-boot]]"
+  - "[[spring-aop]]"
 updated: "2026-04-20"
-related: ["java/java-basics.md", "spring/spring-boot.md", "spring/spring-aop.md"]
 ---
 
 # Spring Core: Inversion of Control и Dependency Injection

@@ -8,9 +8,16 @@ tags:
   - acid
   - isolation
   - concurrency
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["sql-basics.md"]
-next: ["../relational/postgresql/postgres-transactions.md"]
+aliases:
+  - "SQL"
+  - "транзакции и уровни изоляции"
+  - "sql transactions isolation"
+prerequisites:
+  - "[[sql-basics]]"
+next:
+  - "[[postgres-transactions]]"
 updated: "2026-04-20"
 ---
 

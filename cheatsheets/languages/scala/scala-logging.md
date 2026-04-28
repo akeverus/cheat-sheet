@@ -7,11 +7,16 @@ tags:
   - slf4j
   - logback
   - mdc
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Logging"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md"]
 ---
 
 # Scala Logging

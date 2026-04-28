@@ -5,12 +5,15 @@ tags:
   - interview
   - system-design
   - design-chat-system-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Design Chat System"
   - "Chat System design"
   - "WhatsApp design"
-  - "Slack architecture"
-  - "Chat System собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Chat System`

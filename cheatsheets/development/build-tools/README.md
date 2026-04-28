@@ -7,6 +7,10 @@ tags:
   - development
   - build-tools
 type: "index"
+aliases:
+  - "Development Build Tools"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Development Build Tools

@@ -7,6 +7,10 @@ tags:
   - architecture
   - design-principles
 type: "index"
+aliases:
+  - "Design Principles"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Design Principles

@@ -5,8 +5,12 @@ tags:
   - platform
   - cloud-providers
   - azure-services
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Azure Services"
+prerequisites:
+  - "[[azure-basics]]"
 next: []
 updated: "2026-04-20"
 ---

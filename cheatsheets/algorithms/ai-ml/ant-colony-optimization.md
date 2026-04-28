@@ -5,9 +5,15 @@ tags:
   - algorithms
   - ai-ml
   - ant-colony-optimization
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Оптимизация муравьиной колонии"
+  - "ant colony optimization"
+  - "ACO"
 prerequisites: []
-next: []
+next:
+  - "[[genetic-algorithms]]"
 updated: "2026-04-20"
 ---
 # Оптимизация муравьиной колонии

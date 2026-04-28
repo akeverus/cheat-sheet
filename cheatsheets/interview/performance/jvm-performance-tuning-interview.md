@@ -5,12 +5,14 @@ tags:
   - interview
   - performance
   - jvm-performance-tuning-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
-  - "JVM Performance Tuning interview"
-  - "JVM Performance Tuning собеседование"
+  - "Вопросы на собеседовании"
+  - "JVM Performance Tuning"
   - "JVM tuning"
-  - "настройка производительности JVM"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `JVM Performance Tuning`

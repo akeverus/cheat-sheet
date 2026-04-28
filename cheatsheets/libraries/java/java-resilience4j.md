@@ -5,9 +5,14 @@ tags:
   - libraries
   - java
   - java-resilience4j
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Resilience4j"
+  - "Fault Tolerance для Java"
+  - "java resilience4j"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-graphql-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring for GraphQL"
   - "Spring GraphQL interview"
   - "Spring GraphQL собеседование"
-  - "Spring for GraphQL вопросы"
-  - "GraphQL Spring Boot interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-graphql]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring for GraphQL`

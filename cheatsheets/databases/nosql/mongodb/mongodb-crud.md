@@ -5,7 +5,11 @@ tags:
   - databases
   - nosql
   - mongodb-crud
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "MongoDB"
+  - "mongodb crud"
 prerequisites: []
 next: []
 updated: "2026-04-20"

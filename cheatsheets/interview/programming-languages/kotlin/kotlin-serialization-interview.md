@@ -5,12 +5,15 @@ tags:
   - interview
   - programming-languages
   - kotlin-serialization-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "сериализация в Kotlin"
   - "Kotlin serialization interview"
-  - "kotlinx.serialization собеседование"
   - "Kotlin сериализация"
-  - "kotlinx serialization"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: сериализация в `Kotlin`

@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Базы Данных"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Базы Данных
@@ -20,10 +24,12 @@ updated: "2026-04-20"
 
 ## Содержание
 
-- **Инструменты БД** — [README](../basics/README.md)
-- **Графовые БД** — [README](../basics/README.md)
-- **NoSQL** — [README](../basics/README.md)
-- **ORM** — [README](../basics/README.md)
-- **Реляционные БД** — [README](../basics/README.md)
-- **SQL** — [README](../basics/README.md)
-- **Временные Ряды** — [README](../basics/README.md)
+- **Инструменты БД** — [README](database-tools/README.md)
+- **Графовые БД** — [README](graph/README.md)
+- **NoSQL** — [README](nosql/README.md)
+- **ORM** — [README](orm/README.md)
+- **Реляционные БД** — [README](relational/README.md)
+- **SQL** — [README](sql/README.md)
+- **Временные Ряды** — [README](time-series/README.md)
+- [Migrations: Flyway/Liquibase](migrations/flyway-liquibase.md) — миграции схемы
+- [CDC: Change Data Capture](cdc-change-data-capture.md) — Debezium, outbox, log-based replication

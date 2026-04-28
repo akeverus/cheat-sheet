@@ -6,7 +6,15 @@ tags:
   - graph
   - nosql
   - orientdb
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "OrientDB"
+  - "Основы"
+  - "OrientDB: Основы"
+  - "orientdb basics"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # OrientDB: Основы

@@ -5,12 +5,16 @@ tags:
   - interview
   - cloud
   - aws-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "AWS"
   - "AWS interview"
   - "Amazon Web Services interview"
-  - "AWS собеседование"
-  - "AWS basics interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[aws-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS`

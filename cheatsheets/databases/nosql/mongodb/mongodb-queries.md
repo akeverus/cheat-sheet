@@ -5,7 +5,11 @@ tags:
   - databases
   - nosql
   - mongodb-queries
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "MongoDB"
+  - "mongodb queries"
 prerequisites: []
 next: []
 updated: "2026-04-20"

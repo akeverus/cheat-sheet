@@ -5,14 +5,15 @@ tags:
   - interview
   - frameworks
   - spring-framework-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring Framework"
   - "Spring Framework interview"
   - "Spring Framework собеседование"
-  - "Spring IoC"
-  - "Spring DI"
-  - "Spring AOP"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Framework`

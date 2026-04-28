@@ -6,11 +6,17 @@ tags:
   - macros
   - metaprogramming
   - code-generation
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Macros"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-metaprogramming]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-metaprogramming.md"]
 ---
 
 # Scala Macros

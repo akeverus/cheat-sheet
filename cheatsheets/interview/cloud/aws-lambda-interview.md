@@ -5,12 +5,15 @@ tags:
   - interview
   - cloud
   - aws-lambda-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "AWS Lambda"
   - "AWS Lambda interview"
   - "Lambda interview"
-  - "Serverless Lambda interview"
-  - "FaaS interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS Lambda`

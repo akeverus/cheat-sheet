@@ -5,7 +5,11 @@ tags:
   - libraries
   - serialization
   - java-gson
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Gson"
+  - "java gson"
 prerequisites: []
 next: []
 updated: "2026-04-20"

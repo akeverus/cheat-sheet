@@ -5,12 +5,15 @@ tags:
   - interview
   - security
   - zero-trust-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Zero Trust"
   - "Zero Trust interview"
   - "Zero Trust security"
-  - "BeyondCorp interview"
-  - "Zero Trust собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Zero Trust`

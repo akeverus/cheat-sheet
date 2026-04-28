@@ -6,7 +6,13 @@ tags:
   - ai
   - aider
   - cli
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Aider"
+  - "основы"
+  - "Aider: основы"
+  - "aider basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,9 +5,15 @@ tags:
   - databases
   - relational
   - mysql-design
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "MySQL"
+  - "mysql design"
+prerequisites:
+  - "[[mysql-basics]]"
+next:
+  - "[[mysql-indexes]]"
 updated: "2026-04-20"
 ---
 # MySQL: Проектирование баз данных — Полное руководство по проектированию схем

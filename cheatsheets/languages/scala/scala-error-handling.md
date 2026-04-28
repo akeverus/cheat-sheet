@@ -8,11 +8,17 @@ tags:
   - either
   - try
   - exceptions
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Error Handling"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-fp-basics]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---
 
 # Scala Error Handling

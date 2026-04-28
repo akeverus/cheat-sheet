@@ -7,6 +7,10 @@ tags:
   - testing
   - testcontainers
 type: "index"
+aliases:
+  - "Testcontainers"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Testcontainers

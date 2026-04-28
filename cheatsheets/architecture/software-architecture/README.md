@@ -7,6 +7,10 @@ tags:
   - architecture
   - software-architecture
 type: "index"
+aliases:
+  - "Software Architecture"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Software Architecture

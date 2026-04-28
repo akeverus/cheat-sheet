@@ -5,14 +5,15 @@ tags:
   - interview
   - algorithms
   - stacks-queues-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Стеки и очереди"
   - "Stacks and queues interview"
   - "Стеки и очереди собеседование"
-  - "Stack interview"
-  - "Queue interview"
-  - "Deque interview"
-  - "Monotonic stack interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Стеки и очереди`

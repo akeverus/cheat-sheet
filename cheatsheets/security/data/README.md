@@ -8,6 +8,10 @@ tags:
   - data
   - encryption
 type: "index"
+aliases:
+  - "Data Security"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Data Security

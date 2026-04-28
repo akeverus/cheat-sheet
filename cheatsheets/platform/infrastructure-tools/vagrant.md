@@ -5,9 +5,13 @@ tags:
   - platform
   - infrastructure-tools
   - vagrant
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Vagrant"
 prerequisites: []
-next: []
+next:
+  - "[[docker-basics]]"
 updated: "2026-04-20"
 ---
 # Vagrant

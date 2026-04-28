@@ -9,8 +9,17 @@ tags:
   - udp
   - http
   - websocket
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md", "go/go-stdlib-http.md"]
+aliases:
+  - "Go"
+  - "сетевые операции"
+  - "Go: сетевые операции"
+  - "go networking"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-stdlib-http]]"
+next: []
 updated: "2026-04-20"
 ---
 

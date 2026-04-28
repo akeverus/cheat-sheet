@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-aop-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring AOP"
   - "Spring AOP interview"
   - "Spring AOP собеседование"
-  - "AOP interview questions"
-  - "Aspect Oriented Programming interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-aop]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring AOP`

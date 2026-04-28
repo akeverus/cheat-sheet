@@ -5,8 +5,12 @@ tags:
   - monitoring
   - alerting
   - pagerduty
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "PagerDuty"
+prerequisites:
+  - "[[alerting]]"
 next: []
 updated: "2026-04-20"
 ---

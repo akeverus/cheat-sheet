@@ -5,12 +5,15 @@ tags:
   - interview
   - architecture
   - edge-computing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Edge Computing"
   - "Edge Computing interview"
   - "Edge functions"
-  - "CDN compute"
-  - "Edge Computing собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Edge Computing`

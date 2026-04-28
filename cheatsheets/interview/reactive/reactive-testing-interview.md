@@ -7,13 +7,15 @@ tags:
   - reactive-testing-interview
   - testing
   - stepverifier
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Тестирование реактивного кода"
   - "Reactive Testing interview"
   - "StepVerifier interview"
-  - "TestPublisher interview"
-  - "реактивное тестирование собеседование"
-  - "WebTestClient interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Тестирование реактивного кода

@@ -7,8 +7,16 @@ tags:
   - best-practices
   - idiomatic
   - style
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "лучшие практики"
+  - "Go: лучшие практики"
+  - "go best practices"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

@@ -5,13 +5,15 @@ tags:
   - interview
   - data-engineering
   - apache-spark-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Apache Spark"
   - "Apache Spark interview"
   - "Spark interview"
-  - "Spark собеседование"
-  - "Spark RDD interview"
-  - "Spark DataFrame interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Apache Spark`

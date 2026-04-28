@@ -5,7 +5,13 @@ tags:
   - platform
   - iac
   - pulumi-basics
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Основы Pulumi"
+  - "редирект"
+  - "Основы Pulumi (редирект)"
+  - "pulumi basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,7 +5,11 @@ tags:
   - languages
   - kotlin
   - kotlin-interop-java
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Interop with Java"
+  - "kotlin interop java"
 prerequisites: []
 next: []
 updated: "2026-04-20"

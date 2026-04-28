@@ -5,12 +5,16 @@ tags:
   - interview
   - architecture
   - resilience-patterns-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Паттерны отказоустойчивости"
   - "Resilience patterns interview"
-  - "Паттерны отказоустойчивости собеседование"
   - "Circuit Breaker interview"
-  - "Resilience4j interview"
+prerequisites:
+  - "[[resilience-patterns]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Паттерны отказоустойчивости`

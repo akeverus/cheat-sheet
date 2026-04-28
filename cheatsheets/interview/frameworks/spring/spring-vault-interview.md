@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-vault-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Vault"
   - "Spring Vault interview"
   - "Spring Vault собеседование"
-  - "HashiCorp Vault Spring interview"
-  - "secrets management interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-vault]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Vault`

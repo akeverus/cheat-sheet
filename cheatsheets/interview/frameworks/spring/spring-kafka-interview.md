@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-kafka-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Kafka"
   - "Spring Kafka interview"
   - "Spring Kafka собеседование"
-  - "Spring Kafka вопросы"
-  - "kafka spring boot interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-kafka]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Kafka`

@@ -8,8 +8,16 @@ tags:
   - base64
   - hex
   - binary
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "кодирование"
+  - "Go: кодирование"
+  - "go encoding"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

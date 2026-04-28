@@ -5,9 +5,15 @@ tags:
   - algorithms
   - sorting
   - radix-sort
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Поразрядная сортировка"
+  - "Radix Sort"
+prerequisites:
+  - "[[counting-sort]]"
+next:
+  - "[[bucket-sort]]"
 updated: "2026-04-20"
 ---
 # Поразрядная сортировка (Radix Sort)

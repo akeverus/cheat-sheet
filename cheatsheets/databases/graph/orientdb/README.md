@@ -8,6 +8,10 @@ tags:
   - graph
   - orientdb
 type: "index"
+aliases:
+  - "OrientDB"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # OrientDB

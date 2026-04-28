@@ -5,8 +5,13 @@ tags:
   - databases
   - nosql
   - mongodb-aggregation
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "MongoDB"
+  - "mongodb aggregation"
+prerequisites:
+  - "[[mongodb-basics]]"
 next: []
 updated: "2026-04-20"
 ---

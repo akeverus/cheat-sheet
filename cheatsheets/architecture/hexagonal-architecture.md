@@ -2,15 +2,19 @@
 title: "Hexagonal Architecture (Ports & Adapters)"
 description: "Hexagonal Architecture: порты, адаптеры, изоляция домена, применение в Java/Spring Boot."
 tags:
-  - "architecture"
-  - "hexagonal-architecture"
-  - "ports-and-adapters"
-  - "design-patterns"
+  - architecture
+  - hexagonal-architecture
+  - ports-and-adapters
+  - design-patterns
 type: "reference"
 difficulty: "intermediate"
 aliases:
-  - "Hexagonal Architecture (Ports & Adapters)"
-  - "hexagonal architecture"
+  - "Hexagonal Architecture"
+  - "Ports & Adapters"
+prerequisites:
+  - "[[clean-architecture]]"
+next:
+  - "[[ddd]]"
 updated: "2026-04-20"
 ---
 # Hexagonal Architecture (Ports & Adapters)

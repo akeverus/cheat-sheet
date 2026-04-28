@@ -7,6 +7,10 @@ tags:
   - development
   - messaging
 type: "index"
+aliases:
+  - "Development Messaging"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Development Messaging

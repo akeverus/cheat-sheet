@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problem-solving
   - problem-solving-overview
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Решение задач"
+  - "problem solving overview"
 prerequisites: []
 next: []
 updated: "2026-04-20"

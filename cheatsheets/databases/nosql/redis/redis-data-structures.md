@@ -10,11 +10,22 @@ tags:
   - hashes
   - sorted-sets
   - streams
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/redis-basics.md"]
-next: ["databases/redis-persistence.md", "databases/redis-replication.md"]
+aliases:
+  - "Redis"
+  - "Структуры данных"
+  - "Redis: Структуры данных"
+  - "redis data structures"
+prerequisites:
+  - "[[redis-basics]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-performance]]"
+next:
+  - "[[redis-persistence]]"
+  - "[[redis-replication]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
 # Redis: Структуры данных

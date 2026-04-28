@@ -5,10 +5,15 @@ tags:
   - languages
   - java
   - java-collections-converting
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Java Collections"
+  - "конвертирование"
+  - "java collections converting"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Collections: конвертирование

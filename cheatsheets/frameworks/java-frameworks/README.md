@@ -7,6 +7,10 @@ tags:
   - frameworks
   - java-frameworks
 type: "index"
+aliases:
+  - "Java Frameworks"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Java Frameworks

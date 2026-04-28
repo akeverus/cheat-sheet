@@ -5,9 +5,15 @@ tags:
   - databases
   - nosql
   - elasticsearch-indexing
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Elasticsearch"
+  - "elasticsearch indexing"
+prerequisites:
+  - "[[elasticsearch-basics]]"
+next:
+  - "[[elasticsearch-queries]]"
 updated: "2026-04-20"
 ---
 # Elasticsearch: Индексация документов — Управление данными и индексацией

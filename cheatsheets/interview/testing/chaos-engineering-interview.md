@@ -5,12 +5,16 @@ tags:
   - interview
   - testing
   - chaos-engineering-interview
-aliases:
-  - "Chaos Engineering interview"
-  - "Chaos Engineering собеседование"
-  - "Хаос-инжиниринг вопросы"
-  - "Chaos Monkey интервью"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Chaos Engineering"
+  - "Chaos Engineering interview"
+  - "Хаос-инжиниринг вопросы"
+prerequisites:
+  - "[[chaos-engineering]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Chaos Engineering`

@@ -5,9 +5,15 @@ tags:
   - databases
   - relational
   - mysql-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "MySQL"
+  - "mysql basics"
 prerequisites: []
-next: []
+next:
+  - "[[mysql-indexes]]"
+  - "[[mysql-queries]]"
 updated: "2026-04-20"
 ---
 # MySQL: Основы — Полное руководство по реляционной базе данных

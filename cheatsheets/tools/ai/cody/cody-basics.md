@@ -6,7 +6,13 @@ tags:
   - ai
   - cody
   - sourcegraph
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Cody"
+  - "основы"
+  - "Cody: основы"
+  - "cody basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

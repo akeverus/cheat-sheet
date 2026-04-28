@@ -5,9 +5,14 @@ tags:
   - testing
   - unit-testing
   - assertj
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "AssertJ для Java"
+  - "assertj"
 prerequisites: []
-next: []
+next:
+  - "[[hamcrest]]"
 updated: "2026-04-20"
 ---
 # AssertJ для Java

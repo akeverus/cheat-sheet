@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Безопасность"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Безопасность

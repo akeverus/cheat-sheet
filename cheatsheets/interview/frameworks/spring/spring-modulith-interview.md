@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-modulith-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Modulith"
   - "Spring Modulith interview"
   - "Spring Modulith собеседование"
-  - "Spring Modulith вопросы"
-  - "modular monolith interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-modulith]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Modulith`

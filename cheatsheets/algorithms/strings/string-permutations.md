@@ -5,7 +5,11 @@ tags:
   - algorithms
   - strings
   - string-permutations
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Перестановки строки"
+  - "String Permutations"
 prerequisites: []
 next: []
 updated: "2026-04-20"

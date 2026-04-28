@@ -5,7 +5,13 @@ tags:
   - languages
   - kotlin
   - kotlin-concurrency-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Concurrency"
+  - "Advanced"
+  - "Kotlin Concurrency: Advanced"
+  - "kotlin concurrency advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"

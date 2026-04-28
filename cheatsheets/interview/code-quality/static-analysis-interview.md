@@ -5,13 +5,15 @@ tags:
   - interview
   - code-quality
   - static-analysis-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Static Analysis"
   - "Static Analysis interview"
   - "Static Analysis собеседование"
-  - "SonarQube interview"
-  - "SpotBugs interview"
-  - "code quality tools interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Static Analysis

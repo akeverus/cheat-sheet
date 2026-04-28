@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - range-search
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Поиск по области"
+  - "Range Search"
 prerequisites: []
 next: []
 updated: "2026-04-20"

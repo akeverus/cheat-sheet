@@ -7,14 +7,20 @@ tags:
   - grouping
   - aggregation
   - functional-programming
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-collections.md"]
+aliases:
+  - "scala collections grouping"
+prerequisites:
+  - "[[scala-collections]]"
+related:
+  - "[[scala-collections]]"
+  - "[[scala-collections-operations]]"
 next:
-  - scala-implicit
-  - scala-http4s
-  - scala-fp-advanced
+  - "[[scala-implicit]]"
+  - "[[scala-http4s]]"
+  - "[[scala-fp-advanced]]"
 updated: "2026-04-20"
-related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 ---
 
 # Scala Collections — Grouping and Aggregation

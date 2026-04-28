@@ -5,7 +5,12 @@ tags:
   - algorithms
   - math
   - math-sin-with-degrees
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Синус в градусах"
+  - "Math.sin with Degrees"
+  - "math sin with degrees"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -6,14 +6,20 @@ tags:
   - pattern-matching
   - functional-programming
   - case-classes
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Pattern Matching"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-fp-basics]]"
 next:
-  - scala-implicit
-  - scala-http4s
-  - scala-fp-advanced
+  - "[[scala-implicit]]"
+  - "[[scala-http4s]]"
+  - "[[scala-fp-advanced]]"
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---
 
 # Scala Pattern Matching

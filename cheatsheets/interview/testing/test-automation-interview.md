@@ -5,13 +5,15 @@ tags:
   - interview
   - testing
   - test-automation-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Test Automation"
   - "Test Automation interview"
-  - "Автоматизация тестирования собеседование"
   - "Selenium interview"
-  - "REST Assured interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Test Automation`

@@ -5,7 +5,10 @@ tags:
   - development
   - build-tools
   - maven-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Maven Advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"

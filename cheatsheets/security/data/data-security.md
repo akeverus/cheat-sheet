@@ -6,7 +6,13 @@ tags:
   - data
   - encryption
   - pii
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Безопасность данных"
+  - "Data Security"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Безопасность данных (Data Security)

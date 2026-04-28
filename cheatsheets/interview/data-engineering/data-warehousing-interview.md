@@ -5,14 +5,15 @@ tags:
   - interview
   - data-engineering
   - data-warehousing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Data Warehousing"
   - "Data warehousing interview"
   - "Data warehouse interview"
-  - "DWH interview"
-  - "Snowflake interview"
-  - "BigQuery interview"
-  - "Star schema interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Data Warehousing`

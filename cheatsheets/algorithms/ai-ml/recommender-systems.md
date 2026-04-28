@@ -5,7 +5,10 @@ tags:
   - algorithms
   - ai-ml
   - recommender-systems
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "recommender systems"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,9 +5,15 @@ tags:
   - databases
   - relational
   - mysql-admin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "MySQL"
+  - "mysql admin"
+prerequisites:
+  - "[[mysql-basics]]"
+next:
+  - "[[mysql-replication]]"
 updated: "2026-04-20"
 ---
 # MySQL: Администрирование и обслуживание — Полное руководство по управлению MySQL

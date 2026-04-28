@@ -5,13 +5,16 @@ tags:
   - interview
   - programming-languages
   - java-exceptions-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Exceptions"
   - "Java Exceptions interview"
   - "Java Exceptions собеседование"
-  - "Исключения Java"
-  - "Java обработка ошибок"
-difficulty: "intermediate"
+prerequisites:
+  - "[[java-exceptions]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Exceptions`

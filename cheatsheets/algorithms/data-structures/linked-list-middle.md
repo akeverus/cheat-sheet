@@ -5,9 +5,15 @@ tags:
   - algorithms
   - data-structures
   - linked-list-middle
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Linked List"
+  - "linked list middle"
+  - "middle node"
 prerequisites: []
-next: []
+next:
+  - "[[linked-list-reverse]]"
 updated: "2026-04-20"
 ---
 # Поиск среднего элемента связного списка (Linked List)

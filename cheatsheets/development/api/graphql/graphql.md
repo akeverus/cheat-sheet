@@ -5,10 +5,15 @@ tags:
   - development
   - api
   - graphql
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "GraphQL для Java"
+  - "graphql"
 prerequisites:
-  - insomnia-basics
-next: []
+  - "[[insomnia-basics]]"
+next:
+  - "[[api-gateway]]"
 updated: "2026-04-20"
 ---
 # GraphQL для Java

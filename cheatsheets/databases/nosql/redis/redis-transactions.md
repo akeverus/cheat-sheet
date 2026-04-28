@@ -9,11 +9,21 @@ tags:
   - watch
   - atomic
   - locking
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/redis-basics.md"]
-next: ["databases/redis-lua-scripting.md"]
+aliases:
+  - "Redis"
+  - "Транзакции"
+  - "Redis: Транзакции"
+  - "redis transactions"
+prerequisites:
+  - "[[redis-basics]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-lua-scripting]]"
+next:
+  - "[[redis-lua-scripting]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
 ---
 
 # Redis: Транзакции

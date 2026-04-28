@@ -13,11 +13,23 @@ tags:
   - full-text-search
   - uuid
   - custom-types
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/postgres-basics.md"]
-next: ["databases/postgres-design.md"]
+aliases:
+  - "PostgreSQL"
+  - "типы данных"
+  - "массивы, enum, JSONB, домены"
+  - "postgres types"
+prerequisites:
+  - "[[postgres-basics]]"
+related:
+  - "[[postgres-basics]]"
+  - "[[postgres-design]]"
+  - "[[postgres-joins]]"
+  - "[[postgres-indexes]]"
+next:
+  - "[[postgres-design]]"
 updated: "2026-04-20"
-related: ["databases/postgres-basics.md", "databases/postgres-design.md", "databases/postgres-joins.md", "databases/postgres-indexes.md"]
 ---
 
 # PostgreSQL: типы данных (массивы, enum, JSONB, домены)

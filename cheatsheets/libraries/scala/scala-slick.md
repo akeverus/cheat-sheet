@@ -5,8 +5,14 @@ tags:
   - libraries
   - scala
   - scala-slick
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Slick"
+  - "scala slick"
+prerequisites:
+  - "[[scala-basics]]"
+  - "[[sql-basics]]"
 next: []
 updated: "2026-04-20"
 ---

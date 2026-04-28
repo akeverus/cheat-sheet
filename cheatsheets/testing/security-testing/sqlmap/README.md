@@ -8,6 +8,10 @@ tags:
   - security-testing
   - sqlmap
 type: "index"
+aliases:
+  - "sqlmap"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # sqlmap

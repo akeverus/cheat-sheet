@@ -5,8 +5,14 @@ tags:
   - monitoring
   - alerting
   - alertmanager
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Alertmanager"
+  - "Prometheus"
+  - "Alertmanager (Prometheus)"
+prerequisites:
+  - "[[prometheus]]"
 next: []
 updated: "2026-04-20"
 ---

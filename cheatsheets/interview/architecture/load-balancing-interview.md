@@ -5,13 +5,15 @@ tags:
   - interview
   - architecture
   - load-balancing-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Балансировка нагрузки"
   - "Load Balancing interview"
   - "Load Balancing собеседование"
-  - "Балансировка нагрузки interview"
-  - "Nginx load balancing"
-  - "HAProxy interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Балансировка нагрузки`

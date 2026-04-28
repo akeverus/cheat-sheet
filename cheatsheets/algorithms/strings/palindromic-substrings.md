@@ -5,7 +5,11 @@ tags:
   - algorithms
   - strings
   - palindromic-substrings
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Палиндромные подстроки"
+  - "Palindromic Substrings"
 prerequisites: []
 next: []
 updated: "2026-04-20"

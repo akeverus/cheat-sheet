@@ -5,9 +5,15 @@ tags:
   - algorithms
   - algorithmic-paradigms
   - greedy-algorithms
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Жадные алгоритмы"
+  - "Greedy Algorithms"
+  - "greedy"
 prerequisites: []
-next: []
+next:
+  - "[[dynamic-programming]]"
 updated: "2026-04-20"
 ---
 # Жадные алгоритмы (Greedy Algorithms)

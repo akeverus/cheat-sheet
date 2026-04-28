@@ -6,6 +6,10 @@ tags:
   - index
   - orm
 type: "index"
+aliases:
+  - "ORM"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # ORM

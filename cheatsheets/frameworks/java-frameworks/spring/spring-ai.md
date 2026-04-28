@@ -5,8 +5,12 @@ tags:
   - frameworks
   - java-frameworks
   - spring-ai
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Spring AI"
+prerequisites:
+  - "[[spring-boot]]"
 next: []
 updated: "2026-04-20"
 ---

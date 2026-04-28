@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - circle-area-calculation
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Вычисление площади круга"
+  - "Circle Area Calculation"
 prerequisites: []
 next: []
 updated: "2026-04-20"

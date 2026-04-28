@@ -8,6 +8,10 @@ tags:
   - relational
   - sql-server
 type: "index"
+aliases:
+  - "Microsoft SQL Server"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Microsoft SQL Server

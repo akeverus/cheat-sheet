@@ -5,12 +5,15 @@ tags:
   - interview
   - security
   - oauth2-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "OAuth2"
   - "OAuth2 interview"
   - "OAuth2 собеседование"
-  - "OpenID Connect"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `OAuth2`

@@ -5,12 +5,16 @@ tags:
   - interview
   - messaging
   - rabbitmq-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "RabbitMQ"
   - "RabbitMQ interview"
   - "RabbitMQ собеседование"
-  - "RabbitMQ вопросы"
-  - "AMQP брокер"
-difficulty: "intermediate"
+prerequisites:
+  - "[[rabbitmq]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `RabbitMQ`

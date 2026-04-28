@@ -5,7 +5,10 @@ tags:
   - platform
   - iac
   - ansible-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Ansible Advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"

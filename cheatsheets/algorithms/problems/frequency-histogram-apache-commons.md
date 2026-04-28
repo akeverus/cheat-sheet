@@ -5,6 +5,7 @@ tags:
   - algorithms
   - problems
   - frequency-histogram-apache-commons
+type: "reference"
 difficulty: "intermediate"
 prerequisites: []
 next: []

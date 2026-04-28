@@ -5,13 +5,16 @@ tags:
   - interview
   - testing
   - testcontainers-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Testcontainers"
   - "Testcontainers interview"
   - "Testcontainers собеседование"
-  - "Test Containers"
-  - "Тестконтейнеры"
-difficulty: "intermediate"
+prerequisites:
+  - "[[testcontainers]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Testcontainers`

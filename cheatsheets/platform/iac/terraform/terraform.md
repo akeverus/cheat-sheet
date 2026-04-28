@@ -5,9 +5,16 @@ tags:
   - platform
   - iac
   - terraform
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Terraform"
+  - "tf"
+  - "IaC"
+prerequisites:
+  - "[[iac-overview]]"
+next:
+  - "[[ansible]]"
 updated: "2026-04-20"
 ---
 # Terraform

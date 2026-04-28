@@ -5,13 +5,15 @@ tags:
   - interview
   - data-engineering
   - apache-flink-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Apache Flink"
   - "Apache Flink interview"
   - "Flink interview"
-  - "Flink собеседование"
-  - "Flink streaming interview"
-  - "Flink vs Spark"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Apache Flink`

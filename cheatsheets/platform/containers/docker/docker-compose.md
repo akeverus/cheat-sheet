@@ -5,9 +5,15 @@ tags:
   - platform
   - containers
   - docker-compose
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Docker Compose"
+  - "Compose"
+prerequisites:
+  - "[[docker-basics]]"
+next:
+  - "[[kubernetes-basics]]"
 updated: "2026-04-20"
 ---
 # Docker Compose

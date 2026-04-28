@@ -6,7 +6,14 @@ tags:
   - time-series
   - timescaledb
   - postgresql
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "TimescaleDB"
+  - "PostgreSQL для временных рядов"
+  - "timescaledb basics"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # TimescaleDB: PostgreSQL для временных рядов

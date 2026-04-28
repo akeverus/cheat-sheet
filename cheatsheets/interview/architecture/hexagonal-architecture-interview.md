@@ -5,13 +5,16 @@ tags:
   - interview
   - architecture
   - hexagonal-architecture-interview
-aliases:
-  - "Hexagonal Architecture interview"
-  - "Ports and Adapters interview"
-  - "Гексагональная архитектура собеседование"
-  - "Hexagonal Architecture вопросы"
-  - "Ports & Adapters вопросы"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Hexagonal Architecture"
+  - "Ports & Adapters"
+  - "Ports and Adapters interview"
+prerequisites:
+  - "[[hexagonal-architecture]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Hexagonal Architecture (Ports & Adapters)`

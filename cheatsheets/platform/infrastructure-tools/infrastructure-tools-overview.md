@@ -5,9 +5,14 @@ tags:
   - platform
   - infrastructure-tools
   - infrastructure-tools-overview
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "infrastructure tools overview"
 prerequisites: []
-next: []
+next:
+  - "[[consul]]"
+  - "[[vagrant]]"
 updated: "2026-04-20"
 ---
 # Обзор инфраструктурных инструментов

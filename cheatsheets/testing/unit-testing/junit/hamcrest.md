@@ -5,9 +5,14 @@ tags:
   - testing
   - unit-testing
   - hamcrest
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Hamcrest для Java"
+  - "hamcrest"
 prerequisites: []
-next: []
+next:
+  - "[[assertj]]"
 updated: "2026-04-20"
 ---
 # Hamcrest для Java

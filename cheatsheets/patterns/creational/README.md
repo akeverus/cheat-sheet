@@ -7,6 +7,10 @@ tags:
   - patterns
   - creational
 type: "index"
+aliases:
+  - "Порождающие паттерны"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Порождающие паттерны

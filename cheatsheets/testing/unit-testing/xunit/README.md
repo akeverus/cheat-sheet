@@ -8,6 +8,10 @@ tags:
   - unit-testing
   - xunit
 type: "index"
+aliases:
+  - "xUnit.net"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # xUnit.net

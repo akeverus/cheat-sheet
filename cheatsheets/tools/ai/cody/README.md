@@ -8,6 +8,10 @@ tags:
   - ai
   - cody
 type: "index"
+aliases:
+  - "Sourcegraph Cody"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Sourcegraph Cody

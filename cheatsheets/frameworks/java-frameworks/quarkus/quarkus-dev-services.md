@@ -8,11 +8,20 @@ tags:
   - docker
   - containers
   - java
+type: "reference"
 difficulty: "beginner"
-prerequisites: ["quarkus/quarkus-basics.md"]
-next: ["quarkus-basics.md", "quarkus-testing.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus dev services"
+prerequisites:
+  - "[[quarkus-basics]]"
+related:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-testing]]"
+next:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-testing]]"
 updated: "2026-04-20"
-related: ["quarkus-basics.md", "quarkus-testing.md"]
 ---
 
 # Quarkus: Dev Services — Автоматические сервисы для разработки

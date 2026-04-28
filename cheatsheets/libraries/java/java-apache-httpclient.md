@@ -5,9 +5,14 @@ tags:
   - libraries
   - java
   - java-apache-httpclient
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Apache HttpClient"
+  - "Мощный HTTP клиент для Java"
+  - "java apache httpclient"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

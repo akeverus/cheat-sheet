@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-testing-interview
-aliases:
-  - "Spring Boot Testing interview"
-  - "Spring Boot Testing собеседование"
-  - "@WebMvcTest interview"
-  - "MockMvc interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Boot Testing"
+  - "Spring Boot Testing interview"
+  - "@WebMvcTest interview"
+prerequisites:
+  - "[[spring-testing]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Boot Testing`

@@ -5,14 +5,15 @@ tags:
   - interview
   - ai-ml
   - vector-databases-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Vector Databases"
   - "Vector databases interview"
   - "Vector DB interview"
-  - "Pinecone interview"
-  - "Qdrant interview"
-  - "pgvector interview"
-  - "HNSW interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Vector Databases`

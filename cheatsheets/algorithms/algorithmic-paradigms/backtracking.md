@@ -5,9 +5,15 @@ tags:
   - algorithms
   - algorithmic-paradigms
   - backtracking
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Поиск с возвратом"
+  - "Backtracking"
+prerequisites:
+  - "[[divide-and-conquer]]"
+next:
+  - "[[branch-and-bound]]"
 updated: "2026-04-20"
 ---
 # Поиск с возвратом (Backtracking)

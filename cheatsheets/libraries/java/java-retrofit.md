@@ -5,9 +5,13 @@ tags:
   - libraries
   - java
   - java-retrofit
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Retrofit"
+  - "java retrofit"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

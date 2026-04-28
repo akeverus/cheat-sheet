@@ -5,8 +5,12 @@ tags:
   - algorithms
   - trees
   - balanced-binary-tree-check
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Balanced Binary Tree Check"
+prerequisites:
+  - "[[binary-tree]]"
 next: []
 updated: "2026-04-20"
 ---

@@ -7,6 +7,10 @@ tags:
   - monitoring
   - tracing
 type: "index"
+aliases:
+  - "Распределённый трейсинг"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Распределённый трейсинг

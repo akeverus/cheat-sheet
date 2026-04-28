@@ -11,11 +11,22 @@ tags:
   - clustering
   - lua
   - pub-sub
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["databases/postgres-basics.md", "java/java-basics.md"]
-next: ["databases/mongodb.md", "databases/clickhouse.md", "infrastructure/docker-basics.md"]
+aliases:
+  - "redis"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[java-basics]]"
+related:
+  - "[[postgres-basics]]"
+  - "[[spring-data-jpa]]"
+  - "[[kubernetes-basics]]"
+next:
+  - "[[mongodb]]"
+  - "[[clickhouse]]"
+  - "[[docker-basics]]"
 updated: "2026-04-20"
-related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastructure/kubernetes-basics.md"]
 ---
 
 ## Полезные ссылки

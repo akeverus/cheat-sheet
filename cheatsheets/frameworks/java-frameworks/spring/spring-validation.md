@@ -8,11 +8,21 @@ tags:
   - javax-validation
   - jakarta-validation
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
-next: ["spring/spring-mvc.md", "spring/spring-rest.md"]
+aliases:
+  - "Spring Validation"
+  - "Validation"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[spring-boot]]"
+related:
+  - "[[spring-boot]]"
+  - "[[java-basics]]"
+next:
+  - "[[spring-mvc]]"
+  - "[[spring-rest]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
 # Spring Validation: Полное руководство по валидации данных

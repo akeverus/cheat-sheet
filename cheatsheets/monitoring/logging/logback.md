@@ -5,8 +5,14 @@ tags:
   - monitoring
   - logging
   - logback
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Logback для Java"
+  - "logback"
+prerequisites:
+  - "[[logging-basics]]"
+  - "[[slf4j]]"
 next: []
 updated: "2026-04-20"
 ---

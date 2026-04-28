@@ -7,6 +7,10 @@ tags:
   - platform
   - iac
 type: "index"
+aliases:
+  - "Platform IaC"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Platform IaC

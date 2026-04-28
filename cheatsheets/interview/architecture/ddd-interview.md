@@ -5,12 +5,16 @@ tags:
   - interview
   - architecture
   - ddd-interview
-aliases:
-  - "DDD interview"
-  - "Domain-Driven Design собеседование"
-  - "DDD собеседование"
-  - "Domain-Driven Design interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Domain-Driven Design"
+  - "DDD interview"
+  - "DDD собеседование"
+prerequisites:
+  - "[[ddd]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Domain-Driven Design`

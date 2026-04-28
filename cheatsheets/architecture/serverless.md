@@ -4,7 +4,11 @@ description: "Serverless Architecture — это архитектурный по
 tags:
   - architecture
   - serverless
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Serverless Architecture"
+  - "serverless"
 prerequisites: []
 next: []
 updated: "2026-04-20"

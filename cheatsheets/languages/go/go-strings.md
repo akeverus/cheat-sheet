@@ -7,8 +7,16 @@ tags:
   - strings
   - text-processing
   - formatting
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "строки"
+  - "Go: строки"
+  - "go strings"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

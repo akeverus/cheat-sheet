@@ -10,10 +10,18 @@ tags:
   - bi-tools
   - programming-languages
   - cloud
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/clickhouse-performance.md"]
+aliases:
+  - "ClickHouse"
+  - "clickhouse integration"
+prerequisites:
+  - "[[clickhouse-performance]]"
+related:
+  - "[[clickhouse-performance]]"
+  - "[[clickhouse-replication]]"
+next: []
 updated: "2026-04-20"
-related: ["databases/clickhouse-performance.md", "databases/clickhouse-replication.md"]
 ---
 
 ## Полезные ссылки

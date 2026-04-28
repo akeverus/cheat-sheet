@@ -5,11 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-data-jdbc-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Data JDBC"
   - "Spring Data JDBC interview"
   - "Spring Data JDBC собеседование"
-  - "Spring Data JDBC вопросы"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-data-jdbc]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Data JDBC`

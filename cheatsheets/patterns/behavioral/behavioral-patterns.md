@@ -5,7 +5,10 @@ tags:
   - patterns
   - behavioral
   - behavioral-patterns
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Behavioral Patterns"
 prerequisites: []
 next: []
 updated: "2026-04-20"

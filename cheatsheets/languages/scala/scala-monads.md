@@ -5,9 +5,16 @@ tags:
   - languages
   - scala
   - scala-monads
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Monads в Scala"
+  - "scala monads"
+  - "monads"
+  - "монады"
 prerequisites: []
-next: []
+next:
+  - "[[scala-cats]]"
 updated: "2026-04-20"
 ---
 # Monads в Scala

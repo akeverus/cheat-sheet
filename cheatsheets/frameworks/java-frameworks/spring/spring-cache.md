@@ -9,11 +9,20 @@ tags:
   - caffeine
   - performance
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
-next: ["spring/spring-redis.md", "spring/spring-mongodb.md"]
+aliases:
+  - "Spring Cache"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[spring-boot]]"
+related:
+  - "[[spring-boot]]"
+  - "[[java-basics]]"
+next:
+  - "[[spring-redis]]"
+  - "[[spring-mongodb]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
 # Spring Cache: Полное руководство по кешированию

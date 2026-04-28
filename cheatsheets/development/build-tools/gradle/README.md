@@ -7,6 +7,10 @@ tags:
   - build-tools
   - gradle
 type: "index"
+aliases:
+  - "Gradle"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Gradle

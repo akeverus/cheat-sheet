@@ -9,11 +9,21 @@ tags:
   - monitoring
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
-next: ["micronaut-cloud.md", "micronaut-testing.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut actuator"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-core]]"
+  - "[[micronaut-cloud]]"
+next:
+  - "[[micronaut-cloud]]"
+  - "[[micronaut-testing]]"
 updated: "2026-04-20"
-related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
 # Micronaut: Actuator — Health Checks, Metrics и Endpoints

@@ -5,7 +5,10 @@ tags:
   - patterns
   - creational
   - creational-patterns
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Creational Patterns"
 prerequisites: []
 next: []
 updated: "2026-04-20"

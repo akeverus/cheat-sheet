@@ -5,12 +5,16 @@ tags:
   - interview
   - monitoring
   - jaeger-zipkin-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Jaeger и Zipkin"
   - "Jaeger interview"
   - "Zipkin interview"
-  - "Distributed tracing backends"
-  - "Tempo interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[jaeger]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Jaeger и Zipkin`

@@ -5,9 +5,15 @@ tags:
   - databases
   - nosql
   - cassandra-data-modeling
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Cassandra"
+  - "cassandra data modeling"
+prerequisites:
+  - "[[cassandra-basics]]"
+next:
+  - "[[cassandra-queries]]"
 updated: "2026-04-20"
 ---
 # Cassandra: Моделирование данных — Проектирование схем в распределенной базе данных

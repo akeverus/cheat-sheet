@@ -5,8 +5,14 @@ tags:
   - libraries
   - scala
   - scala-doobie
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Doobie"
+  - "scala doobie"
+prerequisites:
+  - "[[scala-cats]]"
+  - "[[sql-basics]]"
 next: []
 updated: "2026-04-20"
 ---

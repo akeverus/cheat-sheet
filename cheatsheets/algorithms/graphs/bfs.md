@@ -5,9 +5,15 @@ tags:
   - algorithms
   - graphs
   - bfs
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Поиск в ширину"
+  - "BFS"
+  - "Поиск в ширину (BFS)"
 prerequisites: []
-next: []
+next:
+  - "[[dijkstra]]"
 updated: "2026-04-20"
 ---
 # Поиск в ширину (BFS)

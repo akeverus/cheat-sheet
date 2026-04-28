@@ -7,6 +7,10 @@ tags:
   - databases
   - postgresql
 type: "index"
+aliases:
+  - "PostgreSQL"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # PostgreSQL

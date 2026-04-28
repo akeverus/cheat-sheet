@@ -5,7 +5,13 @@ tags:
   - patterns
   - concurrency-patterns
   - future-task
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Будущие задачи"
+  - "Future/Task"
+  - "Будущие задачи (Future/Task)"
+  - "future task"
 prerequisites: []
 next: []
 updated: "2026-04-20"

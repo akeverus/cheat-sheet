@@ -5,7 +5,10 @@ tags:
   - testing
   - security-testing
   - sqlmap
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "sqlmap"
 prerequisites: []
 next: []
 updated: "2026-04-20"

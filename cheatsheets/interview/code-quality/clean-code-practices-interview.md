@@ -5,13 +5,16 @@ tags:
   - interview
   - code-quality
   - clean-code-practices-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Clean Code Practices"
   - "Clean Code interview"
   - "Clean Code собеседование"
-  - "SOLID principles interview"
-  - "Robert Martin Clean Code"
-  - "чистый код вопросы"
-difficulty: "intermediate"
+prerequisites:
+  - "[[clean-code]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Clean Code Practices

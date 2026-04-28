@@ -8,11 +8,21 @@ tags:
   - publish
   - subscribe
   - patterns
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/redis-basics.md"]
-next: ["databases/redis-streams.md"]
+aliases:
+  - "Redis"
+  - "Pub/Sub"
+  - "Redis: Pub/Sub"
+  - "redis pubsub"
+prerequisites:
+  - "[[redis-basics]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-streams]]"
+next:
+  - "[[redis-streams]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 ---
 
 # Redis: Pub/Sub

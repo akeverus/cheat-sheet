@@ -8,6 +8,10 @@ tags:
   - security-testing
   - burp-suite
 type: "index"
+aliases:
+  - "Burp Suite"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Burp Suite

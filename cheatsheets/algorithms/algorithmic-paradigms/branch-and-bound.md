@@ -5,8 +5,13 @@ tags:
   - algorithms
   - algorithmic-paradigms
   - branch-and-bound
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Методы ветвей и границ"
+  - "Branch and Bound"
+prerequisites:
+  - "[[backtracking]]"
 next: []
 updated: "2026-04-20"
 ---

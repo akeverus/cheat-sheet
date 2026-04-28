@@ -12,11 +12,22 @@ tags:
   - testing
   - documentation
   - security
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
-next: ["spring/spring-security.md", "api/rest-api-design.md"]
+aliases:
+  - "Spring REST API"
+  - "spring rest"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[spring-boot]]"
+related:
+  - "[[spring-boot]]"
+  - "[[java-basics]]"
+  - "[[rest-api-design]]"
+next:
+  - "[[spring-security]]"
+  - "[[rest-api-design]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.md"]
 ---
 
 # Spring REST API: Полное руководство по разработке RESTful веб-сервисов

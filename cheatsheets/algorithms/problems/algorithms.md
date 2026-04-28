@@ -4,9 +4,16 @@ description: "Преобразование объекта в числовой и
 tags:
   - algorithms
   - problems
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Хеширование и хеш-функции"
+  - "Hashing and Hash Functions"
+  - "algorithms"
 prerequisites: []
-next: []
+next:
+  - "[[divide-and-conquer]]"
+  - "[[dynamic-programming]]"
 updated: "2026-04-20"
 ---
 # Хеширование и хеш-функции (Hashing and Hash Functions)

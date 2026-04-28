@@ -5,13 +5,15 @@ tags:
   - interview
   - leadership
   - conflict-resolution-interview
-aliases:
-  - "Conflict Resolution interview"
-  - "Conflict Resolution собеседование"
-  - "stakeholder management interview"
-  - "de-escalation interview"
-  - "разрешение конфликтов"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Разрешение конфликтов"
+  - "Conflict Resolution interview"
+  - "de-escalation interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Разрешение конфликтов

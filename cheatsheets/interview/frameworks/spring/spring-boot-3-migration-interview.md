@@ -5,13 +5,16 @@ tags:
   - interview
   - spring
   - spring-boot-3-migration-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Spring Boot 3 Migration interview"
+  - "Вопросы на собеседовании"
+  - "Spring Boot 3 Migration"
   - "Spring Boot 3 собеседование"
   - "Spring Boot migration вопросы"
-  - "jakarta migration interview"
-  - "Java 17 Spring Boot interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-boot-3-migration]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Boot 3 Migration`

@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-scheduling-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Scheduling"
   - "Spring Scheduling interview"
   - "Spring @Scheduled interview"
-  - "Spring Scheduling собеседование"
-  - "Spring cron задачи интервью"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-scheduling]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Scheduling`

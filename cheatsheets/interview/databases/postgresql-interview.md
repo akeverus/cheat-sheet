@@ -5,12 +5,15 @@ tags:
   - interview
   - databases
   - postgresql-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "PostgreSQL"
   - "PostgreSQL interview"
   - "PostgreSQL собеседование"
-  - "PostgreSQL вопросы"
-  - "Postgres interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `PostgreSQL`

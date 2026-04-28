@@ -6,14 +6,20 @@ tags:
   - stream
   - lazy-evaluation
   - functional-programming
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-collections-list.md"]
+aliases:
+  - "Scala Stream"
+prerequisites:
+  - "[[scala-collections-list]]"
+related:
+  - "[[scala-collections-list]]"
+  - "[[scala-collections]]"
 next:
-  - scala-implicit
-  - scala-http4s
-  - scala-fp-advanced
+  - "[[scala-implicit]]"
+  - "[[scala-http4s]]"
+  - "[[scala-fp-advanced]]"
 updated: "2026-04-20"
-related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 ---
 
 # Scala Stream

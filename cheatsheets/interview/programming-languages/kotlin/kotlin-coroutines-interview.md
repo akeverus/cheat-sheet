@@ -5,14 +5,15 @@ tags:
   - interview
   - programming-languages
   - kotlin-coroutines-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Kotlin Coroutines"
   - "Kotlin Coroutines interview"
-  - "Kotlin Coroutines собеседование"
   - "корутины Kotlin"
-  - "Kotlin Flow"
-  - "structured concurrency"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kotlin Coroutines`

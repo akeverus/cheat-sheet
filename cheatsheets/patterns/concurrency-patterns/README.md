@@ -7,6 +7,10 @@ tags:
   - patterns
   - concurrency
 type: "index"
+aliases:
+  - "Паттерны многопоточности"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Паттерны многопоточности

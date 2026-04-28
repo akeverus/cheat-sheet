@@ -7,6 +7,10 @@ tags:
   - slack
   - collaboration
 type: "index"
+aliases:
+  - "Slack"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Slack

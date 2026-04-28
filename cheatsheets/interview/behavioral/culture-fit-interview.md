@@ -5,13 +5,15 @@ tags:
   - interview
   - behavioral
   - culture-fit-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Culture Fit"
   - "Culture Fit interview"
   - "Culture Fit собеседование"
-  - "values interview"
-  - "team compatibility interview"
-  - "motivation interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Culture Fit

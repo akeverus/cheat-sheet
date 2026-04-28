@@ -5,9 +5,15 @@ tags:
   - algorithms
   - sorting
   - bead-sort
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Gravity Sort"
+  - "Bead Sort"
+  - "сортировка бусинами"
 prerequisites: []
-next: []
+next:
+  - "[[counting-sort]]"
 updated: "2026-04-20"
 ---
 # Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)

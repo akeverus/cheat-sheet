@@ -5,7 +5,13 @@ tags:
   - languages
   - kotlin
   - kotlin-reactive-rxkotlin
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Reactive"
+  - "RxKotlin"
+  - "Kotlin Reactive: RxKotlin"
+  - "kotlin reactive rxkotlin"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,11 +5,16 @@ tags:
   - interview
   - logging
   - logging-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Logging"
   - "Logging interview"
   - "Логирование собеседование"
-difficulty: "intermediate"
+prerequisites:
+  - "[[logging-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Logging`

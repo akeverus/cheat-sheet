@@ -5,8 +5,14 @@ tags:
   - algorithms
   - ai-ml
   - logistic-regression
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Логистическая регрессия"
+  - "logistic regression"
+  - "logreg"
+prerequisites:
+  - "[[ai-libraries]]"
 next: []
 updated: "2026-04-20"
 ---

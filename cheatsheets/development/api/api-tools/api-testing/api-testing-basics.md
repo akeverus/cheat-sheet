@@ -5,9 +5,15 @@ tags:
   - development
   - api
   - api-testing-basics
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "API Testing"
+  - "Основы"
+  - "API Testing: Основы"
+  - "api testing basics"
 prerequisites:
-  - insomnia-basics
+  - "[[insomnia-basics]]"
 next: []
 updated: "2026-04-20"
 ---

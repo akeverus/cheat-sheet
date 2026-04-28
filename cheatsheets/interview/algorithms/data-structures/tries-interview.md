@@ -5,14 +5,15 @@ tags:
   - interview
   - algorithms
   - tries-interview
-aliases:
-  - "Trie interview"
-  - "Префиксное дерево собеседование"
-  - "Radix tree interview"
-  - "Suffix tree interview"
-  - "Union-Find interview"
-  - "DSU interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Trie и специальные структуры"
+  - "Trie interview"
+  - "Radix tree interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Trie и специальные структуры`

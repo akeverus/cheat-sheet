@@ -7,8 +7,16 @@ tags:
   - errors
   - error-handling
   - wrapping
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "обработка ошибок"
+  - "Go: обработка ошибок"
+  - "go error handling"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

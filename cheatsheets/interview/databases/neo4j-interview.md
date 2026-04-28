@@ -5,12 +5,16 @@ tags:
   - interview
   - databases
   - neo4j-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Neo4j"
   - "Neo4j interview"
   - "Neo4j собеседование"
-  - "Graph database interview"
-  - "Cypher interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[neo4j-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Neo4j`

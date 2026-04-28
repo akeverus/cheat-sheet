@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - knapsack-problem
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Задача о рюкзаке"
+  - "Knapsack Problem"
 prerequisites: []
 next: []
 updated: "2026-04-20"

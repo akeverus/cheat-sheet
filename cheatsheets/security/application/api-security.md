@@ -5,7 +5,11 @@ tags:
   - security
   - application
   - api-security
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Безопасность API"
+  - "api security"
 prerequisites: []
 next: []
 updated: "2026-04-20"

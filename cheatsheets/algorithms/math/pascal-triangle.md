@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - pascal-triangle
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Треугольник Паскаля"
+  - "Pascal Triangle"
 prerequisites: []
 next: []
 updated: "2026-04-20"

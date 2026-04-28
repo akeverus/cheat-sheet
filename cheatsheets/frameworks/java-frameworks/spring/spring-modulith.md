@@ -7,7 +7,14 @@ tags:
   - modulith
   - modular-monolith
   - architecture
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "spring modulith"
+prerequisites:
+  - "[[spring-boot]]"
+next:
+  - "[[microservices]]"
 updated: "2026-04-20"
 ---
 # Spring Modulith — модульный монолит

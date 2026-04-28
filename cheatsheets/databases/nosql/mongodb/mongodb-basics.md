@@ -5,9 +5,15 @@ tags:
   - databases
   - nosql
   - mongodb-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "MongoDB"
+  - "mongodb basics"
 prerequisites: []
-next: []
+next:
+  - "[[mongodb-indexes]]"
+  - "[[mongodb-replication]]"
 updated: "2026-04-20"
 ---
 # MongoDB: Основы документо-ориентированной NoSQL базы данных

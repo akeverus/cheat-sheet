@@ -9,10 +9,18 @@ tags:
   - monitoring
   - hardware
   - configuration
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/clickhouse-replication.md"]
+aliases:
+  - "ClickHouse"
+  - "clickhouse performance"
+prerequisites:
+  - "[[clickhouse-replication]]"
+related:
+  - "[[clickhouse-replication]]"
+  - "[[clickhouse-indexes]]"
+next: []
 updated: "2026-04-20"
-related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.md"]
 ---
 
 # ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу

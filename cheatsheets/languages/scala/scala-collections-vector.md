@@ -7,14 +7,21 @@ tags:
   - vector
   - functional-programming
   - performance
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-collections.md"]
+aliases:
+  - "Scala Collections — Vector"
+  - "scala collections vector"
+prerequisites:
+  - "[[scala-collections]]"
+related:
+  - "[[scala-collections-list]]"
+  - "[[scala-collections]]"
 next:
-  - scala-implicit
-  - scala-http4s
-  - scala-fp-advanced
+  - "[[scala-implicit]]"
+  - "[[scala-http4s]]"
+  - "[[scala-fp-advanced]]"
 updated: "2026-04-20"
-related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 ---
 
 # Scala Collections — Vector

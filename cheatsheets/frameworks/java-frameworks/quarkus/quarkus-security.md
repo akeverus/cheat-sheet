@@ -9,11 +9,21 @@ tags:
   - keycloak
   - authentication
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
-next: ["quarkus-rest.md", "quarkus-reactive.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus security"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-rest]]"
+related:
+  - "[[quarkus-rest]]"
+  - "[[quarkus-reactive]]"
+next:
+  - "[[quarkus-rest]]"
+  - "[[quarkus-reactive]]"
 updated: "2026-04-20"
-related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
 # Quarkus: Security — Authentication, Authorization и OAuth2

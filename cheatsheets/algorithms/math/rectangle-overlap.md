@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - rectangle-overlap
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Перекрытие прямоугольников"
+  - "Rectangle Overlap"
 prerequisites: []
 next: []
 updated: "2026-04-20"

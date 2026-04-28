@@ -5,12 +5,16 @@ tags:
   - interview
   - algorithms
   - divide-and-conquer-interview
-aliases:
-  - "Divide and conquer interview"
-  - "Разделяй и властвуй собеседование"
-  - "D&C interview"
-  - "Master theorem interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Divide and Conquer"
+  - "Divide and conquer interview"
+  - "D&C interview"
+prerequisites:
+  - "[[divide-and-conquer]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Divide and Conquer`

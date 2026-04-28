@@ -5,13 +5,16 @@ tags:
   - interview
   - kotlin
   - kotlin-spring-interview
-aliases:
-  - "Kotlin Spring interview"
-  - "Kotlin Spring Boot собеседование"
-  - "Kotlin backend interview"
-  - "Spring Kotlin вопросы"
-  - "Kotlin coroutines Spring"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Kotlin + Spring"
+  - "Kotlin Spring interview"
+  - "Kotlin backend interview"
+prerequisites:
+  - "[[kotlin-spring]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kotlin + Spring`

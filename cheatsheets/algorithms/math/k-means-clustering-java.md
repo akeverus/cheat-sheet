@@ -5,7 +5,12 @@ tags:
   - algorithms
   - math
   - k-means-clustering-java
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "K-Means кластеризация в Java"
+  - "K-Means Clustering"
+  - "k means clustering java"
 prerequisites: []
 next: []
 updated: "2026-04-20"

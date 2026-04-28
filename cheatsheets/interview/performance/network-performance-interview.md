@@ -5,12 +5,15 @@ tags:
   - interview
   - performance
   - network-performance-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Network Performance"
   - "Network Performance interview"
   - "Network tuning"
-  - "HTTP Performance"
-  - "Network Performance собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Network Performance`

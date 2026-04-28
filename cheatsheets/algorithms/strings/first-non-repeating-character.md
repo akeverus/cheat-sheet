@@ -5,7 +5,13 @@ tags:
   - algorithms
   - strings
   - first-non-repeating-character
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Первый неповторяющийся символ"
+  - "First Non-Repeating Character"
+  - "first non repeating character"
+  - "non-repeating char"
 prerequisites: []
 next: []
 updated: "2026-04-20"

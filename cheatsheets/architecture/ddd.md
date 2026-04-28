@@ -4,9 +4,17 @@ description: "Domain-Driven Design (DDD) — это подход к разраб
 tags:
   - architecture
   - ddd
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Domain-Driven Design"
+  - "DDD"
+  - "Domain-Driven Design (DDD)"
 prerequisites: []
-next: []
+next:
+  - "[[event-sourcing]]"
+  - "[[cqrs]]"
+  - "[[hexagonal-architecture]]"
 updated: "2026-04-20"
 ---
 # Domain-Driven Design (DDD)

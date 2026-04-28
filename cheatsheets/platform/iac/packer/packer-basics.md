@@ -5,7 +5,13 @@ tags:
   - platform
   - iac
   - packer-basics
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Основы Packer"
+  - "редирект"
+  - "Основы Packer (редирект)"
+  - "packer basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

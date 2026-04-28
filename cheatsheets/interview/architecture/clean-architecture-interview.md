@@ -5,13 +5,16 @@ tags:
   - interview
   - architecture
   - clean-architecture-interview
-aliases:
-  - "Clean Architecture interview"
-  - "Clean Architecture собеседование"
-  - "Hexagonal Architecture interview"
-  - "Гексагональная архитектура"
-  - "Ports and Adapters"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Clean Architecture"
+  - "Clean Architecture interview"
+  - "Гексагональная архитектура"
+prerequisites:
+  - "[[clean-architecture]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Clean Architecture`

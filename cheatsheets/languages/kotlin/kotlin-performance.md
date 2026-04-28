@@ -5,7 +5,10 @@ tags:
   - languages
   - kotlin
   - kotlin-performance
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Performance"
 prerequisites: []
 next: []
 updated: "2026-04-20"

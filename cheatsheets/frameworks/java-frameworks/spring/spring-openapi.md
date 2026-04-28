@@ -8,7 +8,15 @@ tags:
   - swagger
   - api-documentation
   - springdoc
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Spring Boot + OpenAPI"
+  - "SpringDoc"
+  - "spring openapi"
+prerequisites:
+  - "[[spring-rest]]"
+next: []
 updated: "2026-04-20"
 ---
 # Spring Boot + OpenAPI (SpringDoc)

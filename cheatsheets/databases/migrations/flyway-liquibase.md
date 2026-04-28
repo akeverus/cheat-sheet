@@ -8,7 +8,12 @@ tags:
   - database
   - spring-boot
   - sql
-difficulty: intermediate
+type: "reference"
+difficulty: "intermediate"
+aliases:
+  - "flyway liquibase"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 

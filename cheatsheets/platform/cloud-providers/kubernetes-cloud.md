@@ -5,7 +5,11 @@ tags:
   - platform
   - cloud-providers
   - kubernetes-cloud
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kubernetes в облаке"
+  - "kubernetes cloud"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,7 +5,10 @@ tags:
   - databases
   - nosql
   - clickhouse
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "ClickHouse"
 prerequisites: []
 next: []
 updated: "2026-04-20"

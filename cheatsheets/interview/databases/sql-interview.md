@@ -5,13 +5,16 @@ tags:
   - interview
   - databases
   - sql-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "SQL"
   - "SQL interview"
   - "SQL собеседование"
-  - "Базы данных SQL"
-  - "Реляционные БД"
-difficulty: "intermediate"
+prerequisites:
+  - "[[sql-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `SQL`

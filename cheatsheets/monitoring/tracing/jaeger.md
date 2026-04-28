@@ -5,10 +5,16 @@ tags:
   - monitoring
   - tracing
   - jaeger
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Jaeger для Java"
+  - "jaeger"
+prerequisites:
+  - "[[distributed-tracing]]"
+  - "[[opentelemetry]]"
 next:
-  - go-observability
+  - "[[go-observability]]"
 updated: "2026-04-20"
 ---
 # Jaeger для Java

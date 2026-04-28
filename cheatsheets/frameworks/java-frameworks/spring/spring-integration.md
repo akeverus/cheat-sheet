@@ -6,14 +6,20 @@ tags:
   - java-frameworks
   - spring-integration
   - eip
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["spring-core.md"]
-next: ["spring-kafka.md", "spring-messaging.md"]
-updated: "2026-04-20"
+aliases:
+  - "Spring Integration"
+prerequisites:
+  - "[[spring-core]]"
 related:
-  - "spring-core.md"
-  - "spring-messaging.md"
-  - "spring-kafka.md"
+  - "[[spring-core]]"
+  - "[[spring-messaging]]"
+  - "[[spring-kafka]]"
+next:
+  - "[[spring-kafka]]"
+  - "[[spring-messaging]]"
+updated: "2026-04-20"
 ---
 # Spring Integration
 

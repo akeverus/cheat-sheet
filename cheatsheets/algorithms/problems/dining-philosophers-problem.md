@@ -5,7 +5,12 @@ tags:
   - algorithms
   - problems
   - dining-philosophers-problem
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Задача об обедающих философах"
+  - "Dining Philosophers Problem"
+  - "dining philosophers"
 prerequisites: []
 next: []
 updated: "2026-04-20"

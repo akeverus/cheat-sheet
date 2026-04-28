@@ -5,8 +5,13 @@ tags:
   - algorithms
   - ai-ml
   - jenetics
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Руководство по Jenetics"
+  - "jenetics"
+prerequisites:
+  - "[[genetic-algorithms]]"
 next: []
 updated: "2026-04-20"
 ---

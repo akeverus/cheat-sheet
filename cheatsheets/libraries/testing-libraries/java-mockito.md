@@ -5,7 +5,11 @@ tags:
   - libraries
   - testing-libraries
   - java-mockito
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Mockito"
+  - "java mockito"
 prerequisites: []
 next: []
 updated: "2026-04-20"

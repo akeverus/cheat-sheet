@@ -5,11 +5,17 @@ tags:
   - databases
   - orm
   - orm-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "ORM"
+  - "Object-Relational Mapping"
+  - "ORM: Object-Relational Mapping"
+  - "orm basics"
 prerequisites: []
 next:
-  - hibernate-relationships
-  - hibernate-caching
+  - "[[hibernate-relationships]]"
+  - "[[hibernate-caching]]"
 updated: "2026-04-20"
 ---
 # ORM: Object-Relational Mapping

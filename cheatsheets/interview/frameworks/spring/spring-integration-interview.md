@@ -5,13 +5,16 @@ tags:
   - interview
   - spring
   - spring-integration-interview
-aliases:
-  - "Spring Integration interview"
-  - "Spring Integration собеседование"
-  - "Spring Integration вопросы"
-  - "EIP interview"
-  - "Enterprise Integration Patterns interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Integration"
+  - "Spring Integration interview"
+  - "Spring Integration вопросы"
+prerequisites:
+  - "[[spring-integration]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Integration`

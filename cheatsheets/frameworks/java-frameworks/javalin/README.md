@@ -7,6 +7,10 @@ tags:
   - javalin
   - java-frameworks
 type: "index"
+aliases:
+  - "Javalin"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Javalin

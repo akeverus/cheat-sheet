@@ -7,6 +7,10 @@ tags:
   - serialization
   - libraries
 type: "index"
+aliases:
+  - "Serialization Libraries"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Serialization Libraries

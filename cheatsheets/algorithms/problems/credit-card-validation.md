@@ -5,7 +5,12 @@ tags:
   - algorithms
   - problems
   - credit-card-validation
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Валидация банковских карт"
+  - "Credit Card Validation"
+  - "Luhn"
 prerequisites: []
 next: []
 updated: "2026-04-20"

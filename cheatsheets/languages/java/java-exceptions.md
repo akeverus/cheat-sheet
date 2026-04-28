@@ -5,10 +5,17 @@ tags:
   - languages
   - java
   - java-exceptions
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Java"
+  - "обработка исключений"
+  - "Java: обработка исключений"
+  - "java exceptions"
+prerequisites:
+  - "[[java-basics]]"
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java: обработка исключений

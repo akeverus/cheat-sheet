@@ -5,12 +5,15 @@ tags:
   - interview
   - messaging
   - redpanda-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Redpanda"
   - "Redpanda interview"
   - "Redpanda собеседование"
-  - "Redpanda vs Kafka"
-  - "Kafka-compatible C++ streaming"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Redpanda`

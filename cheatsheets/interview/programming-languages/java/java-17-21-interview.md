@@ -5,14 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-17-21-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java 17-21"
   - "Java 17-21 interview"
   - "Java 17 21 собеседование"
-  - "Modern Java interview"
-  - "Records Sealed Classes Virtual Threads"
-  - "Современная Java"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java 17-21`

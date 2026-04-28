@@ -5,8 +5,14 @@ tags:
   - algorithms
   - strings
   - levenshtein-distance
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Расстояние Левенштейна"
+  - "Levenshtein Distance"
+  - "Levenshtein"
+prerequisites:
+  - "[[dynamic-programming]]"
 next: []
 updated: "2026-04-20"
 ---

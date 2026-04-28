@@ -9,11 +9,21 @@ tags:
   - protobuf
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-http.md", "micronaut-reactive.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut grpc"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-http]]"
+  - "[[micronaut-reactive]]"
+next:
+  - "[[micronaut-http]]"
+  - "[[micronaut-reactive]]"
 updated: "2026-04-20"
-related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
 # Micronaut: gRPC Integration — RPC Communication

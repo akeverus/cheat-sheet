@@ -5,15 +5,25 @@ tags:
   - postgresql
   - backup
   - restore
-  - pg_dump
-  - pg_basebackup
+  - pg-dump
+  - pg-basebackup
   - pitr
   - continuous-archiving
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
-next: ["databases/postgres-replication.md", "databases/postgres-high-availability.md"]
+aliases:
+  - "PostgreSQL"
+  - "postgres backup restore"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-admin]]"
+related:
+  - "[[postgres-monitoring]]"
+  - "[[postgres-troubleshooting]]"
+next:
+  - "[[postgres-replication]]"
+  - "[[postgres-high-availability]]"
 updated: "2026-04-20"
-related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshooting.md"]
 ---
 
 # PostgreSQL: Резервное копирование и восстановление

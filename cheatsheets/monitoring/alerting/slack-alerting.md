@@ -5,8 +5,12 @@ tags:
   - monitoring
   - alerting
   - slack-alerting
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Slack Alerting"
+prerequisites:
+  - "[[alerting]]"
 next: []
 updated: "2026-04-20"
 ---

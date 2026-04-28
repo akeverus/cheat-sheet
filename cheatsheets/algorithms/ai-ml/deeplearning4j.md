@@ -5,9 +5,16 @@ tags:
   - algorithms
   - ai-ml
   - deeplearning4j
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Руководство по deeplearning4j"
+  - "deeplearning4j"
+  - "DL4J"
+prerequisites:
+  - "[[ai-libraries]]"
+next:
+  - "[[cnn-deeplearning4j]]"
 updated: "2026-04-20"
 ---
 # Руководство по deeplearning4j

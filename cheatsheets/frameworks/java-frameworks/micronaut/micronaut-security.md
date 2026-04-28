@@ -10,11 +10,21 @@ tags:
   - authorization
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-reactive.md", "micronaut-testing.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut security"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-core]]"
+  - "[[micronaut-http]]"
+next:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-testing]]"
 updated: "2026-04-20"
-related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
 # Micronaut: Security — Authentication и Authorization

@@ -5,7 +5,10 @@ tags:
   - development
   - messaging
   - rabbitmq-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "RabbitMQ Advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"

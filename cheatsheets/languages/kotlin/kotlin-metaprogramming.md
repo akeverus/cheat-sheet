@@ -5,7 +5,10 @@ tags:
   - languages
   - kotlin
   - kotlin-metaprogramming
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Metaprogramming"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,9 +5,15 @@ tags:
   - platform
   - cloud-providers
   - azure-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Azure Basics"
+  - "Azure"
 prerequisites: []
-next: []
+next:
+  - "[[azure-services]]"
+  - "[[azure-networking]]"
 updated: "2026-04-20"
 ---
 # Azure Basics

@@ -10,11 +10,22 @@ tags:
   - ssl
   - tls
   - encryption
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/redis-basics.md"]
-next: ["databases/redis-monitoring.md", "databases/redis-troubleshooting.md"]
+aliases:
+  - "Redis"
+  - "Безопасность"
+  - "Redis: Безопасность"
+  - "redis security"
+prerequisites:
+  - "[[redis-basics]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-performance]]"
+next:
+  - "[[redis-monitoring]]"
+  - "[[redis-troubleshooting]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
 # Redis: Безопасность

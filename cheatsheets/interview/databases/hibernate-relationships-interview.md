@@ -5,13 +5,16 @@ tags:
   - interview
   - databases
   - hibernate-relationships-interview
+type: "interview"
+difficulty: "advanced"
 aliases:
-  - "Hibernate Relationships interview"
-  - "JPA relationships собеседование"
+  - "Вопросы на собеседовании"
+  - "Hibernate Relationships"
   - "OneToMany ManyToOne interview"
   - "Hibernate associations вопросы"
-  - "JPA entity mapping interview"
-difficulty: "advanced"
+prerequisites:
+  - "[[hibernate-relationships]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Hibernate Relationships`

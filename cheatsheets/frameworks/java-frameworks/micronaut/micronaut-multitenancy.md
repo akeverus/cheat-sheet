@@ -9,11 +9,21 @@ tags:
   - isolation
   - java
   - kotlin
+type: "reference"
 difficulty: "advanced"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
-next: ["micronaut-data.md", "micronaut-security.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut multitenancy"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-data]]"
+related:
+  - "[[micronaut-data]]"
+  - "[[micronaut-security]]"
+next:
+  - "[[micronaut-data]]"
+  - "[[micronaut-security]]"
 updated: "2026-04-20"
-related: ["micronaut-data.md", "micronaut-security.md"]
 ---
 
 # Micronaut: Multitenancy — Multi-tenant Applications

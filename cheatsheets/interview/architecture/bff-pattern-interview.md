@@ -5,12 +5,15 @@ tags:
   - interview
   - architecture
   - bff-pattern-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "BFF Pattern"
   - "BFF pattern interview"
   - "Backend for Frontend"
-  - "BFF architecture"
-  - "BFF собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `BFF Pattern`

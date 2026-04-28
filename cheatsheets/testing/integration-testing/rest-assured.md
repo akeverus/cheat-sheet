@@ -5,7 +5,11 @@ tags:
   - testing
   - integration-testing
   - rest-assured
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "REST Assured для Java"
+  - "rest assured"
 prerequisites: []
 next: []
 updated: "2026-04-20"

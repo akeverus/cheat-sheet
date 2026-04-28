@@ -5,7 +5,10 @@ tags:
   - development
   - messaging
   - kafka-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kafka Advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"

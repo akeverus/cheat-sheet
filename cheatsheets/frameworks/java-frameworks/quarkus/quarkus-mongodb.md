@@ -8,11 +8,22 @@ tags:
   - panache
   - reactive
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-data.md"]
-next: ["quarkus-data.md", "quarkus-reactive.md"]
+aliases:
+  - "Quarkus"
+  - "MongoDB — NoSQL Database"
+  - "quarkus mongodb"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-data]]"
+related:
+  - "[[quarkus-data]]"
+  - "[[quarkus-reactive]]"
+next:
+  - "[[quarkus-data]]"
+  - "[[quarkus-reactive]]"
 updated: "2026-04-20"
-related: ["quarkus-data.md", "quarkus-reactive.md"]
 ---
 
 # Quarkus: MongoDB — NoSQL Database

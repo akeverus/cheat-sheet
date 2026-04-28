@@ -12,11 +12,22 @@ tags:
   - constraints
   - modeling
   - data-modeling
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/postgres-basics.md"]
-next: ["databases/postgres-joins.md"]
+aliases:
+  - "PostgreSQL"
+  - "проектирование и нормализация"
+  - "postgres design"
+prerequisites:
+  - "[[postgres-basics]]"
+related:
+  - "[[postgres-basics]]"
+  - "[[postgres-joins]]"
+  - "[[postgres-indexes]]"
+  - "[[postgres-types]]"
+next:
+  - "[[postgres-joins]]"
 updated: "2026-04-20"
-related: ["databases/postgres-basics.md", "databases/postgres-joins.md", "databases/postgres-indexes.md", "databases/postgres-types.md"]
 ---
 
 # PostgreSQL: проектирование и нормализация

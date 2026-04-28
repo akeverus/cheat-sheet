@@ -5,7 +5,12 @@ tags:
   - algorithms
   - graphs
   - dijkstra
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Алгоритм Дейкстры"
+  - "Dijkstra's Algorithm"
+  - "dijkstra"
 prerequisites: []
 next: []
 updated: "2026-04-20"

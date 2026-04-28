@@ -7,6 +7,10 @@ tags:
   - api
   - grpc
 type: "index"
+aliases:
+  - "gRPC"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # gRPC

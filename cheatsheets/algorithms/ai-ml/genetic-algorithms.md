@@ -5,9 +5,15 @@ tags:
   - algorithms
   - ai-ml
   - genetic-algorithms
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "genetic algorithms"
+  - "GA"
+prerequisites:
+  - "[[ai-libraries]]"
+next:
+  - "[[jenetics]]"
 updated: "2026-04-20"
 ---
 # Разработка генетического алгоритма

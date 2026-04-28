@@ -9,11 +9,23 @@ tags:
   - encryption
   - roles
   - privileges
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
-next: ["databases/postgres-monitoring.md", "databases/postgres-troubleshooting.md"]
+aliases:
+  - "PostgreSQL"
+  - "Безопасность"
+  - "PostgreSQL: Безопасность"
+  - "postgres security"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-admin]]"
+related:
+  - "[[postgres-admin]]"
+  - "[[postgres-replication]]"
+next:
+  - "[[postgres-monitoring]]"
+  - "[[postgres-troubleshooting]]"
 updated: "2026-04-20"
-related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 ---
 
 # PostgreSQL: Безопасность

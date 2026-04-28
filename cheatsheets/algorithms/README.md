@@ -6,6 +6,10 @@ tags:
   - index
   - algorithms
 type: "index"
+aliases:
+  - "Алгоритмы и структуры данных"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Алгоритмы и структуры данных

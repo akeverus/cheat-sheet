@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - rock-paper-scissors-game
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Игра «Камень-ножницы-бумага»"
+  - "Rock Paper Scissors Game"
 prerequisites: []
 next: []
 updated: "2026-04-20"

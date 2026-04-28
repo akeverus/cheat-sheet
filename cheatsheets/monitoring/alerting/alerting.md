@@ -4,9 +4,16 @@ description: "Комплексное руководство по настрой�
 tags:
   - monitoring
   - alerting
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Системы алертинга для Java"
+  - "alerting"
+prerequisites:
+  - "[[monitoring-best-practices]]"
+next:
+  - "[[alertmanager]]"
+  - "[[pagerduty]]"
 updated: "2026-04-20"
 ---
 # Системы алертинга для Java

@@ -5,7 +5,10 @@ tags:
   - databases
   - database-tools
   - database-tools-overview
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "database tools overview"
 prerequisites: []
 next: []
 updated: "2026-04-20"

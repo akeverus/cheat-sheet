@@ -8,8 +8,16 @@ tags:
   - goroutines
   - channels
   - sync
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "конкурентность"
+  - "Go: конкурентность"
+  - "go concurrency"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

@@ -5,7 +5,13 @@ tags:
   - tools
   - collaboration
   - confluence-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Confluence"
+  - "основы"
+  - "Confluence: основы"
+  - "confluence basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

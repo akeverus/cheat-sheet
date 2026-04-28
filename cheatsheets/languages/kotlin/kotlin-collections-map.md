@@ -5,9 +5,16 @@ tags:
   - languages
   - kotlin
   - kotlin-collections-map
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Collections"
+  - "Map"
+  - "Kotlin Collections: Map"
+  - "kotlin collections map"
 prerequisites: []
-next: []
+next:
+  - "[[kotlin-collections-operations]]"
 updated: "2026-04-20"
 ---
 # Kotlin Collections: Map

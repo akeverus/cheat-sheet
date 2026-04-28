@@ -9,9 +9,17 @@ tags:
   - jpa
   - sql
   - transactions
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "databases/postgres-basics.md"]
-next: ["spring/spring-boot.md", "interview/spring-data-jpa.md"]
+aliases:
+  - "Spring Data JPA/Hibernate"
+  - "spring data jpa"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[postgres-basics]]"
+next:
+  - "[[spring-boot]]"
+  - "[[spring-data-jpa]]"
 updated: "2026-04-20"
 ---
 

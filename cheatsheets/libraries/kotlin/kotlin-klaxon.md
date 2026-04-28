@@ -5,8 +5,13 @@ tags:
   - libraries
   - kotlin
   - kotlin-klaxon
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Klaxon"
+  - "kotlin klaxon"
+prerequisites:
+  - "[[kotlin-basics]]"
 next: []
 updated: "2026-04-20"
 ---

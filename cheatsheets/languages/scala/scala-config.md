@@ -6,11 +6,18 @@ tags:
   - configuration
   - typesafe-config
   - play-config
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Configuration"
+  - "scala config"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-play]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-play.md"]
 ---
 
 # Scala Configuration

@@ -7,6 +7,10 @@ tags:
   - languages
   - scala
 type: "index"
+aliases:
+  - "Scala"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Scala

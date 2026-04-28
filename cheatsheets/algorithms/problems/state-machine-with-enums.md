@@ -5,7 +5,10 @@ tags:
   - algorithms
   - problems
   - state-machine-with-enums
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "State Machine with Enums"
 prerequisites: []
 next: []
 updated: "2026-04-20"

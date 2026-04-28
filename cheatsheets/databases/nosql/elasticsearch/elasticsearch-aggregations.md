@@ -5,8 +5,14 @@ tags:
   - databases
   - nosql
   - elasticsearch-aggregations
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Elasticsearch"
+  - "elasticsearch aggregations"
+  - "aggs"
+prerequisites:
+  - "[[elasticsearch-queries]]"
 next: []
 updated: "2026-04-20"
 ---

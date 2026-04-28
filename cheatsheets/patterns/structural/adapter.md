@@ -5,9 +5,17 @@ tags:
   - patterns
   - structural
   - adapter
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Адаптер"
+  - "Adapter"
+  - "Адаптер (Adapter)"
+prerequisites:
+  - "[[solid-principles]]"
+next:
+  - "[[bridge]]"
+  - "[[decorator]]"
 updated: "2026-04-20"
 ---
 # Адаптер (Adapter)

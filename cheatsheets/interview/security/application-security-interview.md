@@ -5,13 +5,16 @@ tags:
   - interview
   - security
   - application-security-interview
-aliases:
-  - "Application Security interview"
-  - "Application Security собеседование"
-  - "Безопасность приложений"
-  - "AppSec"
-  - "Security Java Spring"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Application Security"
+  - "Application Security interview"
+  - "Безопасность приложений"
+prerequisites:
+  - "[[application-security]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Application Security`

@@ -8,11 +8,21 @@ tags:
   - jobs
   - tasks
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-reactive.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus scheduling"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-reactive]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-reactive]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
 # Quarkus: Scheduling — Планирование задач

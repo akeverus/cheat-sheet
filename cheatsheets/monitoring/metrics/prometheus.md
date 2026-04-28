@@ -5,10 +5,15 @@ tags:
   - monitoring
   - metrics
   - prometheus
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Prometheus"
+  - "PromQL"
+prerequisites:
+  - "[[monitoring-best-practices]]"
 next:
-  - go-observability
+  - "[[go-observability]]"
 updated: "2026-04-20"
 ---
 # Prometheus

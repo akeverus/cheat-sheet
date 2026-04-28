@@ -10,7 +10,14 @@ tags:
   - hql
   - criteria-api
   - queries
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Hibernate"
+  - "JPQL, HQL и Criteria API"
+  - "hibernate jpql criteria"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Hibernate: JPQL, HQL и Criteria API

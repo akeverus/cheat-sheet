@@ -5,12 +5,15 @@ tags:
   - interview
   - security
   - supply-chain-security-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Supply Chain Security interview"
+  - "Вопросы на собеседовании"
+  - "Supply Chain Security"
   - "SBOM interview"
   - "SLSA framework"
-  - "Supply Chain собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Supply Chain Security`

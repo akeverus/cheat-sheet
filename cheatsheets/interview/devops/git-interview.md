@@ -5,13 +5,16 @@ tags:
   - interview
   - devops
   - git-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Git"
   - "Git interview"
   - "Git собеседование"
-  - "Система контроля версий"
-  - "Version control"
-difficulty: "intermediate"
+prerequisites:
+  - "[[git-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Git`

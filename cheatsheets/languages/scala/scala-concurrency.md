@@ -8,11 +8,18 @@ tags:
   - akka
   - actors
   - parallel-collections
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
-next: ["scala/scala-akka.md"]
+aliases:
+  - "Scala Concurrency"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-fp-basics]]"
+next:
+  - "[[scala-akka]]"
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---
 
 # Scala Concurrency

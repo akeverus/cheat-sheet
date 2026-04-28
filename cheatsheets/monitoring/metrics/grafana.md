@@ -5,10 +5,14 @@ tags:
   - monitoring
   - metrics
   - grafana
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Grafana"
+prerequisites:
+  - "[[prometheus]]"
 next:
-  - go-observability
+  - "[[go-observability]]"
 updated: "2026-04-20"
 ---
 # Grafana

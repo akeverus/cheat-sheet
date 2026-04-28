@@ -5,12 +5,15 @@ tags:
   - interview
   - testing
   - test-strategies-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Стратегии тестирования"
   - "Test strategies interview"
-  - "Тестовая стратегия собеседование"
   - "TDD BDD интервью"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Стратегии тестирования

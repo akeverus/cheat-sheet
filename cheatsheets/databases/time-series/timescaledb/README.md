@@ -8,6 +8,10 @@ tags:
   - time-series
   - timescaledb
 type: "index"
+aliases:
+  - "TimescaleDB"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # TimescaleDB

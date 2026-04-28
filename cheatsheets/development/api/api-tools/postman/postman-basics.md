@@ -5,9 +5,15 @@ tags:
   - development
   - api
   - postman-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Postman"
+  - "Основы"
+  - "Postman: Основы"
+  - "postman basics"
 prerequisites:
-  - insomnia-basics
+  - "[[insomnia-basics]]"
 next: []
 updated: "2026-04-20"
 ---

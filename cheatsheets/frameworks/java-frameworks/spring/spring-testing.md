@@ -9,11 +9,20 @@ tags:
   - testcontainers
   - integration-tests
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
-next: ["spring/spring-security.md", "spring/spring-data-jpa.md"]
+aliases:
+  - "Spring Testing"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[spring-boot]]"
+related:
+  - "[[spring-boot]]"
+  - "[[java-basics]]"
+next:
+  - "[[spring-security]]"
+  - "[[spring-data-jpa]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
 # Spring Testing: Полное руководство по тестированию

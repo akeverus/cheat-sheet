@@ -5,9 +5,13 @@ tags:
   - algorithms
   - data-structures
   - collections-big-o
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "collections big o"
 prerequisites: []
-next: []
+next:
+  - "[[collections-complexity]]"
 updated: "2026-04-20"
 ---
 # Практические примеры нотации Big O

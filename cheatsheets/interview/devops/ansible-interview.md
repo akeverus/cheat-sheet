@@ -5,12 +5,16 @@ tags:
   - interview
   - devops
   - ansible-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Ansible"
   - "Ansible interview"
   - "Ansible собеседование"
-  - "Configuration management interview"
-  - "Ansible Playbook interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[ansible]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Ansible`

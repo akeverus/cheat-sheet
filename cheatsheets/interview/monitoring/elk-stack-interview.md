@@ -5,14 +5,16 @@ tags:
   - interview
   - monitoring
   - elk-stack-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "ELK Stack"
   - "ELK Stack interview"
   - "Elastic Stack interview"
-  - "Logstash interview"
-  - "Kibana interview"
-  - "Filebeat interview"
-  - "OpenSearch interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[elk-stack]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `ELK Stack`

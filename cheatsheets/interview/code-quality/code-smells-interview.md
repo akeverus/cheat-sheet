@@ -5,13 +5,15 @@ tags:
   - interview
   - code-quality
   - code-smells-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Code Smells"
   - "Code Smells interview"
   - "Code Smells собеседование"
-  - "refactoring smells interview"
-  - "Fowler code smells"
-  - "запахи кода вопросы"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Code Smells

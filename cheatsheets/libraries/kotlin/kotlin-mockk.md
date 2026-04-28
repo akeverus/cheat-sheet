@@ -5,7 +5,11 @@ tags:
   - libraries
   - kotlin
   - kotlin-mockk
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "MockK"
+  - "kotlin mockk"
 prerequisites: []
 next: []
 updated: "2026-04-20"

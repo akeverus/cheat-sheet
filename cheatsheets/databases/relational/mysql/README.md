@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "MySQL"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # MySQL

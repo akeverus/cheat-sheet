@@ -9,11 +9,25 @@ tags:
   - microservices
   - reactive
   - cloud-native
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java/java-basics.md", "kotlin/kotlin-basics.md"]
-next: ["micronaut-reactive.md", "micronaut-testing.md", "micronaut-security.md"]
+aliases:
+  - "Micronaut"
+  - "Основы"
+  - "Micronaut: Основы"
+  - "micronaut basics"
+prerequisites:
+  - "[[java-basics]]"
+  - "[[kotlin-basics]]"
+related:
+  - "[[micronaut-data]]"
+  - "[[micronaut-hibernate]]"
+  - "[[micronaut-kafka]]"
+next:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-testing]]"
+  - "[[micronaut-security]]"
 updated: "2026-04-20"
-related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
 ---
 
 # Micronaut: Основы

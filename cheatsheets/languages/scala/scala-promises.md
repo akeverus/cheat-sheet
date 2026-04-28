@@ -5,8 +5,14 @@ tags:
   - languages
   - scala
   - scala-promises
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Promises в Scala"
+  - "scala promises"
+  - "Promises"
+prerequisites:
+  - "[[scala-futures]]"
 next: []
 updated: "2026-04-20"
 ---

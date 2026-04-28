@@ -7,7 +7,14 @@ tags:
   - retry
   - resilience
   - fault-tolerance
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "spring retry"
+prerequisites:
+  - "[[spring-core]]"
+next:
+  - "[[java-resilience4j]]"
 updated: "2026-04-20"
 ---
 # Spring Retry — повторные попытки операций

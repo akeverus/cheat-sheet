@@ -7,6 +7,10 @@ tags:
   - patterns
   - behavioral
 type: "index"
+aliases:
+  - "Поведенческие паттерны"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Поведенческие паттерны

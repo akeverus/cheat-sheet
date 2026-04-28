@@ -7,7 +7,14 @@ tags:
   - hibernate
   - jpa
   - relationships
+type: "reference"
 difficulty: "advanced"
+aliases:
+  - "Hibernate"
+  - "связи между сущностями"
+  - "hibernate relationships"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Hibernate: связи между сущностями

@@ -5,11 +5,15 @@ tags:
   - interview
   - code-quality
   - technical-debt-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Технический долг"
   - "Technical debt interview"
   - "Техдолг собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Технический долг

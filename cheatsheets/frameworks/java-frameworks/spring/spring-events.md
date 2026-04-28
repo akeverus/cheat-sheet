@@ -7,7 +7,13 @@ tags:
   - events
   - application-events
   - transactional
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "spring events"
+prerequisites:
+  - "[[spring-core]]"
+next: []
 updated: "2026-04-20"
 ---
 # Spring Events — события приложения

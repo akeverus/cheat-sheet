@@ -5,9 +5,16 @@ tags:
   - patterns
   - creational
   - builder
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Строитель"
+  - "Builder"
+  - "Строитель (Builder)"
+prerequisites:
+  - "[[factory-method]]"
+next:
+  - "[[prototype]]"
 updated: "2026-04-20"
 ---
 # Строитель (Builder)

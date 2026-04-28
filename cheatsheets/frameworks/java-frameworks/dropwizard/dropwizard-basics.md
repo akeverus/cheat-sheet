@@ -8,11 +8,23 @@ tags:
   - microservices
   - metrics
   - logging
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java/java-basics.md", "spring/spring-boot.md"]
-next: ["dropwizard-core.md", "dropwizard-jersey.md"]
+aliases:
+  - "Dropwizard"
+  - "Основы"
+  - "Dropwizard: Основы"
+  - "dropwizard basics"
+prerequisites:
+  - "[[java-basics]]"
+  - "[[spring-boot]]"
+related:
+  - "[[spring-boot]]"
+  - "[[micronaut-basics]]"
+next:
+  - "[[dropwizard-core]]"
+  - "[[dropwizard-jersey]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "micronaut/micronaut-basics.md"]
 ---
 
 # Dropwizard: Основы

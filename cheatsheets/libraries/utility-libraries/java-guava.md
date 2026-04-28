@@ -5,7 +5,13 @@ tags:
   - libraries
   - utility-libraries
   - java-guava
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Google Guava"
+  - "Утилиты для Java"
+  - "Google Guava: Утилиты для Java"
+  - "java guava"
 prerequisites: []
 next: []
 updated: "2026-04-20"

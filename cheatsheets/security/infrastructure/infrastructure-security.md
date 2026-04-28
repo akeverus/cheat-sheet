@@ -5,7 +5,11 @@ tags:
   - security
   - infrastructure
   - infrastructure-security
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Безопасность инфраструктуры"
+  - "Infrastructure Security"
 prerequisites: []
 next: []
 updated: "2026-04-20"

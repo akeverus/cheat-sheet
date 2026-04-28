@@ -5,13 +5,15 @@ tags:
   - interview
   - behavioral
   - star-method-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Метод STAR"
   - "STAR method interview"
   - "STAR method собеседование"
-  - "behavioral interview technique"
-  - "Situation Task Action Result"
-  - "метод STAR вопросы"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Метод STAR

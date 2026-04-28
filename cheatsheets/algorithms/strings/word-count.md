@@ -5,7 +5,12 @@ tags:
   - algorithms
   - strings
   - word-count
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Подсчёт слов"
+  - "Word Count"
+  - "Подсчёт слов (Word Count)"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,13 +5,15 @@ tags:
   - interview
   - ai-ml
   - llm-basics-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "LLM Basics"
   - "LLM basics interview"
   - "Large Language Model interview"
-  - "GPT interview"
-  - "Claude interview"
-  - "Transformer interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `LLM Basics`

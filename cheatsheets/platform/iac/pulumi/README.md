@@ -8,6 +8,10 @@ tags:
   - iac
   - pulumi
 type: "index"
+aliases:
+  - "Pulumi"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Pulumi

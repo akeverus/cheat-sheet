@@ -5,7 +5,11 @@ tags:
   - libraries
   - serialization
   - jackson
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Jackson"
+  - "JSON сериализация в Java"
 prerequisites: []
 next: []
 updated: "2026-04-20"

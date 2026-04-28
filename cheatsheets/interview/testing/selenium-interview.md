@@ -5,13 +5,16 @@ tags:
   - interview
   - testing
   - selenium-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Selenium WebDriver"
   - "Selenium WebDriver interview"
   - "Selenium собеседование"
-  - "UI testing interview"
-  - "E2E testing interview"
-  - "Page Object Model interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[selenium]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Selenium WebDriver`

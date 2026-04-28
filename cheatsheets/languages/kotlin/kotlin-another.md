@@ -10,9 +10,15 @@ tags:
   - dsl
   - serialization
   - metaprogramming
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["kotlin-basics.md", "kotlin-concurrency-basics.md"]
-next: ["kotlin-advanced.md"]
+aliases:
+  - "Kotlin Another"
+prerequisites:
+  - "[[kotlin-basics]]"
+  - "[[kotlin-concurrency-basics]]"
+next:
+  - "[[kotlin-advanced]]"
 updated: "2026-04-20"
 ---
 

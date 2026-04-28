@@ -8,11 +8,20 @@ tags:
   - beans
   - configuration
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md"]
-next: ["quarkus-basics.md", "quarkus-rest.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus core"
+prerequisites:
+  - "[[quarkus-basics]]"
+related:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-rest]]"
+next:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-rest]]"
 updated: "2026-04-20"
-related: ["quarkus-basics.md", "quarkus-rest.md"]
 ---
 
 # Quarkus: Core — CDI, Bean Scopes и Configuration

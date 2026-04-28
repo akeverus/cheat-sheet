@@ -5,9 +5,16 @@ tags:
   - patterns
   - behavioral
   - visitor
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Посетитель"
+  - "Visitor"
+  - "Посетитель (Visitor)"
+prerequisites:
+  - "[[iterator]]"
+next:
+  - "[[interpreter]]"
 updated: "2026-04-20"
 ---
 # Посетитель (Visitor)

@@ -5,9 +5,17 @@ tags:
   - databases
   - relational
   - postgres-data-ops
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "PostgreSQL"
+  - "операции с данными"
+  - "CRUD"
+  - "операции с данными (CRUD)"
+prerequisites:
+  - "[[postgres-basics]]"
+next:
+  - "[[postgres-queries]]"
 updated: "2026-04-20"
 ---
 # PostgreSQL: операции с данными (CRUD)

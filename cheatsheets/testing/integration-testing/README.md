@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Integration Testing"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Integration Testing

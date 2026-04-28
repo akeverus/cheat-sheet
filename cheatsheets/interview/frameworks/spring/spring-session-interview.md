@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-session-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Session"
   - "Spring Session interview"
   - "Spring Session собеседование"
-  - "Spring Session Redis interview"
-  - "distributed sessions interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-session]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Session`

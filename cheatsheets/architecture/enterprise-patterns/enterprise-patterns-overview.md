@@ -7,14 +7,18 @@ tags:
   - enterprise-patterns-overview
   - design-patterns
   - integration
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Enterprise Patterns — обзор"
+  - "enterprise patterns overview"
 prerequisites:
-  - "../design-principles/design-principles.md"
-next:
-  - "../system-design/system-design-basics.md"
+  - "[[design-principles]]"
 related:
-  - "../architecture-patterns.md"
-  - "../ddd.md"
+  - "[[architecture-patterns]]"
+  - "[[ddd]]"
+next:
+  - "[[system-design-basics]]"
 updated: "2026-04-26"
 ---
 # Enterprise Patterns — обзор

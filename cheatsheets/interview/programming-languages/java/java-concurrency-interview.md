@@ -5,13 +5,16 @@ tags:
   - interview
   - programming-languages
   - java-concurrency-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Concurrency"
   - "Java Concurrency interview"
-  - "Java многопоточность собеседование"
   - "Java потоки интервью"
-  - "Java threads interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[java-concurrency-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Concurrency`

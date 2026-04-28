@@ -9,11 +9,22 @@ tags:
   - xadd
   - xread
   - xgroup
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
-next: ["databases/redis-troubleshooting.md"]
+aliases:
+  - "Redis"
+  - "Streams"
+  - "Redis: Streams"
+  - "redis streams"
+prerequisites:
+  - "[[redis-basics]]"
+  - "[[redis-pubsub]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-pubsub]]"
+next:
+  - "[[redis-troubleshooting]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 ---
 
 # Redis: Streams

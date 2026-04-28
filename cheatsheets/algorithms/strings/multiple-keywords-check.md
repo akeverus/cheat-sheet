@@ -5,7 +5,10 @@ tags:
   - algorithms
   - strings
   - multiple-keywords-check
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Multiple Keywords Check"
 prerequisites: []
 next: []
 updated: "2026-04-20"

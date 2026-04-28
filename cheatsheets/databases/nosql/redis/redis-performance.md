@@ -8,11 +8,23 @@ tags:
   - benchmarking
   - profiling
   - monitoring
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
-next: ["databases/redis-security.md", "databases/redis-monitoring.md"]
+aliases:
+  - "Redis"
+  - "Производительность"
+  - "Redis: Производительность"
+  - "redis performance"
+prerequisites:
+  - "[[redis-basics]]"
+  - "[[redis-data-structures]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-clustering]]"
+next:
+  - "[[redis-security]]"
+  - "[[redis-monitoring]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-clustering.md"]
 ---
 
 # Redis: Производительность

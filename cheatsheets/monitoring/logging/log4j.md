@@ -5,9 +5,16 @@ tags:
   - monitoring
   - logging
   - log4j
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Log4j для Java"
+  - "log4j"
+prerequisites:
+  - "[[logging-basics]]"
+next:
+  - "[[slf4j]]"
+  - "[[logback]]"
 updated: "2026-04-20"
 ---
 # Log4j для Java

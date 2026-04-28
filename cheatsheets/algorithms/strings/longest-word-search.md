@@ -5,7 +5,12 @@ tags:
   - algorithms
   - strings
   - longest-word-search
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Поиск самого длинного слова"
+  - "Longest Word Search"
+  - "longest word"
 prerequisites: []
 next: []
 updated: "2026-04-20"

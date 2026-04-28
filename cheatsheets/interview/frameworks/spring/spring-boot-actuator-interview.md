@@ -5,12 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-boot-actuator-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring Boot Actuator"
   - "Spring Boot Actuator interview"
-  - "Spring Boot Actuator собеседование"
   - "Actuator"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-boot]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Boot Actuator`

@@ -5,8 +5,14 @@ tags:
   - monitoring
   - logging
   - elk-stack
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "ELK Stack"
+  - "ELK"
+  - "Elastic Stack"
+prerequisites:
+  - "[[monitoring-best-practices]]"
 next: []
 updated: "2026-04-20"
 ---

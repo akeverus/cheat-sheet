@@ -5,7 +5,12 @@ tags:
   - languages
   - kotlin
   - kotlin-fp-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Functional Programming"
+  - "Basics"
+  - "kotlin fp basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

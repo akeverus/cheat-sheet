@@ -5,8 +5,12 @@ tags:
   - frameworks
   - java-frameworks
   - spring-cloud
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Spring Cloud"
+prerequisites:
+  - "[[spring-boot]]"
 next: []
 updated: "2026-04-20"
 ---

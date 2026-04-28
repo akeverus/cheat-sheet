@@ -7,7 +7,13 @@ tags:
   - windsurf
   - ide
   - codeium
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Windsurf"
+  - "основы"
+  - "Windsurf: основы"
+  - "windsurf basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

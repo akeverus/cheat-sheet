@@ -5,12 +5,15 @@ tags:
   - interview
   - data-engineering
   - dbt-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "dbt"
   - "dbt interview"
   - "data build tool interview"
-  - "dbt cloud interview"
-  - "dbt core interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `dbt`

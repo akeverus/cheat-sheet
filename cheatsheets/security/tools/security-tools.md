@@ -5,7 +5,11 @@ tags:
   - security
   - tools
   - security-tools
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Инструменты безопасности"
+  - "Security Tools"
 prerequisites: []
 next: []
 updated: "2026-04-20"

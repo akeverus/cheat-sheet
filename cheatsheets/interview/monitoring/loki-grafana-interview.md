@@ -5,12 +5,15 @@ tags:
   - interview
   - monitoring
   - loki-grafana-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Loki и Grafana"
   - "Loki interview"
   - "Grafana Loki interview"
-  - "PLG stack interview"
-  - "Grafana stack interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Loki и Grafana`

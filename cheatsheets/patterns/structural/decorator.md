@@ -5,9 +5,17 @@ tags:
   - patterns
   - structural
   - decorator
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Декоратор"
+  - "Decorator"
+  - "Декоратор (Decorator)"
+prerequisites:
+  - "[[composite]]"
+next:
+  - "[[proxy]]"
+  - "[[chain-of-responsibility]]"
 updated: "2026-04-20"
 ---
 # Декоратор (Decorator)

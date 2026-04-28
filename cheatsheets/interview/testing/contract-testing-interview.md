@@ -5,17 +5,16 @@ tags:
   - interview
   - testing
   - contract-testing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Contract Testing"
   - "Contract Testing interview"
   - "Contract Testing собеседование"
-  - "Контрактное тестирование"
-  - "Pact"
-  - "Pact JVM"
-  - "Spring Cloud Contract"
-  - "Consumer Driven Contracts"
-  - "CDC"
-difficulty: "intermediate"
+prerequisites:
+  - "[[contract-testing]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Contract Testing`

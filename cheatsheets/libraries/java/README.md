@@ -7,6 +7,10 @@ tags:
   - java
   - libraries
 type: "index"
+aliases:
+  - "Java Libraries"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Java Libraries

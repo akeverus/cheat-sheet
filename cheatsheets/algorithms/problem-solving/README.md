@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Решение задач"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Решение задач

@@ -5,9 +5,15 @@ tags:
   - algorithms
   - trees
   - boruvka-algorithm
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Алгоритм Борувки"
+  - "Borůvka's Algorithm"
+  - "boruvka algorithm"
 prerequisites: []
-next: []
+next:
+  - "[[kruskal-algorithm]]"
 updated: "2026-04-20"
 ---
 # Алгоритм Борувки (Borůvka's Algorithm)

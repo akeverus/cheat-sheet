@@ -6,13 +6,25 @@ tags:
   - extensions
   - postgis
   - timescaledb
-  - pg_cron
-  - pg_stat_statements
+  - pg-cron
+  - pg-stat-statements
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
-next: ["databases/postgres-fulltext-search.md", "databases/postgres-monitoring.md"]
+aliases:
+  - "PostgreSQL"
+  - "Расширения"
+  - "PostgreSQL: Расширения"
+  - "postgres extensions"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-admin]]"
+related:
+  - "[[postgres-performance-tuning]]"
+  - "[[postgres-replication]]"
+next:
+  - "[[postgres-fulltext-search]]"
+  - "[[postgres-monitoring]]"
 updated: "2026-04-20"
-related: ["databases/postgres-performance-tuning.md", "databases/postgres-replication.md"]
 ---
 
 # PostgreSQL: Расширения

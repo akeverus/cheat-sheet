@@ -5,13 +5,16 @@ tags:
   - interview
   - testing
   - rest-assured-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "REST Assured"
   - "REST Assured interview"
   - "REST Assured собеседование"
-  - "REST Assured вопросы"
-  - "API testing interview"
-  - "Java REST testing"
-difficulty: "intermediate"
+prerequisites:
+  - "[[rest-assured]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `REST Assured`

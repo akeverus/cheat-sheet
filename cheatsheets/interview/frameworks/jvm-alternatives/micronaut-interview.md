@@ -5,11 +5,16 @@ tags:
   - interview
   - frameworks
   - micronaut-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Micronaut"
   - "Micronaut interview"
   - "Micronaut собеседование"
-  - "Micronaut framework interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[micronaut-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Micronaut`

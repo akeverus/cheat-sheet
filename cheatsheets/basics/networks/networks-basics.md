@@ -5,7 +5,11 @@ tags:
   - basics
   - networks
   - networks-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Компьютерные сети"
+  - "networks basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

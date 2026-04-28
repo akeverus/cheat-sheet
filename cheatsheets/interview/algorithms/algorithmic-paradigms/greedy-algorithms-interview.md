@@ -5,12 +5,16 @@ tags:
   - interview
   - algorithms
   - greedy-algorithms-interview
-aliases:
-  - "Greedy algorithms interview"
-  - "Жадные алгоритмы собеседование"
-  - "Activity selection interview"
-  - "Huffman coding interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Жадные алгоритмы"
+  - "Greedy"
+  - "Greedy algorithms interview"
+prerequisites:
+  - "[[greedy-algorithms]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Жадные алгоритмы (Greedy)`

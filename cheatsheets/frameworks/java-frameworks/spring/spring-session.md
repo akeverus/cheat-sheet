@@ -9,11 +9,20 @@ tags:
   - mongodb
   - clustering
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-security.md"]
-next: ["spring/spring-redis.md", "spring/spring-security.md"]
+aliases:
+  - "Spring Session"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-security]]"
+related:
+  - "[[spring-boot]]"
+  - "[[spring-security]]"
+next:
+  - "[[spring-redis]]"
+  - "[[spring-security]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "spring/spring-security.md"]
 ---
 
 # Spring Session: Полное руководство по управлению сессиями

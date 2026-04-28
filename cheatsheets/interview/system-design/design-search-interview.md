@@ -5,12 +5,15 @@ tags:
   - interview
   - system-design
   - design-search-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Design Search System"
   - "Search System design"
   - "Search engine architecture"
-  - "Autocomplete design"
-  - "Search System собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Search System`

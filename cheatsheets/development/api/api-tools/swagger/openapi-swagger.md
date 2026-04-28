@@ -5,9 +5,13 @@ tags:
   - development
   - api
   - openapi-swagger
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "OpenAPI/Swagger"
+  - "openapi swagger"
 prerequisites:
-  - insomnia-basics
+  - "[[insomnia-basics]]"
 next: []
 updated: "2026-04-20"
 ---

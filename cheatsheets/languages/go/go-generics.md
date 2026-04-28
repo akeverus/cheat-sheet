@@ -7,8 +7,16 @@ tags:
   - generics
   - type-parameters
   - constraints
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "Generics"
+  - "Go: Generics"
+  - "go generics"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

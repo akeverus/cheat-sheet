@@ -7,6 +7,10 @@ tags:
   - api
   - testing
 type: "index"
+aliases:
+  - "API Testing"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # API Testing

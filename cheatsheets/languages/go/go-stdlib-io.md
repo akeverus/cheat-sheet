@@ -8,8 +8,15 @@ tags:
   - files
   - streaming
   - buffering
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "стандартная библиотека — I/O"
+  - "go stdlib io"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

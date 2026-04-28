@@ -5,12 +5,16 @@ tags:
   - interview
   - programming-languages
   - go-modules-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Go Modules"
   - "Go modules interview"
   - "Go mod interview"
-  - "Go dependency management"
-  - "Go vendoring interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[go-modules]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Go Modules`

@@ -5,13 +5,16 @@ tags:
   - interview
   - kotlin
   - kotlin-sealed-classes-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Kotlin Sealed Classes interview"
+  - "Вопросы на собеседовании"
+  - "Kotlin Sealed Classes"
   - "Kotlin Sealed собеседование"
   - "Sealed Classes вопросы"
-  - "ADT Kotlin interview"
-  - "exhaustive when interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[kotlin-sealed-classes]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kotlin Sealed Classes`

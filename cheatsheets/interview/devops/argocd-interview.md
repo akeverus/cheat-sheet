@@ -5,12 +5,16 @@ tags:
   - interview
   - devops
   - argocd-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "ArgoCD и GitOps"
   - "ArgoCD interview"
   - "ArgoCD собеседование"
-  - "GitOps вопросы"
-  - "ArgoCD Kubernetes CD"
-difficulty: "intermediate"
+prerequisites:
+  - "[[argocd]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `ArgoCD` и `GitOps`

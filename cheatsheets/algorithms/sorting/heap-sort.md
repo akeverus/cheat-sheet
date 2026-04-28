@@ -1,13 +1,20 @@
 ---
 title: "Сортировка кучей (Heap Sort)"
-description: "Сортировка кучей — это алгоритм сортировки, основанный на структуре данных \"куча\" (heap). Он использует бинарную кучу для сортировки элементов за время O(n log(n)) с гарантированной производительностью. В отличие от быстрой сортировки, которая может деградировать до O(n²) в худше"
+description: "Алгоритм на основе бинарной кучи: гарантированная сложность O(n log n) и in-place сортировка. В отличие от quicksort не деградирует до O(n²) в худшем случае."
 tags:
   - algorithms
   - sorting
   - heap-sort
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Сортировка кучей"
+  - "Heap Sort"
+prerequisites:
+  - "[[binary-tree]]"
+next:
+  - "[[quick-sort]]"
+  - "[[merge-sort]]"
 updated: "2026-04-20"
 ---
 # Сортировка кучей (Heap Sort)

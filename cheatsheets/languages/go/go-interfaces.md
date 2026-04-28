@@ -7,8 +7,16 @@ tags:
   - interfaces
   - polymorphism
   - type-assertions
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "интерфейсы"
+  - "Go: интерфейсы"
+  - "go interfaces"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

@@ -5,12 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-serialization-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Java Serialization"
   - "Java Serialization interview"
-  - "Java Serialization собеседование"
   - "сериализация Java"
-  - "десериализация Java"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Serialization`

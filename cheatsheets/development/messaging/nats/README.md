@@ -7,6 +7,10 @@ tags:
   - messaging
   - nats
 type: "index"
+aliases:
+  - "NATS"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # NATS

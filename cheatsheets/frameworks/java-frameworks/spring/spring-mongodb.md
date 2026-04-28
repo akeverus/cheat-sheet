@@ -8,11 +8,23 @@ tags:
   - document-database
   - repositories
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-data-jpa.md"]
-next: ["databases/mongodb.md", "spring/spring-data-jpa.md"]
+aliases:
+  - "Spring Data MongoDB"
+  - "Полное руководство"
+  - "spring mongodb"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-data-jpa]]"
+related:
+  - "[[spring-boot]]"
+  - "[[spring-data-jpa]]"
+  - "[[mongodb]]"
+next:
+  - "[[mongodb]]"
+  - "[[spring-data-jpa]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongodb.md"]
 ---
 
 # Spring Data MongoDB: Полное руководство

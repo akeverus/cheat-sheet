@@ -5,9 +5,16 @@ tags:
   - patterns
   - structural
   - proxy
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Заместитель"
+  - "Proxy"
+  - "Заместитель (Proxy)"
+prerequisites:
+  - "[[decorator]]"
+next:
+  - "[[facade]]"
 updated: "2026-04-20"
 ---
 # Заместитель (Proxy)

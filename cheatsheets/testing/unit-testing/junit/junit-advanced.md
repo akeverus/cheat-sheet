@@ -5,9 +5,14 @@ tags:
   - testing
   - unit-testing
   - junit-advanced
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "JUnit Advanced для Java"
+  - "junit advanced"
 prerequisites: []
-next: []
+next:
+  - "[[mockito-advanced]]"
 updated: "2026-04-20"
 ---
 # JUnit Advanced для Java

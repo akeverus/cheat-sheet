@@ -5,13 +5,15 @@ tags:
   - interview
   - architecture
   - scalability-patterns-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Паттерны масштабируемости"
   - "Scalability patterns interview"
   - "Масштабирование Java"
-  - "Horizontal scaling"
-  - "Vertical scaling"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Паттерны масштабируемости

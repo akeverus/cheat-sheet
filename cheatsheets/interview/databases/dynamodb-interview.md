@@ -5,12 +5,15 @@ tags:
   - interview
   - databases
   - dynamodb-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "DynamoDB"
   - "DynamoDB interview"
   - "AWS DynamoDB interview"
-  - "DynamoDB собеседование"
-  - "Single-table design interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `DynamoDB`

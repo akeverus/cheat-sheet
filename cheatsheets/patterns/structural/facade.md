@@ -5,9 +5,16 @@ tags:
   - patterns
   - structural
   - facade
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Фасад"
+  - "Facade"
+  - "Фасад (Facade)"
+prerequisites:
+  - "[[adapter]]"
+next:
+  - "[[proxy]]"
 updated: "2026-04-20"
 ---
 # Фасад (Facade)

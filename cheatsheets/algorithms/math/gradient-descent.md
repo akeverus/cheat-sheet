@@ -5,8 +5,13 @@ tags:
   - algorithms
   - math
   - gradient-descent
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Градиентный спуск"
+  - "Gradient Descent"
+prerequisites:
+  - "[[dynamic-programming]]"
 next: []
 updated: "2026-04-20"
 ---

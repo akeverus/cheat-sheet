@@ -5,7 +5,10 @@ tags:
   - algorithms
   - graphs
   - jgrapht
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "JGraphT"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,13 +5,15 @@ tags:
   - interview
   - algorithms
   - hash-tables-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Хеш-таблицы"
   - "Hash tables interview"
   - "Хеш-таблицы собеседование"
-  - "HashMap interview"
-  - "Hashing interview"
-  - "Consistent hashing interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Хеш-таблицы`

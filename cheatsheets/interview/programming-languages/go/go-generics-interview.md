@@ -5,11 +5,16 @@ tags:
   - interview
   - programming-languages
   - go-generics-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Go Generics"
   - "Go generics interview"
   - "Type parameters Go interview"
-  - "Go 1.18 generics"
-difficulty: "intermediate"
+prerequisites:
+  - "[[go-generics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Go Generics`

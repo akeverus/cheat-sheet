@@ -6,6 +6,10 @@ tags:
   - index
   - scala-frameworks
 type: "index"
+aliases:
+  - "Scala Frameworks"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Scala Frameworks

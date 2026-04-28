@@ -5,7 +5,10 @@ tags:
   - patterns
   - structural
   - structural-patterns
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Structural Patterns"
 prerequisites: []
 next: []
 updated: "2026-04-20"

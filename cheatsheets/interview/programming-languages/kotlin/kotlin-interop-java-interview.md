@@ -5,12 +5,16 @@ tags:
   - interview
   - programming-languages
   - kotlin-interop-java-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "интероп Kotlin и Java"
   - "Kotlin Java interop interview"
-  - "Kotlin Java interop собеседование"
   - "Kotlin Java взаимодействие"
-  - "интероп Kotlin Java"
+prerequisites:
+  - "[[kotlin-interop-java]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: интероп `Kotlin` и `Java`

@@ -5,9 +5,15 @@ tags:
   - development
   - api
   - api-documentation-basics
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "API Documentation"
+  - "Основы"
+  - "API Documentation: Основы"
+  - "api documentation basics"
 prerequisites:
-  - insomnia-basics
+  - "[[insomnia-basics]]"
 next: []
 updated: "2026-04-20"
 ---

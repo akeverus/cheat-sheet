@@ -9,11 +9,21 @@ tags:
   - messaging
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-cache.md"]
-next: ["micronaut-cache.md", "micronaut-data.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut redis"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-cache]]"
+related:
+  - "[[micronaut-cache]]"
+  - "[[micronaut-messaging]]"
+next:
+  - "[[micronaut-cache]]"
+  - "[[micronaut-data]]"
 updated: "2026-04-20"
-related: ["micronaut-cache.md", "micronaut-messaging.md"]
 ---
 
 # Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache

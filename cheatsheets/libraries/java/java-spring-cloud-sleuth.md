@@ -5,9 +5,14 @@ tags:
   - libraries
   - java
   - java-spring-cloud-sleuth
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Spring Cloud Sleuth"
+  - "Distributed Tracing для Spring"
+  - "java spring cloud sleuth"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

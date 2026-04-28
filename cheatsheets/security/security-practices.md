@@ -4,7 +4,12 @@ description: "Как встроить безопасность в процесс
 tags:
   - security
   - security-practices
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Практики безопасности"
+  - "Security Practices"
+  - "security"
 prerequisites: []
 next: []
 updated: "2026-04-20"

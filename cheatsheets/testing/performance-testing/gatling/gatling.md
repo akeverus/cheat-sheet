@@ -5,7 +5,10 @@ tags:
   - testing
   - performance-testing
   - gatling
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Gatling"
 prerequisites: []
 next: []
 updated: "2026-04-20"

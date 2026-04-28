@@ -5,7 +5,10 @@ tags:
   - algorithms
   - problems
   - combinatorial-problems-overview
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Обзор комбинаторных задач"
 prerequisites: []
 next: []
 updated: "2026-04-20"

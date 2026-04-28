@@ -5,9 +5,12 @@ tags:
   - development
   - api
   - rest-api-best-practices
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "REST API Best Practices"
 prerequisites:
-  - insomnia-basics
+  - "[[insomnia-basics]]"
 next: []
 updated: "2026-04-20"
 ---

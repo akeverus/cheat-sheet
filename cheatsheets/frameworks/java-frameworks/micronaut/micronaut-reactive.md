@@ -9,11 +9,21 @@ tags:
   - reactive-streams
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-testing.md", "micronaut-cloud.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut reactive"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-http]]"
+  - "[[micronaut-data]]"
+next:
+  - "[[micronaut-testing]]"
+  - "[[micronaut-cloud]]"
 updated: "2026-04-20"
-related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
 # Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams

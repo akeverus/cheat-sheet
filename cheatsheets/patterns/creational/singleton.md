@@ -5,9 +5,16 @@ tags:
   - patterns
   - creational
   - singleton
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Одиночка"
+  - "Singleton"
+  - "Одиночка (Singleton)"
+prerequisites:
+  - "[[solid-principles]]"
+next:
+  - "[[factory-method]]"
 updated: "2026-04-20"
 ---
 # Одиночка (Singleton)

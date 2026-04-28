@@ -5,13 +5,15 @@ tags:
   - interview
   - ai-ml
   - ai-agents-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "AI Agents"
   - "AI agents interview"
   - "LLM agents interview"
-  - "MCP interview"
-  - "LangGraph interview"
-  - "AutoGen interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AI Agents`

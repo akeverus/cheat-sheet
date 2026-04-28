@@ -7,6 +7,10 @@ tags:
   - code-generation
   - libraries
 type: "index"
+aliases:
+  - "Code Generation Libraries"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Code Generation Libraries

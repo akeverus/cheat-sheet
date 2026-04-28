@@ -7,11 +7,22 @@ tags:
   - rpc
   - microservices
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-reactive.md"]
+aliases:
+  - "Quarkus"
+  - "gRPC — Remote Procedure Calls"
+  - "quarkus grpc"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-reactive]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-reactive]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
 # Quarkus: gRPC — Remote Procedure Calls

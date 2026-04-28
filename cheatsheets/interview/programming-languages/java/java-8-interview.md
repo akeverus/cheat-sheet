@@ -5,13 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-8-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java 8"
   - "Java 8 interview"
   - "Java 8 собеседование"
-  - "Lambda Stream Optional"
-  - "Лямбды и стримы Java"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java 8`

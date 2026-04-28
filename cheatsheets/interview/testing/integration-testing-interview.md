@@ -5,14 +5,15 @@ tags:
   - interview
   - testing
   - integration-testing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Integration Testing"
   - "Integration Testing interview"
-  - "Integration Testing собеседование"
   - "Интеграционное тестирование"
-  - "Testcontainers"
-  - "SpringBootTest"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Integration Testing`

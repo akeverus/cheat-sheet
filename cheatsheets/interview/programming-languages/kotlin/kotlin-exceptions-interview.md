@@ -5,12 +5,15 @@ tags:
   - interview
   - programming-languages
   - kotlin-exceptions-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "исключения в Kotlin"
   - "Kotlin exceptions interview"
-  - "Kotlin исключения собеседование"
   - "Kotlin error handling"
-  - "обработка ошибок Kotlin"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: исключения в `Kotlin`

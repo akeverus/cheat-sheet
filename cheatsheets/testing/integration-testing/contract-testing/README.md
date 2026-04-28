@@ -7,6 +7,10 @@ tags:
   - testing
   - contract-testing
 type: "index"
+aliases:
+  - "Contract Testing"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Contract Testing

@@ -5,12 +5,14 @@ tags:
   - interview
   - cicd
   - deployment-strategies-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
-  - "Deployment strategies interview"
+  - "Вопросы на собеседовании"
+  - "Стратегии деплоя"
   - "Стратегии деплоя собеседование"
-  - "Blue-Green Canary Rolling Update"
-  - "Kubernetes deployment strategies"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Стратегии деплоя`

@@ -5,7 +5,15 @@ tags:
   - databases
   - relational
   - sql-server
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "SQL Server"
+  - "Основы"
+  - "SQL Server: Основы"
+  - "sql server basics"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # SQL Server: Основы

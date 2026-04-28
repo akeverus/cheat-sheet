@@ -10,9 +10,17 @@ tags:
   - streams
   - concurrency
   - jvm
+type: "overview"
 difficulty: "beginner"
+aliases:
+  - "Java"
+  - "основы"
+  - "Java: основы"
+  - "java basics"
 prerequisites: []
-next: ["java/java-concurrency-basics.md", "java/java-collections-list.md"]
+next:
+  - "[[java-concurrency-basics]]"
+  - "[[java-collections-list]]"
 updated: "2026-04-20"
 ---
 

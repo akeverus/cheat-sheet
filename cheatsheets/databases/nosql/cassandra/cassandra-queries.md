@@ -5,8 +5,13 @@ tags:
   - databases
   - nosql
   - cassandra-queries
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Cassandra"
+  - "cassandra queries"
+prerequisites:
+  - "[[cassandra-data-modeling]]"
 next: []
 updated: "2026-04-20"
 ---

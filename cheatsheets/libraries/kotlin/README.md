@@ -7,6 +7,10 @@ tags:
   - kotlin
   - libraries
 type: "index"
+aliases:
+  - "Kotlin Libraries"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Kotlin Libraries

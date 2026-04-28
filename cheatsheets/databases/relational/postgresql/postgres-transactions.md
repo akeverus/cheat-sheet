@@ -12,11 +12,22 @@ tags:
   - concurrency
   - deadlocks
   - performance
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/postgres-basics.md"]
-next: ["databases/postgres-design.md"]
+aliases:
+  - "PostgreSQL"
+  - "транзакции, MVCC и блокировки"
+  - "postgres transactions"
+prerequisites:
+  - "[[postgres-basics]]"
+related:
+  - "[[postgres-basics]]"
+  - "[[postgres-design]]"
+  - "[[postgres-indexes]]"
+  - "[[postgres-admin]]"
+next:
+  - "[[postgres-design]]"
 updated: "2026-04-20"
-related: ["databases/postgres-basics.md", "databases/postgres-design.md", "databases/postgres-indexes.md", "databases/postgres-admin.md"]
 ---
 
 # PostgreSQL: транзакции, MVCC и блокировки

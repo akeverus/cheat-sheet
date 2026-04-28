@@ -5,10 +5,17 @@ tags:
   - languages
   - java
   - java-concurrency-basics
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Java Concurrency"
+  - "основы"
+  - "Java Concurrency: основы"
+  - "java concurrency basics"
+prerequisites:
+  - "[[java-basics]]"
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Concurrency: основы

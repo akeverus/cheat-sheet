@@ -5,7 +5,12 @@ tags:
   - testing
   - test-management
   - test-management-overview
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Управление тестированием"
+  - "Test Management"
+  - "test management overview"
 prerequisites: []
 next: []
 updated: "2026-04-20"

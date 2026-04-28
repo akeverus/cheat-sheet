@@ -5,9 +5,16 @@ tags:
   - algorithms
   - math
   - factorial-calculation
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Вычисление факториала"
+  - "Factorial Calculation"
+  - "factorial"
+  - "факториал"
 prerequisites: []
-next: []
+next:
+  - "[[fibonacci-sequence]]"
 updated: "2026-04-20"
 ---
 # Вычисление факториала (Factorial Calculation)

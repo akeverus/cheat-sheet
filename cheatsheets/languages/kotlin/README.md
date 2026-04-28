@@ -7,6 +7,10 @@ tags:
   - languages
   - kotlin
 type: "index"
+aliases:
+  - "Kotlin"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Kotlin

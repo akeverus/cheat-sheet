@@ -5,12 +5,15 @@ tags:
   - interview
   - spring
   - resilience4j-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Resilience4j"
   - "Resilience4j interview"
   - "Resilience4j собеседование"
-  - "Resilience4j вопросы"
-  - "circuit breaker interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Resilience4j`

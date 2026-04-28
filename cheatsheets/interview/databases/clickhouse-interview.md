@@ -5,12 +5,16 @@ tags:
   - interview
   - databases
   - clickhouse-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "ClickHouse"
   - "ClickHouse interview"
   - "ClickHouse собеседование"
-  - "ClickHouse OLAP interview"
-  - "MergeTree interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[clickhouse]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `ClickHouse`

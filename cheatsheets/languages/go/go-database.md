@@ -8,8 +8,16 @@ tags:
   - sql
   - sqlx
   - gorm
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "базы данных"
+  - "Go: базы данных"
+  - "go database"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

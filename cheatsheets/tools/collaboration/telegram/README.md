@@ -8,6 +8,10 @@ tags:
   - collaboration
   - bots
 type: "index"
+aliases:
+  - "Telegram"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Telegram

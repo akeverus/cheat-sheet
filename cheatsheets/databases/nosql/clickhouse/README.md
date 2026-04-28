@@ -8,6 +8,10 @@ tags:
   - clickhouse
   - olap
 type: "index"
+aliases:
+  - "ClickHouse"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # ClickHouse

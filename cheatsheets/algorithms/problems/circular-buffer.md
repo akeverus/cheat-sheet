@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - circular-buffer
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Circular Buffer"
+  - "ring buffer"
 prerequisites: []
 next: []
 updated: "2026-04-20"

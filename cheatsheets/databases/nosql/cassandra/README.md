@@ -7,6 +7,12 @@ tags:
   - cassandra
   - index
 type: "index"
+aliases:
+  - "Cassandra"
+  - "индекс раздела"
+  - "Cassandra: индекс раздела"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Cassandra: индекс раздела

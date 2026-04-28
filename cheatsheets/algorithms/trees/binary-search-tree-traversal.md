@@ -5,7 +5,11 @@ tags:
   - algorithms
   - trees
   - binary-search-tree-traversal
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Обход бинарного дерева поиска"
+  - "Binary Search Tree Traversal"
 prerequisites: []
 next: []
 updated: "2026-04-20"

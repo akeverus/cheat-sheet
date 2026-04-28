@@ -8,6 +8,10 @@ tags:
   - containers
   - kubernetes
 type: "index"
+aliases:
+  - "Kubernetes"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Kubernetes
@@ -24,6 +28,9 @@ Kubernetes (k8s) — оркестратор контейнеров: распре
 - [kubernetes-storage](kubernetes-storage.md) — PV, PVC, StorageClass, CSI
 - [kubernetes-security](kubernetes-security.md) — RBAC, Pod Security Standards, secrets
 - [kubernetes-advanced](kubernetes-advanced.md) — CRD, operators, HPA/VPA, scheduling
+- [helm](helm.md) — пакетный менеджер: charts, templates, releases, hooks, OCI
+- [kustomize](kustomize.md) — overlays для dev/stage/prod, patches, generators
+- [istio](istio.md) — service mesh: sidecar/ambient, mTLS, traffic shifting, observability
 
 ### Соседние разделы
 - [platform/containers/](../../../basics/README.md) — родительский раздел
@@ -58,7 +65,8 @@ Kubernetes (k8s) — оркестратор контейнеров: распре
 | RBAC, ServiceAccount, PSS | [kubernetes-security](kubernetes-security.md) |
 | CRD, operators | [kubernetes-advanced](kubernetes-advanced.md) |
 | HPA, VPA, Cluster Autoscaler | [kubernetes-advanced](kubernetes-advanced.md) |
-| Helm, Kustomize (кратко) | [kubernetes-advanced](kubernetes-advanced.md) |
+| Helm: charts, templates, releases | [helm](helm.md) |
+| Kustomize: overlays и patches | [kustomize](kustomize.md) |
 
 ## Docker vs Kubernetes: различия
 

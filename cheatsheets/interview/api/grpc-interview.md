@@ -5,12 +5,16 @@ tags:
   - interview
   - api
   - grpc-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "gRPC"
   - "gRPC interview"
   - "gRPC собеседование"
-  - "Protocol Buffers interview"
-  - "gRPC streaming"
-difficulty: "intermediate"
+prerequisites:
+  - "[[grpc]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `gRPC`

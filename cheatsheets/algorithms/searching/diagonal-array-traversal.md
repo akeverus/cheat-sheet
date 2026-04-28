@@ -5,7 +5,13 @@ tags:
   - algorithms
   - searching
   - diagonal-array-traversal
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Диагональный обход массива"
+  - "Diagonal Array Traversal"
+  - "Diagonal Traversal"
+  - "обход по диагонали"
 prerequisites: []
 next: []
 updated: "2026-04-20"

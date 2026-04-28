@@ -5,12 +5,16 @@ tags:
   - interview
   - programming-languages
   - go-testing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Go Testing"
   - "Go testing interview"
   - "Go test interview"
-  - "Go fuzzing interview"
-  - "Go benchmarks interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[go-testing]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Go Testing`

@@ -7,6 +7,10 @@ tags:
   - vertx
   - java-frameworks
 type: "index"
+aliases:
+  - "Vert.x"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Vert.x

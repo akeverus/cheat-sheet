@@ -5,13 +5,15 @@ tags:
   - interview
   - security
   - authentication-authorization-patterns-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Authentication and Authorization Patterns"
+  - "Вопросы на собеседовании"
   - "Auth patterns interview"
-  - "Аутентификация и авторизация собеседование"
   - "JWT RBAC ABAC interview"
   - "OAuth2 OIDC паттерны"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Authentication` and `Authorization Patterns`

@@ -5,9 +5,14 @@ tags:
   - platform
   - containers
   - docker-advanced
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Docker Advanced"
+prerequisites:
+  - "[[docker-basics]]"
+next:
+  - "[[docker-compose]]"
 updated: "2026-04-20"
 ---
 # Docker Advanced

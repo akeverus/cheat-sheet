@@ -13,11 +13,24 @@ tags:
   - hash
   - pruning
   - sharding
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-design.md"]
-next: ["databases/postgres-indexes.md"]
+aliases:
+  - "PostgreSQL"
+  - "партиционирование"
+  - "PostgreSQL: партиционирование"
+  - "postgres partitioning"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-design]]"
+related:
+  - "[[postgres-basics]]"
+  - "[[postgres-design]]"
+  - "[[postgres-indexes]]"
+  - "[[postgres-admin]]"
+next:
+  - "[[postgres-indexes]]"
 updated: "2026-04-20"
-related: ["databases/postgres-basics.md", "databases/postgres-design.md", "databases/postgres-indexes.md", "databases/postgres-admin.md"]
 ---
 
 # PostgreSQL: партиционирование

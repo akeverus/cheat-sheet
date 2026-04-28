@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - maze-solver
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Решение лабиринта"
+  - "Maze Solver"
 prerequisites: []
 next: []
 updated: "2026-04-20"

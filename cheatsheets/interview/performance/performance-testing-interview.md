@@ -5,13 +5,15 @@ tags:
   - interview
   - performance
   - performance-testing-interview
-aliases:
-  - "Performance Testing interview"
-  - "Performance Testing собеседование"
-  - "Load testing interview"
-  - "JMeter Gatling k6 собеседование"
-  - "Нагрузочное тестирование вопросы"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Performance Testing"
+  - "Performance Testing interview"
+  - "Load testing interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Performance Testing`

@@ -5,13 +5,16 @@ tags:
   - interview
   - spring
   - spring-messaging-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Messaging"
   - "Spring Messaging interview"
   - "Spring Messaging собеседование"
-  - "Spring JMS interview"
-  - "Spring RabbitMQ interview"
-  - "Spring AMQP interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-messaging]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Messaging`

@@ -5,8 +5,15 @@ tags:
   - algorithms
   - math
   - fibonacci-sequence
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Последовательность Фибоначчи"
+  - "Fibonacci Sequence"
+  - "Fibonacci"
+  - "числа Фибоначчи"
+prerequisites:
+  - "[[dynamic-programming]]"
 next: []
 updated: "2026-04-20"
 ---

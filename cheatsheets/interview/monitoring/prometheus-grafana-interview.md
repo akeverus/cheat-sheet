@@ -5,13 +5,16 @@ tags:
   - interview
   - monitoring
   - prometheus-grafana-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Prometheus и Grafana"
   - "Prometheus interview"
   - "Grafana interview"
-  - "Prometheus Grafana вопросы"
-  - "PromQL мониторинг"
-  - "Prometheus собеседование"
-difficulty: "intermediate"
+prerequisites:
+  - "[[prometheus]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Prometheus` и `Grafana`

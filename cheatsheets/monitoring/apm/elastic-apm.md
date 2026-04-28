@@ -5,8 +5,12 @@ tags:
   - monitoring
   - apm
   - elastic-apm
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Elastic APM"
+prerequisites:
+  - "[[distributed-tracing]]"
 next: []
 updated: "2026-04-20"
 ---

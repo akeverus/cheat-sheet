@@ -8,6 +8,10 @@ tags:
   - ai
   - claude
 type: "index"
+aliases:
+  - "Claude Code"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Claude Code

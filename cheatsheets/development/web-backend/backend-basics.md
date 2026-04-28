@@ -5,7 +5,11 @@ tags:
   - development
   - web-backend
   - backend-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Основы backend-разработки"
+  - "backend basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

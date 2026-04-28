@@ -5,12 +5,15 @@ tags:
   - interview
   - programming-languages
   - go-memory-gc-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Go Memory и GC"
   - "Go memory interview"
   - "Go GC interview"
-  - "Go garbage collector interview"
-  - "Go escape analysis interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Go Memory и GC`

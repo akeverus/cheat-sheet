@@ -5,12 +5,15 @@ tags:
   - interview
   - monitoring
   - observability-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Observability"
   - "Наблюдаемость систем"
   - "Observability interview"
-  - "Три столпа observability"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Observability`

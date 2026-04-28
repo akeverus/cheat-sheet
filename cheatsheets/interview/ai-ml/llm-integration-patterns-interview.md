@@ -5,12 +5,15 @@ tags:
   - interview
   - ai-ml
   - llm-integration-patterns-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "LLM integration patterns interview"
+  - "Вопросы на собеседовании"
+  - "LLM Integration Patterns"
   - "LLM production interview"
   - "LLM gateway interview"
-  - "LiteLLM interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `LLM Integration Patterns`

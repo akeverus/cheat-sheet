@@ -5,13 +5,15 @@ tags:
   - interview
   - data-engineering
   - apache-airflow-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Apache Airflow"
   - "Apache Airflow interview"
   - "Airflow interview"
-  - "Airflow собеседование"
-  - "DAG Airflow interview"
-  - "Workflow orchestration interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Apache Airflow`

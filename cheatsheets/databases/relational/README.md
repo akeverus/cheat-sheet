@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Реляционные базы данных"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Реляционные базы данных

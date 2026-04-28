@@ -5,7 +5,11 @@ tags:
   - algorithms
   - strings
   - suffix-tree-pattern-matching
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Поиск по суффиксному дереву"
+  - "Suffix Tree Pattern Matching"
 prerequisites: []
 next: []
 updated: "2026-04-20"

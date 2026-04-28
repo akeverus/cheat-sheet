@@ -9,11 +9,21 @@ tags:
   - caffeine
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
-next: ["micronaut-redis.md", "micronaut-data.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut cache"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-core]]"
+  - "[[micronaut-redis]]"
+next:
+  - "[[micronaut-redis]]"
+  - "[[micronaut-data]]"
 updated: "2026-04-20"
-related: ["micronaut-core.md", "micronaut-redis.md"]
 ---
 
 # Micronaut: Caching — Cache Abstraction и Redis Cache

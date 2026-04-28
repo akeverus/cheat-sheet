@@ -8,11 +8,21 @@ tags:
   - jpa
   - database
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-security.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus data"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-security]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-security]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-security.md"]
 ---
 
 # Quarkus: Data Access — Hibernate ORM, Panache и Repositories

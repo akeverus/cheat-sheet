@@ -5,12 +5,15 @@ tags:
   - interview
   - api
   - api-design-best-practices-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "API Design Best Practices"
   - "API design interview"
   - "API best practices interview"
-  - "REST API design"
-  - "API patterns interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `API Design Best Practices`

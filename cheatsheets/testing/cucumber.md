@@ -4,7 +4,12 @@ description: "BDD-фреймворк для написания автотест�
 tags:
   - testing
   - cucumber
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Cucumber для Java"
+  - "cucumber"
+  - "Gherkin"
 prerequisites: []
 next: []
 updated: "2026-04-20"

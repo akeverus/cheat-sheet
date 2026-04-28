@@ -8,11 +8,20 @@ tags:
   - coordinates
   - location
   - mapping
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
+aliases:
+  - "Redis"
+  - "Геопространственные данные"
+  - "redis geospatial"
+prerequisites:
+  - "[[redis-basics]]"
+  - "[[redis-data-structures]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-data-structures]]"
 next: []
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 ---
 
 # Redis: Геопространственные данные

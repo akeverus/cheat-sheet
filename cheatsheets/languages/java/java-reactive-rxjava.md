@@ -5,10 +5,16 @@ tags:
   - languages
   - java
   - java-reactive-rxjava
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Java Reactive"
+  - "RxJava"
+  - "Java Reactive: RxJava"
+  - "java reactive rxjava"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Reactive: RxJava

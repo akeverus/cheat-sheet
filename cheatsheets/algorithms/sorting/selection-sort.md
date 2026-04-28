@@ -5,9 +5,15 @@ tags:
   - algorithms
   - sorting
   - selection-sort
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Сортировка выбором"
+  - "Selection Sort"
 prerequisites: []
-next: []
+next:
+  - "[[bubble-sort]]"
+  - "[[merge-sort]]"
 updated: "2026-04-20"
 ---
 # Сортировка выбором (Selection Sort)

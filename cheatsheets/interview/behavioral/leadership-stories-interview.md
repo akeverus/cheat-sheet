@@ -5,13 +5,15 @@ tags:
   - interview
   - behavioral
   - leadership-stories-interview
-aliases:
-  - "Leadership Stories interview"
-  - "Leadership behavioral interview"
-  - "influence interview"
-  - "tech lead stories"
-  - "истории о лидерстве"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Истории о лидерстве"
+  - "Leadership Stories interview"
+  - "influence interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Истории о лидерстве

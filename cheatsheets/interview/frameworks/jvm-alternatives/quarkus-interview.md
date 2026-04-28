@@ -5,12 +5,16 @@ tags:
   - interview
   - frameworks
   - quarkus-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Quarkus"
   - "Quarkus interview"
   - "Quarkus собеседование"
-  - "Quarkus framework interview"
-  - "Native image interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[quarkus-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Quarkus`

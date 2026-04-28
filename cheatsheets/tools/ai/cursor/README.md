@@ -8,6 +8,10 @@ tags:
   - ai
   - cursor
 type: "index"
+aliases:
+  - "Cursor"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Cursor

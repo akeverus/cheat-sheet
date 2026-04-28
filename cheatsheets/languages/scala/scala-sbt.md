@@ -6,11 +6,16 @@ tags:
   - sbt
   - build-tool
   - dependency-management
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala SBT"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md"]
 ---
 
 # Scala SBT

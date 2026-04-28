@@ -5,8 +5,12 @@ tags:
   - testing
   - integration-testing
   - testcontainers
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Testcontainers"
+prerequisites:
+  - "[[docker-basics]]"
 next: []
 updated: "2026-04-20"
 ---

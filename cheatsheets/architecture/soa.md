@@ -4,7 +4,11 @@ description: "Service-Oriented Architecture (SOA) — это архитекту�
 tags:
   - architecture
   - soa
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "SOA"
+  - "Service-Oriented Architecture"
 prerequisites: []
 next: []
 updated: "2026-04-20"

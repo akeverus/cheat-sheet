@@ -5,10 +5,16 @@ tags:
   - languages
   - java
   - java-collections-modification
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Java Collections"
+  - "модификация"
+  - "Java Collections: модификация"
+  - "java collections modification"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Collections: модификация

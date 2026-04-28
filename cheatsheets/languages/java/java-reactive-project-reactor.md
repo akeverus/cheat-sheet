@@ -5,10 +5,16 @@ tags:
   - languages
   - java
   - java-reactive-project-reactor
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Java Reactive"
+  - "Project Reactor"
+  - "Java Reactive: Project Reactor"
+  - "java reactive project reactor"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Reactive: Project Reactor

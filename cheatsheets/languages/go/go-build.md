@@ -8,8 +8,17 @@ tags:
   - deployment
   - docker
   - ci-cd
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md", "go/go-modules.md"]
+aliases:
+  - "Go"
+  - "сборка и развертывание"
+  - "Go: сборка и развертывание"
+  - "go build"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-modules]]"
+next: []
 updated: "2026-04-20"
 ---
 

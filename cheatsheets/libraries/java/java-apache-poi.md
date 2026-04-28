@@ -5,9 +5,13 @@ tags:
   - libraries
   - java
   - java-apache-poi
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Apache POI"
+  - "java apache poi"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - least-common-multiple
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Наименьшее общее кратное"
+  - "Least Common Multiple"
 prerequisites: []
 next: []
 updated: "2026-04-20"

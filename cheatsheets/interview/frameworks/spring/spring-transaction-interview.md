@@ -5,11 +5,15 @@ tags:
   - interview
   - frameworks
   - spring-transaction-interview
-aliases:
-  - "Spring Transactions interview"
-  - "Spring @Transactional собеседование"
-  - "Spring транзакции вопросы"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Transactions"
+  - "Spring Transactions interview"
+  - "Spring транзакции вопросы"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Transactions`

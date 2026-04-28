@@ -7,9 +7,14 @@ tags:
   - http
   - design
   - best-practices
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java-basics.md"]
-next: ["spring/spring-rest.md"]
+aliases:
+  - "REST API Design"
+prerequisites:
+  - "[[java-basics]]"
+next:
+  - "[[spring-rest]]"
 updated: "2026-04-20"
 ---
 

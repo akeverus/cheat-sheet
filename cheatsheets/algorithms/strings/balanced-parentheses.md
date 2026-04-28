@@ -5,7 +5,12 @@ tags:
   - algorithms
   - strings
   - balanced-parentheses
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Баланс скобок"
+  - "Balanced Parentheses"
+  - "balanced parens"
 prerequisites: []
 next: []
 updated: "2026-04-20"

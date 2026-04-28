@@ -5,9 +5,17 @@ tags:
   - algorithms
   - searching
   - find-max-element
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Find Kth Largest Element"
+  - "Find Kth Largest"
+  - "k-й по величине"
+  - "find max element"
 prerequisites: []
-next: []
+next:
+  - "[[k-largest-elements]]"
+  - "[[top-n-frequent-elements]]"
 updated: "2026-04-20"
 ---
 # Поиск k-го по величине элемента (Find Kth Largest Element)

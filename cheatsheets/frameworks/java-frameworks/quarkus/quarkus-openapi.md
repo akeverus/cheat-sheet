@@ -8,11 +8,22 @@ tags:
   - api-documentation
   - rest
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
-next: ["quarkus-rest.md", "quarkus-security.md"]
+aliases:
+  - "Quarkus"
+  - "OpenAPI — API Documentation"
+  - "quarkus openapi"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-rest]]"
+related:
+  - "[[quarkus-rest]]"
+  - "[[quarkus-security]]"
+next:
+  - "[[quarkus-rest]]"
+  - "[[quarkus-security]]"
 updated: "2026-04-20"
-related: ["quarkus-rest.md", "quarkus-security.md"]
 ---
 
 # Quarkus: OpenAPI — API Documentation

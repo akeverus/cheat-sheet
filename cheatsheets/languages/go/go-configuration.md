@@ -8,8 +8,16 @@ tags:
   - env
   - viper
   - config
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "конфигурация"
+  - "Go: конфигурация"
+  - "go configuration"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

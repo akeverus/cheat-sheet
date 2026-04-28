@@ -9,11 +9,20 @@ tags:
   - cron
   - quartz
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
-next: ["spring/spring-batch.md", "spring/spring-integration.md"]
+aliases:
+  - "Spring Scheduling"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[spring-boot]]"
+related:
+  - "[[spring-boot]]"
+  - "[[java-basics]]"
+next:
+  - "[[spring-batch]]"
+  - "[[spring-integration]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
 # Spring Scheduling: Полное руководство по планированию задач

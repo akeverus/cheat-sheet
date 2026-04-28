@@ -5,9 +5,15 @@ tags:
   - libraries
   - scala
   - scala-akka
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Akka"
+  - "scala akka"
+prerequisites:
+  - "[[scala-basics]]"
+next:
+  - "[[scala-akka-streams]]"
 updated: "2026-04-20"
 ---
 # Akka

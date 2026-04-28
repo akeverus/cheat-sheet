@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Графовые базы данных"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Графовые базы данных

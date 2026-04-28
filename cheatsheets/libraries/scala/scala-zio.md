@@ -5,7 +5,11 @@ tags:
   - libraries
   - scala
   - scala-zio
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "ZIO"
+  - "scala zio"
 prerequisites: []
 next: []
 updated: "2026-04-20"

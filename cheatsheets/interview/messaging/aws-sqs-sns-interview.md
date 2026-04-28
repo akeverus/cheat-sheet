@@ -5,12 +5,15 @@ tags:
   - interview
   - messaging
   - aws-sqs-sns-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "AWS SQS и SNS"
   - "AWS SQS interview"
   - "AWS SNS interview"
-  - "SQS SNS собеседование"
-  - "AWS messaging interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `AWS SQS и SNS`

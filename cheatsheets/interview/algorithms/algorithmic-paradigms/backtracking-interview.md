@@ -5,13 +5,16 @@ tags:
   - interview
   - algorithms
   - backtracking-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Backtracking"
   - "Backtracking interview"
   - "Backtracking собеседование"
-  - "N-Queens interview"
-  - "Sudoku interview"
-  - "Permutations interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[backtracking]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Backtracking`

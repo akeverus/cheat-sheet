@@ -5,9 +5,15 @@ tags:
   - databases
   - relational
   - mysql-queries
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "MySQL"
+  - "mysql queries"
+prerequisites:
+  - "[[mysql-basics]]"
+next:
+  - "[[mysql-design]]"
 updated: "2026-04-20"
 ---
 # MySQL: Запросы и оптимизация SQL — Полное руководство по SQL в MySQL

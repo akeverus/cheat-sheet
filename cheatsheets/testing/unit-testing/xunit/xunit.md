@@ -5,7 +5,11 @@ tags:
   - testing
   - unit-testing
   - xunit
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "xUnit.net"
+  - "xunit"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,12 +5,16 @@ tags:
   - interview
   - java
   - java-mapstruct-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "MapStruct"
   - "MapStruct interview"
   - "MapStruct собеседование"
-  - "MapStruct вопросы"
-  - "Java bean mapping interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[java-mapstruct]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `MapStruct`

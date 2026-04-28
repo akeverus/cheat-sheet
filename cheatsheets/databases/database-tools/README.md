@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Инструменты БД"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Инструменты БД

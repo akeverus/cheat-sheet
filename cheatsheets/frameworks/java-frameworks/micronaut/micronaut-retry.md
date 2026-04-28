@@ -9,11 +9,21 @@ tags:
   - backoff
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
-next: ["micronaut-core.md", "micronaut-cloud.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut retry"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-core]]"
+  - "[[micronaut-cloud]]"
+next:
+  - "[[micronaut-core]]"
+  - "[[micronaut-cloud]]"
 updated: "2026-04-20"
-related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
 # Micronaut: Retry — Retry Logic и Circuit Breaker

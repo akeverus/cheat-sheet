@@ -5,11 +5,15 @@ tags:
   - interview
   - leadership
   - team-leadership-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Лидерство в команде"
   - "Team Leadership interview"
   - "Тимлид собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Лидерство в команде

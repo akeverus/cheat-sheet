@@ -5,12 +5,16 @@ tags:
   - interview
   - api
   - openapi-swagger-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "OpenAPI / Swagger"
   - "OpenAPI interview"
   - "Swagger interview"
-  - "OpenAPI собеседование"
-  - "OpenAPI вопросы"
-difficulty: "intermediate"
+prerequisites:
+  - "[[openapi-swagger]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `OpenAPI` / `Swagger`

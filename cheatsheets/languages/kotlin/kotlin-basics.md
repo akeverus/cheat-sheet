@@ -10,11 +10,22 @@ tags:
   - coroutines
   - dsl
   - null-safety
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java/java-basics.md"]
-next: ["kotlin/kotlin-concurrency-basics.md", "kotlin/kotlin-reactive.md", "kotlin/kotlin-another.md"]
+aliases:
+  - "kotlin basics"
+  - "Kotlin"
+prerequisites:
+  - "[[java-basics]]"
+related:
+  - "[[java-basics]]"
+  - "[[kotlin-concurrency-basics]]"
+  - "[[kotlin-reactive]]"
+next:
+  - "[[kotlin-concurrency-basics]]"
+  - "[[kotlin-reactive]]"
+  - "[[kotlin-another]]"
 updated: "2026-04-20"
-related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/kotlin-reactive.md"]
 ---
 
 # Основы Kotlin — Полное руководство

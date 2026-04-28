@@ -5,8 +5,13 @@ tags:
   - databases
   - relational
   - mysql-replication
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "MySQL"
+  - "mysql replication"
+prerequisites:
+  - "[[mysql-basics]]"
 next: []
 updated: "2026-04-20"
 ---

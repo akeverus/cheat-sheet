@@ -5,7 +5,10 @@ tags:
   - languages
   - kotlin
   - kotlin-reactive
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Reactive"
 prerequisites: []
 next: []
 updated: "2026-04-20"

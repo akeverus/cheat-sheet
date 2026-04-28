@@ -8,6 +8,10 @@ tags:
   - unit-testing
   - junit
 type: "index"
+aliases:
+  - "JUnit"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # JUnit

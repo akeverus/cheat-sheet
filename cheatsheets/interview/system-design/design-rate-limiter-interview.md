@@ -5,12 +5,15 @@ tags:
   - interview
   - system-design
   - design-rate-limiter-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Design Rate Limiter"
   - "Rate Limiter design"
   - "Token bucket"
-  - "Sliding window counter"
-  - "Rate Limiter собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Rate Limiter`

@@ -5,9 +5,16 @@ tags:
   - languages
   - kotlin
   - kotlin-collections-operations
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Collections"
+  - "Operations"
+  - "Kotlin Collections: Operations"
+  - "kotlin collections operations"
 prerequisites: []
-next: []
+next:
+  - "[[kotlin-collections-sequences]]"
 updated: "2026-04-20"
 ---
 # Kotlin Collections: Operations

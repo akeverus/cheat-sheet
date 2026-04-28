@@ -9,8 +9,16 @@ tags:
   - maps
   - arrays
   - data-structures
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "коллекции"
+  - "Go: коллекции"
+  - "go collections"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

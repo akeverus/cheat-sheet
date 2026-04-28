@@ -8,6 +8,10 @@ tags:
   - logging
   - log-aggregation
 type: "index"
+aliases:
+  - "Log Aggregation"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Log Aggregation

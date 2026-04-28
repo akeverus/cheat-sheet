@@ -7,7 +7,15 @@ tags:
   - jackson
   - json
   - serialization
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Jackson"
+  - "JSON-сериализация в Java"
+  - "java jackson"
+prerequisites:
+  - "[[java-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 # Jackson: JSON-сериализация в Java

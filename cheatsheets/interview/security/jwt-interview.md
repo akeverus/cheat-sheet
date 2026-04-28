@@ -5,12 +5,15 @@ tags:
   - interview
   - security
   - jwt-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "JWT"
   - "JWT interview"
   - "JWT собеседование"
-  - "JSON Web Token вопросы"
-  - "JWT Spring Security"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `JWT`

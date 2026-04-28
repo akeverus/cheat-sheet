@@ -5,7 +5,12 @@ tags:
   - databases
   - graph
   - neo4j-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Neo4j"
+  - "Основы графовой базы данных"
+  - "neo4j basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,7 +5,11 @@ tags:
   - security
   - application
   - application-security
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Безопасность приложений"
+  - "Application Security"
 prerequisites: []
 next: []
 updated: "2026-04-20"

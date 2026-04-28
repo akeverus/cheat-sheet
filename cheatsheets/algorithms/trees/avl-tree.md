@@ -5,7 +5,13 @@ tags:
   - algorithms
   - trees
   - avl-tree
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "AVL дерево"
+  - "AVL Tree"
+  - "AVL дерево (AVL Tree)"
+  - "AVL"
 prerequisites: []
 next: []
 updated: "2026-04-20"

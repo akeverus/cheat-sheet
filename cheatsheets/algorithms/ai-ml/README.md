@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "AI и машинное обучение"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # AI и машинное обучение

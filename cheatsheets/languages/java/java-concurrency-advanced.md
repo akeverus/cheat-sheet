@@ -5,10 +5,17 @@ tags:
   - languages
   - java
   - java-concurrency-advanced
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Java Concurrency"
+  - "Advanced"
+  - "Java Concurrency: Advanced"
+  - "java concurrency advanced"
+prerequisites:
+  - "[[java-concurrency-basics]]"
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Concurrency: Advanced

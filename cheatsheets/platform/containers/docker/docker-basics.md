@@ -8,11 +8,22 @@ tags:
   - devops
   - infrastructure
   - virtualization
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["devops/os.md"]
-next: ["devops/docker-containers.md", "devops/docker-spring-boot.md", "infrastructure/kubernetes-basics.md"]
+aliases:
+  - "Docker"
+  - "docker basics"
+prerequisites:
+  - "[[os]]"
+related:
+  - "[[nginx]]"
+  - "[[git]]"
+  - "[[spring-boot]]"
+next:
+  - "[[docker-containers]]"
+  - "[[docker-spring-boot]]"
+  - "[[kubernetes-basics]]"
 updated: "2026-04-20"
-related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 ---
 
 # Docker: Полное руководство по контейнеризации

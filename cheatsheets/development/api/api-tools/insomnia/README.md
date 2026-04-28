@@ -7,6 +7,10 @@ tags:
   - api
   - insomnia
 type: "index"
+aliases:
+  - "Insomnia"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Insomnia

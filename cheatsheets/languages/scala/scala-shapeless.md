@@ -5,7 +5,12 @@ tags:
   - languages
   - scala
   - scala-shapeless
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Shapeless в Scala"
+  - "scala shapeless"
+  - "Shapeless"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,7 +5,12 @@ tags:
   - algorithms
   - problems
   - hill-climbing
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Алгоритм восхождения на холм"
+  - "Hill-Climbing"
+  - "hill climbing"
 prerequisites: []
 next: []
 updated: "2026-04-20"

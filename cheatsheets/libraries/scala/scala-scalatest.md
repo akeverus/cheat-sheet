@@ -5,8 +5,13 @@ tags:
   - libraries
   - scala
   - scala-scalatest
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "ScalaTest"
+  - "scala scalatest"
+prerequisites:
+  - "[[scala-basics]]"
 next: []
 updated: "2026-04-20"
 ---

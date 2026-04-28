@@ -5,12 +5,16 @@ tags:
   - interview
   - devops
   - helm-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Helm"
   - "Helm interview"
   - "Helm собеседование"
-  - "Helm chart вопросы"
-  - "Kubernetes Helm"
-difficulty: "intermediate"
+prerequisites:
+  - "[[helm]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Helm`

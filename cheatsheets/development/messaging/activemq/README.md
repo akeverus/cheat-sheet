@@ -8,6 +8,10 @@ tags:
   - activemq
   - jms
 type: "index"
+aliases:
+  - "Apache ActiveMQ"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Apache ActiveMQ

@@ -5,9 +5,14 @@ tags:
   - monitoring
   - logging
   - logging-best-practices
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "logging best practices"
+prerequisites:
+  - "[[logging-basics]]"
+next:
+  - "[[centralized-logging]]"
 updated: "2026-04-20"
 ---
 # Лучшие практики логирования в Java

@@ -5,12 +5,15 @@ tags:
   - interview
   - code-quality
   - code-review-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Code review"
   - "Code review interview"
   - "Code review собеседование"
-  - "Ревью кода"
-  - "Pull request review"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Code review`

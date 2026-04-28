@@ -8,11 +8,22 @@ tags:
   - akka-streams
   - reactive-streams
   - backpressure
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["scala/scala-concurrency.md", "scala/scala-akka.md"]
-next: ["scala-akka-streams.md", "scala-reactive-rxscala.md"]
+aliases:
+  - "Scala Reactive Programming"
+  - "scala reactive"
+prerequisites:
+  - "[[scala-concurrency]]"
+  - "[[scala-akka]]"
+related:
+  - "[[scala-concurrency]]"
+  - "[[scala-akka]]"
+  - "[[scala-fp-advanced]]"
+next:
+  - "[[scala-akka-streams]]"
+  - "[[scala-reactive-rxscala]]"
 updated: "2026-04-20"
-related: ["scala/scala-concurrency.md", "scala/scala-akka.md", "scala/scala-fp-advanced.md"]
 ---
 
 # Scala Reactive Programming

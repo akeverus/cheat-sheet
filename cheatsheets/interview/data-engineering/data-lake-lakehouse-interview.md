@@ -5,14 +5,15 @@ tags:
   - interview
   - data-engineering
   - data-lake-lakehouse-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Data Lake и Lakehouse"
   - "Data lake interview"
   - "Lakehouse interview"
-  - "Delta Lake interview"
-  - "Apache Iceberg interview"
-  - "Apache Hudi interview"
-  - "Data mesh interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Data Lake и Lakehouse`

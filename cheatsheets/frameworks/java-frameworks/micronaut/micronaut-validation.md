@@ -8,11 +8,21 @@ tags:
   - jakarta-validation
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
-next: ["micronaut-http.md", "micronaut-data.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut validation"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-core]]"
+  - "[[micronaut-http]]"
+next:
+  - "[[micronaut-http]]"
+  - "[[micronaut-data]]"
 updated: "2026-04-20"
-related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
 # Micronaut: Validation — Bean Validation и Custom Validators

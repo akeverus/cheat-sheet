@@ -5,13 +5,15 @@ tags:
   - interview
   - behavioral
   - failure-stories-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Истории о неудачах"
   - "Failure Stories interview"
   - "Failure Stories собеседование"
-  - "growth mindset interview"
-  - "ownership behavioral"
-  - "lessons learned interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Истории о неудачах

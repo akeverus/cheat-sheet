@@ -6,6 +6,10 @@ tags:
   - index
   - web-backend
 type: "index"
+aliases:
+  - "Web Backend"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Web Backend

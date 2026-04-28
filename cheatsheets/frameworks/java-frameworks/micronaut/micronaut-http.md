@@ -9,11 +9,21 @@ tags:
   - rest
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
-next: ["micronaut-data.md", "micronaut-security.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut http"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-testing]]"
+next:
+  - "[[micronaut-data]]"
+  - "[[micronaut-security]]"
 updated: "2026-04-20"
-related: ["micronaut-reactive.md", "micronaut-testing.md"]
 ---
 
 # Micronaut: HTTP — Controllers, Routing и Request Handling

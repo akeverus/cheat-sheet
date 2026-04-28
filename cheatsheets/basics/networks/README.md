@@ -6,6 +6,10 @@ tags:
   - index
   - networks
 type: "index"
+aliases:
+  - "Компьютерные сети"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Компьютерные сети

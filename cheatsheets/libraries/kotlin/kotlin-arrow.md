@@ -5,7 +5,11 @@ tags:
   - libraries
   - kotlin
   - kotlin-arrow
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Arrow"
+  - "kotlin arrow"
 prerequisites: []
 next: []
 updated: "2026-04-20"

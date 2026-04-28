@@ -5,7 +5,10 @@ tags:
   - architecture
   - architectural-decision-records
   - adr-template
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "adr template"
 prerequisites: []
 next: []
 updated: "2026-04-20"

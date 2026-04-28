@@ -10,11 +10,22 @@ tags:
   - aggregation
   - replication
   - sharding
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/postgres-basics.md", "java/java-basics.md"]
-next: ["databases/redis.md", "spring/spring-data-jpa.md"]
+aliases:
+  - "MongoDB"
+  - "mongodb main"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[java-basics]]"
+related:
+  - "[[postgres-basics]]"
+  - "[[spring-data-jpa]]"
+  - "[[java-basics]]"
+next:
+  - "[[redis]]"
+  - "[[spring-data-jpa]]"
 updated: "2026-04-20"
-related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/java-basics.md"]
 ---
 
 # MongoDB: Полное руководство по документо-ориентированной NoSQL базе данных

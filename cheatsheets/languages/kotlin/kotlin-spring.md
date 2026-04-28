@@ -5,7 +5,11 @@ tags:
   - languages
   - kotlin
   - kotlin-spring
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin + Spring"
+  - "kotlin spring"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -8,6 +8,10 @@ tags:
   - openapi
   - swagger
 type: "index"
+aliases:
+  - "Swagger / OpenAPI"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Swagger / OpenAPI

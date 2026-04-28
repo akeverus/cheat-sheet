@@ -8,11 +8,21 @@ tags:
   - database
   - key-value
   - basics
+type: "overview"
 difficulty: "beginner"
+aliases:
+  - "Redis"
+  - "Основы"
+  - "Redis: Основы"
+  - "redis basics"
 prerequisites: []
-next: ["databases/nosql/redis/redis-data-structures.md", "databases/nosql/redis/redis-persistence.md"]
+related:
+  - "[[postgres-basics]]"
+  - "[[redis-data-structures]]"
+next:
+  - "[[redis-data-structures]]"
+  - "[[redis-persistence]]"
 updated: "2026-04-20"
-related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql/redis/redis-data-structures.md"]
 ---
 
 # Redis: Основы

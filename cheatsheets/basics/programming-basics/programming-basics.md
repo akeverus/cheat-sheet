@@ -4,7 +4,11 @@ description: "Кратко: Базовые концепции программи
 tags:
   - basics
   - programming-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Основы программирования"
+  - "programming basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

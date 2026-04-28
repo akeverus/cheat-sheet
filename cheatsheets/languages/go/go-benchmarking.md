@@ -7,8 +7,17 @@ tags:
   - benchmarking
   - performance
   - testing
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md", "go/go-testing.md"]
+aliases:
+  - "Go"
+  - "бенчмаркинг"
+  - "Go: бенчмаркинг"
+  - "go benchmarking"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-testing]]"
+next: []
 updated: "2026-04-20"
 ---
 

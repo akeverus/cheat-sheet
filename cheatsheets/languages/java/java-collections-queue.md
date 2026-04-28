@@ -5,10 +5,16 @@ tags:
   - languages
   - java
   - java-collections-queue
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Java Collections"
+  - "Queue"
+  - "Java Collections: Queue"
+  - "java collections queue"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Collections: Queue

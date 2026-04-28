@@ -6,11 +6,18 @@ tags:
   - dsl
   - domain-specific-language
   - type-safe-builders
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["scala/scala-basics.md", "scala/scala-implicit.md"]
+aliases:
+  - "Scala DSL"
+prerequisites:
+  - "[[scala-basics]]"
+  - "[[scala-implicit]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-implicit]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 ---
 
 # Scala DSL

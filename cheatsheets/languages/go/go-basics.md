@@ -8,9 +8,16 @@ tags:
   - concurrency
   - web
   - backend
+type: "overview"
 difficulty: "beginner"
+aliases:
+  - "Go"
+  - "основы"
+  - "Go: основы"
+  - "go basics"
 prerequisites: []
-next: ["go/go-advanced-patterns.md"]
+next:
+  - "[[go-advanced-patterns]]"
 updated: "2026-04-20"
 ---
 

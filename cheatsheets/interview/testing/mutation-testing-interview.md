@@ -5,12 +5,15 @@ tags:
   - interview
   - testing
   - mutation-testing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Mutation Testing"
   - "Mutation testing interview"
   - "PIT mutation testing interview"
-  - "Stryker interview"
-  - "Mutant testing interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Mutation Testing`

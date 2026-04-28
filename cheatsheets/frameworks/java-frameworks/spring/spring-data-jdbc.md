@@ -10,11 +10,20 @@ tags:
   - transactions
   - spring-data
   - sql
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "databases/postgres-basics.md"]
-next: ["spring/spring-data-jpa.md"]
+aliases:
+  - "Spring Data JDBC"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[postgres-basics]]"
+related:
+  - "[[spring-boot]]"
+  - "[[postgres-basics]]"
+  - "[[java-basics]]"
+next:
+  - "[[spring-data-jpa]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "databases/postgres-basics.md", "java/java-basics.md"]
 ---
 
 # Spring Data JDBC: Полное руководство по работе с базами данных

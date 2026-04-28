@@ -5,12 +5,15 @@ tags:
   - interview
   - ai-ml
   - rag-interview
-aliases:
-  - "RAG interview"
-  - "Retrieval-Augmented Generation interview"
-  - "RAG собеседование"
-  - "Document retrieval LLM"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "RAG"
+  - "Retrieval-Augmented Generation"
+  - "RAG interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `RAG (Retrieval-Augmented Generation)`

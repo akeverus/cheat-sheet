@@ -5,7 +5,10 @@ tags:
   - platform
   - containers
   - kubernetes-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kubernetes Advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"

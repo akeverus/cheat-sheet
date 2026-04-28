@@ -5,13 +5,15 @@ tags:
   - interview
   - performance
   - memory-management-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Memory Management"
   - "Memory Management interview"
-  - "Memory Management собеседование"
   - "JVM память"
-  - "управление памятью Java"
-  - "Java GC interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Memory Management`

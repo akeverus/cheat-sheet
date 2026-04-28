@@ -5,12 +5,15 @@ tags:
   - interview
   - java
   - java-reflection-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Java Reflection"
   - "Java Reflection interview"
   - "Java Reflection собеседование"
-  - "Reflection API вопросы"
-  - "Java reflection questions"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Reflection`

@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - traveling-salesman-problem
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Задача коммивояжера"
+  - "Traveling Salesman Problem"
 prerequisites: []
 next: []
 updated: "2026-04-20"

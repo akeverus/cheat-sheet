@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - distance-between-points
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Расстояние между точками"
+  - "Distance Between Points"
 prerequisites: []
 next: []
 updated: "2026-04-20"

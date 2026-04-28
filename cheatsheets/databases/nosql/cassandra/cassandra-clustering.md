@@ -5,9 +5,15 @@ tags:
   - databases
   - nosql
   - cassandra-clustering
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Cassandra"
+  - "cassandra clustering"
+prerequisites:
+  - "[[cassandra-basics]]"
+next:
+  - "[[cassandra-performance]]"
 updated: "2026-04-20"
 ---
 # Cassandra: Кластеризация — Управление узлами и масштабирование

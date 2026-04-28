@@ -5,12 +5,16 @@ tags:
   - interview
   - programming-languages
   - go-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Go"
   - "Go interview"
   - "Go собеседование"
-  - "Golang interview"
-  - "Go basics interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Go`

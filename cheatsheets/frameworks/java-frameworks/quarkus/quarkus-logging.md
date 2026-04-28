@@ -7,11 +7,23 @@ tags:
   - slf4j
   - logback
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-actuator.md"]
+aliases:
+  - "Quarkus"
+  - "Logging — Логирование"
+  - "Quarkus: Logging — Логирование"
+  - "quarkus logging"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-actuator]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-actuator]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-actuator.md"]
 ---
 
 # Quarkus: Logging — Логирование

@@ -5,7 +5,10 @@ tags:
   - development
   - messaging
   - nats
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "NATS"
 prerequisites: []
 next: []
 updated: "2026-04-20"

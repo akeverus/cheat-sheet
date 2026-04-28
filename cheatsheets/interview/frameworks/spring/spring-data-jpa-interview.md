@@ -5,12 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-data-jpa-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring Data JPA"
   - "Spring Data JPA interview"
   - "Spring Data JPA собеседование"
-  - "JPA репозитории"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-data-jpa]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Data JPA`

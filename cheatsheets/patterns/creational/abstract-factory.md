@@ -5,9 +5,16 @@ tags:
   - patterns
   - creational
   - abstract-factory
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Абстрактная фабрика"
+  - "Abstract Factory"
+prerequisites:
+  - "[[factory-method]]"
+next:
+  - "[[builder]]"
+  - "[[prototype]]"
 updated: "2026-04-20"
 ---
 # Абстрактная фабрика (Abstract Factory)

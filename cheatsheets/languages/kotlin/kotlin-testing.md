@@ -5,7 +5,10 @@ tags:
   - languages
   - kotlin
   - kotlin-testing
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Testing"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - age-calculation
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Вычисление возраста"
+  - "Age Calculation"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -7,9 +7,17 @@ tags:
   - rest
   - libraries
   - spring
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java-basics.md"]
-next: ["java-apache-httpclient.md", "java-okhttp.md", "java-retrofit.md"]
+aliases:
+  - "HTTP-клиенты в Java"
+  - "java http clients"
+prerequisites:
+  - "[[java-basics]]"
+next:
+  - "[[java-apache-httpclient]]"
+  - "[[java-okhttp]]"
+  - "[[java-retrofit]]"
 updated: "2026-04-20"
 ---
 

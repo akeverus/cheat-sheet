@@ -5,13 +5,16 @@ tags:
   - interview
   - frameworks
   - vertx-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Vert.x"
   - "Vert.x interview"
   - "Vertx interview"
-  - "Vert.x собеседование"
-  - "Event-driven JVM interview"
-  - "Reactive JVM interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[vertx-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Vert.x`

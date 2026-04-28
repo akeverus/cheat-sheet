@@ -8,8 +8,16 @@ tags:
   - timers
   - timeouts
   - dates
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "работа со временем"
+  - "Go: работа со временем"
+  - "go time"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

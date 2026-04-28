@@ -7,12 +7,16 @@ tags:
   - tls
   - ssl
   - pki
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "TLS / SSL"
+  - "tls ssl"
 prerequisites:
-  - infrastructure-security
+  - "[[infrastructure-security]]"
 next:
-  - redis-security
-  - postgres-security
+  - "[[redis-security]]"
+  - "[[postgres-security]]"
 updated: "2026-04-20"
 ---
 # TLS / SSL: handshake, сертификаты, конфигурация

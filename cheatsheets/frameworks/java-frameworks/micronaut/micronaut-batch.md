@@ -9,11 +9,21 @@ tags:
   - chunk
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-scheduling.md"]
-next: ["micronaut-scheduling.md", "micronaut-data.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut batch"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-scheduling]]"
+related:
+  - "[[micronaut-scheduling]]"
+  - "[[micronaut-data]]"
+next:
+  - "[[micronaut-scheduling]]"
+  - "[[micronaut-data]]"
 updated: "2026-04-20"
-related: ["micronaut-scheduling.md", "micronaut-data.md"]
 ---
 
 # Micronaut: Batch Processing — Job Processing и Scheduling

@@ -8,8 +8,17 @@ tags:
   - metrics
   - tracing
   - monitoring
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["go/go-basics.md", "go/go-logging.md"]
+aliases:
+  - "Go"
+  - "наблюдаемость"
+  - "Go: наблюдаемость"
+  - "go observability"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-logging]]"
+next: []
 updated: "2026-04-20"
 ---
 

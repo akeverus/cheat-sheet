@@ -5,13 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-types-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Types"
   - "Java Types interview"
   - "Java типы собеседование"
-  - "Примитивы и обёртки Java"
-  - "Java type system"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Types`

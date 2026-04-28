@@ -7,11 +7,20 @@ tags:
   - best-practices
   - advanced
   - extensions
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
+aliases:
+  - "Scala Additional Topics"
+  - "scala another"
+prerequisites:
+  - "[[scala-basics]]"
+  - "[[scala-fp-advanced]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-fp-advanced]]"
+  - "[[scala-type-system]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-type-system.md"]
 ---
 
 # Scala Additional Topics

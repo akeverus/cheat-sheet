@@ -9,11 +9,21 @@ tags:
   - topics
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-reactive.md"]
-next: ["micronaut-reactive.md", "micronaut-kafka.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut jms"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-reactive]]"
+related:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-kafka]]"
+next:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-kafka]]"
 updated: "2026-04-20"
-related: ["micronaut-reactive.md", "micronaut-kafka.md"]
 ---
 
 # Micronaut: JMS Integration — Message Queues и Topics

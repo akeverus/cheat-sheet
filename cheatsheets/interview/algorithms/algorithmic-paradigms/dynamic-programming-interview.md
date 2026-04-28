@@ -5,14 +5,16 @@ tags:
   - interview
   - algorithms
   - dynamic-programming-interview
+type: "interview"
+difficulty: "advanced"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Динамическое программирование"
   - "Dynamic programming interview"
-  - "Динамическое программирование собеседование"
   - "DP interview"
-  - "Memoization interview"
-  - "Tabulation interview"
-  - "Knapsack interview"
-difficulty: "hard"
+prerequisites:
+  - "[[dynamic-programming]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Динамическое программирование`

@@ -8,10 +8,18 @@ tags:
   - olap
   - database
   - big-data
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/postgres-basics.md"]
+aliases:
+  - "ClickHouse"
+  - "clickhouse basics"
+prerequisites:
+  - "[[postgres-basics]]"
+related:
+  - "[[postgres-basics]]"
+  - "[[redis-basics]]"
+next: []
 updated: "2026-04-20"
-related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 ---
 
 # ClickHouse: Основы колоночной аналитической базы данных

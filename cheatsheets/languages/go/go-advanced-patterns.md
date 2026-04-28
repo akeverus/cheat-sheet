@@ -7,8 +7,17 @@ tags:
   - patterns
   - concurrency
   - design-patterns
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["go/go-basics.md", "go/go-concurrency.md"]
+aliases:
+  - "Go"
+  - "продвинутые паттерны"
+  - "Go: продвинутые паттерны"
+  - "go advanced patterns"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-concurrency]]"
+next: []
 updated: "2026-04-20"
 ---
 

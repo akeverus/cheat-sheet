@@ -6,11 +6,14 @@ tags:
   - application
   - owasp
   - vulnerabilities
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "owasp top 10"
 prerequisites:
-  - application-security
+  - "[[application-security]]"
 next:
-  - jwt-oauth2
+  - "[[jwt-oauth2]]"
 updated: "2026-04-20"
 ---
 # OWASP Top 10 (2021) — разбор категорий

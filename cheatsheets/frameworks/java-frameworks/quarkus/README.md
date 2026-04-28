@@ -7,6 +7,10 @@ tags:
   - quarkus
   - java-frameworks
 type: "index"
+aliases:
+  - "Quarkus"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Quarkus

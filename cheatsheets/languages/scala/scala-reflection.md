@@ -7,11 +7,17 @@ tags:
   - runtime
   - type-tags
   - introspection
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Reflection"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-type-system]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-type-system.md"]
 ---
 
 # Scala Reflection

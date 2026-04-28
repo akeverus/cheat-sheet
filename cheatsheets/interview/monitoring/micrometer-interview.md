@@ -5,12 +5,16 @@ tags:
   - interview
   - monitoring
   - micrometer-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Micrometer"
   - "Micrometer interview"
   - "Micrometer собеседование"
-  - "Micrometer вопросы"
-  - "metrics interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[micrometer]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Micrometer`

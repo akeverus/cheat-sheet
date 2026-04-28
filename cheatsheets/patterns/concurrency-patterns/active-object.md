@@ -5,9 +5,15 @@ tags:
   - patterns
   - concurrency-patterns
   - active-object
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Активный объект"
+  - "Active Object"
+prerequisites:
+  - "[[java-concurrency-basics]]"
+next:
+  - "[[thread-pool]]"
 updated: "2026-04-20"
 ---
 # Активный объект (Active Object)

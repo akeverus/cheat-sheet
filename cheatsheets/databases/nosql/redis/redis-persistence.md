@@ -8,11 +8,22 @@ tags:
   - aof
   - backup
   - recovery
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/redis-basics.md"]
-next: ["databases/redis-replication.md", "databases/redis-backup-restore.md"]
+aliases:
+  - "Redis"
+  - "Персистентность"
+  - "Redis: Персистентность"
+  - "redis persistence"
+prerequisites:
+  - "[[redis-basics]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-performance]]"
+next:
+  - "[[redis-replication]]"
+  - "[[redis-backup-restore]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
 # Redis: Персистентность

@@ -7,6 +7,10 @@ tags:
   - algorithms
   - ai
 type: "index"
+aliases:
+  - "AI Collections"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # AI Collections

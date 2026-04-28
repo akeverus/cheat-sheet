@@ -7,11 +7,19 @@ tags:
   - fsm
   - state-management
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-core.md"]
-next: ["spring/spring-integration.md"]
+aliases:
+  - "Spring State Machine"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-core]]"
+related:
+  - "[[spring-boot]]"
+  - "[[spring-core]]"
+next:
+  - "[[spring-integration]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "spring/spring-core.md"]
 ---
 
 # Spring State Machine: Полное руководство по state machines

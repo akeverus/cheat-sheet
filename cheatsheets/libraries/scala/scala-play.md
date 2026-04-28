@@ -7,12 +7,19 @@ tags:
   - web-framework
   - http
   - rest-api
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Play Framework"
+  - "scala play"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-slick]]"
 next:
-  - scala-http4s
+  - "[[scala-http4s]]"
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-slick.md"]
 ---
 
 # Scala Play Framework

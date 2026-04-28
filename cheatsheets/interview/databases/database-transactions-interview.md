@@ -5,14 +5,15 @@ tags:
   - interview
   - databases
   - database-transactions-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Транзакции и уровни изоляции"
   - "Database Transactions"
   - "Transaction Isolation Levels"
-  - "Транзакции БД"
-  - "Уровни изоляции"
-  - "ACID interview"
-  - "Spring Transactional собеседование"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Транзакции и уровни изоляции`

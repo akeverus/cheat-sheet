@@ -9,11 +9,21 @@ tags:
   - rest
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-http.md", "micronaut-testing.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut openapi"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-http]]"
+  - "[[micronaut-testing]]"
+next:
+  - "[[micronaut-http]]"
+  - "[[micronaut-testing]]"
 updated: "2026-04-20"
-related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
 # Micronaut: OpenAPI — API Documentation и Swagger

@@ -5,9 +5,14 @@ tags:
   - algorithms
   - strings
   - large-text-string-search
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Поиск строки в большом тексте"
+  - "Large Text String Search"
 prerequisites: []
-next: []
+next:
+  - "[[levenshtein-distance]]"
 updated: "2026-04-20"
 ---
 # Поиск строки в большом тексте (Large Text String Search)

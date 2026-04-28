@@ -5,7 +5,11 @@ tags:
   - testing
   - integration-testing
   - contract-testing
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Контрактное тестирование"
+  - "Contract Testing"
 prerequisites: []
 next: []
 updated: "2026-04-20"

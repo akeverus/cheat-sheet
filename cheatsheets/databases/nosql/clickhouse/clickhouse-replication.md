@@ -9,10 +9,18 @@ tags:
   - high-availability
   - distributed
   - replicatedmergetree
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/clickhouse-tables.md"]
+aliases:
+  - "ClickHouse"
+  - "clickhouse replication"
+prerequisites:
+  - "[[clickhouse-tables]]"
+related:
+  - "[[clickhouse-tables]]"
+  - "[[clickhouse-materialized-views]]"
+next: []
 updated: "2026-04-20"
-related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-views.md"]
 ---
 
 # ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость

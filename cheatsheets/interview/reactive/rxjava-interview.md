@@ -5,13 +5,15 @@ tags:
   - interview
   - reactive
   - rxjava-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "RxJava"
   - "RxJava interview"
   - "RxJava собеседование"
-  - "Reactive Extensions Java"
-  - "ReactiveX Java"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `RxJava`

@@ -7,8 +7,16 @@ tags:
   - regexp
   - regex
   - pattern-matching
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "регулярные выражения"
+  - "Go: регулярные выражения"
+  - "go regexp"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

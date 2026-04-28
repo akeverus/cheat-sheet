@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "CI/CD"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # CI/CD
@@ -42,3 +46,4 @@ updated: "2026-04-20"
 - [travis-ci.md](travis-ci.md) — исторический контекст и оговорки по Travis CI.
 - [github-actions.md](github-actions.md) — практики для современного workflow в GitHub.
 - [gitlab-ci.md](gitlab-ci.md) — альтернативный CI/CD контур для GitLab.
+- [argocd.md](argocd.md) — GitOps-деплой в Kubernetes через Argo CD.

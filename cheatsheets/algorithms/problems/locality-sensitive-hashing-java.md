@@ -5,6 +5,7 @@ tags:
   - algorithms
   - problems
   - locality-sensitive-hashing-java
+type: "reference"
 difficulty: "intermediate"
 prerequisites: []
 next: []

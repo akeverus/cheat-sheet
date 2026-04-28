@@ -5,8 +5,14 @@ tags:
   - patterns
   - behavioral
   - memento
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Хранитель"
+  - "Memento"
+  - "Хранитель (Memento)"
+prerequisites:
+  - "[[command]]"
 next: []
 updated: "2026-04-20"
 ---

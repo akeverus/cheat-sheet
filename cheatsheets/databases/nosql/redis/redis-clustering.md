@@ -8,11 +8,23 @@ tags:
   - scaling
   - high-availability
   - distributed
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/redis-basics.md", "databases/redis-replication.md"]
-next: ["databases/redis-performance.md", "databases/redis-security.md"]
+aliases:
+  - "Redis"
+  - "Кластеризация"
+  - "Redis: Кластеризация"
+  - "redis clustering"
+prerequisites:
+  - "[[redis-basics]]"
+  - "[[redis-replication]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-replication]]"
+next:
+  - "[[redis-performance]]"
+  - "[[redis-security]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 ---
 
 # Redis: Кластеризация

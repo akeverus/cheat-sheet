@@ -5,9 +5,15 @@ tags:
   - databases
   - relational
   - mysql-indexes
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "MySQL"
+  - "mysql indexes"
+prerequisites:
+  - "[[mysql-basics]]"
+next:
+  - "[[mysql-performance]]"
 updated: "2026-04-20"
 ---
 # MySQL: Индексы и оптимизация производительности — Полное руководство по индексации

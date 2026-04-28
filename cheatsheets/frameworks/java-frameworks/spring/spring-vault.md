@@ -6,13 +6,21 @@ tags:
   - vault
   - secrets
   - security
-  - hashiCorp
+  - hashicorp
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-security.md"]
-next: ["spring/spring-security.md"]
+aliases:
+  - "Spring Vault"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-security]]"
+related:
+  - "[[spring-boot]]"
+  - "[[spring-security]]"
+next:
+  - "[[spring-security]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "spring/spring-security.md"]
 ---
 
 # Spring Vault: Полное руководство по управлению секретами

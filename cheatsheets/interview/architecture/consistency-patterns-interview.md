@@ -5,13 +5,15 @@ tags:
   - interview
   - architecture
   - consistency-patterns-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Паттерны согласованности"
   - "Consistency patterns interview"
   - "Eventual consistency interview"
-  - "2PC Saga distributed transactions"
-  - "CRDT vector clocks interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Паттерны согласованности

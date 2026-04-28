@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - logarithm-calculation
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Вычисление логарифма"
+  - "Logarithm Calculation"
 prerequisites: []
 next: []
 updated: "2026-04-20"

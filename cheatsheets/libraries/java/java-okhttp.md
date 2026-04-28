@@ -5,9 +5,13 @@ tags:
   - libraries
   - java
   - java-okhttp
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "OkHttp"
+  - "java okhttp"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

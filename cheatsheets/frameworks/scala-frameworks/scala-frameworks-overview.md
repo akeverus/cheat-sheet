@@ -5,7 +5,11 @@ tags:
   - frameworks
   - scala-frameworks
   - scala-frameworks-overview
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Scala Frameworks — обзор"
+  - "scala frameworks overview"
 prerequisites: []
 next: []
 updated: "2026-04-20"

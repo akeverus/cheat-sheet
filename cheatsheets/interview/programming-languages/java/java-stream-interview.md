@@ -5,12 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-stream-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Java Stream API"
   - "Java Stream interview"
   - "Java Stream собеседование"
-  - "Stream API interview"
-  - "Java стримы"
+prerequisites: []
+next: []
 updated: "2026-04-21"
 ---
 # Вопросы на собеседовании: `Java Stream API`

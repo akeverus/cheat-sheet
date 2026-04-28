@@ -10,11 +10,20 @@ tags:
   - view
   - interceptor
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
-next: ["spring/spring-rest.md", "spring/spring-security.md"]
+aliases:
+  - "Spring MVC"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[spring-boot]]"
+related:
+  - "[[spring-boot]]"
+  - "[[java-basics]]"
+next:
+  - "[[spring-rest]]"
+  - "[[spring-security]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "java/java-basics.md"]
 ---
 
 # Spring MVC: Полное руководство по веб-фреймворку

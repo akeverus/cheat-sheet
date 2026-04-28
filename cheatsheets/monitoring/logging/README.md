@@ -7,6 +7,10 @@ tags:
   - monitoring
   - logging
 type: "index"
+aliases:
+  - "Логирование"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Логирование

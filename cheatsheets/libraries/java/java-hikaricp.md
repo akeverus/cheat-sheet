@@ -5,9 +5,13 @@ tags:
   - libraries
   - java
   - java-hikaricp
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "HikariCP"
+  - "java hikaricp"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

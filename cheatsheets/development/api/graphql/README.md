@@ -7,6 +7,10 @@ tags:
   - api
   - graphql
 type: "index"
+aliases:
+  - "GraphQL"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # GraphQL

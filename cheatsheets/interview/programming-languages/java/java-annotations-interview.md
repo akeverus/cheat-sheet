@@ -5,13 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-annotations-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Annotations"
   - "Java Annotations interview"
   - "Java Annotations собеседование"
-  - "Аннотации Java"
-  - "Java аннотации вопросы"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Annotations`

@@ -5,7 +5,11 @@ tags:
   - languages
   - scala
   - scala-type-classes
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Type Classes в Scala"
+  - "scala type classes"
 prerequisites: []
 next: []
 updated: "2026-04-20"

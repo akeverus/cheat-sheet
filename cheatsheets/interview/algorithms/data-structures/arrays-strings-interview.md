@@ -5,13 +5,15 @@ tags:
   - interview
   - algorithms
   - arrays-strings-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Массивы и строки"
   - "Arrays and strings interview"
   - "Массивы и строки собеседование"
-  - "Array algorithms interview"
-  - "String algorithms interview"
-  - "Kadane interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Массивы и строки`

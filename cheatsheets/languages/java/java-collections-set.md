@@ -5,10 +5,16 @@ tags:
   - languages
   - java
   - java-collections-set
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Java Collections"
+  - "Set"
+  - "Java Collections: Set"
+  - "java collections set"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Collections: Set

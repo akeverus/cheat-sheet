@@ -8,11 +8,21 @@ tags:
   - pubsub
   - data-structures
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-cache.md"]
-next: ["quarkus-cache.md", "quarkus-reactive.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus redis"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-cache]]"
+related:
+  - "[[quarkus-cache]]"
+  - "[[quarkus-reactive]]"
+next:
+  - "[[quarkus-cache]]"
+  - "[[quarkus-reactive]]"
 updated: "2026-04-20"
-related: ["quarkus-cache.md", "quarkus-reactive.md"]
 ---
 
 # Quarkus: Redis — Caching и Data Structures

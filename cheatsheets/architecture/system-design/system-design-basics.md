@@ -7,16 +7,21 @@ tags:
   - system-design-basics
   - capacity-planning
   - cap-theorem
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Основы проектирования систем"
+  - "System Design"
+  - "system design basics"
 prerequisites:
-  - "../../databases/relational/postgresql/postgres-basics.md"
-  - "../../databases/nosql/redis/redis-basics.md"
-next:
-  - "../software-architecture/microservices.md"
-  - "../../interview/architecture/cap-theorem-interview.md"
+  - "[[postgres-basics]]"
+  - "[[redis-basics]]"
 related:
-  - "../architecture-patterns.md"
-  - "../../interview/architecture/distributed-systems-interview.md"
+  - "[[architecture-patterns]]"
+  - "[[distributed-systems-interview]]"
+next:
+  - "[[microservices]]"
+  - "[[cap-theorem-interview]]"
 updated: "2026-04-26"
 ---
 # Основы проектирования систем (System Design)

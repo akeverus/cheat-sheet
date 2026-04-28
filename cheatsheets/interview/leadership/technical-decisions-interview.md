@@ -5,13 +5,15 @@ tags:
   - interview
   - leadership
   - technical-decisions-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Технические решения"
   - "Technical Decisions interview"
   - "ADR собеседование"
-  - "RFC process interview"
-  - "technical decision making"
-  - "architectural decisions interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Технические решения

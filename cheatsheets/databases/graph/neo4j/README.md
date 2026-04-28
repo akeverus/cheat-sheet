@@ -8,6 +8,10 @@ tags:
   - graph
   - neo4j
 type: "index"
+aliases:
+  - "Neo4j"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Neo4j

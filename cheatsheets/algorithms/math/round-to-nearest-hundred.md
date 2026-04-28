@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - round-to-nearest-hundred
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Округление до ближайшей сотни"
+  - "Round to Nearest Hundred"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -7,6 +7,12 @@ tags:
   - sheets-pdf
   - sql
 type: "index"
+aliases:
+  - "SQL Cheat Sheets"
+  - "PDF"
+  - "SQL Cheat Sheets (PDF)"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # SQL Cheat Sheets (PDF)

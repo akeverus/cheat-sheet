@@ -5,9 +5,15 @@ tags:
   - patterns
   - behavioral
   - template-method
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Шаблонный метод"
+  - "Template Method"
+prerequisites:
+  - "[[strategy]]"
+next:
+  - "[[visitor]]"
 updated: "2026-04-20"
 ---
 # Шаблонный метод (Template Method)

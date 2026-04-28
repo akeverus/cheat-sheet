@@ -5,9 +5,14 @@ tags:
   - libraries
   - java
   - java-opentelemetry
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "OpenTelemetry"
+  - "Observability в Java"
+  - "java opentelemetry"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

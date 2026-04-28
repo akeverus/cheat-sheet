@@ -5,13 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-boot-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring Boot"
   - "Spring Boot interview"
   - "Spring Boot собеседование"
-  - "Spring Boot автоконфигурация"
-  - "Spring Boot стартеры"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-boot]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Boot`

@@ -5,7 +5,10 @@ tags:
   - platform
   - infrastructure-tools
   - consul
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Consul"
 prerequisites: []
 next: []
 updated: "2026-04-20"

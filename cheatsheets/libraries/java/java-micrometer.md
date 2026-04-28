@@ -5,9 +5,14 @@ tags:
   - libraries
   - java
   - java-micrometer
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Micrometer"
+  - "Метрики и мониторинг в Java"
+  - "java micrometer"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

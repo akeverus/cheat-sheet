@@ -5,12 +5,16 @@ tags:
   - interview
   - java
   - java-lombok-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Lombok"
   - "Lombok interview"
   - "Lombok собеседование"
-  - "Lombok вопросы"
-  - "Project Lombok interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[java-lombok]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Lombok`

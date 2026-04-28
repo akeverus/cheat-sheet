@@ -10,11 +10,21 @@ tags:
   - gson
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-http.md", "micronaut-kafka.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut serialization"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-http]]"
+  - "[[micronaut-kafka]]"
+next:
+  - "[[micronaut-http]]"
+  - "[[micronaut-kafka]]"
 updated: "2026-04-20"
-related: ["micronaut-http.md", "micronaut-kafka.md"]
 ---
 
 # Micronaut: Serialization — JSON, XML и Custom Serializers

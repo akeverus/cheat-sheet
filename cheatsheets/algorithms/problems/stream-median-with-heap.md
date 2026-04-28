@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - stream-median-with-heap
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Медиана потока на кучах"
+  - "Stream Median with Heap"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -8,11 +8,21 @@ tags:
   - database
   - non-blocking
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-webflux.md"]
-next: ["spring/spring-webflux.md", "spring/spring-data-jdbc.md"]
+aliases:
+  - "Spring Data R2DBC"
+  - "spring r2dbc"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-webflux]]"
+related:
+  - "[[spring-boot]]"
+  - "[[spring-webflux]]"
+next:
+  - "[[spring-webflux]]"
+  - "[[spring-data-jdbc]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 ---
 
 # Spring Data R2DBC: Полное руководство по реактивным базам данных

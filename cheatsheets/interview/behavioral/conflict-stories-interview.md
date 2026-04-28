@@ -5,13 +5,15 @@ tags:
   - interview
   - behavioral
   - conflict-stories-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Конфликтные истории"
   - "Conflict Stories interview"
   - "Conflict behavioral interview"
-  - "Disagreement stories"
-  - "конфликты на интервью"
-  - "behavioral conflict questions"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Конфликтные истории

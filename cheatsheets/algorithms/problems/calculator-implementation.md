@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - calculator-implementation
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Calculator Implementation"
+  - "calculator"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,14 +5,15 @@ tags:
   - interview
   - algorithms
   - heaps-interview
-aliases:
-  - "Heaps interview"
-  - "Кучи собеседование"
-  - "Priority queue interview"
-  - "Min heap interview"
-  - "Max heap interview"
-  - "Heap sort interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Кучи"
+  - "Heaps"
+  - "Heaps interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Кучи (Heaps)`

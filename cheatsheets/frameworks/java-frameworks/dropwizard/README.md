@@ -7,6 +7,10 @@ tags:
   - dropwizard
   - java-frameworks
 type: "index"
+aliases:
+  - "Dropwizard"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Dropwizard

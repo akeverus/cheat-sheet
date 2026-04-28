@@ -7,6 +7,10 @@ tags:
   - databases
   - elasticsearch
 type: "index"
+aliases:
+  - "Elasticsearch"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Elasticsearch

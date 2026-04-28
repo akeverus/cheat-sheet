@@ -5,9 +5,15 @@ tags:
   - platform
   - ci-cd
   - gitlab-ci
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "GitLab CI/CD"
+  - "gitlab ci"
+prerequisites:
+  - "[[git-basics]]"
+next:
+  - "[[argocd]]"
 updated: "2026-04-20"
 ---
 # GitLab CI/CD

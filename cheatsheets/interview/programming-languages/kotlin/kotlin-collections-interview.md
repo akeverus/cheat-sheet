@@ -5,12 +5,15 @@ tags:
   - interview
   - programming-languages
   - kotlin-collections-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Kotlin коллекции"
   - "Kotlin collections interview"
   - "Kotlin коллекции собеседование"
-  - "Kotlin List Set Map"
-  - "Kotlin Sequence"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kotlin` коллекции

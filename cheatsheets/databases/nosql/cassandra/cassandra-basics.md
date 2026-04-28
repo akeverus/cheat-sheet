@@ -5,7 +5,11 @@ tags:
   - databases
   - nosql
   - cassandra-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Cassandra"
+  - "cassandra basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

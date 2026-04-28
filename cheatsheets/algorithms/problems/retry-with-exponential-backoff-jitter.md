@@ -5,6 +5,7 @@ tags:
   - algorithms
   - problems
   - retry-with-exponential-backoff-jitter
+type: "reference"
 difficulty: "intermediate"
 prerequisites: []
 next: []

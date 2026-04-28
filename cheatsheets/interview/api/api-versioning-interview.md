@@ -5,12 +5,15 @@ tags:
   - interview
   - api
   - api-versioning-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "API Versioning"
   - "API versioning interview"
   - "API versioning собеседование"
-  - "REST API versioning"
-  - "GraphQL versioning"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `API Versioning`

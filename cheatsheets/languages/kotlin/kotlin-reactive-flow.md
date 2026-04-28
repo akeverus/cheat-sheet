@@ -5,7 +5,13 @@ tags:
   - languages
   - kotlin
   - kotlin-reactive-flow
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Reactive"
+  - "Flow"
+  - "Kotlin Reactive: Flow"
+  - "kotlin reactive flow"
 prerequisites: []
 next: []
 updated: "2026-04-20"

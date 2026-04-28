@@ -5,9 +5,15 @@ tags:
   - algorithms
   - algorithmic-paradigms
   - dynamic-programming
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Динамическое программирование"
+  - "dynamic programming"
+  - "DP"
 prerequisites: []
-next: []
+next:
+  - "[[greedy-algorithms]]"
 updated: "2026-04-20"
 ---
 # Динамическое программирование

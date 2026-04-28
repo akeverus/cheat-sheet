@@ -7,8 +7,16 @@ tags:
   - logging
   - log
   - structured-logging
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "логирование"
+  - "Go: логирование"
+  - "go logging"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

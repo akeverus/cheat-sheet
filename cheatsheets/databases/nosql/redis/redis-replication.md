@@ -8,11 +8,23 @@ tags:
   - sentinel
   - failover
   - high-availability
+type: "reference"
 difficulty: "advanced"
-prerequisites: ["databases/redis-basics.md", "databases/redis-persistence.md"]
-next: ["databases/redis-clustering.md", "databases/redis-high-availability.md"]
+aliases:
+  - "Redis"
+  - "Репликация"
+  - "Redis: Репликация"
+  - "redis replication"
+prerequisites:
+  - "[[redis-basics]]"
+  - "[[redis-persistence]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-persistence]]"
+next:
+  - "[[redis-clustering]]"
+  - "[[redis-high-availability]]"
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 ---
 
 # Redis: Репликация

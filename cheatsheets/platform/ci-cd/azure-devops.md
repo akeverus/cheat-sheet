@@ -5,9 +5,13 @@ tags:
   - platform
   - ci-cd
   - azure-devops
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Azure DevOps"
 prerequisites: []
-next: []
+next:
+  - "[[github-actions]]"
 updated: "2026-04-20"
 ---
 # Azure DevOps

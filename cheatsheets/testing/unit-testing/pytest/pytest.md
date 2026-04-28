@@ -5,7 +5,10 @@ tags:
   - testing
   - unit-testing
   - pytest
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "pytest"
 prerequisites: []
 next: []
 updated: "2026-04-20"

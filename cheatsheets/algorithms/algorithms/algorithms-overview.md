@@ -4,7 +4,11 @@ description: "Алгоритмы — последовательность шаг
 tags:
   - algorithms
   - algorithms-overview
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Алгоритмы — обзор"
+  - "algorithms overview"
 prerequisites: []
 next: []
 updated: "2026-04-20"

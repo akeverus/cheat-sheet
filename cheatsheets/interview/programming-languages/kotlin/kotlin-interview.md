@@ -5,12 +5,16 @@ tags:
   - interview
   - programming-languages
   - kotlin-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Kotlin"
   - "Kotlin interview"
   - "Kotlin собеседование"
-  - "Котлин вопросы"
-difficulty: "intermediate"
+prerequisites:
+  - "[[kotlin-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kotlin`

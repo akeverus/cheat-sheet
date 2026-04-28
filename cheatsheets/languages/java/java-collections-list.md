@@ -5,10 +5,16 @@ tags:
   - languages
   - java
   - java-collections-list
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Java Collections"
+  - "List"
+  - "Java Collections: List"
+  - "java collections list"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Collections: List

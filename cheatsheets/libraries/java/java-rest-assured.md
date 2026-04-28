@@ -5,9 +5,13 @@ tags:
   - libraries
   - java
   - java-rest-assured
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "REST Assured"
+  - "java rest assured"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

@@ -5,13 +5,15 @@ tags:
   - interview
   - reactive
   - project-reactor-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Project Reactor"
   - "Project Reactor interview"
   - "Project Reactor собеседование"
-  - "Project Reactor вопросы"
-  - "Reactor Flux Mono"
-  - "Reactor interview questions"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Project Reactor`

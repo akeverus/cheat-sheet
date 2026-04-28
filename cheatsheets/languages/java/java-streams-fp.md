@@ -5,10 +5,13 @@ tags:
   - languages
   - java
   - java-streams-fp
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "java streams fp"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Streams и функциональное программирование

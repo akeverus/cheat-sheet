@@ -5,9 +5,14 @@ tags:
   - libraries
   - scala
   - scala-cats
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Cats"
+  - "scala cats"
 prerequisites: []
-next: []
+next:
+  - "[[scala-zio]]"
 updated: "2026-04-20"
 ---
 # Cats

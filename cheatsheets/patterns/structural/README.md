@@ -7,6 +7,10 @@ tags:
   - patterns
   - structural
 type: "index"
+aliases:
+  - "Структурные паттерны"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Структурные паттерны

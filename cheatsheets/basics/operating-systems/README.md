@@ -6,6 +6,10 @@ tags:
   - index
   - operating-systems
 type: "index"
+aliases:
+  - "Операционные системы"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Операционные системы

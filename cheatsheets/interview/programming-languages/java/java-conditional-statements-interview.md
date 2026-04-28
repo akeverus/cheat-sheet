@@ -5,14 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-conditional-statements-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Conditional Statements"
-  - "Java Conditional Statements interview"
   - "Java условные операторы"
   - "Java switch expression"
-  - "Java pattern matching"
-  - "Java управляющие конструкции"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Conditional Statements`

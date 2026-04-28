@@ -9,9 +9,15 @@ tags:
   - jdbc
   - transactions
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["spring-core.md"]
-next: ["spring-security.md"]
+aliases:
+  - "Spring Data"
+  - "JPA, JDBC и работа с данными"
+prerequisites:
+  - "[[spring-core]]"
+next:
+  - "[[spring-security]]"
 updated: "2026-04-20"
 ---
 

@@ -9,11 +9,20 @@ tags:
   - activemq
   - amqp
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-core.md"]
-next: ["spring/spring-kafka.md", "messaging/kafka.md"]
+aliases:
+  - "Spring Messaging"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-core]]"
+related:
+  - "[[spring-boot]]"
+  - "[[rabbitmq]]"
+next:
+  - "[[spring-kafka]]"
+  - "[[kafka]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
 ---
 
 # Spring Messaging: Полное руководство по messaging системам

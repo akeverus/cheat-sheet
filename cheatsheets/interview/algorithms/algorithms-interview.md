@@ -6,12 +6,16 @@ tags:
   - algorithms
   - algorithms-interview
   - overview
-aliases:
-  - "Algorithms interview overview"
-  - "Алгоритмы обзор"
-  - "Алгоритмы карта раздела"
-  - "Algorithms map"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Алгоритмы"
+  - "обзор"
+  - "Algorithms interview overview"
+prerequisites:
+  - "[[algorithms]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Алгоритмы (обзор)`

@@ -1,272 +1,678 @@
 # Подготовка к собеседованию (Interview Prep)
 
-Локальное приложение для тестирования перед интервью: вопросы из markdown-файлов, генерация вариантов ответов через AI (DeepSeek, OpenAI, Spring AI), интервальное повторение (SM-2), подсказки и Mermaid-диаграммы.
+Локальное Spring Boot приложение для тренировки перед техническим интервью: вопросы из markdown-шпаргалок, AI-генерация вариантов ответа (OpenAI / DeepSeek / Spring AI), интервальное повторение по SM-2, прогрессивные подсказки и Mermaid-диаграммы.
+
+> Если вам нужна только короткая инструкция: см. раздел **[TL;DR — самый быстрый запуск](#tl-dr--самый-быстрый-запуск)** ниже.
+
+---
+
+## Содержание
+
+- [TL;DR — самый быстрый запуск](#tl-dr--самый-быстрый-запуск)
+- [Возможности](#возможности)
+- [Требования](#требования)
+- [Первоначальная подготовка репозитория](#первоначальная-подготовка-репозитория)
+- [Способ 1. Запуск через Gradle (рекомендуется для разработки)](#способ-1-запуск-через-gradle-рекомендуется-для-разработки)
+- [Способ 2. Запуск собранного JAR](#способ-2-запуск-собранного-jar)
+- [Способ 3. Docker (одиночный контейнер)](#способ-3-docker-одиночный-контейнер)
+- [Способ 4. Docker Compose с PostgreSQL](#способ-4-docker-compose-с-postgresql)
+- [Способ 5. Запуск с PostgreSQL без Docker](#способ-5-запуск-с-postgresql-без-docker)
+- [Режимы работы (с AI и без)](#режимы-работы-с-ai-и-без)
+- [Переменные окружения](#переменные-окружения)
+- [Профили Spring](#профили-spring)
+- [Доступ к приложению](#доступ-к-приложению)
+- [Проверка работоспособности](#проверка-работоспособности)
+- [Управление данными](#управление-данными)
+- [Сборка и тесты](#сборка-и-тесты)
+- [Структура проекта](#структура-проекта)
+- [Troubleshooting](#troubleshooting)
+- [Дополнительная документация](#дополнительная-документация)
+
+---
+
+## TL;DR — самый быстрый запуск
+
+Для разработчика, у которого уже стоит JDK 17:
+
+```bash
+# 1. Если в репо нет gradle/wrapper/gradle-wrapper.jar — выполнить один раз:
+gradle wrapper
+
+# 2. (опционально) задать ключ для AI-генерации вариантов ответа
+export OPENAI_API_KEY=sk-...
+
+# 3. Запуск
+./gradlew bootRun
+```
+
+Откройте **http://localhost:8080**. Без ключа приложение работает в режиме «флешкарт».
+
+---
 
 ## Возможности
 
-- **Режимы:** Тренировка (по одному вопросу), Экзамен (фиксированное число вопросов, по умолчанию 20), Марафон (по умолчанию 50).
-- **Интервальное повторение:** алгоритм SM-2, дата следующего повторения и статистика по вопросам.
-- **AI-генерация:** варианты ответов (1 правильный + неверные), прогрессивные подсказки (3 уровня), Mermaid-диаграммы к вопросам.
-- **Полнотекстовый поиск:** по вопросам и ответам (SQLite FTS5 / PostgreSQL tsvector).
-- **Экспорт прогресса:** JSON и CSV (эндпоинт `/export`).
+- **Режимы:** Тренировка (по одному вопросу), Экзамен (по умолчанию 20 вопросов), Марафон (по умолчанию 50 вопросов).
+- **Интервальное повторение:** алгоритм SM-2, расчёт даты следующего повторения и mastery-статистика.
+- **AI-генерация:** варианты ответа (4 опции — 1 правильный + 3 дистрактора), 3 уровня прогрессивных подсказок, Mermaid-диаграммы.
+- **Полнотекстовый поиск:** SQLite FTS5 или PostgreSQL `tsvector`.
+- **Экспорт прогресса:** JSON и CSV (`/export?format=json|csv`).
 - **Горячие клавиши:** `1–4` — выбор варианта, `Enter` — отправить ответ.
-- **Без AI-ключей:** приложение работает в режиме флешкарт (показ эталонного ответа + самооценка по SM-2). С ключом `OPENAI_API_KEY` или `DEEPSEEK_API_KEY` — включаются AI-варианты, подсказки и диаграммы.
-- **Сброс AI-вариантов** — кнопка на `/settings` («Управление данными» → «Сбросить банк вариантов»).
+- **Без AI-ключей:** автоматический fallback в режим флешкарт (показ эталонного ответа + самооценка по SM-2).
+- **Сброс банка вариантов:** кнопка на `/settings` или `POST /api/admin/options/clear`.
 
-## Инженерная документация
-
-- `docs/ARCHITECTURE.md` — архитектура и границы слоёв.
-- `docs/DOMAIN.md` — доменная модель и жизненный цикл вопроса.
-- `docs/LLM_PIPELINE.md` — построение prompt, интеграция с AI и обработка ошибок провайдера.
-- `docs/QUESTION_ENGINE.md` — pipeline генерации вопросов в режиме prompt-first (single-call, strict JSON contract).
-- `ENGINEERING_CONTEXT.md` — актуальный инженерный контекст по ключевым архитектурным решениям.
-- `docs/API.md` — API contracts и примеры JSON.
-- `docs/SECURITY.md` — текущая security-модель, ограничения и hardening checklist.
-- `docs/SESSION_LOGIC.md` — логика тренировки, сессий и mastery.
-- `docs/CONTRIBUTING.md` — правила расширения и тестирования.
+---
 
 ## Требования
 
-- **JDK 17+**
-- **SQLite 3.24+** (профиль по умолчанию) или **PostgreSQL 11+** (профиль `postgres`)
-- Переменные окружения для API-ключей: `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, `SPRING_AI_API_KEY` (по необходимости)
+| Компонент | Версия | Зачем |
+|-----------|--------|-------|
+| **JDK** | 17+ | Сборка и запуск |
+| **Gradle** | 8.x (или wrapper) | Сборка |
+| **SQLite** | 3.24+ | Профиль по умолчанию (встроенный JDBC, ставить отдельно НЕ нужно) |
+| **PostgreSQL** | 11+ | Опционально, профиль `postgres` |
+| **Docker / Docker Compose** | актуальная | Опционально, контейнерный запуск |
+| **API-ключ** OpenAI или DeepSeek | — | Опционально, для AI-режима |
 
-## Быстрый старт
+Проверка версий:
 
-**Перед первой сборкой:** в репозитории может не быть `gradle-wrapper.jar`. Выполните один раз:
+```bash
+java -version    # должно быть 17+
+gradle -v        # 8.x; либо использовать ./gradlew
+docker --version
+```
+
+---
+
+## Первоначальная подготовка репозитория
+
+В репозитории может отсутствовать `gradle/wrapper/gradle-wrapper.jar` (он добавляется в `.gitignore` некоторых конфигураций). Если файла нет — сгенерируйте wrapper один раз:
 
 ```bash
 gradle wrapper
 ```
 
-и закоммитьте папку `gradle/wrapper/`. В CI перед сборкой при необходимости выполните `gradle wrapper`.
+Зафиксируйте полученные файлы (`gradle/wrapper/`, `gradlew`, `gradlew.bat`) в коммите. После этого все остальные команды используют только `./gradlew` и системный Gradle уже не нужен.
+
+Если у вас нет даже системного Gradle, на macOS/Linux можно временно поднять его через SDKMAN:
 
 ```bash
-export DEEPSEEK_API_KEY=ваш_ключ   # или OPENAI_API_KEY / SPRING_AI_API_KEY
+curl -s "https://get.sdkman.io" | bash
+sdk install gradle 8.9
+gradle wrapper
+```
+
+---
+
+## Способ 1. Запуск через Gradle (рекомендуется для разработки)
+
+Самый удобный режим для локальной работы — hot reload шаблонов Thymeleaf, прозрачный пересбор при изменениях.
+
+```bash
+# Опционально: задать AI-ключи (без них работает режим флешкарт)
+export OPENAI_API_KEY=sk-...               # либо
+export DEEPSEEK_API_KEY=sk-...
+
+# Запуск
 ./gradlew bootRun
 ```
 
-Откройте в браузере: **http://localhost:8080**
+**Что происходит:**
 
-- **REST API и Swagger UI:** http://localhost:8080/swagger-ui.html
+1. Gradle скачивает зависимости (первый запуск — 1–3 минуты).
+2. Стартует модуль `quiz-app` на порту 8080.
+3. Flyway применяет миграции из `modules/quiz-app/src/main/resources/db/migration/` к локальной SQLite (файл `data/db/interview.db` появится в текущей рабочей директории).
+4. Выполняется первичный импорт markdown-вопросов из `cheatsheets/interview/` в БД.
 
-## Конфигурация
-
-Настройки задаются в `src/main/resources/application.yml` (и профилях `application-prod.yml`, `application-postgres.yml`) по префиксу `app.*`.
-
-| Свойство | Описание | По умолчанию |
-|----------|----------|--------------|
-| `app.interviewPath` | Путь к директории с markdown-файлами вопросов (относительно рабочей директории) | — |
-| `app.aiProvider` | Основной AI-провайдер: `openai`, `deepseek` | `openai` |
-| `app.aiFallbackProvider` | Резервный провайдер при недоступности основного; `none` — отключить | `spring-ai` |
-| `app.interview.optionsCount` | Количество вариантов ответа на вопрос (2–10) | 4 |
-| `app.interview.learnedRepetitions` | Порог повторений для статуса «выучено» | 3 |
-| `app.interview.examPenaltyQuestions` | Доп. вопросов при ошибке в режиме экзамена | 5 |
-| `app.interview.maxSessionCount` | Максимум вопросов в одной сессии | 200 |
-| `app.ai.timeoutSeconds` | Таймаут HTTP-запроса к AI | 30 |
-| `app.ai.maxRetries` | Повторные попытки при 429/5xx | 3 |
-| `app.deepseek.baseUrl`, `apiKey`, `model`, `temperature` | Параметры DeepSeek API | — |
-| `app.openai.baseUrl`, `apiKey`, `model`, `temperature` | Параметры OpenAI API | — |
-| `app.springAi.baseUrl`, `apiKey`, `model`, `temperature` | Параметры Spring AI (Ollama и др.) | — |
-| `app.preload.startupPreload` | Предзагружать варианты при старте приложения | `false` |
-| `app.preload.fullWarmup` | Прогреть все вопросы при старте | `false` |
-| `app.preload.batchSize`, `corePoolSize`, `maxPoolSize`, `queueCapacity` | Параметры пула предзагрузки | — |
-| `app.sqlite.enableWal` | Включить WAL для SQLite | `true` |
-| `app.cache.optionMaxSize` | Размер кэша вариантов ответов | 500 |
-| `app.cache.ttlHours` | Время жизни записей кэша (часы) | 1 |
-| `app.search.maxLimit` | Максимум результатов полнотекстового поиска | 100 |
-| `app.adminToken` | Токен для админ-эндпоинтов (`X-Admin-Token`); пусто — доступ без токена (dev) | — |
-
-Подробное описание полей и вложенных классов — в Javadoc: `./gradlew javadoc`, затем класс `AppProperties`.
-
-В production задайте профиль `prod` (`--spring.profiles.active=prod` или `SPRING_PROFILES_ACTIVE=prod`), чтобы отключить Swagger UI и открытую документацию API.
-
-## Архитектура
-
-- **Веб:** MVC (Thymeleaf) + REST API. Контроллеры: `InterviewMvcController` (страницы тестирования), `InterviewApiController` (API тестирования), `ExportController` (экспорт), `AdminController` (очистка вариантов).
-- **Сервисы:** `InterviewService` (вопросы, сессии, ответы), `OptionGenerationService` (генерация вариантов с кэшем и fallback), `HintService` (подсказки), `DiagramService` (Mermaid), `SpacedRepetitionService` (SM-2), `PreloadService` (фоновая предзагрузка), `SearchService` (FTS), `QuestionImportService` (импорт из markdown).
-- **Персистентность:** JDBC-репозитории (`QuestionRepository`, `AnswerOptionRepository`, `HintRepository`, `ReviewStateRepository` и др.), Flyway-миграции. Поддержка SQLite и PostgreSQL.
-- **Кэш:** in-memory кэш вариантов ответов (Caffeine) с TTL и ограничением размера.
-
-Ключевые классы для разработчиков: `InterviewApplication`, `InterviewMvcController`, `InterviewApiController`, `AppProperties`, `InterviewService`, `OptionGenerationService`.
-
-```mermaid
-flowchart TB
-    subgraph web [Web]
-        IMC[InterviewMvcController]
-        IAC[InterviewApiController]
-        EC[ExportController]
-        AC[AdminController]
-    end
-    subgraph services [Сервисы]
-        IS[InterviewService]
-        OGS[OptionGenerationService]
-        HS[HintService]
-        DS[DiagramService]
-        SS[SearchService]
-        PreloadS[PreloadService]
-    end
-    subgraph ai [AI]
-        OG[OptionGenerator]
-        Cache[OptionCache]
-    end
-    subgraph persistence [Персистентность]
-        QR[QuestionRepository]
-        AOR[AnswerOptionRepository]
-        FTS[FullTextSearchRepository]
-    end
-    IMC --> IS
-    IMC --> OGS
-    IMC --> HS
-    IMC --> DS
-    IMC --> SS
-    IAC --> IS
-    IAC --> OGS
-    IAC --> HS
-    IAC --> DS
-    IAC --> SS
-    IS --> OGS
-    IS --> PreloadS
-    OGS --> OG
-    OGS --> Cache
-    OGS --> AOR
-    IS --> QR
-    SS --> FTS
-    DS --> OG
-```
-
-## Для разработчиков
-
-- **Сборка и тесты:** `./gradlew build` — полная сборка с тестами; `./gradlew test` — только тесты; `./gradlew compileJava` — компиляция без тестов.
-- **Javadoc:** `./gradlew javadoc` — генерация в `build/docs/javadoc/`. Подробное описание полей конфигурации — в Javadoc класса `AppProperties` и вложенных классов (`AppProperties.Interview`, `AppProperties.Ai`, `AppProperties.DeepSeek` и т.д.).
-- **Конфигурация:** все настройки приложения — в `com.cheatsheet.quiz.config.AppProperties` (префикс `app.*` в `application.yml`).
-- **Добавление AI-провайдера:** реализуйте интерфейс `OptionGenerator` (пакет `service.ai`), зарегистрируйте бин в `InfrastructureConfig` и при необходимости добавьте выбор в `optionGenerator()` (primary/fallback). Для OpenAI-совместимых API можно наследовать `AbstractAiClient` и использовать `ConfigurableAiClient` с нужными параметрами.
-
-## Расширяемость
-
-- **Свой AI-провайдер:** реализация `OptionGenerator` + конфигурация в `application.yml` (при необходимости новый вложенный класс в `AppProperties`) + бин в `InfrastructureConfig`. Промпты задаются в `AiPrompts`; для провайдера с другим форматом ответа переопределите парсинг в своей реализации.
-- **Новый формат экспорта:** в `ExportController` добавьте значение в `ExportFormats`, реализуйте формирование тела ответа (аналогично `toCsv`) и ветку в методе `export`.
-- **Правка промптов для вариантов, подсказок, диаграмм:** константы и шаблоны в `com.cheatsheet.quiz.service.ai.AiPrompts`.
-
-## REST API
-
-Полное описание — в Swagger UI: http://localhost:8080/swagger-ui.html
-
-Кратко:
-
-- **GET /** — главная страница (текущий вопрос или форма старта сессии).
-- **POST /start**, **POST /finish** — старт/завершение сессии экзамена/марафона.
-- **POST /answer** — отправка ответа (форма).
-- **POST /api/answer** — отправка ответа (JSON, для AJAX).
-- **POST /api/regenerate** — перегенерация вариантов и подсказок для вопроса.
-- **POST /api/hint** — получение подсказки по уровню (1–3).
-- **POST /api/favorite** — переключение «избранное» для вопроса.
-- **GET /stats** — страница статистики.
-- **GET /export?format=json|csv** — экспорт прогресса.
-- **POST /api/admin/options/clear** — очистка всех вариантов (заголовок `X-Admin-Token` при заданном `app.adminToken`).
-
-Пример curl-запроса ответа:
+**Запуск с дополнительными параметрами:**
 
 ```bash
-curl -X POST "http://localhost:8080/api/answer" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "questionId=1&optionId=2"
+# Сменить порт
+SERVER_PORT=9090 ./gradlew bootRun
+
+# Включить предзагрузку вариантов на старте (требует AI-ключ)
+PRELOAD_STARTUP_PRELOAD=true PRELOAD_FULL_WARMUP=true ./gradlew bootRun
+
+# Передать аргументы Spring Boot
+./gradlew bootRun --args="--spring.profiles.active=postgres --server.port=9090"
+
+# Запуск с другим JVM (например, для дебага)
+./gradlew bootRun --debug-jvm   # подключитесь дебагером к порту 5005
 ```
 
-Пример UI-сценария:
+**Остановка:** `Ctrl+C` в терминале.
 
-1. Открыть главную страницу `/`.
-2. Выбрать вариант ответа.
-3. Нажать `Проверить ответ`.
-4. Просмотреть краткий и полный разбор.
-5. Перейти к следующему вопросу.
+---
 
-## База данных
+## Способ 2. Запуск собранного JAR
 
-- **По умолчанию:** SQLite, файл в каталоге приложения (например `data/`). Миграции Flyway: `src/main/resources/db/migration/`.
-- **PostgreSQL:** профиль `postgres`, миграции в `db/migration-postgres/`.
-
-Основные таблицы: `questions`, `answer_options`, `question_hints`, `review_state`, при необходимости FTS-таблицы (SQLite: `questions_fts`).
-
-## Docker
-
-Сборка образа (в корне проекта должна быть папка `cheatsheets` с вопросами):
+Подходит для эксплуатации (production) и стейджинговых установок.
 
 ```bash
+# 1. Собрать fat-JAR
+./gradlew :quiz-app:bootJar
+
+# 2. Запустить
+java -jar modules/quiz-app/build/libs/quiz-app-0.0.1-SNAPSHOT.jar
+```
+
+**С переменными окружения и профилем:**
+
+```bash
+SPRING_PROFILES_ACTIVE=prod \
+OPENAI_API_KEY=sk-... \
+APP_ADMIN_TOKEN=secret-token \
+java -jar modules/quiz-app/build/libs/quiz-app-0.0.1-SNAPSHOT.jar
+```
+
+**Тонкая настройка JVM:**
+
+```bash
+java -Xms256m -Xmx512m \
+     -XX:+UseG1GC \
+     -Dserver.port=8081 \
+     -jar modules/quiz-app/build/libs/quiz-app-0.0.1-SNAPSHOT.jar \
+     --spring.profiles.active=prod
+```
+
+JAR содержит каталог `cheatsheets/` если вы соберёте через Docker. При запуске «голым» JAR убедитесь, что в рабочей директории есть `cheatsheets/interview/...` (путь задаётся в `app.interview-path`).
+
+---
+
+## Способ 3. Docker (одиночный контейнер)
+
+Используется по умолчанию SQLite внутри контейнера.
+
+```bash
+# 1. Сборка образа (в корне репо должна быть папка cheatsheets/)
 docker build --build-arg VERSION=1.0.0 -t interview-prep .
+
+# 2. Запуск
+docker run --rm \
+  -p 8080:8080 \
+  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+  -e SPRING_PROFILES_ACTIVE=default \
+  --name interview-prep \
+  interview-prep
 ```
 
-Запуск с профилем по умолчанию (в т.ч. Swagger UI):
+По умолчанию в `Dockerfile` стоит `ENV SPRING_PROFILES_ACTIVE=prod` (Swagger выключен). Чтобы включить Swagger UI, явно перекройте профиль на `default`, как в примере выше.
+
+**С persistent SQLite вне контейнера:**
 
 ```bash
-docker run -e SPRING_PROFILES_ACTIVE=default -p 8080:8080 interview-prep
+mkdir -p ./data
+docker run --rm \
+  -p 8080:8080 \
+  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+  -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/cheatsheets:/app/cheatsheets" \
+  interview-prep
 ```
 
-В production-образе по умолчанию активен профиль `prod` (Swagger отключён).
+Маунт `cheatsheets/` нужен, чтобы изменения в markdown-файлах подхватывались без пересборки образа.
 
-### Docker Compose
+---
+
+## Способ 4. Docker Compose с PostgreSQL
+
+Самый удобный путь для full-stack запуска: PostgreSQL + приложение в одной команде.
 
 ```bash
+# 1. (опционально) сложить переменные в .env рядом с docker-compose.yml
+cat > .env <<'EOF'
+OPENAI_API_KEY=sk-...
+AI_PROVIDER=openai
+APP_ADMIN_TOKEN=local-secret
+POSTGRES_USER=interview
+POSTGRES_PASSWORD=interview
+EOF
+
+# 2. Поднять стек
 docker compose up -d
+
+# 3. Логи приложения
+docker compose logs -f interview-prep
+
+# 4. Остановить
+docker compose down
+
+# 5. Полный сброс (включая volume PostgreSQL)
+docker compose down -v
 ```
 
-После изменений в коде или шаблонах пересоберите образ:
+**Что входит в стек (см. `docker-compose.yml`):**
+
+- `postgres` — PostgreSQL 16-alpine, порт `5432`, volume `postgres-data`.
+- `interview-prep` — приложение, порт `8080`, профиль `postgres`, healthcheck на `/actuator/health`.
+
+**Пересборка после изменений в коде:**
 
 ```bash
 docker compose build interview-prep --no-cache
 docker compose up -d interview-prep
 ```
 
-Очистка вариантов для перегенерации:
+---
+
+## Способ 5. Запуск с PostgreSQL без Docker
+
+Если у вас уже стоит PostgreSQL локально:
 
 ```bash
-curl -X POST -H "X-Admin-Token: ваш_токен" http://localhost:8080/api/admin/options/clear
+# 1. Создать БД и пользователя
+psql -U postgres <<SQL
+CREATE USER interview WITH PASSWORD 'interview';
+CREATE DATABASE interview OWNER interview;
+SQL
+
+# 2. Запустить приложение с профилем postgres
+SPRING_PROFILES_ACTIVE=postgres \
+POSTGRES_HOST=localhost \
+POSTGRES_PORT=5432 \
+POSTGRES_DB=interview \
+POSTGRES_USER=interview \
+POSTGRES_PASSWORD=interview \
+OPENAI_API_KEY="$OPENAI_API_KEY" \
+./gradlew bootRun
 ```
 
-(Если `app.adminToken` не задан, заголовок можно не передавать.)
+Flyway автоматически применит миграции из `db/migration-postgres/` при первом запуске.
 
-## Безопасность
+---
 
-- Приложение рассчитано на **локальное использование** (localhost). Аутентификация пользователей и CSRF-защита **не реализованы**.
-- **POST-эндпоинты** (`/answer`, `/api/answer`, `/api/regenerate`, `/api/hint`, `/api/favorite`, `/start`, `/finish`, `/api/admin/*`) **не защищены CSRF-токенами**. Spring Security не подключён. При развёртывании в общем доступе возможны запросы от сторонних сайтов (CSRF). Для production рекомендуется:
-  - подключить Spring Security с включённой CSRF-защитой;
-  - добавлять CSRF-токены в формы (Thymeleaf делает это при включённом Spring Security);
-  - для AJAX — передавать токен в заголовке `X-CSRF-TOKEN`.
-- Вывод пользовательского и AI-генерируемого контента (подсказки, ответы) санитизируется (текст подсказок через `textContent`; HTML ответов — через jsoup в `MarkdownRenderService`). Админ-действия защищены опциональным токеном `X-Admin-Token` (константное сравнение заменено на `MessageDigest.isEqual` для устранения timing attack).
+## Режимы работы (с AI и без)
 
-## Javadoc
+### Без AI-ключей — режим флешкарт
 
-Подробное описание API классов и методов:
+Приложение определяет отсутствие ключей в `AppProperties.isAiEnabled()` и переключает MVC в `flashcardMode=true`. Пользователь видит:
+
+- вопрос;
+- эталонный ответ из markdown;
+- кнопки самооценки SM-2 (Снова / Сложно / Хорошо / Легко).
+
+Для запуска ничего дополнительно делать не нужно — просто **не задавайте** `OPENAI_API_KEY` и `DEEPSEEK_API_KEY`:
 
 ```bash
+./gradlew bootRun
+```
+
+### С AI-ключом — режим теста
+
+Доступны: автогенерация 4 вариантов ответа, 3 прогрессивных подсказки, Mermaid-диаграммы.
+
+```bash
+# Только OpenAI
+export OPENAI_API_KEY=sk-...
+./gradlew bootRun
+
+# Только DeepSeek (поменять провайдера через AI_PROVIDER)
+export DEEPSEEK_API_KEY=sk-...
+AI_PROVIDER=deepseek ./gradlew bootRun
+
+# Оба ключа: основной — OpenAI, fallback — Spring AI
+export OPENAI_API_KEY=sk-...
+export SPRING_AI_API_KEY=sk-...
+./gradlew bootRun
+```
+
+Запросы кэшируются в БД и in-memory (Caffeine). Повторное открытие вопроса не вызывает новых обращений к LLM.
+
+---
+
+## Переменные окружения
+
+### Обязательные / часто используемые
+
+| Переменная | Что задаёт | Пример |
+|-----------|------------|--------|
+| `SERVER_PORT` | Порт HTTP | `8080` |
+| `SPRING_PROFILES_ACTIVE` | Профиль (`default`, `prod`, `postgres`) | `prod` |
+| `AI_PROVIDER` | Основной AI: `openai` или `deepseek` | `openai` |
+| `OPENAI_API_KEY` | Ключ OpenAI | `sk-...` |
+| `OPENAI_MODEL` | Модель OpenAI | `gpt-4.1-mini` |
+| `DEEPSEEK_API_KEY` | Ключ DeepSeek | `sk-...` |
+| `APP_ADMIN_TOKEN` | Токен для admin-эндпоинтов; пусто = без проверки | `secret` |
+
+### PostgreSQL (профиль `postgres`)
+
+| Переменная | По умолчанию |
+|-----------|--------------|
+| `POSTGRES_HOST` | `localhost` |
+| `POSTGRES_PORT` | `5432` |
+| `POSTGRES_DB` | `interview` |
+| `POSTGRES_USER` | `interview` |
+| `POSTGRES_PASSWORD` | `interview` |
+| `SPRING_DATASOURCE_URL` | (override полного URL, имеет приоритет) |
+| `SPRING_DATASOURCE_USERNAME` | — |
+| `SPRING_DATASOURCE_PASSWORD` | — |
+
+### Предзагрузка вариантов
+
+| Переменная | По умолчанию | Описание |
+|-----------|--------------|----------|
+| `PRELOAD_STARTUP_PRELOAD` | `false` | Запускать предзагрузку при старте |
+| `PRELOAD_FULL_WARMUP` | `false` | Прогревать все вопросы |
+| `PRELOAD_WARMUP_LIMIT` | `0` | Ограничение N вопросов (0 = все) |
+| `PRELOAD_TEST_MODE` | `false` | Тестовый режим (10 вопросов) |
+| `PRELOAD_WARMUP_RANDOM_SEED` | `-1` | seed для случайной выборки |
+
+### Прочее
+
+| Переменная | По умолчанию |
+|-----------|--------------|
+| `REGENERATE_RATE_LIMIT_PER_MINUTE` | `20` |
+| `INTERVIEW_RESET_ON_STARTUP` | `false` (полный сброс БД при старте) |
+
+Полный список — в `modules/quiz-app/src/main/resources/application.yml` и Javadoc класса `AppProperties`.
+
+---
+
+## Профили Spring
+
+| Профиль | Назначение | Особенности |
+|---------|-----------|-------------|
+| `default` | Локальная разработка | SQLite (`data/db/interview.db`), Swagger UI **включён** |
+| `prod` | Production | Swagger UI **выключен**; используется по умолчанию в Docker |
+| `postgres` | PostgreSQL | Datasource на PostgreSQL, миграции из `db/migration-postgres/` |
+
+Профили можно комбинировать:
+
+```bash
+# Production + PostgreSQL
+SPRING_PROFILES_ACTIVE=prod,postgres ./gradlew bootRun
+```
+
+---
+
+## Доступ к приложению
+
+После старта откройте в браузере:
+
+| URL | Назначение |
+|-----|-----------|
+| http://localhost:8080/ | Главная страница (текущий вопрос или старт сессии) |
+| http://localhost:8080/stats | Статистика и mastery |
+| http://localhost:8080/settings | Настройки и сброс данных |
+| http://localhost:8080/swagger-ui.html | REST API (только в `default`) |
+| http://localhost:8080/actuator/health | Healthcheck |
+
+### Основные REST-эндпоинты
+
+- `POST /start` / `POST /finish` — старт / завершение сессии экзамена.
+- `POST /answer` — ответ (form-data).
+- `POST /api/answer` — ответ (JSON, для AJAX).
+- `POST /api/regenerate` — перегенерация вариантов.
+- `POST /api/hint` — подсказка по уровню (1–3).
+- `POST /api/favorite` — переключение «избранного».
+- `GET /export?format=json|csv` — экспорт прогресса.
+- `POST /api/admin/options/clear` — очистка банка вариантов (заголовок `X-Admin-Token`, если задан `app.adminToken`).
+
+Пример:
+
+```bash
+curl -X POST http://localhost:8080/api/answer \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "questionId=1&optionId=2"
+```
+
+---
+
+## Проверка работоспособности
+
+После запуска прогоните smoke-тест:
+
+```bash
+# Healthcheck
+curl -fsS http://localhost:8080/actuator/health
+# Ожидаем: {"status":"UP"}
+
+# Главная страница (HTTP 200)
+curl -I http://localhost:8080/
+
+# Если активен default-профиль — Swagger
+curl -I http://localhost:8080/swagger-ui.html
+```
+
+Если health возвращает `DOWN` или 500 — см. раздел [Troubleshooting](#troubleshooting).
+
+---
+
+## Управление данными
+
+### SQLite-файл
+
+По умолчанию БД находится в `data/db/interview.db` относительно рабочей директории при запуске. Чтобы начать с нуля:
+
+```bash
+# Полный сброс — при следующем старте Flyway пересоздаст схему
+rm -rf data/db/
+./gradlew bootRun
+```
+
+Альтернатива — флаг автосброса:
+
+```bash
+INTERVIEW_RESET_ON_STARTUP=true ./gradlew bootRun
+```
+
+### Сброс банка AI-вариантов
+
+Через UI: `Settings → Управление данными → Сбросить банк вариантов`.
+
+Через API:
+
+```bash
+# Если APP_ADMIN_TOKEN не задан
+curl -X POST http://localhost:8080/api/admin/options/clear
+
+# Если задан
+curl -X POST http://localhost:8080/api/admin/options/clear \
+     -H "X-Admin-Token: $APP_ADMIN_TOKEN"
+```
+
+### Экспорт прогресса
+
+```bash
+curl -o progress.json "http://localhost:8080/export?format=json"
+curl -o progress.csv  "http://localhost:8080/export?format=csv"
+```
+
+---
+
+## Сборка и тесты
+
+```bash
+# Полная сборка с тестами
+./gradlew build
+
+# Только тесты
+./gradlew test
+
+# Один тестовый класс
+./gradlew :quiz-app:test --tests "com.cheatsheet.quiz.service.SpacedRepetitionServiceTest"
+
+# Compile без тестов
+./gradlew :quiz-app:compileJava
+
+# Build без тестов (быстрая локальная сборка)
+./gradlew build -x test
+
+# Coverage-проверка
+./gradlew check
+
+# JaCoCo report
+./gradlew jacocoTestReport
+# результат: modules/quiz-app/build/reports/jacoco/test/html/index.html
+
+# Javadoc
 ./gradlew javadoc
+# результат: modules/quiz-app/build/docs/javadoc/
 ```
 
-Результат в `modules/quiz-app/build/docs/javadoc/`.
+---
 
-## Структура проекта (модульная архитектура)
+## Структура проекта
 
-Проект разделен на 3 Gradle-модуля с явными зависимостями:
+```
+cheat-sheet/
+├── modules/
+│   ├── quiz-domain/              # чистая доменная модель (без Spring)
+│   ├── quiz-persistence/         # JDBC-репозитории, Flyway
+│   └── quiz-app/                 # Spring Boot: API, MVC, AI, конфигурация
+│       └── src/main/resources/
+│           ├── application.yml
+│           ├── application-prod.yml
+│           ├── application-postgres.yml
+│           ├── db/migration/             # SQLite миграции
+│           ├── db/migration-postgres/    # PostgreSQL миграции
+│           ├── prompts/                  # промпты для LLM
+│           ├── templates/                # Thymeleaf
+│           └── static/                   # CSS/JS
+├── cheatsheets/                  # markdown-шпаргалки и вопросы
+│   └── interview/                # источник вопросов для приложения
+├── data/                         # ⚠️ создаётся при первом запуске (SQLite + бэкапы)
+├── scripts/                      # сидеры, линтеры, утилиты для cheatsheets
+├── docs/                         # инженерная документация
+├── docker-compose.yml
+├── Dockerfile
+├── build.gradle.kts
+└── settings.gradle.kts
+```
 
-| Модуль | Назначение | Зависит от |
-|--------|------------|------------|
-| `quiz-domain` | Чистая доменная модель: сущности, value-объекты, доменные исключения | — |
-| `quiz-persistence` | JDBC-репозитории, SQL-утилиты, FTS-адаптеры | `quiz-domain` |
-| `quiz-app` | Spring Boot web/API, сервисы, конфигурация, AI-интеграции, templates/static | `quiz-domain`, `quiz-persistence` |
+Зависимости модулей:
 
-Ключевые пакетные границы в `quiz-app`:
+| Модуль | Зависит от |
+|--------|------------|
+| `quiz-domain` | — |
+| `quiz-persistence` | `quiz-domain` |
+| `quiz-app` | `quiz-domain`, `quiz-persistence` |
 
-| Пакет | Назначение |
-|--------|----------|
-| `com.cheatsheet.quiz.api` | MVC/REST контроллеры, DTO и обработка ошибок |
-| `com.cheatsheet.quiz.service` | Бизнес-логика тестирования, AI-интеграции, подсказки, поиск |
-| `com.cheatsheet.quiz.config` | Конфигурация приложения, `AppProperties`, инфраструктурные бины |
-| `com.cheatsheet.quiz.util` | Вспомогательные утилиты |
+Архитектурные правила enforced ArchUnit-тестом `LayeredArchitectureTest`:
+- `domain` не зависит от api/service/persistence/config;
+- `service` не зависит от controllers и security-классов;
+- `persistence` не зависит от api.
 
-Такая декомпозиция уменьшает связность, упрощает развитие и позволяет независимо тестировать доменный и persistence-слои.
+---
 
-## Примечания
+## Troubleshooting
 
-- Варианты ответов кэшируются в БД и in-memory (Caffeine) и показываются одинаково при повторе вопроса.
-- При изменении вопроса/ответа в markdown варианты и подсказки пересоздаются при следующем показе (или через кнопку «Обновить» / API regenerate).
-- Режимы: **Тренировка**, **Экзамен** (по умолчанию 20 вопросов), **Марафон** (по умолчанию 50).
+### `Could not find or load main class`
+
+Не собран JAR. Выполните `./gradlew :quiz-app:bootJar`.
+
+### `Address already in use: bind` на 8080
+
+Порт занят. Сменить:
+
+```bash
+SERVER_PORT=9090 ./gradlew bootRun
+# либо
+./gradlew bootRun --args="--server.port=9090"
+```
+
+Или найти процесс и остановить:
+
+```bash
+lsof -i :8080
+kill <PID>
+```
+
+### Приложение пишет «Вопросы недоступны»
+
+Это значит, что директория `cheatsheets/interview/` не найдена. Проверьте:
+
+```bash
+ls cheatsheets/interview/   # должен показать markdown-файлы
+```
+
+При запуске JAR выполняйте `java -jar` из корня репо, чтобы относительный путь `cheatsheets/interview` совпал с `app.interview-path`.
+
+### `FlywayException: Validate failed`
+
+Схема БД ушла в рассинхрон с миграциями. Самый простой путь — пересоздать БД:
+
+```bash
+# SQLite
+rm -rf data/db/
+
+# PostgreSQL
+psql -U interview -d interview -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+```
+
+И перезапустить.
+
+### Healthcheck `{"status":"DOWN"}`
+
+Проверьте логи:
+
+```bash
+# Локально
+tail -f modules/quiz-app/logs/*.log    # если настроено
+# либо смотрите stdout terminal'а с bootRun
+
+# Docker
+docker compose logs -f interview-prep
+```
+
+Чаще всего — недоступная БД (PostgreSQL не поднялся / неверные креды) или Flyway-конфликт.
+
+### `429 Too Many Requests` от OpenAI/DeepSeek
+
+Сработал rate limit провайдера. Приложение делает до `app.ai.maxRetries` ретраев (по умолчанию 3) с экспоненциальной задержкой. Если сыпется постоянно:
+
+- понизьте параллелизм предзагрузки (`PRELOAD_STARTUP_PRELOAD=false`);
+- проверьте баланс / квоты у провайдера;
+- увеличьте `app.ai.timeoutSeconds` (по умолчанию 60).
+
+### Не работают AI-варианты, хотя ключ задан
+
+1. Убедитесь, что переменная экспортирована в **той же** оболочке, откуда запускается `gradle`/`docker`:
+   ```bash
+   echo $OPENAI_API_KEY
+   ```
+2. Проверьте `app.ai-provider` (`AI_PROVIDER`): провайдер должен совпадать с тем, чей ключ задан.
+3. В логах ищите строку `ai client: provider=...` и сообщения от `AbstractAiClient`.
+
+### `gradle wrapper` падает с «Could not find gradle»
+
+Установите системный Gradle (через Homebrew / SDKMAN) — см. [Первоначальная подготовка](#первоначальная-подготовка-репозитория).
+
+### Контейнер не видит изменения в cheatsheets/
+
+Замаунтите директорию (как в `docker-compose.yml`):
+
+```bash
+docker run -v "$(pwd)/cheatsheets:/app/cheatsheets" ...
+```
+
+---
+
+## Дополнительная документация
+
+- `docs/ARCHITECTURE.md` — архитектура и границы слоёв.
+- `docs/DOMAIN.md` — доменная модель и жизненный цикл вопроса.
+- `docs/LLM_PIPELINE.md` — LLM-pipeline, обработка ошибок провайдера.
+- `docs/QUESTION_ENGINE.md` — pipeline генерации вопросов (single-call, strict JSON).
+- `docs/API.md` — REST API контракты и примеры.
+- `docs/SECURITY.md` — security-модель и hardening checklist.
+- `docs/SESSION_LOGIC.md` — логика сессий и mastery.
+- `docs/CONTRIBUTING.md` — расширение и тестирование.
+- `ENGINEERING_CONTEXT.md` — текущий инженерный контекст.
+- `CLAUDE.md` — инструкции для Claude Code (build/run, архитектурные правила).
+
+## Безопасность (важно при публичном развёртывании)
+
+Приложение по умолчанию рассчитано на **localhost**. Spring Security и CSRF-защита не подключены. POST-эндпоинты (`/answer`, `/api/answer`, `/api/regenerate`, `/api/hint`, `/api/favorite`, `/api/admin/*`) **не защищены CSRF-токенами**.
+
+Для production-публикации:
+
+- подключите Spring Security и включите CSRF;
+- задайте `APP_ADMIN_TOKEN` для admin-эндпоинтов;
+- разместите приложение за reverse proxy с TLS;
+- задайте профиль `prod` (Swagger UI выключен).
+
+---
+
+## Лицензия
+
+Внутренний проект, без явной лицензии. Использование и распространение — по согласованию с владельцем репозитория.

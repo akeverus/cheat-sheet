@@ -5,7 +5,10 @@ tags:
   - platform
   - containers
   - kubernetes-security
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kubernetes Security"
 prerequisites: []
 next: []
 updated: "2026-04-20"

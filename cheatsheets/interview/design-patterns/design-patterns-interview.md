@@ -5,12 +5,15 @@ tags:
   - interview
   - design-patterns
   - design-patterns-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Design Patterns"
   - "Design Patterns interview"
   - "Design Patterns собеседование"
-  - "Паттерны проектирования"
-  - "GoF patterns"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Patterns`

@@ -2,14 +2,19 @@
 title: "Clean Architecture"
 description: "Clean Architecture Роберта Мартина: слои, зависимости, Dependency Rule, применение в Java/Spring."
 tags:
-  - "architecture"
-  - "clean-architecture"
-  - "solid"
-  - "design-patterns"
+  - architecture
+  - clean-architecture
+  - solid
+  - design-patterns
 type: "reference"
 difficulty: "intermediate"
 aliases:
   - "Clean Architecture"
+prerequisites:
+  - "[[solid-principles]]"
+next:
+  - "[[hexagonal-architecture]]"
+  - "[[ddd]]"
 updated: "2026-04-20"
 ---
 # Clean Architecture

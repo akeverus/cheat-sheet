@@ -5,8 +5,12 @@ tags:
   - platform
   - cloud-providers
   - aws-services
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "AWS Services"
+prerequisites:
+  - "[[aws-basics]]"
 next: []
 updated: "2026-04-20"
 ---

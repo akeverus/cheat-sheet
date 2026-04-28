@@ -8,10 +8,18 @@ tags:
   - partitioning
   - primary-key
   - secondary-indexes
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/clickhouse-queries.md"]
+aliases:
+  - "ClickHouse"
+  - "clickhouse indexes"
+prerequisites:
+  - "[[clickhouse-queries]]"
+related:
+  - "[[clickhouse-queries]]"
+  - "[[clickhouse-performance]]"
+next: []
 updated: "2026-04-20"
-related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.md"]
 ---
 
 # ClickHouse: Индексы и оптимизация — Полное руководство по индексации и партиционированию

@@ -5,9 +5,16 @@ tags:
   - algorithms
   - searching
   - k-largest-elements
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "k наибольших элементов"
+  - "K Largest Elements"
+  - "k наибольших"
+prerequisites:
+  - "[[heap-sort]]"
+next:
+  - "[[top-n-frequent-elements]]"
 updated: "2026-04-20"
 ---
 # k наибольших элементов (K Largest Elements)

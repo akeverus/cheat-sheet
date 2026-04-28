@@ -5,12 +5,16 @@ tags:
   - interview
   - architecture
   - api-gateway-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "API Gateway"
   - "API Gateway interview"
   - "API Gateway собеседование"
-  - "Spring Cloud Gateway"
-  - "API шлюз"
-difficulty: "intermediate"
+prerequisites:
+  - "[[api-gateway]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `API Gateway`

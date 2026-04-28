@@ -5,13 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-security-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring Security"
   - "Spring Security interview"
   - "Spring Security собеседование"
-  - "SecurityFilterChain"
-  - "Spring OAuth2"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-security]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Security`

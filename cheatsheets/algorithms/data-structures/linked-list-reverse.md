@@ -5,7 +5,13 @@ tags:
   - algorithms
   - data-structures
   - linked-list-reverse
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Реверс связанного списка"
+  - "Linked List"
+  - "linked list reverse"
+  - "reverse list"
 prerequisites: []
 next: []
 updated: "2026-04-20"

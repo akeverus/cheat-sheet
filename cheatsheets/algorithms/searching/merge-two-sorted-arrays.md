@@ -5,8 +5,12 @@ tags:
   - algorithms
   - searching
   - merge-two-sorted-arrays
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Merge Two Sorted Arrays"
+prerequisites:
+  - "[[merge-sort]]"
 next: []
 updated: "2026-04-20"
 ---

@@ -5,8 +5,12 @@ tags:
   - algorithms
   - data-structures
   - collections-complexity
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "collections complexity"
+prerequisites:
+  - "[[collections-big-o]]"
 next: []
 updated: "2026-04-20"
 ---

@@ -5,13 +5,16 @@ tags:
   - interview
   - cloud
   - azure-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Azure"
   - "Azure interview"
   - "Microsoft Azure interview"
-  - "Azure собеседование"
-  - "Cosmos DB interview"
-  - "AKS interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[azure-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Azure`

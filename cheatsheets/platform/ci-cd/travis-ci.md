@@ -5,9 +5,13 @@ tags:
   - platform
   - ci-cd
   - travis-ci
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Travis CI"
 prerequisites: []
-next: []
+next:
+  - "[[github-actions]]"
 updated: "2026-04-20"
 ---
 # Travis CI

@@ -5,7 +5,13 @@ tags:
   - algorithms
   - problems
   - multi-swarm
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Мульти-рой"
+  - "Multi-Swarm"
+  - "Мульти-рой (Multi-Swarm)"
+  - "multi swarm"
 prerequisites: []
 next: []
 updated: "2026-04-20"

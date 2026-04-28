@@ -5,7 +5,11 @@ tags:
   - security
   - testing
   - security-testing
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Тестирование безопасности"
+  - "security testing"
 prerequisites: []
 next: []
 updated: "2026-04-20"

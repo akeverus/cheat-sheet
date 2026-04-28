@@ -5,7 +5,11 @@ tags:
   - security
   - application
   - web-security
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Веб‑безопасность"
+  - "Web Security"
 prerequisites: []
 next: []
 updated: "2026-04-20"

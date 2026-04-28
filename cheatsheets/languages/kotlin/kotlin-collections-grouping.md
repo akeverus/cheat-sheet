@@ -5,9 +5,15 @@ tags:
   - languages
   - kotlin
   - kotlin-collections-grouping
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Collections"
+  - "Grouping and Aggregation"
+  - "kotlin collections grouping"
 prerequisites: []
-next: []
+next:
+  - "[[kotlin-collections-operations]]"
 updated: "2026-04-20"
 ---
 # Kotlin Collections: Grouping and Aggregation

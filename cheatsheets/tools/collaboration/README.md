@@ -6,6 +6,10 @@ tags:
   - index
   - collaboration
 type: "index"
+aliases:
+  - "Инструменты коллаборации"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Инструменты коллаборации

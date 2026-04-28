@@ -5,7 +5,10 @@ tags:
   - platform
   - iac
   - pulumi
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Pulumi"
 prerequisites: []
 next: []
 updated: "2026-04-20"

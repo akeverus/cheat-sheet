@@ -5,13 +5,15 @@ tags:
   - interview
   - architecture
   - cqrs-event-sourcing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "CQRS и Event Sourcing"
   - "CQRS interview"
   - "Event Sourcing interview"
-  - "CQRS собеседование"
-  - "Event Sourcing собеседование"
-  - "CQRS и Event Sourcing interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `CQRS` и `Event Sourcing`

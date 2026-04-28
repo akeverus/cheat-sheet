@@ -9,11 +9,21 @@ tags:
   - aggregation
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
-next: ["micronaut-data.md", "micronaut-reactive.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut mongodb"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-data]]"
+related:
+  - "[[micronaut-data]]"
+  - "[[micronaut-reactive]]"
+next:
+  - "[[micronaut-data]]"
+  - "[[micronaut-reactive]]"
 updated: "2026-04-20"
-related: ["micronaut-data.md", "micronaut-reactive.md"]
 ---
 
 # Micronaut: MongoDB Integration — Repositories и Queries

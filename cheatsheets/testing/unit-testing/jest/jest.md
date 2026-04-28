@@ -5,7 +5,10 @@ tags:
   - testing
   - unit-testing
   - jest
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Jest"
 prerequisites: []
 next: []
 updated: "2026-04-20"

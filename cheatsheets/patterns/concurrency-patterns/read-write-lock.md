@@ -5,7 +5,12 @@ tags:
   - patterns
   - concurrency-patterns
   - read-write-lock
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Блокировка чтения-записи"
+  - "Read-Write Lock"
+  - "read write lock"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,13 +5,15 @@ tags:
   - interview
   - code-quality
   - code-coverage-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Code Coverage"
   - "Code Coverage interview"
   - "Code Coverage собеседование"
-  - "JaCoCo interview"
-  - "coverage metrics interview"
-  - "test coverage вопросы"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Code Coverage

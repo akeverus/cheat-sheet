@@ -5,12 +5,16 @@ tags:
   - interview
   - architecture
   - event-driven-patterns-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
-  - "Event-driven patterns interview"
+  - "Вопросы на собеседовании"
+  - "Event-driven паттерны"
   - "EDA interview"
   - "Event-driven собеседование"
-  - "Event-driven архитектура собеседование"
+prerequisites:
+  - "[[event-driven]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Event-driven` паттерны

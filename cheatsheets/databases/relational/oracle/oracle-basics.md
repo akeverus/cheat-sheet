@@ -5,7 +5,13 @@ tags:
   - databases
   - relational
   - oracle-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Oracle Database"
+  - "Основы"
+  - "Oracle Database: Основы"
+  - "oracle basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

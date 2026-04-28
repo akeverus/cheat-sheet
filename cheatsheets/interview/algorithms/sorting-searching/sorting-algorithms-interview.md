@@ -5,14 +5,15 @@ tags:
   - interview
   - algorithms
   - sorting-algorithms-interview
-aliases:
-  - "Sorting algorithms interview"
-  - "Алгоритмы сортировки собеседование"
-  - "Quick sort interview"
-  - "Merge sort interview"
-  - "TimSort interview"
-  - "Heap sort interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Алгоритмы сортировки"
+  - "Sorting algorithms interview"
+  - "Quick sort interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Алгоритмы сортировки`

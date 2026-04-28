@@ -9,11 +9,22 @@ tags:
   - resolver
   - data-fetcher
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-rest.md"]
-next: ["api/graphql.md", "spring/spring-webflux.md"]
+aliases:
+  - "Spring GraphQL"
+  - "Полное руководство"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-rest]]"
+related:
+  - "[[spring-boot]]"
+  - "[[spring-rest]]"
+  - "[[graphql]]"
+next:
+  - "[[graphql]]"
+  - "[[spring-webflux]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
 ---
 
 # Spring GraphQL: Полное руководство

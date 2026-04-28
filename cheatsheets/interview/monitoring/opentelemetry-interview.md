@@ -5,12 +5,16 @@ tags:
   - interview
   - monitoring
   - opentelemetry-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "OpenTelemetry"
   - "OpenTelemetry interview"
   - "OTel interview"
-  - "OpenTelemetry собеседование"
-  - "Distributed tracing standard"
-difficulty: "intermediate"
+prerequisites:
+  - "[[opentelemetry]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `OpenTelemetry`

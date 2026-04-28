@@ -5,13 +5,16 @@ tags:
   - interview
   - databases
   - hibernate-caching-interview
+type: "interview"
+difficulty: "advanced"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Hibernate Caching"
   - "Hibernate Caching interview"
   - "Hibernate L2 cache interview"
-  - "JPA caching собеседование"
-  - "Hibernate cache вопросы"
-  - "second level cache interview"
-difficulty: "advanced"
+prerequisites:
+  - "[[hibernate-caching]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Hibernate Caching`

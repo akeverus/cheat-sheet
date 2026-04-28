@@ -5,9 +5,17 @@ tags:
   - algorithms
   - sorting
   - in-place-sort
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "In-place сортировка"
+  - "In-Place Sorting"
+  - "In-Place Sort"
+  - "сортировка на месте"
 prerequisites: []
-next: []
+next:
+  - "[[quick-sort]]"
+  - "[[heap-sort]]"
 updated: "2026-04-20"
 ---
 # In-place сортировка (In-Place Sorting)

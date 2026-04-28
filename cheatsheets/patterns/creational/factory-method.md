@@ -5,9 +5,17 @@ tags:
   - patterns
   - creational
   - factory-method
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Фабричный метод"
+  - "Factory Method"
+  - "Factory"
+prerequisites:
+  - "[[design-principles]]"
+next:
+  - "[[abstract-factory]]"
+  - "[[builder]]"
 updated: "2026-04-20"
 ---
 # Фабричный метод (Factory Method)

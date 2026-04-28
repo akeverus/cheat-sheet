@@ -5,8 +5,13 @@ tags:
   - databases
   - nosql
   - mongodb-sharding
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "MongoDB"
+  - "mongodb sharding"
+prerequisites:
+  - "[[mongodb-replication]]"
 next: []
 updated: "2026-04-20"
 ---

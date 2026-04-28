@@ -5,14 +5,15 @@ tags:
   - interview
   - testing
   - unit-testing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Unit Testing"
   - "Unit Testing interview"
   - "Unit Testing собеседование"
-  - "JUnit 5"
-  - "Mockito"
-  - "Юнит-тестирование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Unit Testing`

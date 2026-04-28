@@ -7,6 +7,10 @@ tags:
   - micronaut
   - java-frameworks
 type: "index"
+aliases:
+  - "Micronaut"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Micronaut

@@ -5,9 +5,16 @@ tags:
   - algorithms
   - sorting
   - merge-sort
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Сортировка слиянием"
+  - "Merge Sort"
+prerequisites:
+  - "[[divide-and-conquer]]"
+next:
+  - "[[quick-sort]]"
+  - "[[heap-sort]]"
 updated: "2026-04-20"
 ---
 # Сортировка слиянием (Merge Sort)

@@ -1,13 +1,20 @@
 ---
 title: "Блочная сортировка (Bucket Sort)"
-description: "Блочная сортировка (bucket sort) — это алгоритм сортировки, который распределяет элементы по нескольким \"ведрам\" (buckets), сортирует каждое ведро отдельно, а затем объединяет результаты в отсортированный массив. Алгоритм особенно эффективен, когда входные данные равномерно распр"
+description: "Распределяет элементы по нескольким «вёдрам» (buckets), сортирует каждое отдельно и объединяет результаты. Эффективна на равномерно распределённых данных."
 tags:
   - algorithms
   - sorting
   - bucket-sort
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Блочная сортировка"
+  - "Bucket Sort"
+prerequisites:
+  - "[[counting-sort]]"
+next:
+  - "[[radix-sort]]"
+  - "[[counting-sort]]"
 updated: "2026-04-20"
 ---
 # Блочная сортировка (Bucket Sort)

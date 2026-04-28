@@ -7,6 +7,10 @@ tags:
   - build-tools
   - maven
 type: "index"
+aliases:
+  - "Maven"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Maven

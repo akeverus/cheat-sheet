@@ -5,8 +5,13 @@ tags:
   - monitoring
   - apm
   - new-relic
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "New Relic APM"
+  - "new relic"
+prerequisites:
+  - "[[monitoring-best-practices]]"
 next: []
 updated: "2026-04-20"
 ---

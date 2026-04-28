@@ -5,8 +5,14 @@ tags:
   - languages
   - scala
   - scala-tagless-final
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Tagless Final в Scala"
+  - "scala tagless final"
+  - "Tagless Final"
+prerequisites:
+  - "[[scala-cats]]"
 next: []
 updated: "2026-04-20"
 ---

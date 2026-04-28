@@ -7,11 +7,18 @@ tags:
   - fp
   - higher-order-functions
   - immutability
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
-next: ["scala/scala-fp-advanced.md"]
+aliases:
+  - "scala fp basics"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-collections]]"
+next:
+  - "[[scala-fp-advanced]]"
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
 # Scala Functional Programming — Basics

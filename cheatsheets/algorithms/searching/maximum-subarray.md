@@ -5,8 +5,15 @@ tags:
   - algorithms
   - searching
   - maximum-subarray
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Максимальный подмассив"
+  - "Maximum Subarray Problem"
+  - "Maximum Subarray"
+  - "Kadane"
+prerequisites:
+  - "[[dynamic-programming]]"
 next: []
 updated: "2026-04-20"
 ---

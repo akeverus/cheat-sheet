@@ -8,11 +8,19 @@ tags:
   - web-framework
   - functional-programming
   - cats-effect
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["scala/scala-fp-advanced.md", "scala/scala-cats.md"]
+aliases:
+  - "Scala http4s"
+prerequisites:
+  - "[[scala-fp-advanced]]"
+  - "[[scala-cats]]"
+related:
+  - "[[scala-fp-advanced]]"
+  - "[[scala-cats]]"
+  - "[[scala-play]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-fp-advanced.md", "scala/scala-cats.md", "scala/scala-play.md"]
 ---
 
 # Scala http4s

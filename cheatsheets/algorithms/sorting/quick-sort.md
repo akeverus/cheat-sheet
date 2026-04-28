@@ -5,9 +5,17 @@ tags:
   - algorithms
   - sorting
   - quick-sort
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Быстрая сортировка"
+  - "Quick Sort"
+  - "quicksort"
+prerequisites:
+  - "[[divide-and-conquer]]"
+next:
+  - "[[merge-sort]]"
+  - "[[heap-sort]]"
 updated: "2026-04-20"
 ---
 # Быстрая сортировка (Quick Sort)

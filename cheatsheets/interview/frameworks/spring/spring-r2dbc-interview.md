@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-r2dbc-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Data R2DBC"
   - "Spring R2DBC interview"
   - "Spring R2DBC собеседование"
-  - "Spring Data R2DBC вопросы"
-  - "reactive database spring interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-r2dbc]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Data R2DBC`

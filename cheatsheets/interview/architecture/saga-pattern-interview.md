@@ -5,13 +5,16 @@ tags:
   - interview
   - architecture
   - saga-pattern-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Saga Pattern"
   - "Saga pattern interview"
   - "Saga собеседование"
-  - "Saga паттерн вопросы"
-  - "Distributed transactions saga interview"
-  - "Паттерн Saga собеседование"
-difficulty: "intermediate"
+prerequisites:
+  - "[[saga-pattern]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Saga Pattern`

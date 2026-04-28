@@ -5,9 +5,14 @@ tags:
   - platform
   - cloud-providers
   - azure-networking
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Azure Networking"
+prerequisites:
+  - "[[azure-basics]]"
+next:
+  - "[[azure-services]]"
 updated: "2026-04-20"
 ---
 # Azure Networking

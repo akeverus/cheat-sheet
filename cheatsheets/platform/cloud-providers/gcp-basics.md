@@ -5,7 +5,11 @@ tags:
   - platform
   - cloud-providers
   - gcp-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "GCP Basics"
+  - "GCP"
 prerequisites: []
 next: []
 updated: "2026-04-20"

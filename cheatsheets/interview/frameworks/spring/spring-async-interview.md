@@ -5,12 +5,15 @@ tags:
   - interview
   - spring
   - spring-async-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring @Async"
   - "Spring Async interview"
   - "Spring @Async собеседование"
-  - "Spring @Async вопросы"
-  - "async spring boot interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring @Async`

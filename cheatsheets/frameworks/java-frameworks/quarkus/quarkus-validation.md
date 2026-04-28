@@ -7,11 +7,22 @@ tags:
   - bean-validation
   - jakarta-validation
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-rest.md"]
+aliases:
+  - "Quarkus"
+  - "Validation — Bean Validation"
+  - "quarkus validation"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-rest]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-rest]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
 # Quarkus: Validation — Bean Validation

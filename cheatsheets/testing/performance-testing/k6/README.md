@@ -8,6 +8,10 @@ tags:
   - performance-testing
   - k6
 type: "index"
+aliases:
+  - "k6"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # k6

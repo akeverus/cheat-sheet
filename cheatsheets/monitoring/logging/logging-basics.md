@@ -5,9 +5,16 @@ tags:
   - monitoring
   - logging
   - logging-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Основы логирования в Java"
+  - "logging basics"
+  - "logging"
 prerequisites: []
-next: []
+next:
+  - "[[logging-best-practices]]"
+  - "[[structured-logging]]"
 updated: "2026-04-20"
 ---
 # Основы логирования в Java

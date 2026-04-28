@@ -5,9 +5,15 @@ tags:
   - libraries
   - java
   - java-jooq
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "jOOQ"
+  - "Type-Safe SQL в Java"
+  - "jOOQ: Type-Safe SQL в Java"
+  - "java jooq"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

@@ -5,7 +5,12 @@ tags:
   - patterns
   - behavioral
   - delegate
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Делегирование"
+  - "Delegate"
+  - "Делегирование (Delegate)"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -7,7 +7,13 @@ tags:
   - validation
   - jakarta
   - spring
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Bean Validation"
+  - "java bean validation"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Bean Validation (JSR-380 / Jakarta Validation 3.0)

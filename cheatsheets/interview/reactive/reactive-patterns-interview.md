@@ -7,13 +7,15 @@ tags:
   - reactive-patterns-interview
   - resilience
   - patterns
-aliases:
-  - "Reactive Patterns interview"
-  - "Reactive Patterns собеседование"
-  - "Reactive Patterns вопросы"
-  - "circuit breaker reactive"
-  - "resilience4j reactor"
+type: "interview"
 difficulty: "advanced"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Reactive Patterns"
+  - "Reactive Patterns interview"
+  - "Reactive Patterns вопросы"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Reactive Patterns

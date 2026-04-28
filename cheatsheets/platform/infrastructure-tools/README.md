@@ -7,6 +7,10 @@ tags:
   - platform
   - infrastructure-tools
 type: "index"
+aliases:
+  - "Platform Infrastructure Tools"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Platform Infrastructure Tools

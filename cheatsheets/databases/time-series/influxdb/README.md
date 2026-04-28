@@ -8,6 +8,10 @@ tags:
   - time-series
   - influxdb
 type: "index"
+aliases:
+  - "InfluxDB"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # InfluxDB

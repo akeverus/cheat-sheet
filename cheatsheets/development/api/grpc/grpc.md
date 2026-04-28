@@ -5,9 +5,12 @@ tags:
   - development
   - api
   - grpc
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "gRPC"
 prerequisites:
-  - insomnia-basics
+  - "[[insomnia-basics]]"
 next: []
 updated: "2026-04-20"
 ---

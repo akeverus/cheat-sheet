@@ -7,8 +7,17 @@ tags:
   - unsafe
   - pointer
   - low-level
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["go/go-basics.md", "go/go-interfaces.md"]
+aliases:
+  - "Go"
+  - "unsafe операции"
+  - "Go: unsafe операции"
+  - "go unsafe"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-interfaces]]"
+next: []
 updated: "2026-04-20"
 ---
 

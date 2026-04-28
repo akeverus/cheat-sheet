@@ -136,7 +136,11 @@ cheatsheets/
 
 ### 1) Frontmatter обязателен
 
-Минимальный контракт:
+Полный контракт frontmatter и Obsidian-семантика — в скилле `obsidian-metadata`
+(`.claude/skills/obsidian-metadata/SKILL.md`). Здесь — выжимка.
+
+Обязательные поля: `title`, `description`, `tags`, `type`, `updated`.
+Рекомендуемые: `aliases`, `difficulty`, `prerequisites`, `related`, `next`.
 
 ```yaml
 ---
@@ -145,13 +149,34 @@ description: "Краткое описание назначения докуме�
 tags:
   - section
   - topic
+type: "overview|reference|how-to|troubleshooting|interview|index|rules"
+difficulty: "beginner|intermediate|advanced"
+aliases:
+  - "Альтернативное название"
+prerequisites:
+  - "[[зависимость]]"
+related:
+  - "[[связанная-тема]]"
 updated: "YYYY-MM-DD"
 ---
 ```
 
-Поле `tags` должно быть YAML-списком, а не JSON-массивом (`tags: [a, b]`) — это требование Obsidian Properties и единый стандарт репозитория.
+Правила:
 
-Допустимы дополнительные поля (`difficulty`, `prerequisites`, `next`, `type`), если они реально используются.
+- `tags` — YAML-список, не JSON-массив (`tags: [a, b]`). lowercase, kebab-case, 2–7 элементов.
+- `type` — строго из enum выше. Index-файлы (`README.md`) → `index`, Q&A в `interview/` → `interview`.
+- `related/prerequisites/next` — wikilink-формат `"[[имя]]"` (без `.md`). Обычная строка
+  `"saga.md"` рёбер в графе не создаст. В **теле** документа — наоборот, только
+  markdown-ссылки.
+- `updated` — ISO-дата `YYYY-MM-DD`.
+
+Массовая нормализация и проверка делается одной командой:
+
+```bash
+python3 .claude/skills/obsidian-metadata/scripts/normalize_frontmatter.py --apply
+```
+
+Скрипт идемпотентен.
 
 ### 2) Обязательный порядок секций (кроме коротких и index-файлов)
 

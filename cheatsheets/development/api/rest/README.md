@@ -7,6 +7,10 @@ tags:
   - api
   - rest
 type: "index"
+aliases:
+  - "REST API"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # REST API

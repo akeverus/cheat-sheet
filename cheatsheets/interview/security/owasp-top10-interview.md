@@ -5,12 +5,15 @@ tags:
   - interview
   - security
   - owasp-top10-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "OWASP Top 10"
   - "OWASP Top 10 interview"
   - "OWASP Top 10 собеседование"
-  - "OWASP interview questions"
-  - "веб-безопасность собеседование"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `OWASP Top 10`

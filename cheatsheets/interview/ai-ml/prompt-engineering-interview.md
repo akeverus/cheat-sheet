@@ -5,12 +5,15 @@ tags:
   - interview
   - ai-ml
   - prompt-engineering-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Prompt Engineering"
   - "Prompt engineering interview"
   - "Prompt design interview"
-  - "Few-shot learning interview"
-  - "Chain of thought interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Prompt Engineering`

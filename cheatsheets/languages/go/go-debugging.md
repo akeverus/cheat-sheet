@@ -8,8 +8,16 @@ tags:
   - delve
   - gdb
   - tracing
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "отладка"
+  - "Go: отладка"
+  - "go debugging"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

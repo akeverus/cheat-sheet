@@ -5,9 +5,16 @@ tags:
   - languages
   - scala
   - scala-futures
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Futures в Scala"
+  - "scala futures"
+  - "Futures"
+prerequisites:
+  - "[[scala-basics]]"
+next:
+  - "[[scala-promises]]"
 updated: "2026-04-20"
 ---
 # Futures в Scala

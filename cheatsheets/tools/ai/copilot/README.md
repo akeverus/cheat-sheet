@@ -8,6 +8,10 @@ tags:
   - ai
   - copilot
 type: "index"
+aliases:
+  - "GitHub Copilot"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # GitHub Copilot

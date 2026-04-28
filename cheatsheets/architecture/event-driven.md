@@ -4,9 +4,16 @@ description: "Event-Driven Architecture (EDA) — это архитектурн�
 tags:
   - architecture
   - event-driven
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Event-Driven Architecture"
+  - "event driven"
+prerequisites:
+  - "[[microservices]]"
+next:
+  - "[[event-sourcing]]"
+  - "[[saga-pattern]]"
 updated: "2026-04-20"
 ---
 # Event-Driven Architecture

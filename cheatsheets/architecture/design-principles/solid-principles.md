@@ -5,9 +5,16 @@ tags:
   - architecture
   - design-principles
   - solid-principles
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Принципы SOLID"
+  - "solid principles"
+  - "SOLID"
 prerequisites: []
-next: []
+next:
+  - "[[clean-code]]"
+  - "[[clean-architecture]]"
 updated: "2026-04-20"
 ---
 # Принципы SOLID

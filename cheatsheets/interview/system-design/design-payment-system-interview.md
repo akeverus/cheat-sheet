@@ -5,12 +5,15 @@ tags:
   - interview
   - system-design
   - design-payment-system-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Design Payment System"
   - "Payment System design"
   - "Stripe architecture"
-  - "Payment processing"
-  - "Payment System собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Payment System`

@@ -5,7 +5,11 @@ tags:
   - development
   - messaging
   - activemq
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Apache ActiveMQ"
+  - "activemq"
 prerequisites: []
 next: []
 updated: "2026-04-20"

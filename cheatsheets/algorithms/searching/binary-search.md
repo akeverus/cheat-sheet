@@ -5,9 +5,16 @@ tags:
   - algorithms
   - searching
   - binary-search
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Бинарный поиск"
+  - "Binary Search"
+  - "бинпоиск"
+  - "bin search"
 prerequisites: []
-next: []
+next:
+  - "[[interpolation-search]]"
 updated: "2026-04-20"
 ---
 # Бинарный поиск (Binary Search)

@@ -7,8 +7,16 @@ tags:
   - modules
   - dependencies
   - packages
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "модули"
+  - "Go: модули"
+  - "go modules"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

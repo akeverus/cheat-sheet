@@ -8,8 +8,17 @@ tags:
   - mutex
   - synchronization
   - concurrency
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md", "go/go-concurrency.md"]
+aliases:
+  - "Go"
+  - "синхронизация"
+  - "Go: синхронизация"
+  - "go sync"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-concurrency]]"
+next: []
 updated: "2026-04-20"
 ---
 

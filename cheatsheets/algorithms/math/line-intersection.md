@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - line-intersection
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Пересечение прямых"
+  - "Line Intersection"
 prerequisites: []
 next: []
 updated: "2026-04-20"

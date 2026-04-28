@@ -7,14 +7,20 @@ tags:
   - spring-websocket
   - stomp
   - sockjs
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["spring-mvc.md"]
-next: ["spring-messaging.md", "spring-security.md"]
-updated: "2026-04-20"
+aliases:
+  - "Spring WebSocket"
+prerequisites:
+  - "[[spring-mvc]]"
 related:
-  - "spring-mvc.md"
-  - "spring-messaging.md"
-  - "spring-security.md"
+  - "[[spring-mvc]]"
+  - "[[spring-messaging]]"
+  - "[[spring-security]]"
+next:
+  - "[[spring-messaging]]"
+  - "[[spring-security]]"
+updated: "2026-04-20"
 ---
 # Spring WebSocket
 

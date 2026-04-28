@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - image-pixel-array
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Массив пикселей изображения"
+  - "Image Pixel Array"
 prerequisites: []
 next: []
 updated: "2026-04-20"

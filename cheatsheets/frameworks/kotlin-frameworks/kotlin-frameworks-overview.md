@@ -5,7 +5,11 @@ tags:
   - frameworks
   - kotlin-frameworks
   - kotlin-frameworks-overview
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Frameworks — обзор"
+  - "kotlin frameworks overview"
 prerequisites: []
 next: []
 updated: "2026-04-20"

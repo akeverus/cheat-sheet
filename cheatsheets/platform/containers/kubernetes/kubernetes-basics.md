@@ -5,7 +5,13 @@ tags:
   - platform
   - containers
   - kubernetes-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kubernetes"
+  - "основы"
+  - "Kubernetes: основы"
+  - "kubernetes basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

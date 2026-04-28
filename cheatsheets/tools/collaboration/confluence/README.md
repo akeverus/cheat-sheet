@@ -7,6 +7,10 @@ tags:
   - confluence
   - collaboration
 type: "index"
+aliases:
+  - "Confluence"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Confluence

@@ -1,3 +1,22 @@
+---
+title: "Sheets PDF: каталог артефактов"
+description: "Каталог внешних PDF-шпаргалок и его связь с markdown-документами через INDEX.yaml."
+tags:
+  - meta
+  - index
+  - sheets-pdf
+  - artifacts
+type: "index"
+aliases:
+  - "Sheets PDF"
+  - "каталог артефактов"
+  - "PDF cheatsheets"
+  - "Артефакты PDF"
+prerequisites: []
+next: []
+updated: "2026-04-27"
+---
+
 # Sheets PDF: каталог артефактов
 
 Каталог `cheatsheets/sheets-pdf/` хранит внешние PDF-материалы как отдельный артефактный слой проекта.

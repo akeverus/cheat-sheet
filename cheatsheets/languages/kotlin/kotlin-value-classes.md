@@ -5,7 +5,10 @@ tags:
   - languages
   - kotlin
   - kotlin-value-classes
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "kotlin value classes"
 prerequisites: []
 next: []
 updated: "2026-04-20"

@@ -5,9 +5,13 @@ tags:
   - interview
   - api
   - http-rest-interview
-aliases:
-  - "HTTP и REST"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "HTTP и REST"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `HTTP` и `REST`

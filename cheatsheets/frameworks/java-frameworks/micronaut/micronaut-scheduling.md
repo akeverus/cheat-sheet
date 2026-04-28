@@ -9,11 +9,21 @@ tags:
   - cron
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
-next: ["micronaut-reactive.md", "micronaut-testing.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut scheduling"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-core]]"
+  - "[[micronaut-reactive]]"
+next:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-testing]]"
 updated: "2026-04-20"
-related: ["micronaut-core.md", "micronaut-reactive.md"]
 ---
 
 # Micronaut: Scheduling — Task Scheduling и Async Execution

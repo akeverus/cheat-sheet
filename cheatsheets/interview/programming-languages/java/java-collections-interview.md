@@ -5,13 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-collections-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Collections"
   - "Java Collections Framework"
   - "Java Collections собеседование"
-  - "коллекции Java"
-  - "HashMap interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-21"
 ---
 # Вопросы на собеседовании: `Java Collections`

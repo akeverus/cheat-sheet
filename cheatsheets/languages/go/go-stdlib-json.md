@@ -7,8 +7,15 @@ tags:
   - json
   - serialization
   - encoding
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "стандартная библиотека — JSON"
+  - "go stdlib json"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

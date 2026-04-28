@@ -5,12 +5,15 @@ tags:
   - interview
   - testing
   - property-based-testing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Property-based testing interview"
+  - "Вопросы на собеседовании"
+  - "Property-based Testing"
   - "QuickCheck interview"
   - "Hypothesis interview"
-  - "jqwik interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Property-based Testing`

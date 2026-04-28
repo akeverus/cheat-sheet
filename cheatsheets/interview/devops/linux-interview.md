@@ -5,14 +5,15 @@ tags:
   - interview
   - devops
   - linux-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Linux и Bash"
   - "Linux"
   - "Linux interview"
-  - "Linux собеседование"
-  - "Bash interview"
-  - "Shell scripting interview"
-  - "Unix interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Linux` и `Bash`

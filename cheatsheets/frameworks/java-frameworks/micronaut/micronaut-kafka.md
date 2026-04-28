@@ -10,11 +10,21 @@ tags:
   - consumers
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-reactive.md"]
-next: ["micronaut-reactive.md", "micronaut-cloud.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut kafka"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-reactive]]"
+related:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-messaging]]"
+next:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-cloud]]"
 updated: "2026-04-20"
-related: ["micronaut-reactive.md", "micronaut-messaging.md"]
 ---
 
 # Micronaut: Kafka Integration — Producers, Consumers и Streams

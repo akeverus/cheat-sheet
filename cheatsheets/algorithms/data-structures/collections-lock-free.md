@@ -5,8 +5,12 @@ tags:
   - algorithms
   - data-structures
   - collections-lock-free
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "collections lock free"
+prerequisites:
+  - "[[java-concurrency-basics]]"
 next: []
 updated: "2026-04-20"
 ---

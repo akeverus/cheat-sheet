@@ -5,12 +5,16 @@ tags:
   - interview
   - programming-languages
   - go-concurrency-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Go Concurrency"
   - "Go concurrency interview"
   - "Goroutines interview"
-  - "Go channels interview"
-  - "Go mutex interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[go-concurrency]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Go Concurrency`

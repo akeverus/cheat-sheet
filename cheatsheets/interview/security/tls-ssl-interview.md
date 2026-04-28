@@ -5,13 +5,16 @@ tags:
   - interview
   - security
   - tls-ssl-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "TLS/SSL"
   - "TLS interview"
   - "SSL interview"
-  - "TLS/SSL собеседование"
-  - "TLS handshake вопросы"
-  - "HTTPS PKI X.509"
-difficulty: "intermediate"
+prerequisites:
+  - "[[tls-ssl]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `TLS/SSL`

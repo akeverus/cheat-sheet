@@ -8,6 +8,10 @@ tags:
   - relational
   - oracle
 type: "index"
+aliases:
+  - "Oracle Database"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Oracle Database

@@ -8,11 +8,21 @@ tags:
   - cloud-native
   - service-mesh
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-graalvm.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus cloud"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-graalvm]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-graalvm]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-graalvm.md"]
 ---
 
 # Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh

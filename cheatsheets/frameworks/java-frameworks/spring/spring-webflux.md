@@ -5,8 +5,14 @@ tags:
   - frameworks
   - java-frameworks
   - spring-webflux
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Spring WebFlux для Java"
+  - "spring webflux"
+  - "WebFlux"
+prerequisites:
+  - "[[spring-core]]"
 next: []
 updated: "2026-04-20"
 ---

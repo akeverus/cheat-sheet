@@ -7,7 +7,13 @@ tags:
   - secrets
   - vault
   - kms
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Управление секретами"
+  - "Secrets Management"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Управление секретами (Secrets Management)

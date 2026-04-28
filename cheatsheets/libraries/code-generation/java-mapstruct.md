@@ -5,7 +5,12 @@ tags:
   - libraries
   - code-generation
   - java-mapstruct
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "MapStruct"
+  - "Маппинг объектов в Java"
+  - "java mapstruct"
 prerequisites: []
 next: []
 updated: "2026-04-20"

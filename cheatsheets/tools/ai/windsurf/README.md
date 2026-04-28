@@ -8,6 +8,10 @@ tags:
   - ai
   - windsurf
 type: "index"
+aliases:
+  - "Windsurf"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Windsurf

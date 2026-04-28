@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Cloud providers"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Cloud providers

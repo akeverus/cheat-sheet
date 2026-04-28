@@ -5,9 +5,15 @@ tags:
   - patterns
   - concurrency-patterns
   - producer-consumer
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Производитель-потребитель"
+  - "Producer-Consumer"
+  - "producer consumer"
 prerequisites: []
-next: []
+next:
+  - "[[thread-pool]]"
 updated: "2026-04-20"
 ---
 # Производитель-потребитель (Producer-Consumer)

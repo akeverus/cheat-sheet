@@ -5,6 +5,7 @@ tags:
   - algorithms
   - problems
   - finite-automata-input-validation
+type: "reference"
 difficulty: "intermediate"
 prerequisites: []
 next: []

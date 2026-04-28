@@ -5,8 +5,12 @@ tags:
   - languages
   - kotlin
   - kotlin-dsl
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Kotlin DSL"
+prerequisites:
+  - "[[kotlin-basics]]"
 next: []
 updated: "2026-04-20"
 ---

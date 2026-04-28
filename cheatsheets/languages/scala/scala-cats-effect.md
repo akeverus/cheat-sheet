@@ -5,9 +5,17 @@ tags:
   - languages
   - scala
   - scala-cats-effect
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Cats Effect в Scala"
+  - "scala cats effect"
+  - "cats-effect"
+  - "CE"
+prerequisites:
+  - "[[scala-cats]]"
+next:
+  - "[[scala-zio]]"
 updated: "2026-04-20"
 ---
 # Cats Effect в Scala

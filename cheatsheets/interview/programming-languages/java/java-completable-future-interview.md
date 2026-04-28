@@ -5,11 +5,14 @@ tags:
   - interview
   - programming-languages
   - java-completable-future-interview
-aliases:
-  - "Java CompletableFuture interview"
-  - "CompletableFuture собеседование"
-  - "CompletableFuture вопросы"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Java CompletableFuture"
+  - "CompletableFuture вопросы"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java CompletableFuture`

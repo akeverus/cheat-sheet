@@ -5,12 +5,16 @@ tags:
   - interview
   - data-engineering
   - kafka-streams-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Kafka Streams"
   - "Kafka Streams interview"
   - "Kafka Streams собеседование"
-  - "KStream KTable interview"
-  - "ksqlDB interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[kafka]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kafka Streams`

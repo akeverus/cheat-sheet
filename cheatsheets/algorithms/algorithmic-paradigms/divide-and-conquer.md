@@ -1,13 +1,20 @@
 ---
 title: "Разделяй и властвуй (Divide and Conquer)"
-description: "Кратко: Комплексное руководство по парадигме \"Разделяй и властвуй\" - от базовых концепций до практических применений с примерами на Java."
+description: "Парадигма «Разделяй и властвуй» — от базовых концепций до практических применений с примерами на Java."
 tags:
   - algorithms
   - algorithmic-paradigms
   - divide-and-conquer
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Разделяй и властвуй"
+  - "Divide and Conquer"
+  - "D&C"
 prerequisites: []
-next: []
+next:
+  - "[[merge-sort]]"
+  - "[[quick-sort]]"
 updated: "2026-04-20"
 ---
 # Разделяй и властвуй (Divide and Conquer)

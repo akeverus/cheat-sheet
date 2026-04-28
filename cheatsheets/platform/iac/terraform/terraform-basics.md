@@ -5,7 +5,13 @@ tags:
   - platform
   - iac
   - terraform-basics
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Основы Terraform"
+  - "редирект"
+  - "Основы Terraform (редирект)"
+  - "terraform basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

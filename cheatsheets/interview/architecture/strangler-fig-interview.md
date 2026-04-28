@@ -5,12 +5,15 @@ tags:
   - interview
   - architecture
   - strangler-fig-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Strangler Fig pattern"
+  - "Вопросы на собеседовании"
+  - "Strangler Fig Pattern"
   - "Strangler Application"
   - "Monolith migration"
-  - "Strangler собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Strangler Fig Pattern`

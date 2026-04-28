@@ -5,7 +5,10 @@ tags:
   - testing
   - security-testing
   - owasp-zap
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "OWASP ZAP"
 prerequisites: []
 next: []
 updated: "2026-04-20"

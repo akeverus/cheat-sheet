@@ -6,6 +6,10 @@ tags:
   - index
   - computer-science
 type: "index"
+aliases:
+  - "Computer Science"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Computer Science

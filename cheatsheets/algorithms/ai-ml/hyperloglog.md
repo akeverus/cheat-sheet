@@ -5,7 +5,10 @@ tags:
   - algorithms
   - ai-ml
   - hyperloglog
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "hyperloglog"
 prerequisites: []
 next: []
 updated: "2026-04-20"

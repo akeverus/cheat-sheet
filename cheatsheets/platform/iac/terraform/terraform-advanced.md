@@ -5,7 +5,10 @@ tags:
   - platform
   - iac
   - terraform-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Terraform Advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"

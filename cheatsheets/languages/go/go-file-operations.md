@@ -7,8 +7,17 @@ tags:
   - files
   - io
   - file-operations
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md", "go/go-stdlib-io.md"]
+aliases:
+  - "Go"
+  - "операции с файлами"
+  - "Go: операции с файлами"
+  - "go file operations"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-stdlib-io]]"
+next: []
 updated: "2026-04-20"
 ---
 

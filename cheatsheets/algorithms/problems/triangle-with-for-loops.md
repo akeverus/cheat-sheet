@@ -5,7 +5,10 @@ tags:
   - algorithms
   - problems
   - triangle-with-for-loops
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Triangle with For Loops"
 prerequisites: []
 next: []
 updated: "2026-04-20"

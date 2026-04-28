@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - perfect-square-check
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Проверка полного квадрата"
+  - "Perfect Square Check"
 prerequisites: []
 next: []
 updated: "2026-04-20"

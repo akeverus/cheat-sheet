@@ -5,7 +5,11 @@ tags:
   - algorithms
   - trees
   - monte-carlo-tree-search-tic-tac-toe
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Поиск по дереву Монте-Карло"
+  - "Monte Carlo Tree Search, MCTS"
 prerequisites: []
 next: []
 updated: "2026-04-20"

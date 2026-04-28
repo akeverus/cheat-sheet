@@ -5,7 +5,10 @@ tags:
   - testing
   - performance-testing
   - artillery
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Artillery"
 prerequisites: []
 next: []
 updated: "2026-04-20"

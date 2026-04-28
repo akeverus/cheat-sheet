@@ -5,7 +5,10 @@ tags:
   - platform
   - cloud-providers
   - gcp-services
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "GCP Services"
 prerequisites: []
 next: []
 updated: "2026-04-20"

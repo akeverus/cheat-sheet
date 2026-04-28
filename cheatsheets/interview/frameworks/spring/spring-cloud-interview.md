@@ -5,13 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-cloud-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring Cloud"
   - "Spring Cloud interview"
   - "Spring Cloud собеседование"
-  - "Spring Cloud Gateway"
-  - "Spring Cloud Config"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-cloud]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Cloud`

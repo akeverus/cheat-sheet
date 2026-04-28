@@ -5,9 +5,15 @@ tags:
   - databases
   - relational
   - mysql-performance
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "MySQL"
+  - "mysql performance"
+prerequisites:
+  - "[[mysql-indexes]]"
+next:
+  - "[[mysql-replication]]"
 updated: "2026-04-20"
 ---
 # MySQL: Производительность и тюнинг — Полное руководство по оптимизации

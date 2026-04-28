@@ -7,6 +7,10 @@ tags:
   - languages
   - go
 type: "index"
+aliases:
+  - "Go"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Go

@@ -5,8 +5,13 @@ tags:
   - algorithms
   - math
   - coprime-numbers
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Взаимно простые числа"
+  - "Coprime Numbers"
+prerequisites:
+  - "[[greatest-common-divisor]]"
 next: []
 updated: "2026-04-20"
 ---

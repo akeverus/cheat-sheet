@@ -6,7 +6,15 @@ tags:
   - structural
   - bridge
   - design-patterns
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Bridge Pattern — Мост"
+  - "bridge"
+prerequisites:
+  - "[[adapter]]"
+next:
+  - "[[composite]]"
 updated: "2026-04-20"
 ---
 # Bridge Pattern — Мост

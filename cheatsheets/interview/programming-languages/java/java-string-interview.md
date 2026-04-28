@@ -5,14 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-string-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java String"
   - "Java String interview"
   - "Java String собеседование"
-  - "строки Java"
-  - "String Pool"
-  - "StringBuilder StringBuffer"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java String`

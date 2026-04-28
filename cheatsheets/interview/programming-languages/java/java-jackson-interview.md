@@ -5,14 +5,16 @@ tags:
   - interview
   - programming-languages
   - java-jackson-interview
-aliases:
-  - "Jackson"
-  - "Jackson interview"
-  - "Jackson JSON"
-  - "Jackson ObjectMapper"
-  - "Jackson собеседование"
-  - "Java JSON interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Jackson"
+  - "JSON"
+  - "Jackson interview"
+prerequisites:
+  - "[[java-jackson]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Jackson`

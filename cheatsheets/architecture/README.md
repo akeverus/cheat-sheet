@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Архитектура"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Архитектура
@@ -26,6 +30,9 @@ updated: "2026-04-20"
 - [Event Sourcing](event-sourcing.md) — хранение состояния как потока событий
 - [cqrs](cqrs.md) — разделение команд и запросов
 - [Domain-Driven Design (DDD)](ddd.md) — предметно-ориентированное проектирование
+- [Saga Pattern](saga-pattern.md) — распределённые транзакции, choreography vs orchestration, Outbox
+- [Resilience Patterns](resilience-patterns.md) — circuit breaker, retry, timeout, bulkhead, fallback, deadlines
+- [Distributed Systems Fundamentals](distributed-systems-fundamentals.md) — CAP, PACELC, консенсус, кворумы, репликация, шардинг
 
 ### Стили архитектуры
 

@@ -11,11 +11,22 @@ tags:
   - advice
   - pointcut
   - joinpoint
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-core.md", "java/java-basics.md"]
-next: ["spring/spring-security.md", "spring/spring-boot.md"]
+aliases:
+  - "Spring AOP"
+  - "AOP"
+prerequisites:
+  - "[[spring-core]]"
+  - "[[java-basics]]"
+related:
+  - "[[spring-core]]"
+  - "[[java-basics]]"
+  - "[[design-behavioral]]"
+next:
+  - "[[spring-security]]"
+  - "[[spring-boot]]"
 updated: "2026-04-20"
-related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behavioral.md"]
 ---
 
 # Spring AOP: Полное руководство по аспектно-ориентированному программированию

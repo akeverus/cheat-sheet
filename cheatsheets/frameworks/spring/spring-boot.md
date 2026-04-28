@@ -7,9 +7,15 @@ tags:
   - auto-configuration
   - actuator
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring-core.md"]
-next: ["spring-data.md", "spring-security.md"]
+aliases:
+  - "Spring Boot"
+prerequisites:
+  - "[[spring-core]]"
+next:
+  - "[[spring-data]]"
+  - "[[spring-security]]"
 updated: "2026-04-20"
 ---
 

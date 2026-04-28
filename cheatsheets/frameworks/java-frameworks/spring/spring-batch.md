@@ -5,8 +5,13 @@ tags:
   - frameworks
   - java-frameworks
   - spring-batch
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Spring Batch для Java"
+  - "spring batch"
+prerequisites:
+  - "[[spring-core]]"
 next: []
 updated: "2026-04-20"
 ---

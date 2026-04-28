@@ -5,8 +5,15 @@ tags:
   - algorithms
   - problems
   - a-star-pathfinding
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Поиск пути A*"
+  - "A* Pathfinding Algorithm"
+  - "a star pathfinding"
+  - "A*"
+prerequisites:
+  - "[[dijkstra]]"
 next: []
 updated: "2026-04-20"
 ---

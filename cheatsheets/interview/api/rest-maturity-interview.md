@@ -5,12 +5,15 @@ tags:
   - interview
   - api
   - rest-maturity-interview
-aliases:
-  - "REST maturity interview"
-  - "Richardson Maturity Model interview"
-  - "HATEOAS interview"
-  - "REST levels interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Richardson Maturity Model"
+  - "REST"
+  - "REST maturity interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Richardson Maturity Model (REST)`

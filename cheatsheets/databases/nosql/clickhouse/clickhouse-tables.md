@@ -8,10 +8,18 @@ tags:
   - data-types
   - mergetree
   - schema
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/clickhouse-basics.md"]
+aliases:
+  - "ClickHouse"
+  - "clickhouse tables"
+prerequisites:
+  - "[[clickhouse-basics]]"
+related:
+  - "[[clickhouse-basics]]"
+  - "[[clickhouse-queries]]"
+next: []
 updated: "2026-04-20"
-related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 ---
 
 # ClickHouse: Таблицы и движки — Полное руководство по созданию и управлению таблицами

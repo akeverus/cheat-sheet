@@ -10,11 +10,21 @@ tags:
   - velocity
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-http.md", "micronaut-mail.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut views"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-http]]"
+  - "[[micronaut-mail]]"
+next:
+  - "[[micronaut-http]]"
+  - "[[micronaut-mail]]"
 updated: "2026-04-20"
-related: ["micronaut-http.md", "micronaut-mail.md"]
 ---
 
 # Micronaut: Views — Template Engines и View Rendering

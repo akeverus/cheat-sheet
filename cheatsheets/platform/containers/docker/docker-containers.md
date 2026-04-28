@@ -5,8 +5,15 @@ tags:
   - platform
   - containers
   - docker-containers
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Docker"
+  - "работа с контейнерами"
+  - "Docker: работа с контейнерами"
+  - "docker containers"
+prerequisites:
+  - "[[docker-basics]]"
 next: []
 updated: "2026-04-20"
 ---

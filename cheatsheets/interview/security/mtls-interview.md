@@ -5,12 +5,15 @@ tags:
   - interview
   - security
   - mtls-interview
-aliases:
-  - "mTLS interview"
-  - "Mutual TLS interview"
-  - "mTLS собеседование"
-  - "Two-way TLS"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "mTLS"
+  - "Mutual TLS"
+  - "mTLS interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `mTLS (Mutual TLS)`

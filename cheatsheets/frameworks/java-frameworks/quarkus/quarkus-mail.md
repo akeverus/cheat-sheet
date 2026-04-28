@@ -8,11 +8,23 @@ tags:
   - email
   - messaging
   - java
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-reactive.md"]
+aliases:
+  - "Quarkus"
+  - "Mail — Отправка email"
+  - "Quarkus: Mail — Отправка email"
+  - "quarkus mail"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-reactive]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-reactive]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
 # Quarkus: Mail — Отправка email

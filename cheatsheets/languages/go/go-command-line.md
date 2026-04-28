@@ -8,8 +8,16 @@ tags:
   - command-line
   - flags
   - cobra
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "командная строка"
+  - "Go: командная строка"
+  - "go command line"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

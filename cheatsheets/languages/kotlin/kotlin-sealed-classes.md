@@ -5,7 +5,10 @@ tags:
   - languages
   - kotlin
   - kotlin-sealed-classes
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "kotlin sealed classes"
 prerequisites: []
 next: []
 updated: "2026-04-20"

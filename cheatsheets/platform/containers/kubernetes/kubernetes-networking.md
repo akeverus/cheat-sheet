@@ -5,9 +5,14 @@ tags:
   - platform
   - containers
   - kubernetes-networking
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Kubernetes Networking"
+prerequisites:
+  - "[[kubernetes-basics]]"
+next:
+  - "[[istio]]"
 updated: "2026-04-20"
 ---
 # Kubernetes Networking

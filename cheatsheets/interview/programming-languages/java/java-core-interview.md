@@ -5,13 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-core-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Core"
   - "Java Core interview"
   - "Java Core собеседование"
-  - "Java основы"
-  - "Core Java"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-21"
 ---
 # Вопросы на собеседовании: `Java Core`

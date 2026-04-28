@@ -7,11 +7,18 @@ tags:
   - interop
   - interoperability
   - migration
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Java Interoperability"
+  - "scala interop java"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[java-basics]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "../java/java-basics.md"]
 ---
 
 # Scala Java Interoperability

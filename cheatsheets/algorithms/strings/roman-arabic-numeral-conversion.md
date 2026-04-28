@@ -5,6 +5,7 @@ tags:
   - algorithms
   - strings
   - roman-arabic-numeral-conversion
+type: "reference"
 difficulty: "intermediate"
 prerequisites: []
 next: []

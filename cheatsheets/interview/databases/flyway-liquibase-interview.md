@@ -5,16 +5,16 @@ tags:
   - interview
   - databases
   - flyway-liquibase-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Flyway и Liquibase"
   - "Flyway"
   - "Liquibase"
-  - "Flyway interview"
-  - "Liquibase interview"
-  - "Flyway собеседование"
-  - "Liquibase собеседование"
-  - "Database migrations"
-  - "Миграции БД"
-difficulty: "intermediate"
+prerequisites:
+  - "[[flyway-liquibase]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Flyway` и `Liquibase`

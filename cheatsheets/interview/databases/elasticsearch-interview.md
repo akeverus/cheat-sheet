@@ -5,13 +5,16 @@ tags:
   - interview
   - databases
   - elasticsearch-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Elasticsearch"
   - "Elasticsearch interview"
   - "Elasticsearch собеседование"
-  - "ES interview questions"
-  - "Вопросы по Elasticsearch"
-  - "Elastic search"
-difficulty: "intermediate"
+prerequisites:
+  - "[[elasticsearch-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Elasticsearch`

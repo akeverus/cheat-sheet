@@ -9,11 +9,21 @@ tags:
   - integration-tests
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-cloud.md", "micronaut-graalvm.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut testing"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-http]]"
+  - "[[micronaut-data]]"
+next:
+  - "[[micronaut-cloud]]"
+  - "[[micronaut-graalvm]]"
 updated: "2026-04-20"
-related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
 # Micronaut: Testing — Unit Tests, Integration Tests и Mocking

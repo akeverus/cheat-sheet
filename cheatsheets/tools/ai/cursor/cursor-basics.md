@@ -7,7 +7,13 @@ tags:
   - cursor
   - ide
   - assistant
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Cursor"
+  - "основы"
+  - "Cursor: основы"
+  - "cursor basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

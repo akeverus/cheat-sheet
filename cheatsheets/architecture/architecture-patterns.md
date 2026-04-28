@@ -4,9 +4,16 @@ description: "Этот документ охватывает основные а
 tags:
   - architecture
   - architecture-patterns
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Архитектурные паттерны"
+  - "architecture patterns"
+prerequisites:
+  - "[[solid-principles]]"
+next:
+  - "[[clean-architecture]]"
+  - "[[ddd]]"
 updated: "2026-04-20"
 ---
 # Архитектурные паттерны

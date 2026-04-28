@@ -7,6 +7,10 @@ tags:
   - security
   - application
 type: "index"
+aliases:
+  - "Application Security"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Application Security

@@ -5,9 +5,15 @@ tags:
   - databases
   - nosql
   - mongodb-indexes
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "MongoDB"
+  - "mongodb indexes"
+prerequisites:
+  - "[[mongodb-basics]]"
+next:
+  - "[[mongodb-aggregation]]"
 updated: "2026-04-20"
 ---
 # MongoDB: Индексы — Полное руководство по индексации и оптимизации запросов

@@ -6,6 +6,10 @@ tags:
   - index
   - programming-basics
 type: "index"
+aliases:
+  - "Основы программирования"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Основы программирования

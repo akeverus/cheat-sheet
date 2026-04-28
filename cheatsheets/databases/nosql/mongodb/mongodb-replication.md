@@ -5,9 +5,16 @@ tags:
   - databases
   - nosql
   - mongodb-replication
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "MongoDB"
+  - "mongodb replication"
+  - "MongoDB replica"
+prerequisites:
+  - "[[mongodb-basics]]"
+next:
+  - "[[mongodb-sharding]]"
 updated: "2026-04-20"
 ---
 # MongoDB: Репликация — Replica Sets для высокой доступности и отказоустойчивости

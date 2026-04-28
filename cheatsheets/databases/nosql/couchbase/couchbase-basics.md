@@ -5,7 +5,15 @@ tags:
   - databases
   - nosql
   - couchbase
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Couchbase"
+  - "Основы"
+  - "Couchbase: Основы"
+  - "couchbase basics"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Couchbase: Основы

@@ -8,12 +8,13 @@ tags:
 type: "interview"
 difficulty: "intermediate"
 aliases:
-  - "Java IO NIO"
+  - "Вопросы на собеседовании"
   - "Java IO / NIO"
+  - "Java IO NIO"
   - "Java NIO interview"
-  - "Java IO собеседование"
-  - "Java NIO.2"
-  - "Java каналы буферы"
+prerequisites:
+  - "[[java-io-nio]]"
+next: []
 updated: "2026-04-27"
 ---
 # Вопросы на собеседовании: `Java IO / NIO`

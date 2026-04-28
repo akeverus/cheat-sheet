@@ -7,8 +7,17 @@ tags:
   - reflection
   - introspection
   - dynamic
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["go/go-basics.md", "go/go-interfaces.md"]
+aliases:
+  - "Go"
+  - "рефлексия"
+  - "Go: рефлексия"
+  - "go reflection"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-interfaces]]"
+next: []
 updated: "2026-04-20"
 ---
 

@@ -5,10 +5,13 @@ tags:
   - monitoring
   - metrics
   - micrometer
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Micrometer"
 prerequisites: []
 next:
-  - go-observability
+  - "[[go-observability]]"
 updated: "2026-04-20"
 ---
 # Micrometer

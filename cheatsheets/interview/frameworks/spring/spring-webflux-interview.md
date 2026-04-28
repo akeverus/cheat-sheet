@@ -5,13 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-webflux-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring WebFlux"
   - "Spring WebFlux interview"
   - "Spring WebFlux собеседование"
-  - "Project Reactor"
-  - "Reactive Spring"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-webflux]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring WebFlux`

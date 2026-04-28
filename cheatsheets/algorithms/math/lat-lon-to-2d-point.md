@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - lat-lon-to-2d-point
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Lat/Lon to 2D Point"
+  - "lat lon to 2d point"
 prerequisites: []
 next: []
 updated: "2026-04-20"

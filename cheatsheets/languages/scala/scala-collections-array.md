@@ -7,11 +7,18 @@ tags:
   - array
   - performance
   - java-interop
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-collections.md"]
+aliases:
+  - "Scala Collections — Array"
+  - "scala collections array"
+prerequisites:
+  - "[[scala-collections]]"
+related:
+  - "[[scala-collections-list]]"
+  - "[[scala-interop-java]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 ---
 
 # Scala Collections — Array

@@ -7,12 +7,16 @@ tags:
   - kotlin-dsl-interview
   - kotlin
   - dsl
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "DSL в Kotlin"
   - "Kotlin DSL interview"
   - "Kotlin DSL собеседование"
-  - "DSL Kotlin"
-  - "type-safe builders Kotlin"
+prerequisites:
+  - "[[kotlin-dsl]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `DSL` в `Kotlin`

@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - leap-year-calculation
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Расчёт високосного года"
+  - "Leap Year Calculation"
 prerequisites: []
 next: []
 updated: "2026-04-20"

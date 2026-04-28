@@ -5,12 +5,16 @@ tags:
   - interview
   - architecture
   - microservices-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Микросервисная архитектура"
   - "Microservices interview"
   - "Микросервисы собеседование"
-  - "Microservices architecture"
-difficulty: "intermediate"
+prerequisites:
+  - "[[microservices]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Микросервисная архитектура

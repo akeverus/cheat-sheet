@@ -9,9 +9,15 @@ tags:
   - oauth2
   - jwt
   - rest-api
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "java/java-basics.md"]
-next: ["interview/spring-security.md"]
+aliases:
+  - "Spring Security"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[java-basics]]"
+next:
+  - "[[spring-security]]"
 updated: "2026-04-20"
 ---
 

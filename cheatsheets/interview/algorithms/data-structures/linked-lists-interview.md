@@ -5,13 +5,15 @@ tags:
   - interview
   - algorithms
   - linked-lists-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Связные списки"
   - "Linked lists interview"
   - "Связные списки собеседование"
-  - "Linked list algorithms"
-  - "Floyd cycle detection interview"
-  - "LinkedList interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Связные списки`

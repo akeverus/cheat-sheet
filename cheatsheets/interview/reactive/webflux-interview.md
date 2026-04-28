@@ -7,13 +7,15 @@ tags:
   - spring-webflux-interview
   - webflux
   - spring
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring WebFlux"
   - "Spring WebFlux interview"
   - "Spring WebFlux собеседование"
-  - "Spring WebFlux вопросы"
-  - "WebFlux reactive web"
-  - "WebFlux interview questions"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring WebFlux`

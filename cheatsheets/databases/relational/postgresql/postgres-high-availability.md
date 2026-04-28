@@ -8,11 +8,22 @@ tags:
   - patroni
   - failover
   - load-balancing
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-replication.md"]
-next: ["databases/postgres-monitoring.md", "databases/postgres-troubleshooting.md"]
+aliases:
+  - "PostgreSQL"
+  - "Высокая доступность"
+  - "postgres high availability"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-replication]]"
+related:
+  - "[[postgres-replication]]"
+  - "[[postgres-backup-restore]]"
+next:
+  - "[[postgres-monitoring]]"
+  - "[[postgres-troubleshooting]]"
 updated: "2026-04-20"
-related: ["databases/postgres-replication.md", "databases/postgres-backup-restore.md"]
 ---
 
 # PostgreSQL: Высокая доступность

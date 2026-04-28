@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - matrix-multiplication
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Умножение матриц"
+  - "Matrix Multiplication"
 prerequisites: []
 next: []
 updated: "2026-04-20"

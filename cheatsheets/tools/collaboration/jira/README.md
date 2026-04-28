@@ -7,6 +7,10 @@ tags:
   - jira
   - collaboration
 type: "index"
+aliases:
+  - "Jira"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Jira

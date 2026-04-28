@@ -4,7 +4,13 @@ description: "Полный индекс по всем содержательны
 tags:
   - interview
   - toc
-difficulty: "intermediate"
+type: "index"
+aliases:
+  - "TOC"
+  - "Interview"
+  - "TOC: Interview"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # TOC: Interview

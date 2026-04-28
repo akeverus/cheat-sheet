@@ -5,8 +5,13 @@ tags:
   - databases
   - relational
   - postgres-joins
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "PostgreSQL"
+  - "postgres joins"
+prerequisites:
+  - "[[postgres-queries]]"
 next: []
 updated: "2026-04-20"
 ---

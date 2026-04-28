@@ -5,11 +5,14 @@ tags:
   - interview
   - monitoring
   - metrics-tracing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Метрики и трейсинг"
   - "Metrics and tracing interview"
-  - "Prometheus Micrometer собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Метрики и трейсинг

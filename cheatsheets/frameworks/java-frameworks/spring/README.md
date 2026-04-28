@@ -7,6 +7,10 @@ tags:
   - frameworks
   - spring
 type: "index"
+aliases:
+  - "Spring Frameworks"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Spring Frameworks

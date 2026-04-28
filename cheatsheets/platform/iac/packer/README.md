@@ -8,6 +8,10 @@ tags:
   - iac
   - packer
 type: "index"
+aliases:
+  - "Packer"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Packer

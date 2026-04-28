@@ -5,7 +5,12 @@ tags:
   - languages
   - scala
   - scala-akka-streams
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Akka Streams в Scala"
+  - "scala akka streams"
+  - "Akka Streams"
 prerequisites: []
 next: []
 updated: "2026-04-20"

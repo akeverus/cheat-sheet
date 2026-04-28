@@ -9,11 +9,17 @@ tags:
   - functors
   - cats
   - scalaz
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["scala/scala-fp-basics.md"]
+aliases:
+  - "scala fp advanced"
+prerequisites:
+  - "[[scala-fp-basics]]"
+related:
+  - "[[scala-fp-basics]]"
+  - "[[scala-basics]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-fp-basics.md", "scala/scala-basics.md"]
 ---
 
 # Scala Functional Programming — Advanced

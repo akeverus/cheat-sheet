@@ -8,6 +8,10 @@ tags:
   - performance-testing
   - artillery
 type: "index"
+aliases:
+  - "Artillery"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Artillery

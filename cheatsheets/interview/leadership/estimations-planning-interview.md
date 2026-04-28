@@ -5,13 +5,15 @@ tags:
   - interview
   - leadership
   - estimations-planning-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Оценка и планирование"
   - "Estimations interview"
   - "Planning interview"
-  - "Story points собеседование"
-  - "Planning Poker interview"
-  - "Agile estimation interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Оценка и планирование

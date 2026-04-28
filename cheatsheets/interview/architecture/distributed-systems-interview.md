@@ -5,13 +5,15 @@ tags:
   - interview
   - architecture
   - distributed-systems-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Распределённые системы"
   - "Distributed systems interview"
-  - "Распределённые системы собеседование"
-  - "Fallacies of Distributed Computing"
   - "Consensus algorithms interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Распределённые системы

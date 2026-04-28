@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Вопросы на собеседованиях"
+prerequisites: []
+next: []
 updated: "2026-04-18"
 ---
 # Вопросы на собеседованиях

@@ -5,7 +5,12 @@ tags:
   - patterns
   - concurrency-patterns
   - thread-pool
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Пул потоков"
+  - "Thread Pool"
+  - "Пул потоков (Thread Pool)"
 prerequisites: []
 next: []
 updated: "2026-04-20"

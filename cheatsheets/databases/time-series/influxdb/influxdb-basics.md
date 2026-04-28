@@ -5,7 +5,12 @@ tags:
   - databases
   - time-series
   - influxdb-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "InfluxDB"
+  - "Основы временных рядов"
+  - "influxdb basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

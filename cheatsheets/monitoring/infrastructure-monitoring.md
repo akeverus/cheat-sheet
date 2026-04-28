@@ -4,9 +4,16 @@ description: "Кратко: Infrastructure Monitoring — мониторинг �
 tags:
   - monitoring
   - infrastructure-monitoring
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Infrastructure Monitoring"
+  - "обзор"
+  - "infra monitoring"
+prerequisites:
+  - "[[monitoring-best-practices]]"
+next:
+  - "[[prometheus]]"
 updated: "2026-04-20"
 ---
 # Infrastructure Monitoring (обзор)

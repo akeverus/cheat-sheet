@@ -5,7 +5,13 @@ tags:
   - languages
   - kotlin
   - kotlin-collections-sequences
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Collections"
+  - "Sequences"
+  - "Kotlin Collections: Sequences"
+  - "kotlin collections sequences"
 prerequisites: []
 next: []
 updated: "2026-04-20"

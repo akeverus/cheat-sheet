@@ -7,7 +7,13 @@ tags:
   - copilot
   - ide
   - assistant
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "GitHub Copilot"
+  - "основы"
+  - "GitHub Copilot: основы"
+  - "copilot basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

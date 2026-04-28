@@ -5,10 +5,14 @@ tags:
   - languages
   - java
   - java-annotations-reflection
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Java Annotations и Reflection"
+  - "java annotations reflection"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Annotations и Reflection

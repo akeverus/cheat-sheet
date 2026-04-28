@@ -5,9 +5,14 @@ tags:
   - platform
   - cloud-providers
   - aws-networking
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "AWS Networking"
+prerequisites:
+  - "[[aws-basics]]"
+next:
+  - "[[aws-services]]"
 updated: "2026-04-20"
 ---
 # AWS Networking

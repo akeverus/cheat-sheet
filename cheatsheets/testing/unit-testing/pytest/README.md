@@ -8,6 +8,10 @@ tags:
   - unit-testing
   - pytest
 type: "index"
+aliases:
+  - "pytest"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # pytest

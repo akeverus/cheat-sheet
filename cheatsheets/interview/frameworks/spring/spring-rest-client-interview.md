@@ -5,11 +5,15 @@ tags:
   - interview
   - frameworks
   - spring-rest-client-interview
-aliases:
-  - "Spring REST Client interview"
-  - "Spring HTTP client собеседование"
-  - "RestClient WebClient RestTemplate вопросы"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Spring REST Clients"
+  - "Spring REST Client interview"
+prerequisites:
+  - "[[spring-rest]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring REST Clients`

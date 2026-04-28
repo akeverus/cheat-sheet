@@ -5,13 +5,16 @@ tags:
   - interview
   - databases
   - hibernate-jpql-criteria-interview
+type: "interview"
+difficulty: "advanced"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Hibernate JPQL & Criteria API"
   - "JPQL interview"
   - "Criteria API interview"
-  - "JPA Criteria собеседование"
-  - "Hibernate queries interview"
-  - "JPA Metamodel interview"
-difficulty: "advanced"
+prerequisites:
+  - "[[hibernate-jpql-criteria]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Hibernate JPQL & Criteria API`

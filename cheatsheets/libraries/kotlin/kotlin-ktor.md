@@ -5,7 +5,10 @@ tags:
   - libraries
   - kotlin
   - kotlin-ktor
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Ktor"
 prerequisites: []
 next: []
 updated: "2026-04-20"

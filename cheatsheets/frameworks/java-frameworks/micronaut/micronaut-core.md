@@ -8,11 +8,20 @@ tags:
   - configuration
   - java
   - kotlin
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md"]
-next: ["micronaut-http.md", "micronaut-data.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut core"
+prerequisites:
+  - "[[micronaut-basics]]"
+related:
+  - "[[micronaut-reactive]]"
+  - "[[micronaut-security]]"
+next:
+  - "[[micronaut-http]]"
+  - "[[micronaut-data]]"
 updated: "2026-04-20"
-related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
 # Micronaut: Core — Dependency Injection и Bean Management

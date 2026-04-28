@@ -5,12 +5,15 @@ tags:
   - interview
   - programming-languages
   - go-stdlib-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Go Standard Library"
   - "Go stdlib interview"
   - "Go standard library interview"
-  - "net/http Go interview"
-  - "encoding/json Go interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Go Standard Library`

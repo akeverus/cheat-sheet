@@ -5,9 +5,16 @@ tags:
   - databases
   - relational
   - postgres-structure
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "PostgreSQL"
+  - "структура БД и таблиц"
+  - "postgres structure"
+prerequisites:
+  - "[[postgres-basics]]"
+next:
+  - "[[postgres-types]]"
 updated: "2026-04-20"
 ---
 # PostgreSQL: структура БД и таблиц

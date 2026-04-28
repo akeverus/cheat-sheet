@@ -5,9 +5,15 @@ tags:
   - algorithms
   - sorting
   - counting-sort
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Сортировка подсчётом"
+  - "Counting Sort"
 prerequisites: []
-next: []
+next:
+  - "[[radix-sort]]"
+  - "[[bucket-sort]]"
 updated: "2026-04-20"
 ---
 # Сортировка подсчётом (Counting Sort)

@@ -5,7 +5,12 @@ tags:
   - libraries
   - utility-libraries
   - java-apache-commons
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Apache Commons"
+  - "Обширная коллекция Java утилит"
+  - "java apache commons"
 prerequisites: []
 next: []
 updated: "2026-04-20"

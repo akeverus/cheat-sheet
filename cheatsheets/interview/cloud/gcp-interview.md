@@ -5,13 +5,16 @@ tags:
   - interview
   - cloud
   - gcp-interview
-aliases:
-  - "GCP interview"
-  - "Google Cloud interview"
-  - "GCP собеседование"
-  - "BigQuery interview"
-  - "Cloud Run interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "GCP"
+  - "Google Cloud Platform"
+  - "GCP interview"
+prerequisites:
+  - "[[gcp-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `GCP (Google Cloud Platform)`

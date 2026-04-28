@@ -5,7 +5,10 @@ tags:
   - algorithms
   - searching
   - top-n-frequent-elements
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Top N Frequent Elements"
 prerequisites: []
 next: []
 updated: "2026-04-20"

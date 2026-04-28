@@ -8,6 +8,10 @@ tags:
   - iac
   - terraform
 type: "index"
+aliases:
+  - "Terraform"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Terraform

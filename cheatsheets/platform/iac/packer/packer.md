@@ -5,7 +5,10 @@ tags:
   - platform
   - iac
   - packer
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Packer"
 prerequisites: []
 next: []
 updated: "2026-04-20"

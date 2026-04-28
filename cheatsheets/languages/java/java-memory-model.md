@@ -8,9 +8,16 @@ tags:
   - memory-model
   - concurrency
   - happens-before
+type: "reference"
 difficulty: "advanced"
-prerequisites: ["java-concurrency-basics.md"]
-next: ["java-concurrency-advanced.md"]
+aliases:
+  - "Java Memory Model"
+  - "JMM"
+  - "Java Memory Model (JMM)"
+prerequisites:
+  - "[[java-concurrency-basics]]"
+next:
+  - "[[java-concurrency-advanced]]"
 updated: "2026-04-20"
 ---
 

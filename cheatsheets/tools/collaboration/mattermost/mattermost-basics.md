@@ -5,7 +5,13 @@ tags:
   - tools
   - collaboration
   - mattermost-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Mattermost"
+  - "основы"
+  - "Mattermost: основы"
+  - "mattermost basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

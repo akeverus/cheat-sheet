@@ -5,12 +5,16 @@ tags:
   - interview
   - devops
   - consul-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "HashiCorp Consul"
   - "Consul interview"
   - "HashiCorp Consul interview"
-  - "Service discovery interview"
-  - "Consul собеседование"
-difficulty: "intermediate"
+prerequisites:
+  - "[[consul]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `HashiCorp Consul`

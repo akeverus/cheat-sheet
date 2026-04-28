@@ -5,7 +5,10 @@ tags:
   - algorithms
   - problems
   - optaplanner
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "OptaPlanner"
 prerequisites: []
 next: []
 updated: "2026-04-20"

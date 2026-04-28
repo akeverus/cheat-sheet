@@ -9,11 +9,21 @@ tags:
   - structured-logging
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
-next: ["micronaut-core.md", "micronaut-actuator.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut logging"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-core]]"
+related:
+  - "[[micronaut-core]]"
+  - "[[micronaut-actuator]]"
+next:
+  - "[[micronaut-core]]"
+  - "[[micronaut-actuator]]"
 updated: "2026-04-20"
-related: ["micronaut-core.md", "micronaut-actuator.md"]
 ---
 
 # Micronaut: Logging — Logback, SLF4J и Structured Logging

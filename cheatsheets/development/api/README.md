@@ -7,6 +7,10 @@ tags:
   - development
   - api
 type: "index"
+aliases:
+  - "Development API"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Development API
@@ -23,4 +27,5 @@ updated: "2026-04-20"
 - [REST](rest/rest-api-best-practices.md)
 - [graphql](graphql/graphql.md)
 - [grpc](grpc/grpc.md)
+- [API Gateway](api-gateway.md) — единая точка входа, BFF, выбор продукта, паттерны
 - [API Tools](../../basics/README.md)

@@ -5,13 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-mvc-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring MVC"
   - "Spring MVC interview"
   - "Spring MVC собеседование"
-  - "DispatcherServlet"
-  - "Spring Web MVC"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-mvc]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring MVC`

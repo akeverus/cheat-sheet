@@ -1,13 +1,20 @@
 ---
 title: "Наблюдатель (Observer)"
-description: "Observer определяет зависимость \"один ко многим\" между объектами, при которой изменение состояния одного объекта приводит к оповещению всех зависимых объектов."
+description: "Определяет зависимость «один ко многим» между объектами: при изменении состояния одного объекта все зависимые автоматически получают уведомление."
 tags:
   - patterns
   - behavioral
   - observer
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Наблюдатель"
+  - "Observer"
+  - "Наблюдатель (Observer)"
+prerequisites:
+  - "[[iterator]]"
+next:
+  - "[[mediator]]"
 updated: "2026-04-20"
 ---
 # Наблюдатель (Observer)

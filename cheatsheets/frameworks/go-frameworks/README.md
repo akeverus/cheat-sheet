@@ -6,6 +6,10 @@ tags:
   - index
   - go-frameworks
 type: "index"
+aliases:
+  - "Go Frameworks"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Go Frameworks

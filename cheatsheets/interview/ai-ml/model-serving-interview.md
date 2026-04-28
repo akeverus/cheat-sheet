@@ -5,13 +5,15 @@ tags:
   - interview
   - ai-ml
   - model-serving-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Model Serving"
   - "Model serving interview"
   - "vLLM interview"
-  - "Triton inference server interview"
-  - "TGI interview"
-  - "Ollama interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Model Serving`

@@ -5,9 +5,14 @@ tags:
   - platform
   - ci-cd
   - tekton
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Tekton"
+prerequisites:
+  - "[[kubernetes-basics]]"
+next:
+  - "[[argocd]]"
 updated: "2026-04-20"
 ---
 # Tekton

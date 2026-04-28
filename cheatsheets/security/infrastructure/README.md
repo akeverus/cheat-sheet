@@ -7,6 +7,10 @@ tags:
   - security
   - infrastructure
 type: "index"
+aliases:
+  - "Infrastructure Security"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Infrastructure Security

@@ -5,11 +5,16 @@ tags:
   - interview
   - testing
   - mockito-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Mockito"
   - "Mockito interview"
   - "Mockito собеседование"
-  - "Mockito вопросы"
-difficulty: "intermediate"
+prerequisites:
+  - "[[mockito]]"
+next: []
 updated: "2026-04-25"
 ---
 

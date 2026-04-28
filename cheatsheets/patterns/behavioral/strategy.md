@@ -5,9 +5,17 @@ tags:
   - patterns
   - behavioral
   - strategy
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Стратегия"
+  - "Strategy"
+  - "Стратегия (Strategy)"
+prerequisites:
+  - "[[solid-principles]]"
+next:
+  - "[[state]]"
+  - "[[template-method]]"
 updated: "2026-04-20"
 ---
 # Стратегия (Strategy)

@@ -8,8 +8,15 @@ tags:
   - web
   - server
   - client
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md"]
+aliases:
+  - "Go"
+  - "стандартная библиотека — HTTP"
+  - "go stdlib http"
+prerequisites:
+  - "[[go-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

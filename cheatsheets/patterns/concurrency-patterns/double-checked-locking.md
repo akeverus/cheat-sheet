@@ -5,7 +5,12 @@ tags:
   - patterns
   - concurrency-patterns
   - double-checked-locking
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Двойная проверка блокировки"
+  - "Double-Checked Locking"
+  - "double checked locking"
 prerequisites: []
 next: []
 updated: "2026-04-20"

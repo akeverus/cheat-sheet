@@ -5,7 +5,11 @@ tags:
   - testing
   - integration-testing
   - wiremock
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "WireMock для Java"
+  - "wiremock"
 prerequisites: []
 next: []
 updated: "2026-04-20"

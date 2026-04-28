@@ -7,7 +7,14 @@ tags:
   - mapstruct
   - dto
   - mapping
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "MapStruct"
+  - "compile-time маппинг объектов"
+  - "java mapstruct"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # MapStruct: compile-time маппинг объектов

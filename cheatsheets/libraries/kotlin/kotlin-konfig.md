@@ -5,8 +5,13 @@ tags:
   - libraries
   - kotlin
   - kotlin-konfig
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Konfig"
+  - "kotlin konfig"
+prerequisites:
+  - "[[kotlin-basics]]"
 next: []
 updated: "2026-04-20"
 ---

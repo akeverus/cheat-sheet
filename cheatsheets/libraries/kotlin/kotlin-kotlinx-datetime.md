@@ -5,8 +5,13 @@ tags:
   - libraries
   - kotlin
   - kotlin-kotlinx-datetime
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "kotlinx.datetime"
+  - "kotlin kotlinx datetime"
+prerequisites:
+  - "[[kotlin-basics]]"
 next: []
 updated: "2026-04-20"
 ---

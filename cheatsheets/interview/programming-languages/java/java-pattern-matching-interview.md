@@ -5,13 +5,15 @@ tags:
   - interview
   - java
   - java-pattern-matching-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Java Pattern Matching interview"
+  - "Вопросы на собеседовании"
+  - "Java Pattern Matching"
   - "Pattern Matching собеседование"
   - "Java 21 pattern matching"
-  - "switch expressions interview"
-  - "record patterns interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Pattern Matching`

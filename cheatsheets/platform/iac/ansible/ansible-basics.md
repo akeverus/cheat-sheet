@@ -5,7 +5,13 @@ tags:
   - platform
   - iac
   - ansible-basics
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Основы Ansible"
+  - "редирект"
+  - "Основы Ansible (редирект)"
+  - "ansible basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

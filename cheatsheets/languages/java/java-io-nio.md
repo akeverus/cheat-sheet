@@ -5,10 +5,15 @@ tags:
   - languages
   - java
   - java-io-nio
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Java IO/NIO"
+  - "работа с файлами и потоками"
+  - "java io nio"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java IO/NIO: работа с файлами и потоками

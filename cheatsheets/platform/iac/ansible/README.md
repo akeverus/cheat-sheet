@@ -8,6 +8,10 @@ tags:
   - iac
   - ansible
 type: "index"
+aliases:
+  - "Ansible"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Ansible

@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Тестирование"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Тестирование
@@ -31,3 +35,4 @@ updated: "2026-04-20"
 - [Security Testing](../basics/README.md) — Burp Suite, OWASP ZAP, sqlmap
 - [UI Testing](../basics/README.md) — Selenium, обзор UI-автоматизации
 - [cucumber](cucumber.md) — BDD-сценарии
+- [Chaos Engineering](chaos-engineering.md) — эксперименты с устойчивостью, gameday, blast radius

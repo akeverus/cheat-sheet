@@ -5,12 +5,15 @@ tags:
   - interview
   - messaging
   - message-brokers-comparison-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
-  - "Message brokers comparison interview"
-  - "Сравнение message brokers"
+  - "Вопросы на собеседовании"
+  - "Сравнение Message Brokers"
   - "Kafka vs RabbitMQ vs NATS"
   - "Choose message broker"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Сравнение Message Brokers`

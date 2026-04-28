@@ -5,11 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-cache-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Cache"
   - "Spring Cache interview"
   - "Spring Cache собеседование"
-  - "Spring Cache вопросы"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-cache]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Cache`

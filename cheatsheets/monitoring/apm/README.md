@@ -7,6 +7,10 @@ tags:
   - monitoring
   - apm
 type: "index"
+aliases:
+  - "APM"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # APM

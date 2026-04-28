@@ -7,6 +7,10 @@ tags:
   - mattermost
   - collaboration
 type: "index"
+aliases:
+  - "Mattermost"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Mattermost

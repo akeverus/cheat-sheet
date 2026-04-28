@@ -5,8 +5,13 @@ tags:
   - databases
   - nosql
   - cassandra-performance
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Cassandra"
+  - "cassandra performance"
+prerequisites:
+  - "[[cassandra-basics]]"
 next: []
 updated: "2026-04-20"
 ---

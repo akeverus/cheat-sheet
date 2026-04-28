@@ -5,12 +5,15 @@ tags:
   - interview
   - kotlin
   - kotlin-flow-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Kotlin Flow"
   - "Kotlin Flow interview"
   - "Kotlin Flow собеседование"
-  - "Kotlin Flow вопросы"
-  - "kotlin reactive streams interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Kotlin Flow`

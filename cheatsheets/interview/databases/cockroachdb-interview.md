@@ -5,12 +5,15 @@ tags:
   - interview
   - databases
   - cockroachdb-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "CockroachDB"
   - "CockroachDB interview"
   - "CockroachDB собеседование"
-  - "Distributed SQL interview"
-  - "NewSQL interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `CockroachDB`

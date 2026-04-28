@@ -6,6 +6,10 @@ tags:
   - index
   - kotlin-frameworks
 type: "index"
+aliases:
+  - "Kotlin Frameworks"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Kotlin Frameworks

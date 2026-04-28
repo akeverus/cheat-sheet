@@ -8,11 +8,23 @@ tags:
   - streaming-replication
   - logical-replication
   - failover
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
-next: ["postgres-high-availability.md", "postgres-backup-restore.md"]
+aliases:
+  - "PostgreSQL"
+  - "Репликация"
+  - "PostgreSQL: Репликация"
+  - "postgres replication"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-admin]]"
+related:
+  - "[[postgres-monitoring]]"
+  - "[[postgres-performance-tuning]]"
+next:
+  - "[[postgres-high-availability]]"
+  - "[[postgres-backup-restore]]"
 updated: "2026-04-20"
-related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tuning.md"]
 ---
 
 # PostgreSQL: Репликация

@@ -5,12 +5,15 @@ tags:
   - interview
   - ai-ml
   - embeddings-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Embeddings"
   - "Embeddings interview"
   - "Embedding models interview"
-  - "Sentence embeddings interview"
-  - "Vector embeddings interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Embeddings`

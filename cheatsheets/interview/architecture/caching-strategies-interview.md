@@ -5,14 +5,15 @@ tags:
   - interview
   - architecture
   - caching-strategies-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Стратегии кэширования"
   - "Caching strategies interview"
   - "Кэширование собеседование"
-  - "Spring Cache interview"
-  - "Redis cache interview"
-  - "Caffeine cache"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Стратегии кэширования

@@ -5,9 +5,15 @@ tags:
   - platform
   - cloud-providers
   - aws-iam
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "AWS IAM"
+  - "Identity and Access Management"
+prerequisites:
+  - "[[aws-basics]]"
+next:
+  - "[[aws-services]]"
 updated: "2026-04-20"
 ---
 # AWS IAM (Identity and Access Management)

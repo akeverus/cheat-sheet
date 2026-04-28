@@ -5,12 +5,16 @@ tags:
   - interview
   - security
   - secrets-management-interview
-aliases:
-  - "Secrets management interview"
-  - "Secrets management собеседование"
-  - "Secret rotation interview"
-  - "Sealed secrets interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Secrets Management"
+  - "Secrets management interview"
+  - "Secret rotation interview"
+prerequisites:
+  - "[[secrets-management]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Secrets Management`

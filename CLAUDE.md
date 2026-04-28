@@ -94,3 +94,84 @@ When a request is clear, proceed directly with changes — no confirmation neede
 ## Subagent Permissions
 
 When spawning subagents (Agent tool) for tasks in this project, always use `dangerouslyDisableSandbox: true` in Bash tool calls within subagents, or pass `--dangerously-skip-permissions` when launching Claude Code as a subprocess. This avoids permission prompts blocking autonomous batch operations like updating cheatsheets.
+
+## graphify (ОБЯЗАТЕЛЬНО — НЕ ОБХОДИТЬ)
+
+В проекте есть граф знаний `graphify-out/`. Граф — **первичный источник** для ответов про код, архитектуру, связи и навигацию. Эти правила имеют приоритет над любыми «быстрыми» подходами вроде сразу-grep.
+
+### 1. Состояние графа — проверять перед использованием
+
+В начале сессии (или перед первым кодовым вопросом) выполнить:
+
+```bash
+ls graphify-out/graph.json graphify-out/GRAPH_REPORT.md 2>/dev/null
+```
+
+- **Если оба файла существуют** → граф готов, можно использовать.
+- **Если хотя бы одного нет** (только `.graphify_*` чанки/кэш — это незавершённый build) → ОБЯЗАТЕЛЬНО достроить:
+  ```bash
+  /graphify .
+  ```
+  И только после успешного завершения отвечать на содержательные вопросы про код. Сообщить пользователю одной строкой, что граф достраивается.
+
+### 2. Поиск и навигация — граф ПЕРЕД raw-файлами
+
+При вопросе про код/архитектуру/связи действовать в этом порядке (НЕ перепрыгивать шаги):
+
+1. **`graphify-out/GRAPH_REPORT.md`** — god-nodes, communities, общая карта. Читать первым.
+2. **`graphify-out/wiki/index.md`** (если есть) — навигация по сообществам. Читать вместо `Glob`/`Grep` по сырым файлам.
+3. **`/graphify query "<вопрос>"`** — для архитектурных/cross-file вопросов («где используется X», «как связаны A и B», «что вызывает Y»).
+4. **`/graphify path "A" "B"`** — кратчайший путь между сущностями.
+5. **`/graphify explain "<node>"`** — объяснение конкретного узла.
+6. Только если граф не дал ответа — переходить к `Grep`/`Read` по сырым файлам.
+
+Хук `PreToolUse` на `Glob|Grep` напомнит про граф — это не шум, а сигнал «сначала граф».
+
+### 3. Обновление графа — после изменений кода
+
+После любых правок исходников в сессии (до завершения ответа пользователю) — инкрементальный rebuild:
+
+```bash
+$(cat graphify-out/.graphify_python) -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
+```
+
+Если правок много или менялась структура каталогов — полный апдейт:
+
+```bash
+/graphify . --update
+```
+
+Не оставлять граф устаревшим к концу сессии.
+
+### 4. Что НЕЛЬЗЯ делать
+
+- НЕ начинать массовый `Grep`/`Glob` по проекту, пока не прочитан `GRAPH_REPORT.md`.
+- НЕ отвечать «не знаю где это» без `/graphify query`.
+- НЕ удалять `graphify-out/` без явной просьбы пользователя.
+- НЕ игнорировать предупреждение хука про граф.
+
+### 5. Когда граф НЕ нужен
+
+Тривиальные правки в одном уже открытом файле, чисто косметические изменения (форматирование, опечатки в строке), вопросы не про код (про DevOps, инфру, шпаргалки в `cheatsheets/`). В этих случаях граф можно не трогать.
+
+### 6. Текущее состояние графа (AST-only, обновлено 2026-04-27)
+
+Граф построен **БЕЗ semantic-LLM** — только AST-извлечение по `modules/`. Это означает:
+
+- **Scope:** только `modules/` (~328 java/kotlin/sql/yaml файлов). `cheatsheets/`, `scripts/`, корневые gradle-файлы и `prompts/` в графе НЕТ.
+- **Что есть:** структурные рёбра (`extends`, `implements`, `calls`, `contains method`, `imports`), god-nodes, communities (321 шт.), token-benchmark (71.7×).
+- **Чего НЕТ:** semantic-связи между классами (`semantically_similar_to`, `rationale_for`, `shares_data_with`), кросс-файловые «surprising connections», связи через docs/markdown.
+
+**Особенность поиска:** граф богат тестовыми методами (`*Test.someTest()`), и наивный поиск `term in label` часто вытаскивает тесты вместо production-классов. При запросах:
+
+- Сначала фильтровать по `source_file` (исключать `src/test/`) или искать по точному `id` узла, а не по label.
+- При сомнениях смотреть `GRAPH_REPORT.md` → секция God Nodes — там сразу production-классы.
+- `/graphify path "ClassA" "ClassB"` работает надёжнее, чем `query` для конкретных пар.
+
+**Как обогатить графа semantic-связями (когда LLM разрешён):**
+
+```bash
+/graphify modules --update --mode deep
+```
+
+Это запустит параллельные subagent-ы Claude для извлечения cross-file семантики и заполнит пробелы. AST-кэш переиспользуется — заново парсить не будет.

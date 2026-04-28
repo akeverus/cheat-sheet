@@ -7,11 +7,17 @@ tags:
   - generics
   - variance
   - type-inference
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["scala/scala-basics.md"]
+aliases:
+  - "Scala Type System"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-fp-advanced]]"
 next: []
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 ---
 
 # Scala Type System

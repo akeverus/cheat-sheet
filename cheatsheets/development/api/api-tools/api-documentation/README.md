@@ -7,6 +7,10 @@ tags:
   - api
   - documentation
 type: "index"
+aliases:
+  - "API Documentation"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # API Documentation

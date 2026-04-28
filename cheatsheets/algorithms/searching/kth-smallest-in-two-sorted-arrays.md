@@ -5,8 +5,14 @@ tags:
   - algorithms
   - searching
   - kth-smallest-in-two-sorted-arrays
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Kth Smallest"
+  - "k-й наименьший"
+prerequisites:
+  - "[[binary-search]]"
+  - "[[merge-two-sorted-arrays]]"
 next: []
 updated: "2026-04-20"
 ---

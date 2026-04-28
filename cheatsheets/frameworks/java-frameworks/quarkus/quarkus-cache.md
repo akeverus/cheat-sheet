@@ -8,11 +8,22 @@ tags:
   - redis
   - performance
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
-next: ["quarkus-core.md", "quarkus-redis.md"]
+aliases:
+  - "Quarkus"
+  - "Cache — Кеширование данных"
+  - "quarkus cache"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-core]]"
+related:
+  - "[[quarkus-core]]"
+  - "[[quarkus-redis]]"
+next:
+  - "[[quarkus-core]]"
+  - "[[quarkus-redis]]"
 updated: "2026-04-20"
-related: ["quarkus-core.md", "quarkus-redis.md"]
 ---
 
 # Quarkus: Cache — Кеширование данных

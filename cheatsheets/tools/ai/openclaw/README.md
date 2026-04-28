@@ -8,6 +8,10 @@ tags:
   - ai
   - openclaw
 type: "index"
+aliases:
+  - "OpenClaw"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # OpenClaw

@@ -5,9 +5,15 @@ tags:
   - algorithms
   - trees
   - prim-algorithm
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Алгоритм Прима"
+  - "Prim's Algorithm"
+  - "prim algorithm"
 prerequisites: []
-next: []
+next:
+  - "[[kruskal-algorithm]]"
 updated: "2026-04-20"
 ---
 # Алгоритм Прима (Prim's Algorithm)

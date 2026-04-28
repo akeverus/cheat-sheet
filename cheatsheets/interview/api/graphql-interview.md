@@ -5,12 +5,16 @@ tags:
   - interview
   - api
   - graphql-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "GraphQL"
   - "GraphQL interview"
   - "GraphQL собеседование"
-  - "GraphQL Spring Boot"
-  - "GraphQL Federation"
-difficulty: "intermediate"
+prerequisites:
+  - "[[graphql]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `GraphQL`

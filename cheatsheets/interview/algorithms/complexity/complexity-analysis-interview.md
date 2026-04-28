@@ -5,13 +5,15 @@ tags:
   - interview
   - algorithms
   - complexity-analysis-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Анализ сложности алгоритмов"
   - "Complexity analysis interview"
   - "Big O interview"
-  - "Анализ сложности собеседование"
-  - "Асимптотика собеседование"
-  - "Algorithmic complexity"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Анализ сложности алгоритмов`

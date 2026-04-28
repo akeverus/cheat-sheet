@@ -5,9 +5,17 @@ tags:
   - databases
   - relational
   - postgres-queries
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "PostgreSQL"
+  - "запросы и агрегаты"
+  - "PostgreSQL: запросы и агрегаты"
+  - "postgres queries"
+prerequisites:
+  - "[[postgres-basics]]"
+next:
+  - "[[postgres-joins]]"
 updated: "2026-04-20"
 ---
 # PostgreSQL: запросы и агрегаты

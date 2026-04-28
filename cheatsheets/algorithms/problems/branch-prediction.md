@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - branch-prediction
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Предсказание ветвления"
+  - "Branch Prediction"
 prerequisites: []
 next: []
 updated: "2026-04-20"

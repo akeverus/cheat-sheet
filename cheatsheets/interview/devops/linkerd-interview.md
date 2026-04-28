@@ -5,12 +5,15 @@ tags:
   - interview
   - devops
   - linkerd-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Linkerd"
   - "Linkerd interview"
   - "Linkerd собеседование"
-  - "Service mesh Linkerd"
-  - "Linkerd vs Istio"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Linkerd`

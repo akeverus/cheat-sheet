@@ -7,6 +7,10 @@ tags:
   - platform
   - containers
 type: "index"
+aliases:
+  - "Platform Containers"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Platform Containers

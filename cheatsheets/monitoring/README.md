@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Мониторинг и Observability"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Мониторинг и Observability

@@ -5,8 +5,13 @@ tags:
   - libraries
   - code-generation
   - java-lombok
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Lombok"
+  - "java lombok"
+prerequisites:
+  - "[[java-basics]]"
 next: []
 updated: "2026-04-20"
 ---

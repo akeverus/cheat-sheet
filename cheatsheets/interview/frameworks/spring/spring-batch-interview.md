@@ -5,13 +5,16 @@ tags:
   - interview
   - frameworks
   - spring-batch-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Spring Batch"
   - "Spring Batch interview"
   - "Spring Batch собеседование"
-  - "Spring Batch ETL"
-  - "Spring Batch chunk processing"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-batch]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Batch`

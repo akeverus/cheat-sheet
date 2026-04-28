@@ -5,12 +5,15 @@ tags:
   - interview
   - databases
   - database-architecture-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
-  - "Database Architecture interview"
-  - "Database Architecture собеседование"
+  - "Вопросы на собеседовании"
+  - "Database Architecture"
   - "архитектура баз данных"
   - "database internals"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Database Architecture`

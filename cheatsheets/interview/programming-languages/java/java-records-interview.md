@@ -5,13 +5,15 @@ tags:
   - interview
   - java
   - java-records-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Java Records"
   - "Java Records interview"
   - "Java Records собеседование"
-  - "Java Records вопросы"
-  - "Java 16 records interview"
-  - "data classes Java"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Records`

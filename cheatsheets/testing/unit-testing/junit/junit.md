@@ -5,9 +5,15 @@ tags:
   - testing
   - unit-testing
   - junit
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "JUnit 5"
+  - "junit"
 prerequisites: []
-next: []
+next:
+  - "[[mockito]]"
+  - "[[testcontainers]]"
 updated: "2026-04-20"
 ---
 # JUnit 5

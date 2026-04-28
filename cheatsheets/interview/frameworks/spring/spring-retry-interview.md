@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-retry-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Retry"
   - "Spring Retry interview"
   - "Spring Retry собеседование"
-  - "Spring Retry вопросы"
-  - "retry pattern interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-retry]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Retry`

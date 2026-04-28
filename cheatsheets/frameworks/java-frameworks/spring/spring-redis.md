@@ -8,11 +8,23 @@ tags:
   - nosql
   - pub-sub
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-cache.md"]
-next: ["spring/spring-mongodb.md", "databases/redis.md"]
+aliases:
+  - "Spring Data Redis"
+  - "Полное руководство"
+  - "spring redis"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-cache]]"
+related:
+  - "[[spring-boot]]"
+  - "[[spring-cache]]"
+  - "[[redis]]"
+next:
+  - "[[spring-mongodb]]"
+  - "[[redis]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md"]
 ---
 
 # Spring Data Redis: Полное руководство

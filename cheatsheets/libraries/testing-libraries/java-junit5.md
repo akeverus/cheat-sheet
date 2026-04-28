@@ -5,7 +5,11 @@ tags:
   - libraries
   - testing-libraries
   - java-junit5
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "JUnit 5"
+  - "java junit5"
 prerequisites: []
 next: []
 updated: "2026-04-20"

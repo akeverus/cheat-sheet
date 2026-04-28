@@ -5,11 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-optional-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Java Optional"
   - "Java Optional interview"
   - "Java Optional собеседование"
-  - "Optional вопросы"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Optional`

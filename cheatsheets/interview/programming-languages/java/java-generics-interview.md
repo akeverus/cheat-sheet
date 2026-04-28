@@ -5,14 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-generics-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Java Generics"
   - "Java Generics interview"
   - "Java Generics собеседование"
-  - "Дженерики Java"
-  - "Type Erasure"
-  - "PECS Java"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-21"
 ---
 # Вопросы на собеседовании: `Java Generics`

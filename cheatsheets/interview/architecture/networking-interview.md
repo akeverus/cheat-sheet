@@ -5,13 +5,15 @@ tags:
   - interview
   - architecture
   - networking-interview
-aliases:
-  - "Networking interview"
-  - "Сетевые протоколы собеседование"
-  - "TCP UDP interview"
-  - "HTTP/2 HTTP/3 interview"
-  - "TLS DNS WebSocket interview"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Сетевые протоколы и сети"
+  - "Networking interview"
+  - "TCP UDP interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Сетевые протоколы и сети`

@@ -7,11 +7,15 @@ tags:
   - jwt
   - oauth2
   - oidc
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "JWT и OAuth2 / OIDC"
+  - "jwt oauth2"
 prerequisites:
-  - application-security
+  - "[[application-security]]"
 next:
-  - owasp-top-10
+  - "[[owasp-top-10]]"
 updated: "2026-04-20"
 ---
 # JWT и OAuth2 / OIDC

@@ -8,6 +8,10 @@ tags:
   - ai
   - aider
 type: "index"
+aliases:
+  - "Aider"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Aider

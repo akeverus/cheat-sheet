@@ -5,12 +5,15 @@ tags:
   - interview
   - devops
   - vault-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "HashiCorp Vault"
   - "Vault interview"
   - "HashiCorp Vault interview"
-  - "Vault собеседование"
-  - "Secrets management interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `HashiCorp Vault`

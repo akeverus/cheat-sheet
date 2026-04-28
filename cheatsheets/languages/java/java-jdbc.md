@@ -7,9 +7,17 @@ tags:
   - database
   - sql
   - persistence
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["java-basics.md", "java-exceptions.md"]
-next: ["java-hikaricp.md"]
+aliases:
+  - "Java JDBC"
+  - "API доступа к БД"
+  - "Java JDBC: API доступа к БД"
+prerequisites:
+  - "[[java-basics]]"
+  - "[[java-exceptions]]"
+next:
+  - "[[java-hikaricp]]"
 updated: "2026-04-20"
 ---
 

@@ -5,7 +5,11 @@ tags:
   - algorithms
   - math
   - standard-deviation
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Стандартное отклонение"
+  - "Standard Deviation"
 prerequisites: []
 next: []
 updated: "2026-04-20"

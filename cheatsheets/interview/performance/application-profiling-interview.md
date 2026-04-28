@@ -10,13 +10,15 @@ tags:
   - async-profiler
   - flame-graph
   - apm
+type: "interview"
 difficulty: "intermediate"
 aliases:
-  - "Application Profiling interview"
+  - "Вопросы на собеседовании"
+  - "Application Profiling"
   - "Java profiling собеседование"
   - "Профилирование приложений"
-  - "JFR interview"
-  - "async-profiler interview"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Application Profiling`

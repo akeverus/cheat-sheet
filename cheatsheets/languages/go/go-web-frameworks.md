@@ -9,8 +9,17 @@ tags:
   - gin
   - echo
   - fiber
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["go/go-basics.md", "go/go-stdlib-http.md"]
+aliases:
+  - "Go"
+  - "веб-фреймворки"
+  - "Go: веб-фреймворки"
+  - "go web frameworks"
+prerequisites:
+  - "[[go-basics]]"
+  - "[[go-stdlib-http]]"
+next: []
 updated: "2026-04-20"
 ---
 

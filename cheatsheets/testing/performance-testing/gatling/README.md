@@ -8,6 +8,10 @@ tags:
   - performance-testing
   - gatling
 type: "index"
+aliases:
+  - "Gatling"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Gatling

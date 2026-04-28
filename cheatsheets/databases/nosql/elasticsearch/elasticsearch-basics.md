@@ -5,9 +5,15 @@ tags:
   - databases
   - nosql
   - elasticsearch-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Elasticsearch"
+  - "elasticsearch basics"
+  - "ES"
 prerequisites: []
-next: []
+next:
+  - "[[elasticsearch-queries]]"
 updated: "2026-04-20"
 ---
 # Elasticsearch: Основы — Полное руководство по распределенному поисковому движку

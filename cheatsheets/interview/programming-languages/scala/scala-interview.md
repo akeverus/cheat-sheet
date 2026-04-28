@@ -5,12 +5,16 @@ tags:
   - interview
   - programming-languages
   - scala-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Scala"
   - "Scala interview"
   - "Scala собеседование"
-  - "Scala 3 interview"
-  - "Functional programming Scala"
-difficulty: "intermediate"
+prerequisites:
+  - "[[scala-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Scala`

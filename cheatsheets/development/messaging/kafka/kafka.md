@@ -5,9 +5,15 @@ tags:
   - development
   - messaging
   - kafka
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Apache Kafka для Java"
+  - "kafka"
 prerequisites: []
-next: []
+next:
+  - "[[spring-kafka]]"
+  - "[[cdc-change-data-capture]]"
 updated: "2026-04-20"
 ---
 # Apache Kafka для Java

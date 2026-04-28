@@ -5,7 +5,11 @@ tags:
   - databases
   - nosql
   - mongodb-performance
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "MongoDB"
+  - "mongodb performance"
 prerequisites: []
 next: []
 updated: "2026-04-20"

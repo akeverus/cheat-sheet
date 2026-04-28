@@ -5,9 +5,16 @@ tags:
   - languages
   - kotlin
   - kotlin-collections-set
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Collections"
+  - "Set"
+  - "Kotlin Collections: Set"
+  - "kotlin collections set"
 prerequisites: []
-next: []
+next:
+  - "[[kotlin-collections-operations]]"
 updated: "2026-04-20"
 ---
 # Kotlin Collections: Set

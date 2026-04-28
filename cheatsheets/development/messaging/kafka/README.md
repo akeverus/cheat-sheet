@@ -8,6 +8,10 @@ tags:
   - kafka
   - streaming
 type: "index"
+aliases:
+  - "Apache Kafka"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Apache Kafka

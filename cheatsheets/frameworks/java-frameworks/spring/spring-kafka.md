@@ -9,11 +9,22 @@ tags:
   - producer
   - consumer
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-messaging.md"]
-next: ["messaging/kafka.md", "spring/spring-cloud.md"]
+aliases:
+  - "Spring for Apache Kafka"
+  - "Полное руководство"
+  - "spring kafka"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-messaging]]"
+related:
+  - "[[spring-boot]]"
+  - "[[kafka]]"
+next:
+  - "[[kafka]]"
+  - "[[spring-cloud]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "messaging/kafka.md"]
 ---
 
 # Spring for Apache Kafka: Полное руководство

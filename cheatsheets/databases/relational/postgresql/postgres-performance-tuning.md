@@ -8,11 +8,22 @@ tags:
   - optimization
   - query-optimization
   - indexes
+type: "overview"
 difficulty: "advanced"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-indexes.md"]
-next: ["databases/postgres-monitoring.md", "databases/postgres-troubleshooting.md"]
+aliases:
+  - "PostgreSQL"
+  - "Тюнинг производительности"
+  - "postgres performance tuning"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-indexes]]"
+related:
+  - "[[postgres-replication]]"
+  - "[[postgres-admin]]"
+next:
+  - "[[postgres-monitoring]]"
+  - "[[postgres-troubleshooting]]"
 updated: "2026-04-20"
-related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 ---
 
 # PostgreSQL: Тюнинг производительности

@@ -5,9 +5,15 @@ tags:
   - algorithms
   - trees
   - binary-tree
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Бинарное дерево"
+  - "Binary Tree"
+  - "Бинарное дерево (Binary Tree)"
 prerequisites: []
-next: []
+next:
+  - "[[avl-tree]]"
 updated: "2026-04-20"
 ---
 # Бинарное дерево (Binary Tree)

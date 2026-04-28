@@ -5,9 +5,15 @@ tags:
   - databases
   - relational
   - postgres-admin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "PostgreSQL"
+  - "postgres admin"
+prerequisites:
+  - "[[postgres-basics]]"
+next:
+  - "[[postgres-monitoring]]"
 updated: "2026-04-20"
 ---
 # PostgreSQL: администрирование и обслуживание

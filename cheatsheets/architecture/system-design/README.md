@@ -7,6 +7,10 @@ tags:
   - architecture
   - system-design
 type: "index"
+aliases:
+  - "System Design"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # System Design

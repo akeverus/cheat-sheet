@@ -5,6 +5,12 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Алгоритмы"
+  - "обзор"
+  - "Алгоритмы (обзор)"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Алгоритмы (обзор)

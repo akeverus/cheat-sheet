@@ -5,11 +5,14 @@ tags:
   - interview
   - monitoring
   - logging-strategies-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Стратегии логирования"
   - "Logging strategies interview"
-  - "Logging стратегии собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: Стратегии логирования

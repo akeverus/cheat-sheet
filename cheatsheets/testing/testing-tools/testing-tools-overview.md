@@ -5,7 +5,10 @@ tags:
   - testing
   - testing-tools
   - testing-tools-overview
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "testing tools overview"
 prerequisites: []
 next: []
 updated: "2026-04-20"

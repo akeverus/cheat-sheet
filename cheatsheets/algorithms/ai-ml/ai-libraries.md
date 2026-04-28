@@ -5,9 +5,15 @@ tags:
   - algorithms
   - ai-ml
   - ai-libraries
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Обзор ИИ библиотек"
+  - "ai libraries"
 prerequisites: []
-next: []
+next:
+  - "[[deeplearning4j]]"
+  - "[[jenetics]]"
 updated: "2026-04-20"
 ---
 # Обзор ИИ библиотек

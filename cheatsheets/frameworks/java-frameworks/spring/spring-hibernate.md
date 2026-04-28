@@ -10,9 +10,18 @@ tags:
   - mapping
   - queries
   - caching
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring-boot", "java-basics", "databases"]
-next: ["spring-data-jpa.md"]
+aliases:
+  - "Spring Data JPA + Hibernate"
+  - "ORM и работа с данными"
+  - "spring hibernate"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[java-basics]]"
+  - "[[databases]]"
+next:
+  - "[[spring-data-jpa]]"
 updated: "2026-04-20"
 ---
 

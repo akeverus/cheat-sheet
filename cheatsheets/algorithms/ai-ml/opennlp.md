@@ -5,7 +5,11 @@ tags:
   - algorithms
   - ai-ml
   - opennlp
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Руководство по Apache OpenNLP"
+  - "opennlp"
 prerequisites: []
 next: []
 updated: "2026-04-20"

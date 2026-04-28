@@ -4,9 +4,15 @@ description: "Event Sourcing — это архитектурный паттер�
 tags:
   - architecture
   - event-sourcing
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Event Sourcing"
+prerequisites:
+  - "[[event-driven]]"
+  - "[[ddd]]"
+next:
+  - "[[cqrs]]"
 updated: "2026-04-20"
 ---
 # Event Sourcing

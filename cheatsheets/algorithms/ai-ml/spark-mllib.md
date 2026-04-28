@@ -5,7 +5,11 @@ tags:
   - algorithms
   - ai-ml
   - spark-mllib
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Руководство по Spark MLlib"
+  - "spark mllib"
 prerequisites: []
 next: []
 updated: "2026-04-20"

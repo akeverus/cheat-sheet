@@ -9,11 +9,21 @@ tags:
   - locale
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
-next: ["micronaut-http.md", "micronaut-views.md"]
+aliases:
+  - "Micronaut"
+  - "micronaut i18n"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-http]]"
+related:
+  - "[[micronaut-http]]"
+  - "[[micronaut-views]]"
+next:
+  - "[[micronaut-http]]"
+  - "[[micronaut-views]]"
 updated: "2026-04-20"
-related: ["micronaut-http.md", "micronaut-views.md"]
 ---
 
 # Micronaut: Internationalization — i18n и Localization

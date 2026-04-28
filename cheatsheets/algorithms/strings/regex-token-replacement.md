@@ -5,7 +5,10 @@ tags:
   - algorithms
   - strings
   - regex-token-replacement
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Regex Token Replacement"
 prerequisites: []
 next: []
 updated: "2026-04-20"

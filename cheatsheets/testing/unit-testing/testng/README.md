@@ -8,6 +8,10 @@ tags:
   - unit-testing
   - testng
 type: "index"
+aliases:
+  - "TestNG"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # TestNG

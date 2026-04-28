@@ -5,7 +5,17 @@ tags:
   - platform
   - ci-cd
   - github-actions
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "GitHub Actions"
+  - "GH Actions"
+  - "CI"
+prerequisites:
+  - "[[git-basics]]"
+next:
+  - "[[argocd]]"
+  - "[[gitlab-ci]]"
 updated: "2026-04-20"
 ---
 # GitHub Actions

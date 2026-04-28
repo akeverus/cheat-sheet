@@ -5,6 +5,10 @@ tags:
   - meta
   - index
 type: "index"
+aliases:
+  - "Базы данных временных рядов"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Базы данных временных рядов

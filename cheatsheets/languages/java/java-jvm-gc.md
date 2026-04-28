@@ -7,9 +7,17 @@ tags:
   - gc
   - memory
   - performance
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["java-basics.md"]
-next: ["java-memory-model.md", "java-concurrency-basics.md"]
+aliases:
+  - "JVM"
+  - "архитектура и сборка мусора"
+  - "java jvm gc"
+prerequisites:
+  - "[[java-basics]]"
+next:
+  - "[[java-memory-model]]"
+  - "[[java-concurrency-basics]]"
 updated: "2026-04-20"
 ---
 

@@ -5,8 +5,14 @@ tags:
   - libraries
   - kotlin
   - kotlin-exposed
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Kotlin Exposed"
+  - "Exposed"
+prerequisites:
+  - "[[kotlin-basics]]"
+  - "[[sql-basics]]"
 next: []
 updated: "2026-04-20"
 ---

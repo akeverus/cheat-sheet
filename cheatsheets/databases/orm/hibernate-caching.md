@@ -10,7 +10,16 @@ tags:
   - ehcache
   - redis
   - performance
+type: "reference"
 difficulty: "advanced"
+aliases:
+  - "Hibernate"
+  - "кэширование"
+  - "L1, L2, Query Cache"
+  - "hibernate caching"
+prerequisites:
+  - "[[redis-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 # Hibernate: кэширование (L1, L2, Query Cache)

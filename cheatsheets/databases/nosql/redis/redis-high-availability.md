@@ -8,11 +8,21 @@ tags:
   - cluster
   - failover
   - disaster-recovery
+type: "reference"
 difficulty: "advanced"
-prerequisites: ["databases/redis-replication.md", "databases/redis-clustering.md"]
+aliases:
+  - "Redis"
+  - "Высокая доступность"
+  - "Redis: Высокая доступность"
+  - "redis high availability"
+prerequisites:
+  - "[[redis-replication]]"
+  - "[[redis-clustering]]"
+related:
+  - "[[redis-replication]]"
+  - "[[redis-clustering]]"
 next: []
 updated: "2026-04-20"
-related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 ---
 
 # Redis: Высокая доступность

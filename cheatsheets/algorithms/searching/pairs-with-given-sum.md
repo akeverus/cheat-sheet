@@ -5,7 +5,11 @@ tags:
   - algorithms
   - searching
   - pairs-with-given-sum
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Пары с заданной суммой"
+  - "Pairs with Given Sum"
 prerequisites: []
 next: []
 updated: "2026-04-20"

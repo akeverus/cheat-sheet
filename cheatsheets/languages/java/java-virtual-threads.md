@@ -8,7 +8,16 @@ tags:
   - loom
   - java21
   - spring-boot
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Java Virtual Threads"
+  - "Project Loom"
+  - "VT"
+  - "Loom"
+prerequisites:
+  - "[[java-concurrency-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 

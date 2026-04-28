@@ -5,13 +5,16 @@ tags:
   - interview
   - databases
   - cassandra-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Apache Cassandra"
   - "Cassandra interview"
   - "Cassandra собеседование"
-  - "NoSQL Cassandra"
-  - "CQL"
-difficulty: "intermediate"
+prerequisites:
+  - "[[cassandra-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Apache Cassandra`

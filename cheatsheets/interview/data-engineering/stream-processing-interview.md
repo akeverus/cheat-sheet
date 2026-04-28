@@ -5,12 +5,15 @@ tags:
   - interview
   - data-engineering
   - stream-processing-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Stream Processing"
   - "Stream processing interview"
   - "Streaming собеседование"
-  - "Real-time processing interview"
-  - "Lambda kappa architecture"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Stream Processing`

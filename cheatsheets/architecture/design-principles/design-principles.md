@@ -4,9 +4,13 @@ description: "Основные принципы проектирования: SO
 tags:
   - architecture
   - design-principles
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "design principles"
 prerequisites: []
-next: []
+next:
+  - "[[solid-principles]]"
 updated: "2026-04-20"
 ---
 # Принципы проектирования программного обеспечения

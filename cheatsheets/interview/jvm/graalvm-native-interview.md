@@ -5,12 +5,15 @@ tags:
   - interview
   - jvm
   - graalvm-native-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "GraalVM Native Image"
   - "GraalVM Native Image interview"
   - "GraalVM Native собеседование"
-  - "GraalVM вопросы"
-  - "Spring Native interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `GraalVM Native Image`

@@ -5,7 +5,11 @@ tags:
   - testing
   - performance-testing
   - jmeter
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Apache JMeter"
+  - "jmeter"
 prerequisites: []
 next: []
 updated: "2026-04-20"

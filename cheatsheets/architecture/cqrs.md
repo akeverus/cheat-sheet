@@ -4,9 +4,15 @@ description: "CQRS (Command Query Responsibility Segregation) — это арх�
 tags:
   - architecture
   - cqrs
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "CQRS"
+prerequisites:
+  - "[[ddd]]"
+  - "[[event-sourcing]]"
+next:
+  - "[[event-driven]]"
 updated: "2026-04-20"
 ---
 # CQRS (Command Query Responsibility Segregation)

@@ -7,11 +7,20 @@ tags:
   - map
   - functional-programming
   - immutable
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["scala/scala-basics.md"]
-next: ["scala/scala-collections-list.md", "scala/scala-collections-set.md"]
+aliases:
+  - "Scala Collections — Map"
+  - "scala collections map"
+prerequisites:
+  - "[[scala-basics]]"
+related:
+  - "[[scala-basics]]"
+  - "[[scala-collections]]"
+next:
+  - "[[scala-collections-list]]"
+  - "[[scala-collections-set]]"
 updated: "2026-04-20"
-related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
 # Scala Collections — Map

@@ -4,9 +4,16 @@ description: "Именование, функции, комментарии и с
 tags:
   - basics
   - clean-code
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Принципы чистого кода"
+  - "clean code"
+  - "чистый код"
 prerequisites: []
-next: []
+next:
+  - "[[solid-principles]]"
+  - "[[design-principles]]"
 updated: "2026-04-20"
 ---
 # Принципы чистого кода

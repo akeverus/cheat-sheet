@@ -8,11 +8,22 @@ tags:
   - rest
   - microservices
   - lightweight
+type: "overview"
 difficulty: "beginner"
-prerequisites: ["java/java-basics.md"]
-next: ["javalin-routing.md", "javalin-websocket.md"]
+aliases:
+  - "Javalin"
+  - "Основы"
+  - "Javalin: Основы"
+  - "javalin basics"
+prerequisites:
+  - "[[java-basics]]"
+related:
+  - "[[spark-basics]]"
+  - "[[spring-rest]]"
+next:
+  - "[[javalin-routing]]"
+  - "[[javalin-websocket]]"
 updated: "2026-04-20"
-related: ["spark/spark-basics.md", "spring/spring-rest.md"]
 ---
 
 # Javalin: Основы

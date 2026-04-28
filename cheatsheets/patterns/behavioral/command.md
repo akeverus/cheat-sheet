@@ -5,9 +5,17 @@ tags:
   - patterns
   - behavioral
   - command
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Команда"
+  - "Command"
+  - "Команда (Command)"
+prerequisites:
+  - "[[chain-of-responsibility]]"
+next:
+  - "[[mediator]]"
+  - "[[memento]]"
 updated: "2026-04-20"
 ---
 # Команда (Command)

@@ -8,11 +8,21 @@ tags:
   - event-streaming
   - messaging
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-reactive.md"]
-next: ["quarkus-reactive.md", "quarkus-messaging.md"]
+aliases:
+  - "Quarkus"
+  - "quarkus kafka"
+prerequisites:
+  - "[[quarkus-basics]]"
+  - "[[quarkus-reactive]]"
+related:
+  - "[[quarkus-reactive]]"
+  - "[[quarkus-messaging]]"
+next:
+  - "[[quarkus-reactive]]"
+  - "[[quarkus-messaging]]"
 updated: "2026-04-20"
-related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 ---
 
 # Quarkus: Kafka — Reactive Messaging и Event Streaming

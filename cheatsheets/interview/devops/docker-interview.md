@@ -5,12 +5,16 @@ tags:
   - interview
   - devops
   - docker-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Docker"
   - "Docker interview"
   - "Docker собеседование"
-  - "Вопросы по Docker"
-  - "Контейнеризация interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[docker-basics]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Docker`

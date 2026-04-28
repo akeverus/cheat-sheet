@@ -10,11 +10,25 @@ tags:
   - monitoring
   - indexes
   - optimization
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/postgres-design.md", "databases/postgres-types.md"]
-next: ["databases/postgres-transactions.md", "databases/postgres-indexes.md", "databases/postgres-partitioning.md"]
+aliases:
+  - "PostgreSQL"
+  - "postgres basics"
+  - "Postgres"
+  - "PG"
+prerequisites:
+  - "[[postgres-design]]"
+  - "[[postgres-types]]"
+related:
+  - "[[postgres-data-ops]]"
+  - "[[postgres-joins]]"
+  - "[[postgres-queries]]"
+next:
+  - "[[postgres-transactions]]"
+  - "[[postgres-indexes]]"
+  - "[[postgres-partitioning]]"
 updated: "2026-04-20"
-related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "databases/postgres-queries.md"]
 ---
 
 # PostgreSQL: Полное руководство по основам и мониторингу

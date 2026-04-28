@@ -5,13 +5,15 @@ tags:
   - interview
   - programming-languages
   - java-modules-interview
+type: "interview"
 difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Java Modules"
+  - "JPMS"
   - "Java Modules interview"
-  - "JPMS interview"
-  - "Java Modules собеседование"
-  - "JPMS собеседование"
-  - "модульная система Java"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Modules` (JPMS)

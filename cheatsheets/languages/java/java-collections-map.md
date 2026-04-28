@@ -5,10 +5,16 @@ tags:
   - languages
   - java
   - java-collections-map
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Java Collections"
+  - "Map"
+  - "Java Collections: Map"
+  - "java collections map"
 prerequisites: []
 next:
-  - java-memory-model
+  - "[[java-memory-model]]"
 updated: "2026-04-20"
 ---
 # Java Collections: Map

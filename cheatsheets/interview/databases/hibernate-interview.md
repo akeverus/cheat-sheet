@@ -5,14 +5,15 @@ tags:
   - interview
   - databases
   - hibernate-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "Hibernate"
   - "Hibernate ORM"
   - "Hibernate interview"
-  - "Hibernate собеседование"
-  - "JPA Hibernate"
-  - "ORM Java"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Hibernate`

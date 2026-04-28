@@ -8,11 +8,22 @@ tags:
   - diagnostics
   - performance
   - recovery
+type: "troubleshooting"
 difficulty: "advanced"
-prerequisites: ["databases/redis-basics.md", "databases/redis-performance.md"]
+aliases:
+  - "Redis"
+  - "Решение проблем"
+  - "Redis: Решение проблем"
+  - "redis troubleshooting"
+prerequisites:
+  - "[[redis-basics]]"
+  - "[[redis-performance]]"
+related:
+  - "[[redis-basics]]"
+  - "[[redis-performance]]"
+  - "[[redis-monitoring]]"
 next: []
 updated: "2026-04-20"
-related: ["databases/redis-basics.md", "databases/redis-performance.md", "databases/redis-monitoring.md"]
 ---
 
 # Redis: Решение проблем

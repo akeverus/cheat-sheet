@@ -8,9 +8,17 @@ tags:
   - ioc
   - aop
   - java
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Spring Framework"
+  - "Core"
+  - "Spring Framework: Core"
+  - "spring core"
 prerequisites: []
-next: ["spring-boot.md", "spring-data.md"]
+next:
+  - "[[spring-boot]]"
+  - "[[spring-data]]"
 updated: "2026-04-20"
 ---
 

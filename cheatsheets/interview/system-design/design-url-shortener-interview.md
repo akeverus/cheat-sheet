@@ -5,12 +5,15 @@ tags:
   - interview
   - system-design
   - design-url-shortener-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Design URL Shortener"
   - "URL Shortener design"
   - "TinyURL system design"
-  - "bit.ly architecture"
-  - "URL Shortener собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design URL Shortener`

@@ -5,12 +5,15 @@ tags:
   - interview
   - system-design
   - design-feed-system-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Design Feed System"
   - "News Feed design"
   - "Twitter timeline"
-  - "Feed architecture"
-  - "Feed System собеседование"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Design Feed System`

@@ -5,9 +5,15 @@ tags:
   - libraries
   - java
   - java-protobuf
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Protocol Buffers"
+  - "Protobuf"
+  - "Protocol Buffers (Protobuf)"
+  - "java protobuf"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

@@ -7,7 +7,13 @@ tags:
   - openclaw
   - automation
   - cli
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "OpenClaw"
+  - "основы"
+  - "OpenClaw: основы"
+  - "openclaw basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

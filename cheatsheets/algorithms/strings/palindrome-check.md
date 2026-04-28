@@ -5,7 +5,12 @@ tags:
   - algorithms
   - strings
   - palindrome-check
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Проверка палиндрома"
+  - "Palindrome Check"
+  - "palindrome"
 prerequisites: []
 next: []
 updated: "2026-04-20"

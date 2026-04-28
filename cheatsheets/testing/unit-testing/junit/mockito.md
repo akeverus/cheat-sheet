@@ -5,7 +5,10 @@ tags:
   - testing
   - unit-testing
   - mockito
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Mockito"
 prerequisites: []
 next: []
 updated: "2026-04-20"

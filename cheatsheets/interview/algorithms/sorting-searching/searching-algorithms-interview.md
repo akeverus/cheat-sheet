@@ -5,13 +5,15 @@ tags:
   - interview
   - algorithms
   - searching-algorithms-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Алгоритмы поиска"
   - "Searching algorithms interview"
   - "Алгоритмы поиска собеседование"
-  - "Binary search interview"
-  - "Linear search interview"
-  - "Exponential search interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Алгоритмы поиска`

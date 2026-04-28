@@ -8,10 +8,18 @@ tags:
   - analytics
   - aggregation
   - window-functions
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/clickhouse-tables.md"]
+aliases:
+  - "ClickHouse"
+  - "clickhouse queries"
+prerequisites:
+  - "[[clickhouse-tables]]"
+related:
+  - "[[clickhouse-tables]]"
+  - "[[clickhouse-indexes]]"
+next: []
 updated: "2026-04-20"
-related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 ---
 
 # ClickHouse: Запросы и аналитика — Полное руководство по SQL запросам

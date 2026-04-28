@@ -5,9 +5,14 @@ tags:
   - languages
   - scala
   - scala-scalaz
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Scalaz в Scala"
+  - "scala scalaz"
 prerequisites: []
-next: []
+next:
+  - "[[scala-cats]]"
 updated: "2026-04-20"
 ---
 # Scalaz в Scala

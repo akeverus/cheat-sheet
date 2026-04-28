@@ -6,7 +6,15 @@ tags:
   - api
   - insomnia
   - api-testing
+type: "overview"
 difficulty: "beginner"
+aliases:
+  - "Insomnia"
+  - "Основы"
+  - "Insomnia: Основы"
+  - "insomnia basics"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Insomnia: Основы

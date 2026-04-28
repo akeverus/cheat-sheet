@@ -9,11 +9,21 @@ tags:
   - metrics
   - observability
   - java
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["spring/spring-boot.md", "spring/spring-security.md"]
-next: ["spring/spring-cloud.md", "monitoring/prometheus.md"]
+aliases:
+  - "Spring Actuator"
+  - "Actuator"
+prerequisites:
+  - "[[spring-boot]]"
+  - "[[spring-security]]"
+related:
+  - "[[spring-boot]]"
+  - "[[prometheus]]"
+next:
+  - "[[spring-cloud]]"
+  - "[[prometheus]]"
 updated: "2026-04-20"
-related: ["spring/spring-boot.md", "monitoring/prometheus.md"]
 ---
 
 # Spring Actuator: Полное руководство по мониторингу и управлению

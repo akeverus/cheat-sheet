@@ -5,7 +5,11 @@ tags:
   - algorithms
   - problems
   - sudoku-solver
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Решатель судоку"
+  - "Sudoku Solver"
 prerequisites: []
 next: []
 updated: "2026-04-20"

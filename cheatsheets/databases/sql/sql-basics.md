@@ -8,13 +8,19 @@ tags:
   - normalization
   - cte
   - upsert
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "SQL"
+  - "Основы"
+  - "SQL: Основы"
+  - "sql basics"
 prerequisites: []
-next:
-  - "sql-transactions-isolation.md"
-  - "../relational/postgresql/postgres-indexes.md"
 related:
-  - "../relational/postgresql/postgres-queries.md"
+  - "[[postgres-queries]]"
+next:
+  - "[[sql-transactions-isolation]]"
+  - "[[postgres-indexes]]"
 updated: "2026-04-27"
 ---
 # SQL: Основы

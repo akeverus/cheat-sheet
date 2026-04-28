@@ -5,14 +5,16 @@ tags:
   - interview
   - databases
   - mongodb-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "MongoDB"
   - "MongoDB interview"
   - "MongoDB собеседование"
-  - "Mongo DB"
-  - "NoSQL MongoDB"
-  - "Spring Data MongoDB"
-difficulty: "intermediate"
+prerequisites:
+  - "[[mongodb]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `MongoDB`

@@ -5,12 +5,16 @@ tags:
   - interview
   - cloud
   - serverless-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Serverless"
   - "Serverless interview"
   - "FaaS interview"
-  - "Serverless computing"
-  - "Edge computing interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[serverless]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Serverless`

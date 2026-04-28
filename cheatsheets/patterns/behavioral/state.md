@@ -5,9 +5,16 @@ tags:
   - patterns
   - behavioral
   - state
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Состояние"
+  - "State"
+  - "Состояние (State)"
+prerequisites:
+  - "[[strategy]]"
+next:
+  - "[[template-method]]"
 updated: "2026-04-20"
 ---
 # Состояние (State)

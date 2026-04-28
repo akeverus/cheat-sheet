@@ -5,9 +5,15 @@ tags:
   - databases
   - nosql
   - elasticsearch-clustering
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Elasticsearch"
+  - "elasticsearch clustering"
+prerequisites:
+  - "[[elasticsearch-basics]]"
+next:
+  - "[[elasticsearch-performance]]"
 updated: "2026-04-20"
 ---
 # Elasticsearch: Кластеризация — Управление кластером и масштабирование

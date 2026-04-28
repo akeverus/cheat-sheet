@@ -5,8 +5,13 @@ tags:
   - algorithms
   - ai-ml
   - cnn-deeplearning4j
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "cnn deeplearning4j"
+  - "CNN"
+prerequisites:
+  - "[[deeplearning4j]]"
 next: []
 updated: "2026-04-20"
 ---

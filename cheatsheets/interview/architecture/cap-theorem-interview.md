@@ -5,13 +5,15 @@ tags:
   - interview
   - architecture
   - cap-theorem-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
   - "CAP-теорема"
   - "CAP theorem interview"
   - "CAP теорема собеседование"
-  - "CP AP системы"
-  - "PACELC interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `CAP`-теорема

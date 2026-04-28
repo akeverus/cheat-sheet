@@ -5,9 +5,17 @@ tags:
   - patterns
   - behavioral
   - iterator
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Итератор"
+  - "Iterator"
+  - "Итератор (Iterator)"
+prerequisites:
+  - "[[composite]]"
+next:
+  - "[[visitor]]"
+  - "[[observer]]"
 updated: "2026-04-20"
 ---
 # Итератор (Iterator)

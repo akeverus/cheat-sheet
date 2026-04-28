@@ -9,11 +9,22 @@ tags:
   - versioning
   - java
   - kotlin
+type: "reference"
 difficulty: "intermediate"
-prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
-next: ["micronaut-data.md", "micronaut-testing.md"]
+aliases:
+  - "Micronaut"
+  - "Flyway — Database Migrations"
+  - "micronaut flyway"
+prerequisites:
+  - "[[micronaut-basics]]"
+  - "[[micronaut-data]]"
+related:
+  - "[[micronaut-data]]"
+  - "[[micronaut-testing]]"
+next:
+  - "[[micronaut-data]]"
+  - "[[micronaut-testing]]"
 updated: "2026-04-20"
-related: ["micronaut-data.md", "micronaut-testing.md"]
 ---
 
 # Micronaut: Flyway — Database Migrations

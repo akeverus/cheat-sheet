@@ -7,7 +7,16 @@ tags:
   - lombok
   - codegen
   - boilerplate
+type: "overview"
 difficulty: "beginner"
+aliases:
+  - "Lombok"
+  - "кодогенерация в Java"
+  - "Lombok: кодогенерация в Java"
+  - "java lombok"
+prerequisites:
+  - "[[java-basics]]"
+next: []
 updated: "2026-04-20"
 ---
 # Lombok: кодогенерация в Java

@@ -5,12 +5,16 @@ tags:
   - interview
   - spring
   - spring-validation-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Spring Validation"
   - "Spring Validation interview"
   - "Bean Validation interview"
-  - "Spring Validation собеседование"
-  - "@Valid @Validated interview"
-difficulty: "intermediate"
+prerequisites:
+  - "[[spring-validation]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Spring Validation`

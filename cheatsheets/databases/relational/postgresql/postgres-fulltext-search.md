@@ -8,11 +8,22 @@ tags:
   - tsquery
   - gin-index
   - search
+type: "overview"
 difficulty: "intermediate"
-prerequisites: ["databases/postgres-basics.md", "databases/postgres-indexes.md"]
-next: ["databases/postgres-extensions.md", "databases/postgres-performance-tuning.md"]
+aliases:
+  - "PostgreSQL"
+  - "Полнотекстовый поиск"
+  - "postgres fulltext search"
+prerequisites:
+  - "[[postgres-basics]]"
+  - "[[postgres-indexes]]"
+related:
+  - "[[postgres-queries]]"
+  - "[[postgres-indexes]]"
+next:
+  - "[[postgres-extensions]]"
+  - "[[postgres-performance-tuning]]"
 updated: "2026-04-20"
-related: ["databases/postgres-queries.md", "databases/postgres-indexes.md"]
 ---
 
 # PostgreSQL: Полнотекстовый поиск

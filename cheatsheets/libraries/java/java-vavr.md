@@ -5,9 +5,13 @@ tags:
   - libraries
   - java
   - java-vavr
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Vavr"
+  - "java vavr"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

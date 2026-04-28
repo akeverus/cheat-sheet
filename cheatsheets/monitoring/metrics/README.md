@@ -7,6 +7,10 @@ tags:
   - monitoring
   - metrics
 type: "index"
+aliases:
+  - "Метрики"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Метрики

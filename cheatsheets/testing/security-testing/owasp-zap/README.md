@@ -8,6 +8,10 @@ tags:
   - security-testing
   - owasp-zap
 type: "index"
+aliases:
+  - "OWASP ZAP"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # OWASP ZAP

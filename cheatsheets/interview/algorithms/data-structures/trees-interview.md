@@ -5,15 +5,15 @@ tags:
   - interview
   - algorithms
   - trees-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Деревья"
   - "Trees interview"
   - "Деревья собеседование"
-  - "Binary tree interview"
-  - "BST interview"
-  - "AVL interview"
-  - "Red-black tree interview"
-  - "B-tree interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Деревья`

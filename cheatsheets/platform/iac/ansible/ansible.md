@@ -5,8 +5,12 @@ tags:
   - platform
   - iac
   - ansible
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Ansible"
+prerequisites:
+  - "[[iac-overview]]"
 next: []
 updated: "2026-04-20"
 ---

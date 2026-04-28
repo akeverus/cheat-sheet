@@ -5,7 +5,10 @@ tags:
   - algorithms
   - ai-ml
   - minimax
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "minimax"
 prerequisites: []
 next: []
 updated: "2026-04-20"

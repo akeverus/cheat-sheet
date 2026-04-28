@@ -5,7 +5,10 @@ tags:
   - testing
   - security-testing
   - burp-suite
+type: "reference"
 difficulty: "intermediate"
+aliases:
+  - "Burp Suite"
 prerequisites: []
 next: []
 updated: "2026-04-20"

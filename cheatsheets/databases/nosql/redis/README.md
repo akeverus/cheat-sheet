@@ -8,6 +8,10 @@ tags:
   - nosql
   - redis
 type: "index"
+aliases:
+  - "Redis"
+prerequisites: []
+next: []
 updated: "2026-04-20"
 ---
 # Redis

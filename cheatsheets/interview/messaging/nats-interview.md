@@ -5,12 +5,16 @@ tags:
   - interview
   - messaging
   - nats-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "NATS"
   - "NATS interview"
   - "NATS собеседование"
-  - "JetStream interview"
-  - "NATS vs Kafka"
-difficulty: "intermediate"
+prerequisites:
+  - "[[nats]]"
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `NATS`

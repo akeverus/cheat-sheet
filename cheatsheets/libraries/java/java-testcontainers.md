@@ -5,9 +5,13 @@ tags:
   - libraries
   - java
   - java-testcontainers
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Testcontainers"
+  - "java testcontainers"
 prerequisites:
-  - java-lombok
+  - "[[java-lombok]]"
 next: []
 updated: "2026-04-20"
 ---

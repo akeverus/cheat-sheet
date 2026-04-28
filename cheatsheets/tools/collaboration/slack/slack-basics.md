@@ -5,7 +5,13 @@ tags:
   - tools
   - collaboration
   - slack-basics
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Slack"
+  - "основы"
+  - "Slack: основы"
+  - "slack basics"
 prerequisites: []
 next: []
 updated: "2026-04-20"

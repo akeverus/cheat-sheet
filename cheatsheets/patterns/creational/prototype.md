@@ -5,9 +5,16 @@ tags:
   - patterns
   - creational
   - prototype
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
+aliases:
+  - "Прототип"
+  - "Prototype"
+  - "Прототип (Prototype)"
+prerequisites:
+  - "[[builder]]"
+next:
+  - "[[singleton]]"
 updated: "2026-04-20"
 ---
 # Прототип (Prototype)

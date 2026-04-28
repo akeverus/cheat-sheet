@@ -5,8 +5,13 @@ tags:
   - testing
   - unit-testing
   - mockito-advanced
+type: "reference"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Mockito Advanced для Java"
+  - "mockito advanced"
+prerequisites:
+  - "[[mockito]]"
 next: []
 updated: "2026-04-20"
 ---

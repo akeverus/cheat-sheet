@@ -5,12 +5,15 @@ tags:
   - interview
   - algorithms
   - recursion-interview
+type: "interview"
+difficulty: "intermediate"
 aliases:
+  - "Вопросы на собеседовании"
+  - "Рекурсия"
   - "Recursion interview"
   - "Рекурсия собеседование"
-  - "Tail recursion interview"
-  - "Recursion tree interview"
-difficulty: "intermediate"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Рекурсия`

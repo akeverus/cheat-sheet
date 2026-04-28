@@ -5,11 +5,13 @@ tags:
   - interview
   - programming-languages
   - java-functional-interface-interview
-aliases:
-  - "Java Functional Interfaces interview"
-  - "Java Functional Interfaces собеседование"
-  - "функциональные интерфейсы Java вопросы"
+type: "interview"
 difficulty: "intermediate"
+aliases:
+  - "Вопросы на собеседовании"
+  - "Java Functional Interfaces"
+prerequisites: []
+next: []
 updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `Java Functional Interfaces`

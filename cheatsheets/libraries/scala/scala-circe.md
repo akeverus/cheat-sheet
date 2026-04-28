@@ -5,8 +5,13 @@ tags:
   - libraries
   - scala
   - scala-circe
+type: "overview"
 difficulty: "intermediate"
-prerequisites: []
+aliases:
+  - "Circe"
+  - "scala circe"
+prerequisites:
+  - "[[scala-basics]]"
 next: []
 updated: "2026-04-20"
 ---

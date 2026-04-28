@@ -5,7 +5,12 @@ tags:
   - languages
   - kotlin
   - kotlin-fp-advanced
+type: "overview"
 difficulty: "intermediate"
+aliases:
+  - "Kotlin Functional Programming"
+  - "Advanced"
+  - "kotlin fp advanced"
 prerequisites: []
 next: []
 updated: "2026-04-20"
