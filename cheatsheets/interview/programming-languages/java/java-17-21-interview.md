@@ -1868,10 +1868,12 @@ ScopedValue.where(CURRENT_USER, adminUser).run(() -> {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Sequenced Collections: SequencedCollection и SequencedMap ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] ScopedValue.get() выбрасывает исключение если значение не установлено в текущем scope | ❌ ПОСЛЕДСТВИЕ: верно — NoSuchElementException; это особенность дизайна: значение явно ограничено scope; проверяй ScopedValue.isBound()
+> - [x] ScopedValue иммутабельны в scope; child tasks автоматически наследуют значение в StructuredTaskScope; нет утечек (GC при выходе из scope) | ✓ ПРИМЕНЯТЬ: request-scoped данные (user, requestId, tenantId) в VT-приложении 📋 ПРАВИЛО: ScopedValue = ThreadLocal без set() + автоGC + автонаследование 🔗 См. Q21
+> - [ ] ScopedValue можно изменять внутри scope через ScopedValue.rebind() | ❌ ПОСЛЕДСТВИЕ: ScopedValue намеренно иммутабельны; rebind() не существует; для "переопределения" — вложенный ScopedValue.where(...).run(...)
+> - [ ] ThreadLocal совместим с Virtual Threads и не вызывает утечек памяти | ❌ ПОСЛЕДСТВИЕ: ThreadLocal с VT создаёт проблемы: значение живёт пока VT не завершится; pool VT = потенциальные утечки; также InheritableThreadLocal копирует значения при каждом fork
+
+## Q38. Sequenced Collections: SequencedCollection и SequencedMap
 
 **Sequenced Collections** (JEP 431, Java 21) — новая иерархия интерфейсов для коллекций с определённым порядком элементов.
 
