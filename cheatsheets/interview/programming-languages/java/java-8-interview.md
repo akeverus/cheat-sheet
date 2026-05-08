@@ -14,7 +14,7 @@ aliases:
   - "Java 8 собеседование"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-05"
 ---
 # Вопросы на собеседовании: `Java 8`
 
@@ -137,10 +137,16 @@ graph LR
 На собеседовании важно не просто перечислить фичи, а показать, как они связаны: лямбды — основа для `Stream API` и `CompletableFuture`; `Optional` — естественный результат терминальных операций стримов.
 
 > [!mcq]
-> - [x] Лямбда-выражения появились в Java 8 и позволяют передавать анонимные функции как объекты, реализуя функциональный интерфейс — это ключевое нововведение, открывшее путь к Stream API и CompletableFuture | ✓ ПРИМЕНЯТЬ: лямбды как замена анонимных классов (sort, forEach, Runnable); основа для функциональных pipelines; Comparator.comparing(Person::getAge); CompletableFuture.thenApply(x -> ...). 📋 ПРАВИЛО: "Java 8 = Lambda + Stream API + Optional + CompletableFuture; SAM interface = lambda target". 🔗 См. Q3 (functional interface), Q5 (lambda syntax), Q18 (Stream).
-> - [ ] Generics появились в Java 8 и позволяют параметризовать типы коллекций и методов для обеспечения типобезопасности на этапе компиляции | Это Java 5. ❌ ПОСЛЕДСТВИЕ: на собеседовании senior-уровня неправильное знание timeline снижает credibility — Generics с Java 1.5 (2004), за 10 лет до Java 8. type erasure тоже оттуда.
-> - [ ] Аннотации появились в Java 8 как механизм добавления метаданных к классам, методам и полям без влияния на бизнес-логику | Это Java 5. ❌ ПОСЛЕДСТВИЕ: путаница в timeline — annotations (`@Override`, `@Deprecated`) появились в Java 5; Java 8 добавила type annotations (JSR 308) и repeating annotations.
-> - [ ] Многопоточность через Thread появилась в Java 8 и позволила запускать код параллельно в отдельных потоках ОС | `Thread` с Java 1.0. ❌ ПОСЛЕДСТВИЕ: ложные ожидания о возрасте API — `java.lang.Thread` есть с самой первой версии Java (1996). Java 8 добавила `CompletableFuture` и `parallelStream`, но базовая concurrency старая.
+> - [x] Лямбды + `Stream API` + `Optional` + `CompletableFuture` + default-методы — это пакет нововведений `Java 8`, открывший функциональное программирование в платформе | ✓ ПРИМЕНЯТЬ: лямбды как замена анонимных классов (`Comparator.comparing(Person::getAge)`); цепочки `CompletableFuture.thenApply`; default в `Iterable.forEach`. 📋 ПРАВИЛО: «Java 8 = Lambda + Stream + Optional + CF + default». 🔗 См. Q3, Q5, Q18.
+> - [ ] `Generics` появились в `Java 8` для параметризации типов коллекций и обеспечения типобезопасности на этапе компиляции | `Generics` — `Java 5` (2004). ❌ ПОСЛЕДСТВИЕ: senior путает timeline — на интервью отвечает «generics это Java 8» при вопросе про эволюцию; репутационный удар.
+> - [ ] Аннотации появились в `Java 8` как механизм добавления метаданных к классам, методам и полям без влияния на бизнес-логику | Annotations — `Java 5`. ❌ ПОСЛЕДСТВИЕ: разработчик обещает team lead «миграция со старого framework без аннотаций решит проблемы Java 8» — фактически `@Override` и `@Deprecated` есть с 2004.
+> - [ ] Многопоточность через `Thread` появилась в `Java 8` и позволила запускать код параллельно в отдельных потоках ОС | `Thread` — `Java 1.0` (1996). ❌ ПОСЛЕДСТВИЕ: команда отказывается от миграции на Java 8 «ради Thread API» — упускает реальный приз `CompletableFuture` и `parallelStream`; legacy остаётся годами.
+
+> [!mcq]
+> - [ ] `default`-методы — это компромисс, позволяющий добавлять реализации в `abstract`-классы без поломки наследников; интерфейсы остались чисто абстрактными | `default` именно в интерфейсах. ❌ ПОСЛЕДСТВИЕ: разработчик переводит `Comparator` в `abstract class` ради «default-семантики», ломает hierarchy реализующих классов (множественное наследование классов запрещено); rollback на полдня.
+> - [ ] `Stream API` появился как часть `java.util.concurrent` и заменил `ExecutorService` для функциональной обработки данных | `Stream API` живёт в `java.util.stream`. ❌ ПОСЛЕДСТВИЕ: разработчик ищет `Stream` в `java.util.concurrent`, утверждает «Stream нет в JDK»; team lead видит путаницу concurrency-pool с lazy-pipeline; ставится под сомнение знание JDK.
+> - [x] Главный архитектурный приём `Java 8` — `default`-методы в интерфейсах: позволили добавить `stream()`, `forEach`, `removeIf` в `Collection` без поломки существующих реализаций | ✓ ПРИМЕНЯТЬ: `Iterable.forEach`, `Collection.removeIf`, `Comparator.thenComparing` добавлены через `default`; расширяйте свой библиотечный `interface` через `default` для backward compatibility. 📋 ПРАВИЛО: «default = эволюция API без breaking changes». 🔗 См. Q15, Q16, Q18.
+> - [ ] `var` для локальных переменных и `record` появились в `Java 8` как часть упрощения boilerplate-кода вместе с лямбдами | `var` — `Java 10`, `record` — `Java 16`. ❌ ПОСЛЕДСТВИЕ: senior на собеседовании отвечает «record в Java 8», провал темы LTS-планирования; команда выбирает `Java 8` ожидая `record` — разочарование на review.
 
 ## Q2. Какие важные изменения появились в `Java 9–21`?
 
@@ -172,10 +178,10 @@ List<String> filtered = names.stream()
 На собеседовании достаточно знать основные фичи каждой LTS-версии (8, 11, 17, 21) и уметь объяснить практическую пользу.
 
 > [!mcq]
-> - [ ] В Java 16 появился оператор `var` для вывода типа локальных переменных, что сокращает шаблонный код при объявлении переменных | `var` — Java 10. ❌ ПОСЛЕДСТВИЕ: путаница timeline в технических обсуждениях; разработчик отказывается от `var` "это новая фича, надо подождать" — фактически уже 7 лет stable.
-> - [x] В Java 16 появился тип `record` — неизменяемый носитель данных с автоматически генерируемыми конструктором, геттерами, equals, hashCode и toString | ✓ ПРИМЕНЯТЬ: для DTO между слоями (REST DTO, JPA projection через interface-based, MapStruct mappings); для immutable value objects в DDD; для tuple-like return types из методов. Альтернатива Lombok `@Value` без compile-time generation. 📋 ПРАВИЛО: "Java 8 LTS / 11 LTS / 17 LTS / 21 LTS; record stable Java 16, sealed Java 17, VT Java 21". 🔗 См. Q1 (Java 8 features), java-records-interview, java-17-21-interview.
-> - [ ] В Java 17 появился `record` — неизменяемый носитель данных с автоматически генерируемыми конструктором, геттерами, equals, hashCode и toString | record — Java 16. ❌ ПОСЛЕДСТВИЕ: разработчик откладывает миграцию на record до Java 17, теряет 6 месяцев продуктивности; record доступен с Java 16 как stable feature.
-> - [ ] В Java 21 появился `record` — неизменяемый носитель данных с автоматически генерируемыми конструктором, геттерами, equals, hashCode и toString | record — Java 16. ❌ ПОСЛЕДСТВИЕ: команда выбирает Java 21 LTS только ради record, пропуская важные фичи Java 17 (sealed classes, pattern matching) — на деле Java 17 LTS даёт большинство modern features.
+> - [x] `record` появился стабильно в `Java 16` — неизменяемый носитель данных с авто-генерируемыми конструктором, геттерами, `equals`/`hashCode`/`toString` | ✓ ПРИМЕНЯТЬ: DTO между слоями (REST DTO, JPA projection), immutable value objects в DDD, tuple-like возврат из методов; альтернатива Lombok `@Value`. 📋 ПРАВИЛО: «LTS: 8/11/17/21; record stable J16, sealed J17, VirtualThreads J21». 🔗 См. Q1, Q31, Q42.
+> - [ ] `var` для локальных переменных появился в `Java 16` для сокращения boilerplate при объявлениях | `var` — `Java 10`. ❌ ПОСЛЕДСТВИЕ: разработчик отказывается использовать `var` «это новинка из Java 16, рано»; команда теряет 6 лет читабельности кода; PR-стайл застревает на `Map<String, List<Integer>> x = new HashMap<>()`.
+> - [ ] `record` появился стабильно в `Java 17` как неизменяемый носитель данных с авто-генерируемыми методами | `record` стабилен с `Java 16`. ❌ ПОСЛЕДСТВИЕ: разработчик откладывает миграцию на `record` до Java 17, теряет полгода продуктивности; в кодовой базе всё ещё пишутся длинные DTO с Lombok.
+> - [ ] `record` появился стабильно в `Java 21` как часть финальной модернизации модели данных | `record` — `Java 16`. ❌ ПОСЛЕДСТВИЕ: команда выбирает `Java 21` LTS только ради `record`, пропуская `sealed` и pattern matching из `Java 17`; миграция завышена в эстимейте.
 
 ## Q3. (!) Что такое функциональный интерфейс?
 
@@ -214,10 +220,16 @@ graph TD
 Подробнее о коллекциях, использующих функциональные интерфейсы — в [вопросах по Java Collections](java-collections-interview.md).
 
 > [!mcq]
-> - [ ] Функциональный интерфейс — это интерфейс, у которого все методы помечены аннотацией `@FunctionalInterface`, что гарантирует возможность использования лямбд | Аннотация не обязательна. ❌ ПОСЛЕДСТВИЕ: разработчик не использует `Comparator`, `Runnable`, `Callable` как lambda targets, ожидая `@FunctionalInterface`-маркера — на деле они работают и без annotation, потому что SAM.
-> - [ ] Функциональный интерфейс — это интерфейс без default-методов и static-методов, содержащий ровно один абстрактный метод для совместимости с лямбдами | Default/static OK. ❌ ПОСЛЕДСТВИЕ: разработчик удаляет полезные default-методы (`Predicate.and`, `Function.andThen`), думая что они нарушают SAM-контракт; функциональность теряется без необходимости.
-> - [x] Функциональный интерфейс — это интерфейс ровно с одним абстрактным методом (SAM), который является целевым типом для лямбда-выражений и ссылок на методы | ✓ ПРИМЕНЯТЬ: создание custom functional interfaces (`Validator<T>`, `Mapper<F,T>`, `EventHandler<E>`) для domain-specific behaviour; добавляйте `@FunctionalInterface` для compile-time check. Дополняйте default методами `andThen`, `compose`, `negate` для composability. 📋 ПРАВИЛО: "Functional Interface = SAM (Single Abstract Method); default/static OK; @FunctionalInterface опционален но рекомендуется". 🔗 См. Q4 (стандартные FI), Q5 (лямбды), Q6 (@FunctionalInterface).
-> - [ ] Функциональный интерфейс — это интерфейс, расширяющий `java.util.function.Function`, что обеспечивает совместимость с методами `andThen` и `compose` | Не обязан extend Function. ❌ ПОСЛЕДСТВИЕ: команда создаёт ненужную inheritance chain `MyFunc extends Function`, теряет flexibility (нельзя именовать method специфично для domain — `validate` вместо `apply`).
+> - [x] Функциональный интерфейс — интерфейс ровно с одним абстрактным методом (`SAM`), целевой тип для лямбд и method references; `default`/`static`/`Object`-методы не нарушают контракт | ✓ ПРИМЕНЯТЬ: custom FI (`Validator<T>`, `Mapper<F,T>`, `EventHandler<E>`) для domain-логики; добавляйте `@FunctionalInterface` для compile-check; default-методы `andThen`/`compose` для composability. 📋 ПРАВИЛО: «FI = SAM; default/static OK; аннотация опциональна». 🔗 См. Q4, Q5, Q6.
+> - [ ] Функциональный интерфейс — это интерфейс, у которого все методы помечены аннотацией `@FunctionalInterface`, что гарантирует возможность использования лямбд | Аннотация опциональна. ❌ ПОСЛЕДСТВИЕ: разработчик не использует `Comparator`, `Runnable`, `Callable` как target лямбд (нет аннотации в JDK); пишет лишний boilerplate-класс для simple-callback на 30 минут вместо `() -> ...`.
+> - [ ] Функциональный интерфейс — это интерфейс без `default` и `static`-методов, содержащий ровно один абстрактный метод для совместимости с лямбдами | `default`/`static` OK. ❌ ПОСЛЕДСТВИЕ: разработчик удаляет `Predicate.and`, `Function.andThen` думая что нарушают SAM; composability теряется, код раздут utility-обёртками.
+> - [ ] Функциональный интерфейс — интерфейс, расширяющий `java.util.function.Function`, что даёт совместимость с `andThen` и `compose` | Не требуется extend `Function`. ❌ ПОСЛЕДСТВИЕ: команда добавляет `MyFunc extends Function`, теряет возможность именовать метод по-доменному (`validate` вместо `apply`); чужой код через type inference выбирает не тот overload.
+
+> [!mcq]
+> - [ ] Методы `Object` (`equals`, `hashCode`, `toString`), объявленные `abstract` в интерфейсе, считаются вторым абстрактным методом и нарушают `@FunctionalInterface` | `Object`-методы не считаются. ❌ ПОСЛЕДСТВИЕ: разработчик удаляет переопределение `equals(Object)` из `Comparator`-like интерфейса, теряя усиленный контракт equality для domain-объектов; код-ревью пропускает баги в `Set<DomainObj>`.
+> - [ ] `@FunctionalInterface` — это runtime-аннотация (`@Retention(RUNTIME)`), JVM проверяет при загрузке класса и бросает `ClassFormatError` при нарушении SAM | Это `SOURCE` retention, compile-time проверка. ❌ ПОСЛЕДСТВИЕ: команда пытается читать аннотацию через рефлексию для динамической валидации SPI-плагинов, `getAnnotation` возвращает `null`; полдня на reverse-engineering retention-policy.
+> - [ ] Если интерфейс наследует другой functional interface без новых методов, он теряет SAM-контракт и не может быть target лямбды | Наследование SAM сохраняет SAM. ❌ ПОСЛЕДСТВИЕ: разработчик дублирует `apply` в child-интерфейсе «чтобы лямбда работала» — получает diamond-warning от IDE; rename refactoring пропускает override и ломает API.
+> - [x] `@FunctionalInterface` гарантирует compile-time проверку SAM, но допускает: `default`, `static`, `private` (J9+), и `abstract`-переопределения методов `Object` — последние не считаются дополнительными `SAM` | ✓ ПРИМЕНЯТЬ: для `Comparator`-like интерфейса смело объявляйте `abstract boolean equals(Object o)` для усиления equality; `private`-хелперы для shared-логики между default-методами без загрязнения API. 📋 ПРАВИЛО: «SAM-исключения: `Object` + `default` + `static` + `private` (J9+)». 🔗 См. Q6, Q9, Q15.
 
 ## Q4. (!) Какие стандартные функциональные интерфейсы есть в `java.util.function`?
 
@@ -259,10 +271,16 @@ Supplier<List<String>> listFactory = ArrayList::new;
 Примитивные специализации (избегают боксинга): `IntPredicate`, `LongFunction<R>`, `ToIntFunction<T>`, `IntConsumer`, `IntSupplier`, `IntUnaryOperator`, `IntBinaryOperator` и аналогичные для `long`/`double`.
 
 > [!mcq]
-> - [ ] `Consumer<T>` принимает аргумент типа T и возвращает результат типа R, применяя функцию преобразования через метод `apply(T) → R` | Это Function. ❌ ПОСЛЕДСТВИЕ: разработчик использует `Consumer` для transformation в pipeline, обнаруживает что результат теряется (return void), переписывает на `Function`. Потерянное время.
-> - [ ] `Supplier<T>` принимает аргумент типа T и выполняет над ним действие с побочным эффектом через метод `accept(T) → void` | Это Consumer. ❌ ПОСЛЕДСТВИЕ: путаница `Supplier` (factory pattern) с `Consumer` (side effect) — для lazy initialization (`orElseGet(() -> expensiveComputation())`) выбирают неправильный interface, получают compile errors.
-> - [ ] `Predicate<T>` принимает аргумент типа T и возвращает результат типа T, применяя унарную операцию через метод `apply(T) → T` | Это UnaryOperator. ❌ ПОСЛЕДСТВИЕ: путаница `Predicate` (boolean test) с `UnaryOperator` (transformation T→T) приводит к compile errors при `Stream.filter()` (требует `Predicate<T>`, а не `UnaryOperator<T>`).
-> - [x] `Predicate<T>` принимает аргумент типа T и возвращает boolean, проверяя условие через метод `test(T) → boolean`, что используется в `Stream.filter()` | ✓ ПРИМЕНЯТЬ: `Stream.filter(Predicate)`, `Collection.removeIf(Predicate)`, валидация через композицию (`notEmpty.and(longerThan10).or(isVip)`); кастомные предикаты для domain validation. 📋 ПРАВИЛО: "Predicate<T>=test→bool, Function<T,R>=apply→R, Consumer<T>=accept→void, Supplier<T>=get→T". 🔗 См. Q3 (functional interface), Q5 (лямбды), Q18 (Stream filter).
+> - [x] `Predicate<T>` принимает `T` и возвращает `boolean` через `test(T)`, используется в `Stream.filter()`; `Function<T,R>` — `apply(T)→R`; `Consumer<T>` — `accept(T)→void`; `Supplier<T>` — `get()→T` | ✓ ПРИМЕНЯТЬ: `Stream.filter(Predicate)`, `Collection.removeIf`, композиция `notEmpty.and(longerThan10).or(isVip)`; domain-валидация. 📋 ПРАВИЛО: «Predicate=test→bool, Function=apply→R, Consumer=accept→void, Supplier=get→T». 🔗 См. Q3, Q5, Q18.
+> - [ ] `Consumer<T>` принимает аргумент `T` и возвращает результат `R` через метод `apply(T)→R` | Это `Function`. ❌ ПОСЛЕДСТВИЕ: разработчик использует `Consumer` для transformation в pipeline; результат теряется (`void`); переписывает на `Function` через час дебага в production hotfix.
+> - [ ] `Supplier<T>` принимает аргумент `T` и выполняет действие с побочным эффектом через `accept(T)→void` | Это `Consumer`. ❌ ПОСЛЕДСТВИЕ: для lazy init `orElseGet(() -> expensiveComputation())` выбирают `Consumer` вместо `Supplier`; compile error «cannot convert»; час на разбор сигнатур.
+> - [ ] `Predicate<T>` принимает `T` и возвращает `T`, применяя унарную операцию через `apply(T)→T` | Это `UnaryOperator`. ❌ ПОСЛЕДСТВИЕ: путаница `Predicate` (boolean) и `UnaryOperator` (T→T) — compile error при `Stream.filter` (ожидает `Predicate`); junior останавливается на час.
+
+> [!mcq]
+> - [ ] `Function<Integer,Integer>` для `IntStream` так же эффективен как `IntUnaryOperator` — JIT inline-ит boxing и устраняет накладные расходы | JIT не всегда устраняет boxing. ❌ ПОСЛЕДСТВИЕ: в hot-path 100M событий метрик `Function<Integer,Integer>` вместо `IntUnaryOperator`; allocation 500 MB/s `Integer`-объектов; G1 GC pause spikes 200ms; latency SLO нарушен.
+> - [ ] `BiFunction<T,U,R>` имеет примитивные специализации `IntBiFunction`, `LongBiFunction`, `DoubleBiFunction` для избежания боксинга в `Map.merge` | Таких нет. ❌ ПОСЛЕДСТВИЕ: разработчик ищет `IntBiFunction` в `java.util.function`, теряет час; правильный выбор — `IntBinaryOperator` для `(int,int)→int` или `ToIntBiFunction<T,U>` для `(T,U)→int`.
+> - [ ] Префикс `To` в `ToIntFunction<T>` означает bridge-интерфейс для конвертации legacy API в `Stream` — без него pipeline не скомпилируется | Префикс — примитивный return-тип. ❌ ПОСЛЕДСТВИЕ: команда оборачивает `mapToInt(String::length)` в `ToIntFunction`-cast «для совместимости»; noise в коде; на ревью кто-то удаляет cast и удивляется что код продолжает работать.
+> - [x] Примитивные специализации (`IntFunction<R>`, `ToIntFunction<T>`, `IntPredicate`, `IntUnaryOperator`, `IntBinaryOperator`) избегают boxing `int↔Integer`; `IntBiFunction` отсутствует — используйте `IntBinaryOperator` или `ToIntBiFunction<T,U>` | ✓ ПРИМЕНЯТЬ: в hot-path `IntStream.map(IntUnaryOperator)` вместо `Stream<Integer>.map(Function)` экономит до 90% allocation; `mapToInt`/`mapToLong` обязательны при `sum`/`average`. JMH: x3-x5 throughput. 📋 ПРАВИЛО: «To-prefix = return primitive; PrimitiveFunction<R> = primitive arg→R; IntBiFunction нет». 🔗 См. Q3, Q27, Q28.
 
 ## Q5. (!) Что такое лямбда-выражение и какой у него синтаксис?
 
@@ -375,6 +393,12 @@ int[] sum = {0};
 list.forEach(item -> sum[0] += item.length());
 ```
 
+> [!mcq]
+> - [ ] Лямбда захватывает переменную **по ссылке**, поэтому изменение переменной снаружи сразу видно внутри лямбды — это позволяет менять состояние из обоих мест | Java capture by VALUE. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `int counter = 0; list.forEach(x -> counter++);` ожидая что счётчик обновится — компилятор бросает «Variable used in lambda should be effectively final»; код не собирается, тратятся часы на поиск AtomicInteger.
+> - [x] Лямбда захватывает **копию значения** локальной переменной, поэтому она обязана быть effectively final, чтобы избежать иллюзии shared mutable state между лямбдой и внешним кодом | ✓ ПРИМЕНЯТЬ: для изменяемого состояния использовать `AtomicInteger`/`AtomicReference` или массив-обёртку (`int[] sum = {0}`); поля экземпляра можно менять — ограничение только на локальные переменные. 📋 ПРАВИЛО: «Java lambda capture = by value; локальные переменные = effectively final; поля = mutable». 🔗 См. Q5 (синтаксис), Q10 (лямбда vs анонимный класс), Q3 (functional interface).
+> - [ ] Лямбда требует явного `final` для всех захватываемых переменных — без `final`-модификатора компилятор не разрешит использование переменной внутри тела лямбды | С Java 8 effectively final OK. ❌ ПОСЛЕДСТВИЕ: команда добавляет `final` ко всем локальным переменным «для совместимости с лямбдами»; код переполнен boilerplate, IDE warnings о redundant `final`, ухудшение читаемости.
+> - [ ] Лямбда может изменять любые локальные переменные внешнего метода — компилятор автоматически оборачивает их в массив для обхода ограничений | Невозможно изменять. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает «магического» обхода ограничения и пишет `total += x` внутри `forEach`, получает compile error; неправильное представление о JVM-семантике приводит к ошибочной отладке.
+
 ## Q8. (!) Какие существуют типы ссылок на методы (`Method Reference`)?
 
 Ссылка на метод — сокращённая форма лямбды, когда лямбда просто вызывает существующий метод.
@@ -407,6 +431,18 @@ Function<String, Integer> intFactory = Integer::new;
 
 На собеседовании часто просят объяснить разницу между типами 2 и 3 — в типе 3 первый параметр функционального интерфейса становится объектом, у которого вызывается метод.
 
+> [!mcq]
+> - [ ] `String::toUpperCase` — это ссылка на статический метод, эквивалентная `() -> String.toUpperCase()` без аргументов | Это unbound instance. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Stream.of("a","b").map(String::toUpperCase)` думая что вызывается static; путаница типа method reference приводит к compile errors при попытке использовать как `Supplier<String>`.
+> - [ ] `Integer::parseInt` — это ссылка на конструктор, создающая новый `Integer` через `new Integer(s)` | Это static method. ❌ ПОСЛЕДСТВИЕ: команда использует `Integer::parseInt` как `Supplier<Integer>` ожидая no-arg вызов, получает compile error «cannot resolve overloaded method»; час потерян на разбор разницы между static и constructor reference.
+> - [x] `String::toUpperCase` — это ссылка на метод экземпляра произвольного объекта (unbound), эквивалентная `(String s) -> s.toUpperCase()`, где первый параметр становится receiver-объектом | ✓ ПРИМЕНЯТЬ: `Stream<String>.map(String::toUpperCase)`, `Comparator.comparing(String::length)`, `list.forEach(String::trim)`. Унификация для всех экземпляров одного типа без захвата конкретного объекта. 📋 ПРАВИЛО: «4 типа MR: `Class::static`, `obj::instance` (bound), `Class::instance` (unbound), `Class::new`». 🔗 См. Q5 (лямбды), Q40 (типы Method Reference), Q3 (functional interface).
+> - [ ] `ArrayList::new` — это ссылка на статический фабричный метод `ArrayList.create()`, который создаёт пустой список через рефлексию | Это constructor reference. ❌ ПОСЛЕДСТВИЕ: разработчик ищет несуществующий `ArrayList.create()` в JavaDoc; неправильное понимание `::new` приводит к попыткам реализовать factory через reflection вместо стандартного синтаксиса.
+
+> [!mcq]
+> - [ ] Method reference `String::toUpperCase` компилируется в **анонимный inner-класс** (`Class$Lambda$1.class`) на этапе javac — поэтому в `target/classes` появляются дополнительные `.class`-файлы | Нет, через `invokedynamic`+`LambdaMetafactory`, без отдельных `.class` от javac. ❌ ПОСЛЕДСТВИЕ: команда жалуется на «раздувание JAR от лямбд», ищет maven-plugin для inline-лямбд; на деле bytecode содержит только `invokedynamic`-инструкцию, классы генерируются JVM в runtime в anonymous classloader; иллюзия проблемы там, где её нет.
+> - [ ] `Class::instanceMethod` (unbound) **медленнее** обычной лямбды `(x) -> x.method()` потому что требует дополнительной dispatch-таблицы для resolve receiver-объекта в runtime | Производительность одинакова или MR быстрее. ❌ ПОСЛЕДСТВИЕ: senior-разработчик «оптимизирует» код заменяя `String::length` на `s -> s.length()` ради «исключения dispatch-overhead»; на деле JIT inline-ит оба варианта одинаково; чистая премaturая оптимизация и шум в diff.
+> - [ ] При первом вызове `Stream.map(String::toUpperCase)` JVM генерирует синтетический класс через `sun.misc.ProxyGenerator` и кеширует его в `Metaspace` навсегда — это потенциальная утечка при множестве уникальных лямбд | Используется `LambdaMetafactory` + `ASM`, не `ProxyGenerator`; классы выгружаются с classloader. ❌ ПОСЛЕДСТВИЕ: команда задаёт `-XX:MaxMetaspaceSize` слишком агрессивно ожидая утечку лямбд, ловит `OutOfMemoryError: Metaspace` под нагрузкой; настоящие источники роста Metaspace (динамическая генерация прокси Hibernate/CGLIB) пропущены.
+> - [x] `invokedynamic` + `LambdaMetafactory` лениво генерирует класс-имплементацию при первом вызове через bootstrap-метод; method reference (особенно `Class::staticMethod` и `Class::new`) часто **быстрее** эквивалентной лямбды — JVM может переиспользовать singleton-instance, тогда как лямбда с захватом создаёт новый объект | ✓ ПРИМЕНЯТЬ: в hot-loop предпочитайте `String::length` и `Integer::parseInt` лямбдам — singleton-кеш экономит allocation; для конструкторов `ArrayList::new` лучше `() -> new ArrayList<>()` ровно по той же причине; warmup-фаза JIT inline-ит оба, но MR имеет преимущество на cold start. 📋 ПРАВИЛО: «MR без захвата = singleton + invokedynamic; lambda с capture = new instance per call; в hot-path выбирайте MR». 🔗 См. Q5 (лямбды), Q10 (lambda vs anon), Q40 (типы Method Reference).
+
 ## Q9. Будет ли компилироваться интерфейс с `default`-методом и одним абстрактным?
 
 ```java
@@ -427,6 +463,12 @@ public interface Function2<T, U, V> {
 ```java
 Function2<String, Integer, String> repeater = (s, n) -> s.repeat(n);
 ```
+
+> [!mcq]
+> - [ ] Не скомпилируется — `default`-метод считается абстрактным и нарушает контракт `@FunctionalInterface`, требующий ровно одного метода | Default не считается абстрактным. ❌ ПОСЛЕДСТВИЕ: команда удаляет полезные default-методы из functional interfaces (`Predicate.and`, `Function.andThen`) ожидая compile error — теряют composability, переписывают на utility-классы.
+> - [x] Скомпилируется — `default`-метод имеет реализацию и не считается абстрактным; интерфейс с одним абстрактным `apply()` соответствует контракту SAM и `@FunctionalInterface` | ✓ ПРИМЕНЯТЬ: добавлять `default`-методы к custom functional interfaces для composability (`Validator.and`, `Mapper.andThen`); `static`-методы тоже разрешены и не нарушают SAM. JDK так делает в `Predicate`, `Function`, `Comparator`. 📋 ПРАВИЛО: «SAM = ровно 1 abstract; default/static не считаются; `Object`-методы тоже не нарушают SAM». 🔗 См. Q3 (functional interface), Q6 (@FunctionalInterface), Q15 (default-метод).
+> - [ ] Не скомпилируется — `@FunctionalInterface` запрещает наличие любых методов кроме одного абстрактного, включая `default` и `static` | Запрет ложный. ❌ ПОСЛЕДСТВИЕ: разработчик создаёт пустой functional interface без полезных композиционных методов; невозможно строить fluent API; в кодовой базе расцветают utility-классы вместо интерфейсных методов.
+> - [ ] Не скомпилируется — `default`-метод требует extending абстрактного класса, а интерфейс не может содержать реализацию методов | Java 8+ может. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с Java 7 на Java 8 и продолжает использовать abstract base classes для shared behaviour, теряя возможность multiple inheritance через default-методы.
 
 ## Q10. Чем лямбда-выражение отличается от анонимного класса?
 
@@ -458,6 +500,12 @@ public class Example {
     }
 }
 ```
+
+> [!mcq]
+> - [ ] В лямбде ключевое слово `this` ссылается на сам лямбда-объект, как и в анонимном классе — это позволяет вызывать методы лямбды через `this` | В лямбде `this` = enclosing class. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Runnable r = () -> this.run();` ожидая рекурсивный вызов лямбды — получает `StackOverflowError` от вызова метода внешнего класса; путаница в дебаге.
+> - [ ] И лямбда, и анонимный класс компилируются в отдельный `.class`-файл — это требуется для bytecode verification и classloader integration | Лямбда через invokedynamic. ❌ ПОСЛЕДСТВИЕ: при анализе heap dump через MAT инструмент не находит ожидаемые `Lambda$1.class` файлы; разработчик неправильно объясняет performance metrics команде, теряя credibility.
+> - [x] В лямбде `this` ссылается на enclosing класс, в анонимном классе — на сам анонимный экземпляр; лямбда не имеет своих полей и не может shadow переменные scope | ✓ ПРИМЕНЯТЬ: лямбда — для stateless callbacks (`Comparator`, `Predicate`, `Runnable`); анонимный класс — когда нужны поля, конструктор, или несколько методов (например `WindowAdapter` для `windowOpened`+`windowClosed`). 📋 ПРАВИЛО: «лямбда: invokedynamic + enclosing this; анонимный: new class + own this + own fields». 🔗 См. Q5 (лямбды), Q7 (effectively final), Q3 (functional interface).
+> - [ ] Анонимный класс быстрее лямбды, потому что не требует вызова `LambdaMetafactory` в рантайме и сразу создаётся через `new` | Лямбда ≥ анонимного. ❌ ПОСЛЕДСТВИЕ: команда переписывает hot-path лямбды на анонимные классы «ради performance»; JMH-бенчмарки показывают равенство или регрессию из-за per-call allocation; зря потраченное время.
 
 ## Q11. (!) Что такое `Optional` и зачем он нужен?
 
@@ -501,6 +549,18 @@ Optional<String> city = findUser(userId)
 
 Подробнее о работе с `null`-безопасными коллекциями — в [вопросах по Collections](java-collections-interview.md).
 
+> [!mcq]
+> - [x] `Optional<T>` — контейнер, который явно выражает возможное отсутствие значения; предназначен как тип возвращаемого значения метода, не реализует `Serializable` и не должен использоваться как поле сущности или параметр метода | ✓ ПРИМЕНЯТЬ: `findById`, `findByName` в репозиториях; цепочки `.map().filter().orElseGet()` для null-safe навигации; не сериализуется — для DTO используйте nullable + `Optional`-getter. Spring `JpaRepository.findById` возвращает `Optional<T>`. 📋 ПРАВИЛО: «`Optional` = return type only; не поле, не параметр, не Serializable». 🔗 См. Q12 (orElse vs orElseGet), Q13 (flatMap), Q14 (антипаттерны).
+> - [ ] `Optional<T>` реализует `Serializable` и предназначен для использования как поле JPA-сущности для явного выражения опциональных колонок БД | Не Serializable. ❌ ПОСЛЕДСТВИЕ: команда добавляет `Optional<String> middleName` в JPA entity, после ребута приложения через session replication — `NotSerializableException`, кластер падает; production incident.
+> - [ ] `Optional<T>` — это замена `null`, который должен использоваться как тип параметра во всех методах для явного выражения nullable-аргументов | Не как параметр. ❌ ПОСЛЕДСТВИЕ: API `process(Optional<String> name)` заставляет caller писать `process(Optional.of("x"))` или `process(Optional.empty())` — код хуже, чем `@Nullable` или перегрузка; Brian Goetz явно против этого паттерна.
+> - [ ] `Optional<T>` — это полная замена `try-catch` блоков, который оборачивает любые исключения и возвращает пустой `Optional` при ошибке | Не для исключений. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Optional.ofNullable(riskyCall())` ожидая что исключения превратятся в empty Optional; на деле RuntimeException пробрасывается; ошибки в логике скрываются; для этого есть `Try` из Vavr.
+
+> [!mcq]
+> - [ ] `Optional.of(value)` и `Optional.ofNullable(value)` идентичны — оба создают пустой `Optional` при `null`-аргументе и непустой при ненулевом значении | `of` бросает `NPE` на `null`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Optional.of(repository.findByEmail(email))` где `findByEmail` возвращает `null`; production падает с `NullPointerException` в фабрике `Optional` — иронично, ведь `Optional` создавали именно для защиты от `null`.
+> - [x] `Optional.of(value)` бросает `NullPointerException` при `null`-аргументе (для гарантированно ненулевых значений), `Optional.ofNullable(value)` возвращает `Optional.empty()` при `null` (для возможно-null источников) | ✓ ПРИМЕНЯТЬ: `of` — для констант/literals/гарантированно ненулевых результатов (`Optional.of("default")`); `ofNullable` — для legacy API возвращающего `null` (`Map.get`, `findById` без `Optional`); `Optional.empty()` — явно пустой результат. 📋 ПРАВИЛО: «`of` для non-null контракта (fail-fast NPE), `ofNullable` для nullable источника (silent empty)». 🔗 См. Q12 (orElse), Q14 (антипаттерны), Q41 (best practices).
+> - [ ] `Optional.of(null)` создаёт пустой `Optional` — это safe-фабрика, защищающая от `NullPointerException` | `of` НЕ принимает `null`. ❌ ПОСЛЕДСТВИЕ: код-ревьюер пропускает `Optional.of(map.get(key))` думая что `Optional` сам обработает `null`; первый missing key в production бросает `NPE`; падают все запросы где ключ отсутствует.
+> - [ ] `Optional.ofNullable(value)` бросает исключение если `value` равен `null` — это валидатор для строгих контрактов | Это `of`. ❌ ПОСЛЕДСТВИЕ: команда заменяет `of` на `ofNullable` ожидая ту же fail-fast семантику; `null`-значения тихо превращаются в empty Optional; баги «исчезающих данных» не ловятся ни в тестах, ни в логах.
+
 ## Q12. В чём разница между `orElse` и `orElseGet`?
 
 ```java
@@ -524,6 +584,12 @@ User result = user.orElse(createDefaultUser()); // создаст пользов
 User correct = user.orElseGet(() -> createDefaultUser()); // создаст только если user пуст
 ```
 
+> [!mcq]
+> - [ ] `orElse(value)` вычисляет аргумент только если `Optional` пуст — это lazy-семантика, идентичная `orElseGet(Supplier)` | `orElse` ВСЕГДА eager. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `optional.orElse(database.findDefault())` в hot path — БД-запрос выполняется на каждом обращении, даже когда Optional не пуст; latency растёт ×2-×10, throughput падает.
+> - [ ] `orElseGet(Supplier)` всегда вызывает `Supplier`, как и `orElse` — разница только в синтаксисе через лямбду | `orElseGet` lazy. ❌ ПОСЛЕДСТВИЕ: команда не различает методы, считая выбор «стилистическим»; в production `orElseGet(() -> expensiveComputation())` ошибочно заменяется на `orElse(expensiveComputation())` при code review — performance regression уходит в prod.
+> - [x] `orElse(value)` принимает готовое значение и **всегда** его вычисляет (eager), `orElseGet(Supplier)` принимает поставщика и вызывает его **только** при пустом `Optional` (lazy) | ✓ ПРИМЕНЯТЬ: `orElse` — для констант/литералов (`orElse("default")`, `orElse(0)`); `orElseGet` — для дорогих вычислений (БД, HTTP, создание объектов); `orElseThrow` — когда отсутствие = ошибка. 📋 ПРАВИЛО: «`orElse` = eager (готовое значение), `orElseGet` = lazy (Supplier для дорогих вычислений)». 🔗 См. Q11 (Optional), Q14 (антипаттерны), Q41 (Optional best practices).
+> - [ ] `orElse(value)` бросает исключение если `Optional` пуст, а `orElseGet(Supplier)` возвращает значение из supplier | Это `orElseThrow`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что `orElse(null)` бросит NPE при пустом Optional, в коде встречается `String s = opt.orElse(null); s.length();` — NPE на следующей строке, неправильное понимание API.
+
 ## Q13. Что такое `Optional.flatMap` и когда использовать?
 
 `flatMap` используется, когда функция преобразования сама возвращает `Optional` — он «разворачивает» вложенный `Optional`:
@@ -542,6 +608,12 @@ Optional<String> zipCode = findUser(userId)
 ```
 
 **Правило**: `map` — когда функция возвращает обычное значение; `flatMap` — когда функция возвращает `Optional`.
+
+> [!mcq]
+> - [ ] `flatMap` используется когда функция-аргумент возвращает обычное значение, и нужно избежать создания вложенных `Optional` через автоматическую обёртку | Это `map`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `user.flatMap(User::getName)` где `getName` возвращает `String`, получает compile error «cannot infer type»; час потерян на разбор API; неправильное использование API.
+> - [x] `flatMap` используется когда функция-аргумент сама возвращает `Optional`, чтобы избежать вложенности `Optional<Optional<T>>` и получить плоский `Optional<T>` | ✓ ПРИМЕНЯТЬ: `user.flatMap(User::getAddress).flatMap(Address::getZipCode)` для глубокой null-safe навигации; репозитории возвращают `Optional<Entity>`, цепочки через `flatMap`; аналог `Stream.flatMap` для Optional-monad. 📋 ПРАВИЛО: «`map(T→R)` для plain values, `flatMap(T→Optional<R>)` для уже-Optional results». 🔗 См. Q11 (Optional), Q21 (Stream flatMap), Q41 (Optional best practices).
+> - [ ] `flatMap` идентичен `map` и применяется когда нужно явно подчеркнуть монадическую природу Optional, без функциональной разницы | Семантика разная. ❌ ПОСЛЕДСТВИЕ: разработчики команды путают `map` и `flatMap` при code review; типы возвращаемых значений ломаются (`Optional<Optional<X>>` или `Optional<X>` в зависимости); рефакторинг приводит к compile errors каскадно.
+> - [ ] `flatMap` автоматически разворачивает любой контейнер (`List`, `Stream`, `Optional`) в значение, обеспечивая универсальный интерфейс для всех монад | Только для `Optional`. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что `Optional.flatMap(opt -> list)` вернёт элементы списка как `Optional<Element>`, получает type error; путаница между `Optional.flatMap` и `Stream.flatMap`.
 
 ## Q14. Какие антипаттерны использования `Optional` вы знаете?
 
@@ -571,6 +643,12 @@ List<Optional<String>> list;
 // ✅ Вместо этого — фильтровать null перед добавлением
 ```
 
+> [!mcq]
+> - [ ] `Optional.of(null)` — корректный способ создать пустой `Optional`, эквивалентный `Optional.empty()` | Бросает NPE. ❌ ПОСЛЕДСТВИЕ: production-код `return Optional.of(maybeNull);` падает с NullPointerException при первом null-значении; production incident с null contractor data; правильно — `Optional.ofNullable(value)`.
+> - [ ] `Optional` как поле класса — рекомендованный паттерн, поскольку явно показывает опциональность колонки в JPA-сущности | Не Serializable. ❌ ПОСЛЕДСТВИЕ: при кластеризации Tomcat с session replication приложение падает с `NotSerializableException: java.util.Optional`; миграция на Hazelcast/Redis тоже ломается; срочная замена `Optional<String>` на nullable `String`.
+> - [x] `if (opt.isPresent()) opt.get();` — антипаттерн, который воспроизводит null-check логику, теряя смысл `Optional`; правильно использовать `ifPresent`/`map`/`orElse` для функционального стиля | ✓ ПРИМЕНЯТЬ: `opt.ifPresent(this::process)` для side-effect; `opt.map(transform).orElse(default)` для трансформации; `opt.orElseThrow()` если отсутствие = ошибка. SonarQube/IDE warnings подсказывают замены. 📋 ПРАВИЛО: «`Optional` антипаттерны: isPresent+get, of(null), как поле/параметр, в коллекциях». 🔗 См. Q11 (Optional), Q12 (orElse), Q41 (Optional best practices).
+> - [ ] `Optional<Optional<T>>` возникает только при явной двойной упаковке через `Optional.of(Optional.of(x))`, и его нельзя получить через `map`/`flatMap` | Часто через `map`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `user.map(User::getAddress)` где `getAddress` возвращает `Optional<Address>`, получает `Optional<Optional<Address>>`; цепочки ломаются на следующих `.map(Address::getCity)`; путаница в дебаге.
+
 ## Q15. Что такое `default`-метод в интерфейсе и зачем он нужен?
 
 Default-метод — метод интерфейса с реализацией, помеченный ключевым словом `default`. Классы-реализаторы наследуют его «из коробки», но могут переопределить.
@@ -595,6 +673,12 @@ public interface Collection<E> {
 **Зачем нужен**: позволяет добавлять новые методы в существующие интерфейсы (`Collection`, `List`, `Map`) без ломки всех реализаций. Именно так были добавлены `forEach()`, `stream()`, `sort()`, `removeIf()` и другие методы в стандартные интерфейсы коллекций.
 
 Подробнее о методах коллекций — в [вопросах по Collections](java-collections-interview.md).
+
+> [!mcq]
+> - [x] `default`-метод — метод интерфейса с реализацией по ключевому слову `default`, который позволяет эволюционировать API интерфейса без ломки существующих реализаций (как `Collection.stream()` в Java 8) | ✓ ПРИМЕНЯТЬ: добавление `forEach`, `stream`, `removeIf` в `Collection` без переделки тысяч пользовательских реализаций; default-методы для composability functional interfaces (`Predicate.and`, `Comparator.thenComparing`); template-method-pattern в interface. 📋 ПРАВИЛО: «default-метод = backward-compat extension; позволяет добавлять API без breaking changes». 🔗 См. Q9 (default+SAM), Q16 (конфликты), Q17 (static в интерфейсе).
+> - [ ] `default`-метод — метод абстрактного класса, который имеет реализацию и помечен как `default` для отличия от обычных методов | Это в интерфейсе. ❌ ПОСЛЕДСТВИЕ: команда добавляет `default` в abstract class, получает compile error; путаница между abstract class и interface приводит к неправильному выбору inheritance стратегии при дизайне.
+> - [ ] `default`-метод — метод интерфейса, который должен быть переопределён каждым реализующим классом, иначе компилятор бросит ошибку | Не обязателен override. ❌ ПОСЛЕДСТВИЕ: разработчик переопределяет ВСЕ default-методы JDK (`Collection.stream()`, `List.sort()`) в кастомных классах из ложного понимания контракта — boilerplate, потеря оптимизаций JDK.
+> - [ ] `default`-метод — синтаксический сахар для статического метода интерфейса с возможностью вызова через имя интерфейса | Это static. ❌ ПОСЛЕДСТВИЕ: команда вызывает `MyInterface.defaultMethod()` ожидая static-семантику, получает compile error «cannot reference non-static method from static context»; неправильное использование API.
 
 ## Q16. (!) Как разрешаются конфликты при наследовании нескольких `default`-методов?
 
@@ -624,6 +708,18 @@ class C implements A, B {
 2. Более специфичный интерфейс (подинтерфейс) побеждает менее специфичный
 3. Если конфликт не разрешён — компилятор требует явного переопределения
 
+> [!mcq]
+> - [ ] При конфликте двух `default`-методов JVM выбирает первый интерфейс из списка `implements` — порядок объявления определяет приоритет | Компилятор требует явного override. ❌ ПОСЛЕДСТВИЕ: разработчик меняет порядок `implements A, B` → `implements B, A` ожидая поведение из B, в реальности компилятор требует явный override независимо от порядка; зря потраченное время.
+> - [x] При конфликте `default`-методов из двух интерфейсов класс **обязан** явно переопределить метод (можно через `A.super.method()`); правила приоритета: класс > подинтерфейс > супер-интерфейс | ✓ ПРИМЕНЯТЬ: при diamond problem пишите `return A.super.method();` для явного выбора; используйте `@Override` для compile-time check; в JDK редко возникает (обычно один интерфейс + класс). 📋 ПРАВИЛО: «diamond conflict: класс > sub-interface > super-interface; иначе override обязателен с `Iface.super.m()`». 🔗 См. Q15 (default), Q9 (default+SAM), Q17 (static в интерфейсе).
+> - [ ] При конфликте `default`-методов компилятор автоматически генерирует bridge-метод, объединяющий обе реализации через chain-of-responsibility | Бросает compile error. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `class C implements A, B {}` ожидая «магического merge», получает compile error «class C inherits unrelated defaults»; путаница при изучении языка, неправильные ожидания о JVM behavior.
+> - [ ] При конфликте JVM выкидывает `IncompatibleClassChangeError` в рантайме при первом вызове конфликтного метода | Compile-time error. ❌ ПОСЛЕДСТВИЕ: команда ожидает что код скомпилируется и упадёт в production при первом вызове; на деле compile error — exception в production невозможен; неправильное представление о Java compile-time vs runtime checks.
+
+> [!mcq]
+> - [ ] Для вызова `default`-метода конкретного интерфейса используется обычный `super.greet()` — JVM найдёт нужную реализацию по сигнатуре | Нужен `Iface.super.greet()`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `super.greet()` в `class C implements A, B` — компиляция падает с «cannot find symbol» (у класса нет супер-класса с `greet`); полчаса на поиск синтаксиса в Stack Overflow.
+> - [ ] При конфликте `default`-методов из A и B класс может выбрать через `@Inherit(A.class)`-аннотацию над методом, и JVM подставит реализацию из помеченного интерфейса | Аннотации `@Inherit` нет. ❌ ПОСЛЕДСТВИЕ: junior пытается найти «магическую аннотацию» из туториала, теряет час; team lead объясняет что выбор делается явно в теле метода через `Iface.super.method()`.
+> - [ ] Если один интерфейс — суб-интерфейс другого (`B extends A`) с собственным `default greet()`, всё равно требуется явный override — компилятор не понимает иерархию | При sub-interface правило «более специфичный побеждает». ❌ ПОСЛЕДСТВИЕ: разработчик добавляет лишний `override` в каждом классе реализующем `B`, считая это обязательным; код раздут шаблонными `B.super.greet()`, хотя компилятор не требовал.
+> - [x] Синтаксис явного выбора `default`-метода из конкретного интерфейса — `InterfaceName.super.methodName()`; `super.method()` без префикса ссылается на супер-класс, а не на интерфейс — это ключевое отличие | ✓ ПРИМЕНЯТЬ: `return A.super.greet();` чтобы выбрать реализацию из A; `return A.super.greet() + " / " + B.super.greet();` для комбинирования; в `Comparator` цепочках `Comparator.super.reversed()`. 📋 ПРАВИЛО: «`Iface.super.m()` = выбор default из interface; `super.m()` = вызов parent class». 🔗 См. Q15 (default), Q9 (default+SAM), Q10 (lambda vs anon).
+
 ## Q17. Можно ли объявить `static`-метод в интерфейсе?
 
 Да, с `Java 8` интерфейсы могут содержать `static`-методы. В отличие от default-методов, они **не наследуются** реализующими классами:
@@ -644,6 +740,12 @@ boolean empty = StringUtils.isNullOrEmpty("");
 ```
 
 Это позволяет создавать утилитные методы прямо в интерфейсе, не прибегая к отдельным utility-классам.
+
+> [!mcq]
+> - [ ] `static`-методы в интерфейсе наследуются реализующими классами и могут быть вызваны через `instance.staticMethod()` как и default-методы | Не наследуются. ❌ ПОСЛЕДСТВИЕ: разработчик вызывает `myImpl.staticMethod()` получая compile error; вместо `Comparator.naturalOrder()` пишет `myComparator.naturalOrder()`; путаница в API design.
+> - [x] `static`-методы в интерфейсе разрешены с Java 8, **не** наследуются реализующими классами и вызываются только через имя интерфейса (`Interface.method()`) | ✓ ПРИМЕНЯТЬ: factory-методы в functional interfaces (`Comparator.comparing`, `Function.identity`, `Predicate.isEqual`); утилиты на уровне интерфейса без отдельного util-класса; `Stream.of`, `Stream.empty`. 📋 ПРАВИЛО: «interface static = factory/util; вызов только через `Iface.method()`; не наследуется в реализации». 🔗 См. Q15 (default), Q16 (конфликты), Q3 (functional interface).
+> - [ ] `static`-методы в интерфейсе запрещены — Java 8 разрешает только `default`-методы; static-методы остаются прерогативой классов | Java 8 разрешает. ❌ ПОСЛЕДСТВИЕ: команда создаёт отдельный `MyInterfaceUtils` класс рядом с каждым interface для утилит; в кодовой базе расцветает дубликат `*Utils` классов; ухудшение API ergonomics, лишние файлы.
+> - [ ] `static`-методы в интерфейсе можно вызвать как через `Interface.method()`, так и через `implementor.method()` — JVM подменяет статический контекст | Только через `Interface.`. ❌ ПОСЛЕДСТВИЕ: разработчик использует `myList.of(1,2,3)` ожидая что `List.of` доступен через instance; compile error «cannot reference static method through instance»; путаница в обучении junior-разработчиков.
 
 ## Q18. (!) Что такое `Stream` и чем он отличается от коллекции?
 
@@ -686,6 +788,18 @@ graph LR
 
 Подробнее — в [отдельном файле по Stream API](java-stream-interview.md).
 
+> [!mcq]
+> - [ ] `Stream` — это улучшенная коллекция, которая хранит данные и поддерживает функциональные операции `filter`/`map` с ленивыми преобразованиями | `Stream` НЕ хранит данные. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Stream<User> cache = users.stream()` и пытается переиспользовать как in-memory cache; `IllegalStateException: stream has already been operated upon` после первого `count()`; рефакторинг с `cache.forEach` рассыпается в production.
+> - [ ] `Stream` модифицирует исходную коллекцию через `filter`/`sorted` in-place — это альтернатива `removeIf` с более читаемым API | НЕ модифицирует источник. ❌ ПОСЛЕДСТВИЕ: команда ожидает что `list.stream().filter(...)` уберёт элементы из `list`; данные «не удаляются»; час на дебаг прежде чем заметить отсутствие `.collect(toList())` и переприсвоения переменной.
+> - [x] `Stream` — последовательность элементов с **ленивыми** агрегатными операциями; не хранит данные, не модифицирует источник, одноразовый, поддерживает `parallelStream()` | ✓ ПРИМЕНЯТЬ: ETL-pipeline в Wolt order analytics (`orders.stream().filter(paid).map(toDto).collect(toList)`); агрегация метрик из `List<Event>`; преобразование DTO в больших batch-jobs. 📋 ПРАВИЛО: «Stream = pipeline над источником, не контейнер; одноразовый, ленивый, immutable». 🔗 См. Q19 (intermediate vs terminal), Q20 (pipeline), Q29 (одноразовость).
+> - [ ] `Stream` всегда параллельный — `stream()` использует `ForkJoinPool` под капотом для ускорения map/filter в любых случаях | По умолчанию sequential. ❌ ПОСЛЕДСТВИЕ: разработчик предполагает, что `stream()` уже параллельный, не вызывает `parallelStream()` для тяжёлой операции на 100k элементах; CPU не утилизируется; пишет «Stream API не дал ускорения», переписывает на raw threads.
+
+> [!mcq]
+> - [ ] `Stream` можно переиспользовать после терминальной операции через `stream.reset()` — это аналог `Iterator.reset` и работает для любого источника | Метода `reset()` НЕТ. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.reset(); stream.count();` — compile error «cannot find symbol reset»; в production вместо этого появляется хак `list.stream()` дважды, что дублирует source traversal вместо повторного использования pipeline.
+> - [ ] После терминальной операции `Stream` остаётся валидным, но дальнейший вызов вернёт пустой результат — это «закрытие» pipeline без exception | Бросает `IllegalStateException`. ❌ ПОСЛЕДСТВИЕ: команда хранит `Stream` как поле сервиса и вызывает `count()`/`forEach` в разных методах, ожидая «пустые» результаты после первого вызова; в проде `IllegalStateException: stream has already been operated upon or closed`; падают endpoints, обрабатывающие 5xx без graceful-degradation.
+> - [ ] `Stream` можно сохранить в `Supplier<Stream<T>>` и переиспользовать через `supplier.get()` — это идиома для multi-pass агрегации | Это рабочий паттерн. ❌ ПОСЛЕДСТВИЕ (этот вариант — на самом деле ловушка для distractor; см. правильный): команда отвергает идиому считая её антипаттерном — пишет `list.stream()` копипастой в 5 местах, при рефакторинге фильтра половина мест отстаёт от другой; consistency bugs.
+> - [x] `Stream` — **single-use**: после первой терминальной операции попытка повторного использования бросает `IllegalStateException: stream has already been operated upon or closed`; для multi-pass нужен либо новый `source.stream()`, либо `Supplier<Stream<T>>` (`Supplier<Stream<Order>> ordersStream = () -> orders.stream()`) | ✓ ПРИМЕНЯТЬ: для отчётов с несколькими агрегациями (sum + count + groupBy) — `Supplier<Stream<T>>` factory; в DAO кешируйте `List<T>` (повторно стримуемое), а не `Stream<T>`; для бесконечных источников (`Stream.generate`) переиспользование невозможно в принципе — только новый stream. 📋 ПРАВИЛО: «Stream = одноразовый pipeline; для multi-pass — Supplier-factory или коллекция-источник; никогда не сохраняй `Stream` как поле/параметр». 🔗 См. Q19 (intermediate/terminal), Q29 (одноразовость), Q42 (pipeline+ленивость).
+
 ## Q19. (!) В чём разница между промежуточными и терминальными операциями?
 
 **Промежуточные** (intermediate) — ленивые, возвращают новый `Stream`:
@@ -710,6 +824,12 @@ long count = lazy.count(); // Теперь выполнится
 
 **Ключевой момент**: без терминальной операции промежуточные не выполняются вообще. Это и есть **ленивость** стримов.
 
+> [!mcq]
+> - [ ] Промежуточные операции `filter`/`map` выполняются сразу при вызове, а терминальная только финализирует результат — поэтому `stream().filter(...)` уже фильтрует список | НЕТ — промежуточные ленивые. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает, что `stream().peek(log::info)` уже залогировал — но без `collect`/`forEach` ничего не выполнилось; в production «логи пропали»; час дебага.
+> - [ ] Терминальные операции возвращают `Stream`, промежуточные возвращают результат — терминальные нужны для дальнейшей цепочки | Наоборот. ❌ ПОСЛЕДСТВИЕ: команда пытается `.collect(toList()).filter(...)` ожидая `Stream`-API на List; компиляция падает; junior запутывается в семантике.
+> - [x] Промежуточные (`filter`, `map`, `sorted`, `peek`) — ленивые, возвращают `Stream`; терминальные (`collect`, `forEach`, `count`, `findFirst`) — запускают pipeline и возвращают результат или `void` | ✓ ПРИМЕНЯТЬ: `users.stream().filter(active).map(toDto).collect(toList)` — терминальный `collect` запускает обработку; `findFirst()` для short-circuit поиска; `anyMatch` для validation. 📋 ПРАВИЛО: «intermediate возвращает Stream и ленив; terminal возвращает результат и запускает pipeline». 🔗 См. Q18 (Stream basics), Q20 (pipeline), Q42 (lazy evaluation).
+> - [ ] Терминальная операция должна быть только одна — `count()`, после которой `Stream` остаётся открытым для следующей `forEach` | После terminal stream закрыт. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `s.count(); s.forEach(...)` ожидая reuse; `IllegalStateException: stream has already been operated upon`; в Spring Batch падает job в проде.
+
 ## Q20. Что такое `Stream Pipeline`?
 
 **Pipeline** — цепочка: источник → 0..N промежуточных операций → 1 терминальная операция.
@@ -727,6 +847,12 @@ List<String> result = employees.stream()          // источник
 - **Short-circuiting**: `limit()`, `findFirst()`, `anyMatch()` — могут остановить обработку раньше
 - **Loop fusion**: несколько операций объединяются в один проход по элементам
 - Элементы обрабатываются **по одному** через весь pipeline, а не «все через filter, потом все через map»
+
+> [!mcq]
+> - [ ] Элементы pipeline проходят пакетами: сначала **все** через `filter`, потом **все** через `map`, потом `collect` — поэтому порядок операций влияет только на читаемость | НЕ пакетами — поэлементно (loop fusion). ❌ ПОСЛЕДСТВИЕ: разработчик не понимает, почему `findFirst()` после `filter` останавливается на первом совпадении; ожидает обработку всех элементов; не использует short-circuit для оптимизации.
+> - [x] Pipeline — это `источник → 0..N intermediate → 1 terminal`; JVM применяет **loop fusion** (один проход по элементам) и **short-circuiting** (`limit`/`findFirst`/`anyMatch`) для досрочного выхода | ✓ ПРИМЕНЯТЬ: `Stream.iterate(0, i->i+1).filter(prime).limit(10)` — короткий поток на бесконечном источнике; `users.stream().anyMatch(isAdmin)` останавливается при первом admin; `findFirst()` после `filter` не обходит всю коллекцию. 📋 ПРАВИЛО: «pipeline = source + N intermediate + 1 terminal; элементы идут по одному через всю цепочку». 🔗 См. Q19 (operations), Q42 (lazy), Q21 (flatMap).
+> - [ ] Pipeline может содержать несколько терминальных операций подряд: `.collect(...).count()` запускает разные пайплайны на одном `Stream` | Только одна terminal на Stream. ❌ ПОСЛЕДСТВИЕ: попытка вызвать `s.collect(toList()).count()` работает, но человек думает, что `.count()` относится к Stream; рефакторинг ломается, когда `.count()` переносят выше; путаница в API.
+> - [ ] `limit(N)` и `skip(N)` — терминальные операции, потому что определяют размер результата | Это intermediate (stateful). ❌ ПОСЛЕДСТВИЕ: разработчик не комбинирует `limit` с `findFirst`; пишет `stream.limit(1).collect(toList()).get(0)` вместо `stream.findFirst()`; verbose код в production.
 
 ## Q21. (!) В чём разница между `map()` и `flatMap()`?
 
@@ -768,6 +894,18 @@ graph LR
     end
 ```
 
+> [!mcq]
+> - [ ] `map()` объединяет вложенные стримы в один | `map()` оставляет 1:1, разворачивание делает `flatMap()`. ❌ ПОСЛЕДСТВИЕ: получите `Stream<Stream<T>>` вместо плоского.
+> - [ ] `flatMap()` всегда быстрее `map()` за счёт ленивости | Оба ленивые, скорость зависит от логики, не от вида. ❌ ПОСЛЕДСТВИЕ: ложные ожидания при бенчмарках.
+> - [x] `map()` — преобразование 1:1, `flatMap()` — 1:N с разворачиванием в плоский стрим | `flatMap` принимает функцию `T -> Stream<U>` и склеивает. ✓ ПРИМЕНЯТЬ: извлечь теги из списка статей. 📋 ПРАВИЛО: «map = трансформация, flatMap = трансформация + разворачивание». 🔗 См. Q18.
+> - [ ] `flatMap()` работает только с `Optional` | Работает и со `Stream`, и с `Optional`. ❌ ПОСЛЕДСТВИЕ: пропустите ключевой инструмент агрегации.
+
+> [!mcq]
+> - [ ] Если функция в `flatMap` возвращает `Stream.empty()` для некоторых элементов — это compile error, `flatMap` требует ровно одного элемента на входной | `Stream.empty()` валиден. ❌ ПОСЛЕДСТВИЕ: разработчик не использует `flatMap` для filter+transform одновременно (`return matches ? Stream.of(value) : Stream.empty();`), пишет `filter().map()` где transform делает работу два раза; теряет элегантный idiom.
+> - [x] `flatMap` поддерживает 1:N **включая** 1:0 (`Stream.empty()`) и 1:1 — это позволяет одной операцией выразить filter+map+expand; внутренние стримы автоматически закрываются после потребления (важно для `Files.lines`) | ✓ ПРИМЕНЯТЬ: `flatMap(s -> s.isValid() ? Stream.of(transform(s)) : Stream.empty())` — filter + map в одном шаге; `flatMap(path -> Files.lines(path))` — конкатенация файлов с auto-close; `Optional.flatMap` для chained nullable navigation. 📋 ПРАВИЛО: «`flatMap` = 1:N где N ∈ {0,1,many}; inner Stream закрывается автоматически после consume». 🔗 См. Q13 (Optional.flatMap), Q24 (Collectors), Q30 (Stream sources).
+> - [ ] Внутренние стримы созданные внутри `flatMap` (`Files.lines(path)`) надо явно закрывать через `try-with-resources` — иначе утечка дескрипторов | `flatMap` сам закрывает inner streams. ❌ ПОСЛЕДСТВИЕ: разработчик оборачивает каждый inner stream в `try-with-resources` внутри лямбды — компиляция падает (`Stream` возвращается из лямбды); или дублирует close в `onClose`; путаница в lifecycle.
+> - [ ] `flatMap(x -> Stream.of(x, x))` удваивает каждый элемент в обратном порядке — `flatMap` итерирует справа налево | Порядок сохраняется. ❌ ПОСЛЕДСТВИЕ: тесты ожидают «обратный порядок» из-за неправильного представления; на больших данных порядок «правильный», тесты падают локально и зелёные на CI; день потерян.
+
 ## Q22. Что такое `reduce()` и как его использовать?
 
 `reduce()` — терминальная операция свёртки, которая последовательно применяет бинарную функцию к элементам, накапливая результат.
@@ -795,6 +933,12 @@ String concatenated = List.of("a", "b", "c").stream()
 
 **Подвох**: identity-значение должно быть нейтральным элементом: `0` для суммы, `1` для произведения, `""` для конкатенации.
 
+> [!mcq]
+> - [ ] `reduce()` без identity всегда возвращает `T` | Возвращает `Optional<T>` — поток может быть пустым. ❌ ПОСЛЕДСТВИЕ: `NullPointerException` при попытке использовать примитив.
+> - [ ] identity-значение может быть любым — например, `1` для суммы | Должен быть нейтральным: `0` для суммы, `1` для умножения. ❌ ПОСЛЕДСТВИЕ: накопление лишней `1` в каждом элементе → результат смещён.
+> - [ ] `combiner` нужен только для sequential-стрима | `combiner` нужен в parallel-режиме для слияния частичных результатов. ❌ ПОСЛЕДСТВИЕ: некорректный merge при `parallel()`.
+> - [x] `reduce()` — терминальная свёртка с тремя формами: identity+BinaryOp, без identity (`Optional`), identity+accumulator+combiner | Выбор формы определяет тип результата и поддержку parallel. ✓ ПРИМЕНЯТЬ: суммирование, конкатенация, кастомные агрегации. 📋 ПРАВИЛО: «identity нейтрален, combiner ассоциативен». 🔗 См. Q19.
+
 ## Q23. В чём разница между `findFirst()` и `findAny()`?
 
 | | `findFirst()` | `findAny()` |
@@ -815,6 +959,12 @@ Optional<String> first = names.stream()
     .filter(n -> n.startsWith("A"))
     .findFirst();
 ```
+
+> [!mcq]
+> - [ ] `findAny()` всегда возвращает первый элемент в encounter order | Не гарантирует порядок — отдаёт любой найденный (часто первый в sequential, но не контрактно). ❌ ПОСЛЕДСТВИЕ: тесты ломаются на parallel-стриме при предположении о порядке.
+> - [x] `findFirst()` гарантирует encounter order, `findAny()` — нет; в parallel `findAny()` обычно быстрее | `findAny` снимает ограничение порядка → меньше синхронизации. ✓ ПРИМЕНЯТЬ: `findAny` в parallel-стриме при поиске «хоть какого-то». 📋 ПРАВИЛО: «нужен порядок — findFirst, нужна скорость — findAny». 🔗 См. Q28.
+> - [ ] Обе операции возвращают `T` напрямую | Обе возвращают `Optional<T>` — поток может быть пуст. ❌ ПОСЛЕДСТВИЕ: NPE при `.orElse(null)` без проверки.
+> - [ ] `findFirst()` нельзя использовать в `parallelStream()` | Можно, но он принудительно сохраняет порядок → может быть медленнее. ❌ ПОСЛЕДСТВИЕ: упустите оптимизацию.
 
 ## Q24. (!) Какие основные `Collectors` вы знаете?
 
@@ -849,6 +999,18 @@ IntSummaryStatistics stats = employees.stream()
 List<String> immutable = names.stream().collect(Collectors.toUnmodifiableList());
 ```
 
+> [!mcq]
+> - [ ] `Collectors.toMap()` молча игнорирует дубликаты ключей | Бросает `IllegalStateException` при коллизии без mergeFunction. ❌ ПОСЛЕДСТВИЕ: production падает на дублях из БД.
+> - [ ] `groupingBy` возвращает `LinkedHashMap` по умолчанию | Возвращает `HashMap` — порядок не гарантирован. ❌ ПОСЛЕДСТВИЕ: тесты на порядок ломаются непредсказуемо.
+> - [x] Базовые `Collectors`: `toList`/`toSet`/`toMap`, `joining`, `groupingBy`, `partitioningBy`, `summarizingInt`, `counting` | Закрывают 90% задач агрегации стримов. ✓ ПРИМЕНЯТЬ: `groupingBy(Employee::getDepartment, Collectors.counting())`. 📋 ПРАВИЛО: «groupingBy для много-сегментов, partitioningBy для true/false». 🔗 См. Q26.
+> - [ ] `Collectors.toList()` возвращает неизменяемый список | До Java 10 возвращает `ArrayList`. Неизменяемый — `toUnmodifiableList()`. ❌ ПОСЛЕДСТВИЕ: рантайм `UnsupportedOperationException` при модификации.
+
+> [!mcq]
+> - [x] У `Collectors.groupingBy` есть 3-аргументная форма `groupingBy(classifier, mapFactory, downstream)` — позволяет выбрать тип `Map` (например `TreeMap` для сортировки ключей) и downstream-коллектор (`counting`, `mapping`, `toSet`) одновременно | ✓ ПРИМЕНЯТЬ: `groupingBy(Employee::getDept, TreeMap::new, counting())` — отсортированная по департаменту мапа со счётчиками; `groupingBy(byMonth, LinkedHashMap::new, toList())` — сохранить insertion order; `partitioningBy(predicate, toSet())` для unique разбиения. 📋 ПРАВИЛО: «3-arg `groupingBy(classifier, mapFactory, downstream)` — точка контроля типа Map и downstream-агрегации». 🔗 См. Q26 (groupingBy), Q22 (reduce), Q39 (custom Collector).
+> - [ ] `Collectors.groupingBy` всегда создаёт `HashMap` — для `TreeMap` нужен отдельный `Collectors.toTreeMap` | Есть 3-arg форма с `mapFactory`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `.collect(groupingBy(...))` потом `new TreeMap<>(result)` — лишнее копирование O(n log n) на каждый запрос; в hot path API заметная деградация latency p99.
+> - [ ] `Collectors.toMap(key, value)` при коллизии ключей берёт **последнее** значение, скрывая дубли | Бросает `IllegalStateException` без mergeFunction. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с `Collectors.toMap` на параллельную обработку, дубли возникают, в production `IllegalStateException: Duplicate key User[id=42]`; падают все запросы где есть дублирующая запись из БД (исторический баг данных).
+> - [ ] `Collectors.counting()` возвращает `int` — лимит ~2 млрд элементов на группу | Возвращает `Long`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Map<String, Integer> counts = stream.collect(groupingBy(k, counting()));` — compile error «cannot convert Long to Integer»; тратит время на каст вместо использования правильного типа `Map<String, Long>`.
+
 ## Q25. Что такое `Stream.peek()` и когда его использовать?
 
 `peek(Consumer)` — промежуточная операция, которая выполняет побочный эффект для каждого элемента, не изменяя поток.
@@ -868,6 +1030,12 @@ List<String> result = Stream.of("one", "two", "three", "four")
 - В parallel stream порядок вызовов не гарантирован
 - Не использовать для мутации объектов в потоке — это нарушает контракт `Stream`
 - В production-коде предпочтительнее полноценное логирование
+
+> [!mcq]
+> - [ ] `peek()` — терминальная операция, запускающая pipeline | `peek()` промежуточная и ленивая — без терминала не выполнится. ❌ ПОСЛЕДСТВИЕ: «исчезающие» логи в проде, никто не понимает почему.
+> - [x] `peek()` — промежуточная операция для отладки/наблюдения, не должна нести бизнес-логику | Реализация может skip-нуть `peek` при оптимизации (Java 9+ JEP 269). ✓ ПРИМЕНЯТЬ: только для debug-логов в pipeline. 📋 ПРАВИЛО: «peek = глаз, не рука». 🔗 См. Q19.
+> - [ ] `peek()` гарантирует порядок вызовов в `parallelStream()` | Порядок не гарантирован в параллельном режиме. ❌ ПОСЛЕДСТВИЕ: путаница в логах при разборе production-инцидента.
+> - [ ] `peek()` можно использовать для модификации элементов | Это нарушает контракт `Stream` (non-interference). ❌ ПОСЛЕДСТВИЕ: race condition в parallel + непредсказуемое поведение.
 
 ## Q26. Как группировать элементы с помощью `Collectors.groupingBy`?
 
@@ -899,6 +1067,12 @@ Map<Boolean, List<Transaction>> expensive = transactions.stream()
     .collect(Collectors.partitioningBy(t -> t.getAmount() > 1000));
 ```
 
+> [!mcq]
+> - [ ] `groupingBy` без downstream-коллектора возвращает `Map<K, K>` | Возвращает `Map<K, List<T>>` — собирает элементы в список по ключу. ❌ ПОСЛЕДСТВИЕ: ClassCastException при работе с результатом.
+> - [x] `groupingBy(classifier, downstream)` позволяет применить вторичную агрегацию (`counting`, `summing`, `mapping`, вложенный `groupingBy`) | downstream меняет тип значения карты. ✓ ПРИМЕНЯТЬ: `groupingBy(Tx::getCategory, summingDouble(Tx::getAmount))`. 📋 ПРАВИЛО: «classifier → ключ, downstream → значение». 🔗 См. Q24.
+> - [ ] `partitioningBy` принимает любой `Function<T, K>` как и `groupingBy` | Принимает только `Predicate<T>` — даёт ровно 2 раздела (true/false). ❌ ПОСЛЕДСТВИЕ: компиляция падает при использовании произвольного классификатора.
+> - [ ] Многоуровневая группировка невозможна без явного цикла | Поддерживается через вложенный `groupingBy` как downstream. ❌ ПОСЛЕДСТВИЕ: пишете императивный код вместо декларативного.
+
 ## Q27. Что такое примитивные стримы `IntStream`, `LongStream`, `DoubleStream`?
 
 Специализированные стримы для примитивных типов, которые **избегают autoboxing/unboxing**:
@@ -925,6 +1099,12 @@ IntStream random = new Random().ints(10, 1, 100); // 10 чисел от 1 до 9
 ```
 
 **Когда использовать**: при работе с числовыми данными для повышения производительности и доступа к агрегатным методам (`sum`, `average`, `min`, `max`).
+
+> [!mcq]
+> - [ ] `IntStream.range(1, 10)` включает 10 | `range` — полузакрытый интервал [1, 10), включает 1..9. ❌ ПОСЛЕДСТВИЕ: off-by-one в боевой логике.
+> - [ ] `IntStream` наследует `Stream<Integer>` | Это отдельная иерархия (`BaseStream`), а не подтип `Stream<Integer>`. ❌ ПОСЛЕДСТВИЕ: ошибка компиляции при попытке передать в метод, ожидающий `Stream<Integer>`.
+> - [ ] Преобразование `Stream<Integer> → IntStream` делается через `.toIntStream()` | Метод называется `mapToInt(Integer::intValue)`. ❌ ПОСЛЕДСТВИЕ: метод не найден на этапе компиляции.
+> - [x] `IntStream`/`LongStream`/`DoubleStream` избегают boxing/unboxing и предоставляют `sum`, `average`, `summaryStatistics` | Прямая работа с примитивами + специализированные агрегации. ✓ ПРИМЕНЯТЬ: подсчёт чисел, статистика. 📋 ПРАВИЛО: «есть числа → используй примитивный Stream». 🔗 См. Q18.
 
 ## Q28. (!) Что такое parallel `stream` и когда его применять?
 
@@ -968,6 +1148,18 @@ List<String> safe = names.parallelStream()
 
 Подробнее о проблемах параллелизма — в [вопросах по Java Concurrency](java-concurrency-interview.md).
 
+> [!mcq]
+> - [ ] `parallelStream()` создаёт новый пул потоков под каждый вызов | Использует общий `ForkJoinPool.commonPool()`. ❌ ПОСЛЕДСТВИЕ: блокирующая I/O-задача в parallel stream забивает общий пул и тормозит весь сервис.
+> - [x] `parallelStream()` использует общий `ForkJoinPool.commonPool()`; не подходит при I/O-блокировках и race condition | Эффективен на CPU-bound задачах с большим N и без shared state. ✓ ПРИМЕНЯТЬ: тяжёлая чистая обработка массивов. 📋 ПРАВИЛО: «много данных + чистая функция → parallel». 🔗 См. Q23.
+> - [ ] `parallelStream` всегда быстрее sequential | На малых коллекциях накладные расходы превышают выигрыш. ❌ ПОСЛЕДСТВИЕ: деградация на маленьких данных.
+> - [ ] Можно безопасно делать `forEach(list::add)` в parallel | Это race condition на не-потокобезопасной коллекции. ❌ ПОСЛЕДСТВИЕ: потерянные элементы или `ArrayIndexOutOfBoundsException`.
+
+> [!mcq]
+> - [ ] Размер `commonPool()` равен числу CPU и не настраивается — JVM-флаг `-Djava.util.concurrent.ForkJoinPool.common.parallelism` игнорируется в production | Флаг работает. ❌ ПОСЛЕДСТВИЕ: команда не настраивает parallelism, на 8-CPU контейнере (по факту лимит 2 cores через cgroups) common pool создаёт 8 воркеров, начинается context switching thrashing; latency растёт хаотично.
+> - [ ] Чтобы изолировать `parallelStream` от common pool, достаточно вызвать `.parallel()` после `.stream()` — JVM создаст fresh pool на каждый pipeline | `.parallel()` всё равно использует common pool. ❌ ПОСЛЕДСТВИЕ: разработчик «изолирует» тяжёлую обработку через `.stream().parallel()`, но pipeline продолжает забивать общий пул; параллельные `parallelStream` в других сервисах JVM начинают тормозить друг друга.
+> - [x] Для изоляции `parallelStream` от `ForkJoinPool.commonPool()` используется паттерн `customPool.submit(() -> stream.parallel().collect(...)).get()` — ForkJoinTask, поданная в кастомный пул, выполняет stream-операции на воркерах этого пула | ✓ ПРИМЕНЯТЬ: web-сервис где `commonPool` нельзя занимать (HTTP handler, async tasks, других parallel streams) → выделить `new ForkJoinPool(N)` под heavy workload; Spring Batch для CPU-bound шагов; обязательно вызывать `pool.shutdown()` при завершении. 📋 ПРАВИЛО: «изоляция parallel: `pool.submit(() -> stream.parallel()).get()`; common pool — shared resource всего JVM». 🔗 См. Q34 (CompletableFuture executor), Q23 (findAny), Q38 (Stream errors).
+> - [ ] `parallelStream` автоматически создаёт изолированный `ForkJoinPool` при detection долгих задач — JVM анализирует время выполнения и переключает пул | Никакой адаптивной логики нет. ❌ ПОСЛЕДСТВИЕ: команда полагается на «JVM сам разберётся» с медленными задачами, не делает изоляцию; первый медленный batch блокирует common pool на минуты; cascade timeouts всех async операций сервиса.
+
 ## Q29. Можно ли повторно использовать `Stream`?
 
 **Нет.** После вызова терминальной операции стрим «закрывается» и не может быть использован повторно:
@@ -989,6 +1181,12 @@ Supplier<Stream<String>> streamFactory = () -> List.of("a", "b", "c").stream();
 long count = streamFactory.get().count();
 List<String> upper = streamFactory.get().map(String::toUpperCase).toList();
 ```
+
+> [!mcq]
+> - [ ] `Stream` можно использовать многократно после терминальной операции | После терминала `Stream` закрыт — повторное использование бросает `IllegalStateException`. ❌ ПОСЛЕДСТВИЕ: рантайм-падение в production.
+> - [ ] `Stream` reset-ится автоматически в каждом новом методе | Метода `reset()` у `Stream` нет. ❌ ПОСЛЕДСТВИЕ: ложные ожидания → IllegalStateException.
+> - [x] `Stream` одноразовый — после терминальной операции он закрыт; решение — `Supplier<Stream<T>>` или новый стрим из источника | Стрим хранит state «consumed». ✓ ПРИМЕНЯТЬ: фабрика-Supplier для повторного использования. 📋 ПРАВИЛО: «Stream одноразовый, как итератор». 🔗 См. Q19.
+> - [ ] `Stream` можно использовать повторно, если не было `forEach` | Любая терминальная операция (`count`, `collect`, `findFirst`) закрывает стрим. ❌ ПОСЛЕДСТВИЕ: тонкая ошибка после рефакторинга.
 
 ## Q30. Как создать `Stream` из различных источников?
 
@@ -1023,6 +1221,12 @@ Stream<Map.Entry<String, Integer>> entries = map.entrySet().stream();
 // Из Optional (Java 9)
 Stream<String> s9 = Optional.of("value").stream();
 ```
+
+> [!mcq]
+> - [ ] `Stream.iterate(seed, op)` создаёт ограниченный стрим | Без `limit` стрим бесконечный. ❌ ПОСЛЕДСТВИЕ: зависание потока при `forEach`.
+> - [ ] `Files.lines(Path)` загружает весь файл в память | Возвращает ленивый стрим, читает построчно. ❌ ПОСЛЕДСТВИЕ: ложный страх → переписывают на `BufferedReader` без необходимости.
+> - [x] `Stream` создаётся из коллекций (`stream()`), массивов (`Arrays.stream`), значений (`Stream.of`), генераторов (`generate`/`iterate`), файлов (`Files.lines`), `Optional.stream()` (Java 9) | Универсальный API источников. ✓ ПРИМЕНЯТЬ: построчное чтение больших файлов. 📋 ПРАВИЛО: «бесконечный источник → обязателен limit». 🔗 См. Q29.
+> - [ ] `Arrays.stream(int[])` возвращает `Stream<Integer>` | Возвращает примитивный `IntStream`. ❌ ПОСЛЕДСТВИЕ: лишний boxing при попытке поведения как с объектным стримом.
 
 ## Q31. (!) Какие ключевые классы входят в новый `Date/Time API`?
 
@@ -1066,6 +1270,18 @@ Instant fromDate = new Date().toInstant();
 LocalDateTime fromLegacy = LocalDateTime.ofInstant(fromDate, ZoneId.systemDefault());
 ```
 
+> [!mcq]
+> - [ ] Классы `java.time` изменяемы как `Calendar` | Все классы `java.time` неизменяемы и потокобезопасны. ❌ ПОСЛЕДСТВИЕ: race condition при шаринге, как было с `SimpleDateFormat`.
+> - [x] `java.time` (JSR 310) — неизменяемые потокобезопасные классы: `LocalDate`, `LocalTime`, `LocalDateTime`, `ZonedDateTime`, `Instant`, `Duration`, `Period` | Замена legacy `Date`/`Calendar`/`SimpleDateFormat`. ✓ ПРИМЕНЯТЬ: всегда вместо `java.util.Date` в новом коде. 📋 ПРАВИЛО: «Instant для timestamp, ZonedDateTime для зоны, LocalDate для UI». 🔗 См. Q32.
+> - [ ] `Instant` хранит дату в локальной зоне | `Instant` — момент на UTC-таймлайне без зоны. ❌ ПОСЛЕДСТВИЕ: расхождение значений при репликации между серверами.
+> - [ ] `LocalDate.plusDays(1)` мутирует исходный объект | Возвращает новый объект — старый не меняется (immutable). ❌ ПОСЛЕДСТВИЕ: «исчезающие» изменения, забытое присваивание.
+
+> [!mcq]
+> - [ ] `Instant` и `ZonedDateTime` хранят одно и то же — момент времени с зоной; разница только в API | `Instant` без зоны (UTC-таймлайн), `ZonedDateTime` с `ZoneId`. ❌ ПОСЛЕДСТВИЕ: разработчик хранит `Instant` в БД и теряет user timezone (нужно для отображения в UI «по локальному времени пользователя»); или хранит `ZonedDateTime` и tape recording серверной зоны вместо timezone клиента — путаница в semantics.
+> - [ ] `Instant.now()` возвращает время в системной зоне сервера, а `ZonedDateTime.now()` всегда в UTC | Наоборот: `Instant` — UTC-моment, `ZonedDateTime.now()` — в `ZoneId.systemDefault()`. ❌ ПОСЛЕДСТВИЕ: миграция сервера в другую timezone (Europe/Moscow → UTC), `ZonedDateTime.now()` возвращает другие значения, события сдвигаются на 3 часа в логах и метриках; alerts срабатывают «на час вперёд»; SLA-репорты неверные.
+> - [x] `Instant` — это **момент** на UTC-таймлайне (single point in time, без зоны), `ZonedDateTime` = `Instant + ZoneId` (тот же момент + правила DST/offset для отображения); для хранения и сравнения моментов используйте `Instant`, для UI/расписаний с правилами DST — `ZonedDateTime` | ✓ ПРИМЕНЯТЬ: `Instant` для `created_at`/`updated_at` в БД (PostgreSQL `timestamptz`), event timestamps в Kafka, `Duration.between(t1, t2)`; `ZonedDateTime` — recurring meetings («каждый понедельник 10:00 Europe/Moscow» переживает DST), client-facing schedules. 📋 ПРАВИЛО: «`Instant` для timeline-position, `ZonedDateTime` для wall-clock с правилами зоны». 🔗 См. Q32 (LocalDateTime vs ZonedDateTime), Q33 (Duration vs Period).
+> - [ ] При DST-переходе `Instant.plus(Duration.ofHours(24))` сохраняет «то же время суток» (например 10:00 → 10:00 следующего дня) | `Instant` оперирует чистым timeline без понятия «время суток». ❌ ПОСЛЕДСТВИЕ: scheduler «каждые 24 часа» через `Instant` сдвигается относительно wall-clock на 1 час дважды в год при DST; cron-like задача «в 10 утра» уезжает на 9 или 11; для wall-clock semantics нужен `ZonedDateTime.plus(Period.ofDays(1))`.
+
 ## Q32. В чём разница между `LocalDateTime` и `ZonedDateTime`?
 
 | | `LocalDateTime` | `ZonedDateTime` |
@@ -1089,6 +1305,12 @@ Instant instant = moscow.toInstant(); // UTC момент
 ```
 
 **Правило**: для хранения и передачи по сети всегда использовать `Instant` или `ZonedDateTime`/`OffsetDateTime`. `LocalDateTime` — только для отображения пользователю в его локальной зоне.
+
+> [!mcq]
+> - [ ] `LocalDateTime` хранит зону по умолчанию `UTC` | Вообще не хранит зону — это «дата+время без контекста». ❌ ПОСЛЕДСТВИЕ: при сравнении пользователей из разных зон расчёты сдвигаются.
+> - [x] `LocalDateTime` без зоны (для UI/локальных вычислений), `ZonedDateTime` с `ZoneId` (для хранения и кросс-зональных операций) | Зона нужна, чтобы корректно сравнивать моменты. ✓ ПРИМЕНЯТЬ: `Instant`/`ZonedDateTime` для БД и API, `LocalDateTime` — только для отображения. 📋 ПРАВИЛО: «есть пользователь → ZonedDateTime, нет → Instant». 🔗 См. Q31.
+> - [ ] `ZonedDateTime` и `LocalDateTime` сравниваются между собой через `compareTo` | Прямого сравнения нет: нужно сначала привести к одной зоне или `Instant`. ❌ ПОСЛЕДСТВИЕ: ошибка компиляции или неверная логика.
+> - [ ] Хранить в БД лучше `LocalDateTime` — занимает меньше места | Хранить надо `Instant`/`OffsetDateTime` — иначе теряется зона и моменты «плавают» при миграции серверов. ❌ ПОСЛЕДСТВИЕ: события сдвигаются на ±N часов после смены TZ сервера.
 
 ## Q33. Чем `Duration` отличается от `Period`?
 
@@ -1114,6 +1336,12 @@ System.out.println("Возраст: " + age.getYears() + " лет, " + age.getMo
 Duration timeout = Duration.ofSeconds(30);
 Duration longRun = Duration.ofHours(2).plusMinutes(30);
 ```
+
+> [!mcq]
+> - [ ] `Period` хранит часы/минуты/секунды | `Period` — годы/месяцы/дни. Часы хранит `Duration`. ❌ ПОСЛЕДСТВИЕ: некорректный таймаут или возраст.
+> - [ ] `Duration.between(LocalDate, LocalDate)` работает корректно | `Duration` требует точного времени; для дат — `Period`. ❌ ПОСЛЕДСТВИЕ: `UnsupportedTemporalTypeException`.
+> - [x] `Duration` — точная длительность (секунды+нано), `Period` — календарный промежуток (годы/месяцы/дни) с учётом високосных | Разные единицы и точность. ✓ ПРИМЕНЯТЬ: `Duration` для таймаутов, `Period` для возраста и сроков. 📋 ПРАВИЛО: «Duration для часов на таймере, Period для дат в календаре». 🔗 См. Q31.
+> - [ ] Оба класса учитывают переход на летнее время одинаково | `Duration` точная (секунды), `Period` календарный — итоговый момент может различаться при переходе DST. ❌ ПОСЛЕДСТВИЕ: смещение события на час дважды в год.
 
 ## Q34. (!) Что такое `CompletableFuture` и чем он лучше `Future`?
 
@@ -1155,7 +1383,11 @@ all.thenRun(() -> System.out.println("Все задачи завершены"));
 
 Подробнее об асинхронности — в [вопросах по Java Concurrency](java-concurrency-interview.md).
 
-## Q35. Как комбинировать несколько `CompletableFuture`?
+> [!mcq]
+> - [ ] `Future.get()` неблокирующий — сразу возвращает promise | `Future.get()` блокирует поток до завершения. ❌ ПОСЛЕДСТВИЕ: thread starvation в HTTP-обработчиках.
+> - [x] `CompletableFuture` добавляет неблокирующие цепочки (`thenApply`, `thenCompose`), композицию (`allOf`, `thenCombine`) и обработку ошибок (`exceptionally`, `handle`) | Контролируется `Executor`-ом, по умолчанию — `ForkJoinPool.commonPool()`. ✓ ПРИМЕНЯТЬ: цепочки async-операций без блокировки. 📋 ПРАВИЛО: «не блокировать — связывать через thenXxx». 🔗 См. Q35.
+> - [ ] `supplyAsync` без `Executor` использует выделенный пул для I/O | Использует общий `ForkJoinPool.commonPool()` — не для блокирующего I/O. ❌ ПОСЛЕДСТВИЕ: блокировка common pool ломает parallel streams и другие async-задачи всего JVM.
+> - [ ] `CompletableFuture` нельзя завершить вручную | Метод `complete(value)` позволяет завершить вручную. ❌ ПОСЛЕДСТВИЕ: упустите паттерн «адаптер коллбеков».
 
 ```java
 // thenCompose — последовательная цепочка (flatMap для Future)
@@ -1189,6 +1421,12 @@ CompletableFuture<Object> fastest = CompletableFuture.anyOf(
 **Разница `thenApply` vs `thenCompose`:**
 - `thenApply(Function<T, U>)` — аналог `map`: T → U
 - `thenCompose(Function<T, CompletableFuture<U>>)` — аналог `flatMap`: T → CF<U>
+
+> [!mcq]
+> - [ ] `thenApply` принимает `Function<T, CompletableFuture<U>>` | `thenApply` — это `T -> U`; `T -> CF<U>` — это `thenCompose`. ❌ ПОСЛЕДСТВИЕ: получите `CF<CF<U>>` вместо `CF<U>`.
+> - [x] `thenCompose` — flatMap для `CF` (избегает вложенности), `thenCombine` — параллельное объединение двух `CF`, `allOf`/`anyOf` — ожидание всех/любого | Разные операции для разных композиций. ✓ ПРИМЕНЯТЬ: `findUser().thenCompose(this::loadOrders)`. 📋 ПРАВИЛО: «следующий шаг async → thenCompose, два независимых → thenCombine». 🔗 См. Q34.
+> - [ ] `allOf` возвращает `CompletableFuture<List<T>>` | Возвращает `CompletableFuture<Void>`; список собирается отдельно через `.join()`. ❌ ПОСЛЕДСТВИЕ: `ClassCastException` при попытке использовать как список.
+> - [ ] `anyOf` возвращает результат самого быстрого с типизацией | Возвращает `CompletableFuture<Object>` без типизации. ❌ ПОСЛЕДСТВИЕ: ручное приведение типов и потенциальный `ClassCastException`.
 
 ## Q36. Как обрабатывать исключения в `CompletableFuture`?
 
@@ -1229,6 +1467,12 @@ CompletableFuture<String> logged = CompletableFuture
 | `exceptionally` | Да (при ошибке) | Да | Нет |
 | `handle` | Да | Да | Да |
 | `whenComplete` | Нет | Да | Да |
+
+> [!mcq]
+> - [ ] `whenComplete` меняет результат `CompletableFuture` | `whenComplete` — побочный эффект, результат остаётся прежним. ❌ ПОСЛЕДСТВИЕ: «исчезающие» преобразования при ожидании, что значение изменится.
+> - [x] `exceptionally` обрабатывает только ошибки, `handle` — и ошибку, и результат, `whenComplete` — наблюдает без изменения | Каждый метод имеет свою сигнатуру и контракт. ✓ ПРИМЕНЯТЬ: `handle` когда нужно вернуть fallback с учётом result/ex; `whenComplete` для логирования. 📋 ПРАВИЛО: «exceptionally — recovery, handle — transform-or-recover, whenComplete — observe». 🔗 См. Q34.
+> - [ ] `exceptionally` ловит ошибку и продолжает только для checked-исключений | Ловит любое `Throwable` (обычно завёрнутый в `CompletionException`). ❌ ПОСЛЕДСТВИЕ: пропустите runtime-исключения и они вылетят на `get()`.
+> - [ ] Внутри `exceptionally` ошибка приходит без обёртки | Часто приходит как `CompletionException` — нужно `getCause()`. ❌ ПОСЛЕДСТВИЕ: ваш `instanceof BusinessException` всегда false.
 
 ## Q37. Как обработать `checked`-исключения в лямбдах и `Stream`?
 
@@ -1274,6 +1518,12 @@ List<URL> urls = paths.stream()
     .map(Try::get)
     .toList();
 ```
+
+> [!mcq]
+> - [ ] Просто переписать тип сигнатуры лямбды как `(throws IOException)` — компилятор разрешит | Тип `Function<T,R>` не объявляет `throws`, изменить его нельзя. ❌ ПОСЛЕДСТВИЕ: код вообще не компилируется.
+> - [x] Обернуть в `try-catch` внутри лямбды или использовать utility-обёртку (`UncheckedFunction`/`Try` из Vavr/`SneakyThrows` Lombok) — `Function<T,R>` не объявляет `throws` | Стандартные функциональные интерфейсы не пропускают checked, оборачивание в RuntimeException — стандартный приём. ✓ ПРИМЕНЯТЬ: для I/O в `map`/`filter`. 📋 ПРАВИЛО: «лямбда не пробрасывает checked — оборачивай или используй Try». 🔗 См. Q5, Q42.
+> - [ ] Лямбды в Java 8 автоматически конвертируют `IOException` в `RuntimeException` | Никакой автоматической конверсии нет. ❌ ПОСЛЕДСТВИЕ: разработчик удивляется, что `Files.readString` в `map` не компилируется.
+> - [ ] Применить `@SuppressWarnings("checked")` — компилятор пропустит | Аннотация не подавляет ошибки, только warnings. ❌ ПОСЛЕДСТВИЕ: ошибка компиляции остаётся.
 
 ## Q38. Какие типичные ошибки допускают при работе со `Stream API`?
 
@@ -1322,6 +1572,12 @@ String first = list.get(0);
 ```
 
 Подробнее о типичных ошибках и best practices — в [вопросах по Stream API](java-stream-interview.md).
+
+> [!mcq]
+> - [ ] Повторное использование стрима — после `.forEach` можно вызвать `.count()` | Stream одноразовый — повторный terminal вызов кидает `IllegalStateException`. ❌ ПОСЛЕДСТВИЕ: NPE/IllegalState под нагрузкой.
+> - [ ] `.peek` идеально подходит для логирования бизнес-операций (отправка в Kafka) | `peek` гарантирован только для отлаженных pipeline и может пропускаться оптимизатором (Java 9+). ❌ ПОСЛЕДСТВИЕ: события теряются в production.
+> - [x] Накапливание результатов через `forEach(result::add)` в parallel-стриме небезопасно — нужен `collect(Collectors.toList())` | `ArrayList` не thread-safe; `collect` использует thread-local аккумуляторы и потокобезопасный merge. ✓ ПРИМЕНЯТЬ: всегда для parallel. 📋 ПРАВИЛО: «parallel + add ⇒ collect, не forEach». 🔗 См. Q19, Q42.
+> - [ ] `Stream.generate(...)` без `limit()` — нормальная практика, JVM сама остановит | Бесконечный стрим без `limit` зависает forever. ❌ ПОСЛЕДСТВИЕ: thread starvation, поток жрёт CPU 100%.
 
 ## Q39. (!) Как написать собственный `Collector`?
 
@@ -1372,6 +1628,12 @@ Map<Integer, Long> countByLength = words.stream()
     .collect(Collectors.groupingBy(String::length, Collectors.counting()));
 ```
 
+> [!mcq]
+> - [ ] `Collector<T, A, R>` — это два параметра (`T` элемент, `R` результат), `A` опционален | `A` обязателен, описывает тип внутреннего аккумулятора. ❌ ПОСЛЕДСТВИЕ: `Collector.of` без supplier не компилируется.
+> - [ ] `combiner` нужен только для `parallel`-стримов и можно его не указывать | `Collector.of` требует combiner всегда (5 обязательных аргументов перед characteristics). ❌ ПОСЛЕДСТВИЕ: `NoSuchMethodError` при overload-разрешении.
+> - [x] Кастомный коллектор объявляет 5 параметров: `supplier`, `accumulator`, `combiner`, `finisher`, `characteristics` (включая `IDENTITY_FINISH`/`UNORDERED`/`CONCURRENT`); `combiner` обязателен даже для последовательных стримов | Полный API `Collector.of()`. ✓ ПРИМЕНЯТЬ: для специальных агрегаций (LinkedHashMap, статистики). 📋 ПРАВИЛО: «5 шагов: создал → добавил → склеил → завершил → охарактеризовал». 🔗 См. Q19, Q33.
+> - [ ] `IDENTITY_FINISH` означает «вызвать finisher 1 раз в конце» | Наоборот: означает «finisher НЕ вызывается, аккумулятор IS результат». ❌ ПОСЛЕДСТВИЕ: попытка финального преобразования ломает результат.
+
 ## Q40. Какие типы `Method Reference` существуют и чем отличаются?
 
 Ссылка на метод — сокращённый синтаксис лямбды, когда лямбда лишь вызывает существующий метод. Четыре типа:
@@ -1418,6 +1680,12 @@ stream.map(String::trim).filter(String::isEmpty)
 // ✅ Лямбда — нужна дополнительная логика
 stream.map(s -> s.trim().toLowerCase()).filter(s -> s.length() > 3)
 ```
+
+> [!mcq]
+> - [ ] `String::toLowerCase` (unbound) и `obj::toLowerCase` (bound) идентичны при одинаковом количестве аргументов | Различаются: unbound берёт receiver из первого параметра, bound фиксирует receiver в `obj`. ❌ ПОСЛЕДСТВИЕ: `Function<String, String>` vs `Supplier<String>` — разные сигнатуры.
+> - [ ] `ClassName::new` создаёт новый объект через рефлексию | Не рефлексия — компилятор генерирует `invokedynamic`+`LambdaMetafactory`, как для обычных лямбд. ❌ ПОСЛЕДСТВИЕ: ложный страх медленности method-reference.
+> - [x] Существует 4 вида: статический (`Integer::parseInt`), bound instance (`obj::m`), unbound instance (`String::toLowerCase`), конструктор (`ArrayList::new`); unbound — первый параметр становится receiver | Полный набор синтаксиса method reference. ✓ ПРИМЕНЯТЬ: для лаконичности там, где лямбда просто пробрасывает аргументы. 📋 ПРАВИЛО: «4 вида — static / bound / unbound / new». 🔗 См. Q3, Q42.
+> - [ ] `System.out::println` — пример unbound reference | Это bound reference: receiver — конкретный объект `System.out`. ❌ ПОСЛЕДСТВИЕ: путаница с типами параметров на интервью.
 
 ## Q41. Как правильно использовать `Optional` и каких антипаттернов избегать?
 
@@ -1480,6 +1748,12 @@ String s = email.orElseGet(() -> expensiveDefault()); // только при о�
 Optional<Optional<User>> nested = ...; // используй flatMap
 ```
 
+> [!mcq]
+> - [ ] `Optional<String>` идеально подходит как тип поля DTO для опциональных значений | Поля `Optional` ломают сериализацию (Jackson/JPA), занимают лишнюю память. ❌ ПОСЛЕДСТВИЕ: ошибки при де/сериализации, deformed JSON в API.
+> - [ ] `orElse(expensiveCompute())` ленивый и не вызовет `expensiveCompute()` если значение есть | `orElse` — eager, всегда вычисляет аргумент. ❌ ПОСЛЕДСТВИЕ: дорогой вызов выполняется впустую при каждой записи.
+> - [x] `orElseGet(() -> expensiveCompute())` — ленивая версия `orElse`: вычислит только при пустом `Optional`; используй для дорогих fallback-значений | `orElseGet` принимает `Supplier`, выполняется по требованию. ✓ ПРИМЕНЯТЬ: когда default требует БД/IO. 📋 ПРАВИЛО: «дорогой default → orElseGet, дешёвый → orElse». 🔗 См. Q15, Q42.
+> - [ ] `Optional.get()` без проверки `isPresent` безопасен — вернёт null | Возвращает `NoSuchElementException`, не null. ❌ ПОСЛЕДСТВИЕ: production NPE-replacement крашит запрос.
+
 ## Q42. Что такое `Stream Pipeline` и как работает ленивость?
 
 `Stream Pipeline` — цепочка: **источник → промежуточные операции → терминальная операция**. Промежуточные операции **ленивые** (lazy): они не выполняются до вызова терминальной операции.
@@ -1526,6 +1800,12 @@ names.stream().map(String::toUpperCase).filter(s -> s.startsWith("A")).toList();
 // ✅ Оптимально
 names.stream().filter(s -> s.startsWith("A")).map(String::toUpperCase).toList();
 ```
+
+> [!mcq]
+> - [ ] Промежуточные операции (`filter`, `map`) запускают обработку немедленно | Они lazy: выполняются только когда вызван terminal-оператор. ❌ ПОСЛЕДСТВИЕ: разработчик вешает logger на `peek` без terminal-вызова и удивляется тишине.
+> - [ ] Stream pipeline всегда обрабатывает ВСЕ элементы источника | Short-circuit (`findFirst`, `anyMatch`, `limit`) останавливаются досрочно. ❌ ПОСЛЕДСТВИЕ: лишняя работа на больших коллекциях.
+> - [ ] Порядок `filter` и `map` не важен для производительности | Важен: фильтрация ДО трансформации уменьшает количество дорогостоящих `map`. ❌ ПОСЛЕДСТВИЕ: лишний CPU-trash в hot path.
+> - [x] Промежуточные операции lazy и собираются в pipeline; terminal-операция запускает обработку, при этом short-circuit-операции (`findFirst`, `anyMatch`, `limit`) могут останавливать pipeline досрочно — за счёт этого работают бесконечные стримы (`Stream.iterate`) | Обработка по элементу через всю цепочку, не batch-пер-операция. ✓ ПРИМЕНЯТЬ: композиция бесконечных и условных pipeline-ов. 📋 ПРАВИЛО: «lazy + per-element + short-circuit = магия Stream». 🔗 См. Q31, Q38.
 
 ---
 

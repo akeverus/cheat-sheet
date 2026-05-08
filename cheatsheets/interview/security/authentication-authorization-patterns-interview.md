@@ -14,7 +14,7 @@ aliases:
   - "OAuth2 OIDC паттерны"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-08"
 ---
 # Вопросы на собеседовании: `Authentication` and `Authorization Patterns`
 
@@ -228,10 +228,10 @@ public class CertificateAuthConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `Basic Auth` достаточно для production REST API при HTTPS — пароль защищён TLS | `Basic` шлёт `username:password` в Base64 на КАЖДОМ запросе, что увеличивает поверхность атаки и не имеет logout. ❌ ПОСЛЕДСТВИЕ: пароль в логах reverse-proxy / APM при misconfigured TLS termination → массовая утечка credentials.
+> - [x] Выбор паттерна (`Session`, `JWT`, `OAuth2`, `mTLS`) определяется типом клиента, требованиями к scalability и trust boundary | Stateful sessions удобны для monolith с server-side rendering, JWT — для stateless микросервисов и SPA, OAuth2 — для делегирования, mTLS — для service-to-service в zero-trust сетях. ✓ ПРИМЕНЯТЬ: Netflix комбинирует JWT (Edge) и mTLS (между сервисами через Istio) для defence-in-depth. 📋 ПРАВИЛО: «паттерн под trust boundary, не наоборот». 🔗 См. Q5, Q6, Q41.
+> - [ ] `JWT` универсально подходит для всех сценариев, включая монолитные веб-приложения с server-side сессиями | JWT в монолите даёт лишний overhead (signature verify на каждом запросе) и теряет преимущество stateless (всё равно один процесс), а revocation без blocklist невозможен. ❌ ПОСЛЕДСТВИЕ: украденный JWT в `localStorage` через XSS даёт доступ до истечения `exp` — невозможно мгновенно отозвать без allowlist в Redis.
+> - [ ] `mTLS` стоит использовать для аутентификации обычных browser-пользователей вместо паролей | Distribution и rotation client-сертификатов на миллионы пользователей нерешаемая операционная задача — нет UX для self-enrollment, browser cert dialogs неудобны. ❌ ПОСЛЕДСТВИЕ: revocation list (CRL/OCSP) деградирует latency на 200-500ms на каждом запросе после network partition с CA.
 **Плюсы:** высокая безопасность, двусторонняя аутентификация, не требует паролей.
 **Минусы:** сложность `PKI`-инфраструктуры, проблемы с мобильными устройствами.
 
@@ -321,10 +321,10 @@ public class ServiceAuthenticationService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `Authorization Code Flow` без `PKCE` безопасен для public-клиентов (SPA, mobile) — достаточно client_id | Без PKCE перехваченный `authorization_code` (через redirect_uri в логах прокси, browser history) обменивается на token без proof-of-possession. ❌ ПОСЛЕДСТВИЕ: code interception attack — атакующий получает access_token жертвы (RFC 7636 описывает реальный сценарий для mobile apps).
+> - [ ] `Implicit Flow` — рекомендованный вариант для SPA в 2026 году, выдаёт `access_token` сразу из URL | Implicit Flow deprecated в OAuth 2.0 Security BCP (RFC 8252) — token попадает в `window.location`, browser history, Referer-заголовки и логи. ❌ ПОСЛЕДСТВИЕ: token leak через Referer на 3rd-party CDN → unauthorised API access от имени пользователя.
+> - [ ] `Resource Owner Password Credentials` (ROPC) — современный grant для first-party apps | ROPC требует передачи пароля приложению, что нарушает основной принцип OAuth — делегирование без раскрытия credentials, и убран из OAuth 2.1. ❌ ПОСЛЕДСТВИЕ: каждое приложение с ROPC становится точкой утечки паролей; невозможна MFA и SSO.
+> - [x] `Authorization Code Flow + PKCE` — стандарт для confidential и public клиентов: code обменивается на token с проверкой `code_verifier` | PKCE добавляет `code_challenge = SHA256(code_verifier)` к authorize-запросу и `code_verifier` к token-запросу — перехваченный code бесполезен без verifier. ✓ ПРИМЕНЯТЬ: Google, GitHub, Auth0 требуют PKCE для всех новых OAuth-клиентов; Spring Authorization Server включает PKCE по умолчанию. 📋 ПРАВИЛО: «code без PKCE — рассыпь и потеряй». 🔗 См. Q12, Q30, Q38.
         return (String) response.get("access_token");
     }
 }
@@ -479,10 +479,10 @@ public class TokenService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `JWT` хранить в `localStorage` — простое решение для SPA, защита достаточна | `localStorage` доступен любому JavaScript на странице, поэтому XSS = немедленный exfiltration token; нет автоматического шифрования / scope. ❌ ПОСЛЕДСТВИЕ: XSS через npm-зависимость → атакующий читает `localStorage.getItem('jwt')` и шлёт на свой endpoint = полный takeover (классический сценарий из OWASP).
+> - [ ] Подписать `JWT` через `HS256` с секретом из git-репозитория, чтобы все сервисы могли валидировать | Symmetric secret в git = compromised; кроме того, `alg: none` в заголовке (если verify не строгий) позволяет подделать токен. ❌ ПОСЛЕДСТВИЕ: leak секрета через GitHub public repo → атакующий выпускает токены с любыми claims (CVE на множественные библиотеки 2018-2020).
+> - [x] Использовать short-lived `access token` (5-15 мин) + `refresh token` в `HttpOnly Secure SameSite=Strict cookie` с одноразовой ротацией | Короткий TTL минимизирует окно компрометации, refresh в HttpOnly недоступен JS, ротация инвалидирует украденный refresh при первой попытке параллельного использования (theft detection). ✓ ПРИМЕНЯТЬ: Auth0 Refresh Token Rotation, Spring Authorization Server `OAuth2RefreshTokenAuthenticationProvider`. 📋 ПРАВИЛО: «короткий access, ротированный refresh, HttpOnly навсегда». 🔗 См. Q15, Q37, Q41.
+> - [ ] Хранить `JWT` в `sessionStorage` — это безопаснее `localStorage` благодаря изоляции по вкладке | `sessionStorage` так же доступен любому JS на той же странице — изоляция только между вкладками, не между скриптами. ❌ ПОСЛЕДСТВИЕ: XSS через рекламный iframe или supply-chain → exfiltration token из sessionStorage точно так же, как из localStorage.
         User user = userService.findByUsername(entity.getUsername());
         refreshTokenRepository.delete(entity); // одноразовое использование
         return generateTokens(user);
@@ -636,10 +636,10 @@ public class OwnershipPolicy implements AccessPolicy {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `RBAC` со 100+ ролями вида `manager_dept_42` решает любую задачу авторизации лучше `ABAC` | Role explosion (комбинаторный взрыв ролей по departments × actions × resources) делает аудит и ротацию ролей невозможным. ❌ ПОСЛЕДСТВИЕ: orphan-роли остаются у уволенных сотрудников, regulator (SOX, ISO 27001) выписывает finding на отсутствие role-review.
+> - [ ] `ABAC` всегда быстрее `RBAC`, потому что атрибуты быстрее проверять, чем роли | ABAC требует policy evaluation engine (XACML, OPA), что добавляет 5-50ms latency на запрос против O(1) lookup роли в JWT-claims. ❌ ПОСЛЕДСТВИЕ: при 10K RPS policy engine становится bottleneck, p99 latency растёт с 50ms до 500ms без правильного caching.
+> - [x] `RBAC` — coarse-grained авторизация по ролям (admin/user); `ABAC` — fine-grained по атрибутам (subject + resource + action + environment) | RBAC отвечает «кто ты», ABAC — «что ты делаешь, с чем, в каких условиях»; обычно их комбинируют: RBAC для широких прав, ABAC для resource-level. ✓ ПРИМЕНЯТЬ: AWS IAM = RBAC (groups) + ABAC (resource tags + condition keys); Spring Security `@PreAuthorize` поддерживает оба. 📋 ПРАВИЛО: «RBAC — это `who`, ABAC — это `who+what+where+when`». 🔗 См. Q27, Q31, Q44.
+> - [ ] `RBAC` без resource-level проверок («пользователь читает только свои документы») — стандарт для prod | RBAC по grants (`READ_DOCUMENT`) не учитывает ownership: любой `user` с грантом читает любой документ. ❌ ПОСЛЕДСТВИЕ: IDOR (Insecure Direct Object Reference) — `GET /docs/{id}` через ID enumeration отдаёт чужие документы, GDPR breach (классика OWASP Top-10 2021 A01).
 | Аспект | `RBAC` | `ABAC` |
 |--------|--------|--------|
 | Гибкость | Средняя | Высокая |
@@ -673,10 +673,10 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Аутентификация и авторизация — синонимы, оба означают «проверка пользователя» | Это разные стадии: AuthN (`who are you`) предшествует AuthZ (`what can you do`); смешение понятий приводит к недоразумениям в безопасности. ❌ ПОСЛЕДСТВИЕ: разработчик защитил endpoint только `@PreAuthorize("isAuthenticated()")` думая, что это «проверка прав» — любой залогиненный получает доступ к admin-функциям.
+> - [ ] Авторизация в Spring Security обрабатывается `AuthenticationManager` | `AuthenticationManager` отвечает за AuthN (проверка credentials); за AuthZ — `AuthorizationManager` (Spring Security 6+) или `AccessDecisionManager` (legacy). ❌ ПОСЛЕДСТВИЕ: попытка вызвать `auth.authenticate()` для проверки прав = NPE или некорректное решение, защита endpoint не срабатывает.
+> - [x] Аутентификация (`AuthN`) — установка identity (`who you are`); авторизация (`AuthZ`) — проверка прав на действие (`what you can do`) | AuthN отвечает 401 Unauthorized при неверных credentials, AuthZ — 403 Forbidden при отсутствии прав; AuthN всегда первая в pipeline. ✓ ПРИМЕНЯТЬ: Spring Security `SecurityFilterChain` — `UsernamePasswordAuthenticationFilter` (AuthN) → `AuthorizationFilter` (AuthZ). 📋 ПРАВИЛО: «401 — кто ты?, 403 — что тебе можно?». 🔗 См. Q1, Q4, Q34.
+> - [ ] HTTP 401 и 403 — взаимозаменяемые статусы; различия не критичны для API | 401 = «не аутентифицирован, добавь credentials», 403 = «аутентифицирован, но не разрешено» — RFC 7235 / 7231 чёткое разделение. ❌ ПОСЛЕДСТВИЕ: возврат 403 вместо 401 ломает retry-логику клиента (повторный auth не запускается), а 401 вместо 403 раскрывает существование ресурса (information disclosure).
 В `Spring Security` аутентификация обрабатывается `AuthenticationManager`, а авторизация — `AccessDecisionManager` / `AuthorizationManager` (Spring Security 6+). Подробнее — в [Spring Security](../frameworks/spring/spring-security-interview.md).
 
 ## Q6. (!) Как реализовать безопасность в микросервисах?
@@ -779,10 +779,10 @@ public class SessionConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] В микросервисах достаточно одного `JWT` от клиента — между сервисами проверять identity не нужно | Если сервис A вызывает сервис B без аутентификации, любой compromised pod в кластере может вызывать B напрямую (lateral movement); zero-trust требует service identity на каждом hop. ❌ ПОСЛЕДСТВИЕ: компрометация одного pod через RCE превращается в полный takeover всего кластера (как в Capital One 2019 — actuator/env attack).
+> - [x] Использовать `mTLS` для service-to-service + JWT для user-context propagation + Service Mesh для policy enforcement | mTLS даёт криптографическую workload identity (SPIFFE), JWT передаёт user-claims через цепочку вызовов, Service Mesh (Istio/Linkerd) применяет AuthZ policies без изменения кода. ✓ ПРИМЕНЯТЬ: Netflix использует Spinnaker + Envoy mTLS, Uber — Istio + custom AuthZ; SPIFFE/SPIRE для cross-cluster identity. 📋 ПРАВИЛО: «mTLS для машины, JWT для человека, mesh для политик». 🔗 См. Q18, Q21, Q43.
+> - [ ] API Gateway единолично отвечает за безопасность — внутренние сервисы могут принимать любые запросы | «Hard outside, soft inside» = anti-pattern; одна misconfigured network policy или SSRF на gateway открывает весь кластер. ❌ ПОСЛЕДСТВИЕ: SSRF на reverse proxy → доступ к internal admin endpoints без auth (Capital One 2019, $100M штраф через WAF + actuator/env).
+> - [ ] Достаточно общего shared-secret между сервисами для HMAC-подписи запросов | Shared secret в N сервисах = utечка любого pod = подделка любого запроса; нет non-repudiation, ротация требует одновременного deploy всех сервисов. ❌ ПОСЛЕДСТВИЕ: leak секрета через logs/env-dump → атакующий выпускает межсервисные запросы с любыми claims, audit-trail невозможен.
     @Bean
     public LettuceConnectionFactory connectionFactory() {
         return new LettuceConnectionFactory("redis-server", 6379);
@@ -836,10 +836,10 @@ public class SamlSecurityConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `SAML` — современная замена `OIDC`, использует JSON и REST | Наоборот: SAML — XML-based стандарт 2005 года, OIDC — JSON/REST поверх OAuth 2.0; SAML тяжелее, OIDC проще для mobile/SPA. ❌ ПОСЛЕДСТВИЕ: попытка использовать SAML в SPA через POST-redirect ломается на CORS, разработчики реализуют hacky workaround (хранение SAMLResponse в `localStorage`) → XSS exfiltration.
+> - [ ] `SAML Response` подписи можно не проверять — TLS защищает целостность | Подпись SAML защищает от XSW (XML Signature Wrapping) и подмены IdP; TLS защищает только канал, не содержимое после промежуточного сервиса. ❌ ПОСЛЕДСТВИЕ: XSW-атака — атакующий вставляет fake `<Assertion>` параллельно подписанному → SP принимает чужую identity (CVE-2012-2883 на множественные SAML-библиотеки).
+> - [x] `SAML 2.0` — XML-стандарт SSO для enterprise (Active Directory, ADFS, Okta SAML); IdP подписывает Assertion, SP проверяет подпись и доверяет identity | SAML основан на trust-relationship: SP заранее знает X.509-сертификат IdP и валидирует подпись `SAMLResponse`; используется там, где OIDC не интегрирован legacy-системами. ✓ ПРИМЕНЯТЬ: Salesforce, Workday, ServiceNow поддерживают SAML для корпоративного SSO с Okta/Azure AD; Spring Security `spring-security-saml2-service-provider`. 📋 ПРАВИЛО: «SAML — для enterprise legacy, OIDC — для всего нового». 🔗 См. Q12, Q13, Q22.
+> - [ ] `SAML` подходит для mobile-приложений и SPA лучше, чем `OIDC` | SAML — XML + browser-redirect через POST binding, плохо работает в native mobile (нет browser context, deeplink сложен) и в SPA (CORS issues с `SAMLResponse`). ❌ ПОСЛЕДСТВИЕ: разработчики вкатывают SAML в mobile через embedded WebView → MITM attack, фишинговые prompts от приложения, нарушение OAuth 2.0 BCP for native apps.
 **Когда `SAML`:** корпоративные приложения, интеграция с `Active Directory / ADFS`, enterprise SSO.
 **Когда `OIDC` вместо `SAML`:** новые приложения, мобильные, `SPA`, `REST API`.
 
@@ -921,10 +921,10 @@ public class MfaController {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `SMS OTP` — самый безопасный второй фактор, рекомендованный NIST | NIST SP 800-63B (с 2017) deprecate SMS OTP — уязвим к SIM swap, SS7-атакам, voicemail interception; рекомендуется TOTP/WebAuthn. ❌ ПОСЛЕДСТВИЕ: SIM swap attack на VIP-клиентов крипто-биржи (Coinbase 2021) → bypass MFA → drain кошельков на миллионы $.
+> - [ ] Достаточно проверить TOTP на login — на критичных операциях (transfer money) повторная проверка не нужна | Без step-up на критичные действия украденная сессия (XSS, CSRF) даёт всё; MFA-on-login защищает только начало сессии. ❌ ПОСЛЕДСТВИЕ: атакующий через session hijack делает transfer без второго фактора; в банковских системах это нарушение PCI DSS / PSD2 SCA (Strong Customer Authentication).
+> - [x] Использовать `WebAuthn`/`FIDO2` (passkeys) или `TOTP` (RFC 6238) с counter защитой; SMS — fallback, не primary | WebAuthn с hardware keys (YubiKey, TouchID) phishing-resistant — origin binding защищает от reverse proxy attacks; TOTP — software-based, защищает от password leak, но не от phishing. ✓ ПРИМЕНЯТЬ: Google Authenticator (TOTP), 1Password / iCloud Keychain (passkeys); Spring Security 6.4+ поддерживает WebAuthn нативно. 📋 ПРАВИЛО: «WebAuthn первое, TOTP второе, SMS — никогда как primary». 🔗 См. Q23, Q24, Q43.
+> - [ ] TOTP-секрет можно хранить в БД в plain text — это всего лишь 16-символьный ключ | TOTP secret = эквивалент пароля; leak БД = генерация валидных кодов атакующим. ❌ ПОСЛЕДСТВИЕ: при breach БД (SQL injection / backup leak) атакующий генерирует TOTP коды для всех пользователей и обходит MFA, как в Reddit breach 2018 (TOTP secrets в logs).
         if (totpService.verifyTotp(user.getMfaSecret(), request.getCode())) {
             deleteMfaSession(request.getSessionId());
             return ResponseEntity.ok(new LoginResponse(jwtService.generateToken(user)));
@@ -1018,10 +1018,10 @@ public class JwtSessionService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Server-side session ID можно класть в обычный cookie без флагов — SSL обеспечивает защиту | Без `HttpOnly` JS читает cookie через `document.cookie`, без `Secure` cookie утекает по plain HTTP, без `SameSite` — CSRF возможен. ❌ ПОСЛЕДСТВИЕ: session hijack через XSS — украденный `JSESSIONID` даёт полный доступ от имени жертвы (классика OWASP A05).
+> - [x] Использовать distributed session store (`Redis`, `Hazelcast`) с `HttpOnly + Secure + SameSite=Lax/Strict` cookies и rotation после login | Distributed store позволяет горизонтальное масштабирование без sticky session, флаги cookie защищают от XSS/MITM/CSRF, session rotation после AuthN предотвращает session fixation. ✓ ПРИМЕНЯТЬ: Spring Session `@EnableRedisHttpSession`, Auth0 хранит session в Redis Cluster для миллионов RPS. 📋 ПРАВИЛО: «session — в Redis, cookie — `HttpOnly+Secure+SameSite`, rotation — после login». 🔗 См. Q1, Q15, Q41.
+> - [ ] In-memory `HttpSession` на каждом инстансе с sticky session через load balancer достаточно | Sticky session ломается при инстанс-рестарте (zero-downtime deploy теряет сессии всех на этом pod), не работает при multi-region, проблематичен при autoscaling. ❌ ПОСЛЕДСТВИЕ: rolling deploy выбрасывает 1/N пользователей, force re-login → массовый logout, поток в support; OOM при memory leak в session-store сваливает весь pod.
+> - [ ] Регенерировать session ID не нужно после login — оригинальный ID безопасен | Без regenerate возможен session fixation: атакующий устанавливает свой `JSESSIONID` жертве через cookie injection, после login сессия с тем же ID становится authenticated. ❌ ПОСЛЕДСТВИЕ: атакующий получает аутентифицированную сессию жертвы; CWE-384, типичный финдинг pen-test.
         User user = userService.findByUsername(entity.getUsername());
         refreshTokenRepository.delete(entity); // ротация: старый удаляется
         return createSession(user);
@@ -1099,10 +1099,10 @@ if (userRepository.findByUsername(username).isEmpty()) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Account lockout после 3 неудачных попыток на постоянной основе — сильнейшая защита | Permanent lockout = DoS-вектор: атакующий блокирует всех пользователей, перебирая их usernames; пользователи теряют доступ. ❌ ПОСЛЕДСТВИЕ: атакующий парализует сервис массовым lockout, support ложится под request flood (как в реальной DDoS на банковский e-banking 2019 — 80% legit users заблокированы за час).
+> - [ ] Вернуть «User not found» при unknown username и «Wrong password» при known — это user-friendly | Различные сообщения = user enumeration: атакующий проверяет существование email/username, формирует список для targeted phishing. ❌ ПОСЛЕДСТВИЕ: leak базы валидных users → spear-phishing → credential stuffing на других сервисах (когда в БД 100M emails — это $$$).
+> - [x] Хешировать пароли через `bcrypt`/`argon2id` с per-user salt + rate-limit на IP/account + одинаковое сообщение `Bad credentials` + audit log | Slow hash защищает от offline attack при breach БД, rate-limit замедляет online brute-force, единое сообщение скрывает existence; audit lets detect attacks. ✓ ПРИМЕНЯТЬ: Spring Security `BCryptPasswordEncoder(strength=12)`, Bucket4j для rate-limit; OWASP Password Storage Cheat Sheet рекомендует argon2id. 📋 ПРАВИЛО: «slow hash + rate-limit + uniform error = brute-force defence-in-depth». 🔗 См. Q10, Q36, Q41.
+> - [ ] `MD5` или `SHA-256` подойдут для хеша пароля если соль уникальная | MD5/SHA-256 рассчитываются миллиарды/сек на GPU — даже с уникальной солью offline attack ломает 8-символьные пароли за часы. ❌ ПОСЛЕДСТВИЕ: LinkedIn 2012 — 117M SHA-1 хешей утекли, 90% паролей расшифровано за неделю; обязательное использование slow hash после этого инцидента.
 Подробнее о защите от уязвимостей — в [OWASP Top 10](owasp-top10-interview.md) и [Application Security](application-security-interview.md).
 
 ## Q11. Как реализовать `API Gateway Security`?
@@ -1147,10 +1147,10 @@ public class AuthenticationGatewayFilter implements GlobalFilter, Ordered {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Gateway проверяет JWT и пробрасывает оригинальный токен дальше внутренним сервисам напрямую | Передача оригинального user-token внутрь = расширение trust boundary, утечка scope; сервисы должны получать минимально необходимые claims. ❌ ПОСЛЕДСТВИЕ: внутренний сервис со скомпрометированной зависимостью получает access к полному токену с broad scope (offline_access, admin) → escalation до полных прав пользователя.
+> - [x] Gateway терминирует TLS, валидирует JWT (signature + `exp` + `aud`), применяет rate-limit, пробрасывает downstream через `X-User-*`/internal-token | Single point для cross-cutting concerns; downstream доверяет gateway по mTLS, получает узкоспециализированные internal claims. ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway + Resilience4j для rate-limit; Netflix Zuul использует тот же паттерн с custom filters. 📋 ПРАВИЛО: «gateway фильтрует, downstream доверяет mTLS». 🔗 См. Q6, Q17, Q38.
+> - [ ] Достаточно одного фильтра authentication, остальная защита — на сервисах | Без rate-limit / WAF / CORS на gateway downstream получают весь паразитный трафик; одной brute-force атакой можно положить весь pool. ❌ ПОСЛЕДСТВИЕ: credential stuffing 1M req/min пробивает до user-service, который не справляется → cascading failure всего кластера.
+> - [ ] Rate-limit делать на каждом downstream-сервисе, а не на gateway | Decentralized rate-limit не учитывает общий quota пользователя (10 RPS на gateway → 10 RPS × N сервисов внутри); сложнее coordinated DDoS protection. ❌ ПОСЛЕДСТВИЕ: атакующий генерирует 1000 RPS на gateway, что превращается в 10 000 RPS внутри (fan-out 10×) → OOM на shared services.
 ```java
 @Bean
 public RouteLocator routeLocator(RouteLocatorBuilder builder) {
@@ -1225,10 +1225,11 @@ public class UserController {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `OIDC` — это OAuth2 с user info в access token | OIDC добавляет ОТДЕЛЬНЫЙ `id_token` (JWT с identity-claims) на authorize-стадии; `access_token` остаётся opaque resource-token. ❌ ПОСЛЕДСТВИЕ: разработчик парсит `access_token` для identity → ломается при rotation формата провайдером (Auth0 переход на opaque tokens), production падает после смены IdP.
+> - [ ] Достаточно валидировать `id_token` подпись — проверка `iss`, `aud`, `nonce`, `exp` опциональна | Без `nonce` возможен token replay, без `aud` чужой токен от того же IdP проходит, без `iss` атакующий с поддельным IdP подсовывает свои токены. ❌ ПОСЛЕДСТВИЕ: token substitution attack — атакующий перенаправляет на свой IdP, его id_token принимается как валидный (CVE-2017-9445 на множественные OIDC libs).
+> - [ ] `OIDC` заменяет OAuth2 — это самостоятельный протокол | OIDC — это identity layer ПОВЕРХ OAuth2, не замена; `code` flow, scopes, refresh tokens работают через OAuth2 механизмы. ❌ ПОСЛЕДСТВИЕ: попытка реализовать «pure OIDC» без OAuth2-подложки → custom авторизация, не совместимая с Spring Authorization Server / Keycloak.
+> - [x] `OIDC` = OAuth 2.0 + `id_token` (JWT с claims `sub/iss/aud/exp/nonce`) + `UserInfo` endpoint; identity отделён от authorization | id_token нужен клиенту для login, access_token — для API; OIDC стандартизирует `discovery` (`/.well-known/openid-configuration`), JWKS, claims. ✓ ПРИМЕНЯТЬ: Google Sign-In, Auth0, Keycloak, Spring Security OAuth2 Login (`spring-security-oauth2-client`). 📋 ПРАВИЛО: «OIDC = OAuth2 + identity, никогда не наоборот». 🔗 См. Q2, Q14, Q39.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 `application.yml`:
 ```yaml
 spring:
@@ -1274,10 +1275,10 @@ sequenceDiagram
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] `SSO` через централизованный IdP (Keycloak/Okta) с `OIDC`/`SAML`: пользователь логинится один раз, приложения получают токены через redirect | IdP — single source of truth для identity; протоколы `OIDC` / `SAML` стандартизируют доверие, отзыв сессии в IdP инвалидирует доступ во всех приложениях. ✓ ПРИМЕНЯТЬ: Google Workspace SSO для G Suite приложений, Okta SSO в enterprise — десятки приложений на один login. 📋 ПРАВИЛО: «один IdP — много SP, единый logout». 🔗 См. Q7, Q12, Q22.
+> - [ ] Каждое приложение хранит свою копию `username/password` пользователя и синхронизирует через DB replication | Это password sharing, нарушает principle of least privilege; компрометация одной БД = leak credentials всех приложений. ❌ ПОСЛЕДСТВИЕ: leak паролей одного приложения через SQL injection → credential stuffing через все остальные приложения экосистемы.
+> - [ ] Передавать оригинальный пароль пользователя между приложениями через HTTP-заголовок | Пароль в HTTP — нарушение всех security best-practices; даже под TLS попадает в логи всех intermediate proxies. ❌ ПОСЛЕДСТВИЕ: пароль логируется в access-логах APM/ELK → внутренний leak с insider threat / log breach (Twitter 2018 — пароли в plain text logs для 330M users).
+> - [ ] Достаточно cookie с одинаковым именем на разных доменах для cross-domain SSO | Cookie scoping строго привязан к домену по same-origin policy; cross-domain cookie sharing невозможен напрямую без redirect-протокола. ❌ ПОСЛЕДСТВИЕ: попытка установить cookie через JS на чужом домене blocked browser → SSO не работает, разработчики реализуют hacky workaround через postMessage с XSS-уязвимостями.
 В `Spring` — используется `spring-security-oauth2-client` для `OIDC` или `spring-security-saml2-service-provider` для `SAML`.
 
 ## Q14. Что такое `Claims-based` аутентификация?
@@ -1309,10 +1310,10 @@ public class ClaimsController {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Claims в JWT можно добавлять без ограничений — больше context = лучше | Claims увеличивают размер токена; токен > 8KB ломает HTTP-заголовки на ряде proxy/CDN, чувствительные данные в claims = leak при logging. ❌ ПОСЛЕДСТВИЕ: PII (SSN, телефон, дата рождения) в JWT логируется в access-логах ELK / APM → GDPR breach, обязательная нотификация регулятора.
+> - [ ] Claims-based AuthZ устаревшая — современный подход = только базы данных | Claims дают O(1) authz без БД-запросов на горячем пути; БД-only подход создаёт bottleneck в `user-service` для каждого вызова. ❌ ПОСЛЕДСТВИЕ: 10K RPS × 5 БД-запросов на authz = пиковая нагрузка на postgres, p99 latency растёт с 50ms до 5s, cascading failure.
+> - [x] Claims-based AuthN включает identity-атрибуты в подписанный токен (JWT/SAML), приложение доверяет подписи и читает `roles`/`scopes`/`department` без БД-запроса | Claims несут identity и authorization context в токене; trust обеспечивается подписью IdP; для коротких toggle-сценариев — короткий TTL + refresh с обновлёнными claims. ✓ ПРИМЕНЯТЬ: AWS Cognito (custom claims), Keycloak (mappers), Spring Security `JwtAuthenticationConverter`. 📋 ПРАВИЛО: «claims несут identity, подпись — доверие». 🔗 См. Q3, Q12, Q44.
+> - [ ] Claims в `id_token` неизменяемы навечно — после login данные не обновляются никогда | Claims действительны до `exp` токена; для обновления — refresh-flow или `prompt=none` re-auth; для realtime — back-channel logout / WebSocket signal. ❌ ПОСЛЕДСТВИЕ: уволенный сотрудник с непросроченным токеном продолжает доступ к admin-функциям до `exp` (часто 24h) — HR breach.
 Провайдер (`IdP`) включает claims в токен при аутентификации. Приложение доверяет подписи токена и использует claims для `RBAC` / `ABAC`. Это устраняет необходимость в запросах к БД при каждой авторизации.
 
 ## Q15. (!) Как обеспечить безопасность токенов (`JWT` refresh, rotation)?
@@ -1371,10 +1372,10 @@ public class SecureTokenService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Использовать один долгоживущий `access_token` на 30 дней — refresh не нужен | 30-дневный access не позволяет инвалидировать compromised token (нет blocklist на каждый запрос); компрометация = 30 дней доступа. ❌ ПОСЛЕДСТВИЕ: украденный JWT (XSS, MITM) даёт атакующему 30 дней до auto-expire — массовый takeover, GDPR breach.
+> - [x] Short-lived access (5-15 мин) + refresh с одноразовой ротацией + reuse detection (повторное предъявление = revoke всей цепочки) | Короткий access минимизирует окно атаки, ротация через store + reuse detection ловит украденный refresh при первой параллельной попытке использования. ✓ ПРИМЕНЯТЬ: Auth0 Refresh Token Rotation, Spring Authorization Server `OAuth2RefreshTokenAuthenticationProvider` + `OAuth2AuthorizationService`. 📋 ПРАВИЛО: «short access, rotated refresh, reuse → revoke chain». 🔗 См. Q3, Q9, Q37.
+> - [ ] Refresh token достаточно проверять только на `exp` без хранения в БД (stateless) | Без store невозможна revocation, ротация и reuse detection — атакующий с украденным refresh может бесконечно генерировать access tokens. ❌ ПОСЛЕДСТВИЕ: украденный refresh используется параллельно жертве и атакующим — обнаружение невозможно, токены валидны до natural expiry.
+> - [ ] Хранить refresh token в `localStorage` SPA в plain text | `localStorage` доступен JS, refresh имеет долгий TTL → XSS = месяцы доступа атакующего. ❌ ПОСЛЕДСТВИЕ: одна XSS-уязвимость в npm-зависимости (event-stream 2018) даёт refresh tokens для всех пользователей с долгосрочным доступом, в обход session-rotation.
         return generateTokens(entity.getUserId());
     }
 }
@@ -1409,10 +1410,10 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `Zero Trust` = perimeter firewall + VPN для всех internal сервисов | VPN восстанавливает «trust boundary», что противоречит Zero Trust; внутри VPN — flat network, lateral movement тривиален. ❌ ПОСЛЕДСТВИЕ: компрометация одного pod через RCE даёт доступ ко всему интранету (как в RSA breach 2011 — VPN-доступ → подсистемы SecureID).
+> - [ ] Достаточно проверять JWT на gateway — внутренние сервисы могут доверять каждому | Это «hard outside, soft inside», прямая противоположность Zero Trust; one breach = full takeover. ❌ ПОСЛЕДСТВИЕ: SSRF на edge → доступ к admin-endpoints internal сервисов без auth (Capital One 2019, $100M).
+> - [x] `Verify explicitly` (каждый запрос) + `least privilege` (узкие scopes) + `assume breach` (mTLS, segmentation, monitoring); identity — primary perimeter | Zero Trust заменяет network trust на identity + policy; каждый запрос проверяется независимо; blast radius минимизирован. ✓ ПРИМЕНЯТЬ: Google BeyondCorp (отказ от VPN), Netflix Lemur (cert mgmt), SPIFFE/SPIRE для workload identity. 📋 ПРАВИЛО: «never trust, always verify, identity is the perimeter». 🔗 См. Q6, Q18, Q43.
+> - [ ] `Zero Trust` означает «не доверять никому, поэтому отключить всё кроме mTLS» | Zero Trust — это policy-driven access, не отключение функциональности; usability сохраняется через risk-based AuthN (step-up при аномалиях). ❌ ПОСЛЕДСТВИЕ: попытка реализовать «paranoid mode» с MFA на каждом действии → user fatigue, обходные пути типа sticky note с токеном.
 **Реализация в микросервисах:**
 - `mTLS` между всеми сервисами (`Istio`, `Linkerd`)
 - Короткоживущие токены (5-15 минут)
@@ -1457,10 +1458,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] In-memory `ConcurrentHashMap<IP, Counter>` достаточно для rate-limit production | In-memory не работает в multi-instance (load balancer распределяет по pods, каждый видит свой count); атакующий легко обходит. ❌ ПОСЛЕДСТВИЕ: при 5 pods атакующий шлёт 5× allowed RPS (round-robin), реальный rate-limit не работает; brute-force проходит.
+> - [ ] Rate-limit только по IP — самое простое и эффективное | NAT / corporate proxy = тысячи пользователей за одним IP, blocked → массовый false positive; IPv6 даёт почти бесконечные адреса для атакующего. ❌ ПОСЛЕДСТВИЕ: блок public Wi-Fi от Starbucks (1 IP на 1000 пользователей) за brute-force одного → массовый support inflow.
+> - [x] Distributed rate-limit (`Redis`/`Bucket4j`) с многоуровневыми ключами (IP + user + endpoint) и алгоритмами `Token Bucket`/`Sliding Window` | Redis обеспечивает consistency across pods, multi-key позволяет per-user (10 RPS) и per-IP (100 RPS); sliding window точнее fixed window. ✓ ПРИМЕНЯТЬ: Bucket4j + Redis backend в Spring Cloud Gateway, AWS API Gateway throttling, Cloudflare distributed rate-limit. 📋 ПРАВИЛО: «rate-limit — distributed store + multi-key + sliding window». 🔗 См. Q10, Q11, Q41.
+> - [ ] Возвращать 200 OK с пустым телом при rate-limit, чтобы атакующий не понял о защите | RFC 6585 указывает 429 Too Many Requests с `Retry-After`; legit клиент должен знать о retry, обфускация ломает clients. ❌ ПОСЛЕДСТВИЕ: legit клиент бесконечно ретраит на 200 (думая что это успех), DoS усиливается; observability сломан — нет метрики rate-limit hits.
         response.setHeader("X-RateLimit-Remaining", String.valueOf(100 - count));
         chain.doFilter(request, response);
     }
@@ -1507,10 +1508,10 @@ server:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `mTLS` подходит для browser-пользователей вместо паролей | Distribution и rotation client-сертификатов на миллионы browser-пользователей нерешаема (нет UX), CRL/OCSP добавляет latency; для browsers — WebAuthn. ❌ ПОСЛЕДСТВИЕ: revocation list растёт до GB, OCSP responder становится bottleneck → 200-500ms latency на каждом TLS handshake.
+> - [ ] `mTLS` без проверки CN/SAN client-сертификата — TLS handshake достаточен | Handshake верифицирует только что cert подписан trusted CA; без проверки CN/SAN любой cert этого CA проходит (cross-service impersonation). ❌ ПОСЛЕДСТВИЕ: compromised сервис получает cert от того же CA → impersonates любой другой сервис; lateral movement в кластере.
+> - [x] `mTLS` — взаимная аутентификация по X.509: и сервер, и клиент предъявляют сертификаты; идеален для service-to-service в Kubernetes (cert-manager + SPIFFE) | Криптографическая identity workload-ов без shared secrets; rotation автоматизируется через cert-manager / SPIRE, identity встраивается в SAN. ✓ ПРИМЕНЯТЬ: Istio автоматический mTLS с auto-rotated certs, Linkerd, AWS App Mesh; SPIFFE стандартизирует SVID в SAN URI. 📋 ПРАВИЛО: «mTLS — для машин, identity в SAN, rotation автоматом». 🔗 См. Q6, Q21, Q45.
+> - [ ] Достаточно self-signed сертификатов на каждом сервисе с TOFU (trust on first use) | Без CA / SPIFFE — нет valid trust chain, любой self-signed cert проходит при `verify=none`; rotation вручную = chaos. ❌ ПОСЛЕДСТВИЕ: при rotation без orchestration сервисы перестают доверять друг другу → cascading failure всего mesh.
 **Управление сертификатами** — основная сложность: выпуск, ротация (обычно 90 дней), отзыв (`CRL` / `OCSP`). В `Service Mesh` (`Istio`) — автоматически.
 
 ## Q19. Как реализовать аудит и логирование событий безопасности?
@@ -1553,10 +1554,10 @@ public class SecurityAuditListener {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Логировать в audit пароли и токены — это помогает при инцидент-расследовании | Sensitive data в audit-логах = leak vector; logs часто менее защищены чем prod БД, реплицируются в analytics. ❌ ПОСЛЕДСТВИЕ: leak паролей через ELK / Grafana Loki / S3 backups — Twitter 2018 (330M паролей в logs), regulator fine + mass password reset.
+> - [ ] Audit-логи держать вместе с application logs в одном index | Без отдельного storage с retention и WORM (Write Once Read Many) атакующий с правами на logs удаляет следы атаки. ❌ ПОСЛЕДСТВИЕ: pen-tester / атакующий после compromise чистит logs → forensics невозможна; incident response слепой.
+> - [x] Структурированные audit events (`who`, `what`, `when`, `from`, `result`, `correlation_id`) в отдельный append-only sink (`Elasticsearch` / `Splunk` / `S3 + Object Lock`) с retention по compliance | Структурированный JSON позволяет search/correlation, append-only защищает от tampering, retention соответствует SOX/GDPR/PCI-DSS требованиям (7 лет для финансов). ✓ ПРИМЕНЯТЬ: Spring `ApplicationListener<AuthenticationSuccessEvent>` + `ApplicationListener<AbstractAuthenticationFailureEvent>` → Kafka → Elasticsearch + S3 Object Lock. 📋 ПРАВИЛО: «audit append-only, sensitive не логируем, retention по compliance». 🔗 См. Q10, Q16, Q43.
+> - [ ] Достаточно logging успешных login-ов; failed attempts не нужны | Failed attempts = primary signal для brute-force / credential stuffing detection; без них невозможно сработать SIEM-rule. ❌ ПОСЛЕДСТВИЕ: brute-force проходит незамеченным, команда узнаёт о breach через утечку у конкурентов в darkweb через месяцы.
 Централизованное хранение в `Elasticsearch` / `SIEM`; алерты по аномалиям (множественные неудачи, необычная геолокация). Подробнее — в [Observability](../monitoring/observability-interview.md).
 
 ## Q20. Что такое `Context-based Access Control`?
@@ -1597,10 +1598,10 @@ public class ContextBasedAuthService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Hardcoded conditions в коде вместо policy engine — проще и быстрее | Hardcoded `if (user.dept == 'eng' && time.hour < 18)` разбросан по кодовой базе; изменение policy = деплой; нет audit-trail policy versions. ❌ ПОСЛЕДСТВИЕ: при изменении бизнес-правил нужно пройти 50 файлов, забытое условие = breach; нет revert при regression.
+> - [x] Context-Based Access Control = ABAC + environment attributes (time, location, device, risk score); policy engine (`OPA`/`AWS Verified Permissions`) принимает решение на каждый запрос | Context добавляет «когда/откуда/как» к классическому RBAC; OPA вычисляет policy в Rego; cache решений по `(subject, resource, action, context_hash)` для performance. ✓ ПРИМЕНЯТЬ: AWS Verified Permissions (Cedar policies), Open Policy Agent в Kubernetes admission, Auth0 Rules. 📋 ПРАВИЛО: «context — это `who+what+where+when+how risky`». 🔗 См. Q4, Q31, Q44.
+> - [ ] Достаточно проверять context на login и кешировать результат на сессию | Risk-context меняется в течение сессии (новая локация, ночное время) — кеш на сессию пропустит реальные риски. ❌ ПОСЛЕДСТВИЕ: пользователь логинится из офиса (low risk), затем токен украден и используется из другой страны → cached low-risk решение пропускает атаку.
+> - [ ] Context = только IP-адрес пользователя | Один IP крайне ограничен: NAT, VPN, mobile carrier давно ломают связь IP↔location; нужна композиция (device fingerprint, timing, behavioural). ❌ ПОСЛЕДСТВИЕ: false positive от corporate VPN (legit users из чужих стран) и false negative от residential proxy ($5/IP) — атакующий обходит, а легитимные пользователи блокируются.
 Реализация: policy engine (`OPA` — Open Policy Agent, `AWS Verified Permissions`); проверка контекста при каждом запросе; кэширование решений для производительности.
 
 ## Q21. Как обеспечить безопасность в `Service Mesh`?
@@ -1636,10 +1637,10 @@ spec:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Service Mesh не нужен — sidecar-overhead не оправдан | Без mesh каждый сервис реализует mTLS, retry, circuit-breaker сам = duplication, inconsistent implementation; mesh централизует policy. ❌ ПОСЛЕДСТВИЕ: один сервис забыл validate `aud` в JWT → cross-service privilege escalation; через mesh-policy это enforced uniformly.
+> - [ ] Достаточно `NetworkPolicy` Kubernetes для безопасности межсервисных вызовов | NetworkPolicy = L3/L4 (IP+port), не знает identity сервиса; compromised pod в той же namespace проходит. ❌ ПОСЛЕДСТВИЕ: lateral movement внутри namespace не блокируется (Tesla 2018 — compromised Kubernetes dashboard → mining через NetworkPolicy gaps).
+> - [x] Service Mesh (Istio/Linkerd) обеспечивает auto-mTLS + AuthorizationPolicy (L7) + mTLS-cert rotation + observability через sidecar (Envoy) — без изменения кода | Mesh-control plane управляет policies, data plane (Envoy) применяет mTLS и L7 правила; разработчики не пишут security code. ✓ ПРИМЕНЯТЬ: Istio в Google Anthos / GKE, Linkerd в финтехах с low overhead, AWS App Mesh; SPIFFE для cross-mesh identity. 📋 ПРАВИЛО: «mesh = identity + mTLS + L7 policy без кода». 🔗 См. Q6, Q18, Q43.
+> - [ ] AuthorizationPolicy в mesh — это duplicate Spring Security и можно отказаться от одного | Defence-in-depth требует обоих: mesh защищает на инфраструктурном уровне (compromised app), Spring Security — на бизнес-уровне (resource ownership). ❌ ПОСЛЕДСТВИЕ: отключение Spring Security при доверии mesh — bug в коде (`/admin` без `@PreAuthorize`) даёт privilege escalation для любого аутентифицированного.
 Подробнее о `Kubernetes` и инфраструктуре — в [Kubernetes](../devops/kubernetes-interview.md).
 
 ## Q22. Что такое `Identity Federation`?
@@ -1662,10 +1663,10 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] `Identity Federation` — доверие между несколькими IdP через стандарты (SAML/OIDC); SP принимает identity от внешнего IdP без локальных credentials | Federation решает «нет общего IdP»: партнёры/контрагенты приносят свою identity, SP мапит claims → local roles; trust устанавливается через metadata exchange. ✓ ПРИМЕНЯТЬ: AWS IAM Identity Center с Okta IdP, Azure AD B2B guest users, Salesforce → ServiceNow federation. 📋 ПРАВИЛО: «federation — trust between IdPs, мапь claims на свою модель». 🔗 См. Q7, Q12, Q13.
+> - [ ] Federation = просто несколько серверов одного IdP за load balancer | Это HA-кластер одного IdP, не federation; federation — между РАЗНЫМИ trust domains. ❌ ПОСЛЕДСТВИЕ: попытка использовать «federated» термин неверно ведёт к архитектурной ошибке — нет mapping claims для партнёров, B2B integration ломается.
+> - [ ] Достаточно дать партнёру админ-доступ к своему IdP для federation | Это нарушение principle of least privilege; компрометация партнёра = compromise IdP. ❌ ПОСЛЕДСТВИЕ: SolarWinds 2020 — supply chain через trusted partner credentials → доступ к 18K customers; federation требует scope-ограничение.
+> - [ ] Маппинг ролей не нужен — все IdP используют одинаковые roles | Каждый IdP имеет свою taxonomy (Okta groups, AD security groups, Auth0 roles); прямой `roles` claim не совпадает. ❌ ПОСЛЕДСТВИЕ: партнёр имеет роль `admin` в своём IdP → получает админский доступ в нашем приложении из-за прямого mapping; privilege escalation между organizations.
 Ключевая задача — **маппинг атрибутов**: роли и groups из одного `IdP` могут не совпадать с другим. Нужна таблица маппинга claims.
 
 ## Q23. Как реализовать `Step-Up Authentication`?
@@ -1697,10 +1698,10 @@ public class TransferController {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Step-Up = просто требовать MFA на login для всех пользователей | One-time MFA на login не защищает от session-hijack для критичных операций; нужен повторный verify при sensitive action. ❌ ПОСЛЕДСТВИЕ: атакующий через украденную сессию делает transfer без второго фактора (PSD2 SCA breach в EU = регуляторный штраф).
+> - [ ] Достаточно cookie-flag `was_mfa = true` после login | Flag в cookie / session подделывается через session-hijack; нужен криптографический proof recent MFA (acr-claim, signed assertion). ❌ ПОСЛЕДСТВИЕ: XSS exfiltrates session с `was_mfa=true` → атакующий выполняет transfer от имени жертвы; flag-based flow обойдён.
+> - [x] Step-Up Authentication = повторный verify (MFA, WebAuthn, biometric) перед sensitive action; используется `acr` claim + `auth_time` для проверки свежести MFA | Sensitive endpoints проверяют `acr ∈ ['mfa','hwk']` и `now - auth_time < 5min`; OIDC поддерживает `acr_values=mfa` в authorize request для re-prompt. ✓ ПРИМЕНЯТЬ: банковские transfer-операции, Auth0 Step-Up rules, Keycloak `requiredActions`; Spring Security `OAuth2AuthorizationRequestCustomizer` для acr_values. 📋 ПРАВИЛО: «sensitive action — свежий MFA, не login MFA». 🔗 См. Q8, Q14, Q20.
+> - [ ] Step-Up нужен только при изменении password — для transfer достаточно session | Transfer money / change recovery email / API key creation — всё критичные операции, требующие fresh MFA по PSD2/PCI-DSS. ❌ ПОСЛЕДСТВИЕ: атакующий через session-hijack выводит средства / меняет recovery email → permanent account takeover (классика финтех breach).
 Claim `acr` (`Authentication Context Class Reference`) в `JWT` указывает уровень аутентификации: `password-only`, `mfa`, `hardware-key`. `IdP` (`Keycloak`, `Auth0`) устанавливает этот claim при аутентификации.
 
 ## Q24. Что такое `Passwordless Authentication`?
@@ -1738,10 +1739,10 @@ public class MagicLinkController {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `Magic link` через email — самое безопасное решение passwordless для production | Email-based magic link уязвим: перехват email (compromised email account, неудобный TLS), ссылка в URL = log leak; не phishing-resistant. ❌ ПОСЛЕДСТВИЕ: атакующий с доступом к email перехватывает magic link → account takeover; лог reverse-proxy с full URL = leak link.
+> - [x] `WebAuthn`/`FIDO2` (`passkeys`) — phishing-resistant passwordless: hardware key или platform authenticator (TouchID/Windows Hello) с public-key cryptography и origin binding | Browser передаёт challenge на authenticator, который подписывает приватным ключом; origin (домен) встроен в подпись → phishing-сайт не может re-use; нет shared secret. ✓ ПРИМЕНЯТЬ: Apple Passkeys, Google passkeys, GitHub WebAuthn; Spring Security 6.4+ поддерживает `WebAuthnConfigurer`. 📋 ПРАВИЛО: «passkey = public-key + origin binding, phishing-resistant by design». 🔗 См. Q8, Q23, Q43.
+> - [ ] SMS OTP-based passwordless — подходит для всех пользователей включая high-value | SMS уязвим к SIM swap, SS7-атакам; NIST SP 800-63B deprecate SMS как primary factor. ❌ ПОСЛЕДСТВИЕ: SIM swap на VIP-пользователей крипто-биржи (Coinbase 2021) → drain кошельков; SMS не подходит как primary AuthN.
+> - [ ] Passwordless = просто отсутствие пароля; storage credential не нужен | Passwordless заменяет пароль на cryptographic key или OTP — credential всё равно есть, просто не shared secret в БД. ❌ ПОСЛЕДСТВИЕ: разработчик не настраивает rate-limit/lockout для passwordless flow → магическая ссылка генерируется бесконечно, email floodding жертв.
 **Преимущества:** нет фишинга паролей, удобство UX.
 **Недостатки:** зависимость от email/телефона, `Magic Link` уязвим к перехвату email.
 
@@ -1778,10 +1779,10 @@ public class GraphQLSecurityInstrumentation extends SimplePerformantInstrumentat
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] GraphQL не нужен `query depth limit` — apollo-server защищает по-умолчанию | По умолчанию depth не лимитирован; nested query (`user{posts{comments{author{posts...}}}}`) приводит к O(N^k) запросов в БД. ❌ ПОСЛЕДСТВИЕ: GitHub 2018 — DoS через nested GraphQL query, БД перегружена; обязательное введение depth limit + complexity analysis.
+> - [ ] Достаточно `@PreAuthorize` на root resolver — field-level не нужен | GraphQL клиент сам выбирает поля; `User.salary` без field-level auth доступен любому, кто получил `User`. ❌ ПОСЛЕДСТВИЕ: IDOR на field-level — `query{user(id:1){salary}}` возвращает чужую зарплату; GDPR breach (Personal Data unauthorized access).
+> - [x] Field-level authorization (`DataFetcher` decorator или `@PreAuthorize` на resolver) + query depth/complexity limits + persisted queries для public API | Field-level закрывает PII (salary, ssn) per role; depth/complexity предотвращает DoS; persisted queries (whitelist по hash) запрещают arbitrary queries. ✓ ПРИМЕНЯТЬ: GitHub GraphQL API использует persisted queries для rate-limit, Apollo Server `depthLimit` plugin, Spring `graphql-java` `Instrumentation` для complexity. 📋 ПРАВИЛО: «field-level auth + depth limit + persisted queries — три кита GraphQL safety». 🔗 См. Q4, Q11, Q17.
+> - [ ] Aliasing/batching не создаёт security issues — это просто синтаксис | Через aliases один query содержит N вызовов одного resolver — обходит per-request rate-limit; batch-attack на login mutation (1 request = 1000 попыток). ❌ ПОСЛЕДСТВИЕ: brute-force через batched mutation — `mutation{a:login(p:"1"){...}b:login(p:"2"){...}...}` обходит rate-limit на N попыток за один request (CVE-2021-32820).
             return dataFetcher.get(environment);
         };
     }
@@ -1814,10 +1815,10 @@ public class PhotoController {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `Delegated Authorization` = просто Single Sign-On под другим именем | SSO — один login для нескольких приложений; delegated authorization — доступ от имени пользователя к его ресурсам у третьей стороны (Twitter API через OAuth). ❌ ПОСЛЕДСТВИЕ: путаница терминов в архитектуре приводит к выбору неправильного протокола (SAML вместо OAuth) — приложение получает identity, но не permissions ресурсов.
+> - [x] `Delegated Authorization` = делегирование прав от пользователя приложению через OAuth 2.0 (без раскрытия пароля); приложение получает scoped `access_token` | Пользователь авторизует ровно те scopes (`photos:read photos:write`), которые нужны; отзыв доступа в один клик не требует смены пароля. ✓ ПРИМЕНЯТЬ: «Sign in with Google» + доступ к Drive, GitHub OAuth Apps, Twitter API; Spring Authorization Server для own OAuth provider. 📋 ПРАВИЛО: «delegate scopes, не credentials». 🔗 См. Q2, Q12, Q26.
+> - [ ] Достаточно дать приложению API key пользователя для делегирования | API key = full account access без scope; нет revocation per приложение, leak ключа = total takeover. ❌ ПОСЛЕДСТВИЕ: leak API key через npm-зависимость → атакующий получает полный доступ от имени пользователя без возможности per-app revocation.
+> - [ ] Scopes — это рекомендация, можно дать full access по умолчанию | Over-privileged tokens = принцип «все права все время»; компрометация одного приложения = full account compromise. ❌ ПОСЛЕДСТВИЕ: leak access_token со scope `*` через одну compromised зависимость → атакующий получает полный доступ к Gmail, Drive, Calendar; правильный подход — `photos:read` минимально.
     @PreAuthorize("hasAuthority('SCOPE_photos:delete')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
@@ -1866,10 +1867,10 @@ public class OrderSecurityService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] `Fine-Grained Authorization` = большое количество ролей (`super_admin`, `regional_admin`, `dept_admin`) | Role explosion = combinatorial explosion (departments × actions × resources); audit невозможен. ❌ ПОСЛЕДСТВИЕ: 5K ролей, новый сотрудник получает чужие права из-за role similarity; SOX audit фейлится на role review.
+> - [ ] Достаточно `@PreAuthorize("hasRole('USER')")` на endpoint без проверки ownership | RBAC без resource-level не различает «свои» и «чужие» данные; любой `USER` читает любой order. ❌ ПОСЛЕДСТВИЕ: IDOR — `GET /orders/{id}` через ID enumeration отдаёт чужие orders; OWASP A01 (Broken Access Control), GDPR breach.
+> - [x] Fine-Grained = combination RBAC + ABAC + resource-level checks: `@PreAuthorize("hasRole('USER') and @orderSecurity.isOwner(#id, authentication)")` или OPA-policy с (subject, resource, action, environment) | Role задаёт coarse access, ABAC + ownership проверяют конкретный ресурс; OPA выносит policy за код, упрощая audit. ✓ ПРИМЕНЯТЬ: AWS IAM (resource-level conditions), Spring `@PreAuthorize` + `PermissionEvaluator`, OpenFGA (Zanzibar-style ReBAC). 📋 ПРАВИЛО: «coarse role + fine-grained resource = real authorization». 🔗 См. Q4, Q33, Q44.
+> - [ ] OPA / Cedar policies — overengineering, hardcoded `if` в коде проще | Hardcoded policies разбросаны по 50 файлам, изменение = деплой; нет audit-trail policy versions, нет centralized review. ❌ ПОСЛЕДСТВИЕ: при regulatory change нужно пересмотреть весь codebase; забытое условие в одном из 50 мест = breach.
     public boolean isOwner(Long orderId, Authentication auth) {
         return orderRepository.findById(orderId)
             .map(order -> order.getUserId().equals(auth.getName()))
@@ -1889,10 +1890,10 @@ public class OrderSecurityService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] Bearer-токены безопасны без token binding — TLS защищает от перехвата | Bearer = «кто принёс — тот и владелец»; украденный любым способом (XSS, MITM, log leak) переиспользуется атакующим. ❌ ПОСЛЕДСТВИЕ: token theft через XSS / lost device → атакующий использует токен на другом устройстве; bearer-семантика делает невозможным detection.
+> - [x] `Token Binding` (`RFC 8471`) или его replacement `DPoP` (`RFC 9449`) криптографически привязывает токен к клиенту через TLS-key или DPoP-proof; перенос на другое устройство невалиден | DPoP-клиент подписывает каждый запрос JWT, содержащий `htm`/`htu`/`jti` и `cnf` (publickey thumbprint); сервер проверяет подпись и `cnf` в access_token. ✓ ПРИМЕНЯТЬ: OAuth 2.1 рекомендует DPoP для public клиентов; реализации в `nimbus-jose-jwt`, GitHub использует sender-constrained tokens. 📋 ПРАВИЛО: «sender-constrained tokens побеждают bearer-theft». 🔗 См. Q3, Q15, Q37.
+> - [ ] Token Binding = просто HMAC от User-Agent в claim | User-Agent тривиально подделывается; нет криптографической проверки proof-of-possession. ❌ ПОСЛЕДСТВИЕ: атакующий копирует UA жертвы → токен принимается; «binding» иллюзорен, security theater.
+> - [ ] DPoP добавляет 100ms latency, поэтому им можно пренебречь в production | DPoP-proof — это маленький JWT (HS256/RS256), подпись < 1ms; оверхед минимальный против ценности sender-binding. ❌ ПОСЛЕДСТВИЕ: отказ от DPoP в финансовом приложении → token theft через XSS = unauthorized transactions; PSD2 требует proof-of-possession для SCA.
 **Практический статус:** поддержка ограничена (отменено в браузерах). Альтернативы:
 - **DPoP** (`Demonstrating Proof-of-Possession`, `RFC 9449`) — proof привязки токена к клиенту
 - Короткий TTL access token + refresh token rotation
@@ -1931,10 +1932,10 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [ ] WebSocket наследует HTTP cookie, поэтому отдельная аутентификация не нужна | WebSocket upgrade idempotent в плане cookies, но без проверки токена subscribe-сообщения принимаются от любого; CSRF на WebSocket (`Cross-Site WebSocket Hijacking`). ❌ ПОСЛЕДСТВИЕ: атакующий с другого домена устанавливает WebSocket к API → читает приватные сообщения жертвы (CSWSH, OWASP).
+> - [ ] Достаточно проверить токен один раз при `CONNECT`; subscribe/publish не нуждаются в auth | Без per-message auth любой подключенный клиент подписывается на чужие topic-ы (`user.{id}.notifications`) и получает leak. ❌ ПОСЛЕДСТВИЕ: пользователь A подписывается на `user.B.notifications` → читает приватные уведомления B; bug на bug bounty $5K-50K.
+> - [x] Аутентификация при upgrade (token в URL/header) + per-subscribe authorization (`@MessageMapping`/`@PreAuthorize`) + `wss://` обязательно + rate-limit на сообщения | Subscribe проверяет `auth.name == topic.userId`; rate-limit на publish защищает от flooding; `wss://` шифрует канал, иначе — plain text WS. ✓ ПРИМЕНЯТЬ: Spring `@MessageMapping` + `@PreAuthorize`, Slack/Discord WebSocket auth с per-message tokens. 📋 ПРАВИЛО: «WebSocket — auth on connect, authz on subscribe, wss:// always». 🔗 См. Q11, Q17, Q43.
+> - [ ] WebSocket по `ws://` (plain) безопасен внутри VPN | Plain WS = clear text сообщения; внутри VPN nessisary not sufficient; compromised pod sniffит весь трафик. ❌ ПОСЛЕДСТВИЕ: tcpdump на compromised pod → leak всех сообщений всех пользователей; required `wss://` + mTLS даже внутри VPC.
 **Ключевые практики:** аутентификация при `CONNECT` (токен в заголовке), `TLS` (`wss://`), проверка прав на подписку к topic, rate limiting сообщений.
 
 ## Q30. (!) Что такое `Proof Key for Code Exchange` (`PKCE`)?
@@ -1998,10 +1999,10 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Зачем нужен:** без `PKCE` перехваченный `authorization code` можно обменять на токен. С `PKCE` — нужен ещё `code_verifier`, который никогда не покидает клиент.
 
 ## Q31. Как реализовать `Dynamic Authorization`?
@@ -2046,10 +2047,10 @@ public class OrderApprovalPolicy implements Policy {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 Для сложных правил используют **`OPA` (Open Policy Agent)** — policy engine с языком `Rego`, или **`AWS Verified Permissions`** — managed-сервис для fine-grained авторизации.
 
 ## Q32. (!) Как настроить `Spring Security` как `OAuth2 Resource Server`?
@@ -2105,10 +2106,10 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 По умолчанию `Spring Security` берёт authorities из claim `scope`. Для кастомных claims (например, `roles` из `Keycloak`) нужен `JwtGrantedAuthoritiesConverter`.
 
 ## Q33. Как реализовать кастомный `PermissionEvaluator` в `Spring Security`?
@@ -2172,10 +2173,10 @@ public class MethodSecurityConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
     @Bean
     static MethodSecurityExpressionHandler methodSecurityExpressionHandler(
             CustomPermissionEvaluator evaluator) {
@@ -2238,10 +2239,10 @@ public class MultiSecurityConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 Ключевое отличие `Spring Security 6`: `@EnableMethodSecurity` вместо `@EnableGlobalMethodSecurity`, lambda-DSL обязателен, `authorizeHttpRequests` вместо `authorizeRequests`.
 
 ## Q35. Как реализовать иерархию ролей в `Spring Security`?
@@ -2275,10 +2276,10 @@ public class RoleHierarchyConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 С этой конфигурацией `@PreAuthorize("hasRole('USER')")` будет пропускать и `ADMIN`, и `MODERATOR`.
 
 ## Q36. Как хранить пароли безопасно в `Java`?
@@ -2315,10 +2316,10 @@ public class PasswordConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Важно:** использовать `char[]` вместо `String` для паролей в памяти (можно обнулить после использования); `String` остаётся в пуле строк JVM.
 
 ## Q37. (!) Какие типичные ошибки при реализации `JWT`?
@@ -2350,10 +2351,10 @@ public JwtDecoder jwtDecoder() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
     return decoder;
 }
 ```
@@ -2403,10 +2404,10 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 **Преимущества:** токены не доступны JavaScript (защита от `XSS`), `CSRF`-защита через cookies, централизованное управление токенами.
 
 ## Q39. Как интегрировать `Keycloak` со `Spring Boot`?
@@ -2450,10 +2451,10 @@ public JwtAuthenticationConverter keycloakJwtConverter() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
         return roles.stream()
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
             .collect(Collectors.toSet());
@@ -2529,10 +2530,10 @@ class ResourceServerTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ```java
 @Test
 void oauth2LoginRedirects() throws Exception {
@@ -2646,10 +2647,10 @@ public class BlacklistJwtDecoder implements JwtDecoder {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 Выбирайте JWT, если:
 ✓ Микросервисная архитектура
 ✓ Mobile/SPA клиенты
@@ -2773,10 +2774,10 @@ public class ApiKeyService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 ```java
 @Bean
 SecurityFilterChain apiSecurityChain(HttpSecurity http,
@@ -2881,10 +2882,10 @@ public class ZeroTrustAuthorizationManager
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 | Принцип | Мера | Инструмент |
 |---------|------|-----------|
 | Verify explicitly | JWT на каждом сервисе | Spring Security Resource Server |
@@ -3012,10 +3013,10 @@ public class MethodSecurityConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
     @Bean
     MethodSecurityExpressionHandler methodSecurityExpressionHandler(
             DocumentPermissionEvaluator permissionEvaluator) {
@@ -3199,10 +3200,10 @@ spec:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Объяснение 2-3 предложения Ключевое отличие и best practice в production.
-> - [ ] Вариант А | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант В | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
-> - [ ] Вариант С | Почему неверно 2-3 предложения Частая ошибка в реальном коде.
+> - [x] Правильный ответ | Объяснение 2-3 предложения Это ключевое разграничение из best practice.
+> - [ ] Вариант А | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант В | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Вариант С | Почему неверно 2-3 предложения ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Application Security](application-security-interview.md)
 - [JWT](jwt-interview.md)
 - [mTLS (Mutual TLS)](mtls-interview.md)

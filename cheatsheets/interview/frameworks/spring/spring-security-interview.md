@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-security]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-05"
 ---
 # Вопросы на собеседовании: `Spring Security`
 
@@ -1784,7 +1784,7 @@ public void deleteDocuments(List<Document> documents) {
 > - [x] Основной риск `@PostAuthorize` в том, что метод уже выполнился с побочными эффектами, прежде чем будет отказано в доступе. | Netflix и Uber столкнулись с данными уже запишущимися при отказе в доступе. SpEL видит returnObject, поэтому вызов обязателен. Это критическое применение.
 > - [ ] Основной риск `@PostAuthorize` в том, что SpEL не поддерживает параметры метода и `authentication`. | SpEL видит #paramName, returnObject и authentication. Это не ограничение. Spotify использует всё это в @PostAuthorize.
 
-> - [ ] Основной риск `@PostAuthorize` в том, что аннотация не работает на `@Service`-бинах, только на контроллерах. | `@PostAuthorize` применяется ко всем Spring-бинам при включённом `@EnableMethodSecurity`. Это антипаттерн или неправильный выбор в production.
+> - [ ] Основной риск `@PostAuthorize` в том, что аннотация не работает на `@Service`-бинах, только на контроллерах. | `@PostAuthorize` применяется ко всем Spring-бинам при включённом `@EnableMethodSecurity` — service-layer аннотируется так же, как контроллеры. ❌ ПОСЛЕДСТВИЕ: разработчик дублирует security-логику в контроллере, ожидая что service-уровень не покрыт — копи-паста расходится с annotation на сервисе при рефакторинге, появляется bypass через прямой вызов сервиса из тестов или другого контроллера.
 
 ## Q35. Как одновременно настроить `CORS` и `CSRF` в `SecurityFilterChain`?
 
@@ -2165,10 +2165,10 @@ public JwtDecoder jwtDecoder() {
 ```
 
 > [!mcq]
-> - [x] Bearer-токен из заголовка `Authorization` извлекает фильтр `BearerTokenAuthenticationFilter` и передаёт в `AuthenticationManager`. | Это штатный фильтр Spring Security OAuth2 Resource Server, работающий до авторизации. Authentication (who), authorization (what), CORS для cross-origin, CSRF protection.
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `BasicAuthenticationFilter` и передаёт в `AuthenticationManager`. | `BasicAuthenticationFilter` парсит только схему `Basic`, не `Bearer`. Частая ошибка в реальном коде.
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `UsernamePasswordAuthenticationFilter` и передаёт в `AuthenticationManager`. | Этот фильтр читает параметры формы, не `Authorization` header. Частая ошибка в реальном коде.
-> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `SecurityContextPersistenceFilter` и передаёт в `AuthenticationManager`. | Он загружает `SecurityContext` из хранилища (обычно сессии), к токенам отношения не имеет. Это антипаттерн или неправильный выбор в production.
+> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `BasicAuthenticationFilter` и передаёт в `AuthenticationManager`. | `BasicAuthenticationFilter` парсит только схему `Basic ` (base64 user:pass), не `Bearer`; для Bearer есть отдельный фильтр в OAuth2 Resource Server. ❌ ПОСЛЕДСТВИЕ: разработчик настраивает только `httpBasic()` ожидая что Bearer тоже подхватится — все JWT-запросы получают 401, мобильное приложение не работает, hotfix в дежурстве.
+> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `UsernamePasswordAuthenticationFilter` и передаёт в `AuthenticationManager`. | `UsernamePasswordAuthenticationFilter` читает параметры формы (`username`/`password`), не `Authorization` header; работает на `/login` endpoint. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет JWT через `formLogin()` chain — фильтр игнорирует header, токен не парсится, защита остаётся только для form-логина.
+> - [ ] Bearer-токен из заголовка `Authorization` извлекает фильтр `SecurityContextPersistenceFilter` и передаёт в `AuthenticationManager`. | `SecurityContextPersistenceFilter` загружает `SecurityContext` из хранилища (обычно сессии); это session restorer, не парсер токенов. ❌ ПОСЛЕДСТВИЕ: команда настраивает stateless API через session-фильтры — каждый запрос создаёт новую session, Redis раздувается, OOM на peak load.
+> - [x] Bearer-токен из заголовка `Authorization` извлекает фильтр `BearerTokenAuthenticationFilter` и передаёт в `AuthenticationManager`. | Это штатный фильтр Spring Security OAuth2 Resource Server: парсит схему `Bearer `, проверяет JWT через `JwtDecoder` или introspection через `OpaqueTokenIntrospector`. ✓ ПРИМЕНЯТЬ: REST API с JWT/OAuth2 — `oauth2ResourceServer(rs -> rs.jwt())` в SecurityFilterChain; для opaque tokens — `rs.opaqueToken()`. 📋 ПРАВИЛО: «Bearer = OAuth2 Resource Server filter, не Basic и не Form». 🔗 См. Q33 (CORS/CSRF), Q41 (JWT validation).
 
 ---
 

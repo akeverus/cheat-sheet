@@ -14,7 +14,7 @@ aliases:
   - "Java Stream собеседование"
 prerequisites: []
 next: []
-updated: "2026-04-21"
+updated: "2026-05-05"
 ---
 # Вопросы на собеседовании: `Java Stream API`
 
@@ -140,6 +140,12 @@ List<String> result = names.stream()
 > - [x] Stream не хранит данные, не модифицирует источник и может быть использован только один раз. | ✓ ПРИМЕНЯТЬ: воспринимайте Stream как одноразовый pipeline; для повторных операций — храните `Supplier<Stream<T>>` или работайте с `Collection`/`List`. Source-агностичность позволяет использовать `IntStream.range`, `Stream.generate`, `Files.lines` единообразно. 📋 ПРАВИЛО: "Stream = no storage + no mutation + one-shot; повторное use = IllegalStateException". 🔗 См. Q2 (pipeline), Q3 (lazy evaluation), Q5 (intermediate vs terminal).
 > - [ ] Stream автоматически синхронизирует доступ к источнику при параллельной обработке. | parallelStream не sync. ❌ ПОСЛЕДСТВИЕ: classical bug — `parallelStream().forEach(x -> sharedList.add(x))` приводит к race conditions, lost updates, потери элементов. Используйте `collect(toList())` который thread-safe.
 
+> [!mcq]
+> - [ ] `Stream.of()` без аргументов выбрасывает `IllegalArgumentException`, потому что Stream не может быть пустым. | Stream может быть пустым. ❌ ПОСЛЕДСТВИЕ: разработчик оборачивает `Stream.of(items.toArray())` в try-catch ожидая исключения на пустом массиве — на деле `Stream.of()` ≡ `Stream.empty()`, корректно работает; лишний boilerplate усложняет код.
+> - [ ] `Stream.concat(s1, s2)` можно повторно использовать для сложения нескольких стримов: `concat(concat(a,b), c).forEach(...); concat(...).count();`. | One-shot. ❌ ПОСЛЕДСТВИЕ: разработчик кеширует результат `Stream.concat(a, b)` в поле, второй terminal — `IllegalStateException: stream has already been operated upon`. concat возвращает обычный Stream — single-use правило сохраняется.
+> - [x] Factory-методы `Stream.of(...)`, `Stream.empty()`, `Stream.concat(s1, s2)` создают новый одноразовый Stream; повторное обращение к terminal операции — `IllegalStateException`. | ✓ ПРИМЕНЯТЬ: для нескольких источников — `Stream.concat(a, b)` (для 2-х) или `Stream.of(a, b, c).flatMap(Function.identity())` (для N); для условного источника — `condition ? stream : Stream.empty()`; для повторных проходов по тем же данным — `Supplier<Stream<T>> s = () -> Stream.of(...);` и `s.get()` каждый раз. 📋 ПРАВИЛО: «factory-методы Stream.of/empty/concat = одноразовые; для re-use — Supplier<Stream> или Collection». 🔗 См. Q4 (создание Stream), Q5 (terminal закрывает Stream), Q35 (типичные ошибки).
+> - [ ] `Stream.empty()` и `Stream.of((Object) null)` эквивалентны — оба создают стрим без элементов. | `Stream.of(null)` = 1 элемент. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Stream.of(maybeNull)` ожидая пустой стрим при null — получает Stream из одного null-элемента, NPE на следующем `map(String::length)`. Для null-safe — `Optional.ofNullable(x).stream()` или `Stream.ofNullable(x)` (Java 9+).
+
 ## Q2. (!) Что такое stream pipeline и из чего он состоит?
 
 Stream pipeline — это цепочка операций, состоящая из трёх частей: **source** (источник), **intermediate operations** (промежуточные операции) и **terminal operation** (терминальная операция).
@@ -178,6 +184,12 @@ List<String> result = List.of("alice", "bob", "charlie", "dave")
 > - [ ] В pipeline может быть несколько терминальных операций, которые последовательно применяются к одному стриму. | One terminal only. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.count(); stream.toList();` — второй вызов IllegalStateException. Создавайте новый stream для каждой terminal op.
 > - [ ] Промежуточные операции pipeline сразу выполняются и возвращают новую коллекцию для следующей операции. | Lazy. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `peek` для отладки, ждёт log output — без terminal operation peek не запускается, log пустой. peek полезен только в полном pipeline.
 
+> [!mcq]
+> - [ ] `Spliterator` нужен только для parallel streams; в sequential pipeline источником служит обычный `Iterator`. | Всегда Spliterator. ❌ ПОСЛЕДСТВИЕ: разработчик при создании custom-источника реализует `Iterator` — Stream API не примет, нужен `Spliterators.spliteratorUnknownSize(iterator, characteristics)` или `StreamSupport.stream(spliterator, false)`. Stream под капотом всегда работает через `Spliterator` независимо от parallel/sequential.
+> - [ ] Перевод `parallel()` в pipeline всегда даёт линейное ускорение пропорционально числу ядер. | Cost-benefit. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `parallel()` на стрим из 100 элементов с лёгкими операциями — на деле overhead split + ForkJoinPool dispatch + merge превышает выгоду; latency растёт в 2-3 раза по сравнению с sequential. Parallel окупается на N×W ≥ ~10_000 (N — элементы, W — work per element).
+> - [x] Источник Stream под капотом — `Spliterator` с характеристиками (`SIZED`, `ORDERED`, `DISTINCT`, `SORTED`, `IMMUTABLE`); они влияют на оптимизации pipeline и стоимость parallel. | ✓ ПРИМЕНЯТЬ: `ArrayList.spliterator()` — `SIZED+ORDERED+SUBSIZED` (хорошо splittable, дешёвый parallel); `LinkedList.spliterator()` — `SIZED+ORDERED` без SUBSIZED (плохо splittable, parallel почти бесполезен); `HashSet` — `SIZED+DISTINCT` (нет ORDERED — `findAny` быстрее `findFirst`); `TreeSet` — `SIZED+DISTINCT+SORTED+ORDERED`. Для `parallel` ищите `SUBSIZED` источники (массивы, ArrayList). 📋 ПРАВИЛО: «Spliterator characteristics → JIT optimizations + parallel splittability; для parallel: SIZED+SUBSIZED+IMMUTABLE/CONCURRENT». 🔗 См. Q20 (когда parallel), Q22 (ForkJoinPool), Q25 (Spliterator подробно).
+> - [ ] `parallel()` стрим всегда быстрее sequential, если данных больше тысячи. | Зависит от source/work. ❌ ПОСЛЕДСТВИЕ: на `LinkedList.parallelStream()` с лёгкими операциями (filter+sum) — sequential быстрее в 5-10×, потому что LinkedList не имеет O(1) split (нужно итерировать к середине). Слепое применение `parallel()` без бенчмарка — антипаттерн.
+
 ## Q3. (!) Что такое lazy evaluation и почему она важна?
 
 Промежуточные операции `Stream` не выполняются сразу — они формируют **описание** pipeline. Реальное выполнение запускается только при вызове терминальной операции. Это и есть **lazy evaluation** (ленивое вычисление).
@@ -202,10 +214,16 @@ List<String> result = lazy.toList(); // Теперь filter/map работают
 ```
 
 > [!mcq]
+> - [x] Благодаря lazy evaluation промежуточные операции не выполняются до вызова терминальной, что позволяет short-circuit операциям завершаться раньше. | ✓ ПРИМЕНЯТЬ: бесконечные стримы становятся практичными — `Stream.iterate(1, n -> n+1).filter(n -> n%17==0).limit(5)` работает; `findFirst` для первого совпадения экономит обходы; loop fusion (filter+map в одной итерации) — JIT оптимизация. 📋 ПРАВИЛО: "lazy = промежуточные ничего не делают до terminal; short-circuit + infinite streams + loop fusion бенефиты". 🔗 См. Q2 (pipeline), Q5 (intermediate vs terminal), Q10 (short-circuit).
 > - [ ] Промежуточные операции выполняются сразу при добавлении в цепочку, чтобы JVM могла оптимизировать pipeline. | Lazy. ❌ ПОСЛЕДСТВИЕ: разработчик считает что `stream.filter(...)` сразу обходит коллекцию, ставит `peek` ожидая увидеть в логах — peek не запускается без terminal operation. Дебаггинг застревает.
 > - [ ] Lazy evaluation означает, что терминальная операция выполняется асинхронно в фоновом потоке. | Не async. ❌ ПОСЛЕДСТВИЕ: путаница lazy и async приводит к ложным ожиданиям — `stream.toList()` в main thread блокирует main thread. Для асинхронности — `CompletableFuture.supplyAsync(() -> stream.toList())`.
-> - [x] Благодаря lazy evaluation промежуточные операции не выполняются до вызова терминальной, что позволяет short-circuit операциям завершаться раньше. | ✓ ПРИМЕНЯТЬ: бесконечные стримы становятся практичными — `Stream.iterate(1, n -> n+1).filter(n -> n%17==0).limit(5)` работает; `findFirst` для первого совпадения экономит обходы; loop fusion (filter+map в одной итерации) — JIT оптимизация. 📋 ПРАВИЛО: "lazy = промежуточные ничего не делают до terminal; short-circuit + infinite streams + loop fusion бенефиты". 🔗 См. Q2 (pipeline), Q5 (intermediate vs terminal), Q10 (short-circuit).
 > - [ ] Lazy evaluation гарантирует, что каждый элемент обрабатывается в цепочке ровно один раз, даже при многократном вызове terminal операций. | Stream одноразовый. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает повторное использование stream после terminal — каждый terminal закрывает stream окончательно. Lazy не делает stream re-usable.
+
+> [!mcq]
+> - [ ] `count()` на `Stream.iterate(1, n -> n+1).limit(1_000_000)` использует lazy и не материализует элементы. | `count` обходит весь pipeline. ❌ ПОСЛЕДСТВИЕ: разработчик считает что `count` "знает" размер от `limit` — на деле обходит миллион элементов через `filter`/`map`, latency как у `forEach`. Для known-size — `list.size()`, не `stream().count()`.
+> - [ ] `forEach` и `findFirst` одинаково ленивы — оба обходят pipeline до первого элемента. | `forEach` обходит всё. ❌ ПОСЛЕДСТВИЕ: на бесконечном `Stream.iterate(1, n->n+1).forEach(...)` приложение зависает; разработчик ожидает что `forEach` "сработает один раз" как `findFirst`.
+> - [x] `findFirst` / `anyMatch` / `limit` могут завершить pipeline после первого совпадения, тогда как `count` / `forEach` / `toList` обходят все элементы. | ✓ ПРИМЕНЯТЬ: для существования — `anyMatch` вместо `filter().count() > 0`; для одного результата — `findFirst` вместо `toList().get(0)`; на parallel — `findAny` ещё быстрее (не ждёт encounter order). На бесконечных стримах — только short-circuit терминалы. 📋 ПРАВИЛО: «short-circuit terminal = lazy окупает себя; all-element terminal (`count`/`forEach`/`toList`/`reduce`) — обходит всё». 🔗 См. Q10 (short-circuit), Q5 (terminal classification), Q26 (бесконечные стримы).
+> - [ ] `peek` гарантированно вызывается для каждого элемента в lazy pipeline, даже если терминал short-circuit. | `peek` могут пропускать. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `peek(log::info)` для аудита и ожидает увидеть все элементы, но JIT (Java 9+ JEP 276) пропускает `peek` если результат не нужен (например, перед `count` на `SIZED` источнике). Для гарантии — `forEach`.
 
 ## Q4. Какие способы создания Stream существуют?
 
@@ -273,6 +291,12 @@ long count = stream.filter(s -> !s.isEmpty()).count();
 > - [x] findFirst и anyMatch являются short-circuit терминальными операциями и могут завершить pipeline раньше, не обработав все элементы. | ✓ ПРИМЕНЯТЬ: `findFirst` для поиска первого совпадения (`users.stream().filter(u->u.isAdmin()).findFirst()`); `anyMatch` для existence check; `noneMatch`/`allMatch` для validation. На больших коллекциях экономия времени linear → constant в лучшем случае. 📋 ПРАВИЛО: "short-circuit terminal: findFirst/findAny/anyMatch/allMatch/noneMatch; intermediate short-circuit: limit". 🔗 См. Q3 (lazy), Q10 (short-circuit подробно), Q6 (stateful vs stateless).
 > - [ ] sorted является stateless операцией, так как только меняет порядок элементов, не создавая нового стрима. | sorted stateful. ❌ ПОСЛЕДСТВИЕ: разработчик использует sorted на бесконечном stream — приложение зависает / OOM (sorted ждёт все элементы перед сортировкой). На finite streams тоже плохо параллелизуется.
 
+> [!mcq]
+> - [ ] `peek(Consumer)` — terminal-операция для побочных эффектов, аналог `forEach`. | peek = intermediate. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.peek(log::info)` ожидая что pipeline запустится — на деле peek intermediate, без terminal ничего не выполняется. Лог пустой, бизнес-логика не запускалась — баг в проде.
+> - [ ] `peek(log::info)` гарантированно вызывается для каждого элемента, поэтому подходит для production-аудита. | JIT может пропустить. ❌ ПОСЛЕДСТВИЕ: на Java 9+ JEP 276 разрешает JIT пропускать `peek` если результат не нужен (`stream.peek(log).count()` на `SIZED`-источнике может скипнуть всю цепочку); production-аудит теряется. Для гарантии — `forEach` или `map(x -> { log(x); return x; })`.
+> - [x] `peek` — intermediate-операция для отладки, JIT может пропустить вызовы при `SIZED`-источниках с Java 9+; для production side-effects используйте `forEach`. | ✓ ПРИМЕНЯТЬ: `peek` ТОЛЬКО для дебага (`stream.peek(System.out::println).filter(...).peek(...).toList()`); для аудита/логирования в проде — terminal `forEach` или `map(x -> { audit(x); return x; })`; никогда не полагайтесь на peek в бизнес-логике. 📋 ПРАВИЛО: «peek = debug-only intermediate; production side effects → forEach (terminal) или map с побочкой; JIT может скипать peek». 🔗 См. Q3 (lazy + JIT skip peek), Q17 (forEach), Q35 (типичные ошибки).
+> - [ ] Терминальные операции всегда обходят все элементы стрима, поэтому `count()` и `forEach` имеют одинаковую сложность. | short-circuit. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.filter(...).count() > 0` для existence check — обходит весь стрим; на 1M записей вместо O(1) с `anyMatch` получает O(n). Для existence — `anyMatch`/`findAny`.
+
 ## Q6. Чем отличаются stateless и stateful промежуточные операции?
 
 **Stateless** операции (`filter`, `map`, `flatMap`) обрабатывают каждый элемент независимо — не нужно знать о других элементах. Они дешёвые и хорошо параллелизуются.
@@ -329,10 +353,16 @@ List<String> activeUserEmails = users.stream()
 ```
 
 > [!mcq]
+> - [x] filter отбирает элементы по условию не меняя тип, map преобразует каждый элемент 1:1, flatMap преобразует элемент в Stream и разворачивает. | ✓ ПРИМЕНЯТЬ: filter для отбора (`isActive`, `> threshold`); map для преобразования (`User → UserDto`, `Long → String`); flatMap для разворачивания вложенных коллекций (`User → orders`, `Optional<Optional<T>> → Optional<T>`). 📋 ПРАВИЛО: "filter = same type, less items; map = 1:1 transform; flatMap = 1:N flatten". 🔗 См. Q8 (flatMap подробно), Q5 (intermediate ops), Q1 (что такое stream).
 > - [ ] map преобразует каждый элемент в Stream и «сплющивает» результат, flatMap преобразует каждый элемент 1:1. | Перепутано. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `users.stream().map(u -> u.getOrders().stream())` ожидая plain Stream<Order>, получает Stream<Stream<Order>> — type mismatch на toList. Нужен flatMap.
 > - [ ] filter изменяет тип элементов в стриме, отбрасывая неподходящие. | filter same type. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что `filter(s -> s.length() > 5)` вернёт `Stream<Integer>` (длины) вместо `Stream<String>` — ложные ожидания приводят к compile errors при последующих map'ах.
-> - [x] filter отбирает элементы по условию не меняя тип, map преобразует каждый элемент 1:1, flatMap преобразует элемент в Stream и разворачивает. | ✓ ПРИМЕНЯТЬ: filter для отбора (`isActive`, `> threshold`); map для преобразования (`User → UserDto`, `Long → String`); flatMap для разворачивания вложенных коллекций (`User → orders`, `Optional<Optional<T>> → Optional<T>`). 📋 ПРАВИЛО: "filter = same type, less items; map = 1:1 transform; flatMap = 1:N flatten". 🔗 См. Q8 (flatMap подробно), Q5 (intermediate ops), Q1 (что такое stream).
 > - [ ] flatMap всегда возвращает больше элементов, чем было в исходном стриме. | Может меньше. ❌ ПОСЛЕДСТВИЕ: ложные ожидания о cardinality — `flatMap(u -> u.orders().stream())` вернёт меньше элементов если у некоторых users нет orders (`Stream.empty()`). flatMap = аналог `flatMap` в Optional.
+
+> [!mcq]
+> - [ ] При `flatMap(u -> Files.lines(u.getPath()))` inner-стримы остаются открытыми и накапливают file handles до сборки мусора. | flatMap закрывает inner. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает file handle leak и оборачивает в try-with-resources — лишний код; на деле flatMap корректно закрывает каждый inner Stream после потребления. Но если inner-стрим не материализован (short-circuit), close может не сработать — для гарантии используйте `try-with-resources` на outer Stream.
+> - [ ] `Stream<Optional<T>>` нельзя превратить в `Stream<T>` через flatMap — нужен только filter+map. | flatMap + Optional.stream(). ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.filter(Optional::isPresent).map(Optional::get)` (антипаттерн по PMD/SonarQube) вместо чистого `stream.flatMap(Optional::stream)` (Java 9+) — бойлерплейт + warning в SonarQube.
+> - [x] `flatMap` закрывает каждый inner-стрим после потребления (utility); для null-safe плоского Stream используйте `Stream.ofNullable(x)` или `Optional::stream`. | ✓ ПРИМЕНЯТЬ: `users.stream().flatMap(u -> u.getOrders().stream())` корректно работает с пустыми списками; `stream.flatMap(Optional::stream)` (Java 9+) для unwrap Optional; `Files.lines(path)` внутри flatMap безопасен — закроется автоматически; для null-safe — `flatMap(x -> Stream.ofNullable(x.getMaybeNull()))`. 📋 ПРАВИЛО: «flatMap = 1:N flatten + закрывает inner-стрим; для Optional/null — Optional.stream / Stream.ofNullable». 🔗 См. Q8 (flatMap подробно), Q16 (Optional + Stream), Q31 (аллокации).
+> - [ ] `flatMap` нельзя комбинировать с parallel-стримами — inner-стримы всегда выполняются sequential. | parallel совместим. ❌ ПОСЛЕДСТВИЕ: разработчик отказывается от `flatMap` в `parallelStream()` ради воображаемой проблемы — на деле inner-стримы корректно интегрируются в ForkJoinPool. Реальная проблема — inner-стримы теряют parallel marker, сами по себе sequential, но outer pipeline parallelism работает.
 
 ## Q8. Как работает flatMap и чем он отличается от map?
 
@@ -360,9 +390,15 @@ List<Order> allOrders = customers.stream()
 
 > [!mcq]
 > - [ ] flatMap(Collection::stream) возвращает Stream<Stream<String>>, который затем нужно разворачивать вручную. | flatMap auto-разворачивает. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет `.flatMap(Function.identity())` после flatMap "для разворачивания" — лишний boilerplate. flatMap уже flat.
-> - [x] flatMap разворачивает List<List<String>> в плоский Stream<String>, тогда как map оставил бы вложенную структуру Stream<List<String>>. | ✓ ПРИМЕНЯТЬ: для денормализации связей one-to-many — `customers.stream().flatMap(c -> c.orders().stream())` даёт все orders плоско; для Optional разворачивания — `Stream.of(opt1, opt2).flatMap(Optional::stream)` (Java 9+); для полей-коллекций в DTO. 📋 ПРАВИЛО: "flatMap = map + flatten; map для 1:1, flatMap для 1:N (или 1:0 при empty); structural: убирает один уровень вложенности". 🔗 См. Q7 (map vs flatMap vs filter), Q8 (flatMap подробно), java-8 Q21 (map vs flatMap в CompletableFuture).
+> - [x] flatMap разворачивает List<List<String>> в плоский Stream<String>, тогда как map оставил бы вложенную структуру Stream<List<String>>. | ✓ ПРИМЕНЯТЬ: для денормализации связей one-to-many — `customers.stream().flatMap(c -> c.orders().stream())` даёт все orders плоско; для Optional разворачивания — `Stream.of(opt1, opt2).flatMap(Optional::stream)` (Java 9+); для полей-коллекций в DTO. 📋 ПРАВИЛО: "flatMap = map + flatten; map для 1:1, flatMap для 1:N (или 1:0 при empty); structural: убирает один уровень вложенности". 🔗 См. Q7 (map vs flatMap vs filter), Q16 (Optional + Stream), Q31 (аллокации в flatMap).
 > - [ ] flatMap требует, чтобы функция возвращала непустой Stream, иначе бросает NoSuchElementException. | Empty OK. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет null-check в lambda (`c -> c.orders() == null ? Stream.empty() : c.orders().stream()`) — но если возвращает `Stream.empty()`, flatMap нормально пропустит, никаких exceptions.
 > - [ ] map и flatMap обе меняют тип элементов, но flatMap дополнительно изменяет количество элементов в стриме. | Структурно разные. ❌ ПОСЛЕДСТВИЕ: фокус только на cardinality пропускает главное — flatMap убирает уровень вложенности (Stream<Stream<T>> → Stream<T>), это структурное преобразование, не просто 1:N.
+
+> [!mcq]
+> - [x] `flatMap` НЕ закрывает внутренние `Stream` автоматически — для `Files.lines()` внутри `flatMap` нужен явный resource management. | ✓ ПРИМЕНЯТЬ: `paths.stream().flatMap(p -> { try { return Files.lines(p); } catch (IOException e) { return Stream.empty(); }})` течёт file handles на больших dataset; правильно — `Files.walk` + try-with-resources на внешнем стриме, или `flatMap` с `.onClose(...)` callback. Внешний `try (Stream<...> s = ...)` закроет только outer, не inner. 📋 ПРАВИЛО: «inner streams в `flatMap` НЕ auto-closed; для I/O — onClose hooks или сторонний resource scope». 🔗 См. Q4 (Files.lines lazy), Q31 (аллокации).
+> - [ ] `flatMap` автоматически вызывает `close()` на каждом inner stream после его обхода — безопасен для `Files.lines`. | Не автозакрытие. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `paths.stream().flatMap(Files::lines).count()` и удивляется "Too many open files" в production — Linux fd-limit ~1024, на 10k файлов crash.
+> - [ ] Inner `Stream` в `flatMap` нельзя использовать с I/O-источниками — JVM бросает `IllegalStateException`. | Нет такого ограничения. ❌ ПОСЛЕДСТВИЕ: разработчик избегает удобной композиции `flatMap(Files::lines)` "из-за запрета", переключается на императивный `for`-loop вместо корректного fix через `onClose`.
+> - [ ] `flatMap` вызывает `close()` на inner stream только если внешний pipeline завершился успешно. | Никогда не вызывает. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет `try-finally` на outer думая что cleanup сработает при exception — fd-leak остаётся даже при happy path; нужен `Stream.onClose(() -> innerStream.close())`.
 
 ## Q9. В чём разница между sorted, distinct, limit и skip?
 
@@ -455,6 +491,18 @@ Map<Long, String> idToName = users.stream()
     .collect(Collectors.toUnmodifiableMap(User::getId, User::getName));
 ```
 
+> [!mcq]
+> - [x] `collect` использует `supplier` + `accumulator` + `combiner` для мутабельной свёртки в контейнер. | ✓ ПРИМЕНЯТЬ: для сборки в `List`/`Set`/`Map`/`String`; `combiner` нужен только при `parallel()`. 📋 ПРАВИЛО: «collect = supplier→accumulator→combiner→finisher; mutable reduction». 🔗 См. Q14 (reduce vs collect), Q15 (custom Collector).
+> - [ ] `collect` — это intermediate-операция, возвращающая новый `Stream` с накопленным результатом. | `collect` — terminal. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.collect(toList()).filter(...)` и получает `compile error`; в production привычка цеплять операции после `collect` ломает PR-ревью.
+> - [ ] `Collectors.toList()` всегда возвращает неизменяемый `List`, как и `stream.toList()` (Java 16+). | `Collectors.toList` mutable. ❌ ПОСЛЕДСТВИЕ: тест `assertThrows(UnsupportedOperationException.class, list::add)` зелёный для `stream.toList()`, но красный для `Collectors.toList()` — миграция между версиями ломает контракт API.
+> - [ ] `Collectors.toMap` без merge-функции при дубликатах ключей оставляет первое значение. | toMap throws. ❌ ПОСЛЕДСТВИЕ: `Collectors.toMap(User::getEmail, ...)` в production падает `IllegalStateException: Duplicate key` при первом же дубль-email — endpoint 500, инцидент в логах.
+
+> [!mcq]
+> - [ ] `stream.toList()` (Java 16+) и `stream.collect(Collectors.toList())` возвращают одинаковый `ArrayList` — оба mutable. | Разные контракты. ❌ ПОСЛЕДСТВИЕ: код `var list = stream.toList(); list.add(x);` падает `UnsupportedOperationException` после миграции с `Collectors.toList()` на `toList()` — обратный путь не транспарентен.
+> - [ ] `Collectors.toUnmodifiableList()` возвращает `Collections.unmodifiableList(arrayList)` — view, изменения исходного видны. | `toUnmodifiableList` копирует. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает live-view и получает stale snapshot — путаница с `Collections.unmodifiableList(mutable)` который действительно view.
+> - [x] `stream.toList()` (Java 16+) и `Collectors.toUnmodifiableList()` дают неизменяемый `List`, а `Collectors.toList()` — модифицируемый `ArrayList`. | ✓ ПРИМЕНЯТЬ: `stream.toList()` для большинства случаев (immutable, null-friendly, без копирования если уже immutable); `Collectors.toUnmodifiableList()` если нужно явно подчеркнуть immutability и запретить null; `Collectors.toCollection(ArrayList::new)` если нужен mutable list. Контракт API: возвращайте immutable из public методов. 📋 ПРАВИЛО: «`toList()` = immutable allowing null; `toUnmodifiableList()` = immutable disallowing null; `Collectors.toList()` = mutable `ArrayList`». 🔗 См. Q14 (reduce vs collect), Q31 (аллокации), java-collections Q (immutable collections).
+> - [ ] Все три метода (`stream.toList()`, `Collectors.toList()`, `Collectors.toUnmodifiableList()`) допускают `null`-элементы. | `toUnmodifiableList` запрещает null. ❌ ПОСЛЕДСТВИЕ: разработчик мигрирует с `Collectors.toList()` на `Collectors.toUnmodifiableList()` ради immutability и получает `NullPointerException` на первом же `null` в источнике; Optional-friendly код ломается.
+
 ## Q12. (!) Как работают groupingBy, partitioningBy, toMap?
 
 Это три ключевых коллектора для создания `Map` из `Stream`:
@@ -497,6 +545,18 @@ List<Employee> lowPaid = partitioned.get(false);
 
 **`toMap`** — см. Q11. Важная ловушка: без merge function дубликаты ключей бросают `IllegalStateException`.
 
+> [!mcq]
+> - [ ] `partitioningBy` принимает `Function` и группирует в `Map<K, List<T>>` с произвольными ключами. | partitioningBy = Predicate. ❌ ПОСЛЕДСТВИЕ: разработчик путает с `groupingBy`, пишет `partitioningBy(User::getRole)` — `compile error`; теряет 30 минут на StackOverflow.
+> - [x] `groupingBy` использует `Function` для классификации, `partitioningBy` — `Predicate` для разбиения на `true`/`false`. | ✓ ПРИМЕНЯТЬ: `partitioningBy` когда ровно 2 группы (даже если одна пустая, ключ `false` есть всегда); `groupingBy` для произвольной классификации. 📋 ПРАВИЛО: «partitioningBy = Predicate→Boolean ключи; groupingBy = Function→любые ключи». 🔗 См. Q11 (collect), Q13 (downstream collectors).
+> - [ ] `partitioningBy` возвращает `Map`, где для пустых групп ключ отсутствует. | Both keys exist. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `map.get(true).size()` без проверки на null, падает `NullPointerException` на пустом источнике; на самом деле обе группы (`true`, `false`) гарантированно есть в результате.
+> - [ ] `groupingBy` всегда требует downstream collector вторым аргументом. | downstream optional. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `groupingBy(User::getDept, toList())` везде, считая что без `toList()` не скомпилится; кодовая база захламляется boilerplate, хотя `groupingBy(classifier)` — однопараметровая перегрузка по умолчанию использует `toList()`.
+
+> [!mcq]
+> - [ ] Чтобы посчитать количество в каждой группе, нужно `groupingBy(classifier).values().stream().map(List::size)`. | `Collectors.counting()` downstream. ❌ ПОСЛЕДСТВИЕ: разработчик собирает `Map<K, List<T>>` ради подсчёта — лишняя аллокация всех элементов в `List`; на 1M записей heap +200MB вместо `Map<K, Long>`.
+> - [ ] `Collectors.summingInt` возвращает `OptionalInt`, потому что сумма пустого набора неопределена. | Возвращает `Integer`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `.orElse(0)` после `summingInt` — `compile error`; на пустом stream `summingInt` корректно возвращает `0`.
+> - [x] Downstream-коллекторы `counting()`, `summingInt(...)`, `mapping(f, toList())`, `averagingDouble(...)` позволяют агрегировать внутри группы без промежуточного `List`. | ✓ ПРИМЕНЯТЬ: подсчёт — `groupingBy(dept, counting())` → `Map<Dept, Long>`; сумма — `groupingBy(dept, summingDouble(Employee::getSalary))`; преобразование+сборка — `groupingBy(dept, mapping(Employee::getName, toList()))` → `Map<Dept, List<String>>`; multi-уровневая — `groupingBy(dept, groupingBy(city, counting()))`. 📋 ПРАВИЛО: «downstream = трансформация группы in-place: counting/summing/averaging/mapping/reducing вместо `groupBy + values + stream + reduce`». 🔗 См. Q11 (collect), Q13 (teeing), Q37 (teeing деталь).
+> - [ ] `Collectors.mapping(f, downstream)` применяет функцию `f` к ключу группы перед классификацией. | `mapping` к элементам. ❌ ПОСЛЕДСТВИЕ: разработчик использует `mapping(String::toUpperCase, ...)` ожидая что ключи группы станут UPPERCASE — а на деле `mapping` трансформирует элементы группы перед downstream collector; ключи остаются те же.
+
 ## Q13. Как использовать Collectors.joining и Collectors.teeing?
 
 **`joining`** — конкатенация строк с разделителем, префиксом и суффиксом:
@@ -533,6 +593,12 @@ var stats = orders.stream()
     ));
 ```
 
+> [!mcq]
+> - [ ] `Collectors.joining(", ")` для конкатенации эффективнее, чем `reduce("", String::concat)`, потому что использует `String.join` внутри. | joining = StringBuilder. ❌ ПОСЛЕДСТВИЕ: разработчик в собеседовании ссылается на `String.join` как реализацию, эксперт уточняет — внутри `StringJoiner`+`StringBuilder`; кандидат демонстрирует поверхностное знание JDK.
+> - [ ] `Collectors.teeing` доступен с Java 8 и применяется для группировки по двум ключам. | teeing — Java 12. ❌ ПОСЛЕДСТВИЕ: разработчик пытается использовать `teeing` в проекте на Java 11 — `cannot find symbol`; CI билд падает после merge, баг возвращается на доработку.
+> - [x] `joining(delimiter, prefix, suffix)` строит строку через `StringJoiner`, `teeing` (Java 12+) применяет два коллектора за один проход. | ✓ ПРИМЕНЯТЬ: `joining` для CSV/JSON-сериализации, `teeing` когда нужны min+max или sum+count за одну итерацию вместо двух стримов. 📋 ПРАВИЛО: «joining = StringJoiner с prefix/suffix; teeing = два коллектора + merger в один проход». 🔗 См. Q11 (collect), Q37 (teeing деталь).
+> - [ ] `teeing` — это терминальная операция, эквивалентная вызову `peek` для двух наблюдателей. | teeing = collector, не peek. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает побочные эффекты для логирования, пишет `teeing(loggingCollector1, loggingCollector2, ...)` с реальной бизнес-логикой в side-effects; в production логи дублируются и потоки данных перепутаны.
+
 ## Q14. (!) В чём разница между reduce и collect?
 
 **`reduce`** — свёртка к **иммутабельному** значению. Каждый шаг создаёт новое значение. Хорош для ассоциативных операций (сумма, произведение, конкатенация).
@@ -560,6 +626,18 @@ T           reduce(T identity, BinaryOperator<T> accumulator); // с identity
 ```
 
 > На собеседовании часто спрашивают: «Почему для сборки в список используют `collect`, а не `reduce`?» — потому что `reduce` с `ArrayList` нарушает контракт: accumulator должен возвращать **новый** объект, а не мутировать аргумент.
+
+> [!mcq]
+> - [x] `reduce` — иммутабельная свёртка к одному значению; `collect` — мутабельная свёртка в контейнер. | ✓ ПРИМЕНЯТЬ: `reduce` для чисел/booleans/иммутабельных типов, `collect` для коллекций и `String`. 📋 ПРАВИЛО: «reduce = immutable BinaryOperator; collect = mutable supplier+accumulator». 🔗 См. Q11 (collect), Q15 (custom Collector), Q35 (типичные ошибки).
+> - [ ] `reduce("", (a, b) -> a + b)` для конкатенации работает за O(n), как и `Collectors.joining()`. | reduce String = O(n²). ❌ ПОСЛЕДСТВИЕ: на 10_000 строк `reduce` становится в 100+ раз медленнее `joining` из-за создания нового `String` на каждом шаге; эндпоинт превышает p99 SLA.
+> - [ ] `reduce` без identity всегда возвращает `T`, как и `reduce(identity, op)`. | reduce без identity = Optional. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `int sum = stream.reduce(Integer::sum)` — `compile error: incompatible types Optional<Integer>`; теряет время на дебаг.
+> - [ ] `collect(Collectors.toList())` и `reduce` с `ArrayList::new` + `list.add(e)` эквивалентны по семантике. | reduce + mutable list = bug. ❌ ПОСЛЕДСТВИЕ: при `parallel()` разные потоки мутируют общий аккумулятор, нарушая контракт reduce — race condition, потерянные элементы или `ConcurrentModificationException`.
+
+> [!mcq]
+> - [ ] `reduce` корректно работает в `parallel()` с любым `BinaryOperator`, JVM сама обеспечивает синхронизацию. | Нужна ассоциативность. ❌ ПОСЛЕДСТВИЕ: `parallel().reduce(0, (a,b) -> a-b)` даёт разный результат от запуска к запуску (вычитание не ассоциативно: `(1-2)-3 ≠ 1-(2-3)`); race condition не воспроизводится в unit-тестах.
+> - [ ] `identity` в `reduce(identity, op)` — это просто начальное значение, как `0` в обычном цикле. | identity = neutral element. ❌ ПОСЛЕДСТВИЕ: разработчик использует `reduce(1, Integer::sum)` "просто чтобы не было Optional" — на parallel получает результат `+N` (где N = число splits), потому что identity применяется в каждом split.
+> - [x] Для `parallel().reduce` оператор должен быть ассоциативным, identity — нейтральным элементом (`op(identity, x) == x`), иначе результат нестабилен. | ✓ ПРИМЕНЯТЬ: для чисел — `reduce(0, Integer::sum)` (0 нейтрален для +), `reduce(1, Integer::*)` (1 нейтрален для *), `reduce(Integer.MIN_VALUE, Math::max)`; для строк — `reduce("", String::concat)` НО O(n²); 3-арг форма `reduce(identity, accumulator, combiner)` для смены типа `<U>` в parallel. 📋 ПРАВИЛО: «parallel reduce требует: associative `(a∘b)∘c = a∘(b∘c)`, identity `e∘x = x∘e = x`, stateless lambda; иначе sequential или collect». 🔗 См. Q21 (parallel risks), Q20 (когда parallel), Q15 (custom Collector combiner).
+> - [ ] Вычитание `(a, b) -> a - b` ассоциативно, поэтому подходит для `parallel().reduce`. | Не ассоциативно. ❌ ПОСЛЕДСТВИЕ: разработчик вычисляет "running balance" через parallel reduce — результат меняется при каждом запуске. Безопасно только в sequential, или переформулировать через сумму с минусами.
 
 ## Q15. Как написать собственный Collector?
 
@@ -593,6 +671,12 @@ graph LR
 - `UNORDERED` — порядок элементов неважен
 - `IDENTITY_FINISH` — finisher не нужен (контейнер = результат)
 
+> [!mcq]
+> - [ ] Кастомный `Collector` всегда требует реализации интерфейса `Collector<T,A,R>` через анонимный класс с пятью методами. | Collector.of проще. ❌ ПОСЛЕДСТВИЕ: 30 строк boilerplate вместо одной фабрики `Collector.of(...)`; кодовая база засорена анонимными классами.
+> - [x] `Collector.of(supplier, accumulator, combiner, finisher, characteristics...)` — фабричный метод для создания кастомного коллектора. | ✓ ПРИМЕНЯТЬ: для специализированных контейнеров (Guava `ImmutableList`, `BitSet`); указывать `IDENTITY_FINISH` если finisher не нужен, `UNORDERED` если порядок не важен. 📋 ПРАВИЛО: «Collector.of = supplier→accumulator→combiner→finisher + characteristics». 🔗 См. Q11 (collect), Q14 (reduce vs collect).
+> - [ ] Характеристика `CONCURRENT` означает, что результат коллектора потокобезопасен для дальнейших операций. | CONCURRENT = thread-safe accumulator. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает потокобезопасный результирующий `Map`, передаёт его в multi-threaded код — `ConcurrentModificationException` при чтении из других потоков; правильно: `CONCURRENT` означает что один контейнер шарится между потоками во время сборки.
+> - [ ] `combiner` обязателен для последовательных стримов (`stream().sequential()`). | combiner только для parallel. ❌ ПОСЛЕДСТВИЕ: разработчик в собеседовании говорит «combiner всегда нужен», эксперт спрашивает «зачем при sequential?»; кандидат не может объяснить, что combiner вызывается только при `parallel()`.
+
 ## Q16. Что такое Optional в контексте Stream и как его правильно использовать?
 
 `findFirst`, `findAny`, `min`, `max`, `reduce` (без identity) возвращают `Optional<T>` — явное указание, что результат может отсутствовать.
@@ -619,6 +703,12 @@ user.isPresent() ? user.get() : x; // Используйте orElse
 Optional.of(nullableValue);        // NullPointerException — используйте ofNullable
 ```
 
+> [!mcq]
+> - [x] `Optional.stream()` (Java 9+) возвращает `Stream` из 0 или 1 элемента и идиоматично используется через `flatMap(Optional::stream)`. | ✓ ПРИМЕНЯТЬ: для разворачивания `Stream<Optional<T>>` в `Stream<T>` без двойного `filter+map`. 📋 ПРАВИЛО: «Optional.stream + flatMap = pipeline-safe unwrap». 🔗 См. Q27 (Stream + Optional), Q35 (анти-паттерны).
+> - [ ] `findFirst()` всегда возвращает `T` или бросает `NoSuchElementException` при пустом стриме. | findFirst = Optional. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `User u = users.stream().findFirst()` — `compile error`; добавляет `.get()` без проверки — `NoSuchElementException` в production на пустом списке.
+> - [ ] `Optional.of(value)` безопасно работает с `null`, возвращая пустой `Optional`. | Optional.of(null) = NPE. ❌ ПОСЛЕДСТВИЕ: `Optional.of(user.getEmail())` где email == null — `NullPointerException` сразу при создании; правильный вариант — `Optional.ofNullable`.
+> - [ ] `Optional.get()` без `isPresent()` — приемлемая практика, если уверен в наличии значения. | get без проверки = bug. ❌ ПОСЛЕДСТВИЕ: SonarQube блокирует MR с правилом `S3655: Optional value should only be accessed after calling isPresent()`; в production случайные пустые значения приводят к `NoSuchElementException` без stacktrace до бизнес-логики.
+
 ## Q17. Как работает forEach и в чём его ограничения?
 
 `forEach` — терминальная операция, выполняющая побочный эффект для каждого элемента. У `parallelStream` порядок вызовов **не гарантируется** (для гарантии порядка используйте `forEachOrdered`).
@@ -639,6 +729,12 @@ List<String> result = stream.collect(Collectors.toList());
 - Нельзя использовать `break`/`continue`/`return` (можно только `return` из лямбды, но это скипает один элемент)
 - Нельзя бросить checked exception из лямбды без обёртки
 - Не возвращает значение — только побочные эффекты
+
+> [!mcq]
+> - [ ] `parallelStream().forEach(...)` гарантирует исходный порядок элементов в источнике. | forEach при parallel = непредсказуем. ❌ ПОСЛЕДСТВИЕ: разработчик логирует через `parallelStream().forEach(log::info)`, в логах порядок перепутан — анализ инцидента невозможен.
+> - [ ] `forEach(list::add)` — потокобезопасный способ собрать результат в `ArrayList` при `parallelStream`. | forEach + ArrayList = race. ❌ ПОСЛЕДСТВИЕ: при `parallelStream().forEach(result::add)` несколько потоков добавляют в `ArrayList`, вызывают `Arrays.copyOf` одновременно — потеря элементов или `ArrayIndexOutOfBoundsException`. Правильно — `collect(toList())`.
+> - [x] `forEachOrdered` гарантирует порядок источника даже на `parallelStream`, но снижает выигрыш от параллелизма. | ✓ ПРИМЕНЯТЬ: когда нужны побочные эффекты в исходном порядке (логирование, запись в выходной поток); для накопления — `collect`. 📋 ПРАВИЛО: «forEach = unordered fast; forEachOrdered = ordered + sync barrier». 🔗 См. Q22 (parallel), Q23 (encounter order).
+> - [ ] `forEach` поддерживает `break` через `return` из лямбды для прерывания итерации. | return = skip 1. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает выход из всей итерации при `return`, но обрабатываются все элементы; для досрочного выхода нужен `findFirst` или обычный `for`-цикл.
 
 ## Q18. Когда использовать IntStream, LongStream, DoubleStream?
 
@@ -668,6 +764,12 @@ Stream<Integer> boxed = IntStream.range(0, 10).boxed();
 - Нужны агрегатные операции (`sum`, `average`, `summaryStatistics`)
 - Генерируете диапазоны чисел (`range`, `rangeClosed`)
 
+> [!mcq]
+> - [ ] `Stream<Integer>.sum()` доступен напрямую и работает за O(n) без оверхеда. | Stream<Integer> не имеет sum. ❌ ПОСЛЕДСТВИЕ: `compile error: cannot find symbol method sum`; разработчик пишет `reduce(0, Integer::sum)` с автобоксингом, который медленнее `IntStream.sum` в 3-5 раз на горячем пути.
+> - [x] `IntStream` избегает автобоксинга `int↔Integer` и предоставляет `sum`, `average`, `summaryStatistics` без `collect`. | ✓ ПРИМЕНЯТЬ: для числовых агрегаций горячих путей; через `mapToInt`/`mapToLong`/`mapToDouble` из объектного `Stream`. 📋 ПРАВИЛО: «mapToInt → IntStream → sum/avg/stats без boxing». 🔗 См. Q19 (range/stats), Q42 (boxing overhead).
+> - [ ] `IntStream.boxed()` возвращает `Stream<int>` для дальнейшей объектной обработки. | boxed = Stream<Integer>. ❌ ПОСЛЕДСТВИЕ: разработчик в собеседовании путает примитивы и обёртки, заявляет что Java поддерживает `Stream<int>` — это невозможно из-за erasure дженериков; теряет балл на базовых вопросах.
+> - [ ] `mapToInt` всегда быстрее `map`, даже когда дальше идёт `collect(toList())`. | toList требует boxing. ❌ ПОСЛЕДСТВИЕ: микрооптимизация `.mapToInt().boxed().collect(toList())` оказывается медленнее обычного `.map().collect(toList())` из-за дополнительного `boxed()` шага; преждевременная оптимизация без замеров.
+
 ## Q19. Как создать диапазон чисел и получить статистику?
 
 ```java
@@ -694,6 +796,12 @@ combined.combine(stats1);
 combined.combine(stats2);
 ```
 
+> [!mcq]
+> - [ ] `IntStream.range(1, 5)` включает `5` в результат (закрытый интервал). | half-open `[1,5)`. ❌ ПОСЛЕДСТВИЕ: разработчик строит daily-report через `IntStream.range(1, lastDay).forEach(day -> report.add(day))` — последний день месяца теряется в отчётности; финансовая reconciliation за январь показывает 30 дней вместо 31, недополучка в выручке выглядит как баг бизнес-логики, audit поднимает 3 спринта.
+> - [ ] `summaryStatistics()` требует двух проходов по стриму (один для count+sum, другой для min+max). | Один проход. ❌ ПОСЛЕДСТВИЕ: команда делает 4 отдельных стрима ради count/sum/min/max над `Files.lines(50GB.csv)` — lazy-источник можно прочитать только раз, file-handle ошибки + 4× дисковое чтение; ETL-задача на 50GB log'а вместо 5 минут работает 25 минут.
+> - [ ] `combine(other)` мутирует оба объекта `IntSummaryStatistics` (left и right получают merge). | Только левый. ❌ ПОСЛЕДСТВИЕ: команда параллельно агрегирует stats per-shard через `s1.combine(s2); s2.combine(s3);` — после первой строки `s2` уже мутирован, вторая комбинация даёт двойной счёт; финансовый total дважды учитывает orders из shard2, выручка завышена в 1.5×.
+> - [x] `IntStream.range(a, b)` — half-open `[a,b)`, `rangeClosed(a, b)` — closed `[a,b]`; `summaryStatistics()` агрегирует count/sum/min/max/average за один проход; `combine(other)` мутирует только левый объект. | ✓ ПРИМЕНЯТЬ: для индексации массива/списка — `IntStream.range(0, list.size())` (всегда half-open совпадает с size); для inclusive диапазонов — `rangeClosed(1, 12).forEach(month -> ...)`; для bulk-метрик дашборда — `summaryStatistics()` за один проход вместо 4 terminal calls; для merge-агрегации в parallel — копировать перед `combine` если нужны оба объекта. 📋 ПРАВИЛО: «range = `[a,b)`, rangeClosed = `[a,b]`; summaryStatistics = 5 метрик за 1 проход; combine мутирует left only». 🔗 См. Q18 (IntStream когда), Q42 (boxing overhead), Q4 (создание Stream).
+
 ## Q20. (!) Когда стоит переходить на parallelStream?
 
 `parallelStream` может ускорить обработку, но **только при выполнении всех условий**:
@@ -717,6 +825,18 @@ List<String> filtered = smallList.parallelStream()  // overhead > выигрыш
 ```
 
 > Правило: **всегда начинайте с последовательного стрима** и переходите на parallel только после измерения с помощью JMH-бенчмарка.
+
+> [!mcq]
+> - [ ] `parallelStream()` всегда быстрее sequential на коллекциях > 100 элементов — JVM знает оптимизации. | Overhead не окупается. ❌ ПОСЛЕДСТВИЕ: команда массово заменяет `.stream()` на `.parallelStream()` в production code review-марафоне ради «оптимизации»; на коллекциях 100-1000 элементов с лёгкими операциями overhead split/merge превышает выгоду — endpoint p99 latency растёт с 5ms до 20ms, CPU usage увеличивается на 30% от координации ForkJoin-задач.
+> - [ ] `LinkedList.parallelStream()` параллелится так же эффективно, как `ArrayList.parallelStream()`. | LinkedList плохо делится. ❌ ПОСЛЕДСТВИЕ: команда мигрирует с `ArrayList` на `LinkedList` ради быстрых вставок в head — теряет 5-10× ускорение parallel в core CPU-bound batch'е; `LinkedList.spliterator()` без `SUBSIZED` не делится бинарно, фактически работает sequential, batch с 30 минут вырастает до 2 часов.
+> - [ ] Любой `parallelStream` нужно оборачивать в `synchronized` блок для thread-safety. | Pipeline без shared state safe. ❌ ПОСЛЕДСТВИЕ: junior, наслушавшись «multi-thread = synchronize», обмазывает `parallelStream().forEach(item -> { synchronized(lock) { process(item); }})` — параллелизм нивелируется через monitor contention, p99 latency как у sequential, CPU 100% на блокировках; senior на ревью не замечает за 200 строками лишних блоков.
+> - [x] Переход на parallel оправдан только при ВСЕХ условиях: CPU-bound (нет I/O), большие данные (N×W ≥ ~10⁴), независимые элементы (нет shared mutable state), хороший `Spliterator` (`ArrayList`/массив с `SIZED+SUBSIZED`), ассоциативные операции; начинать с sequential, переходить только после JMH-бенчмарка. | ✓ ПРИМЕНЯТЬ: parallel хорошо ложится на тяжёлый math-расчёт над `double[]` 1M элементов (rendering, simulation), encryption batch, image processing; для I/O — virtual threads / `Gatherers.mapConcurrent`; всегда замерять перед production rollout. 📋 ПРАВИЛО: «sequential by default, parallel by benchmark; CPU + N×W ≥ 10⁴ + ArrayList + ассоциативность — все условия одновременно». 🔗 См. Q21 (риски parallel), Q22 (ForkJoinPool), Q39 (custom pool).
+
+> [!mcq]
+> - [ ] `parallelStream` от `HashSet` сохраняет порядок вставки благодаря internal Spliterator. | `HashSet` unordered. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает stable order и пишет flaky тест `assertThat(result).containsExactly(...)` — проходит локально, падает на CI с другим hash seed; debug часами.
+> - [ ] `findAny` и `findFirst` одинаково быстры в parallel — JVM выбирает любой результат. | findFirst ждёт первый по encounter order. ❌ ПОСЛЕДСТВИЕ: `parallelStream().findFirst()` на больших данных не быстрее sequential — другие потоки ждут первого по порядку, упущена основная выгода parallel.
+> - [x] На `ordered`-источнике (`List`, `LinkedHashSet`) parallel `limit`/`distinct`/`findFirst` тратят дополнительные ресурсы на поддержание encounter order — `unordered()` снимает гарантию и ускоряет. | ✓ ПРИМЕНЯТЬ: `set.parallelStream().unordered().distinct()` быстрее на больших данных; `findAny` вместо `findFirst`; `forEach` вместо `forEachOrdered` если порядок неважен. На unordered-источниках (`HashSet`, `ConcurrentHashMap`) `unordered()` уже дефолт. 📋 ПРАВИЛО: «ordered+parallel = плата за порядок при merge; `unordered()` = permission to be fast». 🔗 См. Q21 (риски parallel), Q23 (encounter order detail), Q24 (encounter order в pipeline).
+> - [ ] `unordered()` сортирует элементы в произвольном порядке, ломая результат `sorted()`. | `unordered` = снятие encounter-гарантии. ❌ ПОСЛЕДСТВИЕ: разработчик избегает `unordered()` опасаясь что данные перемешаются после `sorted()` — на самом деле `sorted()` после `unordered()` всё равно сортирует; `unordered` влияет только на порядок merge между splits, не на терминальную сортировку.
 
 ## Q21. (!) Какие риски и анти-паттерны есть у parallel streams?
 
@@ -756,6 +876,18 @@ stream.parallel()
     .toList();
 ```
 
+> [!mcq]
+> - [x] Блокирующие HTTP/DB-вызовы в `parallelStream` отбирают потоки `ForkJoinPool.commonPool()` у всех `@Async`/`CompletableFuture` задач JVM (parallelism = `CPU-1` — глобальный bottleneck). | ✓ ПРИМЕНЯТЬ: для I/O в parallel-pipeline — `Executors.newVirtualThreadPerTaskExecutor()` + `CompletableFuture.supplyAsync` (Java 21+) или `Gatherers.mapConcurrent(N, fn)` (Java 22+); для CPU-bound batch с изоляцией — custom `ForkJoinPool.submit(...).get()`; в Spring — `@Async` с явным `TaskExecutor`-bean. 📋 ПРАВИЛО: «`commonPool` = CPU-bound only; никогда HTTP/DB/file-IO внутри `parallelStream` без custom pool». 🔗 См. Q20 (когда parallel), Q22 (ForkJoinPool), Q39 (commonPool details).
+> - [ ] `ArrayList::add` через `forEach` в parallel стриме безопасен, если коллекция предсоздана с правильной capacity. | Не thread-safe. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `parallelStream().forEach(result::add)` для bulk-загрузки — `ArrayList.size++` не atomic, гонка на `elementData[size]`; под нагрузкой 1000 RPS получает потерянные элементы (3% drop) и редкий `ArrayIndexOutOfBoundsException`; правильно — `collect(toList())`.
+> - [ ] `reduce(0, (a, b) -> a - b)` корректно работает в parallel — JVM добавляет synchronized для не-ассоциативных операций. | Не ассоциативно. ❌ ПОСЛЕДСТВИЕ: команда вычисляет «running balance» через parallel reduce с вычитанием — результат меняется от запуска к запуску из-за случайного порядка split'ов; финансовый отчёт показывает разные значения по тем же данным, audit блокирует close-of-quarter на 2 недели.
+> - [ ] Stateful лямбда с `AtomicInteger.incrementAndGet()` гарантирует правильный порядок индексации в parallel. | Counter atomic, порядок random. ❌ ПОСЛЕДСТВИЕ: разработчик строит индексированный список через `parallelStream().peek(e -> e.setIndex(counter.incrementAndGet())).toList()` — counter инкрементится атомарно, но какой поток обрабатывает какой элемент непредсказуемо; индекс 0 проставляется элементу 47, индекс 1 — элементу 12; database integrity check ломается.
+
+> [!mcq]
+> - [ ] `LinkedList.parallelStream()` и `ArrayList.parallelStream()` имеют одинаковую производительность split — структура источника не важна. | Spliterator critical. ❌ ПОСЛЕДСТВИЕ: разработчик мигрирует с `ArrayList` на `LinkedList` "ради вставок" и теряет 5-10× ускорение parallel — `LinkedList.spliterator()` без `SIZED`/`SUBSIZED` не делится бинарно, фактически sequential.
+> - [ ] Stream от `HashMap.entrySet()` и `TreeMap.entrySet()` параллелится одинаково эффективно. | TreeMap хуже. ❌ ПОСЛЕДСТВИЕ: ожидаемого speedup нет — `TreeMap` даёт `ORDERED` Spliterator с дороже split (нужен обход дерева), `HashMap` использует `Spliterators.IteratorSpliterator` без `SUBSIZED` и тоже плохо делится.
+> - [x] Эффективность parallel зависит от характеристик `Spliterator`: `SIZED` + `SUBSIZED` (массив, `ArrayList`) дают O(1) split, `ORDERED` без `SIZED` (`LinkedList`, `Stream.iterate`) — последовательный обход. | ✓ ПРИМЕНЯТЬ: для CPU-bound parallel — `ArrayList`, primitive arrays, `IntStream.range`; избегать — `LinkedList`, `Stream.iterate(seed, next)` (без hasNext predicate), `Files.lines` (unsized lazy I/O); custom Spliterator с правильными characteristics для своих структур. Проверить — `stream.spliterator().characteristics()`. 📋 ПРАВИЛО: «parallel-friendly Spliterator: SIZED + SUBSIZED + IMMUTABLE/CONCURRENT; LinkedList/iterate = parallel-hostile». 🔗 См. Q20 (когда parallel), Q25 (Spliterator деталь), Q26 (iterate vs generate).
+> - [ ] Spliterator-характеристики (`SIZED`, `ORDERED`, `IMMUTABLE`) влияют только на корректность, не на performance. | Влияют на split. ❌ ПОСЛЕДСТВИЕ: разработчик игнорирует characteristics при создании custom source — `trySplit()` возвращает `null` слишком рано, parallel деградирует в sequential без предупреждения.
+
 ## Q22. Как работает ForkJoinPool и можно ли использовать свой пул?
 
 По умолчанию все `parallelStream` используют **общий** `ForkJoinPool.commonPool()` с `Runtime.getRuntime().availableProcessors() - 1` потоками.
@@ -776,6 +908,12 @@ try {
 ```
 
 > Это **недокументированная**, но широко используемая техника. Она работает, потому что `ForkJoinTask` выполняется в пуле, из которого был запущен. Официально Oracle не гарантирует это поведение.
+
+> [!mcq]
+> - [ ] `parallelStream()` создаёт новый `ForkJoinPool` под каждую цепочку — изоляция гарантирована JVM. | commonPool. ❌ ПОСЛЕДСТВИЕ: команда планирует capacity-модель: «20 параллельных стримов × 7 потоков = 140 worker-ов» — на деле все 20 стримов делят один `commonPool` с 7 worker-ами; throughput не масштабируется при росте RPS, p99 latency растёт линейно от concurrency, инцидент по SLA после Black Friday-нагрузки.
+> - [ ] Размер `commonPool` равен `Runtime.availableProcessors()`. | CPU - 1. ❌ ПОСЛЕДСТВИЕ: команда тюнит JVM-флаги исходя из 8 worker'ов на 8-core машине — реальный parallelism = 7; capacity-расчёт даёт +12.5% к реальному throughput; production sizing промахивается на одну ноду в k8s replica set, нагрузка не ложится в SLA.
+> - [ ] `commonPool` можно увеличить через API `Stream.parallel(executor)`. | Нет такого API. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.parallel(myExecutor)` — `compile error: cannot resolve method`; копирует пример из устаревшего блога 2018 года, путающего `parallel()` и `forkjoin.submit()`; теряет 2 часа до обнаружения системного property `java.util.concurrent.ForkJoinPool.common.parallelism`.
+> - [x] `parallelStream` использует единый `ForkJoinPool.commonPool()` JVM-wide с parallelism = `CPU count - 1`; для изоляции — `customPool.submit(() -> stream.parallelStream()...).get()` (недокументированный приём, Oracle не гарантирует, но работает: `ForkJoinTask` подхватывает пул вызывающего). | ✓ ПРИМЕНЯТЬ: для тяжёлых CPU-batch (encryption, ML inference) — `customPool` 4-8 потоков чтобы не отбирать commonPool у Spring `@Async`/CompletableFuture; всегда `try/finally { customPool.shutdown(); }`; для production — комментировать «недокументированный hack» в Javadoc; для IO — virtual threads вместо custom ForkJoinPool. 📋 ПРАВИЛО: «commonPool = JVM-wide singleton, parallelism = CPU-1; customPool.submit() = isolation hack для CPU-bound batch». 🔗 См. Q20 (когда parallel), Q21 (риски), Q39 (commonPool details).
 
 ## Q23. Как encounter order влияет на parallel streams?
 
@@ -800,6 +938,12 @@ list.parallelStream()
 ```
 
 Операции, чувствительные к порядку: `limit`, `skip`, `findFirst`, `forEachOrdered`. Если порядок неважен — используйте `unordered()`, `findAny` вместо `findFirst`.
+
+> [!mcq]
+> - [ ] `findFirst()` и `findAny()` ведут себя одинаково на parallel stream — JVM выбирает самую быструю стратегию. | `findFirst` ждёт по порядку. ❌ ПОСЛЕДСТВИЕ: разработчик использует `parallelStream().findFirst()` для existence check на 10M элементов — все worker'ы блокируются на координации «кто первый по encounter order», в итоге работает медленнее sequential; миграция на `findAny` ускоряет в 4× на 8-core, но никто не знает об этой опции 6 месяцев.
+> - [x] `unordered()` перед `limit(n)`/`distinct()`/`findFirst()` снимает гарантию encounter order и ускоряет parallel pipeline (split/merge без re-sort); `findAny` лучше `findFirst` на parallel; `forEachOrdered` сериализует вывод и фактически отключает параллелизм. | ✓ ПРИМЕНЯТЬ: для big-data dedup — `set.parallelStream().unordered().distinct().toList()`; для existence check — `parallelStream().anyMatch(p)` или `findAny()` вместо `findFirst()`; для логов с порядком — sequential `forEachOrdered`, не parallel. На unordered-источниках (`HashSet`, `ConcurrentHashMap`) `unordered()` уже дефолт. 📋 ПРАВИЛО: «unordered() = permission to be fast; findAny > findFirst в parallel; forEachOrdered убивает параллелизм». 🔗 См. Q20 (когда parallel), Q21 (риски), Q24 (encounter order детали).
+> - [ ] `HashSet.parallelStream().toList()` сохранит порядок вставки благодаря `LinkedHashSet`-подобной семантике. | HashSet unordered. ❌ ПОСЛЕДСТВИЕ: тест `assertThat(result).containsExactly(...)` зеленеет локально (hash seed по умолчанию), падает на CI с `-XX:hashCode=2` или другой JVM-версией; flaky test игнорируется командой 6 месяцев пока реальный rare bug не теряется в шуме.
+> - [ ] `forEachOrdered` работает быстрее `forEach` на parallel — JVM оптимизирует ordered pipeline. | Сериализует. ❌ ПОСЛЕДСТВИЕ: команда переключает все `parallelStream().forEach(...)` на `forEachOrdered` ради «consistent results» — параллелизм отключается, batch-job который должен был ускориться 8× от parallel рабоает как sequential, время обработки 2 часа вместо 15 минут, миссят nightly window.
 
 ## Q24. Что такое encounter order и как он сохраняется в pipeline?
 
@@ -831,6 +975,12 @@ Set.of("c", "a", "b").stream()
     .forEach(System.out::print); // abc
 ```
 
+> [!mcq]
+> - [ ] `HashMap.entrySet().stream()` возвращает упорядоченный стрим — порядок итерации стабилен внутри одной JVM. | Не гарантирует порядок. ❌ ПОСЛЕДСТВИЕ: интеграционные тесты опираются на «обычный» порядок entries, падают после JVM-апгрейда с 17 на 21 (изменение seed alternative hashing); CI блокирует релиз на неделю, пока команда не переписывает 30+ assertions через `containsExactlyInAnyOrder`.
+> - [ ] `distinct()` на упорядоченном стриме оставляет ПОСЛЕДНЕЕ вхождение каждого элемента. | Первое. ❌ ПОСЛЕДСТВИЕ: команда строит de-dup для feed user-events ожидая «оставить latest» — `distinct()` оставляет earliest по encounter order, latest event теряется; user сообщает что новый comment не виден на ленте, support три дня ищет баг в auth/cache, реальная причина — неверное понимание `distinct`.
+> - [ ] `Stream.generate()` производит упорядоченный стрим — `Supplier` вызывается строго sequential. | Unordered. ❌ ПОСЛЕДСТВИЕ: разработчик использует `Stream.generate(idGen::next).parallel().limit(1000)` для bulk-ID генерации с stateful counter — параллельные вызовы supplier'а в произвольном порядке, между потоками race на counter, дубликаты id в БД, unique constraint violation в insertBatch.
+> - [x] `sorted()` устанавливает encounter order, `unordered()` снимает гарантию, `filter`/`map`/`flatMap` сохраняют порядок источника, `distinct()` оставляет первое вхождение по encounter order; ordered-источники: `List`/`LinkedHashSet`/`TreeSet`/`Stream.iterate`; unordered: `HashSet`/`HashMap`/`Stream.generate`. | ✓ ПРИМЕНЯТЬ: для parallel pagination — `list.stream().sorted(byDate).skip(offset).limit(size).toList()` сохраняет порядок; для parallel dedup без важности порядка — `unordered().distinct()`; для bulk ID-генерации — `Stream.generate(UUID::randomUUID)` (UUID stateless, race-safe). 📋 ПРАВИЛО: «sorted ставит, unordered снимает, map хранит, distinct = первое вхождение; ordered: List/Linked/Tree/iterate; unordered: Hash/generate». 🔗 См. Q20 (когда parallel), Q23 (encounter order + parallel), Q26 (iterate vs generate).
+
 ## Q25. Что такое Spliterator и какие характеристики у Stream?
 
 `Spliterator` (splitable iterator) — основа параллелизма в Stream. Он умеет:
@@ -857,6 +1007,12 @@ System.out.println(spliterator.estimateSize());        // примерное к�
 System.out.println(spliterator.characteristics());     // битовая маска характеристик
 System.out.println(spliterator.hasCharacteristics(Spliterator.ORDERED)); // true для List
 ```
+
+> [!mcq]
+> - [ ] `Spliterator.SIZED` гарантирует, что после `trySplit` обе части тоже имеют точный размер. | Это про `SUBSIZED`, не `SIZED`. ❌ ПОСЛЕДСТВИЕ: ForkJoin рассчитывает по `SIZED` баланс split'ов, на `LinkedList` (`SIZED` без `SUBSIZED`) одна часть получает 90% элементов — parallel CPU utilization 30% вместо 90%, latency p99 растёт 3×.
+> - [x] `Spliterator.trySplit()` возвращает префикс новой части или `null` при невозможности расщепления; `SIZED+SUBSIZED` источники (массив, `ArrayList`) дают сбалансированные O(1)-split, остальные — последовательный обход. | ✓ ПРИМЕНЯТЬ: для production parallel — `IntStream.range`, primitive arrays, `ArrayList`; кастомный `Spliterator` обязательно проверяет null от `trySplit` в цикле; `Spliterators.spliterator(iterator, size, characteristics)` для адаптации legacy `Iterator`. Diagnose: `stream.spliterator().characteristics()` показывает битовую маску. 📋 ПРАВИЛО: «trySplit = префикс или null; SIZED+SUBSIZED = O(1) balanced split; иначе sequential». 🔗 См. Q21 (риски parallel), Q22 (ForkJoinPool), Q26 (iterate vs generate splittability).
+> - [ ] `IMMUTABLE` и `CONCURRENT` устанавливаются одновременно для thread-safe коллекций. | Взаимоисключающие. ❌ ПОСЛЕДСТВИЕ: разработчик в кастомном `Spliterator` ставит обе характеристики — JIT при оптимизации делает противоречивые предположения, под нагрузкой получаем `ArrayIndexOutOfBoundsException` в `forEachRemaining` через 2 недели в проде, irreproducible локально.
+> - [ ] `estimateSize()` всегда возвращает точное число элементов. | Только оценка. ❌ ПОСЛЕДСТВИЕ: parallel collector pre-allocates target `ArrayList` по `estimateSize`; на `Files.lines` оценка = `Long.MAX_VALUE`, JVM пытается выделить 8GB → OOM на старте `toList()`.
 
 ## Q26. (!) Как использовать Stream.iterate и Stream.generate?
 
@@ -895,6 +1051,12 @@ List<String> ids = Stream.generate(() -> UUID.randomUUID().toString())
 
 Разница: `iterate` — упорядоченный стрим (каждый элемент зависит от предыдущего), `generate` — неупорядоченный (элементы независимы, лучше параллелизуется).
 
+> [!mcq]
+> - [ ] `Stream.iterate(seed, fn)` без `limit` корректно работает с `count()` — JVM понимает что стрим бесконечен и возвращает `Long.MAX_VALUE`. | Бесконечный hang. ❌ ПОСЛЕДСТВИЕ: prod-сервис выкатывают с метрикой через `iterate(0, n->n+1).count()` ради подсчёта — health-check тимаутится, K8s liveness probe убивает pod, бесконечный crashloop; в parallel вариант забивает все воркеры `ForkJoinPool.commonPool` и блокирует остальные `@Async` задачи.
+> - [ ] `Stream.iterate(seed, hasNext, next)` (Java 9+) бросает `NoSuchElementException`, если предикат сразу false на seed. | Возвращает empty. ❌ ПОСЛЕДСТВИЕ: разработчик заворачивает вызов в try-catch ожидая исключения на edge case `start > end` — лишний boilerplate, и реальные баги в next-функции маскируются вторичным catch'ем.
+> - [ ] `Stream.generate` гарантирует тот же порядок вызовов `Supplier`, что и порядок элементов в результирующем стриме. | Порядок не гарантирован. ❌ ПОСЛЕДСТВИЕ: stateful supplier (`AtomicInteger.getAndIncrement` для проставления sequenceId) на `parallelStream` после `Stream.generate` даёт shuffled IDs — рассинхронизация id ↔ payload, инцидент в платежах.
+> - [x] `Stream.generate(supplier)` создаёт неупорядоченный бесконечный стрим (хорошо параллелится), `Stream.iterate(seed, next)` — упорядоченный (плохо параллелится из-за зависимости от предыдущего элемента); `iterate` (Java 9+) с предикатом hasNext даёт конечный стрим. | ✓ ПРИМЕНЯТЬ: `Stream.generate(UUID::randomUUID).limit(N).parallel()` для bulk-генерации идентификаторов; `Stream.iterate(1, i->i<=100, i->i*2)` вместо C-style for; для Фибоначчи — `iterate(new long[]{0,1}, f->new long[]{f[1], f[0]+f[1]})`. На бесконечных стримах ВСЕГДА ставьте short-circuit terminal (`findFirst`, `limit`+`forEach`). 📋 ПРАВИЛО: «generate = unordered (parallel-friendly); iterate = ordered (sequential by nature); бесконечный стрим без short-circuit = hang». 🔗 См. Q3 (lazy), Q10 (short-circuit), Q21 (parallel risks).
+
 ## Q27. Как комбинировать Stream с Optional?
 
 С Java 9+ `Optional.stream()` возвращает `Stream` из 0 или 1 элемента, что позволяет элегантно интегрировать `Optional` в pipeline:
@@ -925,6 +1087,12 @@ findUser(id).ifPresentOrElse(
 );
 ```
 
+> [!mcq]
+> - [x] `flatMap(Optional::stream)` (Java 9+) разворачивает `Stream<Optional<T>>` в `Stream<T>`, отбрасывая пустые без явного `filter`+`map`+`get`. | ✓ ПРИМЕНЯТЬ: `users.stream().map(User::findEmail).flatMap(Optional::stream).toList()` вместо устаревшего `filter(Optional::isPresent).map(Optional::get)`; SonarQube правило `S3553` помечает старый паттерн как code smell; идиоматично для Spring Data репозиториев, возвращающих `Optional`. 📋 ПРАВИЛО: «`flatMap(Optional::stream)` = безопасный unwrap Stream<Optional> без `.get()`». 🔗 См. Q16 (Optional в Stream), Q7 (flatMap), Q35 (типичные ошибки).
+> - [ ] `Optional.get()` после `filter(Optional::isPresent).map(Optional::get)` безопаснее, чем `flatMap(Optional::stream)`. | Устаревший паттерн. ❌ ПОСЛЕДСТВИЕ: SonarQube блокирует MR (правило `S3553`), reviewer возвращает PR на доработку 3 раза подряд — потерянные часы ради re-implementation того же flatMap-варианта; junior разработчик копирует old style из StackOverflow и засоряет codebase.
+> - [ ] `Optional.or(supplier)` бросает `NoSuchElementException`, если оба `Optional` пустые. | Возвращает empty Optional. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `try { findUser(id).or(() -> findInArchive(id)) } catch (NoSuchElementException e)` — catch блок мёртвый, реальное "user not found" silently игнорируется через `.orElse(null)` и пишется null в БД.
+> - [ ] `Optional.ifPresentOrElse(action, emptyAction)` возвращает значение из ветки `present` для chain'инга. | Возвращает void. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `var result = opt.ifPresentOrElse(...)` — compile error; добавляет хак вокруг через `AtomicReference`, чтобы вытащить результат из лямбды — race condition в multi-thread коде.
+
 ## Q28. Как работает mapMulti (Java 16+)?
 
 `mapMulti` — императивная альтернатива `flatMap`. Вместо создания промежуточного `Stream` для каждого элемента, вызывает `Consumer` для передачи результатов напрямую:
@@ -951,6 +1119,12 @@ List<Integer> multiMapped = numbers.stream()
 - Нужна **императивная** логика с условиями
 - Комбинация `filter` + `map` в одном шаге
 
+> [!mcq]
+> - [ ] `mapMulti` всегда быстрее `flatMap`, потому что вообще не создаёт промежуточных объектов. | Зависит от fan-out. ❌ ПОСЛЕДСТВИЕ: команда мигрирует весь pipeline `flatMap` → `mapMulti` ради воображаемого выигрыша — JMH показывает разницу в пределах ±5% для больших fan-out (>5 элементов на вход), а imperative push-стиль убивает читаемость; PR-ревью занимает 3× дольше.
+> - [ ] `mapMulti` нарушает ленивость стрима, так как сразу пушит элементы в `Consumer`. | Lazy сохранена. ❌ ПОСЛЕДСТВИЕ: разработчик отказывается от `mapMulti` в pipeline с `findFirst`, ожидая что push-стиль принудительно обойдёт весь источник — на деле downstream Consumer связан с pipeline, short-circuit работает; упущенный perf-выигрыш на горячем пути с миллионом элементов.
+> - [ ] Сигнатура `mapMulti` принимает `Function<T, Stream<R>>`, как и `flatMap`. | `BiConsumer<T, Consumer<R>>`. ❌ ПОСЛЕДСТВИЕ: разработчик механически копирует лямбду из `flatMap` — `compile error: incompatible types`; теряет 30 минут пока не обнаружит push-API, в Stack Overflow примеры противоречат друг другу.
+> - [x] `mapMulti` принимает `BiConsumer<T, Consumer<R>>` (push-API) и избегает аллокации промежуточного `Stream` на каждый input-элемент — выгоден на горячих путях с малым fan-out (0-2 элемента) или условной генерацией. | ✓ ПРИМЕНЯТЬ: `stream.<R>mapMulti((item, sink) -> { if (cond) sink.accept(transform(item)); })` для filter+map в одной операции; рекурсивный обход дерева без `flatMap(child -> recurse(child))`; horячий путь обработки event-stream'ов в Kafka consumer'ах с GC-sensitive нагрузкой. Замерять JMH перед production миграцией. 📋 ПРАВИЛО: «`mapMulti` = `BiConsumer<T,Consumer<R>>` push-API; lazy сохранена; выгода = меньше Stream-аллокаций при малом fan-out». 🔗 См. Q7 (flatMap), Q31 (аллокации), Q38 (mapMulti vs flatMap производительность).
+
 ## Q29. (!) Что такое Gatherers (Java 22+) и зачем они нужны?
 
 `Gatherers` (JEP 461) — новый механизм для создания **произвольных промежуточных операций**. До Gatherers для кастомной логики нужно было писать либо кастомный `Collector` (но это terminal), либо использовать `flatMap` с состоянием (хак). Gatherers заполняют этот пробел.
@@ -975,6 +1149,12 @@ graph LR
     G --> R["Result Stream<br/>[1,2], [3,4], [5]"]
     style G fill:#fff3e0
 ```
+
+> [!mcq]
+> - [x] `Gatherer` (JEP 461, Java 22+) — промежуточная операция через `stream.gather(g)`, заполняющая пробел между `map`/`filter` и terminal `Collectors`; integrator возвращает `boolean` (`false` = short-circuit), combiner опционален (`ofSequential` без него). | ✓ ПРИМЕНЯТЬ: `Gatherers.windowSliding(n)` для moving averages в metrics; `scan` для running totals в банковских балансах; кастомный `Gatherer.ofSequential` для run-length encoding или fold-with-emit; `mapConcurrent(n, fn)` вместо `parallelStream` для bounded IO concurrency. До Java 22 эти операции требовали кастомный `Spliterator` или внешние библиотеки. 📋 ПРАВИЛО: «Gatherer = intermediate stateful (Java 22+); integrator boolean → short-circuit; combiner = parallel-опция; ofSequential = sequential-only». 🔗 См. Q11 (collect/Collectors), Q15 (custom Collector), Q30 (встроенные Gatherers).
+> - [ ] `Gatherer` — новая терминальная операция, заменяющая `Collector`. | Intermediate. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.gather(g)` без последующего `.toList()` — `compile error`; в production migration сценарий хочет mass-replace `collect` → `gather` и ломает все pipelines.
+> - [ ] `Gatherer.integrator` обязан вернуть `void`, как стандартный `Consumer`. | Возвращает boolean. ❌ ПОСЛЕДСТВИЕ: разработчик пишет кастомный `takeWhile`-аналог через Gatherer и не может остановить pipeline — без `return false` стрим обходит весь миллион элементов; latency p99 растёт 100×.
+> - [ ] У `Gatherer` нет `combiner`, поэтому он принципиально несовместим с parallel-стримами. | Combiner опционален. ❌ ПОСЛЕДСТВИЕ: команда отказывается от Gatherers в parallel pipeline ради воображаемой проблемы — теряет элегантный API; на деле `Gatherer.of(initializer, integrator, combiner, finisher)` парралелится корректно при наличии combiner'а.
 
 ## Q30. Какие встроенные Gatherers доступны?
 
@@ -1008,6 +1188,12 @@ Stream.of(url1, url2, url3)
 ```
 
 `mapConcurrent` особенно ценен: он использует виртуальные потоки (Java 21+) и позволяет контролировать степень параллелизма — в отличие от `parallelStream`, привязанного к `ForkJoinPool`.
+
+> [!mcq]
+> - [ ] `Gatherers.windowSliding(3)` на стриме `[1,2,3,4]` даёт `[[1,2,3],[4]]` (как fixed-окна с остатком). | Это поведение `windowFixed`. ❌ ПОСЛЕДСТВИЕ: разработчик считает 3-day moving average через `windowSliding`, ожидая `[[1,2,3],[4]]` — на деле получает `[[1,2,3],[2,3,4]]` (правильное скользящее окно), но если ожидание было неверным, графики на дашборде показывают «дыры» в выходные/праздники, аналитика ломается.
+> - [x] `Gatherers.mapConcurrent(n, fn)` ограничивает число одновременных вызовов `fn` величиной `n` через виртуальные потоки (Java 21+), в отличие от `parallelStream` на `commonPool`; `windowSliding` даёт перекрывающиеся окна, `windowFixed` — без перекрытий, `scan` эмитит ВСЕ промежуточные результаты, `fold` — только финальный. | ✓ ПРИМЕНЯТЬ: `urls.stream().gather(Gatherers.mapConcurrent(8, this::fetchPage))` для bulk HTTP-вызовов с bounded concurrency (избегает того что `parallelStream` забивает commonPool); `scan` для running balance в банковских транзакциях; `windowSliding(7)` для weekly moving average в trading-системах. 📋 ПРАВИЛО: «mapConcurrent = bounded virtual-thread concurrency; windowSliding = overlap; windowFixed = no overlap; scan = все промежуточные; fold = финальный». 🔗 См. Q21 (parallel risks), Q22 (ForkJoinPool), Q29 (Gatherers основы).
+> - [ ] `Gatherers.scan` возвращает только финальный аккумулятор, как `reduce`. | Эмитит все промежуточные. ❌ ПОСЛЕДСТВИЕ: разработчик строит running-balance график для Banking UI через `scan`, но выводит только последний элемент — кривая «balance over time» вырождается в одну точку, продакт-менеджер фильтрует баг 2 спринта.
+> - [ ] `Gatherers.mapConcurrent` использует `ForkJoinPool.commonPool` под капотом, как `parallelStream`. | Виртуальные потоки. ❌ ПОСЛЕДСТВИЕ: команда планирует CPU capacity по `availableProcessors-1` ради `mapConcurrent(8, fetchHttp)` — а на деле он создаёт виртуальные потоки и не загружает CPU; реальный bottleneck — downstream API rate limit, который команда не учитывает.
 
 ## Q31. Как избежать лишних аллокаций в Stream-цепочках?
 
@@ -1049,6 +1235,12 @@ var result = stream.toList();
 stream.peek(System.out::println).toList(); // уберите после дебага
 ```
 
+> [!mcq]
+> - [ ] `Stream<Integer>.reduce(0, Integer::sum)` так же быстр, как `IntStream.sum()` — JIT убирает boxing. | Unboxing на каждом шаге. ❌ ПОСЛЕДСТВИЕ: на горячем пути обработки 10M финансовых транзакций `Stream<Long>.reduce(0L, Long::sum)` тратит +600ms vs `LongStream.sum()`; G1 GC тратит дополнительные 15% CPU на сборку Long-обёрток, p99 latency batch-job растёт с 2s до 3.5s.
+> - [ ] `sorted()` перед `filter()` всегда оптимизируется JIT в обратный порядок (filter→sorted) для эффективности. | JIT не переставляет. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `users.stream().sorted(byName).filter(User::isActive).limit(10)` — сортирует все 100K юзеров (active + inactive), затем фильтрует и берёт 10; правильно — `filter().sorted().limit(10)` сортирует только active (~5K), latency падает 20×.
+> - [x] `mapToInt`/`mapToLong`/`mapToDouble` устраняет автобоксинг и активирует специализированные методы (`sum`, `average`, `summaryStatistics`); порядок операций важен — `filter` ставится ПЕРЕД `sorted`/`distinct` для уменьшения работы; `peek` убирается из production. | ✓ ПРИМЕНЯТЬ: `orders.stream().mapToDouble(Order::getTotal).sum()` вместо `reduce(0.0, ...)` на горячем пути отчётов; `filter(active).sorted(byDate).limit(50).toList()` — оптимальный порядок для пагинации; для очень больших данных — primitive arrays + `IntStream.range`. JMH-замеры на target dataset обязательны перед production-оптимизацией. 📋 ПРАВИЛО: «горячий путь = primitive streams + filter-перед-sorted + удалить peek; цена boxing = 2-3× latency + GC pressure». 🔗 См. Q18 (IntStream), Q42 (boxing overhead), Q9 (sorted/distinct/limit).
+> - [ ] `toList()` (Java 16+) возвращает `ArrayList` и поддерживает `add()`/`remove()` для дальнейшей мутации. | Immutable. ❌ ПОСЛЕДСТВИЕ: после миграции с `Collectors.toList()` на `stream.toList()` существующий код `var list = stream.toList(); list.add(x);` падает `UnsupportedOperationException` в production; интеграционный тест прогоняет happy path и не ловит — баг всплывает у первого клиента, на 200 000 запросов.
+
 ## Q32. Как дебажить сложные Stream-пайплайны?
 
 **1. `peek` для временного логирования:**
@@ -1074,6 +1266,12 @@ List<String> result = names.sorted().toList();
 **4. IntelliJ Stream Debugger:** `Trace Current Stream Chain` показывает состояние данных после каждой операции в виде таблицы. Доступен через иконку в debugger panel.
 
 **5. Не оставляйте `peek` в production** — это отладочный инструмент, не часть бизнес-логики.
+
+> [!mcq]
+> - [ ] `peek` без терминальной операции выполнится — это intermediate side-effect, который JVM запускает eagerly. | Lazy. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `users.stream().filter(active).peek(emailService::send);` ради массовой рассылки писем — pipeline не запускается без terminal op, ни одно письмо не отправлено; production silent bug, claim-инциденты от клиентов через 3 дня.
+> - [ ] IntelliJ Stream Debugger требует переписать stream в imperative-стиль для трассировки. | Работает с lazy. ❌ ПОСЛЕДСТВИЕ: разработчик переписывает 200-строчный pipeline в for-цикл ради отладки — теряет lazy-семантику, в результате тест проходит на refactored loop (eager), но production версия (lazy) ведёт себя иначе; баг возвращается через спринт.
+> - [x] `peek` — debug-only intermediate operation, JIT (Java 9+ JEP 276) может пропустить вызовы при `SIZED`-источниках; для production-логирования и аудита используйте `forEach`/`forEachOrdered` (terminal) либо `map(x -> { audit(x); return x; })`. | ✓ ПРИМЕНЯТЬ: `peek` ТОЛЬКО для временной отладки (`stream.peek(System.out::println).filter(...)`), убирать перед commit; IntelliJ IDEA Stream Debugger (`Trace Current Stream Chain`) показывает таблицу состояний по каждой операции — куда мощнее `peek`-логов; breakpoint на строке с лямбдой работает. 📋 ПРАВИЛО: «peek = debug-only intermediate; production audit/side-effects → map или terminal forEach; JIT может скипнуть peek». 🔗 См. Q3 (lazy + JIT skip peek), Q5 (peek vs forEach), Q40 (peek уместен/неуместен).
+> - [ ] Breakpoint внутри лямбды в IntelliJ всегда останавливает pipeline целиком, нельзя поставить на одну операцию. | Можно. ❌ ПОСЛЕДСТВИЕ: разработчик отказывается от lambda-breakpoints, обмазывает код `System.out.println` — debug output попадает в production логи, leak'ает PII (email, card last4), GDPR штраф 50K EUR.
 
 ## Q33. (!) Когда лучше отказаться от Stream в пользу обычного цикла?
 
@@ -1110,6 +1308,12 @@ for (Record r : records) {
 
 **5. Один элемент** — `if`/`else` читабельнее, чем `Stream.of(x).filter(...).map(...).findFirst()`.
 
+> [!mcq]
+> - [ ] Stream поддерживает `break` и `continue` внутри pipeline через специальные методы (`Stream.break()`). | Нет такого API. ❌ ПОСЛЕДСТВИЕ: разработчик 2 часа ищет в Javadoc метод `Stream.break()`, спрашивает на StackOverflow и получает downvote; в итоге пишет хак с `AtomicBoolean` flag в filter — race condition в parallel, irreproducible под нагрузкой.
+> - [x] При checked exceptions внутри лямбд (`IOException`/`SQLException`), при сложном control flow с `break`/`continue`, при необходимости мутировать несколько коллекций одновременно — обычный `for`-цикл читабельнее стрима с sneaky-throw обёртками. | ✓ ПРИМЕНЯТЬ: для парсинга файлов с `IOException` — `for (Path p : paths) { try { lines = Files.readAllLines(p); ... } catch (IOException e) { ... } }` чище чем `paths.stream().map(p -> { try { return Files.readAllLines(p); } catch (IOException e) { throw new UncheckedIOException(e); }})`; для multi-update `Map`+`List`+counter — императивный цикл; для hot path с микро-операциями — JMH-бенчмарк решает. 📋 ПРАВИЛО: «Stream хорош для declarative data transform; loop хорош для imperative control flow + checked exceptions + multi-mutation». 🔗 См. Q34 (читабельность), Q35 (типичные ошибки), Q17 (forEach ограничения).
+> - [ ] Stream всегда быстрее обычного `for`-цикла из-за внутренней оптимизации JIT и loop fusion. | Зависит от размера. ❌ ПОСЛЕДСТВИЕ: разработчик переписывает hot path на 100-элементных коллекциях с `for` на `stream` ради «оптимизации» — JMH показывает регрессию 1.5-2× из-за overhead создания pipeline (Spliterator + ReferencePipeline объекты); p99 endpoint latency растёт с 10ms до 18ms.
+> - [ ] `forEach` гарантирует порядок обхода даже на `parallelStream` без дополнительных операций. | Не гарантирует. ❌ ПОСЛЕДСТВИЕ: разработчик пишет audit log через `parallelStream().forEach(audit::write)` — записи в БД попадают в произвольном порядке, восстановление цепочки событий после инцидента невозможно; SOX compliance audit заваливается.
+
 ## Q34. Как писать читабельный Stream-код в production?
 
 **1. Именованные предикаты и маперы:**
@@ -1142,6 +1346,12 @@ List<OrderDto> result = orders.stream()
 **3. Максимум 5-7 операций в цепочке.** Если больше — выносите промежуточные шаги в методы.
 
 **4. Комментируйте нетривиальную бизнес-логику**, а не механику Stream API.
+
+> [!mcq]
+> - [ ] Pipeline из 10+ операций предпочтителен — JIT инлайнит всё в один цикл и оптимизирует. | Теряет читаемость. ❌ ПОСЛЕДСТВИЕ: 15-операционный pipeline в core-сервисе биллинга — PR-ревью занимает 2 дня, junior не понимает что делает 8-я операция; через 6 месяцев баг в одной из middle-операций живёт в проде, потому что никто не смог разобрать pipeline для код-ревью изменений.
+> - [ ] Несколько операций на одной строке экономят место и улучшают понимание pipeline. | Каждая на своей. ❌ ПОСЛЕДСТВИЕ: `git diff` на однострочном `stream.filter(x).map(y).filter(z).sorted(c).limit(10).toList()` показывает изменение всего блока даже при правке одной операции — code review теряет фокус, blame не показывает кто менял filter; bugfix атрибутируется не тому автору.
+> - [ ] Комментарии в Stream-pipeline должны описывать механику Stream API (что делает `filter`, как работает `flatMap`). | Описывают бизнес. ❌ ПОСЛЕДСТВИЕ: codebase засоряется комментариями типа `// filter оставляет только подходящие` и `// map преобразует` — comment-rot: через 2 рефакторинга комментарии указывают на несуществующие операции, junior читает "что filter делает" вместо смысла бизнес-логики.
+> - [x] Длинный inline-предикат (3+ условия) выносится в `private boolean isEligible(User u)` или `Predicate<User>`; одна операция = одна строка; pipeline до 5-7 операций; комментарии — про бизнес, не про API. | ✓ ПРИМЕНЯТЬ: `Predicate<User> eligible = u -> u.getAge() >= 18 && u.isVerified() && !u.isBlocked();` для re-use и unit-теста; `Comparator<Order> byPriority = comparing(...).thenComparing(...);` отдельно от pipeline; в Spring Data — выносить сложный `filter` в `@Query` JPQL, не в Stream. 📋 ПРАВИЛО: «named predicate/comparator over inline; one-op-per-line; ≤7 ops per pipeline; comments = business intent». 🔗 См. Q33 (когда не Stream), Q35 (типичные ошибки), Q31 (производительность).
 
 ## Q35. Какие типичные ошибки допускают при работе со Stream?
 
@@ -1184,6 +1394,12 @@ list.stream()
 ```
 
 **6. forEach вместо collect для накопления результата** — см. Q17.
+
+> [!mcq]
+> - [ ] `Stream` можно использовать повторно после `count()`, если терминальная операция не модифицирует исходные данные. | One-shot. ❌ ПОСЛЕДСТВИЕ: разработчик кеширует `Stream<User> activeStream = users.stream().filter(active);` как поле сервиса для multiple terminal calls — первый запрос работает, второй бросает `IllegalStateException: stream has already been operated upon or closed`; production endpoint возвращает 500.
+> - [x] `Collectors.toMap(keyFn, valueFn)` без merge-функции бросает `IllegalStateException` при дубликатах ключей; повторное использование Stream невозможно (`IllegalStateException`); модификация источника во время Stream даёт `ConcurrentModificationException`; бесконечный Stream с `sorted` зависает (stateful буферизация всех элементов). | ✓ ПРИМЕНЯТЬ: для `toMap` всегда `(a, b) -> a` (keep first), `(a, b) -> b` (keep last) или `Math::max`; `Collectors.groupingBy` если ожидаются дубликаты как множество; `removeIf` вместо `forEach + remove`; `limit` ставится ДО `sorted` для бесконечных стримов. 📋 ПРАВИЛО: «4 классические ошибки: stream reuse, toMap без merger, source mutation, sorted на бесконечном — все = production crashes». 🔗 См. Q1 (one-shot), Q11 (collect/toMap), Q5 (terminal закрывает stream).
+> - [ ] `list.stream().forEach(s -> list.remove(s))` безопасно благодаря fail-safe итератору `ArrayList`. | ConcurrentModificationException. ❌ ПОСЛЕДСТВИЕ: разработчик пишет такой код для удаления "плохих" записей в production batch-job; на 1000-й итерации `ArrayList.modCount` не совпадает с iterator's expected modCount — `ConcurrentModificationException`, batch падает на полпути, половина данных обработана, половина — нет; idempotent retry невозможен.
+> - [ ] Бесконечный стрим с `sorted()` корректно завершается при наличии `limit()` после: `Stream.iterate(1, n -> n+1).sorted().limit(5)`. | sorted буферизует. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Stream.generate(supplier).sorted().limit(5)` ради top-5 — `sorted` пытается собрать ВСЕ элементы (stateful op до получения terminal), приложение зависает с heap usage 100% → OOM через 30 секунд; правильно — `Stream.generate(...).limit(N).sorted().limit(5)`.
 
 ---
 
@@ -1269,6 +1485,12 @@ List.of(1,1,2,2,2,3,1,1).stream()
 | `fold(init, fn)` | Свёртка с промежуточными значениями |
 | `mapConcurrent(n, fn)` | Параллельный map, ≤n одновременно |
 
+> [!mcq]
+> - [ ] `Stream.gather()` — терминальная операция, возвращающая `Collection<R>` без необходимости `collect`. | Intermediate. ❌ ПОСЛЕДСТВИЕ: разработчик в новом микросервисе на Java 22 пишет `Map<String,Long> result = stream.gather(myGatherer);` ожидая Map — `compile error: incompatible types Stream<R> cannot be converted to Map`; CI падает, спринт смещается на день.
+> - [x] Кастомный `Gatherer.ofSequential(initializer, integrator, finisher)` создаёт stateful intermediate-операцию без combiner — гарантирует последовательное исполнение для зависящих от порядка операций (run-length encoding, parser-style state machine, fold с emit'ом). | ✓ ПРИМЕНЯТЬ: `Gatherer.ofSequential(ArrayList::new, (state, e, ds) -> { /* пушим в state, при условии — emit в ds, return true */ }, (state, ds) -> ds.push(state))` для group-consecutive (RLE) над event-stream'ами; для stream-парсинга CSV с многострочными записями; для prefix-scan'а зависимого от порядка. Без combiner — sequential гарантирован, полезно для stateful ops где параллелизм даст неверный результат. 📋 ПРАВИЛО: «`Gatherer.ofSequential` = stateful intermediate без combiner = order-dependent operations; для parallel — `Gatherer.of` с combiner». 🔗 См. Q29 (Gatherers основы), Q30 (встроенные Gatherers), Q15 (custom Collector сравнение).
+> - [ ] `Gatherers.windowFixed(3)` на стриме из 8 элементов даёт ровно 3 полных окна `[1,2,3],[4,5,6],[7,8,9]` — остаток `[7,8]` отбрасывается. | Остаток в последнем окне. ❌ ПОСЛЕДСТВИЕ: команда строит analytics dashboard через `windowFixed(60)` для группировки по часам — теряет последний неполный час дня, дневной отчёт показывает на ~2.5% меньше транзакций; финансовая reconciliation не сходится, audit-команда блокирует release.
+> - [ ] `Gatherers.mapConcurrent` использует `ForkJoinPool.commonPool` под капотом, как `parallelStream`. | Virtual threads. ❌ ПОСЛЕДСТВИЕ: команда деплоит batch-job с `mapConcurrent(100, http::call)` — ждёт что 100 параллельных HTTP блокируют весь commonPool, изолирует через `JAVA_OPTS=-Djava.util.concurrent.ForkJoinPool.common.parallelism=4`; на деле виртуальные потоки независимы, реальная проблема — downstream API rate limit на 50 RPS, которому всё равно на ForkJoinPool tuning.
+
 ---
 
 ## Q37. (!) Collectors.teeing(): двойной сборщик
@@ -1350,6 +1572,12 @@ numbers.stream().collect(
 - Источник — бесконечный Stream или lazy источник (читается один раз)
 - Производительность критична: избегаем двойной материализации коллекции
 
+> [!mcq]
+> - [x] `Collectors.teeing(downstream1, downstream2, BiFunction merger)` (Java 12+) собирает поток двумя коллекторами за один проход; каждый downstream получает ВСЕ элементы, merger комбинирует итоги; для трёх+ агрегатов используется вложенный `teeing`. | ✓ ПРИМЕНЯТЬ: `stream.collect(teeing(minBy(c), maxBy(c), MinMax::new))` за один обход вместо двух стримов; `teeing(filtering(p, toList()), filtering(p.negate(), toList()), Partition::new)` для разбиения за один проход; экономит проход по lazy-источнику (`Files.lines`) который материализуется один раз. До Java 12 нужен был кастомный `Collector` или 2 прохода. 📋 ПРАВИЛО: «teeing = 2 коллектора + merger за один обход; вложенный teeing для 3+ агрегатов; каждый downstream видит все элементы». 🔗 См. Q11 (collect основы), Q13 (joining/teeing введение), Q15 (custom Collector).
+> - [ ] `Collectors.teeing` принимает три коллектора и одну функцию слияния (тройная свёртка). | Два коллектора. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `teeing(c1, c2, c3, merger)` ожидая тройную перегрузку — `compile error: cannot resolve method`; копирует пример из устаревшего блога 2020 года, который путает teeing и custom Collector; теряет час до обнаружения.
+> - [ ] `teeing` нельзя вкладывать друг в друга — JVM запрещает на уровне type system. | Допускает вложение. ❌ ПОСЛЕДСТВИЕ: команде нужны 4 агрегата (count+sum+min+max) — отказываются от teeing-nesting "из-за запрета", делают 4 отдельных стрима над `Files.lines` — но lazy-источник можно прочитать только раз, file-handle ошибки + 4-кратное чтение диска = 4× CPU/IO.
+> - [ ] Каждый downstream-коллектор `teeing` обрабатывает только половину элементов (split по индексу). | Все элементы. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `teeing(summingDouble(Order::total), counting(), (sum, cnt) -> sum / cnt)` для среднего — ожидает что count=N/2, sum=половина, делит и получает удвоенный average; финансовый отчёт вдвое преувеличивает revenue per order, dashboard вводит руководство в заблуждение.
+
 ---
 
 ## Q38. flatMap vs mapMulti (Java 16): разница и производительность
@@ -1420,6 +1648,12 @@ List<String> allValues = List.of(root).stream()
 **Практическое правило:**
 - **flatMap** — по умолчанию: читабельнее, производительность обычно достаточна
 - **mapMulti** — когда профилировщик показывает, что flatMap создаёт GC pressure
+
+> [!mcq]
+> - [ ] `flatMap` нарушает ленивость: материализует все промежуточные стримы перед продолжением. | Lazy сохранена. ❌ ПОСЛЕДСТВИЕ: команда отказывается от `users.stream().flatMap(u -> u.orders().stream()).findFirst()` ожидая полную материализацию orders для всех users — переписывает на императивный nested loop, теряет 30 строк читаемого декларативного кода ради воображаемой проблемы.
+> - [ ] `flatMap` не закрывает stream-результаты — для каждого `Files.lines` нужно вызывать `close()` вручную. | Closes inner. ❌ ПОСЛЕДСТВИЕ: разработчик оборачивает каждый inner Stream в `try-with-resources` с собственной CloseableStream-обёрткой — дополнительные 50 строк boilerplate в core utility, junior разработчики копируют в новый код без понимания, codebase засоряется fake resource management.
+> - [ ] `mapMulti` принимает ту же функциональную сигнатуру `Function<T, Stream<R>>`, что и `flatMap` — drop-in replacement. | `BiConsumer<T, Consumer<R>>`. ❌ ПОСЛЕДСТВИЕ: разработчик делает mass-rename `flatMap` → `mapMulti` через IDE refactoring — все 200 mass'ов падают с `incompatible types`; rollback PR, потеря 4 часов на неправильную миграцию.
+> - [x] `mapMulti(BiConsumer<T, Consumer<R>>)` — push-API без создания промежуточного `Stream` per input element; `flatMap(Function<T, Stream<R>>)` — pull-API с lazy promise; `mapMulti` выгоден на горячих путях с малым/условным fan-out (0-2), `flatMap` — readable default для bulk-разворачивания. | ✓ ПРИМЕНЯТЬ: `flatMap` для `users.stream().flatMap(u -> u.orders().stream())` — читаемо и lazy; `mapMulti` для условной filter+map: `<R>mapMulti((x, sink) -> { if (cond(x)) sink.accept(transform(x)); })` — экономит Stream-аллокации; для рекурсивного обхода дерева `mapMulti` элегантнее. JMH замеряем перед production миграцией. 📋 ПРАВИЛО: «mapMulti = push (no stream alloc); flatMap = pull (readable, lazy); migrate только при доказанном GC pressure». 🔗 См. Q7 (map vs flatMap), Q8 (flatMap подробно), Q28 (mapMulti основы).
 
 ---
 
@@ -1506,6 +1740,12 @@ try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
 | IO-bound | Virtual Threads + CompletableFuture / StructuredTaskScope |
 | Ограниченная concurrency | `Gatherers.mapConcurrent(n, fn)` |
 
+> [!mcq]
+> - [ ] `parallelStream()` создаёт собственный пул потоков на каждый вызов — изоляция гарантирована JVM. | commonPool. ❌ ПОСЛЕДСТВИЕ: команда планирует capacity по принципу "каждый стрим = свой пул", деплоит batch-job с 50 параллельными `parallelStream` — все используют один `ForkJoinPool.commonPool` (parallelism = CPU-1 = 7 на 8-core), throughput не растёт, latency p99 деградирует, инцидент по SLA.
+> - [ ] `customPool.submit(() -> stream.parallelStream()...).get()` бесполезен — стрим всё равно использует `commonPool`. | Перенаправляет в custom. ❌ ПОСЛЕДСТВИЕ: команда отказывается от рабочего workaround "из-за непонимания механизма" — деплоит batch с тяжёлым CPU-расчётом в `commonPool`, который параллельно используется Spring `@Async`/CompletableFuture; все REST-эндпоинты тормозят, p99 растёт с 50ms до 5s.
+> - [ ] `parallelism = CPU count` всегда оптимально для IO-bound нагрузки внутри parallel stream. | IO нужен >>CPU. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `parallelStream()` для bulk HTTP-вызовов на 8-ядерной машине — фактически работают 7 потоков, ожидающих сеть; реальный параллелизм 7 RPS вместо 1000 RPS как у virtual threads; batch-job вместо 30 секунд работает 2 часа.
+> - [x] `parallelStream()` использует общий `ForkJoinPool.commonPool()` (parallelism = `CPU count - 1`); блокирующие IO-операции исчерпывают пул и тормозят весь JVM; для изоляции — `customPool.submit(() -> stream.parallel()...).get()` (недокументированный, но рабочий приём); для IO-bound — virtual threads + `CompletableFuture` или `Gatherers.mapConcurrent` (Java 22+). | ✓ ПРИМЕНЯТЬ: CPU-bound batch (encryption, compression) — `parallelStream` на `commonPool` или custom pool; IO-bound (HTTP, DB) — `Executors.newVirtualThreadPerTaskExecutor()` + `CompletableFuture.supplyAsync` (Java 21+) или `Gatherers.mapConcurrent(N, fn)` (Java 22+); рекомендация Brian Goetz — никогда не блокирующие операции в `commonPool`. 📋 ПРАВИЛО: «commonPool = CPU-bound only; IO-bound = virtual threads / mapConcurrent; custom pool = workaround для изоляции». 🔗 См. Q21 (риски parallel), Q22 (ForkJoinPool деталь), Q30 (mapConcurrent).
+
 ---
 
 ## Q40. Отладка Stream: peek() — когда уместен и когда нет
@@ -1581,6 +1821,12 @@ List<String> result = names.stream()
 ```
 
 **Правило:** `peek()` — только для отладки и только временно. Перед коммитом — убирать или заменять на логирование внутри `map()`.
+
+> [!mcq]
+> - [x] `peek` — debug-only intermediate, на `parallelStream` порядок вызовов не определён, JIT (JEP 276, Java 9+) может пропустить вызовы при `SIZED`-источниках; для production-side-effects (логирование, аудит, БД) использовать terminal `forEach`/`forEachOrdered` или `map(x -> { audit(x); return x; })`. | ✓ ПРИМЕНЯТЬ: `stream.peek(System.out::println).filter(...).toList()` — ТОЛЬКО временно при отладке, убирать перед commit; для аудита в production — `stream.map(x -> { auditService.log(x); return x; })` или `stream.forEachOrdered(auditService::log)`; IntelliJ Stream Debugger мощнее `peek`-логов. 📋 ПРАВИЛО: «peek = debug-only intermediate; production audit = map или terminal forEach; JIT может скипать peek на SIZED». 🔗 См. Q3 (lazy + JIT skip), Q5 (peek vs forEach), Q32 (debug pipeline).
+> - [ ] `peek()` гарантирует, что `Consumer` вызовется ровно один раз на каждый элемент даже без terminal op. | Lazy. ❌ ПОСЛЕДСТВИЕ: разработчик использует `users.stream().filter(active).peek(emailService::send);` для рассылки welcome-писем — pipeline без terminal, ноль писем отправлено; служба поддержки получает claim'ы за 3 дня молчания, на восстановление нужен retry-batch.
+> - [ ] `peek` — лучшее место для бизнес-side-effects вроде записи в БД (auditLog, history). | Debug-only. ❌ ПОСЛЕДСТВИЕ: команда пишет audit log через `stream.peek(history::save).map(...).toList()` — на `parallelStream` записи попадают в БД в произвольном порядке, восстановить хронологию событий после инцидента невозможно; SOX compliance audit заваливается, штраф 500K USD.
+> - [ ] `peek` исключён из стандартной библиотеки в Java 21 как deprecated и будет удалён в Java 24. | Не deprecated. ❌ ПОСЛЕДСТВИЕ: команда планирует sprint на массовую миграцию `peek` → `map(x -> { ... return x; })` ради ложного removal-warning — 2 недели работы, 50 PR, потерянный focus на реальные задачи.
 
 ---
 
@@ -1666,6 +1912,12 @@ set.parallelStream()
 | `takeWhile()` | Нет (stop при false) | Да |
 | `dropWhile()` | Нет (skip при true) | Да |
 | `limit(n)` | Нет | Да |
+
+> [!mcq]
+> - [x] `takeWhile`/`dropWhile` (Java 9+) — short-circuit операции на упорядоченных стримах: `takeWhile` останавливается при первом false-предикате (не проходит остальные), `dropWhile` пропускает префикс пока true и берёт всё после; `filter` всегда обходит весь стрим. | ✓ ПРИМЕНЯТЬ: `logs.stream().dropWhile(l -> l.timestamp().isBefore(start)).takeWhile(l -> l.timestamp().isBefore(end))` для time-window фильтрации отсортированных логов; `lines.stream().dropWhile(l -> l.startsWith("#"))` для пропуска CSV-заголовков; на `parallelStream` неупорядоченного источника результат непредсказуем — использовать только на `List`/`SortedSet`/`sorted()`. 📋 ПРАВИЛО: «takeWhile = stop-at-first-false; dropWhile = skip-while-true; filter = process-all; работают только на ordered streams». 🔗 См. Q9 (limit/skip сравнение), Q10 (short-circuit ops), Q23 (encounter order).
+> - [ ] `takeWhile` и `filter` дают одинаковый результат на любых данных. | Различаются на неотсортированных. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `events.stream().takeWhile(e -> e.severity() < ERROR)` для счёта успешных событий до первой ошибки, тестирует на отсортированных по severity данных — работает; в production порядок другой (timestamp), `takeWhile<ERROR` останавливается на первом ERROR (хорошо!), но соседняя метрика «total success events» через `filter(<ERROR)` показывает другое число — расхождение в дашбордах вводит в заблуждение at-call.
+> - [ ] `dropWhile` на `parallelStream` неупорядоченного источника (`HashSet`) детерминирован — JVM сортирует перед обработкой. | Непредсказуем. ❌ ПОСЛЕДСТВИЕ: тест `set.parallelStream().dropWhile(p).toList()` падает в CI 1 раз из 10 с другими элементами в результате — `flaky test` маркируется и игнорируется командой 6 месяцев, через год реальный bug в `dropWhile`-логике замаскирован под known-flaky.
+> - [ ] `takeWhile` пропускает первое не-удовлетворяющее значение и продолжает дальше (как `filter` без него). | Завершается полностью. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Stream.of(1,5,2,3).takeWhile(n -> n<5)` ожидая `[1,2,3]` — получает `[1]`, удивляется, тратит час на debug; в production логика «оставить все < threshold с пропуском outliers» не работает.
 
 ---
 
@@ -1758,6 +2010,12 @@ int[] arr = IntStream.range(0, 10).toArray();
 // toList() через boxed (Java 16+)
 List<Integer> list = IntStream.range(0, 10).boxed().toList();
 ```
+
+> [!mcq]
+> - [ ] `IntStream.rangeClosed(0, 5)` возвращает 5 элементов: `0,1,2,3,4`. | 6 элементов (включает 5). ❌ ПОСЛЕДСТВИЕ: разработчик пишет `IntStream.rangeClosed(0, list.size()).forEach(i -> list.get(i))` — ArrayIndexOutOfBoundsException на last+1 индексе; production endpoint `GET /items` возвращает 500 при конкретных размерах коллекции, на CI green из-за edge case.
+> - [ ] `Stream<Integer>.mapToInt(Integer::intValue).sum()` ничем не отличается по производительности от `Stream<Integer>.reduce(0, Integer::sum)`. | mapToInt быстрее. ❌ ПОСЛЕДСТВИЕ: на горячем пути расчёта total order amount (10K orders/sec) `reduce(0L, Long::sum)` создаёт +600MB/sec Long-обёрток, G1 GC тратит 25% CPU на cleanup; latency p99 endpoint вырастает с 10ms до 80ms; миграция на `mapToLong(Order::amount).sum()` решает.
+> - [ ] `IntStream.range(0, n)` возвращает `Stream<Integer>` для дальнейшей объектной обработки. | Примитивный IntStream. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `IntStream.range(0,N).collect(toList())` — `compile error: cannot find symbol method collect(Collector)`; теряет полчаса на разбор (нужен `.boxed().toList()` или `.toArray()`); junior копирует ошибочный пример в slack channel.
+> - [x] `IntStream.summaryStatistics()` возвращает `count`+`sum`+`min`+`max`+`average` за один проход (`IntSummaryStatistics`); примитивные стримы избегают boxing/unboxing — на горячем пути дают 2-3× ускорение vs `Stream<Integer>`; для статистики нескольких метрик `combine(otherStats)` объединяет результаты в parallel/batch-агрегации. | ✓ ПРИМЕНЯТЬ: для дашбордов и метрик — `orders.stream().mapToDouble(Order::total).summaryStatistics()` вместо 5 отдельных terminal-вызовов; для finance-расчётов — `LongStream.sum()` без boxing; `combine` для merge-результатов между shards в parallel-batch'е (`vmstats1.combine(vmstats2)`). Diagnose: VisualVM показывает Long-аллокации на heap при `Stream<Long>` против stable heap у `LongStream`. 📋 ПРАВИЛО: «mapToInt/Long/Double = no boxing + sum/avg/summaryStatistics single-pass; primitive stream выигрывает 2-3× на горячем пути». 🔗 См. Q18 (когда IntStream), Q19 (range/summaryStatistics), Q31 (аллокации).
 
 ---
 

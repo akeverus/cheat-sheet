@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[microservices]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-08"
 ---
 # Вопросы на собеседовании: Микросервисная архитектура
 

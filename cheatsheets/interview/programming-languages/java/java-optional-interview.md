@@ -124,8 +124,8 @@ Optional.of(null); // → NullPointerException немедленно
 Используйте `Optional.of()` только когда уверены, что значение не `null` (например, результат `new Object()`). В остальных случаях — `ofNullable`.
 
 > [!mcq]
-> - [ ] `Optional.of(null)` возвращает `Optional.empty()`, так как `null` автоматически преобразуется в пустой Optional. | `Optional.of(null)` немедленно бросает `NullPointerException`. Именно для ситуаций, когда значение может быть `null`, предназначен `Optional.ofNullable(value)`. Это антипаттерн или неправильный выбор в production.
-> - [ ] `Optional.ofNullable(null)` бросает `NullPointerException`, так как не допускает передачи `null`. | `Optional.ofNullable(null)` возвращает `Optional.empty()` — это его основное назначение. `NullPointerException` бросает только `Optional.of(null)`. Это антипаттерн или неправильный выбор в production.
+> - [ ] `Optional.of(null)` возвращает `Optional.empty()`, так как `null` автоматически преобразуется в пустой Optional. | `Optional.of(null)` немедленно бросает `NullPointerException`. Именно для ситуаций, когда значение может быть `null`, предназначен `Optional.ofNullable(value)`. ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] `Optional.ofNullable(null)` бросает `NullPointerException`, так как не допускает передачи `null`. | `Optional.ofNullable(null)` возвращает `Optional.empty()` — это его основное назначение. `NullPointerException` бросает только `Optional.of(null)`. ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
 > - [x] `Optional.of(value)` бросает `NullPointerException` если `value == null`, а `Optional.ofNullable(value)` возвращает `Optional.empty()`. | `Optional.of()` предназначен для значений, которые гарантированно не `null`. Если есть сомнение, нужно использовать `ofNullable()`, который безопасно преобразует `null` в `Optional.empty()`.
 > - [ ] `Optional.empty()` и `Optional.ofNullable(null)` — разные объекты, каждый вызов создаёт новый экземпляр `Optional`. | `Optional.empty()` возвращает один и тот же синглтон. `Optional.ofNullable(null)` тоже возвращает `Optional.empty()`. Оба результата ссылаются на один и тот же пустой Optional.
 
@@ -159,10 +159,10 @@ if (opt.isEmpty()) { ... }
 ```
 
 > [!mcq]
-> - [ ] `isEmpty()` — метод доступен с Java 8 как симметричная альтернатива `isPresent()`. | `isEmpty()` появился только в Java 11, а не в Java 8. В Java 8 для проверки отсутствия значения приходилось писать `!opt.isPresent()`. Частая ошибка в реальном коде.
+> - [ ] `isEmpty()` — метод доступен с Java 8 как симметричная альтернатива `isPresent()`. | `isEmpty()` появился только в Java 11, а не в Java 8. В Java 8 для проверки отсутствия значения приходилось писать `!opt.isPresent()`. ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 > - [x] `isEmpty()` — метод доступен с Java 11 как синтаксический сахар для `!isPresent()`. | `isEmpty()` добавлен в Java 11 именно для улучшения читаемости. Вместо `!opt.isPresent()` можно написать `opt.isEmpty()`, что лучше читается в условиях вроде `if (opt.isEmpty())`.
-> - [ ] `isEmpty()` — метод доступен с Java 9 как синтаксический сахар для `!isPresent()`. | `isEmpty()` появился в Java 11, а не в Java 9. В Java 9 в `Optional` добавили методы `or()`, `ifPresentOrElse()` и `stream()`, но не `isEmpty()`. Частая ошибка в реальном коде.
-> - [ ] `isEmpty()` и `isPresent()` — независимые методы: `opt.isEmpty()` может вернуть `false` даже если `opt.isPresent()` тоже `false`. | `isEmpty()` — строго инверсия `isPresent()`. Если `isPresent()` возвращает `false`, то `isEmpty()` всегда вернёт `true`, и наоборот. Частая ошибка в реальном коде.
+> - [ ] `isEmpty()` — метод доступен с Java 9 как синтаксический сахар для `!isPresent()`. | `isEmpty()` появился в Java 11, а не в Java 9. В Java 9 в `Optional` добавили методы `or()`, `ifPresentOrElse()` и `stream()`, но не `isEmpty()`. ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] `isEmpty()` и `isPresent()` — независимые методы: `opt.isEmpty()` может вернуть `false` даже если `opt.isPresent()` тоже `false`. | `isEmpty()` — строго инверсия `isPresent()`. Если `isPresent()` возвращает `false`, то `isEmpty()` всегда вернёт `true`, и наоборот. ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 ---
 
@@ -321,7 +321,7 @@ Optional<User> activeAdmin = userRepository.findById(id)
 > - [ ] `filter(predicate)` бросает `NoSuchElementException` если предикат возвращает `false`. | `filter()` не бросает исключений. Если предикат возвращает `false`, Optional просто становится пустым (`Optional.empty()`). Если предикат возвращает `true` — Optional остаётся с тем же значением.
 > - [x] `filter(predicate)` возвращает тот же Optional если предикат `true`, или `Optional.empty()` если предикат `false` или Optional изначально пуст. | `filter()` — безопасная операция: она не создаёт исключений и удобно встраивается в цепочки маппинга. На пустом Optional `filter()` не вызывает предикат и просто возвращает `Optional.empty()`.
 > - [ ] `filter(predicate)` выбрасывает `IllegalArgumentException` если Optional пуст, так как предикату нечего проверять. | На пустом Optional `filter()` не вызывает предикат вообще и просто возвращает `Optional.empty()`. Это позволяет безопасно использовать `filter()` в цепочках без проверок на пустоту.
-> - [ ] `filter(predicate)` преобразует Optional — если предикат `false`, значение заменяется на `null` внутри Optional вместо возврата пустого Optional. | `Optional` не может содержать `null`. Если предикат возвращает `false`, `filter()` возвращает `Optional.empty()`, а не Optional с `null` внутри. Частая ошибка в реальном коде.
+> - [ ] `filter(predicate)` преобразует Optional — если предикат `false`, значение заменяется на `null` внутри Optional вместо возврата пустого Optional. | `Optional` не может содержать `null`. Если предикат возвращает `false`, `filter()` возвращает `Optional.empty()`, а не Optional с `null` внутри. ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 ---
 
@@ -373,7 +373,7 @@ Optional<String> value = tryCache()
 > - [ ] `or(Supplier)` возвращает само значение типа `T`, а не `Optional<T>`, что делает его полным аналогом `orElseGet()`. | `or()` возвращает `Optional<T>`, а не `T`. Это ключевое отличие от `orElseGet()`, который возвращает само значение. `or()` удобен именно для цепочек, где нужно продолжать работу с Optional.
 > - [x] `or(Supplier<Optional<T>>)` возвращает исходный Optional если он непустой, или Optional из Supplier если пустой — результат всегда `Optional<T>`. | `or()` добавлен в Java 9 именно для построения цепочек fallback-стратегий: `tryCache().or(this::tryDatabase).or(this::tryRemoteApi)`. Каждый шаг возвращает `Optional`, что позволяет продолжать цепочку.
 > - [ ] `or(Supplier<Optional<T>>)` — аналог `orElseGet()`, добавленный в Java 9 как его псевдоним с другим возвращаемым типом. | `or()` и `orElseGet()` не псевдонимы. `orElseGet()` «извлекает» значение из Optional, возвращая `T`. `or()` оставляет результат в `Optional`, что принципиально для цепочек.
-> - [ ] `or(Supplier<Optional<T>>)` вычисляет Supplier всегда, независимо от того, пуст ли исходный Optional. | `or()` — ленивый метод: Supplier вызывается только если исходный Optional пуст. Если Optional содержит значение, Supplier не вызывается вовсе. Частая ошибка в реальном коде.
+> - [ ] `or(Supplier<Optional<T>>)` вычисляет Supplier всегда, независимо от того, пуст ли исходный Optional. | `or()` — ленивый метод: Supplier вызывается только если исходный Optional пуст. Если Optional содержит значение, Supplier не вызывается вовсе. ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 ---
 
@@ -404,7 +404,7 @@ List<String> values = optionals.stream()
 > - [ ] `Optional.stream()` доступен с Java 8 и возвращает бесконечный поток значений Optional. | `Optional.stream()` добавлен в Java 9, а не Java 8. Он возвращает поток с одним элементом если Optional непустой, или пустой поток если Optional пуст — никогда не бесконечный.
 > - [x] `Optional.stream()` доступен с Java 9 и возвращает поток с одним элементом если Optional непустой, или пустой поток если Optional пуст. | `Optional.stream()` позволяет удобно интегрировать Optional в цепочки Stream API. Вместо громоздкого `.filter(Optional::isPresent).map(Optional::get)` достаточно `.flatMap(Optional::stream)`.
 > - [ ] `Optional.stream()` доступен с Java 9 и всегда возвращает поток ровно с одним элементом — `null` если Optional пуст. | `Optional.stream()` возвращает пустой поток (`Stream.empty()`) для пустого Optional, а не поток с `null`. Это позволяет использовать его в `flatMap` для фильтрации пустых Optional.
-> - [ ] `Optional.stream()` доступен с Java 11 и возвращает поток с одним элементом если Optional непустой, или пустой поток если Optional пуст. | `Optional.stream()` добавлен в Java 9, а не Java 11. В Java 11 в `Optional` добавили метод `isEmpty()`. Частая ошибка в реальном коде.
+> - [ ] `Optional.stream()` доступен с Java 11 и возвращает поток с одним элементом если Optional непустой, или пустой поток если Optional пуст. | `Optional.stream()` добавлен в Java 9, а не Java 11. В Java 11 в `Optional` добавили метод `isEmpty()`. ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 
 ---
 
