@@ -116,10 +116,12 @@ API design — критическое skill. Хороший API: **intuitive, co
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) URL structure? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] GET /getUsers — глагол в URL, REST-совместимый вариант | ❌ ПОСЛЕДСТВИЕ: дублирует HTTP-метод GET; нарушает REST uniform interface; клиентам надо читать URL как функцию, а не ресурс
+> - [ ] /user/123 — singular для single resource | ❌ ПОСЛЕДСТВИЕ: коллекция /users и элемент /user — разные имена; clients path-строят неконсистентно; правильно /users и /users/123
+> - [x] Plural nouns: /users, /orders; HTTP verb = действие; иерархия /users/123/orders | ✓ ПРИМЕНЯТЬ: любой REST endpoint 📋 ПРАВИЛО: noun+plural = resource; HTTP verb = action; no verbs in URL 🔗 См. Q2
+> - [ ] /Users/123 — uppercase первая буква | ❌ ПОСЛЕДСТВИЕ: case-sensitive в некоторых ОС; стандарт — lowercase URLs; Nginx/Apache пишут в разный регистр по-разному
+
+## Q2. (!) URL structure?
 
 ```
 https://api.example.com/v1/users/123/orders?status=pending&limit=10
@@ -138,10 +140,12 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. snake_case vs camelCase в JSON? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Version в query param: /users?version=1 | ❌ ПОСЛЕДСТВИЕ: query params могут кэшироваться без учёта версии; routing по версии на API Gateway сложнее; path-versioning `/v1/` — стандарт (Stripe, Google)
+> - [ ] Фильтры в path: /users/status/active | ❌ ПОСЛЕДСТВИЕ: нельзя применить несколько фильтров; path = resource identity, query = filter; правильно /users?status=active
+> - [x] api.example.com/v1/users/123/orders?status=pending — subdomain + path version + resource hierarchy + query filters | ✓ ПРИМЕНЯТЬ: production REST API с versioning 📋 ПРАВИЛО: host/version/resource/id?filter — каждый компонент на своём месте 🔗 См. Q1
+> - [ ] /users_123_orders — underscore-separated path | ❌ ПОСЛЕДСТВИЕ: неоднозначный парсинг; RFC 3986 рекомендует hyphens; /users/123/orders — иерархия через слэши
+
+## Q3. snake_case vs camelCase в JSON?
 
 **Choose ONE convention, stick to it.**
 
@@ -163,10 +167,12 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Date/time format? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Смешивать snake_case и camelCase в одном API по контексту | ❌ ПОСЛЕДСТВИЕ: клиентские SDK падают при десериализации; автогенерированные OpenAPI-клиенты создают два поля; inconsistency = support tickets
+> - [ ] Использовать разные конвенции для разных endpoints в одном API | ❌ ПОСЛЕДСТВИЕ: SDK-клиенты теряют type safety; разработчики вынуждены help-документ читать на каждый вызов; ломает DX
+> - [ ] Избегать любых конвенций — пусть разработчик выбирает поле-за-полем | ❌ ПОСЛЕДСТВИЕ: неконсистентный API = technical debt; первый же code review вернёт PR
+> - [x] Выбрать ОДНУ конвенцию (snake_case или camelCase) и придерживаться её во всём API | ✓ ПРИМЕНЯТЬ: любой public REST API; snake_case — Python/Stripe; camelCase — JS/Google 📋 ПРАВИЛО: pick one, enforce via linter/Jackson config, document в OpenAPI 🔗 См. Q22
+
+## Q4. Date/time format?
 
 **ISO 8601** — international standard:
 
@@ -184,10 +190,12 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) Resource hierarchy (parent/child)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Unix timestamp (1745068800) — число быстрее парсится | ❌ ПОСЛЕДСТВИЕ: нечитаемо для людей при debugging; timezone ambiguity; JS Date(timestamp) даёт миллисекунды а не секунды → off-by-1000 bugs
+> - [ ] "April 19, 2025 14:30" — human-readable custom format | ❌ ПОСЛЕДСТВИЕ: не стандартизован; парсинг зависит от locale; i18n клиентов ломается; OpenAPI-генераторы не валидируют
+> - [x] ISO 8601: "2025-04-19T14:30:00Z" (UTC) или "+02:00" (с timezone); в Java — Instant/OffsetDateTime | ✓ ПРИМЕНЯТЬ: все date/time поля в REST API 📋 ПРАВИЛО: ISO 8601 = машинно-читаемый + timezone-safe + универсальный стандарт 🔗 См. Q3
+> - [ ] Только дата "2025-04-19" без времени — проще | ❌ ПОСЛЕДСТВИЕ: теряется time precision для событий; API не может выразить created_at с точностью до секунды
+
+## Q5. (!) Resource hierarchy (parent/child)?
 
 **Hierarchy via URL:**
 ```
@@ -208,10 +216,12 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Sub-resources vs flat structure? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Всегда делать 5+ уровней вложенности для точного отражения данных | ❌ ПОСЛЕДСТВИЕ: /users/123/orders/456/items/789/refunds/1 — нечитаемо; swagger-клиенты генерируют методы с 6 параметрами; deep nesting = URL coupling
+> - [x] Max 2 уровня вложенности: /users/123/orders; глубже — flat с filter params | ✓ ПРИМЕНЯТЬ: parent-child strong containment → nested; independent entities → flat 📋 ПРАВИЛО: 2-level max = ownership clear; deeper = query params 🔗 См. Q6
+> - [ ] Всегда flat: /orders?user_id=123, без иерархии | ❌ ПОСЛЕДСТВИЕ: теряется семантика ownership; API Gateway не может scope по /users/123 без parsing query params; auth middleware усложняется
+> - [ ] Вложенность без ограничений определять по бизнес-объектам | ❌ ПОСЛЕДСТВИЕ: clients строят URL конкатенацией; нет стандарта — каждый endpoint уникален; SDK не генерируется
+
+## Q6. Sub-resources vs flat structure?
 
 **Sub-resources** (nested):
 ```

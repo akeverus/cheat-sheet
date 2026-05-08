@@ -88,10 +88,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. Какие модули входят в Resilience4j? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Hystrix — всё ещё активно поддерживается и является стандартом де-факто | ❌ ПОСЛЕДСТВИЕ: Netflix объявил Hystrix deprecated в 2018; новые проекты на Hystrix получают security-уязвимости без патчей
+> - [ ] Resilience4j работает только с async кодом (Reactor/RxJava) | ❌ ПОСЛЕДСТВИЕ: R4J поддерживает sync (@CircuitBreaker, @Retry), async (CompletableFuture) и reactive (Reactor) — все три модели
+> - [x] Resilience4j: минимальные зависимости, Semaphore-based bulkhead, Micrometer out-of-the-box, Spring Boot 3 поддержка | ✓ ПРИМЕНЯТЬ: новые Spring Boot microservices — всегда R4J вместо Hystrix 📋 ПРАВИЛО: R4J = functional + minimal deps + metrics; Hystrix = deprecated 🔗 См. Q3
+> - [ ] Оба фреймворка эквивалентны: Hystrix вместо R4J — только вопрос предпочтения | ❌ ПОСЛЕДСТВИЕ: Hystrix не поддерживает Spring Boot 3 (jakarta namespace); R4J имеет rate limiter которого нет в Hystrix
+
+## Q2. Какие модули входят в Resilience4j?
 
 | Модуль | Назначение |
 |---|---|
@@ -108,10 +110,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Как работает CircuitBreaker? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Нужно добавлять каждый модуль R4J отдельно: circuitbreaker, retry, ratelimiter | ❌ ПОСЛЕДСТВИЕ: resilience4j-spring-boot3 включает auto-configuration для всех модулей; отдельные зависимости избыточны
+> - [ ] resilience4j-micrometer нужно настраивать вручную отдельно от spring-boot-starter | ❌ ПОСЛЕДСТВИЕ: resilience4j-spring-boot3 включает Micrometer интеграцию out-of-the-box без доп. конфигурации
+> - [ ] resilience4j-cache предназначен для HTTP response кэширования | ❌ ПОСЛЕДСТВИЕ: resilience4j-cache реализует JSR-107 in-memory кэш результатов вызовов; для HTTP кэша нужен Spring Cache
+> - [x] resilience4j-spring-boot3 включает auto-configuration всех модулей; Micrometer интеграция out-of-the-box | ✓ ПРИМЕНЯТЬ: Spring Boot 3 — только resilience4j-spring-boot3 в pom.xml 📋 ПРАВИЛО: один starter = все модули + автоконфигурация + метрики 🔗 См. Q3
+
+## Q3. (!) Как работает CircuitBreaker?
 
 `CircuitBreaker` защищает систему от каскадных сбоев: когда downstream-сервис нестабилен, `CircuitBreaker` "размыкает цепь" и сразу возвращает ошибку или fallback, не ожидая таймаута.
 
@@ -140,10 +144,12 @@ sequenceDiagram
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Какие состояния у CircuitBreaker? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CircuitBreaker бросает исключение только при таймауте downstream-сервиса | ❌ ПОСЛЕДСТВИЕ: CB открывается при failureRate >= threshold независимо от причины; IOException, RuntimeException — тоже считаются сбоями
+> - [ ] В состоянии OPEN запросы ждут в очереди до освобождения downstream | ❌ ПОСЛЕДСТВИЕ: OPEN → немедленный CallNotPermittedException без ожидания; очередь не используется — это fast fail
+> - [ ] В HALF_OPEN пропускаются все запросы до тех пор пока не случится сбой | ❌ ПОСЛЕДСТВИЕ: HALF_OPEN пропускает только permittedNumberOfCallsInHalfOpenState тестовых вызовов, затем решает CLOSED или OPEN
+> - [x] CLOSED→OPEN при failureRate>=threshold; OPEN→fast fail CallNotPermittedException; HALF_OPEN→тест permittedCalls | ✓ ПРИМЕНЯТЬ: защита от каскадных сбоев downstream 📋 ПРАВИЛО: CB = automatic fast-fail + self-healing через HALF_OPEN 🔗 См. Q4
+
+## Q4. (!) Какие состояния у CircuitBreaker?
 
 | Состояние | Описание | Переход |
 |---|---|---|
@@ -157,10 +163,12 @@ sequenceDiagram
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Что такое sliding window в CircuitBreaker? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CircuitBreaker имеет только 3 состояния: CLOSED, OPEN, HALF_OPEN | ❌ ПОСЛЕДСТВИЕ: R4J также имеет DISABLED (CB выключен) и FORCED_OPEN (принудительно разомкнут) для ручного управления в maintenance/debugging
+> - [ ] DISABLED отключает и метрики CB | ❌ ПОСЛЕДСТВИЕ: DISABLED означает что CB не управляет трафиком, но метрики продолжают собираться; автоматических переходов нет
+> - [x] 5 состояний: CLOSED/OPEN/HALF_OPEN (автоматические) + DISABLED/FORCED_OPEN (ручные для maintenance) | ✓ ПРИМЕНЯТЬ: FORCED_OPEN для планового отключения downstream; DISABLED для отладки без вмешательства CB 📋 ПРАВИЛО: 3 авто + 2 ручных = полный контроль над CB 🔗 См. Q3
+> - [ ] FORCED_OPEN переходит в CLOSED автоматически после waitDuration | ❌ ПОСЛЕДСТВИЕ: FORCED_OPEN — только ручной переход через actuator или API; не зависит от таймеров
+
+## Q5. Что такое sliding window в CircuitBreaker?
 
 `Sliding window` определяет, как измеряется `failureRate`:
 
@@ -185,10 +193,12 @@ resilience4j:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Какие ключевые параметры конфигурации CircuitBreaker? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Sliding window использует только COUNT_BASED алгоритм | ❌ ПОСЛЕДСТВИЕ: R4J поддерживает TIME_BASED (последние N секунд) для переменного трафика; COUNT_BASED не учитывает временные провалы активности
+> - [x] COUNT_BASED — последние N вызовов (стабильный трафик); TIME_BASED — за N секунд (переменный); minimum-number-of-calls предотвращает открытие CB на малых объёмах | ✓ ПРИМЕНЯТЬ: переменный трафик → TIME_BASED; стабильный high-load → COUNT_BASED 📋 ПРАВИЛО: minimum-number-of-calls обязателен — без него 1 сбой из 1 = 100% = OPEN 🔗 См. Q6
+> - [ ] minimum-number-of-calls не нужен — CB адаптируется автоматически | ❌ ПОСЛЕДСТВИЕ: без minimum-number-of-calls первый же сбой (100% failure rate) открывает CB; при старте сервиса это приведёт к ложным срабатываниям
+> - [ ] TIME_BASED окно всегда точнее COUNT_BASED | ❌ ПОСЛЕДСТВИЕ: при высоком стабильном RPS COUNT_BASED предсказуем; TIME_BASED при burst трафике включает в окно больше вызовов чем ожидается
+
+## Q6. Какие ключевые параметры конфигурации CircuitBreaker?
 
 ```yaml
 resilience4j:
@@ -213,10 +223,12 @@ resilience4j:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как настроить CircuitBreaker в Spring Boot? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] ignore-exceptions увеличивают failure rate — лучше не использовать | ❌ ПОСЛЕДСТВИЕ: ignore-exceptions полностью исключены из failure calculation; BusinessException не должна открывать CB — это валидационная ошибка, не сбой
+> - [ ] wait-duration-in-open-state — это таймаут ожидания ответа от downstream | ❌ ПОСЛЕДСТВИЕ: wait-duration-in-open-state — время нахождения в OPEN перед переходом в HALF_OPEN; таймаут вызова настраивается через TimeLimiter
+> - [ ] slow-call-rate-threshold и failure-rate-threshold взаимоисключающие — нужен только один | ❌ ПОСЛЕДСТВИЕ: оба порога могут независимо открыть CB; медленные вызовы (без ошибок) тоже признак нестабильности
+> - [x] failure-rate-threshold (default 50%), minimum-number-of-calls, record/ignore-exceptions — ключевые; slow-call тоже открывает CB | ✓ ПРИМЕНЯТЬ: record-exceptions для технических ошибок; ignore-exceptions для бизнес-ошибок 📋 ПРАВИЛО: minimum-number-of-calls + failure-rate = основная связка конфигурации CB 🔗 См. Q5
+
+## Q7. Как настроить CircuitBreaker в Spring Boot?
 
 ```java
 @Service
@@ -246,10 +258,12 @@ public ErrorResponse handleCircuitOpen(CallNotPermittedException ex) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Чем Resilience4j Retry отличается от Spring Retry? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] @CircuitBreaker применим к private методам через self-injection | ❌ ПОСЛЕДСТВИЕ: Spring AOP proxy не перехватывает private методы; @CircuitBreaker на private = silently ignored, CB не активируется
+> - [x] @CircuitBreaker(name, fallbackMethod); fallback принимает те же аргументы + Exception; при OPEN выбрасывается CallNotPermittedException → 503 | ✓ ПРИМЕНЯТЬ: все external API calls — всегда с @CircuitBreaker + fallback 📋 ПРАВИЛО: fallback = те же аргументы + Exception; нет fallback = OPEN бросает в пользователя 🔗 См. Q4
+> - [ ] fallback вызывается только при HTTP timeout, не при OPEN | ❌ ПОСЛЕДСТВИЕ: fallback вызывается при любом исключении И при CallNotPermittedException (OPEN); это основной механизм degraded response
+> - [ ] @ExceptionHandler(CallNotPermittedException) заменяет fallbackMethod | ❌ ПОСЛЕДСТВИЕ: ExceptionHandler обрабатывает исключение, но не возвращает полезный результат; fallbackMethod позволяет вернуть cached/default значение
+
+## Q8. Чем Resilience4j Retry отличается от Spring Retry?
 
 | Критерий | Spring Retry | Resilience4j Retry |
 |---|---|---|

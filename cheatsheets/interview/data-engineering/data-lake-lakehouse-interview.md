@@ -289,10 +289,12 @@ table = pq.read_table('data.parquet', columns=['id', 'name'])
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Delta Lake — что это? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Avro лучше Parquet для batch analytics в Data Lake | ❌ ПОСЛЕДСТВИЕ: Avro row-oriented — читает всю строку даже для одной колонки; Parquet columnar в 10-100x быстрее для SELECT 3 из 100 колонок
+> - [x] Parquet — columnar для analytics; Avro — row-oriented для Kafka+streaming с excellent schema evolution; ORC — columnar для Hive-centric проектов | ✓ ПРИМЕНЯТЬ: выбор формата по движку и use-case 📋 ПРАВИЛО: Parquet=analytics, Avro=streaming, ORC=Hive 🔗 См. Q7, Q8
+> - [ ] ORC и Parquet взаимозаменяемы в любом стеке | ❌ ПОСЛЕДСТВИЕ: ORC оптимизирован для Hive; Parquet имеет лучшую поддержку в Spark, Trino, Pandas, DuckDB; замена ORC→Parquet в Hive потребует пересоздания таблиц
+> - [ ] Для Kafka нужен Parquet — он поддерживает streaming schema evolution | ❌ ПОСЛЕДСТВИЕ: Parquet не поддерживает schema evolution без rewrite файлов; Avro с Confluent Schema Registry — стандарт для Kafka streaming
+
+## Q10. (!) Delta Lake — что это?
 
 **Delta Lake** — open-source table format от Databricks. Превращает S3/ADLS в **transactional store**.
 
@@ -317,10 +319,12 @@ table/
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) Apache Iceberg — отличия? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Delta Lake хранит транзакционный log в самих Parquet файлах | ❌ ПОСЛЕДСТВИЕ: Delta log хранится отдельно в `_delta_log/` как JSON-файлы операций; данные и log разделены
+> - [ ] Delta Lake не поддерживает streaming — только batch Spark | ❌ ПОСЛЕДСТВИЕ: Delta Lake unified: поддерживает Structured Streaming (readStream/writeStream) наряду с batch; это ключевое преимущество над plain Parquet
+> - [x] Delta Lake = ACID transactions + time travel + schema enforcement на S3/ADLS; _delta_log/ хранит JSON операций; MERGE/UPSERT без plain Parquet | ✓ ПРИМЕНЯТЬ: Data Lakehouse с Databricks или Open-Source Delta 📋 ПРАВИЛО: Delta = transactional Parquet с _delta_log journal 🔗 См. Q6
+> - [ ] VACUUM в Delta Lake удаляет все исторические версии немедленно | ❌ ПОСЛЕДСТВИЕ: VACUUM удаляет файлы старше retention threshold (default 7 дней); time travel доступен в пределах retention; немедленное удаление требует threshold=0h (небезопасно)
+
+## Q11. (!) Apache Iceberg — отличия?
 
 **Apache Iceberg** (от Netflix, Apache top с 2020) — конкурент Delta.
 

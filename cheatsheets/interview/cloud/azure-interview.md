@@ -97,10 +97,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Subscriptions, Resource Groups? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Azure лучший выбор для любых workloads дешевле AWS | ❌ ПОСЛЕДСТВИЕ: стоимость зависит от workload; Azure выгодна при Windows/SQL лицензиях, но не универсально дешевле
+> - [ ] Azure не поддерживает Linux и open-source workloads | ❌ ПОСЛЕДСТВИЕ: Azure полностью поддерживает Linux, Kubernetes, Python, Java; open-source это не слабость Azure
+> - [x] Azure сильнее всего для enterprise с Microsoft-стеком: Active Directory, .NET, Office 365, гибридный сценарий через Azure Arc | ✓ ПРИМЕНЯТЬ: организации с Microsoft лицензиями, Active Directory, hybrid cloud 📋 ПРАВИЛО: Azure = Microsoft ecosystem + enterprise identity + hybrid cloud 🔗 См. Q24
+> - [ ] Azure используется только для .NET/Windows приложений | ❌ ПОСЛЕДСТВИЕ: Azure поддерживает все технологические стеки; уникальность — именно интеграция с Microsoft-продуктами, а не ограничение
+
+## Q2. (!) Subscriptions, Resource Groups?
 
 ```
 Tenant (Entra ID directory)
@@ -122,10 +124,12 @@ Tenant (Entra ID directory)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Regions и Availability Zones? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Subscription = billing boundary; Resource Group = logical container ресурсов внутри subscription; удаление RG удаляет все ресурсы в нём | ✓ ПРИМЕНЯТЬ: изолировать prod/dev по subscriptions, группировать ресурсы одного приложения в RG 📋 ПРАВИЛО: RG = корзина ресурсов; delete RG = delete all inside 🔗 См. Q3
+> - [ ] Subscription = один region; Resource Group = billing unit | ❌ ПОСЛЕДСТВИЕ: Subscription охватывает все regions; billing — на уровне Subscription в целом, не на уровне RG
+> - [ ] Resource Group может содержать только один тип ресурсов | ❌ ПОСЛЕДСТВИЕ: RG — логический контейнер без ограничений на типы; App Service + SQL + Storage в одном RG — норма
+> - [ ] Management Group = альтернативное название Resource Group | ❌ ПОСЛЕДСТВИЕ: Management Group организует Subscriptions (применяет Azure Policies); Resource Group — контейнер ресурсов внутри Subscription
+
+## Q3. Regions и Availability Zones?
 
 **Region** — geographical area (East US, West Europe). 60+ regions.
 
@@ -137,10 +141,12 @@ Tenant (Entra ID directory)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Azure VMs? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Availability Zones есть во всех Azure Regions | ❌ ПОСЛЕДСТВИЕ: AZ поддерживают только новые регионы; старые regions (например, некоторые в Азии) не имеют AZ — нужна cross-region репликация
+> - [ ] Region pair используется только для ручного disaster recovery | ❌ ПОСЛЕДСТВИЕ: Azure автоматически приоритизирует восстановление paired-регионов; некоторые сервисы (Azure Storage GRS) автоматически реплицируются в pair
+> - [x] Region = geographic area; AZ = физически изолированные ДЦ в region (3+); Region Pairs = geo-redundancy для DR | ✓ ПРИМЕНЯТЬ: критические системы — zone-redundant deployment; DR план — использовать region pair 📋 ПРАВИЛО: AZ = защита от ДЦ failure; Region Pair = защита от regional disaster 🔗 См. Q2
+> - [ ] Все регионы имеют ровно 3 Availability Zones | ❌ ПОСЛЕДСТВИЕ: количество AZ варьируется; некоторые regions имеют только 1-2 AZ или вообще не поддерживают AZ
+
+## Q4. (!) Azure VMs?
 
 **Azure Virtual Machines** — IaaS, аналог AWS EC2.
 
@@ -161,10 +167,12 @@ Tenant (Entra ID directory)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) AKS (Azure Kubernetes Service)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Azure Reserved Instances дают скидку 30% на 1 год | ❌ ПОСЛЕДСТВИЕ: Reserved Instances дают до 72% скидки; 30% — это примерно Spot VMs для определённых сценариев, не RI
+> - [ ] Spot VMs гарантируют 99.9% доступность | ❌ ПОСЛЕДСТВИЕ: Spot VMs могут быть выгнаны Azure в любой момент при нехватке capacity; для stateless/batch workloads, не для production
+> - [x] Azure Hybrid Benefit позволяет использовать существующие Windows/SQL Server лицензии → экономия до 85%; Spot VMs — до 90% для прерываемых workloads | ✓ ПРИМЕНЯТЬ: Hybrid Benefit при миграции on-premise Windows; Spot для CI/CD, batch jobs 📋 ПРАВИЛО: Hybrid Benefit = bring your license → до 85% off 🔗 См. Q1
+> - [ ] VM series выбирается только по CPU — memory и storage не учитываются | ❌ ПОСЛЕДСТВИЕ: серия VM определяет соотношение CPU/memory/storage; E-series — memory-optimized для БД, L-series — storage-optimized для NVMe
+
+## Q5. (!) AKS (Azure Kubernetes Service)?
 
 **AKS** — managed Kubernetes на Azure.
 
@@ -180,10 +188,12 @@ Tenant (Entra ID directory)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. (!) Azure Functions? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] AKS берёт плату за control plane (master nodes) | ❌ ПОСЛЕДСТВИЕ: AKS control plane бесплатен; платишь только за worker nodes (VM), storage, load balancer
+> - [ ] AKS не поддерживает Windows containers | ❌ ПОСЛЕДСТВИЕ: AKS поддерживает Windows node pools для Windows containers; одна из отличительных особенностей перед GKE
+> - [x] AKS = managed Kubernetes; бесплатный control plane; интеграция с Azure AD, RBAC, ACR, Azure Monitor; автоматическое обновление нод | ✓ ПРИМЕНЯТЬ: microservices на Azure, особенно Microsoft-shop + Windows containers 📋 ПРАВИЛО: AKS = free control plane + Azure-native integrations 🔗 См. Q5
+> - [ ] AKS требует самостоятельной установки Kubernetes на VM | ❌ ПОСЛЕДСТВИЕ: AKS — полностью managed; Azure управляет control plane, API server, etcd; пользователь управляет только worker nodes
+
+## Q6. (!) Azure Functions?
 
 **Azure Functions** — FaaS, аналог AWS Lambda.
 
@@ -215,10 +225,12 @@ public static IActionResult Run(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) App Service? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Consumption plan гарантирует отсутствие cold start | ❌ ПОСЛЕДСТВИЕ: Consumption plan имеет cold start (до нескольких секунд); Premium plan с pre-warmed instances устраняет cold start
+> - [ ] Durable Functions нужны для stateless HTTP-triggered функций | ❌ ПОСЛЕДСТВИЕ: Durable Functions — для stateful workflows с orchestration (аналог Step Functions); обычный HTTP trigger не требует Durable
+> - [x] Consumption plan = true serverless, pay-per-execution; Premium = pre-warmed, no cold start; Durable Functions = stateful workflows | ✓ ПРИМЕНЯТЬ: event-driven processing → Consumption; latency-critical → Premium plan 📋 ПРАВИЛО: Consumption = дёшево + cold start; Premium = дорого + тепло 🔗 См. Q6
+> - [ ] Azure Functions работают только с C# и JavaScript | ❌ ПОСЛЕДСТВИЕ: поддерживаются C#, JavaScript, Python, Java, PowerShell, кастомные runtimes (Go, Rust)
+
+## Q7. (!) App Service?
 
 **App Service** — managed PaaS для веб-приложений.
 
@@ -239,10 +251,12 @@ public static IActionResult Run(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Container Instances, Container Apps? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] App Service требует Docker-образа для деплоя | ❌ ПОСЛЕДСТВИЕ: App Service поддерживает прямой деплой кода (.NET, Node, Java, Python) без Docker; контейнеры — опциональны
+> - [ ] App Service Slots используются только для A/B тестирования | ❌ ПОСЛЕДСТВИЕ: Slots — основной механизм blue-green deployment; swap slots = zero-downtime release, не только A/B testing
+> - [x] App Service = PaaS для веб-приложений; встроенные Slots для blue-green; auto-scaling; CI/CD из GitHub/Azure DevOps | ✓ ПРИМЕНЯТЬ: классические web apps без Kubernetes overhead; .NET/Java/Node production 📋 ПРАВИЛО: App Service = managed PaaS + Slots = blue-green without complexity 🔗 См. Q5
+> - [ ] App Service не поддерживает custom domains и SSL | ❌ ПОСЛЕДСТВИЕ: App Service полностью поддерживает custom domains, SSL/TLS certificates, managed certificate от Azure
+
+## Q8. Container Instances, Container Apps?
 
 **Container Instances (ACI)** — single container, no orchestration. Quick container, no overhead.
 
@@ -258,10 +272,12 @@ public static IActionResult Run(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Azure Storage account types? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Container Apps = полный аналог AKS без ограничений | ❌ ПОСЛЕДСТВИЕ: Container Apps managed serverless — нет прямого доступа к Kubernetes API; для сложных scenarios (custom CRDs, direct K8s control) нужен AKS
+> - [x] ACI = single container без orchestration (batch jobs); Container Apps = serverless microservices на K8s/KEDA; AKS = полный контроль K8s | ✓ ПРИМЕНЯТЬ: ACI для одноразовых задач; Container Apps для авто-scaling microservices 📋 ПРАВИЛО: ACI=simple, ContainerApps=serverless-k8s, AKS=full-k8s 🔗 См. Q5
+> - [ ] Container Apps не поддерживает auto-scaling | ❌ ПОСЛЕДСТВИЕ: Container Apps использует KEDA (Kubernetes Event-Driven Autoscaling) — scale-to-zero включительно на основе событий
+> - [ ] ACI поддерживает stateful orchestration нескольких контейнеров | ❌ ПОСЛЕДСТВИЕ: ACI — single container или simple container groups без orchestration; для stateful multi-container workflows нужен AKS или Container Apps
+
+## Q9. (!) Azure Storage account types?
 
 Azure Storage account — единый namespace для:
 - **Blob Storage** — objects (как S3)
@@ -278,10 +294,12 @@ Azure Storage account — единый namespace для:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Blob Storage tiers? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Azure Blob Storage — это только для хранения файлов веб-сайтов | ❌ ПОСЛЕДСТВИЕ: Blob Storage — объектное хранилище общего назначения: бэкапы, медиафайлы, данные аналитики, логи; не ограничено веб-контентом
+> - [ ] Queue Storage и Service Bus — одно и то же | ❌ ПОСЛЕДСТВИЕ: Queue Storage — простые FIFO очереди без гарантий; Service Bus — enterprise messaging с topic/subscription, DLQ, сессиями
+> - [x] Blob (objects) + File (SMB/NFS) + Queue (messaging) + Table (NoSQL) + Disk (VM) — все в одном Storage Account | ✓ ПРИМЕНЯТЬ: Blob для object storage; Premium Block Blob для low-latency writes 📋 ПРАВИЛО: Storage Account = unified namespace для 5 типов хранилища 🔗 См. Q10
+> - [ ] Premium Block Blob используется для VMs disks | ❌ ПОСЛЕДСТВИЕ: Premium Page Blobs — для VM disks; Premium Block Blob — для low-latency append/block operations (logs, analytics)
+
+## Q10. Blob Storage tiers?
 
 | Tier | Use case | Cost |
 |------|----------|------|
@@ -294,10 +312,12 @@ Azure Storage account — единый namespace для:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) Azure SQL Database? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Archive tier обеспечивает мгновенный доступ к данным | ❌ ПОСЛЕДСТВИЕ: Archive — самый дешёвый tier, но rehydration занимает часы; для мгновенного доступа нужен Hot или Cool
+> - [x] Hot = частый доступ; Cool (≥30 дней) = редкий; Archive = почти никогда (rehydration hours); Lifecycle Management автоматически перемещает между тиерами | ✓ ПРИМЕНЯТЬ: Archive для compliance backups; Lifecycle policy для автоматической оптимизации затрат 📋 ПРАВИЛО: дешевле tier → дольше rehydration; Hot=быстро+дорого, Archive=медленно+дёшево 🔗 См. Q9
+> - [ ] Lifecycle Management нельзя применить к Blob Storage | ❌ ПОСЛЕДСТВИЕ: Lifecycle Management — встроенная функция Blob Storage для автоматического перемещения и удаления объектов по возрасту
+> - [ ] Cool tier обеспечивает более низкую цену доступа чем Hot | ❌ ПОСЛЕДСТВИЕ: Cool tier имеет БОЛЕЕ ВЫСОКУЮ цену за доступ (per-request), но НИЖЕ цену за хранение; оптимален только для редко читаемых данных
+
+## Q11. (!) Azure SQL Database?
 
 **Azure SQL Database** — managed Microsoft SQL Server.
 
@@ -315,10 +335,12 @@ Azure Storage account — единый namespace для:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Cosmos DB? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Elastic Pool позволяет разным БД использовать разный SQL Server engine | ❌ ПОСЛЕДСТВИЕ: Elastic Pool — механизм совместного использования CPU/memory ресурсов; все БД в пуле — SQL Server одной версии
+> - [ ] SQL Managed Instance совместим с Azure SQL Database API 1:1 | ❌ ПОСЛЕДСТВИЕ: Managed Instance = полный SQL Server compatibility; Azure SQL Database — подмножество SQL Server без некоторых agent jobs, linked servers
+> - [x] Single DB = standalone; Elastic Pool = shared DTU/vCore между несколькими БД; Managed Instance = full SQL Server compat (для migration on-premise) | ✓ ПРИМЕНЯТЬ: Managed Instance при миграции on-premise SQL Server без изменений приложения 📋 ПРАВИЛО: Managed Instance = lift-and-shift SQL Server; SQL DB = cloud-native SQL 🔗 См. Q12
+> - [ ] Azure SQL Database не поддерживает автоматические backups | ❌ ПОСЛЕДСТВИЕ: Azure SQL Database включает автоматические backups (full weekly, differential daily, log every 5-12 min) с PITR до 35 дней
+
+## Q12. (!) Cosmos DB?
 
 **Cosmos DB** — multi-model, globally distributed NoSQL. Crown jewel Azure.
 
@@ -343,10 +365,12 @@ Azure Storage account — единый namespace для:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Database for PostgreSQL/MySQL? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Cosmos DB поддерживает только document (JSON) модель данных | ❌ ПОСЛЕДСТВИЕ: Cosmos DB — multi-model: document (Mongo), key-value, column (Cassandra API), graph (Gremlin) — одна БД, несколько API
+> - [ ] RU/s в Cosmos DB = количество запросов в секунду | ❌ ПОСЛЕДСТВИЕ: RU/s — абстрактная единица потребления ресурсов (CPU + IO + memory); один запрос может стоить 1 RU или 100 RU в зависимости от размера документа
+> - [ ] Cosmos DB поддерживает только Eventual Consistency | ❌ ПОСЛЕДСТВИЕ: Cosmos DB предлагает 5 уровней консистентности: Strong, Bounded Staleness, Session, Consistent Prefix, Eventual — выбор на уровне аккаунта/запроса
+> - [x] Cosmos DB = multi-model globally distributed NoSQL с 5 consistency levels, <10ms latency, 99.999% SLA для multi-region writes; цена в RU/s | ✓ ПРИМЕНЯТЬ: глобальные приложения с разными continents; IoT с высоким throughput 📋 ПРАВИЛО: Cosmos DB = planet-scale NoSQL; выбирать API по существующей технологии 🔗 См. Q11
+
+## Q13. Database for PostgreSQL/MySQL?
 
 **Azure Database for PostgreSQL/MySQL** — managed open-source DBs.
 
@@ -360,10 +384,12 @@ Azure Storage account — единый namespace для:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Azure Cache для Redis? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] PostgreSQL Flexible Server не поддерживает high availability | ❌ ПОСЛЕДСТВИЕ: Flexible Server поддерживает zone-redundant HA с standby в другой AZ; автоматический failover за 30-60 секунд
+> - [x] Azure Database for PostgreSQL Flexible Server = managed PostgreSQL с zone-redundant HA; Hyperscale (Citus) для distributed sharding; автоматические backups | ✓ ПРИМЕНЯТЬ: open-source PostgreSQL workloads без управления инфраструктурой 📋 ПРАВИЛО: Flexible Server = managed PG; Hyperscale = distributed sharding для large-scale 🔗 См. Q11
+> - [ ] Hyperscale (Citus) используется для MySQL, не PostgreSQL | ❌ ПОСЛЕДСТВИЕ: Hyperscale (Citus) — исключительно PostgreSQL extension для distributed queries и horizontal sharding
+> - [ ] Azure Database for PostgreSQL не совместим со стандартным PostgreSQL | ❌ ПОСЛЕДСТВИЕ: Azure Database for PostgreSQL — полностью совместимый managed PostgreSQL; существующие приложения без изменений
+
+## Q14. Azure Cache для Redis?
 
 **Azure Cache for Redis** — managed Redis. Аналог AWS ElastiCache, GCP Memorystore.
 
@@ -377,10 +403,12 @@ Azure Storage account — единый namespace для:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) VNet, NSG? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Azure Cache for Redis Basic tier поддерживает replication и failover | ❌ ПОСЛЕДСТВИЕ: Basic — single node, нет HA; Standard tier добавляет replication; Premium — clustering и persistence
+> - [x] Premium tier: clustering + RDB/AOF persistence; Standard: replication без clustering; Basic: dev/test без HA | ✓ ПРИМЕНЯТЬ: production → Standard минимум; high throughput + persistence → Premium 📋 ПРАВИЛО: Basic=dev, Standard=HA, Premium=cluster+persist 🔗 См. Q12
+> - [ ] Redis Enterprise на Azure не предоставляет дополнительных возможностей vs Premium | ❌ ПОСЛЕДСТВИЕ: Enterprise tier добавляет Redis модули (RediSearch, RedisJSON, RedisTimeSeries), active-active geo-replication
+> - [ ] Azure Cache for Redis не поддерживает Redis Cluster mode | ❌ ПОСЛЕДСТВИЕ: Premium tier поддерживает Redis Cluster с шардированием; до 10 шардов в одном кластере
+
+## Q15. (!) VNet, NSG?
 
 **VNet (Virtual Network)** — аналог AWS VPC.
 
@@ -418,10 +446,12 @@ VNet (10.0.0.0/16)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) Entra ID (бывший Azure AD)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Application Gateway — глобальный L7 load balancer с CDN | ❌ ПОСЛЕДСТВИЕ: Application Gateway — regional L7; Azure Front Door — глобальный anycast с CDN и WAF для multi-region scenarios
+> - [ ] Traffic Manager работает на L7 (HTTP) | ❌ ПОСЛЕДСТВИЕ: Traffic Manager — DNS-based routing (не proxy); решение принимается на уровне DNS, не HTTP; нет SSL termination
+> - [x] App Gateway = regional L7 (path-based routing, WAF, SSL); Front Door = global anycast CDN+WAF; Load Balancer = L4; Traffic Manager = DNS routing | ✓ ПРИМЕНЯТЬ: глобальное приложение → Front Door; regional → App Gateway 📋 ПРАВИЛО: Front Door=global L7+CDN, AppGateway=regional L7 🔗 См. Q15
+> - [ ] WAF доступен только в Azure Front Door, не в Application Gateway | ❌ ПОСЛЕДСТВИЕ: WAF интегрирован в оба: Application Gateway WAF (regional) и Front Door WAF (global); выбор по scope
+
+## Q17. (!) Entra ID (бывший Azure AD)?
 
 **Microsoft Entra ID** (rebranded из Azure Active Directory в 2023) — identity provider.
 
@@ -444,10 +474,12 @@ az role assignment create --assignee user@contoso.com \
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Managed Identities? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Entra ID — это только on-premise Active Directory в облаке | ❌ ПОСЛЕДСТВИЕ: Entra ID — cloud-native IdP с SSO для SaaS apps, Conditional Access, MFA; on-premise AD синхронизируется через Entra Connect
+> - [ ] Conditional Access — это просто MFA policy | ❌ ПОСЛЕДСТВИЕ: Conditional Access — granular policies с conditions (user location, device compliance, app risk score) + controls (MFA, block, require compliant device)
+> - [x] Entra ID = cloud IdP: SSO для SaaS, Conditional Access, MFA, Passwordless (FIDO2), B2B/B2C; RBAC в Azure ресурсах через Entra ID | ✓ ПРИМЕНЯТЬ: enterprise SSO + Azure RBAC — всегда через Entra ID 📋 ПРАВИЛО: Entra ID = Microsoft cloud identity platform для Azure + M365 + SaaS 🔗 См. Q18
+> - [ ] Entra ID не поддерживает external identities (B2B) | ❌ ПОСЛЕДСТВИЕ: Entra ID External ID включает B2B (партнёры с их corporate identity) и B2C (consumer identity с social providers)
+
+## Q18. Managed Identities?
 
 **Managed Identity** — auto-created Entra ID identity для Azure resource (VM, App Service, Function).
 
@@ -465,10 +497,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) Synapse Analytics? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] System-assigned Managed Identity можно использовать в нескольких VM одновременно | ❌ ПОСЛЕДСТВИЕ: System-assigned привязана к одному ресурсу и удаляется вместе с ним; User-assigned — независима и может использоваться несколькими ресурсами
+> - [ ] Managed Identity требует хранить client secret в Key Vault | ❌ ПОСЛЕДСТВИЕ: Managed Identity полностью устраняет необходимость в credentials — Azure автоматически ротирует токены; никаких secrets не нужно
+> - [x] System-assigned = tied to resource lifecycle; User-assigned = independent, shareable; оба позволяют коду получать токены без credentials через DefaultAzureCredential | ✓ ПРИМЕНЯТЬ: VM/Function нужен доступ к Storage/KeyVault → Managed Identity вместо connection string 📋 ПРАВИЛО: Managed Identity = no credentials in code; DefaultAzureCredential работает локально и в Azure 🔗 См. Q17
+> - [ ] Managed Identity работает только с Azure Storage, не с другими сервисами | ❌ ПОСЛЕДСТВИЕ: Managed Identity поддерживается всеми Azure сервисами: Key Vault, SQL, Service Bus, Cosmos DB, любые Azure AD-защищённые ресурсы
+
+## Q19. (!) Synapse Analytics?
 
 **Azure Synapse Analytics** — unified analytics platform.
 

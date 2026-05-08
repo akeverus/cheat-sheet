@@ -49,10 +49,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. Как настроить JMS и отправить сообщение? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Spring Messaging = отдельный брокер сообщений, замена RabbitMQ | ❌ ПОСЛЕДСТВИЕ: Spring Messaging — абстракция над брокерами, не сам брокер; без ActiveMQ/Rabbit/Kafka инфраструктура не работает
+> - [x] Абстракция над JMS/AMQP/STOMP/Kafka с унифицированными Message<T> и MessageChannel интерфейсами | ✓ ПРИМЕНЯТЬ: когда нужна единая модель для разных брокеров 📋 ПРАВИЛО: spring-messaging = интерфейсы; spring-jms/spring-rabbit = реализации 🔗 См. Q2
+> - [ ] Spring Messaging поддерживает только JMS (ActiveMQ/IBM MQ) | ❌ ПОСЛЕДСТВИЕ: spring-amqp (RabbitMQ), spring-kafka, spring-websocket (STOMP) — все отдельные проекты поверх spring-messaging абстракции
+> - [ ] Один стартер spring-boot-starter-messaging включает все брокеры | ❌ ПОСЛЕДСТВИЕ: каждый брокер требует отдельный стартер: spring-boot-starter-activemq, spring-boot-starter-amqp, spring-kafka
+
+## Q2. Как настроить JMS и отправить сообщение?
 
 ```xml
 <dependency>
@@ -97,10 +99,12 @@ public class OrderProducer {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Как получать JMS-сообщения? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] JmsTemplate.send() принимает POJO напрямую без конвертера | ❌ ПОСЛЕДСТВИЕ: send() принимает MessageCreator, не POJO; для POJO нужен convertAndSend() с настроенным MessageConverter
+> - [ ] acknowledge-mode: auto гарантирует exactly-once доставку | ❌ ПОСЛЕДСТВИЕ: auto-ack коммитится до обработки; при краше сообщение теряется; нужен client-ack с ручным session.commit()/rollback()
+> - [x] jmsTemplate.convertAndSend(destination, object) + MessageConverter (Jackson) автоматически конвертирует POJO в JSON | ✓ ПРИМЕНЯТЬ: отправка объектов в JMS очереди без ручной сериализации 📋 ПРАВИЛО: convertAndSend = POJO → MessageConverter → Message 🔗 См. Q3
+> - [ ] JmsTemplate является stateful — нельзя использовать как @Bean | ❌ ПОСЛЕДСТВИЕ: JmsTemplate thread-safe и stateless — можно и нужно инжектировать как singleton @Bean
+
+## Q3. Как получать JMS-сообщения?
 
 ```java
 @Component
@@ -137,10 +141,12 @@ public class OrderConsumer {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Как настроить RabbitMQ и отправить сообщение? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] @JmsListener работает только с acknowledge-mode: auto | ❌ ПОСЛЕДСТВИЕ: MANUAL режим требует Session параметра в методе и явного session.commit()/rollback() — полный контроль над ACK
+> - [x] @JmsListener(destination, concurrency="3-10") + @Payload/@Header для binding; MANUAL ACK через Session параметр | ✓ ПРИМЕНЯТЬ: async потребление JMS сообщений с параллельными consumers 📋 ПРАВИЛО: concurrency="min-max" = пул JMS consumers; MANUAL ACK = session.commit/rollback 🔗 См. Q2
+> - [ ] concurrency на @JmsListener создаёт thread pool для всего приложения | ❌ ПОСЛЕДСТВИЕ: concurrency создаёт pool только для данного listener; разные @JmsListener имеют независимые pools
+> - [ ] @Header инжектирует только JMS system headers (JMSMessageID, JMSTimestamp) | ❌ ПОСЛЕДСТВИЕ: @Header инжектирует любой header — и system (JMSPriority), и пользовательские (priority, source)
+
+## Q4. Как настроить RabbitMQ и отправить сообщение?
 
 ```xml
 <dependency>
@@ -213,10 +219,12 @@ public class OrderPublisher {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Какие типы Exchange в RabbitMQ? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] QueueBuilder.durable(name) без x-dead-letter-exchange гарантирует доставку | ❌ ПОСЛЕДСТВИЕ: без DLX сообщения с истёкшим TTL или превышенным maxLength просто выбрасываются; DLX обязателен для poison pill handling
+> - [ ] publisher-confirm-type: correlated — асинхронные подтверждения не нужны, достаточно transactional | ❌ ПОСЛЕДСТВИЕ: transactional режим синхронный и медленный (10x overhead); correlated confirms — async и производительный способ гарантировать доставку
+> - [ ] RabbitTemplate.convertAndSend(queue, object) без exchange работает только для default exchange | ❌ ПОСЛЕДСТВИЕ: это верно — default exchange маршрутизирует по имени очереди; но для custom routing нужен convertAndSend(exchange, routingKey, object)
+> - [x] RabbitTemplate.convertAndSend(exchange, routingKey, object) + @Bean Queue/Exchange/Binding + publisher-confirms для guaranteed delivery | ✓ ПРИМЕНЯТЬ: надёжная публикация с custom routing через TopicExchange 📋 ПРАВИЛО: RabbitMQ = exchange + routing-key → queue; DLX для failed messages 🔗 См. Q5
+
+## Q5. Какие типы Exchange в RabbitMQ?
 
 | Тип | Маршрутизация | Применение |
 |-----|---------------|------------|
@@ -244,10 +252,12 @@ public class OrderPublisher {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Как получать RabbitMQ сообщения? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] fanout exchange требует routing key для маршрутизации | ❌ ПОСЛЕДСТВИЕ: fanout игнорирует routing key — broadcast во все привязанные очереди; routing key важен только для direct и topic exchanges
+> - [ ] topic exchange использует * для любого числа слов в routing key | ❌ ПОСЛЕДСТВИЕ: * = ровно одно слово; # = ноль или более слов; orders.*.eu — одно слово между points; orders.# — любой suffix
+> - [x] direct=точное совпадение ключа; topic=шаблоны (* одно слово, # много); fanout=broadcast; headers=по заголовкам | ✓ ПРИМЕНЯТЬ: topic для иерархических событий (orders.created.eu); fanout для pub-sub 📋 ПРАВИЛО: * = одно слово, # = любое количество; fanout игнорирует routing key 🔗 См. Q4
+> - [ ] headers exchange медленнее других — не рекомендован в production | ❌ ПОСЛЕДСТВИЕ: headers exchange — стандартная RabbitMQ фича; медленнее topic только при сложных условиях, но часто оправдан когда routing key неудобен
+
+## Q6. Как получать RabbitMQ сообщения?
 
 ```java
 @Component
@@ -283,10 +293,12 @@ public class OrderProcessor {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как работает Dead Letter Queue (DLQ)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] ackMode="MANUAL" автоматически ACK при выходе из метода без исключения | ❌ ПОСЛЕДСТВИЕ: MANUAL = никакого auto-ACK; без явного channel.basicAck(tag, false) сообщение остаётся unacked и блокирует consumer
+> - [x] @RabbitListener(ackMode="MANUAL") + channel.basicAck(tag, false) при успехе; basicNack(tag, false, requeue) при ошибке — контроль DLQ маршрутизации | ✓ ПРИМЕНЯТЬ: когда нужно разделить RetryableException (requeue=true) и NonRetryable (→DLQ) 📋 ПРАВИЛО: basicNack(false) = в DLQ; basicNack(true) = requeue 🔗 См. Q7
+> - [ ] @SendTo работает только с @RabbitListener, не с @JmsListener | ❌ ПОСЛЕДСТВИЕ: @SendTo поддерживается обеими: JMS (reply destination) и AMQP (routing key); универсальная аннотация Spring Messaging
+> - [ ] concurrency на @RabbitListener создаёт отдельный thread pool для всего Spring context | ❌ ПОСЛЕДСТВИЕ: concurrency создаёт SimpleMessageListenerContainer с N consumers только для данного listener, изолированно
+
+## Q7. Как работает Dead Letter Queue (DLQ)?
 
 **DLQ** — очередь для "мертвых" сообщений, которые не удалось обработать.
 
@@ -331,10 +343,12 @@ public void processDlq(Order order,
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как работают транзакции в Spring Messaging? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] DLQ настраивается только в RabbitMQ Management UI, не программно | ❌ ПОСЛЕДСТВИЕ: x-dead-letter-exchange и x-dead-letter-routing-key задаются в @Bean Queue через withArgument(); полностью программная конфигурация
+> - [ ] сообщение попадает в DLQ только при consumer exception | ❌ ПОСЛЕДСТВИЕ: DLQ принимает также: превышение TTL, переполнение очереди (x-max-length), basicNack с requeue=false — три независимых триггера
+> - [ ] @Header("x-death") доступен только для первого отклонённого сообщения | ❌ ПОСЛЕДСТВИЕ: x-death — список (List<Map>) накапливающий всю цепочку rejections; каждое отклонение добавляет новый entry с причиной
+> - [x] x-dead-letter-exchange + x-dead-letter-routing-key на source queue → failed messages → DLQ consumer с @Header("x-death") для аудита | ✓ ПРИМЕНЯТЬ: poison pill handling + alerting на необрабатываемые сообщения 📋 ПРАВИЛО: DLQ = safety net для TTL/nack/overflow; x-death = death audit trail 🔗 См. Q6
+
+## Q8. Как работают транзакции в Spring Messaging?
 
 ```java
 // JMS транзакции
@@ -368,10 +382,12 @@ public void processAndPublish(OrderCommand cmd) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Что такое Publisher Confirms в RabbitMQ? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] @Transactional на @JmsListener гарантирует exactly-once с JPA без дополнительной настройки | ❌ ПОСЛЕДСТВИЕ: нужен transactional JMS container factory (sessionTransacted=true); без него JPA rollback не откатит JMS acknowledge
+> - [x] JMS: @Transactional + transactional ContainerFactory = atomic JMS+JPA; AMQP: setChannelTransacted=true; для cross-system — Transactional Outbox | ✓ ПРИМЕНЯТЬ: когда DB save и message publish должны быть атомарными 📋 ПРАВИЛО: AMQP не 2PC → Outbox Pattern; JMS XA работает но медленно 🔗 См. Q9
+> - [ ] RabbitMQ поддерживает 2PC (XA транзакции) как JMS | ❌ ПОСЛЕДСТВИЕ: AMQP не поддерживает 2PC; RabbitMQ транзакции — channel-level, не XA; для distributed tx нужен Outbox или Saga
+> - [ ] setChannelTransacted=true на RabbitTemplate не влияет на @RabbitListener | ❌ ПОСЛЕДСТВИЕ: setChannelTransacted влияет на RabbitTemplate (publisher side); listener transactionality настраивается отдельно через ContainerFactory
+
+## Q9. Что такое Publisher Confirms в RabbitMQ?
 
 **Publisher Confirms** — механизм подтверждения от брокера о получении сообщения.
 
@@ -416,10 +432,12 @@ public class ReliableOrderPublisher {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Что такое Request-Reply Pattern в Spring Messaging? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] publisher-confirm-type: simple достаточно для production надёжности | ❌ ПОСЛЕДСТВИЕ: simple = fire-and-forget confirms без correlation; correlated = async confirm с CorrelationData для track каждого сообщения индивидуально
+> - [ ] setReturnsCallback срабатывает когда consumer не обработал сообщение | ❌ ПОСЛЕДСТВИЕ: ReturnsCallback = сообщение не маршрутизировалось ни в одну очередь (нет binding); это publisher → broker уровень, не consumer
+> - [ ] Publisher Confirms гарантируют exactly-once delivery | ❌ ПОСЛЕДСТВИЕ: Confirms гарантируют at-least-once (сообщение дошло до брокера); для exactly-once нужен идемпотентный consumer + уникальный messageId
+> - [x] setConfirmCallback(ack, correlationData, cause): ack=true → доставлено в broker; ack=false → retry; setReturnsCallback → сообщение не маршрутизировано ни в одну очередь | ✓ ПРИМЕНЯТЬ: guaranteed delivery с async подтверждением 📋 ПРАВИЛО: Confirms = broker ACK; Returns = unroutable message alert 🔗 См. Q4
+
+## Q10. Что такое Request-Reply Pattern в Spring Messaging?
 
 **Request-Reply** — двустороннее взаимодействие через messaging.
 
@@ -451,10 +469,12 @@ public OrderResult handleRequest(OrderRequest request) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как настроить кастомный MessageConverter? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] convertSendAndReceive() неблокирующий — возвращает CompletableFuture | ❌ ПОСЛЕДСТВИЕ: convertSendAndReceive() блокирующий — ждёт ответ по умолчанию 5с; для async нужен AsyncRabbitTemplate.sendAndReceive()
+> - [x] convertSendAndReceive(exchange, routingKey, request) блокирует до ответа; сервер использует @SendTo или replyTo header; под капотом — временная reply queue с correlationId | ✓ ПРИМЕНЯТЬ: RPC-like sync запрос/ответ через messaging 📋 ПРАВИЛО: Request-Reply = temp reply-queue + correlationId + blocking wait 🔗 См. Q6
+> - [ ] @SendTo на listener обязателен для Request-Reply — без него ответ теряется | ❌ ПОСЛЕДСТВИЕ: @SendTo не нужен если клиент передаёт replyTo заголовок; RabbitMQ автоматически маршрутизирует ответ в replyTo очередь
+> - [ ] Request-Reply работает только с direct exchange — не поддерживает topic | ❌ ПОСЛЕДСТВИЕ: работает с любым exchange типом; routing key указывается клиентом в convertSendAndReceive(exchange, routingKey, ...)
+
+## Q11. Как настроить кастомный MessageConverter?
 
 ```java
 // JSON конвертер по умолчанию
@@ -497,10 +517,12 @@ public class ProtobufMessageConverter implements MessageConverter {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Как реализовать retry механизм? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Jackson2JsonMessageConverter работает без classMapper — Spring автоматически определяет тип | ❌ ПОСЛЕДСТВИЕ: без classMapper Spring не знает в какой класс десериализовать; нужен DefaultClassMapper или @JsonTypeInfo в DTO
+> - [ ] MessageConverter нужно регистрировать в Spring context через @Component | ❌ ПОСЛЕДСТВИЕ: MessageConverter должен быть внедрён в RabbitTemplate.setMessageConverter() и ContainerFactory; простой @Component недостаточен
+> - [x] @Bean Jackson2JsonMessageConverter + RabbitTemplate.setMessageConverter(); для type-safe deserialization — DefaultClassMapper с trusted packages | ✓ ПРИМЕНЯТЬ: JSON сериализация POJO в RabbitMQ без ручного marshal/unmarshal 📋 ПРАВИЛО: MessageConverter = pluggable serializer; ClassMapper = type resolution 🔗 См. Q4
+> - [ ] Кастомный MessageConverter заменяет Spring стандартный только если нет Jackson в classpath | ❌ ПОСЛЕДСТВИЕ: Spring выбирает MessageConverter явно через setMessageConverter(); наличие Jackson в classpath не определяет выбор автоматически
+
+## Q12. Как реализовать retry механизм?
 
 ```java
 // Автоматический retry через RetryTemplate
@@ -535,10 +557,12 @@ public void handleOrder(Order order) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как тестировать Spring Messaging? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] RetryTemplate с maxAttempts=3 применяется автоматически к любому @RabbitListener | ❌ ПОСЛЕДСТВИЕ: нужно явно создать containerFactory с RetryInterceptor и указать его в @RabbitListener(containerFactory="retryContainerFactory")
+> - [ ] RejectAndDontRequeueRecoverer реквеует сообщение после всех попыток | ❌ ПОСЛЕДСТВИЕ: RejectAndDontRequeueRecoverer отвергает с requeue=false → сообщение идёт в DLQ; для requeue нужен ImmediateRequeueRecoverer
+> - [x] RetryTemplate.builder().maxAttempts(3).exponentialBackoff() + RejectAndDontRequeueRecoverer → DLQ после N попыток | ✓ ПРИМЕНЯТЬ: автоматический retry с exponential backoff для transient ошибок 📋 ПРАВИЛО: RetryTemplate = stateless retry; RecoveryCallback = что делать после исчерпания попыток 🔗 См. Q7
+> - [ ] exponentialBackoff(1000, 2, 10000) — первая цифра это количество попыток | ❌ ПОСЛЕДСТВИЕ: (initialInterval, multiplier, maxInterval) = начальная задержка, множитель, максимум; количество попыток — maxAttempts()
+
+## Q13. Как тестировать Spring Messaging?
 
 ```java
 // JMS с EmbeddedActiveMQ
@@ -583,10 +607,12 @@ class RabbitIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Чем Spring JMS отличается от Spring AMQP? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] @SpringBootTest с embedded JMS не требует внешнего брокера — работает из коробки без конфигурации | ❌ ПОСЛЕДСТВИЕ: нужна зависимость spring-boot-starter-activemq и embedded-broker=true в YAML; без этого тест пытается подключиться к реальному брокеру
+> - [ ] RabbitMQ тесты лучше всего писать с @MockBean RabbitTemplate | ❌ ПОСЛЕДСТВИЕ: @MockBean не тестирует AMQP семантику (routing, exchange, DLQ); Testcontainers даёт реальный RabbitMQ с полной проверкой конфигурации
+> - [x] JMS: @SpringBootTest + EmbeddedActiveMQ; AMQP: Testcontainers RabbitMQContainer + @DynamicPropertySource; await() для async assertion | ✓ ПРИМЕНЯТЬ: integration tests с реальным брокером вместо mocks 📋 ПРАВИЛО: @DynamicPropertySource инжектирует container ports в Spring context 🔗 См. Q6, Q3
+> - [ ] @DynamicPropertySource доступен только в @Testcontainers тестах | ❌ ПОСЛЕДСТВИЕ: @DynamicPropertySource — любой @SpringBootTest; используется для внедрения динамических значений (container ports, random ports) в application properties
+
+## Q14. Чем Spring JMS отличается от Spring AMQP?
 
 | Критерий | JMS (ActiveMQ) | AMQP (RabbitMQ) |
 |----------|----------------|-----------------|
@@ -602,10 +628,12 @@ JMS — выбор при legacy Java EE системах. AMQP — при вы�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Когда использовать Spring Messaging vs Kafka? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] JMS и AMQP взаимозаменяемы — JmsTemplate и RabbitTemplate имеют одинаковый API | ❌ ПОСЛЕДСТВИЕ: разные API (JmsTemplate.convertAndSend vs RabbitTemplate.convertAndSend с exchange/routingKey); AMQP имеет exchange routing, JMS — нет
+> - [ ] JMS не поддерживает pub-sub — только point-to-point очереди | ❌ ПОСЛЕДСТВИЕ: JMS поддерживает Topics (pub-sub) через javax.jms.Topic; RabbitMQ fanout exchange аналогичен
+> - [x] JMS=Java EE стандарт, direct queue, legacy enterprise; AMQP=open protocol, exchange routing (direct/topic/fanout), modern microservices | ✓ ПРИМЕНЯТЬ: новые сервисы → AMQP/RabbitMQ; интеграция с IBM MQ/Oracle AQ → JMS 📋 ПРАВИЛО: JMS = стандарт для Java EE; AMQP = протокол для любого языка 🔗 См. Q4, Q5
+> - [ ] Spring JMS работает только с ActiveMQ, Spring AMQP — только с RabbitMQ | ❌ ПОСЛЕДСТВИЕ: Spring JMS работает с любым JMS-совместимым брокером (IBM MQ, Oracle AQ, Artemis); Spring AMQP — с любым AMQP 0.9.1 брокером
+
+## Q15. Когда использовать Spring Messaging vs Kafka?
 
 ```text
 Spring Messaging (JMS/AMQP) подходит когда:
@@ -624,14 +652,16 @@ Kafka подходит когда:
 
 **Практика**: в современных системах часто оба — RabbitMQ для task queues (long-running jobs), Kafka для event streaming и audit logs.
 
-## See also
-
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Spring Kafka](spring-kafka-interview.md) — интеграция Kafka в Spring ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Kafka лучше RabbitMQ для task queues — выше throughput | ❌ ПОСЛЕДСТВИЕ: Kafka не удаляет processed messages; task semantics (один consumer обрабатывает, удаляет) → RabbitMQ; Kafka = append-log для replay
+> - [ ] Spring Messaging (JMS/AMQP) поддерживает replay исторических событий | ❌ ПОСЛЕДСТВИЕ: JMS/AMQP не хранят processed messages; replay → Kafka с retention; AMQP = fire-and-forget delivery
+> - [x] JMS/AMQP: task queues, request-reply, гарантия одному consumer; Kafka: event streaming, множество consumer groups, высокий throughput, replay | ✓ ПРИМЕНЯТЬ: RabbitMQ для ordered jobs/tasks; Kafka для event log + stream processing 📋 ПРАВИЛО: queue = task выполнить один раз; Kafka topic = event log читать много раз 🔗 См. Q1
+> - [ ] Kafka поддерживает request-reply паттерн нативно как RabbitMQ | ❌ ПОСЛЕДСТВИЕ: Kafka не поддерживает нативный request-reply; нужна самостоятельная реализация через correlation ID и reply topic
+
+## See also
+
+- [Spring Kafka](spring-kafka-interview.md) — интеграция Kafka в Spring
 - [Spring Integration](spring-integration-interview.md) — EIP паттерны в Spring
 - [RabbitMQ](../../messaging/rabbitmq-interview.md) — основы AMQP, exchanges, queues, routing keys
 - [Apache Kafka](../../messaging/kafka-interview.md) — основы Kafka, partitions, consumer groups

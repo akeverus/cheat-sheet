@@ -1055,10 +1055,12 @@ session.getDatabase("shop").orders.find({ orderId: "123" })
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Можно ли систему переключать между CP и AP? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] MongoDB всегда CP — secondary не поддерживают чтение | ❌ ПОСЛЕДСТВИЕ: MongoDB по умолчанию AP: `w:1` + `readPreference("secondary")` = fast но eventual; CP настраивается через `w:"majority"` + `readConcern("majority")`
+> - [ ] Causal Consistency гарантирует линеаризуемость | ❌ ПОСЛЕДСТВИЕ: causal consistency слабее linearizability; гарантирует только порядок операций в одной сессии, не глобальный порядок
+> - [x] MongoDB Causal Consistency Sessions: `readConcern("majority")` + `readPreference("secondary")` гарантирует что чтение увидит результаты предыдущих записей той же сессии | ✓ ПРИМЕНЯТЬ: снизить нагрузку на primary читая с secondary при этом сохранив causal order 📋 ПРАВИЛО: Causal Session = `clusterTime`+`operationTime` отслеживает happens-before в рамках сессии 🔗 См. Q32
+> - [ ] `readConcern("majority")` нельзя использовать с `readPreference("secondary")` | ❌ ПОСЛЕДСТВИЕ: именно эта комбинация + causal consistency session позволяет безопасно читать с secondary; без causal session есть риск stale read
+
+## Q32. Можно ли систему переключать между CP и AP?
 
 Да, многие системы позволяют настраивать поведение per-request или per-collection:
 
@@ -1074,10 +1076,12 @@ session.getDatabase("shop").orders.find({ orderId: "123" })
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Как выбирать CP vs AP для бизнес-системы? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Система должна быть либо только CP, либо только AP — смешивание невозможно | ❌ ПОСЛЕДСТВИЕ: Cassandra (QUORUM=CP / ONE=AP), DynamoDB (consistentRead), MongoDB (writeConcern) позволяют per-request конфигурацию
+> - [x] Многие системы (Cassandra, DynamoDB, MongoDB, Kafka) конфигурируются per-request: критичные операции → CP (QUORUM/majority), некритичные → AP (ONE/LOCAL_ONE) | ✓ ПРИМЕНЯТЬ: платежи → CP; лента → AP в одной системе 📋 ПРАВИЛО: не ищи CP или AP систему — ищи per-operation consistency level 🔗 См. Q33
+> - [ ] Переключение CP↔AP требует перезапуска кластера | ❌ ПОСЛЕДСТВИЕ: Cassandra меняет consistency level per-query без рестарта; это параметр запроса, не конфигурация кластера
+> - [ ] DynamoDB по умолчанию CP (strongly consistent) | ❌ ПОСЛЕДСТВИЕ: DynamoDB по умолчанию eventual consistent (AP, дешевле); strongly consistent = `consistentRead: true` + доп. стоимость
+
+## Q33. Как выбирать CP vs AP для бизнес-системы?
 
 Задайте вопрос: **допустима ли устаревшая информация?**
 
@@ -1103,10 +1107,12 @@ graph TD
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. (!) Как тестировать partition tolerance? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CP выбирают когда пользователей мало, AP — когда много | ❌ ПОСЛЕДСТВИЕ: выбор CP/AP не зависит от масштаба; зависит от бизнес-требований: допустима ли устаревшая информация для данной операции
+> - [ ] AP система всегда дешевле CP в operational cost | ❌ ПОСЛЕДСТВИЕ: стоимость зависит от конкретной БД и consistency level; CP на primary может быть дешевле AP с репликацией read-replicas
+> - [x] Выбор CP/AP per-operation: «допустима ли устаревшая информация?» Платёж/инвентарь → CP; лента/аналитика → AP; frequency of partition → учесть | ✓ ПРИМЕНЯТЬ: e-commerce — остаток склада CP, каталог AP 📋 ПРАВИЛО: стоимость inconsistency > стоимость unavailability → CP; иначе AP 🔗 См. Q32
+> - [ ] Все операции в сервисе должны использовать один уровень consistency | ❌ ПОСЛЕДСТВИЕ: Cassandra рекомендует QUORUM для критичных операций и LOCAL_ONE для analytics в одном кластере;混合ый подход норма
+
+## Q34. (!) Как тестировать partition tolerance?
 
 Тестирование устойчивости к разделению — важная часть валидации распределённых систем. Основные подходы:
 
@@ -1149,10 +1155,12 @@ sudo tc qdisc add dev eth0 root netem loss 30%
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Как проектировать систему с учётом CAP? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Jepsen тестирует только производительность, не корректность | ❌ ПОСЛЕДСТВИЕ: Jepsen тестирует correctness (linearizability, sequential consistency), а не performance; нашёл реальные баги в Cassandra, MongoDB, Redis
+> - [ ] `iptables DROP` тестирует только latency, не partition | ❌ ПОСЛЕДСТВИЕ: `iptables -j DROP` создаёт полный network partition (пакеты не проходят); именно для тестирования partition tolerance
+> - [x] Jepsen (проверяет linearizability), Chaos Engineering (iptables/tc/Toxiproxy), Chaos Monkey (убивает инстансы); проверять: split-brain, data loss при recovery, auto-recovery | ✓ ПРИМЕНЯТЬ: тест partition tolerance до production при запуске нового кластера 📋 ПРАВИЛО: chaos в staging → verify CAP claims → measure recovery time 🔗 См. Q35
+> - [ ] Chaos Engineering допустим только в production — staging слишком отличается | ❌ ПОСЛЕДСТВИЕ: Netflix начинал chaos в staging; production chaos (GameDay) добавляется позже с feature flags и ограниченным scope
+
+## Q35. Как проектировать систему с учётом CAP?
 
 Практические принципы проектирования распределённых систем с учётом CAP:
 
@@ -1190,10 +1198,12 @@ SELECT now() - pg_last_xact_replay_timestamp() AS replication_lag;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Что такое PACELC — расширение CAP для нормального состояния? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Система должна быть CP или AP во всех сценариях одинаково | ❌ ПОСЛЕДСТВИЕ: PACELC объясняет: даже в нормальном режиме (без partition) выбор latency vs consistency влияет на каждый запрос
+> - [ ] При отсутствии partition CAP теорема не применима | ❌ ПОСЛЕДСТВИЕ: PACELC дополняет CAP именно для нормального режима; latency↔consistency tradeoff существует всегда
+> - [x] Проектировать CP/AP per-operation; использовать async replication для некритичного; circuit breaker + fallback; мониторить replication lag; graceful degradation | ✓ ПРИМЕНЯТЬ: e-commerce — inventory CP, catalog AP; X-Data-Staleness header для прозрачности 📋 ПРАВИЛО: partition rare → PACELC latency/consistency важнее CAP 🔗 См. Q33
+> - [ ] Graceful degradation означает возврат 503 при любой partition | ❌ ПОСЛЕДСТВИЕ: graceful degradation = показать устаревшие данные с предупреждением, не упасть; 503 только когда stale data неприемлема
+
+## Q36. Что такое PACELC — расширение CAP для нормального состояния?
 
 **PACELC** (Partition-Availability-Consistency-Else-Latency-Consistency) — теорема, предложенная Даниэлем Абади в 2012 году. Она расширяет CAP, добавляя вторую ось trade-off: что происходит, когда разделения **нет**.
 
@@ -1234,10 +1244,12 @@ PACELC формулировка:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. ZooKeeper и HBase как CP-системы: детали реализации ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] PACELC = CAP, просто другое название | ❌ ПОСЛЕДСТВИЕ: PACELC расширяет CAP: CAP только про partition; PACELC добавляет E (else) — latency↔consistency tradeoff в нормальном режиме
+> - [ ] Cassandra PA/EL с QUORUM неверна — QUORUM всегда PC | ❌ ПОСЛЕДСТВИЕ: Cassandra при partition всегда AP (можно писать в minority); с QUORUM — PA/EC в PACELC; при ONE — PA/EL
+> - [x] PACELC: при P → AP/CP; при Else → L/C; DynamoDB=PA/EL; Cassandra ONE=PA/EL, QUORUM=PA/EC; ZooKeeper=PC/EC | ✓ ПРИМЕНЯТЬ: объяснять latency vs consistency трadeoff на интервью через PACELC 📋 ПРАВИЛО: PACELC добавляет нормальный режим к CAP; partition редок, latency↔consistency каждый запрос 🔗 См. Q35
+> - [ ] Mongo default — PA/EL (eventual consistent) | ❌ ПОСЛЕДСТВИЕ: MongoDB default `readConcern: local` и `w:1` — это PC/EC в PACELC; strong consistency per document
+
+## Q37. ZooKeeper и HBase как CP-системы: детали реализации
 
 **ZooKeeper** — распределённый координатор, реализующий строгую CP-семантику через протокол **ZAB** (ZooKeeper Atomic Broadcast).
 
@@ -1282,10 +1294,12 @@ String path = zk.create("/lock/my-lock-",
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Cassandra и DynamoDB как AP-системы: детали ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] ZooKeeper CP означает что он всегда доступен — просто с задержкой | ❌ ПОСЛЕДСТВИЕ: ZooKeeper CP: при partition minority узлов блокирует writes; клиент получает ConnectionLossException, не медленный ответ
+> - [ ] ZAB протокол = Raft — те же гарантии | ❌ ПОСЛЕДСТВИЕ: ZAB и Raft — разные протоколы; ZAB broadcasting-first, Raft leader-first election; оба обеспечивают linearizability но разными механизмами
+> - [x] ZooKeeper CP через ZAB: все writes → лидер → PROPOSE кворуму → COMMIT; при partition меньшинство блокирует writes; HBase использует ZK для координации регионов | ✓ ПРИМЕНЯТЬ: leader election, distributed locks, service discovery требуют CP 📋 ПРАВИЛО: ZK ephemeral node исчезает при disconnect → no split-brain possible 🔗 См. Q38
+> - [ ] HBase может работать без ZooKeeper | ❌ ПОСЛЕДСТВИЕ: HBase критически зависит от ZooKeeper для region server tracking; без ZK HBase не знает где находятся region servers
+
+## Q38. Cassandra и DynamoDB как AP-системы: детали
 
 **Cassandra** — AP-система, спроектированная для максимальной доступности. Ключевые механизмы:
 
@@ -1336,10 +1350,12 @@ DynamoDB режимы чтения:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. Network partition на практике: частота и типичные сценарии ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Cassandra всегда AP — нельзя настроить CP поведение | ❌ ПОСЛЕДСТВИЕ: Cassandra с CONSISTENCY ALL или QUORUM = CP поведение; если реплик нет → запись блокируется
+> - [ ] DynamoDB использует Paxos per partition → всегда CP | ❌ ПОСЛЕДСТВИЕ: DynamoDB по умолчанию AP (eventual consistent); strongly consistent reads = opt-in; за деньги и latency
+> - [x] Cassandra AP через leaderless ring + LWW для конфликтов; DynamoDB AP + conditional writes; оба поддерживают CP per-request | ✓ ПРИМЕНЯТЬ: Cassandra для globally distributed writes; DynamoDB для AWS-native OLTP 📋 ПРАВИЛО: Cassandra leaderless → no single point; DynamoDB Paxos per partition → stronger default 🔗 См. Q38
+> - [ ] Cassandra не поддерживает conditional updates — только LWW | ❌ ПОСЛЕДСТВИЕ: Cassandra поддерживает Lightweight Transactions (LWT) через Paxos для conditional writes; дороже но возможно
+
+## Q39. Network partition на практике: частота и типичные сценарии
 
 **Network partition** — это не редкий аварийный сценарий. В реальных production-системах partition происходят регулярно:
 
@@ -1380,10 +1396,12 @@ DynamoDB режимы чтения:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. CAP и микросервисная архитектура: как выбор БД влияет на дизайн? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Network partition происходит только при катастрофах датацентра | ❌ ПОСЛЕДСТВИЕ: partition случается от GC pause (seconds), rolling restart, перегрузки сети, slow network; это регулярные события
+> - [x] Partition происходит регулярно: GC pause, rolling restart, AZ failure, WAN; защита: Jepsen тесты + fencing tokens + circuit breaker + graceful degradation | ✓ ПРИМЕНЯТЬ: при проектировании новой distributed системы учитывать partial partition 📋 ПРАВИЛО: partition не "если", а "когда" — проектировать для recovery, не perfect connectivity 🔗 См. Q34
+> - [ ] Partial partition (A и B видят C но не друг друга) невозможен в cloud | ❌ ПОСЛЕДСТВИЕ: partial partition — реальный сценарий; документирован в AWS, GCP outpost; классические алгоритмы могут вести себя неожиданно
+> - [ ] Fencing tokens защищают только от split-brain при leader election | ❌ ПОСЛЕДСТВИЕ: fencing tokens применяются для любого distributed lock; клиент с устаревшим token → storage отвергает запись
+
+## Q40. CAP и микросервисная архитектура: как выбор БД влияет на дизайн?
 
 В микросервисной архитектуре каждый сервис владеет своей БД (Database per Service pattern). Выбор CP или AP определяет всю стратегию согласованности данных.
 
@@ -1442,10 +1460,12 @@ Notifications  Cassandra   AP     Доставка best-effort
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q41. (!) Google Spanner и TrueTime: как Spanner обходит CAP? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Все микросервисы должны использовать одну БД для согласованности | ❌ ПОСЛЕДСТВИЕ: Database per Service = микросервисный принцип; одна БД = coupling между сервисами, невозможна независимая эволюция
+> - [ ] CP-сервис не может взаимодействовать с AP-сервисом | ❌ ПОСЛЕДСТВИЕ: Saga pattern решает CP↔AP: Order (CP) публикует событие → Product (AP) обновляет каталог; компенсации при ошибке
+> - [x] Database per Service; CP (PostgreSQL) для финансов/инвентаря; AP (Cassandra/Redis) для каталога/корзины; Saga+Outbox для межсервисной согласованности | ✓ ПРИМЕНЯТЬ: e-commerce: Order=CP, Catalog=AP, Cart=AP, Payment=CP 📋 ПРАВИЛО: выбор CP/AP per service based on business risk of inconsistency 🔗 См. Q35
+> - [ ] Outbox pattern нужен только для CP-сервисов | ❌ ПОСЛЕДСТВИЕ: Outbox нужен любому сервису который публикует события + должен быть atomically с записью в БД; актуально для CP и AP сервисов
+
+## Q41. (!) Google Spanner и TrueTime: как Spanner обходит CAP?
 
 **Google Spanner** — глобально распределённая база данных, которую Google позиционирует как CA-систему. Это звучит невозможно с точки зрения CAP, но Spanner использует умный трюк.
 
@@ -1489,10 +1509,12 @@ Spanner — это CP-система. При network partition Spanner блок�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q42. (!) CAP vs BASE: детальное сравнение ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Google Spanner — CA система, нарушающая P теоремы CAP | ❌ ПОСЛЕДСТВИЕ: Spanner — CP; он жертвует availability: при partition ждёт кворума Paxos; его trick — TrueTime минимизирует commit wait до ~7ms
+> - [ ] TrueTime использует NTP как все другие системы | ❌ ПОСЛЕДСТВИЕ: TrueTime = атомные часы + GPS + NTP; погрешность ~7ms vs NTP ~100ms; именно это позволяет commit wait быть коротким
+> - [x] Spanner CP: TrueTime (атомные часы+GPS, ±7ms) позволяет external consistency; commit wait = uncertainty interval; глобальные транзакции через Paxos | ✓ ПРИМЕНЯТЬ: глобально распределённые финансовые системы где CP + low latency нужны 📋 ПРАВИЛО: Spanner обходит CAP trade-off аппаратно (часы), не теоретически 🔗 См. Q42
+> - [ ] Cloud Spanner = open source, можно self-host | ❌ ПОСЛЕДСТВИЕ: Cloud Spanner = managed Google Cloud service; TrueTime требует специального оборудования Google; self-host невозможен без аналогичного hardware
+
+## Q42. (!) CAP vs BASE: детальное сравнение
 
 **ACID** и **BASE** — два противоположных подхода к гарантиям транзакций в распределённых системах.
 
@@ -1557,6 +1579,12 @@ Spanner — это CP-система. При network partition Spanner блок�
 | Кэш / сессии | — | ✓ |
 | Корзина | — | ✓ (с merge) |
 
+> [!mcq]
+> - [ ] BASE = упрощённый ACID для простых систем без транзакций | ❌ ПОСЛЕДСТВИЕ: BASE — осознанный выбор масштабируемости; Amazon, Facebook, Netflix используют BASE для core features; не "упрощение"
+> - [ ] ACID невозможно в distributed systems | ❌ ПОСЛЕДСТВИЕ: Google Spanner, CockroachDB, distributed PostgreSQL реализуют ACID globally; дорого но возможно
+> - [x] CP/ACID: строгая согласованность, может блокировать → финансы, инвентарь; AP/BASE: basically available, eventual → лента, корзина, аналитика | ✓ ПРИМЕНЯТЬ: выбирать по стоимости inconsistency vs unavailability для конкретного use-case 📋 ПРАВИЛО: ACID = DB решает конфликты; BASE = приложение решает merge logic 🔗 См. Q33
+> - [ ] BASE системы не поддерживают конфликт-разрешение — данные просто перезаписываются | ❌ ПОСЛЕДСТВИЕ: Cassandra использует LWW, CouchDB MVCC, Amazon cart union-merge; BASE требует явного conflict resolution в app layer
+
 ---
 
 ## See also
@@ -1567,15 +1595,7 @@ Spanner — это CP-система. При network partition Spanner блок�
 - [Стратегии кэширования](caching-strategies-interview.md) — компромиссы согласованности при кэшировании
 - [Архитектура БД](../databases/database-architecture-interview.md) — как Cassandra, DynamoDB, ZooKeeper реализуют CAP
 - [Паттерны масштабирования](scalability-patterns-interview.md) — горизонтальное масштабирование и partition tolerance
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [API Gateway](api-gateway-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [BFF Pattern](bff-pattern-interview.md)
-- [Стратегии кэширования](caching-strategies-interview.md)
 - [Clean Architecture](clean-architecture-interview.md)
 - [Паттерны согласованности](consistency-patterns-interview.md)
 - [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md)

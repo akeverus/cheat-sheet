@@ -113,10 +113,12 @@ def agent(goal):
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Workflows vs Agents — Anthropic классификация? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] LLM, которая просто отвечает на вопросы без внешних вызовов | ❌ ПОСЛЕДСТВИЕ: это обычный chatbot, не agent; agent обязательно имеет tool use + loop до достижения goal
+> - [ ] Скрипт с жёстко заданными шагами, LLM только генерирует текст | ❌ ПОСЛЕДСТВИЕ: это workflow; agent — LLM dynamically decides next action, не pre-defined sequence
+> - [x] LLM-powered система: принимает goal → планирует → вызывает tools → observes results → iterates до достижения цели | ✓ ПРИМЕНЯТЬ: задачи с неизвестным числом шагов и динамическим выбором tools 📋 ПРАВИЛО: agent = LLM + tools + loop (plan→act→observe) 🔗 См. Q2
+> - [ ] Multi-model система с несколькими специализированными LLM | ❌ ПОСЛЕДСТВИЕ: это multi-agent; single agent может быть и одна LLM в loop
+
+## Q2. (!) Workflows vs Agents — Anthropic классификация?
 
 Anthropic ("Building Effective Agents", 2024) разделяет:
 
@@ -140,10 +142,12 @@ Loop: LLM decides next action → execute → check result → continue
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Когда нужен agent, а когда хватает простого LLM? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Workflows всегда лучше agents — agents слишком непредсказуемы для production | ❌ ПОСЛЕДСТВИЕ: agents незаменимы для задач с неизвестным числом шагов; правило — start with workflows, escalate to agent when needed
+> - [ ] Agents дешевле workflows, потому что LLM делает больше работы | ❌ ПОСЛЕДСТВИЕ: agents дороже и медленнее из-за итеративных LLM-вызовов; workflows predictable и дешевле
+> - [x] Workflows — predictable, дешевле, pre-defined steps; Agents — flexible, дороже, LLM dynamically decides next action; start with workflow | ✓ ПРИМЕНЯТЬ: начинать с workflow, перейти к agent только если нужна dynamic decision-making 📋 ПРАВИЛО: workflow = знаю шаги заранее; agent = LLM решает что делать дальше 🔗 См. Q1
+> - [ ] Agents и workflows — синонимы в Anthropic классификации | ❌ ПОСЛЕДСТВИЕ: ключевое различие: workflow = pre-defined steps; agent = LLM decides at runtime
+
+## Q3. (!) Когда нужен agent, а когда хватает простого LLM?
 
 **Простой LLM:**
 - Single-turn QA

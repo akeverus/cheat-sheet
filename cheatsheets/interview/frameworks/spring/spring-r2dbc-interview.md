@@ -53,10 +53,12 @@ R2DBC не является надстройкой над JDBC — это пол
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. Как настроить Spring Data R2DBC? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] R2DBC — это обёртка над JDBC с async адаптером | ❌ ПОСЛЕДСТВИЕ: R2DBC полностью отдельный API с нативными non-blocking драйверами; смешивание JDBC и R2DBC в одном потоке приводит к thread blocking
+> - [ ] R2DBC поддерживает JPA-стиль с @Entity, @OneToMany и lazy loading | ❌ ПОСЛЕДСТВИЕ: R2DBC не поддерживает JPA lazy loading и joins автоматически; нужно ручное маппирование или @Query
+> - [x] Non-blocking API поверх Reactive Streams; Publisher<Row> вместо ResultSet; R2dbcTransactionManager; нет JPA lazy loading | ✓ ПРИМЕНЯТЬ: Spring WebFlux + реактивный доступ к БД без thread-per-connection 📋 ПРАВИЛО: R2DBC = Reactive Streams + SQL; не замена JPA — другой уровень абстракции 🔗 См. Q2
+> - [ ] R2DBC возвращает CompletableFuture<List<Row>> как стандартный async тип | ❌ ПОСЛЕДСТВИЕ: R2DBC возвращает Publisher<Row> (Flux/Mono); CompletableFuture — Java concurrent, не Reactive Streams
+
+## Q2. Как настроить Spring Data R2DBC?
 
 ```xml
 <dependency>

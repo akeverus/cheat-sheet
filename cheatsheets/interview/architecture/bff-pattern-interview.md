@@ -86,10 +86,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Зачем BFF — проблема, которую решает? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] BFF = API Gateway с rate limiting — один BFF для всех клиентов | ❌ ПОСЛЕДСТВИЕ: один API для всех клиентов → overfetch на mobile, underfetch на web; BFF = отдельный бэкенд per client type
+> - [ ] BFF = микросервис в domain (User BFF, Order BFF) | ❌ ПОСЛЕДСТВИЕ: BFF делится по client type (Web BFF, iOS BFF), не по домену; domain decomposition — это не BFF
+> - [x] BFF = отдельный бэкенд per client type (Web/iOS/Android); агрегирует микросервисы, tailors response под UX каждого клиента | ✓ ПРИМЕНЯТЬ: разные клиенты нуждаются в разных формах данных 📋 ПРАВИЛО: один BFF = один client type = tailored API 🔗 См. Q2
+> - [ ] BFF = GraphQL schema — все клиенты используют один BFF через разные queries | ❌ ПОСЛЕДСТВИЕ: один GraphQL = всё ещё shared API; BFF предполагает отдельные сервисы per client, GraphQL может реализовать BFF, но не заменяет разделение
+
+## Q2. (!) Зачем BFF — проблема, которую решает?
 
 **Problems without BFF (generic API):**
 
@@ -122,10 +124,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) BFF vs API Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Один BFF для всех клиентов устраняет overfetch через query parameters | ❌ ПОСЛЕДСТВИЕ: query params фильтруют поля, но не решают N+1 round trips; BFF агрегирует несколько сервисов за одним запросом
+> - [x] Generic API → overfetch (mobile получает 30 полей вместо 3) + N+1 round trips + client coupling; BFF устраняет все три | ✓ ПРИМЕНЯТЬ: mobile + web + TV требуют разные data shapes 📋 ПРАВИЛО: BFF = no overfetch + single aggregation call + per-client ownership 🔗 См. Q1
+> - [ ] BFF решает только overfetch, N+1 решается GraphQL DataLoader | ❌ ПОСЛЕДСТВИЕ: DataLoader в GraphQL — один из способов, но BFF решает оба через aggregation; DataLoader не устраняет client coupling
+> - [ ] Версионирование API решает client coupling без BFF | ❌ ПОСЛЕДСТВИЕ: версионирование усиливает coupling — каждый клиент на своей версии → N версий на поддержке; BFF даёт independent evolution
+
+## Q3. (!) BFF vs API Gateway?
 
 **API Gateway:** general-purpose edge proxy.
 - Auth, rate limit, logging, routing
@@ -161,10 +165,12 @@ Client → API Gateway → BFF → Microservices
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Architecture с BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] API Gateway заменяет BFF — достаточно добавить transformation logic | ❌ ПОСЛЕДСТВИЕ: Gateway — cross-cutting (auth, rate limit) для всех; BFF — per-client aggregation; разные ответственности, разные owners
+> - [ ] BFF должен содержать бизнес-логику домена (валидация, расчёт цен) | ❌ ПОСЛЕДСТВИЕ: domain logic в BFF → дублирование между BFF-ами; domain logic принадлежит микросервисам
+> - [x] API Gateway = auth/routing/rate-limit для всех; BFF = per-client aggregation/shaping; могут сосуществовать: Client → Gateway → BFF → Services | ✓ ПРИМЕНЯТЬ: Gateway для cross-cutting; BFF когда нужна client-specific aggregation 📋 ПРАВИЛО: Gateway = generic edge; BFF = client-specific layer 🔗 См. Q4
+> - [ ] BFF и API Gateway — взаимоисключающие паттерны | ❌ ПОСЛЕДСТВИЕ: Netflix и SoundCloud используют оба: Gateway снаружи для WAF/auth, BFF внутри для aggregation
+
+## Q4. (!) Architecture с BFF?
 
 ```
 Web browser ─────→ Web BFF (Node.js)
@@ -198,10 +204,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Сколько BFF нужно? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Каждый BFF должен иметь собственную БД | ❌ ПОСЛЕДСТВИЕ: BFF — агрегационный слой без постоянного хранилища; БД принадлежат domain-микросервисам; BFF только агрегирует ответы
+> - [x] BFF = HTTP сервер, параллельно вызывает несколько сервисов, агрегирует в один client-shaped response | ✓ ПРИМЕНЯТЬ: mobile home screen одним запросом агрегирует User+Feed+Notifications 📋 ПРАВИЛО: BFF = parallel fan-out → aggregate → single response 🔗 См. Q1
+> - [ ] BFF синхронно вызывает сервисы по одному для надёжности | ❌ ПОСЛЕДСТВИЕ: последовательные calls = latency суммируется (100+200+150ms = 450ms); параллельный fan-out = max(100,200,150) = 200ms
+> - [ ] BFF сохраняет состояние сессии и кэширует данные в памяти | ❌ ПОСЛЕДСТВИЕ: stateful BFF не масштабируется горизонтально; состояние в Redis/external cache; BFF stateless
+
+## Q5. Сколько BFF нужно?
 
 **Count:** per **client experience**, not per technology.
 
@@ -223,10 +231,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Technology stack для BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Один BFF для iOS и Android нельзя — всегда нужны отдельные | ❌ ПОСЛЕДСТВИЕ: если iOS и Android имеют одинаковые UX требования (например React Native) → один BFF оправдан; split только когда требования разошлись
+> - [ ] Число BFF = число микросервисов | ❌ ПОСЛЕДСТВИЕ: BFF делится по client type, не по сервисам; один BFF агрегирует много сервисов
+> - [x] Один BFF per client type с разными UX; start с одного, split когда требования расходятся | ✓ ПРИМЕНЯТЬ: Web BFF + Mobile BFF для начала; Partner BFF при B2B integration 📋 ПРАВИЛО: BFF = distinct UX = distinct team ownership 🔗 См. Q1
+> - [ ] BFF нужно перезапускать при изменении любого микросервиса | ❌ ПОСЛЕДСТВИЕ: BFF независимо деплоится; изменение микросервиса не требует рестарта BFF если контракт не изменился
+
+## Q6. Technology stack для BFF?
 
 **BFF should be lightweight, I/O-heavy:**
 - Node.js (typical — matches web/mobile team skills)
@@ -250,10 +260,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Что должен делать BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] BFF должен быть написан на том же языке что и mobile app | ❌ ПОСЛЕДСТВИЕ: BFF — server-side; мобильные приложения на Swift/Kotlin, а BFF чаще Node.js или Kotlin backend; owned by mobile team но не тот же runtime
+> - [ ] CPU-intensive BFF лучше на Java Spring MVC (thread-per-request) | ❌ ПОСЛЕДСТВИЕ: BFF I/O-heavy, не CPU; thread-per-request тратит threads на ожидание; reactive/async (Webflux, Node.js) эффективнее
+> - [x] BFF lightweight I/O-heavy → Node.js/Kotlin/Go; async I/O critical; mobile team пишет свой BFF | ✓ ПРИМЕНЯТЬ: высокий throughput при параллельных backend calls 📋 ПРАВИЛО: BFF = fan-out I/O → async framework; team owns full stack 🔗 См. Q14
+> - [ ] BFF нужна реляционная БД для хранения агрегированных ответов | ❌ ПОСЛЕДСТВИЕ: BFF stateless по природе; кэш если нужен — Redis; persistent state в domain services
+
+## Q7. (!) Что должен делать BFF?
 
 **Core responsibilities:**
 
@@ -289,10 +301,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. (!) Что НЕ должен делать BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] BFF должен валидировать бизнес-правила (например, минимальный заказ) | ❌ ПОСЛЕДСТВИЕ: бизнес-правила в BFF дублируются между iOS/Android/Web BFF; domain logic принадлежит сервисам
+> - [x] BFF: aggregation, response shaping, protocol translation, client-specific feature flags, fallbacks | ✓ ПРИМЕНЯТЬ: всё что специфично для одного клиента принадлежит его BFF 📋 ПРАВИЛО: BFF = glue layer; domain logic in services 🔗 См. Q8
+> - [ ] BFF всегда синхронно ждёт все backend calls перед ответом | ❌ ПОСЛЕДСТВИЕ: параллельный fan-out (Promise.all / coroutines) снижает latency; sequential calls суммируют latency
+> - [ ] BFF должен аутентифицировать JWT токены | ❌ ПОСЛЕДСТВИЕ: auth обычно в API Gateway перед BFF; BFF может извлечь userId из validated token, но не должен валидировать сам
+
+## Q8. (!) Что НЕ должен делать BFF?
 
 **Should not:**
 
@@ -321,10 +335,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) GraphQL as BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] BFF должен содержать auth логику (JWT validation, OAuth) | ❌ ПОСЛЕДСТВИЕ: auth в BFF дублируется; Gateway делает auth раньше; "fat BFF" anti-pattern начинается с этого
+> - [ ] BFF должен сохранять ссылки на данные (FK в БД) для ускорения | ❌ ПОСЛЕДСТВИЕ: данные в domain сервисах; BFF без БД агрегирует на лету; denormalization в BFF = data inconsistency
+> - [ ] BFF должен имплементировать сложный алгоритм рекомендаций | ❌ ПОСЛЕДСТВИЕ: CPU-intensive бизнес-логика в domain Recommendation Service; BFF только вызывает его и передаёт результат клиенту
+> - [x] BFF = thin orchestrator: aggregation, shaping, protocol translation, client-specific flags; без domain logic, auth, persistence | ✓ ПРИМЕНЯТЬ: избегать "fat BFF" → рефакторить logic в domain services 📋 ПРАВИЛО: BFF = glue, not logic; если добавляешь бизнес-правило — не в BFF 🔗 См. Q7
+
+## Q9. (!) GraphQL as BFF?
 
 **GraphQL naturally fits BFF role:**
 - Client specifies exact shape they want
@@ -356,10 +372,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. GraphQL Federation? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] GraphQL заменяет BFF полностью — отдельные BFF не нужны | ❌ ПОСЛЕДСТВИЕ: один GraphQL для всех клиентов снова generic API; BFF per-client может быть GraphQL сервером, но разделение по клиентам сохраняется
+> - [x] GraphQL = natural BFF: клиент запрашивает только нужные поля, resolvers агрегируют сервисы, DataLoader решает N+1 | ✓ ПРИМЕНЯТЬ: clients с разными data needs на одном endpoint 📋 ПРАВИЛО: GraphQL as BFF = client-driven shaping + resolver aggregation 🔗 См. Q2
+> - [ ] GraphQL BFF кэшируется стандартным HTTP кэшем (CDN, browser) | ❌ ПОСЛЕДСТВИЕ: GraphQL обычно POST → CDN не кэширует; нужны persisted queries + GET для caching
+> - [ ] GraphQL eliminates N+1 автоматически | ❌ ПОСЛЕДСТВИЕ: GraphQL без DataLoader → N+1 в resolvers; DataLoader нужно настраивать явно для batching + deduplication
+
+## Q10. GraphQL Federation?
 
 **Federation:** multiple teams own parts of single GraphQL schema; composed into federated graph.
 
@@ -394,10 +412,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) Преимущества BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] GraphQL Federation = один сервер с монолитной схемой | ❌ ПОСЛЕДСТВИЕ: Federation = distributed subgraphs, каждая team владеет своим subgraph; Gateway compose-ит в единый граф
+> - [ ] GraphQL Federation заменяет BFF полностью | ❌ ПОСЛЕДСТВИЕ: Federation — domain decomposition (product team, user team); BFF — client-type decomposition; могут coexist: BFF → federated graph
+> - [x] Federation: многие команды владеют subgraphs, Gateway компонует их в единый граф; каждый subgraph деплоится независимо (Apollo Federation, Netflix DGS) | ✓ ПРИМЕНЯТЬ: крупная организация, много команд, каждая владеет своим domain в GraphQL 📋 ПРАВИЛО: Federation = domain subgraphs; Gateway = query planner 🔗 См. Q9
+> - [ ] Federation требует монолитного деплоя всех subgraphs | ❌ ПОСЛЕДСТВИЕ: Independent deployment — ключевое преимущество Federation; каждый subgraph CI/CD независимо
+
+## Q11. (!) Преимущества BFF?
 
 **1. Client-specific optimization:**
 - Mobile: small payloads
@@ -430,10 +450,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Недостатки BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] BFF не имеет недостатков — это всегда правильное решение | ❌ ПОСЛЕДСТВИЕ: BFF = operational overhead (N services), code duplication между BFF-ами, extra network hop; применять обдуманно
+> - [x] Недостатки: code duplication, N сервисов деплоить, latency extra hop, риск "fat BFF", coordination при schema changes | ✓ ПРИМЕНЯТЬ: взвесить против выгод (overfetch, N+1, coupling) до решения о BFF 📋 ПРАВИЛО: BFF trade-off = client freedom vs operational cost 🔗 См. Q11
+> - [ ] BFF увеличивает latency в 2x — всегда | ❌ ПОСЛЕДСТВИЕ: extra hop = 5-20ms, но BFF агрегирует N сервисных calls параллельно; net latency часто меньше чем N sequential calls
+> - [ ] BFF code duplication неизбежна — нельзя переиспользовать код | ❌ ПОСЛЕДСТВИЕ: shared libraries (SDK для User Service client), gRPC generated clients, shared middleware packages решают дублирование
+
+## Q12. (!) Недостатки BFF?
 
 **1. Code duplication:**
 - Multiple BFFs may have similar aggregation
@@ -462,10 +484,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Code duplication между BFFs? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] BFF code duplication исключительно бизнес-логика — её нужно централизовать в одном BFF | ❌ ПОСЛЕДСТВИЕ: централизация aggregation в одном BFF = возврат к generic API problem; дублирование aggregation оправдано
+> - [ ] Один общий BFF для всех клиентов устраняет дублирование | ❌ ПОСЛЕДСТВИЕ: один общий BFF = generic API problem возвращается; дублирование aggregation между BFF — приемлемая цена per-client ownership
+> - [x] Shared libraries (SDK per service), gRPC generated clients, shared middleware packages (auth, logging); aggregation logic per-client — ОК дублировать | ✓ ПРИМЕНЯТЬ: extract в lib что stable; дублировать что client-specific 📋 ПРАВИЛО: shared infra = lib; client aggregation = duplicate OK 🔗 См. Q12
+> - [ ] gRPC клиенты не переиспользуются между BFF-ами — каждый пишет своё | ❌ ПОСЛЕДСТВИЕ: .proto файлы генерируют клиентский код для любого языка; сгенерированный client SDK переиспользуется во всех BFF
+
+## Q13. Code duplication между BFFs?
 
 **Problem:** 3 BFFs make same call к User Service, handle errors same way.
 
@@ -498,10 +522,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) Ownership — кто пишет BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Backend platform team должна писать все BFF-ы для консистентности | ❌ ПОСЛЕДСТВИЕ: BFF отражает UI requirements; backend team не знает UX нюансов → bottleneck; frontend ждёт каждого изменения
+> - [x] Frontend/client team владеет своим BFF: знают UX requirements, независимо iterate, end-to-end ownership | ✓ ПРИМЕНЯТЬ: продуктовая команда = UI + BFF + ответственность за delivery 📋 ПРАВИЛО: BFF owner = client team = кто понимает UX 🔗 См. Q1
+> - [ ] Отдельная "BFF team" владеет всеми BFF-ами | ❌ ПОСЛЕДСТВИЕ: BFF team = новый bottleneck; frontend снова ждёт; ownership не aligned с UX knowledge
+> - [ ] Ownership BFF не важна — любая команда может менять любой BFF | ❌ ПОСЛЕДСТВИЕ: без ясного owner → конфликты, деградация quality, "fat BFF" никто не рефакторит
+
+## Q14. (!) Ownership — кто пишет BFF?
 
 **Common pattern:** **frontend / client team owns BFF.**
 
@@ -527,10 +553,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Caching в BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Backend platform team должна всегда владеть BFF — разработчики фронтенда не знают backend | ❌ ПОСЛЕДСТВИЕ: BFF отражает UX требования; frontend team лучше понимает что нужно их клиенту; platform team = bottleneck
+> - [ ] BFF может быть owned кем угодно — ownership не влияет на качество | ❌ ПОСЛЕДСТВИЕ: без ясного owner → "fat BFF" антипаттерн; UX-driven decisions принимаются неправильной командой
+> - [ ] Только мобильная команда может писать Mobile BFF, только web — Web BFF (жёсткое разграничение) | ❌ ПОСЛЕДСТВИЕ: в стартапах один full-stack engineer часть обоих; важно что team понимает UX, а не название команды
+> - [x] Client team (mobile/web/TV) пишет свой BFF: понимают UX, независимо iterate, end-to-end ownership | ✓ ПРИМЕНЯТЬ: product team = UI + BFF; platform team = microservices + shared infra 📋 ПРАВИЛО: who owns UX → owns BFF 🔗 См. Q8
+
+## Q15. Caching в BFF?
 
 **Layers:**
 
@@ -564,10 +592,12 @@ Third party API ──→ Partner BFF            ─→ [Product Service]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. BFF at edge (Cloudflare, Vercel)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] BFF кэширует весь персонализированный ответ (user-specific) в CDN | ❌ ПОСЛЕДСТВИЕ: CDN кэширует публичный контент; персонализированный ответ нельзя кэшировать в CDN — только base feed без user context
+> - [ ] Redis кэш в BFF не нужен — достаточно in-process cache | ❌ ПОСЛЕДСТВИЕ: in-process cache не переживает restart и не shared между instances; Redis = distributed, persistent, TTL-based
+> - [x] BFF кэширует на трёх уровнях: upstream (ETag/Redis к сервисам), BFF-level (Redis, короткий TTL), CDN (публичный контент) | ✓ ПРИМЕНЯТЬ: hot data → in-proc; medium → Redis; public → CDN 📋 ПРАВИЛО: персонализированный ответ = не CDN; base feed = CDN OK 🔗 См. Q7
+> - [ ] BFF не должен кэшировать — кэширование только в domain services | ❌ ПОСЛЕДСТВИЕ: агрегированные ответы из нескольких сервисов дорого собирать; BFF-level cache снижает backend load и latency
+
+## Q16. BFF at edge (Cloudflare, Vercel)?
 
 **Trend:** run BFF at edge for globally low latency.
 
@@ -601,10 +631,12 @@ Client ←20ms→ Edge BFF (cached) ←150ms→ Services (cold path)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Testing BFF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Edge BFF имеет полный доступ к БД — можно выполнять сложные queries | ❌ ПОСЛЕДСТВИЕ: edge compute (Cloudflare Workers, Vercel Edge) имеет ограниченный runtime (30s, 128MB, нет прямого DB доступа); BFF на edge — thin aggregator
+> - [ ] Edge BFF снижает latency к origin services до нуля | ❌ ПОСЛЕДСТВИЕ: edge → origin = 100-150ms (cold path); выгода edge BFF = client ↔ edge = 20ms вместо client ↔ central = 100-200ms
+> - [x] Edge BFF (Cloudflare Workers, Vercel Edge): BFF call 20ms вместо 150ms; heavy caching; thin layer; auth + feature flags | ✓ ПРИМЕНЯТЬ: globally distributed product требует low-latency BFF 📋 ПРАВИЛО: edge BFF = thin + cached; heavy logic → central 🔗 См. Q7
+> - [ ] Edge BFF не может делать backend calls — только статический контент | ❌ ПОСЛЕДСТВИЕ: Edge Functions могут fetch() к origin services; cold path latency выше но работает
+
+## Q17. Testing BFF?
 
 **Unit tests:**
 - Resolver / handler functions
@@ -634,16 +666,17 @@ Client ←20ms→ Edge BFF (cached) ←150ms→ Services (cold path)
 - Spans created correctly
 - Metrics exposed
 
+> [!mcq]
+> - [ ] Только E2E тесты нужны для BFF — unit тесты бесполезны | ❌ ПОСЛЕДСТВИЕ: E2E медленные и flaky; unit тесты resolvers с mock clients быстро покрывают aggregation logic
+> - [ ] Contract тесты (Pact) не нужны — достаточно integration тестов | ❌ ПОСЛЕДСТВИЕ: integration тесты не предотвращают breaking changes в API сервисов; Pact → consumer-driven contracts → сервис знает что BFF ожидает
+> - [x] Unit (mock service clients) + Contract (Pact ↔ backend) + Integration (WireMock) + E2E (Playwright) + Chaos (inject latency) | ✓ ПРИМЕНЯТЬ: testing pyramid для BFF: много unit → contract → мало E2E 📋 ПРАВИЛО: BFF testing = resolver unit + Pact contracts + synthetic smoke in prod 🔗 См. Q7
+> - [ ] BFF не нужно тестировать — это только proxy | ❌ ПОСЛЕДСТВИЕ: BFF содержит aggregation logic, fallbacks, data shaping; без тестов: N+1 не обнаружен, fallback не работает
+
 ---
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [API Gateway](api-gateway-interview.md) — related but different ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [API Gateway](api-gateway-interview.md) — related but different
 - [Microservices](microservices-interview.md) — BFF connects them
 - [Edge Computing](edge-computing-interview.md) — BFF at edge
 - [GraphQL](../api/graphql-interview.md) — often used as BFF

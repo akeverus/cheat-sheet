@@ -1312,10 +1312,12 @@ map.pollLastEntry();   // удалить c=3
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Что такое String Templates? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] reversed() создаёт полную копию LinkedHashMap в обратном порядке | ❌ ПОСЛЕДСТВИЕ: reversed() возвращает view, не копию; изменения в оригинале видны через reversed() и наоборот
+> - [x] Java 21 добавила SequencedMap: LinkedHashMap.firstEntry(), lastEntry(), reversed(), putFirst(), pollLastEntry() | ✓ ПРИМЕНЯТЬ: когда нужен ordered map с O(1) доступом к первому/последнему элементу 📋 ПРАВИЛО: SequencedMap = LinkedHashMap + порядок как first-class 🔗 См. Q25
+> - [ ] SequencedMap доступна с Java 8 через Collections.synchronizedSortedMap() | ❌ ПОСЛЕДСТВИЕ: SequencedCollection/SequencedMap интерфейсы добавлены в Java 21 (JEP 431); в Java 8 их нет
+> - [ ] putFirst() работает только если map пуста; иначе бросает IllegalStateException | ❌ ПОСЛЕДСТВИЕ: putFirst() перемещает или вставляет элемент в начало всегда; не проверяет размер map
+
+## Q27. Что такое String Templates?
 
 **String Templates** (JEP 430, preview в Java 21, **удалены в Java 23**) — механизм интерполяции строк, который был доступен как preview-фича:
 
@@ -1351,10 +1353,12 @@ String json = """
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Что такое Foreign Function & Memory API? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] String Templates (STR."...") стабильны с Java 21 и доступны в Java 23+ | ❌ ПОСЛЕДСТВИЕ: String Templates удалены в Java 23 (JEP 465) как неудачный эксперимент; код с STR. не компилируется в Java 23+
+> - [ ] FMT и RAW template processors не существуют; только STR | ❌ ПОСЛЕДСТВИЕ: FMT (с форматированием), RAW (возвращает StringTemplate объект) — были доступны наравне с STR в Java 21-22
+> - [x] String Templates (preview Java 21-22) удалены в Java 23; текущая рекомендация — "Hello, %s".formatted(name) | ✓ ПРИМЕНЯТЬ: String.formatted() для интерполяции; text blocks для многострочных шаблонов 📋 ПРАВИЛО: String Templates = исторический preview; использовать formatted() 🔗 См. Q10
+> - [ ] String Templates заменяют StringBuilder и MessageFormat полностью в Java 21+ | ❌ ПОСЛЕДСТВИЕ: String Templates были experimental и убраны; StringBuilder и MessageFormat по-прежнему актуальны
+
+## Q28. Что такое Foreign Function & Memory API?
 
 **Foreign Function & Memory (FFM) API** (JEP 454, Java 22, preview в Java 19-21) — замена `JNI` для вызова нативных функций и работы с off-heap памятью. В Java 21 доступна как preview.
 
@@ -1404,10 +1408,12 @@ try (Arena arena = Arena.ofConfined()) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Какие улучшения появились в API коллекций и утилитах? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] FFM API — просто ещё одна обёртка над JNI без принципиальных преимуществ | ❌ ПОСЛЕДСТВИЕ: FFM API исключает необходимость C-кода и JNI glue layer; работает через MethodHandle и MemorySegment без нативных заголовков
+> - [x] FFM API (Java 22 stable) заменяет JNI: нативные вызовы через Linker/SymbolLookup, off-heap память через MemorySegment с explicit scope lifetime | ✓ ПРИМЕНЯТЬ: нативные библиотеки (OpenSSL, LAPACK), off-heap буферы для производительности 📋 ПРАВИЛО: FFM = JNI без C-кода + безопасное управление native памятью 🔗 См. Q21
+> - [ ] MemorySegment — только для работы с файлами через mmap | ❌ ПОСЛЕДСТВИЕ: MemorySegment представляет любую непрерывную область памяти: heap, off-heap, mmapped файлы, native буферы; не только файлы
+> - [ ] FFM API доступен только в Java 21 preview; в Java 22 его убрали как String Templates | ❌ ПОСЛЕДСТВИЕ: FFM API (JEP 454) стал stable в Java 22; в отличие от String Templates не был удалён
+
+## Q29. Какие улучшения появились в API коллекций и утилитах?
 
 Java 17-21 добавила множество удобных методов в стандартную библиотеку:
 
@@ -1464,10 +1470,12 @@ int pages = Math.ceilDiv(totalItems, pageSize);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Что такое сильная инкапсуляция внутренних API JDK? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Stream.toList() в Java 16 возвращает ArrayList — тот же результат что и collect(toList()) | ❌ ПОСЛЕДСТВИЕ: Stream.toList() возвращает unmodifiable список; collect(toList()) возвращает изменяемый ArrayList; добавление элементов бросит UnsupportedOperationException
+> - [x] Java 16+: Stream.toList() (unmodifiable), mapMulti(); Java 21: HashMap.newHashMap(n) (корректная ёмкость), Math.ceilDiv(), SequencedCollection APIs | ✓ ПРИМЕНЯТЬ: toList() вместо collect(toUnmodifiableList()); newHashMap(n) для избежания rehashing 📋 ПРАВИЛО: toList()=immutable; newHashMap(n)=no rehash for n elements 🔗 См. Q26
+> - [ ] HashMap.newHashMap(100) создаёт map с лимитом в 100 элементов | ❌ ПОСЛЕДСТВИЕ: newHashMap(100) устанавливает начальную ёмкость для 100 элементов без rehash; жёсткого лимита нет, map растёт дальше
+> - [ ] Math.ceilDiv() доступен с Java 8 через Math.ceil(a/(double)b) | ❌ ПОСЛЕДСТВИЕ: Math.ceilDiv(int,int) добавлен в Java 18; Math.ceil(a/(double)b) работает через double — теряет точность для больших чисел
+
+## Q30. Что такое сильная инкапсуляция внутренних API JDK?
 
 **Strong encapsulation of JDK internals** (JEP 403, Java 17) — финальный шаг инкапсуляции внутренних API JDK, начатой в Java 9 с введением [модульной системы](java-modules-interview.md).
 
@@ -1544,10 +1552,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Что такое новый Random Generator API? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] javax.* пакеты переименованы в java.* при миграции на Java 17+ | ❌ ПОСЛЕДСТВИЕ: javax.* → jakarta.* только для Jakarta EE (Spring Boot 3); стандартные javax.crypto, javax.sql в JDK остались в javax.*
+> - [ ] Security Manager был убран в Java 21 — необходимо убрать все вызовы до Java 21 | ❌ ПОСЛЕДСТВИЕ: Security Manager deprecated с Java 17 и удалён в Java 24 (не 21); в Java 21 ещё присутствует с предупреждениями
+> - [ ] Нельзя мигрировать напрямую с Java 11 на Java 21 — нужно проходить каждую версию | ❌ ПОСЛЕДСТВИЕ: можно мигрировать напрямую на любую LTS; промежуточные версии не обязательны
+> - [x] Шаги миграции: обновить JDK → запустить тесты → InaccessibleObjectException → --add-opens → заменить javax→jakarta (если Jakarta EE) → убрать Nashorn/finalize() | ✓ ПРИМЕНЯТЬ: миграция legacy Java 8/11 кодовой базы на Java 21 LTS 📋 ПРАВИЛО: тесты первыми выявят проблемы; --add-opens как временная мера 🔗 См. Q30
+
+## Q32. Что такое новый Random Generator API?
 
 **Enhanced Pseudo-Random Number Generators** (JEP 356, Java 17) — новый унифицированный API для генерации случайных чисел:
 
@@ -1584,10 +1594,12 @@ RandomGeneratorFactory.all()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Какие улучшения получил NullPointerException? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] java.util.Random deprecated in Java 17 — обязательно перейти на RandomGenerator | ❌ ПОСЛЕДСТВИЕ: java.util.Random не deprecated; теперь реализует RandomGenerator и полностью совместим с новым API
+> - [x] Java 17 (JEP 356): RandomGenerator интерфейс объединяет все PRNG; Xoshiro256PlusPlus/L128X256MixRandom; JumpableGenerator для параллельных симуляций | ✓ ПРИМЕНЯТЬ: параллельные Monte Carlo симуляции → JumpableGenerator; высокая скорость → Xoshiro; крипто → SecureRandom 📋 ПРАВИЛО: RandomGenerator = unified PRNG interface; old Random implements it 🔗 См. Q21
+> - [ ] JumpableGenerator используется для криптографических целей вместо SecureRandom | ❌ ПОСЛЕДСТВИЕ: JumpableGenerator — для параллельных симуляций; для крипто всегда SecureRandom; PRNG не подходит для ключей/токенов
+> - [ ] RandomGeneratorFactory нельзя использовать для перечисления алгоритмов — нужен ServiceLoader | ❌ ПОСЛЕДСТВИЕ: RandomGeneratorFactory.all() специально предназначен для перечисления доступных алгоритмов PRNG; ServiceLoader не нужен
+
+## Q33. Какие улучшения получил NullPointerException?
 
 **Helpful NullPointerExceptions** (JEP 358, Java 14, по умолчанию с Java 17) — расширенные сообщения об ошибках, указывающие точную причину NPE:
 
@@ -1648,10 +1660,12 @@ System.out.println(ruFmt.format(1_000_000)); // "1 млн"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. (!) Какие ключевые отличия между Java 17 и Java 21? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Helpful NPE по умолчанию включены начиная с Java 14 во всех JVM | ❌ ПОСЛЕДСТВИЕ: Helpful NPE включены по умолчанию с Java 17; в Java 14-16 требуют флага -XX:+ShowCodeDetailsInExceptionMessages
+> - [ ] Helpful NPE показывают имя переменной которая равна null в любом случае | ❌ ПОСЛЕДСТВИЕ: Helpful NPE показывают метод/поле которое вызвало NPE; точное имя переменной недоступно — JVM анализирует bytecode цепочки вызовов
+> - [x] Java 17+ по умолчанию: "Cannot invoke X because return value of Y is null" — точно указывает цепочку вызовов где встретился null | ✓ ПРИМЕНЯТЬ: диагностика chain NPE без дебаггера в production logs 📋 ПРАВИЛО: Helpful NPE = bytecode анализ → точное место NPE без стек трейса 🔗 См. Q30
+> - [ ] Helpful NPE работает только при запуске через IDE; в production отключены | ❌ ПОСЛЕДСТВИЕ: Helpful NPE работают в любой JVM 17+; IDE vs production не влияет
+
+## Q35. (!) Какие ключевые отличия между Java 17 и Java 21?
 
 Обе версии — LTS, но Java 21 значительно расширяет возможности языка:
 
@@ -1681,10 +1695,12 @@ System.out.println(ruFmt.format(1_000_000)); // "1 млн"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Virtual Threads: детали реализации, Continuation и Carrier Threads ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Java 21 LTS полностью заменяет Java 17 — не стоит использовать Java 17 для новых проектов | ❌ ПОСЛЕДСТВИЕ: Java 17 ещё поддерживается до 2029; некоторые frameworks/libraries ещё не полностью совместимы с Java 21
+> - [x] Java 17 → 21: добавлены virtual threads (JEP 444), record patterns, switch pattern matching, sequenced collections; Java 17 — stable types, Java 21 — concurrency revolution | ✓ ПРИМЕНЯТЬ: новые проекты → Java 21; legacy migration → Java 17 как промежуточный шаг 📋 ПРАВИЛО: Java 17 = type system; Java 21 = concurrency + completed patterns 🔗 См. Q20
+> - [ ] Virtual Threads появились в Java 17 как stable feature | ❌ ПОСЛЕДСТВИЕ: Virtual Threads (JEP 444) stable в Java 21; в Java 17 были только в project Loom как incubator
+> - [ ] Pattern matching в switch stable в Java 17 | ❌ ПОСЛЕДСТВИЕ: Pattern matching в switch (JEP 441) stable в Java 21; в Java 17 — только instanceof pattern matching (JEP 394)
+
+## Q36. Virtual Threads: детали реализации, Continuation и Carrier Threads
 
 **Virtual Threads** (JEP 444, Java 21) — не просто "лёгкие потоки". Их реализация основана на концепции **Continuation** и механизме монтирования/демонтирования на carrier threads.
 
@@ -1771,10 +1787,12 @@ try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. (!) Scoped Values: альтернатива ThreadLocal в мире Virtual Threads ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] StructuredTaskScope автоматически параллелизует все методы без изменений кода | ❌ ПОСЛЕДСТВИЕ: StructuredTaskScope требует явного scope.fork() для каждой задачи; существующий последовательный код надо рефакторить
+> - [ ] ShutdownOnFailure отменяет всё при первой ошибке; ShutdownOnSuccess ждёт все задачи | ❌ ПОСЛЕДСТВИЕ: ShutdownOnSuccess завершает scope при первом успехе (race pattern); ShutdownOnFailure — при первой ошибке
+> - [ ] StructuredTaskScope не позволяет получить результаты forked задач | ❌ ПОСЛЕДСТВИЕ: scope.fork() возвращает Subtask<T>; после scope.join() → subtask.get() возвращает результат
+> - [x] StructuredTaskScope ограничивает lifetime VT scope-ом try-with-resources; при выходе незавершённые VT автоматически cancel | ✓ ПРИМЕНЯТЬ: параллельные fetch с ограниченным временем жизни; fan-out с агрегацией 📋 ПРАВИЛО: structured concurrency = fork в scope + join + автоотмена при выходе 🔗 См. Q36
+
+## Q37. (!) Scoped Values: альтернатива ThreadLocal в мире Virtual Threads
 
 **Scoped Values** (JEP 464, preview Java 21) решают проблему `ThreadLocal` в контексте virtual threads и structured concurrency.
 

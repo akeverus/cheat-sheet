@@ -91,10 +91,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Capacity estimation? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Consistency и durability — главные NFR для поисковой системы | ❌ ПОСЛЕДСТВИЕ: поиск — read-heavy, eventual consistency достаточно; строгий consistency добавляет latency без пользы
+> - [ ] Throughput не важен если latency низкий | ❌ ПОСЛЕДСТВИЕ: при 10k QPS без throughput capacity система перегружается даже с хорошим p50; NFR нужны оба
+> - [ ] Accuracy важнее latency — лучше 2с точный ответ, чем 200ms менее точный | ❌ ПОСЛЕДСТВИЕ: пользователи покидают поиск после 200-300ms; точность без скорости = неиспользуемая система
+> - [x] Low latency (< 200ms p99) + high availability (99.9%+) + freshness (seconds) + relevance quality | ✓ ПРИМЕНЯТЬ: при проектировании NFR для site search; все четыре в балансе 📋 ПРАВИЛО: Search NFR = Latency + Availability + Freshness + Relevance 🔗 См. Q6
+
+## Q2. (!) Capacity estimation?
 
 **Assumptions (e-commerce):**
 - 100M products indexed
@@ -122,10 +124,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Inverted index — что это? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Для 100M docs достаточно одного узла с 1TB SSD — индексирование быстрее | ❌ ПОСЛЕДСТВИЕ: single node = single point of failure; 10k QPS невозможен без параллелизма по шардам
+> - [ ] Index size ≈ raw data size (100 GB docs = 100 GB index) | ❌ ПОСЛЕДСТВИЕ: inverted index = postings lists + term dict + stored fields ≈ 50-150% от raw; плюс replication 2-3x → планировать 400-600 GB
+> - [x] 100M docs × 1KB = 100GB raw; inverted index ~150GB; replication 3x = 450GB; 10k QPS → ~10 shards на ~10 nodes | ✓ ПРИМЕНЯТЬ: capacity estimation для site search на интервью 📋 ПРАВИЛО: Index = raw × 1.5, replication × 3, nodes = peak_QPS / QPS_per_node 🔗 См. Q12
+> - [ ] QPS capacity не влияет на число нод — только на RAM | ❌ ПОСЛЕДСТВИЕ: каждый запрос использует CPU для scoring и IO для чтения postings; без достаточного числа нод CPU bottleneck при пиковой нагрузке
+
+## Q3. (!) Inverted index — что это?
 
 **Forward index:** doc → words (normal DB).
 ```
@@ -157,10 +161,12 @@ doc_2: "quick fox jumps"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Tokenization, normalization, stemming? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Inverted index = forward index с обратной сортировкой документов | ❌ ПОСЛЕДСТВИЕ: это другая структура: forward index = doc→terms, inverted index = term→docs list; сортировка тут ни при чём
+> - [x] Inverted index: term → {doc_id, positions, frequencies}; позволяет O(n_matches) lookup вместо O(all_docs) scan | ✓ ПРИМЕНЯТЬ: полнотекстовый поиск по любым размерам корпуса 📋 ПРАВИЛО: Inverted = term→postings; lookup = O(matches), не O(corpus) 🔗 См. Q3
+> - [ ] Inverted index хранит только doc_id без позиций — позиции ищутся отдельно | ❌ ПОСЛЕДСТВИЕ: Lucene хранит позиции в postings list; без позиций невозможны phrase queries ("hello world") и highlight
+> - [ ] B-tree индекс в базах данных эквивалентен inverted index для текста | ❌ ПОСЛЕДСТВИЕ: B-tree ищет по точному ключу/range; inverted index ищет по term → multiple docs; семантически разные структуры
+
+## Q4. (!) Tokenization, normalization, stemming?
 
 **Pipeline при indexing:**
 
@@ -202,10 +208,12 @@ doc_2: "quick fox jumps"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Elasticsearch vs Lucene — разница? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Разный pipeline на indexing vs query time — нормальная практика | ❌ ПОСЛЕДСТВИЕ: если analyzer при indexing стеммирует "running"→"run", а при query не стеммирует — термин "running" не совпадает с "run" в индексе → 0 результатов
+> - [ ] Stemming и lemmatization идентичны по точности | ❌ ПОСЛЕДСТВИЕ: stemming — эвристический (Porter), может давать нерелевантные корни; lemmatization — dictionary-based, точнее но медленнее
+> - [x] Pipeline: tokenize → lowercase → ASCII fold → stop words → stem; одинаковый на indexing И query time; несинхронизированный = zero recall | ✓ ПРИМЕНЯТЬ: text analysis в Elasticsearch; обязательно совпадение analyzer на indexing и search 📋 ПРАВИЛО: Same analyzer both ways = consistent term matching 🔗 См. Q10
+> - [ ] Stop words всегда надо оставлять — они улучшают recall | ❌ ПОСЛЕДСТВИЕ: stop words ("the", "a") увеличивают postings lists в 10x без пользы для precision; их удаление уменьшает index size и ускоряет lookup
+
+## Q5. Elasticsearch vs Lucene — разница?
 
 **Lucene:** Java library (индекс + search на одном машины).
 
@@ -238,10 +246,12 @@ doc_2: "quick fox jumps"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. (!) High-level architecture? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Elasticsearch — это замена реляционным БД с полным ACID | ❌ ПОСЛЕДСТВИЕ: ES eventual consistent, нет транзакций; для ACID данных нужна реляционная БД, ES — для поиска
+> - [ ] Lucene напрямую масштабируется на кластер без оберток | ❌ ПОСЛЕДСТВИЕ: Lucene — single-node library; для кластеризации, репликации и REST API нужен ES/Solr
+> - [x] Elasticsearch = distributed wrapper над Lucene: REST API + sharding + replication + aggregations; Lucene = low-level search library | ✓ ПРИМЕНЯТЬ: ES для production distributed search; Lucene embedded для in-process search 📋 ПРАВИЛО: ES = Lucene × cluster; Lucene = ES engine inside 🔗 См. Q12
+> - [ ] Solr и Elasticsearch одинаковы по всем параметрам, можно выбрать любой | ❌ ПОСЛЕДСТВИЕ: ES лучше для real-time и JSON; Solr исторически сильнее для enterprise faceted search; разные эко-системы и monitoring tooling
+
+## Q6. (!) High-level architecture?
 
 ```
 Data sources → [Indexing Pipeline] → [Index Service (Elasticsearch)] ← [Query Service]
@@ -265,10 +275,12 @@ Data sources → [Indexing Pipeline] → [Index Service (Elasticsearch)] ← [Qu
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Indexing pipeline? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Query service и indexing service должны быть одним компонентом для консистентности | ❌ ПОСЛЕДСТВИЕ: индексирование write-heavy (batch-friendly), поиск read-heavy (latency-sensitive); совмещение = resource contention → деградация одного из путей
+> - [ ] Cache для поисковых запросов не нужен — каждый запрос уникален | ❌ ПОСЛЕДСТВИЕ: топ-1000 popular queries = 80% трафика; Redis cache с TTL 60s снижает нагрузку на ES в 5-10x
+> - [x] Indexing pipeline: Source → CDC/Kafka → Transform → ES bulk; Query: Client → API GW → Query Service → ES scatter-gather → Cache | ✓ ПРИМЕНЯТЬ: разделение write path и read path в distributed search 📋 ПРАВИЛО: Search architecture = Index path (async) + Query path (sync, latency-sensitive) 🔗 См. Q7
+> - [ ] Elasticsearch сам читает из БД — отдельный indexing pipeline не нужен | ❌ ПОСЛЕДСТВИЕ: ES не интегрируется с БД напрямую; нужны CDC connector (Debezium) или application-level event emission
+
+## Q7. (!) Indexing pipeline?
 
 **Batch indexing:**
 ```
@@ -308,10 +320,12 @@ Application → Kafka topic → Consumer → Index (ES)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Near real-time индексация? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Batch nightly достаточен для всех use cases — freshness не критична | ❌ ПОСЛЕДСТВИЕ: продуктовый каталог с price changes нужен seconds freshness; nightly batch → пользователи видят неактуальные цены/наличие
+> - [x] CDC (Debezium → Kafka) даёт real-time freshness; идемпотентные document ID из source = безопасный retry; bulk API для throughput | ✓ ПРИМЕНЯТЬ: real-time product search updates 📋 ПРАВИЛО: Indexing = CDC+Kafka+idempotency+bulk; DLQ для failed docs 🔗 См. Q8
+> - [ ] ES _update API лучше bulk API для throughput | ❌ ПОСЛЕДСТВИЕ: каждый _update = отдельный HTTP request; bulk API батчит 500-5000 docs → 10-50x больший throughput
+> - [ ] Без идемпотентного ID при retry индекс окажется дублями | ❌ ПОСЛЕДСТВИЕ: при использовании source document ID как ES _id retry = overwrite (upsert); дублей не будет если ID детерминированный
+
+## Q8. Near real-time индексация?
 
 **Elasticsearch:**
 - Documents indexed в in-memory buffer
@@ -336,10 +350,12 @@ Application → Kafka topic → Consumer → Index (ES)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Query flow (scatter-gather)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] refresh_interval=1s означает что документ сразу виден после записи | ❌ ПОСЛЕДСТВИЕ: документ сначала в in-memory buffer → через 1s refresh → в новом segment → searchable; есть задержка до 1s
+> - [ ] Translog в ES используется для replication, не для durability | ❌ ПОСЛЕДСТВИЕ: translog = write-ahead log для crash recovery на single node; replication отдельно через shard copies
+> - [x] refresh_interval (default 1s) = buffer flush → new Lucene segment → searchable; bulk load → disable refresh (-1) → re-enable after; translog = crash recovery | ✓ ПРИМЕНЯТЬ: tuning freshness vs indexing throughput 📋 ПРАВИЛО: refresh_interval = freshness latency; -1 для bulk load, 1s для NRT 🔗 См. Q7
+> - [ ] Для NRT нужно уменьшить refresh_interval до 100ms — это стандартная практика | ❌ ПОСЛЕДСТВИЕ: слишком частый refresh = много мелких Lucene segments → slow search; оптимально 1-5s для большинства use cases
+
+## Q9. (!) Query flow (scatter-gather)?
 
 **Distributed search:**
 ```
@@ -377,10 +393,12 @@ Return results
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Relevance scoring: TF-IDF, BM25? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Coordinator fetch full docs from all shards для merge | ❌ ПОСЛЕДСТВИЕ: fetch full docs от всех шардов = сетевой overhead O(shards × pageSize); scatter-gather возвращает только top-K scores per shard, full docs только для final top-K
+> - [ ] Scatter-gather работает только если все шарды ответили | ❌ ПОСЛЕДСТВИЕ: search_timeout позволяет вернуть частичный результат при slow shard; partial results с degraded quality лучше timeout
+> - [x] Coordinator скаттерит запрос ко всем шардам; каждый возвращает local top-K (IDs + scores); coordinator мержит → global top-K → fetches full docs | ✓ ПРИМЕНЯТЬ: distributed full-text search в ES 📋 ПРАВИЛО: scatter=local top-K, gather=global merge, fetch=full docs 🔗 См. Q12
+> - [ ] Query идёт только к одному шарду — тому, где документ хранится | ❌ ПОСЛЕДСТВИЕ: нельзя знать заранее какой шард хранит релевантные документы; scatter-gather = обязательный паттерн для полноты результатов
+
+## Q10. (!) Relevance scoring: TF-IDF, BM25?
 
 **TF-IDF:**
 - TF (term frequency): more occurrences = more relevant
@@ -415,10 +433,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Ranking beyond text (ML)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] TF-IDF и BM25 идентичны по результатам — выбор не важен | ❌ ПОСЛЕДСТВИЕ: TF-IDF линейно растёт при повторениях; BM25 saturates после порога → BM25 лучше избегает keyword stuffing; ES использует BM25 по умолчанию
+> - [ ] Длина документа не влияет на релевантность в BM25 | ❌ ПОСЛЕДСТВИЕ: BM25 нормализует по длине (параметр b=0.75); без нормализации длинные docs получали бы несправедливо высокий score
+> - [x] BM25 = TF-IDF с saturation (k) + length normalization (b); default в ES; score = IDF × saturated_TF / length_adjusted | ✓ ПРИМЕНЯТЬ: text relevance scoring в ES/Lucene 📋 ПРАВИЛО: BM25 = diminishing TF returns + doc length penalty; k=1.2, b=0.75 defaults 🔗 См. Q11
+> - [ ] IDF важнее TF при оценке релевантности в любом случае | ❌ ПОСЛЕДСТВИЕ: оба важны; для rare terms IDF доминирует; для short precise queries TF критичен; BM25 балансирует оба
+
+## Q11. Ranking beyond text (ML)?
 
 **Text relevance только часть:**
 
@@ -454,10 +474,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Sharding стратегии? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] ML-based LTR можно применять к миллионам кандидатов напрямую | ❌ ПОСЛЕДСТВИЕ: deep ML-модель дорогая; применять к 1M docs = latency 10+ секунд; two-stage: BM25 top-1000 → ML re-rank top-100
+> - [ ] BM25 учитывает персонализацию и freshness автоматически | ❌ ПОСЛЕДСТВИЕ: BM25 = pure text relevance; freshness и personalization = дополнительные сигналы поверх BM25 в hand-tuned formula или LTR
+> - [x] Two-stage: BM25 retrieval top-1000 → ML re-rank top-100; signals: clicks, CTR, freshness, popularity, personalization | ✓ ПРИМЕНЯТЬ: production search ranking с ML в крупных системах 📋 ПРАВИЛО: Stage 1 = fast recall (BM25), Stage 2 = slow precision (ML) 🔗 См. Q18
+> - [ ] A/B тестирование ранкера требует полного rollout перед измерением | ❌ ПОСЛЕДСТВИЕ: A/B test = parallel traffic split; метрики (CTR, conversion) измеряются одновременно; full rollout = нет baseline для сравнения
+
+## Q12. (!) Sharding стратегии?
 
 **Shard:** partition of index on one node.
 
@@ -490,10 +512,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Replication? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Больше шардов всегда лучше — увеличивают параллелизм | ❌ ПОСЛЕДСТВИЕ: слишком много мелких шардов = overhead (metadata, JVM heap per shard); правило: 20-50 GB per shard; 1000 шардов на кластере = проблема
+> - [ ] Time-based sharding подходит для product catalog | ❌ ПОСЛЕДСТВИЕ: time-based = для append-only logs; product catalog без временного dimension → routing по hash или category
+> - [x] Shard count = data_size / target_shard_size (20-50GB); routing key для targeted search; time-based для logs | ✓ ПРИМЕНЯТЬ: initial sharding design для ES index 📋 ПРАВИЛО: Shard size 20-50GB; # primaries fixed at creation; replicas изменяемы 🔗 См. Q13
+> - [ ] Число шардов можно изменить после создания индекса | ❌ ПОСЛЕДСТВИЕ: primary shards фиксированы при создании; изменение = reindex в новый индекс с другим sharding
+
+## Q13. Replication?
 
 **Replica shard:** copy for HA + read scale.
 
@@ -521,10 +545,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) Autocomplete / typeahead? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Replicas увеличивают write throughput | ❌ ПОСЛЕДСТВИЕ: каждый write реплицируется синхронно на все replicas; больше replicas = slower writes; replicas помогают только read throughput
+> - [x] Replicas = HA (node failure → replica promoted) + read scale (queries to primaries + replicas); write: primary → replicas sync | ✓ ПРИМЕНЯТЬ: production ES с HA требованиями; 1-2 replicas стандарт 📋 ПРАВИЛО: 0 replicas = data loss risk; 1 replica = 2x storage + HA; 2 replicas = quorum 🔗 См. Q12
+> - [ ] Primary сhard и replica синхронизируются asynchronously — eventual consistency | ❌ ПОСЛЕДСТВИЕ: ES по умолчанию sync replication; write ACK только после replica confirm; для async нужен wait_for_active_shards=1
+> - [ ] Replicas на том же node что primary для производительности | ❌ ПОСЛЕДСТВИЕ: ES не размещает replica и primary одного shard на одном node; это защита от node failure
+
+## Q14. (!) Autocomplete / typeahead?
 
 **Goal:** suggest completions as user types.
 
@@ -562,10 +588,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Typo tolerance / fuzzy match? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Autocomplete работает через full-text BM25 поиск по всему индексу | ❌ ПОСЛЕДСТВИЕ: full-text search на каждый keystroke при 100M docs = latency 200ms+; autocomplete требует специальных структур (FST, Redis sorted sets) для < 50ms
+> - [ ] Redis sorted sets не поддерживают prefix queries | ❌ ПОСЛЕДСТВИЕ: ZRANGEBYLEX команда ES lookup по prefix; sorted sets с lexicographic order = эффективный prefix suggester
+> - [ ] Trie легко масштабировать горизонтально | ❌ ПОСЛЕДСТВИЕ: distributed trie сложен (split/merge при добавлении); в practice используют ES completion suggester (FST) или Redis per-prefix sorted sets
+> - [x] ES completion suggester (FST, in-memory, < 50ms) или Redis sorted sets по prefix; ранжировать по popularity; обновлять из query logs | ✓ ПРИМЕНЯТЬ: typeahead с < 50ms latency требованием 📋 ПРАВИЛО: Autocomplete = dedicated structure (FST/Redis), не full-text search 🔗 См. Q15
+
+## Q15. (!) Typo tolerance / fuzzy match?
 
 **Goal:** "appel" finds "apple".
 
@@ -605,10 +633,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Faceted search / filters? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] fuzziness: AUTO всегда лучше фиксированного значения | ❌ ПОСЛЕДСТВИЕ: AUTO применяет fuzziness 1 для коротких слов (< 4 chars); для 2-char "is" fuzzy = "in", "it" etc. — много false positives; иногда fixed fuzziness точнее
+> - [x] Levenshtein distance (edit distance) через ES fuzzy query; N-gram для partial; phonetic для names; больше tolerance = больше recall, меньше precision | ✓ ПРИМЕНЯТЬ: "appel" → "apple"; fuzziness: 1-2 для слов > 4 chars 📋 ПРАВИЛО: fuzzy = edit distance; ngram = substring; phonetic = sounds-like 🔗 См. Q14
+> - [ ] N-gram подход точнее edit distance для опечаток | ❌ ПОСЛЕДСТВИЕ: n-gram ищет общие substrings; edit distance ищет минимальные правки; для typos (замена буквы) edit distance точнее; n-gram лучше для partial match
+> - [ ] Phonetic encoding работает для всех языков | ❌ ПОСЛЕДСТВИЕ: Soundex и Metaphone разработаны для английского; для русского/китайского нужны другие алгоритмы или phonetic-aware tokenizers
+
+## Q16. Faceted search / filters?
 
 **Facets:** categorical breakdowns (brand, price range, rating).
 
@@ -645,10 +675,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Semantic search / vector embeddings? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Faceted aggregations всегда быстры независимо от cardinality | ❌ ПОСЛЕДСТВИЕ: terms aggregation на high-cardinality field (user_id = millions) = OOM или timeout; используй cardinality < 100K для realtime facets
+> - [x] Facets = ES aggregations на query result; cached bitsets для filters; cardinality limits performance; sidebar UI shows counts | ✓ ПРИМЕНЯТЬ: product catalog с фильтрами по категории, цене, рейтингу 📋 ПРАВИЛО: Facets = aggs on search results; filter context cached, query context не cached 🔗 См. Q9
+> - [ ] Facets и filters — синонимы, одна операция | ❌ ПОСЛЕДСТВИЕ: facets = counts breakdown per value (aggregation); filters = narrow результаты; facets обычно применяются к уже отфильтрованным результатам
+> - [ ] post_filter не влияет на facets aggregations | ❌ ПОСЛЕДСТВИЕ: post_filter применяется ПОСЛЕ aggregations; позволяет видеть полные facet counts при активном filter — это намеренная разница
+
+## Q17. Semantic search / vector embeddings?
 
 **Problem:** lexical search (BM25) misses synonyms, semantic similarity.
 - Query "running shoes" won't match "jogging footwear"
@@ -685,10 +717,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. (!) Analytics и learning-to-rank? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Semantic search заменяет BM25 полностью — lexical search устарел | ❌ ПОСЛЕДСТВИЕ: BM25 лучше для exact keyword match (product ID, names); semantic лучше для synonyms/paraphrase; hybrid дает лучший recall
+> - [ ] Vector embeddings можно использовать без переиндексации при смене модели | ❌ ПОСЛЕДСТВИЕ: при смене embedding model размерность и пространство меняются; все документы нужно переиндексировать с новой моделью
+> - [x] Hybrid: score = α × BM25 + (1-α) × cosine_similarity(query_vec, doc_vec); ANN index (HNSW) для kNN; ES dense_vector + kNN | ✓ ПРИМЕНЯТЬ: semantic search при семантических запросах + lexical для exact 📋 ПРАВИЛО: Hybrid = BM25 recall + vector precision; ANN = approximate для скорости 🔗 См. Q11
+> - [ ] kNN exact search быстрее ANN для больших коллекций | ❌ ПОСЛЕДСТВИЕ: exact kNN = O(N × d); ANN (HNSW) = O(log N) с приемлемой точностью; для 100M vectors exact = секунды vs ANN = milliseconds
+
+## Q18. (!) Analytics и learning-to-rank?
 
 **Query logs:**
 - Every search + click → event log
@@ -717,10 +751,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Hot queries cache? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Click = прямой сигнал релевантности без искажений | ❌ ПОСЛЕДСТВИЕ: position bias (users click top results regardless of relevance); нужна counterfactual correction или interleaving experiments
+> - [ ] NDCG и CTR измеряют одно и то же | ❌ ПОСЛЕДСТВИЕ: CTR = clicks/impressions (пользовательское поведение); NDCG = relevance × position (quality metric); CTR biased by position, NDCG требует relevance labels
+> - [x] Query logs → clicks/dwell time/conversion → LTR training data; feedback loop: collect → label → train (XGBoost/neural) → A/B test → iterate | ✓ ПРИМЕНЯТЬ: continuous improvement поискового ранкера 📋 ПРАВИЛО: LTR = behavioral data → model → A/B test → metric improvement 🔗 См. Q11
+> - [ ] LTR требует ручной разметки relevance для каждого запроса | ❌ ПОСЛЕДСТВИЕ: ручная разметка дорога; implicit signals (clicks, dwell) используются как weak labels с position bias correction
+
+## Q19. Hot queries cache?
 
 **20% queries = 80% volume** typically.
 
@@ -750,10 +786,12 @@ score = IDF(term) × (TF × (k+1)) / (TF + k × (1 - b + b × |D|/avgdl))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. Index rebuild / rollover? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Cache всех поисковых запросов без разбора — universal cache | ❌ ПОСЛЕДСТВИЕ: персонализированные/уникальные запросы = cache miss всегда; только popular queries кешировать стоит (top 20% = 80% trафика)
+> - [ ] ES request cache работает для все типов запросов | ❌ ПОСЛЕДСТВИЕ: ES request cache только для size=0 (aggs без hits); regular search queries не кешируются request cache; только filter context кеширует bitsets
+> - [x] Redis: hash(query+filters) → result IDs, TTL 60s-5min; CDN для public queries; ES filter cache для bitsets; 20% queries = 80% volume | ✓ ПРИМЕНЯТЬ: popular search results caching в e-commerce 📋 ПРАВИЛО: Cache query hash → results; TTL = freshness tolerance; персонализированные не кешировать 🔗 См. Q6
+> - [ ] Инвалидация cache при обновлении продукта не нужна если TTL короткий | ❌ ПОСЛЕДСТВИЕ: продукт "out of stock" в cache дает плохой UX; event-driven invalidation при критических изменениях даже с TTL < 60s
+
+## Q20. Index rebuild / rollover?
 
 **When needed:**
 - Schema change (new analyzer, new fields)

@@ -102,10 +102,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Архитектура ELK для логов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] ELK используется только для логов — для APM и search нужны отдельные инструменты | ❌ ПОСЛЕДСТВИЕ: Elastic APM и Elasticsearch search — часть того же Elastic Stack; единый стек охватывает logs, APM, SIEM, vector search
+> - [ ] Logstash обязателен в ELK — без него данные не попадут в Elasticsearch | ❌ ПОСЛЕДСТВИЕ: Filebeat может писать напрямую в ES минуя Logstash; Logstash optional — нужен только для сложного transform
+> - [ ] Elasticsearch — реляционная БД с SQL, поддерживает JOIN и foreign keys | ❌ ПОСЛЕДСТВИЕ: Elasticsearch — document-based NoSQL с inverted index; JOIN ограничен nested/parent-child; SQL поддержан только через Elasticsearch SQL plugin
+> - [x] Elasticsearch (distributed search) + Logstash (pipeline) + Kibana (UI) + Beats (shippers) — log aggregation, search, SIEM, APM | ✓ ПРИМЕНЯТЬ: когда нужен full-text search + log aggregation + visualization в одном стеке 📋 ПРАВИЛО: ELK = store(ES) + ingest(Logstash) + ship(Beats) + viz(Kibana) 🔗 См. Q2
+
+## Q2. (!) Архитектура ELK для логов?
 
 ```mermaid
 graph LR
@@ -131,10 +133,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. ELK vs EFK vs other stacks? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Apps должны писать логи напрямую в Elasticsearch через HTTP клиент | ❌ ПОСЛЕДСТВИЕ: без Filebeat нет buffering; при ES перегрузке 429 — логи теряются; прямая запись создаёт tight coupling между приложением и ES
+> - [ ] Logstash обязателен между Filebeat и ES — без него pipeline не работает | ❌ ПОСЛЕДСТВИЕ: Filebeat имеет встроенные processors (grok, add_fields); может писать напрямую в ES; Logstash нужен только для сложного transform
+> - [x] Apps → Filebeat (DaemonSet/sidecar) → optional Logstash → Elasticsearch → Kibana; Filebeat читает файлы/stdout | ✓ ПРИМЕНЯТЬ: K8s log collection через Filebeat DaemonSet → ES → Kibana dashboards 📋 ПРАВИЛО: Filebeat = lightweight shipper; Logstash = heavy transform; ES = store; Kibana = viz 🔗 См. Q1
+> - [ ] Kibana — это ingestion сервис принимающий логи от приложений | ❌ ПОСЛЕДСТВИЕ: Kibana — только UI/visualization layer; ingestion делает Filebeat; хранение — Elasticsearch
+
+## Q3. ELK vs EFK vs other stacks?
 
 **ELK** — Elasticsearch + Logstash + Kibana + Filebeat.
 **EFK** — Elasticsearch + **Fluentd** + Kibana (popular в K8s, более flexible).
@@ -150,10 +154,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Что такое Elasticsearch? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Fluentd = Logstash с другим именем — оба одинаковы по возможностям | ❌ ПОСЛЕДСТВИЕ: Fluentd написан на Ruby, более lightweight, нативный для K8s; Logstash на JVM — heavyweight, но больший ecosystem plugins
+> - [ ] EFK нельзя использовать в K8s — только ELK совместим с Kubernetes | ❌ ПОСЛЕДСТВИЕ: EFK (Elasticsearch + Fluentd + Kibana) — наиболее популярный choice именно в K8s из-за нативного Fluentd DaemonSet
+> - [x] EFK использует Fluentd вместо Logstash (более K8s-friendly); PLG (Promtail+Loki+Grafana) — дешевле но без full-text search | ✓ ПРИМЕНЯТЬ: EFK в K8s если нужен flexible routing; PLG если бюджет ограничен и достаточно label-based query 📋 ПРАВИЛО: ELK=heavyweight+fulltext; EFK=K8s-friendly; PLG=cheap+labels 🔗 См. Q24
+> - [ ] OpenSearch — это полная копия ELK без изменений, создана AWS | ❌ ПОСЛЕДСТВИЕ: OpenSearch — форк ES 7.10 + Kibana 7.10 с отдельным development roadmap; diverged в security features, API совместимость не гарантирована
+
+## Q4. (!) Что такое Elasticsearch?
 
 **Elasticsearch** — distributed search engine на **Apache Lucene**. Open-source (но license changed в 2021).
 
@@ -169,10 +175,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) Index, shards, replicas? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Elasticsearch — специализированная БД только для логов, не подходит для product search | ❌ ПОСЛЕДСТВИЕ: Elasticsearch — general-purpose search engine; активно используется для e-commerce product search (Amazon, eBay), knowledge bases, vector search
+> - [x] Distributed search engine на Apache Lucene: full-text search через inverted index, horizontal scaling через sharding, REST API | ✓ ПРИМЕНЯТЬ: full-text search, log aggregation, analytics aggregations, vector similarity search 📋 ПРАВИЛО: ES = Lucene + REST + distribution; searchable ≈ real-time после index 🔗 См. Q8
+> - [ ] Elasticsearch не поддерживает aggregations — только поиск документов | ❌ ПОСЛЕДСТВИЕ: Elasticsearch имеет мощную aggregations API (terms, histogram, date_histogram, percentiles); активно используется для analytics
+> - [ ] Elasticsearch хранит данные в реляционных таблицах для эффективных JOIN | ❌ ПОСЛЕДСТВИЕ: ES — document store с JSON; JOIN реализован через nested objects или parent-child, не через реляционные таблицы
+
+## Q5. (!) Index, shards, replicas?
 
 **Index** — namespace для documents (~ table в SQL).
 
