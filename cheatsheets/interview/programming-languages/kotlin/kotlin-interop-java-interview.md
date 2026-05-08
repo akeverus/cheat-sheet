@@ -820,10 +820,12 @@ mutable.add("Charlie");      // OK
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. `Java Streams` vs `Kotlin Sequences`: в чём разница и когда что использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Kotlin List (read-only) полностью immutable — Java-код не может её мутировать | ❌ ПОСЛЕДСТВИЕ: read-only в Kotlin = ограниченный интерфейс без add/remove; в байткоде java.util.List; Java-код может вызвать .add() и мутировать коллекцию
+> - [x] Kotlin List/MutableList в байткоде = java.util.List; read-only List не immutable — Java может мутировать через cast или API | ✓ ПРИМЕНЯТЬ: возвращать List из Kotlin API — Java получает java.util.List и может мутировать 📋 ПРАВИЛО: Kotlin read-only = интерфейс без мутаций; не immutable = Java может мутировать 🔗 См. Q1
+> - [ ] Java ArrayList и Kotlin MutableList — разные классы в байткоде | ❌ ПОСЛЕДСТВИЕ: Kotlin MutableList компилируется в java.util.ArrayList; это тот же класс в байткоде
+> - [ ] Kotlin listOf() возвращает java.util.Collections.unmodifiableList() | ❌ ПОСЛЕДСТВИЕ: listOf() возвращает java.util.Arrays.asList() (для малых списков) или kotlin.collections.EmptyList; НЕ unmodifiableList()
+
+## Q17. `Java Streams` vs `Kotlin Sequences`: в чём разница и когда что использовать?
 
 Обе абстракции предоставляют ленивую обработку данных, но отличаются в деталях:
 
@@ -860,10 +862,12 @@ val result2 = listOf(1, 2, 3, 4, 5)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Как `Kotlin`-свойства выглядят из `Java`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Kotlin Sequence поддерживает parallelStream() для параллельной обработки | ❌ ПОСЛЕДСТВИЕ: Kotlin Sequence не имеет встроенного параллелизма; для параллельной обработки нужен Java Stream.parallelStream()
+> - [ ] Java Stream можно повторно использовать после terminal operation | ❌ ПОСЛЕДСТВИЕ: Java Stream закрывается после terminal operation (collect/toList/forEach); повторное использование → IllegalStateException; Kotlin Sequence повторяемая
+> - [x] Kotlin Sequence: повторяемая, нет параллелизма; Java Stream: одноразовый, parallelStream() доступен; оба ленивые | ✓ ПРИМЕНЯТЬ: большие цепочки операций → Sequence; параллельная обработка → Java Stream 📋 ПРАВИЛО: Sequence = повторяемый lazy; Stream = одноразовый с parallel option 🔗 См. Q16
+> - [ ] Kotlin collection filter/map — ленивые операции как Sequence | ❌ ПОСЛЕДСТВИЕ: collection.filter{}.map{} — eager (создают промежуточные списки); asSequence().filter{}.map{} — lazy; это принципиальная разница
+
+## Q18. Как `Kotlin`-свойства выглядят из `Java`?
 
 `Kotlin`-свойства компилируются в приватное поле + геттер (+ сеттер для `var`):
 
@@ -900,10 +904,12 @@ u.setVerified(true);  // не setIsVerified()!
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Как из `Java` вызывать top-level функции `Kotlin`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Boolean-свойство isActive из Kotlin → getIsActive() в Java | ❌ ПОСЛЕДСТВИЕ: Boolean свойства с is-prefix → isActive() (без get); Kotlin-компилятор сохраняет is-convention для Java Bean-совместимости
+> - [x] val name: String → getName(); var age: Int → getAge()+setAge(); val isActive: Boolean → isActive(); @JvmField убирает геттер | ✓ ПРИМЕНЯТЬ: понимание Java-совместимости Kotlin data class в Spring/frameworks 📋 ПРАВИЛО: val→get; var→get+set; Boolean is-prop→is; @JvmField→direct field 🔗 См. Q2
+> - [ ] lateinit var из Java дёт UninitializedPropertyAccessException если не инициализировано | ❌ ПОСЛЕДСТВИЕ: из Java lateinit var возвращает null (без Kotlin-проверки); UninitializedPropertyAccessException только из Kotlin-кода
+> - [ ] internal modifier генерирует private поле без доступа из Java | ❌ ПОСЛЕДСТВИЕ: internal компилируется в public с name-mangling; Java может вызвать через рефлексию; только @JvmSynthetic реально скрывает от Java
+
+## Q19. Как из `Java` вызывать top-level функции `Kotlin`?
 
 Top-level функции (объявленные вне класса) компилируются в статические методы класса, имя которого соответствует имени файла + суффикс `Kt`:
 
@@ -950,10 +956,12 @@ MathUtils.areaOfCircle(5.0);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. (!) Как `value class` (`@JvmInline`) работает при интеропе с `Java`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Top-level функции из Kotlin недоступны из Java без дополнительных аннотаций | ❌ ПОСЛЕДСТВИЕ: top-level функции автоматически доступны через FileNameKt.functionName(); аннотации нужны только для переименования
+> - [x] Top-level функции из Utils.kt → MathUtilsKt.factorial() в Java; @file:JvmName("MathUtils") меняет имя класса-фасада | ✓ ПРИМЕНЯТЬ: утилитарные функции в Kotlin, вызываемые из Java 📋 ПРАВИЛО: top-level fn → FileKt.fn(); @JvmName → кастомный class name 🔗 См. Q9
+> - [ ] val PI_APPROX из top-level файла → PI_APPROX поле в Java напрямую | ❌ ПОСЛЕДСТВИЕ: top-level val → getPI_APPROX() геттер в Java; прямое поле только с @JvmField на top-level val
+> - [ ] @JvmMultifileClass объединяет файлы без одинакового @JvmName | ❌ ПОСЛЕДСТВИЕ: @JvmMultifileClass требует одинаковый @JvmName("X") на всех объединяемых файлах; иначе compile error
+
+## Q20. (!) Как `value class` (`@JvmInline`) работает при интеропе с `Java`?
 
 `value class` (ранее `inline class`) — обёртка над одним значением, которая **по возможности** разворачивается в underlying-тип в байткоде, избегая аллокации объекта:
 

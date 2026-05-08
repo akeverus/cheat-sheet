@@ -106,10 +106,12 @@ public ConnectionFactory connectionFactory() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Как создать реактивный репозиторий? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] spring.datasource.url вместо spring.r2dbc.url для PostgreSQL | ❌ ПОСЛЕДСТВИЕ: datasource.url = JDBC URL (jdbc:postgresql://...); r2dbc URL формат другой (r2dbc:postgresql://...); приложение не стартует
+> - [x] spring-boot-starter-data-r2dbc + r2dbc-postgresql стартер; spring.r2dbc.url=r2dbc:postgresql://...; ConnectionPoolConfiguration для кастомного pool | ✓ ПРИМЕНЯТЬ: реактивный доступ к PostgreSQL с connection pooling 📋 ПРАВИЛО: r2dbc URL = r2dbc:<driver>://<host>/<db>; pool через ConnectionPoolConfiguration 🔗 См. Q3
+> - [ ] R2DBC автоматически использует JDBC connection pool (HikariCP) | ❌ ПОСЛЕДСТВИЕ: R2DBC использует свой reactive connection pool (r2dbc-pool), несовместимый с HikariCP blocking API
+> - [ ] max-size в r2dbc pool равен числу CPU cores по умолчанию | ❌ ПОСЛЕДСТВИЕ: default max-size = 10 не зависит от CPU; нужно явно настраивать под нагрузку
+
+## Q3. Как создать реактивный репозиторий?
 
 ```java
 @Table("orders")
@@ -152,10 +154,12 @@ public class OrderService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Что такое R2dbcEntityTemplate и когда его использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] ReactiveCrudRepository поддерживает только findById/findAll — нет derived query methods | ❌ ПОСЛЕДСТВИЕ: derived queries (findByCustomerId, findByStatusOrderByCreatedAtDesc) полностью поддерживаются аналогично JPA
+> - [ ] @Query в R2DBC репозитории использует JPQL вместо SQL | ❌ ПОСЛЕДСТВИЕ: R2DBC @Query принимает native SQL; JPQL = JPA; смешивание вызовет syntax error или UnsupportedOperationException
+> - [x] ReactiveCrudRepository<T, ID> + derived query methods → Flux/Mono; @Query для кастомного SQL; @Table/@Id для маппирования | ✓ ПРИМЕНЯТЬ: стандартный реактивный CRUD без boilerplate 📋 ПРАВИЛО: extends ReactiveCrudRepository → Spring Data генерирует реактивный SQL 🔗 См. Q4
+> - [ ] Reactive репозиторий не поддерживает @Transactional — только TransactionalOperator | ❌ ПОСЛЕДСТВИЕ: @Transactional работает через AOP и на reactive методах при правильной конфигурации R2dbcTransactionManager
+
+## Q4. Что такое R2dbcEntityTemplate и когда его использовать?
 
 `R2dbcEntityTemplate` — низкоуровневый API для сложных запросов, которые не выражаются через методы репозитория.
 
@@ -194,10 +198,12 @@ public class OrderQueryService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Как работают реактивные транзакции? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] R2dbcEntityTemplate заменяет репозиторий — нужно выбрать только одно | ❌ ПОСЛЕДСТВИЕ: оба используются вместе: репозиторий для стандартных операций, R2dbcEntityTemplate для сложных условий/bulk updates
+> - [ ] R2dbcEntityTemplate требует написания SQL строками как DatabaseClient | ❌ ПОСЛЕДСТВИЕ: R2dbcEntityTemplate использует fluent API (query(where(...))) — type-safe; DatabaseClient — raw SQL; это разные уровни абстракции
+> - [x] Fluent API: template.select(T.class).matching(query(where(...))).all() для чтения; template.update(T.class).apply(update(...)) для partial updates | ✓ ПРИМЕНЯТЬ: сложная фильтрация + partial update без raw SQL 📋 ПРАВИЛО: Repository=CRUD; R2dbcEntityTemplate=complex criteria; DatabaseClient=raw SQL 🔗 См. Q3
+> - [ ] R2dbcEntityTemplate не поддерживает DELETE с условием — только deleteById | ❌ ПОСЛЕДСТВИЕ: template.delete(T.class).matching(query(...)).all() — поддерживает DELETE с произвольным критерием
+
+## Q5. Как работают реактивные транзакции?
 
 В реактивном стеке контекст транзакции хранится не в `ThreadLocal`, а в `Reactor Context`. `@Transactional` работает через AOP + `TransactionalOperator`.
 
@@ -237,10 +243,12 @@ public Mono<Order> processWithOperator(PlaceOrderCommand cmd) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Как решается проблема N+1 в Spring Data R2DBC? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] @Transactional в реактивном коде использует ThreadLocal для хранения контекста | ❌ ПОСЛЕДСТВИЕ: ThreadLocal не работает в reactive scheduler; R2DBC @Transactional использует Reactor Context для propagation
+> - [ ] TransactionalOperator требует ручного beginTransaction/commit в коде | ❌ ПОСЛЕДСТВИЕ: .as(transactionalOperator::transactional) автоматически управляет begin/commit/rollback; ручное управление не нужно
+> - [x] @Transactional работает через Reactor Context (не ThreadLocal); контекст передаётся через Mono chain; при ошибке — автоматический rollback | ✓ ПРИМЕНЯТЬ: декларативные транзакции в WebFlux без изменений API 📋 ПРАВИЛО: Reactor Context = reactive ThreadLocal; @Transactional работает через AOP 🔗 См. Q5
+> - [ ] R2dbcTransactionManager несовместим с @Transactional — нужен только TransactionalOperator | ❌ ПОСЛЕДСТВИЕ: R2dbcTransactionManager полностью совместим с @Transactional через Spring AOP; это стандартный подход
+
+## Q6. Как решается проблема N+1 в Spring Data R2DBC?
 
 R2DBC **не поддерживает lazy loading** (нет JPA-прокси). Каждое связанное поле нужно загружать явно.
 
@@ -283,10 +291,12 @@ public Flux<OrderWithItems> loadOrdersBatched(String customerId) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как настроить Connection Pool? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] R2DBC с flatMap(order → itemRepository.findByOrderId()) не создаёт N+1 — всё реактивное | ❌ ПОСЛЕДСТВИЕ: реактивность не устраняет N+1; flatMap создаёт N отдельных DB-запросов; нужен JOIN или batch-загрузка
+> - [ ] JPA @OneToMany решает N+1 автоматически через JOIN FETCH | ❌ ПОСЛЕДСТВИЕ: без @EntityGraph или JOIN FETCH → LazyInitializationException или N+1; в R2DBC это проблема решается явно
+> - [x] JOIN в @Query для join-запроса; или batch-загрузка через collectList() → findByOrderIdIn(ids) → group by orderId | ✓ ПРИМЕНЯТЬ: избежать N+1 при загрузке сущностей с отношениями 📋 ПРАВИЛО: R2DBC нет lazy loading → JOIN в @Query ИЛИ batch-load с IN clause 🔗 См. Q3
+> - [ ] DatabaseClient.sql(JOIN запрос) не работает с маппированием в entity | ❌ ПОСЛЕДСТВИЕ: DatabaseClient возвращает Map<String, Object>; маппирование в entity делается вручную или через RowMapper
+
+## Q7. Как настроить Connection Pool?
 
 ```java
 @Bean

@@ -90,10 +90,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Capacity estimation? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Ordering можно игнорировать — клиент сам разберётся | ❌ ПОСЛЕДСТВИЕ: без sequence ID или timestamp гарантии сообщения приходят в случайном порядке; в группах из 50+ участников это критично
+> - [ ] High reliability = synchronous replication с ACK от всех реплик | ❌ ПОСЛЕДСТВИЕ: synchronous replication убивает latency (< 500ms требование); достаточно quorum write + async fan-out
+> - [x] Ключевые NFR чата: latency < 500ms, reliability (no msg loss), ordering (seq_id), E2E encryption, 99.99% availability | ✓ ПРИМЕНЯТЬ: называть эти 5 NFR в начале system design interview 📋 ПРАВИЛО: chat NFR = latency + reliability + ordering + encryption + availability 🔗 См. Q2
+> - [ ] Availability 99.99% требует 5 дата-центров в разных регионах | ❌ ПОСЛЕДСТВИЕ: 99.99% = 52 мин downtime/год; достигается через active-active 2-3 DC + graceful degradation, не 5 DC
+
+## Q2. (!) Capacity estimation?
 
 **Assumptions:**
 - 1B active users (WhatsApp-scale)
@@ -126,10 +128,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) WebSockets vs long polling vs SSE? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] 1B users × 50 msg/day = 5TB/day storage — не нужно учитывать медиа отдельно | ❌ ПОСЛЕДСТВИЕ: медиа увеличивает хранение в 10-100x; 5TB/day для текста = 50-500TB/day с фото; S3 для media отдельно от message DB
+> - [ ] 500M concurrent connections = 500 серверов по 1M conn каждый — реалистично | ❌ ПОСЛЕДСТВИЕ: 1M conn/server требует kernel tuning (ulimit, epoll, SO_REUSEPORT); realistically 50-100K/server → 5K-10K servers в connection tier
+> - [ ] Presence map 1B users в Redis = 16GB — не поместится | ❌ ПОСЛЕДСТВИЕ: Redis хранит 16B/entry × 1B = 16GB; Redis легко держит 100GB+ с кластеризацией; это реалистичная оценка
+> - [x] Peak: 2M msg/sec, storage: 5TB/day текст + 500TB/day медиа, connection tier: 500M WebSocket = 5-10K серверов при 50-100K conn/srv | ✓ ПРИМЕНЯТЬ: capacity estimation для 1B-scale chat 📋 ПРАВИЛО: msg/day = users × 50; storage = msg × 100B; conn tier = online × (1/concurrency_per_server) 🔗 См. Q3
+
+## Q3. (!) WebSockets vs long polling vs SSE?
 
 **WebSockets:** bidirectional persistent.
 - **Best** для chat (messages in+out)

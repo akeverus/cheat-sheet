@@ -825,16 +825,17 @@ POST products/_rollover
 - Takes hours for large dataset
 - Plan maintenance window
 
+
+> [!mcq]
+> - [ ] Rebuild требует downtime — нельзя делать без остановки трафика | ❌ ПОСЛЕДСТВИЕ: alias pattern позволяет zero-downtime rebuild: строим products-v2 параллельно → alias swap атомарно → трафик переключается без downtime
+> - [ ] ES reindex API работает только между индексами в одном кластере | ❌ ПОСЛЕДСТВИЕ: ES reindex поддерживает remote source (другой кластер) через remote parameter; cross-cluster reindex возможен
+> - [x] Zero-downtime: build new index → reindex from old → atomic alias swap → delete old; rollover для time-based (logs) | ✓ ПРИМЕНЯТЬ: schema change, analyzer update, bulk backfill 📋 ПРАВИЛО: Alias swap = atomic zero-downtime cutover; double storage temporarily 🔗 См. Q7
+> - [ ] Rollover и rebuild — синонимы одного процесса | ❌ ПОСЛЕДСТВИЕ: rebuild = schema change migration; rollover = auto-create new index when size/age threshold reached (для logs); разные паттерны
+
 ---
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [System Design](system-design-interview.md) — общие принципы ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Elasticsearch](../databases/elasticsearch-interview.md) — deep dive
 - [Design URL Shortener](design-url-shortener-interview.md) — read-heavy patterns
 - [Design Feed System](design-feed-system-interview.md) — ranking parallels

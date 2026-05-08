@@ -98,10 +98,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Зачем OTel вместо vendor SDK? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] OpenTelemetry — это APM-tool вроде Datadog или New Relic | ❌ ПОСЛЕДСТВИЕ: OTel — стандарт API/SDK для инструментации, НЕ backend; backend — Jaeger, Tempo, Datadog, etc.; путаница приводит к ошибкам выбора инструментов
+> - [ ] OTel поддерживает только Java и Go — нет SDK для Python/Node | ❌ ПОСЛЕДСТВИЕ: OTel имеет official SDK для 11+ языков (Java, Go, Python, Node.js, .NET, Ruby, PHP, Rust, etc.); ограничивать выбор стека из-за неверного убеждения
+> - [ ] OTel — proprietary продукт от Google, не open source | ❌ ПОСЛЕДСТВИЕ: OTel — CNCF graduated project (vendor-neutral), Google один из contributors; восприятие как proprietary блокирует adoption
+> - [x] OTel — vendor-neutral CNCF стандарт инструментации (traces/metrics/logs); один SDK → любой backend через config | ✓ ПРИМЕНЯТЬ: новые проекты с опасением vendor lock-in; миграция между APM 📋 ПРАВИЛО: OTel = standardize instrumentation, vendor-agnostic 🔗 См. Q2
+
+## Q2. (!) Зачем OTel вместо vendor SDK?
 
 **Vendor-specific SDK (Datadog, New Relic):**
 - Tightly coupled к vendor

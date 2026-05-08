@@ -1963,10 +1963,12 @@ Map.Entry<String, Product> oldest = lruCache.firstEntry();
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. Pattern Matching for switch: guards и exhaustiveness (Java 21) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] SequencedCollection.getFirst() возвращает null для пустой коллекции | ❌ ПОСЛЕДСТВИЕ: getFirst() на пустой коллекции бросает NoSuchElementException; используй isEmpty() перед вызовом или Optional
+> - [ ] reversed() создаёт новую копию коллекции в обратном порядке | ❌ ПОСЛЕДСТВИЕ: reversed() возвращает view; изменения в оригинале отражаются в reversed(); копия не создаётся
+> - [x] Java 21 (JEP 431): единый API getFirst()/getLast()/addFirst()/reversed() для List, Deque, SortedSet через SequencedCollection | ✓ ПРИМЕНЯТЬ: вместо list.get(0), list.get(size-1), Collections.reverse() 📋 ПРАВИЛО: SequencedCollection = первый/последний + reversed view 🔗 См. Q26
+> - [ ] SequencedSet включает HashSet и TreeSet как реализации | ❌ ПОСЛЕДСТВИЕ: SequencedSet реализует только SortedSet (TreeSet); HashSet не имеет определённого порядка и не реализует SequencedSet
+
+## Q39. Pattern Matching for switch: guards и exhaustiveness (Java 21)
 
 **Pattern Matching for switch** стал финальным в Java 21 (JEP 441). Ключевые возможности: **guards** (when clause), **exhaustiveness checking**, **null handling**.
 

@@ -199,10 +199,12 @@ scrape_configs:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Что такое Micrometer и как он связан с Prometheus? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Prometheus использует push-модель: приложение отправляет метрики на сервер | ❌ ПОСЛЕДСТВИЕ: без Pushgateway Prometheus не получит метрики от short-lived jobs; pull-модель требует живой HTTP endpoint для scrape
+> - [ ] Prometheus хранит метрики в PostgreSQL и поддерживает SQL-запросы | ❌ ПОСЛЕДСТВИЕ: Prometheus хранит в собственном TSDB (time-series database), не SQL; запросы через PromQL; SQL не поддерживается
+> - [x] Prometheus = pull-модель: scrape /actuator/prometheus каждые 15s; PromQL для запросов; Alertmanager для алертов; интеграция с Grafana | ✓ ПРИМЕНЯТЬ: метрики Spring Boot через micrometer-registry-prometheus + /actuator/prometheus 📋 ПРАВИЛО: Prometheus = pull + TSDB + PromQL 🔗 См. Q3
+> - [ ] Prometheus scrape interval нельзя настроить — фиксирован 30 секунд | ❌ ПОСЛЕДСТВИЕ: scrape_interval настраивается глобально и per-job в prometheus.yml; можно от 1s до минут в зависимости от требований
+
+## Q3. (!) Что такое Micrometer и как он связан с Prometheus?
 
 `Micrometer` — фасад для метрик в `Java` (аналог `SLF4J` для логов). Приложение регистрирует счётчики, gauge, таймеры через `Micrometer`; биндинг к `Prometheus` экспортирует их в формате, который `Prometheus` scrape'ит. В [Spring Boot](../frameworks/spring/spring-boot-interview.md) `Micrometer` включён по умолчанию; зависимость `micrometer-registry-prometheus` и эндпоинт `/actuator/prometheus` дают готовый экспорт.
 
@@ -292,10 +294,12 @@ public class PaymentService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Какие типы метрик бывают (counter, gauge, histogram, summary)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Micrometer напрямую сохраняет метрики в Prometheus TSDB через TCP | ❌ ПОСЛЕДСТВИЕ: Micrometer экспортирует метрики через HTTP endpoint /actuator/prometheus; Prometheus сам делает pull scrape; нет прямого TCP соединения
+> - [x] Micrometer = vendor-neutral фасад (аналог SLF4J); micrometer-registry-prometheus экспортирует через /actuator/prometheus в Prometheus text format; high cardinality labels (user_id) → OOM | ✓ ПРИМЕНЯТЬ: Spring Boot метрики → Counter/Timer/Gauge через MeterRegistry + tags 📋 ПРАВИЛО: Micrometer = SLF4J для метрик; registry = destination 🔗 См. Q4
+> - [ ] Micrometer работает только с Prometheus — нельзя подключить другой бэкенд | ❌ ПОСЛЕДСТВИЕ: Micrometer поддерживает 20+ backends: Datadog, InfluxDB, CloudWatch, Graphite; смена бэкенда = смена зависимости без изменения кода
+> - [ ] Для кастомных метрик в Spring Boot нужно создать отдельный HTTP сервер | ❌ ПОСЛЕДСТВИЕ: Spring Boot Actuator автоматически предоставляет /actuator/prometheus; кастомные метрики регистрируются в MeterRegistry и экспортируются автоматически
+
+## Q4. (!) Какие типы метрик бывают (counter, gauge, histogram, summary)?
 
 | Тип | Описание | Пример | Micrometer API |
 |-----|----------|--------|----------------|

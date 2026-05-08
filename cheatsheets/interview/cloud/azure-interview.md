@@ -520,10 +520,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. Azure Data Factory? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Synapse Serverless SQL pool требует загрузки данных в DWH перед запросами | ❌ ПОСЛЕДСТВИЕ: Serverless SQL pool — query-in-place поверх Azure Data Lake без ETL; платишь за TB processed, не за provisioned compute
+> - [ ] Synapse Analytics — замена Azure Data Factory для ETL pipelines | ❌ ПОСЛЕДСТВИЕ: Synapse включает интегрированные Pipelines (аналог ADF), но ADF — отдельный зрелый сервис; Microsoft Fabric — новая объединённая платформа
+> - [x] Synapse = DWH (Dedicated SQL pool) + Serverless SQL (query-in-place) + Spark + Pipelines в одном workspace | ✓ ПРИМЕНЯТЬ: unified analytics над Azure Data Lake с поддержкой SQL и Spark в одном месте 📋 ПРАВИЛО: Dedicated SQL = provisioned DWH; Serverless = pay-per-query on Data Lake 🔗 См. Q20
+> - [ ] Synapse Dedicated SQL pool автоматически масштабируется без паузы | ❌ ПОСЛЕДСТВИЕ: Dedicated SQL pool нужно вручную scale up/down (или автопауза); это отличие от Serverless который scale автоматически
+
+## Q20. Azure Data Factory?
 
 **ADF** — managed ETL/ELT. Аналог AWS Glue, GCP Cloud Data Fusion.
 
@@ -538,10 +540,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Event Hubs vs Service Bus? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] ADF не поддерживает on-premise источники данных | ❌ ПОСЛЕДСТВИЕ: ADF поддерживает on-premise через Self-hosted Integration Runtime; 90+ connectors включают SQL Server on-prem, Oracle, SAP
+> - [ ] Mapping Data Flows требует написания Spark кода | ❌ ПОСЛЕДСТВИЕ: Mapping Data Flows — code-free visual ETL, генерирует Spark код автоматически; кастомный код — через Custom Activity
+> - [x] ADF = managed ETL/ELT с 90+ connectors, visual pipeline designer, CI/CD; аналог AWS Glue + orchestration | ✓ ПРИМЕНЯТЬ: data ingestion из разных источников в Data Lake/Synapse без custom Spark 📋 ПРАВИЛО: ADF = no-code ETL для Azure data pipelines 🔗 См. Q19
+> - [ ] ADF и Synapse Pipelines — полностью разные продукты без пересечения | ❌ ПОСЛЕДСТВИЕ: Synapse Pipelines — встроенный ADF-like сервис внутри Synapse workspace; ADF — standalone; оба основаны на одном engine
+
+## Q21. Event Hubs vs Service Bus?
 
 **Event Hubs** — high-throughput event streaming. Аналог Kafka.
 - Millions events/sec
@@ -561,10 +565,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Azure OpenAI Service? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Event Hubs и Service Bus взаимозаменяемы для любых messaging scenarios | ❌ ПОСЛЕДСТВИЕ: Event Hubs = streaming (IoT, telemetry) millions/sec без ordering guarantee; Service Bus = business messaging с transactions, sessions, DLQ
+> - [x] Event Hubs = high-throughput streaming (Kafka-compatible); Service Bus = enterprise messaging с queues/topics, transactions, DLQ | ✓ ПРИМЕНЯТЬ: Event Hubs для телеметрии/IoT; Service Bus для бизнес-транзакций с гарантией доставки 📋 ПРАВИЛО: EventHubs=stream, ServiceBus=messaging 🔗 См. Q6
+> - [ ] Service Bus поддерживает миллионы событий/сек как Event Hubs | ❌ ПОСЛЕДСТВИЕ: Service Bus оптимизирован для enterprise messaging (тысячи сообщений/сек); Event Hubs — для streaming миллионов событий/сек
+> - [ ] Event Hubs не поддерживает Apache Kafka protocol | ❌ ПОСЛЕДСТВИЕ: Event Hubs Premium tier поддерживает Kafka protocol compatibility; существующие Kafka приложения подключаются без изменений кода
+
+## Q22. (!) Azure OpenAI Service?
 
 **Azure OpenAI Service** — exclusive Microsoft offering. Hosting OpenAI models (GPT-4, etc.) на Azure infrastructure.
 
@@ -581,10 +587,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Azure Machine Learning? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Azure OpenAI Service — то же что публичный OpenAI API с другим endpoint | ❌ ПОСЛЕДСТВИЕ: Azure OpenAI добавляет enterprise compliance (GDPR, HIPAA), private network access, BYOK, данные НЕ используются для обучения моделей OpenAI
+> - [ ] Azure OpenAI Service доступен публично без approval process | ❌ ПОСЛЕДСТВИЕ: Azure OpenAI требует application для доступа (enterprise vetting); не открыт как публичный OpenAI API
+> - [x] Azure OpenAI = GPT-4/models на Azure инфраструктуре с enterprise compliance: GDPR, private VNet, BYOK, данные не идут на обучение | ✓ ПРИМЕНЯТЬ: enterprise с compliance requirements (HIPAA, GDPR) кому нужен GPT-4 в private сети 📋 ПРАВИЛО: Azure OpenAI = OpenAI models + enterprise security guarantees 🔗 См. Q1
+> - [ ] Azure OpenAI Service не поддерживает fine-tuning моделей | ❌ ПОСЛЕДСТВИЕ: Azure OpenAI поддерживает fine-tuning для GPT-3.5-turbo и других моделей; данные fine-tuning хранятся в изолированном Azure tenant
+
+## Q23. Azure Machine Learning?
 
 **Azure ML** — managed ML platform. Equivalent SageMaker, Vertex AI.
 

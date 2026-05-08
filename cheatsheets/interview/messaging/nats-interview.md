@@ -95,10 +95,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) NATS vs Kafka vs RabbitMQ? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] NATS — это только pub/sub без persistence — для durable messaging нужен другой broker | ❌ ПОСЛЕДСТВИЕ: JetStream даёт persistence + at-least-once / exactly-once с 2020; не нужен отдельный broker
+> - [x] Lightweight messaging system: Core NATS = pub/sub at-most-once + JetStream = persistence; microseconds latency, ~30MB binary | ✓ ПРИМЕНЯТЬ: microservices, IoT, edge с low latency и low resource budget 📋 ПРАВИЛО: NATS = Core (pub/sub) + JetStream (persistence) = два слоя 🔗 См. Q9
+> - [ ] NATS = Java-based messaging (как ActiveMQ/RabbitMQ) | ❌ ПОСЛЕДСТВИЕ: NATS написан на Go; Java у клиентов через nats.java; сам сервер не требует JVM (~30MB) — отсюда low resource usage
+> - [ ] NATS не подходит для production — только для prototyping | ❌ ПОСЛЕДСТВИЕ: NATS используют в production crores систем: Mastercard, Walmart, GE, Tesla; CNCF Incubating с зрелым ecosystem
+
+## Q2. (!) NATS vs Kafka vs RabbitMQ?
 
 | Критерий | NATS | Kafka | RabbitMQ |
 |----------|------|-------|----------|

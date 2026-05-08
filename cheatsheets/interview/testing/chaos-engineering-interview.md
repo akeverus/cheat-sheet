@@ -661,10 +661,12 @@ void whenRedisDown_fallbackToDatabase() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. (!) Как подключить `Chaos Monkey` к Spring Boot приложению? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Dependency failure = unit test с mock зависимости | ❌ ПОСЛЕДСТВИЕ: unit test с mock проверяет known error path; chaos dependency failure проверяет неизвестные эффекты в реальных условиях: timeout cascade, thread pool exhaustion
+> - [x] Dependency failure: инжектировать через Toxiproxy/WireMock/NetworkChaos; проверить circuit breaker, bulkhead изоляцию, fallback, retry с backoff | ✓ ПРИМЕНЯТЬ: Redis down → fallback to DB; третья сторона 500 → cached response / degraded mode 📋 ПРАВИЛО: dependency chaos = inject failure + verify isolation + verify graceful degradation 🔗 См. Q11
+> - [ ] Dependency failure = отключить весь service mesh — самый realistic тест | ❌ ПОСЛЕДСТВИЕ: отключение всего service mesh = слишком большой blast radius; нужно инжектировать одну зависимость at a time с blast radius control
+> - [ ] Если есть circuit breaker — dependency failure эксперименты не нужны | ❌ ПОСЛЕДСТВИЕ: circuit breaker нужно тестировать: правильно ли настроен threshold, срабатывает ли timeout, работает ли fallback; код без chaos тестирования не даёт уверенности
+
+## Q16. (!) Как подключить `Chaos Monkey` к Spring Boot приложению?
 
 `Chaos Monkey for Spring Boot` (`codecentric/chaos-monkey-spring-boot`) — библиотека application-level хаоса в Java: инжектирует задержки, исключения, убивает приложение.
 
@@ -726,10 +728,12 @@ management:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) Что такое `Assaults` и `Watchers` в Chaos Monkey? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Chaos Monkey for Spring Boot = Netflix Chaos Monkey; это одна библиотека | ❌ ПОСЛЕДСТВИЕ: разные проекты: Netflix CM = infrastructure-level (EC2 kill, Go); Codecentric CM = application-level (JVM/Spring methods, Java)
+> - [ ] Chaos Monkey для Spring Boot активируется любым профилем Spring | ❌ ПОСЛЕДСТВИЕ: требует активации профиля `chaos-monkey` (`--spring.profiles.active=chaos-monkey`) — без него библиотека пассивна
+> - [x] Chaos Monkey for Spring Boot: application-level хаос в JVM; активируется профилем chaos-monkey; настраивается watchers (где) + assaults (что: latency/exception/kill) через YAML или Actuator | ✓ ПРИМЕНЯТЬ: для integration тестов внутри JVM без внешних инструментов 📋 ПРАВИЛО: CM4SB = watchers(где) + assaults(что) + level(частота) 🔗 См. Q16
+> - [ ] Kill Application Assault корректен для production хаоса — убивает процесс | ❌ ПОСЛЕДСТВИЕ: killApplicationActive=true в prod = намеренный crash; использовать только в dev/staging с пониманием последствий и kill switch
+
+## Q17. (!) Что такое `Assaults` и `Watchers` в Chaos Monkey?
 
 **Watchers** определяют **где** срабатывает хаос — какие типы Spring-бинов будут атакованы. **Assaults** определяют **что** произойдёт — какой тип атаки применится.
 
