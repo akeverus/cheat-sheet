@@ -2366,7 +2366,8 @@ private List<Product> degradedRecommendations(Long userId, Exception e) {
 > - [x] Feature flag (Unleash, LaunchDarkly, или `@ConditionalOnProperty`) проверяется **до** вызова downstream — при `false` отдаётся deградированная логика без вызова; в комбинации с CB: флаг превентивно (плановый maintenance), CB реактивно (внезапный сбой) | Преимущество над CB: можно отключить **до** падения зависимости (peak load, плановое обслуживание). ✓ ПРИМЕНЯТЬ: Unleash kill-switch для отключения ML-рекомендаций при peak Black Friday; LaunchDarkly при rollout новой downstream версии. 📋 ПРАВИЛО: «Флаг — превентивно, CB — реактивно». 🔗 См. Q20, Q31.
 > - [ ] Feature flag заменяет Circuit Breaker — если есть флаг, CB не нужен | Флаг — **ручной** механизм; CB — **автоматический**. При неожиданном сбое (3 утра, выходной) флаг никто не выключит вовремя — нужен CB. ❌ ПОСЛЕДСТВИЕ: e-commerce 2022 — ML-сервис упал в 3:00 субботы, флаг не выключен 4 часа, рекомендации возвращают 500 → checkout страница не грузится → потеря $200K.
 > - [ ] Хранить флаги в `application.yml` и менять через redeploy | Изменение требует deploy → потерян смысл runtime-toggle для быстрой реакции на инцидент (10-15 минут вместо 30 секунд). ❌ ПОСЛЕДСТВИЕ: incident escalation 30 минут на rollout вместо 1 минуты на toggle через Unleash UI; SLA нарушен.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [API Gateway](api-gateway-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Feature flag работает только для UI-фич, не для backend-зависимостей | ❌ ПОСЛЕДСТВИЕ: feature flags применяются для любых downstream вызовов — ML-сервисов, сторонних API, payment providers; backend kill-switch — главный use case
+
 - [BFF Pattern](bff-pattern-interview.md)
 - [Стратегии кэширования](caching-strategies-interview.md)
 - [CAP-теорема](cap-theorem-interview.md)
