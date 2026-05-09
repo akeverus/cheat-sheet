@@ -317,10 +317,12 @@ SurvivedMutant: line 42
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Equivalent mutants? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Все survived мутанты нужно сразу убивать дополнительными тестами | ❌ ПОСЛЕДСТВИЕ: equivalent мутанты нельзя убить — потеря времени; нужно сначала классифицировать survived (real gap vs equivalent vs acceptable)
+> - [x] Survived → investigate: real bug (add test), equivalent (skip), acceptable (boundary не critical); добавить boundary test для условий | ✓ ПРИМЕНЯТЬ: триаж survived мутантов перед действиями 📋 ПРАВИЛО: survived = test gap candidate, не всегда баг 🔗 См. Q9
+> - [ ] Survived мутант = тест полностью бесполезен | ❌ ПОСЛЕДСТВИЕ: тест может покрывать другие сценарии; survived лишь означает что данный mutation не детектируется; не invalid сам тест
+> - [ ] Все survived мутанты = баги в коде | ❌ ПОСЛЕДСТВИЕ: survived — это test gap, не bug в коде; код мог работать корректно, просто tests слабые
+
+## Q10. Equivalent mutants?
 
 **Equivalent mutant** — semantically same as original. **Cannot be killed**.
 
@@ -343,10 +345,12 @@ while (i <= 9) { i++; }  // SAME behavior!
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) PIT для Java? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Equivalent мутанты можно автоматически детектировать и исключать | ❌ ПОСЛЕДСТВИЕ: detection equivalent мутантов — undecidable problem; в общем случае нужен manual review
+> - [x] Equivalent: семантически идентичен оригиналу (i<10 vs i<=9 в while с i++); не убивается; ручной review для классификации | ✓ ПРИМЕНЯТЬ: пометить survived equivalent → исключить из расчёта score 📋 ПРАВИЛО: equivalent = same behavior = unkillable 🔗 См. Q10
+> - [ ] Equivalent мутанты значат что код плох — нужно его рефакторить | ❌ ПОСЛЕДСТВИЕ: equivalent — это особенность конкретных операторов на конкретном коде; не индикатор плохого кода
+> - [ ] PIT автоматически отфильтровывает equivalent мутанты | ❌ ПОСЛЕДСТВИЕ: PIT использует эвристики (например, не мутировать i<list.size() в for), но полная фильтрация невозможна; manual review остаётся
+
+## Q11. (!) PIT для Java?
 
 **PIT (Pitest)** — most popular Java mutation testing tool.
 
@@ -377,10 +381,12 @@ mvn org.pitest:pitest-maven:mutationCoverage
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Stryker для JavaScript/TypeScript? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] PIT очень медленный и непригоден для CI | ❌ ПОСЛЕДСТВИЕ: PIT 1.6+ имеет fast mode + incremental analysis (только changed code) + coverage-based selection; пригоден для CI
+> - [x] PIT (Pitest): pitest-maven plugin + mvn mutationCoverage → HTML report; fast mode + incremental + coverage-based | ✓ ПРИМЕНЯТЬ: добавить в Maven build, запускать в nightly или PR-merge gates 📋 ПРАВИЛО: PIT = Java mutation tool; Maven/Gradle integration ready 🔗 См. Q11
+> - [ ] PIT работает только с JUnit 4, JUnit 5 не поддерживается | ❌ ПОСЛЕДСТВИЕ: PIT поддерживает JUnit 5 с pitest-junit5-plugin; legacy info — JUnit 5 поддерживается несколько лет
+> - [ ] PIT нужно запускать в CI на каждом коммите | ❌ ПОСЛЕДСТВИЕ: даже с fast mode PIT занимает время; запуск на каждом коммите замедляет CI; обычно nightly или quality gate перед merge
+
+## Q12. (!) Stryker для JavaScript/TypeScript?
 
 **Stryker** — mutation testing для JS/TS/.NET/Scala.
 
@@ -407,10 +413,12 @@ npx stryker run
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. mutmut для Python? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Stryker — это просто Jest plugin | ❌ ПОСЛЕДСТВИЕ: Stryker — независимый mutation testing framework для JS/TS/.NET/Scala; интегрируется с Jest/Mocha/Karma как test runners
+> - [x] Stryker: npm install + stryker init + npx stryker run; thresholds в config (high/low/break); Stryker Dashboard для tracking | ✓ ПРИМЕНЯТЬ: JavaScript/TypeScript projects, mutation testing с CI quality gate 📋 ПРАВИЛО: Stryker = JS mutation tool с richтthresholds 🔗 См. Q12
+> - [ ] Stryker не поддерживает TypeScript — только vanilla JS | ❌ ПОСЛЕДСТВИЕ: Stryker имеет TypeScript support через @stryker-mutator/typescript-checker; полноценная работа с tsx/typescript
+> - [ ] thresholds в Stryker — это GUI-настройки, не файл config | ❌ ПОСЛЕДСТВИЕ: stryker.conf.json/js определяет thresholds декларативно; CI fails if score < break threshold
+
+## Q13. mutmut для Python?
 
 ```bash
 pip install mutmut
@@ -424,10 +432,12 @@ mutmut html  # report
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Other tools (Mutil, Cosmic Ray)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] mutmut работает быстрее PIT — Python динамика помогает | ❌ ПОСЛЕДСТВИЕ: наоборот — Python dynamic typing замедляет mutation testing; нет байткод оптимизаций как в JVM
+> - [x] mutmut: pip install + mutmut run + mutmut html; запускает pytest на каждый mutant; медленнее PIT из-за dynamic Python | ✓ ПРИМЕНЯТЬ: Python projects с pytest; CI quality gate с долгим bake-time 📋 ПРАВИЛО: mutmut = Python mutation tool 🔗 См. Q13
+> - [ ] mutmut работает только с unittest, не с pytest | ❌ ПОСЛЕДСТВИЕ: mutmut поддерживает pytest как primary runner; unittest тоже доступен
+> - [ ] mutmut автоматически фильтрует equivalent мутанты в Python | ❌ ПОСЛЕДСТВИЕ: общая проблема mutation testing — нет инструмента полностью решающего equivalent detection; mutmut тоже требует manual filtering
+
+## Q14. Other tools (Mutil, Cosmic Ray)?
 
 - **Mutil** (Go) — Go mutation testing
 - **Cosmic Ray** (Python) — alternative mutmut
@@ -438,10 +448,12 @@ mutmut html  # report
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Mutation testing медленный — почему? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Mutil и Cosmic Ray — это улучшенные версии PIT для разных языков | ❌ ПОСЛЕДСТВИЕ: Mutil — Go-специфичный, Cosmic Ray — Python; не имеют связи с PIT (Java); это independent инструменты
+> - [x] Mutil (Go), Cosmic Ray (Python alt to mutmut), Infection (PHP); PIT (Java) и Stryker (JS/TS) — most mature | ✓ ПРИМЕНЯТЬ: выбирать по language ecosystem; mature tools для core languages 📋 ПРАВИЛО: language → tool: Java/Stryker/mutmut/Mutil/Cosmic/Infection 🔗 См. Q11
+> - [ ] Все mutation testing tools имеют похожий feature set | ❌ ПОСЛЕДСТВИЕ: maturity и features сильно различаются; PIT/Stryker имеют incremental, dashboards; новые tools часто с базовым функционалом
+> - [ ] Pitest для Scala — это PIT работающий с Scala source code | ❌ ПОСЛЕДСТВИЕ: PIT мутирует JVM bytecode, поэтому работает с любым JVM языком (Java, Scala, Kotlin) через тот же Maven plugin
+
+## Q15. (!) Mutation testing медленный — почему?
 
 **Process:** для каждого mutant — recompile (sometimes) + run all tests.
 
