@@ -425,10 +425,12 @@ VNet (10.0.0.0/16)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Application Gateway, Front Door? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] NSG применяется только к отдельным VM, не ко всей подсети | ❌ ПОСЛЕДСТВИЕ: NSG применяется на двух уровнях: subnet (все VM в подсети) или NIC (конкретная VM); subnet-level обычно предпочтительнее
+> - [ ] VNet Peering требует VPN gateway и зашифрованного туннеля | ❌ ПОСЛЕДСТВИЕ: VNet Peering использует Microsoft backbone без VPN overhead и шифрования; для encrypted connectivity нужен VPN Gateway или ExpressRoute
+> - [x] VNet = изолированная сеть; NSG = stateful firewall на subnet/NIC; ASG = логическая группировка VM для удобства NSG-правил | ✓ ПРИМЕНЯТЬ: тиерная архитектура web/app/data в отдельных суbnets с NSG между ними 📋 ПРАВИЛО: VNet=isolation, NSG=firewall, ASG=logical VM group 🔗 См. Q16
+> - [ ] NSG — это stateless firewall, где каждый пакет оценивается независимо | ❌ ПОСЛЕДСТВИЕ: NSG — stateful; если входящее соединение разрешено, ответный трафик автоматически разрешён без явного outbound правила
+
+## Q16. Application Gateway, Front Door?
 
 **Application Gateway** — Layer 7 (HTTP) load balancer внутри region.
 - Path-based routing
@@ -609,10 +611,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) Azure vs AWS — strengths? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Azure ML поддерживает только AutoML без ручных экспериментов | ❌ ПОСЛЕДСТВИЕ: Azure ML поддерживает полный MLOps lifecycle: ручные эксперименты, AutoML, custom training jobs, model registry, real-time/batch endpoints
+> - [x] Azure ML = managed ML platform с compute clusters, AutoML, MLflow, model registry, endpoints; аналог SageMaker/Vertex AI | ✓ ПРИМЕНЯТЬ: enterprise ML с Azure DevOps CI/CD и интеграцией с Azure Data Services 📋 ПРАВИЛО: Azure ML = managed MLOps на Azure; tightly integrated с Azure ecosystem 🔗 См. Q22
+> - [ ] MLflow интеграция недоступна в Azure ML | ❌ ПОСЛЕДСТВИЕ: Azure ML полностью интегрирован с MLflow для experiment tracking, model logging, и deployment; MLflow SDK работает нативно
+> - [ ] Azure ML Designer требует написания Python кода | ❌ ПОСЛЕДСТВИЕ: Designer — no-code drag-and-drop интерфейс для создания ML pipelines; кастомный код нужен только для Custom Script Module
+
+## Q24. (!) Azure vs AWS — strengths?
 
 **Azure strengths:**
 - **Enterprise integration** — AD, Office 365
@@ -631,10 +635,12 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. (!) Когда выбирать Azure? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] AWS имеет более широкий enterprise compliance portfolio чем Azure | ❌ ПОСЛЕДСТВИЕ: Azure имеет наибольшее количество compliance certifications (90+) среди облачных провайдеров, особенно для госсектора и regulated industries
+> - [ ] Azure лучший выбор для open-source first стратегии | ❌ ПОСЛЕДСТВИЕ: AWS имеет более зрелую open-source экосистему (больше managed OSS services); Azure — преимущество в Microsoft-стеке, не в open-source
+> - [x] Azure strengths: enterprise Microsoft integration (AD, Office 365), hybrid cloud (Arc), Azure OpenAI exclusive, .NET/SQL Server; weakness: reliability, UX consistency | ✓ ПРИМЕНЯТЬ: Microsoft-shop, hybrid cloud, enterprise compliance, OpenAI models 📋 ПРАВИЛО: Azure = Microsoft ecosystem + enterprise identity; выбирай для Windows/AD-dominated org 🔗 См. Q25
+> - [ ] Azure reliability выше AWS и GCP по историческим данным | ❌ ПОСЛЕДСТВИЕ: Azure имел заметные outages (DNS, Entra ID outages); AWS исторически более стабилен; это известная слабость Azure
+
+## Q25. (!) Когда выбирать Azure?
 
 **Выбирай Azure когда:**
 - **Уже Microsoft shop** (AD, Office 365, Windows servers)
@@ -673,12 +679,7 @@ Equivalent **AWS IAM Roles for EC2/Lambda** или **GCP Service Accounts**.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [AWS](aws-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [AWS Lambda](aws-lambda-interview.md)
-- [Cloud-native Patterns](cloud-native-patterns-interview.md)
-- [GCP (Google Cloud Platform)](gcp-interview.md)
-- [Serverless](serverless-interview.md)
-- [AI Agents](../ai-ml/ai-agents-interview.md)
+> - [ ] Azure — лучший выбор для cloud-native стартапа без Microsoft истории | ❌ ПОСЛЕДСТВИЕ: cloud-native стартапы чаще выбирают AWS (зрелая экосистема) или GCP (data/ML); Azure дороже и сложнее для greenfield проектов
+> - [ ] Azure выбирают когда нужен best-in-class Kubernetes | ❌ ПОСЛЕДСТВИЕ: GKE (GCP) считается наиболее mature managed Kubernetes; AKS хорош для Microsoft shops, но GKE — выбор для Kubernetes-first
+> - [x] Azure выбирают при Microsoft ecosystem: AD/Office 365, .NET/SQL Server, hybrid on-prem, compliance-heavy industries, Azure OpenAI requirement | ✓ ПРИМЕНЯТЬ: enterprise с Active Directory, Windows-based on-prem migration, regulated industries 📋 ПРАВИЛО: Azure = Microsoft-first choice; для новых cloud-native проектов AWS/GCP чаще оптимальны 🔗 См. Q24
+> - [ ] Azure — лучший выбор для тяжёлых ML/Data Science workloads | ❌ ПОСЛЕДСТВИЕ: GCP (BigQuery, Vertex AI, TPUs) и AWS (SageMaker, Redshift) чаще выбирают для ML/Data; Azure ML хорош, но не лидер в этой нише

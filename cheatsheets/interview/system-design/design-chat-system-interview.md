@@ -164,10 +164,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Connection routing и load balancing? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] SSE лучше WebSocket для чата — меньше overhead | ❌ ПОСЛЕДСТВИЕ: SSE = server→client only (unidirectional); для чата нужен bidirectional поток; client messages шли бы через отдельный REST → двойной overhead
+> - [x] WebSocket = bidirectional persistent; best для chat; SSE = server-push only (notifications); long polling = fallback для legacy browsers; чат = WebSocket | ✓ ПРИМЕНЯТЬ: real-time chat → WebSocket; live dashboard → SSE; старые браузеры → long polling 📋 ПРАВИЛО: WebSocket = duplex = chat; SSE = simplex = notifications 🔗 См. Q4
+> - [ ] Long polling надёжнее WebSocket — проще реализовать в proxy | ❌ ПОСЛЕДСТВИЕ: long polling: каждый request = новый TCP/HTTP; при 500M users = 500M × 2M req/s = невозможная нагрузка; WebSocket держит 1 connection
+> - [ ] WebSocket не поддерживается в мобильных браузерах | ❌ ПОСЛЕДСТВИЕ: WebSocket поддерживается во всех современных браузерах и мобильных приложениях с 2012 года; WhatsApp/Telegram используют WebSocket-подобные протоколы
+
+## Q4. (!) Connection routing и load balancing?
 
 **Challenge:** WebSockets are **stateful** — user's connection lives on one server. Messages для user X must route to that server.
 
@@ -204,10 +206,12 @@ Other user's WebSocket server publishes message for X
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Sticky session проблема? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] WebSocket LB работает так же как HTTP LB — статичная round-robin | ❌ ПОСЛЕДСТВИЕ: WebSocket stateful: после handshake connection закреплена за сервером; round-robin LB разрушит соединение при каждом reconnect; нужен sticky или presence-based routing
+> - [ ] Presence service не нужен если есть consistent hashing | ❌ ПОСЛЕДСТВИЕ: consistent hashing маппит user→server статично; при failover (сервер упал) нужно перегнать mapping в presence service; без него router не знает где user после failover
+> - [x] WebSocket stateful: user_id→server маппинг в presence Redis; при отправке сообщения lookup → route к нужному WS серверу через Kafka; failover = reconnect + update presence | ✓ ПРИМЕНЯТЬ: 1B-scale routing через присутствие service + message broker 📋 ПРАВИЛО: WS routing = presence lookup + broker fan-out 🔗 См. Q5
+> - [ ] Message broker не нужен если есть consistent hashing — прямой dispatch | ❌ ПОСЛЕДСТВИЕ: без broker: отправитель должен знать адрес сервера получателя напрямую; при rolling deploy/failover адреса меняются; broker decouples и обеспечивает delivery guarantee
+
+## Q5. Sticky session проблема?
 
 **Problem:** user reconnects → must go to same server? Or any?
 
@@ -268,10 +272,12 @@ Clients (mobile/web)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Message delivery flow? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Sticky LB достаточно для routing — consistent hashing без presence service | ❌ ПОСЛЕДСТВИЕ: consistent hashing статичен; при server failover маппинг не обновится автоматически; presence service нужен для динамического routing после reconnect
+> - [ ] Non-sticky LB с центральным routing через DB достаточно | ❌ ПОСЛЕДСТВИЕ: DB lookup на каждое сообщение = bottleneck при 2M msg/sec; Redis presence service с O(1) lookup — обязателен
+> - [x] WS Gateway tier (stateful, millions conn) + Message Broker (Kafka/Redis) + Service Tier (Chat/Presence/Group) + Cassandra (messages) + Redis (presence) | ✓ ПРИМЕНЯТЬ: стандартная high-level архитектура WhatsApp/Slack scale chat 📋 ПРАВИЛО: WS tier stateful → broker → services → storage 🔗 См. Q7
+> - [ ] Presence service хранит данные в PostgreSQL для consistency | ❌ ПОСЛЕДСТВИЕ: presence данные обновляются при каждом heartbeat (30s × 500M users = 16M updates/min); Redis TTL = идеальный fit; PostgreSQL → write bottleneck
+
+## Q7. (!) Message delivery flow?
 
 **1:1 chat, both online:**
 
@@ -304,10 +310,12 @@ B ACKs → read receipt back to A
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Message broker между серверами? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Нужно persist после push — если persist fails, message теряется | ❌ ПОСЛЕДСТВИЕ: нужно НАОБОРОТ: persist ПЕРЕД push; если push fails — данные в Cassandra; retry доставки из storage; если persist fails — reject сразу
+> - [ ] Offline delivery: хранить в Redis до reconnect пользователя | ❌ ПОСЛЕДСТВИЕ: Redis in-memory; если Redis restarted — сообщения потеряны; для offline очереди нужна persistent storage (Cassandra + message_queue table)
+> - [x] Persist в Cassandra → lookup presence → если online: publish user:X channel → WS push; если offline: trigger FCM/APNs + запись в undelivered queue | ✓ ПРИМЕНЯТЬ: deliver guarantee через persist-first + ACK pattern 📋 ПРАВИЛО: persist first, push second, retry from storage 🔗 См. Q8
+> - [ ] ACK от клиента не нужен — достаточно TCP ACK | ❌ ПОСЛЕДСТВИЕ: TCP ACK = network delivery; application ACK нужен для read receipt и delivery confirmation; WhatsApp показывает ✓ (sent) / ✓✓ (delivered) / ✓✓ blue (read)
+
+## Q8. Message broker между серверами?
 
 **Why broker:**
 - Decouples sender server from recipient server

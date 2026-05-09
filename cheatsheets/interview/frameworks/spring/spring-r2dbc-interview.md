@@ -329,10 +329,12 @@ public ConnectionFactory connectionFactory() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как тестировать Spring Data R2DBC? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] maxAcquireTime — максимальное время удержания соединения в транзакции | ❌ ПОСЛЕДСТВИЕ: maxAcquireTime = ожидание свободного соединения из пула; maxIdleTime = время простоя до закрытия соединения
+> - [ ] ConnectionPool использует HikariCP внутри для управления соединениями | ❌ ПОСЛЕДСТВИЕ: HikariCP = blocking JDBC pool; r2dbc-pool — отдельная реактивная реализация, несовместимая с HikariCP
+> - [x] ConnectionPoolConfiguration: initialSize, maxSize, maxIdleTime (закрытие idle), maxAcquireTime (timeout ожидания), validationQuery | ✓ ПРИМЕНЯТЬ: production-ready connection pooling для R2DBC 📋 ПРАВИЛО: maxSize ≤ DB max_connections; maxAcquireTime → ConnectionTimeoutException при overflow 🔗 См. Q2
+> - [ ] R2DBC без ConnectionPool — stateless, создаёт новое соединение на каждый запрос | ❌ ПОСЛЕДСТВИЕ: без пула каждый запрос = новый TCP handshake + authentication; latency spike при высокой нагрузке
+
+## Q8. Как тестировать Spring Data R2DBC?
 
 ```java
 // @DataR2dbcTest загружает только R2DBC-слой, без @Service/@Controller
@@ -382,10 +384,12 @@ class OrderIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Когда использовать R2DBC, а когда JPA? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] @DataR2dbcTest загружает полный Spring Boot контекст с @Service и @Controller | ❌ ПОСЛЕДСТВИЕ: @DataR2dbcTest — slice test: только R2DBC beans; нет @Service/@Controller; для полного контекста — @SpringBootTest
+> - [ ] StepVerifier не нужен — можно использовать обычный assert на Mono.block() | ❌ ПОСЛЕДСТВИЕ: .block() в тесте блокирует reactor scheduler; StepVerifier — правильный способ тестировать Publisher; block() в production коде — антипаттерн
+> - [x] @DataR2dbcTest для repository slice; StepVerifier.create(publisher).assertNext().verifyComplete(); Testcontainers + @DynamicPropertySource для integration тестов | ✓ ПРИМЕНЯТЬ: изолированное тестирование реактивных репозиториев 📋 ПРАВИЛО: StepVerifier = правильный способ тестировать Flux/Mono; block() только в тестах крайней необходимости 🔗 См. Q3
+> - [ ] @DynamicPropertySource поддерживает только JDBC URL — не r2dbc | ❌ ПОСЛЕДСТВИЕ: @DynamicPropertySource инжектирует любые properties включая spring.r2dbc.*; это generic механизм без ограничений на тип URL
+
+## Q9. Когда использовать R2DBC, а когда JPA?
 
 | Критерий | R2DBC | JPA/Hibernate |
 |----------|-------|---------------|
@@ -400,10 +404,12 @@ class OrderIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Как обрабатывать ошибки в R2DBC? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] R2DBC лучше JPA во всех случаях из-за non-blocking I/O | ❌ ПОСЛЕДСТВИЕ: при небольшом числе concurrent requests JDBC+HikariCP одинаково эффективен; JPA даёт преимущества в сложных ORM-маппингах
+> - [x] R2DBC: WebFlux + высокий I/O concurrency + нет нужды в JPA lazy loading; JPA: Spring MVC + сложные relations + кэш первого/второго уровня | ✓ ПРИМЕНЯТЬ: R2DBC только в полностью реактивном стеке 📋 ПРАВИЛО: R2DBC + JPA в одном приложении нежелательно; выбери один подход 🔗 См. Q1
+> - [ ] JPA и R2DBC можно смешивать: JPA для reads, R2DBC для writes | ❌ ПОСЛЕДСТВИЕ: смешивание создаёт проблемы с transaction management и schema migration; лучше выбрать единый подход
+> - [ ] R2DBC поддерживает second-level cache через Hibernate | ❌ ПОСЛЕДСТВИЕ: Hibernate/JPA second-level cache несовместим с R2DBC; для кэширования в реактивном стеке — Caffeine или Redis
+
+## Q10. Как обрабатывать ошибки в R2DBC?
 
 ```java
 public Mono<Order> findOrThrow(Long id) {
@@ -428,10 +434,12 @@ public ResponseEntity<ErrorDto> handleR2dbcError(R2dbcDataIntegrityViolationExce
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как работает DatabaseClient для raw SQL? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] switchIfEmpty(Mono.error(...)) выполняется всегда, даже если значение есть | ❌ ПОСЛЕДСТВИЕ: Mono.error() внутри switchIfEmpty ленивый — выполняется только если upstream empty; нет лишних исключений
+> - [ ] retryWhen без filter повторяет при всех ошибках включая non-transient | ❌ ПОСЛЕДСТВИЕ: retry без filter повторяет при constraint violation, auth error и т.д. — лишние retries; нужен .filter(e → e instanceof R2dbcTransientResourceException)
+> - [x] switchIfEmpty(Mono.error()) для 404; onErrorMap для маппирования R2DBC exceptions; retryWhen(Retry.backoff().filter()) для transient errors | ✓ ПРИМЕНЯТЬ: reactive error handling без блокирующих try/catch 📋 ПРАВИЛО: switchIfEmpty = 404; onErrorMap = exception translation; retryWhen = transient retry 🔗 См. Q5
+> - [ ] @ExceptionHandler не работает с Mono/Flux — нужен WebExceptionHandler | ❌ ПОСЛЕДСТВИЕ: @ExceptionHandler в @RestControllerAdvice работает с reactive методами через WebFlux exception resolution
+
+## Q11. Как работает DatabaseClient для raw SQL?
 
 ```java
 @Service

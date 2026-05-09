@@ -775,10 +775,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Как настроить `Latency Assault` и `Exception Assault`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Watchers = что будет происходить (action); Assaults = где будет происходить (target) | ❌ ПОСЛЕДСТВИЕ: наоборот: Watchers = где (какие бины); Assaults = что (latency/exception/kill/memory/CPU)
+> - [x] Watchers: @RestController, @Service, @Repository, custom beans — определяют где; Assaults: Latency, Exception, Kill, Memory, CPU — определяют что; level = каждый N-й вызов | ✓ ПРИМЕНЯТЬ: включить watcher только на @Service для точечного blast radius; level=10 для low-impact 📋 ПРАВИЛО: Watcher=target, Assault=action, Level=frequency 🔗 См. Q16
+> - [ ] level=1 безопаснее чем level=5 | ❌ ПОСЛЕДСТВИЕ: level=1 атакует КАЖДЫЙ вызов — максимальный impact; level=5 атакует каждый 5-й; меньший level = больший chaos blast
+> - [ ] Exception Assault выбрасывает только checked exceptions | ❌ ПОСЛЕДСТВИЕ: Exception Assault по умолчанию RuntimeException (unchecked); можно настроить любой тип исключения через exception.type в YAML
+
+## Q18. Как настроить `Latency Assault` и `Exception Assault`?
 
 ### Latency Assault
 
@@ -837,10 +839,12 @@ chaos:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Как управлять `Chaos Monkey` через Actuator в runtime? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Latency Assault добавляет фиксированную задержку для всех вызовов | ❌ ПОСЛЕДСТВИЕ: задержка случайна в диапазоне [latencyRangeStart, latencyRangeEnd]; фиксированная задержка = неправдоподобна для production
+> - [ ] Exception Assault всегда выбрасывает один тип исключения — RuntimeException | ❌ ПОСЛЕДСТВИЕ: тип настраивается через exception.type в YAML; можно задать любой Throwable включая кастомные
+> - [ ] Комбинирование нескольких assaults невозможно | ❌ ПОСЛЕДСТВИЕ: можно активировать несколько assaults одновременно (latencyActive+exceptionsActive=true); выбор между активными — случайный при каждом вызове
+> - [x] Latency Assault: случайная задержка [start, end] ms перед методом; Exception Assault: выброс configurable exception; оба активируются через assaults config + watcher | ✓ ПРИМЕНЯТЬ: Latency для timeout тестов upstream; Exception для error handler валидации 📋 ПРАВИЛО: latencyActive + exceptionsActive = оба активны, random выбор 🔗 См. Q17
+
+## Q19. Как управлять `Chaos Monkey` через Actuator в runtime?
 
 Chaos Monkey предоставляет Spring Boot Actuator endpoint `/actuator/chaosmonkey` для управления без рестарта приложения.
 
@@ -893,10 +897,12 @@ management:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. Когда использовать `@ChaosMonkeyAnnotation`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Actuator endpoint `/chaosmonkey` можно открыть публично — это только для тестирования | ❌ ПОСЛЕДСТВИЕ: публично открытый `/chaosmonkey/enable` = готовый DoS вектор; в prod защищать Basic Auth или mTLS
+> - [ ] Actuator для Chaos Monkey работает только в dev профиле | ❌ ПОСЛЕДСТВИЕ: Actuator endpoint работает в любом профиле если chaos-monkey активен; именно поэтому нужна security конфигурация в prod
+> - [x] Actuator `/chaosmonkey` позволяет enable/disable, изменять assaults и watchers в runtime без рестарта; это kill switch для немедленной остановки | ✓ ПРИМЕНЯТЬ: runtime management во время GameDay; защитить Auth; интегрировать в CI pipeline 📋 ПРАВИЛО: Actuator = runtime kill switch + dynamic assault config; always secure in prod 🔗 См. Q17
+> - [ ] Через Actuator можно менять только latency настройки, не watchers | ❌ ПОСЛЕДСТВИЕ: /chaosmonkey/assaults и /chaosmonkey/watchers — оба endpoints доступны для runtime изменений
+
+## Q20. Когда использовать `@ChaosMonkeyAnnotation`?
 
 Стандартные watchers работают по стереотипам Spring (`@Service`, `@Repository`). Если нужен **точечный контроль** над конкретными методами, используем `@ChaosMonkeyAnnotation`.
 
@@ -944,10 +950,12 @@ chaos:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. (!) Что такое `Chaos Mesh` и какие fault types он поддерживает? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] @ChaosMonkeyAnnotation нужна только для @Component бинов | ❌ ПОСЛЕДСТВИЕ: аннотация работает на любых Spring-managed бинах и методах; основная цель — точечный blast radius для конкретных методов в любых бинах
+> - [ ] Включить watcher @Service + @Repository одновременно безопасно в монолите | ❌ ПОСЛЕДСТВИЕ: включение всего Service+Repository слоя в большом монолите = непредсказуемый blast radius; chaos расползается на все методы
+> - [x] @ChaosMonkeyAnnotation на конкретный метод — когда нужен точечный blast radius; документирует участие метода в chaos экспериментах | ✓ ПРИМЕНЯТЬ: атаковать только PaymentService#charge без затрагивания всего @Service слоя 📋 ПРАВИЛО: custom annotation = surgical blast radius control = explicit chaos documentation 🔗 См. Q17
+> - [ ] @ChaosMonkeyAnnotation заменяет стандартные watchers — не нужны оба | ❌ ПОСЛЕДСТВИЕ: custom annotations — дополнение к watcher стереотипам; можно комбинировать, каждый имеет своё назначение
+
+## Q21. (!) Что такое `Chaos Mesh` и какие fault types он поддерживает?
 
 **Chaos Mesh** — open-source платформа хаос-инжиниринга для Kubernetes, созданная PingCAP. CNCF Incubating проект. Описывает эксперименты как Custom Resources (CR), что позволяет хранить их в Git и применять через `kubectl apply`.
 

@@ -122,10 +122,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Three pillars: traces, metrics, logs? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Vendor SDK быстрее в разработке — выбирать его всегда | ❌ ПОСЛЕДСТВИЕ: при смене vendor (Datadog→Grafana stack) переписывание всей instrumentation; OTel позволяет переключиться через config без code changes
+> - [ ] OTel требует переписывания приложения с нуля для интеграции | ❌ ПОСЛЕДСТВИЕ: OTel auto-instrumentation (Java agent, Python instrumentation libraries) добавляется без изменений кода; миф препятствует adoption
+> - [x] OTel = single instrumentation, multi-backend через config; нет vendor lock-in; стандарт API across languages | ✓ ПРИМЕНЯТЬ: фирмы с multi-cloud, миграцией APM, или unsure о vendor 📋 ПРАВИЛО: OTel = write once, send anywhere 🔗 См. Q1
+> - [ ] OTel не поддерживается major vendors типа Datadog | ❌ ПОСЛЕДСТВИЕ: в 2025 Datadog/NewRelic/Splunk/Honeycomb принимают OTLP input; устаревшее представление о vendor support
+
+## Q3. (!) Three pillars: traces, metrics, logs?
 
 **Traces** — request paths через services.
 - Stable in OTel
@@ -146,10 +148,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. История (OpenTracing + OpenCensus = OpenTelemetry)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] OTel поддерживает только traces, metrics и logs реализуются отдельно | ❌ ПОСЛЕДСТВИЕ: все три pillars (traces+metrics+logs) — часть OTel; logs стали stable в 2024; разделение приведёт к дублирующим инструментам
+> - [ ] Метрики в OTel — это только counters, нет histogram/gauge | ❌ ПОСЛЕДСТВИЕ: OTel поддерживает Counter, UpDownCounter, Gauge, Histogram, ObservableCounter; ограничение даст плохое представление performance (без percentiles)
+> - [ ] Logs в OTel ещё experimental, не использовать в production | ❌ ПОСЛЕДСТВИЕ: OTel logs stable с 2024; устаревшее знание блокирует унификацию observability
+> - [x] Three pillars: Traces (request paths), Metrics (counter/gauge/histogram), Logs (events); все в одном SDK | ✓ ПРИМЕНЯТЬ: complete observability stack через единый OTel SDK 📋 ПРАВИЛО: traces + metrics + logs = full picture 🔗 См. Q5
+
+## Q4. История (OpenTracing + OpenCensus = OpenTelemetry)?
 
 **OpenTracing** (2016) — спецификация tracing API. Ранний стандарт.
 **OpenCensus** (2017) — Google's tracing + metrics library.
@@ -162,10 +166,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) Components: API, SDK, Collector? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] OpenTracing и OpenCensus всё ещё активно развиваются параллельно с OTel | ❌ ПОСЛЕДСТВИЕ: оба deprecated в 2025; начало нового проекта на OpenTracing/OpenCensus = технический долг с первого дня
+> - [ ] OpenTelemetry — это просто rebranding OpenTracing без изменений | ❌ ПОСЛЕДСТВИЕ: OTel = merge OpenTracing + OpenCensus + новый SDK; API несовместим напрямую; миграция требует переписывания
+> - [x] OTel (2019) = merge OpenTracing (tracing) + OpenCensus (metrics); CNCF graduated; победил в standards war | ✓ ПРИМЕНЯТЬ: миграция legacy OpenTracing/OpenCensus → OTel; новые проекты сразу на OTel 📋 ПРАВИЛО: OTel = OpenTracing + OpenCensus + Logs 🔗 См. Q1
+> - [ ] OTel создавали только Google и Microsoft без участия других vendor | ❌ ПОСЛЕДСТВИЕ: OTel поддерживается ВСЕМИ major vendors (Datadog, Splunk, AWS, Honeycomb, NewRelic); это broad CNCF coalition
+
+## Q5. (!) Components: API, SDK, Collector?
 
 ```
 [App + OTel API] → [OTel SDK] → [OTel Collector] → [Backend(s)]
@@ -181,10 +187,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. (!) OTel Collector — что и зачем? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] API и SDK — одна сущность, разделение на компоненты бессмысленно | ❌ ПОСЛЕДСТВИЕ: разделение позволяет app зависеть только от API (минимальная dependency); SDK можно swap без изменения app code
+> - [ ] Collector обязателен — без него OTel не работает | ❌ ПОСЛЕДСТВИЕ: Collector опционален: SDK может слать напрямую в backend (Direct Export); Collector нужен для batching, multi-backend fanout, central config
+> - [x] API (instrumentation interface) + SDK (implementation, batching, export) + Collector (central process для receive/process/export) | ✓ ПРИМЕНЯТЬ: app зависит от API; SDK + Collector через OTLP 📋 ПРАВИЛО: API stable; SDK swappable; Collector = optional centralizer 🔗 См. Q6
+> - [ ] Collector — это просто прокси без какой-либо обработки данных | ❌ ПОСЛЕДСТВИЕ: Collector делает sampling, filtering, batching, transformation, multi-backend fanout; восприятие как proxy недооценивает функционал
+
+## Q6. (!) OTel Collector — что и зачем?
 
 **OTel Collector** — process, который **receives** телеметрию от apps, **processes** (filter, sample, transform), и **exports** к backends.
 
@@ -212,10 +220,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Receiver, Processor, Exporter в Collector? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Collector используется только в Kubernetes — на VM не работает | ❌ ПОСЛЕДСТВИЕ: Collector — обычный binary; работает на VM, bare metal, containers, Lambda; миф ограничивает архитектурный выбор
+> - [ ] Прямая отправка телеметрии в backend всегда лучше Collector | ❌ ПОСЛЕДСТВИЕ: без Collector каждое app должно знать про каждый backend; смена backend = редеплой всех services; Collector decouples app от backend
+> - [x] Collector decouples apps от backends, делает sampling/filter/batch централизованно; modes: Agent (sidecar) или Gateway (cluster-wide) | ✓ ПРИМЕНЯТЬ: production deployment с multi-backend, централизованной конфигурацией 📋 ПРАВИЛО: Collector = central pipeline; Agent + Gateway = best practice 🔗 См. Q5
+> - [ ] Collector работает только в режиме Agent (sidecar) — Gateway невозможен | ❌ ПОСЛЕДСТВИЕ: Collector поддерживает Agent (per-app sidecar/DaemonSet) И Gateway (centralized cluster) modes; ограничение режима снижает архитектурную гибкость
+
+## Q7. Receiver, Processor, Exporter в Collector?
 
 ```yaml
 # Collector config
@@ -264,10 +274,12 @@ service:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Agent vs Gateway deployment? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Receiver и Exporter — синонимы, разделение искусственное | ❌ ПОСЛЕДСТВИЕ: Receiver принимает (server-side: OTLP server), Exporter отправляет (client-side: к Jaeger); путаница приведёт к неверной конфигурации pipeline
+> - [ ] Processor нельзя пропустить — обязателен в каждом pipeline | ❌ ПОСЛЕДСТВИЕ: processors опциональны (массив может быть пустой); хотя в production всегда нужен memory_limiter + batch для надёжности
+> - [x] Receiver (input: OTLP/Jaeger/Prometheus) → Processor (batch/filter/sampler) → Exporter (output: Jaeger/Prom/Loki); pipelines связывают трёх | ✓ ПРИМЕНЯТЬ: настройка Collector через service.pipelines в YAML 📋 ПРАВИЛО: Receiver→Processor→Exporter pipeline 🔗 См. Q6
+> - [ ] Один pipeline может обрабатывать только один signal type (только traces ИЛИ metrics) | ❌ ПОСЛЕДСТВИЕ: Collector разрешает несколько pipelines (traces, metrics, logs) одновременно с разными receivers/exporters; ограничение одним signal избыточно
+
+## Q8. Agent vs Gateway deployment?
 
 **Agent (per-host):**
 - DaemonSet в K8s (pod на каждой node)
@@ -287,10 +299,12 @@ service:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Auto vs manual instrumentation? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Agent всегда лучше Gateway — выбирать только Agent в production | ❌ ПОСЛЕДСТВИЕ: Agent даёт low-latency локально, но не централизует sampling/processing; на масштабе нужна комбинация Agent + Gateway для balance
+> - [ ] Gateway — единственный паттерн, Agent устарел | ❌ ПОСЛЕДСТВИЕ: Agent (DaemonSet/sidecar) даёт local buffering и низкую latency; чисто Gateway создаёт single point of failure
+> - [x] Best practice: Agent (local, low-latency, basic processing) + Gateway (centralized sampling, complex processing, multi-backend fanout) | ✓ ПРИМЕНЯТЬ: production K8s deployment с тысячами pods 📋 ПРАВИЛО: Agent для local, Gateway для central, оба для prod 🔗 См. Q6
+> - [ ] Sidecar Collector в Kubernetes увеличивает overhead и его нельзя использовать | ❌ ПОСЛЕДСТВИЕ: sidecar pattern — стандартный для OTel; overhead минимален; миф приведёт к direct export в backend без буферизации
+
+## Q9. (!) Auto vs manual instrumentation?
 
 **Auto-instrumentation** — automatic для popular libraries (HTTP, DB, gRPC).
 

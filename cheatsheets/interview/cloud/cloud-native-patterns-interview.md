@@ -431,10 +431,12 @@ startupProbe:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Session state externalization? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Stateless apps проще масштабировать вертикально, а не горизонтально | ❌ ПОСЛЕДСТВИЕ: stateless позволяет горизонтальное масштабирование (добавлять instances); вертикальное (bigger VM) — противоположный подход с потолком
+> - [ ] Sticky sessions решают проблему stateful apps при scaling | ❌ ПОСЛЕДСТВИЕ: sticky sessions ограничивают scaling; если instance упадёт — сессии теряются; правильное решение — externalize state в Redis/DB
+> - [x] Stateless = каждый запрос независим; state во внешнем store (Redis, DB, S3); позволяет horizontal scaling, rolling updates, easy replacement | ✓ ПРИМЕНЯТЬ: все production web apps должны быть stateless; state externalize в Redis 📋 ПРАВИЛО: stateless = любой instance = любой запрос = горизонтальный scaling 🔗 См. Q14
+> - [ ] Stateless apps не могут иметь пользовательские сессии | ❌ ПОСЛЕДСТВИЕ: сессии возможны через externalized session store (Redis + session ID в cookie) или JWT; stateless ≠ no sessions
+
+## Q14. Session state externalization?
 
 **Bad:** session в memory сервера (only that instance can serve user).
 **Good:** session в shared store.

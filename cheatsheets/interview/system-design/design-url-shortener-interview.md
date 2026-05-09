@@ -91,10 +91,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Capacity estimation — сколько storage, QPS? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] URL shortener — write-heavy сервис: оптимизировать запись, не чтение | ❌ ПОСЛЕДСТВИЕ: Reads:Writes ≈ 100:1; оптимизация записи без массивного caching reads = 100ms+ redirect latency
+> - [x] Read-heavy (100:1), low latency (<100ms), HA 99.9%+, unpredictable URLs (security), billions scale | ✓ ПРИМЕНЯТЬ: NFR для URL shortener, формирующие архитектурные решения 📋 ПРАВИЛО: URL shortener = read-heavy + low latency + HA + unpredictable codes 🔗 См. Q9
+> - [ ] Strong consistency между регионами обязательна | ❌ ПОСЛЕДСТВИЕ: глобальный consensus добавит 100-200ms на write; eventual consistency достаточно — короткий код доступен через секунды глобально
+> - [ ] Custom aliases — обязательная функциональность для MVP | ❌ ПОСЛЕДСТВИЕ: vanity URLs усложняют collision detection и conflict resolution; в MVP лучше отложить, опционально для платных пользователей
+
+## Q2. (!) Capacity estimation — сколько storage, QPS?
 
 **Assumptions (bit.ly-scale):**
 - 100M new URLs / month = ~40 writes/sec
@@ -126,10 +128,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) API endpoints и flow? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Cache можно хранить на одной Redis instance — 30GB hot data | ❌ ПОСЛЕДСТВИЕ: single Redis = single point of failure; для HA нужен Redis Cluster или sentinel; 30GB на одной node — но без replication
+> - [ ] Storage 5 лет ≈ 100GB — index не нужен | ❌ ПОСЛЕДСТВИЕ: реально 6B URLs × 150B + индексы на short_code и user_id ≈ 3-5TB; без планирования storage system падает на 50% capacity
+> - [x] 6B URLs × 150B = 900GB raw + indexes ~3-5TB; cache 80/20 ⇒ 30GB Redis для hot URLs | ✓ ПРИМЕНЯТЬ: capacity estimation для read-heavy URL shortener 📋 ПРАВИЛО: 80/20 cache hits hot 20% URLs = огромный QPS hit rate 🔗 См. Q9
+> - [ ] Bandwidth не критичен — URL короткие | ❌ ПОСЛЕДСТВИЕ: при peak 40k QPS × 100B response = 4MB/s; на ingress NIC можно превысить лимит при недостаточной аплинк-пропускной способности
+
+## Q3. (!) API endpoints и flow?
 
 **POST /shorten**
 ```http
@@ -176,10 +180,12 @@ Location: https://very/long/url
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Как генерировать short URL? (Base62, hash, counter) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Использовать 301 (permanent) для всего — улучшает производительность | ❌ ПОСЛЕДСТВИЕ: 301 кэшируется браузером навсегда; redirect не дойдёт до сервера — analytics клик-трекинг не работает; bit.ly использует 301 с private max-age=90 для компромисса
+> - [x] POST /shorten возвращает короткий URL; GET /{code} → 302 redirect (для analytics) или 301 (cached, лучше perf, без tracking) | ✓ ПРИМЕНЯТЬ: REST API дизайн URL shortener; выбор 301/302 зависит от tracking 📋 ПРАВИЛО: 301 = cached forever (no analytics); 302 = each click hits server 🔗 См. Q14
+> - [ ] Flow shorten: validate → generate → return (без cache write) | ❌ ПОСЛЕДСТВИЕ: первый redirect промахнётся в кэше → DB hit → 50ms latency; pre-warm cache при создании = 5ms latency сразу
+> - [ ] При создании короткого URL обязательно проверять что long_url существует | ❌ ПОСЛЕДСТВИЕ: HEAD request на каждый submit добавляет 200-500ms latency; spam-проверки лучше делать в backend offline
+
+## Q4. (!) Как генерировать short URL? (Base62, hash, counter)
 
 **Three main approaches:**
 
@@ -227,10 +233,12 @@ check_db_collision()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) Почему Base62, а не Base64? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Hash MD5 без collision check — самый надёжный подход | ❌ ПОСЛЕДСТВИЕ: на billion entries birthday paradox даёт несколько collisions; без unique constraint два URL получат одинаковый код = один потеряется
+> - [ ] Глобальный counter без шардинга — самое простое решение | ❌ ПОСЛЕДСТВИЕ: single counter — bottleneck при 40+ writes/sec; на peak load очередь к counter блокирует все writes; нужен distributed counter (Snowflake, key ranges)
+> - [x] Counter+Base62 (no collisions, predictable, нужен distributed) ИЛИ random Base62 7chars (3.5T combos, low collision rate) ИЛИ pre-generated pool (offline batches) | ✓ ПРИМЕНЯТЬ: выбор зависит от scale и предсказуемости URL 📋 ПРАВИЛО: counter = predictable bottleneck; random = unpredictable независимое 🔗 См. Q5
+> - [ ] 6 chars Base62 достаточно — 56 миллиардов комбинаций | ❌ ПОСЛЕДСТВИЕ: 56B комбинаций с 6B existing = пространство уже почти заполнено через 5 лет; collision rate растёт катастрофически; 7 chars = 3.5T = безопасно
+
+## Q5. (!) Почему Base62, а не Base64?
 
 **Base62 alphabet:** `[a-zA-Z0-9]` — 62 chars.
 
@@ -268,10 +276,12 @@ def decode(s):
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Как избежать collisions? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Base64 универсально лучше — больше алфавит = меньше длина кода | ❌ ПОСЛЕДСТВИЕ: Base64 содержит `+` и `/` — требуют URL encoding (`%2B`, `%2F`); URL уродлив; URL-safe Base64 (`-`,`_`) лучше но менее supported
+> - [ ] Base10 (decimal) — самое читаемое для пользователей | ❌ ПОСЛЕДСТВИЕ: 7 chars Base10 = 10M URLs, исчерпается за месяц; Base62 7 chars = 3.5T, хватит на годы
+> - [x] Base62 [a-zA-Z0-9] — URL-safe inherently, double-click selects, эстетично; 62^7 = 3.5T combinations | ✓ ПРИМЕНЯТЬ: short URL encoding, file IDs, любые URL-safe identifiers 📋 ПРАВИЛО: Base62 = URL-friendly без escape characters 🔗 См. Q4
+> - [ ] Hex (Base16) лучше Base62 — стандартизированно | ❌ ПОСЛЕДСТВИЕ: Hex кодирует только 4 бита/symbol (vs ~6 Base62); 7 hex chars = 268M URLs; для billion масштаба нужно 10+ chars
+
+## Q6. Как избежать collisions?
 
 **В hash-based approach:**
 - Collision rate низкий, но ≠ 0
@@ -320,10 +330,12 @@ while True:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Database schema? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Generate random codes без проверки collision — birthday paradox низкий | ❌ ПОСЛЕДСТВИЕ: при 6B codes из 3.5T space P(collision)≈0.17%; это ~10M потерянных URL без unique constraint
+> - [x] Strategies: check-and-insert (unique constraint), Bloom filter, pre-generate pool, counter-based; retry limit 3-5 then increase length | ✓ ПРИМЕНЯТЬ: production URL shortener должен иметь стратегию collision handling 📋 ПРАВИЛО: collision handling = unique constraint + retry с лимитом 🔗 См. Q4
+> - [ ] Bloom filter гарантирует отсутствие collisions | ❌ ПОСЛЕДСТВИЕ: Bloom filter даёт false positives (1-2%); без последующей DB check возможен пропуск collision; Bloom = optimization, не guarantee
+> - [ ] При collision лучше всегда возвращать 409 Conflict — пусть клиент попробует ещё раз | ❌ ПОСЛЕДСТВИЕ: латентность взлетает (RTT × число retries); клиент может не делать retry; сервер должен retry внутри generation logic
+
+## Q7. (!) Database schema?
 
 **Simple:**
 
@@ -374,10 +386,12 @@ CREATE TABLE users (
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. SQL vs NoSQL — какой выбор? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] click_count лучше обновлять синхронно при каждом redirect | ❌ ПОСЛЕДСТВИЕ: 40k QPS × UPDATE click_count = lock contention на short_code row; redirect latency взлетает; нужен async batch update
+> - [x] short_code как PRIMARY KEY (fast lookup); clicks separate table partitioned by month; click_count denormalized eventually consistent | ✓ ПРИМЕНЯТЬ: schema дизайн URL shortener с разделением hot/cold paths 📋 ПРАВИЛО: redirect path = lookup-only; analytics path = separate async pipeline 🔗 См. Q14
+> - [ ] Не нужен индекс на user_id если поиск по short_code | ❌ ПОСЛЕДСТВИЕ: "мои URL" страница запрашивает urls WHERE user_id=X; full table scan на 6B records = таймаут
+> - [ ] PARTITION BY HASH лучше PARTITION BY RANGE для кликов | ❌ ПОСЛЕДСТВИЕ: HASH разбрасывает данные равномерно но не позволяет дропнуть старые партиции; RANGE по месяцам = TRUNCATE PARTITION для cleanup
+
+## Q8. SQL vs NoSQL — какой выбор?
 
 **SQL (PostgreSQL/MySQL):**
 - Transactions (важно для counter?)

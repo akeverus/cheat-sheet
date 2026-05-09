@@ -121,10 +121,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Архитектура NATS Server? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Kafka лучше во всех случаях — выбирать только её | ❌ ПОСЛЕДСТВИЕ: для microservices с low-latency требованиями NATS быстрее на порядки; Kafka overkill для простых pub/sub
+> - [x] NATS = low latency (μs) + low resource (~30MB), microservices/IoT/edge; Kafka = stream processing big data; RabbitMQ = complex routing | ✓ ПРИМЕНЯТЬ: NATS для μs-latency и edge; Kafka для replay + big data; RabbitMQ для AMQP routing 📋 ПРАВИЛО: latency → NATS; volume → Kafka; routing → RabbitMQ 🔗 См. Q1
+> - [ ] RabbitMQ имеет наивысший throughput — выбирать его для high-volume | ❌ ПОСЛЕДСТВИЕ: RabbitMQ tens of K/sec, NATS millions; для high-volume RabbitMQ — bottleneck
+> - [ ] NATS не поддерживает persistence вообще — нужна Kafka | ❌ ПОСЛЕДСТВИЕ: JetStream (с 2020) даёт persistence; ограничение — limited stream replay vs Kafka first-class
+
+## Q3. Архитектура NATS Server?
 
 **NATS Server** — single Go binary (~30 MB).
 
@@ -144,10 +146,12 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Subjects (вместо topics)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] NATS требует ZooKeeper как Kafka | ❌ ПОСЛЕДСТВИЕ: NATS не имеет внешних зависимостей; ZooKeeper нужен только Kafka < 3.x; NATS использует RAFT для clustering
+> - [x] Single Go binary ~30MB; standalone/cluster (full mesh)/super-cluster/leaf nodes; built-in auth, TLS, monitoring | ✓ ПРИМЕНЯТЬ: edge deployment (leaf), multi-region (super-cluster), HA (cluster) 📋 ПРАВИЛО: NATS Server = self-contained = no external deps 🔗 См. Q17
+> - [ ] NATS требует JVM в production | ❌ ПОСЛЕДСТВИЕ: NATS написан на Go и компилируется в native binary; никакого JVM не нужно — поэтому 30MB, не GBs
+> - [ ] Cluster mode требует master-slave топологии | ❌ ПОСЛЕДСТВИЕ: NATS cluster = full mesh всех peers; нет master node; любой peer обслуживает запросы
+
+## Q4. (!) Subjects (вместо topics)?
 
 **Subject** — name для message routing. **Hierarchical**, dot-separated.
 
@@ -168,10 +172,12 @@ user.456.profile
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Wildcards в subjects (`*`, `>`)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Subject в NATS = Kafka topic — нет различий | ❌ ПОСЛЕДСТВИЕ: subjects hierarchical, dot-separated, поддерживают wildcards; topics flat без иерархии; subjects можно создавать миллионами без накладных расходов
+> - [x] Hierarchical dot-separated имена с wildcards (*, >); более granular чем Kafka topics; cheap создавать миллионы | ✓ ПРИМЕНЯТЬ: per-user subjects (user.123.profile), event hierarchy (orders.created/updated) 📋 ПРАВИЛО: subject = иерархическое имя для routing с wildcard поддержкой 🔗 См. Q5
+> - [ ] Subjects жёстко лимитированы (~100 на сервер) — нельзя миллионы | ❌ ПОСЛЕДСТВИЕ: NATS специально разработан для миллионов subjects; нет per-subject overhead в Core NATS
+> - [ ] Subjects не поддерживают wildcards — только exact match | ❌ ПОСЛЕДСТВИЕ: `*` (single token) и `>` (multi-token, last only) — стандартные wildcards для подписки на широкий range
+
+## Q5. Wildcards в subjects (`*`, `>`)?
 
 **`*`** — single-token wildcard.
 **`>`** — multi-token wildcard (must be last).
@@ -187,10 +193,12 @@ user.*.profile     — matches user.123.profile, user.456.profile
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. (!) Pub/Sub patterns? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] `*` matches multiple tokens включая dots — `orders.*` matches orders.shipping.scheduled | ❌ ПОСЛЕДСТВИЕ: `*` matches только ONE token; для multiple — нужен `>` (multi-token)
+> - [ ] `>` можно использовать в любой позиции subject pattern | ❌ ПОСЛЕДСТВИЕ: `>` должен быть LAST в pattern; orders.>.scheduled — invalid pattern
+> - [x] `*` = один token, `>` = multi-token (только last); `orders.*` matches orders.created но не orders.shipping.scheduled; `orders.>` matches всё под orders | ✓ ПРИМЕНЯТЬ: подписка на event family (orders.>) или specific level (user.*.profile) 📋 ПРАВИЛО: * = один уровень; > = всё под = последний 🔗 См. Q4
+> - [ ] Wildcards замедляют subscription до O(N) на каждое сообщение | ❌ ПОСЛЕДСТВИЕ: NATS использует prefix tree (trie); subscription matching O(token count), не O(N subscribers)
+
+## Q6. (!) Pub/Sub patterns?
 
 **Publisher:**
 ```javascript
@@ -210,10 +218,12 @@ nc.subscribe("orders.*", msg => {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Queue groups (load balancing)? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Core NATS буферизует сообщения если subscribers offline — auto-replay | ❌ ПОСЛЕДСТВИЕ: Core NATS at-most-once; offline subscribers пропускают сообщения; для buffering нужен JetStream
+> - [ ] Только один subscriber получает сообщение в pub/sub | ❌ ПОСЛЕДСТВИЕ: classic pub/sub = ALL matching subscribers получают (broadcast); один получатель — только в queue groups (load balancing)
+> - [x] Все matching subscribers получают сообщение (broadcast); если subscribers нет — message dropped (at-most-once); для durability нужен JetStream | ✓ ПРИМЕНЯТЬ: real-time fanout событий, broadcasting status 📋 ПРАВИЛО: pub/sub = broadcast all matchers; no subscribers = lost (Core NATS) 🔗 См. Q9
+> - [ ] Publish блокируется до тех пор пока все subscribers не обработают | ❌ ПОСЛЕДСТВИЕ: publish неблокирующий, fire-and-forget; broker не ждёт processing у subscribers
+
+## Q7. (!) Queue groups (load balancing)?
 
 **Queue group** — multiple consumers share same subject, only **ONE** receives each message (round-robin).
 
@@ -237,10 +247,12 @@ nc.publish("orders.process", data);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Request-Reply? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Queue group и обычный subscribe идентичны — разные имена | ❌ ПОСЛЕДСТВИЕ: queue group делает round-robin (один из группы); обычный sub — broadcast (все); путаница приводит к unexpected duplicate processing
+> - [x] Multiple consumers в одной queue group → round-robin (один получает каждое сообщение); load balancing для work queues | ✓ ПРИМЕНЯТЬ: worker pool обработки jobs, scaling consumers горизонтально 📋 ПРАВИЛО: queue group = LB; non-queue sub = broadcast; combine = both 🔗 См. Q6
+> - [ ] Queue groups требуют ручной координации между workers | ❌ ПОСЛЕДСТВИЕ: NATS server сам распределяет сообщения round-robin внутри queue group; никакой client-side coordination
+> - [ ] При сбое worker сообщение теряется в queue group | ❌ ПОСЛЕДСТВИЕ: с JetStream + ack-based delivery → message redelivered другому worker; с Core NATS — да, теряется (at-most-once)
+
+## Q8. Request-Reply?
 
 **RPC-like pattern** через NATS:
 

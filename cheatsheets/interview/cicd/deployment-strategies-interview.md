@@ -1239,10 +1239,12 @@ sequenceDiagram
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Как деплой связан с feature toggles и экспериментированием? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Backward compatibility означает что новый клиент понимает старый сервер | ❌ ПОСЛЕДСТВИЕ: backward compatibility = новый СЕРВЕР понимает старых КЛИЕНТОВ; forward compatibility = старый сервер понимает новых клиентов; путаница — частая ошибка
+> - [ ] При breaking change в API все сервисы деплоятся одновременно (big bang) | ❌ ПОСЛЕДСТВИЕ: big bang деплой = высокий риск; трёхэтапный подход (сервер+оба контракта → мигрировать клиентов → убрать старый) безопаснее
+> - [x] Backward: новый сервер понимает старых клиентов; Forward: старый сервер не падает на новых полях; при breaking change — трёхэтапный деплой | ✓ ПРИМЕНЯТЬ: всегда при изменении API в микросервисах; Pact для верификации 📋 ПРАВИЛО: backward = server compat old clients; forward = server ignores unknown; 3-step for breaking 🔗 См. Q19
+> - [ ] Jackson автоматически обеспечивает backward compatibility — не нужны дополнительные настройки | ❌ ПОСЛЕДСТВИЕ: без @JsonIgnoreProperties(ignoreUnknown=true) Jackson выбросит UnrecognizedPropertyException при неизвестных полях; нужна явная настройка
+
+## Q29. Как деплой связан с feature toggles и экспериментированием?
 
 **Feature toggles** (feature flags) позволяют включить/выключить функциональность без нового деплоя. Деплой и релиз разделяются: код в prod за флагом off; релиз — включение флага.
 
@@ -1281,10 +1283,12 @@ public ResponseEntity<?> checkout(@RequestBody CheckoutRequest request) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Как обеспечить идемпотентность и повторяемость деплоя? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Feature flag и Canary — взаимоисключающие подходы для постепенного rollout | ❌ ПОСЛЕДСТВИЕ: часто используются вместе: Canary — new pods с new code; feature flag — включение фичи внутри new pods только для % пользователей
+> - [ ] Feature toggle нужно хранить в .properties файлах в образе | ❌ ПОСЛЕДСТВИЕ: toggle в образе требует rebuild для изменения; Unleash/LaunchDarkly — runtime change без деплоя; именно для этого external toggle service
+> - [x] Deploy = код за выключенным флагом в prod; Release = включение флага без деплоя; откат = выключить флаг; Unleash для per-user rollout | ✓ ПРИМЕНЯТЬ: разделение deploy и release; риск-снижение; A/B тестирование по userId 📋 ПРАВИЛО: flag = decouple deploy from release; rollback = toggle off 🔗 См. Q7
+> - [ ] Feature flags замедляют код из-за проверки при каждом запросе | ❌ ПОСЛЕДСТВИЕ: Unleash кэширует решения локально; проверка = map lookup O(1); overhead незначителен в production
+
+## Q30. Как обеспечить идемпотентность и повторяемость деплоя?
 
 **Идемпотентность:** повторный запуск деплоя с теми же артефактами даёт тот же результат (не дублирует ресурсы, не ломает состояние).
 
@@ -1309,10 +1313,12 @@ helm upgrade --install myapp ./charts/myapp \
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. (!) Как настроить Canary-деплой через Argo Rollouts? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] kubectl create — идемпотентная операция, безопасна для повторного запуска | ❌ ПОСЛЕДСТВИЕ: kubectl create при существующем ресурсе = error; идемпотентная = kubectl apply (обновляет existing или создаёт new)
+> - [ ] Миграция БД без IF NOT EXISTS — нормально, Flyway не дублирует | ❌ ПОСЛЕДСТВИЕ: Flyway/Liquibase проверяют checksum и применённые версии; но сами скрипты должны быть idempotent для ручного запуска; IF NOT EXISTS = best practice
+> - [x] kubectl apply + helm upgrade --install + идемпотентные DB migrations + фиксированный image tag = повторяемый деплой | ✓ ПРИМЕНЯТЬ: CI/CD pipeline; нельзя использовать kubectl create; только declarative 📋 ПРАВИЛО: idempotent deploy = apply + fixed tag + idempotent migrations 🔗 См. Q17
+> - [ ] helm upgrade без --install безопаснее — не создаст новый релиз случайно | ❌ ПОСЛЕДСТВИЕ: helm upgrade без --install = error если релиз не существует; --install = create or upgrade; для CI/CD нужен --install
+
+## Q31. (!) Как настроить Canary-деплой через Argo Rollouts?
 
 **Argo Rollouts** — Kubernetes-контроллер для прогрессивного деплоя. Вместо стандартного `Deployment` используется CRD `Rollout`, который поддерживает Canary и Blue-Green стратегии с автоматическим анализом метрик.
 
@@ -1432,10 +1438,12 @@ kubectl argo rollouts retry rollout myapp
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. (!) Как настроить Blue-Green деплой через Argo Rollouts? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Argo Rollouts использует стандартный Kubernetes Deployment — не нужен новый CRD | ❌ ПОСЛЕДСТВИЕ: Argo Rollouts использует CRD Rollout вместо Deployment; при замене нужно удалить Deployment и создать Rollout; нельзя использовать оба одновременно
+> - [ ] При Argo Rollouts Canary анализ запускается вручную после каждого step | ❌ ПОСЛЕДСТВИЕ: AnalysisTemplate + Prometheus metrics автоматически анализируются после каждого step; вручную только при autoPromotionEnabled:false
+> - [x] CRD Rollout вместо Deployment; steps: setWeight % → pause → setWeight; AnalysisTemplate с Prometheus для автоматического rollback | ✓ ПРИМЕНЯТЬ: Canary в Kubernetes с автоматическим metric analysis; Argo CD GitOps 📋 ПРАВИЛО: Rollout = Deployment+strategy; AnalysisTemplate = auto promote/rollback по метрикам 🔗 См. Q2
+> - [ ] Argo Rollouts несовместим с Argo CD — только один из них | ❌ ПОСЛЕДСТВИЕ: Argo Rollouts + Argo CD = рекомендованная комбинация для GitOps Canary; Rollout в Git → Argo CD sync → Rollout controller управляет прогрессией
+
+## Q32. (!) Как настроить Blue-Green деплой через Argo Rollouts?
 
 `Argo Rollouts` поддерживает Blue-Green через CRD `Rollout` с указанием `activeService` и `previewService`. При обновлении новые поды создаются под preview; после проверки (или автоматически) трафик переключается.
 
@@ -1509,10 +1517,12 @@ Workflow: обновление образа → Argo Rollouts создаёт pre
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. (!) Как использовать Helm для управления деплоями? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Argo Rollouts Blue-Green сразу переключает 100% трафика без probes | ❌ ПОСЛЕДСТВИЕ: prePromotionAnalysis (smoke tests на preview Service) запускается ДО переключения; после переключения — postPromotionAnalysis; нет прямого сразу-100%
+> - [ ] scaleDownDelaySeconds не нужен — Blue-Green сразу удаляет старые поды | ❌ ПОСЛЕДСТВИЕ: scaleDownDelaySeconds даёт время на rollback без нового деплоя; без него — если нужен rollback, придётся ждать нового promotion
+> - [x] activeService+previewService; ручное promote после prePromotionAnalysis; scaleDownDelaySeconds сохраняет старые поды для быстрого rollback | ✓ ПРИМЕНЯТЬ: Blue-Green с Argo Rollouts; autoPromotionEnabled:false для ручного контроля 📋 ПРАВИЛО: Rollout BG = preview→analysis→promote→scale down; ручной promote = safety gate 🔗 См. Q1
+> - [ ] prePromotionAnalysis замедляет деплой — лучше его не использовать | ❌ ПОСЛЕДСТВИЕ: prePromotionAnalysis — ключевой safety gate перед переключением 100% трафика; экономия времени не стоит пропущенных ошибок
+
+## Q33. (!) Как использовать Helm для управления деплоями?
 
 **Helm** — менеджер пакетов для [Kubernetes](../devops/kubernetes-interview.md). Позволяет шаблонизировать манифесты, управлять версиями релизов и выполнять откат.
 
@@ -1637,10 +1647,12 @@ helm upgrade --install myapp ./charts/myapp \
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. Как настроить деплой через GitHub Actions в Kubernetes? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] helm rollback всегда откатывает к предыдущей версии — нельзя указать конкретную | ❌ ПОСЛЕДСТВИЕ: helm rollback myapp 2 откатывает к ревизии 2; helm rollback myapp 0 — к предыдущей; можно откатить к любой ревизии из helm history
+> - [ ] helm upgrade с --dry-run применяет изменения в тестовом режиме | ❌ ПОСЛЕДСТВИЕ: --dry-run рендерит шаблоны и валидирует без применения; --debug добавляет вывод; реальные изменения — без --dry-run
+> - [x] helm upgrade --install: idempotent; values.yaml + values-prod.yaml переопределение; --wait дождаться rollout; rollback через helm rollback | ✓ ПРИМЕНЯТЬ: Kubernetes deployments с конфигурацией по окружениям; версионирование через chart version 📋 ПРАВИЛО: helm = templating + release history + rollback; upgrade --install = idempotent 🔗 См. Q30
+> - [ ] Helm хранит release history в ConfigMap — занимает много памяти | ❌ ПОСЛЕДСТВИЕ: Helm v3 хранит history в Secrets (более безопасно, чем ConfigMap); revisionHistoryLimit контролирует количество хранимых ревизий
+
+## Q34. Как настроить деплой через GitHub Actions в Kubernetes?
 
 **GitHub Actions** workflow для деплоя в Kubernetes с использованием Helm:
 
