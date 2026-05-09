@@ -85,10 +85,12 @@ java -jar app.jar
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Чем AOT отличается от JIT компиляции? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] GraalVM Native Image — это просто упакованный JRE в один бинарник | ❌ ПОСЛЕДСТВИЕ: GraalVM Native — это AOT-компиляция в нативный код без JRE; bundling JRE = другой подход (jpackage)
+> - [x] AOT-компиляция Java в нативный исполняемый файл; cold start ms vs s; RAM 2-5x меньше; нет JIT warmup; идеально для serverless и CLI | ✓ ПРИМЕНЯТЬ: AWS Lambda, CLI-утилиты, edge computing, контейнеры в k8s 📋 ПРАВИЛО: GraalVM Native = AOT = быстрый старт + малый RAM 🔗 См. Q2
+> - [ ] Native Image работает только для Spring Boot, не для других фреймворков | ❌ ПОСЛЕДСТВИЕ: Native Image работает с любым Java-кодом; есть готовая поддержка в Quarkus, Micronaut, Helidon, Spring Native
+> - [ ] GraalVM Native медленнее обычной JVM на пике производительности | ❌ ПОСЛЕДСТВИЕ: правда лишь частично: для долгоживущих сервисов с heavy workload JIT может дать выше peak throughput; но startup и RAM выигрывает Native
+
+## Q2. (!) Чем AOT отличается от JIT компиляции?
 
 | Аспект | JIT (Just-In-Time) | AOT (Ahead-Of-Time) |
 |---|---|---|
@@ -106,10 +108,12 @@ java -jar app.jar
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Что такое Closed World Assumption? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] AOT всегда быстрее JIT на любых нагрузках — выбирать только AOT | ❌ ПОСЛЕДСТВИЕ: для долгоживущих сервисов JIT профилирует hot paths и оптимизирует их в runtime; AOT без profiling часто медленнее на пике
+> - [x] JIT: компиляция в runtime + adaptive optimization (выше peak throughput); AOT: компиляция до запуска (миллисекунды startup, меньше RAM, нет warmup) | ✓ ПРИМЕНЯТЬ: serverless/CLI → AOT; долгоживущие сервисы с пиковыми нагрузками → JIT 📋 ПРАВИЛО: JIT = peak performance после warmup; AOT = startup + RAM 🔗 См. Q3
+> - [ ] AOT не использует никаких оптимизаций — только трансляцию байткода | ❌ ПОСЛЕДСТВИЕ: AOT делает статический анализ, inlining, dead code elimination; просто без profiling-данных runtime
+> - [ ] JIT компилирует ВСЁ приложение сразу при старте | ❌ ПОСЛЕДСТВИЕ: JIT компилирует только горячие методы по достижении threshold (10K вызовов default); холодный код остаётся interpreted
+
+## Q3. Что такое Closed World Assumption?
 
 `Closed World Assumption` — ключевое допущение GraalVM: **всё, что нужно приложению, известно во время сборки**.
 
@@ -132,10 +136,12 @@ Class<?> clazz = Class.forName(className); // ClassNotFoundException в runtime
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Как GraalVM строит граф достижимости? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Closed World Assumption — это просто оптимизация, не имеет последствий для разработки | ❌ ПОСЛЕДСТВИЕ: CWA означает что reflection/dynamic class loading не работают без явной конфигурации; не учитывать = ClassNotFoundException в runtime
+> - [x] CWA: всё что нужно приложению известно во время сборки; reflection/proxies/resources требуют явной регистрации в reflect-config.json | ✓ ПРИМЕНЯТЬ: понимать почему Class.forName() падает в Native Image; использовать @RegisterForReflection 📋 ПРАВИЛО: CWA = compile time = no surprises at runtime 🔗 См. Q4
+> - [ ] CWA означает что Native Image работает только в "закрытых" сетях без интернета | ❌ ПОСЛЕДСТВИЕ: CWA не имеет отношения к сети; "Closed World" = closed set of code paths known at build time
+> - [ ] При CWA можно динамически загружать классы по имени без конфигурации | ❌ ПОСЛЕДСТВИЕ: Class.forName() с динамическим именем падает с ClassNotFoundException; нужна явная регистрация классов
+
+## Q4. Как GraalVM строит граф достижимости?
 
 Native Image Tool выполняет **статический анализ с нулевой точки**:
 
@@ -167,10 +173,12 @@ java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) Чем Native Image отличается от JVM по характеристикам? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Native Image Tool сканирует все JAR-зависимости и включает всё в бинарник | ❌ ПОСЛЕДСТВИЕ: бинарник был бы 500+MB; на самом деле выполняется reachability analysis от main() и включается только достижимое
+> - [x] Static reachability analysis с main() как точкой входа; рекурсивно строит граф достижимых классов; недостижимые исключаются; reflection требует tracing agent или @RegisterForReflection | ✓ ПРИМЕНЯТЬ: использовать tracing agent для автообнаружения reflection paths 📋 ПРАВИЛО: не достижим из main → не в бинарнике 🔗 См. Q3
+> - [ ] Tracing agent — это runtime-инструмент для production деплоя | ❌ ПОСЛЕДСТВИЕ: agent предназначен для dev-окружения чтобы записать reflection-config.json; в production он не нужен
+> - [ ] Граф достижимости включает все классы из CLASSPATH | ❌ ПОСЛЕДСТВИЕ: ничего не делал бы анализ если бы включал всё; tree shaking — основная экономия размера Native Image
+
+## Q5. (!) Чем Native Image отличается от JVM по характеристикам?
 
 **Реальные показатели Spring Boot приложения:**
 
@@ -187,10 +195,12 @@ java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. В каких сценариях Native Image предпочтительнее JVM? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Native Image и JVM имеют идентичные характеристики | ❌ ПОСЛЕДСТВИЕ: они существенно отличаются: startup ms vs s, RAM 50MB vs 200MB+; путаница приводит к выбору неподходящей технологии для задачи
+> - [x] Native Image: 50ms startup, ~50MB RAM, нет warmup, ниже peak throughput; JVM: секунды startup, 200MB+ RAM, выше peak throughput после JIT warmup | ✓ ПРИМЕНЯТЬ: serverless → Native; долгий high-load сервис → JVM 📋 ПРАВИЛО: характеристики противоположны; выбор по нагрузке 🔗 См. Q6
+> - [ ] Native Image всегда даёт лучший throughput чем JVM | ❌ ПОСЛЕДСТВИЕ: JIT с adaptive optimization может опережать AOT на пиковых нагрузках долгоживущих сервисов; benchmarks нужны
+> - [ ] Native Image потребляет больше RAM из-за статически линкованного кода | ❌ ПОСЛЕДСТВИЕ: наоборот — Native Image экономит RAM (нет JVM metadata, JIT compiler structures, class loaders); 2-5x меньше памяти
+
+## Q6. В каких сценариях Native Image предпочтительнее JVM?
 
 **Предпочти Native Image:**
 - **Serverless / AWS Lambda** — cold start критичен, платишь за время
@@ -207,10 +217,12 @@ java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Как Spring Boot 3 поддерживает Native Image? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Native Image для всех типов приложений — выбирать всегда | ❌ ПОСЛЕДСТВИЕ: для долгоживущих сервисов с heavy reflection (Hibernate) — пересборка медленная, peak throughput ниже; не универсальный выбор
+> - [ ] JVM лучше для serverless из-за JIT optimizations | ❌ ПОСЛЕДСТВИЕ: cold start JVM 5-30 секунд = AWS Lambda timeout; за warmup пользователь платит и ждёт; serverless требует AOT
+> - [x] Native Image: serverless, k8s autoscaling, CLI, edge; JVM: долгие сервисы с heavy reflection (Hibernate ORM) или dev-итерации | ✓ ПРИМЕНЯТЬ: оценка по нагрузке (краткие vs долгие) и зависимостям (reflection-heavy vs нет) 📋 ПРАВИЛО: cold start критичен → AOT; peak throughput на heavy load → JVM 🔗 См. Q5
+> - [ ] Можно использовать Native Image для приложений с активной byte-code generation в runtime | ❌ ПОСЛЕДСТВИЕ: byte-code generation несовместим с CWA; CGLib, Javassist, ASM-libraries в runtime не работают в Native Image
+
+## Q7. (!) Как Spring Boot 3 поддерживает Native Image?
 
 Spring Boot 3 предоставляет **first-class native support** через:
 
@@ -235,10 +247,12 @@ Build time:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Что такое AOT-процессинг в Spring Boot? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Spring Boot 3 не поддерживает Native Image — это отдельный проект Spring Native | ❌ ПОСЛЕДСТВИЕ: Spring Native (отдельный проект) был экспериментом для Spring Boot 2; в Boot 3 поддержка интегрирована first-class в core
+> - [x] Spring Boot 3: Spring AOT Engine + GraalVM Build Tools + RuntimeHints API + auto-detection стандартных компонентов | ✓ ПРИМЕНЯТЬ: spring-boot-maven-plugin native goal; @ImportRuntimeHints для custom hints 📋 ПРАВИЛО: Spring Boot 3 = first-class Native поддержка через AOT processing 🔗 См. Q8
+> - [ ] В Spring Boot 3 нужно вручную писать reflect-config.json для каждого Spring компонента | ❌ ПОСЛЕДСТВИЕ: Spring AOT auto-генерирует hints для всех beans; ручная работа нужна только для собственных reflection вызовов
+> - [ ] Spring Boot 3 запускает GraalVM при каждом запуске приложения | ❌ ПОСЛЕДСТВИЕ: native-image работает только на этапе сборки; runtime — это уже скомпилированный native executable
+
+## Q8. Что такое AOT-процессинг в Spring Boot?
 
 **AOT (Ahead-Of-Time) процессинг** — Spring Boot анализирует `ApplicationContext` **во время сборки** и генерирует:
 - Pre-computed `BeanFactory` код (без runtime scanning)
@@ -264,10 +278,12 @@ public class App {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Как собрать Spring Boot приложение как Native Image? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] AOT-процессинг работает в runtime, оптимизируя на лету | ❌ ПОСЛЕДСТВИЕ: AOT — это build-time, а не runtime; runtime оптимизация — это JIT, противоположный подход
+> - [x] AOT processing анализирует ApplicationContext в build time, генерирует BeanFactory код + RuntimeHints; нет runtime scanning beans | ✓ ПРИМЕНЯТЬ: spring-boot:process-aot goal перед native-image build 📋 ПРАВИЛО: AOT = build-time analysis вместо runtime reflection 🔗 См. Q9
+> - [ ] AOT можно отключить если приложение медленно стартует — это просто опция | ❌ ПОСЛЕДСТВИЕ: AOT обязателен для Native Image — без него classpath scanning runtime fail в Native; без AOT работает только на JVM
+> - [ ] AOT processing совместим с динамическими @Profile в runtime | ❌ ПОСЛЕДСТВИЕ: профили фиксируются на этапе AOT processing; смена профиля в runtime требует пересборки
+
+## Q9. Как собрать Spring Boot приложение как Native Image?
 
 **Требования:**
 - GraalVM 22+ (или `native-image` в PATH)
@@ -319,10 +335,12 @@ mvn spring-boot:build-image -Pnative
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Какие ограничения у Native Image? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Native Image сборка занимает несколько секунд как обычный Java compile | ❌ ПОСЛЕДСТВИЕ: build занимает 3-5 минут (анализ + компиляция); это критично для CI и dev iteration loop
+> - [x] Команда: mvn -Pnative native:compile или gradle nativeCompile; Docker через mvn spring-boot:build-image -Pnative; требует GraalVM 22+ | ✓ ПРИМЕНЯТЬ: добавить native profile в pom.xml; запускать на CI отдельно от dev build 📋 ПРАВИЛО: native build = profile/goal + GraalVM toolchain 🔗 См. Q10
+> - [ ] Native Image требует только Spring Boot 2.7+ — не нужен Spring Boot 3 | ❌ ПОСЛЕДСТВИЕ: для Spring Boot 2.7 был отдельный экспериментальный Spring Native; first-class только в Spring Boot 3+
+> - [ ] Можно запускать native:compile вместо process-aot — AOT не нужен | ❌ ПОСЛЕДСТВИЕ: process-aot обязателен для генерации hints; без AOT native build падает на reflection-heavy beans
+
+## Q10. (!) Какие ограничения у Native Image?
 
 **Главные ограничения:**
 
@@ -345,10 +363,12 @@ mvn spring-boot:build-image -Pnative
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как зарегистрировать рефлексию для Native Image? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Native Image не имеет ограничений — это просто оптимизированный JVM | ❌ ПОСЛЕДСТВИЕ: серьёзные ограничения (reflection, dynamic class loading, JVMTI) без понимания которых production работает с runtime ошибками
+> - [x] Ограничения: reflection без RuntimeHints, dynamic class loading, runtime profiles, Mockito, JVMTI агенты; build 3-5 минут | ✓ ПРИМЕНЯТЬ: проверить совместимость библиотек до миграции; pre-register всё нужное 📋 ПРАВИЛО: Native = constraints на dynamic Java capabilities 🔗 См. Q3
+> - [ ] Lombok не работает в Native Image — нужно отказываться | ❌ ПОСЛЕДСТВИЕ: Lombok работает на compile-time, генерирует код; его аннотации исчезают до native build, поэтому совместим
+> - [ ] @Profile в runtime работает, нужно просто правильно сконфигурировать | ❌ ПОСЛЕДСТВИЕ: профили фиксируются на build-time AOT processing; runtime смена не поддерживается; либо пересборка, либо все profiles одновременно
+
+## Q11. Как зарегистрировать рефлексию для Native Image?
 
 **Способ 1: JSON конфигурация** (`reflect-config.json`):
 ```json
@@ -409,10 +429,12 @@ public class UserController { ... }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Что такое RuntimeHints в Spring? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Reflection в Native Image работает автоматически без регистрации | ❌ ПОСЛЕДСТВИЕ: ClassNotFoundException в runtime при Class.forName(); CWA требует явной регистрации
+> - [x] 3 способа: reflect-config.json, RuntimeHints API, @RegisterReflectionForBinding для DTO; либо tracing agent для автогенерации | ✓ ПРИМЕНЯТЬ: для DTO/entity — аннотация; для библиотечного кода — RuntimeHints; для legacy — tracing agent 📋 ПРАВИЛО: 3 способа: декларативный, программный, автоматический 🔗 См. Q12
+> - [ ] Достаточно зарегистрировать класс — методы и поля видны автоматически | ❌ ПОСЛЕДСТВИЕ: каждый member нужно регистрировать отдельно (constructors, methods, fields); registerType только класс, не его публичные члены
+> - [ ] Tracing agent работает в production для динамической регистрации | ❌ ПОСЛЕДСТВИЕ: agent — это инструмент dev-time для записи конфигов; в production native build он отсутствует
+
+## Q12. Что такое RuntimeHints в Spring?
 
 `RuntimeHints` — API Spring Boot 3 для объявления метаданных, необходимых Native Image в runtime. Заменяет разрозненные JSON-конфиги единым Java API.
 
@@ -452,10 +474,12 @@ org.springframework.aot.hint.RuntimeHintsRegistrar=\
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как работают JSON-конфигурации для native-image? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] RuntimeHints — это runtime API, доступен в production коде | ❌ ПОСЛЕДСТВИЕ: hints применяются на этапе AOT processing (build-time); registerHints() вызывается компилятором, не runtime
+> - [x] RuntimeHints — Spring API для регистрации reflection/proxies/resources/serialization через единый Java DSL вместо разрозненных JSON | ✓ ПРИМЕНЯТЬ: implements RuntimeHintsRegistrar; декларация в spring.factories или @ImportRuntimeHints 📋 ПРАВИЛО: RuntimeHints = type-safe Java API вместо JSON-config 🔗 См. Q13
+> - [ ] RuntimeHints заменяют GraalVM конфиги полностью — JSON больше не нужны | ❌ ПОСЛЕДСТВИЕ: для библиотек без Spring (например ALB SDK) JSON остаются нужны; RuntimeHints — Spring-абстракция
+> - [ ] RuntimeHints автоматически обнаруживают всё что нужно — пишутся только для специфики | ❌ ПОСЛЕДСТВИЕ: Spring AOT обнаруживает Spring-managed beans автоматически, но reflection в собственном коде требует явных hints
+
+## Q13. Как работают JSON-конфигурации для native-image?
 
 GraalVM Native Image читает JSON конфиги из `META-INF/native-image/`:
 - `reflect-config.json` — классы для рефлексии
@@ -480,10 +504,12 @@ cp target/native-image-configs/*.json \
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как тестировать Spring Boot Native приложения? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] JSON конфиги нужно писать вручную для каждой библиотеки | ❌ ПОСЛЕДСТВИЕ: трудоёмко и ошибочно для большого приложения; tracing agent автоматизирует это
+> - [x] 5 JSON: reflect/proxy/resource/serialization/jni-config; в META-INF/native-image/; tracing agent автогенерирует через прогон кода | ✓ ПРИМЕНЯТЬ: для legacy библиотек без Spring native поддержки 📋 ПРАВИЛО: tracing agent + smoke tests = автогенерация конфигов 🔗 См. Q11
+> - [ ] Tracing agent работает в native build | ❌ ПОСЛЕДСТВИЕ: agent работает только на JVM; нужно прогнать на JVM с агентом, потом использовать сгенерированные конфиги для native build
+> - [ ] Достаточно одного smoke test для tracing agent — он покрывает все пути | ❌ ПОСЛЕДСТВИЕ: agent видит только реально пройденные code paths; нужны все use cases (тесты + manual smoke); пропущенные пути упадут в production
+
+## Q14. Как тестировать Spring Boot Native приложения?
 
 **Обычные unit-тесты** работают без изменений (они гоняются на JVM).
 
@@ -518,10 +544,12 @@ class UserControllerNativeTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Как тестировать RuntimeHints? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Только обычные JVM unit-тесты — native-тесты не нужны | ❌ ПОСЛЕДСТВИЕ: native-специфичные проблемы (отсутствующая reflection regs) обнаруживаются только в native runtime; JVM tests их пропускают
+> - [x] mvn -Pnative test или gradle nativeTest для полной native-компиляции; @MockBean вместо Mockito.mock(); @SpringBootTest + MockMvc работают | ✓ ПРИМЕНЯТЬ: native test для smoke check готовности приложения к Native deployment 📋 ПРАВИЛО: native test = compile to native + run tests = catch CWA issues 🔗 См. Q14
+> - [ ] Mockito работает в native tests если использовать аннотации @ExtendWith | ❌ ПОСЛЕДСТВИЕ: Mockito создаёт прокси через byte-code generation в runtime — несовместимо с CWA; используй @MockBean
+> - [ ] Native test очень быстрый — можно запускать каждый коммит | ❌ ПОСЛЕДСТВИЕ: native compile занимает 3-5 минут — каждый коммит непрактично; запускать на nightly или PR-merge
+
+## Q15. Как тестировать RuntimeHints?
 
 Spring Boot предоставляет `RuntimeHintsPredicates` для unit-тестирования hints без полной нативной сборки.
 
@@ -557,12 +585,7 @@ class MyRuntimeHintsTest {
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [JVM](jvm-interview.md) — как работает JVM: ClassLoader, JIT, GC, memory model ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [JVM](jvm-interview.md) — как работает JVM: ClassLoader, JIT, GC, memory model
 - [JVM Performance Tuning](../performance/jvm-performance-tuning-interview.md) — JIT оптимизации, GC tuning — противоположность native
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — auto-configuration, Spring Boot 3 features
 - [Spring Framework](../frameworks/spring/spring-framework-interview.md) — AOT context и BeanFactory в Spring 6
