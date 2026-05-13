@@ -1276,10 +1276,12 @@ new PostgreSQLContainer<>("postgres:16-alpine")
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Какие ограничения и подводные камни есть у `Testcontainers`? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Reusable containers ускоряют CI на 100% | ❌ ПОСЛЕДСТВИЕ: reusable работает только локально (`.withReuse(true)` + `~/.testcontainers.properties`); в CI каждый pipeline run = чистая среда, reuse не применим
+> - [ ] Singleton vs контейнер-на-класс не влияет на скорость | ❌ ПОСЛЕДСТВИЕ: контейнер-на-класс стартует 2-10s каждый раз; singleton экономит 60-80% времени старта на большой test suite
+> - [ ] Параллельный старт через `Startables.deepStart()` опасен | ❌ ПОСЛЕДСТВИЕ: параллельный старт безопасен и быстрее последовательного при множественных контейнерах; runtime автоматически dependency-aware
+> - [x] Стратегии: singleton (60-80% ускорение), alpine-образы (быстрее pull), tmpfs (20-30% диска в RAM), `Startables.deepStart()` (параллельно), reusable containers локально (≈100%) | ✓ ПРИМЕНЯТЬ: для unit/integration с БД — singleton + alpine + tmpfs; на dev машинах — reuse через `.testcontainers.properties` 📋 ПРАВИЛО: оптимизация = layered (image + start mode + storage) 🔗 См. Q27
+
+## Q27. Какие ограничения и подводные камни есть у `Testcontainers`?
 
 **Технические ограничения:**
 
@@ -1307,10 +1309,12 @@ new PostgreSQLContainer<>("postgres:16-alpine")
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Как использовать `ElasticsearchContainer` в тестах? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Testcontainers работает без Docker | ❌ ПОСЛЕДСТВИЕ: Docker (или Podman/colima) — обязательное требование; в средах без Docker нужны fallbacks (testcontainers-cloud, Rancher Desktop)
+> - [ ] H2 всегда подходит вместо Postgres-контейнера | ❌ ПОСЛЕДСТВИЕ: H2 другой dialect — pgcrypto/jsonb/window functions/INSERT...RETURNING не работают как в Postgres; тесты на H2 проходят, прод на Postgres ломается
+> - [ ] Ryuk можно безопасно отключать `TESTCONTAINERS_RYUK_DISABLED=true` всегда | ❌ ПОСЛЕДСТВИЕ: Ryuk — sidecar для cleanup сирот после крашей JVM; без него контейнеры остаются висеть на CI и кончается память
+> - [x] Ограничения: обязателен Docker, 2-10s startup на контейнер, RAM/CPU usage, network flakiness в CI; pitfalls — порт уже занят (used getMappedPort), data leak between tests, @Container + Singleton mismatch, image not found, Ryuk timing. НЕ использовать для — fast unit tests, simple CRUD без диалекта, prod smoke tests | ✓ ПРИМЕНЯТЬ: всегда `getMappedPort()` вместо hardcoded; `@BeforeEach` cleanup для shared singleton 📋 ПРАВИЛО: Testcontainers = real deps но с trade-offs (Docker, time, resources) 🔗 См. Q28
+
+## Q28. Как использовать `ElasticsearchContainer` в тестах?
 
 ```java
 @SpringBootTest
@@ -1399,10 +1403,12 @@ static ElasticsearchContainer elasticsearch =
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Как тестировать отказоустойчивость с `Toxiproxy`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] xpack.security должен быть включён в тестах | ❌ ПОСЛЕДСТВИЕ: ES 8+ security включает auth требования; для тестов отключаем `xpack.security.enabled=false` для упрощения; в prod — обязательно on
+> - [ ] ES автоматически отражает данные в индексе сразу | ❌ ПОСЛЕДСТВИЕ: ES asynchronous indexing с refresh интервалом 1s; в тестах нужен явный `indexOps.refresh()` для immediate visibility
+> - [ ] `discovery.type` опционален в single-node | ❌ ПОСЛЕДСТВИЕ: без `discovery.type=single-node` ES пытается form cluster и зависает; обязателен в single-node setup для тестов
+> - [x] `ElasticsearchContainer` с `docker.elastic.co/elasticsearch:8.x` + `xpack.security.enabled=false` + `discovery.type=single-node`; `@DynamicPropertySource` для `spring.elasticsearch.uris`; refresh после save для immediate visibility; @ServiceConnection в Spring Boot 3.1+ автонастройка | ✓ ПРИМЕНЯТЬ: cleanup index в @BeforeEach/@AfterEach; refresh после writes для read consistency 📋 ПРАВИЛО: ES tests = single-node + no security + explicit refresh 🔗 См. Q29
+
+## Q29. Как тестировать отказоустойчивость с `Toxiproxy`?
 
 **Toxiproxy** — прокси, который позволяет симулировать сетевые сбои: задержки, разрывы соединений, bandwidth-ограничения. В Testcontainers есть встроенный модуль.
 
@@ -1486,10 +1492,12 @@ class OrderServiceResilienceTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. (!) Как использовать `LocalStack` для тестирования `AWS`-сервисов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Toxiproxy = chaos engineering на K8s | ❌ ПОСЛЕДСТВИЕ: Toxiproxy — TCP-proxy для integration-тестов (не K8s); для K8s-chaos — Chaos Mesh, Litmus, Pumba
+> - [ ] Toxiproxy подменяет реальную БД на mock | ❌ ПОСЛЕДСТВИЕ: Toxiproxy стоит МЕЖДУ клиентом и реальной БД (Postgres из Testcontainers); инжектирует network effects, не подменяет
+> - [ ] Latency единственный возможный toxic | ❌ ПОСЛЕДСТВИЕ: toxics — latency, bandwidth, slow_close, timeout, slicer, reset_peer, limit_data; разные failure modes для разных тестов
+> - [x] Toxiproxy: ToxiproxyContainer + Network между app и PostgreSQL; proxy через `toxiproxy.getProxy(postgres, 5432)`; toxics инжектируют latency/bandwidth/disconnect; используется для тестирования retry, circuit breaker, timeouts с realistic failures | ✓ ПРИМЕНЯТЬ: для validation resilience patterns (Resilience4j, @Retryable); inject и remove toxics в тестах; verify graceful degradation 📋 ПРАВИЛО: Toxiproxy = controlled network chaos между client и dep 🔗 См. Q30
+
+## Q30. (!) Как использовать `LocalStack` для тестирования `AWS`-сервисов?
 
 `LocalStack` эмулирует AWS-сервисы (S3, SQS, SNS, DynamoDB и др.) локально. Testcontainers предоставляет модуль `LocalStackContainer`.
 
@@ -1569,10 +1577,12 @@ class S3FileStorageServiceTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. Как тестировать с несколькими версиями одного сервиса? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] LocalStack требует реальный AWS account для тестов | ❌ ПОСЛЕДСТВИЕ: LocalStack — full emulator AWS API локально; не нужны real credentials, S3 bucket в AWS; тесты бесплатные и offline-capable
+> - [ ] Достаточно указать `aws.region` — endpoint AWS подхватится сам | ❌ ПОСЛЕДСТВИЕ: обязателен `endpointOverride` через `localStack.getEndpointOverride(Service.S3)`; иначе AWS SDK идёт в real AWS
+> - [ ] LocalStack поддерживает только S3 | ❌ ПОСЛЕДСТВИЕ: поддерживает 50+ сервисов — S3, SQS, SNS, DynamoDB, Lambda, Secrets Manager, KMS, IAM, etc; нужно указать `withServices(...)`
+> - [x] LocalStack эмулирует AWS API локально; `LocalStackContainer.withServices(Service.S3, Service.SQS)`; `getEndpointOverride()` для AWS SDK clients; `@DynamicPropertySource` для Spring config; создание buckets/queues в @BeforeAll; community version free, pro для advanced features | ✓ ПРИМЕНЯТЬ: для integration с AWS services без real account; CI-friendly (offline); для тестирования IAM permissions — LocalStack Pro 📋 ПРАВИЛО: LocalStack = AWS-like локально, offline, free 🔗 См. Q31
+
+## Q31. Как тестировать с несколькими версиями одного сервиса?
 
 Иногда нужно убедиться, что код работает с разными версиями БД или сервиса (например, при миграции).
 
@@ -1618,10 +1628,12 @@ static Stream<String> postgresVersions() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Как организовать базовый класс для интеграционных тестов с `Testcontainers`? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Тестирование на одной версии БД достаточно | ❌ ПОСЛЕДСТВИЕ: при upgrade БД (Postgres 13→16) breaking changes могут проявиться (deprecated functions, GUC removals); multi-version тестирование выявляет до миграции
+> - [ ] Используем static @Container — Testcontainers сам параметризует | ❌ ПОСЛЕДСТВИЕ: static @Container — одна версия per JVM; для multi-version используем `@ParameterizedTest` + try-with-resources, контейнер per parameter
+> - [ ] Tests должны проходить identical на любых версиях | ❌ ПОСЛЕДСТВИЕ: некоторые тесты version-specific (новые features в Postgres 16); separate test classes для legacy vs new behaviour
+> - [x] `@ParameterizedTest @MethodSource("postgresVersions")` + `try (PostgreSQLContainer<>("postgres:" + version))` для per-version cleanup; Flyway migrations в каждом + JDBC validation; для миграций между major versions — critical перед production upgrade | ✓ ПРИМЕНЯТЬ: при upgrade БД; для open-source libs поддерживающих multiple БД versions; testing compatibility window 📋 ПРАВИЛО: multi-version test = parametrized + try-with-resources 🔗 См. Q32
+
+## Q32. Как организовать базовый класс для интеграционных тестов с `Testcontainers`?
 
 Базовый класс — ключевой паттерн для устранения дублирования настройки контейнеров.
 
@@ -1720,10 +1732,12 @@ class ProductControllerTest extends BaseIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Что такое Ryuk и как он управляет cleanup контейнеров? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] BaseIntegrationTest должен использовать @BeforeAll для setup БД | ❌ ПОСЛЕДСТВИЕ: @Container static + Testcontainers сам lifecycle-managed; @BeforeAll конфликтует и приводит к double-start
+> - [ ] Каждый подкласс должен повторять @Container declarations | ❌ ПОСЛЕДСТВИЕ: дублирование убивает purpose базового класса; static @Container в abstract class наследуется автоматически
+> - [ ] @DynamicPropertySource нужен в каждом подклассе отдельно | ❌ ПОСЛЕДСТВИЕ: метод в abstract class — applies для всех subclasses; декларируется один раз, не дублируется
+> - [x] Abstract BaseIntegrationTest + @SpringBootTest + @Testcontainers; static @Container для всех shared deps (Postgres/Kafka/Redis); @DynamicPropertySource один раз в base; subclasses наследуют без boilerplate; эффективно — Singleton Container pattern через наследование | ✓ ПРИМЕНЯТЬ: вместо повторения setup в каждом test class; protected static контейнеры для доступа из подклассов 📋 ПРАВИЛО: Base class = singleton containers + shared config 🔗 См. Q33
+
+## Q33. Что такое Ryuk и как он управляет cleanup контейнеров?
 
 **Ryuk** — вспомогательный контейнер, который Testcontainers автоматически запускает перед первым тестом. Его задача — гарантировать очистку всех Docker-ресурсов (контейнеры, сети, volumes), созданных во время тестов, даже если JVM завершится аварийно.
 
@@ -1770,10 +1784,12 @@ System.setProperty("TESTCONTAINERS_RYUK_DISABLED", "true");
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. Как использовать `WireMock` как Testcontainer для моков внешних HTTP API? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Ryuk — это вирус который удаляет ваши Docker-контейнеры | ❌ ПОСЛЕДСТВИЕ: Ryuk — официальный helper container в Testcontainers; cleans up orphaned containers по labels после JVM crash; essential для CI hygiene
+> - [ ] Ryuk удаляет ВСЕ Docker контейнеры на машине | ❌ ПОСЛЕДСТВИЕ: Ryuk удаляет ТОЛЬКО containers с label `org.testcontainers=true`; ваши другие контейнеры (Postgres из docker-compose) безопасны
+> - [ ] Отключать Ryuk вообще нельзя | ❌ ПОСЛЕДСТВИЕ: можно через `TESTCONTAINERS_RYUK_DISABLED=true`; полезно в K8s pods (изоляция уже есть), Testcontainers Cloud, reusable containers
+> - [x] Ryuk — sidecar container запускается перед первым тестом, слушает TCP от JVM; при разрыве connection (JVM death) удаляет все containers с label `org.testcontainers=true`; защита от orphans при kill -9/OOM; отключать в K8s, Cloud, reusable | ✓ ПРИМЕНЯТЬ: оставить включённым в обычных CI; отключать в managed K8s где cleanup делает k8s сам 📋 ПРАВИЛО: Ryuk = insurance против orphan containers 🔗 См. Q34
+
+## Q34. Как использовать `WireMock` как Testcontainer для моков внешних HTTP API?
 
 **WireMock** в виде Testcontainer позволяет поднять настоящий HTTP-сервер для мока внешних API — в отличие от `MockRestServiceServer`, WireMock работает на реальном сетевом уровне и тестирует HTTP-клиент полностью.
 
@@ -1844,10 +1860,12 @@ class PaymentGatewayTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Что такое `Testcontainers Cloud` и когда его использовать? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] WireMock = MockMvc | ❌ ПОСЛЕДСТВИЕ: MockMvc — для тестирования контроллеров без HTTP layer; WireMock — настоящий HTTP server для mock внешних API; разные purposes
+> - [ ] WireMock работает только как standalone JAR | ❌ ПОСЛЕДСТВИЕ: WireMockContainer запускает WireMock в Docker — interop с Testcontainers, isolation, version pinning
+> - [ ] Стабы из файлов конфликтуют с programmatic stubFor() | ❌ ПОСЛЕДСТВИЕ: можно совмещать — JSON mappings для base behaviour + programmatic stubFor() для test-specific; они работают вместе
+> - [x] WireMockContainer запускает real HTTP server для mock внешних API; `withMappingFromResource("stub.json")` или programmatic `wireMock.stubFor(post(...).willReturn(...))`; тестирует full HTTP client (retry/timeout/headers); `wireMock.verify(...)` для assertion request shape | ✓ ПРИМЕНЯТЬ: для testing RestTemplate/WebClient/Feign clients; stateful stubs для scenario testing; @ServiceConnection не работает (custom URLs) 📋 ПРАВИЛО: WireMock = real HTTP mock, не MockMvc 🔗 См. Q35
+
+## Q35. Что такое `Testcontainers Cloud` и когда его использовать?
 
 **Testcontainers Cloud** — managed-сервис от компании Testcontainers, который выполняет контейнеры удалённо, а не на локальной машине или CI-агенте. JVM-тест «видит» контейнер как обычный Testcontainer, но реально он работает в облаке.
 
@@ -1895,10 +1913,12 @@ static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Как использовать `DockerComposeContainer` — плюсы и минусы? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Testcontainers Cloud — open-source проект | ❌ ПОСЛЕДСТВИЕ: TC Cloud — commercial managed-сервис от AtomicJar (теперь Docker); paid с free tier для OSS
+> - [ ] TC Cloud требует переписывания всех тестов | ❌ ПОСЛЕДСТВИЕ: прозрачная замена — код тестов остаётся unchanged; меняются только env vars (TC_CLOUD_TOKEN) на CI
+> - [ ] TC Cloud медленнее локального Docker | ❌ ПОСЛЕДСТВИЕ: при правильной концентрации (TC_CLOUD_CONCURRENCY) часто быстрее — параллелизация на распределённых хостах
+> - [x] Testcontainers Cloud — managed remote Docker; код тестов unchanged, прозрачная замена; env `TC_CLOUD_TOKEN=...` + `TC_CLOUD_CONCURRENCY=4`; для CI без Docker (GitHub Actions w/o docker-in-docker), corporate restrictions, large parallel test suites; есть free tier для OSS | ✓ ПРИМЕНЯТЬ: когда CI agent не имеет full Docker access; для horizontal scaling test runs; overhead не оправдан для small projects 📋 ПРАВИЛО: TC Cloud = Docker-as-a-Service для tests 🔗 См. Q36
+
+## Q36. Как использовать `DockerComposeContainer` — плюсы и минусы?
 
 **`DockerComposeContainer`** позволяет запускать несколько сервисов из `docker-compose.yml` вместо описания каждого контейнера вручную.
 
@@ -1960,10 +1980,12 @@ class IntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. Как запускать `Testcontainers`-тесты параллельно без конфликтов? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] DockerComposeContainer должен быть единственным способом для multi-service | ❌ ПОСЛЕДСТВИЕ: для production-grade tests рекомендуется отдельные специализированные контейнеры (PostgreSQLContainer, KafkaContainer) для лучшего контроля и diagnostics
+> - [ ] DockerComposeContainer быстрее запускается чем individual containers | ❌ ПОСЛЕДСТВИЕ: медленнее — docker-compose overhead + sequential service startup; faster solution — Startables.deepStart() с individual containers
+> - [ ] @ServiceConnection работает с DockerComposeContainer | ❌ ПОСЛЕДСТВИЕ: @ServiceConnection требует knowledge о специфическом container type; для DockerCompose нужен manual @DynamicPropertySource
+> - [x] DockerComposeContainer: переиспользовать существующий docker-compose.yml; плюсы — familiar, complex topologies, DevOps-friendly; минусы — медленнее, no type-safe API, weak waitingFor, hard debug. Рекомендация — prefer individual containers через специализированные классы | ✓ ПРИМЕНЯТЬ: для legacy docker-compose configs; reusing prod compose в tests; new tests — individual containers 📋 ПРАВИЛО: DockerCompose = legacy convenience, individual = production-grade 🔗 См. Q37
+
+## Q37. Как запускать `Testcontainers`-тесты параллельно без конфликтов?
 
 **Параллельный запуск** с Testcontainers работает хорошо при правильной архитектуре, но требует внимания к изоляции.
 
@@ -2024,10 +2046,12 @@ class HeavyDatabaseTest { }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Как Testcontainers используется в Kotlin-проектах — DSL и особенности? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Параллельный запуск Testcontainers всегда вызывает конфликты | ❌ ПОСЛЕДСТВИЕ: с правильной архитектурой (singleton + transactions, или per-class containers) параллелизм работает; конфликты — при неправильном sharing
+> - [ ] Random ports недостаточно — нужно fixed ports | ❌ ПОСЛЕДСТВИЕ: Testcontainers по умолчанию использует random ports на host'е; `getMappedPort()` возвращает actual port; fixed ports = причина конфликтов
+> - [ ] Singleton Container + parallel tests — нет изоляции | ❌ ПОСЛЕДСТВИЕ: изоляция через `@Transactional @Rollback` или `@BeforeEach` cleanup; singleton + isolation strategy — рекомендуемый паттерн
+> - [x] Стратегии: 1) Singleton Container + изоляция через transactions/per-test cleanup (recommended); 2) Per-class containers с non-static @Container (full isolation but expensive); JUnit 5 parallel в `junit-platform.properties`; `@ResourceLock` для critical sections | ✓ ПРИМЕНЯТЬ: singleton для большинства; per-class для heavy tests с шиширующими mutations; ограничивать concurrency factor 📋 ПРАВИЛО: parallel = shared container + per-test isolation 🔗 См. Q38
+
+## Q38. Как Testcontainers используется в Kotlin-проектах — DSL и особенности?
 
 **Kotlin-специфика Testcontainers:** официальная поддержка Kotlin идёт через те же Java-API, но существуют расширения и идиомы, делающие код чище.
 
@@ -2100,10 +2124,12 @@ class CoroutineIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. Что такое `@ServiceConnection` в Spring Boot 3.1+ и как он работает? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Kotlin требует отдельной библиотеки `testcontainers-kotlin` для работы | ❌ ПОСЛЕДСТВИЕ: Java API работает в Kotlin напрямую; testcontainers-kotlin — неофициальная DSL для удобства, не обязательна
+> - [ ] @JvmField не нужен в companion object | ❌ ПОСЛЕДСТВИЕ: без @JvmField JUnit 5 Extension не видит Kotlin property как Java field; @Container не работает; @JvmField обязателен на companion-полях
+> - [ ] PostgreSQLContainer<?> = `PostgreSQLContainer<Nothing>` всегда работает | ❌ ПОСЛЕДСТВИЕ: иногда есть генерик-проблемы — `<*>` для star projection безопаснее; `<Nothing>` — Kotlin convention для unused generic
+> - [x] Kotlin Testcontainers: Java API напрямую через `apply { }/also { }`; `@JvmField` обязателен на companion-полях с @Container; `<Nothing>` или `<*>` для generic; extension functions для удобства (toDataSourceProperties); coroutines через runTest интегрируются без проблем | ✓ ПРИМЕНЯТЬ: companion + @JvmField + @Container для singleton; extension functions для DRY; @Container на classes требует обычного val 📋 ПРАВИЛО: Kotlin TC = Java API + @JvmField + idiomatic helpers 🔗 См. Q39
+
+## Q39. Что такое `@ServiceConnection` в Spring Boot 3.1+ и как он работает?
 
 **`@ServiceConnection`** — аннотация Spring Boot 3.1+, которая автоматически конфигурирует Spring-бины (DataSource, RedisConnectionFactory, KafkaProducerFactory и т.д.) на основе запущенного Testcontainers-контейнера. Устраняет необходимость в `@DynamicPropertySource`.
 
@@ -2184,10 +2210,12 @@ public class MyCustomConnectionFactory
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. Как `LocalStack` используется для тестирования AWS-сервисов локально? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] @ServiceConnection заменяет @Container | ❌ ПОСЛЕДСТВИЕ: @ServiceConnection в дополнение к @Container; первая — lifecycle (start/stop), вторая — auto-configuration; обе нужны
+> - [ ] @ServiceConnection работает с любым контейнером out-of-box | ❌ ПОСЛЕДСТВИЕ: только для supported types (Postgres/MySQL/Redis/Kafka/Mongo/Elastic/RabbitMQ); custom containers требуют ConnectionDetails Factory
+> - [ ] @DynamicPropertySource устарел с @ServiceConnection | ❌ ПОСЛЕДСТВИЕ: оба валидны; @ServiceConnection упрощает для standard cases; @DynamicPropertySource для custom config или unsupported containers
+> - [x] @ServiceConnection (Spring Boot 3.1+): автоматически настраивает Spring beans (DataSource/RedisConnectionFactory/KafkaTemplate) на основе running Testcontainer; работает с PostgreSQLContainer/MySQLContainer/RedisContainer/KafkaContainer/MongoDBContainer/ElasticsearchContainer/RabbitMQContainer; альтернатива @DynamicPropertySource | ✓ ПРИМЕНЯТЬ: для simpler test config — @Container + @ServiceConnection; @TestConfiguration с @Bean @ServiceConnection для shared setup 📋 ПРАВИЛО: @ServiceConnection = auto-config Spring beans из contained services 🔗 См. Q40
+
+## Q40. Как `LocalStack` используется для тестирования AWS-сервисов локально?
 
 **LocalStack** — эмулятор AWS API, работающий как Docker-контейнер. Testcontainers предоставляет `LocalStackContainer` с готовым API для его запуска и конфигурации.
 
@@ -2296,16 +2324,3 @@ void shouldSendAndReceiveMessage() {
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация, auto-configuration, профили
 - [Docker](../devops/docker-interview.md) — контейнеризация: образы, сети, volumes, которые использует Testcontainers
 - [Kubernetes](../devops/kubernetes-interview.md) — запуск тестов с Testcontainers в Kubernetes CI runner'ах
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Chaos Engineering](chaos-engineering-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Contract Testing](contract-testing-interview.md)
-- [Integration Testing](integration-testing-interview.md)
-- [Load Testing](load-testing-interview.md)
-- [Mockito](mockito-interview.md)
-- [Mutation Testing](mutation-testing-interview.md)
-- [Шпаргалка: Testcontainers (Testcontainers)](../../testing/integration-testing/testcontainers/testcontainers.md) — теория
