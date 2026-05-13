@@ -1129,10 +1129,12 @@ public void configureMessageBroker(MessageBrokerRegistry registry) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. (!) Как работает WebSocket в Spring WebFlux (реактивный стек)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Heartbeat нужен только клиенту — сервер всегда живой | ❌ ПОСЛЕДСТВИЕ: сервер тоже может зависнуть (GC pause, deadlock); клиент должен детектить и переподключаться при отсутствии heart-beat от сервера в течение `receive_interval`
+> - [ ] Spring сам добавляет heartbeat и `setTaskScheduler` не нужен | ❌ ПОСЛЕДСТВИЕ: для `enableSimpleBroker` нужен явный `setTaskScheduler` — иначе heartbeat не будет работать; для `enableStompBrokerRelay` scheduler не нужен (брокер сам делает)
+> - [ ] nginx `proxy_read_timeout` влияет только на REST, WebSocket не использует HTTP-прокси | ❌ ПОСЛЕДСТВИЕ: WebSocket идёт через тот же TCP, и nginx по `proxy_read_timeout` (по умолчанию 60s) закроет idle WS-соединение; heartbeat должен быть меньше этого таймаута
+> - [x] Heart-beat в STOMP CONNECT header `heart-beat:send,receive`, итоговый = `max(client_send, server_receive)`; в Spring — `setHeartbeatValue(new long[]{10000,10000})` + `setTaskScheduler` для SimpleBroker | ✓ ПРИМЕНЯТЬ: для прохода через nginx — heart-beat 10s, `proxy_read_timeout 3600s`; при relay — `setSystemHeartbeatSendInterval/Receive` отдельно для broker-side 📋 ПРАВИЛО: heart-beat interval << proxy idle timeout 🔗 См. Q27
+
+## Q27. (!) Как работает WebSocket в Spring WebFlux (реактивный стек)?
 
 Spring WebFlux предоставляет **реактивную** поддержку WebSocket без блокирующих потоков:
 
@@ -1184,10 +1186,12 @@ public class ReactiveWebSocketHandler implements WebSocketHandler {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Что такое `WebSocketHandler` в WebFlux и как он отличается от servlet-версии? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] WebFlux WebSocket поддерживает STOMP так же, как `@EnableWebSocketMessageBroker` в MVC | ❌ ПОСЛЕДСТВИЕ: STOMP-сообщения и `@MessageMapping` нативно НЕ поддерживаются в WebFlux; для pub/sub в реактивном стеке используют RSocket или raw WebSocket с собственным протоколом
+> - [ ] WebFlux требует Tomcat 10 как контейнер | ❌ ПОСЛЕДСТВИЕ: WebFlux работает поверх Netty (default), Undertow или Jetty; Tomcat-NIO тоже возможен, но смысла нет — WebFlux нужен event-loop сервер
+> - [ ] `session.send(input)` отправит первое сообщение и закроет соединение | ❌ ПОСЛЕДСТВИЕ: `send(Flux<WebSocketMessage>)` подписывается на Flux и шлёт каждое emission как WS-фрейм; закрытие — когда Flux завершается (complete/error)
+> - [x] WebFlux WS = `WebSocketHandler.handle(WebSocketSession) → Mono<Void>`; вход — `session.receive() : Flux<WebSocketMessage>`, выход — `session.send(Flux)`; event-loop вместо thread-per-connection | ✓ ПРИМЕНЯТЬ: для push-streams (stock prices, live feed) с backpressure; десятки тысяч соединений на одной машине; HandlerMapping регистрирует URL → handler 📋 ПРАВИЛО: WebFlux WS = reactive streams; STOMP не из коробки 🔗 См. Q28
+
+## Q28. Что такое `WebSocketHandler` в WebFlux и как он отличается от servlet-версии?
 
 | | Servlet WebSocket (`TextWebSocketHandler`) | WebFlux WebSocket (`WebSocketHandler`) |
 |---|---|---|
@@ -1220,10 +1224,12 @@ public class StockPriceHandler implements WebSocketHandler {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Какие ограничения у WebSocket по количеству соединений и как их обойти? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] WebFlux WebSocket поддерживает callbacks (`afterConnectionEstablished`) как и servlet-вариант | ❌ ПОСЛЕДСТВИЕ: модель полностью реактивная — один метод `handle(session)` возвращающий `Mono<Void>`; для lifecycle используются `doOnSubscribe`/`doOnTerminate` на Flux'е
+> - [ ] В WebFlux нет backpressure поскольку WebSocket frames неконтролируемы | ❌ ПОСЛЕДСТВИЕ: backpressure поддерживается через Reactor — slow consumer замедляет producer; в servlet-варианте slow client забивает send-buffer и приводит к OutOfMemoryError
+> - [ ] `Mono<Void>` из `handle` означает что соединение синхронное | ❌ ПОСЛЕДСТВИЕ: `Mono<Void>` — это сигнал завершения reactive pipeline; соединение остаётся открытым пока `send()`/`receive()` Flux'ы активны
+> - [x] Servlet: callbacks + thread-per-connection + блокирующий API + STOMP. WebFlux: `Mono<Void> handle(session)` + event-loop + Flux/Mono + backpressure (без STOMP, через RSocket) | ✓ ПРИМЕНЯТЬ: для streaming (live feed, stock prices, IoT) — WebFlux; для chat/pub-sub с готовым protocol — servlet+STOMP 📋 ПРАВИЛО: WebFlux WS = reactive streams, нет STOMP; Servlet WS = callbacks, есть STOMP 🔗 См. Q29
+
+## Q29. Какие ограничения у WebSocket по количеству соединений и как их обойти?
 
 **Ограничения:**
 
@@ -1254,10 +1260,12 @@ public void configureWebSocketTransport(WebSocketTransportRegistration registry)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Как настроить размер буферов и таймауты для WebSocket в Spring? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] WebSocket-соединения не ограничены — TCP сам справляется | ❌ ПОСЛЕДСТВИЕ: лимит ОС на file descriptors (`ulimit -n` 65k default) + JVM heap (≈100KB на соединение для буферов) + thread pool в servlet-вариант (Tomcat 200 потоков); каждый уровень нужно учитывать
+> - [ ] Увеличение thread pool до 100k решит проблему 100k одновременных WS | ❌ ПОСЛЕДСТВИЕ: 100k потоков = 100GB stack memory (1MB на поток) → JVM упадёт; правильное решение — реактивный стек (Netty) с event-loop, где один поток обслуживает тысячи соединений
+> - [ ] Load balancer не имеет лимитов на WS-соединения | ❌ ПОСЛЕДСТВИЕ: LB держит TCP с клиентом и backend'ом — лимиты `worker_connections`/`max_clients` и idle timeout; nginx default 1024 connections per worker
+> - [x] Ограничения: OS file descriptors (`ulimit -n`), JVM thread pool (servlet), JVM heap (~100KB/connection буферы), LB idle timeout. Обход: `ulimit -n 1000000` + WebFlux/Netty + horizontal scale + tuning buffers через `configureWebSocketTransport` | ✓ ПРИМЕНЯТЬ: для 100k+ соединений — WebFlux + Netty, event-loop; для 10k — servlet с настроенным `ulimit` и thread pool 📋 ПРАВИЛО: WS scale = fd limit + event-loop + LB tuning 🔗 См. Q30
+
+## Q30. Как настроить размер буферов и таймауты для WebSocket в Spring?
 
 ```java
 @Configuration
@@ -1298,10 +1306,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. WebSocket в микросервисной архитектуре: service discovery, gateway, routing ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] `setMessageSizeLimit(64 * 1024)` ограничивает только текстовые сообщения, бинарные не считаются | ❌ ПОСЛЕДСТВИЕ: лимит применяется к ОБОИМ типам — TextMessage и BinaryMessage; превышение → исключение и закрытие сессии
+> - [ ] `setSendBufferSizeLimit` — это размер TCP-буфера сокета | ❌ ПОСЛЕДСТВИЕ: это лимит на bufferization у Spring при медленном клиенте; TCP-буфер настраивается через JVM/OS; превышение Spring-лимита → CloseStatus.SESSION_NOT_RELIABLE
+> - [ ] `setTimeToFirstMessage` — таймаут между сообщениями после handshake | ❌ ПОСЛЕДСТВИЕ: это таймаут ТОЛЬКО на первое сообщение от клиента после handshake; idle-timeout между сообщениями настраивается через container (Tomcat: `WsServerContainer.setDefaultMaxSessionIdleTimeout`)
+> - [x] `setMessageSizeLimit` (макс размер фрейма), `setSendBufferSizeLimit` (буфер для slow clients), `setSendTimeLimit` (таймаут send), `setTimeToFirstMessage` (таймаут первого сообщения после handshake) | ✓ ПРИМЕНЯТЬ: для chat — `128KB`/`512KB`/`20s`; для streaming больших payload — `1MB`/`5MB`/`60s`; heartbeat scheduler обязателен для SimpleBroker 📋 ПРАВИЛО: буферы → защита от slow client, taskScheduler → heartbeat 🔗 См. Q31
+
+## Q31. WebSocket в микросервисной архитектуре: service discovery, gateway, routing
 
 В микросервисной среде WebSocket-соединения проходят через несколько слоёв, каждый из которых требует особой конфигурации.
 
@@ -1352,10 +1362,12 @@ server {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. WebSocket vs SSE vs Long Polling: детальное сравнение ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Spring Cloud Gateway работает с WebSocket из коробки на любом route | ❌ ПОСЛЕДСТВИЕ: нужен явный `uri: ws://` или `lb:ws://` для WebSocket; обычный `http://` НЕ обработает Upgrade-заголовок и вернёт 400
+> - [ ] Service Discovery (Eureka/Consul) проверяет каждый WS-фрейм | ❌ ПОСЛЕДСТВИЕ: Discovery участвует только в момент установки соединения (resolve host); после Upgrade соединение прямое и Discovery не вмешивается
+> - [ ] `proxy_http_version 1.1` в nginx опционально для WebSocket | ❌ ПОСЛЕДСТВИЕ: WebSocket Upgrade требует HTTP/1.1; nginx по умолчанию 1.0 для upstream, что блокирует upgrade; без `proxy_http_version 1.1` соединение не установится
+> - [x] Gateway: `lb:ws://service` для роутинга через discovery + sticky на gateway/LB; nginx: `proxy_http_version 1.1` + `Upgrade`/`Connection` headers + `proxy_read_timeout 3600s`; внешний broker для cross-instance fan-out | ✓ ПРИМЕНЯТЬ: Spring Cloud Gateway для K8s/cloud; nginx upstream с `ip_hash` для классических deploy; всегда — внешний RabbitMQ/Redis для cross-pod 📋 ПРАВИЛО: Gateway = ws-aware uri + sticky; nginx = HTTP/1.1 upgrade headers 🔗 См. Q32
+
+## Q32. WebSocket vs SSE vs Long Polling: детальное сравнение
 
 | Характеристика | WebSocket | SSE | Long Polling |
 |----------------|-----------|-----|-------------|
@@ -1393,10 +1405,12 @@ public Flux<ServerSentEvent<String>> streamEvents() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Мониторинг WebSocket: метрики, количество соединений, health ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] WebSocket — полная замена SSE: можно всегда использовать WS вместо SSE | ❌ ПОСЛЕДСТВИЕ: для server→client one-way push SSE проще: HTTP/2 multiplexing, auto-reconnect с Last-Event-ID, проще для LB; WS избыточен и сложнее в эксплуатации
+> - [ ] SSE поддерживает bidirectional общение через `EventSource.send()` | ❌ ПОСЛЕДСТВИЕ: SSE строго server→client; `EventSource` API не имеет `send()`; для отправки клиент → сервер нужен отдельный HTTP-запрос или WebSocket
+> - [ ] Long Polling эквивалентен WebSocket по производительности | ❌ ПОСЛЕДСТВИЕ: каждое сообщение в LP = новый HTTP-запрос с headers (~500 байт overhead); WS-фрейм 2-14 байт; LP в 30-100x дороже по сети
+> - [x] WS: full-duplex, ws://, минимальный overhead. SSE: server→client, HTTP, auto-reconnect с Last-Event-ID, нативно HTTP/2. LP: эмуляция через repeated HTTP, высокий overhead, для legacy | ✓ ПРИМЕНЯТЬ: chat/games → WS; news feed/notifications → SSE; IE11/strict corporate → LP fallback (через SockJS) 📋 ПРАВИЛО: WS = duplex, SSE = server push, LP = legacy 🔗 См. Q33
+
+## Q33. Мониторинг WebSocket: метрики, количество соединений, health
 
 **Ключевые метрики WebSocket:**
 - `ws.connections.active` — текущее количество открытых соединений
@@ -1464,10 +1478,12 @@ public class WebSocketHealthIndicator implements HealthIndicator {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. WebSocket в Kubernetes: sticky sessions, session affinity, проблемы ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Достаточно мониторить общий CPU/RAM — отдельные метрики WS не нужны | ❌ ПОСЛЕДСТВИЕ: проблемы WS (slow consumer, утечка сессий, message backlog) не видны в CPU/RAM до катастрофы; нужны конкретные метрики `active_connections`, `messages_sent/received`, `errors`
+> - [ ] `WebSocketHandlerDecoratorFactory` нужен только для логирования | ❌ ПОСЛЕДСТВИЕ: декоратор — стандартный механизм для metrics, tracing, auth checks вокруг lifecycle-методов; для метрик это правильное место (afterConnectionEstablished/Closed)
+> - [ ] HealthIndicator должен возвращать DOWN при любом disconnect | ❌ ПОСЛЕДСТВИЕ: единичные disconnects — норма; индикатор должен реагировать только на аномалии (resource exhaustion, abnormal error rate); иначе K8s начнёт перезапускать поды при каждом отвалившемся клиенте
+> - [x] Метрики: `ws.connections.active` (gauge), `ws.messages.sent/received` (counter), `ws.errors` (counter), `ws.session.duration` (histogram); декоратор через `WebSocketHandlerDecoratorFactory` для wrapping lifecycle | ✓ ПРИМЕНЯТЬ: Micrometer + Prometheus + Grafana алерты на падение connections > 50% / резкий рост errors; HealthIndicator с порогом, не на каждый disconnect 📋 ПРАВИЛО: WS metrics = lifecycle hooks + Micrometer 🔗 См. Q34
+
+## Q34. WebSocket в Kubernetes: sticky sessions, session affinity, проблемы
 
 **Проблема:** Kubernetes Service по умолчанию балансирует L4 round-robin — каждый новый TCP-коннект идёт к случайному поду. WebSocket — долгоживущий TCP, поэтому сам по себе "липнет" к поду после установки. Проблема возникает при реконнекте.
 
