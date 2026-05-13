@@ -1067,10 +1067,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Что такое `Chaos Engineering`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Consumer-Driven Contracts заменяют integration testing | ❌ ПОСЛЕДСТВИЕ: CDC и integration tests — комплементарные; CDC проверяет схему контракта между consumer/provider; integration tests — фактическое поведение с реальным взаимодействием
+> - [ ] Pact работает только с REST API | ❌ ПОСЛЕДСТВИЕ: Pact поддерживает HTTP/REST, async messaging (Kafka, RabbitMQ, SNS/SQS); v3+ specifications покрывают request-response и message exchange
+> - [ ] Provider verification опциональна | ❌ ПОСЛЕДСТВИЕ: без provider verification CDC бесполезен — contract существует но не enforced на сервере; «consumer написал — provider не знает» = ложная безопасность
+> - [x] Pact workflow: 1) Consumer описывает expected interactions → 2) Pact JSON загружается в Pact Broker → 3) Provider скачивает + верифицирует contract → 4) `Can I Deploy?` gate в CI/CD блокирует deploy при mismatched contracts | ✓ ПРИМЕНЯТЬ: для микросервисов с многими consumer'ами одного provider'а; альтернатива end-to-end testing для cross-service compatibility 📋 ПРАВИЛО: contract = consumer-defined + provider-verified + broker-shared 🔗 См. Q23
+
+## Q23. Что такое `Chaos Engineering`?
 
 `Chaos Engineering` — практика намеренного внесения сбоев в систему для проверки отказоустойчивости. Принципы: **выдвинуть гипотезу**, **минимизировать blast radius**, **наблюдать**, **автоматизировать**.
 
@@ -1110,10 +1112,12 @@ class CircuitBreakerChaosTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) Какие метрики качества тестирования существуют? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Chaos Engineering = намеренные баги в коде в production | ❌ ПОСЛЕДСТВИЕ: chaos инжектирует infrastructure failures (network/pod kill/CPU), не функциональные баги; для bugs — testing и code review
+> - [ ] Цель chaos — поломать прод чтобы увидеть что упадёт | ❌ ПОСЛЕДСТВИЕ: цель — повысить уверенность через controlled experiments; с hypothesis и blast radius; «давайте сломаем» = chaos-ради-chaos антипаттерн
+> - [ ] Chaos требует только Chaos Monkey, других инструментов не нужно | ❌ ПОСЛЕДСТВИЕ: разные уровни и платформы требуют разных tools — Chaos Monkey/Lambda, Chaos Mesh/Litmus K8s, Toxiproxy TCP, Pumba Docker
+> - [x] Chaos Engineering — practice инжекции failure (kill pod, network latency/loss, CPU/memory stress, dependency unavailability) с hypothesis, минимизированным blast radius, observation, automation; цель — build confidence через unknown unknowns | ✓ ПРИМЕНЯТЬ: для валидации resilience patterns (CB, retry, bulkhead) в realistic conditions; integration tests + chaos в CI 📋 ПРАВИЛО: chaos = controlled experiments с hypothesis, не выкл «давайте ломать» 🔗 См. Q24
+
+## Q24. (!) Какие метрики качества тестирования существуют?
 
 ### Coverage Metrics
 
@@ -1146,10 +1150,12 @@ class CircuitBreakerChaosTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Как организовать тестирование в `Agile`/`Scrum`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Line coverage 100% означает отличное качество тестов | ❌ ПОСЛЕДСТВИЕ: line coverage не проверяет правильность assertions; mutation score более показателен — проверяет, ловят ли тесты мутации; 100% line + 30% mutation = плохие тесты
+> - [ ] Defect Leakage — количество дефектов в коде | ❌ ПОСЛЕДСТВИЕ: Defect Leakage = дефекты в prod / все дефекты; показывает % escaping тестов; «количество дефектов в коде» = просто defect count, не leakage
+> - [ ] Flaky rate > 5% — это норма | ❌ ПОСЛЕДСТВИЕ: target <1%; >5% разрушает trust в test suite; команда начинает игнорировать red builds; необходимы quarantine + fix flaky tests как priority
+> - [x] Метрики: Coverage (line >80%, branch >70%, mutation >80%); Quality (defect density, defect leakage, MTTD, MTTR, test effectiveness); Process (flaky rate <1%, exec time <10min unit, automation rate >70%, build success >95%); mutation score > line coverage для quality | ✓ ПРИМЕНЯТЬ: dashboards с trends; алерты при отклонениях; ретроспективы с metrics review; метрики — инструмент, не цель 📋 ПРАВИЛО: quality = mutation score + defect leakage + flaky rate, не coverage alone 🔗 См. Q25
+
+## Q25. Как организовать тестирование в `Agile`/`Scrum`?
 
 ### Тестирование в Scrum-цикле
 
@@ -1174,10 +1180,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. Что такое `Three Amigos` и `Definition of Done`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Тестирование = отдельная фаза в конце спринта | ❌ ПОСЛЕДСТВИЕ: waterfall-pattern в Agile; bug найден в конце спринта = слишком поздно для исправления; тестирование должно быть continuous через спринт
+> - [ ] QA подключается только к concrete-фазе на тестирование | ❌ ПОСЛЕДСТВИЕ: QA должен участвовать в planning (acceptance criteria) и refinement (risks/edge cases); late involvement = missed requirements
+> - [ ] Регрессия ручная — автоматизация не нужна в Scrum | ❌ ПОСЛЕДСТВИЕ: 2-недельные спринты + manual regression = либо incomplete coverage либо delivery delay; automation обязательна для sustainable pace
+> - [x] Принципы: тестирование = часть DoD не отдельная фаза; QA в planning (acceptance criteria); регрессия автоматизирована в CI; exploratory testing time-boxed sessions каждый спринт; ретроспектива обсуждает quality metrics | ✓ ПРИМЕНЯТЬ: shift-left testing; testing-as-code; TDD в development; integration tests в CI; exploratory во второй половине спринта 📋 ПРАВИЛО: testing in Scrum = continuous + automated + retrospected 🔗 См. Q26
+
+## Q26. Что такое `Three Amigos` и `Definition of Done`?
 
 ### Three Amigos
 
@@ -1205,10 +1213,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Как балансировать скорость и качество тестирования? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Three Amigos = developer + tester + designer | ❌ ПОСЛЕДСТВИЕ: правильная троица — Business Analyst (бизнес-ценность), Developer (реализация), Tester (сценарии); designer — отдельный role
+> - [ ] DoD одинаков для всех команд во всех проектах | ❌ ПОСЛЕДСТВИЕ: DoD — team agreement, отражает context (legacy/greenfield, regulated/startup); универсальный DoD не работает
+> - [ ] Three Amigos обсуждает только estimation | ❌ ПОСЛЕДСТВИЕ: estimation — побочный продукт; основная цель — shared understanding, acceptance criteria, risks, edge cases ДО начала работы
+> - [x] Three Amigos = Business Analyst + Developer + Tester перед work на user story; обсуждают бизнес-ценность, реализацию, тестовые сценарии; результат — shared understanding + acceptance criteria + risk areas. DoD — чек-лист: код+review+unit tests (cov>80%)+integration+AC+no critical defects+docs+staging deploy | ✓ ПРИМЕНЯТЬ: Three Amigos в refinement; DoD как team agreement, ревизировать на retrospective; без DoD testing «съедается» дедлайнами 📋 ПРАВИЛО: 3 Amigos = shared understanding ДО кода; DoD = чек-лист завершённости 🔗 См. Q27
+
+## Q27. Как балансировать скорость и качество тестирования?
 
 ### Стратегии оптимизации
 
@@ -1232,10 +1242,12 @@ junit.jupiter.execution.parallel.config.fixed.parallelism = 4
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Что такое `Test Observability`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Скорость и качество — взаимоисключающие, choose one | ❌ ПОСЛЕДСТВИЕ: false dichotomy; правильные техники (parallelization, test impact analysis, tiered execution) дают обе; «trade-off» = lazy thinking
+> - [ ] @SpringBootTest везде для full integration | ❌ ПОСЛЕДСТВИЕ: @SpringBootTest стартует full context (~10s+); @WebMvcTest/@DataJpaTest — slice tests запускаются за секунды; правильный choice = драматический speedup
+> - [ ] E2E тесты на каждый коммит для maximum safety | ❌ ПОСЛЕДСТВИЕ: E2E медленные (minutes-hours), flaky; на каждый коммит = unbearable feedback loop; tiered — unit на коммит, E2E nightly или perpush
+> - [x] Стратегии: параллелизация (JUnit 5 parallel, Gradle --parallel), инкрементальное тестирование, Test Impact Analysis по diff, Tiered Test Execution (unit per commit, E2E scheduled), оптимизация slow tests (slice tests вместо @SpringBootTest); решения на основе данных | ✓ ПРИМЕНЯТЬ: profile slow tests; junit-platform.properties для parallel; tier по execution time/cost; не вместо качества, а на ту же quality за меньшее время 📋 ПРАВИЛО: speed via right techniques, не cuts в coverage 🔗 См. Q28
+
+## Q28. Что такое `Test Observability`?
 
 `Test Observability` — видимость результатов тестов, трендов и метрик для принятия обоснованных решений.
 
@@ -1259,10 +1271,12 @@ junit.jupiter.execution.parallel.config.fixed.parallelism = 4
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Как организовать `Test Review`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Test Observability — это просто Allure-отчёт раз в неделю | ❌ ПОСЛЕДСТВИЕ: статичный отчёт без трендов = недостаточно; нужны continuous dashboards, alerts на регрессии метрик, исторические сравнения
+> - [ ] Достаточно pass/fail status в CI | ❌ ПОСЛЕДСТВИЕ: pass/fail не показывает trends — flaky rate увеличивается, execution time растёт незаметно; нужны metrics с trends по спринтам
+> - [ ] Test Observability — это monitoring production | ❌ ПОСЛЕДСТВИЕ: production observability и test observability — разные; test observability про CI/test infra; production — про runtime app behavior
+> - [x] Компоненты: Dashboards (coverage, flaky rate, exec time, pass/fail по модулям) + Тренды (по спринтам) + Алерты (рост flakiness, падение coverage) + Трассируемость (test ↔ requirement); инструменты — Grafana, Allure, SonarQube, Datadog CI Visibility | ✓ ПРИМЕНЯТЬ: dashboards с trends; alerts при отклонениях; те же principles что production observability (метрики/логи/трейсы), но для test infrastructure 📋 ПРАВИЛО: test observability = data-driven test improvement 🔗 См. Q29
+
+## Q29. Как организовать `Test Review`?
 
 Код-ревью тестов так же важен, как ревью production-кода. Подробнее о ревью — в [вопросах по code review](../code-quality/code-review-interview.md).
 
@@ -1301,10 +1315,12 @@ void shouldReturnDiscountedPriceForPremiumCustomer() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Что такое `Test Doubles Strategy`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Test code review не нужен — тесты приватные | ❌ ПОСЛЕДСТВИЕ: bad tests = false confidence в production code; review тестов critical; «test code is production code» — стандарт зрелых команд
+> - [ ] `assertNotNull` достаточен в большинстве случаев | ❌ ПОСЛЕДСТВИЕ: assertNotNull проверяет только что объект существует; не проверяет правильность значения; нужны specific assertions по бизнес-логике
+> - [ ] `test1()`, `test2()` — приемлемые имена тестов | ❌ ПОСЛЕДСТВИЕ: при failure не знаешь что упало; правильное имя — `shouldReturnDiscountedPriceForPremiumCustomer` (сценарий описан); test name = mini documentation
+> - [x] Чек-лист test review: 1) корректность (test проверяет заявленное), 2) осмысленные assertions, 3) изоляция (без dependency на порядок), 4) Given-When-Then читаемость, 5) хрупкость (нет time/order dependencies), 6) edge cases coverage, 7) описательные имена тестов | ✓ ПРИМЕНЯТЬ: review тестов так же тщательно как production code; «show me the assertion» — главный вопрос; refactor бесполезных assertions 📋 ПРАВИЛО: test code = first-class code, заслуживает review 🔗 См. Q30
+
+## Q30. Что такое `Test Doubles Strategy`?
 
 Выбор типа test double зависит от контекста и цели теста:
 
@@ -1327,10 +1343,12 @@ void shouldReturnDiscountedPriceForPremiumCustomer() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. (!) Что такое `Test Containerization` и `Testcontainers`? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Mock и Stub — синонимы | ❌ ПОСЛЕДСТВИЕ: разные purposes — Stub returns canned data (state verification), Mock verifies interactions (behavior verification); confusing терминологию = плохие тесты
+> - [ ] Mock everything для maximum isolation | ❌ ПОСЛЕДСТВИЕ: over-mocking = тесты падают при любом refactor; если мокаете больше чем тестируете = sign of poor design; prefer real objects + slice tests
+> - [ ] Spy = создание real object с fake methods на лету | ❌ ПОСЛЕДСТВИЕ: spy — partial mock of REAL object; spy(realService) сохраняет реальные методы кроме переопределённых; mock — без real implementation вообще
+> - [x] Test doubles: Dummy (placeholder), Stub (canned data, when().thenReturn()), Mock (interaction verification, verify().send()), Spy (partial mock of real), Fake (упрощённая реализация типа InMemoryRepository); принципы — простейший double, prefer fakes для repositories, изоляция per test | ✓ ПРИМЕНЯТЬ: stub если достаточно; fake для repositories (InMemoryRepository надёжнее цепочки when().thenReturn()); mock только когда verification critical 📋 ПРАВИЛО: choose simplest test double для задачи 🔗 См. Q31
+
+## Q31. (!) Что такое `Test Containerization` и `Testcontainers`?
 
 `Testcontainers` — Java-библиотека для запуска Docker-контейнеров в тестах: БД, брокеры сообщений, кэши — все зависимости поднимаются автоматически.
 
@@ -1378,10 +1396,12 @@ class OrderRepositoryIT {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Как организовать `Test Environments Strategy`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] H2 в-памяти ничем не хуже Testcontainers с реальным PostgreSQL | ❌ ПОСЛЕДСТВИЕ: H2 другой dialect, разное behavior для constraints/types/json/window functions; «тесты проходят на H2, ломается прод на Postgres» — классическая проблема
+> - [ ] Testcontainers требует docker-compose | ❌ ПОСЛЕДСТВИЕ: Testcontainers — Java lib работающая с Docker daemon напрямую через Docker API; docker-compose не нужен; managed containers per test class
+> - [ ] @Container в JUnit 5 — это static method | ❌ ПОСЛЕДСТВИЕ: @Container на field; static field = shared between tests, non-static = per test instance; @DynamicPropertySource для Spring config
+> - [x] Testcontainers поднимает Docker-контейнеры (PostgreSQL/Redis/Kafka) в тестах; @Testcontainers + @Container; @DynamicPropertySource для Spring config; преимущества — воспроизводимость local/CI, изоляция per test class, реальные зависимости вместо H2/embedded | ✓ ПРИМЕНЯТЬ: integration tests с real databases; reuse containers через `withReuse(true)` для скорости; одинаковый image tag в prod и tests 📋 ПРАВИЛО: real dependencies в тестах = avoid local-vs-prod divergence 🔗 См. Q32
+
+## Q32. Как организовать `Test Environments Strategy`?
 
 ### Уровни окружений
 
@@ -1402,10 +1422,12 @@ class OrderRepositoryIT {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Как организовать `Test Data Management`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Достаточно одного staging-окружения для всей команды | ❌ ПОСЛЕДСТВИЕ: shared staging = conflict tests разных команд, flaky shared state; правильнее multiple ephemeral environments на feature
+> - [ ] Production data копируется в staging без анонимизации | ❌ ПОСЛЕДСТВИЕ: GDPR/PII compliance violation; team members получают доступ к real customer data; anonymization обязательна
+> - [ ] Local environment без Docker, manual setup БД и зависимостей | ❌ ПОСЛЕДСТВИЕ: «works on my machine» проблемы; новый dev день setting up dependencies; Testcontainers / docker-compose решают за секунды
+> - [x] Уровни: Local (Testcontainers/фикстуры), CI (generated data), Staging = Production по конфигу (с анонимизированными данными), Production (canary/monitoring); принципы — IaC для воспроизводимости, изоляция, seed data автоматически, feature flags для контроля | ✓ ПРИМЕНЯТЬ: ephemeral environments per PR; Terraform/Pulumi для IaC; data anonymization pipeline для prod→staging dumps 📋 ПРАВИЛО: environments = layered, isolated, IaC-managed 🔗 См. Q33
+
+## Q33. Как организовать `Test Data Management`?
 
 ### Подходы
 
