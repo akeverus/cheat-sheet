@@ -437,10 +437,12 @@ Edge worker:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. A/B testing, personalization? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Edge должен запустить ImageMagick / Sharp нативные библиотеки | ❌ ПОСЛЕДСТВИЕ: Cloudflare Workers (V8 isolate) не поддерживают native binaries; используют managed Cloudflare Image Resizing или WASM-port Sharp; Lambda@Edge может загрузить Sharp через layer
+> - [ ] Кэшировать нужно только original image | ❌ ПОСЛЕДСТВИЕ: cache per variant (URL с params: `?w=500&format=webp`) — каждый вариант отдельным ключом; hit ratio высокий т.к. устройств ограниченное число
+> - [ ] AVIF/WebP не нужны — JPEG сжимает не хуже | ❌ ПОСЛЕДСТВИЕ: WebP даёт ~30% меньше байт чем JPEG, AVIF ~50%; формат negotiation через `Accept` header — критично для bandwidth savings
+> - [x] Edge resize/format conversion on-the-fly: `?w=500&format=webp` → edge fetch original, resize, WebP/AVIF conversion, cache per variant; format negotiation через `Accept` header; tools — CF Image Resizing, Lambda@Edge+Sharp | ✓ ПРИМЕНЯТЬ: для responsive images; cache по URL с params; fallback на JPEG для legacy browsers 📋 ПРАВИЛО: edge image opt = transform + cache per variant 🔗 См. Q10
+
+## Q10. A/B testing, personalization?
 
 **Problem:** A/B tests require dynamic content, but caching breaks that.
 
@@ -482,10 +484,12 @@ export default {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) Как handle state at edge? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] A/B testing на client-side через JS — единственный способ | ❌ ПОСЛЕДСТВИЕ: client-side AB вызывает FOUC/flash (старая версия мелькает перед swap); edge AB позволяет server-side rendering с правильной версией с самого начала
+> - [ ] Caching полностью ломает A/B testing | ❌ ПОСЛЕДСТВИЕ: edge cache + variant cookie + edge function modifies cached HTML; base HTML cacheable, variant-specific injection through HTMLRewriter; cache hit rate высокий
+> - [ ] HTMLRewriter медленнее `.replace()` | ❌ ПОСЛЕДСТВИЕ: HTMLRewriter использует streaming DOM-like API; faster и memory-efficient чем regex/replace для large HTML; рекомендуется в Workers
+> - [x] Edge AB: cache base HTML, edge function определяет variant (cookie или random), inject через HTMLRewriter; set cookie `ab_variant` для persistence; feature flags из cached KV; no FOUC, server-side decision | ✓ ПРИМЕНЯТЬ: для CTA/copy/layout AB tests с low cardinality variants; cookie-based для consistency; HTMLRewriter > .replace() для performance 📋 ПРАВИЛО: edge AB = cached base + injected variant + cookie persistence 🔗 См. Q11
+
+## Q11. (!) Как handle state at edge?
 
 **Challenge:** edge nodes stateless by default; 300+ POPs.
 
@@ -522,10 +526,12 @@ export default {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Cloudflare Durable Objects? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Все state options дают strong consistency | ❌ ПОСЛЕДСТВИЕ: KV — eventually consistent (writes ~1min пропагация); Durable Objects — strongly consistent (single-instance); cache — best-effort; выбор по consistency requirements
+> - [ ] External DB с edge даёт low latency | ❌ ПОСЛЕДСТВИЕ: внешняя DB → edge должен ходить через сеть к региональному DB → 50-200ms добавочно; теряется edge latency benefit
+> - [ ] Durable Objects масштабируются на все POPs автоматически | ❌ ПОСЛЕДСТВИЕ: DO именно single-instance globally (pinned к one POP); даёт strong consistency ценой higher latency для users в других регионах
+> - [x] State at edge options: 1) stateless+origin; 2) edge cache (TTL, per-POP); 3) KV (eventual, read 1ms, write ~1min); 4) Durable Objects (strong, single-instance, coordination); 5) external DB (network roundtrip). Выбор по consistency/write-throughput требованиям | ✓ ПРИМЕНЯТЬ: feature flags/config → KV; chat-room/counter → DO; sessions → KV если eventual OK, DO если strong нужен 📋 ПРАВИЛО: edge state = trade-off latency vs consistency 🔗 См. Q12
+
+## Q12. Cloudflare Durable Objects?
 
 **Durable Object:** single-instance stateful service pinned к one POP.
 
@@ -568,10 +574,12 @@ export class ChatRoom {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. KV stores (Workers KV, DynamoDB Global)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] DO работают как distributed cluster с consensus | ❌ ПОСЛЕДСТВИЕ: DO именно single-instance — один объект живёт ровно в одном POPе; никаких raft/paxos между инстансами; strong consistency через serialization (single-writer)
+> - [ ] DO нельзя использовать с WebSocket | ❌ ПОСЛЕДСТВИЕ: WebSocket — главный use case для DO; chat rooms, collab apps; WebSocket termination на DO даёт shared state между connected clients
+> - [ ] Каждый user request создаёт новый DO instance | ❌ ПОСЛЕДСТВИЕ: DO named (`getDurableObject("chat-room-123")`) — один instance per name; multiple requests на same name = same instance; coordination через name
+> - [x] DO = single-instance stateful service, pinned к one POP по имени; persistent KV storage внутри; WebSocket support; идеальный для chat rooms, real-time collab, atomic counters, leader election; strong consistency через serialization | ✓ ПРИМЕНЯТЬ: для shared state между connected clients (`getDurableObject("room-123")`); $0.20/M requests + storage 📋 ПРАВИЛО: DO = global singleton per name, не cluster 🔗 См. Q13
+
+## Q13. KV stores (Workers KV, DynamoDB Global)?
 
 **Workers KV:**
 - Eventually consistent key-value
@@ -603,10 +611,12 @@ export class ChatRoom {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) Ограничения edge runtime? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Workers KV — strongly consistent на всех POPs | ❌ ПОСЛЕДСТВИЕ: KV — eventually consistent; write пропагирует ~1min global; для strong consistency нужен Durable Object
+> - [ ] KV подходит для high-write throughput (1000s writes/sec на ключ) | ❌ ПОСЛЕДСТВИЕ: KV optimized для read-heavy с low-write; ~1 write/sec per key limit; для high-write на одном ключе — DO или Redis cluster
+> - [ ] DynamoDB Global Tables быстрее Workers KV при reads | ❌ ПОСЛЕДСТВИЕ: KV read latency ~1ms (cached at edge POP); DDB ~10-50ms; KV выигрывает для edge reads; DDB удобнее для Lambda@Edge интеграции
+> - [x] Workers KV: eventually consistent, read ~1ms (cached), write ~1min global propagation, low write throughput per key. DynamoDB Global Tables: multi-region replication, eventual, тяжелее API. FaunaDB/PlanetScale: global SQL, regional strong/cross-region eventual | ✓ ПРИМЕНЯТЬ: KV для feature flags, config, route mappings (read-heavy); DDB Global для Lambda@Edge с SDK; FaunaDB для transactional global 📋 ПРАВИЛО: KV = read-optimized eventual, выбор по consistency/SQL needs 🔗 См. Q14
+
+## Q14. (!) Ограничения edge runtime?
 
 **Cloudflare Workers:**
 - CPU: 10-30s (depending tier)
@@ -644,10 +654,12 @@ export class ChatRoom {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Cold starts? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Workers поддерживают весь Node.js API включая `fs` и child_process | ❌ ПОСЛЕДСТВИЕ: Workers — workerd runtime (subset Web APIs), нет `fs`, child_process, raw TCP; только Fetch API; native npm packages с binary modules не работают
+> - [ ] CPU time 30s достаточно для batch обработки 100GB файла | ❌ ПОСЛЕДСТВИЕ: 30s CPU + 128MB memory — катастрофически мало для batch processing; для heavy workload — Lambda или dedicated container
+> - [ ] Lambda@Edge может returnить body > 1MB на viewer-response | ❌ ПОСЛЕДСТВИЕ: viewer-response/request — 1MB body limit; для больших responses — origin-response (40MB) или streaming через Fetch API
+> - [x] Workers: CPU 10-30s, memory 128MB, no fs/native modules, 10MB package; Lambda@Edge: 5-30s viewer/origin, 128MB-10GB memory, 1MB/40MB body limit, 50MB package. Не подходит для: long-polling >30s, heavy compute, native binaries, regional compliance | ✓ ПРИМЕНЯТЬ: проверять constraints перед выбором; для constraints-aware design — обычные REST → edge, heavy ML → regional 📋 ПРАВИЛО: edge runtime = subset платформы, не replacement Lambda 🔗 См. Q15
+
+## Q15. Cold starts?
 
 **Workers:**
 - Essentially zero (V8 isolate = μs)
@@ -669,10 +681,12 @@ export class ChatRoom {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Compute cost vs traditional? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Workers имеют cold start 100-500ms как Lambda | ❌ ПОСЛЕДСТВИЕ: V8 isolate startup — microseconds (essentially zero); first request на POP может занять 1-5ms на load worker code, дальше reuse
+> - [ ] Provisioned Concurrency для Workers убирает cold start | ❌ ПОСЛЕДСТВИЕ: Workers не требуют PC; PC — фича AWS Lambda для регулярного warming; Workers всегда warm по природе isolates
+> - [ ] Lambda@Edge Java cold start быстрее чем Node.js | ❌ ПОСЛЕДСТВИЕ: Java JVM startup 1-3s, Node.js ~100-300ms; Java — медленнее; для edge — лучше Node.js или Python для cold-start-sensitive workloads
+> - [x] Workers: ~0 cold start (V8 isolate μs); first POP load 1-5ms. Lambda@Edge: 50-500ms cold (Node быстрее Java/.NET). Mitigation: small packages, avoid dynamic imports, Provisioned Concurrency (для Lambda). После first request warm 5-15min | ✓ ПРИМЕНЯТЬ: для latency-критичных endpoints Workers — best; Lambda@Edge с PC если нужны более широкие runtime features 📋 ПРАВИЛО: V8 isolate ≈ no cold start; container ≈ есть cold start 🔗 См. Q16
+
+## Q16. Compute cost vs traditional?
 
 **Cloudflare Workers (2024):**
 - Paid: $5/mo, 10M requests included
@@ -700,10 +714,12 @@ export class ChatRoom {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) Debugging и observability? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Edge всегда дешевле EC2 always-on | ❌ ПОСЛЕДСТВИЕ: для CPU-heavy/long-running workload edge дороже (Workers $5/10M req + CPU); EC2 spot/reserved instances могут быть cheaper для constant load
+> - [ ] Cloudflare Workers и Lambda@Edge стоят одинаково | ❌ ПОСЛЕДСТВИЕ: Workers $0.50/M (после первых 10M в $5 plan); Lambda@Edge $0.60/M + compute charges; Lambda дороже из-за larger runtime
+> - [ ] Edge cost не зависит от cache hit ratio | ❌ ПОСЛЕДСТВИЕ: cache hit обходится в copy bytes (нулевая edge function execution); cache miss → worker runs → billable; high hit ratio = низкая цена
+> - [x] Workers: $5/mo + $0.50/M (cap 30s CPU). Lambda@Edge: $0.60/M + $0.0000125128/GB-second. Edge cheaper при 90%+ cache-hit, spiky traffic, global; expensive при CPU-bound, long-running, stateful. EC2 always-on иногда дешевле для constant load | ✓ ПРИМЕНЯТЬ: cost model = requests + CPU + state IO; benchmark на typical load перед миграцией 📋 ПРАВИЛО: edge cost dominantly per-request, EC2 — per-hour 🔗 См. Q17
+
+## Q17. (!) Debugging и observability?
 
 **Logs:**
 - Cloudflare: `wrangler tail` live stream
@@ -732,10 +748,12 @@ export class ChatRoom {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Deployment strategies? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Локальный отладчик Node.js полностью работает с Workers | ❌ ПОСЛЕДСТВИЕ: Workers — workerd runtime, не Node; `node --inspect` не работает; локально использовать `wrangler dev` (запускает miniflare/workerd)
+> - [ ] CloudWatch собирает все Lambda@Edge логи в одном регионе | ❌ ПОСЛЕДСТВИЕ: Lambda@Edge выполняется в регионе ближайшем к user; логи разбросаны по всем регионам с traffic; для агрегации — CloudWatch Logs Insights с cross-region queries
+> - [ ] Tracing edge → origin → DB работает out-of-box без OpenTelemetry | ❌ ПОСЛЕДСТВИЕ: distributed tracing через POPs требует explicit instrumentation (Trace context propagation); OpenTelemetry export в Honeycomb/Datadog — стандартный путь
+> - [x] Logs: `wrangler tail` для Workers, CloudWatch (multi-region) для Lambda@Edge. Metrics: CF dashboard, CloudFront. Tracing: OpenTelemetry → Honeycomb/Datadog. Local dev: `wrangler dev` + miniflare. Unit: mock fetch/KV; Integration: deploy to staging worker | ✓ ПРИМЕНЯТЬ: structured JSON logs, sampling для high-traffic; Sentry для error reporting; export OpenTelemetry trace events 📋 ПРАВИЛО: edge observability = distributed by nature, нужен явный instrumentation 🔗 См. Q18
+
+## Q18. Deployment strategies?
 
 **Cloudflare Workers:**
 - `wrangler deploy` — instant, global (5-30s propagation)
@@ -764,6 +782,12 @@ routes: [
 - Same worker, branching on flag from KV
 - Instant toggle без deploy
 
+> [!mcq]
+> - [ ] Deployment Cloudflare Workers пропагирует часами по миру | ❌ ПОСЛЕДСТВИЕ: `wrangler deploy` — propagation 5-30s глобально; почти instant; Lambda@Edge — 2-5min (тяжелее)
+> - [ ] Rollback для Workers требует git revert + redeploy через минуты | ❌ ПОСЛЕДСТВИЕ: rollback в seconds — redeploy previous version через `wrangler rollback`; для Lambda@Edge — switch CloudFront к prior version (2-5min)
+> - [ ] Canary rollout невозможен для edge workers | ❌ ПОСЛЕДСТВИЕ: CF supports percent-based routing (`percent: 10` на новую версию); Lambda@Edge harder — обычно через separate distribution или path-based routing
+> - [x] Workers: `wrangler deploy` global ~30s, gradual rollout через percent-routing, rollback через redeploy previous, secrets через `wrangler secret put`. Lambda@Edge: 2-5min propagation, version pinning per path, rollback через CloudFront. CI/CD через GitHub Actions; feature flags через KV для instant toggle без deploy | ✓ ПРИМЕНЯТЬ: canary 10% → 50% → 100% для major releases; feature flags для experiments без deploy 📋 ПРАВИЛО: edge deploy = global propagation + flag-based rollouts 🔗 См. See also
+
 ---
 
 ## See also
@@ -778,15 +802,3 @@ routes: [
 - [Scalability Patterns](scalability-patterns-interview.md) — global scaling
 - [Distributed Systems](distributed-systems-interview.md) — edge = distributed
 - [Observability](../monitoring/observability-interview.md) — debug edge workloads
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [API Gateway](api-gateway-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [BFF Pattern](bff-pattern-interview.md)
-- [Стратегии кэширования](caching-strategies-interview.md)
-- [CAP-теорема](cap-theorem-interview.md)
-- [Clean Architecture](clean-architecture-interview.md)
-- [Паттерны согласованности](consistency-patterns-interview.md)
