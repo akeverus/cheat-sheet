@@ -1527,10 +1527,12 @@ annotations:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Binary vs text frames: MessagePack, Protobuf ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] K8s Service по умолчанию правильно балансирует WS — sticky не нужен | ❌ ПОСЛЕДСТВИЕ: новый WS-connect — новый TCP, идёт по round-robin на любой под; для SockJS HTTP-fallback (несколько запросов в одну сессию) обязательно sticky, иначе разные запросы идут в разные поды
+> - [ ] `sessionAffinity: ClientIP` работает идеально за корпоративным NAT | ❌ ПОСЛЕДСТВИЕ: за NAT все клиенты выглядят с одним IP → попадают в один под → теряется балансировка; нужен cookie-based affinity через Ingress
+> - [ ] Rolling update в K8s сам корректно завершает WS-сессии без drain | ❌ ПОСЛЕДСТВИЕ: K8s посылает SIGTERM, под закрывается, существующие WS-сессии резко обрываются; нужен `preStop` hook с drain-периодом (10-30s) для graceful close
+> - [x] K8s WS: `sessionAffinity: ClientIP` или cookie-affinity через nginx-ingress (`affinity: cookie`); внешний broker для cross-pod fan-out; `preStop` hook + drain period для graceful rolling-update | ✓ ПРИМЕНЯТЬ: cookie-affinity предпочтительнее (работает за NAT); + RabbitMQ для broadcast между подами; всегда настраивать `proxy-read-timeout: 3600` 📋 ПРАВИЛО: K8s WS = cookie-sticky + external broker + preStop drain 🔗 См. Q35
+
+## Q35. Binary vs text frames: MessagePack, Protobuf
 
 WebSocket поддерживает два типа data frames: `text` (UTF-8) и `binary` (произвольные байты).
 
@@ -1575,10 +1577,12 @@ session.sendMessage(new BinaryMessage(bytes));
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. WebSocket и CDN: почему CDN не кэширует WS, CloudFlare ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Binary frames всегда быстрее и компактнее — text использовать не нужно | ❌ ПОСЛЕДСТВИЕ: для редких сообщений overhead на сериализацию binary не оправдан; JSON через TextMessage даёт readability в DevTools, debug и tooling; binary только когда throughput критичен
+> - [ ] Frame type определяется payload'ом — Spring сам выбирает text/binary | ❌ ПОСЛЕДСТВИЕ: тип фрейма выбирает разработчик: `new TextMessage(...)` (opcode 0x1) vs `new BinaryMessage(...)` (opcode 0x2); это разные методы и opcodes в WS-протоколе
+> - [ ] MessagePack и Protobuf — один и тот же формат | ❌ ПОСЛЕДСТВИЕ: MessagePack — schema-less binary JSON; Protobuf — schema-based с компиляцией .proto в код; Protobuf компактнее и быстрее, но требует schema management; MessagePack гибче
+> - [x] Text (opcode 0x1, UTF-8 JSON/XML) vs Binary (opcode 0x2, MessagePack/Protobuf/CBOR); binary компактнее (~50-70% size reduction), быстрее ser/deser, но хуже отладка | ✓ ПРИМЕНЯТЬ: chat/CRUD → JSON text (debugging); high-frequency (stock/IoT/gaming) → Protobuf binary; обработка через `handleTextMessage`/`handleBinaryMessage` 📋 ПРАВИЛО: binary = throughput, text = debuggability 🔗 См. Q36
+
+## Q36. WebSocket и CDN: почему CDN не кэширует WS, CloudFlare
 
 **CDN и WebSocket:**
 CDN (Content Delivery Network) строился для кэширования статических ресурсов по HTTP. WebSocket работает принципиально иначе:
@@ -1606,10 +1610,12 @@ CDN (Content Delivery Network) строился для кэширования с
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. Disconnect стратегии: exponential backoff reconnect на клиенте ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CloudFlare кэширует частые WS-сообщения для уменьшения трафика | ❌ ПОСЛЕДСТВИЕ: CloudFlare НЕ кэширует WS-фреймы — каждый фрейм уникален и stateful; CDN работает как прозрачный TCP-прокси, не как кэш
+> - [ ] WebSocket через CDN всегда медленнее чем direct connect | ❌ ПОСЛЕДСТВИЕ: edge-нода CDN ближе к клиенту → меньше latency на handshake; после установки overhead минимален; в большинстве случаев CDN ускоряет, а не замедляет
+> - [ ] Cloudflare idle timeout для WS — 1 час по умолчанию | ❌ ПОСЛЕДСТВИЕ: idle timeout — 100 секунд; без heartbeat соединение будет закрыто; нужно настроить heartbeat < 100s (например 30s) чтобы не оборвать сессию
+> - [x] CDN работает с WS как transparent TCP-proxy (не кэш): edge → origin tunnel; SSL termination на edge; Cloudflare idle timeout 100s — нужен heartbeat; теряется client IP (нужно X-Forwarded-For) | ✓ ПРИМЕНЯТЬ: heartbeat 30s < 100s edge-timeout; добавить `Cache-Control: no-store` для /ws endpoints; для affinity использовать cookie, не IP 📋 ПРАВИЛО: CDN + WS = TCP-proxy с heartbeat < idle-timeout 🔗 См. Q37
+
+## Q37. Disconnect стратегии: exponential backoff reconnect на клиенте
 
 Надёжный reconnect — критически важен для production WebSocket приложений.
 
@@ -1671,10 +1677,12 @@ class WebSocketClient {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Testing WebSocket: TestWebSocketClient в Spring ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Reconnect с фиксированной задержкой 1 секунда — самое надёжное решение | ❌ ПОСЛЕДСТВИЕ: при массовом disconnect (рестарт сервера, network blip) тысячи клиентов будут DDoS'ить через секунду → сервер не поднимется; нужен exponential backoff
+> - [ ] Бесконечный reconnect — клиент должен пытаться вечно | ❌ ПОСЛЕДСТВИЕ: после `maxReconnectAttempts` нужно остановиться и показать UI «соединение потеряно, нажмите retry»; иначе клиент висит молча и пользователь думает что всё работает
+> - [ ] Jitter не нужен если у нас exponential backoff | ❌ ПОСЛЕДСТВИЕ: без jitter все клиенты с одинаковым `baseDelay=1000` после общего отказа попадут в одну и ту же минуту и накроют сервер пачкой — нужен random ±20% разброс
+> - [x] Reconnect: `onclose` (если `!wasClean`) → `delay = min(base * 2^attempts, maxDelay)` + `jitter (±20%)`; cap на `maxAttempts`; reset счётчика при успешном `onopen` | ✓ ПРИМЕНЯТЬ: `baseDelay=1s, maxDelay=30s, maxAttempts=10`; сохранять `Last-Event-ID` для дедупликации; готовая библиотека `@stomp/stompjs` (auto-reconnect + heartbeat) 📋 ПРАВИЛО: reconnect = exp backoff + jitter + cap + state preservation 🔗 См. Q38
+
+## Q38. Testing WebSocket: TestWebSocketClient в Spring
 
 **Unit-тестирование WebSocketHandler:**
 ```java
@@ -1760,16 +1768,14 @@ WebSocketSession session = client.execute(
 session.sendMessage(new TextMessage("ping"));
 ```
 
----
+> [!mcq]
+> - [ ] Достаточно unit-теста с моком `WebSocketSession` — интеграционные тесты для WS избыточны | ❌ ПОСЛЕДСТВИЕ: mock не проверяет реальный handshake, frame parsing, heartbeat, STOMP protocol; для prod-readiness нужны integration-тесты с `@SpringBootTest(webEnvironment = RANDOM_PORT)` + `WebSocketStompClient`
+> - [ ] `WebSocketStompClient` блокирующий — не подходит для асинхронного теста | ❌ ПОСЛЕДСТВИЕ: клиент по сути асинхронен; для теста используют `CompletableFuture` или `CountDownLatch` для ожидания ответа с таймаутом
+> - [ ] Можно тестировать через `MockMvc` как REST endpoint | ❌ ПОСЛЕДСТВИЕ: `MockMvc` не делает HTTP Upgrade в WebSocket; для WS нужен реальный сервер (`@SpringBootTest` с `webEnvironment = RANDOM_PORT`) или `StandardWebSocketClient`
+> - [x] Unit: mock `WebSocketSession` + `ArgumentCaptor`. Integration: `@SpringBootTest(RANDOM_PORT)` + `WebSocketStompClient`/`StandardWebSocketClient` + `CompletableFuture`/`CountDownLatch` для асинхронного ожидания | ✓ ПРИМЕНЯТЬ: unit — для логики handler'а; integration — для проверки handshake, STOMP CONNECT, subscribe/send, error scenarios; всегда c timeout (3-5s) 📋 ПРАВИЛО: WS test = mock для unit + real server для integration 🔗 См. See also
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [HTTP & REST](http-rest-interview.md)
 - [gRPC](grpc-interview.md)
 - [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md)
