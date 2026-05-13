@@ -778,10 +778,12 @@ registry.enableStompBrokerRelay("/topic", "/queue")
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Как настроить RabbitMQ как внешний STOMP-брокер в Spring? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Simple broker масштабируется горизонтально через session-replication | ❌ ПОСЛЕДСТВИЕ: SimpleBroker — in-memory одного инстанса; топики НЕ синхронизируются между нодами; клиент на ноде A не получит сообщение от ноды B
+> - [ ] Внешний брокер нужен только для durable-сообщений | ❌ ПОСЛЕДСТВИЕ: главная причина — масштабирование на N инстансов; durability — побочный эффект; также ACK, DLQ, retry-policy недоступны в SimpleBroker
+> - [ ] RabbitMQ через `enableStompBrokerRelay` требует AMQP-протокол | ❌ ПОСЛЕДСТВИЕ: relay использует STOMP-плагин RabbitMQ (`rabbitmq_stomp`, порт 61613), не AMQP; Spring разговаривает с брокером тем же STOMP, что и клиент
+> - [x] SimpleBroker: in-memory, single-instance, no persistence; ExternalBroker (RabbitMQ/ActiveMQ): cross-instance, persistence, ACK/DLQ, требует отдельной инфраструктуры | ✓ ПРИМЕНЯТЬ: dev/single-node → SimpleBroker; prod/HA → enableStompBrokerRelay с RabbitMQ или ActiveMQ 📋 ПРАВИЛО: scale-out WS → внешний broker обязателен 🔗 См. Q19
+
+## Q19. Как настроить RabbitMQ как внешний STOMP-брокер в Spring?
 
 **Зависимость:**
 ```xml
@@ -824,10 +826,12 @@ public class RabbitMQWebSocketConfig implements WebSocketMessageBrokerConfigurer
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. (!) Почему масштабирование WebSocket сложнее, чем REST? Как решается проблема sticky sessions? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Достаточно поменять `enableSimpleBroker` на `enableStompBrokerRelay("/topic")` — Spring сам подключится к RabbitMQ на localhost | ❌ ПОСЛЕДСТВИЕ: нужен включённый плагин `rabbitmq_stomp` (`rabbitmq-plugins enable rabbitmq_stomp`), иначе порт 61613 закрыт; также нужны хост/порт/credentials
+> - [ ] Spring подключается к RabbitMQ по AMQP-протоколу через `spring-amqp` | ❌ ПОСЛЕДСТВИЕ: relay использует именно STOMP-плагин RabbitMQ (порт 61613), не AMQP (5672); это позволяет не дублировать сообщения и не транслировать форматы
+> - [ ] Heart-beat между Spring и RabbitMQ настраивать не нужно — TCP keepalive хватает | ❌ ПОСЛЕДСТВИЕ: STOMP heart-beat работает на уровне приложения и обнаруживает «полузакрытые» соединения быстрее TCP keep-alive (TCP по умолчанию 2 часа); без heart-beat зависшее relay-соединение не восстановится автоматически
+> - [x] Включить плагин `rabbitmq_stomp` + `enableStompBrokerRelay("/topic","/queue").setRelayHost(...).setRelayPort(61613).setClientLogin(...).setSystemHeartbeatSendInterval(10000)` | ✓ ПРИМЕНЯТЬ: heart-beat 10s обе стороны; credentials через secret-manager; в prod ещё `.setUserDestinationBroadcast("/topic/unresolved-user-destination")` для user-destinations через relay 📋 ПРАВИЛО: external broker = STOMP plugin + relay config + heart-beat 🔗 См. Q20
+
+## Q20. (!) Почему масштабирование WebSocket сложнее, чем REST? Как решается проблема sticky sessions?
 
 **Проблема:** WebSocket — постоянное соединение. Если у нас 3 инстанса и клиент подключился к инстансу A, то сообщение, пришедшее в инстанс B, не будет доставлено.
 
@@ -856,10 +860,12 @@ graph TD
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Как работает pub/sub через внешний брокер при горизонтальном масштабировании? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] REST stateless — масштабируется любым LB; WebSocket тоже, поскольку браузер автоматически переподключается на любой инстанс | ❌ ПОСЛЕДСТВИЕ: переподключение НЕ решает проблему: сообщение, посланное в инстанс B пока клиент висит на A, не дойдёт до клиента; нужен общий broker или sticky sessions
+> - [ ] Sticky sessions нужны только для WebSocket — для REST они не имеют смысла | ❌ ПОСЛЕДСТВИЕ: stateful REST (HTTP-сессии без Redis) тоже требует sticky; для stateless REST не нужны; для WS — желательны при SockJS HTTP-fallback (xhr-streaming делает несколько запросов в одну сессию)
+> - [ ] Sticky sessions делают WS отказоустойчивым: при падении инстанса LB переключит клиента | ❌ ПОСЛЕДСТВИЕ: наоборот — при падении sticky-инстанса клиент теряет соединение; для resilience нужны reconnect-логика на клиенте + external broker
+> - [x] WS = persistent stateful соединение, привязано к инстансу. Решения: sticky sessions (LB маршрутизирует по cookie/IP) + external broker (RabbitMQ/Redis Pub/Sub) для cross-instance доставки | ✓ ПРИМЕНЯТЬ: для HA — обязательно external broker; sticky sessions помогают SockJS-fallback'у держать сессию; reconnect-логика на клиенте обязательна 📋 ПРАВИЛО: WS scale = sticky + external broker + client reconnect 🔗 См. Q21
+
+## Q21. Как работает pub/sub через внешний брокер при горизонтальном масштабировании?
 
 ```mermaid
 sequenceDiagram
@@ -883,10 +889,12 @@ sequenceDiagram
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Как защитить WebSocket-соединение: CORS, аутентификация, Spring Security? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Spring сам выбирает мастер-инстанс, который рассылает сообщения остальным | ❌ ПОСЛЕДСТВИЕ: нет «мастера»; все инстансы равноправно подключены к брокеру через `StompBrokerRelay`; маршрутизация на стороне брокера
+> - [ ] Каждый инстанс держит TCP-соединение с каждым другим инстансом (mesh) | ❌ ПОСЛЕДСТВИЕ: соединения только с брокером (star-топология), не mesh; масштабирование O(N) соединений, не O(N²)
+> - [ ] Сообщение от Client1 не доходит до App2, только если оба инстанса подключены к одному брокеру | ❌ ПОСЛЕДСТВИЕ: брокер сам бродкастит подписчикам — App2 получит копию сообщения и доставит Client2 даже если они не знают друг о друге
+> - [x] Каждый Spring-инстанс держит TCP-соединение с брокером через StompBrokerRelay; SEND публикуется в broker → broker бродкастит MESSAGE всем инстансам, имеющим локальные подписки → каждый инстанс доставляет своим WS-клиентам | ✓ ПРИМЕНЯТЬ: для user-destinations (`/user/queue/X`) нужен `setUserDestinationBroadcast("/topic/unresolved-user-destination")` чтобы любой инстанс мог найти владельца user-queue 📋 ПРАВИЛО: relay = TCP к брокеру; broker = fan-out между инстансами 🔗 См. Q22
+
+## Q22. (!) Как защитить WebSocket-соединение: CORS, аутентификация, Spring Security?
 
 **CORS для WebSocket:**
 ```java
@@ -956,10 +964,12 @@ public class WebSocketSecurityConfig extends AbstractSecurityWebSocketMessageBro
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Почему нельзя использовать стандартный CSRF-токен для WebSocket? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] WebSocket автоматически наследует Spring Security-контекст HTTP-сессии — никакой настройки не нужно | ❌ ПОСЛЕДСТВИЕ: после Upgrade `SecurityContext` не пробрасывается в каждое STOMP-сообщение; нужен либо `ChannelInterceptor` с `SecurityContextHolder.setContext`, либо `AbstractSecurityWebSocketMessageBrokerConfigurer` для авторизации
+> - [ ] `setAllowedOrigins("*")` безопасно если CSRF включен | ❌ ПОСЛЕДСТВИЕ: `*` отключает CORS-проверку Origin и открывает CSRF-вектор поскольку WS-handshake посылает cookies; в prod использовать `setAllowedOriginPatterns("https://*.myapp.com")`
+> - [ ] Достаточно проверить JWT при handshake — дальше WS считается доверенным | ❌ ПОСЛЕДСТВИЕ: JWT может истечь во время долгоживущего соединения; нужна периодическая проверка expiry либо force-reconnect при revocation
+> - [x] CORS через `setAllowedOriginPatterns`; auth через `HandshakeInterceptor` (HTTP-уровень) или `ChannelInterceptor` на `CONNECT` (STOMP-уровень) + JWT в headers; authz через `AbstractSecurityWebSocketMessageBrokerConfigurer.configureInbound` | ✓ ПРИМЕНЯТЬ: для JWT — `accessor.getNativeHeader("Authorization")` в pre-send interceptor; `simpDestMatchers("/app/admin/**").hasRole("ADMIN")` для destination-based authz 📋 ПРАВИЛО: WS auth = handshake (HTTP) или CONNECT (STOMP); WS authz = destination-matchers 🔗 См. Q23
+
+## Q23. Почему нельзя использовать стандартный CSRF-токен для WebSocket?
 
 **Проблема:** CSRF-защита HTTP основана на том, что вредоносный сайт не может читать куки чужого домена. Для WebSocket `Sec-WebSocket-Key` не является CSRF-токеном, а браузеры автоматически включают куки в handshake-запрос.
 
@@ -989,10 +999,12 @@ stompClient.connect({'Authorization': 'Bearer ' + token}, callback);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. Как обрабатывать ошибки STOMP на сервере через `@MessageExceptionHandler`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CSRF-токен можно положить в `Sec-WebSocket-Protocol` заголовок | ❌ ПОСЛЕДСТВИЕ: атакующий с того же origin может прочитать любой кастомный header через ws-API; правильнее проверять Origin handshake-заголовок и не полагаться на cookie-based auth
+> - [ ] Достаточно требовать `Authorization: Bearer` для WS — CSRF не нужен | ❌ ПОСЛЕДСТВИЕ: если auth по куке (как HTTP-сессия), Origin-чек обязателен; если по Bearer-токену в STOMP-CONNECT — да, CSRF неактуален, поскольку токен злоумышленник не достанет cross-origin
+> - [ ] WebSocket-handshake защищён `Sec-WebSocket-Key` от CSRF-атак | ❌ ПОСЛЕДСТВИЕ: `Sec-WebSocket-Key` — это часть протокола handshake (генерируется браузером для эхо-валидации), а НЕ CSRF-защита; браузер всё равно прикрепит cookies к WS-handshake
+> - [x] WS-handshake — обычный HTTP-запрос с куками, но `Sec-WebSocket-Key` ≠ CSRF-токен. Защита: `setAllowedOriginPatterns(...)` + JWT в STOMP CONNECT headers вместо cookies + `HandshakeInterceptor` для дополнительной проверки | ✓ ПРИМЕНЯТЬ: Origin-чек обязателен в prod; для cookie-auth — strict same-origin; для Bearer-token — допускается широкий Origin 📋 ПРАВИЛО: WS CSRF = Origin check, не token; либо переход на Bearer-token auth 🔗 См. Q24
+
+## Q24. Как обрабатывать ошибки STOMP на сервере через `@MessageExceptionHandler`?
 
 ```java
 @Controller
@@ -1031,10 +1043,12 @@ public class WebSocketExceptionHandler {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Как реализовать автоматическое переподключение на клиенте (JS)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Бросок exception из `@MessageMapping` отправит клиенту STOMP ERROR-фрейм и закроет соединение | ❌ ПОСЛЕДСТВИЕ: без `@MessageExceptionHandler` Spring логирует исключение, но соединение НЕ закрывается; клиент остаётся живым, но без обратной связи о причине ошибки
+> - [ ] `@MessageExceptionHandler` работает как `@ExceptionHandler` — может вернуть HTTP-статус | ❌ ПОСЛЕДСТВИЕ: WS не имеет HTTP-статусов после Upgrade; ответ — обычный STOMP MESSAGE-фрейм на destination из `@SendTo`/`@SendToUser`
+> - [ ] `@ControllerAdvice` с `@MessageExceptionHandler` НЕ работает для STOMP — только локальные хендлеры | ❌ ПОСЛЕДСТВИЕ: `@ControllerAdvice` поддерживается; глобальный обработчик ловит exceptions со всех контроллеров — типичный паттерн для централизованной обработки validation-ошибок
+> - [x] `@MessageExceptionHandler` в контроллере (local) или в `@ControllerAdvice` (global) + `@SendToUser("/queue/errors")` для адресации owner'у запроса | ✓ ПРИМЕНЯТЬ: клиент подписан на `/user/queue/errors`; глобальный @ControllerAdvice для валидации; локальный — для бизнес-ошибок конкретного контроллера 📋 ПРАВИЛО: STOMP errors → @SendToUser, не ERROR-фрейм 🔗 См. Q25
+
+## Q25. Как реализовать автоматическое переподключение на клиенте (JS)?
 
 ```javascript
 class ReconnectingWebSocket {
@@ -1075,10 +1089,12 @@ class ReconnectingWebSocket {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. (!) Как работает heartbeat в STOMP и как его настроить в Spring? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] WebSocket API браузера сам переподключается при потере соединения | ❌ ПОСЛЕДСТВИЕ: нативный WebSocket НЕ переподключается — после `close` событие `onclose` срабатывает один раз, дальше — забота приложения; нужна обёртка с retry-логикой
+> - [ ] Постоянная попытка переподключения с задержкой 100ms максимально быстро восстановит сессию | ❌ ПОСЛЕДСТВИЕ: при массовом disconnect (например, рестарт сервера) thundering herd обрушит сервер; нужен exponential backoff + jitter
+> - [ ] При reconnect нужно создавать новый `SockJS` объект каждый раз — нельзя переиспользовать | ❌ ПОСЛЕДСТВИЕ: верно — старый SockJS закрыт; но после успешного connect ещё нужно повторно сделать SUBSCRIBE на все topics, иначе сообщения не пойдут
+> - [x] Обёртка с exponential backoff (1s → 2s → 4s → 8s, cap 30s) + jitter + повторный SUBSCRIBE после reconnect; сброс счётчика retry при успешном CONNECT | ✓ ПРИМЕНЯТЬ: jitter (random 0-500ms добавочно) против thundering herd; сохранять последний message-id для дедупликации после reconnect; готовая библиотека — reconnecting-websocket 📋 ПРАВИЛО: reconnect = exp.backoff + jitter + re-subscribe + dedup 🔗 См. Q26
+
+## Q26. (!) Как работает heartbeat в STOMP и как его настроить в Spring?
 
 **Heartbeat** — механизм обнаружения разорванных соединений. Стороны договариваются об интервале в заголовке `heart-beat` при `CONNECT`/`CONNECTED`:
 
