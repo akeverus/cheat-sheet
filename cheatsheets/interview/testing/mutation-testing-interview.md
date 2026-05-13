@@ -468,10 +468,12 @@ mutmut html  # report
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Optimization (incremental, in-process)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Mutation testing медленный потому что генерация мутантов сложная | ❌ ПОСЛЕДСТВИЕ: генерация мутантов быстрая (просто bytecode/source patching); медленная часть — N runs тестов для N мутантов
+> - [x] N мутантов × test suite time; 1000 мутантов × 30s = 8.3 часа naive; optimizations (coverage, incremental) → minutes | ✓ ПРИМЕНЯТЬ: использовать optimization flags; incremental run после изменений 📋 ПРАВИЛО: total time ≈ N_mutants × test_time / parallel_factor 🔗 См. Q15
+> - [ ] Если test suite быстрый, mutation testing тоже быстрый | ❌ ПОСЛЕДСТВИЕ: даже 1s тесты с 5000 мутантов = 1.4 часа; число мутантов важнее одного test run
+> - [ ] Скорость зависит только от железа, оптимизации алгоритма не помогают | ❌ ПОСЛЕДСТВИЕ: coverage-based selection (не запускать тесты не покрывающие mutated line) даёт 10-100x ускорение независимо от железа
+
+## Q16. Optimization (incremental, in-process)?
 
 **Optimizations:**
 
@@ -486,10 +488,12 @@ mutmut html  # report
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) Когда mutation testing worth it? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] In-process execution не помогает — JVM cold start dominates | ❌ ПОСЛЕДСТВИЕ: in-process убирает JVM startup для каждого мутанта = 10-100x ускорение; one of major optimizations
+> - [x] Coverage-based selection + per-mutant test selection + incremental + in-process + parallel + bytecode mutation; combine для minutes на large codebase | ✓ ПРИМЕНЯТЬ: enable все optimizations в PIT/Stryker; incremental — после первого full run 📋 ПРАВИЛО: optimizations stack = orders of magnitude faster 🔗 См. Q16
+> - [ ] Bytecode mutation медленнее source mutation | ❌ ПОСЛЕДСТВИЕ: bytecode mutation быстрее (no recompile); source mutation требует full recompile per mutant
+> - [ ] Incremental analysis не работает с CI — нужен polный run | ❌ ПОСЛЕДСТВИЕ: incremental анализирует diff с baseline (last successful run); CI получает результаты быстро на small changes
+
+## Q17. (!) Когда mutation testing worth it?
 
 **Worth it когда:**
 - **Critical code** (financial, safety-critical)
@@ -507,10 +511,12 @@ mutmut html  # report
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Какой score целевой? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Mutation testing нужно применять ко всему коду — generated, glue, prototypes | ❌ ПОСЛЕДСТВИЕ: трата ресурсов на код где value low; generated/glue/prototypes изменяются часто и mutation testing не даёт значимой ценности
+> - [x] Worth it: critical (financial/safety), test quality concerns, library code, TDD verification; less valuable: prototypes, glue, generated code | ✓ ПРИМЕНЯТЬ: targeted на business logic + critical paths; не на everything 📋 ПРАВИЛО: mutation = high-value для critical code, waste для прочего 🔗 См. Q17
+> - [ ] Mutation testing полезно только для библиотек | ❌ ПОСЛЕДСТВИЕ: библиотечный код важная категория, но не единственная; критичный application code (платежи, медицина) тоже выигрывает
+> - [ ] Mutation testing должно быть baseline для всех проектов | ❌ ПОСЛЕДСТВИЕ: cost (CI time + анализ) высок; baseline для startup/prototype = perfect quality at cost of velocity; resource investment должен соответствовать risk
+
+## Q18. Какой score целевой?
 
 **No universal "right" score.** Depends на code criticality.
 
@@ -524,10 +530,12 @@ mutmut html  # report
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) Limitations и criticism? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Один target 80% подходит для всех типов кода | ❌ ПОСЛЕДСТВИЕ: критичный код (финансы, безопасность) требует 90%+; trivial data classes — N/A; one-size-fits-all = слишком жёстко или слишком слабо
+> - [x] Critical paths 90%+, business logic 75-85%, average 60-75%, trivial — N/A; trend важнее absolute score | ✓ ПРИМЕНЯТЬ: разные targets для разных модулей; track trend, не fixate на percent 📋 ПРАВИЛО: target по criticality; trend > absolute 🔗 См. Q18
+> - [ ] Score 100% — реалистичная цель для production | ❌ ПОСЛЕДСТВИЕ: equivalent мутанты предотвращают 100%; преследование = wasted time
+> - [ ] Чем выше mutation score тем лучше тесты — abolutely | ❌ ПОСЛЕДСТВИЕ: высокий score можно достичь искусственно (game метрики); качество тестов измеряется множеством факторов; score — proxy
+
+## Q19. (!) Limitations и criticism?
 
 1. **Slow** даже с optimizations
 2. **Equivalent mutants** noise
@@ -542,10 +550,12 @@ mutmut html  # report
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. CI/CD integration? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Mutation testing — silver bullet для test quality | ❌ ПОСЛЕДСТВИЕ: не заменяет integration tests, code review, exploratory testing; mutation проверяет unit-level assertions, не business correctness
+> - [x] Limitations: медленно, equivalent noise, false sense of quality, doesn't test integration, complement не replace; use thoughtfully | ✓ ПРИМЕНЯТЬ: mutation как ОДНА из метрик, наряду с code review и integration tests 📋 ПРАВИЛО: mutation = unit test quality proxy, не universal correctness 🔗 См. Q19
+> - [ ] High mutation score гарантирует отсутствие production bugs | ❌ ПОСЛЕДСТВИЕ: integration bugs, race conditions, business logic errors могут не отлавливаться mutation testing; нужны другие layers тестирования
+> - [ ] Equivalent mutants — это исключительный случай, не реальная проблема | ❌ ПОСЛЕДСТВИЕ: 5-15% мутантов часто equivalent; они accumulate и засоряют отчёты; ручной triage — significant maintenance overhead
+
+## Q20. CI/CD integration?
 
 **Run на pull requests** (incremental):
 ```bash
@@ -574,12 +584,7 @@ If mutation score < 60% → fail build
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Unit Testing](unit-testing-interview.md) — context ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+- [Unit Testing](unit-testing-interview.md) — base for mutation testing
 - [Test Strategies](test-strategies-interview.md)
 - [Property-based Testing](property-based-testing-interview.md)
 - [Load Testing](load-testing-interview.md)
