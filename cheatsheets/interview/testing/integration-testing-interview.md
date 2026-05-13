@@ -2033,10 +2033,12 @@ void shouldApplyPremiumDiscount() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Как тестировать кеширование? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Хранить все тестовые объекты в JSON-fixture файлах — единственный правильный подход | ❌ ПОСЛЕДСТВИЕ: JSON-fixtures хороши для статичных payloads, но для частых вариаций (premium/blocked/admin users) дублирование разрастается; нужен builder + Object Mother
+> - [x] Комбинация: Test Data Builder (`TestUserBuilder().withEmail(...).premium().build()`) для гибких вариаций одного типа, Object Mother (`TestData.premiumUser()`, `TestData.paidOrder(user)`) для типовых сценариев, `@BeforeAll` для дорогой инициализации контейнеров, `@BeforeEach` для seed/cleanup на каждый тест, базовые классы (`AbstractIntegrationTest`) для общих контейнеров, `@Sql` для декларативной загрузки данных | ✓ ПРИМЕНЯТЬ: Builder при 5+ вариациях одного объекта, Object Mother для коротких имён "premiumUser/blockedUser", AbstractIntegrationTest для shared containers 📋 ПРАВИЛО: Builder = гибкость, Mother = читаемость; уровни setup → @BeforeAll vs @BeforeEach по стоимости 🔗 См. Q33
+> - [ ] Использовать production-данные напрямую в тестах | ❌ ПОСЛЕДСТВИЕ: prod-data может содержать PII (GDPR violation), меняется со временем (flaky tests), нарушает изоляцию; всегда генерировать synthetic test data
+> - [ ] Один большой `@BeforeAll` для всех данных — экономит время | ❌ ПОСЛЕДСТВИЕ: tests становятся зависимыми (порядок выполнения важен), накапливается state между тестами; нарушение isolation приведёт к flaky tests
+
+## Q33. Как тестировать кеширование?
 
 ```java
 @SpringBootTest
@@ -2091,10 +2093,12 @@ class CacheIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. Что такое `Smoke Testing` после деплоя? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Тестировать саму библиотеку кеширования (Caffeine/Redis) — проверить, что она кеширует | ❌ ПОСЛЕДСТВИЕ: библиотеки уже протестированы их авторами; дублирование тестов; тесты упадут при апгрейде версии без причины
+> - [ ] Только TTL — остальное не критично | ❌ ПОСЛЕДСТВИЕ: пропускаются ключевые сценарии — eviction при update (stale data в production), cache miss handling, проверка попадания в кеш
+> - [ ] @MockBean всего кеша — реальный кеш не нужен | ❌ ПОСЛЕДСТВИЕ: мок не проверит реальное кеш-поведение приложения (правильность ключей, TTL, eviction policy); баги в @Cacheable конфигурации не вскроются
+> - [x] Тестировать четыре аспекта: (1) cache hit — повторный вызов возвращает данные без обращения к DB через `@SpyBean` репозитория + `verify(repo, times(1))`; (2) cache miss — первый вызов идёт в DB; (3) eviction при `@CacheEvict`/update — следующий вызов снова идёт в DB; (4) TTL через мок `Clock`. Использовать реальный Redis через `GenericContainer` + `@ServiceConnection`; НЕ тестировать саму библиотеку, только логику приложения | ✓ ПРИМЕНЯТЬ: при использовании `@Cacheable`/`@CacheEvict`/`@CachePut`, при кастомных key generators 📋 ПРАВИЛО: testing application caching logic, not the cache library itself 🔗 См. Q34
+
+## Q34. Что такое `Smoke Testing` после деплоя?
 
 **Smoke test** -- минимальный набор проверок после деплоя: приложение запустилось, БД доступна, ключевые эндпоинты отвечают.
 
@@ -2134,10 +2138,12 @@ Smoke-тесты: быстрые (секунды), запускаются в pip
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. (!) Какие best practices для интеграционного тестирования? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Smoke test — это полный регресс перед деплоем | ❌ ПОСЛЕДСТВИЕ: путаница с регрессионным тестированием; smoke — быстрая проверка (секунды), регресс — часы; разные цели, разные стадии pipeline
+> - [x] Smoke test — минимальный набор быстрых проверок после деплоя: контекст приложения поднялся (`@SpringBootTest`), `/actuator/health` отвечает UP, главные эндпоинты возвращают 200; запускается в pipeline после каждого деплоя; при падении — automatic rollback или alert; не заменяет полные интеграционные тесты, цель — поймать «явные» поломки сразу | ✓ ПРИМЕНЯТЬ: после blue/green switch, canary rollout, любой production deploy 📋 ПРАВИЛО: smoke = «приложение жив?», секунды на ответ, gate для rollback 🔗 См. Q35
+> - [ ] Smoke test должен покрывать все business scenarios | ❌ ПОСЛЕДСТВИЕ: если smoke покрывает всё — он перестаёт быть быстрым; deploy pipeline становится 30+ минут вместо секунд; рекомендуется отдельные слои — smoke + integration + e2e
+> - [ ] Smoke test не нужен, если есть unit + integration тесты | ❌ ПОСЛЕДСТВИЕ: pre-deploy тесты не отлавливают runtime-проблемы (config, env vars, network); smoke — last line of defense на самой развёрнутой системе
+
+## Q35. (!) Какие best practices для интеграционного тестирования?
 
 ### 1. Используйте `Testcontainers` вместо `H2`
 
@@ -2197,10 +2203,12 @@ void shouldRejectOrderForBlockedUser() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. (!) Как использовать `@DataJpaTest` для тестирования репозиториев? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Ставить `@Transactional` на все интеграционные тесты для автоматического rollback | ❌ ПОСЛЕДСТВИЕ: скрывает `LazyInitializationException` (entity manager не закрывается между запросами в проде), не тестирует транзакционные границы реальной системы; flaky-баги вылезут только в проде
+> - [ ] Использовать H2 для скорости — Testcontainers слишком медленные | ❌ ПОСЛЕДСТВИЕ: H2 отличается от PostgreSQL: JSONB, оконные функции, dialect-specific SQL; тесты зелёные, prod падает; запуск H2 «for speed» = false economy
+> - [ ] Каждый тест должен делить state с другими для эффективности | ❌ ПОСЛЕДСТВИЕ: tests становятся order-dependent — flaky tests, невозможность parallel execution; isolation — фундамент стабильности интеграционных тестов
+> - [x] Best practices: (1) Testcontainers вместо H2 — реальный PostgreSQL ловит реальные баги; (2) НЕ ставить `@Transactional` — скрывает LazyInit, не тестирует boundaries; (3) изолировать тесты — `@AfterEach` cleanup или уникальные данные; (4) минимизировать `@MockBean` — каждый уникальный набор создаёт новый ApplicationContext; (5) test slices (`@WebMvcTest`, `@DataJpaTest`) быстрее `@SpringBootTest`; (6) разделить unit и integration по papka (`src/test/java` vs `src/integrationTest`); (7) не дублировать unit-покрытие; (8) мониторить flaky-тесты; (9) разделять fast/slow по pipeline-стадиям; (10) Given-When-Then для читаемости | ✓ ПРИМЕНЯТЬ: чеклист при code review интеграционных тестов, при настройке pipeline для разделения fast/slow 📋 ПРАВИЛО: real DB + no @Transactional + isolation + slices + GWT 🔗 См. Q36
+
+## Q36. (!) Как использовать `@DataJpaTest` для тестирования репозиториев?
 
 `@DataJpaTest` — это test slice, который поднимает только слой JPA: `EntityManager`, репозитории и Flyway/Liquibase миграции. Остальные компоненты Spring Boot не загружаются.
 
@@ -2280,10 +2288,12 @@ class UserRepositoryTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. Как тестировать JSON-сериализацию с `@JsonTest`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] `@DataJpaTest` поднимает весь Spring контекст, включая контроллеры и сервисы | ❌ ПОСЛЕДСТВИЕ: путаница с `@SpringBootTest`; `@DataJpaTest` — slice, загружает только JPA-слой, что критично для скорости (~5x быстрее full context)
+> - [ ] По умолчанию `@DataJpaTest` использует production БД из application.yml | ❌ ПОСЛЕДСТВИЕ: ровно наоборот — по умолчанию `@DataJpaTest` подменяет на embedded H2; чтобы использовать real DB через Testcontainers нужен `@AutoConfigureTestDatabase(replace = NONE)`
+> - [x] `@DataJpaTest` — test slice, поднимает только JPA-слой (EntityManager, репозитории, Flyway/Liquibase), не загружает контроллеры и сервисы — намного быстрее `@SpringBootTest`. По умолчанию использует H2 in-memory; для real PostgreSQL — `@AutoConfigureTestDatabase(replace = NONE)` + `@Testcontainers`. `TestEntityManager` (обёртка) даёт `persistAndFlush()` и `clear()` для контроля first-level cache | ✓ ПРИМЕНЯТЬ: для тестирования repository queries, @Query methods, кастомных JPA mappings; для проверки named queries и projections 📋 ПРАВИЛО: repository tests → @DataJpaTest + @AutoConfigureTestDatabase(NONE) + Testcontainers 🔗 См. Q37
+> - [ ] `@DataJpaTest` не поддерживает `TestEntityManager` — нужен обычный EntityManager | ❌ ПОСЛЕДСТВИЕ: `TestEntityManager` — специально предоставляется `@DataJpaTest` для контроля над персистенцией (persistAndFlush, clear); отказ от него лишит способности контролировать first-level cache в тестах
+
+## Q37. Как тестировать JSON-сериализацию с `@JsonTest`?
 
 `@JsonTest` загружает только конфигурацию Jackson (или Gson/JSONB) — без MVC-слоя и БД. Это быстрый способ проверить `@JsonComponent`, кастомные сериализаторы и формат DTO.
 
@@ -2350,10 +2360,12 @@ class OrderDtoJsonTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. (!) Как использовать `RestAssured` для интеграционных API-тестов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] `@JsonTest` поднимает MVC-слой для проверки сериализации в endpoint | ❌ ПОСЛЕДСТВИЕ: путаница с `@WebMvcTest`; `@JsonTest` — самый узкий slice, только Jackson/Gson/JSONB конфигурация, без MVC и DB
+> - [ ] Использовать обычный `ObjectMapper` напрямую в тесте | ❌ ПОСЛЕДСТВИЕ: без `@JsonTest` теряются кастомные `@JsonComponent`, авто-конфигурации Jackson из application.yml; тест не отразит реальное поведение сериализации
+> - [x] `@JsonTest` — самый узкий test slice, загружает только Jackson/Gson/JSONB конфигурацию (без MVC, БД, services). Использует `JacksonTester<DTO>` для типизированной сериализации/десериализации: `json.write(obj)` → `JsonContent` с `hasJsonPathStringValue("$.field", "value")`, `json.parse(jsonString)` → `ObjectContent` с `usingRecursiveComparison()`. Идеален для проверки `@JsonComponent`, кастомных сериализаторов, формата дат, `@JsonInclude(NON_NULL)` | ✓ ПРИМЕНЯТЬ: при кастомных сериализаторах, для проверки contract сериализации DTO, при изменении Jackson version 📋 ПРАВИЛО: @JsonTest для serialization concerns без MVC/DB overhead 🔗 См. Q38
+> - [ ] `@JsonTest` тестирует только сериализацию, десериализация невозможна | ❌ ПОСЛЕДСТВИЕ: `JacksonTester.parse(json)` возвращает `ObjectContent` для проверки результата десериализации; ложное ограничение лишит половины use-cases
+
+## Q38. (!) Как использовать `RestAssured` для интеграционных API-тестов?
 
 `REST Assured` — библиотека для тестирования REST API с удобным DSL в стиле `given-when-then`. В отличие от `MockMvc`, тестирует реальный HTTP-стек.
 
@@ -2443,10 +2455,12 @@ class OrderApiRestAssuredTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. Как тестировать `Spring Security` в интеграционных тестах? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] `RestAssured` и `MockMvc` одинаковы — выбор не важен | ❌ ПОСЛЕДСТВИЕ: они тестируют разное: RestAssured — реальный HTTP стек (RANDOM_PORT, фильтры, сервлеты), MockMvc — in-process mock (быстрее, но обходит часть стека); выбор «без разницы» приведёт к пропуску багов в фильтрах
+> - [x] `RestAssured` — DSL для testing REST API через реальный HTTP стек (`@SpringBootTest(webEnvironment = RANDOM_PORT)` + `RestAssured.port = port`). Синтаксис `given().contentType().body() → when().post() → then().statusCode().body("field", equalTo(...))`. Тестирует реальные фильтры, сервлеты, security; медленнее MockMvc; идеален для E2E API-тестов. Альтернатива `RestAssuredMockMvc` для @WebMvcTest без полного сервера | ✓ ПРИМЕНЯТЬ: для E2E API-тестов где важна проверка всего стека (security, filters), для contract validation с Hamcrest matchers 📋 ПРАВИЛО: real HTTP + BDD стиль → RestAssured; in-process slice → MockMvc 🔗 См. Q39
+> - [ ] `RestAssured` всегда лучше `MockMvc` — используйте только его | ❌ ПОСЛЕДСТВИЕ: RestAssured медленнее (реальный сервер старт + HTTP roundtrip); для unit-уровня controller logic MockMvc в 5-10x быстрее; смешение «one tool fits all» приведёт к долгому CI
+> - [ ] `RestAssured` работает только с JSON — XML не поддерживается | ❌ ПОСЛЕДСТВИЕ: ложное ограничение; RestAssured исходно поддерживает и XML (XPath/XSD), и JSON (JsonPath); важно для legacy SOAP API
+
+## Q39. Как тестировать `Spring Security` в интеграционных тестах?
 
 ```java
 @WebMvcTest(OrderController.class)
@@ -2523,10 +2537,12 @@ void shouldAllowJwtUserToReadOrders() throws Exception {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. Как использовать `@RestClientTest` для тестирования HTTP-клиентов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Через `@WithMockUser(username, roles)` — JUnit ставит SecurityContext перед тестом; для проверки `401 Unauthorized` — тест без аннотации; для `403 Forbidden` — `@WithMockUser` с недостаточной ролью; для кастомных схем (JWT) — собственная аннотация через `@WithSecurityContext(factory = ...)` с `WithSecurityContextFactory`, который собирает `JwtAuthenticationToken` и кладёт в `SecurityContextHolder` | ✓ ПРИМЕНЯТЬ: для тестирования @PreAuthorize/hasRole в контроллерах, для проверки 401/403 ответов, для JWT-based аутентификации через кастомные аннотации 📋 ПРАВИЛО: WithMockUser для роль-based, WithSecurityContext factory для JWT/claims 🔗 См. Q40
+> - [ ] Хардкодить authentication через `SecurityContextHolder.getContext().setAuthentication()` в каждом тесте | ❌ ПОСЛЕДСТВИЕ: дублирование boilerplate + забывать cleanup → leak between tests; `@WithMockUser`/`@WithSecurityContext` делают это декларативно с auto cleanup
+> - [ ] Отключать Security полностью в тестах через `@AutoConfigureMockMvc(addFilters = false)` | ❌ ПОСЛЕДСТВИЕ: тесты «зелёные», но security rules не проверены; в проде /admin endpoint открыт всем; отключение filters допустимо для не-security тестов, но не для security-specific
+> - [ ] `@WithMockUser` работает только в `@SpringBootTest`, в `@WebMvcTest` не работает | ❌ ПОСЛЕДСТВИЕ: ложное ограничение; `@WithMockUser` отлично работает в `@WebMvcTest` (и даже там основной use-case), путаница приведёт к лишнему full context
+
+## Q40. Как использовать `@RestClientTest` для тестирования HTTP-клиентов?
 
 `@RestClientTest` — test slice для тестирования компонентов, использующих `RestTemplate` или `RestClient`. Загружает только конфигурацию HTTP-клиентов и `MockRestServiceServer`.
 
@@ -2592,10 +2608,23 @@ class PaymentGatewayClientTest {
 
 `@RestClientTest` — аналог `@WebMvcTest` для исходящих HTTP-вызовов. Он изолирует клиент от реальных внешних сервисов и позволяет проверить маппинг запросов/ответов без поднятия полного контекста.
 
+
+> [!mcq]
+> - [ ] `@RestClientTest` поднимает полный Spring контекст для проверки HTTP-клиента | ❌ ПОСЛЕДСТВИЕ: путаница с `@SpringBootTest`; `@RestClientTest` — slice, загружает только конфигурацию HTTP-клиентов и MockRestServiceServer; full context — медленнее в 5-10x
+> - [ ] Использовать WireMock внутри `@SpringBootTest` — единственный способ тестировать клиента | ❌ ПОСЛЕДСТВИЕ: WireMock работает, но избыточен для тестирования одного клиента; `@RestClientTest` + `MockRestServiceServer` решает ту же задачу быстрее (без поднятия HTTP сервера)
+> - [ ] Делать реальные вызовы к внешнему API в тестах | ❌ ПОСЛЕДСТВИЕ: flaky tests (зависят от availability сторонних сервисов), долго, риск утечки данных/credentials, неконтролируемые сценарии ошибок (5xx без поломки real API)
+> - [x] `@RestClientTest(MyClient.class)` — test slice для тестирования `RestTemplate`/`RestClient`-based компонентов. Автоматически предоставляет `MockRestServiceServer` — мокирует HTTP requests на уровне Spring HTTP client. Синтаксис: `mockServer.expect(requestTo(url)).andExpect(method(POST)).andExpect(content().contentType(JSON)).andRespond(withSuccess(jsonBody, JSON))`; `mockServer.verify()` для проверки что все expectations met; для error scenarios — `withServerError()`, `withBadRequest()` | ✓ ПРИМЕНЯТЬ: для тестирования RestTemplate/RestClient-based интеграций с внешними API; для проверки маппинга request/response, retry logic, error handling 📋 ПРАВИЛО: outbound HTTP testing → @RestClientTest + MockRestServiceServer (не WireMock + full context) 🔗 См. See also
+
 ---
 
 ## See also
 
+- [Chaos Engineering](chaos-engineering-interview.md)
+- [Contract Testing](contract-testing-interview.md)
+- [Load Testing](load-testing-interview.md)
+- [Mockito](mockito-interview.md)
+- [Mutation Testing](mutation-testing-interview.md)
+- [Property-based Testing](property-based-testing-interview.md)
 - [Unit Testing](unit-testing-interview.md) — изолированные тесты без внешних зависимостей
 - [Стратегии тестирования](test-strategies-interview.md) — пирамида тестов, выбор уровня
 - [Test Automation](test-automation-interview.md) — автоматизация и запуск в pipeline
@@ -2604,15 +2633,3 @@ class PaymentGatewayClientTest {
 - [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация, профили, auto-configuration
 - [Docker](../devops/docker-interview.md) — контейнеризация, на которой построен Testcontainers
 - [Kafka](../messaging/kafka-interview.md) — тестирование event-driven архитектуры
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Chaos Engineering](chaos-engineering-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Contract Testing](contract-testing-interview.md)
-- [Load Testing](load-testing-interview.md)
-- [Mockito](mockito-interview.md)
-- [Mutation Testing](mutation-testing-interview.md)
-- [Property-based Testing](property-based-testing-interview.md)
