@@ -386,10 +386,12 @@ DELETE /users/123     # delete
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) HTTP status codes по категориям? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] PUT и PATCH полностью взаимозаменяемы | ❌ ПОСЛЕДСТВИЕ: PUT отправляет ВЕСЬ ресурс и заменяет (отсутствующие поля обнуляются); PATCH — только изменения; путать → данные затираются на PUT
+> - [ ] POST идемпотентен если использовать UUID на клиенте | ❌ ПОСЛЕДСТВИЕ: POST по семантике не идемпотентен; client-generated UUID + dedupe-логика на сервере даёт effective idempotency, но HTTP semantics остаются «non-idempotent» (см. Idempotency-Key header)
+> - [ ] GET может изменять состояние если это side-effect логирование | ❌ ПОСЛЕДСТВИЕ: GET = safe (no state change observable клиентом); logging — internal; но action-style `GET /users/123/delete` ломает все правила: CDN/proxy/crawler могут вызвать delete случайно
+> - [x] GET (safe, idempotent, читает), POST (unsafe, non-idempotent, создаёт), PUT (unsafe, idempotent, full replace), PATCH (unsafe, может быть idempotent, partial update), DELETE (unsafe, idempotent, удаляет); HEAD = GET без body, OPTIONS = discover методов | ✓ ПРИМЕНЯТЬ: PATCH с JSON Merge Patch (RFC 7396) или JSON Patch (RFC 6902); PUT для full update; Idempotency-Key header для POST когда нужна safe retry 📋 ПРАВИЛО: правильный verb = правильный contract с caches/proxies/clients 🔗 См. Q12
+
+## Q12. (!) HTTP status codes по категориям?
 
 **1xx — Informational** (rare)
 
@@ -423,10 +425,12 @@ DELETE /users/123     # delete
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Idempotency версов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Все ошибки можно возвращать как 200 OK с error в body | ❌ ПОСЛЕДСТВИЕ: caching/retry/monitoring не работают (200 = success для proxies/CDN); breaks client retry logic (нет distinction между ok и fail); HTTP semantics нарушены
+> - [ ] 401 Unauthorized = пользователь известен, но нет доступа | ❌ ПОСЛЕДСТВИЕ: путаница — 401 = «нет/неправильная аутентификация»; «известен но нет доступа» = 403 Forbidden; разные действия для клиента (401 → re-login, 403 → contact admin)
+> - [ ] 503 Service Unavailable и 504 Gateway Timeout — синонимы | ❌ ПОСЛЕДСТВИЕ: разные семантики — 503 = upstream сам отвечает «я не доступен» (обычно с Retry-After header); 504 = gateway не дождался ответа от upstream
+> - [x] Категории: 1xx info, 2xx success (200/201/204/202), 3xx redirect (301/304), 4xx client error (400/401/403/404/409/422/429), 5xx server error (500/502/503/504); правильные коды → caching, retry, monitoring работают | ✓ ПРИМЕНЯТЬ: 201 + Location на create, 204 на delete без body, 422 для validation errors, 429 с Retry-After для rate-limiting, 503 при maintenance с Retry-After 📋 ПРАВИЛО: status code — это контракт с инфраструктурой (LB/CDN/retry-clients) 🔗 См. Q13
+
+## Q13. Idempotency версов?
 
 **Idempotent verbs:** GET, HEAD, OPTIONS, PUT, DELETE.
 **Non-idempotent:** POST, (PATCH usually).
@@ -452,10 +456,12 @@ Idempotency-Key: 7f9c1d-...
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Safe vs unsafe методы? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Idempotent = метод можно вызывать только один раз | ❌ ПОСЛЕДСТВИЕ: ровно наоборот — idempotent означает можно вызвать N раз с тем же результатом (final state одинаков); важно для retry-логики при сетевых сбоях
+> - [ ] POST с одинаковым body идемпотентен | ❌ ПОСЛЕДСТВИЕ: POST по умолчанию создаёт новый ресурс каждый вызов → не idempotent; для idempotent semantics нужен Idempotency-Key header (Stripe, RFC 9110 draft)
+> - [ ] PATCH всегда идемпотентен | ❌ ПОСЛЕДСТВИЕ: зависит от типа — JSON Merge Patch (RFC 7396) идемпотентен; JSON Patch с array-операциями (`add at index 0`) НЕ идемпотентен (повтор сдвигает массив)
+> - [x] Idempotent: GET/HEAD/OPTIONS/PUT/DELETE; non-idempotent: POST, PATCH (зависит); workaround для POST idempotency = `Idempotency-Key` header, сервер хранит ключ и возвращает same response для duplicate request | ✓ ПРИМЕНЯТЬ: для payment/order POST обязательно Idempotency-Key чтобы network retry не создал дубли; key TTL 24h, хранить в Redis 📋 ПРАВИЛО: idempotent verbs → safe to retry на network failure 🔗 См. Q14
+
+## Q14. Safe vs unsafe методы?
 
 **Safe** — does not modify state. **GET, HEAD, OPTIONS**.
 
@@ -475,10 +481,12 @@ GOOD: DELETE /users/123
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Критика модели (Roy Fielding)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Safe = быстрый/легковесный метод | ❌ ПОСЛЕДСТВИЕ: safe = no state change (читать-only); GET может быть тяжёлым (full report), но всё равно safe; safe-ness про семантику, не perf
+> - [ ] PUT и DELETE — safe потому что idempotent | ❌ ПОСЛЕДСТВИЕ: путаница понятий: safe = no state change; idempotent = same result on retry; PUT/DELETE — unsafe (меняют state), но idempotent
+> - [ ] `GET /users/123/delete` приемлемо если URL содержит auth-token | ❌ ПОСЛЕДСТВИЕ: GET с side-effects — фундаментально неверно; CDN/proxy/browser-prefetch/crawler вызовут случайно; auth не защищает от этого
+> - [x] Safe: GET, HEAD, OPTIONS (read-only). Unsafe: POST, PUT, PATCH, DELETE (modify state). CDN/proxy кэшируют safe, browser prefetch'ит safe URLs; never use GET для side-effect actions | ✓ ПРИМЕНЯТЬ: страницы admin/CRUD UI должны вызывать DELETE/POST через AJAX, не GET-ссылки; правильное соответствие verb-semantics 📋 ПРАВИЛО: safe ≠ idempotent (concepts ортогональны) 🔗 См. Q15
+
+## Q15. (!) Критика модели (Roy Fielding)?
 
 **Roy Fielding** (REST creator, 2000 PhD thesis):
 > "If the engine of application state (and hence the API) is not being driven by hypertext, then it cannot be RESTful."
@@ -494,10 +502,12 @@ GOOD: DELETE /users/123
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Pragmatic REST vs idealistic REST? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Fielding похвалил RMM как точное описание его REST | ❌ ПОСЛЕДСТВИЕ: наоборот — Fielding критиковал API без hypermedia за неправомерное использование термина «RESTful»; его 2008 пост — манифест против Level 2 как «достаточный»
+> - [ ] Fielding считает Level 2 правильным компромиссом | ❌ ПОСЛЕДСТВИЕ: Fielding жёстко: без HATEOAS API «не RESTful»; «If the engine of application state is not being driven by hypertext, then it cannot be RESTful»
+> - [ ] Критика Fielding устарела с появлением OpenAPI | ❌ ПОСЛЕДСТВИЕ: критика об архитектурном стиле, OpenAPI = design-time контракт; ортогонально; Fielding бы сказал что OpenAPI не заменяет runtime discoverability
+> - [x] Roy Fielding (REST creator, 2000 thesis): только Level 3 — true REST; Level 2 без HATEOAS не является RESTful; цитата «if not driven by hypertext, not REST». RMM критикуют за «ladder» — industry pragmatic Level 2 не есть failure | ✓ ПРИМЕНЯТЬ: понимать что «truly RESTful» в академическом смысле редок; pragmatic REST — индустриальная норма с OpenAPI документацией 📋 ПРАВИЛО: Fielding strict vs industry pragmatic — оба валидны для разных контекстов 🔗 См. Q16
+
+## Q16. Pragmatic REST vs idealistic REST?
 
 **Pragmatic (RMM Level 2):**
 - HTTP verbs + status codes
@@ -514,10 +524,12 @@ GOOD: DELETE /users/123
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) GraphQL, gRPC vs REST? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Pragmatic REST = REST без HTTP-методов | ❌ ПОСЛЕДСТВИЕ: Pragmatic = Level 2 (правильные HTTP-методы есть!); без методов — это Level 0/1, не «pragmatic», это «недоделанный»
+> - [ ] Idealistic REST избегает OpenAPI | ❌ ПОСЛЕДСТВИЕ: idealistic Level 3 как раз больше нуждается в documentation (link relations описать где-то надо); OpenAPI + HATEOAS не противоречат
+> - [ ] Pragmatic REST = JSON-only, idealistic = XML-only | ❌ ПОСЛЕДСТВИЕ: формат body ортогонален maturity; и Pragmatic, и Idealistic могут быть JSON или XML; разница в hypermedia/HATEOAS
+> - [x] Pragmatic (Level 2): HTTP verbs + status codes + clean URIs + JSON + OpenAPI docs. Idealistic (Level 3): всё выше + HATEOAS + hypermedia format (HAL/JSON:API). Реальность 2025: pragmatic доминирует, OpenAPI = de-facto standard | ✓ ПРИМЕНЯТЬ: pragmatic для team-internal/SaaS API; idealistic для public/long-lived API с независимыми консьюмерами 📋 ПРАВИЛО: choose maturity level based on consumer-coupling tolerance 🔗 См. Q17
+
+## Q17. (!) GraphQL, gRPC vs REST?
 
 **REST (RMM Level 2):**
 - HTTP-based
@@ -546,6 +558,12 @@ GOOD: DELETE /users/123
 - **Internal microservices** — gRPC
 - **Hybrid** common (REST public + gRPC internal)
 
+> [!mcq]
+> - [ ] GraphQL заменяет REST во всех случаях — REST устарел | ❌ ПОСЛЕДСТВИЕ: каждый стиль для своего случая; REST — для public API с HTTP caching; GraphQL — для mobile/complex queries с over-fetching; не «лучше», а «другое»
+> - [ ] gRPC работает в браузере нативно без proxy | ❌ ПОСЛЕДСТВИЕ: gRPC использует HTTP/2 features (trailers, binary framing) недоступные в browser fetch API; нужен gRPC-Web + proxy (Envoy) для браузерного клиента
+> - [ ] GraphQL имеет лучший HTTP caching чем REST | ❌ ПОСЛЕДСТВИЕ: HTTP caching работает на уровне URL+method (GET); GraphQL обычно POST на `/graphql` с query в body → HTTP cache не работает; кэширование на client (Apollo Cache, Relay) или server (Persisted Queries)
+> - [x] REST: HTTP-based, resource-oriented, natural HTTP caching, может over/under-fetch. GraphQL: single endpoint, client picks fields, schema-driven, subscriptions, слабее HTTP semantics. gRPC: binary Protobuf, HTTP/2, strong typing, streaming, для internal service-to-service | ✓ ПРИМЕНЯТЬ: public API → REST; mobile/complex queries → GraphQL; internal microservices → gRPC; hybrid (public REST + internal gRPC) — типовой паттерн 📋 ПРАВИЛО: каждый стиль для своего use-case, не competitor 🔗 См. See also
+
 ---
 
 ## See also
@@ -559,15 +577,3 @@ GOOD: DELETE /users/123
 - [Микросервисы](../architecture/microservices-interview.md) — APIs context
 - [API Gateway](../architecture/api-gateway-interview.md) — context
 - [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [API Design Best Practices](api-design-best-practices-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [API Versioning](api-versioning-interview.md)
-- [GraphQL](graphql-interview.md)
-- [gRPC](grpc-interview.md)
-- [HTTP и REST](http-rest-interview.md)
-- [OpenAPI / Swagger](openapi-swagger-interview.md)
