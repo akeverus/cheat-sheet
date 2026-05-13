@@ -995,10 +995,12 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Как написать `PodChaos` эксперимент на Chaos Mesh? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Chaos Mesh — это set of bash-скриптов которые запускаются по cron | ❌ ПОСЛЕДСТВИЕ: Chaos Mesh — это Kubernetes-нативная платформа на CRD; декларативные YAML, не imperative scripts; интеграция с k8s lifecycle, RBAC
+> - [ ] Chaos Mesh поддерживает только pod-kill | ❌ ПОСЛЕДСТВИЕ: поддерживает 10+ fault types: PodChaos, NetworkChaos, IOChaos, StressChaos, DNSChaos, TimeChaos, KernelChaos, HTTPChaos, JVMChaos, AWSChaos
+> - [ ] Chaos Mesh работает только на bare-metal K8s, не cloud | ❌ ПОСЛЕДСТВИЕ: работает на любом K8s (EKS, GKE, AKS, on-prem); требует только linux nodes для chaos-daemon; cloud-агностичен
+> - [x] Chaos Mesh = Kubernetes-нативная платформа от PingCAP (CNCF incubating); архитектура Controller Manager + Chaos Daemon per node + CRDs; поддерживает PodChaos, NetworkChaos, IOChaos, StressChaos, DNSChaos, TimeChaos, KernelChaos, HTTPChaos, JVMChaos | ✓ ПРИМЕНЯТЬ: для K8s-первых организаций; rich dashboard для визуализации; workflow для chain экспериментов; RBAC + multi-tenancy 📋 ПРАВИЛО: Chaos Mesh = CRD-driven fault injection для K8s 🔗 См. Q22
+
+## Q22. (!) Как написать `PodChaos` эксперимент на Chaos Mesh?
 
 `PodChaos` — самый распространённый тип: убить или вывести из строя pod.
 
@@ -1076,10 +1078,12 @@ kubectl delete podchaos pod-failure-example   # kill switch
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Как сделать `NetworkChaos` для симуляции задержек? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] `mode: one` означает «всегда первый pod в списке» | ❌ ПОСЛЕДСТВИЕ: `mode: one` — случайный pod из selector; «всегда первый» = deterministic, не chaos; для random но controlled — use `fixed-percent`
+> - [ ] `pod-kill` и `pod-failure` — синонимы | ❌ ПОСЛЕДСТВИЕ: pod-kill = удалить pod permanently (k8s создаст новый); pod-failure = pod ставится в Failed state на duration; разные effects (timing, recovery)
+> - [ ] Selector работает только по namespace, не по labels | ❌ ПОСЛЕДСТВИЕ: selector поддерживает namespaces + labelSelectors + annotationSelectors + fieldSelectors + expressionSelectors; combinable для precise targeting
+> - [x] PodChaos с action (pod-failure / pod-kill / container-kill), mode (one/all/fixed-percent для blast radius control), selector (namespaces + labelSelectors), duration; kill switch через `kubectl delete podchaos <name>` | ✓ ПРИМЕНЯТЬ: начинать с mode=one в staging, потом fixed-percent (5-10%) в prod; всегда duration < observed recovery time 📋 ПРАВИЛО: PodChaos = action + mode (blast radius) + selector + duration 🔗 См. Q23
+
+## Q23. Как сделать `NetworkChaos` для симуляции задержек?
 
 `NetworkChaos` инжектирует сетевые эффекты через `tc` (Linux traffic control) на уровне pod-а.
 
@@ -1151,10 +1155,12 @@ spec:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. Что такое `Litmus` и чем он отличается от Chaos Mesh? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] NetworkChaos требует sidecar-инжекции как Istio | ❌ ПОСЛЕДСТВИЕ: NetworkChaos использует Linux tc (traffic control) через chaos-daemon на node; не требует sidecar mesh; работает на pod-уровне через netns
+> - [ ] `partition` block one-way — `direction: from` блокирует ВЕСЬ outbound | ❌ ПОСЛЕДСТВИЕ: direction = from/to/both и работает только между source/target selectors; не блокирует весь outbound, только селективную пару
+> - [ ] `delay.jitter` обязателен иначе delay не применится | ❌ ПОСЛЕДСТВИЕ: jitter опциональный (добавляет случайность); только `latency` обязателен; jitter useful для realism (real network имеет jitter)
+> - [x] NetworkChaos actions: delay (latency + jitter + correlation), partition (split-brain), loss (packet loss %), duplicate, corrupt, bandwidth; direction (from/to/both) между source и target selectors; tc-based, не sidecar | ✓ ПРИМЕНЯТЬ: для тестирования timeouts/retry/circuit breakers; split-brain для consistency проверки; начинать с small latency (50-100ms) 📋 ПРАВИЛО: NetworkChaos = realistic network conditions через tc 🔗 См. Q24
+
+## Q24. Что такое `Litmus` и чем он отличается от Chaos Mesh?
 
 **Litmus** — open-source платформа хаос-инжиниринга для Kubernetes, CNCF Incubating, основанная MayaData. Фокус на **experiment hub**: каталог готовых экспериментов, которые можно собирать в workflows.
 
@@ -1182,10 +1188,12 @@ spec:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Как устроен `ChaosEngine` и `ChaosExperiment` в Litmus? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Litmus = fork от Chaos Mesh с минимальными изменениями | ❌ ПОСЛЕДСТВИЕ: Litmus и Chaos Mesh — независимые проекты от разных авторов; Litmus — MayaData, Chaos Mesh — PingCAP; разные архитектуры и философии
+> - [ ] Litmus поддерживает только pod-level chaos | ❌ ПОСЛЕДСТВИЕ: Litmus имеет 50+ experiments в ChaosHub: pod-delete, node-drain, network-latency, disk-fill, cassandra-pod-delete, k8s-application-pod-delete и т.д.
+> - [ ] Litmus и Chaos Mesh — proprietary commercial платформы | ❌ ПОСЛЕДСТВИЕ: оба — CNCF Incubating open-source; Litmus от MayaData, Chaos Mesh от PingCAP; commercial — Gremlin (отдельный продукт)
+> - [x] Litmus — CNCF Incubating, experiment-first философия (ChaosHub каталог переиспользуемых экспериментов: pod-delete, node-drain, pod-network-latency); ChaosEngine + ChaosExperiment + ChaosResult CRs; Argo Workflows integration; vs Chaos Mesh — больше «fault-first» с rich UI | ✓ ПРИМЕНЯТЬ: Litmus для команд хотящих готовый каталог + Argo workflows; Chaos Mesh для visual dashboard и fine-grained fault types 📋 ПРАВИЛО: Litmus = hub-driven experiments, Chaos Mesh = CRD-driven faults 🔗 См. Q25
+
+## Q25. Как устроен `ChaosEngine` и `ChaosExperiment` в Litmus?
 
 Litmus использует три ключевых CR:
 
@@ -1260,10 +1268,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. Что такое `Gremlin` и какие у него категории атак? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] ChaosExperiment и ChaosEngine — синонимы, можно использовать любой | ❌ ПОСЛЕДСТВИЕ: ChaosExperiment = template (переиспользуемый шаблон); ChaosEngine = application к конкретному workload; они разделены умышленно для reuse
+> - [ ] ChaosResult создаётся вручную после эксперимента | ❌ ПОСЛЕДСТВИЕ: ChaosResult создаётся автоматически Chaos Runner pod'ом; содержит pass/fail и метрики; используется Prometheus для аналитики
+> - [ ] ChaosEngine может применять только один experiment | ❌ ПОСЛЕДСТВИЕ: `spec.experiments` — array; один ChaosEngine может orchestrate несколько experiments последовательно или параллельно
+> - [x] ChaosExperiment = template (image, args, env, permissions); ChaosEngine = application к target workload (appinfo + chaosServiceAccount + experiments array с overrides); ChaosResult — автоматический результат с pass/fail и метриками для Prometheus | ✓ ПРИМЕНЯТЬ: переиспользуйте ChaosExperiment из ChaosHub; ChaosEngine кастомизируйте per environment; `PODS_AFFECTED_PERC` для blast radius 📋 ПРАВИЛО: Litmus = experiment templates × workload applications 🔗 См. Q26
+
+## Q26. Что такое `Gremlin` и какие у него категории атак?
 
 **Gremlin** — коммерческая SaaS-платформа хаос-инжиниринга (failure-as-a-service). Поддерживает hosts, containers, Kubernetes-ресурсы через агент. Основная ценность — **"halt button"**: любая атака мгновенно откатывается.
 
@@ -1308,10 +1318,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Что такое `Pumba` и когда его использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Gremlin — open-source альтернатива Chaos Mesh | ❌ ПОСЛЕДСТВИЕ: Gremlin — commercial SaaS-платформа (failure-as-a-service); open-source аналоги — Chaos Mesh, Litmus, Chaos Toolkit
+> - [ ] У Gremlin нет автоматического rollback | ❌ ПОСЛЕДСТВИЕ: «halt button» — ключевая фича Gremlin; любая атака откатывается мгновенно; для prod-readiness обязательно
+> - [ ] Gremlin работает только в AWS | ❌ ПОСЛЕДСТВИЕ: cloud-agnostic — поддерживает hosts, containers, K8s в любом окружении (AWS/GCP/Azure/on-prem); через установку Gremlin agent
+> - [x] Gremlin = commercial SaaS chaos-as-a-service; категории атак: Resource (CPU/Mem/IO/Disk), State (Shutdown/Reboot/ProcessKill/TimeTravel), Network (Blackhole/Latency/PacketLoss/DNS); halt button, scenarios, RBAC, status checks, ALFI; integration с PagerDuty/Datadog | ✓ ПРИМЕНЯТЬ: для enterprise compliance (SOC2/HIPAA); когда команда не хочет maintain open-source; full integration tooling 📋 ПРАВИЛО: Gremlin = managed chaos с halt button и enterprise SLA 🔗 См. Q27
+
+## Q27. Что такое `Pumba` и когда его использовать?
 
 **Pumba** — CLI-инструмент для хаоса на уровне Docker и containerd. Работает без Kubernetes — идеален для docker-compose окружений, локальной разработки, интеграционных тестов.
 
@@ -1350,10 +1362,12 @@ Pumba — это "kubectl для контейнерного хаоса", про�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. (!) Что такое `Toxiproxy` и чем он полезен в интеграционных тестах? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Pumba требует Kubernetes для работы | ❌ ПОСЛЕДСТВИЕ: Pumba — CLI для Docker/containerd, работает без K8s; идеален для docker-compose окружений и локальной разработки
+> - [ ] Pumba и Chaos Monkey — синонимы | ❌ ПОСЛЕДСТВИЕ: разные scope — Chaos Monkey (Netflix) для VMs/AWS; Pumba — для Docker контейнеров; разные платформы
+> - [ ] Pumba поддерживает только kill контейнеров | ❌ ПОСЛЕДСТВИЕ: поддерживает kill/stop/pause/remove + network delay/loss/corrupt (через tc netem) + bandwidth limit + stress (через stress-ng)
+> - [x] Pumba = CLI для Docker/containerd хаоса; kill/stop/pause/remove containers + network effects через tc + stress через stress-ng; идеален для docker-compose, локальной разработки, integration-тестов без K8s; lightweight CI pipelines | ✓ ПРИМЕНЯТЬ: для тестирования docker-compose stack'ов; `pumba kill --signal SIGKILL "re2:myapp.*"`; CI с docker-only без K8s 📋 ПРАВИЛО: Pumba = «kubectl для container chaos» 🔗 См. Q28
+
+## Q28. (!) Что такое `Toxiproxy` и чем он полезен в интеграционных тестах?
 
 **Toxiproxy** (Shopify) — TCP-прокси, который стоит между клиентом и сервером и позволяет программно инжектировать "toxics": latency, bandwidth limit, timeout, slice, reset peer. Основное применение — **integration-тесты** с реалистичной сетевой нестабильностью.
 
@@ -1414,10 +1428,12 @@ Toxiproxy — мост между "обычными тестами" и наст�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Сравнение инструментов: что когда выбирать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Toxiproxy — это open-source альтернатива Istio service mesh | ❌ ПОСЛЕДСТВИЕ: Toxiproxy — TCP-proxy для testing, не service mesh; не делает routing, только injection toxics; работает на TCP уровне, не sidecar pattern
+> - [ ] Toxiproxy работает только с HTTP, не с binary protocols | ❌ ПОСЛЕДСТВИЕ: Toxiproxy — TCP-level, работает с ANY TCP protocol (Postgres, Redis, Kafka, gRPC, MySQL); protocol-agnostic
+> - [ ] Toxics применяются только при startup, нельзя менять in runtime | ❌ ПОСЛЕДСТВИЕ: ToxiproxyClient API позволяет добавлять/удалять/изменять toxics во время теста; идеально для тестирования различных degradation scenarios
+> - [x] Toxiproxy = TCP-прокси между client и dependency (Postgres/Redis/Kafka); toxics: latency, bandwidth, slow_close, timeout, slicer, reset_peer, limit_data; programmatic API для runtime control; интеграция с Testcontainers + JUnit | ✓ ПРИМЕНЯТЬ: для integration-тестов circuit breaker/timeout/retry в realistic conditions; CI без K8s; детерминированные тесты с network chaos 📋 ПРАВИЛО: Toxiproxy = TCP toxics в integration тестах, между unit и full chaos 🔗 См. Q29
+
+## Q29. Сравнение инструментов: что когда выбирать?
 
 | Инструмент | Слой | Платформа | Когда выбрать |
 |------------|------|-----------|---------------|
@@ -1450,10 +1466,12 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. (!) Что такое `GameDay` и как его проводить? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Один универсальный chaos-инструмент покрывает все случаи | ❌ ПОСЛЕДСТВИЕ: разные слои (network/infra/app) и платформы (K8s/Docker/VM) требуют разных инструментов; one-size-fits-all не работает в больших командах
+> - [ ] Toxiproxy подходит для chaos в production | ❌ ПОСЛЕДСТВИЕ: Toxiproxy для integration-тестов; в prod нужен инструмент уровня pod/node (Chaos Mesh, Litmus, Gremlin)
+> - [ ] AWS FIS — open-source как Chaos Monkey | ❌ ПОСЛЕДСТВИЕ: AWS FIS (Fault Injection Service) — AWS-native managed service, не open-source; commercial AWS feature; для AWS-only workloads
+> - [x] Multi-stack типичен в крупных командах: Toxiproxy (unit/integration), Chaos Mesh (staging/prod K8s), Gremlin (compliance-критичные); выбор по платформе (K8s/Docker/VM/Cloud) + слою (network/infra/app) + scope (test/prod) | ✓ ПРИМЕНЯТЬ: дерево решений по платформе → K8s = Chaos Mesh/Litmus, Docker-only = Pumba, AWS VM = AWS FIS, Spring Boot inline = Chaos Monkey SB 📋 ПРАВИЛО: инструмент = платформа + слой + scope, не единый ответ 🔗 См. Q30
+
+## Q30. (!) Что такое `GameDay` и как его проводить?
 
 **GameDay** — запланированное мероприятие, на котором команда проводит серию хаос-экспериментов в реальном (часто продовом) окружении, наблюдает реакцию системы и своих процессов, документирует находки. Формат придуман Jesse Robbins в Amazon (2003), вдохновлён пожарными учениями.
 
@@ -1508,10 +1526,12 @@ GameDay — это тренировка не только системы, но �
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. Что должно быть в `runbook` для chaos-эксперимента? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] GameDay — это spontaneous chaos без планирования | ❌ ПОСЛЕДСТВИЕ: spontaneous chaos без plan = реальный инцидент; GameDay = planned exercise с hypothesis, runbook, abort conditions, observers; spontaneous = ANTIPATTERN
+> - [ ] GameDay проводится только в staging | ❌ ПОСЛЕДСТВИЕ: GameDay часто в production (controlled blast radius) — staging не имеет real traffic patterns; принцип 3 (run in production) поощряет prod GameDays с safeguards
+> - [ ] GameDay — soло-упражнение для SRE | ❌ ПОСЛЕДСТВИЕ: GameDay — командное; roles: Orchestrator, Incident Responders, Observers, Scribe, Safety Officer; цель — тренировка команды + системы вместе
+> - [x] GameDay = planned event (Jesse Robbins, Amazon 2003); 4 фазы — Prepare (неделя: scope/hypothesis/runbook/notify) → Execute (2-4ч: live chaos с observers) → Learn (post-mortem 1-2ч) → Follow-up (action items в 1-2 недели); тренировка системы И команды | ✓ ПРИМЕНЯТЬ: квартально или после major changes; начинать с staging GameDay, затем prod c controlled blast radius 📋 ПРАВИЛО: GameDay = fire drill для distributed systems 🔗 См. Q31
+
+## Q31. Что должно быть в `runbook` для chaos-эксперимента?
 
 **Runbook** — документ эксперимента, который служит и планом, и артефактом для post-mortem.
 
@@ -1569,10 +1589,12 @@ Runbook обязателен: без него эксперимент превр�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Как устроен post-mortem после эксперимента? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Runbook можно написать на лету во время эксперимента | ❌ ПОСЛЕДСТВИЕ: «на лету» = импровизация; без pre-defined hypothesis и abort conditions experiment становится не-научным; post-mortem превращается в догадки
+> - [ ] Достаточно name эксперимента и hypothesis в runbook | ❌ ПОСЛЕДСТВИЕ: minimum нужны hypothesis + steady state metrics + blast radius + abort conditions + rollback procedure + observability links; без них — slop-experiment
+> - [ ] Rollback procedure опционален если используем Chaos Mesh | ❌ ПОСЛЕДСТВИЕ: rollback ОБЯЗАТЕЛЕН, даже если Chaos Mesh откатывает сам; на случай если CR-удаление не сработало, нужны manual recovery steps
+> - [x] Runbook = metadata (date/owner/severity/env) + hypothesis + steady state metrics + blast radius + abort conditions + procedure + rollback + observability links; служит и планом, и артефактом для post-mortem | ✓ ПРИМЕНЯТЬ: template в git, версионируется; обновлять после каждого эксперимента; review с SRE/manager перед prod 📋 ПРАВИЛО: runbook = plan + safety + audit-trail 🔗 См. Q32
+
+## Q32. Как устроен post-mortem после эксперимента?
 
 Структура post-mortem после chaos-эксперимента похожа на incident post-mortem, но с фокусом на **обучение**, а не на "вину".
 
