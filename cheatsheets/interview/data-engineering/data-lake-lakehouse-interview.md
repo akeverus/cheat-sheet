@@ -341,10 +341,12 @@ table/
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Apache Hudi? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Iceberg — это storage format для S3, заменяющий Parquet | ❌ ПОСЛЕДСТВИЕ: путаница уровней; Iceberg — table format поверх Parquet/ORC, не заменяет их
+> - [x] Iceberg = open table format (Netflix→Apache) с hidden partitioning, snapshot isolation и multi-engine support (Spark, Trino, Flink, Snowflake) | ✓ ПРИМЕНЯТЬ: multi-vendor Lakehouse без lock-in на Databricks 📋 ПРАВИЛО: Iceberg = open standard для non-Databricks мира 🔗 См. Q12
+> - [ ] Iceberg требует Databricks runtime для записи | ❌ ПОСЛЕДСТВИЕ: ровно наоборот — Iceberg создан как vendor-neutral альтернатива Delta
+> - [ ] Hidden partitioning в Iceberg означает что данные не партиционированы | ❌ ПОСЛЕДСТВИЕ: партиционирование есть, но скрыто от user — partition spec вычисляется автоматически (day(ts)), пользователь пишет фильтр по ts
+
+## Q12. (!) Apache Hudi?
 
 **Apache Hudi** (от Uber, Apache с 2017) — самый старый из трёх.
 
@@ -361,10 +363,12 @@ table/
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. (!) Сравнение Delta vs Iceberg vs Hudi? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Hudi и Delta — одно и то же, разные названия | ❌ ПОСЛЕДСТВИЕ: разные движки, разные форматы log; Hudi от Uber специализирован на UPSERT
+> - [ ] Merge-on-Read (MoR) переписывает Parquet при каждом update | ❌ ПОСЛЕДСТВИЕ: это Copy-on-Write делает; MoR пишет в log, мержит при чтении — быстрая запись, медленнее чтение
+> - [ ] Copy-on-Write в Hudi пропускает запись delta — оптимизация быстрой записи | ❌ ПОСЛЕДСТВИЕ: CoW наоборот переписывает Parquet файл целиком при update; быстрее чтение, медленнее запись
+> - [x] Hudi (Uber, 2017) = UPSERT-первый table format с CoW и MoR storage types + индексами для streaming inserts/updates | ✓ ПРИМЕНЯТЬ: CDC pipelines, streaming aggregations с частыми update'ами 📋 ПРАВИЛО: Hudi = streaming-first table format с indexing 🔗 См. Q13
+
+## Q13. (!) Сравнение Delta vs Iceberg vs Hudi?
 
 | Критерий | Delta Lake | Apache Iceberg | Apache Hudi |
 |----------|------------|----------------|-------------|
@@ -386,10 +390,12 @@ table/
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) ACID transactions на S3 — как? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] На Databricks лучше использовать Iceberg, на Snowflake — Delta | ❌ ПОСЛЕДСТВИЕ: ровно наоборот: Databricks → Delta (native), Snowflake → Iceberg (external tables since 2023)
+> - [x] Databricks → Delta; multi-engine (Trino/Snowflake/Spark) → Iceberg; streaming с UPSERT (CDC) → Hudi | ✓ ПРИМЕНЯТЬ: при выборе table format под конкретный стек 📋 ПРАВИЛО: Delta=Databricks, Iceberg=open, Hudi=streaming-upsert 🔗 См. Q14
+> - [ ] Все три формата идентичны по фичам — выбор не имеет значения | ❌ ПОСЛЕДСТВИЕ: разное partitioning (Iceberg hidden), разное merge (Hudi MoR), разный vendor-neutrality
+> - [ ] Hudi — единственный с time travel | ❌ ПОСЛЕДСТВИЕ: все три поддерживают time travel; Delta через _delta_log, Iceberg через snapshots, Hudi через timeline
+
+## Q14. (!) ACID transactions на S3 — как?
 
 S3 — eventually consistent (был, с 2020 — strong consistency для reads после writes).
 
@@ -412,10 +418,12 @@ Writer B: read version 5, hace changes → tries write version 6
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Time travel? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] ACID на S3 = atomic rename + optimistic concurrency control через version numbers в _delta_log; loser конфликта делает retry с новой версией | ✓ ПРИМЕНЯТЬ: concurrent writers на одну Delta/Iceberg таблицу 📋 ПРАВИЛО: OCC = read version → write next → conflict → retry 🔗 См. Q15
+> - [ ] S3 поддерживает pessimistic locking — Delta использует это | ❌ ПОСЛЕДСТВИЕ: S3 не имеет locks; Delta использует optimistic concurrency (read-modify-write c version check)
+> - [ ] ACID на S3 невозможен — eventually consistent | ❌ ПОСЛЕДСТВИЕ: с 2020 S3 strong consistency для read-after-write; ACID реализуется через transaction log
+> - [ ] Concurrent writers в Delta всегда блокируют друг друга — нужен внешний lock | ❌ ПОСЛЕДСТВИЕ: optimistic concurrency без locks; конфликт детектится при commit, loser ретраит
+
+## Q15. (!) Time travel?
 
 ```sql
 -- Delta Lake / Iceberg
@@ -436,10 +444,12 @@ spark.read.format("delta").option("versionAsOf", 5).load(path)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Schema evolution? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Time travel хранит данные бесплатно — версии живут вечно | ❌ ПОСЛЕДСТВИЕ: каждая старая версия = дополнительный storage; VACUUM нужен для очистки после retention period
+> - [ ] Time travel требует separate backup storage | ❌ ПОСЛЕДСТВИЕ: time travel работает на той же таблице через transaction log; backup не нужен
+> - [ ] VERSION AS OF доступен только в Snowflake, в Delta/Iceberg нет | ❌ ПОСЛЕДСТВИЕ: оба Delta и Iceberg поддерживают VERSION AS OF и TIMESTAMP AS OF
+> - [x] Time travel = SELECT ... VERSION AS OF N или TIMESTAMP AS OF '...' через transaction log; используется для audit, rollback, ML reproducibility | ✓ ПРИМЕНЯТЬ: восстановить случайно удалённое, тренировать ML на конкретной версии 📋 ПРАВИЛО: time travel = SQL поверх log + VACUUM управляет retention 🔗 См. Q16
+
+## Q16. Schema evolution?
 
 ```sql
 -- Add column
@@ -466,10 +476,12 @@ df.write.mode("append").save("table")
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. (!) Z-Order и data clustering? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Schema evolution в Lakehouse невозможен — нужно создавать новую таблицу | ❌ ПОСЛЕДСТВИЕ: ALTER TABLE ADD/RENAME/DROP COLUMN поддерживаются; пересоздание не нужно
+> - [x] Schema evolution = ALTER TABLE ADD/RENAME/DROP/ALTER COLUMN; Iceberg даёт самую полную поддержку (reorder, type promotion); schema enforcement отклоняет несовместимые writes | ✓ ПРИМЕНЯТЬ: добавление новых полей в существующую таблицу без миграции 📋 ПРАВИЛО: Iceberg evolution > Delta > plain Parquet 🔗 См. Q17
+> - [ ] Schema enforcement просто игнорирует лишние колонки — пишет что подошло | ❌ ПОСЛЕДСТВИЕ: enforcement отклоняет write с ошибкой; mergeSchema=true нужен для авто-слияния
+> - [ ] RENAME COLUMN перезаписывает все данные на S3 | ❌ ПОСЛЕДСТВИЕ: в Iceberg/Delta это metadata-only операция — column ID не меняется
+
+## Q17. (!) Z-Order и data clustering?
 
 **Z-Order** — multi-dimensional clustering. Сортирует данные так, чтобы **близкие values по нескольким columns** хранились рядом.
 
@@ -485,10 +497,12 @@ OPTIMIZE my_table ZORDER BY (user_id, country);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Compaction (small files problem)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Z-Order = просто сортировка по одной колонке | ❌ ПОСЛЕДСТВИЕ: ORDER BY делает single-column; Z-Order — multi-dimensional clustering (близкие значения по нескольким columns рядом)
+> - [ ] Z-Order работает только на одной partition column | ❌ ПОСЛЕДСТВИЕ: партиционирование и Z-Order — разные вещи; Z-Order работает внутри партиций по non-partition columns
+> - [x] Z-Order (Delta) / sort orders (Iceberg) = multi-dimensional clustering: queries по нескольким columns пропускают больше irrelevant файлов через data skipping | ✓ ПРИМЕНЯТЬ: highly selective queries по 2-3 columns на больших таблицах 📋 ПРАВИЛО: Z-Order = co-locate related rows для column pruning 🔗 См. Q18
+> - [ ] Z-Order повышает write latency но не влияет на reads | ❌ ПОСЛЕДСТВИЕ: смысл именно в ускорении reads через file skipping; OPTIMIZE — фоновая операция
+
+## Q18. Compaction (small files problem)?
 
 Streaming inserts = много маленьких файлов → плохо для query (overhead на open/close).
 
@@ -510,10 +524,12 @@ ZORDER BY (user_id);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) Medallion architecture (Bronze, Silver, Gold)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Compaction делается через DROP + INSERT всех данных | ❌ ПОСЛЕДСТВИЕ: это перепишет всё; OPTIMIZE мержит мелкие файлы инкрементально, VACUUM чистит старые версии после retention
+> - [x] OPTIMIZE (Delta) / rewrite_data_files (Iceberg) объединяет много мелких файлов в большие; за streaming inserts → нужно регулярно | ✓ ПРИМЕНЯТЬ: после streaming-writes когда таблица фрагментируется на тысячи small files 📋 ПРАВИЛО: streaming → OPTIMIZE WHERE date >= ... + VACUUM 🔗 См. Q19
+> - [ ] VACUUM удаляет файлы немедленно после compaction | ❌ ПОСЛЕДСТВИЕ: VACUUM уважает retention period (default 7 дней) — иначе time travel сломается
+> - [ ] Small files не проблема — Parquet быстро открывается | ❌ ПОСЛЕДСТВИЕ: overhead на open/close, S3 LIST, Spark task per file; 10000 файлов по 1KB убивают performance
+
+## Q19. (!) Medallion architecture (Bronze, Silver, Gold)?
 
 **Databricks Medallion** — стандартная архитектура Lakehouse:
 
@@ -535,10 +551,12 @@ ZORDER BY (user_id);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. (!) Data Mesh — что это? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Bronze хранит готовые BI-отчёты, Gold — сырые данные | ❌ ПОСЛЕДСТВИЕ: ровно наоборот; Bronze = raw, Gold = business-aggregations
+> - [x] Medallion = Bronze (raw, append-only) → Silver (cleaned, dedup, joined) → Gold (business aggregations, BI-ready); каждый слой — Delta таблицы | ✓ ПРИМЕНЯТЬ: structured Lakehouse pipeline в Databricks 📋 ПРАВИЛО: Bronze=raw, Silver=clean, Gold=marts (как dbt staging/intermediate/marts) 🔗 См. Q20
+> - [ ] Silver и Gold — одно и то же, разные названия | ❌ ПОСЛЕДСТВИЕ: Silver — atomic cleaned entities, Gold — aggregated business metrics для BI
+> - [ ] Medallion требует Databricks-only — на open Spark не работает | ❌ ПОСЛЕДСТВИЕ: это паттерн именования слоёв; работает на любом engine с Delta/Iceberg
+
+## Q20. (!) Data Mesh — что это?
 
 **Data Mesh** (Zhamak Dehghani, 2019) — sociotechnical парадигма для **decentralized** data architecture.
 
@@ -559,10 +577,12 @@ ZORDER BY (user_id);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Storage tier optimization (hot/warm/cold)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Data Mesh = decentralized data architecture с domain ownership, data as a product, self-serve platform и federated governance (Zhamak Dehghani, 2019) | ✓ ПРИМЕНЯТЬ: large org где central data team — bottleneck, domains зрелые 📋 ПРАВИЛО: Mesh = domain owns its data product + central platform 🔗 См. Q21
+> - [ ] Data Mesh — это software для управления Lakehouse | ❌ ПОСЛЕДСТВИЕ: это socio-technical парадигма, не tool; реализуется на Iceberg/Delta + Unity/Glue + governance процессах
+> - [ ] Data Mesh = одна central команда владеет всеми pipelines | ❌ ПОСЛЕДСТВИЕ: это data lake monolith — антипаттерн от которого Mesh отказывается
+> - [ ] Data Mesh устраняет центральную инфраструктуру полностью | ❌ ПОСЛЕДСТВИЕ: остаётся self-serve platform team; federated governance задаёт стандарты
+
+## Q21. Storage tier optimization (hot/warm/cold)?
 
 **S3 storage classes:**
 
@@ -590,10 +610,12 @@ ZORDER BY (user_id);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Какие engines работают с Lakehouse? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Storage tiers одинаковы по latency — отличаются только ценой | ❌ ПОСЛЕДСТВИЕ: Glacier Deep = 12h retrieval, Standard = ms; tier выбирается по access pattern + cost
+> - [x] S3 storage classes (Standard, Standard-IA, Glacier Instant/Flexible/Deep) + lifecycle policies автоматом перемещают объекты по возрасту — экономия до 80% на cold data | ✓ ПРИМЕНЯТЬ: данные старше 30/90/365 дней → IA/Glacier/Deep Archive 📋 ПРАВИЛО: hot=ms+$$$, cold=hours+$ 🔗 См. Q22
+> - [ ] Lifecycle policy надо триггерить руками из приложения | ❌ ПОСЛЕДСТВИЕ: S3 сам по cron перемещает объекты по правилам; код приложения не меняется
+> - [ ] Glacier Deep Archive подходит для hot OLAP queries | ❌ ПОСЛЕДСТВИЕ: retrieval 12 часов — для compliance и rarely accessed, не для query
+
+## Q22. (!) Какие engines работают с Lakehouse?
 
 **Spark** — поддерживает все три (Delta, Iceberg, Hudi)
 **Databricks** — нативная Delta
@@ -609,10 +631,12 @@ ZORDER BY (user_id);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Trino / Presto — для query на lake? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Только Spark может читать Delta/Iceberg/Hudi | ❌ ПОСЛЕДСТВИЕ: Trino, Flink, Snowflake, BigQuery, Athena, DuckDB — все поддерживают Iceberg; Delta поддерживается Spark/Trino/Athena
+> - [x] Spark — все три; Databricks → Delta native; Snowflake/BigQuery → Iceberg external tables; Trino → все три; Flink → Iceberg+Hudi для streaming | ✓ ПРИМЕНЯТЬ: multi-engine архитектуры с одной physical таблицей 📋 ПРАВИЛО: Iceberg = широчайший engine support 🔗 См. Q23
+> - [ ] DuckDB не поддерживает Lakehouse форматы | ❌ ПОСЛЕДСТВИЕ: DuckDB читает и Iceberg, и Delta — отлично для local analytics на cloud данных
+> - [ ] BigQuery нельзя подключить к S3 — только GCS native tables | ❌ ПОСЛЕДСТВИЕ: BigQuery external tables работают с Iceberg на любом cloud storage
+
+## Q23. Trino / Presto — для query на lake?
 
 **Trino** (бывший PrestoSQL) — distributed SQL engine для **federated queries**.
 
@@ -635,10 +659,12 @@ GROUP BY u.name;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) Small files problem? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Trino — это столбцовая БД с custom storage | ❌ ПОСЛЕДСТВИЕ: Trino — distributed SQL query engine без storage; читает данные из external sources (S3, Postgres, Kafka)
+> - [x] Trino (бывший PrestoSQL) = distributed SQL для federated queries: один JOIN через Postgres + S3 (Iceberg/Delta/Hudi) + Kafka в одном запросе | ✓ ПРИМЕНЯТЬ: ad-hoc analytics на huge datasets без ETL, multi-source JOIN 📋 ПРАВИЛО: Trino = SQL поверх любых connectors, no storage 🔗 См. Q24
+> - [ ] Trino требует загрузки данных в свой кластер перед запросом | ❌ ПОСЛЕДСТВИЕ: Trino читает напрямую из source через connectors — никакого ETL не нужно
+> - [ ] Trino поддерживает только Hive Metastore | ❌ ПОСЛЕДСТВИЕ: Iceberg, Delta, Hudi catalogs все работают; ~30+ connectors к разным data sources
+
+## Q24. (!) Small files problem?
 
 Если в Lake много маленьких файлов (1-10 KB) — **performance degrade**:
 
@@ -658,10 +684,12 @@ GROUP BY u.name;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Data swamp — что это? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Small files это не проблема — S3 не имеет open-overhead | ❌ ПОСЛЕДСТВИЕ: S3 LIST + GET на каждый файл создаёт network roundtrips; Spark per-task overhead умножается на число файлов
+> - [ ] Решение — увеличить число executor cores | ❌ ПОСЛЕДСТВИЕ: не решает root cause; больше parallelism не помогает если bottleneck в metadata reads
+> - [ ] Slow streaming inserts не создают small files | ❌ ПОСЛЕДСТВИЕ: каждый micro-batch пишет файл; короткий interval (1 min) → много мелких файлов в день
+> - [x] Small files (1-10KB) = degrade performance из-за metadata overhead, S3 LIST и Spark per-file task; решение — OPTIMIZE/rewrite_data_files + правильное partitioning + buffering streaming writes | ✓ ПРИМЕНЯТЬ: после streaming-ingest когда число файлов растёт линейно 📋 ПРАВИЛО: target file size ~128MB-1GB; меньше = compaction, больше = repartition 🔗 См. Q25
+
+## Q25. Data swamp — что это?
 
 **Data swamp** — Data Lake без governance, превратившийся в неуправляемое болото.
 
@@ -681,10 +709,12 @@ GROUP BY u.name;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. (!) Метаданные и каталоги (AWS Glue, Hive Metastore, Unity)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Data swamp = Data Lake без governance: schemas меняются хаотично, нет каталога/lineage/documentation, дубли/мусор/broken pipelines, compliance issues | ✓ ПРИМЕНЯТЬ: профилактика через Catalog (Glue/Unity) + Great Expectations + OpenLineage + data contracts 📋 ПРАВИЛО: Lake без governance = swamp; нужен catalog + lineage + tests 🔗 См. Q26
+> - [ ] Data swamp — это новая архитектура замена Lakehouse | ❌ ПОСЛЕДСТВИЕ: swamp — антипаттерн, деградировавшее состояние Lake; не архитектура
+> - [ ] Достаточно иметь S3 bucket — governance не нужна | ❌ ПОСЛЕДСТВИЕ: ровно это и приводит к swamp; нужен catalog, lineage, quality checks, contracts
+> - [ ] Data lineage отключают чтобы не замедлять pipelines | ❌ ПОСЛЕДСТВИЕ: lineage (OpenLineage, Marquez, Datahub) не влияет на runtime; без него debugging и compliance ломаются
+
+## Q26. (!) Метаданные и каталоги (AWS Glue, Hive Metastore, Unity)?
 
 **Catalog** — registry таблиц/баз с их schemas, locations, partitions.
 
@@ -706,10 +736,12 @@ SELECT * FROM glue_catalog.my_db.my_table;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. (!) Какой формат выбрать в 2026? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Hive Metastore — современный стандарт для Lakehouse | ❌ ПОСЛЕДСТВИЕ: Hive Metastore старый (Java, локальный); тренд — Iceberg REST Catalog (vendor-neutral)
+> - [x] Catalog = registry схем/locations/partitions; варианты: Hive Metastore, AWS Glue (managed), Unity Catalog (Databricks), Iceberg REST Catalog (open), Apache Polaris, Nessie (git-like) | ✓ ПРИМЕНЯТЬ: catalog по экосистеме — Glue на AWS, Unity на Databricks, REST на multi-vendor 📋 ПРАВИЛО: catalog = single source of truth для tables 🔗 См. Q27
+> - [ ] Unity Catalog работает только с Iceberg | ❌ ПОСЛЕДСТВИЕ: Unity native для Delta; добавляет support для Iceberg через Uniform
+> - [ ] Catalog хранит данные сами — он заменяет S3 | ❌ ПОСЛЕДСТВИЕ: catalog хранит metadata (schema, location, partitions); данные остаются в object storage
+
+## Q27. (!) Какой формат выбрать в 2026?
 
 **Decision tree:**
 
@@ -731,10 +763,12 @@ Pure batch analytics, simple use case?
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Streaming + Lakehouse? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Plain Parquet устарел — никогда не использовать в 2026 | ❌ ПОСЛЕДСТВИЕ: для simple batch analytics без UPSERT plain Parquet всё ещё актуален и дешевле table format overhead
+> - [ ] Delta — единственный open standard | ❌ ПОСЛЕДСТВИЕ: Iceberg более open (multi-vendor support); Delta привязан к Databricks roadmap
+> - [x] Databricks → Delta; multi-vendor (Trino+Snowflake+Spark+Flink) → Iceberg (de facto standard в 2026); streaming-CDC → Hudi; simple batch → plain Parquet | ✓ ПРИМЕНЯТЬ: при выборе нового формата под конкретный stack 📋 ПРАВИЛО: Iceberg = open default; Delta = Databricks; Hudi = streaming UPSERT 🔗 См. Q28
+> - [ ] Hudi подходит для всего и устраняет нужду в Iceberg/Delta | ❌ ПОСЛЕДСТВИЕ: Hudi оптимизирован для UPSERT-heavy workloads; не лучший выбор для read-heavy multi-engine BI
+
+## Q28. Streaming + Lakehouse?
 
 ```python
 # Spark Structured Streaming → Delta Lake
@@ -758,6 +792,13 @@ spark.readStream.format("kafka")...load() \
 
 Это направление **главного развития** Lakehouse в **2024-2025**.
 
+
+> [!mcq]
+> - [ ] Streaming в Lakehouse невозможен — только batch | ❌ ПОСЛЕДСТВИЕ: Delta/Iceberg/Hudi все поддерживают streaming reads/writes; Spark Structured Streaming + Delta стандарт
+> - [ ] Streaming требует отдельной таблицы от batch | ❌ ПОСЛЕДСТВИЕ: главное преимущество Lakehouse — unified storage: одна таблица для streaming writes и batch reads
+> - [ ] Hudi + Flink — самая слабая пара для CDC | ❌ ПОСЛЕДСТВИЕ: ровно наоборот — Hudi+Flink самый зрелый для CDC благодаря MoR и indexing
+> - [x] Lakehouse + streaming = unified storage: Delta Live Tables (Databricks), Iceberg+Flink, Hudi+Flink (CDC); один storage для streaming+batch, low latency reads, time travel | ✓ ПРИМЕНЯТЬ: real-time analytics поверх Lakehouse без отдельного hot store 📋 ПРАВИЛО: streaming-write → Lakehouse → batch+ad-hoc reads на той же таблице 🔗 См. See also
+
 ---
 
 ## See also
@@ -773,15 +814,3 @@ spark.readStream.format("kafka")...load() \
 - [Микросервисы](../architecture/microservices-interview.md) — produce events → lake
 - [Caching](../architecture/caching-strategies-interview.md) — для acceleration
 - [Распределённые системы](../architecture/distributed-systems-interview.md) — concepts
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Apache Airflow](apache-airflow-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Apache Flink](apache-flink-interview.md)
-- [Apache Spark](apache-spark-interview.md)
-- [Data Warehousing](data-warehousing-interview.md)
-- [dbt](dbt-interview.md)
-- [Kafka Streams](kafka-streams-interview.md)
