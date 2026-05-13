@@ -92,10 +92,12 @@ User → CDN Edge (runs edge function) → optionally → Origin
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Edge vs CDN vs серверlessless? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Edge Computing — это про edge нод в IoT (sensors/gateways), не имеет отношения к CDN | ❌ ПОСЛЕДСТВИЕ: IoT edge — один из типов, но в контексте backend-собеседований Edge Computing = CDN edge functions (Cloudflare Workers, Lambda@Edge); IoT — отдельная область
+> - [ ] Edge functions выполняются ПОСЛЕ origin response (post-processing) | ❌ ПОСЛЕДСТВИЕ: главная идея — отвечать на запрос БЕЗ обращения к origin (full roundtrip avoided); функция может выполняться и до request, и до response, но цель — снять нагрузку с origin
+> - [ ] Edge всегда быстрее origin потому что использует HTTP/3 | ❌ ПОСЛЕДСТВИЕ: latency edge'а ниже из-за физической близости к user (10-50ms vs 100-300ms), а не из-за протокола; HTTP/3 ортогонален
+> - [x] Edge Computing — запуск application logic близко к users (CDN POPs, 100-300+ локаций); 10-50ms RTT vs origin 150ms; edge function может ответить без обращения к origin → меньше latency и нагрузка | ✓ ПРИМЕНЯТЬ: для glob-distributed apps с low-latency требованиями; auth/personalization/routing at edge 📋 ПРАВИЛО: edge = compute близко к user, не центральный DC 🔗 См. Q2
+
+## Q2. (!) Edge vs CDN vs серверlessless?
 
 **CDN:** static content caching at edge.
 - Stored objects (images, CSS, JS)
@@ -128,10 +130,12 @@ User → CDN Edge (runs edge function) → optionally → Origin
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. (!) Benefits и когда применять? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CDN и Edge Worker — синонимы | ❌ ПОСЛЕДСТВИЕ: CDN — только кэширование статических объектов; Edge Worker — выполнение кода (logic, modify request/response); CDN не запускает функции
+> - [ ] Lambda работает на edge и имеет microsecond startup | ❌ ПОСЛЕДСТВИЕ: AWS Lambda — централизована в regions (us-east-1...); cold start 100ms-1s; для edge — Lambda@Edge или CloudFront Functions; Workers — V8 isolates ~0ms
+> - [ ] Edge Workers имеют полный Node.js runtime с поддержкой всех npm-пакетов | ❌ ПОСЛЕДСТВИЕ: Cloudflare Workers — V8 isolate (subset Web APIs + Fetch); нет fs/net Node modules; ограниченное API; native modules не работают
+> - [x] CDN: статический cache, без logic. Edge compute: CDN + code (modify req/res, auth, personalization). Lambda (centralized): полный runtime, container, longer cold start. Edge serverless (Workers): V8 isolates ~0ms startup, JS/Wasm only, ограниченный runtime | ✓ ПРИМЕНЯТЬ: статика → CDN; lightweight logic at edge → Workers; heavy compute → Lambda regional 📋 ПРАВИЛО: edge = trade полнота runtime на низкую latency 🔗 См. Q3
+
+## Q3. (!) Benefits и когда применять?
 
 **Benefits:**
 
@@ -169,10 +173,12 @@ User → CDN Edge (runs edge function) → optionally → Origin
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) Cloudflare Workers — как работает? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Edge подходит для ML inference и тяжёлых вычислений | ❌ ПОСЛЕДСТВИЕ: edge runtime имеет CPU limits (50ms-1s wall time, ~10MB RAM); тяжёлый compute и ML на edge — не подходит, нужен regional GPU
+> - [ ] Edge заменяет origin полностью — не нужно бекенд-сервера | ❌ ПОСЛЕДСТВИЕ: edge handle часть запросов, но для DB-writes, complex business logic, large compute всё ещё нужен origin; edge — это слой ускорения, не замена
+> - [ ] Главное преимущество edge — снижение compute cost | ❌ ПОСЛЕДСТВИЕ: главное — low latency и origin offload; cost иногда ниже (Workers $5/10M req), но не всегда; LCP/UX выигрыш важнее экономии
+> - [x] Benefits: low latency (10-50ms vs 100-300ms), origin offload, global scale (deploy once → 300 POPs), pay-per-invocation, DDoS absorption. Применять: personalization, auth at edge, A/B testing, image optimization, API proxy/BFF. НЕ применять: heavy compute, long-running (>30s), strict-consistency stateful | ✓ ПРИМЕНЯТЬ: для read-heavy/personalization путей с latency-критичными UX-метриками (LCP, FID) 📋 ПРАВИЛО: edge для lightweight latency-sensitive logic, не для heavy compute 🔗 См. Q4
+
+## Q4. (!) Cloudflare Workers — как работает?
 
 **V8 isolate** — lightweight JavaScript sandbox (same as Chrome tabs).
 
@@ -213,10 +219,12 @@ export default {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. (!) Lambda@Edge vs CloudFront Functions? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Cloudflare Workers — это Docker-контейнеры на CDN-нодах | ❌ ПОСЛЕДСТВИЕ: Workers — V8 isolates (как Chrome tabs), не Docker; именно поэтому startup ~0ms (microseconds), а Docker занимает 100ms+
+> - [ ] Workers поддерживают только синхронный JavaScript без async/await | ❌ ПОСЛЕДСТВИЕ: full async/await поддерживается; основной API — Fetch с Promise; синхронный код избегают (CPU time limit)
+> - [ ] CPU limit Workers — несколько часов, можно запустить ML training | ❌ ПОСЛЕДСТВИЕ: CPU time 10ms free / 30s paid plan; для long-running compute — Lambda regional или dedicated GPU; edge — для short-lived tasks
+> - [x] Worker = V8 isolate (lightweight JS sandbox, microsecond startup) deployed на все Cloudflare POPs (300+); first request loads isolate, subsequent reuse; Fetch API + KV + Durable Objects + Cron + D1/R2; JS/TS/Wasm | ✓ ПРИМЕНЯТЬ: для personalization/auth/routing; KV для eventually consistent state; Durable Objects для strongly consistent (per-key serialized actor) 📋 ПРАВИЛО: Workers = V8 isolate, не container; ~0ms startup на cost of runtime limitations 🔗 См. Q5
+
+## Q5. (!) Lambda@Edge vs CloudFront Functions?
 
 **CloudFront Functions:**
 - Newer (2021)
@@ -250,10 +258,12 @@ export default {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. V8 isolates vs containers? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CloudFront Functions поддерживают вызов AWS-сервисов (DynamoDB, S3) | ❌ ПОСЛЕДСТВИЕ: CloudFront Functions — ограниченный JS, без AWS SDK; для вызовов сервисов нужен Lambda@Edge; CF Functions для simple header/URL manipulation
+> - [ ] Lambda@Edge запускается только на viewer request | ❌ ПОСЛЕДСТВИЕ: 4 точки triggering — viewer request, origin request, origin response, viewer response; viewer = синхронно с клиентом (5s limit), origin = после/до cache (30s limit)
+> - [ ] CloudFront Functions дороже Lambda@Edge | ❌ ПОСЛЕДСТВИЕ: наоборот — CF Functions $0.10/M, Lambda@Edge $0.60/M (~6x); CF Functions — для high-volume cheap operations
+> - [x] CloudFront Functions: JS only, <1ms, viewer only, $0.10/M, для URL rewrite/headers/simple auth. Lambda@Edge: Node/Python, до 5s viewer / 30s origin, 4 triggers, $0.60/M, для personalization/complex routing/image resize | ✓ ПРИМЕНЯТЬ: CF Functions для hot path operations (headers, rewrites); Lambda@Edge для logic требующего external calls 📋 ПРАВИЛО: CF Functions = cheap/simple/fast; Lambda@Edge = capable/expensive 🔗 См. Q6
+
+## Q6. V8 isolates vs containers?
 
 **V8 isolate (Workers):**
 - Light sandbox inside V8 engine
@@ -284,10 +294,12 @@ export default {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Typical use cases? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] V8 isolates обеспечивают VM-level изоляцию как контейнеры | ❌ ПОСЛЕДSTVIE: isolates имеют memory-isolation внутри V8 process, НЕ VM-level (как Firecracker для Lambda); V8 exploit → cross-tenant breakout (редко, но возможно)
+> - [ ] Container startup быстрее isolate потому что pre-warmed | ❌ ПОСЛЕДСТВИЕ: V8 isolate startup ~microseconds (JS context init); container startup 100ms+ (OS + runtime init); container даже с pre-warming на порядки медленнее
+> - [ ] Isolates поддерживают любой язык (Python, Go, Java) | ❌ ПОСЛЕДСТВИЕ: V8 = JavaScript engine; поддерживает JS, TypeScript, WebAssembly (Rust/C/Go → wasm); Python/Java/Go binaries не работают
+> - [x] V8 isolate: memory-isolated sandbox внутри V8, μs startup, 1000s isolates/machine, JS/Wasm only, process-shared security. Container: VM-level (Firecracker), 100ms+ startup, 10s/machine, любой язык, full runtime; trade-off скорость vs полнота | ✓ ПРИМЕНЯТЬ: hot paths (auth, rewrite) → isolates; complex with native libs → containers; гибрид Workers+Lambda — типовой паттерн 📋 ПРАВИЛО: isolate trade-off — startup vs language flexibility и security boundary 🔗 См. Q7
+
+## Q7. (!) Typical use cases?
 
 **1. Auth / JWT validation:**
 - Reject unauthorized requests at edge
@@ -334,10 +346,12 @@ export default {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Auth/JWT validation at edge? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Edge подходит для batch ML training с GPU | ❌ ПОСЛЕДСТВИЕ: edge — для inference lightweight моделей (Cloudflare AI, Vercel AI); training требует GPU, длительных runs, dedicated infra — не edge
+> - [ ] OAuth-flow с full token issuance — типичный edge use case | ❌ ПОСЛЕДСТВИЕ: edge validate JWT (verify signature), не issues tokens; token issuance требует доступ к user DB и identity provider — это origin/IdP, не edge
+> - [ ] Image resize не подходит для edge — слишком CPU-тяжело | ❌ ПОСЛЕДСТВИЕ: image resize — классический edge use case (Cloudflare Image Resizing, AWS Lambda@Edge); CPU limit ~50ms для simple resize/format conversion укладывается
+> - [x] Use cases: JWT auth at edge, URL rewriting/routing/A-B test, personalization (HTML injection), image optimization (resize/WebP), bot detection/WAF, API gateway/BFF, geo-blocking/GDPR, custom caching, WebSocket termination, lightweight AI inference | ✓ ПРИМЕНЯТЬ: для read-heavy/static-base + dynamic-injection workloads; auth-rejection ДО origin экономит compute 📋 ПРАВИЛО: edge use case = lightweight stateless logic перед heavy origin 🔗 См. Q8
+
+## Q8. Auth/JWT validation at edge?
 
 **Flow:**
 ```
@@ -378,10 +392,12 @@ export default {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Image optimization, resize? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Edge can revoke individual tokens мгновенно (revocation list) | ❌ ПОСЛЕДСТВИЕ: revocation hard на edge — нужно либо short TTL JWT (1-5min), либо distribute revocation list ко всем POPs (eventually consistent KV); мгновенная revocation требует origin lookup
+> - [ ] JWT-secret hardcoded в Workers коде | ❌ ПОСЛЕДСТВИЕ: secret в коде → утечка через source maps / git; использовать Cloudflare Secrets (encrypted env vars); rotation через wrangler без redeploy
+> - [ ] При valid JWT edge просто пропускает request к origin без изменений | ❌ ПОСЛЕДСТВИЕ: правильный паттерн — set `X-User-ID`/claims headers и passthrough; origin trusts headers и не делает повторную validation (зато сохраняет audit-info)
+> - [x] Flow: token из `Authorization` header → verify signature через `JWT_SECRET` из Cloudflare Secrets → set `X-User-ID`/claims в forward headers → fetch к origin; origin trust'ит pre-auth headers | ✓ ПРИМЕНЯТЬ: short-TTL access tokens (5-15min) + refresh tokens у origin; JWKS endpoint для public-key rotation 📋 ПРАВИЛО: edge auth = signature verify + claim forward; revocation/issuance — у origin 🔗 См. Q9
+
+## Q9. Image optimization, resize?
 
 **Requirement:** serve right size/format per device/connection.
 
