@@ -1475,10 +1475,12 @@ Order order = anOrder().withProduct("Book").withPrice(new BigDecimal("29.99")).c
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. Как организовать `Test Automation Framework`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Hardcoded data в тестах — простое и быстрое решение | ❌ ПОСЛЕДСТВИЕ: при изменении model тесты ломаются массово; нет reuse; копипаста создаёт divergent fixtures; правильно — builders/factories
+> - [ ] Production data можно использовать без обработки | ❌ ПОСЛЕДСТВИЕ: GDPR/HIPAA violation; нужна анонимизация PII перед использованием; data masking pipeline обязателен
+> - [ ] Тестовые данные одни для всех тестов в проекте | ❌ ПОСЛЕДСТВИЕ: shared state создаёт coupling между тестами; flaky tests при параллельном выполнении; изоляция per test обязательна
+> - [x] Подходы: TestDataBuilder pattern (для unit/integration), Fixtures (JSON/SQL для integration), Factories/ObjectMother (повторяемые наборы), Anonymization (PII masking для staging), Generation (Faker/jqwik для property-based); compliance GDPR/HIPAA через анонимизацию | ✓ ПРИМЕНЯТЬ: builders с fluent API (`anOrder().withProduct("Book").completed().build()`); factories для commonly used objects; изоляция per test 📋 ПРАВИЛО: test data = isolated, builder-driven, anonymized 🔗 См. Q34
+
+## Q34. Как организовать `Test Automation Framework`?
 
 ### Архитектура фреймворка
 
@@ -1502,10 +1504,12 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Что такое `Contract Testing` и как его реализовать с `Pact`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Test Automation Framework = монолит со всей логикой в тестах | ❌ ПОСЛЕДСТВИЕ: monolithic tests — duplication, fragility; правильный design — layered (test cases → step definitions → page objects → driver layer)
+> - [ ] Page Object Pattern только для UI-тестов | ❌ ПОСЛЕДСТВИЕ: аналогично для API — RequestSpec/Client classes инкапсулируют API calls; принцип «изолированный wrapper» применим везде
+> - [ ] Build framework from scratch для каждого проекта | ❌ ПОСЛЕДСТВИЕ: «framework ради framework» антипаттерн; используйте established libs (REST-assured, Selenium WebDriver, Playwright); custom — только specific helpers
+> - [x] Layered architecture: Test Cases → Step Definitions/Helpers → Page Objects/API Clients → Driver Layer (Selenium/RestAssured/WebClient) → App Under Test; Configuration-driven (envs/creds через config); Reports (Allure/JUnit XML); минимализм — не «framework ради framework» | ✓ ПРИМЕНЯТЬ: 4 слоя; tests не знают деталей API/UI; configuration externalized; Allure для rich reports 📋 ПРАВИЛО: framework = abstraction layers + config-driven 🔗 См. Q35
+
+## Q35. Что такое `Contract Testing` и как его реализовать с `Pact`?
 
 `Contract Testing` проверяет, что два сервиса могут корректно общаться, без необходимости запускать оба одновременно.
 
@@ -1550,10 +1554,12 @@ Contract.make {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Что такое `Visual Regression Testing`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Pact = только consumer-side проверка | ❌ ПОСЛЕДСТВИЕ: Pact обязательно two-sided — consumer описывает contract, provider verifies; без provider verification contract бесполезен
+> - [ ] @State в провайдере не нужен | ❌ ПОСЛЕДСТВИЕ: @State methods создают prerequisites для каждого scenario («User 123 exists»); без них provider тест fails при попытке fetch несуществующего user
+> - [ ] Spring Cloud Contract и Pact — синонимы | ❌ ПОСЛЕДСТВИЕ: оба для contract testing, но разные approaches — Pact consumer-driven (JSON pact files), SCC provider-driven (Groovy DSL); разный workflow и tooling
+> - [x] Pact provider verification: @Provider("UserService") + @PactBroker(url) + @TestTemplate + PactVerificationContext.verifyInteraction() + @State methods для prerequisites. Альтернатива — Spring Cloud Contract с Groovy DSL для definitions; обе работают через Pact Broker | ✓ ПРИМЕНЯТЬ: Pact для consumer-driven; SCC для provider-driven; интеграция с CI gate `Can I Deploy?` 📋 ПРАВИЛО: contract testing = bilateral verification 🔗 См. Q36
+
+## Q36. Что такое `Visual Regression Testing`?
 
 `Visual Regression Testing` — автоматическое сравнение скриншотов UI для обнаружения непреднамеренных визуальных изменений.
 
@@ -1575,10 +1581,12 @@ Contract.make {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. Что такое `Performance Testing Strategy`? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] Visual regression = функциональное e2e тестирование | ❌ ПОСЛЕДСТВИЕ: разные purposes — visual regression сравнивает скриншоты (pixel-level), e2e проверяет user flows; ortogonalные testing layers
+> - [ ] Достаточно вручную смотреть на интерфейс перед релизом | ❌ ПОСЛЕДСТВИЕ: manual visual review не масштабируется (1000+ страниц × N браузеров × M размеров экрана); автоматизация обязательна для responsive web
+> - [ ] Visual regression замещает unit тесты | ❌ ПОСЛЕДСТВИЕ: orthogonal layers — unit тесты для logic, visual для UI rendering; visual без unit = только UI без internal consistency
+> - [x] Visual regression = автосравнение скриншотов для обнаружения unintentional UI changes; инструменты — Percy (cloud + CI), Playwright (built-in), BackstopJS (open-source), Chromatic (Storybook); когда — CSS/design system changes, dep updates, cross-browser, responsive | ✓ ПРИМЕНЯТЬ: Percy/Chromatic для CI integration; baseline screenshots в git; review diffs при изменениях; tolerance thresholds для anti-aliasing 📋 ПРАВИЛО: visual regression = pixel-level UI safety net 🔗 См. Q37
+
+## Q37. Что такое `Performance Testing Strategy`?
 
 ### Типы нагрузочного тестирования
 
@@ -1601,10 +1609,12 @@ Contract.make {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Что такое `Security Testing Strategy`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Load Testing и Stress Testing — синонимы | ❌ ПОСЛЕДСТВИЕ: load = ожидаемая нагрузка (поведение в normal conditions); stress = предел системы (где ломается); разные цели, разные методики
+> - [ ] Performance testing — only avg response time | ❌ ПОСЛЕДСТВИЕ: avg скрывает long tails; нужны percentiles (p50/p95/p99); avg 100ms с p99 5s = плохой UX для 1% пользователей
+> - [ ] Performance testing ручной без CI/CD | ❌ ПОСЛЕДСТВИЕ: manual = выполняется редко, регрессии propagate в prod; automation в CI + сравнение с baseline для detection деградации обязательны
+> - [x] Типы: Load (ожидаемая нагрузка), Stress (предел), Spike (резкий рост), Soak (длительная стабильность), Capacity Planning (необходимые ресурсы); метрики — Throughput RPS, Latency p50/p95/p99, Error Rate, Resource Util; инструменты — Gatling/JMeter/k6/Locust | ✓ ПРИМЕНЯТЬ: в CI/CD pipeline на staging; baseline comparison для регрессии; SLO-aligned thresholds; запускать по nightly schedule 📋 ПРАВИЛО: perf testing = automated + percentiles + baseline comparison 🔗 См. Q38
+
+## Q38. Что такое `Security Testing Strategy`?
 
 ### Уровни безопасности
 
@@ -1636,10 +1646,12 @@ security:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. Как организовать тестирование при `Continuous Deployment`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] SAST и DAST — синонимы | ❌ ПОСЛЕДСТВИЕ: SAST — Static (анализ source code без запуска); DAST — Dynamic (тестирование running app); разные approaches, разные findings
+> - [ ] Penetration testing автоматизируется полностью | ❌ ПОСЛЕДСТВИЕ: pen testing требует human creativity для chained exploits и business logic; automated tools (Metasploit) — supplement, не replacement
+> - [ ] Secret scanning — это просто grep по «password» | ❌ ПОСЛЕДСТВИЕ: real tools (Gitleaks, TruffleHog) используют entropy analysis + pattern matching для AWS keys/JWTs/private keys; grep пропускает большинство
+> - [x] Уровни: SAST (SonarQube/SpotBugs/Checkmarx — source code), DAST (OWASP ZAP/Burp Suite — running app), Dependency Scanning (OWASP Dependency-Check/Snyk — CVEs in deps), Pen Testing (Metasploit + manual), Secret Scanning (Gitleaks/TruffleHog). CI/CD integration через security gates с allow_failure | ✓ ПРИМЕНЯТЬ: SAST/dep-scan на каждый коммит; DAST на staging; pen testing quarterly; secret scanning в pre-commit hooks 📋 ПРАВИЛО: security layers = SAST + DAST + deps + secrets + pen test 🔗 См. Q39
+
+## Q39. Как организовать тестирование при `Continuous Deployment`?
 
 При `Continuous Deployment` каждый коммит потенциально попадает в production. Это предъявляет повышенные требования к тестированию.
 
@@ -1671,10 +1683,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. (!) Best practices для `Test Strategy` ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Continuous Deployment = manual gate перед prod | ❌ ПОСЛЕДСТВИЕ: путаница с Continuous Delivery; CD (deployment) = автоматически в prod при passing pipeline; CD (delivery) = ready to deploy с manual gate
+> - [ ] Quality gates можно skip для urgent hotfix | ❌ ПОСЛЕДСТВИЕ: skip gates → возможные новые баги в hotfix; правильный путь — emergency hotfix branch с minimum unit + smoke tests, не отключение всех gates
+> - [ ] Canary не нужен — достаточно staging | ❌ ПОСЛЕДСТВИЕ: staging не имеет real traffic; canary с 1-5% production traffic выявляет issues недоступные на staging
+> - [x] CD pipeline: Commit → Static Analysis (<1min) → Unit Tests (<3min) → Integration (<10min) → Contract Tests (<5min) → Deploy Staging + Smoke → Canary 1-5% → Full Deploy + Monitoring. Quality gates с auto-rollback при error rate>1% или p99>SLA | ✓ ПРИМЕНЯТЬ: progressive rollouts; auto-rollback с metrics-based detection; feature flags для kill-switch; observability обязательна 📋 ПРАВИЛО: CD = automated quality gates + progressive rollout + auto-rollback 🔗 См. Q40
+
+## Q40. (!) Best practices для `Test Strategy`
 
 1. **Определить цели и scope** — что тестируем и зачем
 2. **Приоритизация по риску** — критичное первым (см. `Risk-Based Testing`)
@@ -1699,10 +1713,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q41. (!) Как правильно применять Test Doubles: когда Mock, когда Stub, когда Fake? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [ ] 100% line coverage гарантирует качество | ❌ ПОСЛЕДСТВИЕ: «100% coverage fetish» антипаттерн; покрытие без assertions = false safety; mutation score показывает реальное качество
+> - [ ] Test-Last (тесты после deadline) приемлемо | ❌ ПОСЛЕДСТВИЕ: тесты пишутся в спешке, плохо; правильно — TDD + DoD требуют тесты как part of work
+> - [ ] Игнорировать flaky tests если их мало | ❌ ПОСЛЕДСТВИЕ: «flaky tolerance» подрывает trust в test suite; команда начинает игнорировать red builds; quarantine + fix/delete политика обязательна
+> - [x] Best practices: цели/scope, риск-приоритизация, баланс automation (не всё), continuous testing в CI/CD, метрики (coverage/mutation/flaky), team education, retrospectives, документирование, Shift-Left + Shift-Right, фокус на value (mutation > coverage). Антипаттерны — Ice Cream Cone, 100% Coverage Fetish, Test-Last, Flaky Tolerance, Copy-Paste Tests | ✓ ПРИМЕНЯТЬ: test pyramid в архитектуре; mutation testing в CI; flaky tracker dashboard; testing как часть DoD 📋 ПРАВИЛО: strategy = value-driven, ne coverage-driven 🔗 См. Q41
+
+## Q41. (!) Как правильно применять Test Doubles: когда Mock, когда Stub, когда Fake?
 
 Test Doubles — объекты-заменители реальных зависимостей. Правильный выбор типа влияет на читаемость и устойчивость тестов.
 
@@ -1762,10 +1778,12 @@ class InMemoryOrderRepository implements OrderRepository {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q42. Что такое Contract Testing с Pact: Consumer и Provider стороны? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Mock — это всегда лучший выбор для test isolation | ❌ ПОСЛЕДСТВИЕ: over-mocking ломает тесты при refactor; mock проверяет interactions — нужен только когда тестируете side effects (email/audit calls); для data — stub
+> - [ ] Spy = Mock с дополнительными возможностями | ❌ ПОСЛЕДСТВИЕ: Spy — wrapper around REAL object (реальная логика + опциональная запись); Mock — полностью fake object; разные purposes
+> - [ ] Fake — это просто более сложный Stub | ❌ ПОСЛЕДСТВИЕ: Fake = working simplified implementation (InMemoryRepo с CRUD/search); Stub возвращает canned data per call (`when().thenReturn()`); Fake поддерживает sequence of operations
+> - [x] Stub (data return, без verification), Mock (interaction verification, side effects), Spy (real object + record), Fake (упрощённая working implementation). Правило — тестируем результат → Stub; что-то вызвано → Mock; нужна real logic быстро → Fake/Spy. Mock everything = fragile tests | ✓ ПРИМЕНЯТЬ: stub для repository reads, mock для notification.send(), fake для in-memory persistence, dummy для unused params 📋 ПРАВИЛО: choose double based on test purpose 🔗 См. Q42
+
+## Q42. Что такое Contract Testing с Pact: Consumer и Provider стороны?
 
 **Contract Testing** (контрактное тестирование) — подход, при котором каждая пара сервисов (consumer + provider) согласует контракт взаимодействия и проверяет его независимо. Это снижает необходимость в дорогостоящих E2E-тестах.
 
@@ -1852,10 +1870,12 @@ Pact Broker — централизованное хранилище контра
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q43. Как конкретно выглядит пирамида тестирования: соотношения и числа? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Pact Broker — это только хранилище JSON-файлов | ❌ ПОСЛЕДСТВИЕ: Pact Broker — central system: versioning, webhooks, can-i-deploy matrix, tagging environments; не просто file storage
+> - [ ] Consumer пишет тест ПОСЛЕ provider | ❌ ПОСЛЕДСТВИЕ: consumer-driven подход — наоборот; consumer описывает expected contract → provider verifies; «provider first» = ломает paradigm
+> - [ ] @PactFolder и @PactBroker — взаимоисключающие в provider тесте | ❌ ПОСЛЕДСТВИЕ: оба валидны; @PactFolder — local files (dev), @PactBroker — централизованный hub (CI); выбор по environment
+> - [x] Consumer: @PactConsumerTestExt + @PactTestFor + @Pact методы создают contract + сохраняют JSON в target/pacts. Provider: @SpringBootTest + @Provider + @PactBroker/@PactFolder + @TestTemplate с PactVerificationContext + @State для prerequisites; Pact Broker для versioning + can-i-deploy | ✓ ПРИМЕНЯТЬ: consumer-driven contracts; can-i-deploy gate в CI; tagged environments (dev/staging/prod); webhooks для provider notification 📋 ПРАВИЛО: Pact = consumer describes + provider verifies + broker connects 🔗 См. Q43
+
+## Q43. Как конкретно выглядит пирамида тестирования: соотношения и числа?
 
 Пирамида тестирования задаёт принцип распределения тестов по уровням. Конкретные числа зависят от проекта, но есть общепринятые ориентиры.
 
@@ -1909,10 +1929,12 @@ Ice Cream Cone (антипаттерн):        Honeycomb (для микросе
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q44. (!) Как совместить Mutation Testing с CI/CD и quality gates? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] 50/30/20 (unit/integration/E2E) — стандарт | ❌ ПОСЛЕДСТВИЕ: слишком много E2E — медленные и flaky; правильное приблизительное соотношение 80/15/5 (unit/integration/E2E)
+> - [ ] Ice Cream Cone (много E2E) — норма для микросервисов | ❌ ПОСЛЕДСТВИЕ: Ice Cream Cone — антипаттерн; для микросервисов — Honeycomb (много component tests + contract tests, мало E2E)
+> - [ ] Unit-тесты должны выполняться за 5+ минут | ❌ ПОСЛЕДСТВИЕ: цель — <30s; >5 min на unit делает TDD impractical; нужны slice tests + параллелизация
+> - [x] Типичное соотношение Java-монолит: 80% Unit (500-2000+ tests, <30s) + 15% Integration (50-150 tests, <10min) + 5% E2E (5-15 tests, <30min); Honeycomb для микросервисов (фокус на component tests); метрики — unit run <30s, mutation score >60% | ✓ ПРИМЕНЯТЬ: для монолита — pyramid; для микросервисов — honeycomb (component tests с Testcontainers + contract tests); test budget per layer 📋 ПРАВИЛО: тестовая пирамида = many fast + few slow, по сути 🔗 См. Q44
+
+## Q44. (!) Как совместить Mutation Testing с CI/CD и quality gates?
 
 Mutation Testing запускать на каждый коммит дорого (PITest может занимать 10-30 мин). Правильная интеграция требует стратегии.
 
@@ -2003,10 +2025,12 @@ mutation-test:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q45. Что такое Component Testing и как он вписывается в стратегию? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] PITest запускается на каждый commit, обязательно | ❌ ПОСЛЕДСТВИЕ: full PITest 10-30 min; на каждый commit убьёт feedback loop; правильно — incremental (withHistory) + nightly schedule + при изменении core
+> - [ ] Mutation threshold всегда должен быть 100% | ❌ ПОСЛЕДСТВИЕ: 100% — perfectionism; реалистично — 70% (core business logic 80%, обычные 60%); 100% требует тестов для trivial getters
+> - [ ] Включать все классы в targetClasses (DTOs, configs, entities) | ❌ ПОСЛЕДСТВИЕ: DTOs/configs не имеют логики → mutation на них meaningless; excludedClasses (Dto, Entity, *Config) обязателен для focus на business logic
+> - [x] Mutation testing CI: PITest с withHistory для incremental analysis, mutationThreshold (70% core, 60% обычные), targetClasses на бизнес-логику, excludedClasses (DTOs/configs), STRONGER mutators only, threads=4, schedule nightly + при изменении core modules; allow_failure=false для blocking deploy | ✓ ПРИМЕНЯТЬ: nightly mutation runs; PR-based incremental analysis; quality gates по типу кода; HTML reports для review 📋 ПРАВИЛО: mutation = quality gate но scheduled, не per-commit 🔗 См. Q45
+
+## Q45. Что такое Component Testing и как он вписывается в стратегию?
 
 **Component Testing** — тестирование отдельного сервиса (компонента) в изоляции от других сервисов, но с реальными зависимостями (БД, очереди) через Testcontainers.
 
@@ -2102,6 +2126,12 @@ class OrderComponentTest {
 
 Component Tests — ключевой уровень в модели **Test Honeycomb** (Spotify). Для микросервисов они часто важнее, чем большое количество unit-тестов с моками.
 
+> [!mcq]
+> - [ ] Component Test = Unit Test с моками | ❌ ПОСЛЕДСТВИЕ: Unit Test тестирует class/method изолированно; Component Test тестирует whole service с real БД/queues (через Testcontainers), внешние deps через WireMock; разные scope
+> - [ ] Component Test = E2E с реальным staging | ❌ ПОСЛЕДСТВИЕ: E2E включает все services + real infrastructure; Component Test только один service + Testcontainers + mocked external deps; faster, focused, reliable
+> - [ ] Component Tests заменяют Unit Tests полностью | ❌ ПОСЛЕДСТВИЕ: orthogonal — Unit для fast feedback на classes/methods, Component для service-level integration; в Honeycomb оба нужны
+> - [x] Component Test = тестирование одного сервиса в изоляции с реальными dependencies (БД, queues) через Testcontainers + WireMock для внешних API; @SpringBootTest(RANDOM_PORT) + @Testcontainers + @AutoConfigureWireMock; ловит интеграцию слоёв, SQL-запросы, сериализацию, Spring-конфиг; в 10-100x быстрее E2E | ✓ ПРИМЕНЯТЬ: для микросервисов — primary testing level (Test Honeycomb); unit для logic, component для service, contract для interaction, минимум E2E 📋 ПРАВИЛО: component test = service в изоляции с real deps 🔗 См. See also
+
 ---
 
 ## See also
@@ -2115,15 +2145,3 @@ Component Tests — ключевой уровень в модели **Test Honey
 - [Code Review](../code-quality/code-review-interview.md) — ревью кода и тестов
 - [CI/CD Pipeline](../cicd/pipeline-design-interview.md) — проектирование pipeline с тестами
 - [Микросервисы](../architecture/microservices-interview.md) — тестирование микросервисной архитектуры
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Chaos Engineering](chaos-engineering-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Contract Testing](contract-testing-interview.md)
-- [Integration Testing](integration-testing-interview.md)
-- [Load Testing](load-testing-interview.md)
-- [Mockito](mockito-interview.md)
-- [Mutation Testing](mutation-testing-interview.md)
