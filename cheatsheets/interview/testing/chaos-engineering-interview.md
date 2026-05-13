@@ -1623,10 +1623,12 @@ Runbook обязателен: без него эксперимент превр�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. (!) Что такое `abort condition` и когда останавливать эксперимент? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Post-mortem ищет виновного для дисциплинарных мер | ❌ ПОСЛЕДСТВИЕ: blame culture убивает chaos engineering; команда перестаёт делиться находками, скрывает баги; правильно — blameless post-mortem с фокусом на system/process
+> - [ ] Action items могут не иметь deadline — главное наблюдения | ❌ ПОСЛЕДСТВИЕ: без owner + deadline action items не выполняются; post-mortem становится бюрократией без улучшений; «GameDay покатушки без последствий»
+> - [ ] MTTD и MTTR — одно и то же | ❌ ПОСЛЕДСТВИЕ: MTTD = Mean Time To Detect (alert latency); MTTR = Mean Time To Recover (recovery latency); разные phases of incident response, разные improvements
+> - [x] Post-mortem структура: Summary + Timeline + Hypothesis outcome + What went well + What went wrong + Action Items (owner + deadline) + Unknown unknowns; blameless фокус на system/process; метрики MTTD/MTTR/Customer Impact/SLO Burn Rate | ✓ ПРИМЕНЯТЬ: blameless template — «alert не сработал т.к. metric не экспортировался» (полезно) vs «Петя забыл» (не); review action items через 1-2 недели 📋 ПРАВИЛО: post-mortem = learning, не blame 🔗 См. Q33
+
+## Q33. (!) Что такое `abort condition` и когда останавливать эксперимент?
 
 **Abort condition** — автоматический или ручной триггер немедленной остановки эксперимента, когда система выходит за допустимые границы деградации. Это **обязательный** элемент любого chaos-эксперимента.
 
@@ -1665,10 +1667,12 @@ Runbook обязателен: без него эксперимент превр�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. (!) Какие требования к observability для `Chaos Engineering`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Abort condition опционален — Chaos Mesh сам остановится при проблеме | ❌ ПОСЛЕДСТВИЕ: Chaos Mesh выполняет ЧТО задано в CR; не имеет понятия о SLO/business metrics; abort condition обязателен — это и есть kill switch
+> - [ ] Лучше дать эксперименту завершиться чтобы получить полные данные | ❌ ПОСЛЕДСТВИЕ: продолжение experiment при customer impact = real incident; principle: better stop early и сохранить SLO, чем «полные данные» с outage
+> - [ ] Manual abort by Safety Officer достаточен — automation не нужна | ❌ ПОСЛЕДСТВИЕ: human reaction time ~10-30s слишком медленна для быстрых degradations; нужен automation: Prometheus rule → автоматическое kubectl delete chaos
+> - [x] Abort condition = автоматический/ручной trigger остановки при degradation; типы — Metric-based (error rate > 5%), Latency (p99 > 2s), Business (checkouts -10%), SLO burn rate > 2x, Manual; реализация — Gremlin Status Checks, Chaos Mesh kubectl delete, Prometheus rule | ✓ ПРИМЕНЯТЬ: всегда множественные abort conditions (metric + business + manual); test the kill switch перед prod 📋 ПРАВИЛО: abort early > learn slowly через outage 🔗 См. Q34
+
+## Q34. (!) Какие требования к observability для `Chaos Engineering`?
 
 Без observability chaos engineering **слепой** — нельзя подтвердить или опровергнуть гипотезу, нельзя увидеть abort condition, нельзя написать post-mortem. Observability — **prerequisite**, не "хорошо бы".
 
@@ -1713,10 +1717,12 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Как `Chaos Engineering` связан с `error budget` и SLO? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Observability — это nice-to-have для chaos engineering | ❌ ПОСЛЕДСТВИЕ: observability — PREREQUISITE; без metrics/logs/traces невозможно подтвердить hypothesis, abort на triggers, написать post-mortem; chaos без observability = выкл glазами
+> - [ ] Достаточно basic monitoring (CPU/memory) | ❌ ПОСЛЕДСТВИЕ: infrastructure metrics не показывают business impact; нужны SLI/SLO dashboards + business metrics (orders, revenue) для понимания пользовательского эффекта
+> - [ ] Event markers на графиках не важны — можно вспомнить когда был эксперимент | ❌ ПОСЛЕДСТВИЕ: при множественных experiments в день путаются; event markers («14:00 chaos X started») — обязательны для post-mortem analysis correlation
+> - [x] Три столпа: Metrics (SLO dashboards, infra, business) + Logs (структурированные JSON, correlation ID, aggregation ELK/Loki) + Traces (distributed OTel, span attrs, sampling); + event markers на graphs «started chaos X в 14:00»; observability — drive для практики, не side effect | ✓ ПРИМЕНЯТЬ: подготовка к первому GameDay часто начинается с улучшения observability; полезный side-effect chaos практики 📋 ПРАВИЛО: chaos без observability = blind; observability — prerequisite 🔗 См. Q35
+
+## Q35. Как `Chaos Engineering` связан с `error budget` и SLO?
 
 **SLO** (Service Level Objective) задаёт цель надёжности (например, 99.9% success rate за 30 дней). **Error budget** = 100% - SLO = допустимый процент ошибок. Chaos Engineering **тратит** error budget намеренно, чтобы получить информацию.
 
@@ -1758,10 +1764,12 @@ chaos_policy:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Как встроить `Chaos Engineering` в CI/CD pipeline? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Error budget — это бюджет на исправление багов | ❌ ПОСЛЕДСТВИЕ: error budget = 100% - SLO = допустимый процент неработоспособности (43.2min/month при 99.9%); расходуется на planned outages, chaos, releases
+> - [ ] Если SLO нарушен, всё равно надо проводить chaos для обучения | ❌ ПОСЛЕДСТВИЕ: SLO violation = freeze chaos и stabilize first; chaos requires budget headroom; иначе experiment усугубит существующую проблему
+> - [ ] Chaos experiment должен потратить весь error budget на один раз | ❌ ПОСЛЕДСТВИЕ: рекомендация — single experiment <5% месячного budget; чтобы оставалось место для других experiments + actual incidents; не all-in
+> - [x] SLO задаёт цель (99.9%); error budget = 100% - SLO (43.2min/month при 99.9%); chaos тратит budget намеренно для информации; принципы: no budget → freeze, budget есть → experiments в этом квартале, abort при burn rate > 2x; budget-based prioritization | ✓ ПРИМЕНЯТЬ: policy as code — `minimum_error_budget: 50%`, `experiment_budget_consumption: 5%`, `auto_halt_on_slo_burn: 2x` 📋 ПРАВИЛО: budget = currency for chaos experiments 🔗 См. Q36
+
+## Q36. Как встроить `Chaos Engineering` в CI/CD pipeline?
 
 Автоматизация экспериментов — 4-й принцип Chaos Engineering. Ручные GameDays дают разовую уверенность; CI/CD — **непрерывную**.
 
@@ -1830,10 +1838,12 @@ spec:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. (!) Что такое `Chaos Maturity Model` (CMM)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CI/CD chaos = ручной GameDay раз в квартал | ❌ ПОСЛЕДСТВИЕ: GameDay — manual practice; CI/CD integration — automation, 4-й принцип; одноразовые GameDays дают одноразовую уверенность, не continuous
+> - [ ] Chaos нужен только в prod environment | ❌ ПОСЛЕДСТВИЕ: 3 уровня — Smoke chaos в CI (Toxiproxy), Staging chaos (Chaos Mesh jobs), Prod chaos (Schedule); каждый уровень catches different issues
+> - [ ] Chaos jobs можно запускать без guardrails в CI | ❌ ПОСЛЕДСТВИЕ: нужны emergency freeze flag, SLO burn rate check, maintenance windows (no chaos в Black Friday), Slack notifications; без них — chaos станет cause of outage
+> - [x] 3 уровня — Smoke (Toxiproxy в integration tests, pre-deploy), Staging (Chaos Mesh jobs post-deploy), Prod (ChaosSchedule cron-based); guardrails — freeze flag, SLO burn check, maintenance windows; даёт continuous chaos-устойчивость + regression detection | ✓ ПРИМЕНЯТЬ: начать с Smoke (Toxiproxy в JUnit), затем staging Schedule, prod — только после maturity 📋 ПРАВИЛО: chaos в CI = regression test для resilience 🔗 См. Q37
+
+## Q37. (!) Что такое `Chaos Maturity Model` (CMM)?
 
 **Chaos Maturity Model** (Netflix, Rosenthal & Jones, книга "Chaos Engineering") оценивает зрелость практики по двум осям: **sophistication** (глубина экспериментов) и **adoption** (широта внедрения).
 
@@ -1884,10 +1894,12 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Какие роли участвуют в Chaos Engineering? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] CMM имеет 5 чётких уровней как CMMI | ❌ ПОСЛЕДСТВИЕ: CMM (Rosenthal & Jones, Netflix) — 2D matrix с sophistication (4 levels) × adoption (4 levels), не linear ladder; 16 ячеек, не 5 levels
+> - [ ] «Sophisticated + Cultural Expectation» — обязательный target для всех | ❌ ПОСЛЕДСТВИЕ: для стартапа с 3 сервисами — overkill; цель — осознанное продвижение по матрице based on business needs, не максимум
+> - [ ] CMM измеряет только тулинг (Chaos Monkey vs Chaos Mesh) | ❌ ПОСЛЕДСТВИЕ: измеряет practice maturity (hypothesis discipline, blast radius control, automation, organizational adoption), не только tooling
+> - [x] CMM = 2D matrix; sophistication (Elementary → Simple → Advanced → Sophisticated) × adoption (In the Shadows → Investment → Adoption → Cultural Expectation); цель — осознанное продвижение по матрице based on business needs; путь — staging → CI/CD → prod with SLO integration | ✓ ПРИМЕНЯТЬ: оценить current state по обеим осям; на интервью «как начать chaos» = Elementary staging → Simple runbooks → Advanced CI → Sophisticated prod 📋 ПРАВИЛО: maturity = sophistication × adoption, осознанный рост 🔗 См. Q38
+
+## Q38. Какие роли участвуют в Chaos Engineering?
 
 В зрелой практике chaos распределён между несколькими ролями:
 
@@ -1920,10 +1932,12 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. Как убедить бизнес и руководство внедрять Chaos Engineering? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Chaos — только SRE responsibility, dev teams не участвуют | ❌ ПОСЛЕДСТВИЕ: ownership разделён — Service Owner отвечает за hypothesis своих сервисов; SRE проектирует, devs участвуют как Incident Responders; «only SRE» antipattern
+> - [ ] Один Chaos Engineer на всю компанию покрывает все | ❌ ПОСЛЕДСТВИЕ: bottleneck; модели — Centralized (SRE team), Federated (platform + team experiments), Embedded (chaos engineer в каждой команде); зависит от размера организации
+> - [ ] Safety Officer = совещательный голос без права остановки | ❌ ПОСЛЕДСТВИЕ: Safety Officer — это authority на abort; должен иметь право мгновенно остановить experiment; advisory-only — anti-pattern
+> - [x] Распределённые роли: Chaos Engineer/SRE (платформа), Service Owner (hypothesis), Incident Responder/on-call (тренировка), Safety Officer (abort authority), Observability Engineer (метрики), Platform Team (Chaos Mesh operator), Leadership (бюджет/budget); модели — Centralized/Federated/Embedded | ✓ ПРИМЕНЯТЬ: для small team — один SRE + service owners; для large — Federated с chaos champions в каждом squad 📋 ПРАВИЛО: chaos = cross-functional, не SRE-silo 🔗 См. Q39
+
+## Q39. Как убедить бизнес и руководство внедрять Chaos Engineering?
 
 Сопротивление — частая проблема: "вы хотите специально ломать прод?!". Нужны аргументы в деньгах и рисках.
 
@@ -1953,10 +1967,12 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. (!) Какие антипаттерны в `Chaos Engineering`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] «Netflix делает chaos, поэтому и мы должны» — главный аргумент | ❌ ПОСЛЕДСТВИЕ: cargo culting не убеждает бизнес; нужны specific аргументы про MTTR/SLO/incident frequency в вашей компании
+> - [ ] Достаточно сказать «повысит resilience» — это очевидно | ❌ ПОСЛЕДСТВИЕ: «resilience» слишком abstract; бизнес мыслит ROI в $/времени; нужны конкретные incident costs avoided
+> - [ ] Запустить большой chaos на проде чтобы показать ценность | ❌ ПОСЛЕДСТВИЕ: high-stakes demo может cause outage и навсегда дискредитировать chaos в компании; начинать со staging
+> - [x] Конкретные аргументы: ROI (incident cost × frequency vs experiment cost), MTTR improvement, compliance requirements (PCI/SOC2/disaster recovery), confidence для releases, attract talent; storytelling — «3 инцидента в прошлом квартале × 120 человеко-часов vs 10 часов experiment = ROI 12x»; постепенное внедрение | ✓ ПРИМЕНЯТЬ: data-driven pitch с metrics из вашей системы; постепенно — staging → CI → prod; накопить case studies перед prod 📋 ПРАВИЛО: business case = ROI на конкретных incidents, не abstract resilience 🔗 См. Q40
+
+## Q40. (!) Какие антипаттерны в `Chaos Engineering`?
 
 Список типичных ошибок, которые встречаются на практике:
 
@@ -2002,10 +2018,12 @@ Chaos не заменяет [unit](unit-testing-interview.md) и [integration-т
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q41. Что значит "не делать chaos ради chaos"? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Запустить pod-kill на mode=all без abort condition | ❌ ПОСЛЕДСТВИЕ: само-DDoS; все pods убиты одновременно; нет kill switch → real incident; нарушает blast radius + abort condition принципы
+> - [ ] Использовать только Chaos Monkey без других tools | ❌ ПОСЛЕДСТВИЕ: pod-kill only — не покрывает network/disk/DNS/dependency failures; нужен portfolio экспериментов
+> - [ ] Делать post-mortem только если эксперимент cause outage | ❌ ПОСЛЕДСТВИЕ: каждый experiment требует post-mortem (с outcome, actions); только при outage = упускается learning от «successful» experiments
+> - [x] Антипаттерны: chaos без hypothesis/steady state, без abort condition, без observability, неконтролируемый blast radius (mode=all), chaos во время incident, игнорирование post-mortem, без расписания, замена тестов, только pod-kill, одноразовый GameDay | ✓ ПРИМЕНЯТЬ: pre-flight checklist; chaos freeze flag во время incidents; postmortem template обязателен; chaos = дисциплина, не «давайте ломать» 📋 ПРАВИЛО: chaos antipatterns = всё что нарушает 5 принципов 🔗 См. Q41
+
+## Q41. Что значит "не делать chaos ради chaos"?
 
 Это базовый антипаттерн: команда узнала про chaos, подключила Chaos Monkey, запускает "что-нибудь" — и не получает пользы. Реальный chaos — **дисциплина с научным методом**.
 
@@ -2032,10 +2050,12 @@ Problem → Hypothesis → Experiment → Result → Learning → Action
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q42. Какие prerequisites должны быть перед первым экспериментом? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Любой запуск Chaos Monkey считается дисциплинированным chaos | ❌ ПОСЛЕДСТВИЕ: tool ≠ practice; «запустили tool без hypothesis» = chaos ради chaos; нужны hypothesis + abort + action items
+> - [ ] Hypothesis опциональна если есть мониторинг | ❌ ПОСЛЕДСТВИЕ: без pre-defined hypothesis нет verifiable outcome; «мы смотрим dashboards и решим» = post-hoc rationalization
+> - [ ] «Давайте посмотрим что будет» — валидное начало experiment | ❌ ПОСЛЕДСТВИЕ: explicit пример «chaos ради chaos»; «посмотрим что будет» означает no hypothesis, no measurable outcome, no learning
+> - [x] Дисциплинированный chaos = scientific method: Problem → Hypothesis → Experiment → Result → Learning → Action; обязательны hypothesis, измеримость, blast radius, abort condition, outcome (post-mortem + action items); без любого = «chaos ради chaos» | ✓ ПРИМЕНЯТЬ: explicit формулировка перед experiment; «при X произойдёт Y, и steady state Z сохранится»; не «давайте сломаем» 📋 ПРАВИЛО: experiment = hypothesis-driven, не curiosity-driven 🔗 См. Q42
+
+## Q42. Какие prerequisites должны быть перед первым экспериментом?
 
 Чтобы первый эксперимент был **продуктивен**, а не **разрушителен**, нужна подготовка инфраструктуры и процессов.
 
@@ -2066,10 +2086,12 @@ Chaos Engineering **помогает подсветить** пробелы, но
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q43. Как комбинировать Chaos Engineering с resilience-паттернами? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Достаточно иметь любую CI/CD pipeline для chaos | ❌ ПОСЛЕДСТВИЕ: CI/CD необходимый но не достаточный prerequisite; нужны также observability + SLO + on-call + resilience patterns в коде + быстрый rollback (<5min)
+> - [ ] Можно начинать chaos без observability и накатить её позже | ❌ ПОСЛЕДСТВИЕ: chaos без observability = blind experiments; не можешь подтвердить hypothesis; observability — мастхэв prerequisite, не «нагоним позже»
+> - [ ] SLO не нужны для первого эксперимента | ❌ ПОСЛЕДСТВИЕ: без SLO нет error budget → нет budget для chaos; нет abort condition (SLO burn rate); первый experiment без SLO — random стресс-тест
+> - [x] Prerequisites: Observability (dashboards/alerts/aggregation/tracing) + SLO/error budget + Runbooks + On-call rotation + Resilience patterns в коде (CB/retry/timeout) + Fast rollback < 5min + Auto-scaling/self-healing + Communication channels; без них chaos высветит pre-existing проблемы а не distributed-specific | ✓ ПРИМЕНЯТЬ: если prerequisites не готовы — 2-3 квартала на observability+resilience, потом chaos; не наоборот 📋 ПРАВИЛО: chaos после foundation, не вместо неё 🔗 См. Q43
+
+## Q43. Как комбинировать Chaos Engineering с resilience-паттернами?
 
 Chaos — это **валидация** resilience-паттернов. Паттерн без chaos = надежда; chaos без паттерна = падение.
 
@@ -2105,10 +2127,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q44. (!) Best practices и чек-лист перед экспериментом ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Resilience-паттерны заменяют chaos engineering | ❌ ПОСЛЕДСТВИЕ: паттерн без chaos = надежда что работает; нужна валидация в realistic conditions; «у нас есть circuit breaker» ≠ «он работает в production»
+> - [ ] Circuit Breaker валидируется через unit-тесты | ❌ ПОСЛЕДСТВИЕ: unit-тесты проверяют изолированно; CB-state transitions (closed→open→half-open) под реальной latency валидируются только через chaos (Toxiproxy latency injection)
+> - [ ] Если паттерн в коде — chaos для него не нужен | ❌ ПОСЛЕДСТВИЕ: implementation ≠ behavior; «we have retry» — конфигурация retries может быть неправильной для real failure modes; только chaos verify
+> - [x] Маппинг паттерн → experiment: CB → latency injection, Retry с backoff → 5xx 50%, Timeout → slow downstream, Bulkhead → thread pool saturation, Failover → kill master DB, Graceful degradation → full dependency outage, Idempotency → duplicate requests; процесс — Design → Implement → Chaos → Validate → Regression в CI | ✓ ПРИМЕНЯТЬ: каждый resilience pattern должен иметь сопровождающий chaos experiment в CI; «паттерн без chaos» = unverified hope 📋 ПРАВИЛО: pattern + chaos = trust; pattern alone = hope 🔗 См. Q44
+
+## Q44. (!) Best practices и чек-лист перед экспериментом
 
 Сводный чек-лист успешного хаос-эксперимента:
 
@@ -2180,15 +2204,3 @@ graph LR
 - [Kubernetes](../devops/kubernetes-interview.md) — платформа для Chaos Mesh и Litmus
 - [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — canary/blue-green как способ ограничить blast radius
 - [Pipeline Design](../cicd/pipeline-design-interview.md) — встраивание chaos в CI/CD
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Contract Testing](contract-testing-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Integration Testing](integration-testing-interview.md)
-- [Load Testing](load-testing-interview.md)
-- [Mockito](mockito-interview.md)
-- [Mutation Testing](mutation-testing-interview.md)
-- [Property-based Testing](property-based-testing-interview.md)
