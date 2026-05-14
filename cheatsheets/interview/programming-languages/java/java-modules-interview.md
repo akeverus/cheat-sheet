@@ -1916,10 +1916,124 @@ ENTRYPOINT ["/opt/myapp/bin/myapp"]
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. `jdeps`: анализ зависимостей модулей перед миграцией ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Команда `jlink --add-modules com.example.app --module-path mods --output runtime` падает с ошибкой `Error: automatic module found in jlink: external-lib`. Что произошло и как корректно решить?
+>
+> ---
+>
+> #### A) `jlink` не поддерживает Java 17+, нужно использовать `jpackage` вместо этого — ❌ Неверно
+>
+> **Что на самом деле:** `jlink` активно поддерживается во всех современных версиях Java (8+) и улучшается с каждым релизом (Java 21 добавил поддержку CDS, AOT-загрузку). `jpackage` решает СОВСЕМ другую задачу — упаковку приложения в native installer (`.dmg`, `.msi`, `.deb`). `jpackage` часто использует `jlink` под капотом, но не заменяет его.
+>
+> **Откуда путаница:** Java tooling быстро меняется, и легко предположить deprecation. На самом деле `jlink` — стабильный production tool с 2017 года.
+>
+> **Если бы это было правдой:** в `jdk-21/bin/` не было бы `jlink`. На практике он есть и работает корректно.
+>
+> ---
+>
+> #### B) Запустить `jlink` с флагом `--ignore-signing-info` — это позволит включить automatic modules — ❌ Неверно
+>
+> **Что на самом деле:** такого флага не существует. `jlink` фундаментально требует, чтобы ВСЕ модули были named — у automatic module нет `module-info.class`, и `jlink` не знает, какие пакеты экспортировать, какие зависимости транзитивно подтянуть. Никакой опции «закрыть глаза» на этот факт нет.
+>
+> **Откуда путаница:** `--ignore-missing-deps` существует (для `jdeps`, не для `jlink`), и `--ignore-signing-information` — для `jar` (не для `jlink`). Звучит правдоподобно.
+>
+> **Если бы это было правдой:** не нужны были бы инструменты вроде `moditect` Maven plugin (генератор `module-info.java` для automatic modules). Их существование — следствие невозможности jlink с automatic modules.
+>
+> ---
+>
+> #### C) Объединить все JAR в один fat-jar через Maven Shade Plugin и передать его в `jlink` как один модуль — ❌ Неверно
+>
+> **Что на самом деле:** fat-jar (uber-jar) — это JAR со всеми классами всех зависимостей. У него **всё ещё нет** `module-info.class` (он — automatic module со всеми пакетами своих зависимостей). `jlink` отклонит его так же, как любой другой automatic module. Кроме того, fat-jar часто конфликтует с JPMS из-за split packages.
+>
+> **Откуда путаница:** Shade-plugin часто упоминается как «решение всех проблем сборки». В classpath-мире fat-jar действительно решает многое; в модульном — нет.
+>
+> **Если бы это было правдой:** Spring Boot fat jar (`spring-boot-maven-plugin` repackage) работал бы с jlink из коробки. На практике этого нет — Spring Boot 3 предлагает `bootBuildImage` с buildpacks для оптимизации Docker, но не jlink-совместимость.
+>
+> ---
+>
+> #### D) Все модули в `--module-path` должны быть **named** (с `module-info.class`). Решение: запросить `module-info.java` у автора library, либо сгенерировать через `moditect` Maven plugin / `jdeps --generate-module-info`, либо заменить library на её модуляризованную альтернативу — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `jlink` создаёт custom runtime image — самодостаточный дистрибутив JVM, содержащий только нужные модули. Чтобы это работало, всё дерево зависимостей должно быть детерминированным, что возможно только с named modules.
+>
+> **Полный workflow для production:**
+> 1. Анализ зависимостей: `jdeps --print-module-deps app.jar`.
+> 2. Идентификация automatic modules: `jar --describe-module --file=lib.jar` (если выводит «automatic» — проблема).
+> 3. Решения для automatic modules (от лучшего к худшему):
+>    - Обновить до версии с `module-info.class`.
+>    - Сгенерировать через `moditect`.
+>    - Заменить на модуляризованную альтернативу.
+>    - В крайнем случае — fork и пересборка.
+>
+> **Пример (moditect):**
+> ```xml
+> <plugin>
+>     <groupId>org.moditect</groupId>
+>     <artifactId>moditect-maven-plugin</artifactId>
+>     <executions>
+>         <execution>
+>             <id>add-module-info</id>
+>             <goals><goal>add-module-info</goal></goals>
+>             <configuration>
+>                 <modules>
+>                     <module>
+>                         <artifact>
+>                             <groupId>com.example</groupId>
+>                             <artifactId>legacy-lib</artifactId>
+>                             <version>1.5.0</version>
+>                         </artifact>
+>                         <moduleInfo>
+>                             <name>com.example.legacy</name>
+>                             <exports>com.example.legacy.api;</exports>
+>                         </moduleInfo>
+>                     </module>
+>                 </modules>
+>             </configuration>
+>         </execution>
+>     </executions>
+> </plugin>
+> ```
+>
+> **Полный jlink-pipeline:**
+> ```bash
+> # 1. Анализ
+> jdeps --print-module-deps --ignore-missing-deps \
+>     --multi-release 21 build/libs/app.jar
+> # Output: java.base,java.sql,java.logging
+>
+> # 2. Сборка runtime
+> jlink \
+>     --module-path $JAVA_HOME/jmods:mods \
+>     --add-modules com.example.app,java.sql,java.logging \
+>     --output dist/myapp-runtime \
+>     --strip-debug \
+>     --no-header-files --no-man-pages \
+>     --compress zip-6 \
+>     --launcher myapp=com.example.app/com.example.Main
+>
+> # 3. Размер
+> du -sh dist/myapp-runtime
+> # ~50 MB вместо ~350 MB full JDK
+> ```
+>
+> **Когда применять:**
+> - Docker-образы для serverless (AWS Lambda, Cloud Functions) — каждый MB образа = миллисекунды cold start.
+> - Раздача приложения end-user (как Eclipse IDE — поставляется со своим JRE через jlink).
+> - High-density Kubernetes deployments — экономия на размере образов при большом количестве реплик.
+>
+> **Подводные камни:**
+> - **Spring Boot не jlink-friendly** — слишком много automatic modules в зависимостях; обычно используют GraalVM native-image вместо jlink.
+> - **`--strip-debug` ломает stack traces** — для production debugging оставить debug symbols или отдельно сохранить.
+> - **`--compress zip-6`** — даёт лучший размер, но `--compress zip-9` ещё лучше при медленнее старте (decompress overhead).
+> - **CDS/AppCDS в jlink runtime** — позволяет ускорить start time, но требует `--generate-cds-archive` при сборке.
+> - **Cross-platform jlink** — JDK 19+ позволяет собирать Linux runtime из macOS через `--target-platform linux-x64` (раньше нужен был JDK на target platform).
+>
+> ---
+>
+> **Связанные вопросы:** [[Q19]] — что такое jlink; [[Q20]] — плагины jlink; [[Q35]] — `jdeps` для анализа зависимостей; [[Q38]] — миграция и оценка.
+
+## Q35. `jdeps`: анализ зависимостей модулей перед миграцией
 
 `jdeps` — инструмент статического анализа зависимостей JAR-файлов. Незаменим при подготовке к миграции на JPMS.
 
@@ -1971,10 +2085,92 @@ jdeps --generate-module-info generated/ --module-path lib lib/mylib.jar
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. `ServiceLoader` с `JPMS`: директивы `uses` и `provides...with` в деталях ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** При запуске `jdeps --jdk-internals myapp.jar` на legacy-проекте получили вывод `myapp.jar -> JDK internal API: sun.misc.Unsafe (java.base)`. Что это означает и каким должно быть правильное действие перед миграцией на Java 17+?
+>
+> ---
+>
+> #### A) Это предупреждение можно игнорировать — `sun.misc.Unsafe` поддерживается во всех версиях Java — ❌ Неверно
+>
+> **Что на самом деле:** `sun.misc.Unsafe` — это JDK internal API, и хотя он **физически** доступен (по совместимости), JEP 403 «Strongly Encapsulate JDK Internals» (Java 17) закрыл доступ к internals по умолчанию. На Java 17+ обращение к `sun.misc.Unsafe` без `--add-exports java.base/sun.misc=ALL-UNNAMED` падает с `IllegalAccessError`. На Java 24+ планируется полностью удалить публичный доступ.
+>
+> **Откуда путаница:** `Unsafe` действительно широко используется (Netty, Lucene, Spring's `ReflectionUtils`), и многие версии Java его «терпят». Но «терпит» — не «гарантирует обратную совместимость».
+>
+> **Если бы это было правдой:** не существовало бы JEP 471 «Deprecate the Memory-Access Methods in sun.misc.Unsafe for Removal» (Java 23). Разработка `java.lang.foreign` (Foreign Function & Memory API) как замены — прямое доказательство, что Unsafe планируется удалить.
+>
+> ---
+>
+> #### B) Это критический сигнал перед миграцией: нужно либо найти замену из supported API (`MethodHandles`, `VarHandle`, `java.lang.foreign`), либо добавить `--add-exports java.base/sun.misc=ALL-UNNAMED` как временный workaround, либо обновить зависимость на версию без `Unsafe` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `jdeps --jdk-internals` сканирует bytecode на использование `sun.*`, `jdk.internal.*`, `com.sun.*` (не из public API). Эти классы могут исчезнуть или быть запечатаны в любой версии JDK.
+>
+> **Стратегии замены — таблица из вывода `jdeps`:**
+>
+> | Internal API | Suggested replacement | Когда мигрировать |
+> |--------------|-----------------------|-------------------|
+> | `sun.misc.Unsafe.getInt/Object` | `java.lang.invoke.VarHandle` | Сейчас (Java 9+) |
+> | `sun.misc.Unsafe.allocateMemory` | `java.lang.foreign.Arena.allocate` | Java 22+ (stable) |
+> | `sun.misc.Unsafe.park/unpark` | `java.util.concurrent.locks.LockSupport` | Уже доступно |
+> | `sun.reflect.ReflectionFactory` | `MethodHandles.privateLookupIn` | Java 9+ |
+> | `sun.security.util.KeyUtil` | `java.security.KeyFactory` | Java 7+ |
+>
+> **Пример вывода:**
+> ```bash
+> $ jdeps --jdk-internals --multi-release 17 myapp.jar
+>
+> myapp.jar -> JDK internal API: sun.misc.Unsafe (java.base)
+> myapp.jar -> JDK internal API: sun.security.util.KeyUtil (java.base)
+>
+> JDK Internal API                 Suggested Replacement
+> -----------------                 --------------------
+> sun.misc.Unsafe                  See https://openjdk.org/jeps/260
+> sun.security.util.KeyUtil        Use java.security.KeyFactory @since 1.5
+> ```
+>
+> **Чеклист действий после `jdeps`:**
+> 1. Для своего кода — переписать на supported API.
+> 2. Для legacy-зависимости — проверить, есть ли версия библиотеки без internals (часто библиотеки выпускают «modular» branch).
+> 3. Если миграция невозможна — `--add-exports java.base/sun.misc=ALL-UNNAMED` как временный костыль, с тикетом для long-term fix.
+>
+> **Когда применять:**
+> - Подготовка проекта к миграции с Java 8/11 → Java 17/21.
+> - Анализ third-party библиотек перед добавлением в проект (на их легальность с JEP 403).
+> - Compliance-аудит для проектов под Oracle commercial license.
+>
+> **Подводные камни:**
+> - **Транзитивная проблема** — ваш код чист, но `mylib.jar` использует `Unsafe`. `jdeps` найдёт это, но решать должен автор библиотеки. Зафиксировать в issue tracker upstream.
+> - **`jdeps --jdk-internals` сканирует только compile-time** — runtime reflection-обращения к `sun.*` (через `Class.forName`) НЕ обнаруживаются. Использовать также `--multi-release 17` для проверки MR-JAR.
+> - **`--ignore-missing-deps`** — нужен, если в JAR есть зависимости, не присутствующие на module path. Без него jdeps падает с ошибкой.
+> - **`jdeps --generate-module-info` — только starter** — генерирует базовый шаблон, но `opens` для рефлексии нужно дописывать вручную, потому что jdeps не знает framework-специфики.
+> - **`jdeps` версии должен совпадать с target Java** — анализировать Java 21 bytecode через `jdeps` из JDK 8 даст неверные результаты.
+>
+> ---
+>
+> #### C) Это compile-time предупреждение, в runtime ничего не сломается — ❌ Неверно
+>
+> **Что на самом деле:** `jdeps` — статический анализатор bytecode, и его предупреждения часто превращаются в `IllegalAccessError` или `NoClassDefFoundError` в runtime. На Java 17+ это уже не «warning», а отказ доступа: код упадёт при первом вызове `sun.misc.Unsafe.getUnsafe()`.
+>
+> **Откуда путаница:** до Java 17 `--illegal-access=permit` (default) разрешал доступ к internals с warning. Многие проекты «привыкли» что warnings не критичны.
+>
+> **Если бы это было правдой:** не было бы JEP 403 «Strongly Encapsulate JDK Internals» (Java 17, делает запрет default). Существование JEP — прямое доказательство, что internals закрываются и в runtime, не только compile-time.
+>
+> ---
+>
+> #### D) `jdeps` ошибся — `sun.misc.Unsafe` это публичный API через `Unsafe.getUnsafe()` — ❌ Неверно
+>
+> **Что на самом деле:** хотя класс `sun.misc.Unsafe` действительно доступен через `getUnsafe()` reflection-хаком, он находится в пакете `sun.*` — JDK internals по определению. JEP 260 «Encapsulate Most Internal APIs» классифицировал его как deprecated for removal. `jdeps` правильно его флагирует.
+>
+> **Откуда путаница:** `Unsafe.getUnsafe()` — public static метод; кажется, что класс — публичный API.
+>
+> **Если бы это было правдой:** `Unsafe` был бы в `java.*` пакете, а не в `sun.*`. Расположение в пакете — формальная граница API.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q22]] — миграция проектов; [[Q32]] — split packages; [[Q34]] — jlink требует named modules; [[Q38]] — bottom-up vs top-down стратегии.
+
+## Q36. `ServiceLoader` с `JPMS`: директивы `uses` и `provides...with` в деталях
 
 `ServiceLoader` в модульном мире работает принципиально иначе: декларирование сервисов переносится из `META-INF/services/` в `module-info.java`.
 
