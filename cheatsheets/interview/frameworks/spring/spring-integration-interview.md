@@ -277,10 +277,87 @@ public MessageHandler orderHandler(OrderService service) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Как работает MessagingGateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что отличает Service Activator от обычного Spring-сервиса (`@Service`), вызванного из `@Component`-обработчика? Зачем нужна отдельная EIP-абстракция?
+>
+> ---
+>
+> #### A) Service Activator — это просто синоним `@Service`, аннотации `@ServiceActivator` и `@Service` взаимозаменяемы — ❌ Неверно
+>
+> **Что на самом деле:** это **разные** аннотации с разной семантикой. `@Service` маркирует класс как Spring-bean бизнес-уровня (это `@Component` stereotype). `@ServiceActivator` — это **endpoint-маркер**: связывает метод с `inputChannel`, создаёт `MessageHandler` и `PollingConsumer`/`EventDrivenConsumer`, который слушает канал и вызывает метод при поступлении сообщения.
+>
+> **Откуда путаница:** оба слова имеют «Service» в названии. Но `@Service` — про DI/stereotype, а `@ServiceActivator` — про подписку на канал.
+>
+> **Если бы это было правдой:** не нужен был бы `inputChannel`-атрибут — обычный `@Service` ничего про каналы не знает. На практике без `@ServiceActivator` метод не подпишется на канал.
+>
+> ---
+>
+> #### B) Service Activator — это endpoint, который инкапсулирует бизнес-метод и подписывает его на `MessageChannel` через `MessageHandler`-обёртку — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Service Activator (EIP-паттерн) — это «активатор сервиса»: мост между миром Message-каналов и миром обычных Java-методов. Spring Integration оборачивает ваш бизнес-метод в `ServiceActivatingHandler` (реализация `MessageHandler`), создаёт `Consumer` (`PollingConsumer` для `PollableChannel` или `EventDrivenConsumer` для `SubscribableChannel`), и подписывает его на `inputChannel`.
+>
+> Когда сообщение приходит в канал:
+> 1. Consumer вытаскивает `Message<T>`.
+> 2. `ServiceActivatingHandler` извлекает payload (или передаёт `Message` целиком, если метод принимает `Message`).
+> 3. Spring через `MethodInvokingMessageProcessor` маппит аргументы метода: `@Payload`, `@Header("name")`, `@Headers Map`, и др.
+> 4. Метод вызывается; return value (если не `void`) оборачивается в новое `Message` и отправляется в `outputChannel` (если задан) или в `replyChannel` из заголовков.
+>
+> Это даёт **invocation-агностику**: бизнес-метод не знает про Spring Integration. Его можно тестировать как обычный сервис, плюс интегрировать в flow через аннотацию или DSL.
+>
+> **Пример:**
+> ```java
+> @MessageEndpoint
+> public class OrderProcessor {
+>     @ServiceActivator(inputChannel = "ordersInput", outputChannel = "ordersResult")
+>     public OrderResult process(@Payload Order order, @Header("traceId") String traceId) {
+>         MDC.put("traceId", traceId);
+>         return orderService.handle(order);
+>     }
+> }
+>
+> // Эквивалент через Java DSL
+> @Bean
+> public IntegrationFlow orderFlow(OrderService service) {
+>     return IntegrationFlow.from("ordersInput")
+>         .handle(Order.class, (payload, headers) -> service.handle(payload))
+>         .channel("ordersResult")
+>         .get();
+> }
+> ```
+>
+> **Когда применять:** любая бизнес-логика, которая должна вызываться по сообщению из канала — обработка заказов из Kafka, преобразование файлов, ответ на REST-вход через `HttpRequestHandlingMessagingGateway`. Это самый частый endpoint после `Transformer` и `Filter`.
+>
+> **Подводные камни:**
+> - **`void`-метод не отправляет reply**: если нужно подтвердить обработку, метод должен возвращать значение или явно отправлять в `outputChannel` через `@SendTo`.
+> - **Exception без error-handling** уходит в global `errorChannel` (если задан) или поднимается вверх. На `DirectChannel` exception летит обратно в `send()`-caller.
+> - **`outputChannel` имеет приоритет над `replyChannel` из заголовков** — если оба заданы, reply идёт в `outputChannel`. Это ломает request-reply через Gateway.
+> - **Метод должен быть `public`** — иначе Spring AOP не сможет проксировать.
+>
+> **Связанные вопросы:** [[Q4]] — Gateway как обратная сторона Service Activator; [[Q5]] — Java DSL `.handle()` как альтернатива; [[Q7]] — обработка ошибок в handler.
+>
+> ---
+>
+> #### C) Service Activator работает только с `QueueChannel`, на `DirectChannel` его использовать нельзя — ❌ Неверно
+>
+> **Что на самом деле:** Service Activator работает с обоими типами каналов. Разница в том, какой `Consumer` создаётся: `EventDrivenConsumer` для `SubscribableChannel` (включая `DirectChannel`), `PollingConsumer` для `PollableChannel` (включая `QueueChannel`). Spring Integration выбирает автоматически на основе типа канала.
+>
+> **Откуда путаница:** в документации часто примеры с `QueueChannel` и `Poller`, что создаёт впечатление обязательности.
+>
+> **Если бы это было правдой:** простой синхронный pipeline на `DirectChannel` был бы невозможен — нужен был бы Poller на каждом шаге. На практике 90% Service Activator-ов работают на `DirectChannel`.
+>
+> ---
+>
+> #### D) Service Activator автоматически делает retry при exception до 3 раз — ❌ Неверно
+>
+> **Что на самом деле:** retry **не включён по умолчанию**. Exception в handler-методе летит вверх (или в `errorChannel`). Для retry нужен `RequestHandlerRetryAdvice` (на базе Spring Retry) — он явно подключается через `@ServiceActivator(adviceChain = "retryAdvice")` или DSL `.handle(svc, e -> e.advice(retryAdvice()))`.
+>
+> **Откуда путаница:** многие messaging-фреймворки делают retry по умолчанию (Spring Kafka с DefaultErrorHandler делает 10 попыток). Но Spring Integration этого не делает — политика на разработчике.
+>
+> **Если бы это было правдой:** не нужны были бы Q7-вопросы про `RequestHandlerRetryAdvice`. Reality: без явной настройки retry нет, и первая же transient-ошибка (network blip) пробивает в `errorChannel`.
+
+## Q4. Как работает MessagingGateway?
 
 **Gateway** — интерфейс, который Spring Integration реализует автоматически. Скрывает детали каналов за обычными Java-методами.
 
@@ -314,10 +391,94 @@ public void submit(Order order) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Как устроен Java DSL? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как `@MessagingGateway`-интерфейс превращается в работающий bean без вашей реализации? Что именно генерирует Spring и как там работает request-reply?
+>
+> ---
+>
+> #### A) Spring генерирует bytecode реализации через CGLIB — это enchancer, как у `@Configuration`-классов — ❌ Неверно
+>
+> **Что на самом деле:** Spring Integration использует **JDK Dynamic Proxy** (`java.lang.reflect.Proxy`) — стандартный механизм Java для интерфейсов. `GatewayProxyFactoryBean` создаёт proxy через `Proxy.newProxyInstance()` с `InvocationHandler`, который для каждого вызова метода: формирует `Message<>`, отправляет в `defaultRequestChannel` (или `requestChannel` из `@Gateway`), при синхронных методах блокирует поток ожидая reply, оборачивает результат в return-тип метода.
+>
+> **Откуда путаница:** в Spring Framework для классов проксирование идёт через CGLIB, для интерфейсов — через JDK proxy. `@MessagingGateway` работает **только на интерфейсах**, поэтому именно JDK proxy.
+>
+> **Если бы это было правдой:** работало бы и для абстрактных классов. На практике `@MessagingGateway` на классе вызывает ошибку конфигурации.
+>
+> ---
+>
+> #### B) Spring создаёт JDK Dynamic Proxy для интерфейса, который сериализует вызов в `Message`, шлёт в request-канал и блокирует ожидая reply через temporary reply-channel — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `GatewayProxyFactoryBean` (FactoryBean) — за `@MessagingGateway` стоит именно он. Шаги при вызове `gateway.placeOrder(order)`:
+>
+> 1. Proxy перехватывает вызов через `InvocationHandler`.
+> 2. Spring через `MethodArgsHolder` маппит аргументы: `@Payload` → payload, `@Header("name")` → header, `@Headers Map<String,Object>` → headers map.
+> 3. Создаётся `Message<Order>` с payload + headers + сгенерированным `replyChannel` (`TemporaryReplyChannel` — anonymous `DirectChannel`).
+> 4. Сообщение отправляется в `defaultRequestChannel` или channel из `@Gateway(requestChannel = "...")`.
+> 5. Если метод **возвращает значение** — Gateway блокируется на `replyChannel.receive(timeout)`, ждёт ответ.
+> 6. Если метод `void` — fire-and-forget, возврат сразу.
+> 7. Если возвращает `Future<X>` / `CompletableFuture<X>` / `Mono<X>` / `Flux<X>` — Spring оборачивает асинхронно без блокировки.
+>
+> Это даёт **декларативный фасад**: бизнес-код не знает про каналы, он работает с обычным Java-интерфейсом. Под капотом — асинхронная инфраструктура.
+>
+> **Пример:**
+> ```java
+> @MessagingGateway(defaultRequestChannel = "ordersInput",
+>                   defaultReplyTimeout = "5000",
+>                   defaultRequestTimeout = "2000")
+> public interface OrderGateway {
+>     OrderResult placeOrder(@Payload Order order);           // sync request-reply
+>
+>     @Gateway(requestChannel = "ordersAsync")
+>     void placeOrderAsync(Order order);                       // fire-and-forget
+>
+>     @Gateway(requestChannel = "ordersInput", replyTimeout = 10000)
+>     CompletableFuture<OrderResult> placeOrderFuture(Order order);  // async result
+>
+>     @Gateway(requestChannel = "ordersInput")
+>     Mono<OrderResult> placeOrderReactive(Order order);       // reactive
+> }
+>
+> @Service
+> @RequiredArgsConstructor
+> public class CheckoutService {
+>     private final OrderGateway gateway;   // обычный @Autowired — Spring inject-ит proxy
+>     public OrderResult checkout(Cart cart) { return gateway.placeOrder(new Order(cart)); }
+> }
+> ```
+>
+> **Когда применять:** Gateway — стандартный способ войти в integration flow из контроллера/сервиса/тестов. Альтернатива — `MessagingTemplate.convertSendAndReceive()`, но это императивно и менее читаемо.
+>
+> **Подводные камни:**
+> - **`defaultReplyTimeout` = 30 секунд по умолчанию**. Если handler тормозит, Gateway возвращает `null` (не exception!) — критично проверять на `null` или ставить адекватный timeout.
+> - **`void` метод без `@Async`**: если канал — `DirectChannel`, метод всё равно блокируется на handler (synchronous chain). `void` влияет только на ожидание reply, не на dispatch.
+> - **`CompletableFuture` требует `AsyncTaskExecutor`** в `@MessagingGateway(asyncExecutor = "...")` — иначе future будет уже завершённым (синхронным).
+> - **Reply correlation**: Gateway генерирует уникальный `TemporaryReplyChannel` на каждый вызов — это thread-safe для concurrent calls.
+>
+> **Связанные вопросы:** [[Q3]] — Service Activator как ответ на сообщение Gateway; [[Q1]] — Gateway-паттерн в EIP-каталоге; [[Q10]] — тестирование через Gateway.
+>
+> ---
+>
+> #### C) Gateway работает только синхронно — для async нужно вручную реализовать `MessageHandler` — ❌ Неверно
+>
+> **Что на самом деле:** Gateway поддерживает все три модели: sync (return T), fire-and-forget (return `void`), async (return `Future<T>`/`CompletableFuture<T>`/`Mono<T>`/`Flux<T>`). Достаточно изменить сигнатуру метода — Spring сам подберёт InvocationHandler-логику.
+>
+> **Откуда путаница:** первые версии Spring Integration (до 4.0) поддерживали только sync. Сейчас async/reactive поддерживается из коробки.
+>
+> **Если бы это было правдой:** не было бы интеграции Spring Integration с WebFlux. На практике контроллер на WebFlux вызывает Gateway-метод, возвращающий `Mono<T>`, и весь стек реактивен.
+>
+> ---
+>
+> #### D) Gateway требует, чтобы интерфейс наследовал `org.springframework.integration.gateway.Gateway` — ❌ Неверно
+>
+> **Что на самом деле:** Gateway — это **обычный Java-интерфейс** с аннотацией `@MessagingGateway` (или `<int:gateway>` в XML). Никаких наследований не нужно. Это намеренная design-decision: интерфейс должен быть «чистым», без привязки к Spring Integration.
+>
+> **Откуда путаница:** многие Spring-абстракции требуют наследование marker-интерфейсов (`CrudRepository`, `JpaRepository`).
+>
+> **Если бы это было правдой:** бизнес-интерфейс был бы загрязнён dependency на Spring Integration. Это противоречит цели Gateway — «скрыть messaging от потребителя».
+
+## Q5. Как устроен Java DSL?
 
 **Java DSL** — декларативный способ описать интеграционный поток в одном `@Bean`.
 
@@ -352,10 +513,84 @@ public class OrderIntegrationFlow {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Как реализовать Splitter и Aggregator? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда `IntegrationFlow` builder вызывает `.get()`, что возвращается и как это попадает в Spring контекст? Что определяет «когда flow стартует»?
+>
+> ---
+>
+> #### A) `.get()` возвращает уже подписанный объект, поток начинает работать сразу при вызове `.get()` — ❌ Неверно
+>
+> **Что на самом деле:** `.get()` возвращает `IntegrationFlow` — это **спецификация** (immutable description), а не подписанный poller. Регистрация endpoint-ов, создание каналов, подписка на адаптеры происходит **позже** — когда Spring `IntegrationFlowContext` или `IntegrationFlowBeanPostProcessor` обрабатывает этот `@Bean` во время старта контекста.
+>
+> **Откуда путаница:** в reactive Stream `subscribe()` запускает подписку. В Spring Integration DSL подписка автоматическая, но не на вызове `.get()`, а на регистрации bean-а в контексте.
+>
+> **Если бы это было правдой:** flow начинал бы работать до того, как остальные bean-ы инициализированы — `OrderService`, `KafkaTemplate` и т. п. могли бы быть `null`. На практике flow стартует после `ApplicationContext.refresh()`, когда все bean-ы готовы.
+>
+> ---
+>
+> #### B) `.get()` возвращает `IntegrationFlow` (immutable спецификация); Spring через `IntegrationFlowBeanPostProcessor` регистрирует endpoint-ы и каналы при refresh контекста, flow стартует с `SmartLifecycle.start()` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Java DSL — это **builder pattern** поверх `IntegrationFlowDefinition`. Каждый метод (`from`, `transform`, `filter`, `handle`, `route`, `split`, `aggregate`, `channel`, `enrich`, `bridge`) добавляет шаг в внутренний список `componentsToRegister`. `.get()` возвращает immutable `IntegrationFlow` с этим списком.
+>
+> Когда `IntegrationFlow` объявлен как `@Bean`, при старте контекста:
+> 1. `IntegrationFlowBeanPostProcessor` находит bean типа `IntegrationFlow`.
+> 2. Итерирует по `componentsToRegister` и регистрирует каждый компонент: каналы (`DirectChannel` между шагами), endpoint-ы (`ConsumerEndpointFactoryBean` → `EventDrivenConsumer` или `PollingConsumer`), handler-ы (`ServiceActivatingHandler`, `MessageFilter`, `MessageTransformer`).
+> 3. Каждый endpoint реализует `SmartLifecycle`, что означает: при `ApplicationContext.refresh()` Spring вызывает `start()` в порядке `phase` (по умолчанию `Integer.MAX_VALUE` для endpoints, что значит «стартуют последними»).
+> 4. После старта endpoint-ы подписываются на свои `inputChannel` — flow начинает обрабатывать входящие сообщения.
+>
+> Альтернатива — динамическая регистрация через `IntegrationFlowContext.registration(flow).register()` (runtime), которая полезна для multi-tenant сценариев или горячих изменений.
+>
+> **Пример:**
+> ```java
+> @Bean
+> public IntegrationFlow ordersPipeline(OrderService service, KafkaTemplate<String,String> kafka) {
+>     return IntegrationFlow
+>         .from(Kafka.messageDrivenChannelAdapter(consumerFactory, "orders-in"))
+>         .transform(Transformers.fromJson(Order.class))
+>         .filter((Order o) -> o.amount().signum() > 0,
+>             f -> f.discardChannel("rejectedOrders"))
+>         .<Order, String>route(o -> o.type().name(),
+>             m -> m.subFlowMapping("EXPRESS", sf -> sf.handle(service::express))
+>                   .subFlowMapping("NORMAL", sf -> sf.handle(service::normal)))
+>         .transform(Transformers.toJson())
+>         .handle(Kafka.outboundChannelAdapter(kafka).topic("orders-out"))
+>         .get();
+> }
+> ```
+>
+> **Когда применять:** Java DSL — рекомендуемый способ описания flow в современных Spring Integration приложениях. XML-конфигурация — legacy, аннотации (`@ServiceActivator`, `@Filter`, и т. д.) — для отдельных endpoint-ов в обычных bean-классах.
+>
+> **Подводные камни:**
+> - **Анонимные каналы**: между шагами DSL создаёт анонимные `DirectChannel` с генерированными именами. Если нужен named channel для метрик/monitoring — явный `.channel("name")` между шагами.
+> - **Type-inference при `.<Source,Target>route()`**: Java не всегда корректно выводит generics, требуются explicit type witnesses.
+> - **`flow.get()` vs `flowReturning(...).get()`**: первый не возвращает результат, второй возвращает Mono/Future — важно для Gateway request-reply.
+> - **Lifecycle ordering**: если flow использует bean, который ещё не готов, нужны `@DependsOn` или `phase` настройка endpoint-ов.
+>
+> **Связанные вопросы:** [[Q4]] — Gateway как точка входа в flow; [[Q1]] — DSL-методы соответствуют EIP-паттернам; [[Q8]] — Kafka adapter в DSL.
+>
+> ---
+>
+> #### C) Java DSL — это просто синтаксический сахар над XML, под капотом всё компилируется в `<int:chain>` XML и парсится — ❌ Неверно
+>
+> **Что на самом деле:** Java DSL и XML — параллельные API. DSL **напрямую** создаёт Java-объекты `IntegrationFlow`, без промежуточной XML-генерации. Это даёт type-safety, IDE-autocomplete, refactoring-support и compile-time проверки.
+>
+> **Откуда путаница:** XML был первым API Spring Integration (2007), DSL появился в 4.0 (2014). Многие думают, что новый API строится поверх старого.
+>
+> **Если бы это было правдой:** при ошибке в DSL стек-трейс упоминал бы XML-парсер. На практике стек идёт через `IntegrationFlowBuilder` напрямую.
+>
+> ---
+>
+> #### D) Каждый метод DSL (например, `.filter`) создаёт новый `IntegrationFlow` — это immutable builder в стиле `Stream` API — ❌ Неверно
+>
+> **Что на самом деле:** `IntegrationFlowBuilder` — **mutable** builder (как `StringBuilder`). Каждый метод модифицирует внутренний список `componentsToRegister` и возвращает `this`. Это отличается от immutable Stream API. Reuse одного builder между двумя flow невозможен.
+>
+> **Откуда путаница:** chaining-синтаксис похож на Stream/Optional, но Spring Integration предпочёл mutable builder для производительности и простоты.
+>
+> **Если бы это было правдой:** можно было бы делать `var base = flow.from(...).transform(...);` и переиспользовать `base` в двух потоках. На практике это приведёт к двойной регистрации компонентов.
+
+## Q6. Как реализовать Splitter и Aggregator?
 
 **Splitter** — разбивает одно сообщение с коллекцией на несколько отдельных:
 
