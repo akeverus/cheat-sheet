@@ -12,7 +12,7 @@ aliases:
   - "Java Functional Interfaces"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Java Functional Interfaces`
 
@@ -1313,10 +1313,97 @@ list.forEach(x -> counter[0]++);  // изменяем элемент, а не с
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Можно ли выбросить checked exception из лямбды? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Почему лямбда может читать поле `this.counter` и инкрементировать его, но не может изменить локальную переменную `int n = 0`?
+>
+> ---
+>
+> #### A) Лямбды вообще не могут изменять состояние — это чисто функциональный паттерн без mutation — ❌ Неверно
+>
+> **Что на самом деле:** лямбды **могут** изменять состояние через поля объекта (heap), через массивы (`int[] arr = {0}; lambda → arr[0]++`), через AtomicInteger и другие изменяемые контейнеры. Запрет касается только локальных переменных (стек-фрейма).
+>
+> **Откуда путаница:** функциональный стиль действительно поощряет immutability, но Java лямбды не enforce этого.
+>
+> **Если бы это было правдой:** `forEach(x -> total[0] += x)` не работал бы — но это легитимный приём.
+>
+> ---
+>
+> #### B) Локальные переменные хранятся в стеке метода и могут «уйти» до выполнения лямбды; capture делается **by-value** — захватывается копия значения. Поля объекта в heap и доступны через ссылку — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Когда метод возвращает управление, его **stack frame** удаляется. Если лямбда захватила локальную переменную и сохранилась где-то долгоиграющем (например, в коллекции listener'ов), стек переменной уже нет — обращение по адресу было бы UB. Чтобы это работало, JVM **копирует** значение локальной переменной внутрь лямбда-объекта при создании.
+>
+> Поскольку это копия, изменение «оригинала» не было бы видно лямбде, а изменение копии не было бы видно вне лямбды. Чтобы избежать confusing semantics, Java **запрещает изменение** локальной переменной если она captured лямбдой — она должна быть `final` или **effectively final** (де-факто не меняется).
+>
+> Поля объекта (`this.counter`) — другая история. Они в **heap**, доступны через ссылку `this`. Лямбда захватывает `this` (тоже by-value, но это всего лишь ссылка), и через эту ссылку можно мутировать поле. Это **не thread-safe** (нужны `volatile`/`AtomicInteger`/lock'и), но компилируется.
+>
+> **Пример:**
+> ```java
+> class Counter {
+>     int field = 0;
+>
+>     void demo() {
+>         int local = 0;
+>
+>         // ОК: чтение local
+>         Runnable r1 = () -> System.out.println(local);
+>
+>         // ОШИБКА КОМПИЛЯЦИИ: local больше не effectively final
+>         // local++;  // если раскомментить — лямбда выше не скомпилируется
+>
+>         // ОК: мутируем поле (через this)
+>         Runnable r2 = () -> field++;  // компилируется, но не thread-safe
+>         r2.run();
+>         System.out.println(field);  // 1
+>
+>         // Workaround для мутации «локального» состояния:
+>         int[] holder = {0};  // массив — effectively final ссылка
+>         Runnable r3 = () -> holder[0]++;  // компилируется
+>         r3.run();
+>         System.out.println(holder[0]);  // 1
+>
+>         AtomicInteger atomic = new AtomicInteger(0);  // thread-safe вариант
+>         Runnable r4 = () -> atomic.incrementAndGet();
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Запрет мутации локальных** — чаще всего благо: предотвращает race conditions в multithreading.
+> - **AtomicInteger/Atomic*** — правильный способ счётчиков в параллельных лямбдах (`stream.parallel().forEach(x -> count.incrementAndGet())`).
+> - **`int[1]` holder hack** — для однопоточного кода, когда нужен mutable «refer cell». Менее идиоматично, но иногда самый простой workaround.
+> - **Stream API alternatives**: вместо мутирующего forEach часто лучше `.reduce()`, `.collect()`, `.count()` — функциональные альтернативы без mutation.
+>
+> **Подводные камни:**
+> - **Effectively final ≠ полная иммутабельность**: переменная-ссылка может быть «effectively final», но объект по ссылке мутируется. `final List<String> list = new ArrayList<>(); list.add(...)` — OK, лямбда видит изменения.
+> - **Race conditions через holder[]**: `int[] counter = {0}; stream.parallel().forEach(x -> counter[0]++)` — НЕ thread-safe, потеряете инкременты. Нужен AtomicInteger или `.count()`.
+> - **Capture огромных объектов**: если лямбда захватывает `this`, удерживает весь outer объект. Memory leak'и через event listener'ы.
+> - **Java vs Kotlin**: Kotlin позволяет `var` capture в inline-функциях; Java НЕТ. Это конструктивное отличие, не баг.
+>
+> **Связанные вопросы:** [[Q3]] — лямбда vs анонимный класс (capture); [[Q1]] — SAM target type; [[Q13]] — checked exceptions в лямбдах.
+>
+> ---
+>
+> #### C) Это историческое ограничение из Java 8, отменённое в Java 17 — теперь можно изменять любые переменные — ❌ Неверно
+>
+> **Что на самом деле:** правило effectively final действует и в Java 21. Это **спецификация языка** (JLS §15.27.2), а не временное ограничение. Никаких изменений за все версии Java не было.
+>
+> **Откуда путаница:** Java постоянно эволюционирует (records, sealed, pattern matching). Кажется, что любое ограничение когда-то снимут.
+>
+> **Если бы это было правдой:** Java 17/21 код мог бы менять captured local, но он бы вёл себя «как Kotlin var capture» — а такого нет.
+>
+> ---
+>
+> #### D) Это требование Hibernate/JPA — они не могут сериализовать мутабельные captured переменные — ❌ Неверно
+>
+> **Что на самом деле:** ограничение в Java spec, не связано с Hibernate. Действует одинаково в любом коде, даже без JPA/persistence.
+>
+> **Откуда путаница:** JPA имеет свои ограничения на lazy fetching и proxy, но эти ограничения совершенно не пересекаются с лямбдами.
+>
+> **Если бы это было правдой:** лямбды в Standalone Spring-Boot-приложении без JPA вели бы себя по-другому. Это легко проверить — поведение идентично.
+
+## Q13. Можно ли выбросить checked exception из лямбды?
 
 Нет, если функциональный интерфейс не объявляет `throws`. Стандартные интерфейсы (`Function`, `Predicate` и т.д.) не объявляют checked exceptions.
 
@@ -1348,10 +1435,104 @@ ThrowingFunction<String, byte[]> reader = Files::readAllBytes;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как создать собственный функциональный интерфейс? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой подход к работе с `Files.readAllBytes(path)` в `Function<String, byte[]>` корректен и идиоматичен?
+>
+> ---
+>
+> #### A) Прямо передать `Files::readAllBytes` — Java автоматически оборачивает IOException — ❌ Неверно
+>
+> **Что на самом деле:** `Function.apply()` не объявляет `throws IOException` — следовательно `Files::readAllBytes` (бросающий IOException) **не совместим** с `Function<String, byte[]>` на уровне типов. Compile error: `unhandled exception: java.io.IOException`. Никакой автоматической обёртки нет.
+>
+> **Откуда путаница:** хочется верить, что Java «магически» обработает checked exceptions. Но это противоречит дизайну функциональных интерфейсов.
+>
+> **Если бы это было правдой:** не нужны были бы UncheckedIOException, ThrowingFunction-обёртки и Throwables.propagate из Guava — все они существуют именно из-за этой проблемы.
+>
+> ---
+>
+> #### B) Обернуть в try/catch внутри лямбды, бросая `UncheckedIOException` (или RuntimeException) — стандартный idiom Java для интеграции I/O с Stream API — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Поскольку стандартные функциональные интерфейсы (`Function`, `Predicate`, `Consumer`, `Supplier`) не объявляют `throws`, любой checked exception нужно либо **перепаковать в unchecked**, либо использовать **кастомный** функциональный интерфейс с `throws`.
+>
+> Idiomatic подход — wrap в `UncheckedIOException` (для IOException) или `RuntimeException` (для общих). `UncheckedIOException` появился в Java 8 специально для этого: сохраняет исходный IOException как cause, позволяя getCause() извлечь оригинал в catch-блоке выше по стеку.
+>
+> **Пример:**
+> ```java
+> // Idiomatic: unchecked wrapping
+> Function<String, byte[]> reader = path -> {
+>     try {
+>         return Files.readAllBytes(Path.of(path));
+>     } catch (IOException e) {
+>         throw new UncheckedIOException(e);  // preserves original
+>     }
+> };
+>
+> // Использование в Stream:
+> Map<String, byte[]> data = paths.stream()
+>     .collect(Collectors.toMap(p -> p, reader));
+> // если IOException — UncheckedIOException пропагируется
+>
+> // Кастомный throwing-интерфейс (другой путь):
+> @FunctionalInterface
+> public interface ThrowingFunction<T, R, E extends Exception> {
+>     R apply(T t) throws E;
+>
+>     default Function<T, R> unchecked() {
+>         return t -> {
+>             try { return apply(t); }
+>             catch (Exception e) {
+>                 throw new RuntimeException(e);
+>             }
+>         };
+>     }
+> }
+>
+> ThrowingFunction<String, byte[], IOException> tf = path -> Files.readAllBytes(Path.of(path));
+> Function<String, byte[]> wrapped = tf.unchecked();  // адаптер
+>
+> // Утилита-обёртка (популярная):
+> Function<String, byte[]> sneaky = Unchecked.function(Files::readAllBytes);
+> // jOOL/Vavr/lombok @SneakyThrows предоставляют такие хелперы
+> ```
+>
+> **Когда применять:**
+> - **UncheckedIOException** — для I/O в Java 8+. Семантически прозрачно для читателя кода.
+> - **RuntimeException(e)** — для произвольных checked. Менее точно, но универсально.
+> - **Custom ThrowingFunction** — если нужно сохранять checked-семантику в API. Например, в публичных библиотеках.
+> - **try/catch внутри stream'а** — приемлемо для одиночных edge cases, но если повторяется — лучше вынести wrapper.
+>
+> **Подводные камни:**
+> - **Информация о exception теряется**: `RuntimeException(e)` ОК для большинства, но `UncheckedIOException` лучше — типизированный wrapper позволяет catch'ить именно IO.
+> - **`SneakyThrows` (Lombok)** — компиляторный хак, который позволяет бросать checked как unchecked. Опасен: компилятор не предупредит вверху по стеку, чтобы catch'ить IOException. Используйте осторожно.
+> - **Optional+exception**: лучше альтернатива — вместо throwing превратить в `Optional<R>` или `Result<R, E>` (sealed pattern в Java 21).
+> - **CompletableFuture + checked**: внутри `.thenApply(Function)` тот же запрет. Нужен `.thenApplyAsync` с custom wrap'ом или CompletableFuture.completeExceptionally.
+> - **Streams parallel + checked wrapper**: исключения могут оборачиваться `RuntimeException` дважды (ваш + Spliterator). Распаковывайте через `getCause()` в catch.
+>
+> **Связанные вопросы:** [[Q1]] — SAM contract; [[Q14]] — кастомные функциональные интерфейсы с throws; [[Q7]] — Callable как «throwing Supplier».
+>
+> ---
+>
+> #### C) Использовать `Callable<byte[]>` вместо `Function<String, byte[]>` — Callable поддерживает checked exceptions — ❌ Неверно
+>
+> **Что на самом деле:** `Callable<T>` — это `T call() throws Exception`, **без входных аргументов**. Не подходит как замена `Function<String, byte[]>` потому что не принимает String. Можно использовать в other API (`ExecutorService.submit`), но это другой scope.
+>
+> **Откуда путаница:** оба поддерживают/не поддерживают checked exceptions. Но Callable семантически отличается — нет «функции от X».
+>
+> **Если бы это было правдой:** `Map<String, byte[]> data = paths.stream().collect(Collectors.toMap(p -> p, Callable<?>::call))` — но Stream методы не принимают Callable, нужен Function.
+>
+> ---
+>
+> #### D) Использовать `@FunctionalInterface` с `throws` — компилятор тогда разрешит лямбде бросать checked — ❌ Неверно
+>
+> **Что на самом деле:** добавить `throws` можно только в **свой** интерфейс. `Function<T, R>.apply()` — стандартный JDK интерфейс, его сигнатуру нельзя изменить. Создание кастомного интерфейса — действительно валидный путь (см. правильный ответ), но это не «добавить throws к Function».
+>
+> **Откуда путаница:** ответ частично правильный — кастомный интерфейс с throws работает. Но **вместе с Function он не совмещается** без обёртки.
+>
+> **Если бы это было правдой:** мы могли бы аннотировать `Function` снаружи и менять его сигнатуру — невозможно в Java (нет structural typing).
+
+## Q14. Как создать собственный функциональный интерфейс?
 
 ```java
 @FunctionalInterface
@@ -1391,10 +1572,110 @@ allValid.validate("user@example.com");  // true
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Java 8](java-8-interview.md) — лямбды, Stream API, Optional как нововведения Java 8 ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда оправдано создавать кастомный функциональный интерфейс вместо использования стандартных (`Function`, `Predicate` и т.д.)?
+>
+> ---
+>
+> #### A) Никогда — стандартные интерфейсы покрывают все случаи; кастомные интерфейсы лишь усложняют код — ❌ Неверно
+>
+> **Что на самом деле:** стандартные интерфейсы хороши для generic-операций (filter, map, validate), но имеют недостатки: нет throws checked exceptions, нет доменной семантики (`Function<Order, Receipt>` — что это? валидация? трансформация? сериализация?), нет доменно-специфичных default-методов.
+>
+> **Откуда путаница:** разработчики часто используют `Function<Order, Receipt>` как «универсальный молоток» и думают что этого достаточно. На практике через 6 месяцев читатель кода не понимает что это значит.
+>
+> **Если бы это было правдой:** не существовало бы `Comparator<T>` (можно было бы заменить `BiFunction<T, T, Integer>`), `Runnable` (Consumer<Void>?), `Callable` (Supplier<T> with throws — но именно throws нет в Supplier). Эти кастомные SAM существуют в JDK именно ради ясности.
+>
+> ---
+>
+> #### B) Когда нужна доменная семантика (`Validator`, `Renderer`, `RetryStrategy`), `throws` для checked exceptions, или специфичные `default`-методы для домена — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Три категории оправданных случаев:
+>
+> 1. **Семантическая ясность**: `Validator<Order>` мгновенно читается как «проверка валидности заказа». `Function<Order, Boolean>` или `Predicate<Order>` требует контекста чтобы понять что это. Особенно важно для публичных API.
+>
+> 2. **Checked exceptions**: стандартные интерфейсы НЕ объявляют throws. Если ваш callback может бросать `SQLException`, `IOException`, etc — нужен custom interface с `throws E` (или `throws Exception`).
+>
+> 3. **Доменно-специфичные default-методы**: `Validator.and()`, `Validator.or()`, `Validator.named(...)`, `RetryStrategy.withMaxAttempts(int)`. Стандартные интерфейсы не дадут такого без обёрток.
+>
+> **Пример:**
+> ```java
+> // Семантически — обычный Predicate, но удобнее как Validator:
+> @FunctionalInterface
+> public interface Validator<T> {
+>     ValidationResult validate(T value);  // не boolean — детализированный результат
+>
+>     default Validator<T> and(Validator<T> other) {
+>         return value -> {
+>             ValidationResult r1 = this.validate(value);
+>             if (!r1.isValid()) return r1;
+>             return other.validate(value);
+>         };
+>     }
+>
+>     default Validator<T> withMessage(String customMsg) {
+>         return value -> {
+>             ValidationResult r = this.validate(value);
+>             return r.isValid() ? r : ValidationResult.fail(customMsg);
+>         };
+>     }
+> }
+>
+> // Использование в API:
+> public class OrderService {
+>     private final Validator<Order> validator;
+>     public OrderService(Validator<Order> v) { this.validator = v; }
+>     // читатель сразу видит назначение — валидация
+> }
+>
+> // Checked exception (custom):
+> @FunctionalInterface
+> public interface RestCallback<T> {
+>     T call(HttpRequest req) throws IOException, HttpException;
+> }
+>
+> RestCallback<User> fetch = req -> userClient.send(req);  // checked exceptions ОК
+> ```
+>
+> **Когда применять:**
+> - **Domain-Driven Design**: интерфейсы — часть ubiquitous language. `OrderValidator`, `PaymentProcessor`, `EventHandler` — лучше чем `Predicate`/`Function`/`Consumer`.
+> - **Library API**: публичные интерфейсы должны быть expressive — пользователи запоминают `RetryStrategy.exponentialBackoff()` лучше чем `Function<Integer, Duration>`.
+> - **Checked exceptions handling**: SQL, JDBC, file I/O — стандартные интерфейсы не подходят.
+> - **Builder-style chaining**: default-методы для fluent композиции (`.and().withMessage().memoize()`).
+>
+> **Подводные камни:**
+> - **Слишком много кастомных интерфейсов** — обратная крайность: каждый Function превращается в свой type. Создавайте только когда есть реальная семантическая ценность.
+> - **Совместимость с Stream API**: `stream.filter(Predicate)` не примет ваш кастомный `Validator<T>` напрямую. Нужен adapter: `.filter(validator::isValid)`.
+> - **`@FunctionalInterface` обязательно**: без аннотации случайное добавление второго abstract метода поломает SAM, и лямбды перестанут компилироваться без compile-error на самом интерфейсе.
+> - **Generic variance**: `Validator<? super Order>` принимает `Validator<Object>` — это нужно явно объявить в API: `void validateAll(Validator<? super T> v)`.
+> - **Эволюция**: если позже захотите добавить новый abstract метод (например, batch validation) — это **сломает** всех клиентов с лямбдами. default-методы — безопасный путь расширения.
+>
+> **Связанные вопросы:** [[Q1]] — определение SAM; [[Q2]] — `@FunctionalInterface` compile-time check; [[Q13]] — checked exceptions в лямбдах.
+>
+> ---
+>
+> #### C) Только когда нужно более 2 аргументов — стандартные интерфейсы ограничены BiFunction (2 аргумента) — ❌ Неверно
+>
+> **Что на самом деле:** хотя стандартные интерфейсы действительно ограничены 2 arity (BiFunction, BiPredicate, BiConsumer), это **одна из** причин создания кастомных, но не единственная. Семантическая ясность и throws — другие важные мотивации.
+>
+> **Откуда путаница:** ответ частично верен — для tri-arity и выше нужен custom (например, `TriFunction<A, B, C, R>`). Но «только когда» — слишком ограничительно.
+>
+> **Если бы это было правдой:** все интерфейсы у которых ≤2 аргумента было бы запрещено делать custom — но `Comparator`, `Validator` в реальном коде имеют ровно 1-2 аргумента и оправданы.
+>
+> ---
+>
+> #### D) Только для serialization-purposes — лямбды нельзя сериализовать без кастомного `Serializable` интерфейса — ❌ Неверно
+>
+> **Что на самом деле:** лямбды **можно** сериализовать через `Serializable` cast: `Runnable r = (Runnable & Serializable) () -> ...`. Серилизация — не главный мотив для кастомных интерфейсов.
+>
+> **Откуда путаница:** есть нюансы с сериализацией лямбд (компилятор-зависимая внутренняя структура), но это редкий use-case.
+>
+> **Если бы это было правдой:** не было бы смысла в `Validator`, `RetryStrategy` и других domain-интерфейсах, которые не сериализуются.
+
+## See also
+
+- [Java 8](java-8-interview.md) — лямбды, Stream API, Optional как нововведения Java 8
 - [Java Stream API](java-stream-interview.md) — Function, Predicate, Consumer в Stream
 - [Java Optional](java-optional-interview.md) — Supplier в orElseGet, Consumer в ifPresent
 - [Java Concurrency](java-concurrency-interview.md) — Callable, Runnable в многопоточности
