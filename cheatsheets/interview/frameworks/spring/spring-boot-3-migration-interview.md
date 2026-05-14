@@ -340,10 +340,86 @@ import jakarta.validation.constraints.NotNull;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Что такое HTTP Interface Clients в Spring 6? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие `javax.*` пакеты ОСТАЛИСЬ в Spring Boot 3 (НЕ переименованы в `jakarta.*`)?
+>
+> ---
+>
+> #### A) Все `javax.*` пакеты переименованы в `jakarta.*` без исключений — ❌ Неверно
+>
+> **Что на самом деле:** **JDK-пакеты остались** — `javax.sql.DataSource`, `javax.crypto.*`, `javax.net.ssl.*`, `javax.management.*` (JMX), `javax.naming.*` (JNDI). Эти пакеты — часть Java SE (rt.jar / java.base module), а не Java EE; Oracle их контролирует и не передавал в Eclipse Foundation.
+>
+> **Откуда путаница:** при OpenRewrite migration recipe и автоматическом «find-replace javax→jakarta» все импорты заменяются скопом. Без точного понимания границы Java SE / Java EE разработчики ломают рабочий код.
+>
+> **Если бы это было правдой:** `javax.sql.DataSource` стал бы `jakarta.sql.DataSource`, и любой код с `@Autowired DataSource ds` не компилировался бы. Hikari, Tomcat JDBC pool тоже сломались бы.
+>
+> ---
+>
+> #### B) Остался только `javax.sql.DataSource` (JDBC API в JDK), всё остальное мигрировано — ❌ Неверно
+>
+> **Что на самом деле:** не только DataSource — целый набор JDK-пакетов остался: `javax.crypto.*` (Cipher, KeyGenerator), `javax.net.ssl.*` (SSLContext), `javax.management.*` (MBean, MXBean), `javax.naming.*` (JNDI), `javax.security.auth.*` (JAAS).
+>
+> **Откуда путаница:** DataSource — самый известный пример «javax, который остался», поэтому многие запоминают только его. Но если копнуть глубже — JDK содержит десятки `javax.*` пакетов.
+>
+> **Если бы это было правдой:** код, использующий `Cipher.getInstance("AES")` из `javax.crypto`, ломался бы. На практике крипто-операции работают штатно в SB 3.
+>
+> ---
+>
+> #### C) Пакеты из JDK остались `javax.*` (sql, crypto, net.ssl, management, naming, security); Java EE пакеты мигрировали на `jakarta.*` (persistence, servlet, validation, jms, mail, annotation, ws.rs) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Граница простая: **если пакет входит в JDK (rt.jar / java.base / java.xml и т.д.) — javax. Если из Java EE / Jakarta EE spec — jakarta**.
+>
+> **Остались javax (Java SE / JDK):**
+> - `javax.sql.*` — JDBC API
+> - `javax.crypto.*` — JCE (Java Cryptography Extension)
+> - `javax.net.*`, `javax.net.ssl.*` — SSL/networking
+> - `javax.management.*` — JMX (MBean)
+> - `javax.naming.*` — JNDI
+> - `javax.security.auth.*` — JAAS
+> - `javax.xml.*` — JAXP, JAX-WS (зависит от модуля)
+>
+> **Мигрировали на jakarta (Java EE → Jakarta EE):**
+> - `jakarta.persistence.*` — JPA
+> - `jakarta.servlet.*` — Servlet API
+> - `jakarta.validation.*` — Bean Validation
+> - `jakarta.jms.*` — JMS
+> - `jakarta.mail.*` — Mail
+> - `jakarta.annotation.*` — `@PostConstruct`, `@PreDestroy`, `@Resource`
+> - `jakarta.ws.rs.*` — JAX-RS
+> - `jakarta.transaction.*` — JTA
+>
+> **Пример:**
+> ```java
+> import javax.sql.DataSource;            // JDK — остался javax
+> import javax.crypto.Cipher;              // JDK — остался javax
+> import javax.naming.InitialContext;      // JDK — остался javax
+>
+> import jakarta.persistence.Entity;       // Java EE → jakarta
+> import jakarta.servlet.http.HttpServlet; // Java EE → jakarta
+> import jakarta.validation.Valid;         // Java EE → jakarta
+> ```
+>
+> **Когда применять:** при ручной правке импортов после OpenRewrite. Тест: если класс есть в `java.base`/`java.sql`/`java.xml`/`java.management` модулях JDK 17 — оставлять javax.
+>
+> **Подводные камни:** `javax.annotation.Resource` (CDI) мигрировал в `jakarta.annotation.Resource`, но `javax.annotation.processing.*` (часть JDK для annotation processors) остался javax. Также `@PostConstruct`/`@PreDestroy` теперь в `jakarta.annotation.*`, но раньше jaxws-api тащил их через `javax.annotation`.
+>
+> **Связанные вопросы:** [[Q2]] — причины миграции javax→jakarta; [[Q3]] — порядок миграции SB 2.7→3.x; [[Q15]] — типичные проблемы.
+>
+> ---
+>
+> #### D) `javax.transaction.*` (JTA) остался — потому что входит в JDK через `java.transaction.xa` модуль — ❌ Неверно
+>
+> **Что на самом деле:** `javax.transaction.xa.*` (XAResource, Xid) действительно остался в JDK (`java.transaction.xa` module). Но **сам `javax.transaction.*` (UserTransaction, TransactionManager)** — это Java EE / JTA spec, и он **мигрировал** в `jakarta.transaction.*`. Только подпакет `xa` остался.
+>
+> **Откуда путаница:** имя похожее (`javax.transaction`), и разница в подпакете легко проходит мимо. Запутаться особенно легко если код использует только XAResource без UserTransaction.
+>
+> **Если бы это было правдой:** в SB 3 можно было бы использовать `@Inject UserTransaction` из `javax.transaction` — но нет, нужен `jakarta.transaction.UserTransaction`.
+>
+> ---
+>
+> ## Q5. Что такое HTTP Interface Clients в Spring 6?
 
 Декларативный HTTP-клиент (аналог Feign), встроенный в Spring Framework 6:
 
@@ -388,10 +464,84 @@ WeatherClient weatherClient = HttpServiceProxyFactory
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Что такое Problem Details (RFC 7807) в Spring Boot 3? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое HTTP Interface Clients (`@HttpExchange`) в Spring Framework 6 и чем они отличаются от Feign?
+>
+> ---
+>
+> #### A) HTTP Interface Clients — обёртка над OpenFeign внутри Spring Cloud, требует `@EnableFeignClients` — ❌ Неверно
+>
+> **Что на самом деле:** HTTP Interface Clients — **встроенная** в Spring Framework 6 фича (не Spring Cloud, не Feign). Создаются через `HttpServiceProxyFactory` поверх `WebClient` или `RestClient`. `@EnableFeignClients` — отдельная аннотация Spring Cloud OpenFeign, никак не связана с `@HttpExchange`.
+>
+> **Откуда путаница:** оба механизма используют декларативные интерфейсы с HTTP-аннотациями (`@GetMapping`-подобные). Внешне выглядят похоже, поэтому многие думают что Spring встроил Feign в core.
+>
+> **Если бы это было правдой:** для работы `@HttpExchange` нужна была бы зависимость на `spring-cloud-starter-openfeign` — но это работает чисто на `spring-web` без Spring Cloud.
+>
+> ---
+>
+> #### B) Декларативный HTTP-клиент в Spring Framework 6, использует `@HttpExchange` / `@GetExchange` / `@PostExchange`; создаётся через `HttpServiceProxyFactory` поверх WebClient или RestClient; не требует Spring Cloud — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> HTTP Interface Clients — встроенный в Spring Framework 6 механизм генерации HTTP-клиентов из аннотированных интерфейсов:
+>
+> 1. **Аннотации**: `@HttpExchange` (универсальная), `@GetExchange`, `@PostExchange`, `@PutExchange`, `@DeleteExchange`, `@PatchExchange`.
+> 2. **Параметры**: `@PathVariable`, `@RequestParam`, `@RequestBody`, `@RequestHeader`, `@CookieValue` — те же что в Spring MVC.
+> 3. **Адаптеры**: `WebClientAdapter` (реактивный), `RestClientAdapter` (блокирующий, SB 3.2+), `RestTemplateAdapter` (deprecated).
+> 4. **Возвращаемые типы**: блокирующие (`User`), реактивные (`Mono<User>`, `Flux<User>`), `CompletableFuture`.
+>
+> **Пример:**
+> ```java
+> interface WeatherClient {
+>     @GetExchange("/api/weather/{city}")
+>     Weather getWeather(@PathVariable String city);
+>
+>     @PostExchange("/api/weather")
+>     WeatherReport reportWeather(@RequestBody WeatherData data);
+>
+>     @GetExchange("/api/forecast")
+>     Flux<Forecast> getForecast(@RequestParam String city);
+> }
+>
+> @Bean
+> WeatherClient weatherClient(WebClient.Builder builder) {
+>     WebClient client = builder.baseUrl("https://api.weather.com").build();
+>     return HttpServiceProxyFactory
+>         .builderFor(WebClientAdapter.create(client))
+>         .build()
+>         .createClient(WeatherClient.class);
+> }
+> ```
+>
+> **Когда применять:** замена `RestTemplate` или Feign в новых сервисах. Особенно удобно для микросервисов, где хочется типизированных контрактов API. Не нужен Spring Cloud — `spring-web` достаточно.
+>
+> **Подводные камни:** нет встроенной поддержки service discovery (как у Feign+Eureka) — нужно вручную задавать baseUrl. Нет circuit breaker — интегрируется через Resilience4j вручную. Конфигурация ProxyFactory verbose — можно обернуть в свой `@Configuration`.
+>
+> **Связанные вопросы:** [[Q12]] — RestClient (Spring Boot 3.2+); [[Q1]] — ключевые изменения Spring Boot 3.
+>
+> ---
+>
+> #### C) `@HttpExchange` — это просто алиас для `@RequestMapping`, работает только внутри `@RestController` — ❌ Неверно
+>
+> **Что на самом деле:** `@HttpExchange` создан для **клиентских** интерфейсов (вызов remote API), а не для server-side контроллеров. Объявляется на интерфейсе, и Spring через `HttpServiceProxyFactory` генерирует реализацию — proxy, которая делает HTTP-запросы наружу. `@RequestMapping` — server-side, обрабатывает входящие запросы.
+>
+> **Откуда путаница:** аннотации действительно похожи (HTTP method + path + параметры), и неопытному может показаться что это server-side рефакторинг.
+>
+> **Если бы это было правдой:** не было бы смысла в `HttpServiceProxyFactory` и `WebClientAdapter` — но они нужны именно потому, что это клиентская абстракция.
+>
+> ---
+>
+> #### D) HTTP Interface Clients генерируют классы при компиляции через APT (annotation processor), как MapStruct — ❌ Неверно
+>
+> **Что на самом деле:** HTTP Interface Clients **не используют APT** — они работают **в runtime через JDK Dynamic Proxy** (`Proxy.newProxyInstance`). `HttpServiceProxyFactory.createClient()` создаёт прокси-объект, который при вызове методов формирует HTTP-запрос. Нет генерации .class файлов на этапе компиляции.
+>
+> **Откуда путаница:** MapStruct, Lombok, и некоторые другие Spring-связанные тулзы используют APT. Аналогия может ввести в заблуждение.
+>
+> **Если бы это было правдой:** в `target/generated-sources/` появлялись бы `WeatherClientImpl.java` — но их нет; интерфейс остаётся интерфейсом, и runtime создаёт proxy.
+>
+> ---
+>
+> ## Q6. Что такое Problem Details (RFC 7807) в Spring Boot 3?
 
 Стандарт для JSON error responses в REST API:
 
@@ -437,10 +587,106 @@ Content-Type: `application/problem+json`.
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Что такое GraalVM Native Image и как Spring Boot 3 его поддерживает? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое Problem Details (RFC 7807) и как Spring Boot 3 их реализует?
+>
+> ---
+>
+> #### A) Problem Details — Spring-only стандарт, используется только в `@RestControllerAdvice` через `@ExceptionHandler` — ❌ Неверно
+>
+> **Что на самом деле:** Problem Details — это **IETF RFC 7807**, открытый стандарт описания ошибок в HTTP API. Не Spring-специфичен — поддерживается Quarkus, Micronaut, ASP.NET, FastAPI. Content-Type `application/problem+json` стандартизирован.
+>
+> **Откуда путаница:** в Spring Boot 3 Problem Details впервые появился из коробки, и многие думают что это Spring-фича. На самом деле Spring 3 встроил поддержку существующего стандарта.
+>
+> **Если бы это было правдой:** микросервисы Spring и Quarkus в одной системе не могли бы общаться через стандартные error responses — но они могут, потому что стандарт интероперабельный.
+>
+> ---
+>
+> #### B) Стандарт IETF RFC 7807; JSON-объект с полями `type`, `title`, `status`, `detail`, `instance` + любые custom; Content-Type `application/problem+json`; Spring Boot 3 включает по умолчанию через property `spring.mvc.problemdetails.enabled` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Problem Details (RFC 7807) определяет стандарт JSON-структуры для error response:
+>
+> | Поле | Описание |
+> |---|---|
+> | `type` | URI описания типа ошибки (документация) |
+> | `title` | короткое человекочитаемое название |
+> | `status` | HTTP status code (дублирует header) |
+> | `detail` | подробное описание для этого случая |
+> | `instance` | URI запроса (опционально) |
+> | `*custom*` | extension members (account_balance, retry_after_seconds) |
+>
+> Включение в Spring Boot 3:
+> ```yaml
+> spring:
+>   mvc:
+>     problemdetails:
+>       enabled: true
+>   webflux:
+>     problemdetails:
+>       enabled: true   # для WebFlux отдельно
+> ```
+>
+> **Пример:**
+> ```java
+> @RestControllerAdvice
+> public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+>     @ExceptionHandler(InsufficientFundsException.class)
+>     public ProblemDetail handleInsufficientFunds(InsufficientFundsException ex) {
+>         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+>             HttpStatus.PAYMENT_REQUIRED, ex.getMessage());
+>         problem.setType(URI.create("https://example.com/errors/insufficient-funds"));
+>         problem.setTitle("Insufficient Funds");
+>         problem.setProperty("accountBalance", ex.getBalance());
+>         return problem;
+>     }
+> }
+> ```
+>
+> Response:
+> ```json
+> {
+>   "type": "https://example.com/errors/insufficient-funds",
+>   "title": "Insufficient Funds",
+>   "status": 402,
+>   "detail": "Balance $10, purchase requires $100",
+>   "instance": "/orders/12345/purchases/789",
+>   "accountBalance": 10
+> }
+> ```
+>
+> **Когда применять:** все публичные REST API — особенно multi-language / multi-client (web + iOS + Android). Дает клиентам типизированный способ разбора ошибок (по `type` URI можно генерировать локализованные сообщения).
+>
+> **Подводные камни:** `Spring 6.0` не включал Problem Details по умолчанию — нужно явно ставить property. `Spring Boot 3.2+` упростил, но для `@ControllerAdvice` всё равно нужен `extends ResponseEntityExceptionHandler`. Кастомные fields добавляются через `setProperty`, не как поля POJO.
+>
+> **Связанные вопросы:** [[Q1]] — ключевые изменения Spring Boot 3; [[Q5]] — HTTP Interface Clients (тоже Spring 6 фича).
+>
+> ---
+>
+> #### C) Problem Details — это XML-стандарт W3C для SOAP error envelopes — ❌ Неверно
+>
+> **Что на самом деле:** RFC 7807 — это IETF (не W3C), и формат — JSON (не XML). Существует XML-вариант `application/problem+xml`, но он редко используется. SOAP имеет свой стандарт SOAP Fault, который никак не связан с Problem Details.
+>
+> **Откуда путаница:** SOAP-эпоха и обилие XML-стандартов могут наводить на мысль, что любой error standard — XML. На самом деле Problem Details рождён для REST/JSON-эры (2016).
+>
+> **Если бы это было правдой:** `ProblemDetail` класс в Spring 6 возвращал бы XML по умолчанию — но он сериализуется через Jackson в JSON.
+>
+> ---
+>
+> #### D) Problem Details доступен только в Spring WebFlux (reactive), Spring MVC не поддерживает — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3 поддерживает Problem Details **в обоих стеках** — Spring MVC и Spring WebFlux. Каждый стек имеет свой property:
+> - `spring.mvc.problemdetails.enabled` — для Spring MVC
+> - `spring.webflux.problemdetails.enabled` — для WebFlux
+>
+> **Откуда путаница:** WebFlux часто ассоциируется с современными фичами (modern reactive stack), и можно решить, что Problem Details — тоже WebFlux-only.
+>
+> **Если бы это было правдой:** все приложения на Spring MVC (большинство production-сервисов) не могли бы использовать стандарт — но они могут, и это основной use-case.
+>
+> ---
+>
+> ## Q7. Что такое GraalVM Native Image и как Spring Boot 3 его поддерживает?
 
 **GraalVM Native Image** — AOT (ahead-of-time) компиляция JVM приложения в нативный executable:
 - Startup ~100ms (vs 2-5s для JVM)
