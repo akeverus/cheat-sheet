@@ -1228,10 +1228,104 @@ class OrderStateMachineTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. State Machine vs Saga Pattern — когда что применять? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой подход к тестированию Spring State Machine даёт максимально полное покрытие и при этом остаётся поддерживаемым?
+>
+> ---
+>
+> #### A) Тестировать только sendEvent + getState — этого достаточно, потому что guards/actions просто мокаются на уровне unit. — ❌ Неверно
+>
+> **Что на самом деле:** при таком подходе вы покрываете "transition table" (откуда-куда), но не валидируете integration guards с Extended State, последовательность entry/exit actions, поведение при guard=false (event-not-accepted), interaction listeners. Полное покрытие FSM требует проверки и негативных сценариев, и Extended State, и listener interaction.
+>
+> **Откуда путаница:** простые туториалы показывают именно sendEvent + assertEquals — это базовое покрытие, но недостаточное для production.
+>
+> **Если бы это было правдой:** в SSM не было бы `StateMachineTestPlan` и `StateMachineTestPlanBuilder` — а они есть именно для сценарных тестов.
+>
+> ---
+>
+> #### B) `StateMachineTestPlanBuilder.<S,E>builder().stateMachine(sm).step()....step().build().test()` позволяет описать сценарий из шагов (sendEvent → expectStates → expectStateChanged), включая ожидания listener callback'ов; для unit-тестов guard/action — мокать `StateContext` через Mockito. — ✓ Верно
+>
+> **Развёрнутое объяснение:** SSM предоставляет `spring-statemachine-test` с DSL `StateMachineTestPlanBuilder`. Каждый шаг описывает: что отправляем (`sendEvent(MSG)`), какое состояние ожидаем (`expectStates(STATE)`), сколько transitions ожидаем (`expectStateChanged(count)`), какие events accepted/rejected. Plan управляет автоматическим ожиданием асинхронных reactor-операций (machine.startReactively, sendEvent возвращает Flux). Для guard/action логики — отдельные unit-тесты с замоканным `StateContext<S,E>`: `when(ctx.getMessageHeader("orderId")).thenReturn("ORD-1"); when(ctx.getExtendedState().get(...)).thenReturn(...)`. Для integration tests — `@SpringBootTest` с реальной машиной и моками внешних сервисов (notification, payment gateway). Для persistence — `@DataJpaTest` + `JpaPersistingStateMachineInterceptor` против H2.
+>
+> **Пример:**
+> ```java
+> @SpringBootTest
+> class OrderFsmTest {
+>     @Autowired
+>     private StateMachineFactory<OrderState, OrderEvent> factory;
+>
+>     @Test
+>     void shouldGoFromNewToConfirmedThroughProcessing() throws Exception {
+>         StateMachine<OrderState, OrderEvent> sm = factory.getStateMachine("test-1");
+>
+>         StateMachineTestPlan<OrderState, OrderEvent> plan =
+>             StateMachineTestPlanBuilder.<OrderState, OrderEvent>builder()
+>                 .stateMachine(sm)
+>                 .step()
+>                     .expectStates(NEW)
+>                     .and()
+>                 .step()
+>                     .sendEvent(MessageBuilder.withPayload(CONFIRM).setHeader("orderId", "ORD-1").build())
+>                     .expectStateChanged(1)
+>                     .expectStates(PROCESSING, PAYMENT_PENDING)  // hierarchical
+>                     .and()
+>                 .step()
+>                     .sendEvent(PAY)
+>                     .expectStateChanged(1)
+>                     .expectStates(PROCESSING, PAYMENT_CONFIRMED)
+>                     .and()
+>                 .build();
+>
+>         plan.test();
+>     }
+>
+>     // Negative scenario — guard блокирует
+>     @Test
+>     void shouldRejectShipBeforePayment() throws Exception {
+>         StateMachine<OrderState, OrderEvent> sm = factory.getStateMachine("test-2");
+>         StateMachineTestPlanBuilder.<OrderState, OrderEvent>builder()
+>             .stateMachine(sm)
+>             .step().expectStates(NEW).and()
+>             .step()
+>                 .sendEvent(SHIP)
+>                 .expectEventNotAccepted(1)        // event отвергнут
+>                 .expectStates(NEW)                // состояние не изменилось
+>                 .and()
+>             .build()
+>             .test();
+>     }
+> }
+> ```
+>
+> **Когда применять:** проверка transition table — обязательно; happy path сценариев — обязательно; negative scenarios (guard rejects) — обязательно; hierarchical/parallel regions — TestPlan видит составное состояние; persistence cycle — отдельный test, restore + sendEvent + persist + verify в БД.
+>
+> **Подводные камни:** забыть `expectEventNotAccepted` в негативных тестах — тест может проходить даже если guard сломался; TestPlan ждёт асинхронных reactor-операций — на медленных CI можно получить timeout, нужен `await` с таймаутом; mock-сервисов в actions требует `@MockBean` (не `@Mock`), чтобы Spring подставил их в action beans.
+>
+> ---
+>
+> #### C) Достаточно ArchUnit-тестов на структуру FSM-конфига — поведение тестируется на уровне E2E через REST API. — ❌ Неверно
+>
+> **Что на самом деле:** ArchUnit проверяет архитектуру (зависимости пакетов), но не поведение FSM. E2E тесты слишком медленные и хрупкие для проверки всех transition combinations — typical FSM имеет N states × M events комбинаций. Unit + TestPlan покрытие — золотая середина: быстро и полно.
+>
+> **Откуда путаница:** в проектах с богатым E2E suite иногда экономят на unit tests, надеясь на E2E coverage.
+>
+> **Если бы это было правдой:** одиночное падение E2E ломало бы все downstream сценарии, и debug FSM становился бы невозможным.
+>
+> ---
+>
+> #### D) Для тестирования нужно сначала сериализовать машину в `StateMachineContext`, восстановить и проверить — без persistence cycle тест не валиден. — ❌ Неверно
+>
+> **Что на самом деле:** persistence cycle — отдельная зона ответственности (`StateMachinePersister` тестов). Тесты transition table должны быть **быстрыми и независимыми** от persistence — это базовая пирамида тестов. Persist/restore проверяется отдельно: `persist(sm, "k") → factory.getStateMachine("k") → restore("k") → expectStates(...)`.
+>
+> **Откуда путаница:** для долгоживущих FSM persistence действительно критична, и хочется проверять её "везде".
+>
+> **Если бы это было правдой:** unit-тесты FSM длились бы минуты из-за инициализации хранилищ — и команда перестала бы их писать.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q4]] — Guard тестируется отдельно через StateContext mock; [[Q5]] — Action delegation в service позволяет unit-тестировать service независимо; [[Q11]] — Listener interactions через `expectStateChanged`.
+
+## Q13. State Machine vs Saga Pattern — когда что применять?
 
 | Критерий | State Machine | Saga Pattern |
 |----------|--------------|--------------|
@@ -1246,10 +1340,81 @@ class OrderStateMachineTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как использовать @WithStateMachine для декларативной обработки событий? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Можно ли State Machine использовать как замену Saga для распределённых транзакций между микросервисами?
+>
+> ---
+>
+> #### A) Да, State Machine — это и есть Saga; разница только в терминологии: Saga = orchestrated FSM. — ❌ Неверно
+>
+> **Что на самом деле:** Saga и State Machine — связанные, но **разные** паттерны. Saga специфична для распределённых транзакций между сервисами с компенсирующими операциями и eventual consistency. State Machine — общий паттерн моделирования поведения объекта с состояниями. Orchestrated Saga **может быть реализован** через State Machine как координатор, но не каждая FSM — это Saga.
+>
+> **Откуда путаница:** оба паттерна работают через переходы между состояниями, и orchestrated Saga часто рисуют как state diagram.
+>
+> **Если бы это было правдой:** не было бы choreographed Saga (без orchestrator), который существует и широко используется.
+>
+> ---
+>
+> #### B) State Machine — это локальный паттерн моделирования жизненного цикла одной сущности (один процесс, одна БД, ACID). Saga — distributed transaction pattern с компенсирующими операциями и eventual consistency между сервисами. Их можно комбинировать: orchestrated Saga часто реализуется через State Machine как координатор. — ✓ Верно
+>
+> **Развёрнутое объяснение:** State Machine оперирует в рамках одного процесса и одной БД: переход состояния и побочные эффекты можно обернуть в локальную ACID транзакцию. Saga — про координацию **между** сервисами, где локальные транзакции не достаточно (CAP теорема). В Saga каждый шаг — отдельная локальная транзакция; при сбое выполняются компенсирующие действия в обратном порядке. Две реализации Saga: orchestrated (центральный координатор инициирует шаги — здесь идеально подходит SSM как state-driven координатор) и choreographed (сервисы реагируют на события друг друга без координатора — обычно через Kafka). Использовать SSM как координатор orchestrated Saga: состояния = шаги Saga (PAYMENT_PROCESSING, INVENTORY_RESERVED, SHIPPED), события = ответы сервисов (PAYMENT_OK, INVENTORY_OK), actions = вызовы сервисов и публикация компенсаций при ошибке.
+>
+> **Пример:**
+> ```java
+> // State Machine как orchestrator для Saga
+> public enum OrderSagaState { CREATED, PAYMENT_PENDING, PAYMENT_OK, PAYMENT_FAILED,
+>                              INVENTORY_PENDING, INVENTORY_OK, INVENTORY_FAILED,
+>                              SHIPPED, COMPENSATING_PAYMENT, COMPENSATING_INVENTORY, FAILED }
+>
+> @Bean
+> public Action<OrderSagaState, OrderSagaEvent> reservePayment() {
+>     return ctx -> kafkaTemplate.send("payment.commands", new ReservePayment(...));
+> }
+>
+> @Bean
+> public Action<OrderSagaState, OrderSagaEvent> compensatePayment() {
+>     return ctx -> kafkaTemplate.send("payment.commands", new RefundPayment(...));
+> }
+>
+> // Transition с компенсацией
+> transitions
+>     .withExternal()
+>         .source(INVENTORY_PENDING).target(INVENTORY_FAILED).event(INVENTORY_REJECT)
+>     .and()
+>     .withExternal()
+>         .source(INVENTORY_FAILED).target(COMPENSATING_PAYMENT).event(START_COMPENSATION)
+>         .action(compensatePayment());
+> ```
+>
+> **Когда применять:** локальная FSM (один сервис, одна БД) — order processing внутри одного сервиса, document workflow в одном модуле. Saga + FSM-orchestrator — distributed: e-commerce checkout (Order → Payment → Inventory → Shipping сервисы); booking system (Reservation → Payment → Notification). Choreographed Saga (без FSM) — простые цепочки 2-3 событий с понятной семантикой.
+>
+> **Подводные камни:** использовать SSM Saga-orchestrator без идемпотентности на стороне worker-сервисов — двойные платежи при retry; путать локальные FSM transitions с distributed Saga steps — в Saga каждый шаг должен публиковать событие, не вызывать сервис синхронно (HTTP); компенсация не всегда инверсна — иногда refund != отмена платежа (есть комиссии).
+>
+> ---
+>
+> #### C) State Machine не подходит для долгоживущих процессов — её следует использовать только для синхронных переходов длительностью до секунды. — ❌ Неверно
+>
+> **Что на самом деле:** SSM наоборот часто применяется для долгоживущих workflow (часы, дни) благодаря persistence. Document approval может ждать ответа от reviewer'а сутками — машина персистится, восстанавливается при следующем событии. Ограничение на "до секунды" — выдумка.
+>
+> **Откуда путаница:** in-memory FSM действительно живут коротко, и persistent FSM с persister'ом — отдельный кейс, который не всегда явно обсуждается.
+>
+> **Если бы это было правдой:** не имело бы смысла существование `StateMachinePersister` — но он есть и применяется именно для долгоживущих машин.
+>
+> ---
+>
+> #### D) Saga всегда требует Kafka как транспорт — без Kafka реализовать Saga невозможно. — ❌ Неверно
+>
+> **Что на самом деле:** Saga — паттерн, а не привязка к технологии. Реализуется через любой надёжный transport: RabbitMQ, AWS SQS, gRPC streams, HTTP с retry, NATS. Kafka популярна благодаря log-based семантике, но не обязательна.
+>
+> **Откуда путаница:** в туториалах часто показывают Saga с Kafka, и появляется ассоциация "Saga = Kafka".
+>
+> **Если бы это было правдой:** проекты на AWS с SNS/SQS не могли бы использовать Saga — что не соответствует действительности.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q11]] — Listener публикует события для choreographed scenarios; [[Q7]] — persistence критична для долгоживущих Saga-orchestrator машин.
+
+## Q14. Как использовать @WithStateMachine для декларативной обработки событий?
 
 ```java
 @WithStateMachine
@@ -1280,10 +1445,88 @@ public class OrderEventHandler {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Какие типичные ошибки при работе со Spring State Machine? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что даёт `@WithStateMachine` и какие подводные камни связаны с его использованием вместо явной регистрации Action/Listener бинов?
+>
+> ---
+>
+> #### A) `@WithStateMachine` — это альтернатива `@EnableStateMachine`, аннотация для класса конфигурации FSM. — ❌ Неверно
+>
+> **Что на самом деле:** `@WithStateMachine` и `@EnableStateMachine` решают разные задачи. `@EnableStateMachine`/`@EnableStateMachineFactory` создают саму машину/фабрику. `@WithStateMachine` ставится на **handler-классы** и связывает методы с событиями FSM через аннотации `@OnTransition`, `@OnStateEntry`, `@OnStateExit`, `@OnStateChanged`, `@OnEventNotAccepted` и т.д.
+>
+> **Откуда путаница:** имена похожи (`@With...`, `@Enable...`), оба содержат "StateMachine".
+>
+> **Если бы это было правдой:** конфигурация и handler'ы были бы переплетены в одном классе, что нарушает разделение ответственностей.
+>
+> ---
+>
+> #### B) `@WithStateMachine` связывает Spring bean с конкретной машиной (по `id`/`name`) и позволяет реагировать на её события декларативно через `@OnTransition`, `@OnStateEntry`, `@OnStateExit`, `@OnEventNotAccepted` и др. — методы вызываются автоматически, без явной регистрации listener. — ✓ Верно
+>
+> **Развёрнутое объяснение:** `@WithStateMachine(id="orderFsm")` помечает класс как "получатель событий" конкретной FSM. SSM сканирует bean и регистрирует методы как обработчики на основе аннотаций. Доступные аннотации: `@OnTransition(source="...", target="...")` — на конкретный переход; `@OnStateEntry(target="...")` — entry в состояние; `@OnStateExit(source="...")` — exit; `@OnStateChanged` — любая смена; `@OnEventNotAccepted(event="...")` — отвергнутое событие; `@OnStateMachineStart/Stop` — lifecycle; `@OnStateMachineError` — ошибки. В метод можно инжектить параметры через типы или аннотации: `@EventHeaders Map<String, Object>`, `@EventHeader("orderId") String`, `ExtendedState`, `StateContext<S,E>`, `Message<E>`, `Exception`. Это удобная альтернатива императивной регистрации Action и Listener бинов: handler-логика остаётся декларативной, типобезопасной и читаемой.
+>
+> **Пример:**
+> ```java
+> @Component
+> @WithStateMachine(id = "orderFsm")
+> @RequiredArgsConstructor
+> public class OrderEventHandler {
+>     private final NotificationService notifications;
+>     private final AuditLogRepository auditLog;
+>
+>     @OnTransition(source = "PAYMENT_PENDING", target = "PAYMENT_CONFIRMED")
+>     public void onPaymentConfirmed(
+>             @EventHeader("orderId") String orderId,
+>             ExtendedState extendedState) {
+>         notifications.sendPaymentReceipt(orderId);
+>         extendedState.getVariables().put("paymentConfirmedAt", Instant.now());
+>     }
+>
+>     @OnStateEntry(target = "SHIPPED")
+>     public void onShipped(@EventHeaders Map<String, Object> headers) {
+>         auditLog.save(new AuditEntry((String) headers.get("orderId"), "SHIPPED"));
+>     }
+>
+>     @OnEventNotAccepted(event = "SHIP")
+>     public void onShipRejected(Message<OrderEvent> msg) {
+>         log.warn("Ship event rejected for order {}", msg.getHeaders().get("orderId"));
+>     }
+>
+>     @OnStateMachineError
+>     public void onError(StateMachine<OrderState, OrderEvent> sm, Exception e) {
+>         alertingService.alert("FSM error", e);
+>     }
+> }
+> ```
+>
+> **Когда применять:** когда handler-логика чисто декларативна (логирование, нотификации, метрики); когда нужна привязка к конкретным переходам без полной FSM-конфигурации; для отделения side effects от core конфигурации; для тестируемости — handler можно вызывать напрямую как обычный bean.
+>
+> **Подводные камни:** забыть `id` в `@WithStateMachine` — handler привяжется к default machine (может промахнуться в multi-machine setup); `@OnTransition` без source/target ловит **все** transitions (неожиданное поведение); параметр-инъекция через `@EventHeader` упадёт молча, если header отсутствует — нужны null-checks; handler не транзакционен — `@Transactional` нужно ставить явно; при использовании с `StateMachineFactory` все handler'ы автоматически привязываются к каждой создаваемой машине через `id` config — фильтровать по runtime ID нельзя без дополнительных проверок.
+>
+> ---
+>
+> #### C) `@WithStateMachine` отключает все программные Action и Listener — нельзя комбинировать аннотации и Java-bean подход. — ❌ Неверно
+>
+> **Что на самом деле:** оба подхода **сосуществуют**. Можно одновременно регистрировать Action в `transitions.action(actionBean())` и иметь `@OnTransition` handler — оба отработают. Полезно: бизнес-критичную логику оставлять в Action (часть transition transaction), наблюдение — в `@WithStateMachine`.
+>
+> **Откуда путаница:** часто проекты выбирают один стиль и не смешивают — кажется, что это требование.
+>
+> **Если бы это было правдой:** миграция legacy SSM на аннотации требовала бы переписывания всего сразу — нереалистично.
+>
+> ---
+>
+> #### D) Методы `@OnTransition` всегда выполняются в новой транзакции `REQUIRES_NEW` автоматически. — ❌ Неверно
+>
+> **Что на самом деле:** SSM не управляет транзакциями `@WithStateMachine` методов. Для транзакционности — добавлять `@Transactional` явно. По умолчанию метод выполняется в том же потоке, что и transition, без spring-managed транзакции (если не настроен `@Transactional` на classpath proxy).
+>
+> **Откуда путаница:** Spring Boot обильно использует автоматическую транзакционность (`@JpaRepository`), и хочется верить, что и здесь так же.
+>
+> **Если бы это было правдой:** не было бы вопросов "почему мои изменения не закоммитились в `@OnTransition`" на StackOverflow.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q5]] — Action как императивная альтернатива; [[Q11]] — Listener как императивная альтернатива; [[Q12]] — handler легко тестируется как обычный bean.
+
+## Q15. Какие типичные ошибки при работе со Spring State Machine?
 
 1. **Singleton machine для нескольких объектов** — использовать `StateMachineFactory` вместо `@EnableStateMachine`.
 
