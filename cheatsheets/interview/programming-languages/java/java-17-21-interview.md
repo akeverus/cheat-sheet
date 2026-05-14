@@ -2211,10 +2211,91 @@ for (Object obj : shapes) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q41. String Templates (preview): StringTemplate.STR ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Что делает Record Patterns мощнее чем `instanceof` + getter calls для деконструкции nested records?
+>
+> ---
+>
+> #### A) Record Patterns делают cast быстрее на JIT-уровне — оптимизация bytecode — ❌ Неверно
+>
+> **Что на самом деле:** генерируемый bytecode для record pattern и для `instanceof + getter()` практически идентичен на JIT-уровне после inlining. Главное преимущество — **type safety на compile-time и читаемость**, не производительность.
+>
+> **Откуда путаница:** новые синтаксические возможности часто связывают с оптимизациями. На деле этот фичу проектировали для expressiveness, не speed.
+>
+> **Если бы это было правдой:** мы бы предпочли record patterns ради микро-оптимизаций. Реальная мотивация — корректность кода и compile-time проверки.
+>
+> ---
+>
+> #### B) Record Patterns деконструируют record на компоненты прямо в pattern; nested patterns + exhaustiveness check позволяют compiler гарантировать что все варианты обработаны без runtime cast errors — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Record Patterns (JEP 440, финальный в Java 21) сочетают **type test** и **деструктуризацию**. Запись `obj instanceof ColoredPoint(Point(int x, int y), String color)` делает три вещи одновременно:
+> 1. Проверяет что `obj` имеет тип `ColoredPoint`.
+> 2. Извлекает компонент `point()` (типа `Point`) и проверяет его как `Point` с деконструкцией в `x, y`.
+> 3. Извлекает компонент `color()` (типа `String`) в переменную `color`.
+>
+> Без record patterns тот же код требовал бы 3+ ручных cast + getter вызовов с explicit ClassCastException possibility. Record patterns делают это compile-time safe — типы выводит компилятор.
+>
+> В switch с sealed hierarchy + record patterns получается **functional-style pattern matching** как в Scala/Haskell:
+>
+> **Пример:**
+> ```java
+> sealed interface Expr permits Num, Add, Mul {}
+> record Num(int value) implements Expr {}
+> record Add(Expr left, Expr right) implements Expr {}
+> record Mul(Expr left, Expr right) implements Expr {}
+>
+> int eval(Expr expr) {
+>     return switch (expr) {
+>         case Num(int v) -> v;                          // деконструкция Num
+>         case Add(Expr l, Expr r) -> eval(l) + eval(r); // деконструкция Add
+>         case Mul(Expr l, Expr r) -> eval(l) * eval(r); // деконструкция Mul
+>     };
+> }
+>
+> Expr e = new Add(new Mul(new Num(2), new Num(3)), new Num(4));
+> System.out.println(eval(e));  // 10
+> ```
+>
+> Глубокая деконструкция работает рекурсивно — `instanceof User(String name, Address(String city, _))` достаёт `name` и `city` через два уровня записей. `_` (unnamed pattern) — Java 21 — игнорирует компонент.
+>
+> **Когда применять:**
+> - **AST/IR в compiler-like коде**: switch eval'ит дерево выражений с компактной деконструкцией.
+> - **Domain events** в event-sourced системах: `case OrderPlaced(String orderId, Money amount) -> ...` — handler читается как pattern match.
+> - **Refactoring instanceof chains**: legacy код с цепочками `if (obj instanceof X) { X x = (X) obj; ... }` → switch с patterns в 2-3 раза короче и safer.
+> - **JSON-парсинг** в Jackson 3.x: `JsonNode pattern` для извлечения вложенных полей.
+>
+> **Подводные камни:**
+> - **Type inference в nested**: `case Add(Expr l, Expr r)` — left/right объявлены как `Expr` явно. Если record `Add(int left, int right)` — нужно писать `Add(int l, int r)` (compiler не выводит автоматически).
+> - **Var patterns**: `case Num(var v) -> ...` — компилятор выводит тип. Удобно но скрывает информацию для читателя.
+> - **Поддержка только в record-like классах**: обычный класс без `record` declaration нельзя деконструировать через pattern. Нужно либо record, либо custom deconstruction (preview в Java 24+).
+> - **Generic record patterns**: `case Pair<String, Integer>(var key, var value)` — работает с явными генериками, но компилятор требует `<>` либо diamond.
+> - **Unnamed pattern `_`**: доступен с Java 21 в pattern контексте, с Java 22 — также для unused переменных. Не путать с `_` как identifier (запрещён в Java 9+).
+>
+> **Связанные вопросы:** [[Q39]] — pattern matching for switch и sealed hierarchy; [[Q41]] — String Templates (тоже Java 21); [[Q15]] — records basics.
+>
+> ---
+>
+> #### C) Record Patterns работают только в `switch`, не в `instanceof` — `if (obj instanceof Record(...))` не поддерживается — ❌ Неверно
+>
+> **Что на самом деле:** record patterns работают **и в `instanceof`, и в `switch`**. Синтаксис `if (obj instanceof Point(int x, int y))` валиден — после проверки `x` и `y` доступны в then-блоке. Это естественное расширение pattern matching for instanceof (Java 16).
+>
+> **Откуда путаница:** Pattern matching for switch более частый use-case в туториалах. Можно подумать что record patterns только для switch.
+>
+> **Если бы это было правдой:** мы не могли бы делать compact деконструкцию в одиночных проверках. На практике `if (obj instanceof User(String name, _))` — частый short-circuit паттерн.
+>
+> ---
+>
+> #### D) Record Patterns заменяют `equals/hashCode` методы record — нужно использовать вместо них — ❌ Неверно
+>
+> **Что на самом деле:** Record Patterns — это `synthetic` методы **для деконструкции** в pattern контексте. `equals/hashCode/toString` остаются авто-генерируемые методы records, независимы от patterns. Это разные механизмы для разных задач.
+>
+> **Откуда путаница:** оба связаны с «компонентами record-а». Но `equals` сравнивает экземпляры, patterns — извлекают значения.
+>
+> **Если бы это было правдой:** мы могли бы заменить `Objects.equals(a, b)` на pattern matching. На практике patterns — read-only извлечение, не сравнение.
+
+## Q41. String Templates (preview): StringTemplate.STR
 
 **String Templates** (JEP 430, preview в Java 21, удалены из Java 23 на доработку) — безопасная интерполяция строк, избегающая SQL injection и XSS.
 
@@ -2279,10 +2360,105 @@ PreparedStatement stmt = SQL."SELECT * FROM users WHERE name = \{userName}";
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q42. Unnamed Classes и Instance Main Methods (preview) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какое ключевое преимущество String Templates перед `String.format` для безопасности SQL?
+>
+> ---
+>
+> #### A) STR template processor автоматически экранирует SQL-инъекции — ❌ Неверно
+>
+> **Что на самом деле:** `STR` processor — простой interpolator, **не делает escape** для SQL/HTML/JSON. `STR."WHERE name = '\{userName}'"` подставит userName as-is — SQL injection остаётся возможным, как и при конкатенации.
+>
+> Защита от injection — задача **кастомного processor'а** (`SQL`, `HTML`, `JSON`), который автор пишет сам. Стандартная библиотека предоставляет только `STR` (raw) и `FMT` (format), без security-focused processor'ов.
+>
+> **Откуда путаница:** «String Templates» звучит как «typed templating» с автоматической защитой (по аналогии с Mustache/Handlebars). Реально это low-level API для построения safe processor'ов, не сами processors.
+>
+> **Если бы это было правдой:** мы могли бы заменить `PreparedStatement` на `STR."..."` и забыть про injection. На практике нужен custom SQL processor — иначе небезопасно.
+>
+> ---
+>
+> #### B) String Templates позволяют написать кастомный processor (типа `SQL.`), который видит `template.fragments()` и `template.values()` отдельно — fragments идут как SQL текст, values становятся PreparedStatement bind parameters — это compile-time гарантия safe SQL — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Ключевая идея String Templates — **разделение fragments и values на уровне runtime API**. Когда пишем `STR."Hello \{name}!"`, компилятор создаёт `StringTemplate` объект с:
+> - `fragments()` → `["Hello ", "!"]` (статические части)
+> - `values()` → `[name]` (динамические значения)
+>
+> Кастомный processor получает оба списка и собирает результат **безопасным способом**. Для SQL это означает: fragments складываются с `?` placeholder между ними, values → bind parameters. Injection невозможен — values никогда не попадают в SQL text.
+>
+> **Пример безопасного SQL processor:**
+> ```java
+> // Кастомный processor — типобезопасный SQL
+> static final StringTemplate.Processor<PreparedStatement, SQLException> SQL =
+>     template -> {
+>         // Собираем SQL с ? placeholder между fragments
+>         String sql = String.join("?", template.fragments());
+>         PreparedStatement ps = connection.prepareStatement(sql);
+>         // Безопасно подставляем values через setObject — не строковая конкатенация!
+>         List<Object> values = template.values();
+>         for (int i = 0; i < values.size(); i++) {
+>             ps.setObject(i + 1, values.get(i));
+>         }
+>         return ps;
+>     };
+>
+> // Использование — SQL injection невозможен:
+> String evilInput = "Robert'); DROP TABLE users; --";
+> PreparedStatement stmt = SQL."SELECT * FROM users WHERE name = \{evilInput}";
+> // SQL: "SELECT * FROM users WHERE name = ?"
+> // Bind: ?1 = "Robert'); DROP TABLE users; --"  (всего лишь литерал)
+> // Database executes SELECT с этим literal, drop НЕ срабатывает.
+> ```
+>
+> Сравнение с обычной конкатенацией:
+> ```java
+> // ❌ String.format — небезопасно, всё в одну строку:
+> String query = String.format("WHERE name = '%s'", userName);
+> // userName = "Robert'); DROP" → SQL injection
+>
+> // ✅ String Template + SQL processor:
+> PreparedStatement ps = SQL."WHERE name = \{userName}";
+> // userName всегда становится bind parameter
+> ```
+>
+> **Когда применять:**
+> - **SQL queries** — DSL для типобезопасного SQL: `SQL."INSERT INTO orders \{order}"`.
+> - **HTML rendering** — `HTML."<div>\{userContent}</div>"` с escape via custom processor.
+> - **Shell commands** — `SHELL."rm \{filename}"` с правильным escape для shell metacharacters.
+> - **JSON serialization** — `JSON.{key: \{value}}` с экранированием quotes.
+> - **i18n templates** — `I18N."Hello, \{user.name()}"` с lookup перевода через template processor.
+>
+> **Подводные камни:**
+> - **Статус preview**: JEP 430 был в Java 21 как preview, отозван из Java 23 после критики. Команда работает над переработкой. На production это значит — НЕЛЬЗЯ использовать без `--enable-preview`, а в 23+ вообще удалён.
+> - **`STR` без custom processor** — не более безопасен чем конкатенация. Custom processor обязателен для security.
+> - **Compile-time validation processor** — был задуман но не реализован в Java 21. Сейчас processor валидирует runtime, что снижает преимущество над `format`.
+> - **Performance**: STR делает аллокацию `StringTemplate` объекта на каждое использование. На hot path может быть медленнее чем StringBuilder + format. Бенчмарк перед production.
+> - **IDE поддержка**: IntelliJ показывает type inference, но syntax highlighting для template processors появилась только в 2024.
+>
+> **Связанные вопросы:** [[Q40]] — Record Patterns как другая Java 21 feature; [[Q39]] — sealed hierarchies и pattern matching; [[Q33]] — Text Blocks как ortho­gonal feature для multi-line strings.
+>
+> ---
+>
+> #### C) `String.format` и String Templates делают одно и то же — `STR."..."` это просто новый синтаксис — ❌ Неверно
+>
+> **Что на самом деле:** `String.format` принимает **готовую строку** и подставляет значения через `%s/%d` — никакой структурной информации. String Templates дают processor доступ к **раздельным fragments и values**, что позволяет custom logic (validation, escaping, lazy evaluation).
+>
+> **Откуда путаница:** базовое использование `STR."Hello \{name}"` похоже на `String.format("Hello %s", name)`. Но `STR` — самый простой processor; real power — в custom processors.
+>
+> **Если бы это было правдой:** не было бы смысла в новой фиче. Реальная мотивация — type-safe templating с custom processors.
+>
+> ---
+>
+> #### D) `STR.` — это статический метод класса `String` для concatenation — ❌ Неверно
+>
+> **Что на самом деле:** `STR` — это **template processor**, объект класса `StringTemplate.Processor<String, RuntimeException>`. Синтаксис `STR."..."` — специальная конструкция языка, которая создаёт `StringTemplate` и вызывает processor's `process()` метод.
+>
+> **Откуда путаница:** `STR` пишется capital case как константа, похожа на static method. На деле это instance константа в `StringTemplate.Processor` namespace.
+>
+> **Если бы это было правдой:** мы могли бы вызывать `STR.process(...)` напрямую. Реально синтаксис `STR."..."` — единственный способ использования (template literal syntax).
+
+## Q42. Unnamed Classes и Instance Main Methods (preview)
 
 **Unnamed Classes and Instance Main Methods** (JEP 445, preview Java 21; доработано в JEP 463 Java 22) — снижение порога входа для новичков, упрощение написания простых программ.
 
