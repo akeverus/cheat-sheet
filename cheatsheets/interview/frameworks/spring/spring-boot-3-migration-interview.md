@@ -733,10 +733,93 @@ public class MyHints implements RuntimeHintsRegistrar {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как работает AOT processing в Spring Boot 3? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое GraalVM Native Image, какие выгоды и ограничения, как Spring Boot 3 это поддерживает?
+>
+> ---
+>
+> #### A) Native Image — это just JIT compilation, ускоренный за счёт HotSpot tiered compilation — ❌ Неверно
+>
+> **Что на самом деле:** Native Image — **AOT (Ahead-Of-Time)** компиляция, не JIT. Компиляция происходит на этапе сборки (`native:compile`), создаётся single executable файл без JVM внутри. JIT и tiered compilation — runtime-механизмы HotSpot, которые работают в обычном JVM, но не в native image.
+>
+> **Откуда путаница:** оба механизма «оптимизируют производительность через компиляцию в нативный код», поэтому легко смешать. Но JIT работает в runtime, AOT — в build time.
+>
+> **Если бы это было правдой:** native image требовался бы JVM для запуска — но executable запускается без JDK на машине (нужны только libc и system libs).
+>
+> ---
+>
+> #### B) AOT (Ahead-Of-Time) компиляция через GraalVM в single native executable; startup ~50-100ms, memory ~30% от JVM; ограничения — reflection, dynamic class loading, JNI требуют hints; Spring Boot 3 поддерживает через `spring-boot-starter-parent` AOT processing — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **GraalVM Native Image** — компилятор от Oracle Labs, который анализирует точку входа приложения, определяет все достижимые классы (closed-world assumption) и генерирует один статический executable.
+>
+> Выгоды:
+> - Startup time: 50-100ms (vs 2-5 секунд для JVM)
+> - Memory footprint: ~30% от JVM (нет metaspace, нет JIT compiler в памяти)
+> - Размер: 50-80 MB (можно уменьшить через `upx` до 20 MB)
+> - Нет JVM dependency на runtime — деплой single binary
+>
+> Ограничения (closed-world assumption):
+> - **Reflection** — требует hints (`@RegisterReflection` или `RuntimeHints`)
+> - **Dynamic class loading** (`Class.forName` с runtime-именами) — невозможно
+> - **JNI**, **proxy** (`Proxy.newProxyInstance`), **resources** — требуют hints
+> - **Unsafe** ограничено
+>
+> **Пример:**
+> ```xml
+> <plugin>
+>     <groupId>org.graalvm.buildtools</groupId>
+>     <artifactId>native-maven-plugin</artifactId>
+> </plugin>
+> ```
+> ```bash
+> ./mvnw -Pnative native:compile     # 5-15 минут
+> ./target/myapp                      # запуск 50ms
+> ```
+> ```java
+> @ImportRuntimeHints(MyHints.class)
+> @Component
+> class MyService { }
+>
+> class MyHints implements RuntimeHintsRegistrar {
+>     public void registerHints(RuntimeHints hints, ClassLoader loader) {
+>         hints.reflection().registerType(MyDto.class,
+>             MemberCategory.INVOKE_DECLARED_CONSTRUCTORS,
+>             MemberCategory.DECLARED_FIELDS);
+>     }
+> }
+> ```
+>
+> **Когда применять:** serverless (AWS Lambda, Cloud Run, Knative) — где cold start критичен. Edge computing, CLI tools на JVM. Микросервисы с высоким количеством инстансов и низким уровнем нагрузки на инстанс.
+>
+> **Подводные камни:** время сборки 5-15 минут vs секунды для JVM — медленнее dev loop. Некоторые библиотеки не имеют GraalVM-hints (особенно специфичные internal). Peak throughput может быть ниже чем у JVM с разогретым JIT для long-running.
+>
+> **Связанные вопросы:** [[Q8]] — AOT processing для JVM mode; [[Q1]] — ключевые изменения SB 3; [[Q10]] — Virtual Threads (другой подход к производительности).
+>
+> ---
+>
+> #### C) Native Image работает на CRaC (Coordinated Restore at Checkpoint) — снимок памяти JVM — ❌ Неверно
+>
+> **Что на самом деле:** CRaC и GraalVM Native Image — **разные технологии**. CRaC — это снимок состояния запущенной JVM (как hibernate ноутбука), запуск восстанавливает heap и stack. Native Image — настоящая AOT компиляция в native машинный код.
+>
+> **Откуда путаница:** обе технологии решают «cold start», и обе появились в эту же эпоху (2022-2023). Spring Boot 3 поддерживает CRaC отдельно (через Project CRaC), но это не Native Image.
+>
+> **Если бы это было правдой:** native image требовал бы checkpoint-файл рядом с executable — но он самодостаточен, один binary, без снапшотов.
+>
+> ---
+>
+> #### D) GraalVM Native Image интерпретирует Java bytecode без компиляции, ускорение через предзагрузку классов — ❌ Неверно
+>
+> **Что на самом деле:** Native Image полностью **компилирует** bytecode в нативный машинный код через GraalVM compiler. Это **не интерпретация** — после сборки JVM bytecode внутри executable вообще нет.
+>
+> **Откуда путаница:** в JVM существует interpreter (для not-yet-JITed методов). Кто-то может предположить, что Native Image — это просто interpreter, ускоренный AOT-preload.
+>
+> **Если бы это было правдой:** размер executable был бы равен размеру JVM + bytecode (200+ MB), и были бы те же ограничения по startup, что и в обычной JVM. На практике native image — это компилированный код, без bytecode runtime.
+>
+> ---
+>
+> ## Q8. Как работает AOT processing в Spring Boot 3?
 
 **AOT (Ahead-of-Time)** — анализ приложения на этапе сборки и генерация дополнительного кода для ускорения старта (особенно для GraalVM).
 
@@ -761,10 +844,91 @@ java -Dspring.aot.enabled=true -jar app.jar
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Какие изменения в Observability? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое AOT processing в Spring Boot 3 и какое отличие от GraalVM Native Image?
+>
+> ---
+>
+> #### A) AOT processing = GraalVM Native Image; разные имена одной фичи — ❌ Неверно
+>
+> **Что на самом деле:** **AOT processing — это шаг ПОДГОТОВКИ к Native Image, но ОН ЖЕ работает и для JVM**. Spring AOT engine анализирует приложение и генерирует дополнительные классы (BeanDefinitionRegistrar, ReflectionHints), которые ускоряют startup. Native Image — следующий опциональный шаг, который компилирует всё в native executable.
+>
+> **Откуда путаница:** AOT processing появился в Spring Boot 3 вместе с GraalVM поддержкой, и упоминания часто идут парой. Но AOT работает и в обычном JAR, без Native Image.
+>
+> **Если бы это было правдой:** не было бы смысла в `spring.aot.enabled=true` для обычного JVM запуска. На практике это property даёт 30-50% ускорение startup даже без GraalVM.
+>
+> ---
+>
+> #### B) AOT (Ahead-Of-Time) processing в Spring Boot 3 — генерация pre-computed bean definitions, reflection hints, resource hints на этапе сборки; работает как для GraalVM Native, так и для обычного JVM (через `spring.aot.enabled=true`); ускоряет startup на 30-50% даже в JVM mode — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Spring AOT engine на этапе сборки:
+> 1. **Сканирует приложение** — все `@Component`, `@Configuration`, `@Bean`
+> 2. **Генерирует Java-классы**:
+>    - Pre-computed bean definitions (без reflection на classpath сканирование)
+>    - Optimized `@Configuration` processing
+>    - Reflection hints (`reflect-config.json` для GraalVM)
+>    - Resource hints (`resource-config.json` — какие `.yml`, `.properties` нужны)
+>    - Proxy hints (для CGLIB/JDK proxies)
+> 3. **Замещает runtime reflection** статическим кодом
+>
+> Два режима использования:
+> - **JVM mode**: `mvn spring-boot:process-aot` + `java -Dspring.aot.enabled=true -jar app.jar` → 30-50% faster startup
+> - **Native mode**: `mvn -Pnative native:compile` → AOT generation + GraalVM compile → 95% faster startup
+>
+> **Пример:**
+> ```bash
+> # JVM mode с AOT
+> ./mvnw spring-boot:process-aot
+> java -Dspring.aot.enabled=true -jar target/myapp.jar
+> # Startup: 1.2s вместо 2.5s
+>
+> # Native mode
+> ./mvnw -Pnative native:compile
+> ./target/myapp
+> # Startup: 80ms
+> ```
+>
+> AOT processing генерирует код в `target/spring-aot/main/sources/`:
+> ```java
+> // Сгенерированный AOT класс
+> public class ApplicationContextInitializer__BeanDefinitions {
+>     public static void registerBeanDefinitions(BeanDefinitionRegistry registry) {
+>         // pre-computed bean registrations
+>     }
+> }
+> ```
+>
+> **Когда применять:** AOT в JVM mode — для приложений, чувствительных к startup time, но не желающих переходить на Native (CI/CD, integration tests). Native — для serverless/edge.
+>
+> **Подводные камни:** при AOT processing динамические профили (`@Profile` с runtime-условиями) могут вести себя иначе — bean registration финализируется на этапе сборки. Тестировать AOT-сборку отдельно в pipeline.
+>
+> **Связанные вопросы:** [[Q7]] — GraalVM Native Image; [[Q1]] — ключевые изменения SB 3; [[Q10]] — Virtual Threads.
+>
+> ---
+>
+> #### C) AOT processing — это просто кеширование результатов рефлексии в локальном файле `.aot-cache` — ❌ Неверно
+>
+> **Что на самом деле:** AOT processing — не кеширование, а **генерация настоящих Java-классов** на этапе сборки. Эти классы компилируются в .class файлы и попадают в jar. Runtime их использует напрямую без reflection.
+>
+> **Откуда путаница:** «pre-computation» звучит как «кеш», но фактически это generation of source code, который компилируется в bytecode.
+>
+> **Если бы это было правдой:** не нужно было бы пересобирать jar — достаточно было бы первого запуска для построения кеша. На практике AOT — часть Maven/Gradle build pipeline.
+>
+> ---
+>
+> #### D) AOT processing — это часть JVM HotSpot JIT, активирующаяся через `-XX:+UseAOTCompilation` — ❌ Неверно
+>
+> **Что на самом деле:** Spring AOT processing — это **Spring-фреймворк-уровень** (build-time generation of Java classes). Это не JVM flag и не JIT-фича. JDK 9-16 имел JVM-level AOT (`jaotc`), но он deprecated в JDK 17. Spring AOT работает на уровне Java code generation, не bytecode.
+>
+> **Откуда путаница:** оба слова содержат «AOT». JDK AOT (jaotc) был ранним экспериментом Oracle. Spring AOT — независимая фича.
+>
+> **Если бы это было правдой:** AOT работало бы для любого Java-приложения через JVM flag — но `-Dspring.aot.enabled=true` это Spring-specific property.
+>
+> ---
+>
+> ## Q9. Какие изменения в Observability?
 
 Spring Boot 3 предоставляет единый API для metrics + tracing через Micrometer:
 
@@ -812,10 +976,100 @@ management:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Что нужно знать о поддержке Virtual Threads в Spring Boot 3.2+? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие ключевые изменения в Observability в Spring Boot 3 и почему Spring Cloud Sleuth был удалён?
+>
+> ---
+>
+> #### A) Spring Cloud Sleuth обновлён до версии 4.x, но API сохранён обратно совместимым — ❌ Неверно
+>
+> **Что на самом деле:** Spring Cloud Sleuth **прекращён** в эпоху Spring Boot 3. Команда Sleuth (Marcin Grzejszczak) перешла в Micrometer и создала **Micrometer Tracing** — преемник, основанный на единой Observation API. Sleuth-овый код был перенесён в `micrometer-tracing` и `micrometer-tracing-bridge-*`.
+>
+> **Откуда путаница:** в Spring Cloud 2022.0.x ещё были артефакты `spring-cloud-sleuth-*`, но они помечены deprecated и не работают с Boot 3 без миграции на Micrometer.
+>
+> **Если бы это было правдой:** проекты могли бы добавить `spring-cloud-starter-sleuth` в SB 3 — но это даёт `NoClassDefFoundError` из-за javax/jakarta несовместимости.
+>
+> ---
+>
+> #### B) Micrometer Observation API заменил Spring Cloud Sleuth; единый API для metrics + tracing; интеграция через `micrometer-tracing-bridge-otel` / `-brave`; экспорт в Zipkin/OTLP/Wavefront; AOP `@Observed` для автоинструментации — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Архитектура Observability в Spring Boot 3:
+>
+> 1. **Micrometer Observation API** — core abstraction, единый API для записи measurement (метрики + трейсы из одного места).
+> 2. **Micrometer Tracing** — преемник Sleuth, через bridge подключается к backend (Brave/OpenZipkin или OpenTelemetry).
+> 3. **`@Observed`** — AOP-аннотация для автоматического создания observation из метода.
+> 4. **Auto-instrumentation** — Spring MVC, WebFlux, RestTemplate, WebClient, RestClient, Kafka, JDBC автоматически создают observations.
+>
+> **Пример:**
+> ```xml
+> <dependency>
+>     <groupId>io.micrometer</groupId>
+>     <artifactId>micrometer-tracing-bridge-otel</artifactId>
+> </dependency>
+> <dependency>
+>     <groupId>io.opentelemetry</groupId>
+>     <artifactId>opentelemetry-exporter-zipkin</artifactId>
+> </dependency>
+> ```
+> ```java
+> @Service
+> class OrderService {
+>     private final ObservationRegistry registry;
+>
+>     public Order process(OrderCommand cmd) {
+>         return Observation.createNotStarted("order.process", registry)
+>             .contextualName("process-order")
+>             .lowCardinalityKeyValue("type", cmd.type())
+>             .highCardinalityKeyValue("orderId", cmd.id())
+>             .observe(() -> doProcess(cmd));
+>     }
+> }
+>
+> // AOP вариант
+> @Observed(name = "order.process")
+> public Order process(OrderCommand cmd) { ... }
+> ```
+> ```yaml
+> management:
+>   tracing:
+>     sampling:
+>       probability: 1.0      # 100% в dev, 0.1 в prod
+>   zipkin:
+>     tracing:
+>       endpoint: http://localhost:9411/api/v2/spans
+> ```
+>
+> **Когда применять:** все микросервисы Spring Boot 3+ — Sleuth больше не вариант. OpenTelemetry-стек для cross-platform трейсинга (Java + Go + Python). Zipkin/Brave если уже инвестировано в Zipkin UI.
+>
+> **Подводные камни:** `Observation` имеет low-cardinality (для метрик, ограниченный набор значений) и high-cardinality (для трейсов, любые значения). Использовать `highCardinalityKeyValue` для metric labels — приведёт к cardinality explosion в Prometheus.
+>
+> **Связанные вопросы:** [[Q1]] — ключевые изменения SB 3; [[Q15]] — типичные проблемы при миграции.
+>
+> ---
+>
+> #### C) Spring Boot 3 использует OpenTelemetry напрямую, без Micrometer; Micrometer удалён — ❌ Неверно
+>
+> **Что на самом деле:** **Micrometer не удалён** — наоборот, его роль усилена. Micrometer остаётся основным API для metrics, и Micrometer Tracing добавлен как преемник Sleuth. OpenTelemetry — один из backend-ов, к которому Micrometer подключается через bridge (`micrometer-tracing-bridge-otel`). Прямой OpenTelemetry SDK тоже работает, но Spring рекомендует Micrometer.
+>
+> **Откуда путаница:** OpenTelemetry — модный термин в 2023-2024, и многие думают, что Spring отказался от Micrometer в пользу OTel.
+>
+> **Если бы это было правдой:** `MeterRegistry` API не работал бы в SB 3 — но он работает, и большинство приложений всё ещё используют `meterRegistry.counter(...)`.
+>
+> ---
+>
+> #### D) Tracing в Spring Boot 3 настраивается только через JFR (Java Flight Recorder), не через Micrometer — ❌ Неверно
+>
+> **Что на самом деле:** **JFR — это JVM-level профайлер для дампов, не для distributed tracing**. Tracing спанов между микросервисами идёт через Micrometer Tracing + Zipkin/OTel. JFR используется для производительности и stack profiling, никак не пересекается с distributed tracing.
+>
+> **Откуда путаница:** JFR недавно стал open-source (JDK 11+), и его расширенная функциональность может казаться достаточной для трейсинга. Но между процессами JFR не передаёт trace_id.
+>
+> **Если бы это было правдой:** не нужны были бы Zipkin/Jaeger UI — но они стандарт для multi-service tracing в production.
+>
+> ---
+>
+> ## Q10. Что нужно знать о поддержке Virtual Threads в Spring Boot 3.2+?
 
 Spring Boot 3.2 добавил первоклассную поддержку Java 21 Virtual Threads:
 
