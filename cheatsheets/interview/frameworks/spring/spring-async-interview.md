@@ -14,7 +14,7 @@ aliases:
   - "Spring @Async собеседование"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Spring @Async`
 
@@ -1491,10 +1491,94 @@ void shouldReturnResult() throws Exception {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Чем @Async отличается от CompletableFuture.supplyAsync? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Тест проверяет, что `service.processAsync()` вызывает `repository.save()`. Тест проходит локально, но иногда падает в CI с `Wanted but not invoked: save()`. Какова причина и как исправить?
+>
+> ---
+>
+> #### A) Mockito неправильно настроен — нужно использовать `@MockBean` вместо `@Mock` — ❌ Неверно
+>
+> **Что на самом деле:** `@MockBean` vs `@Mock` различаются по интеграции со Spring Context, но не решают проблему race condition в async-тестах. Если в CI медленный CPU, async-метод просто не успевает выполниться до `verify()`, и тест падает. Замена `@Mock` на `@MockBean` ничего не изменит — нужно либо синхронизировать выполнение, либо ждать результата.
+>
+> **Откуда путаница:** `@MockBean` действительно нужен для Spring Boot Test, но это конфигурационная деталь, не связанная с async.
+>
+> **Если бы это было правдой:** проблема была бы стабильной (всегда падает), а не flaky (иногда падает).
+>
+> ---
+>
+> #### B) Тест использует `Thread.sleep(100)` после async-вызова — увеличить до 5 секунд — ❌ Неверно
+>
+> **Что на самом деле:** `Thread.sleep` в тестах — антипаттерн. Если 100мс не хватает, увеличение до 5 сек делает тест медленным и всё равно flaky на ещё более медленных CI. Кроме того, sleep не учитывает реальное время выполнения — он просто «угадывает» интервал. Правильный подход — детерминистическое управление через `SyncTaskExecutor` или ожидание условия через `Awaitility`.
+>
+> **Откуда путаница:** sleep — простейший способ «дать время», и он часто работает локально.
+>
+> **Если бы это было правдой:** все async-тесты в industry использовали бы sleep, но best practices явно его запрещают.
+>
+> ---
+>
+> #### C) Подменить executor на `SyncTaskExecutor` через `@TestConfiguration` — async-методы будут выполняться синхронно в потоке теста — ✓ Верно
+>
+> **Развёрнутое объяснение:** `SyncTaskExecutor` — реализация `TaskExecutor`, которая выполняет `Runnable.run()` непосредственно в потоке caller-а, без сабмита в pool. Подменив default executor на `SyncTaskExecutor` через `@TestConfiguration` с `@Primary` бином, вы делаете все `@Async` методы синхронными для тестов. Это устраняет race condition: к моменту возврата из `service.processAsync()` метод уже полностью выполнен, mockito-`verify()` работает детерминированно. **Альтернатива** — `Awaitility` для случаев, когда нужна интеграционная проверка с реальным executor-ом.
+>
+> **Пример:**
+> ```java
+> // Подход 1: SyncTaskExecutor (для unit-тестов)
+> @TestConfiguration
+> public class TestAsyncConfig {
+>     @Bean @Primary
+>     public Executor taskExecutor() {
+>         return new SyncTaskExecutor();
+>     }
+> }
+>
+> @SpringBootTest
+> @Import(TestAsyncConfig.class)
+> class AsyncServiceTest {
+>     @Autowired AsyncService service;
+>     @MockBean Repository repository;
+>
+>     @Test
+>     void shouldProcessSync() {
+>         service.processAsync("data");
+>         // К этому моменту метод уже выполнен — без sleep/await
+>         verify(repository).save(any());
+>     }
+> }
+>
+> // Подход 2: Awaitility (для интеграции с реальным executor)
+> @Test
+> void shouldEventuallyProcess() {
+>     service.processAsync("data");
+>     await().atMost(5, SECONDS)
+>         .untilAsserted(() -> verify(repository).save(any()));
+> }
+>
+> // Подход 3: CompletableFuture.get() с timeout (для методов с возвратом)
+> @Test
+> void shouldReturnResult() throws Exception {
+>     CompletableFuture<Result> future = service.fetchAsync();
+>     Result result = future.get(5, SECONDS);
+>     assertThat(result).isNotNull();
+> }
+> ```
+>
+> **Когда применять:** `SyncTaskExecutor` — для unit-тестов сервисов с `@Async` (быстро, детерминированно); `Awaitility` — для integration-тестов с реальным behavior; `.get()` — когда метод возвращает `CompletableFuture` и тест проверяет результат.
+>
+> **Подводные камни:** `SyncTaskExecutor` маскирует проблемы threading (race conditions, MDC propagation) — нужно дополнить integration-тестами с реальным executor; `Awaitility` `atMost` слишком большой → медленные тесты, слишком маленький → flaky; `CompletableFuture.get()` без timeout вешает тест бесконечно при exception.
+>
+> **Связанные вопросы:** [[Q4]] — `SimpleAsyncTaskExecutor`, [[Q5]] — кастомный executor.
+>
+> ---
+>
+> #### D) Использовать `@DirtiesContext` после каждого теста — это решает async-проблемы — ❌ Неверно
+>
+> **Что на самом деле:** `@DirtiesContext` форсит пересоздание Spring контекста между тестами — это резко замедляет test suite (контекст создаётся секунды). К race condition в async это не имеет отношения. Если у вас flaky async-тесты, пересоздание контекста не поможет — нужно либо синхронизировать выполнение, либо явно ждать.
+>
+> **Откуда путаница:** `@DirtiesContext` действительно решает некоторые flaky-тесты (например связанные с состоянием bean-ов), и его применяют как «универсальный фикс».
+>
+> **Если бы это было правдой:** все async-тесты были бы помечены `@DirtiesContext` — но это явно не practice.
+
+## Q15. Чем @Async отличается от CompletableFuture.supplyAsync?
 
 | Критерий | `@Async` | `CompletableFuture.supplyAsync` |
 |---|---|---|
@@ -1526,16 +1610,84 @@ public CompletableFuture<Order> fetchOrderProgrammatic(Long id) {
 }
 ```
 
+
+> [!mcq]
+>
+> **Вопрос:** В чём принципиальная разница между декларативным `@Async` и программным `CompletableFuture.supplyAsync()`, и когда выбирать какой подход?
+>
+> ---
+>
+> #### A) `@Async` — декларативный (аннотация), использует Spring `TaskExecutor`, ограничен AOP-проблемами (self-invocation, private); `supplyAsync` — программный (API), использует `ForkJoinPool.commonPool()` по умолчанию, без AOP-ограничений — ✓ Верно
+>
+> **Развёрнутое объяснение:** это два разных подхода к async-выполнению. `@Async` — Spring-специфичный, декларативный: вы помечаете метод аннотацией, AOP-прокси оборачивает вызов в сабмит в `TaskExecutor`. Преимущества: лаконичный код, интеграция со Spring (TaskDecorator, AsyncConfigurer). Недостатки: AOP-ограничения (public, non-final, через bean ссылку, не self-invocation), один executor на класс. `CompletableFuture.supplyAsync()` — JDK-API: программный, без AOP. Преимущества: явный контроль над executor-ом, нет ограничений на видимость/расположение метода, прямая композиция с `.thenApply/.thenCompose`. Недостатки: больше boilerplate, нет автоматической интеграции со Spring infrastructure (security/MDC propagation вручную).
+>
+> **Пример:**
+> ```java
+> // @Async — декларативный
+> @Service
+> public class UserService {
+>     @Async("apiExecutor")
+>     public CompletableFuture<User> fetchAsync(Long id) {
+>         return CompletableFuture.completedFuture(userRepo.findById(id));
+>     }
+> }
+> // Использование: userService.fetchAsync(1L).thenApply(...)
+>
+> // supplyAsync — программный
+> @Service
+> public class UserService {
+>     private final Executor apiExecutor;  // inject explicitly
+>
+>     public CompletableFuture<User> fetchAsync(Long id) {
+>         return CompletableFuture.supplyAsync(
+>             () -> userRepo.findById(id),
+>             apiExecutor  // явный выбор executor-а
+>         );
+>     }
+> }
+> ```
+>
+> **Когда применять:** **`@Async`** — для service-методов в Spring приложениях, когда нужна простая декларативная async-обёртка (отправка email, фоновая аналитика); **`supplyAsync`** — когда нужно динамически выбирать executor, делать сложные pipeline (`.thenApply.thenCompose.exceptionally`), работать с async без Spring context (utility-классы, тесты).
+>
+> **Подводные камни:** `supplyAsync` без executor использует `ForkJoinPool.commonPool()` — опасно для I/O-bound задач (общий пул на всё приложение); смешивание `@Async` и `supplyAsync` создаёт два разных threading-режима, MDC propagation работает только для `@Async` (если настроен TaskDecorator); `@Async` без `@EnableAsync` — silent no-op.
+>
+> **Связанные вопросы:** [[Q2]] — типы возврата, [[Q3]] — AOP механизм, [[Q12]] — композиция, [[Java CompletableFuture]].
+>
+> ---
+>
+> #### B) `@Async` и `supplyAsync` — синонимы; разработчик выбирает по вкусу, runtime поведение одинаковое — ❌ Неверно
+>
+> **Что на самом деле:** runtime поведение разное. `@Async` всегда использует `TaskExecutor` (бин Spring); `supplyAsync` без executor — `ForkJoinPool.commonPool()`, с executor — указанный. Spring-интеграция (TaskDecorator, SecurityContext propagation) автоматическая в `@Async`, ручная в `supplyAsync`. AOP-ограничения работают только для `@Async`.
+>
+> **Откуда путаница:** оба часто возвращают `CompletableFuture<T>`, и снаружи API выглядит одинаково.
+>
+> **Если бы это было правдой:** не было бы смысла в `@Async` — он был бы просто синтаксическим сахаром.
+>
+> ---
+>
+> #### C) `@Async` — для I/O-bound задач, `supplyAsync` — только для CPU-bound — ❌ Неверно
+>
+> **Что на самом деле:** различие I/O vs CPU bound определяется **executor-ом**, а не способом сабмита. И `@Async`, и `supplyAsync` могут использовать любой executor: маленький пул для CPU-bound, большой для I/O-bound. ForkJoinPool.commonPool по умолчанию настроен под CPU (количество = cores - 1), и `supplyAsync` без executor для I/O действительно опасен — но это про executor, а не про API.
+>
+> **Откуда путаница:** ForkJoinPool часто упоминается как CPU-bound, и кажется, что `supplyAsync` тоже только для CPU.
+>
+> **Если бы это было правдой:** не было бы перегрузки `supplyAsync(Supplier, Executor)` — но она существует именно для произвольных executor-ов.
+>
+> ---
+>
+> #### D) `@Async` работает только с `void` методами, `supplyAsync` — только с возвратом — ❌ Неверно
+>
+> **Что на самом деле:** `@Async` поддерживает `void` (fire-and-forget), `CompletableFuture<T>`, `Future<T>`. `supplyAsync` принимает `Supplier<T>` (требует возврат T) — но есть `runAsync(Runnable)` для void. Так что оба API покрывают и void, и возвращающие сценарии.
+>
+> **Откуда путаница:** имя `supplyAsync` (от Supplier) подчёркивает возврат — и можно ошибочно подумать, что это единственный сценарий.
+>
+> **Если бы это было правдой:** `@Async` метод с `CompletableFuture` не работал бы — но это самый рекомендуемый паттерн.
+
 ---
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Java CompletableFuture](../../programming-languages/java/java-completable-future-interview.md) — API для асинхронной композиции, thenApply/thenCompose/allOf
+- [Java CompletableFuture](../../programming-languages/java/java-completable-future-interview.md) — API для асинхронной композиции, thenApply/thenCompose/allOf
 - [Spring Scheduling](spring-scheduling-interview.md) — @Scheduled, часто используется вместе с @Async
 - [Spring AOP](spring-aop-interview.md) — механизм proxy, self-invocation, ограничения
 - [Spring @Transactional](spring-transaction-interview.md) — взаимодействие с @Async: новый поток = новая транзакция
