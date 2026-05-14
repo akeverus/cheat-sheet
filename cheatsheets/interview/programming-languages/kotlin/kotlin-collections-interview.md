@@ -2327,10 +2327,96 @@ val result = people.sortedWith(complex)
 
 
 > [!mcq]
-> - [ ] `sortedBy { it.age }` модифицирует исходный список in-place — это эффективнее `sortedWith` | Все `sorted*` функции возвращают **новый** список; in-place сортировка — `sortBy`/`sortWith` (без `ed`) и работает только для `MutableList`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `users.sortedBy { it.age }` и ожидает изменения `users`, в логах потом видит «sorted = false», теряется час на дебаг.
-> - [x] `sortedBy{k}` — одно поле через keySelector; `sortedWith(comparator)` — произвольный `Comparator`; `compareBy({a},{b})` создаёт лексикографический Comparator из нескольких ключей; `thenBy` цепляет вторичную сортировку | Это композиционная DSL для сортировки: keySelector для простых случаев, compareBy + thenBy для сложных, sortedWith для финализации. ✓ ПРИМЕНЯТЬ: `people.sortedWith(compareBy<Person>{it.age}.thenByDescending{it.score})` — age ASC, score DESC; читается как priority list. 📋 ПРАВИЛО: «sortedBy = sortedWith(compareBy{})». 🔗 См. Q16.
-> - [ ] `compareBy({a}, {b})` сравнивает по сумме обоих полей одновременно | `compareBy` — **лексикографическое** сравнение: сначала по первому keySelector, при равенстве — по второму, и т.д. Никакого сложения значений. ❌ ПОСЛЕДСТВИЕ: попытка отсортировать по «возрасту + score» через `compareBy({it.age}, {it.score})` даёт sorted by age then by score, разработчик удивляется почему 30/9.5 идёт перед 25/10.0 — два разных контракта.
-> - [ ] `sortedByDescending` доступна только для чисел — для строк нужен `sortedBy { -it.length }` | `sortedByDescending` работает для любого `Comparable<T>` (числа, строки, Date, кастомные классы); `-it.length` — антипаттерн с риском overflow на Int.MIN_VALUE. ❌ ПОСЛЕДСТВИЕ: код-ревьюер требует переписать `sortedBy { -it.priority }` на `sortedByDescending { it.priority }` чтобы избежать overflow при `Int.MIN_VALUE` priority, теряется день на refactor.
+>
+> **Вопрос:** Как соотносятся `sortedBy`, `sortedWith` и `compareBy` — как построить сортировку по нескольким полям с разными направлениями?
+>
+> ---
+>
+> #### A) `sortedBy { it.age }` модифицирует исходный список in-place — это эффективнее `sortedWith` — ❌ Неверно
+>
+> **Что на самом деле:** Все `sorted*` функции (с суффиксом `ed`) возвращают **новый** список, исходный не меняется. In-place сортировка — `sortBy`/`sortWith` (без `ed`) и работает **только** на `MutableList` (нельзя вызвать на read-only `List`). Это намеренное разделение: immutable-стиль (`sortedBy`) vs in-place (`sortBy`).
+>
+> **Откуда путаница:** в Java `Collections.sort(list)` — in-place. Разработчики переносят ожидание на Kotlin, но Kotlin делает чёткое различие через суффикс `ed`.
+>
+> **Если бы это было правдой:** разработчик пишет `users.sortedBy { it.age }` в обработчике API и ожидает изменения исходного `users`-листа; в логах видит «users still unsorted», теряет час на дебаг, в итоге переписывает либо на `users = users.sortedBy { ... }` (присваивание), либо на `users.sortBy { ... }` (если MutableList).
+>
+> ---
+>
+> #### B) `sortedBy{k}` — одно поле через keySelector; `sortedWith(comparator)` — произвольный `Comparator`; `compareBy({a},{b})` создаёт лексикографический Comparator из нескольких ключей; `thenBy` цепляет вторичную сортировку — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Kotlin предлагает композиционную DSL для сортировки, разделённую на три слоя:
+>
+> 1. **Шорткаты для простых случаев**:
+>    - `sortedBy { it.x }` — одно поле, естественный порядок (требует `Comparable`)
+>    - `sortedByDescending { it.x }` — то же, обратный порядок
+> 2. **`Comparator`-строитель** — `compareBy({ ks1 }, { ks2 }, ...)`:
+>    - Создаёт лексикографический Comparator: сначала по первому keySelector, при равенстве по второму, и т.д.
+>    - `compareByDescending { ks }` — обратный порядок по ключу
+>    - `.thenBy { ks }` / `.thenByDescending { ks }` — цепочка вторичных сортировок
+> 3. **Применение к коллекции**:
+>    - `sortedWith(comparator)` — финализирует
+>
+> Принцип: `sortedBy { x }` ≡ `sortedWith(compareBy { x })` — синтаксический сахар.
+>
+> **Пример:**
+> ```kotlin
+> data class Person(val name: String, val age: Int, val score: Double)
+> val people = listOf(
+>     Person("Alice", 30, 9.5),
+>     Person("Bob", 25, 9.5),
+>     Person("Carol", 25, 8.0)
+> )
+>
+> // Простой случай — одно поле
+> val byAge = people.sortedBy { it.age }
+>
+> // Сложный случай: age ASC, score DESC, name ASC (как tiebreaker)
+> val complex = people.sortedWith(
+>     compareBy<Person> { it.age }
+>         .thenByDescending { it.score }
+>         .thenBy { it.name }
+> )
+> // [Bob(25, 9.5), Carol(25, 8.0), Alice(30, 9.5)]
+>
+> // В Avito: сортировка карточек товаров — приоритет ASC, потом цена ASC
+> val sortedCards = cards.sortedWith(
+>     compareBy<Card> { it.priority }.thenBy { it.price }
+> )
+> ```
+>
+> **Когда применять:**
+> - **Yandex search results**: `sortedWith(compareBy({ -it.relevance }, { it.distance }))` — best relevance, ближайший
+> - **Avito feed ranking**: `compareBy { it.priority }.thenByDescending { it.boost }` — feed sorting
+> - **Banking reports**: `transactions.sortedWith(compareByDescending<Tx> { it.amount }.thenBy { it.timestamp })`
+>
+> **Подводные камни:**
+> - **`sortedBy` требует `Comparable<R>`**: для кастомных классов нужно реализовать `compareTo` или использовать `sortedWith(compareBy { ... })`
+> - **Stable sort**: stdlib гарантирует stability (для равных ключей порядок сохраняется) — это важно для multi-stage sorting
+> - **Null-handling**: `compareBy<T> { it.optionalField }` падает на null — используй `nullsFirst()`/`nullsLast()` обёртки
+>
+> **Связанные вопросы:** [[Q16]] — sorted/sortedBy/sortedWith детально; [[Q11]] — базовые операции.
+>
+> ---
+>
+> #### C) `compareBy({a}, {b})` сравнивает по сумме обоих полей одновременно — ❌ Неверно
+>
+> **Что на самом деле:** `compareBy({a}, {b})` делает **лексикографическое** сравнение: сначала сравнивает по первому keySelector (`a`), при равенстве переходит к второму (`b`), и т.д. Никакого сложения, multiplication или комбинирования значений — это priority-list comparison.
+>
+> **Откуда путаница:** математическая интуиция «несколько критериев» иногда ассоциируется с weighted sum (как в ranking-алгоритмах). Но в `compareBy` каждый keySelector — отдельный уровень иерархии, не вклад в общую сумму.
+>
+> **Если бы это было правдой:** попытка отсортировать заказы по «total = amount + bonus» через `compareBy({it.amount}, {it.bonus})` даёт сортировку сначала по amount (если разные), потом по bonus как tiebreaker; разработчик удивляется, почему `Order(amount=100, bonus=0)` идёт перед `Order(amount=50, bonus=200)` — два разных контракта. Для weighted sort нужен `sortedBy { it.amount + it.bonus }`.
+>
+> ---
+>
+> #### D) `sortedByDescending` доступна только для чисел — для строк нужен `sortedBy { -it.length }` — ❌ Неверно
+>
+> **Что на самом деле:** `sortedByDescending` работает для **любого** `Comparable<R>`: числа, строки, Date, LocalDateTime, BigDecimal, кастомные классы с `compareTo`. `sortedBy { -it.length }` — антипаттерн: для `Int.MIN_VALUE` отрицание даёт overflow (остаётся `Int.MIN_VALUE`), плюс для не-Number типов неприменимо.
+>
+> **Откуда путаница:** трюк `-x` для обратной сортировки — паттерн из C-стиля (`qsort` с negation). В Kotlin это не нужно и опасно: используй `sortedByDescending { ... }` или `compareByDescending { ... }`.
+>
+> **Если бы это было правдой:** код-ревьюер требует переписать `sortedBy { -it.priority }` на `sortedByDescending { it.priority }` чтобы избежать overflow при `Int.MIN_VALUE` priority (теоретически возможно при чтении из БД с invalid data); теряется день на refactor; в реальности правильный pattern сразу — `sortedByDescending`.
 
 ## Q40. (!) Чем `groupingBy` отличается от `groupBy` — ленивый vs eager grouping?
 
@@ -2376,10 +2462,96 @@ val countAndLongest = grouping.aggregate { _, acc: Pair<Int, String>?, s, first 
 
 
 > [!mcq]
-> - [ ] `groupBy` и `groupingBy` идентичны — оба возвращают `Map<K, List<V>>` | `groupBy` возвращает `Map<K, List<V>>` сразу (eager); `groupingBy` возвращает **`Grouping<T, K>`** — промежуточный объект для последующих агрегаций (`eachCount`/`fold`/`reduce`) **без** создания списков. ❌ ПОСЛЕДСТВИЕ: команда заменяет `words.groupBy { it.first() }.mapValues { it.value.size }` на «оптимальный» `groupingBy + mapValues { it.value.size }` — компилятор ругается, `Grouping` не имеет `mapValues`, теряется час.
-> - [x] `groupBy` материализует `Map<K, List<V>>` с полными списками (eager); `groupingBy` возвращает `Grouping<T, K>` для агрегаций (`eachCount`/`fold`/`reduce`) без хранения промежуточных списков | `groupingBy` оптимален когда нужны только агрегаты по группам (count, sum, max) — экономит память на больших коллекциях. ✓ ПРИМЕНЯТЬ: подсчёт частоты слов в 100M строк через `words.groupingBy { it }.eachCount()` — O(N) обход и `Map<String, Int>` без `List<String>` для каждой группы. 📋 ПРАВИЛО: «Нужны группы → groupBy; нужны агрегаты → groupingBy». 🔗 См. Q13, Q14.
-> - [ ] `groupingBy.eachCount()` возвращает `List<Int>` — позиционно по группам | `eachCount()` возвращает `Map<K, Int>` — ключи групп → счётчик; никакого `List` или позиционного порядка. ❌ ПОСЛЕДСТВИЕ: попытка получить counts через `grouping.eachCount()[0]` возвращает `null` (если ключ не Int с этим значением), отчёт показывает 0 вместо реального counts.
-> - [ ] `groupingBy` ленив в том смысле, что `eachCount` запускается только при `.toList()` | `eachCount`/`fold`/`reduce` — terminal operations на `Grouping`, они сразу выполняют обход и материализуют `Map`. Lazy только промежуточные шаги (которых у `Grouping` нет). ❌ ПОСЛЕДСТВИЕ: разработчик ожидает «отложенного» поведения, не передаёт `eachCount` в downstream, добавляет лишний `.toList()` который ничего не делает.
+>
+> **Вопрос:** Чем `groupingBy` принципиально отличается от `groupBy` и в каких случаях он экономит память на больших коллекциях?
+>
+> ---
+>
+> #### A) `groupBy` и `groupingBy` идентичны — оба возвращают `Map<K, List<V>>` — ❌ Неверно
+>
+> **Что на самом деле:** Это совершенно разные API:
+> - `groupBy { keySelector }` возвращает **`Map<K, List<V>>`** сразу (eager) — материализует все группы с полными списками.
+> - `groupingBy { keySelector }` возвращает **`Grouping<T, K>`** — промежуточный объект **без** материализации. На нём вызываются terminal-операции `eachCount()` / `fold()` / `reduce()` / `aggregate()`, которые выполняют один проход и материализуют **только агрегаты** (не списки элементов).
+>
+> **Откуда путаница:** названия отличаются на одну букву (`group_By_` vs `group_ingBy_`), легко перепутать. И тот, и другой относятся к группировке.
+>
+> **Если бы это было правдой:** команда заменяет `words.groupBy { it.first() }.mapValues { it.value.size }` на «оптимальный» `words.groupingBy { it.first() }.mapValues { it.value.size }` — компилятор ругается: `Grouping<T, K>` не имеет `mapValues`; час уходит на debugging и чтение Kotlin documentation, чтобы понять, что нужен `eachCount()`.
+>
+> ---
+>
+> #### B) `groupBy` материализует `Map<K, List<V>>` с полными списками (eager); `groupingBy` возвращает `Grouping<T, K>` для агрегаций (`eachCount`/`fold`/`reduce`) без хранения промежуточных списков — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это два разных режима группировки с разной memory-семантикой:
+>
+> **`groupBy { keySelector }`** (eager):
+> - Возвращает `Map<K, List<V>>` сразу
+> - Все элементы каждой группы хранятся в `List<V>` в памяти
+> - Используется когда **нужны сами группы** (например, отобразить раздельные блоки)
+>
+> **`groupingBy { keySelector }`** (lazy aggregation):
+> - Возвращает `Grouping<T, K>` — промежуточный объект-описатель
+> - Terminal-операции выполняются за один проход:
+>   - `eachCount()` → `Map<K, Int>` (счётчик на группу)
+>   - `fold(initial) { acc, t -> ... }` → `Map<K, R>` (произвольная агрегация)
+>   - `reduce { _, acc, t -> ... }` → агрегация без начального значения
+>   - `aggregate { _, acc, t, first -> ... }` → полный контроль с флагом первого элемента
+> - **Не хранит** промежуточные списки элементов в памяти
+>
+> Это экономит память пропорционально размеру групп: для 100M записей с миллионом групп `groupBy` хранит 100M элементов в виде `Map<K, List<T>>`; `groupingBy.eachCount()` хранит только `Map<K, Int>` — миллион интов вместо 100M записей.
+>
+> **Пример:**
+> ```kotlin
+> // Подсчёт частоты слов в логах (100M строк)
+> val frequencies: Map<String, Int> =
+>     reader.lineSequence().groupingBy { it }.eachCount()
+> // O(N) проход, Map<String, Int> — не хранит сами строки
+>
+> // Сумма транзакций по customerId без промежуточных List<Tx>
+> val totalByCustomer: Map<Long, BigDecimal> = transactions
+>     .groupingBy { it.customerId }
+>     .fold(BigDecimal.ZERO) { acc, tx -> acc + tx.amount }
+>
+> // Максимальная зарплата в отделе
+> val maxByDept: Map<String, Employee> = employees
+>     .groupingBy { it.department }
+>     .reduce { _, acc, emp -> if (emp.salary > acc.salary) emp else acc }
+> ```
+>
+> **Когда применять:**
+> - **Yandex / Avito analytics**: 100M+ events → `groupingBy { it.userId }.eachCount()` для частот без хранения событий
+> - **Banking aggregations**: `transactions.groupingBy { it.accountId }.fold(BigDecimal.ZERO) { a, t -> a + t.amount }` для расчёта баланса
+> - **Logging metrics**: `errors.groupingBy { it.errorCode }.eachCount()` для дашбордов
+>
+> **Подводные камни:**
+> - **Нужны сами группы → `groupBy`**: если нужно отобразить или дальше обрабатывать списки — `groupingBy` не подходит
+> - **`Grouping` нельзя итерировать** напрямую — это объект-описатель, не Iterable; нужна terminal-операция
+> - **`fold` vs `reduce`**: `fold` принимает initial и безопасен на пустых группах; `reduce` бросает на пустой
+>
+> **Связанные вопросы:** [[Q13]] — groupBy/associateBy/partition; [[Q14]] — groupingBy детально; [[Q33]] — associate functions.
+>
+> ---
+>
+> #### C) `groupingBy.eachCount()` возвращает `List<Int>` — позиционно по группам — ❌ Неверно
+>
+> **Что на самом деле:** `eachCount()` возвращает **`Map<K, Int>`** — ключи групп → счётчик элементов. Никакого `List` или позиционного порядка нет; это именно `Map`, где ключ — результат `keySelector`, значение — count.
+>
+> **Откуда путаница:** аналогия с Python `Counter` (возвращает Counter-объект как Map) — корректна; но если ожидать stream API из других языков (например, parallel reduction → array), можно подумать о позиционном результате.
+>
+> **Если бы это было правдой:** разработчик пишет `grouping.eachCount()[0]` ожидая получить count первой группы; runtime возвращает `null` (нет ключа `0` в Map, если только Int не является keySelector), отчёт показывает «0 unique users» вместо реального count, dashboard не показывает данные.
+>
+> ---
+>
+> #### D) `groupingBy` ленив в том смысле, что `eachCount` запускается только при `.toList()` — ❌ Неверно
+>
+> **Что на самом деле:** `eachCount()` / `fold()` / `reduce()` — **terminal operations** на `Grouping`: они сразу выполняют один проход по источнику и материализуют `Map<K, R>`. Lazy только intermediate шаги — но у `Grouping` нет intermediate операций (только terminal).
+>
+> «Lazy» в Grouping означает «не материализует промежуточные List на группы», а не «откладывает выполнение до terminal». Это другая ленивость, чем у Sequence.
+>
+> **Откуда путаница:** Sequence — lazy с явным terminal (`toList`); `Grouping` визуально похож на промежуточный шаг, но семантически — он сам результат построения descriptor, и `eachCount` — это уже terminal операция, не «build».
+>
+> **Если бы это было правдой:** разработчик ожидает «отложенного» поведения, оборачивает `grouping.eachCount()` в `lazy { }` ожидая что вычисление произойдёт только при первом доступе; в реальности `eachCount` уже выполнил O(N) обход; добавляет лишний `.toList()` на Map (который ничего не делает); CR-review требует убрать лишний wrapper, теряется час.
 
 ## Q41. Как работают `chunked` и `windowed` — batch processing и скользящее окно?
 
