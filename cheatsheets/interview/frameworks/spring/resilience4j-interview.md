@@ -14,7 +14,7 @@ aliases:
   - "Resilience4j собеседование"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Resilience4j`
 
@@ -391,7 +391,7 @@ public class OrderService {
 >
 > ---
 >
-> #### B) `@Retry` безопасно ставить на любой метод — Resilience4j автоматически детектит идемпотентность и не ретраит POST/PUT — ❌ Верно неверно
+> #### B) `@Retry` безопасно ставить на любой метод — Resilience4j автоматически детектит идемпотентность и не ретраит POST/PUT — ❌ Неверно
 >
 > **Что на самом деле:** Resilience4j ничего не знает о HTTP-семантике и идемпотентности. Он ретраит ЛЮБОЙ метод, на который повесили `@Retry`, если выброшено исключение из `retry-exceptions`. Идемпотентность — ответственность разработчика: для POST `/orders` обязательно использовать `Idempotency-Key` на стороне сервера.
 >
@@ -493,7 +493,7 @@ public void handleRateLimit() {}
 >
 > ---
 >
-> #### B) При `timeout-duration: 0` и исчерпанном лимите вызов бесконечно блокируется, пока не освободится слот — ✓ Верно неверно
+> #### B) При `timeout-duration: 0` и исчерпанном лимите вызов бесконечно блокируется, пока не освободится слот — ❌ Неверно
 >
 > **Что на самом деле:** наоборот — `timeout-duration: 0` означает «НЕ ждать ни миллисекунды», сразу бросать `RequestNotPermitted`. Это failure-fast режим. Чтобы ждать освобождения, нужно `timeout-duration: 500ms` или больше.
 >
@@ -1157,10 +1157,72 @@ resilience4j.retry.calls{name="svc", kind="failed_with_retry"}
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Как работают события (Events) в Resilience4j? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая Micrometer-метрика покажет, что CircuitBreaker перешёл в OPEN, и как настроить Spring Boot Actuator, чтобы health-endpoint начал учитывать CB-статус?
+>
+> ---
+>
+> #### A) `resilience4j.circuitbreaker.state{name="svc"}` — числовой gauge (CLOSED=0, OPEN=1, HALF_OPEN=2), а для health нужно `management.health.circuitbreakers.enabled: true`; обязательно также `include: health` в `management.endpoints.web.exposure` — ✓ Верно
+>
+> **Развёрнутое объяснение:** Resilience4j через `resilience4j-micrometer` экспортирует набор метрик. Ключевые: `resilience4j.circuitbreaker.state` (gauge с current state), `resilience4j.circuitbreaker.calls{kind="successful|failed|ignored|not_permitted"}` (counter по результатам), `resilience4j.circuitbreaker.failure.rate` (текущий %), `resilience4j.circuitbreaker.slow.call.rate`. Для health-endpoint включается `management.health.circuitbreakers.enabled: true` + Actuator должен быть exposed. Дополнительно `management.endpoint.health.show-details: always` показывает per-CB status.
+>
+> **Пример:**
+> ```yaml
+> management:
+>   endpoints:
+>     web.exposure.include: health,metrics,circuitbreakers
+>   endpoint.health.show-details: always
+>   health:
+>     circuitbreakers.enabled: true
+>     ratelimiters.enabled: true
+>   metrics.tags:
+>     application: ${spring.application.name}
+> ```
+> ```
+> # Prometheus query — alert if any CB is OPEN
+> max(resilience4j_circuitbreaker_state{state="open"}) by (name) == 1
+>
+> # Failure rate by CB
+> resilience4j_circuitbreaker_failure_rate{name="paymentService"}
+> ```
+>
+> **Когда применять:** в любом production Spring Boot сервисе с Resilience4j — обязательно подключать Micrometer + Actuator. Дашборды в Grafana строятся на этих метриках; PagerDuty alerts срабатывают на `state="open" == 1`. ING, Booking используют для SRE-дашбордов.
+>
+> **Подводные камни:** `state` экспортируется как **отдельные метрики на каждое значение** (state="closed", state="open", state="half_open") — некоторые версии (Micrometer 1.10+) дают `gauge` с 0/1 per label. Если использовать `state="open" == 1` без `max(... ) by (name)`, легко двойное alerting. `kind="not_permitted"` (вызовы отброшенные в OPEN) НЕ входит в `failure.rate` — это считается через `resilience4j.circuitbreaker.not.permitted.calls`.
+>
+> **Связанные вопросы:** [[Q4]] — переходы между состояниями CB; [[Q18]] — Events vs Metrics; [[Q19]] — зависимости (micrometer-registry-prometheus)
+>
+> ---
+>
+> #### B) Достаточно `management.endpoints.web.exposure.include: '*'` — Resilience4j автоматически включит CB в `/actuator/health` — ❌ Неверно
+>
+> **Что на самом деле:** одного `include: '*'` мало. CircuitBreaker health indicator выключен по умолчанию — даже если actuator exposed, нужен явный `management.health.circuitbreakers.enabled: true`. Это сделано чтобы избежать ситуации, когда один OPEN CB переводит весь сервис в DOWN (и K8s рестартит pod, делая хуже).
+>
+> **Откуда путаница:** многие health-indicators (db, diskSpace) включены по умолчанию при `include: '*'`. Кажется, CB по аналогии.
+>
+> **Если бы это было правдой:** при первом же OPEN CB на noncritical-зависимость K8s liveness probe вернул бы DOWN → pod рестарт → новые ошибки → каскад.
+>
+> ---
+>
+> #### C) Resilience4j публикует только counters, нет gauge-метрики `state` — для мониторинга OPEN нужно парсить логи — ❌ Неверно
+>
+> **Что на самом деле:** `resilience4j.circuitbreaker.state` — это именно gauge (текущее состояние, обновляемое realtime). Helper-метрика, специально создана для дашбордов и алертов. Парсить логи никогда не нужно.
+>
+> **Откуда путаница:** в очень старых версиях Resilience4j (0.x) действительно были только counters. Это исправлено в 1.0+.
+>
+> **Если бы это было правдой:** Grafana-дашборды по CB были бы невозможны без log-parser pipeline — но есть готовые шаблоны Grafana.
+>
+> ---
+>
+> #### D) Для отображения CB в `/actuator/circuitbreakers` нужно добавить `circuitbreakers` в `include` и установить `management.endpoint.circuitbreakers.enabled: true` явно — последний default `false` — ❌ Неверно
+>
+> **Что на самом деле:** `management.endpoint.circuitbreakers.enabled` — `true` по умолчанию. Нужно ТОЛЬКО expose через `include: circuitbreakers`. Это не enable, а exposure.
+>
+> **Откуда путаница:** Spring Boot 2.x требовал явного `enabled: true` для многих endpoints. Spring Boot 3 упростил — большинство включены, только exposure нужна.
+>
+> **Если бы это было правдой:** документация Resilience4j всегда показывала бы оба флага, но в примерах есть только `include`.
+
+## Q18. Как работают события (Events) в Resilience4j?
 
 Каждый модуль публикует события через `EventPublisher` (pull-model, не Spring events).
 
@@ -1181,10 +1243,79 @@ circuitBreaker.getEventPublisher()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Какие зависимости нужны для Spring Boot? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём разница между Resilience4j Events и Spring `ApplicationEvent`, и какие практические use-case у Events помимо логов?
+>
+> ---
+>
+> #### A) Resilience4j Events — это Spring `ApplicationEvent`, и слушать их можно через стандартный `@EventListener` без дополнительной настройки — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j Events — это **СВОЙ механизм** через `EventPublisher` внутри библиотеки, НЕ Spring events. Подписка делается через `circuitBreaker.getEventPublisher().onStateTransition(consumer)`. В Spring Boot интеграции есть мост через `CircuitBreakerOnStateTransitionEvent` → Spring `ApplicationEvent`, но это **дополнительный слой** (нужно `resilience4j-spring-boot3` с auto-bridge).
+>
+> **Откуда путаница:** Spring проекты часто публикуют свои события через `ApplicationEventPublisher`. От Resilience4j ожидают того же.
+>
+> **Если бы это было правдой:** `@EventListener(CircuitBreakerOnStateTransitionEvent.class)` работал бы вообще без настройки — но фактически нужен Spring Boot starter (без него — только нативный `EventPublisher`).
+>
+> ---
+>
+> #### B) Events отправляются синхронно в треде вызывающего метода — длинный listener блокирует основной запрос — ✓ Верно
+>
+> **Развёрнутое объяснение:** `EventPublisher` в Resilience4j по умолчанию синхронный: при transition CLOSED→OPEN он обходит всех подписчиков в текущем треде. Если listener делает медленную работу (HTTP-вызов в Slack, sync-write в DB) — это блокирует основной business-flow. Для тяжёлых listener'ов нужно явно вынести в `@Async` или передать в очередь (Kafka, in-memory queue). Использовать Events для real-time alerting (Slack notification на OPEN), audit-log в БД, custom-метрик помимо Micrometer, обновления ServiceMesh-конфига.
+>
+> **Пример:**
+> ```java
+> @Component
+> public class CircuitBreakerEventLogger {
+>     @Autowired
+>     private CircuitBreakerRegistry registry;
+>     @Autowired
+>     private SlackClient slack;
+>
+>     @PostConstruct
+>     void subscribe() {
+>         registry.circuitBreaker("paymentService")
+>             .getEventPublisher()
+>             .onStateTransition(event -> {
+>                 var from = event.getStateTransition().getFromState();
+>                 var to = event.getStateTransition().getToState();
+>                 if (to == State.OPEN) {
+>                     slackAsync.send("🚨 paymentService CB: " + from + "→OPEN");
+>                 }
+>             });
+>     }
+>
+>     @Async                                // НЕ блокировать caller
+>     public void slackAsync(String msg) { slack.send(msg); }
+> }
+> ```
+>
+> **Когда применять:** alerts on state transitions (PagerDuty, Slack), audit log "когда какой CB сколько раз OPEN", custom Prometheus pushgateway metrics, integration с service mesh (обновить Istio circuit breaker config).
+>
+> **Подводные камни:** sync-вызов listener'ов — если кто-то засунул блокирующую операцию (HTTP, sync DB) — это замедляет нормальные вызовы метода. Обязательно `@Async` + ThreadPoolTaskExecutor. EventConsumerBuffer ограничен (default 100) — старые события дропаются.
+>
+> **Связанные вопросы:** [[Q4]] — state transitions CLOSED→OPEN→HALF_OPEN; [[Q17]] — Metrics vs Events; [[Q19]] — `resilience4j-spring-boot3` для Spring bridge
+>
+> ---
+>
+> #### C) Events нужны только для отладки в local — в production они автоматически отключаются для экономии CPU — ❌ Неверно
+>
+> **Что на самом деле:** Events работают всегда, на всех окружениях. Нет «production mode» отключения. Накладные расходы минимальны (несколько nanosecond на publish, если нет подписчиков).
+>
+> **Откуда путаница:** некоторые библиотеки (например, Spring Boot DevTools) выключают часть функционала в prod-profile.
+>
+> **Если бы это было правдой:** alerting в production не работал бы вообще — но именно production-сценарий и есть главный use-case для Events.
+>
+> ---
+>
+> #### D) Events — это просто callback API, аналог `addListener()` в Java Swing — не имеют практического применения в backend — ❌ Неверно
+>
+> **Что на самом деле:** Events — критический инструмент для real-time observability в production. Slack/PagerDuty alerts, audit-log, custom metrics, mesh integration — всё на Events. Сравнение с Swing неуместно: это server-side, performance-critical путь.
+>
+> **Откуда путаница:** «callback API» — упрощённое представление о реактивном паттерне, не передающее значимость в backend-стэке.
+>
+> **Если бы это было правдой:** SRE-команды не использовали бы Resilience4j Events — но они активно используются в Netflix, Booking, ING для realtime-alerting.
+
+## Q19. Какие зависимости нужны для Spring Boot?
 
 **Spring Boot 3 (рекомендуется):**
 ```xml
@@ -1216,10 +1347,77 @@ circuitBreaker.getEventPublisher()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. Каковы ограничения аннотационного подхода? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие зависимости обязательны для использования `@CircuitBreaker` и `@Retry` аннотаций в Spring Boot 3, и почему AOP-стартер критичен?
+>
+> ---
+>
+> #### A) Достаточно одного `resilience4j-core` — все аннотации и AOP-аспекты транзитивно подтягиваются — ❌ Неверно
+>
+> **Что на самом деле:** `resilience4j-core` — это **только** базовое API без Spring-интеграции и без AOP. Для аннотаций нужен `resilience4j-spring-boot3` (или `-spring-boot2` для SB2), который подтягивает: модули CB/Retry/RateLimiter, autoconfig, регистрацию аспектов. AOP-стартер `spring-boot-starter-aop` обычно идёт транзитивно с `-spring-boot3`, но в редких случаях (минимальный Spring контекст без `spring-aop` в classpath) — нужно добавить вручную.
+>
+> **Откуда путаница:** многие Java-библиотеки имеют один «zero-config» артефакт. Resilience4j модульная и требует выбора starter'а.
+>
+> **Если бы это было правдой:** `@CircuitBreaker` работал бы сразу, но в реальности без `-spring-boot3` аннотация молча игнорируется (нет аспекта).
+>
+> ---
+>
+> #### B) Для Spring Boot 3 нужны: `resilience4j-spring-boot3` (автоконфиг + аспекты) + `spring-boot-starter-aop` (AOP-инфраструктура для перехвата аннотаций); для метрик дополнительно `spring-boot-starter-actuator` + `micrometer-registry-prometheus` — ✓ Верно
+>
+> **Развёрнутое объяснение:** `resilience4j-spring-boot3` — главный стартер, который привозит per-module Resilience4j (CB, Retry, RateLimiter, Bulkhead, TimeLimiter), `Resilience4jAspect*` (классы аспектов), `AbstractRefreshScopedConfig` и autoconfig. AOP-стартер нужен потому, что Resilience4j использует AspectJ-аспекты, которые без `spring-aop` + `aspectjweaver` не запускаются. Для Spring Boot 2 — `resilience4j-spring-boot2`. Метрики идут через `resilience4j-micrometer`, который подтягивается транзитивно — но Prometheus-экспортёр нужно подключить отдельно (`micrometer-registry-prometheus`), он не входит в стартер.
+>
+> **Пример:**
+> ```xml
+> <!-- Spring Boot 3 -->
+> <dependencies>
+>     <dependency>
+>         <groupId>io.github.resilience4j</groupId>
+>         <artifactId>resilience4j-spring-boot3</artifactId>
+>         <version>2.2.0</version>
+>     </dependency>
+>     <dependency>
+>         <groupId>org.springframework.boot</groupId>
+>         <artifactId>spring-boot-starter-aop</artifactId>
+>     </dependency>
+>     <!-- для метрик и health -->
+>     <dependency>
+>         <groupId>org.springframework.boot</groupId>
+>         <artifactId>spring-boot-starter-actuator</artifactId>
+>     </dependency>
+>     <dependency>
+>         <groupId>io.micrometer</groupId>
+>         <artifactId>micrometer-registry-prometheus</artifactId>
+>     </dependency>
+> </dependencies>
+> ```
+>
+> **Когда применять:** любой Spring Boot 3 микросервис, где нужны декларативные `@CircuitBreaker`/`@Retry`/etc. Если нужен только programmatic API (без аннотаций) — достаточно отдельных модулей `resilience4j-circuitbreaker`, `-retry` etc, без AOP-стартера.
+>
+> **Подводные камни:** для Spring Boot 3 нужна Resilience4j 2.x (1.x не поддерживает jakarta namespace). Для reactive стека дополнительно `resilience4j-reactor`. WebFlux + Resilience4j через аннотации — есть особенности с `Mono`/`Flux`, иногда programmatic API чище. CommonsLang/Vavr — больше не транзитивная зависимость в 2.x.
+>
+> **Связанные вопросы:** [[Q1]] — отличия от Hystrix; [[Q17]] — metrics через actuator; [[Q20]] — ограничения аннотационного подхода (AOP self-invocation)
+>
+> ---
+>
+> #### C) Spring Boot 3 НЕ поддерживает Resilience4j из-за миграции с javax на jakarta — нужно остаться на Spring Boot 2 — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j 2.0+ полностью поддерживает Spring Boot 3 и jakarta-namespace. Артефакт `resilience4j-spring-boot3` создан специально для SB3. Старая 1.7.x поддерживала только SB2.
+>
+> **Откуда путаница:** некоторые библиотеки (отдельные Hibernate add-ons, JMS-клиенты) действительно отставали от jakarta-миграции. Resilience4j справился быстро.
+>
+> **Если бы это было правдой:** все проекты на Spring Boot 3 не имели бы resilience-стратегий — но это широко используется.
+>
+> ---
+>
+> #### D) AOP-стартер не нужен для Spring Boot 3 — там используется compile-time weaving через Spring Native compilation — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3 по умолчанию использует **runtime proxy-based AOP** (как и SB2). Compile-time weaving — отдельная опция через AspectJ Maven plugin, она не активна по умолчанию. Resilience4j-аннотации работают через CGLIB/JDK-прокси, что требует `spring-boot-starter-aop`.
+>
+> **Откуда путаница:** GraalVM native compilation в Spring Boot 3 действительно делает что-то похожее на compile-time. Но это native-build, не дефолтный режим.
+>
+> **Если бы это было правдой:** native-сборка работала бы из коробки, а в реальности нужны hints для Resilience4j (через `spring-aot`).
+
+## Q20. Каковы ограничения аннотационного подхода?
 
 Resilience4j аннотации работают через Spring AOP proxy — те же ограничения, что у `@Transactional`:
 
@@ -1248,16 +1446,86 @@ public class OrderService {
 
 **Итог:** для сложных комбинаций или fine-grained control используй программный API через `CircuitBreakerRegistry`, `RetryRegistry` и `Decorators`.
 
----
+
+> [!mcq]
+>
+> **Вопрос:** Какие ключевые ограничения аннотационного подхода Resilience4j в Spring Boot, и как их обойти для self-invocation сценария?
+>
+> ---
+>
+> #### A) Аннотации работают на любых private/protected методах через AspectJ load-time weaving, если включить `-javaagent:aspectjweaver.jar` — ❌ Неверно
+>
+> **Что на самом деле:** даже с AspectJ load-time weaving (LTW), Resilience4j из коробки конфигурирует **proxy-based AOP**, который НЕ перехватывает private/protected. Чтобы заставить работать на private — нужен реальный AspectJ compile-time weaving + явная настройка `@Aspect` от Resilience4j. На практике это редко делается; стандартная рекомендация — оставить методы public.
+>
+> **Откуда путаница:** LTW — известный workaround для self-invocation в Spring. Многие думают, что это покрывает и private methods.
+>
+> **Если бы это было правдой:** все туториалы рекомендовали бы LTW для Resilience4j — но рекомендуют public-методы.
+>
+> ---
+>
+> #### B) Final классы и final методы работают нормально — Resilience4j использует JDK dynamic proxies, которые не требуют наследования — ❌ Неверно
+>
+> **Что на самом деле:** JDK dynamic proxies работают только для **интерфейсов**, не для конкретных классов. Для proxy-классов без интерфейсов Spring использует CGLIB, который генерирует subclass — и НЕ может наследовать `final` классы (или `final` методы). Решение: добавить интерфейс ИЛИ убрать `final`.
+>
+> **Откуда путаница:** Spring документация говорит о JDK proxies как default. Не упоминают переключение на CGLIB для классов без интерфейса.
+>
+> **Если бы это было правдой:** `final class PaymentService` с `@CircuitBreaker` работал бы — но фактически Spring выбросит `BeanCreationException` на старте.
+>
+> ---
+>
+> #### C) Self-invocation (вызов метода того же бина) — НЕ ловится прокси; решение: self-injection (`@Autowired SelfBean self;` + `self.method()`) или вынос в отдельный бин; private методы недоступны для AOP; final классы ломают CGLIB — ✓ Верно
+>
+> **Развёрнутое объяснение:** Resilience4j через Spring AOP создаёт proxy вокруг бина. Любой вызов через ссылку proxy → перехват; внутри метода `this.otherMethod()` → НЕ перехват (минует proxy). Решение из коробки: впрыснуть сам бин (`@Autowired OrderService self`) и звать `self.method()`. Альтернатива — вынести метод в отдельный сервис. Final-классы — стандартное ограничение CGLIB; объявить класс non-final ИЛИ создать интерфейс. Private методы — proxy НЕ может перехватывать (нет subclass override) — оставлять public/package-private.
+>
+> **Пример:**
+> ```java
+> @Service
+> public class OrderService {
+>
+>     @Autowired
+>     private OrderService self;                  // self-injection
+>
+>     public void placeOrder(Order order) {
+>         self.processWithCircuitBreaker(order);  // через proxy → CB сработает
+>         // this.processWithCircuitBreaker(order); // НЕ сработает!
+>     }
+>
+>     @CircuitBreaker(name = "orderService")
+>     public void processWithCircuitBreaker(Order order) {
+>         externalApi.create(order);
+>     }
+> }
+> ```
+> Альтернатива (предпочтительная) — программный API:
+> ```java
+> private final CircuitBreaker cb;
+> public OrderService(CircuitBreakerRegistry reg) {
+>     this.cb = reg.circuitBreaker("orderService");
+> }
+> public void placeOrder(Order order) {
+>     cb.executeSupplier(() -> externalApi.create(order));
+> }
+> ```
+>
+> **Когда применять:** для self-invocation — программный API (Decorators.ofSupplier()) проще и явнее, чем self-injection (избегает циклической зависимости и `BeanCurrentlyInCreationException`). Для final-классов из third-party — оборачивать в свой не-final adapter.
+>
+> **Подводные камни:** self-injection может вызвать `BeanCurrentlyInCreationException` если есть другие циклические зависимости. `@Lazy` на self-инжекте помогает. Программный API не использует AOP, поэтому работает с private/final/static — но теряет декларативность.
+>
+> **Связанные вопросы:** [[Q3]] — Circuit Breaker logic; [[Q7]] — @CircuitBreaker setup; [[Q19]] — Spring Boot 3 зависимости и AOP-стартер
+>
+> ---
+>
+> #### D) Все эти ограничения сняты в Resilience4j 2.0+ — теперь аспекты работают и на self-invocation, и на private методах автоматически — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j 2.0 принёс много улучшений (jakarta, Spring Boot 3, новые метрики), но ограничения proxy-based AOP остались — это **архитектурное** ограничение Spring AOP, а не Resilience4j. Аналогичные ограничения у `@Transactional`, `@Cacheable`, `@Async`.
+>
+> **Откуда путаница:** хочется верить, что новая версия решает старые проблемы. Маркетинг 2.0 действительно подсветил много улучшений.
+>
+> **Если бы это было правдой:** документация Spring AOP в целом изменилась бы — но self-invocation остаётся «known limitation» с момента появления Spring.
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Resilience Patterns](../../architecture/resilience-patterns-interview.md) — теоретические паттерны отказоустойчивости (Circuit Breaker, Retry, Bulkhead)
+- [Resilience Patterns](../../architecture/resilience-patterns-interview.md) — теоретические паттерны отказоустойчивости (Circuit Breaker, Retry, Bulkhead)
 - [Spring Retry](spring-retry-interview.md) — @Retryable/@Recover в Spring, альтернатива Resilience4j Retry
 - [Spring Boot](spring-boot-interview.md) — auto-configuration, starters
 - [Spring AOP](spring-aop-interview.md) — механизм работы аннотаций Resilience4j через proxy
