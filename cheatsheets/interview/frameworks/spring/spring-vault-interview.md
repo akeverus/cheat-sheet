@@ -54,10 +54,72 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. Как настроить Spring Vault? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Зачем переходить с хранения секретов в `application.yml`/env vars на HashiCorp Vault?
+>
+> ---
+>
+> #### A) Vault — это просто шифрованный YAML-файл, который Spring подключает вместо `application.yml`, секреты лежат в Git, но в зашифрованном виде — ❌ Неверно
+>
+> **Что на самом деле:** Vault — это сетевой сервис (HTTP API), который хранит секреты в своём backend storage (Consul, integrated raft) и выдаёт их только аутентифицированным клиентам с действующим токеном. Никаких файлов в Git — клиент обращается к `https://vault:8200/v1/secret/data/...` и получает JSON.
+>
+> **Откуда путаница:** ассоциация с `git-crypt`, `SOPS`, `Ansible Vault` — там действительно зашифрованные файлы в репозитории. HashiCorp Vault — другой класс инструмента.
+>
+> **Если бы это было правдой:** ротация мастер-ключа требовала бы переписать всю историю Git, аудит «кто читал секрет» был бы невозможен (Git не логирует чтения), а dynamic secrets с TTL не существовали бы в принципе.
+>
+> ---
+>
+> #### B) Vault нужен только для соответствия требованиям PCI DSS / SOC2 — функционально env vars и `application.yml` дают то же самое, разница только в галочке аудитора — ❌ Неверно
+>
+> **Что на самом деле:** compliance — это побочный эффект. Главные технические преимущества: централизованная ротация без передеплоя, dynamic secrets (TTL-credentials генерируются on-demand), transit encryption-as-a-service, аудит-лог каждого чтения, fine-grained ACL через policies.
+>
+> **Откуда путаница:** аудиторы действительно требуют Vault-подобные решения, и многие команды внедряют его «для галочки».
+>
+> **Если бы это было правдой:** при компрометации pod-а с env vars злоумышленник получил бы статичный пароль на годы — у Vault dynamic credentials истекут через час и Vault сам revoke-нет lease в PostgreSQL.
+>
+> ---
+>
+> #### C) HashiCorp Vault — централизованное хранилище секретов с динамической генерацией credentials, transit encryption и аудит-логами; Spring Vault — клиентская библиотека, инкапсулирующая Vault HTTP API в `VaultTemplate` и `@VaultPropertySource` — ✓ Верно
+>
+> **Развёрнутое объяснение:** Vault решает несколько проблем одновременно. Static secrets (KV engine) — заменяют пароли в YAML. Dynamic secrets (database, AWS, PKI engines) — Vault создаёт уникальный username/password для каждого приложения с TTL, после которого автоматически revoke-ает. Transit engine — encryption-as-a-service: приложение шлёт plaintext, получает ciphertext, ключ никогда не покидает Vault. Аудит-лог пишет каждую операцию чтения с identity клиента. Spring Vault даёт идиоматичный Spring-доступ: `VaultTemplate` для прямого API, `spring-cloud-starter-vault-config` для подтягивания секретов в `Environment` на старте.
+>
+> **Пример:**
+> ```yaml
+> # bootstrap.yml — Spring Cloud Vault загружает секреты ДО application.yml
+> spring:
+>   cloud:
+>     vault:
+>       host: vault.prod.internal
+>       port: 8200
+>       scheme: https
+>       authentication: KUBERNETES
+>       kubernetes:
+>         role: payment-service
+>         service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
+>       kv:
+>         enabled: true
+>         backend: secret
+>         version: 2
+>         application-name: payment-service
+> ```
+>
+> **Когда применять:** микросервисы в production, требования к ротации без передеплоя, dynamic DB credentials, mTLS через Vault PKI, encryption-as-a-service для PII (карты, паспорта), мульти-кластерные deployments с единой policy-моделью.
+>
+> **Подводные камни:** Vault — SPOF без HA-конфигурации (минимум 3 ноды с Raft); unsealing требует ключей Shamir's Secret Sharing (5 из 7 операторов); токен root никогда не использовать в приложениях; auto-unseal через cloud KMS обязателен в облаке.
+>
+> ---
+>
+> #### D) Vault полностью заменяет environment variables и Kubernetes Secrets — после внедрения Vault их использовать запрещено — ❌ Неверно
+>
+> **Что на самом деле:** env vars и K8s Secrets продолжают использоваться для bootstrap-конфигурации — нужно как-то передать в pod `VAULT_ROLE_ID`, путь к service account token, адрес Vault. Это chicken-and-egg: чтобы получить секреты, нужен initial credential. K8s Service Account JWT — стандартный bootstrap для Vault Kubernetes auth.
+>
+> **Откуда путаница:** маркетинговое позиционирование Vault как «убийцы env vars».
+>
+> **Если бы это было правдой:** невозможно было бы передать в pod даже URL Vault-сервера — он сам стал бы секретом без места хранения.
+>
+> **Связанные вопросы:** [[Q2]] — настройка Spring Vault; [[Q7]] — методы аутентификации; [[Q12]] — Vault Agent
+
+## Q2. Как настроить Spring Vault?
 
 ```xml
 <dependency>
@@ -112,10 +174,84 @@ public class VaultConfig extends AbstractVaultConfiguration {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Как читать секреты из Vault? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Spring Cloud Vault конфигурация задаётся в `bootstrap.yml`, а не в `application.yml`. Почему?
+>
+> ---
+>
+> #### A) `bootstrap.yml` — устаревший формат из Spring Boot 1.x, в Spring Boot 3.x обе конфигурации работают одинаково, разницы нет — ❌ Неверно
+>
+> **Что на самом деле:** `bootstrap.yml` загружается через специальный `Bootstrap ApplicationContext`, который инициализируется ДО основного контекста — именно в этот момент Spring Cloud Vault аутентифицируется и подтягивает секреты в `Environment`. В Spring Boot 2.4+ появилась альтернатива через `spring.config.import: vault://...`, но bootstrap context остаётся актуальным для legacy-конфигураций.
+>
+> **Откуда путаница:** многие гайды для Spring Boot 3 действительно показывают `spring.config.import` вместо `bootstrap.yml`, создавая впечатление deprecation.
+>
+> **Если бы это было правдой:** `@Value("${db.password}")` в `application.yml` не резолвилось бы, потому что Vault ещё не запрошен — placeholder остался бы нерешённым и контекст упал бы с `IllegalArgumentException`.
+>
+> ---
+>
+> #### B) Чтобы Vault-секреты попали в `Environment` ДО создания `@ConfigurationProperties`, `@Value`-биндов и DataSource bean-ов, конфигурация подключения к Vault должна быть доступна на самой ранней фазе старта — это роль `bootstrap.yml` или `spring.config.import: vault://` в Spring Boot 2.4+ — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring Boot имеет двухфазную модель загрузки. Bootstrap phase: маленький контекст с минимальным набором bean-ов, отвечающий за внешнюю конфигурацию (Vault, Config Server). Application phase: основной контекст с вашими бизнес-bean-ами. Vault-клиент должен жить в bootstrap phase, потому что значения, которые он подтягивает (например, `spring.datasource.password`), нужны при создании `DataSource` в application phase. Если положить `spring.cloud.vault.*` в `application.yml` — клиент попытается создаться слишком поздно, secrets не попадут в `Environment` к моменту, когда они нужны.
+>
+> **Пример:**
+> ```yaml
+> # bootstrap.yml — обязательно для legacy подхода
+> spring:
+>   application:
+>     name: payment-service
+>   cloud:
+>     vault:
+>       host: vault.prod.internal
+>       port: 8200
+>       scheme: https
+>       authentication: APPROLE
+>       app-role:
+>         role-id: ${VAULT_ROLE_ID}
+>         secret-id: ${VAULT_SECRET_ID}
+>       kv:
+>         enabled: true
+>         backend: secret
+>         application-name: payment-service
+> ```
+> ```yaml
+> # ИЛИ современный подход (Spring Boot 2.4+, Spring Cloud 2020.0+)
+> # application.yml
+> spring:
+>   config:
+>     import: "vault://secret/payment-service"
+>   cloud:
+>     vault:
+>       host: vault.prod.internal
+>       authentication: APPROLE
+> ```
+>
+> **Когда применять:** bootstrap.yml — при использовании `spring-cloud-starter-bootstrap`; `spring.config.import` — для новых проектов на Spring Boot 2.4+, более явная фазированная загрузка без скрытого bootstrap context.
+>
+> **Подводные камни:** в Spring Boot 2.4+ bootstrap context отключён по умолчанию — нужна явная зависимость `spring-cloud-starter-bootstrap`, иначе `bootstrap.yml` игнорируется. Профили в bootstrap (`bootstrap-prod.yml`) работают отдельно от application-профилей.
+>
+> ---
+>
+> #### C) `bootstrap.yml` хранится в зашифрованном виде через `jasypt` и сам по себе является секретом — поэтому его нельзя коммитить в Git — ❌ Неверно
+>
+> **Что на самом деле:** `bootstrap.yml` — обычный YAML, его именно коммитят в Git. Он содержит только конфигурацию подключения к Vault (адрес, метод аутентификации), но НЕ секреты. `VAULT_ROLE_ID` и `VAULT_SECRET_ID` подставляются через env vars/Kubernetes Secrets в момент запуска.
+>
+> **Откуда путаница:** ассоциация со словом «secret» в имени `VaultSecretId`.
+>
+> **Если бы это было правдой:** AppRole-механизм был бы бесполезен — суть AppRole в том, что Role ID можно безопасно зашить в образ, а Secret ID — короткоживущий wrapping token от CI/CD.
+>
+> ---
+>
+> #### D) `bootstrap.yml` нужен только для Spring Cloud Config Server — для Vault используется только `application.yml` — ❌ Неверно
+>
+> **Что на самом деле:** оба компонента (Config Server и Vault) являются «property source loader»-ами уровня bootstrap. Любая внешняя система, которая поставляет свойства до основного контекста, конфигурируется в bootstrap phase. Vault в этом смысле архитектурно идентичен Config Server.
+>
+> **Откуда путаница:** исторически bootstrap.yml появился именно для Config Server, и многие воспринимают его как «config-server-specific».
+>
+> **Если бы это было правдой:** Spring Cloud Vault не смог бы заменять `${db.password}` в `application.yml` — placeholder остался бы строкой `${db.password}`.
+>
+> **Связанные вопросы:** [[Q1]] — зачем Vault; [[Q3]] — чтение секретов; [[Q9]] — интеграция с PropertySource
+
+## Q3. Как читать секреты из Vault?
 
 ```java
 // 1. Через VaultTemplate (прямое чтение)
@@ -158,10 +294,77 @@ public class AppConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Что такое Dynamic Secrets и как их использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда вы пишете `@Value("${db.password}")` с Spring Cloud Vault, в какой момент происходит обращение к Vault и что произойдёт, если значение в Vault изменится?
+>
+> ---
+>
+> #### A) `@Value` динамически читает Vault при каждом обращении к полю — изменения в Vault видны мгновенно — ❌ Неверно
+>
+> **Что на самом деле:** `@Value` — это инъекция значения один раз при создании bean-а. Spring подставляет строку из `Environment` в поле, после этого никаких обращений к Vault не происходит. Это обычное property resolution, идентичное `@Value` из `application.yml`.
+>
+> **Откуда путаница:** ожидание, что Vault-интеграция «магически» делает поля reactive. Это работа `@RefreshScope` или явного `VaultTemplate`-вызова, не `@Value`.
+>
+> **Если бы это было правдой:** каждый вызов `userRepository.findById()` дёргал бы Vault для re-resolution `${spring.datasource.password}` — latency и DDoS на Vault.
+>
+> ---
+>
+> #### B) `@Value` резолвится один раз при создании bean-а на старте — для runtime-обновления нужны `@RefreshScope` + `/actuator/refresh`, либо прямой `VaultTemplate.read()`, либо `VaultLeaseContainer` с callback на ротацию — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring Cloud Vault на старте подтягивает секреты в `Environment` через `PropertySource`. `@Value("${db.password}")` обращается к `Environment.getProperty()` ровно один раз — при инстанциировании bean-а. Чтобы получить новое значение после ротации в Vault, нужно либо: (1) пометить bean `@RefreshScope` и вызвать `POST /actuator/refresh` — тогда bean пересоздаётся и `@Value` резолвится заново; (2) использовать `VaultTemplate` напрямую — каждый вызов `vaultTemplate.read("secret/...")` идёт в Vault; (3) подписаться на ротацию через `VaultLeaseContainer.requestRotatingSecret()` — callback вызывается при автоматическом продлении lease.
+>
+> **Пример:**
+> ```java
+> // Способ 1: VaultTemplate — прямое чтение, без кэширования
+> @Service
+> @RequiredArgsConstructor
+> public class SecretService {
+>     private final VaultTemplate vaultTemplate;
+>
+>     public String getDatabasePassword() {
+>         VaultResponseSupport<Map<String, Object>> response =
+>             vaultTemplate.read("secret/data/myapp/db");
+>         return (String) response.getData().get("password");
+>     }
+> }
+>
+> // Способ 2: @RefreshScope для runtime-обновления @Value
+> @Component
+> @RefreshScope
+> public class ApiKeyHolder {
+>     @Value("${external.api.key}")
+>     private String apiKey;
+>     // POST /actuator/refresh пересоздаёт bean, apiKey перечитывается из Vault
+> }
+> ```
+>
+> **Когда применять:** статичные конфиги (URL внешнего API) — `@Value`; периодически ротируемые секреты — `@RefreshScope`; dynamic credentials с TTL (DB, AWS) — `VaultLeaseContainer`.
+>
+> **Подводные камни:** `@RefreshScope` создаёт CGLIB-прокси, что ломает финальные классы и kotlin-data-class-ы; bean пересоздаётся целиком — все его поля сбрасываются (включая накопленные кэши); вызов `/actuator/refresh` без security exposes конфигурацию.
+>
+> ---
+>
+> #### C) `@VaultPropertySource` работает в runtime — при каждом `${...}`-resolve обращается к Vault — ❌ Неверно
+>
+> **Что на самом деле:** `@VaultPropertySource` регистрирует `PropertySource` один раз при инициализации контекста — он подтягивает все ключи из указанного пути и кэширует их в Environment. Дальше работает как обычный `PropertySource`. Никакого runtime-resolve в Vault при каждом `${...}` нет.
+>
+> **Откуда путаница:** имя «PropertySource» воспринимается как «активный источник», но это просто snapshot ключей.
+>
+> **Если бы это было правдой:** `@VaultPropertySource` имел бы массивные performance-проблемы — каждое property-resolution = HTTP-вызов в Vault.
+>
+> ---
+>
+> #### D) Чтение секретов из Vault невозможно через Spring beans — нужно использовать только Vault CLI или HTTP API напрямую — ❌ Неверно
+>
+> **Что на самом деле:** Spring Vault предоставляет три идиоматичных Spring-способа: (1) `@Value` через Spring Cloud Vault PropertySource (startup-time); (2) `VaultTemplate` для программного API (runtime); (3) `@VaultPropertySource` для декларативной подгрузки конкретного пути в Environment.
+>
+> **Откуда путаница:** недопонимание разделения ответственности между Vault CLI (для операторов/DevOps) и Spring Vault (для приложений).
+>
+> **Если бы это было правдой:** существование `spring-vault-core`, `spring-cloud-starter-vault-config` и `VaultTemplate` было бы бессмысленным.
+>
+> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q5]] — VaultLeaseContainer; [[Q9]] — PropertySource integration
+
+## Q4. Что такое Dynamic Secrets и как их использовать?
 
 **Dynamic Secrets** — учётные данные, генерируемые Vault on-demand с ограниченным временем жизни (TTL). После истечения TTL Vault автоматически отзывает их.
 
