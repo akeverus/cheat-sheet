@@ -14,7 +14,7 @@ aliases:
   - "Big O interview"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Анализ сложности алгоритмов`
 
@@ -1548,10 +1548,107 @@ long sum(int[] arr) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Как профилировать реальный алгоритм, а не оценивать через Big O? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** `Merge Sort` и `Quick Sort` оба имеют сложность `O(n log n)`, но `Arrays.sort()` для примитивов в Java использует Quick Sort. Почему, если асимптотика одинаковая?
+>
+> ---
+>
+> #### A) Merge Sort устарел и больше не поддерживается JVM — ❌ Неверно
+>
+> **Что на самом деле:** Merge Sort активно используется в Java. `Arrays.sort()` для ОБЪЕКТОВ применяет **TimSort** — гибрид Merge Sort и Insertion Sort. Он stable и работает за гарантированные `O(n log n)`. Merge Sort нигде не «устарел».
+>
+> **Откуда путаница:** студенты иногда смешивают «устаревший API» с «эффективностью». На JVM используются разные алгоритмы для разных типов данных.
+>
+> **Если бы это было правдой:** `Collections.sort(list)` не работал бы для `List<Integer>` — но он работает на `TimSort`. JDK 7 явно ввёл TimSort именно потому, что он стабилен и эффективен.
+>
+> ---
+>
+> #### B) У Merge Sort асимптотика на самом деле `O(n²)`, а не `O(n log n)` — ❌ Неверно
+>
+> **Что на самом деле:** Merge Sort гарантированно `O(n log n)` во всех случаях (best, average, worst). Это его сильная сторона по сравнению с Quick Sort (`O(n²)` worst). Утверждение про `O(n²)` для Merge Sort фундаментально неверно.
+>
+> **Откуда путаница:** возможно, путаница с **Bubble Sort** (`O(n²)`) или с in-place вариантами Merge Sort, которые имеют большую константу из-за дополнительной работы.
+>
+> **Если бы это было правдой:** TimSort (на основе Merge Sort) не использовался бы — и `Collections.sort()` работал бы за `O(n²)`. На практике он `O(n log n)`.
+>
+> ---
+>
+> #### C) Quick Sort имеет меньшие скрытые константы: in-place (не нужна доп. память O(n)), лучше cache locality (работает в одной области памяти), меньше копирований — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Big O скрывает константные множители: `Quick Sort = c₁·n log n`, `Merge Sort = c₂·n log n`, где `c₁ < c₂` примерно в 2-3 раза. Причины:
+>
+> 1. **In-place vs out-of-place:**
+>    - Quick Sort работает в исходном массиве, перестановками. Память: `O(log n)` для стека рекурсии.
+>    - Merge Sort требует временный массив размера `n` (out-of-place). Память: `O(n)`.
+>    - Аллокация массива на каждом уровне рекурсии — это `O(n log n)` записей в кучу + GC pressure.
+>
+> 2. **Cache locality:**
+>    - Quick Sort: partition работает с непрерывным сегментом массива. Sequential access — CPU prefetcher эффективен.
+>    - Merge Sort: чтение из двух подмассивов + запись в третий → 3 cache streams вместо одного. Больше cache misses.
+>
+> 3. **Branch prediction:**
+>    - Quick Sort partition имеет простой паттерн ветвления (`if arr[j] < pivot`).
+>    - Merge merge имеет более сложный паттерн (`if A[i] < B[j]` или конец одного массива).
+>
+> 4. **Меньше копирований:**
+>    - Quick Sort: каждый элемент перемещается `log n` раз (через swap).
+>    - Merge Sort: каждый элемент копируется в temp и обратно на каждом уровне → `2 n log n` копий.
+>
+> **Пример:**
+> ```java
+> // JMH benchmark на массиве 10^6 случайных int:
+> // Quick Sort:  ~80ms,  выделено 0 MB
+> // Merge Sort:  ~180ms, выделено ~8MB (temp arrays)
+> // TimSort:     ~95ms,  выделено ~2MB (gallop mode)
+>
+> // Поэтому Java для примитивов:
+> Arrays.sort(int[] arr);     // Dual-Pivot QuickSort (Yaroslavskiy)
+>
+> // А для объектов:
+> Arrays.sort(Object[] arr);  // TimSort (stable, гарантированный n log n)
+> ```
+>
+> Сравнение констант для популярных алгоритмов:
+>
+> ```
+> Алгоритм                  Big O          Скрытая константа   Stable?   In-place?
+> ────────────────────────────────────────────────────────────────────────────────────
+> Quick Sort                O(n log n)*    ~1.4 n log n        Нет       Да
+> Merge Sort                O(n log n)     ~2.5 n log n        Да        Нет (O(n) memory)
+> Heap Sort                 O(n log n)     ~3 n log n          Нет       Да
+> TimSort                   O(n log n)     ~1.7 n log n        Да        Нет (O(n) worst)
+> Dual-Pivot Quick (Java)   O(n log n)*    ~1.1 n log n        Нет       Да
+>
+> * — average case; worst case O(n²) для классических Quick Sort реализаций.
+> ```
+>
+> **Когда применять:**
+> - **Quick Sort**: примитивы, не нужна stability, есть защита от worst case (random pivot или Introsort).
+> - **Merge Sort / TimSort**: stability важна (сортировка по нескольким ключам), гарантированный `O(n log n)`, можно жертвовать памятью.
+> - **Heap Sort**: нужны гарантированные `O(n log n)` И in-place — но самые большие константы.
+> - **Insertion Sort**: малые массивы (`n < 32`) или почти отсортированные данные.
+>
+> **Подводные камни:**
+> - **JIT-warmup**: первый запуск всегда медленнее. JMH делает warm-up специально, иначе бенчмарки врут в 10×.
+> - **`Arrays.equals()` для объектов**: вызывает `equals()`, который может быть дорогим (string comparison) → константа взлетает.
+> - **Cache size зависит от CPU**: на старых CPU с L1=8KB Merge Sort может выиграть из-за меньших структур; на современных (L1=32KB) Quick Sort доминирует.
+> - **Galactic algorithms**: алгоритмы с лучшей асимптотикой, но настолько большими константами, что неприменимы (Coppersmith-Winograd для матриц).
+>
+> **Связанные вопросы:** [[Q28]] — `O(1)` может быть медленнее `O(n)`; [[Q30]] — профилирование через JMH; [[Q19]] — cache locality важнее Big O.
+>
+> ---
+>
+> #### D) Quick Sort использует меньше операций сравнения, потому что он не stable — ❌ Неверно
+>
+> **Что на самом деле:** число СРАВНЕНИЙ у Quick и Merge примерно одинаково (`n log n`). Stability не связана с числом сравнений — она про сохранение порядка равных элементов. Скорость Quick Sort определяется in-place свойством, cache locality и простой структурой partition.
+>
+> **Откуда путаница:** студенты иногда полагают, что stable сортировка делает «дополнительные проверки» для сохранения порядка. На самом деле stability — это свойство самого алгоритма, а не дополнительных операций.
+>
+> **Если бы это было правдой:** unstable сортировки всегда были бы быстрее stable, но TimSort (stable) лишь немного медленнее Quick на случайных данных, а на почти отсортированных — БЫСТРЕЕ (`O(n)` best case).
+
+## Q30. Как профилировать реальный алгоритм, а не оценивать через Big O?
 
 1. **JMH** (Java Microbenchmark Harness) — стандарт для микробенчей в JVM
 2. **Async-profiler** — sampling profiler с CPU/memory флеймграфами
@@ -1572,10 +1669,116 @@ public int linearSearch(Blackhole bh) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. (!) Что такое complexity attack? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какой инструмент НЕЛЬЗЯ использовать для измерения чистого времени работы алгоритма на JVM, потому что он систематически даёт неверные результаты?
+>
+> ---
+>
+> #### A) `System.nanoTime()` вокруг вызова метода — он измеряет реальное время с наносекундной точностью — ❌ Верно для измерения, но не для микробенчмарка
+>
+> **Что на самом деле:** `System.nanoTime()` действительно высокоточный (sub-microsecond), и для разовых замеров крупных операций он подходит. ПРОБЛЕМА в контексте микробенчмарка: JIT компиляция, dead code elimination, OSR — все эти оптимизации искажают результат. Для одного крупного замера (`>1 секунды`) `nanoTime()` норма.
+>
+> **Откуда путаница:** «использовать nanoTime для измерения времени» — корректно как способ ПОЛУЧЕНИЯ времени. Но «использовать nanoTime для микробенчмаркинга» — антипаттерн. Различие тонкое.
+>
+> **Если бы это было правдой:** JMH не существовал бы — все писали бы свои бенчмарки через `nanoTime`. JMH был создан в OpenJDK именно потому, что наивные замеры часто ошибаются на порядки.
+>
+> ---
+>
+> #### B) JMH (Java Microbenchmark Harness) — он создан Sun/Oracle и официально не работает с современными JDK — ❌ Неверно
+>
+> **Что на самом деле:** JMH — это **рекомендованный** инструмент для микробенчмаркинга на JVM. Поддерживается Oracle, работает со всеми современными JDK (8, 11, 17, 21). Он специально обходит ошибки наивных замеров: warm-up, dead code elimination, false sharing.
+>
+> **Откуда путаница:** возможно, путаница с устаревшими микробенчмарк-фреймворками (Caliper от Google).
+>
+> **Если бы это было правдой:** Spring Framework, Netty, JDK internals не использовали бы JMH — но все они используют его для регрессионных замеров.
+>
+> ---
+>
+> #### C) `System.currentTimeMillis()` в цикле — потому что он измеряет wall-clock time, а не CPU time, и имеет миллисекундную точность, недостаточную для оценки `n log n` алгоритмов на малых `n` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `System.currentTimeMillis()` имеет несколько фундаментальных проблем для микробенчмаркинга:
+>
+> 1. **Точность только до миллисекунды** (на некоторых ОС — до 10-15 мс). Алгоритмы `O(n log n)` на `n = 1000` выполняются за микросекунды → ошибка измерения 100%+.
+> 2. **Wall-clock time, не CPU time**: учитывает GC паузы, context switches, фоновые процессы. Один и тот же замер может дать 5ms или 50ms в зависимости от загрузки системы.
+> 3. **Не обходит JIT-компиляцию**: первые 10-100 вызовов выполняются интерпретатором (медленно), потом JIT компилирует — внезапное ускорение в 10×.
+> 4. **Не обходит dead code elimination**: если результат не используется, JIT удалит весь код. `long s = 0; for (int x : arr) s += x;` без `Blackhole.consume(s)` → весь цикл удалён, замер показывает 0ns.
+> 5. **OSR (On-Stack Replacement)**: горячий метод компилируется и заменяется прямо во время выполнения — измерение получает смесь интерпретируемого и скомпилированного кода.
+>
+> Правильный инструментарий на JVM:
+>
+> ```
+> Задача                                 Инструмент            Почему
+> ───────────────────────────────────────────────────────────────────────
+> Микробенчмарки (метод <1ms)            JMH                   Handles JIT/DCE/OSR
+> Профилирование production              async-profiler         Low overhead (~1%), флеймграфы
+> Поиск bottleneck                       JFR (Java Flight Rec.) Встроен в JDK, низкий оверхед
+> Memory analysis                        VisualVM / JProfiler  Heap dump, OQL queries
+> GC analysis                            JFR + GCViewer        GC pauses, allocation rate
+> Линейный замер крупных операций        System.nanoTime()     Достаточно для >1s операций
+> ```
+>
+> **Пример:**
+> ```java
+> // ❌ ПЛОХО: naive benchmark
+> long start = System.currentTimeMillis();
+> for (int i = 0; i < 1000; i++) algo(data);
+> long elapsed = System.currentTimeMillis() - start;
+> // Результат: ~0ms (точность недостаточна) или ошибка в 10×
+>
+> // ✅ ХОРОШО: JMH
+> @State(Scope.Benchmark)
+> public class AlgoBenchmark {
+>     int[] data;
+>
+>     @Setup
+>     public void setup() {
+>         data = new Random(42).ints(1_000_000, 0, 1000).toArray();
+>     }
+>
+>     @Benchmark
+>     @BenchmarkMode(Mode.AverageTime)
+>     @OutputTimeUnit(TimeUnit.MICROSECONDS)
+>     public int linearSearch(Blackhole bh) {
+>         for (int i = 0; i < data.length; i++)
+>             if (data[i] == 42) return i;
+>         return -1;
+>     }
+> }
+> ```
+>
+> JMH автоматически:
+> - Делает warm-up (5 итераций по 1s) — JIT компилирует hot path.
+> - Запускает измерительные итерации (5+ по 1s) — статистическая значимость.
+> - Использует `Blackhole.consume()` — предотвращает dead code elimination.
+> - Форкает JVM — независимые runs устраняют влияние класс-загрузки.
+>
+> **Когда применять:**
+> - **Регрессионное тестирование производительности**: JMH в CI на каждый PR.
+> - **Сравнение реализаций**: какой `HashMap` быстрее — JDK vs Eclipse Collections.
+> - **Профилирование production**: async-profiler, JFR — а не JMH (JMH про микро-замеры).
+> - **Поиск hot path**: async-profiler с флеймграфами — `java -agentpath:libasyncProfiler.so=start,event=cpu,file=profile.html ...`.
+>
+> **Подводные камни:**
+> - **JMH overhead**: каждый замер ~10ns на инфраструктуру. Для операций <50ns точность теряется.
+> - **Caching effects**: повторный запуск той же операции прогревает кэш — реальные production-данные не таковы. Использовать `@OperationsPerInvocation` для разнообразных данных.
+> - **`@Fork(0)`** в JMH — критическая ошибка, не использовать. Всегда `@Fork(2+)` для независимости от warm-up JVM.
+> - **System load** во время бенчмарка: запускать на изолированной машине, без браузеров и IDE.
+>
+> **Связанные вопросы:** [[Q29]] — скрытые константы; [[Q19]] — cache locality важнее Big O; [[Q28]] — `O(1)` vs `O(n)` на малых n.
+>
+> ---
+>
+> #### D) `@Benchmark` annotation из Spring — это полноценная замена JMH — ❌ Неверно
+>
+> **Что на самом деле:** в Spring **НЕТ** аннотации `@Benchmark` для микробенчмаркинга. Аннотация `@Benchmark` принадлежит JMH (`org.openjdk.jmh.annotations.Benchmark`). Spring имеет `@Timed` от Micrometer для production-метрик, но это другое — он измеряет HTTP-запросы или вызовы метода в долгоживущем приложении.
+>
+> **Откуда путаница:** Spring Boot Actuator поддерживает много метрик через Micrometer (`@Timed`, `@Counted`), и студенты путают их с микробенчмаркингом.
+>
+> **Если бы это было правдой:** Spring-проекты могли бы делать микробенчмарки без отдельного фреймворка. На практике все используют JMH (отдельный gradle/maven модуль) для бенчей.
+
+## Q31. (!) Что такое complexity attack?
 
 **Algorithmic complexity attack** — атака, при которой злоумышленник специально подаёт вход, вызывающий **худший случай** сложности у алгоритма на сервере.
 
@@ -1592,6 +1795,103 @@ public int linearSearch(Blackhole bh) {
 
 Подробнее об атаках — в [Application Security](../../security/application-security-interview.md) и [OWASP Top 10](../../security/owasp-top10-interview.md).
 
+
+> [!mcq]
+>
+> **Вопрос:** В Java 7 HashMap страдал от **HashDoS** атаки: специально подобранные ключи давали `O(n)` на каждый `get()`, и POST-запрос с 10 000 параметрами обрушивал сервер. Какие защиты Java 8+ применила?
+>
+> ---
+>
+> #### A) Изменили хеш-функцию на SHA-256 — криптостойкую — ❌ Неверно
+>
+> **Что на самом деле:** Java 8 НЕ переходила на SHA-256 для `HashMap.hashCode()`. SHA-256 в 100× медленнее обычного хеша и непригоден для каждого `put`/`get`. Защита Java 8 — это **treeification**: коллизии в одном bucket превращаются в красно-чёрное дерево (`O(log n)`), а не остаются `LinkedList` (`O(n)`).
+>
+> **Откуда путаница:** криптографические хеши действительно сопротивляются HashDoS, но их стоимость недопустима для in-memory структур. Используются в распределённых системах (consistent hashing), не в `HashMap`.
+>
+> **Если бы это было правдой:** `HashMap.put()` стал бы в 100× медленнее, и весь Java ecosystem развалился бы по производительности.
+>
+> ---
+>
+> #### B) Treeification бакетов: при коллизиях > 8 элементов LinkedList превращается в красно-чёрное дерево, давая `O(log n)` вместо `O(n)` для атакующего входа — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Algorithmic complexity attack — это эксплуатация worst case алгоритма через подбор adversarial input. Без защиты `O(1)` или `O(n log n)` алгоритм деградирует к `O(n)` или `O(n²)`, и сервер падает.
+>
+> Java 7 `HashMap`:
+> ```
+> bucket[hash % capacity] → LinkedList<Entry>
+> get(key): hash → bucket → линейный поиск в LinkedList → O(n) при коллизии
+> ```
+>
+> Атака HashDoS:
+> 1. Атакующий знает хеш-функцию (open source).
+> 2. Подбирает 10 000 строк с одинаковым `hashCode()` (collision strings для Java 7: `"Aa"`, `"BB"`, `"aA"`, ...).
+> 3. POST `?a=...&b=...&c=...` с этими ключами → парсер кладёт их в `HashMap<String, String>`.
+> 4. Каждый `put()` делает линейный поиск → `O(n²)` суммарно.
+> 5. CPU 100%, сервер обрушен.
+>
+> Java 8+ защиты:
+> 1. **TREEIFY_THRESHOLD = 8**: если в bucket >8 элементов, LinkedList превращается в красно-чёрное дерево.
+> 2. **UNTREEIFY_THRESHOLD = 6**: при уменьшении до 6 — обратно в LinkedList.
+> 3. **MIN_TREEIFY_CAPACITY = 64**: treeification только если capacity ≥64; иначе resize.
+>
+> Эффект: вместо `O(n²)` атака даёт `O(n log n)` — всё ещё хуже нормы, но не DoS.
+>
+> **Пример других complexity attacks:**
+> ```
+> Атака                  Алгоритм-жертва       Worst case        Защита
+> ────────────────────────────────────────────────────────────────────────────
+> HashDoS                HashMap (Java <8)     O(n) per get      Treeification (Java 8)
+> ReDoS                  Regex backtracking    O(2ⁿ)             Linear regex (RE2, Hyperscan)
+> Quick Sort attack      Quick Sort, fixed pivot   O(n²)         Random pivot, Introsort
+> Zip bomb               Декомпрессия          O(2ᵏ)             Лимит на разжатый размер
+> Billion laughs (XML)   XML expansion         O(exponential)    Лимит на entity depth
+> SlowLoris              HTTP connection mgmt  O(connections)    Connection timeout, rate limit
+> RPC complexity         Деревья запросов GraphQL  O(n^depth)    Query depth limit, cost analysis
+> ```
+>
+> Реальные примеры:
+> - **2003** — Crosby & Wallach: «Denial of Service via Algorithmic Complexity Attacks». Открыли тему.
+> - **2011** — 28C3 talk: HashDoS на Tomcat, PHP, .NET, Ruby on Rails → массовые патчи.
+> - **2019** — Cloudflare ReDoS на регулярном выражении: глобальный outage 27 минут.
+> - **2022** — log4shell-style уязвимости часто комбинируют complexity attack + RCE.
+>
+> **Пример защищённого кода:**
+> ```java
+> // ❌ УЯЗВИМ: пользовательский regex без timeout
+> boolean matches(String userPattern, String input) {
+>     return Pattern.compile(userPattern).matcher(input).matches();
+>     // userPattern = "(a+)+$" + input = "aaaaa...X" → catastrophic backtracking
+> }
+>
+> // ✅ ЗАЩИЩЁН: timeout через отдельный поток или RE2-like движок
+> boolean matches(String userPattern, String input) {
+>     CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() ->
+>         Pattern.compile(userPattern).matcher(input).matches());
+>     return future.get(1, TimeUnit.SECONDS);  // throw на превышение
+> }
+>
+> // Или использовать RE2J (no backtracking, linear time)
+> import com.google.re2j.Pattern;
+> import com.google.re2j.Matcher;
+> ```
+>
+> **Когда применять:**
+> - **API endpoints, принимающие user input**: лимиты на размер, валидация структуры до парсинга.
+> - **JSON/XML парсеры**: настроить max depth, max array size, total bytes.
+> - **GraphQL**: query complexity analysis (Apollo, Hot Chocolate), depth limit.
+> - **Regex от пользователя**: timeout, или линейные движки (RE2, Hyperscan).
+> - **Hash collections в публичном API**: salt hash, randomized hash function.
+>
+> **Подводные камни:**
+> - **Treeification не помогает против тривиального DoS** (миллион уникальных ключей → нагрузка на rehashing, GC).
+> - **Salt не вечен**: если seed утечёт через timing attack, атака возобновится. Использовать `ThreadLocalRandom` для каждой инстансы.
+> - **Zip bomb на decompressed size**: проверять размер ДО разжатия не получится — checksum не помогает. Лимитировать ПОТОК разжатия.
+> - **ReDoS в стандартных регексах JDK**: даже `String.matches()` уязвим. Аудитировать регексы статически (rxxr2, recheck).
+>
+> **Связанные вопросы:** [[Q24]] — Quick Sort `O(n²)` worst case; [[Q14]] — HashMap деградирует до `O(log n)`; [[Q23]] — нижняя граница сортировки сравнениями.
+
 ---
 
 ## See also
@@ -1607,13 +1907,7 @@ public int linearSearch(Blackhole bh) {
 - [Java Collections](../../programming-languages/java/java-collections-interview.md) — реальные сложности коллекций
 - [Application Profiling](../../performance/application-profiling-interview.md) — JMH, профилировщики, реальные замеры
 - [JVM](../../jvm/jvm-interview.md) — как стек, GC и JIT влияют на сложность
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Backtracking](../algorithmic-paradigms/backtracking-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [Backtracking](../algorithmic-paradigms/backtracking-interview.md)
 - [Divide and Conquer](../algorithmic-paradigms/divide-and-conquer-interview.md)
 - [Динамическое программирование](../algorithmic-paradigms/dynamic-programming-interview.md)
 - [Жадные алгоритмы (Greedy)](../algorithmic-paradigms/greedy-algorithms-interview.md)
