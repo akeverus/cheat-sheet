@@ -1196,10 +1196,71 @@ processors:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Как управлять стоимостью логов и трейсов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая стратегия sampling трейсов наиболее устойчива для production: сохраняет редкие ошибки и медленные запросы, не теряет интересные кейсы при низком общем проценте sampling?
+>
+> ---
+>
+> #### A) Head-based sampling с фиксированным `ratio: 0.1` (10%) для всех запросов — ❌ Неверно
+>
+> **Что на самом деле:** Head-based решает на входе по `traceId hash` — без знания исхода трейса. Это даёт предсказуемый объём, но равномерно теряет 90% всего, включая ошибки и медленные запросы. Для SLO-диагностики этого недостаточно: при error rate 0.5% и 10% sampling реально сохранится ~0.05% запросов — статистики на расследование почти нет.
+>
+> **Откуда путаница:** `OpenTelemetry SDK` по умолчанию предлагает `parentbased_traceidratio` — это документированный простой вариант, многие думают, что он production-ready.
+>
+> **Если бы это было правдой:** SRE открывает Tempo при инциденте «p99 = 5s, error rate 1%», находит 2-3 случайных трейса вместо паттерна — root cause не локализуется, MTTR растёт.
+>
+> ---
+>
+> #### B) Rate limiting — N трейсов в секунду на каждый сервис — ❌ Неверно
+>
+> **Что на самом деле:** Rate limiting (head-based) ограничивает RPS трейсов, что хорошо для предсказуемости стоимости. Но при всплеске трафика (5x normal) теряется именно тот период, который интересен SRE — момент инцидента. Также нет приоритезации ошибок: успешный `GET /healthz` и `500 POST /payment` имеют равные шансы попасть в выборку.
+>
+> **Откуда путаница:** `Jaeger` исторически популяризовал rate-limit sampler как защиту от перегрузки backend — это валидно как защита, но не как основная стратегия.
+>
+> **Если бы это было правдой:** в момент инцидента (всплеск 5xx) sampler дропает 80% ошибок — расследование становится невозможным; ирония в том, что чем хуже система, тем меньше данных для диагностики.
+>
+> ---
+>
+> #### C) Sample 100% всех трейсов без фильтрации — наиболее полное покрытие — ❌ Неверно
+>
+> **Что на самом деле:** 100% sampling в production невозможен экономически: при 1M RPS × 10 KB/трейс получится ~10 GB/час, ~$1000–10000/мес в managed (Datadog/Honeycomb). Кроме стоимости — overhead на network/CPU экспортёра, риск backpressure на приложение. 100% sampling уместен только в dev/staging или для очень низконагруженных сервисов.
+>
+> **Откуда путаница:** «больше данных — лучше» — интуитивно, но неверно на production-масштабе. Также некоторые vendor-доклады («Honeycomb pioneered events not samples») воспринимают буквально.
+>
+> **Если бы это было правдой:** observability бюджет = 30–50% от стоимости инфраструктуры, FinOps кричит, sampling всё равно вводят — но поспешно и без процессов.
+>
+> ---
+>
+> #### D) Комбинация: head-based 10–20% baseline + always-sample ошибки/медленные + tail-based в OTel Collector для финальной фильтрации — ✓ Верно
+>
+> **Развёрнутое объяснение:** Production-ready стратегия — двухуровневая. На уровне SDK (head) сохраняем baseline trace для статистики (`parentbased_traceidratio: 0.1`). На уровне OTel Collector (tail) применяем `tail_sampling processor`, который буферизует все span'ы трейса на `decision_wait` (5–30s) и принимает решение постфактум: 100% ошибок (`status_code: ERROR`), 100% медленных (`latency > 1s`), 5–10% остальных. Это даёт **полное покрытие интересных случаев** при общем sampling 5–15%. Минус: tail-sampling требует памяти на буферизацию (~1 GB / 50k RPS) и не работает корректно при разнесённых Collector instances (нужен `loadbalancing exporter` для group-by-traceId).
+>
+> **Пример:**
+> ```yaml
+> # OTel Collector — production tail sampling
+> processors:
+>   tail_sampling:
+>     decision_wait: 10s
+>     num_traces: 100000
+>     policies:
+>       - name: errors
+>         type: status_code
+>         status_code: {status_codes: [ERROR]}
+>       - name: slow-requests
+>         type: latency
+>         latency: {threshold_ms: 1000}
+>       - name: probabilistic
+>         type: probabilistic
+>         probabilistic: {sampling_percentage: 10}
+> ```
+>
+> **Когда применять:** любая production-система с >1k RPS. Grafana Labs, Shopify, Uber используют такую двухуровневую схему. Для микросервисов на Kubernetes — OTel Collector в gateway-режиме.
+>
+> **Подводные камни:** tail-sampling требует, чтобы **все spans одного trace** попали на один Collector instance — нужен loadbalancing exporter с `routing_key: traceID`. Без этого Collector видит фрагменты трейса и принимает неверные решения. Также `decision_wait` должен быть больше максимального трейса — иначе trim long traces.
+>
+> **Связанные вопросы:** [[Q27]] — управление стоимостью телеметрии; [[Q34]] — OTel Collector processors; [[Q39]] — FinOps и sampling.
+
+## Q27. Как управлять стоимостью логов и трейсов?
 
 Рабочие рычаги:
 
@@ -1225,10 +1286,68 @@ processors:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Как запускать observability в production без перегруза системы? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой подход к управлению стоимостью observability работает в production и одновременно сохраняет диагностическую ценность данных?
+>
+> ---
+>
+> #### A) Хранить все логи и трейсы в hot-storage (SSD) 90 дней — иначе при инциденте недостаточно данных — ✓ Верно? Нет, это ❌ Неверно
+>
+> **Что на самом деле:** 90 дней hot-storage экономически разорителен: для 100 GB/день логов это 9 TB на SSD ≈ $200–1000/мес только за диски, плюс indexing overhead (Elasticsearch удваивает место). Реально 95% расследований используют данные **первых 24–72 часов**. Стандартная tiered-схема: hot 3–7 дней (SSD), warm 30 дней (HDD/cold S3), cold 90–365 дней (S3 Glacier для compliance).
+>
+> **Откуда путаница:** SRE-команды боятся «недостаточно данных при инциденте», поэтому склонны хранить всё в hot. Также аудит/compliance требует длинного retention — но он не требует hot-access.
+>
+> **Если бы это было правдой:** observability budget = 30–50% инфраструктуры; FinOps вынуждает резко резать retention с потерей всех данных, а не только hot-уровня.
+>
+> ---
+>
+> #### B) Снизить retention до 1 дня для всех логов — самый дешёвый вариант — ❌ Неверно
+>
+> **Что на самом деле:** 1 день retention ломает базовые workflow: weekly trend analysis, recurring incidents («каждый понедельник 9:00 alert»), compliance (часто 90+ дней обязательны), post-mortem (инциденты часто расследуются через 2–3 дня). 1 день уместен только для DEBUG-логов или для синтетических трейсов в нагрузочном тесте.
+>
+> **Откуда путаница:** при выходе из бюджета первая мысль — резать retention равномерно. Но это даёт линейную экономию и нелинейную потерю ценности.
+>
+> **Если бы это было правдой:** при инциденте в понедельник нет данных за пятницу — recurring patterns не видны; команда «летит» вслепую.
+>
+> ---
+>
+> #### C) Tiered retention (hot/warm/cold) + фильтрация на уровне агента + sampling + cardinality control + видимость стоимости — ✓ Верно
+>
+> **Развёрнутое объяснение:** Многоуровневая стратегия — единственный устойчивый подход. **Tiered retention**: hot 3–7 дней (SSD, indexed), warm 30 дней (HDD/object storage, lazy index), cold 90–365 дней (S3 Glacier, compliance only). **Фильтрация на агенте**: drop health-check логов (`/actuator/health`), не собирать DEBUG в production, severity-filter в `OTel Collector`. **Sampling** (см. Q26): 10% baseline + 100% errors через tail-sampling. **Cardinality control**: запрет `user_id`/`request_id` в Prometheus labels (cardinality explosion → OOM). **Видимость**: dashboard «cost-per-service» рядом с SLO-дашбордом — без этого оптимизация не приоритизируется. Эталон зрелости: observability = 5–15% от стоимости инфраструктуры приложения.
+>
+> **Пример:**
+> ```yaml
+> # Loki — tiered retention через retention_period + S3
+> limits_config:
+>   retention_period: 168h     # 7 дней hot
+> compactor:
+>   retention_enabled: true
+>   retention_delete_delay: 2h
+> storage_config:
+>   aws:
+>     s3: s3://logs-bucket
+>     # lifecycle policy: переход в Glacier через 30 дней
+> ```
+>
+> **Когда применять:** любая production-система, где observability bill стал заметен в FinOps-отчёте (обычно >$10k/мес). Grafana Labs, Datadog публикуют подробные cost-tier-гайды.
+>
+> **Подводные камни:** **cold storage retrieval cost** — S3 Glacier дешевле хранит, но дорогая выборка (~$0.03/GB). Если инциденты часто требуют warm-данные — лучше HDD, а не Glacier. Также **drop health-checks** ломает uptime monitoring, если он строится по логам — нужны отдельные synthetic probes.
+>
+> **Связанные вопросы:** [[Q26]] — sampling стратегии; [[Q28]] — observability без перегруза; [[Q39]] — FinOps детально.
+>
+> ---
+>
+> #### D) Перейти полностью на managed-решение (Datadog) — vendor оптимизирует за нас — ❌ Неверно
+>
+> **Что на самом деле:** Managed-решения **дороже** self-hosted при том же volume (Datadog Logs ~$1.27/GB ingest + $0.10/GB retention vs self-hosted Loki ~$0.10/GB total на S3). Vendor не оптимизирует — он биллит по тарифу. Managed выгоден когда у команды нет SRE-ресурсов на поддержку self-hosted стека.
+>
+> **Откуда путаница:** «managed = меньше операционных забот» путают с «managed = дешевле». Сравнение TCO нужно делать с учётом FTE на self-hosted.
+>
+> **Если бы это было правдой:** компании Netflix/Uber/Shopify не строили бы свои observability-стеки на open-source (LGTM, Mantis) — они делают это именно ради cost control.
+>
+> ---
+
+## Q28. Как запускать observability в production без перегруза системы?
 
 Ключевые практики:
 
@@ -1253,10 +1372,70 @@ processors:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Как выбрать стек observability под команду и бюджет? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая комбинация практик защищает приложение от того, что observability сама становится причиной деградации (latency overhead, OOM, backpressure)?
+>
+> ---
+>
+> #### A) Использовать synchronous экспорт телеметрии — это даёт максимальную целостность данных — ❌ Неверно
+>
+> **Что на самом деле:** Synchronous экспорт (блокирующий) добавляет network round-trip к каждой операции — для трейсов это 5–50 ms на span, что превращает быстрый endpoint в медленный. Также при недоступности backend поток приложения зависает, что ведёт к thread pool exhaustion и каскадному отказу. Production-стандарт — асинхронная отправка через batch processor с in-memory queue.
+>
+> **Откуда путаница:** в туториалах для простоты часто показывают synchronous-экспорт. Также есть legacy-инструменты (OpenTracing с inproc-exporter), которые работают синхронно.
+>
+> **Если бы это было правдой:** при сбое OTel Collector все pods приложения замирают → cascading failure всего сервиса.
+>
+> ---
+>
+> #### B) Логировать всё на DEBUG в production — данных будет много, можно потом отфильтровать — ❌ Неверно
+>
+> **Что на самом деле:** DEBUG-логирование в production создаёт три проблемы: (1) I/O bottleneck — write throughput logs > disk throughput → log buffer переполнен → потеря данных, (2) cost — DEBUG-логи увеличивают volume в 10–100x, (3) latency — synchronous appenders (logback default) блокируют request thread. Production-стандарт: INFO/WARN по умолчанию, DEBUG включается **временно** через dynamic log level (`POST /actuator/loggers/com.app.X` с `{"configuredLevel": "DEBUG"}`) на 10–30 минут для конкретной диагностики.
+>
+> **Откуда путаница:** «больше данных = легче расследовать» путают с production-реальностью, где данных слишком много, чтобы в них что-то найти.
+>
+> **Если бы это было правдой:** при включении DEBUG на всём — p99 latency растёт в 3–5x, диск заполняется за часы.
+>
+> ---
+>
+> #### C) Async export + sampling + контроль cardinality + dynamic log levels + circuit breaker на telemetry pipeline — ✓ Верно
+>
+> **Развёрнутое объяснение:** Защитный стек состоит из 5 практик. **Async export**: batch processor с in-memory queue + отдельный thread pool (OTel SDK default). **Sampling трейсов**: 10% baseline + 100% errors (см. Q26). **Cardinality control**: запрет high-cardinality labels (userId, requestId) — иначе Prometheus OOM. **Dynamic log levels** через Spring Actuator: INFO в normal mode, DEBUG включается per-class через REST API на короткое время. **Circuit breaker на export**: при недоступности backend телеметрия **дропается**, а не копится в queue — иначе OOM в самом приложении. Также: **separate thread pool** для экспортёра, **memory limit** на queue с drop-on-full стратегией.
+>
+> **Пример:**
+> ```java
+> // OTel SDK — async batch с memory limit и drop-on-full
+> BatchSpanProcessor processor = BatchSpanProcessor.builder(otlpExporter)
+>     .setMaxQueueSize(2048)              // drop при переполнении
+>     .setMaxExportBatchSize(512)
+>     .setScheduleDelay(Duration.ofSeconds(5))
+>     .setExporterTimeout(Duration.ofSeconds(30))
+>     .build();
+>
+> // Dynamic log level через Actuator
+> // POST /actuator/loggers/com.app.OrderService
+> // {"configuredLevel": "DEBUG"}
+> // через 30 мин: {"configuredLevel": null}  // вернуть default
+> ```
+>
+> **Когда применять:** любая production-система с SLO на latency. Особенно критично для high-throughput (>10k RPS) и low-latency (<100 ms p99) сервисов.
+>
+> **Подводные камни:** **дроп при переполнении queue** означает потерю данных в момент перегрузки — именно когда они нужны. Нужно alerting на `otel_exporter_dropped_spans_total`. Также **dynamic log level** не работает для loggers, инициализированных до Spring context (например, static init блоки).
+>
+> **Связанные вопросы:** [[Q8]] — cardinality control; [[Q26]] — sampling; [[Q34]] — memory_limiter в OTel Collector.
+>
+> ---
+>
+> #### D) Отключить трейсы и оставить только метрики — метрики лёгкие и достаточны для всего — ❌ Неверно
+>
+> **Что на самом деле:** Метрики действительно дешевле трейсов (агрегированные time series), но **не заменяют** их для cross-service диагностики. Метрика `http_requests{status="500"}` говорит «есть ошибки», но не показывает **где** в цепочке `user → API → service-A → service-B → DB` они произошли. Без трейсов MTTR для распределённых багов растёт в разы.
+>
+> **Откуда путаница:** трейсы дорого хранить — реакция «удалим вообще». Правильная реакция — sampling, а не отключение.
+>
+> **Если бы это было правдой:** при инциденте «50% запросов медленные» нет данных, какой именно сервис в цепочке тормозит — расследование руками через логи занимает часы.
+>
+> ---
+
+## Q29. Как выбрать стек observability под команду и бюджет?
 
 | Сценарий | Рекомендация |
 |----------|-------------|
