@@ -406,10 +406,87 @@ Topic "orders" (3 partitions)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Как обрабатывать ошибки в @KafkaListener? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что произойдёт, если у топика 3 партиции, а в Consumer Group 5 потребителей с одинаковым `groupId`?
+>
+> ---
+>
+> #### A) 3 потребителя получат по одной партиции, 2 будут **idle** в состоянии STABLE без сообщений; добавление шестого потребителя ничего не изменит — параллелизм ограничен числом партиций — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Kafka гарантирует: **одна партиция = один consumer внутри группы** в каждый момент времени (для ordering и offset-tracking). Если в группе больше потребителей, чем партиций — лишние сидят без работы, держат heartbeat, но не получают записей. Это базовое ограничение масштабирования.
+>
+> **Practical implication:** при планировании capacity сначала выбирают **число партиций** (это hard upper bound на параллелизм consumer), потом — `concurrency` listener. Изменить число партиций в работающем топике можно только **в большую сторону** (`kafka-topics.sh --alter --partitions N`), но это **сломает порядок** для существующих ключей (rebalancing rehash). Поэтому для критичных топиков партиции overprovisioned at design time (например, 50 партиций на старте даже для текущих 5 consumers).
+>
+> Rebalancing protocol: когда consumer добавляется/удаляется, **GroupCoordinator** (broker) триггерит rebalance — все consumers коротко останавливают обработку, переdistribution партиций по `PartitionAssignor` (default: `RangeAssignor`, в Kafka 2.4+ — `CooperativeStickyAssignor` для меньшего движения).
+>
+> **Пример:**
+> ```yaml
+> # 3 partition topic + 3 instance Spring Boot app:
+> # - каждый instance имеет 1 thread (concurrency=1)
+> # - каждый instance получит 1 partition
+> # - результат: 3-way parallelism
+>
+> # Если concurrency=3 на одном instance с 3 partitions:
+> # - 1 instance × 3 threads = 3 consumer
+> # - также 3-way parallelism, но без HA (один pod падает — всё стоит)
+> ```
+>
+> ```bash
+> # Diagnose: кто сколько партиций имеет
+> kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
+>   --describe --group order-service
+> # GROUP         TOPIC   PARTITION  CURRENT-OFFSET  CONSUMER-ID
+> # order-service orders  0          12345           consumer-1-abc...
+> # order-service orders  1          12300           consumer-2-def...
+> # order-service orders  2          12400           consumer-3-ghi...
+> # consumer-4-* и consumer-5-* — без PARTITION (idle)
+> ```
+>
+> **Когда применять:**
+> - **HA pattern**: 3 partitions + 3 replicas Spring Boot pods + concurrency=1 → каждый pod держит одну партицию, на pod restart другой подхватывает.
+> - **Hot-key scenario** (LinkedIn-style): если партиции выбираются по user_id и есть «знаменитость» — её партиция перегружена, остальные idle. Решение: salt key (например, `user_id + random(0..N)`), но теряем ordering.
+> - **Multi-tenant**: разные `groupId` для каждого consumer-приложения дают независимое чтение одного топика (fan-out).
+>
+> **Подводные камни:**
+> - **Rebalancing pause**: classic protocol останавливает ВСЮ группу на время rebalance (stop-the-world). `CooperativeStickyAssignor` (default with Spring Kafka 3.x) — incremental rebalance, движение только нужных партиций.
+> - **`session.timeout.ms` < `max.poll.interval.ms`**: если listener долго обрабатывает запись, истекает poll interval → consumer kicked out → rebalance. Симптом в логах: `Member ... has failed, removing it from the group`.
+> - **`groupId` collision**: два разных приложения с одним `groupId` будут «съедать» сообщения друг у друга — баг типа «у меня только половина сообщений приходит».
+>
+> **Связанные вопросы:** [[Q3]] — `concurrency` параметр; [[Q8]] — `ConcurrentKafkaListenerContainerFactory`; [[Q9]] — offset commits в group context.
+>
+> ---
+>
+> #### B) Все 5 потребителей будут получать **одинаковые** копии сообщений — это broadcast паттерн Consumer Group — ❌ Неверно
+>
+> **Что на самом деле:** Внутри одной Consumer Group **нет** broadcast. Каждое сообщение доставляется **ровно одному** consumer группы. Broadcast достигается **разными** `groupId` — каждая группа независимо читает все сообщения.
+>
+> **Откуда путаница:** в JMS Topic broadcast действительно работает на subscribers одного topic. Kafka реализует и queue, и pub/sub через combination Consumer Group + topic.
+>
+> **Если бы это было правдой:** offset был бы per-consumer, а не per-group — но Kafka хранит offset в `__consumer_offsets` именно по `(groupId, topic, partition)`. На практике broadcasting через consumer group не работает.
+>
+> ---
+>
+> #### C) Kafka автоматически создаст 2 дополнительные партиции для балансировки — rebalance scales topic — ❌ Неверно
+>
+> **Что на самом деле:** Kafka **никогда** не создаёт партиции автоматически. Изменение partition count — ручное администраторское действие (`kafka-topics.sh --alter`). Rebalance перераспределяет существующие партиции между consumers, не создаёт новые.
+>
+> **Откуда путаница:** в managed-Kafka (Confluent Cloud) есть auto-scaling **тиров**, но не auto-creation партиций. Партиции — топологическое решение, и их число влияет на disk I/O всех брокеров.
+>
+> **Если бы это было правдой:** топологии Kafka деградировали бы со временем — каждое подключение consumer добавляло бы партиции, увеличивая нагрузку на диск brokers. Реальность: партиции стабильны и planning требует prediction.
+>
+> ---
+>
+> #### D) Запуск шестого потребителя выкинет один из существующих по принципу LRU — group size hard-capped размером партиций — ❌ Неверно
+>
+> **Что на самом деле:** Kafka **не выкидывает** consumers из группы по достижению лимита. Все 5 (или 50) могут быть в группе — лишние просто idle (без assignment). Выкидывание происходит только по `session.timeout` или `max.poll.interval` exceeded.
+>
+> **Откуда путаница:** некоторые реализации thread-pool делают eviction при превышении capacity — отсюда ассоциация. Kafka group membership — это soft state, не bounded.
+>
+> **Если бы это было правдой:** ручной shutdown extra-consumers пропадал бы непредсказуемо — нельзя было бы предсказать, какой pod выживет. На практике лишние instance идут в idle, что прозрачно для оператора.
+
+## Q5. Как обрабатывать ошибки в @KafkaListener?
 
 **Опции обработки ошибок:**
 
@@ -449,10 +526,103 @@ public void handle(OrderEvent event) { ... }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Что такое Dead Letter Topic (DLT) и как его использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что делает `DefaultErrorHandler` по умолчанию при exception в `@KafkaListener`, и почему «просто catch внутри метода» — недостаточно?
+>
+> ---
+>
+> #### A) Сразу коммитит offset проблемной записи и продолжает с следующей — без retries — ❌ Неверно
+>
+> **Что на самом деле:** `DefaultErrorHandler` (default в Spring Kafka 2.8+) делает `FixedBackOff(0L, 9L)` — **10 attempts** (1 initial + 9 retries) с zero delay, потом log error и seek **на следующий offset** (`seekToCurrentErrorHandler` для batch варианта — другая семантика). Простой commit без retries не его поведение.
+>
+> **Откуда путаница:** в Spring Kafka 2.4 был `LoggingErrorHandler`, который действительно только логировал. `DefaultErrorHandler` (новый) — другая дефолтная политика.
+>
+> **Если бы это было правдой:** transient ошибки (network blip, БД temporary unavailable) приводили бы к потере данных. На практике default retries спасают от 90% таких ошибок.
+>
+> ---
+>
+> #### B) Перебрасывает exception вызывающему — в `MessageListenerContainer.stop()` — что останавливает весь listener — ❌ Неверно
+>
+> **Что на самом деле:** `DefaultErrorHandler` **не останавливает** контейнер. Старая семантика `SeekToCurrentErrorHandler` (deprecated) могла seek без commit (запись перечитывается бесконечно), но контейнер продолжал работать. Stop контейнера — это отдельный action через `KafkaListenerEndpointRegistry`.
+>
+> **Откуда путаница:** в Spring Batch необработанный exception останавливает Job. Spring Kafka — другая семантика: контейнер устойчив к ошибкам обработки.
+>
+> **Если бы это было правдой:** одна kafka запись с битым payload убивала бы весь потребитель — production был бы хрупким. Реальность: error handler **сам решает**, что делать (retry/skip/DLT/stop).
+>
+> ---
+>
+> #### C) Откатывает Kafka offset на начало топика (`auto.offset.reset=earliest`) и перечитывает все записи — ❌ Неверно
+>
+> **Что на самом деле:** `auto.offset.reset` срабатывает **только** когда у consumer **нет** committed offset для партиции (первое подключение, новый groupId, или удалили offset). На уже работающей группе ошибка обработки не триггерит реset на начало.
+>
+> **Откуда путаница:** в DLT-pipeline можно вручную reset offset через `kafka-consumer-groups.sh --reset-offsets --to-earliest` для replay — но это администраторская команда, не auto-behavior.
+>
+> **Если бы это было правдой:** баг в одной записи приводил бы к replay миллионов сообщений — экономически невозможно для high-throughput систем.
+>
+> ---
+>
+> #### D) Делает **retries с backoff** (default `FixedBackOff(0L, 9L)` — 10 попыток без задержки), при exhaust вызывает **recoverer** (по умолчанию — log + skip; с `DeadLetterPublishingRecoverer` — публикация в `<topic>.DLT`); offset коммитится **только после** recoverer; `addNotRetryableExceptions` исключает «детерминированные» ошибки из retries — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Try/catch внутри listener метода ловит exception, но **не интегрируется** с infrastructure: нет правил «retry/skip/DLT» на уровне фреймворка, нет метрик retry attempt, нет stack-trace headers в DLT, нет правильного offset управления. После `catch + return` offset коммитится **как если бы запись была успешно обработана** — это data loss.
+>
+> Правильно: бросать exception из метода → `DefaultErrorHandler` применяет backoff → если backoff exhausted, вызывается `ConsumerRecordRecoverer.accept(record, exception)` — обычно `DeadLetterPublishingRecoverer`, который пишет в `<topic>.DLT` с headers `kafka_dlt-exception-fqcn`, `kafka_dlt-exception-message`, `kafka_dlt-exception-stacktrace`, `kafka_dlt-original-topic`. Это даёт **полный контекст** для downstream диагностики.
+>
+> `addNotRetryableExceptions(ValidationException.class)` — критический паттерн: невалидный payload не должен ретраиться 10 раз (всё равно failed), отправить сразу в DLT.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class KafkaErrorConfig {
+>
+>     @Bean
+>     public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> template) {
+>         var backoff = new ExponentialBackOffWithMaxRetries(5);
+>         backoff.setInitialInterval(1_000L);                          // 1s
+>         backoff.setMultiplier(2.0);                                  // 2s, 4s, 8s, 16s
+>         backoff.setMaxInterval(30_000L);                             // cap 30s
+>
+>         var recoverer = new DeadLetterPublishingRecoverer(template,
+>             (rec, ex) -> new TopicPartition(rec.topic() + ".DLT", rec.partition()));
+>
+>         var handler = new DefaultErrorHandler(recoverer, backoff);
+>         handler.addNotRetryableExceptions(
+>             ValidationException.class,                               // плохой payload
+>             ConstraintViolationException.class,
+>             IllegalArgumentException.class);
+>         handler.setRetryListeners((rec, ex, attempt) ->
+>             log.warn("Retry {} for offset={}", attempt, rec.offset(), ex));
+>         return handler;
+>     }
+> }
+>
+> @Component
+> @RequiredArgsConstructor
+> public class OrderConsumer {
+>     private final OrderProcessor processor;
+>
+>     @KafkaListener(topics = "orders", groupId = "order-service")
+>     public void handle(OrderEvent event) {
+>         processor.process(event);              // exception bubbles up — handler решит
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Любой production listener** (Wolt order processing, Yandex courier dispatch) — без DLT записи теряются после retries.
+> - **Idempotent downstream**: можно retry агрессивно, downstream handles duplicates.
+> - **Saga compensations**: если retry не помогает — DLT в outbox + manual operator decision.
+>
+> **Подводные камни:**
+> - **Recoverer тоже может упасть** (broker down во время write в DLT) — настройте `DeadLetterPublishingRecovererFactory` с retries publishing, либо `kafkaTemplate` с idempotent producer.
+> - **Headers DLT не сериализуемые в Avro**: при Avro консьюмере DLT — добавьте `JsonSerializer` для DLT topic отдельно.
+> - **Order break после retry**: если запись retries 10s, последующие записи partition ждут — для critical-path задайте `addRetryableExceptions` только сетевым.
+> - **`@RetryableTopic`** (Spring Kafka 2.7+) — альтернатива: создаёт отдельные retry-topics для async retry, не блокирует основной.
+>
+> **Связанные вопросы:** [[Q6]] — DLT в детали; [[Q9]] — offset commit semantic; [[Q15]] — pause/resume в backpressure.
+
+## Q6. Что такое Dead Letter Topic (DLT) и как его использовать?
 
 DLT — топик, куда отправляются сообщения, которые не удалось обработать после всех повторных попыток. Предотвращает блокировку партиции.
 
@@ -473,10 +643,97 @@ public void handleDlt(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как работают транзакции в Spring Kafka? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой Kafka-механизм лежит в основе Dead Letter Topic, и как `DeadLetterPublishingRecoverer` сохраняет контекст ошибки для DLT-consumer?
+>
+> ---
+>
+> #### A) DLT — это специальный broker-side feature Kafka: при ack-failure broker сам перенаправляет запись в `<topic>.DLT` через internal механизм — ❌ Неверно
+>
+> **Что на самом деле:** Kafka broker **ничего не знает** о DLT. Это **client-side convention**: `DeadLetterPublishingRecoverer` — обычный Spring Kafka recoverer, который вызывает `kafkaTemplate.send("<topic>.DLT", record)` через стандартный Producer API. Broker видит это как обычную publish-операцию.
+>
+> **Откуда путаница:** в AWS SQS DLQ — это broker-side feature (auto-redrive после maxReceiveCount). В Kafka DLT — паттерн, реализованный в клиенте.
+>
+> **Если бы это было правдой:** не нужно было бы конфигурировать `DeadLetterPublishingRecoverer` — broker автоматом всё бы делал. Реальность: без recoverer-а DLT не работает, не существует.
+>
+> ---
+>
+> #### B) DLT — **обычный** Kafka топик (часто `<original>.DLT`), куда `DeadLetterPublishingRecoverer` после exhaust retries публикует запись с **headers**: `kafka_dlt-original-topic`, `kafka_dlt-original-partition`, `kafka_dlt-original-offset`, `kafka_dlt-exception-fqcn`, `kafka_dlt-exception-message`, `kafka_dlt-exception-stacktrace` — это даёт операторам полный контекст для диагностики и replay — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Внутри `DeadLetterPublishingRecoverer.accept(record, ex)` логика:
+> 1. Сериализует key/value исходной записи (или преобразует через `headerEnricher`).
+> 2. Копирует **все** original headers.
+> 3. Добавляет headers с префиксом `kafka_dlt-*` (или `KafkaHeaders.DLT_*` constants).
+> 4. Вызывает `kafkaTemplate.send(new ProducerRecord<>("<topic>.DLT", ...))`.
+> 5. Возвращает `void` — но при transactional setup это в той же transaction, что и offset commit (atomicity).
+>
+> Operations team имеет три типичных workflow с DLT:
+> - **Alerting**: `@KafkaListener(topics = ".*\\.DLT$", topicPattern = ...)` шлёт alert в Slack.
+> - **Investigation**: kafka-console-consumer + headers display показывают exception type.
+> - **Replay**: после фикса бага через `kafka-console-producer` (или kcat) скопировать записи назад в original topic, либо запустить временный «retry» consumer.
+>
+> **Пример:**
+> ```java
+> @Bean
+> public DeadLetterPublishingRecoverer dltRecoverer(KafkaTemplate<String, Object> template) {
+>     return new DeadLetterPublishingRecoverer(template,
+>         (rec, ex) -> {
+>             // Кастомный routing: разные DLT для разных типов exceptions
+>             if (ex.getCause() instanceof ValidationException) {
+>                 return new TopicPartition(rec.topic() + ".validation.DLT", -1);
+>             }
+>             return new TopicPartition(rec.topic() + ".DLT", rec.partition());
+>         });
+> }
+>
+> @KafkaListener(topics = "orders.DLT", groupId = "dlt-monitor")
+> public void monitorDlt(
+>         @Payload OrderEvent event,
+>         @Header(KafkaHeaders.DLT_EXCEPTION_FQCN) String exceptionType,
+>         @Header(KafkaHeaders.DLT_EXCEPTION_MESSAGE) String exceptionMsg,
+>         @Header(KafkaHeaders.DLT_ORIGINAL_TOPIC) String originalTopic,
+>         @Header(KafkaHeaders.DLT_ORIGINAL_OFFSET) long originalOffset) {
+>     alertingService.notify(event, exceptionType, exceptionMsg, originalTopic, originalOffset);
+>     dltMetricsService.recordDltEvent(originalTopic, exceptionType);
+> }
+> ```
+>
+> **Когда применять:**
+> - **Любой Spring Boot Kafka сервис в production** (Yandex, Wolt, LinkedIn) — без DLT баги обработки теряют данные.
+> - **Multi-stage retry**: основной retry в memory (10 attempts), DLT + manual replay для уровня операторов.
+> - **Compliance**: DLT с retention 30+ дней даёт audit trail для регуляторов (например, финтех).
+>
+> **Подводные камни:**
+> - **DLT partition count** обычно равен original (чтобы preserved ordering при replay) — но это создаёт `topic.partitions × 2` storage cost.
+> - **DLT loop**: если consumer DLT тоже падает, можно создать «вторичный DLT» — но обычно проще log + alert.
+> - **Schema evolution**: при изменении schema в original topic, old DLT записи могут не десериализоваться — используйте `ErrorHandlingDeserializer` для DLT consumer.
+> - **DLT producer transactions**: если main consumer transactional, recoverer publishing должен быть в том же `KafkaTemplate` — иначе DLT публикация может потеряться при rollback.
+>
+> **Связанные вопросы:** [[Q5]] — error handler retries leading to DLT; [[Q7]] — transactional DLT publishing; [[Q13]] — ordering preservation in DLT replay.
+>
+> ---
+>
+> #### C) DLT — это специальный consumer group, который получает все failed messages из любого топика автоматически — ❌ Неверно
+>
+> **Что на самом деле:** Consumer group — это группа **потребителей**, не топик. DLT — топик. Они ортогональны: DLT топик может иметь свою consumer group (`dlt-monitor`), но это **обычная** группа.
+>
+> **Откуда путаница:** smешение двух конcept — possible если думать «DLT = special consumer». Реально DLT — это куда **пишут**, consumer group — кто **читает**.
+>
+> **Если бы это было правдой:** все приложения автоматом получали бы failed messages из всех топиков — это нарушение isolation. На практике каждое приложение конфигурирует свой DLT explicitly.
+>
+> ---
+>
+> #### D) DLT работает только при `acks=all` и `enable.idempotence=true`, иначе сообщения теряются — это broker-enforced — ❌ Неверно
+>
+> **Что на самом деле:** DLT **не требует** `acks=all` или `idempotence`. Это просто публикация в Kafka — работает с любыми producer settings. Тем не менее, **рекомендуется** `acks=all` (чтобы DLT publish не потерялось при broker failure) и idempotence (чтобы избежать дубликатов DLT при producer retry).
+>
+> **Откуда путаница:** `idempotence` и `acks=all` — обязательны для **transactional** producer, и часто DLT pipeline transactional. Но это не requirement DLT как такового.
+>
+> **Если бы это было правдой:** нельзя было бы делать DLT в high-throughput pipelines с `acks=0` (которые exist в metrics-streaming). Реальность: DLT — flexible feature, не привязан к durability settings.
+
+## Q7. Как работают транзакции в Spring Kafka?
 
 Kafka транзакции гарантируют **exactly-once semantics** при записи в несколько топиков или при совместном использовании с БД.
 
