@@ -14,7 +14,7 @@ aliases:
   - "TinyURL system design"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Design URL Shortener`
 
@@ -1108,10 +1108,67 @@ SET short_code long_url EX 86400
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Rate limiting? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какой подход обеспечивает многоуровневую защиту от использования URL shortener для phishing и spam?
+>
+> ---
+>
+> #### A) Запрашивать капчу при каждом shorten — отсекает ботов — ❌ Неверно
+>
+> **Что на самом деле:** Капча при каждом shorten ломает API use case (программный shortening через bit.ly API, partner integrations) и UX (chat bots, IFTTT automations). Также капча не защищает от human-operated phishing campaigns — атакующий вручную создаёт 100 ссылок, что для phishing достаточно. Капча — это один инструмент в стеке, не replacement для multi-layer защиты.
+> **Откуда путаница:** "Капча = anti-bot = anti-abuse" — но abuse часто human-driven, а bot-traffic эффективнее ограничивается rate limiting.
+> **Если бы это было правдой:** Bit.ly API теряет 80% программных клиентов; conversion rate на shorten endpoint падает с 95% до 60%; конкурент без капчи отбирает рынок.
+>
+> ---
+>
+> #### B) Проверять только домен в blocklist при создании — этого достаточно — ❌ Неверно
+>
+> **Что на самом деле:** Static blocklist ловит **известные** malicious domains, но не новые phishing (созданный час назад domain не в списке). Также атакующие используют **redirect chains** (legit-looking URL → 302 → phishing) или **compromised legitimate sites** (взломанный WordPress, легальный домен). Защита требует динамической проверки (Google Safe Browsing, VirusTotal, PhishTank) **+** post-creation rescanning (URL может стать malicious после создания) **+** user reporting flow.
+> **Откуда путаница:** Blocklist — самая известная техника, но это lagging indicator.
+> **Если бы это было правдой:** Zero-day phishing проходит проверку; через 30 минут URL уже разослан жертвам; reputation hit на shortener brand ("bit.ly hosted phishing").
+>
+> ---
+>
+> #### C) Доверять Google Safe Browsing — Google уже всё знает — ❌ Неверно
+>
+> **Что на самом деле:** Google Safe Browsing — мощный signal, но **не достаточный** в одиночку: (1) GSB обновляется с задержкой (часы-дни для new phishing), (2) target URL может пройти GSB при создании, но стать malicious позже (compromised site, redirect chain), (3) target может быть legitimate но используется для targeted attacks (CEO impersonation). Нужен defense in depth: GSB + PhishTank + own ML model + user reporting + post-creation monitoring + rate limiting per creator.
+> **Откуда путаница:** "Google знает всё про phishing" — но GSB cover < 50% реального phishing в первые 24 часа.
+> **Если бы это было правдой:** Полагаясь только на GSB, shortener становится conduit для fresh phishing; legal liability при serving known malicious через own domain.
+>
+> ---
+>
+> #### D) Multi-layer defense: realtime URL scan API (Google Safe Browsing + PhishTank) на create → rate limiting per creator + reserved blocklist → interstitial preview для suspicious → continuous rescan + user reporting + automated revocation — ✓ Верно
+>
+> **Развёрнутое объяснение:** **Defense in depth** покрывает разные attack vectors на разных этапах lifecycle ссылки. **Create-time**: query Google Safe Browsing API + PhishTank + own ML-классификатор; static blocklist (известные scam domains, banking impersonations); rate limit per IP/account (10 URLs/hour anon, 1000/hr auth) отсекает mass-creation. **Display-time**: interstitial preview ("вы переходите на example.com, продолжить?") для suspicious patterns (новый домен, IDN homograph, mismatch shortener brand). **Runtime**: периодический re-scan существующих URLs (target мог быть compromised); user reporting button (1-click); automated revocation при threshold reports/scan score. **Legal/compliance**: clear ToS, DMCA flow, transparency reports.
+> **Пример:**
+> ```python
+> async def shorten(long_url, user):
+>     # Layer 1: rate limit
+>     if not rate_limiter.allow(user.id, "shorten"):
+>         raise TooManyRequests()
+> 
+>     # Layer 2: static blocklist
+>     if domain_of(long_url) in BANNED_DOMAINS:
+>         raise Forbidden("banned_domain")
+> 
+>     # Layer 3: real-time scan (parallel)
+>     gsb, phishtank, ml = await asyncio.gather(
+>         google_safe_browsing.check(long_url),
+>         phishtank.check(long_url),
+>         ml_classifier.score(long_url),
+>     )
+>     if any([gsb.malicious, phishtank.flagged, ml.score > 0.8]):
+>         metrics.malicious_blocked.inc()
+>         raise Forbidden("malicious_url")
+> 
+>     short_code = generate_code()
+>     await db.insert(short_code, long_url, scan_score=ml.score, user.id)
+>     await scan_queue.publish(short_code)   # for periodic rescan
+>     return short_code
+> ```
+> **Когда применять:** Bit.ly использует именно такой stack (Safe Browsing + own classifier + user reports). Twitter t.co — multi-layer с real-time + ML. Discord invite links — invite scanning + rate limiting + reporting. Любой user-generated link/content платформа: Reddit URLs, Facebook external links.
+> **Подводные камни:** False positives — legitimate URLs (small business, niche blogs) могут не попасть в GSB и быть flagged ML — нужен appeal process. Latency на shorten — Safe Browsing API ~50ms; параллельные calls + cache (известные clean domains кешировать на час). Adversarial — атакующие тестируют classifier через rapid create/revoke цикл; мониторить per-account success rate. Compliance — log scan decisions для DMCA defense.
+> **Связанные вопросы:** [[Q17]] — rate limiting как часть anti-abuse; [[Q14]] — analytics для anomaly detection; [[Q15]] — circuit breaker при Safe Browsing outage (fail-closed vs fail-open).
 
 **Why:** prevent abuse, DoS, cost control.
 
@@ -1144,16 +1201,85 @@ Retry-After: 60
 
 **DDoS:** CDN (CloudFront) + WAF handle layer 7 attacks.
 
+
+> [!mcq]
+>
+> **Вопрос:** Какой rate limiting algorithm + storage backend подходит для distributed URL shortener с burst-friendly UX и точным enforcement?
+>
+> ---
+>
+> #### A) Fixed window counter в memory app server (`Map<userId, count>`, reset каждую минуту) — простейшее решение — ❌ Неверно
+>
+> **Что на самом деле:** In-memory counter per app server **не distributed**: при N app instances behind LB user может делать N × limit запросов (по limit на каждый instance) — реальный лимит размывается. Также fixed window даёт **boundary spike**: лимит 100/min разрешает 200 запросов в 2 секунды на границе окон (последние 100 в 12:00:59 + первые 100 в 12:01:00). Не подходит для serious abuse prevention.
+> **Откуда путаница:** "Counter в map — просто и быстро" — но игнорирует distributed nature и edge case windowing.
+> **Если бы это было правдой:** Effective rate limit = configured × N instances; добавление app capacity усиливает abuse vector; bot за 2 секунды отправляет 200 shorten при заявленном лимите 100.
+>
+> ---
+>
+> #### B) Distributed lock на каждый request через Redis WATCH/MULTI/EXEC — atomic — ❌ Неверно
+>
+> **Что на самом деле:** WATCH/MULTI/EXEC даёт optimistic concurrency, но на каждый rate-limit check добавляет round-trip и possible retry при conflict. Для 40k QPS это слишком дорого: latency на rate-limit check 5-10ms + retry — сериализует hot path. Также lock-based подходы не нужны для simple counter: `INCR` атомарен сам по себе в Redis.
+> **Откуда путаница:** "Lock = safe" — overkill для counter operations.
+> **Если бы это было правдой:** Rate limiting сам становится bottleneck при high QPS; конкурент с lockless подходом получает лучший throughput.
+>
+> ---
+>
+> #### C) Token bucket или sliding window log в Redis с `INCR + EXPIRE` (или GCRA/Redis-Cell module) — distributed atomic, burst-friendly, точный — ✓ Верно
+>
+> **Развёрнутое объяснение:** **Token bucket** — bucket с capacity N токенов, регенерация R токенов/sec; запрос забирает 1 токен, если нет — 429. Это позволяет **burst** (использовать всю capacity сразу) с rate-limited sustained throughput — UX-friendly для chat bots и batch operations. **Sliding window log** — точнее (без boundary spike), но дороже по памяти. Redis как storage даёт **atomic counter ops** (`INCR`, `INCRBY`) + TTL (`EXPIRE`) для auto-cleanup — distributed counter без race condition. Redis-Cell module реализует **GCRA** (Generic Cell Rate Algorithm) — один command `CL.THROTTLE` возвращает allow/deny + retry-after, без round-trips. Для очень high-scale можно делать **probabilistic rate limiting** (sample 1/10 requests) на edge + accurate на origin.
+> **Пример:**
+> ```python
+> # Token bucket via Redis Lua script (atomic)
+> LUA_TOKEN_BUCKET = """
+> local key = KEYS[1]
+> local capacity = tonumber(ARGV[1])
+> local rate = tonumber(ARGV[2])  -- tokens per sec
+> local now = tonumber(ARGV[3])
+> local requested = tonumber(ARGV[4])
+> 
+> local bucket = redis.call('HMGET', key, 'tokens', 'ts')
+> local tokens = tonumber(bucket[1]) or capacity
+> local last_ts = tonumber(bucket[2]) or now
+> 
+> -- refill
+> local delta = (now - last_ts) * rate
+> tokens = math.min(capacity, tokens + delta)
+> 
+> if tokens >= requested then
+>     tokens = tokens - requested
+>     redis.call('HMSET', key, 'tokens', tokens, 'ts', now)
+>     redis.call('EXPIRE', key, math.ceil(capacity / rate) * 2)
+>     return {1, tokens}  -- allow
+> else
+>     return {0, tokens}  -- deny, suggest retry
+> end
+> """
+> # Per-user: capacity=1000, rate=1000/3600 (1000/hr sustained, bursts up to 1000)
+> ```
+> Response headers:
+> ```
+> X-RateLimit-Limit: 1000
+> X-RateLimit-Remaining: 987
+> X-RateLimit-Reset: 1640003600
+> Retry-After: 13   # only when 429
+> ```
+> **Когда применять:** GitHub API (5000/hr authenticated, token bucket), Stripe API (sliding window, per-API-key), AWS API Gateway (token bucket + WAF). Yandex Cloud — GCRA через Redis. Twitter API v2 — sliding window log для точности. Любой public API: shortener, payment, messaging, AI inference.
+> **Подводные камни:** Cross-region — глобальный rate limit требует replicated Redis (Redis Enterprise Active-Active или DynamoDB conditional update) + eventual consistency на checks; trade-off accuracy vs latency. Cost — Redis storage scaled с N users × N rate-limit policies; partitioning by user_id для horizontal scale. Hot keys — high-traffic API key создаёт single Redis key hotspot; sharding ключа на N parts с aggregation на check. Fail-open vs fail-closed при Redis outage — обычно fail-open (skip rate limit), но logging для audit; fail-closed только для critical anti-abuse.
+> **Связанные вопросы:** [[Q15]] — circuit breaker при Redis outage; [[Q16]] — rate limiting как часть anti-abuse stack; [[rate-limiter-interview]] — глубокий dive в алгоритмы.
+>
+> ---
+>
+> #### D) HAProxy / Nginx `limit_req` module — handle всё на edge, no app code — ❌ Неверно
+>
+> **Что на самом деле:** Nginx `limit_req` работает per-instance (не distributed) и поддерживает только simple per-IP limiting. Для per-user / per-API-key rate limit требуется доступ к auth data, которая на edge недоступна без decoding JWT (что Nginx может, но не идеально). Также Nginx limits сложно динамически обновлять (нужен reload); rate limit policies в URL shortener зависят от user tier (free/paid) — это application-level concern.
+> **Откуда путаница:** "Edge-level limiting эффективнее" — true для DDoS на L7, но не для bizlogic rate limits.
+> **Если бы это было правдой:** Невозможно дать paid users higher limit; rate limits не работают cross-instance; UX-friendly bursting (token bucket) недоступен в простом `limit_req`.
+
 ---
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [System Design](system-design-interview.md) — общие принципы ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [System Design](system-design-interview.md) — общие принципы
 - [Design Rate Limiter](design-rate-limiter-interview.md) — компонент
 - [Caching Strategies](../architecture/caching-strategies-interview.md) — Redis, CDN
 - [Database Architecture](../databases/database-architecture-interview.md) — SQL vs NoSQL
