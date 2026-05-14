@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-r2dbc]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Spring Data R2DBC`
 
@@ -713,10 +713,86 @@ public Mono<Void> batchInsert(List<Order> orders) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Что такое реактивные миграции и как их применять? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой подход к batch insert в R2DBC обеспечивает реальную производительность и почему `saveAll` неэффективен для больших объёмов?
+>
+> ---
+>
+> #### A) `orderRepository.saveAll(orders)` — это полноценный batch на уровне SQL — ❌ Неверно
+>
+> **Что на самом деле:** `saveAll` в Spring Data R2DBC выполняет **отдельный INSERT для каждого entity** — асинхронно, но не одним statement-ом. На 10 000 записей получится 10 000 round-trip к БД, каждый с network latency 1-5ms = 10-50 секунд для типичной локальной сети.
+>
+> **Откуда путаница:** имя `saveAll` (множественное число) намекает на batch. В Spring Data JPA `saveAll` тоже не делает batch без `hibernate.jdbc.batch_size`. R2DBC ведёт себя похоже — синтаксис batch, семантика — одиночные.
+>
+> **Если бы это было правдой:** мы могли бы заливать 100K записей за секунды через repository. На практике через `saveAll` это десятки секунд, что для ETL/import-задач неприемлемо.
+>
+> ---
+>
+> #### B) Настоящий batch в R2DBC делается через `DatabaseClient.inConnectionMany` + `Statement.add()` для накопления параметров + `execute()` один раз — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> R2DBC `Statement` имеет API накопления параметров: `bind(...).add()` повторяется N раз для N записей, после чего один `execute()` отправляет одно сообщение в БД с пакетом параметров. Это **настоящий batch** на уровне wire-протокола (например, PostgreSQL Extended Query Protocol поддерживает `Bind`+`Execute` циклы).
+>
+> Чтобы получить доступ к `Statement`, нужно использовать `client.inConnectionMany(connection -> ...)` — это «raw» API ниже DatabaseClient.sql(). Внутри блока имеем `Connection` и можем создать `Statement` напрямую.
+>
+> Производительность на 10 000 записей: ~100-200ms вместо 10-50 секунд через `saveAll` — выигрыш 50-100×.
+>
+> **Пример:**
+> ```java
+> public Mono<Void> batchInsert(List<Order> orders) {
+>     return client.inConnectionMany(conn ->
+>         Flux.fromIterable(orders)
+>             .buffer(500)                                // chunks по 500 — баланс между memory и latency
+>             .flatMap(batch -> {
+>                 Statement stmt = conn.createStatement(
+>                     "INSERT INTO orders(customer_id, total, status) VALUES($1, $2, $3)");
+>                 batch.forEach(o -> stmt
+>                     .bind(0, o.customerId())
+>                     .bind(1, o.total())
+>                     .bind(2, o.status().name())
+>                     .add());                            // ← накапливаем параметры
+>                 return stmt.execute();                  // ← один execute на batch
+>             })
+>     ).then();
+> }
+> ```
+>
+> **Когда применять:**
+> - **ETL/import jobs**: загрузка CSV-файлов или экспорт из другой БД — миллионы записей.
+> - **Bulk reconciliation** в финансовых системах: пересчёт остатков по транзакциям, обновление массы записей.
+> - **Background data backfill** при schema migrations: добавили колонку, нужно пересчитать значения для всех существующих записей.
+> - **Streaming ingest** в системах типа Telegram message backups, IoT events — batch по N сообщений каждые M секунд.
+>
+> **Подводные камни:**
+> - **`buffer(500)`** — критичен для контроля memory и size of network packet. Слишком большой batch (`buffer(100000)`) даст OOM при больших orders; слишком малый (`buffer(10)`) не отличается от saveAll по latency.
+> - **Один failed insert ломает весь batch**: PostgreSQL по умолчанию rollback'ит весь batch при constraint violation. Решение — `ON CONFLICT DO NOTHING` или separate transactions через `flatMap(.., concurrency=1)`.
+> - **Backpressure**: `Flux.fromIterable` + `.buffer(500)` не учитывает скорость БД. При медленной БД memory накапливается. Лучше — `.limitRate(N)` или `concatMap` вместо `flatMap`.
+> - **Получение generated IDs**: `Statement.returnGeneratedValues("id")` нужно вызывать ДО `execute()`, и потом маппить result.
+>
+> **Связанные вопросы:** [[Q11]] — DatabaseClient как раз даёт `inConnectionMany`; [[Q5]] — транзакции вокруг batch для atomic insert; [[Q12]] — custom converter применяется в `bind()`.
+>
+> ---
+>
+> #### C) `Flux.fromIterable(orders).flatMap(repo::save)` — это batch с параллельным выполнением — ❌ Неверно
+>
+> **Что на самом деле:** `flatMap(repo::save)` отправляет N независимых INSERT-запросов параллельно. Это **параллельный insert**, не batch. Каждый запрос — отдельный round-trip, отдельная transaction (без явной обёртки), и сервер БД получит N concurrent connections.
+>
+> **Откуда путаница:** «параллельно» и «batch» обычно описывают «много за один раз». На уровне БД это разные паттерны: batch — один statement с N параметров, parallel — N statements одновременно.
+>
+> **Если бы это было правдой:** мы выиграли бы только за счёт parallelism, что упирается в `maxConnections` пула (обычно 10-50). При 10K записей и pool 20 — wait очередь в 500x. Real batch через Statement.add() даёт настоящий выигрыш на wire-protocol уровне.
+>
+> ---
+>
+> #### D) Batch insert в R2DBC невозможен — нужно использовать JDBC для bulk операций — ❌ Неверно
+>
+> **Что на самом деле:** R2DBC **поддерживает** batch через `Statement.add()` — это часть R2DBC SPI (Service Provider Interface). Любой compliant R2DBC драйвер (postgres, mariadb, mssql, h2) реализует это API. Не нужно мигрировать на JDBC.
+>
+> **Откуда путаница:** часто рекомендуют «для bulk используйте JDBC» как для миграций (Flyway). Это верно для миграций (одноразово), но для runtime bulk-операций R2DBC батч работает.
+>
+> **Если бы это было правдой:** R2DBC-приложение не могло бы существовать без второго JDBC datasource для bulk операций — что нарушает principle «один stack, одна модель concurrent». На практике один R2DBC connection pool обслуживает и single-row, и batch операции.
+
+## Q14. Что такое реактивные миграции и как их применять?
 
 R2DBC-приложение не может использовать Flyway напрямую в реактивном режиме при старте. Решение — запустить Flyway через блокирующий JDBC при инициализации:
 
@@ -743,10 +819,102 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Какова интеграция Spring Data R2DBC с WebFlux? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему Flyway/Liquibase нельзя запускать «нативно» через R2DBC, и как корректно мигрировать схему в R2DBC-проекте?
+>
+> ---
+>
+> #### A) Flyway/Liquibase запускают миграции один раз при старте — они не могут работать с reactive драйверами потому что используют синхронный JDBC API внутри — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Flyway и Liquibase — зрелые JDBC-инструменты, написаны до появления R2DBC. Их API внутри использует `java.sql.Connection`, `PreparedStatement`, `ResultSet` — синхронный блокирующий JDBC. R2DBC использует `io.r2dbc.spi.Connection` — другая иерархия, non-blocking, не совместимая с JDBC.
+>
+> Решение в R2DBC-приложении — **два datasource**:
+> 1. **JDBC datasource** для миграций (запускается через `@Bean(initMethod = "migrate")` или Spring Boot auto-config с `spring.datasource.*`).
+> 2. **R2DBC ConnectionFactory** для runtime запросов (`spring.r2dbc.*`).
+>
+> Миграции выполняются однократно при boot — блокирующий I/O в этот момент не критичен, поскольку приложение ещё не принимает запросы.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class DatabaseConfig {
+>
+>     @Bean(initMethod = "migrate")
+>     public Flyway flyway(@Value("${spring.datasource.url}") String jdbcUrl,
+>                          @Value("${spring.datasource.username}") String user,
+>                          @Value("${spring.datasource.password}") String pwd) {
+>         return Flyway.configure()
+>             .dataSource(jdbcUrl, user, pwd)         // pure JDBC datasource
+>             .locations("classpath:db/migration")
+>             .baselineOnMigrate(true)
+>             .load();
+>     }
+>
+>     // ConnectionFactory R2DBC создаётся Spring Boot auto-config из spring.r2dbc.*
+> }
+> ```
+>
+> ```yaml
+> spring:
+>   flyway:
+>     enabled: false                          # отключаем встроенную auto-migration
+>   r2dbc:
+>     url: r2dbc:postgresql://localhost:5432/mydb
+>     username: app
+>     password: ${DB_PASSWORD}
+>   datasource:                               # ТОЛЬКО для Flyway, не используется runtime
+>     url: jdbc:postgresql://localhost:5432/mydb
+>     username: app
+>     password: ${DB_PASSWORD}
+>     driver-class-name: org.postgresql.Driver
+> ```
+>
+> **Когда применять:**
+> - **Любой production R2DBC проект** — без миграций нельзя. Двойной datasource — стандартный паттерн.
+> - **Spring Boot 3.x + R2DBC** — auto-config поддерживает оба datasource одновременно.
+> - **Тесты с Testcontainers** — `@DynamicPropertySource` биндит и `spring.r2dbc.url`, и `spring.datasource.url` к одному PostgreSQL контейнеру.
+>
+> **Подводные камни:**
+> - **Дублирование credentials**: `spring.r2dbc.*` и `spring.datasource.*` указывают на ту же БД, но конфигурация разная — легко рассинхронизировать (например, обновить пароль в одном, забыть в другом).
+> - **Время старта приложения**: миграции блокируют startup. На большой схеме (100+ migrations) добавляет 10-30 секунд к boot time.
+> - **Тесты с Testcontainers**: оба URL должны указывать на тот же контейнер, иначе R2DBC увидит unmigrated схему.
+> - **`r2dbc-migrate` library** — альтернатива Flyway, нативно для R2DBC. Но менее зрелый, ограничен в features (нет undo, нет baseline strategy).
+>
+> **Связанные вопросы:** [[Q1]] — обзор Spring Data R2DBC; [[Q11]] — DatabaseClient для runtime SQL после миграции; [[Q15]] — интеграция с WebFlux на уровне controllers.
+>
+> ---
+>
+> #### B) Flyway работает через R2DBC напрямую, если включить `flyway.r2dbc-mode=true` — ❌ Неверно
+>
+> **Что на самом деле:** такой конфигурации в Flyway не существует. Flyway 10.x всё ещё JDBC-only. Команда Flyway обсуждала R2DBC support, но не реализовала — JDBC остаётся primary backend.
+>
+> **Откуда путаница:** многие Spring properties имеют `r2dbc` варианты (`spring.r2dbc.*`). Можно подумать что у Flyway тоже есть переключатель. На самом деле — нет.
+>
+> **Если бы это было правдой:** мы могли бы выкинуть `spring.datasource.*` из конфига и обойтись одним R2DBC URL. На практике приходится держать дублирующую JDBC-конфигурацию для миграций.
+>
+> ---
+>
+> #### C) Миграции в R2DBC проекте писать как Java-классы с использованием DatabaseClient — ❌ Неверно
+>
+> **Что на самом деле:** можно теоретически написать схему через DatabaseClient (`CREATE TABLE`, `ALTER TABLE` через raw SQL), но это **повторяет неудачные практики** до Flyway: нет версионирования, нет идемпотентности, нет rollback-стратегии, нет state-tracking. Промышленные команды всегда используют Flyway/Liquibase для миграций.
+>
+> **Откуда путаница:** «всё пишем в reactive стеке» — звучит элегантно. Но миграции — это однократная операция при boot, не runtime workload. Reactive overhead тут не нужен.
+>
+> **Если бы это было правдой:** каждая команда писала бы свой mini-Flyway, дублируя зрелые решения. Result — баги migrate logic, проблемы при rollback, отсутствие schema validation.
+>
+> ---
+>
+> #### D) Spring Boot автоматически конвертирует JDBC-миграции Flyway в R2DBC-операции — ❌ Неверно
+>
+> **Что на самом деле:** никакой автоматической конвертации нет. Spring Boot просто использует **отдельный JDBC datasource** для Flyway. R2DBC-приложения держат два datasource: один JDBC только для миграций, другой R2DBC для runtime.
+>
+> **Откуда путаница:** Spring Boot часто автоматизирует boilerplate. Можно ожидать что R2DBC + Flyway = magic. На деле нужно явно сконфигурировать оба datasource.
+>
+> **Если бы это было правдой:** старт R2DBC-приложения не требовал бы `jdbc:` URL — но без него Flyway упадёт с `No DataSource configured`. Дублирующая JDBC-конфигурация остаётся обязательной.
+
+## Q15. Какова интеграция Spring Data R2DBC с WebFlux?
 
 ```java
 @RestController
@@ -779,14 +947,89 @@ public class OrderController {
 
 Нельзя смешивать R2DBC с блокирующим кодом (JPA) в одном потоке WebFlux — это уничтожит реактивный backpressure и заблокирует event loop.
 
+> [!mcq]
+>
+> **Вопрос:** Что произойдёт если в WebFlux endpoint вызвать блокирующий JPA-метод вместе с R2DBC Mono/Flux?
+>
+> ---
+>
+> #### A) Spring автоматически переключит JPA-вызов на отдельный поток через `@Async` — ❌ Неверно
+>
+> **Что на самом деле:** Spring **НЕ** автоматически переключает блокирующие вызовы. WebFlux работает в event-loop модели (Reactor Netty) с ограниченным числом event-loop потоков (обычно `Runtime.availableProcessors()` × 2). Блокирующий JPA-вызов **блокирует именно event-loop поток**.
+>
+> **Откуда путаница:** Spring имеет много magic с auto-config. Можно ожидать «умное» переключение блокирующих методов. На деле — без явного `.subscribeOn(Schedulers.boundedElastic())` блокирует.
+>
+> **Если бы это было правдой:** мы могли бы спокойно микшировать JPA и R2DBC в одном endpoint. На практике это блокирует event-loop, скорость падает до сотен RPS вместо тысяч.
+>
+> ---
+>
+> #### B) Блокирующий JPA-вызов остановит event-loop поток на время запроса; другие запросы будут ждать; thread starvation при множественных параллельных запросах — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> WebFlux + Reactor Netty используют **event-loop модель**: ограниченное число потоков (типично 4-16, по числу cores) обслуживает тысячи concurrent соединений. Принцип — каждый поток выполняет только non-blocking операции и быстро возвращается в pool.
+>
+> Если в endpoint вызвать `jpaRepository.findById(id)` (блокирующий JDBC), поток **застрянет** на ожидании БД (10-100ms). Пока он ждёт, другие соединения, привязанные к этому потоку, не могут обрабатываться.
+>
+> **Что плохо в production:**
+> 1. При 8 event-loop потоках и 1000 RPS с 50ms blocking call — потоки заняты, новые запросы накапливаются в backlog, latency растёт.
+> 2. Backpressure сломан: reactive streams ожидают non-blocking, и сигналы `request(N)` не отрабатываются вовремя.
+> 3. `OutOfMemoryError` при росте queue размера socket buffers.
+>
+> **Пример (правильный workaround если нельзя избежать блокировки):**
+> ```java
+> @GetMapping("/{id}")
+> public Mono<OrderDto> getOrder(@PathVariable String id) {
+>     // ✅ Правильно: блокировка делегируется на boundedElastic scheduler
+>     return Mono.fromCallable(() -> jpaRepository.findById(id))     // блокирующий вызов
+>         .subscribeOn(Schedulers.boundedElastic())                  // отдельный пул для blocking
+>         .map(OrderMapper::toDto);
+> }
+>
+> // ❌ Неправильно: блокирует event-loop
+> @GetMapping("/{id}")
+> public Mono<OrderDto> getOrderBad(@PathVariable String id) {
+>     Order o = jpaRepository.findById(id).orElseThrow();             // блокировка прямо в потоке
+>     return Mono.just(OrderMapper.toDto(o));
+> }
+> ```
+>
+> **Когда применять:**
+> - **R2DBC + WebFlux** — primary pattern для reactive Spring приложений: одна модель concurrent для всего стека.
+> - **Server-Sent Events** (как в коде Q15) — стриминг новых записей из БД через `Flux<T>` с reactive backpressure до клиента.
+> - **High-concurrency endpoints**: chat, real-time analytics, IoT ingest — где WebFlux раскрывается на тысячах connections.
+>
+> **Подводные камни:**
+> - **JPA + R2DBC в одном проекте**: иногда нужно (например, legacy JPA repository + новый reactive feature). В этом случае строго через `Schedulers.boundedElastic()` или Spring `@Async` + `CompletableFuture` маппинг.
+> - **Virtual Threads (Java 21+)** — альтернатива WebFlux: блокирующий JDBC + virtual thread = неблокирующее ожидание на уровне JVM. Но это **другая модель**, не WebFlux.
+> - **`@Transactional` в WebFlux**: работает только с R2DBC через `ReactiveTransactionManager`. С JPA — нужен `TransactionTemplate` внутри `boundedElastic`.
+> - **Reactor blockhound** — диагностический tool, который ловит блокирующие вызовы в reactive потоках. Включать в тестовом контуре для defense.
+>
+> **Связанные вопросы:** [[Q1]] — обзор R2DBC; [[Q11]] — DatabaseClient — preferred API в WebFlux; [[Q14]] — миграции через JDBC при boot (там блокировка допустима).
+>
+> ---
+>
+> #### C) WebFlux обнаружит блокирующий вызов и бросит `IllegalStateException` — ❌ Неверно
+>
+> **Что на самом деле:** WebFlux в production runtime **не детектит** блокирующие вызовы. Это просто запустит JDBC код, поток заблокируется, а exception не возникнет. Единственный способ обнаружить — использовать `reactor-tools BlockHound` в тестовом окружении (он бросит `BlockingOperationError`).
+>
+> **Откуда путаница:** «Reactor умеет всё» — частая мысль. Detection блокировок требует instrumentation на JVM-уровне (BlockHound), а не runtime check Reactor-а.
+>
+> **Если бы это было правдой:** не было бы такой массовой проблемы с производительностью reactive приложений. На практике bug «работает на одном пользователе, падает на нагрузке» — типичный сценарий.
+>
+> ---
+>
+> #### D) Spring Data R2DBC автоматически конвертирует JPA-репозитории в реактивные — ❌ Неверно
+>
+> **Что на самом деле:** JPA и R2DBC — **отдельные** stack: разные пакеты, разные drivers, разные annotations. JPA `@Entity` ≠ R2DBC entity, JPA `Repository` ≠ R2DBC `ReactiveCrudRepository`. Никакой автоконвертации нет.
+>
+> **Откуда путаница:** оба «Spring Data», оба «Repository». Кажется что это варианты одного API. На самом деле под капотом разные иерархии классов.
+>
+> **Если бы это было правдой:** мы могли бы добавить R2DBC starter и получить reactive JPA «бесплатно». Реальная миграция JPA → R2DBC требует переписывания entity, repository, query patterns.
+
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Spring WebFlux](spring-webflux-interview.md) — реактивный HTTP стек, идеально сочетается с R2DBC ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [Spring WebFlux](spring-webflux-interview.md) — реактивный HTTP стек, идеально сочетается с R2DBC
 - [Spring Data JPA](spring-data-jpa-interview.md) — блокирующая альтернатива для синхронных приложений
 - [Spring Data JDBC](spring-data-jdbc-interview.md) — lightweight JDBC без реактивности
 - [Spring Boot](spring-boot-interview.md) — auto-configuration для R2DBC
