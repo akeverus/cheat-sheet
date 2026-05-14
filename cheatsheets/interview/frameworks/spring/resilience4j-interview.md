@@ -278,10 +278,71 @@ public ErrorResponse handleCircuitOpen(CallNotPermittedException ex) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Как настроить Retry в Spring Boot? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём ключевые отличия Resilience4j Retry от Spring Retry с практической точки зрения?
+>
+> ---
+>
+> #### A) Resilience4j Retry и Spring Retry — это один и тот же модуль, просто разные имена пакетов — ❌ Неверно
+>
+> **Что на самом деле:** это две независимые библиотеки с разными авторами, API и runtime. Spring Retry (`org.springframework.retry`) — часть Spring portfolio, основан на `RetryTemplate` и `@Retryable`. Resilience4j (`io.github.resilience4j`) — отдельный проект, преемник Hystrix, с функциональным API и собственными метриками Micrometer.
+>
+> **Откуда путаница:** оба декларируют похожие аннотации (`@Retryable` vs `@Retry`), оба работают через AOP, оба интегрируются со Spring Boot. На уровне «зачем» они одинаковые — отсюда мысль, что это один тулкит.
+>
+> **Если бы это было правдой:** конфигурация в `application.yml` была бы единой, а в реальности `spring.retry.*` и `resilience4j.retry.*` — разные неймспейсы; смешав их, получишь silently-ignored настройки и retry без backoff.
+>
+> ---
+>
+> #### B) Spring Retry поддерживает экспоненциальный backoff, а Resilience4j Retry — только фиксированную паузу — ❌ Неверно
+>
+> **Что на самом деле:** наоборот, Resilience4j поддерживает `exponential-backoff-multiplier`, рандомизированный jitter (`IntervalFunction.ofExponentialRandomBackoff`) и custom-функции через `RetryConfig.intervalFunction()`. Spring Retry тоже имеет `@Backoff(multiplier=2)`, но Resilience4j даёт более гибкий API.
+>
+> **Откуда путаница:** документация Resilience4j по умолчанию показывает простой `wait-duration: 500ms`, и многие не замечают `exponential-backoff-multiplier` в YAML-конфигурации.
+>
+> **Если бы это было правдой:** под нагрузкой все ретраи 1000 клиентов выстреливали бы одновременно (thundering herd), и downstream-сервис никогда бы не успел восстановиться — типичный симптом «retry storm» в incident-репортах.
+>
+> ---
+>
+> #### C) Resilience4j Retry: своя `@Retry`, нативная интеграция с `@CircuitBreaker`, Micrometer-метрики из коробки, функциональный API + reactive (Reactor/RxJava); Spring Retry — `@Retryable` + AOP, без CB-интеграции и без метрик — ✓ Верно
+>
+> **Развёрнутое объяснение:** Resilience4j Retry — это декоратор поверх `Supplier`/`Function`, который можно цепочкой комбинировать с `CircuitBreaker`, `Bulkhead`, `RateLimiter`, `TimeLimiter`. Из коробки публикует метрики `resilience4j.retry.calls{kind="successful_without_retry|successful_with_retry|failed_with_retry"}` в Micrometer. Поддерживает sync, async (`CompletableFuture`) и reactive (`Mono/Flux`). Spring Retry — более старый, чисто AOP-инструмент: умеет ретраи и recovery (`@Recover`), но не знает о CircuitBreaker и не публикует метрики без ручной обвязки.
+>
+> **Пример:**
+> ```java
+> @CircuitBreaker(name = "paymentCB", fallbackMethod = "fallback")
+> @Retry(name = "paymentRetry")
+> public PaymentResult charge(Payment p) {
+>     return paymentApi.process(p);
+> }
+> ```
+> ```yaml
+> resilience4j:
+>   retry:
+>     instances:
+>       paymentRetry:
+>         max-attempts: 3
+>         wait-duration: 200ms
+>         exponential-backoff-multiplier: 2
+>         retry-exceptions: [java.io.IOException]
+> ```
+>
+> **Когда применять:** новые Spring Boot 3 microservices, где нужна композиция Retry+CircuitBreaker+Bulkhead и метрики в Grafana/Prometheus. Используется в Netflix, Booking, ING.
+>
+> **Подводные камни:** при ретраях для non-idempotent операций (POST `/orders`) — обязательно идемпотентность по `Idempotency-Key`, иначе двойная оплата. Retry поверх OPEN CircuitBreaker — почти всегда бессмыслен (CB сразу бросает `CallNotPermittedException`).
+>
+> **Связанные вопросы:** [[Q9]] — конфигурация Retry в Spring Boot; [[Q15]] — комбинирование с CircuitBreaker; [[Q1]] — миграция с Hystrix
+>
+> ---
+>
+> #### D) Spring Retry уже включён в `resilience4j-spring-boot3` и заменяет Resilience4j Retry автоматически — ❌ Неверно
+>
+> **Что на самом деле:** `resilience4j-spring-boot3` подтягивает только модули Resilience4j (`resilience4j-retry`, `-circuitbreaker`, и т.д.). Spring Retry — отдельная зависимость (`org.springframework.retry:spring-retry`), которая ставится только если её явно объявить.
+>
+> **Откуда путаница:** оба starter'а активно используют `@EnableAspectJAutoProxy`, и кажется что они «дружат». На практике Spring Retry не подключается транзитивно.
+>
+> **Если бы это было правдой:** `@Retryable` работала бы сразу — но без явной зависимости в `pom.xml` аннотация молча игнорируется (нет AOP-аспекта), и продакшен-сбои не ретраятся вообще.
+
+## Q9. Как настроить Retry в Spring Boot?
 
 ```yaml
 resilience4j:
@@ -315,10 +376,73 @@ public class OrderService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Как работает RateLimiter? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие параметры обязательны для конфигурации Resilience4j Retry в `application.yml`, и что произойдёт при ретраях для не-идемпотентной операции?
+>
+> ---
+>
+> #### A) `max-attempts: 3` — это число ДОПОЛНИТЕЛЬНЫХ попыток после первой, то есть всего будет 4 вызова — ❌ Неверно
+>
+> **Что на самом деле:** в Resilience4j `max-attempts` — это ОБЩЕЕ число попыток, ВКЛЮЧАЯ первую. При `max-attempts: 3` будет 1 основной вызов + 2 ретрая = всего 3. Это отличается от Spring Retry, где `maxAttempts` тоже означает общее число — но многих сбивает аналогия с retry-counter в HTTP клиентах.
+>
+> **Откуда путаница:** у Spring `@Retryable` тоже общее, но в Hystrix и в Netflix Ribbon `maxRetries` означал именно «сверх первой». Кто пришёл из Hystrix — путает.
+>
+> **Если бы это было правдой:** при `max-attempts: 3` логи показывали бы 4 вызова downstream-сервиса, alerts на retry-bursts срабатывали бы чаще; capacity-planning ошибся бы на 25%.
+>
+> ---
+>
+> #### B) `@Retry` безопасно ставить на любой метод — Resilience4j автоматически детектит идемпотентность и не ретраит POST/PUT — ❌ Верно неверно
+>
+> **Что на самом деле:** Resilience4j ничего не знает о HTTP-семантике и идемпотентности. Он ретраит ЛЮБОЙ метод, на который повесили `@Retry`, если выброшено исключение из `retry-exceptions`. Идемпотентность — ответственность разработчика: для POST `/orders` обязательно использовать `Idempotency-Key` на стороне сервера.
+>
+> **Откуда путаница:** HTTP-клиенты типа Apache HttpClient и WebClient умеют автоматически ретраить только GET/HEAD по умолчанию. От Resilience4j ожидают похожего поведения.
+>
+> **Если бы это было правдой:** не было бы массовых инцидентов с двойными списаниями — но Stripe, GitLab, Yandex.Checkout публично рассказывали про дубликаты платежей именно из-за слепого retry на POST.
+>
+> ---
+>
+> #### C) Параметры: `max-attempts` (общее число попыток), `wait-duration` (база паузы), `retry-exceptions` (whitelist), `ignore-exceptions` (blacklist); для non-idempotent POST обязательна идемпотентность на стороне сервера через `Idempotency-Key` — ✓ Верно
+>
+> **Развёрнутое объяснение:** базовый набор: `max-attempts` — общее число попыток, `wait-duration` — стартовая пауза, `exponential-backoff-multiplier` — множитель для экспоненциального backoff, `retry-exceptions` — какие исключения триггерят ретрай, `ignore-exceptions` — какие сразу пробрасывать без ретрая. Для non-idempotent операций критично: либо ретраить только специфические исключения (`IOException` на этапе connect — безопасно, в отличие от `SocketTimeoutException` после `commit`), либо требовать `Idempotency-Key` от клиента и хранить его на сервере с TTL.
+>
+> **Пример:**
+> ```yaml
+> resilience4j:
+>   retry:
+>     instances:
+>       orderService:
+>         max-attempts: 3
+>         wait-duration: 500ms
+>         exponential-backoff-multiplier: 2
+>         retry-exceptions:
+>           - java.net.ConnectException     # safe — соединение не установлено
+>         ignore-exceptions:
+>           - com.example.ValidationException
+> ```
+> ```java
+> @Retry(name = "orderService", fallbackMethod = "orderFallback")
+> public Order fetchOrder(Long id) {
+>     return orderApiClient.getOrder(id);
+> }
+> ```
+>
+> **Когда применять:** идемпотентные GET к downstream сервисам (cat-service, inventory) с jitter+exponential backoff. POST — только при наличии серверной идемпотентности (Stripe, Yandex Pay).
+>
+> **Подводные камни:** retry-exceptions работает по `instanceof`, поэтому `IOException` поймает и `SocketTimeoutException` — а timeout после `commit` уже non-safe. Используй точные классы исключений. `wait-duration` без jitter создаёт thundering herd при массовых сбоях downstream.
+>
+> **Связанные вопросы:** [[Q8]] — отличие от Spring Retry; [[Q15]] — комбинирование с CircuitBreaker; [[Q16]] — fallbackMethod и сигнатура
+>
+> ---
+>
+> #### D) `wait-duration: 500ms` означает, что между КАЖДЫМИ попытками будет ровно 500ms даже с `exponential-backoff-multiplier: 2` — ❌ Неверно
+>
+> **Что на самом деле:** `exponential-backoff-multiplier` умножает паузу: 500ms, 1000ms, 2000ms... При значении 2 каждый следующий интервал в два раза больше предыдущего. Если хочется фиксированной паузы — оставлять multiplier незаданным (default не используется в этом режиме) или явно `1.0`.
+>
+> **Откуда путаница:** в Spring Retry `@Backoff(delay=500)` без `multiplier` действительно даёт фиксированную задержку; ожидают аналогии.
+>
+> **Если бы это было правдой:** retry storm под нагрузкой не разрешался бы — все ретраи стреляли бы синхронно каждые 500ms, downstream никогда не отдыхал.
+
+## Q10. (!) Как работает RateLimiter?
 
 `RateLimiter` ограничивает количество вызовов за период времени. Защищает downstream-сервис от перегрузки и не даёт своему сервису превысить лимиты внешнего API.
 
@@ -354,10 +478,73 @@ public void handleRateLimit() {}
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как настроить RateLimiter в Spring Boot? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой алгоритм использует Resilience4j RateLimiter, и что произойдёт при `timeout-duration: 0`, когда лимит исчерпан?
+>
+> ---
+>
+> #### A) Resilience4j RateLimiter — это leaky bucket: запросы складываются в буфер и обрабатываются с фиксированной скоростью — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j RateLimiter реализует вариант **token bucket** с фиксированными окнами обновления: в начале каждого `limitRefreshPeriod` пополняется `limitForPeriod` разрешений (permits). Запросы потребляют permits; при отсутствии — ждут до `timeoutDuration` или сразу бросают `RequestNotPermitted`. Leaky bucket — другая модель (буферизация), её Resilience4j не реализует.
+>
+> **Откуда путаница:** leaky bucket и token bucket часто описывают в одних учебниках как «эквивалентные» формы rate limiting. Nginx limit_req использует leaky bucket — отсюда ожидание.
+>
+> **Если бы это было правдой:** запросы бы НИКОГДА не отвергались сразу — они бы стояли в очереди. Memory/latency росли бы под нагрузкой, но 429 не возвращался, что противоречит наблюдаемому поведению Resilience4j.
+>
+> ---
+>
+> #### B) При `timeout-duration: 0` и исчерпанном лимите вызов бесконечно блокируется, пока не освободится слот — ✓ Верно неверно
+>
+> **Что на самом деле:** наоборот — `timeout-duration: 0` означает «НЕ ждать ни миллисекунды», сразу бросать `RequestNotPermitted`. Это failure-fast режим. Чтобы ждать освобождения, нужно `timeout-duration: 500ms` или больше.
+>
+> **Откуда путаница:** в некоторых API (`tryLock(0)`) ноль означает «дефолт». Здесь это буквально «0 миллисекунд».
+>
+> **Если бы это было правдой:** под нагрузкой треды-вызыватели висели бы вечно, Tomcat thread pool исчерпался бы за минуты, сервис бы умер от blocked threads — но в реальности Resilience4j при `0` стабильно возвращает 429.
+>
+> ---
+>
+> #### C) RateLimiter применяется только на стороне сервера (incoming requests), для исходящих вызовов к external API он не работает — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j RateLimiter — это локальный декоратор Java-кода, ему всё равно, server-side это или client-side. Самый частый use-case — именно **client-side rate limiting** для исходящих вызовов к external API (Stripe лимит 100 RPS, OpenAI лимит 3 RPM), чтобы не получить 429 от внешнего сервиса.
+>
+> **Откуда путаница:** в Spring Cloud Gateway есть `RequestRateLimiter` для inbound — кажется, что Resilience4j по аналогии тоже только для inbound.
+>
+> **Если бы это было правдой:** не было бы решения для защиты собственного сервиса от блокировки внешним API; пришлось бы каждый раз писать свой Semaphore.
+>
+> ---
+>
+> #### D) Token bucket с фиксированными окнами: в начале `limitRefreshPeriod` обновляется `limitForPeriod` permits; при отсутствии вызов ждёт до `timeoutDuration`, иначе бросает `RequestNotPermitted` (HTTP 429); `timeout-duration: 0` = fail-fast — ✓ Верно
+>
+> **Развёрнутое объяснение:** RateLimiter поддерживает 3 параметра: `limit-for-period` (сколько permits выдавать), `limit-refresh-period` (интервал пополнения), `timeout-duration` (сколько ждать permit). Это **token bucket с дискретными окнами**, а не classic continuous token bucket — permits НЕ накапливаются, а пересоздаются с нуля в начале каждого окна. Это создаёт известный edge case: на границе окна можно потребить 2× лимит за короткий промежуток (последние permits старого окна + первые нового).
+>
+> **Пример:**
+> ```yaml
+> resilience4j:
+>   ratelimiter:
+>     instances:
+>       stripeApi:
+>         limit-for-period: 100
+>         limit-refresh-period: 1s
+>         timeout-duration: 0          # fail-fast
+> ```
+> ```java
+> @RateLimiter(name = "stripeApi", fallbackMethod = "limited")
+> public Charge charge(Payment p) {
+>     return stripeClient.charge(p);
+> }
+>
+> public Charge limited(Payment p, RequestNotPermitted ex) {
+>     return Charge.deferred(p);   // отложить или вернуть 429
+> }
+> ```
+>
+> **Когда применять:** ограничение исходящих вызовов к платным/лимитированным API (Stripe, OpenAI, Twilio). На стороне сервера — Spring Cloud Gateway или Bucket4j, как правило, удобнее (распределённый rate limit через Redis).
+>
+> **Подводные камни:** Resilience4j RateLimiter — **локальный**, in-memory. В кластере из 10 инстансов каждый получит свои 100 RPS → суммарно 1000 RPS на downstream. Для распределённого rate limiting — `bucket4j-redis` или Gateway. Edge-burst на границе окна: при `limit=100/s` за 2 секунды максимум 200, но можно увидеть 100+100 в течение 100ms.
+>
+> **Связанные вопросы:** [[Q11]] — конфигурация RateLimiter; [[Q15]] — комбинирование с CircuitBreaker; [[Q17]] — метрики `resilience4j.ratelimiter.available.permissions`
+
+## Q11. Как настроить RateLimiter в Spring Boot?
 
 Через `application.yml` (см. Q10). Дополнительные параметры:
 
