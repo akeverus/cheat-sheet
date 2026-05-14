@@ -404,10 +404,87 @@ public class DynamicDbService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Что такое VaultLeaseContainer и зачем он нужен? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Чем dynamic secrets отличаются от обычных static credentials в KV engine?
+>
+> ---
+>
+> #### A) Dynamic secrets — это просто KV-секреты с короткой TTL, Vault удаляет запись из KV после истечения времени — ❌ Неверно
+>
+> **Что на самом деле:** dynamic secrets — это credentials, которые Vault **создаёт on-demand** в целевой системе (PostgreSQL, MySQL, AWS, MongoDB) для каждого обращения. Vault не хранит их, а генерирует: создаёт нового пользователя в БД через `creation_statements`, отдаёт credentials клиенту, регистрирует lease, и по истечении TTL **дропает пользователя** в целевой системе через `revocation_statements`. KV engine хранит статичные значения и не имеет такой механики.
+>
+> **Откуда путаница:** оба механизма используют TTL, но смысл TTL разный: в KV — это «expire entry», в dynamic — «revoke созданного external resource».
+>
+> **Если бы это было правдой:** Vault не нуждался бы в database plugin и connection-конфигурации с root-доступом к БД для создания/удаления пользователей.
+>
+> ---
+>
+> #### B) Vault создаёт уникальные TTL-credentials в целевой системе (БД, AWS, PKI) по запросу приложения, регистрирует lease и автоматически revoke-ает их (DROP USER, IAM-key delete) после истечения TTL — каждое приложение получает свои creds — ✓ Верно
+>
+> **Развёрнутое объяснение:** ключевая идея — Vault выступает как **trusted authority**, который имеет root-доступ к целевой системе и делегирует ограниченные credentials. Для database engine это работает так: оператор настраивает в Vault connection (с root-паролем БД) и role с `creation_statements` (SQL для создания юзера) и `revocation_statements` (DROP USER). Приложение вызывает `vault read database/creds/payment-app` — Vault генерирует уникальный username `v-approle-payment-XXX`, выполняет SQL, отдаёт credentials с TTL и `lease_id`. Через TTL (или вручную `vault lease revoke`) Vault сам выполняет DROP USER. Никаких shared credentials между инстансами.
+>
+> **Пример:**
+> ```java
+> // Получение TTL-credentials для PostgreSQL
+> @Service
+> @RequiredArgsConstructor
+> public class DynamicDbCredentialsProvider {
+>     private final VaultTemplate vaultTemplate;
+>
+>     public DbCredentials fetch() {
+>         VaultResponseSupport<Map<String, Object>> lease =
+>             vaultTemplate.read("database/creds/payment-role");
+>         return new DbCredentials(
+>             (String) lease.getRequiredData().get("username"),  // v-approle-payment-7K2x...
+>             (String) lease.getRequiredData().get("password"),
+>             lease.getLeaseId(),                                  // database/creds/.../abc123
+>             Duration.ofSeconds(lease.getLeaseDuration())         // 1 hour
+>         );
+>     }
+> }
+> ```
+> ```hcl
+> # Vault server config (terraform или vault CLI)
+> resource "vault_database_secret_backend_role" "payment" {
+>   name        = "payment-role"
+>   backend     = "database"
+>   db_name     = "postgres-prod"
+>   default_ttl = 3600
+>   max_ttl     = 86400
+>   creation_statements = [
+>     "CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';",
+>     "GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA app TO \"{{name}}\";"
+>   ]
+> }
+> ```
+>
+> **Когда применять:** доступ к БД из микросервисов (каждый pod — свой user), доступ к AWS (STS-токены через aws engine), доступ к Consul/RabbitMQ, TLS-сертификаты через PKI engine. Особенно полезно когда нужно зафиксировать кто именно делал запрос в audit-логе целевой системы.
+>
+> **Подводные камни:** root-credentials БД в Vault — критический secret (компрометация = захват БД); `max_ttl` ограничивает максимальное продление — после него lease нельзя renew и нужно requesting новый; при revoke во время активного connection-pool пул резко получает auth-error — нужен graceful rotation через `softEvictConnections`; PostgreSQL `DROP USER` не сработает если у user есть owned objects — `revocation_statements` должны включать `REASSIGN OWNED` или `DROP OWNED`.
+>
+> ---
+>
+> #### C) Dynamic secrets — это секреты, которые Vault генерирует случайным образом и хранит в KV, отдавая клиенту при каждом запросе один и тот же сгенерированный пароль — ❌ Неверно
+>
+> **Что на самом деле:** dynamic secrets никогда не хранятся в Vault после генерации — Vault держит только lease metadata (когда revoke). Каждый вызов `vault read database/creds/...` возвращает **разные** credentials (если не запрашиваешь существующий lease по ID).
+>
+> **Откуда путаница:** ассоциация с password generators (Vaultwarden, 1Password), которые генерируют и сохраняют пароли.
+>
+> **Если бы это было правдой:** теряется главное преимущество dynamic secrets — изоляция между запросами и автоматический revoke в целевой системе.
+>
+> ---
+>
+> #### D) Dynamic secrets — экспериментальная фича, не предназначенная для production — все используют только KV — ❌ Неверно
+>
+> **Что на самом деле:** dynamic secrets — production-ready с 2016 года, активно используются в банках, fintech, healthcare. Database, AWS, PKI, SSH engines стабильны и имеют GA-статус. В крупных deployments dynamic credentials — основной use case Vault, а KV — вспомогательный для статичных секретов (API keys внешних сервисов).
+>
+> **Откуда путаница:** реальная сложность настройки (нужны permissions в целевой системе, понимание lease lifecycle) создаёт впечатление «не для production».
+>
+> **Если бы это было правдой:** существование `database-secret-engines`, `aws-secret-backend`, dedicated документации по PKI рабочим процессам было бы необъяснимо.
+>
+> **Связанные вопросы:** [[Q5]] — VaultLeaseContainer и lease renewal; [[Q11]] — автоматическая ротация; [[Q8]] — PKI engine
+
+## Q5. Что такое VaultLeaseContainer и зачем он нужен?
 
 `VaultLeaseContainer` — компонент Spring Vault для управления lease (аренда секрета). Автоматически продлевает lease до истечения TTL.
 
@@ -448,10 +525,88 @@ public class DatabaseCredentialService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Как работает Transit Secrets Engine (шифрование как сервис)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Зачем нужен `VaultLeaseContainer` при работе с dynamic secrets и что произойдёт без него?
+>
+> ---
+>
+> #### A) `VaultLeaseContainer` — это локальный кэш Vault-ответов, ускоряющий чтение секретов; без него каждый `vaultTemplate.read()` идёт в сеть, но функционально приложение работает корректно — ❌ Неверно
+>
+> **Что на самом деле:** `VaultLeaseContainer` — не кэш, а **lease lifecycle manager**. Он отслеживает выданные dynamic credentials с TTL, планирует через `TaskScheduler` фоновую задачу `renew lease` за `expiryThresholdPercentage` до истечения, и при невозможности renew (например, достигнут `max_ttl`) вызывает callback с новыми credentials через `vault.read()`. Кэширования ответов нет — есть управление жизненным циклом lease.
+>
+> **Откуда путаница:** слово «Container» воспринимается как Spring-context-aware кэш-контейнер.
+>
+> **Если бы это было правдой:** dynamic credentials всё равно истекли бы через TTL независимо от кэша, и приложение получило бы `PSQLException: FATAL: role does not exist` от закрытого Vault-ом пользователя БД.
+>
+> ---
+>
+> #### B) `VaultLeaseContainer` управляет жизненным циклом lease (renew до истечения TTL, ротация при достижении `max_ttl`) и через `requestRotatingSecret()` уведомляет callback о новых credentials — без него dynamic secrets просто истекут и приложение получит auth-error от целевой системы — ✓ Верно
+>
+> **Развёрнутое объяснение:** dynamic secrets (DB credentials, AWS STS) имеют два TTL: `default_ttl` (через сколько lease нуждается в renew) и `max_ttl` (максимальное время жизни даже с renew). `VaultLeaseContainer` решает обе проблемы: (1) renew — фоновый scheduler через `expiryThresholdPercentage` (по умолчанию 90% от TTL) вызывает `vault write sys/leases/renew` и продлевает lease; (2) ротация — когда renew невозможен (max_ttl исчерпан или Vault revoke-нул), контейнер вызывает `requestNewLease()`, получает новые credentials и триггерит callback `LeaseAwareConfigurer`. Без контейнера TTL истечёт незаметно и `DROP USER` в БД приведёт к `FATAL: role "v-approle-XXX" does not exist` на следующем DB-запросе.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class VaultLeaseConfig {
+>     @Bean(destroyMethod = "destroy")
+>     public SecretLeaseContainer leaseContainer(VaultOperations vaultOperations,
+>                                                  TaskScheduler scheduler) {
+>         SecretLeaseContainer container = new SecretLeaseContainer(vaultOperations, scheduler);
+>         container.setExpiryThresholdSeconds(60);     // обновлять за 60s до истечения
+>         container.setMinRenewalSeconds(10);
+>         return container;
+>     }
+> }
+>
+> @Service
+> @RequiredArgsConstructor
+> public class DbCredentialsRotator {
+>     private final SecretLeaseContainer leaseContainer;
+>     private final HikariDataSource dataSource;
+>
+>     @PostConstruct
+>     public void subscribe() {
+>         RequestedSecret secret = RequestedSecret.rotating("database/creds/payment-role");
+>         leaseContainer.addLeaseListener(event -> {
+>             if (event instanceof SecretLeaseCreatedEvent created) {
+>                 Map<String, Object> data = created.getSecrets();
+>                 dataSource.setUsername((String) data.get("username"));
+>                 dataSource.setPassword((String) data.get("password"));
+>                 dataSource.getHikariPoolMXBean().softEvictConnections();
+>             }
+>         });
+>         leaseContainer.addRequestedSecret(secret);
+>     }
+> }
+> ```
+>
+> **Когда применять:** все случаи dynamic secrets — PostgreSQL/MySQL credentials, AWS STS-токены, RabbitMQ users, MongoDB users. Без него dynamic secrets превращаются в bombу замедленного действия.
+>
+> **Подводные камни:** callback вызывается из scheduler-thread — не блокировать долгими операциями; `softEvictConnections()` не закрывает активные транзакции, только idle connections — running queries продолжат работу со старым user-ом до завершения; при `max_ttl` лучше использовать `rotating` (новый lease) вместо `renewing` (renew существующего).
+>
+> ---
+>
+> #### C) `VaultLeaseContainer` — это deprecated класс из Spring Vault 1.x, в современных версиях нужно использовать только `@Scheduled` с ручным `vaultTemplate.read()` — ❌ Неверно
+>
+> **Что на самом деле:** `SecretLeaseContainer` (полное имя в современном API) — активно поддерживаемый компонент Spring Vault. Ручной `@Scheduled` не знает о lease lifecycle: он не различает «нужен renew» от «нужен новый lease после max_ttl», не получает события от Vault.
+>
+> **Откуда путаница:** многие туториалы показывают ручной `@Scheduled` как «простой» подход, и это создаёт впечатление, что специализированный container не нужен.
+>
+> **Если бы это было правдой:** Spring Vault документация и кодовая база не содержали бы `SecretLeaseContainer` как central abstraction для dynamic secrets.
+>
+> ---
+>
+> #### D) `VaultLeaseContainer` нужен только для KV v2 — для dynamic secrets используется отдельный механизм через `@DynamicSecret` — ❌ Неверно
+>
+> **Что на самом деле:** ровно наоборот — `SecretLeaseContainer` нужен **только для dynamic secrets** (database, aws, pki, ssh engines), потому что только у них есть lease с TTL. KV v1/v2 хранят статичные значения без lease — для их «обновления» используется `@RefreshScope` + `/actuator/refresh`. Аннотации `@DynamicSecret` в Spring Vault не существует.
+>
+> **Откуда путаница:** путаница между понятиями «динамичности» (KV v2 versioning) и «dynamic secrets» (TTL-credentials).
+>
+> **Если бы это было правдой:** Spring Vault имел бы две параллельные иерархии классов для одной задачи.
+>
+> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q11]] — автоматическая ротация; [[Q3]] — `@Value` resolution
+
+## Q6. Как работает Transit Secrets Engine (шифрование как сервис)?
 
 Transit Engine позволяет зашифровать/расшифровать данные без необходимости управлять ключами в приложении.
 
@@ -486,10 +641,78 @@ public class EncryptionService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Какие методы аутентификации поддерживает Spring Vault? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая ключевая идея Transit Secrets Engine и чем он отличается от обычного шифрования через `javax.crypto` в приложении?
+>
+> ---
+>
+> #### A) Transit Engine хранит зашифрованные данные в Vault, приложение отправляет plaintext и получает обратно ссылку на зашифрованную запись — ❌ Неверно
+>
+> **Что на самом деле:** Transit Engine **никогда не хранит ни plaintext, ни ciphertext**. Это stateless encryption service: приложение шлёт plaintext, получает ciphertext (с префиксом `vault:v1:`), хранит ciphertext в своей БД. Для расшифровки приложение шлёт ciphertext обратно, получает plaintext. Vault хранит **только ключи**.
+>
+> **Откуда путаница:** ассоциация с KV engine, который действительно хранит данные.
+>
+> **Если бы это было правдой:** Vault при компрометации содержал бы всю чувствительную базу клиентов целиком — это противоречит security-модели «Vault держит ключи, БД держит данные».
+>
+> ---
+>
+> #### B) Transit Engine — encryption-as-a-service: приложение получает ciphertext через Vault API, ключ никогда не покидает Vault, ротация ключа не требует перешифрования старых данных (ciphertext помечен версией ключа `vault:v1:...`) — ✓ Верно
+>
+> **Развёрнутое объяснение:** Transit решает задачу «как шифровать PII без управления ключами в приложении». Принцип: (1) оператор создаёт named key через `vault write -f transit/keys/customer-pii type=aes256-gcm96`; (2) приложение вызывает `vault write transit/encrypt/customer-pii plaintext=<base64>` и получает `vault:v1:<base64-ciphertext>` где `v1` — версия ключа; (3) ciphertext сохраняется в БД; (4) для расшифровки — `vault write transit/decrypt/customer-pii ciphertext=...`. Ключ никогда не покидает Vault, что критично: компрометация app pod-а не даёт ничего — без действующего Vault-токена нельзя расшифровать ничего. Ротация: `vault write -f transit/keys/customer-pii/rotate` создаёт `v2`, новые шифрования используют `v2`, старые `vault:v1:` ciphertext-ы расшифровываются автоматически (Vault помнит все версии). Convergent encryption и derived keys дают детерминированное шифрование для поиска по зашифрованным полям.
+>
+> **Пример:**
+> ```java
+> @Service
+> @RequiredArgsConstructor
+> public class CustomerPiiEncryptionService {
+>     private final VaultTemplate vaultTemplate;
+>     private static final String KEY_NAME = "customer-pii";
+>
+>     public String encryptPassport(String passportNumber) {
+>         TransitOperations transit = vaultTemplate.opsForTransit();
+>         Ciphertext result = transit.encrypt(KEY_NAME, Plaintext.of(passportNumber));
+>         return result.getCiphertext();  // "vault:v3:Hh7G..."
+>     }
+>
+>     public String decryptPassport(String ciphertext) {
+>         TransitOperations transit = vaultTemplate.opsForTransit();
+>         return transit.decrypt(KEY_NAME, Ciphertext.of(ciphertext)).asString();
+>     }
+>
+>     // Запускается раз в квартал — старые данные продолжают читаться
+>     public void rotateKey() {
+>         vaultTemplate.opsForTransit().rotate(KEY_NAME);
+>     }
+> }
+> ```
+>
+> **Когда применять:** PII (паспорта, ИНН, карты), GDPR compliance (право на удаление = revoke key version), мульти-сервисная архитектура с единой политикой шифрования, audit-логи всех encrypt/decrypt операций, FIPS 140-2 compliance через Vault HSM-backed keys.
+>
+> **Подводные камни:** latency — каждый encrypt/decrypt это network call в Vault (batch API `transit/encrypt` для bulk); Vault становится hot dependency — нужно HA + caching стратегия для read-heavy decrypt; convergent encryption (детерминированное) уменьшает безопасность ради возможности поиска — использовать только когда необходимо; key deletion навсегда блокирует доступ к данным (нужны backups через `transit/backup/<key>`).
+>
+> ---
+>
+> #### C) Transit Engine — это TLS-туннель для шифрования трафика между микросервисами, замена mTLS — ❌ Неверно
+>
+> **Что на самом деле:** Transit Engine шифрует **данные**, а не транспорт. Для шифрования трафика используется TLS через Vault PKI (issue certificates), это разные engines с разными задачами.
+>
+> **Откуда путаница:** слово «transit» воспринимается как «in-transit encryption» (TLS).
+>
+> **Если бы это было правдой:** существование отдельного PKI engine для выпуска TLS-сертификатов было бы избыточным.
+>
+> ---
+>
+> #### D) Transit Engine — устаревший механизм из Vault 0.x, в современных версиях рекомендуется делать AES-шифрование в Java через `Cipher` и хранить ключ в Vault KV — ❌ Неверно
+>
+> **Что на самом деле:** Transit Engine — активно развиваемая часть Vault. Хранение AES-ключа в KV и шифрование в приложении ломает главное преимущество: компрометация app pod-а = чтение ключа из app memory = расшифровка всей БД. С Transit ключ никогда не попадает в приложение.
+>
+> **Откуда путаница:** «зачем сетевой round-trip, если можно зашифровать локально» — игнорирует security threat-модель.
+>
+> **Если бы это было правдой:** банки и healthcare не использовали бы Transit для PCI DSS / HIPAA compliance.
+>
+> **Связанные вопросы:** [[Q1]] — обзор Vault; [[Q8]] — PKI engine; [[Q15]] — best practices
+
+## Q7. Какие методы аутентификации поддерживает Spring Vault?
 
 | Метод | Применение | Описание |
 |-------|-----------|----------|
@@ -517,10 +740,86 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как использовать Vault PKI для динамических TLS-сертификатов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой метод аутентификации Spring Vault предпочтителен для production-микросервиса в Kubernetes и почему `TOKEN` не подходит?
+>
+> ---
+>
+> #### A) `TOKEN` — самый простой и безопасный метод: достаточно установить `VAULT_TOKEN` через Kubernetes Secret и приложение готово к работе — ❌ Неверно
+>
+> **Что на самом деле:** статический токен — антипаттерн для production. Токен попадает в Kubernetes Secret (зашифрован в etcd, но доступен любому с RBAC на pod), не имеет автоматической ротации, при компрометации pod-а действителен до явного revoke. Это эквивалент пароля БД в env vars — задача, которую Vault призван решить.
+>
+> **Откуда путаница:** простота настройки в туториалах — токен показывают первым как «hello world».
+>
+> **Если бы это было правдой:** Vault не разрабатывал бы 15+ alternative auth methods (AppRole, Kubernetes, AWS IAM, GCP, JWT/OIDC).
+>
+> ---
+>
+> #### B) Для Kubernetes-микросервиса — `KUBERNETES` auth: приложение использует свой Service Account JWT как proof of identity, Vault проверяет JWT через TokenReview API K8s и выдаёт короткоживущий Vault-токен; токен ротируется автоматически без участия CI/CD — ✓ Верно
+>
+> **Развёрнутое объяснение:** Kubernetes auth работает так. (1) Оператор настраивает в Vault: `vault write auth/kubernetes/config token_reviewer_jwt=@sa-token kubernetes_host=...` и `vault write auth/kubernetes/role/payment-app bound_service_account_names=payment-sa bound_service_account_namespaces=prod policies=payment-policy ttl=1h`. (2) Pod монтирует свой JWT в `/var/run/secrets/kubernetes.io/serviceaccount/token`. (3) Spring Vault при старте читает JWT и вызывает `vault write auth/kubernetes/login role=payment-app jwt=<jwt>`. (4) Vault через TokenReview API проверяет JWT в API server, убеждается что pod бежит с правильным SA в правильном namespace, выдаёт Vault-токен с TTL=1h. (5) Spring Vault автоматически renew-ит токен в фоне. Идентичность — это identity самого K8s; компрометация требует захвата SA в namespace, что значительно сложнее статичного токена.
+>
+> **Пример:**
+> ```yaml
+> # bootstrap.yml
+> spring:
+>   application:
+>     name: payment-service
+>   cloud:
+>     vault:
+>       host: vault.prod.internal
+>       port: 8200
+>       scheme: https
+>       authentication: KUBERNETES
+>       kubernetes:
+>         role: payment-app                 # совпадает с auth/kubernetes/role/...
+>         kubernetes-path: kubernetes        # mount path в Vault
+>         service-account-token-file: /var/run/secrets/kubernetes.io/serviceaccount/token
+>       kv:
+>         enabled: true
+>         backend: secret
+>         application-name: payment-service
+> ```
+> ```yaml
+> # k8s manifests/payment-deployment.yaml
+> apiVersion: apps/v1
+> kind: Deployment
+> spec:
+>   template:
+>     spec:
+>       serviceAccountName: payment-sa     # bound в Vault role
+>       containers:
+>       - name: app
+>         image: payment-service:1.2.3
+> ```
+>
+> **Когда применять:** Kubernetes-микросервисы (всегда предпочитать KUBERNETES auth); вне K8s — APPROLE (Role ID в образе, Secret ID через CI/CD wrapping); EC2/Lambda — AWS IAM auth через instance identity; on-premise legacy — TLS client cert auth.
+>
+> **Подводные камни:** TokenReview API K8s должен быть доступен с Vault-нод (обычно через master endpoint); SA-токен с Kubernetes 1.21+ это short-lived projected token — нужен обновлённый Spring Vault для повторного чтения файла; `bound_service_account_namespaces=*` — антипаттерн, всегда указывать конкретный namespace; Vault-токен после login имеет свой TTL — Spring Vault renew-ит его, но если pod не активен дольше `max_ttl`, придётся re-login (Spring Vault делает это автоматически).
+>
+> ---
+>
+> #### C) Для production всегда нужно использовать `LDAP` — корпоративная директория обеспечивает единую точку управления identity — ❌ Неверно
+>
+> **Что на самом деле:** LDAP — human auth (developer/operator аутентифицируется в Vault для управления). Для машинной аутентификации (приложение → Vault) используются machine-identity методы: Kubernetes, AppRole, AWS IAM, GCP. Приложение не имеет «логина и пароля LDAP».
+>
+> **Откуда путаница:** LDAP популярен в enterprise для SSO, и команды по инерции пытаются использовать его и для приложений.
+>
+> **Если бы это было правдой:** каждый pod нуждался бы в выделенном LDAP-пользователе и пароле, что воссоздаёт проблему «пароли в конфигах».
+>
+> ---
+>
+> #### D) Любой метод одинаково безопасен — выбор только эстетический, главное чтобы Vault был включён — ❌ Неверно
+>
+> **Что на самом деле:** выбор auth-метода — это центральное security-решение. TOKEN — самый слабый (статичный credential), AppRole — promotion-friendly, Kubernetes — лучший для K8s (identity делегируется control-plane), AWS IAM — лучший в AWS (identity = instance role). Каждый метод имеет свои threat-модели и трейдоффы.
+>
+> **Откуда путаница:** упрощение «Vault установлен — security готов».
+>
+> **Если бы это было правдой:** документация Vault не содержала бы 100+ страниц про auth methods и threat models.
+>
+> **Связанные вопросы:** [[Q2]] — настройка Spring Vault; [[Q1]] — обзор Vault; [[Q15]] — best practices
+
+## Q8. Как использовать Vault PKI для динамических TLS-сертификатов?
 
 ```java
 @Service
@@ -548,10 +847,80 @@ Vault PKI используется для:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Как Spring Cloud Vault интегрируется с Spring Boot PropertySource? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём ключевое преимущество Vault PKI engine перед традиционными статичными TLS-сертификатами от внутреннего CA?
+>
+> ---
+>
+> #### A) Vault PKI бесплатный, а внутренний CA на базе OpenSSL платный — это единственная разница — ❌ Неверно
+>
+> **Что на самом деле:** оба варианта могут быть бесплатными. Главное различие — automation и lifetime: Vault PKI на лету issue-ит сертификаты с короткими TTL (часы/дни), интегрирует ACL через Vault roles, automates renewal через Vault Agent. Статичный CA выдаёт годовые сертификаты, требует ручного rotation, не имеет встроенного механизма authorization.
+>
+> **Откуда путаница:** упрощённое сравнение «коммерческое vs open-source».
+>
+> **Если бы это было правдой:** существование dedicated PKI engine не имело бы смысла — достаточно было бы скрипта на OpenSSL.
+>
+> ---
+>
+> #### B) Vault PKI выдаёт короткоживущие сертификаты (часы/дни) on-demand с автоматическим renewal — это позволяет zero-downtime ротацию mTLS, узкие blast radius при компрометации, fine-grained ACL через Vault policies на каждый CN/SAN — ✓ Верно
+>
+> **Развёрнутое объяснение:** Vault PKI работает так. (1) Оператор создаёт CA через `vault write pki/root/generate/internal common_name=internal-ca` (или импортирует существующий). (2) Создаётся role: `vault write pki/roles/services-role allowed_domains=svc.cluster.local allow_subdomains=true max_ttl=24h`. (3) Приложение через Spring Vault вызывает `vaultTemplate.opsForPki().issueCertificate("pki/issue/services-role", request)` — Vault генерирует приватный ключ + сертификат, подписывает CA, возвращает x509 chain + PEM ключ. (4) Приложение использует сертификат для mTLS до истечения TTL, затем requests новый. Преимущества vs статичный CA: при компрометации сервиса blast radius ограничен временем жизни сертификата (часы), не годами; revocation через CRL/OCSP не нужна — сертификат сам истекает; идентичность приложения = Vault policy, проверяется при каждом issue; обновление CA не требует касания всех клиентов одновременно (по мере истечения).
+>
+> **Пример:**
+> ```java
+> @Service
+> @RequiredArgsConstructor
+> public class TlsCertificateProvider {
+>     private final VaultTemplate vaultTemplate;
+>
+>     public KeyStore obtainServerKeyStore(String commonName) throws Exception {
+>         VaultCertificateRequest request = VaultCertificateRequest.builder()
+>             .commonName(commonName)                         // payment.svc.cluster.local
+>             .altNames(List.of("payment", "payment.prod"))
+>             .ttl(Duration.ofHours(24))
+>             .build();
+>         VaultCertificateResponse response =
+>             vaultTemplate.opsForPki().issueCertificate("pki/issue/services-role", request);
+>
+>         CertificateBundle bundle = response.getRequiredData();
+>         KeyStore keyStore = KeyStore.getInstance("PKCS12");
+>         keyStore.load(null, null);
+>         keyStore.setKeyEntry("server",
+>             bundle.getPrivateKeySpec(),
+>             "changeit".toCharArray(),
+>             bundle.getX509CertificateChain().toArray(new X509Certificate[0]));
+>         return keyStore;
+>     }
+> }
+> ```
+>
+> **Когда применять:** mTLS между микросервисами в Kubernetes/Consul Connect; сертификаты для admin-доступа (короткие TTL — часы); IoT-устройства с автоматическим enrollment; intermediate CA для сегментации (Vault PKI as intermediate, подписанный корневым HSM-CA).
+>
+> **Подводные камни:** clock skew между Vault и клиентом — сертификат с TTL=1h может стать невалидным из-за разницы во времени; renewal должен начинаться задолго до истечения (хотя бы за 20% TTL); приватный ключ передаётся через сеть — Vault и клиент должны быть на TLS; root CA private key — критический secret, лучше HSM-backed или keep offline; rotation CA — нетривиально, нужны cross-signing или dual-CA период.
+>
+> ---
+>
+> #### C) Vault PKI работает только с самоподписанными сертификатами и не может выпускать сертификаты, доверенные внешними системами — ❌ Неверно
+>
+> **Что на самом деле:** Vault PKI может работать как intermediate CA, подписанный публичным CA (DigiCert, Let's Encrypt через external signing). Корневой CA можно держать offline, импортировать в Vault как intermediate с ограниченной name constraints.
+>
+> **Откуда путаница:** простые tutorials показывают только self-signed root, создавая впечатление limitation.
+>
+> **Если бы это было правдой:** Vault PKI был бы непригоден для публичных endpoint-ов, что противоречит реальной enterprise-практике.
+>
+> ---
+>
+> #### D) Vault PKI хранит уже выпущенные сертификаты в KV — приложение просто читает их оттуда — ❌ Неверно
+>
+> **Что на самом деле:** Vault PKI генерирует сертификаты **on-demand** при каждом `pki/issue/<role>`. Хранение в KV — антипаттерн (если приватный ключ в storage, любой с read-доступом получает ключ). Vault PKI хранит только CA private key и метаданные выпущенных сертификатов для CRL.
+>
+> **Откуда путаница:** ассоциация с обычным workflow «admin генерирует cert → сохраняет в storage → приложение читает».
+>
+> **Если бы это было правдой:** Vault PKI терял бы основное преимущество — ephemeral credentials.
+>
+> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q6]] — Transit engine; [[Q15]] — best practices
+
+## Q9. Как Spring Cloud Vault интегрируется с Spring Boot PropertySource?
 
 ```yaml
 # bootstrap.yml — загружается ДО application.yml
