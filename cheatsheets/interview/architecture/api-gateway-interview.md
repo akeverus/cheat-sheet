@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[api-gateway]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `API Gateway`
 
@@ -2811,6 +2811,148 @@ spring:
 
 Без таймаутов retry может «зависнуть» ожидая ответа.
 
+> [!mcq]
+>
+> **Вопрос:** Почему retry на POST/PUT через Gateway без идемпотентности — антипаттерн, и как Circuit Breaker предотвращает каскадные сбои?
+>
+> ---
+>
+> #### A) Retry на POST безопасен потому что Gateway автоматически делает idempotency check — ❌ Неверно
+>
+> **Что на самом деле:** Gateway **НЕ делает** idempotency check. Это responsibility клиента и application logic — клиент должен слать `Idempotency-Key: <uuid>` header, backend хранить ключи в Redis/DB и дедуплицировать.
+>
+> При retry POST `/orders` без idempotency:
+> - Запрос 1: создаёт order 12345
+> - Network glitch — клиент не получает 201
+> - Запрос 2 (retry): создаёт order 12346
+> - Результат: **2 заказа за одну покупку** (двойное списание!)
+>
+> **Откуда путаница:** есть идея «Gateway = smart proxy с auto-features». На деле Gateway — transport layer, semantic поведение определяет app.
+>
+> **Если бы это было правдой:** retry POST не вызывал бы дубликатов. На практике это **классическая причина** double charges в платёжных системах (Stripe, PayPal требуют Idempotency-Key для всех POST).
+>
+> ---
+>
+> #### C) Retry только для идемпотентных методов (GET, HEAD, PUT, DELETE); для POST — только с Idempotency-Key header + dedupe на backend. Circuit Breaker отключает retry для падающего сервиса (fast fail вместо повторных запросов), предотвращая увеличение нагрузки на уже больной сервис — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Идемпотентность HTTP методов (RFC 7231):
+> - **Идемпотентные**: GET, HEAD, PUT, DELETE, OPTIONS — N одинаковых запросов = тот же эффект как 1 запрос.
+> - **Не идемпотентные**: POST, PATCH (зависит от impl) — каждый запрос имеет side effect.
+>
+> Retry для не-идемпотентных = создание дубликатов при network glitches. Решение — **Idempotency-Key**:
+>
+> ```http
+> POST /orders
+> Idempotency-Key: 7f3a2b1e-...
+> Content-Type: application/json
+>
+> { "userId": 42, "amount": 100 }
+> ```
+>
+> Backend:
+> 1. Извлечь `Idempotency-Key`.
+> 2. Lookup в Redis (TTL 24h): был ли уже такой ключ?
+> 3. Если был → вернуть cached response.
+> 4. Если новый → обработать, сохранить result, вернуть.
+>
+> **Circuit Breaker — defense in depth:**
+> ```
+> CLOSED (work) → 50% errors → OPEN (block) → wait 10s → HALF-OPEN (test) → CLOSED or back to OPEN
+> ```
+>
+> При OPEN Gateway сразу возвращает fallback (без retry), что:
+> 1. **Снижает нагрузку** на падающий сервис (не добивает его retry'ями).
+> 2. **Быстро отвечает клиенту** (fast fail вместо timeout × 3 retry).
+> 3. **Даёт время recovery** для backend (rebooting pod, GC pause, DB reconnect).
+>
+> Resilience4j + Spring Cloud Gateway автоматически предотвращает retry поверх открытого CB.
+>
+> **Пример (Spring Cloud Gateway):**
+> ```yaml
+> spring:
+>   cloud:
+>     gateway:
+>       routes:
+>         - id: payment-route
+>           uri: lb://payment-service
+>           predicates:
+>             - Path=/api/payments/**
+>           filters:
+>             - name: CircuitBreaker
+>               args:
+>                 name: payment-cb
+>                 fallbackUri: forward:/fallback/payment
+>             - name: Retry
+>               args:
+>                 retries: 3
+>                 statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE
+>                 methods: GET, HEAD              # ← НЕ для POST!
+>                 backoff:
+>                   firstBackoff: 50ms
+>                   maxBackoff: 500ms
+>                   factor: 2
+>       httpclient:
+>         connect-timeout: 1000
+>         response-timeout: 5s                    # обязательно
+> ```
+>
+> ```java
+> // Resilience4j Circuit Breaker config
+> @Bean
+> public Customizer<ReactiveResilience4JCircuitBreakerFactory> cbConfig() {
+>     return factory -> factory.configure(builder -> builder
+>         .circuitBreakerConfig(CircuitBreakerConfig.custom()
+>             .slidingWindowSize(10)
+>             .failureRateThreshold(50)                                 // OPEN при ≥50% errors
+>             .waitDurationInOpenState(Duration.ofSeconds(10))         // ждать перед HALF-OPEN
+>             .permittedNumberOfCallsInHalfOpenState(3)                // test calls
+>             .build())
+>         .timeLimiterConfig(TimeLimiterConfig.custom()
+>             .timeoutDuration(Duration.ofSeconds(5))
+>             .build()), "payment-cb");
+> }
+> ```
+>
+> **Когда применять:**
+> - **Stripe/Square/PayPal**: ВСЕ POST endpoints требуют Idempotency-Key. Без него API возвращает 400.
+> - **AWS SDK**: автоматический retry с exponential backoff + jitter, но только для idempotent operations. Для S3 PutObject — manual.
+> - **Spring Cloud Gateway**: Resilience4j CB + Retry filter — стандарт для microservices.
+> - **AWS API Gateway**: интеграция с Lambda через Throttling и Reserved Concurrency.
+>
+> **Подводные камни:**
+> - **Idempotency-Key TTL**: 24h типично; слишком короткий — retry после длительного network outage создаёт дубли; слишком длинный — Redis growth.
+> - **CB threshold tuning**: 50% errors в окне 10 — может быть слишком чувствительно (transient blip → CB OPEN). Tuning под реальную нагрузку.
+> - **Retry + CB взаимодействие**: retry должен НЕ срабатывать когда CB OPEN — Resilience4j делает это automatically, но кастомные impls могут «retry до победного».
+> - **Timeout < retry total**: connection timeout 1s + 3 retries × 1s = до 4s waiting. Total timeout должен быть выше суммы.
+> - **Bulkhead**: rate limit + thread pool отделение per-service. Без него падающий сервис исчерпывает thread pool Gateway → cascade.
+> - **Fallback логика**: не всегда «вернуть error». Часто — cached response, default value, queue для async retry.
+>
+> **Связанные вопросы:** [[Q34]] — WebSocket reconnect strategies; [[Q37]] — versioning с deprecated header; [[Q12]] — error handling в Gateway.
+>
+> ---
+>
+> #### B) Circuit Breaker не нужен если есть retry — retry достаточно — ❌ Неверно
+>
+> **Что на самом деле:** retry и CB **дополняющие**, не конкурирующие. Retry → for transient (1-2 secs) network blips. CB → for sustained degradation (минуты). Без CB retry усугубляет проблему: добивает падающий сервис.
+>
+> **Откуда путаница:** оба «защищают от ошибок». Семантика разная: retry оптимизирует success rate отдельного запроса, CB защищает систему от cascade failure.
+>
+> **Если бы это было правдой:** мы могли бы бесконечно retry. На практике без CB → thundering herd → полный outage.
+>
+> ---
+>
+> #### D) Retry с exponential backoff гарантирует доставку 100% — ❌ Неверно
+>
+> **Что на самом деле:** retry помогает с transient errors, но не гарантирует 100% delivery. Сервис может быть полностью недоступен (например, security incident — manual disable); permanent error (400 — bad request, 401 — auth issue); request itself имеет bug.
+>
+> Retry — это **best effort** механизм. Для guaranteed delivery — async messaging (Kafka, SQS) с at-least-once semantics + dedup на consumer.
+>
+> **Откуда путаница:** «retry до победного» создаёт иллюзию reliability. На деле без CB и timeout retry превращается в bomb.
+>
+> **Если бы это было правдой:** messaging queues (Kafka, RabbitMQ) не нужны были бы. Реально — для guaranteed delivery нужна async architecture, не sync retry.
+
 ---
 
 ## See also
@@ -2823,15 +2965,3 @@ spring:
 - [Сетевые протоколы](networking-interview.md) — HTTP/2, TLS termination и WebSocket proxying на уровне Gateway
 - [HTTP & REST](../api/http-rest-interview.md) — версионирование API, CORS и трансформация запросов/ответов
 - [Стратегии кэширования](caching-strategies-interview.md) — кэширование ответов на уровне Gateway для снижения нагрузки
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [BFF Pattern](bff-pattern-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Стратегии кэширования](caching-strategies-interview.md)
-- [CAP-теорема](cap-theorem-interview.md)
-- [Clean Architecture](clean-architecture-interview.md)
-- [Паттерны согласованности](consistency-patterns-interview.md)
-- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md)
