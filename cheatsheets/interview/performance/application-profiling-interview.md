@@ -2576,10 +2576,105 @@ public void benchmarkJsonSerialization(Blackhole bh) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. Allocation Profiling — TLAB, allocation rate ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему **sampling profiling** имеет overhead 1-3%, а **instrumentation profiling** — 10-200x, и в каком случае разница принципиальна?
+>
+> ---
+>
+> #### A) Sampling — вставляет байт-код в каждый метод, instrumentation — собирает stack trace через JVMTI. Sampling быстрее потому что использует hardware counters — ❌ Неверно (описания перепутаны)
+>
+> **Что на самом деле:** определения **развёрнуты наоборот**. Sampling **не вставляет** байт-код — он периодически снимает stack trace «снаружи» (signal handler / JVMTI). Instrumentation именно вставляет байт-код (в bytecode-инструмент enter/exit для каждого метода). Hardware counters — это для perf_events / PMU, специфичная техника async-profiler.
+>
+> Это полная инверсия терминов — кандидат не знает базовых определений.
+>
+> **Откуда путаница:** sampling и instrumentation часто упоминаются вместе, иногда путаются. Senior — должен железно знать различие.
+>
+> **Если бы это было правдой:** sampling замедлял бы JVM на 100x, а instrumentation был бы быстрее. На практике обратное.
+>
+> ---
+>
+> #### B) Sampling периодически (например, 1000Hz) снимает stack trace без модификации кода — overhead зависит от частоты sampling, не от количества методов. Instrumentation модифицирует bytecode каждого метода (enter/exit hooks) — overhead пропорционален **количеству вызовов методов**, что для tight loops означает 10-200x slowdown — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **Sampling (статистический подход):**
+> - Профайлер ставит периодический timer (signal `SIGPROF` или JVMTI sampler). По срабатыванию — записывает stack trace всех потоков.
+> - Overhead = (cost of one sample) × (samples per second). Для 1000Hz × 30 потоков × (~10μs на sample) = 300ms per second работы профайлера = 30% **на сборе сэмплов**. Но это распределено между all cores → 1-3% per-core.
+> - **Не зависит** от того, делает ли код миллион вызовов в секунду или тысячу.
+>
+> **Instrumentation (детерминистический подход):**
+> - Профайлер модифицирует bytecode при загрузке класса (или AOP-style proxy). В каждый method enters: `profiler.recordStart(methodId)`, в каждый exit: `profiler.recordEnd(methodId)`.
+> - Overhead = (cost per method call) × (calls per second). Для tight loop с 10M calls/sec × 100ns per record = 1 second of profiling overhead per second → **100% slowdown** (2x slower).
+> - В худшем случае (микро-методы, getters in loops) — 200x slowdown.
+>
+> **Пример (численная иллюстрация):**
+> ```text
+> Метод: long sum(int[] arr) {           // 10ns без profiling
+>     long s = 0;
+>     for (int i = 0; i < arr.length; i++) s += arr[i];
+>     return s;
+> }
+>
+> Sampling (async-profiler 1000Hz):
+>   - Видит этот метод раз в ~миллион вызовов
+>   - Overhead per call: amortized ~10ns × 0.001 = 10ps
+>   - Slowdown: 0.1%
+>
+> Instrumentation (JProfiler full):
+>   - Каждый вызов: enter (50ns) + exit (50ns) = +100ns
+>   - Real cost: 10ns → 110ns = 11x slowdown
+>
+> Метод с 1M вызовов/сек: instrumentation добавит 100ms/sec → service unusable.
+> ```
+>
+> ```bash
+> # Sampling (production-safe)
+> ./profiler.sh -e cpu -d 30 -f cpu.html <PID>   # 1-3% overhead
+>
+> # Instrumentation (only dev/staging)
+> # YourKit/JProfiler в default mode: instrument all methods
+> # JMH с -prof gc: instrument allocation sites only
+> ```
+>
+> **Когда применять:**
+> - **Production**: ВСЕГДА sampling. Instrumentation в проде = инцидент.
+> - **Dev micro-benchmark**: instrumentation OK для точного измерения hot method.
+> - **JMH**: использует instrumentation, но isolated в benchmark harness — не влияет на production.
+> - **Coverage tools** (JaCoCo): instrumentation, но обычно offline или test-only.
+>
+> **Подводные камни:**
+> - **Sampling и tight loops без safepoints**: см. Q3, Q35 — JFR sampling может промахнуться. async-profiler решает через `perf_events`.
+> - **Instrumentation и hot code**: JIT inlining перестаёт работать (методы становятся «cold» с дополнительным кодом), общая performance меняется.
+> - **Instrumentation и async**: для `CompletableFuture` chain instrumentation портит timing — внутренний код framework тоже инструментируется.
+> - **Mixed approach**: некоторые tools (JFR) делают sampling + targeted instrumentation для критичных событий (GC, allocation). Лучшее обоих миров.
+>
+> **Связанные вопросы:** [[Q2]] — sampling vs instrumentation theory; [[Q3]] — safepoint bias; [[Q9]] — async-profiler internals.
+>
+> ---
+>
+> #### C) Sampling использует CPU sampling counters, instrumentation использует RAM — это hardware vs software профилирование — ❌ Неверно
+>
+> **Что на самом деле:** оба используют CPU и RAM. Различие не в **аппаратном уровне**, а в **подходе к измерению**: статистический (sampling) vs полный (instrumentation). Hardware counters (Intel PMU, perf_events) — это **подмножество** sampling, не отдельная категория.
+>
+> Это попытка ответить через звучные термины без понимания механики.
+>
+> **Откуда путаница:** «hardware counters» и «software counters» — реальная дихотомия, но они оба находятся в категории sampling.
+>
+> **Если бы это было правдой:** instrumentation работал бы в RAM-only mode без CPU. На практике instrumentation требует CPU для записи timestamps.
+>
+> ---
+>
+> #### D) Разница не принципиальна — оба дают overhead 1-5% при правильной настройке — ❌ Неверно
+>
+> **Что на самом деле:** для **простых сценариев** instrumentation действительно может иметь 5-10% overhead (если профилируется только 1-2 метода). Но в **default config** (профилировать всё) или для **CPU-bound кода** разница на порядки.
+>
+> Для production вопрос **критический**: 1-3% (sampling) vs 10-200x (instrumentation). Эта разница определяет можно ли запускать инструмент в проде или нет.
+>
+> **Откуда путаница:** оба могут работать в dev environment без видимых проблем. В проде разница становится принципиальной.
+>
+> **Если бы это было правдой:** YourKit/JProfiler можно было бы оставлять в production. Реально все BigTech запрещают их там.
+
+## Q40. Allocation Profiling — TLAB, allocation rate
 
 **TLAB (Thread-Local Allocation Buffer)** — каждый поток получает свой буфер в young generation heap. Аллокация в TLAB — просто сдвиг указателя, нет синхронизации → крайне быстро.
 
@@ -2632,10 +2727,112 @@ Gauge.builder("jvm.gc.allocation.rate", ...)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q41. Database Query Profiling — slow query log, EXPLAIN ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему JFR allocation profiling использует **два разных события** — `ObjectAllocationInNewTLAB` и `ObjectAllocationOutsideTLAB` — и что говорит преобладание одного над другим?
+>
+> ---
+>
+> #### A) `InNewTLAB` — для primitive объектов, `OutsideTLAB` — для reference объектов. Это аналогично stack vs heap allocation — ❌ Неверно
+>
+> **Что на самом деле:** **все Java объекты** аллоцируются в heap (в Java нет true stack allocation для объектов до escape analysis JIT-оптимизации). TLAB vs outside TLAB — не про **тип** объекта, а про **где** в young generation он размещён.
+>
+> Primitive ≠ object: `int` живёт на stack или внутри другого объекта, но `Integer` — heap object, может попасть в любой TLAB.
+>
+> **Откуда путаница:** «in» vs «outside» звучит как fundamental dichotomy. Реально оба — heap allocation, разница в performance characteristics.
+>
+> **Если бы это было правдой:** `int[]` массивы не аллоцировались бы в TLAB (primitive container). Реально аллоцируются в TLAB если помещаются.
+>
+> ---
+>
+> #### B) `InNewTLAB` записывается при каждой allocation, `OutsideTLAB` — только когда TLAB переполнен. Поэтому первое всегда множитель второго — ❌ Неверно
+>
+> **Что на самом деле:** **оба события** записываются как **sampled events**, не как every allocation. JFR использует TLAB exhaustion как natural sample point — записывается событие раз в N байт (default `jdk.ObjectAllocationInNewTLAB#period=20 ms`). Это самостоятельный sampling механизм.
+>
+> Соотношение **зависит** от размера объектов и TLAB:
+> - Маленькие объекты (< 1/64 TLAB) — почти все в TLAB → `InNewTLAB` >> `OutsideTLAB`.
+> - Большие объекты (массивы > 1MB) — обычно outside TLAB.
+> - Разнообразие — обычно 90% In, 10% Outside.
+>
+> **Откуда путаница:** «in TLAB — это normal, outside — это exception» — частично верно, но не про event frequency.
+>
+> **Если бы это было правдой:** соотношение событий было бы константой. Реально оно — диагностический сигнал.
+>
+> ---
+>
+> #### C) `InNewTLAB` события быстрее писать чем `OutsideTLAB`, поэтому JFR разделяет их для performance. С точки зрения user — одинаковы — ❌ Неверно
+>
+> **Что на самом деле:** разделение событий **не для performance JFR**, а для **диагностической ценности**: они означают разные performance characteristics для приложения. Performance JFR одинаковая для обоих типов событий — это нормальные JFR events с тем же overhead.
+>
+> Разделение полезно когда смотришь dump в Mission Control — фильтр по event type показывает разные patterns.
+>
+> **Откуда путаница:** «зачем разделять если они одинаковы» — кажется arbitrary. Но это про **семантику**, не про implementation.
+>
+> **Если бы это было правдой:** в Mission Control эти events отображались бы вместе. Реально они в разных tab'ах с разной интерпретацией.
+>
+> ---
+>
+> #### D) `InNewTLAB` = объект помещается в текущий TLAB (fast path, sub-microsecond). `OutsideTLAB` = объект **слишком большой для TLAB** (обычно > 1/64 TLAB size) и аллоцируется напрямую в Eden через CAS lock → slow path. Преобладание `OutsideTLAB` в профиле = много **больших объектов** → bottleneck — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **TLAB (Thread-Local Allocation Buffer)** — каждый поток получает приватный регион Eden (по default 1MB, динамически растёт). Аллокация = просто increment указателя `top += size`, без synchronization. Это **fast path** — единицы наносекунд.
+>
+> Если объект **слишком большой** (> `tlab_size / 64` по умолчанию), JVM не использует TLAB (waste бы было) — идёт **slow path**: CAS lock на Eden top pointer, аллоцирует напрямую. Это **сериализованная операция**, contention между потоками.
+>
+> **Диагностика по преобладанию:**
+>
+> 1. **`InNewTLAB` >> `OutsideTLAB`** (90/10 типично): нормальная allocation pattern. Если allocation rate высокий — оптимизация на уровне reduce allocation rate (object pooling, byte[] reuse).
+>
+> 2. **`OutsideTLAB` >> ожидаемого** (20%+): много больших объектов. Признаки:
+>    - Большие `byte[]` для serialization (`ByteArrayOutputStream` без size hint).
+>    - Большие `String` (Hibernate query results concatenated).
+>    - Огромные `HashMap.table` resizing (при большом capacity).
+>    - **Симптом**: allocation rate выглядит умеренный, но GC pressure высокий + thread contention на Eden lock.
+>
+> **Пример (production case):**
+> ```text
+> JFR analysis:
+>   ObjectAllocationInNewTLAB:    5,000 events,  total 50MB
+>   ObjectAllocationOutsideTLAB:    300 events,  total 800MB ← подозрительно
+>
+> Drill-down (Mission Control):
+>   Outside TLAB top sites:
+>     1. com.fasterxml.jackson.databind.ObjectMapper.writeValueAsBytes (60%)
+>        → byte[] 5MB-15MB per response (huge JSON)
+>     2. org.springframework.web.multipart parsing (25%)
+>        → byte[] upload buffer
+>
+> Fix:
+>   - Use streaming serialization: ObjectMapper.writeValue(OutputStream)
+>   - Set TLAB size: -XX:TLABSize=4m (4× default)
+>   Результат: OutsideTLAB events 300 → 20, GC pause -40%.
+> ```
+>
+> ```bash
+> # Снять allocation profile
+> java -XX:StartFlightRecording=duration=60s,settings=profile,filename=alloc.jfr \
+>   -XX:FlightRecorderOptions=stackdepth=64 \
+>   MyApp
+>
+> # Async-profiler аналог
+> ./profiler.sh -e alloc -d 60 -f alloc.html <PID>
+> # --alloc=2k — sample каждые 2KB allocations
+> ```
+>
+> **Когда применять:**
+> - **GC pressure высокий, allocation rate высокий**: разделить allocation на in/out TLAB → найти large objects.
+> - **Eden lock contention в thread dump**: классический признак OutsideTLAB-heavy pattern.
+> - **Latency spikes без видимой причины**: large object allocation = lock + zero-out memory time.
+>
+> **Подводные камни:**
+> - **Dynamic TLAB size**: `-XX:+UseTLAB -XX:+ResizeTLAB` (default) — JVM подбирает size. Static `-XX:TLABSize=...` отключает adaptation.
+> - **Async-profiler vs JFR**: async-profiler не различает in/out TLAB напрямую — нужно JFR для этой детализации.
+> - **NUMA-aware allocation**: на multi-socket системах outside TLAB ещё медленнее (cross-socket memory access).
+> - **String deduplication (G1)**: меняет picture — duplicates merge, total allocation выглядит ниже.
+>
+> **Связанные вопросы:** [[Q17]] — allocation profiling basics; [[Q22]] — GC analysis; [[Q8]] — JFR events.
+
+## Q41. Database Query Profiling — slow query log, EXPLAIN
 
 **Slow Query Log в PostgreSQL:**
 ```sql
