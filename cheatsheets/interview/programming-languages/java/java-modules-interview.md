@@ -1613,10 +1613,103 @@ java --module-path mods \
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. `--add-opens` и `--add-exports`: когда и как использовать для рефлексии с `JPMS`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** На production запуск приложения падает с `java.lang.module.ResolutionException: Modules javax.annotation.api and java.xml.ws.annotation export package javax.annotation to module myapp`. Какое решение правильно устраняет split package?
+>
+> ---
+>
+> #### A) Исключить конфликтующую зависимость (Maven `<exclusion>` или Gradle `exclude`) или применить `--patch-module java.xml.ws.annotation=javax.annotation-api.jar` для слияния пакетов — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Split package — это состояние, при котором два модуля одновременно экспортируют один и тот же пакет (`javax.annotation`). JPMS жёстко запрещает такое: загрузчик не может однозначно выбрать модуль-владельца пакета. В classpath-мире эта проблема была «скрытой» (выигрывал JAR, оказавшийся первым в classpath), что приводило к плавающим багам.
+>
+> **Стратегии устранения, от простой к радикальной:**
+>
+> | Стратегия | Когда применять | Эффект |
+> |-----------|-----------------|--------|
+> | **`<exclusion>`/`exclude`** | Один из JAR — дубль/устаревший | Самое чистое решение |
+> | **`--patch-module`** | Нужно сохранить оба, но логически они — одно целое | Сливает классы из второго JAR в первый модуль |
+> | **`relocate` (Shade/Shadow)** | Свой код | Переименовывает пакет, чтобы не было конфликта |
+> | **Переход на Jakarta EE** | `javax.*` ↔ `jakarta.*` | Меняет namespace полностью |
+> | **Вынести общий пакет в свой модуль** | Собственный код | Долгосрочное решение, нужен рефакторинг |
+>
+> **Пример (наиболее частый случай — `javax.annotation`):**
+> ```xml
+> <!-- Maven: исключить из транзитивной зависимости -->
+> <dependency>
+>     <groupId>com.example</groupId>
+>     <artifactId>some-lib</artifactId>
+>     <exclusions>
+>         <exclusion>
+>             <groupId>javax.annotation</groupId>
+>             <artifactId>javax.annotation-api</artifactId>
+>         </exclusion>
+>     </exclusions>
+> </dependency>
+> ```
+>
+> **Workaround через `--patch-module` (когда исключить нельзя):**
+> ```bash
+> java --module-path mods \
+>      --patch-module java.xml.ws.annotation=javax.annotation-api-1.3.2.jar \
+>      -m com.example.app/com.example.Main
+> ```
+>
+> **Диагностика через `jdeps`:**
+> ```bash
+> jdeps --multi-release 17 --module-path mods --check com.example.app
+> # Output:
+> # Modules javax.annotation.api and java.xml.ws.annotation export package
+> #   javax.annotation
+> ```
+>
+> **Когда применять:**
+> - Apps на Java 8 → 11+ миграция (множество `javax.*` API стали split с JDK modules).
+> - Использование старых версий библиотек с дублирующими `javax.annotation`, `javax.xml.bind`.
+> - Сборка fat JAR с `relocate` для распространения as plugin (избежать конфликта с host application).
+>
+> **Подводные камни:**
+> - **Транзитивные split packages** — не всегда видно сразу, что library A и library B оба тянут `javax.activation`. `mvn dependency:tree` + `jdeps --check` обязательны.
+> - **Java 11 встроенный `java.xml.ws.annotation` удалён в Java 11+** — пользователи `javax.annotation.PostConstruct` должны явно добавить `javax.annotation-api` или мигрировать на `jakarta.annotation`.
+> - **`--patch-module` не работает с jlink** — для custom runtime image придётся пересобрать JAR.
+> - **`relocate` ломает рефлексию** — если код использует `Class.forName("javax.annotation.PostConstruct")`, после relocate имя класса изменится.
+>
+> ---
+>
+> #### B) Игнорировать ошибку через `--ignore-module-conflict` JVM-флаг — split package не критичен — ❌ Неверно
+>
+> **Что на самом деле:** **такого флага не существует**. Module resolution — обязательный этап загрузки JVM, и `ResolutionException` фатальна. JVM просто не запустит приложение. Никакой опции «продолжать с предупреждением» в JPMS нет принципиально — это одна из главных задач модульной системы (обеспечить детерминированность).
+>
+> **Откуда путаница:** в classpath-мире многие ошибки можно было «приглушить» опциями. Возникает соблазн искать аналогичный флаг для JPMS.
+>
+> **Если бы это было правдой:** теряется главное преимущество JPMS — однозначность загрузки классов. Зачем тогда вообще ввели запрет на split package?
+>
+> ---
+>
+> #### C) Поместить оба конфликтующих JAR в один общий `uber-jar` с pom-include — JVM сольёт пакеты сама — ❌ Неверно
+>
+> **Что на самом деле:** uber-jar (fat jar) — это просто архив со всеми классами. Если в нём окажутся два класса с одинаковым FQN из разных пакетов — будет работать «первый найденный» (поведение classpath, не JPMS). А если оба JAR находятся на module path, fat jar их не объединяет — split package сохраняется. Sharing/Shadow plugin может слить, но это уже `relocate`, а не fat jar.
+>
+> **Откуда путаница:** «положить в один архив» интуитивно кажется решением «один пакет — один источник». Но это иллюзия: JVM смотрит на manifest и `module-info`, а не на физический архив.
+>
+> **Если бы это было правдой:** сборка любого Spring Boot fat jar автоматически решала бы все split packages, и проблема не существовала бы. На практике fat jar на classpath работает, на module path — нет (Spring Boot fat jar не работает напрямую как named module без специальной упаковки).
+>
+> ---
+>
+> #### D) Объявить оба пакета как `requires` в `module-info.java` — это явно разрешит split — ❌ Неверно
+>
+> **Что на самом деле:** `requires` — это объявление зависимости от модуля, а не разрешение split package. Если модуль A и модуль B оба экспортируют `javax.annotation`, и потребитель C объявит `requires A, B`, resolver выбросит `ResolutionException` ДО того, как код потребителя выполнится. Никакая комбинация `requires` не разрешает конфликт — он архитектурный.
+>
+> **Откуда путаница:** в большинстве проблем с модулями виновато либо `requires`, либо `exports`/`opens`. Возникает гипотеза, что и split package решается ими.
+>
+> **Если бы это было правдой:** существовала бы директива `requires X | Y` (выбор реализации в runtime). Её нет, потому что JPMS принципиально требует уникальности пакета.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q17]] — split package как понятие; [[Q22]] — миграция Maven/Gradle; [[Q35]] — `jdeps` для диагностики; [[Q38]] — стратегии миграции.
+
+## Q33. `--add-opens` и `--add-exports`: когда и как использовать для рефлексии с `JPMS`?
 
 Флаги `--add-opens` и `--add-exports` — механизм для обхода модульных ограничений без изменения `module-info.java`. Необходимы при использовании фреймворков с рефлексией или внутренних JDK API.
 
@@ -1665,10 +1758,111 @@ tasks.withType<Test> {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. `jlink`: создание custom minimal JRE — практическое руководство ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём принципиальная разница между `--add-exports` и `--add-opens` JVM-флагами, и какой использовать в каждом случае?
+>
+> ---
+>
+> #### A) `--add-exports` и `--add-opens` — синонимы; оба дают полный доступ к пакету, разница только в синтаксисе — ❌ Неверно
+>
+> **Что на самом деле:** это два РАЗНЫХ уровня доступа, не синонимы. `--add-exports` даёт compile-time/runtime доступ к **public типам и членам** (как обычный `exports`). `--add-opens` дополнительно разрешает рефлексию через `setAccessible(true)` (как `opens`). Используя один вместо другого — получите либо «не вижу класс», либо «вижу класс, но рефлексия запрещена».
+>
+> **Откуда путаница:** оба флага имеют одинаковый синтаксис `<module>/<package>=<target>` и оба «открывают» пакет. Лёгко перепутать на первый взгляд.
+>
+> **Если бы это было правдой:** не было бы смысла в двух флагах. Существование пары `exports`/`opens` в `module-info.java` (которая зеркалит `--add-exports`/`--add-opens`) подчёркивает: это две разные оси доступа.
+>
+> ---
+>
+> #### B) `--add-opens` использовать только при компиляции, `--add-exports` — только в runtime — ❌ Неверно
+>
+> **Что на самом деле:** наоборот относительно «когда применять», но и это не точно. ОБА флага можно передавать и `javac` (compile-time), и `java` (runtime). Разница не во времени применения, а в том, какой ВИД доступа открывается: types-and-members (`--add-exports`) или reflection (`--add-opens`). На compile-time нужен `--add-exports` (компилятору reflection не интересна). На runtime нужен тот, который требует ваш framework.
+>
+> **Откуда путаница:** часто `--add-opens` указывается только в `java`-команде (для Spring Boot), а `--add-exports` — и в `javac`, и в `java`. Создаётся ассоциация «opens=runtime, exports=compile».
+>
+> **Если бы это было правдой:** не существовало бы compile-only сценариев работы с reflection (например, статический анализ через `--add-opens` для AnnotationProcessor). На практике reflection ↔ `--add-opens` строго на runtime, но это потому что рефлексия — runtime-явление, не из-за ограничения флага.
+>
+> ---
+>
+> #### C) `--add-exports` для compile-time/runtime доступа к public API пакета (аналог `exports pkg to M`); `--add-opens` для дополнительного reflection-доступа через `setAccessible(true)` (аналог `opens pkg to M`); ALL-UNNAMED означает «все классы classpath» — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Понимать эти флаги легче через таблицу «что открывают»:
+>
+> | Флаг | Доступ к public | Доступ к private/protected через reflection | Эквивалент в `module-info.java` |
+> |------|----------------|-------------------------------------------|------------------------------------|
+> | `--add-exports` | Да | Нет (для private нужен ещё `--add-opens`) | `exports pkg to M` |
+> | `--add-opens` | Да (включает в себя exports) | Да | `opens pkg to M` |
+>
+> **Синтаксис:**
+> ```bash
+> --add-exports <module>/<package>=<target-module>
+> --add-opens   <module>/<package>=<target-module>
+>
+> # ALL-UNNAMED — особое имя для classpath
+> # Один пакет можно открыть нескольким target:
+> --add-opens java.base/java.lang=ALL-UNNAMED,com.example.app
+> ```
+>
+> **Пример типичного набора для Spring Boot на Java 17+:**
+> ```bash
+> java \
+>   --add-opens java.base/java.lang=ALL-UNNAMED \
+>   --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
+>   --add-opens java.base/java.util=ALL-UNNAMED \
+>   --add-opens java.base/java.util.concurrent=ALL-UNNAMED \
+>   --add-opens java.base/java.io=ALL-UNNAMED \
+>   --add-opens java.base/java.nio=ALL-UNNAMED \
+>   --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+>   -jar spring-boot-app.jar
+> ```
+>
+> **Использование для собственной кодовой базы (Hibernate видит entity):**
+> ```bash
+> # Если без module-info.java:
+> --add-opens com.example.app/com.example.entity=org.hibernate.orm.core
+>
+> # ALL-UNNAMED — если приложение на classpath
+> --add-opens java.base/java.util.concurrent=ALL-UNNAMED
+> ```
+>
+> **В Gradle для тестов (Mockito 5+ требует на Java 21):**
+> ```kotlin
+> tasks.withType<Test> {
+>     jvmArgs(
+>         "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+>         "--add-opens", "java.base/java.util=ALL-UNNAMED"
+>     )
+> }
+> ```
+>
+> **Когда применять:**
+> - Spring Boot/Hibernate/Mockito/Lombok с runtime-рефлексией к JDK internals.
+> - Доступ к `sun.misc.Unsafe`, `jdk.internal.*` — без флагов модуль `java.base` не пустит.
+> - Промежуточный шаг миграции: когда `module-info.java` ещё не добавлен, но Spring уже падает на современной JVM.
+>
+> **Подводные камни:**
+> - **Capacity drift в Dockerfile** — флаги нужно прописать в `ENTRYPOINT` и продублировать в Kubernetes `args`. Легко забыть один — упадёт только в конкретной среде.
+> - **`--illegal-access` удалён в Java 17** — раньше многие проекты полагались на default `permit`. Сейчас миграция на Java 17+ ломает приложения без явных флагов.
+> - **`opens` для test classpath** — `mockito-core` 5.x требует `--add-opens java.base/java.lang=ALL-UNNAMED` в тестах. Без него все unit-тесты падают.
+> - **`--add-exports` к `sun.*` будет deprecated** — JEP 403 «Strongly Encapsulate JDK Internals» постепенно убирает доступ; рассчитывать на эти флаги в долгосрочной перспективе нельзя.
+> - **Долгосрочно** — лучше добавить `opens` в `module-info.java` или попросить вендора фреймворка использовать API без рефлексии (например, ASM/Byte Buddy создаёт классы вместо `setAccessible`).
+>
+> ---
+>
+> #### D) `--add-opens` работает только для модулей JDK; для пользовательских модулей нужно `--enable-native-access` — ❌ Неверно
+>
+> **Что на самом деле:** `--add-opens` работает для ЛЮБЫХ модулей — JDK, named, automatic. Синтаксис идентичен: `--add-opens <module>/<package>=<target>`. Флаг `--enable-native-access` относится к Foreign Function & Memory API (JEP 442, Java 22) — это совсем другая тема (native code interop), не reflection.
+>
+> **Откуда путаница:** в туториалах примеры `--add-opens` почти всегда показывают модуль `java.base` (`--add-opens java.base/java.lang=ALL-UNNAMED`). Кажется, что флаг ограничен JDK.
+>
+> **Если бы это было правдой:** не было бы способа подружить custom-фреймворк с custom-entity без перезаписи `module-info.java` обоих модулей. На практике `--add-opens com.example.app/com.example.entity=org.hibernate.orm.core` работает прекрасно.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q5]] — `exports` vs `opens`; [[Q12]] — рефлексия и JPMS; [[Q13]] — JVM-флаги обхода; [[Q37]] — Spring/Hibernate/Jackson сценарии.
+
+## Q34. `jlink`: создание custom minimal JRE — практическое руководство
 
 `jlink` — утилита для создания **custom runtime image**: самодостаточного дистрибутива JVM только с необходимыми модулями. Требование: все модули должны быть **именованными**.
 
