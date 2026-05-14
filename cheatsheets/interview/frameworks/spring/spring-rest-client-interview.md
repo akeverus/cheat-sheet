@@ -634,10 +634,70 @@ Flux<User> allUsers = webClient.get()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как сделать синхронный вызов через WebClient? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда оправдан выбор WebClient вместо RestClient в Spring 6.1+ проекте?
+>
+> ---
+>
+> #### A) Всегда — WebClient новее и поэтому лучше — ❌ Неверно
+>
+> **Что на самом деле:** WebClient (Spring 5, 2017) **старше** RestClient (Spring 6.1, 2023). И «новее = лучше» здесь не работает: WebClient оптимизирован для реактивного стека (event-loop, Reactor), RestClient — для thread-per-request (Spring MVC). В неподходящем стеке каждый из них даёт overhead.
+>
+> **Откуда путаница:** Маркетинг fluent API и привычка «новые библиотеки лучше старых».
+>
+> **Если бы это было правдой:** Spring команда не выпустила бы RestClient после WebClient — это противоречит факту его релиза в 6.1.
+>
+> ---
+>
+> #### B) Когда вы вызываете больше 100 RPS — RestClient не выдержит — ❌ Неверно
+>
+> **Что на самом деле:** RestClient выдерживает любую нагрузку, которую выдерживает thread pool + backend HTTP client (Apache HC, JDK HttpClient). Тысячи RPS — норма. Bottleneck — не RestClient, а количество потоков (tomcat default 200, можно увеличить) и connection pool.
+>
+> **Откуда путаница:** Реактивные библиотеки рекламируют «миллионы соединений», и это ассоциируется с «нужно реактивно для нагрузки». Но реактив помогает только когда **много параллельных I/O ожиданий**, не RPS как таковых.
+>
+> **Если бы это было правдой:** Все high-load REST API на Spring MVC давно бы перешли на WebFlux — но миллионы продакшен-сервисов на Spring MVC работают отлично.
+>
+> ---
+>
+> #### C) WebClient — единственный, кто поддерживает HTTP/2 — ❌ Неверно
+>
+> **Что на самом деле:** RestClient поддерживает HTTP/2 через `JdkClientHttpRequestFactory` (JDK 11+, HTTP/2 default) или `JettyClientHttpRequestFactory`. WebClient тоже поддерживает HTTP/2 через Reactor Netty. Поддержка зависит от backend, а не от Spring-клиента.
+>
+> **Откуда путаница:** Reactor Netty часто упоминается с HTTP/2, и кажется, что только WebClient это умеет.
+>
+> **Если бы это было правдой:** RestClient в HTTP/1.1-only стеке был бы неприемлем для современных API — что не так.
+>
+> ---
+>
+> #### D) Реактивный стек (WebFlux), streaming (SSE/Flux), либо параллельные I/O с малым числом потоков — ✓ Верно
+>
+> **Развёрнутое объяснение:** WebClient уместен в трёх сценариях: (1) **Реактивное приложение** — controllers возвращают `Mono`/`Flux`, и WebClient органично встраивается без `.block()`; (2) **Streaming** — Server-Sent Events, NDJSON, chunked responses — `bodyToFlux(ServerSentEvent.class)`; (3) **Параллельные I/O без блокировки потоков** — например, нужно вызвать 50 API параллельно из одного запроса, и thread-per-request не подходит (можно использовать `Flux.merge()`). В Spring MVC проекте на thread-per-request — RestClient проще и достаточен.
+>
+> **Пример:**
+> ```java
+> // WebClient уместен — SSE streaming
+> Flux<ServerSentEvent<Update>> updates = webClient.get()
+>     .uri("/stream/updates")
+>     .accept(MediaType.TEXT_EVENT_STREAM)
+>     .retrieve()
+>     .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<Update>>() {});
+>
+> // WebClient уместен — fan-out
+> Flux<User> users = Flux.fromIterable(ids)
+>     .flatMap(id -> webClient.get().uri("/users/{id}", id)
+>         .retrieve().bodyToMono(User.class), 10);  // 10 параллельно
+>
+> // RestClient достаточен — обычный CRUD
+> User u = restClient.get().uri("/users/{id}", id).retrieve().body(User.class);
+> ```
+>
+> **Когда применять:** WebFlux приложение → WebClient. Spring MVC + SSE → WebClient. Spring MVC + sync CRUD → RestClient.
+>
+> **Подводные камни:** `WebClient` + `.block()` в Spring MVC — антипаттерн, даёт деградацию по сравнению с RestClient. Если нужны Reactor-типы только локально — лучше использовать RestClient и обернуть в `CompletableFuture.supplyAsync()`.
+>
+> **Связанные вопросы:** [[Q8]] — `.block()` в WebClient; [[Q11]] — @HttpExchange с WebClient
+
+## Q8. Как сделать синхронный вызов через WebClient?
 
 ```java
 // .block() превращает реактивный вызов в блокирующий
@@ -654,10 +714,79 @@ User user = webClient.get()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Что такое @HttpExchange и как им пользоваться? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Можно ли использовать `WebClient` синхронно, и каковы последствия?
+>
+> ---
+>
+> #### A) Да, через `.synchronous()` модификатор на WebClient builder — ❌ Неверно
+>
+> **Что на самом деле:** Такого метода **не существует** в WebClient API. WebClient изначально reactive, и единственный способ получить значение синхронно — `Mono.block()`. Кандидат, придумавший «.synchronous()», вероятно путает с другими fluent API.
+>
+> **Откуда путаница:** В некоторых HTTP-клиентах есть переключатели sync/async — переносят на WebClient.
+>
+> **Если бы это было правдой:** Документация и Javadoc упоминали бы этот метод — но они говорят только про `.block()` и предостерегают от него в реактивном контексте.
+>
+> ---
+>
+> #### B) Использовать `Mono.block()` без проблем — это рекомендованный паттерн в Spring MVC — ❌ Неверно
+>
+> **Что на самом деле:** `.block()` **работает**, но это **антипаттерн** в реактивном контексте (WebFlux) — блокирует event-loop поток, что вызывает `IllegalStateException` или деградацию. В Spring MVC `.block()` технически безопасен (поток из thread pool, всё равно блокируется), но overhead WebClient + Reactor больше, чем у RestClient. Документация Spring 6.1+ явно рекомендует RestClient для синхронных вызовов.
+>
+> **Откуда путаница:** Многие legacy-проекты использовали WebClient синхронно, потому что RestClient не существовал. Это привычка, не лучшая практика.
+>
+> **Если бы это было правдой:** RestClient не появился бы в Spring 6.1 — его цель именно заменить «WebClient + .block()» паттерн.
+>
+> ---
+>
+> #### C) Использовать `.toFuture().get()` — это правильный способ синхронизации — ❌ Неверно
+>
+> **Что на самом деле:** `.toFuture().get()` — обходной путь через `CompletableFuture`, но семантически эквивалентен `.block()` (тоже блокирует поток). И ещё хуже: `CompletableFuture.get()` бросает checked exceptions (`InterruptedException`, `ExecutionException`), что усложняет код. `.block()` бросает `RuntimeException`.
+>
+> **Откуда путаница:** Программисты ищут «более чистый» путь и приходят к Future API.
+>
+> **Если бы это было правдой:** Этот паттерн был бы в документации — но Spring рекомендует или `.block()`, или RestClient.
+>
+> ---
+>
+> #### D) Через `.block()` — но это антипаттерн в WebFlux (блокирует event-loop); в Spring MVC лучше использовать RestClient — ✓ Верно
+>
+> **Развёрнутое объяснение:** `.block()` — единственный способ получить значение из `Mono`/`Flux` синхронно. В Spring MVC (thread-per-request, нет event-loop) это технически безопасно: поток из tomcat pool блокируется. Но: (1) тащит зависимости Reactor + spring-webflux; (2) overhead создания/диспозиции `Mono` для каждого вызова; (3) Reactor Netty thread pool по умолчанию маленький (количество CPU × 2) — может стать bottleneck. В Spring WebFlux `.block()` **бросает** `IllegalStateException` при попытке в реактивном потоке. Поэтому Spring 6.1 ввёл RestClient — синхронный без Reactor.
+>
+> **Пример:**
+> ```java
+> // Технически работает в Spring MVC, но антипаттерн
+> User user = webClient.get().uri("/users/{id}", id)
+>     .retrieve()
+>     .bodyToMono(User.class)
+>     .block();
+>
+> // В WebFlux — IllegalStateException
+> @GetMapping("/sync-bad")
+> public User badEndpoint() {
+>     return webClient.get().uri("/users/1")
+>         .retrieve().bodyToMono(User.class).block();  // ОШИБКА!
+> }
+>
+> // Правильно в WebFlux — асинхронно
+> @GetMapping("/async")
+> public Mono<User> goodEndpoint() {
+>     return webClient.get().uri("/users/1")
+>         .retrieve().bodyToMono(User.class);
+> }
+>
+> // Правильно в Spring MVC — RestClient
+> User user = restClient.get().uri("/users/{id}", id)
+>     .retrieve().body(User.class);
+> ```
+>
+> **Когда применять:** `.block()` допустим только в тестах, CLI-приложениях, init-фазе. В production коде Spring MVC — RestClient.
+>
+> **Подводные камни:** В WebFlux `.block()` определяется по имени потока (`reactor-http-nio-*` и т.п.). Reactor проверяет это через `BlockHound` при включенном `-javaagent`. Любой `.block()` в `@RestController` reactive метода — runtime error.
+>
+> **Связанные вопросы:** [[Q7]] — когда нужен WebClient; [[Q1]] — RestClient как замена для sync
+
+## Q9. (!) Что такое @HttpExchange и как им пользоваться?
 
 `@HttpExchange` (Spring 6) — декларативный стиль HTTP-клиентов, аналог `@FeignClient` из Spring Cloud но встроенный в Spring Framework.
 
@@ -707,10 +836,98 @@ public class OrderService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Какие аннотации параметров поддерживает @HttpExchange? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое `@HttpExchange` в Spring 6 и как он работает?
+>
+> ---
+>
+> #### A) @HttpExchange — это аннотация для контроллеров, аналог @RequestMapping — ❌ Неверно
+>
+> **Что на самом деле:** `@HttpExchange` для **клиентского** интерфейса, а не для серверного контроллера. Использует тот же стиль (path, method), но создаёт **прокси для вызова remote API**, не обработчик запросов. Серверная аннотация — `@RequestMapping`/`@GetMapping`/`@PostMapping` etc.
+>
+> **Откуда путаница:** Аннотации называются похоже (`@GetExchange` vs `@GetMapping`), и оба работают с REST.
+>
+> **Если бы это было правдой:** Существование `RestClientAdapter`, `HttpServiceProxyFactory` не имело бы смысла.
+>
+> ---
+>
+> #### B) Это часть Spring Cloud OpenFeign, требует @EnableFeignClients — ❌ Неверно
+>
+> **Что на самом деле:** `@HttpExchange` — **встроенный** в Spring Framework 6 механизм, **не требует** Spring Cloud или Feign. Это замена/упрощение Feign внутри ядра Spring. Не нужны `@EnableFeignClients`, `spring-cloud-starter-openfeign` — только spring-web 6+.
+>
+> **Откуда путаница:** OpenFeign был стандартом для декларативных HTTP-клиентов до Spring 6. Команды могут не знать про новый встроенный механизм.
+>
+> **Если бы это было правдой:** В Spring Framework documentation не было бы раздела «HTTP Interface», но он есть начиная с 6.0.
+>
+> ---
+>
+> #### C) @HttpExchange генерирует код во время компиляции через annotation processor — ❌ Неверно
+>
+> **Что на самом деле:** `@HttpExchange` использует **runtime прокси** (JDK Dynamic Proxy), а не code generation. `HttpServiceProxyFactory.createClient(InterfaceClass)` создаёт прокси-объект, который перехватывает вызовы методов и преобразует их в HTTP-вызовы через `RestClient`/`WebClient`. Никакого APT/annotation processor, никакого compile-time codegen.
+>
+> **Откуда путаница:** Многие современные библиотеки используют codegen (MapStruct, Lombok), и предполагается, что @HttpExchange делает то же.
+>
+> **Если бы это было правдой:** В pom/build.gradle потребовалось бы `annotationProcessor` зависимость — но её нет в документации.
+>
+> ---
+>
+> #### D) Декларативный HTTP-клиент: интерфейс с аннотациями, прокси создаётся через `HttpServiceProxyFactory` + `RestClientAdapter`/`WebClientAdapter` — ✓ Верно
+>
+> **Развёрнутое объяснение:** Паттерн: (1) объявить **интерфейс** с методами, аннотированными `@HttpExchange` (или специализациями `@GetExchange`, `@PostExchange`, `@PutExchange`, `@DeleteExchange`, `@PatchExchange`); параметры — `@PathVariable`, `@RequestParam`, `@RequestBody`, `@RequestHeader`; (2) на старте создать backend — `RestClient` (для sync) или `WebClient` (для reactive); (3) обернуть его в `RestClientAdapter.create(rc)` или `WebClientAdapter.create(wc)`; (4) `HttpServiceProxyFactory.builderFor(adapter).build().createClient(MyApi.class)` — получить готовый прокси-бин; (5) использовать как обычный Spring бин. Прокси автоматически: подставляет path variables, сериализует body, парсит response, обрабатывает status codes.
+>
+> **Пример:**
+> ```java
+> // 1. Интерфейс
+> public interface UserClient {
+>     @GetExchange("/users/{id}")
+>     User getUser(@PathVariable long id);
+>
+>     @GetExchange("/users")
+>     List<User> findUsers(@RequestParam String role);
+>
+>     @PostExchange("/users")
+>     User createUser(@RequestBody CreateUserRequest req);
+>
+>     @PutExchange("/users/{id}")
+>     User updateUser(@PathVariable long id, @RequestBody User user);
+>
+>     @DeleteExchange("/users/{id}")
+>     void deleteUser(@PathVariable long id);
+> }
+>
+> // 2. Конфигурация
+> @Configuration
+> class UserClientConfig {
+>     @Bean
+>     UserClient userClient(RestClient.Builder builder) {
+>         RestClient rc = builder.baseUrl("https://users.api").build();
+>         RestClientAdapter adapter = RestClientAdapter.create(rc);
+>         HttpServiceProxyFactory factory =
+>             HttpServiceProxyFactory.builderFor(adapter).build();
+>         return factory.createClient(UserClient.class);
+>     }
+> }
+>
+> // 3. Использование как любого бина
+> @Service
+> @RequiredArgsConstructor
+> class OrderService {
+>     private final UserClient userClient;
+>
+>     public Order placeOrder(long userId) {
+>         User u = userClient.getUser(userId);
+>         // ...
+>     }
+> }
+> ```
+>
+> **Когда применять:** Когда есть несколько endpoints одного API — интерфейс читается как контракт. Лучше тестируется (можно замокать interface), лучше документируется (Javadoc на методах).
+>
+> **Подводные камни:** Можно вернуть `Mono<T>` для WebClient adapter и `T` для RestClient adapter — типы зависят от backend. Smешать в одном интерфейсе нельзя. Кастомные exception mapping настраиваются через `RestClient`/`WebClient` builder (`.defaultStatusHandler()`), а не на интерфейсе.
+>
+> **Связанные вопросы:** [[Q10]] — аннотации параметров; [[Q11]] — RestClient vs WebClient adapter
+
+## Q10. Какие аннотации параметров поддерживает @HttpExchange?
 
 | Аннотация | Описание |
 |---|---|
