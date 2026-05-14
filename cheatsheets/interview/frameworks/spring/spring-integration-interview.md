@@ -76,10 +76,77 @@ public class IntegrationConfig { ... }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. Какие типы MessageChannel существуют? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему Spring Integration реализует именно EIP-паттерны Хопе и Вульфа, а не предлагает свою модель интеграции? Что это даёт архитектуре приложения?
+>
+> ---
+>
+> #### A) Spring Integration — это обёртка над JMS API, она просто упрощает работу с очередями сообщений — ❌ Неверно
+>
+> **Что на самом деле:** Spring Integration транспортно-агностичен. JMS — лишь один из десятков адаптеров (Kafka, AMQP, FTP, HTTP, File, JDBC, Email и др.). Ядро — это `Message<Payload, Headers>` и `MessageChannel`, которые не знают про конкретный транспорт. JMS adapter — отдельный модуль `spring-integration-jms`.
+>
+> **Откуда путаница:** многие первое знакомство с интеграцией получают через JMS (J2EE-эра), и любую «messaging-абстракцию» воспринимают как очередь.
+>
+> **Если бы это было правдой:** Spring Integration не смог бы пайплайнить File → Transform → Kafka без брокера. На практике один и тот же `IntegrationFlow` цепляет inbound/outbound адаптеры разных протоколов без переписывания бизнес-логики.
+>
+> ---
+>
+> #### B) Это реализация EIP-каталога Хопе-Вульфа: единый словарь Message/Channel/Endpoint/Gateway даёт переносимый язык дизайна интеграций — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Книга «Enterprise Integration Patterns» (Hohpe & Woolf, 2003) каталогизировала 65 паттернов асинхронной интеграции: Message, Channel, Router, Filter, Splitter, Aggregator, Service Activator, Gateway, Claim Check и др. Spring Integration берёт эти паттерны как **first-class building blocks** — каждому соответствует Java-абстракция или DSL-метод.
+>
+> Польза — общий словарь. Архитектор на доске рисует «Splitter → Filter → Aggregator», и разработчик мгновенно отображает это в `.split().filter().aggregate()`. Не нужно изобретать названия. Те же паттерны работают в Apache Camel, Mule, IBM Integration Bus — это переносимое знание.
+>
+> Ключевые абстракции: `Message<T>` (payload + headers), `MessageChannel` (транспорт между endpoint-ами), `MessageEndpoint` (узел обработки: filter/transformer/router/service-activator), `Gateway` (вход/выход из мира интеграции для обычного Java-кода).
+>
+> **Пример:**
+> ```java
+> @Configuration
+> @EnableIntegration
+> public class OrdersIntegration {
+>     @Bean
+>     public IntegrationFlow ordersFlow(OrderService service) {
+>         return IntegrationFlow
+>             .from(Kafka.messageDrivenChannelAdapter(consumerFactory, "orders"))
+>             .transform(Transformers.fromJson(Order.class))   // Message Translator
+>             .filter((Order o) -> o.amount().signum() > 0)    // Message Filter
+>             .<Order, String>route(o -> o.type().name(),      // Content-Based Router
+>                 m -> m.subFlowMapping("EXPRESS", sf -> sf.handle(service::express))
+>                       .subFlowMapping("NORMAL", sf -> sf.handle(service::normal)))
+>             .get();
+>     }
+> }
+> ```
+>
+> **Когда применять:** интеграции между гетерогенными системами (Kafka + REST + DB + S3 в одном flow), ETL-конвейеры с трансформациями, batch-orchestration через event-driven подход, разрыв связности между bounded contexts в монолите через каналы.
+>
+> **Подводные камни:** EIP-паттерны решают **асинхронную** интеграцию. Для синхронного RPC (REST между микросервисами) Spring Integration избыточен — хватит `WebClient`/`RestTemplate`. Не путать каналы Spring Integration (in-process) с реальными брокерами (Kafka, RabbitMQ) — каналы это абстракция, под ними может быть как `LinkedBlockingQueue`, так и Kafka topic через адаптер.
+>
+> **Связанные вопросы:** [[Q2]] — типы MessageChannel; [[Q4]] — Gateway как фасад; [[Q11]] — Spring Integration vs Apache Camel.
+>
+> ---
+>
+> #### C) Spring Integration — это альтернатива Spring Boot для интеграционных приложений, его нельзя использовать в обычном Spring Boot — ❌ Неверно
+>
+> **Что на самом деле:** Spring Integration — это **дополнение** к Spring Boot, не альтернатива. Подключается через `spring-boot-starter-integration` и `@EnableIntegration`. Живёт в том же `ApplicationContext`, использует те же `@Bean`-ы и autoconfiguration.
+>
+> **Откуда путаница:** название «Integration» звучит как отдельный стек. На практике это Spring-модуль среди прочих, как `spring-data-jpa` или `spring-security`.
+>
+> **Если бы это было правдой:** нельзя было бы в одном Spring Boot приложении иметь и REST-контроллер, и интеграционный flow. На деле миллионы приложений делают именно так.
+>
+> ---
+>
+> #### D) Spring Integration — это реализация JBI (Java Business Integration) спецификации — ❌ Неверно
+>
+> **Что на самом деле:** Spring Integration **не реализует** JSR-208 (JBI). JBI — устаревший стандарт ESB-контейнеров, реализованный в OpenESB/ServiceMix; Spring команда осознанно отказалась от него в пользу EIP. Сам JBI давно мёртв (последний релиз спецификации — 2005).
+>
+> **Откуда путаница:** в 2000-х любая интеграционная платформа должна была заявить совместимость с JBI. Spring Integration вышел в 2007 году и стал успешен **именно потому**, что не пошёл этим путём.
+>
+> **Если бы это было правдой:** Spring Integration зависел бы от мёртвой спецификации и устаревших контейнеров. На практике он легковесен и работает в любом Java-процессе.
+
+## Q2. Какие типы MessageChannel существуют?
 
 | Канал | Поведение | Применение |
 |-------|-----------|------------|
@@ -100,10 +167,90 @@ public class IntegrationConfig { ... }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Что такое Service Activator? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём принципиальная разница между `DirectChannel` и `QueueChannel` с точки зрения транзакционных границ и threading-модели?
+>
+> ---
+>
+> #### A) `DirectChannel` и `QueueChannel` отличаются только наличием буфера — в остальном работают одинаково — ❌ Неверно
+>
+> **Что на самом деле:** различие фундаментальное. `DirectChannel` — **синхронный**: метод `send()` сам выполняет handler на том же потоке отправителя. `QueueChannel` — **асинхронный**: `send()` кладёт сообщение в очередь и возвращается; обработка происходит на отдельном потоке, который запускает `PollingConsumer` через `Poller`.
+>
+> **Откуда путаница:** оба реализуют `MessageChannel.send(Message)`, и снаружи API выглядит одинаково. Но семантика выполнения разная.
+>
+> **Если бы это было правдой:** простой апгрейд `new DirectChannel()` → `new QueueChannel(100)` не ломал бы транзакционные сценарии. На практике после такой замены теряется `@Transactional`-контекст, и rollback при ошибке consumer-а перестаёт работать.
+>
+> ---
+>
+> #### B) `DirectChannel` синхронно проносит транзакцию и ThreadLocal до получателя; `QueueChannel` разрывает поток и требует Poller с отдельной транзакцией — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `DirectChannel` — это «прямой вызов»: handler выполняется в стеке `send()`-вызывающего потока. Это значит, что `TransactionSynchronizationManager` (Spring's `@Transactional`), `SecurityContextHolder` (Spring Security), `RequestContextHolder` (MVC) — все `ThreadLocal`-контексты остаются доступны handler-у. Транзакция, начатая выше по стеку, охватывает всю цепочку.
+>
+> `QueueChannel` хранит сообщения в `BlockingQueue` (default capacity unbounded). Отправитель кладёт сообщение и возвращается мгновенно (или блокируется при capacity overflow). Чтобы сообщение было обработано, нужен `PollingConsumer` с настроенным `Poller` — он на отдельном потоке (`TaskScheduler`) делает `receive()` из очереди и вызывает handler. Это **разрывает** ThreadLocal-контекст: транзакция, security, MDC не пересекают границу очереди.
+>
+> Другие типы каналов: `ExecutorChannel` (асинхронный, но через `TaskExecutor` без буфера — async dispatch), `PublishSubscribeChannel` (broadcast всем подписчикам), `PriorityChannel` (приоритетная очередь), `FluxMessageChannel` (Reactor bridge для WebFlux).
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class ChannelsConfig {
+>     // Sync — транзакция проносится насквозь
+>     @Bean MessageChannel ordersDirect() { return new DirectChannel(); }
+>
+>     // Async — нужен Poller для consume
+>     @Bean MessageChannel ordersQueue() { return new QueueChannel(1000); }
+>
+>     // Async + Poller с транзакцией
+>     @Bean
+>     public IntegrationFlow asyncFlow(OrderService service, PlatformTransactionManager tm) {
+>         return IntegrationFlow
+>             .from("ordersQueue",
+>                 c -> c.poller(Pollers.fixedDelay(100)
+>                     .transactional(tm)         // транзакция стартует на каждом poll-tick
+>                     .maxMessagesPerPoll(10)))
+>             .handle(service::process)
+>             .get();
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - `DirectChannel` (default) — когда нужна сквозная транзакция и низкая latency. 95% in-process потоков.
+> - `QueueChannel` — буферизация между быстрым продюсером и медленным консьюмером, развязка потоков (отправитель не ждёт обработки).
+> - `ExecutorChannel` — параллельная обработка одного потока N воркерами (concurrent service-activators).
+> - `PublishSubscribeChannel` — fan-out, события, уведомления нескольким подписчикам.
+>
+> **Подводные камни:**
+> - **`QueueChannel` теряет сообщения при рестарте** — это in-memory `LinkedBlockingQueue`. Для durability нужен `MessageStore` (JDBC, Redis) или внешний брокер (Kafka/AMQP-канал).
+> - **Backpressure**: `QueueChannel(capacity)` блокирует `send()` при заполнении. Без capacity — unbounded, риск OOM.
+> - **Полл-задержка**: `Pollers.fixedDelay(1000)` означает 1 сек latency на каждое сообщение. Для low-latency лучше `ExecutorChannel`.
+> - **`PublishSubscribeChannel` synchronous by default** — медленный подписчик блокирует всех остальных. Передать `TaskExecutor` через `setTaskExecutor()` для async fan-out.
+>
+> **Связанные вопросы:** [[Q1]] — EIP-словарь; [[Q9]] — транзакции в Spring Integration; [[Q3]] — Service Activator как handler канала.
+>
+> ---
+>
+> #### C) `QueueChannel` поддерживает persistence из коробки (как Kafka) — сообщения переживают рестарт — ❌ Неверно
+>
+> **Что на самом деле:** `QueueChannel` — это in-memory `BlockingQueue`. После рестарта JVM очередь пуста, все непрочитанные сообщения теряются. Для durability нужен либо внешний `MessageStore` (JDBC/MongoDB/Redis), либо канал-адаптер к брокеру (Kafka, RabbitMQ).
+>
+> **Откуда путаница:** слово «Queue» ассоциируется с Kafka/RabbitMQ, которые персистентны. Но `QueueChannel` — это просто Java-объект, а не подключение к брокеру.
+>
+> **Если бы это было правдой:** не нужны были бы отдельные модули `spring-integration-kafka`/`spring-integration-amqp` для надёжной доставки. На практике критичные сообщения всегда идут через брокер, а `QueueChannel` — для in-memory разгрузки.
+>
+> ---
+>
+> #### D) `PublishSubscribeChannel` гарантирует exactly-once delivery каждому подписчику — ❌ Неверно
+>
+> **Что на самом деле:** `PublishSubscribeChannel` делает synchronous fan-out: вызывает handler каждого подписчика по очереди в потоке отправителя. Если один из них бросает исключение, поведение зависит от `ignoreFailures`: false (default) — exception прерывает цепочку, последующие подписчики не вызываются; true — exception логируется и итерация продолжается. Гарантии «exactly-once» нет — нет персистентности и retry.
+>
+> **Откуда путаница:** «publish-subscribe» как паттерн часто реализуется в Kafka/JMS с гарантиями at-least-once. Но in-process `PublishSubscribeChannel` — это просто синхронный broadcast в Java.
+>
+> **Если бы это было правдой:** не нужен был бы Kafka для надёжной event-distribution. На деле для exactly-once нужны идемпотентные consumer-ы и transactional outbox.
+
+## Q3. Что такое Service Activator?
 
 **Service Activator** — endpoint, связывающий канал с методом бизнес-компонента.
 
