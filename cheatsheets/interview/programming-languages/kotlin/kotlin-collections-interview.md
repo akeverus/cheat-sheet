@@ -1584,10 +1584,79 @@ users.associateWith { it.email }
 
 
 > [!mcq]
-> - [ ] `associateBy { it.id }` создаёт `Map<User, Int>` — ключом становится сам элемент | Наоборот: `associateBy` делает ключ из лямбды, значение — сам элемент; результат `Map<Int, User>`. ❌ ПОСЛЕДСТВИЕ: разработчик путает с `associateWith`, пишет `users.associateBy { it.id }[user]` ожидая получить id, NullPointerException в проде на горячем пути.
-> - [x] `associateBy{k}` → `Map<K, T>` (ключ из лямбды, значение = элемент); `associateWith{v}` → `Map<T, V>` (элемент = ключ, значение из лямбды); `associate{k to v}` → `Map<K, V>` (обе части из лямбды) | Это три ортогональных кейса построения Map: индекс по полю, обогащение элемента вычисленным значением, полностью кастомная пара. ✓ ПРИМЕНЯТЬ: `orders.associateBy { it.id }` для O(1) lookup в processOrders; `users.associateWith { fetchProfile(it) }` для batch-обогащения. 📋 ПРАВИЛО: «By = key from λ, With = value from λ, associate = both». 🔗 См. Q42, Q13.
-> - [ ] При дублирующемся ключе `associateBy` бросает `IllegalStateException` — это безопасный default | Все три функции **молча перезаписывают** значение последним; для проверки дубликатов используй `groupBy` или собственный merge. ❌ ПОСЛЕДСТВИЕ: дедупликация заказов по customerId через `orders.associateBy { it.customerId }` тихо теряет половину записей; финансовый отчёт расходится с базой, аудит выявляет через 3 месяца.
-> - [ ] `associate` всегда эффективнее `associateBy`, потому что не создаёт промежуточный `Pair` | `associate { k to v }` создаёт `Pair<K, V>` на каждый элемент; `associateBy { key }` принимает только keySelector и не создаёт Pair. ❌ ПОСЛЕДСТВИЕ: миграция «упростили на `associate`» добавляет N pair-аллокаций в hot loop, latency p99 растёт на 8%, инцидент в performance review.
+>
+> **Вопрос:** В чём ключевое отличие `associateBy`, `associateWith` и `associate` — какая функция куда кладёт ключ и значение?
+>
+> ---
+>
+> #### A) `associateBy { it.id }` создаёт `Map<User, Int>` — ключом становится сам элемент — ❌ Неверно
+>
+> **Что на самом деле:** `associateBy { keySelector }` делает **ключ** из лямбды, **значением** становится сам элемент: `users.associateBy { it.id }` → `Map<Int, User>`. Это «индекс по полю»: даёт O(1) lookup элемента по его id-полю.
+>
+> **Откуда путаница:** название «By» неоднозначно — можно прочитать как «keyed BY user-object», но в Kotlin-stdlib `By` означает «по результату лямбды»: лямбда вычисляет ключ. Похожая логика: `sortedBy { it.x }` — сортировка по результату лямбды.
+>
+> **Если бы это было правдой:** разработчик путает с `associateWith`, пишет `val byId = users.associateBy { it.id }; byId[user]` ожидая получить id; runtime возвращает `null` (ключ типа `Int`, а передаётся `User`), NullPointerException в проде на горячем пути login-эндпоинта, 5% запросов падают.
+>
+> ---
+>
+> #### B) `associateBy{k}` → `Map<K, T>` (ключ из лямбды, значение = элемент); `associateWith{v}` → `Map<T, V>` (элемент = ключ, значение из лямбды); `associate{k to v}` → `Map<K, V>` (обе части из лямбды) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Эти три функции — три ортогональных способа построения `Map` из коллекции, различающиеся по тому, откуда берутся ключ и значение:
+>
+> 1. **`associateBy { keySelector }`** — «индекс по полю». Ключ вычисляется лямбдой, значением становится сам элемент. Применение: построение справочника `id → entity` для O(1) lookup.
+> 2. **`associateWith { valueSelector }`** — «обогащение элемента». Ключом становится сам элемент, значение вычисляется лямбдой. Применение: вычислить сопутствующее значение для каждого элемента (score, profile, fetched data).
+> 3. **`associate { transform: T -> Pair<K, V> }`** — полная кастомизация: лямбда возвращает `Pair<K, V>`, обе части под контролем. Применение: когда ни элемент целиком, ни одно его поле не подходят как ключ/значение.
+> 4. **`associateBy({ k }, { v })`** — двух-аргументная версия `associateBy`, эквивалентная `associate { k(it) to v(it) }`, но без создания Pair.
+>
+> **Пример:**
+> ```kotlin
+> data class User(val id: Int, val name: String, val email: String)
+> val users = listOf(User(1, "Alice", "a@x"), User(2, "Bob", "b@x"))
+>
+> // associateBy — индекс по id
+> val byId: Map<Int, User> = users.associateBy { it.id }
+> // {1=User(1,"Alice",...), 2=User(2,"Bob",...)}
+>
+> // associateWith — обогащение
+> val withProfile: Map<User, Profile> = users.associateWith { fetchProfile(it) }
+>
+> // associate — кастомная пара
+> val emailToName: Map<String, String> = users.associate { it.email to it.name }
+> ```
+>
+> **Когда применять:**
+> - **Yandex orders processing**: `orders.associateBy { it.id }` для O(1) lookup при join с другим источником
+> - **Avito batch-обогащение**: `users.associateWith { fetchScore(it.id) }` для batch-вычисления реputation
+> - **JetBrains analytics**: `associate { (k, v) -> "$k-$v" to compute(k, v) }` для custom map-keys
+>
+> **Подводные камни:**
+> - **Дубликаты ключей** — все три функции **молча** перезаписывают: побеждает последний элемент. Для группировки с сохранением всех значений — `groupBy`.
+> - **`associate` с Pair-allocation**: создаёт `Pair<K, V>` на каждый элемент; `associateBy({}, {})` эффективнее, если оба ключа и значения вычисляются.
+> - **Mutable map**: возвращают `LinkedHashMap` (сохраняет порядок вставки), не immutable.
+>
+> **Связанные вопросы:** [[Q42]] — детально про associateBy/With/associate; [[Q13]] — groupBy и partition; [[Q14]] — groupingBy для агрегаций.
+>
+> ---
+>
+> #### C) При дублирующемся ключе `associateBy` бросает `IllegalStateException` — это безопасный default — ❌ Неверно
+>
+> **Что на самом деле:** Все три функции (`associate`, `associateBy`, `associateWith`) **молча перезаписывают** значение последним элементом с тем же ключом — никаких exception. Это часть контракта stdlib. Для обнаружения дубликатов — `groupBy { key }` (получаешь `Map<K, List<V>>` и сам решаешь, что делать).
+>
+> **Откуда путаница:** «дубликат — это ошибка» — естественная интуиция из реляционных БД (UNIQUE constraint бросает). Но в stdlib Kotlin приоритет — нет неожиданных exception, поведение «last wins» документировано.
+>
+> **Если бы это было правдой:** дедупликация заказов по customerId через `orders.associateBy { it.customerId }` тихо теряет половину записей (если у клиента несколько заказов); финансовый отчёт расходится с базой данных, аудит выявляет расхождение только через 3 месяца, ущерб — incorrect K1 reporting в ФНС.
+>
+> ---
+>
+> #### D) `associate` всегда эффективнее `associateBy`, потому что не создаёт промежуточный `Pair` — ❌ Неверно
+>
+> **Что на самом деле:** **Наоборот**: `associate { k to v }` создаёт **`Pair<K, V>` на каждом элементе** (два объекта: pair-wrapper + опционально boxed-значения), потом извлекает компоненты в Map. `associateBy { keySelector }` пишет в `LinkedHashMap.put(key, element)` напрямую без Pair-allocation. `associateBy` эффективнее.
+>
+> **Откуда путаница:** название «associate» звучит более «низкоуровнево» (примитивная операция), а «By» с дополнительными скобками — «обёртка». На самом деле наоборот.
+>
+> **Если бы это было правдой:** миграция «упростили код на `associate { it.id to it }`» добавляет N Pair-аллокаций в hot loop processOrders, latency p99 растёт на 8% (с 50ms до 54ms), allocation profiling в Sentry показывает 30% времени в `kotlin.Pair.<init>`, инцидент в performance review.
 
 ## Q34. Как работает `flatten` и чем отличается от `flatMap`?
 
@@ -1620,10 +1689,84 @@ posts.map { it.tags }.flatten().distinct()  // то же, но два шага
 
 
 > [!mcq]
-> - [x] `flatten` принимает `Iterable<Iterable<T>>` и склеивает в один уровень; `flatMap` = `map + flatten` за один проход (преобразует элемент в коллекцию + flatten) | `flatten` — операция над уже вложенной структурой, `flatMap` — комбинация transform + flatten, эффективнее `map().flatten()`. ✓ ПРИМЕНЯТЬ: `posts.flatMap { it.tags }.distinct()` — все уникальные теги без промежуточного `List<List<String>>`. 📋 ПРАВИЛО: «flatMap = map+flatten в один проход». 🔗 См. Q12.
-> - [ ] `flatten` flatten'ит на любую глубину — `listOf(listOf(listOf(1,2)))` → `[1,2]` | `flatten` снимает **только один уровень**: `listOf(listOf(listOf(1,2))).flatten()` → `[[1,2]]`. Для глубокого flatten нужен recursive flatMap или собственная реализация. ❌ ПОСЛЕДСТВИЕ: парсинг JSON-дерева через `tree.flatten()` оставляет вложенность, downstream-код получает `List<List<Node>>` вместо `List<Node>`, ClassCastException.
-> - [ ] `words.map { it.split(" ") }.flatten()` и `words.flatMap { it.split(" ") }` одинаковы по производительности | По результату эквивалентны, но `map + flatten` делает два прохода и создаёт промежуточный `List<List<String>>`; `flatMap` — один проход с прямой записью. ❌ ПОСЛЕДСТВИЕ: при логировании 1М запросов через `lines.map { it.split() }.flatten()` пиковая память в 2× выше из-за временного nested-List, OOM на JVM с тесным heap.
-> - [ ] `flatMap` работает только для `List<List<T>>`, для `Set<Set<T>>` нужен `flatten` | `flatMap` работает с любым `Iterable<R>` где `R: Iterable`; `Set<Set<T>>.flatMap { it }` валиден. ❌ ПОСЛЕДСТВИЕ: разработчик дублирует логику для Set через ручной `for` с `addAll`, code review требует переписать через `flatMap`, теряется 2 часа на «спор о типах».
+>
+> **Вопрос:** Чем отличаются `flatten` и `flatMap` в Kotlin stdlib и когда какую использовать?
+>
+> ---
+>
+> #### A) `flatten` принимает `Iterable<Iterable<T>>` и склеивает в один уровень; `flatMap` = `map + flatten` за один проход (преобразует элемент в коллекцию + flatten) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это две связанные, но различные операции:
+>
+> - **`flatten()`** — extension только для `Iterable<Iterable<T>>` (коллекция уже содержит коллекции). Принимает структуру вида `List<List<T>>` и склеивает её в один уровень: `[[a,b],[c]]` → `[a,b,c]`. Снимает **ровно один уровень** вложенности.
+> - **`flatMap { transform }`** — преобразует каждый элемент в коллекцию (`T -> Iterable<R>`) и сразу склеивает результаты. Эквивалентно `.map(transform).flatten()`, но за **один проход**, без промежуточного списка списков.
+>
+> Разница в производительности: `map + flatten` — два прохода и промежуточный `List<List<R>>`, `flatMap` — один проход с прямой записью элементов в результат.
+>
+> **Пример:**
+> ```kotlin
+> // flatten — есть уже nested структура
+> val nested = listOf(listOf(1, 2), listOf(3, 4), listOf(5))
+> nested.flatten()  // [1, 2, 3, 4, 5]
+>
+> // flatMap — нужно сначала преобразовать элемент в коллекцию
+> data class Post(val title: String, val tags: List<String>)
+> val posts = listOf(
+>     Post("A", listOf("kotlin", "jvm")),
+>     Post("B", listOf("kotlin", "spring"))
+> )
+> val allTags = posts.flatMap { it.tags }.distinct()  // ["kotlin", "jvm", "spring"]
+>
+> // flatMap эффективнее чем map().flatten()
+> // flatMap: один проход
+> posts.flatMap { it.tags }
+> // map + flatten: два прохода + промежуточный List<List<String>>
+> posts.map { it.tags }.flatten()
+> ```
+>
+> **Когда применять:**
+> - **Avito поиск тегов**: `cards.flatMap { it.tags }.toSet()` для построения tag-index по всем карточкам
+> - **Yandex Maps маршруты**: `routes.flatMap { it.waypoints }` для агрегации точек из вложенных маршрутов
+> - **JetBrains logs**: `logFiles.flatMap { it.readLines() }` для streaming-чтения нескольких файлов как один Sequence
+>
+> **Подводные камни:**
+> - **`flatten` снимает только один уровень**: `listOf(listOf(listOf(1,2))).flatten()` → `[[1,2]]`, НЕ `[1,2]`. Для глубокого flatten нужен recursive flatMap или собственная функция
+> - **`flatMap` с Sequence** — `Sequence.flatMap` существует и lazy: каждый элемент преобразуется и стримится в результат без полной материализации
+> - **Empty inner collections**: `flatMap { it.tags }` корректно обрабатывает посты без тегов (пустой List просто не добавляет ничего)
+>
+> **Связанные вопросы:** [[Q12]] — детально про map vs flatMap; [[Q11]] — базовые операции коллекций.
+>
+> ---
+>
+> #### B) `flatten` flatten'ит на любую глубину — `listOf(listOf(listOf(1,2)))` → `[1,2]` — ❌ Неверно
+>
+> **Что на самом деле:** `flatten` снимает **только один уровень** вложенности. `listOf(listOf(listOf(1,2))).flatten()` → `[listOf(1,2)]` (тип `List<List<Int>>`), не `[1,2]`. Для глубокого flatten (любая глубина) нужно рекурсивно вызывать flatten/flatMap, либо написать собственную функцию.
+>
+> **Откуда путаница:** в JavaScript есть `Array.prototype.flat(depth)` с параметром глубины, и `flat(Infinity)` flatten'ит всё. В Kotlin такой опции нет — `flatten()` всегда снимает один уровень.
+>
+> **Если бы это было правдой:** парсинг JSON-дерева комментариев через `tree.flatten()` оставляет вложенность, downstream-код ожидает `List<Comment>` но получает `List<List<Comment>>`, ClassCastException при `(it as Comment).text` в API-handler, 500 на всех страницах с тред-комментариями.
+>
+> ---
+>
+> #### C) `words.map { it.split(" ") }.flatten()` и `words.flatMap { it.split(" ") }` одинаковы по производительности — ❌ Неверно
+>
+> **Что на самом деле:** По результату — да, эквивалентны. По производительности — **нет**: `map + flatten` делает два прохода (сначала вся коллекция через map, затем через flatten) и создаёт промежуточный `List<List<String>>`. `flatMap` — один проход с прямой записью каждого split-результата в финальный список.
+>
+> **Откуда путаница:** оптимизирующий компилятор Kotlin не делает такой автоматической fusion (как, скажем, Haskell GHC с rewrite rules). Идиоматичное решение — писать `flatMap` явно.
+>
+> **Если бы это было правдой:** при логировании 1М запросов через `lines.map { it.split(" ") }.flatten()` пиковая память в 2× выше из-за временного nested-List, JVM с heap=1GB получает OutOfMemoryError на batch-обработке, OOMKilled в Kubernetes, deployment откатывается.
+>
+> ---
+>
+> #### D) `flatMap` работает только для `List<List<T>>`, для `Set<Set<T>>` нужен `flatten` — ❌ Неверно
+>
+> **Что на самом деле:** `flatMap` работает с **любым** `Iterable<T>` где transform возвращает `Iterable<R>` — это включает `List`, `Set`, `Sequence`, любой кастомный `Iterable`. `Set<Set<T>>.flatMap { it }` валиден; `Set<T>.flatMap { transform }` валиден. Аналогично `flatten` — работает на любом `Iterable<Iterable<T>>`.
+>
+> **Откуда путаница:** примеры в туториалах обычно про `List` (самый частый кейс). Это даёт впечатление, что `flatMap` — функция «для List», хотя на самом деле она generic над `Iterable`.
+>
+> **Если бы это было правдой:** разработчик дублирует логику для Set через ручной цикл `for (s in sets) result.addAll(s)`, code review требует переписать через `flatMap`, теряется 2 часа на «спор о типах», в результате выясняется что `flatMap` работает на всём.
 
 ## Q35. Что такое `coerceIn`, `minOrNull`, `maxOrNull`, `sumOf`, `averageOf`?
 
@@ -1666,10 +1809,81 @@ val pageSize = requestedSize.coerceIn(10, 100)
 
 
 > [!mcq]
-> - [ ] `min()` и `max()` возвращают `null` на пустой коллекции — это безопасный default | `min()`/`max()` бросают `NoSuchElementException`; `null` возвращают только `minOrNull()`/`maxOrNull()`. В Kotlin 1.7+ `min()`/`max()` объявлены `@Deprecated` в пользу `minOrNull`/`maxOrNull`. ❌ ПОСЛЕДСТВИЕ: REST-эндпоинт `/stats` падает 500 на запросе с пустым фильтром, alert срабатывает в 3 утра, дежурный находит причину через час.
-> - [ ] `coerceIn(min, max)` бросает `IllegalArgumentException` если значение вне диапазона | `coerceIn` молча обрезает значение до границы: `15.coerceIn(0, 10)` → 10. Это его основное назначение — нормализация без if-else. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет defensive `if (page !in 1..max) throw` ожидая, что `coerceIn` уже это делает, дублирует логику и путает читателей.
-> - [x] `coerceIn(a, b)` clamps значение в диапазон без if-else; `minOrNull/maxOrNull` безопасны на пустой коллекции; `sumOf{}` агрегирует без промежуточного List; `min()/max()` бросают `NoSuchElementException` на пустой | Это базовые builtin'ы для агрегатов и нормализации: явные «безопасные» варианты с `OrNull` и no-throw `coerceIn` — идиоматичный путь без NPE/exception. ✓ ПРИМЕНЯТЬ: `val page = userInput.coerceIn(1, maxPages)` в пагинации; `orders.sumOf { it.amount }` без `map().sum()`. 📋 ПРАВИЛО: «*OrNull в проде, coerceIn для clamp». 🔗 См. Q36.
-> - [ ] `sumOf { it.price }` и `map { it.price }.sum()` идентичны по производительности — компилятор оптимизирует автоматически | `sumOf` пишет напрямую в накопитель без промежуточного `List<Double>`; `map().sum()` создаёт временный список с боксингом. Compiler не делает такую оптимизацию автоматически. ❌ ПОСЛЕДСТВИЕ: финансовый отчёт по 10М транзакций через `.map { it.amount }.sum()` ест 800 MB pre-allocated heap, в Docker контейнере с 1 GB memory limit получает OOMKilled.
+>
+> **Вопрос:** Какие свойства имеют `coerceIn`, `minOrNull`/`maxOrNull` и `sumOf` и какие из них безопасны на пустой коллекции?
+>
+> ---
+>
+> #### A) `min()` и `max()` возвращают `null` на пустой коллекции — это безопасный default — ❌ Неверно
+>
+> **Что на самом деле:** `min()` и `max()` (без суффикса) **бросают `NoSuchElementException`** на пустой коллекции — это исторический контракт. `null` возвращают только `minOrNull()` и `maxOrNull()`. В Kotlin 1.7+ старые `min()`/`max()` объявлены **`@Deprecated`** в пользу `minOrNull`/`maxOrNull` именно из-за этой опасности.
+>
+> **Откуда путаница:** разработчики ожидают «null-safe by default» в современном Kotlin. Но базовые `min`/`max` остались с throw-семантикой для обратной совместимости с ранними версиями (там не было `OrNull`-вариантов).
+>
+> **Если бы это было правдой:** REST-endpoint `/stats/min-price` падает 500 на запросе с пустым фильтром (например, поиск товаров категории, где сегодня нет offers), alert в Prometheus срабатывает в 3 утра, дежурный SRE находит причину через час по stacktrace `NoSuchElementException: List is empty`.
+>
+> ---
+>
+> #### B) `coerceIn(min, max)` бросает `IllegalArgumentException` если значение вне диапазона — ❌ Неверно
+>
+> **Что на самом деле:** `coerceIn(min, max)` **молча обрезает** значение до ближайшей границы — это его основное назначение. `15.coerceIn(0, 10)` → 10, `(-5).coerceIn(0, 100)` → 0, `5.coerceIn(0, 10)` → 5 (без изменений). Никаких exception — это no-throw clamping.
+>
+> **Откуда путаница:** название «coerce» (принуждать) у некоторых ассоциируется с runtime-проверкой. Но в Kotlin это именно «привести к границам», как `Math.clamp` в Java 21+ или `clip` в numpy.
+>
+> **Если бы это было правдой:** разработчик добавляет defensive `if (page !in 1..max) throw IllegalArgumentException()` ожидая, что `coerceIn` сам бросает; дублирует проверку, конфликт между «coerced до 10» и «брошено exception» путает читателей, code review требует выбрать один подход.
+>
+> ---
+>
+> #### C) `coerceIn(a, b)` clamps значение в диапазон без if-else; `minOrNull/maxOrNull` безопасны на пустой коллекции; `sumOf{}` агрегирует без промежуточного List; `min()/max()` бросают `NoSuchElementException` на пустой — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это набор связанных builtin-функций для агрегации и нормализации числовых значений:
+>
+> 1. **`coerceIn(a, b)`** — clamping без if-else: молча приводит значение к ближайшей границе. Идеален для нормализации user-input (пагинация, throttling).
+> 2. **`minOrNull()`/`maxOrNull()`** — null на пустой коллекции. Безопасный default для production-кода.
+> 3. **`min()`/`max()`** — `NoSuchElementException` на пустой (`@Deprecated` в Kotlin 1.7+).
+> 4. **`minOf { selector }`/`maxOf { selector }`** — без OrNull, возвращают значение selector, бросают на пустой.
+> 5. **`minByOrNull { selector }`/`maxByOrNull { selector }`** — возвращают сам элемент (не значение selector); null на пустой.
+> 6. **`sumOf { selector }`** — агрегация по selector без промежуточного List (один проход).
+> 7. **`average()`** — Double, на пустой коллекции возвращает `Double.NaN`.
+>
+> **Пример:**
+> ```kotlin
+> // Нормализация пагинации без if-else
+> val page = userInput.coerceIn(1, maxPages)
+> val pageSize = requestedSize.coerceIn(10, 100)
+>
+> // Безопасный max без NPE
+> val maxPrice = products.maxOrNull { it.price } ?: BigDecimal.ZERO
+> val expensive = products.maxByOrNull { it.price } ?: return emptyList()
+>
+> // sumOf — без промежуточного списка
+> val total = orders.sumOf { it.amount }  // BigDecimal
+> // НЕ: orders.map { it.amount }.sum() — создаёт List<BigDecimal>
+> ```
+>
+> **Когда применять:**
+> - **Yandex pagination**: `page.coerceIn(1, maxPages)` в API-handler для защиты от out-of-range запросов
+> - **Avito price stats**: `products.maxByOrNull { it.price }` без crash на пустых категориях
+> - **Bank reporting**: `transactions.sumOf { it.amount }` для 10M записей без OOM на промежуточном List
+>
+> **Подводные камни:**
+> - **`coerceIn(min, max)` требует `min <= max`** — иначе IllegalArgumentException. При параметризации границ из конфига делай sanity-check
+> - **`average()` на пустой** — `Double.NaN`, а не exception. NaN в дальнейших вычислениях распространяется тихо
+> - **`sumOf` type inference**: для BigDecimal иногда нужно `sumOf<Order, BigDecimal> { it.amount }`
+>
+> **Связанные вопросы:** [[Q36]] — first/last/single и их безопасные варианты; [[Q31]] — оптимизация аллокаций; [[Q11]] — базовые операции.
+>
+> ---
+>
+> #### D) `sumOf { it.price }` и `map { it.price }.sum()` идентичны по производительности — компилятор оптимизирует автоматически — ❌ Неверно
+>
+> **Что на самом деле:** `sumOf` пишет результат напрямую в локальный accumulator (`var sum: Long = 0; for ... sum += selector(it)`), без промежуточного списка. `map().sum()` создаёт **полный** `List<Double>` (с боксингом для primitives) перед суммированием. Компилятор Kotlin **не делает** автоматический rewrite `map(f).sum() → sumOf(f)`.
+>
+> **Откуда путаница:** разработчики с Haskell/Scala фоном привыкли к stream fusion (компилятор объединяет цепочки). В Kotlin такой optimization нет — Sequence частично решает, но stream-fusion compile-time отсутствует.
+>
+> **Если бы это было правдой:** финансовый отчёт по 10М транзакций через `.map { it.amount }.sum()` создаёт промежуточный `List<BigDecimal>` на 800 MB, в Docker-контейнере с 1 GB memory limit получает OutOfMemoryError, Kubernetes OOMKilled, ежедневный отчёт не сгенерирован, бухгалтерия теряет SLA в M&A audit.
 
 ## Q36. Как используются `first`, `last`, `single`, `elementAtOrElse` и их безопасные варианты?
 
