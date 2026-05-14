@@ -691,10 +691,98 @@ Supplier<String> s = () -> "lazy value";
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. (!) Какие 4 вида method references существуют? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём ключевая разница между `Callable<T>` и `Supplier<T>`, если оба не имеют входных параметров и возвращают T?
+>
+> ---
+>
+> #### A) Callable работает только в `ExecutorService`, Supplier — везде; функционально идентичны — ❌ Неверно
+>
+> **Что на самом деле:** `Callable.call() throws Exception` — может бросать **checked exceptions**, `Supplier.get()` — нет. Это принципиальная разница: при работе с I/O, JDBC, network — Callable не требует try/catch внутри, Supplier — требует обернуть в `try { ... } catch (...) { throw new RuntimeException(); }`.
+>
+> **Откуда путаница:** оба «производят значение без входа». Кажется что Callable — просто Supplier для ExecutorService.
+>
+> **Если бы это было правдой:** не было бы смысла иметь два интерфейса. На деле они существуют именно ради разделения checked-семантики.
+>
+> ---
+>
+> #### B) Supplier всегда возвращает immutable, Callable может возвращать mutable — ❌ Неверно
+>
+> **Что на самом деле:** ни один из интерфейсов не накладывает ограничений на mutability возвращаемого значения. `Supplier<List<String>>` может возвращать ArrayList (mutable). `Callable<String>` — immutable String. Это никак не связано с дизайном интерфейсов.
+>
+> **Откуда путаница:** возможно ассоциация с functional programming где «pure functions» возвращают immutable. Но Java не enforce'ит этого.
+>
+> **Если бы это было правдой:** `Supplier<ArrayList<String>> factory = ArrayList::new` не компилировался бы — но это идиоматичный код.
+>
+> ---
+>
+> #### C) `Callable.call() throws Exception` (поддерживает checked exceptions), `Supplier.get()` — не бросает checked; Callable в `java.util.concurrent`, Supplier в `java.util.function` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Три отличия:
+>
+> 1. **Checked exceptions**: сигнатура `T call() throws Exception` позволяет бросать любые exception без обёртки. `T get()` — только unchecked. Это критично для I/O кода: `Callable<byte[]> r = () -> Files.readAllBytes(path)` — компилируется. `Supplier<byte[]> r = () -> Files.readAllBytes(path)` — НЕ компилируется.
+>
+> 2. **Пакет/назначение**: `Callable<T>` в `java.util.concurrent` — для async задач в ExecutorService, ScheduledExecutorService, CompletableFuture. `Supplier<T>` в `java.util.function` — для lazy values, фабрик, default-providers (Optional, Stream.generate, requireNonNullElseGet).
+>
+> 3. **API integration**: `ExecutorService.submit(Callable)` → `Future<T>`. `CompletableFuture.supplyAsync(Supplier)` — обратите внимание, supplyAsync принимает Supplier, не Callable. Если ваша операция бросает checked exception — нужно обернуть в RuntimeException или использовать `completableFuture.handle()`.
+>
+> **Пример:**
+> ```java
+> // Callable: I/O с checked exception без try/catch внутри
+> Callable<String> reader = () -> Files.readString(Path.of("/etc/hosts"));
+> Future<String> future = executor.submit(reader);
+> try {
+>     String content = future.get();  // checked exceptions перепакованы в ExecutionException
+> } catch (ExecutionException | InterruptedException e) { ... }
+>
+> // Supplier: тот же I/O требует обёртки
+> Supplier<String> badReader = () -> Files.readString(Path.of("/etc/hosts"));
+> // COMPILE ERROR: unhandled IOException
+>
+> Supplier<String> wrappedReader = () -> {
+>     try {
+>         return Files.readString(Path.of("/etc/hosts"));
+>     } catch (IOException e) {
+>         throw new UncheckedIOException(e);
+>     }
+> };
+>
+> // Supplier в Optional:
+> User u = userOpt.orElseGet(() -> userRepo.findDefault());
+>
+> // Конвертация Callable → Supplier:
+> Supplier<String> sup = () -> {
+>     try { return reader.call(); }
+>     catch (Exception e) { throw new RuntimeException(e); }
+> };
+> ```
+>
+> **Когда применять:**
+> - **Callable**: async tasks с checked exceptions (file I/O, JDBC, RestTemplate), задачи в ExecutorService, ScheduledExecutorService.
+> - **Supplier**: lazy values (`Optional.orElseGet`, SLF4J `log.debug(() -> ...)`), фабрики (`ArrayList::new`), Stream.generate, default providers.
+> - **Runnable**: fire-and-forget без возврата (Thread, scheduling без результата).
+>
+> **Подводные камни:**
+> - `executor.submit(() -> 42)` — компилятор выбирает Callable<Integer>, а не Supplier. Если хочется Future<Void> для fire-and-forget — используйте `submit(Runnable)`.
+> - **CompletionStage + checked**: `CompletableFuture.supplyAsync(supplier)` НЕ принимает Callable. Для checked exceptions либо оборачивайте, либо используйте custom executor.
+> - **Lambda capture в Callable**: captured-переменные те же effectively-final правила, как в любой лямбде.
+> - **ScheduledExecutorService.schedule(Runnable/Callable, ...)** — обе перегрузки, выбор по target type.
+>
+> **Связанные вопросы:** [[Q4]] — все стандартные интерфейсы; [[Q5]] — Supplier vs Consumer; [[Q13]] — checked exceptions в лямбдах.
+>
+> ---
+>
+> #### D) Runnable идентичен Callable<Void> — оба void и без аргументов — ❌ Неверно
+>
+> **Что на самом деле:** `Runnable.run()` — `void`, **не бросает** checked exceptions. `Callable<Void>.call() throws Exception` — формально возвращает `Void` (тип-обёртка, обычно `return null`), **может** бросать checked. Это разные интерфейсы и не взаимозаменяемы.
+>
+> **Откуда путаница:** оба «не возвращают полезное значение». Но Callable<Void> ещё и может throws Exception.
+>
+> **Если бы это было правдой:** не было бы перегрузок `executor.submit(Runnable)` vs `executor.submit(Callable<T>)`. Компилятор различает их по сигнатуре. Также `Executors.callable(Runnable)` — adapter, который как раз делает Callable<Object> из Runnable, явно показывая что это разные типы.
+
+## Q8. (!) Какие 4 вида method references существуют?
 
 | Вид | Синтаксис | Эквивалентная лямбда |
 |---|---|---|
@@ -730,10 +818,98 @@ Function<Integer, ArrayList<String>> withCap = ArrayList::new;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Как работают compose() и andThen() в Function? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой тип method reference у выражения `String::toUpperCase` когда оно присваивается переменной `Function<String, String> upper`?
+>
+> ---
+>
+> #### A) Reference на статический метод — `String.toUpperCase` это static-метод класса — ❌ Неверно
+>
+> **Что на самом деле:** `toUpperCase()` — instance method (вызывается на конкретной String), а не static. Static-методы у String: `valueOf`, `format`, `join`, `copyValueOf`. Static method reference выглядит так же синтаксически (`ClassName::method`), но семантика разная.
+>
+> **Откуда путаница:** синтаксис `ClassName::method` идентичен для static и для unbound instance reference. Различить помогает только знание API: открыть Javadoc → `public String toUpperCase()` (instance) vs `public static String valueOf(int i)` (static).
+>
+> **Если бы это было правдой:** компилятор интерпретировал бы как `s -> String.toUpperCase(s)`, что не существует — static метода с таким именем нет.
+>
+> ---
+>
+> #### B) Reference на метод экземпляра на типе (unbound) — receiver предоставляется как первый аргумент Function — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это **unbound receiver** form: `ClassName::instanceMethod`. Тип лямбды требует `Function<String, String>` — функция от String к String. Компилятор разворачивает `String::toUpperCase` в `s -> s.toUpperCase()`: первый аргумент Function становится receiver'ом instance метода.
+>
+> Это отличается от **bound receiver** (`prefix::concat` где `prefix` — конкретный объект). Различить помогает контекст: если слева class name + справа instance method → unbound; если слева instance + справа method → bound.
+>
+> 4 вида method references в Java:
+> 1. **Static**: `Integer::parseInt` → `s -> Integer.parseInt(s)`.
+> 2. **Bound** (на конкретном объекте): `prefix::concat` → `s -> prefix.concat(s)`.
+> 3. **Unbound** (instance method на типе): `String::toUpperCase` → `s -> s.toUpperCase()`.
+> 4. **Constructor**: `ArrayList::new` → `() -> new ArrayList<>()` или `n -> new ArrayList<>(n)`.
+>
+> **Пример:**
+> ```java
+> // 1. Static
+> Function<String, Integer> parser = Integer::parseInt;
+> parser.apply("42");  // 42
+>
+> // 2. Bound (конкретный объект до ::)
+> String prefix = "Hello: ";
+> Function<String, String> greet = prefix::concat;
+> greet.apply("World");  // "Hello: World"
+>
+> // 3. Unbound (тип до ::)
+> Function<String, String> upper = String::toUpperCase;
+> upper.apply("hi");  // "HI"
+>
+> // Двухаргументная unbound (compareTo как Comparator):
+> Comparator<String> cmp = String::compareTo;
+> // эквивалентно (s1, s2) -> s1.compareTo(s2)
+>
+> // 4. Constructor
+> Supplier<ArrayList<String>> factory = ArrayList::new;
+> Function<Integer, ArrayList<String>> withCap = ArrayList::new;
+>
+> // Array constructor:
+> IntFunction<String[]> arrayMaker = String[]::new;
+> String[] arr = arrayMaker.apply(10);  // new String[10]
+> ```
+>
+> **Когда применять:**
+> - **Stream API**: `.map(String::trim)`, `.filter(s -> !s.isEmpty())`, `.collect(Collectors.toList())` — method references компактнее лямбд.
+> - **Comparators**: `Comparator.comparing(User::getName)`, `.thenComparing(User::getAge)`.
+> - **Builder/Factory patterns**: `Stream.generate(UUID::randomUUID)`, `() -> new ArrayList<>()` лучше как `ArrayList::new`.
+> - **Method references читаются лучше** лямбд когда логика — это просто вызов одного метода без преобразований.
+>
+> **Подводные камни:**
+> - **Overloaded methods** — компилятор может не выбрать нужную перегрузку. `System.out::println` неоднозначно (есть `println(String)`, `println(int)`, ...). Target type помогает: `Consumer<String> c = System.out::println` ОК.
+> - **Generic methods**: `List<String>::add` не работает напрямую — нужно `(list, item) -> list.add(item)` или `BiConsumer<List<String>, String> c = List::add`.
+> - **NPE риск**: `bound::method` если bound = null — NPE сразу при создании method reference, не при вызове. `Function<String, Integer> f = (null)::length` — NullPointerException на присваивании.
+> - **Refactoring**: если переименовать метод, method reference сразу ломается на compile-time (это плюс). Лямбда же продолжает компилироваться даже если поведение поменялось.
+>
+> **Связанные вопросы:** [[Q1]] — SAM как target для method reference; [[Q3]] — лямбда vs анонимный класс; [[Q4]] — стандартные интерфейсы.
+>
+> ---
+>
+> #### C) Bound receiver reference — `String` это конкретный объект, на который привязан метод — ❌ Неверно
+>
+> **Что на самом деле:** `String` — это **класс**, а не конкретный объект-инстанс. Bound reference требует именно объект-instance: `"hello"::toUpperCase` — bound (привязан к строке "hello"); `String::toUpperCase` — unbound (любая String получит этот метод).
+>
+> **Откуда путаница:** в bound и unbound одинаковый синтаксис `Receiver::method`. Различает только что стоит слева — class (unbound) или instance (bound).
+>
+> **Если бы это было правдой:** результат был бы `Supplier<String>` (zero-arg → String), а не `Function<String, String>`. Сигнатуры разные.
+>
+> ---
+>
+> #### D) Constructor reference — каждый вызов создаёт новый String — ❌ Неверно
+>
+> **Что на самом деле:** constructor reference имеет синтаксис `ClassName::new`. `String::toUpperCase` — это вызов instance-метода `toUpperCase()`, а не конструктор. String конструкторы выглядели бы как `String::new` (что компилируется как Function для нескольких overloads).
+>
+> **Откуда путаница:** возможно ассоциация с тем что `toUpperCase()` создаёт новую String (true, но это side-effect метода, не конструктора).
+>
+> **Если бы это было правдой:** `Function<String, String> upper = String::toUpperCase` интерпретировалось бы как `s -> new String(s)`, и `upper.apply("hi")` возвращало бы "hi", а не "HI". Логически неверно.
+
+## Q9. (!) Как работают compose() и andThen() в Function?
 
 Оба объединяют функции в цепочку, но порядок выполнения **обратный**:
 
@@ -760,10 +936,96 @@ plus3ThenTimes2.apply(5);  // (5+3)*2 = 16
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Как работают and(), or(), negate() в Predicate? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что вернёт `Function<Integer, Integer> f = times2.compose(plus3); f.apply(5);` где `times2 = x -> x*2` и `plus3 = x -> x+3`?
+>
+> ---
+>
+> #### A) 13, так как `compose` применяет функции слева направо: сначала times2(5)=10, потом plus3(10)=13 — ❌ Неверно
+>
+> **Что на самом деле:** это поведение `andThen`, а не `compose`. `compose` идёт **справа налево** относительно записи: `times2.compose(plus3).apply(5)` = `times2(plus3(5))` = `times2(8)` = `16`. Левый в записи (`times2`) выполняется **последним**.
+>
+> **Откуда путаница:** интуитивно «сначала this, потом other» — но именно так работает `andThen`. `compose` инвертирует порядок.
+>
+> **Если бы это было правдой:** `compose` и `andThen` делали бы одно и то же — не было бы смысла иметь оба метода. Они существуют именно ради разного порядка.
+>
+> ---
+>
+> #### B) 16, так как `compose` применяет аргумент сначала к other (plus3), потом к this (times2): `times2(plus3(5))` = `times2(8)` = 16 — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Java следует математическому определению композиции из теории функций: `(f ∘ g)(x) = f(g(x))`. То есть `f.compose(g)` = «применить g, потом f» — справа налево. Если `f = times2` и `g = plus3`, то `times2.compose(plus3) (5)` = `times2(plus3(5))` = `times2(5+3)` = `times2(8)` = `16`.
+>
+> `andThen` — это обратный порядок, как pipeline: `f.andThen(g)` = `g(f(x))` = «сначала f, потом g». Для `times2.andThen(plus3).apply(5)` = `plus3(times2(5))` = `plus3(10)` = `13`.
+>
+> Мнемоника:
+> - `f.andThen(g)` — «f, а **затем** g» (как читается на английском: f and then g).
+> - `f.compose(g)` — «f, **компонуется с** g, где g идёт первым» (g «вкладывается внутрь» f, как `f(g(x))`).
+>
+> **Пример:**
+> ```java
+> Function<Integer, Integer> times2 = x -> x * 2;
+> Function<Integer, Integer> plus3 = x -> x + 3;
+>
+> // compose: g applied first, then f
+> Function<Integer, Integer> c = times2.compose(plus3);
+> c.apply(5);  // times2(plus3(5)) = times2(8) = 16
+>
+> // andThen: f applied first, then g
+> Function<Integer, Integer> a = times2.andThen(plus3);
+> a.apply(5);  // plus3(times2(5)) = plus3(10) = 13
+>
+> // Практический pipeline (andThen более популярен):
+> Function<String, String> trim = String::trim;
+> Function<String, String> upper = String::toUpperCase;
+> Function<String, Integer> length = String::length;
+>
+> Function<String, Integer> pipeline = trim.andThen(upper).andThen(length);
+> pipeline.apply("  hello  ");  // 5 (trim → "hello", upper → "HELLO", length → 5)
+>
+> // compose чаще используется в математических контекстах:
+> Function<Integer, Double> sqrt = Math::sqrt;
+> Function<Double, Double> abs = Math::abs;
+> Function<Integer, Double> sqrtOfAbs = sqrt.compose(i -> (double) Math.abs(i));
+> ```
+>
+> **Когда применять:**
+> - **andThen** — практически всегда для pipelines (data transformation: trim → validate → save). Читается естественно: «сначала это, затем то».
+> - **compose** — когда хочется подчеркнуть математическую композицию или когда «inner function» уже задана а нужно её обернуть.
+> - **Consumer.andThen** — только andThen (нет возвращаемого значения, compose невозможна).
+> - **Predicate** не имеет ни compose ни andThen — только `and()`, `or()`, `negate()` (тоже композиция, но булевая).
+>
+> **Подводные камни:**
+> - **`null` argument** — `f.andThen(null)` бросает NullPointerException **сразу** (не отложенно). Проверка в default-методе.
+> - **Type compatibility**: `Function<T, R> f`, `Function<R, V> g` — `f.andThen(g)` возвращает `Function<T, V>`. Цепочка строится по типам.
+> - **Generic capture bug**: иногда type inference не справляется, нужно явно указать generic параметр: `Function.<String>identity().andThen(s -> s.length())`.
+> - **Side effects в Function**: если одна из функций имеет side-effects (логирование, мутация), порядок может стать критичным. Compose vs andThen — это не только результат, но и порядок side-effects.
+> - **Производительность**: каждый `andThen/compose` создаёт новый Function-объект (через invokedynamic + LambdaMetafactory). На горячем пути в Stream это незаметно (JIT inline), но в micro-benchmarks разница есть.
+>
+> **Связанные вопросы:** [[Q4]] — Function/BiFunction; [[Q10]] — and/or/negate в Predicate; [[Q14]] — кастомные функциональные интерфейсы с композицией.
+>
+> ---
+>
+> #### C) 26, так как `compose` создаёт новую функцию выполняющую обе подфункции параллельно и суммирующую результаты — ❌ Неверно
+>
+> **Что на самом деле:** в Java нет «параллельной композиции функций» в стандартной библиотеке. `compose` — синхронная sequential операция. Параллельность достигается через `CompletableFuture.allOf` или Stream.parallel.
+>
+> **Откуда путаница:** возможно ассоциация с reactive streams (Flux.combineLatest), но это совсем другой API.
+>
+> **Если бы это было правдой:** функциональная композиция стала бы конструктом параллелизма — но это противоречит её определению.
+>
+> ---
+>
+> #### D) Compile error — Function не имеет метода compose() — ❌ Неверно
+>
+> **Что на самом деле:** `Function<T, R>` имеет **default метод** `compose(Function<? super V, ? extends T> before)` (а также `andThen`, `identity`). Все три — standard Java 8+ API.
+>
+> **Откуда путаница:** возможно путают с Consumer (у которого только `andThen`, нет `compose`).
+>
+> **Если бы это было правдой:** Stream API и Functional API стали бы намного беднее. compose доступен с Java 8, поведение специфицировано в JLS и Javadoc.
+
+## Q10. Как работают and(), or(), negate() в Predicate?
 
 ```java
 Predicate<String> notEmpty = s -> !s.isEmpty();
