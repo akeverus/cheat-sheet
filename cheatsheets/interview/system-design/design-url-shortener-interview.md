@@ -588,10 +588,57 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как shard DB? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая cache strategy + eviction policy наиболее уместна для Redis-слоя URL shortener?
+>
+> ---
+>
+> #### A) Write-through на все ключи + LRU eviction + TTL=infinity — гарантирует 100% cache hit — ❌ Неверно
+>
+> **Что на самом деле:** Write-through на ВСЕ shorten операции означает write amplification 2x (DB + Redis для каждой записи), включая URL которые никогда не будут прочитаны (90% URLs — long tail, < 1 click). Это раздувает Redis memory: 6B URLs × 100 bytes = 600GB Redis-кластер вместо 30GB для hot set. LRU без TTL = ключи никогда не expire сами; при memory pressure eviction случайных old-but-popular ключей.
+> **Откуда путаница:** "Cache hit 100% — святой грааль" — но cost этого выше, чем экономия от cache miss-ов на cold tail.
+> **Если бы это было правдой:** Redis cost вырастает в 20x; write latency на shorten растёт (await Redis write); при partial Redis outage write fails, хотя DB здорова.
+>
+> ---
+>
+> #### B) Cache-aside (lazy loading) + LFU eviction + TTL=24h — populates только реально востребованное, хранит самые популярные — ✓ Верно
+>
+> **Развёрнутое объяснение:** **Cache-aside** означает: read → Redis miss → DB → store в Redis. Это автоматически фильтрует cold tail — URLs которые никто не кликает не занимают cache memory. **LFU** (Least Frequently Used, `maxmemory-policy allkeys-lfu` в Redis) лучше LRU для URL shortener потому что популярные ссылки кликают долго (виральные YouTube-shortlinks 6+ месяцев), а LRU выбросит "старый но часто кликаемый" в пользу "недавно созданного но единожды прочитанного". **TTL 24h** — компромисс: длинный TTL экономит DB reads, короткий — даёт revocation window для phishing URLs.
+> **Пример:**
+> ```
+> # redis.conf
+> maxmemory 32gb
+> maxmemory-policy allkeys-lfu
+> 
+> # Application
+> long_url = redis.get(short_code)
+> if long_url is None:
+>     long_url = db.lookup(short_code)
+>     if long_url:
+>         redis.setex(short_code, 86400, long_url)  # TTL 24h
+>     else:
+>         redis.setex(f"miss:{short_code}", 60, "1")  # negative cache 1 min
+> return long_url
+> ```
+> **Когда применять:** Read-heavy KV workload с power-law распределением (Pareto 20/80). Twitter t.co, bit.ly, Yandex Cloud Object Storage metadata — все используют cache-aside + LFU. Negative caching (короткий TTL на 404) защищает от amplified DB load при scanning attacks.
+> **Подводные камни:** Thundering herd — cache expiry на популярном ключе → миллион concurrent DB queries; митигировать через probabilistic early refresh (XFetch algorithm) или single-flight pattern. Cold start — после Redis restart первые минуты hit ratio 0%; warm-up через replay top-1000 ключей. Stale data при DB update — invalidate через `DEL short_code` или короткий TTL.
+> **Связанные вопросы:** [[Q9]] — multi-tier cache architecture; [[Q13]] — TTL и expiration semantics; [[Q15]] — graceful degradation при Redis outage.
+>
+> ---
+>
+> #### C) Write-behind (async DB write) ускоряет shorten endpoint — ❌ Неверно
+>
+> **Что на самом деле:** Write-behind означает: write только в Redis, async flush в DB через batch. Для URL shortener это **опасно**: после shorten user получает короткую ссылку и отправляет другу; если Redis crashed до flush — ссылка не разрешается → 404 для user-visible action. Write-behind применим только для idempotent-able loss tolerant данных (analytics counters, кэш hit metrics), но не для durable mapping.
+> **Откуда путаница:** "Async = быстро" — но без durability gates это потеря данных.
+> **Если бы это было правдой:** SLA на "созданная ссылка работает" падает до Redis persistence (~99.5%); compliance аудит (GDPR data retention) ломается потому что DB не имеет полной истории; recovery procedure после Redis crash требует replay из app logs.
+>
+> ---
+>
+> #### D) LRU eviction всегда лучше LFU для cache — ❌ Неверно
+>
+> **Что на самом деле:** LRU оптимален для **recency-based** workloads (file system cache, session cache), но URL shortener имеет **frequency-based** распределение — viral URL популярна месяцами с пиками. LRU выбросит "стабильно популярный" URL когда в кеш попадёт burst of new shorten requests; LFU защищает long-term hot ключи. Redis 4.0+ предлагает оба, но `allkeys-lfu` явно рекомендуется для CDN-style workload (см. Redis docs).
+> **Откуда путаница:** LRU исторически был дефолтом в Redis (до 4.0) и memcached → "стандартный выбор".
+> **Если бы это было правдой:** При viral burst (Black Friday, новостной shortlink) hot set эвакуируется новыми ссылками; hit ratio падает с 95% до 60%; DB read load вырастает в 8x в самый неудобный момент.
 
 **Sharding strategies:**
 
@@ -626,10 +673,57 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Custom aliases? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как лучше всего шардировать DB для URL shortener с 6B записей, чтобы избежать hot partitions и упростить resharding?
+>
+> ---
+>
+> #### A) Consistent hashing по short_code с virtual nodes (vnodes) + shard-prefix encoding для co-location генерации — ✓ Верно
+>
+> **Развёрнутое объяснение:** **Consistent hashing** минимизирует rebalancing при изменении числа shards: добавили shard — мигрирует только 1/N ключей, а не все. **Virtual nodes** (каждый физический shard представлен 100-500 vnodes на hash-кольце) выравнивают распределение даже при разной ёмкости физических shards. **Shard-prefix encoding** (первые 1-2 символа short_code = shard ID) ускоряет lookup: app server знает shard по prefix без consultation с metadata service; каждый shard генерирует свои коды независимо → нет distributed counter contention. DynamoDB делает это автоматически (auto-split partitions при > 1000 WCU), Cassandra — через token ranges + vnodes.
+> **Пример:**
+> ```
+> # Code generation: shard-prefix encoded
+> shard_id = host_local_counter % NUM_SHARDS
+> suffix = base62(snowflake_id)
+> short_code = base62(shard_id) + suffix   # e.g. "aB7xK2p"
+> 
+> # Lookup
+> shard = decode_prefix(short_code[0])      # O(1)
+> long_url = shards[shard].get(short_code)
+> 
+> # Resharding (add shard N+1)
+> consistent_hash_ring.add_vnodes(N+1, count=200)
+> # Migrate only ~1/(N+1) of vnodes from old shards
+> ```
+> DynamoDB hash partitioning: hash(short_code) → 10GB/3000 RCU partition; auto-split at threshold. Cassandra: `PARTITION KEY = short_code` + `num_tokens: 256`.
+> **Когда применять:** Любая горизонтально-масштабируемая KV-система с unpredictable growth. Используется в DynamoDB, Cassandra, Riak, Twitter Manhattan, Bit.ly's MySQL sharding layer. Особенно важно когда reshard происходит без downtime (online cluster expansion).
+> **Подводные камни:** Hot partition при viral URL — даже с perfect hashing один short_code = один shard; митигировать через write sharding (suffix к ключу — `viral_url#0`, `viral_url#1`, ..., aggregation на read) или CDN edge cache. Cross-shard query ("count URLs created today") требует scatter-gather; для analytics использовать отдельный store (Kafka → ClickHouse). Vnode count tradeoff: больше vnodes = равномернее, но больше metadata overhead.
+> **Связанные вопросы:** [[Q4]] — distributed code generation (Snowflake); [[Q14]] — analytics в отдельной системе; [[Q15]] — replication внутри shard для durability.
+>
+> ---
+>
+> #### B) Range-based sharding по алфавиту short_code (a-i → shard 0, j-r → shard 1, ...) — проще для debug — ❌ Неверно
+>
+> **Что на самом деле:** Range-based sharding по prefix создаёт **hot shards**: Base62 distribution неравномерна — реальный traffic зависит от scheme generation. Если counter monotonically растёт и base62-encoded младший разряд меняется быстрее старшего, новые URLs концентрируются на одном shard, пока range не "продвинется". Также resharding range partitions требует физического move половины данных при split.
+> **Откуда путаница:** Range partitioning из PostgreSQL/MySQL `PARTITION BY RANGE` — проще для timeseries (по дате), но для random keys создаёт hotspots.
+> **Если бы это было правдой:** Все новые short_code попадают на shard 0; через месяц shard 0 имеет 80% данных, shard 5 — 5%; resharding split shard 0 = migration 600GB данных = часы downtime или сложный online split.
+>
+> ---
+>
+> #### C) Sharding по user_id co-locates URLs одного пользователя — лучший выбор — ❌ Неверно
+>
+> **Что на самом деле:** Sharding по user_id оптимизирует **"My links" query** (все URLs пользователя на одном shard), но проваливает основной use case — **redirect by short_code**: чтобы найти long_url нужно либо scatter-gather по всем shards, либо вторичный индекс short_code → user_id (extra lookup). Большинство трафика — redirects (100:1), а не "My links" view; primary access pattern диктует shard key.
+> **Откуда путаница:** Принцип "shard by what you query" применён без учёта весов запросов.
+> **Если бы это было правдой:** Каждый redirect делает либо N parallel queries (scatter), либо 2 sequential lookup (index + shard); p99 latency растёт с 10ms до 30-50ms; system upper bound по QPS падает в N раз для основного use case.
+>
+> ---
+>
+> #### D) Modulo hashing `shard = hash(short_code) % N` без consistent hashing — простейшее решение — ❌ Неверно
+>
+> **Что на самом деле:** `mod N` distribution равномерна, но при изменении N (добавили shard) **почти все ключи** меняют свой shard: `hash(x) % 4 ≠ hash(x) % 5` для большинства x. Это требует full reshuffle = миграция 100% данных. Consistent hashing решает именно эту проблему — переселяется только 1/N ключей. Также `mod N` не поддерживает разные capacity per shard (heterogeneous cluster).
+> **Откуда путаница:** Mod hashing — стандартная техника в учебниках, минимальный код; работает до первой попытки масштабировать кластер.
+> **Если бы это было правдой:** Добавление shard превращается в недельную миграционную операцию; "live resharding" невозможен без сложного proxy-layer (Vitess, ProxySQL); при failure shard невозможно временно redirect трафик на neighbours без перекеширования всего hash space.
 
 **User requests:** `/myalias` instead of `/abc1234`.
 
