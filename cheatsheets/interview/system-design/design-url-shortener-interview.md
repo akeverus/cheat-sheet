@@ -428,10 +428,49 @@ Table: urls
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Как scale reads? (cache, CDN) ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Для URL shortener выбирают между PostgreSQL и DynamoDB. Какое утверждение лучше всего обосновывает выбор технологии хранения?
+>
+> ---
+>
+> #### A) PostgreSQL обязателен — нужны транзакции и ACID для целостности short_code → long_url — ❌ Неверно
+>
+> **Что на самом деле:** Запись short_code → long_url — это идемпотентная single-row операция. Никаких multi-table транзакций не требуется: либо INSERT с UNIQUE constraint проходит, либо нет. ACID нужен для финансовых транзакций или сложных бизнес-инвариантов, а не для key-value lookup.
+> **Откуда путаница:** Привычка "DB = ACID = PostgreSQL по умолчанию". Многие backend-разработчики не различают bounded-context: какое именно гарантирование нужно в этой схеме.
+> **Если бы это было правдой:** Bit.ly и TinyURL работали бы на PostgreSQL primary, упирались бы в vertical scale на 50k+ QPS, тратили inflated $$$ на RDS Multi-AZ вместо DynamoDB on-demand с автоматическим горизонтальным split.
+>
+> ---
+>
+> #### B) Redis — единственный нужный store; persistence через AOF достаточно вместо отдельной DB — ❌ Неверно
+>
+> **Что на самом деле:** Redis с AOF теряет 0-1с данных при crash; RDB snapshot — до минут. Для URL shortener это означает потерю свежесозданных коротких ссылок — user отправил клиенту ссылку, через секунду crash → ссылка не разрешается → user-visible 404 на собственную ссылку. Redis нужен как cache layer поверх durable store (MySQL/DynamoDB), а не как единственный source of truth.
+> **Откуда путаница:** "Bit.ly использует Redis" → читают как "Redis вместо DB", хотя там Redis + MySQL.
+> **Если бы это было правдой:** При memory eviction (LRU) старые short_code теряются навсегда; SLA на durability падает до уровня AOF fsync (~99.9% в лучшем случае); compliance аудит (GDPR right-to-erasure logs) проваливается.
+>
+> ---
+>
+> #### C) Key-value NoSQL (DynamoDB/Cassandra) — оптимальный выбор: схема доступа = lookup by PK, нужна горизонтальная масштабируемость и predictable p99 latency — ✓ Верно
+>
+> **Развёрнутое объяснение:** URL shortener — это **canonical key-value workload**: 99% запросов = `GET long_url WHERE short_code = ?`. DynamoDB даёт p99 ≈ 10ms на любом масштабе с auto-partitioning по hash(short_code); on-demand pricing освобождает от capacity planning. Транзакции не нужны — short_code генерируется уникальным (counter+Base62, Snowflake, или INSERT с retry на conflict). Analytics (clicks) идут в отдельный pipeline (Kafka → ClickHouse), не нагружая redirect path.
+> **Пример:**
+> ```
+> Table: urls (DynamoDB)
+>   PK: short_code (S)
+>   Attrs: long_url, created_at, expires_at (TTL attr), user_id
+>   GSI: user_id-created_at-index (для "My links")
+> ```
+> Bit.ly: MySQL + Redis (legacy stack); modern (Yandex Cloud Shortener, Hootsuite Owly) — DynamoDB-style KV. Google goo.gl (до закрытия) — Bigtable.
+> **Когда применять:** Read-heavy workload (100:1 reads:writes), schema-on-read (атрибуты могут эволюционировать без миграций), нужен global secondary index для query patterns кроме PK, multi-region replication из коробки (DynamoDB Global Tables).
+> **Подводные камни:** Cross-partition queries (например, "top-100 URLs by clicks") требуют scan — нужен отдельный analytics store. Hot partition при единичном viral URL — митигировать write sharding (suffix к ключу) или CDN edge cache. Стоимость GSI = удвоение write capacity.
+> **Связанные вопросы:** [[Q7]] — Database schema; [[Q9]] — scale reads через cache/CDN; [[Q11]] — sharding strategies для самой DB.
+>
+> ---
+>
+> #### D) Cassandra — лучший выбор потому что поддерживает SQL через CQL — ❌ Неверно
+>
+> **Что на самом деле:** CQL похож на SQL **синтаксически**, но семантически ограничен: нет JOIN, нет subqueries, WHERE только по partition key (или с ALLOW FILTERING — антипаттерн). Cassandra оптимизирована для write-heavy workload (LSM-tree, append-only), а URL shortener — read-heavy. DynamoDB или Redis-as-primary дадут лучший cost/latency для 100:1 read ratio.
+> **Откуда путаница:** "CQL = SQL = удобно" — обманчивое сходство имени.
+> **Если бы это было правдой:** Tombstones от expired URLs накапливаются в SSTables, compaction overhead растёт; redirect latency через Cassandra p99 ≈ 30-50ms против DynamoDB 10ms; операционная сложность (управление nodetool, repair schedules) выше чем у managed DynamoDB.
 
 **Read amplification problem:** 1 URL може serve billions of redirects.
 
@@ -471,10 +510,52 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Cache strategy (write-through / lazy)? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** При scale reads для URL shortener (40k QPS, 100:1 read:write ratio) какая стратегия наиболее эффективна для снижения нагрузки на origin?
+>
+> ---
+>
+> #### A) Single Redis instance перед DB достаточен — отдаст все hot ключи из памяти — ❌ Неверно
+>
+> **Что на самом деле:** Single Redis instance с 30GB RAM покрывает hot set, но даёт single point of failure и upper bound ~100k QPS на инстанс. При 40k QPS глобально это работает, но при viral spike (топ-URL × миллион кликов) Redis instance насыщает NIC раньше, чем CPU; нужен Redis Cluster или multi-tier (in-proc → Redis → DB). Также Redis не решает географическую latency: user из Бразилии всё равно идёт в US-East datacenter.
+> **Откуда путаница:** "Redis = решение проблемы reads" — но single-tier cache игнорирует edge caching и geo-distribution.
+> **Если бы это было правдой:** При DDoS на популярный short_code single Redis колено-в-колено с DB; cross-region users получают 200ms RTT вместо 20ms через CDN edge; Redis OOM при unbounded growth.
+>
+> ---
+>
+> #### B) 301 Permanent Redirect полностью решает проблему — браузер закеширует — ❌ Неверно
+>
+> **Что на самом деле:** 301 действительно кешируется браузером надолго, но даёт два критических минуса: (1) теряется аналитика — последующие переходы не доходят до сервера, нет click_count; (2) нельзя отозвать ссылку — если URL заблокирован за phishing, у миллионов пользователей в браузере останется кеш 301 на месяцы. Большинство shortener используют **302 Found** (не кешируется) + CDN с короткой TTL для контроля.
+> **Откуда путаница:** "Permanent = постоянный = хорошо для производительности" — но в business context каждый клик должен быть наблюдаемым.
+> **Если бы это было правдой:** Аналитика клик-стрима ломается; revocation malicious URL невозможен без X-User-Agent fingerprint; conversion tracking партнёров (UTM-параметры) теряется на повторных кликах.
+>
+> ---
+>
+> #### C) Sharding DB по short_code решает read scaling без cache — ❌ Неверно
+>
+> **Что на самом деле:** Sharding распределяет write load и storage capacity, но **не решает read amplification**: один популярный short_code (viral video link) генерирует миллионы redirect на один shard → этот shard становится hot partition. Cache (Redis/CDN) — единственный способ обработать read amplification, потому что копирует hot ключи близко к edge, минуя origin. Sharding и cache решают **разные** проблемы и применяются вместе.
+> **Откуда путаница:** Смешение write scale (sharding) и read scale (caching) — обе называются "scale", но техники разные.
+> **Если бы это было правдой:** При viral URL один shard упирается в IOPS, остальные простаивают; добавление shard'ов не помогает, потому что трафик идёт в один partition; нужен либо cache, либо write-sharding популярного ключа (suffix trick).
+>
+> ---
+>
+> #### D) Multi-tier cache (CDN edge → Redis cluster → DB read replicas) + 302 redirect — обрабатывает read amplification на каждом уровне — ✓ Верно
+>
+> **Развёрнутое объяснение:** **L0 Browser** — не кешировать (302) для аналитики. **L1 CDN edge** (CloudFront/Cloudflare) — top URLs закешированы в 200+ POP по всему миру, hit ratio 50-70%, latency 5-20ms close to user. **L2 Redis cluster** — hot set (20% URLs = 80% трафика), p99 1ms, hit ratio 95%+ от того что прошло через CDN. **L3 DB read replicas** (Aurora replicas или DynamoDB Global Tables) — rarely touched, обрабатывают cache miss + cold tail. Каждый уровень снижает нагрузку на следующий экспоненциально — origin DB видит < 0.1% исходного трафика.
+> **Пример:**
+> ```
+> 40k QPS глобально
+>   ↓ CDN edge (hit 60%)
+> 16k QPS на app servers
+>   ↓ Redis cluster (hit 95%)
+> 800 QPS на DB
+>   ↓ read replicas split
+> ~200 QPS на каждую replica
+> ```
+> Cache-Control: `public, max-age=300, s-maxage=3600` — короткий browser TTL (revocation), длинный CDN TTL (offload).
+> **Когда применять:** Любой read-heavy KV сервис: bit.ly (Akamai + Redis), TikTok shortlinks (Cloudflare + own KV), Twitter t.co (Fastly + Manhattan KV store). 100:1 read:write — caching обязателен; 10:1 — рекомендован; 1:1 — необязателен.
+> **Подводные камни:** Cache invalidation при revocation — short TTL + explicit purge через CDN API. Stale cache при rolling restart — warm-up через replay logs. CDN cost — CloudFront $0.085/GB egress; для viral URLs можно превысить DB cost.
+> **Связанные вопросы:** [[Q10]] — cache-aside vs write-through trade-offs; [[Q15]] — graceful degradation при cache outage; [[Q11]] — sharding для write capacity (orthogonal к read scaling).
 
 **Write-through:**
 - On shorten: write DB + Redis atomically
