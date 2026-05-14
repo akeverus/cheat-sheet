@@ -2609,10 +2609,98 @@ val diffs: List<Int> = numbers.zipWithNext { a, b -> b - a }
 
 
 > [!mcq]
-> - [ ] `chunked(3)` и `windowed(3)` дают одинаковый результат для списка из 10 элементов | `chunked(3)` → `[[1,2,3],[4,5,6],[7,8,9],[10]]` (непересекающиеся блоки + хвост); `windowed(3)` → `[[1,2,3],[2,3,4],...,[8,9,10]]` (перекрытие, step=1, partialWindows=false по умолчанию). ❌ ПОСЛЕДСТВИЕ: batch-загрузчик «по 500» через `windowed(500)` создаёт ~N окон вместо N/500 батчей, БД получает в 500× больше insert-запросов, MySQL слот рестартит.
-> - [x] `chunked(n)` — непересекающиеся блоки фиксированного размера (последний может быть меньше); `windowed(n, step, partialWindows)` — скользящее окно с настраиваемым шагом и опциональными неполными окнами | `chunked` — для batch-обработки (БД-вставка, paging, разбивка на retry-блоки); `windowed` — для скользящего среднего, анализа трендов, временных серий. ✓ ПРИМЕНЯТЬ: `records.chunked(500) { repo.saveAll(it) }` для batch insert; `prices.windowed(7) { it.average() }` для 7-day moving average. 📋 ПРАВИЛО: «chunked = batch, windowed = sliding». 🔗 См. Q15.
-> - [ ] `windowed(3, partialWindows=false)` по умолчанию включает неполные окна в хвосте | `partialWindows=false` — это **default**; неполные окна **исключаются** (последние n-1 элементов не образуют окно). Для включения нужно явно `partialWindows = true`. ❌ ПОСЛЕДСТВИЕ: расчёт скользящего среднего по последним 30 дням «обрезает» последние 2 дня молча; отчёт «pricing trend» не показывает свежие данные, бизнес замечает через неделю.
-> - [ ] `zipWithNext { a, b -> b - a }` — это частный случай `chunked(2)` с overlap=0 | `zipWithNext` ≡ `windowed(2, step=1)` (пары соседних с перекрытием); `chunked(2)` даёт `[[a,b],[c,d],...]` без перекрытия. Принципиально разная семантика. ❌ ПОСЛЕДСТВИЕ: расчёт дельт между соседними измерениями через `chunked(2) { it[1] - it[0] }` теряет половину дельт, график анализа сенсоров пропускает скачки.
+>
+> **Вопрос:** Чем `chunked` принципиально отличается от `windowed` и в каких случаях их легко перепутать с критическими последствиями?
+>
+> ---
+>
+> #### A) `chunked(3)` и `windowed(3)` дают одинаковый результат для списка из 10 элементов — ❌ Неверно
+>
+> **Что на самом деле:** Это **разные** алгоритмы разбиения:
+> - `chunked(3)` на `[1..10]` → `[[1,2,3], [4,5,6], [7,8,9], [10]]` (4 блока, последний неполный, нет перекрытия)
+> - `windowed(3)` на `[1..10]` → `[[1,2,3], [2,3,4], [3,4,5], [4,5,6], [5,6,7], [6,7,8], [7,8,9], [8,9,10]]` (8 окон, перекрытие, по умолчанию step=1, partialWindows=false)
+>
+> Для 10 элементов: `chunked(3)` даёт ~3-4 элемента в результате, `windowed(3)` — ~8.
+>
+> **Откуда путаница:** оба принимают `size` как первый параметр, оба возвращают `List<List<T>>`. Без знания семантики легко взять любую.
+>
+> **Если бы это было правдой:** batch-загрузчик «по 500 записей за раз» написан через `records.windowed(500) { repo.saveAll(it) }` вместо `chunked(500)`; вместо N/500 батчей создаётся ~N окон с overlap, БД получает в 500× больше insert-запросов (каждая запись попадает в 500 окон), MySQL connection pool исчерпывается, replication slot рестартит, downtime 15 минут.
+>
+> ---
+>
+> #### B) `chunked(n)` — непересекающиеся блоки фиксированного размера (последний может быть меньше); `windowed(n, step, partialWindows)` — скользящее окно с настраиваемым шагом и опциональными неполными окнами — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это две принципиально разных операции разбиения:
+>
+> **`chunked(size)`** — batch partitioning:
+> - Делит коллекцию на непересекающиеся блоки фиксированного размера
+> - Последний блок может быть **меньше** size, если общий размер не кратен
+> - Применение: batch processing (БД insert, API pagination, retry-партии)
+>
+> **`windowed(size, step=1, partialWindows=false)`** — sliding window:
+> - Создаёт перекрывающиеся окна с настраиваемым шагом
+> - `step=1` (по умолчанию) — окна сдвигаются на 1 элемент; `step=size` эквивалентен `chunked`
+> - `partialWindows=false` (по умолчанию) — исключает неполные окна в хвосте; `=true` включает
+> - Применение: moving average, тренды, signal processing, time-series анализ
+>
+> **`zipWithNext { a, b -> ... }`** — частный случай `windowed(2)`: пары соседних с перекрытием. Применение: вычисление дельт, transitions.
+>
+> **Пример:**
+> ```kotlin
+> // Batch insert в БД (chunked)
+> fun saveAll(records: List<Record>) {
+>     records.chunked(500) { batch ->
+>         repository.saveAll(batch)  // 500-сразу-вставка, не overlap
+>     }
+> }
+>
+> // Скользящее 7-day moving average для цен (windowed)
+> val movingAvg: List<Double> = prices.windowed(7) { it.average() }
+>
+> // Дельты между соседними измерениями (zipWithNext = windowed(2))
+> val deltas: List<Int> = readings.zipWithNext { a, b -> b - a }
+>
+> // Сэмплирование каждых 5 элементов из окна 3 (windowed с custom step)
+> val samples: List<List<Int>> = signal.windowed(size = 3, step = 5)
+> ```
+>
+> **Когда применять:**
+> - **Avito batch DB ops**: `orders.chunked(1000) { repo.saveAll(it) }` для batch insert без overload
+> - **Yandex Maps анализ**: `gpsPoints.windowed(10) { computeSpeed(it) }` — скорость как среднее по окну
+> - **Banking metrics**: `dailyBalances.windowed(30) { it.average() }` для 30-day moving average
+>
+> **Подводные камни:**
+> - **`partialWindows=false` обрезает хвост**: `windowed(30)` на 365 днях даёт 336 окон, последние 29 дней не покрыты — важно для отчётов
+> - **`step > size`** в `windowed` — пропуски между окнами (sampling), не overlap
+> - **`chunked` last batch меньше**: при `repo.saveAll(batch)` это ок; если внешний API требует ровно N — добавь `chunked(N).filter { it.size == N }`
+>
+> **Связанные вопросы:** [[Q15]] — windowed/chunked/zipWithNext детально; [[Q11]] — базовые операции.
+>
+> ---
+>
+> #### C) `windowed(3, partialWindows=false)` по умолчанию включает неполные окна в хвосте — ❌ Неверно
+>
+> **Что на самом деле:** `partialWindows=false` — это **default** значение; неполные окна **исключаются** (последние n-1 элементов не образуют окно). Для включения нужно явно передать `partialWindows = true`: `windowed(3, partialWindows = true)` даст в хвосте `[..., [9,10], [10]]`.
+>
+> **Откуда путаница:** «window» часто ассоциируется с «всё включить, даже неполное» (как в SQL window functions). Но по умолчанию Kotlin строг — пропускает incomplete tails.
+>
+> **Если бы это было правдой:** расчёт скользящего среднего цен за последние 30 дней через `prices.windowed(30) { it.average() }` «обрезает» последние 29 дней молча — отчёт «pricing trend» не показывает свежие данные (вчерашняя цена не входит ни в одно окно); бизнес замечает через неделю, аналитика дашборда отстаёт.
+>
+> ---
+>
+> #### D) `zipWithNext { a, b -> b - a }` — это частный случай `chunked(2)` с overlap=0 — ❌ Неверно
+>
+> **Что на самом деле:** `zipWithNext` ≡ `windowed(2, step=1)`: пары соседних с **перекрытием** (каждый элемент попадает в две пары). `chunked(2)` — пары без перекрытия: `[[a,b],[c,d],[e,f],...]`. Это принципиально разная семантика.
+>
+> Пример: для `[1,2,3,4,5]`:
+> - `zipWithNext` → `[(1,2), (2,3), (3,4), (4,5)]` — 4 пары
+> - `chunked(2)` → `[[1,2], [3,4], [5]]` — 2.5 пары
+>
+> **Откуда путаница:** оба «работают парами», но overlap-семантика отличается.
+>
+> **Если бы это было правдой:** расчёт дельт между соседними измерениями сенсоров через `readings.chunked(2) { it[1] - it[0] }` теряет половину дельт (для `[10, 12, 14, 17]` получим `[2, 3]` вместо `[2, 2, 3]`); график анализа температуры пропускает аномальные скачки, alert о перегреве оборудования не срабатывает.
 
 ## Q42. В чём разница между `associateBy`, `associateWith` и `associate`?
 
@@ -2657,10 +2745,98 @@ val emailToId: Map<String, Int> = users.associate { it.email to it.id }
 
 
 > [!mcq]
-> - [x] `associateBy{k}` ставит результат лямбды как ключ, элемент как значение; `associateWith{v}` — наоборот, элемент как ключ, результат лямбды как значение; `associate{k to v}` — обе части из лямбды | Три варианта декомпозиции «откуда ключ, откуда значение»: индекс по полю (`By`), обогащение элемента (`With`), полная кастомизация (`associate`). ✓ ПРИМЕНЯТЬ: `orders.associateBy { it.id }` для O(1) lookup; `users.associateWith { computeScore(it) }` для batch-обогащения. 📋 ПРАВИЛО: «By → key from λ; With → value from λ». 🔗 См. Q33, Q13.
-> - [ ] `associateWith { it.email }` создаёт `Map<String, User>` где email — ключ | `associateWith` ставит **сам элемент** ключом, результат лямбды — значением: `users.associateWith { it.email }` → `Map<User, String>`. Чтобы получить `Map<String, User>` по email — нужен `associateBy { it.email }`. ❌ ПОСЛЕДСТВИЕ: lookup пользователей по email через `userByEmail[email]` возвращает null (ключ — User, не String), 404 для всех login-запросов после миграции.
-> - [ ] При коллизии ключей все три функции бросают `IllegalStateException` | Все три **молча** перезаписывают значения последним элементом — это часть контракта. Для обнаружения дубликатов используй `groupBy`. ❌ ПОСЛЕДСТВИЕ: дедупликация по customerId через `customers.associateBy { it.id }` тихо теряет дубликаты; CRM показывает только последнюю запись на customer, аудит через 3 месяца находит расхождение.
-> - [ ] `associate` всегда более производителен чем `associateBy`, так как использует Pair напрямую | `associate { k to v }` **создаёт `Pair<K, V>`** на каждом элементе (allocation); `associateBy { key }` пишет в `LinkedHashMap` без Pair. Производительность `associateBy` лучше. ❌ ПОСЛЕДСТВИЕ: «оптимизация» через `users.associate { it.id to it }` в hot path добавляет N Pair-аллокаций, GC-pressure растёт, p99 latency +5ms.
+>
+> **Вопрос:** Что определяет, какая из функций (`associateBy`, `associateWith`, `associate`) даёт `Map<K, T>`, какая `Map<T, V>`, и какая полностью кастомная?
+>
+> ---
+>
+> #### A) `associateBy{k}` ставит результат лямбды как ключ, элемент как значение; `associateWith{v}` — наоборот, элемент как ключ, результат лямбды как значение; `associate{k to v}` — обе части из лямбды — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это три ортогональных варианта декомпозиции «откуда ключ, откуда значение»:
+>
+> 1. **`associateBy { keySelector: (T) -> K }`** → `Map<K, T>`
+>    - Ключ из лямбды (= keySelector), значение = сам элемент
+>    - Кейс: **индекс по полю** для O(1) lookup
+>
+> 2. **`associateWith { valueSelector: (T) -> V }`** → `Map<T, V>`
+>    - Ключ = сам элемент, значение из лямбды (= valueSelector)
+>    - Кейс: **обогащение элемента** вычисленным значением
+>
+> 3. **`associate { transform: (T) -> Pair<K, V> }`** → `Map<K, V>`
+>    - Обе части из лямбды через Pair
+>    - Кейс: полная кастомизация, когда ни элемент, ни одно его поле не подходят как ключ/значение
+>
+> 4. **`associateBy({ keySelector }, { valueTransform })`** → `Map<K, V>` (двух-аргументная)
+>    - Эквивалент `associate { k(it) to v(it) }`, но без создания Pair (эффективнее)
+>
+> Мнемоника: «**By** = key from λ; **With** = value from λ; **associate** = both».
+>
+> **Пример:**
+> ```kotlin
+> data class Order(val id: Long, val customerId: Long, val amount: BigDecimal)
+> val orders = repo.findAll()
+>
+> // associateBy — индекс по id для join
+> val byId: Map<Long, Order> = orders.associateBy { it.id }
+> val o = byId[42L]  // O(1) lookup
+>
+> // associateWith — обогащение score для каждого заказа
+> val withScore: Map<Order, Double> = orders.associateWith { computeRiskScore(it) }
+>
+> // associate — кастомные пары (например, id → форматированная строка)
+> val display: Map<Long, String> =
+>     orders.associate { it.id to "${it.amount} for ${it.customerId}" }
+>
+> // associateBy с valueTransform — без Pair-allocation
+> val idToAmount: Map<Long, BigDecimal> =
+>     orders.associateBy({ it.id }, { it.amount })
+> ```
+>
+> **Когда применять:**
+> - **Avito orders processing**: `orders.associateBy { it.id }` для O(1) join с invoices
+> - **Yandex batch enrichment**: `users.associateWith { fetchProfile(it.id) }` для bulk-fetch profiles
+> - **Banking statement**: `txs.associateBy({ it.id }, { it.amount })` без Pair-allocation в hot path
+>
+> **Подводные камни:**
+> - **Дубликаты ключей**: все три функции молча перезаписывают; для группировки — `groupBy`
+> - **`associate` создаёт Pair**: для perf-critical путей предпочитай `associateBy({}, {})`
+> - **Порядок сохраняется**: возвращает `LinkedHashMap` (предсказуемая итерация)
+>
+> **Связанные вопросы:** [[Q33]] — детально про associate functions; [[Q13]] — groupBy и partition; [[Q14]] — groupingBy.
+>
+> ---
+>
+> #### B) `associateWith { it.email }` создаёт `Map<String, User>` где email — ключ — ❌ Неверно
+>
+> **Что на самом деле:** `associateWith` ставит **сам элемент** ключом, результат лямбды — значением: `users.associateWith { it.email }` → **`Map<User, String>`** (User → email). Чтобы получить `Map<String, User>` по email (email → user), нужен `associateBy { it.email }`.
+>
+> **Откуда путаница:** название «With» можно прочитать как «associate user with email = key with email», но Kotlin-семантика: «associate each element WITH a value» — значение из лямбды, элемент сам — ключ.
+>
+> **Если бы это было правдой:** lookup пользователей по email через `val userByEmail = users.associateWith { it.email }; userByEmail[email]` возвращает `null` (ключ типа User, а передаётся String); 404 для всех login-запросов после миграции, customer support забит тикетами; правильно — `users.associateBy { it.email }`.
+>
+> ---
+>
+> #### C) При коллизии ключей все три функции бросают `IllegalStateException` — ❌ Неверно
+>
+> **Что на самом деле:** Все три (`associate`, `associateBy`, `associateWith`) **молча перезаписывают** значения последним элементом с тем же ключом. Это часть документированного контракта stdlib. Для обнаружения дубликатов или сохранения всех значений — `groupBy { keySelector }` (возвращает `Map<K, List<V>>`).
+>
+> **Откуда путаница:** «unique constraint violation» — естественная интуиция из реляционных БД (PRIMARY KEY бросает duplicate). Но stdlib Kotlin приоритезирует «нет неожиданных exceptions», документируя last-wins.
+>
+> **Если бы это было правдой:** дедупликация по customerId через `customers.associateBy { it.id }` тихо теряет дубликаты (если в БД есть дубль due to некорректной миграции); CRM показывает только последнюю запись на customer, потерянные данные о предыдущих сессиях; аудит через 3 месяца находит расхождение с raw данными.
+>
+> ---
+>
+> #### D) `associate` всегда более производителен чем `associateBy`, так как использует Pair напрямую — ❌ Неверно
+>
+> **Что на самом деле:** **Наоборот**: `associate { k to v }` создаёт **`Pair<K, V>`-объект на каждом элементе** (allocation), затем `.first`/`.second` извлекаются и кладутся в Map. `associateBy { keySelector }` пишет напрямую `linkedMap.put(key, element)` без Pair. Производительность `associateBy` лучше.
+>
+> Для случая когда нужны и кастомный ключ, и кастомное значение — есть `associateBy({ k }, { v })` (двухаргументная), которая тоже не создаёт Pair.
+>
+> **Откуда путаница:** «Pair напрямую» звучит как «без обёрток». На самом деле Pair — это сам объект-обёртка с allocation.
+>
+> **Если бы это было правдой:** «оптимизация» через `users.associate { it.id to it }` в hot path processOrders добавляет N Pair-аллокаций, GC-pressure в young-gen растёт, p99 latency +5ms, perf review требует rollback до `associateBy { it.id }`.
 
 ## Q43. Что такое `scan` и как он отличается от `fold`?
 
