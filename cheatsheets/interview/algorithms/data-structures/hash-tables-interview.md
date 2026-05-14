@@ -14,7 +14,7 @@ aliases:
   - "Хеш-таблицы собеседование"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Хеш-таблицы`
 
@@ -788,17 +788,7 @@ map.merge("counter", 1, Integer::sum);
 >
 > ---
 >
-> #### A) Это просто синтаксический сахар — runtime-поведение идентичное — ❌ Неверно
->
-> **Что на самом деле:** разница принципиальная. `compute()` выполняет read-modify-write **атомарно** под `synchronized(head)` для конкретного bucket. Последовательность `get + put` имеет race-window между чтением и записью: другой поток может вставить/обновить значение между ними — lost update.
->
-> **Откуда путаница:** код выглядит «той же логикой» в одну строку — кажется эквивалентным; забывается atomicity-гарантия.
->
-> **Если бы это было правдой:** счётчик в `chm.compute(key, (k,v) -> v+1)` показывал бы те же значения, что и `chm.put(k, chm.get(k)+1)` — но второй вариант теряет инкременты, и итоговое значение будет меньше ожидаемого.
->
-> ---
->
-> #### B) `compute` атомарно выполняет read-modify-write под локом bucket-head — между чтением и записью никто не вмешается; `get+put` не атомарны и теряют обновления — ✓ Верно
+> #### A) `compute` атомарно выполняет read-modify-write под локом bucket-head — между чтением и записью никто не вмешается; `get+put` не атомарны и теряют обновления — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -835,6 +825,16 @@ map.merge("counter", 1, Integer::sum);
 > - Долгие вычисления внутри лямбды держат bucket lock — другие потоки на тот же bucket блокируются. Для тяжёлых операций — либо `CompletableFuture` как значение, либо `Caffeine`.
 > - `merge` с возвращением `null` из remapping удалит ключ — иногда непреднамеренно.
 > - В Java 8 есть [известный баг](https://bugs.openjdk.org/browse/JDK-8062841) с deadlock при рекурсивном computeIfAbsent — исправлено в Java 9+.
+>
+> ---
+>
+> #### B) Это просто синтаксический сахар — runtime-поведение идентичное — ❌ Неверно
+>
+> **Что на самом деле:** разница принципиальная. `compute()` выполняет read-modify-write **атомарно** под `synchronized(head)` для конкретного bucket. Последовательность `get + put` имеет race-window между чтением и записью: другой поток может вставить/обновить значение между ними — lost update.
+>
+> **Откуда путаница:** код выглядит «той же логикой» в одну строку — кажется эквивалентным; забывается atomicity-гарантия.
+>
+> **Если бы это было правдой:** счётчик в `chm.compute(key, (k,v) -> v+1)` показывал бы те же значения, что и `chm.put(k, chm.get(k)+1)` — но второй вариант теряет инкременты, и итоговое значение будет меньше ожидаемого.
 >
 > ---
 >
@@ -1985,6 +1985,104 @@ public class HashSet<E> {
 
 Все сложности и контракт `hashCode/equals` — те же, что у `HashMap`. Применяется для **уникальности** без значений.
 
+
+> [!mcq]
+>
+> **Вопрос:** Как реализован `HashSet<T>` в Java и какое значение хранится в его внутренней Map?
+>
+> ---
+>
+> #### A) HashSet — независимая структура с собственным алгоритмом хеширования, оптимизированная для отсутствия значений — ❌ Неверно
+>
+> **Что на самом деле:** HashSet — это обёртка вокруг HashMap, а не независимая структура. Внутри хранится `private transient HashMap<E, Object> map;` — все элементы используются как ключи, а в качестве значения используется один общий sentinel объект.
+>
+> **Откуда путаница:** название «HashSet» подразумевает уникальную реализацию; разработчики ожидают «более лёгкого» класса.
+>
+> **Если бы это было правдой:** HashSet имел бы другие performance characteristics, чем HashMap; реально они идентичны (потому что Set делегирует Map'у).
+>
+> ---
+>
+> #### B) HashSet хранит элементы в TreeMap для гарантии порядка — ❌ Неверно
+>
+> **Что на самом деле:** HashSet хранит в HashMap (нет порядка). Set с упорядоченным порядком — это TreeSet (на TreeMap) или LinkedHashSet (insertion-order). Путаница с TreeMap привела бы к O(log n) операциям, а не O(1).
+>
+> **Откуда путаница:** разработчик может смешивать TreeSet и HashSet.
+>
+> **Если бы это было правдой:** iteration по HashSet был бы отсортирован — но это не так, тесты с set.iterator() показали бы случайный порядок.
+>
+> ---
+>
+> #### C) HashSet<E> = обёртка над HashMap<E, Object>; все элементы хранятся как ключи; значение — единый sentinel `private static final Object PRESENT = new Object()`; add/contains/remove делегируются map.put/containsKey/remove — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> JDK-реализация HashSet — простой adapter:
+> ```java
+> public class HashSet<E> extends AbstractSet<E> {
+>     private transient HashMap<E, Object> map;
+>     private static final Object PRESENT = new Object();
+>
+>     public boolean add(E e) {
+>         return map.put(e, PRESENT) == null;  // true если ключа не было
+>     }
+>
+>     public boolean contains(Object o) {
+>         return map.containsKey(o);
+>     }
+>
+>     public boolean remove(Object o) {
+>         return map.remove(o) == PRESENT;
+>     }
+> }
+> ```
+>
+> Дизайн-преимущество: вся сложная логика (treeify, resize, hashCode contract, fail-fast iterator) уже отлажена в HashMap. HashSet получает её бесплатно. Минус — overhead на хранение PRESENT-ссылки в каждом entry (8-16 байт на element, бесполезно).
+>
+> Аналогично:
+> - `LinkedHashSet` обёртка над `LinkedHashMap`.
+> - `TreeSet` обёртка над `TreeMap`.
+> - `ConcurrentHashMap.newKeySet()` — Set-вид на ConcurrentHashMap.
+>
+> **Пример:**
+> ```java
+> Set<String> set = new HashSet<>();
+> set.add("a");        // внутри: map.put("a", PRESENT)
+> set.contains("a");   // внутри: map.containsKey("a")
+>
+> // Иногда нужна Set-семантика над существующей ConcurrentHashMap:
+> ConcurrentHashMap<String, Boolean> chm = new ConcurrentHashMap<>();
+> Set<String> view = ConcurrentHashMap.newKeySet();   // отдельная Set
+> Set<String> keys = chm.keySet(true);                // view с дефолтным значением
+> keys.add("k");                                        // равно chm.put("k", true)
+> ```
+>
+> **Когда применять:**
+> - **Deduplication**: уникальные ID/строки — natural fit для Set.
+> - **Membership testing**: `if (allowedRoles.contains(role))`.
+> - **`stream().distinct()` под капотом** использует HashSet.
+> - **Set operations**: union/intersection через `addAll`/`retainAll`.
+>
+> **Подводные камни:**
+> - **Память**: HashSet тяжелее `Map<K, Boolean>` или `boolean[]` (если элементы — small int). PRESENT занимает место бесполезно.
+> - **Iteration order**: HashSet не гарантирует порядок (даже стабильный между запусками). Для предсказуемого — LinkedHashSet.
+> - **Не thread-safe**: для concurrent — `ConcurrentHashMap.newKeySet()` или `CopyOnWriteArraySet` (для редких записей).
+> - **contains() требует корректного equals/hashCode** на элементах. Если положить mutable объект и потом изменить — теряется (как с HashMap-ключами).
+> - `remove(Object)` — возвращает boolean, но `remove(int)` НЕ существует на HashSet (в отличие от List) — частая ловушка.
+>
+> ---
+>
+> #### D) HashSet работает за O(log n) из-за внутреннего сравнения по hashCode — ❌ Неверно
+>
+> **Что на самом деле:** HashSet работает за O(1) среднее, O(log n) худшее (только при treeify коллизий) — те же характеристики, что у HashMap. «Сравнение по hashCode» — некорректное описание; элементы группируются в bucket по hash, и внутри bucket equals разрешает коллизии.
+>
+> **Откуда путаница:** «hash» + «set» + «сравнение» → ассоциация с sorted/binary search.
+>
+> **Если бы это было правдой:** HashSet был бы заметно медленнее на больших размерах — реально его используют в hot-path коде без проблем.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q8]] — устройство HashMap; [[Q4]] — equals/hashCode contract; [[Q23]] — LinkedHashMap (LinkedHashSet — Set-вариант).
+
 ---
 
 ## See also
@@ -2002,15 +2100,3 @@ public class HashSet<E> {
 - [Распределённые системы](../../architecture/distributed-systems-interview.md) — sharding и hashing
 - [Application Security](../../security/application-security-interview.md) — HashDoS защита
 - [Redis](../../databases/redis-interview.md) — hash table в основе
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Массивы и строки](arrays-strings-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Графы](graphs-interview.md)
-- [Кучи (Heaps)](heaps-interview.md)
-- [Связные списки](linked-lists-interview.md)
-- [Стеки и очереди](stacks-queues-interview.md)
-- [Деревья](trees-interview.md)
