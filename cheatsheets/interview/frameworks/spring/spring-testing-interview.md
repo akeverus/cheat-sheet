@@ -107,10 +107,80 @@ class OrderServiceIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. Какие режимы `webEnvironment` есть в `@SpringBootTest`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что делает `@SpringBootTest` и в каких сценариях его выбор оправдан по сравнению с slice-тестами?
+>
+> ---
+>
+> #### A) `@SpringBootTest` загружает только web-слой, как `@WebMvcTest`, но дополнительно поднимает Tomcat — ❌ Неверно
+>
+> **Что на самом деле:** `@SpringBootTest` загружает **полный** ApplicationContext: все `@Component`/`@Service`/`@Repository`/`@Configuration`, все автоконфигурации Spring Boot из `spring.factories`/`AutoConfiguration.imports`. Web-слой — лишь одна из частей. Tomcat запускается опционально через `webEnvironment = RANDOM_PORT/DEFINED_PORT`, по умолчанию `MOCK` (без сервера).
+>
+> **Откуда путаница:** разработчик видит, что в `@SpringBootTest` доступен MockMvc и думает «это супер-WebMvcTest». На деле MockMvc становится доступен только при добавлении `@AutoConfigureMockMvc`, а контекст содержит ВСЁ приложение.
+>
+> **Если бы это было правдой:** не было бы смысла в slice-аннотациях — все бы просто писали `@SpringBootTest`. На практике именно из-за разницы в scope test suite на 500 тестов с `@SpringBootTest` собирается 8-12 минут вместо 30 секунд на slice-тестах.
+>
+> ---
+>
+> #### B) `@SpringBootTest` загружает полный ApplicationContext (все бины + автоконфигурации + `application.yml`); применять для интеграционных тестов, требующих взаимодействия нескольких слоёв (Service ↔ Repository ↔ DB), а для одиночного слоя предпочтительны slice-тесты (`@WebMvcTest`, `@DataJpaTest`) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `@SpringBootTest` ищет основной класс с `@SpringBootApplication` (поднимаясь по пакетам) и запускает Spring Boot startup как в продакшене: применяет автоконфигурации, читает профили, создаёт все бины. Это самый «честный» тип теста — поведение максимально близко к production. Цена — медленный старт (несколько секунд на контекст) и риск тестировать слишком много за раз. Для тестов одного слоя Spring Boot предлагает slice-аннотации: они загружают только релевантную часть и автоматически мокируют остальное.
+>
+> **Пример:**
+> ```java
+> @SpringBootTest
+> @AutoConfigureMockMvc
+> class OrderE2ETest {
+>
+>     @Autowired private MockMvc mockMvc;
+>     @Autowired private OrderRepository repository;
+>
+>     @Test
+>     void createOrder_persistsAndReturnsCreated() throws Exception {
+>         mockMvc.perform(post("/api/orders")
+>                 .contentType(APPLICATION_JSON)
+>                 .content("""{"customerId":"CUST-1"}"""))
+>             .andExpect(status().isCreated());
+>
+>         assertThat(repository.findAll()).hasSize(1);
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - End-to-end тесты бизнес-сценария через несколько слоёв (Controller → Service → Repository → DB).
+> - Smoke-тесты на старте CI: «контекст вообще поднимается?»
+> - Тестирование автоконфигураций и стартеров.
+> - В связке с Testcontainers — близкая к production интеграция (PostgreSQL, Kafka, Redis).
+>
+> **Подводные камни:**
+> - Каждый уникальный набор `@MockBean` создаёт новый контекст в кеше — следите за `org.springframework.test.context.cache=DEBUG`.
+> - `webEnvironment = RANDOM_PORT` поднимает Tomcat — не забывайте `@LocalServerPort` для адреса.
+> - При `MOCK` (default) реальный сервер НЕ запускается, TestRestTemplate работать не будет — нужен MockMvc.
+>
+> **Связанные вопросы:** [[Q2]] — режимы `webEnvironment`; [[Q3]] — test slices; [[Q13]] — кеширование ApplicationContext.
+>
+> ---
+>
+> #### C) `@SpringBootTest` всегда поднимает реальный HTTP-сервер на порту 8080 — ❌ Неверно
+>
+> **Что на самом деле:** по умолчанию `webEnvironment = MOCK` — НИКАКОЙ реальный сервер не поднимается. Для реального сервера нужно явно указать `webEnvironment = RANDOM_PORT` (рекомендуется) или `DEFINED_PORT` (для 8080). `MOCK` использует MockMvc через DispatcherServlet без сетевого слоя.
+>
+> **Откуда путаница:** в JUnit-туториалах часто показывают `@SpringBootTest(webEnvironment = RANDOM_PORT)` и оставляют впечатление что так всегда. Default-режим `MOCK` менее заметен.
+>
+> **Если бы это было правдой:** параллельный запуск тестов в CI на одной VM конфликтовал бы за порт 8080 — `BindException: Address already in use`. На практике именно поэтому default — `MOCK`, а для HTTP-тестов используют `RANDOM_PORT`.
+>
+> ---
+>
+> #### D) `@SpringBootTest` запускает только Spring Test Context без Boot-специфичных автоконфигураций — ❌ Неверно
+>
+> **Что на самом деле:** `@SpringBootTest` НАСЛЕДУЕТСЯ от `@BootstrapWith(SpringBootTestContextBootstrapper.class)` и явно включает все Boot-автоконфигурации через `SpringBootContextLoader`. Это его главное отличие от чистого `@ContextConfiguration` из Spring Test — Boot magic (data source autoconfigure, Jackson, Web MVC) работает.
+>
+> **Откуда путаница:** есть Spring Test (`@ContextConfiguration`, `@RunWith(SpringRunner.class)`) — действительно без Boot-specific логики. Можно спутать с `@SpringBootTest`.
+>
+> **Если бы это было правдой:** в тесте бы не работали `@ConfigurationProperties`, `application.yml` не читался бы, JPA-репозитории не создавались бы автоматически. Spring Boot smart defaults бы просто исчезли — тест перестал бы отражать production.
 
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -147,10 +217,86 @@ class OrderControllerHttpTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Что такое test slices и зачем нужны? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие режимы `webEnvironment` существуют в `@SpringBootTest` и в чём ключевая разница между `MOCK` и `RANDOM_PORT`?
+>
+> ---
+>
+> #### A) `MOCK` запускает Tomcat на random-порту, `RANDOM_PORT` — на 8080 — ❌ Неверно
+>
+> **Что на самом деле:** `MOCK` (default) НЕ запускает реальный сервер вообще — создаётся mock-окружение через `MockServletContext`. `RANDOM_PORT` запускает реальный embedded Tomcat/Jetty/Undertow на случайном свободном порту (порт можно получить через `@LocalServerPort`). `DEFINED_PORT` запускает на конфигурируемом порту (по умолчанию 8080).
+>
+> **Откуда путаница:** «random port» и «random» в `MOCK` звучат похоже. На самом деле `MOCK` — про mock-объекты, а `RANDOM_PORT` — про случайный TCP-порт.
+>
+> **Если бы это было правдой:** параллельные `MOCK`-тесты падали бы с `BindException` на CI runner. В реальности `MOCK` идеально параллелится — нет сетевого I/O вообще.
+>
+> ---
+>
+> #### B) Все режимы идентичны, разница только в логировании — ❌ Неверно
+>
+> **Что на самом деле:** режимы кардинально различаются по архитектуре. `MOCK` → запросы идут через MockMvc/DispatcherServlet БЕЗ сокета. `RANDOM_PORT`/`DEFINED_PORT` → реальный HTTP через сокет, доступен TestRestTemplate/WebTestClient. `NONE` → веб-слой вообще не загружается (для тестов без Web — например, batch-задач).
+>
+> **Откуда путаница:** все режимы синтаксически выглядят одинаково (`webEnvironment = X`). Реальные различия видны только когда подключаешь TestRestTemplate (в `MOCK` он будет `null`).
+>
+> **Если бы это было правдой:** Spring Boot не имел бы причин иметь 4 разных значения enum. На практике выбор режима меняет: запускается ли Tomcat, нужен ли `@LocalServerPort`, какие тесты возможны.
+>
+> ---
+>
+> #### C) `MOCK` (default) — фиктивный web-environment без сокета, тесты через MockMvc; `RANDOM_PORT` — реальный embedded-сервер на случайном порту для тестов через TestRestTemplate/WebTestClient; `DEFINED_PORT` — реальный сервер на сконфигурированном порту; `NONE` — web-слой не загружается — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `webEnvironment` определяет, как Spring подготовит web-окружение в тесте. `MOCK` подходит для подавляющего большинства тестов (он быстр и идемпотентен): DispatcherServlet работает «in-memory», но всё остальное (фильтры, advice, security) — реальное. `RANDOM_PORT` нужен для end-to-end тестов через HTTP-стек: например, проверка реальной сериализации, CORS, headers. `DEFINED_PORT` редок — почти всегда лучше `RANDOM_PORT` (избегает порт-конфликтов в CI). `NONE` — для не-веб приложений (batch, scheduler-only).
+>
+> **Пример:**
+> ```java
+> // RANDOM_PORT для HTTP end-to-end теста
+> @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+> class OrderHttpTest {
+>
+>     @LocalServerPort int port;
+>     @Autowired TestRestTemplate rest;
+>
+>     @Test
+>     void createOrder_via_http() {
+>         ResponseEntity<Order> r = rest.postForEntity(
+>             "http://localhost:" + port + "/api/orders",
+>             new OrderRequest("CUST-1"), Order.class);
+>         assertThat(r.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+>     }
+> }
+>
+> // MOCK для большинства тестов
+> @SpringBootTest
+> @AutoConfigureMockMvc
+> class OrderMvcTest {
+>     @Autowired MockMvc mockMvc;
+>     // никаких портов, реальный сервер не нужен
+> }
+> ```
+>
+> **Когда применять:**
+> - `MOCK` — основной режим: быстрее, можно параллелить, MockMvc даёт fluent assertions.
+> - `RANDOM_PORT` — проверка реального HTTP: WebSocket, SSE, header propagation, CORS preflight.
+> - `DEFINED_PORT` — редко: при необходимости фиксированного порта (например, тесты Docker compose, где другой контейнер знает имя/порт).
+> - `NONE` — batch jobs, scheduler-driven приложения без REST API.
+>
+> **Подводные камни:**
+> - `MOCK` не выполняет реальную сериализацию HTTP — нюансы Content-Type negotiation могут отличаться от продакшена.
+> - В `RANDOM_PORT` `@LocalServerPort` валиден только в test-классе, не в `@Configuration`.
+> - При `NONE` нельзя автоматически получить MockMvc — это не web-режим.
+>
+> **Связанные вопросы:** [[Q1]] — общее назначение `@SpringBootTest`; [[Q7]] — MockMvc fluent API; [[Q15]] — Testcontainers с RANDOM_PORT.
+>
+> ---
+>
+> #### D) `RANDOM_PORT` использует mock TCP стек без реального socket binding — ❌ Неверно
+>
+> **Что на самом деле:** `RANDOM_PORT` запускает РЕАЛЬНЫЙ embedded Tomcat/Jetty с реальным `ServerSocket.bind()` на свободный порт (Spring находит его через `ServerSocketFactory`). Никаких mock-сокетов — реальный TCP listener, реальная HTTP-обработка.
+>
+> **Откуда путаница:** «mock» в `MOCK` и слово «test» в `@SpringBootTest` могут навести на мысль, что Spring всегда подделывает networking.
+>
+> **Если бы это было правдой:** нельзя было бы проверить ничего, что требует реального HTTP — WebSocket, SSE, header parsing nuances. На самом деле `RANDOM_PORT` именно для таких проверок и используется.
 
 **Test slice** — тестовая аннотация, загружающая только определённый слой приложения, не поднимая весь контекст.
 
@@ -169,10 +315,82 @@ class OrderControllerHttpTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Что такое `@WebMvcTest` и чем отличается от `@SpringBootTest`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое test slice и какие бины он загружает по сравнению с полным `@SpringBootTest`?
+>
+> ---
+>
+> #### A) Test slice загружает ВЕСЬ ApplicationContext, но логирует только бины своего слоя — ❌ Неверно
+>
+> **Что на самом деле:** test slice физически загружает только подмножество бинов, относящихся к нужному слою. Реализовано через `@TypeExcludeFilters` + специальный `AutoConfigurationImportFilter`: каждый slice имеет свой `*TypeExcludeFilter` (например, `WebMvcTypeExcludeFilter`), который исключает `@Service`, `@Repository`, `@Component` из основного приложения.
+>
+> **Откуда путаница:** если в логах теста видны меньше бинов, чем в проде, можно подумать что они «отфильтрованы при выводе». На самом деле они физически отсутствуют в контексте.
+>
+> **Если бы это было правдой:** не было бы выигрыша по скорости — а на практике slice-тест поднимается в 5-10 раз быстрее, чем `@SpringBootTest`. Это именно потому, что бинов меньше.
+>
+> ---
+>
+> #### B) Test slice — это `@Profile("test")` для тестового запуска — ❌ Неверно
+>
+> **Что на самом деле:** test slice — это **отдельный механизм**, не связанный с профилями. Реализован через композицию `@BootstrapWith` + `@OverrideAutoConfiguration(enabled=false)` + `@TypeExcludeFilters`. Профили (`@ActiveProfiles`) можно использовать ВНУТРИ slice-теста ортогонально.
+>
+> **Откуда путаница:** и slice и `@Profile` управляют тем, какие бины активны. Кажется что это одно и то же.
+>
+> **Если бы это было правдой:** для slice-теста пришлось бы помечать профилем каждый продакшен-класс — `@Profile("!test")` на сервис, чтобы он не загружался. На практике никто этого не делает, потому что slice работает независимо.
+>
+> ---
+>
+> #### C) Test slice — это шаблон с моками для определённого слоя — ❌ Неверно
+>
+> **Что на самом деле:** slice сам по себе НЕ создаёт моки. Он лишь убирает бины «соседних» слоёв из контекста. Если контроллеру нужен `OrderService`, и есть `@WebMvcTest` — этот сервис надо явно мокировать через `@MockBean`. Slice не угадывает зависимости автоматически.
+>
+> **Откуда путаница:** многие читали туториалы, где `@WebMvcTest` идёт парой с `@MockBean OrderService`, и думают что моки — часть slice'а.
+>
+> **Если бы это было правдой:** не нужно было бы писать `@MockBean` руками — Spring сам мокировал бы всё в контексте. На практике без `@MockBean` тест упадёт на старте: `UnsatisfiedDependencyException`.
+>
+> ---
+>
+> #### D) Test slice — тестовая аннотация, загружающая только определённый слой приложения (например, web для `@WebMvcTest` или JPA для `@DataJpaTest`); остальные бины НЕ создаются, отсутствующие зависимости нужно мокировать через `@MockBean`; даёт значительный выигрыш в скорости старта — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Test slices работают через комбинацию аннотаций:
+> 1. `@OverrideAutoConfiguration(enabled = false)` — отключает все автоконфигурации.
+> 2. `@ImportAutoConfiguration` — включает только релевантные (например, `WebMvcAutoConfiguration`).
+> 3. `@TypeExcludeFilters({WebMvcTypeExcludeFilter.class})` — исключает не-web компоненты (`@Service`, `@Component`, кроме `@Controller`).
+> 4. `@AutoConfigureMockMvc` (для web) — настраивает MockMvc.
+>
+> Результат: контекст содержит только нужные бины. Это даёт 5-10× ускорение и изолирует тестируемый слой.
+>
+> **Пример:**
+> ```java
+> // @WebMvcTest содержит только web-слой
+> @WebMvcTest(OrderController.class)
+> class OrderControllerTest {
+>     @Autowired MockMvc mockMvc;
+>     @MockBean OrderService orderService;   // обязательно — иначе UnsatisfiedDependency
+>     @MockBean OrderMapper mapper;          // обязательно
+>
+>     @Test
+>     void getOrder_returns200() throws Exception {
+>         when(orderService.findById(1L)).thenReturn(new Order(1L, "CUST-1"));
+>         mockMvc.perform(get("/api/orders/1")).andExpect(status().isOk());
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - `@WebMvcTest` — для тестов контроллеров (routing, validation, status codes).
+> - `@DataJpaTest` — для тестов репозиториев (queries, JPA mappings, constraints).
+> - `@JsonTest` — для проверки сериализации JSON.
+> - `@RestClientTest` — для тестов HTTP-клиентов (`RestTemplate`/`RestClient`).
+>
+> **Подводные камни:**
+> - `@MockBean` обязателен для каждой зависимости — забыли мокать `OrderMapper` → `UnsatisfiedDependencyException`.
+> - Spring Security включается в `@WebMvcTest` — без `@WithMockUser` или `csrf()` POST/PUT упадут с 403.
+> - Slice-аннотации НЕ комбинируются друг с другом — нельзя `@WebMvcTest + @DataJpaTest`. Для интеграционного теста используется `@SpringBootTest`.
+>
+> **Связанные вопросы:** [[Q4]] — `@WebMvcTest` детально; [[Q5]] — `@DataJpaTest`; [[Q6]] — обзор всех slice-аннотаций; [[Q9]] — `@MockBean` для slice-тестов.
 
 `@WebMvcTest` загружает **только web-слой**: контроллеры, фильтры, `WebMvcConfigurer`, `HandlerMethodArgumentResolver`. Сервисы и репозитории — нужно мокировать.
 
