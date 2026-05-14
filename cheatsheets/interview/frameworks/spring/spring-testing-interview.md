@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-testing]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Spring Boot Testing`
 
@@ -1778,16 +1778,105 @@ class LegacyIntegrationTest {
 
 `@ServiceConnection` (Spring Boot 3.1+) — автоматически настраивает datasource/redis/kafka из контейнера, не нужно `@DynamicPropertySource`.
 
+
+> [!mcq]
+>
+> **Вопрос:** Как правильно интегрировать Testcontainers со Spring Boot 3.1+ и какие преимущества даёт `@ServiceConnection` по сравнению с `@DynamicPropertySource`?
+>
+> ---
+>
+> #### A) Testcontainers и Spring Boot несовместимы — нужно вручную поднимать БД через `docker-compose` — ❌ Неверно
+>
+> **Что на самом деле:** Testcontainers — стандарт de-facto для integration-тестов со Spring Boot. С версии 3.1 интеграция стала нативной через `@ServiceConnection` — никаких `docker-compose`, никаких `@DynamicPropertySource`. Достаточно объявить контейнер как `@Bean` и пометить `@ServiceConnection`.
+>
+> **Откуда путаница:** в legacy-проектах часто встречается ручной setup через `docker-compose` и externally-managed контейнеры.
+>
+> **Если бы это было правдой:** не было бы официального `spring-boot-testcontainers` модуля и stop-the-show поддержки на SpringIO talks. На практике это первоклассный способ.
+>
+> ---
+>
+> #### B) `@DynamicPropertySource` устарел — нельзя использовать в Spring Boot 3+ — ❌ Неверно
+>
+> **Что на самом деле:** `@DynamicPropertySource` НЕ deprecated — он остаётся валидным API для случаев, когда нужна полная гибкость (нестандартные properties, кастомные контейнеры без поддержки `@ServiceConnection`). `@ServiceConnection` — сахар поверх него для типовых случаев (PostgreSQL, Redis, Kafka, MongoDB, RabbitMQ и др.).
+>
+> **Откуда путаница:** `@ServiceConnection` рекомендуется как best practice, что создаёт впечатление вытеснения `@DynamicPropertySource`.
+>
+> **Если бы это было правдой:** разработчикам пришлось бы массово рефакторить legacy-проекты. На практике `@DynamicPropertySource` сохранён для обратной совместимости и нестандартных случаев.
+>
+> ---
+>
+> #### C) `@ServiceConnection` создаёт постоянное TCP-соединение между тестом и контейнером — закрытие убивает все следующие тесты — ❌ Неверно
+>
+> **Что на самом деле:** `@ServiceConnection` НЕ управляет соединениями — он управляет CONFIGURATION. Аннотация говорит Spring Boot: «возьми host/port/credentials этого контейнера и подставь в `spring.datasource.*` (или `spring.redis.*`, и т.д.)». Реальный pool соединений (`HikariCP`, Lettuce, и т.д.) создаётся Spring как обычно.
+>
+> **Откуда путаница:** слово «Connection» вводит в заблуждение — это про подключение конфигурации, а не TCP.
+>
+> **Если бы это было правдой:** Spring Boot не имел бы смысла поддерживать аннотацию — managed lifecycle конфликтовал бы с pool management. На практике это чисто конфигурационный механизм.
+>
+> ---
+>
+> #### D) `@ServiceConnection` (Spring Boot 3.1+) автоматически связывает Testcontainer с Spring Boot autoconfiguration: для контейнера типа `PostgreSQLContainer<?>` Spring подставит `spring.datasource.url/username/password` без явного `@DynamicPropertySource`; объявляется как `@Bean` в `@TestConfiguration`, импортируется через `@Import(TestcontainersConfig.class)` или регистрируется через `@Bean static` в тест-классе; поддерживает PostgreSQL/MySQL/Redis/Kafka/RabbitMQ/MongoDB/Elasticsearch и др.; преимущества — меньше boilerplate, типобезопасность, переиспользование контейнера между тестами (singleton-pattern) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Под капотом `@ServiceConnection` использует `ContainerConnectionSource` + `ConnectionDetailsFactory`. Каждый тип контейнера имеет свою фабрику: `PostgresContainerConnectionDetailsFactory` для PostgreSQL, `KafkaContainerConnectionDetailsFactory` для Kafka и т.д. Они умеют извлекать host/port/credentials из контейнера и создавать соответствующий `ConnectionDetails`-бин, который Spring Boot autoconfiguration предпочитает обычным properties.
+>
+> **Полная конфигурация:**
+> ```java
+> // src/test/java/.../TestcontainersConfig.java
+> @TestConfiguration(proxyBeanMethods = false)
+> public class TestcontainersConfig {
+>
+>     @Bean
+>     @ServiceConnection
+>     PostgreSQLContainer<?> postgres() {
+>         return new PostgreSQLContainer<>("postgres:16-alpine")
+>             .withReuse(true);  // singleton — не пересоздавать между тестами
+>     }
+>
+>     @Bean
+>     @ServiceConnection
+>     KafkaContainer kafka() {
+>         return new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.5.0"));
+>     }
+> }
+>
+> @SpringBootTest
+> @Import(TestcontainersConfig.class)
+> class UserRepositoryIntegrationTest {
+>     @Autowired UserRepository repository;
+>
+>     @Test
+>     void persistAndFind() {
+>         User u = repository.save(new User("alice"));
+>         assertThat(repository.findById(u.getId())).isPresent();
+>     }
+> }
+> ```
+>
+> **Для container reuse между тестами:** `.withReuse(true)` + установить `testcontainers.reuse.enable=true` в `~/.testcontainers.properties`. Это драматически ускоряет CI — контейнер живёт между билдами (запускается один раз).
+>
+> **Когда применять:**
+> - Integration-тесты с реальной БД (postgres, MySQL).
+> - Тесты с Kafka producers/consumers.
+> - Тесты Redis (cache, distributed lock).
+> - Elasticsearch search-queries.
+> - Любой external dependency, для которого есть Testcontainer.
+>
+> **Подводные камни:**
+> - Docker должен быть запущен на CI runner-е (требует privileged mode или docker socket mount).
+> - При параллельных тестах в одной JVM container reuse конфликтует с `@DirtiesContext` — pool может попытаться connect к убитому контейнеру.
+> - `@ServiceConnection` не работает для самописных контейнеров без `*ConnectionDetailsFactory` — для них нужен `@DynamicPropertySource`.
+> - Тесты, использующие `@ServiceConnection`, попадают в свой context cache entry — не смешивать с `@SpringBootTest` без контейнеров.
+> - Image pull при первом запуске может быть медленным — на CI лучше pre-pull через docker pre-step.
+>
+> **Связанные вопросы:** [[Q1]] — `@SpringBootTest` базовая; [[Q5]] — `@DataJpaTest` (часто комбинируется); [[Q13]] — кеш контекста с Testcontainers.
+
 ---
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Spring Boot](spring-boot-interview.md) — автоконфигурация, `@SpringBootApplication`, production features ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [Spring Boot](spring-boot-interview.md) — автоконфигурация, `@SpringBootApplication`, production features
 - [Spring Framework](spring-framework-interview.md) — ApplicationContext, BeanFactory, тестовый контекст
 - [Spring MVC](spring-mvc-interview.md) — `@WebMvcTest`, контроллеры, MockMvc handler mapping
 - [Spring Data JPA](spring-data-jpa-interview.md) — `@DataJpaTest`, TestEntityManager, repository тесты
