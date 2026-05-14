@@ -958,10 +958,91 @@ public class ApiConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Как тестировать приложение с Spring Vault? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В каком порядке Spring Cloud Vault загружает секреты из нескольких контекстов и как разрешаются конфликты ключей с одинаковым именем?
+>
+> ---
+>
+> #### A) Все секреты сливаются в один Map; при конфликте имён выбрасывается `DuplicateKeyException` и приложение падает на старте — ❌ Неверно
+>
+> **Что на самом деле:** Spring Cloud Vault не падает при конфликтах — он использует обычный механизм Spring PropertySource ordering. Каждый Vault-путь становится отдельным `VaultPropertySource`, более специфичные источники имеют приоритет и **переопределяют** менее специфичные. Это идентично тому, как `application-prod.yml` переопределяет `application.yml`.
+>
+> **Откуда путаница:** интуиция о map merge → conflict detection.
+>
+> **Если бы это было правдой:** невозможно было бы иметь общий контекст `secret/application` и переопределять конкретные ключи в `secret/myapp/production`.
+>
+> ---
+>
+> #### B) Порядок (от высшего приоритета к низшему): `secret/<app>/<profile>` → `secret/<app>` → `secret/application/<profile>` → `secret/application`; конфликтующие ключи переопределяются — более специфичные источники побеждают, как в обычном Spring PropertySource ordering — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring Cloud Vault реализует двухуровневую иерархию — `<application-name>` (specific to service) и `application` (shared across services), каждая с активным профилем. Это копия модели Spring Cloud Config. Конкретно при `spring.application.name=payment-service` и `spring.profiles.active=production`, Spring Vault регистрирует 4 `VaultPropertySource` в `Environment` в указанном порядке. При резолве `${db.password}` Spring проходит источники от первого (`payment-service/production`) к последнему (`application`), берёт первое найденное значение. Это позволяет: общие infrastructure-секреты (Redis URL, observability tokens) лежат в `secret/application`, специфичные (DB password конкретного сервиса) — в `secret/payment-service`, среда-специфичные overrides — в `/production`. Дополнительные пути конфигурируются через `spring.cloud.vault.kv.application-name=app1,app2,app3` (CSV) или `generic-backend` для legacy KV v1.
+>
+> **Пример:**
+> ```yaml
+> # bootstrap.yml
+> spring:
+>   application:
+>     name: payment-service
+>   profiles:
+>     active: production
+>   cloud:
+>     vault:
+>       kv:
+>         enabled: true
+>         backend: secret
+>         version: 2
+>         application-name: payment-service
+>         default-context: application
+>         profile-separator: '/'
+>
+> # Резолв ${db.password} проходит источники:
+> # 1. secret/data/payment-service/production  → найдено? → используется
+> # 2. secret/data/payment-service             → fallback
+> # 3. secret/data/application/production       → fallback
+> # 4. secret/data/application                  → последний fallback
+> ```
+> ```java
+> // Проверка порядка через @ConfigurationProperties debug
+> @Component
+> @RequiredArgsConstructor
+> public class PropertySourceInspector {
+>     private final ConfigurableEnvironment env;
+>
+>     @PostConstruct
+>     public void logSources() {
+>         env.getPropertySources().forEach(ps ->
+>             log.info("PropertySource: {}", ps.getName()));
+>     }
+> }
+> ```
+>
+> **Когда применять:** мульти-сервисная архитектура с общими infrastructure-секретами (Kafka SASL, Redis, telemetry tokens) — в `secret/application`; per-service секреты — в `secret/<service>`; env-specific overrides — в `<context>/<profile>`. Профили `secret/application/local` для разработки.
+>
+> **Подводные камни:** имя приложения и профиль читаются на bootstrap phase — если задать через `@Configuration`, будет поздно (Vault уже использовал defaults); `secret/application/production` без существующего пути даёт `404` и Spring Vault логирует warning (можно подавить через `spring.cloud.vault.fail-fast=false`); путь `secret/application` в KV v2 фактически означает `secret/data/application` — Spring Vault добавляет `/data/` автоматически.
+>
+> ---
+>
+> #### C) Spring Cloud Vault читает только один путь `secret/<application-name>` — multi-context unsupported — ❌ Неверно
+>
+> **Что на самом деле:** multi-context — фундаментальная фича Spring Cloud Vault для DRY-секретов. Документация явно описывает четыре уровня контекста.
+>
+> **Откуда путаница:** простые туториалы показывают только базовый случай.
+>
+> **Если бы это было правдой:** в каждом сервисе пришлось бы дублировать общие infrastructure-секреты.
+>
+> ---
+>
+> #### D) Профили в Spring Cloud Vault используют `:` вместо `/` в пути — `secret:application:production` — ❌ Неверно
+>
+> **Что на самом деле:** разделитель настраивается через `spring.cloud.vault.kv.profile-separator` (default `/`). Vault использует `/` как path separator, поэтому `:` потребовал бы URL-encoding и не работал бы стандартно.
+>
+> **Откуда путаница:** Spring profiles в логах часто записываются через `:`, но это display-only.
+>
+> **Если бы это было правдой:** пути в Vault не соответствовали бы Vault filesystem-like structure и были бы непрозрачны при `vault list secret/`.
+>
+> **Связанные вопросы:** [[Q2]] — bootstrap.yml; [[Q3]] — `@Value` resolution; [[Q13]] — KV v1 vs v2
+
+## Q10. Как тестировать приложение с Spring Vault?
 
 ```java
 // 1. VaultDevModeContainer (встроенный dev сервер через Testcontainers)
@@ -1011,10 +1092,89 @@ class SecretServiceTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как реализовать автоматическую ротацию секретов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая стратегия тестирования Spring Vault интеграции корректна и почему mock-ировать `VaultTemplate` целиком — антипаттерн для интеграционных тестов?
+>
+> ---
+>
+> #### A) Тестировать Vault-интеграцию в unit-тестах через `@MockBean VaultTemplate` — этого достаточно для всех уровней тестирования — ❌ Неверно
+>
+> **Что на самом деле:** mock VaultTemplate валиден для unit-тестов конкретного сервиса (тестируется бизнес-логика, не интеграция). Но это не проверяет: правильность путей Vault (`secret/data/...` vs `secret/...`), KV v1 vs v2 difference, bootstrap.yml загрузку, AppRole authentication flow, lease lifecycle. Интеграционные тесты требуют реального Vault через Testcontainers.
+>
+> **Откуда путаница:** mock-всё подход кажется простым, и для unit-тестов это даже правильно.
+>
+> **Если бы это было правдой:** баги вроде «забыли `/data/` префикс для KV v2» обнаруживались бы только в production.
+>
+> ---
+>
+> #### B) Двухуровневый подход: unit-тесты — mock `VaultTemplate` для бизнес-логики; интеграционные тесты — `VaultContainer` через Testcontainers с реальным Vault в dev mode, секреты заранее загружаются через `withInitCommand` или `withVaultToken+vault kv put`, конфигурация Spring через `@DynamicPropertySource` — ✓ Верно
+>
+> **Развёрнутое объяснение:** Testcontainers даёт реальный Vault процесс с минимальным overhead — `hashicorp/vault:latest` image в dev mode стартует за ~1s, имеет `token=root` для упрощения тестов, in-memory storage. Это поднимает реальный HTTP API: можно тестировать AppRole auth, KV v2 paths с `/data/`, Transit engine, lease lifecycle. `@DynamicPropertySource` подставляет container-specific хост/порт в Spring properties — Spring Vault при старте контекста реально подключается к Vault. Альтернативно через `VaultTestUtils` можно загружать секреты декларативно. Mock в integration-тестах ломает гарантии: код может работать с моком, но падать на реальном Vault из-за path-mismatch.
+>
+> **Пример:**
+> ```java
+> @SpringBootTest
+> @Testcontainers
+> @ActiveProfiles("test")
+> class PaymentServiceVaultIntegrationTest {
+>
+>     @Container
+>     static VaultContainer<?> vault = new VaultContainer<>("hashicorp/vault:1.15")
+>         .withVaultToken("root-test-token")
+>         .withInitCommand(
+>             "secrets enable -version=2 -path=secret kv",
+>             "kv put secret/payment-service/test db.username=app db.password=s3cr3t",
+>             "auth enable approle",
+>             "write auth/approle/role/payment-app policies=default",
+>             "write -force auth/approle/role/payment-app/secret-id"
+>         );
+>
+>     @DynamicPropertySource
+>     static void vaultProps(DynamicPropertyRegistry registry) {
+>         registry.add("spring.cloud.vault.host", vault::getHost);
+>         registry.add("spring.cloud.vault.port", vault::getFirstMappedPort);
+>         registry.add("spring.cloud.vault.scheme", () -> "http");
+>         registry.add("spring.cloud.vault.token", () -> "root-test-token");
+>         registry.add("spring.cloud.vault.authentication", () -> "TOKEN");
+>     }
+>
+>     @Autowired
+>     private PaymentService paymentService;
+>
+>     @Test
+>     void shouldReadCredentialsFromVault() {
+>         assertThat(paymentService.dbConfig().password()).isEqualTo("s3cr3t");
+>     }
+> }
+> ```
+>
+> **Когда применять:** unit-тесты с mock — для бизнес-логики, использующей VaultTemplate как dependency; integration-тесты с Testcontainers — для проверки startup, путей, auth flow, KV-структуры; staging environment с реальным Vault HA-кластером — для контрактов с продакшен-конфигурацией.
+>
+> **Подводные камни:** Vault dev mode не persistent — рестарт контейнера = потеря данных (для тестов это плюс, для долгих экспериментов — минус); `withVaultToken("root")` — НЕ для CI с shared state, генерируйте уникальный токен; cold start Vault container добавляет ~1s к каждому тесту — используйте `@TestContainers` shared lifecycle через `@ClassRule` или `static`; CI runners должны иметь Docker — без него Testcontainers не работает.
+>
+> ---
+>
+> #### C) В Spring Vault нет автоматической тестовой инфраструктуры — нужно деплоить production Vault и подключаться к нему из CI — ❌ Неверно
+>
+> **Что на самом деле:** Testcontainers с `VaultContainer` — стандартный подход, рекомендуемый HashiCorp и Spring команд. Никаких production-зависимостей в тестах быть не должно.
+>
+> **Откуда путаница:** возможна аналогия с RDS/Cassandra в legacy CI, где использовался shared dev-кластер.
+>
+> **Если бы это было правдой:** flaky tests из-за shared state, медленный CI, security risk (тесты получают prod-токены).
+>
+> ---
+>
+> #### D) Spring Vault поддерживает только real-Vault тестирование через `@SpringBootTest` — никакого mock`vaultTemplate` нельзя — ❌ Неверно
+>
+> **Что на самом деле:** mock `VaultTemplate` через Mockito абсолютно валиден для unit-тестирования сервисов, использующих Vault как зависимость. Spring Vault не запрещает mock, ограничения накладываются только на проверку самой интеграции.
+>
+> **Откуда путаница:** некоторые источники призывают «всегда тестировать с реальным Vault», что слишком категорично.
+>
+> **Если бы это было правдой:** unit-тесты бизнес-логики стали бы slow и flaky из-за необходимости Vault container в каждом тесте.
+>
+> **Связанные вопросы:** [[Q3]] — VaultTemplate; [[Q2]] — bootstrap.yml; [[Q7]] — auth methods
+
+## Q11. Как реализовать автоматическую ротацию секретов?
 
 ```java
 @Component
@@ -1048,10 +1208,88 @@ public class SecretRotationManager {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Что такое Vault Agent и зачем он нужен? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая стратегия ротации DB credentials корректна для production-приложения с пулом HikariCP и почему резкое закрытие соединений — антипаттерн?
+>
+> ---
+>
+> #### A) При получении новых credentials просто вызвать `dataSource.close()` и создать новый `HikariDataSource` — это гарантирует, что все соединения используют свежие credentials — ❌ Неверно
+>
+> **Что на самом деле:** `dataSource.close()` мгновенно разрывает все активные соединения, включая те, в которых идут транзакции. Это вызывает `SQLException: Connection is closed` в running queries, откаты транзакций, потерю запросов клиентов. В production под нагрузкой 1000 RPS это приведёт к массовым 500-кам на несколько секунд.
+>
+> **Откуда путаница:** «закрыть и пересоздать» — стандартный подход для управляемых ресурсов, но не для пулов с активными connection users.
+>
+> **Если бы это было правдой:** SLA по uptime было бы невозможно соблюсти при rotation каждый час.
+>
+> ---
+>
+> #### B) Graceful rotation: использовать `SecretLeaseContainer.addLeaseListener` для callback при ротации, через `HikariConfigMXBean.setUsername/setPassword` обновить credentials, затем `softEvictConnections()` — старые idle соединения закрываются, активные доживают до конца транзакции, новые открываются с new credentials — ✓ Верно
+>
+> **Развёрнутое объяснение:** HikariCP поддерживает hot-reconfiguration через JMX. `setUsername()`/`setPassword()` обновляют конфигурацию пула (новые connections будут использовать новые credentials), но НЕ трогают существующие. `softEvictConnections()` помечает idle connections как evictable — они закроются при возврате в пул вместо переиспользования, активные доживают до commit/rollback. Это даёт seamless transition: latency-spike отсутствует, все runtime queries завершаются успешно. В сочетании с Vault `SecretLeaseContainer` цикл полностью автоматизирован: lease приближается к `expiryThresholdSeconds`, контейнер requests новый lease, callback обновляет HikariCP, через несколько секунд пул полностью на новых credentials. Старый Vault user в БД продолжает жить до `lease_duration` — этого достаточно, чтобы все running queries завершились.
+>
+> **Пример:**
+> ```java
+> @Component
+> @RequiredArgsConstructor
+> @Slf4j
+> public class DbCredentialsRotator {
+>     private final SecretLeaseContainer leaseContainer;
+>     private final HikariDataSource dataSource;
+>
+>     @PostConstruct
+>     public void subscribeToRotation() {
+>         RequestedSecret secret = RequestedSecret.rotating("database/creds/payment-role");
+>         leaseContainer.addLeaseListener(this::onLeaseEvent);
+>         leaseContainer.addErrorListener(error ->
+>             log.error("Vault lease error", error.getException()));
+>         leaseContainer.addRequestedSecret(secret);
+>     }
+>
+>     private void onLeaseEvent(SecretLeaseEvent event) {
+>         if (event instanceof SecretLeaseCreatedEvent created) {
+>             Map<String, Object> data = created.getSecrets();
+>             String newUsername = (String) data.get("username");
+>             String newPassword = (String) data.get("password");
+>
+>             HikariConfigMXBean configMBean = dataSource.getHikariConfigMXBean();
+>             configMBean.setUsername(newUsername);
+>             configMBean.setPassword(newPassword);
+>
+>             // Старые connections завершают свои транзакции, новые получают свежие creds
+>             dataSource.getHikariPoolMXBean().softEvictConnections();
+>             log.info("Rotated DB credentials to user={}", newUsername);
+>         }
+>     }
+> }
+> ```
+>
+> **Когда применять:** все случаи dynamic DB credentials в production — без graceful rotation производственная нагрузка несовместима с короткими TTL; AWS STS credentials в SDK — аналогично через `AWSCredentialsProvider` refresh; Redis/RabbitMQ — через client reconnect API.
+>
+> **Подводные камни:** старый Vault user в БД должен жить **дольше** longest-running transaction — `min_ttl` lease должен учитывать этот параметр; если приложение использует не Hikari, а другой pool — нужно проверить наличие `setUsername()` API (Tomcat JDBC pool тоже поддерживает); транзакции в PostgreSQL > `lease_duration` приведут к `FATAL: role does not exist` несмотря на graceful rotation — нужно ограничивать transaction timeout; HikariConfigMXBean доступен только после `dataSource.getHikariConfigMXBean()` — bean injection не работает.
+>
+> ---
+>
+> #### C) Ротация должна быть запланирована через cron job на стороне DBA, который вручную обновляет пароли в Vault — приложение не должно знать о ротации — ❌ Неверно
+>
+> **Что на самом деле:** dynamic secrets автоматизируют ротацию полностью внутри Vault. Ручной DBA workflow возвращает к проблеме «забытых старых паролей» и противоречит цели Vault.
+>
+> **Откуда путаница:** legacy enterprise workflows с ручной ротацией паролей раз в квартал.
+>
+> **Если бы это было правдой:** ценность Vault сводилась бы к «централизованное хранилище паролей», без преимуществ dynamic credentials.
+>
+> ---
+>
+> #### D) Spring Cloud Vault сам управляет HikariCP при ротации — никакого кода писать не нужно — ❌ Неверно
+>
+> **Что на самом деле:** Spring Cloud Vault не имеет встроенной интеграции с конкретными connection pools. Он предоставляет `SecretLeaseContainer` для уведомления о ротации, а адаптацию к Hikari/Tomcat/Druid приложение делает само.
+>
+> **Откуда путаница:** «магия Spring Boot autoconfiguration» — но Vault → DataSource bridge не входит в autoconfiguration.
+>
+> **Если бы это было правдой:** не было бы необходимости в blog posts и официальной документации Spring Vault по теме DB credentials rotation.
+>
+> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q5]] — VaultLeaseContainer; [[Q15]] — best practices
+
+## Q12. Что такое Vault Agent и зачем он нужен?
 
 **Vault Agent** — sidecar-процесс рядом с приложением, который:
 1. Аутентифицируется в Vault.
