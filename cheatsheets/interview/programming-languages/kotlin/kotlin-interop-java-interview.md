@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[kotlin-interop-java]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: интероп `Kotlin` и `Java`
 
@@ -2763,10 +2763,102 @@ AnimalExtKt.speak(new Dog()); // "..." — тот же эффект
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. `Java Optional` и Kotlin: паттерны интеграции при работе с `Spring Data` ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В Kotlin есть `fun String.toKebabCase(): String` в файле `StringExt.kt`. `open class Animal`, `class Dog : Animal()`, и `fun Animal.speak() = "generic"`, `fun Dog.speak() = "woof"`. Что вернёт `Java`-вызов `AnimalExtKt.speak(new Dog())`?
+>
+> ---
+>
+> #### A) `"woof"` — Java определяет рантайм-тип `Dog` и выбирает наиболее специфичную версию — ❌ Неверно
+>
+> **Что на самом деле:** extension-функции компилируются в static methods. У статических методов в Java нет полиморфизма — разрешение происходит compile-time по объявленному типу параметра, не runtime. `AnimalExtKt.speak(new Dog())` для Java выглядит как два разных static method overload: `speak(Animal)` и `speak(Dog)`. По правилу overload resolution, передаётся `new Dog()` — runtime тип `Dog`, но overload resolution использует expression's compile-time тип. Когда литерал `new Dog()`, компилятор выбирает `speak(Dog)` → "woof".
+>
+> Но! В реальной кодовой базе обычно вызывают через переменную: `Animal a = new Dog(); AnimalExtKt.speak(a)` → выберется `speak(Animal)` → "generic". Не «runtime polymorphism», а compile-time resolution.
+>
+> **Откуда путаница:** Kotlin `animal.speak()` для `val animal: Animal = Dog()` тоже возвращает "generic" — статика. Не объектно-ориентированная виртуальная диспетчеризация.
+>
+> **Если бы это было правдой:** extension functions поддерживали бы полиморфизм — но они by-design статические для производительности и предсказуемости.
+>
+> ---
+>
+> #### B) `"generic"` — Java overload resolution выберет `speak(Dog)` для литерала `new Dog()` — это compile-time, не runtime — ❌ Неверно
+>
+> **Что на самом деле:** для прямого вызова `AnimalExtKt.speak(new Dog())` Java compiler видит **expression типа `Dog`** (литерал new Dog()), и выбирает `speak(Dog)` overload. Результат — "woof". Generic вариант ("generic") был бы при передаче переменной типа `Animal`.
+>
+> **Откуда путаница:** утверждение про static dispatch правильное, но конкретно для `new Dog()` тип выражения — `Dog`, не Animal.
+>
+> **Если бы это было правдой:** Java не мог бы корректно работать с упрощёнными API типа `Math.max(int, int)` vs `Math.max(double, double)` — overload resolution был бы непредсказуем.
+>
+> ---
+>
+> #### C) `"woof"` — Java compile-time overload resolution выберет наиболее специфичный overload `speak(Dog)` для выражения `new Dog()` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Extension-функции компилируются в **статические методы**, где receiver становится первым параметром. Для `fun Animal.speak()` и `fun Dog.speak()`:
+>
+> ```kotlin
+> // Kotlin source
+> fun Animal.speak() = "generic"
+> fun Dog.speak() = "woof"
+> ```
+>
+> ```java
+> // Bytecode equivalent
+> public static String speak(Animal $this) { return "generic"; }
+> public static String speak(Dog $this) { return "woof"; }
+> ```
+>
+> Это **обычные overload'ы static methods**. Java компилятор разрешает overload по compile-time типу выражения (не по runtime типу объекта):
+>
+> ```java
+> AnimalExtKt.speak(new Dog());          // expression type: Dog → speak(Dog) → "woof"
+>
+> Animal a = new Dog();
+> AnimalExtKt.speak(a);                  // expression type: Animal → speak(Animal) → "generic"
+>
+> Dog d = new Dog();
+> AnimalExtKt.speak(d);                  // expression type: Dog → speak(Dog) → "woof"
+> ```
+>
+> Это **тот же эффект**, что и в Kotlin: extension functions выбираются **статически** по declared type.
+>
+> **Пример (Kotlin):**
+> ```kotlin
+> open class Animal
+> class Dog : Animal()
+>
+> fun Animal.speak() = "generic"
+> fun Dog.speak() = "woof"
+>
+> fun main() {
+>     val a: Animal = Dog()
+>     println(a.speak())     // "generic" — declared type Animal!
+>     println((a as Dog).speak())  // "woof" — после каста declared type Dog
+>     println(Dog().speak()) // "woof" — declared type Dog
+> }
+> ```
+>
+> **Когда применять:** понимание этого важно при дизайне extension function иерархий. Если нужен полиморфизм — используйте обычный virtual метод в классе, а не extension. Extensions хороши для utility, расширяющих API без модификации класса.
+>
+> **Подводные камни:**
+> - **Нет доступа к `private`/`protected`** членам класса (extension — внешний код).
+> - **Не участвуют в `override`** — нельзя переопределить в подклассе через `override fun Animal.speak()`.
+> - **Не доступны через интерфейсы**: `interface Walker; fun Walker.walk()` — это статика на конкретном типе, не часть virtual table.
+> - **`@JvmName` на extension** в файле — для управления имени Java helper class (`StringExtensionsKt` → `Strings`).
+>
+> **Связанные вопросы:** [[Q5]] — extension functions из Java basic; [[Q19]] — top-level functions; [[Q12]] — SAM conversion в extensions.
+>
+> ---
+>
+> #### D) Компилятор Kotlin запретит написать одноимённые extensions на классе и подклассе — ошибка компиляции — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin позволяет одноимённые extensions на разных типах — это часть языка (overload). Никакой ошибки компиляции — только static dispatch при вызове. Можно вообще написать `fun Any.toString()` (extension на Any), и это будет work side-by-side с `Object.toString()`.
+>
+> **Откуда путаница:** в OOP-наследовании нельзя одноимённые методы с одинаковой сигнатурой в иерархии (override only). С extensions — другие правила.
+>
+> **Если бы это было правдой:** не было бы возможности расширять hierarchies с уточняющим поведением — а это популярная идиома.
+
+## Q37. `Java Optional` и Kotlin: паттерны интеграции при работе с `Spring Data`
 
 При работе со `Spring Data` из `Kotlin` часто встречается `Optional<T>` в возвращаемых типах. Kotlin предоставляет удобные расширения для работы с ним.
 
@@ -2811,10 +2903,90 @@ fun findByEmail(email: String): User? = repo.findByEmail(email)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Kotlin generics variance (`in`/`out`) и Java wildcards: практические примеры при интеропе ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** В Spring Boot с Kotlin репозиторий `interface UserRepository : JpaRepository<User, Long>` имеет метод `findByEmail(email: String): User?`. Чем такая сигнатура отличается от `Optional<User>`?
+>
+> ---
+>
+> #### A) Никак не отличаются — `User?` и `Optional<User>` идентичны на байткоде — ❌ Неверно
+>
+> **Что на самом деле:** различия принципиальны. `User?` — это **тот же `User`** на байткоде, с annotation `@Nullable` на сигнатуре. `Optional<User>` — это **wrapper-объект**, отдельный allocation на каждый вызов. Сигнатуры в байткоде разные: `User findByEmail(String)` vs `Optional<User> findByEmail(String)`.
+>
+> **Откуда путаница:** семантически оба представляют «может отсутствовать». Реализационно они разные.
+>
+> **Если бы это было правдой:** не было бы причины предпочитать одно другому. На деле выбор влияет на performance, code style и тип возвращаемого значения.
+>
+> ---
+>
+> #### B) `User?` — нативный Kotlin nullable, Spring Data 2.x+ распознаёт его и работает идиоматично без Optional-обёртки. Меньше overhead, лучше интеграция с Kotlin null safety — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Spring Data 2.x+ (Spring Boot 2.0+) понимает Kotlin nullable types в repository-сигнатурах. Когда метод возвращает `User?`, Spring:
+> 1. **Не оборачивает** результат в `Optional`.
+> 2. **Возвращает `null`** напрямую если запись не найдена.
+> 3. **Уважает Kotlin null safety**: компилятор Kotlin требует обработки null в потребляющем коде.
+>
+> Это даёт:
+> - **Zero overhead**: нет allocation Optional на каждый вызов.
+> - **Идиоматичный Kotlin**: используем `?.`, `?:`, `let { }`, smart cast.
+> - **Compile-time safety**: Kotlin compiler заставит обработать null.
+>
+> **Пример:**
+> ```kotlin
+> interface UserRepository : JpaRepository<User, Long> {
+>     // Kotlin idiomatic — Spring Data 2.x+ supported
+>     fun findByEmail(email: String): User?
+>
+>     // Можно и Optional, но избыточно для Kotlin
+>     fun findByEmailOptional(email: String): Optional<User>
+> }
+>
+> @Service
+> class UserService(private val repo: UserRepository) {
+>     // Идиоматично
+>     fun greet(email: String): String =
+>         repo.findByEmail(email)?.let { "Hello, ${it.name}!" } ?: "Unknown user"
+>
+>     // С Optional — менее красиво
+>     fun greetOpt(email: String): String =
+>         repo.findByEmailOptional(email)
+>             .map { "Hello, ${it.name}!" }
+>             .orElse("Unknown user")
+> }
+> ```
+>
+> **Когда применять:** **всегда** для новых Kotlin Spring Data репозиториев — nullable return types. Optional используйте только если интерфейс репозитория делится с Java-кодом и нужна совместимость, или для built-in `JpaRepository<T, ID>.findById(ID): Optional<T>` (наследуется от Spring Data).
+>
+> **Подводные камни:**
+> - **`findById`** наследуется от `CrudRepository` и возвращает `Optional<T>` — нельзя переопределить (это базовый interface). Используйте extension: `fun <ID, T : Any> CrudRepository<T, ID>.findByIdOrNull(id: ID): T? = findById(id).orElse(null)` (есть в Spring Data Kotlin extensions).
+> - **Query methods**: `findByX` — поддерживают nullable; `getByX` — кидают `EmptyResultDataAccessException` (стандарт Spring Data).
+> - **Reactive Spring Data**: `Mono<User>` и `Flow<User>` — это reactive types, не путать с обычным nullable.
+> - **Custom queries (`@Query`)**: nullable return type работает, если query может вернуть пустой результат — Spring сам конвертирует.
+>
+> **Связанные вопросы:** [[Q33]] — Optional vs T? интероп в общем; [[Q8]] — nullability контракты; [[Q34]] — почему data class предпочтительнее Lombok в Spring контексте.
+>
+> ---
+>
+> #### C) Spring Data вообще не поддерживает Kotlin nullable — нужно использовать только `Optional` — ❌ Неверно
+>
+> **Что на самом деле:** Spring Data 2.x+ имеет нативную поддержку Kotlin nullable return types. Это документировано: «Kotlin null safety is honored». В Spring Data 1.x было ограничение, но это устаревшие версии (последняя 1.x — 2017 год).
+>
+> **Откуда путаница:** Spring историчски ориентирован на Java, легко предположить, что Kotlin-specific фичи не поддерживаются.
+>
+> **Если бы это было правдой:** Kotlin был бы непригоден для Spring Boot — но он, наоборот, поощряется JetBrains и Pivotal вместе.
+>
+> ---
+>
+> #### D) `User?` всегда быстрее `Optional<User>`, но Spring Data конвертирует один в другой автоматически — нет реального выбора — ❌ Неверно
+>
+> **Что на самом деле:** Spring Data **не конвертирует**: метод возвращает тот тип, который объявлен. Сигнатура с `User?` — return `User` напрямую, с `Optional<User>` — return `Optional<User>`. Это решение разработчика, а не auto-magic.
+>
+> **Откуда путаница:** Spring «делает много магии», и есть соблазн думать про auto-conversion. Но return type — это контракт API, его соблюдает разработчик, не framework.
+>
+> **Если бы это было правдой:** разные потребители одного метода видели бы разный тип — что нарушает Liskov substitution и Java type system.
+
+## Q38. Kotlin generics variance (`in`/`out`) и Java wildcards: практические примеры при интеропе
 
 Практическая разница между declaration-site (Kotlin) и use-site variance (Java) проявляется особенно чётко при передаче обобщённых коллекций через границу Kotlin/Java.
 
@@ -2887,6 +3059,115 @@ val readOnly: List<String> = listOf("a")
 val objects: List<Any> = readOnly // OK — ковариантность работает
 ```
 
+
+> [!mcq]
+>
+> **Вопрос:** В Kotlin есть `interface Repository<out T> { fun findAll(): List<T> }`. Из Java через Dagger DI инжектируется `@Inject List<UserDto> users`. Почему DI fails с «несовпадение типов»?
+>
+> ---
+>
+> #### A) `out T` транслируется в Java как `? extends T` — Java видит `List<? extends UserDto>`, что не совпадает с `List<UserDto>` для injection — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Kotlin использует **declaration-site variance** — `out T` объявляется один раз на классе, и все использования автоматически ковариантны. Java использует **use-site variance** через wildcards (`? extends T`, `? super T`). При компиляции Kotlin генерирует Java-сигнатуры с wildcards для совместимости с use-site системой:
+>
+> ```kotlin
+> // Kotlin
+> interface Repository<out T> {
+>     fun findAll(): List<T>
+> }
+> ```
+>
+> ```java
+> // Java видит (примерно):
+> interface Repository<T> {
+>     List<? extends T> findAll();   // wildcard добавлен из-за out T
+> }
+> ```
+>
+> Это создаёт проблему для frameworks, выполняющих exact type matching:
+> - **Dagger**: смотрит ровно `List<UserDto>`, не находит — есть только `List<? extends UserDto>`.
+> - **Guice**: аналогично.
+> - **Jackson** type adapters: могут не разрешить deserialization target.
+>
+> **Решение — `@JvmSuppressWildcards`**:
+>
+> ```kotlin
+> interface Repository<out T> {
+>     fun findAll(): List<@JvmSuppressWildcards T>
+> }
+> ```
+>
+> Это говорит компилятору: «не добавляй wildcard для этого конкретного использования T». В Java увидим `List<T>` — совпадение для DI.
+>
+> **Или альтернатива — `@JvmWildcard`** (для принудительного добавления wildcard, обычно в инвариантных позициях).
+>
+> **Пример:**
+> ```kotlin
+> // Без аннотаций — wildcards проникают через всю иерархию
+> interface Producer<out T> {
+>     fun produce(): T
+>     fun list(): List<T>                              // List<? extends T> в Java
+> }
+>
+> // С @JvmSuppressWildcards — точные типы для Java
+> interface JavaFriendlyProducer<out T> {
+>     fun produce(): T
+>     fun list(): List<@JvmSuppressWildcards T>       // List<T> в Java
+> }
+>
+> // На уровне всего класса
+> @JvmSuppressWildcards
+> interface AllSuppressed<out T> {
+>     fun produce(): T
+>     fun list(): List<T>                              // List<T>
+> }
+> ```
+>
+> **Когда применять:**
+> - **Любой Kotlin API, используемый из Java DI** (Dagger, Spring): `@JvmSuppressWildcards`.
+> - **Type-safe deserialization** (Jackson, Gson type tokens): `@JvmSuppressWildcards`.
+> - **Inverse**: `@JvmWildcard` — редко, обычно для совместимости с legacy Java API, ожидающим wildcards.
+>
+> **Подводные камни:**
+> - **`in T` производит `? super T`** в Java — симметричная проблема для Consumer-функций.
+> - **`@JvmSuppressWildcards` на final position только**: если тип используется в нескольких позициях (`Map<K, V>`), нужно аннотировать каждую отдельно.
+> - **`Function0`/`Function1` лямбды**: Kotlin функциональные типы имеют `out R` для результата, что часто требует suppression при возврате из Kotlin в Java.
+> - **`*` (star projection)** в Kotlin → `?` в Java (unbounded wildcard) — это уже Java-видимое, аннотации не нужны.
+>
+> **Связанные вопросы:** [[Q14]] — basics of `in`/`out` vs `extends`/`super`; [[Q15]] — когда нужны `@JvmSuppressWildcards`/`@JvmWildcard`; [[Q16]] — интероп коллекций; [[Q26]] — Java-friendly Kotlin API design.
+>
+> ---
+>
+> #### B) Kotlin `out T` запрещает использование generic в Java вообще — нужно полностью переписать interface без variance — ❌ Неверно
+>
+> **Что на самом деле:** generic interface отлично работает из Java. Проблема только в exact type matching из-за wildcards. Использование `out T` остаётся возможным с правильными аннотациями.
+>
+> **Откуда путаница:** разочарование от «несовпадение типов» приводит к радикальным решениям. На деле — это minor поправка через `@JvmSuppressWildcards`.
+>
+> **Если бы это было правдой:** Kotlin был бы непригоден для DI frameworks — но он используется массово в Android Dagger и Spring.
+>
+> ---
+>
+> #### C) `@Inject` требует `Provider<List<UserDto>>` вместо прямого `List<UserDto>` — ❌ Неверно
+>
+> **Что на самом деле:** `Provider` — это Dagger-конструкт для lazy injection или scope mismatches, не решение проблемы wildcards. С `Provider<List<UserDto>>` Dagger всё равно ищет binding `List<UserDto>` (или `Provider<List<UserDto>>`) и встречает ту же проблему wildcards.
+>
+> **Откуда путаница:** Provider часто упоминается как решение DI-проблем. Но он решает другую категорию (lifecycle), не type matching.
+>
+> **Если бы это было правдой:** все Java DI коды требовали бы Provider — но они работают с прямыми типами для type-erased generics.
+>
+> ---
+>
+> #### D) Нужно использовать `Array<UserDto>` вместо `List<UserDto>` — массивы не имеют wildcards в Java — ❌ Неверно
+>
+> **Что на самом деле:** `Array<T>` в Kotlin компилируется в Java arrays `T[]`. Массивы covariant by design в Java (`String[]` подтип `Object[]`), но это **runtime** covariance, со всеми проблемами ArrayStoreException. Использование array вместо List — это потеря type safety, не решение wildcards.
+>
+> **Откуда путаница:** массивы кажутся «более простыми». На деле они хуже generics для большинства задач, и не дают идиоматичный Kotlin/Java API.
+>
+> **Если бы это было правдой:** все коллекции бы переписали в arrays — но мы давно ушли от этого после Generics в Java 5.
+
 ---
 
 ## See also
@@ -2900,16 +3181,4 @@ val objects: List<Any> = readOnly // OK — ковариантность раб�
 - [Java Core](../java/java-core-interview.md) — базовые концепции Java для понимания интеропа
 - [Java Concurrency](../java/java-concurrency-interview.md) — использование Java-примитивов синхронизации из Kotlin
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — смешанные Kotlin+Java проекты в Spring
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Kotlin коллекции](kotlin-collections-interview.md) ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
-- [Kotlin Coroutines](kotlin-coroutines-interview.md)
-- [DSL в Kotlin](kotlin-dsl-interview.md)
-- [исключения в Kotlin](kotlin-exceptions-interview.md)
-- [Kotlin](kotlin-interview.md)
-- [сериализация в Kotlin](kotlin-serialization-interview.md)
 - [Шпаргалка: Kotlin Interop with Java](../../../languages/kotlin/kotlin-interop-java.md) — теория
