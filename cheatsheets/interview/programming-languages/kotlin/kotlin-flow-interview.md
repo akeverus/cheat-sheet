@@ -14,7 +14,7 @@ aliases:
   - "Kotlin Flow собеседование"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Kotlin Flow`
 
@@ -735,10 +735,100 @@ flow.catch { emit(-1) }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Как работают zip и combine? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что ловит оператор `.catch { }` в Flow и что НЕ ловит?
+>
+> ---
+>
+> #### A) `.catch { }` ловит ВСЕ исключения в pipeline — включая внутри `.collect { }` — ❌ Неверно
+>
+> **Что на самом деле:** `.catch { }` ловит исключения **upstream** — те, что бросаются до неё в цепочке (в `flow { }`, `.map`, `.filter`, любых операторах между источником и catch). Исключения **внутри `.collect { }`** (terminal lambda) НЕ перехватываются `.catch`.
+>
+> **Откуда путаница:** имя «catch» предполагает универсальный try-catch. По факту это **downstream-aware** оператор, который видит только upstream errors.
+>
+> **Если бы это было правдой:** мы могли бы поставить `.catch` в начале pipeline и забыть про error handling в collect. На практике bug в `updateUi(it)` внутри collect упадёт неперехваченным и убьёт coroutine.
+>
+> ---
+>
+> #### B) `.catch { }` ловит upstream исключения (в flow{}, map, filter перед ним); исключения внутри `.collect { }` нужно ловить try/catch вокруг collect или через `.onEach { }.catch { }.collect()` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Flow exception transparency требует: `.catch { }` срабатывает только на исключения, бросаемые **вверх** по pipeline относительно её позиции. Это позволяет переподписаться, эмитнуть fallback значение, залогировать ошибку, не прерывая цепочку.
+>
+> Внутри `.collect { lambda }` (terminal operation) — лямбда выполняется в потоке, в котором происходит сбор. Если она бросает — exception распространяется вверх по корутине, не задевая `.catch` оператор. Это by design: catch не должен «маскировать» баги downstream.
+>
+> Идиоматичный паттерн — переместить обработку downstream в `.onEach { ... }` (intermediate, можно `.catch { }`), а в `.collect` оставить минимум (`.collect()` без аргументов).
+>
+> **Пример:**
+> ```kotlin
+> val flow = flow {
+>     emit(1)
+>     throw RuntimeException("upstream!")
+>     emit(2)
+> }
+>
+> // ✅ catch ЛОВИТ upstream exception
+> flow.catch { e -> emit(-1) }
+>     .collect { println(it) }      // prints: 1, -1
+>
+> // ❌ catch НЕ ловит exception в collect lambda
+> flow.catch { emit(-1) }
+>     .collect {
+>         if (it == 1) throw IllegalStateException("downstream!")
+>         println(it)
+>     }                              // ⚠ IllegalStateException распространяется вверх
+>
+> // ✅ Правильно: переместить логику в onEach + catch
+> flow.onEach {
+>     if (it == 1) throw IllegalStateException("downstream!")
+> }
+> .catch { e -> println("caught: ${e.message}") }
+> .collect()                          // empty collect, exception обработан в catch
+>
+> // ✅ Альтернатива: try/catch вокруг collect
+> try {
+>     flow.collect { riskyOperation(it) }
+> } catch (e: Exception) {
+>     logger.error("Flow failed", e)
+> }
+> ```
+>
+> **Когда применять:**
+> - **Retry strategies**: `.catch { e -> if (isRetryable(e)) delay(1000); emit(fallback) else throw e }` — graceful degradation для transient failures.
+> - **Logging без прерывания**: `.catch { e -> logger.error("Pipeline error", e); throw e }` — re-throw после логирования.
+> - **Fallback values**: на ошибке БД — эмитнуть `cachedValue` вместо exception.
+> - **Spring WebFlux endpoint**: `.catch { e -> emit(ErrorResponse(e.message)) }` — конвертация ошибок в response без 500.
+>
+> **Подводные камни:**
+> - **`.catch` после `.collect()` — синтаксическая ошибка**: catch только intermediate operator, должен быть до terminal.
+> - **`CancellationException`** НЕ ловится catch (by design, чтобы не нарушать cooperative cancellation). Если нужно — отдельная обработка через `runCatching` + `getOrNull`.
+> - **`SupervisorJob` vs default Job**: дочерние flow с обычным Job отменяют parent при exception. SupervisorJob изолирует ошибки между siblings.
+> - **`launchIn` + exception**: `flow.launchIn(scope)` запускает на scope; необработанные исключения завершают scope (если не SupervisorScope).
+>
+> **Связанные вопросы:** [[Q14]] — memory leak при подписке без правильного scope; [[Q1]] — общая модель Flow и suspend; [[Q9]] — `retry`/`retryWhen` операторы для recovery.
+>
+> ---
+>
+> #### C) `.catch { }` блокирует распространение exception дальше — после неё coroutine не падает — ❌ Неверно
+>
+> **Что на самом деле:** `.catch { }` действительно может «проглотить» исключение если в её лямбде не вызывать `throw`. Но если внутри `.catch { throw e }` или просто реализация catch проброса не делает emit — Flow заканчивается без emit'а, и downstream НЕ получает значения. Это «нормальное» завершение, не блокировка.
+>
+> **Откуда путаница:** «catch блокирует exception propagation» — да, для downstream Flow. Но для coroutine context — exception действительно остановлен. Не путать с try/catch в обычной Java/Kotlin.
+>
+> **Если бы это было правдой:** мы могли бы поставить `.catch { }` без аргументов и Flow продолжил бы работать после ошибки. На практике без `emit` в catch lambda Flow завершается (как обычный flow после выхода из flow{}).
+>
+> ---
+>
+> #### D) `.catch { }` работает как глобальный exception handler — нужен только один на всё приложение — ❌ Неверно
+>
+> **Что на самом деле:** `.catch { }` — **локальный** оператор для одного Flow pipeline. Один Flow — один catch (или несколько вложенных). Для глобального exception handling в coroutines используется `CoroutineExceptionHandler` через `CoroutineContext`.
+>
+> **Откуда путаница:** аналогия с `@RestControllerAdvice` или global error handlers в HTTP-фреймворках. В корутинах локальная обработка плюс global handler — два разных уровня.
+>
+> **Если бы это было правдой:** мы бы поставили один catch в `main()` и забыли. На практике нужно catch в каждом критичном pipeline + опционально CoroutineExceptionHandler для unhandled.
+
+## Q16. Как работают zip и combine?
 
 ```kotlin
 val flow1 = flowOf(1, 2, 3)
@@ -766,10 +856,96 @@ numbers.combine(letters) { n, l -> "$n$l" }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Что такое scan и runningFold? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём ключевая разница между `zip` и `combine`, и когда каждый из них подходит для UI state?
+>
+> ---
+>
+> #### A) `zip` и `combine` идентичны — оба объединяют два Flow в один — ❌ Неверно
+>
+> **Что на самом деле:** оба объединяют, но **триггерами эмиссии** работают по-разному:
+> - `zip(a, b) { x, y -> ... }` — попарно: ждёт ОБА flow эмитнуть, потом эмитит результат. Если a быстрее b — буферизирует. Завершается когда любой Flow завершается.
+> - `combine(a, b) { x, y -> ... }` — последние значения: эмитит при ЛЮБОМ обновлении в a или b, используя последнее значение другого flow.
+>
+> **Откуда путаница:** оба берут «пару значений из двух потоков». Но семантика разная — попарное synchronized vs reactive recomputation.
+>
+> **Если бы это было правдой:** разработчики использовали бы любой из них без последствий. На практике выбор неправильного даёт баги (zip для UI state буферизирует и теряет actuality, combine для парных результатов лжёт о соответствии).
+>
+> ---
+>
+> #### C) Когда нужно объединить два независимых пользовательских стейта (текст поиска + фильтр) и реагировать на любое изменение — `combine`; когда нужно строго попарно сопоставить два потока (одна запись = одна запись) — `zip` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Аналогия:
+> - `zip` = "застёжка-молния" — звенья по парам, оба должны быть готовы.
+> - `combine` = "формула с двумя входами" — при изменении любого входа пересчитывается выход.
+>
+> Для UI state (поисковая строка + фильтр + категория) — типично `combine`, потому что обновление любого должно пересчитать список:
+>
+> ```kotlin
+> val searchQuery = MutableStateFlow("")
+> val category = MutableStateFlow("All")
+> val sortOrder = MutableStateFlow(SortOrder.NEWEST)
+>
+> val results: Flow<List<Product>> = combine(
+>     searchQuery.debounce(300),
+>     category,
+>     sortOrder
+> ) { query, cat, sort ->
+>     productRepository.search(query, cat, sort)
+> }.flowOn(Dispatchers.IO)
+> ```
+>
+> Для парного матчинга — `zip`. Например, две parallel API request возвращают связанные результаты (`userInfo + userPosts`), нужно объединить per index:
+>
+> ```kotlin
+> val userIds: Flow<Long> = flowOf(1, 2, 3)
+> val userNames: Flow<String> = userIds.map { api.getName(it) }
+> val userEmails: Flow<String> = userIds.map { api.getEmail(it) }
+>
+> // zip — попарно по индексу
+> userNames.zip(userEmails) { name, email ->
+>     UserSummary(name, email)
+> }.collect { println(it) }
+> // UserSummary("Alice", "alice@x.com"), UserSummary("Bob", "bob@x.com"), ...
+> ```
+>
+> **Когда применять:**
+> - **`combine` для reactive UI**: Compose `collectAsState()` + combine для derived state (Yandex Lavka, Wolt — поиск товаров с фильтрами).
+> - **`zip` для пакетных операций**: парсинг файлов параллельно (имя + содержимое из разных API), merge sorted streams.
+> - **`combine` для feature flags + user prefs**: при изменении любого триггерится UI rerender.
+> - **`zip` для barrier sync**: ждать пока ВСЕ subjective Flow эмитнут перед продолжением.
+>
+> **Подводные камни:**
+> - **`combine` initial emission**: эмитит когда ВСЕ source flows эмитнули хотя бы один раз. Если один flow никогда не эмитит (cold flow с timeout) — combine молчит.
+> - **`zip` буферизация**: если a быстрее b, всё что эмитнул a буферизуется в памяти до момента когда b догонит. На большом disparity — OOM.
+> - **`combine` cardinality mismatch**: 3 эмиссии в a и 5 в b → combine выдаст 8 эмиссий (по одной на каждое изменение). Иногда удивляет.
+> - **`zip` early termination**: zip(short, infinite) завершается когда short закончится — infinite Flow отменяется. Это by design (попарно невозможно без короткого).
+>
+> **Связанные вопросы:** [[Q12]] — `flatMapLatest` тоже для reactive поиска; [[Q6]] — `StateFlow` как основной источник для combine; [[Q4]] — операторы преобразования.
+>
+> ---
+>
+> #### B) `zip` эмитит при изменении любого из flows, `combine` — попарно — ❌ Неверно (перепутаны определения)
+>
+> **Что на самом деле:** **наоборот**. `combine` эмитит при любом изменении (reactive recomputation), `zip` — строго попарно (pairing). Это классическая путаница, поскольку имена не отражают семантику.
+>
+> **Откуда путаница:** «combine» звучит как «объединять» (что близко к pairing), «zip» — как «zip-files» (тоже pairing). Семантика по поведению, не по этимологии имени.
+>
+> **Если бы это было правдой:** все UI state pipelines работали бы наоборот — клик кнопки не обновлял бы список, а ждал бы matching элемент из другого Flow.
+>
+> ---
+>
+> #### D) `combine` нельзя использовать с более чем 2 flow — для 3+ нужен ручной `flatMap` — ❌ Неверно
+>
+> **Что на самом деле:** `combine` поддерживает variadic: `combine(flow1, flow2, flow3, flow4, flow5) { a, b, c, d, e -> ... }`. До 5 параметров с typed lambda; для большего числа есть overloads с `vararg flows: Flow<T>` и `transform: suspend (Array<T>) -> R`.
+>
+> **Откуда путаница:** в RxJava `combineLatest` имеет limit на 9 источников, что можно по аналогии распространить на Flow. На деле kotlinx-coroutines имеет gradual extension и vararg fallback.
+>
+> **Если бы это было правдой:** мы не могли бы делать combine из 3+ user prefs или filters. На практике 5-7 sources в combine — норма для сложных дашбордов.
+
+## Q17. Что такое scan и runningFold?
 
 `scan`/`runningFold` — накапливающие операторы, похожие на `reduce`, но **эмитируют каждый промежуточный результат**.
 
@@ -792,16 +968,94 @@ flowOf(1, 2, 3)
 - История изменений состояния
 - Прогрессивное построение списка
 
+> [!mcq]
+>
+> **Вопрос:** В чём ключевое отличие `scan` (`runningFold`) от обычного `reduce`?
+>
+> ---
+>
+> #### A) `scan` быстрее чем `reduce` из-за optimизации Kotlin compiler — ❌ Неверно
+>
+> **Что на самом деле:** оба оператора используют одну и ту же accumulating логику внутри. Производительность одинакова per element. **Семантика** отличается: `reduce` — terminal оператор, эмитит **один результат** в конце; `scan` — intermediate оператор, эмитит **каждый промежуточный шаг**.
+>
+> **Откуда путаница:** `scan` для UI-обновлений может «казаться быстрее» потому что показывает результаты ИНКРЕМЕНТАЛЬНО. На деле total CPU work тот же; разница в timing наблюдаемых результатов.
+>
+> **Если бы это было правдой:** мы бы предпочитали scan везде ради скорости. На практике выбор по semantics: нужны промежуточные значения — scan, только финал — reduce.
+>
+> ---
+>
+> #### B) `scan` эмитит каждый промежуточный аккумулятор (включая initial); `reduce` эмитит только финальное значение по завершении Flow — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Оба оператора накапливают значение функцией `(acc, value) -> acc'`. Разница:
+>
+> | Оператор | Тип | Эмиссии |
+> |---|---|---|
+> | `reduce { acc, v -> acc + v }` | **Terminal** (suspend, не intermediate) | Один результат после завершения source flow |
+> | `scan(init) { acc, v -> acc + v }` | **Intermediate** | Initial + каждый промежуточный аккумулятор |
+> | `runningFold(init) { acc, v -> ... }` | **Intermediate** | То же что scan, более явное имя |
+> | `runningReduce { acc, v -> ... }` | **Intermediate** | Без initial (первое значение становится initial) |
+>
+> Для `flowOf(1, 2, 3, 4, 5).scan(0) { a, v -> a + v }`:
+> - `scan` эмитит: `0` (initial), `1` (0+1), `3` (1+2), `6` (3+3), `10` (6+4), `15` (10+5) → 6 эмиссий
+> - `reduce` эмитит: `15` (только финал) → 1 эмиссия
+>
+> **Пример (running total для UI progress bar):**
+> ```kotlin
+> val fileChunks: Flow<ByteArray> = downloadFileInChunks()
+>
+> // ❌ reduce — UI обновится только когда всё скачается
+> val total: ByteArray = fileChunks.reduce { acc, chunk -> acc + chunk }
+> updateProgress(total.size)
+>
+> // ✅ scan — UI получает обновления после каждого chunk
+> fileChunks
+>     .scan(0) { acc, chunk -> acc + chunk.size }
+>     .collect { downloadedBytes -> updateProgress(downloadedBytes) }
+> // 0, 1024, 2048, 3072, ... — пользователь видит прогресс
+> ```
+>
+> **Когда применять:**
+> - **Running stats**: average, sum, max во время стрима событий — Discord live message count, чат-сообщения per second.
+> - **Progress tracking**: загрузка файлов, миграции БД — каждый шаг видим.
+> - **State machines**: `scan(initialState) { state, event -> reducer(state, event) }` — Redux-like architecture в Compose.
+> - **Audit trail**: история изменений объекта — `runningFold(emptyList<HistoryEntry>()) { history, change -> history + change }`.
+> - **Backpressure для batches**: `scan(emptyList<T>()) { batch, item -> if (batch.size < N) batch + item else listOf(item) }.filter { it.size == N }` — окно событий.
+>
+> **Подводные камни:**
+> - **Memory growth**: `scan(emptyList<T>()) { acc, v -> acc + v }` — список растёт без bounded. При длинном flow — OOM.
+> - **`runningReduce` без initial** падает на пустом flow (NoSuchElementException), потому что нет первого значения. `scan` с initial безопасен.
+> - **`scan` сохраняет тип аккумулятора** — может отличаться от типа элементов: `Flow<Int>.scan("") { acc, v -> "$acc-$v" } : Flow<String>`.
+> - **`stateIn` + `scan` антипаттерн**: scan уже даёт continuous state stream, оборачивать в `stateIn` создаёт двойную buffering.
+>
+> **Связанные вопросы:** [[Q4]] — базовые intermediate операторы; [[Q6]] — StateFlow как стандартная альтернатива scan для UI state; [[Q16]] — combine для derived state из нескольких источников.
+>
+> ---
+>
+> #### C) `scan` блокирует Flow до завершения source — поэтому работает только на конечных flow — ❌ Неверно
+>
+> **Что на самом деле:** `scan` — **non-blocking intermediate** оператор. Работает на любом Flow (cold/hot, finite/infinite) и эмитит каждый шаг сразу после получения нового значения. На бесконечном Flow (например, StateFlow) scan тоже работает — просто никогда не «завершается» в classical sense.
+>
+> **Откуда путаница:** `reduce` действительно требует завершения Flow для эмиссии (нет завершения — нет результата). `scan` это не про финальное значение, а про intermediate, поэтому ограничения нет.
+>
+> **Если бы это было правдой:** мы не могли бы использовать scan для UI state, который update'ится continuously. На практике именно для UI scan и применяется.
+>
+> ---
+>
+> #### D) `scan` и `runningFold` — разные операторы с разной семантикой — ❌ Неверно
+>
+> **Что на самом деле:** `scan` и `runningFold` — **полные синонимы** в kotlinx-coroutines. `runningFold` появилось позже как более описательное имя (по аналогии с `runningReduce`); `scan` — оригинальное Reactor-подобное имя. Можно использовать любое.
+>
+> **Откуда путаница:** наличие двух функций намекает на разную семантику. На деле это полная функциональная эквивалентность для дублирования по convention.
+>
+> **Если бы это было правдой:** в документации kotlinx-coroutines была бы таблица различий. Реально — упоминается как «также известный как runningFold».
+
 ---
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Kotlin Coroutines](kotlin-coroutines-interview.md) — suspend функции, CoroutineScope, Job, Dispatcher ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [Kotlin Coroutines](kotlin-coroutines-interview.md) — suspend функции, CoroutineScope, Job, Dispatcher
 - [Kotlin](kotlin-interview.md) — основы языка, null safety, data classes
 - [Spring WebFlux](../../frameworks/spring/spring-webflux-interview.md) — реактивный стек Spring, Mono/Flux vs Flow
 - [Reactive Streams](../../reactive/reactive-streams-interview.md) — спецификация backpressure (Publisher/Subscriber/Subscription)
