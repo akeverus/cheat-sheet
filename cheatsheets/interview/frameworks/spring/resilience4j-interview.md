@@ -861,10 +861,78 @@ public void handleTimeout() {}
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Как комбинировать несколько аннотаций? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему `@TimeLimiter` нельзя поставить на обычный синхронный метод, и как тогда «обрезать» долгие синхронные вызовы?
+>
+> ---
+>
+> #### A) `@TimeLimiter` работает только на `CompletableFuture` / `Mono` / `Flux` — у синхронного метода нет тикета на отмену; для sync используй `CircuitBreaker.slowCallDurationThreshold` + `slowCallRateThreshold` или Apache HttpClient `setSocketTimeout` — ✓ Верно
+>
+> **Развёрнутое объяснение:** Java НЕ умеет извне прерывать выполняющийся в синхронном треде метод — `Thread.interrupt()` лишь устанавливает флаг, который метод должен проверять. `TimeLimiter` оборачивает `Future` и при превышении timeout зовёт `future.cancel(true)`, что для async-задач реально освобождает caller. Для sync единственный способ ограничить время — нативный socket-timeout на клиенте (Apache, OkHttp, JDBC `queryTimeout`) ИЛИ метрики slow calls в CircuitBreaker (`slow-call-duration-threshold: 2s`, `slow-call-rate-threshold: 50` — если 50% звонков медленнее 2s, CB → OPEN).
+>
+> **Пример:**
+> ```yaml
+> # ASYNC — TimeLimiter
+> resilience4j:
+>   timelimiter:
+>     instances:
+>       slowReport:
+>         timeout-duration: 2s
+>         cancel-running-future: true
+>
+>   # SYNC — slow call metric в CB
+>   circuitbreaker:
+>     instances:
+>       slowApi:
+>         slow-call-duration-threshold: 2s
+>         slow-call-rate-threshold: 50
+>         minimum-number-of-calls: 10
+> ```
+> ```java
+> @TimeLimiter(name = "slowReport", fallbackMethod = "timeoutFb")
+> @Bulkhead(name = "slowReport", type = Bulkhead.Type.THREADPOOL)
+> public CompletableFuture<Report> generate() {
+>     return CompletableFuture.supplyAsync(externalApi::heavyReport);
+> }
+> ```
+>
+> **Когда применять:** TimeLimiter — для WebClient/AsyncRestTemplate/CompletableFuture-вызовов. Slow-call в CB — для RestTemplate/JDBC/любых синхронных HTTP-клиентов, где есть нативный `connectTimeout`+`readTimeout`. В Spring WebFlux TimeLimiter широко используется для Mono/Flux через `BulkheadOperator`+`TimeLimiterOperator`.
+>
+> **Подводные камни:** `cancel-running-future: true` отправляет `Thread.interrupt()`, но если HTTP-клиент не уважает interrupt (Apache HttpClient < 4.3) — тред продолжает висеть, только Future-обёртка отдаёт TimeoutException. Реально нужны socket-timeouts на клиенте + TimeLimiter сверху.
+>
+> **Связанные вопросы:** [[Q4]] — состояния CircuitBreaker; [[Q13]] — THREADPOOL Bulkhead для async; [[Q15]] — порядок аспектов TimeLimiter→CB→Bulkhead
+>
+> ---
+>
+> #### B) `@TimeLimiter` использует `Thread.stop()` для немедленной остановки любого метода — sync или async — ❌ Неверно
+>
+> **Что на самом деле:** `Thread.stop()` deprecated с Java 1.2 (UnsafeOperation: оставляет объекты в inconsistent state). Resilience4j НИКОГДА не использует `Thread.stop()`. Для async — `Future.cancel(true)`, для sync — невозможно.
+>
+> **Откуда путаница:** в Java 1.0/1.1 действительно был `Thread.stop()`. В современных туториалах его иногда упоминают для исторического контекста, и кто-то воспринимает как «всё ещё работает».
+>
+> **Если бы это было правдой:** Resilience4j бы не сертифицировался для production (опасный UB), но он CNCF-grade tool в широком использовании.
+>
+> ---
+>
+> #### C) `@TimeLimiter` на sync методе генерирует Spring AOP-обёртку, которая запускает метод в отдельном тред-пуле автоматически — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j AOP-аспект для `@TimeLimiter` требует метод, возвращающий `CompletionStage<T>` или `Future<T>` (или Reactive-тип). Если повесить на `public String method()` — стартап даст warning, аннотация молча игнорируется ИЛИ выбрасывает `IllegalArgumentException` при первом вызове (зависит от версии).
+>
+> **Откуда путаница:** Spring `@Async` действительно превращает sync метод в async, отправляя его в ThreadPoolTaskExecutor. Кажется, что TimeLimiter делает то же.
+>
+> **Если бы это было правдой:** не было бы необходимости в THREADPOOL Bulkhead — TimeLimiter сам бы изолировал тред-пул. Но в реальности нужна явная связка `@Bulkhead(THREADPOOL) + @TimeLimiter`.
+>
+> ---
+>
+> #### D) Для sync вызовов TimeLimiter не нужен — Spring Boot устанавливает глобальный 30-секундный timeout на все @RestController методы — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot НЕ ставит timeout на synchronous controller-методы. Tomcat имеет `connection-timeout` (idle TCP) и `async-timeout` (для DeferredResult), но НЕ для синхронных вызовов. Метод может выполняться часами, пока клиент не закроет соединение.
+>
+> **Откуда путаница:** многие предполагают «дефолтные таймауты» как у nginx или AWS ALB (typically 60s). На уровне application server этого нет.
+>
+> **Если бы это было правдой:** не было бы инцидентов с зависшими тредами Tomcat — но классическая фигня «thread pool exhaustion» в каждом втором post-mortem именно из-за отсутствия timeouts.
+
+## Q15. (!) Как комбинировать несколько аннотаций?
 
 Несколько аннотаций можно применять к одному методу — они оборачиваются в цепочку decorator'ов.
 
@@ -896,10 +964,66 @@ Decorators.ofSupplier(() -> paymentApi.process(payment))
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Как работает fallback в Resilience4j? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В каком порядке выполняются аспекты при сочетании `@TimeLimiter` + `@CircuitBreaker` + `@RateLimiter` + `@Bulkhead` + `@Retry` на одном методе, и почему важно ставить Retry внутри CircuitBreaker, а не наоборот?
+>
+> ---
+>
+> #### A) Порядок выполнения произвольный — Spring AOP сортирует аспекты по алфавиту, поэтому Bulkhead идёт первым — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j Spring Boot starter явно задаёт `Ordered` для каждого аспекта. Порядок (от внешнего к внутреннему): `TimeLimiter → CircuitBreaker → RateLimiter → Bulkhead → Retry → Method`. Это НЕ алфавитный порядок, а тщательно подобранная композиция: TimeLimiter снаружи, чтобы обрезать всю цепочку по таймауту; Retry внутри CB, чтобы каждый ретрай считался отдельным вызовом для статистики CB.
+>
+> **Откуда путаница:** в чистом Spring AOP при отсутствии явного `@Order` действительно порядок недетерминированный.
+>
+> **Если бы это было правдой:** результаты были бы непредсказуемыми между запусками — но Resilience4j даёт стабильное поведение.
+>
+> ---
+>
+> #### B) Retry должен быть **снаружи** CircuitBreaker — чтобы при OPEN CB ретраи давали ему шанс восстановиться — ❌ Неверно
+>
+> **Что на самом деле:** наоборот, Retry должен быть **внутри** CB. Когда CB OPEN, он сразу бросает `CallNotPermittedException` — ретраить такое бессмысленно (CB не «выздоровеет» от того, что вы повторите вызов). Ретраи имеют смысл только пока CB CLOSED — для transient errors (network blip). Когда CB перешёл в OPEN, retry стек просто впустую жжёт время и ресурсы.
+>
+> **Откуда путаница:** интуитивно «давать второй шанс» — это retry поверх всего. Не учитывают, что OPEN — это намеренный отказ, а не transient ошибка.
+>
+> **Если бы это было правдой:** retry-storm при downstream-down: `max-attempts=3` × `retry-delay=500ms` × 1000 запросов = 1500 «холостых» tries в секунду, пока CB OPEN.
+>
+> ---
+>
+> #### C) Порядок: TimeLimiter → CircuitBreaker → RateLimiter → Bulkhead → Retry → Method (снаружи внутрь). Retry внутри CB — иначе при OPEN CB бессмысленно ретраить (CB не «оживёт» от повторных вызовов), а каждый retry даст статистику CB как отдельный вызов — ✓ Верно
+>
+> **Развёрнутое объяснение:** композиция работает как matrёшка: входящий вызов проходит TimeLimiter (если sync, этот слой пропускается), затем CB (если OPEN — мгновенный CallNotPermittedException), затем RateLimiter (если permits=0 — RequestNotPermitted), затем Bulkhead (если все слоты заняты — BulkheadFullException), затем Retry (для transient errors), наконец сам method. Логика «Retry внутри CB»: каждый retry проходит CB → даёт статистику failures → triggers transition в OPEN правильно. Если Retry снаружи, retry повторяется ПОСЛЕ CB-решения → CB видит только одно событие на N попыток → статистика искажена.
+>
+> **Пример:**
+> ```java
+> @TimeLimiter(name = "payment")          // 1. timeout всей цепочки
+> @CircuitBreaker(name = "payment",       // 2. fail-fast при OPEN
+>                 fallbackMethod = "fb")
+> @RateLimiter(name = "payment")          // 3. лимит RPS
+> @Bulkhead(name = "payment",             // 4. concurrency isolation
+>           type = Bulkhead.Type.THREADPOOL)
+> @Retry(name = "payment")                // 5. transient retry
+> public CompletableFuture<Result> charge(Payment p) {
+>     return CompletableFuture.supplyAsync(() -> api.charge(p));
+> }
+> ```
+>
+> **Когда применять:** для критичных external API (платежи, идентификация). Альтернатива — программная композиция через `Decorators.ofSupplier(...)`, где порядок виден явно.
+>
+> **Подводные камни:** TimeLimiter работает только с CompletableFuture/Mono; для sync — `slow-call-duration-threshold` в CB. Если CB и Retry на одном имени `payment`, метрики `resilience4j.retry.calls{kind="failed_with_retry"}` и `resilience4j.circuitbreaker.calls{kind="failed"}` дают разный счёт — это нормально (CB видит ретраи как отдельные вызовы).
+>
+> **Связанные вопросы:** [[Q4]] — состояния CircuitBreaker (CLOSED→OPEN); [[Q8]] — Retry vs Spring Retry; [[Q14]] — TimeLimiter для async
+>
+> ---
+>
+> #### D) В Spring Boot 3 порядок аспектов настраивается через `resilience4j.aspect-order` — без явной конфигурации работает только первая аннотация — ❌ Неверно
+>
+> **Что на самом деле:** порядок задан **по умолчанию** в `Resilience4jAspectOrder`. Конфигурация `resilience4j.aspect-order` существует, но используется только если нужно изменить дефолт (редкий случай). Все 5 аннотаций работают одновременно без дополнительных настроек.
+>
+> **Откуда путаница:** в Spring AOP вообще `@Order` нужно ставить руками. Кажется, что для resilience-аспектов тоже.
+>
+> **Если бы это было правдой:** туториалы по Resilience4j всегда показывали бы YAML-конфиг для order — но они показывают только сами `resilience4j.<module>.instances`.
+
+## Q16. Как работает fallback в Resilience4j?
 
 `fallbackMethod` — метод того же класса, который вызывается при любом исключении (включая `CallNotPermittedException`, `BulkheadFullException` и т.д.).
 
@@ -927,10 +1051,77 @@ public User userFallback(Long id, CallNotPermittedException ex) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Как настроить Actuator метрики для Resilience4j? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какие требования к сигнатуре fallback-метода в Resilience4j, и какие типичные ошибки возникают, если их нарушить?
+>
+> ---
+>
+> #### A) Fallback-метод может быть в любом классе проекта — Resilience4j ищет его через ApplicationContext по имени — ❌ Неверно
+>
+> **Что на самом деле:** fallback ОБЯЗАН быть в **том же классе**, где находится основной метод. Это AOP-ограничение: Resilience4j использует `Class.getDeclaredMethod()` для поиска, не Spring bean lookup. Положив fallback в helper-класс или в другой сервис, получим `NoSuchMethodException` при старте.
+>
+> **Откуда путаница:** Spring `@ExceptionHandler` можно вынести в `@ControllerAdvice` — отдельный класс. Здесь логика другая.
+>
+> **Если бы это было правдой:** проще было бы делать fallback-стратегии переиспользуемыми между сервисами — но в Resilience4j этого нет, и обычно fallback дублируется (или используют общий helper, вызываемый из fallback).
+>
+> ---
+>
+> #### B) Fallback вызывается только при `CallNotPermittedException` (CB OPEN), но не при обычных исключениях из метода — ❌ Неверно
+>
+> **Что на самом деле:** fallback вызывается при **ЛЮБОМ** Throwable из основного метода — `CallNotPermittedException` (CB OPEN), `RequestNotPermitted` (rate limited), `BulkheadFullException` (Bulkhead full), `TimeoutException`, и обычные `IOException`, `RuntimeException` — всё. Это основной механизм degraded response.
+>
+> **Откуда путаница:** в Hystrix существовало понятие `getFallback()` и оно реагировало на любые ошибки. Может быть, переиначили, помня про CB-specifics.
+>
+> **Если бы это было правдой:** под нормальным сбоем сервиса (без OPEN CB) пользователь получал бы 500-ку, что противоречит наблюдаемому поведению.
+>
+> ---
+>
+> #### C) Fallback можно перегрузить: для разных типов исключений — разные методы; при выборе Resilience4j ищет самый специфичный по типу — ✓ Верно
+>
+> **Развёрнутое объяснение:** Resilience4j поддерживает несколько overload'ов fallback с одинаковым именем но разными типами исключения в последнем параметре. При срабатывании выбирается самый специфичный совпадающий (по `Class.isAssignableFrom`). Если общий fallback `Exception` есть — он catch-all. Сигнатура: те же аргументы, что у основного метода, плюс `Exception ex` (или подтип) последним параметром. Return type — точно такой же, что у основного метода (для async — тоже `CompletableFuture<T>` с тем же `T`).
+>
+> **Пример:**
+> ```java
+> @CircuitBreaker(name = "userService", fallbackMethod = "userFallback")
+> public User getUser(Long id) {
+>     return userApi.findById(id);
+> }
+>
+> // catch-all
+> public User userFallback(Long id, Exception ex) {
+>     log.warn("Generic fallback", ex);
+>     return User.anonymous();
+> }
+>
+> // более специфичный — выбран при OPEN CB
+> public User userFallback(Long id, CallNotPermittedException ex) {
+>     return userCache.getOrElse(id, User.anonymous());
+> }
+>
+> // более специфичный — выбран при timeout
+> public User userFallback(Long id, TimeoutException ex) {
+>     metrics.increment("user.timeout");
+>     return User.anonymous();
+> }
+> ```
+>
+> **Когда применять:** когда разные типы сбоев требуют разной стратегии degraded response. OPEN CB → отдать cached value; timeout → быстро вернуть default; validation error → проброс наверх (через `ignore-exceptions`).
+>
+> **Подводные камни:** fallback **не имеет права** долго работать или вызывать тот же сбойный сервис — иначе fallback зависает на тех же ресурсах. Не зови БД из fallback (если БД и есть сбойная зависимость) — отдавай in-memory cache или default. ThreadLocal/MDC в fallback могут отсутствовать, если использован THREADPOOL Bulkhead.
+>
+> **Связанные вопросы:** [[Q3]] — CallNotPermittedException при OPEN; [[Q7]] — настройка fallbackMethod; [[Q15]] — порядок аспектов и fallback на самом внешнем
+>
+> ---
+>
+> #### D) Fallback автоматически кэширует свой результат на `failureRateThreshold` секунд, чтобы не нагружать систему — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j НЕ кэширует результат fallback. Каждый вызов основного метода → при ошибке вызов fallback заново. Кэширование — отдельная ответственность (Spring `@Cacheable`, Caffeine, Redis).
+>
+> **Откуда путаница:** есть отдельный модуль `resilience4j-cache` для кэширования — кто-то воспринимает его как «часть fallback-логики».
+>
+> **Если бы это было правдой:** fallback с обращением к Redis выполнялся бы один раз и кэшировался — но без явного `@Cacheable` каждый запрос делает свой round-trip.
+
+## Q17. Как настроить Actuator метрики для Resilience4j?
 
 ```yaml
 management:
