@@ -1256,10 +1256,77 @@ public class UserAggregateService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как передать контекст (SecurityContext, MDC) в @Async? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какой паттерн обеспечивает **параллельное** выполнение трёх `@Async` методов и блокирующее ожидание всех результатов?
+>
+> ---
+>
+> #### A) `CompletableFuture.allOf(f1, f2, f3).join()` и затем `f1.join() / f2.join() / f3.join()` для результатов — ✓ Верно
+>
+> **Развёрнутое объяснение:** `CompletableFuture.allOf(...)` возвращает `CompletableFuture<Void>`, который завершается, когда **все** переданные futures завершились (успешно или с exception). `.join()` блокирует caller до этого момента, не выбрасывает checked exception (в отличие от `.get()`). После `allOf.join()` каждый из исходных futures гарантированно завершён, и `f1.join()` вернёт результат немедленно без блокировки. Это идиоматичный способ собрать результаты параллельных async-операций. Важно: вызывать `fetchUserAsync(id)` и `fetchOrdersAsync(id)` нужно **до** `allOf`, иначе они выполнятся последовательно.
+>
+> **Пример:**
+> ```java
+> public UserAggregate aggregate(Long id) {
+>     // 1. Запуск трёх async-операций параллельно
+>     CompletableFuture<User> userF = service.fetchUserAsync(id);
+>     CompletableFuture<List<Order>> ordersF = service.fetchOrdersAsync(id);
+>     CompletableFuture<Profile> profileF = service.fetchProfileAsync(id);
+>
+>     // 2. Ожидание всех (блокирующее, но методы уже выполняются параллельно)
+>     CompletableFuture.allOf(userF, ordersF, profileF).join();
+>
+>     // 3. Сборка результата — без блокировки, futures уже completed
+>     return new UserAggregate(userF.join(), ordersF.join(), profileF.join());
+> }
+>
+> // Альтернатива без блокировки caller-а
+> public CompletableFuture<UserAggregate> aggregateAsync(Long id) {
+>     CompletableFuture<User> userF = service.fetchUserAsync(id);
+>     CompletableFuture<List<Order>> ordersF = service.fetchOrdersAsync(id);
+>     CompletableFuture<Profile> profileF = service.fetchProfileAsync(id);
+>     return CompletableFuture.allOf(userF, ordersF, profileF)
+>         .thenApply(v -> new UserAggregate(userF.join(), ordersF.join(), profileF.join()));
+> }
+> ```
+>
+> **Когда применять:** параллельные вызовы независимых внешних API/БД, агрегация данных из нескольких источников, GraphQL-style data loaders.
+>
+> **Подводные камни:** все три метода должны использовать разные executor-ы или один с достаточным `corePoolSize` — иначе они встанут в очередь и выполнятся последовательно; `allOf` не отменяет остальные при exception в одном — нужно явное `cancel()`; `.join()` всё ещё блокирует caller-поток — для не-блокирующего сценария используйте `.thenApply()` на результате `allOf`.
+>
+> **Связанные вопросы:** [[Q2]] — `CompletableFuture` тип возврата, [[Q15]] — отличия от `supplyAsync`, [[Java CompletableFuture]] — расширенный API.
+>
+> ---
+>
+> #### B) `Future.get()` в цикле по списку futures — последовательно ожидать каждый — ❌ Неверно
+>
+> **Что на самом деле:** `Future.get()` блокирует до завершения **этого конкретного** future. Сабмит трёх async-вызовов до цикла действительно запускает их параллельно, и в этом смысле `f1.get(); f2.get(); f3.get();` работает — общее время ≈ max(t1, t2, t3). Но это **legacy** подход: `.get()` бросает checked `ExecutionException`, `InterruptedException`, не поддерживает композицию (`.thenApply`, exception handling), и для коллекций futures приходится писать ручной цикл с try-catch.
+>
+> **Откуда путаница:** функционально результат тот же, что у `allOf`, но эргономика хуже.
+>
+> **Если бы это было правдой как «правильно»:** документация Spring и Java не рекомендовала бы `CompletableFuture` API; но `Future<T>` явно помечен как legacy для новых проектов.
+>
+> ---
+>
+> #### C) Вызвать три `@Async` метода последовательно и собрать результаты через obj.getResult() — ❌ Неверно
+>
+> **Что на самом деле:** если `@Async` методы возвращают POJO, а не `CompletableFuture`, Spring вернёт caller-у `null` и метод выполнится в фоне — caller получит NPE при `obj.getResult()`. Если же методы возвращают `CompletableFuture` и вызываются последовательно с `.get()` сразу после каждого, то параллелизма нет — каждый вызов блокирует следующий.
+>
+> **Откуда путаница:** императивный код «вызвать → получить» интуитивно понятнее, чем функциональная композиция.
+>
+> **Если бы это было правдой:** не было бы смысла в `@Async` — он не давал бы выигрыша по времени.
+>
+> ---
+>
+> #### D) Запустить отдельный `ExecutorService.invokeAll(tasks)` параллельно с `@Async` — ❌ Неверно
+>
+> **Что на самом деле:** `invokeAll` принимает `Collection<Callable<T>>`, а `@Async` методы — это не `Callable`, это просто Java-методы, обёрнутые AOP-прокси. Чтобы использовать `invokeAll`, пришлось бы обернуть каждый async-метод в `Callable`, и тогда `@Async` стал бы избыточным — получился бы дубль threading-логики.
+>
+> **Откуда путаница:** `invokeAll` действительно подходит для параллельного выполнения, но он работает с raw `Callable`, а не с Spring `@Async`.
+>
+> **Если бы это было правдой:** получили бы двойное использование thread pool — `@Async` сабмитит в один executor, `invokeAll` ждёт результата в другом, что бессмысленно.
+
+## Q13. Как передать контекст (SecurityContext, MDC) в @Async?
 
 По умолчанию `SecurityContext` и `MDC` привязаны к `ThreadLocal` — в async потоке они **пусты**.
 
@@ -1296,10 +1363,85 @@ public Executor asyncExecutor() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как тестировать @Async методы? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Почему `MDC` (logging context, например traceId) теряется в `@Async` методе, и как правильно его пробросить?
+>
+> ---
+>
+> #### A) `MDC` синхронизирован через `static volatile` поля — для @Async нужно скопировать значения через `MDC.copyFromGlobal()` — ❌ Неверно
+>
+> **Что на самом деле:** `MDC` хранит данные через `ThreadLocal<Map<String, String>>` (см. `MDCAdapter` реализации Logback/Log4j). Каждый поток имеет свою копию контекста — `static volatile` тут не используется. Метода `MDC.copyFromGlobal()` не существует. Правильный способ — снять snapshot в caller-потоке через `MDC.getCopyOfContextMap()` и установить его в worker-потоке через `MDC.setContextMap()`.
+>
+> **Откуда путаница:** разработчики иногда думают, что MDC — это глобальный singleton, потому что вызовы `MDC.put()` выглядят как статические.
+>
+> **Если бы это было правдой:** не было бы проблемы с MDC в любом многопоточном коде. Но в реальности это типичная проблема, требующая explicit propagation.
+>
+> ---
+>
+> #### B) Зарегистрировать `TaskDecorator` в `ThreadPoolTaskExecutor`, который копирует `MDC.getCopyOfContextMap()` в worker-поток — ✓ Верно
+>
+> **Развёрнутое объяснение:** `TaskDecorator` — Spring API для оборачивания каждой задачи перед сабмитом в executor. В момент сабмита (в caller-потоке) decorator снимает snapshot MDC через `MDC.getCopyOfContextMap()`. Возвращаемый `Runnable` в момент исполнения (в worker-потоке) устанавливает MDC через `MDC.setContextMap(snapshot)`, выполняет оригинальный Runnable, и в finally очищает MDC (`MDC.clear()`). Это обеспечивает корректную передачу контекста независимо от того, какой `@Async` метод вызван. Для SecurityContext аналогичный паттерн или готовая обёртка `DelegatingSecurityContextAsyncTaskExecutor`.
+>
+> **Пример:**
+> ```java
+> public class MdcTaskDecorator implements TaskDecorator {
+>     @Override
+>     public Runnable decorate(Runnable runnable) {
+>         // Снимок в потоке caller-а (Tomcat поток)
+>         Map<String, String> contextMap = MDC.getCopyOfContextMap();
+>         SecurityContext securityContext = SecurityContextHolder.getContext();
+>
+>         return () -> {
+>             // Восстановление в worker-потоке
+>             try {
+>                 if (contextMap != null) MDC.setContextMap(contextMap);
+>                 SecurityContextHolder.setContext(securityContext);
+>                 runnable.run();
+>             } finally {
+>                 MDC.clear();
+>                 SecurityContextHolder.clearContext();
+>             }
+>         };
+>     }
+> }
+>
+> @Bean
+> public Executor asyncExecutor() {
+>     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+>     executor.setCorePoolSize(8);
+>     executor.setTaskDecorator(new MdcTaskDecorator());
+>     executor.initialize();
+>     return executor;
+> }
+> ```
+>
+> **Когда применять:** обязательно во всех проектах с tracing/observability — без этого traceId/spanId/customerId теряются в async-логах, и debug становится невозможным; критично для multi-tenant систем (tenantId), security audit (userId).
+>
+> **Подводные камни:** не забыть `MDC.clear()` в finally — worker-поток переиспользуется в pool, утечка контекста между задачами; SecurityContextHolder.clearContext() тоже обязателен; `TaskDecorator` применяется ко всем задачам пула — если разные `@Async` методы требуют разной propagation-логики, нужны разные executor-ы; не работает для `TaskExecutionAutoConfiguration` без явной конфигурации.
+>
+> **Связанные вопросы:** [[Q5]] — кастомный executor, [[Q4]] — default executor.
+>
+> ---
+>
+> #### C) Spring автоматически передаёт `RequestContextHolder` и связанные с ним `ThreadLocal` в async-потоки — ❌ Неверно
+>
+> **Что на самом деле:** Spring не передаёт `RequestContextHolder` (хранит `HttpServletRequest`/`Response`) в async-потоки автоматически. Если в async-методе вызвать `RequestContextHolder.currentRequestAttributes()` — будет `IllegalStateException` или `null`. Для проброса есть `setInheritable(true)` (через `RequestContextListener` / `RequestContextFilter`), но он работает только для child-потоков и не подходит для thread pool.
+>
+> **Откуда путаница:** некоторые spring-фичи действительно делают propagation автоматически (например `@Scheduled` использует то же executor-конфиг как `@Async`), и можно предположить, что и контекст переносится.
+>
+> **Если бы это было правдой:** не нужны были бы `DelegatingSecurityContextRunnable`, `TaskDecorator` для MDC, и т. п. — но они существуют именно из-за отсутствия автомагии.
+>
+> ---
+>
+> #### D) Заменить `ThreadLocal` на `InheritableThreadLocal` через JVM-флаг `-Dspring.threadlocal.inheritable=true` — ❌ Неверно
+>
+> **Что на самом деле:** такого JVM-флага не существует. `InheritableThreadLocal` действительно копирует значение в child-потоки при их создании, но это работает только при создании потока через конструктор `Thread`. Когда `ThreadPoolTaskExecutor` переиспользует worker-потоки из пула, наследование уже произошло один раз (при создании потока), и второй раз `InheritableThreadLocal` не сработает. Подходящего паттерна нет — нужен explicit copy через `TaskDecorator`.
+>
+> **Откуда путаница:** `InheritableThreadLocal` существует и используется в некоторых случаях (`SecurityContextHolder` MODE_INHERITABLETHREADLOCAL), но для thread pool он бесполезен.
+>
+> **Если бы это было правдой:** проблема MDC в @Async давно была бы решена JVM-флагом, но она остаётся актуальной во всех версиях Spring.
+
+## Q14. Как тестировать @Async методы?
 
 **Проблема:** в тестах `@Async` усложняет проверки — результат может быть ещё не готов.
 
