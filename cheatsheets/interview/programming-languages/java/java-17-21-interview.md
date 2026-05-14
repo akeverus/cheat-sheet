@@ -14,7 +14,7 @@ aliases:
   - "Java 17 21 собеседование"
 prerequisites: []
 next: []
-updated: "2026-05-08"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Java 17-21`
 
@@ -2533,6 +2533,107 @@ java --enable-preview --source 21 hello.java
 
 **Статус:** Preview в Java 21-22, финализировано в Java 25 (ожидается) как часть Project Amber.
 
+> [!mcq]
+>
+> **Вопрос:** Какая главная мотивация Unnamed Classes + Instance Main Methods, и какие ограничения у этой preview-фичи?
+>
+> ---
+>
+> #### A) Это просто синтаксический сахар — Hello World можно писать без `class` и `static` — ❌ Неверно (поверхностный ответ)
+>
+> **Что на самом деле:** это **правильное наблюдение, но неполное**. Поверхностное объяснение: убрали boilerplate. Глубокое: уменьшается **когнитивная нагрузка для новичков**, которым иначе пришлось бы понимать `public`, `class`, `static`, `String[] args` до того, как написать первую программу. Это часть Project Amber — series JEPs для приближения Java к Python/JavaScript по low entry barrier.
+>
+> Поверхностный ответ упускает реальную мотивацию: язык традиционно требовал OO-mental-model для тривиальных программ; теперь можно поэтапно вводить концепции.
+>
+> **Откуда путаница:** «сахар» — частое описание новых syntactic features. Здесь это unfair simplification — есть design goal.
+>
+> **Если бы это было правдой:** фича сводилась бы к removeing keywords. Реально дизайн затрагивает loading mechanism (unnamed top-level class), method resolution (priority: `static main(String[])` > `static main()` > `main(String[])` > `main()`).
+>
+> ---
+>
+> #### B) JEP 445/463 (Project Amber) уменьшает entry barrier для новичков: можно писать `void main()` без `public class`, без `static`, без `args` — компилятор обёртывает в unnamed top-level class; preview статус, требует `--enable-preview --source 21+` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Цель — позволить программу typing `void main() { ... }` в `.java` файле и запустить без traditional Java boilerplate. Это снимает 4 концепции которые новичку нужно понять для Hello World:
+> 1. **`public`** — modifier visibility (зачем нужен — непонятно сразу)
+> 2. **`class`** — OO declaration (а почему просто не функция?)
+> 3. **`static`** — class-level vs instance (требует понимания экземпляров)
+> 4. **`String[] args`** — array параметр (зачем массив, зачем String?)
+>
+> Java 21 unnamed class + instance main позволяют:
+> ```java
+> // Полноценный .java файл — никаких classes, никаких static
+> void main() {
+>     System.out.println("Hello, World!");
+> }
+> ```
+>
+> Компилятор делает synthetic anonymous top-level класс под капотом. Это **только для top-level** — в существующих классах поведение не меняется.
+>
+> Приоритет method resolution (если есть несколько main):
+> 1. `public static void main(String[] args)` — классическая
+> 2. `public static void main()` — без args
+> 3. `void main(String[] args)` — instance с args
+> 4. `void main()` — instance без args
+>
+> Для instance main компилятор создаёт инстанс класса (через default constructor) и вызывает `main()` на нём.
+>
+> **Пример (быстрый скрипт без boilerplate):**
+> ```java
+> // CheckPort.java — однофайловая утилита
+> import java.net.Socket;
+>
+> void main() throws Exception {
+>     String host = "localhost";
+>     int port = 8080;
+>     try (var socket = new Socket(host, port)) {
+>         System.out.println("Port " + port + " is open");
+>     } catch (Exception e) {
+>         System.out.println("Port " + port + " is closed");
+>     }
+> }
+> // Запуск: java --enable-preview --source 21 CheckPort.java
+> ```
+>
+> **Когда применять:**
+> - **Обучение Java**: новички могут писать программы, постепенно изучая `class`/`static`.
+> - **Однофайловые скрипты**: автоматизация, проверки, демо — Java конкурирует с Python для small scripting.
+> - **Live coding в presentations**: компактные примеры без отвлечения на boilerplate.
+> - **JEP 330 + unnamed classes**: `java MyScript.java` — Java как scripting platform для DevOps tasks.
+> - **Build files и migrations**: gradle-init, Liquibase Groovy — Java становится конкурентом.
+>
+> **Подводные камни:**
+> - **Только top-level**: в named class instance main тоже работает, но без unnamed wrapper. Cannot mix unnamed-class syntax с regular class в одном файле.
+> - **`this` в unnamed class** — есть, но ограничен (anonymous instance не имеет имени для `MyClass.this`).
+> - **`extends`/`implements` запрещены** — unnamed class не может наследовать или реализовывать. Это by design (упрощение для начинающих).
+> - **Imports на top-level** — обязательны, но без package declaration — unnamed class не может быть в named package.
+> - **Preview статус (Java 21-23)** — требует `--enable-preview --source N` для компиляции и запуска. В Java 25 ожидается финализация (часть Project Amber roadmap).
+> - **IDE поддержка**: IntelliJ Idea 2024.1+, VSCode/Eclipse — позже. Для CI/CD нужен JDK 21+.
+> - **Performance**: на runtime разницы нет — обычный class instance + method invocation.
+>
+> **Связанные вопросы:** [[Q39]] — pattern matching, тоже Java 21 final feature; [[Q40]] — Record Patterns; [[Q41]] — String Templates (preview, изменения в 23+).
+>
+> ---
+>
+> #### C) Unnamed Classes — для embedded systems с ограниченной памятью (no class overhead) — ❌ Неверно
+>
+> **Что на самом деле:** memory overhead не уменьшается. Класс всё равно создаётся компилятором (synthetic), просто имя не пишется в исходнике. JIT/Hotspot одинаково обрабатывает named и unnamed classes — это about ergonomics, не runtime.
+>
+> **Откуда путаница:** «unnamed» звучит как «нет объекта». На деле — есть synthetic anonymous class, как и для лямбд/инноков anonymous classes.
+>
+> **Если бы это было правдой:** мы могли бы использовать для IoT/microcontrollers. На практике Java на embedded — отдельный target (Java ME, GraalVM Native), независимый от Project Amber.
+>
+> ---
+>
+> #### D) Эта фича заменяет JShell для интерактивной разработки — JShell deprecated в Java 21 — ❌ Неверно
+>
+> **Что на самом деле:** JShell **НЕ deprecated** — это интерактивный REPL для evaluation выражений, поставляется с JDK с Java 9. Unnamed classes — отдельная фича для **файловых** программ (не REPL). Они комплементарны, не конкурируют.
+>
+> **Откуда путаница:** оба «упрощают входной порог». Но JShell — для experiments в memory, unnamed class — для simple .java файлов с main.
+>
+> **Если бы это было правдой:** мы потеряли бы способ запустить `jshell` и попробовать `System.out.println(5 + 7)`. JShell живой в Java 21+.
+
 ---
 
 ## See also
@@ -2546,15 +2647,3 @@ java --enable-preview --source 21 hello.java
 - [Java Types](java-types-interview.md) — `records`, `sealed classes`, `var` — ключевые нововведения Java 16-21
 - [Java Generics](java-generics-interview.md) — обобщения и `type inference`, взаимодействие с `records`
 - [JVM](../../jvm/jvm-interview.md) — устройство JVM, влияние `Virtual Threads` на планировщик, `GC` и `Project Loom`
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Java 8](java-8-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Java Annotations](java-annotations-interview.md)
-- [Java Collections](java-collections-interview.md)
-- [Java Concurrency](java-concurrency-interview.md)
-- [Java Conditional Statements](java-conditional-statements-interview.md)
-- [Java Core](java-core-interview.md)
