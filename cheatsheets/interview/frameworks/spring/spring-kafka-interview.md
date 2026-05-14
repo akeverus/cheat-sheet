@@ -1520,10 +1520,105 @@ record.headers().add(new RecordHeader("sequence", ByteBuffer.allocate(8).putLong
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как настроить idempotent producer? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая стратегия ordering в Kafka — самая практичная для production, и какие trade-offs она имеет?
+>
+> ---
+>
+> #### A) Single partition per topic — простой способ обеспечить strict ordering — ❌ Неверно (для production)
+>
+> **Что на самом деле:** один partition действительно даёт strict ordering, но **жертвует throughput**. Кафка масштабируется через partitions: один partition = один consumer instance (в одной group), throughput limited single-thread. Для большинства production workloads это unacceptable: 1000 RPS — потолок одного partition.
+>
+> Подходит только для **low-volume strict-ordered** scenarios (audit log, ledger без partitioning ключа).
+>
+> **Откуда путаница:** «strict ordering» звучит как best practice. На деле это business requirement, а не tech default.
+>
+> **Если бы это было правдой:** все Kafka topics имели бы 1 partition. Реально prod-топики имеют 6-100+ partitions.
+>
+> ---
+>
+> #### B) Partition by key (e.g., customer_id) — даёт ordering per key, parallelism между keys; production-стандарт для большинства событийных систем — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Kafka гарантирует ordering **per partition**, не globally. Если все события для одного entity попадают в одну partition (через consistent hash key), они обрабатываются по порядку. Между разными entities — parallelism.
+>
+> Это **partition by key** strategy:
+> ```java
+> // Producer: explicit key
+> kafkaTemplate.send("orders", order.getCustomerId(), orderEvent);
+> //                  topic      key (определяет partition)  value
+> ```
+>
+> Hash(customer_id) % partitions определяет target partition. Все события customer_id=42 идут в одну partition → strict ordering для этого customer'а. Разные customers распределяются по partitions → throughput linearly scales с partition count.
+>
+> **Пример (Spring Kafka):**
+> ```java
+> // Producer side
+> @Service
+> public class OrderEventPublisher {
+>     @Autowired KafkaTemplate<String, OrderEvent> template;
+>
+>     public void publish(OrderEvent event) {
+>         template.send("orders",
+>             event.customerId(),     // KEY: customerId
+>             event);                 // ordering preserved per customer
+>     }
+> }
+>
+> // Consumer side — concurrency настраивается по partition count
+> @KafkaListener(
+>     topics = "orders",
+>     concurrency = "10"               // 10 consumer threads
+> )
+> public void handle(OrderEvent event) {
+>     // Spring assigns partitions to threads;
+>     // events of one customer всегда на одном thread.
+> }
+> ```
+>
+> **Когда применять:**
+> - **E-commerce**: события одного order/customer должны обрабатываться по порядку (placed → paid → shipped), но между customers — parallel.
+> - **Banking**: транзакции одного аккаунта по порядку.
+> - **IoT**: события одного устройства по порядку, но устройств — миллионы.
+> - **Wolt/Avito**: order lifecycle events keyed by order_id.
+>
+> **Подводные камни:**
+> - **Hot keys**: если 80% событий — один customer (например, b2b client с миллионами orders), partition становится hot, throughput limited.
+> - **Repartitioning**: при увеличении partition count hash mapping меняется — старые ключи могут попасть в другие partitions, ordering breaks. Использовать sticky partitioner или явный partition mapping.
+> - **`max.in.flight.requests.per.connection > 1` + retries** ломает ordering при failures (out-of-order retry). С `enable.idempotence=true` Kafka сохраняет ordering автоматически.
+> - **Cross-partition ordering**: НЕ гарантировано. Если бизнес-логика требует global ordering, partition by key не работает — нужен single partition или event sourcing с aggregator.
+>
+> **Связанные вопросы:** [[Q12]] — Kafka Streams reuse partition strategy; [[Q14]] — idempotent producer для ordering safety; [[Q5]] — error handler не должен ломать ordering.
+>
+> ---
+>
+> #### C) Sequence numbers в headers — клиент сам сортирует на consumer side — ❌ Неверно (антипаттерн)
+>
+> **Что на самом деле:** consumer-side sorting через sequence numbers возможен, но создаёт сложности:
+> - **Buffer overhead**: нужно держать out-of-order messages в памяти до закрытия gap.
+> - **Stuck consumers**: если message #5 lost (или ну delayed), всё после него blocked.
+> - **State complexity**: cross-batch state, restart recovery.
+>
+> На практике это **last-resort** когда partition by key невозможен (например, no natural key). Простой partition by key решает 95% случаев без этого complexity.
+>
+> **Откуда путаница:** Cassandra и другие eventually-consistent systems используют sequence numbers. Но Kafka built-in primitive — partition ordering, не cross-partition reconciliation.
+>
+> **Если бы это было правдой:** ordering был бы distributed problem, Kafka not different from generic message queue.
+>
+> ---
+>
+> #### D) Acks=all + retries=Integer.MAX_VALUE гарантируют ordering — ❌ Неверно
+>
+> **Что на самом деле:** `acks=all` + retries — это про **durability** (записано на N replicas), не **ordering**. Retries сами по себе ЛОМАЮТ ordering: message #1 fails, retried, message #2 succeeds first → arrived out of order on broker.
+>
+> Для сохранения ordering с retries нужен `enable.idempotence=true` (с Kafka 0.11+), который добавляет sequence numbers per producer на broker level.
+>
+> **Откуда путаница:** durability и ordering часто упоминаются вместе как «надёжность». Семантически они разные.
+>
+> **Если бы это было правдой:** не было бы документации Confluent про `enable.idempotence` и его требований (max.in.flight ≤ 5, retries > 0, acks=all).
+
+## Q14. Как настроить idempotent producer?
 
 ```yaml
 spring:
@@ -1538,10 +1633,118 @@ Idempotent producer присваивает каждому сообщению seq
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Как работает Pause/Resume для @KafkaListener? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что **не** гарантирует idempotent producer (`enable.idempotence=true`), и в чём отличие от Exactly-Once Semantics (EOS)?
+>
+> ---
+>
+> #### A) Idempotent producer = Exactly-Once delivery end-to-end — синонимы — ❌ Неверно
+>
+> **Что на самом деле:** idempotent producer гарантирует **at-most-once на broker level** — broker не примет дубль с тем же `(producer_id, sequence_number)`. НО:
+> - Это **per-producer, per-session** — при restart producer'а ID меняется, дубли возможны.
+> - Это **per-partition** — гарантия в рамках одной partition, не cross-partition.
+> - Это **не покрывает consumer side** — consumer может прочитать одно сообщение несколько раз (например, после rebalance).
+>
+> Exactly-Once Semantics (EOS) — это **end-to-end** гарантия через transactions: producer atomically пишет в multiple partitions + commits consumer offsets. Это шире idempotent.
+>
+> **Откуда путаница:** оба связаны с avoiding duplicates. Но idempotent — частный случай (broker-side dedup), EOS — полный pipeline.
+>
+> **Если бы это было правдой:** не было бы separate `transactional.id` setting и `KafkaTransactionManager`.
+>
+> ---
+>
+> #### B) Idempotent producer гарантирует только broker-side dedup в пределах одной сессии producer'а; для full EOS нужны transactions (transactional.id, beginTransaction, sendOffsetsToTransaction); consumer-side обработка требует separate idempotency key — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Три уровня delivery semantics в Kafka:
+>
+> 1. **At-least-once** (default): возможны дубли.
+>    ```yaml
+>    enable.idempotence: false
+>    acks: all
+>    retries: 3
+>    ```
+>
+> 2. **Idempotent producer**: dedup per-producer-session.
+>    ```yaml
+>    enable.idempotence: true   # auto: acks=all, retries=Integer.MAX_VALUE, max.in.flight≤5
+>    ```
+>    - Broker tracks (producer_id, sequence_number) per partition.
+>    - Дубли при retry внутри сессии — отброшены.
+>    - **Ограничение**: при producer restart новый producer_id → дубли возможны.
+>
+> 3. **Exactly-Once Semantics (EOS)**: end-to-end через transactions.
+>    ```yaml
+>    transactional.id: orders-producer-tx-1
+>    isolation.level: read_committed   # consumer side
+>    ```
+>    - Producer atomically commits в multiple partitions.
+>    - `sendOffsetsToTransaction` — atomically commits offsets вместе с output messages.
+>    - Consumer с `read_committed` видит только committed messages.
+>
+> **Пример (EOS pattern — read-process-write):**
+> ```java
+> @Bean
+> public KafkaTransactionManager<String, Object> ktm(ProducerFactory<String, Object> pf) {
+>     return new KafkaTransactionManager<>(pf);
+> }
+>
+> @Service
+> public class OrderProcessor {
+>     @Autowired KafkaTemplate<String, OrderEvent> template;
+>     @Autowired KafkaTemplate<String, NotificationEvent> notifTemplate;
+>
+>     @KafkaListener(topics = "orders", containerFactory = "txFactory")
+>     @Transactional("ktm")                        // ChainedKafkaTransactionManager
+>     public void process(OrderEvent order) {
+>         // 1. Read from "orders"
+>         // 2. Process
+>         OrderResult result = service.process(order);
+>         // 3. Write to "results" (atomically with offset commit)
+>         template.send("results", result);
+>         // 4. Write to "notifications" (atomically)
+>         notifTemplate.send("notifications", buildNotif(result));
+>         // Все 3 step'a — atomically. Crash → ничего не commit'итс.
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Idempotent producer**: ДОЛЖЕН быть включён в любом production Kafka producer'е (нет downside).
+> - **Transactions + EOS**: read-process-write pipelines (Kafka Streams делает это автоматически), financial systems, exactly-once requirements.
+> - **At-least-once + idempotent consumer logic**: most pragmatic — idempotency на app level (например, idempotency key в DB unique constraint).
+>
+> **Подводные камни:**
+> - **`enable.idempotence=true` + `acks=1`** — exception при старте. Idempotence требует `acks=all`.
+> - **`max.in.flight.requests > 5`** — exception. Idempotence требует ≤ 5 для maintaining ordering.
+> - **Transactions hurt throughput** — 5-10x latency overhead. Используй только когда EOS критичен.
+> - **Producer restart with same `transactional.id`** — fences старого producer'а. Если ID не уникален между instances — split-brain.
+> - **Consumer `read_committed`** добавляет latency (ждёт commit для visibility).
+>
+> **Связанные вопросы:** [[Q8]] — KafkaTransactionManager basics; [[Q9]] — AckMode interplay с transactions; [[Q13]] — ordering с idempotent producer.
+>
+> ---
+>
+> #### C) Idempotence не нужна — современные Kafka brokers сами dedup'ят — ❌ Неверно
+>
+> **Что на самом деле:** broker dedup работает **только при enabled idempotence** (sequence numbers required). Без него broker не имеет способа distinguish original message от retry — оба valid sends.
+>
+> **Откуда путаница:** «broker умный» — желаемое, не реальность. Без protocol-level dedup (sequence numbers) задача невозможна.
+>
+> **Если бы это было правдой:** `enable.idempotence` был бы default `true` с Kafka 0.11+. Реально стал default только с Kafka 3.0+.
+>
+> ---
+>
+> #### D) Idempotence работает только с Avro/Protobuf, не с JSON — ❌ Неверно
+>
+> **Что на самом деле:** idempotence — это **wire protocol level** (producer_id + sequence_number в записываемых batches). Сериализация payload (JSON/Avro/Protobuf) — orthogonal. Idempotence работает с любой сериализацией.
+>
+> **Откуда путаница:** Avro/Protobuf часто упоминаются как «production-grade» — экстраполяция «production-grade features only with them».
+>
+> **Если бы это было правдой:** компании использующие JSON Kafka topics не могли бы получить idempotence. На практике все используют.
+
+## Q15. Как работает Pause/Resume для @KafkaListener?
 
 ```java
 @Autowired
