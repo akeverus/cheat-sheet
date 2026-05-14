@@ -1347,10 +1347,85 @@ Real-time stream processing (windowing, joins):
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Что такое Claim Check и как его реализовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Spring Integration с Kafka adapter vs прямой @KafkaListener — когда нужен Integration?
+>
+> ---
+>
+> #### A) Spring Integration обязателен для всех Kafka use cases — @KafkaListener устарел — ❌ Неверно
+>
+> **Что на самом деле:** @KafkaListener активно поддерживается и **рекомендуемый** способ для простых consumer/producer scenarios. Integration с Kafka adapter — overkill для basic message handling.
+>
+> **Если бы это было правдой:** Spring Kafka не имел бы dedicated artifact, всё было бы под spring-integration-kafka.
+>
+> ---
+>
+> #### B) @KafkaListener для простых cases (one topic → handler), Spring Integration когда нужна композиция нескольких adapters/каналов: file → Kafka → DB pipeline с transformations/routing/aggregation; либо complex routing logic (header-based, content-based) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **@KafkaListener подходит когда:**
+> - Один input topic → handler
+> - Простая обработка без routing
+> - Не нужны EIP patterns (aggregator, splitter, enricher)
+>
+> **Spring Integration с Kafka adapter подходит когда:**
+> - Композиция: Kafka → enrich from DB → split → fan-out в 3 topics
+> - File watcher → parse → Kafka producer (одна flow definition)
+> - Routing на основе message content/headers
+> - Aggregator: ждать N related messages из топика и обрабатывать batch
+>
+> **Пример:**
+> ```java
+> // ❌ Простой случай — overkill
+> @Bean
+> public IntegrationFlow simpleKafkaConsumer(KafkaProperties props) {
+>     return IntegrationFlow.from(Kafka.messageDrivenChannelAdapter(...))
+>         .handle(orderService::process)
+>         .get();
+> }
+> // ✅ Лучше: @KafkaListener
+> @KafkaListener(topics = "orders")
+> public void handle(OrderEvent event) { orderService.process(event); }
+>
+> // ✅ Spring Integration оправдан — multi-source ETL
+> @Bean
+> public IntegrationFlow ordersETL() {
+>     return IntegrationFlow.from(Kafka.messageDrivenChannelAdapter(consumerFactory, "raw-orders"))
+>         .enrich(e -> e.requestChannel(customerLookupChannel)
+>                       .requestPayloadExpression("payload.customerId"))
+>         .<OrderEvent, Boolean>route(o -> o.amount() > 1000,
+>             m -> m.subFlowMapping(true, sf -> sf.handle(Kafka.outboundChannelAdapter(pf).topic("hi-value")))
+>                   .subFlowMapping(false, sf -> sf.handle(Kafka.outboundChannelAdapter(pf).topic("regular"))))
+>         .get();
+> }
+> ```
+>
+> **Когда применять:**
+> - **@KafkaListener**: 80% production cases — простой event handling.
+> - **Spring Integration**: ETL, multi-source/sink pipelines, complex routing, integration с не-Kafka source.
+> - **Kafka Streams**: stateful processing (windowing, joins) — отдельный класс задач.
+>
+> **Подводные камни:**
+> - **Не миксовать**: @KafkaListener и `Kafka.messageDrivenChannelAdapter` в одном проекте — confusing.
+> - **Integration overhead**: каждый Channel = JMS-like overhead vs direct method call.
+> - **Testability**: Spring Integration flows тестируются с MockIntegrationContext, @KafkaListener — с EmbeddedKafka.
+>
+> **Связанные вопросы:** [[Q8]] — Kafka inbound adapter; [[Q11]] — Integration vs Camel; [[Q14]] — Enricher pattern.
+>
+> ---
+>
+> #### C) Spring Integration быстрее @KafkaListener — лучше throughput — ❌ Неверно
+>
+> **Что на самом деле:** оба используют один `MessageListenerContainer` под капотом. Throughput идентичен. Integration добавляет slight overhead на messaging channels (negligible на CPU-bound workloads).
+>
+> ---
+>
+> #### D) Integration единственный способ интегрировать Kafka с не-Spring системами — ❌ Неверно
+>
+> **Что на самом деле:** @KafkaListener интегрируется со всем что доступно в Spring Boot context — DB, REST clients, third-party APIs. Не нужен Integration для cross-system communication.
+
+## Q13. Что такое Claim Check и как его реализовать?
 
 **Claim Check** — паттерн: большие данные хранятся отдельно (S3, БД), в канале передаётся только ссылка-токен. Уменьшает размер сообщений в очереди.
 
@@ -1376,10 +1451,88 @@ public IntegrationFlow claimCheckRetrieveFlow(ClaimCheckTransformer claimCheck) 
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как работает Enricher (Content Enricher)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Claim Check pattern — когда применять и какой главный trade-off?
+>
+> ---
+>
+> #### A) Claim Check всегда лучше — уменьшает размер сообщений — ❌ Неверно
+>
+> **Что на самом деле:** Claim Check добавляет **внешнюю dependency** (S3, БД) и **eventual consistency**:
+> - Message в queue → claim_id, но реальный payload в S3 ещё не replicated.
+> - Если S3 endpoint недоступен, claim_id useless.
+> - Retention в S3 нужно coordinate с retention в queue.
+>
+> Это не silver bullet — добавляет complexity. Применяется когда message size большой.
+>
+> ---
+>
+> #### B) Применять когда: 1) message больше broker limit (Kafka 1MB default, RabbitMQ 128MB), 2) compliance требует hashes/signatures отдельно, 3) дешевле хранить large data в S3 ($0.023/GB) vs Kafka cluster. Trade-off — eventual consistency между queue и storage, нужен retention coordination — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **Когда оправдан:**
+> 1. **Large payloads**: PDFs, images, documents (>1MB) — broker не должен store binary blob.
+> 2. **Cost optimization**: Kafka storage stores all replicas (RF=3 = 3x cost). S3 cheaper при large data.
+> 3. **Compliance separation**: payload в encrypted S3 (KMS), metadata в queue (audit-friendly).
+>
+> **Реализация (Spring Integration):**
+> ```java
+> @Bean
+> public IntegrationFlow claimCheckFlow(S3Service s3) {
+>     return IntegrationFlow.from("largeDocsInput")
+>         .transform(Message.class, msg -> {
+>             // 1. Save payload в S3
+>             String claimId = UUID.randomUUID().toString();
+>             s3.putObject("docs-bucket", claimId, msg.getPayload());
+>             // 2. Заменить payload на claim_id
+>             return MessageBuilder.withPayload(claimId)
+>                 .copyHeaders(msg.getHeaders())
+>                 .setHeader("claim-check", true)
+>                 .build();
+>         })
+>         .handle(Kafka.outboundChannelAdapter(pf).topic("docs-events"))
+>         .get();
+> }
+>
+> @Bean
+> public IntegrationFlow retrieveFlow(S3Service s3) {
+>     return IntegrationFlow.from(Kafka.messageDrivenChannelAdapter(cf, "docs-events"))
+>         .filter(m -> m.getHeaders().get("claim-check", Boolean.class))
+>         .transform(String.class, claimId ->
+>             s3.getObject("docs-bucket", claimId))
+>         .handle(docService::process)
+>         .get();
+> }
+> ```
+>
+> **Когда применять:**
+> - **Document processing**: PDF/Word/Excel в email → S3 + metadata в Kafka.
+> - **Image pipelines**: User upload → S3 + processing trigger в queue.
+> - **Audit + payload separation**: Compliance audit log не должен содержать PII; PII в encrypted S3.
+> - **Avito**: photos для ad listings — claim check вместо хранения в DB blobs.
+>
+> **Подводные камни:**
+> - **Retention mismatch**: queue retention 7d, S3 lifecycle 30d → возможны stale claim_ids при replay.
+> - **S3 eventually consistent (cross-region)**: write в us-east, read в us-west может вернуть 404 первые секунды.
+> - **No transactional atomicity**: write S3 + send Kafka — два разных write. Crash между ними = orphan S3 object или orphan queue message.
+> - **Cost monitoring**: S3 PUT/GET requests тоже стоят денег ($0.005/1000 GET). На high RPS считать total.
+>
+> **Связанные вопросы:** [[Q1]] — EIP patterns; [[Q14]] — Enricher (reverse pattern); [[Q11]] — Camel также supports.
+>
+> ---
+>
+> #### C) Claim Check работает только с S3 — нельзя с DB или Redis — ❌ Неверно
+>
+> **Что на самом деле:** любой key-value store подходит: S3 (cheap, slow), Redis (fast, expensive), MongoDB GridFS, DB blob storage. Выбор по latency/cost trade-off.
+>
+> ---
+>
+> #### D) Claim Check замена для Kafka compaction — ❌ Неверно
+>
+> **Что на самом деле:** Kafka compaction — log retention strategy (keep latest message per key), не storage offloading. Claim Check — отдельный pattern для large payloads. Они могут coexist.
+
+## Q14. Как работает Enricher (Content Enricher)?
 
 **Enricher** — добавляет данные из внешнего источника в сообщение (обогащение):
 
