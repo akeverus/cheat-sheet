@@ -1696,10 +1696,86 @@ False positive rate: `(1 − e^(−kn/m))^k`, где `k` — число хеш-�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Когда HashMap деградирует до O(n)? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Что такое HashDoS-атака и как Java 8+ защищается от неё?
+>
+> ---
+>
+> #### A) Атака на CPU кэш через специально подобранные ключи, забивающие L1 — Java 8+ защищается увеличенным размером bucket — ❌ Неверно
+>
+> **Что на самом деле:** HashDoS не про CPU cache. Атака подбирает ключи (POST-параметры, JSON-ключи, HTTP headers) с **одинаковым hashCode**, что отправляет их все в один bucket HashMap. Bucket вырождается в O(n) цепочку, и обработка одного запроса с 10k параметров занимает O(n²) = 100M операций → CPU занят на секунды/минуты.
+>
+> **Откуда путаница:** «DoS» в HTTP-контексте часто ассоциируется с сетевой/CPU нагрузкой; HashDoS — специфический подтип algorithmic complexity attack.
+>
+> **Если бы это было правдой:** Java 8 treeify и не помогал бы, и Tomcat не вводил бы `maxParameterCount`.
+>
+> ---
+>
+> #### B) Атака подбирает ключи с одинаковым hashCode для забивания random buckets — защита через CSPRNG hashes — ❌ Неверно (детали неточные)
+>
+> **Что на самом деле:** Атака отправляет всё в ОДИН bucket (не random — все цели сходятся в одно место). Java 8 не использует CSPRNG для hash (это значительный overhead для каждого put/get); вместо этого применяет **randomized hash seed для String** в некоторых JVM (`-Djdk.map.alternative.hashing.threshold=512`, не enabled by default в OpenJDK 11+) И главное — **treeify** при длинных цепочках.
+>
+> **Откуда путаница:** упоминание CSPRNG звучит правдоподобно (Python, Ruby используют hash randomization), но Java выбрала другой путь.
+>
+> **Если бы это было правдой:** каждый put/get страдал бы от overhead крипто-хеша; реально Java оптимизирована для throughput.
+>
+> ---
+>
+> #### C) Algorithmic complexity attack: злоумышленник подбирает ключи с одинаковым hashCode → все попадают в один bucket → O(n) на каждую операцию → CPU exhaustion. Java 8+ защита: treeify (O(n) → O(log n) worst-case) при цепочке ≥ 8; на уровне приложения — лимит на число параметров запроса — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **HashDoS** (известна с CCS 2003, массовая эксплуатация 2011-2012 в Java/PHP/Python/Ruby):
+> 1. **Принцип**: атакующий знает алгоритм hash (или подбирает методом коллизий через birthday paradox) и формирует payload, где все ключи попадают в один bucket.
+> 2. **Пример**: HTTP POST с 65k параметрами, hashCode которых одинаков для Java String → парсинг tomcat'ом тратит секунды CPU.
+> 3. **Импакт**: один request забивает CPU thread на длительное время → отказ в обслуживании других пользователей.
+>
+> **Защита Java 8+** на уровне HashMap:
+> - **Treeify** при длине цепочки ≥ TREEIFY_THRESHOLD (8) — bucket становится красно-чёрным деревом → worst case O(log n) вместо O(n).
+> - **Randomized hash seed** для String (опционально, deprecated в новых JVM).
+>
+> **Защита на уровне приложения**:
+> - Tomcat `maxParameterCount=10000` (default — раньше unlimited).
+> - JSON parsers (Jackson) — лимит на nesting depth.
+> - Validation на длину входных данных.
+> - Rate limiting / WAF фильтры.
+>
+> **Пример:**
+> ```java
+> // Атакующий payload (Java 7, эта атака — около 100 млн ops на 60k ключей):
+> // ?a=1&b=2&c=3...  где hashCode(a) == hashCode(b) == ...
+> // Способ: подбор строк через collision attack.
+>
+> // В Java 8+ treeify смягчает (но не полностью устраняет):
+> // 60k коллизий → red-black tree → O(log 60000) ≈ 16 на ops vs 60000.
+> ```
+>
+> **Когда применять защиту:**
+> - **Любой публичный API**, принимающий user-controlled keys (form data, JSON, XML attributes).
+> - **Search indexes / facets** — где пользователь может задать произвольный набор полей.
+> - **Web-frameworks**: проверить дефолтные limits (Spring Boot: `server.tomcat.max-parameter-count`).
+>
+> **Подводные камни:**
+> - Treeify работает только если ключи `Comparable`. Иначе используется System.identityHashCode как tie-breaker — менее эффективно, но всё равно O(log n).
+> - **TREEIFY_THRESHOLD = 8 + MIN_TREEIFY_CAPACITY = 64**: при capacity < 64 вместо treeify происходит resize. На очень маленьких картах атака может проходить дольше.
+> - **Не для всех типов**: HashMap с custom user-defined ключами не защищён, если hashCode пользователя — простой константный (например, `return 1;`). Treeify помогает, но это симптом плохого hashCode.
+> - **`ConcurrentHashMap` тоже уязвим без правильных hashCode** — treeify там тоже есть, но атака на bucket lock contention отдельная проблема.
+>
+> ---
+>
+> #### D) HashDoS — атака на DNS-резолверы через массовые запросы — не имеет отношения к HashMap — ❌ Неверно
+>
+> **Что на самом деле:** HashDoS — это конкретно atomic-complexity attack на in-memory hash tables (HashMap, dict, hash). DNS-флуд — отдельная категория DDoS, не связана с алгоритмом hash table.
+>
+> **Откуда путаница:** «hash» и «DoS» по отдельности могут относиться к разным атакам; смешение терминов.
+>
+> **Если бы это было правдой:** Java SE Security Update CVE-2011-4858 не существовал бы как фикс в HashMap.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q11]] — treeify (основная защита); [[Q32]] — деградация HashMap; [[Q2]] — хеш-функции (источник проблемы).
+
+## Q32. Когда HashMap деградирует до O(n)?
 
 1. **Плохая хеш-функция** — все ключи дают один хеш. Без treeify — `O(n)`. С treeify — `O(log n)`.
 2. **Преднамеренный HashDoS** — см. Q31
@@ -1709,10 +1785,91 @@ False positive rate: `(1 − e^(−kn/m))^k`, где `k` — число хеш-�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Можно ли использовать null как ключ или значение? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие сценарии вызывают деградацию HashMap до O(n) даже в Java 17?
+>
+> ---
+>
+> #### A) Только при concurrent modifications — single-threaded HashMap всегда O(1) — ❌ Неверно
+>
+> **Что на самом деле:** деградация возможна и в single-threaded коде. Главные причины: плохой hashCode (все ключи в один bucket), HashDoS, containsValue. Concurrent modifications приводят к undefined behavior (потеря данных, infinite loop), а не к контролируемой деградации.
+>
+> **Откуда путаница:** ассоциация «O(n) проблемы = thread safety проблемы».
+>
+> **Если бы это было правдой:** все single-threaded benchmarks показывали бы стабильный O(1); реально на адversariаль payload — деградация даже на 1 thread.
+>
+> ---
+>
+> #### B) Только при containsKey, потому что он сравнивает все ключи — ❌ Неверно
+>
+> **Что на самом деле:** `containsKey()` использует тот же путь, что и `get()` — O(1) среднее, O(log n) worst-case с treeify. Линейный поиск делает `containsValue()`, не containsKey.
+>
+> **Откуда путаница:** разработчик может путать containsKey и containsValue.
+>
+> **Если бы это было правдой:** код `if (map.containsKey(k))` был бы катастрофически медленным; реально это идиоматичный паттерн.
+>
+> ---
+>
+> #### C) Высокий load factor (0.75) автоматически вызывает деградацию — нужно ставить ≤ 0.5 — ❌ Неверно
+>
+> **Что на самом деле:** LF=0.75 — оптимальный баланс между памятью и производительностью. При его превышении срабатывает rehashing (увеличение capacity ×2). LF не вызывает деградацию сам по себе; он триггер для resize.
+>
+> **Откуда путаница:** «высокий = плохо» — упрощённая эвристика. На деле HashMap спроектирован под LF=0.75.
+>
+> **Если бы это было правдой:** Java разработчики устанавливали бы default LF на 0.5; реально дефолт 0.75 десятилетиями.
+>
+> ---
+>
+> #### D) Несколько сценариев: (1) плохой hashCode (все ключи в один bucket — с treeify O(log n), без — O(n)); (2) HashDoS (преднамеренные коллизии); (3) capacity слишком мал → много коллизий до resize; (4) mutable keys, изменённые после insert (get вернёт null, линейная попытка fallback нет — данные потеряны); (5) `containsValue()` — всегда O(n) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Хотя HashMap в среднем O(1), есть пять основных способов его деградации:
+>
+> 1. **Плохая hashCode-функция**: `return 1;` или `return field.hashCode() % 10;` — мало уникальных значений → большие цепочки. С Java 8+ treeify даёт O(log n) вместо O(n).
+> 2. **HashDoS атака**: специально подобранные ключи с одинаковым hashCode (см. Q31).
+> 3. **Недооцененная capacity**: `new HashMap<>()` (default 16) при заведомо больших данных приводит к множественному resize, и до первого resize коллизии частые.
+> 4. **Mutable keys**: если объект-ключ изменяет поле, входящее в hashCode, после `put()` — запись «теряется» (get идёт в другой bucket). Это не деградация в O(n), а функциональный баг.
+> 5. **`containsValue()` всегда O(n + capacity)** — он не использует hash structure, а сканирует все buckets.
+>
+> **Пример:**
+> ```java
+> // 1. Плохой hashCode:
+> class BadKey {
+>     @Override public int hashCode() { return 42; } // ВСЕ в один bucket!
+> }
+> Map<BadKey, V> map = new HashMap<>();
+> // 10k put = 10k × 5000 = 50M операций (с treeify — ~10k × log 10k = 130k операций)
+>
+> // 3. Недооценённая capacity:
+> Map<String, Integer> big = new HashMap<>(); // capacity 16
+> for (int i = 0; i < 1_000_000; i++) big.put("k" + i, i);
+> // ~20 resize операций (каждая O(size at time)) — много мусора и пауз GC
+>
+> // Правильно:
+> Map<String, Integer> sized = new HashMap<>(1_500_000); // initial capacity
+>
+> // 5. containsValue O(n):
+> if (map.containsValue(target)) {... } // НЕ для hot path; используй reverse index
+> ```
+>
+> **Когда применять знание:**
+> - **Code review**: ловить `new HashMap<>()` в местах, где известен размер.
+> - **Профилировка**: O(log n) cycles в bucket — сигнал плохого hashCode, надо чинить класс-ключ.
+> - **Security review**: user-input ключи без length-limit → потенциальный HashDoS.
+> - **`containsValue()`** — в горячем коде заменить на reverse Map<V, Set<K>> или внешний индекс.
+>
+> **Подводные камни:**
+> - **`record` спасает hashCode**: с Java 14+ records авто-генерируют корректные hashCode/equals. Используйте их для value objects.
+> - **`Objects.hash()` не идеален для performance**: создаёт `Object[]` массив (autoboxing). В hot path — ручная XOR-комбинация быстрее.
+> - **Hibernate proxy объекты** имеют разный hashCode после lazy load — не использовать как ключи в HashMap.
+> - **`@EqualsAndHashCode` Lombok** на mutable классе — баг ожидающий случиться. Только на `@Value` (immutable).
+>
+> ---
+>
+> **Связанные вопросы:** [[Q11]] — treeify; [[Q31]] — HashDoS; [[Q7]] — immutable keys; [[Q12]] — сложности операций.
+
+## Q33. Можно ли использовать null как ключ или значение?
 
 | Структура | null ключ | null значение |
 |-----------|-----------|---------------|
@@ -1726,10 +1883,88 @@ False positive rate: `(1 − e^(−kn/m))^k`, где `k` — число хеш-�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. (!) Чем HashSet отличается от HashMap? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Почему `ConcurrentHashMap` запрещает `null` для ключа и значения, а обычный `HashMap` разрешает?
+>
+> ---
+>
+> #### A) В concurrent setting нельзя атомарно отличить «нет ключа» от «есть, но значение null» через `get()` — это создавало бы race window между `containsKey()` и `get()` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `HashMap.get(key)` возвращает `null` в двух случаях:
+> 1. Ключа нет в карте.
+> 2. Ключ есть, но значение `null`.
+>
+> В single-threaded коде разделить эти случаи можно через `containsKey()`. Но в **многопоточной** среде между `containsKey()` и `get()` другой поток может удалить/добавить ключ — результат становится недостоверным. Невозможно атомарно «проверить и взять».
+>
+> Дизайнеры ConcurrentHashMap (Doug Lea) решили: чтобы не вводить в API ambiguity, **запретить null совсем**. Тогда `get() == null` имеет один смысл — ключа нет. Это упрощает контракт и устраняет category of bugs.
+>
+> Также `null` ключи усложняли бы lock-free read path: нужно было бы вычислять hashCode на null (0 по конвенции) и обрабатывать его специально.
+>
+> **Пример:**
+> ```java
+> // HashMap — null допустим, но требует careful handling:
+> HashMap<String, Integer> map = new HashMap<>();
+> map.put("counter", null);
+> Integer v = map.get("counter");  // null — есть, но null
+> if (v == null) {
+>     if (map.containsKey("counter")) { /* есть, значение null */ }
+>     else { /* нет */ }
+> }
+>
+> // ConcurrentHashMap — NullPointerException:
+> ConcurrentHashMap<String, Integer> chm = new ConcurrentHashMap<>();
+> chm.put("k", null);  // NPE!
+> chm.put(null, 1);    // NPE!
+> ```
+>
+> **Когда применять знание:**
+> - **Миграция HashMap → ConcurrentHashMap**: проверить, что ни один put не использует null значения; иначе использовать sentinel object или Optional.
+> - **API design**: если ваша Map-возвращающая функция может вернуть null значения, документировать поведение — пользователи могут передать в ConcurrentHashMap и получить NPE.
+> - **`compute*` методы**: возврат null из remapping лямбды удаляет ключ — иногда непреднамеренное удаление.
+>
+> **Подводные камни:**
+> - **`Collections.synchronizedMap(new HashMap<>())`** РАЗРЕШАЕТ null (это просто wrapper над HashMap). Подмена ConcurrentHashMap на synchronizedMap «починит» NPE, но снизит throughput в разы.
+> - **TreeMap**: запрещает null ключи (NPE при `compareTo(null)`), разрешает null значения. Hashtable — запрещает оба.
+> - **Java Streams `Collectors.toMap`** бросает NPE на null values (даже если коллектор внутри HashMap) — known sharp edge.
+> - **Workaround для concurrent null**: `chm.put(k, Optional.ofNullable(v))` или sentinel `NULL_VALUE`.
+>
+> ---
+>
+> #### B) ConcurrentHashMap наследуется от Hashtable, который тоже запрещал null — это legacy ограничение — ❌ Неверно
+>
+> **Что на самом деле:** ConcurrentHashMap наследуется от AbstractMap, не от Hashtable. Запрет null — намеренный design choice Doug Lea для семантики concurrent contract, не legacy.
+>
+> **Откуда путаница:** оба класса thread-safe и оба запрещают null — кажется наследованием.
+>
+> **Если бы это было правдой:** ConcurrentHashMap не вводил бы новые API (computeIfAbsent, merge) — она была бы «просто более быстрый Hashtable».
+>
+> ---
+>
+> #### C) JVM не может хранить null в lock-free структурах — это техническое ограничение — ❌ Неверно
+>
+> **Что на самом деле:** JVM может хранить null в lock-free структурах (например, `AtomicReference.set(null)` работает). Это design choice ConcurrentHashMap, не JVM-ограничение.
+>
+> **Откуда путаница:** «технические причины» звучат правдоподобно, но реальная мотивация — semantic clarity API.
+>
+> **Если бы это было правдой:** ConcurrentLinkedQueue, ConcurrentSkipListMap и другие lock-free structures также запрещали бы null; реально каждый класс имеет свои правила.
+>
+> ---
+>
+> #### D) Все Map в Java запрещают null — HashMap делает это с Java 17+ — ❌ Неверно
+>
+> **Что на самом деле:** HashMap и LinkedHashMap разрешают null ключи и null значения во всех версиях Java (включая 21). Это часть их публичного контракта и backward-compatibility.
+>
+> **Откуда путаница:** разработчик может путать с TreeMap (NPE на null ключи) или ConcurrentHashMap.
+>
+> **Если бы это было правдой:** миллионы существующих приложений сломались бы при апгрейде; реально HashMap.put(null, v) работает и в Java 21.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q20]] — устройство ConcurrentHashMap; [[Q21]] — vs Hashtable; [[Q22]] — атомарные методы.
+
+## Q34. (!) Чем HashSet отличается от HashMap?
 
 `HashSet<T>` — обёртка вокруг `HashMap<T, Object>`. Все элементы как ключи, значения — `PRESENT` (sentinel).
 
