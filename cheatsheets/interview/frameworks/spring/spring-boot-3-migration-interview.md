@@ -1101,10 +1101,98 @@ public TomcatProtocolHandlerCustomizer<?> protocolHandlerVirtualThreadExecutorCu
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Какие breaking changes в Spring Security 6? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Что нужно знать о поддержке Virtual Threads в Spring Boot 3.2+ и для каких задач они дают выигрыш?
+>
+> ---
+>
+> #### A) Virtual Threads ускоряют CPU-bound вычисления через лёгкие потоки и parallel computation — ❌ Неверно
+>
+> **Что на самом деле:** Virtual Threads (JEP 444, Java 21) — это **lightweight threads для I/O-bound нагрузок**, не для CPU-bound. Их преимущество — миллионы виртуальных потоков на JVM с минимальной памятью (~1KB на VT vs ~1MB на platform thread). При CPU-bound работе они **не дают выигрыша** — bottleneck остаётся в количестве CPU-ядер.
+>
+> **Откуда путаница:** «virtual» звучит как магия, и можно подумать, что VT решают все проблемы concurrency. На деле они решают только проблему «много блокирующих I/O вызовов».
+>
+> **Если бы это было правдой:** CPU-bound задачи (hash computation, ML inference) ускорялись бы — но на 8-ядерном CPU больше 8 параллельных CPU задач не запустятся быстрее, независимо от типа потока.
+>
+> ---
+>
+> #### B) Lightweight threads (Project Loom, JEP 444 в Java 21); ~1KB на VT, миллионы потоков на JVM; ускоряют I/O-bound (DB, HTTP, file); Spring Boot 3.2+ включает через `spring.threads.virtual.enabled=true` для Tomcat/Jetty/@Async/@Scheduled — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Virtual Threads — Project Loom финализирован в Java 21 (JEP 444):
+> - Управляются JVM (не OS), pinned к platform thread только во время выполнения
+> - При `Thread.sleep()`, blocking I/O, `LockSupport.park()` — VT откладывается, platform thread освобождается
+> - Запоминается стек, потом продолжается на любом platform thread
+>
+> Spring Boot 3.2+ интеграция:
+> ```yaml
+> spring:
+>   threads:
+>     virtual:
+>       enabled: true   # Tomcat worker, @Async, @Scheduled, WebFlux
+> ```
+>
+> Что переключается:
+> - **Tomcat request handling** — каждый HTTP request на свой VT
+> - **`@Async` методы** — VT executor вместо обычного ThreadPoolTaskExecutor
+> - **`@Scheduled` tasks** — VT scheduler
+> - **WebFlux** опционально может использовать VT
+>
+> **Пример:**
+> ```java
+> // С virtual threads request обрабатывается на VT
+> @RestController
+> class OrderController {
+>     @GetMapping("/orders/{id}")
+>     public Order get(@PathVariable Long id) {
+>         // Этот thread — virtual; blocking call безопасен
+>         return orderService.find(id);  // JDBC blocking call
+>     }
+> }
+>
+> // Кастомный VT executor
+> @Bean
+> TomcatProtocolHandlerCustomizer<?> protocolHandlerVirtualThreadExecutorCustomizer() {
+>     return protocolHandler -> protocolHandler.setExecutor(
+>         Executors.newVirtualThreadPerTaskExecutor()
+>     );
+> }
+> ```
+>
+> **Когда применять:** I/O-bound сервисы — HTTP API с большим числом параллельных запросов, JDBC-heavy сервисы. Хорошо работает там, где раньше использовался WebFlux только ради concurrency (но команда не хочет реактивности).
+>
+> **Подводные камни:**
+> - **Pinning**: `synchronized` блоки пиннят VT к platform thread (нельзя освободить). Использовать `ReentrantLock` вместо.
+> - **ThreadLocal**: миллион VT × миллион ThreadLocal = OOM. Использовать `ScopedValue` (preview API).
+> - **Не помогает для CPU-bound** — bottleneck в количестве cores.
+> - **JNI/native код**: блокирует platform thread (не VT-aware).
+>
+> **Связанные вопросы:** [[Q1]] — ключевые изменения SB 3; [[Q7]] — GraalVM Native (альтернатива для cold start); [[Q9]] — Observability.
+>
+> ---
+>
+> #### C) Virtual Threads — это просто новое имя для `ForkJoinPool.commonPool()`; никаких runtime-изменений в JVM — ❌ Неверно
+>
+> **Что на самом деле:** Virtual Threads — фундаментально новая JVM-фича в Java 19 (preview) → Java 21 (GA). Это не псевдоним для ForkJoinPool. ForkJoinPool управляет workers (platform threads), а VT — это объекты, выполняемые НА carrier threads (которые могут быть из ForkJoinPool, но это разные уровни абстракции).
+>
+> **Откуда путаница:** carrier thread pool для VT использует ForkJoinPool под капотом, и поверхностно может казаться что это одно и то же. На самом деле VT — отдельная сущность с unmount/mount семантикой.
+>
+> **Если бы это было правдой:** проблема blocking I/O в ForkJoinPool была бы решена ещё в Java 8 — но она не решена, и поэтому Project Loom разрабатывался 5+ лет.
+>
+> ---
+>
+> #### D) Virtual Threads автоматически работают только в Spring WebFlux (reactive), для Spring MVC нужен ручной adapter — ❌ Неверно
+>
+> **Что на самом деле:** **Spring MVC** — основной сценарий применения VT. Tomcat/Jetty в Spring Boot 3.2 при `spring.threads.virtual.enabled=true` использует VT для request handling — это эквивалент «дешёвой реактивности» для blocking MVC кода. **WebFlux** уже non-blocking и в VT не нуждается принципиально.
+>
+> **Откуда путаница:** все недавние performance-фичи (reactive, VT) могут казаться «современным WebFlux-стеком». На деле VT — это **способ сделать Spring MVC масштабируемым без переписывания на WebFlux**.
+>
+> **Если бы это было правдой:** VT не приносили бы выгоды большинству Spring-приложений (они MVC) — но именно для MVC они самые полезные.
+>
+> ---
+>
+> ## Q11. Какие breaking changes в Spring Security 6?
 
 ```java
 // ДО (Spring Security 5, SB 2.x)
@@ -1145,10 +1233,95 @@ class SecurityConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Что такое декларативный RestClient? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие главные breaking changes в Spring Security 6 (Spring Boot 3)?
+>
+> ---
+>
+> #### A) Spring Security 6 удалил `SecurityFilterChain`, заменил его на `HttpSecurity` напрямую как Bean — ❌ Неверно
+>
+> **Что на самом деле:** Наоборот, **`SecurityFilterChain` — НОВЫЙ рекомендованный способ** конфигурации в Spring Security 6. `HttpSecurity` — это builder API, а `SecurityFilterChain` — финальный результат, который регистрируется как Bean. До 6.x был `WebSecurityConfigurerAdapter` (deprecated), теперь его удалили.
+>
+> **Откуда путаница:** в SS 5.7+ оба способа были доступны параллельно, и легко запутаться кто заменил кого.
+>
+> **Если бы это было правдой:** `@Bean HttpSecurity` не имел бы смысла — `HttpSecurity` это builder с состоянием, нельзя его регистрировать как Bean.
+>
+> ---
+>
+> #### B) `WebSecurityConfigurerAdapter` удалён → `SecurityFilterChain` Bean; `authorizeRequests` → `authorizeHttpRequests`; `antMatchers` → `requestMatchers`; Customizer-лямбды обязательны вместо `.and()`; defaults более строгие (CSRF включён, formLogin не дефолтный) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Главные breaking changes Spring Security 6:
+>
+> 1. **`WebSecurityConfigurerAdapter` УДАЛЁН** — нельзя `extends WebSecurityConfigurerAdapter`. Вместо этого `@Bean SecurityFilterChain`.
+> 2. **`authorizeRequests()` deprecated → `authorizeHttpRequests()`** — новый API с улучшенной типизацией.
+> 3. **`antMatchers()` → `requestMatchers()`** — единый API для path matching (раньше были `antMatchers`, `mvcMatchers`, `regexMatchers`).
+> 4. **Customizer-лямбды**: `.authorizeHttpRequests(auth -> ...)` вместо `.authorizeHttpRequests().and()`.
+> 5. **CSRF включён по умолчанию** — для stateless API нужен explicit `.csrf(csrf -> csrf.disable())`.
+> 6. **OAuth2 Resource Server** — упрощён, JWT decoders настраиваются через property `spring.security.oauth2.resourceserver.jwt.issuer-uri`.
+>
+> **Пример:**
+> ```java
+> // ДО (Spring Security 5, SB 2.x) — DEPRECATED
+> @EnableWebSecurity
+> class SecurityConfig extends WebSecurityConfigurerAdapter {
+>     @Override
+>     protected void configure(HttpSecurity http) throws Exception {
+>         http.authorizeRequests()
+>             .antMatchers("/public").permitAll()
+>             .anyRequest().authenticated()
+>             .and().formLogin();
+>     }
+> }
+>
+> // ПОСЛЕ (Spring Security 6, SB 3.x)
+> @Configuration
+> @EnableWebSecurity
+> class SecurityConfig {
+>     @Bean
+>     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+>         http
+>             .authorizeHttpRequests(auth -> auth
+>                 .requestMatchers("/public").permitAll()
+>                 .requestMatchers("/admin/**").hasRole("ADMIN")
+>                 .anyRequest().authenticated())
+>             .formLogin(Customizer.withDefaults())
+>             .csrf(csrf -> csrf.disable());   // если stateless API
+>         return http.build();
+>     }
+> }
+> ```
+>
+> **Когда применять:** обязательно при миграции на Spring Boot 3. OpenRewrite recipe `org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_0` частично автоматизирует.
+>
+> **Подводные камни:** многие `@EnableMethodSecurity` defaults изменились (`prePostEnabled=true` дефолт вместо false). `RoleHierarchy` Bean больше не автоматически подхватывается — нужно явная регистрация. `H2 Console` блокируется CSRF — для dev `.requestMatchers(toH2Console()).permitAll()` + disable CSRF на этом пути.
+>
+> **Связанные вопросы:** [[Q1]] — ключевые изменения SB 3; [[Q3]] — порядок миграции; [[Q15]] — типичные проблемы.
+>
+> ---
+>
+> #### C) Spring Security 6 полностью отказался от Servlet Filter архитектуры в пользу Reactive Streams — ❌ Неверно
+>
+> **Что на самом деле:** Spring Security **продолжает использовать Servlet Filter** для Spring MVC (`spring-security-web`). Для WebFlux отдельный `spring-security-webflux` с реактивными filter (`WebFilter`). Оба стека сохранены, ничего не объединено.
+>
+> **Откуда путаница:** Spring 6 / Spring Boot 3 ассоциируется с reactive, и кто-то может предположить unified reactive Security.
+>
+> **Если бы это было правдой:** MVC-приложения сломались бы при апгрейде — но они работают, и `SecurityFilterChain` остаётся servlet filter chain.
+>
+> ---
+>
+> #### D) Spring Security 6 перевёл всю аутентификацию на JWT по умолчанию; form login удалён — ❌ Неверно
+>
+> **Что на самом деле:** **Form login полноценно поддерживается** в Spring Security 6 (`http.formLogin(Customizer.withDefaults())`). JWT — это просто один из вариантов (через `oauth2ResourceServer().jwt()`), не дефолт. Basic Auth, OAuth2 Login, SAML2, LDAP — все типы аутентификации сохранены.
+>
+> **Откуда путаница:** API-first архитектуры массово переходят на JWT, и можно предположить что Spring следует тренду по умолчанию.
+>
+> **Если бы это было правдой:** все web-приложения с HTML формой логина ломались бы — но они работают штатно.
+>
+> ---
+>
+> ## Q12. Что такое декларативный RestClient?
 
 Spring Boot 3.2 принёс `RestClient` — новый блокирующий HTTP-клиент с fluent API (замена `RestTemplate`):
 
@@ -1187,10 +1360,93 @@ Mono<Order> orderMono = client.get()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Какие изменения в auto-configuration? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое `RestClient` в Spring Boot 3.2+, чем он отличается от `RestTemplate` и `WebClient`?
+>
+> ---
+>
+> #### A) `RestClient` — это reactive replacement для `WebClient`, использующий Project Reactor — ❌ Неверно
+>
+> **Что на самом деле:** `RestClient` — **БЛОКИРУЮЩИЙ** HTTP-клиент. Это рекомендованная замена `RestTemplate` с fluent API похожим на WebClient, но без Mono/Flux. `WebClient` остаётся reactive (Mono/Flux), и они нужны для разных сценариев.
+>
+> **Откуда путаница:** имя «RestClient» похоже на «WebClient», и многие думают, что это reactive-эволюция WebClient. На самом деле это блокирующая альтернатива для не-reactive контекста.
+>
+> **Если бы это было правдой:** `RestClient.create()` возвращал бы реактивные типы — но `restClient.get().retrieve().body(User.class)` возвращает `User` напрямую, blocking.
+>
+> ---
+>
+> #### B) Блокирующий HTTP-клиент в Spring Boot 3.2+; fluent API похожий на WebClient; рекомендованная замена `RestTemplate`; синхронные `body(Class)` вызовы; `WebClient` остаётся для reactive (WebFlux) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Эволюция HTTP-клиентов в Spring:
+> - **`RestTemplate`** — старый блокирующий клиент. Не deprecated, но рекомендуется RestClient.
+> - **`WebClient`** — reactive non-blocking (Mono/Flux) для WebFlux или async вызовов в MVC.
+> - **`RestClient`** (Spring 6.1, Spring Boot 3.2+) — блокирующий с современным fluent API.
+> - **`@HttpExchange`** — декларативные интерфейсы (поверх RestClient или WebClient).
+>
+> **Пример:**
+> ```java
+> // Создание (auto-configured RestClient.Builder доступен в SB 3.2+)
+> RestClient client = RestClient.create("https://api.example.com");
+>
+> // GET
+> Order order = client.get()
+>     .uri("/orders/{id}", 123)
+>     .retrieve()
+>     .body(Order.class);
+>
+> // POST с body
+> OrderResponse response = client.post()
+>     .uri("/orders")
+>     .contentType(MediaType.APPLICATION_JSON)
+>     .body(new CreateOrderRequest(...))
+>     .retrieve()
+>     .body(OrderResponse.class);
+>
+> // Обработка ошибок
+> ResponseEntity<Order> entity = client.get()
+>     .uri("/orders/{id}", 999)
+>     .retrieve()
+>     .onStatus(HttpStatusCode::is4xxClientError,
+>         (req, res) -> { throw new NotFoundException(); })
+>     .toEntity(Order.class);
+>
+> // Exchange handler (полный контроль)
+> Order o = client.get()
+>     .uri("/orders/{id}", 123)
+>     .exchange((req, res) -> objectMapper.readValue(res.getBody(), Order.class));
+> ```
+>
+> **Когда применять:** новые сервисы на Spring MVC — сразу RestClient (не RestTemplate). При миграции с RestTemplate — постепенный refactor, RestTemplate не deprecated и продолжает работать.
+>
+> **Подводные камни:** `RestClient.Builder` auto-configured в SB 3.2+ как `restClientBuilder()` Bean. `RestClient` thread-safe, можно создать один на приложение. Для timeout — настраивать через `ClientHttpRequestFactory` (например `JdkClientHttpRequestFactory.setReadTimeout()`).
+>
+> **Связанные вопросы:** [[Q5]] — HTTP Interface Clients (поверх RestClient); [[Q1]] — изменения SB 3; [[Q10]] — Virtual Threads (с RestClient блокирующий код становится дешёвым).
+>
+> ---
+>
+> #### C) `RestClient` — это просто алиас для `RestTemplate`; класс переименован для согласованности — ❌ Неверно
+>
+> **Что на самом деле:** `RestClient` — **полностью новый класс** в Spring Framework 6.1 с современным fluent API. `RestTemplate` остался с императивным API (`exchange()`, `getForObject()`). Это два разных класса, не алиасы.
+>
+> **Откуда путаница:** оба клиента блокирующие и решают похожие задачи, поэтому может казаться что один заменил имя другого.
+>
+> **Если бы это было правдой:** не было бы смысла иметь два класса. На практике `RestTemplate` остаётся для legacy code, `RestClient` для нового.
+>
+> ---
+>
+> #### D) `RestClient` интегрирован только через Spring Cloud Stream; для standalone Spring Boot 3 нужен отдельный starter — ❌ Неверно
+>
+> **Что на самом деле:** `RestClient` — часть `spring-web` (core Spring Framework 6.1+). Доступен в любом Spring Boot 3.2+ приложении автоматически. Не нужно Spring Cloud, не нужен отдельный starter.
+>
+> **Откуда путаница:** Spring Cloud OpenFeign — отдельный starter, и аналогия может ввести в заблуждение.
+>
+> **Если бы это было правдой:** для использования RestClient пришлось бы добавлять `spring-cloud-starter-*` зависимость — но достаточно `spring-boot-starter-web`.
+>
+> ---
+>
+> ## Q13. Какие изменения в auto-configuration?
 
 ```java
 // ДО Spring Boot 2.x — META-INF/spring.factories
