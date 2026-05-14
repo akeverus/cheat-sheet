@@ -532,10 +532,74 @@ public BatchLoaderRegistry batchLoaderRegistry(OrderItemService itemService) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Как реализовать GraphQL Subscriptions? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Production-сервис на Spring GraphQL: запрос `{ orders(first: 100) { customer { name } items { product { name } } } }` создаёт 200+ SQL-запросов. В чём корень проблемы и какое решение Spring GraphQL даёт идиоматичнее всего?
+>
+> ---
+>
+> #### A) Это поведение GraphQL по дизайну — клиенту нужно ограничить запросы через `query complexity`; на уровне резолверов ничего не сделать — ❌ Неверно
+>
+> **Что на самом деле:** Query complexity лимиты — это защита от DoS, а не от N+1. Они отрезают слишком глубокие/широкие queries, но не решают batching. На стороне resolver'а как раз и надо чинить N+1 — иначе любой допустимый query будет медленным.
+>
+> **Откуда путаница:** Смешение двух разных проблем: complexity attack (злоумышленник присылает огромный query) vs N+1 (легитимный query генерирует много SQL).
+>
+> **Если бы это было правдой:** Нельзя было бы оптимизировать GraphQL — но Shopify, Netflix, GitHub публиковали кейсы где DataLoader снижал нагрузку на DB в 50-100 раз.
+>
+> ---
+>
+> #### B) `@BatchMapping` — Spring-идиоматичный подход: один метод получает `List<Parent>` и возвращает `Map<Parent, Child>` (или `Collection<Child>`), Spring сам группирует вызовы — ✓ Верно
+>
+> **Развёрнутое объяснение:** Когда query запрашивает поле `items` для 100 заказов, без batching Spring вызвал бы resolver `items(Order)` 100 раз — каждый со своим SQL. `@BatchMapping` меняет сигнатуру: метод принимает `List<Order>` (весь батч сразу) и возвращает `Map<Order, List<OrderItem>>`. Spring собирает все 100 родителей, вызывает resolver ОДИН раз, и распределяет результат обратно по каждому Order. Под капотом это работает через GraphQL Java DataLoader, но без явной регистрации. Возможны два возврата: `Map<Parent, Child>` (1:1) или `Map<Parent, List<Child>>` (1:N).
+>
+> **Пример:**
+> ```java
+> @Controller
+> @RequiredArgsConstructor
+> public class OrderBatchResolver {
+>     private final OrderItemService itemService;
+>
+>     // Один SQL вместо N — Spring сам собирает батч
+>     @BatchMapping(typeName = "Order", field = "items")
+>     public Map<Order, List<OrderItem>> items(List<Order> orders) {
+>         List<String> ids = orders.stream().map(Order::getId).toList();
+>         Map<String, List<OrderItem>> byOrderId = itemService.findByOrderIds(ids)
+>             .stream().collect(Collectors.groupingBy(OrderItem::getOrderId));
+>         return orders.stream().collect(
+>             Collectors.toMap(o -> o, o -> byOrderId.getOrDefault(o.getId(), List.of()))
+>         );
+>     }
+> }
+> ```
+>
+> **Когда применять:** Любые 1:N или N:1 связи в схеме (`Order.customer`, `Order.items`, `Product.category`). Альтернатива — `DataLoader` через `BatchLoaderRegistry`, более гибкая (есть кэширование, асинхронность, custom keys), но требует больше boilerplate.
+>
+> **Подводные камни:** Batch резолверы выполняются АСИНХРОННО к основной query — Spring дожидается завершения parent-резолвера и собирает все child-запросы в один tick event loop'а. В реактивном стеке возвращайте `Mono<Map<Order, List<OrderItem>>>` или `Flux<Map.Entry<...>>`. Если у разных Order одинаковый key, dedupe должен быть в SQL — `findByOrderIds(distinctIds)`.
+>
+> ---
+>
+> #### C) Достаточно использовать `JOIN FETCH` в JPA-репозитории — N+1 исчезает на уровне SQL — ❌ Неверно
+>
+> **Что на самом деле:** `JOIN FETCH` помогает в REST, где сервер знает, какие поля нужны. В GraphQL клиент решает динамически — иногда нужно `items`, иногда нет. Жадный `JOIN FETCH` всегда грузит всё, теряя главное преимущество GraphQL.
+>
+> **Откуда путаница:** Опыт JPA-оптимизации в REST. Там стратегия «eager fetch при необходимости» работает, а в GraphQL — нет.
+>
+> **Если бы это было правдой:** Не существовало бы DataLoader как концепции — но Facebook изобрёл его именно для GraphQL и эта библиотека портирована во все языки.
+>
+> ---
+>
+> #### D) Spring GraphQL автоматически детектит N+1 и применяет batch — нужно лишь включить `spring.graphql.batch.auto=true` — ❌ Неверно
+>
+> **Что на самом деле:** Такого свойства не существует. Spring GraphQL не имеет magic auto-batching: разработчик явно объявляет `@BatchMapping` или регистрирует `BatchLoader`. Магия Hibernate `@BatchSize` или `default_batch_fetch_size` — это про JPA, не про GraphQL.
+>
+> **Откуда путаница:** Кажется, что современный фреймворк должен «угадывать» — но в GraphQL Spring не знает, какие resolver'ы относятся к одному root-запросу без явной декларации.
+>
+> **Если бы это было правдой:** N+1 был бы решённой проблемой в индустрии — но он остаётся #1 причиной production-инцидентов после миграции на GraphQL.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q3]] — `@SchemaMapping` создаёт N+1, [[Q15]] — мониторинг и обнаружение медленных queries, [[Q10]] — пагинация.
+
+## Q6. Как реализовать GraphQL Subscriptions?
 
 ```graphql
 type Subscription {
@@ -569,10 +633,85 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как обрабатывать ошибки в Spring GraphQL? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Команда добавляет real-time-обновление статуса заказа через GraphQL Subscriptions. Какой транспорт необходимо настроить и какой тип резолвер должен вернуть?
+>
+> ---
+>
+> #### A) Subscriptions работают поверх HTTP long-polling — резолвер возвращает обычный объект, Spring сам организует polling — ❌ Неверно
+>
+> **Что на самом деле:** GraphQL spec для subscriptions требует push-семантики через WebSocket (стандарт `graphql-ws`) или SSE. Long-polling — это вообще не subscription, это antipattern имитации. Spring GraphQL никогда не делает polling за разработчика.
+>
+> **Откуда путаница:** Опыт реализации «realtime» через polling в legacy REST. Это работало, но было дорого и неэффективно — для того и нужны subscriptions.
+>
+> **Если бы это было правдой:** Не было бы отдельной зависимости `spring-boot-starter-websocket` для GraphQL subscriptions — но она прямо документирована в Spring GraphQL reference.
+>
+> ---
+>
+> #### B) Резолвер возвращает `Flux<T>` (Project Reactor), транспорт — WebSocket по протоколу `graphql-ws`, который необходимо включить через `spring.graphql.websocket.path` — ✓ Верно
+>
+> **Развёрнутое объяснение:** `@SubscriptionMapping` обязан вернуть `Flux<T>` или `Publisher<T>` — это поток событий, который Spring отдаёт клиенту через WebSocket. Внутри метода обычно используется `Sinks.Many` или интеграция с Kafka/Reactor для получения событий. Транспорт `graphql-ws` (наследник `subscriptions-transport-ws`) включается отдельно через `spring.graphql.websocket.path=/graphql-ws`. На клиенте библиотеки Apollo Client, Relay, graphql-ws управляют WebSocket-соединением. RSocket — опциональный транспорт для backend-to-backend интеграций (`spring.graphql.rsocket.mapping=graphql`). HTTP/SSE-транспорт для subscriptions появился в Spring GraphQL 1.3+ как альтернатива WebSocket, удобная для прохождения через прокси/firewalls.
+>
+> **Пример:**
+> ```graphql
+> type Subscription {
+>     orderStatusChanged(orderId: ID!): Order!
+> }
+> ```
+> ```java
+> @Controller
+> @RequiredArgsConstructor
+> public class OrderSubscriptionController {
+>     private final Sinks.Many<Order> sink = Sinks.many().multicast().onBackpressureBuffer();
+>
+>     @SubscriptionMapping
+>     public Flux<Order> orderStatusChanged(@Argument String orderId) {
+>         return sink.asFlux().filter(o -> o.getId().equals(orderId));
+>     }
+>
+>     @EventListener
+>     public void onOrderUpdated(OrderUpdatedEvent event) {
+>         sink.tryEmitNext(event.getOrder());
+>     }
+> }
+> ```
+> ```yaml
+> spring:
+>   graphql:
+>     websocket:
+>       path: /graphql-ws
+>       connection-init-timeout: 60s
+> ```
+>
+> **Когда применять:** Live-обновления (статусы заказов, котировки бирж, чаты, dashboards). Yandex Trading использует subscriptions для тикеров; GitHub — для уведомлений; Hasura встроен на subscriptions поверх Postgres LISTEN/NOTIFY.
+>
+> **Подводные камни:** Sticky-сессии для WebSocket (load balancer), backpressure при медленных клиентах (`Sinks.Many.onBackpressureBuffer` имеет лимит), масштабирование с несколькими инстансами (нужен Redis Pub/Sub или Kafka для дистрибуции событий), аутентификация (token в `connection_init`-сообщении, не в HTTP-header).
+>
+> ---
+>
+> #### C) Достаточно `@QueryMapping public Order orderStatusChanged()` — Spring сам распознает subscription по имени поля в SDL — ❌ Неверно
+>
+> **Что на самом деле:** `@QueryMapping` маппит на `type Query`, `@SubscriptionMapping` — на `type Subscription`. Это разные операционные типы GraphQL. Spring не угадывает по имени поля — он смотрит на аннотацию.
+>
+> **Откуда путаница:** Кажется, что schema-first означает «фреймворк всё выводит из схемы», но связь Java↔SDL устанавливается аннотациями явно.
+>
+> **Если бы это было правдой:** Schema linker не мог бы валидировать, что для каждого поля `Subscription` есть резолвер, возвращающий `Flux`.
+>
+> ---
+>
+> #### D) В Spring GraphQL subscriptions ОБЯЗАТЕЛЬНО используют RSocket — WebSocket не поддерживается — ❌ Неверно
+>
+> **Что на самом деле:** Главный транспорт subscriptions — WebSocket по протоколу `graphql-ws`. RSocket — опциональный альтернативный транспорт (полезен для service-to-service, не для браузеров). SSE добавлен в 1.3+.
+>
+> **Откуда путаница:** Spring продвигает RSocket как часть реактивной экосистемы, и его упоминание в Spring GraphQL может создать впечатление обязательности.
+>
+> **Если бы это было правдой:** Невозможно было бы интегрировать Spring GraphQL subscriptions с Apollo Client/Relay — самыми популярными GraphQL-клиентами в JS-мире, которые работают по `graphql-ws`.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q1]] — обзор Spring GraphQL и WebFlux, [[Q11]] — auth для WebSocket, [[Q15]] — мониторинг подписок.
+
+## Q7. Как обрабатывать ошибки в Spring GraphQL?
 
 ```java
 // 1. GraphQL DataFetcherExceptionResolver — перехватывает ошибки резолверов
@@ -617,10 +756,82 @@ public class OrderController {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как тестировать Spring GraphQL? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В REST вы возвращаете `HTTP 404` для не найденного заказа. В GraphQL фронтенд жалуется, что вместо `404` приходит `200 OK` с пустым `data`. Как правильно обрабатывать ошибки в Spring GraphQL?
+>
+> ---
+>
+> #### A) В GraphQL ошибки передаются через HTTP-статусы — настройте `@ResponseStatus(HttpStatus.NOT_FOUND)` на исключении и фронтенд увидит 404 — ❌ Неверно
+>
+> **Что на самом деле:** В GraphQL HTTP-статус почти всегда `200 OK`, даже при ошибках в резолвере. Ошибки передаются в JSON-поле `errors[]` вместе с (опциональным) `data`. Это фундаментальная часть спецификации: один запрос может вернуть и данные, и ошибки одновременно (партиальные ошибки в дереве).
+>
+> **Откуда путаница:** REST-привычки. `@ResponseStatus` не имеет эффекта в GraphQL-резолверах — Spring GraphQL не использует его.
+>
+> **Если бы это было правдой:** Не работали бы partial responses: один query с десятью полями, где одно недоступно — клиент получал бы 5xx и терял остальные 9 полей. В реальности GraphQL отдаст `data: {...9 полей...}` + `errors: [{path: [...10-е поле]}]`.
+>
+> ---
+>
+> #### B) Ошибки возвращаются в `errors[]`-массиве JSON-ответа; для маппинга exception → `GraphQLError` используется `DataFetcherExceptionResolver` (глобально) или `@GraphQlExceptionHandler` (в контроллере) с указанием `ErrorType` (NOT_FOUND, FORBIDDEN, BAD_REQUEST и т.д.) — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring GraphQL предоставляет два механизма обработки ошибок. **Глобально** — реализуйте `DataFetcherExceptionResolverAdapter` как `@Component`: его `resolveToSingleError(Throwable, DataFetchingEnvironment)` маппит конкретное исключение в `GraphQLError` с полем `errorType` (NOT_FOUND, FORBIDDEN, UNAUTHORIZED, BAD_REQUEST, INTERNAL_ERROR). **Локально** — Spring GraphQL 1.2+ поддерживает `@GraphQlExceptionHandler` внутри контроллера, аналогично `@ExceptionHandler` в MVC. Возврат `null` из resolver'а означает «передать дальше по цепочке». `path` в ошибке указывает на конкретное поле в дереве query — фронтенд показывает локальную ошибку, не ломая остальные поля.
+>
+> **Пример:**
+> ```java
+> @Component
+> public class OrderExceptionResolver extends DataFetcherExceptionResolverAdapter {
+>     @Override
+>     protected GraphQLError resolveToSingleError(Throwable ex, DataFetchingEnvironment env) {
+>         if (ex instanceof OrderNotFoundException e) {
+>             return GraphQLError.newError()
+>                 .errorType(ErrorType.NOT_FOUND)
+>                 .message("Order not found: " + e.getId())
+>                 .path(env.getExecutionStepInfo().getPath())
+>                 .build();
+>         }
+>         return null; // передать default handler'у
+>     }
+> }
+>
+> // Альтернатива — handler в контроллере
+> @Controller
+> public class OrderController {
+>     @GraphQlExceptionHandler
+>     public GraphQLError handleNotFound(OrderNotFoundException ex) {
+>         return GraphQLError.newError().errorType(ErrorType.NOT_FOUND)
+>             .message(ex.getMessage()).build();
+>     }
+> }
+> ```
+>
+> **Когда применять:** Все production-проекты. GitHub GraphQL API использует `errors[]` с типизированными codes (`UNPROCESSABLE`, `FORBIDDEN`); Shopify — собственные `userErrors` payload-типы для бизнес-ошибок (валидация формы), оставляя `errors[]` для технических сбоев.
+>
+> **Подводные камни:** Не выкидывайте детали стектрейса в `message` (security). Различайте «expected» бизнес-ошибки (валидация — в payload-тип `userErrors`) от unexpected (404, 500 — в `errors[]`). HTTP-статус `400 Bad Request` GraphQL возвращает только для синтаксически невалидного query (parse/validate ошибка); runtime-ошибки идут в 200 + errors[].
+>
+> ---
+>
+> #### C) В GraphQL ошибки нужно ВСЕГДА возвращать как payload-тип (`{ order, errors: [UserError!]! }`) — `errors[]` использовать запрещено — ❌ Неверно
+>
+> **Что на самом деле:** Это два разных уровня. `errors[]` — для технических ошибок (NOT_FOUND, network, security). Payload-тип `userErrors`/`userErrors` — для бизнес-валидации (email уже занят, недостаточно товара на складе). Обе техники легитимны и часто используются вместе (паттерн «Errors as Data» от Shopify).
+>
+> **Откуда путаница:** Доклад Shopify «Errors as Data» популяризировал payload-подход, и многие посчитали его единственно правильным.
+>
+> **Если бы это было правдой:** Невозможно было бы отделить «ваш запрос невалиден» от «такого ресурса нет» — оба попадали бы в одну корзину.
+>
+> ---
+>
+> #### D) `@GraphQlExceptionHandler` поддерживает только реактивный стек — для MVC нужен только `DataFetcherExceptionResolverAdapter` — ❌ Неверно
+>
+> **Что на самом деле:** Оба механизма работают в обоих стеках. `@GraphQlExceptionHandler` появился в Spring GraphQL 1.2 как удобный аналог `@ExceptionHandler` MVC и работает одинаково в Servlet и Reactive.
+>
+> **Откуда путаница:** Spring GraphQL изначально (1.0) поддерживал только `DataFetcherExceptionResolver`, аннотация добавлена позже.
+>
+> **Если бы это было правдой:** Документация Spring GraphQL содержала бы ограничение «только для WebFlux» — но оно отсутствует.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q3]] — `OrderNotFoundException` в Query resolver, [[Q11]] — `AccessDeniedException` от Spring Security, [[Q8]] — тестирование ошибок через `GraphQlTester`.
+
+## Q8. Как тестировать Spring GraphQL?
 
 ```java
 // @GraphQlTest — тестовый слайс только для GraphQL
@@ -673,10 +884,85 @@ query GetOrder($id: ID!) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Что такое GraphQL Directives и как их использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой тестовый slice и инструмент Spring GraphQL даёт для unit-тестирования резолверов без полного контекста приложения?
+>
+> ---
+>
+> #### A) Использовать `@SpringBootTest` с реальным HTTP-клиентом (`TestRestTemplate`/`WebTestClient`), отправляя JSON `{"query": "..."}` через `POST /graphql` — ❌ Неверно (можно, но неоптимально)
+>
+> **Что на самом деле:** Это полноценный integration-тест, который запускает весь контекст и реальный HTTP-сервер. Долго (секунды на тест), хрупко, не даёт удобных DSL для проверки GraphQL-ответов (приходится парсить JSON руками). Spring предоставляет специализированный `@GraphQlTest` slice + `GraphQlTester` для этого.
+>
+> **Откуда путаница:** REST-привычка тестировать через HTTP. В GraphQL есть лучший инструмент.
+>
+> **Если бы это было правдой:** Не существовало бы `GraphQlTester` и `@GraphQlTest` — но они есть и являются основным способом тестирования.
+>
+> ---
+>
+> #### B) `@GraphQlTest(OrderController.class)` поднимает test slice только с GraphQL-инфраструктурой и указанными контроллерами; `GraphQlTester` — fluent DSL для query/mutation/subscription с JSON-path ассерциями — ✓ Верно
+>
+> **Развёрнутое объяснение:** `@GraphQlTest` — это test slice аналогичный `@WebMvcTest`. Поднимает только GraphQL-bean'ы (схема, резолверы, instrumentation, exception resolvers), без полного контекста. `GraphQlTester` — fluent API: `tester.document("...")` для inline-query, `tester.documentName("getOrder")` для загрузки из `src/test/resources/graphql-test/getOrder.graphql`, `.variable(...)` для переменных, `.execute()` запускает, `.path("...").entity(Class).isEqualTo(...)` — ассерции по полям результата. Для проверки ошибок — `.errors().expect(predicate)`. `HttpGraphQlTester` — вариант для интеграционных тестов через реальный HTTP. `WebSocketGraphQlTester` — для subscriptions. Зависимости (репозитории, сервисы) мокаются через `@MockBean`.
+>
+> **Пример:**
+> ```java
+> @GraphQlTest(OrderController.class)
+> class OrderControllerTest {
+>     @Autowired private GraphQlTester tester;
+>     @MockBean private OrderService orderService;
+>
+>     @Test
+>     void shouldReturnOrder() {
+>         when(orderService.findById("123")).thenReturn(
+>             Optional.of(new Order("123", "customer-1",
+>                 new BigDecimal("99.99"), OrderStatus.PENDING)));
+>
+>         tester.documentName("getOrder")  // src/test/resources/graphql-test/getOrder.graphql
+>             .variable("id", "123")
+>             .execute()
+>             .path("order.id").entity(String.class).isEqualTo("123")
+>             .path("order.status").entity(String.class).isEqualTo("PENDING");
+>     }
+>
+>     @Test
+>     void shouldReturnErrorForMissingOrder() {
+>         when(orderService.findById("999")).thenReturn(Optional.empty());
+>         tester.document("{ order(id: \"999\") { id } }")
+>             .execute()
+>             .errors()
+>             .expect(e -> e.getErrorType() == ErrorType.NOT_FOUND);
+>     }
+> }
+> ```
+>
+> **Когда применять:** Любой Spring GraphQL проект. Документы храните в `src/test/resources/graphql-test/` — это конвенция и идеально для code review. Для контракт-тестов фронта и бэка можно поделиться `.graphql`-файлами между проектами.
+>
+> **Подводные камни:** `@GraphQlTest` не поднимает Spring Security автоматически — нужно явно `@Import(SecurityConfig.class)` или `@MockBean SecurityFilterChain`. Не поднимает JPA — нужны мок сервисов. Документы по умолчанию ищутся в `src/test/resources/graphql-test/<name>.graphql`.
+>
+> ---
+>
+> #### C) Достаточно стандартного `@WebMvcTest` — GraphQL endpoint работает через тот же `DispatcherServlet` — ❌ Неверно
+>
+> **Что на самом деле:** `@WebMvcTest` не поднимает GraphQL-инфраструктуру (`GraphQlSource`, `SchemaResource`). Тест упадёт с `No GraphQlTester bean`. `@GraphQlTest` — специально созданный slice с правильным набором auto-configurations.
+>
+> **Откуда путаница:** Spring MVC-привычки. Хотя endpoint `/graphql` действительно проходит через `DispatcherServlet`, инфраструктура для GraphQL отдельная.
+>
+> **Если бы это было правдой:** Не было бы отдельной аннотации в Spring Boot.
+>
+> ---
+>
+> #### D) Тестировать резолверы можно только через GraphQL Java напрямую: создать `GraphQL` объект и вызвать `.execute(query)` — ❌ Неверно (слишком низкоуровнево)
+>
+> **Что на самом деле:** Так можно, но это потеря всех Spring-специфичных моментов: `@Argument` binding, `@SchemaMapping` discovery, security filter chain, exception resolvers. `GraphQlTester` интегрирует это всё.
+>
+> **Откуда путаница:** Опыт работы с голым GraphQL Java до Spring GraphQL. Тогда это был единственный способ.
+>
+> **Если бы это было правдой:** Spring GraphQL не предоставлял бы testing-модуль — но он предоставляет, см. `spring-graphql-test`.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q7]] — error testing через `.errors()`, [[Q11]] — Security в тестах, [[Q15]] — мониторинг как альтернатива тестам в production.
+
+## Q9. Что такое GraphQL Directives и как их использовать?
 
 Директивы изменяют поведение схемы или выполнения запросов.
 
