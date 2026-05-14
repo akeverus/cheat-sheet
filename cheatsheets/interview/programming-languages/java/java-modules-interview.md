@@ -1157,10 +1157,83 @@ module com.example.service {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Какие типичные ошибки допускают при работе с модулями? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая практика модульного дизайна правильно сочетает инкапсуляцию реализации с публикуемым API?
+>
+> ---
+>
+> #### A) Экспортировать все пакеты модуля через `exports`, потому что иначе клиенты не смогут импортировать классы — ❌ Неверно
+>
+> **Что на самом деле:** экспортировать нужно ТОЛЬКО API-пакеты (`com.example.api`). Internal-пакеты (`com.example.impl`, `com.example.internal`) намеренно остаются недоступными — это и есть главная цель JPMS: жёсткая инкапсуляция на уровне модуля, недостижимая через `public`-классы classpath. Клиентам нужны только контракты.
+>
+> **Откуда путаница:** в classpath-мире любой `public` класс был «частью API» по факту, потому что был импортируем. JPMS меняет ментальную модель: `public` теперь означает «доступен внутри модуля», а межмодульная видимость — отдельное явное решение через `exports`.
+>
+> **Если бы это было правдой:** через год команда обнаружит, что внешние потребители завязались на `Impl`-классы (через `import com.example.impl.UserServiceImpl`). Любой рефакторинг внутреннего слоя сломает обратную совместимость — то есть JPMS перестанет давать главную пользу: свободу менять реализацию без боязни.
+>
+> ---
+>
+> #### B) Использовать `open module` глобально вместо точечных `opens pkg to framework` — это упрощает работу с Spring/Hibernate — ❌ Неверно
+>
+> **Что на самом деле:** это анти-практика. `open module` открывает ВСЕ пакеты для рефлексии любому модулю — полностью разрушает runtime-инкапсуляцию. Хороший дизайн: точечный `opens com.example.entity to org.hibernate.orm.core`, чтобы только Hibernate имел доступ к полям entity. Глобальный `open module` оправдан только на самом первом шаге миграции, как временный костыль.
+>
+> **Откуда путаница:** на первых попытках модуляризации Spring Boot приложения `open module` спасает от каскада `InaccessibleObjectException`. Соблазн оставить так — велик.
+>
+> **Если бы это было правдой:** инвестиции в JPMS обнуляются — модуль с `open module` функционально эквивалентен JAR на classpath с точки зрения рефлексии. Single-purpose `opens` — тот выигрыш, ради которого вообще стоит писать `module-info.java`.
+>
+> ---
+>
+> #### C) Группировать модули по техническим слоям: `com.example.controllers`, `com.example.services`, `com.example.repositories` — ❌ Неверно
+>
+> **Что на самом деле:** хорошее правило — **модуль = осмысленная единица по домену** (`com.example.billing`, `com.example.users`, `com.example.notifications`), не по слою. Слоистая разбивка ведёт к тому, что любая бизнес-фича требует изменений во ВСЕХ модулях одновременно — модульность только мешает. Domain-driven разбивка локализует изменения внутри одного модуля.
+>
+> **Откуда путаница:** Spring Boot туториалы часто демонстрируют 3-слойную архитектуру (`controller/service/repository`) в одном пакете. Кажется логичным масштабировать это до модулей.
+>
+> **Если бы это было правдой:** добавление одного нового endpoint `/api/users/{id}/avatar` потребует изменения 4 модулей (controller, service, repository, dto). MR с 4 модулями вместо 1 — головная боль для code review и релизного цикла.
+>
+> ---
+>
+> #### D) Экспортировать только API-пакеты, скрывать `impl`/`internal`, использовать `requires transitive` для публичных зависимостей API, `opens` — точечно для конкретных фреймворков — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Хороший модульный дизайн опирается на четыре пары решений:
+>
+> 1. **API vs impl** — пакет с контрактами (интерфейсы, DTO) экспортируется; пакеты с реализациями остаются внутренними. Это позволяет менять реализацию без слома потребителей.
+> 2. **Domain vs layer** — границы модуля проводятся по бизнес-доменам, а не по техническим слоям. Это локализует изменения.
+> 3. **`requires transitive` для API-зависимостей** — если в публичной сигнатуре метода используется тип из другого модуля, клиент должен видеть его автоматически.
+> 4. **`opens` точечно** — открывать только конкретный пакет конкретному фреймворку (`opens com.example.entity to org.hibernate.orm.core`), а не `open module` глобально.
+>
+> **Пример:**
+> ```java
+> module com.example.billing {
+>     requires transitive com.example.billing.api;  // публичный API виден клиентам
+>     requires com.example.billing.impl;            // impl скрыт
+>     requires org.hibernate.orm.core;
+>
+>     exports com.example.billing.api;              // только контракты
+>     // НЕ экспортируем: com.example.billing.impl, com.example.billing.internal
+>
+>     opens com.example.billing.entity              // точечный opens
+>         to org.hibernate.orm.core;
+>
+>     provides com.example.spi.PaymentProcessor
+>         with com.example.billing.impl.StripeProcessor;
+> }
+> ```
+>
+> **Когда применять:**
+> - Multi-module библиотеки (как `jackson-databind` + `jackson-core` + `jackson-annotations`) — каждый модуль с чёткими API-границами.
+> - Plugin-системы через `ServiceLoader`: SPI-модуль с интерфейсами, provider-модули с `provides...with`.
+> - JDK-style модули с очевидным контрактом (`java.sql`, `java.xml`).
+>
+> **Подводные камни:**
+> - **`requires transitive` цепочки** — длинные цепи `requires transitive` создают неявные зависимости; клиент думает что использует один модуль, а тянет 15.
+> - **API-evolution** — если экспортируется `interface Foo`, добавление метода в Foo ломает реализации в downstream-модулях. Use `default`-методы или `sealed`-иерархии.
+> - **Module boundaries vs Maven module** — JPMS-модуль и Maven-модуль это разные понятия; один Maven-модуль может содержать несколько JPMS-модулей или наоборот.
+>
+> **Связанные вопросы:** [[Q5]] — `exports` vs `opens`; [[Q7]] — `requires transitive`; [[Q10]] — `provides`/`uses`; [[Q29]] — типичные ошибки.
+
+## Q29. Какие типичные ошибки допускают при работе с модулями?
 
 | Ошибка | Последствие | Решение |
 |--------|-------------|---------|
@@ -1175,10 +1248,93 @@ module com.example.service {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Каковы перспективы развития модульной системы `Java`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** При запуске Spring Boot приложения с `module-info.java` падает `InaccessibleObjectException: ... module com.example.app does not "opens com.example.entity" to module org.hibernate.orm.core`. В чём корень проблемы и как правильно её устранить?
+>
+> ---
+>
+> #### A) Нужно добавить `requires org.hibernate.orm.core` в `module-info.java` — модуль ещё не подключён — ❌ Неверно
+>
+> **Что на самом деле:** `requires` решает проблему **compile-time видимости типов**, а не runtime-рефлексии. Если бы `requires` отсутствовал, ошибка была бы на этапе компиляции: «module not found». `InaccessibleObjectException` — это runtime-ошибка от `setAccessible(true)`: модуль Hibernate уже подключён, но не имеет права обращаться к private-полям entity через reflection. Нужен **`opens`**, а не `requires`.
+>
+> **Откуда путаница:** `requires` и `opens` оба объявляются в `module-info.java` и оба про «доступ». Кажется, что одно лечит другое. На самом деле это ортогональные оси: `requires` = «я зависим от модуля X», `opens` = «модуль X имеет право reflection в мой пакет».
+>
+> **Если бы это было правдой:** разработчик добавит `requires` (если ещё нет), упадёт повторно, и потеряет время на тыканье в случайные директивы вместо понимания, что reflection требует именно `opens`.
+>
+> ---
+>
+> #### B) Нужно добавить `opens com.example.entity to org.hibernate.orm.core` — Hibernate использует рефлексию для lazy loading, dirty checking, доступа к private-полям entity — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Hibernate работает с entity через рефлексию по нескольким причинам:
+> 1. **Доступ к private-полям** — `@Column` обычно вешается на private-поля, и Hibernate читает/пишет их через `Field.setAccessible(true)`.
+> 2. **Lazy loading proxy** — для lazy-ассоциаций Hibernate создаёт CGLIB/Byte Buddy proxy через рефлексию.
+> 3. **Dirty checking** — сравнение snapshot и текущего состояния полей.
+>
+> В classpath-мире `setAccessible(true)` работает для любого `public` класса. В JPMS — модуль-владелец должен явно дать разрешение через `opens`.
+>
+> **Пример:**
+> ```java
+> module com.example.app {
+>     requires spring.boot;
+>     requires spring.context;
+>     requires jakarta.persistence;
+>     requires org.hibernate.orm.core;
+>
+>     // Hibernate должен видеть поля entity:
+>     opens com.example.app.entity to org.hibernate.orm.core;
+>
+>     // Spring DI/AOP должен видеть бины:
+>     opens com.example.app.service to spring.core, spring.beans;
+>     opens com.example.app.config to spring.core, spring.context;
+>
+>     exports com.example.app.api;
+> }
+> ```
+>
+> Если у вас несколько фреймворков, нуждающихся в reflection (Spring + Hibernate + Jackson), можно указать всех в одной директиве:
+> ```java
+> opens com.example.app.dto to com.fasterxml.jackson.databind, spring.web;
+> ```
+>
+> **Когда применять:**
+> - JPA/Hibernate entity с private-полями (`@Column`, `@Id`, `@ManyToOne`).
+> - DTO для Jackson сериализации/десериализации.
+> - Spring beans с `@Autowired` на private-поля или приватных конструкторов.
+> - Mockito mock-генерация в тестах (часто требует `opens` в `build.gradle`).
+>
+> **Подводные камни:**
+> - **`open module` соблазн** — глобально открывает всё. Это анти-практика: лучше точечные `opens pkg to framework`.
+> - **`--add-opens` JVM-флаг как костыль** — работает в runtime, но требует синхронизировать с deployment (Dockerfile, Kubernetes manifest). `opens` в `module-info.java` решает проблему «раз и навсегда».
+> - **Reflection cascade** — entity ссылается на embedded `@Embeddable` объект, который тоже надо `opens`. JVM не показывает второй уровень автоматически; внимательно читать stack trace.
+> - **`exports` ≠ `opens`** — даже если пакет уже `exports`, `setAccessible(true)` к private-полям всё равно требует `opens`. Это две разные оси доступа: compile-time vs runtime-reflection.
+>
+> ---
+>
+> #### C) Нужно запустить с JVM-флагом `--illegal-access=permit` — это разрешит всю рефлексию — ❌ Неверно
+>
+> **Что на самом деле:** флаг `--illegal-access` был средством миграции в Java 9-15 и **удалён в Java 17**. На современных версиях JVM он либо игнорируется с предупреждением, либо запуск завершается ошибкой «Unrecognized option». Решение через `--add-opens` существует, но это runtime-костыль; декларативное `opens` в `module-info.java` лучше.
+>
+> **Откуда путаница:** `--illegal-access=permit` был дефолтом в Java 9-15 и многие туториалы советуют его как «магическую» команду. Сейчас этот совет устарел.
+>
+> **Если бы это было правдой:** на production с Java 17+ приложение просто не запустится — `Unrecognized VM option`. На Java 11 — запустится, но с warning, и при апгрейде на 17 сломается без предупреждения.
+>
+> ---
+>
+> #### D) Нужно убрать `module-info.java` и запускать на classpath — JPMS несовместим со Spring Boot — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot **совместим** с JPMS (требуется правильная конфигурация `opens` и `requires`). Большинство Spring Boot проектов работают на classpath не потому, что JPMS «несовместим», а потому, что миграция на JPMS трудозатратна без существенного выигрыша для бизнес-приложения. Это инженерное решение, а не техническая блокировка.
+>
+> **Откуда путаница:** в Spring 5 и ранних Spring Boot 2.x действительно были проблемы с automatic modules (`spring-core` не имел стабильного `Automatic-Module-Name`). Сейчас все основные Spring модули объявляют `Automatic-Module-Name`.
+>
+> **Если бы это было правдой:** проекты вроде Quarkus Native, GraalVM native-image (которые требуют статической модульности) были бы невозможны со Spring. Однако они работают: значит, проблема не в принципиальной несовместимости, а в умении правильно настроить `opens`.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q5]] — `exports` vs `opens`; [[Q12]] — рефлексия в JPMS; [[Q13]] — JVM-флаги обхода; [[Q37]] — Spring/Hibernate/Jackson с JPMS.
+
+## Q30. Каковы перспективы развития модульной системы `Java`?
 
 Модульная система `Java` продолжает развиваться:
 
