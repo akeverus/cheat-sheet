@@ -844,10 +844,54 @@ data class CreateUserRequest(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как обрабатывать исключения в Kotlin Spring приложении? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Зачем в Kotlin data class с Bean Validation нужен префикс `@field:NotBlank` вместо просто `@NotBlank`?
+>
+> ---
+>
+> #### A) Префикс `@field:` обязателен по спецификации JSR-380 для всех языков, не только Kotlin — ❌ Неверно
+>
+> **Что на самом деле:** JSR-380 (Bean Validation 2.0) ничего не знает про Kotlin use-site targets — это спецификация Java. В Java аннотации `@NotBlank` на поле работают как есть, потому что нет неоднозначности «на что повесить». Префикс — это Kotlin-специфичный механизм, нужный из-за множественности целей (field, getter, parameter, setter, property).
+> **Откуда путаница:** разработчики думают, что Bean Validation спецификация диктует синтаксис.
+> **Если бы это было правдой:** Java-разработчики тоже писали бы `@field:NotBlank` — но они пишут просто `@NotBlank`.
+>
+> ---
+>
+> #### B) В Kotlin data class у property есть несколько JVM-targets (field, getter, constructor parameter), и без явного `@field:` аннотация попадёт на конструктор-параметр, который Bean Validation не сканирует — ✓ Верно
+>
+> **Развёрнутое объяснение:** Kotlin property с primary-constructor параметром `val name: String` компилируется в три JVM-целях: приватное `field name`, public `getName()` getter, и параметр конструктора `(String name)`. Без явного use-site target Kotlin выбирает первый подходящий из стандартного порядка (`param` → `property` → `field`). Для конструктора-параметра это будет `param` — туда и попадёт `@NotBlank`. Hibernate Validator (`@Valid`) сканирует именно field и method annotations, и не видит аннотацию на параметре конструктора → валидация просто не срабатывает. Префикс `@field:` форсирует target на field — туда, где Validator её увидит. Альтернативно работает `@get:NotBlank` (на getter).
+> **Пример:**
+> ```kotlin
+> // НЕ работает — аннотация на параметре конструктора
+> data class CreateRequest(@NotBlank val name: String)
+>
+> // Работает — аннотация на field
+> data class CreateRequest(@field:NotBlank val name: String)
+>
+> @PostMapping
+> fun create(@Valid @RequestBody req: CreateRequest) { /* validation сработает */ }
+> ```
+> **Когда применять:** во всех Kotlin data class, используемых как Request DTO с `@Valid`. Это стандарт.
+> **Подводные камни:** Spring 6 / Hibernate Validator 8 начинают поддерживать сканирование конструктор-параметров (`@ValidateOnExecution`), но в подавляющем большинстве проектов всё ещё нужен `@field:`. Для JSON-Schema/Springdoc OpenAPI может потребоваться дополнительно `@get:`.
+> **Связанные вопросы:** [[Q14]] — список типичных ошибок, [[Q11]] — обработка `MethodArgumentNotValidException`.
+>
+> ---
+>
+> #### C) Префикс `@field:` нужен, чтобы Jackson правильно сериализовал поле в JSON — ❌ Неверно
+>
+> **Что на самом деле:** Jackson по умолчанию использует getter-based сериализацию (или field-based, если настроено) и ему не нужны use-site targets для своих аннотаций. `@JsonProperty` тоже работает без `@field:` в большинстве случаев. Это две разные подсистемы — сериализация и валидация.
+> **Откуда путаница:** все эти аннотации часто стоят рядом в одном data class.
+> **Если бы это было правдой:** Jackson был бы недоступен без use-site targets — а он работает «из коробки».
+>
+> ---
+>
+> #### D) Без `@field:` Kotlin компилятор выдаст ошибку «cannot resolve annotation target» — ❌ Неверно
+>
+> **Что на самом деле:** Код компилируется без ошибок. Компилятор молча выбирает default target и не предупреждает разработчика. Это и есть самое опасное — валидация «тихо» не срабатывает, баги доходят до production.
+> **Откуда путаница:** разработчики ожидают, что критическая семантическая разница должна ловиться компилятором.
+> **Если бы это было правдой:** ошибка с `@NotBlank val name` была бы compile-time — а её нет.
+
+## Q11. Как обрабатывать исключения в Kotlin Spring приложении?
 
 ```kotlin
 @RestControllerAdvice
@@ -880,10 +924,60 @@ class UserNotFoundException(id: Long) : RuntimeException("User $id not found")
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Что такое extension functions в контексте Spring? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой механизм Spring наиболее подходит для централизованной обработки исключений в REST API на Kotlin, и как он работает?
+>
+> ---
+>
+> #### A) Try/catch внутри каждого `@RestController` метода с возвратом `ResponseEntity.status(...)` — самый явный подход — ❌ Неверно
+>
+> **Что на самом деле:** Try/catch в каждом методе нарушает DRY, размазывает обработку ошибок по контроллерам, и неминуемо приводит к рассогласованию формата ошибки в разных эндпоинтах. Это анти-паттерн в Spring экосистеме.
+> **Откуда путаница:** «явное лучше неявного» — здравая идея, но в Spring централизованная обработка не «магическая», а вполне явная — она просто вынесена в отдельный класс.
+> **Если бы это было правдой:** в Spring не существовало бы `@ControllerAdvice` — а он есть с версии 3.2 (2012).
+>
+> ---
+>
+> #### B) `@RestControllerAdvice` + `@ExceptionHandler(SomeException::class)` — централизованный перехват исключений всех контроллеров с возможностью маппинга на стандартный формат ошибки — ✓ Верно
+>
+> **Развёрнутое объяснение:** `@RestControllerAdvice` — комбинация `@ControllerAdvice` и `@ResponseBody`. Класс сканируется при старте, методы с `@ExceptionHandler` регистрируются в `HandlerExceptionResolver`. Когда контроллерный метод бросает исключение, Spring DispatcherServlet ищет подходящий handler по типу исключения (с учётом наследования), вызывает его, и результат сериализуется как обычный response body. Можно ограничить scope advice конкретным пакетом/аннотацией (`@RestControllerAdvice(basePackages = ...)`). Дополнительно, для consistent error model используют `ProblemDetail` (RFC 7807, Spring 6+) или собственный `ErrorResponse` data class.
+> **Пример:**
+> ```kotlin
+> @RestControllerAdvice
+> class GlobalExceptionHandler {
+>     @ExceptionHandler(UserNotFoundException::class)
+>     fun handleNotFound(ex: UserNotFoundException): ResponseEntity<ErrorResponse> =
+>         ResponseEntity.status(NOT_FOUND).body(
+>             ErrorResponse("USER_NOT_FOUND", ex.message ?: "User not found")
+>         )
+>
+>     @ExceptionHandler(MethodArgumentNotValidException::class)
+>     fun handleValidation(ex: MethodArgumentNotValidException) =
+>         ResponseEntity.badRequest().body(
+>             ErrorResponse("VALIDATION", ex.bindingResult.fieldErrors.joinToString())
+>         )
+> }
+> ```
+> **Когда применять:** во всех REST API на Spring (MVC и WebFlux). Это стандарт.
+> **Подводные камни:** `@RestControllerAdvice` работает только для исключений из `@Controller`-слоя; ошибки в `Filter`-цепочке (security, CORS) обрабатываются раньше и должны ловиться отдельно (`AuthenticationEntryPoint`, `AccessDeniedHandler`). Для WebFlux + suspend исключение нужно бросать из `suspend` функции — `Mono.error(...)` в reactive-цепочке тоже работает.
+> **Связанные вопросы:** [[Q10]] — валидация в контроллерах, [[Q13]] — Security ошибки.
+>
+> ---
+>
+> #### C) Глобальный `@PostConstruct` метод, который регистрирует error handlers через `WebMvcConfigurer.configureHandlerExceptionResolvers` — ❌ Неверно
+>
+> **Что на самом деле:** Технически `WebMvcConfigurer.configureHandlerExceptionResolvers` существует, но это низкоуровневый API для исключительных случаев — кастомных resolver'ов. Для бизнес-логики практически никогда не используется; `@ControllerAdvice` идиоматичнее и проще.
+> **Откуда путаница:** в документации Spring упоминается оба пути, и кажется, что они равноправны.
+> **Если бы это было правдой:** все туториалы рекомендовали бы `WebMvcConfigurer` — но рекомендуют `@ControllerAdvice`.
+>
+> ---
+>
+> #### D) Использование `ResponseStatusException`, бросая прямо из контроллера — Spring сам формирует JSON-ответ — ❌ Неверно
+>
+> **Что на самом деле:** `ResponseStatusException` действительно поддерживается и формирует базовый ответ, но не даёт контроля над форматом ошибки (нет `code`/`details`/`timestamp` полей), и нет места для cross-cutting логирования или метрик. Для прототипа подходит, для продакшена нужен `@RestControllerAdvice`.
+> **Откуда путаница:** `ResponseStatusException` упоминают как «удобный shortcut», и легко решить, что этого достаточно.
+> **Если бы это было правдой:** мы могли бы получить унифицированный formato ошибки без advice — но default ResponseStatusException JSON минимален и не настраивается.
+
+## Q12. Что такое extension functions в контексте Spring?
 
 ```kotlin
 // Extension function — добавляет методы существующим классам
@@ -909,10 +1003,53 @@ Extension functions — способ адаптировать Java-based Spring 
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как интегрировать Kotlin с Spring Security? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Как реально работают Kotlin extension functions в Spring-контексте — на уровне JVM bytecode и как Spring их видит?
+>
+> ---
+>
+> #### A) Extension function динамически добавляет метод в class через reflection при первом вызове — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin не модифицирует existing classes в runtime. Extension function — чисто статическая концепция: компилятор генерирует обычный `static`-метод с receiver-параметром, а на каждом call site подставляет вызов этого статического метода. Никакой динамической модификации классов и никакой reflection.
+> **Откуда путаница:** синтаксис `obj.extensionFun()` выглядит как метод класса, и кажется, что класс «расширяется».
+> **Если бы это было правдой:** Spring и AOP-proxy могли бы перехватывать extension calls — но они их не видят.
+>
+> ---
+>
+> #### B) Это статический метод в синтетическом классе (например, `MyExtensionsKt`) с первым параметром-receiver; на JVM вызов `req.authToken()` компилируется в `MyExtensionsKt.authToken(req)` — ✓ Верно
+>
+> **Развёрнутое объяснение:** Файл `MyExtensions.kt` с top-level extension `fun ServerHttpRequest.authToken(): String? = ...` компилируется в class `MyExtensionsKt` (имя файла + `Kt` суффикс) со статическим методом `public static String authToken(ServerHttpRequest $this) { ... }`. На call site `request.authToken()` Kotlin генерирует bytecode `INVOKESTATIC MyExtensionsKt.authToken(...)`. Spring и AOP видят только тот класс, на котором они умеют делать proxy — но extension не часть target-класса, поэтому `@Transactional` на extension не работает (метод статический и не в Spring-бине). Зато extension отлично подходит для адаптации Java-API под Kotlin-стиль (например, `Mono.awaitSingle()`).
+> **Пример:**
+> ```kotlin
+> // file: WebExtensions.kt
+> fun ServerHttpRequest.authToken(): String? =
+>     headers["Authorization"]?.firstOrNull()?.removePrefix("Bearer ")
+>
+> // call site:
+> val token = request.authToken()
+> // bytecode: INVOKESTATIC com/example/WebExtensionsKt.authToken
+> ```
+> **Когда применять:** для адаптации сторонних API, добавления удобных хелперов на Spring-классы без наследования, конвертеров (`.toResponse()` на доменной модели). Идеально для cross-cutting concerns, не требующих DI.
+> **Подводные камни:** extension не участвует в полиморфизме (resolved statically) — `parent.foo()` вызовет extension Parent, даже если у Child есть свой. `@Transactional`, `@Async`, `@Cacheable` на extension не работают — это статика вне Spring-бина. Extension не может иметь backing field.
+> **Связанные вопросы:** [[Q1]] — open-classes для proxy, [[Q5]] — `awaitSingle()` extension на `Mono`.
+>
+> ---
+>
+> #### C) Это макрос Kotlin-компилятора, который inline-ит тело функции прямо на call site без вызова метода — ❌ Неверно
+>
+> **Что на самом деле:** Extension без `inline` модификатора компилируется в обычный вызов статического метода, никакого inlining. С `inline fun ServerHttpRequest.authToken()` — да, тело подставляется на call site, но это эффект `inline`, а не extension. Это разные ортогональные механизмы.
+> **Откуда путаница:** оба генерируют «удобный» bytecode, и легко смешать.
+> **Если бы это было правдой:** обычные extension не появлялись бы в stack trace — а они появляются как `MyExtensionsKt.authToken`.
+>
+> ---
+>
+> #### D) Extension — это псевдоним для interface method, который Kotlin генерирует через mixin — ❌ Неверно
+>
+> **Что на самом деле:** В Kotlin нет mixin'ов как в Ruby/Scala. Extension — отдельный механизм статических методов с syntactic sugar. Никаких интерфейсов компилятор не добавляет к receiver-класс.
+> **Откуда путаница:** «расширение классов» звучит похоже на Ruby mixin или Scala implicit class.
+> **Если бы это было правдой:** receiver class имел бы дополнительные методы в reflection — а `Class.getMethods()` для `ServerHttpRequest` не покажет extension.
+
+## Q13. Как интегрировать Kotlin с Spring Security?
 
 ```kotlin
 @Configuration
