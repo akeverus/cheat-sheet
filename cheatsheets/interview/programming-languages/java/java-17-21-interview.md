@@ -1505,10 +1505,12 @@ java --add-opens java.base/java.lang=ALL-UNNAMED \
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. (!) Какова стратегия миграции с Java 8/11 на Java 17/21? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+/> - [ ] Достаточно поднять JDK runtime — внутренние API JDK останутся доступны как раньше | ❌ ПОСЛЕДСТВИЕ: `--illegal-access=permit` удалён в Java 17, рефлексия на `sun.misc.*` бросает `InaccessibleObjectException`, старые библиотеки падают на старте
+> - [x] С Java 17 включена сильная инкапсуляция: внутренние API (`sun.misc.*`, `com.sun.*`, `jdk.internal.*`) недоступны через рефлексию; для legacy нужен явный `--add-opens`, а лучше — миграция на `VarHandle`/`MethodHandle` | ✓ ПРИМЕНЯТЬ: обновить Hibernate/Spring/Jackson до версий с поддержкой Java 17; `--add-opens` как временный workaround 📋 ПРАВИЛО: `--add-opens` — мост, а не дом 🔗 См. Q31
+> - [ ] `--add-opens` действует на весь classpath независимо от модуля — пишется один раз и забывается | ❌ ПОСЛЕДСТВИЕ: `--add-opens` указывается per-модуль (`java.base/sun.nio.ch=ALL-UNNAMED`); забыв один модуль, получим `InaccessibleObjectException` в продакшене после релиза
+> - [ ] `sun.misc.Unsafe` можно использовать в Java 17 без флагов — он по-прежнему public API | ❌ ПОСЛЕДСТВИЕ: `Unsafe` инкапсулирован, прямой доступ через рефлексию запрещён; правильно — `VarHandle` (read/write на разные memory orderings) или `MethodHandle`
+
+## Q31. (!) Какова стратегия миграции с Java 8/11 на Java 17/21?
 
 Миграция на современные LTS-версии Java — частый вопрос на собеседованиях:
 
@@ -1633,10 +1635,12 @@ a.method(b.value);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. Что такое Compact Number Formatting? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Helpful NPE в Java 17+ показывает имя локальной переменной, которая оказалась null | ❌ ПОСЛЕДСТВИЕ: разработчик ждёт `variable "user" is null`, а JVM пишет `Cannot invoke "User.getAddress()" because "user" is null` — анализ идёт по bytecode, не по локальным именам; неверные ожидания → теряются мин в чтении логов
+> - [ ] Helpful NPE требует флаг `-XX:+ShowCodeDetailsInExceptionMessages` в Java 17+ | ❌ ПОСЛЕДСТВИЕ: в Java 14-16 флаг был нужен, но с Java 15 включён по умолчанию; в Java 17 разработчики, добавляющие флаг «на всякий случай», лишь раздувают JAVA_OPTS
+> - [x] С Java 17 NPE по умолчанию печатает цепочку: `Cannot invoke "X" because the return value of "Y" is null` — JVM анализирует bytecode фрейма, чтобы указать точную позицию | ✓ ПРИМЕНЯТЬ: production логи без debugger, диагностика chained-вызовов в обработке ответов API; не нужен ручной `Objects.requireNonNull` для каждого звена 📋 ПРАВИЛО: «Helpful NPE = bytecode-анализ → точное место без stacktrace дайвинга» 🔗 См. Q34
+> - [ ] Helpful NPE можно отключить только пересборкой JVM из исходников | ❌ ПОСЛЕДСТВИЕ: разработчик считает, что нельзя выключить feature; на самом деле есть `-XX:-ShowCodeDetailsInExceptionMessages` — отключает фичу одной опцией, например в legacy-системах с custom-парсингом стектрейсов
+
+## Q34. Что такое Compact Number Formatting?
 
 **Compact Number Formatting** — компактное форматирование чисел, полезное для UI:
 
@@ -2037,10 +2041,90 @@ switch (str) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. (!) Record Patterns: деконструкция в switch и instanceof ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как Pattern Matching for `switch` обеспечивает exhaustiveness check, и почему это разрешает убрать `default`?
+>
+> ---
+>
+> #### A) Компилятор проверяет любую switch expression на exhaustiveness, требуя default для любых типов — ❌ Неверно
+>
+> **Что на самом деле:** exhaustiveness check работает **только для sealed hierarchies** (sealed interface/class с конкретным списком permits). Для произвольных Object типов или открытых иерархий default ОБЯЗАТЕЛЕН — компилятор не может знать все возможные подтипы.
+>
+> **Откуда путаница:** в Kotlin `when` сильнее: проверяет exhaustiveness и для enum. В Java это тоже работает (enum exhaustiveness был ещё в Java 7), но для open hierarchies (`Object`, `interface` без sealed) — нет.
+>
+> **Если бы это было правдой:** мы могли бы писать `switch (any Object) { case Integer i -> ... case String s -> ... }` без default. На деле компилятор требует default — Object'ом может быть что угодно.
+>
+> ---
+>
+> #### B) Sealed hierarchy фиксирует список subtypes на compile-time через `permits`; компилятор проверяет что все varieties покрыты в switch, и доказывает exhaustiveness без default — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `sealed interface Shape permits Circle, Rectangle, Triangle` — это контракт: **только** эти три subtype могут реализовать Shape. Компилятор знает полный список, поэтому при `switch (shape)` он может проверить что все 3 case покрыты. Если нет — compile error «switch statement does not cover all possible input values».
+>
+> Это сильнее runtime ассертов: если позже добавить `record Pentagon implements Shape` (для этого нужно расширить permits), все switch без case для Pentagon **перестанут компилироваться**. Это safe refactoring — компилятор укажет все места, которые нужно дополнить.
+>
+> Без sealed (например, `interface Shape`) компилятор не может гарантировать exhaustiveness — кто-то может имплементировать Shape снаружи (даже через рефлексию). Поэтому default обязателен.
+>
+> **Пример:**
+> ```java
+> sealed interface Shape permits Circle, Rectangle, Triangle {}
+> record Circle(double radius) implements Shape {}
+> record Rectangle(double w, double h) implements Shape {}
+> record Triangle(double base, double height) implements Shape {}
+>
+> double area(Shape shape) {
+>     return switch (shape) {
+>         case Circle c -> Math.PI * c.radius() * c.radius();
+>         case Rectangle r -> r.w() * r.h();
+>         case Triangle t -> 0.5 * t.base() * t.height();
+>         // default НЕ НУЖЕН — sealed обеспечивает exhaustiveness
+>     };
+> }
+>
+> // Если позже добавить:
+> // record Pentagon(...) implements Shape {} + добавить в permits
+> // ↓
+> // area() выше перестанет компилироваться:
+> // "switch expression does not cover Pentagon"
+> ```
+>
+> **Когда применять:**
+> - **Domain models с конечным набором вариантов**: payment status (`Pending | Approved | Declined | Refunded`), order events, AST nodes — sealed + pattern matching заменяет visitor pattern.
+> - **API discriminated unions**: JSON-схемы с `type: "..."` дискриминатором — каждый type = record в sealed hierarchy.
+> - **Functional-style ADT** (Algebraic Data Types) в Java — sealed = sum type, record = product type.
+> - **Refactoring safety**: при добавлении нового case в business logic компилятор укажет все switch'ы которые нужно обновить.
+>
+> **Подводные камни:**
+> - **Sealed + reflection** — рефлексия может обойти `permits`, но компилятор всё равно требует case только для permits-классов. Reflection-based subtypes — runtime fallback на default.
+> - **Cross-module sealed**: subtypes должны быть в том же module (или в одном package для non-modular code). Иначе compile error.
+> - **Pattern dominance order**: `case Number n -> ...` ДО `case Integer i -> ...` — compile error (Integer dominated). Специфичные кейсы раньше общих.
+> - **Null handling**: до Java 21 switch с null → NullPointerException. Java 21 разрешает `case null -> ...` явно. Без него null всё ещё NPE, даже с sealed hierarchy.
+> - **Sealed без permits clause**: в одном файле — permits implicit (все subtypes из файла). В разных файлах — нужно `permits A, B, C` явно.
+>
+> **Связанные вопросы:** [[Q40]] — Record Patterns как ortho­gonal feature; [[Q41]] — String Templates (тоже Java 21); [[Q35]] — sealed classes basics.
+>
+> ---
+>
+> #### C) Pattern matching работает только в `switch`, не в `instanceof` — `instanceof` остался как в Java 8 — ❌ Неверно
+>
+> **Что на самом деле:** **Pattern Matching for `instanceof`** появилось раньше (Java 16 final): `if (obj instanceof Integer i)` — без явного cast. С Java 21 + Record Patterns можно деконструировать: `if (obj instanceof Point(int x, int y))`. Pattern matching работает в обоих местах.
+>
+> **Откуда путаница:** часто связывают «pattern matching» именно со switch (как Scala/Kotlin/Rust). На деле Java расширяет постепенно: 16 — instanceof, 21 — switch + record patterns.
+>
+> **Если бы это было правдой:** разработчики не могли бы использовать pattern matching в одиночных проверках. На практике именно `if (obj instanceof Type t)` чаще встречается, чем сложные switch.
+>
+> ---
+>
+> #### D) Pattern Matching for switch — синтаксический сахар над if-else, без bytecode оптимизаций — ❌ Неверно
+>
+> **Что на самом деле:** Pattern matching switch компилируется в **invokedynamic** bytecode инструкции с table-based dispatch и type checks через `MethodHandles`. Это эффективнее чем if-else цепочки: O(1) dispatch для большинства случаев vs O(n) instanceof проверок.
+>
+> **Откуда путаница:** синтаксис кажется «синтаксическим сахаром» (как diamond operator). На деле JIT и Hotspot реально оптимизируют pattern matching через type profile + inlining.
+>
+> **Если бы это было правдой:** на больших sealed hierarchies switch был бы медленнее if-else. Реально benchmarks показывают равную или лучшую производительность.
+
+## Q40. (!) Record Patterns: деконструкция в switch и instanceof
 
 **Record Patterns** (JEP 440, финальный в Java 21) позволяют **деконструировать** record-значения прямо в паттерне, извлекая компоненты.
 
