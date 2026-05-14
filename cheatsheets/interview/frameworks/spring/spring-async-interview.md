@@ -476,10 +476,76 @@ public void sendEmail(...) { ... }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Что такое AsyncConfigurer? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Что произойдёт, если в `ThreadPoolTaskExecutor` все потоки заняты (`maxPoolSize` достигнут) и очередь (`queueCapacity`) полностью заполнена, а в этот момент приходит новая задача?
+>
+> ---
+>
+> #### A) Spring автоматически увеличивает `maxPoolSize` для разгрузки очереди — ❌ Неверно
+>
+> **Что на самом деле:** `ThreadPoolTaskExecutor` (как и базовый `ThreadPoolExecutor` из JDK) имеет фиксированные `corePoolSize` и `maxPoolSize`. Они НЕ изменяются автоматически. Если все потоки заняты и очередь полна — срабатывает `RejectedExecutionHandler`. Spring никаких «авто-масштабирующихся» пулов не предоставляет; для эластичности можно использовать Virtual Threads (Java 21) или внешний load balancer.
+>
+> **Откуда путаница:** auto-scaling — модная концепция в Kubernetes/cloud, и кажется, что Spring тоже должен это делать.
+>
+> **Если бы это было правдой:** unbounded рост потоков под пиковой нагрузкой — OOM `unable to create new native thread` через минуты пиковой нагрузки.
+>
+> ---
+>
+> #### B) Срабатывает `RejectedExecutionHandler` — по умолчанию `AbortPolicy` бросает `RejectedExecutionException` — ✓ Верно
+>
+> **Развёрнутое объяснение:** когда `ThreadPoolExecutor` не может принять задачу (все потоки заняты + очередь полна), он передаёт её в `RejectedExecutionHandler`. JDK предоставляет 4 стандартные стратегии: `AbortPolicy` (default) — бросает `RejectedExecutionException`; `CallerRunsPolicy` — выполняет задачу в потоке caller-а (backpressure); `DiscardPolicy` — молча отбрасывает; `DiscardOldestPolicy` — выбрасывает самую старую из очереди и кладёт новую. Spring `ThreadPoolTaskExecutor` использует `AbortPolicy` по умолчанию — это надёжно, потому что ошибка видна сразу, а не маскируется. Для критичных операций обычно ставят `CallerRunsPolicy` — медленнее, но без потерь.
+>
+> **Пример:**
+> ```java
+> @Bean("criticalExecutor")
+> public Executor criticalExecutor() {
+>     ThreadPoolTaskExecutor e = new ThreadPoolTaskExecutor();
+>     e.setCorePoolSize(4);
+>     e.setMaxPoolSize(8);
+>     e.setQueueCapacity(100);
+>     // backpressure: caller выполнит задачу сам если pool переполнен
+>     e.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+>     e.setThreadNamePrefix("critical-");
+>     e.initialize();
+>     return e;
+> }
+>
+> // Кастомный handler с метриками
+> e.setRejectedExecutionHandler((task, executor) -> {
+>     meterRegistry.counter("async.rejected", "pool", "critical").increment();
+>     log.error("Task rejected, pool stats: active={} queue={}",
+>         executor.getActiveCount(), executor.getQueue().size());
+>     throw new RejectedExecutionException("critical pool exhausted");
+> });
+> ```
+>
+> **Когда применять:** всегда явно задавайте `RejectedExecutionHandler` для production. Default `AbortPolicy` ок для fail-fast сценариев; `CallerRunsPolicy` — для критичных задач без потерь; кастомный handler — для метрик/alert-ов.
+>
+> **Подводные камни:** `CallerRunsPolicy` может заблокировать ваш HTTP request-thread (если caller — Tomcat поток) и каскадно деградировать весь сервис; `DiscardPolicy` опасна молчаливой потерей данных; `setQueueCapacity(Integer.MAX_VALUE)` делает `maxPoolSize` бесполезным — `ThreadPoolExecutor` сначала заполняет очередь, и только потом увеличивает потоки.
+>
+> **Связанные вопросы:** [[Q4]] — default executor, [[Q6]] — `AsyncConfigurer`.
+>
+> ---
+>
+> #### C) Spring блокирует caller-поток до тех пор, пока в пуле не освободится слот — ❌ Неверно
+>
+> **Что на самом деле:** блокировка caller-потока — это поведение `CallerRunsPolicy`, но это **не default**. По умолчанию `ThreadPoolTaskExecutor` использует `AbortPolicy` — выбрасывает exception, не блокирует. Если хочется блокировать, нужно либо явно сконфигурировать `CallerRunsPolicy`, либо использовать `LinkedBlockingQueue` с ограниченным размером + кастомный handler с `queue.put()` (блокирующий вариант).
+>
+> **Откуда путаница:** в reactive системах backpressure реализуется именно блокировкой/замедлением upstream; и можно предположить аналогичный default для `ThreadPoolTaskExecutor`.
+>
+> **Если бы это было правдой:** Tomcat-потоки накапливались бы в ожидании async-пула, и сервис прекратил бы принимать HTTP-запросы — каскадная деградация под нагрузкой.
+>
+> ---
+>
+> #### D) Задача автоматически переходит в next available executor через failover — ❌ Неверно
+>
+> **Что на самом деле:** `ThreadPoolTaskExecutor` — изолированный pool, он не знает про другие executor-ы и не имеет встроенного failover. Если нужен failover между пулами — реализуется на уровне application logic (try-catch на `RejectedExecutionException` + retry в другой executor). Это редко используется — обычно проще увеличить размер одного пула.
+>
+> **Откуда путаница:** failover — общий паттерн в распределённых системах (multi-region, replicas); кажется, что должен быть и в Spring.
+>
+> **Если бы это было правдой:** debug стал бы кошмарным — задача начинает выполнение в одном пуле, перебрасывается в другой, MDC/SecurityContext теряются — крайне нежелательное поведение.
+
+## Q6. Что такое AsyncConfigurer?
 
 `AsyncConfigurer` — интерфейс для централизованной настройки default executor и exception handler.
 
@@ -511,10 +577,82 @@ public class AsyncConfig implements AsyncConfigurer {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Как обрабатывать исключения в @Async методах? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** В чём ключевая разница между реализацией `AsyncConfigurer` и объявлением `@Bean Executor` с именем `taskExecutor` для настройки `@Async`?
+>
+> ---
+>
+> #### A) Разницы нет — это два эквивалентных способа задать тот же default executor — ❌ Неверно
+>
+> **Что на самом деле:** разница есть и важная. `AsyncConfigurer.getAsyncExecutor()` ставит **default** executor для всех `@Async` без имени. `@Bean` с именем `taskExecutor` тоже становится default (Spring предпочитает bean с этим именем). Но `AsyncConfigurer` дополнительно позволяет настроить `AsyncUncaughtExceptionHandler` (для `void` методов) одной точкой конфигурации, в то время как через `@Bean` это требует регистрации отдельного bean.
+>
+> **Откуда путаница:** конечный результат для простого случая (один пул потоков) действительно одинаков.
+>
+> **Если бы это было правдой:** документация Spring не выделяла бы `AsyncConfigurer` как отдельный интерфейс — он был бы лишним.
+>
+> ---
+>
+> #### B) `AsyncConfigurer` поддерживает только один executor, а `@Bean` — множество с разными именами — ❌ Неверно
+>
+> **Что на самом деле:** **оба** подхода поддерживают множество executor-ов. Через `AsyncConfigurer` вы задаёте **default** executor; параллельно вы можете объявить дополнительные `@Bean` с именами (`emailExecutor`, `reportExecutor`) и использовать их через `@Async("emailExecutor")`. То есть `AsyncConfigurer` не исключает использование именованных executor-ов.
+>
+> **Откуда путаница:** интерфейс `AsyncConfigurer.getAsyncExecutor()` возвращает один `Executor`, и кажется, что это единственный.
+>
+> **Если бы это было правдой:** в сложных приложениях `AsyncConfigurer` был бы непригоден, что не так — он используется именно для default + дополнительные `@Bean`.
+>
+> ---
+>
+> #### C) `AsyncConfigurer` объединяет настройку default executor И глобального exception handler в одной точке конфигурации — ✓ Верно
+>
+> **Развёрнутое объяснение:** `AsyncConfigurer` — это convenient интерфейс с двумя методами: `getAsyncExecutor()` возвращает default executor, `getAsyncUncaughtExceptionHandler()` — обработчик `void @Async` исключений. Оба используются `ProxyAsyncConfiguration` при инициализации `AsyncAnnotationBeanPostProcessor`. Через `@Bean Executor taskExecutor()` вы получаете только default executor; для exception handler нужно отдельно объявить bean типа `AsyncUncaughtExceptionHandler` или реализовать `AsyncConfigurer`. То есть `AsyncConfigurer` — это **группировка** двух связанных настроек.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> @EnableAsync
+> public class AsyncConfig implements AsyncConfigurer {
+>
+>     @Override
+>     public Executor getAsyncExecutor() {
+>         ThreadPoolTaskExecutor e = new ThreadPoolTaskExecutor();
+>         e.setCorePoolSize(10);
+>         e.setMaxPoolSize(50);
+>         e.setQueueCapacity(200);
+>         e.setThreadNamePrefix("app-async-");
+>         e.setTaskDecorator(new MdcTaskDecorator());
+>         e.initialize();
+>         return e;
+>     }
+>
+>     @Override
+>     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+>         return (throwable, method, params) -> {
+>             log.error("Async error in {}: {}", method.getName(),
+>                 throwable.getMessage(), throwable);
+>             meterRegistry.counter("async.errors", "method", method.getName())
+>                 .increment();
+>         };
+>     }
+> }
+> ```
+>
+> **Когда применять:** используйте `AsyncConfigurer`, когда хотите централизованно настроить и default executor, и exception handler. Для дополнительных именованных executor-ов — объявляйте отдельные `@Bean`.
+>
+> **Подводные камни:** только один `AsyncConfigurer` будет применён (при наличии нескольких — Spring выберет один и проигнорирует остальные); метод `getAsyncUncaughtExceptionHandler()` работает только для `void` методов — для `CompletableFuture` исключения уходят в future и обрабатываются через `.exceptionally()`.
+>
+> **Связанные вопросы:** [[Q5]] — кастомный executor, [[Q7]] — exception handling, [[Q8]] — `AsyncUncaughtExceptionHandler`.
+>
+> ---
+>
+> #### D) `AsyncConfigurer` устарел с Spring 5 и заменён на `@EnableAsync(executor=...)` — ❌ Неверно
+>
+> **Что на самом деле:** `AsyncConfigurer` **не deprecated** и активно используется во всех современных версиях Spring (6.x). `@EnableAsync` не имеет атрибута `executor` — она имеет `mode`, `proxyTargetClass`, `annotation`, `order`, но не `executor`. Конфигурация executor-а делается отдельно: либо через `AsyncConfigurer`, либо через `@Bean`.
+>
+> **Откуда путаница:** в Spring документации действительно были изменения в этой области (например `setRejectedExecutionHandler` в `ThreadPoolTaskExecutor`), и можно ошибочно перенести deprecation на сам `AsyncConfigurer`.
+>
+> **Если бы это было правдой:** атрибут `executor` в `@EnableAsync` физически отсутствует — компилятор отвергнет такой код. `AsyncConfigurer` остаётся рекомендованным способом централизованной настройки.
+
+## Q7. (!) Как обрабатывать исключения в @Async методах?
 
 **Для `CompletableFuture` — через `.exceptionally()` / `.handle()`:**
 ```java
@@ -545,10 +683,80 @@ fetchData()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Что такое AsyncUncaughtExceptionHandler? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Где обработается `RuntimeException`, выброшенный из `void @Async` метода, если caller не использовал try-catch вокруг вызова и не зарегистрирован `AsyncUncaughtExceptionHandler`?
+>
+> ---
+>
+> #### A) Исключение пробрасывается в caller — стандартная Java семантика — ❌ Неверно
+>
+> **Что на самом деле:** `@Async` метод выполняется в **другом потоке**, поэтому исключение **не может** быть проброшено в caller. Caller к моменту exception уже давно вернулся из вызова метода (он вернулся сразу же, при сабмите задачи в executor). Try-catch вокруг `service.asyncMethod()` ловит только проблемы при сабмите (например `RejectedExecutionException`), но не runtime-исключения из тела метода.
+>
+> **Откуда путаница:** в синхронном Java коде exception действительно пробрасывается caller-у. Многие разработчики переносят эту модель на `@Async`, не учитывая смену потока.
+>
+> **Если бы это было правдой:** все примеры с `AsyncUncaughtExceptionHandler` были бы избыточны — но в реальности именно отсутствие этого handler делает exception «невидимым».
+>
+> ---
+>
+> #### B) Исключение записывается в `Future.get()` — caller получит `ExecutionException` при следующем вызове — ❌ Неверно
+>
+> **Что на самом деле:** `Future.get()` действительно оборачивает exception в `ExecutionException` — но только для методов с возвратом `Future<T>` / `CompletableFuture<T>`. Для `void @Async` методов **нет** объекта Future, исключение некуда упаковывать — оно просто пропадает в worker-потоке.
+>
+> **Откуда путаница:** механика Future действительно сохраняет exception, но это не относится к void методам.
+>
+> **Если бы это было правдой:** caller был бы вынужден держать ссылки на Future-объекты от всех вызовов, что несовместимо с fire-and-forget семантикой void методов.
+>
+> ---
+>
+> #### C) Spring автоматически логирует exception на уровне WARN и продолжает работу — ❌ Неверно
+>
+> **Что на самом деле:** Spring **не** логирует автоматически. По умолчанию `SimpleAsyncUncaughtExceptionHandler` просто логирует на уровне ERROR. Если он по какой-то причине не активирован (старые версии, сломанная конфигурация), exception действительно может пропасть без следа. Документация явно рекомендует регистрировать кастомный `AsyncUncaughtExceptionHandler`.
+>
+> **Откуда путаница:** Spring часто логирует ошибки автоматически (например `DefaultExceptionResolver` в MVC), и можно предположить аналогичное.
+>
+> **Если бы это было правдой:** не было бы необходимости в `AsyncUncaughtExceptionHandler` — но он явно существует и рекомендуется.
+>
+> ---
+>
+> #### D) Exception обрабатывается `SimpleAsyncUncaughtExceptionHandler` (default) — лог на уровне ERROR, без alert-ов — ✓ Верно
+>
+> **Развёрнутое объяснение:** для `void @Async` методов Spring использует `AsyncUncaughtExceptionHandler`. По умолчанию это `SimpleAsyncUncaughtExceptionHandler` — он логирует exception в logger класса `AsyncExecutionAspectSupport` на уровне ERROR, но НЕ отправляет alert-ов, не считает метрики, не делает retry. Для production это недостаточно — exception может потеряться в логах или не попасть в alerting. Лучшая практика — реализовать `AsyncUncaughtExceptionHandler` через `AsyncConfigurer.getAsyncUncaughtExceptionHandler()` с метриками и alert-ами. Для **методов с `CompletableFuture`** handler НЕ срабатывает — exception уходит в future и обрабатывается через `.exceptionally()/.handle()`.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> @EnableAsync
+> public class AsyncConfig implements AsyncConfigurer {
+>
+>     @Override
+>     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+>         return (throwable, method, params) -> {
+>             // 1. Структурный лог с контекстом
+>             log.error("Async error in {}.{}, params={}",
+>                 method.getDeclaringClass().getSimpleName(),
+>                 method.getName(),
+>                 Arrays.toString(params),
+>                 throwable);
+>             // 2. Метрика для alert-инга
+>             meterRegistry.counter("async.exceptions",
+>                 "class", method.getDeclaringClass().getSimpleName(),
+>                 "method", method.getName()).increment();
+>             // 3. Для критичных операций — DLQ или retry
+>             if (method.isAnnotationPresent(Critical.class)) {
+>                 dlqPublisher.publish(new FailedTask(method, params, throwable));
+>             }
+>         };
+>     }
+> }
+> ```
+>
+> **Когда применять:** всегда регистрируйте кастомный handler для production. Особенно если у вас много `void @Async` методов (отправка email, обновление аналитики, индексация).
+>
+> **Подводные камни:** handler НЕ срабатывает для `CompletableFuture` — для них используйте `.exceptionally()` или `.handle()`; handler выполняется в том же worker-потоке, что и упавший метод — медленный handler блокирует поток; не вызывайте из handler-а методы, которые сами могут выбросить exception, без try-catch.
+>
+> **Связанные вопросы:** [[Q2]] — типы возврата, [[Q8]] — `AsyncUncaughtExceptionHandler` детально.
+
+## Q8. Что такое AsyncUncaughtExceptionHandler?
 
 `AsyncUncaughtExceptionHandler` — глобальный обработчик для исключений из `void @Async` методов.
 
