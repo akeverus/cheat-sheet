@@ -2584,10 +2584,128 @@ exchange.getResponse().getHeaders()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. (!) Retry и Circuit Breaker на уровне API Gateway ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какой подход к версионированию API через Gateway лучше для публичного API, и что критично соблюдать при поддержке нескольких версий?
+>
+> ---
+>
+> #### A) URI versioning (`/api/v1/...`) — де-факто стандарт для публичных API: явность, простота кэширования, легко тестировать и логировать; одновременно поддерживать ≤ 2 версии с явным `Sunset`/`Deprecation` header'ами для устаревающей — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Четыре основных подхода и их трейд-оффы:
+>
+> | Стратегия | Пример | Плюсы | Минусы |
+> |---|---|---|---|
+> | **URI Versioning** | `/api/v1/users` | Явность, простой routing, CDN cache | Нарушает «pure REST» (URI = ресурс) |
+> | **Header Versioning** | `Accept-Version: v2` | Чистый URL, REST-friendly | Сложно тестировать, нет в browser cache key |
+> | **Media Type** | `Accept: application/vnd.x+json;v=2` | Самый «правильный» REST | Невозможно для curl без флагов, плохая UX |
+> | **Query Param** | `/api/users?version=2` | Простой | Загрязняет URL, не кешируется correctly |
+>
+> Industry consensus (Stripe, GitHub, Twilio, AWS):
+> - **Public API** → URI versioning. Stripe идёт дальше — date-based: `2024-09-30`.
+> - **Internal/partner API** → Header versioning возможен, если есть контроль клиентов.
+> - **GraphQL** → versioning через schema evolution (deprecated fields), не URL.
+>
+> **Pattern для поддержки нескольких версий:**
+> 1. Maximum **2 active versions** (текущая + предыдущая). Больше — exponential maintenance cost.
+> 2. **Deadline для deprecation**: 6-12 месяцев notice через `Sunset` header.
+> 3. **Communication**: changelog, email клиентам, dashboard «вы используете deprecated v1».
+> 4. **Migration helpers**: автоматический rewrite v1 → v2 в Gateway, чтобы постепенно мигрировать.
+>
+> **Пример (Spring Cloud Gateway):**
+> ```yaml
+> spring:
+>   cloud:
+>     gateway:
+>       routes:
+>         - id: users-v1-deprecated
+>           uri: lb://users-service-v1
+>           predicates:
+>             - Path=/api/v1/users/**
+>           filters:
+>             - AddResponseHeader=Sunset, "Sat, 31 Dec 2026 23:59:59 GMT"
+>             - AddResponseHeader=Deprecation, "true"
+>             - AddResponseHeader=Link, "</api/v2/users>; rel=\"successor-version\""
+>         - id: users-v2
+>           uri: lb://users-service-v2
+>           predicates:
+>             - Path=/api/v2/users/**
+> ```
+>
+> ```java
+> // GlobalFilter для логирования использования deprecated версии:
+> @Component
+> public class DeprecationLoggingFilter implements GlobalFilter {
+>     @Override
+>     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+>         if (exchange.getRequest().getPath().value().startsWith("/api/v1/")) {
+>             log.warn("Deprecated v1 API called by client: {} from {}",
+>                 exchange.getRequest().getHeaders().getFirst("User-Agent"),
+>                 exchange.getRequest().getRemoteAddress());
+>         }
+>         return chain.filter(exchange);
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Stripe-style**: date-based URI versioning `2024-09-30` — каждая ABI change = новая дата; клиенты pinned к дате через `Stripe-Version` header.
+> - **Twilio/GitHub**: integer URI versioning `/2010-04-01/Accounts` или `/v3/repos`.
+> - **Internal microservices**: Header versioning + tight контроль клиентов; миграция за квартал.
+> - **GraphQL**: schema evolution через `@deprecated` директиву, без URL versioning.
+>
+> **Подводные камни:**
+> - **CDN cache invalidation** при header versioning: cache key по умолчанию не учитывает headers; нужно настроить Vary header.
+> - **Too many versions**: 5+ активных версий = N² combinations для testing + поддержки. Каждая версия = месяцы инженерного времени.
+> - **Backward compatibility внутри версии**: даже в `/v2/...` нужно соблюдать non-breaking changes (добавлять поля, не удалять). Иначе минорные обновления ломают клиентов.
+> - **Sunset deadline ignoring**: clients ignore deprecation warnings, нужны рекламные кампании, dashboard, forced cutoff с warning emails.
+> - **API Gateway не панацея**: backend service сам решает как обрабатывать v1 vs v2 — Gateway только маршрутизирует.
+>
+> **Связанные вопросы:** [[Q4]] — routing predicates в Spring Cloud Gateway; [[Q15]] — кэширование по версиям; [[Q33]] — backward compatibility в schema evolution.
+>
+> ---
+>
+> #### B) Header versioning лучше — это «чистый REST» — ❌ Неверно (упрощение)
+>
+> **Что на самом деле:** Header versioning не нарушает REST (URI остаётся идентификатором ресурса), но имеет **операционные проблемы**: нельзя тестировать через browser URL, плохой cache key (нужен `Vary: Accept-Version`), сложнее в логах (URL не отражает версию).
+>
+> Для **publi API** где клиенты — не только ваши собственные приложения, URI versioning доминирует именно по operational reasons.
+>
+> **Откуда путаница:** «чистый REST» — академический идеал. На практике pragmatism (Stripe, GitHub) побеждает purity.
+>
+> **Если бы это было правдой:** все public API использовали бы header versioning. Реально 90%+ public API — URI based (Stripe, Twilio, GitHub, AWS).
+>
+> ---
+>
+> #### C) Query parameter versioning — самый простой и подходит для production — ❌ Неверно
+>
+> **Что на самом деле:** query param `/api/users?version=2` имеет несколько серьёзных проблем:
+> - **CDN cache** часто игнорирует query params для cacheable resources.
+> - **URL pollution**: `/api/users?version=2&filter=active&page=10` — версия перемешана с business params.
+> - **REST semantics**: query params — обычно filters/options, а не идентификация ресурса.
+> - **Inconsistent**: некоторые endpoints без version param → unclear default.
+>
+> **Откуда путаница:** «просто добавить ?version=2» — кажется минимальный effort. На деле это quick hack, который сложно поддерживать в production.
+>
+> **Если бы это было правдой:** AWS/Google/Microsoft использовали бы query versioning. Реально все три — URI-based.
+>
+> ---
+>
+> #### D) Поддерживать неограниченное число версий — пользователи сами решат когда мигрировать — ❌ Неверно
+>
+> **Что на самом деле:** каждая активная версия = месяцы maintenance, тестов, security patches. 5+ versions = exponential cost. Без forced deprecation:
+> - Bug fix в v2 нужно portировать в v1, v0, v-old → N×работа.
+> - Security patch в shared library → проверить compatibility со всеми версиями.
+> - Database migration: нельзя удалить колонку, которая в v1 используется.
+>
+> Industry rule: **maximum 2 versions** в active maintenance, явный Sunset deadline для остальных.
+>
+> **Откуда путаница:** «не ломать клиентов» = «поддерживать всё». На практике клиенты тоже хотят миграции (новые features в новой версии), но нужен push.
+>
+> **Если бы это было правдой:** Stripe поддерживал бы все версии с 2010 года. Реально Stripe прекращает поддержку через 2-3 года с явным warning.
+
+## Q38. (!) Retry и Circuit Breaker на уровне API Gateway
 
 ### Retry на уровне Gateway
 
