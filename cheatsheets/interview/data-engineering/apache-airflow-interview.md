@@ -14,7 +14,7 @@ aliases:
   - "Airflow interview"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Apache Airflow`
 
@@ -656,27 +656,7 @@ Hooks — для custom Python tasks. Operators — для declarative workflows
 >
 > ---
 >
-> #### A) Hook и Operator — синонимы; можно использовать любой термин взаимозаменяемо — ❌ Неверно
->
-> **Что на самом деле:** это **два разных уровня абстракции**. Hook — низкоуровневый wrapper над external system (DB, API, S3), который инкапсулирует подключение и базовые операции. Operator — высокоуровневый task в DAG, который обычно использует Hook внутри для declarative описания шага pipeline.
->
-> **Откуда путаница:** в документации часто оба упоминаются вместе, и `PostgresOperator` действительно использует `PostgresHook` внутри. Но они не взаимозаменяемы в коде: Hook — это Python-объект, Operator — task в DAG.
->
-> **Если бы это было правдой:** мы могли бы использовать `PostgresHook(task_id='x')` напрямую в DAG. На практике это бросит exception, потому что Hook не наследует `BaseOperator`.
->
-> ---
->
-> #### B) Hook — это event-listener для airflow lifecycle (как Django signals) — ❌ Неверно
->
-> **Что на самом деле:** Hook в Airflow — это **connection wrapper**, не lifecycle callback. Для lifecycle событий используют `on_success_callback`, `on_failure_callback`, `on_retry_callback` в `default_args` или operators.
->
-> **Откуда путаница:** слово "hook" в других фреймворках (React, Git, WordPress) означает event-callback. В Airflow семантика другая — это database/API connection helper.
->
-> **Если бы это было правдой:** можно было бы написать `@hook(on_failure)` для глобального обработчика всех ошибок. На практике для этого используют `default_args = {'on_failure_callback': ...}` или Sentry integration.
->
-> ---
->
-> #### C) Hook = low-level wrapper над external system (DB/API/S3) с инкапсулированным connection; Operator = high-level task в DAG, который обычно использует Hook внутри; Hook для custom Python tasks (PythonOperator), Operator для declarative workflows — ✓ Верно
+> #### A) Hook = low-level wrapper над external system (DB/API/S3) с инкапсулированным connection; Operator = high-level task в DAG, который обычно использует Hook внутри; Hook для custom Python tasks (PythonOperator), Operator для declarative workflows — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -725,6 +705,26 @@ Hooks — для custom Python tasks. Operators — для declarative workflows
 > - **Custom Hooks**: для legacy систем без provider package можно унаследоваться от `BaseHook` и реализовать `get_conn()`.
 >
 > **Связанные вопросы:** [[Q6]] — что такое Operator; [[Q20]] — Connections и Variables; [[Q22]] — Sensor как специальный тип Operator.
+>
+> ---
+>
+> #### B) Hook — это event-listener для airflow lifecycle (как Django signals) — ❌ Неверно
+>
+> **Что на самом деле:** Hook в Airflow — это **connection wrapper**, не lifecycle callback. Для lifecycle событий используют `on_success_callback`, `on_failure_callback`, `on_retry_callback` в `default_args` или operators.
+>
+> **Откуда путаница:** слово "hook" в других фреймворках (React, Git, WordPress) означает event-callback. В Airflow семантика другая — это database/API connection helper.
+>
+> **Если бы это было правдой:** можно было бы написать `@hook(on_failure)` для глобального обработчика всех ошибок. На практике для этого используют `default_args = {'on_failure_callback': ...}` или Sentry integration.
+>
+> ---
+>
+> #### C) Hook и Operator — синонимы; можно использовать любой термин взаимозаменяемо — ❌ Неверно
+>
+> **Что на самом деле:** это **два разных уровня абстракции**. Hook — низкоуровневый wrapper над external system (DB, API, S3), который инкапсулирует подключение и базовые операции. Operator — высокоуровневый task в DAG, который обычно использует Hook внутри для declarative описания шага pipeline.
+>
+> **Откуда путаница:** в документации часто оба упоминаются вместе, и `PostgresOperator` действительно использует `PostgresHook` внутри. Но они не взаимозаменяемы в коде: Hook — это Python-объект, Operator — task в DAG.
+>
+> **Если бы это было правдой:** мы могли бы использовать `PostgresHook(task_id='x')` напрямую в DAG. На практике это бросит exception, потому что Hook не наследует `BaseOperator`.
 >
 > ---
 >
@@ -1004,17 +1004,7 @@ helm install airflow apache-airflow/airflow
 >
 > ---
 >
-> #### B) Production Airflow обязательно требует Astronomer SaaS — самостоятельный deploy невозможен — ❌ Неверно
->
-> **Что на самом деле:** Astronomer — самый популярный **managed** Airflow, но не единственный путь. Self-hosted на Kubernetes через [official Helm chart](https://airflow.apache.org/docs/helm-chart/stable/) — полноценный production-grade вариант, используемый многими компаниями (Avito, Tinkoff). Также есть MWAA (AWS) и Cloud Composer (GCP) как managed альтернативы.
->
-> **Откуда путаница:** Astronomer активно маркетирует свой продукт. На деле выбор между self-hosted и managed — про operational overhead, не про техническую возможность.
->
-> **Если бы это было правдой:** каждая компания была бы вынуждена платить Astronomer. На практике большинство enterprise (банки, telco) запускают Airflow в своём K8s через Helm.
->
-> ---
->
-> #### C) Production deploy: managed (Astronomer / MWAA / Cloud Composer) или self-hosted на Kubernetes через official Helm chart; рекомендуемая архитектура — KubernetesExecutor + PostgreSQL для metadata + S3/GCS для логов + Secrets Backend (Vault/AWS SM) + Sentry/DataDog для мониторинга — ✓ Верно
+> #### B) Production deploy: managed (Astronomer / MWAA / Cloud Composer) или self-hosted на Kubernetes через official Helm chart; рекомендуемая архитектура — KubernetesExecutor + PostgreSQL для metadata + S3/GCS для логов + Secrets Backend (Vault/AWS SM) + Sentry/DataDog для мониторинга — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -1100,6 +1090,16 @@ helm install airflow apache-airflow/airflow
 > - **Helm chart vs custom**: official Helm — хорош для start, но крупные команды часто пишут свой operator (`airflow-on-k8s-operator`) для GitOps workflow.
 >
 > **Связанные вопросы:** [[Q15]] — выбор executor (Kubernetes для prod); [[Q23]] — reschedule mode для sensors в prod; [[Q25]] — scaling DAG count.
+>
+> ---
+>
+> #### C) Production Airflow обязательно требует Astronomer SaaS — самостоятельный deploy невозможен — ❌ Неверно
+>
+> **Что на самом деле:** Astronomer — самый популярный **managed** Airflow, но не единственный путь. Self-hosted на Kubernetes через [official Helm chart](https://airflow.apache.org/docs/helm-chart/stable/) — полноценный production-grade вариант, используемый многими компаниями (Avito, Tinkoff). Также есть MWAA (AWS) и Cloud Composer (GCP) как managed альтернативы.
+>
+> **Откуда путаница:** Astronomer активно маркетирует свой продукт. На деле выбор между self-hosted и managed — про operational overhead, не про техническую возможность.
+>
+> **Если бы это было правдой:** каждая компания была бы вынуждена платить Astronomer. На практике большинство enterprise (банки, telco) запускают Airflow в своём K8s через Helm.
 >
 > ---
 >
@@ -1270,7 +1270,17 @@ helm install airflow apache-airflow/airflow
 >
 > ---
 >
-> #### C) Production DAGs должны быть **идемпотентны** (безопасный re-run) и **атомарны** (task = одна операция); не импортировать тяжёлые libs на топ-level (медленный parsing); использовать Variables/Connections (не hardcode); Pools для shared resources; настраивать retries и SLA; писать pytest на DAG; деплоить через CI/CD из git — ✓ Верно
+> #### C) DAG никогда не нужно тестировать — Airflow сам проверяет валидность — ❌ Неверно
+>
+> **Что на самом деле:** Airflow проверяет **syntax** при парсинге, но не **бизнес-логику**, не зависимости, не корректность параметров. DAG может пройти парсинг и провалиться в runtime (неверный SQL, отсутствующий column). Production DAGs обязательно покрывают тестами: `pytest` для проверки структуры DAG (количество tasks, dependencies), unit-тесты для Python функций используемых в `@task`, integration-тесты с реальной БД через testcontainers.
+>
+> **Откуда путаница:** Airflow CLI `airflow dags test` проверяет, что DAG парсится — это уже считается "тестированием" наивно. На практике этого мало.
+>
+> **Если бы это было правдой:** ETL pipelines падали бы только в production. На практике крупные команды (Detmir, Yandex) имеют 30-50% test coverage на DAG-код и helper-функции.
+>
+> ---
+>
+> #### D) Production DAGs должны быть **идемпотентны** (безопасный re-run) и **атомарны** (task = одна операция); не импортировать тяжёлые libs на топ-level (медленный parsing); использовать Variables/Connections (не hardcode); Pools для shared resources; настраивать retries и SLA; писать pytest на DAG; деплоить через CI/CD из git — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -1350,16 +1360,6 @@ helm install airflow apache-airflow/airflow
 > - **SLA не работает для очень коротких DAG** — `sla` checks делается по интервалам scheduler, малозаметно для DAG < 5 минут.
 >
 > **Связанные вопросы:** [[Q13]] — backfill требует idempotency; [[Q20]] — Connections и Variables для конфигурации; [[Q24]] — deploy DAG через git-sync; [[Q25]] — scaling tradeoffs.
->
-> ---
->
-> #### D) DAG никогда не нужно тестировать — Airflow сам проверяет валидность — ❌ Неверно
->
-> **Что на самом деле:** Airflow проверяет **syntax** при парсинге, но не **бизнес-логику**, не зависимости, не корректность параметров. DAG может пройти парсинг и провалиться в runtime (неверный SQL, отсутствующий column). Production DAGs обязательно покрывают тестами: `pytest` для проверки структуры DAG (количество tasks, dependencies), unit-тесты для Python функций используемых в `@task`, integration-тесты с реальной БД через testcontainers.
->
-> **Откуда путаница:** Airflow CLI `airflow dags test` проверяет, что DAG парсится — это уже считается "тестированием" наивно. На практике этого мало.
->
-> **Если бы это было правдой:** ETL pipelines падали бы только в production. На практике крупные команды (Detmir, Yandex) имеют 30-50% test coverage на DAG-код и helper-функции.
 
 ## Q27. (!) Airflow vs Prefect vs Dagster?
 
@@ -1379,10 +1379,123 @@ helm install airflow apache-airflow/airflow
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Какие минусы Airflow? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая ключевая концептуальная разница между Airflow, Prefect и Dagster, определяющая выбор инструмента?
+>
+> ---
+>
+> #### A) Airflow и Prefect — это одно и то же; разница только в названии — ❌ Неверно
+>
+> **Что на самом деле:** это разные продукты с разной философией. Airflow (2014, Apache) — DAG-first, statically defined в Python. Prefect (2018) — task/flow-first, dynamic execution, modern Python API без top-level DAG объекта. Dagster (2018) — **asset-first** (data-aware), думает о produced data, а не о tasks; вводит `Software-Defined Asset` концепцию.
+>
+> **Откуда путаница:** все три — Python orchestrators для data pipelines. На поверхности задачи похожи, но архитектурно сильно отличаются.
+>
+> **Если бы это было правдой:** Prefect и Dagster не существовали бы как отдельные проекты с >10k stars. На практике они активно конкурируют с Airflow.
+>
+> ---
+>
+> #### B) Только Dagster подходит для production, остальные — toys — ❌ Неверно
+>
+> **Что на самом деле:** Airflow — **доминирующий** production orchestrator (Airbnb, Lyft, Twitter, тысячи enterprise). Prefect и Dagster — современные альтернативы с лучшим dev experience, но Airflow доминирует в enterprise по количеству установок. Все три production-ready.
+>
+> **Откуда путаница:** Dagster маркетинг активно подчёркивает "asset-first" преимущества. Это валидный подход, но не делает Airflow toy.
+>
+> **Если бы это было правдой:** Apache top-level project Airflow не был бы стандартом de facto. На практике большинство Data Engineer вакансий требует Airflow.
+>
+> ---
+>
+> #### C) Ключевая разница в **модели описания workflow**: Airflow = DAG-first (статический Python DAG, операторы, дата-агностичный); Prefect = flow/task-first (динамический Python API, async-friendly, модерн UX); Dagster = asset-first (думает о data artifacts, типизация данных, software-defined assets); выбор: Airflow для legacy/enterprise/community, Prefect для Python-heavy modern teams, Dagster для analytics с фокусом на data lineage — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Все три решают одну задачу — orchestration data pipelines — но по-разному отвечают на вопрос «что является primitive абстракцией».
+>
+> **Airflow** — DAG это центр вселенной. Ты описываешь tasks и зависимости, scheduler запускает DAG по cron. Tasks не знают друг о друге кроме XCom; данные между ними передаются externally (S3, DB). Airflow data-agnostic — он не знает что такое «таблица users», он знает что task X запускается после task Y.
+>
+> **Prefect** — flow/task через декораторы, как обычный Python код. Нет глобального DAG объекта — flow выполняется как функция, ветвление через if/else работает динамически runtime. Prefect 2.0+ ввёл concept "subflows", "deployments", "blocks" (re-usable конфигурация). Async-first из коробки.
+>
+> **Dagster** — концепция Asset (data artifact: таблица, файл, ML-model). Ты описываешь не tasks, а **что они produce**. Asset имеет dependencies на upstream assets, type system проверяет совместимость. Dagster знает «table orders зависит от table raw_orders», что даёт data lineage из коробки.
+>
+> **Пример:**
+> ```python
+> # Airflow — DAG-first
+> from airflow.decorators import dag, task
+>
+> @dag(schedule='@daily', start_date=datetime(2025, 1, 1))
+> def orders_pipeline():
+>     @task
+>     def extract(): return fetch_orders()
+>     @task
+>     def transform(data): return clean(data)
+>     @task
+>     def load(data): write_to_warehouse(data)
+>
+>     load(transform(extract()))
+> orders_pipeline()
+>
+>
+> # Prefect — flow-first
+> from prefect import flow, task
+>
+> @task
+> def extract(): return fetch_orders()
+> @task
+> def transform(data): return clean(data)
+> @task
+> def load(data): write_to_warehouse(data)
+>
+> @flow(name="orders-pipeline")
+> def orders_pipeline():
+>     load(transform(extract()))   # обычный Python — никакого `>>`
+>
+> if __name__ == "__main__":
+>     orders_pipeline.serve(cron="0 2 * * *")
+>
+>
+> # Dagster — asset-first
+> from dagster import asset, Definitions
+>
+> @asset
+> def raw_orders():
+>     return fetch_orders()
+>
+> @asset
+> def cleaned_orders(raw_orders):       # dependency через аргумент
+>     return clean(raw_orders)
+>
+> @asset
+> def warehouse_orders(cleaned_orders):
+>     write_to_warehouse(cleaned_orders)
+>     return "warehouse://orders"
+>
+> defs = Definitions(assets=[raw_orders, cleaned_orders, warehouse_orders])
+> ```
+>
+> **Когда применять:**
+> - **Airflow** — Tinkoff/Detmir/Сбер enterprise с established stack, многолетние pipelines, hiring data engineers (рынок Airflow > Prefect+Dagster). Лучший выбор для legacy migration.
+> - **Prefect** — стартапы и ML teams, где важен dev experience: быстрый local dev, modern Python (Pydantic, async). Yandex.Cloud projects, где Python-heavy stack.
+> - **Dagster** — analytics teams с фокусом на data quality / lineage; интеграция с dbt из коробки; data mesh архитектуры. Хорош для warehouse-centric (Snowflake/BigQuery).
+> - **Argo Workflows** — pure K8s teams, generic workflow (не data-specific).
+>
+> **Подводные камни:**
+> - **Hiring пул**: Airflow специалистов в 10× больше, чем Prefect/Dagster.
+> - **Vendor lock-in**: Prefect Cloud и Dagster Cloud — managed offerings; миграция со self-hosted на cloud и обратно требует усилий.
+> - **Community / providers**: Airflow имеет ~80 official providers (Snowflake, BigQuery, AWS, etc), у Prefect/Dagster — меньше готовых интеграций.
+> - **Stability vs novelty**: Airflow стабилен и зрел, но имеет накопленный legacy (XCom limits, scheduler quirks). Prefect/Dagster — современная архитектура, но меньше battle-tested patterns.
+>
+> **Связанные вопросы:** [[Q1]] — Airflow позиционирование как orchestrator; [[Q28]] — минусы Airflow которые компенсируют Prefect/Dagster; [[Q8]] — TaskFlow API как ответ Airflow на современные API.
+>
+> ---
+>
+> #### D) Все три — это просто JSON DSL-конфигурации, без Python кода — ❌ Неверно
+>
+> **Что на самом деле:** **все три** написаны на Python и используют Python как primary DSL. Workflow описывается Python-кодом, не JSON/YAML. Yaml-only конфигурации существуют (Argo Workflows, Tekton), но эти инструменты — другая категория (generic K8s workflow), не data orchestrators.
+>
+> **Откуда путаница:** в managed offerings (MWAA, Astronomer) есть YAML-конфиги для deployment. Но workflow definition — всегда Python.
+>
+> **Если бы это было правдой:** Data engineers могли бы не знать Python — достаточно YAML. На практике все три требуют свободного владения Python.
+
+## Q28. Какие минусы Airflow?
 
 1. **Slow local development** — поднять Airflow для теста медленно
 2. **Тяжёлая для маленьких задач** — нужна metadata DB, scheduler, executor, web UI
@@ -1396,16 +1509,115 @@ helm install airflow apache-airflow/airflow
 
 В **2024** многие выбирают **Prefect или Dagster** для новых проектов из-за лучшего dev experience. Airflow остаётся стандартом enterprise.
 
+
+> [!mcq]
+>
+> **Вопрос:** Какие минусы Airflow в 2025 являются наиболее болезненными для production команд, и какие из них действительно фундаментальны (а не «исторические»)?
+>
+> ---
+>
+> #### A) Airflow в 2025 не имеет минусов — все исторические проблемы исправлены в 2.x — ❌ Неверно
+>
+> **Что на самом деле:** Airflow 2.x действительно сильно улучшил dev experience (TaskFlow API, HA scheduler, deferrable sensors), но **фундаментальные ограничения** остались. XCom через metadata DB всё ещё неподходит для больших payloads. Scheduler-driven model плохо подходит для event-driven workflows. Local dev требует Docker + Postgres + scheduler даже для проверки одного task.
+>
+> **Откуда путаница:** официальный roadmap активно решает старые проблемы, и кажется что "всё хорошо". На деле некоторые ограничения встроены в архитектуру.
+>
+> **Если бы это было правдой:** Prefect/Dagster не имели бы рынка. На практике эти продукты растут именно за счёт фундаментальных Airflow weaknesses.
+>
+> ---
+>
+> #### B) Основные минусы Airflow: (1) slow local dev — нужен Docker+Postgres+scheduler для теста; (2) тяжеловесность для маленьких задач; (3) tight coupling tasks ↔ Airflow API мешает unit-тестировать; (4) XCom через metadata DB — не для больших данных; (5) DAG parsing overhead на сотнях DAG; (6) `poke` mode sensors съедает workers; (7) не для streaming; (8) исторический баггаж execution_date vs logical_date; (9) сложности major upgrade; фундаментальные — coupling и scheduler-driven model, остальные постепенно решаются — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Минусы Airflow делятся на три категории по «исправимости»:
+>
+> **Фундаментальные (архитектурные)**:
+> - **Tight coupling tasks ↔ Airflow API** — task функция использует `context`, `xcom_pull`, `Variable.get` — без mocks её нельзя запустить вне Airflow. Prefect/Dagster решают это через cleaner abstractions.
+> - **Scheduler-driven model** — Airflow думает в терминах cron, а не events. Event-driven workflows требуют либо TriggerDagRunOperator, либо external scheduler (Argo).
+> - **DAG-первичность vs Asset-первичность** — Airflow не знает что такое "table users", он знает только task names. Data lineage сложно получить без external tools (DataHub, Marquez).
+>
+> **Сильно улучшенные в 2.x**:
+> - **HA Scheduler** — с 2.0 несколько scheduler replicas active-active.
+> - **TaskFlow API** — меньше boilerplate, автоматический XCom.
+> - **Deferrable sensors** — sensors не занимают worker slot (с 2.2).
+> - **Dynamic Task Mapping** — `.expand()` для runtime количества tasks (с 2.3).
+>
+> **Operational (тюнятся)**:
+> - **DAG parsing overhead** — настраивается через `parsing_processes`, `min_file_process_interval`.
+> - **`poke` mode sensors** — решается переходом на `reschedule` или `deferrable`.
+> - **Local dev** — Astronomer CLI (`astro dev start`) делает локальный setup быстрым.
+>
+> **Пример:**
+> ```python
+> # Tight coupling — этот task сложно unit-тестировать
+> from airflow.decorators import task
+> from airflow.models import Variable
+>
+> @task
+> def process_orders(**context):
+>     date = context['logical_date'].strftime('%Y-%m-%d')
+>     api_key = Variable.get('orders_api_key')
+>     # Без Airflow runtime context и Variable нельзя вызвать функцию
+>     return fetch_orders(api_key, date)
+>
+>
+> # ЛУЧШЕ — отделить бизнес-логику от Airflow
+> def fetch_orders_pure(api_key: str, date: str) -> list:
+>     """Pure function — легко unit-тестируется"""
+>     return requests.get(f"https://api/orders?date={date}", headers={"X-Key": api_key}).json()
+>
+> @task
+> def process_orders_task(date: str, **context):
+>     api_key = Variable.get('orders_api_key')
+>     return fetch_orders_pure(api_key, date)
+>
+> # Тест:
+> def test_fetch_orders_pure(httpx_mock):
+>     httpx_mock.add_response(json=[{"id": 1}])
+>     result = fetch_orders_pure("test_key", "2025-01-01")
+>     assert result == [{"id": 1}]
+> ```
+>
+> **Когда применять (когда минусы становятся deal-breaker):**
+> - **Streaming/event-driven**: Airflow — wrong tool. Kafka Streams, Flink или Prefect events лучше.
+> - **ML pipelines с большой передачей данных**: XCom limit заметен, лучше Kubeflow или Metaflow.
+> - **Modern dev experience критичен**: small startup без legacy → Prefect/Dagster.
+> - **Data lineage as first-class concern**: Dagster выигрывает.
+>
+> **Подводные камни (mitigations):**
+> - **Major version upgrades (1.x → 2.x)** — могут сломать DAG-файлы. Mitigation: тщательное чтение release notes, staging тестирование.
+> - **Provider package version drift** — `apache-airflow-providers-*` имеют свои циклы релизов, могут конфликтовать с Airflow core. Mitigation: constraint files.
+> - **Backward incompatibility внутри 2.x**: например `schedule_interval` → `schedule`, deprecated providers. Mitigation: следить за DeprecationWarning в логах.
+> - **Lock-in на cron-style scheduling**: event-driven через `TriggerDagRunOperator` работает, но громоздко.
+>
+> **Связанные вопросы:** [[Q19]] — XCom limits подробнее; [[Q23]] — reschedule/deferrable как mitigation для poke; [[Q25]] — scaling и DAG parsing overhead; [[Q27]] — Prefect/Dagster как альтернативы решающие конкретные минусы.
+>
+> ---
+>
+> #### C) Главный минус — Airflow медленнее Spark на 10×, поэтому не подходит для больших данных — ❌ Неверно
+>
+> **Что на самом деле:** **Airflow не обрабатывает данные сам** — он orchestrator. Сравнивать его со Spark бессмысленно: Airflow запускает Spark job, не заменяет его. Performance Airflow измеряется в task throughput (десятки-сотни tasks/min на scheduler), а не в data throughput.
+>
+> **Откуда путаница:** новички иногда думают что Airflow — это compute engine. На самом деле compute делается в external system (Spark, BigQuery, Python в PythonOperator), Airflow только координирует.
+>
+> **Если бы это было правдой:** для больших данных был бы запрет на Airflow. На практике Airflow — стандартный способ оркестрировать Spark/BigQuery jobs терабайт-петабайт масштаба.
+>
+> ---
+>
+> #### D) Airflow не имеет недостатков — это идеальный инструмент для любых задач — ❌ Неверно
+>
+> **Что на самом деле:** ни один инструмент не идеален. Airflow — отличный orchestrator для batch ETL, но не для streaming (используй Kafka Streams/Flink), не для интерактивных queries (Jupyter/dbt), не для low-latency event processing (Kafka + microservices). Знание trade-offs — основа staff/principal-level data engineering.
+>
+> **Откуда путаница:** при долгой работе с Airflow привыкаешь и перестаёшь видеть ограничения. Это называется "Maslow's hammer" — когда есть молоток, всё кажется гвоздём.
+>
+> **Если бы это было правдой:** не было бы Prefect, Dagster, Argo, Kubeflow, Metaflow, Flyte. Существование этих продуктов доказывает, что Airflow не покрывает все use cases.
+
 ---
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Apache Spark](apache-spark-interview.md) — Airflow часто оркестрирует Spark jobs ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [Apache Spark](apache-spark-interview.md) — Airflow часто оркестрирует Spark jobs
 - [Apache Flink](apache-flink-interview.md) — vs Airflow (streaming vs batch)
 - [Kafka Streams](kafka-streams-interview.md) — другой стиль (event-driven)
 - [dbt](dbt-interview.md) — часто оркестрируется через Airflow
