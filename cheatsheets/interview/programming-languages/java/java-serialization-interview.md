@@ -14,7 +14,7 @@ aliases:
   - "сериализация Java"
 prerequisites: []
 next: []
-updated: "2026-05-08"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Java Serialization`
 
@@ -2616,10 +2616,114 @@ public HttpMessageConverter<MyFormat> myConverter() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. (!) Jackson vs Gson — углублённое сравнение для Spring-проектов ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как Spring обрабатывает сериализацию через `HttpMessageConverter`, и как настроить content negotiation?
+>
+> ---
+>
+> #### A) `HttpMessageConverter` — это deprecated API из Spring 4.x, в Spring Boot 3+ используется `WebClient` для сериализации — ❌ Неверно
+>
+> **Что на самом деле:** `HttpMessageConverter` — основной и активно поддерживаемый механизм Spring MVC и Spring WebFlux. Жив в Spring Boot 3.4, Spring 6.x. `WebClient` — это HTTP client (replacement для `RestTemplate`), он сам внутри использует `HttpMessageConverter`-аналоги (`Encoder`/`Decoder` в reactive стеке) для сериализации.
+>
+> **Откуда путаница:** Spring 5+ принёс reactive стек с другими именами (`HttpMessageReader`/`Writer`, `Encoder`/`Decoder`). Junior может ассоциировать «новое» с «обязательной заменой».
+>
+> **Если бы это было правдой:** Spring документация удалила бы примеры с custom `HttpMessageConverter`. Реально они есть в актуальных guides.
+>
+> ---
+>
+> #### B) Spring выбирает конвертер только по типу возвращаемого Java-объекта — `Accept` заголовок игнорируется — ❌ Неверно
+>
+> **Что на самом деле:** Spring использует **content negotiation** — выбирает конвертер по комбинации (1) `Accept` заголовка клиента, (2) `produces` атрибута `@RequestMapping`, (3) типа Java-объекта. Алгоритм: client request имеет `Accept: application/xml, application/json;q=0.9` → Spring проверяет какие конвертеры поддерживают эти media-types для возвращаемого типа → выбирает лучший match.
+>
+> **Откуда путаница:** в простых API всегда возвращают JSON, и кажется что Accept не учитывается. Реально учитывается, просто почти всегда выбирается JSON converter.
+>
+> **Если бы это было правдой:** content negotiation не работал бы — нельзя было бы делать `produces = {JSON, XML, PROTOBUF}` endpoint. Реально это типичный pattern.
+>
+> ---
+>
+> #### C) `HttpMessageConverter<T>` имеет `canRead`/`canWrite` (поддержка типа + media), `read`/`write` (преобразование); Spring Boot регистрирует конвертеры автоматически (`MappingJackson2HttpMessageConverter` для JSON, `MappingJackson2XmlHttpMessageConverter`, `ProtobufHttpMessageConverter`, etc.); content negotiation выбирает конвертер по `Accept` header + `produces` attribute + type; customize через `WebMvcConfigurer.configureMessageConverters` или `Jackson2ObjectMapperBuilderCustomizer` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `HttpMessageConverter<T>` — Spring abstraction для bidirectional conversion между Java объектом и HTTP body. Интерфейс имеет четыре основных метода: `canRead(class, mediaType)` — может ли decode тип из этого media-type; `canWrite(class, mediaType)` — может ли encode; `read(class, inputMessage)` — выполнить decode; `write(t, mediaType, outputMessage)` — выполнить encode.
+>
+> Spring Boot auto-configuration (`HttpMessageConvertersAutoConfiguration`) регистрирует набор конвертеров по умолчанию на основе classpath: Jackson на classpath → `MappingJackson2HttpMessageConverter`; Jackson XML → `MappingJackson2XmlHttpMessageConverter`; Protobuf → `ProtobufHttpMessageConverter`; всегда — `StringHttpMessageConverter`, `ByteArrayHttpMessageConverter`, `FormHttpMessageConverter`.
+>
+> Content negotiation работает через `RequestResponseBodyMethodProcessor` → `AbstractMessageConverterMethodProcessor.writeWithMessageConverters`. Алгоритм: получить acceptable media types (Accept header + `produces` attribute) → для каждого, найти конвертер с `canWrite(returnType, mediaType)` → выбрать лучший match по priority/quality.
+>
+> Кастомизация: для tweaking уже зарегистрированных Jackson — `Jackson2ObjectMapperBuilderCustomizer`. Для добавления нового конвертера — `WebMvcConfigurer.configureMessageConverters` (override) или `extendMessageConverters` (append).
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class JsonConfig {
+>
+>     // Tweaking standard Jackson behavior
+>     @Bean
+>     public Jackson2ObjectMapperBuilderCustomizer customizer() {
+>         return builder -> builder
+>             .featuresToDisable(
+>                 SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,
+>                 DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
+>             )
+>             .modules(new JavaTimeModule())  // для LocalDateTime/Instant
+>             .serializationInclusion(JsonInclude.Include.NON_NULL);
+>     }
+> }
+>
+> // Custom converter для proprietary format
+> @Configuration
+> public class CustomConverterConfig implements WebMvcConfigurer {
+>     @Override
+>     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+>         converters.add(0, new MyProprietaryConverter());  // priority high
+>     }
+> }
+>
+> // Content negotiation
+> @RestController
+> public class OrderController {
+>     @GetMapping(value = "/orders/{id}", produces = {
+>         MediaType.APPLICATION_JSON_VALUE,
+>         MediaType.APPLICATION_XML_VALUE,
+>         "application/x-protobuf"
+>     })
+>     public OrderDto getOrder(@PathVariable Long id) {
+>         return orderService.findById(id);
+>         // Accept: application/xml → MappingJackson2XmlHttpMessageConverter
+>         // Accept: application/x-protobuf → ProtobufHttpMessageConverter
+>         // Accept: */* → MappingJackson2HttpMessageConverter (default)
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Multi-format public API** — REST с поддержкой JSON + XML для legacy клиентов; настроить через `produces`.
+> - **Кастомные форматы** (CSV exports, vendor-specific binary): реализовать `AbstractHttpMessageConverter<T>`.
+> - **Tweaking Jackson defaults** для всего приложения: `Jackson2ObjectMapperBuilderCustomizer` вместо `@JsonSerialize` per class.
+> - **gRPC-альтернатива через REST**: ProtobufHttpMessageConverter позволяет REST endpoints возвращать Protobuf — гибрид JSON + Protobuf клиентам.
+>
+> **Подводные камни:**
+> - **Order of converters matters**: первый найденный `canWrite=true` побеждает. Кастомные converters лучше регистрировать в начало списка.
+> - **`extendMessageConverters` vs `configureMessageConverters`**: первый дополняет defaults, второй полностью заменяет (легко сломать Boot defaults).
+> - **`Accept: */*` поведение**: Spring выбирает первый converter из default order — обычно JSON. Это может не совпадать с client expectations.
+> - **Strict content negotiation**: `spring.mvc.contentnegotiation.strategy=request-parameter` — query param `?format=xml` для override.
+> - **HATEOAS / RFC 7807 (problem details)**: Spring 6 добавил автоматический `application/problem+json` через `ProblemDetailHttpMessageConverter`.
+> - **WebFlux другой**: использует `HttpMessageReader/Writer`, не `HttpMessageConverter`. Конфигурация через `WebFluxConfigurer.configureHttpMessageCodecs`.
+>
+> **Связанные вопросы:** [[Q21]] — Jackson `ObjectMapper`; [[Q22]] — Jackson vs Gson; [[Q26]] — Protobuf для альтернативного content negotiation.
+>
+> ---
+>
+> #### D) `HttpMessageConverter` работает только с JSON и XML — для Protobuf нужен отдельный механизм `GrpcInterceptor` — ❌ Неверно
+>
+> **Что на самом деле:** Spring предоставляет `ProtobufHttpMessageConverter` (модуль `spring-web` с `protobuf-java` на classpath) — Protobuf через стандартный HTTP с `Content-Type: application/x-protobuf` или `application/x-protobuf;delimited=true`. `GrpcInterceptor` — это другая technology (gRPC, HTTP/2 native, не REST), не часть Spring MVC.
+>
+> **Откуда путаница:** Protobuf ассоциируется с gRPC. Реально Protobuf — формат сериализации, gRPC — RPC framework over HTTP/2 с Protobuf default. Можно использовать Protobuf без gRPC.
+>
+> **Если бы это было правдой:** Spring документация не упоминала бы `ProtobufHttpMessageConverter`. Реально это officially supported для REST-style Protobuf APIs.
+
+## Q38. (!) Jackson vs Gson — углублённое сравнение для Spring-проектов
 
 Базовое сравнение уже в Q22. Здесь — детали, критичные для production Spring-проектов:
 
@@ -2676,10 +2780,109 @@ Gson gson = new GsonBuilder()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. FST — быстрый аналог Java Serialization ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какие production-критичные отличия между Jackson и Gson для Spring Boot проектов?
+>
+> ---
+>
+> #### A) Jackson и Gson идентичны для всех задач — выбор зависит только от личных предпочтений — ❌ Неверно
+>
+> **Что на самом деле:** существуют конкретные production-relevant отличия: (1) поддержка `record` (Jackson с 2.12 — полная, Gson до 2.10 — отсутствовала, 2.10+ — базовая); (2) streaming API (Jackson `JsonParser`/`JsonGenerator` — мощный, Gson — слабее); (3) Spring Boot integration (Jackson — built-in, Gson — нужны зависимости); (4) экосистема модулей (Jackson — десятки `jackson-datatype-*`, Gson — мало); (5) производительность (Jackson быстрее по большинству benchmark'ов).
+>
+> **Откуда путаница:** в простых case'ах (POJO ↔ JSON) обе работают одинаково. Junior не доходит до edge cases.
+>
+> **Если бы это было правдой:** Spring Boot не выбрал бы Jackson defaultом. Реально это сознательное решение Spring team из-за качественных отличий.
+>
+> ---
+>
+> #### B) Gson быстрее Jackson в 10× — Google оптимизировала его для high-performance — ❌ Неверно
+>
+> **Что на самом деле:** Jackson **быстрее** Gson на большинстве benchmark'ов (jvm-serializers, github.com/fabienrenaud/java-json-benchmark). Jackson использует streaming API, более агрессивное кэширование, оптимизированный binary encoding (CBOR, MessagePack модули). Gson — простее в API, но медленнее.
+>
+> **Откуда путаница:** «Google → must be fast» — heuristic. Реально Gson проектировался для простоты, не raw speed.
+>
+> **Если бы это было правдой:** Android команды массово мигрировали бы на Gson из-за CPU/battery. Реально многие переходят на Moshi (Square) или kotlinx.serialization для Android.
+>
+> ---
+>
+> #### C) Gson лучше работает с Java `record` чем Jackson — Google добавил полную поддержку первыми — ❌ Неверно
+>
+> **Что на самом деле:** Jackson 2.12 (декабрь 2020) добавил **полную** поддержку record: сериализация через accessor methods, десериализация через canonical constructor. Gson до 2.10 (2023) — не работал с record correctly (использовал field reflection, что нарушало record encapsulation). Gson 2.10+ — базовая поддержка, но Jackson всё ещё лидер по integration depth.
+>
+> **Откуда путаница:** chronological ассоциация «Google библиотека = быстрее всех получает новый Java».
+>
+> **Если бы это было правдой:** документация Gson продвигала бы это как key feature. Реально Gson team медленнее реагирует на новые Java features.
+>
+> ---
+>
+> #### D) Spring Boot — Jackson built-in (`spring-boot-starter-web`), Gson требует исключения Jackson и добавления зависимости; record поддержка — Jackson 2.12+ полная, Gson 2.10+ базовая; streaming API — Jackson `JsonParser`/`JsonGenerator` низкоуровневый и быстрый, Gson слабее; экосистема Jackson — десятки модулей (`jsr310`, `jdk8`, `kotlin`, `protobuf`, `csv`, `yaml`); null handling — Jackson `@JsonInclude` гибкий, Gson только глобально через builder. Performance — Jackson 1.5-3× быстрее по большинству benchmark'ов; Android — Gson предпочтительнее из-за меньшего размера (~250KB vs ~1.7MB) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Выбор Jackson vs Gson — практически решённый вопрос для backend Spring проектов в пользу Jackson, но детали важны для performance tuning и edge cases. Jackson — экосистема, не библиотека: `jackson-core` (streaming API), `jackson-annotations`, `jackson-databind` (POJO mapping), плюс десятки `jackson-datatype-*` модулей для специальных типов.
+>
+> Streaming API critical для high-throughput: `JsonParser` обходит JSON документ как event stream (START_OBJECT, FIELD_NAME, VALUE_NUMBER_INT, END_OBJECT) — не создаёт intermediate `JsonNode` дерево. Это позволяет обрабатывать гигабайтные JSON-файлы с минимальным heap. Spring Boot Actuator endpoints используют streaming для больших metrics dumps.
+>
+> Record support: Jackson 2.12+ автоматически работает с record через canonical constructor — параметры маппятся по именам компонентов. С `-parameters` flag в javac или с явными `@JsonProperty` на компонентах. Gson до 2.10 пытался писать в `final` поля через рефлексию — иногда работало, иногда нет (модули JDK с strong encapsulation блокировали).
+>
+> Null handling: Jackson имеет ortogonal axes — `@JsonInclude(NON_NULL/NON_EMPTY/NON_DEFAULT/NON_ABSENT)` per-field, per-class или globally. Gson — глобально через `GsonBuilder.serializeNulls()` или per-field через custom `TypeAdapter`. Для контроля на разных endpoints — Jackson проще.
+>
+> **Пример:**
+> ```java
+> // Jackson — record + null handling + JavaTime
+> public record OrderDto(
+>     @JsonProperty("order_id") UUID orderId,
+>     BigDecimal total,
+>     @JsonInclude(NON_NULL) String note,         // null skip per field
+>     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+>     Instant createdAt
+> ) {}
+>
+> // Spring Boot конфиг (минимальный — Jackson уже включен)
+> @Bean
+> public Jackson2ObjectMapperBuilderCustomizer customizer() {
+>     return builder -> builder
+>         .modules(new JavaTimeModule())
+>         .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+>         .serializationInclusion(JsonInclude.Include.NON_NULL);
+> }
+>
+> // High-performance streaming
+> try (JsonParser parser = mapper.getFactory().createParser(largeJsonFile)) {
+>     while (parser.nextToken() != null) {
+>         if ("userId".equals(parser.getCurrentName())) {
+>             parser.nextToken();
+>             processUserId(parser.getValueAsLong());
+>         }
+>     }
+> }
+> // Gson не имеет аналогичного low-level streaming
+>
+> // Gson — простое use, но в Spring Boot нужно исключить Jackson
+> // build.gradle:
+> // implementation('org.springframework.boot:spring-boot-starter-web') {
+> //     exclude group: 'com.fasterxml.jackson.core'
+> // }
+> // implementation 'com.google.code.gson:gson:2.10.1'
+> ```
+>
+> **Когда применять:**
+> - **Backend Spring Boot** — Jackson всегда (built-in, faster, better record support).
+> - **Android** — Gson или Moshi (smaller binary).
+> - **CLI tools, simple data conversion** — Gson за простоту API.
+> - **High-throughput streaming** (Kafka events, log processing) — Jackson streaming API.
+> - **Cross-format (JSON+XML+YAML)** — только Jackson покрывает.
+>
+> **Подводные камни:**
+> - **`ObjectMapper` thread-safety**: thread-safe **после конфигурации**. Конфигурировать на startup, потом immutable use. Создавать per-request — performance disaster.
+> - **`@JsonCreator` для immutable**: Lombok `@Value` без `@JsonCreator` — Jackson не сможет десериализовать. Решение: `-parameters` flag или explicit `@JsonProperty`.
+> - **Gson serializing nulls by default off**: пропускает null, но иногда нужно их видеть. `GsonBuilder().serializeNulls()`.
+> - **Migration Jackson → Gson** (или обратно): аннотации не совместимы (`@JsonProperty` ≠ `@SerializedName`). Дорогостоящий refactor.
+> - **Jackson `JsonInclude.Include.NON_ABSENT`**: новое в 2.12, специально для `Optional<T>` — игнорировать `Optional.empty()` но писать `Optional.of(null)`.
+>
+> **Связанные вопросы:** [[Q21]] — Jackson basics; [[Q22]] — общий обзор Jackson vs Gson; [[Q24]] — custom serializers в Jackson.
+
+## Q39. FST — быстрый аналог Java Serialization
 
 **FST** (Fast Serialization) — библиотека, совместимая с Java Serialization API, но значительно быстрее стандартной реализации.
 
@@ -2726,10 +2929,103 @@ User restored = (User) conf.asObject(bytes);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. Как сериализуются `Java Record` — детали механизма ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое FST (Fast Serialization), какие преимущества над JDK Serialization и где его применять?
+>
+> ---
+>
+> #### A) Drop-in замена JDK Serialization (классы остаются `Serializable`), быстрее в 4-10× за счёт оптимизированной рефлексии и кэширования; API совместим (`FSTConfiguration.asByteArray`/`asObject` вместо `ObjectOutputStream`/`ObjectInputStream`); JVM-only; `FSTConfiguration` shared, но instances не thread-safe — нужен ThreadLocal; типичный use case — кэширование объектов в Redis для legacy кода с `Serializable`; альтернатива Kryo, но проще миграция — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> FST (de.ruedigermoeller:fst) — библиотека Rüdiger Möller для быстрой Java-сериализации. Ключевая идея — взять API стандартной Java Serialization (классы implementing `Serializable`, методы `writeObject`/`readObject`) и реализовать заново с агрессивной оптимизацией: меньше boxing, реже синхронизация, кэширование рефлексии по классам, компактный wire format.
+>
+> Главное достоинство — **migration cost**. В отличие от Kryo (требует регистрации классов, не использует `Serializable`, ломает custom serialization protocols) FST работает с существующими `Serializable` классами без изменений. Это делает FST идеальным для post-hoc оптимизации legacy кода: добавил dependency, заменил `new ObjectOutputStream` на `FSTConfiguration.asByteArray` — performance улучшилась в разы.
+>
+> Wire format не совместим с JDK Serialization — это другие байты. Нельзя записать FST'ом, прочитать стандартным JDK API. Но contracted: классы и совместимость по `serialVersionUID` сохраняются. Если FST instance переходит в другой JVM с теми же классами — работает.
+>
+> Thread-safety: `FSTConfiguration` создаётся один раз (immutable после конфигурации), но `getObjectInput`/`getObjectOutput` возвращают instances с mutable state. Для concurrent serialization — pool или ThreadLocal pattern.
+>
+> Сейчас FST не активно развивается (последний major release ~2021). Для нового кода Kryo более популярный выбор. Но FST остаётся валидным для migration scenarios.
+>
+> **Пример:**
+> ```java
+> // Setup — один раз на приложение
+> public class SerializationConfig {
+>     private static final FSTConfiguration CONF =
+>         FSTConfiguration.createDefaultConfiguration();
+>
+>     static {
+>         // Регистрация ускоряет (опционально, но желательно для hot classes)
+>         CONF.registerClass(Order.class, OrderItem.class, Customer.class);
+>     }
+>
+>     public static FSTConfiguration get() { return CONF; }
+> }
+>
+> // Использование — drop-in замена ObjectOutputStream
+> public class RedisOrderCache {
+>     private final RedisTemplate<String, byte[]> redis;
+>     private final FSTConfiguration fst = SerializationConfig.get();
+>
+>     public void put(String key, Order order) {
+>         byte[] bytes = fst.asByteArray(order);  // вместо ObjectOutputStream
+>         redis.opsForValue().set(key, bytes, Duration.ofMinutes(15));
+>     }
+>
+>     public Order get(String key) {
+>         byte[] bytes = redis.opsForValue().get(key);
+>         return bytes == null ? null : (Order) fst.asObject(bytes);
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Legacy Java app с `Serializable` DTO**, который нужно ускорить — migration cost минимальный.
+> - **Кэширование в Redis/Hazelcast** между JVM-нодами одного приложения.
+> - **Spring Session с `RedisSerializer`** — заменить дефолтный `JdkSerializationRedisSerializer` на custom FST-based.
+> - **Distributed lock data** в Apache Ignite — компактнее JDK.
+>
+> **Подводные камни:**
+> - **Wire format incompatibility**: данные сохранённые FST нельзя прочитать стандартным `ObjectInputStream`. Если в системе есть legacy compoennts с JDK API — нельзя смешивать.
+> - **Не поддерживает record/sealed classes**: библиотека не активно развивается, нет поддержки Java 14+ features. Для record нужен Kryo с custom serializer или Jackson Smile.
+> - **`registerClass` order matters**: при regression FST использует short integer IDs (на основе registration order). Изменение порядка регистрации между producer и consumer = data corruption. Pin порядок.
+> - **`setForceSerializable(true)`** позволяет сериализовать non-Serializable классы — мощно, но открывает security risks (gadget chains всё ещё применимы).
+> - **Versioning**: FST 2.x → 3.x было breaking changes в wire format. Pin major version в production.
+>
+> **Связанные вопросы:** [[Q28]] — Kryo как современная альтернатива; [[Q15]] — security риски Java Ser. (включая FST); [[Q30]] — почему всё же предпочитать JSON/Protobuf для inter-service.
+>
+> ---
+>
+> #### B) FST — это новый формат сериализации в JDK 21, нативно поддерживается без зависимостей — ❌ Неверно
+>
+> **Что на самом деле:** FST — внешняя open-source библиотека (`de.ruedigermoeller:fst`), не часть JDK. JDK не имеет встроенного "fast serialization" — только стандартный (slow) `ObjectInputStream`/`ObjectOutputStream`. Для оптимизации нужны third-party библиотеки: FST, Kryo, Protostuff.
+>
+> **Откуда путаница:** название «Fast Serialization» звучит как official JDK feature.
+>
+> **Если бы это было правдой:** FST появился бы в `java.io` пакете. Реально находится в `org.nustaq.serialization.FSTConfiguration`.
+>
+> ---
+>
+> #### C) FST совместим с wire-format JDK Serialization — байты, записанные FST, читаются стандартным `ObjectInputStream` — ❌ Неверно
+>
+> **Что на самом деле:** FST использует собственный wire format — компактнее и быстрее парсится. Байты не совместимы с `ObjectInputStream`. API контракт (классы Serializable, методы writeObject/readObject) совместим, но wire bytes — нет.
+>
+> **Откуда путаница:** «drop-in replacement» интерпретируется широко.
+>
+> **Если бы это было правдой:** не нужно было бы менять deserializer code — старый `ObjectInputStream` читал бы FST байты. Реально это разные форматы.
+>
+> ---
+>
+> #### D) FST — межъязыковая библиотека, работает с Java, Python, Go клиентами — ❌ Неверно
+>
+> **Что на самом деле:** FST **JVM-only**. Wire format использует Java-специфичные семантики (Serializable hierarchy, transient handling, writeObject/readObject hooks). Других реализаций нет. Для cross-language нужны Protobuf/Avro/MessagePack.
+>
+> **Откуда путаница:** generic name «Fast Serialization» не указывает на JVM-привязку.
+>
+> **Если бы это было правдой:** FST конкурировал бы с Protobuf, был бы в Google Cloud documentation. Реально применение узкое — оптимизация JVM internal serialization.
+
+## Q40. Как сериализуются `Java Record` — детали механизма
 
 Этот вопрос углубляет Q19. Здесь — детали внутреннего механизма и отличия от обычных классов.
 
