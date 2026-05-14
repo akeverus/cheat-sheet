@@ -488,10 +488,90 @@ interface OrderRepository : CoroutineCrudRepository<Order, Long> {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как избежать memory leak при использовании SharedFlow? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как Spring WebFlux обрабатывает `Flow<T>` от controller и где разница с `Flux<T>`?
+>
+> ---
+>
+> #### A) WebFlux конвертирует `Flow` в `Flux` через `ReactiveAdapterRegistry` и обрабатывает как обычный reactive Publisher — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Spring WebFlux под капотом использует **Reactor** (`Flux`/`Mono` — реализация Reactive Streams). Kotlin `Flow` — другая абстракция (cold flow, suspend-based), но Spring предоставляет **bridge** через `kotlinx-coroutines-reactor` модуль: метод `.asFlux()` конвертирует Flow в Flux, `.asFlow()` обратно. `ReactiveAdapterRegistry` автоматически подхватывает Kotlin Flow type и применяет конверсию.
+>
+> С точки зрения разработчика разницы между `fun get(): Flow<T>` и `fun get(): Flux<T>` для контроллера почти нет — Spring обрабатывает оба одинаково. Различия — на уровне идиоматики: Flow более естественно в Kotlin codebase, `suspend fun` для одиночных значений (вместо `Mono`).
+>
+> **Пример:**
+> ```kotlin
+> @RestController
+> @RequestMapping("/orders")
+> class OrderController(private val service: OrderService) {
+>     // Flow → Spring сам конвертирует в Flux при сериализации response
+>     @GetMapping fun getOrders(): Flow<OrderDto> = service.streamOrders()
+>
+>     // SSE — Flow стримит события через event-stream
+>     @GetMapping("/{id}/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+>     fun streamEvents(@PathVariable id: String): Flow<OrderEvent> =
+>         service.getOrderEvents(id)
+>
+>     // suspend fun — эквивалент Mono<OrderDto>
+>     @GetMapping("/{id}")
+>     suspend fun getOrder(@PathVariable id: String): OrderDto =
+>         service.findById(id) ?: throw NotFoundException()
+> }
+>
+> // Spring Data R2DBC + coroutines — CoroutineCrudRepository
+> interface OrderRepository : CoroutineCrudRepository<Order, Long> {
+>     fun findByStatus(status: OrderStatus): Flow<Order>
+>     suspend fun findById(id: Long): Order?
+> }
+> ```
+>
+> **Когда применять:**
+> - **Kotlin-first WebFlux проекты** — Flow + suspend читается чище чем Mono/Flux/`.flatMap{ }`.
+> - **Server-Sent Events / streaming endpoints** — Flow с backpressure через `kotlinx-coroutines-reactor`.
+> - **Spring Data R2DBC** — `CoroutineCrudRepository` для коротких запросов; для аналитики — `DatabaseClient` через `awaitSingle()`/`flow`.
+> - **Yandex/Wolt mobile API** — Kotlin Multiplatform клиент + Spring WebFlux backend с Flow.
+>
+> **Подводные камни:**
+> - **Backpressure** в Flow — cooperative через `buffer()`, `conflate()`, `collectLatest`. В Flux — Reactor-style request/cancel. При конвертации Flow → Flux backpressure пробрасывается, но семантика может неожиданно отличаться (например, `collectLatest` ≠ `switchMap`).
+> - **Dispatcher leak**: Flow по умолчанию работает на dispatcher вызывающего. В WebFlux endpoint это event-loop поток. Если в Flow есть блокирующая операция (JDBC) — нужен `.flowOn(Dispatchers.IO)`.
+> - **`@PreAuthorize` + `suspend`**: работает, но требует `kotlin-reflect` и Spring Security ≥ 5.5; раньше нужны были workaround через `MonoSecurityContext`.
+> - **OpenAPI generation** для Flow: Springdoc корректно понимает `Flow<T>` → `Flux<T>` начиная с v2.0; на старых версиях документация генерируется неверно.
+>
+> **Связанные вопросы:** [[Q1]] — определение Flow vs Sequence; [[Q5]] — Hot vs Cold flows и SharedFlow; [[Q14]] — memory leak при подписке на SharedFlow в Spring beans.
+>
+> ---
+>
+> #### B) WebFlux не поддерживает Kotlin Flow — нужно вручную конвертировать `.asPublisher()` — ❌ Неверно
+>
+> **Что на самом деле:** WebFlux поддерживает Flow **из коробки** (через `kotlinx-coroutines-reactor`, который автоматически подключается при наличии coroutines в classpath). Ручная конвертация `.asPublisher()` или `.asFlux()` не нужна — Spring справляется сам.
+>
+> **Откуда путаница:** в старых версиях Spring (5.0-5.2) поддержка корутин была ограниченной, и приходилось вручную писать `.asFlux()`. С 5.3+ это работает прозрачно.
+>
+> **Если бы это было правдой:** каждый controller с Flow требовал бы шаблонного `.asFlux()` в конце. На практике этот код пишется один раз в integration с библиотекой, не в коде приложения.
+>
+> ---
+>
+> #### C) `Flow<T>` блокирует event-loop в WebFlux — нужно использовать только `Flux<T>` — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin Flow — **non-blocking** suspend-based абстракция. Под капотом Flow использует continuation passing style (CPS) — это та же модель что у Reactor, не блокирующая. Spring Reactor Netty event-loop не блокируется при использовании Flow.
+>
+> **Откуда путаница:** suspend functions «выглядят как» блокирующий код (`val x = repo.findById(id)`). Но это лишь синтаксический сахар над non-blocking continuation; компилятор Kotlin генерирует state machine.
+>
+> **Если бы это было правдой:** Kotlin/Spring экосистема была бы непригодна для high-load reactive API. На практике Yandex/Wolt/Avito используют Kotlin+WebFlux+Flow в production на тысячах RPS.
+>
+> ---
+>
+> #### D) `Flow` работает только с `R2dbcRepository`, не с `WebFlux` controller — ❌ Неверно
+>
+> **Что на самом деле:** Flow работает **везде в reactive Spring стеке**: controller, service, repository, WebClient, тесты. WebFlux принимает Flow в response, WebClient может возвращать Flow (`.bodyToFlow<T>()`), R2DBC репозитории возвращают Flow.
+>
+> **Откуда путаница:** Flow часто демонстрируют именно с R2DBC. Но это просто популярный use-case — Flow универсален.
+>
+> **Если бы это было правдой:** мы могли бы получать Flow от БД, но не возвращать его клиенту — пришлось бы конвертировать в Flux. На практике Flow → клиент идёт прозрачно.
+
+## Q14. Как избежать memory leak при использовании SharedFlow?
 
 ```kotlin
 // ПРОБЛЕМА: scope живёт дольше, чем коллектор
@@ -521,10 +601,112 @@ override fun onStop() { job.cancel() }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Что произойдёт при исключении внутри flow { } без catch? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему `GlobalScope.launch` для коллектора `SharedFlow` приводит к memory leak в Android Activity?
+>
+> ---
+>
+> #### A) `GlobalScope` создаёт корутину которая работает быстрее чем lifecycleScope — это race condition — ❌ Неверно
+>
+> **Что на самом деле:** проблема не в скорости. `GlobalScope` создаёт корутину **с lifetime = время жизни приложения**, не привязанную к жизненному циклу Activity. Когда Activity уничтожается (`onDestroy`), корутина продолжает работать, удерживая ссылку на Activity через лямбду `handleEvent(it)`.
+>
+> **Откуда путаница:** memory leak интуитивно ассоциируется с многопоточностью и race conditions. На деле — про lifetime mismatch: subscriber переживает publisher's scope.
+>
+> **Если бы это было правдой:** проблема решалась бы добавлением `delay()` или `yield()` — задержки. На практике замедление не помогает; нужно остановить корутину при `onDestroy`.
+>
+> ---
+>
+> #### B) `SharedFlow` хранит strong reference на collector lambda; при бесконечной жизни scope лямбда (и её захваченные `this`) не освобождаются GC, удерживая Activity и весь его VM — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `SharedFlow` — это hot flow, который ведёт **внутренний список подписчиков** (`flow.subscribers`). Когда мы делаем `flow.collect { handleEvent(it) }`, лямбда регистрируется в этом списке. Лямбда захватывает `this` (Activity) через выражение `handleEvent`.
+>
+> Если корутина бежит в `GlobalScope`, она живёт до конца процесса. Соответственно, лямбда не удаляется из subscribers list, и сильная ссылка на Activity сохраняется. GC видит «Activity достижима через GlobalScope → flow.subscribers → lambda → this» и НЕ удаляет её.
+>
+> Результат: Activity, ViewBinding, ViewModel, drawable, bitmaps — всё остаётся в памяти после `onDestroy`. На каждом orientation change или re-creation — новый leak.
+>
+> **Пример (правильно vs неправильно):**
+> ```kotlin
+> // ❌ LEAK: GlobalScope живёт всю жизнь приложения
+> class BadActivity : AppCompatActivity() {
+>     override fun onCreate(savedInstanceState: Bundle?) {
+>         super.onCreate(savedInstanceState)
+>         GlobalScope.launch {
+>             viewModel.events.collect { event ->         // лямбда → this → Activity → ViewModel...
+>                 updateUi(event)
+>             }
+>         }
+>     }
+> }
+>
+> // ✅ ПРАВИЛЬНО: lifecycle-aware scope
+> class GoodActivity : AppCompatActivity() {
+>     override fun onCreate(savedInstanceState: Bundle?) {
+>         super.onCreate(savedInstanceState)
+>         lifecycleScope.launch {
+>             repeatOnLifecycle(Lifecycle.State.STARTED) {
+>                 viewModel.events.collect { event ->     // отменяется на onStop, рестартует на onStart
+>                     updateUi(event)
+>                 }
+>             }
+>         }
+>     }
+> }
+>
+> // ✅ Альтернатива: явный Job + cancel в onDestroy/onStop
+> class AlternativeActivity : AppCompatActivity() {
+>     private var collectJob: Job? = null
+>     override fun onStart() {
+>         super.onStart()
+>         collectJob = lifecycleScope.launch {
+>             viewModel.events.collect { updateUi(it) }
+>         }
+>     }
+>     override fun onStop() {
+>         super.onStop()
+>         collectJob?.cancel()                            // явно убираем подписку
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Android**: всегда `lifecycleScope.launch` + `repeatOnLifecycle` для UI-коллекторов. Это стандартный паттерн с Lifecycle 2.4+ (2021).
+> - **Spring beans с SharedFlow**: используйте `@PreDestroy` для отмены корутин при остановке bean (`@Service` lifecycle).
+> - **Compose**: `LaunchedEffect(key)` или `collectAsState()` — Compose сам управляет lifecycle.
+> - **ViewModel**: `viewModelScope` — отменяется в `onCleared()` автоматически.
+>
+> **Подводные камни:**
+> - **`StateFlow.collect` блокирует корутину навсегда** — даже без новых эмиссий, поскольку StateFlow никогда не завершается. Это by design, но удивляет начинающих.
+> - **`repeatOnLifecycle` ≠ `flowWithLifecycle`**: первый рестартует collector при resume, второй пропускает значения когда состояние ниже минимального. Выбор зависит от сценария (UI vs background work).
+> - **Multiple collectors на одной Flow** — каждый collect создаёт **отдельную subscribers entry** в SharedFlow. Параллельная подписка из 5 Activities = 5 lambda references.
+> - **Leak detection**: LeakCanary видит коллекторы с retained Activity. Но первопричина — `GlobalScope`, а не SharedFlow per se.
+>
+> **Связанные вопросы:** [[Q5]] — Hot vs Cold flow и SharedFlow basics; [[Q6]] — StateFlow и conflation; [[Q15]] — exception handling при collect отменяет коллектор автоматически.
+>
+> ---
+>
+> #### C) `SharedFlow` всегда вызывает memory leak — лучше использовать `StateFlow` — ❌ Неверно
+>
+> **Что на самом деле:** memory leak зависит от scope сборки, не от типа flow. `StateFlow` имеет ту же проблему если коллектор в `GlobalScope`. Разница между StateFlow и SharedFlow — в semantics (conflated state vs broadcast events), не в безопасности по памяти.
+>
+> **Откуда путаница:** StateFlow «выглядит проще», и для UI обычно подходит лучше. Но утечка возникает из-за scope коллектора, не из-за выбора типа.
+>
+> **Если бы это было правдой:** мы бы могли использовать SharedFlow только для одноразовых событий через `consumeAsFlow()`. Но это бы заблокировало главное применение SharedFlow — event bus для multiple subscribers.
+>
+> ---
+>
+> #### D) `lifecycleScope` сам по себе достаточен; `repeatOnLifecycle` нужен только для производительности — ❌ Неверно
+>
+> **Что на самом деле:** `lifecycleScope.launch` без `repeatOnLifecycle` стартует одну корутину при `onCreate`. Эта корутина живёт до **уничтожения Activity** (`onDestroy`), что означает collect продолжается **даже когда Activity на фоне** (`onStop`). Это растрата ресурсов: обновления UI идут, когда пользователь не видит экран.
+>
+> `repeatOnLifecycle(STARTED)` отменяет корутину при `onStop` и пересоздаёт при `onStart` — экономит CPU/battery, что критично на mobile.
+>
+> **Откуда путаница:** `lifecycleScope` звучит как «полное решение». На деле он лишь обеспечивает cancel при destroy, но не оптимизирует время жизни между start/stop.
+>
+> **Если бы это было правдой:** background activities обрабатывали бы updates вхолостую. На Android 12+ это может приводить к ANR — система мониторит и убивает background workers.
+
+## Q15. Что произойдёт при исключении внутри flow { } без catch?
 
 ```kotlin
 val flow = flow {
