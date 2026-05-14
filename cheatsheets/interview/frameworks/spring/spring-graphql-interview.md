@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-graphql]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Spring for GraphQL`
 
@@ -1441,10 +1441,87 @@ GraphiQL и Apollo Sandbox используют introspection — при отк�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как обрабатывать файловый upload в Spring GraphQL? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Security audit обнаружил, что любой может получить полную схему API через introspection-запрос `{ __schema { types { name fields { name } } } }`. Что такое introspection, какие риски и как его отключить в production?
+>
+> ---
+>
+> #### A) Introspection — это уязвимость GraphQL, её всегда нужно отключать; для разработчиков использовать `.graphqls` файл напрямую — ❌ Неверно (слишком категорично)
+>
+> **Что на самом деле:** Introspection — это **фича** GraphQL spec, на которой работают весь tooling: GraphiQL, Apollo Sandbox, IDE-плагины (graphql-config), code-generators (codegen, GraphQL Code Generator), API explorers. Без него теряется значительная часть developer experience. Проблема — только в публичных production-API с конфиденциальной схемой; в B2B-API часто оставляют, в internal — почти всегда оставляют.
+>
+> **Откуда путаница:** Security checklist'ы пишут «отключите introspection в production» без нюансов. На деле решение зависит от модели угроз.
+>
+> **Если бы это было правдой:** GitHub и Shopify не оставляли бы introspection включённым в публичных API — но они оставляют (с rate limiting и аутентификацией).
+>
+> ---
+>
+> #### B) Introspection — это набор meta-полей (`__schema`, `__type`, `__typename`), позволяющий запросить структуру схемы; в Spring GraphQL отключается через `spring.graphql.schema.introspection.enabled=false` (Spring Boot 3.x) или через `Instrumentation`; отключение ломает GraphiQL и подобные tools — ✓ Верно
+>
+> **Развёрнутое объяснение:** Introspection — built-in механизм GraphQL: любой может запросить `{ __schema { types { name fields { name type { name } } } } }` и получить полную структуру схемы. Это даёт разработчикам инструменты (Apollo Studio, GraphiQL, IDE-autocomplete) — но в production может раскрыть внутренние имена полей, deprecated-методы, экспериментальные типы. Отключение в Spring GraphQL: с Spring Boot 3.x — `spring.graphql.schema.introspection.enabled=false`; в более ранних версиях — через `Instrumentation`, оборачивающий выполнение и отклоняющий запросы с `__schema`/`__type`. Альтернатива — оставить introspection включённым, но защитить аутентификацией (Apollo использует API keys для Studio access).
+>
+> **Пример:**
+> ```yaml
+> # Spring Boot 3.x — простой способ
+> spring:
+>   graphql:
+>     schema:
+>       introspection:
+>         enabled: false   # отключить в production
+>       printer:
+>         enabled: true    # вывод схемы при старте (для dev/debug)
+>   profiles:
+>     active: prod
+> ```
+> ```java
+> // Альтернатива через Instrumentation (для тонкого контроля)
+> @Bean
+> @Profile("prod")
+> public Instrumentation disableIntrospection() {
+>     return new SimplePerformantInstrumentation() {
+>         @Override
+>         public InstrumentationContext<ExecutionResult> beginExecution(
+>                 InstrumentationExecutionParameters params,
+>                 InstrumentationState state) {
+>             if (params.getQuery().contains("__schema")
+>                     || params.getQuery().contains("__type")) {
+>                 throw new IntrospectionDisabledException();
+>             }
+>             return SimpleInstrumentationContext.noOp();
+>         }
+>     };
+> }
+> ```
+>
+> **Когда применять:** Public B2C APIs (mobile backend), регулируемые отрасли (банки, медицина), API с экспериментальными полями. В internal/B2B API с аутентификацией — обычно оставляют. Можно конфигурировать per-profile: dev — включено, prod — выключено.
+>
+> **Подводные камни:** Отключение ломает GraphiQL UI (`spring.graphql.graphiql.enabled=true` становится бесполезным без introspection). Решение: использовать persisted queries или статичную документацию (генерируемую из SDL при сборке). `__typename` — особый случай: даже при отключенной introspection он часто доступен, потому что требуется для Apollo Cache normalization. Отключайте `__typename` отдельно — это другой механизм.
+>
+> ---
+>
+> #### C) Introspection работает только в development-профиле; в production-профиле Spring GraphQL автоматически его отключает — ❌ Неверно
+>
+> **Что на самом деле:** По умолчанию introspection ВКЛЮЧЁН во всех профилях. Spring не делает магического отключения. Разработчик должен явно прописать `enabled: false` для prod.
+>
+> **Откуда путаница:** Spring Boot отключает Swagger в production по `prod` профилю (некоторые конфигурации) — кажется, что и здесь то же. Но это разные механизмы.
+>
+> **Если бы это было правдой:** Не было бы security-recommendations для GraphQL «явно отключайте introspection».
+>
+> ---
+>
+> #### D) Disable можно только через сторонние библиотеки (`graphql-java-extended-validation`) — Spring GraphQL не имеет API для этого — ❌ Неверно
+>
+> **Что на самом деле:** В Spring Boot 3.x есть встроенное свойство `spring.graphql.schema.introspection.enabled`. До этого приходилось через `Instrumentation` — но это всё внутри Spring GraphQL, без сторонних библиотек.
+>
+> **Откуда путаница:** Старые статьи (на момент 2022) показывали кастомные решения через Instrumentation, и это запомнилось как «единственный путь».
+>
+> **Если бы это было правдой:** В release notes Spring Boot 3.x не было бы упоминания нового свойства.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q1]] — почему schema — публичный контракт, [[Q9]] — `@deprecated` directive виден в introspection, [[Q15]] — мониторинг introspection-attempts как security event.
+
+## Q14. Как обрабатывать файловый upload в Spring GraphQL?
 
 GraphQL multipart upload spec:
 
@@ -1469,10 +1546,93 @@ public Document uploadDocument(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Как отлаживать и мониторить GraphQL-запросы? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой формат загрузки файлов в GraphQL стандартизирован, и почему сама multipart spec не часть GraphQL Core spec?
+>
+> ---
+>
+> #### A) GraphQL Core поддерживает file upload через специальный тип `File` в schema — ❌ Неверно
+>
+> **Что на самом деле:** GraphQL Core spec намеренно НЕ включает file upload — он определён как **transport-agnostic** язык запросов (может работать через HTTP, WebSocket, gRPC). File upload — это HTTP-специфичная фича через `multipart/form-data`, поэтому она вынесена в **отдельную spec**: «GraphQL multipart request spec» от Jayden Seric (apollo-upload-client).
+>
+> **Откуда путаница:** В REST файл загружается стандартно через multipart — кажется естественным что и GraphQL должен «как и REST». Но GraphQL абстрагируется от transport.
+>
+> **Если бы это было правдой:** клиент мог бы вызвать `mutation { upload(file: <local-path>) }` без специальной библиотеки — на практике это работает только через apollo-upload-client или graphql-multipart-request-spec.
+>
+> ---
+>
+> #### B) Multipart upload spec — это конвенция от Apollo: первый field `operations` содержит GraphQL query + null placeholders для файлов; `map` мапит multipart parts к переменным; binary parts передаются после; Spring GraphQL поддерживает через scalar `Upload` + `@Argument Part file` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Multipart request имеет 3 поля:
+> 1. **`operations`** — JSON с GraphQL запросом, где переменные файлов = `null` (placeholder).
+> 2. **`map`** — JSON, маппирующий ключи multipart parts к variable paths: `{"0": ["variables.file"]}`.
+> 3. **Numbered parts** (`0`, `1`, ...) — binary file content.
+>
+> Spring GraphQL пишет custom scalar `Upload` (resolver возвращает `MultipartFile` или WebFlux `Part`), и в @MutationMapping инжектит через `@Argument`.
+>
+> **Пример (cURL):**
+> ```bash
+> curl -X POST http://localhost:8080/graphql \
+>   -F operations='{"query":"mutation($file: Upload!, $orderId: ID!){ uploadDocument(file: $file, orderId: $orderId){ id } }","variables":{"file":null,"orderId":"ord-42"}}' \
+>   -F map='{"0":["variables.file"]}' \
+>   -F 0=@./invoice.pdf
+> ```
+>
+> ```java
+> @MutationMapping
+> public Document uploadDocument(
+>         @Argument Part file,                  // WebFlux Part / MultipartFile
+>         @Argument String orderId) {
+>     return documentService.save(orderId, file);
+> }
+>
+> // Регистрация custom scalar
+> @Bean
+> public RuntimeWiringConfigurer runtimeWiringConfigurer() {
+>     return wiringBuilder -> wiringBuilder.scalar(ExtendedScalars.Upload);
+> }
+> ```
+>
+> **Когда применять:** Avito (загрузка фото к объявлению), Wolt (документы для верификации), любые B2B портал с document upload. На практике многие команды делают **отдельный REST endpoint** `/api/upload` для файлов — проще, не требует клиентской библиотеки, лучше для CDN.
+>
+> **Подводные камни:**
+> - **Apollo Server v3+** удалил built-in поддержку Upload — теперь требует `graphql-upload` библиотеку отдельно.
+> - **CSRF protection** ломает upload — нужно whitelist endpoint или использовать proper CSRF token in form.
+> - **Max upload size** — Spring Boot default 1MB, нужно `spring.servlet.multipart.max-file-size=10MB`.
+> - **Тестирование**: GraphQlTester не поддерживает multipart — нужен WebTestClient напрямую с multipart body.
+> - **Subscriptions с upload** не работают — multipart требует request/response, не WebSocket.
+>
+> **Связанные вопросы:** [[Q1]] — schema definition и custom scalars; [[Q4]] — @MutationMapping basics; [[Q15]] — мониторинг upload latency.
+>
+> ---
+>
+> #### C) Multipart upload не нужен — можно отправить файл как base64-encoded String в GraphQL variable — ❌ Неверно (хотя технически возможно)
+>
+> **Что на самом деле:** base64 действительно работает технически, но это антипаттерн:
+> - **+33% overhead** в bytes vs binary (base64 encoding).
+> - JSON parser должен прочитать всю строку перед обработкой — нет streaming.
+> - 10MB файл = 13.3MB в JSON, что часто превышает default body limits.
+> - GraphQL query log будет содержать gigantic strings, что засоряет observability.
+>
+> На малых файлах (avatars < 100KB) base64 приемлем, на больших — multipart обязателен.
+>
+> **Откуда путаница:** «Всё в одном request» звучит просто. Но для production-grade upload streaming и memory efficiency критичны.
+>
+> **Если бы это было правдой:** Apollo не создавал бы multipart spec, и Spring не добавлял бы scalar Upload.
+>
+> ---
+>
+> #### D) Spring GraphQL автоматически генерирует REST endpoint `/upload` для каждой Upload-mutation — ❌ Неверно
+>
+> **Что на самом деле:** Spring GraphQL обрабатывает upload через тот же `/graphql` endpoint с multipart content-type. Отдельного REST endpoint не создаётся — клиент сам решает использовать ли GraphQL multipart или собственный REST endpoint (как часто делают на practice).
+>
+> **Откуда путаница:** магия Spring auto-config — кажется что и здесь что-то генерируется. На деле — нет.
+>
+> **Если бы это было правдой:** в Spring docs было бы упоминание `/upload` endpoint и его конфигурации. Реально весь upload идёт через `/graphql` с multipart.
+
+## Q15. Как отлаживать и мониторить GraphQL-запросы?
 
 ```java
 // Instrumentation для логирования запросов
@@ -1504,14 +1664,123 @@ logging:
 
 Для production: Spring Boot Actuator выставляет метрики `graphql.*` (время выполнения, количество ошибок) через Micrometer.
 
+> [!mcq]
+>
+> **Вопрос:** Какие метрики GraphQL критичны для мониторинга в production, и почему стандартный HTTP request rate недостаточен?
+>
+> ---
+>
+> #### A) HTTP request rate = GraphQL request rate — достаточно стандартного APM — ❌ Неверно
+>
+> **Что на самом деле:** в GraphQL ОДИН HTTP request может содержать **множество operations** (queries + mutations) или nested resolvers. Стандартный APM покажет «100 RPS на /graphql», но не покажет что внутри один query триггерит 50 resolver calls с разной latency. Нужны GraphQL-specific метрики: per-field execution time, resolver count per request, error rate per field.
+>
+> **Откуда путаница:** REST endpoints мониторятся через HTTP метрики (rate, latency, errors). Это переносится на GraphQL по привычке, но информация теряется.
+>
+> **Если бы это было правдой:** не было бы Apollo Studio / DataDog GraphQL integration / Hasura tracing — все они были бы избыточны.
+>
+> ---
+>
+> #### B) Метрики: `graphql.request.count` + `graphql.request.duration` + `graphql.request.error.count` через Micrometer (auto-config в Spring Boot 3+); per-resolver latency через custom Instrumentation; deprecated fields usage tracking; query complexity histograms — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Production GraphQL мониторинг состоит из 4 уровней:
+>
+> 1. **Aggregate request metrics** (Spring Boot Actuator auto-config):
+>    - `graphql.request.count` — total queries/mutations
+>    - `graphql.request.duration` — p50/p95/p99 латентность
+>    - `graphql.request.error.count` — by error type (validation, runtime, datafetcher)
+>
+> 2. **Per-resolver tracing** (custom Instrumentation): какой resolver занимает время. Без этого «query медленный» = детектив-расследование.
+>
+> 3. **Deprecated fields usage**: tracking какие `@deprecated` поля ещё используются — для безопасного удаления.
+>
+> 4. **Query complexity histograms**: distribution complexity scores — детектит abuse (DoS through deep nesting).
+>
+> **Пример:**
+> ```java
+> @Bean
+> public Instrumentation tracingInstrumentation(MeterRegistry meterRegistry) {
+>     return new SimplePerformantInstrumentation() {
+>         @Override
+>         public DataFetcher<?> instrumentDataFetcher(DataFetcher<?> df,
+>                                                     InstrumentationFieldFetchParameters params,
+>                                                     InstrumentationState state) {
+>             return env -> {
+>                 String fieldName = params.getField().getName();
+>                 Timer.Sample sample = Timer.start(meterRegistry);
+>                 try {
+>                     Object result = df.get(env);
+>                     sample.stop(meterRegistry.timer("graphql.field.duration",
+>                         "field", fieldName, "status", "success"));
+>                     return result;
+>                 } catch (Exception e) {
+>                     sample.stop(meterRegistry.timer("graphql.field.duration",
+>                         "field", fieldName, "status", "error"));
+>                     throw e;
+>                 }
+>             };
+>         }
+>     };
+> }
+> ```
+>
+> ```yaml
+> # application.yml — включить tracing
+> logging:
+>   level:
+>     org.springframework.graphql: DEBUG
+>     graphql.execution: DEBUG
+> management:
+>   metrics:
+>     tags:
+>       application: ${spring.application.name}
+> ```
+>
+> **Когда применять:** любой production GraphQL service. Apollo Studio, Datadog APM, OpenTelemetry — все поддерживают GraphQL-aware tracing.
+>
+> **Подводные камни:**
+> - **Cardinality explosion**: per-field timer создаёт тег `field=<имя поля>`. На 100 fields × 100 hosts = 10K series в Prometheus. Использовать `MeterFilter` для bounded cardinality.
+> - **Sampling в high-RPS**: на 10K RPS детальный tracing на каждый запрос — дорого. Sampling 1% достаточен.
+> - **Subscription metrics отдельно**: long-lived connections не fit в request-duration model — нужны connection.count / messages.rate.
+> - **Persisted queries breaking traces**: если клиент шлёт hash вместо query, в logs ничего читаемого нет — нужен hash → query mapping.
+>
+> **Связанные вопросы:** [[Q5]] — N+1 проблема и DataLoader; [[Q13]] — query complexity для DoS protection; [[Q14]] — file upload latency.
+>
+> ---
+>
+> #### C) GraphQL не нужно специально мониторить — он работает поверх HTTP, любой APM покрывает — ❌ Неверно
+>
+> **Что на самом деле:** APM видит request-level (URL `/graphql`, status 200, duration). НО:
+> - не видит **внутри** request какие resolvers вызывались
+> - не видит **per-field errors** (errors могут быть в response с status 200)
+> - не видит **deprecated fields usage**
+>
+> Apollo Studio / Datadog APM Server с GraphQL plugin / OpenTelemetry GraphQL instrumentation решают это.
+>
+> **Откуда путаница:** «всё через HTTP» — поверхностное наблюдение. На production без GraphQL-aware monitoring очень сложно диагностировать.
+>
+> **Если бы это было правдой:** Apollo Studio не существовал бы как продукт.
+>
+> ---
+>
+> #### D) Достаточно `logging.level: DEBUG` для production — все запросы в логи попадут — ❌ Неверно
+>
+> **Что на самом деле:** DEBUG логи в production:
+> - заполняют disk быстро (TB/day на high-RPS)
+> - создают I/O latency
+> - содержат PII (queries с user data → GDPR violation)
+> - не агрегируются (логи != метрики)
+>
+> Правильно: DEBUG только в dev/staging, в prod — структурированные метрики (Micrometer + Prometheus) + sampled tracing (1-10%).
+>
+> **Откуда путаница:** «больше логов = лучше отладка» — справедливо для dev, но не для prod scale.
+>
+> **Если бы это было правдой:** не было бы distinction между observability layers (logs vs metrics vs traces).
+
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [GraphQL](../../api/graphql-interview.md) — основы GraphQL (schema, queries, resolvers, N+1 проблема) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [GraphQL](../../api/graphql-interview.md) — основы GraphQL (schema, queries, resolvers, N+1 проблема)
 - [Spring WebFlux](spring-webflux-interview.md) — реактивный стек для GraphQL subscriptions
 - [Spring Boot](spring-boot-interview.md) — auto-configuration, starter dependencies
 - [Spring REST Clients](spring-rest-client-interview.md) — REST как альтернатива GraphQL
