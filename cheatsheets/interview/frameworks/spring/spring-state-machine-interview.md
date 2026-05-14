@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-state-machine]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Spring State Machine`
 
@@ -819,7 +819,17 @@ sm.startReactively().block();
 >
 > ---
 >
-> #### C) `@EnableStateMachine` создаёт singleton `StateMachine` (один на приложение), `@EnableStateMachineFactory` создаёт `StateMachineFactory`, из которого `getStateMachine(id)` возвращает новый независимый экземпляр; Factory обязательна для per-entity workflow (order, document, user). — ✓ Верно
+> #### C) Factory создаёт thread-safe singleton машин — можно безопасно использовать один экземпляр из `factory.getStateMachine("singleton")` параллельно из любого числа потоков. — ❌ Неверно
+>
+> **Что на самом деле:** ни singleton машина (`@EnableStateMachine`), ни экземпляры из Factory **не являются** thread-safe для одновременной обработки событий. SSM проектировалась как stateful entity, не как thread-safe service. Безопасный паттерн — distributed lock на machineId + restore из persistence + sendEvent + persist + unlock.
+>
+> **Откуда путаница:** Factory звучит как «фабрика безопасных объектов», а Spring beans по умолчанию singleton — отсюда ложная аналогия.
+>
+> **Если бы это было правдой:** не было бы необходимости в Redisson-локах и persister'ах — но реальность требует явной синхронизации.
+>
+> ---
+>
+> #### D) `@EnableStateMachine` создаёт singleton `StateMachine` (один на приложение), `@EnableStateMachineFactory` создаёт `StateMachineFactory`, из которого `getStateMachine(id)` возвращает новый независимый экземпляр; Factory обязательна для per-entity workflow (order, document, user). — ✓ Верно
 >
 > **Развёрнутое объяснение:** Singleton машина — `@EnableStateMachine` создаёт ровно один bean `StateMachine<S,E>`. Все потоки видят одно и то же состояние. Использовать только для глобальных состояний (режим приложения, общий feature toggle). Factory — `@EnableStateMachineFactory` создаёт bean `StateMachineFactory<S,E>` с тем же DSL-конфигом, но каждый вызов `factory.getStateMachine(machineId)` возвращает свежий экземпляр в initial state. Это нужно для per-entity сценариев: каждый Order имеет свою машину, каждый Document — свою. Без Factory попытка использовать один singleton FSM для нескольких заказов приведёт к race conditions: пока один поток обрабатывает CONFIRM, другой видит уже изменённое состояние. Factory + persister + distributed lock — каноничный паттерн.
 >
@@ -851,16 +861,6 @@ sm.startReactively().block();
 > **Когда применять:** Factory — order lifecycle, document approval, payment processing, ticket workflow. Singleton — circuit breaker всего приложения, режим maintenance, глобальный feature flag.
 >
 > **Подводные камни:** забыть `autoStartup(false)` — каждое `getStateMachine` дёргает entry actions initial state; не закрывать машину после использования (`sm.stopReactively()`) — утечка ресурсов; путать `machineId` (имя конфига) с runtime ID экземпляра (передаётся в `getStateMachine(id)`).
->
-> ---
->
-> #### D) Factory создаёт thread-safe singleton машин — можно безопасно использовать один экземпляр из `factory.getStateMachine("singleton")` параллельно из любого числа потоков. — ❌ Неверно
->
-> **Что на самом деле:** ни singleton машина (`@EnableStateMachine`), ни экземпляры из Factory **не являются** thread-safe для одновременной обработки событий. SSM проектировалась как stateful entity, не как thread-safe service. Безопасный паттерн — distributed lock на machineId + restore из persistence + sendEvent + persist + unlock.
->
-> **Откуда путаница:** Factory звучит как «фабрика безопасных объектов», а Spring beans по умолчанию singleton — отсюда ложная аналогия.
->
-> **Если бы это было правдой:** не было бы необходимости в Redisson-локах и persister'ах — но реальность требует явной синхронизации.
 >
 > ---
 >
@@ -1134,7 +1134,17 @@ public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent
 >
 > ---
 >
-> #### C) `StateMachineListener` — observer-интерфейс с callback'ами (`stateChanged`, `eventNotAccepted`, `stateMachineError`, `transition`, `transitionStarted`/`transitionEnded`); используется для кросс-резных задач (метрики, audit, alerting); исключения в listener не прерывают transition. — ✓ Верно
+> #### C) Listener гарантирует exactly-once семантику: каждое событие смены состояния доставится ровно один раз, даже после рестарта. — ❌ Неверно
+>
+> **Что на самом деле:** SSM не даёт гарантий exactly-once. Listener выполняется в той же JVM, что и transition — после рестарта приложения никакие пропущенные события не доставятся. Для exactly-once нужны Kafka transactional outbox, idempotency keys, retry с дедупликацией — это уровень выше SSM.
+>
+> **Откуда путаница:** Spring Integration и Kafka имеют exactly-once, и кажется, что Spring State Machine — это про то же.
+>
+> **Если бы это было правдой:** SSM можно было бы использовать как event bus для distributed систем — но это не его задача.
+>
+> ---
+>
+> #### D) `StateMachineListener` — observer-интерфейс с callback'ами (`stateChanged`, `eventNotAccepted`, `stateMachineError`, `transition`, `transitionStarted`/`transitionEnded`); используется для кросс-резных задач (метрики, audit, alerting); исключения в listener не прерывают transition. — ✓ Верно
 >
 > **Развёрнутое объяснение:** SSM реализует observer pattern: `StateMachine.addStateListener(listener)`. Интерфейс `StateMachineListener<S,E>` имеет ~12 callback'ов, обычно расширяют `StateMachineListenerAdapter` и переопределяют нужные. Ключевые: `stateChanged(from, to)` — после смены состояния; `transition(transition)` — на каждый переход (включая internal); `eventNotAccepted(event)` — событие не вызвало перехода (нет matching transition или guard вернул false); `stateMachineError(sm, exception)` — exception в action или транзишене; `extendedStateChanged` — изменение Extended State. Исключения в listener логируются, но НЕ прерывают transition. Это специально, чтобы observer не ломал core workflow. Регистрация через `.listener(bean)` в `StateMachineConfigurationConfigurer` или через `sm.addStateListener(listener)` в runtime. Для distributed аналитики — собирать события в Kafka, отправлять в Elasticsearch.
 >
@@ -1173,16 +1183,6 @@ public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent
 > **Когда применять:** Prometheus метрики переходов; audit log в БД (с асинхронной записью); alerting на `eventNotAccepted` (бизнес-аномалия); отправка событий в Kafka для downstream систем; correlation ID propagation через MDC.
 >
 > **Подводные камни:** забыть, что listener не транзакционен — запись в БД из stateChanged может не откатиться при rollback transition; синхронный listener блокирует transition (тяжёлая IO в listener — антипаттерн); порядок listener'ов не гарантирован (если их несколько); listener на factory создаваемых машинах нужно регистрировать после `getStateMachine()`, не глобально.
->
-> ---
->
-> #### D) Listener гарантирует exactly-once семантику: каждое событие смены состояния доставится ровно один раз, даже после рестарта. — ❌ Неверно
->
-> **Что на самом деле:** SSM не даёт гарантий exactly-once. Listener выполняется в той же JVM, что и transition — после рестарта приложения никакие пропущенные события не доставятся. Для exactly-once нужны Kafka transactional outbox, idempotency keys, retry с дедупликацией — это уровень выше SSM.
->
-> **Откуда путаница:** Spring Integration и Kafka имеют exactly-once, и кажется, что Spring State Machine — это про то же.
->
-> **Если бы это было правдой:** SSM можно было бы использовать как event bus для distributed систем — но это не его задача.
 >
 > ---
 >
@@ -1233,17 +1233,7 @@ class OrderStateMachineTest {
 >
 > ---
 >
-> #### A) Тестировать только sendEvent + getState — этого достаточно, потому что guards/actions просто мокаются на уровне unit. — ❌ Неверно
->
-> **Что на самом деле:** при таком подходе вы покрываете "transition table" (откуда-куда), но не валидируете integration guards с Extended State, последовательность entry/exit actions, поведение при guard=false (event-not-accepted), interaction listeners. Полное покрытие FSM требует проверки и негативных сценариев, и Extended State, и listener interaction.
->
-> **Откуда путаница:** простые туториалы показывают именно sendEvent + assertEquals — это базовое покрытие, но недостаточное для production.
->
-> **Если бы это было правдой:** в SSM не было бы `StateMachineTestPlan` и `StateMachineTestPlanBuilder` — а они есть именно для сценарных тестов.
->
-> ---
->
-> #### B) `StateMachineTestPlanBuilder.<S,E>builder().stateMachine(sm).step()....step().build().test()` позволяет описать сценарий из шагов (sendEvent → expectStates → expectStateChanged), включая ожидания listener callback'ов; для unit-тестов guard/action — мокать `StateContext` через Mockito. — ✓ Верно
+> #### A) `StateMachineTestPlanBuilder.<S,E>builder().stateMachine(sm).step()....step().build().test()` позволяет описать сценарий из шагов (sendEvent → expectStates → expectStateChanged), включая ожидания listener callback'ов; для unit-тестов guard/action — мокать `StateContext` через Mockito. — ✓ Верно
 >
 > **Развёрнутое объяснение:** SSM предоставляет `spring-statemachine-test` с DSL `StateMachineTestPlanBuilder`. Каждый шаг описывает: что отправляем (`sendEvent(MSG)`), какое состояние ожидаем (`expectStates(STATE)`), сколько transitions ожидаем (`expectStateChanged(count)`), какие events accepted/rejected. Plan управляет автоматическим ожиданием асинхронных reactor-операций (machine.startReactively, sendEvent возвращает Flux). Для guard/action логики — отдельные unit-тесты с замоканным `StateContext<S,E>`: `when(ctx.getMessageHeader("orderId")).thenReturn("ORD-1"); when(ctx.getExtendedState().get(...)).thenReturn(...)`. Для integration tests — `@SpringBootTest` с реальной машиной и моками внешних сервисов (notification, payment gateway). Для persistence — `@DataJpaTest` + `JpaPersistingStateMachineInterceptor` против H2.
 >
@@ -1300,6 +1290,16 @@ class OrderStateMachineTest {
 > **Когда применять:** проверка transition table — обязательно; happy path сценариев — обязательно; negative scenarios (guard rejects) — обязательно; hierarchical/parallel regions — TestPlan видит составное состояние; persistence cycle — отдельный test, restore + sendEvent + persist + verify в БД.
 >
 > **Подводные камни:** забыть `expectEventNotAccepted` в негативных тестах — тест может проходить даже если guard сломался; TestPlan ждёт асинхронных reactor-операций — на медленных CI можно получить timeout, нужен `await` с таймаутом; mock-сервисов в actions требует `@MockBean` (не `@Mock`), чтобы Spring подставил их в action beans.
+>
+> ---
+>
+> #### B) Тестировать только sendEvent + getState — этого достаточно, потому что guards/actions просто мокаются на уровне unit. — ❌ Неверно
+>
+> **Что на самом деле:** при таком подходе вы покрываете "transition table" (откуда-куда), но не валидируете integration guards с Extended State, последовательность entry/exit actions, поведение при guard=false (event-not-accepted), interaction listeners. Полное покрытие FSM требует проверки и негативных сценариев, и Extended State, и listener interaction.
+>
+> **Откуда путаница:** простые туториалы показывают именно sendEvent + assertEquals — это базовое покрытие, но недостаточное для production.
+>
+> **Если бы это было правдой:** в SSM не было бы `StateMachineTestPlan` и `StateMachineTestPlanBuilder` — а они есть именно для сценарных тестов.
 >
 > ---
 >
@@ -1450,17 +1450,7 @@ public class OrderEventHandler {
 >
 > ---
 >
-> #### A) `@WithStateMachine` — это альтернатива `@EnableStateMachine`, аннотация для класса конфигурации FSM. — ❌ Неверно
->
-> **Что на самом деле:** `@WithStateMachine` и `@EnableStateMachine` решают разные задачи. `@EnableStateMachine`/`@EnableStateMachineFactory` создают саму машину/фабрику. `@WithStateMachine` ставится на **handler-классы** и связывает методы с событиями FSM через аннотации `@OnTransition`, `@OnStateEntry`, `@OnStateExit`, `@OnStateChanged`, `@OnEventNotAccepted` и т.д.
->
-> **Откуда путаница:** имена похожи (`@With...`, `@Enable...`), оба содержат "StateMachine".
->
-> **Если бы это было правдой:** конфигурация и handler'ы были бы переплетены в одном классе, что нарушает разделение ответственностей.
->
-> ---
->
-> #### B) `@WithStateMachine` связывает Spring bean с конкретной машиной (по `id`/`name`) и позволяет реагировать на её события декларативно через `@OnTransition`, `@OnStateEntry`, `@OnStateExit`, `@OnEventNotAccepted` и др. — методы вызываются автоматически, без явной регистрации listener. — ✓ Верно
+> #### A) `@WithStateMachine` связывает Spring bean с конкретной машиной (по `id`/`name`) и позволяет реагировать на её события декларативно через `@OnTransition`, `@OnStateEntry`, `@OnStateExit`, `@OnEventNotAccepted` и др. — методы вызываются автоматически, без явной регистрации listener. — ✓ Верно
 >
 > **Развёрнутое объяснение:** `@WithStateMachine(id="orderFsm")` помечает класс как "получатель событий" конкретной FSM. SSM сканирует bean и регистрирует методы как обработчики на основе аннотаций. Доступные аннотации: `@OnTransition(source="...", target="...")` — на конкретный переход; `@OnStateEntry(target="...")` — entry в состояние; `@OnStateExit(source="...")` — exit; `@OnStateChanged` — любая смена; `@OnEventNotAccepted(event="...")` — отвергнутое событие; `@OnStateMachineStart/Stop` — lifecycle; `@OnStateMachineError` — ошибки. В метод можно инжектить параметры через типы или аннотации: `@EventHeaders Map<String, Object>`, `@EventHeader("orderId") String`, `ExtendedState`, `StateContext<S,E>`, `Message<E>`, `Exception`. Это удобная альтернатива императивной регистрации Action и Listener бинов: handler-логика остаётся декларативной, типобезопасной и читаемой.
 >
@@ -1504,6 +1494,16 @@ public class OrderEventHandler {
 >
 > ---
 >
+> #### B) `@WithStateMachine` — это альтернатива `@EnableStateMachine`, аннотация для класса конфигурации FSM. — ❌ Неверно
+>
+> **Что на самом деле:** `@WithStateMachine` и `@EnableStateMachine` решают разные задачи. `@EnableStateMachine`/`@EnableStateMachineFactory` создают саму машину/фабрику. `@WithStateMachine` ставится на **handler-классы** и связывает методы с событиями FSM через аннотации `@OnTransition`, `@OnStateEntry`, `@OnStateExit`, `@OnStateChanged`, `@OnEventNotAccepted` и т.д.
+>
+> **Откуда путаница:** имена похожи (`@With...`, `@Enable...`), оба содержат "StateMachine".
+>
+> **Если бы это было правдой:** конфигурация и handler'ы были бы переплетены в одном классе, что нарушает разделение ответственностей.
+>
+> ---
+>
 > #### C) `@WithStateMachine` отключает все программные Action и Listener — нельзя комбинировать аннотации и Java-bean подход. — ❌ Неверно
 >
 > **Что на самом деле:** оба подхода **сосуществуют**. Можно одновременно регистрировать Action в `transitions.action(actionBean())` и иметь `@OnTransition` handler — оба отработают. Полезно: бизнес-критичную логику оставлять в Action (часть transition transaction), наблюдение — в `@WithStateMachine`.
@@ -1538,14 +1538,105 @@ public class OrderEventHandler {
 
 5. **Отсутствие end-состояний** — без `end()` машина никогда не завершается и продолжает обрабатывать события.
 
-## See also
-
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Spring Events](spring-events-interview.md) — ApplicationEvents, альтернатива для простых случаев ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая из ошибок чаще всего приводит к самым серьёзным production-инцидентам в проектах со Spring State Machine?
+>
+> ---
+>
+> #### A) Слишком гранулярная иерархия состояний — нужно держать FSM плоской и без вложений. — ❌ Неверно
+>
+> **Что на самом деле:** иерархия состояний — это **сильная сторона** SSM, она помогает декомпозировать сложный workflow. Плоская FSM на 30 состояний и 200 transitions нечитаема и неподдерживаема; правильно структурированная hierarchical FSM на 5 composite states и 15 substates лучше для команды.
+>
+> **Откуда путаница:** в простых учебных примерах действительно используется плоская FSM, и кажется, что усложнять не надо.
+>
+> **Если бы это было правдой:** UML statechart не вводил бы concept composite state — а именно он сделал FSM применимой к большим бизнес-процессам.
+>
+> ---
+>
+> #### B) Перенос бизнес-логики в Action/Guard вместо делегирования в сервисы — handler становится god-method'ом, нет переиспользования. — ❌ Неверно
+>
+> **Что на самом деле:** это **реальная** ошибка, но она приводит к проблемам поддержки, не к production-инцидентам напрямую. Бизнес-логика в Action работает, просто плохо тестируется и переиспользуется. Это quality issue, не reliability issue.
+>
+> **Откуда путаница:** ошибка действительно частая и важная — но среди вариантов есть более критичная для production reliability.
+>
+> **Если бы это было правдой:** проекты с anti-pattern'ом немедленно падали бы в production — на практике они просто медленно деградируют по maintainability.
+>
+> ---
+>
+> #### C) Использование `@EnableStateMachine` (singleton) вместо `StateMachineFactory` для per-entity workflow — все заказы шарят одну машину, race conditions, потеря состояний при concurrent событиях по разным orderId. — ✓ Верно
+>
+> **Развёрнутое объяснение:** это **классическая** ошибка с прямыми production-последствиями. `@EnableStateMachine` создаёт **один** bean `StateMachine` для всего приложения. Если код использует его для нескольких заказов (`sm.sendEvent(confirmOrder1)` параллельно с `sm.sendEvent(shipOrder2)`), оба заказа делят одно состояние — события одного заказа меняют state для другого. Симптомы в production: заказы внезапно "перепрыгивают" этапы, события теряются ("event not accepted" в логах для валидных событий), race conditions трудно воспроизводимы локально (всё работает на одной машине в dev). Правильное решение: `@EnableStateMachineFactory` + `factory.getStateMachine(orderId)` для каждого заказа + persistence через `StateMachinePersister` + distributed lock на orderId (Redisson, JDBC `SELECT FOR UPDATE`).
+>
+> **Пример:**
+> ```java
+> // ❌ Антипаттерн — singleton для per-entity FSM
+> @Configuration
+> @EnableStateMachine  // <-- singleton!
+> public class OrderFsmConfigWrong { ... }
+>
+> @Service
+> @RequiredArgsConstructor
+> public class OrderServiceWrong {
+>     private final StateMachine<OrderState, OrderEvent> sm;  // один на всё приложение
+>
+>     public void process(String orderId, OrderEvent event) {
+>         // RACE CONDITION: два разных заказа шарят машину
+>         sm.sendEvent(Mono.just(MessageBuilder.withPayload(event).build())).blockFirst();
+>     }
+> }
+>
+> // ✓ Правильный паттерн
+> @Configuration
+> @EnableStateMachineFactory
+> public class OrderFsmConfig { ... }
+>
+> @Service
+> @RequiredArgsConstructor
+> public class OrderService {
+>     private final StateMachineFactory<OrderState, OrderEvent> factory;
+>     private final StateMachinePersister<OrderState, OrderEvent, String> persister;
+>     private final RedissonClient redisson;
+>
+>     public void process(String orderId, OrderEvent event) {
+>         RLock lock = redisson.getLock("order-fsm:" + orderId);
+>         lock.lock();
+>         try {
+>             StateMachine<OrderState, OrderEvent> sm = factory.getStateMachine(orderId);
+>             persister.restore(sm, orderId);
+>             sm.startReactively().block();
+>             sm.sendEvent(Mono.just(MessageBuilder.withPayload(event)
+>                 .setHeader("orderId", orderId).build())).blockFirst();
+>             persister.persist(sm, orderId);
+>         } finally {
+>             lock.unlock();
+>         }
+>     }
+> }
+> ```
+>
+> **Когда применять:** любой per-entity workflow (order, document, ticket, user lifecycle) — обязательно Factory. Singleton машина допустима только для **глобальных** состояний приложения (maintenance mode, global circuit breaker).
+>
+> **Подводные камни:** code review должен ловить `@EnableStateMachine` в feature кода — добавить ArchUnit правило; миграция legacy кода с singleton на Factory требует одновременно добавления persistence и distributed lock — нельзя ограничиться заменой аннотации; тесты "локально работает" не ловят race condition — нужны concurrency tests или хотя бы load testing на staging.
+>
+> ---
+>
+> #### D) Слишком частое использование Extended State — нужно хранить всё в `@Entity`, а Extended State использовать только в исключительных случаях. — ❌ Неверно
+>
+> **Что на самом деле:** Extended State — спроектированный механизм для workflow-метаданных, его активное использование — норма, не антипаттерн. Перенос retry counters, временных флагов, accumulated context в доменную сущность как раз и есть антипаттерн (детали реализации FSM протекают в API).
+>
+> **Откуда путаница:** в DDD-литературе часто советуют "богатые domain entities" и кажется, что любая дополнительная state нужна в Entity.
+>
+> **Если бы это было правдой:** Extended State не существовал бы в SSM API — но он есть и используется широко.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q8]] — Factory vs singleton; [[Q7]] — persistence обязательна для Factory подхода; [[Q11]] — Listener на `eventNotAccepted` помогает диагностировать race conditions.
+
+## See also
+
+- [Spring Events](spring-events-interview.md) — ApplicationEvents, альтернатива для простых случаев
 - [Spring Integration](spring-integration-interview.md) — EIP, роутинг как альтернативный подход
 - [Saga Pattern](../../architecture/saga-pattern-interview.md) — распределённые транзакции, использование state machines
 - [CQRS & Event Sourcing](../../architecture/cqrs-event-sourcing-interview.md) — event-driven архитектура для сложных workflow
