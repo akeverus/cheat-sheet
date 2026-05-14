@@ -1454,10 +1454,71 @@ processors:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Как observability помогает в инциденте и постмортеме? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Команда из 5 разработчиков (нет dedicated SRE) запускает Kubernetes-микросервисы с бюджетом до $500/мес на observability. Какой стек выбрать?
+>
+> ---
+>
+> #### A) Datadog Enterprise — стандарт индустрии, всё в одном вендоре — ❌ Неверно
+>
+> **Что на самом деле:** Datadog Enterprise стоит $15–23 на host/мес + per-GB логи + per-trace billing. Для 10 хостов + умеренный трафик легко выходит $2k–5k/мес — в 10x превышает бюджет. Datadog уместен для enterprise с командой devops и multi-million budget, не для стартапов.
+>
+> **Откуда путаница:** «стандарт индустрии» — маркетинговое заявление; реально в стартапах чаще self-hosted LGTM или Grafana Cloud Free tier.
+>
+> **Если бы это было правдой:** observability bill съел бы инфраструктурный бюджет — пришлось бы выключать сервисы для оплаты мониторинга.
+>
+> ---
+>
+> #### B) Self-hosted ELK (Elasticsearch + Logstash + Kibana) + Jaeger — open-source, всё бесплатно — ❌ Неверно
+>
+> **Что на самом деле:** Self-hosted ELK на production-нагрузке требует значительных ресурсов: Elasticsearch cluster ≥3 nodes (16 GB RAM каждая) + операционная поддержка (re-sharding, version upgrades, performance tuning). Для команды из 5 разработчиков без SRE это 0.5–1 FTE на поддержку — дороже managed-решения. Jaeger требует Cassandra/ES storage с тем же overhead.
+>
+> **Откуда путаница:** «open-source = бесплатно» забывает про TCO (operating cost = FTE × salary).
+>
+> **Если бы это было правдой:** команда тратит 2–3 дня в месяц на «починку Elasticsearch», вместо разработки фич.
+>
+> ---
+>
+> #### C) Grafana LGTM стек (Loki + Grafana + Tempo + Mimir) + OTel Collector, deployed через Helm в том же кластере — ✓ Верно
+>
+> **Развёрнутое объяснение:** LGTM-стек — оптимальный выбор для Kubernetes-native команд с ограниченным бюджетом. **Loki** для логов хранит индекс только по лейблам (cheap storage в S3, $0.02/GB), **Tempo** для трейсов работает аналогично (object storage, не нужна полная индексация). **Mimir** для метрик — масштабируемая версия Prometheus. **Grafana** unified UI для всего. **OTel Collector** — единая точка сбора. Деплой через `kube-prometheus-stack` + `loki-stack` + `tempo-distributed` Helm charts. Стоимость: ~$100/мес на S3 storage + compute в существующем кластере. **Альтернатива** — Grafana Cloud Free (10k series, 50 GB logs, 50 GB traces бесплатно) — покрывает small startup без self-hosting.
+>
+> **Пример:**
+> ```yaml
+> # values.yaml для loki + tempo + mimir на S3
+> loki:
+>   storage:
+>     bucketNames: {chunks: logs, ruler: rules}
+>     s3: {endpoint: s3.amazonaws.com, region: eu-west-1}
+> tempo:
+>   storage:
+>     trace: {backend: s3, s3: {bucket: traces}}
+> # OTel Collector — gateway mode
+> exporters:
+>   loki: {endpoint: http://loki:3100/loki/api/v1/push}
+>   otlp/tempo: {endpoint: tempo:4317}
+>   prometheusremotewrite: {endpoint: http://mimir:9009/api/v1/push}
+> ```
+>
+> **Когда применять:** Kubernetes-native startups/scale-ups (5–50 engineers), open-source-friendly culture, есть навыки Helm/k8s. Также: cost-sensitive команды с SLO на observability spend.
+>
+> **Подводные камни:** **Loki не для full-text search** — он индексирует только labels, поиск по `|=` или regex медленный на больших объёмах. Если нужен ELK-style search — лучше OpenSearch. **Tempo требует traceID для запросов** — нельзя «найти все медленные трейсы за час» без external index (TraceQL частично решает). **Vendor lock-in минимален** — OTel обеспечивает миграцию.
+>
+> **Связанные вопросы:** [[Q27]] — управление стоимостью; [[Q34]] — OTel Collector; [[Q39]] — FinOps.
+>
+> ---
+>
+> #### D) Только Prometheus + Grafana — метрик хватит на всё, логи в `kubectl logs` — ❌ Неверно
+>
+> **Что на самом деле:** Метрики без логов и трейсов покрывают только «detection», но не «diagnosis». При инциденте «error rate 5%» Prometheus покажет график, но не root cause. `kubectl logs` работает только на живых pods — после restart данные теряются. Production-минимум: метрики + persistent logs (хотя бы Loki).
+>
+> **Откуда путаница:** в учебных туториалах часто показывают только Prometheus — он самый известный из стека. Реально это лишь один pillar из трёх.
+>
+> **Если бы это было правдой:** при OOMKilled pod логи теряются с рестартом — невозможно понять, в каком месте кода была проблема.
+>
+> ---
+
+## Q30. Как observability помогает в инциденте и постмортеме?
 
 **Во время инцидента:**
 1. Фиксируем impact по SLI/бизнес-метрикам — "сколько пользователей затронуто"
@@ -1484,10 +1545,85 @@ processors:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. Как внедрять observability в CI/CD и релизный процесс? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что должен включать качественный post-mortem после production-инцидента, чтобы максимально использовать observability-данные и предотвратить повторение?
+>
+> ---
+>
+> #### A) Виновники, дисциплинарные меры и приказ «больше не ломать» — ❌ Неверно
+>
+> **Что на самом деле:** Blame culture — главный антипаттерн post-mortem. Когда команда боится наказания, инциденты скрываются или замалчиваются, а реальные причины (системные баги, плохая observability, неполный runbook) не устраняются. Industry standard — **blameless post-mortem** (Google SRE Book, Etsy). Цель — улучшить систему, не наказать людей.
+>
+> **Откуда путаница:** в традиционных корпорациях руководство ожидает «найти виноватого». Это краткосрочно успокаивает менеджмент, но долгосрочно ухудшает MTTR.
+>
+> **Если бы это было правдой:** команда скрывает инциденты, post-mortems пишут формально, паттерны повторяются — инцидент того же типа происходит снова через месяц.
+>
+> ---
+>
+> #### B) Только текстовое описание «что произошло» без timeline и метрик — ❌ Неверно
+>
+> **Что на самом деле:** Без точного timeline (с timestamps до секунд) и metric snapshots невозможно установить корреляции и понять caustic chain. «Сервис упал, мы починили» — это не post-mortem, это твит. Качественный post-mortem требует timeline из observability-данных, метрик до/после, screenshot дашбордов.
+>
+> **Откуда путаница:** под пресс «быстрее закрыть тикет» команды пишут краткие текстовые отчёты вместо полноценных post-mortems.
+>
+> **Если бы это было правдой:** через 3 месяца никто не помнит деталей; preventative actions не выполняются, потому что неясно, что именно предотвращать.
+>
+> ---
+>
+> #### C) Точный timeline на основе observability, root cause analysis, impact assessment, action items с дедлайнами и owner, contributing factors — ✓ Верно
+>
+> **Развёрнутое объяснение:** Качественный post-mortem (формат Google SRE Book) включает: **(1) Timeline** из observability — каждое событие с timestamp, цитатами из логов, screenshot дашбордов. **(2) Impact**: сколько пользователей затронуто (по SLI), revenue impact, продолжительность. **(3) Root cause** — техническая причина (e.g., «certificate expired» — НЕ «человек забыл обновить»). **(4) Contributing factors** — почему мониторинг не предупредил, почему runbook не помог, что было сложно диагностировать. **(5) Action items** с owner, дедлайном, jira-ticket: добавить метрику X, обновить runbook Y, fix bug Z. **(6) Lessons learned** — что повторно использовать. **(7) Blameless tone** — описываем систему, не людей. Регулярные «post-mortem reviews» команды раз в квартал — выявление паттернов между инцидентами.
+>
+> **Пример:**
+> ```markdown
+> # Post-Mortem: payment-service outage 2026-04-15
+>
+> ## Timeline
+> | Time (UTC) | Event | Source |
+> |------------|-------|--------|
+> | 10:15:23 | Alert: error_rate>1% on payment-service | Alertmanager |
+> | 10:17:01 | p99 latency = 2.3s (baseline 200ms) | Grafana dashboard |
+> | 10:19:42 | Trace: `payment.charge` span timeout 5s | Tempo trace |
+> | 10:22:15 | Log: "Connection refused: payment-gateway:443" | Loki |
+> | 10:25:00 | Root cause identified: TLS cert expired | Manual diag |
+> | 10:28:30 | Fix deployed: cert renewed via ACME | git commit |
+> | 10:32:00 | Recovery: error_rate<0.1%, p99=180ms | Dashboard |
+>
+> ## Impact
+> - Duration: 17 minutes (10:15–10:32)
+> - Failed payments: ~2,400 transactions
+> - Revenue impact: ~$45k
+> - SLO budget consumed: 8% of monthly budget
+>
+> ## Root Cause
+> Let's Encrypt cert on payment-gateway expired. ACME auto-renewal cron
+> failed silently for 14 days (DNS provider rate-limited).
+>
+> ## Action Items
+> - [ ] @alice — Add `cert_expiry_days` metric + alert at 14 days (2026-04-22)
+> - [ ] @bob — Fix ACME cron error handling (2026-04-29)
+> - [ ] @carol — Runbook: cert rotation procedure (2026-05-06)
+> ```
+>
+> **Когда применять:** обязательно после P1/P2 инцидентов, опционально для P3 с recurring pattern. Проводить в течение 3 рабочих дней — данные ещё свежие.
+>
+> **Подводные камни:** **action items без дедлайнов** — главная причина повторения инцидентов. Нужен tracker (Jira label `post-mortem`) и monthly review нерешённых items. **Скрытые root causes** — если первая обнаруженная причина (cert) лежит поверх системной (cron silent failure), нужно «Five Whys» до системной.
+>
+> **Связанные вопросы:** [[Q31]] — observability в CI/CD; [[Q33]] — maturity model; [[Q38]] — Runbook.
+>
+> ---
+>
+> #### D) Записать в Confluence «всё работает, инцидент закрыт» — это формальность для compliance — ❌ Неверно
+>
+> **Что на самом deal:** Минимальный post-mortem без анализа — формальность, которая создаёт ложное чувство «процесс есть». Через 6 месяцев такой документ не помогает: невозможно восстановить timeline, action items не были созданы.
+>
+> **Откуда путаница:** ISO/SOC2 compliance иногда требует «incident reports», и команды воспринимают это как paperwork.
+>
+> **Если бы это было правдой:** учиться на инцидентах невозможно — каждый инцидент уникален вместо того, чтобы быть частью паттерна.
+>
+> ---
+
+## Q31. Как внедрять observability в CI/CD и релизный процесс?
 
 - На **pre-prod** проверять обязательные метрики/логи/трейсы для новых endpoints
 - При **canary** сравнивать SLI новой и старой версии автоматически
@@ -1530,10 +1666,94 @@ spec:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. (!) Какие anti-patterns в observability встречаются чаще всего? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как наиболее эффективно встроить observability в release pipeline для автоматической защиты от плохих релизов?
+>
+> ---
+>
+> #### A) Деплоить сразу 100% и руками проверять Grafana в течение часа — ❌ Неверно
+>
+> **Что на самом деле:** Big-bang deploy + ручная проверка не масштабируется. (1) При плохом релизе 100% пользователей сразу страдают — нет canary buffer. (2) Ручная проверка субъективна и зависит от того, кто смотрит дашборд. (3) Нет automation для rollback — счёт идёт на минуты. Industry standard: progressive delivery (canary / blue-green) + automated guardrails.
+>
+> **Откуда путаница:** в небольших проектах легче деплоить «как раньше». Но как только сервис достигает SLO, big-bang становится недопустимым.
+>
+> **Если бы это было правдой:** при плохом релизе MTTR = время на детект (человеческое восприятие) + время на rollback. Это часы, не минуты.
+>
+> ---
+>
+> #### B) Покрыть unit-тестами 100% кода — этого достаточно перед deploy в production — ❌ Неверно
+>
+> **Что на самом деле:** Unit-тесты проверяют корректность кода в изоляции, но не ловят integration-баги: проблемы с конфигурацией prod, latency в реальных сервисах, breaking changes в API партнёров, deadlocks под реальным concurrency. 100% coverage не защищает от 50% production-проблем. Observability в release pipeline — независимый слой защиты.
+>
+> **Откуда путаница:** «больше тестов = надёжнее» — частично правда, но тесты и observability дополняют, а не заменяют друг друга.
+>
+> **Если бы это было правдой:** компании Netflix/Google/Amazon с миллионами тестов не нуждались бы в canary deployments — но они активно их используют.
+>
+> ---
+>
+> #### C) Canary deployment + automated guardrails (SLI comparison new vs old) + auto-rollback по метрикам + связь release→trace→dashboard — ✓ Верно
+>
+> **Развёрнутое объяснение:** Полный pipeline: **(1) Canary deployment** — деплоить новую версию на 5–10% traffic (через Argo Rollouts / Flagger / Istio). **(2) Automated SLI comparison**: AnalysisTemplate сравнивает error_rate и latency между новой и старой версией каждые 60 секунд. **(3) Pass/Fail gates**: если новая версия хуже на 1% — auto-rollback, без человека. **(4) Post-deploy validation**: 30 минут наблюдение на 100% трафике, затем «release complete». **(5) Release annotations** в Grafana — связь deploy time с метрикой деградации. **(6) Trace sampling at deploy**: высокий sampling в первые часы релиза для диагностики. **(7) Pre-prod gates**: на staging проверять обязательные метрики/логи/трейсы для новых endpoints — структурные тесты observability-конфига.
+>
+> **Пример:**
+> ```yaml
+> # Argo Rollouts — automated canary with guardrails
+> apiVersion: argoproj.io/v1alpha1
+> kind: AnalysisTemplate
+> metadata:
+>   name: success-rate
+> spec:
+>   metrics:
+>     - name: error-rate
+>       interval: 60s
+>       count: 5
+>       successCondition: result[0] < 0.01    # <1% error rate
+>       failureLimit: 2                       # 2 failures → rollback
+>       provider:
+>         prometheus:
+>           address: http://prometheus:9090
+>           query: |
+>             sum(rate(http_requests_total{
+>               app="{{args.service}}",
+>               version="{{args.version}}",
+>               status=~"5.."
+>             }[5m]))
+>             /
+>             sum(rate(http_requests_total{
+>               app="{{args.service}}",
+>               version="{{args.version}}"
+>             }[5m]))
+>     - name: p99-latency
+>       successCondition: result[0] < 0.5
+>       provider:
+>         prometheus:
+>           query: |
+>             histogram_quantile(0.99,
+>               sum(rate(http_request_duration_seconds_bucket{
+>                 app="{{args.service}}",
+>                 version="{{args.version}}"
+>               }[5m])) by (le))
+> ```
+>
+> **Когда применять:** обязательно для сервисов с SLO (любой пользовательский сервис), для high-traffic API. Особенно критично для финансовых/payment-сервисов, где даже минута деградации = большие потери.
+>
+> **Подводные камни:** **Low-traffic canary** — при 5% трафика на сервис с 100 RPS получаем 5 RPS на новой версии, статистики на 60 секунд может быть недостаточно (false positives). Решение: увеличить window до 5–10 минут или использовать synthetic load. **Метрики до окончания warm-up** — первые 30 секунд после старта pod показывают спайки латентности (JVM warmup, connection pool init); нужен `initialDelay` в analysis.
+>
+> **Связанные вопросы:** [[Q30]] — post-mortem; [[Q23]] — SLO/burn rate; [[Q33]] — maturity model.
+>
+> ---
+>
+> #### D) Только полные нагрузочные тесты перед каждым релизом — этого достаточно — ❌ Неверно
+>
+> **Что на самом деле:** Load testing в staging не репродуцирует production-условия: реальный traffic pattern, реальные данные, реальные external dependencies (за исключением chaos testing с production-shadow trafic). Многие баги проявляются только в prod (data corner cases, third-party API quirks). Load testing полезен, но не заменяет canary + observability.
+>
+> **Откуда путаница:** load testing видим (есть отчёт), canary deployment — процесс (нет одного артефакта).
+>
+> **Если бы это было правдой:** компании не использовали бы canary — но Amazon, Google, Netflix используют его именно потому, что load testing недостаточно.
+>
+> ---
+
+## Q32. (!) Какие anti-patterns в observability встречаются чаще всего?
 
 | Anti-pattern | Проблема | Решение |
 |-------------|----------|---------|
