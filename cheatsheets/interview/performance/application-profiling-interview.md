@@ -1998,10 +1998,93 @@ java -XX:StartFlightRecording=duration=60s,filename=profile.jfr,settings=profile
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Profiling в production — low-overhead инструменты ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В каком сценарии **async-profiler принципиально превосходит JFR**, а не просто отличается по флагам?
+>
+> ---
+>
+> #### A) Long-term continuous profiling в production (24/7 запись) — ❌ Неверно
+>
+> **Что на самом деле:** для long-term continuous profiling **JFR — лучший выбор**, не async-profiler. JFR создан именно для этого: rolling buffer, низкий overhead 1-2%, integration с Mission Control, persistent storage. Async-profiler — это **on-demand** tool, обычно запускается на 30-90 секунд для targeted analysis.
+>
+> Pyroscope / Grafana Phlare поддерживают async-profiler в continuous mode, но это требует отдельной инфраструктуры. JFR работает out-of-the-box.
+>
+> **Откуда путаница:** «async-profiler точнее → используем его везде». На практике точность нужна не всегда, а continuous availability — да.
+>
+> **Если бы это было правдой:** Datadog Continuous Profiler использовал бы async-profiler как основной агент. Реально они используют JFR (через Java Agent).
+>
+> ---
+>
+> #### B) Анализ GC pauses и связь с allocation rate — ❌ Неверно
+>
+> **Что на самом деле:** для GC анализа **JFR превосходит async-profiler**. JFR имеет встроенные события `jdk.GarbageCollection`, `jdk.GCPhasePause`, `jdk.GCHeapSummary`, `jdk.PromotionFailed` — комплексный контекст. Async-profiler видит allocation flame graph, но не GC phases и тем более не concurrent vs STW phases.
+>
+> Для GC tuning workflow: JFR + GCViewer / JITWatch.
+>
+> **Откуда путаница:** «allocation = GC pressure → async-profiler с -e alloc». Allocation profiling — да, но **полный анализ GC** требует JFR events.
+>
+> **Если бы это было правдой:** все GC analysis guides рекомендовали async-profiler. Реально все рекомендуют JFR + Mission Control.
+>
+> ---
+>
+> #### C) Профилирование короткоживущих процессов (CLI tool, batch job на 10 сек) — ❌ Неверно
+>
+> **Что на самом деле:** для short-lived процессов **оба инструмента работают**, и JFR даже удобнее: `-XX:StartFlightRecording=duration=10s,filename=profile.jfr` запускает запись с первой миллисекунды. Async-profiler требует attach к running процессу — это race condition для short jobs.
+>
+> Для batch-jobs JFR из коробки.
+>
+> **Откуда путаница:** async-profiler ассоциируется с low-overhead, что нужно short jobs. Но startup overhead JFR — единичные миллисекунды.
+>
+> **Если бы это было правдой:** JMH benchmarks использовали бы async-profiler. Реально они тоже работают с JFR (через `-prof jfr`).
+>
+> ---
+>
+> #### D) Точное измерение CPU времени для методов, которые не проходят через safepoint (`tight loops`, native код, JNI вызовы) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> JFR использует JVMTI sampling, который прерывает потоки **только в safepoints** (точках, куда JVM может остановить поток для GC или биркапа). Tight loops без вызовов методов (например, `for (int i; i < N; i++) sum += arr[i]`) могут **миллисекунды не достигать safepoint**, и JFR пропустит их в sampling.
+>
+> Async-profiler через **AsyncGetCallTrace** API (внутренний HotSpot API) и `perf_events` (Linux kernel) делает sampling **из signal handler** — не привязан к safepoints. Видит:
+>
+> - **Tight CPU-bound loops** без method calls — JFR покажет 0% времени, async-profiler точно.
+> - **Native код** (JNI, native methods) — JFR not aware, async-profiler через perf_events видит C/C++ frames.
+> - **JIT-генерированный код** до его finalization — JFR может пропустить, async-profiler видит через perf.
+> - **OS-level activity**: syscalls, page faults — для full-stack profiling.
+>
+> **Пример (production CPU mystery):**
+> ```text
+> Симптом: JFR показывает 95% времени в idle/parked. Откуда же CPU 80%?
+> Решение: запустил async-profiler — обнаружил tight loop в JNI wrapper
+> для криптографической библиотеки. JFR не видел — нет safepoint в JNI.
+> ```
+>
+> ```bash
+> # Async-profiler с perf_events (Linux, нужен CAP_SYS_ADMIN или /proc/sys/kernel/perf_event_paranoid<2)
+> ./profiler.sh -e cpu -d 30 -f cpu.html -t <PID>
+>
+> # С native stack (видны C/C++ frames)
+> ./profiler.sh -e cpu -d 30 --native -f cpu-native.html <PID>
+>
+> # На macOS — нет perf_events, но AsyncGetCallTrace работает
+> ./profiler.sh -e itimer -d 30 -f cpu-mac.html <PID>
+> ```
+>
+> **Когда применять:**
+> - **Подозрение на safepoint bias**: профиль выглядит «слишком чистым», но CPU высокий.
+> - **Hybrid Java/native код**: ML-инференс (ONNX/TF), криптография (BoringSSL), сжатие (Zstd JNI).
+> - **Сравнение AOT/JIT performance**: GraalVM native vs HotSpot JIT.
+> - **Низкоуровневая оптимизация**: cache misses, branch mispredicts через `--event cache-misses`.
+>
+> **Подводные камни:**
+> - **Сигналы (`SIGPROF`)**: async-profiler использует signals — конфликт с librsry, использующими их (старая Netty, JNI с custom signal handlers).
+> - **Symbol resolution**: для native frames нужны debug symbols (`.so` с DWARF). Без них stack frames = `0x7f8b3c...`.
+> - **Container security**: K8s pods часто блокируют `CAP_SYS_ADMIN` → fallback на `itimer` mode (менее точный, но работает).
+> - **Запись wall vs cpu mode**: путаница частая. `cpu` = on-CPU only, `wall` = on-CPU + off-CPU (видит ожидание I/O).
+>
+> **Связанные вопросы:** [[Q3]] — safepoint bias detail; [[Q9]] — async-profiler internals; [[Q11]] — JFR vs async-profiler choosing.
+
+## Q36. Profiling в production — low-overhead инструменты
 
 **Принцип:** production profiling должен иметь overhead < 3%, не блокировать потоки, не влиять на latency > 5%.
 
@@ -2055,10 +2138,94 @@ public JfrMeterRegistry jfrMeterRegistry(JfrConfig config) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. Heap Dump анализ — MAT, VisualVM, утечки памяти ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой инструмент категорически **нельзя** использовать в production даже для краткого анализа, потому что вызывает многосекундный Stop-the-World?
+>
+> ---
+>
+> #### A) JFR с настройками `settings=profile` (не default) — ❌ Неверно
+>
+> **Что на самом деле:** JFR с `settings=profile` имеет overhead ~2% (vs ~1% у default) — выше, но всё ещё **полностью безопасен** для production. Никаких STW pauses сверх обычных. JFR разработан для production continuous recording: Mission Control с самого начала рекомендует `settings=profile` для retrospective анализа.
+>
+> Разница `default` vs `profile`: больше событий сэмплируется (allocation events, more thread states), но без блокировки потоков.
+>
+> **Откуда путаница:** «profile» звучит как «heavy», в отличие от «default». Но JFR design language другой — оба режима safe.
+>
+> **Если бы это было правдой:** Datadog/Pyroscope не могли бы использовать JFR. Реально это их основа.
+>
+> ---
+>
+> #### B) Heap dump через `jmap -dump` без предупреждения, особенно на больших heap (10GB+) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Heap dump требует **полной остановки JVM (Stop-the-World)** на время записи всего heap на диск. Для 10GB heap на SSD это ~5-10 секунд, на slow storage (NFS, EBS gp2) — до минуты. Все application threads замораживаются, входящие запросы накапливаются в queue, healthcheck'и failing → **K8s начинает рестартить pod как unhealthy**.
+>
+> Особо опасные сценарии:
+>
+> 1. **`jmap -dump` без флага `live`** — дампит ВСЕ объекты включая mortuary (garbage). Размер dump в 2-3 раза больше, время записи дольше.
+> 2. **Дамп на podDisk** — pod storage обычно overlay filesystem поверх slow network volume. Запись 10GB → 30-60 сек STW.
+> 3. **Production во время пика нагрузки** — backpressure cascade. Upstream timeout'ы, retry storm, circuit breaker open.
+>
+> **Безопасные альтернативы:**
+>
+> ```bash
+> # 1. jcmd с live=true — только reachable, меньше размер
+> jcmd <PID> GC.heap_dump filename=/tmp/heap.hprof live=true
+> # Всё равно STW, но меньше: для 10GB live=5GB → ~2.5 сек
+>
+> # 2. Сначала тщательно подготовиться:
+> #    a) Удалить pod из load balancer (drain)
+> #    b) Подождать активные запросы (graceful shutdown timeout)
+> #    c) Только потом — heap dump
+>
+> # 3. Альтернатива — JFR с GC events
+> jcmd <PID> JFR.start duration=60s settings=profile filename=/tmp/jfr.jfr
+> # Не даёт heap detail, но даёт allocation hotspots без STW
+>
+> # 4. Crash dump (auto on OOM) — STW неизбежен, но pod уже умирает
+> -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heap.hprof
+> ```
+>
+> **Когда применять (heap dump в prod):**
+> - **Только при memory leak investigation** где нет других способов.
+> - **Только на одном из реплик pod** (others handle traffic).
+> - **Drain pod из service** перед дампом, restore после.
+> - **Сообщить on-call team** — это **planned operation**, не silent.
+>
+> **Подводные камни:**
+> - **Disk space**: для 10GB heap нужно 10GB+ free. Pod ephemeral storage может быть только 1GB → dump fail.
+> - **Permission**: `jmap`/`jcmd` требуют same user as JVM или CAP_SYS_PTRACE.
+> - **Compressed pointers**: dump сохраняется в uncompressed формате, размер на диске больше чем `Used Heap`.
+> - **Networking impact**: пока STW идёт — все потоки заблокированы, gRPC keep-alive failing, downstream services видят timeouts.
+>
+> **Связанные вопросы:** [[Q18]] — heap dump basics; [[Q19]] — memory leak detection; [[Q27]] — production profiling safety.
+>
+> ---
+>
+> #### C) async-profiler с `-d 30 -e cpu` (sampling 1000Hz) — ❌ Неверно
+>
+> **Что на самом деле:** async-profiler с дефолтными настройками имеет overhead 1-3%, **никаких STW pauses**. Используется в production routinely в больших компаниях (Netflix, LinkedIn, Twitter). Sampling через signal handler не блокирует application threads.
+>
+> «1000Hz» звучит как «высокая нагрузка», но это 1000 samples в секунду на все CPU — крошечный overhead.
+>
+> **Откуда путаница:** profiler ассоциируется с «замедление». В случае async-profiler — это namesake: «async» = неблокирующий.
+>
+> **Если бы это было правдой:** async-profiler был бы запрещён в production. Реально это **самый используемый** production profiler в Java world.
+>
+> ---
+>
+> #### D) Datadog Continuous Profiler агент в дефолтной конфигурации — ❌ Неверно
+>
+> **Что на самом деле:** Datadog Java Agent спроектирован специально для production: overhead 2-5%, no STW, rolling buffer. По умолчанию профилирует 60 сек каждые 60 минут. Тысячи компаний запускают его в проде 24/7.
+>
+> Continuous profilers (Datadog, Pyroscope, Grafana Phlare) — категория инструментов **созданных для постоянной работы в проде**.
+>
+> **Откуда путаница:** «continuous» звучит как «всегда работает = большой overhead». Реально cumulative overhead за час всё ещё < 5%.
+>
+> **Если бы это было правдой:** Datadog продал бы 0 лицензий. Реально это многомиллионный бизнес именно на production-grade safety.
+
+## Q37. Heap Dump анализ — MAT, VisualVM, утечки памяти
 
 **Heap dump** — снимок всего состояния памяти JVM в формате `.hprof`. Содержит все объекты, ссылки, классы.
 
