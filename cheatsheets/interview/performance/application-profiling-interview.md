@@ -19,7 +19,7 @@ aliases:
   - "Профилирование приложений"
 prerequisites: []
 next: []
-updated: "2026-05-08"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Application Profiling`
 
@@ -2900,10 +2900,108 @@ logging.level.org.hibernate.orm.jdbc.bind: TRACE  # параметры
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q42. Profiling реактивных приложений — особенности Project Reactor ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В `EXPLAIN ANALYZE` для медленного запроса PostgreSQL виден `Seq Scan` на таблице с 50M строк и `Rows Removed by Filter: 49,950,000`. Что это означает и какое решение?
+>
+> ---
+>
+> #### A) Полный sequential scan: PostgreSQL читает все 50M строк, фильтрует 99.9% в памяти, возвращает 50k. Это означает что нет подходящего индекса под условие WHERE — нужно создать B-tree индекс на столбце фильтрации (с учётом selectivity и query pattern) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `Seq Scan` (Sequential Scan) — план выполнения когда planner решает прочитать **всю таблицу** последовательно. PostgreSQL **может** выбрать Seq Scan когда:
+>
+> 1. **Нет индекса** на колонке в WHERE clause.
+> 2. **Selectivity слишком низкая**: индекс есть, но статистика говорит что >5-10% строк подойдут — Seq Scan дешевле (random I/O индекса хуже sequential I/O).
+> 3. **Устаревшая статистика** (forgot `ANALYZE` после bulk insert): planner ошибается в селективности.
+>
+> `Rows Removed by Filter: 49,950,000` означает что из 50M прочитанных строк только 50k passed фильтр — **selectivity 0.1%**. Это **классический индекс-кандидат**: индекс должен быстро найти 50k строк, не читая все 50M.
+>
+> **Workflow для решения:**
+>
+> ```sql
+> -- 1. Анализ запроса
+> EXPLAIN (ANALYZE, BUFFERS)
+> SELECT * FROM orders WHERE status = 'PENDING' AND created_at > now() - interval '1 day';
+>
+> -- Вывод:
+> -- Seq Scan on orders (cost=0..1.2M rows=50000 width=...) (actual time=4500ms)
+> --   Filter: ((status = 'PENDING') AND (created_at > now() - '1 day'))
+> --   Rows Removed by Filter: 49950000
+> --   Buffers: shared read=580000  ← 580k 8KB pages из диска = 4.6GB
+>
+> -- 2. Создать составной индекс под query pattern
+> CREATE INDEX CONCURRENTLY idx_orders_status_created
+>     ON orders(status, created_at)
+>     WHERE status IN ('PENDING', 'PROCESSING');  -- partial index — меньше
+>
+> -- 3. ANALYZE для обновления статистики
+> ANALYZE orders;
+>
+> -- 4. Повторный EXPLAIN
+> EXPLAIN (ANALYZE, BUFFERS)
+> SELECT * FROM orders WHERE status = 'PENDING' AND created_at > now() - interval '1 day';
+>
+> -- Ожидание:
+> -- Index Scan using idx_orders_status_created (cost=0.5..200 rows=50000) (actual time=15ms)
+> --   Index Cond: ((status = 'PENDING') AND (created_at > '...'))
+> --   Buffers: shared hit=200 read=50  ← 50 pages = 400KB
+> ```
+>
+> **Когда применять:**
+> - **Любая медленная query**: всегда начинать с `EXPLAIN ANALYZE` (с реальной нагрузкой).
+> - **После bulk insert / data migration**: обновить статистику через `ANALYZE table_name`.
+> - **«Запрос работает быстро в dev, медленно в prod»**: разная статистика, разный data distribution.
+> - **Составные индексы**: column order matters — leftmost prefix используется (для запросов с WHERE по подмножеству колонок).
+>
+> **Подводные камни:**
+> - **`CREATE INDEX CONCURRENTLY`**: ОБЯЗАТЕЛЬНО в проде — иначе блокирует таблицу на время создания. На 50M строк это 5-30 минут.
+> - **Bloat**: индекс может стать неэффективным после массовых updates. `REINDEX CONCURRENTLY` (PG 12+) для пересборки.
+> - **Index не выбирается planner'ом**: даже после создания planner может игнорировать. Проверить статистику (`pg_stats`), увеличить `default_statistics_target`.
+> - **Function index**: для `WHERE LOWER(email) = ?` нужен `CREATE INDEX ON users(LOWER(email))`.
+> - **Hot inserts**: новые данные находятся в одной части индекса → page contention. Решение — partition table.
+>
+> **Связанные вопросы:** [[Database Performance]] — SQL optimization; [[Q22]] — GC connection с DB latency; [[Q15]] — off-CPU profiling видит DB wait.
+>
+> ---
+>
+> #### B) PostgreSQL не поддерживает индексы для условий со временем (created_at) — нужно использовать партиционирование — ❌ Неверно
+>
+> **Что на самом деле:** B-tree индексы **отлично работают** с timestamp колонками — это один из самых частых случаев индексирования. `WHERE created_at > X` — bounded range scan через B-tree.
+>
+> Партиционирование (range partitioning по дате) — полезно для **очень больших таблиц** (миллиарды строк, retention policy), но для 50M строк индекс справится.
+>
+> **Откуда путаница:** партиционирование часто упоминается для time-series данных. Это не альтернатива индексам, а complement.
+>
+> **Если бы это было правдой:** Hibernate с auditing колонками был бы непригоден. Реально миллионы apps индексируют timestamp.
+>
+> ---
+>
+> #### C) `Rows Removed by Filter` — это не проблема, PostgreSQL так пишет нормальные запросы. Решения не требуется — ❌ Неверно
+>
+> **Что на самом деле:** `Rows Removed by Filter: 49M` — **критический сигнал**. Это означает 49M строк прочитано впустую — disk I/O, CPU на сравнения, memory bandwidth. Это **definition** inefficient query.
+>
+> Нормально это выглядит как `Rows Removed by Filter: 100-1000` — отбрасывание мусора после индексного поиска. Миллионы — bug.
+>
+> **Откуда путаница:** `Rows Removed by Filter` присутствует в любом EXPLAIN — но в нормальных запросах это small number.
+>
+> **Если бы это было правдой:** все queries работали бы как Seq Scan. Реально без индексов проды бы не работали.
+>
+> ---
+>
+> #### D) Нужно увеличить shared_buffers PostgreSQL до 32GB чтобы вся таблица помещалась в RAM — ❌ Неверно (частичное решение)
+>
+> **Что на самом деле:** увеличение shared_buffers **снижает disk I/O**, но не решает фундаментальную проблему — 50M строк всё равно читаются и фильтруются. Это **band-aid**, не fix.
+>
+> Кроме того, shared_buffers 32GB рекомендуется для машин с 100GB+ RAM, иначе вытесняет OS page cache (counterproductive).
+>
+> **Правильно**: индекс снижает количество читаемых страниц с 580k до 200 — это **3000x** улучшение, не зависит от RAM.
+>
+> **Откуда путаница:** «больше памяти = быстрее» — общее правило, но не для алгоритмических проблем. O(N) → O(log N) важнее размера RAM.
+>
+> **Если бы это было правдой:** indexing был бы не нужен — просто положить всё в RAM. Реально index + RAM = power combo.
+
+## Q42. Profiling реактивных приложений — особенности Project Reactor
 
 **Особенности:** реактивный код работает на пуле потоков (обычно 1 поток на CPU). Традиционный thread dump / CPU profiling по потокам неинформативен — один поток обрабатывает много запросов.
 
@@ -2958,6 +3056,118 @@ management.metrics.enable.reactor: true
 
 **Ключевые метрики реактивного сервиса:** event loop utilization (> 80% — bottleneck), pending count, upstream latency через r2dbc/WebClient метрики.
 
+
+> [!mcq]
+>
+> **Вопрос:** Почему **traditional thread dump** малоинформативен для reactive приложений на Project Reactor, и какой инструмент даёт правильную картину?
+>
+> ---
+>
+> #### A) В reactive thread dumps все потоки в state `WAITING` — это deadlock, который традиционный jstack не умеет обнаруживать — ❌ Неверно
+>
+> **Что на самом деле:** WAITING состояние event loop потоков в reactive — это **норма**, не deadlock. Event loop парк'ятся когда нет работы (epoll_wait под капотом). Traditional `jstack` отлично детектит реальные deadlocks (через monitor cycle analysis) — в reactive они редки, но возможны.
+>
+> Проблема не в deadlock detection, а в **смешивании контекстов запросов на одном потоке**.
+>
+> **Откуда путаница:** «много потоков WAITING → проблема» — общая интуиция, но для reactive это default state.
+>
+> **Если бы это было правдой:** Spring WebFlux/Netty не работали бы — у них event loop постоянно WAITING. Реально это правильный design.
+>
+> ---
+>
+> #### B) Reactive код выполняется на event loop pool (1 поток на CPU) — **один поток обрабатывает много запросов**, переключаясь между ними. Stack trace показывает текущий запрос, но контекст других не виден. Решение — `Reactor Debug Agent` или `Hooks.onOperatorDebug()` для сохранения **assembly-time stack trace** (где Flux был создан) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Traditional thread-per-request модель (Servlet, Spring MVC):
+> - Поток `http-nio-8080-exec-1` обрабатывает один запрос от начала до конца.
+> - Thread dump показывает полный stack: HTTP handler → Service → Repository → JDBC.
+> - Понятно «что делает каждый поток».
+>
+> Reactive модель (WebFlux + Reactor):
+> - Поток `reactor-http-nio-1` обрабатывает **сотни запросов параллельно**, переключаясь между ними при non-blocking I/O.
+> - Thread dump в момент `T` показывает stack одного запроса — других не видно (они не выполняются на CPU).
+> - Stack trace сам по себе короткий: `Flux.subscribe → flatMap → map` — не видно **откуда** этот Flux пришёл (где `assembly-time`).
+>
+> **Решение — assembly-time vs execution-time stack:**
+>
+> ```java
+> // Включить в dev / staging (НЕ в prod — overhead 50-100%)
+> @PostConstruct
+> public void init() {
+>     ReactorDebugAgent.init();  // из reactor-tools dependency
+>     // или альтернатива:
+>     // Hooks.onOperatorDebug();
+> }
+>
+> // Теперь при ошибке stack показывает обе точки:
+> // - где Flux создан (assembly time)
+> // - где обработка упала (execution time)
+> //
+> // Error has been observed at the following site(s):
+> //   *__checkpoint ⇢ Inbound HTTP request to GET /orders
+> //   |_ checkpoint ⇢ OrderService.fetchOrders
+> //   |_ checkpoint ⇢ Hibernate.executeQuery
+> ```
+>
+> ```java
+> // Production-safe альтернатива — checkpoint() в hot paths
+> orderFlux
+>     .map(this::enrich).checkpoint("after-enrich")
+>     .flatMap(this::persist).checkpoint("after-persist")
+>     .subscribe();
+> // checkpoint имеет zero overhead — только при ошибке записывает точку
+> ```
+>
+> ```java
+> // Распространение trace через Reactor Context
+> Mono<Order> processed = orderService.process(order)
+>     .contextWrite(Context.of("traceId", traceId, "userId", userId));
+> // Доступно во всех downstream операторах:
+> .doOnNext(o -> Mono.deferContextual(ctx -> {
+>     log.info("Order {} processed, traceId={}", o.id, ctx.get("traceId"));
+>     return Mono.empty();
+> }))
+> ```
+>
+> **Когда применять:**
+> - **WebFlux / R2DBC приложения**: всегда включать Reactor Debug Agent в dev.
+> - **Production debugging** реактивного сервиса: `checkpoint()` в критичных точках.
+> - **Distributed tracing**: Micrometer Tracing + Reactor Context для correlation IDs.
+> - **Profiling reactive**: использовать **wall-clock async-profiler** (`-e wall`) — видит off-CPU (где ждём DB/HTTP).
+>
+> **Подводные камни:**
+> - **ReactorDebugAgent overhead 50-100%**: только для dev/staging. В prod использовать `checkpoint()` selectively.
+> - **Context propagation**: Reactor Context **не** работает с ThreadLocal-based libraries (MDC) automatically. Нужны Micrometer Context Propagation 1.0+.
+> - **Schedulers.boundedElastic блокирующий код**: для legacy blocking JDBC внутри reactive pipeline. Тогда thread dump для этого пула информативен traditional way.
+> - **Virtual threads (Java 21+)**: меняют картину — каждый запрос на своём virtual thread, thread dump снова осмысленный (но миллионы потоков). Pyroscope с virtual-thread-aware sampling.
+>
+> **Связанные вопросы:** [[Q20]] — thread dump basics; [[Q15]] — on-CPU vs off-CPU; [[Q14]] — CPU bottleneck.
+>
+> ---
+>
+> #### C) Reactor использует corutines внутри JVM — нужен Kotlin-specific debugger вместо jstack — ❌ Неверно
+>
+> **Что на самом деле:** Project Reactor — **чистая Java библиотека**, не использует Kotlin coroutines. Это reactive streams implementation на основе publisher/subscriber pattern + work-stealing scheduler.
+>
+> Kotlin Coroutines — отдельная технология (kotlinx.coroutines), может работать поверх Reactor (kotlinx-coroutines-reactor adapter), но это не зависимость.
+>
+> **Откуда путаница:** «реактивный + асинхронный» → ассоциация с corutines.
+>
+> **Если бы это было правдой:** Java-only приложения с WebFlux не могли бы профилироваться. Реально WebFlux — самый популярный Java reactive framework.
+>
+> ---
+>
+> #### D) Reactive приложения нужно профилировать только в production — в dev они слишком медленные для realistic анализа — ❌ Неверно
+>
+> **Что на самом деле:** наоборот, **в dev включают** Reactor Debug Agent именно потому что **в prod его overhead неприемлем**. Dev environment специально настраивают для debug-friendliness (даже ценой performance).
+>
+> Production profiling — wall-clock async-profiler без debug agent.
+>
+> **Откуда путаница:** «production profiling важнее» — общее правило. Но reactive specifics требуют **dev-time debug help**.
+>
+> **Если бы это было правдой:** все reactive bugs ловились бы в prod. Реально 90% — в dev/test через debug agent.
+
 ---
 
 ## See also
@@ -2968,15 +3178,7 @@ management.metrics.enable.reactor: true
 - [Метрики и трассировка](../monitoring/metrics-tracing-interview.md) — Prometheus, distributed tracing
 - [Observability](../monitoring/observability-interview.md) — наблюдаемость систем
 - [Kubernetes](../devops/kubernetes-interview.md) — оркестрация контейнеров
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Caching Performance](caching-performance-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Database Performance](database-performance-interview.md)
-- [JVM Performance Tuning](jvm-performance-tuning-interview.md)
-- [Memory Management](memory-management-interview.md)
-- [Network Performance](network-performance-interview.md)
-- [Performance Testing](performance-testing-interview.md)
+- [Caching Performance](caching-performance-interview.md) — стратегии кеширования
+- [Database Performance](database-performance-interview.md) — оптимизация БД-запросов
+- [Network Performance](network-performance-interview.md) — сетевая производительность
+- [Performance Testing](performance-testing-interview.md) — нагрузочное тестирование
