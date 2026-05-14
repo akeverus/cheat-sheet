@@ -815,10 +815,89 @@ MockMvc fluent API:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как тестировать REST endpoint с JSON через MockMvc? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Что такое `MockMvc` и в каких сценариях его использование оправдано по сравнению с `TestRestTemplate`/`WebTestClient`?
+>
+> ---
+>
+> #### A) `MockMvc` — это HTTP-клиент с моком сервера, подключается к реальному Tomcat — ❌ Неверно
+>
+> **Что на самом деле:** `MockMvc` — наоборот: НЕ имеет реального сервера и НЕ открывает сокет. Использует `MockHttpServletRequest` + `DispatcherServlet` для симуляции HTTP-запросов прямо в JVM. Под капотом — `TestDispatcherServlet`, который проходит через стандартный pipeline Spring MVC (interceptors, controller, exception handler), но всё in-process.
+>
+> **Откуда путаница:** слово «Mock» и «Mvc» создают впечатление о моке клиента/сервера. На деле это исполнитель Spring MVC pipeline без сетевого слоя.
+>
+> **Если бы это было правдой:** `MockMvc` зависел бы от свободного порта, не параллелился бы хорошо в CI. На практике он быстрее и предсказуемее именно благодаря отсутствию сокетов.
+>
+> ---
+>
+> #### B) `MockMvc` — Spring-инструмент для тестирования web-слоя БЕЗ запуска реального HTTP-сервера: симулирует HTTP-запросы напрямую через DispatcherServlet (in-process), даёт fluent API (`perform → andExpect → andDo → andReturn`); применять когда нужно тестировать routing/валидацию/статусы быстро и предсказуемо; для end-to-end через реальный HTTP — использовать `TestRestTemplate`/`WebTestClient` с `webEnvironment = RANDOM_PORT` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `MockMvc` работает следующим образом:
+> 1. `MockHttpServletRequest` создаётся через builders (`get(url)`, `post(url)`, и т.д.).
+> 2. `TestDispatcherServlet` принимает request — но в памяти, без сокета.
+> 3. Запрос проходит через реальный Spring MVC pipeline: HandlerMapping → Interceptors → Controller → HandlerExceptionResolver → ViewResolver.
+> 4. Ответ упаковывается в `MockHttpServletResponse`.
+> 5. Fluent matchers (`andExpect`) проверяют ответ.
+>
+> Это даёт скорость (нет TCP) + полноту (реальный DispatcherServlet pipeline). Единственное, чего MockMvc не покрывает — реальная HTTP-сериализация заголовков и сокет-уровневые вещи (keep-alive, chunking).
+>
+> **Пример:**
+> ```java
+> @WebMvcTest(OrderController.class)
+> class OrderControllerTest {
+>
+>     @Autowired MockMvc mockMvc;
+>     @MockBean OrderService service;
+>
+>     @Test
+>     void getOrder_notFound_returns404() throws Exception {
+>         when(service.findById(99L))
+>             .thenThrow(new OrderNotFoundException(99L));
+>
+>         mockMvc.perform(get("/api/orders/99"))
+>             .andExpect(status().isNotFound())
+>             .andExpect(jsonPath("$.error").value("ORDER_NOT_FOUND"))
+>             .andDo(print());      // dump request/response в консоль
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - Тесты routing и URL-mapping.
+> - Проверка валидации (`@Valid`) и handler exception mappers.
+> - Тесты Spring Security (`with(user(...))`, `with(csrf())`, `with(jwt())`).
+> - Тесты `@ControllerAdvice` для глобальной обработки ошибок.
+> - Быстрые контроллер-тесты (slice `@WebMvcTest`).
+>
+> **Подводные камни:**
+> - `MockMvc` НЕ выполняет реальную HTTP-сериализацию — нюансы Content-Type negotiation могут отличаться от продакшена.
+> - `andDo(print())` пишет в System.out — в CI логи могут засоряться.
+> - При работе с async-контроллерами (`Callable`, `DeferredResult`) нужен `andExpect(request().asyncStarted())` + `asyncDispatch()`.
+> - В `@SpringBootTest` MockMvc нужно явно включить через `@AutoConfigureMockMvc` — в `@WebMvcTest` он включён сам.
+>
+> **Связанные вопросы:** [[Q4]] — `@WebMvcTest` + MockMvc; [[Q8]] — JSON через MockMvc; [[Q14]] — Spring Security в MockMvc.
+>
+> ---
+>
+> #### C) `MockMvc` симулирует только GET-запросы, для POST/PUT нужен TestRestTemplate — ❌ Неверно
+>
+> **Что на самом деле:** `MockMvc` поддерживает ВСЕ HTTP-методы: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `request` (для нестандартных методов). Доступны fluent builders: `.contentType()`, `.content(jsonBody)`, `.header()`, `.cookie()`, `.with(csrf())`.
+>
+> **Откуда путаница:** в простых примерах часто показывают только `get(url)`. Создаётся впечатление что это всё что умеет MockMvc.
+>
+> **Если бы это было правдой:** не было бы тестов на создание ресурсов через POST — а это самая частая операция в API. На практике `mockMvc.perform(post(...).content(...))` — нормальная идиома.
+>
+> ---
+>
+> #### D) `MockMvc` — устаревший API, в Spring Boot 3+ заменён на `WebTestClient` — ❌ Неверно
+>
+> **Что на самом деле:** `MockMvc` активно поддерживается в Spring Boot 3.x и не помечен как deprecated. `WebTestClient` — это **reactive** клиент из Spring WebFlux, он применяется для WebFlux-приложений (`@WebFluxTest`). Для traditional Spring MVC servlet-приложений MockMvc остаётся стандартом. В Spring Framework 6.2 даже добавили `MockMvc.perform(...)` интеграцию с `WebTestClient` для единообразия API.
+>
+> **Откуда путаница:** WebTestClient выглядит «новее» (reactive API), и есть гайды по миграции на него. Но миграция оправдана только если приложение само reactive.
+>
+> **Если бы это было правдой:** Spring Boot 3.x reference guide рекомендовал бы WebTestClient везде. На практике в документации MockMvc — основной инструмент для MVC-тестов.
 
 ```java
 @WebMvcTest(OrderController.class)
@@ -866,10 +945,79 @@ class OrderControllerTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Чем `@MockBean` отличается от `@Mock` из Mockito? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Как корректно тестировать REST endpoint с JSON-payload через `MockMvc` и какие matchers использовать для проверки ответа?
+>
+> ---
+>
+> #### A) Отправлять JSON через `.contentType(APPLICATION_JSON).content(objectMapper.writeValueAsString(dto))`, проверять статус через `status().isCreated()`, заголовки через `header().string(...)`, JSON-поля через `jsonPath("$.field").value(...)`; для типизированного парсинга ответа — `andReturn().getResponse().getContentAsString()` → `objectMapper.readValue(...)` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Идиома MockMvc для POST с JSON: builders `post(url)` + `.contentType(APPLICATION_JSON)` + `.content(jsonString)`. Сериализация делается через `ObjectMapper` (Spring Boot регистрирует его в контексте автоматически), который респектит конфигурацию приложения (модули `JavaTimeModule`, `kebab-case`, `@JsonIgnore`).
+>
+> Для проверки ответа есть несколько matchers:
+> - `status()` — HTTP-код (`isOk`, `isCreated`, `isBadRequest`, `isUnauthorized`).
+> - `header()` — заголовки (`Location`, `Content-Type`, custom).
+> - `jsonPath()` — поля JSON через JsonPath синтаксис (`$.id`, `$.items[0].sku`, `$.errors.length()`).
+> - `content().json(...)` — сравнение всего payload через JSONassert (поддерживает strict/lenient режимы).
+>
+> Для получения объекта ответа: `MvcResult result = mockMvc.perform(...).andReturn();` → `String body = result.getResponse().getContentAsString();` → `OrderResponse dto = objectMapper.readValue(body, OrderResponse.class);`.
+>
+> **Пример:**
+> ```java
+> mockMvc.perform(post("/api/orders")
+>         .contentType(APPLICATION_JSON)
+>         .content(objectMapper.writeValueAsString(new OrderRequest("CUST-1"))))
+>     .andExpect(status().isCreated())
+>     .andExpect(header().string("Location", containsString("/api/orders/")))
+>     .andExpect(jsonPath("$.id").exists())
+>     .andExpect(jsonPath("$.customer").value("CUST-1"));
+> ```
+>
+> **Когда применять:**
+> - Тесты POST/PUT endpoints с JSON body.
+> - Проверка контракта API (поля, статусы, заголовки).
+> - Проверка валидации (`@Valid` + `MethodArgumentNotValidException`).
+> - Negative cases: 400/404/409 для ошибочных входов.
+>
+> **Подводные камни:**
+> - `jsonPath("$.field").value(42)` строго сравнивает тип — `42` (int) НЕ равен `42L` (long), используйте `value(42)` для int, `value(42L)` для long.
+> - `content().json("{\"id\":1}", true)` — strict mode (порядок и все поля), `false` — lenient (подмножество).
+> - При `@RestControllerAdvice` важно тестировать формат ошибки (`$.error`, `$.timestamp`) — иначе изменение глобального handler-а сломает контракт без сигнала.
+> - Не забывайте про CSRF в Spring Security: для POST нужно `.with(csrf())` если фильтр включён.
+>
+> **Связанные вопросы:** [[Q7]] — основы MockMvc; [[Q14]] — Spring Security + JSON тесты.
+>
+> ---
+>
+> #### B) Использовать `RestAssured` вместо MockMvc — это единственный способ отправить JSON в тесте — ❌ Неверно
+>
+> **Что на самом деле:** MockMvc нативно поддерживает JSON через `.contentType(APPLICATION_JSON).content(...)`. RestAssured — отдельная библиотека для тестирования через реальный HTTP-сервер (применяется с `webEnvironment = RANDOM_PORT`), не замена MockMvc, а альтернатива для end-to-end.
+>
+> **Откуда путаница:** RestAssured популярен в acceptance/E2E-тестах с fluent BDD-стилем (`given().when().then()`), что создаёт впечатление о его универсальности.
+>
+> **Если бы это было правдой:** все Spring Boot reference примеры были бы на RestAssured. На практике документация показывает именно MockMvc для контроллер-тестов.
+>
+> ---
+>
+> #### C) JSON нужно вручную собирать в `String`, без `ObjectMapper`, иначе тест зависит от рантайма приложения — ❌ Неверно
+>
+> **Что на самом деле:** наоборот — использование `ObjectMapper` из контекста делает тест устойчивее к рефакторингу DTO. Если поле переименовали, тест упадёт на этапе сериализации (раньше), а не на jsonPath (что менее очевидно). Конкатенация строк JSON — антипаттерн: при добавлении поля все тесты ломаются.
+>
+> **Откуда путаница:** в простых примерах туториалов часто пишут JSON inline: `.content("{\"name\":\"foo\"}")`. Это работает, но плохо масштабируется.
+>
+> **Если бы это было правдой:** при изменении DTO пришлось бы вручную править десятки JSON-строк в тестах. На практике `objectMapper.writeValueAsString(dto)` автоматически следует за изменениями DTO.
+>
+> ---
+>
+> #### D) `jsonPath()` не работает в MockMvc — нужно парсить response как String и сравнивать через `equals` — ❌ Неверно
+>
+> **Что на самом деле:** `jsonPath()` — стандартный matcher MockMvc (`org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath`). Использует JsonPath библиотеку Jayway для навигации по JSON-структуре: `$.items[0].id`, `$.errors[?(@.code=='X')]`, `$.array.length()`.
+>
+> **Откуда путаница:** возможно, конфьюзится с XPath (для XML). Или с ситуацией когда забыли добавить `jayway-jsonpath` в classpath (он включён транзитивно через `spring-boot-starter-test`).
+>
+> **Если бы это было правдой:** все официальные примеры Spring Test использовали бы парсинг строк. На практике `jsonPath` — основной инструмент.
 
 | Параметр | `@Mock` (Mockito) | `@MockBean` (Spring Boot Test) |
 |---|---|---|
@@ -897,10 +1045,77 @@ class OrderControllerTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Что такое `@SpyBean` и когда нужен? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Чем `@MockBean` (Spring Boot Test) принципиально отличается от `@Mock` (Mockito) и почему добавление `@MockBean` влияет на скорость прогона test suite?
+>
+> ---
+>
+> #### A) `@MockBean` и `@Mock` — синонимы, разница только в пакете импорта — ❌ Неверно
+>
+> **Что на самом деле:** это разные инструменты с разной семантикой. `@Mock` создаёт mock-объект Mockito, который надо вручную подставить в зависимый класс через `@InjectMocks` (или `MockitoAnnotations.openMocks(this)`). `@MockBean` создаёт mock и **регистрирует его в Spring ApplicationContext**, заменяя реальный бин — все `@Autowired` зависимости получают именно mock.
+>
+> **Откуда путаница:** оба создают mock, оба работают через Mockito под капотом, имена похожи.
+>
+> **Если бы это было правдой:** не было бы влияния на кеш контекста, slice-тесты не нуждались бы в `@MockBean`. На практике именно различие в scope (JVM vs Spring container) определяет производительность.
+>
+> ---
+>
+> #### B) `@Mock` создаёт mock-объект уровня JVM (для unit-тестов БЕЗ Spring), `@MockBean` регистрирует mock в `ApplicationContext`, заменяя бин — каждый уникальный набор `@MockBean` создаёт новый context cache entry (поэтому `@MockBean` загрязняет кеш и замедляет test suite); `@Mock` использовать в чистых unit-тестах, `@MockBean` — в `@SpringBootTest`/slice-тестах когда нужно подменить зависимость в DI-графе — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Spring TestContext Framework кеширует `ApplicationContext` по «ключу»: комбинация аннотаций, профилей, `@TestPropertySource`, `@ContextConfiguration` и **набора `@MockBean`/`@SpyBean`**. Если в `TestA` указан `@MockBean EmailService`, а в `TestB` — `@MockBean PaymentService`, это **два разных контекста** (две full Spring start-up). При 50+ тестовых классах с уникальными `@MockBean` суммарное время может вырасти с 30 секунд до 10 минут.
+>
+> Mockito `@Mock` живёт только внутри JVM, активируется через `MockitoAnnotations.openMocks(this)` или `@ExtendWith(MockitoExtension.class)`. Не влияет на Spring совсем — потому что Spring о нём ничего не знает.
+>
+> **Пример:**
+> ```java
+> // Unit test без Spring:
+> @ExtendWith(MockitoExtension.class)
+> class OrderServiceTest {
+>     @Mock OrderRepository repository;
+>     @InjectMocks OrderService service;        // Mockito подставит mock вручную
+> }
+>
+> // Slice test со Spring:
+> @WebMvcTest(OrderController.class)
+> class OrderControllerTest {
+>     @MockBean OrderService service;           // Spring подставит mock в контроллер через DI
+> }
+> ```
+>
+> **Когда применять:**
+> - `@Mock` — для unit-тестов класса в изоляции (быстро, без context).
+> - `@MockBean` — для slice/`@SpringBootTest`, где нужно подменить бин в DI-графе.
+> - В одном проекте обычно ОБА: бизнес-логика покрывается `@Mock`, integration-paths — `@MockBean`.
+>
+> **Подводные камни:**
+> - Минимизируйте `@MockBean` через общий базовый класс (`abstract class BaseIntegrationTest`) — все наследники переиспользуют контекст.
+> - Не путать с `@MockitoBean` (новый в Spring 6.2 — замена устаревшему `@MockBean`).
+> - `@MockBean` сбрасывает mock после каждого теста — не нужно явно вызывать `reset(mock)`.
+> - Mockito-mock через `@Mock` не сбрасывается между тестами по умолчанию (без extension) — может приводить к leak состояния.
+>
+> **Связанные вопросы:** [[Q10]] — `@SpyBean` (partial mock); [[Q13]] — кеш контекста и `@MockBean`.
+>
+> ---
+>
+> #### C) `@MockBean` работает только в unit-тестах без Spring, `@Mock` — в Spring-тестах — ❌ Неверно
+>
+> **Что на самом деле:** наоборот. `@MockBean` определена в `org.springframework.boot.test.mock.mockito` — она требует Spring контекста (без `@SpringBootTest`/slice-аннотации просто не сработает). `@Mock` из `org.mockito` работает где угодно, включая Spring-тесты, но требует ручной wiring через `@InjectMocks`.
+>
+> **Откуда путаница:** слово «Bean» иногда ассоциируется с «упрощённой версией» — а тут наоборот, «Bean» = «бин Spring».
+>
+> **Если бы это было правдой:** не было бы способа подменить бин в context — это сломало бы всю модель slice-тестов. На практике `@MockBean` — основной способ подмены в Spring Test.
+>
+> ---
+>
+> #### D) Использование `@MockBean` НЕ влияет на скорость теста — он переиспользует существующий контекст — ❌ Неверно
+>
+> **Что на самом деле:** `@MockBean` — один из ключевых факторов context cache invalidation. Spring рассматривает набор `@MockBean` как часть «отпечатка» контекста: разные наборы = разные кеш-entries = разные full Spring start-up. Логи `org.springframework.test.context.cache=DEBUG` покажут `cache.size`, `hitCount`, `missCount`, `parentCount`.
+>
+> **Откуда путаница:** локальный запуск одного теста быстрый, и эффект становится заметен только на CI с десятками классов.
+>
+> **Если бы это было правдой:** не было бы рекомендации Spring docs «минимизируйте `@MockBean`». На практике это один из главных source медленного CI.
 
 `@SpyBean` — частичный mock в Spring-контексте: реальный бин, но с возможностью мокировать отдельные методы.
 
@@ -941,10 +1156,89 @@ class OrderEventTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Что такое `@TestConfiguration` и зачем нужна? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое `@SpyBean` в Spring Boot Test и в каких сценариях он предпочтительнее `@MockBean`?
+>
+> ---
+>
+> #### A) `@SpyBean` — то же что `@MockBean`, просто с другим именем — ❌ Неверно
+>
+> **Что на самом деле:** `@SpyBean` создаёт **partial mock** (Mockito spy): сохраняет реальный бин и оборачивает его в spy, который по умолчанию делегирует вызовы реальному методу. `@MockBean` создаёт полностью искусственный mock — все методы возвращают defaults (`null`/`0`/`false`/empty collections) пока не настроены через `when().thenReturn()`.
+>
+> **Откуда путаница:** обе аннотации регистрируют бин в контекст через `BeanPostProcessor` (`MockitoPostProcessor`), оба используют Mockito.
+>
+> **Если бы это было правдой:** не было бы смысла иметь две аннотации. На практике разница в стратегии стаббинга кардинальная.
+>
+> ---
+>
+> #### B) `@SpyBean` запускает реальный код бина и одновременно мокирует все его методы — оба поведения активны параллельно — ❌ Неверно
+>
+> **Что на самом деле:** для каждого вызова применяется ЛИБО реальный метод, ЛИБО stub — не оба сразу. По умолчанию spy делегирует на реальный метод; если для метода настроен `doReturn(...).when(spy).method(...)`, то применяется stub. Параллельного исполнения нет, иначе семантика была бы неопределённой.
+>
+> **Откуда путаница:** spy кажется «двойным» — и слежение, и мок. Но «слежение» (verify) и «стаббинг» — разные операции, не параллельные.
+>
+> **Если бы это было правдой:** возникали бы side effects от реального метода даже при stub-е — нельзя было бы корректно мокировать поведение. На практике stub полностью замещает реальный вызов.
+>
+> ---
+>
+> #### C) `@SpyBean` оборачивает реальный бин в Mockito spy: по умолчанию делегирует вызовы реальной реализации, но позволяет переопределить отдельные методы через `doReturn(...).when(spyBean).method(...)`; применяется когда нужно протестировать реальную бизнес-логику но подменить один-два побочных эффекта (отправку email, внешний HTTP, time-dependent методы) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `@SpyBean` идеален для сценария «работает почти всё кроме одной точки»: представьте `OrderEventPublisher` с методами `publish()` и `sendEmail()`. Реальный `publish()` тестируется как есть, а `sendEmail()` мокается, чтобы не дёргать SMTP-сервер.
+>
+> **Важно про стаббинг spy:** используйте `doReturn/doThrow/doAnswer` форму, а не `when(...).thenReturn(...)`. Причина: `when(spy.method()).thenReturn(...)` СНАЧАЛА вызовет реальный метод (для оценки выражения), что может вызвать NPE или побочный эффект. `doReturn(x).when(spy).method(...)` не вызывает реальный метод вообще.
+>
+> **Пример:**
+> ```java
+> @SpringBootTest
+> class OrderServiceIntegrationTest {
+>
+>     @SpyBean
+>     private OrderEventPublisher publisher;
+>
+>     @Autowired
+>     private OrderService service;
+>
+>     @Test
+>     void create_whenEmailDown_doesNotPropagateError() {
+>         // Мокаем только один метод spy
+>         doThrow(new RuntimeException("Email down"))
+>             .when(publisher).sendEmail(any());
+>
+>         // Остальные методы (например publish to Kafka) работают реально
+>         assertThatCode(() -> service.create(new OrderRequest("CUST-1")))
+>             .doesNotThrowAnyException();
+>
+>         verify(publisher).publish(any(OrderCreatedEvent.class));   // реальный
+>         verify(publisher).sendEmail(any());                        // mock
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - Подменить «дорогой» побочный эффект (email, SMS, HTTP-вызов внешнего API).
+> - Time-dependent методы (`Clock.now()` → подменить на фиксированный момент).
+> - Проверить вызовы AOP-методов (`@Async`, `@Transactional` proxies) — spy сохраняет proxy.
+> - Логирование/аудит — реальный код пишет в log, тест проверяет факт вызова.
+>
+> **Подводные камни:**
+> - `final` методы Mockito не может перекрыть без `mockito-inline` (в Spring Boot 3.x — by default через `org.mockito:mockito-core` с inline mock-maker).
+> - Spy на `@Component` с AOP-обёрткой: иногда spy оборачивается не на сам бин, а на CGLIB proxy — verify может не сработать. Решение: `@SpyBean(reset = MockReset.AFTER)`.
+> - `@SpyBean` тоже загрязняет кеш контекста, как `@MockBean`.
+> - При тестировании self-invocation внутри класса (метод A вызывает метод B того же класса напрямую, без proxy) — spy не перехватит B.
+>
+> **Связанные вопросы:** [[Q9]] — `@MockBean` vs `@Mock`; [[Q13]] — кеш контекста и `@SpyBean`.
+>
+> ---
+>
+> #### D) `@SpyBean` работает только с final-классами и интерфейсами — ❌ Неверно
+>
+> **Что на самом деле:** ровно наоборот в части intent — `@SpyBean` оборачивает экземпляр любого Spring-бина. Ограничение Mockito: spy на final классе требует `mockito-inline` mock-maker. В Spring Boot 3.x это поведение по умолчанию, поэтому работает почти всегда. С интерфейсами spy формально не имеет смысла (нет реализации для делегирования) — нужна конкретная реализация.
+>
+> **Откуда путаница:** возможно, конфьюзится с ограничением «final классы — проблема для proxy».
+>
+> **Если бы это было правдой:** нельзя было бы делать spy для `@Service` (обычные классы, не final, не интерфейс) — а это самый частый use-case.
 
 `@TestConfiguration` — конфигурационный класс **только для тестов**, добавляющий бины в Spring-контекст:
 
