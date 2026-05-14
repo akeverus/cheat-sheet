@@ -471,10 +471,95 @@ public class ReportService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Как работают custom converters в R2DBC? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Зачем нужен `DatabaseClient` если уже есть `R2dbcRepository`, и в чём ключевое различие подходов?
+>
+> ---
+>
+> #### A) `DatabaseClient` — это устаревший API, замена для `R2dbcRepository` в новых проектах не нужна — ❌ Неверно
+>
+> **Что на самом деле:** `DatabaseClient` и `R2dbcRepository` — **дополняющие** API, не конкурирующие. Repository даёт CRUD-абстракцию для entity-based операций (`save`, `findById`, `findAll`). DatabaseClient — низкоуровневый клиент для произвольного SQL с reactive типизированным mapping. Оба активно развиваются в Spring Data R2DBC.
+>
+> **Откуда путаница:** в Spring Data JPA есть `JdbcTemplate` как «легаси» альтернатива JPA. По аналогии можно подумать что `DatabaseClient` — такой же old-school. На деле он именно reactive-first, не legacy.
+>
+> **Если бы это было правдой:** пришлось бы делать все aggregation-запросы и сложные JOIN-ы через `@Query` в Repository, что лишало бы гибкости (например, динамический WHERE/GROUP BY в зависимости от runtime-параметров). На сложной аналитике это блокирует фичу.
+>
+> ---
+>
+> #### B) `DatabaseClient` нужен для произвольного SQL с reactive mapping когда Repository слишком ограничен (агрегаты, JOIN-ы, dynamic queries) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `R2dbcRepository<T, ID>` хорош для CRUD по сущностям: `save`, `findById`, `findAll`, derived queries (`findByCustomerId`), `@Query("SELECT ...")`. Но он ограничен **типом result** — возвращает `Flux<T>` где T — entity. Для агрегатов (`SUM`, `COUNT`, `GROUP BY`), JOIN-ов с проекциями, динамических queries он неудобен.
+>
+> `DatabaseClient` — это reactive `JdbcTemplate`: пишешь raw SQL, биндишь параметры через `.bind()`, маппишь row → DTO через `.map((row, meta) -> ...)`, возвращаешь `Flux<DTO>`/`Mono<DTO>`. Это даёт полный контроль над SQL и проекциями.
+>
+> Под капотом оба используют один `ConnectionFactory` — это просто разные API над одним пулом.
+>
+> **Пример:**
+> ```java
+> @Service
+> @RequiredArgsConstructor
+> public class ReportService {
+>     private final DatabaseClient client;
+>
+>     public Flux<OrderSummary> getOrderSummary(LocalDate from, LocalDate to) {
+>         return client.sql("""
+>                 SELECT customer_id,
+>                        COUNT(*) as order_count,
+>                        SUM(total) as total_amount
+>                 FROM orders
+>                 WHERE created_at BETWEEN :from AND :to
+>                 GROUP BY customer_id
+>                 ORDER BY total_amount DESC
+>                 """)
+>             .bind("from", from.atStartOfDay())
+>             .bind("to", to.plusDays(1).atStartOfDay())
+>             .map((row, meta) -> new OrderSummary(
+>                 row.get("customer_id", String.class),
+>                 row.get("order_count", Long.class),
+>                 row.get("total_amount", BigDecimal.class)
+>             ))
+>             .all();   // или .one() / .first()
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Аналитические запросы** в Spring WebFlux endpoints — отчёты, dashboards, метрики, где результат не маппируется на entity.
+> - **Динамические WHERE/ORDER BY** на основе runtime параметров — Repository `@Query` требует статический SQL.
+> - **Batch insert** — `client.inConnectionMany(conn -> ...)` даёт доступ к `Statement.add()` для накопления параметров перед `execute()` (см. Q13).
+> - **Сложные SQL constructions**: CTE, window functions, recursive queries. В Repository это `@Query` со строкой; в DatabaseClient — текстовый блок Java 15+ с подсветкой синтаксиса.
+>
+> **Подводные камни:**
+> - **Schema-less mapping**: `row.get("col", Class)` — runtime типизация. Опечатка в имени колонки = `IllegalArgumentException` только при выполнении, не при компиляции. Спасает интеграционный тест.
+> - **N+1 проблема всё ещё актуальна**: `flatMap` запросов в цикле даст N+1 даже в реактивном стеке. Решение — JOIN в SQL, не N reactive calls.
+> - **Параметры через `:name` (named) или `$1`/`$2` (positional)**: R2DBC native — positional `$N`, Spring добавляет named как обёртку. На некоторых драйверах (например, MS SQL Server R2DBC) named параметры не работают без `.bind("name", value)`.
+> - **No automatic transaction management для raw SQL**: `@Transactional` работает с DatabaseClient методами через `TransactionalOperator`, но требует явной обёртки если транзакция нужна между несколькими SQL вызовами.
+>
+> **Связанные вопросы:** [[Q12]] — custom converters для R2DBC mapping; [[Q13]] — batch insert через `DatabaseClient.inConnectionMany`; [[Q5]] — реактивные транзакции с `TransactionalOperator`.
+>
+> ---
+>
+> #### C) `DatabaseClient` работает синхронно (блокирует поток) — поэтому его не нужно использовать в WebFlux — ❌ Неверно
+>
+> **Что на самом деле:** `DatabaseClient` полностью **reactive**. Возвращает `Mono`/`Flux`, использует non-blocking R2DBC драйверы (например, `r2dbc-postgresql`). Поток не блокируется на ожидании БД.
+>
+> **Откуда путаница:** имя «`DatabaseClient`» похоже на `JdbcTemplate`, который синхронный. Но R2DBC — Reactive Relational Database Connectivity, и весь его стек non-blocking.
+>
+> **Если бы это было правдой:** использование `DatabaseClient` в WebFlux endpoint блокировало бы event-loop поток, что нивелировало бы все преимущества reactive стека. На практике с DatabaseClient в WebFlux держат тысячи concurrent connections на одной JVM.
+>
+> ---
+>
+> #### D) `DatabaseClient` нужен только для миграций — Flyway/Liquibase не работают с R2DBC — ❌ Неверно
+>
+> **Что на самом деле:** `DatabaseClient` — для **runtime SQL запросов** приложения, не для миграций. Миграции (Flyway/Liquibase) запускаются через **JDBC** (синхронный) при старте приложения — отдельный datasource, ничего общего с DatabaseClient (см. Q14).
+>
+> **Откуда путаница:** оба касаются SQL и БД. Но миграции — однократная операция при boot (когда блокирующий I/O не критичен), а DatabaseClient — для тысяч RPS reactive запросов.
+>
+> **Если бы это было правдой:** миграции в R2DBC-приложении пришлось бы писать reactive — что нереально (Flyway/Liquibase synchronous by design). Реальный подход: JDBC для миграций + R2DBC для runtime.
+
+## Q12. Как работают custom converters в R2DBC?
 
 ```java
 // Для хранения enum как строки (по умолчанию — по индексу)
@@ -505,10 +590,101 @@ public class R2dbcConfig extends AbstractR2dbcConfiguration {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как выполнить batch insert? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему для хранения enum как строки в R2DBC нужны custom converters, и что произойдёт без них?
+>
+> ---
+>
+> #### A) Без converter R2DBC сохранит enum как `null` — поле станет пустым — ❌ Неверно
+>
+> **Что на самом деле:** R2DBC по умолчанию маппит enum **по индексу** (`ordinal()`), не как `null`. Т.е. `OrderStatus.PENDING` (индекс 0) → в БД сохранится число `0`. Это работает, но создаёт ловушку: если кто-то добавит новый статус в середину enum, все существующие записи сдвинутся.
+>
+> **Откуда путаница:** в JPA с `@Enumerated` без аргумента используется `ORDINAL` (по индексу), но многие думают что без аннотации значение `null`. R2DBC аналогично — есть дефолтное поведение, не null.
+>
+> **Если бы это было правдой:** статус не сохранялся бы вообще, и приложение падало бы на `NOT NULL constraint violation`. На практике сохраняется, но как число — что плохо для эволюции схемы.
+>
+> ---
+>
+> #### B) Custom converters нужны только для типов которых нет в стандартной библиотеке Java — ❌ Неверно
+>
+> **Что на самом деле:** custom converters нужны для **любой нестандартной семантики маппинга**, не только для exotic типов. Enum → String, BigDecimal → custom precision, UUID ↔ String/binary, MoneyAmount (custom value object) — всё это enum-в-string, primitive-в-class, не только «отсутствующие типы».
+>
+> **Откуда путаница:** Spring документация часто показывает converters как «extension point для новых типов». Но это лишь один из use-cases — реальная цель шире.
+>
+> **Если бы это было правдой:** мы не могли бы переопределить дефолтное поведение для enum-а, BigDecimal precision, UUID format — пришлось бы манипулировать схемой или DTO для каждого запроса.
+>
+> ---
+>
+> #### C) Custom converters переопределяют дефолтное маппирование (enum по индексу → enum как строка) через `@WritingConverter` + `@ReadingConverter`, регистрируются в `AbstractR2dbcConfiguration.getCustomConverters()` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Spring Data R2DBC использует `MappingR2dbcConverter`, который применяет цепочку Converter-ов при чтении (DB → Java) и записи (Java → DB). Дефолтный converter для enum-а использует `ordinal()` — это компактно, но опасно при изменении порядка enum значений в коде.
+>
+> Альтернативы:
+> 1. **Custom converter с String** — сохраняем `name()`, что устойчиво к перестановкам в enum (но не к переименованию).
+> 2. **Database CHECK constraint** на колонке — типобезопасность на уровне БД.
+> 3. **PostgreSQL ENUM type** — нативный enum в Postgres + custom converter Java enum ↔ Postgres enum.
+>
+> Регистрация — через расширение `AbstractR2dbcConfiguration` и метод `getCustomConverters()`. `@WritingConverter` — Java → DB, `@ReadingConverter` — DB → Java. Без аннотации Spring не понимает направление и игнорирует converter.
+>
+> **Пример:**
+> ```java
+> @WritingConverter
+> public class OrderStatusWriteConverter implements Converter<OrderStatus, String> {
+>     @Override
+>     public String convert(OrderStatus source) {
+>         return source.name();              // PENDING, PAID, SHIPPED — в БД как строка
+>     }
+> }
+>
+> @ReadingConverter
+> public class OrderStatusReadConverter implements Converter<String, OrderStatus> {
+>     @Override
+>     public OrderStatus convert(String source) {
+>         return OrderStatus.valueOf(source); // строка → enum value
+>     }
+> }
+>
+> @Configuration
+> public class R2dbcConfig extends AbstractR2dbcConfiguration {
+>     @Override
+>     protected List<Object> getCustomConverters() {
+>         return List.of(
+>             new OrderStatusWriteConverter(),
+>             new OrderStatusReadConverter()
+>         );
+>     }
+>     // Также нужен @Override connectionFactory()
+> }
+> ```
+>
+> **Когда применять:**
+> - **Enum-ы стабильные по name, нестабильные по порядку** — добавляете новый статус в середину, не ломается production.
+> - **Custom value objects** (`Money`, `Email`, `UserId`) — маппинг в varchar/number.
+> - **JSON-колонки** (`JSONB` в Postgres) — custom converter `Map<String, Object> ↔ String`.
+> - **Encrypted fields** — converter с шифрованием/дешифровкой на лету.
+> - **Hibernate-проекты, мигрирующие в R2DBC** — портирование `@Converter` логики на R2DBC API.
+>
+> **Подводные камни:**
+> - **Аннотация обязательна**: без `@WritingConverter` / `@ReadingConverter` Spring не зарегистрирует converter правильно — silent no-op.
+> - **`@JdbcTypeCode`** работает в Spring Data JDBC, не в R2DBC — синтаксис другой.
+> - **Spring Boot autoconfig**: если есть `@EnableR2dbcRepositories`, custom converters не подхватываются автоматически — нужен `AbstractR2dbcConfiguration`.
+> - **Direction sensitivity**: один и тот же класс не может быть и Reading, и Writing converter; нужно два разных класса (или anonymous inner classes).
+>
+> **Связанные вопросы:** [[Q11]] — DatabaseClient использует те же converters; [[Q15]] — интеграция с Spring Security UserDetailsService для UserStatus enum; [[Q4]] — entity mapping в Repository.
+>
+> ---
+>
+> #### D) Spring автоматически распознаёт enum по аннотации `@Enumerated(STRING)` как в JPA — ❌ Неверно
+>
+> **Что на самом деле:** `@Enumerated` — это **JPA-аннотация**, R2DBC её НЕ поддерживает. В R2DBC нет ничего эквивалентного — единственный способ переопределить дефолтное поведение через custom converters.
+>
+> **Откуда путаница:** разработчики приходят из Spring Data JPA и ожидают `@Enumerated(EnumType.STRING)`. R2DBC — отдельный стек с другой моделью маппинга, никаких JPA-аннотаций.
+>
+> **Если бы это было правдой:** мы могли бы избежать boilerplate с двумя converter-классами. На практике пишем converter + регистрацию = ~20 строк кода, к сожалению.
+
+## Q13. Как выполнить batch insert?
 
 ```java
 // Вариант 1 — через Repository (по одному, но асинхронно)
