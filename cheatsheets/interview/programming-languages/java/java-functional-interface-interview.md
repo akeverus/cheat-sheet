@@ -389,10 +389,84 @@ Supplier<List<String>> newList = ArrayList::new;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Чем Consumer отличается от Supplier? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой стандартный интерфейс `java.util.function` подходит для `Stream.filter()`, ожидающего проверку «строка длиннее 5 символов»?
+>
+> ---
+>
+> #### A) `Function<String, Boolean>` — функция, возвращающая Boolean — ❌ Неверно
+>
+> **Что на самом деле:** `Stream.filter()` принимает `Predicate<T>`, а не `Function<T, Boolean>`. Это разные интерфейсы: `Predicate.test()` возвращает примитивный `boolean` (без boxing), а `Function<String, Boolean>` — обёрнутый `Boolean` (с автобоксингом). Сигнатура `filter` требует `Predicate`, ваш `Function` просто не скомпилируется.
+>
+> **Откуда путаница:** `Function<T, R>` действительно универсальный — кажется что любая «T → R» функция подходит. Но Java выделила `Predicate<T>` отдельно именно ради примитивного boolean и удобной композиции (`and`, `or`, `negate`).
+>
+> **Если бы это было правдой:** filter принимал бы любую функцию возвращающую `Boolean` — но при этом терял бы `Predicate.negate()`, `and()`, `or()` и платил boxing на каждом элементе stream'а.
+>
+> ---
+>
+> #### B) `Consumer<String>` — потребитель строки — ❌ Неверно
+>
+> **Что на самом деле:** `Consumer<T>` имеет сигнатуру `void accept(T t)` — НИЧЕГО не возвращает. Filter же нуждается в `true/false` для каждого элемента. Consumer подходит для `forEach`, логирования, побочных эффектов — но НЕ для предикатов.
+>
+> **Откуда путаница:** разработчик может смешивать «принимает T» (это и Consumer, и Predicate) с «принимает T и решает фильтровать». Различает их именно возвращаемое значение.
+>
+> **Если бы это было правдой:** `stream.filter(consumer)` не имел бы способа узнать «оставить элемент или нет» — нет возвращаемого значения. Filter принципиально не может работать с Consumer.
+>
+> ---
+>
+> #### C) `Predicate<String>` с методом `test(String): boolean` — специально создан для условий и интегрирован с `Stream.filter()` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `Predicate<T>` — функциональный интерфейс **специально под условные проверки**: `boolean test(T t)`. `Stream.filter()`, `Collection.removeIf()`, `Optional.filter()` — все принимают именно его. Преимущества vs `Function<T, Boolean>`:
+>
+> 1. **Примитивный boolean** — нет boxing на каждом элементе (важно на больших stream'ах).
+> 2. **Композиция**: `.and(other)`, `.or(other)`, `.negate()`, `Predicate.not(p)` (Java 11+) — встроенные default-методы.
+> 3. **Семантическая ясность** — сигнатура метода `filter(Predicate<? super T>)` сразу говорит читателю «фильтр», а не «произвольная трансформация».
+>
+> **Пример:**
+> ```java
+> Predicate<String> longerThan5 = s -> s.length() > 5;
+>
+> List<String> result = Stream.of("Java", "Kotlin", "Go", "Scala", "Haskell")
+>     .filter(longerThan5)
+>     .collect(Collectors.toList());
+> // ["Kotlin", "Haskell"]
+>
+> // Композиция:
+> Predicate<String> startsWithJ = s -> s.startsWith("J");
+> Predicate<String> longAndJ = longerThan5.and(startsWithJ);
+>
+> // Java 11+: Predicate.not
+> List<String> nonEmpty = stream
+>     .filter(Predicate.not(String::isEmpty))
+>     .toList();
+> ```
+>
+> **Когда применять:**
+> - Любая операция «оставить/отбросить» в Stream API.
+> - Валидация: `Validator<T>` часто строится поверх `Predicate<T>`.
+> - Условные удаления: `list.removeIf(predicate)`, `map.entrySet().removeIf(...)`.
+> - Optional.filter: `optional.filter(predicate).map(...)`.
+>
+> **Подводные камни:**
+> - `Predicate<T>` vs `BiPredicate<T,U>` — для двух аргументов нужна 2-arity версия (`Map.forEach((k,v) -> ...)` с BiConsumer, не Consumer).
+> - **Примитивные специализации** (`IntPredicate`, `LongPredicate`, `DoublePredicate`) — для `IntStream`/`LongStream`/`DoubleStream`. Использование `Predicate<Integer>` с IntStream вызывает boxing.
+> - **Negate vs not**: `p.negate()` (instance метод) и `Predicate.not(p)` (static, Java 11+) делают одно и то же, но `not` читается лучше с method references: `Predicate.not(String::isEmpty)`.
+>
+> **Связанные вопросы:** [[Q4]] — основные интерфейсы; [[Q10]] — and/or/negate композиция; [[Q11]] — IntPredicate и другие специализации.
+>
+> ---
+>
+> #### D) `BiPredicate<String, Integer>` — двухаргументный предикат — ❌ Неверно
+>
+> **Что на самом деле:** `BiPredicate<T,U>` — для случаев когда нужно проверить пару значений (например, ключ+значение в Map). Здесь же мы фильтруем `Stream<String>` — один аргумент на элемент. `BiPredicate` сюда не подойдёт по сигнатуре.
+>
+> **Откуда путаница:** «длиннее 5» может казаться двухаргументным условием (строка + число 5). Но 5 — это **захваченная константа** внутри лямбды, не отдельный параметр интерфейса.
+>
+> **Если бы это было правдой:** `Stream.filter(BiPredicate)` не существует в API. Компилятор отверг бы такое использование.
+
+## Q5. Чем Consumer отличается от Supplier?
 
 | | `Consumer<T>` | `Supplier<T>` |
 |---|---|---|
@@ -415,10 +489,87 @@ Optional.empty().orElseGet(today);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Чем Function отличается от UnaryOperator? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Где правильно использовать `Supplier<T>` вместо `Consumer<T>` в стандартной Java библиотеке?
+>
+> ---
+>
+> #### A) `list.forEach(supplier)` — для каждого элемента применить supplier — ❌ Неверно
+>
+> **Что на самом деле:** `Collection.forEach()` принимает `Consumer<T>`, а не Supplier. forEach отдаёт каждый элемент в Consumer — это поток значений в side-effect. Supplier же ничего не принимает, только производит — нечего ему «передать» от forEach.
+>
+> **Откуда путаница:** название «forEach» может ассоциироваться с «производством действий». Но семантически forEach — поглотитель элементов, не источник.
+>
+> **Если бы это было правдой:** `list.forEach(() -> "hi")` — supplier не получал бы ни одного элемента списка. Был бы бессмысленным «for each X do something unrelated».
+>
+> ---
+>
+> #### B) `optional.orElseGet(supplier)` — ленивое вычисление default-значения только если Optional пуст — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `Optional.orElseGet(Supplier<? extends T>)` — классическое использование Supplier: **отложенное** вычисление значения по требованию. Если Optional содержит значение — supplier не вызывается; если пуст — вызывается `get()` и результат становится значением.
+>
+> Это принципиально отличается от `orElse(T defaultValue)`, который **всегда** вычисляет default (eagerly), даже если Optional не пуст. Supplier даёт **lazy evaluation** — критично если default дорогой (запрос в БД, генерация UUID, чтение файла).
+>
+> **Пример:**
+> ```java
+> // Плохо: orElse — всегда вызывается expensiveFetch()
+> User user = userOpt.orElse(expensiveFetch());  // вызовется даже если userOpt непустой!
+>
+> // Хорошо: orElseGet — вызывается только если userOpt.isEmpty()
+> User user = userOpt.orElseGet(() -> expensiveFetch());
+> User user2 = userOpt.orElseGet(this::expensiveFetch);  // method ref
+>
+> // Другие места Supplier:
+> Logger log = LoggerFactory.getLogger(MyClass.class);
+> log.debug(() -> "Heavy computation: " + complexToString());  // SLF4J 2.x Supplier
+>
+> // Java 9+: Stream.generate
+> Stream<UUID> ids = Stream.generate(UUID::randomUUID).limit(10);
+>
+> // Стандартный фабричный паттерн:
+> Supplier<List<String>> listFactory = ArrayList::new;
+> List<String> a = listFactory.get();
+> List<String> b = listFactory.get();  // независимые экземпляры
+> ```
+>
+> **Когда применять:**
+> - **Lazy default values** (`orElseGet`, `requireNonNullElseGet`) — когда вычисление default'а дорогое или имеет side-effects.
+> - **Lazy logging** — SLF4J 2.x методы вида `log.debug(Supplier)` вычисляют сообщение только если уровень включён.
+> - **Stream.generate** — бесконечные stream'ы (`Stream.generate(() -> readNext())`).
+> - **Фабрики** — `ArrayList::new`, `() -> new HashMap<>()` как фабрика контейнеров для `Collector.toMap`.
+> - **Memoization wrapper'ы** — Suppliers.memoize в Guava.
+>
+> **Подводные камни:**
+> - **Supplier vs Callable**: `Supplier.get()` НЕ может бросать checked exceptions, `Callable.call() throws Exception` может. Для I/O лучше Callable.
+> - **Race condition в supplier**: если supplier шарится между threads и имеет side-effect (например, инкремент счётчика) — нужна синхронизация.
+> - **`orElseGet` с side-effect** — каждый вызов `orElseGet` повторит вычисление; если supplier дорогой, кешируй вне.
+> - **Method reference vs lambda**: `LoggerFactory::getLogger` НЕ supplier (метод требует аргумент-класс). Нужно `() -> LoggerFactory.getLogger(...)`.
+>
+> **Связанные вопросы:** [[Q7]] — Supplier vs Callable vs Runnable; [[Q4]] — все стандартные интерфейсы; [[Q13]] — checked exceptions в лямбдах.
+>
+> ---
+>
+> #### C) `executor.submit(supplier)` — отправить задачу на выполнение в пуле потоков — ❌ Неверно
+>
+> **Что на самом деле:** `ExecutorService.submit()` принимает `Runnable` или `Callable<T>`, но НЕ `Supplier<T>`. Если у вас Supplier и вы хотите его asynchronously запустить — оборачивайте: `CompletableFuture.supplyAsync(supplier, executor)`.
+>
+> **Откуда путаница:** и Supplier, и Callable — «ноль аргументов → T». Семантически близки. Но Supplier — для синхронного lazy compute (не бросает checked exceptions), Callable — для async задач (бросает Exception).
+>
+> **Если бы это было правдой:** `executor.submit(() -> 42)` мог бы выбираться компилятором как Supplier — но реально это всегда Callable<Integer>. Перегрузка `submit` Supplier'а нет.
+>
+> ---
+>
+> #### D) `Map.merge(key, value, supplier)` — для слияния значений по ключу — ❌ Неверно
+>
+> **Что на самом деле:** `Map.merge` принимает `BiFunction<V, V, V>` (старое значение + новое → результат), а не Supplier. Supplier нигде в Map API не используется как BiFunction.
+>
+> **Откуда путаница:** есть метод `computeIfAbsent(key, mappingFunction)` где mappingFunction — это `Function<K, V>`, и его иногда путают со «снабжением» значения. Но это всё ещё Function (зависит от ключа), не Supplier.
+>
+> **Если бы это было правдой:** `map.merge` не получал бы информацию о существующем значении — а это его основная семантика. Был бы бесполезным.
+
+## Q6. Чем Function отличается от UnaryOperator?
 
 `UnaryOperator<T>` расширяет `Function<T, T>` — частный случай когда тип входа и выхода одинаков.
 
@@ -437,10 +588,83 @@ names.replaceAll(String::trim);  // replaceAll принимает UnaryOperator<
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Чем Runnable отличается от Callable и Supplier? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой метод `List<T>` принимает именно `UnaryOperator<T>`, а не `Function<T, T>`?
+>
+> ---
+>
+> #### A) `list.map(operator)` — преобразовать все элементы — ❌ Неверно
+>
+> **Что на самом деле:** у `List<T>` **нет** метода `map()`. Это путаница со `Stream.map(Function<T, R>)`. На самом Stream'е метод `map` принимает Function (не UnaryOperator), потому что Stream позволяет менять тип элементов (`Stream<String>` → `Stream<Integer>`).
+>
+> **Откуда путаница:** в коллекциях многих языков (Kotlin, JS) есть `.map()` напрямую. В Java идёт через Stream API.
+>
+> **Если бы это было правдой:** наш ответ был бы сразу неверен — у List нет такого метода, компилятор отверг бы код.
+>
+> ---
+>
+> #### B) `list.forEach(operator)` — применить операцию к каждому элементу — ❌ Неверно
+>
+> **Что на самом деле:** `Collection.forEach` принимает `Consumer<T>`, не UnaryOperator. forEach — для побочных эффектов, без возвращаемого значения.
+>
+> **Откуда путаница:** UnaryOperator тоже «применяет операцию к T», но возвращает T. forEach не интересуется возвращаемым значением.
+>
+> **Если бы это было правдой:** результат операции (новое T) выбрасывался бы — UnaryOperator имел бы смысл Consumer'а. Это противоречит дизайну.
+>
+> ---
+>
+> #### C) `list.replaceAll(operator)` — заменить каждый элемент результатом применения оператора к нему — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `List.replaceAll(UnaryOperator<E> op)` — единственный стандартный API метод где UnaryOperator принципиально нужен **вместо** Function. Семантика: элемент типа `E` заменяется новым значением **того же типа** `E`. Если бы метод принимал `Function<E, R>`, можно было бы случайно вернуть несовместимый тип и сломать invariant List'а.
+>
+> Это **type-safety через интерфейс**: `UnaryOperator<E> extends Function<E, E>` — сужение типа специально для in-place операций. Любой Function<E,E> совместим с UnaryOperator<E> (через приведение или lambda), но никак не наоборот.
+>
+> **Пример:**
+> ```java
+> List<String> names = new ArrayList<>(List.of("  Alice ", "Bob ", " Charlie"));
+>
+> // replaceAll — UnaryOperator<String>:
+> names.replaceAll(String::trim);
+> // ["Alice", "Bob", "Charlie"]
+>
+> // А вот это не скомпилируется:
+> // names.replaceAll(String::length);  // ERROR: String::length is Function<String, Integer>
+>
+> // Map.replaceAll — аналогично, BiFunction<K, V, V> (новое V должно быть V):
+> Map<String, Integer> scores = new HashMap<>(Map.of("a", 1, "b", 2));
+> scores.replaceAll((k, v) -> v * 10);  // {a=10, b=20}
+>
+> // BinaryOperator<T> в Stream.reduce:
+> int sum = IntStream.of(1, 2, 3, 4).reduce(0, Integer::sum);
+> // Integer::sum — BinaryOperator<Integer>, частный случай BiFunction<Integer, Integer, Integer>
+> ```
+>
+> **Когда применять (UnaryOperator vs Function):**
+> - **UnaryOperator<T>** — in-place преобразование коллекции (`List.replaceAll`), endo-функции в монаде (state transformer), идентичность (`UnaryOperator.identity()`).
+> - **Function<T, T>** — когда хотите явно подчеркнуть «трансформация может вернуть любой тип, но здесь совпадает». В API design лучше UnaryOperator для строгой семантики.
+> - **BinaryOperator<T>** — для reduce и aggregation: `(T, T) -> T` обеспечивает associative свойство.
+>
+> **Подводные камни:**
+> - **List.replaceAll mutates the list** — это in-place операция, оригинальный список меняется. Если нужна копия — `list.stream().map(op).toList()`.
+> - **UnaryOperator.identity()** — `UnaryOperator<T> id = UnaryOperator.identity()` возвращает функцию `x -> x`. Полезно как default или в Stream.collect.
+> - **Boxing для примитивов**: используйте `IntUnaryOperator` для `int`, `LongUnaryOperator` для `long`. `UnaryOperator<Integer>` будет boxing на каждом элементе.
+> - **Concurrent modification**: `replaceAll` на ArrayList безопасен; на `CopyOnWriteArrayList` создаёт новую копию; на стандартных immutable List'ах (`List.of()`) бросает UnsupportedOperationException.
+>
+> **Связанные вопросы:** [[Q4]] — все стандартные интерфейсы; [[Q11]] — примитивные специализации; [[Q9]] — andThen/compose.
+>
+> ---
+>
+> #### D) `list.sort(operator)` — сортировка с использованием UnaryOperator — ❌ Неверно
+>
+> **Что на самом деле:** `List.sort(Comparator<? super E> c)` принимает Comparator, а не UnaryOperator. Comparator — это `(T, T) -> int`, тогда как UnaryOperator — `T -> T`. Семантически разные операции: сравнение vs трансформация.
+>
+> **Откуда путаница:** оба интерфейса работают с одним типом T. Но Comparator возвращает порядок, UnaryOperator — новое значение.
+>
+> **Если бы это было правдой:** sort не имел бы способа узнать порядок элементов — он получал бы «преобразованный» элемент, но не знал «больше/меньше».
+
+## Q7. Чем Runnable отличается от Callable и Supplier?
 
 | | `Runnable` | `Callable<T>` | `Supplier<T>` |
 |---|---|---|---|
