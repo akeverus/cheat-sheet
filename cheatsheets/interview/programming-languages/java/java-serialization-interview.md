@@ -1098,10 +1098,89 @@ User parsed = User.parseFrom(bytes);       // десериализация
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Что такое `Apache Avro` и чем он отличается от `Protobuf`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое `Protocol Buffers` (Protobuf) от Google и какие у них ключевые свойства?
+>
+> ---
+>
+> #### A) Protobuf — это текстовый формат с XML-подобным синтаксисом, схема пишется в `.xml` файлах — ❌ Неверно
+>
+> **Что на самом деле:** Protobuf — это **бинарный** формат. Схема описывается в `.proto` файлах с собственным DSL (не XML), а wire-формат — компактная последовательность tag-length-value байт. Текстовый XML-аналог — это Protobuf Text Format для отладки, но wire-протокол всегда бинарный.
+>
+> **Откуда путаница:** разработчики, пришедшие из SOAP/XML-мира, ассоциируют «схема + контракт» с XML Schema. Реально Protobuf ближе к ASN.1 — компактное бинарное кодирование с явной схемой.
+>
+> **Если бы это было правдой:** gRPC терял бы своё преимущество в скорости — XML парсинг в 10-100× медленнее tag-decoding в Protobuf. Netflix не выбрал бы gRPC для inter-service калибровок при 100K RPS.
+>
+> ---
+>
+> #### B) Protobuf требует, чтобы клиент и сервер использовали одну и ту же версию схемы — несовместимые версии падают с runtime ошибкой — ❌ Неверно
+>
+> **Что на самом деле:** одно из главных достоинств Protobuf — **forward и backward compatibility** при правильном использовании. Старый клиент читает новые сообщения, игнорируя неизвестные поля (по тегу). Новый клиент читает старые, получая default-значения для новых полей. Ключевые правила: не менять числовой тег, не менять тип поля, использовать `reserved` для удалённых тегов.
+>
+> **Откуда путаница:** аналогия с Java Serialization, где смена `serialVersionUID` ломает совместимость. В Protobuf совместимость определяется тегами, а не hash от структуры.
+>
+> **Если бы это было правдой:** rolling deploy в Kubernetes стал бы невозможен — нельзя было бы иметь в кластере одновременно v1 и v2 pods. Google внутренне не смог бы поддерживать тысячи сервисов с разной cadence релизов.
+>
+> ---
+>
+> #### C) Protobuf хранит имена полей в каждом сообщении — JSON-подобная самоописываемость — ❌ Неверно
+>
+> **Что на самом деле:** Protobuf пишет **только числовой тег** (varint) + значение. Имя поля живёт ТОЛЬКО в `.proto` файле и сгенерированном коде. Именно поэтому формат компактнее JSON в 3-10 раз: для поля `user_name` JSON шлёт строку «user_name», Protobuf — один байт `0x0A` (тег=1, type=length-delimited).
+>
+> **Откуда путаница:** Avro кодирует с привязкой к schema (где имена есть), и многие путают Avro и Protobuf. Avro может хранить полную schema рядом с данными, Protobuf — никогда.
+>
+> **Если бы это было правдой:** Protobuf терял бы преимущество в размере над JSON. Никто бы не выбрал его для Kafka events на 1M msg/s — лишний overhead имён уничтожил бы пропускную способность.
+>
+> ---
+>
+> #### D) Бинарный формат от Google со строгой схемой в `.proto` файлах; числовые теги вместо имён полей (компактность 3-10× к JSON); кодогенерация для 10+ языков; отличная forward/backward совместимость через `reserved` теги — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Protobuf проектировался Google для внутренних RPC при гигантских масштабах. Каждое поле в `.proto` имеет уникальный числовой тег (1-15 кодируются 1 байтом). Wire-format: `<tag, wire_type><value>`. Wire-types — varint, 64-bit, length-delimited, 32-bit. Decoder читает tag, ищет в сгенерированном классе соответствующий setter, парсит значение по wire-type. Незнакомые теги пропускаются — это и есть основа forward compatibility.
+>
+> Совместимость держится на правилах: (1) никогда не менять тег существующего поля; (2) никогда не менять тип поля несовместимым образом (int32→string запрещено, int32→int64 ограниченно совместимо); (3) при удалении поля использовать `reserved 5;` чтобы тег нельзя было переиспользовать.
+>
+> **Пример:**
+> ```protobuf
+> syntax = "proto3";
+> package example;
+>
+> message User {
+>   string name = 1;
+>   int32 age = 2;
+>   reserved 3, 4;         // удалённые теги защищены
+>   repeated string roles = 5;
+>   enum Status { ACTIVE = 0; INACTIVE = 1; }
+>   Status status = 6;
+> }
+> ```
+>
+> ```java
+> User user = User.newBuilder()
+>     .setName("Alice").setAge(30)
+>     .addRoles("admin").setStatus(User.Status.ACTIVE)
+>     .build();
+>
+> byte[] bytes = user.toByteArray();        // 18 байт
+> User parsed = User.parseFrom(bytes);      // forward-compat parsing
+> ```
+>
+> **Когда применять:**
+> - **gRPC** — Google Cloud, Istio service mesh, Envoy data plane.
+> - **Kafka events** с обязательной schema — Uber, Lyft используют Protobuf + Confluent Schema Registry для billion-events/day pipelines.
+> - **Mobile↔backend** — Twitter API использует Protobuf для нативных клиентов (экономия трафика и батареи).
+> - **Внутренние API между микросервисами** — типичный выбор когда нужна performance + строгий контракт.
+>
+> **Подводные камни:**
+> - **Числовые теги — навсегда**: если случайно переиспользовать удалённый тег для нового поля, старые клиенты прочитают мусор. Всегда `reserved`.
+> - **`proto3` `optional`**: в proto3 примитивы не отличают «не задано» от «дефолт» (0/false/""). С Protobuf 3.15+ можно вернуть `optional` для явного нуллируемости.
+> - **Большие enum**: добавление нового enum-value в proto3 — backward compat ОК, но старый клиент получит default (0) если не знает значения. Закладывать `UNKNOWN = 0` в каждый enum.
+> - **`Any` type** — гибкий, но теряет type safety. Для полиморфных сообщений лучше `oneof`.
+>
+> **Связанные вопросы:** [[Q27]] — сравнение с Apache Avro; [[Q29]] — выбор формата под use case; [[Q31]] — версионирование схем в микросервисах.
+
+## Q27. Что такое `Apache Avro` и чем он отличается от `Protobuf`?
 
 `Apache Avro` — бинарный формат сериализации, ориентированный на `Hadoop`-экосистему и потоковую обработку данных. Главное отличие от `Protobuf` — **схема хранится вместе с данными**.
 
@@ -1130,10 +1209,93 @@ User parsed = User.parseFrom(bytes);       // десериализация
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Что такое `Kryo` и когда его выбирают? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём ключевое отличие Apache Avro от Protocol Buffers и где Avro предпочтительнее?
+>
+> ---
+>
+> #### A) Avro описывает схему в JSON, при сериализации writer-schema хранится **с данными** (в файле) или регистрируется в Schema Registry (для Kafka); reader-schema согласуется с writer через schema resolution — это даёт лучшую эволюцию для долгоживущих данных в Data Lake — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Avro изначально проектировался для Hadoop: писать петабайты данных, читать через годы возможно другой версией приложения. Ключевая идея — **schema-data binding**. Файл `.avro` содержит блок с writer-schema в header, потом записи без имён полей (как Protobuf — компактно). Reader при чтении использует свою schema и применяет правила resolution: совпадающие поля по имени маппятся, missing поля у reader получают default, неизвестные у writer — пропускаются.
+>
+> Для Kafka схема не хранится в каждом сообщении (overhead!) — Confluent Schema Registry даёт каждой schema числовой ID (4 байта). Сообщение = `<magic-byte><schema-id><avro-payload>`. Producer регистрирует schema, consumer фетчит её по ID. Schema Registry умеет проверять совместимость (BACKWARD/FORWARD/FULL) при регистрации новой версии.
+>
+> Avro в отличие от Protobuf не использует числовые теги — поля идентифицируются по позиции в schema. Это значит, что schema reader **обязательна** для парсинга; в Protobuf же файл «само-понятен» по тегам.
+>
+> **Пример:**
+> ```json
+> {
+>   "type": "record",
+>   "name": "OrderEvent",
+>   "namespace": "com.example.events",
+>   "fields": [
+>     {"name": "orderId", "type": "string"},
+>     {"name": "amount", "type": "double"},
+>     {"name": "currency", "type": "string", "default": "USD"},
+>     {"name": "items", "type": {"type": "array", "items": "string"}}
+>   ]
+> }
+> ```
+>
+> ```java
+> // Kafka Producer с Schema Registry
+> Properties props = new Properties();
+> props.put("value.serializer", KafkaAvroSerializer.class);
+> props.put("schema.registry.url", "http://schema-registry:8081");
+>
+> OrderEvent event = OrderEvent.newBuilder()
+>     .setOrderId("ord-42").setAmount(99.99).build();
+> producer.send(new ProducerRecord<>("orders", event));
+> // На wire: magic_byte(0) + schema_id(4 bytes) + avro_payload
+> ```
+>
+> **Когда применять:**
+> - **Kafka event streaming** — стандарт в Confluent ecosystem; LinkedIn (создатели Kafka и Avro), Uber, Lyft.
+> - **Data Lake / Lakehouse** — Apache Iceberg, Delta Lake, Hadoop HDFS хранят данные как `.avro` или `.parquet` с Avro-схемами.
+> - **Schema evolution через годы** — финансовые транзакции, audit logs, событийные журналы с retention 5-7 лет.
+> - **Big Data tooling** — Apache Spark, Flink, Hive имеют first-class Avro поддержку.
+>
+> **Подводные камни:**
+> - **Schema Registry — single point of failure**: если он недоступен, producer/consumer падают. Critical: HA-deployment, кэширование schema на клиенте.
+> - **`namespace` обязателен**: типы с одинаковым `name` в разных `namespace` — разные schema. Случайное совпадение ломает совместимость.
+> - **Union types** (`["null", "string"]`) — first type в union считается default. `["string", "null"]` запрещён в FORWARD compatibility.
+> - **Logical types** (decimal, timestamp-millis) — нужны для финансовых данных, не путать с base types.
+>
+> **Связанные вопросы:** [[Q26]] — Protobuf для сравнения; [[Q29]] — выбор формата под use case; [[Q31]] — Schema Registry compatibility modes.
+>
+> ---
+>
+> #### B) Avro и Protobuf — это одна и та же технология, Avro просто более ранняя версия — ❌ Неверно
+>
+> **Что на самом деле:** Avro и Protobuf — независимые проекты с разной философией. Protobuf (Google, 2008 open-source) — числовые теги, schema-on-write+read, идеал для RPC. Avro (Apache, 2009, создан Doug Cutting для Hadoop) — schema-binding, schema resolution, идеал для Data Lake. Они появились в одно время и решали разные задачи.
+>
+> **Откуда путаница:** оба бинарные, оба требуют схему, оба используются с Kafka. Junior-разработчик легко смешивает их в голове.
+>
+> **Если бы это было правдой:** не было бы споров «Avro vs Protobuf» в архитектурных обзорах. Confluent не строил бы экосистему вокруг Avro если бы Protobuf был «новой версией». Сейчас Confluent поддерживает оба + JSON Schema.
+>
+> ---
+>
+> #### C) Avro быстрее Protobuf в 5-10× за счёт zero-copy декодирования — ❌ Неверно
+>
+> **Что на самом деле:** на benchmark'ах Protobuf и Avro сопоставимы по скорости (разница 10-30% в обе стороны в зависимости от данных). Zero-copy — это про FlatBuffers/Cap'n Proto, не про Avro. Avro оптимизирован для streaming и schema resolution, не для raw decoding speed.
+>
+> **Откуда путаница:** в кругах Big Data Avro продвигают как «быстрый формат», что верно при сравнении с JSON или XML, но не относительно Protobuf.
+>
+> **Если бы это было правдой:** Google использовал бы Avro внутри для gRPC. Реальный выбор — это trade-off экосистемы (Hadoop/Kafka vs gRPC/Cloud).
+>
+> ---
+>
+> #### D) Avro требует генерации кода как Protobuf — без `avro-tools` нельзя ни читать, ни писать данные — ❌ Неверно
+>
+> **Что на самом деле:** Avro поддерживает **dynamic schema mode** через `GenericRecord` — можно читать/писать без кодогенерации, работая с `Map`-подобной структурой. Это уникальное преимущество Avro: загружаешь schema в runtime, парсишь данные без compile-time типов. Полезно для generic ETL pipelines, schema-agnostic kafka consumers.
+>
+> **Откуда путаница:** опытом из Protobuf, где `protoc` обязателен для генерации классов.
+>
+> **Если бы это было правдой:** Apache NiFi, Kafka Connect, Flink SQL не могли бы работать с Avro-данными generic-way. Реально они активно используют `GenericRecord` для обработки любых схем без перекомпиляции.
+
+## Q28. Что такое `Kryo` и когда его выбирают?
 
 `Kryo` — быстрая бинарная библиотека сериализации для JVM. Не требует реализации `Serializable`, может сериализовать любой POJO.
 
@@ -1168,10 +1330,90 @@ input.close();
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. (!) Как выбрать формат сериализации для проекта? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое Kryo и в каких системах он используется? Какие его ключевые свойства и ограничения?
+>
+> ---
+>
+> #### A) Kryo — это межъязыковой бинарный формат как Protobuf, поддерживает Java/Python/Go из коробки — ❌ Неверно
+>
+> **Что на самом деле:** Kryo — **строго JVM-only**. Wire-format использует Java-специфичные конструкции (class IDs, наследование, Java collections semantics). Нет официальной поддержки других языков. Если нужна межъязыковая сериализация — Protobuf, Avro, MessagePack, FlatBuffers — но не Kryo.
+>
+> **Откуда путаница:** Kryo упоминается рядом с Protobuf/Avro в списках «binary serializers», и junior может предположить полную взаимозаменяемость.
+>
+> **Если бы это было правдой:** Apache Spark использовал бы Kryo для PySpark↔JVM коммуникации, но реально там Pickle (Python side) + Java serializer (JVM side). Cross-language путь не идёт через Kryo.
+>
+> ---
+>
+> #### B) Быстрая JVM-only библиотека (~5-10× быстрее Java Serialization); не требует `Serializable`; используется в Apache Spark, Flink, Akka, Hazelcast; **не thread-safe** — нужен `ThreadLocal<Kryo>` или pool; нет schema-эволюции — рискованно для долгосрочного хранения — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Kryo создан Nathan Sweet в 2009 для оптимизации игровых клиентов (компактность + скорость). Его модель — рефлексия с агрессивным кэшированием. Регистрация классов через `kryo.register(MyClass.class)` присваивает короткий integer ID — это экономит байты (вместо FQCN пишется int). Без регистрации Kryo пишет полное имя класса, что больше и медленнее.
+>
+> Ключевая особенность — **не использует `Serializable`**. Kryo работает с любым POJO через рефлексию + бесконструкторный allocation (`Objenesis`). Это позволяет сериализовать legacy-классы без модификации. Но это же создаёт риск: можно случайно сериализовать `ClassLoader`, `Thread`, или другую системную ссылку — Kryo пройдёт по графу до конца.
+>
+> Главная боль — **thread-unsafety**. Каждый `Kryo` instance держит mutable state (registration cache, reference tracking buffers). Использование одного instance из нескольких threads ведёт к corruption данных, race conditions, ClassCastException. Решение: `ThreadLocal<Kryo>`, `Pool<Kryo>` (Kryo 5.x имеет встроенный `Pool`), или `KryoPool` из библиотеки kryo-pool.
+>
+> **Пример:**
+> ```java
+> // Production-grade Kryo через Pool
+> Pool<Kryo> kryoPool = new Pool<>(true, false, 8) {
+>     @Override
+>     protected Kryo create() {
+>         Kryo kryo = new Kryo();
+>         kryo.register(Order.class);
+>         kryo.register(OrderItem.class);
+>         kryo.setReferences(true);     // для циклов
+>         return kryo;
+>     }
+> };
+>
+> // Сериализация
+> Kryo kryo = kryoPool.obtain();
+> try (Output output = new Output(new FileOutputStream("order.kryo"))) {
+>     kryo.writeObject(output, order);
+> } finally {
+>     kryoPool.free(kryo);
+> }
+> ```
+>
+> **Когда применять:**
+> - **Apache Spark** — `spark.serializer=org.apache.spark.serializer.KryoSerializer` (рекомендован Databricks для shuffle).
+> - **Apache Flink** — fallback serializer для типов вне POJO/Tuple системы.
+> - **Hazelcast / Apache Ignite** — для in-memory caches между JVM-нодами.
+> - **Akka remoting** — опционально через `akka.actor.serializers.kryo`.
+> - **Local JVM cache в Redis** через сериализатор — компактнее и быстрее JDK.
+>
+> **Подводные камни:**
+> - **Эволюция класса**: добавление/удаление поля без миграции данных ломает чтение. Если нужна совместимость — `TaggedFieldSerializer` или явные version-fields.
+> - **Регистрация по умолчанию**: `kryo.setRegistrationRequired(true)` в production — иначе атакующий может через user-input сериализовать произвольный класс (Spark CVE-2018-8024).
+> - **Lambda и inner classes**: Kryo не сериализует lambda по умолчанию (нет stable serialized form). Использовать `ClosureSerializer` + регистрацию.
+> - **Recursive references**: `kryo.setReferences(true)` обязательно для графов с циклами, иначе StackOverflow.
+>
+> **Связанные вопросы:** [[Q26]] — Protobuf как альтернатива для cross-language; [[Q29]] — выбор формата по use-case; [[Q39]] — FST как близкий аналог.
+>
+> ---
+>
+> #### C) Kryo требует обязательной реализации `Serializable` и `serialVersionUID` для каждого класса — ❌ Неверно
+>
+> **Что на самом деле:** Kryo сериализует **любой POJO** без `Serializable`. Это одно из его ключевых преимуществ перед стандартной Java Serialization — не нужно ретроактивно добавлять интерфейс к существующим классам. Регистрация (`kryo.register`) — отдельный механизм, не связанный с `Serializable`.
+>
+> **Откуда путаница:** ассоциация с JVM-сериализацией, где `Serializable` обязателен.
+>
+> **Если бы это было правдой:** Spark не мог бы Kryo-сериализовать произвольные RDD-элементы. Реально пользователь Spark часто работает с Scala case-классами, которые не наследуют `Serializable` по умолчанию.
+>
+> ---
+>
+> #### D) Kryo thread-safe и можно делиться одним экземпляром между tasks Spark executor'а — ❌ Неверно
+>
+> **Что на самом деле:** Kryo **категорически не thread-safe**. Один `Kryo` instance держит mutable state и попытка одновременного использования из 2+ threads ведёт к data corruption, не к exception. Это одна из самых частых production-ошибок при первой интеграции. Spark внутренне создаёт per-task instance именно потому, что shared невозможен.
+>
+> **Откуда путаница:** ассоциация с thread-safe Jackson `ObjectMapper` (после конфигурации). Разработчик переносит интуицию.
+>
+> **Если бы это было правдой:** Apache Spark не нуждался бы в `SerializerInstance` для каждого task. Производительность была бы выше за счёт исключения allocations.
+
+## Q29. (!) Как выбрать формат сериализации для проекта?
 
 ```mermaid
 graph TD
@@ -1210,10 +1452,99 @@ graph TD
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. (!) Почему в микросервисах обычно избегают `Java Serialization`? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Как правильно выбрать формат сериализации между JSON / Protobuf / Avro / Kryo / Java Serialization для разных задач?
+>
+> ---
+>
+> #### A) Универсальный выбор — JSON: подходит для REST API, gRPC, Kafka, Spark и кэша Redis — ❌ Неверно
+>
+> **Что на самом деле:** JSON хорош для REST API и debugging, но проигрывает по другим axes. Для gRPC он несовместим (контракт gRPC = Protobuf). Для Kafka events на высоких throughput JSON тратит 5-10× больше байт + парсинг медленнее. Для Spark shuffle JSON катастрофичен — Kryo/Java-native быстрее в десятки раз.
+>
+> **Откуда путаница:** JSON «работает везде» в смысле library support, но «работает» ≠ «оптимально». Junior смешивает доступность и пригодность.
+>
+> **Если бы это было правдой:** не было бы существования Protobuf, Avro, MessagePack — они исчезли бы как ненужные. Реальность: Netflix хранит метаданные видео в JSON для совместимости, но billion-events/day в Avro.
+>
+> ---
+>
+> #### B) Выбор формата зависит только от скорости — нужно всегда брать самый быстрый формат, остальное вторично — ❌ Неверно
+>
+> **Что на самом деле:** скорость — лишь одно из 5+ измерений. Critical axes: (1) межъязыковость (JVM-only vs cross-language), (2) схема и эволюция, (3) человекочитаемость для debugging, (4) экосистема (gRPC?, Kafka?, Spark?), (5) безопасность (RCE risk). Самый быстрый Kryo бесполезен для REST API (только JVM). Самый компактный FlatBuffers неудобен для аудита.
+>
+> **Откуда путаница:** benchmark-driven thinking — разработчик видит «Kryo в 10× быстрее JSON» и заключает что Kryo всегда лучше.
+>
+> **Если бы это было правдой:** Twitter не использовал бы JSON в публичном API. Real-world: trade-off многомерный, скорость не доминирует.
+>
+> ---
+>
+> #### C) Decision matrix по use-case: **REST API** → JSON (Jackson); **gRPC** → Protobuf (обязательно); **Kafka events с schema evolution** → Avro + Schema Registry; **Spark/Flink shuffle** → Kryo; **Redis cache между JVM** → Kryo или JSON в зависимости от observability нужд; **legacy RMI** → Java Serialization с `ObjectInputFilter`; **mobile API с экономией трафика** → Protobuf — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Выбор формата — архитектурное решение с долгосрочными последствиями. Правильная декомпозиция: сначала определить **контекст использования** (граница системы, аудитория данных), затем приоритеты (performance vs human-readable vs evolution), наконец конкретный формат.
+>
+> Ключевые правила: (1) **external API** (публичный) → JSON, потому что любой клиент его поддержит и можно дебажить через curl; (2) **internal RPC** → Protobuf если выбран gRPC, иначе JSON; (3) **event streaming** с retention годами → Avro с Schema Registry, потому что schema evolution критична; (4) **cache** с горячими данными → Kryo для скорости, JSON если важно мониторить содержимое через redis-cli; (5) **Big Data** → Avro/Parquet (storage), Kryo (shuffle); (6) **legacy** → не трогать, добавить `ObjectInputFilter`, планировать миграцию.
+>
+> **Пример:**
+> ```yaml
+> # decision-matrix.yaml — реальный проект e-commerce
+> formats:
+>   external_rest_api:
+>     format: JSON
+>     library: Jackson
+>     reason: "Public API, debugging, mobile clients"
+>
+>   internal_grpc:
+>     format: Protobuf
+>     library: protobuf-java + grpc-java
+>     reason: "Inter-service RPC, strong contracts, code-gen"
+>
+>   kafka_order_events:
+>     format: Avro
+>     registry: Confluent Schema Registry
+>     compatibility: BACKWARD
+>     reason: "Long retention (7y), schema evolution critical"
+>
+>   redis_session_cache:
+>     format: Kryo
+>     reason: "JVM-only, short-lived, speed > human-readability"
+>
+>   spark_etl_shuffle:
+>     format: Kryo
+>     reason: "Performance critical, internal to job"
+>
+>   legacy_rmi_endpoint:
+>     format: Java Serialization
+>     filter: "com.example.dto.*;!*"
+>     migration_target: "Q3 2026"
+>     reason: "Cannot break clients, hardened with filter"
+> ```
+>
+> **Когда применять:**
+> - **Архитектурный review** — этот фреймворк помогает обосновать выбор перед security/perf review.
+> - **Greenfield проект** — выбор формата на старте определяет 5+ лет техдолга.
+> - **Migration** — анализ существующих интеграций по той же матрице для priorization.
+> - **Cross-team API контракт** — JSON Schema или Protobuf `.proto` как single source of truth.
+>
+> **Подводные камни:**
+> - **Не смешивать форматы в одном слое**: если Kafka topic — Avro, все consumer'ы должны быть Avro. Mixed topics ломают consumer groups.
+> - **JSON ≠ всегда дёшево**: для events 100K msg/s парсинг JSON может стать bottleneck, CPU bound. Profile до выбора.
+> - **Protobuf без `optional`**: в proto3 default значения неотличимы от «не задано». Если semantics важна — proto3 `optional` keyword (Protobuf 3.15+).
+> - **Kryo + cross-version JVM upgrade**: смена JDK (8→17) может изменить `serialVersionUID`-эквивалент или semantics коллекций. Тестировать.
+>
+> **Связанные вопросы:** [[Q26]] — Protobuf детали; [[Q27]] — Avro и Schema Registry; [[Q28]] — Kryo; [[Q30]] — почему не Java Serialization в микросервисах.
+>
+> ---
+>
+> #### D) Для микросервисов всегда нужно использовать Java Serialization — это стандарт JDK, не требует зависимостей — ❌ Неверно
+>
+> **Что на самом деле:** Java Serialization в микросервисах — **антипаттерн**. Привязывает к JVM (Python/Go клиенты невозможны), несовместима между версиями классов (rolling deploy ломается), создаёт attack surface для RCE через gadget chains, неотлаживаема (бинарный формат). См. Q30 для развёрнутого ответа.
+>
+> **Откуда путаница:** «standard JDK = best practice» — ошибочная эвристика. JDK содержит много deprecated/legacy API.
+>
+> **Если бы это было правдой:** Netflix, Uber, Lyft использовали бы Java Serialization для inter-service. Реально: все используют gRPC + Protobuf или Kafka + Avro/JSON. Java Serialization осталась в RMI и legacy fat-clients.
+
+## Q30. (!) Почему в микросервисах обычно избегают `Java Serialization`?
 
 Стандартная `Java Serialization` создаёт ряд проблем в микросервисной архитектуре:
 
