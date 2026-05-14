@@ -605,10 +605,71 @@ map.computeIfAbsent("b", k -> 2); // атомарно
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Чем ConcurrentHashMap отличается от Hashtable и Collections.synchronizedMap? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Как ConcurrentHashMap (Java 8+) достигает высокого параллельного throughput по сравнению с Hashtable?
+>
+> ---
+>
+> #### A) Используется один глобальный `ReentrantLock` для всей таблицы, но он fair — это даёт высокую пропускную способность — ❌ Неверно
+>
+> **Что на самом деле:** ConcurrentHashMap НЕ использует глобальный лок. С Java 8+ применяется CAS на первом узле bucket и `synchronized` на конкретном bucket-head при необходимости. Глобальный лок убил бы параллелизм — именно так и работают Hashtable/synchronizedMap, и поэтому они медленные.
+>
+> **Откуда путаница:** ассоциация «thread-safe = lock» из учебников по concurrency. Опускают, что современные lock-free структуры используют CAS и шардирование локов.
+>
+> **Если бы это было правдой:** при 32 ядрах и 100k RPS на shared map с одним fair lock — очередь потоков на лок убьёт всю производительность; latency p99 уйдёт в секунды.
+>
+> ---
+>
+> #### B) ConcurrentHashMap использует ровно 16 сегментов (Segments) с отдельным lock на каждый — как было в Java 7 — ❌ Неверно
+>
+> **Что на самом деле:** segment-based locking был ДО Java 8. В Java 8+ его убрали в пользу более тонкой стратегии: CAS на пустой bucket, `synchronized` на head-узле bucket при коллизии. Это лучше масштабируется, чем фиксированные 16 сегментов.
+>
+> **Откуда путаница:** многие старые статьи и книги (Effective Java 2nd ed, до 2018) описывают legacy Java 7 implementation. Информация устарела.
+>
+> **Если бы это было правдой:** при 64 ядрах все потоки конкурировали бы за всего 16 локов — bottleneck при write-heavy workload; не было бы выигрыша от перехода на Java 8+.
+>
+> ---
+>
+> #### C) Не блокирует чтение — get() использует CAS и atomic read — ❌ Неверно (формулировка неточная)
+>
+> **Что на самом деле:** get() в ConcurrentHashMap действительно lock-free, но **не использует CAS** — он просто читает `volatile` поле `Node.val`. CAS применяется только при модификации (put/remove). Утверждение про CAS на read — миф.
+>
+> **Откуда путаница:** «lock-free = CAS» — расхожее упрощение. На деле lock-free read возможен через volatile/memory barriers без atomic compare-and-swap.
+>
+> **Если бы это было правдой:** CAS на каждом чтении добавил бы overhead `LOCK CMPXCHG` инструкции — это снизило бы read throughput на 30-50%.
+>
+> ---
+>
+> #### D) CAS на первом узле bucket для вставок + `synchronized` на bucket-head при коллизии + lock-free volatile reads + параллельный resize через `transferIndex` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> ConcurrentHashMap в Java 8+ построен на трёх принципах:
+> 1. **Reads — полностью lock-free.** Чтение проходит через `volatile Node.val`, без блокировок и без CAS. Несколько потоков читают параллельно без contention.
+> 2. **Writes — fine-grained locking.** Если bucket пуст — CAS-вставка first node. Если есть коллизия — `synchronized (head)` на head-узле этого конкретного bucket. Другие buckets продолжают работать без блокировки.
+> 3. **Resize — кооперативный.** При rehashing все потоки помогают переносить элементы, координируясь через `transferIndex` (атомарный счётчик незавершённых bucket'ов).
+>
+> **Пример:**
+> ```java
+> ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
+> // Параллельно из 100 потоков — без contention если buckets разные
+> IntStream.range(0, 100).parallel().forEach(i ->
+>     map.compute("k" + i, (k, v) -> v == null ? 1 : v + 1)
+> );
+> ```
+>
+> **Когда применять:**
+> - Shared counters/registries в высоконагруженных сервисах (Spring `@Cacheable`, session storage).
+> - Конкурентные кэши с read-heavy workload (например, computeIfAbsent для memoization).
+>
+> **Подводные камни:**
+> - `null` запрещён и для ключа, и для значения — иначе нельзя отличить «нет ключа» от «значение null» атомарно.
+> - `size()` приближённый при concurrent modifications — не использовать как точный счётчик; вместо него — `LongAdder` или `mappingCount()`.
+> - Iterators **weakly consistent**: не бросают `ConcurrentModificationException`, но могут не отразить недавние изменения.
+>
+> **Связанные вопросы:** [[Q21]] — сравнение с Hashtable; [[Q22]] — атомарные методы; [[Q19]] — почему HashMap небезопасен.
+
+## Q21. Чем ConcurrentHashMap отличается от Hashtable и Collections.synchronizedMap?
 
 | Структура | Стратегия | Чтение | Производительность |
 |-----------|-----------|--------|--------------------|
@@ -628,10 +689,76 @@ ConcurrentHashMap<String, Integer> conc = new ConcurrentHashMap<>();
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) Атомарные методы ConcurrentHashMap? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** В чём принципиальная разница между `Collections.synchronizedMap(new HashMap<>())` и `ConcurrentHashMap` под нагрузкой?
+>
+> ---
+>
+> #### A) `synchronizedMap` блокирует только при write, а ConcurrentHashMap блокирует при любой операции — ❌ Неверно
+>
+> **Что на самом деле:** ровно наоборот. `synchronizedMap` использует обёртку с глобальным `synchronized(mutex)` на КАЖДУЮ операцию, включая get(). ConcurrentHashMap НЕ блокирует чтения вообще (lock-free volatile read).
+>
+> **Откуда путаница:** название «ConcurrentHashMap» наводит на мысль о более «защитной» реализации, что неверно ассоциируется с «больше локов».
+>
+> **Если бы это было правдой:** ConcurrentHashMap не имела бы преимуществ перед `synchronizedMap` — но бенчмарки JMH показывают разницу в 10-100× на read-heavy workload.
+>
+> ---
+>
+> #### B) ConcurrentHashMap позволяет null значения, Hashtable — нет — ❌ Неверно
+>
+> **Что на самом деле:** наоборот. Hashtable выбрасывает NullPointerException и для null ключа, и для null значения. ConcurrentHashMap **тоже запрещает** null — намеренно, чтобы избежать ambiguity между «нет ключа» и «есть, но null» в concurrent setting. HashMap позволяет null (для ключа — один, для значений — сколько угодно).
+>
+> **Откуда путаница:** часто путают, какая именно map разрешает null. Только обычный HashMap и LinkedHashMap разрешают.
+>
+> **Если бы это было правдой:** код вида `map.put(key, null)` работал бы на ConcurrentHashMap; на практике это бросает NPE — баг в production.
+>
+> ---
+>
+> #### C) Hashtable и synchronizedMap полностью эквивалентны и взаимозаменяемы — ❌ Неверно
+>
+> **Что на самом деле:** оба используют глобальный лок, но Hashtable — это legacy-класс из Java 1.0 с собственной реализацией методов (`elements()`, `keys()` — Enumeration вместо Iterator), а `synchronizedMap` — wrapper вокруг любой Map с `synchronized(mutex)`. Hashtable не наследует от AbstractMap.
+>
+> **Откуда путаница:** оба «медленные и глобально залоченные», поэтому кажутся одинаковыми. Но API и наследование различаются.
+>
+> **Если бы это было правдой:** можно было бы безопасно мигрировать с Hashtable на synchronizedMap не меняя коллекционные клиенты — на практике Enumeration vs Iterator ломает совместимость.
+>
+> ---
+>
+> #### D) Hashtable использует глобальный synchronized на каждом методе — ✓ Верно (А — корректный ответ на вопрос «в чём разница»)
+>
+> **Развёрнутое объяснение:**
+>
+> Ключевая разница — **зернистость локов**:
+> - **Hashtable / synchronizedMap** — один глобальный лок (`synchronized` или mutex-объект). Любой поток, делающий get/put/remove, блокирует все остальные потоки на всю карту. Throughput не растёт от увеличения числа ядер.
+> - **ConcurrentHashMap** — bucket-level locking + lock-free reads. Параллельные write в разные buckets не конкурируют. Reads вообще не блокируются. Throughput линейно масштабируется до сотен потоков.
+>
+> Дополнительно ConcurrentHashMap предоставляет атомарные методы (`computeIfAbsent`, `merge`), которые невозможно безопасно выразить через `synchronizedMap` без внешнего лока.
+>
+> **Пример:**
+> ```java
+> // ПЛОХО: глобальный лок, не масштабируется
+> Map<String, Integer> sync = Collections.synchronizedMap(new HashMap<>());
+> // race condition: get-then-put не атомарны
+> if (!sync.containsKey("k")) sync.put("k", 1);
+>
+> // ХОРОШО: атомарная операция
+> ConcurrentHashMap<String, Integer> chm = new ConcurrentHashMap<>();
+> chm.putIfAbsent("k", 1);
+> ```
+>
+> **Когда применять:**
+> - **ConcurrentHashMap** — всегда для shared mutable map в многопоточном коде.
+> - **synchronizedMap** — только для legacy-кода или когда нужна Map с null-значениями и thread-safety одновременно (редко).
+> - **Hashtable** — никогда в новом коде; только для backward compat (например, `System.getProperties()` возвращает Hashtable).
+>
+> **Подводные камни:**
+> - Iterator у synchronizedMap всё равно требует внешнего `synchronized(syncMap)` блока — фейл-фаст без него.
+> - ConcurrentHashMap `size()` приближённый — нельзя использовать в `if (map.size() == 0)` для решений.
+> - Hashtable `null` бросает NPE — миграция со старого кода требует null-checks.
+>
+> **Связанные вопросы:** [[Q20]] — устройство ConcurrentHashMap; [[Q22]] — атомарные операции; [[Q19]] — небезопасность HashMap.
+
+## Q22. (!) Атомарные методы ConcurrentHashMap?
 
 ```java
 ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
@@ -656,10 +783,84 @@ map.merge("counter", 1, Integer::sum);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. (!) LinkedHashMap — как устроен и зачем? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Чем `map.compute(key, (k, v) -> v == null ? 1 : v + 1)` лучше последовательности `get + put` на ConcurrentHashMap?
+>
+> ---
+>
+> #### A) Это просто синтаксический сахар — runtime-поведение идентичное — ❌ Неверно
+>
+> **Что на самом деле:** разница принципиальная. `compute()` выполняет read-modify-write **атомарно** под `synchronized(head)` для конкретного bucket. Последовательность `get + put` имеет race-window между чтением и записью: другой поток может вставить/обновить значение между ними — lost update.
+>
+> **Откуда путаница:** код выглядит «той же логикой» в одну строку — кажется эквивалентным; забывается atomicity-гарантия.
+>
+> **Если бы это было правдой:** счётчик в `chm.compute(key, (k,v) -> v+1)` показывал бы те же значения, что и `chm.put(k, chm.get(k)+1)` — но второй вариант теряет инкременты, и итоговое значение будет меньше ожидаемого.
+>
+> ---
+>
+> #### B) `compute` атомарно выполняет read-modify-write под локом bucket-head — между чтением и записью никто не вмешается; `get+put` не атомарны и теряют обновления — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Атомарные методы ConcurrentHashMap (`compute`, `computeIfAbsent`, `computeIfPresent`, `merge`, `putIfAbsent`, `replace`) гарантируют, что лямбда вычисляется ОДИН раз под bucket-локом, и результат записывается без race window. Это эквивалентно более тяжёлой конструкции:
+> ```java
+> synchronized (someExternalLock) {
+>     V v = map.get(key);
+>     V newV = remappingFn.apply(key, v);
+>     if (newV == null) map.remove(key); else map.put(key, newV);
+> }
+> ```
+> Но без внешнего лока (лочится только bucket, а не вся карта) и без необходимости явной синхронизации.
+>
+> **Пример:**
+> ```java
+> ConcurrentHashMap<String, Integer> counters = new ConcurrentHashMap<>();
+> // Word frequency counter — корректен при concurrent updates
+> words.parallelStream().forEach(w ->
+>     counters.merge(w, 1, Integer::sum)
+> );
+>
+> // Cache pattern с lazy init — гарантия "только один вычисляет"
+> Cache cache = caches.computeIfAbsent(key, k -> expensiveBuild(k));
+> ```
+>
+> **Когда применять:**
+> - **`merge(k, 1, Integer::sum)`** — счётчики (frequency, hit-count); идеальный паттерн.
+> - **`computeIfAbsent(k, k -> load(k))`** — memoization, lazy cache initialization; гарантия single-flight на ключ.
+> - **`compute(k, fn)`** — сложные update-логики с null-handling.
+> - **`putIfAbsent`** — простая «вставка, если нет», без вычисления нового значения.
+>
+> **Подводные камни:**
+> - Лямбда в `computeIfAbsent` **не должна модифицировать ту же мапу** (особенно тот же ключ) — это вызовет `IllegalStateException` или зависание из-за рекурсивной блокировки на bucket head.
+> - Долгие вычисления внутри лямбды держат bucket lock — другие потоки на тот же bucket блокируются. Для тяжёлых операций — либо `CompletableFuture` как значение, либо `Caffeine`.
+> - `merge` с возвращением `null` из remapping удалит ключ — иногда непреднамеренно.
+> - В Java 8 есть [известный баг](https://bugs.openjdk.org/browse/JDK-8062841) с deadlock при рекурсивном computeIfAbsent — исправлено в Java 9+.
+>
+> ---
+>
+> #### C) `compute` использует optimistic locking с retry — при contention повторяет вычисление лямбды — ❌ Неверно
+>
+> **Что на самом деле:** `compute` использует `synchronized(head)`, не optimistic locking. Лямбда выполняется ровно один раз. Если нужен retry-pattern — это уже `AtomicReference.updateAndGet` с CAS-loop, но это другая абстракция.
+>
+> **Откуда путаница:** ConcurrentHashMap ассоциируется с CAS; домысливается, что atomic methods тоже на CAS-retry.
+>
+> **Если бы это было правдой:** лямбда с сайд-эффектами (логированием, метриками) могла бы выполниться несколько раз — нарушение контракта `compute` (документация гарантирует single invocation).
+>
+> ---
+>
+> #### D) Атомарные методы работают только на single-threaded коде — в multi-threaded нужен внешний lock — ❌ Неверно
+>
+> **Что на самом деле:** атомарные методы предназначены именно для multi-threaded использования — это их основная польза. В single-threaded коде разницы с `get+put` нет (race просто невозможен).
+>
+> **Откуда путаница:** «atomic» иногда понимают как «однопоточное выполнение» — что неверно; atomic = неделимая операция с точки зрения других потоков.
+>
+> **Если бы это было правдой:** не было бы смысла в API — пользователи писали бы `synchronized` блоки сами; библиотека не давала бы добавленной ценности.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q20]] — устройство ConcurrentHashMap; [[Q21]] — vs Hashtable; [[Q19]] — небезопасность HashMap.
+
+## Q23. (!) LinkedHashMap — как устроен и зачем?
 
 `LinkedHashMap` extends `HashMap` + поддерживает **связный список** всех элементов в порядке вставки (или доступа).
 
