@@ -1039,10 +1039,84 @@ public void onOrderPlaced(OrderPlacedEvent event) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Какие есть требования к @Async методам? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** В методе `@Transactional processOrder()` вы вызываете `notificationService.sendAsync(order)` (где `sendAsync` помечен `@Async` и читает order из БД). Что увидит async-метод сразу после вызова?
+>
+> ---
+>
+> #### A) Тот же transaction context, что и у caller — async видит uncommitted данные — ❌ Неверно
+>
+> **Что на самом деле:** `@Transactional` хранит транзакцию в `TransactionSynchronizationManager` через `ThreadLocal`. `@Async` запускает метод в **другом потоке**, у которого свой пустой `ThreadLocal`. Транзакция caller-а НЕ распространяется в async-поток. Async-метод не видит uncommitted данные — он либо читает закоммиченные данные (если транзакция caller-а уже завершилась), либо вообще ничего не находит (если транзакция ещё в процессе).
+>
+> **Откуда путаница:** в одном потоке `@Transactional` распространяется по nested вызовам через `propagation = REQUIRED`, и кажется, что это работает универсально.
+>
+> **Если бы это было правдой:** не было бы паттерна `@TransactionalEventListener(phase = AFTER_COMMIT)` — он специально создан для этой проблемы.
+>
+> ---
+>
+> #### B) Async-метод блокируется до коммита транзакции caller-а — Spring координирует — ❌ Неверно
+>
+> **Что на самом деле:** Spring не координирует транзакции между потоками. Async-метод стартует немедленно после сабмита в executor — он не ждёт коммита транзакции caller-а. Это создаёт **race condition**: async может прочитать order из БД до того, как caller успел его сохранить и закоммитить.
+>
+> **Откуда путаница:** в JTA/XA транзакциях есть координация между ресурсами, но не между Spring-методами в разных потоках.
+>
+> **Если бы это было правдой:** не было бы знаменитой проблемы «async не видит запись» в Spring документации и StackOverflow.
+>
+> ---
+>
+> #### C) Async выполняется без транзакционного контекста caller-а; если есть `@Transactional` на async-методе — открывается НОВАЯ транзакция; данные caller-а могут быть ещё не закоммичены — ✓ Верно
+>
+> **Развёрнутое объяснение:** `@Async` запускается в потоке executor-а с чистым `ThreadLocal`. Если на async-методе тоже есть `@Transactional`, Spring через `TransactionAspect` откроет **новую** транзакцию (по умолчанию `propagation = REQUIRED` — но так как нет существующей транзакции в этом потоке, создаётся новая). Эта новая транзакция изолирована от транзакции caller-а: если caller использует `READ_COMMITTED`, async может не увидеть запись до коммита; если `READ_UNCOMMITTED` — увидит, но это редко применяется. Главный антипаттерн: вызывать async-метод посередине `@Transactional` блока caller-а и ожидать, что он увидит локальные изменения. Правильный паттерн — `@TransactionalEventListener(phase = AFTER_COMMIT)` + `@Async`: гарантирует, что async выполнится только после commit, и в отдельном потоке.
+>
+> **Пример:**
+> ```java
+> // АНТИПАТТЕРН: race condition
+> @Transactional
+> public void processOrder(Order order) {
+>     orderRepository.save(order);  // INSERT в транзакции T1
+>     // Транзакция T1 НЕ закоммичена!
+>     notificationService.sendAsync(order.getId());
+>     // В async потоке: SELECT FROM orders WHERE id=? → возможно NotFound
+> }
+>
+> // ПРАВИЛЬНО: TransactionalEventListener + Async
+> @Transactional
+> public void processOrder(Order order) {
+>     orderRepository.save(order);
+>     eventPublisher.publishEvent(new OrderPlaced(order.getId()));
+>     // Async listener сработает только после commit
+> }
+>
+> @Component
+> public class OrderNotificationListener {
+>     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+>     @Async("notificationExecutor")
+>     public void onOrderPlaced(OrderPlaced event) {
+>         // Гарантированно после commit, в отдельном потоке
+>         Order order = orderRepository.findById(event.orderId())
+>             .orElseThrow();  // безопасно — данные точно есть
+>         notificationService.send(order);
+>     }
+> }
+> ```
+>
+> **Когда применять:** для любых async-операций, зависящих от данных, сохранённых в caller-транзакции — используйте `@TransactionalEventListener(AFTER_COMMIT)`. Это стандартный паттерн в DDD-системах с domain events.
+>
+> **Подводные камни:** `BEFORE_COMMIT` фаза события — async может прочитать данные, но изменения ещё могут откатиться; rollback caller не отменяет async; `propagation = REQUIRES_NEW` на caller-методе не помогает — суть в смене потока, а не в propagation; в тестах с `SyncTaskExecutor` проблема скрыта.
+>
+> **Связанные вопросы:** [[Q9]] — self-invocation, [[Spring Events]] — `@TransactionalEventListener`, [[Spring @Transactional]] — propagation.
+>
+> ---
+>
+> #### D) Async-метод автоматически наследует isolation level и timeout caller-транзакции — ❌ Неверно
+>
+> **Что на самом деле:** транзакции вообще не передаются между потоками в Spring без явной координации (например через `TransactionTemplate.execute()` с захваченным `TransactionSynchronizationManager` snapshot, что почти никто не делает). Async-метод стартует с дефолтными настройками — либо без транзакции вообще, либо со своей `@Transactional` конфигурацией.
+>
+> **Откуда путаница:** в WebFlux есть `TransactionalOperator` с context propagation; в JDK 21 Virtual Threads тоже планируется. Но в классическом Spring `@Async` ничего такого нет.
+>
+> **Если бы это было правдой:** долгая транзакция caller-а блокировала бы async-методы по timeout — но в реальности они независимы.
+
+## Q11. Какие есть требования к @Async методам?
 
 1. **`public` метод** — AOP proxy не перехватывает `private`/`protected` (кроме `proxyTargetClass = true` + CGLIB для `protected`)
 2. **Не может быть `final`** — CGLIB не может создать subclass
@@ -1067,10 +1141,82 @@ public class DataProcessor {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Как комбинировать несколько @Async вызовов? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Что произойдёт, если навесить `@Async` на `private` метод и вызвать его через bean-ссылку из другого класса?
+>
+> ---
+>
+> #### A) Spring логирует warning «@Async on private method ignored» и метод выполняется синхронно — ❌ Неверно
+>
+> **Что на самом деле:** Spring не предупреждает об этом — это silent no-op. AOP-прокси (JDK Dynamic Proxy или CGLIB) физически не может перехватить private-методы: CGLIB генерирует subclass и переопределяет только видимые (public/protected) методы; JDK Dynamic Proxy работает через интерфейсы и видит только интерфейсные методы. Поэтому private + `@Async` — это конструкция, которая компилируется, но не работает, без предупреждений.
+>
+> **Откуда путаница:** Spring часто логирует warning о подобных проблемах (например `BeanPostProcessor` пишет о self-injection), и кажется, что @Async тоже должно.
+>
+> **Если бы это было правдой:** проблема обнаруживалась бы при первом запуске. Но её обычно ловят только при code-review или в production по нестабильному поведению.
+>
+> ---
+>
+> #### B) `BeanCreationException` при старте контекста — Spring валидирует видимость методов с AOP-аннотациями — ❌ Неверно
+>
+> **Что на самом деле:** Spring не валидирует видимость на старте. Bean создаётся успешно, контекст поднимается, приложение запускается. Проблема видна только при попытке вызвать private метод — и даже тогда нет ошибки, просто метод выполняется синхронно.
+>
+> **Откуда путаница:** некоторые валидации Spring делает на старте (циклические зависимости, неудовлетворённые `@Required`), и хотелось бы такого же для AOP.
+>
+> **Если бы это было правдой:** этого требования не было бы в FAQ и StackOverflow — оно обнаруживалось бы автоматически.
+>
+> ---
+>
+> #### C) Метод нельзя вызвать извне класса из-за `private` — компилятор отвергнет код — ❌ Неверно
+>
+> **Что на самом деле:** в условии сказано «вызвать через bean-ссылку из другого класса» — это уже подразумевает попытку доступа извне. Если метод `private`, компилятор действительно не даст его вызвать через `service.privateMethod()`. Но вопрос про сценарий: разработчик внутри класса вызывает private метод (`this.privateMethod()`), ожидая что `@Async` сделает его асинхронным. Компилятор это пропускает, потому что доступ к собственным private членам разрешён.
+>
+> **Откуда путаница:** буквальная интерпретация вопроса — действительно нельзя вызвать private извне. Но семантически вопрос про typical case с self-invocation.
+>
+> **Если бы это было правдой:** не было бы предупреждения «`@Async` не работает на private» в документации — оно адресует именно self-invocation сценарий.
+>
+> ---
+>
+> #### D) Silent no-op — метод выполняется синхронно, в потоке caller-а, без warning и без exception — ✓ Верно
+>
+> **Развёрнутое объяснение:** это одна из самых коварных проблем `@Async`. Возможные сценарии: (1) `@Async` на `private` методе — AOP-прокси не видит метод, aspect не применяется; (2) `@Async` на `final` методе — CGLIB не может его переопределить (для `final class` — то же); (3) `@Async` на `static` методе — AOP работает с instance, статика игнорируется; (4) `@Async` на методе класса, который не является spring bean — AOP-прокси вообще нет. Во всех случаях метод выполняется синхронно, в потоке caller-а, без какого-либо сигнала об ошибке. Это и есть основное «правило» работы с `@Async`: всегда public, не final, не static, всегда через bean.
+>
+> **Пример:**
+> ```java
+> @Service
+> public class DataProcessor {
+>
+>     // ❌ private — silent no-op
+>     @Async
+>     private void processInternal() { ... }
+>
+>     // ❌ final — CGLIB не может переопределить
+>     @Async
+>     public final void processFinal() { ... }
+>
+>     // ❌ static — AOP работает с instance
+>     @Async
+>     public static void processStatic() { ... }
+>
+>     // ✓ public, non-final, instance — работает
+>     @Async
+>     public void processCorrectly() { ... }
+>
+>     public void caller() {
+>         processInternal();   // силент-синхронно
+>         processFinal();      // силент-синхронно
+>         DataProcessor.processStatic();  // силент-синхронно
+>         // даже processCorrectly() при self-invocation тоже синхронно!
+>     }
+> }
+> ```
+>
+> **Когда применять:** при code-review всегда проверяйте: метод public? non-final? non-static? Класс — spring bean? Вызов через bean-ссылку, не через `this`? Если хотя бы один пункт нарушен — `@Async` не сработает.
+>
+> **Подводные камни:** IDE-плагины (IntelliJ Spring plugin) предупреждают о таких ошибках, но не во всех случаях; SonarQube правило `spring:S6829` отлавливает часть; тесты с `SyncTaskExecutor` маскируют проблему — нужно интеграционное тестирование с реальным executor.
+>
+> **Связанные вопросы:** [[Q3]] — механизм AOP proxy, [[Q9]] — self-invocation, [[Q1]] — настройка `@EnableAsync`.
+
+## Q12. Как комбинировать несколько @Async вызовов?
 
 Через `CompletableFuture` композицию:
 
