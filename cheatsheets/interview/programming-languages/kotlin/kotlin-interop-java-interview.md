@@ -2332,10 +2332,90 @@ fun findUserOptional(id: Long): Optional<User> =
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. Почему `Lombok` несовместим с `Kotlin` при использовании `kapt` и как это решить? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В Kotlin-сервисе вызываем Java API, возвращающий `Optional<String>`. Какой подход наиболее идиоматичный для интеграции с Kotlin null safety?
+>
+> ---
+>
+> #### A) `optional.get()` всегда, потому что `Optional` гарантирует наличие значения — ❌ Неверно
+>
+> **Что на самом деле:** `Optional.get()` бросает `NoSuchElementException`, если значение отсутствует (`Optional.empty()`). Optional **не гарантирует** наличие — наоборот, его цель — явно представить отсутствие. Использование `.get()` без проверки `.isPresent()` — антипаттерн, замаскированный NPE.
+>
+> **Откуда путаница:** имя `Optional` ассоциируется с «возможно, есть». Метод `get()` звучит безопасно. На деле это «развернуть, упасть если пусто».
+>
+> **Если бы это было правдой:** не было бы смысла в типе `Optional` — он совпадал бы по семантике с `T`. Существует именно потому, что отсутствие — реальная возможность.
+>
+> ---
+>
+> #### B) Конвертировать в Kotlin nullable: `val name: String? = optional.orElse(null)` или через extension `fun <T> Optional<T>.orNull(): T? = orElse(null)` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Идиоматичный Kotlin не использует `Optional` — для отсутствия есть `T?`, который интегрирован в систему типов compile-time. Поэтому на границе с Java нужно сконвертировать `Optional<T>` в `T?` как можно раньше, и дальше работать с обычными Kotlin null-safe операторами.
+>
+> Стандартный stdlib не содержит `orNull()`, но это распространённое расширение в проектах:
+>
+> ```kotlin
+> // Common extension
+> fun <T> Optional<T>.orNull(): T? = orElse(null)
+>
+> // Использование
+> val name: String? = javaService.findName(id).orNull()
+> val length = name?.length ?: 0
+> ```
+>
+> **Альтернативы:**
+> - `optional.orElse(default)` — если есть подходящий default.
+> - `optional.orElseThrow { CustomException(...) }` — для error-paths.
+> - `if (optional.isPresent) optional.get() else null` — verbose, но работает без extension.
+>
+> **Возврат `Optional` из Kotlin в Java**:
+>
+> ```kotlin
+> // Kotlin внутренности — работаем с T?
+> internal fun findUser(id: Long): User? = repo.findById(id)
+>
+> // Java-facing API — конвертируем в Optional
+> @JvmStatic
+> fun findUserOptional(id: Long): Optional<User> =
+>     Optional.ofNullable(findUser(id))
+> ```
+>
+> **Когда применять:** **всегда** при работе с Java API, возвращающим `Optional`. Конвертация в начале функции, затем идиоматичный Kotlin. Spring Data 2.x+ уже поддерживает nullable return types вместо Optional — используйте их.
+>
+> **Подводные камни:**
+> - **Не пытайтесь использовать `Optional` в Kotlin-only коде** — это лишний overhead (allocation) и менее идиоматично.
+> - **`Optional<Optional<T>>`** — антипаттерн в Java; в Kotlin `T??` запрещён компилятором.
+> - **Сериализация Optional**: не `Serializable` по умолчанию, плохо ведёт себя с Jackson без специальных модулей.
+> - **Performance**: `Optional` — это object allocation на каждый вызов, в hot path заметно. Kotlin `T?` — это null в байткоде, zero overhead.
+>
+> **Связанные вопросы:** [[Q6]] — platform types на границе; [[Q8]] — nullability контракты; [[Q37]] — Optional паттерны со Spring Data.
+>
+> ---
+>
+> #### C) Использовать `optional.map { ... }.orElse(default)` — функциональный стиль безопаснее — ❌ Неверно
+>
+> **Что на самом деле:** функциональный API Optional работает, но это **Java-стиль**, не Kotlin-идиоматичный. После конвертации в `T?` Kotlin предоставляет более мощные операторы: `?.let { }`, `?.also { }`, `?:`, `?.takeIf { }` — они интегрированы с системой типов и smart casts. Использовать `optional.map().orElse()` означает «принести Java-стиль в Kotlin», теряя преимущества языка.
+>
+> **Откуда путаница:** functional API выглядит элегантно. На деле он избыточен в Kotlin, где `?.` уже делает то же самое короче.
+>
+> **Если бы это было правдой:** Kotlin не предоставлял бы `?.` и `?:` — но они существуют именно как замена `Optional.map/orElse`.
+>
+> ---
+>
+> #### D) Использовать `Optional` везде в Kotlin-коде вместо `T?` — это совместимее с Java — ❌ Неверно
+>
+> **Что на самом деле:** это анти-идиоматично и приносит overhead:
+> 1. **Performance**: каждый `Optional` — это object allocation; на горячем пути это видно.
+> 2. **Compile-time safety**: `Optional<T>.get()` — runtime check, `T?.let` — compile-time guarantee.
+> 3. **Code style**: смешение Optional и T? в одной кодовой базе создаёт путаницу.
+> 4. **Spring Data**: с 2.x уже поддерживает nullable return types — Optional не нужен.
+>
+> **Откуда путаница:** «совместимость с Java» — мнимое преимущество. Из Java вы все равно сделаете wrapper. Лучше — внутренний Kotlin использует `T?`, на границе — конверсия.
+>
+> **Если бы это было правдой:** Kotlin не имел бы null safety вообще — мы все писали бы `Optional<T>`. Существование `T?` именно для отказа от Optional.
+
+## Q34. Почему `Lombok` несовместим с `Kotlin` при использовании `kapt` и как это решить?
 
 `Lombok` генерирует код через `Java Annotation Processing API (APT)`. `Kotlin` использует `kapt` (Kotlin Annotation Processing Tool) как совместимый слой, но есть принципиальная проблема: `kapt` обрабатывает `Kotlin`-файлы, а `APT` — `Java`-файлы. `Lombok` не видит `Kotlin`-классы, а `kapt` не обрабатывает Java-классы.
 
@@ -2392,10 +2472,87 @@ val updated = request.copy(age = 30)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Как работает `companion object` с `@JvmStatic` из `Java`: детали и подводные камни? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Java-класс с `@Builder` и `@Data` от Lombok не виден из Kotlin (компиляция падает: `cannot find symbol builder()`). В чём причина?
+>
+> ---
+>
+> #### A) Lombok устаревшая библиотека, JetBrains её заблокировал на уровне Kotlin компилятора — ❌ Неверно
+>
+> **Что на самом деле:** JetBrains не блокирует Lombok. Проблема — техническая: порядок компиляции Kotlin/Java и роль annotation processing (APT). Lombok работает через APT, который вмешивается в `javac` фазу, но Kotlin компилятор запускается **до** `javac` — и не видит сгенерированный Lombok код.
+>
+> **Откуда путаница:** иногда есть проблемы между library vendors. Здесь — чисто технический cycle dependency.
+>
+> **Если бы это было правдой:** в проекте можно было бы отключить блокировку через compiler flag. Но такого флага нет — потому что блокировки нет.
+>
+> ---
+>
+> #### B) Lombok генерирует код через Java APT, который запускается после `kotlinc`. Kotlin компилируется первым, но видит только оригинальный Java source (без Lombok-генерированного `builder()`) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Корень проблемы — последовательность компиляции:
+>
+> 1. **`kotlinc`** запускается первым, парсит Kotlin + Java sources (в read-only режиме для Java).
+> 2. На этом этапе **Lombok ещё НЕ обработан** — он работает как Java annotation processor, который запускается во время `javac`, не `kotlinc`.
+> 3. Kotlin компилятор видит **оригинальный Java source**: `@Builder class UserRequest { ... }` без сгенерированного `builder()` метода.
+> 4. **`javac`** запускается следующим, обрабатывает Lombok аннотации, генерирует `builder()`, `getX()`, и т.д.
+> 5. Java code, использующий Lombok, компилируется успешно — но Kotlin уже скомпилирован и не может ссылаться на сгенерированный код.
+>
+> Это circular dependency: чтобы Kotlin увидел Lombok-генерированный код, Lombok должен сработать первым; чтобы Lombok сработал, нужен javac; чтобы запустился javac, должен быть Kotlin stubs; чтобы были stubs, нужен kotlinc — и круг замкнулся.
+>
+> **Решения (от лучшего к худшему):**
+>
+> ```kotlin
+> // 1. ✅ Лучшее: разделить модули
+> //    java-domain/src/main/java/UserRequest.java  (Lombok работает)
+> //    kotlin-service/src/main/kotlin/UserService.kt  (зависит как от JAR)
+> // Lombok отрабатывает при компиляции java-domain, Kotlin видит готовый класс.
+>
+> // 2. ✅ Хорошее: заменить Lombok на Kotlin data class
+> data class UserRequest(
+>     val name: String,
+>     val email: String,
+>     val age: Int = 0
+> )
+> // copy(), getters, equals, hashCode, toString — всё автоматически
+> val updated = request.copy(age = 30)  // вместо builder pattern
+>
+> // 3. ⚠️ Delombok pre-processing (сложно настраивать в Gradle)
+> //    Раскрыть Lombok в обычный Java перед kotlinc.
+> ```
+>
+> **Когда применять:** при миграции с Java+Lombok на Kotlin — разделение модулей — самый прагматичный путь. Постепенное переписывание Java-модулей на Kotlin без Lombok.
+>
+> **Подводные камни:**
+> - **`MapStruct`** — аналогичная проблема (тоже APT). Решение: KSP-альтернативы (например, MapStruct альтернативы для Kotlin) или модульное разделение.
+> - **Dagger 2** — работает через APT, но Dagger явно поддерживает Kotlin через kapt с поправками.
+> - **Lombok + Kotlin в одном модуле теоретически возможно** через `kapt`, но требует hack-конфигурации с `--no-stubs` и т.д. — не рекомендуется.
+> - **`@Builder.Default`** Lombok features — теряются при модульном разделении (потому что Lombok сработал в Java-модуле, до его использования в Kotlin).
+>
+> **Связанные вопросы:** [[Q27]] — порядок компиляции Kotlin+Java; [[Q29]] — annotation targets в Kotlin; [[Q22]] — overloaded methods from Java.
+>
+> ---
+>
+> #### C) `kapt` несовместим с APT — нужно использовать только `KSP` — ❌ Неверно
+>
+> **Что на самом деле:** `kapt` это **именно** Kotlin Annotation Processing Tool — он эмулирует APT для Kotlin. Он совместим с APT, но обрабатывает только Kotlin-source. Lombok работает над **Java-source**, который kapt не трогает. KSP (Kotlin Symbol Processing) — это альтернатива kapt для Kotlin-only процессоров, ещё дальше от Lombok.
+>
+> **Откуда путаница:** kapt и KSP — оба annotation processing tools для Kotlin, легко перепутать что они делают. Lombok не работает ни с kapt, ни с KSP.
+>
+> **Если бы это было правдой:** переход на KSP решал бы проблему — но нет, проблема в Java APT vs Kotlin compilation order.
+>
+> ---
+>
+> #### D) Lombok нужно настроить с `-AlombokKotlinSupport=true` — нативная поддержка с 2022 года — ❌ Неверно
+>
+> **Что на самом деле:** такой опции не существует. Lombok project не имеет нативной интеграции с Kotlin компилятором. Были эксперименты (Lombok plugin для IntelliJ, который преобразует annotations при работе в IDE), но это IDE-only feature, не compile-time.
+>
+> **Откуда путаница:** Lombok активно развивается, новые опции добавляются. Звучит правдоподобно.
+>
+> **Если бы это было правдой:** мы все могли бы использовать Lombok в смешанных проектах без хлопот. На практике — модульное разделение остаётся стандартом.
+
+## Q35. Как работает `companion object` с `@JvmStatic` из `Java`: детали и подводные камни?
 
 `companion object` в `Kotlin` — это синглтон-объект, связанный с классом. При компиляции он превращается во вложенный класс `Companion`. Без аннотаций — неудобен для `Java`.
 
@@ -2448,10 +2605,103 @@ class Config {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Как extension-функции `Kotlin` выглядят в байткоде и чем это важно для `Java`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В Kotlin есть `class Order { companion object { val DEFAULT_TIMEOUT = Duration.ofSeconds(30); const val MAX_ITEMS = 100 } }`. Как из Java получить эти значения?
+>
+> ---
+>
+> #### A) `Order.DEFAULT_TIMEOUT` и `Order.MAX_ITEMS` — обе доступны как static fields — ❌ Неверно
+>
+> **Что на самом деле:** `MAX_ITEMS` действительно доступен напрямую как `Order.MAX_ITEMS` (потому что `const val` → `static final`). Но `DEFAULT_TIMEOUT` — это обычный `val`, который компилируется в getter в companion. Из Java: `Order.Companion.getDEFAULT_TIMEOUT()`. Без `@JvmField` или `@JvmStatic` обращение через Companion обязательно.
+>
+> **Откуда путаница:** оба объявлены в companion, кажется, что должны работать одинаково. Но `const` и `val` имеют разную семантику: `const` — compile-time константа (только примитивы и String), inlined в callsite; `val` — runtime значение.
+>
+> **Если бы это было правдой:** `Duration` мог бы быть `const` — но `const` запрещает не-примитивные типы.
+>
+> ---
+>
+> #### B) `Order.MAX_ITEMS` напрямую (const val → static final); `Order.Companion.getDEFAULT_TIMEOUT()` через Companion-объект (обычный val) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Companion object в байткоде — это вложенный класс `Companion` (singleton). Его поля и методы доступны через `OuterClass.Companion.xxx()`. Чтобы избежать этого, Kotlin предоставляет аннотации:
+>
+> **`const val`** — для compile-time констант:
+> - Только примитивы (`Int`, `Long`, `Double`, `Boolean`, ...) и `String`.
+> - Компилируется в `public static final` поле.
+> - Inlined в callsite (значение копируется в место вызова).
+> - Доступно как `Order.MAX_ITEMS`.
+>
+> **обычный `val`** — runtime значение:
+> - Любой тип (включая `Duration`, `List<T>`, кастомные классы).
+> - Компилируется как `private static final` поле в Companion + getter.
+> - Доступ только через `Order.Companion.getDEFAULT_TIMEOUT()`.
+>
+> **`@JvmField val`** — экспозить как static field:
+> - Любой тип.
+> - Компилируется в `public static final` поле прямо на outer class.
+> - Доступ как `Order.DEFAULT_TIMEOUT` (без Companion).
+>
+> **`@JvmStatic` на функции** — экспозить как static method:
+> - Доступ как `Order.create()` (вместо `Order.Companion.create()`).
+>
+> **Пример:**
+> ```kotlin
+> class Order {
+>     companion object {
+>         const val MAX_ITEMS = 100                              // → Order.MAX_ITEMS (static final int)
+>         val DEFAULT_TIMEOUT = Duration.ofSeconds(30)           // → Order.Companion.getDEFAULT_TIMEOUT()
+>
+>         @JvmField
+>         val ALLOWED_STATUSES = setOf("PENDING", "CONFIRMED")   // → Order.ALLOWED_STATUSES (static final field)
+>
+>         @JvmStatic
+>         fun create(): Order = Order()                          // → Order.create()
+>
+>         fun validate(o: Order): Boolean = true                 // → Order.Companion.validate(o)
+>     }
+> }
+> ```
+>
+> ```java
+> int max = Order.MAX_ITEMS;                                 // OK: const → static final, inlined
+> Duration t = Order.Companion.getDEFAULT_TIMEOUT();         // нужен Companion
+> Set<String> s = Order.ALLOWED_STATUSES;                    // OK: @JvmField → static field
+> Order o = Order.create();                                  // OK: @JvmStatic → static method
+> boolean ok = Order.Companion.validate(o);                  // нужен Companion
+> ```
+>
+> **Когда применять:** для libraries, активно используемых из Java — обязательно `@JvmField`/`@JvmStatic` на companion элементах. Для Kotlin-only кода — игнорируйте, идёт через Companion прозрачно.
+>
+> **Подводные камни:**
+> - **Именованный companion** (`companion object Defaults { ... }`): доступ через `Order.Defaults.xxx()`, а с `@JvmStatic` — через `Order.xxx()`. Имя влияет.
+> - **`internal val` в companion**: компилируется в public с name mangling (`getDefaultTimeout$module_name()`) — из Java доступно, но имя страшное.
+> - **`const val` ограничения**: только примитивы и String. `Float.NaN` запрещён (не const-expression).
+> - **`@JvmField val` ограничения**: не может быть `lateinit` (геттер уже есть), не может быть `open` (нужен getter для polymorphism).
+>
+> **Связанные вопросы:** [[Q2]] — детали `@JvmStatic`/`@JvmField`/`@JvmOverloads`; [[Q3]] — companion object вызовы без аннотаций; [[Q9]] — `@JvmName`.
+>
+> ---
+>
+> #### C) `Order.DEFAULT_TIMEOUT` и `Order.MAX_ITEMS` через рефлексию: `Class.forName("Order").getField(...)` — ❌ Неверно
+>
+> **Что на самом деле:** reflection работает для **любых** Java-видимых полей, но это medium для библиотечного кода (Jackson, JPA), не для normal application code. Для прямого использования compile-time нужен static field access. Companion val без `@JvmField` не имеет публичного поля — есть только getter; reflection через `getField` не сработает (нужен `getMethod("getDEFAULT_TIMEOUT")`).
+>
+> **Откуда путаница:** reflection — универсальный механизм. Но это не идиоматичный способ для compile-time доступа.
+>
+> **Если бы это было правдой:** все JavaBean'ы и Kotlin properties работали бы через reflection — но мы используем normal getter calls для эффективности.
+>
+> ---
+>
+> #### D) Companion object недоступен из Java вообще — нужно делать `class Order { static final Duration DEFAULT_TIMEOUT = ... }` в отдельном Java helper — ❌ Неверно
+>
+> **Что на самом деле:** companion object **доступен** из Java через `Order.Companion.xxx()` или через `@JvmField`/`@JvmStatic` напрямую. Создавать отдельный Java helper — избыточно. Просто аннотируйте поля в companion правильно.
+>
+> **Откуда путаница:** companion object — Kotlin-специфичный концепт. Может показаться, что Java его не понимает.
+>
+> **Если бы это было правдой:** Kotlin был бы практически непригоден для смешанных проектов — но он используется массово (Android, Spring, серверная разработка).
+
+## Q36. Как extension-функции `Kotlin` выглядят в байткоде и чем это важно для `Java`?
 
 Extension-функции — синтаксический сахар `Kotlin`. Компилятор превращает их в статические методы, где первый параметр — receiver (объект расширения). Это означает, что extension-функции **не изменяют класс** — никакого полиморфизма, переопределения или доступа к приватным полям нет.
 
