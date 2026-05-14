@@ -1382,10 +1382,129 @@ public class KafkaStreamsConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Какие стратегии обеспечения порядка сообщений есть в Kafka? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём ключевое отличие Kafka Streams от обычного `@KafkaListener` consumer'а, и когда нужен Kafka Streams вместо Spring Kafka?
+>
+> ---
+>
+> #### A) Kafka Streams = `@KafkaListener` + автоматическая обработка в parallel threads — просто performance optimization — ❌ Неверно
+>
+> **Что на самом деле:** Kafka Streams — это **stateful stream processing framework**, не оптимизация `@KafkaListener`. Главные отличия:
+> - **Local state stores** (RocksDB) — окна (windowed aggregations), join'ы между потоками — невозможно делать на consumer'е без external state.
+> - **Exactly-once semantics** (EOS) — atomic write-back в output topics с read transaction.
+> - **Topology DSL** (`KStream`/`KTable`/`GlobalKTable`) — declarative processing graph.
+> - **Repartitioning** (через repartition topics) для join по non-key fields.
+>
+> @KafkaListener — простой consumer для message handling, не stream processing.
+>
+> **Откуда путаница:** оба читают Kafka topics. Но scope разный: consumer = single message handler, Streams = pipeline с state.
+>
+> **Если бы это было правдой:** Confluent не делал бы Streams отдельным продуктом. Spring Cloud Stream не имел бы separate `kafka-streams` binder.
+>
+> ---
+>
+> #### B) Kafka Streams для stateful обработки (windows, joins, aggregations) с local state stores (RocksDB) и exactly-once semantics; @KafkaListener — stateless message handler. Streams лучше для real-time analytics, ETL, CEP; @KafkaListener — для трансляции событий в commands — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **@KafkaListener use cases:**
+> - Прочитать message → вызвать method → ack
+> - Простая трансляция event → command (например, OrderPlaced → SendEmail)
+> - Stateless transformation (mapping/filtering без joins)
+>
+> **Kafka Streams use cases:**
+> - **Aggregations**: count orders per customer last hour (windowed).
+> - **Joins**: enrich OrderEvent с UserData via KTable join.
+> - **Stateful transformations**: detect fraud patterns по последовательности событий.
+> - **ETL pipelines**: real-time data warehouse populated from event streams.
+>
+> Spring integration через `@EnableKafkaStreams` + `StreamsBuilder`:
+>
+> ```java
+> @Configuration
+> @EnableKafkaStreams
+> public class StreamConfig {
+>
+>     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
+>     public KafkaStreamsConfiguration streamsConfig() {
+>         return new KafkaStreamsConfiguration(Map.of(
+>             StreamsConfig.APPLICATION_ID_CONFIG, "orders-processor",
+>             StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092",
+>             StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once_v2",
+>             StreamsConfig.STATE_DIR_CONFIG, "/var/kafka-streams"
+>         ));
+>     }
+>
+>     @Bean
+>     public KStream<String, OrderEvent> topology(StreamsBuilder builder) {
+>         // KStream — поток событий
+>         KStream<String, OrderEvent> orders = builder.stream("orders");
+>
+>         // KTable — обновляющаяся таблица (compacted topic)
+>         KTable<String, Customer> customers = builder.table("customers");
+>
+>         // Stream-Table join: обогащаем event данными о клиенте
+>         orders
+>             .join(customers,
+>                   (order, customer) -> new EnrichedOrder(order, customer))
+>             .filter((k, v) -> v.customer().tier() == VIP)
+>             .to("vip-orders");
+>
+>         // Windowed aggregation: count orders per customer 1h window
+>         orders
+>             .groupBy((k, v) -> v.customerId())
+>             .windowedBy(TimeWindows.of(Duration.ofHours(1)))
+>             .count()
+>             .toStream()
+>             .to("orders-per-hour");
+>
+>         return orders;
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Real-time analytics**: Yandex Music — count plays per artist, Netflix — recommendations updated by viewing events.
+> - **Fraud detection**: Wolt — sequence detection (multiple orders from same IP в коротком окне).
+> - **ETL**: Avito — events → real-time data warehouse update.
+> - **CEP (Complex Event Processing)**: detection patterns на streams (transaction A followed by transaction B within 5 min = suspicious).
+>
+> **Подводные камни:**
+> - **RocksDB state size** — на больших aggregations может вырасти до GB. State sized как `keys × windows`.
+> - **Rebalancing pause** — при scale-out partition reassignment вызывает app pause (до минут на больших state).
+> - **State restoration** — при restart Streams читает changelog topics для восстановления state. Большой state = slow startup.
+> - **`exactly_once_v2`** требует Kafka 2.5+ broker.
+> - **Spring Cloud Stream binder** — declarative альтернатива, но meno гибкая чем raw Streams DSL.
+>
+> **Связанные вопросы:** [[Q3]] — @KafkaListener basics; [[Q14]] — idempotent producer; [[Q13]] — ordering для stateful processing.
+>
+> ---
+>
+> #### C) Kafka Streams не работает в Spring Boot — нужен Confluent Platform отдельно — ❌ Неверно
+>
+> **Что на самом деле:** Spring Kafka имеет first-class integration через `@EnableKafkaStreams` и `StreamsBuilder`. Не нужен Confluent Platform — стандартный Kafka broker достаточен.
+>
+> **Откуда путаница:** Confluent — vendor для Kafka, многие enterprise features (Schema Registry, KSQL) require Confluent. Но Kafka Streams — open source часть Apache Kafka.
+>
+> **Если бы это было правдой:** Spring Cloud Stream не имел бы kafka-streams binder.
+>
+> ---
+>
+> #### D) Streams — устаревшая технология, замещается Apache Flink — ❌ Неверно
+>
+> **Что на самом деле:** Kafka Streams и Apache Flink — комплементарные tools, не конкуренты:
+> - **Streams**: библиотека внутри app, deployed as standalone JVM. Tightly coupled с Kafka.
+> - **Flink**: separate cluster, supports multiple sources/sinks (Kafka, Kinesis, files), more advanced windowing.
+>
+> Streams лучше для Kafka-only pipelines с simpler topology. Flink — для cross-system orchestration с complex CEP.
+>
+> Оба активно развиваются и используются в production у LinkedIn, Uber, Yelp.
+>
+> **Откуда путаница:** Flink хайповее в последние годы. Но Streams не устарел.
+>
+> **Если бы это было правдой:** Confluent перестал бы инвестировать в Streams. Реально регулярные releases (Streams 3.x в 2024).
+
+## Q13. Какие стратегии обеспечения порядка сообщений есть в Kafka?
 
 ```java
 // 1. Один partition на топик (low throughput, high ordering)
