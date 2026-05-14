@@ -52,10 +52,74 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. Что такое миграция с javax на jakarta и почему она нужна? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие пять изменений в Spring Boot 3.0 действительно являются ключевыми breaking-баррьерами для миграции с 2.7?
+>
+> ---
+>
+> #### A) Spring Boot 3 = Java 11 baseline + Spring Framework 5.4 + опциональная поддержка `jakarta.*` через флаг — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3 требует **Java 17** как минимум (build и runtime). Spring Framework 6 — обязательная зависимость, не 5.x. Переход на `jakarta.*` — не опциональный флаг, а полная замена пакетов: код, использующий `javax.persistence.*`, `javax.servlet.*`, `javax.validation.*`, не скомпилируется на SB 3.
+>
+> **Откуда путаница:** в Spring Boot 2.x была возможность работать с Java 8/11/17 одновременно, и многие команды думают, что Spring сохранит подобную обратную совместимость и в 3.x.
+>
+> **Если бы это было правдой:** команды откладывали бы апгрейд JDK и продолжали использовать `javax.*`; в production миграция была бы тривиальной. На практике попытка собрать SB 3 проект на Java 11 даёт `UnsupportedClassVersionError` уже на этапе компиляции `spring-boot-starter` jar-ов.
+>
+> ---
+>
+> #### B) Java 17 baseline, Jakarta EE 9+ namespace migration, Spring Framework 6, GraalVM Native Image first-class support, Micrometer Observation API (metrics + tracing) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Пять системных изменений Spring Boot 3.0 (ноябрь 2022):
+>
+> 1. **Java 17 baseline** — минимум для компиляции и runtime. Spring Framework 6 использует `sealed`, `records`, pattern matching.
+> 2. **Jakarta EE 9+** — все Java EE пакеты переименованы из `javax.*` в `jakarta.*` (Eclipse Foundation не получила trademark от Oracle). Затрагивает JPA, Servlet, JAX-RS, Bean Validation, JMS, Mail.
+> 3. **Spring Framework 6** — обновлённый Core, поддержка AOT, Problem Details (RFC 7807), HTTP Interface Clients.
+> 4. **GraalVM Native Image** — поддержка из коробки через `spring-boot-starter-parent` AOT-processing (без Spring Native experimental).
+> 5. **Observation API** — единый API для metrics (Micrometer) и tracing (`micrometer-tracing` через OpenTelemetry/Zipkin/Brave), вместо Spring Cloud Sleuth.
+>
+> **Пример:**
+> ```xml
+> <parent>
+>     <groupId>org.springframework.boot</groupId>
+>     <artifactId>spring-boot-starter-parent</artifactId>
+>     <version>3.2.0</version>
+> </parent>
+> <properties>
+>     <java.version>17</java.version>
+> </properties>
+> ```
+>
+> **Когда применять:** новые проекты с 2023 года — стартовать сразу на SB 3.x. Legacy SB 2.7 — план миграции с budget на тестирование (зависимости часто отстают на 6-12 месяцев).
+>
+> **Подводные камни:** многие third-party библиотеки задержались с jakarta-релизами (springdoc-openapi, swagger, custom internal libs). Проверить совместимость через `mvn dependency:tree` ДО старта миграции.
+>
+> **Связанные вопросы:** [[Q2]] — javax→jakarta детали; [[Q3]] — последовательность миграции 2.7→3.x; [[Q15]] — типичные проблемы.
+>
+> ---
+>
+> #### C) Главное изменение — переход на Spring Boot Native Mode (всегда GraalVM), JVM режим deprecated с 3.0 — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3 продолжает быть **в первую очередь JVM-приложением**. GraalVM Native Image — опциональный профиль сборки (`-Pnative`), не дефолтный режим. JVM mode полноценно поддерживается и остаётся основным сценарием для большинства проектов.
+>
+> **Откуда путаница:** Spring Native (experimental проект в 2021-2022) активно продвигал GraalVM, и его слияние с mainline Spring Boot 3 многие истолковали как «теперь всё native».
+>
+> **Если бы это было правдой:** все проекты на SB 3 страдали бы от ограничений native (reflection hints, отсутствие dynamic class loading, длительная сборка 5-15 минут). На практике JVM-приложение собирается за секунды и запускается за 2-5 секунд как обычно.
+>
+> ---
+>
+> #### D) Spring Boot 3 удалил Actuator, заменил его на отдельный starter `spring-boot-starter-observability` — ❌ Неверно
+>
+> **Что на самом деле:** Actuator **полностью сохранён** в Spring Boot 3 — это `spring-boot-starter-actuator`. Изменилось только то, что Micrometer Observation API заменил Spring Cloud Sleuth для tracing, и переименованы некоторые properties (`management.metrics.export.prometheus.*` → `management.prometheus.metrics.export.*`).
+>
+> **Откуда путаница:** новость о Micrometer Tracing вытеснении Sleuth многие интерпретировали как «Actuator переделан». Также `spring-boot-properties-migrator` подсвечивает переименования, что усиливает впечатление масштабного слома.
+>
+> **Если бы это было правдой:** все Kubernetes liveness/readiness probes, healthcheck-эндпоинты `/actuator/health`, метрики Prometheus в SB 3 не работали бы — но они работают штатно.
+>
+> ---
+>
+> ## Q2. Что такое миграция с javax на jakarta и почему она нужна?
 
 В 2017 Oracle передала Java EE в Eclipse Foundation. Eclipse не смогла сохранить `javax.*` пакеты из-за trademark. Результат: вся платформа переименована в **Jakarta EE** с пакетами `jakarta.*`.
 
@@ -75,10 +139,74 @@ import jakarta.validation.constraints.NotNull;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Как выполнить миграцию с Spring Boot 2.7 на 3.x? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему Spring Boot 3 переименовал все пакеты `javax.*` (servlet, persistence, validation) в `jakarta.*`?
+>
+> ---
+>
+> #### A) Это маркетинговая инициатива Spring Team для брендирования своей версии Java EE — ❌ Неверно
+>
+> **Что на самом деле:** Spring Framework просто **следует** переходу Java EE → Jakarta EE. В 2017 Oracle передала Java EE в Eclipse Foundation, но НЕ передала право использовать trademark `javax.*`. Eclipse был вынужден переименовать все пакеты — Spring/Hibernate/Tomcat не имели выбора и должны были адаптироваться.
+>
+> **Откуда путаница:** в community часто звучит «Spring сломал совместимость» — но Spring лишь обновил импорты под Jakarta EE 9. Если бы Spring проигнорировал, он остался бы на устаревшем Java EE 8 без новых спецификаций.
+>
+> **Если бы это было правдой:** Spring Team могла бы выбрать любые имена пакетов (`org.springframework.persistence.*`?) — но тогда не работала бы интеграция с Hibernate 6, Tomcat 10, Jetty 11, которые тоже мигрировали на `jakarta.*`.
+>
+> ---
+>
+> #### B) `javax.*` пакеты были несовместимы с Java 17 модульной системой, и Eclipse решил их переписать — ❌ Неверно
+>
+> **Что на самом деле:** Java Module System (JPMS) с Java 9 — совершенно отдельная история. `javax.*` пакеты прекрасно работали в модульной системе. Причина переименования **исключительно юридическая** — Oracle сохранил trademark на `javax.*` после передачи Java EE Eclipse Foundation в 2017.
+>
+> **Откуда путаница:** Java 9 (модули) и javax→jakarta (Jakarta EE 9, 2019) хронологически близки, и многие путают эти изменения.
+>
+> **Если бы это было правдой:** изменения пошли бы постепенно с Java 9, а не одним большим релизом в 2019. Также Java SE-пакеты `javax.sql.DataSource`, `javax.crypto.*` остались бы — и они остались, потому что они часть JDK (Oracle), а не Java EE (Eclipse).
+>
+> ---
+>
+> #### C) Trademark `javax.*` принадлежит Oracle; Eclipse Foundation после передачи Java EE не получил права использовать namespace; Jakarta EE 9 (2019) переименовал все Java EE пакеты в `jakarta.*` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Timeline миграции:
+> 1. **2017** — Oracle объявляет передачу Java EE Eclipse Foundation.
+> 2. **2018** — Eclipse Foundation запускает проект Jakarta EE (новое имя для Java EE).
+> 3. **Переговоры о `javax.*` namespace** — Oracle оставляет trademark за собой; Eclipse не может развивать спецификации в этом namespace без согласия Oracle.
+> 4. **Jakarta EE 9 (2019)** — полная замена `javax.*` → `jakarta.*` для всех Java EE API.
+> 5. **2022** — Spring Boot 3 / Hibernate 6 / Tomcat 10 / Jetty 11 переходят на jakarta.
+>
+> **Пример:**
+> ```java
+> // ДО Spring Boot 3
+> import javax.persistence.Entity;
+> import javax.servlet.http.HttpServletRequest;
+> import javax.validation.constraints.NotNull;
+>
+> // ПОСЛЕ Spring Boot 3
+> import jakarta.persistence.Entity;
+> import jakarta.servlet.http.HttpServletRequest;
+> import jakarta.validation.constraints.NotNull;
+> ```
+>
+> **Когда применять:** при миграции SB 2.7→3.x — обязательная замена всех Java EE импортов через OpenRewrite recipe `org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0` или IntelliJ Migration Assistant.
+>
+> **Подводные камни:** Java SE пакеты (`javax.sql.DataSource`, `javax.crypto.*`, `javax.net.ssl.*`, `javax.management.*`, `javax.naming.*`) **остались javax** — это часть JDK от Oracle, не Java EE. Правило: если пакет из JDK rt.jar — javax; если из Java EE spec — jakarta.
+>
+> **Связанные вопросы:** [[Q1]] — Spring Boot 3 ключевые изменения; [[Q4]] — какие javax-пакеты НЕ мигрировали; [[Q15]] — типичные проблемы при миграции.
+>
+> ---
+>
+> #### D) Spring Team добровольно переименовала пакеты для удобной поддержки JDK 17 — ❌ Неверно
+>
+> **Что на самом деле:** переименование произошло не в Spring, а в **Jakarta EE 9 (2019, Eclipse Foundation)**. Spring был вынужден последовать, чтобы интегрироваться с обновлёнными Tomcat 10, Hibernate 6, Jetty 11. Spring Team не имела контроля над namespace — это решение Oracle/Eclipse.
+>
+> **Откуда путаница:** для разработчика, который видит SB 3 migration guide, кажется что это Spring breaking change. На самом деле Spring — реактивный потребитель: они мигрировали последними, не первыми.
+>
+> **Если бы это было правдой:** Spring мог бы оставить `javax.*` (как Java EE 8 stack) — но тогда не работали бы Hibernate 6 / Tomcat 10 / Jetty 11, и Spring замёрз бы на устаревшем стеке.
+>
+> ---
+>
+> ## Q3. Как выполнить миграцию с Spring Boot 2.7 на 3.x?
 
 ```text
 Последовательность:
@@ -108,10 +236,87 @@ import jakarta.validation.constraints.NotNull;
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Какие javax-пакеты НЕ мигрировали на jakarta? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В каком порядке безопасно мигрировать legacy проект со Spring Boot 2.7 на Spring Boot 3.x?
+>
+> ---
+>
+> #### A) Сразу `spring-boot-starter-parent` 3.2.0, потом фиксить compile errors одну за другой, тесты переписывать в конце — ❌ Неверно
+>
+> **Что на самом деле:** прямой прыжок 2.7 → 3.2 обычно даёт **сотни compile errors** одновременно: javax→jakarta, Spring Security 6 breaking, Hibernate 6 HQL изменения, Sleuth удалён, Actuator endpoint переименования. Распутывать это всё разом — путь к багам, особенно когда тесты ещё не работают (нечем проверить корректность правок).
+>
+> **Откуда путаница:** для маленьких проектов прыжок 2.7→3.2 действительно проходит за час. Для production-приложения с 50+ зависимостями — это недели работы и регресс-баги.
+>
+> **Если бы это было правдой:** команда правит код «до зелёных тестов», но без поэтапной верификации не понимает, какой именно шаг ввёл регрессию. Типичный сценарий — обнаружение Hibernate 6 HQL bug через 2 недели после релиза в production.
+>
+> ---
+>
+> #### B) Сначала обновить JDK до 17 на 2.7.x → обновить до latest 2.7.x (последний minor) → запустить OpenRewrite recipe → обновить parent на 3.x → исправить оставшиеся ошибки и протестировать — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Поэтапный план миграции (рекомендация Spring Team):
+>
+> 1. **Java 17 на текущем Spring Boot 2.7** — приложение должно работать на JDK 17 в production. Это снимает риск «JDK + Spring сразу».
+> 2. **Spring Boot 2.7.x latest** (например 2.7.18) — последний minor; убирает большую часть deprecation warnings, готовит к 3.x.
+> 3. **OpenRewrite migration recipe** — автоматический рефакторинг javax→jakarta:
+>    ```bash
+>    mvn org.openrewrite.maven:rewrite-maven-plugin:run \
+>      -Drewrite.activeRecipes=org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
+>    ```
+> 4. **`spring-boot-starter-parent` 3.x** — обновить parent, разрулить compile errors (которые остались после OpenRewrite).
+> 5. **`spring-boot-properties-migrator` (runtime)** — добавить временно, чтобы получать warnings о переименованных properties.
+> 6. **Тестирование** — unit, integration, e2e; особое внимание Hibernate 6 SQL диалектам и Spring Security 6.
+>
+> **Пример:**
+> ```xml
+> <parent>
+>     <groupId>org.springframework.boot</groupId>
+>     <artifactId>spring-boot-starter-parent</artifactId>
+>     <version>3.2.0</version>
+> </parent>
+> <properties>
+>     <java.version>17</java.version>
+> </properties>
+>
+> <dependencies>
+>   <dependency>
+>     <groupId>org.springframework.boot</groupId>
+>     <artifactId>spring-boot-properties-migrator</artifactId>
+>     <scope>runtime</scope>
+>   </dependency>
+> </dependencies>
+> ```
+>
+> **Когда применять:** для любого production-проекта с возрастом >1 года. Маленькие greenfield-проекты можно мигрировать одним прыжком.
+>
+> **Подводные камни:** OpenRewrite не покрывает всё — Spring Security 6 lambda DSL, Hibernate 6 SQL generation, custom `WebSecurityConfigurerAdapter` нужно править вручную. Third-party библиотеки могут не иметь jakarta-версий — проверить через `mvn dependency:tree | grep javax`.
+>
+> **Связанные вопросы:** [[Q11]] — Spring Security 6 breaking changes; [[Q14]] — properties migrator; [[Q15]] — типичные проблемы при миграции.
+>
+> ---
+>
+> #### C) Сразу мигрировать на SB 3.x, потом дотягивать JDK 17 при следующем спринте — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3 **требует** Java 17 для компиляции и runtime. Без JDK 17 даже Maven не сможет загрузить `spring-boot-starter-parent` 3.x — будет `UnsupportedClassVersionError` уже на этапе resolution.
+>
+> **Откуда путаница:** Spring Boot 2.x работал на Java 8 и 11 одновременно, и многие думают что переход на 3 можно отложить апгрейд JDK на потом.
+>
+> **Если бы это было правдой:** можно было бы постепенно вводить SB 3, оставаясь на Java 11. На практике CI-сборка ломается на самом первом шаге.
+>
+> ---
+>
+> #### D) Откатить все custom configurations, перейти на vanilla SB 3 архитектуру, постепенно добавить кастомизации обратно — ❌ Неверно
+>
+> **Что на самом деле:** «откатить кастомизации» означает rewrite from scratch — это не миграция, а переписывание проекта. Для production-системы с бизнес-логикой это месяцы работы. Правильный подход — **инкрементальный**: править зависимости и API, сохраняя бизнес-логику нетронутой.
+>
+> **Откуда путаница:** в некоторых блогах «greenfield rewrite» предлагается как способ обхода технического долга. Это валидно для маленьких прототипов, но не для production.
+>
+> **Если бы это было правдой:** разработчики бы переписывали бизнес-логику и теряли edge case коды, накопленные годами. Регресс-баги становятся гарантированными.
+>
+> ---
+>
+> ## Q4. Какие javax-пакеты НЕ мигрировали на jakarta?
 
 ```text
 ОСТАЛИСЬ javax.*:
