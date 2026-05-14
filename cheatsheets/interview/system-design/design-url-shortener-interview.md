@@ -749,10 +749,60 @@ INSERT INTO urls (short_code, long_url) VALUES ('myalias', '...');
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. TTL / expiration? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Два пользователя одновременно пытаются забронировать custom alias `/promo2026`. Какая реализация корректно обрабатывает race condition?
+>
+> ---
+>
+> #### A) Сначала SELECT WHERE short_code='promo2026', если нет — INSERT — проще всего — ❌ Неверно
+>
+> **Что на самом деле:** SELECT-then-INSERT — классический **check-then-act race condition** (TOCTOU). Между SELECT (миллисекунды) и INSERT две параллельные транзакции могут оба прочитать "не существует", оба INSERT — и одна выиграет, другая упадёт на UNIQUE constraint (если он есть) или (хуже) перепишет (если нет). Без UNIQUE constraint один из пользователей получит "успех", а в DB будет данные другого. Защита через application-level lock не работает в multi-instance deployment.
+> **Откуда путаница:** Изоляция READ COMMITTED не предотвращает phantom write; SERIALIZABLE дороже и часто не используется.
+> **Если бы это было правдой:** Под нагрузкой race возможен ежеминутно для популярных alias-имён ("admin", "login"); user видит "alias забронирован", но через секунду открывает свою ссылку — она ведёт на чужой URL; legal/PR issue если premium-аккаунт оплатил vanity URL.
+>
+> ---
+>
+> #### B) Просто хранить custom_alias в отдельной таблице, FK на urls — race решится сама — ❌ Неверно
+>
+> **Что на самом деле:** Отдельная таблица не решает проблему — race condition существует на любой структуре, где не используется constraint или atomic-операция. FK защищает только от orphan references, но не от concurrent claim одинакового alias-значения. Без UNIQUE constraint на `aliases.name` две параллельные транзакции вставят одинаковый alias.
+> **Откуда путаница:** Думают "разделил на таблицы = снял проблему", хотя проблема в отсутствии явного constraint.
+> **Если бы это было правдой:** Двойное хранение (urls + aliases) удваивает write amplification; FK contention на parent row при concurrent insert; всё равно нужен UNIQUE constraint — и можно было сделать без отдельной таблицы.
+>
+> ---
+>
+> #### C) Использовать distributed lock (Redis SETNX или ZooKeeper) на alias name перед INSERT — ❌ Неверно
+>
+> **Что на самом деле:** Distributed lock работает, но это **over-engineering**: добавляет dependency (Redis/ZK availability), сложность с lock TTL и release-on-crash, и performance overhead (round-trip к lock service на каждый INSERT). DB UNIQUE constraint решает ту же задачу atomic-ally за одну операцию без extra dependencies. Distributed locks нужны для координации **между разными ресурсами** (cross-DB state), не для single-row uniqueness.
+> **Откуда путаница:** Гипертрофированное применение "distributed systems" подходов к локальной проблеме.
+> **Если бы это было правдой:** Latency на shorten растёт +5-20ms (lock RTT); при Redis outage shorten ломается, хотя DB здорова; lock timeout misconfigure → stale lock блокирует валидный alias на минуты.
+>
+> ---
+>
+> #### D) UNIQUE constraint на short_code + INSERT с обработкой conflict (`ON CONFLICT DO NOTHING` / catch DuplicateKeyException) — atomic, durable — ✓ Верно
+>
+> **Развёрнутое объяснение:** **UNIQUE constraint** даёт **atomic check-and-insert** на уровне DB — DB engine гарантирует что только одна транзакция выиграет race, остальные получат ошибку конфликта. Это работает идентично для random-generated short_code и custom aliases (один столбец, одна constraint). PostgreSQL: `INSERT ... ON CONFLICT (short_code) DO NOTHING RETURNING id` — если RETURNING вернул строку, выиграл я; иначе alias занят. DynamoDB: `PutItem` с `ConditionExpression: attribute_not_exists(short_code)` — фейлится с `ConditionalCheckFailedException`, если ключ существует.
+> **Пример:**
+> ```sql
+> -- Schema
+> CREATE TABLE urls (
+>   short_code VARCHAR(30) PRIMARY KEY,  -- UNIQUE implicit
+>   long_url   TEXT NOT NULL,
+>   user_id    BIGINT,
+>   created_at TIMESTAMPTZ DEFAULT NOW(),
+>   is_custom  BOOLEAN DEFAULT FALSE,
+>   CHECK (LENGTH(short_code) BETWEEN 3 AND 30)
+> );
+> 
+> -- Claim custom alias (atomic)
+> INSERT INTO urls (short_code, long_url, user_id, is_custom)
+> VALUES ('promo2026', $1, $2, TRUE)
+> ON CONFLICT (short_code) DO NOTHING
+> RETURNING short_code;
+> -- 0 rows returned → 409 Conflict to user
+> ```
+> **Когда применять:** Любой scenario с unique resource claim: usernames (Twitter @handle), email addresses, ticket reservations, vanity URLs (Bit.ly Pro, Rebrandly, TinyURL custom domains). UNIQUE — single source of truth для concurrent integrity.
+> **Подводные камни:** Reserved namespace — заранее INSERT системных alias ("admin", "api", "login", "support", "terms") при bootstrap, чтобы user не мог их claim. Case sensitivity — `ProMo2026` vs `promo2026` должны считаться одинаковыми; либо normalize на write (lowercase), либо `UNIQUE INDEX ON LOWER(short_code)`. Cross-shard uniqueness — при sharding по short_code constraint работает per-shard, но т.к. lookup тоже идёт через hash → один alias = один shard, всё ок.
+> **Связанные вопросы:** [[Q6]] — collision avoidance для generated codes; [[Q4]] — code generation с гарантией uniqueness; [[Q16]] — abuse prevention (reserved trademarks).
 
 **DB expiration:**
 - `expires_at` timestamp
@@ -778,10 +828,67 @@ SET short_code long_url EX 86400
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Analytics (click tracking)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая стратегия expiration / TTL для URL shortener оптимальна по cost и UX?
+>
+> ---
+>
+> #### A) Hard DELETE из DB сразу при истечении expires_at через synchronous trigger — гарантирует чистоту — ❌ Неверно
+>
+> **Что на самом деле:** Synchronous trigger на каждый redirect (проверять `expires_at < NOW()`, DELETE если истёк) — antipattern: redirect path должен быть read-only, любая запись добавляет lock contention и удваивает latency. Также при concurrent reads тот же expired URL может попасть в N DELETE — wasted work. Hard delete сразу теряет историю clicks и audit trail.
+> **Откуда путаница:** "Истёк → удалить" — интуитивно, но смешивает logical expiration с physical cleanup.
+> **Если бы это было правдой:** p99 redirect latency растёт; concurrent DELETE conflicts; нет возможности восстановить ссылку при ошибочном expiration; analytics за expired URLs ломается.
+>
+> ---
+>
+> #### B) Не использовать TTL вообще — URLs живут вечно, проще — ❌ Неверно
+>
+> **Что на самом деле:** Без TTL DB растёт неограниченно: бесплатные ссылки от анонимных пользователей (90% URLs) живут годами без cleanup. Storage cost растёт linearly, индексы становятся медленнее (B-tree depth, cache footprint), backup/restore времени-затратнее. Также phishing/spam URLs накапливаются — даже после revocation запись остаётся forever. Business model большинства shortener (Bit.ly, TinyURL, Short.io) включает TTL: 30 дней для anonymous, 1-5 лет для paid.
+> **Откуда путаница:** "Storage cheap, не парься" — но при 6B+ записях каждая копейка × миллиарды = реальные деньги.
+> **Если бы это было правдой:** Через 5 лет 60B+ записей в DB, многие никогда не читались; backup time 8+ часов; cold storage tier неприменим без TTL gate; GDPR compliance ("right to be forgotten") требует ручного процесса.
+>
+> ---
+>
+> #### C) Soft delete (флаг `deleted_at` или `is_expired`) + native DB TTL (DynamoDB TTL attribute) + background sweep с batch DELETE — двухфазный cleanup — ✓ Верно
+>
+> **Развёрнутое объяснение:** **Логически** URL считается expired когда `expires_at < NOW()` — app проверяет на read и возвращает 404 (не DELETE), сохраняя audit trail и возможность undo. **Физически** cleanup делается асинхронно: DynamoDB TTL автоматически удаляет items в течение 48 часов после `expires_at` (без cost — фоновая операция); для MySQL/Postgres — batched scheduled DELETE через cron в low-traffic window. Между logical expiration и physical delete — grace window (7-30 дней) когда ссылку можно восстановить (важно для accidental expiration или legal hold).
+> **Пример:**
+> ```sql
+> -- Read path (no write)
+> SELECT long_url FROM urls
+> WHERE short_code = $1
+>   AND (expires_at IS NULL OR expires_at > NOW())
+>   AND deleted_at IS NULL;
+> -- Returns 0 rows → 404 Gone
+> 
+> -- Background sweep (cron, hourly, batch=10k)
+> DELETE FROM urls
+> WHERE deleted_at < NOW() - INTERVAL '30 days'
+>   AND short_code IN (
+>     SELECT short_code FROM urls
+>     WHERE deleted_at IS NOT NULL
+>     ORDER BY deleted_at ASC LIMIT 10000
+>   );
+> ```
+> ```yaml
+> # DynamoDB
+> Table: urls
+>   TimeToLiveSpecification:
+>     AttributeName: expires_at
+>     Enabled: true
+> # AWS auto-deletes within 48h of expiration, free
+> ```
+> **Когда применять:** Bit.ly использует DynamoDB TTL для free-tier ссылок (30 days). Twitter t.co — soft delete с 90-day retention для compliance. Любой mass-storage сервис где cleanup нельзя блокировать main flow: S3 Lifecycle Policies, Cloudflare KV namespace expiration, Redis EXPIRE.
+> **Подводные камни:** DynamoDB TTL — eventual (до 48 часов задержки), не подходит для time-critical revocation; в этом случае дополнительная app-level проверка. Index on `expires_at` для sweep — занимает место, но без него full scan. Cache invalidation — expired URL в Redis должен быть удалён или иметь TTL <= DB expires_at, иначе serve expired content из cache.
+> **Связанные вопросы:** [[Q9]] — cache TTL coordination; [[Q14]] — analytics для expired URLs (preserve history); [[Q16]] — revocation для malicious URLs (immediate, not lazy).
+>
+> ---
+>
+> #### D) Использовать Redis EXPIRE на DB-записях — Redis сам управляет TTL для всех слоёв — ❌ Неверно
+>
+> **Что на самом деле:** Redis EXPIRE работает только для Redis keys — не для DB rows. Redis — это **cache layer**, durable store (MySQL/DynamoDB) держит данные независимо. Если Redis expired key — cache miss приведёт к DB lookup, который вернёт URL (потому что DB не знает что Redis expired). Cross-layer TTL coordination требует **одного source of truth** (`expires_at` колонка в DB) + cache TTL <= DB TTL.
+> **Откуда путаница:** Смешивание ролей cache и persistent storage; "Redis имеет TTL — давайте использовать только его".
+> **Если бы это было правдой:** Несогласованность: Redis истёк, но DB вернула долговечный URL — expiration logic некорректна; при Redis restart все TTL теряются — все URLs становятся "вечными"; невозможно сделать revocation на DB-уровне (legal hold) без extra invalidation logic.
 
 **On redirect:**
 - Emit event async (don't block redirect)
