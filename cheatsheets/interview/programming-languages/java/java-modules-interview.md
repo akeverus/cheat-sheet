@@ -2220,10 +2220,112 @@ Optional<PaymentProvider> stripe = loader.stream()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. Совместимость `Spring`, `Hibernate` и `Jackson` с `JPMS`: типичные проблемы ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какое сочетание директив `module-info.java` правильно описывает SPI-архитектуру с интерфейсом `PaymentProvider`, реализацией `StripeProvider` и потребителем?
+>
+> ---
+>
+> #### A) Модуль-провайдер: `provides com.example.spi.PaymentProvider with com.example.stripe.StripeProvider`; модуль-потребитель: `uses com.example.spi.PaymentProvider`; обоим нужен `requires com.example.spi`; реализация НЕ экспортируется — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> JPMS заменяет classpath-based ServiceLoader (через файлы `META-INF/services/<interface>`) на декларативные директивы в `module-info.java`. Это даёт несколько преимуществ: проверка корректности связей на этапе module graph resolution, скрытие реализации от потребителя, явное декларирование точек расширения.
+>
+> **Полная архитектура (3 модуля):**
+>
+> ```java
+> // 1. Модуль-контракт (SPI)
+> module com.example.spi {
+>     exports com.example.spi;  // экспортируем ТОЛЬКО интерфейс
+> }
+>
+> // 2. Модуль-реализация (provider)
+> module com.example.stripe {
+>     requires com.example.spi;            // зависимость от контракта
+>     // НЕ нужно exports — реализация скрыта!
+>     provides com.example.spi.PaymentProvider
+>         with com.example.stripe.StripeProvider,
+>              com.example.stripe.StripeTestProvider;  // несколько реализаций
+> }
+>
+> // 3. Модуль-потребитель (consumer)
+> module com.example.app {
+>     requires com.example.spi;            // знает контракт
+>     uses com.example.spi.PaymentProvider;  // декларирует потребление
+>     // НЕ требуется requires com.example.stripe — реализации обнаруживаются
+> }
+> ```
+>
+> **Использование в коде:**
+> ```java
+> // Java 9+ stream-API:
+> ServiceLoader<PaymentProvider> loader = ServiceLoader.load(PaymentProvider.class);
+>
+> PaymentProvider stripe = loader.stream()
+>     .filter(p -> p.type().getSimpleName().contains("Stripe"))
+>     .map(ServiceLoader.Provider::get)
+>     .findFirst()
+>     .orElseThrow();
+>
+> // Получить все реализации:
+> List<PaymentProvider> all = loader.stream()
+>     .map(ServiceLoader.Provider::get)
+>     .toList();
+> ```
+>
+> **Ключевые правила:**
+> 1. **`uses` обязателен** — иначе `ServiceLoader.load()` бросит исключение или вернёт пустой поток. Это контракт «я буду искать сервис».
+> 2. **`provides...with` для провайдера** — может перечислить несколько реализаций через запятую.
+> 3. **Контракт (`PaymentProvider`) экспортируется**, реализации — нет. Это инкапсуляция: потребитель видит только интерфейс.
+> 4. **Резолвинг — при модульной загрузке** — JPMS строит граф провайдеров до запуска main; если `provides` указывает на несуществующий класс, JVM не стартует.
+>
+> **Когда применять:**
+> - Плагин-системы (JDBC драйверы, charsets, log providers — JDK использует ServiceLoader повсеместно).
+> - Multi-vendor SDK (`PaymentProvider` для Stripe/Adyen/Braintree, переключаемые без перекомпиляции).
+> - Архитектура hexagonal/ports-and-adapters — порты как SPI, адаптеры как providers.
+>
+> **Подводные камни:**
+> - **Дублирующая регистрация** — если library имеет и `META-INF/services/...`, и `provides` в `module-info.java`, в classpath-режиме сработают оба, могут появиться duplicates. JPMS-режим использует только `module-info`.
+> - **`uses` без `provides`** — `ServiceLoader.load()` вернёт пустой поток. Compile-time это не отловится; нужны интеграционные тесты.
+> - **Сортировка по приоритету** — `ServiceLoader` не гарантирует порядок реализаций. Если нужен приоритет — собственная аннотация `@Priority` + сортировка вручную.
+> - **`automatic module` как provider** — работает через `META-INF/services` (для совместимости), не через `provides`. Поэтому миграция legacy-SPI часто требует и `provides` (для named), и `META-INF/services` (для automatic).
+> - **Reflection-фабрика** — если provider требует параметризованного создания, можно использовать `provides ... with ClassWithProviderMethod`, где `provider()` static-метод возвращает экземпляр.
+>
+> ---
+>
+> #### B) Достаточно положить `META-INF/services/com.example.spi.PaymentProvider` в JAR с реализацией — `module-info.java` не нужен в named modules — ❌ Неверно
+>
+> **Что на самом деле:** для **named modules** (`module-info.class` присутствует) обязательно использовать `provides...with` в `module-info.java`. `META-INF/services` игнорируется для named modules в module path-режиме (JPMS этот механизм заменил). `META-INF/services` продолжает работать только для `automatic` и `unnamed` модулей (на classpath).
+>
+> **Откуда путаница:** до Java 9 механизм через `META-INF/services` был единственным. Многие туториалы и существующие библиотеки до сих пор используют его, создаётся ощущение универсальности.
+>
+> **Если бы это было правдой:** не было бы директив `provides`/`uses` в `module-info.java`. Их существование — следствие того, что для named modules нужен новый декларативный механизм.
+>
+> ---
+>
+> #### C) `provides` нужен только в модуле-потребителе; модуль-реализация ничего не объявляет — ❌ Неверно
+>
+> **Что на самом деле:** **наоборот**. `provides X with Y` объявляется в модуле-реализации (Y — это provider), `uses X` — в модуле-потребителе. Логика: provider «предоставляет», consumer «использует». Перепутать их = ServiceLoader не найдёт никаких реализаций.
+>
+> **Откуда путаница:** в декларативных DSL часто путают direction. ServiceLoader к тому же двунаправлен по своей сути (consumer ищет provider), и легко поменять стороны местами.
+>
+> **Если бы это было правдой:** consumer ВСЕГДА знал бы конкретную реализацию (Stripe), что разрушает смысл SPI — динамическое подключение реализаций без знания о них.
+>
+> ---
+>
+> #### D) Реализацию `StripeProvider` нужно экспортировать через `exports com.example.stripe;` чтобы ServiceLoader её увидел — ❌ Неверно
+>
+> **Что на самом деле:** **наоборот** — экспорт реализации это анти-паттерн. SPI-архитектура должна скрывать реализацию: потребитель должен знать только интерфейс `PaymentProvider`. Если экспортировать `StripeProvider`, любой клиент сможет `import com.example.stripe.StripeProvider`, минуя ServiceLoader — теряется главная польза SPI (replacement без знания реализации).
+>
+> **Откуда путаница:** «если что-то нужно показать наружу — экспортируем» — общее правило. Кажется логичным, что provider должен быть «виден».
+>
+> **Если бы это было правдой:** `provides...with` была бы избыточной, потому что consumer уже видел бы класс через `exports`. Существование `provides` как отдельной директивы — признание, что provider предоставляется ServiceLoader'у в обход обычных `exports`.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q10]] — `provides`/`uses` базовое определение; [[Q11]] — ServiceLoader в classpath vs JPMS; [[Q28]] — хорошие практики дизайна модулей.
+
+## Q37. Совместимость `Spring`, `Hibernate` и `Jackson` с `JPMS`: типичные проблемы
 
 На практике большинство Spring Boot приложений работают на `classpath` без `module-info.java`. Если добавить `module-info.java`, возникают характерные ошибки.
 
@@ -2295,10 +2397,99 @@ module com.example.app {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Стратегии миграции legacy-кода: `Bottom-Up` vs `Top-Down` в деталях ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В Spring Boot приложении с `module-info.java` Jackson не может сериализовать `UserDto`, Hibernate выбрасывает `InaccessibleObjectException` на entity, Spring AOP-прокси не работает на `@Service`. Какое из решений правильно лечит ВСЕ три проблемы?
+>
+> ---
+>
+> #### A) Перевести все DTO/entity/services в один общий пакет `com.example.app.shared` и сделать `exports com.example.app.shared;` — тогда reflection будет работать — ❌ Неверно
+>
+> **Что на самом деле:** `exports` даёт compile-time/runtime доступ к public-членам, но НЕ разрешает рефлексию (`setAccessible(true)`). Jackson, Hibernate и Spring используют именно reflection для доступа к private-полям. Объединение в один пакет также разрушает архитектуру — domain entities, DTO и сервисы смешиваются.
+>
+> **Откуда путаница:** «открыть пакет» интуитивно ассоциируется с одной директивой. На самом деле есть две оси: `exports` (видимость типов) и `opens` (рефлексия).
+>
+> **Если бы это было правдой:** в `module-info.java` не было бы директивы `opens` отдельно от `exports`. Существование двух директив — признание, что они решают разные задачи.
+>
+> ---
+>
+> #### B) Добавить `open module com.example.app { ... }` — это лучшее долгосрочное решение, потому что упрощает работу со всеми фреймворками — ❌ Неверно
+>
+> **Что на самом деле:** `open module` действительно решает проблему — открывает ВСЕ пакеты для рефлексии любому модулю. Это сработает в краткосрочной перспективе, но это **анти-практика**: модуль становится функционально эквивалентным JAR на classpath с точки зрения reflection. Долгосрочно — точечные `opens pkg to framework`.
+>
+> **Откуда путаница:** при первой миграции `open module` экономит часы отладки `InaccessibleObjectException`. Соблазн оставить так — велик.
+>
+> **Если бы это было правдой:** в Java best practices не было бы рекомендации избегать `open module`. Все Spring/Hibernate/Jackson туториалы для JPMS рекомендуют точечные `opens` для долгосрочного решения.
+>
+> ---
+>
+> #### C) Запустить с `--add-opens java.base/java.lang=ALL-UNNAMED` в JVM-аргументах — этого хватит для Spring, Hibernate и Jackson — ❌ Неверно
+>
+> **Что на самом деле:** `--add-opens java.base/java.lang=ALL-UNNAMED` — это нужно для Spring (доступ к internals JDK), но **не решает** проблему доступа к ВАШИМ entity/DTO. Нужны ваши собственные `opens com.example.entity to org.hibernate.orm.core`, `opens com.example.dto to com.fasterxml.jackson.databind`. Один флаг не открывает все пакеты для всех фреймворков.
+>
+> **Откуда путаница:** `--add-opens java.base/java.lang=ALL-UNNAMED` часто упоминается как «магическая» строка для Spring Boot. Кажется, что это панацея.
+>
+> **Если бы это было правдой:** Spring Boot приложения на Java 17+ не нуждались бы в каскаде `--add-opens` для разных пакетов. На практике для full Spring Boot нужно 5-7 разных `--add-opens` (java.lang, java.util, java.util.concurrent, java.io, sun.nio.ch).
+>
+> ---
+>
+> #### D) Точечно открыть три пакета: `opens com.example.app.entity to org.hibernate.orm.core; opens com.example.app.dto to com.fasterxml.jackson.databind; opens com.example.app.service to spring.core, spring.beans;` — каждый фреймворк получает доступ только к своим пакетам — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Принцип «least privilege» в модульном дизайне: каждому фреймворку открыть РОВНО те пакеты, которые ему нужны, и больше ничего. Это сохраняет инкапсуляцию (главная цель JPMS) и при этом разрешает легитимный reflection.
+>
+> **Полная конфигурация module-info.java для Spring Boot + Hibernate + Jackson:**
+>
+> ```java
+> module com.example.app {
+>     // === Compile-time зависимости ===
+>     requires spring.boot;
+>     requires spring.boot.autoconfigure;
+>     requires spring.context;
+>     requires spring.beans;
+>     requires spring.core;
+>     requires spring.web;
+>     requires jakarta.persistence;
+>     requires org.hibernate.orm.core;
+>     requires com.fasterxml.jackson.databind;
+>     requires com.fasterxml.jackson.annotation;
+>
+>     // === Runtime reflection (opens) — точечно по доменам ===
+>     // Spring: для DI/AOP/configuration
+>     opens com.example.app to spring.core, spring.beans, spring.context;
+>     opens com.example.app.config to spring.core, spring.context;
+>     opens com.example.app.service to spring.core, spring.beans;
+>     opens com.example.app.controller to spring.core, spring.web;
+>
+>     // Hibernate: для entity (lazy loading, dirty checking)
+>     opens com.example.app.entity to org.hibernate.orm.core;
+>
+>     // Jackson: для DTO (serialization/deserialization)
+>     opens com.example.app.dto to com.fasterxml.jackson.databind;
+>
+>     // === Compile-time API ===
+>     exports com.example.app.api;
+> }
+> ```
+>
+> **Когда применять:**
+> - Production Spring Boot приложения, мигрирующие на JPMS (редко, но встречается в финтехе/банкинге).
+> - Библиотеки, которые должны быть совместимы с JPMS-проектами потребителей.
+> - Микросервисы на Quarkus/Helidon, где JPMS-совместимость встроена в фреймворк.
+>
+> **Подводные камни:**
+> - **Forgot opens** — добавили новый `@Entity` → `InaccessibleObjectException` в runtime. Нужен интеграционный smoke test для каждого пакета с reflection.
+> - **Reflection cascade** — `@Embeddable` объект ВНУТРИ entity тоже требует `opens`. Hibernate не «прокидывает» доступ через границы пакета.
+> - **Mockito в тестах** — `opens com.example.app.entity to org.mockito;` в `test/module-info.java` или `--add-opens` через `build.gradle`.
+> - **Spring AOP CGLIB-прокси** — для класса с `@Transactional` Spring создаёт прокси через CGLIB, который требует `opens` на пакет. Без него — `IllegalAccessException: Class spring.aop ... cannot access class com.example.service.UserService`.
+> - **Lombok @Data** — генерирует public getter/setter, но Hibernate всё равно может обращаться к полям через reflection (зависит от `@Access(FIELD)` vs `@Access(PROPERTY)`).
+> - **Native compilation** — GraalVM native-image требует `reflect-config.json` отдельно; `opens` в `module-info` нужен для JVM-режима, для native — отдельный конфиг.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q5]] — `exports` vs `opens`; [[Q9]] — `open module`; [[Q12]] — рефлексия в JPMS; [[Q26]] — Spring и JPMS; [[Q27]] — Hibernate и JPMS.
+
+## Q38. Стратегии миграции legacy-кода: `Bottom-Up` vs `Top-Down` в деталях
 
 Миграция на JPMS — итеративный процесс. Выбор стратегии зависит от структуры проекта.
 
