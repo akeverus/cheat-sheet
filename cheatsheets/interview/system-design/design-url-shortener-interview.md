@@ -925,10 +925,64 @@ SET short_code long_url EX 86400
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Reliability и single point of failure? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой pipeline для click tracking analytics масштабируется до 40k+ redirects/sec без влияния на p99 redirect latency?
+>
+> ---
+>
+> #### A) Synchronous `UPDATE urls SET click_count = click_count + 1 WHERE short_code = $1` на каждый redirect — простейшее решение — ❌ Неверно
+>
+> **Что на самом деле:** Synchronous UPDATE превращает read-only redirect в write, добавляет row lock и WAL fsync, повышая latency с 10ms до 30-80ms (или больше при contention). Для popular URL row level lock сериализует concurrent updates → throughput одного row ограничен ~1k updates/sec. При viral URL (10k clicks/sec) очередь обновлений растёт неограниченно, redirects начинают timeout.
+> **Откуда путаница:** "Один SQL — что может пойти не так" — недооценка lock contention при skewed workload.
+> **Если бы это было правдой:** p99 redirect 200ms+, viral URL deadlocks, replication lag растёт, replicas отстают от primary; SLA нарушен.
+>
+> ---
+>
+> #### B) Async event-based pipeline: emit Kafka event на redirect → Flink/Spark aggregation → ClickHouse/Druid → batch counter update — ✓ Верно
+>
+> **Развёрнутое объяснение:** Redirect path остаётся **read-only**: после возврата 302 user-у app **асинхронно** публикует event в Kafka (fire-and-forget с local buffer для durability при Kafka outage). Kafka топик `url_clicks` partitioned by short_code → stream processor (Flink) агрегирует counts по окнам (1 min tumbling) и пишет в analytics store (ClickHouse — columnar, оптимизирован для time-series aggregation). Counter в main DB обновляется batch-ом раз в минуту (single UPDATE с aggregated delta вместо +1 на event), что снижает write QPS в 1000+ раз. Real-time dashboard читает из ClickHouse напрямую, не trogая main DB.
+> **Пример:**
+> ```
+> Redirect Service
+>      ↓ async, non-blocking
+> Kafka: url_clicks (partitioned by short_code, 100 partitions)
+>      ↓
+> Flink job: 1-min tumbling windows
+>      ↓
+> ClickHouse: clicks_aggregated (short_code, minute, count, country, ua)
+>      ↓ every 1 min batch
+> Main DB: UPDATE urls SET click_count = click_count + delta
+> ```
+> ```json
+> // Event format
+> {
+>   "short_code": "abc1234",
+>   "ts": 1715616000000,
+>   "ip_hash": "sha256(...)",
+>   "country": "RU",
+>   "referrer": "facebook.com",
+>   "ua_family": "Chrome"
+> }
+> ```
+> **Когда применять:** Любой sub-100ms read path с heavy write side-effects: ad-impression tracking (Google Ads), feed view counters (Twitter), purchase events (Shopify). Bit.ly использует Kafka + custom aggregation; YouTube view counts — async pipeline через Bigtable + Dataflow.
+> **Подводные камни:** At-least-once delivery в Kafka → возможны duplicate clicks; дедупликация по `(short_code, ip_hash, ts_minute)`. Backpressure при Kafka outage — local buffer на app server (disk-backed queue, Apache Kafka producer's `acks=1` + `linger.ms=100`) на 5-10 min outage; затем drop с metric alarm. Replay для backfill — возможен через Kafka retention 7 days. GDPR — IP hashing на ingest, retention policy для PII.
+> **Связанные вопросы:** [[Q15]] — reliability при Kafka outage; [[Q9]] — почему redirect path должен быть read-only; [[Q16]] — abuse detection через analytics signals.
+>
+> ---
+>
+> #### C) Записывать каждый click в отдельную таблицу `clicks(short_code, ts)` synchronous INSERT — простая denormalization — ❌ Неверно
+>
+> **Что на самом деле:** Synchronous INSERT добавляет write QPS равный read QPS (40k INSERTs/sec) — масштабирует write side-effect 1:1 с reads, аннулируя весь смысл cache hierarchy. Append-only INSERT быстрее UPDATE (no row lock), но всё ещё блокирует redirect; через час набирается 144M строк/час = 3.5B/день — DB collapse в несколько дней. Также analytics queries (`COUNT(*) WHERE short_code=X`) делают full scan для популярных URL.
+> **Откуда путаница:** "Append-only лучше update" — правда, но всё ещё synchronous блокирует hot path.
+> **Если бы это было правдой:** DB storage растёт на TB/неделю; INSERT latency растёт с ростом таблицы; analytics queries блокируют write throughput через shared resources (page cache eviction, WAL contention).
+>
+> ---
+>
+> #### D) WebSocket push с client side на каждый redirect — analytics в браузере — ❌ Неверно
+>
+> **Что на самом деле:** WebSocket требует persistent connection — но URL shortener redirect не имеет client-side application (user просто follows ссылку, app не загружается). Аналитика должна собираться **server-side** при обработке redirect, потому что только сервер видит **все** клики (включая bots, server-to-server, headless browsers). Client-side analytics (JS pixel) применима только если есть landing page, что contradicts core UX shortener.
+> **Откуда путаница:** Web analytics в обычных продуктах (Google Analytics) делается через JS-пиксели, но shortener redirect — это HTTP 302 без HTML.
+> **Если бы это было правдой:** Большинство кликов (curl, link previews от Facebook/Telegram/Slack, bots) теряются; analytics показывает только desktop browser-based clicks; конкурент с server-side tracking даёт более полную аналитику для paid users.
 
 **SPOFs to eliminate:**
 
@@ -959,10 +1013,65 @@ SET short_code long_url EX 86400
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Security (spam, phishing)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой набор практик обеспечивает 99.99% availability (≤52 мин/год downtime) для URL shortener?
+>
+> ---
+>
+> #### A) Multi-AZ stateless apps + Redis Cluster + DB primary с автоматическим failover + circuit breakers с degraded reads → graceful degradation на каждом слое — ✓ Верно
+>
+> **Развёрнутое объяснение:** **99.99% SLA = max 52 мин downtime/год** = практически любой single-component failure не должен вызывать user-visible outage. Достигается через redundancy на каждом уровне И **graceful degradation** при partial failure. Stateless app servers за load balancer (ELB/NLB across 3 AZs) — instance loss = 0 user impact (auto-scaling group spawns replacement). Redis Cluster с replicas (Sentinel или Redis Cluster mode) — master loss → failover в течение секунд. DB — Aurora Multi-AZ или DynamoDB Global Tables (cross-region replication, single-digit second RTO). **Circuit breakers** (Resilience4j, Hystrix) — при Redis outage app fallback to DB direct (slower, но works); при DB read replica outage → primary; при cache+DB outage → serve stale из in-proc cache (Caffeine) + 503 only для cold misses.
+> **Пример:**
+> ```mermaid
+> graph LR
+>   User -->|DNS Round-Robin| LB1[ELB AZ-a]
+>   User -->|DNS Round-Robin| LB2[ELB AZ-b]
+>   LB1 --> App1[App ASG]
+>   LB2 --> App2[App ASG]
+>   App1 -->|primary| Redis1[Redis AZ-a]
+>   App1 -.->|fallback| Redis2[Redis AZ-b]
+>   App1 --> DB[(Aurora Multi-AZ)]
+>   App1 -->|circuit-breaker| Caffeine[Local L1 30s TTL]
+> ```
+> ```java
+> // Circuit breaker pattern (Resilience4j)
+> @CircuitBreaker(name = "redis", fallbackMethod = "getFromDb")
+> String resolve(String shortCode) { return redis.get(shortCode); }
+> 
+> @CircuitBreaker(name = "db", fallbackMethod = "getFromLocalCache")
+> String getFromDb(String shortCode, Throwable t) { return db.lookup(shortCode); }
+> 
+> String getFromLocalCache(String shortCode, Throwable t) {
+>     return caffeineCache.getIfPresent(shortCode);  // last-resort
+> }
+> ```
+> **Когда применять:** Любой high-availability сервис: bit.ly (multi-region active-active), Cloudflare DNS (anycast + 200+ POP), AWS Route 53 (100% SLA через cross-region replication). Twitter t.co — multi-DC с automatic failover; Yandex Cloud Object Storage — Erasure coding across 3 AZ + cross-region replication.
+> **Подводные камни:** Cascade failures — circuit breakers должны иметь bulkhead isolation (отдельные thread pools для DB и Redis), иначе DB outage exhaust app threads waiting на timeout. Split-brain в Redis Sentinel — конфигурировать quorum правильно (3+ nodes, odd number). Chaos engineering — регулярно тестировать failover (Chaos Monkey, AWS Fault Injection Simulator); не тестированные failover работают только 40% времени (Netflix data). Stateful storage — DB recovery time часто >5 min, что съедает 99.99% budget; multi-region для real four-nines.
+> **Связанные вопросы:** [[Q4]] — distributed counter (Snowflake) убирает SPOF при code generation; [[Q9]] — multi-tier cache как защита от DB outage; [[Q11]] — sharding replicas per shard.
+>
+> ---
+>
+> #### B) Single high-end primary DB достаточно — managed RDS даёт 99.95% SLA — ❌ Неверно
+>
+> **Что на самом деле:** RDS single-AZ SLA = 99.95% ≈ 4.4 часа downtime/год — это не 99.99%. Single primary — SPOF: instance failure (hardware, kernel panic, AZ outage) = full system down до failover (минуты). Также planned maintenance (minor version upgrades) добавляет regular short outages, не предусмотренные SLA budget. Для 99.99% нужны Multi-AZ + автоматический failover.
+> **Откуда путаница:** Cloud provider SLA читают как "приложение получит этот SLA", но это SLA только на сам instance, не на end-to-end.
+> **Если бы это было правдой:** Random AZ outage = час+ downtime, SLA нарушен; user trust в shortener теряется; SLA refunds + reputation cost.
+>
+> ---
+>
+> #### C) Использовать только Redis как primary storage — он быстрее и проще — ❌ Неверно
+>
+> **Что на самом деле:** Redis с AOF даёт persistence через replay log, но не durable enough для primary KV store при network partition или process crash: AOF append может потерять последние секунды (fsync everysec mode), RDB snapshots — минуты. Без durable backing store любой data loss = безвозвратная потеря mapping short→long. Также Redis OOM = data loss (eviction policy эвакуирует данные). 99.99% durability требует replicated WAL (Aurora) или durable KV (DynamoDB).
+> **Откуда путаница:** "Redis имеет persistence — значит можно как primary" — недооценка различия между cache durability и storage durability.
+> **Если бы это было правдой:** Redis-only выдерживает 99% uptime в нормальных условиях, но в catastrophic scenario (data center fire, multi-AZ outage) — full data loss; reputation hit непропорционален SLA budget.
+>
+> ---
+>
+> #### D) Использовать только CDN с long TTL — нет origin failure если всё в CDN — ❌ Неверно
+>
+> **Что на самом деле:** CDN кеширует только **read path** — новые URLs создаются на origin, который остаётся SPOF для shorten endpoint. Также cache miss (новый, редкий, expired URL) идёт на origin — при origin outage user видит 503/504 на cache miss. CDN — это **enhancement layer**, не replacement для HA architecture origin-а.
+> **Откуда путаница:** "CDN решает всё" — но кеширование не покрывает write path и cold reads.
+> **Если бы это было правдой:** Невозможно создать новый URL при origin outage; популярные URLs работают, но shorten endpoint и аналитика недоступны; partial outage с asymmetric UX.
 
 **Malicious use:** shortener obscures destination → phishing via trusted domain.
 
