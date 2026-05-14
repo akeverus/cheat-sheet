@@ -762,10 +762,88 @@ public void processAndPublish(OrderCommand cmd) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как настроить Kafka Listener для конкурентного чтения? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что обеспечивают Kafka транзакции (`transaction.id` + `KafkaTransactionManager`), и почему `@Transactional` поверх Kafka template **не** даёт «exactly-once» гарантию с произвольной внешней БД?
+>
+> ---
+>
+> #### A) Транзакции в Kafka — это просто `producer.beginTransaction()` + `producer.commitTransaction()`, аналог JDBC: либо все записи в одном топике вошли, либо ни одна — ❌ Неверно
+>
+> **Что на самом деле:** Kafka транзакции **шире** простого «все или ничего» в одном топике: они охватывают записи в **несколько топиков и партиций атомарно**, а также **offset commits** для consumer-side (для exactly-once stream processing — read → transform → write). Это не JDBC-аналог.
+>
+> **Откуда путаница:** API повторяет JDBC (`begin/commit/abort`), но семантика — distributed atomic broadcast.
+>
+> **Если бы это было правдой:** Kafka Streams не могли бы делать `read → process → write + commit offset` атомарно — но именно это и есть exactly-once semantics. На практике transactions дают cross-topic atomicity + offset.
+>
+> ---
+>
+> #### B) Transactional producer гарантирует exactly-once между Kafka и любой другой системой (БД, Redis, S3) автоматически — broker отслеживает внешние commits — ❌ Неверно
+>
+> **Что на самом деле:** Kafka transactions работают **только** внутри Kafka cluster (broker-side). Никакой broker не «знает» про внешнюю БД. Распределённая атомарность Kafka+JPA требует **two-phase commit** (XA) или **outbox pattern** — Kafka transactions сами по себе этого не дают.
+>
+> **Откуда путаница:** `ChainedKafkaTransactionManager` создаёт **видимость** общей транзакции — но это **best-effort** chain (commits в последовательности), а не XA. Между commit JPA и commit Kafka возможен сбой → inconsistency.
+>
+> **Если бы это было правдой:** не нужны были бы Debezium/outbox/Kafka Connect для CDC — приложение само писало бы в БД и Kafka atomically. Реальность: outbox-pattern — индустриальный стандарт именно из-за этого.
+>
+> ---
+>
+> #### C) Transactional producer (с `transaction.id`) обеспечивает **атомарное** write в несколько Kafka-топиков + offset commit как часть транзакции; consumer должен использовать `isolation.level=read_committed` для невидимости uncommitted записей. **Exactly-once с внешней БД** требует outbox pattern (БД пишет в outbox-таблицу → Debezium публикует в Kafka) или 2PC; `ChainedKafkaTransactionManager` даёт **best-effort chained commits**, не настоящую atomicity — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Внутренняя механика: каждый transactional producer регистрируется с уникальным `transaction.id` на `TransactionCoordinator` broker. Coordinator поддерживает state machine (`Ongoing` → `PrepareCommit` → `CompleteCommit`), пишет markers в `__transaction_state` топик и в каждую партицию, куда были writes (commit markers — `0x01`, abort markers — `0x00`). Consumer с `isolation.level=read_committed` пропускает все записи с abort marker и uncommitted записи.
+>
+> Exactly-once stream processing (Kafka Streams) использует transactions: `consumer.poll()` → `producer.send()` → `producer.sendOffsetsToTransaction(offsets, consumerGroupMetadata)` → `producer.commitTransaction()`. Если crash в любой точке — abort → consumer перечитывает с last committed offset.
+>
+> ChainedKafkaTransactionManager: `@Transactional("chainedKafkaTxManager")` запускает Kafka tx + JPA tx → выполняет body → commit JPA → commit Kafka. Между commit JPA и commit Kafka может быть сбой (JVM crash, network partition) → JPA committed, Kafka **не** committed → data inconsistency. Это **не atomic**, это «hopeful chain».
+>
+> **Пример (outbox pattern — правильный):**
+> ```java
+> @Service
+> @RequiredArgsConstructor
+> public class OrderService {
+>     private final OrderRepository orderRepo;
+>     private final OutboxRepository outboxRepo;
+>
+>     @Transactional   // только JPA-транзакция, никакой Kafka
+>     public void createOrder(OrderCommand cmd) {
+>         Order order = orderRepo.save(new Order(cmd));
+>         outboxRepo.save(new OutboxEvent(
+>             "orders",
+>             order.getId().toString(),
+>             objectMapper.writeValueAsString(new OrderCreated(order))
+>         ));   // atomic с order: одна JPA tx, одна БД
+>     }
+> }
+>
+> // Debezium читает CDC из outbox-таблицы → публикует в Kafka
+> // Atomicity гарантирована БД (single transaction), Kafka получает с задержкой
+> ```
+>
+> **Когда применять:**
+> - **Kafka Streams** (Confluent, Yandex.Reklama): exactly-once `processing.guarantee=exactly_once_v2` — встроенные transactions.
+> - **Outbox pattern** (Stripe, Wolt): для надёжной публикации событий из микросервиса с БД.
+> - **Saga compensation**: transactional producer для атомарного «send command + commit consumer offset» в saga step.
+>
+> **Подводные камни:**
+> - **`transaction.id` коллизии**: если два инстанса используют один `transaction.id`, новый «fencit» старый (`ProducerFencedException`). При scale-out нужны уникальные ID — обычно `<service>-<podName>-<index>`.
+> - **Transaction timeout** (`transaction.timeout.ms`, default 60s): если transaction висит дольше — broker abort. Long-running listener в транзакции может surprisingly abort.
+> - **`read_committed` lag**: consumer ждёт commit/abort marker — latency растёт на размер `transaction.timeout.ms` worst-case.
+> - **Кросс-кластерные transactions невозможны**: MirrorMaker copy не сохраняет transactional semantics.
+>
+> **Связанные вопросы:** [[Q14]] — idempotent producer (обязательно для transactional); [[Q9]] — `sendOffsetsToTransaction`; [[Q12]] — Kafka Streams exactly-once.
+>
+> ---
+>
+> #### D) Транзакции работают только при `acks=0` — broker не должен ждать подтверждения для atomic commit — ❌ Неверно
+>
+> **Что на самом деле:** Transactional producer **обязательно** требует `acks=all` (default при enable transactions). `acks=0` (fire-and-forget) несовместим — broker не может garantee atomic commit без подтверждений.
+>
+> **Откуда путаница:** обратная ассоциация «низкие acks → меньше блокировки → лучше для tx». На деле transactions требуют **максимальной** durability.
+>
+> **Если бы это было правдой:** transactional pipeline не давал бы exactly-once — half of writes терялись бы в transit. Реальность: `acks=all + min.insync.replicas=2+` mandatory.
+
+## Q8. Как настроить Kafka Listener для конкурентного чтения?
 
 ```java
 @Bean
@@ -793,10 +871,98 @@ public void handle(OrderEvent event, Acknowledgment ack) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Как управлять offset коммитами? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что точно делает `factory.setConcurrency(3)` в `ConcurrentKafkaListenerContainerFactory`, и почему `concurrency > partitions` бесполезно?
+>
+> ---
+>
+> #### A) `setConcurrency(3)` создаёт **3 sub-контейнера** внутри одного listener, каждый со своим `KafkaConsumer` и dedicated thread; партиции **топика** распределяются между этими consumers (внутри ОДНОГО Spring Boot инстанса). Если у топика 2 партиции, при `concurrency=3` третий consumer будет idle — параллелизм ограничен `min(concurrency, partitions)` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Архитектурно `ConcurrentMessageListenerContainer` — это **группа** из N `KafkaMessageListenerContainer`. Каждый sub-container:
+> 1. Создаёт **собственный** `KafkaConsumer` через `consumerFactory`.
+> 2. Запускает **свой** thread (`KafkaConsumerThread-<n>`).
+> 3. Делает свой `poll()` цикл и диспатчит в listener method.
+>
+> При rebalance внутри одного Consumer Group партиции распределяются по всем consumers группы (включая консьюмеров из других инстансов). Если у топика 2 партиции, а у тебя 1 instance × concurrency=3 → 3 consumer регистрируются в группе → 2 получат по партиции, 1 idle. Аналогично, если 3 instance × concurrency=3 на топик с 5 partition → 9 consumers, 5 с партициями, 4 idle.
+>
+> Главная проблема: **idle consumers расходуют ресурсы** (heap, threads, network sockets) и **участвуют в rebalance** (замедляют его). Поэтому `concurrency` должен **точно** соответствовать planned partition count: `concurrency × replicas = partition_count`.
+>
+> Тredding model: каждый sub-container thread обрабатывает свою партицию **последовательно** — это гарантирует ordering внутри партиции. Внутри thread можно делать `@Async`, но тогда теряется ordering и offset commit становится сложным.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class KafkaConcurrencyConfig {
+>
+>     // Топик с 6 partitions, 2 instance с concurrency=3 → 6 consumers, всё работает
+>     @Bean
+>     public ConcurrentKafkaListenerContainerFactory<String, OrderEvent> orderListenerFactory(
+>             ConsumerFactory<String, OrderEvent> cf) {
+>         var factory = new ConcurrentKafkaListenerContainerFactory<String, OrderEvent>();
+>         factory.setConsumerFactory(cf);
+>         factory.setConcurrency(3);
+>         factory.getContainerProperties().setAckMode(AckMode.MANUAL);
+>         factory.getContainerProperties().setPollTimeout(3_000);
+>         return factory;
+>     }
+> }
+>
+> // Или через annotation
+> @KafkaListener(topics = "orders", concurrency = "3", containerFactory = "orderListenerFactory")
+> public void handle(OrderEvent event, Acknowledgment ack) {
+>     processOrder(event);
+>     ack.acknowledge();
+> }
+> ```
+>
+> **Diagnose**: `kafka-consumer-groups.sh --describe --group <group>` покажет PARTITION column пустой для idle consumers — это red flag «слишком много concurrency».
+>
+> **Когда применять:**
+> - **Topic-bound parallelism**: 1 instance × concurrency=N для batch-обработки в outbox publisher.
+> - **HA по партициям**: replicas × concurrency=1 — каждый pod держит одну партицию, на pod restart другой подхватывает (Wolt courier dispatch).
+> - **Saturated CPU listener** (compression, ML inference): concurrency = CPU cores, partitions tuned to match.
+>
+> **Подводные камни:**
+> - **`concurrency > partitions`**: idle consumers, замедляют rebalance, нагружают `__consumer_offsets` heartbeat traffic.
+> - **`concurrency` менять hot не получается**: требует restart listener container; для dynamic scaling использовать `KafkaListenerEndpointRegistry.getListenerContainer().stop()` + reconfig.
+> - **`ack.acknowledge()` thread-safety**: вызывается в consumer thread; нельзя acknowledge из `@Async` без careful coordination.
+> - **Rebalance взаимодействие**: при добавлении/удалении consumer вся группа коротко останавливается (или incrementally с `CooperativeStickyAssignor`).
+>
+> **Связанные вопросы:** [[Q4]] — Consumer Group + partitions; [[Q9]] — AckMode для concurrent контейнера; [[Q3]] — listener thread model.
+>
+> ---
+>
+> #### B) `setConcurrency(3)` запускает 3 **поток** внутри **одного** `KafkaConsumer` для parallel processing записей одной партиции — ❌ Неверно
+>
+> **Что на самом деле:** Один `KafkaConsumer` instance **не thread-safe** и не может быть обработан несколькими threads. `concurrency=3` создаёт **3 отдельных** consumer-а, каждый со своим thread. Внутри одной партиции записи обрабатываются строго последовательно (для ordering).
+>
+> **Откуда путаница:** общая ассоциация «concurrency = parallel processing one task». В Kafka concurrency = «сколько consumers создать», не «сколько threads на партицию».
+>
+> **Если бы это было правдой:** ordering внутри партиции потерялся бы — параллельная обработка не гарантирует order. На практике Kafka даёт ordering именно потому, что одна партиция — один thread.
+>
+> ---
+>
+> #### C) `setConcurrency(3)` означает, что Kafka cluster добавит 3 brokers для load balancing запросов — ❌ Неверно
+>
+> **Что на самом деле:** `concurrency` — это **client-side** конфигурация Spring Kafka. Broker-side ничего об этом не знает. Number of brokers и concurrency listener — независимые концепты.
+>
+> **Откуда путаница:** Смешение client/server параметров. Cluster scale — это broker operations team, listener concurrency — application configuration.
+>
+> **Если бы это было правдой:** добавление concurrency в app code триггерило бы infrastructure changes — невозможно. Реальность: `concurrency` влияет только на JVM consumers.
+>
+> ---
+>
+> #### D) `setConcurrency(3)` создаёт thread pool из 3 threads для **асинхронного** dispatch listener метода — основной thread остаётся свободен — ❌ Неверно
+>
+> **Что на самом деле:** `concurrency` создаёт **отдельных** consumers с **своими** poll loops. Это не async dispatch — каждый sub-container последовательно poll + processes. Async dispatch требует `@Async` на listener метод (с большими caveats для offset commit).
+>
+> **Откуда путаница:** `@Async` + thread pool — паттерн из Spring core. В Kafka concurrency — другая семантика: несколько independent consumers, не один shared task queue.
+>
+> **Если бы это было правдой:** offset commit стал бы непредсказуемым — нельзя commit пока тред не закончил async обработку. Реальность: dedicated consumer per thread решает это естественно.
+
+## Q9. Как управлять offset коммитами?
 
 | AckMode | Поведение |
 |---------|-----------|
@@ -817,10 +983,102 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Как работает сериализация/десериализация в Spring Kafka? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём разница между `AckMode.MANUAL` и `AckMode.MANUAL_IMMEDIATE`, и почему default `BATCH` опасен с long-running listeners?
+>
+> ---
+>
+> #### A) Различий нет — это просто алиасы одного режима для разных Spring версий — ❌ Неверно
+>
+> **Что на самом deal:** Два разных режима с разной семантикой. `MANUAL` — accumulate ack calls в pending list, commit при следующем `poll()`. `MANUAL_IMMEDIATE` — commit немедленно через `consumer.commitSync()` (или async).
+>
+> **Откуда путаница:** имена похожи. Но они дают разный performance vs durability trade-off.
+>
+> **Если бы это было правдой:** не было бы reason иметь два режима в API. Spring сохраняет оба именно потому что разница важна.
+>
+> ---
+>
+> #### B) `MANUAL_IMMEDIATE` асинхронный, `MANUAL` — синхронный — `MANUAL` блокирует listener до broker ack — ❌ Неверно
+>
+> **Что на самом деле:** Наоборот: `MANUAL_IMMEDIATE` делает `commitSync()` или `commitAsync()` сразу при `ack.acknowledge()` (блокирующий call к broker если sync). `MANUAL` — defer до следующего `poll()`, что даёт **batching** ack-ов и **меньше** broker round-trips.
+>
+> **Откуда путаница:** «immediate» звучит как «не ждёт». Но «immediate» здесь означает «без отлагательства до poll», что фактически вызывает MORE network calls.
+>
+> **Если бы это было правдой:** `MANUAL_IMMEDIATE` был бы лучше всегда — но он медленнее именно потому, что commits сразу.
+>
+> ---
+>
+> #### C) Default `BATCH` коммитит после каждой записи — производительность ниже, чем `MANUAL` — ❌ Неверно
+>
+> **Что на самом деле:** Default `BATCH` коммитит **после обработки batch-а из poll()** (одного `consumer.poll()` вызова), не после каждой записи. `RECORD` — это «после каждой записи». Поэтому `BATCH` (default) — высокий throughput, но при crash потеря batch unfinished записей.
+>
+> **Откуда путаница:** имя «BATCH» можно прочитать как «commit batch-ом» или «commit для batch» — путаница.
+>
+> **Если бы это было правдой:** default Spring Kafka был бы slowest mode — что не имело бы смысла как default.
+>
+> ---
+>
+> #### D) `MANUAL` — `ack.acknowledge()` добавляет offset в **pending list**, commit отложен до следующего `poll()` (batched ack — better throughput); `MANUAL_IMMEDIATE` — **немедленный** sync/async commit при каждом ack. Default `BATCH` коммитит **весь poll batch** после обработки последней записи в нём — при long-running listener crash посередине теряется уже сделанная работа всех предыдущих записей в batch (at-least-once) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Все 7 AckMode мapping:
+> | Mode | Когда commit | Trade-off |
+> |------|-------------|-----------|
+> | `RECORD` | После каждой записи | Slowest, lowest data loss |
+> | `BATCH` (default) | После poll batch | Fast, batch loss на crash |
+> | `TIME` | По таймеру (`ackTime`) | Predictable latency |
+> | `COUNT` | После N записей | Tuned for throughput |
+> | `COUNT_TIME` | По count ИЛИ time | Hybrid |
+> | `MANUAL` | `ack.acknowledge()` + следующий poll | Programmatic, batched |
+> | `MANUAL_IMMEDIATE` | `ack.acknowledge()` → commit сразу | Programmatic, immediate |
+>
+> Долгий listener при default `BATCH`: представь `poll()` вернул 50 записей, обработка каждой 1 сек. После записи #30 JVM crash → offset **не** committed (commit только после #50). После restart consumer перечитает все 50 — записи 1-30 обработаны дважды (at-least-once). Idempotent downstream спасает, но если processing — non-idempotent (например, charge card), это duplicate billing.
+>
+> Решение: `MANUAL` + ack после каждой successful записи → точечный commit, на crash потеряется максимум одна запись в обработке.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class AckModeConfig {
+>     @Bean
+>     public ConcurrentKafkaListenerContainerFactory<String, OrderEvent> safeFactory(
+>             ConsumerFactory<String, OrderEvent> cf) {
+>         var factory = new ConcurrentKafkaListenerContainerFactory<String, OrderEvent>();
+>         factory.setConsumerFactory(cf);
+>         factory.getContainerProperties().setAckMode(AckMode.MANUAL);  // не IMMEDIATE — больше throughput
+>         factory.getContainerProperties().setSyncCommits(true);        // sync commit (safer)
+>         return factory;
+>     }
+> }
+>
+> @KafkaListener(topics = "orders", containerFactory = "safeFactory")
+> public void handle(OrderEvent event, Acknowledgment ack) {
+>     try {
+>         processOrder(event);                  // не-идемпотентная операция
+>         ack.acknowledge();                    // commit только после успеха
+>     } catch (Exception e) {
+>         log.error("Processing failed, will retry", e);
+>         // не ack — DefaultErrorHandler сделает retry
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **`MANUAL`** (best default): non-idempotent processing с manual control — финансовые операции, charges, sends.
+> - **`MANUAL_IMMEDIATE`**: критичные записи где crash после ack недопустим (например, single-event compliance audit).
+> - **`BATCH`**: idempotent processing с high throughput — например, метрики aggregation.
+> - **`TIME`/`COUNT`**: balance между latency и crash window — backend для analytics.
+>
+> **Подводные камни:**
+> - **`AckMode.MANUAL` без ack никогда не коммитит** — bug «consumer перечитывает одни и те же записи бесконечно» обычно отсюда (`return` без ack).
+> - **`enable-auto-commit=true` несовместим с MANUAL**: Spring выкинет exception при старте — явно выставить `enable-auto-commit=false` при MANUAL.
+> - **`MANUAL_IMMEDIATE` + sync = blocking listener thread**: при медленном broker round-trip throughput падает 10x. Используй async или `MANUAL`.
+> - **Out-of-order ack**: при concurrent processing записей одной партиции (`@Async`) ack может прийти не в порядке offset — Spring сохраняет highest, но window между ack-ами может быть data loss.
+>
+> **Связанные вопросы:** [[Q3]] — `@KafkaListener` параметры; [[Q5]] — error handler vs ack interaction; [[Q7]] — `sendOffsetsToTransaction` в transactional context.
+
+## Q10. Как работает сериализация/десериализация в Spring Kafka?
 
 ```yaml
 spring:
@@ -848,10 +1106,99 @@ public ConsumerFactory<String, Object> consumerFactory() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как тестировать Spring Kafka без реального брокера? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая ключевая security-проблема с дефолтным `JsonDeserializer`, и какой параметр критичен в production?
+>
+> ---
+>
+> #### A) `JsonDeserializer` медленный — нужно использовать Kryo для скорости — ❌ Неверно
+>
+> **Что на самом деле:** скорость не главная проблема. **Безопасность** — критичнее. По умолчанию Jackson десериализует **любой** класс из payload, если есть type info в headers (`__TypeId__`). Атакующий может отправить malicious payload с `__TypeId__: org.apache.commons.collections.functors.InvokerTransformer` (CVE-2015-7501 series) → RCE при десериализации.
+>
+> Параметр `spring.json.trusted.packages` — whitelist разрешённых пакетов. Без него = security risk.
+>
+> **Откуда путаница:** «JSON медленный vs Protobuf» — частое сравнение. Но в Spring Kafka context security важнее performance для типичной нагрузки.
+>
+> **Если бы это было правдой:** все Spring Kafka apps использовали бы Avro/Protobuf по default. Реально JSON остаётся default — Spring добавил security guard вместо смены формата.
+>
+> ---
+>
+> #### B) `spring.json.trusted.packages` — whitelist пакетов разрешённых для deserialization; без него Jackson доверяет всем классам в payload, что = RCE-risk (gadget chain attacks); production setting: `com.mycompany.events.*`, никогда `*` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Spring Kafka JsonDeserializer использует Jackson, который по умолчанию читает `__TypeId__` header (или resolved class из default type). При untrusted source (Kafka topic из external system, multi-tenant) это RCE-вектор:
+>
+> 1. Producer (compromised или malicious) шлёт payload с `__TypeId__: <gadget class>`.
+> 2. Jackson инстанцирует класс — gadget chain вызывает `Runtime.exec()`.
+> 3. На consumer'е выполняется arbitrary command.
+>
+> CVE post-mortems: Equifax 2017 (Apache Struts Java deserialization), Spring4Shell 2022.
+>
+> Защита:
+> 1. **`trusted.packages`** — whitelist специфичных пакетов.
+> 2. **`useTypeHeaders=false`** — игнорировать `__TypeId__` из headers, использовать known type (`value.default.type`).
+> 3. **Avro/Protobuf** с Schema Registry — schema enforcement on broker level.
+>
+> **Пример:**
+> ```yaml
+> spring:
+>   kafka:
+>     consumer:
+>       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+>       properties:
+>         spring.json.trusted.packages: "com.mycompany.events.*"  # whitelist
+>         spring.json.use.type.headers: false                       # ignore __TypeId__
+>         spring.json.value.default.type: com.mycompany.events.OrderEvent
+> ```
+>
+> ```java
+> // Programmatic для error-tolerant deserialization
+> @Bean
+> public ConsumerFactory<String, Object> consumerFactory() {
+>     JsonDeserializer<Object> deserializer = new JsonDeserializer<>();
+>     deserializer.addTrustedPackages("com.mycompany.events.*");
+>     deserializer.setUseTypeHeaders(false);              // КРИТИЧНО для security
+>     deserializer.setRemoveTypeHeaders(true);             // не пробрасываем дальше
+>
+>     // ErrorHandlingDeserializer — не убивает consumer на bad payload
+>     ErrorHandlingDeserializer<Object> errorHandling =
+>         new ErrorHandlingDeserializer<>(deserializer);
+>     return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), errorHandling);
+> }
+> ```
+>
+> **Когда применять:** ВСЕГДА в production. Multi-tenant Kafka (где разные команды публикуют в общий cluster) — must.
+>
+> **Подводные камни:**
+> - **`trusted.packages: "*"`** — отключает защиту. Никогда не делать в prod.
+> - **Polymorphic types** (`@JsonTypeInfo`) ломаются если `useTypeHeaders=false` — нужен custom subtypes registration.
+> - **`ErrorHandlingDeserializer` обёртка** обязательна, иначе bad payload убивает consumer thread → infinite restart loop.
+> - **Schema evolution**: добавление optional field — OK; удаление required field ломает consumers. Confluent Schema Registry + backward/forward compat checks.
+>
+> **Связанные вопросы:** [[Q3]] — @KafkaListener basics; [[Q5]] — DeserializationException handling; [[Q11]] — тестирование с EmbeddedKafka.
+>
+> ---
+>
+> #### C) JsonSerializer не подходит для production — нужен только Avro — ❌ Неверно
+>
+> **Что на самом деле:** JSON отлично работает в production многих компаний (Avito, Yandex, Wolt). Avro даёт преимущества: schema enforcement, compact binary, evolution checks — но требует Schema Registry infra. JSON проще, дебажится eyeballing, sufficient для internal events с rev'd contract.
+>
+> **Откуда путаница:** «Kafka best practice = Avro» — Confluent marketing. На практике выбор зависит от scale и compliance requirements.
+>
+> **Если бы это было правдой:** все Spring Kafka tutorials использовали бы Avro. Реально JSON — default в туториалах и работает.
+>
+> ---
+>
+> #### D) `JsonDeserializer` не работает с Spring Boot 3 — нужен `Jackson2JsonMessageConverter` — ❌ Неверно
+>
+> **Что на самом деле:** `JsonDeserializer` — primary path в Spring Kafka 3.x. `Jackson2JsonMessageConverter` — отдельный механизм для `KafkaTemplate` / `MessageHeaders` integration, не deserialization layer.
+>
+> **Откуда путаница:** оба связаны с Jackson + Spring Kafka. Но это разные слои API.
+>
+> **Если бы это было правдой:** breaking change documented в Spring Boot 3 release notes. Реально JsonDeserializer работает unchanged.
+
+## Q11. Как тестировать Spring Kafka без реального брокера?
 
 ```xml
 <dependency>
@@ -891,10 +1238,115 @@ class OrderConsumerTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Что такое Kafka Streams в контексте Spring? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** EmbeddedKafka vs Testcontainers Kafka — что лучше для production-grade integration тестов и почему?
+>
+> ---
+>
+> #### A) EmbeddedKafka — быстрее (in-JVM), нет docker, лучше для CI — ✓ Верно (но с нюансом — нужен баланс)
+>
+> **Развёрнутое объяснение:**
+>
+> Оба инструмента для тестирования Kafka без production cluster. Trade-offs:
+>
+> | Аспект | EmbeddedKafka | Testcontainers Kafka |
+> |---|---|---|
+> | Startup time | ~3-5s | ~10-15s |
+> | Docker required | Нет | Да |
+> | Behavior fidelity | ~95% (in-JVM) | 100% (real Kafka) |
+> | Memory usage | ~200MB (JVM heap) | ~500MB (container) |
+> | Cluster scenarios | Single-broker | Multi-broker (compose) |
+> | Network failures sim | Limited | Yes (toxiproxy) |
+>
+> **EmbeddedKafka подходит когда:**
+> - Unit-ish integration tests (один consumer, простая логика)
+> - CI с ограниченными ресурсами (нет Docker)
+> - Тысячи тестов где speed критичен
+>
+> **Testcontainers Kafka подходит когда:**
+> - End-to-end tests with multi-component setup (Schema Registry + Kafka + app)
+> - Тестирование partition rebalancing, network partitions
+> - Validation что app работает с **той же** Kafka version что в prod
+>
+> Production-grade подход — mix: EmbeddedKafka для unit-level (быстро, много тестов), Testcontainers для integration (medium count) + dedicated staging cluster для smoke tests.
+>
+> **Пример (EmbeddedKafka):**
+> ```java
+> @EmbeddedKafka(
+>     partitions = 3,                          // multi-partition для testing ordering
+>     topics = {"orders", "orders-dlt"},
+>     brokerProperties = {
+>         "log.cleaner.enable=false",           // disable log cleaner — speed
+>         "auto.create.topics.enable=false"
+>     }
+> )
+> @SpringBootTest
+> class OrderConsumerTest {
+>     @Autowired KafkaTemplate<String, OrderEvent> template;
+>     @Autowired OrderService orderService;
+>
+>     @Test
+>     void shouldProcessOrderEvent() throws Exception {
+>         OrderEvent event = new OrderEvent(UUID.randomUUID(), "PENDING");
+>         template.send("orders", event.orderId().toString(), event).get();
+>
+>         await().atMost(5, SECONDS)
+>             .untilAsserted(() ->
+>                 assertThat(orderService.findById(event.orderId())).isPresent());
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Avito/Booking**: EmbeddedKafka для unit-level, Testcontainers для integration, staging cluster для E2E.
+> - **CI optimization**: EmbeddedKafka в parallel test runs (по 100+ tests одновременно).
+> - **Local dev**: Testcontainers — same Kafka version что в prod, no version drift bugs.
+>
+> **Подводные камни:**
+> - **EmbeddedKafka не cleanup автоматически между тестами**: используй `@DirtiesContext` или `kafka.cleanup()` иначе state leaks между тестами.
+> - **Random port conflicts**: `EmbeddedKafkaBroker` randomizes, но Spring Boot Test cache reuses context — `@DirtiesContext.AFTER_CLASS` обязателен для isolation.
+> - **`await()` без timeout** — flaky tests. Всегда atMost(5-10s) с meaningful assertions.
+> - **Kraft mode (KIP-500)**: новые версии Kafka работают без Zookeeper. EmbeddedKafka поддерживает с Spring Kafka 3.1+.
+>
+> **Связанные вопросы:** [[Q3]] — @KafkaListener config; [[Q9]] — AckMode тестирование; [[Q13]] — ordering guarantees test.
+>
+> ---
+>
+> #### B) EmbeddedKafka не существует в Spring Kafka 3.x — удалено в favor of Testcontainers — ❌ Неверно
+>
+> **Что на самом деле:** EmbeddedKafka **активно поддерживается** в Spring Kafka 3.x. С Kraft mode (без Zookeeper) стало ещё быстрее. Удаление не планируется.
+>
+> **Откуда путаница:** Kafka 3.x deprecated Zookeeper — кажется что embedded Kafka тоже становится legacy. На деле просто Kraft под капотом.
+>
+> **Если бы это было правдой:** Spring Kafka docs убрали бы примеры EmbeddedKafka. Реально они актуальны.
+>
+> ---
+>
+> #### C) `@EmbeddedKafka` требует обязательно `@DirtiesContext` для каждого теста — ❌ Неверно (но рекомендуется)
+>
+> **Что на самом деле:** `@DirtiesContext` — recommended для test isolation, но не обязателен. Без него tests могут проходить, если осторожно cleanup'ить топики/groups. Но это fragile — типично используют `@DirtiesContext` или per-test unique topic names.
+>
+> **Откуда путаница:** многие туториалы показывают `@DirtiesContext` как обязательный — это best practice, не requirement.
+>
+> **Если бы это было правдой:** test suite размером 100+ tests был бы непрактичен (каждый тест = 5s startup × 100 = 500s test suite).
+>
+> ---
+>
+> #### D) MockProducer/MockConsumer достаточно — EmbeddedKafka избыточен — ❌ Неверно (в большинстве случаев)
+>
+> **Что на самом деле:** MockProducer/MockConsumer (Kafka Mock APIs) тестируют **логику обработки**, не **integration**. Без real broker нет:
+> - Real serialization/deserialization (можно тестировать на mocks но не fidelity)
+> - Partition rebalancing
+> - Consumer group coordination
+> - Spring Kafka container lifecycle (StartListener, AckMode, error handling)
+>
+> Mocks для unit tests (business logic). EmbeddedKafka для integration tests (Spring Kafka container + real Kafka behavior).
+>
+> **Откуда путаница:** mocks быстрее. Но они тестируют другой уровень — выбор инструмента зависит от scope теста.
+>
+> **Если бы это было правдой:** не было бы EmbeddedKafka в spring-kafka-test artifact.
+
+## Q12. Что такое Kafka Streams в контексте Spring?
 
 Spring Kafka поддерживает Kafka Streams через `StreamsBuilderFactoryBean`:
 
