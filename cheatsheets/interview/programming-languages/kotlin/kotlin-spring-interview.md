@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[kotlin-spring]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Kotlin + Spring`
 
@@ -1090,10 +1090,61 @@ suspend fun meReactive(): User {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Какие типичные ошибки при использовании Kotlin + Spring? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как получить текущего authenticated user в `suspend` контроллере WebFlux + Spring Security?
+>
+> ---
+>
+> #### A) Использовать `SecurityContextHolder.getContext().authentication` напрямую — это standard Java способ — ❌ Неверно
+>
+> **Что на самом деле:** `SecurityContextHolder` использует `ThreadLocal` для хранения контекста. В корутинах поток меняется на каждом suspension point, и `ThreadLocal` теряет значение. Это базовая несовместимость blocking security model и suspend-кода. В WebFlux + Coroutines нужно использовать `ReactiveSecurityContextHolder`.
+> **Откуда путаница:** разработчики переносят опыт из Spring MVC + Java.
+> **Если бы это было правдой:** мы получали бы корректного пользователя на любом потоке — но при первом `delay` контекст теряется.
+>
+> ---
+>
+> #### B) Использовать `@AuthenticationPrincipal` параметр в контроллере или `ReactiveSecurityContextHolder.getContext().awaitSingle()` в suspend-коде — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring Security WebFlux хранит `SecurityContext` в reactor `ContextView` (не в `ThreadLocal`). Через `kotlinx-coroutines-reactor` этот контекст автоматически прокидывается в coroutine context при адаптации `suspend` ↔ `Mono`. Доступ из suspend-кода: `ReactiveSecurityContextHolder.getContext().awaitSingle()` (или `awaitSingleOrNull()` если может быть пустым). Ещё проще — параметр `@AuthenticationPrincipal jwt: Jwt` (или `OidcUser`, `UserDetails`) в сигнатуре контроллера, Spring сам извлечёт principal из reactive контекста и передаст. Это идиоматичный путь.
+> **Пример:**
+> ```kotlin
+> @RestController
+> class MeController(private val userService: UserService) {
+>
+>     @GetMapping("/me")
+>     suspend fun me(@AuthenticationPrincipal jwt: Jwt): UserResponse =
+>         userService.findByUsername(jwt.subject).toResponse()
+>
+>     // Альтернатива через ReactiveSecurityContextHolder
+>     @GetMapping("/me-alt")
+>     suspend fun meAlt(): UserResponse {
+>         val auth = ReactiveSecurityContextHolder.getContext()
+>             .awaitSingle().authentication
+>         return userService.findByUsername(auth.name).toResponse()
+>     }
+> }
+> ```
+> **Когда применять:** во всех reactive/coroutine контроллерах с Spring Security.
+> **Подводные камни:** Spring Security DSL для Kotlin (`http { authorizeHttpRequests { ... } }`) живёт в `org.springframework.security.config.annotation.web.invoke` — нужно `import` корректно. Для тестов нужны `@WithMockUser` или `WebTestClient.mutateWith(SecurityMockServerConfigurers.mockUser())`.
+> **Связанные вопросы:** [[Q5]] — suspend + WebFlux, [[Q6]] — CoroutineCrudRepository.
+>
+> ---
+>
+> #### C) Передавать `Principal` через параметр контроллера из CoroutineContext через `currentCoroutineContext()` — ❌ Неверно
+>
+> **Что на самом деле:** `currentCoroutineContext()` возвращает coroutine context (Job, Dispatcher, etc.), но Spring Security элементы там лежат под специальным ключом `ReactorContext` и доступ через них требует именно `ReactiveSecurityContextHolder`, который инкапсулирует эту логику. Прямой доступ к `currentCoroutineContext()[ReactorContext]` теоретически возможен, но это низкоуровневый и хрупкий путь.
+> **Откуда путаница:** разработчики ищут «coroutine-native» способ доступа.
+> **Если бы это было правдой:** Spring Security предоставлял бы такой шорткат — но рекомендованное API именно `ReactiveSecurityContextHolder`.
+>
+> ---
+>
+> #### D) Делать `runBlocking { SecurityContextHolder.getContext() }` чтобы вынуть из старого `ThreadLocal` — ❌ Неверно
+>
+> **Что на самом деле:** В WebFlux `SecurityContextHolder` (blocking) попросту пуст — security-цепочка никогда не клала туда значения. `runBlocking` ничего не вернёт. Это путаница двух моделей security.
+> **Откуда путаница:** новички пытаются «починить» проблему обёртками.
+> **Если бы это было правдой:** Spring предлагал бы такие хаки в документации — но рекомендация ровно противоположная.
+
+## Q14. Какие типичные ошибки при использовании Kotlin + Spring?
 
 1. **`data class` для `@Entity`** — см. Q3. Используйте обычный класс.
 
@@ -1136,10 +1187,55 @@ suspend fun getOrders(): List<Order> = orderService.findAll()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. В чём преимущества и недостатки Kotlin для Spring Boot проектов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что произойдёт, если использовать `runBlocking { ... }` внутри `suspend`-метода WebFlux контроллера для обхода чисто реактивного API?
+>
+> ---
+>
+> #### A) Spring сам обнаружит `runBlocking` и переключит вызов на блокирующий пул `Schedulers.boundedElastic()` — ❌ Неверно
+>
+> **Что на самом деле:** Spring не делает никакой автоматической инспекции тела suspend-функции. Он адаптирует suspend ↔ Mono на уровне границы метода, не зная, что происходит внутри. `runBlocking` блокирует ровно тот поток, на котором был вызван — обычно это Netty event-loop поток (`reactor-http-nio-*`), которых всего по числу ядер.
+> **Откуда путаница:** разработчики ожидают, что фреймворк защитит от ошибок.
+> **Если бы это было правдой:** не было бы legendary post-mortem про `runBlocking` в WebFlux. Но они есть — это classic production-инцидент.
+>
+> ---
+>
+> #### B) Поток Netty event-loop заблокируется, остальные запросы на этом потоке встанут в очередь, throughput резко упадёт, в логах появятся `BlockHound` warnings (если включён) — ✓ Верно
+>
+> **Развёрнутое объяснение:** WebFlux работает на Netty event-loop, обычно `2 * Runtime.availableProcessors()` потоков. Каждый поток обслуживает тысячи параллельных запросов через non-blocking I/O. `runBlocking { ... }` создаёт новый scope и блокирует вызывающий поток до завершения тела — на этот период один из event-loop потоков выпадает. Если в `runBlocking` есть медленный I/O или `delay`, throughput падает в N раз (N — число потоков event-loop). В стрессовых сценариях это приводит к серверу, который держит 100 connections вместо 10000. Включение Reactor BlockHound в dev-режиме помогает ловить такие места: `BlockHoundError: Blocking call! ...` при попытке `Thread.sleep` или `IO.read` на reactor-потоке.
+> **Пример:**
+> ```kotlin
+> // ПЛОХО — блокирует Netty thread
+> @GetMapping
+> suspend fun bad(): List<Order> =
+>     runBlocking { orderRepo.findAll().toList() }
+>
+> // ХОРОШО — естественный suspend, никакого runBlocking
+> @GetMapping
+> suspend fun good(): List<Order> =
+>     orderRepo.findAll().toList()
+> ```
+> **Когда применять:** **никогда** не использовать `runBlocking` в WebFlux/reactive контексте. Для адаптации blocking-кода в suspend — `withContext(Dispatchers.IO) { blockingCall() }`.
+> **Подводные камни:** Suspend-функция уже coroutine context, ей просто не нужен `runBlocking`. Если приходится вызывать blocking JDBC из реактивного контроллера — `withContext(Dispatchers.IO)` или вынос в `@Async`-сервис, но лучшее решение — мигрировать на R2DBC.
+> **Связанные вопросы:** [[Q5]] — suspend в WebFlux, [[Q6]] — CoroutineCrudRepository.
+>
+> ---
+>
+> #### C) Код просто не скомпилируется — Kotlin запрещает вложенные coroutine builders — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin не запрещает `runBlocking` внутри `suspend` функции (хотя IDE даёт warning «runBlocking inside a coroutine»). Код прекрасно собирается и работает. Это runtime-проблема, не compile-time.
+> **Откуда путаница:** надежда, что компилятор поймает плохие практики.
+> **Если бы это было правдой:** не было бы статей и блогов о том, как искать `runBlocking` в production-коде — а они есть.
+>
+> ---
+>
+> #### D) Сработает CoroutineContext propagation, и блокировка перейдёт в фоновый поток без вреда — ❌ Неверно
+>
+> **Что на самом деле:** `runBlocking` создаёт **новый** event-loop в текущем потоке и блокирует его до завершения. Это не "переключение", это создание blocking scope поверх существующего. Никакая propagation тут не помогает.
+> **Откуда путаница:** название `runBlocking` звучит как «запустить с блокированием в отдельном scope, не трогая текущий».
+> **Если бы это было правдой:** `runBlocking` был бы безопасен везде — и не было бы предупреждений в документации.
+
+## Q15. В чём преимущества и недостатки Kotlin для Spring Boot проектов?
 
 **Преимущества**:
 - **Null safety** — меньше NPE в runtime.
@@ -1159,14 +1255,57 @@ suspend fun getOrders(): List<Order> = orderService.findAll()
 
 **Практика**: современные Spring Boot проекты выигрывают от Kotlin, особенно с WebFlux + Coroutines. Для legacy Java проектов — постепенная миграция по модулям.
 
-## See also
-
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Kotlin](kotlin-interview.md) — основы языка, null safety, data classes ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какое главное практическое преимущество Kotlin для Spring Boot проекта по сравнению с Java, и есть ли реальная цена?
+>
+> ---
+>
+> #### A) Kotlin полностью устраняет Spring boilerplate — больше не нужны `@Service`, `@Configuration`, `@Bean` — ❌ Неверно
+>
+> **Что на самом деле:** Все стандартные Spring-аннотации остаются. Kotlin сокращает boilerplate Java-уровня (геттеры/сеттеры/конструкторы через data class, `val`-поля как DI), но не Spring-аннотации — без них фреймворк не понимает, что регистрировать как bean. Bean DSL — альтернатива, но не замена.
+> **Откуда путаница:** маркетинг иногда обещает «no-boilerplate», и легко решить, что Spring-аннотации тоже исчезнут.
+> **Если бы это было правдой:** Spring Boot Kotlin проекты не имели бы `@Service`/`@Configuration` — а они везде.
+>
+> ---
+>
+> #### B) Главные преимущества — null-safety на уровне типов, data class для DTO, suspend/Flow для реактивного кода без чейнов Mono/Flux, extension functions, DSL для бинов и security; ценой идёт необходимость плагинов (kotlin-spring, kotlin-jpa) и осторожность с platform types и `final`-методами — ✓ Верно
+>
+> **Развёрнутое объяснение:** Kotlin даёт реальные технические выигрыши в Spring-проектах: (1) `User?` vs `User` устраняет целый класс багов NPE; (2) `data class CreateRequest(...)` заменяет 50 строк Java DTO; (3) `suspend fun get(id): User?` читается линейно, без `.flatMap(...).switchIfEmpty(...).onErrorResume(...)` цепочек; (4) extension functions удобно адаптируют Java-API; (5) DSL для beans/router/security — типобезопасная конфигурация без XML. Цена: обязательные плагины (`kotlin-spring`, `kotlin-jpa`) — без них `@Transactional` ломается с `Cannot subclass final class`; platform types от Java-API скрывают `null`; data class в JPA создаёт скрытые проблемы; некоторые Mockito возможности требуют MockK взамен; medium-sized проектам нужна команда, знакомая с обоими языками.
+> **Пример:**
+> ```kotlin
+> // 1 строка вместо Java DTO с геттерами/equals/hashCode/toString
+> data class CreateUserRequest(@field:NotBlank val name: String, @field:Email val email: String)
+>
+> // suspend читается линейно
+> @PostMapping
+> suspend fun create(@Valid @RequestBody req: CreateUserRequest): UserResponse =
+>     userService.create(req).toResponse()
+> ```
+> **Когда применять:** новые Spring Boot проекты — Kotlin почти всегда выигрышен; legacy Java — постепенная миграция по модулям; embedded/нативные сборки требуют осторожности с reflection.
+> **Подводные камни:** компиляция Kotlin медленнее Java (улучшается с K2 в 2.0+); Spring AOT/Native имеет тонкости с reflection в Kotlin metadata; командам без опыта корутин может быть тяжело отлаживать suspend-stack traces.
+> **Связанные вопросы:** [[Q1]]-[[Q4]] — плагины и их роль, [[Q14]] — типичные ошибки.
+>
+> ---
+>
+> #### C) Kotlin делает Spring приложение в 2 раза быстрее за счёт нативной компиляции — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin компилируется в обычный JVM bytecode и runtime-производительность сопоставима с Java (часто чуть медленнее на 1-3% из-за дополнительных null-проверок и synthetic bridges). Нативная компиляция — это отдельная фича GraalVM Native Image, доступная и для Java, и для Kotlin.
+> **Откуда путаница:** Kotlin Multiplatform поддерживает native targets, но это не runtime для JVM-Spring.
+> **Если бы это было правдой:** все Spring-проекты на Java мигрировали бы на Kotlin за неделю — но реальные benchmarks показывают схожие цифры.
+>
+> ---
+>
+> #### D) Kotlin несовместим со Spring Boot 3.x и работает только до Spring Boot 2.x — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3.x официально поддерживает Kotlin как first-class язык: kotlin-spring/kotlin-jpa плагины обновлены, suspend полностью интегрирован, Spring Native поддерживает Kotlin. На главной странице Spring.io есть туториалы именно для Spring Boot 3 + Kotlin.
+> **Откуда путаница:** иногда путают версии Kotlin compiler и Spring.
+> **Если бы это было правдой:** все Kotlin-Spring проекты были бы legacy — а они активно растут.
+
+## See also
+
+- [Kotlin](kotlin-interview.md) — основы языка, null safety, data classes
 - [Kotlin Coroutines](kotlin-coroutines-interview.md) — suspend функции, CoroutineScope
 - [Kotlin Flow](kotlin-flow-interview.md) — реактивные потоки, StateFlow/SharedFlow
 - [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — auto-configuration, Spring Boot Starter
