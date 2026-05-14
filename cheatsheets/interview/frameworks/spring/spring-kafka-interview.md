@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-kafka]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Spring Kafka`
 
@@ -1773,14 +1773,114 @@ public void handle(ConsumerRecord<String, OrderEvent> record,
 }
 ```
 
+> [!mcq]
+>
+> **Вопрос:** Зачем нужен pause/resume `@KafkaListener` в production, и какие нюансы поведения важны?
+>
+> ---
+>
+> #### A) Pause/resume — это альтернатива rate limiting, лучше чем @RateLimit — ❌ Неверно
+>
+> **Что на самом деле:** pause/resume — **explicit consumer control** для backpressure scenarios, не rate limiting. Rate limiter (Bucket4j, Resilience4j) ограничивает throughput на app level. Pause полностью **останавливает** consumption — нет сообщений из Kafka до resume.
+>
+> Они комплементарны: rate limiter для smooth throttling, pause/resume для backoff на overload или maintenance.
+>
+> **Откуда путаница:** оба «replace flow». Но pause = stop, rate limit = slow.
+>
+> **Если бы это было правдой:** @RateLimit был бы избыточен в Spring. Реально оба сосуществуют.
+>
+> ---
+>
+> #### B) Pause/resume для: 1) backpressure при downstream деградации (БД медленнее), 2) graceful maintenance (drain in-flight), 3) circuit breaker logic. Pause **не теряет** записей (broker hold), но во время паузы heartbeats продолжаются → нет rebalance — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Behaviour деталей:
+>
+> 1. **`container.pause()`** — флаг для consumer'а. После текущего poll() consumer не делает следующий poll, но **heartbeats продолжаются** (через background thread в Kafka client) → consumer остаётся в group, нет rebalance.
+>
+> 2. **Сообщения не теряются** — broker держит их в topic (TTL = retention policy). Resume → consumer продолжает с last committed offset.
+>
+> 3. **In-flight messages** обрабатываются до конца — pause не interrupts текущий handler.
+>
+> 4. **`consumer.pause(partitions)`** (raw API) — pause specific partitions, polynomial consumer keeps polling other partitions.
+>
+> **Пример (production circuit breaker pattern):**
+> ```java
+> @Service
+> public class OrderConsumerControl {
+>     @Autowired KafkaListenerEndpointRegistry registry;
+>     @Autowired DatabaseHealthMonitor dbHealth;
+>
+>     @Scheduled(fixedDelay = 10_000)
+>     public void checkDownstreamHealth() {
+>         MessageListenerContainer container =
+>             registry.getListenerContainer("ordersContainer");
+>
+>         if (dbHealth.isUnhealthy() && container.isRunning() && !container.isPauseRequested()) {
+>             log.warn("DB unhealthy, pausing Kafka consumer");
+>             container.pause();
+>         } else if (dbHealth.isHealthy() && container.isPauseRequested()) {
+>             log.info("DB recovered, resuming Kafka consumer");
+>             container.resume();
+>         }
+>     }
+> }
+>
+> // Альтернатива — Resilience4j Circuit Breaker
+> @KafkaListener(id = "ordersContainer", topics = "orders", containerFactory = "txFactory")
+> public void handle(OrderEvent event) {
+>     try {
+>         circuitBreaker.executeRunnable(() -> orderService.save(event));
+>     } catch (CallNotPermittedException e) {
+>         // CB open → pause consumer, wait for recovery
+>         registry.getListenerContainer("ordersContainer").pause();
+>         throw e;     // Spring retry/DLQ обработает
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Downstream degradation**: БД медленнее обычного, downstream HTTP API throttles 503 — pause до recovery.
+> - **Graceful shutdown**: при rolling deployment — pause перед SIGTERM, drain in-flight, потом shutdown.
+> - **Maintenance windows**: запланированный downtime downstream → pause перед окном, resume после.
+> - **Batch processing throttle**: при memory pressure → pause до GC settling.
+> - **Avito/Wolt**: pause consumers при degraded payments service вместо генерации тысячи failed orders.
+>
+> **Подводные камни:**
+> - **Heartbeat timeout**: если pause longer than `session.timeout.ms` (default 45s, но depends on heartbeat-interval), consumer удаляется из group → rebalance при resume. Use `max.poll.interval.ms` > pause duration.
+> - **Lag accumulation**: paused consumer накапливает lag в Prometheus метрик. Alert thresholds должны учитывать planned pauses.
+> - **`pause()` is async**: takes effect после текущего poll(). На coarse-grained processing это может быть 1-2s latency.
+> - **`partition.pause(...)` vs `container.pause()`**: container — все partitions, raw — selective.
+> - **Не путать с `setAutoStartup(false)`**: эта property останавливает container полностью, requires `start()` через registry для resumption.
+>
+> **Связанные вопросы:** [[Q5]] — error handler без pause создаёт infinite retries; [[Q3]] — @KafkaListener lifecycle; [[Q9]] — AckMode interplay с pause.
+>
+> ---
+>
+> #### C) Pause/resume — deprecated в Kafka 3.x, заменён concurrent consumers — ❌ Неверно
+>
+> **Что на самом деле:** pause/resume — **core feature** Kafka client API, не deprecated. Concurrent consumers (через `concurrency=N`) — orthogonal механизм для parallel processing, не replacement для pause.
+>
+> **Откуда путаница:** concurrency хайповее обсуждается как «scaling». Pause/resume — про operational control, разные purposes.
+>
+> **Если бы это было правдой:** Spring Kafka API не имело бы методов pause/resume в `MessageListenerContainer`.
+>
+> ---
+>
+> #### D) Pause теряет сообщения — broker удаляет их после timeout — ❌ Неверно
+>
+> **Что на самом деле:** Kafka retention policy (default 7 days) определяет когда **broker** удаляет сообщения, не pause. Pause просто останавливает **consumer**, сообщения ждут на broker до resume.
+>
+> Единственный риск: если pause длится дольше retention (например, paused for 8 days с 7-day retention) — broker может удалить старые offset'ы, consumer пропустит at resume.
+>
+> **Откуда путаница:** «consumer не работает = сообщения теряются» — naive consumer/queue mental model. Kafka durable log не делает этого.
+>
+> **Если бы это было правдой:** pause был бы бессмысленным для production — нельзя было бы безопасно использовать.
+
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Apache Kafka](../../messaging/kafka-interview.md) — основы Kafka: partitions, offsets, consumer groups, delivery semantics
+- [Apache Kafka](../../messaging/kafka-interview.md) — основы Kafka: partitions, offsets, consumer groups, delivery semantics
 - [Spring Boot](spring-boot-interview.md) — auto-configuration, Spring Boot starters
 - [Spring @Transactional](spring-transaction-interview.md) — транзакции Kafka + JPA через ChainedKafkaTransactionManager
 - [Spring Retry](spring-retry-interview.md) — retry в Kafka listeners через DefaultErrorHandler
