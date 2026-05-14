@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-integration]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Spring Integration`
 
@@ -1556,10 +1556,95 @@ Enricher делает запрос в `customerLookupChannel` и добавля�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Как мониторить Spring Integration? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Enricher pattern — какой главный риск производительности, и как Spring Integration его mitigates?
+>
+> ---
+>
+> #### A) Enricher всегда быстрый — делает один HTTP request — ❌ Неверно
+>
+> **Что на самом деле:** Enricher делает request **per message** через `requestChannel`. Для high-throughput pipeline (1000 msg/sec) это 1000 lookup requests/sec → bottleneck на downstream (DB/API) или amplification.
+>
+> Главный риск: **N+1 lookup pattern** — каждое сообщение триггерит свой lookup без batching.
+>
+> **Откуда путаница:** один enricher в demo выглядит fast. На production scale это очевидная проблема.
+>
+> ---
+>
+> #### B) Enricher делает synchronous lookup per message → N+1 amplification. Mitigation: 1) cache enrichment data в local in-memory store (Caffeine), 2) batch enrichment через Aggregator, 3) Bloom filter для negative lookups (точно нет — skip), 4) async enrichment с timeout fallback — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **Проблема:** при 1000 msg/sec и enrichment latency 50ms = 50 concurrent lookup requests в каждый момент. Если downstream API ограничен 100 RPS → запросы наслаиваются, latency растёт, eventually timeout.
+>
+> **Mitigation strategies:**
+>
+> 1. **Local cache (Caffeine):**
+>    ```java
+>    @Bean
+>    public IntegrationFlow enrichedFlow(CustomerService svc) {
+>        Cache<String, CustomerInfo> cache = Caffeine.newBuilder()
+>            .maximumSize(10_000)
+>            .expireAfterWrite(Duration.ofMinutes(5))
+>            .build();
+>
+>        return IntegrationFlow.from("orders")
+>            .enrichHeaders(e -> e.headerExpression("customer",
+>                "@cache.get(payload.customerId, k -> @customerService.getById(k))"))
+>            .handle(orderProcessor::process)
+>            .get();
+>    }
+>    ```
+>
+> 2. **Batch enrichment через Aggregator:**
+>    ```java
+>    IntegrationFlow.from("orders")
+>        .aggregate(a -> a.correlationStrategy(m -> "fixed")
+>                         .releaseStrategy(g -> g.size() >= 50)
+>                         .groupTimeout(100))                    // 50 msg или 100ms
+>        .transform(List.class, batch -> svc.getBulkInfo(batch))  // 1 bulk request
+>        .split()                                                  // вернуть к single messages
+>        .handle(processor::process)
+>        .get();
+>    ```
+>
+> 3. **Bloom filter для negative lookups**: если 80% customer_ids не существуют в системе, Bloom filter exclude'ит их без DB hit.
+>
+> 4. **Async enrichment** через `RecipientListRouter` parallel:
+>    ```java
+>    .enrich(e -> e.requestChannel(asyncLookupChannel)
+>                  .requestTimeout(200L)         // fallback после 200ms
+>                  .replyTimeout(200L))
+>    ```
+>
+> **Когда применять:**
+> - **Order processing**: enrich OrderEvent с CustomerInfo, ProductDetails — типичный pattern.
+> - **Fraud detection**: enrich transaction с user history, device info.
+> - **Avito/Wolt**: enrichment с user preferences для personalization.
+>
+> **Подводные камни:**
+> - **Stale cache**: TTL слишком long → запросы обработаны со stale data. Use cache invalidation через events.
+> - **Cache stampede**: TTL expires → 100 concurrent requests for same key. Use `refreshAfterWrite` или single-flight pattern.
+> - **Enrichment failure handling**: что делать если lookup failed? Skip message? Process с partial data? Use compensating logic.
+> - **Header bloat**: enrichment добавляет headers → message size растёт. На Kafka это может превысить broker limits.
+>
+> **Связанные вопросы:** [[Q13]] — Claim Check (orthogonal pattern); [[Q1]] — EIP patterns; [[Q12]] — Aggregator для batching.
+>
+> ---
+>
+> #### C) Enricher работает только с REST APIs — нельзя с DB или message queues — ❌ Неверно
+>
+> **Что на самом деле:** Enricher abstracted над `requestChannel` — любая Integration target подходит: REST (HTTP outbound), DB (JDBC inbound gateway), JMS (request-reply queue), Kafka (с reply topic). Универсальный механизм.
+>
+> ---
+>
+> #### D) Enricher изменяет payload — destructive по nature — ❌ Неверно
+>
+> **Что на самом деле:** Enricher может изменить либо headers (`enrichHeaders`), либо properties payload (`propertyFunction`). По умолчанию НЕ destructive — добавляет к existing data, не заменяет.
+>
+> Destructive transformation — это `Transformer`, не `Enricher`.
+
+## Q15. Как мониторить Spring Integration?
 
 ```java
 // Spring Integration Metrics через Micrometer
@@ -1587,14 +1672,85 @@ management:
         include: integrationgraph  # /actuator/integrationgraph — граф потоков
 ```
 
+> [!mcq]
+>
+> **Вопрос:** Какие специфичные для Spring Integration метрики критичны в production, и почему стандартного APM недостаточно?
+>
+> ---
+>
+> #### A) Достаточно стандартных JVM metrics (CPU, heap, GC) — APM покроет всё — ❌ Неверно
+>
+> **Что на самом деле:** JVM-level метрики не видят **flow-level проблемы**:
+> - QueueChannel size растёт → producer быстрее consumer'а (нет latency на CPU, но lag растёт)
+> - Один handler медленный → bottleneck в pipeline, но CPU normal
+> - Errors на конкретном channel → silent failures без global error count
+>
+> ---
+>
+> #### B) Критичны: `spring.integration.send` (rate, channel-level), `spring.integration.receive` (для pollable), `spring.integration.handlers` (duration histogram), `spring.integration.channels.queueSize` (для QueueChannel — detect backpressure). + /actuator/integrationgraph для visual flow inspection — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **4 уровня мониторинга:**
+>
+> 1. **Channel-level rates** — `spring.integration.send` per channel name. Detect dead channels, drift в throughput.
+>
+> 2. **Handler latency** — `spring.integration.handlers` histogram. Detect медленные handlers, p99 outliers.
+>
+> 3. **Queue backpressure** — `spring.integration.channels.queueSize` для каждого QueueChannel. Alert at >80% capacity.
+>
+> 4. **Error rate** — `spring.integration.send` с tag `result=failure` per channel. Detect failed message processing.
+>
+> **Пример (Prometheus alerts):**
+> ```yaml
+> # Alert на backpressure
+> - alert: SpringIntegrationQueueFull
+>   expr: spring_integration_channels_queueSize / spring_integration_channels_queueCapacity > 0.8
+>   for: 2m
+>
+> # Alert на медленный handler
+> - alert: SpringIntegrationHandlerSlow
+>   expr: histogram_quantile(0.99, spring_integration_handlers_seconds_bucket) > 1.0
+>   for: 5m
+>
+> # Alert на error rate
+> - alert: SpringIntegrationErrors
+>   expr: rate(spring_integration_send_total{result="failure"}[5m]) > 0.01
+>   for: 1m
+> ```
+>
+> **`/actuator/integrationgraph`** — JSON с описанием всех flows (nodes, edges). Можно визуализировать через Spring Integration Dashboard (UI on top).
+>
+> **Когда применять:** любой production Spring Integration deployment. Без этих метрик debugging issues — догадки.
+>
+> **Подводные камни:**
+> - **Channel name cardinality**: если генерируются dynamic channel names, метрики растут unbounded → Prometheus OOM. Bounded names обязательны.
+> - **`handlers` histogram buckets** — default buckets могут не подходить (5ms-10s). Tune под expected latency.
+> - **`integrationgraph` endpoint** не должен быть публичен — flow structure leaks internal architecture.
+> - **Tracing с Sleuth/Micrometer Tracing**: messages передают trace context через `MessageHeaders` — propagation работает между sync channels, но async (QueueChannel) требует custom interceptor.
+>
+> **Связанные вопросы:** [[Q9]] — transaction monitoring; [[Q10]] — testing с MockIntegrationContext; [[Q3]] — channel types и их metrics differences.
+>
+> ---
+>
+> #### C) Spring Integration metrics deprecated — нужны custom через AOP — ❌ Неверно
+>
+> **Что на самом деле:** `spring.integration.*` метрики активно поддерживаются и автоматически exported через Micrometer. Custom AOP не нужен для standard metrics.
+>
+> ---
+>
+> #### D) Достаточно DEBUG logs для production debugging — ❌ Неверно
+>
+> **Что на самом деле:** DEBUG logs:
+> - Заполняют disk быстро (TB/day на high RPS)
+> - Не агрегируются (не fit для dashboards)
+> - Создают I/O latency
+>
+> Логи для diagnostic, метрики для monitoring — разные tools.
+
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Spring Kafka](spring-kafka-interview.md) — Kafka как канал/адаптер в Spring Integration ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [Spring Kafka](spring-kafka-interview.md) — Kafka как канал/адаптер в Spring Integration
 - [Spring Messaging](spring-messaging-interview.md) — JMS, RabbitMQ базовые абстракции
 - [Spring Batch](spring-batch-interview.md) — batch-обработка, часто используется совместно
 - [Event-Driven Patterns](../../architecture/event-driven-patterns-interview.md) — теория EIP паттернов
