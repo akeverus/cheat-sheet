@@ -2200,10 +2200,111 @@ Client → API Gateway → Lambda Function → Response
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. GraphQL через API Gateway: federation и schema stitching ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда AWS API Gateway HTTP API лучше REST API, и какой главный constraint выбора?
+>
+> ---
+>
+> #### A) HTTP API быстрее REST API за счёт лучшего кэширования — ❌ Неверно
+>
+> **Что на самом деле:** HTTP API **не имеет встроенного кэширования** (вообще). REST API имеет caching layer (через CloudFront/Edge cache, настраивается per stage). Latency HTTP API чуть ниже из-за минимальной обработки, но это не «кэширование лучше».
+>
+> **Откуда путаница:** «HTTP API» звучит как «оптимизированная версия REST API». Реально это **другой product** с разным feature set: меньше функций, ниже цена, проще конфигурация.
+>
+> **Если бы это было правдой:** HTTP API использовали бы для high-traffic API requiring caching. На практике для caching нужен REST API + CloudFront, либо external cache layer.
+>
+> ---
+>
+> #### B) HTTP API дешевле REST API (~70%) и быстрее, поддерживает JWT auth нативно; но НЕ поддерживает Request Validation, Lambda Authorizer (Token-based), API Keys, кэширование, transformation templates — для них нужен REST API — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> AWS API Gateway имеет три варианта, каждый со своими trade-offs:
+>
+> | Feature | REST API | HTTP API | WebSocket API |
+> |---|---|---|---|
+> | Цена ($/M req) | $3.50 | $1.00 | $1.00 + $0.25/M minutes |
+> | Latency | 60-80ms | 30-50ms | N/A (stateful) |
+> | JWT Auth | Custom Authorizer | Nativetо JWT | Custom |
+> | Lambda Authorizer | ✓ (Token + Request) | ✓ (Request only) | ✓ |
+> | Request Validation | ✓ (JSON Schema) | ✗ | ✗ |
+> | API Keys | ✓ | ✗ | ✗ |
+> | Кэширование | ✓ (per stage) | ✗ | ✗ |
+> | Transformation | ✓ (VTL templates) | ✗ | ✗ |
+> | WebSocket | ✗ | ✗ | ✓ |
+> | OpenAPI 3.0 | Импорт | Импорт + Export | ✗ |
+>
+> **HTTP API подходит когда:**
+> - Простой REST/gRPC прокси к Lambda/EKS/EC2 без сложной validation
+> - JWT-based auth (Cognito, Auth0) — без custom Lambda Authorizer
+> - Микросервис который сам валидирует input (нет нужды в Gateway-level schema check)
+> - Cost-sensitive high-volume API (миллиарды requests/month)
+>
+> **REST API подходит когда:**
+> - Сложные authorization flows (Token-based Lambda Authorizer)
+> - Request/response transformation для legacy backends
+> - Per-tenant API Keys + Usage Plans для billing
+> - Edge caching через CloudFront integration
+>
+> **Пример (HTTP API + Lambda через CDK):**
+> ```typescript
+> import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+> import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+>
+> const api = new apigwv2.HttpApi(this, 'Api', {
+>     corsPreflight: { allowOrigins: ['*'], allowMethods: [CorsHttpMethod.ANY] }
+> });
+>
+> // JWT authorizer — нативная фича HTTP API
+> const authorizer = new HttpJwtAuthorizer('JwtAuth', 'https://cognito-idp.eu-west-1.amazonaws.com/POOL_ID', {
+>     jwtAudience: ['app-client-id']
+> });
+>
+> api.addRoutes({
+>     path: '/users/{id}',
+>     methods: [HttpMethod.GET],
+>     integration: new HttpLambdaIntegration('GetUser', getUserLambda),
+>     authorizer: authorizer
+> });
+> ```
+>
+> **Когда применять:**
+> - **HTTP API**: microservices proxy, JWT-only auth (Cognito), high-RPS endpoints.
+> - **REST API**: legacy migration, complex transformation, per-tenant rate limiting через API Keys.
+> - **WebSocket API**: chat, real-time notifications (но Connection IDs хранятся в DynamoDB — операционный overhead).
+> - **NOT serverless API Gateway**: при >10M req/day часто дешевле ECS Fargate с ALB + own service.
+>
+> **Подводные камни:**
+> - **29-second timeout** для синхронной интеграции — Lambda не может выполняться дольше. Для long-running tasks — async pattern с SQS.
+> - **Cold start** Lambda — 100-500ms на первый запрос. Provisioned Concurrency решает, но добавляет cost.
+> - **Request size limits**: 10MB для REST API, 6MB для HTTP API. Для больших файлов — pre-signed S3 URL.
+> - **Quota**: 10K RPS per region по умолчанию (можно увеличить). При burst > 10K → throttling 429.
+> - **No HTTP/2 для backend**: API Gateway → Lambda всегда HTTP/1.1, что лимитирует throughput для streaming.
+> - **CORS** в HTTP API настраивается declarative (без `OPTIONS` обработчика). В REST API — нужен Mock integration.
+>
+> **Связанные вопросы:** [[Q34]] — WebSocket API для real-time; [[Q12]] — JWT validation на Gateway; [[Q15]] — кэширование стратегии.
+>
+> ---
+>
+> #### C) HTTP API всегда дешевле REST API, поэтому всегда выбирать его — ❌ Неверно (упрощение)
+>
+> **Что на самом деле:** дешевле — да, но **функции отсутствуют**. Если нужна validation, API Keys, кэширование, transformation — HTTP API не подходит, и выбор «всегда HTTP API» приводит к doubling в коде (валидация в Lambda, custom auth, etc.). Total Cost of Ownership может быть выше, чем у REST API.
+>
+> **Откуда путаница:** «70% дешевле» — заметный маркетинговый pitch. Но cost includes только Gateway requests, не дополнительный Lambda execution time для отсутствующих фич.
+>
+> **Если бы это было правдой:** не было бы причин использовать REST API. AWS не сохранял бы оба продукта если бы один доминировал.
+>
+> ---
+>
+> #### D) HTTP API поддерживает WebSocket, а REST API — нет — ❌ Неверно
+>
+> **Что на самом деле:** WebSocket — отдельный третий тип (**WebSocket API**), не часть HTTP API. Ни REST API, ни HTTP API не поддерживают WebSocket transit.
+>
+> **Откуда путаница:** «HTTP» включает WebSocket Upgrade. Но AWS API Gateway чётко разделяет: REST API для request/response, WebSocket API для stateful connections, HTTP API для оптимизированного proxy.
+>
+> **Если бы это было правдой:** мы могли бы создавать chat-приложения через HTTP API. Реально нужен dedicated WebSocket API с DynamoDB для connection IDs.
+
+## Q36. GraphQL через API Gateway: federation и schema stitching
 
 ### Зачем GraphQL через Gateway
 
