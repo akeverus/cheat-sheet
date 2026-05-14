@@ -780,10 +780,77 @@ public class CustomAsyncExceptionHandler implements AsyncUncaughtExceptionHandle
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Почему @Async не работает при self-invocation? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Для какого типа `@Async` методов срабатывает `AsyncUncaughtExceptionHandler`, и почему он не помогает для методов с возвратом `CompletableFuture`?
+>
+> ---
+>
+> #### A) Только для методов с возвратом `void` — для `CompletableFuture` exception упаковывается в future и обрабатывается через `.exceptionally()` — ✓ Верно
+>
+> **Развёрнутое объяснение:** `AsyncUncaughtExceptionHandler` срабатывает **только** для `void @Async` методов, потому что у них нет объекта, через который можно было бы доставить exception caller-у. Для методов с `CompletableFuture<T>` или `Future<T>` Spring (точнее `AsyncExecutionInterceptor`) ловит exception, упаковывает его в future через `CompletableFuture.completeExceptionally(throwable)` и возвращает caller-у. Дальше caller обрабатывает его через `.exceptionally(ex -> ...)`, `.handle((res, ex) -> ...)`, или получает `ExecutionException` при `.get()`. Это два разных механизма доставки exception, и они взаимоисключающие.
+>
+> **Пример:**
+> ```java
+> // void метод — обрабатывается через AsyncUncaughtExceptionHandler
+> @Async
+> public void sendEmail(String to) {
+>     emailClient.send(to);  // RuntimeException → handler
+> }
+>
+> // CompletableFuture метод — обрабатывается через .exceptionally
+> @Async
+> public CompletableFuture<Result> processOrder(Order order) {
+>     orderProcessor.process(order);  // RuntimeException → future.exceptionally
+>     return CompletableFuture.completedFuture(new Result());
+> }
+>
+> // Caller
+> service.processOrder(order)
+>     .exceptionally(ex -> {
+>         log.error("Processing failed", ex);
+>         meterRegistry.counter("order.failed").increment();
+>         return Result.failed();
+>     })
+>     .thenAccept(this::publishResult);
+> ```
+>
+> **Когда применять:** для критичных операций (платежи, заказы) — используйте `CompletableFuture` и обрабатывайте через `.exceptionally()`, чтобы caller знал об ошибке. Для fire-and-forget (email, аналитика) — `void` + глобальный `AsyncUncaughtExceptionHandler` с метриками.
+>
+> **Подводные камни:** забыть зарегистрировать `AsyncUncaughtExceptionHandler` для `void` методов — exception просто пропадёт; не вызвать `.exceptionally()` на CompletableFuture — exception дойдёт только при `.get()` или вообще проигнорируется; смешать оба паттерна — handler не сработает для CompletableFuture, и exception потеряется.
+>
+> **Связанные вопросы:** [[Q2]] — типы возврата, [[Q7]] — обработка исключений общая.
+>
+> ---
+>
+> #### B) Для всех `@Async` методов независимо от возвращаемого типа — handler универсален — ❌ Неверно
+>
+> **Что на самом деле:** handler специально отделён для `void` методов. Для `CompletableFuture` Spring следует JDK-семантике: exception идёт в future. Это сделано намеренно — иначе была бы двойная обработка (handler + future.exceptionally), которая запутала бы разработчика.
+>
+> **Откуда путаница:** название «Uncaught» намекает на универсальность — «любое не пойманное исключение».
+>
+> **Если бы это было правдой:** handler срабатывал бы для всех методов, но тогда exception приходил бы дважды — в handler и в future, что нарушает контракт CompletableFuture API.
+>
+> ---
+>
+> #### C) Только для `CompletableFuture` — handler заменяет `.exceptionally()` — ❌ Неверно
+>
+> **Что на самом деле:** ровно наоборот. Для `CompletableFuture` handler НЕ срабатывает — exception упаковывается в future. Handler существует именно для случая `void`, когда упаковывать некуда.
+>
+> **Откуда путаница:** имя «UncaughtExceptionHandler» близко к `Thread.UncaughtExceptionHandler`, который тоже обрабатывает любые exception в потоке независимо от типа.
+>
+> **Если бы это было правдой:** разработчики не использовали бы `.exceptionally()` — но это рекомендованный паттерн в документации.
+>
+> ---
+>
+> #### D) Только для checked exceptions (`Exception`) — `RuntimeException` пропускается дальше — ❌ Неверно
+>
+> **Что на самом деле:** handler ловит **любые** `Throwable` из `void` метода — `RuntimeException`, `Error`, checked Exception (если метод их объявил). Параметр `Throwable throwable` в сигнатуре handler-а это подтверждает. Различия checked/unchecked в Java не релевантны в контексте async — в worker-потоке exception всё равно пропадёт без обработки.
+>
+> **Откуда путаница:** в синхронном Java checked/unchecked различаются на уровне компилятора, но в runtime для catch-блоков различия минимальные.
+>
+> **Если бы это было правдой:** `NullPointerException` (RuntimeException) в `void @Async` методах пропадал бы без следа, что катастрофично для production.
+
+## Q9. (!) Почему @Async не работает при self-invocation?
 
 `@Async` работает через **Spring AOP proxy**. При self-invocation (`this.method()`) вызов обходит прокси — async-обёртка не применяется.
 
@@ -842,10 +909,100 @@ public class OrderService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Как @Async взаимодействует с @Transactional? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** В классе `OrderService` метод `processOrder()` вызывает `this.sendEmailAsync()`, помеченный `@Async`. Что произойдёт с email при вызове `processOrder()` через bean?
+>
+> ---
+>
+> #### A) Email отправится асинхронно — `@Async` всегда работает на public методах одного класса — ❌ Неверно
+>
+> **Что на самом деле:** хотя метод public и `@Async` валиден, при self-invocation (`this.sendEmailAsync()`) вызов идёт **напрямую** к target-методу, минуя AOP-прокси. Spring создаёт прокси-обёртку вокруг `OrderService`, и в публичном API (через bean reference) `@Async` работает. Но внутри класса `this` — это **target**, а не прокси, поэтому aspect-логика (сабмит в executor) не применяется. Email отправится **синхронно**, в потоке caller-а.
+>
+> **Откуда путаница:** оба метода public и принадлежат spring bean — кажется, что условия для `@Async` выполнены. Разработчики часто не подозревают, что `this` и bean-ссылка — это разные объекты в Spring.
+>
+> **Если бы это было правдой:** `@Async` работал бы на любых internal-вызовах, и не было бы нужды в `@Lazy self-injection`. Но это противоречит модели runtime AOP proxy.
+>
+> ---
+>
+> #### B) Email отправится синхронно — `this.method()` обходит AOP-прокси, и `@Async` игнорируется — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring создаёт AOP-прокси `OrderService$$EnhancerBySpringCGLIB` поверх класса. Из контекста (через `@Autowired`/constructor injection) другие bean-ы получают именно прокси. Но **внутри метода** `this` ссылается на target-объект (оригинальный, без обёртки). Вызов `this.sendEmailAsync()` идёт напрямую к target-методу, минуя прокси, и aspect-логика (`AsyncExecutionInterceptor.invoke()`) не выполняется. Метод просто исполняется в том же потоке. Никакого предупреждения в логах — silent no-op. Та же проблема возникает с `@Transactional`, `@Cacheable`, `@PreAuthorize` и любыми Spring AOP-аннотациями. Решений три: вынести метод в отдельный bean (рекомендуется), self-injection через `@Lazy`, использовать `AopContext.currentProxy()`.
+>
+> **Пример:**
+> ```java
+> // ПРОБЛЕМА: silent no-op
+> @Service
+> public class OrderService {
+>     public void processOrder(Order order) {
+>         validate(order);
+>         sendEmailAsync(order);  // this.sendEmailAsync() — обход proxy
+>     }
+>
+>     @Async
+>     public void sendEmailAsync(Order order) {
+>         emailClient.send(order);  // выполнится синхронно!
+>     }
+> }
+>
+> // РЕШЕНИЕ 1: отдельный bean (рекомендуется)
+> @Service
+> public class EmailService {
+>     @Async
+>     public void send(Order order) { emailClient.send(order); }
+> }
+>
+> @Service
+> public class OrderService {
+>     private final EmailService emailService;  // proxy
+>
+>     public void processOrder(Order order) {
+>         validate(order);
+>         emailService.send(order);  // через proxy → async работает
+>     }
+> }
+>
+> // РЕШЕНИЕ 2: self-injection через @Lazy
+> @Service
+> public class OrderService {
+>     @Autowired @Lazy
+>     private OrderService self;  // ссылка на proxy
+>
+>     public void processOrder(Order order) {
+>         self.sendEmailAsync(order);  // через proxy
+>     }
+>
+>     @Async
+>     public void sendEmailAsync(Order order) { ... }
+> }
+> ```
+>
+> **Когда применять:** при проектировании сервисов с `@Async`/`@Transactional` — всегда выносите их в отдельные классы или используйте self-injection. Не полагайтесь на «магию» Spring внутри одного класса.
+>
+> **Подводные камни:** проблема невидимая — нет ошибок, нет warning-ов, тесты проходят (особенно если в тестах SyncTaskExecutor). В production это проявляется как непонятный рост latency endpoint-а; self-injection с `@Lazy` обязательно — без него возникает циклическая зависимость при старте.
+>
+> **Связанные вопросы:** [[Q3]] — механизм AOP proxy, [[Q10]] — та же проблема с `@Transactional`, [[Q11]] — требования к методу.
+>
+> ---
+>
+> #### C) Spring выбрасывает `IllegalStateException` при попытке self-invocation `@Async` метода — ❌ Неверно
+>
+> **Что на самом деле:** Spring не отслеживает self-invocation и не бросает исключение. Это **silent** проблема — самая опасная категория багов: код работает, но не так, как ожидается. В runtime aspect просто не применяется, метод выполняется в текущем потоке.
+>
+> **Откуда путаница:** некоторые проверки Spring действительно бросают исключения (например `BeanCurrentlyInCreationException`), и хочется такого же fail-fast поведения для self-invocation.
+>
+> **Если бы это было правдой:** проблема обнаруживалась бы сразу при тестах. Но её часто находят только в production по метрикам latency или thread-dump-у.
+>
+> ---
+>
+> #### D) `@Async` работает, но в текущем потоке — Spring сам решает, нужен ли отдельный поток — ❌ Неверно
+>
+> **Что на самом деле:** `@Async` — декларативная аннотация: либо она применена (через proxy), либо нет. Spring не делает динамического решения «нужен ли поток» — он либо сабмитит в executor, либо игнорирует. При self-invocation просто не доходит до aspect-обработки.
+>
+> **Откуда путаница:** Spring иногда делает «умное» поведение (например `@Transactional(propagation = REQUIRED)` переиспользует существующую транзакцию). Можно перенести эту модель на `@Async`.
+>
+> **Если бы это было правдой:** не было бы смысла в `@Async` — она ничем не отличалась бы от обычного вызова метода.
+
+## Q10. (!) Как @Async взаимодействует с @Transactional?
 
 **Ключевое:** `@Async` запускается в **новом потоке**, а `@Transactional` использует `ThreadLocal` для привязки транзакции. Это значит — **транзакция НЕ передаётся** в async метод.
 
