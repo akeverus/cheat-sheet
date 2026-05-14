@@ -891,10 +891,87 @@ transitions
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Что такое regions (параллельные регионы)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что именно даёт иерархическое (вложенное) состояние и какие подводные камни возникают при переходах из/в parent-состояние?
+>
+> ---
+>
+> #### A) Hierarchical state — это просто синтаксический сахар: после генерации FSM компилятор разворачивает иерархию в плоский набор состояний без вложенности. — ❌ Неверно
+>
+> **Что на самом деле:** иерархия — реальная UML state machine конструкция, сохраняемая в runtime. Переход на parent state означает вход в его initial substate (entry default). Переход с уровня parent применяется ко всем substate ниже без дублирования. Это не sugar, а семантика UML statechart.
+>
+> **Откуда путаница:** в JS/Python FSM-библиотеках hierarchical state часто реализуют через генерацию строковых ID, и кажется, что Spring делает так же.
+>
+> **Если бы это было правдой:** не было бы понятия "current state stack" (parent + substate одновременно), и `sm.getState().getIds()` возвращал бы один ID, а не множество.
+>
+> ---
+>
+> #### B) Hierarchical state позволяет группировать подсостояния под общим parent (`.parent(PROCESSING)`); transition с source=parent применяется ко всем substate; entry parent автоматически входит в initial substate; `getStates().getIds()` возвращает Set parent+substate. — ✓ Верно
+>
+> **Развёрнутое объяснение:** UML statechart разрешает composite states — состояния, содержащие свои внутренние FSM. В SSM реализуется через `.withStates().parent(PARENT).initial(...).state(...)`. Семантика: (1) машина одновременно "в" parent и в одном из substate — `getState().getIds()` возвращает `{PARENT, SUBSTATE}`; (2) transition `.source(PARENT).target(X).event(E)` срабатывает из любого substate, если из substate нет более специфичного transition (правило приоритета — внутренний переход выигрывает); (3) entry в parent через transition без указания substate приведёт к entry initial substate; (4) entry/exit actions parent выполняются при входе/выходе из всей иерархии. Это решает проблему "событие CANCEL должно работать в любой стадии PROCESSING" без дублирования 5 transitions.
+>
+> **Пример:**
+> ```java
+> @Override
+> public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> s) throws Exception {
+>     s.withStates()
+>         .initial(NEW)
+>         .state(PROCESSING)                  // composite
+>         .end(DELIVERED).end(CANCELLED)
+>         .and()
+>         .withStates()
+>             .parent(PROCESSING)
+>             .initial(PAYMENT_PENDING)
+>             .state(PAYMENT_CONFIRMED)
+>             .state(SHIPPING)
+>             .state(DELIVERY);
+> }
+>
+> @Override
+> public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> t) throws Exception {
+>     t.withExternal()
+>         .source(NEW).target(PROCESSING).event(CONFIRM)  // войдёт в PAYMENT_PENDING
+>         .and()
+>         .withExternal()
+>         .source(PROCESSING).target(CANCELLED).event(CANCEL)  // работает из любого substate
+>         .and()
+>         .withInternal()
+>         .source(SHIPPING).event(TRACK_UPDATE);  // внутренний — без exit/entry actions
+> }
+>
+> // Runtime
+> sm.getState().getIds();  // {PROCESSING, SHIPPING}
+> ```
+>
+> **Когда применять:** order workflow с общими событиями (cancel, refund) на всех этапах processing; document approval с общими атрибутами для всех "под-ревью" состояний; payment processing с общим timeout-обработчиком на всю стадию авторизации.
+>
+> **Подводные камни:** забыть `initial(...)` для parent — transition в parent упадёт с runtime ошибкой; конфликт transition уровня parent vs substate — внутренний выигрывает молча, легко получить непредсказуемое поведение; persistence иерархии требует записи child contexts в `StateMachineContext` — не все persister'ы делают это корректно.
+>
+> ---
+>
+> #### C) Hierarchical state — это то же самое, что parallel regions: оба моделируют вложенность через `.parent(...)`. — ❌ Неверно
+>
+> **Что на самом деле:** это разные UML концепции. Hierarchical state — последовательная вложенность (машина в **одном** из substate в момент времени). Parallel regions — несколько **одновременных** независимых под-FSM внутри одного состояния. Hierarchical использует `.parent()`, regions используют `.parent().region("name")` — каждый region запускается параллельно.
+>
+> **Откуда путаница:** оба используют `.parent()`, и без слова `region()` синтаксис выглядит одинаково.
+>
+> **Если бы это было правдой:** `getStates().getIds()` всегда возвращал бы Set из всех substate сразу, а это нарушает определение FSM (one current state).
+>
+> ---
+>
+> #### D) Иерархия запрещает transitions между substates разных parent — для этого нужно сначала выйти на root уровень. — ❌ Неверно
+>
+> **Что на самом деле:** SSM поддерживает cross-hierarchy transitions: `.source(SUBSTATE_OF_A).target(SUBSTATE_OF_B).event(...)` корректно отрабатывает exit substate_A → exit parent_A → entry parent_B → entry substate_B (cascading actions). Этот же механизм используется UML.
+>
+> **Откуда путаница:** в простых FSM-библиотеках иерархия часто реализована плоско, и cross-hierarchy переходы запрещены.
+>
+> **Если бы это было правдой:** моделирование сложных workflow (например, переход напрямую из `PAYMENT.PENDING` в `REFUND.IN_PROGRESS`) было бы невозможно без промежуточных состояний.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q10]] — parallel regions vs hierarchy; [[Q3]] — `getState().getIds()` возвращает stack для composite states.
+
+## Q10. Что такое regions (параллельные регионы)?
 
 **Regions** — параллельные независимые подавтоматы внутри одного состояния. Используются для моделирования параллельных процессов.
 
@@ -921,10 +998,83 @@ transitions
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как добавить StateMachineListener? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда нужны parallel regions вместо обычной hierarchical вложенности, и зачем для них существуют pseudostates fork/join?
+>
+> ---
+>
+> #### A) Regions — это просто способ задавать несколько initial states; машина выберет один из них на основе guards. — ❌ Неверно
+>
+> **Что на самом деле:** regions означают **одновременное** существование машины в нескольких подсостояниях параллельно. Каждый region имеет свой initial и end. Это не "выбор", а "параллельная обработка". Выбор начального состояния — это junction/choice pseudostate, не region.
+>
+> **Откуда путаница:** в учебниках по FSM часто обсуждают выбор между initial states через guards, и слово "region" может ошибочно ассоциироваться с этим.
+>
+> **Если бы это было правдой:** не было бы необходимости в fork/join pseudostates (которые синхронизируют параллельное завершение нескольких регионов).
+>
+> ---
+>
+> #### B) Regions нужны для последовательной обработки множества событий — это альтернатива hierarchical state с лучшей производительностью. — ❌ Неверно
+>
+> **Что на самом деле:** regions — про **параллелизм** (orthogonal regions в UML), а hierarchical — про **вложенность** (composite state). Регионы не быстрее иерархии и не заменяют её; они решают другую задачу: моделирование независимых параллельных аспектов одного объекта.
+>
+> **Откуда путаница:** оба механизма используют `.parent()`, и без чтения UML спецификации легко спутать.
+>
+> **Если бы это было правдой:** регионы не имели бы fork/join — а они есть именно для синхронизации параллельных потоков.
+>
+> ---
+>
+> #### C) Regions моделируют orthogonal (параллельные) состояния — машина одновременно находится в одном substate каждого региона; fork разветвляет переход на несколько регионов, join синхронизирует выход когда ВСЕ регионы достигли финального substate. — ✓ Верно
+>
+> **Развёрнутое объяснение:** UML orthogonal regions позволяют декомпозировать composite state на несколько параллельных подавтоматов. В SSM: `.parent(PROCESSING).region("PAYMENT")` создаёт регион "PAYMENT", `.parent(PROCESSING).region("INVENTORY")` — параллельный регион "INVENTORY". Машина в `PROCESSING` одновременно в `PAYMENT.PENDING` И в `INVENTORY.PENDING`. Каждое событие пытается выполнить transition в обоих регионах независимо. **Fork pseudostate** — точка разветвления: один transition `.source(START).target(FORK)` затем `.withFork().source(FORK).target(PROCESSING)` распараллеливает в initial substates всех регионов. **Join pseudostate** — точка синхронизации: `.withJoin().source(PROCESSING).target(JOIN_STATE)` сработает только когда **каждый** регион достигнет своего end-substate. Используется для "wait for all" семантики.
+>
+> **Пример:**
+> ```java
+> @Override
+> public void configure(StateMachineStateConfigurer<OS, OE> s) throws Exception {
+>     s.withStates()
+>         .initial(NEW)
+>         .state(PROCESSING)
+>         .fork(FORK_STATE)
+>         .join(JOIN_STATE)
+>         .state(CONFIRMED)
+>         .and()
+>         .withStates().parent(PROCESSING).region("PAYMENT")
+>             .initial(PAY_PENDING).end(PAY_DONE)
+>         .and()
+>         .withStates().parent(PROCESSING).region("INVENTORY")
+>             .initial(INV_PENDING).end(INV_DONE);
+> }
+>
+> @Override
+> public void configure(StateMachineTransitionConfigurer<OS, OE> t) throws Exception {
+>     t.withExternal().source(NEW).target(FORK_STATE).event(START).and()
+>         .withFork().source(FORK_STATE).target(PROCESSING).and()    // разветвление
+>         .withInternal().source(PAY_PENDING).event(PAY_OK).and()    // переход в одном регионе
+>         .withInternal().source(INV_PENDING).event(INV_OK).and()    // переход в другом регионе
+>         .withJoin().source(PROCESSING).target(JOIN_STATE).and()    // синхронизация
+>         .withExternal().source(JOIN_STATE).target(CONFIRMED).event(FINALIZE);
+> }
+> ```
+>
+> **Когда применять:** order processing с параллельными подсистемами (payment + inventory + KYC); document approval с независимыми ветками ревью (legal review + finance review + technical review); установка телефона с параллельными checks (network + sim + account activation).
+>
+> **Подводные камни:** event с одинаковым trigger в обоих регионах вызовет transition в обоих сразу — нужно проектировать события "региональными"; join не сработает, если хотя бы один регион не достиг end-state — машина "зависнет" в PROCESSING; persistence параллельных регионов требует child contexts в `StateMachineContext` для каждого региона.
+>
+> ---
+>
+> #### D) Fork — это conditional branching (если/иначе) аналогично if-else, join — это loop join обратно к conditional. — ❌ Неверно
+>
+> **Что на самом деле:** условное ветвление в UML моделируется через **choice** или **junction** pseudostates с guards, а не fork. Fork всегда разветвляет в параллельные регионы (без условий, все ветви активируются одновременно). Путаница fork/choice — распространённая ошибка.
+>
+> **Откуда путаница:** в BPMN fork-join действительно может быть и conditional gateway, и parallel gateway. В UML statechart fork — это только parallel.
+>
+> **Если бы это было правдой:** не нужны были бы отдельные pseudostates choice и junction в SSM API — но они есть с разной семантикой.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q9]] — hierarchical vs parallel; [[Q3]] — `getState().getIds()` для параллельных регионов возвращает substate каждого региона.
+
+## Q11. Как добавить StateMachineListener?
 
 ```java
 @Component
@@ -959,10 +1109,86 @@ public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Как тестировать Spring State Machine? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём принципиальная разница между `StateMachineListener` и `Action` — оба ведь выполняются при переходе?
+>
+> ---
+>
+> #### A) Listener и Action — это две альтернативы одному и тому же; выбор — вопрос вкуса разработчика. — ❌ Неверно
+>
+> **Что на самом деле:** Action — **часть бизнес-логики перехода**, exception в action прерывает transition (машина уходит в error state). Listener — **observer**, для кросс-резных задач (логирование, метрики, audit), exception в listener **НЕ** прерывает transition. Разная семантика: Action участвует в transaction перехода, Listener — нет.
+>
+> **Откуда путаница:** оба вызываются при переходе и оба получают контекст — на поверхности похожи.
+>
+> **Если бы это было правдой:** не было бы смысла в двух API — но они разделены умышленно по UML state machine принципу "action — часть transition, listener — внешний наблюдатель".
+>
+> ---
+>
+> #### B) Listener привязывается к одному конкретному state и срабатывает только когда машина в этом состоянии. — ❌ Неверно
+>
+> **Что на самом деле:** `StateMachineListener` (а правильнее — `StateMachineListenerAdapter`) — это глобальный listener на всю машину. Он получает события всех переходов, всех изменений состояния, всех ошибок. Привязка к конкретному состоянию — это `@OnStateEntry(target = "X")` через `@WithStateMachine` annotation.
+>
+> **Откуда путаница:** есть похожая аннотация-based API через `@WithStateMachine`, где можно фильтровать по state — и легко спутать её с интерфейсом Listener.
+>
+> **Если бы это было правдой:** один Listener мог бы покрыть только одно состояние, и для логирования всех переходов нужны были бы N listener'ов — что нерационально.
+>
+> ---
+>
+> #### C) `StateMachineListener` — observer-интерфейс с callback'ами (`stateChanged`, `eventNotAccepted`, `stateMachineError`, `transition`, `transitionStarted`/`transitionEnded`); используется для кросс-резных задач (метрики, audit, alerting); исключения в listener не прерывают transition. — ✓ Верно
+>
+> **Развёрнутое объяснение:** SSM реализует observer pattern: `StateMachine.addStateListener(listener)`. Интерфейс `StateMachineListener<S,E>` имеет ~12 callback'ов, обычно расширяют `StateMachineListenerAdapter` и переопределяют нужные. Ключевые: `stateChanged(from, to)` — после смены состояния; `transition(transition)` — на каждый переход (включая internal); `eventNotAccepted(event)` — событие не вызвало перехода (нет matching transition или guard вернул false); `stateMachineError(sm, exception)` — exception в action или транзишене; `extendedStateChanged` — изменение Extended State. Исключения в listener логируются, но НЕ прерывают transition. Это специально, чтобы observer не ломал core workflow. Регистрация через `.listener(bean)` в `StateMachineConfigurationConfigurer` или через `sm.addStateListener(listener)` в runtime. Для distributed аналитики — собирать события в Kafka, отправлять в Elasticsearch.
+>
+> **Пример:**
+> ```java
+> @Component
+> @RequiredArgsConstructor
+> public class OrderFsmMetricsListener
+>         extends StateMachineListenerAdapter<OrderState, OrderEvent> {
+>
+>     private final MeterRegistry metrics;
+>
+>     @Override
+>     public void stateChanged(State<OrderState, OrderEvent> from, State<OrderState, OrderEvent> to) {
+>         metrics.counter("order.state.changed",
+>             "from", from == null ? "null" : from.getId().name(),
+>             "to", to.getId().name()
+>         ).increment();
+>     }
+>
+>     @Override
+>     public void eventNotAccepted(Message<OrderEvent> event) {
+>         metrics.counter("order.event.rejected", "event", event.getPayload().name()).increment();
+>         log.warn("Event {} rejected — current state doesn't allow it", event.getPayload());
+>     }
+>
+>     @Override
+>     public void stateMachineError(StateMachine<OrderState, OrderEvent> sm, Exception e) {
+>         metrics.counter("order.fsm.error").increment();
+>         log.error("FSM error for machine {}", sm.getId(), e);
+>         // alerting через AlertManager
+>     }
+> }
+> ```
+>
+> **Когда применять:** Prometheus метрики переходов; audit log в БД (с асинхронной записью); alerting на `eventNotAccepted` (бизнес-аномалия); отправка событий в Kafka для downstream систем; correlation ID propagation через MDC.
+>
+> **Подводные камни:** забыть, что listener не транзакционен — запись в БД из stateChanged может не откатиться при rollback transition; синхронный listener блокирует transition (тяжёлая IO в listener — антипаттерн); порядок listener'ов не гарантирован (если их несколько); listener на factory создаваемых машинах нужно регистрировать после `getStateMachine()`, не глобально.
+>
+> ---
+>
+> #### D) Listener гарантирует exactly-once семантику: каждое событие смены состояния доставится ровно один раз, даже после рестарта. — ❌ Неверно
+>
+> **Что на самом деле:** SSM не даёт гарантий exactly-once. Listener выполняется в той же JVM, что и transition — после рестарта приложения никакие пропущенные события не доставятся. Для exactly-once нужны Kafka transactional outbox, idempotency keys, retry с дедупликацией — это уровень выше SSM.
+>
+> **Откуда путаница:** Spring Integration и Kafka имеют exactly-once, и кажется, что Spring State Machine — это про то же.
+>
+> **Если бы это было правдой:** SSM можно было бы использовать как event bus для distributed систем — но это не его задача.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q5]] — Action vs Listener; [[Q14]] — `@WithStateMachine` как декларативная альтернатива.
+
+## Q12. Как тестировать Spring State Machine?
 
 ```java
 @SpringBootTest
