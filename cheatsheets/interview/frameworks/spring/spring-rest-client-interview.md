@@ -92,7 +92,7 @@ graph LR
 >
 > ---
 >
-> #### A) RestTemplate и RestClient — это один и тот же класс с разными именами в разных версиях Spring — ❌ Неверно
+> #### B) RestTemplate и RestClient — это один и тот же класс с разными именами в разных версиях Spring — ❌ Неверно
 >
 > **Что на самом деле:** Это два разных класса: `org.springframework.web.client.RestTemplate` (с Spring 3.0, методы вроде `getForObject`, `postForEntity`) и `org.springframework.web.client.RestClient` (с Spring 6.1, fluent builder). RestClient был написан с нуля как замена RestTemplate, использует ту же инфраструктуру (`HttpMessageConverter`, `ClientHttpRequestFactory`), но имеет совершенно другой API.
 >
@@ -102,7 +102,7 @@ graph LR
 >
 > ---
 >
-> #### B) WebClient — это синхронный fluent клиент из Spring 6.1, который заменяет RestTemplate — ❌ Неверно
+> #### C) WebClient — это синхронный fluent клиент из Spring 6.1, который заменяет RestTemplate — ❌ Неверно
 >
 > **Что на самом деле:** `WebClient` существует с Spring 5 (2017) и является **реактивным** клиентом из пакета `spring-webflux`. Возвращает `Mono<T>`/`Flux<T>`. Синхронный fluent клиент-замена RestTemplate — это `RestClient` (Spring 6.1, 2023), а не WebClient.
 >
@@ -112,7 +112,7 @@ graph LR
 >
 > ---
 >
-> #### C) RestClient требует zависимость spring-webflux, как и WebClient — ❌ Неверно
+> #### D) RestClient требует zависимость spring-webflux, как и WebClient — ❌ Неверно
 >
 > **Что на самом деле:** `RestClient` живёт в модуле `spring-web` (тот же, что и `RestTemplate`), не требует Reactor и WebFlux. Это его главное преимущество — синхронная альтернатива для Spring MVC без реактивных зависимостей.
 >
@@ -122,7 +122,7 @@ graph LR
 >
 > ---
 >
-> #### D) RestClient (Spring 6.1+) — синхронный fluent клиент в spring-web, RestTemplate deprecated, WebClient — реактивный в spring-webflux — ✓ Верно
+> #### A) RestClient (Spring 6.1+) — синхронный fluent клиент в spring-web, RestTemplate deprecated, WebClient — реактивный в spring-webflux — ✓ Верно
 >
 > **Развёрнутое объяснение:** Spring предоставляет три клиента с разными задачами. `RestTemplate` — классический синхронный клиент (Spring 3+), помечен deprecated в Spring 6 из-за устаревшего дизайна (перегрузка методов вместо fluent). `RestClient` (Spring 6.1) — синхронный fluent клиент в `spring-web`, drop-in замена RestTemplate для Spring MVC. `WebClient` (Spring 5+) — реактивный клиент в `spring-webflux`, возвращает `Mono`/`Flux`. RestClient и WebClient разделяют API-стиль (fluent builder с `.retrieve()`/`.exchange()`), но runtime-модель различна.
 >
@@ -163,7 +163,7 @@ graph LR
 >
 > ---
 >
-> #### A) RestTemplate удалён из Spring 6 — его методы выбрасывают `UnsupportedOperationException` — ❌ Неверно
+> #### C) RestTemplate удалён из Spring 6 — его методы выбрасывают `UnsupportedOperationException` — ❌ Неверно
 >
 > **Что на самом deletée:** Deprecated не означает «удалён». RestTemplate полностью функционален в Spring 6.x, существующий код продолжает работать. Spring команда просто не добавляет новые фичи и рекомендует мигрировать на RestClient в новых проектах. Удаление возможно в Spring 7+, но даже это не гарантировано.
 >
@@ -173,7 +173,7 @@ graph LR
 >
 > ---
 >
-> #### B) RestTemplate deprecated потому, что он медленнее RestClient на benchmark — ❌ Неверно
+> #### D) RestTemplate deprecated потому, что он медленнее RestClient на benchmark — ❌ Неверно
 >
 > **Что на самом деле:** Производительность RestTemplate и RestClient практически идентична — оба используют одну инфраструктуру (`ClientHttpRequestFactory`, `HttpMessageConverter`). Причина deprecation — **дизайн API**: перегрузка методов (`getForObject`, `getForEntity`, `exchange`) против fluent builder; сложность расширения; отсутствие поддержки новых паттернов (декларативный @HttpExchange).
 >
@@ -183,7 +183,7 @@ graph LR
 >
 > ---
 >
-> #### C) RestTemplate не поддерживает HTTP/2 и HTTPS, поэтому deprecated — ❌ Неверно
+> #### A) RestTemplate не поддерживает HTTP/2 и HTTPS, поэтому deprecated — ❌ Неверно
 >
 > **Что на самом деле:** RestTemplate поддерживает HTTP/2 (через `JdkClientHttpRequestFactory` на JDK 11+) и HTTPS работает из коробки с любым `ClientHttpRequestFactory`. Эти возможности зависят от backend (Apache HttpClient, JDK HttpClient, Jetty), не от Spring-клиента.
 >
@@ -193,7 +193,7 @@ graph LR
 >
 > ---
 >
-> #### D) Устаревший API: перегрузка методов вместо fluent builder; трудно расширять; новые фичи (декларативный @HttpExchange) — только в RestClient — ✓ Верно
+> #### B) Устаревший API: перегрузка методов вместо fluent builder; трудно расширять; новые фичи (декларативный @HttpExchange) — только в RestClient — ✓ Верно
 >
 > **Развёрнутое объяснение:** RestTemplate был спроектирован в Java 5 эпоху и использует **перегрузку методов** (`getForObject`, `getForEntity`, `exchange`, `execute`) — десятки вариантов для одной задачи. Это затрудняет дискаверабилити и расширение. RestClient использует единый **fluent builder** (`.get().uri().retrieve().body()`), который читается как DSL, легче расширяется через `requestInterceptor`/`requestInitializer`, и поддерживается как backend для декларативных `@HttpExchange` интерфейсов. Spring команда явно сказала, что RestTemplate в maintenance mode — fixes только для критических багов.
 >
@@ -261,7 +261,7 @@ client.delete()
 >
 > ---
 >
-> #### A) RestClient — синглтон, и один builder можно использовать только один раз — ❌ Неверно
+> #### D) RestClient — синглтон, и один builder можно использовать только один раз — ❌ Неверно
 >
 > **Что на самом деле:** `RestClient` — обычный объект, не синглтон. `RestClient.Builder` тоже переиспользуемый — можно вызвать `.build()` несколько раз, получая новые independent клиенты с одинаковой базовой конфигурацией. На практике один `RestClient` создаётся как `@Bean` и инжектится в множество сервисов — он thread-safe.
 >
@@ -271,7 +271,7 @@ client.delete()
 >
 > ---
 >
-> #### B) Каждый HTTP-метод (GET/POST/PUT/DELETE) требует отдельного RestClient экземпляра — ❌ Неверно
+> #### A) Каждый HTTP-метод (GET/POST/PUT/DELETE) требует отдельного RestClient экземпляра — ❌ Неверно
 >
 > **Что на самом деле:** Один `RestClient` поддерживает все методы — выбор делается через fluent: `.get()`, `.post()`, `.put()`, `.delete()`, `.patch()`, `.method(HttpMethod.X)`. RestClient — это «фабрика запросов», а не специализированный per-метод объект.
 >
@@ -281,7 +281,7 @@ client.delete()
 >
 > ---
 >
-> #### C) `.retrieve()` обязательно возвращает Mono, и нужно вызывать `.block()` — ❌ Неверно
+> #### B) `.retrieve()` обязательно возвращает Mono, и нужно вызывать `.block()` — ❌ Неверно
 >
 > **Что на самом деле:** RestClient **синхронный**. `.retrieve()` возвращает `ResponseSpec`, у которого `.body(Class)` сразу даёт распарсенный объект (синхронный вызов). Mono/Flux — это про WebClient, не про RestClient. Никакого `.block()` не нужно.
 >
@@ -291,7 +291,7 @@ client.delete()
 >
 > ---
 >
-> #### D) Fluent builder: `.get()/.post()` → `.uri()` → `.body()` (для POST) → `.retrieve()/.exchange()` → `.body(Class)/.toEntity(Class)/.toBodilessEntity()` — ✓ Верно
+> #### C) Fluent builder: `.get()/.post()` → `.uri()` → `.body()` (для POST) → `.retrieve()/.exchange()` → `.body(Class)/.toEntity(Class)/.toBodilessEntity()` — ✓ Верно
 >
 > **Развёрнутое объяснение:** RestClient использует chain pattern: сначала HTTP-метод (`.get()`, `.post()`, ...), затем URI (`.uri("/users/{id}", 42)` с подстановкой переменных), для POST/PUT — `.contentType()` и `.body(payload)`, затем терминальный `.retrieve()` (auto-throw на 4xx/5xx) или `.exchange((req, resp) -> ...)` (полный контроль). На конце — извлечение результата: `.body(User.class)` для тела, `.toEntity(User.class)` для `ResponseEntity<User>`, `.toBodilessEntity()` если тело не нужно.
 >
@@ -449,7 +449,7 @@ RestClient client = RestClient.builder()
 >
 > ---
 >
-> #### A) Обернуть `.retrieve().body()` в try-catch и парсить статус из exception message — ❌ Неверно
+> #### B) Обернуть `.retrieve().body()` в try-catch и парсить статус из exception message — ❌ Неверно
 >
 > **Что на самом деле:** Парсинг exception message — fragile подход (тексты ошибок меняются между версиями Spring). Правильно: `HttpClientErrorException`/`HttpServerErrorException` имеют структурированный API: `.getStatusCode()`, `.getResponseBodyAsString()`, `.getResponseHeaders()`. Ещё лучше — `.onStatus()`, который преобразует ошибку до того, как она станет исключением Spring.
 >
@@ -459,7 +459,7 @@ RestClient client = RestClient.builder()
 >
 > ---
 >
-> #### B) Использовать `.exchange()` всегда — `.retrieve()` опасно из-за auto-throw — ❌ Неверно
+> #### C) Использовать `.exchange()` всегда — `.retrieve()` опасно из-за auto-throw — ❌ Неверно
 >
 > **Что на самом деле:** `.retrieve()` + `.onStatus()` — рекомендованный паттерн. Auto-throw это **фича**, не баг: не позволяет случайно проигнорировать ошибку. `.exchange()` нужен только для специфичных случаев (404 → Optional, response headers как часть бизнес-логики).
 >
@@ -469,7 +469,7 @@ RestClient client = RestClient.builder()
 >
 > ---
 >
-> #### C) Глобальный try-catch на уровне @ControllerAdvice — единственный правильный способ — ❌ Неверно
+> #### D) Глобальный try-catch на уровне @ControllerAdvice — единственный правильный способ — ❌ Неверно
 >
 > **Что на самом деле:** @ControllerAdvice — для конвертации необработанных exceptions в HTTP-ответы вашего API. Но **до** него часто нужна локальная обработка: rate-limit (429) → retry с backoff, 404 → fallback на cache, 500 → circuit breaker. Это делается на уровне RestClient через `.onStatus()` или `.exchange()`.
 >
@@ -479,7 +479,7 @@ RestClient client = RestClient.builder()
 >
 > ---
 >
-> #### D) `.onStatus(predicate, errorHandler)` per-call, `.defaultStatusHandler()` global; HttpClientErrorException и HttpServerErrorException — typed exceptions с .getStatusCode() — ✓ Верно
+> #### A) `.onStatus(predicate, errorHandler)` per-call, `.defaultStatusHandler()` global; HttpClientErrorException и HttpServerErrorException — typed exceptions с .getStatusCode() — ✓ Верно
 >
 > **Развёрнутое объяснение:** Spring предоставляет три слоя обработки ошибок: (1) **per-call**: `.onStatus(HttpStatusCode::is4xxClientError, (req, resp) -> throw new MyBusinessException(...))` — преобразует HTTP-статус в доменное исключение; (2) **builder-level**: `.defaultStatusHandler()` в `RestClient.builder()` — применяется ко всем запросам этого клиента; (3) **fallback**: если `.onStatus()` не покрыл — выбрасывается `RestClientResponseException` (родитель `HttpClientErrorException`/`HttpServerErrorException`/`UnknownContentTypeException`). У всех есть `.getStatusCode()`, `.getResponseBodyAsString()`, `.getResponseHeaders()`.
 >
@@ -538,7 +538,7 @@ Map<String, Object> data = client.get().uri("/info")
 >
 > ---
 >
-> #### A) `List<User>.class` синтаксически корректен, но дольше работает чем `User[]` — ❌ Неверно
+> #### C) `List<User>.class` синтаксически корректен, но дольше работает чем `User[]` — ❌ Неверно
 >
 > **Что на самом деле:** `List<User>.class` — это **syntax error** в Java. Параметризованные generic типы нельзя превратить в `Class` literal из-за type erasure. Компилятор ругнётся ещё до production.
 >
@@ -548,7 +548,7 @@ Map<String, Object> data = client.get().uri("/info")
 >
 > ---
 >
-> #### B) Использовать `.body(List.class)` — Spring сам поймёт, что это `List<User>` по context — ❌ Неверно
+> #### D) Использовать `.body(List.class)` — Spring сам поймёт, что это `List<User>` по context — ❌ Неверно
 >
 > **Что на самом деле:** `.body(List.class)` вернёт `List<LinkedHashMap>` (Jackson default для unknown generic). Метод **не** знает целевой тип элементов — это and is exactly где **type erasure** теряет информацию. Без `ParameterizedTypeReference` Spring физически не может прочитать `<User>`.
 >
@@ -558,7 +558,7 @@ Map<String, Object> data = client.get().uri("/info")
 >
 > ---
 >
-> #### C) Десериализовать в `User[]` — массивы безопаснее List и быстрее — ❌ Частично верно, но не лучшее решение
+> #### A) Десериализовать в `User[]` — массивы безопаснее List и быстрее — ❌ Частично верно, но не лучшее решение
 >
 > **Что на самом деле:** `User[].class` **работает** (массивы reified в Java), но это компромисс: теряете `List` API (`.stream()`, `.add()`, immutability), и при чтении больших коллекций массив требует contiguous memory. Стандарт — `ParameterizedTypeReference<List<User>>`. Массив только если API клиентского кода требует.
 >
@@ -568,7 +568,7 @@ Map<String, Object> data = client.get().uri("/info")
 >
 > ---
 >
-> #### D) `.body(new ParameterizedTypeReference<List<User>>() {})` — anonymous subclass захватывает generic info через reflection — ✓ Верно
+> #### B) `.body(new ParameterizedTypeReference<List<User>>() {})` — anonymous subclass захватывает generic info через reflection — ✓ Верно
 >
 > **Развёрнутое объяснение:** `ParameterizedTypeReference` — паттерн «type token» из Guava, встроенный в Spring. Anonymous subclass (`new ParameterizedTypeReference<List<User>>() {}`) сохраняет generic parameters в `superclass` метаданных class-файла — Spring читает их через `getGenericSuperclass()`. Это единственный способ передать `Type` информацию через границы методов в Java. Работает для любых generic типов: `List<User>`, `Map<String, Object>`, `Page<Order>`, nested `Map<String, List<User>>`.
 >
@@ -639,7 +639,7 @@ Flux<User> allUsers = webClient.get()
 >
 > ---
 >
-> #### A) Всегда — WebClient новее и поэтому лучше — ❌ Неверно
+> #### D) Всегда — WebClient новее и поэтому лучше — ❌ Неверно
 >
 > **Что на самом деле:** WebClient (Spring 5, 2017) **старше** RestClient (Spring 6.1, 2023). И «новее = лучше» здесь не работает: WebClient оптимизирован для реактивного стека (event-loop, Reactor), RestClient — для thread-per-request (Spring MVC). В неподходящем стеке каждый из них даёт overhead.
 >
@@ -649,7 +649,7 @@ Flux<User> allUsers = webClient.get()
 >
 > ---
 >
-> #### B) Когда вы вызываете больше 100 RPS — RestClient не выдержит — ❌ Неверно
+> #### A) Когда вы вызываете больше 100 RPS — RestClient не выдержит — ❌ Неверно
 >
 > **Что на самом деле:** RestClient выдерживает любую нагрузку, которую выдерживает thread pool + backend HTTP client (Apache HC, JDK HttpClient). Тысячи RPS — норма. Bottleneck — не RestClient, а количество потоков (tomcat default 200, можно увеличить) и connection pool.
 >
@@ -659,7 +659,7 @@ Flux<User> allUsers = webClient.get()
 >
 > ---
 >
-> #### C) WebClient — единственный, кто поддерживает HTTP/2 — ❌ Неверно
+> #### B) WebClient — единственный, кто поддерживает HTTP/2 — ❌ Неверно
 >
 > **Что на самом деле:** RestClient поддерживает HTTP/2 через `JdkClientHttpRequestFactory` (JDK 11+, HTTP/2 default) или `JettyClientHttpRequestFactory`. WebClient тоже поддерживает HTTP/2 через Reactor Netty. Поддержка зависит от backend, а не от Spring-клиента.
 >
@@ -669,7 +669,7 @@ Flux<User> allUsers = webClient.get()
 >
 > ---
 >
-> #### D) Реактивный стек (WebFlux), streaming (SSE/Flux), либо параллельные I/O с малым числом потоков — ✓ Верно
+> #### C) Реактивный стек (WebFlux), streaming (SSE/Flux), либо параллельные I/O с малым числом потоков — ✓ Верно
 >
 > **Развёрнутое объяснение:** WebClient уместен в трёх сценариях: (1) **Реактивное приложение** — controllers возвращают `Mono`/`Flux`, и WebClient органично встраивается без `.block()`; (2) **Streaming** — Server-Sent Events, NDJSON, chunked responses — `bodyToFlux(ServerSentEvent.class)`; (3) **Параллельные I/O без блокировки потоков** — например, нужно вызвать 50 API параллельно из одного запроса, и thread-per-request не подходит (можно использовать `Flux.merge()`). В Spring MVC проекте на thread-per-request — RestClient проще и достаточен.
 >
@@ -841,7 +841,7 @@ public class OrderService {
 >
 > ---
 >
-> #### A) @HttpExchange — это аннотация для контроллеров, аналог @RequestMapping — ❌ Неверно
+> #### B) @HttpExchange — это аннотация для контроллеров, аналог @RequestMapping — ❌ Неверно
 >
 > **Что на самом деле:** `@HttpExchange` для **клиентского** интерфейса, а не для серверного контроллера. Использует тот же стиль (path, method), но создаёт **прокси для вызова remote API**, не обработчик запросов. Серверная аннотация — `@RequestMapping`/`@GetMapping`/`@PostMapping` etc.
 >
@@ -851,7 +851,7 @@ public class OrderService {
 >
 > ---
 >
-> #### B) Это часть Spring Cloud OpenFeign, требует @EnableFeignClients — ❌ Неверно
+> #### C) Это часть Spring Cloud OpenFeign, требует @EnableFeignClients — ❌ Неверно
 >
 > **Что на самом деле:** `@HttpExchange` — **встроенный** в Spring Framework 6 механизм, **не требует** Spring Cloud или Feign. Это замена/упрощение Feign внутри ядра Spring. Не нужны `@EnableFeignClients`, `spring-cloud-starter-openfeign` — только spring-web 6+.
 >
@@ -861,7 +861,7 @@ public class OrderService {
 >
 > ---
 >
-> #### C) @HttpExchange генерирует код во время компиляции через annotation processor — ❌ Неверно
+> #### D) @HttpExchange генерирует код во время компиляции через annotation processor — ❌ Неверно
 >
 > **Что на самом деле:** `@HttpExchange` использует **runtime прокси** (JDK Dynamic Proxy), а не code generation. `HttpServiceProxyFactory.createClient(InterfaceClass)` создаёт прокси-объект, который перехватывает вызовы методов и преобразует их в HTTP-вызовы через `RestClient`/`WebClient`. Никакого APT/annotation processor, никакого compile-time codegen.
 >
@@ -871,7 +871,7 @@ public class OrderService {
 >
 > ---
 >
-> #### D) Декларативный HTTP-клиент: интерфейс с аннотациями, прокси создаётся через `HttpServiceProxyFactory` + `RestClientAdapter`/`WebClientAdapter` — ✓ Верно
+> #### A) Декларативный HTTP-клиент: интерфейс с аннотациями, прокси создаётся через `HttpServiceProxyFactory` + `RestClientAdapter`/`WebClientAdapter` — ✓ Верно
 >
 > **Развёрнутое объяснение:** Паттерн: (1) объявить **интерфейс** с методами, аннотированными `@HttpExchange` (или специализациями `@GetExchange`, `@PostExchange`, `@PutExchange`, `@DeleteExchange`, `@PatchExchange`); параметры — `@PathVariable`, `@RequestParam`, `@RequestBody`, `@RequestHeader`; (2) на старте создать backend — `RestClient` (для sync) или `WebClient` (для reactive); (3) обернуть его в `RestClientAdapter.create(rc)` или `WebClientAdapter.create(wc)`; (4) `HttpServiceProxyFactory.builderFor(adapter).build().createClient(MyApi.class)` — получить готовый прокси-бин; (5) использовать как обычный Spring бин. Прокси автоматически: подставляет path variables, сериализует body, парсит response, обрабатывает status codes.
 >
@@ -968,7 +968,7 @@ public interface SearchClient {
 >
 > ---
 >
-> #### A) Только `@PathVariable` и `@RequestBody` — это minimal API — ❌ Неверно
+> #### C) Только `@PathVariable` и `@RequestBody` — это minimal API — ❌ Неверно
 >
 > **Что на самом деле:** `@HttpExchange` поддерживает полный набор: `@PathVariable`, `@RequestParam`, `@RequestHeader`, `@RequestBody`, `@CookieValue`, `@RequestPart` (multipart), `@RequestAttribute`, плюс «специальные» параметры — `URI`, `HttpMethod`, `MultiValueMap<String, String>` (для form data). Полнее, чем у Feign, потому что переиспользует инфраструктуру Spring MVC argument resolvers.
 >
@@ -978,7 +978,7 @@ public interface SearchClient {
 >
 > ---
 >
-> #### B) Все аннотации @RequestParam становятся path variables — ❌ Неверно
+> #### D) Все аннотации @RequestParam становятся path variables — ❌ Неверно
 >
 > **Что на самом деле:** Они принципиально разные: `@RequestParam` → query string (`?role=admin`), `@PathVariable` → подстановка в URL path (`/users/{id}` → `/users/42`). Spring различает их по аннотации, не «всё подставляет в URL».
 >
@@ -988,7 +988,7 @@ public interface SearchClient {
 >
 > ---
 >
-> #### C) Заголовки нельзя передать через параметры — только через builder.defaultHeader() — ❌ Неверно
+> #### A) Заголовки нельзя передать через параметры — только через builder.defaultHeader() — ❌ Неверно
 >
 > **Что на самом деле:** `@RequestHeader("X-Token") String token` в сигнатуре метода — корректный и идиоматичный способ. `defaultHeader()` для константных, общих для всех вызовов значений; `@RequestHeader` — для динамических (например, request ID на каждый запрос, токен сессии пользователя).
 >
@@ -998,7 +998,7 @@ public interface SearchClient {
 >
 > ---
 >
-> #### D) `@PathVariable`, `@RequestParam`, `@RequestHeader`, `@RequestBody`, `@CookieValue`, плюс `URI`, `HttpMethod` для динамических override — ✓ Верно
+> #### B) `@PathVariable`, `@RequestParam`, `@RequestHeader`, `@RequestBody`, `@CookieValue`, плюс `URI`, `HttpMethod` для динамических override — ✓ Верно
 >
 > **Развёрнутое объяснение:** Полный набор аннотаций, поддерживаемых `HttpServiceMethodArgumentResolver`:
 > - `@PathVariable` — подстановка в `{name}` placeholders URL
@@ -1080,7 +1080,7 @@ spring:
 >
 > ---
 >
-> #### A) Через @Backend(RestClient.class) аннотацию на интерфейсе — ❌ Неверно
+> #### D) Через @Backend(RestClient.class) аннотацию на интерфейсе — ❌ Неверно
 >
 > **Что на самом деле:** Такой аннотации **не существует** в Spring API. Выбор backend — runtime concern, через factory: `RestClientAdapter.create(restClient)` или `WebClientAdapter.create(webClient)`. Интерфейс одинаков для обоих, только wiring отличается.
 >
@@ -1090,7 +1090,7 @@ spring:
 >
 > ---
 >
-> #### B) RestClient adapter не поддерживает `Mono`/`Flux` возвращаемые типы — ❌ Частично верно, но требует уточнения
+> #### A) RestClient adapter не поддерживает `Mono`/`Flux` возвращаемые типы — ❌ Частично верно, но требует уточнения
 >
 > **Что на самом деле:** Это **верно**, но утверждение неполное и часто понимают неправильно. RestClientAdapter — синхронный, поддерживает `T`, `ResponseEntity<T>`, `void`. Не поддерживает `Mono`/`Flux` — потому что они реактивные. Однако в задаче этот пункт — про подключение, а не ограничение типов; это деталь, а не главный ответ.
 >
@@ -1100,7 +1100,7 @@ spring:
 >
 > ---
 >
-> #### C) Один HttpServiceProxyFactory можно использовать только с одним adapter за всё время приложения — ❌ Неверно
+> #### B) Один HttpServiceProxyFactory можно использовать только с одним adapter за всё время приложения — ❌ Неверно
 >
 > **Что на самом деле:** Каждый вызов `HttpServiceProxyFactory.builderFor(adapter)` создаёт новый factory, который привязан к этому adapter. В приложении можно иметь несколько factories с разными adapters (один для sync, другой для reactive). Один adapter — на один RestClient/WebClient экземпляр (или на API).
 >
@@ -1110,7 +1110,7 @@ spring:
 >
 > ---
 >
-> #### D) `RestClientAdapter.create(rc)` — sync (T, ResponseEntity<T>); `WebClientAdapter.create(wc)` — reactive (Mono<T>, Flux<T>); интерфейс одинаковый, разные factories — ✓ Верно
+> #### C) `RestClientAdapter.create(rc)` — sync (T, ResponseEntity<T>); `WebClientAdapter.create(wc)` — reactive (Mono<T>, Flux<T>); интерфейс одинаковый, разные factories — ✓ Верно
 >
 > **Развёрнутое объяснение:** Spring предоставляет два adapter'а:
 > - **`RestClientAdapter`** — для синхронного backend; методы интерфейса возвращают `T`, `ResponseEntity<T>`, `void`. Создаётся: `RestClientAdapter.create(restClient)`.
@@ -1329,7 +1329,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > ---
 >
-> #### A) Сразу заменить все вызовы RestTemplate на RestClient через regex find/replace — ❌ Неверно
+> #### B) Сразу заменить все вызовы RestTemplate на RestClient через regex find/replace — ❌ Неверно
 >
 > **Что на самом деле:** API кардинально другой (методы vs fluent builder), regex не поможет: `getForObject(url, Cls)` → `get().uri(url).retrieve().body(Cls)`. Кроме того, теряются настройки: interceptors, converters, error handlers. Big-bang миграции в production коде — рецепт для regression. Правильный путь — постепенный, с переиспользованием существующих настроек.
 >
@@ -1339,7 +1339,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > ---
 >
-> #### B) Переписать весь код с нуля — RestClient несовместим с RestTemplate инфраструктурой — ❌ Неверно
+> #### C) Переписать весь код с нуля — RestClient несовместим с RestTemplate инфраструктурой — ❌ Неверно
 >
 > **Что на самом деле:** RestClient **полностью совместим** с инфраструктурой RestTemplate — использует те же `HttpMessageConverter`, `ClientHttpRequestFactory`, `ClientHttpRequestInterceptor`. `RestClient.create(existingTemplate)` сохраняет ВСЕ настройки: factory, interceptors, converters, errorHandler.
 >
@@ -1349,7 +1349,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > ---
 >
-> #### C) Обернуть RestClient в адаптер с интерфейсом RestTemplate — пусть код не меняется — ❌ Неверно
+> #### D) Обернуть RestClient в адаптер с интерфейсом RestTemplate — пусть код не меняется — ❌ Неверно
 >
 > **Что на самом деле:** Технически возможно, но **не нужно** — RestClient уже использует те же converters/interceptors. Адаптерный слой только добавляет complexity без выгод. Лучше **переписать call sites** (немного boilerplate, но прозрачный код), чем поддерживать compatibility-обёртку.
 >
@@ -1359,7 +1359,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > ---
 >
-> #### D) `RestClient.create(restTemplate)` сохраняет настройки; постепенно мигрировать call sites; держать оба клиента параллельно во время transition — ✓ Верно
+> #### A) `RestClient.create(restTemplate)` сохраняет настройки; постепенно мигрировать call sites; держать оба клиента параллельно во время transition — ✓ Верно
 >
 > **Развёрнутое объяснение:** Безопасный путь: (1) для каждого `@Bean RestTemplate` создать соседний `@Bean RestClient` через `RestClient.create(restTemplate)` — переиспользует существующие interceptors (auth, logging), MessageConverters, RequestFactory; (2) новый код пишем сразу на RestClient; (3) существующие call sites рефакторим **по одному**, покрывая тестами; (4) когда последний caller мигрирован — удаляем `RestTemplate` бин. Параллельное сосуществование безопасно: оба клиента из одной инфраструктуры, поведение идентично.
 >
@@ -1408,7 +1408,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > ---
 >
-> #### A) `ClientHttpRequestFilter` — обёртка вокруг запроса, как Servlet Filter — ❌ Неверно
+> #### C) `ClientHttpRequestFilter` — обёртка вокруг запроса, как Servlet Filter — ❌ Неверно
 >
 > **Что на самом деле:** В RestClient (синхронный) интерфейс называется `ClientHttpRequestInterceptor` — НЕ Filter. Filter — это терминология WebClient (`ExchangeFilterFunction`). RestClient использует interceptor pattern.
 >
@@ -1418,7 +1418,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > ---
 >
-> #### B) `@RestClientInterceptor` аннотация на любом бине — Spring сам подцепит — ❌ Неверно
+> #### D) `@RestClientInterceptor` аннотация на любом бине — Spring сам подцепит — ❌ Неверно
 >
 > **Что на самом деле:** Такой аннотации нет. Interceptor регистрируется явно: `.requestInterceptor(ClientHttpRequestInterceptor)`. Если нужно несколько — вызвать несколько раз builder, либо передать список.
 >
@@ -1428,7 +1428,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > ---
 >
-> #### C) Interceptor может только читать запрос, не модифицировать — ❌ Неверно
+> #### A) Interceptor может только читать запрос, не модифицировать — ❌ Неверно
 >
 > **Что на самом деле:** `ClientHttpRequestInterceptor.intercept(HttpRequest req, byte[] body, ClientHttpRequestExecution exec)` может **изменить** request headers (добавить Authorization, correlation ID), модифицировать body (например, для подписи), и подменить response (retry, fallback). Полный контроль над request/response chain.
 >
@@ -1438,7 +1438,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > ---
 >
-> #### D) `ClientHttpRequestInterceptor` — функциональный интерфейс с доступом к request/body/execution для модификации до и после реального HTTP-вызова — ✓ Верно
+> #### B) `ClientHttpRequestInterceptor` — функциональный интерфейс с доступом к request/body/execution для модификации до и после реального HTTP-вызова — ✓ Верно
 >
 > **Развёрнутое объяснение:** Сигнатура: `ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)`. Внутри: можно прочитать/модифицировать request (через `request.getHeaders().set(...)`), вызвать `execution.execute(request, body)` для real call (или skip — для caching/mock), прочитать/модифицировать response. Типичные use-cases: добавление auth headers, логирование, метрики (latency), retry с backoff, circuit breaker, distributed tracing.
 >
