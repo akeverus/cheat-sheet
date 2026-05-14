@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-vault]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Spring Vault`
 
@@ -1315,10 +1315,82 @@ Vault Agent монтирует файл `/vault/secrets/config` в pod. Spring B
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Какова разница между KV v1 и KV v2? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда оправдан Vault Agent sidecar вместо прямой интеграции через Spring Cloud Vault?
+>
+> ---
+>
+> #### A) Vault Agent — обязательная замена Spring Vault: Spring Vault deprecated, все новые приложения должны использовать только Vault Agent — ❌ Неверно
+>
+> **Что на самом деле:** Vault Agent и Spring Vault — параллельные решения, оба активно поддерживаются. Vault Agent даёт language-agnostic подход (приложение читает файлы), Spring Vault — идиоматичную Spring-интеграцию с `@Value` и `VaultTemplate`. Выбор зависит от архитектурных требований.
+>
+> **Откуда путаница:** маркетинговые материалы HashiCorp акцентируют Vault Agent для polyglot environments.
+>
+> **Если бы это было правдой:** Spring команда прекратила бы развитие `spring-cloud-vault` репозитория.
+>
+> ---
+>
+> #### B) Vault Agent — sidecar, который аутентифицируется в Vault, рендерит секреты в файлы через consul-template и автоматически их обновляет; оправдан когда приложение polyglot (не Java), legacy (нельзя добавлять Spring зависимости), либо нужно decouple-ить app от Vault-API (приложение читает файлы и не знает про Vault) — ✓ Верно
+>
+> **Развёрнутое объяснение:** Vault Agent работает как отдельный процесс (или K8s sidecar container) рядом с приложением. Конфигурация Agent: (1) auto-auth method (Kubernetes/AppRole) — Agent сам аутентифицируется и держит токен; (2) sinks — куда писать токен (file для других процессов); (3) templates — consul-template шаблоны, которые рендерят файлы из Vault-секретов. Когда секрет ротируется в Vault, Agent перерендеривает файл и опционально шлёт SIGHUP приложению. Для Java/Spring приложений выбор Vault Agent vs Spring Vault: Spring Vault — когда приложение уже на Spring и нужна tight integration (`@Value`, dynamic credentials через `SecretLeaseContainer`); Vault Agent — когда (a) приложение не Java (Go, Python, Node без зрелого SDK), (b) legacy app, нельзя менять код, (c) гетерогенный кластер с разными приложениями и нужно унифицировать secrets delivery, (d) приложение должно быть Vault-agnostic для портирования. В K8s Vault Agent injector делает это автоматически через webhook + аннотации.
+>
+> **Пример:**
+> ```yaml
+> # K8s deployment с Vault Agent Injector
+> apiVersion: apps/v1
+> kind: Deployment
+> metadata:
+>   name: payment-service
+> spec:
+>   template:
+>     metadata:
+>       annotations:
+>         vault.hashicorp.com/agent-inject: "true"
+>         vault.hashicorp.com/role: "payment-app"
+>         vault.hashicorp.com/agent-inject-secret-db: "database/creds/payment-role"
+>         vault.hashicorp.com/agent-inject-template-db: |
+>           {{- with secret "database/creds/payment-role" -}}
+>           spring.datasource.username={{ .Data.username }}
+>           spring.datasource.password={{ .Data.password }}
+>           {{- end -}}
+>         vault.hashicorp.com/agent-inject-status: "update"
+>     spec:
+>       serviceAccountName: payment-sa
+>       containers:
+>       - name: app
+>         image: payment-service:1.0
+>         env:
+>         - name: SPRING_CONFIG_ADDITIONAL_LOCATION
+>           value: "file:/vault/secrets/db"
+> ```
+>
+> **Когда применять:** polyglot микросервисы (Java + Go + Python); legacy apps без Spring (Tomcat-приложения, не Boot); strict separation of concerns (security team управляет Vault Agent config, dev team — приложением); GitOps-only workflows где конфигурация Vault Agent — часть K8s manifest, а не часть приложения.
+>
+> **Подводные камни:** Vault Agent — дополнительный sidecar, +~50MB memory per pod; конфигурация templates через consul-template имеет свой DSL, не такой выразительный как Spring `@Value`; rotate без SIGHUP требует приложение, которое перечитывает файл (Spring Boot этого не делает автоматически); dynamic secrets через Agent — нужен SIGHUP + DataSource refresh в приложении (теряется преимущество над Spring Vault).
+>
+> ---
+>
+> #### C) Vault Agent — это CLI-инструмент для администраторов, у приложений нет с ним взаимодействия — ❌ Неверно
+>
+> **Что на самом деле:** Vault Agent — runtime-процесс рядом с приложением, не CLI. Он постоянно работает и обслуживает приложение, не для одноразовых операторских задач.
+>
+> **Откуда путаница:** возможна ассоциация с `vault` CLI-командой.
+>
+> **Если бы это было правдой:** HashiCorp не разрабатывал бы Kubernetes Vault Agent Injector и не публиковал бы интеграционные guides.
+>
+> ---
+>
+> #### D) Vault Agent заменяет Vault server — приложение может работать только с Agent без полноценного Vault — ❌ Неверно
+>
+> **Что на самом деле:** Vault Agent — клиент Vault, не сервер. Он подключается к реальному Vault server, аутентифицируется и проксирует/кэширует ответы. Без Vault server Agent бесполезен.
+>
+> **Откуда путаница:** слово «Agent» иногда воспринимается как «standalone autonomous component».
+>
+> **Если бы это было правдой:** Vault Agent документация не требовала бы конфигурации `vault.address`.
+>
+> **Связанные вопросы:** [[Q1]] — обзор Vault; [[Q7]] — auth methods; [[Q9]] — PropertySource
+
+## Q13. Какова разница между KV v1 и KV v2?
 
 | Критерий | KV v1 | KV v2 |
 |----------|-------|-------|
@@ -1341,10 +1413,89 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как обрабатывать ошибки при недоступности Vault? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Главное архитектурное отличие KV v2 от KV v1 и как это влияет на Spring Vault конфигурацию?
+>
+> ---
+>
+> #### A) KV v2 быстрее KV v1 за счёт оптимизированного storage backend; путь к секретам идентичен — ❌ Неверно
+>
+> **Что на самом деле:** performance не первичное отличие. Главное — KV v2 хранит **versioned history** секретов (последние N версий) и поддерживает soft delete. Путь различается: KV v1 — `secret/myapp`, KV v2 — `secret/data/myapp` для чтения данных, `secret/metadata/myapp` для метаданных. Spring Cloud Vault сам подставляет `/data/`, если включен `kv.version: 2`.
+>
+> **Откуда путаница:** «v2 = быстрее» — общая интуиция о версионировании софта.
+>
+> **Если бы это было правдой:** не требовалось бы менять путь к секретам и параметр `kv.version`.
+>
+> ---
+>
+> #### B) KV v2 добавляет versioning (хранит N последних версий с возможностью отката), soft delete (помеченные на удаление можно восстановить), metadata (creation time, version count, max_versions), check-and-set (CAS); путь становится `secret/data/<path>` для данных и `secret/metadata/<path>` для метаданных — Spring Cloud Vault подставляет `/data/` автоматически при `kv.version: 2` — ✓ Верно
+>
+> **Развёрнутое объяснение:** KV v1 — простой KV store: write перезаписывает старое значение бесследно. KV v2 (introduced in Vault 0.10) добавляет: (1) Versioning — каждый write создаёт новую версию, старые доступны через `vault kv get -version=N`; max_versions ограничивает retention; (2) Soft delete — `vault kv delete` помечает версии как deleted, но физически они остаются (можно `vault kv undelete`), `destroy` удаляет окончательно; (3) Metadata — отдельный path для созданных времён, версионности, custom metadata; (4) CAS (check-and-set) — write требует указать ожидаемую version, что предотвращает race conditions при одновременных обновлениях; (5) Patch — обновление отдельных полей без full write. Spring Cloud Vault: при `kv.version: 2` автоматически добавляет `/data/` к пути, при `kv.version: 1` (default для совместимости) — нет. Если запутался, в логах Spring Vault будет `404 Not Found` от Vault — это самый частый симптом неправильной версии.
+>
+> **Пример:**
+> ```yaml
+> # bootstrap.yml — для KV v2
+> spring:
+>   cloud:
+>     vault:
+>       kv:
+>         enabled: true
+>         backend: secret
+>         version: 2                # ВАЖНО — без этого Spring пытается читать /secret/myapp (404)
+>         application-name: payment-service
+> ```
+> ```bash
+> # Создание KV v2 в Vault и запись секрета
+> vault secrets enable -version=2 -path=secret kv
+> vault kv put secret/payment-service db.password=v1-password
+> vault kv put secret/payment-service db.password=v2-password
+> vault kv get -version=1 secret/payment-service     # возвращает v1-password
+> vault kv metadata get secret/payment-service        # список всех версий
+> ```
+> ```java
+> // Прямое чтение конкретной версии через VaultTemplate
+> @Service
+> @RequiredArgsConstructor
+> public class HistoricalSecretService {
+>     private final VaultTemplate vaultTemplate;
+>
+>     public String readSpecificVersion(String path, int version) {
+>         VaultResponseSupport<Map<String, Object>> response = vaultTemplate
+>             .opsForVersionedKeyValue("secret")
+>             .get(path, Versioned.Version.from(version))
+>             .getData();
+>         return (String) response.get("db.password");
+>     }
+> }
+> ```
+>
+> **Когда применять:** KV v2 — почти всегда для новых deployments (versioning ценен для rollback после ошибочного коммита); KV v1 — только для legacy совместимости или performance-critical сценариев без потребности в истории.
+>
+> **Подводные камни:** KV v2 default `max_versions=10` — после превышения старые версии теряются; политики Vault для KV v2 пишутся через `path "secret/data/myapp/*"` а не `path "secret/myapp/*"` — частая ошибка; `vault kv` CLI команда абстрагирует версионирование, но raw API через curl требует знать о `/data/` префиксе; миграция с v1 на v2 требует пересоздания mount-а с другим именем (нельзя upgrade in-place).
+>
+> ---
+>
+> #### C) KV v2 — это шифрованная версия KV v1 (KV v1 хранит секреты в plaintext) — ❌ Неверно
+>
+> **Что на самом деле:** обе версии шифруют секреты в storage backend через barrier (encryption layer Vault). Шифрование не зависит от KV version — оно встроено в Vault. Разница между v1 и v2 — в feature set (versioning, metadata, soft delete).
+>
+> **Откуда путаница:** интуиция «v2 более secure чем v1».
+>
+> **Если бы это было правдой:** KV v1 был бы немедленно депрекейтнут как security hole.
+>
+> ---
+>
+> #### D) KV v1 и KV v2 — это две разные базы данных; нужно выбирать одну при установке Vault и менять нельзя — ❌ Неверно
+>
+> **Что на самом деле:** Vault поддерживает множественные KV mounts одновременно — можно иметь `secret/` (v2) и `legacy/` (v1) на одной Vault-инстансе. Mount enable через `vault secrets enable -version=2 -path=secret kv`. Это разные secret engines с разной semantics, не разные databases.
+>
+> **Откуда путаница:** ассоциация с MySQL/PostgreSQL «версия БД при установке».
+>
+> **Если бы это было правдой:** миграция с v1 на v2 требовала бы полного переразвертывания Vault.
+>
+> **Связанные вопросы:** [[Q1]] — обзор Vault; [[Q3]] — чтение секретов; [[Q9]] — PropertySource paths
+
+## Q14. Как обрабатывать ошибки при недоступности Vault?
 
 ```java
 @Configuration
@@ -1381,10 +1532,96 @@ public class ResilientSecretService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Какие best practices при работе с Spring Vault? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая стратегия резильентности корректна для приложения с Vault как зависимостью и почему «fallback на закэшированные секреты в памяти» имеет ограничения?
+>
+> ---
+>
+> #### A) Приложение должно сразу падать при недоступности Vault — fail-fast гарантирует, что не работает с устаревшими credentials — ❌ Неверно (частично)
+>
+> **Что на самом деле:** fail-fast при старте приложения — валидная стратегия (если Vault недоступен при boot, лучше не подниматься чем работать без секретов). Но runtime-failure уже работающего приложения — другая ситуация: приложение УЖЕ имеет credentials в памяти, может продолжать работу до их истечения. Резкое падение при первой ошибке Vault создаёт каскадные отказы при transient unavailability.
+>
+> **Откуда путаница:** fail-fast — хорошая практика в общем случае, но применима не для всех runtime ошибок.
+>
+> **Если бы это было правдой:** Vault transient unavailability (30-секундный network glitch) убивал бы весь кластер микросервисов.
+>
+> ---
+>
+> #### B) Многоуровневая стратегия: (1) fail-fast при boot (если Vault недоступен на старте — pod не поднимается); (2) graceful degradation в runtime — credentials уже в памяти, продолжаем работу; (3) Circuit Breaker (Resilience4j) для Vault-обращений в runtime с fallback на last-known credentials; (4) метрики `vault.unavailable` для алертов; (5) Vault HA-кластер из 3-5 нод для устранения SPOF — ✓ Верно
+>
+> **Развёрнутое объяснение:** Vault — критическая dependency, но не каждая операция требует его доступности. На startup приложение читает secrets в `Environment` — без Vault это невозможно, fail-fast. В runtime: статичные секреты уже в memory (`@Value` поля), Vault не нужен пока не пересоздаются bean-ы; dynamic credentials уже выданы с TTL, действуют до истечения; transit encryption — каждый encrypt/decrypt идёт в Vault, здесь резильентность критична. Circuit Breaker обходит Vault при flapping (5xx или timeout > threshold), приложение использует last-known-good credentials до восстановления Vault. Метрики (Micrometer + VaultHealthIndicator) + alerts (PagerDuty при `vault.status=down` > 1 минуту) дают operability. Но главное — архитектурное решение: Vault должен быть HA (3-5 нод с Raft consensus), географически распределённый, с auto-unseal через cloud KMS. Single-node Vault — гарантированное падение.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class VaultResilienceConfig {
+>     @Bean
+>     public CircuitBreaker vaultCircuitBreaker() {
+>         CircuitBreakerConfig config = CircuitBreakerConfig.custom()
+>             .failureRateThreshold(50)                       // открыть при 50% errors
+>             .slowCallDurationThreshold(Duration.ofSeconds(2))
+>             .waitDurationInOpenState(Duration.ofSeconds(30))
+>             .minimumNumberOfCalls(10)
+>             .build();
+>         return CircuitBreaker.of("vault", config);
+>     }
+> }
+>
+> @Service
+> @RequiredArgsConstructor
+> @Slf4j
+> public class ResilientTransitService {
+>     private final VaultTemplate vaultTemplate;
+>     private final CircuitBreaker vaultCircuitBreaker;
+>     private final Map<String, String> lastKnownEncryptedValues = new ConcurrentHashMap<>();
+>
+>     public String encryptOrCache(String plaintext) {
+>         return vaultCircuitBreaker.executeSupplier(() -> {
+>             String ciphertext = vaultTemplate.opsForTransit()
+>                 .encrypt("customer-pii", Plaintext.of(plaintext)).getCiphertext();
+>             lastKnownEncryptedValues.put(plaintext, ciphertext);
+>             return ciphertext;
+>         });
+>         // Если CB OPEN — throws CallNotPermittedException, можно поймать в @Recover
+>     }
+>
+>     @Recover
+>     public String fallback(Exception ex, String plaintext) {
+>         log.error("Vault unavailable, returning cached encryption", ex);
+>         String cached = lastKnownEncryptedValues.get(plaintext);
+>         if (cached == null) throw new VaultUnavailableException(ex);
+>         return cached;
+>     }
+> }
+> ```
+>
+> **Когда применять:** все production-deployments — Vault как critical path требует defensive coding; transit-encryption сервисы — без CB одна Vault-нода кладёт весь сервис; dynamic DB credentials — менее критично, есть `lease_duration` buffer; KV reads — наименее критично, можно кэшировать длительно.
+>
+> **Подводные камни:** кэширование PII-encryption в памяти повышает blast radius при компрометации pod-а (нужны short TTL на кэш или encrypted-at-rest cache); circuit breaker должен иметь timeout > Vault `default_lease_ttl`/4 чтобы не флипать на нормальном renew; `last-known credentials` для dynamic secrets бесполезны — они revoke-нуты в БД, только static secrets можно кэшировать; алерты на Vault unavailability должны быть P1 — даже если приложения временно работают, это окно для проблем.
+>
+> ---
+>
+> #### C) Приложение должно держать копию всех секретов в локальном файле и читать только оттуда — Vault опционален — ❌ Неверно
+>
+> **Что на самом деле:** локальная копия секретов в файле — это файл с паролями, что отменяет смысл Vault (централизация, аудит, ротация). Это antipattern, не resilience.
+>
+> **Откуда путаница:** интуитивная защита от network issues через локальное хранение.
+>
+> **Если бы это было правдой:** Vault терял бы все свои преимущества — теряется аудит чтения, теряется ротация без передеплоя.
+>
+> ---
+>
+> #### D) Resilience4j Circuit Breaker заменяет необходимость в Vault HA — достаточно одной Vault-ноды и хорошего fallback кода в приложении — ❌ Неверно
+>
+> **Что на самом деле:** Circuit Breaker — это application-level mitigation, который защищает от transient failures (несколько секунд-минут). Single-node Vault — это **гарантированное** падение при apt-get upgrade, hardware failure, network partition. HA cluster — это операционное требование, а не альтернатива application-level resilience.
+>
+> **Откуда путаница:** иногда команды экономят на инфраструктуре, надеясь компенсировать кодом.
+>
+> **Если бы это было правдой:** documentation HashiCorp не требовала бы Raft cluster mode для production.
+>
+> **Связанные вопросы:** [[Q11]] — ротация и graceful handling; [[Q15]] — best practices; [[Q5]] — VaultLeaseContainer
+
+## Q15. Какие best practices при работе с Spring Vault?
 
 1. **Никогда не логировать секреты** — даже в DEBUG уровне.
 
@@ -1400,14 +1637,97 @@ public class ResilientSecretService {
 
 7. **Health check Vault** — `/actuator/health` Spring Vault добавляет индикатор доступности Vault.
 
-## See also
-
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Secrets Management](../../security/secrets-management-interview.md) — общие вопросы по управлению секретами ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какая практика наиболее критична для production-deployment Spring Vault и какие ошибки чаще всего встречаются в audit'ах?
+>
+> ---
+>
+> #### A) Использовать root token в приложениях — это даёт максимальную гибкость и позволяет читать любые секреты при изменении конфигурации — ❌ Неверно
+>
+> **Что на самом деле:** root token — это credential `superadmin` с unlimited scope. Использование его в приложениях — топовая security violation: компрометация одного pod-а = захват всего Vault. Root token предназначен для bootstrap и emergency unsealing, после чего отзывается (`vault token revoke <root-token>`). Production приложения используют scoped tokens через AppRole/Kubernetes auth с минимальными policies.
+>
+> **Откуда путаница:** root token «просто работает» в dev и команды по инерции переносят это в prod.
+>
+> **Если бы это было правдой:** Vault Threat Model документация не имела бы целой секции «Never use root tokens in applications».
+>
+> ---
+>
+> #### B) Многоуровневая security baseline: (1) least-privilege policies — каждый сервис имеет policy ровно для своих путей; (2) Kubernetes/AppRole вместо TOKEN; (3) TLS на all-Vault-traffic с pinned CA; (4) audit logging в централизованную SIEM; (5) short TTL для всех credentials (30m-1h max); (6) sealing на secrets at rest через cloud KMS; (7) periodic rotation transit keys; (8) HA Vault кластер с auto-unseal; (9) никогда не логировать секреты (даже в DEBUG); (10) separate Vault per environment (dev/staging/prod) — ✓ Верно
+>
+> **Развёрнутое объяснение:** production Vault — это сложная security-система с множеством failure modes. Основные принципы. (1) Least-privilege — Vault policies через `path "secret/data/payment/*" { capabilities = ["read"] }` гарантируют что компрометация payment-service не даёт доступ к auth-service секретам. (2) Auth methods — TOKEN deprecated для prod, Kubernetes/AppRole/AWS IAM дают rotating short-lived tokens. (3) Transport TLS обязателен — без него любой network observer видит секреты в plain. (4) Audit logging — `vault audit enable file path=/var/log/vault_audit.log` + push в SIEM (Splunk, ELK) для compliance и forensics. (5) Короткие TTL — `default_lease_ttl=30m` ограничивает окно компрометации; `max_lease_ttl` — максимум для renew. (6) Auto-unseal через cloud KMS (AWS KMS, GCP KMS) убирает need в Shamir keys при рестарте. (7) Transit keys rotation квартально — `vault write -f transit/keys/<key>/rotate`. (8) HA — 3 или 5 нод с Raft consensus. (9) Логирование секретов через `@Value` или `toString()` PII-объектов — частая утечка. (10) Отдельные Vault-инстансы per env — изоляция blast radius.
+>
+> **Пример:**
+> ```hcl
+> # vault/policies/payment-service.hcl — least-privilege policy
+> path "secret/data/payment-service/*" {
+>   capabilities = ["read"]
+> }
+> path "secret/data/application/*" {
+>   capabilities = ["read"]
+> }
+> path "database/creds/payment-role" {
+>   capabilities = ["read"]
+> }
+> path "transit/encrypt/customer-pii" {
+>   capabilities = ["update"]
+> }
+> path "transit/decrypt/customer-pii" {
+>   capabilities = ["update"]
+> }
+> # НЕТ доступа к secret/data/other-service/, не read root, не sys/*
+> ```
+> ```yaml
+> # bootstrap.yml — TLS-pinning, fail-fast, scope-limited
+> spring:
+>   cloud:
+>     vault:
+>       host: vault.prod.internal
+>       port: 8200
+>       scheme: https
+>       fail-fast: true                        # не подниматься без Vault
+>       ssl:
+>         trust-store: classpath:vault-ca.jks
+>         trust-store-password: ${VAULT_TRUSTSTORE_PASS}
+>       authentication: KUBERNETES
+>       kubernetes:
+>         role: payment-service                # bound к payment-service policy
+>       config:
+>         lifecycle:
+>           lease-endpoints: legacy
+>           min-renewal-seconds: 10            # короткие интервалы renew
+> ```
+>
+> **Когда применять:** все production deployments без исключений; staging — те же practices с менее строгими алертами; dev — можно использовать `dev mode` для упрощения, но привычки те же (никаких root tokens в коде).
+>
+> **Подводные камни:** Vault policies — declarative и иногда требуют тонкой настройки (KV v2 требует `secret/data/...` paths в policy, не `secret/...`); audit logs могут заполнить диск — нужна rotation через logrotate + offload в SIEM; TLS-pinning через truststore требует обновлять truststore при rotation CA — добавьте intermediate CA или используйте system trust store; «короткие TTL» имеют trade-off — слишком короткие = высокая нагрузка на Vault и риск renewal-failure; разделение Vault per env требует separate operational overhead — некоторые команды используют один Vault с namespace isolation (Enterprise feature).
+>
+> ---
+>
+> #### C) Достаточно использовать Spring Vault с default-настройками — Spring Boot autoconfiguration делает всё security-correct из коробки — ❌ Неверно
+>
+> **Что на самом деле:** Spring Vault autoconfiguration настраивает только Spring-side. Security настройки Vault (policies, auth methods, TTLs, audit) — это операционная конфигурация HashiCorp Vault, которую Spring не знает. Defaults безопасны для запуска, но не для production hardening.
+>
+> **Откуда путаница:** «Spring Boot — convention over configuration» создаёт впечатление что defaults достаточны для всего.
+>
+> **Если бы это было правдой:** не существовало бы Vault Production Hardening Guide объёмом 50+ страниц.
+>
+> ---
+>
+> #### D) Логировать секреты в DEBUG-режиме — это нормально, главное не в INFO/WARN — ❌ Неверно
+>
+> **Что на самом деле:** логирование секретов на любом уровне — security incident. DEBUG-логи попадают в централизованные log aggregators (ELK, Datadog), доступны DevOps, могут быть случайно расшарены в bug-репортах. Production может быть случайно стартован с DEBUG (например, при отладке инцидента) — секреты улетят в логи. Правильный подход — `@ToString.Exclude` на полях с секретами, маскирование через logback filter, или dedicated audit-log с шифрованием.
+>
+> **Откуда путаница:** ложное чувство безопасности «DEBUG не в production».
+>
+> **Если бы это было правдой:** не было бы регулярных CVE с утечкой credentials в logs.
+>
+> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q7]] — auth methods; [[Q14]] — error handling
+
+## See also
+
+- [Secrets Management](../../security/secrets-management-interview.md) — общие вопросы по управлению секретами
 - [Spring Security](spring-security-interview.md) — безопасность приложений
 - [Kubernetes](../../devops/kubernetes-interview.md) — Vault + K8s интеграция через Service Account JWT
 - [Spring Cloud](spring-cloud-interview.md) — Spring Cloud Config + Vault backend
