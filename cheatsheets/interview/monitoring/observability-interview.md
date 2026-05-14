@@ -1769,10 +1769,73 @@ spec:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Как оценить зрелость observability в команде? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой из подходов является фундаментальным anti-pattern в observability — повторяется в большинстве команд и приводит к самым серьёзным последствиям в production?
+>
+> ---
+>
+> #### A) High-cardinality labels (userId, requestId, sessionId в Prometheus labels) — ✓ Верно
+>
+> **Развёрнутое объяснение:** Cardinality explosion — главный anti-pattern, потому что (1) **последствия катастрофические**: OOM Prometheus, остановка всего мониторинга. (2) **Часто встречается**: разработчик думает «добавлю userId в label для дебага», не понимая time series модели. (3) **Сложно откатить**: time series уже созданы, retention длинный, удаление требует tombstones. Prometheus хранит одну time series на каждую уникальную комбинацию labels. С 1M users × 100 endpoints × 5 status codes = 500M time series ≈ 100+ GB RAM, что взрывает Prometheus. Правило: **labels должны иметь ограниченное и предсказуемое множество значений** (HTTP method, status code, endpoint, region — да; userId, requestId, traceId — НЕТ). Для high-cardinality данных используются traces (Tempo) и logs (Loki), которые индексируют иначе.
+>
+> **Пример:**
+> ```java
+> // BAD: cardinality explosion
+> Counter.builder("http.requests")
+>     .tag("user_id", userId)        // 1M+ unique values
+>     .tag("request_id", reqId)      // unique per request!
+>     .register(registry);
+>
+> // GOOD: predictable cardinality
+> Counter.builder("http.requests")
+>     .tag("method", method)         // GET, POST, PUT, DELETE (~10)
+>     .tag("status", String.valueOf(status))  // 2xx, 4xx, 5xx (~20)
+>     .tag("endpoint", normalizeEndpoint(uri))// /api/users/{id} (~100)
+>     .register(registry);
+> // Total cardinality: 10 × 20 × 100 = 20,000 — manageable
+> ```
+>
+> Защитные механизмы: (1) `metric_relabel_configs` в Prometheus для drop high-cardinality labels; (2) `--storage.tsdb.max-block-duration` лимиты; (3) alert на `prometheus_tsdb_head_series` (sudden growth = cardinality bug); (4) Mimir/VictoriaMetrics поддерживают `max_series_per_user`.
+>
+> **Когда применять:** правило enforced **всегда**, на любой Prometheus-based мониторинг. Особенно критично для multi-tenant сервисов.
+>
+> **Подводные камни:** **postmortem-расследование cardinality** — Prometheus уже упал, нужно понять, какой именно label виноват. Использовать `prometheus_tsdb_head_series_created_total` per metric перед падением. **Auto-instrumentation** (Spring Boot Actuator) иногда добавляет `uri` label с path variables — нужен URI normalization.
+>
+> **Связанные вопросы:** [[Q8]] — cardinality в Prometheus; [[Q26]] — sampling трейсов для high-cardinality; [[Q33]] — зрелость observability.
+>
+> ---
+>
+> #### B) Использовать Grafana вместо самописных HTML-дашбордов — ❌ Неверно
+>
+> **Что на самом деле:** Использование Grafana — это **best practice**, не anti-pattern. Grafana — индустриальный стандарт для визуализации метрик. Самописные дашборды на HTML/JS — это анти-паттерн (drift, нет versioning, нет sharing).
+>
+> **Откуда путаница:** перевернутая логика. Реальный anti-pattern в дашбордах — это «copy-paste без maintenance» и «dashboard-as-art», а не выбор инструмента.
+>
+> **Если бы это было правдой:** Grafana — основной инструмент в LGTM, Datadog, New Relic — все они интегрируют с Grafana или копируют её UX.
+>
+> ---
+>
+> #### C) Хранить логи в Elasticsearch вместо в plain text — ❌ Неверно
+>
+> **Что на самом деле:** Elasticsearch для логов — стандартное и обоснованное решение (ELK-стек). Plain text logs (`tail -f` на файлы) — это анти-паттерн, не наоборот. Реальный pattern: structured JSON logs в indexed log store (Elasticsearch / Loki / Splunk).
+>
+> **Откуда путаница:** Elasticsearch дорогой, кто-то может назвать его «не нужным», но это не делает его anti-pattern.
+>
+> **Если бы это было правдой:** SRE-команды использовали бы `grep` на файлах — но это работает только для single-host, ломается в distributed system.
+>
+> ---
+>
+> #### D) Добавлять traceId во все логи — это лишняя нагрузка на logger — ❌ Неверно
+>
+> **Что на самом деле:** TraceId в логах — **обязательное** требование для корреляции трёх pillars (см. Q3). Overhead на logger — несколько байт на сообщение, что незаметно. Без traceId логи изолированы от трейсов — невозможна cross-pillar диагностика.
+>
+> **Откуда путаница:** иногда оптимизируют log size, не понимая, что traceId — это ROI > 100x на расследовании инцидентов.
+>
+> **Если бы это было правдой:** при инциденте «traceId = abc123, latency 5s» SRE не может найти соответствующие логи — диагностика растягивается на часы.
+>
+> ---
+
+## Q33. Как оценить зрелость observability в команде?
 
 Краткая шкала:
 
@@ -1802,10 +1865,69 @@ spec:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. OpenTelemetry Collector: архитектура, pipeline и processors? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Команда заявляет «у нас есть observability — мы поставили Prometheus и Grafana». Какой набор критериев позволяет объективно оценить реальную зрелость observability в команде?
+>
+> ---
+>
+> #### A) Только количество метрик в Prometheus и количество дашбордов в Grafana — ❌ Неверно
+>
+> **Что на самом деле:** Метрики vanity (количество дашбордов) не отражают зрелость. Команда может иметь 500 дашбордов и ноль actionable алертов — это «много шума, мало сигнала». Зрелость измеряется **MTTD / MTTR** и **процентом инцидентов, обнаруженных мониторингом** (не клиентами).
+>
+> **Откуда путаница:** руководству легко продать «1000 метрик» как достижение; но это вход, а не результат.
+>
+> **Если бы это было правдой:** команда оптимизировала бы под «больше графиков», игнорируя actionable nature алертов.
+>
+> ---
+>
+> #### B) Многоуровневая модель: L1 базовый мониторинг → L2 SLO-driven → L3 корреляция трёх pillars → L4 встроенная в SDLC → L5 проактивная (anomaly detection, chaos) + измерение MTTD/MTTR — ✓ Верно
+>
+> **Развёрнутое объяснение:** Industry-standard maturity model для observability имеет 5 уровней. **L1 (Basic Monitoring)**: есть Prometheus + Grafana, есть базовые алерты, но они threshold-based и часто false-positive. **L2 (SLO-driven)**: определены SLI/SLO для критичных сервисов, алерты переведены на burn rate, есть runbooks для каждого page-алерта. **L3 (Correlated)**: три pillars связаны через traceId, переход metric→trace→log за 1 клик, structured logging повсеместно. **L4 (Embedded in SDLC)**: observability в CI/CD pipeline (canary guardrails, auto-rollback), pre-deploy checks обязательных метрик, release annotations. **L5 (Proactive)**: anomaly detection (ML-based), capacity planning по метрикам, chaos engineering как regular practice, continuous profiling. **Главный критерий**: MTTD и MTTR **снижаются** или хотя бы держатся постоянными при росте сложности системы. Если они растут — observability отстаёт от роста системы.
+>
+> **Пример checklist для self-assessment:**
+> ```markdown
+> ## Observability Maturity Checklist (target: L3+)
+> - [ ] Все сервисы экспортируют RED-метрики (Rate, Errors, Duration)
+> - [ ] Structured JSON logging с traceId/spanId во всех сервисах
+> - [ ] Distributed tracing покрывает 100% inter-service вызовов
+> - [ ] SLO определены для критичных user-facing сервисов
+> - [ ] Алерты имеют runbooks и severity levels (P1-P4)
+> - [ ] Дашборды организованы трёхуровнево: overview → service → debug
+> - [ ] Observability проверяется в CI/CD pipeline (canary analysis)
+> - [ ] Команда проводит регулярные "observability reviews" (monthly)
+> - [ ] MTTD < 5 min для P1, MTTR < 30 min для P1
+> - [ ] % инцидентов, обнаруженных monitoring (не клиентами) > 90%
+> ```
+>
+> **Когда применять:** ежеквартально (observability review), при онбординге нового сервиса, при росте команды > 20 разработчиков.
+>
+> **Подводные камни:** **L5 без L1-L4** — команды покупают AI-based anomaly detection, не имея structured logs. Это «решение в поисках проблемы». Развитие должно быть последовательным. **MTTD сложно мерить точно**: нужно знать, когда инцидент *реально* начался — это требует post-mortem дисциплины.
+>
+> **Связанные вопросы:** [[Q30]] — post-mortem; [[Q31]] — CI/CD observability; [[Q32]] — anti-patterns.
+>
+> ---
+>
+> #### C) Только наличие 24/7 on-call rotation — без него зрелости нет — ❌ Неверно
+>
+> **Что на самом деле:** On-call — это operational практика, а не observability maturity. Можно иметь on-call без хорошей observability (тогда дежурный страдает) и наоборот — иметь зрелую observability в B2B-сервисе без 24/7 (бизнес-часы достаточно).
+>
+> **Откуда путаница:** on-call часто упоминается рядом с observability, но это разные дисциплины.
+>
+> **Если бы это было правдой:** маленькие startups никогда не могли бы иметь зрелую observability — но многие имеют, без формального 24/7.
+>
+> ---
+>
+> #### D) Сертификация по ISO/SOC2 — это объективная мера зрелости — ❌ Неверно
+>
+> **Что на самом деле:** Compliance сертификации проверяют **наличие процессов** (logging есть, retention есть), но не **качество** observability. Можно пройти SOC2 с зрелостью L1, имея только базовые логи и аудит-трейлы.
+>
+> **Откуда путаница:** compliance audits дают «галочку» руководству, но не отражают эффективность диагностики инцидентов.
+>
+> **Если бы это было правдой:** SOC2-certified компании никогда не имели бы громких outage — но Cloudflare, AWS, Google имеют outage регулярно, при всех сертификациях.
+>
+> ---
+
+## Q34. OpenTelemetry Collector: архитектура, pipeline и processors?
 
 **OpenTelemetry Collector** — независимый компонент для получения, обработки и экспорта телеметрии (метрики, логи, трейсы). Избавляет от необходимости конфигурировать каждый SDK для каждого backend.
 
@@ -1896,10 +2018,96 @@ service:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Continuous Profiling: Pyroscope, Grafana Phlare, eBPF? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём ключевая роль OpenTelemetry Collector в production-архитектуре и какой режим деплоя подходит для большого Kubernetes-кластера с тысячами подов?
+>
+> ---
+>
+> #### A) OTel Collector — это только агент для отправки данных в один backend (например, Jaeger) — ❌ Неверно
+>
+> **Что на самом деле:** OTel Collector — **vendor-neutral pipeline** для приёма, обработки и многократного экспорта телеметрии. Один Collector может одновременно отправлять в Prometheus (metrics), Loki (logs), Tempo (traces), Datadog (mirror), S3 (archive). Это **fan-out** abstraction, которая делает миграцию между бэкендами тривиальной (только в exporter config).
+>
+> **Откуда путаница:** часто в туториалах показывают один экспортёр для простоты, отсюда восприятие «Collector = агент».
+>
+> **Если бы это было правдой:** vendor lock-in был бы неизбежен, переход с Jaeger на Tempo требовал бы пересборки приложений.
+>
+> ---
+>
+> #### B) OTel Collector — это просто proxy без обработки данных — ❌ Неверно
+>
+> **Что на самом деле:** Collector — это не proxy, а **stateful pipeline** с processors. Ключевые processors: `batch` (буферизация), `memory_limiter` (защита от OOM), `tail_sampling` (решение о sampling после получения трейса), `filter` (drop unwanted data), `resource` (add attributes), `transform` (rewrite fields). Это активная обработка данных, не пассивная пересылка.
+>
+> **Откуда путаница:** слово «collector» намекает на passive role, но реальная роль — pipeline orchestrator.
+>
+> **Если бы это было правдой:** не было бы tail-sampling, не было бы cost optimization — приложение слало бы 100% сырых данных в backend.
+>
+> ---
+>
+> #### C) Vendor-neutral pipeline для приёма/обработки/экспорта телеметрии; в большом k8s — комбинированный режим: Agent (DaemonSet/sidecar) → Gateway (Deployment), где Agent делает local collection, Gateway — tail-sampling и forwarding в backend — ✓ Верно
+>
+> **Развёрнутое объяснение:** Архитектура: `[Receivers] → [Processors] → [Exporters]`. Receivers принимают данные (OTLP, Prometheus scrape, Fluent Forward), processors их обрабатывают, exporters отправляют в backend. **Режимы деплоя:** (1) **Agent mode** — DaemonSet (один Collector на ноду) или sidecar (в каждом pod) — низкая задержка, изоляция; (2) **Gateway mode** — централизованный Deployment (3–10 instances), упрощает конфигурацию, позволяет tail-sampling по полному трейсу; (3) **Combined mode** — Agent (DaemonSet) собирает локально → Gateway (Deployment) делает tail-sampling и форвардит в backend. Combined — production-стандарт для k8s с >1000 подов: Agent даёт buffering и resilience при сбое Gateway, Gateway — global view трейсов для sampling. Между Agent и Gateway используется `loadbalancing exporter` с `routing_key: traceID` — гарантирует, что все spans одного трейса попадут на один Gateway instance.
+>
+> **Пример:**
+> ```yaml
+> # Agent (DaemonSet) — local collection + basic processing
+> # values-agent.yaml
+> mode: daemonset
+> config:
+>   receivers:
+>     otlp: {protocols: {grpc: {endpoint: 0.0.0.0:4317}}}
+>   processors:
+>     batch: {timeout: 1s, send_batch_size: 1024}
+>     memory_limiter: {limit_mib: 256, check_interval: 1s}
+>   exporters:
+>     loadbalancing:
+>       routing_key: traceID
+>       protocol:
+>         otlp: {tls: {insecure: true}}
+>       resolver:
+>         k8s: {service: otel-gateway.observability}
+>   service:
+>     pipelines:
+>       traces:
+>         receivers: [otlp]
+>         processors: [memory_limiter, batch]
+>         exporters: [loadbalancing]
+>
+> # Gateway (Deployment) — tail-sampling + final export
+> # values-gateway.yaml
+> mode: deployment
+> replicaCount: 5
+> config:
+>   processors:
+>     tail_sampling:
+>       decision_wait: 10s
+>       policies:
+>         - {name: errors, type: status_code, status_code: {status_codes: [ERROR]}}
+>         - {name: slow, type: latency, latency: {threshold_ms: 1000}}
+>         - {name: probabilistic, type: probabilistic, probabilistic: {sampling_percentage: 10}}
+>   exporters:
+>     otlp/tempo: {endpoint: tempo:4317}
+>     prometheusremotewrite: {endpoint: http://mimir:9009/api/v1/push}
+> ```
+>
+> **Когда применять:** Kubernetes-кластер с >50 сервисами или >1000 подов; multi-cluster setup; необходимость tail-sampling. Для small setup (<10 сервисов) достаточно Gateway mode.
+>
+> **Подводные камни:** **Loadbalancing exporter и pod restarts** — при перезапуске Gateway pod трейсы могут разорваться (spans на разных Gateway). Решение: использовать `sticky session` через `headless service`. **Memory pressure в Gateway** при tail-sampling — нужен `memory_limiter` обязательно, иначе OOM. **Версионная совместимость** OTel Collector меняется быстро — pinned version в Helm chart.
+>
+> **Связанные вопросы:** [[Q26]] — sampling стратегии; [[Q28]] — observability без перегруза; [[Q39]] — FinOps и sampling.
+>
+> ---
+>
+> #### D) Использовать sidecar pattern для каждого приложения — это даёт максимальную изоляцию — ❌ Неверно
+>
+> **Что на самом деле:** Sidecar в каждом pod создаёт огромные накладные расходы: 1000 pods × Collector overhead (50–200 MB RAM каждый) = 50–200 GB кластерной памяти. DaemonSet (один Collector на ноду) даёт ту же изоляцию по нодам с в 10–100x меньшим overhead. Sidecar уместен только для critical isolation requirements (multi-tenant с строгой изоляцией).
+>
+> **Откуда путаница:** sidecar pattern популярен (Istio, Envoy), но не всегда оптимален.
+>
+> **Если бы это было правдой:** kube-prometheus-stack и популярные Helm charts использовали бы sidecar, но они используют DaemonSet/Deployment.
+>
+> ---
+
+## Q35. Continuous Profiling: Pyroscope, Grafana Phlare, eBPF?
 
 **Continuous Profiling** — постоянный сбор профилей производительности в production, в отличие от разового профилирования при расследовании. Четвёртый столп observability.
 
