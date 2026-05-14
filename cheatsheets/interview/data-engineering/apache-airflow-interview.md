@@ -1128,10 +1128,109 @@ helm install airflow apache-airflow/airflow
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. Best practices для production DAGs? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие реальные scaling limits у одного Airflow instance и что становится bottleneck'ом первым?
+>
+> ---
+>
+> #### A) Airflow выдерживает миллионы DAG на одной machine без проблем — горизонтальное масштабирование не нужно — ❌ Неверно
+>
+> **Что на самом деле:** один Airflow instance практически упирается в **5000-10000 DAG'ов** даже на мощной hardware. Дальше начинаются проблемы: scheduler не успевает парсить DAG-файлы, metadata DB деградирует из-за роста таблиц `task_instance`/`dag_run`, UI становится медленным. Крупные компании (Airbnb, Lyft) разделяют DAG'и по нескольким Airflow installations по доменам.
+>
+> **Откуда путаница:** документация Airflow редко даёт жёсткие цифры, и кажется, что "просто добавь workers". На деле workers — не bottleneck; bottleneck — scheduler и metadata DB.
+>
+> **Если бы это было правдой:** Airbnb и Lyft не разделяли бы свои Airflow installations. На практике даже компании-создатели делят по командам.
+>
+> ---
+>
+> #### B) Главный bottleneck — workers; добавляешь больше worker нод и любое количество DAG'ов работает — ❌ Неверно
+>
+> **Что на самом деле:** workers — самый легко масштабируемый компонент (особенно с KubernetesExecutor). Реальные bottleneck'и в порядке возникновения: (1) **Scheduler** — медленно сканирует DAG-файлы, у него есть `parsing_processes` limit; (2) **Metadata DB** — таблица `task_instance` растёт нелинейно при много DAG, нужны индексы и retention policy; (3) **Webserver** — рендеринг UI с тысячами DAG медленный.
+>
+> **Откуда путаница:** интуитивно scaling = "больше воркеров". Это работает в простых системах (web servers). В Airflow workers — terminal nodes, bottleneck выше по pipeline.
+>
+> **Если бы это было правдой:** проблема решалась бы добавлением `airflow celery worker` процессов. На практике даже с 100 workers, если scheduler не успевает планировать, кластер простаивает.
+>
+> ---
+>
+> #### C) Лимит — около 100 DAG, дальше Airflow не работает физически — ❌ Неверно
+>
+> **Что на самом деле:** 100 DAG — это слабый LocalExecutor setup. Production CeleryExecutor спокойно держит 1000-5000 DAG, KubernetesExecutor — 5000-10000+ с правильным тюнингом. Лимит 100 — это рекомендация для LocalExecutor на одной VM.
+>
+> **Откуда путаница:** новички видят, что Airflow "медленно работает" с парой сотен DAG, и делают вывод о hard limit. На деле нужно тюнить `parsing_processes`, `max_active_runs_per_dag`, метаданные.
+>
+> **Если бы это было правдой:** Detmir/Lamoda не могли бы вести 1000+ pipelines. На практике они работают на одном Airflow + правильная архитектура.
+>
+> ---
+>
+> #### D) Лимит зависит от executor и hardware: LocalExecutor ≈ 50-200 DAG / ~100 параллельных tasks; CeleryExecutor ≈ 1000+ DAG / тысячи tasks; KubernetesExecutor ограничен только K8s ресурсами; первые bottleneck'и — Scheduler (DAG parsing), Metadata DB (рост task_instance), Network для distributed; крупные installations разделяют DAG по нескольким Airflow по доменам — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Airflow scaling — это **многомерная задача**, не «один лимит». Нужно отдельно мерить:
+> - **DAG count** — сколько Python-файлов сканирует scheduler.
+> - **Task instances per day** — сколько строк добавляется в `task_instance` ежедневно.
+> - **Concurrent tasks** — сколько одновременно выполняется.
+> - **DAG run frequency** — как часто запускаются (минутные DAG — нагрузка на scheduler).
+>
+> Реальные production числа (по сообществу):
+> - **Airbnb** (создатели): ~5000 DAG, разбиты по командам на разные installations.
+> - **Lyft**: десятки тысяч DAG, делят по доменам.
+> - **Detmir / Avito-уровень**: 1000-3000 DAG на одном instance с тюнингом.
+> - **Стандартный enterprise**: 200-500 DAG, никаких проблем без тюнинга.
+>
+> Bottleneck'и и решения:
+> 1. **Scheduler DAG parsing** — `parsing_processes` (default 2 → 8-16 для prod), `min_file_process_interval` (30 → 120 сек), `dag_dir_list_interval`.
+> 2. **Metadata DB** — индексы по `dag_id, execution_date`, регулярный `VACUUM ANALYZE`, retention policy на `task_instance`/`log`/`xcom` (например `airflow db clean --clean-before-timestamp`).
+> 3. **DAG-Processor isolation (2.3+)** — выделить отдельный процесс `airflow dag-processor` от scheduler для горизонтального scaling парсинга.
+> 4. **HA Scheduler (2.0+)** — несколько scheduler replicas (active-active через row-level locking).
+>
+> **Пример:**
+> ```python
+> # airflow.cfg для большого install (3000 DAG)
+> [scheduler]
+> parsing_processes = 16
+> min_file_process_interval = 120
+> dag_dir_list_interval = 300
+> scheduler_heartbeat_sec = 5
+> max_dagruns_to_create_per_loop = 50
+>
+> [core]
+> max_active_runs_per_dag = 16
+> max_active_tasks_per_dag = 64
+> parallelism = 1024   # глобальный лимит concurrent task instances
+> dag_concurrency = 64
+>
+> [database]
+> sql_alchemy_pool_size = 30
+> sql_alchemy_max_overflow = 60
+>
+> [logging]
+> remote_logging = True
+> remote_base_log_folder = s3://airflow-prod/logs/
+> ```
+>
+> ```bash
+> # cron job для очистки metadata DB раз в неделю
+> airflow db clean --clean-before-timestamp '2025-04-01' \
+>   --tables task_instance,xcom,job,log --yes
+> ```
+>
+> **Когда применять:**
+> - **Один Airflow на компанию** — до ~500 DAG, простая структура.
+> - **Один Airflow на команду / домен** — 500-3000 DAG на instance, при росте организации.
+> - **Разделение по environment (dev/prod)** — обязательно, не один Airflow для всех сред.
+> - **Federated Airflow** — у Lyft каждая команда self-service, единый UI через aggregator.
+>
+> **Подводные камни:**
+> - **`max_active_runs_per_dag=16` default может быть мало**: при backfill можно получить tasks waiting on slot. Тюнить под рабочую нагрузку.
+> - **Long-running TaskInstance retention**: таблица `log` в metadata DB растёт быстрее всех; chunked deletes обязательны.
+> - **DAG file size**: каждый DAG-файл парсится при каждом scan; если в файле тяжёлые imports или DB-запросы — это убивает scheduler. Top-level Python код DAG должен быть pure-functional.
+> - **Smart Sensors (deprecated)** vs **Deferrable Sensors (2.2+)**: для крупных install Deferrable Sensors почти обязательны — экономят worker slots на сотнях ждущих tasks.
+>
+> **Связанные вопросы:** [[Q17]] — CeleryExecutor scaling; [[Q18]] — KubernetesExecutor; [[Q24]] — production deploy с правильными конфигами; [[Q26]] — best practices для prod DAGs.
+
+## Q26. Best practices для production DAGs?
 
 1. **Idempotency** — DAG должен быть безопасен к повторному запуску
 2. **Atomicity** — task делает одну вещь, можно re-run
@@ -1146,10 +1245,123 @@ helm install airflow apache-airflow/airflow
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. (!) Airflow vs Prefect vs Dagster? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что важнее всего соблюдать при разработке production DAG, и почему именно idempotency и atomicity?
+>
+> ---
+>
+> #### A) Главное — писать DAG как можно короче (1-2 task) для скорости — ❌ Неверно
+>
+> **Что на самом деле:** короткий DAG **противоречит** atomicity. Если 5 операций уместить в один task, то при failure посередине нельзя re-run только проблемную часть — придётся повторять весь task, что часто невозможно (нет idempotency). Production DAG обычно разбит на 5-15 small atomic tasks.
+>
+> **Откуда путаница:** меньше tasks = меньше overhead. Это верно для overhead scheduler, но цена — потеря recoverability. Trade-off в пользу granularity.
+>
+> **Если бы это было правдой:** все ETL писали бы как `BashOperator('python whole_pipeline.py')`. На практике это анти-паттерн — нельзя re-run только failed step.
+>
+> ---
+>
+> #### B) Хранить все секреты прямо в DAG-коде для transparency — ❌ Неверно
+>
+> **Что на самом деле:** **категорически нельзя** хранить secrets в DAG-коде. Во-первых, DAG лежит в git — secret окажется в истории. Во-вторых, DAG-файл доступен из UI через "Code" tab — любой Airflow user увидит пароли. Правильно: Connections (encrypted в metadata DB) + Secrets Backend (Vault, AWS Secrets Manager) для creds, Variables для config (только non-sensitive).
+>
+> **Откуда путаница:** в туториалах часто показывают `password = "test123"` для простоты. В production это compliance violation.
+>
+> **Если бы это было правдой:** SOC2/ISO27001 аудит провалился бы при первой проверке. На практике все enterprise Airflow выносят secrets в Vault.
+>
+> ---
+>
+> #### C) Production DAGs должны быть **идемпотентны** (безопасный re-run) и **атомарны** (task = одна операция); не импортировать тяжёлые libs на топ-level (медленный parsing); использовать Variables/Connections (не hardcode); Pools для shared resources; настраивать retries и SLA; писать pytest на DAG; деплоить через CI/CD из git — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Production DAG отличается от dev «работает на моём laptop» именно дисциплиной этих принципов. Idempotency означает: запуск DAG с теми же параметрами (logical_date) дважды даёт тот же результат, без дублей в данных. Atomicity означает: каждый task делает одну логическую операцию и либо успешно завершается, либо «как будто не выполнялся» — нет частичных эффектов.
+>
+> Без idempotency backfill становится опасным (дубли в warehouse), retries приводят к double-charge в Stripe, а scheduled retry после failure ломает downstream agg.
+>
+> Без atomicity нельзя re-run только failed step — приходится перезапускать огромную операцию или править данные руками.
+>
+> **Пример:**
+> ```python
+> from airflow.decorators import dag, task
+> from airflow.models import Variable
+> from airflow.providers.postgres.hooks.postgres import PostgresHook
+> from datetime import datetime
+>
+> default_args = {
+>     'owner': 'data-platform',
+>     'retries': 3,
+>     'retry_delay': timedelta(minutes=5),
+>     'retry_exponential_backoff': True,
+>     'sla': timedelta(hours=2),                  # alert если task > 2h
+>     'on_failure_callback': send_to_pagerduty,
+>     'on_sla_miss_callback': send_to_slack,
+> }
+>
+> @dag(
+>     dag_id='orders_daily_etl',
+>     schedule='@daily',
+>     start_date=datetime(2025, 1, 1),
+>     catchup=False,
+>     max_active_runs=1,                          # не позволять concurrent runs
+>     default_args=default_args,
+>     tags=['orders', 'critical', 'tier1'],
+> )
+> def orders_etl():
+>     @task(pool='warehouse_write_pool', pool_slots=2)
+>     def load_to_warehouse(logical_date: str):
+>         hook = PostgresHook(postgres_conn_id='warehouse')
+>         # IDEMPOTENCY: DELETE+INSERT за день, не append-only
+>         hook.run(f"""
+>             DELETE FROM analytics.orders WHERE date = '{logical_date}';
+>             INSERT INTO analytics.orders
+>             SELECT * FROM staging.orders WHERE date = '{logical_date}';
+>         """)
+>
+>     @task
+>     def validate_row_count(logical_date: str):
+>         hook = PostgresHook(postgres_conn_id='warehouse')
+>         (cnt,) = hook.get_first(
+>             f"SELECT COUNT(*) FROM analytics.orders WHERE date = '{logical_date}'"
+>         )
+>         min_expected = int(Variable.get("orders_min_daily", 1000))
+>         if cnt < min_expected:
+>             raise ValueError(f"Only {cnt} rows, expected >= {min_expected}")
+>
+>     # ATOMICITY: каждый task — одна логическая операция
+>     extracted = extract_from_source('{{ ds }}')
+>     transformed = transform(extracted)
+>     load = load_to_warehouse('{{ ds }}')
+>     transformed >> load >> validate_row_count('{{ ds }}')
+>
+> orders_etl()
+> ```
+>
+> **Когда применять:**
+> - **Idempotency через MERGE/UPSERT или DELETE+INSERT** — для warehouse loads (BigQuery, Snowflake, Postgres).
+> - **Idempotency через unique constraint + ON CONFLICT** — для row-level inserts в OLTP.
+> - **Pools для shared API rate limits** — Avito ETL читает Bitrix24 API, pool ограничивает 5 concurrent calls.
+> - **SLA alerts** — для tier-1 DAG, чтобы команда узнавала о деградации до того, как заметит бизнес.
+>
+> **Подводные камни:**
+> - **`datetime.now()` в DAG ломает idempotency** — используй `{{ ds }}` или `logical_date` из context.
+> - **Top-level imports тяжёлых libraries (pandas, requests с API call)** — scheduler парсит DAG-файл часто; долгий import = scheduler hang.
+> - **Catchup=True по умолчанию** — при deploy старого DAG с `start_date` 2 года назад создаст сотни runs.
+> - **PythonOperator со side-effects на module-level** — выполнится при каждом parse, не только при run.
+> - **SLA не работает для очень коротких DAG** — `sla` checks делается по интервалам scheduler, малозаметно для DAG < 5 минут.
+>
+> **Связанные вопросы:** [[Q13]] — backfill требует idempotency; [[Q20]] — Connections и Variables для конфигурации; [[Q24]] — deploy DAG через git-sync; [[Q25]] — scaling tradeoffs.
+>
+> ---
+>
+> #### D) DAG никогда не нужно тестировать — Airflow сам проверяет валидность — ❌ Неверно
+>
+> **Что на самом деле:** Airflow проверяет **syntax** при парсинге, но не **бизнес-логику**, не зависимости, не корректность параметров. DAG может пройти парсинг и провалиться в runtime (неверный SQL, отсутствующий column). Production DAGs обязательно покрывают тестами: `pytest` для проверки структуры DAG (количество tasks, dependencies), unit-тесты для Python функций используемых в `@task`, integration-тесты с реальной БД через testcontainers.
+>
+> **Откуда путаница:** Airflow CLI `airflow dags test` проверяет, что DAG парсится — это уже считается "тестированием" наивно. На практике этого мало.
+>
+> **Если бы это было правдой:** ETL pipelines падали бы только в production. На практике крупные команды (Detmir, Yandex) имеют 30-50% test coverage на DAG-код и helper-функции.
+
+## Q27. (!) Airflow vs Prefect vs Dagster?
 
 | Критерий | Airflow | Prefect | Dagster |
 |----------|---------|---------|---------|
