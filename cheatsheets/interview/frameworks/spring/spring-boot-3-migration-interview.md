@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-boot-3-migration]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Spring Boot 3 Migration`
 
@@ -67,7 +67,7 @@ updated: "2026-04-25"
 >
 > ---
 >
-> #### B) Java 17 baseline, Jakarta EE 9+ namespace migration, Spring Framework 6, GraalVM Native Image first-class support, Micrometer Observation API (metrics + tracing) — ✓ Верно
+> #### D) Java 17 baseline, Jakarta EE 9+ namespace migration, Spring Framework 6, GraalVM Native Image first-class support, Micrometer Observation API (metrics + tracing) — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -109,7 +109,7 @@ updated: "2026-04-25"
 >
 > ---
 >
-> #### D) Spring Boot 3 удалил Actuator, заменил его на отдельный starter `spring-boot-starter-observability` — ❌ Неверно
+> #### B) Spring Boot 3 удалил Actuator, заменил его на отдельный starter `spring-boot-starter-observability` — ❌ Неверно
 >
 > **Что на самом деле:** Actuator **полностью сохранён** в Spring Boot 3 — это `spring-boot-starter-actuator`. Изменилось только то, что Micrometer Observation API заменил Spring Cloud Sleuth для tracing, и переименованы некоторые properties (`management.metrics.export.prometheus.*` → `management.prometheus.metrics.export.*`).
 >
@@ -117,9 +117,8 @@ updated: "2026-04-25"
 >
 > **Если бы это было правдой:** все Kubernetes liveness/readiness probes, healthcheck-эндпоинты `/actuator/health`, метрики Prometheus в SB 3 не работали бы — но они работают штатно.
 >
-> ---
->
-> ## Q2. Что такое миграция с javax на jakarta и почему она нужна?
+
+## Q2. Что такое миграция с javax на jakarta и почему она нужна?
 
 В 2017 Oracle передала Java EE в Eclipse Foundation. Eclipse не смогла сохранить `javax.*` пакеты из-за trademark. Результат: вся платформа переименована в **Jakarta EE** с пакетами `jakarta.*`.
 
@@ -204,9 +203,8 @@ import jakarta.validation.constraints.NotNull;
 >
 > **Если бы это было правдой:** Spring мог бы оставить `javax.*` (как Java EE 8 stack) — но тогда не работали бы Hibernate 6 / Tomcat 10 / Jetty 11, и Spring замёрз бы на устаревшем стеке.
 >
-> ---
->
-> ## Q3. Как выполнить миграцию с Spring Boot 2.7 на 3.x?
+
+## Q3. Как выполнить миграцию с Spring Boot 2.7 на 3.x?
 
 ```text
 Последовательность:
@@ -241,17 +239,7 @@ import jakarta.validation.constraints.NotNull;
 >
 > ---
 >
-> #### A) Сразу `spring-boot-starter-parent` 3.2.0, потом фиксить compile errors одну за другой, тесты переписывать в конце — ❌ Неверно
->
-> **Что на самом деле:** прямой прыжок 2.7 → 3.2 обычно даёт **сотни compile errors** одновременно: javax→jakarta, Spring Security 6 breaking, Hibernate 6 HQL изменения, Sleuth удалён, Actuator endpoint переименования. Распутывать это всё разом — путь к багам, особенно когда тесты ещё не работают (нечем проверить корректность правок).
->
-> **Откуда путаница:** для маленьких проектов прыжок 2.7→3.2 действительно проходит за час. Для production-приложения с 50+ зависимостями — это недели работы и регресс-баги.
->
-> **Если бы это было правдой:** команда правит код «до зелёных тестов», но без поэтапной верификации не понимает, какой именно шаг ввёл регрессию. Типичный сценарий — обнаружение Hibernate 6 HQL bug через 2 недели после релиза в production.
->
-> ---
->
-> #### B) Сначала обновить JDK до 17 на 2.7.x → обновить до latest 2.7.x (последний minor) → запустить OpenRewrite recipe → обновить parent на 3.x → исправить оставшиеся ошибки и протестировать — ✓ Верно
+> #### A) Сначала обновить JDK до 17 на 2.7.x → обновить до latest 2.7.x (последний minor) → запустить OpenRewrite recipe → обновить parent на 3.x → исправить оставшиеся ошибки и протестировать — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -296,6 +284,16 @@ import jakarta.validation.constraints.NotNull;
 >
 > ---
 >
+> #### B) Сразу `spring-boot-starter-parent` 3.2.0, потом фиксить compile errors одну за другой, тесты переписывать в конце — ❌ Неверно
+>
+> **Что на самом деле:** прямой прыжок 2.7 → 3.2 обычно даёт **сотни compile errors** одновременно: javax→jakarta, Spring Security 6 breaking, Hibernate 6 HQL изменения, Sleuth удалён, Actuator endpoint переименования. Распутывать это всё разом — путь к багам, особенно когда тесты ещё не работают (нечем проверить корректность правок).
+>
+> **Откуда путаница:** для маленьких проектов прыжок 2.7→3.2 действительно проходит за час. Для production-приложения с 50+ зависимостями — это недели работы и регресс-баги.
+>
+> **Если бы это было правдой:** команда правит код «до зелёных тестов», но без поэтапной верификации не понимает, какой именно шаг ввёл регрессию. Типичный сценарий — обнаружение Hibernate 6 HQL bug через 2 недели после релиза в production.
+>
+> ---
+>
 > #### C) Сразу мигрировать на SB 3.x, потом дотягивать JDK 17 при следующем спринте — ❌ Неверно
 >
 > **Что на самом деле:** Spring Boot 3 **требует** Java 17 для компиляции и runtime. Без JDK 17 даже Maven не сможет загрузить `spring-boot-starter-parent` 3.x — будет `UnsupportedClassVersionError` уже на этапе resolution.
@@ -314,9 +312,8 @@ import jakarta.validation.constraints.NotNull;
 >
 > **Если бы это было правдой:** разработчики бы переписывали бизнес-логику и теряли edge case коды, накопленные годами. Регресс-баги становятся гарантированными.
 >
-> ---
->
-> ## Q4. Какие javax-пакеты НЕ мигрировали на jakarta?
+
+## Q4. Какие javax-пакеты НЕ мигрировали на jakarta?
 
 ```text
 ОСТАЛИСЬ javax.*:
@@ -417,9 +414,8 @@ import jakarta.validation.constraints.NotNull;
 >
 > **Если бы это было правдой:** в SB 3 можно было бы использовать `@Inject UserTransaction` из `javax.transaction` — но нет, нужен `jakarta.transaction.UserTransaction`.
 >
-> ---
->
-> ## Q5. Что такое HTTP Interface Clients в Spring 6?
+
+## Q5. Что такое HTTP Interface Clients в Spring 6?
 
 Декларативный HTTP-клиент (аналог Feign), встроенный в Spring Framework 6:
 
@@ -469,7 +465,7 @@ WeatherClient weatherClient = HttpServiceProxyFactory
 >
 > ---
 >
-> #### A) HTTP Interface Clients — обёртка над OpenFeign внутри Spring Cloud, требует `@EnableFeignClients` — ❌ Неверно
+> #### B) HTTP Interface Clients — обёртка над OpenFeign внутри Spring Cloud, требует `@EnableFeignClients` — ❌ Неверно
 >
 > **Что на самом деле:** HTTP Interface Clients — **встроенная** в Spring Framework 6 фича (не Spring Cloud, не Feign). Создаются через `HttpServiceProxyFactory` поверх `WebClient` или `RestClient`. `@EnableFeignClients` — отдельная аннотация Spring Cloud OpenFeign, никак не связана с `@HttpExchange`.
 >
@@ -479,7 +475,7 @@ WeatherClient weatherClient = HttpServiceProxyFactory
 >
 > ---
 >
-> #### B) Декларативный HTTP-клиент в Spring Framework 6, использует `@HttpExchange` / `@GetExchange` / `@PostExchange`; создаётся через `HttpServiceProxyFactory` поверх WebClient или RestClient; не требует Spring Cloud — ✓ Верно
+> #### A) Декларативный HTTP-клиент в Spring Framework 6, использует `@HttpExchange` / `@GetExchange` / `@PostExchange`; создаётся через `HttpServiceProxyFactory` поверх WebClient или RestClient; не требует Spring Cloud — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -539,9 +535,8 @@ WeatherClient weatherClient = HttpServiceProxyFactory
 >
 > **Если бы это было правдой:** в `target/generated-sources/` появлялись бы `WeatherClientImpl.java` — но их нет; интерфейс остаётся интерфейсом, и runtime создаёт proxy.
 >
-> ---
->
-> ## Q6. Что такое Problem Details (RFC 7807) в Spring Boot 3?
+
+## Q6. Что такое Problem Details (RFC 7807) в Spring Boot 3?
 
 Стандарт для JSON error responses в REST API:
 
@@ -602,7 +597,7 @@ Content-Type: `application/problem+json`.
 >
 > ---
 >
-> #### B) Стандарт IETF RFC 7807; JSON-объект с полями `type`, `title`, `status`, `detail`, `instance` + любые custom; Content-Type `application/problem+json`; Spring Boot 3 включает по умолчанию через property `spring.mvc.problemdetails.enabled` — ✓ Верно
+> #### D) Стандарт IETF RFC 7807; JSON-объект с полями `type`, `title`, `status`, `detail`, `instance` + любые custom; Content-Type `application/problem+json`; Spring Boot 3 включает по умолчанию через property `spring.mvc.problemdetails.enabled` — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -674,7 +669,7 @@ Content-Type: `application/problem+json`.
 >
 > ---
 >
-> #### D) Problem Details доступен только в Spring WebFlux (reactive), Spring MVC не поддерживает — ❌ Неверно
+> #### B) Problem Details доступен только в Spring WebFlux (reactive), Spring MVC не поддерживает — ❌ Неверно
 >
 > **Что на самом деле:** Spring Boot 3 поддерживает Problem Details **в обоих стеках** — Spring MVC и Spring WebFlux. Каждый стек имеет свой property:
 > - `spring.mvc.problemdetails.enabled` — для Spring MVC
@@ -684,9 +679,8 @@ Content-Type: `application/problem+json`.
 >
 > **Если бы это было правдой:** все приложения на Spring MVC (большинство production-сервисов) не могли бы использовать стандарт — но они могут, и это основной use-case.
 >
-> ---
->
-> ## Q7. Что такое GraalVM Native Image и как Spring Boot 3 его поддерживает?
+
+## Q7. Что такое GraalVM Native Image и как Spring Boot 3 его поддерживает?
 
 **GraalVM Native Image** — AOT (ahead-of-time) компиляция JVM приложения в нативный executable:
 - Startup ~100ms (vs 2-5s для JVM)
@@ -748,7 +742,7 @@ public class MyHints implements RuntimeHintsRegistrar {
 >
 > ---
 >
-> #### B) AOT (Ahead-Of-Time) компиляция через GraalVM в single native executable; startup ~50-100ms, memory ~30% от JVM; ограничения — reflection, dynamic class loading, JNI требуют hints; Spring Boot 3 поддерживает через `spring-boot-starter-parent` AOT processing — ✓ Верно
+> #### C) AOT (Ahead-Of-Time) компиляция через GraalVM в single native executable; startup ~50-100ms, memory ~30% от JVM; ограничения — reflection, dynamic class loading, JNI требуют hints; Spring Boot 3 поддерживает через `spring-boot-starter-parent` AOT processing — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -799,7 +793,7 @@ public class MyHints implements RuntimeHintsRegistrar {
 >
 > ---
 >
-> #### C) Native Image работает на CRaC (Coordinated Restore at Checkpoint) — снимок памяти JVM — ❌ Неверно
+> #### B) Native Image работает на CRaC (Coordinated Restore at Checkpoint) — снимок памяти JVM — ❌ Неверно
 >
 > **Что на самом деле:** CRaC и GraalVM Native Image — **разные технологии**. CRaC — это снимок состояния запущенной JVM (как hibernate ноутбука), запуск восстанавливает heap и stack. Native Image — настоящая AOT компиляция в native машинный код.
 >
@@ -817,9 +811,8 @@ public class MyHints implements RuntimeHintsRegistrar {
 >
 > **Если бы это было правдой:** размер executable был бы равен размеру JVM + bytecode (200+ MB), и были бы те же ограничения по startup, что и в обычной JVM. На практике native image — это компилированный код, без bytecode runtime.
 >
-> ---
->
-> ## Q8. Как работает AOT processing в Spring Boot 3?
+
+## Q8. Как работает AOT processing в Spring Boot 3?
 
 **AOT (Ahead-of-Time)** — анализ приложения на этапе сборки и генерация дополнительного кода для ускорения старта (особенно для GraalVM).
 
@@ -849,7 +842,7 @@ java -Dspring.aot.enabled=true -jar app.jar
 >
 > ---
 >
-> #### A) AOT processing = GraalVM Native Image; разные имена одной фичи — ❌ Неверно
+> #### B) AOT processing = GraalVM Native Image; разные имена одной фичи — ❌ Неверно
 >
 > **Что на самом деле:** **AOT processing — это шаг ПОДГОТОВКИ к Native Image, но ОН ЖЕ работает и для JVM**. Spring AOT engine анализирует приложение и генерирует дополнительные классы (BeanDefinitionRegistrar, ReflectionHints), которые ускоряют startup. Native Image — следующий опциональный шаг, который компилирует всё в native executable.
 >
@@ -859,7 +852,7 @@ java -Dspring.aot.enabled=true -jar app.jar
 >
 > ---
 >
-> #### B) AOT (Ahead-Of-Time) processing в Spring Boot 3 — генерация pre-computed bean definitions, reflection hints, resource hints на этапе сборки; работает как для GraalVM Native, так и для обычного JVM (через `spring.aot.enabled=true`); ускоряет startup на 30-50% даже в JVM mode — ✓ Верно
+> #### A) AOT (Ahead-Of-Time) processing в Spring Boot 3 — генерация pre-computed bean definitions, reflection hints, resource hints на этапе сборки; работает как для GraalVM Native, так и для обычного JVM (через `spring.aot.enabled=true`); ускоряет startup на 30-50% даже в JVM mode — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -926,9 +919,8 @@ java -Dspring.aot.enabled=true -jar app.jar
 >
 > **Если бы это было правдой:** AOT работало бы для любого Java-приложения через JVM flag — но `-Dspring.aot.enabled=true` это Spring-specific property.
 >
-> ---
->
-> ## Q9. Какие изменения в Observability?
+
+## Q9. Какие изменения в Observability?
 
 Spring Boot 3 предоставляет единый API для metrics + tracing через Micrometer:
 
@@ -991,7 +983,7 @@ management:
 >
 > ---
 >
-> #### B) Micrometer Observation API заменил Spring Cloud Sleuth; единый API для metrics + tracing; интеграция через `micrometer-tracing-bridge-otel` / `-brave`; экспорт в Zipkin/OTLP/Wavefront; AOP `@Observed` для автоинструментации — ✓ Верно
+> #### D) Micrometer Observation API заменил Spring Cloud Sleuth; единый API для metrics + tracing; интеграция через `micrometer-tracing-bridge-otel` / `-brave`; экспорт в Zipkin/OTLP/Wavefront; AOP `@Observed` для автоинструментации — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -1059,7 +1051,7 @@ management:
 >
 > ---
 >
-> #### D) Tracing в Spring Boot 3 настраивается только через JFR (Java Flight Recorder), не через Micrometer — ❌ Неверно
+> #### B) Tracing в Spring Boot 3 настраивается только через JFR (Java Flight Recorder), не через Micrometer — ❌ Неверно
 >
 > **Что на самом деле:** **JFR — это JVM-level профайлер для дампов, не для distributed tracing**. Tracing спанов между микросервисами идёт через Micrometer Tracing + Zipkin/OTel. JFR используется для производительности и stack profiling, никак не пересекается с distributed tracing.
 >
@@ -1067,9 +1059,8 @@ management:
 >
 > **Если бы это было правдой:** не нужны были бы Zipkin/Jaeger UI — но они стандарт для multi-service tracing в production.
 >
-> ---
->
-> ## Q10. Что нужно знать о поддержке Virtual Threads в Spring Boot 3.2+?
+
+## Q10. Что нужно знать о поддержке Virtual Threads в Spring Boot 3.2+?
 
 Spring Boot 3.2 добавил первоклассную поддержку Java 21 Virtual Threads:
 
@@ -1190,9 +1181,8 @@ public TomcatProtocolHandlerCustomizer<?> protocolHandlerVirtualThreadExecutorCu
 >
 > **Если бы это было правдой:** VT не приносили бы выгоды большинству Spring-приложений (они MVC) — но именно для MVC они самые полезные.
 >
-> ---
->
-> ## Q11. Какие breaking changes в Spring Security 6?
+
+## Q11. Какие breaking changes в Spring Security 6?
 
 ```java
 // ДО (Spring Security 5, SB 2.x)
@@ -1238,7 +1228,7 @@ class SecurityConfig {
 >
 > ---
 >
-> #### A) Spring Security 6 удалил `SecurityFilterChain`, заменил его на `HttpSecurity` напрямую как Bean — ❌ Неверно
+> #### B) Spring Security 6 удалил `SecurityFilterChain`, заменил его на `HttpSecurity` напрямую как Bean — ❌ Неверно
 >
 > **Что на самом деле:** Наоборот, **`SecurityFilterChain` — НОВЫЙ рекомендованный способ** конфигурации в Spring Security 6. `HttpSecurity` — это builder API, а `SecurityFilterChain` — финальный результат, который регистрируется как Bean. До 6.x был `WebSecurityConfigurerAdapter` (deprecated), теперь его удалили.
 >
@@ -1248,7 +1238,7 @@ class SecurityConfig {
 >
 > ---
 >
-> #### B) `WebSecurityConfigurerAdapter` удалён → `SecurityFilterChain` Bean; `authorizeRequests` → `authorizeHttpRequests`; `antMatchers` → `requestMatchers`; Customizer-лямбды обязательны вместо `.and()`; defaults более строгие (CSRF включён, formLogin не дефолтный) — ✓ Верно
+> #### A) `WebSecurityConfigurerAdapter` удалён → `SecurityFilterChain` Bean; `authorizeRequests` → `authorizeHttpRequests`; `antMatchers` → `requestMatchers`; Customizer-лямбды обязательны вместо `.and()`; defaults более строгие (CSRF включён, formLogin не дефолтный) — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -1319,9 +1309,8 @@ class SecurityConfig {
 >
 > **Если бы это было правдой:** все web-приложения с HTML формой логина ломались бы — но они работают штатно.
 >
-> ---
->
-> ## Q12. Что такое декларативный RestClient?
+
+## Q12. Что такое декларативный RestClient?
 
 Spring Boot 3.2 принёс `RestClient` — новый блокирующий HTTP-клиент с fluent API (замена `RestTemplate`):
 
@@ -1444,9 +1433,8 @@ Mono<Order> orderMono = client.get()
 >
 > **Если бы это было правдой:** для использования RestClient пришлось бы добавлять `spring-cloud-starter-*` зависимость — но достаточно `spring-boot-starter-web`.
 >
-> ---
->
-> ## Q13. Какие изменения в auto-configuration?
+
+## Q13. Какие изменения в auto-configuration?
 
 ```java
 // ДО Spring Boot 2.x — META-INF/spring.factories
@@ -1468,10 +1456,97 @@ public class MyDataSourceAutoConfiguration { ... }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Что такое Configuration Properties Migrator? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какое главное изменение в механизме auto-configuration в Spring Boot 3?
+>
+> ---
+>
+> #### A) Auto-configuration теперь работает через annotation processor — все `@AutoConfiguration` классы генерируются как компилируемые .class — ❌ Неверно
+>
+> **Что на самом деле:** Auto-configuration **по-прежнему** работает через runtime classpath scanning, не APT. Изменился только **способ объявления** auto-configuration классов: вместо `META-INF/spring.factories` теперь файл `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` с просто списком class FQN, один на строку.
+>
+> **Откуда путаница:** появилась новая аннотация `@AutoConfiguration` (раньше использовался `@Configuration`), и может казаться, что появилась compile-time генерация.
+>
+> **Если бы это было правдой:** в `target/generated-sources/` появлялись бы файлы — но их нет. Auto-configuration discovery остаётся runtime механизмом.
+>
+> ---
+>
+> #### D) `spring.factories` заменён на `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` (plain text file, один class FQN на строку); `@AutoConfiguration` — новая marker-аннотация вместо `@Configuration`; старый формат deprecated, но всё ещё работает — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Изменения в declaration auto-configuration:
+>
+> 1. **Старый формат (Spring Boot 2.x)** — `META-INF/spring.factories`:
+>    ```properties
+>    org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+>        com.example.MyAutoConfiguration,\
+>        com.example.AnotherAutoConfiguration
+>    ```
+>    Многострочный, через `\` continuation, сложно мерджить в git.
+>
+> 2. **Новый формат (Spring Boot 3.x)** — `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`:
+>    ```
+>    com.example.MyAutoConfiguration
+>    com.example.AnotherAutoConfiguration
+>    ```
+>    Один класс на строку, без `=`, без `\` — git-friendly.
+>
+> 3. **`@AutoConfiguration`** — новая аннотация. Раньше использовался `@Configuration` + объявление в `spring.factories`. Теперь:
+>    ```java
+>    @AutoConfiguration
+>    @ConditionalOnClass(DataSource.class)
+>    public class MyDataSourceAutoConfiguration {
+>        @Bean
+>        @ConditionalOnMissingBean
+>        public DataSource dataSource() { ... }
+>    }
+>    ```
+>    `@AutoConfiguration` имеет `before`/`after` атрибуты для ordering:
+>    ```java
+>    @AutoConfiguration(after = DataSourceAutoConfiguration.class)
+>    public class MyOrmAutoConfiguration { ... }
+>    ```
+>
+> **Пример migration:**
+> ```diff
+> - // src/main/resources/META-INF/spring.factories
+> - org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+> -   com.example.MyAutoConfiguration
+> +
+> + // src/main/resources/META-INF/spring/
+> + //     org.springframework.boot.autoconfigure.AutoConfiguration.imports
+> + com.example.MyAutoConfiguration
+> ```
+>
+> **Когда применять:** при создании Spring Boot starter в SB 3+. При миграции существующих starters — заменить spring.factories на .imports файл. Spring Boot 3 поддерживает оба, но новые проекты должны использовать .imports.
+>
+> **Подводные камни:** `spring.factories` всё ещё используется для других целей (ApplicationListener, EnvironmentPostProcessor) — он не удалён полностью, только EnableAutoConfiguration перенесён. Не путать с `META-INF/spring.factories` который ещё может содержать `org.springframework.context.ApplicationListener=...`.
+>
+> **Связанные вопросы:** [[Q8]] — AOT processing (тоже изменения в инфраструктуре); [[Q1]] — ключевые изменения SB 3.
+>
+> ---
+>
+> #### C) Auto-configuration полностью удалена; все Spring Boot starter должны явно объявлять `@Configuration` классы в `META-INF/services` — ❌ Неверно
+>
+> **Что на самом деле:** Auto-configuration **сохранена** и остаётся ключевой фичей Spring Boot 3. Файл `META-INF/services` — это JDK ServiceLoader механизм, никак не связан со Spring auto-configuration. Spring использует свой собственный mechanism для discovery.
+>
+> **Откуда путаница:** JDK ServiceLoader использует похожий по идее формат (один class на строку в `META-INF/services/<interface>`).
+>
+> **Если бы это было правдой:** Spring Boot 3 starters не работали бы автоматически — но `spring-boot-starter-data-jpa` подключается и auto-configures DataSource как обычно.
+>
+> ---
+>
+> #### B) `@AutoConfiguration` — это deprecated alias для `@Configuration`, рекомендуется не использовать — ❌ Неверно
+>
+> **Что на самом деле:** Наоборот, `@AutoConfiguration` — **рекомендованная** аннотация для auto-configuration классов в Spring Boot 3+. Она расширяет `@Configuration` плюс добавляет специфические для auto-config возможности (`before`/`after` ordering). `@Configuration` сам по себе всё ещё работает, но `@AutoConfiguration` несёт явный intent.
+>
+> **Откуда путаница:** «add new annotation, keep old one» часто означает deprecation. Здесь наоборот — старый способ устаревает, новый рекомендуется.
+>
+> **Если бы это было правдой:** Spring Boot 3 internal starters не использовали бы `@AutoConfiguration` — но они используют.
+>
+
+## Q14. Что такое Configuration Properties Migrator?
 
 ```xml
 <dependency>
@@ -1493,10 +1568,102 @@ The following properties have been renamed:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Какие проблемы часто возникают при миграции? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое `spring-boot-properties-migrator` и как он помогает при миграции на Spring Boot 3?
+>
+> ---
+>
+> #### A) Это автоматический rewrite-инструмент, который переименовывает properties в исходных файлах `application.yml` — ❌ Неверно
+>
+> **Что на самом деле:** `spring-boot-properties-migrator` **не модифицирует** файлы исходного кода или конфигурации. Он работает в runtime: при запуске приложения логирует WARNING для устаревших или переименованных properties и **временно мапит** старые имена на новые. Изменения в YAML/properties файлах нужно делать вручную (или OpenRewrite recipe).
+>
+> **Откуда путаница:** название «migrator» наводит на мысль о автоматическом рефакторинге исходников. Реально это runtime diagnostic tool.
+>
+> **Если бы это было правдой:** после запуска приложения `application.yml` менялся бы on disk — но Spring не пишет в config-файлы пользователя.
+>
+> ---
+>
+> #### C) Runtime-инструмент с `scope: runtime`; логирует WARNING про устаревшие/переименованные properties; временно мапит старые имена на новые для поддержания работы приложения; удалить после миграции — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `spring-boot-properties-migrator` — диагностический модуль:
+>
+> 1. **Подключение** (только на время миграции):
+>    ```xml
+>    <dependency>
+>        <groupId>org.springframework.boot</groupId>
+>        <artifactId>spring-boot-properties-migrator</artifactId>
+>        <scope>runtime</scope>
+>    </dependency>
+>    ```
+>
+> 2. **Что делает**:
+>    - При старте Spring Boot сканирует `application.yml`/`.properties`
+>    - Сравнивает с метаданными SB 3 (где описаны renames из 2.x → 3.x)
+>    - Логирует WARNING для каждой устаревшей property
+>    - **Временно** мапит старые имена на новые, чтобы приложение не упало
+>
+> 3. **Пример вывода**:
+>    ```text
+>    The use of configuration keys that have been renamed was found
+>    in the environment:
+>      Property source: applicationConfig: [classpath:/application.yml]
+>        Key: management.metrics.export.prometheus.enabled
+>          Replacement: management.prometheus.metrics.export.enabled
+>      Key: spring.kafka.consumer.properties.specific.avro.reader
+>          Replacement: spring.kafka.consumer.properties.specific\.avro\.reader
+>    ```
+>
+> 4. **Действие**: вручную переименовать в YAML на новые ключи.
+>
+> 5. **Удалить** dependency после миграции (избежать перфоманс-оверхеда на runtime scanning).
+>
+> **Пример migration:**
+> ```yaml
+> # ДО (Spring Boot 2.7)
+> management:
+>   metrics:
+>     export:
+>       prometheus:
+>         enabled: true
+>
+> # ПОСЛЕ (Spring Boot 3.0+)
+> management:
+>   prometheus:
+>     metrics:
+>       export:
+>         enabled: true
+> ```
+>
+> **Когда применять:** временно во время миграции SB 2.7 → 3.x. Подключить → запустить → собрать WARNINGs → исправить YAML → удалить dependency.
+>
+> **Подводные камни:** не покрывает 100% renames — Spring Boot 3.1, 3.2 добавляют новые renames. Каждый minor upgrade — снова подключить migrator. Не работает для third-party библиотек (только Spring Boot core). Может слегка замедлить startup (~50-100ms) — не оставлять в production.
+>
+> **Связанные вопросы:** [[Q3]] — последовательность миграции; [[Q9]] — Observability properties renames; [[Q15]] — типичные проблемы.
+>
+> ---
+>
+> #### B) Это maven plugin, запускается через `mvn spring-boot:migrate-properties` и переписывает application.yml — ❌ Неверно
+>
+> **Что на самом деле:** properties-migrator — **runtime dependency**, не Maven plugin. Подключается через `<dependency>` с `<scope>runtime</scope>`, не через `<plugin>`. Maven goal `migrate-properties` не существует. Для рефакторинга на этапе сборки используется OpenRewrite recipe.
+>
+> **Откуда путаница:** Spring Boot Maven plugin (`spring-boot-maven-plugin`) предоставляет goals (`run`, `repackage`, `build-image`, `process-aot`). Аналогия может ввести в заблуждение.
+>
+> **Если бы это было правдой:** в логах сборки появлялись бы WARN — но WARN появляются только при `bootRun`/runtime запуске.
+>
+> ---
+>
+> #### D) Properties Migrator поддерживает только Spring Cloud Config Server, для локальных application.yml не работает — ❌ Неверно
+>
+> **Что на самом деле:** properties-migrator работает с **любыми** property sources — `application.yml`, `application.properties`, env vars, command line args, Spring Cloud Config Server. Это universal механизм через Spring `Environment` API.
+>
+> **Откуда путаница:** Spring Cloud Config Server имеет свои механизмы для конфигурации, и можно предположить специализацию.
+>
+> **Если бы это было правдой:** standalone приложения (без Cloud Config) не получали бы WARN — но они получают.
+>
+
+## Q15. Какие проблемы часто возникают при миграции?
 
 1. **Jakarta EE несовместимость библиотек**:
 ```text
@@ -1532,14 +1699,100 @@ management.metrics.export.*  → management.prometheus.*
 
 **Best practice**: разбить миграцию на этапы — сначала Java 17, потом зависимости до последних 2.x, затем 3.0, затем 3.x++.
 
-## See also
-
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Spring Boot](spring-boot-interview.md) — основы Spring Boot, auto-configuration ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие самые частые проблемы возникают при миграции Spring Boot 2.7 → 3.x в production-проектах?
+>
+> ---
+>
+> #### A) Главная проблема — необходимость переписать всё на Kotlin, потому что SB 3 не поддерживает Java — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3 **полноценно поддерживает Java** (требует Java 17+, но это не Kotlin). Java остаётся основным языком для Spring. Kotlin тоже поддерживается, но это альтернатива, не требование.
+>
+> **Откуда путаница:** в community много hype вокруг Kotlin + Spring, и можно ошибочно подумать что SB 3 forced миграцию.
+>
+> **Если бы это было правдой:** все existing Spring projects на Java были бы вынуждены переписаться — это огромная стоимость, не реальная.
+>
+> ---
+>
+> #### B) Third-party библиотеки без jakarta-поддержки + Hibernate 6 HQL/SQL changes + Spring Security 6 breaking + Sleuth → Micrometer Tracing + Actuator properties renames + Jackson 2.14 stricter parsing — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Топ-7 типичных проблем при миграции 2.7 → 3.x:
+>
+> 1. **Jakarta EE несовместимость третьих библиотек**:
+>    ```text
+>    Error: NoClassDefFoundError: javax/servlet/http/HttpServletRequest
+>    → Решение: обновить library (springdoc-openapi-starter-webmvc-ui 2.x вместо springfox)
+>    или заменить на jakarta-compatible alternative
+>    ```
+>
+> 2. **Hibernate 6 breaking changes**:
+>    - HQL парсер переписан (некоторые запросы перестают парситься)
+>    - SQL diaeplct generation отличается (например `nvarchar` vs `varchar` для MSSQL)
+>    - `@OneToMany(fetch=LAZY)` дефолт изменился
+>    - Удалены некоторые сидераторы (`SequenceStyleGenerator` теперь дефолт для PostgreSQL)
+>
+> 3. **Spring Security 6**: `WebSecurityConfigurerAdapter` удалён (см. Q11).
+>
+> 4. **Spring Cloud Sleuth удалён** → переходить на `micrometer-tracing-bridge-otel` или `-brave`.
+>
+> 5. **Actuator properties переименованы**:
+>    ```yaml
+>    # старые
+>    management.metrics.export.prometheus.enabled
+>    management.metrics.export.wavefront.*
+>    # новые
+>    management.prometheus.metrics.export.enabled
+>    management.wavefront.metrics.export.*
+>    ```
+>
+> 6. **WebMVC/WebFlux route changes**:
+>    - `antMatchers` → `requestMatchers`
+>    - `PathPatternParser` дефолт (более строгий чем `AntPathMatcher`)
+>
+> 7. **Jackson 2.14+** — strict number parsing; ранее терпимый к "123" в Integer стал throw. HikariCP defaults timeouts сокращены.
+>
+> **Пример проблем и решений:**
+> ```text
+> springfox-swagger2 → springdoc-openapi-starter-webmvc-ui 2.x
+> spring-cloud-starter-sleuth → micrometer-tracing-bridge-otel
+> Hibernate 5.x → 6.x (новый jakarta.persistence + новый HQL parser)
+> Lombok < 1.18.24 → 1.18.30+ (Java 17 compatibility)
+> Mockito 4.x → 5.x (Java 17 на runtime)
+> ```
+>
+> **Когда применять:** план миграции production-сервиса — выделить минимум 1-2 недели на тестирование. Использовать feature flags для постепенного rollout. Мониторить latency, error rate, GC после deploy.
+>
+> **Подводные камни:** Hibernate 6 generated SQL может отличаться → integration tests с реальной БД (Testcontainers) обязательны. Свои custom `WebSecurityConfigurerAdapter`-наследники переписывать вручную (OpenRewrite не покрывает 100%).
+>
+> **Связанные вопросы:** [[Q3]] — порядок миграции; [[Q11]] — Spring Security 6 breaking; [[Q9]] — Observability migration; [[Q14]] — properties migrator.
+>
+> ---
+>
+> #### C) Главная проблема — Tomcat 10 потерял HTTP/2 support; нужно перейти на Jetty или Netty — ❌ Неверно
+>
+> **Что на самом деле:** Tomcat 10 **полноценно поддерживает HTTP/2** (как и Tomcat 9). Главное изменение Tomcat 10 — это переход на jakarta namespace (servlet 5.0). HTTP/2 продолжает работать через `<UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol"/>` или Spring Boot property `server.http2.enabled=true`.
+>
+> **Откуда путаница:** Tomcat 10 — major version с breaking changes (servlet 5.0), и можно ожидать потерь features. Но HTTP/2 не среди них.
+>
+> **Если бы это было правдой:** все Spring Boot 3 приложения теряли бы HTTP/2 — но они работают штатно.
+>
+> ---
+>
+> #### D) Spring Boot 3 удалил поддержку SQL баз; работает только с NoSQL — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3 **полноценно поддерживает SQL** — JDBC, JPA (через Hibernate 6), R2DBC, Spring Data JDBC, Spring Data JPA. NoSQL (MongoDB, Redis, Cassandra) тоже поддерживается. Никаких удалений баз.
+>
+> **Откуда путаница:** возможно от внимания к Hibernate 6 и Jakarta Persistence — кажется что-то «полностью переделано» и могут возникнуть необычные ассоциации.
+>
+> **Если бы это было правдой:** `spring-boot-starter-data-jpa` не существовал бы — но он есть и активно используется.
+
+## See also
+
+- [Spring Boot](spring-boot-interview.md) — основы Spring Boot, auto-configuration
 - [Spring Framework](spring-framework-interview.md) — Spring Framework 6 changes
 - [Spring Security](spring-security-interview.md) — breaking changes в Spring Security 6
 - [Java Virtual Threads](../../programming-languages/java/java-virtual-threads-interview.md) — поддержка в Spring Boot 3.2+
