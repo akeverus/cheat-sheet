@@ -429,10 +429,12 @@ predicates:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Какие типы фильтров существуют в Spring Cloud Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Только Path и Method — больше ничего не нужно | ❌ ПОСЛЕДСТВИЕ: невозможна маршрутизация по тенанту/headers/host, А/B тесты невозможны.
+> - [x] Полный набор: Path, Method, Header, Query, Host, Cookie, After/Before/Between (по времени), RemoteAddr (IP), Weight (распределение трафика); комбинируются через логическое И | ✓ ПРИМЕНЯТЬ: гибкая маршрутизация. 📋 ПРАВИЛО: «все условия И, не ИЛИ». 🔗 См. Q10
+> - [ ] Predicates подключаются через ServiceFilter — отдельная подсистема | ❌ ПОСЛЕДСТВИЕ: путаница, predicates встроенные в RouteLocator.
+> - [ ] Только regex для всех условий — простота | ❌ ПОСЛЕДСТВИЕ: regex на дате/IP уродлив, type-safe Between/RemoteAddr предикаты гораздо удобнее.
+
+## Q10. (!) Какие типы фильтров существуют в Spring Cloud Gateway?
 
 Фильтры делятся на несколько категорий:
 
@@ -464,10 +466,12 @@ predicates:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) Как написать кастомный GatewayFilter? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] По области — GatewayFilter (для конкретного маршрута, AddRequestHeader/RewritePath) vs GlobalFilter (для всех, аутентификация/логирование); по фазе — Pre (до backend: auth, rate limit) и Post (после ответа: модификация, логирование); встроенные — Headers, Paths, Params, CircuitBreaker, Retry, RequestRateLimiter, ModifyRequestBody | ✓ ПРИМЕНЯТЬ: организация пайплайна. 📋 ПРАВИЛО: «pre для security, post для transform». 🔗 См. Q11
+> - [ ] Один тип GatewayFilter — больше не нужно | ❌ ПОСЛЕДСТВИЕ: невозможно сделать cross-cutting concerns (logging/metrics для всех маршрутов).
+> - [ ] Фильтры выполняются только post — после backend | ❌ ПОСЛЕДСТВИЕ: фактически неверно, pre-фильтры критичны для auth/rate limit.
+> - [ ] Фильтры — это сервлеты Servlet API | ❌ ПОСЛЕДСТВИЕ: SCG на WebFlux, никаких сервлетов, реактивный pipeline.
+
+## Q11. (!) Как написать кастомный GatewayFilter?
 
 Кастомный фильтр создаётся через наследование от `AbstractGatewayFilterFactory`:
 
@@ -525,10 +529,12 @@ filters:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Что такое GlobalFilter и чем он отличается от GatewayFilter? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Наследуем AbstractGatewayFilterFactory<Config>, реализуем apply(Config) возвращая GatewayFilter (exchange, chain) → chain.filter(exchange).then(Mono.fromRunnable(() -> ...)); код до chain.filter() — pre, в .then() — post; конфиг через @Data inner class; YAML usage с args | ✓ ПРИМЕНЯТЬ: кастомная логика на маршруте. 📋 ПРАВИЛО: «pre до chain, post в then». 🔗 См. Q12
+> - [ ] Достаточно implements GatewayFilter с filter() методом | ❌ ПОСЛЕДСТВИЕ: нет конфигурации через YAML, нет factory pattern.
+> - [ ] HandlerInterceptor из Spring MVC можно переиспользовать | ❌ ПОСЛЕДСТВИЕ: SCG на WebFlux, HandlerInterceptor оттуда не работает.
+> - [ ] Writing aspect via @Aspect — AOP | ❌ ПОСЛЕДСТВИЕ: SCG не использует AOP, фильтр должен быть в pipeline.
+
+## Q12. Что такое GlobalFilter и чем он отличается от GatewayFilter?
 
 **`GlobalFilter`** автоматически применяется ко всем маршрутам без явного указания в конфигурации, в отличие от `GatewayFilter`, который привязывается к конкретному маршруту.
 
@@ -572,10 +578,12 @@ public class RequestLoggingGlobalFilter implements GlobalFilter, Ordered {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как работает цепочка фильтров и порядок их выполнения? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] GlobalFilter — это просто рекомендуемый, можно обойтись без него | ❌ ПОСЛЕДСТВИЕ: cross-cutting concerns (auth/log) дублируются в каждом маршруте.
+> - [x] GlobalFilter автоматически применяется ко всем маршрутам (implements GlobalFilter + Ordered, @Component), GatewayFilter — только к конкретному маршруту через AbstractGatewayFilterFactory; GlobalFilter для логирования/auth/трейсинга, GatewayFilter для трансформации/retry | ✓ ПРИМЕНЯТЬ: правильный scope фильтра. 📋 ПРАВИЛО: «cross-cutting — Global». 🔗 См. Q13
+> - [ ] GlobalFilter работает только в blocking режиме | ❌ ПОСЛЕДСТВИЕ: фактическая ошибка, SCG = WebFlux, всё реактивно.
+> - [ ] GlobalFilter не может изменять request — только observability | ❌ ПОСЛЕДСТВИЕ: фактически неверно, exchange.mutate().request() позволяет менять.
+
+## Q13. Как работает цепочка фильтров и порядок их выполнения?
 
 Фильтры выполняются в определённом порядке, который контролируется интерфейсом `Ordered`:
 
@@ -604,10 +612,12 @@ graph TD
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Какие встроенные фильтры для трансформации запросов и ответов существуют? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Pre-фильтры выполняются в порядке возрастания order (от меньшего к большему), Post-фильтры — в обратном (от большего к меньшему); GlobalFilter и GatewayFilter объединяются и сортируются вместе; без явного order — в порядке объявления; контролируется через interface Ordered | ✓ ПРИМЕНЯТЬ: chain composition. 📋 ПРАВИЛО: «pre asc, post desc». 🔗 См. Q14
+> - [ ] Все фильтры выполняются параллельно для скорости | ❌ ПОСЛЕДСТВИЕ: нарушает контракт filter chain, race conditions.
+> - [ ] Порядок не контролируется — всё в HashMap | ❌ ПОСЛЕДСТВИЕ: фактически неверно, Spring сортирует по @Order/Ordered.
+> - [ ] GlobalFilter всегда после GatewayFilter | ❌ ПОСЛЕДСТВИЕ: упрощение, они объединяются в одну sorted chain.
+
+## Q14. Какие встроенные фильтры для трансформации запросов и ответов существуют?
 
 **Трансформация запросов:**
 
@@ -657,10 +667,12 @@ public RouteLocator routes(RouteLocatorBuilder builder) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Как реализовать аутентификацию и авторизацию через API Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Request: AddRequestHeader, RemoveRequestHeader, RewritePath (с regex и captures), StripPrefix, AddRequestParameter, RequestSize (5MB); Response: modifyResponseBody (Mono.just envelope) программно через RouteLocator; для тела — ModifyRequestBody/ModifyResponseBody | ✓ ПРИМЕНЯТЬ: трансформации на gateway. 📋 ПРАВИЛО: «без переписывания backend». 🔗 См. Q15
+> - [ ] Только programmatic — YAML не поддерживает | ❌ ПОСЛЕДСТВИЕ: фактически неверно, YAML filters широко используются.
+> - [ ] Только AddHeader/RemoveHeader — больше не нужно | ❌ ПОСЛЕДСТВИЕ: RewritePath и StripPrefix критичны для маршрутизации legacy → new.
+> - [ ] Трансформации требуют отдельного middleware service | ❌ ПОСЛЕДСТВИЕ: лишний hop, gateway сам умеет.
+
+## Q15. (!) Как реализовать аутентификацию и авторизацию через API Gateway?
 
 Есть два подхода:
 
@@ -741,10 +753,12 @@ public class SecurityConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Как настроить CORS в Spring Cloud Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] Каждый микросервис проверяет JWT сам — Gateway просто роутер | ❌ ПОСЛЕДСТВИЕ: дублирование auth логики, drift между сервисами, secret rotation сложен.
+> - [x] Gateway = единая точка auth: JwtAuthenticationFilter (GlobalFilter, order -100) проверяет Bearer, decode JWT, передаёт X-User-Id/X-User-Roles downstream через mutated request; альтернатива — Spring Security WebFlux с OAuth2 Resource Server + authorizeExchange | ✓ ПРИМЕНЯТЬ: централизованная auth. 📋 ПРАВИЛО: «Gateway = первый bouncer». 🔗 См. Q16
+> - [ ] Basic Auth достаточно — JWT overkill | ❌ ПОСЛЕДСТВИЕ: stateful sessions, нет SSO, refresh token невозможен.
+> - [ ] Хранить JWT в БД и проверять каждый запрос | ❌ ПОСЛЕДСТВИЕ: JWT теряет преимущества stateless, БД bottleneck.
+
+## Q16. Как настроить CORS в Spring Cloud Gateway?
 
 **Глобальная CORS-конфигурация через YAML:**
 
@@ -801,10 +815,12 @@ filters:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Как реализовать OAuth 2.0 Token Relay через Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] YAML globalcors с cors-configurations '[/**]': allowedOrigins, allowedMethods, allowedHeaders, exposedHeaders, allowCredentials, maxAge; альтернатива — CorsWebFilter @Bean с UrlBasedCorsConfigurationSource; при дублировании headers Gateway+backend — DedupeResponseHeader=Access-Control-Allow-* RETAIN_UNIQUE | ✓ ПРИМЕНЯТЬ: SPA фронтенды. 📋 ПРАВИЛО: «один CORS — на Gateway». 🔗 См. Q17
+> - [ ] CORS не нужен на Gateway — браузер сам разберётся | ❌ ПОСЛЕДСТВИЕ: 404/403 на preflight OPTIONS, фронт не работает.
+> - [ ] Использовать @CrossOrigin в контроллерах downstream | ❌ ПОСЛЕДСТВИЕ: дублирование, drift конфигурации, OPTIONS летит ко всем сервисам.
+> - [ ] AllowOrigin: "*" с credentials — для удобства | ❌ ПОСЛЕДСТВИЕ: spec нарушение (запрещено сочетание), CORS errors, security risk.
+
+## Q17. Как реализовать OAuth 2.0 Token Relay через Gateway?
 
 **Token Relay** -- это паттерн, при котором `API Gateway` выступает `OAuth 2.0 Client`, получает токен от Authorization Server и передаёт (`relay`) его downstream-сервисам.
 
@@ -857,10 +873,12 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. (!) Как реализовать Rate Limiting в API Gateway? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [x] Token Relay = Gateway как OAuth2 Client, получает Authorization Code, exchange на Access Token у Auth Server (Keycloak), фильтр TokenRelay= автоматически подставляет Bearer Token в downstream-запросы; downstream сервисы — Resource Server, проверяют jwt | ✓ ПРИМЕНЯТЬ: BFF + микросервисы с OAuth2. 📋 ПРАВИЛО: «Gateway держит токен, downstream его получает». 🔗 См. Q18
+> - [ ] Передавать пароль пользователя downstream — простота | ❌ ПОСЛЕДСТВИЕ: грубое нарушение security, пароль в логах, не SSO-совместимо.
+> - [ ] Каждый сервис делает свой OAuth flow с пользователем | ❌ ПОСЛЕДСТВИЕ: невозможно для server-to-server, UX ломается, многократные redirect.
+> - [ ] Token Relay не нужен — JWT уже Bearer | ❌ ПОСЛЕДСТВИЕ: путает Token Relay (auth code flow) с pass-through (Resource Server flow).
+
+## Q18. (!) Как реализовать Rate Limiting в API Gateway?
 
 `Spring Cloud Gateway` предоставляет встроенный `RequestRateLimiter` на основе `Redis` с алгоритмом `Token Bucket`:
 
@@ -926,10 +944,12 @@ public class RateLimiterConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) Как интегрировать Circuit Breaker с API Gateway? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [x] RequestRateLimiter фильтр на Redis с Token Bucket: replenishRate (запросов/сек), burstCapacity (всплеск), requestedTokens, key-resolver=#{@userKeyResolver}; KeyResolver Bean возвращает Mono с ключом (X-User-Id, IP, X-Api-Key); при превышении 429 + X-RateLimit-Remaining/Replenish-Rate/Burst-Capacity | ✓ ПРИМЕНЯТЬ: защита от abuse. 📋 ПРАВИЛО: «Token Bucket + Redis cluster». 🔗 См. Q19
+> - [ ] In-memory rate limiter — Redis избыточен | ❌ ПОСЛЕДСТВИЕ: rate limit per-instance, при горизонтальном scale лимит × N инстансов.
+> - [ ] Iptables на уровне OS | ❌ ПОСЛЕДСТВИЕ: не различает per-user/per-api-key, всё по IP, false positives для NAT.
+> - [ ] Только на backend, Gateway пропускает всё | ❌ ПОСЛЕДСТВИЕ: backend получает DDoS, защита поздно.
+
+## Q19. (!) Как интегрировать Circuit Breaker с API Gateway?
 
 `Spring Cloud Gateway` интегрируется с `Resilience4j` через фильтр `CircuitBreaker`:
 
@@ -995,10 +1015,12 @@ public class FallbackController {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. (!) Как API Gateway интегрируется с Service Discovery? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] CircuitBreaker фильтр SCG + Resilience4j: name (orderServiceCB), fallbackUri (forward:/fallback/orders); Resilience4j config — slidingWindowSize, failureRateThreshold 50%, waitDurationInOpenState 10s, halfOpen calls; timelimiter timeoutDuration; FallbackController возвращает graceful degradation | ✓ ПРИМЕНЯТЬ: защита от каскадных отказов. 📋 ПРАВИЛО: «open circuit → fallback». 🔗 См. Q20
+> - [ ] Только Retry без CircuitBreaker | ❌ ПОСЛЕДСТВИЕ: каскадные отказы, retry усиливает нагрузку на упавший сервис.
+> - [ ] @CircuitBreaker аннотация на gateway-методах | ❌ ПОСЛЕДСТВИЕ: SCG не вызывает методы, фильтр работает в pipeline.
+> - [ ] CB реализовать вручную через AtomicBoolean | ❌ ПОСЛЕДСТВИЕ: нет half-open, нет статистики, нет per-instance state.
+
+## Q20. (!) Как API Gateway интегрируется с Service Discovery?
 
 `Spring Cloud Gateway` автоматически интегрируется с `Eureka`, `Consul` или `Kubernetes Service Discovery` через префикс `lb://`:
 
@@ -1042,10 +1064,12 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Как реализовать балансировку нагрузки через Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Префикс lb:// в uri (lb://user-service) — Gateway резолвит через Eureka/Consul/K8s; discovery.locator.enabled=true автогенерирует маршруты /SERVICE-NAME/** для всех сервисов в реестре (удобно для dev, в prod явные маршруты для контроля экспозиции) | ✓ ПРИМЕНЯТЬ: dynamic routing. 📋 ПРАВИЛО: «lb://, не http://». 🔗 См. Q21
+> - [ ] Хардкодить http://service:8080 — простота | ❌ ПОСЛЕДСТВИЕ: при scale-out новые инстансы не подключаются, при failover — даунтайм.
+> - [ ] DNS-based discovery достаточно | ❌ ПОСЛЕДСТВИЕ: DNS TTL медленный, нет health-checks per-instance.
+> - [ ] discovery.locator.enabled=true в prod | ❌ ПОСЛЕДСТВИЕ: все внутренние сервисы автоматически экспонируются наружу — security risk.
+
+## Q21. Как реализовать балансировку нагрузки через Gateway?
 
 `Spring Cloud Gateway` использует `Spring Cloud LoadBalancer` (ранее -- `Ribbon`) для клиентской балансировки:
 
@@ -1078,10 +1102,12 @@ public class LoadBalancerConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. Поддерживает ли Spring Cloud Gateway WebSocket? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Spring Cloud LoadBalancer (заменил Ribbon) — клиентская балансировка; стратегии — RoundRobinLoadBalancer (default), RandomLoadBalancer; кастомные через ReactorServiceInstanceLoadBalancer; @LoadBalancerClient per-service config | ✓ ПРИМЕНЯТЬ: per-service балансировка. 📋 ПРАВИЛО: «client-side balance, не server-side». 🔗 См. Q22
+> - [ ] Server-side балансировка обязательна — клиентская не работает | ❌ ПОСЛЕДСТВИЕ: фактически наоборот, SCG использует client-side.
+> - [ ] Только Round-Robin поддерживается | ❌ ПОСЛЕДСТВИЕ: упускаем Random/Weighted/кастомные стратегии.
+> - [ ] Ribbon всё ещё рекомендуется | ❌ ПОСЛЕДСТВИЕ: Ribbon в maintenance mode, заменён на Spring Cloud LoadBalancer.
+
+## Q22. Поддерживает ли Spring Cloud Gateway WebSocket?
 
 Да, `Spring Cloud Gateway` поддерживает проксирование `WebSocket`-соединений. Для этого используется схема `ws://` или `wss://`:
 
@@ -1126,10 +1152,12 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Как реализовать версионирование API через Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Да: uri: ws://localhost:8081 или lb:ws://service; Gateway делает HTTP Upgrade; фильтры pre/post применяются только к initial Upgrade-запросу, не к каждому WebSocket-фрейму; таймауты отдельно через httpclient.websocket; поддержка wss:// с TLS | ✓ ПРИМЕНЯТЬ: WS-прокси для realtime сервисов. 📋 ПРАВИЛО: «ws:// схема, не http://». 🔗 См. Q23
+> - [ ] Нет, WS не поддерживается — нужен отдельный прокси | ❌ ПОСЛЕДСТВИЕ: ложно, SCG поддерживает WS с момента 2.0.
+> - [ ] Фильтры применяются к каждому WS-фрейму | ❌ ПОСЛЕДСТВИЕ: фактически неверно, фрейминг прозрачен.
+> - [ ] WS требует STOMP messaging | ❌ ПОСЛЕДСТВИЕ: STOMP — это поверх WS, SCG проксирует raw WS.
+
+## Q23. Как реализовать версионирование API через Gateway?
 
 Несколько стратегий версионирования на уровне Gateway:
 
@@ -1195,10 +1223,12 @@ routes:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. Что такое API Composition/Aggregation и как реализовать через Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] 1) URL-путь (Path=/api/v1/users/** + StripPrefix=2); 2) header-based (Header=X-Api-Version, v1); 3) Canary через Weight=group, 90/10; разные uri (lb://user-service-v1 vs v2); Weight полезен для gradual rollout | ✓ ПРИМЕНЯТЬ: API evolution. 📋 ПРАВИЛО: «URL для major, header для minor». 🔗 См. Q24
+> - [ ] Только URL versioning — header overrated | ❌ ПОСЛЕДСТВИЕ: невозможно делать canary, нужно менять клиентский код.
+> - [ ] Versioning не нужен — всегда обратная совместимость | ❌ ПОСЛЕДСТВИЕ: невозможные breaking changes, accumulated tech debt.
+> - [ ] Менять контракт сразу для всех клиентов | ❌ ПОСЛЕДСТВИЕ: ломает интеграции, mobile clients не обновляются мгновенно.
+
+## Q24. Что такое API Composition/Aggregation и как реализовать через Gateway?
 
 **API Composition** -- паттерн, при котором `API Gateway` вызывает несколько backend-сервисов, собирает их ответы и возвращает клиенту единый агрегированный результат.
 
@@ -1264,10 +1294,12 @@ public class DashboardAggregationFilter implements GlobalFilter, Ordered {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. (!) Сравните Spring Cloud Gateway, Kong и Nginx как API Gateway ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Gateway вызывает несколько backend-сервисов параллельно (Mono.zip), агрегирует JSON, возвращает клиенту единый ответ; реализация — GlobalFilter с WebClient + Mono.zip + writeWith; для сложных сценариев лучше отдельный BFF или CQRS с предвычисленными views — Gateway не должен быть orchestrator | ✓ ПРИМЕНЯТЬ: dashboard-эндпоинты. 📋 ПРАВИЛО: «aggregate не business logic». 🔗 См. Q25
+> - [ ] Aggregation = call в цикле sync HttpClient | ❌ ПОСЛЕДСТВИЕ: блокировка WebFlux thread, latency = sum.
+> - [ ] Aggregation на client side — Gateway просто роутер | ❌ ПОСЛЕДСТВИЕ: chatty, N сетевых вызовов с UI, mobile страдает.
+> - [ ] Использовать GraphQL для всего — Gateway лишний | ❌ ПОСЛЕДСТВИЕ: путаница инструментов, GraphQL — это другой слой, не routing.
+
+## Q25. (!) Сравните Spring Cloud Gateway, Kong и Nginx как API Gateway
 
 | Аспект | Spring Cloud Gateway | Kong | Nginx |
 |---|---|---|---|
@@ -1295,10 +1327,12 @@ public class DashboardAggregationFilter implements GlobalFilter, Ordered {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. Как организовать мониторинг и логирование API Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] SCG — Java/WebFlux/Netty, нативная Spring экосистема, без GUI, Java-фильтры; Kong — Lua/OpenResty, plugin ecosystem, GUI (Manager/Konga), enterprise; Nginx — C, максимальная производительность, SSL termination, C-модули; часто комбо: Nginx/Envoy на L4 + Kong/SCG на L7 | ✓ ПРИМЕНЯТЬ: выбор Gateway. 📋 ПРАВИЛО: «Spring команда → SCG, agnostic → Kong, perf → Nginx». 🔗 См. Q26
+> - [ ] Все три одинаковы — выбирайте любой | ❌ ПОСЛЕДСТВИЕ: игнорирование stack fit, Kong плагины не пишутся на Java.
+> - [ ] Nginx устарел, не использовать | ❌ ПОСЛЕДСТВИЕ: фактически неверно, Nginx — основа Kong, отличный L4/L7 для статики.
+> - [ ] SCG медленнее всех — Java медленный | ❌ ПОСЛЕДСТВИЕ: упрощение, после JVM warmup Netty показывает хорошие цифры.
+
+## Q26. Как организовать мониторинг и логирование API Gateway?
 
 **Метрики через Micrometer + Prometheus:**
 
@@ -1372,10 +1406,12 @@ public class AccessLogGlobalFilter implements GlobalFilter, Ordered {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Какие anti-паттерны связаны с API Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Метрики — Micrometer + Prometheus (spring.cloud.gateway.requests, gateway.requests.duration, resilience4j.circuitbreaker.state); Distributed Tracing — Micrometer Tracing + Zipkin/Jaeger (sampling 100% dev, 10-20% prod); централизованное логирование через AccessLogGlobalFilter (Ordered.LOWEST_PRECEDENCE) + ELK | ✓ ПРИМЕНЯТЬ: observability. 📋 ПРАВИЛО: «metrics + traces + logs — три кита». 🔗 См. Q27
+> - [ ] Только access log в файл — этого достаточно | ❌ ПОСЛЕДСТВИЕ: нет distributed tracing, debugging распределённых проблем невозможен.
+> - [ ] Sampling 100% в prod для полноты | ❌ ПОСЛЕДСТВИЕ: огромный объём трейсов, storage cost, perf overhead.
+> - [ ] Метрики собирать вручную в БД | ❌ ПОСЛЕДСТВИЕ: переизобретаем колесо, нет histogram/percentiles, нет federation.
+
+## Q27. Какие anti-паттерны связаны с API Gateway?
 
 **1. "Толстый" Gateway (God Gateway)**
 
@@ -1419,10 +1455,12 @@ Gateway -- первая точка контакта. Без метрик, тре
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. (!) Как реализовать request/response трансформацию на уровне Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] God Gateway (бизнес-логика внутри), SPOF без HA, отсутствие timeouts/CB, чрезмерная агрегация, один Gateway для всех клиентов (нужен BFF), хранение состояния (sessions/cache в Gateway — он должен быть stateless, всё в Redis), игнорирование observability | ✓ ПРИМЕНЯТЬ: code review checklist. 📋 ПРАВИЛО: «infra только, без business». 🔗 См. Q28
+> - [ ] Главный антипаттерн — много маршрутов | ❌ ПОСЛЕДСТВИЕ: подмена тезиса, маршрутов сколько нужно, проблема — содержимое.
+> - [ ] Антипаттернов нет — Gateway всегда хорошо | ❌ ПОСЛЕДСТВИЕ: команда не видит проблем, накопление technical debt.
+> - [ ] Использовать YAML вместо Java DSL — антипаттерн | ❌ ПОСЛЕДСТВИЕ: оба валидны, YAML лучше для declarative routes.
+
+## Q28. (!) Как реализовать request/response трансформацию на уровне Gateway?
 
 **Request/Response трансформация** — изменение входящих запросов (добавление заголовков, маппинг путей) и исходящих ответов (фильтрация полей, изменение формата) на уровне Gateway без изменения backend-сервисов.
 
@@ -1524,10 +1562,12 @@ public class ResponseSanitizationFilter implements GlobalFilter {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. Как настроить Kong API Gateway для rate limiting и аутентификации? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [x] Встроенные YAML фильтры — StripPrefix, AddRequestHeader (UUID, propagate user), RemoveResponseHeader (X-Internal-*), RewritePath с regex captures; кастомный GlobalFilter для body — ServerRequest.bodyToMono + ObjectMapper + CachedBodyOutputMessage + decorate; для response — ServerHttpResponseDecorator.writeWith с трансформацией DataBuffer | ✓ ПРИМЕНЯТЬ: декорация без изменения backend. 📋 ПРАВИЛО: «YAML для simple, GlobalFilter для body». 🔗 См. Q29
+> - [ ] Только AddRequestHeader — большего не нужно | ❌ ПОСЛЕДСТВИЕ: невозможна модификация тела, чувствительные данные летят клиенту.
+> - [ ] Менять backend для каждой трансформации | ❌ ПОСЛЕДСТВИЕ: tight coupling, gateway теряет смысл, версионирование backend кошмар.
+> - [ ] Использовать DTO mapping в каждом контроллере | ❌ ПОСЛЕДСТВИЕ: gateway не нужен, дублирование на N сервисов.
+
+## Q29. Как настроить Kong API Gateway для rate limiting и аутентификации?
 
 **Kong** — высокопроизводительный API Gateway на базе `Nginx` + `OpenResty`, управляемый через декларативный конфиг или Admin API. Широко используется как альтернатива Spring Cloud Gateway для polyglot-архитектур.
 
@@ -1590,10 +1630,12 @@ services:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. (!) Как организовать observability (метрики, трейсинг, логи) для API Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Декларативный kong.yml: services + routes + plugins (jwt с claims_to_verify exp, rate-limiting с policy=redis для кластера и minute/hour limits, http-log в Logstash); Kong на Nginx/OpenResty + Lua, 50+ готовых плагинов, polyglot, выше perf чем SCG но операционная сложность с DB | ✓ ПРИМЕНЯТЬ: polyglot teams. 📋 ПРАВИЛО: «plugin > custom code». 🔗 См. Q30
+> - [ ] Kong = тот же SCG, разница в логотипе | ❌ ПОСЛЕДСТВИЕ: разные стеки (Lua vs Java), кастомизация Kong через Lua/Go.
+> - [ ] Kong не поддерживает rate limiting | ❌ ПОСЛЕДСТВИЕ: фактически ошибка, rate-limiting — встроенный плагин.
+> - [ ] Кастомные Lua плагины писать в production небезопасно | ❌ ПОСЛЕДСТВИЕ: Lua sandbox stable, plugins официально поддерживаемая extension механика.
+
+## Q30. (!) Как организовать observability (метрики, трейсинг, логи) для API Gateway?
 
 **Observability** для API Gateway критична: Gateway — единая точка входа, и любые проблемы здесь затрагивают весь трафик.
 
@@ -1694,10 +1736,12 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. (!) Алгоритмы Rate Limiting: Token Bucket, Leaky Bucket, Fixed Window, Sliding Window ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> - [x] 3 столпа: Metrics (Micrometer + Prometheus с percentiles-histogram и SLO buckets) + Traces (Micrometer Tracing + OpenTelemetry, sampling 10% prod / 100% dev) + Logs (AccessLogFilter с structured logging, traceId из traceparent header); ключевые PromQL — RPS, error rate, p99 latency, CB OPEN count; SLO — 99.9% availability, p99 < 50ms overhead | ✓ ПРИМЕНЯТЬ: production-grade Gateway. 📋 ПРАВИЛО: «3 столпа + SLO». 🔗 См. Q31
+> - [ ] Достаточно application.log в файл | ❌ ПОСЛЕДСТВИЕ: нет distributed tracing, нет metrics dashboard, debugging почти невозможен.
+> - [ ] Sampling 100% всегда для accuracy | ❌ ПОСЛЕДСТВИЕ: огромный объём данных, perf overhead, storage cost.
+> - [ ] Не нужны SLO — измерять достаточно availability | ❌ ПОСЛЕДСТВИЕ: нет targeting, latency drift не виден до большого инцидента.
+
+## Q31. (!) Алгоритмы Rate Limiting: Token Bucket, Leaky Bucket, Fixed Window, Sliding Window
 
 Четыре основных алгоритма ограничения частоты запросов — каждый с разными характеристиками по точности, потреблению памяти и поведению при burst-трафике.
 
@@ -1795,10 +1839,12 @@ rate = prev_window_count × (1 - elapsed/window) + curr_window_count
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. (!) API Gateway vs Service Mesh: когда что выбирать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Token Bucket — burst разрешён, O(1) память, Lua-скрипт в Redis (SCG default); Leaky Bucket — выравнивает поток, очередь O(queue); Fixed Window — простой INCR+EXPIRE O(1), но граничный всплеск 2x; Sliding Log — точный ZSET O(N) дорого; Sliding Counter — O(1) интерполяция между окнами (Cloudflare); выбор по burst tolerance + memory budget | ✓ ПРИМЕНЯТЬ: выбор алгоритма rate limit. 📋 ПРАВИЛО: «Token Bucket — default, Sliding Counter — точно». 🔗 См. Q32
+> - [ ] Все алгоритмы эквивалентны — выбирайте Fixed Window | ❌ ПОСЛЕДСТВИЕ: граничный всплеск даёт 2x пик, downstream crashes.
+> - [ ] Только Token Bucket существует на практике | ❌ ПОСЛЕДСТВИЕ: упускаем Sliding Counter для precise quotas (Cloudflare стандарт).
+> - [ ] Sliding Log всегда лучше — точность важнее | ❌ ПОСЛЕДСТВИЕ: O(N) память на пользователя, при росте трафика interface DoS-able.
+
+## Q32. (!) API Gateway vs Service Mesh: когда что выбирать?
 
 ### API Gateway
 
@@ -1856,10 +1902,12 @@ API Gateway не заменяет Service Mesh и наоборот — они д
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. Как работает gRPC-Web через API Gateway? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] API Gateway — North-South трафик (клиент → кластер): auth, rate limit, SSL termination, routing; Service Mesh (Istio/Linkerd) — East-West (сервис ↔ сервис): mTLS, retry, CB, traffic splitting через Envoy sidecars; они дополняют друг друга — Gateway на границе, Mesh внутри; production = оба | ✓ ПРИМЕНЯТЬ: понимание границ. 📋 ПРАВИЛО: «N-S → Gateway, E-W → Mesh». 🔗 См. Q33
+> - [ ] Service Mesh заменяет API Gateway | ❌ ПОСЛЕДСТВИЕ: Mesh не делает rate limit для external clients, нет developer portal.
+> - [ ] API Gateway достаточно — Mesh излишен | ❌ ПОСЛЕДСТВИЕ: нет mTLS между сервисами, traffic splitting сложный, observability ручная.
+> - [ ] Использовать только Mesh с ingress gateway | ❌ ПОСЛЕДСТВИЕ: возможно (Istio Ingress), но без API management фич — нет developer portal, простой rate limit.
+
+## Q33. Как работает gRPC-Web через API Gateway?
 
 ### Проблема
 
@@ -1915,10 +1963,12 @@ Envoy/Kong выполняют транскодинг по `.proto`-дескри�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. WebSocket через API Gateway: sticky sessions и масштабирование ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] Браузер не умеет gRPC из-за ограничений fetch и отсутствия trailers; gRPC-Web — обёртка над HTTP/1.1 или HTTP/2 с Content-Type: application/grpc-web+proto; Gateway (Envoy/Istio/Kong через плагин) транскодирует gRPC-Web → gRPC и обратно; trailers инкапсулируются в body; server streaming поддерживается, client/bidi — через WebSocket transport; альтернатива — google.api.http транскодинг HTTP/JSON ↔ gRPC | ✓ ПРИМЕНЯТЬ: gRPC backend + browser clients. 📋 ПРАВИЛО: «Envoy/Kong транскодинг». 🔗 См. Q34
+> - [ ] Браузеры нативно поддерживают gRPC — никакой обёртки | ❌ ПОСЛЕДСТВИЕ: фактически ошибка, fetch не даёт HTTP trailers.
+> - [ ] Нужно писать собственный JavaScript transport | ❌ ПОСЛЕДСТВИЕ: переизобретаем gRPC-Web, библиотека есть.
+> - [ ] gRPC-Web поддерживает bidi streaming через HTTP/1.1 | ❌ ПОСЛЕДСТВИЕ: фактически ошибка, bidi только через WebSocket transport gRPC-Web.
+
+## Q34. WebSocket через API Gateway: sticky sessions и масштабирование
 
 ### Проблема
 
@@ -1992,10 +2042,107 @@ session.close(CloseStatus.SERVICE_RESTARTED);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. API Gateway в serverless архитектуре (AWS API Gateway) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему WebSocket-соединения через API Gateway сложнее масштабировать чем HTTP, и какой ключевой компонент решает проблему распределённого broadcast?
+>
+> ---
+>
+> #### A) WebSocket требует более мощных серверов из-за нагрузки на CPU — нужна вертикальная масштабируемость — ❌ Неверно
+>
+> **Что на самом деле:** WebSocket per-connection нагрузка низкая (несколько KB памяти + idle socket). Современные серверы держат 100K+ соединений на 8GB RAM (Reactor Netty, Vert.x). Проблема масштабирования НЕ в CPU/RAM per connection, а в **распределённой природе соединений** между подами.
+>
+> **Откуда путаница:** «много соединений = больше ресурсов» — интуитивно. На деле HTTP request/response короче и легче buffer-ом обрабатывать, чем держать сотни тысяч persistent connections; но это не CPU-bound bottleneck.
+>
+> **Если бы это было правдой:** решение было бы тривиальным — увеличить размер инстансов. Реальная проблема — координация состояния между подами при scale-out.
+>
+> ---
+>
+> #### B) Когда пользователь A подключается к pod1, а сообщение для него приходит на pod2 — pod2 не может напрямую отправить frame в socket, который держит pod1; нужен distributed pub/sub (Redis Pub/Sub, Kafka, NATS) для маршрутизации сообщений между подами — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> WebSocket — это **stateful** соединение, привязанное к конкретному поду. Когда balancer распределяет нагрузку:
+> 1. User A → load balancer → pod1 (socket принадлежит pod1)
+> 2. Backend service пишет «message for user A» → попадает на pod2 (round-robin)
+> 3. pod2 не имеет socket-а user A → не может отправить
+>
+> Решение — **distributed pub/sub layer**:
+> - При connect: pod1 публикует «user A connected to pod1» в Redis/Kafka, либо подписывается на channel `user-A-events`.
+> - При message: pod2 публикует message в `user-A-events` channel.
+> - Pod1 получает message из своего subscription и отправляет в socket.
+>
+> Это inversion of control: соединения локальны, координация — через external state store.
+>
+> **Пример (Redis Pub/Sub):**
+> ```java
+> @Component
+> @RequiredArgsConstructor
+> public class WsBroadcaster {
+>     private final StringRedisTemplate redis;
+>     private final Map<String, WebSocketSession> localSessions = new ConcurrentHashMap<>();
+>
+>     // При подключении user A к этому поду
+>     public void onConnect(String userId, WebSocketSession session) {
+>         localSessions.put(userId, session);
+>     }
+>
+>     // Любой pod может опубликовать message
+>     public void sendToUser(String userId, String message) {
+>         redis.convertAndSend("ws:user:" + userId, message);
+>     }
+>
+>     // Subscriber на этом поде ловит message и доставляет в локальный socket
+>     @EventListener
+>     public void onRedisMessage(String channel, String message) {
+>         String userId = channel.substring("ws:user:".length());
+>         WebSocketSession session = localSessions.get(userId);
+>         if (session != null && session.isOpen()) {
+>             session.sendMessage(new TextMessage(message));
+>         }
+>     }
+> }
+> ```
+>
+> Альтернативы — Apache Kafka (для durability и replay), NATS (для max throughput), Redis Pub/Sub (простой, eventual consistency).
+>
+> **Когда применять:**
+> - **Chat / messaging** (Slack, Telegram-clone): миллионы пользователей, шарды по pods, координация через Redis.
+> - **Real-time notifications**: push событий из backend в браузер пользователя, независимо от того к какому поду он подключён.
+> - **Collaborative editing** (Google Docs-clone): операции из одного клиента доставляются всем участникам через broadcast.
+> - **Stock trading dashboards** (Bloomberg-style): котировки публикуются в pub/sub, клиенты подписываются и получают через свой pod.
+> - **Multiplayer games**: events игроков в room → broadcast всем в room через pod-агностичный channel.
+>
+> **Подводные камни:**
+> - **In-memory state**: если pod хранит `Map<userId, Session>` локально — при рестарте теряются. Sessions must быть re-establishable, либо персистентность connection state в Redis с TTL.
+> - **L7 health checks**: load balancer должен проверять HTTP `/health`, не TCP — WebSocket keepalive ≠ application health.
+> - **Idle timeout**: AWS ALB по умолчанию 60s. Нужно либо настроить heartbeat (ping/pong frame каждые 30s), либо увеличить timeout до 3600s.
+> - **HPA (Horizontal Pod Autoscaler)**: добавление новых подов НЕ перераспределяет existing connections. Клиенты остаются на старых подах — могут быть hot pods.
+> - **Graceful shutdown**: при rolling deploy pod должен отправить close frame `CloseStatus.SERVICE_RESTARTED` (1012) клиентам, чтобы они переподключились к другому поду.
+> - **Connection storms**: если 1M клиентов одновременно реконнектятся (после deploy), это DDoS на load balancer. Нужен exponential backoff на клиенте.
+>
+> **Связанные вопросы:** [[Q33]] — Spring Cloud Gateway nativе WebSocket routing; [[Q11]] — sticky sessions vs distributed state; [[Q24]] — service discovery для backend сервисов.
+>
+> ---
+>
+> #### C) WebSocket нельзя проксировать через Gateway — нужно direct connection к сервису — ❌ Неверно
+>
+> **Что на самом деле:** Spring Cloud Gateway, Kong, Traefik, Envoy, nginx — все поддерживают WebSocket proxying через `Upgrade: websocket` HTTP header. Gateway проксирует Upgrade-запрос к backend, дальше двусторонний TCP туннель остаётся open.
+>
+> **Откуда путаница:** в старых nginx без `proxy_http_version 1.1` и без специальных headers WebSocket действительно не работал. Сейчас это базовая фича всех Gateway.
+>
+> **Если бы это было правдой:** мы не могли бы поставить authentication/rate limiting перед WebSocket endpoint. На практике именно через Gateway проходят все WS — для auth/throttling.
+>
+> ---
+>
+> #### D) WebSocket-соединения автоматически распределяются между подами через consistent hashing — никакого pub/sub не нужно — ❌ Неверно
+>
+> **Что на самом деле:** consistent hashing **выбирает pod** для нового соединения, но не помогает с **broadcast**. Если message для user A пришёл на random pod (не тот, где socket A), consistent hashing не поможет переадресовать — он только балансирует connect-events.
+>
+> **Откуда путаница:** consistent hashing решает sticky sessions проблему для HTTP. Для WebSocket это лишь часть решения — нужен ещё pub/sub для cross-pod broadcast.
+>
+> **Если бы это было правдой:** chat-приложения работали бы на любом WebSocket-сервере без Redis. На практике (Slack, Discord) — обязательно distributed pub/sub layer.
+
+## Q35. API Gateway в serverless архитектуре (AWS API Gateway)
 
 ### AWS API Gateway — варианты
 
