@@ -51,10 +51,68 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. Как настроить базовую State Machine? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда уместно применять Spring State Machine, а когда лучше обойтись без неё?
+>
+> ---
+>
+> #### A) SSM — это лёгкая замена workflow-движкам типа Camunda/Activiti, поэтому её нужно брать для любого мульти-шагового бизнес-процесса с BPMN. — ❌ Неверно
+>
+> **Что на самом деле:** Camunda/Activiti — это полноценные workflow-движки с BPMN, исполнителем, формами, историей, human tasks и встроенной транзакционной персистенцией. SSM — это in-memory FSM-фреймворк без BPMN, без задачек на людей, без UI; персистенция — отдельный модуль и пишется руками. Для длинных бизнес-процессов с человеческими шагами SSM не подходит.
+>
+> **Откуда путаница:** обе технологии «про процессы», и в туториалах SSM часто рисуют как «легковесную замену BPMN».
+>
+> **Если бы это было правдой:** команды брали бы SSM для onboarding/KYC, а потом упирались бы в отсутствие персистенции истории, отката шагов и UI для бизнеса — переписывали бы проект на Camunda.
+>
+> ---
+>
+> #### B) SSM нужна только когда состояний у объекта больше десяти и переходы описываются UML state diagram. — ❌ Неверно
+>
+> **Что на самом деле:** количество состояний не критерий. Уже 4-5 состояний с guard-ами, action-ами и end-состояниями оправдывают SSM. Критерий — сложность переходов, наличие условий и побочных эффектов, а не размер enum.
+>
+> **Откуда путаница:** примеры в документации часто показывают большие state diagrams, и это создаёт впечатление, что SSM нужна только для «больших» автоматов.
+>
+> **Если бы это было правдой:** простую модель Order(PENDING→CONFIRMED→SHIPPED→DELIVERED) с guard `paymentVerified` пришлось бы писать вручную через if/else, что даёт хаос из условий и побочных эффектов.
+>
+> ---
+>
+> #### C) SSM применяется, когда у объекта есть чёткий набор состояний, переходы требуют валидации (guard) и побочных эффектов (action), а текущее состояние нужно сохранять между запросами. — ✓ Верно
+>
+> **Развёрнутое объяснение:** SSM — это in-memory конечный автомат на Spring. Она формализует то, что обычно превращается в кашу из `if (status == ...)`: набор состояний, события-триггеры, условия перехода (`Guard`), побочные эффекты (`Action`) и end-состояния. Бизнес-логика, которая «зависит от текущего состояния» (Order, Document, Payment, KYC), естественно ложится на FSM. Для длительного хранения состояние сериализуется через `StateMachinePersister` (JDBC, Redis), а сам экземпляр восстанавливается по запросу.
+>
+> **Пример:**
+> ```java
+> // Объект имеет конечный набор состояний и валидируемые переходы
+> enum OrderState { PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED }
+> enum OrderEvent { CONFIRM, SHIP, DELIVER, CANCEL }
+>
+> // CONFIRM разрешён только если оплата подтверждена (guard)
+> // и должен отправить email + резервировать товар (actions)
+> transitions.withExternal()
+>     .source(PENDING).target(CONFIRMED).event(CONFIRM)
+>     .guard(paymentVerifiedGuard())
+>     .action(sendConfirmationEmail());
+> ```
+>
+> **Когда применять:** order lifecycle, document approval, payment workflow, KYC pipeline, subscription state, любые domain-объекты с конечным набором состояний и нетривиальными переходами.
+>
+> **Подводные камни:** для простого `enum status` без guards/actions SSM — overkill; для распределённых процессов через несколько сервисов лучше Saga; не использовать SSM как очередь сообщений.
+>
+> ---
+>
+> #### D) SSM нужна только для приложений на WebFlux, потому что использует Reactor для `sendEvent`. — ❌ Неверно
+>
+> **Что на самом деле:** SSM поддерживает и блокирующий, и реактивный API. Метод `sendEvent` возвращает `Flux<StateMachineEventResult>`, но его можно `.blockFirst()` в обычном MVC-приложении. Архитектура не привязана к WebFlux.
+>
+> **Откуда путаница:** в SSM 3.x reactive API стал основным, и в новых примерах часто видно `Mono`/`Flux`. Но это просто API-обёртка, а не требование к стеку.
+>
+> **Если бы это было правдой:** команды на Spring MVC отказывались бы от SSM из-за «реактивности», возвращаясь к ручным `switch (status)` цепочкам, теряя guards/actions.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q2]] — конфигурация состояний и переходов; [[Q13]] — SSM vs Saga Pattern для распределённых процессов.
+
+## Q2. Как настроить базовую State Machine?
 
 ```xml
 <dependency>
@@ -108,10 +166,81 @@ public class OrderStateMachineConfig
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Как отправить событие и получить текущее состояние? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что обязательно нужно для корректной базовой конфигурации Spring State Machine на enum-состояниях?
+>
+> ---
+>
+> #### A) Объявить `@EnableStateMachine` на конфигурационном классе, наследоваться от `StateMachineConfigurerAdapter` и описать states + transitions в `configure(...)` методах. — ✓ Верно
+>
+> **Развёрнутое объяснение:** `@EnableStateMachine` создаёт singleton-бин `StateMachine<S,E>` в контексте. Класс `StateMachineConfigurerAdapter<S,E>` предоставляет три точки настройки: states (initial/states/end), transitions (external/internal/local через withExternal()/...) и configuration (autoStartup, listener, taskExecutor). Без `initial(...)` машина не стартует; без `end(...)` она никогда не завершится и продолжит принимать события. Зависимость `spring-statemachine-core` подтягивается отдельно — она не входит в spring-boot starters.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> @EnableStateMachine
+> public class OrderStateMachineConfig
+>         extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
+>
+>     @Override
+>     public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states)
+>             throws Exception {
+>         states.withStates()
+>             .initial(OrderState.PENDING)
+>             .states(EnumSet.allOf(OrderState.class))
+>             .end(OrderState.DELIVERED)
+>             .end(OrderState.CANCELLED);
+>     }
+>
+>     @Override
+>     public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions)
+>             throws Exception {
+>         transitions
+>             .withExternal().source(PENDING).target(CONFIRMED).event(CONFIRM).and()
+>             .withExternal().source(CONFIRMED).target(SHIPPED).event(SHIP);
+>     }
+> }
+> ```
+>
+> **Когда применять:** один глобальный автомат на приложение (например, для синглетного workflow). Для per-entity автоматов нужен `@EnableStateMachineFactory` — см. Q8.
+>
+> **Подводные камни:** `@EnableStateMachine` создаёт singleton — не подходит для параллельной работы с разными бизнес-объектами; забыли `end(...)` — машина «вечная»; не подключили starter — `NoSuchBeanDefinitionException` при инжекте `StateMachine`.
+>
+> ---
+>
+> #### B) Достаточно положить enum-ы `OrderState` и `OrderEvent` в classpath — SSM подберёт их по соглашению имён. — ❌ Неверно
+>
+> **Что на самом деле:** SSM не использует convention-over-configuration для enum-ов. Без `StateMachineConfigurerAdapter` и описания transitions фреймворк не знает, какие переходы разрешены, какое initial-состояние и какие end. Это приводит к стартовой ошибке или к машине без переходов.
+>
+> **Откуда путаница:** Spring Data JPA автоматически биндит сущности через `@Entity` — отсюда ложная аналогия.
+>
+> **Если бы это было правдой:** любой enum в classpath становился бы автоматом, и любое переименование класса ломало бы бизнес-логику.
+>
+> ---
+>
+> #### C) Нужно явно объявить `@Bean StateMachine<S,E>` с new `DefaultStateMachine` и руками регистрировать transitions через `addTransition()`. — ❌ Неверно
+>
+> **Что на самом деле:** прямое создание `DefaultStateMachine` обходит конфигурацию через `StateMachineConfigurerAdapter`, ломает интеграцию с `@WithStateMachine`, listener-механизмом и persister-ами. Это low-level API, который не предназначен для прикладного использования.
+>
+> **Откуда путаница:** в исходниках SSM встречается `DefaultStateMachine` — и пользователи копируют его в свой код.
+>
+> **Если бы это было правдой:** пришлось бы вручную писать boilerplate для каждого `withExternal()`, теряя type-safe builder и валидацию конфига при старте.
+>
+> ---
+>
+> #### D) Конфигурация делается через YAML-файл `statemachine.yml` в `src/main/resources`. — ❌ Неверно
+>
+> **Что на самом деле:** SSM не поддерживает YAML-описание автоматов «из коробки». Конфигурация — через Java DSL (`StateMachineConfigurerAdapter`) либо через UML (SCXML-файл с расширением `.uml`, отдельный builder). YAML-формата нет.
+>
+> **Откуда путаница:** многие Spring-модули конфигурируются через `application.yml`, и это формирует ожидание.
+>
+> **Если бы это было правдой:** изменения в state diagram не требовали бы пересборки — но валидация графа стала бы runtime-only, и опечатки ловились бы только в production.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q3]] — отправка событий и получение состояния; [[Q8]] — StateMachineFactory для per-entity автоматов.
+
+## Q3. Как отправить событие и получить текущее состояние?
 
 ```java
 @Service
@@ -143,10 +272,70 @@ public class OrderFsmService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. Что такое Guard и для чего он нужен? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какой способ корректно отправляет событие в Spring State Machine 3.x и проверяет, принято ли оно?
+>
+> ---
+>
+> #### A) Вызвать `stateMachine.sendEvent(OrderEvent.CONFIRM)` напрямую — метод вернёт `boolean` accepted. — ❌ Неверно
+>
+> **Что на самом деле:** в SSM 3.x синхронный метод `sendEvent(E)` помечен как `@Deprecated`. Основной API — реактивный: `sendEvent(Mono<Message<E>>)` возвращает `Flux<StateMachineEventResult<S,E>>`. Передавать просто enum нельзя — нужен `Message<E>`, чтобы прокинуть headers (например, `orderId`).
+>
+> **Откуда путаница:** в SSM 2.x был синхронный `sendEvent(E)` — старые туториалы и StackOverflow-ответы до сих пор так пишут.
+>
+> **Если бы это было правдой:** не получилось бы прокинуть `orderId` через headers, и actions/guards не имели бы доступа к контексту бизнес-объекта.
+>
+> ---
+>
+> #### B) Построить `Message<OrderEvent>` через `MessageBuilder.withPayload()` с нужными headers, отправить через `stateMachine.sendEvent(Mono.just(message))`, проверить `getResultType() == ACCEPTED`. — ✓ Верно
+>
+> **Развёрнутое объяснение:** реактивный API SSM 3.x требует `Mono<Message<E>>`. Headers сообщения доступны в guards/actions через `context.getMessageHeader(key)` — это стандартный способ прокидывать `orderId`, `userId`, корреляционные ID. Результат `StateMachineEventResult.ResultType` принимает три значения: `ACCEPTED` (переход выполнен), `DENIED` (guard вернул false / нет такого перехода), `DEFERRED` (событие отложено). Проверка `getResultType()` — единственный надёжный способ узнать, прошёл ли переход.
+>
+> **Пример:**
+> ```java
+> Message<OrderEvent> message = MessageBuilder.withPayload(OrderEvent.CONFIRM)
+>     .setHeader("orderId", orderId)
+>     .build();
+>
+> StateMachineEventResult<OrderState, OrderEvent> result =
+>     stateMachine.sendEvent(Mono.just(message)).blockFirst();
+>
+> if (result.getResultType() == ResultType.ACCEPTED) {
+>     log.info("Переход принят, новое состояние: {}", stateMachine.getState().getId());
+> } else {
+>     log.warn("Событие отклонено: {}", result.getResultType());
+> }
+> ```
+>
+> **Когда применять:** любой production-код на SSM 3.x; обязательно проверять `getResultType()`, иначе молчаливые отказы потеряются.
+>
+> **Подводные камни:** `.blockFirst()` блокирует поток — в WebFlux лучше `.next()` и асинхронная подписка; без headers actions не получат контекст; `getState().getId()` для иерархических машин вернёт лист, а не родителя.
+>
+> ---
+>
+> #### C) Создать новый `StateMachineEventTrigger` на каждое событие и пушить его в `EventQueue.offer(trigger)`. — ❌ Неверно
+>
+> **Что на самом деле:** `StateMachineEventTrigger` — внутренний класс SSM, не предназначенный для прямого использования. Прикладной API — только `sendEvent(Mono<Message<E>>)`. Очереди событий внутри машины управляются автоматически.
+>
+> **Откуда путаница:** в IDE автокомплит может показать internal-классы из пакетов `*.support.*` — пользователи думают, что это публичный API.
+>
+> **Если бы это было правдой:** обновление SSM ломало бы код при каждом minor-релизе, так как internal API меняется без warnings.
+>
+> ---
+>
+> #### D) Использовать `ApplicationEventPublisher.publishEvent(orderEvent)` — Spring сам найдёт state machine и применит событие. — ❌ Неверно
+>
+> **Что на самом деле:** Spring ApplicationEvents — независимый pub/sub-механизм, никак не связанный с SSM. Машина состояний не подписывается на `ApplicationEventPublisher` автоматически; событие просто никуда не попадёт.
+>
+> **Откуда путаница:** оба механизма называются «events», и Spring продвигает event-driven архитектуру через `@EventListener`.
+>
+> **Если бы это было правдой:** state machine реагировала бы на все события приложения подряд, включая `ContextRefreshedEvent`, что привело бы к хаотичным переходам.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q4]] — Guards для условных переходов; [[Q11]] — Listener для отслеживания `eventNotAccepted`.
+
+## Q4. Что такое Guard и для чего он нужен?
 
 **Guard** — условие, которое должно быть истинным для выполнения перехода. Если guard возвращает `false` — переход не происходит.
 
