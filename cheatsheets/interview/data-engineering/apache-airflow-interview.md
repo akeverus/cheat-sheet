@@ -872,10 +872,102 @@ sensor = FileSensor(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) Как deploy Airflow в production? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Чем `mode='reschedule'` отличается от `mode='poke'` (default) для sensor, и когда что выбирать?
+>
+> ---
+>
+> #### A) `reschedule` запускает sensor на другом worker, `poke` — на том же; разница только в location — ❌ Неверно
+>
+> **Что на самом деле:** в **обоих** режимах sensor может попасть на любой worker (это решает executor, не mode). Разница — в **поведении между проверками**: в `poke` worker удерживает task slot, в `reschedule` task завершается со статусом `up_for_reschedule` и через `poke_interval` секунд переотправляется в очередь executor.
+>
+> **Откуда путаница:** оба термина звучат как "перенаправление", и слово "reschedule" напоминает routing. На деле reschedule = "освободить slot и переподнять task позже", не "переслать на другой узел".
+>
+> **Если бы это было правдой:** разница была бы только в network topology, но проблема worker exhaustion никуда бы не делась. На практике именно освобождение slot — главное преимущество reschedule.
+>
+> ---
+>
+> #### B) `reschedule` работает быстрее потому что не делает реальных проверок — ❌ Неверно
+>
+> **Что на самом деле:** `reschedule` делает **те же самые проверки** через `poke()` — semantically identical. Просто между проверками task убирается со slot. По latency `reschedule` чуть медленнее: каждая проверка проходит через scheduler queue (~5-30 sec overhead).
+>
+> **Откуда путаница:** "освободить worker" интуитивно ассоциируется с "быстрее". На практике reschedule оптимизирует **throughput** кластера, а не latency одного sensor.
+>
+> **Если бы это было правдой:** reschedule был бы default режимом для всех sensors. На самом деле default — `poke`, потому что для коротких ожиданий он быстрее и надёжнее.
+>
+> ---
+>
+> #### C) `poke` (default) удерживает worker slot всё время ожидания между проверками; `reschedule` освобождает slot между проверками — task завершается со статусом `up_for_reschedule` и через `poke_interval` снова берётся executor'ом; `reschedule` обязателен для long-running sensors (часы/дни), иначе worker pool забьётся — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> В режиме `poke` task попадает на worker и выполняет цикл `while not poke(): sleep(poke_interval)`. Slot остаётся занят весь timeout. Если у тебя CeleryExecutor с 50 worker slots и 60 файловых sensors с `timeout=24h`, кластер встанет — все слоты будут «спать».
+>
+> В режиме `reschedule` sensor устроен иначе: вызывает `poke()` один раз; если `False`, кидает `AirflowRescheduleException` со временем следующей попытки (`now + poke_interval`). Task получает статус `up_for_reschedule`, slot освобождается. Scheduler по cron-у переподнимает task в очередь executor.
+>
+> Trade-off:
+> - `poke` — быстрый цикл проверок (`poke_interval=5s` нормально), низкая latency, но слот занят.
+> - `reschedule` — overhead на reschedule (минимум 5-30 sec на cycle), но slot свободен для других tasks.
+>
+> **Пример:**
+> ```python
+> from airflow.sensors.filesystem import FileSensor
+> from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
+>
+> # КОРОТКОЕ ожидание (минуты) — poke
+> wait_marker = FileSensor(
+>     task_id='wait_marker',
+>     filepath='/data/_READY',
+>     poke_interval=10,
+>     timeout=300,        # 5 минут максимум
+>     mode='poke',
+> )
+>
+> # ДОЛГОЕ ожидание (часы) — reschedule
+> wait_s3 = S3KeySensor(
+>     task_id='wait_late_data',
+>     bucket_name='analytics-raw',
+>     bucket_key='events/dt={{ ds }}/_SUCCESS',
+>     poke_interval=600,   # каждые 10 минут
+>     timeout=24 * 3600,   # до суток
+>     mode='reschedule',   # КРИТИЧНО: иначе сожрёт slot на день
+> )
+>
+> # Ещё лучше для AWS — async deferrable sensor (Airflow 2.2+)
+> wait_s3_async = S3KeySensor(
+>     task_id='wait_s3_async',
+>     bucket_name='analytics-raw',
+>     bucket_key='events/dt={{ ds }}/_SUCCESS',
+>     poke_interval=600,
+>     timeout=24 * 3600,
+>     deferrable=True,     # уходит в Triggerer, не занимает worker slot вовсе
+> )
+> ```
+>
+> **Когда применять:**
+> - **`poke`** — короткие ожидания (< 10 минут), быстрые опросы (< 30 сек), когда worker slots в избытке.
+> - **`reschedule`** — ожидания > 30 минут, особенно cross-DAG `ExternalTaskSensor`, файловые sensor с late-arriving data.
+> - **`deferrable=True`** — production cluster с десятками sensors; экономит слоты ещё сильнее, потому что Triggerer работает асинхронно через asyncio.
+>
+> **Подводные камни:**
+> - **`poke_interval >= 5 min` для reschedule**: слишком частый reschedule даёт большой накладной overhead. Если нужны частые проверки — лучше `poke`.
+> - **Idempotency `poke()`**: при reschedule между вызовами state теряется, поэтому `poke()` должен быть чистой функцией без локальных переменных.
+> - **Triggerer process** для deferrable: нужен отдельный `airflow triggerer` процесс — не запустится из коробки, надо добавлять в deploy.
+> - **External task sensor**: `mode='reschedule'` особенно важен, потому что обычно ждём до конца дня — без reschedule парализует кластер.
+>
+> **Связанные вопросы:** [[Q22]] — что такое sensor; [[Q25]] — масштабирование DAG count (sensors часто bottleneck); [[Q26]] — best practice mode reschedule по умолчанию.
+>
+> ---
+>
+> #### D) `reschedule` — это retry mode для упавших sensor, аналог `retries=N` — ❌ Неверно
+>
+> **Что на самом деле:** `retries` срабатывает при **failure** (exception), `reschedule` — при **успешном poke=False** (ожидание ещё не завершено). Это разные механизмы: retries — обработка ошибок, reschedule — стратегия ожидания. Sensor можно настроить с обоими параметрами одновременно: `retries=3, mode='reschedule'`.
+>
+> **Откуда путаница:** оба параметра приводят к "повторному выполнению" task, и можно решить, что они дублируют друг друга. Различие: retry перезапускает с нуля (timeout считается заново), reschedule продолжает существующий sensor (timeout идёт с первой попытки).
+>
+> **Если бы это было правдой:** мы бы выбирали между `retries=10` и `mode='reschedule'`. На практике используются вместе: retries — на случай transient errors (network), reschedule — на случай долгого ожидания условия.
+
+## Q24. (!) Как deploy Airflow в production?
 
 **Опции:**
 
@@ -897,10 +989,129 @@ helm install airflow apache-airflow/airflow
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. (!) Сколько DAG'ов / tasks может выдержать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая архитектура deploy Airflow в production считается рекомендуемой в 2025?
+>
+> ---
+>
+> #### A) Один `docker run apache/airflow` на одной VM с SQLite — стандартный production setup — ❌ Неверно
+>
+> **Что на самом деле:** это **dev/local** setup. SQLite не поддерживает concurrent writes, поэтому SequentialExecutor — единственный возможный (1 task за раз). Для production нужны: Postgres/MySQL как metadata DB, distributed executor (Celery/Kubernetes), отдельные процессы Scheduler/Webserver/Workers, persistent storage для логов.
+>
+> **Откуда путаница:** `docker run apache/airflow standalone` действительно работает «из коробки» и в документации часто показан как quickstart. Но это explicitly помечено как not-for-production.
+>
+> **Если бы это было правдой:** mid-size компании запускали бы Airflow на одной t3.medium VM. На практике даже маленький Airflow требует 3-4 контейнера и Postgres.
+>
+> ---
+>
+> #### B) Production Airflow обязательно требует Astronomer SaaS — самостоятельный deploy невозможен — ❌ Неверно
+>
+> **Что на самом деле:** Astronomer — самый популярный **managed** Airflow, но не единственный путь. Self-hosted на Kubernetes через [official Helm chart](https://airflow.apache.org/docs/helm-chart/stable/) — полноценный production-grade вариант, используемый многими компаниями (Avito, Tinkoff). Также есть MWAA (AWS) и Cloud Composer (GCP) как managed альтернативы.
+>
+> **Откуда путаница:** Astronomer активно маркетирует свой продукт. На деле выбор между self-hosted и managed — про operational overhead, не про техническую возможность.
+>
+> **Если бы это было правдой:** каждая компания была бы вынуждена платить Astronomer. На практике большинство enterprise (банки, telco) запускают Airflow в своём K8s через Helm.
+>
+> ---
+>
+> #### C) Production deploy: managed (Astronomer / MWAA / Cloud Composer) или self-hosted на Kubernetes через official Helm chart; рекомендуемая архитектура — KubernetesExecutor + PostgreSQL для metadata + S3/GCS для логов + Secrets Backend (Vault/AWS SM) + Sentry/DataDog для мониторинга — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Production Airflow — это **набор сервисов**, не одно приложение. Минимальный набор: Scheduler, Webserver, Executor с Workers, Triggerer (для deferrable tasks с 2.2+), Metadata DB. Каждый — отдельный процесс/pod с health-checks и horizontal scaling.
+>
+> Выбор между managed и self-hosted:
+> - **Managed (Astronomer/MWAA/Composer)** — operational overhead минимален, но vendor lock-in и стоимость. Подходит для команд без dedicated platform engineering.
+> - **Self-hosted Helm на K8s** — полный контроль, легче кастомизация, нужна команда DevOps. Подходит для enterprise с established K8s practice.
+>
+> Критические компоненты production setup:
+> - **PostgreSQL 13+** для metadata DB (с регулярным VACUUM и индексами).
+> - **KubernetesExecutor** для compute (pod-per-task, изоляция dependencies).
+> - **Remote logging** на S3/GCS/Azure Blob — иначе логи теряются при ephemeral pod restart.
+> - **Secrets Backend** (Vault, AWS Secrets Manager, GCP Secret Manager) — не хранить creds в Variables.
+> - **Monitoring**: Sentry для exceptions, DataDog/Prometheus + Grafana для metrics (task duration, scheduler lag).
+> - **DAG-as-code through git-sync sidecar** — DAG файлы синхронизируются из git repo автоматически.
+>
+> **Пример:**
+> ```yaml
+> # values.yaml для official Helm chart
+> executor: "KubernetesExecutor"
+>
+> postgresql:
+>   enabled: false  # внешний managed Postgres
+> data:
+>   metadataConnection:
+>     user: airflow
+>     pass: ""  # из secret
+>     host: airflow-pg.cluster-xyz.eu-central-1.rds.amazonaws.com
+>     port: 5432
+>     db: airflow_metadata
+>
+> logs:
+>   persistence:
+>     enabled: false
+> config:
+>   logging:
+>     remote_logging: "True"
+>     remote_base_log_folder: "s3://airflow-prod-logs/"
+>     remote_log_conn_id: "aws_default"
+>
+> secretsBackend:
+>   secrets:
+>     backend: "airflow.providers.hashicorp.secrets.vault.VaultBackend"
+>     backend_kwargs:
+>       url: "https://vault.internal:8200"
+>       connections_path: "airflow/connections"
+>       variables_path: "airflow/variables"
+>
+> dags:
+>   gitSync:
+>     enabled: true
+>     repo: "git@github.com:company/airflow-dags.git"
+>     branch: "main"
+>     subPath: "dags"
+>     wait: 60
+>
+> webserver:
+>   replicas: 2
+> scheduler:
+>   replicas: 2   # HA с Airflow 2.0+
+> triggerer:
+>   replicas: 2
+> ```
+>
+> ```bash
+> helm repo add apache-airflow https://airflow.apache.org
+> helm upgrade --install airflow apache-airflow/airflow \
+>   --namespace airflow --create-namespace \
+>   -f values.yaml
+> ```
+>
+> **Когда применять:**
+> - **Astronomer Cloud** — startups и SMB, где Airflow — не core competency.
+> - **MWAA** — AWS-only стек, нужна интеграция с IAM/VPC/Secrets Manager.
+> - **Helm на K8s** — enterprise с своими K8s, банки, telco, Tinkoff/Avito-уровень.
+> - **Cloud Composer** — GCP-only стек, особенно для BigQuery-centric pipelines.
+>
+> **Подводные камни:**
+> - **Single scheduler bottleneck до 2.0**: HA scheduler работает только с 2.0+; для старых версий — single point of failure.
+> - **DAG parsing cost**: scheduler перечитывает DAG-файлы каждые `min_file_process_interval` (default 30 сек) — на 1000+ DAG нужно тюнить `parsing_processes`, `max_threads`.
+> - **Webserver сессии**: при scale webserver replicas нужен Redis для shared session store, иначе пользователи теряют login.
+> - **Helm chart vs custom**: official Helm — хорош для start, но крупные команды часто пишут свой operator (`airflow-on-k8s-operator`) для GitOps workflow.
+>
+> **Связанные вопросы:** [[Q15]] — выбор executor (Kubernetes для prod); [[Q23]] — reschedule mode для sensors в prod; [[Q25]] — scaling DAG count.
+>
+> ---
+>
+> #### D) Production Airflow надо deploy через `docker-compose up` с одним контейнером всех компонентов — ❌ Неверно
+>
+> **Что на самом деле:** `docker-compose` подход (даже в multi-container варианте) — это dev окружение. Production требует health-checks, auto-restart, horizontal scaling, secret management, persistent storage — всё это решается K8s или managed сервисом. `docker-compose` не даёт rolling updates, нет встроенного service discovery, нет network policies.
+>
+> **Откуда путаница:** в `docs/docker/docker-compose.yaml` Airflow есть готовый файл, который выглядит "production-ready". На деле он подходит для local dev и POC, не для prod.
+>
+> **Если бы это было правдой:** все production deploy выглядели бы как `docker-compose up -d`. На практике это рабочий dev-setup, но через 1-2 месяца команды мигрируют на K8s.
+
+## Q25. (!) Сколько DAG'ов / tasks может выдержать?
 
 Зависит от executor и hardware:
 
