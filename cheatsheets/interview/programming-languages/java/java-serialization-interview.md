@@ -1567,10 +1567,81 @@ graph LR
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. Как организовать версионирование схем в микросервисной архитектуре? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему в современной микросервисной архитектуре Java Serialization обычно избегается?
+>
+> ---
+>
+> #### A) Java Serialization деprecated в Java 17 и удалён из JDK — компилятор откажется собирать код с `Serializable` — ❌ Неверно
+>
+> **Что на самом деле:** `Serializable` интерфейс **не deprecated** и не удалён. Он жив в Java 21 и далее. JEP 154 (2014) предлагал deprecate Java Serialization, но был отложен — слишком много кода зависит. JEP 415 (Java 17) добавил `setSerialFilterFactory` для усиления безопасности, но не удалил функционал.
+>
+> **Откуда путаница:** реальный план Oracle — постепенное вытеснение через JEP 154 + JEP 290 (filtering). Junior может это слышать как «уже deprecated».
+>
+> **Если бы это было правдой:** миллионы существующих Java-приложений с RMI, JCache, Hibernate L2 cache не собирались бы на Java 17+. Никакого массового breakage не было.
+>
+> ---
+>
+> #### B) Java Serialization медленнее JSON в 10× — это единственная причина её избегать — ❌ Неверно
+>
+> **Что на самом деле:** Java Serialization действительно медленна (рефлексия + метаданные), но это **далеко не главная проблема**. Куда важнее: (1) tight coupling по классам, (2) JVM-only, (3) RCE через gadget chains, (4) непрозрачный бинарный формат, (5) нет schema evolution. Эти проблемы качественные, не количественные.
+>
+> **Откуда путаница:** «performance» — простая метрика, проще обсуждать чем architectural concerns.
+>
+> **Если бы это было правдой:** достаточно было бы перейти на Kryo (быстрее Java Ser. в 5-10×). Реально Kryo тоже не используют для микросервисов — JVM-only лишает межъязыковости.
+>
+> ---
+>
+> #### C) Главная причина — Java Serialization не поддерживает шифрование данных в потоке — ❌ Неверно
+>
+> **Что на самом деле:** шифрование — orthogonal к формату сериализации. Любой формат (JSON/Protobuf/Java Ser.) можно зашифровать через `CipherOutputStream`. Protobuf не имеет «встроенного шифрования», как и Java Serialization. Шифрование решается на transport уровне (TLS) или wrapper-stream'ом.
+>
+> **Откуда путаница:** смешение concerns — сериализация формата и cryptography.
+>
+> **Если бы это было правдой:** Protobuf тоже надо было бы избегать (он тоже не шифрует). Реальная причина отказа от Java Ser. — другая.
+>
+> ---
+>
+> #### D) Tight coupling между сервисами по версии класса (rolling deploy ломается); привязка к JVM (нельзя интегрировать Python/Go клиентов); RCE через gadget chains (Equifax, Jenkins CVE); нет читаемости в логах и Kibana; нет schema evolution (как в Avro/Protobuf reserved); медленнее современных альтернатив — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> В микросервисной архитектуре сервисы должны быть **слабо связаны**, **независимо развёртываемы** и **межъязыково совместимы**. Java Serialization нарушает каждый из этих принципов. Tight coupling: если Service A сериализует `Order v2`, а Service B имеет в classpath `Order v1` — `InvalidClassException` или silent data loss. Rolling deploy блокируется: нельзя иметь в кластере одновременно v1 и v2 pod'ы. Это убивает Canary deployments, Blue-Green deploys, A/B testing на инфраструктурном уровне.
+>
+> JVM-привязка отрезает целые экосистемы: Python ML-сервисы, Go API gateways, Node.js BFF — никто не может десериализовать Java-ser stream. Это толкает к ad-hoc REST endpoints с JSON-обёртками вокруг binary-данных, что приводит к двойному сериализации.
+>
+> Безопасность — главный риск в 2020-2024. Equifax 2017 (147M записей через Apache Struts CVE-2017-5638), Jenkins (CVE-2017-1000353), WebLogic (CVE-2015-4852) — все используют gadget chains в Java Serialization. Атакующий формирует поток, который при `readObject` вызывает цепочку методов в Commons Collections / Spring → `Runtime.exec()`. ObjectInputFilter (JEP 290) — patch, но не silver bullet.
+>
+> Наблюдаемость: бинарный формат нечитаем в Kibana, Grafana, Splunk. Нельзя `grep "userId=42"` по логам Kafka. Debugging запроса требует прогона через ObjectInputStream — невозможно в production.
+>
+> **Пример:**
+> ```mermaid
+> graph LR
+>   subgraph "Anti-pattern: Java Ser. в микросервисах"
+>     A1[Service A<br/>Java 17, Order v2] -->|byte stream| B1[Service B<br/>Java 11, Order v1]
+>     B1 -->|InvalidClassException| X[Failed deploy]
+>   end
+>   subgraph "Best practice"
+>     A2[Service A<br/>Java/Kotlin] -->|Protobuf/JSON| B2[Service B<br/>Python/Go/Java]
+>     A2 -->|Schema Registry| SR[Compatibility check]
+>   end
+>   style X fill:#ffcdd2
+> ```
+>
+> **Когда применять:**
+> - Это **AVOID list**: вместо Java Ser. использовать JSON/Protobuf/Avro для inter-service.
+> - **Исключения** где Java Ser. ещё допустима: legacy RMI endpoints с миграционным планом; Hazelcast/Apache Ignite distributed cache внутри одной JVM-кластерной системы (но рекомендуется Kryo); Hibernate L2 cache (но Hibernate сам ушёл на JSON-based serializers в 6.x).
+> - В этих исключениях **обязательно** `ObjectInputFilter` whitelist + мониторинг через JFR.
+>
+> **Подводные камни:**
+> - **Spring Session по умолчанию использует Java Ser.** для атрибутов в Redis. Если объекты сессии содержат gadget-классы — risk. Mitigation: `spring.session.redis.serializer=json`.
+> - **Hazelcast Default**: Hazelcast IMap.put сериализует Java Ser. по умолчанию. Включить Kryo или Portable.
+> - **Kafka Java Serializer** (`StringSerializer`/`ByteArraySerializer`) — НЕ Java Ser., это просто primitive serializers. Но JsonSerializer внутри Spring Kafka может использовать Jackson — ОК.
+> - **Migration legacy RMI** — болезненна. Часто переписывают на gRPC + Protobuf или REST + JSON, сохраняя interface signatures.
+>
+> **Связанные вопросы:** [[Q15]] — security риски Java Ser.; [[Q17]] — `ObjectInputFilter` для legacy; [[Q29]] — выбор формата по use-case; [[Q31]] — schema versioning.
+
+## Q31. Как организовать версионирование схем в микросервисной архитектуре?
 
 Версионирование схем — критически важная практика при эволюции API. Основные подходы:
 
@@ -1611,10 +1682,107 @@ Accept: application/vnd.api.v2+json
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. Как сериализация связана с паттернами обмена сообщениями? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие основные подходы к версионированию схем существуют для Protobuf, Avro и JSON, и какие compatibility modes есть в Schema Registry?
+>
+> ---
+>
+> #### A) Protobuf — `reserved` теги + правила добавления полей (`int32` field=N с default); Avro + Confluent Schema Registry — режимы BACKWARD/FORWARD/FULL/NONE, валидация при регистрации; JSON — URL versioning (`/api/v1/`) или media-type (`Accept: application/vnd.api.v2+json`) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Schema versioning — это контракт между producer и consumer данных, эволюционирующий во времени. У каждого формата свой механизм.
+>
+> **Protobuf**: schema эволюционирует через правила на уровне `.proto` файла. Добавление поля с новым тегом — backward+forward compatible (старый клиент игнорирует, новый использует default). Удаление поля — нужно `reserved 5; reserved "old_field_name";` чтобы тег нельзя было переиспользовать. Смена типа поля несовместима кроме узкого набора (int32↔uint32↔bool). Buf или Bazel-based linters проверяют правила в CI.
+>
+> **Avro + Schema Registry**: Confluent Schema Registry (или Apicurio) держит реестр всех schemas с версиями. При регистрации новой версии проверяется compatibility:
+> - **BACKWARD** (default) — новая schema может читать старые данные. Можно: удалить поле, добавить optional. Нельзя: убрать обязательное поле, добавить required без default.
+> - **FORWARD** — старая schema читает новые данные. Зеркально к BACKWARD.
+> - **FULL** — оба направления, самый строгий.
+> - **NONE** — отключить проверки (опасно).
+>
+> **JSON**: schema-less по природе, но в production применяют JSON Schema + URL/media-type versioning. URL versioning (`/v1/orders` vs `/v2/orders`) — простой, но fragmentates кодовую базу. Media-type (`Accept: application/vnd.example.v2+json`) — RESTful, требует content negotiation на server side. Кроме того, sender can be lenient (NON_NULL omission) — consumer должен tolerate unknown fields (`@JsonIgnoreProperties(ignoreUnknown=true)` в Jackson).
+>
+> **Пример:**
+> ```protobuf
+> // v2.proto — эволюция от v1
+> message User {
+>   string name = 1;
+>   int32 age = 2;
+>   reserved 3, 4;              // удалённые в v1.5 теги
+>   reserved "phone", "fax";    // удалённые имена
+>   string email = 5;           // новое поле, default ""
+>   repeated string roles = 6;  // новое поле, default []
+> }
+> ```
+>
+> ```yaml
+> # Confluent Schema Registry — настройка compatibility
+> # POST /config/{subject}
+> {
+>   "compatibility": "BACKWARD"
+> }
+> # Проверка при регистрации:
+> # POST /subjects/order-value/versions
+> # — Schema Registry rejects если новая schema нарушает BACKWARD
+> ```
+>
+> ```java
+> // Spring Boot REST — media-type versioning
+> @GetMapping(value = "/orders/{id}",
+>     produces = "application/vnd.example.v2+json")
+> public OrderDtoV2 getOrderV2(@PathVariable Long id) { ... }
+>
+> @GetMapping(value = "/orders/{id}",
+>     produces = "application/vnd.example.v1+json")
+> public OrderDtoV1 getOrderV1(@PathVariable Long id) { ... }
+> ```
+>
+> **Когда применять:**
+> - **Kafka events** в LinkedIn, Confluent Cloud, Uber — обязательно BACKWARD через Schema Registry.
+> - **gRPC API** — Buf CLI для статической проверки `.proto` совместимости в CI (Buf Schema Registry для Google's Stripe-style).
+> - **Public REST API** — URL versioning, deprecation timeline 6-12 месяцев + `Deprecation` header + `Sunset` header (RFC 8594).
+> - **Internal REST** — tolerant reader + media-type, эволюция без bumping версии.
+>
+> **Подводные камни:**
+> - **BACKWARD не гарантирует data correctness**: добавил поле `currency` с default "USD" — все old events будут читаться как USD, даже если они были EUR. Schema compatibility ≠ semantic compatibility.
+> - **Schema Registry == single point of failure**: HA-deployment обязателен. Producer кэширует schemas — но первый запуск при недоступном registry падает.
+> - **Protobuf — поле с тегом >15 занимает 2 байта**: для горячих полей оставлять теги 1-15.
+> - **`oneof` в Protobuf**: нельзя добавлять/удалять поля из существующего `oneof` без слома совместимости.
+>
+> **Связанные вопросы:** [[Q26]] — Protobuf детали; [[Q27]] — Avro в Schema Registry; [[Q5]] — Java native `serialVersionUID` для контраста.
+>
+> ---
+>
+> #### B) Главный способ — bumping major version в URL (`/v1/`, `/v2/`, `/v3/`); это решает все проблемы совместимости — ❌ Неверно
+>
+> **Что на самом деле:** URL versioning — лишь **один** из подходов, и только для REST. Для Kafka events, gRPC, Hadoop файлов он неприменим. И даже для REST URL-versioning имеет минусы: fragments codebase (нужны parallel handlers v1, v2, v3), не помогает с tolerance к unknown fields, удваивает support burden.
+>
+> **Откуда путаница:** наглядный, простой подход, который видно в README любого API. Junior воспринимает его как «универсальное решение».
+>
+> **Если бы это было правдой:** Stripe API (известный за тщательное versioning) не использовал бы date-based versioning (`Stripe-Version: 2023-10-16`). Они выбрали media-type стиль именно из-за минусов URL versioning.
+>
+> ---
+>
+> #### C) Все форматы обеспечивают автоматическую совместимость — достаточно не менять имена полей — ❌ Неверно
+>
+> **Что на самом деле:** автоматической совместимости нет — каждый формат требует **явных правил**. Protobuf — `reserved` теги. Avro — Schema Registry compatibility checks. Java Serialization — `serialVersionUID` + правила. JSON — tolerant reader pattern. Без знания правил совместимость ломается.
+>
+> **Откуда путаница:** маркетинговые слова «schema evolution» в documentation создают иллюзию автоматизма.
+>
+> **Если бы это было правдой:** не существовало бы Schema Registry — он был бы не нужен. Реальность: Confluent инвестировал миллионы в Schema Registry именно потому что автоматизма нет.
+>
+> ---
+>
+> #### D) В микросервисах достаточно использовать `@Version` аннотацию из JPA для версионирования API — ❌ Неверно
+>
+> **Что на самом деле:** `@Version` в JPA — это **optimistic locking** для concurrency control в базе данных, не имеет отношения к API versioning. Это incrementing-integer на entity для предотвращения lost updates. Путать с API/schema versioning — фундаментальная ошибка в проектировании.
+>
+> **Откуда путаница:** слово «version» в разных контекстах. JPA `@Version` решает other problem.
+>
+> **Если бы это было правдой:** Spring Data REST автоматически давал бы versioned API. Реально `@Version` появляется в JSON ответе как обычное поле (entity version), не управляет versioning'ом эндпоинта.
+
+## Q32. Как сериализация связана с паттернами обмена сообщениями?
 
 Формат сериализации влияет на архитектурные решения в messaging-системах:
 
@@ -1640,10 +1808,107 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. (!) Десериализация как вектор атаки — OWASP и реальные эксплойты ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как формат сериализации связан с архитектурными паттернами обмена сообщениями (Event Sourcing, CQRS, Saga)?
+>
+> ---
+>
+> #### A) Формат сериализации не влияет на messaging patterns — это orthogonal concerns — ❌ Неверно
+>
+> **Что на самом деле:** формат критически влияет на эволюцию контрактов, debugging, performance, retention. Event Sourcing с retention 5+ лет требует формата с явной schema evolution (Avro/Protobuf reserved). CQRS с разными формами запроса/чтения может смешивать форматы (JSON для REST commands + Protobuf для internal events). Saga с long-running transactions требует backward compat для compensating actions через годы.
+>
+> **Откуда путаница:** в академической литературе messaging patterns обсуждают абстрактно, без deep dive в serialization.
+>
+> **Если бы это было правдой:** не было бы холиваров «Avro vs Protobuf для event store». Реальность: Greg Young (создатель concept Event Sourcing) пишет статьи specifically про формат и evolution.
+>
+> ---
+>
+> #### B) **Event Sourcing** → Avro + Schema Registry (схема эволюционирует годами, retention > application lifecycle); **CQRS** → разные форматы для read/write (JSON для commands из REST + Protobuf/Avro для internal events); **Saga** → обязательная forward+backward compatibility для compensating actions; **outbox pattern** → формат в БД (JSON для читаемости в debugging) + Kafka topic → Avro для downstream — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> В Event-Driven Architecture формат сериализации — это **долгосрочный контракт**, а не runtime деталь. Event Sourcing систематически хранит все события с retention равным времени жизни системы. Если retention 5-7 лет (audit, financial), то schema эволюционирует через множество application versions. Avro с BACKWARD compatibility в Schema Registry — индустриальный стандарт: NDA Confluent (LinkedIn), Uber Cadence, Booking.com.
+>
+> CQRS разделяет write model и read model. Write model часто принимает JSON (REST API ergonomics), но внутренние события (commands → events → projections) могут использовать Protobuf для compactness и schema discipline. Read model (materialized views) может быть в JSON для простоты в Elasticsearch / read DB.
+>
+> Saga Pattern координирует distributed transactions через события и compensating actions. Если saga запущена за месяц до выхода новой версии события — compensating action в новой версии должен уметь обрабатывать старый формат. FULL compatibility в Schema Registry плюс «event versioning» (event type + version в payload).
+>
+> Outbox Pattern (Transactional Outbox) пишет события в таблицу одной транзакцией с business data, потом отдельный poller публикует в Kafka. Здесь часто JSON в таблице (читаемо в SQL для debugging) и трансформация в Avro/Protobuf при публикации.
+>
+> **Пример:**
+> ```yaml
+> # Production event-sourcing setup для e-commerce
+> components:
+>   order_aggregate:
+>     event_store:
+>       type: Kafka
+>       topic: order.events
+>       format: Avro
+>       compatibility: BACKWARD
+>       retention: -1  # forever (kafka tiered storage)
+>
+>   command_api:
+>     protocol: REST
+>     format: JSON
+>     example: 'POST /orders {"items":[...], "total": 99.99}'
+>
+>   internal_events:
+>     - OrderCreated   # Avro schema v1, v2, v3
+>     - OrderPaid      # Avro schema v1, v2
+>     - OrderShipped   # Avro schema v1
+>
+>   compensating_actions:
+>     - OrderCancelled # читает all v1..vN events
+>     - PaymentRefunded # читает all v1..vM events
+> ```
+>
+> ```java
+> // Event с явной версией для long-running saga
+> @AvroSchema(subject = "order.OrderCreated")
+> public record OrderCreated(
+>     String orderId,
+>     long timestamp,
+>     int schemaVersion,    // явная версия для saga
+>     BigDecimal total,
+>     String currency       // добавлено в v2 (default "USD" в Avro)
+> ) {}
+> ```
+>
+> **Когда применять:**
+> - **Event Sourcing** в финтехе (Wise, Revolut, Stripe internal) — Avro обязателен, schema discipline критична.
+> - **CQRS read model** — Elasticsearch с JSON projections, Kafka Streams с Avro для internal state stores.
+> - **Saga в e-commerce** (Wolt, Yandex Lavka, Uber) — orchestration с явным versioning событий, длительные timeouts (часы-дни).
+> - **Outbox pattern** в Debezium-based архитектурах — Protobuf на wire для compactness Kafka throughput.
+>
+> **Подводные камни:**
+> - **Event replay** для rebuilding projections: после нескольких версий schema нужно тестировать что новая projection корректно читает все версии. Schema registry помогает, но не заменяет integration test.
+> - **Saga timeout vs schema deprecation**: если saga может жить 30 дней, нельзя удалять поле раньше 30+ дней после deploy.
+> - **Outbox latency**: между commit БД и Kafka publish — задержка polling'а. Compensating saga должна handle late events.
+> - **Event size limits**: Kafka default `message.max.bytes=1MB`. Large events (>500KB) — anti-pattern, использовать claim-check pattern (S3 ссылка в event).
+>
+> **Связанные вопросы:** [[Q26]] — Protobuf для commands; [[Q27]] — Avro для events; [[Q31]] — schema versioning rules.
+>
+> ---
+>
+> #### C) Все messaging patterns требуют использовать только JSON, потому что он читается человеком — ❌ Неверно
+>
+> **Что на самом деле:** JSON удобен для debugging, но имеет недостатки в high-throughput messaging: больший размер, медленнее парсинг, нет встроенной schema evolution. На 1M events/s JSON может стать bottleneck'ом (CPU bound на parsing). Production messaging часто использует binary форматы — отладка решается через Schema Registry UI или dedicated tools (Confluent Control Center, akhq).
+>
+> **Откуда путаница:** debugging-driven thinking — «если не вижу в логах, значит не работает».
+>
+> **Если бы это было правдой:** LinkedIn не использовал бы Avro в Kafka — был бы JSON. Реальность: при создании Kafka LinkedIn быстро столкнулись с performance проблемами JSON.
+>
+> ---
+>
+> #### D) Event Sourcing запрещает binary форматы — нужны только текстовые для аудита — ❌ Неверно
+>
+> **Что на самом деле:** Event Sourcing требует **immutability и replay-ability**, но не запрещает binary. Audit в binary форматах решается через Schema Registry (audit log schemas) и tooling (Confluent UI, Avro tools для CLI inspection). Greg Young (создатель Event Sourcing concept) активно использует Protobuf в EventStoreDB.
+>
+> **Откуда путаница:** «audit = текстовый формат» — старое представление из дней до schema-registry tooling.
+>
+> **Если бы это было правдой:** EventStoreDB, KurrentDB, EventStore Cloud не использовали бы Protobuf в default storage layer. Они используют именно потому что schema evolution + compactness важнее текстовости.
+
+## Q33. (!) Десериализация как вектор атаки — OWASP и реальные эксплойты
 
 По классификации **OWASP Top 10 (A8:2017 — Insecure Deserialization)** ненадёжная десериализация входит в число критических уязвимостей. В OWASP Top 10 2021 вошла в A08:2021 — Software and Data Integrity Failures.
 
@@ -1698,10 +1963,104 @@ try (var ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q34. (!) Как `readResolve()` обеспечивает Singleton при десериализации? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие реальные CVE связаны с insecure deserialization в Java, и какая многоуровневая защита рекомендуется OWASP?
+>
+> ---
+>
+> #### A) Insecure deserialization — теоретическая угроза, реальных эксплойтов в production не было — ❌ Неверно
+>
+> **Что на самом деле:** insecure deserialization — категория **массовых** реальных эксплойтов с миллиардными последствиями. Equifax 2017 (147M записей через Apache Struts CVE-2017-5638), Oracle WebLogic CVE-2015-4852 (RCE через Commons Collections), Jenkins CVE-2017-1000353, Apache Shiro CVE-2016-4437 (RememberMe cookie). OWASP Top 10 включает её с 2017 года.
+>
+> **Откуда путаница:** OWASP список абстрактен, и junior может не связать конкретные новости (Equifax breach) с deserialization-категорией.
+>
+> **Если бы это было правдой:** ysoserial (генератор payload'ов) не имел бы 13K stars на GitHub. Tooling существует именно потому что эксплойты реальны и частотны.
+>
+> ---
+>
+> #### B) Достаточно отключить `enableDefaultTyping` в Jackson — это закрывает все vectors атаки — ❌ Неверно
+>
+> **Что на самом деле:** `enableDefaultTyping=false` (по умолчанию с Jackson 2.10+) закрывает один конкретный vector — polymorphic deserialization JSON. Но не защищает от: (1) Java native serialization через `ObjectInputStream` (RMI, JNDI, Spring Session); (2) XML deserialization через `XMLDecoder`; (3) snake_oil libraries с custom deserialization. Нужна multi-layer defense.
+>
+> **Откуда путаница:** один технический tweak — простой mental model. Реальная безопасность многоуровневая.
+>
+> **Если бы это было правдой:** PayPal, Capital One, Equifax после обновления Jackson 2.10+ не имели бы breach'ей. Реально CVE продолжают появляться (CVE-2023-* в jackson-databind и других libs).
+>
+> ---
+>
+> #### C) Defense in depth: (1) **избегать** binary deserialization для untrusted input (JSON + tolerant reader вместо Java Ser.); (2) `ObjectInputFilter` whitelist (JEP 290); (3) HMAC-подпись сериализованных данных + verify до readObject; (4) изолировать deserialization в отдельном процессе с минимальными правами; (5) JFR-мониторинг событий десериализации; (6) удалить gadget-библиотеки из classpath (старые Commons Collections); (7) Jackson 2.10+ `PolymorphicTypeValidator` для JSON polymorphism — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Insecure deserialization — это family vulnerabilities, в которой атакующий контролирует поток байт, поступающий в `readObject` или аналог. Java особенно уязвима из-за gadget chains: чтобы выполнить произвольный код, не нужно загружать malicious class — достаточно вызвать цепочку существующих методов в classpath, заканчивающуюся на `Runtime.exec` или `ProcessBuilder.start`.
+>
+> Известные CVE с context:
+> - **Equifax 2017 (CVE-2017-5638)** — Apache Struts OGNL injection + deserialization → 147M PII записей утекли, $4 млрд stock loss, CEO ушёл. Не починили Struts patch вовремя.
+> - **Oracle WebLogic (CVE-2015-4852)** — Commons Collections gadget chain в T3 protocol. WebLogic стал ботнетом для cryptomining.
+> - **Apache Shiro (CVE-2016-4437)** — RememberMe cookie = Base64(AES(Java Serialized)). Hardcoded AES key → атакующий может подделать cookie → RCE.
+> - **Jackson CVE-2017-7525** — `enableDefaultTyping` + `JdbcRowSetImpl` гаджет → JNDI lookup на attacker LDAP → RCE.
+> - **Log4Shell (CVE-2021-44228)** — формально не deserialization, но похожий vector через JNDI lookup в logging формате.
+>
+> Defense in depth — единственная серьёзная защита. Каждый слой даёт independent protection: ObjectInputFilter блокирует gadget классы; HMAC-подпись делает поток tamper-evident; изоляция процесса ограничивает blast radius; мониторинг даёт detection даже при bypass.
+>
+> **Пример:**
+> ```java
+> // Multi-layer defense for legacy RMI endpoint
+> public class SecureDeserializer {
+>     private static final String SECRET_KEY = System.getenv("HMAC_SECRET");
+>     private static final ObjectInputFilter FILTER =
+>         ObjectInputFilter.Config.createFilter(
+>             "com.example.dto.*;java.base/*;!*"
+>         );
+>
+>     public <T> T deserialize(byte[] payload, byte[] signature, Class<T> type)
+>             throws IOException, ClassNotFoundException {
+>
+>         // Layer 1: HMAC verification (rejects tampering)
+>         byte[] expected = computeHmacSha256(payload, SECRET_KEY);
+>         if (!MessageDigest.isEqual(expected, signature)) {
+>             metrics.counter("deser.tamper_detected").increment();
+>             throw new SecurityException("HMAC mismatch");
+>         }
+>
+>         // Layer 2: ObjectInputFilter (rejects gadget classes)
+>         try (var bais = new ByteArrayInputStream(payload);
+>              var ois = new ObjectInputStream(bais)) {
+>             ois.setObjectInputFilter(FILTER);
+>             return type.cast(ois.readObject());
+>         } catch (InvalidClassException e) {
+>             metrics.counter("deser.filter_rejected").increment();
+>             throw e;
+>         }
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Legacy RMI/T3 endpoints**, которые нельзя сразу удалить — обязательная защита перед миграцией.
+> - **Spring Session с Redis** на классических Java Ser. — переключить на JSON serializer.
+> - **Кэши с user input** (Redis с session data) — sanitize input до записи или сменить формат.
+> - **Public APIs** — никогда не принимать `application/x-java-serialized-object` content-type.
+>
+> **Подводные камни:**
+> - **HMAC-key compromise**: если ключ leaked (Apache Shiro hardcoded!), вся защита обнуляется. Key rotation, HashiCorp Vault, AWS KMS.
+> - **`ObjectInputFilter` patterns are confusing**: `"com.example.*;!*"` — wildcard `*` НЕ matches subpackages. `"com.example.**"` или explicit list.
+> - **Jackson `PolymorphicTypeValidator` default**: с Jackson 2.10+ требуется явный validator при `activateDefaultTyping`. Не отключать ради «удобства».
+> - **XStream** (XML) тоже уязвим — CVE-2021-21351 и подобные. Если XStream в classpath — настроить `XStream.setupDefaultSecurity` и whitelist.
+>
+> **Связанные вопросы:** [[Q15]] — общие риски Java Ser.; [[Q16]] — gadget chains подробно; [[Q17]] — `ObjectInputFilter`; [[Q18]] — overall защита.
+>
+> ---
+>
+> #### D) `SecurityManager.setSecurityManager(custom)` — единственная официальная защита от desserialization атак в JDK — ❌ Неверно
+>
+> **Что на самом деле:** `SecurityManager` deprecated в Java 17 (JEP 411) и будет удалён. Никогда не был основной защитой от deserialization — он управлял general permissions (file IO, network, reflection), но не специально deserialization. Реальная защита — `ObjectInputFilter` (JEP 290, Java 9, backport 8u121).
+>
+> **Откуда путаница:** старые tutorials упоминали SecurityManager как «защита Java». Современный mainstream сместился к ObjectInputFilter.
+>
+> **Если бы это было правдой:** OWASP Cheat Sheet рекомендовал бы SecurityManager. Реально рекомендации перечисляют ObjectInputFilter, HMAC verification, process isolation.
+
+## Q34. (!) Как `readResolve()` обеспечивает Singleton при десериализации?
 
 Стандартная Java-сериализация **создаёт новый объект** при десериализации, обходя приватный конструктор. Это нарушает инвариант Singleton:
 
