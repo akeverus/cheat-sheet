@@ -2124,10 +2124,103 @@ JVM гарантирует, что `enum`-константы десериали�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q35. Что такое `serialPersistentFields` и когда его использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как `readResolve()` решает проблему Singleton при десериализации, и почему `enum`-Singleton предпочтительнее?
+>
+> ---
+>
+> #### A) `readResolve()` запрещает десериализацию объекта — JVM бросит `NotSerializableException` если попытаться deserialize Singleton — ❌ Неверно
+>
+> **Что на самом деле:** `readResolve()` не запрещает desserialization — он **заменяет** результат. JVM выполняет полную десериализацию (читает поля, создаёт временный объект), потом вызывает `readResolve()`, и возвращаемое значение становится итоговым. Временный объект собирается GC.
+>
+> **Откуда путаница:** ассоциация с `InvalidObjectException` (которую можно бросить из `readObject` для блокирования). `readResolve` решает другую задачу — substitution.
+>
+> **Если бы это было правдой:** не было бы способа корректно сериализовать Singleton. Все Singleton-классы (`Boolean`, `Locale`, `Optional.empty()`) сломались бы при `ObjectOutputStream.writeObject`.
+>
+> ---
+>
+> #### B) `readResolve()` вызывается **до** десериализации и решает читать ли поток вообще — ❌ Неверно
+>
+> **Что на самом деле:** `readResolve()` вызывается **после** полной десериализации, на готовом объекте. До этого момента JVM проделала всю работу (allocate, читать поля, восстановить state). Substitution случается на финальном шаге. Если нужно валидировать поток до — это `readObject` или `ObjectInputFilter`.
+>
+> **Откуда путаница:** парное название с `writeReplace` (который ДО записи) сбивает: можно ожидать симметрии в timing.
+>
+> **Если бы это было правдой:** валидация контента происходила бы в `readResolve`. Реально валидация — в `readObject` (тоже после, но до `readResolve`).
+>
+> ---
+>
+> #### C) `readResolve()` должен быть `public` и `static` чтобы JVM смогла его вызвать — ❌ Неверно
+>
+> **Что на самом деле:** сигнатура — `private Object readResolve()` (или `protected`/`package-private`, но обычно `private`). JVM находит метод через рефлексию по имени и сигнатуре. `public` или `static` не требуются и даже могут быть ошибочны (`static` метод не сможет получить `this`).
+>
+> **Откуда путаница:** аналогия с `main(String[])` (public static) или с factory методами.
+>
+> **Если бы это было правдой:** код Joshua Bloch'а в Effective Java (`return INSTANCE;`) не работал бы. Реально pattern требует `private Object readResolve()`.
+>
+> ---
+>
+> #### D) `readResolve()` вызывается JVM **после** десериализации и возвращает объект, который заменит десериализованный (временный собирается GC). Для Singleton возвращаем `INSTANCE`. **Сигнатура: `private Object readResolve()`**. `enum`-Singleton предпочтительнее, потому что JVM сама обеспечивает уникальность экземпляров — без `readResolve` и риска забыть; невозможно создать через рефлексию (`Constructor.newInstance` бросает `IllegalArgumentException` для enum) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Singleton + Java Serialization — классическая ловушка. Стандартная десериализация создаёт новый объект через `Unsafe.allocateInstance` (минуя конструкторы) и заполняет поля из потока. Приватный конструктор не вызывается → второй Singleton может появиться, нарушая инвариант `s1 == s2`.
+>
+> `readResolve()` решает это substitution'ом: JVM проверяет наличие метода с этим именем и сигнатурой через `ObjectStreamClass.invokeReadResolve`. Если есть — возвращаемое значение заменяет десериализованный объект. Для Singleton: вернуть единственную статическую константу, забыть про только что созданный объект.
+>
+> Но pattern fragility: разработчик может забыть `readResolve`, неправильно его подписать (`public` вместо `private` — JVM проигнорирует), или пропустить при рефакторинге наследников. Каждый случай — silent bug в production.
+>
+> `enum`-Singleton — bullet-proof решение Joshua Bloch'а (Effective Java Item 3). Java Language Spec гарантирует: enum constants — single instance per JVM. Сериализация enum в стандартном механизме особая: пишется только имя константы, при чтении вызывается `Enum.valueOf(class, name)` — никаких новых объектов. Reflection-обход: `Constructor.newInstance` для enum бросает `IllegalArgumentException` (нет публичного конструктора, и JVM это специально enforce). Это защищает не только от serialization, но и от reflection attack.
+>
+> **Пример:**
+> ```java
+> // Подход 1: классический Singleton с readResolve
+> public class ClassicSingleton implements Serializable {
+>     private static final long serialVersionUID = 1L;
+>     public static final ClassicSingleton INSTANCE = new ClassicSingleton();
+>     private ClassicSingleton() {}
+>
+>     // ОБЯЗАТЕЛЬНО private — иначе JVM не вызовет
+>     @java.io.Serial
+>     private Object readResolve() {
+>         return INSTANCE;  // временный объект пойдёт в GC
+>     }
+> }
+>
+> // Подход 2: enum-Singleton (Bloch, Effective Java Item 3)
+> public enum EnumSingleton {
+>     INSTANCE;
+>     public void doWork() { /* business logic */ }
+> }
+>
+> // Тест корректности после round-trip
+> @Test
+> void singletonSurvivesRoundtrip() throws Exception {
+>     ClassicSingleton orig = ClassicSingleton.INSTANCE;
+>     ClassicSingleton copy = roundTrip(orig);
+>     assertSame(orig, copy);  // true, благодаря readResolve
+>
+>     EnumSingleton e1 = EnumSingleton.INSTANCE;
+>     EnumSingleton e2 = roundTrip(e1);
+>     assertSame(e1, e2);  // true, gratis от JVM
+> }
+> ```
+>
+> **Когда применять:**
+> - **Singleton с заранее известным набором instances** — Spring beans с `@Scope("singleton")` (но обычно это handled framework'ом).
+> - **Финансовые константы** — `RoundingMode`, `TimeUnit`, `ChronoUnit` (все enum).
+> - **Configuration objects** — application-wide config, который не должен дублироваться.
+> - **`Boolean.TRUE/FALSE`, `Optional.empty()`** — JDK uses readResolve для них.
+>
+> **Подводные камни:**
+> - **Забыть `private` модификатор**: `public Object readResolve()` — JVM игнорирует, Singleton ломается под serialization. Compiler НЕ предупреждает.
+> - **`writeReplace` без `readResolve` — асимметрия**: serialize заменяет на proxy, deserialize создаёт proxy, но Singleton не восстанавливается. Нужны оба.
+> - **Наследники Singleton'а**: если `class Sub extends Singleton`, `Sub.readResolve()` тоже должен быть. Иначе deserialize `Sub` вернёт parent `INSTANCE` (silent bug).
+> - **`@java.io.Serial` annotation (Java 14+)**: IDE и компилятор проверяют корректность сигнатуры. Использовать всегда.
+> - **Concurrency**: `INSTANCE` должен быть инициализирован thread-safe — лучше `static final` (JVM гарантирует safe publication).
+>
+> **Связанные вопросы:** [[Q9]] — `writeReplace`/`readResolve` подробно; [[Q12]] — `enum` Serialization детали; [[Q13]] — Serialization Proxy Pattern.
+
+## Q35. Что такое `serialPersistentFields` и когда его использовать?
 
 `serialPersistentFields` — специальное поле, позволяющее явно задать список полей, участвующих в сериализации, и их типы — независимо от реальных полей класса:
 
@@ -2175,10 +2268,110 @@ public class FlexibleClass implements Serializable {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Как сериализация работает с наследованием и `abstract class`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое `serialPersistentFields` и какие проблемы оно решает?
+>
+> ---
+>
+> #### A) `private static final ObjectStreamField[] serialPersistentFields` — явно декларирует имена и типы «виртуальных» сериализуемых полей независимо от реальных полей класса. Позволяет переименовать поля класса без слома совместимости (физическое поле `fullName` → логическое имя `"name"` в потоке). Используется с `ObjectOutputStream.PutField` / `ObjectInputStream.GetField` в custom `writeObject`/`readObject`. Требует точного имени поля — иначе JVM игнорирует — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `serialPersistentFields` — малоизвестный, но мощный механизм. По умолчанию Java Serialization берёт список сериализуемых полей через рефлексию (все non-transient, non-static instance fields). Если объявить `serialPersistentFields`, JVM использует **этот список** вместо рефлексии. Это даёт contract на «serialized form» отдельный от «in-memory form».
+>
+> Контракт сериализации фиксируется: `[ObjectStreamField("name", String.class), ObjectStreamField("age", int.class)]`. Реальные поля класса могут называться `fullName` и `yearsOld` — это implementation detail, не часть serialized form. При обновлении класса можно изменить in-memory структуру (другой кэш, lazy initialization, computed fields), сохраняя стабильность wire format.
+>
+> Mechanic: при writeObject вручную пишешь `out.putFields().put("name", fullName); out.writeFields();`. При readObject — `in.readFields().get("name", null)`. JVM использует декларированные имена в `serialPersistentFields` для сериализованной формы.
+>
+> Аналогично mechanism в Apache Avro (схема vs in-memory class) или Jackson `@JsonProperty("name")` на поле `fullName`. Но для legacy Java Serialization кода это единственный нативный способ.
+>
+> **Пример:**
+> ```java
+> public class CustomerRecord implements Serializable {
+>     @java.io.Serial
+>     private static final long serialVersionUID = 1L;
+>
+>     // Логический контракт сериализации (publishedAPI)
+>     @java.io.Serial
+>     private static final ObjectStreamField[] serialPersistentFields = {
+>         new ObjectStreamField("name", String.class),
+>         new ObjectStreamField("age", int.class),
+>         new ObjectStreamField("email", String.class)
+>     };
+>
+>     // Реальные поля могут быть другими (рефактоинг)
+>     private String fullName;     // переименовано из "name"
+>     private int yearsOld;        // переименовано из "age"
+>     private String contactEmail; // переименовано из "email"
+>     private transient String computedHash;  // вычисляемое — не пишем
+>
+>     @java.io.Serial
+>     private void writeObject(ObjectOutputStream out) throws IOException {
+>         ObjectOutputStream.PutField fields = out.putFields();
+>         fields.put("name", fullName);
+>         fields.put("age", yearsOld);
+>         fields.put("email", contactEmail);
+>         out.writeFields();
+>     }
+>
+>     @java.io.Serial
+>     private void readObject(ObjectInputStream in)
+>             throws IOException, ClassNotFoundException {
+>         ObjectInputStream.GetField fields = in.readFields();
+>         this.fullName = (String) fields.get("name", null);
+>         this.yearsOld = fields.get("age", 0);
+>         this.contactEmail = (String) fields.get("email", null);
+>         this.computedHash = computeHash();
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - **Рефакторинг legacy классов** с long-term Serialized data (десятки лет в архивах, банковский RMI). Эволюционируешь in-memory представление, не ломая старые `.ser` файлы.
+> - **Декорпление публичного API от implementation**: serialized form — часть public contract, in-memory — internal.
+> - **Защита от случайной утечки** новых internal полей в wire format. Только то что в `serialPersistentFields` — пишется.
+> - **Joshua Bloch, Effective Java Item 87** рекомендует серьёзно подумать про serialized form как публичный API.
+>
+> **Подводные камни:**
+> - **Точное имя**: должно быть строго `serialPersistentFields`, `private static final ObjectStreamField[]`. Любое отклонение — JVM молча игнорирует и переходит на default reflection.
+> - **Без custom writeObject/readObject ничего не работает**: декларация без manual put/get не имеет эффекта.
+> - **Тип ObjectStreamField должен совпадать с тем что пишешь**: декларировал `int.class`, написал `fields.put("age", 30L)` (long) — runtime error.
+> - **Не путать с `transient`**: `transient` исключает поле из default serialization; `serialPersistentFields` определяет полный список без зависимости от `transient`.
+> - **Несовместимость со records**: для record `serialPersistentFields` не применяется — record имеет фиксированный механизм через canonical constructor.
+>
+> **Связанные вопросы:** [[Q4]] — `transient` для контраста; [[Q10]] — custom `writeObject`/`readObject`; [[Q5]] — schema evolution в Java Ser.
+>
+> ---
+>
+> #### B) `serialPersistentFields` — это аннотация для маркировки полей сериализации, аналог `@JsonProperty` в Jackson — ❌ Неверно
+>
+> **Что на самом деле:** это **поле класса**, не аннотация. `private static final ObjectStreamField[] serialPersistentFields = {...}`. Java Serialization не использует аннотации для конфигурации — это механизм 1997 года, до появления annotation processing.
+>
+> **Откуда путаница:** в современном Java mindshare конфигурация через аннотации (Jackson, JPA, Spring). Старый mechanism через magic field name выглядит непривычно.
+>
+> **Если бы это было правдой:** существовала бы `@SerialField("name") private String fullName`. Реально такой аннотации нет; есть `@java.io.Serial` (Java 14+) — но она маркирует сами specials methods (writeObject, readObject, serialPersistentFields), а не отдельные поля.
+>
+> ---
+>
+> #### C) `serialPersistentFields` нужно для сериализации `static` полей — стандартный механизм их пропускает — ❌ Неверно
+>
+> **Что на самом деле:** `serialPersistentFields` **не помогает** сериализовать static поля — static принадлежат классу, не instance, и Java Serialization их принципиально не сохраняет. Поле `serialPersistentFields` декларирует instance-level «виртуальные» поля для маппинга на in-memory, но всё это работает с instance state.
+>
+> **Откуда путаница:** «static field for serialization config» — звучит как «static fields сериализуются через этот mechanism».
+>
+> **Если бы это было правдой:** Hibernate L2 cache сохранял бы static counters между рестартами. Реально такой sequence-counter всегда инициализируется заново.
+>
+> ---
+>
+> #### D) Использование `serialPersistentFields` обязательно для всех `Serializable` классов начиная с Java 17 — без него компилятор ругается warning'ом — ❌ Неверно
+>
+> **Что на самом деле:** `serialPersistentFields` всегда **опционально**. Большинство Serializable классов в JDK и open-source его не используют — default reflection-based mechanism подходит. Compiler не выдаёт warning. Java 14+ добавил `@java.io.Serial` для удобной маркировки serialize-related members, но это не обязательство использовать `serialPersistentFields`.
+>
+> **Откуда путаница:** Java 17 принёс изменения в SecurityManager и serialization filtering. Junior может ассоциировать «security tightening» с «обязательные новые механизмы».
+>
+> **Если бы это было правдой:** миграция legacy кода на Java 17 ломала бы сборки массово. Реально миграции проходят без подобного breakage.
+
+## Q36. Как сериализация работает с наследованием и `abstract class`?
 
 Java-сериализация и наследование — источник многих тонких проблем:
 
@@ -2242,10 +2435,107 @@ public class UserEntity extends AbstractEntity {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. (!) Как Spring обрабатывает сериализацию через `HttpMessageConverter`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как Java Serialization работает с наследованием — что происходит с полями родителя при разных конфигурациях?
+>
+> ---
+>
+> #### A) Если родитель не `Serializable`, его поля автоматически сериализуются вместе с полями потомка — ❌ Неверно
+>
+> **Что на самом деле:** поля родителя, который **не** `Serializable`, **не сохраняются** в потоке. Это часто источник silent data loss. При десериализации JVM инициализирует часть родителя через **no-arg конструктор** — поля принимают значения из конструктора, а не из потока. Например, родитель `Account` с `private int balance = 0;` через no-arg ctor — десериализованный `Wallet extends Account` потеряет balance.
+>
+> **Откуда путаница:** интуитивно «всё что в объекте — сохраняется». Java Ser. specifically discriminates по `Serializable` интерфейсу при walking up hierarchy.
+>
+> **Если бы это было правдой:** не нужно было бы помечать каждый класс в иерархии `implements Serializable`. Реально это требование явное.
+>
+> ---
+>
+> #### B) Если родитель `Serializable` → его поля сериализуются автоматически (Serializable inherited). Если родитель НЕ `Serializable` → его поля **НЕ** сохраняются; при десериализации JVM требует у родителя **доступный no-arg конструктор**, через который инициализируются его поля (если ctor отсутствует — `InvalidClassException`). Abstract class может быть `Serializable`; каждый конкретный подкласс должен иметь свой `serialVersionUID` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Java Serialization имеет специфические правила обхода иерархии классов. JVM walks вверх от инстансиируемого класса до `Object` (или до первого non-Serializable). Для каждого Serializable-класса в цепочке: записываются его non-transient instance fields. Когда встречается non-Serializable родитель — обход останавливается, его поля игнорируются.
+>
+> При десериализации зеркально: JVM создаёт объект через `Unsafe.allocateInstance` (без вызова конструкторов). Потом для каждого Serializable-класса в цепочке восстанавливает поля из потока. Для **non-Serializable родителя** JVM вызывает его no-arg конструктор — поля получают значения из этого ctor, не из потока. Если no-arg ctor отсутствует или недоступен (private) → `InvalidClassException: no valid constructor`.
+>
+> Abstract class может быть `Serializable` — это не отличается от обычного класса. Главный nuance — `serialVersionUID` НЕ наследуется. Каждый класс в иерархии имеет свой собственный `serialVersionUID`. Подкласс должен явно объявить.
+>
+> Интерфейс `Serializable` наследуется как обычный interface — если родительский класс или интерфейс реализует Serializable, все потомки тоже Serializable (или должны быть явно non-Serializable, но nothing in Java prevents Serializable inheritance).
+>
+> **Пример:**
+> ```java
+> // Non-Serializable parent — обязателен no-arg ctor!
+> public class Account {
+>     protected BigDecimal balance;
+>     protected long accountId;
+>
+>     // ОБЯЗАТЕЛЕН для serialization потомка Wallet
+>     public Account() {
+>         this.balance = BigDecimal.ZERO;  // эти значения после deserialize!
+>         this.accountId = -1L;
+>     }
+>
+>     public Account(BigDecimal balance, long id) {
+>         this.balance = balance;
+>         this.accountId = id;
+>     }
+> }
+>
+> public class Wallet extends Account implements Serializable {
+>     @java.io.Serial
+>     private static final long serialVersionUID = 1L;
+>     private String currency;
+>     private List<Transaction> history;
+>
+>     public Wallet(BigDecimal balance, long id, String currency) {
+>         super(balance, id);
+>         this.currency = currency;
+>     }
+> }
+>
+> // После round-trip:
+> Wallet original = new Wallet(new BigDecimal("100.00"), 42L, "USD");
+> Wallet restored = roundTrip(original);
+> assertEquals("USD", restored.currency);           // restored from stream ✓
+> assertEquals(BigDecimal.ZERO, restored.balance);  // LOST! Account.balance was not Serializable
+> assertEquals(-1L, restored.accountId);            // LOST! From no-arg ctor
+> ```
+>
+> **Когда применять:**
+> - **JPA entities с `@MappedSuperclass`** — base entity часто Serializable, конкретные тоже; helps Spring Session, JCache.
+> - **DTO иерархии**: `BaseDto` Serializable + конкретные DTOs наследуют; единое место для metadata (timestamp, traceId).
+> - **Sealed hierarchies для events**: `sealed interface Event extends Serializable permits OrderCreated, OrderPaid` — clean polymorphic events с гарантированной serializability.
+>
+> **Подводные камни:**
+> - **Silent data loss** при non-Serializable parent: pattern, который ловит junior'ов. Test: round-trip + assertEquals on parent fields.
+> - **`InvalidClassException: no valid constructor`** при отсутствии no-arg ctor — частая ошибка при наследовании от 3rd-party non-Serializable классов (часто immutable libraries).
+> - **`serialVersionUID` не наследуется**: компилятор не предупреждает если забыли. IDE (IntelliJ) подсказывает.
+> - **`final` поля родителя через no-arg ctor**: если родитель имеет `private final String x` инициализируемый в no-arg ctor — это будет финальное значение в десериализованном объекте, не из потока.
+> - **Equality после round-trip**: если `equals/hashCode` использует parent fields, и они lost — equals возвращает false для логически идентичных объектов.
+>
+> **Связанные вопросы:** [[Q2]] — `Serializable` marker interface; [[Q7]] — наследование с non-Serializable parent; [[Q19]] — record и наследование; [[Q5]] — schema evolution.
+>
+> ---
+>
+> #### C) При наследовании `serialVersionUID` родителя автоматически копируется в потомка — не нужно объявлять отдельно — ❌ Неверно
+>
+> **Что на самом деле:** `serialVersionUID` — `static final long` поле, и как любое static, оно **не наследуется** в смысле serialization. Каждый класс должен явно объявить свой собственный. Если потомок не объявил — JVM сгенерирует hash от его структуры (а не возьмёт parent's UID). Compiler НЕ предупреждает.
+>
+> **Откуда путаница:** general Java inheritance permits accessing static fields через subclass name (`Subclass.PARENT_STATIC_FIELD`), создавая иллюзию «наследования» static.
+>
+> **Если бы это было правдой:** один UID в base class покрывал бы всю иерархию. Реально каждый класс — независимый serialization unit.
+>
+> ---
+>
+> #### D) Abstract class **не может** быть `Serializable` — компилятор это запрещает — ❌ Неверно
+>
+> **Что на самом деле:** abstract class **может** implement Serializable без проблем. Сам abstract class не сериализуется напрямую (нельзя инстансировать), но его поля и методы участвуют в сериализации конкретных подклассов. Multiple JDK classes — `AbstractList`, `AbstractMap`, `AbstractCollection` — все Serializable.
+>
+> **Откуда путаница:** «нельзя создать instance abstract class» → «нельзя сериализовать». Но сериализуется конкретный подкласс, а его abstract родитель просто contributes своими полями.
+>
+> **Если бы это было правдой:** `AbstractList` не был бы Serializable, и `ArrayList` (extends AbstractList) не сериализовался бы корректно. Реально иерархия collections широко Serializable.
+
+## Q37. (!) Как Spring обрабатывает сериализацию через `HttpMessageConverter`?
 
 Spring MVC и Spring WebFlux используют `HttpMessageConverter` для преобразования объектов в HTTP-тело запроса/ответа и обратно. Это основной механизм сериализации в REST API.
 
