@@ -14,7 +14,7 @@ aliases:
   - "Observability interview"
 prerequisites: []
 next: []
-updated: "2026-05-08"
+updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: `Observability`
 
@@ -2583,10 +2583,111 @@ kubectl rollout undo deployment/orders-service -n production
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. FinOps и Observability: стоимость телеметрии и sampling для снижения затрат? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что отличает качественный actionable runbook от формального документа «для галочки», и почему это критично для MTTR?
+>
+> ---
+>
+> #### A) Главное — общее описание проблемы и кому звонить в случае непонимания — ❌ Неверно
+>
+> **Что на самом деле:** «Общее описание» и эскалация — это часть runbook, но **не его суть**. Если дежурный получает page в 3 ночи и читает «что-то с базой данных, звони @db-team», MTTR растягивается на час ожидания эксперта. Качественный runbook позволяет **дежурному без специальных знаний** выполнить базовые диагностические и mitigation шаги.
+>
+> **Откуда путаница:** runbook часто пишется как «теоретический документ», а не операционный инструмент.
+>
+> **Если бы это было правдой:** все инциденты эскалировались бы экспертам — это разрушает on-call rotation, эксперты выгорают.
+>
+> ---
+>
+> #### B) Только описание severity и владельца — детали в коде/документации — ❌ Неверно
+>
+> **Что на самом деле:** «Детали в коде» означает, что дежурному надо в 3 ночи читать кодовую базу, чтобы понять, как отлаживать payment-service. Это невозможно для большой системы и неэффективно даже для маленькой. Runbook **должен быть самодостаточным** для базовой диагностики.
+>
+> **Откуда путаница:** разработчики, которые знают код, думают «всё понятно», и не пишут runbook. Но дежурный — не автор кода.
+>
+> **Если бы это было правдой:** новые дежурные после онбординга не могли бы реагировать на инциденты — но это и есть случай в командах без runbooks.
+>
+> ---
+>
+> #### C) Severity + impact + конкретные команды диагностики (kubectl, queries, dashboard URL) + actionable mitigation шаги + ссылки на observability + signs of recovery + время эскалации + дата последнего обновления — ✓ Верно
+>
+> **Развёрнутое объяснение:** Качественный runbook — это **operational tool**, который позволяет дежурному за 5–15 минут локализовать и mitigate проблему. Структура: **(1) Метаданные**: severity (P1/P2), алерт, владелец команды, дата последнего обновления. **(2) Описание и impact**: что произошло и какое бизнес-влияние (revenue, users, SLO budget). **(3) Диагностика — конкретные команды**: `kubectl logs -l app=orders --tail=100`, Kibana query `q=level:ERROR&sort=@timestamp:desc`, ссылка на Grafana dashboard с pre-filtered time range. **(4) Зависимости проверить**: БД (link to dashboard), Kafka (link), upstream services. **(5) Последний deploy**: `kubectl rollout history deployment/X` — release часто причина. **(6) Mitigation actions с конкретными командами**: «rollback: `kubectl rollout undo deployment/X`», «scale up: `kubectl scale --replicas=10`». **(7) Signs of recovery**: какие метрики должны вернуться к baseline. **(8) Эскалация**: «если не решено за 15 минут → @team-lead, @sre-on-call». **(9) Post-incident**: ссылка на post-mortem template. **Runbook Automation** (продвинутый уровень): PagerDuty Runbook Automation, AWS SSM — кнопка выполняет диагностические шаги; ChatOps в Slack с slash-команд «/runbook orders-error-rate».
+>
+> **Пример:**
+> ```markdown
+> # Runbook: OrderService High Error Rate
+> **Severity:** P1 | **Алерт:** OrderServiceErrorRateHigh | **Owner:** @team-orders
+> **Updated:** 2026-04-15
+>
+> ## Impact
+> Пользователи не могут оформить заказы. Revenue loss ~$1000/min.
+>
+> ## Диагностика (выполнить последовательно)
+>
+> ### 1. Проверить дашборд (за 30 сек)
+> [Orders Service Dashboard](https://grafana/d/orders?from=now-30m)
+> Смотреть: error_rate, p99_latency, request_rate
+>
+> ### 2. Последние ошибки в логах
+> ```bash
+> # Kibana
+> GET /orders-*/_search?q=level:ERROR&sort=@timestamp:desc&size=50
+> ```
+>
+> ### 3. Зависимости
+> - БД: [Postgres Dashboard](https://grafana/d/postgres-orders) — connection pool?
+> - Kafka: `kafkactl get cg orders-consumer` — lag?
+> - Payment: [Payment Service Health](https://grafana/d/payment) — upstream healthy?
+>
+> ### 4. Последний deploy
+> ```bash
+> kubectl rollout history deployment/orders-service -n production
+> ```
+>
+> ## Mitigation
+>
+> ### Если проблема после deploy → rollback
+> ```bash
+> kubectl rollout undo deployment/orders-service -n production
+> # Подтверждение: error_rate должен упасть < 0.5% за 2 минуты
+> ```
+>
+> ### Если перегружен connection pool
+> ```bash
+> kubectl set env deployment/orders-service -n production \
+>   SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=20
+> ```
+>
+> ## Signs of Recovery
+> - error_rate < 0.1% (5 минут sustained)
+> - p99 latency < 300 ms
+> - alert ErrorRateHigh = resolved
+>
+> ## Эскалация
+> Не решено за 15 минут → @orders-lead (+7-XXX-XXX), @sre-on-call
+>
+> ## Post-Incident
+> Создать post-mortem: [Template](https://confluence/pm-template)
+> ```
+>
+> **Когда применять:** для **каждого** page-алерта обязательно. Без runbook алерт не должен быть P1/P2.
+>
+> **Подводные камни:** **Runbook drift** — система меняется, runbook устаревает. Решение: указывать `Updated date`, monthly review, тестирование runbook в GameDays. **Слишком длинный runbook** — никто не читает. Сохранять под 1 экран для диагностики, mitigation — отдельная секция. **Hardcoded URLs/commands** — при миграции (cluster rename, service mesh migration) ломаются ссылки.
+>
+> **Связанные вопросы:** [[Q30]] — post-mortem; [[Q37]] — alert fatigue; [[Q33]] — maturity model.
+>
+> ---
+>
+> #### D) Только текстовое описание архитектуры — это даёт контекст для диагностики — ❌ Неверно
+>
+> **Что на самом деле:** Архитектурное описание полезно для **онбординга**, но не для **on-call response**. Дежурный в 3 ночи не будет читать архитектурный документ — ему нужны actionable шаги. Архитектура должна быть в отдельной wiki, runbook ссылается на неё опционально.
+>
+> **Откуда путаница:** разработчики любят писать про архитектуру; runbook воспринимают как «расширенная архитектура».
+>
+> **Если бы это было правдой:** runbook был бы 10+ страниц теории — никто не читает в момент инцидента.
+>
+> ---
+
+## Q39. FinOps и Observability: стоимость телеметрии и sampling для снижения затрат?
 
 **Проблема:** телеметрия дорогая. В высоконагруженной системе:
 - 1 млн RPS × 1 трейс/запрос × 10 KB/трейс = **10 GB/час** трейсов
@@ -2656,10 +2757,98 @@ Counter.builder("http.requests")
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q40. Synthetic Monitoring: что это и когда нужно? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Observability bill вырос до $50k/мес и FinOps требует сокращения на 50%. Какой подход сохранит диагностическую ценность данных при максимальном сокращении затрат?
+>
+> ---
+>
+> #### A) Снизить retention всех данных до 7 дней — простое и предсказуемое решение — ❌ Неверно
+>
+> **Что на самом деле:** Равномерное снижение retention теряет ценность непропорционально стоимости. Многие use-cases требуют 30+ дней (weekly trends, recurring incidents, compliance). Также cost driver не всегда retention — часто это **ingest** (storage cheap, processing expensive). Нужен **selective** подход, не blanket cuts.
+>
+> **Откуда путаница:** retention — самый видимый параметр (один slider), но снижение даёт линейную экономию с нелинейной потерей ценности.
+>
+> **Если бы это было правдой:** через месяц инцидентов «у нас нет данных за прошлый понедельник» — recurring patterns пропадают.
+>
+> ---
+>
+> #### B) Перейти на head-based sampling 1% всех трейсов — резко снижает trace cost — ❌ Неверно
+>
+> **Что на самом деле:** Head-based 1% теряет 99% данных равномерно — включая редкие ошибки. При error rate 0.1% и 1% sampling реально сохранится 0.001% запросов — статистики на расследование почти нет. Правильный подход: **tail-based** с 100% ошибок и медленных + probabilistic 5% остальных = ~5–10% общий sampling при сохранении 100% интересных кейсов.
+>
+> **Откуда путаница:** head-based — самый простой sampler (SDK config), tail-based требует OTel Collector setup.
+>
+> **Если бы это было правдой:** при инциденте «p99 = 5s» в Tempo находим 2 случайных трейса вместо паттерна — root cause не локализуется.
+>
+> ---
+>
+> #### C) Cost analytics per service → tail-sampling (100% errors + 10% baseline) + cardinality cleanup + log level optimization (drop DEBUG) + tiered retention (hot/warm/cold) + drop high-volume low-value events (health checks) + per-service spending caps — ✓ Верно
+>
+> **Развёрнутое объяснение:** Системный FinOps approach для observability: **(1) Cost analytics per service** — dashboard «$/month per service» — без этого оптимизация не приоритизируется. Top-3 сервиса обычно дают 70% bill. **(2) Tail-sampling для трейсов** (см. Q26) — 100% ошибок + 100% медленных + 10% baseline = общий sampling 5–15% при сохранении 95% диагностической ценности. **(3) Cardinality cleanup** — найти high-cardinality metrics через `topk(20, count by (__name__)({__name__=~".+"}))`, удалить unused labels. Часто 5–10% метрик дают 80% time series. **(4) Log level optimization**: drop DEBUG в production через `OTel Collector filter processor`; sampling редких DEBUG для специфичной диагностики. **(5) Tiered retention**: hot 3–7d (SSD), warm 30d (HDD/object storage), cold 90–365d (S3 Glacier). **(6) Drop high-volume low-value events**: health checks (`/actuator/health`, `/healthz`), Kubernetes liveness probes — drop на agent уровне. **(7) Per-service spending caps** в budget alerting — алерт на «service X превысил $X/мес». **(8) Metrics vs traces tradeoff**: для SLO достаточно агрегированных метрик, трейсы — только для диагностики.
+>
+> **Пример:**
+> ```yaml
+> # OTel Collector — comprehensive cost optimization
+> processors:
+>   # 1. Drop health checks (high volume, low value)
+>   filter/healthchecks:
+>     spans:
+>       exclude:
+>         match_type: regexp
+>         attributes:
+>           - {key: http.target, value: '^(/healthz|/actuator/health|/metrics)$'}
+>
+>   # 2. Tail sampling — keep all errors + slow + 10% baseline
+>   tail_sampling:
+>     decision_wait: 10s
+>     num_traces: 100000
+>     policies:
+>       - {name: errors, type: status_code, status_code: {status_codes: [ERROR]}}
+>       - {name: slow, type: latency, latency: {threshold_ms: 1000}}
+>       - {name: probabilistic, type: probabilistic, probabilistic: {sampling_percentage: 10}}
+>
+>   # 3. Drop high-cardinality labels from metrics
+>   transform/cardinality:
+>     metric_statements:
+>       - context: datapoint
+>         statements:
+>           - delete_key(attributes, "user_id")
+>           - delete_key(attributes, "request_id")
+>
+>   # 4. Log severity filter — drop DEBUG in production
+>   filter/loglevels:
+>     logs:
+>       exclude:
+>         match_type: strict
+>         severity_text: ["DEBUG", "TRACE"]
+>
+> # Loki — tiered retention
+> limits_config:
+>   retention_period: 168h    # 7 days hot
+> compactor:
+>   retention_enabled: true
+> # Lifecycle policy в S3 — переход в Glacier через 30 дней
+> ```
+>
+> **Когда применять:** обязательно при observability bill > 5–10% от total infra cost, при росте на 30%+ MoM, при FinOps audit. Регулярный review — раз в квартал.
+>
+> **Подводные камни:** **Drop health checks** может сломать uptime monitoring, если он строится на этих логах — нужны отдельные synthetic probes. **Per-service caps** при exceeded → drop telemetry → инцидент не диагностируется. Caps должны быть с alerting, не hard stop. **Cardinality cleanup** требует понимания, какие labels используются в queries — нужен grep по Grafana dashboards перед удалением.
+>
+> **Связанные вопросы:** [[Q26]] — sampling детально; [[Q27]] — управление стоимостью логов; [[Q32]] — anti-patterns (cardinality).
+>
+> ---
+>
+> #### D) Перейти на полностью managed-решение (Datadog) — оно дешевле open-source — ❌ Неверно
+>
+> **Что на самом деле:** Managed-решения **дороже** self-hosted при том же volume (Datadog Logs $1.27/GB ingest vs Loki ~$0.10/GB). Managed выгоден когда нет SRE-ресурсов на поддержку self-hosted, но не «дешевле» по чистой стоимости.
+>
+> **Откуда путаница:** managed экономит operational time (FTE × salary), что иногда забывают учесть. Но monetary cost обычно выше.
+>
+> **Если бы это было правдой:** Netflix, Uber, Shopify использовали бы Datadog — но они инвестируют в свои observability-платформы именно для cost control.
+>
+> ---
+
+## Q40. Synthetic Monitoring: что это и когда нужно?
 
 **Synthetic Monitoring** — активная проверка работоспособности системы с помощью искусственно созданных запросов (синтетических транзакций), имитирующих поведение пользователя.
 
@@ -2718,10 +2907,97 @@ await expect(page).toHaveURL('/confirmation');
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [ELK Stack](elk-stack-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда synthetic monitoring критично необходимо в дополнение к Real User Monitoring (RUM) и стандартным метрикам?
+>
+> ---
+>
+> #### A) Synthetic monitoring заменяет RUM — оно «лучше», потому что контролируемо — ❌ Неверно
+>
+> **Что на самом деле:** Synthetic и RUM — **complementary**, не альтернативы. Synthetic — это **proactive** мониторинг с предсказуемым сценарием, RUM — **reactive** с реальным поведением. Synthetic не видит реальных проблем пользователей (specific data, browsers, regions), RUM не видит проблем в low-traffic окнах (3 AM). Полная observability требует обоих.
+>
+> **Откуда путаница:** маркетинг synthetic-инструментов (Datadog Synthetics) иногда подаёт его как «полную замену».
+>
+> **Если бы это было правдой:** синтетический сценарий «login + checkout» работает, но реальный пользователь с конкретным promo code получает ошибку — RUM это видит, synthetic — нет.
+>
+> ---
+>
+> #### B) Synthetic — это только uptime monitoring (ping/HTTP check), ничего больше — ❌ Неверно
+>
+> **Что на самом деле:** Современный synthetic monitoring включает: **(1) Uptime checks** (Blackbox Exporter, Pingdom), **(2) Multi-step transactions** (Playwright/Selenium scenarios — checkout flow), **(3) API monitoring** (POST /payment with valid payload), **(4) Multi-region checks** (из 5–10 географических локаций для CDN/DNS issues), **(5) Performance baseline** (page load time с разных регионов).
+>
+> **Откуда путаница:** простейшие use-cases — uptime, отсюда упрощение восприятия.
+>
+> **Если бы это было правдой:** не существовало бы Checkly, Datadog Synthetics с их сложным scenario language.
+>
+> ---
+>
+> #### C) Critical user journeys monitoring 24/7 (включая low-traffic окна) + multi-region проверки + API contract testing + SLO baseline в staging — обязательно для critical user-facing services — ✓ Верно
+>
+> **Развёрнутое объяснение:** Synthetic monitoring критично в нескольких сценариях. **(1) 24/7 uptime для low-traffic окон**: B2B сервис в 3 AM не имеет пользователей, но должен работать; RUM ничего не покажет, synthetic — да. **(2) Critical user journeys**: login → search → checkout — каждые 5 минут синтетический сценарий проходит весь flow; деградация любого шага видна сразу. **(3) Multi-region monitoring**: запуск из 10+ географических точек обнаруживает CDN/DNS issues — «работает в Москве, не работает в Лондоне». **(4) API contract monitoring**: synthetic POST с реальным payload проверяет не только статус, но и response schema (breaking changes detection). **(5) SLO baseline в staging/canary**: synthetic нагрузка проверяет, что новая версия соответствует SLO, прежде чем получит реальный трафик. **(6) Pre-incident detection**: synthetic быстрее обнаруживает problem (60s intervals), чем накапливающаяся ошибка в RUM (нужны минуты для статистической значимости).
+>
+> **Пример:**
+> ```javascript
+> // Playwright — synthetic critical user journey
+> // Запуск каждые 5 минут из 5 регионов через Grafana Synthetic Monitoring
+> import { test, expect } from '@playwright/test';
+>
+> test('checkout journey', async ({ page }) => {
+>   // 1. Login
+>   await page.goto('https://example.com/login');
+>   await page.fill('#email', 'synthetic-user@example.com');
+>   await page.fill('#password', process.env.SYNTHETIC_PWD);
+>   await page.click('button[type="submit"]');
+>   await expect(page).toHaveURL('/dashboard');
+>
+>   // 2. Add to cart
+>   await page.goto('/products/SKU-12345');
+>   await page.click('#add-to-cart');
+>   await expect(page.locator('.cart-count')).toHaveText('1');
+>
+>   // 3. Checkout
+>   await page.goto('/checkout');
+>   await page.click('#proceed-payment');
+>   await expect(page).toHaveURL('/confirmation', { timeout: 30000 });
+>
+>   // 4. Performance assertion
+>   const metrics = await page.evaluate(() => JSON.stringify(performance.timing));
+>   const parsed = JSON.parse(metrics);
+>   expect(parsed.loadEventEnd - parsed.navigationStart).toBeLessThan(3000);
+> });
+> ```
+>
+> ```yaml
+> # Blackbox Exporter (Prometheus) — простой HTTP probe
+> modules:
+>   http_2xx:
+>     prober: http
+>     timeout: 5s
+>     http:
+>       valid_status_codes: [200]
+>       fail_if_not_ssl: true
+>       fail_if_body_not_matches_regexp: ['"status":"ok"']
+> ```
+>
+> **Когда применять:** обязательно для **user-facing critical paths** (login, checkout, payment), **SLA-bound services** (B2B с финансовыми штрафами за downtime), **public APIs** с contract guarantees. Минимум для production — HTTP health check каждые 60 секунд с P1 alert.
+>
+> **Подводные камни:** **Synthetic scripts maintenance** — при изменении UI/API скрипты ломаются (false alerts). Решение: synthetic scripts — это код, нужен code review и обновление при UI changes. **Cost** — multi-region synthetic за 100+ check/min может стоить $100–500/мес. **False positives от CDN/network jitter** — нужен `for: 2m` в alert и multi-region quorum (3 из 5). **Synthetic users в production** — нужно фильтровать в analytics, чтобы не искажать business metrics.
+>
+> **Связанные вопросы:** [[Q23]] — SLO/SLI; [[Q31]] — CI/CD observability; [[Q37]] — alert fatigue.
+>
+> ---
+>
+> #### D) Synthetic monitoring нужен только для веб-сайтов с пользовательским UI — ❌ Неверно
+>
+> **Что на самом деле:** Synthetic применим к **любым** сервисам: REST APIs, gRPC, Kafka producers/consumers (synthetic publish/subscribe), даже database connectivity. Веб-UI — самый известный случай, но не единственный.
+>
+> **Откуда путаница:** Playwright/Selenium ассоциируются с UI testing, отсюда восприятие «synthetic = web».
+>
+> **Если бы это было правдой:** API-only сервисы (backend microservices) не имели бы synthetic monitoring — но они активно его используют через API probes.
+>
+> ---
+
+- [ELK Stack](elk-stack-interview.md)
 - [Jaeger и Zipkin](jaeger-zipkin-interview.md)
 - [Стратегии логирования](logging-strategies-interview.md)
 - [Loki и Grafana](loki-grafana-interview.md)
