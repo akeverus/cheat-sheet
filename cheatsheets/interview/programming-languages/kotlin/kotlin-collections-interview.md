@@ -1932,10 +1932,89 @@ numbers.getOrNull(10)          // null
 
 
 > [!mcq]
-> - [ ] `single()` возвращает `null` если элементов больше одного — это безопасное API | `single()` бросает `IllegalArgumentException` если в коллекции **больше одного** элемента, и `NoSuchElementException` если пуста. `null` возвращает только `singleOrNull()`. ❌ ПОСЛЕДСТВИЕ: «один пользователь по email» через `users.single { it.email == x }` падает 500, когда дубликат email прошёл валидацию (race condition в registration), пользователь не может залогиниться.
-> - [ ] `firstOrNull { predicate }` всегда быстрее `first { predicate }` потому что не бросает исключение | Обе функции имеют идентичную логику обхода и early-termination на первом match; разница только в обработке «не найдено» (null vs throw). Производительности это не касается. ❌ ПОСЛЕДСТВИЕ: код-ревьюер настаивает «замените на firstOrNull для скорости», теряется час на бенчмарк, который не показывает разницы.
-> - [x] `*OrNull`-варианты безопасны на пустой/missing; `single()` требует ровно один элемент (иначе exception); `elementAtOrElse(n){}` вызывает лямбду с индексом при out-of-bounds | Это контракт-первых функций: явные `OrNull` для null-safe чтения, `single`/`Or` для unique-cardinality контракта, `elementAt*` для индексного доступа с настраиваемым fallback. ✓ ПРИМЕНЯТЬ: `users.firstOrNull { it.id == id } ?: throw NotFound(id)` в API-handler; `single` для assertion «ровно один admin». 📋 ПРАВИЛО: «*OrNull в проде, без — только если invariant гарантирован». 🔗 См. Q11.
-> - [ ] `singleOrNull { it.isActive }` возвращает первый активный элемент даже при множестве совпадений | `singleOrNull` возвращает `null` **и при пустой, и при > 1 совпадении** — это его контракт «ровно один или ничего». ❌ ПОСЛЕДСТВИЕ: фильтрация дефолтной языковой настройки через `singleOrNull { it.isDefault }` молча возвращает null, когда в БД случайно два default-record, UI показывает английский вместо локали пользователя.
+>
+> **Вопрос:** Чем `first`/`last`/`single` отличаются от своих `OrNull`-вариантов и какие гарантии даёт `single` про мощность результата?
+>
+> ---
+>
+> #### A) `single()` возвращает `null` если элементов больше одного — это безопасное API — ❌ Неверно
+>
+> **Что на самом деле:** `single()` имеет **двойной throw-контракт**: бросает `NoSuchElementException` если коллекция пуста и `IllegalArgumentException` если в ней **больше одного** элемента. `null` возвращает только `singleOrNull()` (и тоже в обоих случаях: 0 или > 1). Контракт `single` — «ровно один или throw».
+>
+> **Откуда путаница:** название «single» ассоциируется с `firstOrNull`-стилем безопасности. Но в Kotlin `single` без OrNull — strict assertion на единичность: используется для контрактов вроде «у пользователя ровно один primary email».
+>
+> **Если бы это было правдой:** «найти пользователя по email» через `users.single { it.email == x }` в endpoint `/login` падает 500 с `IllegalArgumentException: Collection contains more than one matching element`, когда дубликат email прошёл валидацию (race condition в registration); все попытки login для этого пользователя возвращают 500 пока DBA не удалит дубликат вручную.
+>
+> ---
+>
+> #### B) `firstOrNull { predicate }` всегда быстрее `first { predicate }` потому что не бросает исключение — ❌ Неверно
+>
+> **Что на самом деле:** Обе функции имеют **идентичную** логику обхода: итерируют коллекцию, проверяют predicate, early-termination на первом совпадении. Единственная разница — что делать, когда совпадение не найдено: `first` бросает `NoSuchElementException`, `firstOrNull` возвращает `null`. Производительность отличается только в edge-case «совпадения нет» (throw vs null assignment) — пренебрежимо.
+>
+> **Откуда путаница:** «exception дороже» — общеизвестный perf-факт. Но он применим только к **созданию и пробрасыванию** exception, а не к happy path (где exception не создаётся). Микро-оптимизация на «избегании потенциального exception» не имеет смысла.
+>
+> **Если бы это было правдой:** код-ревьюер настаивает «замените все `first` на `firstOrNull` для скорости», теряется час на JMH-бенчмарк, который не показывает разницы; вместо этого правильная мотивация — null-safety, а не perf.
+>
+> ---
+>
+> #### C) `*OrNull`-варианты безопасны на пустой/missing; `single()` требует ровно один элемент (иначе exception); `elementAtOrElse(n){}` вызывает лямбду с индексом при out-of-bounds — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это семейство функций доступа к элементам с разными контрактами:
+>
+> | Функция | На пустой | Если не найдено / out-of-bounds |
+> |---------|-----------|-------------------------------|
+> | `first()` / `last()` | NoSuchElementException | NoSuchElementException |
+> | `firstOrNull()` / `lastOrNull()` | null | null |
+> | `single()` | NoSuchElementException | IllegalArgumentException (>1) |
+> | `singleOrNull()` | null | null (и при пустой, и при >1) |
+> | `elementAt(n)` | IOOBE | IOOBE |
+> | `elementAtOrNull(n)` | null | null |
+> | `elementAtOrElse(n){default}` | default(n) | default(n) |
+>
+> Семантика разделена на:
+> - **Existence** (`first`/`firstOrNull`) — «найти первый элемент по predicate»
+> - **Cardinality assertion** (`single`/`singleOrNull`) — «ровно один элемент или ошибка»
+> - **Index access** (`elementAt*`) — позиционный доступ с настраиваемым fallback
+>
+> **Пример:**
+> ```kotlin
+> // API handler — явная обработка отсутствия
+> fun getUser(id: Long): User =
+>     users.firstOrNull { it.id == id } ?: throw NotFoundException("user $id")
+>
+> // Assertion «ровно один admin» — фейл at startup лучше тихого default
+> val rootAdmin: User = users.single { it.role == Role.ROOT_ADMIN }
+>
+> // Index access с custom default
+> val item: Item = list.elementAtOrElse(index) { idx ->
+>     logger.warn("index $idx out of range, fallback")
+>     Item.EMPTY
+> }
+> ```
+>
+> **Когда применять:**
+> - **Yandex API**: `firstOrNull { it.id == id }` для null-safe lookup в `/users/{id}` handler
+> - **Spring startup assertions**: `roles.single { it.isDefault }` — если default не ровно один, fail fast at startup
+> - **JetBrains UI**: `tabs.elementAtOrElse(activeIdx) { tabs.first() }` для resilient navigation
+>
+> **Подводные камни:**
+> - **`singleOrNull` при > 1** возвращает null — может маскировать data corruption (duplicate default flag в БД)
+> - **`first()` без predicate на бесконечной Sequence** — работает, но `first { p }` без match зависнет навсегда
+> - **`elementAt` на Sequence** — O(n), не O(1) (нет random access)
+>
+> **Связанные вопросы:** [[Q11]] — базовые операции; [[Q35]] — minOrNull/maxOrNull; [[Q19]] — mapNotNull для filter-null inline.
+>
+> ---
+>
+> #### D) `singleOrNull { it.isActive }` возвращает первый активный элемент даже при множестве совпадений — ❌ Неверно
+>
+> **Что на самом деле:** `singleOrNull` возвращает **`null` И при пустой, И при > 1 совпадении** — это его контракт «ровно один элемент или ничего». Если нужен «первый совпадающий», нужен `firstOrNull`.
+>
+> **Откуда путаница:** название «single OR null» можно прочитать как «single OR fallback to null on empty» (как `firstOrNull`). Но семантика `single` всегда про cardinality = 1, и `OrNull` означает «при невыполнении контракта вернуть null вместо throw».
+>
+> **Если бы это было правдой:** фильтрация дефолтной языковой настройки через `localeConfigs.singleOrNull { it.isDefault }` молча возвращает `null`, когда в БД случайно два record с `isDefault=true` (например, после миграции из legacy-системы); UI показывает английский вместо русской локали пользователя, customer support получает тикеты «приложение на английском, хотя я выбрал русский», расследование занимает дни.
 
 ## Q37. (!) Что такое `PersistentList` / `PersistentMap` и зачем нужен structural sharing?
 
@@ -1983,10 +2062,95 @@ list2 = [1, 2, 3, 4, 5, 6]
 
 
 > [!mcq]
-> - [ ] `PersistentList.add()` создаёт полную копию списка — это O(n) операция, как и `ArrayList.add` со сдвигом | `PersistentList` использует RRB-trees со structural sharing: операция `add` имеет сложность O(log n), новая версия делит большую часть структуры с предыдущей. ❌ ПОСЛЕДСТВИЕ: команда отказывается от persistent collections «потому что они медленные», возвращается к `Collections.unmodifiableList` + ручному copy на каждое изменение, реальные allocations в 5× выше.
-> - [x] `kotlinx.collections.immutable` (`PersistentList`/`PersistentMap`) даёт истинную неизменяемость через structural sharing (HAMT для Map, RRB-tree для List), `add`/`put` за O(log n) без full copy | В отличие от `listOf()` (read-only view над mutable `ArrayList`), persistent collections **гарантированно** не меняются; идеально для multi-thread snapshots, event sourcing, Compose state. ✓ ПРИМЕНЯТЬ: `MutableStateFlow(persistentListOf<Order>())` в Compose ViewModel — каждый emit создаёт новый snapshot за O(log n), structural diff в @Composable работает корректно. 📋 ПРАВИЛО: «PersistentList = immutable + structural sharing + O(log n)». 🔗 См. Q6, Q7.
-> - [ ] `listOf()` и `persistentListOf()` — эквивалентны, оба создают immutable список | `listOf()` возвращает read-only `Collections$SingletonList` или `ArrayList` под обёрткой `KType`; через каст к `MutableList` модифицируем. `persistentListOf` — отдельный класс, mutation API отсутствует на уровне типа. ❌ ПОСЛЕДСТВИЕ: библиотечный код «возьмёт List, поменяет если ArrayList», работает 6 месяцев, после Kotlin upgrade меняется реализация `listOf` — поведение ломается тихо.
-> - [ ] Structural sharing работает только для Persistent Map — для PersistentList всегда O(n) copy | Structural sharing реализовано для **всех** persistent типов: List (RRB-tree), Map (HAMT), Set (HAMT на ключах). Это центральный design pattern библиотеки. ❌ ПОСЛЕДСТВИЕ: разработчик пишет ручную immutable list через `ArrayList(prev).apply { add() }`, проигрывает в perf тестах и в memory profile.
+>
+> **Вопрос:** Что такое structural sharing в `PersistentList`/`PersistentMap` и почему `add`/`put` не делают полную копию?
+>
+> ---
+>
+> #### A) `PersistentList.add()` создаёт полную копию списка — это O(n) операция, как и `ArrayList.add` со сдвигом — ❌ Неверно
+>
+> **Что на самом деле:** `PersistentList` использует **RRB-trees** (Relaxed Radix Balanced trees) — древовидную структуру с branching factor ~32. Операция `add` создаёт новую версию дерева, которая **разделяет** все неизменённые узлы с предыдущей версией; копируется только путь от корня до изменённого листа — O(log32 n) ≈ O(log n) узлов. Для списка из миллиона элементов это ~4 уровня дерева, не миллион копий.
+>
+> **Откуда путаница:** разработчики, не знакомые с persistent data structures, экстраполируют опыт `ArrayList.add(0, x)` (O(n) сдвиг) на любые immutable-обёртки. Concept structural sharing — нетривиальная идея из functional programming (Clojure, Scala, Haskell), требует знакомства.
+>
+> **Если бы это было правдой:** команда отказывается от persistent collections «потому что они медленные», возвращается к `Collections.unmodifiableList(ArrayList(prev).apply { add(x) })` на каждое изменение в Compose state; реальные allocations в 5× выше, GC pressure растёт, frame drops в UI на сложных списках.
+>
+> ---
+>
+> #### B) `kotlinx.collections.immutable` (`PersistentList`/`PersistentMap`) даёт истинную неизменяемость через structural sharing (HAMT для Map, RRB-tree для List), `add`/`put` за O(log n) без full copy — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `kotlinx.collections.immutable` — отдельная библиотека от JetBrains (НЕ часть stdlib), добавляющая по-настоящему неизменяемые коллекции:
+>
+> 1. **`PersistentList<T>`** — реализован через RRB-trees (Relaxed Radix Balanced); add/removeAt — O(log32 n); `get(i)` — O(log n).
+> 2. **`PersistentMap<K, V>`** — HAMT (Hash Array Mapped Trie); put/remove/get — O(log32 n) ≈ near-O(1) на практике.
+> 3. **`PersistentSet<T>`** — HAMT на ключах, та же сложность.
+>
+> **Structural sharing**: при создании новой версии (например, `list.add(x)`) копируются только узлы вдоль пути от корня к изменённому листу. Все остальные поддеревья **разделяются** между старой и новой версиями. Старая ссылка по-прежнему валидна и видит свою версию — это даёт snapshot-semantics без полного копирования.
+>
+> Это принципиально отличается от `listOf()` (read-only view над mutable JVM-`ArrayList`): persistent collections **гарантированно** не меняются — нет cast-эскейпов, нет reflection-модификации, нет shared mutable backing.
+>
+> **Пример:**
+> ```kotlin
+> import kotlinx.collections.immutable.*
+>
+> // Compose ViewModel с PersistentList — каждый emit = new snapshot
+> class OrderViewModel : ViewModel() {
+>     private val _orders = MutableStateFlow<PersistentList<Order>>(persistentListOf())
+>     val orders: StateFlow<PersistentList<Order>> = _orders.asStateFlow()
+>
+>     fun addOrder(order: Order) {
+>         _orders.value = _orders.value.add(order)  // O(log32 n), shared с prev
+>     }
+> }
+>
+> // В @Composable diff работает корректно — старый snapshot не меняется
+> @Composable fun OrdersList(orders: PersistentList<Order>) {
+>     LazyColumn {
+>         items(orders, key = { it.id }) { OrderRow(it) }
+>     }
+> }
+>
+> // Builder для батч-изменений (эффективнее цепочки .add().add())
+> val result = persistentListOf<Int>().builder().apply {
+>     addAll(largeBatch)
+>     removeAt(0)
+> }.build()
+> ```
+>
+> **Когда применять:**
+> - **Avito / Wolt Compose UI**: state в `StateFlow<PersistentList<Item>>` для корректного recomposition diff
+> - **Yandex event sourcing**: immutable history of events, каждое событие = new snapshot
+> - **Banking concurrency**: snapshot-isolation без блокировок (`@Volatile var state: PersistentMap`)
+>
+> **Подводные камни:**
+> - **Не в stdlib**: нужно добавить `org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.x`
+> - **Worse perf для small N**: для < 16-32 элементов overhead дерева перевешивает; RRB-tree shines на больших коллекциях
+> - **Builder для batch-операций**: цепочка `list.add().add().add()` создаёт промежуточные snapshots; для batch — `.builder().build()`
+> - **Не путать с `Collections.unmodifiableList`** — это просто read-only обёртка над mutable, не immutable
+>
+> **Связанные вопросы:** [[Q6]] — read-only ≠ immutable; [[Q7]] — kotlinx.collections.immutable детально; [[Q1]] — read-only vs mutable иерархия.
+>
+> ---
+>
+> #### C) `listOf()` и `persistentListOf()` — эквивалентны, оба создают immutable список — ❌ Неверно
+>
+> **Что на самом деле:** `listOf()` возвращает один из JVM-классов (`Collections$SingletonList` для одного элемента, `Arrays$ArrayList` для нескольких, `EmptyList` для пустого) под обёрткой контракта `List<T>`. Через `as MutableList` или reflection можно модифицировать backing-структуру. `persistentListOf()` — это `kotlinx.collections.immutable.PersistentList`, отдельный класс с tree-структурой и **отсутствующим** mutation API на уровне типа.
+>
+> **Откуда путаница:** оба читаются «как immutable list», и тип `List<T>` одинаков на уровне Kotlin compile-time. Но runtime-поведение разное.
+>
+> **Если бы это было правдой:** библиотечный код «принимает List, проверяет if (it is ArrayList) it.add() else copy», работает 6 месяцев, после Kotlin/JVM upgrade меняется реализация `listOf` (например, теперь возвращает `ImmutableCollections$ListN` из JDK), поведение ломается тихо на edge cases, баги воспроизводятся только в одном environment.
+>
+> ---
+>
+> #### D) Structural sharing работает только для Persistent Map — для PersistentList всегда O(n) copy — ❌ Неверно
+>
+> **Что на самом деле:** Structural sharing реализован для **всех** persistent типов в библиотеке: `PersistentList` (RRB-tree), `PersistentMap` (HAMT), `PersistentSet` (HAMT на ключах). Это центральный design pattern библиотеки — без него persistent collections были бы непрактичны (каждая мутация O(n)).
+>
+> **Откуда путаница:** HAMT для Map — более известная техника (используется в Clojure, Scala Vector); RRB-tree для List менее известен, но реализован аналогично.
+>
+> **Если бы это было правдой:** разработчик пишет ручную immutable list через `ArrayList(prev).apply { add() }` на каждое изменение, в perf-тестах проигрывает PersistentList на 10× при списках > 1000 элементов, memory profile показывает в 4× больше allocations.
 
 ## Q38. (!) Чем отличаются `Collection`, `Iterable` и `Sequence` — когда что использовать?
 
@@ -2031,10 +2195,92 @@ fun processLargeFile(lines: Sequence<String>): List<String> =
 
 
 > [!mcq]
-> - [ ] `Iterable<T>` имеет `size`, поэтому подходит везде где нужен подсчёт элементов | `Iterable<T>` НЕ имеет `size` — это базовый контракт для for-цикла. `size` есть только у `Collection<T>` (и наследников `List`/`Set`). Вызов `.count()` на `Iterable` — O(n) обход. ❌ ПОСЛЕДСТВИЕ: API метод принимает `Iterable<Item>`, внутри `if (items.count() > 100)` обходит весь источник до условия, при `Sequence` это материализует поток дважды.
-> - [x] `Iterable<T>` — базовый контракт «можно итерировать»; `Collection<T>` добавляет `size`/`contains`; `Sequence<T>` — lazy chain без промежуточных коллекций; `Flow<T>` — асинхронный поток | Иерархия по гарантиям: Iterable (любой обход) ⊂ Collection (известный размер, повторяемый) ⊕ Sequence (lazy, возможно one-shot) ⊕ Flow (suspend). Принимай Iterable в API для максимальной гибкости. ✓ ПРИМЕНЯТЬ: `fun process(items: Iterable<Item>)` гибче чем `List<Item>`; для длинной цепочки `lines.asSequence().filter{}.map{}.take(N)`. 📋 ПРАВИЛО: «Iterable in, List out». 🔗 См. Q8, Q10.
-> - [ ] `Sequence<T>` всегда многопроходный — можно вызывать `count()` и `forEach` подряд | Sequence **может** быть one-shot (от `Iterator`-based source); только Sequence от `Iterable` гарантированно повторяема. Дважды итерировать generator-sequence — `IllegalStateException` или silent empty. ❌ ПОСЛЕДСТВИЕ: лог-обработка `lines.filter{}.count(); lines.forEach{ log(it) }` второй раз получает 0 элементов, отчёт показывает «0 errors» вместо реальных 1000.
-> - [ ] Между `Collection` и `Sequence` нет принципиальной разницы — обе ленивые | Collection — **eager** (`map`/`filter` сразу создают новый список); Sequence — **lazy** (накопление операций до terminal). Это центральное отличие модели вычисления. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает короткое замыкание в `list.map{}.filter{}.first()`, профайлер показывает full O(n) проход — `first()` на List не helps, нужен `asSequence()`.
+>
+> **Вопрос:** Чем `Iterable`, `Collection` и `Sequence` отличаются по гарантиям и какие проблемы могут возникнуть при их перепутывании в API?
+>
+> ---
+>
+> #### A) `Iterable<T>` имеет `size`, поэтому подходит везде где нужен подсчёт элементов — ❌ Неверно
+>
+> **Что на самом деле:** `Iterable<T>` **не имеет** свойства `size` — это базовый контракт с единственным методом `iterator(): Iterator<T>`. Подсчёт через `.count()` на `Iterable` — это **O(n) обход**. `size` доступен только у `Collection<T>` (и его наследников `List`, `Set`, `MutableCollection`).
+>
+> **Откуда путаница:** в Java у `Collection.size()` сильная асоциация с `Iterable` — все знакомые типы (`List`, `Set`) реализуют оба интерфейса одновременно. Но Kotlin `Iterable` — это minimal interface, как Java `java.lang.Iterable`, без size.
+>
+> **Если бы это было правдой:** API метод принимает `fun process(items: Iterable<Item>)`, внутри `if (items.count() > 100) batch()`, при передаче `Sequence` (которая тоже Iterable) `count()` материализует поток первый раз, потом `forEach` второй раз — но Sequence может быть one-shot, и второй проход даёт пустой результат; отчёт показывает 0 events вместо реальных.
+>
+> ---
+>
+> #### B) `Iterable<T>` — базовый контракт «можно итерировать»; `Collection<T>` добавляет `size`/`contains`; `Sequence<T>` — lazy chain без промежуточных коллекций; `Flow<T>` — асинхронный поток — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Четыре разных контракта с разными гарантиями:
+>
+> | Контракт | size | Многопроходной | Вычисление | Промежуточные коллекции |
+> |----------|------|----------------|------------|------------------------|
+> | `Iterable<T>` | нет | как правило да | eager (через extensions) | создаёт |
+> | `Collection<T>` | да | да | eager | создаёт |
+> | `Sequence<T>` | нет | не гарантировано | lazy | не создаёт |
+> | `Flow<T>` | нет | при cold flow да | lazy + suspend | не создаёт |
+>
+> **Иерархия в Kotlin stdlib**: `Iterable<T>` ⊃ `Collection<T>` ⊃ `List<T>`, `Set<T>`. `Sequence<T>` — НЕ наследник Iterable (это намеренно — чтобы не путались eager/lazy extensions). `Flow<T>` — отдельная иерархия в `kotlinx.coroutines`.
+>
+> Лучшая практика API: **принимать самый широкий тип**, **возвращать самый специфичный**:
+> - Input: `Iterable<T>` (максимальная гибкость для caller)
+> - Output: `List<T>` (caller знает размер, может итерировать дважды)
+>
+> **Пример:**
+> ```kotlin
+> // ✅ Принимаем Iterable — гибкость для caller
+> fun processAll(items: Iterable<String>): List<String> {
+>     return items.filter { it.isNotBlank() }.map { it.trim() }
+> }
+>
+> // ✅ Collection — когда нужен size заранее
+> fun paginate(items: Collection<Order>, page: Int, size: Int): List<Order> {
+>     val total = items.size  // O(1) — Collection гарантирует
+>     return items.drop(page * size).take(size)
+> }
+>
+> // ✅ Sequence — длинная цепочка с возможным early-exit
+> fun firstError(lines: Sequence<String>): String? =
+>     lines.filter { it.startsWith("ERROR") }
+>          .map { it.substringAfter("] ") }
+>          .firstOrNull()  // streaming, читаем до первой ошибки
+> ```
+>
+> **Когда применять:**
+> - **Yandex public API**: `fun process(items: Iterable<T>)` — caller может передать List, Set, Sequence
+> - **Avito reporting**: `Collection` если нужен size для логирования или pagination
+> - **JetBrains file indexing**: `Sequence<File>` для lazy streaming больших дерев
+>
+> **Подводные камни:**
+> - **Sequence от Iterable повторяема**: `list.asSequence()` можно итерировать дважды (новый iterator каждый раз)
+> - **Sequence от generator one-shot**: `sequence { yield(...) }` нельзя итерировать дважды — `IllegalStateException`
+> - **`count()` на Iterable** — O(n), не constant; для известно-известного размера используй `Collection`
+> - **`Sequence.toList()` материализует** — после этого работа уже с eager List
+>
+> **Связанные вопросы:** [[Q8]] — Sequence vs List базовое; [[Q10]] — практический выбор; [[Q30]] — overhead Sequence.
+>
+> ---
+>
+> #### C) `Sequence<T>` всегда многопроходный — можно вызывать `count()` и `forEach` подряд — ❌ Неверно
+>
+> **Что на самом деле:** Sequence **может** быть one-shot: если источник — generator (`sequence { yield ... }`) или Java Iterator-based, второй проход даёт `IllegalStateException` или silent empty (зависит от реализации). Только `iterable.asSequence()` (обёртка над Iterable) гарантированно повторяема, потому что под капотом создаёт новый Iterator на каждый запрос.
+>
+> **Откуда путаница:** в туториалах Sequence обычно показывают на `list.asSequence()` — где повторное итерирование работает. Но это частный случай, не общий контракт.
+>
+> **Если бы это было правдой:** лог-обработка `lines = generateSequence { reader.readLine() }; lines.filter{}.count(); lines.forEach{ archive(it) }` второй раз получает 0 элементов (reader уже исчерпан); отчёт показывает «0 errors processed», но реально было 10000, расхождение замечают через неделю на сверке с raw логами.
+>
+> ---
+>
+> #### D) Между `Collection` и `Sequence` нет принципиальной разницы — обе ленивые — ❌ Неверно
+>
+> **Что на самом деле:** `Collection.map`/`filter` — **eager**: создают новый список немедленно. `Sequence.map`/`filter` — **lazy**: накапливают операции в pipeline, выполняются только при terminal-операции (`toList`, `first`, `sum`). Это центральное отличие модели вычисления.
+>
+> **Откуда путаница:** API похож (`map`, `filter`, `fold`), и разработчики, не разбирающиеся в lazy vs eager, могут думать, что компилятор сам оптимизирует. Не оптимизирует — поведение строго определено типом.
+>
+> **Если бы это было правдой:** разработчик ожидает короткое замыкание в `list.map { expensive(it) }.filter { it > 0 }.first()`, профайлер показывает full O(n) проход с `expensive` на каждом элементе — `first()` на List не helps, потому что `map`/`filter` уже выполнились eager; нужен `asSequence()` чтобы получить streaming-семантику.
 
 ## Q39. В чём разница между `sortedBy`, `sortedWith` и `compareBy`?
 
