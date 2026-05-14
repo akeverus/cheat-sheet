@@ -14,7 +14,7 @@ aliases:
   - "Java Modules interview"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Java Modules` (JPMS)
 
@@ -2561,6 +2561,100 @@ jar --describe-module --file=lib/external.jar
 
 **Когда остановиться на classpath:** если проект использует много legacy-библиотек без `Automatic-Module-Name` или активно использует `sun.*` API, полная модуляризация может не стоить затрат. Компромисс: использовать `jlink` с `--add-modules` для оптимизации Docker-образов без полной модуляризации кода приложения.
 
+
+> [!mcq]
+>
+> **Вопрос:** В legacy multi-module Spring Boot проекте (`utils.jar`, `service.jar`, `app.jar` + 20 внешних JAR без `module-info`) принято решение мигрировать на JPMS. Какая стратегия наиболее устойчива и снижает риск middle-game блокеров?
+>
+> ---
+>
+> #### A) Top-Down: первым делом написать `module-info.java` для `app.jar`, объявить все остальные модули как `requires automatic_name`. Постепенно добавлять `module-info` в `service.jar`, `utils.jar` — ❌ Неверно
+>
+> **Что на самом деле:** Top-Down работает, но рискованно: когда дойдём до `service.jar` или `utils.jar`, обнаружим split packages, internal API, или невозможные имена automatic modules. К этому моменту уже написано много `requires automatic` — переписывать дорого. Bottom-Up снимает эти риски заранее. Top-Down оправдан только когда хочется быстро увидеть границы модулей для архитектурного обсуждения, но не для production-миграции.
+>
+> **Откуда путаница:** Top-Down звучит логично («главное — приложение»), и часто рекомендуется в туториалах. Реальная практика крупных миграций (например, JDK переход на модули) шла Bottom-Up.
+>
+> **Если бы это было правдой:** не существовало бы рекомендации Bottom-Up как «better strategy» в official Oracle guide on JPMS migration. Существование обеих стратегий — признание trade-off, и Bottom-Up выигрывает по survivability.
+>
+> ---
+>
+> #### B) Bottom-Up: начать с листьев графа зависимостей (`utils.jar` — нет зависимостей на свой код), сделать его named module, потом `service.jar`, потом `app.jar`. Внешние библиотеки временно подключаются как `automatic modules`, заменяются на named при наличии поддержки upstream — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Bottom-Up — стандартная стратегия инкрементальной миграции, потому что:
+>
+> 1. **Локальность ошибок** — изменения в `utils.jar` влияют только на `utils.jar`. Если что-то ломается, проблема понятна и локальна.
+> 2. **Тестируемость каждого шага** — после модуляризации `utils.jar` можно прогнать тесты `utils`, потом `service`, потом `app`. Без необходимости менять всё сразу.
+> 3. **Гипотеза-провер раньше** — split packages и internal API всплывают на первом шаге (`utils`), не в последнюю минуту.
+> 4. **Реверсивность** — если шаг не получился, откат малый. В Top-Down откат означает выкинуть всю работу.
+>
+> **Пример pipeline:**
+> ```bash
+> # Шаг 0: подготовка
+> jdeps --module-path lib --multi-release 17 -s app.jar
+> jdeps --jdk-internals --multi-release 17 app.jar
+> jdeps --check --module-path lib com.example.app  # split packages
+>
+> # Шаг 1: utils.jar — листовой модуль
+> # Создаём utils/src/main/java/module-info.java
+> # module com.example.utils { exports com.example.utils; }
+>
+> # Проверяем:
+> mvn -pl utils clean test
+> jar --describe-module --file=utils/target/utils-1.0.jar
+>
+> # Шаг 2: service.jar — зависит от utils
+> # module com.example.service {
+> #     requires com.example.utils;
+> #     requires external.lib;  // automatic
+> #     exports com.example.service.api;
+> # }
+>
+> # Шаг 3: app.jar — top-level
+> # module com.example.app {
+> #     requires com.example.service;
+> #     requires spring.boot;
+> #     opens com.example.app to spring.core;
+> # }
+> ```
+>
+> **Когда применять:**
+> - Production-миграция multi-module Spring Boot проекта.
+> - Open-source библиотеки (Jackson, Hibernate проходили именно Bottom-Up).
+> - JDK сам мигрировался на JPMS Bottom-Up: модули `java.base` (нижний уровень) → `java.sql` → `java.xml`.
+>
+> **Подводные камни:**
+> - **Циклические зависимости в листьях** — если `utils` ⇄ `service` циклична, Bottom-Up невозможен без рефакторинга. JPMS строго запрещает циклы.
+> - **Automatic modules в зависимостях** — Bottom-Up не помогает, если upstream-библиотека не модуляризована. `jlink` тогда невозможен, но это ограничение библиотек, не вашей стратегии.
+> - **Skip the top** — иногда `app.jar` так и остаётся на classpath, потому что в Spring Boot модуляризация контроллеров даёт мало пользы. Это нормально: hybrid-подход (нижние модули named, top — classpath) приемлем.
+> - **Maven multi-module ≠ JPMS module** — Maven-модуль может содержать один JPMS-модуль, и наоборот. Не путать.
+> - **Где остановиться** — если проект использует много legacy-JAR без `Automatic-Module-Name` или активно использует `sun.*` API, полная модуляризация может не стоить затрат. Компромисс: использовать `jlink` для Docker-оптимизации без полной модуляризации.
+>
+> ---
+>
+> #### C) Параллельная миграция: разработчики одновременно модуляризуют все JAR за один MR. Это сэкономит время и снимет промежуточные риски — ❌ Неверно
+>
+> **Что на самом деле:** «Big Bang» миграция — самый рискованный подход. Все ошибки (split packages, transitive deps, циклы, internal API, reflection-проблемы Spring/Hibernate) обнаружатся одновременно, и невозможно изолировать причину. Code review и testing превращается в кошмар. На практике такие миграции либо проваливаются, либо тянутся месяцы.
+>
+> **Откуда путаница:** «параллельность» звучит как «эффективность». В сложных системах с зависимостями параллельность часто = chaos.
+>
+> **Если бы это было правдой:** в инженерных практиках не было бы концепции «iterative refactoring». Все рекомендации (Martin Fowler, Working Effectively with Legacy Code) — про малые шаги, не big bang.
+>
+> ---
+>
+> #### D) Сразу переходим на GraalVM native-image — он автоматически решит JPMS-проблемы — ❌ Неверно
+>
+> **Что на самом деле:** GraalVM native-image имеет свой набор ограничений (reflection-config, dynamic proxies, classpath-scanning), которые требуют ещё более тщательной подготовки, чем JPMS. Native-image НЕ решает JPMS-проблемы — у него ортогональная задача (AOT-компиляция). Сочетание JPMS + native-image часто УВЕЛИЧИВАЕТ сложность, не уменьшает.
+>
+> **Откуда путаница:** GraalVM подаётся как «решение всех runtime-проблем Java» (cold start, memory). Возникает иллюзия, что и архитектурные проблемы (JPMS) лечатся им.
+>
+> **Если бы это было правдой:** Quarkus и Micronaut (фреймворки, оптимизированные под native-image) не нуждались бы в собственных модульных моделях. Они их имеют, потому что native-image решает только runtime-вопросы, не архитектурные.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q21]] — стратегии миграции (overview); [[Q22]] — Maven/Gradle и модули; [[Q35]] — `jdeps` для подготовки; [[Q34]] — jlink требует named modules.
+
 ---
 
 ## See also
@@ -2572,13 +2666,6 @@ jar --describe-module --file=lib/external.jar
 - [JVM](../../jvm/jvm-interview.md) — загрузка классов, `ClassLoader` иерархия, `InaccessibleObjectException` при рефлексии
 - [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — `Service Locator`, `Plugin Pattern` через `ServiceLoader`
 - [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — Spring и `JPMS`: совместимость, `opens` для рефлексии Spring
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Java 17-21](java-17-21-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
 - [Java 8](java-8-interview.md)
 - [Java Annotations](java-annotations-interview.md)
 - [Java Collections](java-collections-interview.md)
