@@ -1144,10 +1144,98 @@ class OrderIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Чем Spring Integration отличается от Apache Camel? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие специальные testing utilities предоставляет `spring-integration-test`, и почему они лучше чем обычный `@SpringBootTest`?
+>
+> ---
+>
+> #### A) Обычный @SpringBootTest достаточен — не нужны special test utilities — ❌ Неверно
+>
+> **Что на самом деле:** обычный @SpringBootTest стартует контекст с реальными потоками, но **не даёт hooks для substitution handlers/endpoints**. Без `@SpringIntegrationTest` нельзя подменить middle-handler в flow без модификации production кода.
+>
+> Также обычный test не имеет access к internal `IntegrationFlowContext` для dynamic flow registration в тестах.
+>
+> **Если бы это было правдой:** не было бы artifact `spring-integration-test`. Реально это отдельная dependency со специфичными утилитами.
+>
+> ---
+>
+> #### B) `@SpringIntegrationTest` + `MockIntegrationContext.substituteMessageHandlerFor()` для замены handlers в running context; `IntegrationFlowContext.registration()` для dynamic flows в тестах; `MessageChannel.receive(timeout)` для assertion on async results — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Spring Integration Test предоставляет:
+>
+> 1. **`@SpringIntegrationTest(noAutoStartup)`** — отключает auto-start handlers для controlled testing.
+>
+> 2. **`MockIntegrationContext`** — substitute handlers без модификации production:
+>    ```java
+>    @SpringIntegrationTest
+>    @SpringBootTest
+>    class OrderFlowTest {
+>        @Autowired MockIntegrationContext mockContext;
+>        @Autowired OrderGateway gateway;
+>        @Autowired @Qualifier("ordersOutput") PollableChannel output;
+>
+>        @Test
+>        void shouldFailoverOnServiceError() {
+>            mockContext.substituteMessageHandlerFor("orderHandler",
+>                m -> { throw new RuntimeException("downstream unavailable"); });
+>
+>            gateway.placeOrder(order);
+>
+>            Message<?> err = errorChannel.receive(5000);
+>            assertThat(err.getPayload()).isInstanceOf(MessagingException.class);
+>        }
+>    }
+>    ```
+>
+> 3. **`IntegrationFlowContext`** — dynamic registration:
+>    ```java
+>    IntegrationFlowRegistration reg = flowContext.registration(
+>        IntegrationFlow.from(c -> c.gateway(MyGateway.class))
+>            .handle(svc::process)
+>            .get())
+>        .register();
+>    // tests with isolated flow
+>    reg.destroy();
+>    ```
+>
+> 4. **`PollableChannel.receive(timeout)`** — async assertion с timeout.
+>
+> **Когда применять:**
+> - **Integration tests** Spring Integration flows: assertion того что message доходит до output channel.
+> - **Error scenarios**: substitute handler that throws → assertion errorChannel поведения.
+> - **Dynamic flow tests**: per-test flow registration без context pollution.
+>
+> **Подводные камни:**
+> - **Async assertions без timeout** — flaky tests. Всегда `receive(5000)` с meaningful assertion.
+> - **`@DirtiesContext` важен**: substituted handlers persist в context — между тестами нужна изоляция.
+> - **GenericMessage vs ErrorMessage**: error channel получает `ErrorMessage` (с `MessagingException` payload), не raw exception.
+> - **Не путать с `@MockBean`**: substitution на handler level, не bean level — flow остаётся wired.
+>
+> **Связанные вопросы:** [[Q9]] — transactional flow testing; [[Q3]] — channel types; [[Q15]] — мониторинг flows.
+>
+> ---
+>
+> #### C) Можно тестировать только через actual brokers (Testcontainers) — нет other way — ❌ Неверно
+>
+> **Что на самом деле:** для тестирования **business logic** в flow не нужны real brokers. `MockIntegrationContext` substitutes handlers без external dependencies. Testcontainers нужен для integration tests с real adapters (Kafka/RabbitMQ).
+>
+> Это две разные testing strategies:
+> - **Unit-level flow tests**: substitute handlers, mock channels — fast.
+> - **Integration tests**: real adapters через Testcontainers — slow but full fidelity.
+>
+> **Если бы это было правдой:** unit tests были бы непрактичны — каждый тест 10-30s startup.
+>
+> ---
+>
+> #### D) `@SpringIntegrationTest` deprecated — заменён JUnit 5 extensions — ❌ Неверно
+>
+> **Что на самом деле:** `@SpringIntegrationTest` — это **сам и есть** JUnit 5 extension (через `@ExtendWith` под капотом). Не deprecated, активно поддерживается в Spring Integration 6.x.
+>
+> **Если бы это было правдой:** в release notes Spring Integration 6 было бы deprecation notice.
+
+## Q11. Чем Spring Integration отличается от Apache Camel?
 
 | Критерий | Spring Integration | Apache Camel |
 |----------|--------------------|--------------|
@@ -1163,10 +1251,85 @@ class OrderIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Когда использовать Spring Integration vs Spring Kafka? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда выбирать Spring Integration vs Apache Camel в новом проекте?
+>
+> ---
+>
+> #### A) Spring Integration лучше при существующем Spring stack — меньше учить, native dependency injection, fewer libraries — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Trade-offs:
+>
+> | Аспект | Spring Integration | Apache Camel |
+> |---|---|---|
+> | Spring ecosystem | Native | Через camel-spring-boot |
+> | Коннекторы | ~30 | 200+ (включая SAP, Salesforce, AS400) |
+> | Learning curve | Низкая (для Spring devs) | Средняя (свой DSL) |
+> | DSL options | Java DSL | Java/Scala/XML/YAML/Kotlin DSL |
+> | Test support | `@SpringIntegrationTest` | `CamelTestSupport` |
+> | Use case | Internal apps, ESB-light | Multi-protocol integration platforms |
+>
+> **Выбор:**
+> - **Spring Integration**: проект на Spring, нужно ≤30 коннекторов, команда знает Spring.
+> - **Apache Camel**: enterprise integration с многими legacy systems (SAP, AS400, IBM MQ), нужен specialized DSL (e.g., RouteBuilder), Camel-based products like Apache ServiceMix / Karaf / Fuse.
+>
+> **Пример migration scenario:**
+> ```java
+> // Spring Integration — для file → Kafka pipeline
+> @Bean
+> public IntegrationFlow fileToKafka() {
+>     return IntegrationFlow.from(Files.inboundAdapter(new File("/inbox")))
+>         .transform(File.class, this::parse)
+>         .handle(Kafka.outboundChannelAdapter(producerFactory).topic("orders"))
+>         .get();
+> }
+>
+> // Camel — для SAP IDoc → JMS pipeline
+> from("sap-idoc-server:server:idoc?type=ORDERS05")
+>     .convertBodyTo(OrderDto.class)
+>     .to("activemq:queue:orders");
+> ```
+>
+> **Когда применять Camel вместо Integration:**
+> - Нужны коннекторы которых нет в Integration (SAP, AS400, FHIR).
+> - Команда уже работает с Camel в других проектах.
+> - Cloud Camel K (serverless integration on Kubernetes).
+>
+> **Подводные камни:**
+> - **«Camel = больше = лучше»** ложно. Если хватает 5 коннекторов из Integration — Camel overkill.
+> - **Spring Cloud Stream** — ещё одна альтернатива для simple pub/sub поверх Kafka/RabbitMQ.
+> - **Spring Integration JDBC adapters** покрывают 90% DB integration; Camel JDBC component делает то же.
+> - **Migration cost**: переход Integration → Camel = переписать flows на RouteBuilder.
+>
+> **Связанные вопросы:** [[Q1]] — EIP patterns как foundation; [[Q12]] — Integration vs Spring Kafka; [[Q15]] — мониторинг.
+>
+> ---
+>
+> #### B) Apache Camel всегда лучше — больше коннекторов = больше возможностей — ❌ Неверно
+>
+> **Что на самом деле:** «больше features = лучше» — fallacy. 200 коннекторов добавляют complexity (separate libraries, more configuration surface) даже если используется 5. Для simple integration overhead не оправдан.
+>
+> Реально команды на pure Spring stacks (Yandex, Avito) часто выбирают Integration именно за simplicity.
+>
+> ---
+>
+> #### C) Spring Integration уже deprecated — все мигрируют на Camel — ❌ Неверно
+>
+> **Что на самом деле:** Spring Integration активно поддерживается (версия 6.x в 2024, синхронизация со Spring 6 / Spring Boot 3). Migration в одну сторону не наблюдается.
+>
+> **Если бы это было правдой:** spring-integration-* artifacts были бы в maintenance mode.
+>
+> ---
+>
+> #### D) Camel = enterprise (платный), Spring Integration = open-source — ❌ Неверно
+>
+> **Что на самом деле:** оба open-source (Apache 2.0). Red Hat Fuse — коммерческая поддержка Camel, но сам Camel бесплатный. Spring Integration аналогично — open-source с commercial support от VMware/Broadcom через Spring Tanzu.
+>
+> **Откуда путаница:** Red Hat Fuse часто упоминается с Camel.
+
+## Q12. Когда использовать Spring Integration vs Spring Kafka?
 
 ```text
 Простой Kafka consumer/producer:
