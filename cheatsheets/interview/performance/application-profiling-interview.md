@@ -2275,10 +2275,95 @@ OutgoingReferences: EventBus → List<Listener> → 10k объектов → в�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Thread Dump анализ — deadlock detection, jstack ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём разница между **Shallow Heap** и **Retained Heap** в Eclipse MAT, и почему для поиска утечек важна именно **Retained**?
+>
+> ---
+>
+> #### A) Shallow Heap = размер объекта + все его поля (включая вложенные), Retained Heap = только сам объект — ❌ Неверно (определения перепутаны)
+>
+> **Что на самом деле:** определения **развёрнуты наоборот**. Shallow Heap = размер **самого объекта** (header + поля как references, без рекурсивного разворачивания). Retained Heap = shallow + размер всего что объект **dominate'ит** (удерживает от GC).
+>
+> Это типичная путаница «термины звучат интуитивно наоборот». Shallow = «поверхностный» = только сам, Retained = «удерживаемый» = всё что держит.
+>
+> **Откуда путаница:** «shallow» звучит как «поверхностный охват» — но это охват чего? Объекта самого, не его referenced graph.
+>
+> **Если бы это было правдой:** в MAT Histogram колонка Shallow была бы бесполезной (дублировала Retained). Реально Shallow быстро считается, Retained — медленнее (требует dominator analysis).
+>
+> ---
+>
+> #### B) Shallow Heap всегда меньше Retained Heap для любого объекта без исключений — ❌ Неверно
+>
+> **Что на самом деле:** Shallow Heap **может равняться** Retained Heap, если объект **ничего не dominate'ит** (например, immutable Integer без owned references, или объект чьи поля удерживаются ещё откуда-то). В этом случае удаление объекта не освободит дополнительной памяти за пределами самого объекта.
+>
+> Утверждение «всегда меньше» — оверконфидентное упрощение. Правильно: «Shallow ≤ Retained».
+>
+> **Откуда путаница:** интуиция говорит «retained включает shallow + что-то ещё». Это правильно, но «что-то ещё» может быть 0.
+>
+> **Если бы это было правдой:** для каждого объекта удаление освобождало бы больше памяти чем размер самого объекта. Реально для большинства leaf-объектов retained = shallow.
+>
+> ---
+>
+> #### C) Shallow Heap = размер **самого объекта** (header + поля как references). Retained Heap = shallow + размер всего что объект **уникально удерживает** через dominator tree. Для поиска утечек нужен Retained: если объект Retained = 800MB → его удаление освобождает 800MB — это и есть «утечка» — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Утечка памяти в Java = **объект не GC'ится потому что какой-то Reference держит его в живых**. MAT находит этот корень-удержатель через **dominator tree algorithm** (теория графов):
+>
+> - **Dominator X для Y**: каждый путь из GC root к Y проходит через X. То есть удаление X гарантированно освобождает Y.
+> - **Retained Heap of X** = Σ shallow всех объектов, которых X dominate'ит.
+>
+> Поиск утечки = найти объект с **высоким retained heap** относительно его «семантической функции». Cache на 800MB может быть нормально, но если кеш не имеет eviction → растёт неограниченно → leak.
+>
+> **Пример:**
+> ```text
+> Object: com.app.SessionRegistry (singleton)
+>   Shallow: 48 bytes  (один HashMap reference + lock)
+>   Retained: 1.4 GB   (вся map с 5M sessions)
+>
+> Без Retained видели бы только 48 байт — невозможно догадаться о масштабе.
+> С Retained сразу понятно: вот наша 1.4GB утечка.
+>
+> Path to GC Roots показывает:
+>   GC Root: static field com.app.SessionRegistry.INSTANCE
+>   → SessionRegistry instance
+>     → sessionsByToken: HashMap (1.4GB retained)
+> ```
+>
+> ```sql
+> -- OQL для drill-down: найти stale sessions
+> SELECT s.token, s.createdAt, s.lastAccess
+> FROM com.app.Session s
+> WHERE s.lastAccess < ${cutoff}
+> ORDER BY s.lastAccess DESC
+> ```
+>
+> **Когда применять:**
+> - **OOM investigation**: всегда сортировать Dominator Tree по retained heap.
+> - **Memory growth investigation**: сравнить 2 snapshot, найти объекты у которых retained вырос.
+> - **Code review для caches**: каждый Map/List который хранит per-request data → проверить eviction policy.
+>
+> **Подводные камни:**
+> - **Multiple GC roots**: если объект удерживается из двух мест (две static collections referencing same Order) — он не входит в retained ни одного, выпадает в "Unreachable Objects" статистику. Решение: посмотреть Outgoing References для каждого root.
+> - **Soft/Weak references**: MAT по умолчанию considers weak refs not-retaining, soft refs retaining. Можно переключить в Preferences.
+> - **Class instances vs static fields**: static fields в class metadata (PermGen/Metaspace), не в heap. Их retained = только instance heap, не class itself.
+> - **Производительность**: dominator tree вычисляется O(N log N) при открытии dump. Для 32GB dump — 5-10 минут на powerful machine.
+>
+> **Связанные вопросы:** [[Q18]] — heap dump basics; [[Q19]] — memory leak detection; [[Q33]] — MAT workflow.
+>
+> ---
+>
+> #### D) Shallow Heap = только примитивы объекта (без references), Retained Heap = только references (без примитивов) — ❌ Неверно
+>
+> **Что на самом деле:** оба include и примитивы (long, int как поля), и references (4-8 байт каждый). Разница не в **типе** данных, а в **scope**: shallow = только данные самого объекта, retained = плюс данные dominated объектов.
+>
+> Это полная фантазия про значение терминов.
+>
+> **Откуда путаница:** возможно ассоциация «shallow → простой → примитив». В реальности это про graph traversal scope.
+>
+> **Если бы это было правдой:** для `String { byte[] value; int hash; }` shallow была бы 4 байта (hash), retained — byte[] size. На самом деле shallow String = 16 байт (header + reference + int).
+
+## Q38. Thread Dump анализ — deadlock detection, jstack
 
 **Thread dump** — снимок состояния всех потоков JVM в момент снятия.
 
@@ -2334,10 +2419,118 @@ TIMED_WAITING — Thread.sleep(), wait(timeout), park(timeout)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q39. CPU Profiling — sampling vs instrumentation ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Снимок thread dump показывает 200 потоков в `WAITING` на `HikariPool.getConnection`. Что это означает и какой следующий шаг?
+>
+> ---
+>
+> #### A) Pool exhaustion: размер пула меньше чем запросов — 200 потоков ждут свободного connection. Следующий шаг — посмотреть `maxPoolSize`, время удержания connection'ов и наличие долгих транзакций — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Паттерн «много потоков WAITING на одном synchronization point» — классическая **lock contention**, а конкретно для HikariPool — **pool exhaustion** (или **connection leak**).
+>
+> Механика: HikariCP по умолчанию имеет maxPoolSize=10. Когда все 10 connection'ов занято, новые запросы блокируются на `AbstractQueuedSynchronizer.acquireSharedInterruptibly` в очереди ожидания. Если средний request обрабатывается дольше чем (10 / RPS) секунд — очередь растёт неограниченно.
+>
+> **Диагностика — 3 параллельных гипотезы:**
+>
+> 1. **Pool слишком мал**: проверить `hikari.maximum-pool-size` vs реальный RPS × avg query time.
+> 2. **Connection leak**: транзакции не закрываются (forgot `@Transactional` boundary, custom JDBC без finally). Видно через `hikari.leak-detection-threshold=60000` → warnings в логах.
+> 3. **Долгие транзакции**: `@Transactional` на методе который делает 30-секундный HTTP call → connection держится 30 сек, pool exhaustion. Видно в `pg_stat_activity` (PostgreSQL): `SELECT * FROM pg_stat_activity WHERE state='idle in transaction'`.
+>
+> **Пример workflow:**
+> ```bash
+> # 1. Снять thread dump (под нагрузкой)
+> jcmd <PID> Thread.print > dump.txt
+>
+> # 2. Подсчитать сколько потоков в каждом state
+> grep -E "java.lang.Thread.State" dump.txt | sort | uniq -c
+> #    180 java.lang.Thread.State: WAITING (parking)
+> #     15 java.lang.Thread.State: RUNNABLE
+> #      5 java.lang.Thread.State: TIMED_WAITING
+>
+> # 3. Найти common waiting point
+> grep -A 3 "HikariPool.getConnection" dump.txt | head -50
+>
+> # 4. Параллельно — посмотреть state БД
+> psql -c "SELECT state, count(*) FROM pg_stat_activity GROUP BY state"
+> # 50 connections active, 40 'idle in transaction' (5+ minutes) ← leak!
+> ```
+>
+> ```yaml
+> # Решение (короткое — увеличить + leak detection):
+> spring.datasource.hikari:
+>   maximum-pool-size: 50            # рост с 10 до 50
+>   connection-timeout: 3000          # быстрее fail чем висеть
+>   leak-detection-threshold: 30000  # лог если connection > 30s
+> ```
+>
+> ```java
+> // Решение (правильное — устранить долгую транзакцию):
+> @Transactional   // ❌ ПЛОХО: connection держится 30 сек
+> public void processOrder(Order o) {
+>     orderRepo.save(o);
+>     paymentService.charge(o);  // HTTP call 30s
+>     // connection заблокирован
+> }
+>
+> // ✓ Разделить:
+> public void processOrder(Order o) {
+>     orderRepo.saveInTransaction(o);     // короткая транзакция
+>     paymentService.charge(o);            // вне транзакции
+>     orderRepo.markPaidInTransaction(o); // другая короткая
+> }
+> ```
+>
+> **Когда применять (этот workflow):**
+> - **«Запросы медленные, но БД не загружена»**: pool exhaustion основной кандидат.
+> - **K8s pod restart на healthcheck timeout**: thread pool заблокирован на DB pool.
+> - **После добавления new feature с long HTTP calls в @Transactional**: классическая регрессия.
+>
+> **Подводные камни:**
+> - **Reactive (R2DBC)**: pool exhaustion проявляется иначе — `Mono.timeout` instead of blocked threads. Thread dump покажет идлящие event loop threads.
+> - **Connection validation**: `connection-test-query` запускается при checkout — если БД медленная, это добавляет latency.
+> - **CPU не показывает проблему**: при pool exhaustion CPU низкий (потоки парк'ятся), но throughput падает. Метрика для алерта — `hikaricp.connections.pending`.
+>
+> **Связанные вопросы:** [[Q20]] — thread dump basics; [[Q21]] — lock contention; [[Q15]] — off-CPU analysis.
+>
+> ---
+>
+> #### B) CPU bottleneck в HikariCP — нужна оптимизация internal pool implementation — ❌ Неверно
+>
+> **Что на самом деле:** HikariCP — один из самых оптимизированных pool'ов (Brett Wooldridge известен perf-focused кодом). `WAITING` состояние означает **ожидание** на synchronization, а не CPU работу. Потоки парк'ятся kernel-level, CPU = 0 для них.
+>
+> Если бы был CPU bottleneck — потоки были бы в `RUNNABLE`, а не `WAITING`.
+>
+> **Откуда путаница:** «много потоков в Hikari → Hikari плохой». Реально Hikari ведёт себя правильно — он не может создать connection если в пуле нет, должен ждать.
+>
+> **Если бы это было правдой:** замена Hikari на DBCP / C3P0 решила бы проблему. На практике любой pool с тем же maxSize даёт ту же симптоматику.
+>
+> ---
+>
+> #### C) Deadlock между потоками — каждый держит ресурс который нужен другому — ❌ Неверно
+>
+> **Что на самом деле:** deadlock в `jstack` выводе явно помечен — `Found N deadlock(s)` секция в конце дампа. Кроме того, в deadlock потоки в `BLOCKED` (не `WAITING`), и каждый имеет owned/wanted monitors указанные конкретно.
+>
+> 200 потоков на одном synchronization point — это **contention**, не deadlock. Deadlock = циклическая зависимость между N≥2 ресурсами.
+>
+> **Откуда путаница:** «много заблокированных потоков → deadlock». Реально deadlock — специфический паттерн, обычно 2-3 потока.
+>
+> **Если бы это было правдой:** JVM выводила бы `Found 1 deadlock`. Без этой строки — не deadlock.
+>
+> ---
+>
+> #### D) Connection leak: connection'ы создаются и не закрываются — ❌ Неверно (частично перекрывается с A, но это не корневой признак)
+>
+> **Что на самом деле:** connection leak **может быть причиной** pool exhaustion (см. вариант A), но не единственной. Сам факт «200 потоков ждут» не диагностирует leak — может быть просто маленький pool под высокой нагрузкой.
+>
+> Для leak нужны **дополнительные signals**: `leak-detection-threshold` warnings, `pg_stat_activity` показывает «idle in transaction», метрики `hikaricp.connections.active` стабильно равны max.
+>
+> **Откуда путаница:** leak — самая частая причина, кандидаты иногда отвечают «leak» без дальнейшей диагностики. Senior отвечает «pool exhaustion, нужно ещё посмотреть leak vs slow query vs small pool».
+>
+> **Если бы это было правдой:** restart pod решал бы проблему permanently. Реально через 10 минут pool снова exhausted — нужен fix.
+
+## Q39. CPU Profiling — sampling vs instrumentation
 
 **Sampling profiling:**
 - С заданной частотой (например, 1000 раз/сек) прерывает каждый поток и записывает его стектрейс.
