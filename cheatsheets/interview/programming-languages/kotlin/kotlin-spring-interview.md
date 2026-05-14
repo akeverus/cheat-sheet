@@ -309,10 +309,60 @@ class User(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Как использовать Kotlin Coroutines с Spring WebFlux? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какую конкретную задачу решает плагин `kotlin-jpa` в Spring Boot проекте на Kotlin?
+>
+> ---
+>
+> #### A) Генерирует синтетический no-arg конструктор для `@Entity`, `@MappedSuperclass`, `@Embeddable`, доступный только через reflection — ✓ Верно
+>
+> **Развёрнутое объяснение:** Спецификация JPA требует, чтобы у entity был public/protected no-arg конструктор — Hibernate использует его при гидратации (загрузке из БД через reflection). Kotlin primary-конструктор обычно требует все аргументы. Плагин `kotlin-jpa` (под капотом — `noarg`) во время компиляции добавляет в bytecode скрытый no-arg конструктор, но не открывает его для прямого вызова из Kotlin-кода — попытка `User()` не скомпилируется. Это аккуратно: API сохраняется, а Hibernate получает то, что ему нужно.
+> **Пример:**
+> ```kotlin
+> // build.gradle.kts
+> plugins {
+>     kotlin("plugin.jpa") version "2.0.0"
+> }
+>
+> @Entity
+> class User(
+>     @Id @GeneratedValue val id: Long = 0,
+>     var name: String,    // нет default — но плагин всё равно сделает no-arg
+>     var email: String
+> )
+>
+> // val u = User() // не скомпилируется
+> // Hibernate.newInstance(User::class.java) // работает через reflection
+> ```
+> **Когда применять:** в любом проекте с Hibernate/JPA на Kotlin — обязательная зависимость.
+> **Подводные камни:** плагин включается только для перечисленных аннотаций по умолчанию; для кастомных мета-аннотаций нужно явно добавить `noArg { annotation("com.example.MyEntity") }`. Без плагина обходной путь — default-значения у всех полей (`var name: String = ""`), но это уродует доменную модель.
+> **Связанные вопросы:** [[Q1]] — kotlin-spring плагин, [[Q3]] — почему обычный class, не data class.
+>
+> ---
+>
+> #### B) Открывает классы `@Entity` (делает их `open`), чтобы Hibernate мог создать lazy-proxy — ❌ Неверно
+>
+> **Что на самом деле:** Открытие классов — задача `kotlin-allopen` (с предконфигурацией под Spring — `kotlin-spring`). Чтобы lazy-загрузка работала, в Spring Boot starter Kotlin обычно прописывают `allOpen { annotation("jakarta.persistence.Entity") }`. Сам `kotlin-jpa` только генерирует no-arg.
+> **Откуда путаница:** оба плагина часто включают вместе, и эффект для разработчика выглядит как «всё стало работать с JPA».
+> **Если бы это было правдой:** мы бы не получали ошибку `Cannot subclass final class` без allOpen — но получаем.
+>
+> ---
+>
+> #### C) Регистрирует Kotlin-аналоги аннотаций `@Entity` и `@Id` в classpath Spring Data — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin использует стандартные аннотации из `jakarta.persistence.*` (или `javax.persistence.*` в старых проектах), никаких отдельных Kotlin-аналогов нет. Плагин не трогает аннотации — он работает на уровне bytecode-трансформации.
+> **Откуда путаница:** разработчики иногда думают, что под Kotlin нужны «свои» аннотации.
+> **Если бы это было правдой:** мы бы импортировали `kotlin.persistence.Entity` — а импортируем стандартный `jakarta.persistence.Entity`.
+>
+> ---
+>
+> #### D) Конвертирует `data class` в обычный `class`, чтобы избежать проблем с `equals`/`hashCode` Hibernate — ❌ Неверно
+>
+> **Что на самом деле:** `data class` остаётся `data class`. Плагин никак не меняет сгенерированные `equals`/`hashCode`. Проблемы из Q3 решаются вручную — переписыванием на обычный class либо переопределением `equals`/`hashCode` по `id`.
+> **Откуда путаница:** хотелось бы «магической» автоматической починки, но плагин делает только одну вещь — no-arg конструктор.
+> **Если бы это было правдой:** мы бы могли свободно использовать `data class @Entity` без последствий — а на практике это плохо работает в продакшене.
+
+## Q5. Как использовать Kotlin Coroutines с Spring WebFlux?
 
 ```kotlin
 @RestController
@@ -352,10 +402,56 @@ Spring WebFlux автоматически адаптирует `suspend` → `Mo
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Что такое CoroutineCrudRepository? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что произойдёт, если объявить `@GetMapping` метод как `suspend fun getOrder(id: String): Order` в Spring WebFlux контроллере?
+>
+> ---
+>
+> #### A) Spring выбросит ошибку «suspend functions are not supported in @RestController» при старте — ❌ Неверно
+>
+> **Что на самом деле:** Spring WebFlux официально поддерживает `suspend` функции с версии 5.2 (2019). Это первоклассная фича для Kotlin — её можно использовать без обёрток и адаптеров. Ошибка возникает только в `spring-webmvc` (синхронный стек), не в WebFlux.
+> **Откуда путаница:** разработчики, не работавшие с WebFlux + Kotlin, переносят сюда ограничения старого Spring MVC.
+> **Если бы это было правдой:** официальная документация Spring + Kotlin не рекомендовала бы этот стиль повсеместно.
+>
+> ---
+>
+> #### B) Метод выполнится в `runBlocking` на event loop потоке Netty и заблокирует обработку других запросов — ❌ Неверно
+>
+> **Что на самом деле:** Spring WebFlux НЕ оборачивает `suspend` в `runBlocking`. Вместо этого он создаёт `Mono` через `mono { suspendFun() }`-подобный механизм (`CoroutinesUtils`), и запускает корутину в `Dispatchers.Unconfined` с переключением на `Schedulers.parallel()` для блокирующих операций — никакого блокирования event loop.
+> **Откуда путаница:** `runBlocking` действительно блокирует, и кажется логичным, что фреймворк «дёшево» использует его. Но это сделало бы WebFlux бесполезным.
+> **Если бы это было правдой:** пропускная способность падала бы до уровня blocking-стека — но тесты показывают, что suspend + WebFlux держит десятки тысяч RPS на одном инстансе.
+>
+> ---
+>
+> #### C) Spring WebFlux адаптирует `suspend fun` к `Mono<T>` через `CoroutinesUtils`/`mono { }`, запуская корутину в реактивном контексте — ✓ Верно
+>
+> **Развёрнутое объяснение:** WebFlux distinguishes return types через `HandlerAdapter`. Для `suspend` функций используется специальный `InvocableHandlerMethod` с `CoroutinesUtils.invokeSuspendingFunction(...)` — он создаёт `Mono` из корутины, переходя в `Dispatchers.Unconfined` и поднимая reactor `ContextView` как coroutine context. `Flow<T>` аналогично адаптируется к `Flux<T>`. Это unified подход: для разработчика код выглядит как обычная Kotlin-функция, для рантайма — как `Mono`/`Flux`. Backpressure, cancellation, и context-propagation работают корректно.
+> **Пример:**
+> ```kotlin
+> @RestController
+> class OrderController(private val service: OrderService) {
+>
+>     @GetMapping("/{id}")
+>     suspend fun getOrder(@PathVariable id: String): Order? =
+>         service.findById(id)  // вернётся как Mono<Order>
+>
+>     @GetMapping
+>     fun all(): Flow<Order> = service.findAll()  // вернётся как Flux<Order>
+> }
+> ```
+> **Когда применять:** во всех новых WebFlux проектах на Kotlin — это рекомендованный стиль вместо ручных `Mono`/`Flux`.
+> **Подводные камни:** WebMVC (`spring-webmvc`) не поддерживает `suspend` напрямую до Spring 6+ (а полная поддержка с виртуальными потоками — Spring 6.1+). Внутри `suspend` нельзя вызывать blocking I/O без `withContext(Dispatchers.IO)` — заблокирует worker.
+> **Связанные вопросы:** [[Q6]] — CoroutineCrudRepository, [[Q14]] — антипаттерн с runBlocking.
+>
+> ---
+>
+> #### D) Метод компилируется, но Spring всегда отдаёт `200 OK` с пустым body — `suspend` несовместим с сериализацией — ❌ Неверно
+>
+> **Что на самом деле:** возвращаемое значение `suspend` функции сериализуется тем же `HttpMessageConverter`-механизмом — Jackson, Kotlinx Serialization, что угодно. Если `Order` возвращён, в body будет JSON. Если `null` для nullable `Order?` — `404 Not Found` (через `ResponseEntity`-handling).
+> **Откуда путаница:** разработчики ожидают, что `Continuation` параметр (под капотом suspend) попадёт в сериализацию — но компилятор Kotlin его прячет в bytecode, а `CoroutinesUtils` снимает в момент адаптации.
+> **Если бы это было правдой:** реальные production WebFlux-приложения на Kotlin отдавали бы пустые ответы — а они работают.
+
+## Q6. Что такое CoroutineCrudRepository?
 
 ```kotlin
 // Spring Data расширение для корутин
@@ -379,10 +475,53 @@ interface OrderRepository : CoroutineCrudRepository<Order, Long> {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как тестировать Kotlin Spring приложения? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что собой представляет `CoroutineCrudRepository<T, ID>` в Spring Data и поверх какого слоя он работает?
+>
+> ---
+>
+> #### A) Это блокирующий репозиторий с `suspend` обёрткой, под капотом вызывает JDBC через `runBlocking` — ❌ Неверно
+>
+> **Что на самом деле:** `CoroutineCrudRepository` работает поверх реактивных Spring Data модулей (R2DBC, MongoDB Reactive, Cassandra Reactive, Redis Reactive), а не поверх JDBC. Никакого `runBlocking` под капотом — это адаптация `Mono`/`Flux` из реактивного драйвера к `suspend`/`Flow`.
+> **Откуда путаница:** JDBC более привычен, и кажется, что репозитории «должны» работать через него.
+> **Если бы это было правдой:** под нагрузкой пул соединений быстро бы исчерпался, и реактивные плюсы исчезли.
+>
+> ---
+>
+> #### B) Это интерфейс Spring Data поверх реактивных драйверов (R2DBC/MongoDB Reactive), адаптирующий `Mono`/`Flux` к `suspend`/`Flow` через `kotlinx-coroutines-reactor` — ✓ Верно
+>
+> **Развёрнутое объяснение:** `CoroutineCrudRepository<T, ID>` — наследник `ReactiveCrudRepository<T, ID>`, в котором методы переписаны как `suspend` (для одиночных результатов) и `Flow<T>` (для коллекций). Spring Data при создании прокси-репозитория использует `ReactiveAdapterRegistry`, который через `kotlinx-coroutines-reactor` конвертирует `Mono.awaitSingleOrNull()` → `suspend fun ... : T?` и `Flux.asFlow()` → `fun ...: Flow<T>`. Запросы (производные методы, `@Query`) и транзакции (`@Transactional` с reactive transaction manager) работают идентично.
+> **Пример:**
+> ```kotlin
+> interface OrderRepository : CoroutineCrudRepository<Order, Long> {
+>     suspend fun findByCustomerId(customerId: String): Order?
+>     fun findByStatus(status: OrderStatus): Flow<Order>
+>
+>     @Query("SELECT * FROM orders WHERE total > :min")
+>     fun findHighValue(min: BigDecimal): Flow<Order>
+> }
+> ```
+> **Когда применять:** в WebFlux + R2DBC проектах на Kotlin. Это default-выбор для нового реактивного стека.
+> **Подводные камни:** транзакции требуют `R2dbcTransactionManager` или `ReactiveMongoTransactionManager` — обычный `JpaTransactionManager` не работает. `@Transactional` на suspend-методе работает с Spring 6+; до этого нужен manual `TransactionalOperator`.
+> **Связанные вопросы:** [[Q5]] — WebFlux + suspend, [[Q13]] — security с suspend.
+>
+> ---
+>
+> #### C) Это альтернатива `JpaRepository` поверх Hibernate с поддержкой корутин — ❌ Неверно
+>
+> **Что на самом деле:** Hibernate синхронный, основан на JDBC, и не имеет нативной поддержки корутин. Hibernate Reactive (отдельный проект Quarkus/Reactive) использует Mutiny и Vert.x, а не Spring Data Coroutine. `CoroutineCrudRepository` живёт только в реактивных Spring Data модулях.
+> **Откуда путаница:** «репозиторий» в большинстве проектов означает JPA, и легко предположить, что Coroutine-вариант тоже про JPA.
+> **Если бы это было правдой:** у вас бы работал `@Entity` с `CoroutineCrudRepository` — но эта связка не существует в Spring Data JPA.
+>
+> ---
+>
+> #### D) Это маркер-интерфейс, который заставляет Spring Boot стартовать в реактивном режиме автоматически — ❌ Неверно
+>
+> **Что на самом деле:** Запуск в reactive-режиме определяется наличием `spring-boot-starter-webflux` и отсутствием `spring-boot-starter-web` в classpath, а не наличием репозитория. Spring Data сам по себе не управляет WebApplicationType.
+> **Откуда путаница:** есть auto-configuration зависимости, но они идут в обратную сторону — стартеры тянут модули, а не модули определяют стартер.
+> **Если бы это было правдой:** добавление одной репозиторной зависимости меняло бы тип всего приложения — это нарушало бы изоляцию модулей.
+
+## Q7. Как тестировать Kotlin Spring приложения?
 
 ```kotlin
 @SpringBootTest
