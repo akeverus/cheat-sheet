@@ -371,10 +371,70 @@ transitions
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Что такое Action в State Machine? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Чем Guard принципиально отличается от Action в Spring State Machine и в какой момент он вызывается?
+>
+> ---
+>
+> #### A) Guard вызывается ПОСЛЕ выполнения action и может откатить переход, если что-то пошло не так. — ❌ Неверно
+>
+> **Что на самом деле:** Guard вызывается СНАЧАЛА — до того, как переход будет применён, до actions. Если guard вернул `false`, никаких побочных эффектов не происходит, машина остаётся в старом состоянии, а событие фиксируется как `DENIED` (или `eventNotAccepted` через listener). После запуска action отката нет — нужно компенсирующее событие.
+>
+> **Откуда путаница:** в обычном Java-коде `try-catch` после побочного эффекта возвращает состояние назад. По аналогии кажется, что guard работает как post-check.
+>
+> **Если бы это было правдой:** action `sendConfirmationEmail()` сначала отправил бы письмо клиенту, а потом guard сказал бы «не подтверждать заказ» — клиент получил бы письмо о подтверждении несуществующего заказа.
+>
+> ---
+>
+> #### B) Guard — это `Function<StateContext, Boolean>`, вызывается ДО перехода; если возвращает `false` — переход не происходит, actions не выполняются, событие DENIED. — ✓ Верно
+>
+> **Развёрнутое объяснение:** Guard — условие на переход. Сигнатура: `Guard<S,E>` = `boolean evaluate(StateContext<S,E> context)`. Машина при получении события находит подходящий transition, проверяет guard и только если он `true` — выполняет actions и меняет состояние. Это первичный механизм enforce-инвариантов: «отгружать только оплаченные заказы», «отменить только pending», «approve только при наличии прав». Guard ДОЛЖЕН быть pure-функцией без побочных эффектов; вся работа — в actions.
+>
+> **Пример:**
+> ```java
+> @Bean
+> public Guard<OrderState, OrderEvent> paymentVerifiedGuard() {
+>     return context -> {
+>         String orderId = (String) context.getMessageHeader("orderId");
+>         return paymentService.isVerified(orderId);  // только чтение, без side effects
+>     };
+> }
+>
+> transitions.withExternal()
+>     .source(PENDING).target(CONFIRMED).event(CONFIRM)
+>     .guard(paymentVerifiedGuard())   // CONFIRM пройдёт только при оплаченном заказе
+>     .action(sendConfirmationEmail()); // выполнится только если guard = true
+> ```
+>
+> **Когда применять:** валидация инвариантов перед переходом, проверка прав, бизнес-условий, дедупликация событий, choice pseudo-state с условным роутингом.
+>
+> **Подводные камни:** побочные эффекты внутри guard приводят к недетерминированному поведению; throw из guard расценивается как ошибка машины (не как false) — лучше catch внутри и вернуть false; guard, обращающийся к БД, — узкое место производительности.
+>
+> ---
+>
+> #### C) Guard блокирует выполнение action, но переход состояния всё равно происходит — это просто фильтр для побочных эффектов. — ❌ Неверно
+>
+> **Что на самом деле:** guard блокирует ВЕСЬ переход целиком — и actions, и смену состояния. Если нужно «перейти, но не делать действие» — это разные actions на разных transitions, а не один guard.
+>
+> **Откуда путаница:** в Spring AOP `@Conditional` или `@ConditionalOnProperty` блокируют отдельный bean, не весь контекст.
+>
+> **Если бы это было правдой:** при отказе guard PENDING→CONFIRMED заказ всё равно перешёл бы в CONFIRMED, но без email — а на следующем шаге машина попыталась бы SHIP неоплаченный заказ.
+>
+> ---
+>
+> #### D) Guard — это аннотация `@PreAuthorize` на методе action, проверяющая права доступа через Spring Security. — ❌ Неверно
+>
+> **Что на самом деле:** Guard — это бин `Guard<S,E>`, никак не связанный со Spring Security. Можно внутри guard проверять `SecurityContextHolder`, но это руками. `@PreAuthorize` к state machine не применяется автоматически.
+>
+> **Откуда путаница:** концепт «pre-check перед действием» одинаков, и слово guard в IT часто ассоциируется с security.
+>
+> **Если бы это было правдой:** для бизнес-инвариантов (paymentVerified, inventoryAvailable) пришлось бы изобретать `@PreAuthorize("hasPaymentVerified()")` — что заведомо громоздко.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q5]] — Action как side effect перехода; [[Q11]] — Listener для отслеживания `eventNotAccepted` от guard.
+
+## Q5. Что такое Action в State Machine?
 
 **Action** — побочный эффект, выполняемый при переходе или входе/выходе из состояния.
 
@@ -416,10 +476,77 @@ states.withStates()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Что такое Extended State? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие виды Action существуют в Spring State Machine и в какой момент каждый вызывается?
+>
+> ---
+>
+> #### A) Существует только один тип action — на transition; entry/exit actions достигаются ручной проверкой состояния внутри transition action. — ❌ Неверно
+>
+> **Что на самом деле:** SSM поддерживает несколько видов action из коробки: **transition action** (при переходе), **entry action** (при входе в состояние), **exit action** (при выходе из состояния), **state-do action** (выполняется пока машина в состоянии). Их разделение — фундаментальная часть UML state diagrams.
+>
+> **Откуда путаница:** в простых примерах часто показывают только transition action — и кажется, что больше ничего нет.
+>
+> **Если бы это было правдой:** «при входе в SHIPPED отправить notification» пришлось бы дублировать на каждом transition, ведущем в SHIPPED — нарушение DRY.
+>
+> ---
+>
+> #### B) Transition action нельзя получить доступ к headers сообщения — для этого нужен только Guard. — ❌ Неверно
+>
+> **Что на самом деле:** action получает тот же `StateContext`, что и guard. Доступ к `context.getMessageHeader(key)` и `context.getExtendedState()` есть из обоих. Разница только в семантике: guard читает и возвращает boolean, action выполняет побочный эффект.
+>
+> **Откуда путаница:** в туториалах guards часто читают headers, а actions просто пишут лог — формируется впечатление разделения по доступу.
+>
+> **Если бы это было правдой:** action не смог бы получить `orderId` из headers, и пришлось бы дублировать данные через Extended State перед каждым переходом.
+>
+> ---
+>
+> #### C) Action — это `Consumer<StateContext>`, выполняется ПОСЛЕ guard и ДО смены состояния; бывает transition, entry, exit, state-do; ошибка action может прервать переход. — ✓ Верно
+>
+> **Развёрнутое объяснение:** Action — побочный эффект перехода. Сигнатура: `Action<S,E>` = `void execute(StateContext<S,E> context)`. Последовательность при transition: guard → exit action источника → transition action → entry action цели → событие listener `stateChanged`. Exception в action попадает в `stateMachineError` listener; машина переходит в error state. Транзакционность action не управляется SSM — это ответственность разработчика (`@Transactional` на сервисе, в который делегирует action). Entry/exit actions объявляются в `withStates().state(STATE, entryAction, exitAction)`.
+>
+> **Пример:**
+> ```java
+> @Bean
+> public Action<OrderState, OrderEvent> sendConfirmationEmail() {
+>     return context -> {
+>         String orderId = (String) context.getMessageHeader("orderId");
+>         emailService.sendConfirmation(orderId);
+>         context.getExtendedState().getVariables().put("confirmedAt", Instant.now());
+>     };
+> }
+>
+> // Entry action SHIPPED — выполнится при любом transition в SHIPPED
+> states.withStates()
+>     .state(SHIPPED, dispatchShipmentNotification(), null);
+>     //              entry ↑                          ↑ exit
+>
+> // Transition action — выполнится только на конкретном переходе
+> transitions.withExternal()
+>     .source(PENDING).target(CONFIRMED).event(CONFIRM)
+>     .action(sendConfirmationEmail())
+>     .action(updateInventory());  // цепочка actions выполняется по порядку
+> ```
+>
+> **Когда применять:** отправка нотификаций, запись audit log, обновление связанных систем, метрик. Транзакционные effects — обернуть `@Transactional` в делегируемом сервисе.
+>
+> **Подводные камни:** action не идемпотентен по умолчанию — при retry/recovery будет выполнен повторно; exception прерывает chain actions; нельзя полагаться на порядок отправки писем и записи в БД без transactional outbox.
+>
+> ---
+>
+> #### D) Action автоматически выполняется в транзакции `@Transactional(REQUIRES_NEW)` — SSM управляет границами транзакций. — ❌ Неверно
+>
+> **Что на самом деле:** SSM сама не открывает транзакций. Если action пишет в БД, нужно либо `@Transactional` на сервисе, в который делегирует action, либо явно использовать `TransactionTemplate`. По умолчанию каждое обращение к БД из action — auto-commit.
+>
+> **Откуда путаница:** Spring обильно использует декларативные транзакции, и пользователи ожидают, что любой Spring-фреймворк автоматически их даёт.
+>
+> **Если бы это было правдой:** запись audit log и отправка email атомарно либо обе откатывались, либо обе фиксировались — но без явного управления это иллюзия консистентности.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q4]] — Guard как pre-condition; [[Q6]] — Extended State для передачи данных между actions.
+
+## Q6. Что такое Extended State?
 
 **Extended State** — key-value хранилище, доступное в контексте State Machine. Используется для передачи данных между actions и guards без загрязнения заголовков сообщений.
 
@@ -441,10 +568,75 @@ Extended State персистируется вместе с машиной со�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как сохранять состояние State Machine (persistence)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Чем Extended State отличается от обычных переменных бина и зачем он нужен, если можно просто хранить данные в `@Entity` сущности заказа?
+>
+> ---
+>
+> #### A) Extended State — это поле `Map` внутри `StateMachine`, которое не сохраняется при persistence и существует только в RAM до рестарта. — ❌ Неверно
+>
+> **Что на самом деле:** Extended State (точнее, его `getVariables()`) сериализуется в `StateMachineContext` вместе с текущим состоянием при сохранении через `StateMachinePersister`/`StateMachinePersist`. При восстановлении машины через `resetStateMachine(ctx)` переменные восстанавливаются обратно.
+>
+> **Откуда путаница:** в первых туториалах часто показывают Extended State без persistence, и кажется, что это in-memory кэш.
+>
+> **Если бы это было правдой:** после рестарта приложения retry-счётчик из Extended State обнулился бы, и заказ мог снова получить уже отвергнутый платёж.
+>
+> ---
+>
+> #### B) Extended State — key-value хранилище в `StateContext`, видимое всем guard'ам и action'ам одной машины, сериализуется через `StateMachineContext` и используется для данных, релевантных только текущему workflow (retry count, временные флаги). — ✓ Верно
+>
+> **Развёрнутое объяснение:** Extended State — это `Map<Object, Object>` в составе `StateMachineContext<S,E>`. Доступ единый из guard, action, listener: `context.getExtendedState().getVariables()`. Используется для данных, которые нужны только в рамках жизненного цикла FSM (счётчик retry, флаг ручного override, последняя ошибка платежа). При персистенции `DefaultStateMachineContext` принимает Map переменных и сохраняет вместе с состоянием. Это позволяет хранить специфичные для workflow данные отдельно от доменной сущности `Order`, не загрязняя её колонками типа `retryCount`, `lastPaymentError`. По UML-нотации это и есть "extended state" — расширение конечного state набором переменных.
+>
+> **Пример:**
+> ```java
+> // Запись в action
+> @Bean
+> public Action<OrderState, OrderEvent> incrementRetry() {
+>     return context -> {
+>         Map<Object, Object> vars = context.getExtendedState().getVariables();
+>         vars.merge("retryCount", 1, (a, b) -> ((Integer) a) + 1);
+>     };
+> }
+>
+> // Чтение в guard
+> @Bean
+> public Guard<OrderState, OrderEvent> maxRetriesGuard() {
+>     return context -> {
+>         Integer retries = context.getExtendedState().get("retryCount", Integer.class);
+>         return retries == null || retries < 3;
+>     };
+> }
+> ```
+>
+> **Когда применять:** retry counters в payment processing; временные флаги (`manualOverride=true`); кэш промежуточных результатов между guard и action; данные, которые нет смысла выносить в доменную модель.
+>
+> **Подводные камни:** значения должны быть сериализуемы (для JDBC/Redis persister); коллизии ключей при больших workflow — заводить отдельный enum для key namespace; нельзя класть туда тяжёлые объекты (Session, Connection); очистка переменных при достижении end-state не происходит автоматически.
+>
+> ---
+>
+> #### C) Extended State дублирует функциональность `@Entity` сущности — это просто in-memory кэш над колонками БД, и его нужно держать синхронным с доменной моделью. — ❌ Неверно
+>
+> **Что на самом деле:** Extended State и доменная сущность решают разные задачи. Доменная сущность хранит бизнес-данные (сумма, товары, адрес). Extended State хранит метаданные workflow (retry count, флаги). Их синхронизация — не требование, а часто антипаттерн: смешивание ответственностей и двойная запись.
+>
+> **Откуда путаница:** при первом знакомстве кажется логичным «зачем дублировать — давайте всё в Order».
+>
+> **Если бы это было правдой:** retry counter протёк бы в доменную модель, и `Order.retryCount` появился бы в API ответах клиентам, хотя это деталь реализации FSM.
+>
+> ---
+>
+> #### D) Extended State доступен только action'ам, но не guard'ам — guard работает только с `event` и `source`/`target`. — ❌ Неверно
+>
+> **Что на самом деле:** guard получает тот же `StateContext`, что и action, и читает Extended State одинаково: `context.getExtendedState().get(key, type)`. Это основной паттерн «условие на основании накопленного состояния workflow».
+>
+> **Откуда путаница:** в простых примерах guard действительно проверяет только headers, и Extended State не показан.
+>
+> **Если бы это было правдой:** реализовать `maxRetriesGuard` через Extended State было бы невозможно, и пришлось бы каждый раз пробрасывать счётчик через headers сообщения.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q4]] — Guard читает Extended State; [[Q5]] — Action пишет в Extended State; [[Q7]] — persistence сериализует переменные.
+
+## Q7. Как сохранять состояние State Machine (persistence)?
 
 ```java
 // JPA Entity для сохранения состояния
@@ -496,10 +688,82 @@ public class PersistableOrderFsmService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Что такое StateMachineFactory и когда его использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как правильно реализовать persistence для Spring State Machine, чтобы машина переживала рестарт приложения и работала корректно в многоинстансовом окружении?
+>
+> ---
+>
+> #### A) Достаточно сохранить текущий enum-state в колонку `Order.state` — при следующем запросе восстановить машину через `factory.getStateMachine(orderId)` и продолжить. — ❌ Неверно
+>
+> **Что на самом деле:** просто сохранения enum-state недостаточно. `factory.getStateMachine(orderId)` всегда создаёт машину в `initial` состоянии. Чтобы восстановить машину в нужное состояние, нужно использовать `StateMachineAccessor.resetStateMachine(StateMachineContext)` — он принимает контекст с состоянием И Extended State variables. Без `resetStateMachine` все переходы будут отрабатывать с начала.
+>
+> **Откуда путаница:** в маленьких примерах часто хватает только state, и кажется, что Extended State можно игнорировать.
+>
+> **Если бы это было правдой:** retry counter, accumulated failures и любые workflow-метаданные терялись бы между запросами — FSM фактически работала бы как stateless.
+>
+> ---
+>
+> #### B) `StateMachinePersister<S, E, K>` сериализует `StateMachineContext` (состояние + Extended State + история регионов) в storage (`StateMachinePersist`), и при следующем обращении машина восстанавливается через `resetStateMachine(ctx)`. Поддерживаются JDBC, Redis, MongoDB, кастомные реализации. — ✓ Верно
+>
+> **Развёрнутое объяснение:** SSM предоставляет двухуровневую абстракцию: `StateMachinePersist<S, E, K>` — низкоуровневый интерфейс хранилища (`write(ctx, key)`, `read(key)`), и `StateMachinePersister<S, E, K>` — обёртка, которая снимает `StateMachineContext` из живой машины и применяет обратно. Готовые реализации: `JpaStateMachineRepository` + `JpaPersistingStateMachineInterceptor`, `RedisStateMachinePersister`, `MongoDbPersistingStateMachineInterceptor`. Контекст содержит state, Extended State variables, child contexts (для иерархии и регионов), historyStates. При восстановлении: `factory.getStateMachine(orderId)` → `persister.restore(sm, orderId)` → `sm.startReactively().block()` → теперь машина в нужном состоянии и с переменными. Для thread safety в многоинстансовом окружении нужен distributed lock (Redis Redisson, JDBC `SELECT FOR UPDATE`) на ключе orderId.
+>
+> **Пример:**
+> ```java
+> @Service
+> @RequiredArgsConstructor
+> public class OrderFsmService {
+>     private final StateMachineFactory<OrderState, OrderEvent> factory;
+>     private final StateMachinePersister<OrderState, OrderEvent, String> persister;
+>     private final RedissonClient redisson;
+>
+>     public boolean process(String orderId, OrderEvent event) {
+>         RLock lock = redisson.getLock("fsm:" + orderId);
+>         lock.lock();
+>         try {
+>             StateMachine<OrderState, OrderEvent> sm = factory.getStateMachine(orderId);
+>             persister.restore(sm, orderId);          // <-- восстановление из БД
+>             sm.startReactively().block();
+>             boolean accepted = sm.sendEvent(Mono.just(
+>                 MessageBuilder.withPayload(event).setHeader("orderId", orderId).build()
+>             )).blockFirst().getResultType() == ResultType.ACCEPTED;
+>             persister.persist(sm, orderId);          // <-- сохранение нового состояния
+>             return accepted;
+>         } finally {
+>             lock.unlock();
+>         }
+>     }
+> }
+> ```
+>
+> **Когда применять:** долгоживущие workflow (order lifecycle, document approval, KYC), где между событиями могут пройти минуты/дни; многоинстансовые приложения, где запросы по одному orderId могут попасть на разные поды.
+>
+> **Подводные камни:** забыть про блокировку — race conditions при параллельных событиях по одному orderId; сериализация Extended State требует Serializable значений; миграция enum-имён состояний при изменении кода ломает восстановление; `persist()` после неуспешного `sendEvent` сохранит "застрявшее" состояние — нужна явная обработка ResultType.
+>
+> ---
+>
+> #### C) Spring State Machine из коробки сама пишет состояние в БД через `@Transactional` interceptor — никаких persister'ов настраивать не нужно. — ❌ Неверно
+>
+> **Что на самом деле:** SSM **не** имеет автоматической persistence "из коробки" в общем смысле. Есть `JpaPersistingStateMachineInterceptor`, который надо явно зарегистрировать в конфигурации (`config.withConfiguration().machineId(...)` + interceptor). Без явной настройки SSM хранит состояние только в RAM. Идея «всё магически персистится» — заблуждение.
+>
+> **Откуда путаница:** Spring Data, Spring Security имеют много auto-конфигурации, и пользователи ждут того же от SSM.
+>
+> **Если бы это было правдой:** не было бы вопросов про `StateMachinePersister` и многочисленных рецептов с Redis/JDBC — но реальность сложнее.
+>
+> ---
+>
+> #### D) Для distributed FSM нужно использовать Zookeeper-based persistence — `JdbcStateMachinePersist` не работает в multi-instance окружении. — ❌ Неверно
+>
+> **Что на самом деле:** JDBC persistence отлично работает в multi-instance окружении при условии добавления distributed lock (например, `SELECT FOR UPDATE` или Redis lock) для предотвращения одновременной обработки событий по одному ключу. Zookeeper нужен для другого — Distributed State Machine (когда одна логическая машина координируется между нодами кластера), а не просто для persistence.
+>
+> **Откуда путаница:** оба слова содержат "distributed", и легко спутать два разных сценария.
+>
+> **Если бы это было правдой:** каждое приложение со State Machine обязательно тянуло бы Zookeeper кластер — на практике большинство обходится JDBC + блокировкой.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q6]] — Extended State сериализуется вместе с состоянием; [[Q8]] — `StateMachineFactory` создаёт восстанавливаемые экземпляры.
+
+## Q8. Что такое StateMachineFactory и когда его использовать?
 
 **StateMachineFactory** — создаёт отдельный экземпляр State Machine для каждой сущности. Используется когда каждый объект (заказ, пользователь) должен иметь свою независимую машину состояний.
 
@@ -530,10 +794,79 @@ sm.startReactively().block();
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Как реализовать иерархические состояния? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём разница между `@EnableStateMachine` и `@EnableStateMachineFactory`, и в каких сценариях критично использовать фабрику?
+>
+> ---
+>
+> #### A) `@EnableStateMachine` создаёт `StateMachineFactory` как bean, а `@EnableStateMachineFactory` — это альтернативное имя для той же аннотации, оставленное для обратной совместимости. — ❌ Неверно
+>
+> **Что на самом деле:** это две **разные** аннотации с разной семантикой. `@EnableStateMachine` создаёт **один singleton** `StateMachine` bean — на всё приложение. `@EnableStateMachineFactory` создаёт `StateMachineFactory<S,E>` bean, из которого можно получать новые независимые экземпляры машин через `factory.getStateMachine(machineId)`.
+>
+> **Откуда путаница:** имена похожи, и в Spring часто есть синонимы (`@Component` vs `@Service` функционально).
+>
+> **Если бы это было правдой:** не было бы смысла иметь две аннотации в API, и факт их наличия указывает на разное предназначение.
+>
+> ---
+>
+> #### B) `@EnableStateMachine` подходит только для встраивания в Spring Boot Actuator — для бизнес-логики всегда нужна Factory. — ❌ Неверно
+>
+> **Что на самом деле:** `@EnableStateMachine` вполне применим для бизнес-задач, когда машина моделирует **глобальное** состояние системы (например, статус всего приложения, режим обслуживания, общий circuit breaker). Главное — не использовать его, когда нужно по экземпляру на бизнес-сущность.
+>
+> **Откуда путаница:** в большинстве туториалов показывают именно order workflow, где Factory обязательна — и складывается впечатление, что Singleton машина бесполезна.
+>
+> **Если бы это было правдой:** Spring не предоставлял бы `@EnableStateMachine` отдельно — это был бы антипаттерн API.
+>
+> ---
+>
+> #### C) `@EnableStateMachine` создаёт singleton `StateMachine` (один на приложение), `@EnableStateMachineFactory` создаёт `StateMachineFactory`, из которого `getStateMachine(id)` возвращает новый независимый экземпляр; Factory обязательна для per-entity workflow (order, document, user). — ✓ Верно
+>
+> **Развёрнутое объяснение:** Singleton машина — `@EnableStateMachine` создаёт ровно один bean `StateMachine<S,E>`. Все потоки видят одно и то же состояние. Использовать только для глобальных состояний (режим приложения, общий feature toggle). Factory — `@EnableStateMachineFactory` создаёт bean `StateMachineFactory<S,E>` с тем же DSL-конфигом, но каждый вызов `factory.getStateMachine(machineId)` возвращает свежий экземпляр в initial state. Это нужно для per-entity сценариев: каждый Order имеет свою машину, каждый Document — свою. Без Factory попытка использовать один singleton FSM для нескольких заказов приведёт к race conditions: пока один поток обрабатывает CONFIRM, другой видит уже изменённое состояние. Factory + persister + distributed lock — каноничный паттерн.
+>
+> **Пример:**
+> ```java
+> @Configuration
+> @EnableStateMachineFactory  // <-- НЕ @EnableStateMachine
+> public class OrderFsmConfig extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
+>     @Override
+>     public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent> c) throws Exception {
+>         c.withConfiguration()
+>             .autoStartup(false)          // ВАЖНО: иначе каждый getStateMachine стартует машину
+>             .machineId("orderFsm");
+>     }
+>     // ... states, transitions
+> }
+>
+> @Service
+> public class OrderService {
+>     private final StateMachineFactory<OrderState, OrderEvent> factory;
+>
+>     public void process(String orderId, OrderEvent event) {
+>         StateMachine<OrderState, OrderEvent> sm = factory.getStateMachine(orderId);
+>         // у каждого заказа — своя машина в своём состоянии
+>     }
+> }
+> ```
+>
+> **Когда применять:** Factory — order lifecycle, document approval, payment processing, ticket workflow. Singleton — circuit breaker всего приложения, режим maintenance, глобальный feature flag.
+>
+> **Подводные камни:** забыть `autoStartup(false)` — каждое `getStateMachine` дёргает entry actions initial state; не закрывать машину после использования (`sm.stopReactively()`) — утечка ресурсов; путать `machineId` (имя конфига) с runtime ID экземпляра (передаётся в `getStateMachine(id)`).
+>
+> ---
+>
+> #### D) Factory создаёт thread-safe singleton машин — можно безопасно использовать один экземпляр из `factory.getStateMachine("singleton")` параллельно из любого числа потоков. — ❌ Неверно
+>
+> **Что на самом деле:** ни singleton машина (`@EnableStateMachine`), ни экземпляры из Factory **не являются** thread-safe для одновременной обработки событий. SSM проектировалась как stateful entity, не как thread-safe service. Безопасный паттерн — distributed lock на machineId + restore из persistence + sendEvent + persist + unlock.
+>
+> **Откуда путаница:** Factory звучит как «фабрика безопасных объектов», а Spring beans по умолчанию singleton — отсюда ложная аналогия.
+>
+> **Если бы это было правдой:** не было бы необходимости в Redisson-локах и persister'ах — но реальность требует явной синхронизации.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q7]] — persistence работает в связке с Factory; [[Q11]] — listener регистрируется на машину из Factory; [[Q15]] — singleton machine для нескольких объектов — типичная ошибка.
+
+## Q9. Как реализовать иерархические состояния?
 
 Иерархические состояния позволяют группировать состояния с общим поведением:
 
