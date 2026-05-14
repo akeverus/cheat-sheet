@@ -1007,10 +1007,91 @@ public class AuthDirectiveWiring implements SchemaDirectiveWiring {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Как реализовать пагинацию в GraphQL? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В схеме объявлена кастомная директива `directive @auth(role: String!) on FIELD_DEFINITION`. На уровне Spring GraphQL для её обработки нужно реализовать какой компонент и как он подключается?
+>
+> ---
+>
+> #### A) Достаточно поставить аннотацию `@AuthDirective` на резолвер — Spring сам свяжет её с SDL-директивой по имени — ❌ Неверно
+>
+> **Что на самом деле:** SDL-директивы и Java-аннотации — разные миры. Связать их можно только через `SchemaDirectiveWiring`, который оборачивает `DataFetcher` поля декорированным поведением. Никакого автоматического mapping по имени не существует.
+>
+> **Откуда путаница:** В Spring MVC аннотация и runtime-обработчик связаны через `BeanPostProcessor`. Хочется такого же магического связывания, но в GraphQL дизайн другой.
+>
+> **Если бы это было правдой:** Не было бы необходимости в `SchemaDirectiveWiring` интерфейсе — но это центральный API GraphQL Java для директив.
+>
+> ---
+>
+> #### B) Реализовать `SchemaDirectiveWiring` — `onField()` оборачивает оригинальный `DataFetcher` декоратором, который выполняется при вызове поля; компонент регистрируется через `RuntimeWiringConfigurer` — ✓ Верно
+>
+> **Развёрнутое объяснение:** `SchemaDirectiveWiring` — стандартный интерфейс GraphQL Java для обработки директив. Метод `onField(SchemaDirectiveWiringEnvironment)` вызывается ОДИН раз при построении схемы для каждого поля с этой директивой. Внутри вы получаете оригинальный `DataFetcher` (`env.getFieldDataFetcher()`) и оборачиваете его в декоратор, который выполняется при каждом GraphQL-запросе. Регистрация в Spring GraphQL делается через `RuntimeWiringConfigurer` bean — Spring передаст его в строитель схемы. Директивы бывают двух родов: **schema directives** (применяются при построении схемы, например `@auth`, `@deprecated`) и **query directives** (применяются клиентом в запросе, например `@include`, `@skip`).
+>
+> **Пример:**
+> ```graphql
+> directive @auth(role: String!) on FIELD_DEFINITION
+>
+> type Query {
+>     adminReport: Report! @auth(role: "ADMIN")
+> }
+> ```
+> ```java
+> @Component
+> public class AuthDirectiveWiring implements SchemaDirectiveWiring {
+>     @Override
+>     public GraphQLFieldDefinition onField(
+>             SchemaDirectiveWiringEnvironment<GraphQLFieldDefinition> env) {
+>         String requiredRole = (String) env.getAppliedDirective("auth")
+>             .getArgument("role").getValue();
+>         DataFetcher<?> original = env.getFieldDataFetcher();
+>         DataFetcher<?> authFetcher = ctx -> {
+>             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+>             boolean ok = auth.getAuthorities().stream()
+>                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + requiredRole));
+>             if (!ok) throw new AccessDeniedException("Required role: " + requiredRole);
+>             return original.get(ctx);
+>         };
+>         return env.setFieldDataFetcher(authFetcher);
+>     }
+> }
+>
+> @Configuration
+> class GraphQlConfig {
+>     @Bean
+>     RuntimeWiringConfigurer wiringConfigurer(AuthDirectiveWiring authWiring) {
+>         return wiring -> wiring.directive("auth", authWiring);
+>     }
+> }
+> ```
+>
+> **Когда применять:** Cross-cutting concerns на уровне SDL: авторизация (`@auth`), кэширование (`@cacheControl`), форматирование (`@uppercase`), маскирование (`@masked` для PII), rate-limiting (`@rateLimit`). Apollo Federation использует директивы (`@key`, `@external`) для определения federated schema.
+>
+> **Подводные камни:** `onField()` вызывается при старте, не на каждый запрос — там нельзя ссылаться на текущий security context. Декоратор `DataFetcher` — это место, где есть доступ к runtime-контексту. Альтернатива в Spring — `@PreAuthorize` на резолвере (проще, но без декларации в SDL).
+>
+> ---
+>
+> #### C) Директивы можно использовать только встроенные (`@deprecated`, `@include`, `@skip`) — кастомные не поддерживаются Spring GraphQL — ❌ Неверно
+>
+> **Что на самом деле:** Spring GraphQL полностью поддерживает кастомные директивы через `SchemaDirectiveWiring` (это API GraphQL Java, на котором Spring построен). Кастомные директивы — стандартная часть GraphQL spec.
+>
+> **Откуда путаница:** Документация Spring GraphQL фокусируется на основных кейсах и редко показывает примеры с директивами — кажется, что их «нет».
+>
+> **Если бы это было правдой:** Невозможно было бы построить Apollo Federation на Spring GraphQL — но Netflix DGS и сам Spring GraphQL поддерживают её.
+>
+> ---
+>
+> #### D) Директивы обрабатываются через GraphQL `Instrumentation`, регистрируемую как `@Bean` — ❌ Неверно
+>
+> **Что на самом деле:** `Instrumentation` — это hook для перехвата ЭТАПОВ выполнения query (parse, validate, execute, fetch field). Она знает «было ли поле запрошено», но не понимает SDL-директивы напрямую. Для директив нужен `SchemaDirectiveWiring`. Instrumentation полезна для логирования, метрик, query complexity — Q15 как раз о ней.
+>
+> **Откуда путаница:** Оба механизма про cross-cutting concerns, и легко перепутать.
+>
+> **Если бы это было правдой:** GraphQL Java не имел бы отдельного API для директив.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q11]] — auth через `@PreAuthorize` vs `@auth` directive, [[Q13]] — `@deprecated` для introspection, [[Q15]] — Instrumentation.
+
+## Q10. Как реализовать пагинацию в GraphQL?
 
 Рекомендованный стиль — Cursor-based (Relay Connection spec):
 
@@ -1055,10 +1136,82 @@ public Connection<Order> orders(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как Spring GraphQL интегрируется с Spring Security? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Для списка заказов нужно реализовать пагинацию по 20 элементов с возможностью бесконечного скролла. Какой стиль пагинации в GraphQL рекомендован спецификацией Relay и почему cursor-based лучше offset-based для production?
+>
+> ---
+>
+> #### A) Offset-based (`orders(limit: 20, offset: 40)`) — самый простой и подходит для любого размера данных — ❌ Неверно
+>
+> **Что на самом деле:** Offset работает только на маленьких/статичных датасетах. На большом наборе `OFFSET 100000` означает «прочитать 100000 строк и выбросить» — линейная деградация. При добавлении новых записей в начало (новый заказ) страница «сдвигается» — пользователь видит дубли или пропуски при скролле.
+>
+> **Откуда путаница:** Привычка SQL-пагинации с `LIMIT/OFFSET`. Работает для админ-панели на 1000 записей; ломается на бесконечном скролле с миллионами.
+>
+> **Если бы это было правдой:** Никто не разработал бы Relay Connection spec — но он существует именно для решения проблем offset.
+>
+> ---
+>
+> #### B) Cursor-based по спецификации Relay Connection (`first`, `after`, `last`, `before` + `Connection`/`Edge`/`PageInfo` типы); Spring GraphQL поддерживает её через `ScrollPosition` и `Window` — ✓ Верно
+>
+> **Развёрнутое объяснение:** Cursor — это opaque-токен (обычно base64-encoded id или составной ключ), указывающий позицию в наборе данных. Запрос `orders(first: 20, after: "cursor123")` означает «20 элементов СТРОГО ПОСЛЕ позиции cursor123». Стабильно к вставкам/удалениям, не требует считывать пропущенные строки в БД (можно сделать `WHERE id > cursor LIMIT 20` с индексом). Relay-спецификация требует обёртки в `Connection` тип с `edges[{ node, cursor }]` и `pageInfo { hasNextPage, hasPreviousPage, startCursor, endCursor }`. Spring GraphQL 1.2+ имеет первоклассную поддержку: возвращайте `Window<T>` из Spring Data Commons, и `DefaultConnection.create(window, CursorStrategy)` обернёт в Relay-формат.
+>
+> **Пример:**
+> ```graphql
+> type Query {
+>     orders(first: Int, after: String, last: Int, before: String): OrderConnection!
+> }
+> type OrderConnection {
+>     edges: [OrderEdge!]!
+>     pageInfo: PageInfo!
+>     totalCount: Int!
+> }
+> type OrderEdge { node: Order!  cursor: String! }
+> type PageInfo {
+>     hasNextPage: Boolean!  hasPreviousPage: Boolean!
+>     startCursor: String   endCursor: String
+> }
+> ```
+> ```java
+> @QueryMapping
+> public Connection<Order> orders(@Argument int first, @Argument String after) {
+>     ScrollPosition position = after != null
+>         ? ScrollPosition.forward(CursorEncoder.decode(after))
+>         : ScrollPosition.keyset();
+>     Window<Order> window = orderService.findPage(first, position);
+>     return DefaultConnection.create(window,
+>         CursorStrategy.withEncoder(CursorEncoder.base64()));
+> }
+> ```
+>
+> **Когда применять:** Любая публичная схема (GitHub, Shopify, Facebook GraphQL APIs все используют Relay Connection). Mobile-приложения с infinite scroll. Аналитические дашборды.
+>
+> **Подводные камни:** `totalCount` бывает дорогим (`SELECT COUNT(*)` на большой таблице — full scan); часто его вычисляют отдельно или приближённо (`estimated_count`). Cursor должен быть стабилен к ORDER BY — если сортируете по `updatedAt`, в cursor нужны и `updatedAt`, и `id` (для tiebreaker). Не путайте cursor с offset — раскрытие сырых offset в cursor сводит к нулю преимущество.
+>
+> ---
+>
+> #### C) Page-based (`orders(page: 3, size: 20)`) — Spring Data-style, идеально интегрируется с `Pageable` — ❌ Неверно
+>
+> **Что на самом деле:** Это лишь обёртка над offset (`offset = page * size`) и имеет все его проблемы. Хотя Spring GraphQL может маппить на `Pageable`, для production-схем GraphQL это не рекомендуется.
+>
+> **Откуда путаница:** Spring Data привычки. В REST это работает; в GraphQL с быстрорастущими данными — нет.
+>
+> **Если бы это было правдой:** Apollo Client не выпускал бы специальный helper `relayStylePagination` — но это его рекомендованный паттерн.
+>
+> ---
+>
+> #### D) Spring GraphQL не поддерживает Relay-пагинацию из коробки — приходится писать `Connection`-тип руками — ❌ Неверно (для 1.2+)
+>
+> **Что на самом деле:** Spring GraphQL 1.2+ поставляет `org.springframework.graphql.data.pagination.*` — встроенную поддержку через `Window<T>`, `ScrollPosition`, `CursorStrategy`. До 1.2 действительно приходилось вручную, теперь — нет.
+>
+> **Откуда путаница:** Старые tutorials написаны под 1.0/1.1, и часть Stack Overflow ответов устарели.
+>
+> **Если бы это было правдой:** В docs Spring GraphQL не было бы раздела «Pagination» — но он есть.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q5]] — `@BatchMapping` для items, [[Q13]] — introspection и поля Connection, [[Q15]] — мониторинг slow queries.
+
+## Q11. Как Spring GraphQL интегрируется с Spring Security?
 
 ```java
 // Method-level security работает out-of-the-box
@@ -1091,10 +1244,86 @@ Spring Security перехватывает запросы до их попада
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Чем @SchemaMapping отличается от @QueryMapping и @MutationMapping? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Аутентификация JWT уже настроена в `SecurityFilterChain` для REST. GraphQL endpoint `/graphql` должен использовать ту же auth. Что нужно сделать для корректной работы?
+>
+> ---
+>
+> #### A) Нужно отключить Spring Security для `/graphql` и реализовать собственную аутентификацию через `Instrumentation` — ❌ Неверно
+>
+> **Что на самом деле:** `/graphql` — обычный HTTP POST endpoint, к нему применяется стандартный `SecurityFilterChain`. Никакой специальной аутентификации не требуется — Spring Security валидирует JWT до того, как запрос дойдёт до GraphQL-резолверов.
+>
+> **Откуда путаница:** Мысль «GraphQL = специальный мир, нужны специальные механизмы». На самом деле для HTTP-транспорта всё работает прозрачно. Специфика возникает только для WebSocket (subscriptions) — там auth идёт в `connection_init`-сообщении.
+>
+> **Если бы это было правдой:** Spring GraphQL имел бы свой security-модуль — но он использует Spring Security без модификаций.
+>
+> ---
+>
+> #### B) Spring Security интегрируется out-of-the-box: `SecurityContextHolder` доступен в резолверах, `@PreAuthorize`/`@PostAuthorize` работают на методах `@QueryMapping`/`@MutationMapping`, `Principal` инжектится как параметр — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring GraphQL построен поверх Spring MVC/WebFlux, поэтому Security Filter Chain отрабатывает до резолверов. `Principal`, `Authentication` инжектятся в параметры методов автоматически (Spring GraphQL resolver argument resolvers). Method-level security (`@EnableMethodSecurity`) с `@PreAuthorize`/`@PostAuthorize` навешивается на резолверы как на обычные Spring-бины. Для WebFlux используйте `ReactiveSecurityContextHolder` и `Mono<Authentication>`. Важная деталь: при `AccessDeniedException` Spring GraphQL не вернёт HTTP 403 — он попадёт в `errors[]` через `DataFetcherExceptionResolver` с `ErrorType.FORBIDDEN` (см. Q7).
+>
+> **Пример:**
+> ```java
+> @Configuration
+> @EnableMethodSecurity
+> class SecurityConfig {
+>     @Bean
+>     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+>         return http
+>             .authorizeHttpRequests(a -> a
+>                 .requestMatchers("/graphql").authenticated()
+>                 .anyRequest().permitAll())
+>             .oauth2ResourceServer(o -> o.jwt(Customizer.withDefaults()))
+>             .build();
+>     }
+> }
+>
+> @Controller
+> public class OrderController {
+>     @QueryMapping
+>     @PreAuthorize("isAuthenticated()")
+>     public List<Order> myOrders(Principal principal) {
+>         return orderService.findByCustomer(principal.getName());
+>     }
+>
+>     @MutationMapping
+>     @PreAuthorize("hasRole('ADMIN')")
+>     public void deleteOrder(@Argument String id) {
+>         orderService.delete(id);
+>     }
+> }
+> ```
+>
+> **Когда применять:** Любой production GraphQL API. Для WebSocket subscriptions добавьте `WebSocketGraphQlInterceptor`, чтобы валидировать token из `connection_init` и пробрасывать `SecurityContext` в `Flux`.
+>
+> **Подводные камни:** `@PreAuthorize` на `@SchemaMapping` для вложенного поля будет выполняться ДЛЯ КАЖДОГО элемента — может сильно замедлить large lists. Лучше проверять авторизацию в root-резолвере. Subscriptions через WebSocket — `SecurityContextHolder` (ThreadLocal) НЕ работает в `Flux`-цепочке: используйте `ReactiveSecurityContextHolder` или явно пробрасывайте Authentication через context.
+>
+> ---
+>
+> #### C) Spring Security несовместим со Spring GraphQL — нужно использовать GraphQL-нативные библиотеки (`graphql-java-tools-security`) — ❌ Неверно
+>
+> **Что на самом деле:** Spring GraphQL специально интегрирован со Spring Security; в `spring-graphql` есть классы `SecurityContextThreadLocalAccessor` для пробрасывания контекста в реактив. Сторонние библиотеки не нужны.
+>
+> **Откуда путаница:** В Apollo Server (Node.js) популярны context-based решения; перенос мышления приводит к ложному выводу.
+>
+> **Если бы это было правдой:** Не было бы документации Spring GraphQL «Security» — но она есть.
+>
+> ---
+>
+> #### D) Авторизация в GraphQL возможна только через директивы `@auth` в SDL — Spring Method Security игнорируется — ❌ Неверно
+>
+> **Что на самом деле:** Оба подхода легитимны. Method Security (`@PreAuthorize`) — рекомендованный default. Directive-based — для декларативной авторизации в SDL (см. Q9). Они даже комбинируются.
+>
+> **Откуда путаница:** Доклады по GraphQL-only авторизации (например, Hasura) убеждают, что SDL — единственное правильное место. В Spring-мире — нет.
+>
+> **Если бы это было правдой:** В тестах нельзя было бы мокать security с `@WithMockUser` — но это работает.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q7]] — `AccessDeniedException` → `ErrorType.FORBIDDEN`, [[Q9]] — `@auth` directive, [[Q6]] — auth для WebSocket subscriptions.
+
+## Q12. Чем @SchemaMapping отличается от @QueryMapping и @MutationMapping?
 
 ```java
 // @QueryMapping — сокращение для @SchemaMapping(typeName = "Query")
@@ -1116,10 +1345,76 @@ public Customer customer(Order order) { ... }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как работает introspection и когда его отключать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Метод `customer(Order order)` помечен `@SchemaMapping(typeName="Order", field="customer")`. Если убрать аннотацию `@SchemaMapping` и оставить `@QueryMapping`, что произойдёт?
+>
+> ---
+>
+> #### A) Ничего не изменится — Spring угадывает тип по сигнатуре метода — ❌ Неверно
+>
+> **Что на самом деле:** `@QueryMapping` строго маппится на `type Query`, не на вложенные типы. С `@QueryMapping public Customer customer(Order order)` Spring попытается найти поле `customer` в корневом `type Query` — оно не существует, контекст упадёт при schema-mapping validation или вернёт `null` для query.
+>
+> **Откуда путаница:** Spring славится «умной» autodetection — кажется, что и здесь магия. Но `typeName` — фундаментальная информация, её нельзя угадать.
+>
+> **Если бы это было правдой:** Не было бы смысла в существовании отдельной аннотации `@SchemaMapping`.
+>
+> ---
+>
+> #### B) `@QueryMapping` и `@MutationMapping`/`@SubscriptionMapping` — синтаксические алиасы `@SchemaMapping` с фиксированным `typeName` ("Query"/"Mutation"/"Subscription"); для вложенных типов нужен только `@SchemaMapping` — ✓ Верно
+>
+> **Развёрнутое объяснение:** Аннотации `@QueryMapping`/`@MutationMapping`/`@SubscriptionMapping` — это `@SchemaMapping`, с pre-заданным `typeName`. Их единственная цель — читаемость кода: «эта функция — Query root». Для всего остального (вложенные resolver'ы, federation, custom types) нужен `@SchemaMapping(typeName="...")`. `field` можно опустить, если имя метода совпадает с полем в SDL. `typeName` можно опустить, если родительский тип однозначно выводится из первого аргумента (например, метод принимает `Order` → typeName="Order"). Это объясняет, почему `@SchemaMapping public Customer customer(Order order)` работает без аргументов.
+>
+> **Пример:**
+> ```java
+> // Все четыре эквивалентны
+> @QueryMapping public Order order(@Argument String id) { ... }
+> @SchemaMapping(typeName = "Query") public Order order(@Argument String id) { ... }
+> @SchemaMapping(typeName = "Query", field = "order") public Order findOrder(@Argument String id) { ... }
+>
+> // Для Mutation
+> @MutationMapping public Order createOrder(@Argument CreateOrderInput input) { ... }
+> @SchemaMapping(typeName = "Mutation") public Order createOrder(@Argument CreateOrderInput input) { ... }
+>
+> // Для Subscription
+> @SubscriptionMapping public Flux<Order> orderStatusChanged(@Argument String orderId) { ... }
+>
+> // Для вложенного поля — только @SchemaMapping
+> @SchemaMapping(typeName = "Order", field = "customer")
+> public Customer customer(Order order) { ... }
+>
+> // typeName выводится из аргумента
+> @SchemaMapping public Customer customer(Order order) { ... }  // typeName="Order"
+> ```
+>
+> **Когда применять:** Используйте специализированные аннотации для root-операций (читаемее в code review), `@SchemaMapping` — для вложенных полей. Если в одном контроллере смешиваются разные `typeName`, лучше явно указывать.
+>
+> **Подводные камни:** Если в SDL есть несколько `type X` (например, унаследованных через interfaces), нужно явно указать `typeName`. Имя поля в SDL должно совпадать с именем метода — иначе Spring ругнётся `No DataFetcher for field`. Spring GraphQL логирует все обнаруженные маппинги при старте с `spring.graphql.schema.printer.enabled=true`.
+>
+> ---
+>
+> #### C) `@MutationMapping` отличается от `@SchemaMapping(typeName="Mutation")` тем, что включает транзакционность — ❌ Неверно
+>
+> **Что на самом деле:** Транзакции в Spring управляются `@Transactional`, не GraphQL-аннотациями. `@MutationMapping` — чистый sugar, никакой transactional семантики не добавляет. Хотя GraphQL-spec гарантирует серийное выполнение mutations, это не транзакция БД.
+>
+> **Откуда путаница:** Слово «mutation» наводит на «изменение состояния» → транзакция. Но связь только семантическая.
+>
+> **Если бы это было правдой:** Нужно было бы конфигурировать transaction manager через GraphQL-настройки — этого нет.
+>
+> ---
+>
+> #### D) `@SchemaMapping` работает только в WebFlux, в MVC доступны только `@QueryMapping`/`@MutationMapping` — ❌ Неверно
+>
+> **Что на самом деле:** Все четыре аннотации работают одинаково в обоих стеках. Различия касаются типа возврата (`Mono`/`Flux` vs обычные типы) и thread-context propagation, не аннотаций.
+>
+> **Откуда путаница:** Reactive-tutorials часто показывают `@SchemaMapping` с `Mono` примерами, создавая ощущение привязки.
+>
+> **Если бы это было правдой:** Документация Spring GraphQL имела бы оговорку — но её нет.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q3]] — Query resolver pattern, [[Q4]] — Mutation pattern, [[Q5]] — `@BatchMapping` для оптимизации `@SchemaMapping`.
+
+## Q13. Как работает introspection и когда его отключать?
 
 Introspection — встроенный механизм GraphQL для получения информации о схеме (`__schema`, `__type`).
 
