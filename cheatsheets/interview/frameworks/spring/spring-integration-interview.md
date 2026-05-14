@@ -624,10 +624,91 @@ public BatchResult aggregate(List<OrderResult> results) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как обрабатывать ошибки? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему Aggregator требует `correlationStrategy` и `releaseStrategy`, и что произойдёт, если их не настроить? Как Aggregator понимает, что группа готова?
+>
+> ---
+>
+> #### A) Aggregator группирует все сообщения подряд за указанный таймаут — никакие стратегии не нужны — ❌ Неверно
+>
+> **Что на самом деле:** Aggregator работает по **correlation key**: сообщения с одинаковым ключом попадают в одну `MessageGroup`. Без явной `correlationStrategy` он использует `IntegrationMessageHeaderAccessor.CORRELATION_ID` из заголовков. Если заголовка нет — каждое сообщение получает уникальный ID и группа не формируется. Time-based группировка — отдельный механизм через `groupTimeout`, не замена correlation.
+>
+> **Откуда путаница:** многие путают Aggregator с time-windowing (Kafka Streams). Это разные паттерны: Aggregator корреляционный, windowing — временной.
+>
+> **Если бы это было правдой:** не нужен был бы Splitter рядом — он генерирует именно `correlationId` для последующей сборки. Splitter+Aggregator работают в паре через одинаковый `correlationId`.
+>
+> ---
+>
+> #### B) Aggregator корреляционно группирует через `correlationStrategy` (key) и решает «когда отдавать» через `releaseStrategy` (size/expression/timeout); без них использует header `correlationId` + `sequenceSize` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Aggregator реализует EIP-паттерн «State-based / Stateful» компонент. Внутри держит `MessageStore` (default — `SimpleMessageStore` in-memory), где накапливает `MessageGroup` — группы сообщений по `correlationKey`.
+>
+> Три стратегии:
+> 1. **CorrelationStrategy** — определяет ключ группы. Default: `HeaderAttributeCorrelationStrategy(CORRELATION_ID)`. Кастомные: SpEL (`headers['batchId']`), Lambda, метод с `@CorrelationStrategy`.
+> 2. **ReleaseStrategy** — определяет, когда группа «complete». Default: `SequenceSizeReleaseStrategy` — ждёт `sequenceSize` сообщений (заголовок, который ставит Splitter). Кастомные: `groupSize() == N`, SpEL (`size() == headers['batchSize']`), `TimeoutCountSequenceSizeReleaseStrategy`.
+> 3. **MessageGroupProcessor** — что вернуть из группы. Default: `DefaultAggregatingMessageGroupProcessor` — соединяет payloads в `List<T>`.
+>
+> Дополнительно `groupTimeout` — частичный release: если за timeout ms группа не дошла до size, отдать что есть.
+>
+> Splitter перед Aggregator-ом автоматически ставит заголовки `CORRELATION_ID` (из исходного messageId) + `SEQUENCE_SIZE` (количество split-ов) + `SEQUENCE_NUMBER` — это «магия» pair-операции.
+>
+> **Пример:**
+> ```java
+> @Bean
+> public IntegrationFlow batchProcessing(OrderProcessor processor) {
+>     return IntegrationFlow.from("batchInput")
+>         // Splitter: BatchOrderRequest{orders: [o1, o2, o3]} → 3 сообщения
+>         .split(BatchOrderRequest.class, BatchOrderRequest::orders)
+>         // Каждый Order обрабатывается параллельно
+>         .channel(c -> c.executor(taskExecutor()))
+>         .handle(Order.class, (o, h) -> processor.process(o))
+>         // Aggregator: собрать назад по correlationId
+>         .aggregate(spec -> spec
+>             .correlationStrategy(m -> m.getHeaders().get(IntegrationMessageHeaderAccessor.CORRELATION_ID))
+>             .releaseStrategy(g -> g.size() == (Integer) g.getOne().getHeaders()
+>                 .get(IntegrationMessageHeaderAccessor.SEQUENCE_SIZE))
+>             .outputProcessor(g -> new BatchResult(g.getMessages().stream()
+>                 .map(m -> (OrderResult) m.getPayload()).toList()))
+>             .groupTimeout(5000L)              // частичный результат через 5 сек
+>             .sendPartialResultOnExpiry(true))
+>         .channel("batchOutput")
+>         .get();
+> }
+> ```
+>
+> **Когда применять:** scatter-gather (распарать запросы, собрать ответы), batch-обработка с параллелизмом per-item, sequencer (восстановить порядок out-of-order сообщений), reduce-step после parallel pipeline.
+>
+> **Подводные камни:**
+> - **Memory leak без `expireGroupsUponCompletion`**: после release MessageGroup остаётся в store как `completed`. Установить `expireGroupsUponCompletion(true)` или настроить `MessageGroupStoreReaper`.
+> - **Persistent store для надёжности**: `SimpleMessageStore` теряет группы при рестарте. Для durability — `JdbcMessageStore`/`RedisMessageStore`/`MongoDbMessageStore`.
+> - **`groupTimeout` создаёт `ScheduledFuture` на каждое первое сообщение группы** — на high-throughput надо настраивать `TaskScheduler` pool.
+> - **Order не гарантирован после параллельной обработки**: если порядок важен, использовать `ResequencingMessageHandler`.
+>
+> **Связанные вопросы:** [[Q5]] — DSL для split/aggregate; [[Q9]] — persistence через MessageStore; [[Q1]] — Splitter и Aggregator в EIP-каталоге.
+>
+> ---
+>
+> #### C) Aggregator работает только in-memory и теряет данные при рестарте — это by design, для надёжности используют только Kafka — ❌ Неверно
+>
+> **Что на самом деле:** Aggregator работает с любым `MessageGroupStore`. In-memory `SimpleMessageStore` — лишь default. Для durability: `JdbcMessageStore` (PostgreSQL/Oracle с DDL `INT_MESSAGE_GROUP`), `RedisMessageStore`, `MongoDbMessageStore`, `HazelcastMessageStore`. После рестарта группы восстанавливаются из store, и поток продолжает накопление.
+>
+> **Откуда путаница:** Kafka действительно делает stateful aggregation (через RocksDB state store), но и Spring Integration Aggregator может быть persistent.
+>
+> **Если бы это было правдой:** не было бы classом `JdbcMessageStore` в `spring-integration-jdbc`. На практике это рабочий patterndля enterprise-приложений.
+>
+> ---
+>
+> #### D) Splitter и Aggregator не связаны — нужно вручную проставлять correlationId в заголовки сообщений между ними — ❌ Неверно
+>
+> **Что на самом деле:** Splitter автоматически устанавливает заголовки `CORRELATION_ID` (= ID исходного сообщения), `SEQUENCE_SIZE` (= количество split-ов), `SEQUENCE_NUMBER` (1, 2, 3, ...). Aggregator по умолчанию читает их через `HeaderAttributeCorrelationStrategy(CORRELATION_ID)` и `SequenceSizeReleaseStrategy`. Это «out of the box» pair.
+>
+> **Откуда путаница:** в Apache Camel требуется явная конфигурация `aggregationStrategy`. В Spring Integration работает «магически» через стандартные заголовки.
+>
+> **Если бы это было правдой:** простой `.split().handle().aggregate()` не работал бы без явных заголовков. На практике именно так и пишут — без явной корреляции.
+
+## Q7. Как обрабатывать ошибки?
 
 ```java
 // 1. errorChannel — глобальный канал ошибок
@@ -663,10 +744,106 @@ public RequestHandlerRetryAdvice retryAdvice() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как подключить Kafka через Spring Integration? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Куда летит exception из handler-а, если в потоке не настроен ни `errorChannel`, ни `RequestHandlerRetryAdvice`? Какие три уровня обработки ошибок есть?
+>
+> ---
+>
+> #### A) Spring Integration ловит exception и кладёт в DLQ автоматически — никакой настройки не нужно — ❌ Неверно
+>
+> **Что на самом деле:** **никакой автоматической DLQ нет**. Spring Integration — это процессинговый фреймворк, не брокер. DLQ — это концепция Kafka/RabbitMQ, и реализуется она через явный send в DLT-topic при ошибке (Spring Kafka делает это через `DeadLetterPublishingRecoverer`). В Spring Integration без явной настройки exception летит наверх по стеку (sync) или в global `errorChannel` (если канал async).
+>
+> **Откуда путаница:** Spring Kafka действительно имеет default `DefaultErrorHandler` с retry + DLT. Spring Integration более низкоуровневый.
+>
+> **Если бы это было правдой:** не было бы Q7-вопросов про error-handling вообще. На практике любой production-flow требует explicit error handling.
+>
+> ---
+>
+> #### B) Три уровня: (1) глобальный `errorChannel` для async exception-ов, (2) локальный `errorChannel` в `.handle(svc, e -> e.errorChannel(...))`, (3) `RequestHandlerRetryAdvice` для retry перед уходом в errorChannel — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Spring Integration предоставляет иерархическую обработку ошибок:
+>
+> **Уровень 1 — Глобальный errorChannel.** Spring Integration автоматически регистрирует bean `errorChannel` (`PublishSubscribeChannel`). Для **синхронных** flow на `DirectChannel` exception летит обратно в `send()`-caller (или Gateway-вызов). Для **асинхронных** flow (`QueueChannel`/`ExecutorChannel`/`PublishSubscribeChannel` с TaskExecutor) exception оборачивается в `ErrorMessage` и публикуется в `errorChannel`. Если на этом канале нет подписчика — `MessagingExceptionHandler` логирует WARN. Регистрируем `@ServiceActivator(inputChannel = "errorChannel")` для централизованного хендлинга — отправка в DLQ, алертинг, метрики.
+>
+> **Уровень 2 — Локальный errorChannel per-endpoint.** В DSL `.handle(svc, e -> e.errorChannel("orderErrors"))` или аннотацией `@ServiceActivator(errorChannel = "orderErrors")`. Это override глобального — exception из этого конкретного handler-а идёт в named channel, не в global. Полезно для feature-специфичной обработки.
+>
+> **Уровень 3 — RequestHandlerRetryAdvice (Spring Retry).** Оборачивает handler в proxy с retry-логикой. До того как exception улетит в errorChannel, делается N попыток (exponential backoff, retryOn classes, recoveryCallback). Если все попытки исчерпаны — exception идёт по обычному пути (errorChannel или вверх).
+>
+> Также есть `ExpressionEvaluatingRequestHandlerAdvice` для conditional advice и `RequestHandlerCircuitBreakerAdvice` (circuit breaker).
+>
+> **Пример:**
+> ```java
+> @Configuration
+> public class ErrorHandlingConfig {
+>     // Уровень 1: глобальный errorChannel
+>     @ServiceActivator(inputChannel = "errorChannel")
+>     public void onError(ErrorMessage error, @Header(MessageHeaders.ID) UUID id) {
+>         Throwable cause = error.getPayload().getCause();
+>         Message<?> failed = error.getPayload().getFailedMessage();
+>         meterRegistry.counter("integration.errors", "type", cause.getClass().getSimpleName()).increment();
+>         deadLetterPublisher.send(failed.getPayload(), cause.getMessage());
+>     }
+>
+>     // Уровень 3: retry advice
+>     @Bean
+>     public RequestHandlerRetryAdvice retryAdvice() {
+>         var advice = new RequestHandlerRetryAdvice();
+>         advice.setRetryTemplate(RetryTemplate.builder()
+>             .maxAttempts(3)
+>             .exponentialBackoff(500, 2.0, 5000)
+>             .retryOn(TransientException.class)
+>             .build());
+>         advice.setRecoveryCallback(ctx -> {  // вызывается после исчерпания retry
+>             log.error("All retries failed", ctx.getLastThrowable());
+>             return null;
+>         });
+>         return advice;
+>     }
+>
+>     // Уровень 2 + 3: локальный errorChannel + retry
+>     @Bean
+>     public IntegrationFlow orderFlow(OrderService svc, RequestHandlerRetryAdvice retry) {
+>         return IntegrationFlow.from("ordersInput")
+>             .handle(svc, "process",
+>                 e -> e.advice(retry).errorChannel("orderErrors"))
+>             .get();
+>     }
+> }
+> ```
+>
+> **Когда применять:** уровень 1 — обязательно, центральный handler для observability. Уровень 2 — когда нужна feature-специфичная обработка (например, разные DLQ для разных типов сообщений). Уровень 3 — transient errors (network, временно недоступный сервис).
+>
+> **Подводные камни:**
+> - **`DirectChannel` пробрасывает exception синхронно** — `errorChannel` не сработает для sync flow, exception летит в Gateway-вызов. Чтобы попадало в errorChannel — async канал.
+> - **`@Transactional` rollback при exception** случается до того, как сообщение попадает в errorChannel — DLQ-получатель не увидит rollback-нутые изменения.
+> - **`recoveryCallback` возвращает значение, которое становится reply** — `null` ломает downstream, который ждёт payload.
+> - **Retry на `DirectChannel`-flow** блокирует caller на N\*backoff времени — может выбить HTTP timeout наверху.
+>
+> **Связанные вопросы:** [[Q9]] — транзакции и rollback при ошибке; [[Q10]] — тестирование error-flow; [[Q3]] — Service Activator как точка отказа.
+>
+> ---
+>
+> #### C) `errorChannel` обрабатывает только `IntegrationException`-ы — обычные RuntimeException туда не попадают — ❌ Неверно
+>
+> **Что на самом деле:** Spring Integration **оборачивает любой Throwable** из handler-а в `MessagingException` и публикует в `errorChannel` как `ErrorMessage(MessagingException)`. Внутри payload-а — `getCause()` возвращает оригинальный `Throwable` (любой тип), `getFailedMessage()` — оригинальное сообщение. Не нужно наследовать `IntegrationException`.
+>
+> **Откуда путаница:** название `errorChannel` ассоциируется с framework-specific exceptions.
+>
+> **Если бы это было правдой:** обработка обычных бизнес-исключений (`InvalidOrderException`) не работала бы. На практике все exceptions попадают в errorChannel.
+>
+> ---
+>
+> #### D) `RequestHandlerRetryAdvice` — это AOP-аспект, который применяется к `@Service`-классам, помеченным `@Retryable` — ❌ Неверно
+>
+> **Что на самом деле:** `RequestHandlerRetryAdvice` — это **`HandleMessageAdvice`**, реализация интерфейса `MethodInterceptor`, которая применяется к `MessageHandler`-у (не к `@Service`), причём только в контексте `IntegrationFlow`. Это специфика Spring Integration, не общий Spring AOP. `@Retryable` (Spring Retry annotation) — отдельный механизм, применимый к любому Spring-bean.
+>
+> **Откуда путаница:** оба используют `RetryTemplate` под капотом, но проксируют разные точки.
+>
+> **Если бы это было правдой:** retry в integration-flow и retry в обычном сервисе работали бы одинаково. На практике в flow используют именно `RequestHandlerRetryAdvice`.
+
+## Q8. Как подключить Kafka через Spring Integration?
 
 ```java
 @Bean
@@ -705,10 +882,97 @@ public KafkaProducerMessageHandler<String, String> kafkaOutboundAdapter(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Как транзакции работают в Spring Integration? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Когда выбирать `KafkaMessageDrivenChannelAdapter` (event-driven) против `KafkaInboundChannelAdapter` (polling)? В чём принципиальная разница?
+>
+> ---
+>
+> #### A) Это синонимы — оба под капотом используют `KafkaConsumer.poll()` — ❌ Неверно
+>
+> **Что на самом деле:** это **разные** адаптеры с разной моделью консьюминга. `KafkaMessageDrivenChannelAdapter` оборачивает `MessageListenerContainer` (тот же, что у `@KafkaListener`) — он сам в фоне крутит `poll()` и push-ит сообщения в integration-channel сразу как они приходят. `KafkaInboundChannelAdapter` (Source-based) — `PollableChannel`-source, который вызывает `poll()` только когда integration-poller (Pollers.fixedDelay) триггерится. Разница: push vs pull.
+>
+> **Откуда путаница:** оба «inbound» Kafka adapters, разница не очевидна из имён.
+>
+> **Если бы это было правдой:** не было бы двух разных классов. На практике у них разные performance-характеристики.
+>
+> ---
+>
+> #### B) MessageDriven — push-модель через `MessageListenerContainer` (как `@KafkaListener`); Inbound (Source) — pull-модель через integration-Poller, лучше для batch и точечного контроля throughput — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Kafka offers two consumption styles в Spring Integration:
+>
+> **1. `KafkaMessageDrivenChannelAdapter` (рекомендуемый).** Под капотом — `ConcurrentMessageListenerContainer` (тот же, что используется Spring Kafka `@KafkaListener`). Container управляет жизненным циклом Consumer-а: запускает background-поток (потоки), вызывает `consumer.poll()` в цикле, и для каждого `ConsumerRecord` диспатчит в `MessageListener.onMessage()` → внутри пушит в `outputChannel`. Поддерживает `ListenerMode.record` (один record → одно сообщение) и `ListenerMode.batch` (батч → одно сообщение со списком). Auto-commit или manual ack через `Acknowledgment`. Это event-driven подход: как только Kafka вернула batch — мы сразу обрабатываем.
+>
+> **2. `KafkaInboundChannelAdapter` (source-based, polling).** Реализует `MessageSource<ConsumerRecord>`, который надо poll-ить через `<int:poller>` или DSL `.poller(Pollers.fixedDelay(1000))`. На каждый tick poller-а вызывается `receive()` → внутри `consumer.poll(timeout)` → возвращается одно сообщение (или null). Это даёт точный контроль над throughput (например, «не больше 100 msg/sec»), но добавляет latency (=poller interval) и не использует Kafka batch-fetch эффективно.
+>
+> Outbound: `KafkaProducerMessageHandler` принимает Spring `Message`, конвертирует в `ProducerRecord` и отправляет через `KafkaTemplate`. Поддерживает SpEL для topic/partition/key, `KafkaSendCallback` для async confirmation, transactional sender.
+>
+> **Пример (event-driven, рекомендуемый):**
+> ```java
+> @Bean
+> public KafkaMessageDrivenChannelAdapter<String, String> ordersInbound(
+>         ConsumerFactory<String, String> consumerFactory) {
+>     var props = new ContainerProperties("orders-topic");
+>     props.setGroupId("order-processor");
+>     props.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+>     var container = new ConcurrentMessageListenerContainer<>(consumerFactory, props);
+>     container.setConcurrency(3);  // 3 потока = 3 partitions
+>     var adapter = new KafkaMessageDrivenChannelAdapter<>(container, ListenerMode.record);
+>     adapter.setOutputChannelName("ordersChannel");
+>     return adapter;
+> }
+>
+> @Bean
+> public IntegrationFlow kafkaFlow(KafkaMessageDrivenChannelAdapter<String,String> in,
+>                                   KafkaTemplate<String,String> template,
+>                                   OrderService service) {
+>     return IntegrationFlow.from(in)
+>         .transform(Transformers.fromJson(Order.class))
+>         .handle(Order.class, (o, h) -> {
+>             OrderResult result = service.process(o);
+>             ((Acknowledgment) h.get(KafkaHeaders.ACKNOWLEDGMENT)).acknowledge();
+>             return result;
+>         })
+>         .handle(Kafka.outboundChannelAdapter(template).topic("order-results"))
+>         .get();
+> }
+> ```
+>
+> **Когда применять:**
+> - `MessageDriven` — 95% случаев: realtime processing, low latency, high throughput.
+> - `Inbound/Source` — точное rate-limiting, batch-обработка с явным расписанием (раз в N минут), legacy интеграции с фиксированным окном poll.
+>
+> **Подводные камни:**
+> - **Concurrency vs partitions**: `setConcurrency(N)` создаёт N потоков, но реальный параллелизм ограничен количеством partitions в topic-е.
+> - **ListenerMode.batch + integration**: batch-сообщение в Spring Integration — это `Message<List<ConsumerRecord>>` или `Message<List<Payload>>`. Downstream handler должен уметь работать со списком.
+> - **Auto-commit риски**: при `AckMode.RECORD/BATCH/TIME` сообщение коммитится **после** успешной обработки в Spring Integration. При async-flow (`QueueChannel`) commit может произойти **до** реального завершения handler-а — потеря сообщения при crash. Использовать `MANUAL_IMMEDIATE` + явный `acknowledge()`.
+> - **No DLQ автоматически**: `errorChannel` обработает exception, но send в DLT-topic надо делать вручную (через outbound adapter в errorChannel-flow).
+>
+> **Связанные вопросы:** [[Q1]] — Kafka adapter как реализация Channel Adapter pattern; [[Q9]] — transactional Kafka producer/consumer; [[Q7]] — error handling для Kafka сообщений; [[Q11]] — Spring Integration vs Spring Kafka — когда что.
+>
+> ---
+>
+> #### C) Kafka в Spring Integration работает только через XML-конфигурацию `<int-kafka:inbound-channel-adapter>` — Java DSL не поддерживается — ❌ Неверно
+>
+> **Что на самом деле:** Java DSL полностью поддерживает Kafka через `Kafka.messageDrivenChannelAdapter()`, `Kafka.inboundChannelAdapter()`, `Kafka.outboundChannelAdapter()` factory методы из `spring-integration-kafka`. Эти методы возвращают builders с типобезопасной конфигурацией.
+>
+> **Откуда путаница:** в старой документации (до 4.0) использовался XML.
+>
+> **Если бы это было правдой:** все современные туториалы Spring Integration были бы на XML. На практике DSL — стандарт.
+>
+> ---
+>
+> #### D) `KafkaMessageDrivenChannelAdapter` не поддерживает manual offset commit — это работает только с `@KafkaListener` — ❌ Неверно
+>
+> **Что на самом деле:** `KafkaMessageDrivenChannelAdapter` использует тот же `MessageListenerContainer`, что и `@KafkaListener`, и поддерживает все `AckMode`-ы, включая `MANUAL` / `MANUAL_IMMEDIATE`. `Acknowledgment` пробрасывается в integration message через заголовок `KafkaHeaders.ACKNOWLEDGMENT`. В handler-е делаем `headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment.class).acknowledge()`.
+>
+> **Откуда путаница:** в простых примерах manual commit редко показывается.
+>
+> **Если бы это было правдой:** для critical-сообщений пришлось бы городить отдельный flow на `@KafkaListener`. На практике manual commit работает прозрачно через заголовок.
+
+## Q9. Как транзакции работают в Spring Integration?
 
 ```java
 // DirectChannel поддерживает транзакцию от отправителя до конца потока
@@ -731,10 +995,109 @@ IntegrationFlow flow = IntegrationFlow
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Как тестировать Spring Integration потоки? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему `@Transactional` метод вызывающий `gateway.placeOrder()` НЕ покрывает обработку в QueueChannel, и какое решение в production?
+>
+> ---
+>
+> #### A) @Transactional работает только с JDBC — для Spring Integration нужен @MessageTransactional — ❌ Неверно
+>
+> **Что на самом деле:** аннотации `@MessageTransactional` не существует. `@Transactional` работает с любым `PlatformTransactionManager`. Проблема не в JDBC, а в **передаче транзакционного контекста через async boundary**.
+>
+> **Откуда путаница:** Spring имеет много specialized annotations (`@JmsListener`, `@KafkaListener` с transactional context). Можно подумать что Integration тоже имеет.
+>
+> **Если бы это было правдой:** в Spring Integration docs было бы упоминание `@MessageTransactional`. Реально это `@Transactional` + правильная конфигурация channels.
+>
+> ---
+>
+> #### B) `QueueChannel` имеет внутренний BlockingQueue + отдельный thread для обработки → транзакция вызывающего треда не пробрасывается. Решение: `DirectChannel` (sync, same thread) или явная конфигурация `Poller.transactional()` для async channels — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **Корень проблемы — thread boundary:**
+> - `DirectChannel.send()` — synchronous, тот же thread, тот же transaction context.
+> - `QueueChannel.send()` — кладёт в `BlockingQueue`, возвращается; **poller thread** забирает и обрабатывает в **своей** транзакции (или вне транзакции вообще).
+>
+> `@Transactional` использует `TransactionSynchronizationManager` с `ThreadLocal` — context живёт только в потоке-обладателе. Передача между threads требует явной propagation.
+>
+> **Решения:**
+>
+> 1. **DirectChannel (sync flow)** — простейшее. Транзакция покрывает все handlers до конца.
+>
+> 2. **QueueChannel + Poller с транзакциями** — для async с durability:
+>    ```java
+>    IntegrationFlow flow = IntegrationFlow
+>        .from(MessageChannels.queue("queueChannel", 1000),
+>            c -> c.poller(Pollers.fixedDelay(1000)
+>                .transactional(transactionManager)            // poller starts new tx
+>                .maxMessagesPerPoll(10)))                      // batch обработка в одной tx
+>        .handle(orderService::process)
+>        .get();
+>    ```
+>    Здесь каждый poll создаёт новую транзакцию для batch'а messages.
+>
+> 3. **TransactionSynchronizationFactory** — для propagation custom logic после commit/rollback.
+>
+> **Пример (transactional poller + retry):**
+> ```java
+> @Bean
+> public IntegrationFlow ordersFlow(PlatformTransactionManager txManager) {
+>     return IntegrationFlow
+>         .from(MessageChannels.queue("orders", 5000))
+>         .handle("orderService", "process",
+>             e -> e.poller(Pollers.fixedRate(100)
+>                 .transactional(txManager)
+>                 .advice(retryAdvice())
+>                 .maxMessagesPerPoll(50)
+>                 .errorChannel("dlqChannel")))
+>         .get();
+> }
+>
+> @Bean
+> public RequestHandlerRetryAdvice retryAdvice() {
+>     RequestHandlerRetryAdvice advice = new RequestHandlerRetryAdvice();
+>     advice.setRetryTemplate(RetryTemplate.builder()
+>         .maxAttempts(3).exponentialBackoff(100, 2, 10000).build());
+>     advice.setRecoveryCallback(ctx ->
+>         errorChannel.send(MessageBuilder.withPayload(ctx.getLastThrowable()).build()));
+>     return advice;
+> }
+> ```
+>
+> **Когда применять:**
+> - **DirectChannel + @Transactional**: simple synchronous workflows, REST → business logic → DB.
+> - **QueueChannel + transactional poller**: high-throughput async processing с durability requirements.
+> - **ExecutorChannel + tx synchronization**: parallel processing с per-task transactions.
+>
+> **Подводные камни:**
+> - **Без poller transaction message может потеряться**: process crashes after dequeue, before DB commit.
+> - **Long transactions hurt throughput**: `maxMessagesPerPoll: 50` баланс между batch efficiency и lock time.
+> - **`ChainedKafkaTransactionManager`** для Kafka + JDBC tx atomically.
+> - **PublishSubscribeChannel** не propagates transaction между subscribers — каждый в своей tx.
+>
+> **Связанные вопросы:** [[Q3]] — MessageChannel types; [[Q7]] — error handling для tx rollback; [[Q8]] — Kafka adapter с transactions.
+>
+> ---
+>
+> #### C) Spring Integration не поддерживает транзакции — для них надо использовать Spring Batch — ❌ Неверно
+>
+> **Что на самом деле:** Spring Integration **полностью** поддерживает транзакции через `Poller.transactional()`, `TransactionSynchronizationFactory`, `ChainedTransactionManager`. Spring Batch — orthogonal framework для batch jobs (job/step model), не transaction wrapper.
+>
+> **Откуда путаница:** Spring Batch имеет explicit `transactionManager` в step config. Можно подумать что только Batch это умеет.
+>
+> **Если бы это было правдой:** для transactional message processing команды переходили бы с Integration на Batch, что не наблюдается.
+>
+> ---
+>
+> #### D) Транзакции автоматически работают везде в Spring Integration — никакой конфигурации не нужно — ❌ Неверно
+>
+> **Что на самом деле:** автоматическая propagation работает только в **synchronous channels** (DirectChannel). Для **async channels** (QueueChannel, ExecutorChannel) требуется явная конфигурация poller'а или `TaskExecutor` с `TransactionSynchronizationFactory`.
+>
+> **Откуда путаница:** Spring славится «just works» поведением. Но transaction propagation across threads — fundamentally manual.
+>
+> **Если бы это было правдой:** не было бы упоминания «transaction boundary» в Spring Integration documentation.
+
+## Q10. Как тестировать Spring Integration потоки?
 
 ```java
 @SpringIntegrationTest
