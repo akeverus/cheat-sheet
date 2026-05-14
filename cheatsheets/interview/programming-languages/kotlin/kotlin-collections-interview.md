@@ -14,7 +14,7 @@ aliases:
   - "Kotlin коллекции собеседование"
 prerequisites: []
 next: []
-updated: "2026-05-08"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Kotlin` коллекции
 
@@ -1858,16 +1858,18 @@ val stats: List<Stats> = numbers.scan(Stats(0, 0, 0.0)) { acc, n ->
 | `reduce { }` | Нет | Одно значение | 1 |
 | `runningReduce { }` | Нет | Все шаги | n |
 
+
+> [!mcq]
+> - [ ] `scan` и `fold` возвращают одинаковый тип `T` — оба сворачивают коллекцию в одно значение | `fold(init){}` → `T` (одно значение); `scan(init){}` → `List<T>` со всеми промежуточными состояниями + начальное; размер `n+1`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `val sum: Int = numbers.scan(0){a,b -> a+b}` ожидая `Int`, компилятор: `Type mismatch: List<Int>` vs `Int`; недопонимание во время сдачи PR.
+> - [x] `fold(init){}` сворачивает коллекцию в **одно** итоговое значение; `scan(init){}` (он же `runningFold`) возвращает **все промежуточные** накопления + начальное (размер n+1); `runningReduce{}` — то же что scan, но без init (размер n) | `scan/runningFold` нужен когда нужна история накопления (cumulative sum, moving max, время состояний), `fold` — финальный результат. ✓ ПРИМЕНЯТЬ: `prices.runningReduce { acc, p -> maxOf(acc, p) }` для running max в графике котировок; `transactions.fold(BigDecimal.ZERO) { acc, t -> acc + t.amount }` для итоговой суммы. 📋 ПРАВИЛО: «fold = final value; scan = trace of values». 🔗 См. Q11, Q26.
+> - [ ] `runningReduce` бросает `NoSuchElementException` на пустом списке как `reduce` | `runningReduce` действительно требует non-empty коллекцию (наследует контракт `reduce`); это **верное** наблюдение для отдельной части — но `scan` отличается тем, что **с initial безопасен на пустой**: `emptyList<Int>().scan(0){a,b->a+b}` → `[0]`. ❌ ПОСЛЕДСТВИЕ: команда заменяет `scan(0){}` на `runningReduce{}` для «упрощения», в проде на пустом фильтре получают exception вместо `[0]`, отчёт «total trend» падает.
+> - [ ] `scan(init){}` возвращает `List<T>` размера ровно `n` (исходный размер) — без начального значения | `scan(init)` возвращает размер `n+1` (включает начальное); `runningReduce{}` (без init) возвращает размер `n`. Часто путают именно из-за `+1`. ❌ ПОСЛЕДСТВИЕ: alignment отчёта по индексам (день → cumsum) даёт off-by-one: дата 1 января показывает накопление за 31 декабря, бизнес-аналитика выявляет ошибку только в годовом отчёте.
+
 ---
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Основы Kotlin](kotlin-interview.md) — null-safety, классы, scope-функции, inline ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [Основы Kotlin](kotlin-interview.md) — null-safety, классы, scope-функции, inline
 - [Kotlin Coroutines](kotlin-coroutines-interview.md) — Flow как альтернатива Sequence для асинхронных потоков
 - [Kotlin / Java Interop](kotlin-interop-java-interview.md) — как Kotlin-коллекции видны из Java
 - [DSL в Kotlin](kotlin-dsl-interview.md) — buildList/buildMap как пример type-safe builders
