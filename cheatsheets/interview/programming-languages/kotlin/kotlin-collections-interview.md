@@ -1240,10 +1240,77 @@ listOf(1, 2, 3).asSequence().filter { it > 1 }.toList()  // избыточно
 
 
 > [!mcq]
-> - [ ] `asSequence()` всегда быстрее обычного `List` — это бесплатная оптимизация для любых данных | Sequence имеет постоянный overhead на создание итератора и упаковку лямбд; для < 100 элементов или 1 операции — медленнее List. ❌ ПОСЛЕДСТВИЕ: команда оборачивает `listOf(a, b, c).asSequence().map { }.toList()` «для производительности», в hot path JMH показывает 4× замедление, релиз откатывают.
-> - [x] Sequence окупается на больших данных + длинная цепочка + early termination; для маленьких коллекций overhead итератора > выгода от lazy | Каждая промежуточная операция Sequence создаёт wrapper-итератор и не инлайнит лямбду как у `Iterable`; ленивость даёт эффект только когда промежуточные List реально дорогие или есть `first()`/`take()`. ✓ ПРИМЕНЯТЬ: `File("huge.log").useLines { it.filter { "ERROR" in it }.first() }` — миллион строк, читаем до первой ошибки. 📋 ПРАВИЛО: «Sequence = lazy + large + chain; иначе List». 🔗 См. Q8, Q10.
-> - [ ] Sequence поддерживает специализированные `IntSequence`/`LongSequence` без boxing — в этом её главная выгода | Stdlib не содержит специализаций для примитивов; Int проходит через `Iterator<Int>`, что означает boxing на каждом элементе. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает Java-стримовский IntStream-выигрыш, профайлер показывает аллокации `Integer` в `young gen`, GC pause растёт.
-> - [ ] Sequence параллелится автоматически через `parallelStream()` — это аналог Java Stream | У Kotlin Sequence нет parallel-режима; для параллелизма нужны `Flow` + `flatMapMerge` или Java Stream API напрямую. ❌ ПОСЛЕДСТВИЕ: «оптимизация» отчёта через `.asSequence()` не даёт ожидаемого ускорения на 16-core машине, отдел DBA винит SQL, теряется неделя на расследование.
+>
+> **Вопрос:** Когда `asSequence()` действительно окупается, а когда добавляет лишний overhead по сравнению с прямой работой через `List`?
+>
+> ---
+>
+> #### A) `asSequence()` всегда быстрее обычного `List` — это бесплатная оптимизация для любых данных — ❌ Неверно
+>
+> **Что на самом деле:** Sequence имеет **постоянный overhead** на создание wrapper-итератора для каждой промежуточной операции и на упаковку лямбд через интерфейс `Function1`. Для коллекций < 100 элементов или для одной операции (`map` без последующих шагов) — Sequence медленнее List, потому что выгода от ленивости не успевает покрыть постоянные расходы.
+>
+> **Откуда путаница:** «Sequence — это lazy, lazy — это всегда хорошо» — частый шаблон рассуждения из функционального программирования. Но lazy окупается только когда промежуточные структуры реально дорогие (большие List) или есть `first()`/`take(n)` с ранним выходом.
+>
+> **Если бы это было правдой:** команда оборачивает `listOf(a, b, c).asSequence().map { }.toList()` «для производительности» в hot path REST endpoint, JMH-бенчмарк показывает 4× замедление вместо ускорения, релиз откатывают через час после деплоя.
+>
+> ---
+>
+> #### B) Sequence окупается на больших данных + длинная цепочка + early termination; для маленьких коллекций overhead итератора > выгода от lazy — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Sequence — это **ленивый pipeline**: промежуточные операции (`map`, `filter`) не создают новые коллекции, а накапливаются в цепочку преобразований и выполняются по одному элементу за раз только при terminal-операции (`toList`, `first`, `sum`). Это даёт три выигрыша:
+>
+> 1. **Нет промежуточных List** — при `list.map{}.filter{}.map{}` через List создаётся 3 промежуточных списка, через Sequence — ни одного.
+> 2. **Early termination** — `sequence.filter{}.first{}` останавливается на первом совпадении; `list.filter{}.first{}` сначала фильтрует ВЕСЬ список.
+> 3. **Streaming** — можно работать с источником, который не помещается в память (`File.useLines`, бесконечная последовательность).
+>
+> Но цена — постоянный overhead: каждая операция оборачивает источник в новый `Iterator`, лямбды передаются как объекты (не инлайнятся как у `Iterable.map`), нет специализаций для примитивов (boxing `Int → Integer` на каждом элементе).
+>
+> **Пример:**
+> ```kotlin
+> // Sequence окупается: большие данные + длинная цепочка + early stop
+> File("huge.log").useLines { lines ->
+>     lines.filter { "ERROR" in it }
+>          .map { it.substringAfter("] ") }
+>          .first()  // читаем только до первой ошибки, не весь файл
+> }
+>
+> // Sequence НЕ нужен: маленькая коллекция, одна операция
+> listOf(1, 2, 3).asSequence().filter { it > 1 }.toList()  // избыточно
+> ```
+>
+> **Когда применять:**
+> - Yandex поисковые логи: 100M строк, нужны первые 100 ошибок → `useLines { it.filter{}.take(100) }`
+> - JetBrains IntelliJ: индексация файлов, lazy-чтение с прерыванием по таймауту
+> - Avito feed: streaming-обработка событий из Kafka через `Flow.asSequence()` (хотя для async-cases Flow лучше)
+>
+> **Подводные камни:**
+> - **One-shot sequences**: `sequence { yield(...) }` нельзя итерировать дважды — `IllegalStateException`
+> - **Boxing для примитивов**: нет `IntSequence` как у Java `IntStream`; для perf-critical числовых pipeline лучше Java Stream API
+> - **Нет parallel-режима**: Sequence сугубо последовательна; для параллелизма — `Flow.flatMapMerge` или `parallelStream`
+>
+> **Связанные вопросы:** [[Q8]] — Sequence vs List базовое отличие; [[Q10]] — практический выбор; [[Q11]] — операции над коллекциями.
+>
+> ---
+>
+> #### C) Sequence поддерживает специализированные `IntSequence`/`LongSequence` без boxing — в этом её главная выгода — ❌ Неверно
+>
+> **Что на самом деле:** Stdlib Kotlin **не содержит** специализаций для примитивов (в отличие от Java `IntStream`/`LongStream`). `Sequence<Int>` проходит через `Iterator<Int>` с boxing — каждый `Int` упаковывается в `Integer` на каждом шаге. Главная выгода Sequence — lazy-вычисление и отсутствие промежуточных коллекций, а не оптимизация для примитивов.
+>
+> **Откуда путаница:** разработчики с Java-фоном помнят про `IntStream` и переносят ожидание на Kotlin. Но Kotlin Sequence — это generic-абстракция; для unboxed-арифметики используют `IntArray` + ручные циклы или Java Stream API напрямую.
+>
+> **Если бы это было правдой:** разработчик переписывает hot-loop `IntArray.sum()` через `intArray.asSequence().sum()` ожидая такого же perf, профайлер показывает аллокации `Integer` в young-gen, GC pause растёт с 10ms до 80ms, p99 latency портится.
+>
+> ---
+>
+> #### D) Sequence параллелится автоматически через `parallelStream()` — это аналог Java Stream — ❌ Неверно
+>
+> **Что на самом деле:** У Kotlin Sequence **нет parallel-режима** в принципе — она сугубо последовательна. Для параллелизма нужны `Flow` + `flatMapMerge` (асинхронно) или Java Stream API через `.stream().parallel()`. Sequence ≠ Stream — это разные абстракции, несмотря на похожий API.
+>
+> **Откуда путаница:** Kotlin Sequence API синтаксически похож на Java Stream (`map`, `filter`, `reduce`), и в туториалах часто говорят «Sequence — это аналог Stream». Но это лишь поверхностное сходство: Stream имеет `parallel()`, Sequence — нет.
+>
+> **Если бы это было правдой:** «оптимизация» отчёта на 16-core машине через `.asSequence()` не даёт ожидаемого ускорения, CPU остаётся на 100% одного ядра, отдел DBA винит SQL-запросы, теряется неделя на расследование, пока кто-то не профилирует и не находит, что Sequence singletreaded.
 
 ## Q31. Как избежать лишних аллокаций при работе с коллекциями?
 
@@ -1283,10 +1350,81 @@ a.any { it in b }
 
 
 > [!mcq]
-> - [ ] `items.map { parse(it) }.filterNotNull()` оптимальнее `mapNotNull` — два чётких шага читаются лучше | Это два прохода и промежуточный `List<T?>`; `mapNotNull` делает то же за один проход без аллокации промежуточного списка. ❌ ПОСЛЕДСТВИЕ: при batch-обработке 1М записей JMH показывает в 2× больше allocations, young-gen заполняется быстрее, GC pause растёт.
-> - [ ] `items.filter { it.isActive }.isEmpty()` лучше чем `items.none { it.isActive }` — явная семантика | `filter().isEmpty()` материализует полный List, `none` останавливается на первом активном; для коллекции из 1М с активным элементом на позиции 5 разница в 200000×. ❌ ПОСЛЕДСТВИЕ: health-check эндпоинт сканирует весь список заказов вместо early-exit, под нагрузкой выходит за 30s timeout, K8s рестартит pod.
-> - [x] Используй `mapNotNull`, `sumOf`, `any`/`none`/`all`, задавай initial capacity для `ArrayList`/`HashMap`, применяй Sequence для длинных цепочек | Эти приёмы устраняют промежуточные списки и enable early termination; `ArrayList(expected)` избегает многократных realloc при `add`. ✓ ПРИМЕНЯТЬ: `users.sumOf { it.balance }` вместо `users.map { it.balance }.sum()` экономит N intermediate boxed Long в hot path bank-калькулятора. 📋 ПРАВИЛО: «Один проход + initial capacity + early stop». 🔗 См. Q11, Q30.
-> - [ ] `(a intersect b).isNotEmpty()` — идиоматичный способ проверить пересечение двух Set | `intersect` создаёт новый Set; для проверки достаточно `a.any { it in b }` без аллокации. ❌ ПОСЛЕДСТВИЕ: проверка «есть ли общие теги» в API-фильтре под нагрузкой создаёт миллионы временных Set, профайлер аллокаций показывает 40% времени в `HashSet.<init>`.
+>
+> **Вопрос:** Какой набор техник наиболее эффективно снижает количество промежуточных аллокаций при работе с коллекциями в hot-path коде?
+>
+> ---
+>
+> #### A) `items.map { parse(it) }.filterNotNull()` оптимальнее `mapNotNull` — два чётких шага читаются лучше — ❌ Неверно
+>
+> **Что на самом деле:** `map + filterNotNull` — это **два прохода** по коллекции и промежуточный `List<T?>` (с null-элементами, которые потом отфильтруются). `mapNotNull` делает то же самое **за один проход**: применяет лямбду и сразу пишет в результат только non-null значения, без промежуточного списка с null-ами.
+>
+> **Откуда путаница:** «явные шаги — лучше для читаемости» — справедливая идея в общем случае, но `mapNotNull` — стандартная stdlib-функция, идиоматичная и понятная. Это не «магия» вроде кастомных combinators.
+>
+> **Если бы это было правдой:** при batch-обработке 1М записей JMH показывает в 2× больше allocations, young-gen GC цикл проходит в 2 раза чаще, latency p99 растёт с 50ms до 80ms на каждый batch, retention в Grafana показывает деградацию через час после релиза.
+>
+> ---
+>
+> #### B) `items.filter { it.isActive }.isEmpty()` лучше чем `items.none { it.isActive }` — явная семантика — ❌ Неверно
+>
+> **Что на самом деле:** `filter().isEmpty()` материализует **полный** новый список (даже если первый элемент уже подходит), потом проверяет размер. `none { predicate }` использует **early termination** — останавливается на первом элементе, удовлетворяющем предикату. Для коллекции из 1М с активным элементом на позиции 5 разница в 200 000× по обходам.
+>
+> **Откуда путаница:** `filter` + `isEmpty` читается «более явно» в Java-стиле. Но `none`/`any`/`all` — стандартные функции с встроенной optimization для early exit; они не менее явны, просто компактнее.
+>
+> **Если бы это было правдой:** health-check endpoint `/orders/active` через `orders.filter{active}.isEmpty()` сканирует весь список из 500K заказов вместо early-exit на первом, под нагрузкой 200 RPS выходит за 30s timeout, K8s рестартит pod, бизнес теряет 5 минут доступности per restart.
+>
+> ---
+>
+> #### C) Используй `mapNotNull`, `sumOf`, `any`/`none`/`all`, задавай initial capacity для `ArrayList`/`HashMap`, применяй Sequence для длинных цепочек — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это композиция приёмов, устраняющих основные источники лишних аллокаций:
+>
+> 1. **Combined operations** (`mapNotNull`, `sumOf`, `flatMap`) — делают map+filter/map+sum/map+flatten за один проход без промежуточного списка.
+> 2. **Short-circuit predicates** (`any`, `none`, `all`) — early termination на первом match, вместо полного `filter`-обхода.
+> 3. **Initial capacity** для `ArrayList(expected)` / `HashMap(expected * 4/3 + 1)` — избегает многократного realloc-копирования при росте (по умолчанию ArrayList удваивается каждые `size = capacity`, что даёт O(log n) copy-операций).
+> 4. **Sequence для длинных цепочек** — `list.asSequence().map{}.filter{}.first{}` экономит N промежуточных List и поддерживает early exit (см. Q30).
+> 5. **In-place операции на Set/Map** — `a.any { it in b }` вместо `(a intersect b).isNotEmpty()` для проверки пересечения без аллокации.
+>
+> **Пример:**
+> ```kotlin
+> // bank-калькулятор балансов: hot path 10K RPS
+> // Плохо: 2 прохода + intermediate List<Long>
+> val total = users.map { it.balance }.sum()
+>
+> // Хорошо: 1 проход, без промежуточного списка
+> val total = users.sumOf { it.balance }
+>
+> // ArrayList с известным размером
+> val result = ArrayList<Order>(orders.size)  // не resize по ходу
+> for (o in orders) if (o.isValid()) result.add(o)
+>
+> // Проверка пересечения тегов без создания Set
+> fun hasCommonTags(a: Set<String>, b: Set<String>) = a.any { it in b }
+> ```
+>
+> **Когда применять:**
+> - Avito feed-фильтрация: миллионы карточек, нужна проверка активности → `items.any{active}` вместо `filter{}.isNotEmpty()`
+> - Yandex Maps tile-обработка: known capacity → `ArrayList(tileCount)` экономит realloc-копии
+> - JetBrains analyzer: длинные pipeline parse → `asSequence().map{}.filter{}.toList()` без промежуточных списков
+>
+> **Подводные камни:**
+> - **Initial capacity для HashMap**: нужно `expected * 4/3 + 1` (load factor 0.75), просто `expected` даст resize при заполнении
+> - **`sumOf` для BigDecimal**: нужно явно `sumOf<Order, BigDecimal>` (type inference иногда падает)
+> - **`any` на пустой**: возвращает `false` — это корректно, но проверяй edge-case в тестах
+>
+> **Связанные вопросы:** [[Q11]] — базовые операции; [[Q30]] — Sequence overhead; [[Q19]] — `mapNotNull` детально.
+>
+> ---
+>
+> #### D) `(a intersect b).isNotEmpty()` — идиоматичный способ проверить пересечение двух Set — ❌ Неверно
+>
+> **Что на самом деле:** `intersect` **создаёт новый Set** со всеми общими элементами, потом проверяется его размер. Для одной проверки достаточно `a.any { it in b }` — обходит `a` до первого элемента, который есть в `b` (O(1) lookup в HashSet), без аллокации нового Set.
+>
+> **Откуда путаница:** `intersect` — красивое математическое название операции, ассоциируется с set theory. Но для **проверки** существования пересечения создавать всю intersection — избыточно.
+>
+> **Если бы это было правдой:** проверка «есть ли общие теги между фильтром пользователя и карточкой товара» в API-фильтре Avito под нагрузкой 1000 RPS создаёт миллионы временных Set, профайлер аллокаций показывает 40% времени в `HashSet.<init>` и `Iterator.next`, p99 latency растёт с 20ms до 150ms.
 
 ## Q32. (!) Безопасны ли Kotlin-коллекции для многопоточного доступа?
 
@@ -1324,10 +1462,87 @@ val immutable = persistentListOf(1, 2, 3)
 
 
 > [!mcq]
-> - [ ] `listOf()` возвращает истинно неизменяемую коллекцию — она потокобезопасна без дополнительной работы | `listOf()` — read-only view над `ArrayList` (Java mutable); reflection или приведение к `MutableList` позволяет модифицировать; «безопасность» только в типах. ❌ ПОСЛЕДСТВИЕ: команда передаёт `List<Order>` между корутинами без синхронизации, в проде ловит `ConcurrentModificationException` при итерации, обвиняют Kotlin, а виноват shared reference на mutable backing.
-> - [ ] `MutableList` и `MutableMap` в Kotlin синхронизированы как `Vector`/`Hashtable` в Java | `mutableListOf()` → `ArrayList` (unsynchronized); `mutableMapOf()` → `LinkedHashMap`. Никакой синхронизации нет. ❌ ПОСЛЕДСТВИЕ: shared `MutableMap<String, Int>` под нагрузкой 100 RPS даёт corrupted state (бесконечный цикл в `HashMap.get`), на проде поток виснет в 100% CPU.
-> - [x] Ни read-only, ни mutable Kotlin-коллекции не потокобезопасны — для shared mutable state нужны `ConcurrentHashMap`, `CopyOnWriteArrayList` или `kotlinx.collections.immutable` | Под капотом — обычные Java-коллекции без `synchronized`; read-only — только compile-time контракт, а не runtime-гарантия. ✓ ПРИМЕНЯТЬ: in-memory кеш в Spring-сервисе держи как `ConcurrentHashMap<String, CacheEntry>`; для immutable-snapshot — `persistentMapOf` + atomic ref. 📋 ПРАВИЛО: «Mutable share = explicit thread-safe collection». 🔗 См. Q1, Q6, Q37.
-> - [ ] Достаточно обернуть в `Collections.synchronizedList()` и итерировать без дополнительных мер | `synchronizedList` синхронизирует отдельные методы, но итерация (`for`/`forEach`) требует ручного `synchronized(list) { }` вокруг всего цикла. ❌ ПОСЛЕДСТВИЕ: код проходит code review, в проде `ConcurrentModificationException` при concurrent iterate+modify, инцидент только на peak traffic в pre-prod.
+>
+> **Вопрос:** Что нужно сделать для безопасного многопоточного доступа к Kotlin-коллекциям и почему `listOf()`/`mutableListOf()` не помогают?
+>
+> ---
+>
+> #### A) `listOf()` возвращает истинно неизменяемую коллекцию — она потокобезопасна без дополнительной работы — ❌ Неверно
+>
+> **Что на самом деле:** `listOf(...)` возвращает **read-only view** над JVM-классом (обычно `Arrays.AsList` или `ArrayList`), а не истинно immutable structure. Контракт `List<T>` в Kotlin запрещает мутирующие методы на уровне типа, но JVM-объект под капотом mutable. Если кто-то держит ссылку на `MutableList<T>` на тот же объект (например, выдал список через cast или через mutable-источник), он может модифицировать список параллельно с чтением другим потоком.
+>
+> **Откуда путаница:** в документации Kotlin «read-only» часто переводят как «immutable». Это compile-time контракт, а не runtime-гарантия. Истинная immutability — только в `kotlinx.collections.immutable.PersistentList`.
+>
+> **Если бы это было правдой:** команда передаёт `List<Order>` между корутинами без синхронизации, в проде ловит `ConcurrentModificationException` при итерации в reporting-сервисе, обвиняют Kotlin runtime, теряют день на debugging, пока кто-то не находит `as MutableList` в downstream-сервисе.
+>
+> ---
+>
+> #### B) `MutableList` и `MutableMap` в Kotlin синхронизированы как `Vector`/`Hashtable` в Java — ❌ Неверно
+>
+> **Что на самом деле:** `mutableListOf()` под капотом — `java.util.ArrayList` (unsynchronized, как в Java начиная с 1.2). `mutableMapOf()` → `java.util.LinkedHashMap` (тоже unsynchronized). **Никакой синхронизации нет.** Legacy-классы `Vector` и `Hashtable` в Kotlin не используются — они считаются устаревшими в самом Java.
+>
+> **Откуда путаница:** разработчики помнят `Vector` из времён Java 1.1 и думают, что Kotlin «продолжает» эту традицию. На самом деле Kotlin изначально проектировался поверх современных Java-коллекций (Java 1.2+), без legacy-синхронизации.
+>
+> **Если бы это было правдой:** shared `MutableMap<String, Int>` под нагрузкой 100 RPS из 8 потоков даёт corrupted internal state (бесконечный цикл в `HashMap.get` из-за circular link в bucket), поток виснет в 100% CPU, JVM thread dump показывает loop в `HashMap.getNode`, требуется restart pod.
+>
+> ---
+>
+> #### C) Ни read-only, ни mutable Kotlin-коллекции не потокобезопасны — для shared mutable state нужны `ConcurrentHashMap`, `CopyOnWriteArrayList` или `kotlinx.collections.immutable` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Kotlin **не имеет** собственных thread-safe коллекций — все базовые типы (`listOf`, `mutableListOf`, `setOf`, `mutableSetOf`, `mapOf`, `mutableMapOf`) — это обёртки над стандартными Java `ArrayList`/`LinkedHashSet`/`LinkedHashMap`, которые НЕ синхронизированы. «Read-only» в Kotlin — это compile-time контракт типа `List<T>`, а не гарантия неизменяемости на уровне JVM-объекта.
+>
+> Для thread-safe сценариев есть три семейства решений:
+> 1. **`java.util.concurrent`**: `ConcurrentHashMap` (lock-striping), `CopyOnWriteArrayList` (snapshot iteration), `ConcurrentLinkedQueue` (non-blocking).
+> 2. **`Collections.synchronized*`**: полная синхронизация через единый `synchronized`, но **итерация требует ручного `synchronized(list) { for ... }`**.
+> 3. **`kotlinx.collections.immutable`**: `persistentListOf`/`persistentMapOf` — истинная неизменяемость со structural sharing, безопасны для чтения из любого потока без синхронизации.
+>
+> **Пример:**
+> ```kotlin
+> // In-memory кеш в Spring-сервисе под нагрузкой 1000 RPS
+> @Component
+> class TokenCache {
+>     // ✅ Thread-safe lookup без явных locks
+>     private val cache = ConcurrentHashMap<String, TokenEntry>()
+>
+>     fun get(token: String): TokenEntry? = cache[token]
+>     fun put(token: String, entry: TokenEntry) { cache[token] = entry }
+> }
+>
+> // Snapshot-pattern: атомарная замена immutable snapshot
+> @Component
+> class FeatureFlags {
+>     @Volatile private var flags: PersistentMap<String, Boolean> = persistentMapOf()
+>
+>     fun isEnabled(name: String) = flags[name] ?: false
+>     fun update(name: String, value: Boolean) {
+>         flags = flags.put(name, value)  // atomic ref swap
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - Yandex Cloud: shared in-memory state в `@Component` → `ConcurrentHashMap`
+> - Avito feature flags: snapshot-pattern с `persistentMapOf` + atomic ref
+> - Kotlin Multiplatform / Compose: `PersistentList` в `StateFlow` для UI state
+>
+> **Подводные камни:**
+> - **`ConcurrentHashMap.computeIfAbsent` блокирует bucket** — длинная лямбда внутри держит блокировку, может вызвать contention
+> - **`CopyOnWriteArrayList` дорог на запись** — каждый `add` копирует весь массив; подходит только для read-heavy workloads
+> - **`synchronizedList` для итерации** — нужна ручная обёртка `synchronized(list) { list.forEach { } }`
+>
+> **Связанные вопросы:** [[Q1]] — read-only vs mutable; [[Q6]] — действительно ли read-only immutable; [[Q37]] — Persistent Collections детально.
+>
+> ---
+>
+> #### D) Достаточно обернуть в `Collections.synchronizedList()` и итерировать без дополнительных мер — ❌ Неверно
+>
+> **Что на самом деле:** `Collections.synchronizedList(list)` оборачивает отдельные методы (`add`, `get`, `remove`) в `synchronized(this)`, но **итерация** (`for (x in list)` или `list.forEach { }`) — это вызов `iterator()` + многократный `next()` БЕЗ держания lock между ними. Если другой поток модифицирует список во время итерации — `ConcurrentModificationException`.
+>
+> **Откуда путаница:** название `synchronizedList` создаёт впечатление «всё синхронизировано». Документация Java явно говорит: «iteration must be done with manual synchronization», но это часто упускают.
+>
+> **Если бы это было правдой:** код проходит code review «синхронизированный список, всё ок», в pre-prod проходит smoke-тесты, в проде на peak traffic ловится `ConcurrentModificationException` в reporting-сервисе, который параллельно итерирует и принимает обновления; инцидент воспроизводится только под нагрузкой.
 
 ## Q33. Что такое `associate` и чем он отличается от `associateBy` и `associateWith`?
 
