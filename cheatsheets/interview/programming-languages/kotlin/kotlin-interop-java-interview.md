@@ -1188,10 +1188,79 @@ if (result instanceof Result.Success success) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Как из `Java` использовать `data class` из `Kotlin`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Из `Java 21` нужно обработать `Kotlin sealed class Result` со всеми ветками. Какое утверждение про exhaustiveness корректно?
+>
+> ---
+>
+> #### A) Java компилятор сам потребует exhaustive switch для Kotlin sealed, так же как `when` в Kotlin — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin `sealed` помечает класс как `abstract` с приватным конструктором, но в байткоде нет атрибута `PermittedSubclasses` (это Java 17+ `JEP 409`). Поэтому `javac` не видит границ иерархии и не требует exhaustive switch. Exhaustiveness в Kotlin — фишка фронтенда компилятора, не байткода.
+>
+> **Откуда путаница:** оба языка с версии 17 имеют `sealed`, кажется что они взаимозаменяемы. Но это два разных механизма с разной поддержкой в байткоде.
+>
+> **Если бы это было правдой:** не пришлось бы вручную добавлять `default` или `else` в Java switch — компилятор покрыл бы пропуск ветки `Loading`. На практике забытая ветка в Java тихо проваливается в `default`.
+>
+> ---
+>
+> #### B) С Java 17+ `instanceof` pattern matching работает для Kotlin sealed классов, но exhaustiveness check (полнота веток) не гарантируется — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Kotlin sealed компилируется в обычный `abstract class` с приватным конструктором (или `sealed interface` — в обычный `interface`). Подклассы — это обычные классы, поэтому Java может работать с ними через `instanceof` и pattern matching (`case Result.Success s -> ...`). Однако Java компилятор НЕ видит, что иерархия закрыта, потому что `PermittedSubclasses` атрибут не записан в `.class` файл (Kotlin до сих пор не использует Java sealed механизм даже на JVM target 17+).
+>
+> Следствие: `switch` над Kotlin sealed классом требует `default` ветку или компилируется как non-exhaustive. Если позже добавить новый подкласс в Kotlin (`data class Cached : Result()`) — Java код тихо упадёт в `default` без warning.
+>
+> **Пример:**
+> ```java
+> // Java 21 — компилируется, но не exhaustive с точки зрения javac
+> String describe(Result r) {
+>     return switch (r) {
+>         case Result.Success s -> "OK: " + s.getData();
+>         case Result.Error e -> "Err: " + e.getMessage();
+>         case Result.Loading l -> "Loading";
+>         default -> throw new IllegalStateException("unknown: " + r);  // обязательно
+>     };
+> }
+> ```
+>
+> ```kotlin
+> // Kotlin: when exhaustive автоматически — компилятор проверит полноту
+> fun describe(r: Result) = when (r) {
+>     is Result.Success -> "OK: ${r.data}"
+>     is Result.Error -> "Err: ${r.message}"
+>     Result.Loading -> "Loading"
+>     // компилятор сам проверит, что покрыты все
+> }
+> ```
+>
+> **Когда применять:** в смешанных Kotlin/Java codebases — относитесь к Kotlin sealed как к обычной иерархии при работе из Java. Логику exhaustive обработки оставляйте в Kotlin (фасадные функции), а из Java вызывайте этот фасад.
+>
+> **Подводные камни:** при добавлении нового подкласса в Kotlin sealed — придётся вручную аудитить все Java switch'и (нет компилятор-варнингов). Для критических иерархий лучше предоставлять `accept(Visitor)` метод.
+>
+> **Связанные вопросы:** [[Q32]] — детальное сравнение Kotlin sealed vs Java 17 sealed; [[Q26]] — практики дизайна Kotlin API для Java.
+>
+> ---
+>
+> #### C) Kotlin sealed невозможно использовать из Java вообще — приходится переписывать на обычные классы — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin sealed после компиляции — это обычный `abstract class` с публичными подклассами. Java может работать с ним через `instanceof`, `switch`, наследование иерархии — всё работает. Ограничение только в exhaustiveness check (которое и так Kotlin-feature).
+>
+> **Откуда путаница:** некоторые думают, что `sealed` — это Kotlin-only концепция, недоступная JVM. На деле в байткоде это обычная иерархия.
+>
+> **Если бы это было правдой:** пришлось бы дублировать иерархии для Java и Kotlin, что свело бы на нет преимущества мультиязычного проекта.
+>
+> ---
+>
+> #### D) `sealed interface` (Kotlin 1.5+) полностью имплементирует Java 17 `sealed` через `permits`-список — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin `sealed interface` компилируется в обычный `interface` БЕЗ Java 17 `permits` атрибута в байткоде, даже на JVM target 17+. Это две разные реализации с разной runtime-семантикой: Kotlin sealed enforced на compile-time, Java sealed enforced на runtime через `PermittedSubclasses`.
+>
+> **Откуда путаница:** Kotlin 1.5 и Java 17 sealed появились примерно одновременно, оба ограничивают иерархии. Кажется, что Kotlin должен использовать Java механизм, но JetBrains оставил свою реализацию для bytecode-совместимости со старыми JVM.
+>
+> **Если бы это было правдой:** `Class.getPermittedSubclasses()` возвращал бы непустой массив для Kotlin sealed, но он возвращает `null`. Reflection-based фреймворки не могут полагаться на это.
+
+## Q25. Как из `Java` использовать `data class` из `Kotlin`?
 
 `data class` компилируется в обычный `Java`-класс с автоматически сгенерированными методами:
 
@@ -1223,10 +1292,73 @@ User updated = user.copy("Bob", user.getAge()); // нельзя пропусти
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. (!) Какие практики делают `Kotlin` API удобным для `Java`-клиентов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Из `Java` нужно создать копию `Kotlin data class User(val name: String, val age: Int)`, изменив только `name`. Какой код корректен?
+>
+> ---
+>
+> #### A) `user.copy(name = "Bob")` — Java транслирует named arguments в byte code — ❌ Неверно
+>
+> **Что на самом деле:** Java не поддерживает named arguments — это синтаксис уровня Kotlin компилятора. Named arguments не существуют в байткоде; их компилятор Kotlin превращает в позиционные вызовы при компиляции вызова. Из Java они недоступны на синтаксическом уровне.
+>
+> **Откуда путаница:** named arguments выглядят как обычный Java-синтаксис типа `Method.setProperty(name=...)`. На деле в Java это синтаксическая ошибка — `=` внутри method arguments недопустим.
+>
+> **Если бы это было правдой:** мигрировать Kotlin codebase на Java было бы тривиально. На деле — это одно из главных неудобств: Java-клиенты теряют значимое преимущество default-параметров.
+>
+> ---
+>
+> #### B) `user.copy("Bob")` — Kotlin компилятор сам подставит остальные значения как default — ❌ Неверно
+>
+> **Что на самом деле:** `copy()` имеет default-параметры (`name = this.name, age = this.age`), но эти defaults доступны только Kotlin-вызывающим. В Java копируется обычная сигнатура метода `copy(String, int)` — нужно передать ОБА параметра. Без `@JvmOverloads` на `copy` (которую `data class` не предоставляет) перегрузки не генерируются.
+>
+> **Откуда путаница:** в Kotlin вызов `user.copy(name = "Bob")` работает, отсюда соблазн думать, что compiler-generated overload доступен и в Java.
+>
+> **Если бы это было правдой:** `user.copy("Bob")` компилировался бы Java-компилятором — но он выдаст ошибку «required: String, int; found: String».
+>
+> ---
+>
+> #### C) `user.copy("Bob", user.getAge())` — нужно явно передать все параметры, нет default values в Java — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `data class` генерирует метод `copy(String name, int age)` с полной сигнатурой. Из Java нужно передать ВСЕ параметры — там нет механизма default args. Чтобы не дублировать неизменяемые поля, обычно вызывают getter текущего объекта (`user.getAge()`).
+>
+> Если предполагается частый вызов из Java, есть три обходных пути: (1) добавить вторичный конструктор-копию с `@JvmOverloads`, но это не работает с `data class` напрямую; (2) написать helper `withName(String)` в companion с `@JvmStatic`; (3) использовать `@JvmRecord` (Kotlin 1.5+, JVM 16+) — но это меняет API и убирает `copy()`. Чаще всего проще всего жить с явным передаваниемем всех параметров.
+>
+> **Пример:**
+> ```kotlin
+> // Kotlin
+> data class User(val name: String, val age: Int)
+>
+> // Дополнительные Java-friendly helpers:
+> fun User.withName(newName: String) = copy(name = newName)
+> fun User.withAge(newAge: Int) = copy(age = newAge)
+> ```
+>
+> ```java
+> // Java
+> User user = new User("Alice", 30);
+> User renamed = user.copy("Bob", user.getAge());         // прямой copy — все параметры
+> User easier = UserKt.withName(user, "Bob");             // extension — удобнее
+> ```
+>
+> **Когда применять:** прямой `copy()` — для одноразовых конвертаций; extension-функции `withX()` — если data class активно используется из Java и нужно много частичных копий.
+>
+> **Подводные камни:** при добавлении нового поля в `data class` все Java-вызовы `copy()` сломаются (новая обязательная позиция). Это известный pain-point — поэтому в публичных API для Java часто избегают `data class` и используют builder pattern.
+>
+> **Связанные вопросы:** [[Q4]] — `@JvmOverloads` для default-параметров; [[Q26]] — практики Java-friendly Kotlin API; [[Q28]] — `@JvmRecord` как альтернатива.
+>
+> ---
+>
+> #### D) `User.copy(user, "Bob")` — статический метод, первый параметр — original — ❌ Неверно
+>
+> **Что на самом деле:** `copy()` — это instance метод на data class, не статический. Вызов `User.copy(...)` не скомпилируется. Это правило для extension functions (которые компилируются в static methods с receiver-параметром первым), но не для обычных методов класса.
+>
+> **Откуда путаница:** extension-функции и top-level функции из Kotlin действительно вызываются из Java как статические методы. Возможно, это распространяется и на data class методы — но нет, инстанс-методы остаются инстанс-методами.
+>
+> **Если бы это было правдой:** все методы класса можно было бы вызывать статически, что нарушало бы базовую object orientation. На практике java-bytecode чётко различает instance/static методы (опкоды `invokevirtual` vs `invokestatic`).
+
+## Q26. (!) Какие практики делают `Kotlin` API удобным для `Java`-клиентов?
 
 Если `Kotlin`-модуль используется из `Java`, стоит следовать набору правил:
 
@@ -1257,10 +1389,89 @@ graph TD
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. Как организовать смешанный `Kotlin`/`Java` проект в `Gradle`? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Вы публикуете `Kotlin`-библиотеку для Java-консьюмеров. Какая комбинация аннотаций обеспечит fluent API без необходимости знать про `Companion`?
+>
+> ---
+>
+> #### A) `@file:JvmName("MyApi")` на всех файлах + `companion object` без других аннотаций — ❌ Неверно
+>
+> **Что на самом деле:** `@file:JvmName` меняет только имя сгенерированного facade-класса для top-level функций, но НЕ влияет на companion object. Без `@JvmStatic` на каждом методе companion'а Java должна писать `MyClass.Companion.method()` — это и есть «знание про Companion», которого мы избегаем.
+>
+> **Откуда путаница:** `@file:JvmName` звучит как глобальный rename. На деле это атрибут для top-level декларации, не для companion.
+>
+> **Если бы это было правдой:** companion object'ы автоматически бы экспозили статические методы — но это сломало бы совместимость с существующим Kotlin-кодом, где `Companion` явно используется как объект-singleton.
+>
+> ---
+>
+> #### B) `@JvmStatic` на функциях companion + `@JvmField` или `const val` на константах + `@JvmOverloads` на функциях с default-параметрами — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это базовый «Java-friendly toolkit» Kotlin. Каждая аннотация решает конкретную проблему компиляции:
+>
+> - **`@JvmStatic`** — поднимает метод из `Companion` нестед-класса на сам класс. Без него Java пишет `MyClass.Companion.create()` (Companion — это синглтон-объект, доступный через статическое поле).
+> - **`@JvmField`** / `const val` — экспозит свойство как public static final поле вместо геттера. `const val` — для compile-time констант (примитивы и String), inlined в callsite. `@JvmField val` — для рантайм-значений любых типов.
+> - **`@JvmOverloads`** — генерирует серию overload'ов для функций с default-параметрами, чтобы Java мог вызывать без передачи всех параметров. Без неё default'ы доступны только Kotlin-вызывающим.
+>
+> Дополнительно: `@JvmName` для разрешения конфликтов имён (когда Kotlin генерирует одинаковые JVM-сигнатуры или нужно скрыть mangled-имя); `@Throws` для checked exceptions, чтобы Java-компилятор требовал `try/catch`.
+>
+> **Пример:**
+> ```kotlin
+> class HttpClient(private val baseUrl: String) {
+>
+>     @JvmOverloads
+>     fun get(path: String, timeout: Duration = Duration.ofSeconds(30)): Response =
+>         performGet(path, timeout)
+>
+>     companion object {
+>         const val DEFAULT_TIMEOUT_SEC = 30L
+>
+>         @JvmField
+>         val USER_AGENT_HEADER = "User-Agent"
+>
+>         @JvmStatic
+>         fun newClient(baseUrl: String): HttpClient = HttpClient(baseUrl)
+>     }
+> }
+> ```
+>
+> ```java
+> // Java — чистый, идиоматичный код:
+> HttpClient client = HttpClient.newClient("https://api");          // @JvmStatic
+> long sec = HttpClient.DEFAULT_TIMEOUT_SEC;                        // const val
+> String header = HttpClient.USER_AGENT_HEADER;                     // @JvmField
+> client.get("/users");                                              // @JvmOverloads — без timeout
+> client.get("/users", Duration.ofSeconds(5));                       // @JvmOverloads — с timeout
+> ```
+>
+> **Когда применять:** библиотечный Kotlin-код, который должен потребляться как из Kotlin, так и из Java; SDK для платформ типа Android, где код часто смешанный.
+>
+> **Подводные камни:** `@JvmOverloads` генерирует overload'ы линейно справа-налево, не комбинаторно — для функции с 3 defaults будет 4 версии (без 1, 2 или 3 параметров), не 8. Если нужны произвольные комбинации — пишите перегрузки вручную.
+>
+> **Связанные вопросы:** [[Q2]] — детальные различия `@JvmStatic`/`@JvmField`/`@JvmOverloads`; [[Q3]] — companion object без аннотаций; [[Q35]] — подводные камни с `companion object`.
+>
+> ---
+>
+> #### C) `@JvmDefault` на интерфейсах + `@JsField` (модификатор видимости) — ❌ Неверно
+>
+> **Что на самом деле:** `@JvmDefault` действительно есть в Kotlin (управление default-методами интерфейсов на JVM 8+), но это узкоспециальная аннотация для интерфейсов, не для обычных API. Аннотации `@JsField` не существует — есть только `@JvmField`. Этот ответ комбинирует реальные элементы с вымышленными.
+>
+> **Откуда путаница:** `@JvmDefault` упоминается в гайдах по Kotlin/JVM interop, но решает другую задачу — компиляция default методов интерфейсов как настоящих default методов JVM (а не статических методов в `$DefaultImpls`).
+>
+> **Если бы это было правдой:** существование `@JsField` нарушило бы naming convention (`Jvm` для JVM-таргета, `Js` для Kotlin/JS). Это две разных платформы.
+>
+> ---
+>
+> #### D) Использовать `internal` модификатор для скрытия всего лишнего из Java — ❌ Неверно
+>
+> **Что на самом деле:** `internal` в Kotlin компилируется в `public` с name-mangling (имя метода: `originalName$module`). То есть из Java функция **доступна**, но имя выглядит уродливо: `myMethod$module_name()`. `internal` НЕ скрывает API из Java — он скрывает его только от другого Kotlin-модуля.
+>
+> **Откуда путаница:** `internal` звучит как «приватный для модуля», что многие ожидают распространения на все потребители вне модуля. На деле это работает только на уровне Kotlin compiler check, не на уровне байткода.
+>
+> **Если бы это было правдой:** Kotlin-only encapsulation работал бы из Java — но JVM не знает про модули Kotlin (это compile-time концепция), и есть только public/protected/package/private видимость.
+
+## Q27. Как организовать смешанный `Kotlin`/`Java` проект в `Gradle`?
 
 В `Gradle` `Kotlin`-плагин умеет компилировать `Kotlin` и `Java` вместе, обеспечивая cross-compilation:
 
