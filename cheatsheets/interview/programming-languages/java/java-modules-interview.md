@@ -1352,10 +1352,92 @@ module com.example.service {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. Чем отличаются `unnamed module`, `automatic module` и `named module` на практике? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему `JPMS` существует с Java 9 (2017), но массовое adoption в Spring Boot приложениях так и не произошло, и в каких случаях его понимание всё-таки критично?
+>
+> ---
+>
+> #### A) `JPMS` несовместим со Spring Boot — поэтому никто его не использует. Сейчас его планируют удалить — ❌ Неверно
+>
+> **Что на самом деле:** `JPMS` совместим со Spring Boot (нужен `opens` для рефлексии), и **его не планируют удалять**. Наоборот: Project Leyden и Project Loom опираются на модульную информацию для AOT-компиляции и оптимизаций. Удаление JPMS невозможно — на нём построен сам JDK (модули `java.base`, `java.sql` и т.д.).
+>
+> **Откуда путаница:** низкое adoption в application-коде создаёт иллюзию, что технология «умирает». На самом деле она используется JVM и крупными библиотеками невидимо для разработчика.
+>
+> **Если бы это было правдой:** GraalVM native-image, Quarkus, Micronaut — все опираются на стабильную модульную модель JDK. Их существование доказывает, что JPMS — фундамент, а не deprecated experiment.
+>
+> ---
+>
+> #### B) Adoption низкий потому, что Java-сообщество ленивое. Через год-два все Spring Boot приложения мигрируют на JPMS — ❌ Неверно
+>
+> **Что на самом деле:** причина не в «лени», а в **отсутствии бизнес-выгоды для типичного приложения**. Spring Boot уже даёт инкапсуляцию через DI и пакет-private классы. Добавление `module-info.java` требует написания `opens` для каждого фреймворка (Spring, Hibernate, Jackson, Mockito) и не даёт ничего, кроме декоративной строгости. Через 2 года ситуация качественно не изменится — приложения останутся на classpath.
+>
+> **Откуда путаница:** OpenJDK команда продвигает JPMS, поэтому казалось, что adoption — вопрос времени. На практике технологии без явной бизнес-ценности не приживаются (см. Project Jigsaw — 9 лет от анонса до релиза, но adoption всё ещё низкий).
+>
+> **Если бы это было правдой:** мы увидели бы массу tutorials и Spring Boot starter с `module-info`. По факту — `spring-boot-starter-web` до сих пор поставляется как automatic module без `module-info.class`.
+>
+> ---
+>
+> #### C) Adoption низкий потому, что миграция дорогая без выгоды для бизнес-приложений, но JPMS критичен для: понимания `InaccessibleObjectException`, оптимизации Docker-образов через `jlink`, работы с JDK internals, native-image инструментов — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> JPMS — это инфраструктурная технология, не application-фича:
+>
+> 1. **Бизнес-приложения остаются на classpath** — миграция требует написать `module-info.java`, добавить `opens` для каждого DI/ORM/serialization фреймворка, переписать Maven/Gradle конфиг. ROI близок к нулю.
+>
+> 2. **JDK сам построен на модулях** — `java.base`, `java.sql`, `java.xml`, `java.net.http`. Любой разработчик сталкивается с этим, видя `InaccessibleObjectException: ... module java.base does not "opens java.lang"`.
+>
+> 3. **`jlink` даёт реальный production-выигрыш** — Docker-образ Spring Boot на JDK 21 весит ~350 MB. Через `jlink` можно сделать custom runtime ~50 MB. Это economically viable для high-scale deployments.
+>
+> 4. **Native-image инструменты опираются на JPMS** — GraalVM, Quarkus, Micronaut требуют чёткой модульной модели для AOT-компиляции и dead-code elimination.
+>
+> 5. **Понимание JPMS — обязательно для собеседований** — даже если код не использует `module-info`, вопросы по JPMS встречаются практически на любом mid+/senior interview по Java.
+>
+> **Пример (jlink для Docker):**
+> ```dockerfile
+> FROM eclipse-temurin:21-jdk AS builder
+> COPY build/libs/app.jar /app/
+> RUN $JAVA_HOME/bin/jdeps --print-module-deps --ignore-missing-deps \
+>         --multi-release 21 /app/app.jar > /app/modules.txt
+> RUN $JAVA_HOME/bin/jlink \
+>     --add-modules $(cat /app/modules.txt) \
+>     --output /app/runtime --strip-debug --compress zip-6 \
+>     --no-header-files --no-man-pages
+>
+> FROM debian:bookworm-slim
+> COPY --from=builder /app/runtime /opt/jre
+> COPY --from=builder /app/app.jar /app/app.jar
+> ENV PATH=/opt/jre/bin:$PATH
+> ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+> # Результат: ~70 MB вместо ~350 MB полного JDK-образа
+> ```
+>
+> **Когда применять знание JPMS:**
+> - Отладка `InaccessibleObjectException` в любом Spring Boot/JPA приложении на современной JVM.
+> - Оптимизация Docker-образов для serverless (Lambda cold start) или большого количества микросервисов.
+> - GraalVM native-image: подготовка `reflect-config.json`, понимание `--initialize-at-build-time`.
+> - Разработка библиотек/SDK для внешних потребителей (нужен `Automatic-Module-Name` минимум).
+>
+> **Подводные камни:**
+> - **`--illegal-access` удалён в Java 17** — старые workaround'ы перестают работать, нужно использовать `--add-opens`/`--add-exports` явно.
+> - **Project Leyden** ещё в разработке (preview-фичи в JDK 22+); рассчитывать на AOT через JPMS сейчас рано.
+> - **Library ecosystem** — большинство популярных библиотек (Jackson, Lombok, Mockito) долго не имели `module-info.class` или имели проблемные `Automatic-Module-Name`. Сейчас ситуация улучшилась, но проверять перед миграцией.
+>
+> ---
+>
+> #### D) JPMS будет полностью заменён Project Loom (virtual threads) — модули больше не нужны — ❌ Неверно
+>
+> **Что на самом деле:** Project Loom и JPMS — ортогональные технологии. Loom решает задачу concurrency (lightweight threads), JPMS — encapsulation/dependency management. Они работают вместе, не заменяют друг друга. Virtual threads используют модули java.base, и `Thread.startVirtualThread()` живёт в модульной системе.
+>
+> **Откуда путаница:** Loom получил много внимания в Java 21 (LTS), JPMS — обсуждается реже. Создаётся впечатление, что одно «вытесняет» другое в внимании сообщества.
+>
+> **Если бы это было правдой:** в Java 21 убрали бы `module-info.java`. Этого не произошло — JDK 21 расширил поддержку модулей (например, для preview features).
+>
+> ---
+>
+> **Связанные вопросы:** [[Q1]] — что такое JPMS; [[Q19]] — jlink; [[Q21]] — стратегии миграции; [[Q37]] — Spring/Hibernate/Jackson; [[Q38]] — bottom-up vs top-down.
+
+## Q31. Чем отличаются `unnamed module`, `automatic module` и `named module` на практике?
 
 Три типа модулей — центральное понятие JPMS. Разница между ними определяет, как артефакты взаимодействуют при миграции и в смешанных проектах.
 
@@ -1395,10 +1477,100 @@ jar --describe-module --file=mylib.jar
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. `Split packages`: почему запрещены в `JPMS` и как их устранить? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Именованный модуль (с `module-info.java`) пытается объявить `requires legacy.lib`, где `legacy.lib` — обычный JAR на classpath без `module-info` и без `Automatic-Module-Name`. Компилятор выдаёт ошибку. Почему и как корректно решить проблему?
+>
+> ---
+>
+> #### A) Именованный модуль не может `requires` ни на что — это ограничение JPMS. Нужно убрать `module-info.java` и оставить всё на classpath — ❌ Неверно
+>
+> **Что на самом деле:** именованный модуль может объявлять `requires` на ДРУГИЕ именованные модули и на automatic modules. Запрет действует только на `unnamed module` (classpath). Удалять `module-info.java` — выкидывать модульность ради одной зависимости. Правильно — перевести JAR в automatic module через `module path`.
+>
+> **Откуда путаница:** ошибка компиляции после добавления `requires` создаёт впечатление, что весь подход неверен. На самом деле проблема локальна — нужно поднять конкретный JAR с classpath на module path.
+>
+> **Если бы это было правдой:** JPMS был бы непригоден для миграции legacy-проектов, потому что в любом реальном проекте есть зависимости без `module-info`. Existence of `automatic modules` опровергает это.
+>
+> ---
+>
+> #### B) Положить `legacy.lib.jar` на `module path` — JVM автоматически превратит его в automatic module с именем из manifest `Automatic-Module-Name`, либо из имени JAR-файла (с предупреждением о нестабильности) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Три типа модулей в JPMS определяют возможные связи:
+>
+> | | Откуда | Имя | Может `requires` |
+> |--|--------|-----|------------------|
+> | **Named** | `module-info.class` в JAR | Из `module-info` | Named, Automatic |
+> | **Automatic** | JAR на module path без `module-info` | `Automatic-Module-Name` или из имени файла | Named, Automatic, Unnamed |
+> | **Unnamed** | JAR на classpath | Нет имени | Named, Automatic, Unnamed |
+>
+> **Ключевой принцип:** именованный модуль не может `requires` на unnamed (classpath), но может на automatic. Поэтому automatic module — это «мост» между модульным миром и legacy classpath.
+>
+> **Пример:**
+> ```bash
+> # Структура проекта
+> # mods/legacy-lib-1.2.jar          (без module-info, без Automatic-Module-Name)
+> # mods/app/module-info.class
+> # mods/app/com/example/app/Main.class
+>
+> # 1. Узнаём, какое имя получит legacy-lib как automatic module:
+> jar --describe-module --file=mods/legacy-lib-1.2.jar
+> # Output:
+> # legacy.lib@1.2 automatic
+> # requires java.base mandated
+> # contains com.legacy.util
+>
+> # JVM вывела имя "legacy.lib" из имени файла "legacy-lib-1.2.jar"
+> # (заменив дефисы на точки, отбросив версию)
+>
+> # 2. Используем в module-info.java:
+> module com.example.app {
+>     requires legacy.lib;           // имя automatic module
+>     exports com.example.app;
+> }
+>
+> # 3. Запуск:
+> java --module-path mods -m com.example.app/com.example.app.Main
+> ```
+>
+> **Опасность derived имени:** если автор библиотеки в следующей версии переименует JAR (`legacy-2.0.jar` вместо `legacy-lib-1.2.jar`), имя automatic module изменится с `legacy.lib` на `legacy`, и ваш `requires` сломается. Правильное решение — попросить автора добавить в manifest `Automatic-Module-Name: org.example.legacy`, тогда имя стабильно.
+>
+> **Когда применять:**
+> - Миграция bottom-up: библиотеки-зависимости поднимаются на module path как automatic, потом постепенно получают полноценный `module-info.class`.
+> - Использование SDK от вендоров, которые ещё не модуляризовались (часто финтех/банковский софт).
+> - Тестовые библиотеки (старые версии JUnit/Mockito без `module-info`).
+>
+> **Подводные камни:**
+> - **`requires automatic.module` тянет ВСЕ его пакеты** — automatic module экспортирует всё, что в нём есть. Никакой инкапсуляции от legacy-зависимости вы не получите.
+> - **`jlink` НЕ работает с automatic modules** — для custom runtime все модули должны быть named. Это причина, по которой долго не получается перевести Spring Boot приложение под jlink.
+> - **Имя «выведено из файла» — нестабильно** — JDK печатает warning при загрузке такого модуля. Игнорировать опасно: при обновлении версии библиотеки имя может измениться.
+> - **Split package между automatic и named** — automatic module экспортирует все пакеты, и легко наступает split package с другим модулем. Диагностика — `jdeps --check`.
+>
+> ---
+>
+> #### C) Перенести `legacy.lib.jar` на classpath и оставить `module-info.java` — JVM сама свяжет их через unnamed module — ❌ Неверно
+>
+> **Что на самом деле:** ровно наоборот — это типичная ошибка миграции. Именованный модуль НЕ МОЖЕТ объявить `requires` на классы из classpath (unnamed module). Это «стена» в архитектуре JPMS, специально введённая ради воспроизводимости сборки. Compiler выдаст ошибку «module not found», и единственный путь — поднять JAR на module path.
+>
+> **Откуда путаница:** в classpath-мире JAR'ы автоматически связывались независимо от расположения. Кажется, что добавление module path — это просто новая опция, и classpath продолжит работать как раньше.
+>
+> **Если бы это было правдой:** не было бы смысла в automatic modules — JVM могла бы автоматически «видеть» classpath из named module. Существование automatic modules — следствие того, что С classpath named module работать не умеет.
+>
+> ---
+>
+> #### D) Скомпилировать `legacy.lib` с флагом `--add-exports legacy.lib/*=ALL-UNNAMED` — это превратит его в named module — ❌ Неверно
+>
+> **Что на самом деле:** `--add-exports` — это runtime/compile-time флаг для уже named модулей, который открывает их пакеты другим модулям. Он НЕ превращает JAR в named module и не работает на JAR без `module-info.class`. Превратить JAR в named можно только пересборкой с `module-info.java` или применением `jdeps --generate-module-info` (генерирует шаблон).
+>
+> **Откуда путаница:** флаги `--add-exports`/`--add-opens` часто описывают как «способ преодолеть модульные ограничения». Возникает соблазн применить их к любой проблеме с модулями.
+>
+> **Если бы это было правдой:** не существовало бы automatic modules и инструмента `jdeps --generate-module-info`. Их существование — признание, что превращение JAR в named module — нетривиальный процесс.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q4]] — module path vs classpath; [[Q14]] — unnamed module; [[Q15]] — automatic module и его имя; [[Q16]] — сравнение трёх типов модулей; [[Q38]] — стратегии миграции.
+
+## Q32. `Split packages`: почему запрещены в `JPMS` и как их устранить?
 
 **Split package** — ситуация, когда классы одного пакета (`com.example.util`) находятся в разных модулях одновременно. В `JPMS` это жёстко запрещено.
 
