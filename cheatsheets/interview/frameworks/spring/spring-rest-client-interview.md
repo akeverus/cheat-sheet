@@ -350,10 +350,68 @@ Optional<User> user = client.get()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Как обрабатывать ошибки в RestClient? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём принципиальное различие между `.retrieve()` и `.exchange()` в RestClient?
+>
+> ---
+>
+> #### A) `.retrieve()` синхронный, а `.exchange()` асинхронный — ❌ Неверно
+>
+> **Что на самом деле:** Оба метода **синхронные** — RestClient в принципе синхронный клиент. Разница не в синхронности, а в **уровне контроля**: `.retrieve()` — high-level, автоматическая обработка статусов и ошибок; `.exchange()` — low-level, ручной разбор `ClientHttpResponse`.
+>
+> **Откуда путаница:** В WebClient оба возвращают `Mono`, и кажется, что в RestClient может быть аналог. Но RestClient — это синхронная парадигма.
+>
+> **Если бы это было правдой:** `exchange((req, resp) -> ...)` возвращал бы `CompletableFuture` или `Mono`, а он возвращает прямо `T`.
+>
+> ---
+>
+> #### B) `.exchange()` не может читать тело ответа, только статус и заголовки — ❌ Неверно
+>
+> **Что на самом деле:** `.exchange()` получает `ConvertibleClientHttpResponse` с методом `.bodyTo(Class)`, `.bodyTo(ParameterizedTypeReference)` — читает тело так же гибко, как `.retrieve()`. Главное преимущество — доступ к телу **в зависимости от статуса**: можно прочитать только при 2xx, и пропустить при 404.
+>
+> **Откуда путаница:** В старом RestTemplate `exchange()` действительно возвращал `ResponseEntity<T>`, и был жёстко привязан к десериализации. В RestClient `.exchange()` гибче.
+>
+> **Если бы это было правдой:** Невозможно было бы реализовать паттерн «404 → Optional.empty(), 200 → Optional.of(body)» через `.exchange()` — а это его основной use-case.
+>
+> ---
+>
+> #### C) `.retrieve()` не выбрасывает исключений на 4xx/5xx — нужно проверять статус вручную — ❌ Неверно
+>
+> **Что на самом деле:** По умолчанию `.retrieve()` **автоматически** выбрасывает `HttpClientErrorException` для 4xx и `HttpServerErrorException` для 5xx. Это default-поведение для безопасности — нельзя «забыть проверить статус». Кастомизировать через `.onStatus(predicate, errorHandler)`.
+>
+> **Откуда путаница:** В некоторых других HTTP-библиотеках (например, OkHttp Response) ошибки не выбрасываются автоматически — паттерн переносят на Spring ошибочно.
+>
+> **Если бы это было правдой:** Документация Spring явно говорит обратное: «By default, ResponseSpec throws an exception when encountering a 4xx or 5xx response status».
+>
+> ---
+>
+> #### D) `.retrieve()` — short-circuit с auto-throw на ошибках; `.exchange()` — callback `(req, resp) → T` с полным контролем (status, headers, body, condition) — ✓ Верно
+>
+> **Развёрнутое объяснение:** `.retrieve()` подходит для 90% случаев: успешный 2xx → распарсить body, иначе исключение. `.exchange(BiFunction<HttpRequest, ConvertibleClientHttpResponse, T>)` даёт callback, в котором можно: проверить статус (`response.getStatusCode()`), прочитать заголовки (`response.getHeaders()`), условно распарсить тело (`response.bodyTo(...)`) или вернуть `null`/`Optional.empty()`, отдельно обработать конкретные коды без exception. Используется когда нужно отличать 404 от 500 в бизнес-логике, или когда схема ответа зависит от статуса.
+>
+> **Пример:**
+> ```java
+> // retrieve() — простой случай
+> User u = client.get().uri("/users/1").retrieve().body(User.class);
+>
+> // exchange() — 404 как Optional.empty
+> Optional<User> u = client.get().uri("/users/{id}", id)
+>     .exchange((req, resp) -> {
+>         if (resp.getStatusCode() == HttpStatus.NOT_FOUND)
+>             return Optional.empty();
+>         if (resp.getStatusCode().is2xxSuccessful())
+>             return Optional.of(resp.bodyTo(User.class));
+>         throw new ServiceException("Unexpected: " + resp.getStatusCode());
+>     });
+> ```
+>
+> **Когда применять:** `retrieve()` для default-флоу; `exchange()` когда тело зависит от статуса, нужны response headers, или нестандартная обработка ошибок без exception-flow.
+>
+> **Подводные камни:** В `exchange()` callback **обязан** прочитать response body или закрыть его — иначе connection leak. RestClient делает это автоматически после возврата из lambda, но в долгих обработках всё равно следить за ресурсами.
+>
+> **Связанные вопросы:** [[Q3]] — общая структура fluent API; [[Q5]] — `.onStatus()` для кастомных ошибок
+
+## Q5. Как обрабатывать ошибки в RestClient?
 
 ```java
 // onStatus — для конкретных кодов
@@ -386,10 +444,71 @@ RestClient client = RestClient.builder()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Как десериализовать коллекцию через RestClient? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как корректно обработать ошибки 4xx/5xx в RestClient, сохраняя бизнес-логику?
+>
+> ---
+>
+> #### A) Обернуть `.retrieve().body()` в try-catch и парсить статус из exception message — ❌ Неверно
+>
+> **Что на самом деле:** Парсинг exception message — fragile подход (тексты ошибок меняются между версиями Spring). Правильно: `HttpClientErrorException`/`HttpServerErrorException` имеют структурированный API: `.getStatusCode()`, `.getResponseBodyAsString()`, `.getResponseHeaders()`. Ещё лучше — `.onStatus()`, который преобразует ошибку до того, как она станет исключением Spring.
+>
+> **Откуда путаница:** Программисты привыкли к exceptions с string-based info, забывают про typed API.
+>
+> **Если бы это было правдой:** Любой апгрейд Spring мог бы сломать обработку ошибок, потому что message format не входит в API contract.
+>
+> ---
+>
+> #### B) Использовать `.exchange()` всегда — `.retrieve()` опасно из-за auto-throw — ❌ Неверно
+>
+> **Что на самом деле:** `.retrieve()` + `.onStatus()` — рекомендованный паттерн. Auto-throw это **фича**, не баг: не позволяет случайно проигнорировать ошибку. `.exchange()` нужен только для специфичных случаев (404 → Optional, response headers как часть бизнес-логики).
+>
+> **Откуда путаница:** Боязнь exceptions в hot path — но JVM exception cost amortized низок, и Spring exceptions используются как control flow в этом домене.
+>
+> **Если бы это было правдой:** Тонны boilerplate в каждом RestClient-вызове — что противоречит идее fluent DSL.
+>
+> ---
+>
+> #### C) Глобальный try-catch на уровне @ControllerAdvice — единственный правильный способ — ❌ Неверно
+>
+> **Что на самом деле:** @ControllerAdvice — для конвертации необработанных exceptions в HTTP-ответы вашего API. Но **до** него часто нужна локальная обработка: rate-limit (429) → retry с backoff, 404 → fallback на cache, 500 → circuit breaker. Это делается на уровне RestClient через `.onStatus()` или `.exchange()`.
+>
+> **Откуда путаница:** Глобальный handler — известный Spring паттерн, и кажется универсальным решением.
+>
+> **Если бы это было правдой:** Невозможны были бы паттерны Circuit Breaker, Retry, Bulkhead на уровне HTTP-клиента — а они стандарт для production.
+>
+> ---
+>
+> #### D) `.onStatus(predicate, errorHandler)` per-call, `.defaultStatusHandler()` global; HttpClientErrorException и HttpServerErrorException — typed exceptions с .getStatusCode() — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring предоставляет три слоя обработки ошибок: (1) **per-call**: `.onStatus(HttpStatusCode::is4xxClientError, (req, resp) -> throw new MyBusinessException(...))` — преобразует HTTP-статус в доменное исключение; (2) **builder-level**: `.defaultStatusHandler()` в `RestClient.builder()` — применяется ко всем запросам этого клиента; (3) **fallback**: если `.onStatus()` не покрыл — выбрасывается `RestClientResponseException` (родитель `HttpClientErrorException`/`HttpServerErrorException`/`UnknownContentTypeException`). У всех есть `.getStatusCode()`, `.getResponseBodyAsString()`, `.getResponseHeaders()`.
+>
+> **Пример:**
+> ```java
+> User user = client.get().uri("/users/{id}", id)
+>     .retrieve()
+>     .onStatus(s -> s.value() == 404,
+>         (req, resp) -> { throw new UserNotFoundException(id); })
+>     .onStatus(HttpStatusCode::is5xxServerError,
+>         (req, resp) -> { throw new ServiceUnavailableException(
+>             resp.getStatusCode() + ": " + new String(resp.getBody().readAllBytes())); })
+>     .body(User.class);
+>
+> // Global rate-limit handler
+> RestClient rc = RestClient.builder()
+>     .defaultStatusHandler(s -> s.value() == 429,
+>         (req, resp) -> { throw new RateLimitException(
+>             resp.getHeaders().getFirst("Retry-After")); })
+>     .build();
+> ```
+>
+> **Когда применять:** `.onStatus()` для конкретных кодов с бизнес-логикой; `.defaultStatusHandler()` для cross-cutting concerns (rate-limit, auth-refresh). Доменные exceptions ловить в @ControllerAdvice для финальной конвертации.
+>
+> **Подводные камни:** В `.onStatus()` handler **обязан** выбросить исключение или throw — нельзя «проглотить» ошибку и продолжить. Для возврата alternative-значения используйте `.exchange()`.
+>
+> **Связанные вопросы:** [[Q4]] — exchange для условной обработки; [[Q12]] — retry на уровне ClientHttpRequestFactory
+
+## Q6. Как десериализовать коллекцию через RestClient?
 
 Для `List<T>` нужен `ParameterizedTypeReference` — иначе стирание типов не позволит десериализовать правильно:
 
@@ -414,10 +533,76 @@ Map<String, Object> data = client.get().uri("/info")
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Когда использовать WebClient вместо RestClient? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему `.body(List<User>.class)` не работает и что использовать вместо этого?
+>
+> ---
+>
+> #### A) `List<User>.class` синтаксически корректен, но дольше работает чем `User[]` — ❌ Неверно
+>
+> **Что на самом деле:** `List<User>.class` — это **syntax error** в Java. Параметризованные generic типы нельзя превратить в `Class` literal из-за type erasure. Компилятор ругнётся ещё до production.
+>
+> **Откуда путаница:** В C# `typeof(List<User>)` работает (reified generics), и аналогию переносят в Java.
+>
+> **Если бы это было правдой:** Любой Java программист использовал бы `List<X>.class` в reflection — но такого кода нигде нет.
+>
+> ---
+>
+> #### B) Использовать `.body(List.class)` — Spring сам поймёт, что это `List<User>` по context — ❌ Неверно
+>
+> **Что на самом деле:** `.body(List.class)` вернёт `List<LinkedHashMap>` (Jackson default для unknown generic). Метод **не** знает целевой тип элементов — это and is exactly где **type erasure** теряет информацию. Без `ParameterizedTypeReference` Spring физически не может прочитать `<User>`.
+>
+> **Откуда путаница:** Spring часто «угадывает» правильное поведение, и это создаёт ложное ожидание.
+>
+> **Если бы это было правдой:** Не существовало бы `ParameterizedTypeReference` в Spring API.
+>
+> ---
+>
+> #### C) Десериализовать в `User[]` — массивы безопаснее List и быстрее — ❌ Частично верно, но не лучшее решение
+>
+> **Что на самом деле:** `User[].class` **работает** (массивы reified в Java), но это компромисс: теряете `List` API (`.stream()`, `.add()`, immutability), и при чтении больших коллекций массив требует contiguous memory. Стандарт — `ParameterizedTypeReference<List<User>>`. Массив только если API клиентского кода требует.
+>
+> **Откуда путаница:** Quick hack «обойти generics через массив» популярен, и кажется идиоматичным.
+>
+> **Если бы это было правдой:** Документация Spring рекомендовала бы массивы — но она рекомендует `ParameterizedTypeReference`.
+>
+> ---
+>
+> #### D) `.body(new ParameterizedTypeReference<List<User>>() {})` — anonymous subclass захватывает generic info через reflection — ✓ Верно
+>
+> **Развёрнутое объяснение:** `ParameterizedTypeReference` — паттерн «type token» из Guava, встроенный в Spring. Anonymous subclass (`new ParameterizedTypeReference<List<User>>() {}`) сохраняет generic parameters в `superclass` метаданных class-файла — Spring читает их через `getGenericSuperclass()`. Это единственный способ передать `Type` информацию через границы методов в Java. Работает для любых generic типов: `List<User>`, `Map<String, Object>`, `Page<Order>`, nested `Map<String, List<User>>`.
+>
+> **Пример:**
+> ```java
+> // List
+> List<User> users = client.get().uri("/users")
+>     .retrieve()
+>     .body(new ParameterizedTypeReference<List<User>>() {});
+>
+> // Java 11+: diamond операторы работают
+> List<User> users = client.get().uri("/users")
+>     .retrieve()
+>     .body(new ParameterizedTypeReference<>() {});  // компилятор выводит тип
+>
+> // Map
+> Map<String, Object> data = client.get().uri("/info")
+>     .retrieve()
+>     .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+>
+> // Spring Page<T>
+> Page<Order> page = client.get().uri("/orders?page=0&size=20")
+>     .retrieve()
+>     .body(new ParameterizedTypeReference<RestPage<Order>>() {});
+> // RestPage — custom subclass с @JsonCreator, т.к. Page интерфейс
+> ```
+>
+> **Когда применять:** Всегда когда возвращаемый тип — generic (List, Map, Page, Set, custom generic). Для single object достаточно `.body(User.class)`.
+>
+> **Подводные камни:** Anonymous class create new class per call site — не критично, но при экстремальном тюнинге можно вынести в static final. Spring `Page<T>` нельзя десериализовать напрямую — нужна `RestPage<T>` (custom с конструктором), потому что `Page` интерфейс.
+>
+> **Связанные вопросы:** [[Q3]] — общая структура RestClient; [[Q13]] — миграция с `RestTemplate.exchange(..., new ParameterizedTypeReference<>() {})`
+
+## Q7. (!) Когда использовать WebClient вместо RestClient?
 
 **RestClient** (синхронный):
 - Традиционные Spring MVC приложения (thread-per-request)
