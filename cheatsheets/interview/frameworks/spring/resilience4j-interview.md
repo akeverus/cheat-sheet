@@ -570,10 +570,72 @@ RateLimiterConfig config = RateLimiterConfig.custom()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Что такое Bulkhead и когда его использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что произойдёт в Spring Boot, если конфигурация RateLimiter описана в YAML, но имя в `@RateLimiter(name="...")` указано неправильно?
+>
+> ---
+>
+> #### A) Resilience4j создаст RateLimiter с дефолтами (`limit-for-period: 50`, `limit-refresh-period: 500ns`, `timeout-duration: 5s`) автоматически — ✓ Верно
+>
+> **Развёрнутое объяснение:** Resilience4j Spring Boot starter регистрирует `RateLimiterAutoConfiguration`, которая при первом обращении к несуществующему имени создаёт инстанс с глобальными дефолтами из `resilience4j.ratelimiter.configs.default` (если не определён — встроенные: 50 permits / 500ns / 5s wait). Это «forgiving» поведение — приложение стартует и работает, но с непреднамеренными лимитами.
+>
+> **Пример:**
+> ```yaml
+> resilience4j:
+>   ratelimiter:
+>     configs:
+>       default:                        # baseline для всех нерасшифрованных
+>         limit-for-period: 50
+>         limit-refresh-period: 500ms
+>         timeout-duration: 0
+>     instances:
+>       externalApi:
+>         base-config: default
+>         limit-for-period: 10          # override
+> ```
+> ```java
+> // typo: "externalApii" вместо "externalApi" — стартап OK, лимит = default!
+> @RateLimiter(name = "externalApii")
+> public String call() { ... }
+> ```
+>
+> **Когда применять:** в production обязательно определять `configs.default` явно с консервативными значениями, чтобы typo не превращался в неконтролируемый rate. Использовать `RateLimiterRegistry.getAllRateLimiters()` в startup-чеке для аудита, что все ожидаемые имена существуют.
+>
+> **Подводные камни:** дефолтные `500ns` и `50 permits` — это фактически «нет лимита» для большинства сценариев. Если положиться на default, можно случайно открыть downstream к перегрузке. Логи стартапа не предупреждают о typo.
+>
+> **Связанные вопросы:** [[Q10]] — алгоритм RateLimiter; [[Q17]] — Actuator метрики; [[Q20]] — ограничения аннотационного подхода
+>
+> ---
+>
+> #### B) Spring Boot выбросит `BeanCreationException` при старте, потому что не найден `RateLimiter` с указанным именем — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j НЕ валидирует имена при старте. Регистр lazy: инстанс создаётся при первом обращении (`registry.rateLimiter(name)`), с применением `configs.default` или встроенных дефолтов. Стартап успешный, ошибка не возникнет.
+>
+> **Откуда путаница:** Spring Bean validation действительно бросает ошибку при отсутствии бина. Кажется, что Resilience4j Registry работает так же.
+>
+> **Если бы это было правдой:** typo ловились бы на CI — но в реальности они проявляются только в проде, когда лимит срабатывает раньше ожидаемого (или не срабатывает совсем).
+>
+> ---
+>
+> #### C) Аннотация `@RateLimiter` игнорируется, метод выполняется без лимита — ❌ Неверно
+>
+> **Что на самом деле:** аннотация всегда применяется AOP-аспектом, если в classpath есть `resilience4j-spring-boot3` + `spring-boot-starter-aop`. Просто создаётся новый RateLimiter с дефолтами, а не игнорируется.
+>
+> **Откуда путаница:** в Hystrix без явного registration команд аннотация частично могла «не работать». В Resilience4j механизм другой — Registry lazy-load.
+>
+> **Если бы это было правдой:** под нагрузкой downstream получал бы 100% RPS без всякой защиты — но мониторинг показывает применение rate-limit с дефолтными значениями (видно в Micrometer-метриках).
+>
+> ---
+>
+> #### D) Resilience4j подтянет имя из ближайшего совпадающего по Левенштейну инстанса в YAML — ❌ Неверно
+>
+> **Что на самом деле:** никакой fuzzy-matching не существует. Имя сравнивается строго через `Map.get(name)`. Не найдено — создаётся новый с default-конфигом.
+>
+> **Откуда путаница:** некоторые библиотеки IoC (Spring, Guice) умеют primary/qualifier fallback. Это путают с rate-limiter-конфигом.
+>
+> **Если бы это было правдой:** debugging типа «почему ratelimiter externalApii применяет лимит из externalApi» был бы кошмаром — конфиги «склеивались» бы по похожести имени.
+
+## Q12. (!) Что такое Bulkhead и когда его использовать?
 
 `Bulkhead` (переборка) — паттерн изоляции ресурсов: каждый downstream получает ограниченный пул потоков или семафоров, чтобы сбой одного не "утопил" весь сервис.
 
@@ -591,10 +653,68 @@ RateLimiterConfig config = RateLimiterConfig.custom()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Какие типы Bulkhead поддерживает Resilience4j? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое паттерн Bulkhead, и какую проблему он решает, чего НЕ решает CircuitBreaker?
+>
+> ---
+>
+> #### A) Bulkhead — это синоним CircuitBreaker, разные имена одного паттерна в разных библиотеках — ❌ Неверно
+>
+> **Что на самом деле:** это разные паттерны. CircuitBreaker отслеживает **failure rate** и переходит в OPEN, чтобы быстро отказывать ВСЕМ запросам когда downstream нездоров. Bulkhead ограничивает **concurrency** — сколько одновременных вызовов разрешено к downstream, чтобы один медленный сервис не съел все треды caller'а. CircuitBreaker реагирует на ошибки, Bulkhead — на параллелизм.
+>
+> **Откуда путаница:** оба паттерна — «способы изоляции от плохого downstream». В Hystrix они были тесно связаны (Bulkhead был частью Command). В Resilience4j это отдельные модули.
+>
+> **Если бы это было правдой:** не было бы инцидентов «cascading failure»: CircuitBreaker НЕ защищает от ситуации, когда downstream **медленный, но не падает** (запросы висят, треды накапливаются). Это классический сценарий, где нужен именно Bulkhead.
+>
+> ---
+>
+> #### B) Изоляция concurrency: ограничивает число одновременных вызовов к одному downstream (semaphore или dedicated thread pool); защищает caller от истощения thread pool, когда downstream завис, но не упал — ✓ Верно
+>
+> **Развёрнутое объяснение:** Bulkhead — это переборка (метафора корабля): даже если один отсек затоплен, корабль остаётся на плаву. В микросервисах: caller имеет 200 Tomcat-тредов; downstream-A висит на 30 секунд (TCP-стек open, ответ не приходит). Без Bulkhead все 200 тредов забиваются ожиданием A → callers к B и C тоже падают (cascade). С Bulkhead `maxConcurrentCalls=20` для A — максимум 20 тредов «съест» A, остальные 180 свободны для B и C; новые вызовы A моментально получают `BulkheadFullException`.
+>
+> **Пример:**
+> ```yaml
+> resilience4j:
+>   bulkhead:
+>     instances:
+>       slowInventoryApi:
+>         max-concurrent-calls: 20
+>         max-wait-duration: 100ms      # ждать слот 100ms
+> ```
+> ```java
+> @Bulkhead(name = "slowInventoryApi", fallbackMethod = "cached")
+> public Stock check(Long sku) {
+>     return inventoryClient.check(sku); // зависающий downstream
+> }
+> ```
+>
+> **Когда применять:** при множественных downstream с разной надёжностью (несколько внешних API); при асинхронных задачах с разным SLA; когда нужна изоляция «потоков SLA» (premium vs standard customers). Netflix, Booking, ING активно используют Bulkhead.
+>
+> **Подводные камни:** SEMAPHORE Bulkhead НЕ прерывает уже стартовавший вызов — если downstream висит 30s, тред caller'а тоже висит 30s. Чтобы отрезать долгие вызовы, нужен `TimeLimiter` сверху (только для async). THREADPOOL Bulkhead может вернуть тред, но требует CompletableFuture.
+>
+> **Связанные вопросы:** [[Q13]] — SEMAPHORE vs THREADPOOL; [[Q14]] — комбинирование с TimeLimiter; [[Q15]] — порядок аспектов в цепочке
+>
+> ---
+>
+> #### C) Bulkhead отвергает запросы на основе **failure rate** последних N вызовов — ❌ Неверно
+>
+> **Что на самом деле:** failure rate отслеживает CircuitBreaker, не Bulkhead. Bulkhead отвергает по числу одновременно активных вызовов, без оглядки на успех/неуспех.
+>
+> **Откуда путаница:** оба паттерна выбрасывают исключения (`CallNotPermittedException` от CB, `BulkheadFullException` от Bulkhead). Кажется, что критерии похожи.
+>
+> **Если бы это было правдой:** Bulkhead не помогал бы при «slow but successful» сценарии — а это его главный use-case. CircuitBreaker не сработает: метрики говорят, что вызовы успешны (просто медленные), failure rate = 0%.
+>
+> ---
+>
+> #### D) Bulkhead применяется только к синхронным методам и не имеет async-варианта — ❌ Неверно
+>
+> **Что на самом деле:** Resilience4j предоставляет два варианта: `Bulkhead` (semaphore, для sync) и `ThreadPoolBulkhead` (для async через `CompletableFuture`). Оба настраиваются через `@Bulkhead(type=...)`. ThreadPoolBulkhead — единственный способ дать BOTH изоляцию И прерывание долгих вызовов.
+>
+> **Откуда путаница:** semaphore-based Bulkhead — default в Resilience4j (раньше — наоборот в Hystrix). Многие первым видят именно его.
+>
+> **Если бы это было правдой:** reactive-стек (WebFlux + Reactor) был бы лишён Bulkhead — но фактически Resilience4j предоставляет `BulkheadOperator` для Mono/Flux.
+
+## Q13. Какие типы Bulkhead поддерживает Resilience4j?
 
 | Тип | Механизм | Использование |
 |---|---|---|
@@ -638,10 +758,77 @@ public CompletableFuture<String> asyncCall() {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Когда нужен TimeLimiter? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В чём ключевая разница между SEMAPHORE и THREADPOOL типами Bulkhead, и когда выбирать каждый?
+>
+> ---
+>
+> #### A) SEMAPHORE — для асинхронных вызовов, THREADPOOL — для синхронных — ❌ Неверно
+>
+> **Что на самом деле:** строго наоборот. `SEMAPHORE` (default) — для **синхронных** вызовов, выполняется в текущем треде caller'а, использует `java.util.concurrent.Semaphore` для счётчика. `THREADPOOL` — для **асинхронных** вызовов, делегирует выполнение dedicated `ExecutorService`, возвращает `CompletableFuture`.
+>
+> **Откуда путаница:** в Hystrix THREADPOOL был default'ом и многие ассоциируют thread pool с «правильным изолированным async». Resilience4j изменил подход.
+>
+> **Если бы это было правдой:** SEMAPHORE Bulkhead на синхронном методе создавал бы CompletableFuture без причины — overhead на каждый вызов, нет смысла.
+>
+> ---
+>
+> #### B) THREADPOOL Bulkhead применяется только для CPU-intensive задач (изоляция CPU), для I/O он бесполезен — ❌ Неверно
+>
+> **Что на самом деле:** THREADPOOL Bulkhead создан именно для **I/O-bound** задач (HTTP-вызовы к external API). Изоляция CPU обычно решается через настройку JVM/Tomcat thread pool. THREADPOOL даёт два преимущества: (1) caller-тред освобождается сразу после `submit()`, (2) можно прервать вызов (через `Future.cancel(true)`).
+>
+> **Откуда путаница:** в общей теории «отдельный пул потоков для CPU-bound» — общеизвестная практика. К Bulkhead это не относится.
+>
+> **Если бы это было правдой:** Hystrix THREADPOOL никогда бы не применялся для HTTP-клиентов — а это был его основной use-case в Netflix.
+>
+> ---
+>
+> #### C) Между SEMAPHORE и THREADPOOL нет разницы — оба используют семафор внутри, имена сохранены для backward-compatibility — ❌ Неверно
+>
+> **Что на самом деле:** механизмы принципиально разные. SEMAPHORE — счётчик permits, никаких новых тредов. THREADPOOL — реальный `ThreadPoolExecutor` с `core-thread-pool-size`, `max-thread-pool-size`, `queue-capacity`. У них даже разные YAML-секции: `resilience4j.bulkhead.*` и `resilience4j.thread-pool-bulkhead.*`.
+>
+> **Откуда путаница:** аннотация одна — `@Bulkhead(type=...)`. Это создаёт иллюзию «параметр-флажок».
+>
+> **Если бы это было правдой:** не было бы возможности освободить caller-тред — а это главная фича THREADPOOL.
+>
+> ---
+>
+> #### D) SEMAPHORE: счётчик permits, sync, лёгкий, caller-тред блокируется → когда нужна изоляция concurrency без overhead. THREADPOOL: dedicated `ExecutorService`, async (`CompletableFuture`), caller-тред свободен сразу → когда нужно прерывать долгие вызовы или освобождать Tomcat-треды — ✓ Верно
+>
+> **Развёрнутое объяснение:** SEMAPHORE подходит когда вызовы быстрые (<100ms) и важна low-latency: нет переключения контекста, нет передачи задачи в другой пул. THREADPOOL — когда вызовы могут зависнуть, и нужно: (а) гарантированно отпустить request-тред Tomcat'а, (б) интегрироваться с TimeLimiter для прерывания. THREADPOOL даёт честную изоляцию (свой пул), но добавляет ~10-50µs overhead на context switch + потерю ThreadLocal/MDC, если не настроен `ContextPropagator`.
+>
+> **Пример:**
+> ```yaml
+> resilience4j:
+>   bulkhead:                          # SEMAPHORE
+>     instances:
+>       fastApi:
+>         max-concurrent-calls: 50
+>         max-wait-duration: 50ms
+>   thread-pool-bulkhead:              # THREADPOOL
+>     instances:
+>       slowExternalApi:
+>         max-thread-pool-size: 20
+>         core-thread-pool-size: 10
+>         queue-capacity: 50
+> ```
+> ```java
+> @Bulkhead(name = "fastApi", type = Bulkhead.Type.SEMAPHORE)
+> public Stock check(Long sku) { ... }
+>
+> @Bulkhead(name = "slowExternalApi", type = Bulkhead.Type.THREADPOOL)
+> public CompletableFuture<Report> generate() {
+>     return CompletableFuture.supplyAsync(() -> externalApi.generate());
+> }
+> ```
+>
+> **Когда применять:** SEMAPHORE — для in-memory сервисов, in-cluster gRPC; THREADPOOL — для slow external API (third-party report generation, OCR, ML inference). Netflix Hystrix исторически использовал THREADPOOL для всех вызовов; Resilience4j-сообщество чаще выбирает SEMAPHORE по умолчанию.
+>
+> **Подводные камни:** THREADPOOL ломает `ThreadLocal` (Spring Security context, MDC для логов, transaction context). Нужен `ContextPropagator` для пробрасывания. SEMAPHORE не умеет прерывать вызов — нужен TimeLimiter сверху, который работает только с async.
+>
+> **Связанные вопросы:** [[Q12]] — концепция Bulkhead; [[Q14]] — TimeLimiter для прерывания; [[Q15]] — порядок аспектов
+
+## Q14. Когда нужен TimeLimiter?
 
 `TimeLimiter` устанавливает timeout для **асинхронных** вызовов (`CompletableFuture`, `Mono`, `Flux`). Для синхронных вызовов используй `CircuitBreaker.slowCallDurationThreshold`.
 
