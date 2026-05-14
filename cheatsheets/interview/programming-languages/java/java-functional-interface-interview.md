@@ -1063,10 +1063,114 @@ List<String> nonEmpty = list.stream()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Что такое примитивные специализации функциональных интерфейсов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Имеют ли методы `and()`, `or()` в `Predicate<T>` поведение **short-circuit** (не вычислять правый операнд если результат уже определён)?
+>
+> ---
+>
+> #### A) Нет, всегда вычисляются оба предиката — это последовательное логическое сложение/умножение — ❌ Неверно
+>
+> **Что на самом деле:** `Predicate.and()` и `Predicate.or()` точно повторяют семантику `&&` и `||`: **short-circuit** evaluation. В `p.and(q)`: если `p.test(x)` вернул `false` — `q.test(x)` НЕ вызывается. В `p.or(q)`: если `p.test(x)` вернул `true` — `q.test(x)` НЕ вызывается.
+>
+> **Откуда путаница:** возможно ассоциация с `&` и `|` (без short-circuit, побитовые/eager логические). Но Java `Predicate` использует именно `&&` и `||` в default-реализациях.
+>
+> **Если бы это было правдой:** дорогие предикаты в `.and(...)` всегда вычислялись бы — это убило бы производительность. Реально это критично для фильтров типа `cheapCheck.and(expensiveDbLookup)`.
+>
+> ---
+>
+> #### B) Да, `and` и `or` используют `&&`/`||` в default-методах: для `and` правый не вычисляется если левый false; для `or` — если левый true — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Реализация в JDK (`java.util.function.Predicate`):
+> ```java
+> default Predicate<T> and(Predicate<? super T> other) {
+>     Objects.requireNonNull(other);
+>     return (t) -> test(t) && other.test(t);  // && — short-circuit
+> }
+> default Predicate<T> or(Predicate<? super T> other) {
+>     Objects.requireNonNull(other);
+>     return (t) -> test(t) || other.test(t);  // || — short-circuit
+> }
+> default Predicate<T> negate() {
+>     return (t) -> !test(t);
+> }
+> ```
+>
+> Это позволяет ставить **дешёвые** предикаты первыми, **дорогие** — последними:
+> ```java
+> Predicate<User> isActive = u -> u.isActive();          // O(1)
+> Predicate<User> hasOrders = u -> orderDb.hasOrders(u); // DB query
+>
+> // Правильный порядок — дешёвый первый:
+> users.stream().filter(isActive.and(hasOrders))
+>     // Если user не active, hasOrders НЕ вызывается → no DB query
+>
+> // Неправильный — дорогой первый:
+> users.stream().filter(hasOrders.and(isActive))
+>     // Каждый user проходит DB query, даже неактивные
+> ```
+>
+> **Пример:**
+> ```java
+> Predicate<String> notEmpty = s -> !s.isEmpty();
+> Predicate<String> startsWithA = s -> s.startsWith("A");
+> Predicate<String> longEnough = s -> s.length() > 5;
+>
+> // Композиция:
+> Predicate<String> valid = notEmpty.and(startsWithA).and(longEnough);
+> valid.test("Alice");    // notEmpty=true → startsWithA=true → longEnough=false → false
+> valid.test("");         // notEmpty=false → остальные НЕ вычисляются → false
+>
+> // negate:
+> Predicate<String> isEmpty = notEmpty.negate();
+> isEmpty.test("");       // true
+>
+> // Java 11+: Predicate.not (static), удобнее с method references:
+> List<String> nonEmpty = list.stream()
+>     .filter(Predicate.not(String::isEmpty))
+>     .collect(Collectors.toList());
+>
+> // Цепочка ассоциативна:
+> Predicate<User> filter = isAdult.and(hasEmail).and(isVerified).or(isAdmin);
+> // Эквивалентно: ((isAdult AND hasEmail) AND isVerified) OR isAdmin
+> ```
+>
+> **Когда применять:**
+> - **Stream filter** с несколькими условиями: чище чем длинная лямбда.
+> - **Бизнес-валидация**: композиция «правил» через `.and()` создаёт читаемые цепочки.
+> - **Performance optimization**: помещайте быстрые предикаты первыми — short-circuit спасает циклы CPU.
+> - **`Predicate.not()`** (Java 11+) вместо `.negate()` если хочется static-метод: `.filter(Predicate.not(String::isBlank))`.
+>
+> **Подводные камни:**
+> - **NullPointerException на null аргументе**: `p.and(null)` бросает NPE сразу (через `requireNonNull` в default-методе).
+> - **Side effects в predicate'е**: если predicate имеет побочные эффекты (логирование!), short-circuit меняет наблюдаемое поведение. Логирование пропусков может «исчезать».
+> - **Ассоциативность**: `p1.and(p2).or(p3)` это `(p1 AND p2) OR p3`, не `p1 AND (p2 OR p3)`. Скобки в лямбде важны: `.and(p2.or(p3))` явно меняет порядок.
+> - **Type variance**: `Predicate.and(Predicate<? super T>)` — можно компонировать с predicate более общего типа. Это позволяет `Predicate<Number>` + `Predicate<Object>` → `Predicate<Number>`.
+>
+> **Связанные вопросы:** [[Q9]] — compose/andThen в Function; [[Q4]] — Predicate среди стандартных интерфейсов; [[Q11]] — IntPredicate/LongPredicate специализации.
+>
+> ---
+>
+> #### C) `and()` — short-circuit, `or()` — нет (всегда вычисляет оба для логической полноты) — ❌ Неверно
+>
+> **Что на самом деле:** оба метода используют short-circuit. `or` короткозамыкается на `true`, `and` — на `false`. Это симметрично и одинаково для всех булевых операторов в Java.
+>
+> **Откуда путаница:** возможно неверная интуиция «OR должен проверить оба варианта чтобы быть честным». Но и `&&`, и `||` short-circuit с самого Java 1.0.
+>
+> **Если бы это было правдой:** `nullCheck.or(callOnObject)` в Java не сработал бы как защита от NPE: вызвался бы `callOnObject` даже если `nullCheck=true`. На деле классический pattern `x == null || x.isValid()` работает именно потому что `||` short-circuits.
+>
+> ---
+>
+> #### D) `and` и `or` поддерживают short-circuit только для primitive specializations (`IntPredicate.and`); generic `Predicate` — eager — ❌ Неверно
+>
+> **Что на самом деле:** реализация одинакова для `Predicate<T>` и `IntPredicate`/`LongPredicate`/`DoublePredicate`. Все используют `&&`/`||` в default-методе. Источник — Java SE Javadoc/исходник OpenJDK.
+>
+> **Откуда путаница:** иногда кажется что примитивные специализации имеют другие правила (быстрее, JIT-friendly). Но семантика идентична.
+>
+> **Если бы это было правдой:** оптимизации производительности зависели бы от типа Predicate, что было бы аномалией в API дизайне.
+
+## Q11. Что такое примитивные специализации функциональных интерфейсов?
 
 Стандартные интерфейсы работают с объектами → boxing/unboxing при работе с `int`, `long`, `double`. Примитивные специализации избегают этого.
 
@@ -1094,10 +1198,93 @@ IntStream.range(0, 1000).map(squareInt).sum();
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Что значит effectively final для переменных в лямбде? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему в hot-path коде с `IntStream` лучше использовать `IntUnaryOperator` вместо `Function<Integer, Integer>`?
+>
+> ---
+>
+> #### A) `Function<Integer, Integer>` создаёт boxing/unboxing на каждом вызове: int → Integer → int — это аллокации и GC pressure; `IntUnaryOperator` работает с примитивами напрямую — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `Function<T, R>` — generic интерфейс с `R apply(T t)`. Generic'и в Java реализованы через **type erasure**: на runtime это `Function<Object, Object>`, оперирующая ссылками. Для `int` это значит autoboxing: каждый `apply(intValue)` создаёт `Integer.valueOf(intValue)` (или достаёт из кеша для маленьких значений), затем результат `Integer` распаковывается обратно через `intValue()`.
+>
+> `IntUnaryOperator` — специализация: `int applyAsInt(int operand)`. Никакого boxing, JVM работает с примитивами напрямую — это эффективно сразу и даёт JIT больше возможностей для inline'инга и SIMD-оптимизаций.
+>
+> На бенчмарках разница для tight loops может быть 3-10× по latency и значительная GC pressure для большого объёма данных (миллионы элементов).
+>
+> **Пример:**
+> ```java
+> // Плохо: boxing на каждом элементе
+> Function<Integer, Integer> squareBoxed = x -> x * x;
+> int sum = IntStream.range(0, 1_000_000)
+>     .boxed()                              // int → Integer (1M аллокаций)
+>     .map(squareBoxed)                     // Integer.intValue + boxing back
+>     .mapToInt(Integer::intValue)          // ещё unboxing
+>     .sum();
+>
+> // Хорошо: no boxing
+> IntUnaryOperator square = x -> x * x;
+> int sumFast = IntStream.range(0, 1_000_000)
+>     .map(square)                          // примитивы → примитивы
+>     .sum();
+>
+> // Семейство примитивных специализаций:
+> IntPredicate evens = x -> x % 2 == 0;
+> IntConsumer printer = System.out::println;        // void accept(int)
+> IntSupplier random = () -> ThreadLocalRandom.current().nextInt(100);
+> IntFunction<String> toHex = Integer::toHexString; // int → R (boxing для R только если R = тип-обёртка)
+> ToIntFunction<String> length = String::length;    // T → int
+> IntToLongFunction widen = x -> (long) x * 1000;
+> IntBinaryOperator add = Integer::sum;             // BiFunction<int, int, int>
+> ```
+>
+> **Когда применять:**
+> - **IntStream/LongStream/DoubleStream** — все методы принимают примитивные специализации (`.map(IntUnaryOperator)`, `.filter(IntPredicate)`).
+> - **Численные вычисления** на больших массивах — финансовые расчёты, ML, image processing.
+> - **Hot loops** с миллионами итераций — boxing убивает throughput.
+> - **API design**: если ваш интерфейс работает с числами — лучше предоставить примитивную версию рядом с generic.
+>
+> **Подводные камни:**
+> - **Integer cache**: для значений -128..127 `Integer.valueOf(i)` возвращает кэшированные объекты — boxing для них дешевле. Но всё равно есть overhead vs прямой примитив.
+> - **Только Int/Long/Double**: остальные примитивы (`byte`, `short`, `float`, `char`, `boolean`) специализаций НЕ имеют. Для `byte` используют int-специализации с приведением.
+> - **API limitations**: `IntStream.flatMap` принимает `IntFunction<? extends IntStream>` — нет «BiIntFunction», некоторые комбинации недоступны.
+> - **Generic совместимость**: `IntFunction<R>` (int → R) и `ToIntFunction<T>` (T → int) — разные интерфейсы. Не путайте.
+> - **Composition**: `IntUnaryOperator.andThen(IntUnaryOperator)` есть, но composition между разными специализациями (например, `IntUnaryOperator` + `LongUnaryOperator`) — сложнее, иногда нужны явные приведения.
+>
+> **Связанные вопросы:** [[Q4]] — generic функциональные интерфейсы; [[Q5]] — Consumer vs Supplier; [[Q9]] — composition.
+>
+> ---
+>
+> #### B) `IntUnaryOperator` быстрее потому что использует SIMD-инструкции автоматически — ❌ Неверно
+>
+> **Что на самом деле:** SIMD-оптимизации (auto-vectorization) — это работа JIT-компилятора (C2/Graal) на bytecode-уровне. Они применяются к любому коду, удовлетворяющему условиям (отсутствие данных-зависимостей, простые операции). `IntUnaryOperator` не «использует SIMD автоматически» — но **позволяет JIT** легче применять SIMD из-за отсутствия boxing.
+>
+> **Откуда путаница:** связь «примитивы → SIMD» есть, но не прямая. SIMD появляется при удачных условиях, не гарантирован.
+>
+> **Если бы это было правдой:** все коды на примитивах в Java были бы безусловно SIMD'нуты — реально это редкая оптимизация, требующая Vector API (preview).
+>
+> ---
+>
+> #### C) Java запрещает использовать `Function<Integer, Integer>` в IntStream — это compile error — ❌ Неверно
+>
+> **Что на самом деле:** `Function<Integer, Integer>` можно использовать в Stream<Integer>, но НЕ в IntStream (последний требует именно `IntUnaryOperator`). Это не «запрет», а несовместимость сигнатур. И через `.boxed()` можно перейти от IntStream к Stream<Integer>.
+>
+> **Откуда путаница:** ограничение есть, но это просто API design, не запрет.
+>
+> **Если бы это было правдой:** `IntStream.range(0,10).boxed().map(Function<Integer,Integer>)` не работал бы — но это идиоматичный паттерн.
+>
+> ---
+>
+> #### D) `IntUnaryOperator` использует меньше памяти под объект-лямбду (16 байт vs 32 байт у Function) — ❌ Неверно
+>
+> **Что на самом деле:** объект лямбды одинакового размера (определяется LambdaMetafactory и invokedynamic, не generic параметрами). Экономия — в **отсутствии аллокаций Integer-объектов на каждый apply()**, а не в размере самой лямбды.
+>
+> **Откуда путаница:** интуитивно «специализированный = меньше» — но это про другую часть. Главное — устранение boxing-аллокаций на горячем пути.
+>
+> **Если бы это было правдой:** разница была бы фиксированной (16 байт), независимо от объёма данных. Реальная разница пропорциональна числу элементов (1M элементов → 1M аллокаций boxing).
+
+## Q12. Что значит effectively final для переменных в лямбде?
 
 Переменные из внешней области видимости, используемые в лямбде, должны быть `final` или **effectively final** (не изменяться после инициализации).
 
