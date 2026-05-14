@@ -2375,10 +2375,121 @@ POST /graphql
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. (!) Стратегии версионирования API через Gateway ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Чем Apollo Federation лучше Schema Stitching, и почему стандартный rate limiting не работает для GraphQL?
+>
+> ---
+>
+> #### A) Federation использует HTTP/2, Stitching — HTTP/1.1, поэтому Federation быстрее — ❌ Неверно
+>
+> **Что на самом деле:** оба используют HTTP/HTTPS для transport, протокол одинаков. Разница — **в архитектурной модели**:
+> - **Schema Stitching**: Gateway знает схемы всех сервисов, объединяет их в `mergedSchema`. Gateway — координирующий компонент с deep knowledge.
+> - **Apollo Federation**: каждый сервис **публикует свой подграф** с `@key`/`@external`/`@requires` директивами. Gateway/Router строит query plan на основе метаданных, не зная внутренних схем.
+>
+> **Откуда путаница:** «новее = быстрее» — частая ассоциация. Federation действительно более масштабируем (по developer experience), но не на transport level.
+>
+> **Если бы это было правдой:** Federation работал бы только с HTTP/2-enabled backend'ами. На практике Federation поверх HTTP/1.1 работает, просто медленнее по latency.
+>
+> ---
+>
+> #### B) Apollo Federation даёт каждому сервису владение своей частью схемы через `@key` директивы; Gateway-router композирует query plan на основе схемы-метаданных; для GraphQL rate limiting нужен query complexity scoring (не по RPS) потому что один запрос может быть тяжелее тысячи простых — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Schema Stitching — старый подход, где Gateway видит **все схемы целиком**, merge их, и при каждом query вручную разруливает к нужным сервисам. Проблемы: tight coupling (Gateway знает внутренние схемы), хрупкость при изменениях, сложная отладка.
+>
+> Apollo Federation (v2, 2022) меняет модель:
+> - **Subgraph** — каждый сервис экспортирует свою часть схемы с спец-директивами:
+>   - `@key(fields: "id")` — «здесь живёт entity с этим ключом»
+>   - `@external` — «поле определено в другом subgraph»
+>   - `@requires(fields: "...")` — «мне нужно это поле от другого subgraph»
+> - **Supergraph** — композиция всех subgraph через Apollo Studio/Rover CLI.
+> - **Apollo Router** (Rust) или Apollo Gateway (Node.js) — выполняет query, делегируя к subgraph через generated `_entities` queries.
+>
+> **Пример (Federation):**
+> ```graphql
+> # UserService — subgraph
+> type User @key(fields: "id") {
+>     id: ID!
+>     name: String!
+>     email: String!
+> }
+>
+> # OrderService — subgraph (ссылается на User)
+> type Order @key(fields: "id") {
+>     id: ID!
+>     total: Float!
+>     user: User
+> }
+>
+> type User @key(fields: "id") @extends {
+>     id: ID! @external
+>     orders: [Order]                  # OrderService добавляет поле к User
+> }
+> ```
+>
+> При запросе `{ order(id: 1) { user { name } } }` Apollo Router строит план:
+> 1. → OrderService: `order(id: 1) { id, total, user { id } }` (получаем `user.id`)
+> 2. → UserService: `_entities(representations: [{__typename: User, id: 42}]) { ... on User { name } }`
+> 3. Merge: возвращает `{ id: 1, total: ..., user: { id: 42, name: "Alice" } }`
+>
+> **Rate limiting для GraphQL — почему не RPS:**
+> Один запрос может быть тривиальным (`{ me { id } }`) или катастрофически тяжёлым (`{ users { orders { items { product { reviews { user { orders { ... } } } } } } } }` — exponential blow-up). RPS-based rate limiting не различает их.
+>
+> Решение — **query complexity scoring**: каждому полю присваивается вес, общая сумма не должна превышать budget.
+>
+> ```java
+> // graphql-java
+> .instrumentation(new MaxQueryComplexityInstrumentation(1000))
+> .instrumentation(new MaxQueryDepthInstrumentation(10))
+>
+> // Кастомный complexity:
+> static class FieldComplexity implements FieldComplexityCalculator {
+>     public int calculate(FieldComplexityEnvironment env, int childComplexity) {
+>         int multiplier = env.getArguments().getOrDefault("first", 1);
+>         return multiplier * (1 + childComplexity);
+>     }
+> }
+> ```
+>
+> Или **persisted queries**: клиент шлёт hash (`{"id": "abc123"}`), Gateway проксирует cached query. Запрещает arbitrary queries в production.
+>
+> **Когда применять:**
+> - **Apollo Federation** для микросервисов с GraphQL: каждая команда владеет своим subgraph, Apollo Studio CI/CD проверяет breaking changes в supergraph composition.
+> - **Schema Stitching** — legacy, не для новых проектов. Apollo deprecated stitching в пользу Federation.
+> - **Query complexity rate limiting**: GitHub GraphQL API, Shopify Admin API, Yelp Fusion — для public API с unpredictable nesting.
+> - **Persisted queries**: mobile clients где список запросов известен заранее; build-time generation hash из codegen.
+>
+> **Подводные камни:**
+> - **`@key` requires composite indexing**: GraphQL ↔ database mapping должен поддерживать lookup по ключу. Если ключ не индексирован — N+1 на database.
+> - **N+1 проблема между subgraph**: `_entities` query вызывается batched (batch by `__typename`), но всё равно дополнительный round-trip к subgraph. DataLoader в subgraph для batching.
+> - **Schema composition errors**: при breaking changes (изменение типа поля, удаление `@key`) Apollo Studio CI должен блокировать deploy. Без этого supergraph ломается.
+> - **Query complexity manual scoring**: автоматически считать сложность через AST traversal легко, но веса полей нужно настраивать вручную — иначе либо false positives, либо реальные thundering herds.
+> - **Federation v1 vs v2**: разные синтаксисы директив, миграция через `extend type` → `@key` непростая.
+>
+> **Связанные вопросы:** [[Q1]] — GraphQL единственный endpoint vs REST many endpoints; [[Q12]] — auth для GraphQL queries; [[Q15]] — кэширование GraphQL queries проблемнее REST.
+>
+> ---
+>
+> #### C) GraphQL не нужен Gateway — клиент напрямую обращается к каждому сервису — ❌ Неверно
+>
+> **Что на самом деле:** один из главных бенефитов GraphQL — **единая точка входа**, чтобы клиент не координировал N сервисов сам. Без Gateway/Router клиенту пришлось бы делать `M` запросов на `M` сервисов плюс merge — что нивелирует value GraphQL.
+>
+> **Откуда путаница:** децентрализованный подход «каждый сервис свой endpoint» — REST-стиль. GraphQL specifically design about единого endpoint.
+>
+> **Если бы это было правдой:** GraphQL не нужен был бы вообще — REST endpoints одинаково хорошо работают на multi-service. Реальный value GraphQL — одна gateway-точка с гибкой композицией.
+>
+> ---
+>
+> #### D) Schema Stitching работает только с PostgreSQL — ❌ Неверно
+>
+> **Что на самом деле:** Schema Stitching/Federation — это о **GraphQL композиции**, не о storage. Backend может быть любым (PostgreSQL, MongoDB, REST API, gRPC, third-party APIs). Каждый subgraph сам определяет как получать данные.
+>
+> **Откуда путаница:** в туториалах GraphQL часто PostgreSQL. На деле GraphQL — over-layer над любым data source.
+>
+> **Если бы это было правдой:** GraphQL не работал бы с MongoDB/DynamoDB/external APIs. Реально федерация over heterogeneous backends — норма.
+
+## Q37. (!) Стратегии версионирования API через Gateway
 
 ### 1. URI Versioning
 
