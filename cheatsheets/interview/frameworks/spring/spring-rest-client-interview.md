@@ -14,7 +14,7 @@ aliases:
 prerequisites:
   - "[[spring-rest]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: `Spring REST Clients`
 
@@ -963,10 +963,88 @@ public interface SearchClient {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как подключить @HttpExchange к RestClient vs WebClient? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие аннотации параметров поддерживает `@HttpExchange` интерфейс?
+>
+> ---
+>
+> #### A) Только `@PathVariable` и `@RequestBody` — это minimal API — ❌ Неверно
+>
+> **Что на самом деле:** `@HttpExchange` поддерживает полный набор: `@PathVariable`, `@RequestParam`, `@RequestHeader`, `@RequestBody`, `@CookieValue`, `@RequestPart` (multipart), `@RequestAttribute`, плюс «специальные» параметры — `URI`, `HttpMethod`, `MultiValueMap<String, String>` (для form data). Полнее, чем у Feign, потому что переиспользует инфраструктуру Spring MVC argument resolvers.
+>
+> **Откуда путаница:** В простых примерах из туториалов часто только `@PathVariable` и `@RequestBody`.
+>
+> **Если бы это было правдой:** Невозможно было бы передать query params или headers, что делало бы клиент неюзабельным для большинства API.
+>
+> ---
+>
+> #### B) Все аннотации @RequestParam становятся path variables — ❌ Неверно
+>
+> **Что на самом деле:** Они принципиально разные: `@RequestParam` → query string (`?role=admin`), `@PathVariable` → подстановка в URL path (`/users/{id}` → `/users/42`). Spring различает их по аннотации, не «всё подставляет в URL».
+>
+> **Откуда путаница:** Оба «попадают в URL», и кажется, что они эквивалентны.
+>
+> **Если бы это было правдой:** Невозможно было бы передать query параметры в @HttpExchange — но это нормально работает.
+>
+> ---
+>
+> #### C) Заголовки нельзя передать через параметры — только через builder.defaultHeader() — ❌ Неверно
+>
+> **Что на самом деле:** `@RequestHeader("X-Token") String token` в сигнатуре метода — корректный и идиоматичный способ. `defaultHeader()` для константных, общих для всех вызовов значений; `@RequestHeader` — для динамических (например, request ID на каждый запрос, токен сессии пользователя).
+>
+> **Откуда путаница:** Default headers — частый паттерн, может казаться единственным.
+>
+> **Если бы это было правдой:** Невозможно передать correlation ID или per-call token — что блокирует реальные use-cases.
+>
+> ---
+>
+> #### D) `@PathVariable`, `@RequestParam`, `@RequestHeader`, `@RequestBody`, `@CookieValue`, плюс `URI`, `HttpMethod` для динамических override — ✓ Верно
+>
+> **Развёрнутое объяснение:** Полный набор аннотаций, поддерживаемых `HttpServiceMethodArgumentResolver`:
+> - `@PathVariable` — подстановка в `{name}` placeholders URL
+> - `@RequestParam` — query string параметры; для `Map<String, String>` — все ключи как params
+> - `@RequestHeader` — HTTP заголовки запроса; `Map`/`MultiValueMap` — несколько заголовков
+> - `@RequestBody` — тело запроса; сериализуется через `HttpMessageConverter`
+> - `@CookieValue` — отправляет cookie в `Cookie:` header
+> - `@RequestPart` — multipart upload, для файлов и form data
+> - `@RequestAttribute` — атрибуты запроса (доступны в interceptors)
+> - **Специальные типы без аннотации:**
+>   - `URI` — переопределяет baseUrl + path этого вызова (динамический URL)
+>   - `HttpMethod` — динамически меняет метод (редко используется)
+>   - `MultiValueMap<String, String>` — form-encoded body
+>
+> **Пример:**
+> ```java
+> public interface SearchClient {
+>
+>     @GetExchange("/search/{type}")
+>     SearchResult search(
+>         @PathVariable String type,                          // path: /search/articles
+>         @RequestParam String query,                          // ?query=spring
+>         @RequestParam(defaultValue = "1") int page,          // &page=1
+>         @RequestHeader("Accept-Language") String lang        // header
+>     );
+>
+>     @PostExchange("/upload")
+>     ResponseEntity<Void> upload(
+>         @RequestHeader("X-Upload-Token") String token,
+>         @RequestPart("file") MultipartFile file,
+>         @RequestPart("metadata") FileMetadata meta,
+>         URI alternateBase  // override URL: загрузка на CDN, не на основной API
+>     );
+>
+>     @PostExchange("/login")
+>     LoginResp login(MultiValueMap<String, String> formData);  // x-www-form-urlencoded
+> }
+> ```
+>
+> **Когда применять:** Использовать аннотации одноимённые Spring MVC — переиспользование mental model. Динамический URI — для multi-tenant сценариев. `MultiValueMap` — для OAuth2 token endpoint (form-urlencoded).
+>
+> **Подводные камни:** `URI` параметр должен быть **абсолютным** — он не комбинируется с baseUrl. Если нужно лишь переопределить путь — лучше путь через `@GetExchange("/dynamic")` + `@PathVariable`. Multipart upload требует, чтобы backend имел `MultipartResolver` (для RestClient — HttpComponents или Jetty).
+>
+> **Связанные вопросы:** [[Q9]] — общая структура @HttpExchange; [[Q11]] — выбор adapter
+
+## Q11. Как подключить @HttpExchange к RestClient vs WebClient?
 
 **С RestClient (синхронный, Spring 6.1+):**
 ```java
@@ -997,10 +1075,88 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Как настроить таймауты, базовый URL и заголовки? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как @HttpExchange интерфейс подключается к разным HTTP-клиентам?
+>
+> ---
+>
+> #### A) Через @Backend(RestClient.class) аннотацию на интерфейсе — ❌ Неверно
+>
+> **Что на самом деле:** Такой аннотации **не существует** в Spring API. Выбор backend — runtime concern, через factory: `RestClientAdapter.create(restClient)` или `WebClientAdapter.create(webClient)`. Интерфейс одинаков для обоих, только wiring отличается.
+>
+> **Откуда путаница:** Многие фреймворки используют аннотацию для выбора реализации (например, `@Transactional(transactionManager = "...")`).
+>
+> **Если бы это было правдой:** Было бы много примеров с `@Backend` в Spring docs — но их нет.
+>
+> ---
+>
+> #### B) RestClient adapter не поддерживает `Mono`/`Flux` возвращаемые типы — ❌ Частично верно, но требует уточнения
+>
+> **Что на самом деле:** Это **верно**, но утверждение неполное и часто понимают неправильно. RestClientAdapter — синхронный, поддерживает `T`, `ResponseEntity<T>`, `void`. Не поддерживает `Mono`/`Flux` — потому что они реактивные. Однако в задаче этот пункт — про подключение, а не ограничение типов; это деталь, а не главный ответ.
+>
+> **Откуда путаница:** Деталь, которая может казаться полным ответом.
+>
+> **Если бы это было правдой:** (это правда) — но это часть большей картины.
+>
+> ---
+>
+> #### C) Один HttpServiceProxyFactory можно использовать только с одним adapter за всё время приложения — ❌ Неверно
+>
+> **Что на самом деле:** Каждый вызов `HttpServiceProxyFactory.builderFor(adapter)` создаёт новый factory, который привязан к этому adapter. В приложении можно иметь несколько factories с разными adapters (один для sync, другой для reactive). Один adapter — на один RestClient/WebClient экземпляр (или на API).
+>
+> **Откуда путаница:** Builder-pattern может казаться singleton.
+>
+> **Если бы это было правдой:** Невозможно было бы иметь два разных API в одном приложении.
+>
+> ---
+>
+> #### D) `RestClientAdapter.create(rc)` — sync (T, ResponseEntity<T>); `WebClientAdapter.create(wc)` — reactive (Mono<T>, Flux<T>); интерфейс одинаковый, разные factories — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring предоставляет два adapter'а:
+> - **`RestClientAdapter`** — для синхронного backend; методы интерфейса возвращают `T`, `ResponseEntity<T>`, `void`. Создаётся: `RestClientAdapter.create(restClient)`.
+> - **`WebClientAdapter`** — для реактивного backend; методы возвращают `Mono<T>`, `Flux<T>`, `Mono<ResponseEntity<T>>`. Создаётся: `WebClientAdapter.create(webClient)`.
+>
+> Интерфейс `@HttpExchange` можно написать в двух стилях (или поддержать оба — но не одновременно в одном интерфейсе): sync-стиль (`User getUser(...)`) для RestClient, reactive-стиль (`Mono<User> getUser(...)`) для WebClient. Один и тот же интерфейс может работать с обоими, если возвращаемые типы — `T` (RestClient) или Spring сам adapter'ит (для WebClient `Mono<T>` всегда).
+>
+> **Пример:**
+> ```java
+> // Интерфейс
+> public interface UserClient {
+>     @GetExchange("/users/{id}")
+>     User getUser(@PathVariable long id);
+> }
+>
+> // Sync — RestClient
+> @Bean
+> UserClient userClientSync(RestClient.Builder builder) {
+>     RestClient rc = builder.baseUrl("https://users.api").build();
+>     RestClientAdapter adapter = RestClientAdapter.create(rc);
+>     return HttpServiceProxyFactory.builderFor(adapter).build()
+>         .createClient(UserClient.class);
+> }
+>
+> // Reactive интерфейс — другой набор методов
+> public interface UserClientReactive {
+>     @GetExchange("/users/{id}")
+>     Mono<User> getUser(@PathVariable long id);
+> }
+>
+> @Bean
+> UserClientReactive userClientReactive(WebClient.Builder builder) {
+>     WebClient wc = builder.baseUrl("https://users.api").build();
+>     WebClientAdapter adapter = WebClientAdapter.create(wc);
+>     return HttpServiceProxyFactory.builderFor(adapter).build()
+>         .createClient(UserClientReactive.class);
+> }
+> ```
+>
+> **Когда применять:** Spring MVC → RestClient + RestClientAdapter. Spring WebFlux → WebClient + WebClientAdapter. Mixed (рекомендуется избегать) → два разных интерфейса.
+>
+> **Подводные камни:** Spring Boot 3.2+ имеет авто-конфигурацию через `@ImportHttpServices` или manual bean registration — не нужно вручную создавать factory в простых случаях. RestClient adapter не сериализует `CompletableFuture` — для async parallel вызовов нужен WebClient или ручной `@Async`.
+>
+> **Связанные вопросы:** [[Q9]] — общая структура @HttpExchange; [[Q7]] — RestClient vs WebClient выбор
+
+## Q12. Как настроить таймауты, базовый URL и заголовки?
 
 ```java
 // Таймауты через ClientHttpRequestFactory
@@ -1041,10 +1197,98 @@ RestClient client = RestClient.builder()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как мигрировать с RestTemplate на RestClient? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как настроить connect/read timeouts и pool в RestClient для production?
+>
+> ---
+>
+> #### A) Через @Value("${rest.timeout}") в коде RestClient — Spring сам применит — ❌ Неверно
+>
+> **Что на самом деле:** RestClient таймауты настраиваются через `ClientHttpRequestFactory`, который **передаётся** в builder. Просто `@Value` не делает магии — нужно его прочитать и применить к factory: `factory.setConnectTimeout(...)`. Spring Boot имеет авто-конфигурацию через `spring.http.client.connect-timeout`, но это работает только при использовании `RestClient.Builder` Spring Boot бина.
+>
+> **Откуда путаница:** Часть Spring properties применяются автоматически (например, `server.port`), и хочется верить, что и тут так.
+>
+> **Если бы это было правдой:** Не нужны были бы `ClientHttpRequestFactory` варианты.
+>
+> ---
+>
+> #### B) Один timeout на всё — connect и read одно значение — ❌ Неверно
+>
+> **Что на самом деле:** Это **разные** уровни и должны настраиваться раздельно: **connect timeout** — время на установление TCP соединения (обычно 1-5 сек, fail-fast если backend down); **read timeout** — время ожидания **каждого chunk** ответа от server (обычно 10-30 сек, зависит от SLA endpoint); опционально **request timeout** (`SETTING_HTTP_REQUEST_TIMEOUT`) — общее время на запрос целиком. Один таймаут — либо слишком короткий для медленных операций, либо слишком длинный для fail-fast.
+>
+> **Откуда путаница:** Многие библиотеки имели простой single timeout, и привычка переносится на Spring.
+>
+> **Если бы это было правдой:** API `setConnectTimeout/setReadTimeout` не имел бы смысла — а они есть.
+>
+> ---
+>
+> #### C) Connection pool настраивается на уровне RestClient — `RestClient.builder().maxConnections(100)` — ❌ Неверно
+>
+> **Что на самом деле:** RestClient **не знает** о пуле соединений — это responsibility backend (Apache HttpClient, JDK HttpClient, Jetty). Пул настраивается **внутри** backend и оборачивается в `ClientHttpRequestFactory`. Метода `.maxConnections()` на RestClient builder нет.
+>
+> **Откуда путаница:** Logically pool «принадлежит» клиенту, и кажется естественным settings там.
+>
+> **Если бы это было правдой:** RestClient смешивал бы concerns и был бы менее портативным.
+>
+> ---
+>
+> #### D) Через `ClientHttpRequestFactory` (Apache HttpClient/JDK HttpClient): connectTimeout, readTimeout раздельно; pool — в backend; baseUrl/headers/interceptors — в RestClient builder — ✓ Верно
+>
+> **Развёрнутое объяснение:** Production-ready конфигурация делится на слои:
+> - **Backend (HTTP client)** — Apache HttpComponents 5, JDK HttpClient, Jetty Reactive Client. Здесь pool size, keep-alive, eviction.
+> - **`ClientHttpRequestFactory`** — обёртка над backend, экспонирует connectTimeout/readTimeout. Варианты: `HttpComponentsClientHttpRequestFactory` (Apache HC), `JdkClientHttpRequestFactory` (JDK 11+), `SimpleClientHttpRequestFactory` (deprecated, dev only).
+> - **RestClient builder** — baseUrl, defaultHeader, defaultUriVariables, requestInterceptor, defaultStatusHandler, messageConverters.
+>
+> Таймауты не должны быть бесконечными — без них зависшие соединения исчерпают thread pool и приведут к cascading failure.
+>
+> **Пример:**
+> ```java
+> // Apache HttpClient 5 с пулом
+> PoolingHttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
+>     .setMaxConnTotal(200)
+>     .setMaxConnPerRoute(50)
+>     .setDefaultConnectionConfig(ConnectionConfig.custom()
+>         .setConnectTimeout(Timeout.ofSeconds(3))
+>         .setSocketTimeout(Timeout.ofSeconds(15))
+>         .build())
+>     .build();
+>
+> CloseableHttpClient httpClient = HttpClients.custom()
+>     .setConnectionManager(cm)
+>     .evictExpiredConnections()
+>     .evictIdleConnections(TimeValue.ofSeconds(30))
+>     .build();
+>
+> ClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+>
+> RestClient client = RestClient.builder()
+>     .baseUrl("https://api.example.com/v2")
+>     .requestFactory(factory)
+>     .defaultHeader("Authorization", "Bearer " + apiKey)
+>     .defaultHeader("Accept", "application/json")
+>     .requestInterceptor((request, body, execution) -> {
+>         log.debug("→ {} {}", request.getMethod(), request.getURI());
+>         var response = execution.execute(request, body);
+>         log.debug("← {}", response.getStatusCode());
+>         return response;
+>     })
+>     .build();
+>
+> // Альтернатива: JDK HttpClient (HTTP/2 default)
+> HttpClient jdk = HttpClient.newBuilder()
+>     .connectTimeout(Duration.ofSeconds(3))
+>     .version(HttpClient.Version.HTTP_2)
+>     .build();
+> ClientHttpRequestFactory jdkFactory = new JdkClientHttpRequestFactory(jdk);
+> ```
+>
+> **Когда применять:** Apache HC — для production с тонкой настройкой пула и SSL. JDK HttpClient — для HTTP/2 без extra dependencies. Spring Boot 3.4+ имеет авто-конфигурацию через `spring.http.client.*` properties.
+>
+> **Подводные камни:** Read timeout — это **socket read**, не общий request timeout. Если backend возвращает chunked response, каждый chunk должен прийти в пределах timeout, но total time может быть больше. Для total cap нужен `request-timeout` (Apache HC 5.2+) или вручную `CompletableFuture.orTimeout()`.
+>
+> **Связанные вопросы:** [[Q3]] — структура RestClient; [[Q5]] — error handling
+
+## Q13. Как мигрировать с RestTemplate на RestClient?
 
 **Прямое создание из существующего RestTemplate:**
 ```java
@@ -1080,10 +1324,153 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Spring WebFlux](spring-webflux-interview.md) — WebClient в реактивном стеке ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как наиболее безопасно мигрировать большую кодовую базу с RestTemplate на RestClient?
+>
+> ---
+>
+> #### A) Сразу заменить все вызовы RestTemplate на RestClient через regex find/replace — ❌ Неверно
+>
+> **Что на самом деле:** API кардинально другой (методы vs fluent builder), regex не поможет: `getForObject(url, Cls)` → `get().uri(url).retrieve().body(Cls)`. Кроме того, теряются настройки: interceptors, converters, error handlers. Big-bang миграции в production коде — рецепт для regression. Правильный путь — постепенный, с переиспользованием существующих настроек.
+>
+> **Откуда путаница:** Простые случаи (`getForObject` → `get().retrieve().body()`) выглядят похоже, и кажется, что весь код можно поменять механически.
+>
+> **Если бы это было правдой:** Spring команда не вводила бы `RestClient.create(restTemplate)` — этот factory метод нужен именно для постепенной миграции.
+>
+> ---
+>
+> #### B) Переписать весь код с нуля — RestClient несовместим с RestTemplate инфраструктурой — ❌ Неверно
+>
+> **Что на самом деле:** RestClient **полностью совместим** с инфраструктурой RestTemplate — использует те же `HttpMessageConverter`, `ClientHttpRequestFactory`, `ClientHttpRequestInterceptor`. `RestClient.create(existingTemplate)` сохраняет ВСЕ настройки: factory, interceptors, converters, errorHandler.
+>
+> **Откуда путаница:** Новое API → кажется, что и инфра новая.
+>
+> **Если бы это было правдой:** Миграция была бы непомерно дорогой, и Spring не рекомендовал бы её.
+>
+> ---
+>
+> #### C) Обернуть RestClient в адаптер с интерфейсом RestTemplate — пусть код не меняется — ❌ Неверно
+>
+> **Что на самом деле:** Технически возможно, но **не нужно** — RestClient уже использует те же converters/interceptors. Адаптерный слой только добавляет complexity без выгод. Лучше **переписать call sites** (немного boilerplate, но прозрачный код), чем поддерживать compatibility-обёртку.
+>
+> **Откуда путаница:** Шаблон «adapter pattern» популярен, и кажется решением для миграции API.
+>
+> **Если бы это было правдой:** Spring предоставил бы такой адаптер из коробки — но его нет, потому что Spring рекомендует переписывать call sites.
+>
+> ---
+>
+> #### D) `RestClient.create(restTemplate)` сохраняет настройки; постепенно мигрировать call sites; держать оба клиента параллельно во время transition — ✓ Верно
+>
+> **Развёрнутое объяснение:** Безопасный путь: (1) для каждого `@Bean RestTemplate` создать соседний `@Bean RestClient` через `RestClient.create(restTemplate)` — переиспользует существующие interceptors (auth, logging), MessageConverters, RequestFactory; (2) новый код пишем сразу на RestClient; (3) существующие call sites рефакторим **по одному**, покрывая тестами; (4) когда последний caller мигрирован — удаляем `RestTemplate` бин. Параллельное сосуществование безопасно: оба клиента из одной инфраструктуры, поведение идентично.
+>
+> **Пример:**
+> ```java
+> // 1. Параллельный bean
+> @Bean
+> RestTemplate restTemplate(ClientHttpRequestFactory factory, Auth auth) {
+>     RestTemplate rt = new RestTemplate(factory);
+>     rt.getInterceptors().add(new AuthInterceptor(auth));
+>     rt.getMessageConverters().add(0, new SpecialConverter());
+>     return rt;
+> }
+>
+> @Bean
+> RestClient restClient(RestTemplate restTemplate) {
+>     return RestClient.create(restTemplate);  // переиспользует всё!
+> }
+>
+> // 2. Типичные замены call sites
+> // Старое:
+> String body = restTemplate.getForObject(url, String.class);
+> ResponseEntity<User> resp = restTemplate.postForEntity(url, payload, User.class);
+> List<User> users = restTemplate.exchange(url, GET, null,
+>     new ParameterizedTypeReference<List<User>>() {}).getBody();
+>
+> // Новое:
+> String body = restClient.get().uri(url).retrieve().body(String.class);
+> ResponseEntity<User> resp = restClient.post().uri(url)
+>     .body(payload).retrieve().toEntity(User.class);
+> List<User> users = restClient.get().uri(url)
+>     .retrieve().body(new ParameterizedTypeReference<List<User>>() {});
+> ```
+>
+> **Когда применять:** Любая существующая RestTemplate-based кодовая база при апгрейде на Spring 6+. Не нужно блокировать новый код — пишите его на RestClient сразу.
+>
+> **Подводные камни:** `RestTemplate.getInterceptors()` — mutable list, изменения **после** `RestClient.create(rt)` **не** распространятся на RestClient (snapshot на момент создания). Если interceptors добавляются динамически — лучше создавать RestClient после полной инициализации, или конфигурировать оба в одном `@Configuration`. `errorHandler` ведёт себя различно: в RestTemplate он перехватывает ошибки, в RestClient `.retrieve()` использует свои `.onStatus()` handlers — может потребоваться адаптация error handling логики.
+>
+> **Связанные вопросы:** [[Q1]] — сравнение клиентов; [[Q2]] — почему RestTemplate deprecated; [[Q3]] — fluent API RestClient
+
+## See also
+
+> [!mcq]
+>
+> **Вопрос:** Какой interceptor lifecycle hook используется для модификации запроса в RestClient?
+>
+> ---
+>
+> #### A) `ClientHttpRequestFilter` — обёртка вокруг запроса, как Servlet Filter — ❌ Неверно
+>
+> **Что на самом деле:** В RestClient (синхронный) интерфейс называется `ClientHttpRequestInterceptor` — НЕ Filter. Filter — это терминология WebClient (`ExchangeFilterFunction`). RestClient использует interceptor pattern.
+>
+> **Откуда путаница:** Servlet Filter аналогия — кажется, что и здесь будет «Filter».
+>
+> **Если бы это было правдой:** `RestClient.builder().filter(...)` существовал бы — но метод называется `requestInterceptor()`.
+>
+> ---
+>
+> #### B) `@RestClientInterceptor` аннотация на любом бине — Spring сам подцепит — ❌ Неверно
+>
+> **Что на самом деле:** Такой аннотации нет. Interceptor регистрируется явно: `.requestInterceptor(ClientHttpRequestInterceptor)`. Если нужно несколько — вызвать несколько раз builder, либо передать список.
+>
+> **Откуда путаница:** В Spring есть много `@*` аннотаций, и кажется, что для всего есть declarative way.
+>
+> **Если бы это было правдой:** Documentation описывала бы аннотацию — но описывает только functional interface.
+>
+> ---
+>
+> #### C) Interceptor может только читать запрос, не модифицировать — ❌ Неверно
+>
+> **Что на самом деле:** `ClientHttpRequestInterceptor.intercept(HttpRequest req, byte[] body, ClientHttpRequestExecution exec)` может **изменить** request headers (добавить Authorization, correlation ID), модифицировать body (например, для подписи), и подменить response (retry, fallback). Полный контроль над request/response chain.
+>
+> **Откуда путаница:** Read-only это безопаснее, и кажется default-поведением.
+>
+> **Если бы это было правдой:** Не было бы стандартного use-case "auth header через interceptor".
+>
+> ---
+>
+> #### D) `ClientHttpRequestInterceptor` — функциональный интерфейс с доступом к request/body/execution для модификации до и после реального HTTP-вызова — ✓ Верно
+>
+> **Развёрнутое объяснение:** Сигнатура: `ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)`. Внутри: можно прочитать/модифицировать request (через `request.getHeaders().set(...)`), вызвать `execution.execute(request, body)` для real call (или skip — для caching/mock), прочитать/модифицировать response. Типичные use-cases: добавление auth headers, логирование, метрики (latency), retry с backoff, circuit breaker, distributed tracing.
+>
+> **Пример:**
+> ```java
+> RestClient client = RestClient.builder()
+>     // Auth interceptor
+>     .requestInterceptor((req, body, exec) -> {
+>         req.getHeaders().set("Authorization", "Bearer " + tokenProvider.get());
+>         return exec.execute(req, body);
+>     })
+>     // Logging + metrics interceptor
+>     .requestInterceptor((req, body, exec) -> {
+>         long start = System.nanoTime();
+>         log.debug("→ {} {}", req.getMethod(), req.getURI());
+>         ClientHttpResponse resp = exec.execute(req, body);
+>         long latencyMs = (System.nanoTime() - start) / 1_000_000;
+>         log.debug("← {} ({} ms)", resp.getStatusCode(), latencyMs);
+>         meterRegistry.timer("http.client", "uri", req.getURI().getPath())
+>             .record(latencyMs, TimeUnit.MILLISECONDS);
+>         return resp;
+>     })
+>     .build();
+> ```
+>
+> **Когда применять:** Auth, logging, metrics, tracing — стандартные cross-cutting concerns на уровне HTTP-клиента. Несколько interceptors применяются в порядке регистрации (chain).
+>
+> **Подводные камни:** Если interceptor вызывает `exec.execute()` несколько раз (например, retry), нужно **повторно** скопировать body — InputStream может быть consumed. Для distributed tracing — использовать готовый `ClientHttpRequestInterceptor` из Micrometer или Sleuth/Brave, не писать свой.
+>
+> **Связанные вопросы:** [[Q12]] — конфигурация RestClient; [[Q5]] — обработка ошибок через .onStatus()
+
+- [Spring WebFlux](spring-webflux-interview.md) — WebClient в реактивном стеке
 - [Spring Framework](spring-framework-interview.md) — архитектура Spring, MessageConverters
 - [Spring Boot](spring-boot-interview.md) — автоконфигурация HTTP-клиентов
 - [HTTP & REST](../../api/http-rest-interview.md) — HTTP-методы, статус-коды, заголовки
