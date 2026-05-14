@@ -1506,10 +1506,81 @@ class UserTest extends BaseIntegrationTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как тестировать Spring Security (аутентификацию/авторизацию)? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Как Spring TestContext Framework кеширует `ApplicationContext` между тестами и какие факторы инвалидируют кеш-entry?
+>
+> ---
+>
+> #### A) Кешируется один контекст на весь test suite — поэтому добавление `@MockBean` не влияет на время прогона — ❌ Неверно
+>
+> **Что на самом деле:** кешируется несколько контекстов одновременно (LRU cache, default `maxSize = 32`). Каждый уникальный «отпечаток» конфигурации создаёт отдельный entry. Добавление `@MockBean` — один из главных факторов инвалидации, потому что разные наборы mock-бинов меняют ключ кеша → создаётся новый context из scratch.
+>
+> **Откуда путаница:** разработчик видит, что один тест запускается быстро (контекст переиспользуется) и распространяет это на весь suite.
+>
+> **Если бы это было правдой:** не было бы рекомендации Spring docs «минимизируйте уникальные конфигурации тестов». На практике это главный bottleneck CI.
+>
+> ---
+>
+> #### B) Spring TestContext Framework держит LRU-кеш `ApplicationContext` (по умолчанию `maxSize = 32`), ключ кеша — комбинация: `@ContextConfiguration`-классы/locations, активные профили, `@TestPropertySource`, набор `@MockBean`/`@SpyBean`, `webEnvironment`, `@DirtiesContext`-флаг; уникальный ключ = новый context start-up; для оптимизации — выносить общие `@MockBean` в abstract base class, чтобы наследники переиспользовали один контекст; мониторинг — `logging.level.org.springframework.test.context.cache=DEBUG` показывает `hitCount/missCount/size` — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Внутри `TestContextManager` живёт `DefaultCacheAwareContextLoaderDelegate` → он обращается к `DefaultContextCache`. Cache реализован как `Map<MergedContextConfiguration, ApplicationContext>` с LRU-eviction. `MergedContextConfiguration` — это «отпечаток»: hash от всех конфигурационных аспектов теста.
+>
+> **Факторы, формирующие ключ:**
+> - `@SpringBootConfiguration` / `@Configuration`-классы.
+> - Активные профили (`@ActiveProfiles`).
+> - `@TestPropertySource` (значения properties).
+> - `@MockBean` / `@SpyBean` — типы и имена бинов.
+> - `webEnvironment` (`MOCK`/`RANDOM_PORT`/`NONE`).
+> - Locations (XML/Groovy files).
+> - Parent context, если есть.
+>
+> **Стратегии оптимизации:**
+> ```java
+> @SpringBootTest
+> abstract class BaseIntegrationTest {
+>     @MockBean EmailService emailService;
+>     @MockBean PaymentService paymentService;
+> }
+>
+> class OrderTest extends BaseIntegrationTest { /* same context */ }
+> class UserTest extends BaseIntegrationTest { /* same context — cache hit */ }
+> class ReviewTest extends BaseIntegrationTest { /* same context — cache hit */ }
+> ```
+>
+> **Когда применять знание:**
+> - Анализ медленного CI: «почему тесты идут 8 минут?» → проверить `cache.size` через debug-логи.
+> - Рефакторинг test base class: вынести общие `@MockBean` для cache reuse.
+> - Принятие решения о `@DirtiesContext` — каждый раз = полный startup, обходится дорого.
+>
+> **Подводные камни:**
+> - `maxSize` по умолчанию 32 — на больших проектах LRU начинает выталкивать кеш-entries; следующий тест с тем же ключом снова делает full startup. Можно увеличить через `-Dspring.test.context.cache.maxSize=64`.
+> - Каждый `@DirtiesContext` evict-ит entry — но не сам кеш.
+> - Если у вас 50 уникальных конфигураций — все 50 контекстов будут поднимать JVM (heap, threads, BD-pools).
+> - Не путать с Mockito mock reset — это другой механизм, работает после каждого теста независимо от cache.
+>
+> **Связанные вопросы:** [[Q9]] — `@MockBean` влияет на cache; [[Q12]] — `@DirtiesContext`; [[Q11]] — `@TestConfiguration` тоже формирует ключ.
+>
+> ---
+>
+> #### C) Каждый тестовый класс ВСЕГДА получает новый `ApplicationContext` — кеш отключён по умолчанию — ❌ Неверно
+>
+> **Что на самом деле:** наоборот — кеш ВКЛЮЧЁН по умолчанию. Это одна из главных оптимизаций Spring Test, без которой test suite на 200+ классах был бы катастрофически медленным. Кеш формируется на основе «отпечатка» конфигурации: два класса с одинаковыми аннотациями = один общий context.
+>
+> **Откуда путаница:** разработчик видит время старта контекста и предполагает, что это происходит для каждого теста.
+>
+> **Если бы это было правдой:** test suite на 50 классах с `@SpringBootTest` занимал бы 50 × 5 секунд = 4+ минуты только на startup. На практике общий startup ~5 секунд (один контекст), а тесты выполняются мгновенно.
+>
+> ---
+>
+> #### D) Кеш контекста сохраняется на диск между билдами CI — ❌ Неверно
+>
+> **Что на самом деле:** кеш живёт в памяти JVM текущего процесса. Между билдами CI (новый процесс) — старт с нуля. Spring не сериализует `ApplicationContext` на диск, потому что бины часто содержат native-resources (соединения, потоки, прокси), которые нельзя сериализовать корректно.
+>
+> **Откуда путаница:** в проектах с Gradle Build Cache можно встретить кеш test-output на диске — но это другой уровень (результаты тестов, а не сам Spring контекст).
+>
+> **Если бы это было правдой:** CI-пайплайны были бы намного быстрее. На практике каждый билд = full Spring startup.
 
 ```xml
 <dependency>
@@ -1563,10 +1634,96 @@ mockMvc.perform(get("/api/orders")
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Как использовать Testcontainers с Spring Boot? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какие инструменты Spring Security Test использовать для тестирования аутентификации/авторизации (`@WithMockUser`, `with(user())`, `with(jwt())`) и в чём их различия?
+>
+> ---
+>
+> #### A) Можно тестировать Security только через реальный auth-сервер (Keycloak в Testcontainers) — `@WithMockUser` не даёт реального покрытия — ❌ Неверно
+>
+> **Что на самом деле:** `@WithMockUser` и аналоги официально рекомендуются Spring Security как стандартный способ unit/slice-тестирования. Они корректно симулируют `SecurityContext` (заполняют `Authentication` с нужными ролями/принципалом), и Spring Security обрабатывает запрос ровно как в production. Реальный Keycloak имеет смысл только для end-to-end проверок OAuth flow (login, redirect, token exchange) — в 90% случаев это излишне.
+>
+> **Откуда путаница:** mock пользователя кажется «недостаточно реальным» для security-чувствительных проверок.
+>
+> **Если бы это было правдой:** test suite на каждый эндпоинт занимал бы минуты — Keycloak start-up небыстрый. На практике `@WithMockUser` — быстро и достаточно.
+>
+> ---
+>
+> #### B) `@WithMockUser` отключает Spring Security полностью — фильтры не применяются — ❌ Неверно
+>
+> **Что на самом деле:** `@WithMockUser` НЕ отключает Security — наоборот, заполняет `SecurityContext` mock-аутентификацией ДО выполнения запроса. Все фильтры (`SecurityFilterChain`, `FilterSecurityInterceptor`, `MethodSecurityInterceptor`) работают как обычно и принимают решения на основе ролей mock-пользователя.
+>
+> **Откуда путаница:** в простых тестах `@WithMockUser(roles = "USER")` «магически» делает запрос успешным, что может выглядеть как обход Security.
+>
+> **Если бы это было правдой:** тесты не могли бы покрывать сценарии `401`/`403` — а это базовая возможность `@WithMockUser`. На практике именно фильтры решают, что вернуть.
+>
+> ---
+>
+> #### C) Подключить `spring-security-test`; `@WithMockUser(roles = "ADMIN")` — на тестовый метод/класс для симуляции аутентифицированного пользователя; `mockMvc.with(user("alice").roles("USER"))` — request-level подмена в одном запросе; `mockMvc.with(jwt().jwt(j -> j.claim("scope", "read")))` — для OAuth2/JWT эндпоинтов; `mockMvc.with(csrf())` — для POST/PUT/DELETE (CSRF-токен); для негативных проверок (`401`/`403`) — обычный запрос без `@WithMockUser` / с недостаточной ролью — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `spring-security-test` (gradle: `testImplementation 'org.springframework.security:spring-security-test'`) даёт три уровня инструментов:
+>
+> 1. **Класс/метод аннотации** (`@WithMockUser`, `@WithUserDetails`, `@WithAnonymousUser`, `@WithSecurityContext`) — заполняют `SecurityContext` через TestExecutionListener до начала теста.
+> 2. **Request-level postprocessors** (`SecurityMockMvcRequestPostProcessors`): `user(...)`, `jwt()`, `oauth2Login()`, `oidcLogin()`, `csrf()` — применяются через `.with(...)` к конкретному запросу MockMvc.
+> 3. **Matchers** (`SecurityMockMvcResultMatchers`): `authenticated()`, `unauthenticated()`, `withAuthentication(...)` — для проверки итогового состояния.
+>
+> **Пример комплексного теста:**
+> ```java
+> @WebMvcTest(OrderController.class)
+> class OrderSecurityTest {
+>
+>     @Autowired MockMvc mockMvc;
+>
+>     @Test
+>     void getOrders_anonymous_returns401() throws Exception {
+>         mockMvc.perform(get("/api/orders"))
+>             .andExpect(status().isUnauthorized());
+>     }
+>
+>     @Test
+>     @WithMockUser(roles = "USER")
+>     void getOrders_user_returns200() throws Exception {
+>         mockMvc.perform(get("/api/orders"))
+>             .andExpect(status().isOk());
+>     }
+>
+>     @Test
+>     void deleteOrder_jwt_withScope_returns204() throws Exception {
+>         mockMvc.perform(delete("/api/orders/1")
+>                 .with(jwt().jwt(j -> j.claim("scope", "orders:delete")))
+>                 .with(csrf()))
+>             .andExpect(status().isNoContent());
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - Все role-based endpoints (`@PreAuthorize`, `hasRole(...)`).
+> - JWT-authenticated REST API (`@AuthenticationPrincipal Jwt`).
+> - OAuth2 client/resource server endpoints.
+> - CSRF-protected POST/PUT/DELETE.
+> - Method-level security (`@Secured`, `@PreAuthorize`) — те же инструменты работают.
+>
+> **Подводные камни:**
+> - `@WithMockUser` НЕ подходит для JWT-эндпоинтов, ожидающих `Jwt`-principal: используйте `with(jwt())`.
+> - CSRF включён по умолчанию — без `with(csrf())` POST/PUT/DELETE вернут 403. Часто забывают.
+> - В `@WebMvcTest` security AutoConfiguration может не подхватиться — нужно `@WebMvcTest(controllers = X.class, includeFilters = ...)` или вручную `@Import(SecurityConfig.class)`.
+> - `@WithUserDetails("alice")` требует `UserDetailsService` в контексте — иначе `UsernameNotFoundException`.
+> - При параллельных тестах `SecurityContext` уровня класса может протечь через `SecurityContextHolder.STRATEGY_THREADLOCAL`.
+>
+> **Связанные вопросы:** [[Q7]] — MockMvc; [[Q4]] — `@WebMvcTest` slice; [[Q11]] — `@TestConfiguration` для test SecurityFilterChain.
+>
+> ---
+>
+> #### D) `with(jwt())` работает только если в контексте запущен реальный OAuth2-сервер — ❌ Неверно
+>
+> **Что на самом деле:** `with(jwt())` создаёт mock-JWT и регистрирует его в `SecurityContext` БЕЗ обращения к реальному authorization server. Это in-process подмена `Authentication`. JWK validation, signature checks — всё пропускается, потому что mock-JWT помечен как уже валидный. Для real-flow тестирования нужен `@SpringBootTest` + Keycloak/WireMock.
+>
+> **Откуда путаница:** JWT в production требует authorization server для валидации — кажется, что и в тестах будет так.
+>
+> **Если бы это было правдой:** slice-тесты `@WebMvcTest` не работали бы со Security — а они отлично работают именно благодаря тому, что `with(jwt())` не требует реального сервера.
 
 **Spring Boot 3.1+ нативная интеграция:**
 
