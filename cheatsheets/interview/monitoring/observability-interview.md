@@ -2159,10 +2159,70 @@ pyroscope.profiler.event=cpu,alloc,lock
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q36. Chaos Engineering и Observability: как связаны? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Чем continuous profiling принципиально отличается от distributed tracing и почему его называют «четвёртым столпом» observability?
+>
+> ---
+>
+> #### A) Continuous profiling — это просто более частая версия traditional CPU profiling (jstack, async-profiler) — ❌ Неверно
+>
+> **Что на самом деле:** Continuous profiling — это **постоянный, low-overhead** сбор профилей **в production**, в отличие от traditional profiling, который запускается разово при расследовании. Ключевые отличия: (1) **overhead < 1% CPU** (vs 5–30% для traditional), (2) **корреляция с traces/metrics через timestamps**, (3) **persistent storage** профилей как time series (можно сравнивать v1 vs v2 релизы), (4) **continuous sampling** даёт ретроспективу — «что было 2 дня назад в 14:35».
+>
+> **Откуда путаница:** инструменты похожи (async-profiler в обоих случаях), но режим работы и хранение принципиально разные.
+>
+> **Если бы это было правдой:** не было бы отдельной категории инструментов (Pyroscope, Grafana Phlare, Polar Signals) — все использовали бы async-profiler руками.
+>
+> ---
+>
+> #### B) Continuous profiling показывает только CPU usage — для memory нужны другие инструменты — ❌ Неверно
+>
+> **Что на самом деле:** Современный continuous profiling покрывает несколько типов профилей: **CPU** (где тратится время), **Heap Allocation** (источник GC pressure), **Lock Contention** (deadlocks, мьютексы), **Wall Clock** (включая IO wait), **GPU** (для ML workloads). Pyroscope agent для Java через JFR собирает `cpu,alloc,lock` одновременно.
+>
+> **Откуда путаница:** CPU profiling — самый известный тип, часто упрощают до «profiling = CPU».
+>
+> **Если бы это было правдой:** не было бы возможности диагностировать GC-проблемы или lock contention через profiling — но это базовая функция Pyroscope/Phlare.
+>
+> ---
+>
+> #### C) Постоянный low-overhead сбор профилей CPU/heap/lock на уровне функций кода в production, корреляция с traces через profileID, ретроспективный анализ деградации — ✓ Верно
+>
+> **Развёрнутое объяснение:** Continuous profiling — четвёртый столп observability, потому что отвечает на вопрос **«что именно делает CPU/memory в этот момент?»** — на уровне функций и строк кода. Distributed tracing показывает, **какой span медленный** (e.g., `payment.charge` = 500ms), но не **что внутри него происходит** (sleep? CPU-bound loop? lock wait?). Profiling даёт **flame graph** до строки кода. Корреляция: при включённой интеграции (Pyroscope + Tempo), каждый span получает `profileID` attribute, в Grafana из trace можно одним кликом перейти к профилю. Технологии: **Pyroscope** (теперь Grafana Pyroscope) — primary OSS choice, поддерживает Java (через JFR), Go (pprof), Python, Ruby, Rust, eBPF. **eBPF-based profiling** (Grafana Beyla, Parca) — работает без agent, на уровне kernel, профилирует **любой** процесс. **Use case 1**: «latency spike каждые 10 минут» — flame graph показывает GC stop-the-world (long allocation). **Use case 2**: «release v2 увеличил CPU на 20%» — diff flame graph между v1 и v2 показывает, какая функция стала медленнее.
+>
+> **Пример:**
+> ```java
+> // application.properties — Pyroscope agent для Java
+> // Запуск: java -javaagent:pyroscope.jar -jar app.jar
+> pyroscope.application.name=orders-service
+> pyroscope.server.address=http://pyroscope:4040
+> pyroscope.format=jfr
+> pyroscope.profiler.event=cpu,alloc,lock
+> pyroscope.profiler.upload.interval=10s
+> pyroscope.labels=region=eu-west-1,version=2.3.1
+>
+> // OpenTelemetry integration — profileID в spans
+> // tracer adds profile.id attribute to each span
+> // Grafana: click "View Profile" from trace view
+> ```
+>
+> **Когда применять:** обязательно для performance-critical сервисов (payment, search, recommendation). Для других — опционально. Стоимость: ~1% CPU overhead, ~10–50 GB storage в месяц для среднего сервиса.
+>
+> **Подводные камни:** **JFR overhead не всегда 1%** — при включении `alloc` profiling может вырасти до 3–5% на allocation-heavy сервисах. **eBPF требует privileged container** или `CAP_BPF` capability — security implications в multi-tenant clusters. **Profiles большие** — flame graph для часа работы = 100+ MB, нужны компрессия и retention policy.
+>
+> **Связанные вопросы:** [[Q34]] — OTel Collector и profiling pipeline; [[Q36]] — chaos engineering; [[Q39]] — FinOps.
+>
+> ---
+>
+> #### D) Profiling нужен только для local development, в production это слишком дорого — ❌ Неверно
+>
+> **Что на самом деле:** Это устаревшее представление. Современный continuous profiling (Pyroscope с eBPF/JFR) специально спроектирован для production: low-overhead, low-storage, корреляция с traces. Компании Netflix, Uber, Shopify используют production profiling.
+>
+> **Откуда путаница:** старые инструменты (JProfiler в interactive mode) действительно вызывали серьёзный overhead. Continuous profiling — новое поколение.
+>
+> **Если бы это было правдой:** Grafana не приобретала бы Pyroscope, Polar Signals не основывалась бы — но profiling-сегмент быстро растёт именно для production.
+>
+> ---
+
+## Q36. Chaos Engineering и Observability: как связаны?
 
 **Chaos Engineering** — намеренное внесение сбоев в систему для проверки её устойчивости и обнаружения слабых мест до того, как они проявятся в production.
 
@@ -2211,10 +2271,95 @@ Observe → Hypothesize → Experiment → Observe results → Fix gaps → Repe
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q37. Alert Fatigue: причины, как бороться, стратегии silencing? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Почему chaos engineering без observability бесполезен и как они дополняют друг друга в практике?
+>
+> ---
+>
+> #### A) Chaos engineering — это про резилиентность, observability — про мониторинг. Они независимы — ❌ Неверно
+>
+> **Что на самом деле:** Chaos engineering **без** observability — это «стрельба вслепую». Цель chaos experiment — проверить гипотезу о поведении системы при сбое. Без observability вы не можете **подтвердить** или **опровергнуть** гипотезу — только наблюдать, что «всё упало». Они тесно связаны: chaos предоставляет controlled failure, observability предоставляет инструменты измерения.
+>
+> **Откуда путаница:** дисциплины развивались параллельно, поэтому их часто путают как независимые. Но Netflix (создатель Chaos Monkey) и Honeycomb всегда подчёркивали их взаимозависимость.
+>
+> **Если бы это было правдой:** Chaos Monkey запускали бы без мониторинга — но даже в первой статье Netflix о Chaos Monkey (2011) observability была частью протокола.
+>
+> ---
+>
+> #### B) Chaos engineering можно применять только в staging — в production это слишком опасно — ❌ Неверно
+>
+> **Что на самом деле:** Chaos engineering **в production** — это industry-standard practice (Netflix, Amazon, Google). Принципы безопасности: **(1) Blast radius** — ограничить scope (один pod, не весь сервис), **(2) Hypothesis-driven** — есть гипотеза «при X сработает Y», **(3) Auto-abort** — если metrics выходят за границы, эксперимент останавливается автоматически. Staging-only chaos упускает реальные failure modes, которые видны только в production (real traffic patterns, real data, real third-party APIs).
+>
+> **Откуда путаница:** «production = опасно» — естественная осторожность. Но без production chaos нет уверенности, что система устойчива.
+>
+> **Если бы это было правдой:** Netflix не запускал бы Chaos Monkey в production — но он работает там более 10 лет.
+>
+> ---
+>
+> #### C) Chaos engineering без observability невозможен — observability даёт измерение гипотезы; chaos выявляет gaps в observability (что не видно при сбое) — циклическая взаимозависимость — ✓ Верно
+>
+> **Развёрнутое объяснение:** Цикл **Chaos + Observability**: (1) **Hypothesize** — «при потере 30% запросов к БД, Circuit Breaker сработает и пользователи получат graceful degradation». (2) **Define metrics** — что измеряем: error_rate, p99_latency, circuit_breaker_state. (3) **Run experiment** — Gremlin/LitmusChaos вносит latency или packet loss. (4) **Observe via three pillars** — metrics показывают error rate, traces показывают, какие именно span'ы падают, logs показывают сообщения circuit breaker. (5) **Validate** — гипотеза подтверждена или опровергнута данными. (6) **Discover gaps** — типичный результат: «мы не можем объяснить, что произошло на X компоненте, потому что нет метрик для него» — chaos выявил **blind spots в observability**. (7) **Iterate** — добавить недостающую observability, повторить эксперимент. **Принципы безопасности**: **blast radius** (ограниченный scope), **steady-state hypothesis** (определить «нормальное» состояние), **automated abort** (auto-stop при превышении SLO), **runbook** для отката.
+>
+> **Пример:**
+> ```yaml
+> # LitmusChaos experiment с automated abort через Prometheus
+> apiVersion: litmuschaos.io/v1alpha1
+> kind: ChaosEngine
+> metadata:
+>   name: payment-service-network-loss
+> spec:
+>   appinfo:
+>     appns: production
+>     applabel: app=payment-service
+>     appkind: deployment
+>   chaosServiceAccount: litmus-admin
+>   experiments:
+>     - name: pod-network-loss
+>       spec:
+>         components:
+>           env:
+>             - name: NETWORK_PACKET_LOSS_PERCENTAGE
+>               value: '30'
+>             - name: TOTAL_CHAOS_DURATION
+>               value: '60'  # 60 секунд
+>         probe:
+>           - name: error-rate-check
+>             type: promProbe
+>             promProbe/inputs:
+>               endpoint: http://prometheus:9090
+>               query: |
+>                 sum(rate(http_requests_total{
+>                   service="payment-service", status=~"5.."
+>                 }[1m])) /
+>                 sum(rate(http_requests_total{
+>                   service="payment-service"
+>                 }[1m]))
+>               comparator:
+>                 type: float
+>                 criteria: '<'    # error rate должен быть < 5%
+>                 value: '0.05'
+>             mode: Continuous     # проверка каждые 5 секунд
+> ```
+>
+> **Когда применять:** **GameDays** (раз в квартал — все команды), **regular chaos** (раз в неделю — автоматизировано), **pre-release chaos** (перед major release). Начинать с staging, потом — production с blast radius.
+>
+> **Подводные камни:** **Chaos в peak hours** — может вызвать реальную деградацию для пользователей. Решение: запускать в low-traffic окнах. **Compound failures** — если одновременно chaos + реальный инцидент, сложно отделить. Решение: **chaos calendar** и интеграция с alerting (не алертить во время запланированного chaos). **Stakeholder communication** — бизнес должен знать, что chaos = намеренные сбои, иначе panic.
+>
+> **Связанные вопросы:** [[Q33]] — maturity model (L5 = proactive); [[Q35]] — profiling под нагрузкой; [[Q37]] — alert fatigue.
+>
+> ---
+>
+> #### D) Chaos engineering = Chaos Monkey — random instance termination, ничего больше — ❌ Неверно
+>
+> **Что на самом деле:** Chaos Monkey (2011) — пионер, но современный chaos engineering — гораздо шире: **latency injection** (Toxiproxy, Gremlin), **CPU/memory stress**, **network partitions** (split-brain testing), **disk failures**, **time skew** (NTP drift), **certificate expiry simulation**. Это целая дисциплина с principles и hypothesis-driven подходом, не «random kill».
+>
+> **Откуда путаница:** Chaos Monkey — самый известный инструмент, отсюда упрощение.
+>
+> **Если бы это было правдой:** не было бы LitmusChaos, Gremlin, Chaos Mesh — но эти платформы активно развиваются.
+>
+> ---
+
+## Q37. Alert Fatigue: причины, как бороться, стратегии silencing?
 
 **Alert Fatigue** — состояние, при котором дежурный перестаёт реагировать на алерты из-за их количества, ложных срабатываний или нерелевантности.
 
@@ -2271,10 +2416,101 @@ route:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q38. Что включать в Runbook для автоматизации реакции на инцидент? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Команда жалуется на alert fatigue (50+ алертов в день, дежурные игнорируют). Какая комбинация изменений даёт устойчивый эффект, а не временное затыкание?
+>
+> ---
+>
+> #### A) Просто отключить половину алертов — оставить только самые громкие — ❌ Неверно
+>
+> **Что на самом деле:** Случайное отключение «громких» алертов — это ложь себе и игнорирование реальных проблем. Если алерт срабатывает часто, есть два варианта: (1) это **реальная проблема** — её надо чинить, не игнорировать; (2) это **неактуальный алерт** — его надо удалить осознанно после анализа. Просто silence — это «scotch-tape over check-engine light».
+>
+> **Откуда путаница:** под давлением «надо снизить количество алертов в Jira» команды часто делают именно это.
+>
+> **Если бы это было правдой:** через 3 месяца окажется, что отключили алерт на реальную проблему — она проявится как outage, замеченный пользователями.
+>
+> ---
+>
+> #### B) Купить более дорогую alerting platform (PagerDuty Enterprise) — она «умнее» — ❌ Неверно
+>
+> **Что на самом деле:** Tool не решает проблему **плохих алертов**. PagerDuty Enterprise добавляет ML-based grouping, routing, escalation — но если базовые алерты бессмысленны (threshold без контекста, нет runbook), tool не поможет. Сначала надо чинить алерты, потом улучшать routing.
+>
+> **Откуда путаница:** vendor-маркетинг продаёт «AI-powered noise reduction» как silver bullet.
+>
+> **Если бы это было правдой:** компании покупали бы PagerDuty Enterprise и забывали бы про alert fatigue — но проблема остаётся даже с лучшими tools.
+>
+> ---
+>
+> #### C) Переход с threshold на SLO/burn-rate alerting + severity levels с runbooks + дедупликация в Alertmanager + monthly alert review + silencing maintenance windows + удаление dead alerts — ✓ Верно
+>
+> **Развёрнутое объяснение:** Системное решение alert fatigue — multi-pronged подход. **(1) SLO-based alerting** заменяет threshold-based: вместо «CPU > 80%» (всегда срабатывает, не значит проблема) использовать burn rate — «error budget сгорает в 14.4x быстрее нормы за 1 час → page» (Google SRE multi-window strategy). **(2) Severity levels** с чёткими определениями: P1 (требует немедленной реакции, звонок, < 5 мин), P2 (час), P3 (рабочее время), P4 (бэклог). **(3) Runbooks обязательны для page-алертов** — без runbook алерт удаляется или понижается до P3. **(4) Дедупликация в Alertmanager**: `group_by: [alertname, cluster, service]`, `group_wait: 30s`, `repeat_interval: 4h` (не спамить). **(5) Dependency silencing**: если БД down — заглушить все зависимые алерты автоматически. **(6) Monthly alert review** — команда смотрит топ-20 алертов: те, на которые никто не реагировал → удалить или понизить severity. **(7) Maintenance windows** — silence во время planned deploys. **(8) Time-based silencing** — P3 ночью не будит, идёт в утренний ticket.
+>
+> **Пример:**
+> ```yaml
+> # Alertmanager — продвинутая конфигурация
+> route:
+>   group_by: ['alertname', 'cluster', 'service']
+>   group_wait: 30s              # подождать собрать связанные
+>   group_interval: 5m
+>   repeat_interval: 4h          # не спамить чаще
+>   receiver: 'default'
+>   routes:
+>     # P1 — звонок, любое время
+>     - matchers: [severity="P1"]
+>       receiver: 'pagerduty-critical'
+>       continue: true
+>     # P3 — не будить ночью (00:00-08:00 MSK)
+>     - matchers: [severity="P3"]
+>       receiver: 'slack-team'
+>       active_time_intervals: [work-hours]
+>     # Dependency silence — если БД down, заглушить app алерты
+>     - matchers: [alertname="DatabaseDown"]
+>       receiver: 'pagerduty-critical'
+>       routes:
+>         - matchers: [service=~"orders|payments"]
+>           receiver: 'silent'  # blackhole
+>
+> time_intervals:
+>   - name: work-hours
+>     time_intervals:
+>       - weekdays: [monday:friday]
+>         times: [{start_time: 08:00, end_time: 20:00}]
+>         location: Europe/Moscow
+>
+> # SLO-based burn rate alert (вместо threshold)
+> groups:
+>   - name: slo-burn-rate
+>     rules:
+>       - alert: ErrorBudgetBurnTooFast
+>         expr: |
+>           (sum(rate(http_requests_total{status=~"5.."}[1h])) /
+>            sum(rate(http_requests_total[1h]))) > 14.4 * (1 - 0.999)
+>         for: 5m
+>         labels: {severity: P1}
+>         annotations:
+>           summary: "Error budget burning 14.4x — будет исчерпан за 2 дня"
+>           runbook_url: "https://runbooks/error-budget-burn"
+> ```
+>
+> **Когда применять:** обязательно при >20 алертах в день на команду; критично для on-call rotation health. Регулярный alert review — каждый месяц.
+>
+> **Подводные камни:** **Silence-all-the-things** — можно перестараться и заглушить реально важное. Решение: silence только с TTL (1 неделя max), требовать justification. **Burn rate alerts требуют SLO** — без определённых SLI/SLO формула не работает (см. Q23). **Dependency silencing** требует знания graph зависимостей сервисов — нужен service map в Grafana / Istio.
+>
+> **Связанные вопросы:** [[Q23]] — SLO/burn rate; [[Q24]] — multi-window strategy; [[Q38]] — Runbook.
+>
+> ---
+>
+> #### D) Алерты в Slack-канал, дежурный сам решает, на что реагировать — это самый гибкий подход — ❌ Неверно
+>
+> **Что на самом деле:** Без severity levels и routing «всё в один канал» — это рецепт alert fatigue. Дежурный получает 100+ сообщений за смену, реальные P1 теряются. Slack — это **дополнительный канал** для P3/P4, но не основной для P1/P2 (там нужен phone call через PagerDuty / OpsGenie).
+>
+> **Откуда путаница:** маленькие команды действительно используют только Slack — это работает до определённого scale.
+>
+> **Если бы это было правдой:** не существовало бы PagerDuty с миллиардной валуацией — но on-call platforms активно растут.
+>
+> ---
+
+## Q38. Что включать в Runbook для автоматизации реакции на инцидент?
 
 **Runbook** — документ с инструкциями по реагированию на конкретный алерт или инцидент. Цель: дежурный без знания системы может следовать runbook и решить проблему.
 
