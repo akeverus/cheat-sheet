@@ -437,10 +437,83 @@ class OrderControllerTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Что такое `@DataJpaTest` и как настроить? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Чем `@WebMvcTest` принципиально отличается от `@SpringBootTest` и как корректно подготовить контекст для теста контроллера?
+>
+> ---
+>
+> #### A) `@WebMvcTest` загружает только web-слой (контроллеры, `WebMvcConfigurer`, фильтры, argument resolvers), сервисы и репозитории НЕ создаются — нужно мокировать через `@MockBean`; MockMvc настраивается автоматически; работает быстрее `@SpringBootTest` благодаря меньшему контексту — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> `@WebMvcTest` через `WebMvcTypeExcludeFilter` исключает из сканирования все `@Service`, `@Component`, `@Repository`, `@Configuration` (кроме `@RestControllerAdvice`, `Converter`, `Filter`, `HandlerInterceptor`, `WebMvcConfigurer`). Это даёт минимальный контекст, идеальный для тестирования URL-роутинга, валидации, исключений, сериализации.
+>
+> Если указать класс контроллера в параметре (`@WebMvcTest(OrderController.class)`), будет загружен только он — остальные контроллеры приложения исключаются. Без параметра загружаются все контроллеры.
+>
+> **Пример:**
+> ```java
+> @WebMvcTest(OrderController.class)
+> class OrderControllerTest {
+>
+>     @Autowired private MockMvc mockMvc;
+>     @MockBean private OrderService orderService;
+>     @MockBean private OrderMapper mapper;
+>
+>     @Test
+>     void createOrder_validatesRequestBody() throws Exception {
+>         mockMvc.perform(post("/api/orders")
+>                 .contentType(APPLICATION_JSON)
+>                 .content("{}"))  // missing required customerId
+>             .andExpect(status().isBadRequest())
+>             .andExpect(jsonPath("$.errors[0].field").value("customerId"));
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - Проверка mapping URL → controller method.
+> - Проверка валидации (`@Valid`, `@NotNull`, custom validators).
+> - Проверка статус-кодов и заголовков ответа.
+> - Проверка работы `@ControllerAdvice` и exception handlers.
+> - Проверка сериализации/десериализации DTO.
+>
+> **Подводные камни:**
+> - Spring Security автоматически активна в `@WebMvcTest` — POST/PUT без `csrf()` упадут на 403. Решение: `mockMvc.perform(post(...).with(csrf()))`.
+> - Каждый уникальный набор `@MockBean` создаёт новый контекст → фрагментирует кеш и замедляет общий suite.
+> - JPA-репозитории и `@DataSource` НЕ создаются — если контроллер инжектит репозиторий напрямую (анти-паттерн), нужно мокировать.
+> - При множестве контроллеров без параметра `@WebMvcTest` загрузит все — это замедлит тест и потребует мокировать ВСЕ их зависимости.
+>
+> **Связанные вопросы:** [[Q3]] — общее понятие test slice; [[Q7]] — MockMvc детали; [[Q9]] — `@MockBean` особенности; [[Q14]] — тестирование Spring Security в `@WebMvcTest`.
+>
+> ---
+>
+> #### B) `@WebMvcTest` загружает весь Spring-контекст, но запускает только web-слой Tomcat — ❌ Неверно
+>
+> **Что на самом деле:** `@WebMvcTest` НЕ загружает реальный Tomcat и НЕ грузит весь контекст. Это slice-аннотация: загружает только web-инфраструктуру (DispatcherServlet, ControllerAdvice, MessageConverter, MockMvc) и явно указанные контроллеры. Сервисы/репозитории отсутствуют.
+>
+> **Откуда путаница:** в обоих аннотациях слово «web» наводит на мысль о реальном сервере. На самом деле `@WebMvcTest` использует только MockMvc без сетевого слоя.
+>
+> **Если бы это было правдой:** не было бы 5-10× ускорения — контекст занимал бы те же 8 секунд что `@SpringBootTest`. На практике slice-тест поднимается за 1-2 секунды.
+>
+> ---
+>
+> #### C) `@WebMvcTest` это псевдоним `@SpringBootTest` для контроллеров — ❌ Неверно
+>
+> **Что на самом деле:** аннотации фундаментально разные. `@SpringBootTest` загружает ВСЁ приложение; `@WebMvcTest` — только web-слой с автоматическими исключениями. Разные `ContextLoader`, разные `TypeExcludeFilters`, разный набор автоконфигураций (slice использует `@ImportAutoConfiguration` whitelist, `@SpringBootTest` — все автоконфигурации).
+>
+> **Откуда путаница:** в обоих случаях можно тестировать контроллеры, отсюда иллюзия эквивалентности.
+>
+> **Если бы это было правдой:** не было бы причин для существования двух разных аннотаций. На практике выбор аннотации меняет: время сборки контекста, набор бинов, необходимость `@MockBean`.
+>
+> ---
+>
+> #### D) В `@WebMvcTest` MockMvc нужно настраивать вручную через `@AutoConfigureMockMvc` — ❌ Неверно
+>
+> **Что на самом деле:** `@WebMvcTest` САМ применяет `@AutoConfigureMockMvc` — никаких дополнительных аннотаций не требуется. Достаточно `@Autowired MockMvc mockMvc;` в тесте. В отличие от `@SpringBootTest`, где `@AutoConfigureMockMvc` нужен явно (там нет slice-логики).
+>
+> **Откуда путаница:** в `@SpringBootTest` действительно нужен `@AutoConfigureMockMvc`. Можно по аналогии решить что и в `@WebMvcTest` тоже.
+>
+> **Если бы это было правдой:** примеры из официальной документации Spring Boot не работали бы — там не пишут `@AutoConfigureMockMvc` рядом с `@WebMvcTest`. На практике это лишнее, slice сам настраивает MockMvc.
 
 `@DataJpaTest` загружает **только JPA-слой**: Entity, Repository, JPA-конфигурацию. По умолчанию — in-memory H2.
 
@@ -487,10 +560,92 @@ class UserRepositoryRealDbTest { }
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Какие ещё test slices есть в Spring Boot? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что делает `@DataJpaTest` и как корректно настроить его для тестов на реальной БД (например, PostgreSQL через Testcontainers)?
+>
+> ---
+>
+> #### A) `@DataJpaTest` всегда работает только с H2 in-memory БД, для PostgreSQL нужен `@SpringBootTest` — ❌ Неверно
+>
+> **Что на самом деле:** `@DataJpaTest` использует **embedded** БД по умолчанию (H2/HSQLDB/Derby — что есть на classpath), но это поведение **переопределяется** через `@AutoConfigureTestDatabase(replace = Replace.NONE)`. С этой аннотацией используется реально настроенный datasource — например, Testcontainers PostgreSQL.
+>
+> **Откуда путаница:** в гайдах часто показывают H2 как «default». На практике для тестов, проверяющих SQL-функционал PostgreSQL (JSONB, window functions), переключение на реальный PostgreSQL обязательно — и делается оно прямо в `@DataJpaTest`.
+>
+> **Если бы это было правдой:** все интеграционные тесты репозиториев приходилось бы писать с `@SpringBootTest`. На практике `@DataJpaTest + Replace.NONE + Testcontainers` — самый частый и легковесный подход.
+>
+> ---
+>
+> #### B) `@DataJpaTest` не делает транзакций — каждый тест видит данные предыдущего — ❌ Неверно
+>
+> **Что на самом деле:** `@DataJpaTest` оборачивает каждый тест-метод в транзакцию и **откатывает её** после теста (`@Transactional` с rollback=true применяется автоматически). Это даёт изоляцию тестов на одной БД без необходимости пересоздавать схему.
+>
+> **Откуда путаница:** при чтении кода `@DataJpaTest` нет видимого `@Transactional` — кажется, что транзакций нет. На деле он включён через мета-аннотации.
+>
+> **Если бы это было правдой:** тесты на одном файле БД были бы flaky — порядок выполнения определял бы результаты. На практике `@DataJpaTest` гарантирует чистое состояние на каждом тесте через rollback.
+>
+> ---
+>
+> #### C) `@DataJpaTest` загружает только JPA-слой (Entity, Repository, JPA-конфигурацию + `TestEntityManager`); по умолчанию использует embedded БД и оборачивает каждый тест в транзакцию с rollback; для теста на реальной БД нужно `@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)` плюс настроенный datasource (например, через Testcontainers `@ServiceConnection`) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Slice `@DataJpaTest` через `DataJpaTypeExcludeFilter` оставляет в контексте: `@Entity`, `JpaRepository`, `EntityManagerFactory`, `TransactionManager`, `TestEntityManager`. Сервисы, контроллеры, security исключаются.
+>
+> Поведение по умолчанию:
+> 1. Embedded DB вместо реальной (`@AutoConfigureTestDatabase(replace = Replace.ANY)`).
+> 2. `@Transactional` с автоматическим rollback после каждого теста.
+> 3. SQL-логи включены (`spring.jpa.show-sql = true`).
+> 4. `TestEntityManager` — обёртка над `EntityManager` для удобной подготовки данных.
+>
+> **Пример:**
+> ```java
+> @DataJpaTest
+> @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+> @Testcontainers
+> class UserRepositoryPostgresTest {
+>
+>     @Container
+>     @ServiceConnection
+>     static PostgreSQLContainer<?> postgres =
+>         new PostgreSQLContainer<>("postgres:16");
+>
+>     @Autowired UserRepository repository;
+>     @Autowired TestEntityManager em;
+>
+>     @Test
+>     void findByEmail_returnsUser() {
+>         em.persist(new User("alice@mail.com", "Alice"));
+>         em.flush();
+>
+>         assertThat(repository.findByEmail("alice@mail.com"))
+>             .map(User::getName).contains("Alice");
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - Тесты JPA-запросов (`@Query`, derived queries, criteria API).
+> - Проверка constraints и unique-индексов на уровне БД.
+> - Тесты на маппинг Entity → таблица (особенно `@OneToMany`, `@ManyToOne`).
+> - С Testcontainers — для DB-specific фич (PostgreSQL JSONB, full-text search).
+>
+> **Подводные камни:**
+> - Автоматический rollback скрывает баги — например, `flush()` ошибки видны только после явного `em.flush()`.
+> - Без `Replace.NONE` ваш PostgreSQL-datasource игнорируется в пользу H2 — тест проходит, но не отражает production.
+> - `@DataJpaTest` не загружает `@EntityListeners` с зависимостями на `@Service` — они будут `null`.
+> - Lazy loading может работать иначе в тесте (одна транзакция на весь тест) vs в продакшене.
+>
+> **Связанные вопросы:** [[Q3]] — slices общая идея; [[Q6]] — другие data slices (`@DataJdbcTest`, `@DataMongoTest`); [[Q15]] — Testcontainers с `@ServiceConnection`.
+>
+> ---
+>
+> #### D) `@DataJpaTest` поднимает Tomcat и контроллеры, чтобы можно было тестировать репозиторий через REST — ❌ Неверно
+>
+> **Что на самом деле:** `@DataJpaTest` — slice для JPA-слоя БЕЗ web-инфраструктуры. Никакого Tomcat, никаких контроллеров. Тестирование идёт напрямую через `@Autowired Repository`.
+>
+> **Откуда путаница:** если читать про «slice» и понимать как «облегчённый SpringBootTest», можно подумать что web остаётся.
+>
+> **Если бы это было правдой:** время старта `@DataJpaTest` было бы сравнимо с `@SpringBootTest`. На практике slice стартует за секунду — благодаря отсутствию web-слоя.
 
 | Аннотация | Что загружает |
 |---|---|
@@ -523,10 +678,97 @@ class OrderDtoJsonTest {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Что такое `MockMvc` и как им пользоваться? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+>
+> **Вопрос:** Какие test slices, кроме `@WebMvcTest` и `@DataJpaTest`, есть в Spring Boot и для каких задач они предназначены?
+>
+> ---
+>
+> #### A) Только `@WebMvcTest` и `@DataJpaTest` — других slice-аннотаций нет — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot предоставляет 10+ slice-аннотаций. Полный список из `spring-boot-test-autoconfigure`:
+> - `@WebMvcTest`, `@WebFluxTest` — web-слой (servlet/reactive).
+> - `@DataJpaTest`, `@DataJdbcTest`, `@DataMongoTest`, `@DataNeo4jTest`, `@DataRedisTest`, `@DataR2dbcTest`, `@DataCassandraTest`, `@DataLdapTest` — для разных хранилищ.
+> - `@JsonTest`, `@RestClientTest`, `@WebServiceClientTest`, `@JdbcTest`, `@GraphQlTest`.
+>
+> **Откуда путаница:** в туториалах фокусируются на `@WebMvcTest` и `@DataJpaTest` как самых частых. Остальные slice-аннотации менее известны.
+>
+> **Если бы это было правдой:** для теста ObjectMapper-сериализации пришлось бы поднимать `@SpringBootTest` (минуты на CI вместо секунды через `@JsonTest`). На практике slice есть почти для каждой задачи.
+>
+> ---
+>
+> #### B) Slice-аннотации — это просто алиасы `@SpringBootTest` с разными профилями — ❌ Неверно
+>
+> **Что на самом деле:** каждый slice — отдельная композиция аннотаций со своим `*TypeExcludeFilter` и whitelist автоконфигураций. Например, `@JsonTest` оставляет только `JacksonAutoConfiguration` + `GsonAutoConfiguration` + `JsonTesters`. `@RestClientTest` оставляет `RestTemplateAutoConfiguration` + `MockRestServiceServerAutoConfiguration`.
+>
+> **Откуда путаница:** все slice-аннотации выглядят похоже и используются как «упрощённый SpringBootTest». Кажется что это просто скрытые профили.
+>
+> **Если бы это было правдой:** профили `@Profile("test-json")` и т.д. встречались бы в коде Spring Boot. На практике механизм совсем другой — `@TypeExcludeFilters`.
+>
+> ---
+>
+> #### C) Slice-аннотации существуют только для реляционных БД — ❌ Неверно
+>
+> **Что на самом деле:** есть slice для NoSQL: `@DataMongoTest`, `@DataNeo4jTest`, `@DataRedisTest`, `@DataCassandraTest`, `@DataElasticsearchTest`. Каждый поднимает соответствующую инфраструктуру (например, `@DataMongoTest` использует Flapdoodle embedded MongoDB).
+>
+> **Откуда путаница:** в Spring исторически JPA — самая видная часть стека. Кажется что slice-механизм заточен под него.
+>
+> **Если бы это было правдой:** тесты Mongo/Redis-репозиториев требовали бы `@SpringBootTest` — но Spring Boot Test модуль предоставляет именно специализированные slices для них.
+>
+> ---
+>
+> #### D) Spring Boot предоставляет slice-аннотации для разных задач: `@WebFluxTest` (reactive web + WebTestClient); `@DataJdbcTest` / `@DataMongoTest` / `@DataRedisTest` / `@DataNeo4jTest` / `@DataR2dbcTest` / `@DataCassandraTest` (NoSQL и reactive repositories); `@JsonTest` (Jackson/Gson сериализация с `JacksonTester`); `@RestClientTest` (RestTemplate/RestClient + MockRestServiceServer); `@WebServiceClientTest` (SOAP); `@JdbcTest` (JdbcTemplate без JPA); `@GraphQlTest` — все используют тот же механизм исключения «не своих» бинов — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Slice-аннотации структурированы в три семейства:
+> 1. **Web slices:** `@WebMvcTest` (servlet, MockMvc), `@WebFluxTest` (reactive, WebTestClient), `@GraphQlTest` (GraphQL).
+> 2. **Data slices:** `@DataJpaTest`, `@DataJdbcTest`, `@DataR2dbcTest`, `@DataMongoTest`, `@DataRedisTest`, `@DataCassandraTest`, `@DataNeo4jTest`, `@DataLdapTest`, `@DataElasticsearchTest`.
+> 3. **Integration helpers:** `@JsonTest` (сериализация), `@RestClientTest` (HTTP-клиенты с моком сервера), `@WebServiceClientTest` (SOAP), `@JdbcTest` (чистый JDBC без JPA).
+>
+> Все они реализованы через одну инфраструктуру: `*TypeExcludeFilter` + whitelist автоконфигураций.
+>
+> **Пример:**
+> ```java
+> // @JsonTest для проверки сериализации DTO
+> @JsonTest
+> class OrderDtoJsonTest {
+>     @Autowired JacksonTester<OrderDto> json;
+>
+>     @Test
+>     void serialize_matchesExpectedJson() throws Exception {
+>         OrderDto dto = new OrderDto(1L, "CUST-1", BigDecimal.TEN);
+>         assertThat(json.write(dto))
+>             .extractingJsonPathStringValue("@.customerId").isEqualTo("CUST-1");
+>     }
+> }
+>
+> // @RestClientTest для тестов HTTP-клиента
+> @RestClientTest(PaymentClient.class)
+> class PaymentClientTest {
+>     @Autowired PaymentClient client;
+>     @Autowired MockRestServiceServer server;
+>
+>     @Test
+>     void charge_returnsTransactionId() {
+>         server.expect(requestTo("/api/charge"))
+>               .andRespond(withSuccess("{\"id\":\"txn-1\"}", APPLICATION_JSON));
+>         assertThat(client.charge(100)).isEqualTo("txn-1");
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - `@JsonTest` — изоляция тестов сериализации (custom serializers, naming strategies).
+> - `@RestClientTest` — unit-тест HTTP-клиента с моком сервера через `MockRestServiceServer`.
+> - `@DataR2dbcTest` — reactive репозитории на R2DBC.
+> - `@GraphQlTest` — schema validation, query resolvers без поднятия HTTP.
+>
+> **Подводные камни:**
+> - `@DataMongoTest` по умолчанию хочет Flapdoodle embedded Mongo — для production-like нужен `@AutoConfigureDataMongo` + Testcontainers.
+> - `@RestClientTest` мокает только сервер, а не сам клиент — нельзя проверить retry/timeout логику без дополнительных моков.
+> - Композиция slice-аннотаций не работает: нельзя `@DataJpaTest + @WebMvcTest` — каждый имеет свой `TypeExcludeFilter`.
+>
+> **Связанные вопросы:** [[Q3]] — концепция slice; [[Q4]] — `@WebMvcTest`; [[Q5]] — `@DataJpaTest`.
 
 `MockMvc` — Spring-инструмент для тестирования web-слоя **без запуска реального HTTP-сервера**: симулирует HTTP-запросы через Spring DispatcherServlet.
 
