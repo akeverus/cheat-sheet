@@ -1453,10 +1453,111 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. (!) Как ответить про profiling на senior-раунде за 1 минуту? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какая ключевая разница между Level 2 (Proactive continuous profiling) и Level 3 (Integrated в CI/CD) profiling maturity?
+>
+> ---
+>
+> #### A) Level 3 быстрее обнаруживает регрессии чем Level 2, потому что использует ML для anomaly detection — ❌ Неверно
+>
+> **Что на самом деле:** Level 3 быстрее не из-за ML, а из-за **сдвига влево**: вместо мониторинга в проде (Level 2 reactive — заметили деградацию, начали разбираться), профилирование происходит **в pipeline до merge**. Если PR увеличивает p99 на 10% — merge блокируется. Регрессия не доходит до прода вообще.
+>
+> Level 2 находит регрессию через минуты/часы после deploy. Level 3 — за минуты ДО merge. Это не «быстрее обнаруживает», это «не пускает».
+>
+> **Откуда путаница:** «proactive» звучит как «предотвращает», но Level 2 reactive — реагирует уже после ввода в прод. Level 3 — настоящий preventive.
+>
+> **Если бы это было правдой:** Level 2 работал бы как Level 3 + ML. На практике это разные подходы — observability vs gate.
+>
+> ---
+>
+> #### B) Level 3 встраивает profiling в CI/CD pipeline с performance budgets: регрессия > порога блокирует merge. Это «shift-left»: проблемы ловятся ДО deploy, а не после — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> **Level 1 (Reactive)**: инцидент → ad-hoc профилирование. Hero-driven, не масштабируется.
+>
+> **Level 2 (Proactive continuous)**: Pyroscope/Datadog continuously снимает sampling-профили в проде. Регрессии видны быстро, но **после deploy**.
+>
+> **Level 3 (Integrated в CI/CD)**: профилирование как часть PR-проверок. Performance test suite запускается на shadow traffic, JFR снимается, сравнивается с baseline. Если deviation > threshold (e.g., +10% allocations, +5% CPU time в hot path) — merge блокируется, как блокируется failing unit test.
+>
+> Это **performance budget** — формальный SLA на performance characteristics. Развитие идеи как unit tests, но для performance.
+>
+> **Пример (GitHub Actions с performance budget):**
+> ```yaml
+> name: Performance Regression Check
+> on: pull_request
+> jobs:
+>   perf-test:
+>     runs-on: ubuntu-latest
+>     steps:
+>       - uses: actions/checkout@v4
+>       - name: Run JMH benchmark
+>         run: ./gradlew jmh
+>       - name: Compare with baseline
+>         run: |
+>           ./scripts/compare-perf.sh \
+>             baseline-main.json \
+>             results/jmh-results.json \
+>             --threshold-cpu 5% \
+>             --threshold-mem 10%
+>           # exit code 1 если deviation > threshold
+>       - name: Upload flame graph artifact
+>         uses: actions/upload-artifact@v3
+>         with:
+>           name: flame-graph-${{ github.sha }}
+>           path: results/flame-graph.svg
+> ```
+>
+> ```java
+> // Performance budget как JUnit test
+> @Test
+> @PerformanceBudget(p99Latency = "100ms", maxAllocations = "1MB/req")
+> void orderEndpoint_meetsBudget() {
+>     load(1000, () -> client.placeOrder(testOrder));
+>     assertNoRegression();    // сравнивает с baseline в S3
+> }
+> ```
+>
+> **Когда применять:**
+> - **Latency-критичные сервисы**: HFT, AdTech, real-time bidding. Каждый ms = деньги.
+> - **Mature engineering org**: Yandex, Tinkoff, Booking имеют dedicated Perf Engineering teams строящие такие pipelines.
+> - **Open-source critical libraries**: Netty, Vert.x, Spring Framework имеют JMH benchmarks как часть CI.
+> - **После 2-3 major incidents** связанных с performance regression: команда понимает что reactive Level 2 не хватает.
+>
+> **Подводные камни:**
+> - **Flaky benchmarks**: JIT warm-up, GC pauses, CPU noise → false positives. Решение — multiple runs + statistical significance (t-test).
+> - **Baseline drift**: главная ветка постепенно медленеет (1% per quarter — не блокируется, но cumulative). Нужен периодический baseline reset.
+> - **Cost**: каждый PR запускает performance test = compute time + benchmark infrastructure.
+> - **Не все services equal**: для admin UI performance budget избыточен, для checkout API — обязателен.
+>
+> **Связанные вопросы:** [[Q29]] — Pyroscope continuous profiling integration; [[Q30]] — нерепрезентативная нагрузка как риск; [[Q5]] — JFR + JMH в benchmark suite.
+>
+> ---
+>
+> #### C) Level 3 заменяет необходимость в production monitoring — если CI пропустил, в проде проблем не будет — ❌ Неверно
+>
+> **Что на самом деле:** Level 3 **дополняет**, не заменяет Level 2. Бывают:
+> - Деградации зависимые от prod traffic patterns (не воспроизводятся в CI)
+> - Hardware-specific regressions (Intel vs ARM в CI vs prod)
+> - Постепенные деградации от data growth (более 100M rows → новый SQL plan)
+>
+> Production monitoring остаётся obligatory. Level 3 ловит большинство, Level 2 — остальное.
+>
+> **Откуда путаница:** «полная автоматизация» — заманчивая идея. На практике production — последний rampart, и его нельзя убрать.
+>
+> **Если бы это было правдой:** компании с perfect CI могли бы убрать APM. Реально все enterprise — и New Relic/Datadog в проде, и performance tests в CI.
+>
+> ---
+>
+> #### D) Зрелая команда переходит сразу с Level 1 на Level 3, пропуская Level 2 — ❌ Неверно
+>
+> **Что на самом деле:** Level 3 requires **baseline** — данные о текущей performance, на основе которых ставятся thresholds. Без Level 2 (continuous profiling собирающий baseline) команда не знает реалистичных значений для budget'ов. Прыжок Level 1 → Level 3 даст либо too lax thresholds (всё проходит), либо too strict (ничего не мержится).
+>
+> **Откуда путаница:** «быстрее = лучше». На практике build maturity requires foundations.
+>
+> **Если бы это было правдой:** новые проекты могли бы начинать сразу с Level 3. Реально первые 6-12 месяцев — собирать data в Level 2, потом установить thresholds для Level 3.
+
+## Q32. (!) Как ответить про profiling на senior-раунде за 1 минуту?
 
 Шаблон:
 
