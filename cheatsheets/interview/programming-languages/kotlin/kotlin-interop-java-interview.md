@@ -1917,10 +1917,95 @@ class UserServiceAdapter(private val javaService: JavaUserService) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q31. Почему `inline`-функции недоступны из `Java` и как это обойти? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В Kotlin-сервисе вызываем legacy Java API без `@Nullable`/`@NotNull` аннотаций. Какая стратегия даёт максимальную compile-time безопасность?
+>
+> ---
+>
+> #### A) `val name = service.getName()` — компилятор Kotlin сам выведет nullable тип по умолчанию для всех Java вызовов — ❌ Неверно
+>
+> **Что на самом деле:** компилятор Kotlin без специальных флагов выводит тип как **platform type** (`String!`), не как nullable. Platform type — особый «промежуточный» тип, который **не проверяется** на null compile-time. То есть `val name = ...` даёт `String!`, что позволяет вызывать `.length` без `?.` — и упасть в runtime, если значение было `null`.
+>
+> **Откуда путаница:** хочется верить, что Kotlin «защищает по умолчанию». На деле это была сознательная уступка для практического интеропа — иначе пришлось бы аннотировать всю Java стандартную библиотеку.
+>
+> **Если бы это было правдой:** не было бы проблемы platform types вообще. Существование вопроса именно потому, что compiler НЕ защищает по умолчанию.
+>
+> ---
+>
+> #### B) Использовать `-Xjsr305=strict` compiler flag + явные nullable-типы при чтении Java значений — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Безопасная стратегия для смешанных проектов состоит из трёх слоёв:
+>
+> **1. Compiler flag `-Xjsr305=strict`**: заставляет Kotlin компилятор трактовать **все** Java-типы без аннотаций как `nullable` (`T?`), не как platform types. Это убирает «опасную середину» — каждый Java-вызов теперь требует явной обработки null.
+>
+> ```kotlin
+> // build.gradle.kts
+> tasks.withType<KotlinCompile> {
+>     compilerOptions {
+>         freeCompilerArgs.add("-Xjsr305=strict")
+>     }
+> }
+> ```
+>
+> **2. Явные nullable-типы**: при получении значений из Java явно объявляйте тип, не полагаясь на type inference:
+>
+> ```kotlin
+> // Плохо: получим platform type
+> val name = service.getName()       // String!
+> name.length                         // компилируется, но NPE возможен
+>
+> // Хорошо: явный nullable
+> val name: String? = service.getName()
+> name?.length ?: 0                   // явная обработка null
+>
+> // Или явный non-null с runtime check
+> val name: String = requireNotNull(service.getName()) { "name must not be null" }
+> ```
+>
+> **3. Defensive wrappers** на границе с Java:
+>
+> ```kotlin
+> class UserServiceAdapter(private val javaService: JavaUserService) {
+>     fun getName(id: Long): String =
+>         requireNotNull(javaService.getName(id)) { "name null for id=$id" }
+>
+>     fun getMiddleName(id: Long): String? =
+>         javaService.getMiddleName(id)  // явно nullable
+> }
+> ```
+>
+> **Когда применять:** для всех новых проектов с Java-зависимостями. Для legacy проектов — постепенный rollout: сначала на новых модулях, затем расширять.
+>
+> **Подводные камни:**
+> - **`-Xjsr305=strict` ломает существующий код**: где платформенные типы тихо позволяли вызовы, теперь будут ошибки компиляции. Миграция нетривиальна.
+> - **JSR-305 vs JSpecify**: JSR-305 (`@Nullable` от `javax.annotation`) — устаревшая, но широко используемая. Новый стандарт — JSpecify (`org.jspecify.annotations.@Nullable`). Kotlin 1.8+ поддерживает оба.
+> - **Аннотировать Java исходники** в своей кодовой базе — лучше всего; для third-party используйте JSR-305 mapping или Kotlin external annotations.
+>
+> **Связанные вопросы:** [[Q6]] — что такое platform types; [[Q7]] — `@Nullable`/`@NotNull` аннотации; [[Q8]] — nullability контракты в публичном Kotlin API.
+>
+> ---
+>
+> #### C) Обернуть все Java-вызовы в `try/catch (NullPointerException)` и логировать — ❌ Неверно
+>
+> **Что на самом деле:** это runtime-обработка, не compile-time безопасность. NPE будет уже произошедшим event'ом — поздно. К тому же `try/catch (NPE)` антипаттерн: ловит **любой** NPE, а не только от platform types. Может скрыть баги в собственном коде, где `null` действительно был непредвиденным.
+>
+> **Откуда путаница:** «обработка ошибок» интуитивно ассоциируется с try/catch. Но Kotlin null safety — про **предотвращение**, а не **поимку** ошибок.
+>
+> **Если бы это было правдой:** язык не нуждался бы в системе типов с null safety — все языки бы решали это через try/catch. Существование `T?` именно потому, что compile-time гарантии ценятся.
+>
+> ---
+>
+> #### D) Использовать `?:` (Elvis operator) после каждого Java-вызова — это статически проверяется компилятором — ❌ Неверно
+>
+> **Что на самом деле:** Elvis operator (`?:`) применим только к **nullable** типам (`T?`). С platform type он становится noop — компилятор не требует его использования, потому что platform type «не nullable» с его точки зрения. Поэтому `service.getName() ?: "default"` для **platform type** просто работает (компилятор не возражает), но НЕ даёт гарантий.
+>
+> **Откуда путаница:** Elvis выглядит как «защита от null» — хочется применять везде. Но без явного nullable-типа защита неполная.
+>
+> **Если бы это было правдой:** все Java-вызовы потребовали бы Elvis — но компилятор не выдаёт warnings для platform types. Нужно сначала **сделать тип nullable** (явно или через `-Xjsr305=strict`), и тогда уже Elvis работает по назначению.
+
+## Q31. Почему `inline`-функции недоступны из `Java` и как это обойти?
 
 `inline`-функции `Kotlin` — конструкция, которую компилятор разворачивает (inlines) в месте вызова. Это означает, что в байткоде нет отдельного метода с такой сигнатурой — `Java` просто не может на него сослаться.
 
@@ -1965,10 +2050,88 @@ object JsonUtils {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q32. `Sealed classes` в `Java 17` vs `Kotlin sealed`: ключевые отличия при интеропе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В Kotlin есть `inline fun <reified T> fromJson(json: String): T`. Почему её нельзя вызвать из Java напрямую?
+>
+> ---
+>
+> #### A) `inline` делает функцию `private` в байткоде — для доступа из Java нужен `@JvmStatic` — ❌ Неверно
+>
+> **Что на самом деле:** `inline` не делает функцию private. На байткоде inline-функции остаются `public` (если объявлены `public`). Проблема в другом — у `reified` функций **не существует non-inline copy** в байткоде, который Java мог бы вызвать. Их сигнатура существует, но содержимое всегда раскрывается inline на callsite.
+>
+> **Откуда путаница:** `private`-сценарий часто причина «не вижу из Java». Здесь — другая природа: байткод просто не содержит вызываемого метода.
+>
+> **Если бы это было правдой:** `@JvmStatic` бы помогал. На деле он не помогает с inline+reified — потому что проблема глубже visibility.
+>
+> ---
+>
+> #### B) Inline-функции существуют только на уровне Kotlin compiler — `reified` type параметры доступны через подстановку на callsite, что невозможно из Java — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Inlining работает так: Kotlin компилятор берёт тело inline-функции и **копирует его в каждое место вызова**. Если функция имеет `reified T`, тип `T` становится известной константой на callsite, и компилятор подставляет `T::class.java` напрямую как `MyType.class`.
+>
+> ```kotlin
+> // Kotlin исходник
+> inline fun <reified T> fromJson(json: String): T =
+>     mapper.readValue(json, T::class.java)
+>
+> // На вызове:
+> val user = fromJson<User>(json)
+>
+> // Компилятор разворачивает в:
+> val user = mapper.readValue(json, User::class.java)  // T::class.java → User.class
+> ```
+>
+> Из Java невозможно «развернуть» вызов в место использования — Java компилятор работает только с вызовами по сигнатуре. Поскольку реального метода нет (или он есть, но без reification), вызов из Java либо не компилируется, либо теряет тип.
+>
+> **Решения для Java-совместимости:**
+>
+> ```kotlin
+> // Вариант 1: предоставить non-inline overload с Class<T>
+> inline fun <reified T> fromJson(json: String): T =
+>     fromJson(json, T::class.java)
+>
+> fun <T> fromJson(json: String, type: Class<T>): T =
+>     mapper.readValue(json, type)
+> ```
+>
+> ```java
+> // Java может вызвать non-inline overload:
+> User user = JsonUtils.fromJson(json, User.class);
+> ```
+>
+> **Когда применять:** при дизайне публичных Kotlin-библиотек предусматривайте non-inline аналоги для всех `inline`+`reified` API. Используйте `inline` для удобного Kotlin-DSL, а Java-friendly слой — отдельно.
+>
+> **Подводные камни:**
+> - **`crossinline` lambdas** — недоступны из Java по той же причине (требуют inlining lambda body).
+> - **`noinline` параметры** — доступны (это обычные function objects), но сама функция-обёртка может быть недоступна.
+> - **Inline functions с `inline` параметрами без `reified`** — иногда компилятор оставляет non-inline copy для рекурсии или indirect calls. Это деталь реализации, не контракт.
+> - **`@PublishedApi internal inline`** — частая идиома для exposing inline functions, но из Java всё равно недоступно из-за reification.
+>
+> **Связанные вопросы:** [[Q19]] — top-level функции и `@file:JvmName`; [[Q21]] — suspend функции из Java через подобный mechanism; [[Q26]] — практики дизайна Java-friendly API.
+>
+> ---
+>
+> #### C) Inline-функции компилируются как abstract methods в специальных интерфейсах — Java не имплементирует их — ❌ Неверно
+>
+> **Что на самом деле:** inline-функции не имеют отношения к интерфейсам или абстрактным методам. Их «не существование» в байткоде — это эффект inlining: компилятор не генерирует метод в `.class` файле (для чистых inline без non-inline fallback'а), а просто разворачивает тело на месте вызова.
+>
+> **Откуда путаница:** идея «функция как интерфейс» возникает по аналогии с `fun interface` (SAM в Kotlin), которые компилируются в интерфейсы.
+>
+> **Если бы это было правдой:** Kotlin компилятор генерировал бы синтетические интерфейсы для каждой inline-функции, что было бы катастрофой для размера jar.
+>
+> ---
+>
+> #### D) `inline` функции это макросы — они не существуют в байткоде вообще — ❌ Неверно
+>
+> **Что на самом деле:** inline-функции **обычно существуют** в байткоде (для non-inline call paths, для error reporting, для stacktrace). Они «существуют, но игнорируются» при вызове из Kotlin — там компилятор заменяет вызов на inlined body. Из Java — функция в байткоде есть, но `reified T` параметр представлен как `Object` (стирание), что делает её бесполезной для type-safe вызовов.
+>
+> **Откуда путаница:** «макрос» — общая абстракция, и inline похож на C-макросы. Но Kotlin inline сохраняет signature info в metadata, и есть `kotlin.Metadata` annotation, описывающая inline-status.
+>
+> **Если бы это было правдой:** stacktrace не показывал бы имя inline-функции, debugger не мог бы поставить breakpoint. На деле и stacktrace, и breakpoints работают — потому что функция есть в `.class` (синтетический method для inline-source-mapping).
+
+## Q32. `Sealed classes` в `Java 17` vs `Kotlin sealed`: ключевые отличия при интеропе
 
 `Kotlin` и `Java 17` оба поддерживают `sealed`-классы, но это разные механизмы с разными гарантиями и разным поведением при взаимодействии.
 
@@ -2025,10 +2188,97 @@ val area = when (shape) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q33. `Java Optional` vs `Kotlin` null safety: что лучше и как работать на границе двух языков? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** В смешанном Kotlin/Java codebase есть `Kotlin sealed class Result` и `Java 17 sealed class Shape permits Circle, Rectangle`. Какое утверждение про их интероп верно?
+>
+> ---
+>
+> #### A) Kotlin `when` exhaustive проверяет полноту веток как для Kotlin sealed, так и для Java 17 sealed классов — ❌ Неверно
+>
+> **Что на самом деле:** Kotlin компилятор НЕ распознаёт Java 17 sealed hierarchies для целей exhaustiveness check. Когда Kotlin `when` пытается обработать Java sealed class — компилятор требует `else` ветку, даже если все Java-perm-subtypes перечислены. Это потому что Kotlin не парсит `PermittedSubclasses` атрибут Java sealed (по крайней мере, в текущих стабильных версиях).
+>
+> **Откуда путаница:** на семантическом уровне обе фичи одинаковы (закрытая иерархия). Но реализации независимы — Kotlin sealed появился до Java sealed, и их интероп пока не дотянут.
+>
+> **Если бы это было правдой:** не пришлось бы писать `else -> error("unreachable")` для Java sealed. На практике это требуется.
+>
+> ---
+>
+> #### B) Kotlin sealed классы в байткоде НЕ имеют `PermittedSubclasses` атрибута — они компилируются как обычный abstract class с приватным конструктором — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это ключевое отличие на байткод-уровне. **Kotlin sealed** (с 2016 года) появился до Java 17 sealed (2021) и был реализован через **convention** в байткоде:
+> - **Abstract класс** с приватным конструктором (или package-private constructor для иерархий через runtime).
+> - **Подклассы должны быть в том же module** (compile-time check Kotlin компилятором).
+> - **НЕТ атрибута `PermittedSubclasses`** — JVM ничего не знает про закрытость иерархии.
+>
+> **Java 17 sealed**:
+> - Атрибут `PermittedSubclasses` в `.class` файле.
+> - JVM enforced на runtime: `IncompatibleClassChangeError` при попытке наследовать не из permits.
+> - `Class.isSealed()` возвращает true.
+>
+> **Сравнительная таблица:**
+>
+> | Аспект | Kotlin sealed | Java 17 sealed |
+> |---|---|---|
+> | Объявление | `sealed class X` | `sealed class X permits A, B` |
+> | Enforcement | Kotlin compile-time | JVM runtime |
+> | Атрибут в .class | НЕТ | `PermittedSubclasses` |
+> | `Class.isSealed()` | `false` | `true` |
+> | Подклассы | В том же module | В списке `permits` |
+> | Exhaustive `when` (Kotlin) | Работает для своих | НЕ работает для Java sealed |
+> | Exhaustive `switch` (Java 21) | Не работает | Работает |
+>
+> **Пример:**
+> ```kotlin
+> // Kotlin
+> sealed class Result {
+>     data class Success(val data: String) : Result()
+>     data class Error(val msg: String) : Result()
+> }
+>
+> // Reflection из любого языка:
+> Result::class.java.isSealed       // false (!) — Kotlin sealed не использует JVM sealed
+> ```
+>
+> ```java
+> // Java 17
+> public sealed class Shape permits Circle, Rectangle {}
+>
+> Shape.class.isSealed();           // true
+> Shape.class.getPermittedSubclasses();  // [Circle.class, Rectangle.class]
+> ```
+>
+> **Когда применять:** для критичной runtime-проверки иерархии — используйте Java sealed (даже из Kotlin кода, объявляя класс в Java-файле). Для compile-time guarantees в Kotlin-only коде — Kotlin sealed. Не смешивайте механизмы в одной иерархии.
+>
+> **Подводные камни:**
+> - **Frameworks через reflection** (Jackson polymorphic deserialization): часто проверяют `isSealed()`. Для Kotlin sealed эта проверка не сработает.
+> - **Будущее Kotlin sealed на JVM 17+**: возможно, будут добавлять `PermittedSubclasses` для JVM target 17+ (обсуждается в KEEP), но пока нет.
+> - **`sealed interface`** в Kotlin — компилируется в обычный interface без специальных атрибутов.
+>
+> **Связанные вопросы:** [[Q24]] — Kotlin sealed из Java; [[Q26]] — design Kotlin API для Java; [[Q28]] — `@JvmRecord` как параллельный пример отдельных механизмов.
+>
+> ---
+>
+> #### C) `Kotlin sealed` и `Java 17 sealed` полностью совместимы и взаимозаменяемы — JetBrains использует один и тот же JVM-механизм — ❌ Неверно
+>
+> **Что на самом деле:** механизмы независимы. Java 17 sealed использует bytecode-атрибут `PermittedSubclasses` (`JEP 409`). Kotlin sealed не использует этот атрибут до сих пор — реализован через приватный конструктор и compile-time check. Они работают рядом, но не интегрированы.
+>
+> **Откуда путаница:** обе фичи названы `sealed`, обе достигают одной цели. Кажется, что JetBrains должен был унифицировать. Но Kotlin sealed появился раньше, есть legacy compatibility constraint.
+>
+> **Если бы это было правдой:** `Class.isSealed()` работал бы для Kotlin sealed, что упростило бы reflection-based frameworks. Это не так.
+>
+> ---
+>
+> #### D) Kotlin sealed запрещает наследование из Java напрямую — компилятор Java не даст extend такой класс — ❌ Неверно
+>
+> **Что на самом деле:** Java компилятор НЕ может проверить, что класс sealed (нет `PermittedSubclasses`). Из Java можно сделать `extends KotlinSealedClass` — компиляция пройдёт. **Но** Kotlin компилятор при компиляции своего модуля проверит, что наследник в том же модуле и не Java-класс — и сломается. Если Java-наследник в отдельном модуле — компиляция Java пройдёт, но runtime/Kotlin будет считать иерархию открытой.
+>
+> **Откуда путаница:** «sealed = закрыто» — кажется, что для всех языков. Но enforcement работает только для Kotlin compiler.
+>
+> **Если бы это было правдой:** Java compiler учитывал бы Kotlin metadata — но он этого не делает. Это разрыв в interop.
+
+## Q33. `Java Optional` vs `Kotlin` null safety: что лучше и как работать на границе двух языков?
 
 `Java Optional` и `Kotlin` nullable-типы решают одну задачу — явное представление отсутствующего значения — но принципиально разными способами.
 
