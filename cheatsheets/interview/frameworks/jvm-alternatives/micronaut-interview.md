@@ -1081,11 +1081,51 @@ class ServiceTest {
 С Micronaut 4 — **Test Resources** (аналог Quarkus Dev Services) автоматически поднимают Postgres, Kafka, и т.д. в контейнерах.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. (!) Service discovery, config management? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что делает аннотация `@MicronautTest` в тестах Micronaut?
+>
+> - [x] **A.** Поднимает полноценный application context и поддерживает `@Inject`, `@Client`, `@MockBean`, по умолчанию оборачивает каждый тест в транзакцию с откатом
+>
+>     ```java
+>     @MicronautTest
+>     class UserControllerTest {
+>         @Inject @Client("/") HttpClient client;
+>
+>         @MockBean(UserRepository.class)
+>         UserRepository mockRepo() { return mock(UserRepository.class); }
+>
+>         @Test
+>         void testList() {
+>             var resp = client.toBlocking()
+>                 .exchange(HttpRequest.GET("/users"),
+>                           Argument.listOf(User.class));
+>             assertEquals(HttpStatus.OK, resp.getStatus());
+>         }
+>     }
+>     ```
+>
+>     **Почему правильно:** `@MicronautTest` — это полный аналог `@SpringBootTest`, но с поддержкой DI-инъекций в сам тестовый класс, `@MockBean` для подмены бинов и **transactional rollback по умолчанию** (через `@TransactionMode.SEPARATE_TRANSACTIONS` контроль). С Micronaut 4 также интегрируется с **Test Resources** — автоматически поднимает Postgres/Kafka/Redis контейнеры (аналог Quarkus Dev Services).
+>
+>     **Где применяется:** интеграционные тесты controller→service→repository с реальной БД из Testcontainers, без ручного управления жизненным циклом контекста.
+>
+> - [ ] **B.** Работает только с unit-тестами без application context, нужно вручную создавать `ApplicationContext.run()` для каждого теста
+>
+>     **Почему неправильно:** это описание **отсутствия** `@MicronautTest`. Аннотация как раз и нужна, чтобы избавиться от ручного `ApplicationContext context = ApplicationContext.run()` в каждом `@BeforeEach`. JUnit 5 extension `MicronautJunit5Extension` управляет жизненным циклом контекста автоматически.
+>
+>     **Последствие ошибки:** разработчик заводит boilerplate в `@BeforeEach`/`@AfterEach`, контекст не шарится между тестами одного класса → 10× медленнее прогон, плюс утечки ресурсов при забытом `context.close()`.
+>
+> - [ ] **C.** Это аналог `@WebMvcTest` из Spring — поднимает только web-слой без service/repository бинов
+>
+>     **Почему неправильно:** `@MicronautTest` по умолчанию поднимает **полный** application context. Срезы тестов (slice tests) в Micronaut решаются через `@MicronautTest(application = MyApp.class, environments = "test")` и `@Property` для override-ов, а не отдельной аннотацией. Web-only test делается через `EmbeddedServer` + `@Client` без специальной аннотации-среза.
+>
+>     **Последствие ошибки:** ожидаешь lightweight тест, а получаешь full context — но при этом mock-и service-слоя не подставлены через `@MockBean`, тесты ходят в реальную БД → flaky.
+>
+> - [ ] **D.** Требует обязательного запуска embedded server на случайном порту для каждого теста, даже если тестируется только service-слой
+>
+>     **Почему неправильно:** embedded server поднимается только если в зависимостях есть `micronaut-http-server-netty` **и** в тест инжектится `@Client` или `EmbeddedServer`. Для чистого service-теста с `@Inject UserService` сервер не стартует — Micronaut оптимизирует загрузку.
+>
+>     **Последствие ошибки:** разработчик добавляет `excludeFromTestClassPath` для netty, ломая работающие `@Client`-тесты в других классах.
+
+## Q19. (!) Service discovery, config management?
 
 Micronaut имеет **встроенную** поддержку для облачных сервисов (без отдельного `Spring Cloud`):
 
@@ -1111,11 +1151,54 @@ interface UserClient { ... }
 ```
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. Serverless поддержка (AWS Lambda, GCP Functions)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Как Micronaut поддерживает service discovery и distributed configuration?
+>
+> - [ ] **A.** Только через подключение `spring-cloud-starter-consul-discovery` — Micronaut использует те же стартеры, что и Spring Cloud
+>
+>     **Почему неправильно:** Micronaut **не использует** Spring Cloud стартеры — у него собственный модуль `micronaut-discovery-client` с native-friendly реализацией (без reflection-heavy auto-configuration). Подключение Spring-стартеров привнесёт лишний classpath, конфликты бинов и сломает AOT-компиляцию.
+>
+>     **Последствие ошибки:** GraalVM native image падает на старте из-за reflection-классов Spring Cloud, или JVM-сборка стартует 5+ секунд вместо 200ms.
+>
+> - [ ] **B.** Service discovery поддерживается только для Kubernetes через DNS, остальные системы (Consul, Eureka) требуют сторонних плагинов
+>
+>     **Почему неправильно:** Micronaut "из коробки" поддерживает **Consul, Eureka, Kubernetes, AWS Cloud Map, OCI Service Discovery** через официальные модули `io.micronaut.discovery:*`. Это не сторонние плагины, а часть платформы.
+>
+>     **Последствие ошибки:** команда ищет несуществующие "плагины", вместо `implementation("io.micronaut.discovery:micronaut-discovery-client")` пишут самописный `RestTemplate`-discovery, теряя health checks и автоматический re-fetch.
+>
+> - [ ] **C.** Для config management подходит только `application.yml` в classpath — внешние источники не поддерживаются
+>
+>     **Почему неправильно:** Micronaut поддерживает **distributed config** из: Consul KV, Spring Cloud Config Server, AWS Parameter Store / Secrets Manager, HashiCorp Vault, etcd, Kubernetes ConfigMap/Secret, OCI Vault. Подключается через `bootstrap.yml` (читается до `application.yml`).
+>
+>     **Последствие ошибки:** секреты лежат в git внутри `application.yml` → security incident; либо приходится самописно тянуть `aws-sdk` и парсить параметры в `EventListener`.
+>
+> - [x] **D.** Встроенные модули `micronaut-discovery-client` и `micronaut-config-client` дают native-поддержку Consul/Eureka/K8s/AWS Cloud Map для discovery и Consul/Vault/Parameter Store/etcd для конфигурации, а `@Client(id = "...")` автоматически резолвит сервис через configured registry
+>
+>     ```yaml
+>     # bootstrap.yml — читается ДО application.yml
+>     micronaut:
+>       application:
+>         name: order-service
+>       config-client:
+>         enabled: true
+>     consul:
+>       client:
+>         registration: { enabled: true }
+>         config: { enabled: true }
+>     ```
+>
+>     ```java
+>     @Client(id = "user-service")   // через discovery, не URL
+>     public interface UserClient {
+>         @Get("/users/{id}")
+>         Mono<User> findById(@PathVariable Long id);
+>     }
+>     ```
+>
+>     **Почему правильно:** все модули discovery/config спроектированы под **compile-time DI** и AOT — никакого reflection при чтении конфига, метаданные индексов сервисов генерируются в build-time. Это даёт мгновенный старт в native image и предсказуемое поведение в K8s.
+>
+>     **Где применяется:** микросервисная архитектура с Consul/Vault, K8s-нативные приложения с автодискавери через Service API, AWS-deployments с Parameter Store.
+
+## Q20. Serverless поддержка (AWS Lambda, GCP Functions)?
 
 ```bash
 mn create-function-app my-function --features=aws-lambda,graalvm
@@ -1139,11 +1222,56 @@ public class MyHandler extends MicronautRequestHandler<APIGatewayProxyRequestEve
 Аналогично — Google Cloud Functions, Azure Functions, OCI Functions.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Distributed tracing, metrics? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Почему Micronaut особенно подходит для AWS Lambda и других serverless-платформ?
+>
+> - [ ] **A.** Micronaut единственный фреймворк, который умеет запускаться внутри Lambda — Spring Boot и Quarkus не имеют такой поддержки
+>
+>     **Почему неправильно:** на Lambda работают **все три**: Spring Cloud Function, Quarkus AWS Lambda extension и Micronaut. Преимущество Micronaut — не сам факт поддержки, а **характеристики**: cold start и memory footprint.
+>
+>     **Последствие ошибки:** ложный аргумент в архитектурном решении легко разбивается на ревью; выбор Micronaut должен обосновываться метриками, а не несуществующей эксклюзивностью.
+>
+> - [x] **B.** Compile-time DI без reflection даёт холодный старт ~30 ms в native image (vs ~5–10 сек у Spring Boot на JVM), что критично для pay-per-invocation модели; `MicronautRequestHandler` интегрирует DI прямо в Lambda handler
+>
+>     ```java
+>     public class OrderHandler
+>             extends MicronautRequestHandler<APIGatewayProxyRequestEvent,
+>                                             APIGatewayProxyResponseEvent> {
+>         @Inject OrderService service;        // DI работает в Lambda
+>
+>         @Override
+>         public APIGatewayProxyResponseEvent execute(
+>                 APIGatewayProxyRequestEvent input) {
+>             var id = input.getPathParameters().get("id");
+>             return new APIGatewayProxyResponseEvent()
+>                 .withStatusCode(200)
+>                 .withBody(service.toJson(service.find(id)));
+>         }
+>     }
+>     ```
+>
+>     ```bash
+>     # генерация функции с GraalVM native:
+>     mn create-function-app order-fn --features=aws-lambda,graalvm
+>     ./gradlew nativeCompile     # → bootstrap-binary для Lambda custom runtime
+>     ```
+>
+>     **Почему правильно:** в serverless **каждый cold start оплачивается** (latency + billed duration). Spring Boot на JVM в Lambda — это 5–10 секунд init phase, что: (а) даёт п99 latency 6+ сек для пользователей, (б) попадает в `INIT_REPORT` биллинга. Micronaut native — 30 ms init, JVM-режим ~500 ms. Аналогично работают GCP Functions, Azure Functions, OCI Functions через свои handler-ы.
+>
+>     **Где применяется:** event-driven API (API Gateway → Lambda), потоковая обработка (SQS/Kinesis triggers), scheduled jobs (EventBridge → Lambda).
+>
+> - [ ] **C.** Micronaut требует обязательного использования GraalVM native — на стандартной JVM-runtime в Lambda работать не будет
+>
+>     **Почему неправильно:** Micronaut отлично работает на стандартной Lambda Java 17/21 runtime — старт ~500 мс (vs ~5–10 сек у Spring Boot JVM), что уже приемлемо для большинства сценариев. Native compilation — это **опциональная** оптимизация, не обязательное требование.
+>
+>     **Последствие ошибки:** команда отказывается от Micronaut, считая GraalVM-toolchain обязательным; теряют выигрыш в 10× даже без native-сборки.
+>
+> - [ ] **D.** Lambda-функции на Micronaut не поддерживают DI — `@Inject` внутри handler-а не работает, нужно вручную создавать `ApplicationContext` в каждом вызове
+>
+>     **Почему неправильно:** базовый класс `MicronautRequestHandler` сам управляет `ApplicationContext`: контекст создаётся один раз при init (вне billed time), а `@Inject` поля заполняются автоматически. Ручное создание контекста в `execute()` — антипаттерн, который убивает весь выигрыш Micronaut.
+>
+>     **Последствие ошибки:** разработчик пишет `ApplicationContext.run()` в `execute()` → cold start превращается в "warm start" (каждый invoke поднимает контекст 500мс) → биллинг растёт в 10×, latency деградирует.
+
+## Q21. Distributed tracing, metrics?
 
 ```yaml
 tracing:
