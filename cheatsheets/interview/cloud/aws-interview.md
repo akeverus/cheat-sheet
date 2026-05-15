@@ -107,11 +107,45 @@ updated: "2026-04-25"
 200+ сервисов. Большинству бэкендеров знакомо ~20.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Regions, Availability Zones, Edge Locations? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что верно характеризует AWS как cloud-платформу?
+>
+> - [x] **A. AWS — облачная платформа от Amazon (с 2006), ~200+ сервисов, сгруппированных в категории: Compute (EC2, Lambda), Storage (S3, EBS), Databases (RDS, DynamoDB), Networking (VPC, CloudFront), Security (IAM, KMS), Analytics, AI/ML и другие.**
+>
+>     **Развёрнутое объяснение.** AWS — публичное облако с долей рынка ~32% (2025). Стартовала в 2006 с S3 и EC2. Сервисы делятся на функциональные категории, что облегчает навигацию и проектирование архитектуры. Большинству бэкендеров достаточно знать ~20 core-сервисов из 200+.
+>
+>     **Пример.** Типичный web-app: ALB (Networking) → EC2 ASG (Compute) → RDS PostgreSQL (Databases) → S3 для статики (Storage) → IAM-роли (Security) → CloudWatch для метрик (Management).
+>
+>     **Когда применять.** Если нужна managed-инфраструктура с глобальным присутствием (30+ regions), широким набором сервисов и pay-as-you-go биллингом. AWS — выбор по умолчанию для большинства enterprise/SaaS.
+>
+>     **Подводные камни.** Vendor lock-in (труднее мигрировать), сложный pricing (особенно data transfer out — частая причина «неожиданных» счетов), огромная поверхность IAM требует осторожности.
+>
+>     **Связанные вопросы.** [[Q2]] regions/AZ/edge, [[Q3]] pricing model, [[Q31]] Well-Architected Framework.
+>
+> - [ ] B. AWS — это исключительно IaaS-платформа (Infrastructure as a Service), предоставляющая только виртуальные машины и сетевые ресурсы; managed-сервисы (RDS, DynamoDB, Lambda) к AWS не относятся и предоставляются партнёрами.
+>
+>     **Что на самом деле.** AWS покрывает все три уровня — IaaS (EC2, VPC, EBS), PaaS (Elastic Beanstalk, App Runner, RDS) и SaaS-подобные managed-сервисы (Lambda, DynamoDB, SageMaker). Это полноценная multi-tier платформа от Amazon, а не партнёров.
+>
+>     **Откуда путаница.** Исторически AWS начинался с IaaS (EC2, S3 в 2006), и в старых учебниках его так и описывают. Сейчас 80%+ выручки даёт portfolio managed-сервисов выше IaaS.
+>
+>     **Если бы это было правдой.** Тогда у Amazon не было бы Aurora, DynamoDB, Bedrock, Lambda — а это флагманы. И невозможно было бы строить serverless-архитектуры на AWS, что противоречит реальности.
+>
+> - [ ] C. AWS — это open-source-проект, разрабатываемый сообществом под управлением Apache Foundation; Amazon лишь предоставляет хостинг по модели community edition.
+>
+>     **Что на самом деле.** AWS — proprietary commercial-сервис, на 100% принадлежащий Amazon.com Inc. Apache Foundation курирует другие проекты (Kafka, Spark, Cassandra), но не облачные платформы.
+>
+>     **Откуда путаница.** Amazon активно использует open-source (Linux, Kubernetes в EKS, PostgreSQL в RDS) и контрибьютит назад, но сама платформа — closed-source SaaS.
+>
+>     **Если бы это было правдой.** Можно было бы развернуть AWS у себя в дата-центре по аналогии с OpenStack — но такой возможности нет (есть только Outposts как managed-railout от Amazon).
+>
+> - [ ] D. Основные категории AWS — это «Бесплатные сервисы» и «Платные сервисы»; разделение по функциональности (Compute, Storage) отсутствует и используется только в маркетинге.
+>
+>     **Что на самом деле.** Категоризация по функциональности — официальная и используется в консоли AWS, документации и сертификациях. Free Tier — это pricing-модель (12 месяцев + always-free уровни), а не категория сервиса.
+>
+>     **Откуда путаница.** Новички часто фокусируются на Free Tier при первом знакомстве и воспринимают это как главное деление.
+>
+>     **Если бы это было правдой.** В AWS Console не было бы группировки «Compute», «Storage», «Databases» в навигации — но она там есть и используется ежедневно.
+
+## Q2. (!) Regions, Availability Zones, Edge Locations?
 
 ```
 Region (us-east-1, eu-central-1)
@@ -129,11 +163,45 @@ Region (us-east-1, eu-central-1)
 **Best practice:** **Multi-AZ** для high availability (RDS Multi-AZ, EC2 across AZs).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. AWS pricing model? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Как соотносятся Region, Availability Zone и Edge Location в AWS?
+>
+> - [ ] A. Region и Availability Zone — это синонимы (один data center в одном городе); Edge Location — это резервный AZ, который активируется только при failover основного.
+>
+>     **Что на самом деле.** Region содержит 3+ изолированных AZ (каждый — отдельный физический data center или кластер дата-центров). Edge Location — это точка CDN (CloudFront), не имеющая отношения к failover между AZ.
+>
+>     **Откуда путаница.** В маленьких regions кажется, что «всё в одном городе» — но даже там AZ физически разнесены на километры с отдельным питанием и сетью.
+>
+>     **Если бы это было правдой.** Multi-AZ deployment в RDS не имел бы смысла — но это краеугольная практика для high availability в AWS.
+>
+> - [x] **B. Region — географическая зона (us-east-1, eu-central-1) с 3+ изолированными Availability Zones (физическими data centers с отдельным питанием/сетью); Edge Location — точка CDN (CloudFront, 600+ globally) для low-latency доставки контента, не связана с compute-инфраструктурой региона.**
+>
+>     **Развёрнутое объяснение.** Иерархия: Region → AZ → конкретные ресурсы. AZ изолированы по power/network/cooling, но соединены low-latency сетью (<1ms) внутри региона. Edge Locations работают отдельно — кэшируют статику и терминируют HTTPS ближе к пользователю, чем ближайший Region.
+>
+>     **Пример.** Web-app в eu-central-1 (Frankfurt): EC2/RDS Multi-AZ across eu-central-1a/1b/1c для отказоустойчивости + CloudFront с edge-локациями в Москве/Стамбуле/Варшаве для быстрой доставки статики российским/европейским пользователям.
+>
+>     **Когда применять.** Multi-AZ — для production баз (RDS, Aurora) и stateful-сервисов; ASG across AZs — для stateless web-tier; CloudFront — для статики, API-кэширования и DDoS-защиты.
+>
+>     **Подводные камни.** Cross-AZ data transfer стоит денег ($0.01-0.02/GB) — heavy chatty workloads между AZ могут «дорожать». Edge Location не хранит данные постоянно — это кэш с TTL, не replacement для S3 cross-region replication.
+>
+>     **Связанные вопросы.** [[Q21]] CloudFront CDN, [[Q32]] Multi-AZ vs Multi-Region, [[Q13]] RDS.
+>
+> - [ ] C. Edge Location — это специальный тип AZ с GPU-инстансами для ML-workload; Regions включают только обычные AZ для CPU-задач.
+>
+>     **Что на самом деле.** GPU-инстансы (P-, G-семейства EC2) живут в обычных AZ внутри Regions, а не в Edge Locations. Edge Location — это сетевая точка CloudFront/Global Accelerator/Route53 без EC2-плоскости.
+>
+>     **Откуда путаница.** Появился Lambda@Edge — запуск кода в Edge Locations, что создаёт иллюзию compute «на краях». Но это очень ограниченный runtime (короткий timeout, нет VPC), а не полноценные AZ.
+>
+>     **Если бы это было правдой.** Можно было бы запросить g5.xlarge в Edge Location — но AWS Console такой опции не предоставляет, instance types доступны только в AZ внутри Region.
+>
+> - [ ] D. Availability Zone — это виртуальный конструкт без физической изоляции; AWS просто маркирует логические разделы одного data center как «AZ-a», «AZ-b» для совместимости с устаревшими API.
+>
+>     **Что на самом деле.** AZ — физически изолированные data centers (или кластеры зданий) с отдельным power, cooling, networking. AWS публикует это в whitepapers и SLA — Multi-AZ даёт реальную защиту от outage одного DC.
+>
+>     **Откуда путаница.** Идентификаторы AZ маппятся per-account (us-east-1a у вас и у соседа — разные физические AZ), что иногда воспринимается как «виртуальность».
+>
+>     **Если бы это было правдой.** Multi-AZ RDS не давал бы реальной отказоустойчивости (одновременный отказ всех AZ при сбое одного DC) — но история outage-ов AWS показывает обратное (часто падает один AZ, остальные работают).
+
+## Q3. AWS pricing model?
 
 **Pay-as-you-go** для большинства services:
 - **EC2:** per-hour или per-second (Linux)
@@ -151,11 +219,45 @@ Region (us-east-1, eu-central-1)
 **Critical:** **data transfer out** — самая частая cause неприятных счетов.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) EC2 — instance types, families? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Как устроен ценообразование AWS и что чаще всего «дороже, чем ожидаешь»?
+>
+> - [ ] A. AWS использует исключительно flat monthly subscription (как Netflix): фиксированная плата за account, после которой все сервисы доступны без дополнительных счетов.
+>
+>     **Что на самом деле.** Основная модель AWS — pay-as-you-go: оплата по факту использования (EC2 per-second, S3 per-GB, Lambda per-invocation). Subscription-планов с unlimited-доступом ко всему нет.
+>
+>     **Откуда путаница.** Есть Support Plans (Developer/Business/Enterprise) с фиксированной ценой, но это плата за поддержку, а не за infrastructure.
+>
+>     **Если бы это было правдой.** Не было бы кейсов «accidental $50,000 bill» из-за неправильно настроенного S3 или Lambda — но они регулярно случаются у новичков.
+>
+> - [ ] B. Data transfer внутри одного Region (между AZ) — всегда полностью бесплатен; outbound к internet — также бесплатен в рамках Free Tier неограниченно.
+>
+>     **Что на самом деле.** Cross-AZ data transfer стоит $0.01-0.02/GB в обе стороны. Outbound к internet — $0.05-0.09/GB после 100GB free per month, и Free Tier здесь именно ограниченный, а не unlimited.
+>
+>     **Откуда путаница.** В одном AZ data transfer действительно бесплатен; новички экстраполируют это на «весь Region».
+>
+>     **Если бы это было правдой.** Не было бы оптимизаций cross-AZ traffic (например, использование AZ-aware routing в Kafka/Cassandra для удешевления).
+>
+> - [x] **C. AWS использует pay-as-you-go (EC2 per-hour/second, S3 per-GB + per-request, Lambda per-invocation + per-GB-second) с modifier-ами: Reserved Instances/Savings Plans (до 72% скидка за commitment), Spot Instances (до 90% за interruptibility), Free Tier (12 месяцев + always-free лимиты). Самая частая «неожиданность» — data transfer out к internet и между Regions.**
+>
+>     **Развёрнутое объяснение.** Биллинг гранулярный — платишь только за фактическое использование. Discounts достигаются через commitment (RI/SP на 1-3 года) или принятие риска прерывания (Spot — AWS может забрать инстанс с уведомлением за 2 минуты). Data transfer — самая коварная часть pricing, так как считается отдельно от compute/storage.
+>
+>     **Пример.** Web-app: EC2 t3.medium On-Demand ($30/мес) + RDS db.t3.medium ($55/мес) + S3 100GB ($2.3/мес) + 500GB data transfer out ($45/мес) → suddenly transfer-cost = 35% bill.
+>
+>     **Когда применять.** Predictable steady workload → Savings Plans (3 года All Upfront ≈ 60% скидка). Fault-tolerant batch/ML → Spot Fleet. Spiky или dev → On-Demand. Прототипирование → Free Tier.
+>
+>     **Подводные камни.** NAT Gateway тарифицируется за GB обработанного трафика ($0.045/GB) + $0.045/hour — может стоить больше, чем EC2 за ним. CloudWatch Logs ingestion ($0.50/GB) скрытно дорожает при verbose logging. Inter-Region transfer ($0.02/GB) дороже cross-AZ.
+>
+>     **Связанные вопросы.** [[Q5]] Reserved/Spot/Savings Plans, [[Q33]] Cost optimization tips, [[Q34]] частые ошибки.
+>
+> - [ ] D. Цена EC2 рассчитывается только по CPU-часам; storage (EBS), networking и операционная система (Windows-лицензия) включены бесплатно во все instance types.
+>
+>     **Что на самом деле.** EC2 hourly rate включает compute + базовый network, но EBS-тома, public IPv4 (с 2024 платный), data transfer и Windows-лицензия — отдельные line items в bill.
+>
+>     **Откуда путаница.** Linux on-demand цена выглядит как «всё включено», но на практике 30-50% bill — это EBS + transfer + другие add-ons.
+>
+>     **Если бы это было правдой.** RDS не имел бы отдельной строки «Storage (GB-month)» и «IOPS» в pricing — но они там есть и часто превышают cost самого instance.
+
+## Q4. (!) EC2 — instance types, families?
 
 **Instance families:**
 
