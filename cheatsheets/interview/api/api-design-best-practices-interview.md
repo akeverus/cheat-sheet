@@ -116,10 +116,52 @@ API design — критическое skill. Хороший API: **intuitive, co
 
 
 > [!mcq]
-> - [ ] GET /getUsers — глагол в URL, REST-совместимый вариант | ❌ ПОСЛЕДСТВИЕ: дублирует HTTP-метод GET; нарушает REST uniform interface; клиентам надо читать URL как функцию, а не ресурс
-> - [ ] /user/123 — singular для single resource | ❌ ПОСЛЕДСТВИЕ: коллекция /users и элемент /user — разные имена; clients path-строят неконсистентно; правильно /users и /users/123
-> - [x] Plural nouns: /users, /orders; HTTP verb = действие; иерархия /users/123/orders | ✓ ПРИМЕНЯТЬ: любой REST endpoint 📋 ПРАВИЛО: noun+plural = resource; HTTP verb = action; no verbs in URL 🔗 См. Q2
-> - [ ] /Users/123 — uppercase первая буква | ❌ ПОСЛЕДСТВИЕ: case-sensitive в некоторых ОС; стандарт — lowercase URLs; Nginx/Apache пишут в разный регистр по-разному
+> 
+> **Вопрос:** Как правильно именовать ресурсы в REST API?
+> 
+> - [x] **A)** Plural nouns в URL (`/users`, `/orders`), действие выражается HTTP-методом (`GET /users/123`, `DELETE /users/123`), иерархия через слэши (`/users/123/orders/456`)
+>   
+>   **Развёрнутое объяснение:** REST трактует URL как идентификатор **ресурса** (существительное), а действие — как HTTP-метод (глагол). Plural-форма унифицирует коллекцию и элемент: `/users` (коллекция) и `/users/123` (один элемент той же коллекции). Это даёт consistent path-building на клиенте: `${base}/users/${id}` работает и для list, и для get-one.
+>   
+>   **Пример:**
+>   ```
+>   GET    /users           # список
+>   POST   /users           # создать
+>   GET    /users/123       # один
+>   PUT    /users/123       # обновить
+>   DELETE /users/123       # удалить
+>   GET    /users/123/orders  # вложенная коллекция
+>   ```
+>   
+>   **Когда применять:** любой REST/HTTP API, который описывает CRUD над доменными сущностями — пользователи, заказы, продукты, документы.
+>   
+>   **Подводные камни:** для не-CRUD действий (отправить письмо, перевыпустить токен) plural-noun плохо ложится — тогда используют sub-resource-as-action (`POST /users/123/password-resets`) или явный action-endpoint. Не злоупотреблять глубокой вложенностью (>2 уровней) — путь становится хрупким.
+>   
+>   **Связанные вопросы:** [[Q2]] (URL structure), [[Q5]] (resource hierarchy), [[Q8]] (non-CRUD actions)
+> 
+> - [ ] **B)** `GET /getUsers` — глагол в URL для ясности намерения
+>   
+>   **Что на самом деле:** действие в REST выражается HTTP-методом, а не словом в URL. `GET /getUsers` дублирует семантику `GET`, нарушает uniform interface и ломает routing/caching, которые опираются на «URL = ресурс».
+>   
+>   **Откуда путаница:** привычка из RPC/SOAP-стиля, где endpoint = имя удалённой процедуры. В REST эта модель заменена на «ресурс + метод».
+>   
+>   **Если бы это было правдой:** пришлось бы поддерживать `getUsers`, `listUsers`, `findUsers` как разные URL, caching по методу перестал бы работать, OpenAPI-генераторы создавали бы дублирующие операции.
+> 
+> - [ ] **C)** `/user/123` — singular form, потому что речь об одном пользователе
+>   
+>   **Что на самом деле:** правильно `/users/123` — элемент коллекции `/users`. Singular-форма разрывает связь между коллекцией и элементом и заставляет клиентов помнить две разные базы.
+>   
+>   **Откуда путаница:** грамматическая логика «один = singular» переносится с естественного языка на URL, но URL обозначает не объект, а **путь в коллекции**.
+>   
+>   **Если бы это было правдой:** SDK и path-helpers пришлось бы дублировать (`usersUrl()` и `userUrl(id)`), а вложенные ресурсы (`/user/123/orders` vs `/users/123/orders`) разъезжались бы по конвенции.
+> 
+> - [ ] **D)** `/Users/123` — uppercase первой буквы, как имя класса в коде
+>   
+>   **Что на самом деле:** стандарт — lowercase URLs (RFC 3986 + индустриальная практика Stripe/GitHub/Google). Часть инфраструктуры case-sensitive (Nginx по умолчанию), часть нет — это рождает разъезжающиеся редиректы и дубликаты в кэше/логах.
+>   
+>   **Откуда путаница:** перенос code style (PascalCase для классов) на URL-namespace.
+>   
+>   **Если бы это было правдой:** `/Users/123` и `/users/123` считались бы одним ресурсом — но CDN/прокси будут кэшировать их раздельно, а аналитика разойдётся по двум path-ам.
 
 ## Q2. (!) URL structure?
 
@@ -140,10 +182,48 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 
 > [!mcq]
-> - [ ] Version в query param: /users?version=1 | ❌ ПОСЛЕДСТВИЕ: query params могут кэшироваться без учёта версии; routing по версии на API Gateway сложнее; path-versioning `/v1/` — стандарт (Stripe, Google)
-> - [ ] Фильтры в path: /users/status/active | ❌ ПОСЛЕДСТВИЕ: нельзя применить несколько фильтров; path = resource identity, query = filter; правильно /users?status=active
-> - [x] api.example.com/v1/users/123/orders?status=pending — subdomain + path version + resource hierarchy + query filters | ✓ ПРИМЕНЯТЬ: production REST API с versioning 📋 ПРАВИЛО: host/version/resource/id?filter — каждый компонент на своём месте 🔗 См. Q1
-> - [ ] /users_123_orders — underscore-separated path | ❌ ПОСЛЕДСТВИЕ: неоднозначный парсинг; RFC 3986 рекомендует hyphens; /users/123/orders — иерархия через слэши
+> 
+> **Вопрос:** Какая структура URL для REST API корректна?
+> 
+> - [ ] **A)** `/users?version=1&status=active` — версия и фильтры одинаково передаются query-параметрами
+>   
+>   **Что на самом деле:** версия API относится к **routing/contract**, а не к фильтру выборки. Стандарт индустрии (Stripe, GitHub, Google Cloud) — version в path (`/v1/users`), потому что это позволяет API Gateway маршрутизировать на разные backend-ы, разделять контракты в OpenAPI и кэшировать ответы независимо.
+>   
+>   **Откуда путаница:** query string выглядит «универсальной свалкой» для любых необязательных параметров.
+>   
+>   **Если бы это было правдой:** один и тот же путь `/users` отвечал бы разными схемами в зависимости от `?version=`, а CDN кэшировал бы их в одну запись — клиенты v1 получали бы тело v2.
+> 
+> - [x] **B)** `https://api.example.com/v1/users/123/orders?status=pending&limit=10` — subdomain `api`, version в path `/v1`, resource path с идентификатором, фильтры в query string
+>   
+>   **Развёрнутое объяснение:** каждый компонент URL отвечает за свою роль. **`api.` subdomain** изолирует API от веб-сайта (отдельные cert, CORS, rate-limit). **`/v1/`** в path даёт явный контракт и удобный routing. **`/users/123/orders`** — иерархия ресурсов: путь однозначно идентифицирует, что именно мы запрашиваем. **`?status=pending&limit=10`** — фильтры, пагинация, сортировка: всё, что **не идентифицирует** ресурс, а уточняет выборку.
+>   
+>   **Пример:**
+>   ```
+>   GET https://api.example.com/v1/users/123/orders?status=pending&limit=10&sort=-created_at
+>   ```
+>   path = identity, query = projection/filter. Lowercase, hyphens для multi-word (`/order-items`), plural nouns.
+>   
+>   **Когда применять:** любой production REST API с явным versioning и filtering — public API, internal microservices с published contract.
+>   
+>   **Подводные камни:** не путать «фильтр» (query) с «sub-resource» (path) — `/users/123/orders` это коллекция заказов пользователя 123, а не фильтр. Если фильтров очень много (search) — рассмотреть `POST /users/search` с телом, чтобы не упереться в лимит длины URL (~2KB на прокси).
+>   
+>   **Связанные вопросы:** [[Q1]] (resource naming), [[Q4]] (date format), [[Q5]] (hierarchy)
+> 
+> - [ ] **C)** `/users/status/active` — фильтры выражаются как сегменты path для красоты URL
+>   
+>   **Что на самом деле:** path обозначает **идентичность ресурса**, query — **выбор подмножества**. `/users/status/active` ломает иерархию: непонятно, `status` это sub-resource или фильтр, и невозможно скомбинировать несколько фильтров (`status=active` + `country=ru`).
+>   
+>   **Откуда путаница:** SEO-friendly URLs на frontend (`/blog/category/tech`) переносятся на API.
+>   
+>   **Если бы это было правдой:** для двух фильтров пришлось бы изобретать `/users/status/active/country/ru`, и порядок сегментов стал бы значимым — две эквивалентные комбинации воспринимались бы как разные ресурсы.
+> 
+> - [ ] **D)** `/users_123_orders` — underscore-separated path для краткости
+>   
+>   **Что на самом деле:** RFC 3986 определяет `/` как разделитель иерархии — именно так роутеры, прокси и OpenAPI строят tree of resources. Underscore внутри сегмента допустим (хотя hyphen предпочтительнее для multi-word), но **между уровнями иерархии** нужен слэш.
+>   
+>   **Откуда путаница:** перенос snake_case-конвенции из имён переменных на структуру URL.
+>   
+>   **Если бы это было правдой:** path-matching на API Gateway/Spring `@PathVariable` сломался бы — нельзя извлечь `userId` и `orderId` без custom-парсера; OpenAPI не смог бы описать ресурсы древовидно.
 
 ## Q3. snake_case vs camelCase в JSON?
 
@@ -167,10 +247,54 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 
 > [!mcq]
-> - [ ] Смешивать snake_case и camelCase в одном API по контексту | ❌ ПОСЛЕДСТВИЕ: клиентские SDK падают при десериализации; автогенерированные OpenAPI-клиенты создают два поля; inconsistency = support tickets
-> - [ ] Использовать разные конвенции для разных endpoints в одном API | ❌ ПОСЛЕДСТВИЕ: SDK-клиенты теряют type safety; разработчики вынуждены help-документ читать на каждый вызов; ломает DX
-> - [ ] Избегать любых конвенций — пусть разработчик выбирает поле-за-полем | ❌ ПОСЛЕДСТВИЕ: неконсистентный API = technical debt; первый же code review вернёт PR
-> - [x] Выбрать ОДНУ конвенцию (snake_case или camelCase) и придерживаться её во всём API | ✓ ПРИМЕНЯТЬ: любой public REST API; snake_case — Python/Stripe; camelCase — JS/Google 📋 ПРАВИЛО: pick one, enforce via linter/Jackson config, document в OpenAPI 🔗 См. Q22
+> 
+> **Вопрос:** Как выбрать конвенцию именования JSON-полей в REST API?
+> 
+> - [ ] **A)** Смешивать snake_case и camelCase внутри одного response в зависимости от контекста поля (legacy vs new)
+>   
+>   **Что на самом деле:** клиентские SDK десериализуют JSON в типизированные структуры по **одному** правилу маппинга (`@JsonNaming(SnakeCaseStrategy.class)` в Java, `JSONDecoder.keyDecodingStrategy` в Swift). Смешение конвенций ломает дефолтный маппинг — придётся для каждого поля писать `@JsonProperty`.
+>   
+>   **Откуда путаница:** «временное решение» при миграции legacy → new часто превращается в постоянное.
+>   
+>   **Если бы это было правдой:** OpenAPI-генераторы создавали бы клиентов с разными конвенциями для разных полей одной модели — type-safe код становится невозможным без ручных переопределений.
+> 
+> - [ ] **B)** Разные конвенции для разных endpoints (`/v1/users` → snake_case, `/v1/products` → camelCase) — пусть каждая команда решает сама
+>   
+>   **Что на самом деле:** API — это **единый контракт**, и DX (developer experience) страдает в первую очередь от inconsistency. SDK-генераторы (OpenAPI Generator, NSwag) применяют конвенцию глобально; mixed-style ломает type safety на уровне всего клиента.
+>   
+>   **Откуда путаница:** микросервисная архитектура с отдельными командами выглядит как оправдание; на деле public-контракт нужно унифицировать на уровне API Gateway или style guide.
+>   
+>   **Если бы это было правдой:** на каждый вызов разработчику пришлось бы заглядывать в Swagger — DX скатывается к уровню недокументированного RPC.
+> 
+> - [x] **C)** Выбрать ОДНУ конвенцию (snake_case ИЛИ camelCase) и применять её во всём API; в Java — внутри классы в camelCase, наружу через `@JsonNaming` или `spring.jackson.property-naming-strategy`
+>   
+>   **Развёрнутое объяснение:** consistency > preference. Обе конвенции работают; что выбрать — определяется экосистемой клиентов. **snake_case**: Python/Ruby/Rails-клиенты, Stripe, Slack, Twitter API. **camelCase**: JavaScript-первые SDK, Google Cloud, Microsoft Graph. Внутри Java-кода поля всегда `camelCase` (PEP-конвенция языка), а сериализация настраивается централизованно одной аннотацией/проперти.
+>   
+>   **Пример:**
+>   ```java
+>   // application.yml
+>   spring.jackson.property-naming-strategy: SNAKE_CASE
+>   
+>   // DTO
+>   public record UserDto(String firstName, Instant createdAt) {}
+>   
+>   // JSON output
+>   {"first_name": "Alice", "created_at": "2026-05-15T10:00:00Z"}
+>   ```
+>   
+>   **Когда применять:** любой публичный/межсервисный REST API. Если клиенты — преимущественно JS/мобильные TypeScript-приложения, выбирай camelCase; если Python/Ruby/data-engineering — snake_case.
+>   
+>   **Подводные камни:** одна конвенция должна быть **enforced** — добавь ArchUnit/Checkstyle-правило или Spotless-форматтер, иначе через год в API наберётся «исключений». Конвенция в URL (`/order-items` — hyphens) и в JSON (`order_items` — underscores) **разные** и это нормально: это разные слои, у них разные RFC.
+>   
+>   **Связанные вопросы:** [[Q1]] (URL naming), [[Q4]] (date format), [[Q22]] (versioning strategy)
+> 
+> - [ ] **D)** Отказаться от любых конвенций — каждый разработчик выбирает имя поля сам по ситуации
+>   
+>   **Что на самом деле:** отсутствие конвенции = технический долг с первого дня. Code review будет тратить время на bikeshedding `firstName` vs `first_name` vs `FirstName` в каждом PR, и API превратится в лоскутное одеяло без shared mental model.
+>   
+>   **Откуда путаница:** «свобода = производительность» — но в командной разработке свобода без guard-rails означает несогласованность.
+>   
+>   **Если бы это было правдой:** автогенерация SDK и type-safe-клиентов стала бы невозможной; OpenAPI как контракт перестал бы выполнять свою функцию.
 
 ## Q4. Date/time format?
 
