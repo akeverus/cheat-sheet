@@ -1360,11 +1360,33 @@ private String name;
 - `${formatter.format('%1$.2f', validatedValue)}` — форматирование через EL
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Что такое Spring Validator interface и когда его использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] В DTO написано `@NotBlank(message = "{user.name.required}")`, а в `ValidationMessages.properties` есть запись `user.name.required=Имя обязательно`. Что Spring/Hibernate Validator сделает с фигурными скобками `{...}` в `message`?
+>
+> - [ ] A. Фигурные скобки — синтаксический сахар Spring EL: значение между `{...}` оценивается как SpEL-выражение в контексте текущего бина. Если ключа нет — выбрасывается `SpelEvaluationException`.
+>
+>   `{...}` в `message` — это НЕ SpEL, а MessageInterpolation из Bean Validation spec (`ResourceBundleMessageInterpolator`). SpEL обрабатывает только `${...}` и только если включён EL-провайдер. Перепутать эти два механизма — классическая ошибка.
+>
+>   ПОСЛЕДСТВИЕ: разработчик пишет `{order.total > 100}` ожидая EL, получает дословный текст «{order.total > 100}» в ответе API, тратит часы на отладку, не понимая почему «SpEL не работает».
+>
+> - [ ] B. `{user.name.required}` подставляется только если в classpath есть `messages.properties` (стандартный Spring `MessageSource`). `ValidationMessages.properties` Hibernate Validator игнорирует — нужно настраивать `MessageInterpolator` вручную через `LocalValidatorFactoryBean`.
+>
+>   Наоборот: `ValidationMessages.properties` — это default-bundle Bean Validation spec (`ResourceBundleMessageInterpolator`), он подхватывается БЕЗ конфигурации. Spring Boot дополнительно интегрирует его с `MessageSource` через `MessageSourceResourceBundleLocator`, но базовый механизм работает и без Spring.
+>
+>   ПОСЛЕДСТВИЕ: команда переименовывает `ValidationMessages.properties` → `messages.properties` «для консистентности», ломает все валидационные сообщения, продакшен отдаёт ключи вместо текста — `{user.name.required}` в JSON-ответе.
+>
+> - [ ] C. Spring Boot всегда автоматически объединяет `messages.properties` и `ValidationMessages.properties` в один `MessageSource`, и порядок поиска ключа: сначала `messages`, потом `ValidationMessages`. Дубликаты ключей разрешаются в пользу `messages.properties`.
+>
+>   Spring Boot интегрирует их, но НЕ объединяет в один bundle: `ValidationMessages.properties` остаётся отдельным ресурсом Hibernate Validator, а `messages.properties` — отдельным `MessageSource` для i18n. Они доступны через разные API (`Validator` vs `MessageSource.getMessage()`), порядок поиска и дубликаты — миф.
+>
+>   ПОСЛЕДСТВИЕ: попытка использовать один ключ в двух местах приводит к расхождению локалей (валидационное сообщение на английском, остальное приложение на русском), QA пишет баг «несогласованный язык в форме».
+>
+> - [x] **D. `{user.name.required}` — это MessageInterpolation: Hibernate Validator при формировании текста ошибки видит фигурные скобки и ищет ключ в `ValidationMessages.properties` (default-bundle Bean Validation spec). В Spring Boot этот lookup интегрирован с `MessageSource`, поэтому работает i18n по `LocaleContextHolder.getLocale()`. Атрибуты вроде `{min}`, `{max}` — те же скобки, только ключ — имя атрибута аннотации.**
+>
+>   Механика: `ResourceBundleMessageInterpolator` сначала пытается найти `{user.name.required}` в `ValidationMessages_<locale>.properties` → потом в `ValidationMessages.properties` → потом в bundle самой аннотации (`org.hibernate.validator.ValidationMessages` для встроенных). После lookup'а — рекурсивная подстановка `{min}`, `{max}` и EL-выражений `${...}` (если включён EL-провайдер, например `jakarta.el` в Tomcat). Spring добавляет свой `MessageInterpolatorFactory`, который умеет проксировать lookup через `MessageSource` — это даёт единый i18n-цикл с остальным приложением.
+>
+>   ВЫГОДА: один источник правды для текстов ошибок, нормальная локализация (русский/английский/казахский), отсутствие хардкода в коде. Если ключ не найден — сообщение остаётся как есть (`{user.name.required}` в ответе), что моментально видно в e2e-тестах и легко чинится.
+
+## Q14. Что такое Spring Validator interface и когда его использовать?
 
 `org.springframework.validation.Validator` — Spring-специфический подход к валидации (альтернатива Bean Validation):
 
@@ -1418,11 +1440,33 @@ public class OrderController {
 **Предпочтение:** в новых проектах — Bean Validation с кастомными validators (stateful — через Spring DI). Spring Validator — для сложных случаев.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Как валидировать элементы коллекции в контроллере? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] У вас сложная валидация заказа: нужно проверить, что сумма заказа не превышает лимит клиента из БД, склад содержит товары и дата доставки доступна (всё это требует обращений к сервисам). Какой подход лучше всего подходит и почему Bean Validation тут слабее?
+>
+> - [ ] A. Использовать только Bean Validation: создать `@OrderValid` constraint, в `ConstraintValidator<OrderValid, Order>` инжектить через `@Autowired` нужные сервисы (`CustomerService`, `WarehouseService`, `DeliveryService`). Spring Validator — устаревший подход с эпохи Spring 2, в Spring Boot 3 его поддержка deprecated.
+>
+>   Bean Validation с DI работает (через `SpringConstraintValidatorFactory`), но всё пихать в один `@OrderValid` приводит к god-validator: тяжело тестировать, нет промежуточных ошибок (либо всё валидно, либо одно сообщение), нет связи с `BindingResult` для form-binding. Spring Validator НЕ deprecated — `@Validator` interface активно поддерживается в Spring Framework 6, используется в `DataBinder`, `WebDataBinder`, формах.
+>
+>   ПОСЛЕДСТВИЕ: монолитный validator на 300 строк превращается в bottleneck для команды — несколько разработчиков правят его одновременно, мержи становятся болью, тесты охватывают только happy path.
+>
+> - [x] **B. Использовать `org.springframework.validation.Validator` через `@InitBinder` + `WebDataBinder.addValidators()`: validator получает `Errors`-объект и через `rejectValue("field", "code", "default")` накапливает несколько ошибок с привязкой к полям. Это даёт интеграцию с `BindingResult`, поддержку i18n через `MessageSource` (коды ошибок резолвятся через стандартный механизм Spring), возможность инжектить сервисы как в обычный `@Component`, и совместимость с form-биндингом (`@ModelAttribute`).**
+>
+>   Механика: `WebDataBinder` после биндинга параметров запускает все зарегистрированные `Validator`-ы; `supports(Class)` фильтрует по типу target-объекта, `validate(target, errors)` собирает ошибки в `BindingResult`. Контроллер видит результат через параметр `BindingResult`, может вернуть форму с ошибками или 400. Для сложной бизнес-валидации это идеально: валидатор имеет полный доступ к Spring-контексту, может делать lookup в БД, не привязан к строгому контракту Bean Validation (один тип = одна аннотация = одно сообщение).
+>
+>   ВЫГОДА: чистое разделение — Bean Validation для формат-проверок (`@NotBlank`, `@Email`, `@Size`) отрабатывает на DTO до биндинга, Spring `Validator` для бизнес-логики отрабатывает после биндинга с доступом ко всему контексту. В одном запросе пользователь получает ВСЕ ошибки сразу (формат + бизнес), а не за два круга.
+>
+> - [ ] C. Вынести валидацию в сервисный слой: после `userService.create(dto)` внутри сервиса вызвать `validateBusinessRules(dto)`, выбросить кастомное `BusinessValidationException` и обработать его в `@ControllerAdvice`. Так чище, потому что валидация в сервисе тестируется без MVC-инфраструктуры.
+>
+>   Это валидный паттерн для бизнес-инвариантов, но он НЕ заменяет валидаторы: ошибки приходят по одной (исключение бросается на первой проблеме), нет аккумуляции, нет привязки к полям формы, нет интеграции с form-biding. Для REST API c JSON это терпимо, для server-side форм (Thymeleaf) — катастрофа: пользователь не видит, какие именно поля невалидны.
+>
+>   ПОСЛЕДСТВИЕ: фронтенд получает 400 «Invalid order: customer limit exceeded», но не понимает какое поле подсвечивать; UX страдает, появляются хаки вроде парсинга текста ошибки на клиенте.
+>
+> - [ ] D. Реализовать всё через `@PrePersist` JPA-listener: перед сохранением сущности вызывать сервисы и бросать `ConstraintViolationException`. Так валидация автоматически срабатывает на любом `save()` и не нужно дублировать логику.
+>
+>   `@PrePersist` срабатывает СЛИШКОМ ПОЗДНО — на этапе flush в БД, после того, как клиент уже получил «успешный» ответ контроллера (в случае `@Transactional`), или внутри транзакции с поднятым state в памяти. JPA-listeners плохо инжектят сервисы (нужны хаки через `ApplicationContextAware`), не имеют доступа к HTTP-контексту, исключения внутри них откатывают транзакцию целиком — это смешивание ответственности БД-слоя и валидации.
+>
+>   ПОСЛЕДСТВИЕ: запросы с невалидными данными доходят до `INSERT`, заполняют логи стек-трейсами JPA, иногда оставляют orphan-записи в связанных таблицах (если каскад отработал до listener'а), отладка занимает дни.
+
+## Q15. Как валидировать элементы коллекции в контроллере?
 
 **Вариант 1 — через `@RequestBody` с коллекцией:**
 
@@ -1467,11 +1511,33 @@ public class SearchController {
 Валидация элементов коллекции через `@Valid` перед каждым типом в generic (Java 11+).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Типичные ошибки при работе с Bean Validation? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> [!mcq] Эндпоинт принимает `List<CreateUserRequest>` напрямую (без обёртки): `public X bulk(@RequestBody @NotEmpty List<@Valid CreateUserRequest> users)`. Валидация элементов не срабатывает — Spring молча сохраняет невалидные записи. В чём причина и как починить?
+>
+> - [ ] A. `@Valid` внутри generic-параметра (`List<@Valid ...>`) не поддерживается Bean Validation: type-use аннотации работают только в полях класса, в параметрах метода стирание типов убивает их. Решение: вынести в DTO-обёртку `BulkRequest` с полем `@Valid List<CreateUserRequest> users`.
+>
+>   Type-use аннотации (`@Valid` в `List<@Valid ...>`) поддерживаются Bean Validation 2.0+ (JSR 380, с Java 8) — это часть спецификации, Hibernate Validator 6+ их обрабатывает корректно через container element validation. Стирание типов не мешает: аннотации хранятся в `Method.getParameterAnnotatedTypes()`. Решение «обернуть в DTO» работает, но НЕ из-за невозможности валидировать generic.
+>
+>   ПОСЛЕДСТВИЕ: команда тратит спринт на рефакторинг всех bulk-эндпоинтов в обёртки, ломает обратную совместимость API, хотя проблема была в другом — в отсутствии `@Validated` на контроллере.
+>
+> - [ ] B. Spring MVC не валидирует элементы `List<@Valid ...>` потому что `@Valid` распространяется только на тип параметра, а не на элементы коллекции. Нужно заменить на `@Valid @RequestBody List<CreateUserRequest> users` (без аннотации внутри generic) — `MethodArgumentResolver` сам рекурсивно валидирует элементы.
+>
+>   Без `@Valid` внутри generic элементы НЕ валидируются — `@Valid` на параметре проверяет сам объект (`List`), но не делегирует на содержимое: `List` не имеет валидационных constraint'ов, нет нечего проверять. Container element validation требует ИМЕННО `@Valid` внутри generic (`List<@Valid T>`). Это противоположный совет от правильного.
+>
+>   ПОСЛЕДСТВИЕ: разработчик «упрощает» код, удаляет внутреннее `@Valid`, валидация пропадает полностью, в production проходят запросы с невалидными `email`, `null`-полями и т.п. — обнаружение через метрики «странных» данных в БД спустя недели.
+>
+> - [x] **C. Валидация элементов через `@Valid` внутри generic-параметра — это method-level validation: она срабатывает ТОЛЬКО когда на классе контроллера стоит `@Validated`. Без `@Validated` Spring использует обычный путь `@Valid → @RequestBody-аргумент`, который валидирует только сам `List` (нечего валидировать). Решение: добавить `@Validated` на класс контроллера — это включает `MethodValidationPostProcessor`, который через AOP проксирует методы и валидирует параметры с `@NotEmpty`/`@Size`/типизированными `@Valid`.**
+>
+>   Механика: `@Valid @RequestBody` обрабатывается `RequestResponseBodyMethodProcessor` — он вызывает `validateIfApplicable`, что проверяет только верхний уровень аргумента (сам `List`). Container element validation (`@NotEmpty` на параметре, `@Valid` внутри generic) — это method validation из `jakarta.validation.executable.ExecutableValidator`, которая требует прокси: либо CGLIB/JDK-прокси на контроллере (`@Validated` запускает `MethodValidationPostProcessor`), либо AspectJ. Без прокси method-level validation не срабатывает — параметры просто игнорируются.
+>
+>   ВЫГОДА: понимание двух уровней валидации (argument-level vs method-level) позволяет правильно настроить эндпоинт; при нарушении бросается `ConstraintViolationException`, который нужно обработать в `@ControllerAdvice` (он отличается от `MethodArgumentNotValidException`). Альтернатива — DTO-обёртка с `@Valid List<...>` — работает на argument-level и не требует `@Validated`, но добавляет boilerplate.
+>
+> - [ ] D. Bean Validation не работает с `List<@Valid ...>` из-за конфликта типов: `@Valid` — это маркер каскадной валидации поля, а в generic-параметре она интерпретируется как constraint и игнорируется (потому что у `@Valid` нет `ConstraintValidator`). Нужно использовать кастомный `@ValidEach` или сторонние библиотеки.
+>
+>   `@Valid` действительно не имеет `ConstraintValidator` — это маркер каскадной валидации, обрабатываемый специальным механизмом валидатора. Но он ШТАТНО работает внутри generic как container element marker — никаких кастомных аннотаций не нужно. «Конфликт типов» здесь — выдуманное оправдание непонимания спецификации.
+>
+>   ПОСЛЕДСТВИЕ: тимлид заказывает разработку «нашего собственного `@ValidEach`», тратится неделя, появляется ещё одна точка отказа в проекте — кастомный код, дублирующий стандартный механизм Hibernate Validator.
+
+## Q16. Типичные ошибки при работе с Bean Validation?
 
 | Симптом | Причина | Решение |
 |---|---|---|
@@ -1487,12 +1553,7 @@ public class SearchController {
 
 ## See also
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Spring MVC](spring-mvc-interview.md) — `@Valid` в контроллерах, `BindingResult`, обработка ошибок ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+- [Spring MVC](spring-mvc-interview.md) — `@Valid` в контроллерах, `BindingResult`, обработка ошибок
 - [Spring Boot](spring-boot-interview.md) — `spring-boot-starter-validation`, автоконфигурация `ValidationAutoConfiguration`
 - [Spring Framework](spring-framework-interview.md) — `@Validated` как AOP-триггер, `MethodValidationPostProcessor`
 - [Spring AOP](spring-aop-interview.md) — `@Validated` работает через AOP-прокси; self-invocation проблема
