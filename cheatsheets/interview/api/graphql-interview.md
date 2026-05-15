@@ -419,11 +419,53 @@ type Mutation {
 ---
 
 
-> [!mcq]
-> - [ ] Обычный Object type можно использовать напрямую как input аргумент мутации | ❌ ПОСЛЕДСТВИЕ: Object types могут содержать циклические ссылки и резолверы — GraphQL validation error; нужен отдельный `input` тип
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Input типы могут содержать circular references | ❌ ПОСЛЕДСТВИЕ: circular input types невалидны в GraphQL spec; schema validation при запуске приложения завершится с ошибкой
-> - [ ] Один `UserInput` тип достаточен и для createUser и для updateUser мутаций | ❌ ПОСЛЕДСТВИЕ: для create все поля required (`String!`), для update все optional (`String`); один тип нарушает domain invariants — create принимает неполные данные
+> [!mcq] Какое утверждение об `input`-типах в GraphQL верно?
+>
+> - [ ] **A.** Обычный `type User { ... }` можно передавать как аргумент мутации, если у него нет резолверов
+>
+>     НЕВЕРНО. GraphQL spec явно запрещает использовать Object types в позиции аргумента. Schema validation на старте упадёт с ошибкой `The type of <Mutation>.<arg> must be Input Type but got: User`.
+>
+>     ПОСЛЕДСТВИЕ: приложение не стартует — `SchemaProblem` в `GraphQLSchema.newSchema().build()`; даже «чистый» Object без резолверов отвергается парсером схемы.
+>
+> - [ ] **B.** `input`-типы могут содержать циклические ссылки друг на друга, как Object types
+>
+>     НЕВЕРНО. По спецификации GraphQL (June 2018, §3.10) циклы во `input` запрещены: `input A { b: B } input B { a: A }` — невалидная схема.
+>
+>     ПОСЛЕДСТВИЕ: `graphql-java` бросит `InvalidSchemaException` на этапе сборки; цикл невозможно сериализовать из JSON (бесконечная вложенность переменных).
+>
+> - [ ] **C.** Один универсальный `UserInput` достаточен и для `createUser`, и для `updateUser`
+>
+>     НЕВЕРНО. Для `createUser` поля обязательны (`name: String!`), для `updateUser` — опциональны (`name: String`). Один тип ломает domain invariants: либо create пропустит `null`, либо update потребует все поля.
+>
+>     ПОСЛЕДСТВИЕ: на проде клиент получит `User` с `name=null` после create (NOT NULL constraint в БД), либо вынужден слать все поля при update — лишний трафик + race condition при concurrent edit.
+>
+> - [x] **D.** `input`-типы — это чистые структуры данных без резолверов и интерфейсов, отдельные от Object types
+>
+>     ВЕРНО. Спецификация разделяет Input/Output types: `input` не имеет резолверов, не реализует `interface`, не содержит union/object-полей с аргументами. Это сериализуемый DTO для аргументов.
+>
+>     ```graphql
+>     input CreateUserInput {
+>         name: String!
+>         email: String!
+>         role: Role = USER
+>     }
+>     type Mutation {
+>         createUser(input: CreateUserInput!): User!
+>     }
+>     ```
+>
+>     ```java
+>     @Component
+>     public class UserMutationResolver {
+>         @MutationMapping
+>         public User createUser(@Argument CreateUserInput input) {
+>             return userService.create(input.name(), input.email(), input.role());
+>         }
+>     }
+>     public record CreateUserInput(String name, String email, Role role) {}
+>     ```
+>
+>     ПРИМЕНЕНИЕ: разделение `CreateXInput`/`UpdateXInput`/`FilterXInput` фиксирует контракт — обязательность полей выражена на уровне схемы, клиент валидируется до резолвера. Введение default value (`role: Role = USER`) убирает boilerplate из клиентского кода.
 
 ## Q5. (!) Как устроены Query, Mutation и Subscription?
 
@@ -468,11 +510,46 @@ type Subscription {
 ---
 
 
-> [!mcq]
-> - [ ] Top-level mutations выполняются параллельно так же как Query fields | ❌ ПОСЛЕДСТВИЕ: по спецификации top-level mutations последовательны; параллельная реализация нарушает spec — непредсказуемый порядок side effects
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Subscription работает через HTTP polling без persistent connection | ❌ ПОСЛЕДСТВИЕ: HTTP stateless не поддерживает server push; Subscriptions требуют WebSocket или SSE; polling — отдельный антипаттерн с высоким overhead
-> - [ ] Query с side effects семантически эквивалентен Mutation | ❌ ПОСЛЕДСТВИЕ: клиенты и промежуточные слои кэшируют Query агрессивно; side effects в Query могут выполниться неожиданно — нарушение контракта
+> [!mcq] Какое утверждение о Query/Mutation/Subscription корректно?
+>
+> - [x] **A.** Top-level поля `Mutation` выполняются последовательно, top-level поля `Query` — параллельно
+>
+>     ВЕРНО. GraphQL spec §6.2.2 (Mutation): «If the operation is a mutation, the result of the operation is the result of executing the operation’s top level selection set on the mutation root object type. This selection set should be executed serially». Для Query — `executeSelectionSet` параллельно.
+>
+>     ```graphql
+>     mutation BatchOps {
+>         a: createUser(input: {name: "A"}) { id }   # выполняется ПЕРВЫМ
+>         b: createUser(input: {name: "B"}) { id }   # ПОСЛЕ a, видит её результат
+>     }
+>     ```
+>
+>     ```java
+>     // graphql-java: AsyncExecutionStrategy для Query, AsyncSerialExecutionStrategy для Mutation
+>     GraphQL.newGraphQL(schema)
+>         .queryExecutionStrategy(new AsyncExecutionStrategy())
+>         .mutationExecutionStrategy(new AsyncSerialExecutionStrategy())
+>         .build();
+>     ```
+>
+>     ПРИМЕНЕНИЕ: позволяет клиенту батчить связанные мутации в одном запросе (`createUser` → `createPost` для нового user.id) с гарантией порядка. Внутри одного резолвера sub-selection всё равно параллелен — последовательность только на корне.
+>
+> - [ ] **B.** Top-level mutations выполняются параллельно, как и Query fields
+>
+>     НЕВЕРНО. Спецификация требует serial execution для мутаций. Параллельная реализация — нарушение spec, race conditions на одних и тех же сущностях.
+>
+>     ПОСЛЕДСТВИЕ: batch-мутация `deleteAccount → transferFunds` может выполнить transfer на удалённый аккаунт (или наоборот); никакие гарантии порядка — потеря данных, неконсистентный state.
+>
+> - [ ] **C.** `Subscription` работает через HTTP long-polling без persistent connection
+>
+>     НЕВЕРНО. Subscription требует двусторонний канал: WebSocket (`graphql-ws`/`graphql-transport-ws`) или SSE. HTTP stateless не поддерживает server push без переподключения.
+>
+>     ПОСЛЕДСТВИЕ: polling = высокая задержка (1-5s), N×RPS на сервер, нет гарантии «получено единожды»; для chat/notifications даёт UX как у REST `GET /messages?since=...` — теряется смысл Subscription.
+>
+> - [ ] **D.** `Query` со side effects семантически эквивалентен `Mutation`
+>
+>     НЕВЕРНО. Клиенты (Apollo Client, Relay), CDN и gateway-кэши агрессивно кэшируют `Query` (`@cacheControl`, `GET`-запросы, persisted queries).
+>
+>     ПОСЛЕДСТВИЕ: `query incrementCounter { ... }` выполнится один раз и закэшируется — последующие вызовы вернут старый результат без вызова резолвера; реальный inc не произойдёт. Нарушение контракта Query = pure read.
 
 ## Q6. Что такое переменные и директивы в GraphQL?
 
@@ -528,11 +605,58 @@ type Query {
 ---
 
 
-> [!mcq]
-> - [ ] `@skip(if: true)` включает поле если условие true | ❌ ПОСЛЕДСТВИЕ: `@skip` ПРОПУСКАЕТ поле при `true`; `@include` включает при `true`; обратная логика ведёт к отсутствующим данным в ответе
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] GraphQL переменные нужно экранировать для защиты от injection | ❌ ПОСЛЕДСТВИЕ: GraphQL variables строго типизированы, не интерполируются в query string; injection через variables невозможен — но injection через резолвер в SQL возможен
-> - [ ] Пользовательская директива работает без server-side реализации | ❌ ПОСЛЕДСТВИЕ: директива требует implementation в DataFetcher или SchemaDirectiveWiring; без реализации директива игнорируется — нет ожидаемого поведения
+> [!mcq] Какое утверждение о переменных и директивах GraphQL верно?
+>
+> - [ ] **A.** `@skip(if: true)` включает поле, а `@include(if: true)` — пропускает
+>
+>     НЕВЕРНО. Семантика прямо противоположная: `@skip(if: true)` ПРОПУСКАЕТ поле, `@include(if: true)` ВКЛЮЧАЕТ. Они дублируют друг друга через инверсию условия (`@skip(if: $x)` == `@include(if: !$x)`).
+>
+>     ПОСЛЕДСТВИЕ: клиент получает пустой ответ там, где ожидает данные; UI рендерит «No data» при `withPosts=true`; отладка через сетевые логи показывает корректный запрос, но мозг разработчика ищет баг не там.
+>
+> - [x] **B.** Кастомная директива на схеме требует server-side реализации через `SchemaDirectiveWiring` или DataFetcher
+>
+>     ВЕРНО. Объявление `directive @auth(role: Role!) on FIELD_DEFINITION` — это только декларация в SDL. Без обработчика runtime просто пропускает её.
+>
+>     ```graphql
+>     directive @auth(role: Role!) on FIELD_DEFINITION
+>     type Query {
+>         adminUsers: [User!]! @auth(role: ADMIN)
+>     }
+>     ```
+>
+>     ```java
+>     public class AuthDirective implements SchemaDirectiveWiring {
+>         @Override
+>         public GraphQLFieldDefinition onField(SchemaDirectiveWiringEnvironment<GraphQLFieldDefinition> env) {
+>             GraphQLDirective d = env.getDirective();
+>             Role required = Role.valueOf((String) d.getArgument("role").getValue());
+>             GraphQLFieldDefinition field = env.getElement();
+>             DataFetcher<?> original = env.getCodeRegistry().getDataFetcher(env.getFieldsContainer(), field);
+>             DataFetcher<?> guarded = e -> {
+>                 User u = e.getGraphQlContext().get("user");
+>                 if (u == null || !u.hasRole(required)) throw new AccessDeniedException("Need " + required);
+>                 return original.get(e);
+>             };
+>             env.getCodeRegistry().dataFetcher(env.getFieldsContainer(), field, guarded);
+>             return field;
+>         }
+>     }
+>     RuntimeWiring.newRuntimeWiring().directive("auth", new AuthDirective()).build();
+>     ```
+>
+>     ПРИМЕНЕНИЕ: декларативная авторизация на уровне схемы — `@auth(role: ADMIN)` рядом с полем читаемее, чем разбросанные проверки в резолверах. То же для `@upper`, `@deprecated(reason: ...)` (поведение в introspection), `@cost` (rate limiting).
+>
+> - [ ] **C.** GraphQL переменные нужно вручную экранировать для защиты от injection в schema
+>
+>     НЕВЕРНО. Переменные передаются отдельным JSON, не интерполируются в query string. Парсер `graphql-java` строго типизирует их по схеме: `$id: ID!` отвергнет non-string.
+>
+>     ПОСЛЕДСТВИЕ: ложное чувство безопасности заставляет писать ручной escaping вместо параметризованных SQL-запросов в резолверах — injection всё равно случится через `String.format("SELECT ... WHERE name = '%s'", input.name())`. Защищать надо downstream вызовы (JDBC PreparedStatement), не GraphQL слой.
+>
+> - [ ] **D.** `@deprecated` на поле блокирует его выполнение в runtime
+>
+>     НЕВЕРНО. `@deprecated(reason: "...")` — это маркер для introspection (отображается в IDE/Graphiql и в `__schema`). Поле работает как раньше, резолвер вызывается.
+>
+>     ПОСЛЕДСТВИЕ: команда добавляет `@deprecated` и удаляет код через месяц — все клиенты, не обновившие запросы, начинают получать ошибки в проде. Нужен реальный мониторинг использования deprecated полей (`fieldExecutionListener`) перед удалением.
 
 ## Q7. Что такое фрагменты и зачем они нужны?
 
