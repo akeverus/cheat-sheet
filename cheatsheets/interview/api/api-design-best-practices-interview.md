@@ -314,10 +314,58 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 
 > [!mcq]
-> - [ ] Unix timestamp (1745068800) — число быстрее парсится | ❌ ПОСЛЕДСТВИЕ: нечитаемо для людей при debugging; timezone ambiguity; JS Date(timestamp) даёт миллисекунды а не секунды → off-by-1000 bugs
-> - [ ] "April 19, 2025 14:30" — human-readable custom format | ❌ ПОСЛЕДСТВИЕ: не стандартизован; парсинг зависит от locale; i18n клиентов ломается; OpenAPI-генераторы не валидируют
-> - [x] ISO 8601: "2025-04-19T14:30:00Z" (UTC) или "+02:00" (с timezone); в Java — Instant/OffsetDateTime | ✓ ПРИМЕНЯТЬ: все date/time поля в REST API 📋 ПРАВИЛО: ISO 8601 = машинно-читаемый + timezone-safe + универсальный стандарт 🔗 См. Q3
-> - [ ] Только дата "2025-04-19" без времени — проще | ❌ ПОСЛЕДСТВИЕ: теряется time precision для событий; API не может выразить created_at с точностью до секунды
+> 
+> **Вопрос:** Какой формат date/time использовать в REST API JSON?
+> 
+> - [ ] **A)** Unix timestamp (`"created_at": 1745068800`) — число короче и парсится быстрее
+>   
+>   **Что на самом деле:** Unix timestamp — числовая дельта от 1970 UTC, нечитаемая для людей. При debugging логов/JSON нужен конвертер, чтобы понять, когда именно произошло событие. Хуже того, **разные платформы используют разные единицы** — JS `new Date(timestamp)` ожидает миллисекунды, Linux/Java `Instant.ofEpochSecond` — секунды; ошибка масштаба даёт off-by-1000 bug.
+>   
+>   **Откуда путаница:** в БД и логах timestamps часто хранятся как `bigint` ради компактности, и это переносят в API contract.
+>   
+>   **Если бы это было правдой:** OpenAPI-схема показывала бы `type: integer`, и валидатор не отличил бы `created_at` от `user_id`; клиенты на разных языках интерпретировали бы единицу по-разному.
+> 
+> - [ ] **B)** Custom human-readable формат: `"April 19, 2025 14:30"`
+>   
+>   **Что на самом деле:** этот формат **не стандартизован** и зависит от locale (`"19 avril 2025"` для FR, `"19 апреля 2025"` для RU). Парсинг требует i18n-aware парсера, а сравнение двух дат становится строковой операцией без гарантий. OpenAPI-генераторы не валидируют такие поля как `date-time` и не маппят на `Instant`/`OffsetDateTime`.
+>   
+>   **Откуда путаница:** API «для людей» путают с UI: представление для пользователя — задача frontend, контракт API должен быть машинно-читаемым.
+>   
+>   **Если бы это было правдой:** один и тот же endpoint возвращал бы разные строки в зависимости от `Accept-Language`, и сервер с клиентом разъезжались бы в timezone.
+> 
+> - [ ] **C)** Local time без timezone: `"2025-04-19T14:30:00"` — клиент сам знает свой часовой пояс
+>   
+>   **Что на самом деле:** без timezone строка **неоднозначна** — `14:30` это UTC, MSK, NY или Tokyo? Между микросервисами в разных регионах это сразу даёт расхождение «событие из будущего». ISO 8601 без суффикса `Z` или `±HH:MM` формально допустим, но интерпретация остаётся на клиенте.
+>   
+>   **Откуда путаница:** legacy-системы возвращают local time в формате БД (`TIMESTAMP WITHOUT TIME ZONE`), и это просачивается в API.
+>   
+>   **Если бы это было правдой:** distributed system с серверами в разных регионах строила бы timeline событий с разбросом ±12 часов; alerts по `created_at > now() - 1h` ловили бы фантомные/пропавшие события.
+> 
+> - [x] **D)** ISO 8601 с timezone: `"2025-04-19T14:30:00Z"` (UTC) или `"2025-04-19T14:30:00+02:00"`; в Java — `Instant`/`OffsetDateTime`, не `Date`
+>   
+>   **Развёрнутое объяснение:** ISO 8601 — международный стандарт, явно описывающий дату, время и **timezone offset**. Это даёт три свойства одновременно: **машинно-читаемо** (один формат на все языки), **однозначно** (timezone в самой строке), **сортируемо лексикографически** (`"2025-04-19" < "2025-04-20"`). OpenAPI описывает такие поля как `type: string, format: date-time`, и генераторы автоматически маппят их на `Instant`/`OffsetDateTime` в Java, `Date`/`DateTime` в TS, `datetime` в Python.
+>   
+>   **Пример:**
+>   ```json
+>   {
+>     "created_at": "2025-04-19T14:30:00Z",
+>     "scheduled_for": "2025-04-19T14:30:00+02:00"
+>   }
+>   ```
+>   В Java:
+>   ```java
+>   public record OrderDto(
+>       Instant createdAt,         // → "2025-04-19T14:30:00Z"
+>       OffsetDateTime scheduledFor // → "2025-04-19T14:30:00+02:00"
+>   ) {}
+>   ```
+>   Jackson сериализует `Instant`/`OffsetDateTime` в ISO 8601 по умолчанию (с `jackson-datatype-jsr310`).
+>   
+>   **Когда применять:** все date/time поля в любом REST/GraphQL API. UTC (`Z`) — для timestamps событий (created_at, updated_at). Offset (`+02:00`) — когда важна локальная семантика (расписание в магазине, бронирование рейса).
+>   
+>   **Подводные камни:** **никогда** не использовать `java.util.Date` — он mutable и хранит UTC internally, но `toString()` показывает local time, что путает в логах. Для дат без времени (день рождения) — `LocalDate` и `format: date` (`"2025-04-19"`). Не путать `Instant` (UTC) с `LocalDateTime` (без timezone) — последний не годится для API.
+>   
+>   **Связанные вопросы:** [[Q3]] (JSON naming conventions), [[Q2]] (URL structure)
 
 ## Q5. (!) Resource hierarchy (parent/child)?
 
@@ -340,10 +388,55 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 
 
 > [!mcq]
-> - [ ] Всегда делать 5+ уровней вложенности для точного отражения данных | ❌ ПОСЛЕДСТВИЕ: /users/123/orders/456/items/789/refunds/1 — нечитаемо; swagger-клиенты генерируют методы с 6 параметрами; deep nesting = URL coupling
-> - [x] Max 2 уровня вложенности: /users/123/orders; глубже — flat с filter params | ✓ ПРИМЕНЯТЬ: parent-child strong containment → nested; independent entities → flat 📋 ПРАВИЛО: 2-level max = ownership clear; deeper = query params 🔗 См. Q6
-> - [ ] Всегда flat: /orders?user_id=123, без иерархии | ❌ ПОСЛЕДСТВИЕ: теряется семантика ownership; API Gateway не может scope по /users/123 без parsing query params; auth middleware усложняется
-> - [ ] Вложенность без ограничений определять по бизнес-объектам | ❌ ПОСЛЕДСТВИЕ: clients строят URL конкатенацией; нет стандарта — каждый endpoint уникален; SDK не генерируется
+> 
+> **Вопрос:** Какое правило выбрать для resource hierarchy (parent/child) в URL?
+> 
+> - [x] **A)** Max 2 уровня вложенности: `/users/123/orders` и `/users/123/orders/456`; глубже — flat structure с filter params
+>   
+>   **Развёрнутое объяснение:** 2-level rule — это компромисс между **выразительностью ownership** и **удобством работы с URL**. Два уровня позволяют ясно выразить parent-child relationship (`/users/{userId}/orders` — заказы конкретного пользователя), и при этом URL остаётся читаемым в логах, документации и client SDK. Глубже nesting даёт `/users/123/orders/456/items/789/refunds/1` — методы SDK получают 4-5 path-параметров, swagger-клиенты генерируют монструозные сигнатуры, а frontend конкатенирует строки руками. Beyond 2 levels — переход на flat с query (`/refunds?order_id=456`).
+>   
+>   **Пример:**
+>   ```
+>   GET  /users/123/orders                # OK — 2 levels, orders of user
+>   GET  /users/123/orders/456            # OK — specific order
+>   GET  /refunds?order_id=456            # NOT /users/123/orders/456/refunds/1 — flat с filter
+>   ```
+>   В Spring:
+>   ```java
+>   @GetMapping("/users/{userId}/orders/{orderId}")
+>   public OrderDto getOrder(@PathVariable Long userId, @PathVariable Long orderId) { ... }
+>   ```
+>   Stripe следует тому же правилу: `/customers/{id}/sources` (2 levels), но refunds — flat (`/refunds`).
+>   
+>   **Когда применять:** **strong containment** (item существует только в контексте parent) — nesting; **independent entity** (refund имеет смысл сам по себе) — flat. Auth/scoping тоже выигрывает: API Gateway легко проверяет, что `{userId}` в path совпадает с `sub` в JWT.
+>   
+>   **Подводные камни:** даже при nested URL стоит дублировать flat-вариант для случаев, когда parent неизвестен (`GET /orders/{id}` без userId — полезно для admin/support). Stripe именно так и делает: `/customers/cus_123/charges` **и** `/charges?customer=cus_123` сосуществуют.
+>   
+>   **Связанные вопросы:** [[Q6]] (sub-resources vs flat), [[Q2]] (URL structure)
+> 
+> - [ ] **B)** Всегда делать 5+ уровней вложенности для максимально точного отражения иерархии данных
+>   
+>   **Что на самом деле:** глубокая вложенность ломает практическое использование API. URL `/users/123/orders/456/items/789/refunds/1` — нечитаем в логах, занимает много места в `access.log`, и SDK-генератор создаёт метод `getUserOrderItemRefund(userId, orderId, itemId, refundId)` с 4 path-параметрами, которые легко перепутать местами.
+>   
+>   **Откуда путаница:** ER-модель в БД переносится 1-в-1 в URL — кажется, что «правильно» отразить все foreign keys.
+>   
+>   **Если бы это было правдой:** каждое изменение в иерархии БД ломало бы public API; refactoring «вынести refunds в отдельный сервис» требовал бы breaking change для всех клиентов.
+> 
+> - [ ] **C)** Всегда flat: `/orders?user_id=123`, без иерархии в принципе
+>   
+>   **Что на самом деле:** теряется семантика **ownership** и **scoping**. API Gateway не может проверить, что пользователь имеет доступ к ресурсу, без парсинга query string (`?user_id=`) — это требует policy на уровне приложения, а не на уровне routing. Auth middleware сложнее писать и тестировать.
+>   
+>   **Откуда путаница:** GraphQL/REST-flat школа считает, что URL должен быть «плоским пространством имён ресурсов», а связи выражаются через filters.
+>   
+>   **Если бы это было правдой:** rate-limit per user (типа `/users/{userId}/*`) на API Gateway не реализуется без custom-plugin; logging/audit теряет parent context.
+> 
+> - [ ] **D)** Вложенность без ограничений — каждая команда определяет глубину по своим бизнес-объектам
+>   
+>   **Что на самом деле:** отсутствие конвенции = каждый endpoint уникален. Clients строят URL конкатенацией (template strings вместо SDK), нет единого стандарта в OpenAPI, и API Gateway/portal не может генерировать docs автоматически.
+>   
+>   **Откуда путаница:** «у нас микросервисы, каждый сам решает» — но API consumer один, и ему нужна предсказуемость.
+>   
+>   **Если бы это было правдой:** developer portal показывал бы 200 endpoints с разной структурой; onboarding нового клиента занимал бы недели вместо часов.
 
 ## Q6. Sub-resources vs flat structure?
 
@@ -367,10 +460,68 @@ POST /orders {"user_id": 123, ...}
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Bulk operations? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> 
+> **Вопрос:** Когда выбирать sub-resources (nested) vs flat structure для API?
+> 
+> - [ ] **A)** Всегда использовать только nested URLs — это единственно правильный REST-стиль
+>   
+>   **Что на самом деле:** REST не требует nesting — он требует **resource-oriented** design. Многие ресурсы существуют независимо (charge, refund, invoice), и forced nesting создаёт искусственную иерархию. Например, `/users/123/orders/456` подразумевает, что order **существует только** в контексте user — но в реальности admin/support хочет открыть order по id без знания userId.
+>   
+>   **Откуда путаница:** учебники по REST часто показывают только nested примеры (`/posts/{id}/comments`), и это запоминается как «правильный REST».
+>   
+>   **Если бы это было правдой:** Stripe не предоставлял бы `/charges/{id}` отдельно от `/customers/{id}/charges`; admin-tools было бы невозможно построить без знания всей parent-chain.
+> 
+> - [x] **B)** Выбор по семантике: **strong containment** → nested, **independent entity** → flat; оба варианта могут co-exist
+>   
+>   **Развёрнутое объяснение:** правило простое: если ресурс **не существует без parent** (комментарий без поста, address без user) — nested. Если ресурс **имеет независимую identity** и используется в разных контекстах (charge, payment, order) — flat. И **ничто не мешает поддерживать оба варианта** одновременно: Stripe именно так и делает — `/customers/cus_123/charges` для list-по-customer и `/charges?customer=cus_123` для общего search/filter. Это даёт SDK удобные scoped-методы (`stripe.customers.charges.list(customerId)`) и одновременно flat-access для admin-tools.
+>   
+>   **Пример:**
+>   ```
+>   # Strong containment — nested:
+>   GET  /users/123/addresses
+>   POST /users/123/addresses          # address принадлежит user
+>   
+>   # Independent — flat:
+>   GET  /orders?customer_id=123
+>   POST /orders {"customer_id": 123}  # order — independent entity
+>   
+>   # Co-exist (Stripe pattern):
+>   GET  /customers/cus_123/charges    # SDK convenience
+>   GET  /charges?customer=cus_123     # general search
+>   GET  /charges/ch_456               # direct access by ID
+>   ```
+>   В Spring:
+>   ```java
+>   @GetMapping("/users/{userId}/addresses")  // nested — strong containment
+>   public List<AddressDto> listAddresses(@PathVariable Long userId) { ... }
+>   
+>   @GetMapping("/orders")                    // flat — independent
+>   public List<OrderDto> listOrders(@RequestParam(required = false) Long customerId) { ... }
+>   ```
+>   
+>   **Когда применять:** проверить вопрос «Имеет ли ресурс смысл без знания parent?». Если **нет** — nested (`/posts/{id}/comments`). Если **да** — flat (`/charges?customer=cus_123`). Для крупных API стоит сразу проектировать оба варианта при сильной containment, чтобы admin/integration scenarios не упирались в parent-only URLs.
+>   
+>   **Подводные камни:** дублирование endpoints стоит maintenance — но окупается удобством. Главный риск: разъезжающаяся валидация (`POST /users/123/orders` валидирует, что user существует; `POST /orders {"user_id": 123}` забывает). Решение: общий service-layer вызывается из обоих controllers, валидация — в нём.
+>   
+>   **Связанные вопросы:** [[Q5]] (resource hierarchy), [[Q7]] (bulk operations)
+> 
+> - [ ] **C)** Решать по производительности БД — что быстрее JOIN-ится, то и nested
+>   
+>   **Что на самом деле:** URL design определяется **API contract**, а не схемой БД. Behind the same URL может стоять JOIN, отдельный сервис, кэш или GraphQL-федерация — это деталь реализации. Если URL зависит от внутреннего storage, любая миграция БД (sharding, split table) ломает public API.
+>   
+>   **Откуда путаница:** в early-stage проектах API часто пишется как «обёртка над БД», и URL отражает структуру таблиц.
+>   
+>   **Если бы это было правдой:** разделение orders в отдельный сервис заставило бы менять `/users/{id}/orders` → `/orders?user_id={id}` — breaking change для всех клиентов из-за внутренней рефакторизации.
+> 
+> - [ ] **D)** Использовать только flat URLs, чтобы любой ресурс был доступен по одному и тому же шаблону
+>   
+>   **Что на самом деле:** flat-only теряет выразительность scoping в URL. Authorization-проверка «у user 123 есть доступ к order 456» становится сложнее: нужно достать order из БД, прочитать `customer_id`, сравнить с JWT — вместо простого matching `{userId}` из path с `sub` claim. Это antipattern для API Gateway-based auth.
+>   
+>   **Откуда путаница:** GraphQL-mindset переносится на REST: «единое flat-namespace ресурсов».
+>   
+>   **Если бы это было правдой:** policy-as-code в API Gateway (типа `path("/users/${user.id}/*")` в OPA/Cedar) не работала бы; вся authz переезжала бы в приложение и дублировалась между сервисами.
+
+## Q7. (!) Bulk operations?
 
 **Need:** create / update / delete multiple resources в one call.
 
