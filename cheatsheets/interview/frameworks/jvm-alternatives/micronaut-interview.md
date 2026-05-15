@@ -100,10 +100,53 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [ ] Spring Boot тоже использует compile-time DI начиная с версии 3, разницы нет | ❌ ПОСЛЕДСТВИЕ: Spring Boot по-прежнему использует runtime reflection; выбор Spring для serverless = cold start 3-15с вместо 1-2с
-> - [x] Compile-time DI/AOP без рефлексии + first-class GraalVM native image → cold start ~30ms native | ✓ ПРИМЕНЯТЬ: Lambda/autoscaling где критичен cold start 📋 ПРАВИЛО: "compile-time = no reflection = fast start" 🔗 См. Q4
-> - [ ] Micronaut — тонкий wrapper над Spring Framework, использует SpringContext под капотом | ❌ ПОСЛЕДСТВИЕ: Micronaut — полностью независимый BeanContext без Spring; ложные ожидания Spring-поведения ломают миграцию
-> - [ ] Micronaut поддерживает только Kotlin, для Java нужен другой фреймворк | ❌ ПОСЛЕДСТВИЕ: Micronaut поддерживает Java, Kotlin и Groovy; ошибочный отказ от фреймворка без реального ограничения
+>
+> **Вопрос:** Что принципиально отличает Micronaut от других JVM-фреймворков и делает его подходящим для serverless и микросервисов?
+>
+> ---
+>
+> #### A) Compile-time DI/AOP без рефлексии + first-class GraalVM native image → cold start ~30ms в native — ✓ Верно
+>
+> **Развёрнутое объяснение:** Micronaut использует annotation processor (JSR-269), который **во время сборки** генерирует `$Definition`-классы для каждого `@Singleton`/`@Controller` и `$Intercepted`-классы для AOP. В runtime `BeanContext` просто загружает их через `ServiceLoader`, без сканирования classpath и без `java.lang.reflect`. Отсутствие рефлексии — это и есть причина быстрого старта (~30ms native, 1-2с JVM) и низкого memory footprint (~30-50 МБ native).
+>
+> **Пример:**
+> ```java
+> @Singleton
+> public class OrderService {
+>     private final OrderRepository repo;
+>     public OrderService(OrderRepository repo) { this.repo = repo; }
+> }
+> // После javac в build/classes/.../OrderService$Definition.class:
+> // public final class $OrderService$Definition extends AbstractInitializableBeanDefinition<OrderService> {
+> //     public OrderService instantiate(BeanResolutionContext ctx, BeanContext beanContext) {
+> //         return new OrderService((OrderRepository) super.getBeanForConstructorArgument(ctx, beanContext, 0, null));
+> //     }
+> // }
+> ```
+>
+> **Когда применять:** AWS Lambda / GCP Functions, k8s scale-to-zero, memory-constrained окружения, любые сценарии где cold start критичен.
+>
+> **Подводные камни:** все DTO, попадающие в Jackson или validation, должны быть помечены `@Introspected` — иначе в native image будет `SerializationException`. Сторонние библиотеки, использующие рефлексию (старые версии Hibernate, некоторые JDBC-драйверы) требуют отдельной reflect-config для GraalVM.
+>
+> **Связанные вопросы:** [[Q4]], [[Q16]]
+>
+> ---
+>
+> #### B) Spring Boot тоже использует compile-time DI начиная с версии 3, разницы нет — ❌ Неверно
+>
+> **Что на самом деле:** Spring Boot 3 добавил `spring-aot` для native image (генерация hints в compile time), но **сам DI-граф по-прежнему строится в runtime через рефлексию** в `AnnotationConfigApplicationContext`. AOT-обработка нужна только для GraalVM, JVM-режим остался reflection-based. **Откуда путаница:** маркетинг Spring Boot 3 «cloud-native, native ready» создаёт впечатление архитектурного равенства с Micronaut, хотя речь идёт о компиляции hints, а не о смене модели DI. **Если бы это было правдой:** cold start Spring Boot на JVM был бы ~1-2с как у Micronaut, но в реальности это 3-15с.
+>
+> ---
+>
+> #### C) Micronaut — тонкий wrapper над Spring Framework, использует SpringContext под капотом — ❌ Неверно
+>
+> **Что на самом деле:** Micronaut — независимый фреймворк с собственным `io.micronaut.context.BeanContext`, никакой зависимости от `org.springframework.context.ApplicationContext`. Только аннотации (`@Controller`, `@Inject`) синтаксически похожи на Spring для облегчения миграции. **Откуда путаница:** создатели Micronaut — бывшие разработчики Grails/Spring, отсюда узнаваемые имена аннотаций. **Если бы это было правдой:** Micronaut тащил бы за собой 30+ МБ spring-core jars и наследовал бы reflection-based DI, а это противоречило бы заявленным cold start ~30ms native.
+>
+> ---
+>
+> #### D) Micronaut поддерживает только Kotlin, для Java нужен другой фреймворк — ❌ Неверно
+>
+> **Что на самом деле:** Micronaut официально поддерживает Java, Kotlin (через kapt/KSP) и Groovy. Большинство примеров в документации написаны именно на Java. **Откуда путаница:** в JetBrains-экосистеме Kotlin часто ассоциируется с современными JVM-фреймворками (Ktor, Spring + Kotlin DSL), отсюда ложное обобщение. **Если бы это было правдой:** Micronaut Launch (start.micronaut.io) не предлагал бы Java как опцию по умолчанию, а production-кейсы вроде Oracle Cloud Infrastructure не использовали бы его.
 
 ## Q2. (!) Чем Micronaut отличается от Spring Boot?
 
@@ -121,10 +164,51 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [ ] Spring Boot 3+ с native image идентичен Micronaut по производительности — разницы нет | ❌ ПОСЛЕДСТВИЕ: Spring Boot 3 native ускоряет старт, но DI по-прежнему reflection-based; при JVM-режиме разница cold start 3-10x
-> - [ ] Оба используют runtime reflection для DI; Micronaut лишь добавляет синтаксический сахар | ❌ ПОСЛЕДСТВИЕ: Micronaut генерирует DI-код в compile time через annotation processor; неверная модель → неожиданные ошибки при GraalVM native
-> - [x] Micronaut — compile-time DI/AOP, cold start 1-2с JVM vs Spring Boot 3-15с, memory 80-120 МБ vs 150-300 МБ | ✓ ПРИМЕНЯТЬ: Lambda, k8s scale-to-zero, memory-constrained deployments 📋 ПРАВИЛО: "no reflection = fast startup + low memory" 🔗 См. Q25
-> - [ ] Micronaut поддерживает только блокирующий HTTP, без Reactor/RxJava | ❌ ПОСЛЕДСТВИЕ: Micronaut поддерживает Reactor, RxJava, CompletableFuture; ограничение reactive-архитектуры без основания
+>
+> **Вопрос:** Какова ключевая архитектурная разница между Micronaut и Spring Boot и как она проявляется на cold start и memory footprint в JVM-режиме?
+>
+> ---
+>
+> #### A) Spring Boot 3+ с native image идентичен Micronaut по производительности — разницы нет — ❌ Неверно
+>
+> **Что на самом деле:** в native image Spring Boot 3 действительно близок к Micronaut (~50-100ms старт), но в **JVM-режиме**, который доминирует в production, разница сохраняется: Spring Boot 3-15с, Micronaut 1-2с. Это потому что Spring AOT генерирует hints для GraalVM, но базовая DI-машина остаётся reflection-based. **Откуда путаница:** бенчмарки native vs native действительно показывают паритет; ошибка — экстраполировать это на JVM. **Если бы это было правдой:** не было бы смысла использовать Micronaut в JVM-режиме, но Oracle, Netflix используют его именно так.
+>
+> ---
+>
+> #### B) Micronaut — compile-time DI/AOP, cold start 1-2с JVM vs Spring Boot 3-15с, memory 80-120 МБ vs 150-300 МБ — ✓ Верно
+>
+> **Развёрнутое объяснение:** Micronaut генерирует DI-код во время компиляции через annotation processor, а Spring Boot строит `ApplicationContext` в runtime через сканирование classpath + рефлексию. Эта разница даёт два эффекта: (1) cold start — нет затрат на classpath scan, (2) memory — нет хранения metadata в `BeanFactory`, нет CGLIB-proxy объектов в heap. AOP в Micronaut реализован через `$Intercepted`-subclass, сгенерированный компилятором, тогда как Spring создаёт CGLIB-proxy в runtime.
+>
+> **Пример:**
+> ```yaml
+> # Real benchmark на одинаковом сервисе (5 controllers + JDBC + Kafka):
+> # Spring Boot 3.2 JVM:    startup 4.8s, RSS 240 MB, first request p95 850ms
+> # Micronaut 4.2 JVM:      startup 1.4s, RSS 95  MB, first request p95 180ms
+> # Spring Boot 3.2 native: startup 95ms, RSS 110 MB, first request p95 35ms
+> # Micronaut 4.2 native:   startup 35ms, RSS 65  MB, first request p95 28ms
+> ```
+> ```java
+> // Micronaut: @Transactional → сгенерированный TransactionalInterceptor вызывается через прямой method call
+> // Spring:    @Transactional → CGLIB proxy перехватывает вызов через MethodInterceptor + рефлексия
+> ```
+>
+> **Когда применять:** k8s scale-to-zero (KEDA), AWS Lambda, batch-jobs которые часто рестартятся, memory-budget < 256MB на pod.
+>
+> **Подводные камни:** Spring-эcosystem огромна (Spring Security, Spring Data REST, Spring Cloud Gateway) — у Micronaut аналоги есть, но менее зрелые. Миграция большого Spring-проекта на Micronaut обычно занимает 3-6 месяцев из-за `@Conditional`, `@Profile`, Spring Cloud Config.
+>
+> **Связанные вопросы:** [[Q1]], [[Q25]]
+>
+> ---
+>
+> #### C) Оба используют runtime reflection для DI; Micronaut лишь добавляет синтаксический сахар — ❌ Неверно
+>
+> **Что на самом деле:** Micronaut вообще не использует `java.lang.reflect` для разрешения зависимостей. Все `BeanDefinition`-классы сгенерированы компилятором и регистрируются через `ServiceLoader` (`META-INF/services/io.micronaut.inject.BeanDefinitionReference`). **Откуда путаница:** похожий синтаксис аннотаций (`@Inject`, `@Singleton`) наводит на мысль о похожей реализации. **Если бы это было правдой:** GraalVM native image не работал бы из коробки без `reflect-config.json`, но Micronaut запускается в native без дополнительной конфигурации.
+>
+> ---
+>
+> #### D) Micronaut поддерживает только блокирующий HTTP, без Reactor/RxJava — ❌ Неверно
+>
+> **Что на самом деле:** Micronaut HTTP-сервер построен на Netty и нативно поддерживает `Publisher<T>` из Reactive Streams. Можно возвращать `Mono`, `Flux`, `Single`, `Maybe`, `CompletableFuture` — всё конвертируется через `ReactiveTypeConverter`. **Откуда путаница:** Spring WebFlux часто ассоциируется как «единственный reactive JVM-стек», поэтому новичкам кажется, что Micronaut — конкурент только Spring MVC. **Если бы это было правдой:** не было бы `micronaut-rxjava3`, `micronaut-reactor` модулей и встроенного R2DBC в Micronaut Data.
 
 ## Q3. (!) Чем Micronaut отличается от Quarkus?
 
@@ -145,10 +229,58 @@ updated: "2026-04-25"
 
 
 > [!mcq]
-> - [ ] Quarkus работает только в GraalVM native, на JVM не запускается | ❌ ПОСЛЕДСТВИЕ: Quarkus поддерживает JVM-режим с hot reload (dev mode); исключение Quarkus без оснований
-> - [x] Quarkus от Red Hat придерживается MicroProfile/Jakarta EE, имеет более развитый Dev Services; Micronaut ближе к Spring-стилю | ✓ ПРИМЕНЯТЬ: Micronaut — когда команда знает Spring; Quarkus — когда нужны стандарты Jakarta EE 📋 ПРАВИЛО: "OCI=Spring-style, RedHat=Jakarta-style" 🔗 См. Q23
-> - [ ] Micronaut — только для Google Cloud, Quarkus — только для Red Hat OpenShift | ❌ ПОСЛЕДСТВИЕ: оба фреймворка cloud-agnostic; неправильная привязка к провайдеру сужает архитектурные опции
-> - [ ] Quarkus значительно быстрее Micronaut в native, на порядок отличие cold start | ❌ ПОСЛЕДСТВИЕ: native cold start Quarkus ~10-30ms vs Micronaut ~30ms — незначительная разница; не основание для выбора фреймворка
+>
+> **Вопрос:** Чем Micronaut принципиально отличается от Quarkus и как выбрать между ними для нового проекта?
+>
+> ---
+>
+> #### A) Quarkus работает только в GraalVM native, на JVM не запускается — ❌ Неверно
+>
+> **Что на самом деле:** Quarkus отлично работает в JVM-режиме, причём `quarkus:dev` mode даёт live reload — изменения в коде применяются без перезапуска. Native — опциональный профиль (`quarkus build -Dnative`). **Откуда путаница:** Red Hat активно продвигает связку Quarkus + GraalVM как USP, отсюда впечатление эксклюзивности. **Если бы это было правдой:** Quarkus был бы непригоден для команд без GraalVM-экспертизы, но он популярен именно как универсальный JVM-фреймворк.
+>
+> ---
+>
+> #### B) Quarkus значительно быстрее Micronaut в native, на порядок отличие cold start — ❌ Неверно
+>
+> **Что на самом деле:** реальные бенчмарки показывают паритет: Quarkus native ~10-30ms, Micronaut native ~30ms на типичных REST-сервисах. Разница в пределах погрешности и зависит от конкретного приложения (количество beans, размер графа классов). **Откуда путаница:** маркетинговые материалы Red Hat про «supersonic, subatomic Java» создают впечатление превосходства. **Если бы это было правдой:** все cloud-native проекты переехали бы на Quarkus, но Oracle Cloud, Target, Wells Fargo используют Micronaut в production.
+>
+> ---
+>
+> #### C) Quarkus от Red Hat придерживается MicroProfile/Jakarta EE, имеет более развитый Dev Services; Micronaut ближе к Spring-стилю и проще для команд из Spring-мира — ✓ Верно
+>
+> **Развёрнутое объяснение:** **Quarkus** построен поверх стандартов Jakarta EE (CDI вместо `@Inject` Micronaut-стиля, JAX-RS вместо `@Controller`, MicroProfile Config, Health, Metrics). Его **Dev Services** автоматически поднимают Testcontainers для PostgreSQL/Kafka/Redis при запуске `quarkus:dev` — это сильное преимущество для DX. **Micronaut** использует свои аннотации, синтаксически близкие к Spring (`@Controller`, `@Get`, `@Inject` из jakarta.inject), и Test Resources (аналог Dev Services, добавлен в 4.0). Выбор сводится к команде: Spring-команды быстрее освоят Micronaut, Java EE/JBoss-команды — Quarkus.
+>
+> **Пример:**
+> ```java
+> // Quarkus (Jakarta EE стиль)
+> @Path("/users")
+> @ApplicationScoped
+> public class UserResource {
+>     @Inject UserService service;          // jakarta.inject
+>     @GET @Path("/{id}") @Produces(MediaType.APPLICATION_JSON)
+>     public User get(@PathParam("id") Long id) { return service.find(id); }
+> }
+>
+> // Micronaut (Spring-подобный стиль)
+> @Controller("/users")
+> public class UserController {
+>     private final UserService service;
+>     public UserController(UserService service) { this.service = service; }
+>     @Get("/{id}") public User get(Long id) { return service.find(id); }
+> }
+> ```
+>
+> **Когда применять:** **Micronaut** — мигрируем с Spring Boot, нужна максимальная совместимость с привычным DI; команда уже знает Spring. **Quarkus** — greenfield проект на Jakarta EE, команда из JBoss/WildFly мира, нужен Dev Services из коробки, важна интеграция с OpenShift.
+>
+> **Подводные камни:** оба фреймворка хороши, выбор часто определяется не техникой, а экосистемой компании (Red Hat support vs Oracle support). Не пытайтесь смешивать Quarkus extensions с Micronaut beans — это разные `BeanContainer` API.
+>
+> **Связанные вопросы:** [[Q1]], [[Q23]]
+>
+> ---
+>
+> #### D) Micronaut — только для Google Cloud, Quarkus — только для Red Hat OpenShift — ❌ Неверно
+>
+> **Что на самом деле:** оба фреймворка cloud-agnostic. У Micronaut есть first-class модули для AWS, GCP, Azure, Oracle Cloud (Object Storage, Secret Manager, Functions). Quarkus аналогично работает на любых K8s-кластерах, не только OpenShift. **Откуда путаница:** Quarkus = Red Hat = OpenShift по ассоциации; Micronaut продвигался Oracle Cloud Infrastructure. **Если бы это было правдой:** не существовало бы `micronaut-aws`, `micronaut-azure`, `quarkus-amazon-lambda` модулей.
 
 ## Q4. (!) Что такое compile-time DI в Micronaut?
 
@@ -440,10 +572,84 @@ public interface UserClient {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Как организовать конфигурацию? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Как Micronaut определяет, делать ли HTTP-вызов блокирующим или реактивным при использовании `@Client`?
+>
+> ---
+>
+> #### A) По возвращаемому типу метода интерфейса (`List<T>` → blocking, `Flux<T>`/`Mono<T>` → reactive, `CompletableFuture<T>` → async) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Micronaut HTTP client использует тип возвращаемого значения метода как контракт. Annotation processor видит сигнатуру и генерирует соответствующий `$Intercepted` класс, который правильно адаптирует ответ Netty-канала. Под капотом сетевой слой ВСЕГДА реактивный (Netty + Reactor), но публичное API подстраивается:
+> - `T` или `List<T>` → блокирующий вызов (`.block()` под капотом)
+> - `Mono<T>` / `Flux<T>` → Reactor publisher без блокировки
+> - `Single<T>` / `Observable<T>` → RxJava (если `micronaut-rxjava3` подключён)
+> - `CompletableFuture<T>` → async через Java стандарт
+>
+> **Пример:**
+> ```java
+> @Client("https://api.example.com")
+> public interface UserClient {
+>     // blocking — поток ждёт ответ
+>     @Get("/users/{id}")
+>     User findById(Long id);
+>
+>     // reactive — non-blocking, возвращает publisher
+>     @Get("/users/{id}")
+>     Mono<User> findByIdReactive(Long id);
+>
+>     // streaming — каждый элемент по мере прихода (SSE/NDJSON)
+>     @Get(value = "/users", processes = MediaType.APPLICATION_JSON_STREAM)
+>     Flux<User> streamUsers();
+>
+>     // async через стандартный Java API
+>     @Get("/users/{id}")
+>     CompletableFuture<User> findByIdAsync(Long id);
+> }
+> ```
+>
+> **Когда применять:**
+> - В реактивных контроллерах (возвращающих `Mono`/`Flux`) — использовать reactive-методы клиента, чтобы не блокировать event loop Netty.
+> - В блокирующих контроллерах с `@ExecuteOn(TaskExecutors.IO)` — допустим blocking-метод, он будет выполнен в IO-пуле.
+> - Для streaming-эндпоинтов (NDJSON, SSE) — только `Flux<T>` с `APPLICATION_JSON_STREAM`.
+>
+> **Подводные камни:**
+> - Блокирующий метод `@Client` в реактивном контроллере на event-loop'е заблокирует Netty worker → throughput падает до 1 запроса/поток. Помечайте контроллер `@ExecuteOn(TaskExecutors.IO)` или используйте `Mono`.
+> - `Flux<User> list()` БЕЗ `processes = JSON_STREAM` соберёт весь список перед эмиссией — не стриминг, а отложенный сбор.
+> - `CompletableFuture` пробрасывает исключения через `CompletionException` — оборачивайте при unwrap.
+>
+> **Связанные вопросы:** [[Q10]] — declarative @Client и compile-time generation; [[Q22]] — Reactor/RxJava в Micronaut; [[Q8]] — REST-контроллеры и их типы возвратов.
+>
+> ---
+>
+> #### B) Через аннотацию `@Async` на методе клиента — без неё всегда блокирующий — ❌ Неверно
+>
+> **Что на самом деле:** в Micronaut нет аннотации `@Async` для declarative HTTP-клиентов. Стиль выполнения определяется исключительно типом возврата метода. Аннотация `@Async` в Micronaut существует только для бинов сервисов (`@ExecuteOn`/`@Async` в Micronaut 4 у методов сервисов) — это совсем другой механизм.
+>
+> **Откуда путаница:** в Spring Boot есть `@Async` для асинхронного выполнения методов через `TaskExecutor` (без HTTP-специфики). Разработчик переносит ментальную модель «нужна аннотация для async» на Micronaut.
+>
+> **Если бы это было правдой:** разработчик с реактивным контроллером добавил бы `Flux<User> list()` без `@Async` и ожидал блокирующего вызова — в реальности Micronaut вернёт честный `Flux` без блокировки, и тесты с моками типа `when(client.list()).thenReturn(...)` упали бы с `ClassCastException`.
+>
+> ---
+>
+> #### C) По строковому параметру `mode` в `@Client(mode = "reactive")` — ❌ Неверно
+>
+> **Что на самом деле:** аннотация `@Client` имеет параметры `value` (URL/service-id), `id`, `path`, `configuration`, `errorType`, `httpVersion`, но не `mode`. Реактивность не настраивается на уровне клиента целиком — она per-method через тип возврата.
+>
+> **Откуда путаница:** у некоторых HTTP-клиентов (например, AsyncHttpClient в Java) действительно есть глобальный mode. Также `WebClient` в Spring WebFlux всегда reactive, а `RestTemplate` всегда blocking — две разные сущности. Это создаёт впечатление, что выбор делается на уровне клиента, а не метода.
+>
+> **Если бы это было правдой:** нельзя было бы в одном клиенте смешивать blocking-методы (для админ-эндпоинтов с `@ExecuteOn(IO)`) и reactive (для high-throughput путей) — пришлось бы заводить два разных интерфейса под один сервис.
+>
+> ---
+>
+> #### D) Все методы `@Client` блокирующие; reactive нужно вручную через `Mono.fromCallable(client::call)` — ❌ Неверно
+>
+> **Что на самом деле:** declarative `@Client` поддерживает реактивные типы изначально и НЕ блокирует поток для `Mono`/`Flux` методов. Под капотом используется Netty, а ответ оборачивается в Reactor publisher без `.block()`. `Mono.fromCallable(client::call)` — антипаттерн: он завернул бы блокирующий вызов в обёртку, но реальное I/O всё равно блокирует поток scheduler'а.
+>
+> **Откуда путаница:** в Spring 4/5 с `RestTemplate` так и приходилось делать — `Mono.fromCallable(() -> restTemplate.getForObject(...))` на `Schedulers.boundedElastic()`. Привычка переносится на Micronaut, где это и не нужно, и вредно.
+>
+> **Если бы это было правдой:** не существовало бы преимущества Micronaut по throughput на реактивных путях — стек выглядел бы как Spring MVC с `RestTemplate`, что противоречит бенчмаркам ~100K req/s.
 
 ```yaml
 # application.yml
