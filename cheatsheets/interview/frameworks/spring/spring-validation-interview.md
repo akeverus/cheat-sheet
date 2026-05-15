@@ -915,11 +915,57 @@ public class UserRequest {
 **Правило:** в `isValid()` не проверять `null` — за это отвечает `@NotNull`. Если значение `null` → `return true` (constraint не нарушен).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Как реализовать кросс-field валидацию? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что обязательно нужно для рабочей кастомной constraint-аннотации `@Phone`?
+>
+> - [ ] **A) Только объявить `@interface Phone` с атрибутами `message()`, `groups()`, `payload()` — Bean Validation сам найдёт подходящий валидатор по соглашению об именах.**
+>
+>   Это неверно: спецификация Jakarta Bean Validation не требует и не использует name-conventions для подбора валидатора. Если в аннотации нет `@Constraint(validatedBy = ...)` или класс `PhoneValidator` не реализует `ConstraintValidator<Phone, String>` — провайдер (Hibernate Validator) выкинет `ConstraintDefinitionException` при первой же проверке.
+>
+>   ❌ ПОСЛЕДСТВИЕ: при первом же запросе с `@Phone` контроллер падает с 500 вместо 400, в логах `No validator could be found for constraint 'Phone'` — пользователи получают internal error.
+>
+> - [ ] **B) Объявить аннотацию с `@Constraint(validatedBy = PhoneValidator.class)`, но без обязательных элементов `groups()` и `payload()`.**
+>
+>   Bean Validation требует, чтобы любая constraint-аннотация имела ровно три обязательных элемента: `message()`, `Class<?>[] groups()` и `Class<? extends Payload>[] payload()`. Без них Hibernate Validator при инициализации фабрики (`buildValidatorFactory()`) бросит `ConstraintDefinitionException: HV000074: Constraint definition ... is missing the mandatory element 'groups'`.
+>
+>   ❌ ПОСЛЕДСТВИЕ: приложение даже не стартует — `LocalValidatorFactoryBean.afterPropertiesSet()` падает, контекст Spring не поднимается, deploy откатывается.
+>
+> - [x] **C) Объявить `@interface Phone` с `@Constraint(validatedBy = PhoneValidator.class)` и тремя обязательными элементами + реализовать `PhoneValidator implements ConstraintValidator<Phone, String>` с методом `isValid()`, который трактует `null` как валидное значение.**
+>
+>   Это полный и корректный контракт. `@Constraint(validatedBy = ...)` связывает аннотацию с валидатором; три обязательных элемента (`message()`, `groups()`, `payload()`) требуются спецификацией; интерфейс `ConstraintValidator<A, T>` параметризован самой аннотацией и типом проверяемого поля. Опциональный `initialize(Phone)` читает атрибуты аннотации (например, `regexp`). Игнорирование `null` в `isValid()` — стандартное соглашение: за null отвечает отдельная аннотация `@NotNull`, иначе невозможно сделать поле опциональным.
+>
+>   ```java
+>   @Target({ElementType.FIELD, ElementType.PARAMETER})
+>   @Retention(RetentionPolicy.RUNTIME)
+>   @Constraint(validatedBy = PhoneValidator.class)
+>   @Documented
+>   public @interface Phone {
+>       String message() default "Неверный формат телефона";
+>       Class<?>[] groups() default {};
+>       Class<? extends Payload>[] payload() default {};
+>       String regexp() default "^\\+7\\d{10}$";
+>   }
+>
+>   public class PhoneValidator implements ConstraintValidator<Phone, String> {
+>       private String regexp;
+>       @Override public void initialize(Phone a) { this.regexp = a.regexp(); }
+>       @Override public boolean isValid(String value, ConstraintValidatorContext ctx) {
+>           if (value == null) return true; // null — забота @NotNull
+>           return value.matches(regexp);
+>       }
+>   }
+>   ```
+>
+>   КОГДА ВЫБИРАТЬ: всегда, когда нужна доменная проверка одного поля (телефон, ИНН, slug, hex-color) — даёт декларативный API и хорошо читается на DTO.
+>
+>   ✅ ПОСЛЕДСТВИЕ: `@Phone` срабатывает на любом DTO через `@Valid`, опциональные поля (null) корректно проходят, ошибки попадают в стандартный поток `MethodArgumentNotValidException` → HTTP 400 с понятным message.
+>
+> - [ ] **D) Реализовать `PhoneValidator extends javax.validation.spi.ValidationProvider` и зарегистрировать его в `META-INF/services` — Hibernate Validator подхватит через SPI.**
+>
+>   Это путаница уровней: `ValidationProvider` — это SPI для регистрации целого провайдера валидации (как Hibernate Validator или Apache BVal), а не отдельного constraint. Подмена провайдера сломает всю валидацию приложения, при этом саму аннотацию `@Phone` это всё равно не подружит с `PhoneValidator`. Правильный механизм для кастомного constraint — `ConstraintValidator<A, T>` + `@Constraint(validatedBy = ...)`.
+>
+>   ❌ ПОСЛЕДСТВИЕ: попытка переопределить SPI ломает `ValidationAutoConfiguration` — все `@Valid` в контроллерах перестают срабатывать; баги типа «invalid email проходит на prod» вылезают через несколько релизов, когда забывают про эту правку.
+
+## Q8. Как реализовать кросс-field валидацию?
 
 Когда нужно проверить несколько полей вместе (например, `password == confirmPassword`), аннотацию вешают на **класс**:
 
@@ -980,11 +1026,66 @@ public class RegisterRequest {
 `addPropertyNode` — привязывает ошибку к конкретному полю, а не к объекту.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Как создать stateful validator с инъекцией Spring-бинов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Нужна проверка `password == confirmPassword` в `RegisterRequest`. Какая реализация cross-field валидации корректна и привязывает ошибку именно к полю `confirmPassword`?
+>
+> - [ ] **A) Повесить `@AssertTrue` на геттер `isPasswordsMatch()` внутри DTO, который возвращает `password.equals(confirmPassword)`.**
+>
+>   Технически валидация сработает и forms-вариант часто так и делают, но ошибка привяжется к виртуальному полю `passwordsMatch`, а не к реальному `confirmPassword`. Это критично для UX: фронт ожидает увидеть ошибку под конкретным input-полем, а не под несуществующим. К тому же геттер десинхронизируется с реальными полями при рефакторинге (легко забыть обновить).
+>
+>   ❌ ПОСЛЕДСТВИЕ: фронт получает `field: "passwordsMatch"` в `MethodArgumentNotValidException.fieldErrors`, не может подсветить нужный input — пользователи видят generic-баннер «форма содержит ошибки» и теряются.
+>
+> - [ ] **B) Сравнить пароли вручную в контроллере: `if (!req.getPassword().equals(req.getConfirmPassword())) throw new IllegalArgumentException(...)`.**
+>
+>   Это работает, но ломает декларативную модель: валидация размазана между аннотациями на DTO и imperative-кодом в контроллере. Сложнее тестировать (нужен полный slice-тест вместо `Validator.validate()`), невозможно переиспользовать на сервисном уровне через `@Validated`, и `IllegalArgumentException` нужно отдельно мапить в HTTP 400 в `@ControllerAdvice`.
+>
+>   ❌ ПОСЛЕДСТВИЕ: дублирование логики (в форме регистрации, смены пароля, восстановления) — рано или поздно одна из веток разойдётся с другими; security-баг «можно поменять пароль без подтверждения» прилетает через полгода.
+>
+> - [ ] **C) Объявить class-level аннотацию `@PasswordMatch` без атрибутов `password()` и `confirmPassword()` — валидатор сам по reflection найдёт поля с именами `password` и `confirmPassword`.**
+>
+>   Hardcoded имена полей — анти-паттерн: аннотацию нельзя переиспользовать для пары `newPassword`/`confirmNewPassword` или `email`/`confirmEmail`. Кроме того, ошибка из `addPropertyNode("confirmPassword")` тоже будет hardcoded — невозможно настроить под другую форму без правки самого валидатора.
+>
+>   ❌ ПОСЛЕДСТВИЕ: при добавлении формы смены пароля приходится либо копировать `@PasswordMatch` под другим именем (`@NewPasswordMatch`), либо ломать существующий контракт — растёт сложность поддержки.
+>
+> - [x] **D) Объявить class-level аннотацию `@PasswordMatch(password = "password", confirmPassword = "confirmPassword")` + валидатор, который через `BeanWrapperImpl` читает значения этих полей и через `ctx.addPropertyNode(confirmPasswordField).addConstraintViolation()` привязывает ошибку к нужному полю.**
+>
+>   Это эталонный паттерн cross-field валидации в Spring. Аннотация на `ElementType.TYPE` получает доступ к объекту целиком; имена полей — параметры аннотации (переиспользуема для любых пар); `BeanWrapperImpl` решает задачу reflection-доступа единообразно с остальным Spring; вызов `disableDefaultConstraintViolation()` + `addPropertyNode()` критичен — без него ошибка прилетит на уровне всего объекта (с пустым `field`), а не на конкретном поле.
+>
+>   ```java
+>   @Target(ElementType.TYPE) @Retention(RetentionPolicy.RUNTIME)
+>   @Constraint(validatedBy = PasswordMatchValidator.class)
+>   public @interface PasswordMatch {
+>       String message() default "Пароли не совпадают";
+>       Class<?>[] groups() default {};
+>       Class<? extends Payload>[] payload() default {};
+>       String password();
+>       String confirmPassword();
+>   }
+>
+>   public class PasswordMatchValidator implements ConstraintValidator<PasswordMatch, Object> {
+>       private String passField, confirmField;
+>       @Override public void initialize(PasswordMatch a) {
+>           this.passField = a.password();
+>           this.confirmField = a.confirmPassword();
+>       }
+>       @Override public boolean isValid(Object obj, ConstraintValidatorContext ctx) {
+>           BeanWrapper bw = new BeanWrapperImpl(obj);
+>           if (Objects.equals(bw.getPropertyValue(passField), bw.getPropertyValue(confirmField))) return true;
+>           ctx.disableDefaultConstraintViolation();
+>           ctx.buildConstraintViolationWithTemplate(ctx.getDefaultConstraintMessageTemplate())
+>              .addPropertyNode(confirmField).addConstraintViolation();
+>           return false;
+>       }
+>   }
+>
+>   @PasswordMatch(password = "password", confirmPassword = "confirmPassword")
+>   public class RegisterRequest { ... }
+>   ```
+>
+>   КОГДА ВЫБИРАТЬ: всегда, когда нужно проверить инвариант между двумя+ полями (даты `from <= to`, два пароля, цены `discount <= price`) и хочется красивый JSON-ответ с привязкой к полю.
+>
+>   ✅ ПОСЛЕДСТВИЕ: фронт получает `fieldErrors: [{field: "confirmPassword", message: "Пароли не совпадают"}]` — нужный input сразу подсвечивается; аннотация переиспользуется на любой паре полей без правки валидатора.
+
+## Q9. Как создать stateful validator с инъекцией Spring-бинов?
 
 Hibernate Validator по умолчанию создаёт validators через `new`. В Spring Boot — через `ConstraintValidatorFactory`, которая использует Spring-контекст.
 
@@ -1017,11 +1118,57 @@ public @interface UniqueEmail {
 **Важно:** если используется `javax.validation.Validator` напрямую (не через Spring) — DI не работает.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Как работает композиция constraints? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Нужен `@UniqueEmail`-validator, который дёргает `UserRepository.existsByEmail()`. Какой подход в Spring Boot обеспечит реальную инъекцию `UserRepository` в валидатор?
+>
+> - [x] **A) Пометить `UniqueEmailValidator` аннотацией `@Component` (или `@Service`) и инжектить `UserRepository` через `@Autowired` / конструктор — Spring Boot автоконфигурацией поднимает `LocalValidatorFactoryBean` с `SpringConstraintValidatorFactory`, которая создаёт валидаторы через ApplicationContext.**
+>
+>   Это рабочая идиома Spring Boot. `ValidationAutoConfiguration` создаёт бин `LocalValidatorFactoryBean` (реализует и `javax.validation.Validator`, и `org.springframework.validation.Validator`) с подменённой `ConstraintValidatorFactory` на `SpringConstraintValidatorFactory`. Эта фабрика при создании каждого validator-инстанса делает `applicationContext.getAutowireCapableBeanFactory().createBean(clazz)` — DI работает полноценно, включая `@Autowired`, конструкторную инъекцию, `@Value`, `@Qualifier`. Аннотация `@Component` обязательна не сама по себе (фабрика умеет создавать и не-Spring-классы), но она гарантирует, что Spring увидит класс при classpath-сканировании и провалидирует граф зависимостей на старте.
+>
+>   ```java
+>   @Component
+>   public class UniqueEmailValidator implements ConstraintValidator<UniqueEmail, String> {
+>       private final UserRepository userRepository;
+>       public UniqueEmailValidator(UserRepository userRepository) {
+>           this.userRepository = userRepository; // конструкторная DI работает
+>       }
+>       @Override public boolean isValid(String email, ConstraintValidatorContext ctx) {
+>           if (email == null) return true;
+>           return !userRepository.existsByEmail(email);
+>       }
+>   }
+>
+>   @Target(ElementType.FIELD) @Retention(RetentionPolicy.RUNTIME)
+>   @Constraint(validatedBy = UniqueEmailValidator.class)
+>   public @interface UniqueEmail {
+>       String message() default "Email уже зарегистрирован";
+>       Class<?>[] groups() default {};
+>       Class<? extends Payload>[] payload() default {};
+>   }
+>   ```
+>
+>   КОГДА ВЫБИРАТЬ: всегда, когда валидация требует обращения к Spring-инфраструктуре (БД, кэш, внешний HTTP-клиент, конфиги). Это standard-way в Spring Boot.
+>
+>   ✅ ПОСЛЕДСТВИЕ: валидатор получает реальный `UserRepository`, проверка на уникальность работает на любом DTO с `@UniqueEmail` через `@Valid`. Внимание: эта проверка имеет TOCTOU-race с insert'ом — её нужно дублировать unique-constraint'ом на БД.
+>
+> - [ ] **B) Создавать `UniqueEmailValidator` через `new` в самом валидаторе или в `@PostConstruct` контроллера, а `UserRepository` присваивать через статическое поле `UniqueEmailValidator.repository = repo`.**
+>
+>   Hibernate Validator по умолчанию создаёт validator-инстансы через `Class.newInstance()` (через `DefaultConstraintValidatorFactory`), поэтому `@Autowired` в валидаторе работать не будет — Spring о нём ничего не знает. Костыль со static-полем создаёт глобальное состояние: тесты ломаются (порядок-зависимы), in-process параллелизм небезопасен, при перезагрузке контекста (Spring DevTools, testcontext caching) статика остаётся «прибитой» к старому бину.
+>
+>   ❌ ПОСЛЕДСТВИЕ: после рестарта DevTools валидатор держит ссылку на закрытый `EntityManager`, дальше — `NullPointerException` или `IllegalStateException: Session/EntityManager is closed` на каждом запросе с `@UniqueEmail`.
+>
+> - [ ] **C) Использовать `Validation.buildDefaultValidatorFactory().getValidator()` напрямую и руками подкидывать `UserRepository` через `ConstraintValidatorContext.unwrap(...)`.**
+>
+>   `Validation.buildDefaultValidatorFactory()` строит фабрику без Spring-контекста (через дефолтный `DefaultConstraintValidatorFactory`) — DI не работает в принципе. `ConstraintValidatorContext` — это API для построения нарушений (сообщения, ноды, payload), а не для прокидывания зависимостей; ни `unwrap`, ни какой-либо другой его метод не даёт доступа к репозиторию.
+>
+>   ❌ ПОСЛЕДСТВИЕ: код компилируется, но `userRepository` в валидаторе остаётся `null` → `NullPointerException` при первом валидируемом запросе; в логах нет внятного сообщения, диагностика занимает часы.
+>
+> - [ ] **D) Превратить `UniqueEmailValidator` в bean со scope `prototype` и достать его из `ApplicationContext.getBean()` внутри `isValid()` через `ApplicationContextHolder`.**
+>
+>   Service-locator поверх Spring — анти-паттерн. Во-первых, лишний indirection при каждой валидации (lookup в контексте на горячем пути). Во-вторых, `ApplicationContextHolder` — статический singleton, тот же проблемный паттерн что и в варианте B. В-третьих, prototype-scope здесь не нужен и вреден: `SpringConstraintValidatorFactory` уже сама управляет жизненным циклом, дополнительный prototype может приводить к утечке инстансов через ApplicationContext.
+>
+>   ❌ ПОСЛЕДСТВИЕ: измеримая деградация latency на endpoint'ах с валидацией (десятки микросекунд на каждый `getBean`), плюс утечка прокси-объектов в ApplicationContext — heap растёт пока не упирается в `OutOfMemoryError`.
+
+## Q10. Как работает композиция constraints?
 
 `@Constraint(validatedBy = {})` без валидатора + `@ReportAsSingleViolation` = мета-аннотация из нескольких constraints:
 
