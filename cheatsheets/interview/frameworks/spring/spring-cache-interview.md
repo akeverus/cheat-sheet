@@ -1129,10 +1129,64 @@ spring:
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Как настроить Caffeine как провайдер кэша? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Какие CacheManager-реализации поддерживает Spring Boot из коробки?**
+>
+> - [x] **A) Spring Boot автоматически конфигурирует один из шести CacheManager в зависимости от classpath: `ConcurrentMapCacheManager` (по умолчанию, без зависимостей), `CaffeineCacheManager`, `RedisCacheManager` (через `spring-boot-starter-data-redis`), `JCacheCacheManager` (EhCache 3), `HazelcastCacheManager`, `SpringEmbeddedCacheManager` (Infinispan). Явный выбор — через `spring.cache.type=caffeine|redis|...`**
+>
+>     **Развёрнутое объяснение:** `CacheAutoConfiguration` сканирует classpath и активирует `@ConditionalOnClass` для каждого провайдера. Порядок приоритета определяется `CacheType` enum: generic → JCache → EhCache → Hazelcast → Infinispan → Couchbase → Redis → Caffeine → simple. Если несколько провайдеров на classpath — нужно явное `spring.cache.type`. `ConcurrentMapCacheManager` (он же "simple") — fallback, который активируется, когда ничего другого не найдено. Все реализации реализуют интерфейс `CacheManager` и возвращают `Cache`-обёртки над нативным API провайдера (например, `CaffeineCache` обёртывает `com.github.benmanes.caffeine.cache.Cache`).
+>
+>     **Пример (real Spring Java code):**
+>     ```java
+>     // application.yml
+>     // spring:
+>     //   cache:
+>     //     type: caffeine
+>     //     cache-names: products, users
+>
+>     @SpringBootApplication
+>     @EnableCaching
+>     public class App {
+>         public static void main(String[] args) {
+>             ConfigurableApplicationContext ctx = SpringApplication.run(App.class, args);
+>             CacheManager cm = ctx.getBean(CacheManager.class);
+>             System.out.println(cm.getClass().getSimpleName());
+>             // → CaffeineCacheManager (если caffeine на classpath)
+>             // → ConcurrentMapCacheManager (если зависимостей нет)
+>         }
+>     }
+>     ```
+>
+>     **Когда применять:** `ConcurrentMap` — для тестов и dev-окружения; Caffeine — для in-process кэша с высокой производительностью и TTL; Redis — для распределённого кэша между подами; EhCache/Hazelcast — для enterprise и legacy.
+>
+>     **Подводные камни:** если на classpath одновременно Redis и Caffeine, Spring Boot выберет Redis (приоритет выше) — это часто сюрприз; `type: none` полностью отключает кэширование (методы выполняются каждый раз); `ConcurrentMapCacheManager` не поддерживает TTL и eviction policy.
+>
+>     **Связанные вопросы:** [[Q12]], [[Q13]], [[Q18]]
+>
+> - [ ] **B) Spring Boot поддерживает только Redis и Caffeine — остальные провайдеры нужно подключать вручную через `@Bean CacheManager`**
+>
+>     **Что на самом деле:** Spring Boot имеет автоконфигурацию для девяти типов кэша (см. `CacheType` enum): generic, jcache, ehcache, hazelcast, infinispan, couchbase, redis, caffeine, simple. Все они работают «из коробки» при наличии нужной зависимости.
+>
+>     **Откуда путаница:** Redis и Caffeine — действительно самые популярные в современных проектах, поэтому их чаще упоминают в туториалах. Но «популярные» ≠ «единственные поддерживаемые».
+>
+>     **Если бы это было правдой:** легаси-приложения с EhCache не могли бы мигрировать на Spring Boot без переписывания всей кэш-конфигурации. На практике `JCacheCacheManager` через JSR-107 работает с EhCache 3 без единой строки Java-кода.
+>
+> - [ ] **C) `RedisCacheManager` создаётся вручную через `@Bean` — Spring Boot не имеет автоконфигурации для Redis-кэша**
+>
+>     **Что на самом деле:** `RedisCacheConfiguration` в `org.springframework.boot.autoconfigure.cache` автоматически создаёт `RedisCacheManager`, если на classpath есть `spring-boot-starter-data-redis` и `spring.cache.type=redis` (или Redis — единственный провайдер). Кастомизация — через `RedisCacheManagerBuilderCustomizer`.
+>
+>     **Откуда путаница:** до Spring Boot 2.0 (2018) автоконфигурации Redis-кэша действительно не было — нужно было писать `@Bean RedisCacheManager`. Старые туториалы вводят в заблуждение.
+>
+>     **Если бы это было правдой:** не было бы смысла в `spring-boot-starter-data-redis` для кэша — он бы давал только `RedisTemplate`. На практике стартер активирует и `RedisCacheManager` автоматически.
+>
+> - [ ] **D) `ConcurrentMapCacheManager` — это адаптер над Redis, который работает через сетевое соединение по умолчанию**
+>
+>     **Что на самом деле:** `ConcurrentMapCacheManager` — чисто in-memory реализация на основе `java.util.concurrent.ConcurrentHashMap`. Ни одного сетевого вызова, всё в heap текущего JVM-процесса. Это противоположность распределённому кэшу.
+>
+>     **Откуда путаница:** название `ConcurrentMap` может ассоциироваться с «concurrent distributed map» вроде Hazelcast IMap. Но в Spring это просто обёртка над `ConcurrentHashMap`.
+>
+>     **Если бы это было правдой:** дефолтный CacheManager требовал бы Redis-сервер для работы, и любое Spring Boot приложение с `@EnableCaching` падало бы без Redis на старте. На практике `ConcurrentMapCacheManager` запускается без зависимостей вообще.
+
+## Q12. Как настроить Caffeine как провайдер кэша?
 
 **Зависимость:**
 ```xml
@@ -1185,10 +1239,72 @@ public class CacheConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как подключить Redis-кэш? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Какой способ конфигурации Caffeine позволяет задать разные TTL для разных кэшей в одном приложении?**
+>
+> - [ ] **A) Прописать через `spring.cache.caffeine.spec=maximumSize=500,expireAfterWrite=10m` — Spring Boot применит указанный TTL индивидуально к каждому кэшу из `cache-names`**
+>
+>     **Что на самом деле:** свойство `spring.cache.caffeine.spec` задаёт **единую** спецификацию, которая применяется ко **всем** кэшам, перечисленным в `spring.cache.cache-names`. Один TTL, один maximumSize на все кэши. Разные значения через `spec` невозможны.
+>
+>     **Откуда путаница:** YAML-конфигурация выглядит лаконично и складывается ощущение, что Spring Boot «умнее, чем есть». На практике `CaffeineSpec` — это одна строка спецификации Caffeine, не map.
+>
+>     **Если бы это было правдой:** была бы поддержка `spring.cache.caffeine.specs.products=...` и `specs.users=...`. Такого свойства в Spring Boot нет (по состоянию на 3.x).
+>
+> - [ ] **B) Использовать `CaffeineCacheManager.setCacheSpecification(String spec)` отдельно для каждого кэша через `BeanPostProcessor`**
+>
+>     **Что на самом деле:** метод `setCacheSpecification` устанавливает спецификацию **по умолчанию** на сам CacheManager — она применяется ко всем кэшам, созданным lazy через `getCache(name)`. Это не per-cache, а общий fallback.
+>
+>     **Откуда путаница:** название метода намекает на «set» (как будто можно установить для каждого индивидуально), но это singleton-настройка менеджера.
+>
+>     **Если бы это было правдой:** появилась бы перегрузка `setCacheSpecification(String cacheName, String spec)`. В реальном API такого метода нет.
+>
+> - [ ] **C) Аннотировать каждый метод `@Cacheable(value="products", caffeineSpec="maximumSize=1000")` — параметр аннотации переопределяет глобальный spec**
+>
+>     **Что на самом деле:** у `@Cacheable` нет параметра `caffeineSpec`. Стандартные атрибуты: `cacheNames`, `key`, `keyGenerator`, `cacheManager`, `cacheResolver`, `condition`, `unless`, `sync`. Конфигурация провайдера живёт строго на уровне `CacheManager`, не на аннотации.
+>
+>     **Откуда путаница:** в JCache (`@CacheResult`) есть `cacheResolver`, через который можно подсунуть кастомную конфигурацию. Но это другая модель.
+>
+>     **Если бы это было правдой:** аннотации стали бы зависимы от конкретного провайдера (Caffeine), что нарушает абстракцию Spring Cache. Принцип Spring — annotation не знает про backend.
+>
+> - [x] **D) Объявить `@Bean CacheManager` и зарегистрировать каждый кэш через `CaffeineCacheManager.registerCustomCache(name, Caffeine.newBuilder()...build())` с индивидуальным `Caffeine.Builder` для каждого имени**
+>
+>     **Развёрнутое объяснение:** `CaffeineCacheManager` имеет метод `registerCustomCache(String name, com.github.benmanes.caffeine.cache.Cache<Object,Object> cache)`, который принимает уже построенный нативный Caffeine-Cache с любой комбинацией настроек. Это единственный способ дать разные TTL/size/policy разным именам кэша. YAML-spec работает только как fallback для не зарегистрированных вручную имен. После `registerCustomCache` обращение к `cacheManager.getCache(name)` вернёт обёртку именно над переданной конфигурацией.
+>
+>     **Пример (real Spring Java code):**
+>     ```java
+>     @Configuration
+>     @EnableCaching
+>     public class CaffeineCacheConfig {
+>
+>         @Bean
+>         public CacheManager cacheManager() {
+>             CaffeineCacheManager manager = new CaffeineCacheManager();
+>             // короткий TTL для часто меняющихся данных
+>             manager.registerCustomCache("products",
+>                 Caffeine.newBuilder()
+>                     .maximumSize(1000)
+>                     .expireAfterWrite(Duration.ofMinutes(10))
+>                     .recordStats()
+>                     .build());
+>             // sliding window для сессий
+>             manager.registerCustomCache("sessions",
+>                 Caffeine.newBuilder()
+>                     .maximumSize(500)
+>                     .expireAfterAccess(Duration.ofMinutes(30))
+>                     .build());
+>             // дефолт для всех остальных
+>             manager.setCaffeineSpec(CaffeineSpec.parse("maximumSize=100,expireAfterWrite=5m"));
+>             return manager;
+>         }
+>     }
+>     ```
+>
+>     **Когда применять:** когда в приложении сосуществуют кэши с разными требованиями — например, products (10 мин TTL), sessions (30 мин sliding), reference-data (24 часа). Это типичный случай в production.
+>
+>     **Подводные камни:** `expireAfterWrite` — строгий TTL от записи; `expireAfterAccess` — sliding (TTL продлевается при чтении); `recordStats()` нужен для метрик через `CaffeineCacheMetrics`; `registerCustomCache` должен вызываться **до** первого обращения к `getCache(name)`, иначе создастся дефолтный.
+>
+>     **Связанные вопросы:** [[Q11]], [[Q13]], [[Q18]]
+
+## Q13. Как подключить Redis-кэш?
 
 **Зависимость:**
 ```xml
@@ -1217,10 +1333,72 @@ Spring Boot автоматически создаёт `RedisCacheManager`. Да�
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Как настроить TTL для Redis-кэша? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Что минимально нужно сделать для подключения Redis как провайдера Spring Cache?**
+>
+> - [ ] **A) Добавить только `@EnableCaching` — Spring Boot сам поднимет Redis-контейнер в embedded-режиме и подключится к нему**
+>
+>     **Что на самом деле:** Spring Boot не имеет embedded-Redis. Нужен внешний Redis-сервер (запущенный отдельно — Docker, локальный сервис, managed-инстанс) и зависимость `spring-boot-starter-data-redis`, которая принесёт Lettuce-клиент. Без сервера приложение упадёт на старте с `RedisConnectionFailureException`.
+>
+>     **Откуда путаница:** в Spring Boot есть embedded-варианты для H2, MongoDB (`flapdoodle`), Kafka (`spring-kafka-test`). По аналогии можно ждать того же для Redis, но в core Spring Boot этого нет.
+>
+>     **Если бы это было правдой:** в dev-режиме не нужен был бы `docker run redis`. На практике для локальной разработки используют `testcontainers-redis`, `embedded-redis` от kstyrc или Docker Compose — это третьи стороны, не Spring Boot core.
+>
+> - [x] **B) Добавить `spring-boot-starter-data-redis`, установить `spring.cache.type=redis` (или единственный провайдер на classpath), настроить `spring.data.redis.host/port`. Spring Boot автоматически создаст `RedisCacheManager` с дефолтным `JdkSerializationRedisSerializer`. Кэшируемые объекты должны быть `Serializable` или нужно настроить Jackson-сериализатор.**
+>
+>     **Развёрнутое объяснение:** `RedisCacheConfiguration` (автоконфигурация) активируется при наличии классов `RedisConnectionFactory` и `RedisCacheManager` на classpath + условии `spring.cache.type=redis`. Стартер приносит Lettuce как дефолтный клиент (Jedis опционально через `jedis-clients`). `RedisCacheManager` сохраняет каждую запись как пару `cacheName::key → byte[]` в Redis. Сериализация по умолчанию — JDK serialization (требует `Serializable`), что часто меняют на JSON через `GenericJackson2JsonRedisSerializer` для интероперабельности.
+>
+>     **Пример (real Spring Java code):**
+>     ```java
+>     // build.gradle
+>     // implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+>
+>     // application.yml
+>     // spring:
+>     //   cache:
+>     //     type: redis
+>     //   data:
+>     //     redis:
+>     //       host: localhost
+>     //       port: 6379
+>
+>     @SpringBootApplication
+>     @EnableCaching
+>     public class App {}
+>
+>     @Service
+>     public class ProductService {
+>         @Cacheable("products")
+>         public Product findById(Long id) {
+>             // данные сохранятся в Redis как
+>             // key: "products::1", value: byte[]
+>             return repository.findById(id).orElseThrow();
+>         }
+>     }
+>     ```
+>
+>     **Когда применять:** распределённый кэш между подами Kubernetes; общий кэш для нескольких сервисов; долгоживущий кэш, который должен переживать рестарты; near cache (Caffeine L1 + Redis L2).
+>
+>     **Подводные камни:** объекты должны быть `Serializable`, иначе `NotSerializableException`; смена структуры класса (добавление поля) ломает уже закэшированные данные (`InvalidClassException`) — решается переходом на JSON-сериализатор; сетевые задержки добавляют latency (~1-2 мс vs ~100 нс у Caffeine); `null` не кэшируется по умолчанию — нужно `RedisCacheConfiguration.disableCachingNullValues()` инвертировать.
+>
+>     **Связанные вопросы:** [[Q11]], [[Q12]], [[Q18]]
+>
+> - [ ] **C) Подменить `CacheManager` через `@Primary @Bean ConcurrentMapCacheManager redisCacheManager()` — Spring сам поймёт, что нужен Redis по имени бина**
+>
+>     **Что на самом деле:** Spring выбирает CacheManager по типу, а не по имени бина. `ConcurrentMapCacheManager` всегда in-memory, как бы вы его ни назвали. Имя `redisCacheManager` — просто строка для DI-контекста, она не активирует Redis.
+>
+>     **Откуда путаница:** в Spring есть convention-over-configuration по именам бинов (`dataSource`, `transactionManager`), но это работает для конкретных автоконфигураций, а не как магическое преобразование типов.
+>
+>     **Если бы это было правдой:** можно было бы получить Hazelcast через `@Bean ConcurrentMapCacheManager hazelcastCacheManager()`. На практике тип бина определяет поведение.
+>
+> - [ ] **D) Аннотировать `@Cacheable(value="products", provider=CacheProvider.REDIS)` — параметр `provider` указывает Spring какой backend использовать для конкретного кэша**
+>
+>     **Что на самом деле:** у `@Cacheable` нет параметра `provider`. Выбор провайдера происходит на уровне `CacheManager`/`CacheResolver` для всего приложения (или сегментов, если зарегистрировано несколько CacheManager + явный `cacheManager` в аннотации).
+>
+>     **Откуда путаница:** в Hibernate `@Cache(usage = ..., region = ...)` действительно настраивается на уровне сущности. Spring Cache использует другую модель — провайдер декларируется один раз на CacheManager.
+>
+>     **Если бы это было правдой:** каждая аннотация знала бы про конкретные backends (Redis, Caffeine, Hazelcast), что нарушает Spring Cache Abstraction. Идея абстракции — менять провайдера без изменения кода.
+
+## Q14. Как настроить TTL для Redis-кэша?
 
 ```java
 @Configuration
