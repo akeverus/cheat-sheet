@@ -686,10 +686,36 @@ class MyService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Environment-specific конфиги? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Как Micronaut читает и применяет конфигурацию из `application.yml`?**
+>
+> #### A) Конфиг загружается только через `@Value` — отдельных POJO для группы свойств в Micronaut нет
+>
+> Неверно. Micronaut поддерживает `@ConfigurationProperties("prefix")` — type-safe POJO, в который собирается ветка конфига (как в Spring).
+>
+> **Почему путают:** в учебных примерах часто показывают только `@Value("${some.value}")`, и кажется, будто это единственный способ. На самом деле для нескольких связанных свойств идиоматично использовать `@ConfigurationProperties`.
+>
+> #### B) `application.yml` — единственный поддерживаемый формат; properties/toml в Micronaut не работают
+>
+> Неверно. Micronaut поддерживает `properties`, `yml`, `groovy`, `toml`, а также environment variables и системные свойства. Все они мёржатся в единый `Environment`.
+>
+> **Откуда путаница:** YAML — самый частый формат в туториалах, и это создаёт впечатление эксклюзивности. На деле формат — вопрос предпочтения команды.
+>
+> #### C) Placeholder'ы `${VAR:default}` интерпретируются только в runtime, поэтому подставить env var в `application.yml` нельзя
+>
+> Неверно. `${DB_USER:admin}` — стандартный синтаксис Micronaut для подстановки env var с дефолтом. Это работает именно потому, что `Environment` объединяет файлы конфига и переменные окружения в одном property resolver'е.
+>
+> **Если бы это было правдой:** не получилось бы переопределять `datasources.default.username` через `DB_USER` без кода — а это базовый паттерн в контейнерных деплоях.
+>
+> #### C+) ✅ Micronaut собирает иерархию property source'ов (файл + env vars + system properties + cloud config), а свойства инжектятся через `@Value` или type-safe `@ConfigurationProperties("prefix")` POJO
+>
+> Это и есть правильная модель. `Environment` мёржит все источники по приоритету, поддерживает placeholder'ы `${VAR:default}`, а для группы связанных свойств идиоматично создавать `@ConfigurationProperties` — компайл-тайм-проверка имён, без runtime-рефлексии.
+>
+> **Почему именно так:** Micronaut делает property binding на этапе компиляции через annotation processor, поэтому конфиг проверяется типизированно и работает в GraalVM native image без reflection metadata.
+>
+> **Когда применять `@ConfigurationProperties` vs `@Value`:** для одиночного значения — `@Value`, для группы связанных свойств с одним префиксом — `@ConfigurationProperties` (читабельнее, тестируется, валидируется через `@Validated`).
+
+## Q13. Environment-specific конфиги?
 
 `application-{env}.yml` для разных environments:
 
@@ -711,10 +737,36 @@ MICRONAUT_ENVIRONMENTS=prod java -jar app.jar
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) Что такое Micronaut Data? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Как Micronaut выбирает environment-specific конфиги и переопределяет общие значения?**
+>
+> #### A) ✅ Базовый `application.yml` грузится всегда, а `application-{env}.yml` подключается по активным `micronaut.environments` (через `-D`, env var, profile); значения мёржатся, env-specific перекрывает общее
+>
+> Это и есть правильная модель. Активные environment'ы задаются через `-Dmicronaut.environments=prod` или `MICRONAUT_ENVIRONMENTS=prod`, можно перечислить несколько через запятую (`prod,k8s,aws`) — каждый следующий имеет более высокий приоритет. `application-test.yml` подключается автоматически в `@MicronautTest`.
+>
+> **Почему именно так:** это классический паттерн «base + override», знакомый по Spring profiles. Micronaut определяет порядок мёрджа предсказуемо: общий файл → env-specific → env vars → system properties → CLI args.
+>
+> **Когда применять:** разные эндпоинты БД/Kafka для dev/prod, выключение debug-логирования в prod, отдельная конфигурация для интеграционных тестов через `application-test.yml`.
+>
+> #### B) Имя файла должно совпадать с системным свойством `spring.profiles.active` — Micronaut читает Spring-конвенцию
+>
+> Неверно. У Micronaut собственное свойство — `micronaut.environments` (или env var `MICRONAUT_ENVIRONMENTS`). Spring-конвенция `spring.profiles.active` не используется.
+>
+> **Откуда путаница:** механизм идейно аналогичен Spring profiles, и разработчики, мигрирующие с Spring Boot, по инерции пытаются включать профили старым способом. В Micronaut переменная — другая.
+>
+> #### C) Можно активировать только один environment одновременно; список нескольких профилей не поддерживается
+>
+> Неверно. Micronaut поддерживает несколько environment'ов одновременно: `-Dmicronaut.environments=prod,k8s,aws`. Они применяются последовательно — каждый следующий перекрывает предыдущий.
+>
+> **Если бы это было правдой:** нельзя было бы накладывать конфиг slice'ы (например, `prod` + `k8s` + `aws-region-eu`), а это стандартный паттерн для облачных деплоев.
+>
+> #### D) Micronaut автоматически детектит окружение по hostname и применяет соответствующий `application-{env}.yml` без участия разработчика
+>
+> Неверно. Auto-detection работает в ограниченном виде (например, распознаются `kubernetes`, `cloud`, `test` через специальные триггеры), но универсального детекта по hostname нет — environment задаётся явно через property/env var или через специфические триггеры (`@MicronautTest` для `test`).
+>
+> **Откуда путаница:** Micronaut действительно имеет несколько встроенных environment-detector'ов (например, `K8S_ENV`), и это создаёт иллюзию полностью автоматической работы. На практике для прода всё равно нужно явно ставить `MICRONAUT_ENVIRONMENTS=prod`.
+
+## Q14. (!) Что такое Micronaut Data?
 
 `Micronaut Data` — type-safe, compile-time data access (аналог Spring Data, но без рефлексии).
 
@@ -733,10 +785,38 @@ public interface UserRepository extends CrudRepository<User, Long> {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. JDBC, JPA, R2DBC репозитории? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Чем Micronaut Data отличается от Spring Data JPA в плане работы с запросами?**
+>
+> #### A) Micronaut Data — это тонкая обёртка над Hibernate, она использует тот же runtime-парсер finder-методов, что и Spring Data
+>
+> Неверно. Micronaut Data **не использует runtime-парсинг** имён методов. Имена finder-методов разбираются на этапе компиляции annotation processor'ом, и в class-файл генерируется готовая реализация с SQL/JPQL.
+>
+> **Откуда путаница:** API внешне идентичный Spring Data (`findByName`, `CrudRepository`), что создаёт иллюзию одинакового механизма. На деле фундаментально разный pipeline: compile-time generation vs runtime proxy.
+>
+> #### B) ✅ Micronaut Data генерирует реализации репозиториев **в compile time**: finder-методы транслируются в SQL/JPQL без рефлексии, что даёт быстрый старт и работу в GraalVM native image
+>
+> Это и есть ключевое отличие. Annotation processor разбирает имена методов (`findByEmail`, `findByAuthorOrderByYearDesc`) и `@Query`-аннотации на этапе компиляции, после чего записывает готовую реализацию в byte code. В runtime нет ни рефлексии, ни прокси.
+>
+> **Почему именно так:** Micronaut в целом построен на compile-time DI и AOP, и Data следует той же идеологии. Это даёт три выигрыша: (1) меньше памяти (нет proxy-каскадов), (2) быстрее старт (нет сканирования classpath), (3) совместимость с GraalVM native image «из коробки».
+>
+> **Когда применять:** микросервисы с быстрым стартом, native-image деплои, low-memory среды; всё, где Spring Data JPA даёт ощутимый overhead на старт/heap.
+>
+> **Дополнительно:** поддерживаются backends JDBC (без Hibernate), JPA (через Hibernate), R2DBC (reactive), MongoDB — все через единый API `@Repository`.
+>
+> #### C) Micronaut Data не поддерживает `@Query` с произвольным JPQL/SQL — только derived queries из имени метода
+>
+> Неверно. `@Query("UPDATE User u SET u.active = false WHERE u.lastLogin < :date")` — стандартная фича Micronaut Data, аналогичная Spring Data. Поддерживаются и JPQL, и native SQL (`nativeQuery = true`).
+>
+> **Если бы это было правдой:** Micronaut Data не покрыл бы реальные сценарии (bulk update/delete, сложные JOIN'ы), и его нельзя было бы использовать как замену Spring Data JPA.
+>
+> #### D) Под капотом Micronaut Data всегда использует R2DBC, поэтому работа с обычным JDBC невозможна
+>
+> Неверно. Backends независимы: можно выбрать `@JdbcRepository` (sync JDBC без Hibernate), `@JpaRepository` (Hibernate), `@R2dbcRepository` (reactive), `@MongoRepository`. R2DBC — лишь один из вариантов, и далеко не дефолт.
+>
+> **Откуда путаница:** Micronaut активно продвигается как «реактивный фреймворк», и это создаёт впечатление, что и Data реактивная по умолчанию. На практике большинство приложений использует JDBC или JPA.
+
+## Q15. JDBC, JPA, R2DBC репозитории?
 
 Micronaut Data поддерживает:
 
