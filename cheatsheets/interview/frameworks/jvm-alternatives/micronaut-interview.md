@@ -1442,11 +1442,37 @@ public class UserController {
 7. **Compile time** — больше времени на сборку, медленнее editor feedback в больших проектах
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Производительность Micronaut vs Quarkus vs Spring Boot? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Какой минус Micronaut критичен именно для native image и команды без AOT-опыта?
+>
+> - [ ] A) Меньше community и медленнее ответы на StackOverflow по сравнению со Spring.
+>
+>     **Почему неправильно:** размер community — общая проблема любой не-Spring экосистемы, но она не блокирует разработку. Можно компенсировать чтением исходников, GitHub Issues, Gitter-каналом Micronaut. Это **дискомфорт, а не stopper**.
+>
+>     **Последствие ошибки:** команда фокусируется на «социальном» риске и упускает технические — например, ловит surprise на проде, когда DTO без `@Introspected` падают в native image.
+>
+> - [x] B) Native image требует `@Introspected` на всех DTO/POJO, участвующих в сериализации — забыли аннотацию → `ClassNotFoundException` или пустые JSON-поля в runtime.
+>
+>     **Почему правильно:** GraalVM native image не делает классический reflection — Micronaut **на этапе компиляции** генерирует introspection-метаданные только для классов с `@Introspected` (или попадающих под `@Serdeable`, `@Entity` и т.д.). Если разработчик добавил новый DTO и забыл аннотацию — на JVM-режиме всё работает (Jackson через reflection), а в native image поле молча станет null или class не найдётся при десериализации.
+>
+>     **Механизм:** annotation processor `micronaut-inject-java` сканирует `@Introspected` → генерирует `*$Introspection.class` с явными getters/setters. Native image берёт **только эти** сгенерированные классы, обычный reflection отключён.
+>
+>     **Use-case:** при ревью кода в Micronaut-проектах с native — обязательная проверка «есть ли `@Introspected` на новых DTO» должна быть в чек-листе или ArchUnit-тесте. Альтернатива — `@Introspected` на package-info.java для всего пакета.
+>
+>     **Best practice:** включить `micronaut.application.fail-fast=true` + интеграционный smoke-test в native режиме на CI, чтобы ловить пропущенные аннотации до production.
+>
+> - [ ] C) Документация Micronaut объёмнее, чем Spring, что замедляет онбординг.
+>
+>     **Почему неправильно:** прямо противоположно реальности — документация Micronaut **меньше** Spring (в разы по объёму примеров), и это действительно минус, но не «объёмнее». Это инверсия факта.
+>
+>     **Последствие ошибки:** в техническом обсуждении такой ответ сразу маркирует кандидата как не работавшего с Micronaut — он не видел разницу в guides.
+>
+> - [ ] D) Compile time меньше, чем у Spring Boot, из-за compile-time DI.
+>
+>     **Почему неправильно:** compile-time DI **увеличивает** время сборки (annotation processor генерирует код для каждого `@Singleton`/`@Inject`), а не уменьшает. Runtime startup быстрее — но это другая метрика. Путаница compile time vs startup time.
+>
+>     **Последствие ошибки:** команда выбирает Micronaut, ожидая быструю IDE-сборку в больших проектах, и сталкивается с медленным incremental build → падает developer productivity.
+
+## Q25. Производительность Micronaut vs Quarkus vs Spring Boot?
 
 | Метрика | Micronaut | Quarkus | Spring Boot |
 |---------|-----------|---------|-------------|
@@ -1459,11 +1485,41 @@ public class UserController {
 **Микро-различия в throughput**, существенные — в startup и memory. Все три современные фреймворки сильно лучше старого Spring Boot (до 3.0).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. (!) Какие компании используют Micronaut в production? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Где Micronaut и Quarkus реально обгоняют Spring Boot, а где разница незначительна?
+>
+> - [ ] A) Throughput (req/s) у Micronaut в 5-10 раз выше Spring Boot — это главное преимущество.
+>
+>     **Почему неправильно:** по бенчмаркам TechEmpower и собственным замерам разница в throughput **в пределах 10-25%**, иногда Spring Boot 3.x даже выигрывает на одном инстансе с прогретым JIT. Это **микро-различия**, не порядки. Слишком сильное заявление = не понимаешь природу преимуществ AOT-фреймворков.
+>
+>     **Последствие ошибки:** команда выбирает Micronaut **ради throughput** под нагрузку 100K RPS, тратит месяцы на миграцию — и получает те же цифры, что были на Spring. Перенос был необоснован, ROI отрицательный.
+>
+> - [ ] B) Memory footprint Spring Boot одинаков с Micronaut и Quarkus в любом режиме.
+>
+>     **Почему неправильно:** прямо противоположно фактам. Spring Boot держит 150-300 MB heap на старте (рефлексивный DI, BeanFactory, прокси), Micronaut/Quarkus — 80-150 MB. В native image разница ещё больше (30-50 MB vs 50-100 MB). Это **измеримое 2-3x преимущество** для Kubernetes/serverless.
+>
+>     **Последствие ошибки:** sizing подов рассчитан по Spring-меркам — pods за-OOM-нутся под нагрузкой или, наоборот, переплата за memory limits в облаке.
+>
+> - [x] C) Главное преимущество — startup time и memory footprint, особенно в native image (~30 ms vs 50-200 ms cold start). Throughput у всех трёх сопоставим.
+>
+>     **Почему правильно:** ключевая выгода AOT-фреймворков (Micronaut, Quarkus) — **холодный старт и память**, а не пропускная способность установившегося трафика. Spring Boot прогревается JIT-ом за секунды и догоняет по throughput. Но если pod рестартует, scale-to-zero в Knative или Lambda — каждая секунда старта = деньги и SLA.
+>
+>     **Конкретные цифры:**
+>     - JVM cold start: Micronaut/Quarkus ~1-1.5 сек, Spring Boot 3-15 сек.
+>     - Native cold start: Micronaut/Quarkus ~10-30 ms, Spring Boot AOT ~50-200 ms.
+>     - Memory: AOT-фреймворки экономят 2-3x heap.
+>     - Throughput: разница в пределах погрешности (~10-20%).
+>
+>     **Use-case выбора:** serverless (AWS Lambda, Cloud Run), частые scale-up под спайки, CI с тысячами интеграционных тестов (быстрее старт контекста), edge/IoT с ограниченной памятью.
+>
+>     **Best practice:** при обсуждении производительности **всегда уточнять метрику** — throughput, latency p99, cold start, memory. Без этого сравнение бессмысленно.
+>
+> - [ ] D) Cold start Spring Boot 3.x в native режиме всегда быстрее Micronaut.
+>
+>     **Почему неправильно:** Spring Boot 3 действительно получил поддержку native (Spring AOT), но стартует **медленнее** Micronaut/Quarkus (50-200 ms vs 10-30 ms) — потому что Spring AOT — это «прибитый поверх» reflection-ориентированной архитектуры, а Micronaut был спроектирован под AOT изначально.
+>
+>     **Последствие ошибки:** команда выбирает Spring Native, ожидая лидера по cold start, и не получает целевых SLA в Lambda с p99 cold start < 100 ms.
+
+## Q26. (!) Какие компании используют Micronaut в production?
 
 - **Oracle** — внутренние сервисы (logically — фреймворк родственный)
 - **Boeing**
@@ -1473,6 +1529,37 @@ public class UserController {
 - **Various FinTech** (используется для микросервисов)
 
 Меньше публичности, чем у Spring или Quarkus, но в enterprise сегменте присутствие хорошее.
+
+
+> [!mcq] Что говорит публичный adoption Micronaut о его зрелости для enterprise?
+>
+> - [ ] A) Micronaut используется только в стартапах, никаких корпораций — поэтому брать в enterprise рискованно.
+>
+>     **Почему неправильно:** факт обратный — Micronaut активно используют **крупные enterprise**: Oracle (Micronaut Foundation), Boeing, Walmart Labs, Target, Goldman Sachs (частично), ряд FinTech. Это не «startup-only фреймворк». Заявление противоречит публичной информации.
+>
+>     **Последствие ошибки:** архитектурный комитет отвергает Micronaut на основании ложного факта → команда уходит на Spring Boot с худшим cold start, проигрывая в SLA для serverless-нагрузки.
+>
+> - [ ] B) Micronaut поддерживается только Oracle и больше никем, как закрытый внутренний инструмент.
+>
+>     **Почему неправильно:** Micronaut — **open source** (Apache 2.0), управляется **Micronaut Foundation** (некоммерческая организация, отделена от Oracle). Внешняя экосистема: Object Computing (создатели), Sonatype, contributors из Boeing, Walmart и др. Это не «Oracle-only».
+>
+>     **Последствие ошибки:** менеджмент боится vendor lock-in на Oracle → необоснованно блокирует выбор Micronaut, теряя его технические преимущества.
+>
+> - [ ] C) Только Goldman Sachs использует Micronaut, и только в одной legacy-системе.
+>
+>     **Почему неправильно:** даже сам Goldman Sachs не «только в legacy» — у них Micronaut в новых микросервисах. Плюс есть Boeing, Walmart, Target, Oracle, разные FinTech. Заявление сужает реальность до одной компании.
+>
+>     **Последствие ошибки:** недооценка adoption → отказ от Micronaut → выбор более медленного стека под cloud-native нагрузку.
+>
+> - [x] D) Micronaut в production используют Oracle, Boeing, Walmart Labs, Target, Goldman Sachs и FinTech-компании — adoption меньше Spring, но в enterprise присутствие весомое, особенно где важны cold start и память.
+>
+>     **Почему правильно:** публичные case studies, GitHub testimonials, конференционные доклады (Micronaut Connect, Devoxx) подтверждают этот список. **Меньше публичности**, чем у Spring, — но в enterprise-сегменте Micronaut представлен достаточно, чтобы не считать его «экспериментальным».
+>
+>     **Use-case adoption:** микросервисы под Kubernetes (Walmart Labs), serverless на AWS Lambda (FinTech), внутренние Oracle Cloud-сервисы, edge-приложения (Boeing). Везде, где **cold start и memory важнее, чем максимальный community size**.
+>
+>     **Как использовать на собеседовании:** при выборе между Spring Boot и Micronaut аргументировать adoption — «не bleeding edge, есть production-проверка в Tier-1 компаниях, есть Foundation и поддержка LTS-веток». Это снижает архитектурный риск в глазах менеджмента.
+>
+>     **Best practice:** перед принятием решения смотреть **свежие** case studies (последние 1-2 года) на micronaut.io/case-studies и в GitHub Issues — оценить активность maintainers и реальное использование, а не маркетинговые упоминания.
 
 ---
 
@@ -1491,14 +1578,3 @@ public class UserController {
 - [JVM](../../jvm/jvm-interview.md) — JIT vs AOT компиляция
 - [Memory Management](../../performance/memory-management-interview.md) — почему меньше памяти
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [Ktor](ktor-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Quarkus](quarkus-interview.md)
-- [Vert.x](vertx-interview.md)
-- [Spring AOP](../spring/spring-aop-interview.md)
-- [Spring Batch](../spring/spring-batch-interview.md)
-- [Spring Boot Actuator](../spring/spring-boot-actuator-interview.md)
