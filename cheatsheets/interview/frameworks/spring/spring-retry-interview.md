@@ -647,11 +647,44 @@ policy.setPolicyMap(Map.of(
 ```
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. Что такое CircuitBreakerRetryPolicy? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Какая `RetryPolicy` повторяет попытки до истечения общего таймаута, независимо от количества вызовов?
+>
+> - [ ] **A) `SimpleRetryPolicy`** — ограничивает по числу попыток.
+>
+>   Эта политика повторяет до `maxAttempts` (по умолчанию 3) и игнорирует время — может занять как 10 мс, так и 10 минут, если backoff велик. Для дедлайнов она не подходит.
+>
+>   ❌ Использование `SimpleRetryPolicy` там, где нужен общий лимит по времени, приведёт к зависанию вызова дольше SLA.
+>
+> - [ ] **B) `AlwaysRetryPolicy`** — повторяет бесконечно.
+>
+>   У `AlwaysRetryPolicy.canRetry()` всегда возвращает `true`, никаких ограничений (ни по времени, ни по числу попыток) нет. В production без `CompositeRetryPolicy` это прямой путь к thread starvation.
+>
+>   ❌ Использовать её как «retry до таймаута» — миф: она не следит за временем, а просто не останавливается.
+>
+> - [x] **C) `TimeoutRetryPolicy`** — ограничивает retry общим временем выполнения.
+>
+>   `TimeoutRetryPolicy` хранит timestamp начала в `RetryContext` и в `canRetry()` сравнивает прошедшее время с `setTimeout(ms)`. Когда таймаут истёк — попытки прекращаются, даже если их было всего две.
+>
+>   ```java
+>   TimeoutRetryPolicy policy = new TimeoutRetryPolicy();
+>   policy.setTimeout(5000); // суммарно не дольше 5 секунд
+>
+>   RetryTemplate template = new RetryTemplate();
+>   template.setRetryPolicy(policy);
+>   template.setBackOffPolicy(new FixedBackOffPolicy()); // 1 сек между попытками
+>
+>   String result = template.execute(ctx -> externalApi.call());
+>   ```
+>
+>   Подходит для интеграций со строгим SLA: «не дольше N миллисекунд, сколько бы попыток ни понадобилось».
+>
+> - [ ] **D) `CircuitBreakerRetryPolicy`** — открывает «цепь» после серии ошибок.
+>
+>   Эта политика отслеживает количество ошибок за окно времени и временно блокирует вызовы (`circuit open`), но не ограничивает суммарное время одного `RetryTemplate.execute`. Она про защиту downstream-сервиса, а не про дедлайн вызова.
+>
+>   ❌ Путать circuit breaker с timeout — частая ошибка: первый бережёт зависимость, второй — текущий тред.
+
+## Q8. Что такое CircuitBreakerRetryPolicy?
 
 `CircuitBreakerRetryPolicy` — встроенный Circuit Breaker в Spring Retry (в отличие от полноценного [Resilience4j CB](resilience4j-interview.md)). Подходит для простых случаев.
 
@@ -669,11 +702,44 @@ template.setRetryPolicy(circuitBreakerPolicy);
 **Ограничения Spring Retry CB:** нет метрик, нет HALF_OPEN состояния, нет Spring Boot auto-configuration. Для production используй [Resilience4j](resilience4j-interview.md).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. (!) Почему @Retryable не работает при self-invocation? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что делают параметры `openTimeout` и `resetTimeout` в `CircuitBreakerRetryPolicy`?
+>
+> - [ ] **A) `openTimeout` — таймаут одного HTTP-вызова, `resetTimeout` — общий таймаут retry.**
+>
+>   Spring Retry не управляет таймаутами вызовов — это работа клиента (`RestTemplate`, `WebClient`, JDBC). `CircuitBreakerRetryPolicy` оперирует своими счётчиками ошибок, а не сетевым временем.
+>
+>   ❌ Если поставить `openTimeout=2000` в надежде ограничить HTTP — внешний сервис продолжит висеть, пока сокет не отвалится.
+>
+> - [ ] **B) `openTimeout` — задержка между попытками, `resetTimeout` — backoff multiplier.**
+>
+>   Это путаница с `BackOffPolicy`. Задержки между попытками задают `FixedBackOffPolicy` / `ExponentialBackOffPolicy`, у `CircuitBreakerRetryPolicy` нет ни `delay`, ни `multiplier`.
+>
+>   ❌ Конфигурировать backoff через `openTimeout` бесполезно — это поле вообще про другое окно.
+>
+> - [ ] **C) Оба параметра — синонимы, задают окно мониторинга ошибок.**
+>
+>   В исходниках `CircuitBreakerRetryPolicy` это два разных поля с разной семантикой: одно — окно сбора ошибок, второе — длительность открытого состояния. Они не взаимозаменяемы.
+>
+>   ❌ Установить только один из них «потому что они одинаковые» приведёт к тому, что цепь либо не откроется, либо никогда не закроется.
+>
+> - [x] **D) `openTimeout` — окно подсчёта ошибок до открытия цепи, `resetTimeout` — длительность открытого состояния перед попыткой закрыть.**
+>
+>   Логика политики: если в течение `openTimeout` мс набралось `maxAttempts` ошибок — цепь открывается и `canRetry()` начинает возвращать `false`. Через `resetTimeout` мс цепь закрывается обратно, и счётчик сбрасывается.
+>
+>   ```java
+>   CircuitBreakerRetryPolicy cb = new CircuitBreakerRetryPolicy(
+>       new SimpleRetryPolicy(3)              // 3 ошибки = открытие цепи
+>   );
+>   cb.setOpenTimeout(5000);                  // считаем ошибки в окне 5 сек
+>   cb.setResetTimeout(20000);                // цепь открыта 20 сек, потом закроется
+>
+>   RetryTemplate template = new RetryTemplate();
+>   template.setRetryPolicy(cb);
+>   ```
+>
+>   Важно: эта реализация не имеет состояния `HALF_OPEN` и не публикует метрики. Для production со сложными требованиями к CB используй Resilience4j.
+
+## Q9. (!) Почему @Retryable не работает при self-invocation?
 
 `@Retryable` работает через **Spring AOP proxy**: прокси обёртывает bean снаружи, а вызов `this.method()` обходит прокси и попадает напрямую в реальный объект — retry не срабатывает.
 
@@ -722,11 +788,59 @@ public class PaymentService {
 3. **RetryTemplate** — не зависит от AOP.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. (!) Как правильно комбинировать @Retryable и @Transactional? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> [!mcq] Почему вызов `this.retryableMethod()` из другого метода того же бина не запускает retry?
+>
+> - [x] **A) Spring AOP оборачивает бин в proxy снаружи; `this.*` идёт мимо proxy и не активирует Retry-аспект.**
+>
+>   `@Retryable` реализован как AOP-аспект, который применяется к proxy-объекту (JDK dynamic proxy для интерфейсов, CGLIB для классов). Контейнер инжектит именно proxy в зависимости. Вызов через ссылку `this` обращается напрямую к полю исходного объекта, минуя проксирующий слой, поэтому интерсептор `RetryOperationsInterceptor` не отрабатывает.
+>
+>   ```java
+>   @Service
+>   public class PaymentService {
+>
+>       public void process(Payment p) {
+>           retryableMethod(p);          // this.* — мимо proxy, retry не работает
+>       }
+>
+>       @Retryable(retryFor = IOException.class)
+>       public void retryableMethod(Payment p) {
+>           gateway.charge(p);
+>       }
+>   }
+>
+>   // Решение: вынести в отдельный бин ИЛИ self-inject через @Lazy
+>   @Service
+>   public class PaymentService {
+>       @Autowired @Lazy
+>       private PaymentService self;     // proxy-ссылка
+>
+>       public void process(Payment p) {
+>           self.retryableMethod(p);     // через proxy — retry работает
+>       }
+>   }
+>   ```
+>
+>   Тот же механизм объясняет, почему `@Transactional`, `@Cacheable` и другие Spring AOP-аннотации тоже ломаются на self-invocation.
+>
+> - [ ] **B) `@Retryable` требует `public static` метода, а обычный instance-метод не подходит.**
+>
+>   `@Retryable` работает с обычными `public` instance-методами. Требование к `static` относится к совершенно другому случаю (например, `@PostConstruct` ограничения). Аннотация на static-методе вообще не сработает, потому что AOP не проксирует статику.
+>
+>   ❌ Менять метод на static «чтобы retry заработал» — антипаттерн, который сломает работу аспекта полностью.
+>
+> - [ ] **C) Контекст retry привязан к thread-local и теряется при внутреннем вызове.**
+>
+>   `RetryContext` действительно использует `RetrySynchronizationManager` поверх ThreadLocal, но self-invocation выполняется в том же треде — контекст бы не «потерялся». Проблема не в треде, а в том, что аспект вообще не запускается.
+>
+>   ❌ Попытка «починить» проблему сменой `@Async` или executor-а не поможет — proxy всё равно будет обойдён.
+>
+> - [ ] **D) Spring Retry не работает в `@Service`-бинах, только в `@Component`.**
+>
+>   `@Service` — это `@Component` с другим стереотипом, разницы для AOP нет. `@Retryable` работает в обоих, проблема self-invocation не зависит от типа стереотипа.
+>
+>   ❌ Переименование `@Service` в `@Component` ничего не меняет — корневая причина в обходе proxy.
+
+## Q10. (!) Как правильно комбинировать @Retryable и @Transactional?
 
 Если метод **одновременно** `@Transactional` и `@Retryable`, транзакция откатывается до того, как retry срабатывает — и retry бесполезен.
 
