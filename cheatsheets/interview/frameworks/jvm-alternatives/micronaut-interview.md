@@ -845,10 +845,62 @@ JDBC версия не нуждается в Hibernate → меньше памя
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. (!) Поддержка GraalVM Native Image? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Чем `@JdbcRepository` в Micronaut Data отличается от `@JpaRepository` и `@R2dbcRepository`, и когда какой выбирать?**
+>
+> #### A) `@JdbcRepository` — это просто JPA без `@Entity`-аннотации, под капотом всё равно работает Hibernate
+>
+> Неверно. `@JdbcRepository` **не использует Hibernate** вообще. Это самостоятельный backend, который генерирует SQL напрямую из имён методов и `@Query`, выполняет его через обычный JDBC и мапит результат на POJO через compile-time introspection.
+>
+> **Откуда путаница:** одинаковый API `CrudRepository` создаёт впечатление общего runtime. Но за `@JdbcRepository` нет ни `EntityManager`, ни persistence context, ни lazy loading — это «чистый» SQL access слой.
+>
+> #### B) Реактивный доступ к БД в Micronaut Data обеспечивает `@JpaRepository` через корутинный wrapper над Hibernate
+>
+> Неверно. Реактивный backend — это **отдельная аннотация `@R2dbcRepository`**, основанная на R2DBC-драйверах (`r2dbc-postgresql`, `r2dbc-mysql`), а не на Hibernate. JPA фундаментально блокирующая, и обернуть её в реактивный API без потери смысла нельзя.
+>
+> **Если бы это было правдой:** Hibernate-вызовы в reactive pipeline блокировали бы event loop, и весь смысл реактивного подхода (горизонтальное масштабирование на малом числе потоков) терялся бы.
+>
+> #### C) ✅ `@JdbcRepository` — синхронный SQL без Hibernate (лёгкий, быстрый старт), `@JpaRepository` — через Hibernate с lazy/dirty checking, `@R2dbcRepository` — non-blocking через R2DBC; выбор зависит от модели данных и стиля приложения
+>
+> Это и есть правильное разграничение. Три независимых backends с одним API:
+>
+> ```java
+> // JDBC: lightweight, no Hibernate, native SQL/dialect
+> @JdbcRepository(dialect = Dialect.POSTGRES)
+> public interface BookRepository extends CrudRepository<Book, Long> {
+>     List<Book> findByAuthor(String author);
+> }
+>
+> // JPA: Hibernate, entity graph, lazy loading
+> @Repository
+> public interface UserRepository extends JpaRepository<User, Long> {
+>     @EntityGraph(attributePaths = "roles")
+>     Optional<User> findByEmail(String email);
+> }
+>
+> // R2DBC: reactive, non-blocking
+> @R2dbcRepository(dialect = Dialect.POSTGRES)
+> public interface OrderRepository extends ReactorCrudRepository<Order, Long> {
+>     Flux<Order> findByStatus(String status);
+> }
+> ```
+>
+> **Почему именно так:** Micronaut Data — это compile-time engine, который генерирует реализацию репозитория под каждый backend отдельно. Поэтому можно выбрать минимально необходимый stack без перетягивания Hibernate в микросервис, где он не нужен.
+>
+> **Когда применять:**
+> - `@JdbcRepository` — микросервисы с простыми моделями, нужна максимальная скорость старта и низкое потребление памяти (native image-friendly).
+> - `@JpaRepository` — сложные доменные модели с ассоциациями, нужны JPA-фичи (cascade, lazy, optimistic locking).
+> - `@R2dbcRepository` — реактивные API с высоким concurrency и нагрузкой на I/O.
+>
+> **Дополнительно:** в одном приложении можно смешивать backends (часть репозиториев на JDBC, часть на JPA), они изолированы друг от друга через разные `@Repository`-стереотипы.
+>
+> #### D) Все три типа репозиториев совместимы между собой — можно объявить интерфейс с `@JdbcRepository`, а в runtime переключить его на R2DBC через property
+>
+> Неверно. Тип репозитория фиксируется на этапе компиляции — annotation processor генерирует под каждый бэкенд **разный код** (SQL execution через JDBC vs R2DBC connection vs JPA EntityManager). Поменять backend без правки исходников и пересборки нельзя.
+>
+> **Если бы это было правдой:** не было бы смысла в разных аннотациях — хватило бы одной `@DataRepository` с динамическим выбором. Но переход с blocking JDBC на non-blocking R2DBC требует изменения сигнатур методов (`List<T>` → `Flux<T>`), что чисто по типам несовместимо.
+
+## Q16. (!) Поддержка GraalVM Native Image?
 
 Micronaut **первый** мейнстримный JVM-фреймворк с full GraalVM поддержкой:
 
@@ -868,10 +920,65 @@ Micronaut **первый** мейнстримный JVM-фреймворк с fu
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Какие особенности и подводные камни? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Почему Micronaut исторически считается «более native-friendly», чем Spring Boot до Spring Native/AOT?**
+>
+> #### A) Micronaut запускает JIT-компилятор GraalVM на старте приложения и поэтому стартует быстрее, чем Spring Boot
+>
+> Неверно. В **native image нет JIT** вообще — весь код AOT-скомпилирован в нативный бинарь. Это и есть причина мгновенного старта: не нужно прогревать JIT, не нужно загружать классы. Micronaut использует тот же `native-image` тулчейн GraalVM, что и Spring Native.
+>
+> **Откуда путаница:** GraalVM известен как JIT-компилятор (Graal Compiler), и легко спутать его с native-image (отдельная AOT-сборка). Это два разных продукта одного проекта.
+>
+> #### B) Micronaut требует меньше памяти, потому что не использует Java вообще — кодогенерация выдаёт чистый C
+>
+> Неверно. Micronaut генерирует **обычный Java bytecode** на этапе компиляции — никакого C нет. Меньшее потребление памяти достигается за счёт отсутствия рантайм-рефлексии и proxy-каскадов, а не за счёт другого языка.
+>
+> **Если бы это было правдой:** Micronaut нельзя было бы запускать на обычной JVM (без native image), но это штатный режим работы фреймворка.
+>
+> #### C) Spring Boot никогда не поддерживал native image; единственный способ собрать Spring-приложение в нативный бинарь — переписать его на Micronaut
+>
+> Неверно. Spring Native (отдельный проект, объединённый в Spring Boot 3.x как Spring AOT) даёт нативную сборку Spring-приложений. Просто Micronaut **исторически появился раньше** с встроенной поддержкой, а Spring дорабатывал её эволюционно через AOT-процессор.
+>
+> **Откуда путаница:** в 2018–2021 годах Spring действительно не имел production-ready native поддержки, и Micronaut позиционировался как замена. Сейчас оба фреймворка поддерживают native, но с разной зрелостью.
+>
+> #### D) ✅ Micronaut с самого старта построен на **compile-time DI/AOP без рефлексии**: annotation processor генерирует bean-метаданные и proxy в bytecode на этапе сборки, а в runtime нет ни classpath-сканирования, ни reflection — поэтому `native-image` собирается практически без дополнительной конфигурации
+>
+> Это и есть архитектурное отличие. Spring исторически опирался на runtime reflection (`@Autowired` через `BeanPostProcessor`, dynamic proxies для `@Transactional`), что плохо ложится на closed-world модель GraalVM. Micronaut с первого релиза проектировался иначе:
+>
+> ```java
+> @Singleton
+> public class OrderService {
+>     private final OrderRepository repo;
+>
+>     public OrderService(OrderRepository repo) { this.repo = repo; }
+>
+>     @Transactional
+>     public Order create(OrderRequest req) { ... }
+> }
+> ```
+>
+> На этапе компиляции annotation processor видит `@Singleton` и `@Transactional`, генерирует `OrderService$Definition` (метаданные для DI) и `OrderService$Intercepted` (compile-time proxy для transaction-advice). В runtime DI-контейнер просто читает готовые definitions без сканирования classpath.
+>
+> Для DTO, которые сериализуются в JSON, нужна реflection-metadata — её добавляет `@Introspected`:
+>
+> ```java
+> @Introspected
+> public class User {
+>     private final Long id;
+>     private final String name;
+>     // конструктор + геттеры
+> }
+> ```
+>
+> Это даёт Jackson возможность работать без reflection в native image.
+>
+> **Почему именно так:** GraalVM `native-image` использует closed-world assumption — он должен знать ВСЕ классы, методы и reflection-вызовы на этапе сборки. Compile-time подход Micronaut естественно совместим с этим ограничением: что было сгенерировано на этапе сборки, то и существует в бинаре. Spring Native решает ту же задачу через AOT-процессор, но это надстройка над исторически reflection-heavy архитектурой.
+>
+> **Когда применять:** serverless (AWS Lambda, Cloud Run) с требованием <100ms старта, контейнеры с лимитом памяти 64–128 MB, edge deployments. Подвохи остаются: сборка native занимает 5–15 минут, peak throughput ниже на ~30% (нет JIT), стек-трейсы менее читаемы.
+>
+> **Дополнительно:** для third-party библиотек, которые используют reflection, всё равно нужны конфиги в `META-INF/native-image/` или GraalVM hints через `@ReflectiveAccess` / `@TypeHint`. «Из коробки» — только для собственного кода Micronaut и его экосистемы.
+
+## Q17. Какие особенности и подводные камни?
 
 1. **@Introspected** на DTO — без него Jackson не сможет сериализовать в native (нужна reflection metadata)
 2. **Third-party libraries** могут требовать ручной конфигурации reflection
@@ -886,10 +993,64 @@ public class User { ... } // обязательно для DTO в native
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. (!) @MicronautTest и его возможности? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **При сборке Micronaut-приложения в GraalVM native image падает JSON-сериализация DTO в HTTP-ответе («No serializer found», `IllegalArgumentException` на reflection). Что нужно сделать в первую очередь?**
+>
+> #### A) ✅ Пометить DTO аннотацией `@Introspected` (или Jackson-классы `@SerdeImport`) — annotation processor сгенерирует compile-time метаданные, и Jackson/Serde смогут читать поля без рантайм-рефлексии
+>
+> Это и есть корректное решение для native-сборки. По умолчанию Jackson обходит поля через reflection (`Class.getDeclaredFields()`), но в native image весь reflection должен быть зарегистрирован на этапе сборки. `@Introspected` запускает Micronaut annotation processor, который генерирует `BeanIntrospection` для класса:
+>
+> ```java
+> @Introspected
+> public class UserDto {
+>     private final Long id;
+>     private final String name;
+>     private final String email;
+>
+>     public UserDto(Long id, String name, String email) {
+>         this.id = id;
+>         this.name = name;
+>         this.email = email;
+>     }
+>     // геттеры
+> }
+>
+> @Controller("/users")
+> public class UserController {
+>     @Get("/{id}")
+>     public UserDto get(@PathVariable Long id) {
+>         return new UserDto(id, "Alice", "alice@example.com");
+>     }
+> }
+> ```
+>
+> В compile time будет создан `UserDto$Introspection`, содержащий доступ к полям без reflection. Если приложение использует Micronaut Serialization (а не классический Jackson), `@Serdeable` делает то же самое и работает быстрее.
+>
+> **Почему именно так:** GraalVM `native-image` имеет closed-world модель — все reflection-вызовы должны быть известны на этапе сборки. `@Introspected` решает это идиоматично для Micronaut: метаданные кладутся в bytecode, и в runtime ничего отражать не нужно.
+>
+> **Когда применять:** все DTO, которые сериализуются/десериализуются через HTTP (request body, response body, query params binding), а также сущности, для которых нужна compile-time бин-интроспекция (валидация, `@Value` injection полей).
+>
+> **Дополнительно:** для DTO в подключённых третьесторонних библиотеках, которые нельзя пометить аннотацией, используется `@Introspected(classes = ExternalClass.class)` на любом классе вашего проекта — это сгенерирует метаданные для внешних типов.
+>
+> #### B) Добавить `-H:+ReportExceptionStackTraces` в опции `native-image` — это автоматически решит проблему с сериализацией
+>
+> Неверно. Этот флаг лишь улучшает диагностику (печатает стек-трейсы внутренних исключений сборки) и **не влияет** на reflection-метаданные. Сериализация продолжит падать.
+>
+> **Откуда путаница:** опция действительно полезна при дебаге native build, но это инструмент диагностики, а не фикс. Решение проблемы — `@Introspected` или конфиги в `META-INF/native-image/reflect-config.json`.
+>
+> #### C) Переключиться на JVM-режим (без native image), потому что native-сборка принципиально несовместима с JSON-сериализацией
+>
+> Неверно. JSON-сериализация прекрасно работает в native image при правильной конфигурации (`@Introspected` + Micronaut Serialization или `reflect-config.json` для Jackson). Сотни production-приложений на Micronaut + native подтверждают это.
+>
+> **Если бы это было правдой:** Micronaut не позиционировался бы как native-first фреймворк. На практике сериализация — одна из самых отработанных областей в native режиме.
+>
+> #### D) Использовать `@Reflective` вместо `@Introspected`, потому что Jackson требует именно runtime-рефлексии
+>
+> Неверно. Во-первых, в Micronaut нет аннотации `@Reflective` — есть `@ReflectiveAccess` для регистрации reflection-доступа к конкретному элементу. Во-вторых, в native image нужно **избегать** runtime-рефлексии, а не разрешать её — путь через compile-time интроспекцию (`@Introspected`) более эффективен и идиоматичен.
+>
+> **Откуда путаница:** в Spring Native действительно используются hints типа `@RegisterReflectionForBinding`, и разработчики переносят этот ментальный паттерн на Micronaut. Но философия Micronaut — генерировать метаданные на этапе компиляции, а не регистрировать рантайм-доступ.
+
+## Q18. (!) @MicronautTest и его возможности?
 
 ```java
 @MicronautTest
