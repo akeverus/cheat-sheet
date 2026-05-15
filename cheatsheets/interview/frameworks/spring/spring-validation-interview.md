@@ -510,10 +510,89 @@ public ResponseEntity<?> create(@Valid @RequestBody UserRequest req, BindingResu
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Как работает каскадная валидация вложенных объектов? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие исключения и где обрабатывать, чтобы корректно конвертировать ошибки Bean Validation в `400 Bad Request` для всех типов входа (`@RequestBody`, `@PathVariable`, `@Validated`-сервисы)?
+>
+> ---
+>
+> #### A) Достаточно одного `@ExceptionHandler(ValidationException.class)` — это общий супер-класс, и Spring MVC сам приведёт к нему и `MethodArgumentNotValidException`, и `ConstraintViolationException`, и `BindException`. — ❌ Неверно
+>
+> **Что на самом деле:** `MethodArgumentNotValidException` **не** наследуется от `jakarta.validation.ValidationException` — он расширяет `BindException` (а та — `Exception`). Поэтому `@ExceptionHandler(ValidationException.class)` отловит только `ConstraintViolationException` (от сервисного `@Validated`), а ошибки `@Valid @RequestBody` пройдут мимо и улетят в дефолтный `ResponseEntityExceptionHandler` → `400`, но без вашего формата ошибок.
+>
+> **Откуда путаница:** имена `MethodArgumentNotValidException` и `ConstraintViolationException` оба содержат слово «validation», и разработчики предполагают общий предок. На деле это разные иерархии — Spring MVC `BindException` и Jakarta `ValidationException`.
+>
+> **Если бы это было правдой:** не пришлось бы держать два `@ExceptionHandler` в каждом `@ControllerAdvice`, и весь интернет не был бы забит вопросами «почему мой handler не ловит ошибки `@Valid`».
+>
+> ---
+>
+> #### B) `BindingResult` — единственный корректный способ обработки: добавляете его параметром после `@Valid @RequestBody`, и Spring **не бросает** исключение, а складывает ошибки в `result`. `@ExceptionHandler` для валидации не нужен. — ❌ Неверно
+>
+> **Что на самом деле:** `BindingResult` действительно подавляет `MethodArgumentNotValidException`, но это **не «единственный способ»** и работает только для `@RequestBody`/`@ModelAttribute` в контроллере. Для `@RequestParam`/`@PathVariable` с constraint-аннотациями (`@NotBlank`, `@Min`) бросается `ConstraintViolationException` — `BindingResult` его не ловит. Для сервисного `@Validated` — то же самое. К тому же `BindingResult` дублирует код проверок в каждом контроллере, тогда как `@ControllerAdvice` централизует обработку.
+>
+> **Откуда путаница:** `BindingResult` действительно работает в простых CRUD-туториалах с одним endpoint. Авторы статей не упоминают сервисный уровень.
+>
+> **Если бы это было правдой:** не существовал бы `RestResponseEntityExceptionHandler` в Spring и весь паттерн `@RestControllerAdvice` для глобальной обработки ошибок был бы лишним.
+>
+> ---
+>
+> #### C) В Spring Boot 3+ ничего обрабатывать не нужно: `ProblemDetail` (RFC 7807) автоматически конвертирует все `*ValidationException` в JSON с полем `errors[]`, идентичным для обоих типов исключений. — ❌ Неверно
+>
+> **Что на самом деле:** `ProblemDetail` в Spring 6 действительно добавляет дефолтный формат ответа (`application/problem+json`), но это всего лишь body для `400`/`422`. Полезные детали ошибок (`field`, `rejected value`, `message`) **не попадают** туда автоматически из `ConstraintViolationException` — нужно либо переопределить `handleConstraintViolation` в `ResponseEntityExceptionHandler`, либо написать свой `@ExceptionHandler` и наполнить `ProblemDetail.setProperty("errors", ...)`. Дефолтный JSON содержит только `type`, `title`, `status`, `detail` — без списка нарушенных полей.
+>
+> **Откуда путаница:** в release notes Spring 6 действительно подсвечена интеграция с RFC 7807, и многие думают, что это покрывает весь use-case.
+>
+> **Если бы это было правдой:** не было бы официального гайда «Customizing Validation Error Responses» в Spring docs.
+>
+> ---
+>
+> #### D) Нужны **два** `@ExceptionHandler` в `@RestControllerAdvice`: `MethodArgumentNotValidException` — для `@Valid @RequestBody`/`@ModelAttribute` (Spring MVC), и `ConstraintViolationException` — для `@RequestParam`/`@PathVariable` с constraint-аннотациями и для сервисного `@Validated`. У них разные API (`getBindingResult().getFieldErrors()` vs `getConstraintViolations()`), поэтому общий handler не подойдёт. — ✓ Верно
+>
+> **Развёрнутое объяснение:** Spring MVC обрабатывает `@Valid` на `@RequestBody` через `RequestResponseBodyMethodProcessor`, который при ошибке оборачивает `BindingResult` в `MethodArgumentNotValidException extends BindException` — Spring-специфичное исключение. Для метод-уровня (`@RestController` с `@Validated` + constraint на параметре, или `@Service` с `@Validated`) работает `MethodValidationPostProcessor` через AOP-proxy и бросает Jakarta-стандартный `ConstraintViolationException`. Это два разных контракта: `MethodArgumentNotValidException` даёт `FieldError` с `field`/`defaultMessage`/`rejectedValue`, а `ConstraintViolationException` — `ConstraintViolation` с `propertyPath`/`invalidValue`. Маппинг в единый response — задача handler-а.
+>
+> **Пример:**
+>
+> ```java
+> @RestControllerAdvice
+> public class ValidationExceptionHandler {
+>
+>     // 1) @Valid @RequestBody / @ModelAttribute → Spring MVC
+>     @ExceptionHandler(MethodArgumentNotValidException.class)
+>     public ResponseEntity<ErrorResponse> handleBody(MethodArgumentNotValidException ex) {
+>         List<FieldErrorDto> errors = ex.getBindingResult().getFieldErrors().stream()
+>             .map(fe -> new FieldErrorDto(fe.getField(), fe.getDefaultMessage(),
+>                                          fe.getRejectedValue()))
+>             .toList();
+>         return ResponseEntity.badRequest().body(new ErrorResponse("VALIDATION_FAILED", errors));
+>     }
+>
+>     // 2) @RequestParam / @PathVariable / @Validated-сервисы → Jakarta
+>     @ExceptionHandler(ConstraintViolationException.class)
+>     public ResponseEntity<ErrorResponse> handleParams(ConstraintViolationException ex) {
+>         List<FieldErrorDto> errors = ex.getConstraintViolations().stream()
+>             .map(v -> new FieldErrorDto(
+>                 v.getPropertyPath().toString(),    // например, "create.req.email"
+>                 v.getMessage(),
+>                 v.getInvalidValue()))
+>             .toList();
+>         return ResponseEntity.badRequest().body(new ErrorResponse("VALIDATION_FAILED", errors));
+>     }
+> }
+> ```
+>
+> **Когда применять:**
+> - В любом REST-проекте — минимум эти два handler-а должны быть в `@RestControllerAdvice`.
+> - Если используется `@Validated` на классе `@RestController` + constraint на параметре метода — это тоже путь через `ConstraintViolationException`.
+> - Для `BindException` (form-binding в server-side rendering, `@ModelAttribute`) можно добавить третий handler или объединить с `MethodArgumentNotValidException` (общий родитель `BindException` в Spring 6+).
+>
+> **Подводные камни:**
+> - `MethodArgumentNotValidException` сам наследуется от `BindException` — handler на `BindException` поймает оба, но потеряет точность диагностики.
+> - `ConstraintViolationException` приходит из `jakarta.validation`, а не из Spring — не перепутайте импорт с `org.hibernate.exception.ConstraintViolationException` (это JDBC unique constraint).
+> - `propertyPath` для сервисного `@Validated` начинается с имени метода (`create.req.email`) — клиенту обычно нужно отрезать первые два сегмента.
+> - В Spring Boot `ResponseEntityExceptionHandler` уже даёт дефолтный `400` для `MethodArgumentNotValidException`, но без `errors[]` — приходится переопределять либо handler, либо `handleMethodArgumentNotValid`.
+>
+> **Связанные вопросы:** [[Q3]], [[Q5]], [[Q11]]
+
+## Q5. Как работает каскадная валидация вложенных объектов?
 
 `@Valid` на поле типа другого объекта включает валидацию и этого объекта:
 
@@ -544,10 +623,106 @@ public class Address {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Что такое группы валидации и зачем они нужны? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что именно делает `@Valid` на поле `private Address shippingAddress` внутри `OrderRequest`, и что произойдёт, если убрать `@Valid`, оставив только `@NotNull`?
+>
+> ---
+>
+> #### A) `@Valid` на поле вложенного объекта включает **каскадную (рекурсивную) валидацию**: validator после проверки полей `OrderRequest` рекурсивно обходит поля `Address` и применяет все их constraint-аннотации (`@NotBlank street`, `@Pattern zip` и т.д.). Без `@Valid` проверится только `address != null`, но внутрь объекта validator не зайдёт — невалидный `Address` с пустыми полями пройдёт фильтр. — ✓ Верно
+>
+> **Развёрнутое объяснение:** `@Valid` — это маркер из Jakarta Validation, который Hibernate Validator интерпретирует как «descend into this property». При обходе графа объектов validator смотрит на каждое поле: если над ним есть `@Valid` (либо тип помечен как cascadable), он рекурсивно вызывает `validate()` для значения этого поля. Без `@Valid` поле трактуется как «leaf»: применяются только constraint-аннотации, привязанные к самому полю (`@NotNull`, `@Size`), но не constraint-ы **внутри** объекта. Поэтому `Address(null, null, "abc")` с `@NotBlank` внутри пройдёт валидацию `OrderRequest`, если на `shippingAddress` нет `@Valid`. Для коллекций аналогично: `@Valid List<OrderItem> items` валидирует **каждый** элемент; без `@Valid` проверится только не-null/не-пустота списка.
+>
+> **Пример:**
+>
+> ```java
+> public class OrderRequest {
+>     @NotBlank
+>     private String orderRef;
+>
+>     @NotNull
+>     @Valid                    // ← каскад: валидируем поля Address
+>     private Address shippingAddress;
+>
+>     @NotEmpty
+>     @Valid                    // ← каждый OrderItem тоже валидируется
+>     private List<OrderItem> items;
+> }
+>
+> public class Address {
+>     @NotBlank private String street;
+>     @NotBlank private String city;
+>     @Pattern(regexp = "\\d{6}") private String zip;
+> }
+>
+> // Тест поведения
+> @Test
+> void cascadeValidatesNestedFields() {
+>     OrderRequest req = new OrderRequest(
+>         "ORD-1",
+>         new Address("", "", "abc"),         // street/city пустые, zip не подходит под regex
+>         List.of(new OrderItem("SKU-1", 1)));
+>
+>     Set<ConstraintViolation<OrderRequest>> errors = validator.validate(req);
+>
+>     assertThat(errors).extracting(v -> v.getPropertyPath().toString())
+>         .containsExactlyInAnyOrder(
+>             "shippingAddress.street",
+>             "shippingAddress.city",
+>             "shippingAddress.zip");
+> }
+>
+> @Test
+> void withoutValidNestedSkipped() {
+>     // Та же модель, но БЕЗ @Valid над shippingAddress
+>     // Address с пустыми полями ПРОЙДЁТ — caller не узнает о проблеме
+> }
+> ```
+>
+> **Когда применять:**
+> - На любом поле DTO, чей тип — не примитив/строка/число, а доменный объект, у которого есть свои constraint-аннотации.
+> - На коллекциях DTO: `List<@Valid Item>` (Jakarta 3.0+) или `@Valid List<Item>` (Jakarta 2.0).
+> - На `Map<K, V>` — `@Valid` валидирует значения (но не ключи) в Hibernate Validator.
+>
+> **Подводные камни:**
+> - `@Valid` без `@NotNull` пропускает `null`-объект молча (нечего валидировать) — обычно нужны обе аннотации.
+> - Циклические ссылки (`A.b → B.a → A.b`) Hibernate Validator не отслеживает — будет `StackOverflowError`. Делайте либо DTO ациклическими, либо помечайте «обратные» ссылки без `@Valid`.
+> - Каскад не имеет «глубины» — он работает до листьев. Это может быть дорого для больших графов; для пакетной обработки используйте manual `Validator.validate()` с ограничением.
+> - `@Valid` в Jakarta 3.0 на generic-параметре требует `@Target(TYPE_USE)` импорт-форму: `List<@Valid Item>`.
+> - При каскаде применяется та же группа, что у вызывающего, если не указана иная (см. [[Q6]]).
+>
+> **Связанные вопросы:** [[Q3]], [[Q6]], [[Q7]]
+>
+> ---
+>
+> #### B) `@Valid` на поле объявляет, что значение поля будет **повторно сериализовано** и провалидировано на стороне клиента (через JSON Schema), а серверная валидация не запускается — без `@Valid` запускается полная серверная проверка. — ❌ Неверно
+>
+> **Что на самом деле:** `@Valid` — чисто **серверная** runtime-аннотация Bean Validation API. Никакой связи с JSON Schema, клиентом или re-serialization нет. Без `@Valid` валидация всё равно происходит, но **не рекурсивно** — проверяются только constraint-ы на самом поле, а не внутри объекта.
+>
+> **Откуда путаница:** в OpenAPI/JSON-schema есть концепция nested schema validation, и термины звучат похоже. Но Spring и Hibernate Validator не работают с JSON Schema — они отражением обходят Java-объекты.
+>
+> **Если бы это было правдой:** Bean Validation был бы бесполезен без подключения JSON Schema validator, и `@Valid` на поле `Address` не имел бы смысла в WebFlux/MVC, где сериализацию делает Jackson.
+>
+> ---
+>
+> #### C) `@Valid` гарантирует, что поле будет провалидировано **до** десериализации JSON: Jackson сначала проверит структуру, а потом создаст объект — это защита от bean-injection атак. Без `@Valid` объект создаётся как есть, и атакующий может протащить `prototype pollution`. — ❌ Неверно
+>
+> **Что на самом деле:** валидация выполняется **после** десериализации, не до. Сначала Jackson создаёт полностью заполненный Java-объект, затем `RequestResponseBodyMethodProcessor` вызывает `Validator.validate()` на собранном объекте. Никакой «защиты до десериализации» `@Valid` не даёт. От бин-injection защищают другие механизмы: `@JsonIgnore`, immutable DTO, `@JsonCreator`, отдельные read/write модели.
+>
+> **Откуда путаница:** «prototype pollution» — атака из JavaScript, в Java эквивалента нет. Но в обсуждениях security иногда смешивают эти понятия. Тем не менее security guides рекомендуют валидировать input — отсюда ассоциация.
+>
+> **Если бы это было правдой:** `@Valid` должен был бы интегрироваться с Jackson через специальный deserializer, и без `spring-boot-starter-validation` нельзя было бы безопасно использовать `@RequestBody`. Это не так.
+>
+> ---
+>
+> #### D) `@Valid` валидирует только **поля типа `Object`**, для конкретных типов (`Address`, `List<Item>`) нужно использовать `@Validated` с указанием класса: `@Validated(Address.class)`. Без `@Validated` каскад не работает. — ❌ Неверно
+>
+> **Что на самом деле:** `@Valid` универсален для **любых** ссылочных типов (DTO, коллекции, массивы). `@Validated` — это Spring-аннотация для активации метод-уровень валидации и групп; она **не используется** для каскада на полях. Семантика `@Validated(Address.class)` — «применить группу Address.class», а не «провалидировать объект класса Address». К тому же `@Validated` нельзя поставить на поле (`@Target` ограничен `TYPE, METHOD, PARAMETER`).
+>
+> **Откуда путаница:** оба маркера упоминаются вместе при объяснении валидации в Spring, и разработчик путает «активировать метод-валидацию класса» (`@Validated` на классе) с «валидировать объект класса» (это `@Valid` на поле).
+>
+> **Если бы это было правдой:** `@Validated(Address.class)` компилировался бы на поле и означал бы каскад — но он туда не компилируется в принципе.
+
+## Q6. Что такое группы валидации и зачем они нужны?
 
 Группы позволяют применять разные constraints в зависимости от контекста (создание vs обновление):
 
@@ -589,10 +764,105 @@ public interface OrderedChecks {}
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Как создать кастомную constraint-аннотацию? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** У вас один DTO `UserRequest` с полем `id`, которое при создании должно быть `null`, а при обновлении — обязательно. Как организовать валидацию, не плодя два разных DTO?
+>
+> ---
+>
+> #### A) Использовать два разных DTO — `CreateUserRequest` (без `id`) и `UpdateUserRequest` (с `@NotNull id`). Группы валидации — устаревший паттерн, признанный антипаттерном в Effective Java и в официальном Spring style guide. — ❌ Неверно
+>
+> **Что на самом деле:** разделение на два DTO — **тоже валидное** решение, и в некоторых командах его предпочитают (явность контрактов, легче эволюционировать независимо). Но называть группы «устаревшими» и «антипаттерном» неверно — они часть актуального Jakarta Validation 3.0, активно поддерживаются Hibernate Validator и Spring. Ни в Effective Java, ни в Spring style guide такой пометки нет. Выбор «два DTO vs группы» — вопрос вкуса и масштаба, а не deprecation.
+>
+> **Откуда путаница:** в больших проектах разделение DTO действительно часто удобнее (legacy-аргумент), но это не делает группы устаревшими.
+>
+> **Если бы это было правдой:** `@Validated(Group.class)` и `Default.class` были бы помечены `@Deprecated` — но они активно развиваются (в Jakarta 3.1 добавлено `@GroupSequence` improvements).
+>
+> ---
+>
+> #### B) Объявить marker-interfaces `OnCreate` и `OnUpdate`, навесить на поле `id` две аннотации с разными `groups` (`@Null(groups = OnCreate.class)` + `@NotNull(groups = OnUpdate.class)`), а в контроллере указывать активную группу через `@Validated(OnCreate.class)` или `@Validated(OnUpdate.class)`. Constraint без явной группы попадает в `Default.class` и проверяется всегда, когда указана `Default` (либо ничего). — ✓ Верно
+>
+> **Развёрнутое объяснение:** группы — это **множества констрейнтов**, которые можно активировать выборочно. Сами группы — обычные пустые интерфейсы-маркеры, используемые только как `Class<?>` token. Каждый constraint хранит атрибут `groups` (по умолчанию `{}` → `Default.class`). При вызове `validator.validate(obj, OnCreate.class)` Hibernate Validator пропускает только те констрейнты, в `groups` которых есть `OnCreate.class`. Spring `@Validated(OnCreate.class)` на параметре контроллера/сервиса передаёт это во встроенный механизм валидации. Важно: `@Valid` групп **не принимает** — только `@Validated`. Если ни одна группа не указана (`@Validated` без аргумента), применяется `Default.class`.
+>
+> **Пример:**
+>
+> ```java
+> // Marker-интерфейсы
+> public interface OnCreate {}
+> public interface OnUpdate {}
+>
+> public class UserRequest {
+>     @Null(groups = OnCreate.class)             // создание: id должен быть null
+>     @NotNull(groups = OnUpdate.class)          // обновление: id обязателен
+>     private Long id;
+>
+>     @NotBlank(groups = {OnCreate.class, OnUpdate.class})
+>     private String name;                       // оба сценария
+>
+>     @NotBlank(groups = OnCreate.class)         // только при создании
+>     @Size(min = 8, groups = OnCreate.class)
+>     private String password;
+>
+>     @Email                                     // groups={} → Default.class
+>     private String email;                      // НЕ проверяется при @Validated(OnCreate.class)
+> }
+>
+> @RestController
+> @RequestMapping("/users")
+> public class UserController {
+>
+>     @PostMapping
+>     public ResponseEntity<?> create(
+>             @Validated(OnCreate.class) @RequestBody UserRequest req) { ... }
+>
+>     @PutMapping("/{id}")
+>     public ResponseEntity<?> update(
+>             @Validated(OnUpdate.class) @RequestBody UserRequest req) { ... }
+> }
+>
+> // Чтобы email проверялся всегда — указать Default.class явно:
+> // @Validated({OnCreate.class, Default.class})
+>
+> // Или через @GroupSequence — последовательный запуск групп:
+> @GroupSequence({Default.class, OnCreate.class})
+> public interface CreateChecks {}
+> // → сначала Default; если упало — OnCreate не запускается (fail-fast по группам)
+> ```
+>
+> **Когда применять:**
+> - Когда один и тот же DTO переиспользуется в разных endpoint-ах (Create/Update/Patch) — экономит дублирование классов и mapper-логику.
+> - Когда нужны разные правила в зависимости от роли пользователя (`AdminChecks` vs `UserChecks`) — группа задаётся в контроллере по роли.
+> - Когда есть «этапная» проверка: сначала формат (`Default`), потом бизнес-инварианты (`BusinessRules`) через `@GroupSequence`.
+>
+> **Подводные камни:**
+> - **Constraints без `groups` НЕ запускаются** при `@Validated(OnCreate.class)` — они в группе `Default`, которая активируется только если её явно указали. Часто это причина «`@Email` молча игнорируется».
+> - `@Valid` группы **не понимает** — `@Valid(OnCreate.class)` не компилируется. Только `@Validated`.
+> - При каскадной валидации группа **наследуется** от вызывающего: `@Validated(OnCreate.class)` на `OrderRequest` запустит `OnCreate` и для всех `@Valid`-полей внутри. Чтобы переключить группу при каскаде, нужен `@ConvertGroup(from = OnCreate.class, to = OnNested.class)`.
+> - Группа-интерфейс должна быть **пустой** (никаких методов) — иначе теряет смысл marker-pattern.
+> - `@GroupSequence` выполняет группы строго последовательно: следующая стартует только если предыдущая прошла без ошибок (fail-fast).
+>
+> **Связанные вопросы:** [[Q3]], [[Q5]], [[Q7]]
+>
+> ---
+>
+> #### C) В Spring достаточно создать два разных метода в `@RestControllerAdvice` с разными `@ExceptionHandler` — один для `Create`-ошибок, другой для `Update`. Bean Validation сам определит контекст по HTTP-методу (POST vs PUT) и применит соответствующие констрейнты. — ❌ Неверно
+>
+> **Что на самом деле:** Bean Validation **никак не связан** с HTTP-методом — он не знает про `POST`/`PUT`. Контекст переключается явно через `@Validated(Group.class)`. `@ExceptionHandler` срабатывает уже **после** валидации (на исключение), он не управляет тем, какие констрейнты применять. К тому же ошибка `@Null` и `@NotNull` приведут к одному и тому же `MethodArgumentNotValidException` — handler не сможет различить «создание упало» от «обновление упало» без явных флагов.
+>
+> **Откуда путаница:** разработчики ожидают, что framework «угадает» контекст по операции. Spring так делает в некоторых местах (например, `@PostMapping` vs `@PutMapping` для роутинга), но валидация — domain-level concern, она HTTP-агностична.
+>
+> **Если бы это было правдой:** Bean Validation работала бы только в HTTP-контексте и была бы неприменима для service-уровня, очередей, batch-jobs. Это сильно ограничило бы спецификацию.
+>
+> ---
+>
+> #### D) Достаточно вынести правило в `if` внутри контроллера: `if (req.getId() != null && isCreate) throw new ValidationException(...)`. Группы — это hack для тех, кто не понимает SOLID; нормальный код всегда явно проверяет инварианты в сервисе. — ❌ Неверно
+>
+> **Что на самом деле:** declarative-валидация через группы — **рекомендованный** способ для декларативных правил, потому что: (1) правило задано рядом с полем (single source of truth), (2) активируется автоматически перед сервисом (fail-fast), (3) даёт структурированный ответ клиенту (`MethodArgumentNotValidException` → 400 с полями), (4) не размывает бизнес-логику сервиса проверками формата. Имеративные `if`-ы в контроллере дублируются между endpoint-ами, плохо тестируются, не дают единого формата ошибок и нарушают DRY.
+>
+> **Откуда путаница:** в простых проектах с одним endpoint-ом ручной `if` действительно проще. Этот опыт переносится на сложные проекты, где он перестаёт работать.
+>
+> **Если бы это было правдой:** в Hibernate Validator не было бы groups API, в Jakarta-стандарте не существовало бы `@GroupSequence`, а Spring не реализовал бы `@Validated`. Все эти артефакты — ответ на реальную проблему повторного использования DTO.
+
+## Q7. Как создать кастомную constraint-аннотацию?
 
 **Шаг 1 — объявить аннотацию:**
 
