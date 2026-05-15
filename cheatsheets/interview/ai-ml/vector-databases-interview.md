@@ -672,11 +672,31 @@ results = collection.query.near_text(
 **Когда:** хочется feature-rich, готовы запустить self-hosted.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. (!) Qdrant? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что отличает Weaviate от других vector DB и почему его выбирают?
+>
+> - [ ] **A) Weaviate — closed-source proprietary SaaS без self-hosted опции, как Pinecone**
+>   - **Что на самом деле:** Weaviate — **open-source под Apache 2.0**, можно self-host в Docker/Kubernetes; managed cloud (Weaviate Cloud Services) — опциональный SaaS поверх того же кода. Это противоположность Pinecone, которая именно proprietary-only.
+>   - **Откуда путаница:** Weaviate Cloud рекламируется как managed-сервис, что у новичков ассоциируется с «значит закрытый». На деле open-source repo на GitHub имеет 11k+ звёзд и активно принимает PR'ы.
+>   - **Если бы это было правдой:** не было бы смысла в self-hosted production deployments Weaviate в банках/госах, которым лицензионно нельзя использовать закрытый SaaS.
+>
+> - [x] **B) Weaviate — open-source (Apache 2.0) vector DB с GraphQL API, встроенными vectorizer-модулями (text2vec-openai/cohere), hybrid search BM25+vector и multi-tenancy**
+>   - **Развёрнутое объяснение:** Weaviate позиционируется как самая **feature-rich** open-source vector DB. Ключевая идея — vectorizer-модули генерируют embedding автоматически при insert: пишешь `{"content": "Hello"}`, модуль `text2vec-openai` вызывает OpenAI и сохраняет вектор. Поддержка нескольких API: **GraphQL** (основной, удобен для nested filters), REST, gRPC, native Python/JS-клиенты. **Hybrid search** комбинирует BM25 (keyword) и vector similarity с alpha-параметром взвешивания. **Multi-tenancy** — каждый tenant изолирован, не нужно делать per-tenant collection. Есть **generative search** — модуль вызывает LLM (OpenAI/Cohere/Anthropic) прямо из БД, объединяя retrieval и generation в один запрос (RAG-in-DB).
+>   - **Пример:** SaaS-документация для 1000 клиентов — multi-tenancy выделяет каждому изолированное пространство в одной collection; vectorizer-модуль избавляет от отдельного embedding-сервиса; hybrid search вытаскивает и точные совпадения по терминам (BM25), и семантически близкие (vector).
+>   - **Когда применять:** нужен feature-rich vector DB с минимумом glue-кода (vectorizer внутри); готовы запустить self-hosted и поддерживать кластер; multi-tenant SaaS-сценарии; RAG, где хочется собрать pipeline в одной системе.
+>   - **Подводные камни:** (1) GraphQL API мощный, но имеет learning curve и хуже работает с типичными ORM/SQL-инструментами; (2) vectorizer-модули привязывают к конкретному провайдеру (text2vec-openai требует OpenAI key и оплату на каждый insert); (3) memory footprint выше Qdrant'а на тех же датасетах; (4) consistency model — eventually consistent при репликации, не подходит для strict transactional сценариев.
+>   - **Связанные вопросы:** [[Q12]] Pinecone (closed-source альтернатива), [[Q14]] Qdrant (Rust-альтернатива), [[Q15]] Milvus (distributed-альтернатива), [[Q16]] pgvector (extension вместо отдельной БД).
+>
+> - [ ] **C) Weaviate использует только sparse-векторы (TF-IDF/BM25) и не поддерживает dense embedding'и от neural networks**
+>   - **Что на самом деле:** Weaviate — **dense-vector first** БД, dense-векторы являются основной структурой хранения. BM25 (sparse) добавлен как часть hybrid search **в дополнение** к dense vector search, а не как замена.
+>   - **Откуда путаница:** упоминание BM25 в фичах могло создать впечатление «это keyword-search движок типа Elasticsearch». На деле BM25 в Weaviate — second-class citizen для hybrid mode.
+>   - **Если бы это было правдой:** не было бы смысла в text2vec-openai модулях, которые именно генерируют dense embeddings размерности 1536.
+>
+> - [ ] **D) Weaviate написан на Python и предназначен только для prototyping, в production не используется**
+>   - **Что на самом деле:** Weaviate написан на **Go** (production-grade language для concurrent systems), активно используется в production у клиентов уровня Stack Overflow, Instabase, Cohere. Python — только клиент.
+>   - **Откуда путаница:** в туториалах виден Python-клиент, и легко спутать клиент с реализацией БД. Большинство modern vector DB именно так: сервер на Go/Rust/C++, клиенты на Python/JS.
+>   - **Если бы это было правдой:** не было бы Helm-чартов для production Kubernetes-deployment'ов и benchmarks на миллионах векторов, которые требуют именно компилируемого языка.
+
+## Q14. (!) Qdrant?
 
 **Qdrant** — open-source vector DB на **Rust**. Растущая популярность.
 
@@ -710,11 +730,31 @@ results = client.search(
 В **2025** — top-3 выбор для production. Особенно популярен в open-source LLM stack.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Milvus? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что отличает Qdrant и почему он стал популярен в 2025?
+>
+> - [ ] **A) Qdrant — Python-библиотека, встроенная в numpy для быстрого поиска ближайших соседей**
+>   - **Что на самом деле:** Qdrant — **standalone vector database** на Rust с собственным сетевым сервером (REST + gRPC), а не in-process библиотека. Python — лишь клиент (`qdrant-client`), который ходит по сети. numpy с ним не связан архитектурно.
+>   - **Откуда путаница:** в туториалах для разработчика всё выглядит как `from qdrant_client import QdrantClient`, что напоминает обычную библиотеку. Но `QdrantClient("localhost", port=6333)` явно указывает на сетевое подключение к серверу.
+>   - **Если бы это было правдой:** не было бы Docker-образа `qdrant/qdrant`, на котором запускают production-кластеры, и не было бы managed Qdrant Cloud.
+>
+> - [ ] **B) Qdrant написан на Java и работает только внутри JVM-приложений, не имеет standalone сервера**
+>   - **Что на самом деле:** Qdrant написан на **Rust** — это его ключевая отличительная черта (memory-safety без GC, низкая latency, малый footprint). Standalone-сервер запускается одним бинарём, не требует JVM.
+>   - **Откуда путаница:** Lucene/Elasticsearch — Java, и vector search ассоциируется с этим стеком. Но Qdrant сознательно вышел за пределы JVM-мира.
+>   - **Если бы это было правдой:** не было бы преимущества по memory-эффективности и cold-start latency, которые Qdrant именно подчёркивает в маркетинге.
+>
+> - [x] **C) Qdrant — open-source vector DB на Rust с HNSW + опциональной quantization, excellent metadata filtering на indexed fields, gRPC+REST API, built-in sharding и replication**
+>   - **Развёрнутое объяснение:** Qdrant написан на **Rust**, что даёт ему преимущества по latency и memory footprint (нет GC pauses, predictable performance). Использует **HNSW** как основной индекс с поддержкой **scalar quantization (int8) и binary quantization** для compress'а в 4-32× с минимальной потерей recall. Главная фишка — **payload (metadata) filtering**: поля, помеченные как indexed, попадают в отдельные индексы (B-tree для чисел, hash для keyword), и фильтр применяется **во время** HNSW-обхода, а не post-filter после ANN — это критично для cardinality-неравномерных фильтров. **gRPC** даёт высокую throughput для bulk-операций, **REST** удобен для exploration. Sharding (по hash от point ID) и replication (Raft consensus) встроены — кластер растягивается на несколько нод без внешних оркестраторов.
+>   - **Пример:** e-commerce поиск похожих товаров с фильтром по категории/цене: индекс на `category` + `price_range` позволяет HNSW обходить только релевантные регионы графа; на 50M товаров p99 latency остаётся <50ms даже при выборках в 0.1% от датасета.
+>   - **Когда применять:** open-source LLM-stack (LangChain/LlamaIndex имеют first-class интеграцию); сценарии с интенсивным metadata filtering; команды, которым важна низкая latency и низкое потребление памяти; production deployments без vendor lock-in.
+>   - **Подводные камни:** (1) Rust-стек — меньше готовых решений и экспертизы, чем у Java/Go; (2) replication через Raft требует чёткой конфигурации quorum; (3) при квантизации recall падает на 2-5% — нужно профилировать на своих данных; (4) hot-reload конфигурации шардов ограничен — некоторые изменения требуют рестарта; (5) memory-mapping payload'ов работает хуже на NFS/cloud-disk'ах, чем на локальном NVMe.
+>   - **Связанные вопросы:** [[Q8]] HNSW, [[Q10]] PQ/quantization, [[Q13]] Weaviate (Go-альтернатива), [[Q15]] Milvus (distributed-альтернатива).
+>
+> - [ ] **D) Qdrant поддерживает только exact KNN (brute-force) и не имеет ANN-индексов**
+>   - **Что на самом деле:** Qdrant основан на **HNSW** — одном из самых эффективных ANN-алгоритмов. Brute-force поиск доступен как fallback (`exact=true`) для маленьких датасетов или тестов, но **не является основным режимом**.
+>   - **Откуда путаница:** возможно, путают с FAISS Flat-index или с тем, что Qdrant можно заставить выполнить точный поиск флагом.
+>   - **Если бы это было правдой:** не было бы смысла говорить о sub-millisecond latency на 10M+ векторах — brute-force такого не даёт даже на Rust.
+
+## Q15. Milvus?
 
 **Milvus** — open-source vector DB от Zilliz.
 
@@ -730,11 +770,31 @@ results = client.search(
 **Минусы:** более complex deployment чем Qdrant/Weaviate.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. (!) pgvector — PostgreSQL extension? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Чем Milvus принципиально отличается от Qdrant/Weaviate и когда его выбирать?
+>
+> - [ ] **A) Milvus — embedded ANN-библиотека уровня FAISS, без сетевого сервера и без persistence**
+>   - **Что на самом деле:** Milvus — **distributed vector database** с компонентной архитектурой (proxy, query node, data node, index node, root coordinator), persistence через object storage (S3/MinIO), сетевые API (gRPC/REST). Это уровень выше FAISS — FAISS используется как один из движков **внутри** Milvus.
+>   - **Откуда путаница:** FAISS-like алгоритмы (IVF, HNSW) используются внутри Milvus, что может создать впечатление эквивалентности. Но Milvus добавляет distributed orchestration, persistence, schema, мульти-replica.
+>   - **Если бы это было правдой:** не было бы Helm-чартов для Kubernetes-deployment'а Milvus с десятком компонентов и не было бы Zilliz Cloud как managed-сервиса поверх.
+>
+> - [ ] **B) Milvus поддерживает только один ANN-алгоритм (HNSW) и не масштабируется горизонтально**
+>   - **Что на самом деле:** Milvus поддерживает **множество ANN-индексов**: HNSW, IVF_FLAT, IVF_PQ, IVF_SQ8, ANNOY, DiskANN, GPU-IVF. Горизонтальное масштабирование — одна из его архитектурных целей: миллиарды векторов на распределённом кластере.
+>   - **Откуда путаница:** HNSW — самый известный ANN-алгоритм, и его упоминают первым в туториалах. Но Milvus сознательно делает выбор алгоритма параметром, а не привязкой.
+>   - **Если бы это было правдой:** не было бы доказанных production-deployments на десятках миллиардов векторов в enterprise, для которых выбор индекса под задачу критичен.
+>
+> - [ ] **C) Milvus — простая single-node БД с deployment в один docker-compose, проще чем Qdrant**
+>   - **Что на самом деле:** Milvus имеет **distributed architecture** с разделёнными ролями нод (proxy/query/data/index/coordinator), что делает deployment сложнее, чем у monolith-БД (Qdrant/Weaviate запускаются одним бинарём). Milvus Lite существует как embedded-вариант для прототипов, но production-deployment требует Kubernetes.
+>   - **Откуда путаница:** есть docker-compose для quick-start, что создаёт впечатление простоты. Но production требует K8s, etcd, MinIO/S3, Pulsar/Kafka.
+>   - **Если бы это было правдой:** не было бы основной критики Milvus в индустрии — «overkill для маленьких проектов».
+>
+> - [x] **D) Milvus — open-source vector DB от Zilliz с distributed Kubernetes-native архитектурой, поддержкой множества ANN-алгоритмов (HNSW, IVF, ANNOY, DiskANN, GPU-IVF), strong consistency и GPU-acceleration для миллиардов векторов**
+>   - **Развёрнутое объяснение:** Milvus спроектирован как **cloud-native distributed vector database** для масштаба «миллиарды векторов». Архитектура: **compute и storage разделены** (compute scales horizontally, storage в S3/MinIO), компоненты (Proxy, Query Node, Data Node, Index Node, Coordinator) деплоятся в Kubernetes независимо. Поддерживается **широкий спектр индексов**: HNSW (баланс), IVF_FLAT/IVF_PQ/IVF_SQ8 (для big data), DiskANN (для on-disk датасетов больше RAM), GPU_IVF_FLAT/GPU_IVF_PQ (для batch-сценариев с GPU). **Strong consistency** через Pulsar/Kafka log — гарантирует ordered writes и snapshot isolation для reads. **GPU acceleration** — индексация и поиск могут выполняться на NVIDIA GPU, что даёт 10-100× ускорение на больших датасетах.
+>   - **Пример:** enterprise photo search на 10B изображений: distributed sharding раскидывает данные по 50 query-нодам, DiskANN-индекс позволяет хранить большую часть на NVMe; GPU-нода ускоряет nightly batch reindex; strong consistency гарантирует, что новые загрузки видны во всех репликах после commit.
+>   - **Когда применять:** датасеты от 100M+ векторов с прогнозируемым ростом до миллиардов; enterprise-сценарии, где SLA на latency и consistency важнее простоты deployment; команды с Kubernetes-экспертизой; need для GPU-acceleration или DiskANN для больших данных, не помещающихся в RAM.
+>   - **Подводные камни:** (1) **complex deployment** — десятки компонентов в K8s, что-то всегда «не запускается» (etcd, Pulsar, MinIO); (2) overkill для проектов <10M векторов — Qdrant/Weaviate проще и дешевле в ops; (3) Pulsar как message log — отдельная система, требующая отдельной экспертизы; (4) совместимость API между мажорными версиями (1.x → 2.x) ломалась — миграция большой боли; (5) memory overhead на coordinator-нодах высокий на маленьких deployments.
+>   - **Связанные вопросы:** [[Q8]] HNSW, [[Q9]] HNSW vs IVF, [[Q10]] PQ для сжатия, [[Q11]] FAISS как движок под капотом, [[Q13]] Weaviate (monolith-альтернатива), [[Q14]] Qdrant (monolith-альтернатива).
+
+## Q16. (!) pgvector — PostgreSQL extension?
 
 **pgvector** — extension для PostgreSQL, добавляет vector type.
 
