@@ -355,10 +355,74 @@ public PaymentResult recoverGeneral(Exception e, PaymentRequest req) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. Какие backoff-стратегии поддерживает Spring Retry? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое `@Recover` в Spring Retry и какие требования предъявляются к сигнатуре fallback-метода?
+>
+> ---
+>
+> #### A) `@Recover` — это метод, который вызывается **вместо** `@Retryable` при первом же исключении и заменяет основной retry-механизм: если он есть в классе, повторов не будет, а сразу отработает fallback — ❌ Неверно
+>
+> **Что на самом деле:** `@Recover` вызывается **только после исчерпания** `maxAttempts` (или когда исключение не подходит под `retryFor`/`noRetryFor`). Сначала прокси прогоняет цикл попыток через `RetryTemplate`, и лишь когда счётчик попыток исчерпан, ищется подходящий `@Recover`-метод. Если бы `@Recover` отрабатывал сразу — retry был бы полностью бессмысленным.
+>
+> **Откуда путаница:** в circuit-breaker-паттернах (Hystrix `fallbackMethod`, Resilience4j `@CircuitBreaker(fallbackMethod=...)`) fallback действительно может срабатывать «вместо» при открытой цепи. Spring Retry устроен иначе.
+>
+> **Если бы это было правдой:** `@Retryable(maxAttempts = 5)` рядом с `@Recover` всегда показывал бы в логах ровно одну попытку — но на практике видно 5 попыток, и только потом fallback.
+>
+> ---
+>
+> #### B) `@Recover`-метод может быть в **любом** Spring-бине и подбирается глобально по типу исключения через `BeanFactory`; имя класса значения не имеет — ❌ Неверно
+>
+> **Что на самом деле:** `@Recover` ищется **в том же классе**, где объявлен `@Retryable`-метод. `RecoverAnnotationRecoveryHandler` сканирует методы того же таргета и подбирает наиболее специфичный по типу первого аргумента (исключение) и совпадению остальных параметров. Метод `@Recover` в другом бине Spring Retry не найдёт.
+>
+> **Откуда путаница:** `@ControllerAdvice` + `@ExceptionHandler` действительно работают глобально по контексту — кажется, что `@Recover` устроен аналогично.
+>
+> **Если бы это было правдой:** можно было бы вынести один «GlobalRecoverHandler» на весь проект — но любая попытка так сделать кончается `ExhaustedRetryException`, потому что обработчик не найден в локальном классе.
+>
+> ---
+>
+> #### C) `@Recover`-метод должен иметь **другой** возвращаемый тип, чем `@Retryable` — обычно `void` или `Optional`, чтобы вызывающий код мог отличить «успех» от «fallback» — ❌ Неверно
+>
+> **Что на самом деле:** `@Recover` должен возвращать **тот же тип** (или совместимый — подтип), что и `@Retryable`-метод. Иначе прокси не сможет вернуть значение вызывающему коду — сигнатура AOP-перехвата требует, чтобы fallback подходил под точку вызова. Различать «успех» и «fallback» правильно через само значение (флаг, `Result.failed(...)`) или через метрики, а не через тип возврата.
+>
+> **Откуда путаница:** в реактивных стеках fallback иногда возвращает `Mono.empty()` вместо `Mono<T>` — кажется, что «другой тип» допустим.
+>
+> **Если бы это было правдой:** компилятор Java не позволил бы — но Spring Retry проверяет совместимость в рантайме и кидает понятное `IllegalStateException` при несовпадении.
+>
+> ---
+>
+> #### D) `@Recover` должен быть **в том же классе**, что и `@Retryable`-метод; **первый аргумент** — тип пойманного исключения (или его суперкласс), **возвращаемый тип совпадает** с retryable-методом, **остальные аргументы** соответствуют параметрам исходного метода; Spring выбирает наиболее специфичный по типу исключения как overloaded-handler — ✓ Верно
+>
+> **Развёрнутое объяснение:** Когда `RetryTemplate` исчерпал `maxAttempts`, `RecoverAnnotationRecoveryHandler` сканирует методы того же таргета, отмеченные `@Recover`. Алгоритм выбора: (1) первый параметр должен быть `Throwable` или его подтип, совместимый с пойманным исключением; (2) остальные параметры должны совпадать (по типу и порядку) с параметрами `@Retryable`-метода (можно пропустить хвост — Spring подставит); (3) возвращаемый тип совместим. Если кандидатов несколько, выбирается **самый специфичный по типу исключения** (`IOException` побеждает `Exception` для `IOException`). При отсутствии подходящего `@Recover` пробрасывается оригинальное исключение или `ExhaustedRetryException` (для stateful retry).
+>
+> **Пример:**
+> ```java
+> @Service
+> public class PaymentService {
+>     @Retryable(retryFor = Exception.class, maxAttempts = 3)
+>     public PaymentResult charge(PaymentRequest req) throws Exception {
+>         return gateway.charge(req);
+>     }
+>
+>     @Recover
+>     public PaymentResult recoverIO(IOException e, PaymentRequest req) {
+>         return PaymentResult.retry("network error: " + e.getMessage());
+>     }
+>
+>     @Recover
+>     public PaymentResult recoverGeneral(Exception e, PaymentRequest req) {
+>         return PaymentResult.failed("unrecoverable: " + e.getClass().getSimpleName());
+>     }
+> }
+> ```
+> При `IOException` после исчерпания попыток вызовется `recoverIO` (более специфичный), при `IllegalStateException` — `recoverGeneral` (общий).
+>
+> **Когда применять:** всегда, когда поток вызывающего кода должен получить **осмысленный fallback-результат** вместо пробрасывания исключения — это шаблон «graceful degradation» (логирование, метрики, отдача кэша, deferred-обработка через очередь).
+>
+> **Подводные камни:** (1) забыли указать `@Recover` для конкретного исключения — летит оригинальный exception, и retry выглядит «сломанным»; (2) сигнатура аргументов не совпадает (например, в `@Retryable` параметр `Order order`, а в `@Recover` — `String orderId`) — Spring не подберёт метод; (3) первый аргумент должен быть **исключением**, а не бизнес-объектом — частая ошибка; (4) `@Recover` сам в self-invocation **не работает** по той же причине, что и `@Retryable` (нужен прокси); (5) если у нескольких `@Recover` одинаковая «дистанция» по типу исключения, поведение неопределённое — лучше держать иерархию однозначной.
+>
+> **Связанные вопросы:** [[Q3]] — параметры `@Retryable` и поведение при исчерпании попыток; [[Q9]] — self-invocation ломает и `@Retryable`, и `@Recover`; [[Q13]] — `RetryListener` как альтернатива `@Recover` для observability
+
+## Q5. Какие backoff-стратегии поддерживает Spring Retry?
 
 ```java
 // Фиксированная задержка (1 сек)
@@ -386,10 +450,77 @@ backOff.setMaxInterval(10000);
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. Что такое RetryTemplate и когда его использовать? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Какие backoff-стратегии поддерживает Spring Retry и как они настраиваются через `@Backoff`/`BackOffPolicy`?
+>
+> ---
+>
+> #### A) Spring Retry поддерживает **`FixedBackOffPolicy`** (постоянная задержка), **`ExponentialBackOffPolicy`** (геометрический рост `delay × multiplier`, ограничивается `maxDelay`), **`ExponentialRandomBackOffPolicy`** (то же + ±50% джиттер для борьбы с thundering herd) и **`UniformRandomBackOffPolicy`** (равномерный рандом в диапазоне `[min, max]`); все они конфигурируются через аннотацию `@Backoff(delay, multiplier, maxDelay, random)` или через программный `RetryTemplateBuilder` — ✓ Верно
+>
+> **Развёрнутое объяснение:** `BackOffPolicy` — это контракт Spring Retry для расчёта паузы между попытками. Аннотация `@Backoff` автоматически выбирает реализацию по параметрам: если `multiplier == 0` — `FixedBackOffPolicy(delay)`; если `multiplier > 1` и `random = false` — `ExponentialBackOffPolicy` с `initialInterval=delay`, `multiplier`, `maxInterval=maxDelay`; если `random = true` — `ExponentialRandomBackOffPolicy` (тот же экспоненциальный рост, но каждый интервал умножается на случайный множитель в диапазоне ~`[0.5, 1.5]`); если задан `delayExpression` или `maxDelayExpression` — SpEL-вычисление в рантайме. Программно эти политики собираются явно: `new ExponentialBackOffPolicy()` + сеттеры, либо `RetryTemplate.builder().exponentialBackoff(initial, multiplier, max)` / `.fixedBackoff(ms)` / `.uniformRandomBackoff(min, max)`.
+>
+> **Пример:**
+> ```java
+> // 1) Фиксированная задержка 500 ms
+> @Retryable(retryFor = IOException.class, backoff = @Backoff(delay = 500))
+> public void fixed() { ... }
+>
+> // 2) Экспоненциальная: 1s → 2s → 4s → 8s (потолок 10s)
+> @Retryable(backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 10000))
+> public void exponential() { ... }
+>
+> // 3) Экспоненциальная + джиттер ±50% (анти-thundering-herd)
+> @Retryable(backoff = @Backoff(delay = 1000, multiplier = 2.0, maxDelay = 10000, random = true))
+> public void exponentialJitter() { ... }
+>
+> // 4) Программно — равномерный рандом в диапазоне [200, 800] ms
+> RetryTemplate template = RetryTemplate.builder()
+>     .maxAttempts(5)
+>     .uniformRandomBackoff(200, 800)
+>     .build();
+> ```
+>
+> **Когда применять:** **Fixed** — для локальных операций с предсказуемой transient-ошибкой (быстрый кэш, локальная очередь); **Exponential** — для удалённых HTTP/DB-сервисов под нагрузкой, чтобы дать им время на восстановление; **ExponentialRandom (jitter)** — стандарт де-факто для распределённых клиентов одного даунстрима (тысячи pod'ов одновременно ретраят — джиттер размазывает пик); **UniformRandom** — для scheduling-задач, где важна однородная плотность запросов.
+>
+> **Подводные камни:** (1) забыли `maxDelay` — экспонента уходит в минуты, retry «зависает» (`1s → 2s → 4s → ... → 1024s`); (2) `random = true` без `multiplier` — джиттер применяется к фиксированной паузе и теряет смысл; (3) `delay = 0` отключает паузу полностью — это нагрузочная атака на даунстрим; (4) backoff отрабатывает через `Thread.sleep`, блокируя поток — на больших ретраях это съедает thread pool (для реактивных стеков нужен `Retry.backoff()` из Reactor, см. [[Q11]]); (5) при stateful retry backoff между попытками **не** удерживается — пауза зависит от частоты переотправки сообщения брокером.
+>
+> **Связанные вопросы:** [[Q3]] — параметры `@Backoff` в составе `@Retryable`; [[Q6]] — программная конфигурация через `RetryTemplate`; [[Q11]] — backoff для реактивных потоков
+>
+> ---
+>
+> #### B) Spring Retry поддерживает только **`FixedBackOffPolicy`** — для всех остальных стратегий (экспонента, jitter) нужно подключать отдельную библиотеку Resilience4j, потому что в spring-retry экспоненциальный backoff не реализован — ❌ Неверно
+>
+> **Что на самом деле:** `ExponentialBackOffPolicy`, `ExponentialRandomBackOffPolicy`, `UniformRandomBackOffPolicy` — это **штатные классы** пакета `org.springframework.retry.backoff` начиная с самой первой версии. Resilience4j вообще не нужен — это альтернативный стек, а не дополнение.
+>
+> **Откуда путаница:** Resilience4j активно продвигается в Spring Cloud как «современный» retry — кажется, что spring-retry — это «старый и минимальный» вариант. На самом деле возможности по backoff у обеих библиотек сопоставимы.
+>
+> **Если бы это было правдой:** `@Backoff(multiplier = 2.0)` не компилировался бы или игнорировался — но в реальности параметр читается и применяется.
+>
+> ---
+>
+> #### C) Backoff в Spring Retry реализован **неблокирующе** через `ScheduledExecutorService`: пауза не занимает поток вызывающего, ретраи планируются и выполняются в отдельном thread pool, поэтому подходят и для high-throughput сервисов — ❌ Неверно
+>
+> **Что на самом деле:** стандартный `FixedBackOffPolicy`/`ExponentialBackOffPolicy` использует **`Thread.sleep`** (через `ThreadWaitSleeper` по умолчанию). Это **блокирует** вызывающий поток на всё время backoff. Для высоконагруженных сервисов это критично: при `maxAttempts = 5` и экспоненте до 10s один тред может быть занят ~20s. Чтобы получить неблокирующее поведение, нужны реактивные API (`Mono.retryWhen` / Reactor `Retry.backoff()`) или явная асинхронная архитектура.
+>
+> **Откуда путаница:** Spring `@Async` и `@Scheduled` создают впечатление, что Spring всегда «асинхронен» — но `@Retryable` живёт в синхронной AOP-обвязке.
+>
+> **Если бы это было правдой:** не было бы рекомендации «не комбинируйте `@Retryable` с длинным backoff на синхронных HTTP-эндпоинтах» — но она существует именно из-за блокировки потока.
+>
+> ---
+>
+> #### D) `@Backoff(random = true)` означает **полностью случайную** задержку без всякой связи с `delay` и `multiplier` — это режим «chaos engineering», где Spring сам выбирает интервал из равномерного распределения `[0, Long.MAX_VALUE]` — ❌ Неверно
+>
+> **Что на самом деле:** `random = true` в `@Backoff` включает `ExponentialRandomBackOffPolicy`, которая **сохраняет** базовый экспоненциальный рост, но домножает каждый интервал на случайный коэффициент в диапазоне примерно `[0.5, 1.5]` (классический jitter). Это нужно для anti-thundering-herd, а не для chaos engineering. Параметры `delay`, `multiplier`, `maxDelay` продолжают работать как обычно.
+>
+> **Откуда путаница:** Netflix Chaos Monkey, jitter в академических статьях о distributed systems — иногда смешиваются понятия «случайный backoff» и «полностью случайные пуши».
+>
+> **Если бы это было правдой:** retry с `random = true` мог бы дать паузу в 10 лет — это сделало бы фичу непригодной для production.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q3]] — `@Backoff` в составе `@Retryable`; [[Q6]] — `RetryTemplate.builder()` с backoff; [[Q11]] — Reactor `Retry.backoff()` как неблокирующая альтернатива
+
+## Q6. Что такое RetryTemplate и когда его использовать?
 
 `RetryTemplate` — программный API для retry без аннотаций.
 
@@ -419,10 +550,81 @@ retryTemplate.execute(
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Какие RetryPolicy реализации есть в Spring Retry? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+>
+> **Вопрос:** Что такое `RetryTemplate`, чем он отличается от аннотации `@Retryable` и когда программный API уместнее декларативного?
+>
+> ---
+>
+> #### A) `RetryTemplate` — это специальный планировщик задач (`@Scheduled`) внутри Spring Retry: он запускает повторы по cron-выражению и не требует AOP-прокси, потому что работает через `TaskScheduler` — ❌ Неверно
+>
+> **Что на самом деле:** `RetryTemplate` — это **синхронный программный API** в виде шаблонного метода (`execute(RetryCallback, RecoveryCallback)`). Никакого `@Scheduled` или `TaskScheduler` он не использует. Это императивная альтернатива `@Retryable`-аннотации: вы сами вызываете `template.execute(...)` в нужной точке кода. Backoff между попытками реализован через `Thread.sleep`, а не через планировщик.
+>
+> **Откуда путаница:** название `*Template` напоминает `JdbcTemplate`, `RestTemplate` — но семантика у `RetryTemplate` ближе к императивному «обернуть-блок-в-retry», а не к scheduling.
+>
+> **Если бы это было правдой:** конфигурировался бы cron-expression, был бы `@Bean ScheduledExecutorService` — но в API `RetryTemplate` ничего такого нет.
+>
+> ---
+>
+> #### B) `RetryTemplate` — это **программный (императивный) API** Spring Retry для повторов **без аннотаций** и **без AOP-прокси**: вы создаёте экземпляр (обычно через `RetryTemplate.builder()` с `maxAttempts`, `backoff`, `retryOn`, `withListener`) и оборачиваете нужный участок кода в `template.execute(callback, recoveryCallback)`; используется когда нужен retry вне Spring-бина, динамическая конфигурация политики, явный `RecoveryCallback` или stateful-retry (Kafka/JMS) — ✓ Верно
+>
+> **Развёрнутое объяснение:** `RetryTemplate` — это thread-safe компонент, инкапсулирующий `RetryPolicy` (решает, продолжать ли), `BackOffPolicy` (как долго ждать), список `RetryListener` (хуки на open/close/error). Метод `execute(RetryCallback<T,E> callback)` запускает цикл: вызывает `callback.doWithRetry(context)`, ловит исключение, спрашивает у `RetryPolicy#canRetry(context)`, если да — `BackOffPolicy#backOff()` и повтор. Перегрузка `execute(callback, recoveryCallback)` принимает `RecoveryCallback<T>` — он будет вызван, когда попытки исчерпаны (программный аналог `@Recover`). Без AOP-прокси значит: работает в `static`-методе, лямбде, утилитном классе, юнит-тесте без Spring-контекста.
+>
+> **Пример:**
+> ```java
+> @Bean
+> public RetryTemplate paymentRetryTemplate(MeterRegistry meters) {
+>     return RetryTemplate.builder()
+>         .maxAttempts(5)
+>         .exponentialBackoff(200, 2.0, 5000)         // 200ms → 400 → 800 → 1.6s → 3.2s
+>         .retryOn(IOException.class)
+>         .traversingCauses()                          // учитывать вложенные causes
+>         .withListener(new RetryListenerSupport() {
+>             @Override public <T, E extends Throwable> void onError(
+>                     RetryContext ctx, RetryCallback<T,E> cb, Throwable ex) {
+>                 meters.counter("payment.retry.attempts").increment();
+>             }
+>         })
+>         .build();
+> }
+>
+> // Использование (программная композиция, динамический recovery)
+> PaymentResult result = paymentRetryTemplate.execute(
+>     ctx -> gateway.charge(req),                      // основная операция
+>     ctx -> PaymentResult.deferred(req.getId())       // recovery после исчерпания
+> );
+> ```
+>
+> **Когда применять:** (1) код вне Spring-контейнера (утилитный класс, batch job, тест без `@SpringBootTest`); (2) **динамическая** retry-политика, выбираемая в рантайме (`policy = isCritical ? new SimpleRetryPolicy(10) : new SimpleRetryPolicy(2)`); (3) нужен **`RecoveryCallback`** на конкретный вызов, а не общий `@Recover` для всего класса; (4) **stateful retry** (`RetryState`) для Kafka/JMS listeners — аннотацией это не выразить; (5) self-invocation внутри одного бина, где `@Retryable` не сработает из-за proxy bypass; (6) комбинирование с другими паттернами (CircuitBreaker, ExceptionClassifier) — программная сборка `RetryPolicy` гибче.
+>
+> **Подводные камни:** (1) `RetryTemplate` — synchronous, `Thread.sleep` блокирует поток (см. [[Q5]]); (2) забыли указать `retryOn(...)` — `SimpleRetryPolicy` по умолчанию ретраит **все** `Exception`, включая `NullPointerException` — маскирует баги; (3) если шарите один `RetryTemplate` между методами с разной политикой — состояние policy общее, легко получить непредсказуемое поведение; (4) `RecoveryCallback` вызывается **только при исчерпании** попыток, не при первой ошибке (как и `@Recover`); (5) при stateful-retry обязателен `RetryState` — без него поведение деградирует до stateless.
+>
+> **Связанные вопросы:** [[Q2]] — `@EnableRetry` для аннотационного пути (для `RetryTemplate` не нужен); [[Q3]] — `@Retryable` как декларативная альтернатива; [[Q5]] — backoff-стратегии и их API; [[Q12]] — stateful retry через `RetryState`; [[Q13]] — `RetryListener` и метрики
+>
+> ---
+>
+> #### C) `RetryTemplate` — это **обязательный бин**, без которого `@Retryable`-аннотация не работает: интерсептор ищет в контексте `@Bean RetryTemplate retryTemplate()` и кидает `NoSuchBeanDefinitionException`, если его нет — ❌ Неверно
+>
+> **Что на самом деле:** `@Retryable` работает «из коробки» — `RetryConfiguration` (импортируемая через `@EnableRetry`) сама создаёт `AnnotationAwareRetryOperationsInterceptor`, который собирает `RetryTemplate` **по параметрам аннотации** на лету (`maxAttempts`, `backoff`, `retryFor`). Кастомный `RetryTemplate`-бин нужен только если вы вызываете retry **программно** (`retryTemplate.execute(...)`) — это полностью независимый путь.
+>
+> **Откуда путаница:** в документации часто рядом показывают и аннотационный, и программный API, и кажется, что они «связаны через общий бин».
+>
+> **Если бы это было правдой:** все туториалы по `@Retryable` начинались бы со снипета `@Bean RetryTemplate` — но они начинаются с `@EnableRetry` + аннотации на методе.
+>
+> ---
+>
+> #### D) `RetryTemplate` нужен только для асинхронного retry в реактивном коде (`Mono`/`Flux`); для синхронного блокирующего кода используется только `@Retryable`-аннотация — ❌ Неверно
+>
+> **Что на самом деле:** ровно наоборот — `RetryTemplate` **синхронный и блокирующий**. Для реактивного кода используют `Retry.backoff(...)` из Reactor (`Mono.retryWhen(...)`) или Resilience4j-reactor — `RetryTemplate` там не работает, потому что `Thread.sleep` блокирует event loop. См. [[Q11]] о реактивных стратегиях.
+>
+> **Откуда путаница:** «программный API» иногда ассоциируется с «реактивным» — но `RetryTemplate` появился задолго до Reactor и остался императивным.
+>
+> **Если бы это было правдой:** в API `RetryTemplate` были бы методы вроде `executeMono()` или `executeFlux()` — но их нет, есть только синхронный `execute(callback)`.
+>
+> ---
+>
+> **Связанные вопросы:** [[Q3]] — декларативный `@Retryable` как альтернатива; [[Q5]] — backoff-стратегии для `RetryTemplate`; [[Q11]] — реактивный retry через Reactor; [[Q12]] — stateful-retry через `RetryTemplate.setRetryState(...)`
+
+## Q7. Какие RetryPolicy реализации есть в Spring Retry?
 
 | Политика | Описание |
 |---|---|
