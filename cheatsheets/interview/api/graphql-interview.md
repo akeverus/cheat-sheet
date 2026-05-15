@@ -142,10 +142,44 @@ graph LR
 
 
 > [!mcq]
-> - [ ] GraphQL полностью заменяет REST во всех случаях | ❌ ПОСЛЕДСТВИЕ: GraphQL хуже для file uploads, простых CRUD APIs с HTTP кэшированием, public webhooks — REST проще и performant в этих случаях
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] GraphQL использует WebSocket вместо HTTP для Query и Mutation | ❌ ПОСЛЕДСТВИЕ: Query/Mutation работают по обычному HTTP POST; только Subscriptions требуют WebSocket/SSE — путаница приводит к ненужной complexity
-> - [ ] GraphQL кэшируется HTTP кэшем так же как REST | ❌ ПОСЛЕДСТВИЕ: все запросы — POST на один URL; HTTP кэш по URL не работает; нужны persisted queries для GET-based CDN кэширования
+> **Вопрос:** В чём ключевое архитектурное отличие GraphQL от REST с точки зрения формирования ответа сервера?
+>
+> - [x] **A) Клиент в теле запроса декларативно указывает нужные поля, и сервер возвращает ровно эту проекцию — устраняя over-fetching и under-fetching за один round-trip**
+>
+>     ✓ ПОЧЕМУ ВЕРНО: это и есть фундаментальная идея GraphQL — shape ответа определяется запросом клиента, а не контрактом эндпоинта.
+>
+>     МЕХАНИЗМ: запрос приходит на единственный `POST /graphql`, парсится в AST, валидируется по schema, и executor вызывает резолверы только для запрошенных полей.
+>
+>     ```graphql
+>     query { user(id: "1") { name posts { title } } }
+>     ```
+>
+>     ```java
+>     @SchemaMapping(typeName = "Query")
+>     public User user(@Argument String id) {
+>         return userRepo.findById(id).orElseThrow();
+>     }
+>     ```
+>
+>     ПРИМЕНИМОСТЬ: мобильные клиенты с тонким каналом, BFF-агрегация разнородных бэкендов, экраны со сложными зависимыми данными.
+>
+> - [ ] **B) GraphQL полностью заменяет REST во всех сценариях и всегда быстрее**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: это не замена, а альтернатива; для file upload, простого CRUD под HTTP-кэш и public webhooks REST проще и эффективнее.
+>
+>     ПОСЛЕДСТВИЕ: команда выбирает GraphQL «потому что модно», получает лишний tooling, проблемы с кэшированием на CDN, security overhead (depth/complexity limiting) — и теряет скорость доставки.
+>
+> - [ ] **C) GraphQL обязательно использует WebSocket вместо HTTP для всех операций**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: Query и Mutation работают по обычному `HTTP POST`; WebSocket/SSE нужен только для Subscriptions.
+>
+>     ПОСЛЕДСТВИЕ: инфраструктура поднимает WebSocket-шлюз там, где достаточно `POST /graphql` через обычный Ingress; усложняется балансировка, sticky sessions, наблюдаемость.
+>
+> - [ ] **D) GraphQL кэшируется HTTP-кэшем (Cache-Control + URL) так же прозрачно, как REST**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: все запросы идут `POST` на один URL — HTTP-кэш по URL/методу бесполезен; нужны persisted queries + GET или клиентский cache (Apollo, Relay) по normalized entities.
+>
+>     ПОСЛЕДСТВИЕ: ожидание «CDN сам закэширует» приводит к пустому hit-rate, нагрузка падает на origin, latency растёт.
 
 ## Q2. Что такое Schema Definition Language (SDL)?
 
@@ -195,10 +229,46 @@ input CreateBookInput {
 
 
 > [!mcq]
-> - [ ] `!` в SDL означает список (array) элементов | ❌ ПОСЛЕДСТВИЕ: `!` — non-null модификатор; `[String]` — список; `[String!]!` — non-null список non-null строк; путаница ведёт к неверной схеме и runtime ошибкам
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] `input` типы могут содержать поля с кастомными резолверами | ❌ ПОСЛЕДСТВИЕ: input types — чистые структуры без резолверов; использование Object type как input argument → GraphQL validation error при старте
-> - [ ] SDL одинаков для GraphQL и gRPC (оба описывают API) | ❌ ПОСЛЕДСТВИЕ: gRPC использует Protocol Buffers (.proto); SDL специфичен только для GraphQL; перепутать означает неверный tooling и генерацию кода
+> **Вопрос:** Что такое Schema Definition Language (SDL) в GraphQL и какова его роль в проекте?
+>
+> - [ ] **A) `!` в SDL обозначает «список» (array) элементов**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: `!` — модификатор non-null (поле гарантированно не `null`); квадратные скобки `[...]` обозначают список; `[String!]!` — non-null список non-null строк.
+>
+>     ПОСЛЕДСТВИЕ: разработчик пишет `users: User!` ожидая массив, получает один объект; клиент падает на `.map()`, схема не отражает domain model.
+>
+> - [x] **B) SDL — текстовый язык описания типизированной схемы GraphQL: типов, полей, операций и связей; это единый контракт между клиентом и сервером, по которому валидируются запросы и генерируется tooling**
+>
+>     ✓ ПОЧЕМУ ВЕРНО: schema-first подход — SDL хранится в `.graphqls`, парсится при старте в `GraphQLSchema`, по нему валидируются входящие запросы и генерируются типы для клиента (Apollo Codegen, graphql-codegen).
+>
+>     МЕХАНИЗМ: spring-graphql читает `*.graphqls` из `classpath:graphql/`, биндит каждый `type/Query/Mutation` к `@SchemaMapping`-методам контроллера.
+>
+>     ```graphql
+>     type Book { id: ID! title: String! author: Author! }
+>     type Query { book(id: ID!): Book }
+>     ```
+>
+>     ```java
+>     @Controller
+>     class BookController {
+>         @QueryMapping public Book book(@Argument String id) { return service.find(id); }
+>         @SchemaMapping public Author author(Book book) { return authorService.byId(book.authorId()); }
+>     }
+>     ```
+>
+>     ПРИМЕНИМОСТЬ: общий source of truth для backend, frontend, мобильных клиентов; автогенерация TS/Kotlin типов исключает дрейф между API и UI.
+>
+> - [ ] **C) `input` типы могут содержать поля с кастомными резолверами**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: `input` — чисто структуры данных без логики и резолверов; они нужны как «DTO для аргументов», нельзя ссылаться на Object type как input.
+>
+>     ПОСЛЕДСТВИЕ: попытка `input X { y: User }`, где `User` — Object type, падает на schema validation при старте: «field type must be Input type».
+>
+> - [ ] **D) SDL одинаков для GraphQL и gRPC — оба описывают API одинаковым языком**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: gRPC использует Protocol Buffers (`.proto`) с другой семантикой (RPC-методы, бинарный формат, отсутствие проекций полей); SDL — специфично только для GraphQL.
+>
+>     ПОСЛЕДСТВИЕ: команда пытается переиспользовать `.proto`-файлы как `.graphqls`, теряет tooling, не понимает где field selection и `input` против `message`.
 
 ## Q3. (!) Какие типы данных существуют в GraphQL?
 
@@ -268,10 +338,56 @@ input UserFilter {
 
 
 > [!mcq]
-> - [ ] `ID` — числовой тип Integer в GraphQL | ❌ ПОСЛЕДСТВИЕ: ID сериализуется как String; сравнение ID как число даёт неверные результаты; базы данных с UUID вернут ошибку сериализации
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] `union` тип расширяет `interface` и добавляет реализацию | ❌ ПОСЛЕДСТВИЕ: union — набор возможных объектных типов без общих полей; только Object types реализуют interface; неверный schema design даёт compile error
-> - [ ] `Float` в GraphQL — 32-битное число как Java float | ❌ ПОСЛЕДСТВИЕ: GraphQL Float — double precision (64-bit); использование как float в Java ведёт к precision loss при сериализации
+> **Вопрос:** Чем отличаются `interface` и `union` в системе типов GraphQL и как они применяются для полиморфизма?
+>
+> - [ ] **A) `ID` — это числовой тип `Integer`, и при сериализации сравнивается как число**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: `ID` — это уникальный идентификатор, который сериализуется как `String` (хотя клиент может прислать число — оно будет приведено к строке); сравнение «как число» некорректно для UUID и составных ключей.
+>
+>     ПОСЛЕДСТВИЕ: схема ломается, как только в БД появляются UUID (`"a1b2-..."`) или префиксные ID (`"user:42"`) — `Integer.parseInt` бросает `NumberFormatException`.
+>
+> - [ ] **B) `union` расширяет `interface` и добавляет к нему реализацию по умолчанию**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: это две разные конструкции. `interface` объявляет общие поля, которые Object types обязаны реализовать; `union` — это «один из» нескольких Object types БЕЗ общих полей.
+>
+>     ПОСЛЕДСТВИЕ: попытка `union X implements Y` — schema parse error; разработчик путает selection set (для union нужны `... on Type { ... }`-фрагменты) с обычным наследованием.
+>
+> - [x] **C) `interface` — общий контракт полей, который реализуют Object types (`implements`); `union` — set возможных Object types без общих полей; в обоих случаях клиент использует inline-фрагменты `... on Type` для выбора type-specific полей**
+>
+>     ✓ ПОЧЕМУ ВЕРНО: это и есть штатный механизм полиморфизма в GraphQL — interface для «все Node имеют id», union для «search возвращает User или Post или Comment».
+>
+>     МЕХАНИЗМ: на сервере нужен `TypeResolver`, который по runtime-объекту возвращает GraphQL type name; иначе executor не знает, какие резолверы вызвать.
+>
+>     ```graphql
+>     interface Node { id: ID! }
+>     type User implements Node { id: ID! name: String! }
+>     union SearchResult = User | Post | Comment
+>     type Query { search(q: String!): [SearchResult!]! }
+>     ```
+>
+>     ```java
+>     @Bean
+>     RuntimeWiringConfigurer wiring() {
+>         return b -> b.type("SearchResult", t -> t.typeResolver(env -> {
+>             Object o = env.getObject();
+>             if (o instanceof User)    return env.getSchema().getObjectType("User");
+>             if (o instanceof Post)    return env.getSchema().getObjectType("Post");
+>             return env.getSchema().getObjectType("Comment");
+>         }));
+>     }
+>     ```
+>
+>     ```graphql
+>     query { search(q: "java") { __typename ... on User { name } ... on Post { title } } }
+>     ```
+>
+>     ПРИМЕНИМОСТЬ: feed/timeline с разнотипными сущностями, поиск по нескольким коллекциям, activity log.
+>
+> - [ ] **D) `Float` в GraphQL — это 32-битное число, эквивалентное Java `float`**
+>
+>     ✗ ПОЧЕМУ НЕВЕРНО: GraphQL `Float` по спецификации — IEEE 754 double precision (64-bit), маппится на Java `Double`.
+>
+>     ПОСЛЕДСТВИЕ: маппинг резолвера в `float` теряет точность для финансовых/научных значений; для денежных сумм всё равно нужен custom scalar (`BigDecimal`) — `Float` здесь не подходит ни в каком виде.
 
 ## Q4. Что такое Input-типы и зачем они нужны?
 
