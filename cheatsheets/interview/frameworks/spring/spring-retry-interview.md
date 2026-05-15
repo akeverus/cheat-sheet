@@ -872,10 +872,44 @@ public void doUpdateTransactional(Entity e) {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. Как Spring Retry интегрируется с Reactor/WebClient? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Вопрос:** Как правильно скомбинировать `@Retryable` и `@Transactional`, чтобы retry действительно повторял операцию в свежей транзакции?
+>
+> - [x] **A. Поместить `@Retryable` на внешний метод без `@Transactional`, а `@Transactional` — на вложенный метод, который вызывается через Spring-bean (proxy)**
+>
+>   Каждая попытка стартует **новую транзакцию**: при `OptimisticLockException` происходит rollback, retry-advice ловит исключение и снова вызывает внешний метод → новый `doUpdateTransactional()` → новый `TransactionInterceptor` открывает свежую транзакцию.
+>
+>   ```java
+>   @Retryable(retryFor = OptimisticLockException.class, maxAttempts = 3)
+>   public void updateWithRetry(Entity e) {
+>       doUpdateTransactional(e);  // ← proxy-вызов в другой bean
+>   }
+>   @Transactional
+>   public void doUpdateTransactional(Entity e) { repository.save(e); }
+>   ```
+>
+>   **Почему правильно:** retry-interceptor находится **снаружи** транзакционного advice, поэтому ловит исключение уже после `commit/rollback` — состояние БД консистентно, JPA-контекст пересоздаётся.
+>
+>   **Use-case:** оптимистичные блокировки (JPA `@Version`), deadlock retry на PostgreSQL (`40P01`), serialization failures (`40001`).
+>
+> - [ ] **B. Поставить обе аннотации на один метод — `@Transactional` + `@Retryable` — Spring сам разрулит порядок advice через `@Order`**
+>
+>   Порядок advice по умолчанию: `@Retryable` стоит **внутри** `@Transactional` (retry-advice имеет более низкий приоритет). При исключении транзакция откатывается **до** того, как retry успеет среагировать — следующая попытка работает с уже rolled-back `EntityManager`, получает `TransientObjectException` или `IllegalStateException`.
+>
+>   ❌ ПОСЛЕДСТВИЕ: retry "работает" по логам (3 attempts), но все попытки падают на `detached entity` — данные не сохраняются, инцидент в production.
+>
+> - [ ] **C. Использовать `@Transactional(propagation = REQUIRES_NEW)` на том же методе, что и `@Retryable` — каждая попытка создаст новую транзакцию**
+>
+>   `REQUIRES_NEW` создаст новую транзакцию **внутри** retry-цикла, но порядок advice не меняется: `@Retryable` всё равно срабатывает **после** commit/rollback внешней транзакции. Плюс при self-invocation (вызов из того же класса) `@Transactional` вообще игнорируется.
+>
+>   ❌ ПОСЛЕДСТВИЕ: иллюзия решения — на тестах работает (если бросать через TestTemplate), в проде self-invocation ломает proxy и retry проходит без транзакции вообще.
+>
+> - [ ] **D. Ловить исключение вручную в `catch`-блоке и вызывать метод рекурсивно из самого себя**
+>
+>   Рекурсивный вызов из того же класса обходит Spring proxy → `@Transactional` не применяется → нет ни retry, ни управления транзакцией.
+>
+>   ❌ ПОСЛЕДСТВИЕ: stack overflow при долгих сбоях, нет backoff/jitter, нет метрик через `RetryListener`, нельзя ограничить max attempts централизованно.
+
+## Q11. Как Spring Retry интегрируется с Reactor/WebClient?
 
 `@Retryable` **не работает** с реактивными методами (`Mono`/`Flux`) — для них нужен встроенный Reactor-механизм:
 
@@ -897,10 +931,46 @@ webClient.get()
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. Что такое Stateful Retry и когда он нужен? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Вопрос:** Почему `@Retryable` не подходит для реактивного `WebClient`, и какой механизм нужно использовать вместо него?
+>
+> - [x] **A. `@Retryable` работает с проверкой выброшенного исключения из синхронного вызова, а `Mono`/`Flux` возвращают результат немедленно — ошибку нужно ловить через оператор `retryWhen(Retry.backoff(...))` в reactive-цепочке**
+>
+>   `@Retryable` — это AOP-advice вокруг `Method.invoke()`. Реактивный метод возвращает `Mono<T>` **сразу** (без блокировки), а ошибка приходит **позже** через `onError` сигнал в подписке. AOP-перехватчик не видит этот сигнал — для него метод "успешен" в момент возврата `Mono`.
+>
+>   ```java
+>   webClient.get().uri("/api/data")
+>       .retrieve()
+>       .bodyToMono(Data.class)
+>       .retryWhen(Retry.backoff(3, Duration.ofMillis(500))
+>           .filter(e -> e instanceof WebClientResponseException.ServiceUnavailable)
+>           .jitter(0.5)
+>           .onRetryExhaustedThrow((spec, signal) ->
+>               new ServiceUnavailableException("All retries exhausted")));
+>   ```
+>
+>   **Почему правильно:** `Retry.backoff()` — оператор Reactor, который встраивается в reactive stream и реагирует на `onError`-сигналы; поддерживает экспоненциальный backoff, jitter, фильтр исключений, hook на исчерпание.
+>
+>   **Use-case:** WebFlux HTTP-клиенты, R2DBC, реактивный Kafka — всё, что строится поверх `Project Reactor`.
+>
+> - [ ] **B. Достаточно навесить `@Retryable` на метод, возвращающий `Mono`, и Spring сам обернёт реактивный поток в retry-decorator**
+>
+>   Spring Retry **не имеет** интеграции с Reactor — `@Retryable` advice проверяет результат `Method.invoke()`, видит успешно вернувшийся `Mono` и завершает работу. Когда подписчик получит `onError` — retry-advice уже давно отработал.
+>
+>   ❌ ПОСЛЕДСТВИЕ: тесты с `StepVerifier` показывают, что retry не срабатывает, и в production первый же 503 от downstream-сервиса проваливается без повторов.
+>
+> - [ ] **C. Использовать `@Retryable(useReactive = true)` — специальный режим для Mono/Flux появился в Spring Retry 2.0**
+>
+>   Такого режима **не существует** ни в Spring Retry 1.x, ни в 2.x. API `@Retryable` не имеет параметра `useReactive`, и интеграция с Reactor не планируется (это противоречит блокирующей природе AOP-advice).
+>
+>   ❌ ПОСЛЕДСТВИЕ: придуманный флаг → код не компилируется или (если кто-то добавит wrapper) маскирует реальную проблему — junior-разработчик потратит часы на дебаг.
+>
+> - [ ] **D. Завернуть `Mono` в `.block()` и применить `@Retryable` к синхронному методу**
+>
+>   `.block()` блокирует поток до получения результата — это **разрушает** реактивную модель: вместо event-loop потока (несколько на JVM) используется обычный thread, теряется backpressure, при высокой нагрузке исчерпываются worker'ы WebFlux.
+>
+>   ❌ ПОСЛЕДСТВИЕ: на нагрузочном тестировании TPS падает в 10-100 раз, WebFlux-эффективность исчезает, а в `Schedulers.parallel()` ловится `BlockHound`-исключение.
+
+## Q12. Что такое Stateful Retry и когда он нужен?
 
 `Stateful Retry` сохраняет состояние между попытками через ключ (`RetryState`). Нужен для **транзакционных message listeners** (Kafka, JMS).
 
@@ -924,10 +994,47 @@ template.execute(ctx -> {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. Как добавить метрики и логирование через RetryListener? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Вопрос:** В каких сценариях обычный (stateless) `RetryTemplate` не работает корректно и нужен Stateful Retry с `RetryState`?
+>
+> - [x] **A. Когда retry происходит внутри транзакционного message listener (Kafka, JMS): rollback откатывает транзакцию, брокер пере-доставляет сообщение, и каждый retry — это уже отдельный вызов, а не продолжение цикла**
+>
+>   В транзакционном Kafka listener при исключении транзакция (включая offset commit) откатывается, сообщение остаётся в партиции, consumer poll() получает его **снова** — для in-memory счётчика stateless retry это новое сообщение, и счётчик начинается с 0 → бесконечный цикл.
+>
+>   ```java
+>   RetryTemplate template = new RetryTemplate();
+>   template.setRetryPolicy(new SimpleRetryPolicy(3));
+>   // RetryState идентифицирует сообщение по ключу — счётчик переживает rollback
+>   RetryState state = new DefaultRetryState(message.key(), /* forceRefresh */ false);
+>   template.execute(
+>       ctx -> { processMessage(message); return null; },
+>       ctx -> { sendToDlq(message); return null; },  // recoverer после исчерпания
+>       state
+>   );
+>   ```
+>
+>   **Почему правильно:** `Stateful Retry` хранит счётчик **снаружи** (`RetryContextCache`, обычно in-memory `Map<key, RetryContext>`); при повторной доставке retry-advice находит существующий контекст по ключу и продолжает счёт. После `maxAttempts` срабатывает `recoverer` (отправка в DLQ).
+>
+>   **Use-case:** Kafka transactional listener (`spring-kafka` + `DefaultErrorHandler` с `BackOff`), JMS transacted session, Spring Batch retryable item processor — везде, где rollback нельзя избежать.
+>
+> - [ ] **B. Когда у retry-метода больше 3 аргументов и нужно сохранять их между попытками в `RetryContext`**
+>
+>   `RetryContext` действительно хранит атрибуты между попытками, но это работает и в stateless-режиме. Количество аргументов метода не имеет отношения к выбору stateful/stateless — состояние аргументов хранит стек вызова, а не retry-механизм.
+>
+>   ❌ ПОСЛЕДСТВИЕ: попытка решить выдуманную проблему добавлением `Stateful Retry` усложняет код, создаёт race conditions в `RetryContextCache` и не даёт никакого выигрыша.
+>
+> - [ ] **C. Когда нужно сохранять прогресс retry в БД (Redis), чтобы пережить перезапуск приложения**
+>
+>   `Stateful Retry` хранит контекст в **in-memory** `RetryContextCache` (`MapRetryContextCache` по умолчанию) — при рестарте JVM состояние теряется. Для durable retry нужны другие инструменты: outbox pattern, message broker с retry-policy, или явное хранение состояния в БД.
+>
+>   ❌ ПОСЛЕДСТВИЕ: команда рассчитывает на сохранение прогресса после деплоя, но после rollout retry начинается заново — двойные платежи, дублирование уведомлений.
+>
+> - [ ] **D. Когда нужен exponential backoff между попытками — stateless retry не поддерживает задержки**
+>
+>   Stateless `RetryTemplate` **отлично** поддерживает `ExponentialBackOffPolicy`, `FixedBackOffPolicy`, `UniformRandomBackOffPolicy` — backoff никак не связан с stateful/stateless. Stateful — это про **где** хранится счётчик, а не про **как** делается пауза.
+>
+>   ❌ ПОСЛЕДСТВИЕ: junior'ы путают эти концепции и тащат `Stateful Retry` туда, где достаточно `RetryTemplate.builder().exponentialBackoff(...).build()` — лишняя сложность без причины.
+
+## Q13. Как добавить метрики и логирование через RetryListener?
 
 `RetryListener` позволяет перехватывать события retry:
 
