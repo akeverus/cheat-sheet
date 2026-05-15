@@ -1119,10 +1119,28 @@ ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9090)
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Что такое Metadata в gRPC? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Что представляют собой Interceptors в gRPC и где их применяют?**
+>
+> - [x] **A.** Middleware-компоненты, перехватывающие RPC-вызовы для cross-cutting логики (логирование, auth, метрики)
+>   - Корректное определение: `ServerInterceptor` оборачивает входящие вызовы, `ClientInterceptor` — исходящие, оба регистрируются через `ServerBuilder`/`ManagedChannelBuilder`.
+>   - Механизм: реализация `interceptCall(...)` вызывает `next.startCall(...)` или `next.newCall(...)`, оборачивая `ServerCall.Listener`/`ClientCall` через `ForwardingServer/ClientCallListener`.
+>   - Применение: единая точка для трассировки (trace-id из `Metadata`), `JWT`-валидации, rate limiting, измерения latency — без правки бизнес-логики сервисов.
+>   - Контракт: interceptor не должен блокировать поток I/O и обязан корректно проксировать все callback'и (`onMessage`, `onHalfClose`, `onCancel`, `onComplete`).
+>   - Аналог в HTTP-мире: `Servlet Filter` или Spring `HandlerInterceptor`, но работает на уровне gRPC-вызовов, а не HTTP-запросов.
+>
+> - [ ] **B.** Утилиты для парсинга `.proto`-файлов и генерации стабов на стадии сборки
+>   - Это работа `protoc` и плагина `protoc-gen-grpc-java`, выполняется на этапе компиляции, а не во время RPC-вызова.
+>   - ПОСЛЕДСТВИЕ: путаница приведёт к попыткам "перехватить" вызов через generated-код, что невозможно — стабы immutable и не имеют hook-точек.
+>
+> - [ ] **C.** Конфигурация TLS-шифрования и mTLS-аутентификации на уровне канала
+>   - TLS настраивается через `ManagedChannelBuilder.useTransportSecurity()` и `SslContextBuilder`, это transport-layer, а не application-layer.
+>   - ПОСЛЕДСТВИЕ: попытка через interceptor "включить TLS" приведёт к runtime-ошибкам — interceptor не имеет доступа к socket'у.
+>
+> - [ ] **D.** Механизм health checking для load balancer'а через `grpc.health.v1.Health` сервис
+>   - Health checking — отдельный стандартный сервис (`HealthGrpc`), реализуется как обычный gRPC-сервис, а не как interceptor.
+>   - ПОСЛЕДСТВИЕ: реализация health-логики внутри interceptor нарушит контракт LB — он ожидает RPC-вызов `Check`/`Watch` к health-сервису.
+
+## Q14. Что такое Metadata в gRPC?
 
 `Metadata` — это механизм передачи дополнительной информации между клиентом и сервером, аналогичный HTTP-заголовкам. Передаётся в формате ключ-значение.
 
@@ -1157,10 +1175,28 @@ Metadata активно используется для передачи trace-i
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. (!) Как устроена обработка ошибок в gRPC? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Чем `Metadata` в gRPC отличается от тела сообщения и как её передают?**
+>
+> - [ ] **A.** Это часть `protobuf`-сообщения, объявляемая в `.proto` через специальное поле `metadata`
+>   - В `.proto` нет встроенного `metadata`-типа: пользовательские метаданные описываются как обычные поля сообщения, но это уже payload, а не транспортные метаданные.
+>   - ПОСЛЕДСТВИЕ: попытка добавить trace-id/auth в `.proto` приведёт к смешению cross-cutting логики с бизнес-моделью и сломает совместимость при эволюции схемы.
+>
+> - [x] **B.** Транспортные ключ-значение пары поверх HTTP/2 headers, передаваемые отдельно от payload через initial/trailing frames
+>   - Корректно: `Metadata` маппится на HTTP/2 HEADERS-фреймы; `Metadata.Key<T>` задаёт имя и `Marshaller` (`ASCII_STRING_MARSHALLER` или `BINARY_BYTE_MARSHALLER` для `-bin`-суффикса).
+>   - Передаётся в трёх точках: initial metadata (request headers клиента), response headers (перед первым сообщением сервера) и trailing metadata/trailers (после последнего сообщения, плюс `grpc-status`/`grpc-message`).
+>   - Доступ к ней — через `ServerInterceptor.interceptCall(call, headers, next)` или `ClientInterceptor` (запись в `headers` в `start(...)`); прикладной код в сервисе по умолчанию её не видит.
+>   - Use-cases: распространение `trace-id` (W3C `traceparent`), JWT в `authorization`, `user-agent`, `grpc-timeout` (для deadline propagation).
+>   - Ограничение: ASCII-ключи (lowercase), бинарные значения только в `-bin`-ключах, суммарный размер ограничен `maxInboundMetadataSize` (по умолчанию 8 KB).
+>
+> - [ ] **C.** Информация о схеме `.proto`-файлов, передаваемая через gRPC reflection API
+>   - Это служба `grpc.reflection.v1alpha.ServerReflection`, отдельный сервис для динамических клиентов (`grpcurl`, Postman), никак не связан с per-call metadata.
+>   - ПОСЛЕДСТВИЕ: путаница приведёт к попыткам через reflection передавать auth/tracing — это архитектурная ошибка, reflection обычно отключают в production.
+>
+> - [ ] **D.** Конфигурация канала: keepalive, max message size, compression — задаваемая через `ChannelOption`
+>   - Это channel-level настройки `ManagedChannelBuilder` (`keepAliveTime`, `maxInboundMessageSize`), они влияют на все вызовы канала, а не на конкретный RPC.
+>   - ПОСЛЕДСТВИЕ: смешение этих понятий помешает динамически прокидывать per-request данные — channel-options нельзя менять на лету для одного вызова.
+
+## Q15. (!) Как устроена обработка ошибок в gRPC?
 
 В gRPC ошибки передаются через объект `Status`, который содержит **код ошибки** и опциональное **текстовое описание**. Это принципиально отличается от HTTP status codes.
 
@@ -1230,10 +1266,28 @@ try {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. Какие стандартные Status Codes существуют в gRPC? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> **Как gRPC возвращает ошибки клиенту и чем это отличается от HTTP REST?**
+>
+> - [ ] **A.** Через HTTP status codes (4xx/5xx) — клиент читает их из ответа как в обычном REST
+>   - HTTP/2 для всех успешных и неуспешных gRPC-вызовов возвращает `200 OK`; реальный gRPC-статус приходит в trailer'е `grpc-status`.
+>   - ПОСЛЕДСТВИЕ: ориентация на HTTP-код в middleware/proxy приведёт к тому, что все gRPC-ошибки будут считаться успешными ответами (метрики 5xx будут нулевыми, алерты сломаются).
+>
+> - [ ] **B.** Через выброс checked-exception в generated stub, которое клиент обязан перехватить компилятором
+>   - В Java stub-методы бросают `StatusRuntimeException` (unchecked), компилятор не заставляет его ловить — это сознательный design choice.
+>   - ПОСЛЕДСТВИЕ: ожидание checked-exception приведёт к тому, что разработчик не обернёт вызов в `try/catch`, и при `UNAVAILABLE` приложение упадёт по unhandled-exception.
+>
+> - [x] **C.** Через объект `Status` с кодом из 17 стандартных значений (`NOT_FOUND`, `UNAVAILABLE`, …), описанием и опциональными деталями в trailer'ах
+>   - Корректно: сервер вызывает `responseObserver.onError(Status.X.withDescription(...).asRuntimeException())`; HTTP/2 trailers содержат `grpc-status` (число), `grpc-message` (строка), `grpc-status-details-bin` (Any-protobuf для Rich Error Model).
+>   - Клиент ловит `StatusRuntimeException`, извлекает `e.getStatus().getCode()` и применяет retry-стратегию (`UNAVAILABLE` → retry, `INVALID_ARGUMENT` → fail fast, `DEADLINE_EXCEEDED` → fail).
+>   - Rich Error Model: `com.google.rpc.Status` с `details` (например, `BadRequest.FieldViolation`) передаётся через `StatusProto.toStatusRuntimeException(...)` для структурированных ошибок валидации.
+>   - Контракт: статусы стандартизованы (gRPC spec), что позволяет middleware (envoy, linkerd) единообразно строить метрики/retry-policy без знания бизнес-семантики.
+>   - Распространение: deadline и status автоматически прокидываются через interceptor'ы, что критично для микросервисных цепочек (root-cause виден на всех hop'ах).
+>
+> - [ ] **D.** Через специальное поле `error` в каждом `.proto`-сообщении ответа — клиент проверяет его вручную
+>   - Это паттерн "envelope с error" из REST/GraphQL, не gRPC; gRPC использует out-of-band signalling через trailer'ы для разделения ошибки и payload.
+>   - ПОСЛЕДСТВИЕ: добавление `error`-поля в каждый response-message создаст дублирование с `grpc-status`, усложнит схему и сломает retry-логику middleware (она смотрит на `grpc-status`, а не на тело).
+
+## Q16. Какие стандартные Status Codes существуют в gRPC?
 
 gRPC определяет 17 стандартных кодов в `io.grpc.Status.Code`:
 
