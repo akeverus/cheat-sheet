@@ -1266,11 +1266,28 @@ If-Match: "abc123"
 **Stripe pattern:** `sk_live_abc123...` — prefix immediately tells whether secret/publishable/test/live.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. (!) Rate limiting headers? ❌ ПОСЛЕДСТВИЕ: антипаттерн деградирует SLA при росте нагрузки или зависимостей.
+> [!mcq] Какой набор практик хранения API-ключей минимизирует риск утечки и облегчает ротацию?
+>
+> - [ ] Хранить ключи в БД в открытом виде, отдавать админу при любом запросе
+>     - Почему: «show only on creation» — единственный способ гарантировать, что даже DB-админ не увидит plaintext-ключи у клиентов.
+>     - Последствие: при компрометации БД утекают рабочие production-ключи всех клиентов одновременно.
+>
+> - [x] Хранить хеш ключа, показывать plaintext один раз при создании, давать revoke/rotate без downtime
+>     - Почему: ключи — это secrets; хеш в БД защищает от утечки, одноразовый показ снимает риск повторного просмотра, revoke/rotate — обязательны для incident response.
+>     - Как работает: на создание сервер генерирует случайный ключ (32+ байта), отдаёт клиенту один раз, в БД сохраняет SHA-256/HMAC. При запросе сравнивает хеш. Revoke = пометка `revoked_at`. Rotate = создание нового ключа со старым ещё активным N часов.
+>     - Когда: любой публичный API с per-customer ключами (Stripe, GitHub, Twilio).
+>     - Пример: `sk_live_abc123…` с prefix указывает на тип/среду; в БД лежит `sha256(key)`.
+>
+> - [ ] Использовать один общий API-ключ для всех клиентов и менять его раз в год
+>     - Почему: shared secret = невозможно отозвать ключ одного скомпрометированного клиента без поломки остальных; раз в год — слишком редко для production.
+>     - Последствие: утечка ключа у одного клиента форсит экстренную ротацию для всех, окно эксплуатации — до 365 дней.
+>
+> - [ ] Класть API-ключи в URL query string и логировать их в access-логах для audit
+>     - Почему: URL попадают в access-логи, browser history, Referer-header, прокси-логи — это утечка secrets по дизайну. Audit делается отдельным `audit_log` с key_id, не plaintext.
+>     - Последствие: ключи утекают через logs/Sentry/CDN-логи в десятки систем, ротация после инцидента стоит дни.
+
+
+## Q20. (!) Rate limiting headers?
 
 **Tell client about limits:**
 
@@ -1300,11 +1317,28 @@ Retry-After: 60
 - Honor `Retry-After` после 429
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q21. Throttling vs hard limits? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что должен вернуть сервер на rate-limited запрос, чтобы клиент мог корректно отступить?
+>
+> - [x] HTTP 429 Too Many Requests с заголовком `Retry-After` и текущими `RateLimit-*` headers
+>     - Почему: 429 — стандартный статус для rate-limit, `Retry-After` (секунды или HTTP-date) даёт клиенту точный момент следующей попытки, `RateLimit-Limit/Remaining/Reset` (RFC 9239) сообщают окно лимита.
+>     - Как работает: клиентский SDK видит 429, читает `Retry-After: 60`, ждёт 60 секунд и повторяет; в фоне `RateLimit-Remaining` позволяет prepare backoff до hit.
+>     - Когда: любой API с rate-limiting (Stripe, GitHub, Twilio) — это де-факто стандарт.
+>     - Пример: `HTTP/1.1 429 Too Many Requests\nRetry-After: 60\nRateLimit-Limit: 100\nRateLimit-Remaining: 0`.
+>
+> - [ ] HTTP 200 OK с пустым телом и заголовком `X-Rate-Limited: true`
+>     - Почему: 200 говорит «успех» — клиент не поймёт что запрос отклонён и не retry; custom header заголовок не покрывается стандартными HTTP-клиентами.
+>     - Последствие: клиент сохранит «пустые данные» как валидный ответ, потеряет реальные данные, ретраев не будет.
+>
+> - [ ] HTTP 503 Service Unavailable без заголовков
+>     - Почему: 503 семантически означает «сервис недоступен» (downtime, перегрузка), не «лимит превышен для этого клиента». Без `Retry-After` клиент ретраит с фиксированным интервалом, провоцируя retry storm.
+>     - Последствие: клиенты считают это инцидентом всего сервиса, эскалация в саппорт, retry-шторм усиливает нагрузку.
+>
+> - [ ] HTTP 403 Forbidden с описанием лимита в JSON body
+>     - Почему: 403 означает «permission denied» — клиент решит что у него отозваны права и пойдёт re-auth/re-key, а не ждать. Сообщение в body не парсится стандартными middleware/прокси.
+>     - Последствие: клиент инициирует key rotation/re-auth flow, поддержка перегружена ложными тикетами «отозвали ключ».
+
+
+## Q21. Throttling vs hard limits?
 
 **Throttling** (soft) — slow down requests.
 **Hard limit** — reject (429).
@@ -1325,11 +1359,28 @@ Retry-After: 60
 **Tools:** API Gateway (Kong, Apigee), Nginx, Envoy, application code.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q22. (!) OpenAPI / Swagger? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] В чём ключевая разница между throttling и hard rate limit, и когда какой применять?
+>
+> - [ ] Throttling и hard limit — это синонимы, оба отклоняют запросы с 429
+>     - Почему: это разные механизмы — throttling замедляет (queue/delay), hard limit отклоняет; смешивание их понятий ведёт к неверной конфигурации API gateway.
+>     - Последствие: клиент видит timeout вместо ясного 429, retry-логика ломается, observability фейлится.
+>
+> - [ ] Throttling используется на проде, hard limit — на dev/staging
+>     - Почему: оба используются на проде в комбинации; среда не определяет тип ограничения. Hard limit (429) защищает от abuse, throttling — от нагрузки.
+>     - Последствие: на dev отключают защиту и пропускают баги; на проде без hard limit одно-bad-actor консьюмер выжирает весь capacity.
+>
+> - [x] Throttling — soft, замедляет/queueing (token bucket с задержкой), hard limit — отклоняет с 429, применяются на разных уровнях
+>     - Почему: throttling сохраняет SLA при кратковременных всплесках (smoothing), hard limit защищает от sustained abuse и переполнения; типичный prod использует оба: throttle до 80% capacity, hard limit на 100%.
+>     - Как работает: token bucket с capacity=100 и refill=10/s; при превышении throttle добавляет delay, при превышении hard cap (например, 200%) возвращает 429.
+>     - Когда: throttling — для предсказуемого degradation, hard limit — для abuse protection; per-endpoint и per-key.
+>     - Пример: Stripe ограничивает создание users жёстче (10/s hard) чем чтение (100/s throttled).
+>
+> - [ ] Hard limit — это infrastructure-level (Nginx), throttling — application-level (код); они никогда не сочетаются
+>     - Почему: оба механизма реализуются на любом уровне (Nginx умеет и `limit_req` с burst+delay = throttling, и `limit_req_zone` reject = hard); в проде их обычно сочетают на разных уровнях (Nginx + app).
+>     - Последствие: defense-in-depth теряется — один уровень защиты обходится при misconfiguration или DDoS на нём.
+
+
+## Q22. (!) OpenAPI / Swagger?
 
 **OpenAPI** (formerly Swagger) — standard для API documentation.
 
@@ -1368,11 +1419,28 @@ paths:
 Подробнее — в [OpenAPI / Swagger](openapi-swagger-interview.md).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q23. Examples и SDKs? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Какой подход к OpenAPI-спецификации даёт максимум пользы команде и интеграторам?
+>
+> - [ ] Генерировать OpenAPI из работающего кода в проде через introspection раз в неделю
+>     - Почему: «code-first auto-generation» приводит к тому, что спека всегда отстаёт; никто не ревьюит контракт до релиза, breaking changes уходят в прод.
+>     - Последствие: интеграторы получают обновлённую спеку постфактум, ломаются их клиенты, нет процесса согласования API-changes.
+>
+> - [ ] Писать OpenAPI вручную в .md документации без машинной валидации
+>     - Почему: markdown не валидируется тулингом, нет генерации SDK/клиентов, дрейф между документацией и реализацией — гарантирован.
+>     - Последствие: документация устаревает за недели, integration partners жалуются на «non-working examples», поддержка тонет в вопросах.
+>
+> - [x] Spec-first: писать OpenAPI YAML/JSON до кода, валидировать в CI, генерировать клиенты и server-stubs
+>     - Почему: спека — source of truth для контракта; review до реализации ловит проблемы дешёво; авто-генерация клиентов даёт интеграторам SDK «бесплатно»; CI-валидация ловит дрейф.
+>     - Как работает: PR с изменением `openapi.yaml` ревьюится → генерируется server-stub (Spring, FastAPI) и client SDK → реализация заполняет stub → contract-tests проверяют runtime соответствие.
+>     - Когда: любой public API, B2B-интеграции, microservices с несколькими консьюмерами.
+>     - Пример: Stripe, GitHub — оба ведут OpenAPI как source-of-truth, генерируют 10+ SDK из неё.
+>
+> - [ ] Использовать Swagger UI только для внутренней разработки, без публикации спеки наружу
+>     - Почему: Swagger UI — удобный front, но без публичной спеки интеграторы лишены машинной генерации клиентов и contract-testing; «внутреннее использование» теряет 90% value.
+>     - Последствие: каждый интегратор пишет HTTP-клиент с нуля, contract-mismatches ловятся в проде, поддержка перегружена ad-hoc вопросами.
+
+
+## Q23. Examples и SDKs?
 
 **Always provide:**
 - **Code examples** (curl, Python, JavaScript, Java, ...)
@@ -1384,11 +1452,28 @@ paths:
 **Auto-gen tools:** OpenAPI Generator, Speakeasy, Stainless.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q24. (!) HTTPS only? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что даёт интегратору авто-сгенерированный SDK сверх «голой» HTTP-документации?
+>
+> - [ ] Только улучшение DX без влияния на надёжность интеграции
+>     - Почему: SDK даёт типизацию, retry-логику, обработку 429/5xx, аутентификацию из коробки — это не просто DX, а снижение integration bugs.
+>     - Последствие: команда недооценивает SDK и не вкладывается в авто-генерацию, интеграторы пишут свои клиенты с багами retry/auth.
+>
+> - [x] Типизированный клиент с готовым auth, retry, pagination, error-handling — снижает integration bugs и time-to-first-call
+>     - Почему: SDK инкапсулирует HTTP-детали (auth headers, retry на 429/5xx с backoff, pagination cursor, парсинг ошибок), интегратор работает с domain-объектами; авто-генерация из OpenAPI гарантирует синхронность с API.
+>     - Как работает: OpenAPI Generator/Speakeasy/Stainless парсят spec → создают типизированные модели (`User`, `Order`) и методы (`client.users.get(id)`); SDK включает middleware для auth/retry/logging.
+>     - Когда: любой public API с >5 эндпоинтами или 3+ языками интеграторов.
+>     - Пример: `stripe.charges.create(amount=2000, currency='usd')` вместо ручного `POST /v1/charges` с form-encoded body.
+>
+> - [ ] Полную обратную совместимость SDK при breaking changes API
+>     - Почему: SDK генерируется из spec — если API ломается, SDK тоже ломается (новая major version). SDK не «маскирует» breaking changes автоматически.
+>     - Последствие: ложные ожидания «обновим API, клиенты не заметят» приводят к падению интеграций при релизе.
+>
+> - [ ] Защиту от утечки API-ключей через SDK-side encryption
+>     - Почему: SDK не шифрует ключи — они в env vars/secrets manager у клиента; SDK только передаёт в Authorization header через HTTPS.
+>     - Последствие: команда полагается на «волшебную защиту SDK», не вкладывается в нормальное хранение ключей у интеграторов (docs, examples с env vars).
+
+
+## Q24. (!) HTTPS only?
 
 **Always.** No HTTP в production.
 
@@ -1407,11 +1492,28 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 **TLS 1.2 minimum** (1.3 recommended).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q25. Input validation, output encoding? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Как правильно поступить с HTTP-запросом к API в проде, который требует HTTPS?
+>
+> - [ ] Принять запрос на HTTP и обработать как обычно — клиент сам решит мигрировать
+>     - Почему: на HTTP API-ключ и payload передаются в открытом виде, перехватываются на любом hop; «клиент сам мигрирует» — никогда не работает в реальности.
+>     - Последствие: API-ключи утекают через wifi-сниффинг и compromised proxies, secrets компрометируются у интеграторов.
+>
+> - [ ] Сделать 301/302 redirect на HTTPS-версию URL
+>     - Почему: при redirect клиент уже отправил secrets в HTTP-запросе — они утекли до того, как redirect случился. Стандартные HTTP-клиенты вроде curl автоматически следуют redirect и могут «потерять» Authorization header.
+>     - Последствие: secret уже в открытом виде в логах, redirect не защищает; ложное чувство безопасности.
+>
+> - [x] Отклонить HTTP-запрос с 400/426 без redirect, на HTTPS отдавать HSTS-заголовок
+>     - Почему: fail-fast предотвращает утечку secrets (клиент не отправит ключ повторно по https без явного решения); HSTS (`max-age=31536000; includeSubDomains; preload`) запоминается браузером и форсит HTTPS даже при попытке HTTP.
+>     - Как работает: на :80 listen возвращает 400/426 «HTTPS required» с минимальным телом без обработки auth; на :443 отдаёт `Strict-Transport-Security` с большим max-age и preload-листингом.
+>     - Когда: production API с secrets/auth, особенно B2B и financial APIs.
+>     - Пример: Stripe API возвращает 400 на HTTP, не редиректит — это форсит разработчиков починить URL сразу.
+>
+> - [ ] Разрешить HTTP только для health-check эндпоинтов, остальное — HTTPS
+>     - Почему: смешанная конфигурация усложняет defense; даже health-check может утекать internal-info (имена пулов, БД, версии). Современные load balancers и orchestrators (k8s) делают health checks HTTPS без проблем.
+>     - Последствие: misconfigured proxy случайно отдаст другой эндпоинт через :80, secret утекает; security audit fail.
+
+
+## Q25. Input validation, output encoding?
 
 **Input validation:**
 - Schema (OpenAPI или JSON Schema)
@@ -1428,11 +1530,28 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 Подробнее — в [Application Security](../security/application-security-interview.md).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q26. CORS? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Где должна происходить input validation в продакшен API, чтобы защитить от SQLi и malformed data?
+>
+> - [ ] Только на клиенте через JavaScript-валидаторы перед отправкой формы
+>     - Почему: клиент-валидация — для UX (быстрый feedback), не security; клиент модифицируется злоумышленником (curl, postman, modified JS), и без серверной валидации SQL-injection пройдёт напрямую.
+>     - Последствие: SQLi через ручной POST с любым payload, утечка/повреждение данных в БД.
+>
+> - [x] На границе API через schema (OpenAPI/JSON Schema) + типизированные queries (prepared statements/ORM)
+>     - Почему: schema-валидация на entry-point режектит malformed JSON/типы до бизнес-логики; prepared statements/ORM с параметризованными запросами делают SQLi структурно невозможным (значения не интерполируются в SQL-строку).
+>     - Как работает: контроллер парсит JSON по OpenAPI-схеме (type, range, format, length, pattern), невалидное отклоняется 400 с RFC 7807 detail; в БД-слое — `SELECT … WHERE id = ?` с bind-параметром, не string-concat.
+>     - Когда: каждый API-endpoint с user input; обязательно для public/B2B API.
+>     - Пример: Spring `@Valid @RequestBody UserDto` + JPA repository c named parameters; FastAPI Pydantic models + SQLAlchemy ORM.
+>
+> - [ ] Только в БД через CHECK constraints и triggers
+>     - Почему: БД-constraints — последняя линия защиты, но они срабатывают после round-trip и не защищают от SQLi (если значения уходят через string-interpolation, constraints не помогают). Ошибка вылазит как DB exception вместо structured 400.
+>     - Последствие: latency на каждом bad request, неинформативные 500 ошибки клиентам, SQLi всё ещё возможна.
+>
+> - [ ] Делать sanitize input удалением подозрительных символов (`'`, `;`, `--`) перед SQL
+>     - Почему: blacklist-санитизация легко обходится (encoding, double-encoding, comment variants); правильный подход — параметризованные запросы, которые делают значение data, а не code. «Удаление кавычек» — антипаттерн.
+>     - Последствие: ложное чувство безопасности, SQLi через `' OR 1=1/**/` или unicode-варианты обходит фильтр.
+
+
+## Q26. CORS?
 
 **Cross-Origin Resource Sharing** — browser security.
 
@@ -1448,11 +1567,28 @@ Access-Control-Max-Age: 3600
 **Best practice:** specify exact origins, не `*` для authenticated APIs.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q27. (!) Caching headers? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Как корректно настроить CORS для public API, который вызывается из browser-SPA авторизованных партнёров?
+>
+> - [ ] `Access-Control-Allow-Origin: *` и `Access-Control-Allow-Credentials: true`
+>     - Почему: это невалидная комбинация — браузер отклонит response, если используется `withCredentials=true` (cookies, Authorization header) с wildcard origin. Это намеренное ограничение CORS spec.
+>     - Последствие: запросы из SPA падают с CORS error, либо приходится отключать credentials и переходить на менее безопасную auth.
+>
+> - [ ] Полностью отключить CORS на сервере, проверяя Origin только в application-коде
+>     - Почему: «отключение CORS» обычно означает echo Origin'a в `Allow-Origin`, что эквивалентно `*` и открывает CSRF-like атаки; правильная проверка — на CORS-уровне через allowlist.
+>     - Последствие: любой malicious сайт может вызывать API от имени залогиненного пользователя через JavaScript, утечка данных через CSRF.
+>
+> - [x] Allowlist конкретных origin'ов (по партнёрам), `Allow-Credentials: true`, preflight кешируется через `Max-Age`
+>     - Почему: явный список allowed origins (`https://partner1.com`, `https://partner2.com`) предотвращает CSRF, `Allow-Credentials` позволяет cookie/Authorization, `Max-Age: 3600` снижает количество preflight OPTIONS-запросов.
+>     - Как работает: на каждый запрос сервер сравнивает `Origin` header с allowlist, echo обратно при match; на OPTIONS отвечает `Allow-Methods/Headers/Max-Age` без вызова бизнес-логики; для не-allowed возвращает response без CORS-headers — браузер блокирует.
+>     - Когда: B2B API с авторизованными SPA-клиентами; partner integrations.
+>     - Пример: Spring `CorsConfigurationSource` с `setAllowedOrigins(List.of("https://acme.com"))` и `setAllowCredentials(true)`.
+>
+> - [ ] Разрешить любой origin через regex `.*\.partner\.com` без allowlist
+>     - Почему: regex-based matching часто содержит баги (`.` без escape матчит любой символ, missing anchors); subdomain takeover у партнёра делает атаку тривиальной. Явный список безопаснее.
+>     - Последствие: skipped escape матчит `evil-partnerXcom.attacker.com`, атакующий получает доступ к API от имени партнёра.
+
+
+## Q27. (!) Caching headers?
 
 ```http
 # Tell client/CDN how long к cache
@@ -1479,11 +1615,28 @@ If-None-Match: "abc123"
 **Use case:** static-ish data (user profile, product catalog).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q28. Compression (gzip, brotli)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Что даёт связка `ETag` + `If-None-Match` для GET-эндпоинта пользовательского профиля?
+>
+> - [ ] Защиту от concurrent updates через optimistic locking
+>     - Почему: это use-case `If-Match` (на PUT/PATCH для optimistic concurrency), не `If-None-Match` (на GET для caching). Разные семантики, разные заголовки.
+>     - Последствие: путаница между caching и concurrency приведёт к неверной реализации — либо потерянные updates, либо неработающее кеширование.
+>
+> - [x] Conditional GET: при unchanged ETag сервер возвращает 304 Not Modified без тела, экономя bandwidth и render-cost
+>     - Почему: клиент посылает `If-None-Match: "abc123"`, сервер сравнивает с текущим ETag; если совпадает — 304 Not Modified (без body), клиент использует cached version. Экономит bandwidth, serialization, render.
+>     - Как работает: на GET сервер считает ETag (hash от resource state), отдаёт в response; клиент кеширует `(URL, ETag, body)`; на повторный запрос шлёт `If-None-Match`; сервер сравнивает (часто только проверка version в БД, без полного fetch) и отдаёт 304.
+>     - Когда: read-heavy ресурсы с редким обновлением (профиль, каталог, конфиг); особенно при больших payload.
+>     - Пример: `GET /users/123` → `200 ETag: "v42"` + body; повторный `GET /users/123 If-None-Match: "v42"` → `304 Not Modified` (empty body, ~100 bytes vs ~5KB).
+>
+> - [ ] Автоматическую инвалидацию CDN-кеша при изменении ресурса
+>     - Почему: ETag сам по себе не инвалидирует CDN-кеш; CDN использует TTL/purge API/Cache-Control. ETag — инструмент клиента для revalidation, не push-инвалидация для CDN.
+>     - Последствие: расчёт на «автоинвалидацию» приводит к stale data в CDN после updates; нужен явный purge или короткий max-age.
+>
+> - [ ] Шифрование ответа на уровне HTTP-кеширования
+>     - Почему: ETag — это hash для compare, не шифрование; шифрование — это TLS (транспорт). Кешированный ответ хранится в plaintext в браузере/CDN.
+>     - Последствие: ложное чувство безопасности при размещении sensitive data в кешируемых endpoints — они доступны в browser cache/CDN.
+
+
+## Q28. Compression (gzip, brotli)?
 
 **Client requests:**
 ```http
@@ -1502,11 +1655,28 @@ Content-Encoding: gzip
 **Most frameworks** auto-handle compression.
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q29. (!) HATEOAS — нужно? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Когда корректно включать compression (gzip/brotli) на API-эндпоинтах?
+>
+> - [ ] Только на статических файлах (CSS, JS) — для JSON это бессмысленно
+>     - Почему: JSON — текстовый формат с высокой избыточностью (повторяющиеся ключи, whitespace), gzip даёт 60-90% reduction; именно для JSON-API compression наиболее эффективна.
+>     - Последствие: bandwidth-расходы CDN х10 от необходимого; мобильные клиенты на медленных каналах долго грузят payload.
+>
+> - [x] На всех JSON/text-ответах когда клиент шлёт `Accept-Encoding: gzip, br`, кроме encrypted/уже-compressed payload
+>     - Почему: text-формат (JSON/XML/HTML) сжимается в 5-10 раз; brotli (`br`) даёт лучше compression чем gzip при чуть большем CPU; для encrypted/binary (изображения, PDF) повторное сжатие даёт <5% эффекта и тратит CPU.
+>     - Как работает: клиент шлёт `Accept-Encoding: gzip, br`; сервер выбирает поддерживаемый алгоритм, возвращает `Content-Encoding: br` + сжатый body. Negotiation через q-values: `gzip;q=0.5, br;q=1.0`.
+>     - Когда: production API с JSON-ответами; включается на reverse proxy (Nginx) или framework middleware (Spring `server.compression.enabled=true`).
+>     - Пример: `nginx`: `gzip on; gzip_types application/json text/plain; brotli on;`.
+>
+> - [ ] Compression нужно делать на уровне приложения вручную через `gzip.compress()` перед `response.write()`
+>     - Почему: это работа reverse-proxy/framework; ручное сжатие не учитывает `Accept-Encoding` negotiation, ломает streaming, конфликтует с middleware и CDN.
+>     - Последствие: double-compression (приложение + Nginx), ломаные клиенты которые не указали `br`, баги при HEAD-запросах с Content-Length.
+>
+> - [ ] Compression снижает latency на medium/высоких payload, но всегда тратит CPU больше чем экономит
+>     - Почему: gzip-compression тратит микросекунды CPU при exhanged ratio 5-10x; на сетях с RTT >50ms compression-savings (меньше packets) сильно перевешивают CPU. Для cold mobile networks compression — критична для UX.
+>     - Последствие: отключение compression «ради CPU» утяжеляет mobile UX и увеличивает egress-bill в облаке.
+
+
+## Q29. (!) HATEOAS — нужно?
 
 **В большинстве** API — **нет**.
 
@@ -1520,11 +1690,28 @@ Content-Encoding: gzip
 См. [REST Maturity](rest-maturity-interview.md).
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q30. Webhooks design? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] Когда полная HATEOAS-реализация (hypermedia, link relations, RMM L3) даёт реальный value, а когда — overengineering?
+>
+> - [ ] Всегда нужна — это требование REST и без неё API не REST
+>     - Почему: чистый REST по Roy Fielding включает HATEOAS, но индустрия (Stripe, GitHub, AWS) повсеместно отказалась от полной HATEOAS в пользу OpenAPI + URL conventions; «не настоящий REST» — спор без практической ценности.
+>     - Последствие: команда тратит спринты на реализацию `_links` и `application/hal+json`, клиенты их игнорируют, поддержка усложнена без пользы.
+>
+> - [ ] Никогда не нужна, OpenAPI закрывает 100% use-cases
+>     - Почему: для state-machines (approval workflows, order lifecycle) HATEOAS даёт реальный value — клиент видит actual available actions без захардкоженных правил «если status=draft, показать кнопку publish».
+>     - Последствие: для workflow API клиенты дублируют state-логику, расхождения с сервером ведут к показу недоступных действий и 403/409 ошибкам.
+>
+> - [x] Полезна для state-machine/workflow API, где доступные actions зависят от текущего state; для CRUD — overengineering
+>     - Почему: HATEOAS-links динамически отражают transitions (`_links.publish`, `_links.cancel`), клиент рендерит UI по актуальным actions; для простого CRUD (users, products) `OpenAPI + URL conventions` дают 95% того же при 10% сложности.
+>     - Как работает: в response поле `_links` с разрешёнными переходами: `{"_links": {"approve": {"href": "/orders/123/approve"}, "cancel": {"href": "/orders/123/cancel"}}}`; клиент рендерит кнопки по наличию ключей.
+>     - Когда: order management, approval workflows, document lifecycle, payment state machines.
+>     - Пример: PayPal API использует HATEOAS для payment-state transitions (`approve`, `capture`, `refund`).
+>
+> - [ ] HATEOAS нужна для discoverability — клиенты находят новые endpoints автоматически без обновления документации
+>     - Почему: реальные клиенты не «discover» endpoints — они написаны под конкретный контракт; idea «self-discovering clients» популярна в академии, но в production-API не подтверждена. OpenAPI + SDK решает discoverability эффективнее.
+>     - Последствие: команда вкладывается в discoverability-фичу, которая не востребована; реальные интеграторы используют SDK и OpenAPI explorer.
+
+
+## Q30. Webhooks design?
 
 **Webhook** — server sends events к customer-provided URL.
 
@@ -1540,6 +1727,28 @@ Content-Encoding: gzip
 - **Testing tools** (webhook tester, ngrok)
 
 **Stripe webhooks** are gold standard — copy that design.
+
+
+> [!mcq] Что обязательно должно быть на принимающей стороне webhook'а, чтобы интеграция была надёжной в production?
+>
+> - [ ] Только endpoint с публичным URL и логированием — retry и подпись делает сам отправитель
+>     - Почему: подпись (HMAC) проверяется приёмником, иначе любой может подделать webhook и инициировать действия (создать платёж, изменить order); retry от отправителя бесполезен, если receiver не идемпотентен и обрабатывает event несколько раз.
+>     - Последствие: атакующий шлёт fake webhook на публичный URL, инициирует business-action; duplicate delivery дублирует charges/orders.
+>
+> - [ ] Достаточно проверки IP-адреса отправителя в whitelist
+>     - Почему: IP-whitelist хрупок (отправитель меняет инфру, NAT, CDN), не защищает от MITM, и не покрывает duplicate delivery. HMAC-подпись + идемпотентность — стандарт индустрии.
+>     - Последствие: после миграции отправителя на новые IP интеграция тихо ломается; IP-spoofing на shared infra возможен.
+>
+> - [x] HMAC-проверка подписи + идемпотентность по `event_id` + быстрый 2xx ответ с фоновой обработкой
+>     - Почему: HMAC доказывает отправителя (shared secret в `X-Signature`), идемпотентность по event_id защищает от duplicate delivery (отправитель retry'ит при non-2xx), быстрый 2xx (<5s) предотвращает timeout-retry'и; тяжёлая работа уходит в очередь.
+>     - Как работает: receiver проверяет `HMAC_SHA256(secret, body) == header.X-Signature` (с timing-safe compare); сохраняет `event_id` в `processed_events` (INSERT IGNORE); если duplicate — 200 OK без обработки; иначе enqueue в Kafka/SQS и сразу 200.
+>     - Когда: любой webhook-receiver (Stripe, GitHub, Twilio, custom B2B).
+>     - Пример: Stripe `Stripe-Signature: t=1700000000,v1=abc…` + Idempotency-Key в downstream calls; receiver хранит event_id в Redis SET с TTL=30d.
+>
+> - [ ] Синхронная обработка прямо в request handler, без очереди, чтобы вернуть результат отправителю
+>     - Почему: webhook не ожидает результат бизнес-обработки — только подтверждение получения; синхронная обработка приводит к timeout (отправитель ждёт ~5-10s) и retry-шторму при downstream-падениях.
+>     - Последствие: при медленном downstream receiver отвечает >5s → 504/timeout → отправитель retry'ит несколько раз → duplicate processing + cascade failure.
+
 
 ---
 
@@ -1557,15 +1766,3 @@ Content-Encoding: gzip
 - [API Gateway](../architecture/api-gateway-interview.md) — routing, rate limiting
 - [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
 - [Application Security](../security/application-security-interview.md) — input validation, HTTPS
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [API Versioning](api-versioning-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [GraphQL](graphql-interview.md)
-- [gRPC](grpc-interview.md)
-- [HTTP и REST](http-rest-interview.md)
-- [OpenAPI / Swagger](openapi-swagger-interview.md)
-- [Richardson Maturity Model (REST)](rest-maturity-interview.md)
