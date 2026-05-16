@@ -388,11 +388,45 @@ Region (us-east-1, eu-central-1)
 - **sc1** — HDD cold
 
 
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. (!) Auto Scaling Groups? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> [!mcq] В чём разница между AMI, EBS и instance store, и где будет жить база данных PostgreSQL на EC2?
+>
+> - [ ] A. AMI и EBS — это одно и то же: и AMI, и EBS — это «диски» в AWS, разница только в названии (AMI для Windows-инстансов, EBS — для Linux). Instance store — это бэкап-механизм, который автоматически реплицирует данные между AZ.
+>
+>     **Что на самом деле.** AMI — это **шаблон** (snapshot OS + software + configs), используется для запуска новых инстансов; это не работающий диск. EBS — **persistent block storage** (виртуальный диск, attached к инстансу). Instance store — **локальный NVMe SSD** на физическом хосте, **теряется при stop/terminate**, никакой репликации между AZ. Базу данных PostgreSQL — на EBS (gp3 или io2), потому что instance store потеряет данные при первом же maintenance reboot.
+>
+>     **Откуда путаница.** Новички видят «AMI» в списке storage-сервисов AWS Console и предполагают, что это disk. AMI там потому, что физически хранится в S3 (для backed-by-S3) или как набор EBS-snapshots.
+>
+>     **Если бы это было правдой.** Нельзя было бы создать AMI из running-инстанса (а на самом деле это базовая операция — «save state as AMI»), и не существовало бы EBS-backed AMI как отдельной категории.
+>
+> - [x] **B. AMI (Amazon Machine Image) — это шаблон (snapshot OS + предустановленный софт + конфиги) для запуска новых EC2-инстансов; сам по себе не «работает», только клонирует state. EBS (Elastic Block Store) — persistent виртуальный диск, attached к инстансу по сети (over-the-wire); сохраняется при stop/start/terminate (если не Delete-on-Termination), может перемещаться между инстансами в той же AZ, поддерживает snapshots в S3. Instance store — локальный NVMe SSD физически в шасси хоста, очень быстрый (микросекундные latency), но теряется при stop/hibernate/terminate/hardware failure. Базу PostgreSQL — однозначно на EBS (gp3 или io2 для high-IOPS); instance store — только для эфемерных данных (tmp-каталоги, Spark shuffle, локальные кэши, которые можно перестроить).**
+>
+>     **Развёрнутое объяснение.** Это три **разных абстракции** разного назначения: AMI — образ/шаблон, EBS — сетевой диск, instance store — локальный диск. EBS = «портативный SSD по сети» (durability ~99.999%, snapshots), instance store = «физический диск в сервере» (нулевая durability, максимальная скорость). Для stateful нагрузок (БД, любая persistence) — EBS; для stateless с эфемерным кэшем — instance store экономит деньги и даёт latency-win.
+>
+>     **Пример.** PostgreSQL prod: `r6g.2xlarge` + 2× `io2` 500 GB (provisioned 10 000 IOPS), Multi-AZ через streaming replication. ElasticSearch с реплицируемыми shards: `i4i.2xlarge` (NVMe instance store) — данные локальные, при потере узла кластер ребалансит из других реплик.
+>
+>     **Когда применять.** AMI — для immutable infrastructure (golden image → ASG launch template). EBS — для всего stateful: БД, файловое хранилище приложения, persistent volumes. Instance store — для distributed stores с встроенной репликацией (Cassandra, ES, Kafka на NVMe), временных файлов, scratch-space.
+>
+>     **Подводные камни.** EBS привязан к AZ — нельзя attach к инстансу в другой AZ (нужно snapshot → restore). Default `DeleteOnTermination=true` для root EBS-volume — при terminate инстанса диск удаляется. Instance store на t-instances вообще нет (только M/C/R/I с NVMe-вариантами).
+>
+>     **Связанные вопросы.** [[Q4]] EC2 families (I-family = instance store), [[Q7]] Auto Scaling (AMI в launch template), [[Q11]] EBS snapshots vs S3 backup.
+>
+> - [ ] C. EBS — это локальный диск на физическом хосте, а instance store — сетевой блочный сторадж в S3. Поэтому EBS быстрее, но теряется при перезагрузке, а instance store медленнее, но переживает рестарт.
+>
+>     **Что на самом деле.** Всё **с точностью до наоборот**. EBS = сетевой over-the-wire диск (выживает при reboot/stop/terminate), instance store = локальный NVMe в шасси (теряется при stop). EBS медленнее по latency (микросекунды + сеть = ~1ms), instance store быстрее (~50μs). EBS не хранится в S3 (его snapshots — да, но это другой объект).
+>
+>     **Откуда путаница.** Названия запутывающие: «Elastic Block Store» звучит как «локальный блочный диск», «instance store» звучит как «связанный с инстансом, значит сетевой». На деле — обратная аналогия.
+>
+>     **Если бы это было правдой.** Нельзя было бы detach EBS от одного инстанса и attach к другому (для локального диска такое невозможно), но AWS CLI команда `aws ec2 attach-volume` это делает ежедневно.
+>
+> - [ ] D. AMI — это runtime VM-инстанс с уже загруженным приложением (готовый к запуску контейнер на уровне VM), EBS — лог изменений AMI, instance store — кэш для быстрого доступа к EBS. Все три обязательны для запуска EC2.
+>
+>     **Что на самом деле.** AMI — статический **template** (не running VM), используется в `RunInstances` API для создания нового инстанса; запущенный AMI = EC2-инстанс. EBS — независимый сервис block storage, не «лог изменений AMI». Instance store — отдельный локальный диск, не кэш для EBS. Можно запустить EC2 вообще без EBS (instance store-backed AMI), и наоборот — EBS живёт без AMI.
+>
+>     **Откуда путаница.** Концепция «golden AMI» иногда подаётся как «запакованный микросервис», и новички экстраполируют до «AMI это контейнер».
+>
+>     **Если бы это было правдой.** Не было бы возможности обновлять running EC2 без замены AMI (но `apt upgrade` на running-инстансе работает), и не было бы separate billing для EBS (но в счёте AWS EBS — отдельная строка от EC2-hours).
+
+## Q7. (!) Auto Scaling Groups?
 
 **ASG** — автоматическое масштабирование EC2 instances based on metrics.
 
