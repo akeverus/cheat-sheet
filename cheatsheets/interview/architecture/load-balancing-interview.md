@@ -1138,10 +1138,25 @@ graph TB
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Как настроить Spring Cloud LoadBalancer? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] **Серверная и клиентская балансировка — это разные названия одного и того же подхода: внешний компонент типа Nginx распределяет запросы**
+>
+>   Это противоречит самому различию. Серверная балансировка действительно реализуется через отдельный компонент (`Nginx`, `HAProxy`, `AWS ALB`), но клиентская — это когда клиент САМ выбирает узел из списка инстансов, полученного из Service Discovery (`Eureka`, `Consul`). Эти подходы принципиально различаются по архитектуре и SPOF.
+>
+> - [ ] **Клиентская балансировка — это балансировка нагрузки между клиентами (browser-side), а серверная — между серверами**
+>
+>   Смешение терминов. «Клиент» здесь — это сервис-потребитель (например, микросервис A, вызывающий микросервис B), а не браузер пользователя. Клиентская балансировка означает, что логика выбора инстанса находится в клиентском приложении (через `Spring Cloud LoadBalancer`, `gRPC client LB`), а не в браузере.
+>
+> - [ ] **При клиентской балансировке клиент всегда подключается к фиксированному адресу, а серверная использует round-robin**
+>
+>   Алгоритм (round-robin, least-connections, weighted) — это ортогональная характеристика, не зависящая от типа балансировки. И серверная, и клиентская могут использовать любой алгоритм. Принципиальное различие: КТО принимает решение о выборе инстанса — внешний компонент или сам клиент.
+>
+> - [x] **Серверная — отдельный компонент (Nginx, AWS ALB) принимает все запросы и распределяет на бэкенды; клиентская — клиент сам выбирает узел из Service Discovery, нет SPOF балансировщика**
+>
+>   Корректное определение. **Серверная:** все запросы идут через единый балансировщик (`Nginx`, `HAProxy`, `AWS ALB`) — он становится single point of failure, добавляется лишний hop. **Клиентская:** клиент получает список инстансов из Service Discovery (`Eureka`, `Consul`) и сам выбирает узел через библиотеку (`Spring Cloud LoadBalancer`, `gRPC client LB`) — нет SPOF, прямое соединение, но клиент сложнее. На практике комбинируют: внешний трафик через серверный LB, межсервисные вызовы — через клиентский.
+>
+>   **Practical:** для внешнего трафика (north-south) используй `AWS ALB`/`Nginx`; для межсервисных вызовов (east-west) в Kubernetes — service mesh (`Istio`) или client-side LB (`Spring Cloud LoadBalancer`).
+
+## Q17. Как настроить Spring Cloud LoadBalancer?
 
 `Spring Cloud LoadBalancer` — замена устаревшего `Netflix Ribbon` для клиентской балансировки в Spring-экосистеме.
 
@@ -1224,10 +1239,25 @@ public class PaymentService {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. Как реализовать кастомную стратегию балансировки в Spring Cloud? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [x] **Подключить `spring-cloud-starter-loadbalancer` + Service Discovery (Eureka), создать `@LoadBalanced` бин WebClient.Builder/RestTemplate, обращаться по логическому имени сервиса (`http://user-service/...`)**
+>
+>   Корректный путь. **Шаги:** (1) зависимости `spring-cloud-starter-loadbalancer` + `spring-cloud-starter-netflix-eureka-client`; (2) `@Bean @LoadBalanced public WebClient.Builder ...` — аннотация включает interceptor, который резолвит логическое имя сервиса через Service Discovery; (3) в коде использовать URL вида `http://user-service/api/users/{id}` — `user-service` это имя из Eureka, а не DNS. По умолчанию используется Round Robin. Балансировка происходит на клиенте, без отдельного LB-компонента.
+>
+>   **Practical:** не забудь поставить `@LoadBalanced` — без неё `WebClient`/`RestTemplate` попытается резолвить `user-service` как DNS-имя и упадёт с `UnknownHostException`.
+>
+> - [ ] **Прописать список IP-адресов всех инстансов в `application.yml` под ключом `spring.cloud.loadbalancer.servers` и указать алгоритм через `loadbalancer.algorithm: round-robin`**
+>
+>   Нет такого свойства в Spring Cloud LoadBalancer, и hardcode IP-адресов противоречит самой идее динамической балансировки. Список инстансов берётся из Service Discovery (`Eureka`, `Consul`) или из `ServiceInstanceListSupplier`, а не из конфига. Так балансировщик автоматически узнаёт о новых/упавших инстансах через регистрацию в discovery service.
+>
+> - [ ] **Добавить `@EnableLoadBalancing` на главный класс приложения и использовать аннотацию `@LoadBalanceClient(name = "user-service")` на каждом методе сервиса**
+>
+>   Аннотации `@EnableLoadBalancing` в Spring Cloud LoadBalancer не существует (это путаница с устаревшим `@EnableEurekaClient`). Реальная аннотация `@LoadBalancerClient(name = "...")` ставится на конфиг-класс для подмены балансировщика на кастомный, а не на каждый метод. Включение происходит автоматически при подключении starter-а + `@LoadBalanced` на бин клиента.
+>
+> - [ ] **Заменить `RestTemplate` на `Netflix Ribbon`, добавив `@RibbonClient(name = "user-service")` — это единственный поддерживаемый способ клиентской балансировки в Spring**
+>
+>   `Netflix Ribbon` устарел и удалён из Spring Cloud 2020.0+ (Ilford release train). Современная замена — `Spring Cloud LoadBalancer`, который и работает с `@LoadBalanced WebClient`/`RestTemplate`. Использование Ribbon в новых проектах = технический долг и проблемы с обновлениями Spring Boot.
+
+## Q18. Как реализовать кастомную стратегию балансировки в Spring Cloud?
 
 `Spring Cloud LoadBalancer` позволяет заменить стандартный `Round Robin` на собственную стратегию:
 
@@ -1286,10 +1316,25 @@ class UserServiceLBConfig {
 
 
 > [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Что такое blue-green и canary в контексте балансировки? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+> - [ ] **Достаточно унаследоваться от `RoundRobinLoadBalancer` и переопределить метод `chooseServer()` — Spring автоматически подхватит её через component scan**
+>
+>   Component scan не подхватывает балансировщик автоматически — нужна явная привязка к конкретному сервису через `@LoadBalancerClient(name = "...", configuration = ...)`. Метод называется `choose(Request)` и возвращает `Mono<Response<ServiceInstance>>`, а не `chooseServer()` (это API устаревшего Netflix Ribbon). Корректный путь — реализовать `ReactorServiceInstanceLoadBalancer`.
+>
+> - [x] **Реализовать `ReactorServiceInstanceLoadBalancer.choose(Request)`, получить инстансы через `ServiceInstanceListSupplier`, выбрать подходящий и вернуть `Mono<Response<ServiceInstance>>`; зарегистрировать через `@LoadBalancerClient(name, configuration)`**
+>
+>   Корректный путь. **Шаги:** (1) класс реализует `ReactorServiceInstanceLoadBalancer` с методом `choose(Request) -> Mono<Response<ServiceInstance>>`; (2) через `ObjectProvider<ServiceInstanceListSupplier>` получаешь список живых инстансов из Service Discovery; (3) применяешь свою логику выбора (например, least response time, sticky session по header, локация); (4) возвращаешь `new DefaultResponse(instance)` или `new EmptyResponse()`. Регистрация через `@LoadBalancerClient(name = "user-service", configuration = UserServiceLBConfig.class)` + `@Bean` в этом конфиге — это привязывает кастомный балансировщик ТОЛЬКО к указанному сервису.
+>
+>   **Practical:** не клади конфиг-класс с балансировщиком в `@ComponentScan` главного приложения — Spring создаст один балансировщик глобально вместо per-service. Конфиг должен быть в отдельном пакете.
+>
+> - [ ] **Прописать алгоритм в `application.yml`: `spring.cloud.loadbalancer.strategy: custom` и указать FQN класса в `spring.cloud.loadbalancer.class`**
+>
+>   Таких свойств в Spring Cloud LoadBalancer нет. Кастомная стратегия регистрируется только через Java-конфигурацию с `@LoadBalancerClient` и `@Bean`. YAML-конфиг позволяет переключать готовые `ServiceInstanceListSupplier` (health-check, zone-preference, retry), но не подменять сам алгоритм выбора.
+>
+> - [ ] **Создать реализацию `IRule` из Netflix Ribbon и зарегистрировать её через `@RibbonClient` — Spring Cloud LoadBalancer построен поверх Ribbon**
+>
+>   `IRule` — это API устаревшего Netflix Ribbon. Spring Cloud LoadBalancer не построен поверх Ribbon — это его полная замена (Ribbon удалён из Spring Cloud 2020.0+). Использование `IRule`/`@RibbonClient` в новых проектах не работает или работает только через legacy-зависимости. Правильный API — `ReactorServiceInstanceLoadBalancer`.
+
+## Q19. Что такое blue-green и canary в контексте балансировки?
 
 **Blue-green** — два идентичных окружения. Трафик идёт на одно (blue); при деплое поднимается новая версия (green); после проверки балансировщик переключает весь трафик.
 
