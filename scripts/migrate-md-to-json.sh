@@ -17,11 +17,11 @@ JSON_FILE="$JSON_DIR/$BASENAME.json"
 mkdir -p "$JSON_DIR"
 
 # Detect awk variant
-if command -v gawk >/dev/null 2>&1; then
-    AWK=gawk
-else
-    AWK=awk
+if ! command -v gawk >/dev/null 2>&1; then
+    echo "ERROR: gawk is required (3-arg match() syntax). Install: brew install gawk" >&2
+    exit 2
 fi
+AWK=gawk
 
 # Run awk extractor → TSV
 TSV=$("$AWK" -f scripts/extract-mcq-blocks.awk "$MD_FILE")
@@ -45,11 +45,15 @@ sec_map = {
     'Как было бы правильно': 'how_it_should_be',
 }
 data = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(lambda: {'sections': {}})))
+qtitles = {}  # q_number -> title text
 for line in sys.stdin:
     parts = line.rstrip('\n').split('\t')
     if len(parts) != 7:
         continue
     q, blk, label, correct, text, sec, content = parts
+    if sec == 'QTITLE':
+        qtitles[int(q)] = content
+        continue
     key = sec_map.get(sec)
     if not key:
         continue
@@ -61,6 +65,9 @@ for line in sys.stdin:
 out = {'topic_slug': '$BASENAME', 'questions': []}
 for qn in sorted(data.keys()):
     blocks = []
+    qtitle = qtitles.get(qn) or 'Question ' + str(qn)
+    if not qtitle.strip():
+        qtitle = '<no question text>'
     for bi in sorted(data[qn].keys()):
         options = []
         labels = sorted(data[qn][bi].keys())
@@ -68,7 +75,7 @@ for qn in sorted(data.keys()):
             o = data[qn][bi][lbl]
             o['order'] = order
             options.append(o)
-        blocks.append({'block_idx': bi, 'question_text': '', 'options': options})
+        blocks.append({'block_idx': bi, 'question_text': qtitle, 'options': options})
     out['questions'].append({'q_number': qn, 'blocks': blocks})
 print(json.dumps(out, ensure_ascii=False, indent=2))
 ")

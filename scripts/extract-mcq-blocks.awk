@@ -6,7 +6,18 @@
 BEGIN { current_q = ""; in_mcq = 0; block_idx = 0; opt_label = ""; correct = ""; opt_text = "" }
 
 /^## Q[0-9]+\./ {
-    match($0, /^## Q([0-9]+)\./, m); current_q = m[1]; block_idx = 0; in_mcq = 0; next
+    match($0, /^## Q([0-9]+)\.[[:space:]]*(.*)$/, m)
+    current_q = m[1]
+    current_q_title = m[2]
+    # Strip (!) marker and trailing whitespace
+    gsub(/\(!\)/, "", current_q_title)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", current_q_title)
+    block_idx = 0
+    in_mcq = 0
+    # Emit a meta-row so downstream knows the question text
+    # Format: q_number\t-1\t-\t-\tQTITLE\t-\t<title>
+    printf "%s\t-1\t-\t-\tQTITLE\t-\t%s\n", current_q, current_q_title
+    next
 }
 
 /^> \[!mcq\]/ { in_mcq = 1; next }
