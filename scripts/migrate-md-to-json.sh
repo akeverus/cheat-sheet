@@ -51,7 +51,7 @@ for line in sys.stdin:
     if len(parts) != 7:
         continue
     q, blk, label, correct, text, sec, content = parts
-    if sec == 'QTITLE':
+    if text == 'QTITLE':
         qtitles[int(q)] = content
         continue
     key = sec_map.get(sec)
