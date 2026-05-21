@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.service.imports;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +15,7 @@ import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import com.cheatsheet.quiz.service.ai.AiQuestionClient;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.cheatsheet.quiz.common.util.InterviewPathResolver;
+import com.cheatsheet.quiz.service.imports.McqLoadResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -104,6 +106,7 @@ class QuestionImportServiceTest {
             TransactionCallback<?> callback = invocation.getArgument(0);
             return callback.doInTransaction(null);
         });
+        lenient().when(mcqJsonLoader.loadForTopic(any(), any())).thenReturn(McqLoadResult.notFound());
 
         Clock clock = Clock.fixed(Instant.parse("2026-02-28T00:00:00Z"), ZoneOffset.UTC);
         QuestionImportService service = new QuestionImportService(
@@ -177,6 +180,7 @@ class QuestionImportServiceTest {
             TransactionCallback<?> callback = invocation.getArgument(0);
             return callback.doInTransaction(null);
         });
+        lenient().when(mcqJsonLoader.loadForTopic(any(), any())).thenReturn(McqLoadResult.notFound());
 
         Clock clock = Clock.fixed(Instant.parse("2026-02-28T00:00:00Z"), ZoneOffset.UTC);
         QuestionImportService service = new QuestionImportService(
