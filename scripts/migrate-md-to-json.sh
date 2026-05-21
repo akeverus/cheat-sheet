@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# migrate-md-to-json.sh — конвертирует один .md (v2 inline MCQ) в .json seed + чистит .md.
+# Usage: bash scripts/migrate-md-to-json.sh cheatsheets/interview/<category>/<topic>.md
+
+set -euo pipefail
+
+MD_FILE="$1"
+[[ -f "$MD_FILE" ]] || { echo "file not found: $MD_FILE"; exit 1; }
+
+# Compute paths
+REL=${MD_FILE#cheatsheets/interview/}
+CATEGORY=$(dirname "$REL")
+BASENAME=$(basename "$REL" .md)
+JSON_DIR="modules/quiz-app/src/main/resources/seed/mcq/$CATEGORY"
+JSON_FILE="$JSON_DIR/$BASENAME.json"
+
+mkdir -p "$JSON_DIR"
+
+# Detect awk variant
+if command -v gawk >/dev/null 2>&1; then
+    AWK=gawk
+else
+    AWK=awk
+fi
+
+# Run awk extractor → TSV
+TSV=$("$AWK" -f scripts/extract-mcq-blocks.awk "$MD_FILE")
+if [[ -z "$TSV" ]]; then
+    echo "no MCQ blocks found in $MD_FILE"
+    exit 0
+fi
+
+# Build JSON via python3 (one-shot migration tool, not generation)
+JSON_BUILD=$(printf '%s\n' "$TSV" | python3 -c "
+import sys, json, collections
+sec_map = {
+    'Развёрнутое объяснение': 'explanation',
+    'Пример': 'example',
+    'Когда применять': 'when_to_apply',
+    'Подводные камни': 'edge_cases',
+    'Связанные вопросы': 'related',
+    'Что на самом деле': 'what_actually',
+    'Откуда путаница': 'source_of_confusion',
+    'Если бы это было правдой': 'if_it_were_true',
+    'Как было бы правильно': 'how_it_should_be',
+}
+data = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(lambda: {'sections': {}})))
+for line in sys.stdin:
+    parts = line.rstrip('\n').split('\t')
+    if len(parts) != 7:
+        continue
+    q, blk, label, correct, text, sec, content = parts
+    key = sec_map.get(sec)
+    if not key:
+        continue
+    opt = data[int(q)][int(blk)][label]
+    opt['label'] = label
+    opt['text'] = text
+    opt['correct'] = (correct == 'true')
+    opt['sections'][key] = content
+out = {'topic_slug': '$BASENAME', 'questions': []}
+for qn in sorted(data.keys()):
+    blocks = []
+    for bi in sorted(data[qn].keys()):
+        options = []
+        labels = sorted(data[qn][bi].keys())
+        for order, lbl in enumerate(labels):
+            o = data[qn][bi][lbl]
+            o['order'] = order
+            options.append(o)
+        blocks.append({'block_idx': bi, 'question_text': '', 'options': options})
+    out['questions'].append({'q_number': qn, 'blocks': blocks})
+print(json.dumps(out, ensure_ascii=False, indent=2))
+")
+
+echo "$JSON_BUILD" > "$JSON_FILE"
+
+# Strip MCQ blocks from .md
+"$AWK" '
+    /^> \[!mcq\]/ { in_mcq = 1; next }
+    in_mcq && /^>/ { next }
+    in_mcq && /^[[:space:]]*$/ { in_mcq = 0; next }
+    { print }
+' "$MD_FILE" > "$MD_FILE.tmp" && mv "$MD_FILE.tmp" "$MD_FILE"
+
+# Remove mcq_format_version from frontmatter (BSD sed compat: use -i '')
+case "$(uname)" in
+    Darwin) sed -i '' '/^mcq_format_version:/d' "$MD_FILE" ;;
+    *)      sed -i '/^mcq_format_version:/d' "$MD_FILE" ;;
+esac
+
+echo "Migrated: $MD_FILE → $JSON_FILE"
