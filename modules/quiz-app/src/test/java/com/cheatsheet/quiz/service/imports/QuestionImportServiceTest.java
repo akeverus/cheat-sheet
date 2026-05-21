@@ -54,6 +54,8 @@ class QuestionImportServiceTest {
     AiQuestionClient aiQuestionClient;
     @Mock
     TransactionTemplate transactionTemplate;
+    @Mock
+    McqJsonLoader mcqJsonLoader;
 
     @Test
     void importAllUsesMarkdownFallbackWhenCanonicalizationUnavailable() throws Exception {
@@ -116,7 +118,8 @@ class QuestionImportServiceTest {
                 hashingService,
                 questionExpansionService,
                 aiQuestionClient,
-                transactionTemplate
+                transactionTemplate,
+                mcqJsonLoader
         );
 
         service.importAll();
@@ -188,7 +191,8 @@ class QuestionImportServiceTest {
                 hashingService,
                 questionExpansionService,
                 aiQuestionClient,
-                transactionTemplate
+                transactionTemplate,
+                mcqJsonLoader
         );
 
         service.importAll();

@@ -22,9 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
-import com.cheatsheet.quiz.domain.OptionSource;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -60,6 +58,7 @@ public class QuestionImportService {
     private final QuestionExpansionService questionExpansionService;
     private final AiQuestionClient aiQuestionClient;
     private final TransactionTemplate transactionTemplate;
+    private final McqJsonLoader mcqJsonLoader;
 
     /**
      * Импортирует все markdown-файлы из директории {@code app.interview-path}.
@@ -160,6 +159,20 @@ public class QuestionImportService {
         } catch (IOException e) {
             log.warn("Ошибка парсинга файла: {}", file, e);
         }
+
+        // Загружаем MCQ-сиды из JSON один раз на файл (не на вопрос).
+        Path relPath = root.relativize(file);
+        String categoryPath = relPath.getParent() == null ? "" : relPath.getParent().toString().replace("\\", "/");
+        String topicSlug = relPath.getFileName().toString().replaceFirst("\\.md$", "");
+        try {
+            McqLoadResult result = mcqJsonLoader.loadForTopic(categoryPath, topicSlug);
+            if (result.found()) {
+                log.info("Loaded {} options for topic {} ({} questions skipped)",
+                        result.optionsInserted(), topicSlug, result.questionsSkipped());
+            }
+        } catch (Exception e) {
+            log.warn("Ошибка загрузки MCQ-сидов для {}/{}: {}", categoryPath, topicSlug, e.getMessage(), e);
+        }
         return new ImportResult(inserted, updated, unchanged);
     }
 
@@ -239,9 +252,6 @@ public class QuestionImportService {
             long id = questionRepository.insert(question);
             reviewStateRepository.insertIfAbsent(id, clock.instant().getEpochSecond());
             fullTextSearchRepository.upsert(id, question.questionText(), question.answerMarkdown());
-            if (parsed.hasMcqOptions()) {
-                upsertOptionsFromMd(id, parsed.options());
-            }
             return UpsertOutcome.INSERT;
         }
 
@@ -255,16 +265,9 @@ public class QuestionImportService {
             optionCache.invalidate(current.id());
             reviewStateRepository.reset(current.id(), clock.instant().getEpochSecond());
             fullTextSearchRepository.upsert(current.id(), updatedQuestion.questionText(), updatedQuestion.answerMarkdown());
-            if (parsed.hasMcqOptions()) {
-                upsertOptionsFromMd(current.id(), parsed.options());
-            }
             return UpsertOutcome.UPDATE;
         }
 
-        // UNCHANGED: restore MD options if they were manually deleted
-        if (parsed.hasMcqOptions() && answerOptionRepository.countByQuestionId(existing.get().id()) == 0) {
-            upsertOptionsFromMd(existing.get().id(), parsed.options());
-        }
         return UpsertOutcome.UNCHANGED;
     }
 
@@ -284,18 +287,6 @@ public class QuestionImportService {
             log.warn("Расширение вопроса {} не удалось: {}", baseQuestion.get().slug(), e.getMessage(), e);
             return 0;
         }
-    }
-
-    private void upsertOptionsFromMd(long questionId, List<MarkdownQuestionParser.ParsedOption> options) {
-        List<AnswerOptionRepository.AnswerOptionCreate> creates = new ArrayList<>(options.size());
-        for (int i = 0; i < options.size(); i++) {
-            MarkdownQuestionParser.ParsedOption opt = options.get(i);
-            creates.add(new AnswerOptionRepository.AnswerOptionCreate(
-                    opt.text(), opt.correct(), i,
-                    OptionSource.MARKDOWN.name(), opt.explanation(),
-                    1, 2, opt.mcqBlockIdx()));
-        }
-        answerOptionRepository.insertAll(questionId, creates);
     }
 
     /** Результат импорта одного файла. */
