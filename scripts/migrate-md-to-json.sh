@@ -41,8 +41,14 @@ sec_map = {
     'Связанные вопросы': 'related',
     'Что на самом деле': 'what_actually',
     'Откуда путаница': 'source_of_confusion',
+    'Откуда путаника': 'source_of_confusion',   # typo variant in source
     'Если бы это было правдой': 'if_it_were_true',
     'Как было бы правильно': 'how_it_should_be',
+    'Как было bы правильно': 'how_it_should_be',  # mixed-script typo
+    'Как было bly правильно': 'how_it_should_be',  # typo variant
+    'Как было bzy правильно': 'how_it_should_be',  # typo variant
+    'Как было bı правильно': 'how_it_should_be',   # typo variant
+    'Как было bылo правильно': 'how_it_should_be', # typo variant
 }
 data = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(lambda: {'sections': {}})))
 qtitles = {}  # q_number -> title text
@@ -56,6 +62,12 @@ for line in sys.stdin:
         continue
     key = sec_map.get(sec)
     if not key:
+        # Fallback: prefix match (e.g. 'Когда применять защиту' → 'Когда применять')
+        for prefix, mapped in sec_map.items():
+            if sec.startswith(prefix):
+                key = mapped
+                break
+    if not key:
         continue
     opt = data[int(q)][int(blk)][label]
     opt['label'] = label
@@ -63,6 +75,7 @@ for line in sys.stdin:
     opt['correct'] = (correct == 'true')
     opt['sections'][key] = content
 out = {'topic_slug': '$BASENAME', 'questions': []}
+import sys as _sys
 for qn in sorted(data.keys()):
     blocks = []
     qtitle = qtitles.get(qn) or 'Question ' + str(qn)
@@ -71,12 +84,20 @@ for qn in sorted(data.keys()):
     for bi in sorted(data[qn].keys()):
         options = []
         labels = sorted(data[qn][bi].keys())
+        # Schema requires exactly 4 options labeled A,B,C,D.
+        if labels != ['A', 'B', 'C', 'D']:
+            print(f'  skip: Q{qn} block {bi} has labels {labels} (not A,B,C,D) — likely legacy/non-v2 MCQ', file=_sys.stderr)
+            continue
         for order, lbl in enumerate(labels):
             o = data[qn][bi][lbl]
             o['order'] = order
             options.append(o)
         blocks.append({'block_idx': bi, 'question_text': qtitle, 'options': options})
-    out['questions'].append({'q_number': qn, 'blocks': blocks})
+    if blocks:
+        # Re-index blocks 0..N within each question after possible skips
+        for new_idx, b in enumerate(blocks):
+            b['block_idx'] = new_idx
+        out['questions'].append({'q_number': qn, 'blocks': blocks})
 print(json.dumps(out, ensure_ascii=False, indent=2))
 ")
 

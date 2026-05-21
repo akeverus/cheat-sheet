@@ -1,0 +1,1865 @@
+{
+  "topic_slug": "complexity-analysis-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сравнить эффективность двух алгоритмов?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Бенчмарк на одном наборе данных характеризует поведение в конкретной точке `n`, а не закон роста. При `n=100` алгоритм `O(n²)` с малой константой может быть быстрее `O(n log n)`, но при `n=10⁶` ситуация инвертируется. Без асимптотического анализа нельзя экстраполировать.",
+                "source_of_confusion": "«Измеряй, а не гадай» — здоровый инженерный лозунг для оптимизации hot-path. Но он не отменяет необходимости понимать закон роста: бенчмарк — это одна точка, Big O — функция.",
+                "if_it_were_true": "Команды выбирали бы Bubble Sort для production, потому что на `n=10` он быстрее Merge Sort. Через год нагрузка вырастает до `n=10⁶`, latency p99 поднимается с 50ms до 5s, и срочно переписывают код в pager-вызов.",
+                "how_it_should_be": "Бенчмарк дополняет, но не заменяет анализ сложности: сначала сравнить `O()` в worst/avg/best и по памяти, потом для финального выбора померить константы на репрезентативных `n`."
+              },
+              "label": "A",
+              "text": "Запустить оба на одном наборе данных и замерить время выполнения секундомером.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Сравнение алгоритмов идёт по двум ортогональным измерениям — **time** и **space** — и по трём сценариям входа: best/average/worst. Big O даёт верхнюю границу закона роста, что позволяет предсказать поведение при увеличении `n` без эмпирики. На собеседовании ожидают, что кандидат назовёт обе сложности и обоснует выбор: например, Quick Sort `O(n log n)` avg time + `O(log n)` space лучше Merge Sort `O(n log n)` + `O(n)` для memory-constrained систем.",
+                "example": "При выборе сортировки для embedded-устройства с 64KB RAM: `Heap Sort` (`O(n log n)` time, `O(1)` space) предпочтительнее `Merge Sort` (`O(n)` aux), хотя константы Heap Sort больше. На сервере с unlimited RAM выбор обратный — TimSort стабильнее и быстрее на real-world данных.",
+                "when_to_apply": "При проектировании algorithmic API или выборе collection-типа в production — Netflix, Booking.com явно документируют ожидаемую сложность операций как часть SLA.",
+                "edge_cases": "Worst case иногда экстремально редок (Quick Sort `O(n²)` на отсортированном входе при fixed pivot), и avg case ближе к реальности — но для security-sensitive систем worst всё равно главный (HashDoS, ReDoS).",
+                "related": "[[complexity-analysis-interview#Q2]] best/worst/average; [[complexity-analysis-interview#Q3]] O/Omega/Theta нотация; [[complexity-analysis-interview#Q6]] пространственная сложность."
+              },
+              "label": "B",
+              "text": "Сравнить временну́ю и пространственную сложность в худшем, среднем и лучшем случае.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Длина кода и асимптотика — независимые характеристики. Bubble Sort помещается в 5 строк, но `O(n²)`; Merge Sort — 20 строк, но `O(n log n)`. Краткость может быть антипаттерном: одна строка с `stream().sorted().collect()` скрывает `O(n log n)` allocation overhead.",
+                "source_of_confusion": "Метрика LOC популярна для оценки «сложности кода», и её ошибочно переносят на «сложность алгоритма» — два разных концепта (Cyclomatic complexity vs Computational complexity).",
+                "if_it_were_true": "В CLRS не было бы 1300 страниц анализа — достаточно было бы измерять алгоритмы линейкой. На практике даже однострочник `arr.sort()` запускает 200+ строк JDK кода под капотом.",
+                "how_it_should_be": "Метрика LOC характеризует читаемость и maintainability; для эффективности нужна именно асимптотическая оценка time/space."
+              },
+              "label": "C",
+              "text": "Подсчитать число строк кода — чем меньше, тем эффективнее.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Память не «дешёвая» в любых контекстах: JVM heap ограничен `-Xmx`, embedded-системы имеют KB-десятки RAM, при `O(n²)` aux space на `n=10⁵` это уже 80GB. Space также влияет на cache locality, GC pressure и латентность.",
+                "source_of_confusion": "В классических курсах действительно сначала учат time complexity, а space упоминается мимоходом. В современных high-throughput системах memory-bound становятся первичными.",
+                "if_it_were_true": "Naive recursive Fibonacci с memoization (`O(n)` time, `O(n)` memory) был бы оптимален для всех случаев — но iterative two-variable вариант (`O(n)` time, `O(1)` memory) на embedded спасает от OOM.",
+                "how_it_should_be": "Сравнивать обе характеристики и выбирать по ограничениям системы: latency-critical → time; memory-constrained → space; production server → обе с приоритетом по бизнес-требованиям."
+              },
+              "label": "D",
+              "text": "Смотреть только на временну́ю сложность — память сегодня дешёвая и вторична.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое лучший, худший и средний сценарий?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Merge Sort гарантированно `O(n log n)` во всех трёх сценариях (best/avg/worst). Разделение всегда даёт две равные части (`n/2`), независимо от данных. Слияние — линейная операция за `O(n)` на каждом уровне × `log n` уровней = `O(n log n)`. Это его ключевое преимущество перед Quick Sort.",
+                "source_of_confusion": "Студенты помнят, что Merge Sort тратит память `O(n)` на временный буфер, и переносят это на time — но aux space и time complexity ортогональны.",
+                "if_it_were_true": "TimSort (на основе Merge Sort) в `Arrays.sort(Object[])` имел бы катастрофические провалы на adversarial input — но он стабильно `O(n log n)` на любых данных, и именно поэтому его выбрала JDK для объектных сортировок.",
+                "how_it_should_be": "Merge Sort всегда `O(n log n)` time + `O(n)` space — выбирай за стабильную сложность и stability свойство, не отбрасывай из-за мифического worst case."
+              },
+              "label": "A",
+              "text": "Merge Sort имеет худший случай `O(n²)` из-за многократного слияния — поэтому его избегают в production.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Случайные данные — это **средний** случай Quick Sort с фиксированным pivot, ожидаемое время `O(n log n)`. Худший случай — **отсортированный** или **обратно-отсортированный** вход: тогда pivot всегда минимум/максимум, partition разбивает `n` на `[n-1, 0]`, глубина рекурсии `n`, итог `O(n²)`.",
+                "source_of_confusion": "Существует ассоциация «случайность = нестабильность = плохо», но в Quick Sort всё ровно наоборот: случайные данные хороши, упорядоченные плохи. Именно поэтому добавляют random pivot.",
+                "if_it_were_true": "`Arrays.sort(int[])` в Java (Dual-Pivot Quick) деградировал бы каждый раз при сортировке случайных int — и был бы заменён давно. Но он остаётся быстрейшим на real-world нагрузке.",
+                "how_it_should_be": "Уточнить: случайные данные — average case (`O(n log n)`); отсортированные/обратно отсортированные с fixed pivot — worst case (`O(n²)`). Защита — random pivot или median-of-three."
+              },
+              "label": "B",
+              "text": "Quick Sort с фиксированным pivot на полностью случайных данных — это и есть худший случай.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`HashMap.get()` имеет **средний** `O(1)` и **худший** `O(log n)` (Java 8+, treeified bucket) или `O(n)` (Java 7 и раньше, linked list bucket). При HashDoS-атаке или плохой hash-функции worst case реален и наблюдаем.",
+                "source_of_confusion": "На обычной нагрузке `HashMap.get()` ведёт себя как `O(1)` миллиарды раз — и складывается уверенность, что worst case теоретический. Реальные incident-репорты (Crosby & Wallach 2003, 28C3 2011) показывают обратное.",
+                "if_it_were_true": "Не существовало бы CVE-2011-4838 (Tomcat hash collision DoS), и Java 8 не вводила бы treeification. Реально атаки уронили продакшен Tomcat, PHP, Ruby — и заставили все runtimes ввести защиты.",
+                "how_it_should_be": "При SLA-оценке всегда называть worst case: `HashMap.get() = O(1)` avg, `O(log n)` worst (Java 8+). Без worst анализ неполон и уязвим к complexity attack."
+              },
+              "label": "C",
+              "text": "`HashMap.get()` всегда `O(1)` без исключений — на этом строится оценка SLA.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "SLA — это обязательство по верхней границе latency. Worst case — единственная характеристика, дающая такую гарантию: avg case описывает ожидаемое поведение, но не предохраняет от tail latency. На p99/p99.9 SLA worst case проявляется при достаточном объёме запросов. Поэтому в high-stakes системах (биржи, безопасность, real-time) выбирают алгоритмы с предсказуемым worst case даже ценой худшего avg.",
+                "example": "В trading-системе Heap Sort (`O(n log n)` worst, `O(1)` space) предпочитают Quick Sort (`O(n log n)` avg, `O(n²)` worst): один outlier в `O(n²)` создаёт 50ms spike, разваливающий market-making бот. Knight Capital в 2012 потеряла $440M за 45 минут из-за похожего edge case.",
+                "when_to_apply": "При обсуждении SLA на собеседовании; при выборе алгоритма для финансовых, медицинских, security-критичных систем; для public APIs принимающих user input (защита от complexity attack).",
+                "edge_cases": "Worst case иногда крайне маловероятен — для batch-обработки с контролируемым входом avg case может быть достаточен. Но если на input есть user influence — worst случай обязателен.",
+                "related": "[[complexity-analysis-interview#Q24]] Quick Sort worst case; [[complexity-analysis-interview#Q14]] HashMap worst O(log n); [[complexity-analysis-interview#Q31]] complexity attack."
+              },
+              "label": "D",
+              "text": "Худший случай даёт гарантию производительности — на нём строят SLA и выбор алгоритма для критичных систем.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое асимптотические обозначения O, Omega, Theta?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Формально: `f(n) = O(g(n))` если `∃ c, n₀: f(n) ≤ c·g(n)` для всех `n ≥ n₀` («рост не быстрее `g`»). `f(n) = Omega(g(n))` если `f(n) ≥ c·g(n)` («рост не медленнее `g`»). `f(n) = Theta(g(n))` ⟺ `f(n) = O(g(n)) ∧ f(n) = Omega(g(n))` — точный порядок роста. `Omega` используется в нижних границах сложности задачи (`Ω(n log n)` для comparison sort) — это утверждение, что **никакой** алгоритм быстрее быть не может.",
+                "example": "Quick Sort: `T_avg(n) = Theta(n log n)` — точная средняя сложность; `T_worst(n) = O(n²)` — верхняя граница худшего случая; `T_any(n) = Omega(n log n)` — никакой comparison sort не быстрее (information-theoretic lower bound из decision tree).",
+                "when_to_apply": "При доказательстве оптимальности алгоритма (через нижнюю границу `Omega`); в академических статьях, формальных спецификациях, академических собеседованиях; в production-документации обычно достаточно `O`.",
+                "edge_cases": "Утверждение «алгоритм `O(n²)`» само по себе не значит, что он не `O(n log n)` — лучшее (более tight) upper bound может существовать. Поэтому `Theta` строже и информативнее, чем `O`.",
+                "related": "[[complexity-analysis-interview#Q4]] правила упрощения Big O; [[complexity-analysis-interview#Q23]] нижняя граница comparison sort; [[complexity-analysis-interview#Q5]] классы сложности."
+              },
+              "label": "A",
+              "text": "`O` — верхняя граница, `Omega` — нижняя, `Theta` — точная (пересечение `O` и `Omega`).",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`O(n)` — это **только верхняя граница**: алгоритм работает не хуже `c·n`. Линейный алгоритм можно корректно описать как `O(n)`, но также как `O(n²)` или `O(2ⁿ)` — все эти границы верны, просто не tight. `Theta(n)` обязывает к обеим границам сверху и снизу — это строгая характеристика точного порядка роста.",
+                "source_of_confusion": "В разговоре «программисты говорят O, имеют в виду Theta» — это устоявшаяся практика, и она перетекает в учебники. Формально это смешение, и интервьюер с математическим бэкграундом отличит.",
+                "if_it_were_true": "Утверждение «sorted insertion в TreeMap = O(n)» было бы неотличимо от «O(log n)» — обе утверждения valid как upper bound, но дают совершенно разную картину. Анализ потерял бы дискриминирующую силу.",
+                "how_it_should_be": "`O` — upper bound («не хуже»); `Theta` — tight bound («точно такого порядка»); они отличаются именно строгостью."
+              },
+              "label": "B",
+              "text": "`Theta(n)` и `O(n)` — синонимы, оба описывают «точный» порядок роста алгоритма.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`Omega` — нижняя граница **функции роста**, а не «best case» алгоритма. Это две независимые оси: best/avg/worst — про класс входа; `O`/`Omega`/`Theta` — про tight bound функции. Можно сказать `T_best(n) = Omega(n)` — best case растёт не медленнее линейно. Или `T_worst(n) = Omega(n²)` — worst случай растёт не медленнее квадратично.",
+                "source_of_confusion": "Терминологическая ловушка: `O` ассоциируется с «худшим» (потому что upper bound), и по симметрии `Omega` — с «лучшим». Но это смешение двух ортогональных размерностей: bound vs case.",
+                "if_it_were_true": "В CLRS не было бы фразы «Comparison sort require Omega(n log n) comparisons in the worst case» — а она центральна. Конкретно: worst case (n log n) — lower bound (Omega) для всех comparison sorts.",
+                "how_it_should_be": "Best case — это сценарий входа; `Omega` — характеристика роста функции. Их можно комбинировать: `T_best(n) = Omega(n)` или `T_worst(n) = Omega(n log n)`."
+              },
+              "label": "C",
+              "text": "`Omega` показывает лучший случай работы алгоритма на конкретных входах.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`O(n)` — это асимптотический upper bound: `f(n) ≤ c·n` для некоторой константы `c` при `n ≥ n₀`. Конкретное число операций может быть `2n + 5`, `100n`, `0.5n`, или даже `7` (константа — тоже `O(n)`). Big O скрывает константы и low-order terms.",
+                "source_of_confusion": "Студенты первого курса часто читают `O(n)` буквально как «n шагов». На самом деле это асимптотический класс функций, а не точное число.",
+                "if_it_were_true": "`O(2n) ≠ O(n)`, что нарушало бы все правила упрощения Big O. Не существовало бы лемм «отбрасываем константы», и анализ стал бы непрактичным.",
+                "how_it_should_be": "`O(n)` — функция растёт линейно с константным множителем; точное число операций варьирует, но порядок роста константен."
+              },
+              "label": "D",
+              "text": "`O(n)` означает строго `n` операций — не больше и не меньше.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие правила упрощения Big O существуют?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Независимые переменные в Big O **не объединяют**, даже если в конкретный момент `n > m`. Алгоритм со сложностью `O(n + m)` принципиально зависит от обеих величин — например, обход двух массивов разной длины. Записать его как `O(n)` означает потерять зависимость от `m`.",
+                "source_of_confusion": "Правило «отбрасываем младшие члены» (`O(n² + n) = O(n²)`) ошибочно расширяют на разные переменные. Но `m` — не «младший член относительно `n`», это независимая величина.",
+                "if_it_were_true": "При обработке двух independent feeds разной длины `n=10⁶`, `m=10⁹` оценка `O(n)` показала бы 10⁶ операций, реально — 10⁹+10⁶ ≈ 10⁹. Latency недооценена в 1000×.",
+                "how_it_should_be": "`O(n + m)` остаётся `O(n + m)`; объединять можно только когда показано, что `m = O(n)` или наоборот."
+              },
+              "label": "A",
+              "text": "`O(n + m) = O(n)` если `n > m` — независимые переменные допустимо объединять.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Сложность зависит от **числа итераций** каждого цикла, а не от факта вложенности. Внешний цикл `n` × внутренний цикл `n` = `O(n²)`. Но `n` × `log n` = `O(n log n)`; `n` × `√n` = `O(n √n)`; `n` × `n/i` (треугольный) = `O(n²)` или гармонический `O(n log n)`.",
+                "source_of_confusion": "Мнемоника «один цикл = O(n), два = O(n²)» вбита на ранних курсах. Работает для квадратных вложений, обманчива при логарифмических, треугольных или гармонических границах.",
+                "if_it_were_true": "Все алгоритмы с binary search внутри цикла оценивались бы как `O(n²)` вместо реального `O(n log n)` — Sort+Search паттерны (`Arrays.sort + binarySearch`) выглядели бы непригодными.",
+                "how_it_should_be": "Считать iterations каждого цикла и перемножать: `O(внешний × внутренний)`. При логарифмическом шаге внутреннего цикла — `O(n log n)`, не `O(n²)`."
+              },
+              "label": "B",
+              "text": "Два вложенных цикла всегда дают `O(n²)`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Это полный набор правил упрощения Big O. (1) `O(2n) = O(n)` — константные множители не влияют на класс. (2) `O(n² + n + log n) = O(n²)` — доминирующий член поглощает остальные. (3) `O(n + m) ≠ O(n)` — независимые переменные сохраняются. (4) Вложенные циклы `for i: for j` дают `O(iters_i × iters_j)`. (5) Последовательные блоки `sort(); search();` дают `O(блок1) + O(блок2) = O(max(блок1, блок2))`. Правила выводятся из определения `f(n) = O(g(n)) ⟺ ∃c, n₀: f(n) ≤ c·g(n)`.",
+                "example": "Алгоритм: сначала отсортировать массив (`O(n log n)`), затем для каждого элемента бинарный поиск во втором массиве (`O(n log m)`). Итог: `O(n log n) + O(n log m) = O(n log n + n log m) = O(n · (log n + log m))`. Нельзя объединить `n` и `m`, и нельзя отбросить slower term, если переменные независимы.",
+                "when_to_apply": "При подсчёте сложности на собеседовании, в код-ревью, в архитектурных решениях — обязательная техника для верной оценки.",
+                "edge_cases": "При adversarial input «доминирующий член» может меняться: `O(n + k)` где `k` — output, может быть `O(n)` или `O(n²)` в зависимости от случая (output-sensitive complexity). Тогда сохраняем обе переменные.",
+                "related": "[[complexity-analysis-interview#Q21]] вложенные циклы с разными границами; [[complexity-analysis-interview#Q22]] output-sensitive complexity; [[complexity-analysis-interview#Q5]] классы сложности."
+              },
+              "label": "C",
+              "text": "Константы отбрасываем, оставляем доминирующий член, независимые переменные НЕ объединяют, вложенные циклы перемножаются, последовательные — складываются.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "При сложении сложностей берётся **максимум**: `O(f(n)) + O(g(n)) = O(max(f, g))`. `O(n log n) + O(n²) = O(n²)`, потому что `n²` доминирует. Перемножение применяется только для вложенных циклов, не для последовательных блоков.",
+                "source_of_confusion": "Студенты иногда применяют арифметику Big O буквально, не различая «вложенно» (×) и «последовательно» (+).",
+                "if_it_were_true": "Tim Sort (`O(n log n)` сортировка + `O(n)` запись) оценивался бы как `O(n² log n)` — что неверно. Реально `O(n log n) + O(n) = O(n log n)`.",
+                "how_it_should_be": "`O(A) + O(B) = O(max(A, B))` для последовательных блоков; `O(A) × O(B) = O(A·B)` для вложенных циклов; различать когда что применять."
+              },
+              "label": "D",
+              "text": "`O(n log n) + O(n²) = O(n² log n)` — при сложении блоки перемножаются.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие классы сложности встречаются чаще всего?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Эмпирическое правило competitive programming: современный CPU выполняет порядка 10⁸ простых операций в секунду (с учётом cache miss, branch mispredict, JIT overhead). Делим бюджет на функцию сложности: `n² ≤ 10⁸ → n ≤ 10⁴`; `n log n ≤ 10⁸ → n ≤ 5·10⁶` (округляем до 10⁷); `n ≤ 10⁸ → n ≤ 10⁸`. Эта таблица — первый sanity-check на собеседовании при ограничениях задачи.",
+                "example": "На LeetCode при `n ≤ 10⁵` и time limit 1 сек: `O(n²) = 10¹⁰` — TLE; нужен `O(n log n)` или лучше. При `n ≤ 100` любая полиномиальная сложность приемлема — даже `O(n³) = 10⁶`.",
+                "when_to_apply": "При оценке complexity-budget на собеседовании, в код-ревью production систем, при выборе алгоритма по бизнес-требованиям (latency p99 < 100ms ⟶ `n²` для `n ≤ 1000`).",
+                "edge_cases": "Константы и cache effects могут изменить картину в 10×: `O(n)` с cache miss на каждом обращении медленнее `O(n log n)` с sequential access; JVM warm-up в первые секунды снижает производительность в 5-10×.",
+                "related": "[[complexity-analysis-interview#Q18]] когда O(n²) лучше O(n log n); [[complexity-analysis-interview#Q19]] cache locality; [[complexity-analysis-interview#Q28]] константы важнее асимптотики на малых n."
+              },
+              "label": "A",
+              "text": "`O(n²)` для `n ≤ 10⁴`; `O(n log n)` для `n ≤ 10⁷`; `O(n)` для `n ≤ 10⁸` при бюджете ~10⁸ операций/сек.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Факториал растёт **намного быстрее** экспоненты. При `n=20`: `2²⁰ ≈ 10⁶`, а `20! ≈ 2.4·10¹⁸` — разница в 10¹². По формуле Стирлинга `n! ≈ (n/e)ⁿ · √(2πn)`, что превышает `cⁿ` для любой константы `c` при больших `n`. Это разные классы сложности.",
+                "source_of_confusion": "Оба считаются «экспоненциальными» в неформальной речи, и при `n < 5` числа сравнимы (`2⁵=32`, `5!=120`).",
+                "if_it_were_true": "Naive TSP (`O(n!)`) для n=15 был бы выполним за минуты — но `15! ≈ 1.3·10¹²`, это часы даже для одного CPU. Held-Karp DP TSP (`O(2ⁿ · n²)`) даёт реальный gap: `2¹⁵ · 15² ≈ 7.4·10⁶` — миллисекунды.",
+                "how_it_should_be": "`O(n!) >> O(2ⁿ) >> O(nᵏ)` — три разных класса; путать факториал и экспоненту нельзя."
+              },
+              "label": "B",
+              "text": "`O(n!)` практически то же самое, что `O(2ⁿ)` — обе экспоненциальны.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`O(log n)` растёт значительно медленнее `O(√n)`. При `n=10⁶`: `log₂(10⁶) ≈ 20`, `√(10⁶) = 1000` — разница в 50×. При `n=10⁹`: `log₂ ≈ 30`, `√ ≈ 31623` — разница в 1000×. Логарифмическая сложность принципиально лучше корневой.",
+                "source_of_confusion": "Обе сложности «суб-линейные» (медленнее `O(n)`), и в неформальной речи их объединяют как «быстрые». Но между ними экспоненциальный разрыв.",
+                "if_it_were_true": "Binary search (`O(log n)`) и pollard rho (`O(n^¼)`) считались бы эквивалентными — а первый кратно быстрее для проверки членства в множестве.",
+                "how_it_should_be": "`O(log n) << O(√n) << O(n)`; различать классы не объединяя."
+              },
+              "label": "C",
+              "text": "`O(log n)` и `O(√n)` примерно одинаковые по скорости роста.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "При `n = 10⁶`, `n³ = 10¹⁸` операций — порядка 10¹⁰ секунд = 300 лет на одном CPU. Верхняя граница для `O(n³)` в бюджете 10⁸ op/сек — `n ≤ √[3]{10⁸} ≈ 460`. Дальше — TLE.",
+                "source_of_confusion": "Студенты помнят, что «полиномы быстрые», и не делают арифметику: `n³` при больших `n` гигантский.",
+                "if_it_were_true": "Floyd-Warshall (`O(V³)`) на графе с миллионом вершин был бы выполним — но он применим только до `V ≈ 500`. Для крупных графов используют Dijkstra-per-source или гибридные алгоритмы.",
+                "how_it_should_be": "`O(n³)` приемлемо до `n ≤ 500`; для `n = 10⁶` нужен `O(n)` или `O(n log n)`."
+              },
+              "label": "D",
+              "text": "`O(n³)` приемлемо для `n ≤ 10⁶`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое пространственная сложность?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Space complexity считает только **auxiliary space** — память, выделяемую внутри алгоритма поверх входа. Входной массив считается уже занятым и не учитывается в анализе. Это позволяет сравнивать алгоритмы независимо от размера входа.",
+                "source_of_confusion": "В обыденной речи «памяти нужно много» включает и сам массив. Формальное определение исключает input по соглашению, иначе всякий алгоритм был бы как минимум `O(n)` по памяти.",
+                "if_it_were_true": "In-place алгоритмы (Bubble Sort, Heap Sort, Quick Sort partition) не отличались бы от out-of-place — все были бы `O(n)`. Реально для memory-constrained систем именно auxiliary решает выбор.",
+                "how_it_should_be": "Учитывать только auxiliary space (переменные + стек + новые структуры); входной массив исключаем."
+              },
+              "label": "A",
+              "text": "Space complexity включает входные данные — для алгоритма с массивом `int[n]` это `O(n)` auxiliary.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Merge Sort требует **`O(n)` aux space** для временного буфера на merge-шаге. Слияние двух отсортированных подмассивов в третий — out-of-place операция: классический Merge Sort невозможен без дополнительной памяти размера `n`. Существуют in-place merge sort варианты, но они теряют простоту или скорость.",
+                "source_of_confusion": "Merge Sort и Quick Sort обычно упоминают вместе как «эффективные `O(n log n)` сортировки», и студенты переносят свойства одной на другую. Quick Sort — in-place (`O(log n)` aux), Merge Sort — нет.",
+                "if_it_were_true": "TimSort (на основе Merge Sort) не требовал бы worst case `O(n)` heap memory — но JDK резервирует именно его. На embedded-устройствах с 64KB RAM сортировка миллиона int через Merge не помещается.",
+                "how_it_should_be": "Merge Sort = `O(n log n)` time + `O(n)` aux space (out-of-place); Heap Sort = `O(n log n)` time + `O(1)` aux (in-place)."
+              },
+              "label": "B",
+              "text": "Merge Sort работает in-place и не создаёт новых структур данных.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Стандартное определение space complexity — auxiliary memory, выделяемая алгоритмом сверх входа: локальные переменные, новые массивы/HashMap/Set, стек рекурсии. Входной массив считается «дано» и не входит в анализ. Эта конвенция позволяет различать in-place (`O(1)`/`O(log n)` aux) и out-of-place (`O(n)`+ aux) алгоритмы. Стек рекурсии — критическая часть: алгоритм может выглядеть `O(1)` memory, но иметь `O(n)` стек, что вызовет `StackOverflowError`.",
+                "example": "`Quick Sort` aux = `O(log n)` (стек рекурсии на сбалансированном partition); `Merge Sort` aux = `O(n)` (буфер) + `O(log n)` (стек); `Heap Sort` aux = `O(1)` (in-place, итеративно); `BFS` aux = `O(V)` (очередь + visited). Это первый параметр при выборе алгоритма для memory-constrained.",
+                "when_to_apply": "При выборе алгоритма для embedded/realtime систем, оценке JVM heap pressure, сравнении in-place vs out-of-place; на собеседовании всегда называть time + space.",
+                "edge_cases": "Стек рекурсии часто забывают — алгоритм с `O(1)` локальными переменными, но рекурсией глубиной `n` реально занимает `O(n)` памяти на стеке (фрейм ~ 50-200 байт в JVM).",
+                "related": "[[complexity-analysis-interview#Q8]] in-place vs out-of-place; [[complexity-analysis-interview#Q9]] recursive call stack space; [[complexity-analysis-interview#Q7]] амортизированная сложность."
+              },
+              "label": "C",
+              "text": "Space complexity = auxiliary space (переменные + стек вызовов + новые структуры); входные данные не учитываются.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "JVM **не реализует** Tail Call Optimization (отличие от Scala/Clojure через `@tailrec`/`trampoline`, или Scheme/Haskell нативно). Каждый рекурсивный вызов в Java добавляет фрейм на стек — даже tail-recursive методы. Глубина `n` → `O(n)` на стеке → `StackOverflowError` при `n > ~8000` (с дефолтным `-Xss512k`).",
+                "source_of_confusion": "В функциональных языках TCO стандарт, и Java-разработчики, переходящие с Scala, ожидают того же. Spec JVM поддерживает invokedynamic + frame replacement, но компилятор `javac` не генерирует TCO bytecode.",
+                "if_it_were_true": "`factorial(1_000_000)` через tail recursion работал бы — но он бросает StackOverflowError. Проверить можно простым тестом: `int f(int n, int acc) { return n == 0 ? acc : f(n-1, acc*n); }` упадёт на больших `n`.",
+                "how_it_should_be": "В JVM рекурсия = `O(глубина)` aux space на стеке; для глубокой рекурсии конвертировать в итерацию с явным `Deque` или использовать trampolining библиотеки."
+              },
+              "label": "D",
+              "text": "Рекурсия использует `O(1)` памяти благодаря хвостовой оптимизации JVM (TCO).",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое амортизированная сложность?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Worst case **конкретной** операции `add()` — это realloc + copy на `O(n)` (когда внутренний массив заполнен). Амортизированный `O(1)` означает усреднение по серии из `n` операций, не гарантию на каждую отдельную. Это два разных утверждения.",
+                "source_of_confusion": "«Amortized = worst average» — звучит как «гарантированный worst case». Реально амортизация — это распределение стоимости по серии операций, не bound на одну операцию.",
+                "if_it_were_true": "Latency-critical системы (HFT, gaming engines) могли бы свободно использовать `ArrayList.add()` без опасений — но при realloc на 10M элементов latency spike до 50ms виден в p99.99. В trading это убытки.",
+                "how_it_should_be": "Worst case одной операции `O(n)`, амортизированный `O(1)` — разные меры; для realtime нужна гарантия на каждую операцию, не среднее."
+              },
+              "label": "A",
+              "text": "`ArrayList.add()` имеет worst case `O(1)` благодаря амортизации.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Амортизированный `O(1)` усредняет стоимость по серии, но **отдельная** операция может занять `O(n)`. В realtime-системах с строгим latency budget (например, p99.9 < 10ms) realloc-операция `ArrayList` создаст spike, нарушающий SLA. Амортизированная сложность не дает per-operation guarantees.",
+                "source_of_confusion": "В обычных backend-системах spike в 1ms на realloc незаметен, и Big O воспринимается буквально как «время на операцию».",
+                "if_it_were_true": "Не было бы pre-sized ArrayList (`new ArrayList<>(capacity)`) и системы как Aeron, LMAX Disruptor (используют ring buffers фиксированного размера именно для гарантий по latency). Latency-критичные системы избегают амортизированных структур.",
+                "how_it_should_be": "Амортизированный `O(1)` — статистическое усреднение; для каждой операции в realtime нужна гарантия `O(1)` worst-case (pre-allocated, lock-free)."
+              },
+              "label": "B",
+              "text": "Амортизированный `O(1)` — это то же самое, что `O(1)` по задержке.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Амортизированный анализ через aggregate method: пусть `n` операций выполнили суммарно `T(n)` работы; амортизированная стоимость одной = `T(n)/n`. Для `ArrayList.add()`: realloc происходит при размерах 1, 2, 4, 8, ..., `n` (geometric growth ×2 или ×1.5). Стоимость realloc — `O(размер)`. Суммарная работа на realloc: `1 + 2 + 4 + ... + n ≈ 2n = O(n)`. Делим на `n` вставок: `O(1)` amortized. Ключевой ингредиент — **геометрический** рост; при arithmetic (+1 каждый раз) realloc происходит на каждой операции → `O(n)` каждый раз → `O(n²)` суммарно → `O(n)` amortized.",
+                "example": "Java `ArrayList`: `newCapacity = oldCapacity + (oldCapacity >> 1)` (×1.5). При вставке 10⁶ элементов: realloc происходит ~34 раза (log₁.₅(10⁶)≈34), суммарная work ~2.5·10⁶ = `O(n)`. На каждую операцию в среднем — 2.5 операций. Без geometric growth (например, `+10` каждый раз) при 10⁶ элементов: 10⁵ realloc × ~ 10⁶/2 копий = 5·10¹⁰ work — невычислимо.",
+                "when_to_apply": "При объяснении ArrayList/HashMap/StringBuilder на интервью; при выборе структуры с динамическим ростом для high-throughput batch обработки (не для realtime).",
+                "edge_cases": "Geometric growth с фактором 2 двойная память сразу после realloc; ×1.5 — компромисс между waste и количеством realloc. Adversarial input может заставить попасть в worst case паттерн (но для ArrayList это не критично без злого умысла).",
+                "related": "[[complexity-analysis-interview#Q15]] ArrayList.add() амортизированный анализ; [[complexity-analysis-interview#Q14]] HashMap rehashing; [[complexity-analysis-interview#Q5]] классы сложности."
+              },
+              "label": "C",
+              "text": "Редкие дорогие операции (realloc `O(n)`) компенсируются дешёвыми (`O(1)`); суммарно `n` вставок = `O(n)` → среднее `O(1)`.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`HashMap.put()` амортизированно **`O(1)`**. Rehashing — действительно `O(n)` операция, но происходит редко (при load factor > 0.75) и amortized к `O(1)` по тому же принципу geometric growth. `O(log n)` worst case относится к `get()` в treeified bucket (Java 8+), не к amortized `put()`.",
+                "source_of_confusion": "Java 8 ввела `TreeNode` для bucket'ов с длинной цепочкой → `O(log n)` worst для get/put в одном bucket. Студенты путают worst для конкретного bucket с amortized по всему `HashMap`.",
+                "if_it_were_true": "`HashMap.put()` был бы строго медленнее `TreeMap.put()` (`O(log n)`) — но эмпирически HashMap в 3-5× быстрее. Если бы amortized был `O(log n)`, HashMap не имел бы смысла.",
+                "how_it_should_be": "`HashMap.put()` = `O(1)` amortized (avg + rehashing); worst для одной операции — `O(log n)` (treeified bucket) или `O(n)` (rehashing)."
+              },
+              "label": "D",
+              "text": "`HashMap.put()` имеет амортизированную `O(log n)` из-за rehashing.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем in-place отличается от out-of-place алгоритма?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "In-place алгоритм работает в той же области памяти, что и вход, и тратит не больше `O(log n)` дополнительной памяти. По строгому определению `O(1)` aux — strict in-place; с учётом рекурсии до `O(log n)` — relaxed in-place (включает Quick Sort). Out-of-place требует `O(n)` или больше — создаёт новые структуры (буфер, копию). Различие критично для memory-constrained систем: embedded, JVM с ограниченным heap, real-time с строгим memory budget.",
+                "example": "Bubble Sort и Heap Sort — strict in-place (`O(1)` aux). Quick Sort — relaxed in-place (`O(log n)` aux на стек рекурсии при balanced partition). Merge Sort — out-of-place (`O(n)` aux на буфер для merge). Counting Sort — out-of-place (`O(n + k)` aux на count и output arrays). Reverse в `StringBuilder` — in-place. `new ArrayList<>(other)` — out-of-place.",
+                "when_to_apply": "Embedded/IoT (Heap Sort вместо Merge); JVM при tight heap (`Arrays.sort` для int[] — Dual-Pivot Quick Sort, in-place); streaming алгоритмы (in-place preferred). Out-of-place выбирают для stability (Merge Sort) или parallelism (легче распараллелить).",
+                "edge_cases": "«In-place» в литературе понимают по-разному: строго `O(1)` или включая стек `O(log n)`. На собеседовании уточнять, что имеется в виду. JVM-объекты с references — даже in-place алгоритм меняет порядок указателей, что может повлиять на GC.",
+                "related": "[[complexity-analysis-interview#Q6]] пространственная сложность; [[complexity-analysis-interview#Q9]] recursive call stack; [[complexity-analysis-interview#Q15]] ArrayList realloc."
+              },
+              "label": "A",
+              "text": "In-place использует `O(1)` или `O(log n)` aux space (стек рекурсии учитывается); out-of-place — `O(n)` и больше.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Quick Sort partition работает в исходном массиве через swap — это in-place операция. Рекурсия добавляет `O(log n)` aux space на стек (при balanced partition), что укладывается в relaxed in-place определение. Worst case `O(n)` стек при unbalanced partition — редкий случай, исправляемый introsort fallback.",
+                "source_of_confusion": "Рекурсия ассоциируется с «созданием нового», а out-of-place — с «новой структурой данных». Но стек рекурсии — это другой ресурс, и Quick Sort не выделяет новый массив.",
+                "if_it_were_true": "`Arrays.sort(int[])` в Java (Dual-Pivot Quick) аллоцировал бы `O(n)` heap — но он не делает этого, и это причина его выбора для примитивов: zero heap allocation.",
+                "how_it_should_be": "Quick Sort — in-place (relaxed): `O(log n)` aux на стек, без дополнительной структуры данных размера `n`."
+              },
+              "label": "B",
+              "text": "Quick Sort — out-of-place, потому что использует рекурсию.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "In-place — **наоборот**, алгоритм модифицирует вход вместо создания новой структуры. Это противоречит intuition «in-place = безопасно для входа». Immutable / pure-functional подход — **out-of-place**: создаёт новую структуру, оставляя оригинал нетронутым.",
+                "source_of_confusion": "«In» в «in-place» путают с «not touched». На деле «in-place» — «работает на месте, в том же месте памяти».",
+                "if_it_were_true": "`Arrays.sort(arr)` не модифицировал бы `arr` — но это его основное поведение. `List.sort()` тоже мутирует. Immutable варианты — `Collections.sort` + copy, `Stream.sorted().toList()`.",
+                "how_it_should_be": "In-place = модифицирует вход (`O(1)`/`O(log n)` aux); out-of-place = не трогает вход, создаёт новый (`O(n)` aux). Immutability — это out-of-place семантика."
+              },
+              "label": "C",
+              "text": "In-place означает «не изменяет входной массив».",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Heap Sort строит max-heap **в том же массиве**, используя индексную арифметику (`parent = i/2`, `children = 2i, 2i+1`). Никакая отдельная структура данных не создаётся — это in-place алгоритм с `O(1)` aux space. Это одна из немногих сортировок с `O(n log n)` worst time + `O(1)` aux space одновременно.",
+                "source_of_confusion": "«Бинарная куча» звучит как отдельная структура (PriorityQueue), но в Heap Sort куча — это логическая структура, наложенная на массив через индексы.",
+                "if_it_were_true": "Heap Sort не использовался бы в embedded или security-критичных системах — но он там популярен именно за in-place + гарантированный worst case. `std::sort` в libstdc++ через Introsort падает в Heap Sort при глубокой рекурсии.",
+                "how_it_should_be": "Heap Sort — strict in-place (`O(1)` aux); куча построена на месте через индексы в том же массиве."
+              },
+              "label": "D",
+              "text": "Heap Sort out-of-place из-за бинарной кучи внутри.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое recursive call stack space?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "JVM **не реализует** Tail Call Optimization (TCO). Каждый рекурсивный вызов — даже tail position — создаёт новый stack frame. Tail-recursive `factorial(1_000_000)` падает с `StackOverflowError`. Project Loom рассматривал TCO как возможность, но не включил в финальный релиз.",
+                "source_of_confusion": "Scala, Kotlin (с `tailrec`), Clojure через `recur`, Haskell, Scheme — поддерживают TCO. Разработчики, переходящие с этих языков, ожидают того же от Java.",
+                "if_it_were_true": "Recursive deep traversal на дереве с миллионом узлов работал бы без проблем — реально это StackOverflow при ~8000 глубины с `-Xss512k`.",
+                "how_it_should_be": "JVM не делает TCO; для tail-recursive алгоритмов конвертировать в loop, использовать explicit `Deque` стек, или trampolining (libraries как Vavr)."
+              },
+              "label": "A",
+              "text": "Хвостовая рекурсия в Java оптимизируется JVM до `O(1)` стека.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Stack frame в JVM содержит: локальные переменные, параметры, адрес возврата, ссылку на `this` (для instance methods), operand stack. Размер фрейма зависит от метода — обычно 50-200 байт. При глубине рекурсии `h` стек растёт на `O(h)` фреймов. Дефолтный thread stack `-Xss = 512KB` (Linux x64), что вмещает ~5-10 тысяч фреймов. Превышение → `StackOverflowError`. Стек — реальный ресурс, входящий в space complexity.",
+                "example": "`factorial(n)` — рекурсия глубиной `n` → `O(n)` стек, падает при `n > ~8000`. `binarySearch(arr, lo, hi)` — глубина `log n` → `O(log n)` стек, для `n = 2³²` всего 32 фрейма. DFS на дереве — глубина `O(h)` где `h` — высота дерева; для skewed tree `h = n` (StackOverflow риск); для balanced — `h = log n`. Recursive merge sort: глубина `log n` → `O(log n)` стек.",
+                "when_to_apply": "При расчёте space complexity рекурсивных алгоритмов на собеседовании; при выборе алгоритма для deep tree обработки в JVM; при настройке `-Xss` для специфических workload.",
+                "edge_cases": "GraalVM, OpenJ9 могут иметь разные defaults для thread stack. Virtual Threads (Loom) имеют меньшие стартовые фреймы, но всё равно растут с рекурсией. Глубина unbalanced tree может стать `O(n)` неожиданно.",
+                "related": "[[complexity-analysis-interview#Q6]] space complexity общая; [[complexity-analysis-interview#Q11]] дерево рекурсии; [[complexity-analysis-interview#Q24]] Quick Sort recursion depth."
+              },
+              "label": "B",
+              "text": "Каждый вызов добавляет фрейм `O(1)`; глубина рекурсии `h` → `O(h)` стек.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Стек — это **прикладной** ресурс памяти, ограниченный `-Xss` и заполняемый исполнением программы. Это не «hardware overhead» — это память, которую алгоритм реально использует. При глубокой рекурсии стек переполняется и приложение падает. Без учёта стека space complexity была бы неполной.",
+                "source_of_confusion": "Стек невидим в обычном программировании — не аллоцируется явно через `new`, не виден в profiler heap dump. Создаётся иллюзия, что это «системный ресурс», не относящийся к алгоритму.",
+                "if_it_were_true": "Рекурсивный DFS считался бы `O(1)` aux space — но при глубине 10⁵ он падает. Студент, сдавая интервью, забывает упомянуть стек и получает feedback «неполный анализ».",
+                "how_it_should_be": "Стек включается в total space complexity: для рекурсии = `O(глубина_рекурсии)` дополнительно к любым явным аллокациям."
+              },
+              "label": "C",
+              "text": "Стек вызовов не входит в space complexity — это hardware overhead.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Оба нуждаются в `visited[V]` (`O(V)`), но различаются дополнительной структурой: **DFS** рекурсивно — `O(h)` стек, где `h` — глубина дерева/графа (до `V` в worst case skewed graph); итеративный DFS — `O(V)` явный стек. **BFS** — `O(V)` очередь (worst case все вершины одного уровня). Итого оба `O(V)` память, но через разные механизмы.",
+                "source_of_confusion": "«`visited` массив — главная структура» — упрощение из учебников, игнорирующее стек/очередь.",
+                "if_it_were_true": "DFS на длинной цепочке вершин `V = 10⁶` работал бы без StackOverflow — реально падает на ~8000 глубине. BFS требовал бы `O(1)` очереди, но `Queue.offer()` хранит ссылки на вершины — растёт с шириной уровня.",
+                "how_it_should_be": "BFS = `O(V)` (visited + queue); recursive DFS = `O(V)` (visited + recursion stack of depth h≤V); iterative DFS = `O(V)` (visited + explicit stack)."
+              },
+              "label": "D",
+              "text": "BFS и DFS имеют одинаковую space complexity `O(1)` — только `visited` массив.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое master theorem и как им пользоваться?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Master theorem для `T(n) = a·T(n/b) + f(n)` с `a ≥ 1`, `b > 1`: вычисляем критическую функцию `n^(log_b a)` (это «работа рекурсивных вызовов»). Три случая: **(1)** `f(n) = O(n^(log_b a − ε))` для `ε > 0` — `f` слабее → `T(n) = Θ(n^(log_b a))`, рекурсия доминирует. **(2)** `f(n) = Θ(n^(log_b a))` — равны → `T(n) = Θ(n^(log_b a) · log n)`, логарифмический множитель. **(3)** `f(n) = Ω(n^(log_b a + ε))` + regularity condition `a·f(n/b) ≤ c·f(n)` для `c < 1` — `f` доминирует → `T(n) = Θ(f(n))`, работа вне рекурсии доминирует.",
+                "example": "Binary Search `T(n) = T(n/2) + O(1)`: `a=1, b=2`, `n^(log_b a) = n⁰ = 1`, `f(n) = 1` — случай 2 → `T(n) = Θ(log n)`. Merge Sort `T(n) = 2T(n/2) + O(n)`: `a=2, b=2`, `n^(log_b a) = n`, `f(n) = n` — случай 2 → `T(n) = Θ(n log n)`. Strassen `T(n) = 7T(n/2) + O(n²)`: `n^(log₂7) ≈ n^2.81`, `f(n) = n²` — случай 1 → `T(n) = Θ(n^2.81)`.",
+                "when_to_apply": "Для divide-and-conquer алгоритмов с равномерным делением на `b` подзадач; в анализе DP с recursive структурой; на собеседовании для быстрой оценки рекурсивных алгоритмов.",
+                "edge_cases": "Master theorem **не применим** к `T(n) = T(n-1) + O(1)` (не divide-and-conquer форма), к `T(n) = T(n/3) + T(2n/3) + O(n)` (разные подзадачи). Для этих случаев — recursion tree method или substitution.",
+                "related": "[[complexity-analysis-interview#Q11]] дерево рекурсии; [[complexity-analysis-interview#Q12]] метод подстановки; [[complexity-analysis-interview#Q24]] Quick Sort анализ."
+              },
+              "label": "A",
+              "text": "Сравниваем `f(n)` с `n^(log_b a)`: равны → `T(n) = O(f(n) · log n)`; `f(n)` доминирует строго → `T(n) = O(f(n))`; `f(n)` поглощается → `T(n) = O(n^(log_b a))`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Здесь `f(n) = n` и `n^(log_b a) = n^(log₂2) = n^1 = n` — они **равны**, не «`f` доминирует». Это случай 2 master theorem: `T(n) = Θ(n^(log_b a) · log n) = Θ(n log n)`. Случай 3 требовал бы `f(n) = Ω(n^(log_b a + ε))` для некоторого `ε > 0` — то есть строго больший порядок роста.",
+                "source_of_confusion": "«`f(n) = n` ≥ `n^(log_b a) = n`» воспринимается как «доминирует или равно» → случай 3. На деле для случая 3 нужно **строгое** доминирование с `ε > 0`, не равенство.",
+                "if_it_were_true": "Merge Sort оценивался бы как `O(n)` — а это противоречит общеизвестному `O(n log n)`. Тест: при `n = 10⁶` Merge Sort делает ~2·10⁷ операций, а `n` — 10⁶, в 20× меньше.",
+                "how_it_should_be": "При `f(n) = Θ(n^(log_b a))` применяется случай 2 → `T(n) = Θ(n^(log_b a) · log n)`. Для Merge Sort: `T(n) = Θ(n log n)`."
+              },
+              "label": "B",
+              "text": "Merge Sort `T(n) = 2T(n/2) + O(n)`: `f(n) = n` доминирует над `n^(log₂2) = n` → случай 3, `T(n) = O(n)`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Master theorem требует форму `T(n) = a·T(n/b) + f(n)` с `b > 1` — деление подзадачи на меньшие. `T(n-1)` — это **уменьшение** на константу, а не деление. Для линейной рекуррентности применяют recursion tree или substitution → `T(n) = O(n)`.",
+                "source_of_confusion": "Обе формы — «рекурсивное определение через меньшее `n`», и студенты пытаются применить master theorem к любой рекуррентности.",
+                "if_it_were_true": "`T(n) = T(n-1) + O(1)` оценивалось бы как `T(n) = O(log n)` (по аналогии с `T(n/2) + O(1)`) — но реально это `O(n)` (`factorial`, `linkedList.length`).",
+                "how_it_should_be": "Master theorem только для `T(n/b)`; для `T(n-1)` использовать recursion tree или substitution method."
+              },
+              "label": "C",
+              "text": "Master theorem применим для `T(n) = T(n-1) + O(1)` (линейная рекуррентность).",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Binary Search имеет `T(n) = T(n/2) + O(1)`, не `O(n)`. На каждом шаге делается **константное** число сравнений, а не линейное. Если бы рекуррентность была `T(n) = T(n/2) + O(n)`, то да, случай 3 → `T(n) = O(n)` — но это уже другой алгоритм (например, селект n-го порядкового статистика, hoare's algorithm).",
+                "source_of_confusion": "Студент помнит, что Binary Search «обходит массив» — но реально он не обходит, а делит indices. На каждом шаге одно сравнение `arr[mid] vs target`.",
+                "if_it_were_true": "Binary Search был бы `O(n)` — таким же как linear search. Различие двух алгоритмов потерялось бы.",
+                "how_it_should_be": "Binary Search: `T(n) = T(n/2) + O(1)`, `a=1, b=2`, `n^(log_b a) = 1 = f(n)` → случай 2 → `T(n) = Θ(log n)`."
+              },
+              "label": "D",
+              "text": "Binary Search `T(n) = T(n/2) + O(n)` соответствует случаю 3 master theorem, `T(n) = O(n)`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как анализировать сложность через дерево рекурсии?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Глубина дерева — `O(log n)`, не `O(n)`. На каждом уровне размер задачи делится пополам, и через `k` уровней получаем `n/2^k`. Останавливаемся при `n/2^k = 1`, т.е. `k = log₂ n`. Работа на каждом уровне `n` (суммарная работа по всем поддеревьям). Итог: `n × log n = O(n log n)`, не `O(n²)`.",
+                "source_of_confusion": "Студенты иногда смешивают глубину дерева и число подзадач: 2 подзадачи на узел дают `2^log_n = n` листьев, и кажется, что глубина — `n`. Реально глубина — это число уровней, и она `log n`.",
+                "if_it_were_true": "Merge Sort оценивался бы как `O(n²)` — но это противоречит реальной производительности. На `n = 10⁶`: `n² = 10¹²` (часы), а реально Merge Sort — секунды.",
+                "how_it_should_be": "Глубина деления пополам — `log n`; работа на уровень — `n`; итог `O(n log n)`."
+              },
+              "label": "A",
+              "text": "`T(n) = 2T(n/2) + n`: дерево имеет `O(n)` уровней, работа на каждом уровне `n` → `O(n²)`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Recursion tree method: (1) Рисуем дерево вызовов, где корень — `T(n)`, дети — `a` копий `T(n/b)`. (2) На каждом уровне считаем суммарную работу подзадач. (3) Считаем глубину дерева (`log_b n`). (4) Суммируем по всем уровням. Для `T(n) = 2T(n/2) + n`: уровень 0 — 1 узел × `n` работы = `n`; уровень 1 — 2 узла × `n/2` = `n`; ... уровень `log n` — `n` узлов × 1 = `n`. Сумма: `n × log n = O(n log n)`. Метод универсален и применим к рекуррентностям, где master theorem не работает (неравные подзадачи, аддитивные термы).",
+                "example": "`T(n) = T(n/2) + T(n/2) + 1` (DP с counting): уровень `k` имеет `2^k` узлов × 1 = `2^k`. Сумма геопрогрессии: `1 + 2 + 4 + ... + n = 2n - 1 = O(n)`. Применимо к двоичному поиску c counting подзадач. Другой пример: `T(n) = T(n/3) + T(2n/3) + n` (median-of-three quicksort) — дерево unbalanced, но работа на уровень всё ещё `n`, глубина `O(log n)` → `O(n log n)`.",
+                "when_to_apply": "Для рекуррентностей где master theorem неприменим (неравные подзадачи, T(n-1)); для intuitive understanding сложности D&C алгоритмов; на собеседовании для оценки нестандартных рекурсий.",
+                "edge_cases": "Метод визуальный, но при unbalanced trees сложно посчитать. Можно ошибиться на границах (last level partial). Сходящаяся геопрогрессия даёт `O(work at root)`, а не `O(n log n)` — внимательно к коэффициентам.",
+                "related": "[[complexity-analysis-interview#Q10]] master theorem; [[complexity-analysis-interview#Q12]] метод подстановки; [[complexity-analysis-interview#Q24]] Quick Sort рекурсия."
+              },
+              "label": "B",
+              "text": "Считаем работу на каждом уровне и суммируем: `T(n) = 2T(n/2) + n` → каждый уровень `n` работы, глубина `log n` → `O(n log n)`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`T(n-1)` уменьшает `n` на **1** на каждом шаге, а не делит пополам. Глубина дерева — `n` уровней, не `log n`. На каждом уровне 1 единица работы. Итог: `T(n) = O(n)`. Это линейная рекуррентность, не divide-and-conquer.",
+                "source_of_confusion": "Студенты часто применяют «логарифмическая глубина» как универсальный паттерн для рекурсии, забывая что логарифм возникает только при делении пополам/на `b`.",
+                "if_it_were_true": "Iterative `factorial(n)` (рекурсивно `T(n-1) + O(1)`) оценивался бы как `O(log n)` — но это `O(n)` (один умножение на каждое уменьшение).",
+                "how_it_should_be": "`T(n) = T(n-1) + O(1)` → линейная глубина `n` → `T(n) = O(n)`. Логарифмическая глубина только при `T(n/b)`."
+              },
+              "label": "C",
+              "text": "`T(n) = T(n-1) + 1`: дерево имеет `log n` уровней.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Геопрогрессия даёт **разные** результаты в зависимости от коэффициента: если ratio = 1 (равная работа на уровень) → `O(n log n)`; если ratio < 1 (убывающая) → `O(work at root)`, например `O(n)` для `T(n) = T(n/2) + n`; если ratio > 1 (растущая) → `O(leaves cost)`, например `O(n^log_b a)` для bottom-heavy дерева.",
+                "source_of_confusion": "Merge Sort (`O(n log n)`) часто приводят как образец, и студенты обобщают на любую D&C рекурсию.",
+                "if_it_were_true": "`T(n) = T(n/2) + n` оценивалось бы как `O(n log n)`, но реально это `O(n)` (сходящаяся геопрогрессия `n + n/2 + n/4 + ... = 2n`).",
+                "how_it_should_be": "Анализировать ratio геопрогрессии: 1 → `O(n log n)`; <1 → `O(work_at_root)`; >1 → `O(leaves)`. Master theorem формализует эти три случая."
+              },
+              "label": "D",
+              "text": "Геометрическая прогрессия в дереве всегда означает `O(n log n)`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как доказать сложность через подстановку?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Substitution method требует **предварительно угадать** оценку `T(n) ≤ c·g(n)` (или `Theta`/`Omega`). Затем подставить гипотезу для `T(n/2)` (или иной формы) в рекуррентность и доказать индукцией, что та же оценка выполняется для `n`. Без начальной гипотезы индуктивный шаг невозможен — нечего подставлять.",
+                "source_of_confusion": "Название «substitution» звучит механически, как алгоритмическая процедура. Реально это **доказательство гипотезы**, не её поиск.",
+                "if_it_were_true": "Существовал бы алгоритм автоматического анализа сложности любой рекуррентности — но даже современные системы (Wolfram Alpha) ограничены и требуют формулировки гипотезы.",
+                "how_it_should_be": "Для гипотезы используют recursion tree или master theorem (где применим), потом substitution для верификации/доказательства."
+              },
+              "label": "A",
+              "text": "Метод подстановки автоматически находит асимптотическую оценку без начального предположения.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Substitution method — формальный доказательственный приём через mathematical induction. (1) **Guess**: предположить, что `T(n) ≤ c·g(n)` для подходящих констант `c, n₀`. (2) **Assume**: индукционное предположение — `T(k) ≤ c·g(k)` для всех `k < n`. (3) **Prove**: подставить в рекуррентность и показать, что `T(n) ≤ c·g(n)` выполняется при выборе достаточно большого `c`. Метод даёт строгое математическое доказательство, не приближение. Используется в академических работах и CLRS для верификации интуитивных оценок.",
+                "example": "Для `T(n) = 2T(n/2) + n` угадываем `T(n) ≤ c·n·log n`. Подставляем: `T(n) ≤ 2·c·(n/2)·log(n/2) + n = c·n·(log n − 1) + n = c·n·log n − c·n + n`. Чтобы это было `≤ c·n·log n`, нужно `−c·n + n ≤ 0`, т.е. `c ≥ 1`. Выбираем `c = 1` и базовый случай → доказательство завершено. Если бы угадали `T(n) ≤ c·n` — не сработало бы: `2·c·(n/2) + n = c·n + n > c·n`.",
+                "when_to_apply": "В академических доказательствах сложности; для формальной верификации результата recursion tree или master theorem; в complex DP алгоритмах где другие методы дают только приближение.",
+                "edge_cases": "Может не сработать с неправильной гипотезой — приходится итерировать. Иногда нужно strengthen induction hypothesis (доказывать более сильное утверждение для успеха индукции). Граничные условия — отдельная работа.",
+                "related": "[[complexity-analysis-interview#Q11]] дерево рекурсии для подбора гипотезы; [[complexity-analysis-interview#Q10]] master theorem; [[complexity-analysis-interview#Q4]] правила Big O."
+              },
+              "label": "B",
+              "text": "Угадываем `T(n) ≤ c·g(n)`, подставляем `T(n/2) ≤ c·g(n/2)` в рекуррентность и доказываем `T(n) ≤ c·g(n)` по индукции.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "При подстановке: `T(n) ≤ 2·(c·n/2) + n = c·n + n > c·n`. Гипотеза `T(n) ≤ c·n` **не выполняется** для любого `c` — индукция падает. Правильная гипотеза — `T(n) ≤ c·n·log n`, которая успешно подставляется (см. предыдущий пример).",
+                "source_of_confusion": "Линейная гипотеза `O(n)` интуитивна для алгоритма, обходящего массив. Но Merge Sort делает работу на каждом уровне рекурсии, а уровней `log n` — нужен логарифмический множитель.",
+                "if_it_were_true": "Merge Sort был бы `O(n)` — но он `Θ(n log n)`. Это разница в `log n` раз, существенная при `n = 10⁹`.",
+                "how_it_should_be": "Для `2T(n/2) + n` правильная гипотеза — `T(n) = O(n log n)`. Substitution с `T(n) ≤ c·n` фаилит, и это сигнал усилить гипотезу."
+              },
+              "label": "C",
+              "text": "Для `T(n) = 2T(n/2) + n` гипотеза `T(n) ≤ c·n` доказывается подстановкой.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Оба метода — корректные доказательственные техники, и для одной рекуррентности дают **одинаковый** результат. Разные оценки означают ошибку вычислений в одном из методов. Это математические теоремы: tight bound уникален с точностью до константы.",
+                "source_of_confusion": "Recursion tree — визуальный/интуитивный; substitution — формальный. Кажется, что они «разные методы». Это разные инструменты для одного факта.",
+                "if_it_were_true": "Не существовало бы единой теории сложности — каждый метод давал бы свой ответ. CLRS не было бы возможным, и комплексити-анализ был бы непредсказуем.",
+                "how_it_should_be": "Все корректные методы (recursion tree, substitution, master theorem) дают одинаковый tight bound; расхождение — ошибка, требующая проверки."
+              },
+              "label": "D",
+              "text": "Метод подстановки и дерево рекурсии могут давать разные результаты для одной рекуррентности.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова сложность операций в Java Collections?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`LinkedList.get(i)` — это **`O(n)`** операция. Внутри происходит обход от head или tail до индекса `i` (Java оптимизирует: если `i < size/2` идёт с head, иначе с tail). Random access принципиально не поддерживается в linked structure — нет арифметики указателей на ячейку.",
+                "source_of_confusion": "Студенты путают `LinkedList.add(last)` (`O(1)` — да, хранит ссылку на tail) с `get(i)` (нет O(1)). Замена `ArrayList` на `LinkedList` «для скорости» в random access — типичный антипаттерн.",
+                "if_it_were_true": "Не было бы необходимости в `ArrayList` — `LinkedList` был бы строго лучше (`O(1)` insert/delete + `O(1)` random access). Реально `ArrayList` доминирует в JDK именно из-за random access.",
+                "how_it_should_be": "`LinkedList.get(i)` — `O(n)`; для random access всегда `ArrayList` или массив; LinkedList оптимален для частых insert/delete в середине через ListIterator."
+              },
+              "label": "A",
+              "text": "`LinkedList.get(i)` работает за `O(1)` — хранит ссылку на текущий узел.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`TreeMap` — это Red-Black Tree, и **все** операции (`get`, `put`, `remove`) — `O(log n)` worst и avg. `HashMap` — `O(1)` avg, `O(log n)` worst (treeified bucket). На больших `n` разница существенна: `n=10⁶`, `TreeMap` ~20 операций, `HashMap` ~1.",
+                "source_of_confusion": "Оба реализуют интерфейс `Map`, и API идентичен. Студенты путают одинаковый API с одинаковой сложностью.",
+                "if_it_were_true": "Не было бы смысла иметь оба класса в JDK — HashMap был бы строго лучше (`O(1)` + lower constants). Реально TreeMap нужен именно когда требуется упорядоченность (`firstKey`, `floorKey`, `subMap`).",
+                "how_it_should_be": "HashMap = `O(1)` avg / `O(log n)` worst; TreeMap = `O(log n)` всегда; выбирать по требованию ordered iteration."
+              },
+              "label": "B",
+              "text": "`TreeMap` и `HashMap` имеют одинаковую среднюю сложность `O(1)` для `get/put`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`PriorityQueue.contains()` — это `O(n)` линейный поиск по всей куче. Бинарная куча упорядочена только относительно min/max (top), но не для произвольного поиска. Для `O(log n)` поиска нужен `TreeSet` или иная упорядоченная структура.",
+                "source_of_confusion": "Слово «бинарная куча» звучит как «бинарное дерево поиска», и кажется, что contains должен быть `O(log n)`. Но heap order ≠ search tree order: дочерние узлы могут быть в любом порядке относительно друг друга.",
+                "if_it_were_true": "`PriorityQueue` заменил бы `TreeSet` — но это не происходит. Реально для запросов «есть ли элемент» PriorityQueue не подходит.",
+                "how_it_should_be": "`PriorityQueue.contains() = O(n)`; `offer/poll = O(log n)`; `peek = O(1)`. Для поиска нужны TreeSet/HashSet."
+              },
+              "label": "C",
+              "text": "`PriorityQueue.contains()` работает за `O(log n)` — бинарное дерево внутри.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Каждая коллекция имеет характерный набор сложностей по операциям, определяемый внутренней структурой. **Массивы** (`ArrayList`, `ArrayDeque`) — `O(1)` random access через индексную арифметику. **Hash-based** (`HashMap`, `HashSet`) — `O(1)` avg через хеш-функцию, `O(log n)` worst (Java 8 treeified). **Tree-based** (`TreeMap`, `TreeSet`) — `O(log n)` через RB-Tree, поддерживают упорядочённый обход. **Linked** (`LinkedList`) — `O(n)` random access, `O(1)` insertion at known position. Знание этой матрицы — обязательное на собеседовании.",
+                "example": "Кэширование пользовательских профилей по `userId` (high-throughput lookup): `HashMap<Long, User>` — `O(1)` avg. Iterating top-10 leaderboard по score: `TreeMap<Integer, String>` или `PriorityQueue` с capacity 10. Большой батч с iteration по индексу: `ArrayList<T>`. Queue для BFS: `ArrayDeque`. LinkedList используется редко — обычно `LinkedList` хуже `ArrayList` из-за cache misses.",
+                "when_to_apply": "При выборе коллекции под операционный профиль (read/write/iterate/search ratio); при оценке latency на собеседовании; в код-ревью при подозрении на неоптимальный выбор структуры.",
+                "edge_cases": "`HashMap.put()` иногда O(n) (rehashing) — но amortized O(1). `ArrayList.add()` amortized O(1) только при добавлении в конец; в середине — O(n). `TreeMap` не synchronized — нужны `ConcurrentSkipListMap` для concurrent ordered access (тоже `O(log n)`).",
+                "related": "[[complexity-analysis-interview#Q14]] HashMap worst O(log n); [[complexity-analysis-interview#Q15]] ArrayList amortized; [[complexity-analysis-interview#Q19]] cache locality."
+              },
+              "label": "D",
+              "text": "`ArrayList.get() = O(1)`; `HashMap.get() = O(1)` avg, `O(log n)` worst; `TreeMap.get() = O(log n)`; `LinkedList.get() = O(n)`.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему HashMap.get() в худшем случае O(log n), а не O(n)?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Java 7 `HashMap`: bucket = `LinkedList<Entry>`. При коллизиях или HashDoS-атаке цепочка растёт, `get()` становится `O(n)`. Java 8 добавила **treeification**: когда в bucket >= 8 элементов И capacity >= 64, LinkedList трансформируется в Red-Black Tree (`TreeNode`). Worst case становится `O(log n)`. Защита требует, чтобы ключи реализовывали `Comparable` — иначе используется `System.identityHashCode` как tieBreakOrder. При уменьшении до `UNTREEIFY_THRESHOLD = 6` дерево обратно превращается в список.",
+                "example": "Атака HashDoS 2011 на Tomcat: атакующий подбирал ключи с одинаковым `hashCode()` (например, для Java 7 строки `\"Aa\"`, `\"BB\"`, `\"BBaA\"` коллидировали). POST с 10000 такими параметрами → 10000 элементов в одном bucket → `O(n²)` суммарно на парсинг → CPU 100%, DoS. Java 8 treeification снижает атаку до `O(n log n)` — не идеально, но не DoS.",
+                "when_to_apply": "При анализе безопасности HashMap для security-critical кода; при настройке `initialCapacity` для high-throughput Map; при отладке latency spikes в hot path.",
+                "edge_cases": "Если ключ не реализует `Comparable`, treeification использует identity hash — менее эффективно. `MIN_TREEIFY_CAPACITY = 64` — если capacity меньше, при коллизии происходит resize, а не treeify (resize обычно решает проблему). При frequent insert/remove balanced дерево требует rebalancing, что добавляет константу к operations.",
+                "related": "[[complexity-analysis-interview#Q13]] сложности Java Collections; [[complexity-analysis-interview#Q31]] complexity attack (HashDoS); [[complexity-analysis-interview#Q7]] амортизированный анализ."
+              },
+              "label": "A",
+              "text": "При длине цепочки `>= TREEIFY_THRESHOLD = 8` и `capacity >= MIN_TREEIFY_CAPACITY = 64` LinkedList превращается в RB-дерево; worst case `O(log n)` вместо `O(n)`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Дерево используется **только** при достижении `TREEIFY_THRESHOLD = 8` элементов в одной корзине (bucket). Обычно bucket — это `LinkedList` из 1-3 элементов. Если бы все элементы были в одном дереве, `HashMap` имел бы постоянный overhead и потерял бы преимущество перед `TreeMap`.",
+                "source_of_confusion": "Студенты слышат «Java 8 ввела дерево» и обобщают на весь `HashMap`. Реально это локальная оптимизация на коллизии.",
+                "if_it_were_true": "`HashMap.get()` всегда `O(log n)` — но эмпирически он быстрее `TreeMap`. Тест: `n=10⁶`, HashMap.get() ~ 50ns, TreeMap.get() ~ 200ns. Разница в 4× не существовала бы.",
+                "how_it_should_be": "Bucket нормально — `LinkedList`; treeify только при `>= 8` элементов в bucket И `capacity >= 64`. Остальные buckets остаются list'ами."
+              },
+              "label": "B",
+              "text": "Java 8 хранит все элементы `HashMap` в красно-чёрном дереве для гарантированного `O(log n)`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Load factor > 0.75 → **rehashing** всей таблицы (удвоение capacity), а не treeification. Treeification срабатывает по длине **отдельной цепочки** в bucket: `>= 8 элементов`. Эти два механизма — разные защиты: rehashing уменьшает collision rate, treeification — ограничивает worst case при unavoidable collisions.",
+                "source_of_confusion": "Оба связаны с «когда HashMap становится медленным», и студенты их смешивают. Реально это разные триггеры.",
+                "if_it_were_true": "При HashDoS-атаке load factor мог бы оставаться низким (мало уникальных hash buckets), и treeification не сработал бы. Защита от атаки была бы нулевой.",
+                "how_it_should_be": "Rehashing — при `size > capacity · loadFactor`; treeification — при `bucket.length >= 8 && capacity >= 64`. Два независимых механизма."
+              },
+              "label": "C",
+              "text": "Treeification включается при load factor > 0.75.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "При уменьшении до `UNTREEIFY_THRESHOLD = 6` (через `remove()`) дерево **обратно** превращается в LinkedList. Это экономит память: TreeNode тяжелее (parent/left/right/prev/red), чем простой Node. Реверсия — динамическая, для разных buckets независимо.",
+                "source_of_confusion": "Кажется, что трансформация «дороже отменить», но реально reverse — это просто перестроение list из in-order обхода.",
+                "if_it_were_true": "HashMap после атаки HashDoS сохранял бы tree overhead навсегда (даже после удаления злонамеренных элементов) → memory leak. Реально cleanup происходит автоматически.",
+                "how_it_should_be": "`TREEIFY_THRESHOLD = 8` для перехода в tree, `UNTREEIFY_THRESHOLD = 6` для обратного перехода в list; асимметрия предотвращает thrashing."
+              },
+              "label": "D",
+              "text": "После treeification bucket никогда не возвращается в связный список.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему ArrayList.add() — это амортизированный O(1)?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Aggregate amortized analysis: посчитаем total work для `n` вставок. Realloc происходит при размерах 1, 2 (~1.5·1), 3 (~1.5·2), 4 (~1.5·3)... примерно `log₁.₅ n` раз. Каждый realloc копирует текущие элементы: 1 + 1.5 + 2.25 + ... + n ≈ `n · (1.5/0.5) = 3n` (геометрическая сумма). Плюс `n` дешёвых вставок (O(1) каждая). Total: `O(n)` work. Делим на `n` операций: `O(1)` amortized. **Ключевой ингредиент** — геометрический рост: arithmetic growth (capacity + k) дал бы `O(n²)` total → `O(n)` amortized, что хуже.",
+                "example": "Java реализация: `newCapacity = oldCapacity + (oldCapacity >> 1)` — фактор 1.5 (компромисс между waste и realloc count). Для `n = 10⁶`: realloc происходит ~34 раза, суммарная work ~2.5·10⁶ операций. Средняя — 2.5 op/insert. Без geometric growth (например, `+10`): 10⁵ realloc × ~5·10⁵ копий = 5·10¹⁰ — катастрофа. Поэтому `Vector` в Java исторически имел `+capacity` и был медленнее.",
+                "when_to_apply": "При объяснении ArrayList на интервью; при подготовке к large append-heavy workload (batch processing, log accumulation); при выборе initial capacity для known-size data.",
+                "edge_cases": "Amortized ≠ worst case: одна операция может занять `O(n)`, что создаёт latency spike в realtime системах. Для предсказуемой latency использовать pre-sized `new ArrayList<>(n)` или ring buffer.",
+                "related": "[[complexity-analysis-interview#Q7]] амортизированная сложность; [[complexity-analysis-interview#Q13]] Java Collections complexity; [[complexity-analysis-interview#Q14]] HashMap rehashing."
+              },
+              "label": "A",
+              "text": "Суммарно `n` вставок выполняют `O(n)` работы (realloc происходит ~`log₁.₅ n` раз × копирования); амортизированное среднее `= O(1)`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Конкретная операция `add()` может быть `O(n)` — когда внутренний массив заполнен, создаётся новый размера `×1.5`, копируются все элементы (`O(n)`), потом добавляется новый. Только **средняя** стоимость через серию операций — `O(1)`. Random access к элементам (`O(1)`) — это `get(i)`, не `add()`.",
+                "source_of_confusion": "Студенты помнят, что `ArrayList` — это массив, и переносят `O(1)` access на `O(1)` insert. Это разные операции.",
+                "if_it_were_true": "Не имело бы значения, передавать `initialCapacity` в конструктор — на практике это даёт 2-5× ускорение для known-size scenarios.",
+                "how_it_should_be": "`ArrayList.add(last)` — `O(1)` amortized (не worst); `get(i)` — `O(1)` worst (random access)."
+              },
+              "label": "B",
+              "text": "`ArrayList.add()` всегда `O(1)` — массив позволяет произвольный доступ к элементам.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Указание `initialCapacity` **улучшает** производительность, устраняя необходимость в realloc. При known-size `new ArrayList<>(1000000)` выделяет массив сразу — все 10⁶ операций `add()` будут `O(1)` без амортизации. Memory footprint тот же, что и при автоматическом росте до конца.",
+                "source_of_confusion": "Может казаться, что «больше памяти сразу = хуже», но это premature optimization. Реально это правильный паттерн.",
+                "if_it_were_true": "JDK не предоставлял бы конструктор с capacity — но он есть в `ArrayList`, `HashMap`, `StringBuilder` именно для оптимизации.",
+                "how_it_should_be": "`initialCapacity` устраняет realloc → детерминированный `O(1)` для каждой вставки; рекомендуется для known-size scenarios."
+              },
+              "label": "C",
+              "text": "`new ArrayList<>(n)` ухудшает амортизированную сложность из-за изначально большой памяти.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`LinkedList.add(last)` — это **`O(1)` worst case, без амортизации**. Внутри есть ссылка на tail, добавление — это `tail.next = newNode; tail = newNode`. Никаких realloc — у linked list нет фиксированного массива. Механизм принципиально другой. `LinkedList.add(index)` — это `O(n)` обход до индекса + `O(1)` вставка.",
+                "source_of_confusion": "Оба класса добавляют элементы и являются `List`, и студенты обобщают сложность.",
+                "if_it_were_true": "Между ArrayList и LinkedList не было бы выбора — но обычно `ArrayList` лучше из-за cache locality (даже при `O(1)` LinkedList операциях, cache misses делают её медленнее на практике).",
+                "how_it_should_be": "`ArrayList.add(last)` — `O(1)` amortized (realloc + geometric growth); `LinkedList.add(last)` — `O(1)` worst (pointer manipulation); разные механизмы для одного асимптотического класса."
+              },
+              "label": "D",
+              "text": "`LinkedList.add()` тоже амортизированный `O(1)` по той же причине.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается O(log n) и O(log² n)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`O(log² n) = O((log n)²)` — это **квадрат** логарифма, а не двойной логарифм. При `n = 10⁶`: `log₂(10⁶) ≈ 20`, `(log₂(10⁶))² = 400` — разница в **20×**, а не 2×. При `n = 10⁹`: `log n ≈ 30`, `log² n ≈ 900` — разница в 30×.",
+                "source_of_confusion": "Запись `log² n` визуально похожа на `2·log n` (где «²» — это «×2»). Реально это `(log n) × (log n)`.",
+                "if_it_were_true": "Алгоритм считающий узлы в perfect binary tree (`O(log² n)`) был бы только в 2× медленнее простого высота-измерения (`O(log n)`) — реально разница в десятки раз на больших деревьях.",
+                "how_it_should_be": "`log² n` означает `(log n)²` — квадрат логарифма; не путать с удвоением."
+              },
+              "label": "A",
+              "text": "`O(log² n) = O(2 · log n)` — в два раза медленнее `O(log n)`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "`log² n` появляется при двойной логарифмической вложенности: внешний цикл `log n` итераций, внутренний — `log n`. Это всё ещё **полилогарифмическая** сложность, что значительно лучше любой полиномиальной (`O(n)`, `O(n²)`, etc.). При `n = 10⁹`: `log n ≈ 30`, `log² n ≈ 900`, `n ≈ 10⁹` — `log² n` в 10⁶ раз меньше `n`. На практике `O(log² n)` алгоритмы considered очень быстрыми.",
+                "example": "Counting nodes в complete binary tree (Q36 в leetcode): для каждого узла (`log n` глубина) делаем оценку высоты подерева (`log n`) → `O(log² n)`. При `n = 10⁶` узлов: ~400 операций vs наивный `O(n) = 10⁶`. Другой пример: некоторые data structures с двойной индексацией (например, segment tree с lazy propagation для range queries).",
+                "when_to_apply": "При анализе алгоритмов с «binary search inside binary search» паттерном; при оценке полилогарифмических DS; на собеседовании для отличия от линейных классов.",
+                "edge_cases": "`log² n` всё ещё растёт — при `n = 10⁹` это 900 операций, что в 30× медленнее `O(log n)`. Не всегда «логарифмическая» = «мгновенная». Также `log³ n`, `log⁴ n` существуют и логарифмически растут.",
+                "related": "[[complexity-analysis-interview#Q5]] классы сложности; [[complexity-analysis-interview#Q10]] master theorem; [[complexity-analysis-interview#Q21]] вложенные циклы с разными границами."
+              },
+              "label": "B",
+              "text": "`O(log² n) = O((log n) · (log n))`; растёт быстрее `O(log n)`, но намного медленнее `O(n)`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Правило отбрасывания константы (`O(2n) = O(n)`) применимо только для **константных** множителей. `log n` — переменная функция от `n`, а не константа. `(log n)²` строго больший класс, чем `log n`: соотношение `log²n / log n = log n → ∞` при `n → ∞`.",
+                "source_of_confusion": "Студенты автоматически отбрасывают «²» как «константу степени», игнорируя что основание — переменная.",
+                "if_it_were_true": "Любой алгоритм с полилогарифмической сложностью оценивался бы одинаково (`log n`, `log²n`, `log¹⁰⁰ n`) — а это противоречит факту, что асимптотики действительно различаются.",
+                "how_it_should_be": "`O(log² n) ≠ O(log n)` — строго больший класс. Константа отбрасывается, переменная функция — нет."
+              },
+              "label": "C",
+              "text": "`O(log² n)` и `O(log n)` одинаковы по порядку роста — как `O(2n) = O(n)`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`log² n > log n` для `n > 2`, поэтому `O(n log² n) > O(n log n)` — медленнее. При `n = 10⁶`: `n log n = 2·10⁷`, `n log² n = 4·10⁸` — в 20× медленнее. Любая сортировка `O(n log² n)` хуже Merge Sort (`O(n log n)`).",
+                "source_of_confusion": "Студенты путают полилогарифмические факторы. «log² быстрее n»? — да, но `n log² n` ≠ `n × log²(n)` ≠ что-то лучше `n log n`.",
+                "if_it_were_true": "Shellsort (`O(n log² n)` в одной версии) был бы быстрее Quick/Merge — но эмпирически он медленнее на больших данных.",
+                "how_it_should_be": "`O(n log² n) > O(n log n)` — медленнее в `log n` раз; для сортировок предпочитают `O(n log n)`."
+              },
+              "label": "D",
+              "text": "`O(n log² n)` быстрее `O(n log n)`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое pseudo-polynomial complexity?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Pseudo-polynomial — это алгоритм, время которого полиномиально от **значения** входного параметра, но экспоненциально от его **размера представления** (числа битов). Для Knapsack DP таблица — `n × W` ячеек, где `W` — вместимость рюкзака. Если `W = 2^30 ≈ 10⁹`, размер входа — 30 битов, но алгоритм делает 10⁹·n операций — экспоненциально по битам. Pseudo-polynomial — ключевое понятие для классификации NP-hard задач: «слабо NP-hard» (Knapsack, Subset Sum — есть pseudo-polynomial DP) vs «сильно NP-hard» (TSP — нет даже pseudo-polynomial).",
+                "example": "Knapsack для `W = 10⁶, n = 1000`: таблица — 10⁹ ячеек, ~10ms на правильно реализованном DP. Knapsack для `W = 10¹², n = 1000`: 10¹⁵ ячеек — OOM и часы. Хотя размер входа изменился незначительно (40 vs 12 битов для `W`), время и память выросли на порядки. Также Subset Sum DP `O(n·S)` — pseudo-polynomial.",
+                "when_to_apply": "При оценке Knapsack/Subset Sum в production — проверять диапазон `W`/`S`; для NP-hard задач выбирать pseudo-polynomial DP только при ограниченных параметрах; в академическом контексте при классификации сложности.",
+                "edge_cases": "Pseudo-polynomial != polynomial: при unbounded `W` алгоритм бесполезен. Distinct от polylog (`O(n · log^k n)`): polylog — про количество операций как функцию от размера, pseudo-poly — про связь с значением входа.",
+                "related": "[[complexity-analysis-interview#Q20]] NP-hard vs NP-complete; [[complexity-analysis-interview#Q5]] классы сложности; [[complexity-analysis-interview#Q12]] доказательство подстановкой."
+              },
+              "label": "A",
+              "text": "Knapsack DP `O(n·W)`: полиномиален от **значения** W, но экспоненциален от **числа битов** `log₂ W`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Pseudo-polynomial и polylog — **разные** концепты. Polylog — `O((log n)^k)` для константного `k`, описывает количество операций как функцию от размера входа `n`. Pseudo-polynomial — связь сложности с **значением** параметра, не его размером.",
+                "source_of_confusion": "Оба термина содержат «poly» и звучат как «промежуточные» классы между полиномами и экспонентой.",
+                "if_it_were_true": "Knapsack DP оценивался бы как polylog — но он экспоненциален по битам входа. Это разные оси анализа.",
+                "how_it_should_be": "Polylog — `O((log n)^k)` (про размер); pseudo-poly — `O(value(input))` (про значение). Knapsack pseudo-poly, fast Fourier — polylog."
+              },
+              "label": "B",
+              "text": "Pseudo-polynomial = `O(n · polylog(n))` — алгоритм с полиномиальными логарифмами.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`S` — это **значение** целевой суммы. Для кодирования `S` нужно `log₂ S` битов. Если `S = 2^30`, размер входа — 30 битов, а алгоритм делает `S = 10⁹` операций — это 2³⁰ операций по битам, **экспоненциально**. Полиномиальный алгоритм работал бы за `O(poly(log S))`, например `O((log S)^10)`.",
+                "source_of_confusion": "`O(n·S)` визуально похоже на полиномиальную форму. Студенты не различают «размер входа» (биты) и «значение входа» (целое число).",
+                "if_it_were_true": "Subset Sum была бы в P → P = NP. Clay Institute заплатил бы $1M.",
+                "how_it_should_be": "`O(n·S)` — pseudo-polynomial; полиномиально от значения `S`, экспоненциально от размера в битах `log S`."
+              },
+              "label": "C",
+              "text": "Subset Sum с DP `O(n·S)` — это **полиномиальная** сложность.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "При `W = 10⁹` таблица `n·W` содержит `10¹²` ячеек × `n = 10³` = `10¹⁵` ячеек. Memory: каждая `int` = 4 байта → `4·10¹⁵ = 4 PB` — невычислимо. Алгоритм применим только при ограниченных `W` (обычно `W ≤ 10⁶`).",
+                "source_of_confusion": "Студенты на learnбуке решают Knapsack для `W = 100` и обобщают на любые значения.",
+                "if_it_were_true": "Можно было бы решить произвольную NP-hard задачу полиномиально — снова P = NP.",
+                "how_it_should_be": "Проверять `W` (или `S`) на входе; для больших `W` использовать approximation algorithms (FPTAS для Knapsack) или branch-and-bound."
+              },
+              "label": "D",
+              "text": "Алгоритм `O(n·W)` применим при любых `W`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда O(n²) лучше O(n log n)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Big O описывает поведение **при `n → ∞`**, скрывая константы. На малых `n` (`n < 50`) Insertion Sort (`O(n²)`) часто **быстрее** Merge Sort (`O(n log n)`) из-за меньших констант, лучшей cache locality, отсутствия overhead рекурсии и аллокаций. TimSort и Java Dual-Pivot Quick Sort переключаются на Insertion Sort для малых подмассивов именно по этой причине.",
+                "source_of_confusion": "Big O — это упрощение, и в учебниках его представляют как «универсальный закон». В реальной production-системе константы решают.",
+                "if_it_were_true": "Не было бы hybrid sorting algorithms (TimSort, Introsort, Dual-Pivot). JDK реализовал бы один универсальный алгоритм — реально использует несколько с переключениями.",
+                "how_it_should_be": "На малых `n` `O(n²)` может быть быстрее; асимптотика верна только при `n → ∞`; пороговая точка определяется константами."
+              },
+              "label": "A",
+              "text": "`O(n log n)` всегда лучше `O(n²)` при любом `n`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Big O — это асимптотический анализ: `f(n) = O(g(n))` означает `f(n) ≤ c·g(n)` для всех `n ≥ n₀`. При `n < n₀` поведение не описано Big O. В реальном железе важны: (1) **Cache locality** — sequential access (`Insertion Sort` на массиве) в 10-100× быстрее random (Merge Sort с двух буферов). (2) **Branch prediction** — простые петли лучше предсказываются, чем recursive calls. (3) **Allocation overhead** — Merge Sort выделяет `O(n)` память каждый раз, Insertion Sort — `O(1)`. (4) **JIT inlining** — короткие методы инлайнятся лучше. Insertion Sort с константой ~5 на `n = 50`: 5·50² = 12500 ops; Merge Sort с константой ~50: 50·50·log 50 ≈ 14000 ops — comparable.",
+                "example": "TimSort (`Arrays.sort(Object[])` в JDK 7+) использует Insertion Sort для подмассивов `n < 32`, потом merge. Dual-Pivot Quick Sort (`Arrays.sort(int[])`) переключается на Insertion при `n < 47`. Introsort (`std::sort` в libstdc++) — на `n < 16`. Эти пороги тщательно подобраны через benchmarking.",
+                "when_to_apply": "При оптимизации hot path с малыми `n`; при выборе алгоритма для embedded или realtime; на собеседовании при обсуждении hybrid sorting algorithms.",
+                "edge_cases": "Порог зависит от железа (CPU cache size, branch predictor): на разных архитектурах оптимальное `n` отличается в 2-3×. Также от типа данных: для объектов overhead `equals/compareTo` сдвигает порог.",
+                "related": "[[complexity-analysis-interview#Q19]] cache locality важнее Big O; [[complexity-analysis-interview#Q28]] константы важнее асимптотики; [[complexity-analysis-interview#Q29]] скрытые константы."
+              },
+              "label": "B",
+              "text": "При `n ≤ 50`, хорошей cache locality и малых константах `O(n²)` может обогнать `O(n log n)`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Cache locality и константы важны **независимо** от порядка данных. На случайных входах малой длины Insertion Sort всё равно быстрее Merge Sort из-за простоты операций. Преимущество на partially sorted — отдельный эффект (`O(n)` best case для Insertion Sort), не основное правило.",
+                "source_of_confusion": "Insertion Sort действительно особенно хорош на nearly-sorted (TimSort использует это для real-world data), и студенты экстраполируют на все случаи.",
+                "if_it_were_true": "TimSort и Quick Sort не переключались бы на Insertion для малых random подмассивов — но они делают это всегда.",
+                "how_it_should_be": "На малых `n` константы решают для любых данных; partially sorted — отдельный бонус."
+              },
+              "label": "C",
+              "text": "`O(n²)` лучше только если данные уже частично отсортированы.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "При `n = 100`: `n² = 10000`, `n log n ≈ 700` — разница в **14×**. Для hot code или частых вызовов это значимо: при 10⁶ вызовов/сек — 10⁴ vs 7·10² мс = 10x latency difference. Различимо легко через JMH.",
+                "source_of_confusion": "В абсолютном wall time оба «миллисекунды», и кажется «одинаково». Реально на серверной нагрузке кумулятивно различимо.",
+                "if_it_were_true": "Профилирование hot path было бы бессмысленным на малых `n` — но JMH регулярно показывает 5-15× разницы.",
+                "how_it_should_be": "Различимы всегда: соотношение `n²/(n log n) = n/log n`; для `n = 100` — 14×; для `n = 50` — 7×. На малых `n` константы могут перевернуть картину, но числа операций различимы."
+              },
+              "label": "D",
+              "text": "`O(n log n)` и `O(n²)` неразличимы при `n < 100`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему cache locality важна больше, чем Big O для малых n?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Sequential обход `LinkedList` **медленнее** `ArrayList` в 10-100× из-за **cache miss** на каждом узле. ArrayList хранит данные contiguous в массиве — prefetcher загружает 16-64 int за один cache line (64 байт). LinkedList узлы разбросаны по heap случайным образом, и каждый `next` — потенциальный cache miss (~100ns latency). Shift при вставке в середину — единственный сценарий, где LinkedList выигрывает.",
+                "source_of_confusion": "Big O говорит «оба `O(n)` обход» — кажется, что одинаково. Реальность: константы из-за cache отличаются на порядки.",
+                "if_it_were_true": "Современные high-performance системы использовали бы LinkedList — но эмпирически (JMH, profiling) `ArrayList` выигрывает почти везде.",
+                "how_it_should_be": "ArrayList sequential обход в 10-100× быстрее LinkedList из-за cache; одна из главных причин избегать LinkedList в Java."
+              },
+              "label": "A",
+              "text": "`LinkedList` быстрее `ArrayList` при sequential обходе — нет shift операций.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Memory hierarchy: L1 cache (`~1ns`, 32KB), L2 (`~3ns`, 256KB), L3 (`~10ns`, 8MB), RAM (`~100ns`, GB). Каждый уровень в 3-30× медленнее. Cache line — 64 байта; за один miss загружается 16 int сразу. CPU **prefetcher** предсказывает следующие чтения для sequential паттернов, скрывая latency. Random access на linked structures разрушает prefetch — каждое чтение становится миссом. Branch prediction также эффективнее для простых циклов, чем для рекурсии. Итог: алгоритм с худшим Big O может побеждать на практике благодаря cache-friendly access patterns. Например, B-Tree (`O(log_b n)` с большой константой) обычно быстрее AVL/BST (`O(log n)` с маленькой константой) — потому что B-Tree блоки помещаются в cache line.",
+                "example": "Sum по 10⁶ int: `ArrayList` ~1.5ms, `LinkedList` ~150ms — 100× разница, оба `O(n)`. Бинарный поиск в массиве (`O(log n)` + sequential) быстрее поиска в balanced BST (`O(log n)` + random pointers). B-Tree в databases (PostgreSQL, MySQL) — `O(log n)` с branching factor 100-1000, оптимизирован под 8KB page = cache-friendly.",
+                "when_to_apply": "При выборе структуры для CPU-intensive workload; в databases (B-Tree вместо BST); в data engineering для batch processing больших массивов; на собеседовании при обсуждении real-world производительности.",
+                "edge_cases": "Cache-friendly не всегда означает «contiguous»: иногда random access по small dataset помещается в L1 целиком, и locality не важна. Также concurrent access создаёт false sharing — отдельная проблема.",
+                "related": "[[complexity-analysis-interview#Q18]] когда O(n²) лучше O(n log n); [[complexity-analysis-interview#Q28]] O(1) может быть медленнее O(n); [[complexity-analysis-interview#Q29]] скрытые константы."
+              },
+              "label": "B",
+              "text": "L1 cache miss `~100ns` vs cache hit `~1ns`; sequential доступ в 10-100× быстрее random access того же `O(n)`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Cache locality критична для **всех** алгоритмов, включая `O(log n)`. B-Tree vs BST: оба `O(log n)`, но B-Tree выигрывает на практике из-за cache-friendly блоков. PostgreSQL хранит index в 8KB страницах именно для cache/disk locality. Даже binary search в массиве быстрее, чем в дереве, потому что массив — sequential.",
+                "source_of_confusion": "«Логарифмическое — быстро всё равно» — упрощение, не учитывающее latency cache miss.",
+                "if_it_were_true": "Использование BST в database indexes было бы стандартом — реально все базы используют B-Tree (или LSM-tree).",
+                "how_it_should_be": "Cache locality важна для любой сложности; при `O(log n)` cache miss tax = 100× оригинал."
+              },
+              "label": "C",
+              "text": "Cache locality не влияет на `O(log n)` алгоритмы — слишком мало операций.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "JVM **не перемещает** объекты для cache locality без compacting GC. Compacting GC (G1, Shenandoah, ZGC) уплотняет heap, но порядок объектов не оптимизируется под access pattern. LinkedList узлы остаются разбросаны по heap, особенно при concurrent insert/remove.",
+                "source_of_confusion": "Современные GC делают много оптимизаций (escape analysis, generational), и кажется, что они «всё сами оптимизируют».",
+                "if_it_were_true": "Не было бы разницы между ArrayList и LinkedList на JVM — но JMH постоянно показывает разрыв.",
+                "how_it_should_be": "JVM не делает cache-aware layout; для cache locality использовать `ArrayList`, `int[]`, value types (Project Valhalla в будущем)."
+              },
+              "label": "D",
+              "text": "JVM автоматически оптимизирует linked structures для cache locality.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое NP-hard и NP-complete простым языком?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "NP-complete = `NP ∩ NP-hard`. Это задачи, которые (1) сами лежат в классе NP (решение проверяется за полином) и (2) NP-hard (к ним полиномиально сводится любая задача из NP). Утверждение «∩ P» сделало бы P = NP тривиально — а это открытая проблема тысячелетия.",
+                "source_of_confusion": "Буквы похожи (NP-complete vs P), и кажется логичным, что «полный» класс — это «решаемый». На самом деле «complete» означает «полный представитель класса» — самые сложные задачи в NP.",
+                "if_it_were_true": "За выходные доказали бы P = NP и взяли миллион долларов от Clay Mathematics Institute. Все криптосистемы на сложности факторизации рухнули бы за ночь — RSA, ECC, blockchain.",
+                "how_it_should_be": "NP-complete = `NP ∩ NP-hard`; «complete» означает «полный представитель» (самые сложные в NP), а не «полностью решаемый»."
+              },
+              "label": "A",
+              "text": "NP-complete — это подмножество `NP-hard ∩ P`, то есть задачи, которые и сводимы к NP, и решаются за полином.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`NP-hard ⊇ NP-complete`, причём строго. NP-hard включает задачи, к которым NP полиномиально сводится, но сами они могут быть **вне** NP (то есть даже их решение не проверяется за полином). Halting Problem, например, NP-hard (любая NP-задача сводится к ней), но не в NP — она вообще неразрешима.",
+                "source_of_confusion": "На практике почти все «знаменитые» NP-hard задачи (TSP, SAT, Knapsack) одновременно NP-complete, поэтому термины часто смешивают.",
+                "if_it_were_true": "Можно было бы сводить Halting Problem к SAT и решать остановку машин Тьюринга через SAT-солверы. Очевидное противоречие с теоремой Тьюринга 1936 года.",
+                "how_it_should_be": "NP-hard — строго больший класс, чем NP-complete; включает неразрешимые задачи (Halting Problem) и optimization-варианты (TSP-optimization)."
+              },
+              "label": "B",
+              "text": "NP-hard и NP-complete — одно и то же, различие чисто терминологическое.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Ни для одной NP-complete задачи полиномиальный алгоритм **не известен** (это и есть суть P vs NP). NP-complete формально определяется через сводимость и принадлежность NP, а не через известность алгоритма. Если бы для одной NP-complete задачи нашли полином — он автоматически распространился бы на все NP через reduction.",
+                "source_of_confusion": "Существуют pseudo-polynomial алгоритмы (DP для Knapsack за `O(n·W)`), и кажется, что это «полином». Но `W` — значение, а не размер входа в битах, поэтому это не настоящий полином.",
+                "if_it_were_true": "Интервьюер бы спросил «какой полиномиальный алгоритм для SAT?» — и не получил бы ответа ни от вас, ни от компьютерной науки за 50 лет.",
+                "how_it_should_be": "NP-complete определяется через reduction и membership в NP, не через known algorithm; для всех NP-complete полином неизвестен."
+              },
+              "label": "C",
+              "text": "NP-complete — задачи, для которых известен полиномиальный алгоритм, NP-hard — без него.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Иерархия классов: **P** — решаемые за полином (sorting `O(n log n)`). **NP** — решение **проверяется** за полином (SAT: проверить присваивание линейно, найти — `2ⁿ`). **NP-hard** — «не легче самых сложных в NP»; формально: любая NP-задача полиномиально сводится к ней. Сами могут быть в NP или вне. **NP-complete = NP ∩ NP-hard** — самые сложные задачи в NP. Если решить одну за полином — решены все NP. Сводимость `A ≤ₚ B`: полиномиальный алгоритм, превращающий instance A в instance B так, что ответы совпадают.",
+                "example": "SAT, TSP-decision, Subset Sum, Graph Coloring — NP-complete (в NP, NP-hard). Halting Problem — NP-hard, но не в NP (неразрешима — нет finite proof). TSP-optimization (найти кратчайший тур) — NP-hard, но не точно NP (не сертифицируется finite proof, нужен альтернативный тур для сравнения). Sorting, Dijkstra — в P, не NP-hard.",
+                "when_to_apply": "Доказать NP-hardness задачи → не тратить недели на полиномиальный алгоритм, использовать heuristics (genetic, simulated annealing), approximations (2-approximation для metric TSP), branch-and-bound, exact для маленьких instances; на собеседовании при появлении задач со словами «найти оптимальное», «существует ли путь», «минимальное покрытие».",
+                "edge_cases": "NP ≠ «не полиномиальная» (Non-deterministic Polynomial); pseudo-polynomial ≠ polynomial (DP Knapsack `O(n·W)` экспоненциально от битов); reduction direction matters — `A ≤ₚ B` означает «B не легче A», часто путают направление.",
+                "related": "[[complexity-analysis-interview#Q5]] классы сложности; [[complexity-analysis-interview#Q17]] pseudo-polynomial; [[complexity-analysis-interview#Q31]] complexity attack."
+              },
+              "label": "D",
+              "text": "NP-hard — задачи, к которым любая NP-задача сводится за полином; NP-complete — `NP-hard ∩ NP` (NP-hard, которые сами лежат в NP). Halting Problem — NP-hard, но не NP.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как оценить сложность нескольких вложенных циклов с разными границами?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Правило «вложенные циклы = `O(n²)`» работает только когда оба идут от 0 до n с шагом 1. Здесь внутренний цикл с `j *= 2` делает `log₂ n` итераций, а не `n`. Итоговая сложность — `n · log n = O(n log n)`, что в тысячу раз быстрее `O(n²)` на `n = 10⁶`.",
+                "source_of_confusion": "Мнемоника «один цикл = O(n), два = O(n²)» вбита в голову на ранних этапах. Она верна для квадратных вложений, но обманчива при логарифмических, гармонических или треугольных границах.",
+                "if_it_were_true": "На массиве `n = 10⁹` любой алгоритм бинарного поиска внутри цикла выглядел бы как `O(n²)` и считался непригодным — потерялись бы все Sort-then-binary-search паттерны.",
+                "how_it_should_be": "Считать iterations каждого цикла отдельно: внешний `n`, внутренний `log n` → `n × log n = O(n log n)`."
+              },
+              "label": "A",
+              "text": "`O(n²)` — два вложенных цикла всегда дают `O(n²)`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Внутренний цикл доминирует только если он **один**. Здесь он вложен внутрь линейного цикла по `i`, поэтому работа **умножается**: `n · log n`. Заменить умножение на «доминирование» — грубая ошибка анализа.",
+                "source_of_confusion": "При ослаблении правил Big O («отбрасываем константы и младшие слагаемые») студенты иногда отбрасывают и линейный множитель. Но это сложение vs умножение: `n + log n = O(n)`, но `n × log n = O(n log n)`.",
+                "if_it_were_true": "Бинарный поиск в массиве из `n` элементов всегда был бы `O(log n)`, даже если применён к каждой строке матрицы `n × n` — `n × log n` работа выглядела бы как `log n`. Любой merge sort стал бы линейным.",
+                "how_it_should_be": "Вложенные циклы умножаются: `O(внешний × внутренний)` = `O(n log n)`."
+              },
+              "label": "B",
+              "text": "`O(log n)` — внутренний логарифмический цикл доминирует.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Число итераций цикла с `j *= 2` при `j < n` равно `⌊log₂ n⌋ + 1`, а не `n`. После итерации `k` значение `j = 2ᵏ`, цикл останавливается при `2ᵏ ≥ n`, т.е. `k = log₂ n`. Это фундаментальный паттерн (как в бинарном поиске).",
+                "source_of_confusion": "«Верхняя граница» цикла — `n`, и кажется, что цикл «может» сделать `n` итераций. Но шаг — геометрическая прогрессия, и реальное число итераций — `log n`.",
+                "if_it_were_true": "Бинарный поиск был бы `O(n)`, и Heap.insert (`O(log n)`) — тоже линейным. Все древовидные структуры рухнули бы по производительности.",
+                "how_it_should_be": "Анализировать **скорость роста** счётчика: `*= 2` → геометрическая → `log n` итераций; `+= 1` → линейная → `n` итераций."
+              },
+              "label": "C",
+              "text": "`O(n · n)` — потому что внутренний цикл всё равно итерирует до `n`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Анализ вложенных циклов: total = (iters внешнего) × (avg iters внутреннего). Внешний `i = 0..n-1` → `n` итераций. Внутренний `j = 1, 2, 4, ..., < n` → `⌊log₂ n⌋ + 1` итераций (геопрогрессия). Итог: `n · log n = O(n log n)`. Геометрический шаг (`*=k` для `k > 1`) всегда даёт `O(log n)` итераций; арифметический (`+= k`) — `O(n/k)`. При гармоническом шаге (`j += i`) → сумма `n · H(n) = O(n log n)` через гармонический ряд.",
+                "example": "`for i in 1..n: for j = 0; j < n; j += i` → гармоническая прогрессия `Σ n/i ≈ n·H(n) = O(n log n)`. `for i in 0..n: for j = i..n` → треугольный `n + (n-1) + ... + 1 = n(n+1)/2 = O(n²)`. `for i in 0..n: for j = 1; j < n; j *= 2` → `n · log n` (наш случай). Merge sort внутренне `n log n` именно из-за этого паттерна на каждом уровне рекурсии.",
+                "when_to_apply": "При анализе вложенных циклов на собеседовании и в код-ревью; при проектировании batch операций с binary search на каждый item; при оценке систем поиска (для каждого из `n` запросов — бинарный поиск).",
+                "edge_cases": "Шаг `*= 2` стартует с 0 → `j` останется нулём навсегда → бесконечный цикл. Гармонический ряд `H(n) ≈ ln n` — важная формула. Вложенный треугольный = `O(n²)`, не `O(n²/2)` (константы отбрасываются).",
+                "related": "[[complexity-analysis-interview#Q4]] правила Big O; [[complexity-analysis-interview#Q11]] дерево рекурсии; [[complexity-analysis-interview#Q16]] O(log²n) vs O(log n)."
+              },
+              "label": "D",
+              "text": "`O(n log n)` — внешний цикл даёт `n`, внутренний с `j *= 2` даёт `log n`, итого `n · log n`.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что значит «алгоритм линеен по выходу»?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`k` — это размер **выхода**, который в общем случае может быть больше `n`. Если ищем все подстроки одного символа в строке `\"aaaa...a\"`, ответ — `n²/2` пар индексов, т.е. `k = O(n²)`. Записать это как `O(n)` — грубо неверно.",
+                "source_of_confusion": "В учебных примерах `k` часто мал, и кажется, что это «константа». Но output-sensitive нотация специально подчёркивает зависимость от выхода для случаев, когда он растёт.",
+                "if_it_were_true": "Алгоритм Convex Hull Чана (`O(n log h)`) не имел бы смысла vs Graham (`O(n log n)`): он быстрее только когда `h << n`. Output-sensitivity — единственный способ доказать его преимущество.",
+                "how_it_should_be": "Output-sensitive нотация сохраняет `k`: `O(n + k)` ≠ `O(n)` в общем случае; на adversarial input `k = O(n²)`."
+              },
+              "label": "A",
+              "text": "`O(n + k)` — это просто упрощение `O(n)` для маленьких `k`, всегда можно записать как `O(n)`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`n + k` — это **арифметическая сумма**, не «или». Алгоритм всегда тратит `O(n)` на чтение входа **плюс** `O(k)` на запись/обработку выхода. Это конъюнкция: обе работы выполняются всегда.",
+                "source_of_confusion": "В Big O обычно отбрасывают младшие слагаемые: `O(n + log n) = O(n)`. Студенты по инерции отбрасывают и `k`. Но `k` — переменная, не константа.",
+                "if_it_were_true": "Нельзя было бы отличить `O(n + k)` от `O(n · k)` или `O(max(n, k))` — а это разные алгоритмы. Сложение и максимум совпадают (`n + k = Θ(max(n, k))`), но умножение — квадратичная зона.",
+                "how_it_should_be": "`O(n + k)` — сумма work над входом и выходом; обе компоненты выполняются всегда, не альтернатива."
+              },
+              "label": "B",
+              "text": "`O(n + k)` означает «или `n`, или `k`, в зависимости от случая» — disjunction.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Output-sensitive анализ применим к множеству задач: поиск подстрок (`O(n + occ)` для Aho-Corasick), интерсекция отрезков (`O((n + k) log n)`), запросы диапазонов (`O(log n + k)` для B-tree), регулярные выражения с захватом групп.",
+                "source_of_confusion": "Концепция действительно популяризировалась в Computational Geometry (Chan, Kirkpatrick-Seidel), и в учебниках чаще там.",
+                "if_it_were_true": "Запросы к индексу БД (B-tree range scan) не имели бы корректной оценки. `SELECT * FROM t WHERE x BETWEEN a AND b` — это `O(log n + k)`, без output-sensitive не объяснить, почему миллион результатов медленнее трёх.",
+                "how_it_should_be": "Output-sensitive применима к: pattern matching, range queries, joins (merge join `O(n + m + |result|)`), geometric algorithms."
+              },
+              "label": "C",
+              "text": "Output-sensitive complexity применима только к задачам визуальной геометрии (Convex Hull).",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Стандартный Big O — функция от размера входа `n`. В задачах, где размер выхода `k` непредсказуем (0 до экспоненциального), такая оценка либо слишком пессимистична (`O(n²)` worst), либо неинформативна. Output-sensitive нотация явно учитывает `k`: `O(n + k)` — линейно от входа + выхода (идеал); `O(n log n + k)` — препроцессинг + линейный вывод; `O((n + k) log n)` — каждый элемент выхода требует log работы. Это позволяет более точно сравнивать алгоритмы для запросов, где результат может быть мал.",
+                "example": "Convex Hull для `n = 10⁶` точек на окружности (`h ≈ 100`): Chan `O(n log h) = 10⁶ · 7 ≈ 7·10⁶`; Graham `O(n log n) = 10⁶ · 20 ≈ 2·10⁷` — Chan в 3× быстрее. B-tree range scan PostgreSQL `SELECT WHERE x BETWEEN 100 AND 110` на 10⁹ строк: `O(log n + k) = 30 + 10 ≈ 40` операций vs full scan `O(n) = 10⁹`. Aho-Corasick для поиска `m` patterns в тексте `n` с `occ` вхождений: `O(n + m + occ)`.",
+                "when_to_apply": "Range queries в databases (Postgres B-tree); pattern matching на больших корпусах (Aho-Corasick); merge joins после sort; геометрические алгоритмы (Convex Hull, Voronoi); GraphQL/REST API endpoints с pagination.",
+                "edge_cases": "`k` может быть экспоненциальным: для «все Hamiltonian paths» выход `O(n!)` — output-sensitive `O(n + n!)` не помогает. Не путать с amortized (усреднение по операциям) vs output-sensitive (зависимость от выхода). Иногда доказывается output-sensitive lower bound: любой алгоритм, перечисляющий `k` элементов, обязан их вывести.",
+                "related": "[[complexity-analysis-interview#Q4]] правила Big O; [[complexity-analysis-interview#Q5]] классы сложности; [[complexity-analysis-interview#Q25]] BFS как O(V+E)."
+              },
+              "label": "D",
+              "text": "Output-sensitive complexity: алгоритм работает за `O(размер входа + размер выхода)`, что лучше `O(n²)` когда выход мал.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему сортировки сравнением не быстрее O(n log n)?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Любой алгоритм, использующий только сравнения двух элементов для определения порядка, представляется бинарным **деревом решений**: внутренние узлы — сравнения `a[i] < a[j]?`, листья — конкретные перестановки. Каждая из `n!` перестановок входа даёт корректный отсортированный результат — в дереве не меньше `n!` листьев. Высота бинарного дерева с `L` листьями — не меньше `⌈log₂ L⌉`. Значит: высота ≥ `log₂(n!) = Σ log₂(i) ≈ n·log₂(n) − n·log₂(e) + O(log n) = Θ(n log n)` (формула Стирлинга). Высота = число сравнений в worst case → `Ω(n log n)` lower bound для любого comparison-based алгоритма. Это **information-theoretic** доказательство: чтобы различить `n!` перестановок, нужно минимум `log(n!)` бит информации, и каждое сравнение даёт максимум 1 бит.",
+                "example": "Comparison sorts достигают этой границы: Merge Sort — `O(n log n)` worst; Heap Sort — `O(n log n)` worst; TimSort — `O(n log n)` worst. Non-comparison sorts (Counting `O(n+k)`, Radix `O(d·(n+k))`, Bucket `O(n+k)` avg) **не сравнивают** элементы — используют значения как индексы — поэтому `Ω(n log n)` к ним не применяется и они могут быть быстрее.",
+                "when_to_apply": "Обосновать выбор сортировки на интервью (для int в малом диапазоне → Counting `O(n+k)`); доказать оптимальность Merge/Heap; понять, почему `Arrays.sort(Object[])` — TimSort (`O(n log n)`).",
+                "edge_cases": "Параллельные сортировки могут быть быстрее по wall-clock, но total work `Ω(n log n)` сохраняется. Probabilistic algorithms (RandomizedQuickSort) — `O(n log n)` avg, но worst всё ещё `O(n²)`. Bucket Sort быстрее `O(n log n)` только при равномерном распределении.",
+                "related": "[[complexity-analysis-interview#Q24]] Quick Sort worst case; [[complexity-analysis-interview#Q5]] классы сложности; [[complexity-analysis-interview#Q31]] complexity attack."
+              },
+              "label": "A",
+              "text": "Decision tree argument: каждая сортировка сравнениями — бинарное дерево решений с `n!` листьями, его высота не меньше `log₂(n!) = Θ(n log n)` по формуле Стирлинга.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Сравнение двух `int` или `long` — это `O(1)` операция CPU (одна `cmp` инструкция). Размер ключа фиксирован (32/64 бит) и не зависит от `n`. Нижняя граница `Ω(n log n)` доказывается через число **различаемых перестановок**, а не через стоимость одного сравнения.",
+                "source_of_confusion": "Для строк или BigInteger сравнение действительно `O(длина ключа)`, и общая сложность становится `O(L · n log n)`. Но это не меняет lower bound — он про **число** сравнений, не их стоимость.",
+                "if_it_were_true": "Counting Sort для целых не существовал бы — он работает с теми же битами. Но Counting `O(n+k)` существует и опровергает эту логику.",
+                "how_it_should_be": "Один сравнение — `O(1)` для fixed-size ключей; `Ω(n log n)` доказывается через decision tree и теорию информации, не через cost сравнения."
+              },
+              "label": "B",
+              "text": "Потому что сравнение двух элементов всегда занимает `O(log n)` времени из-за сравнения битов.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Это **математически доказанная** lower bound, не эмпирическое наблюдение. Decision tree argument — формальное доказательство в CLRS (глава 8). Никакое будущее открытие не сделает comparison-based сортировку быстрее `Ω(n log n)` — это противоречило бы теории информации.",
+                "source_of_confusion": "В computer science многие upper bounds улучшались со временем (Strassen для матриц, FFT). Но это upper, не lower. Нижние границы доказываются окончательно.",
+                "if_it_were_true": "Можно было бы построить алгоритм за пределами information-theoretic limit — противоречие. `log(n!)` бит информации нужно «извлечь», и каждое сравнение даёт максимум 1 бит.",
+                "how_it_should_be": "`Ω(n log n)` — окончательная математическая lower bound для comparison sort; будущие алгоритмы могут быть только non-comparison."
+              },
+              "label": "C",
+              "text": "Это эмпирический закон: на практике все известные сортировки `Ω(n log n)`, но математически возможна быстрейшая.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Кэш — физическое ограничение конкретного оборудования. Теоретическая lower bound `Ω(n log n)` справедлива на абстрактной RAM-машине без кэша. Cache effects влияют на **константу**, не на асимптотику.",
+                "source_of_confusion": "Merge Sort действительно проседает на больших массивах из-за cache misses (cache-oblivious sorts, external memory model — отдельная тема). Это другой уровень анализа.",
+                "if_it_were_true": "На машинах с бесконечным кэшем сортировка работала бы быстрее `O(n log n)` — но даже в идеальных условиях (in-memory, in-cache) lower bound сохраняется.",
+                "how_it_should_be": "Cache влияет на константы, не на асимптотику; `Ω(n log n)` справедлива на любой архитектуре."
+              },
+              "label": "D",
+              "text": "Из-за лимита кэша процессора: при `n > L1_size` сортировка деградирует.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Quick Sort в среднем O(n log n), а в худшем O(n²)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Ровно наоборот: на **случайных** данных Quick Sort работает в среднем `O(n log n)`. Это его сильная сторона. Случайный pivot с вероятностью `> 1/2` оказывается «достаточно близко к медиане», и глубина рекурсии остаётся `O(log n)`.",
+                "source_of_confusion": "Студенты смешивают «случайные данные» и «худший случай». Worst case — это специфическая структура входа (отсортированный), а не случайность.",
+                "if_it_were_true": "Quick Sort не использовался бы в `Arrays.sort()` для примитивов — но Java делает именно это (Dual-Pivot QuickSort). Эмпирически на случайных данных Quick — самый быстрый.",
+                "how_it_should_be": "Random — это avg case (`O(n log n)`); worst case — это **упорядоченный** вход с fixed pivot."
+              },
+              "label": "A",
+              "text": "При полностью случайных данных — рандомизация ломает алгоритм.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Quick Sort очень cache-friendly: partition работает с непрерывным куском памяти, sequential access. Константы малы. Кэш-промахи замедляют на единицы процентов, не превращают `O(n log n)` в `O(n²)`.",
+                "source_of_confusion": "Другие сортировки (Merge) страдают от cache при больших `n` — это про инженерные константы. Асимптотика Quick деградирует только из-за плохого pivot.",
+                "if_it_were_true": "TimSort и Merge работали бы лучше Quick на `n = 10⁸` — но эмпирически Quick остаётся конкурентоспособным.",
+                "how_it_should_be": "Cache влияет линейно (constants), не превращает алгоритм в `O(n²)`; для degradation нужен конкретный adversarial pivot pattern."
+              },
+              "label": "B",
+              "text": "При большом массиве (`n > 10⁶`) кэш-промахи делают алгоритм квадратичным.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Quick Sort выбирает pivot и делит массив на две части. Если pivot — фиксированный (последний) элемент, а массив уже отсортирован, то pivot всегда максимум → «меньше» содержит `n-1` элементов, «больше» — 0. Получается «вырожденная» рекурсия: partition(n) → O(n), потом partition(n-1) → O(n-1), и так далее. Сумма `n + (n-1) + ... + 1 = n(n+1)/2 = O(n²)`. Глубина рекурсии — `n`, что также вызывает StackOverflowError при `n > ~10⁴` в JVM с дефолтным `-Xss512k`. Защиты: random pivot (`ThreadLocalRandom.nextInt`), median-of-three (медиана из first/mid/last), Introsort (переключение на Heap Sort при глубине > `2 log n`), Dual-Pivot (Java 7+ для int[]).",
+                "example": "Naive `partition(arr, lo, hi)` с `pivot = arr[hi]`: на отсортированном `[1, 2, 3, ..., 10⁶]` → 10⁶ уровней рекурсии × 10⁶/2 partition = 5·10¹¹ операций → timeout. С random pivot ожидание `2·10⁷` операций → миллисекунды. `Arrays.sort()` Java для int[] использует Dual-Pivot Quicksort (Yaroslavskiy) с защитой от worst case через дополнительный pivot и переключение на Insertion Sort для малых подмассивов.",
+                "when_to_apply": "Понимать риск при имплементации custom Quick Sort; на интервью указывать защиту (random pivot/median-of-three); при использовании JDK `Arrays.sort` worst case уже защищён внутри.",
+                "edge_cases": "«Sorted with one swap» — adversarial test на интервью; всё равно `O(n²)` для fixed pivot. Random не безопасно при known seed → SecureRandom для security-critical. Tail recursion на большей части → StackOverflow; решение — переходить итеративно на меньшую часть.",
+                "related": "[[complexity-analysis-interview#Q23]] нижняя граница Ω(n log n); [[complexity-analysis-interview#Q9]] recursive call stack; [[complexity-analysis-interview#Q31]] complexity attack."
+              },
+              "label": "C",
+              "text": "Когда массив уже отсортирован (или обратно отсортирован): pivot всегда минимум/максимум, partition даёт разделение `[0, n-1]`, глубина рекурсии становится `n`.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Дубликаты — проблема **наивной** реализации (Lomuto partition), но с **трёхпартиционным** Quick Sort (Dutch National Flag: разделяет на `<`, `=`, `>`) дубликаты обрабатываются за `O(n)` на каждом уровне. Java Dual-Pivot QuickSort и `std::sort` используют именно этот подход.",
+                "source_of_confusion": "В наивной реализации (Lomuto) `[5, 5, 5, 5, 5]` действительно даёт несбалансированное разделение. Но это специфическая проблема одной реализации.",
+                "if_it_were_true": "Библиотечные сортировки не справлялись бы с реальными данными (логи с повторами). На практике они отлично работают.",
+                "how_it_should_be": "Three-way partition handles дубликаты за `O(n)`; проблема — только в naive Lomuto, не во всём Quick Sort семействе."
+              },
+              "label": "D",
+              "text": "При наличии дубликатов: одинаковые элементы всегда вызывают `O(n²)`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая сложность у BFS и DFS?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Благодаря массиву `visited[]` каждая вершина обрабатывается **ровно один раз**, и каждое ребро — ровно один раз (в направленном) или дважды (в неориентированном — с обоих концов). Это `V + E`, не `V · E`. `visited` гарантирует, что мы не возвращаемся к обработанным вершинам.",
+                "source_of_confusion": "Если забыть про `visited`, BFS/DFS могут зациклиться. Студенты, видя «for vertex: for edge», неверно перемножают.",
+                "if_it_were_true": "На плотном графе `E = V²` сложность была бы `V³`, и BFS/DFS не имели бы смысла. Дорожные карты, соцсети были бы непроходимы.",
+                "how_it_should_be": "Каждая вершина и ребро посещаются константное число раз → `O(V + E)`."
+              },
+              "label": "A",
+              "text": "`O(V · E)` — для каждой вершины проверяем все рёбра.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Анализ времени: каждая вершина помещается в очередь/стек ровно один раз (защита через `visited`). При извлечении перебираем все её рёбра — `degree(v)` работы. Суммарно `Σ degree(v) = 2E` для неориентированного, `E` для ориентированного. Плюс `O(V)` на инициализацию visited и iter по vertices. Итог `O(V + E)`. Анализ памяти: `visited[V]` — `O(V)`; очередь BFS / стек DFS — worst `O(V)`. Это базовая сложность для большинства алгоритмов на графах через обход (топосорт, connected components, cycle detection, bipartiteness check).",
+                "example": "Социальная сеть LinkedIn: `V = 10⁹` пользователей, `E ≈ 10¹¹` рёбер (избрано связей). BFS для «друзья друзей» (2 уровня): обход `O(V + E)` = 10¹¹ операций ≈ 1000 сек — нужен distributed подход. Для дерева Spotify playlist (`E = V - 1 = 10⁶` нод): BFS `O(V) = 10⁶` ≈ миллисекунды. PostgreSQL `LATERAL` recursive CTE для иерархий выполняет в основе BFS/DFS.",
+                "when_to_apply": "BFS для shortest path в unweighted graph; DFS для топсорта/cycle detection/connected components; иерархические обходы (org chart, DOM tree); web crawlers (BFS по ссылкам).",
+                "edge_cases": "Adjacency matrix vs list: на matrix всегда `O(V²)`, даже на sparse graph. DFS recursive на длинной цепочке `V = 10⁶` → StackOverflow; нужен iterative с явным `Deque`. Multigraph (несколько рёбер между парой): `E` может быть > `V²`, формула остаётся `O(V + E)`.",
+                "related": "[[complexity-analysis-interview#Q26]] Dijkstra; [[complexity-analysis-interview#Q27]] Bellman-Ford; [[complexity-analysis-interview#Q4]] правила Big O."
+              },
+              "label": "B",
+              "text": "`O(V + E)` по времени, `O(V)` по памяти; каждая вершина посещается раз, каждое ребро рассматривается раз (или дважды в неориентированном).",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`visited` — массив `V` с `O(1)` доступом. Инициализация `O(V)`, проверки `O(1)`. Итог зависит от представления: adjacency list → `O(V + E)`; adjacency matrix → `O(V²)`.",
+                "source_of_confusion": "При **матричном** представлении действительно `O(V²)` — для каждой вершины перебираем всю строку. На **списке** — `O(V + E)`. Студент путает два представления.",
+                "if_it_were_true": "BFS на дереве с миллионом узлов = `10¹²` операций — часы. Реально миллисекунды.",
+                "how_it_should_be": "На adjacency list — `O(V + E)`; на adjacency matrix — `O(V²)`; учитывать тип представления при анализе."
+              },
+              "label": "C",
+              "text": "`O(V²)` для любого графа из-за `visited` массива.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "BFS использует **обычную FIFO** очередь (`ArrayDeque`, не `PriorityQueue`). Все операции `offer/poll` — `O(1)`. `O(log V)` появляется в **Dijkstra** (heap для извлечения min weight vertex), не в BFS.",
+                "source_of_confusion": "BFS и Dijkstra оба про shortest path; студенты смешивают структуры данных. BFS — unweighted с queue, Dijkstra — weighted с heap.",
+                "if_it_were_true": "BFS был бы избыточен — все использовали бы Dijkstra. Но BFS принципиально проще и быстрее: `O(V + E)` vs `O((V+E) log V)`.",
+                "how_it_should_be": "BFS использует FIFO queue, операции `O(1)`; total `O(V + E)`. Priority queue появляется в Dijkstra."
+              },
+              "label": "D",
+              "text": "`O(log V)` для BFS, `O(V)` для DFS — BFS использует priority queue.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова сложность Dijkstra с разными приоритетными очередями?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Размер кучи — `O(V)`, не `O(E)`. Хотя выполняем до `E` операций `decreaseKey`/`add`, в куче одновременно максимум `V` вершин (или `V` копий с lazy deletion). Логарифм считается от размера кучи: `log V`. При этом `log V` и `log E` асимптотически эквивалентны (`log E ≤ log V² = 2 log V`), но обычно пишут `log V`.",
+                "source_of_confusion": "В реализации с lazy deletion куча действительно растёт до `O(E)` элементов (добавляем дубликаты при каждой релаксации). Но операции `O(log E) = O(log V)`, итог тот же.",
+                "if_it_were_true": "Разница `O(log V)` vs `O(log E)` была бы существенной — но они одно и то же с точностью до константы. Главное — префикс перед логарифмом.",
+                "how_it_should_be": "Записывать `O((V + E) log V)` — стандартная нотация для Dijkstra с binary heap."
+              },
+              "label": "A",
+              "text": "`O(V log E)` — извлечение минимума из E элементов кучи.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`O(V²)` — сложность Dijkstra с **массивной** реализацией (линейный поиск минимума). С **кучей** — `O((V + E) log V)`, что лучше для sparse графов: `O(V log V)` при `E = O(V)`.",
+                "source_of_confusion": "В исходной статье Dijkstra 1959 алгоритм описан через массив; куча появилась позже как оптимизация. Учебники часто упоминают только array version.",
+                "if_it_were_true": "На дорожной сети США (`V ≈ 10⁷`, `E ≈ 3·10⁷`) Dijkstra выполнялся бы `10¹⁴` операций = годы. Реально с heap — секунды.",
+                "how_it_should_be": "Сложность зависит от структуры данных: array `O(V²)`, binary heap `O((V+E) log V)`, Fibonacci heap `O(V log V + E)`."
+              },
+              "label": "B",
+              "text": "`O(V²)` всегда, независимо от структуры данных.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Каждое ребро рассматривается раз, но релаксация может вызвать `decreaseKey` в куче — `O(log V)`. Итог: `E · log V` от рёбер плюс `V · log V` от извлечений minimum → `O((V + E) log V)`. BFS — `O(V + E)`, но он не использует heap (unweighted).",
+                "source_of_confusion": "Анализ BFS `O(V + E)` обобщают на Dijkstra. Но Dijkstra использует priority queue, добавляющую log множитель.",
+                "if_it_were_true": "Dijkstra и BFS были бы одинаково быстры. Тогда не было бы смысла различать weighted/unweighted shortest path — но weighted требует heap.",
+                "how_it_should_be": "Dijkstra `O((V + E) log V)` (heap); BFS `O(V + E)` (queue) — логарифм — цена weighted."
+              },
+              "label": "C",
+              "text": "`O(E)` — каждое ребро рассматривается раз.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Dijkstra состоит из двух операций: extract-min (`V` раз) и relaxation (`E` раз). Стоимость зависит от структуры данных PQ. **Array** (линейный поиск): extract-min `O(V)`, decreaseKey `O(1)` → `V·V + E·1 = O(V²)`. **Binary heap**: extract-min `O(log V)`, decreaseKey `O(log V)` → `V·log V + E·log V = O((V+E) log V)`. **Fibonacci heap**: extract-min `O(log V)`, decreaseKey `O(1)` amortized → `O(V log V + E)`. Для sparse графов `E ≈ V` heap выигрывает (`O(V log V)` vs `O(V²)`); для dense графов `E ≈ V²` array выигрывает (`O(V²)` vs `O(V² log V)`).",
+                "example": "Sparse 10⁶ V, 10⁶ E: array — 10¹², heap — 2·10⁷ (heap в 50000× быстрее, секунды vs часы). Dense 10⁴ V, 10⁸ E: array — 10⁸, heap — 1.4·10⁹ (array в 14× быстрее). Java standard: `PriorityQueue` через lazy deletion (`pq.offer(updated)`, проверка `if (cur[1] > dist[u]) continue;`) — проще, чем true `decreaseKey`. Используется в `PathFinder` Spring, Neo4j для shortest path, в GPS-навигации (с A* оптимизацией).",
+                "when_to_apply": "Sparse graphs (соцсети, дорожные карты `E ≈ V`) → PriorityQueue/binary heap; dense graphs (полные, mat distance `E ≈ V²`) → array; для production обычно binary heap (`PriorityQueue`) — universal good default.",
+                "edge_cases": "Java `PriorityQueue` не поддерживает `decreaseKey` — lazy deletion компромисс. Negative edges → Dijkstra ломается, использовать Bellman-Ford. Floating-point weights дают накопление ошибки — для целочисленных предпочесть `long`. Fibonacci heap теоретически лучше, на практике константы делают его медленнее.",
+                "related": "[[complexity-analysis-interview#Q25]] BFS O(V+E); [[complexity-analysis-interview#Q27]] Bellman-Ford; [[complexity-analysis-interview#Q5]] классы сложности."
+              },
+              "label": "D",
+              "text": "`O((V + E) log V)` с binary heap; `O(V²)` с массивом. На плотном графе `E ≈ V²` массивная реализация быстрее, чем `V² log V` с кучей.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова сложность алгоритма Беллмана-Форда?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Bellman-Ford — итеративный алгоритм релаксации: `for i in 1..V-1: for each edge (u,v,w): if dist[u]+w < dist[v]: dist[v] = dist[u]+w`. Каждая из `V-1` итераций «расширяет» область известных shortest path на одну вершину. После `V-1` итерации все пути длиной до `V-1` рёбер обработаны (максимум для простого пути в графе с `V` вершинами). Сложность: `(V-1)·E = O(V·E)`. Память `O(V)` для `dist[]`. Дополнительная `V`-я итерация обнаруживает negative cycle: если есть улучшение — цикл существует. **Dijkstra ломается** на негативных весах: greedy финализирует вершину с минимальным dist, но негативное ребро далее может улучшить уже «закрытую» вершину — алгоритм пропускает это обновление.",
+                "example": "Граф A→B=2, A→C=5, B→C=−10. Dijkstra извлекает B первым (dist=2), потом C (dist=5) — закрывает C **до** обработки ребра B→C. Реальный shortest path A→B→C = 2−10 = −8 пропущен. Bellman-Ford в итерации 1: dist[B]=2, dist[C]=5; итерация 2: dist[C]=2−10=−8 (через B). Корректно находит. Real-world: arbitrage detection в forex — валютные курсы как `−log(rate)`, negative cycle = арбитраж. Internet routing protocol RIP — distance-vector, в основе Bellman-Ford.",
+                "when_to_apply": "Графы с негативными весами; обнаружение negative cycle; distance-vector routing protocols; financial arbitrage; SPFA — практически быстрее, но worst case `O(V·E)`.",
+                "edge_cases": "Integer overflow при `dist[u] + w` — использовать `long`. Disconnected graphs: вершины без пути остаются `INF`, проверять перед сравнением. Negative cycle reachable from src → dist стремится к `-∞`, обязательно дополнительная V-я итерация для detection.",
+                "related": "[[complexity-analysis-interview#Q26]] Dijkstra; [[complexity-analysis-interview#Q25]] BFS; [[complexity-analysis-interview#Q5]] классы сложности."
+              },
+              "label": "A",
+              "text": "`O(V · E)` time, `O(V)` memory; делается `V-1` итерация, в каждой релаксируем все `E` рёбер. Dijkstra ломается на отрицательных весах из-за greedy финализации вершин.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Bellman-Ford **не использует** PriorityQueue. Это итеративный алгоритм с простыми циклами: внешний по итерациям (`V-1`), внутренний по рёбрам (`E`). Никакой кучи. SPFA (вариант Bellman-Ford) использует обычную FIFO, но это другое.",
+                "source_of_confusion": "SPFA — оптимизация Bellman-Ford с queue — иногда смешивают с priority queue. Но даже SPFA не `O((V+E) log V)` — worst `O(V·E)`.",
+                "if_it_were_true": "Bellman-Ford был бы быстрее Dijkstra на negative weights — но тогда Dijkstra устарел. Реально Dijkstra `O((V+E) log V)` быстрее BF `O(V·E)`, просто не работает с negative weights.",
+                "how_it_should_be": "Bellman-Ford = `O(V·E)` без heap; SPFA с FIFO queue — те же worst, лучше avg."
+              },
+              "label": "B",
+              "text": "`O((V + E) log V)` — Bellman-Ford использует priority queue как Dijkstra.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Bellman-Ford — это **single-source** алгоритм. Находит расстояния от **одной** исходной вершины до всех остальных. Для all-pairs используется Floyd-Warshall с `O(V³)` или Bellman-Ford запущенный `V` раз → `O(V²·E)`.",
+                "source_of_confusion": "Bellman-Ford часто упоминают рядом с Floyd-Warshall (оба работают с negative weights), студенты смешивают.",
+                "if_it_were_true": "BF был бы строго лучше Floyd (`V²` vs `V³`) для all-pairs — но это не так. BF×V = `V²·E`, что хуже Floyd на плотном графе.",
+                "how_it_should_be": "Bellman-Ford single-source `O(V·E)`; Floyd-Warshall all-pairs `O(V³)`; различать scope алгоритмов."
+              },
+              "label": "C",
+              "text": "`O(V²)` всегда — Bellman-Ford анализирует все пары вершин.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`O(V + E)` — сложность BFS на unweighted graph. Bellman-Ford делает **`V-1` итераций** по всем рёбрам — работа умножается на `V-1`: итог `O(V · E)`. Это принципиально другой класс сложности.",
+                "source_of_confusion": "При первом изучении BF выглядит как «вложенный BFS», но внешний цикл `V-1` радикально меняет асимптотику.",
+                "if_it_were_true": "Bellman-Ford был бы линейным и заменил Dijkstra. На sparse графах Dijkstra (`O((V+E) log V)`) в `log V` раз быстрее BF.",
+                "how_it_should_be": "BFS = `O(V + E)` (один проход); Bellman-Ford = `O(V · E)` (V-1 проходов); разный класс сложности."
+              },
+              "label": "D",
+              "text": "`O(V + E)` — линейно, как BFS.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Может ли O(1) быть медленнее O(n)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Big O описывает асимптотическое поведение при `n → ∞`. На конкретном маленьком `n` алгоритм с худшей асимптотикой может быть быстрее. Здесь A делает 10⁹ операций (константа), B — 100 операций (`n=100`). B в 10⁷ раз быстрее.",
+                "source_of_confusion": "Утверждение «`O(1)` лучше `O(n)`» — упрощение, верное только при достаточно больших `n`. Для `n` меньше точки пересечения константа доминирует.",
+                "if_it_were_true": "Можно было бы заменить `Arrays.sort()` на любую `O(1)`-операцию (чтение длины) и получить «сортировку за константное время» — очевидный абсурд.",
+                "how_it_should_be": "Big O — асимптотический, не absolute; конкретное `n` может перевернуть картину в зависимости от констант."
+              },
+              "label": "A",
+              "text": "Алгоритм A всегда быстрее, потому что `O(1) < O(n)` для любого `n`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Для `n = 100` алгоритм B выполняет 100 операций, A — 10⁹. B быстрее в 10⁷ раз именно **при маленьком `n`**. Точка пересечения, где они равны: `n = 10⁹`. До этого B быстрее, после — A.",
+                "source_of_confusion": "«Асимптотика главная, константы — мелочи» — академическая установка, которая на практике не работает на малых `n`.",
+                "if_it_were_true": "Библиотеки использовали бы asymptotically-optimal Fibonacci heap игнорируя константы. Реально все используют binary heap — его константы в 2-3× меньше.",
+                "how_it_should_be": "При `n = 100` B быстрее A; точка перехода зависит от соотношения констант, может быть на любом `n`."
+              },
+              "label": "B",
+              "text": "Алгоритм A всегда быстрее, но разница важна только при `n > 10¹⁰`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Big O — асимптотический анализ: `f(n) = O(g(n))` означает существование `c, n₀` таких, что `f(n) ≤ c · g(n)` для всех `n ≥ n₀`. Поведение при `n < n₀` Big O не описывает. Конкретные числа: A = 10⁹ ops (constant), B = `n` ops. Точка пересечения `10⁹ = n` → `n = 10⁹`. До этого B быстрее, после — A. На реальных production размерах (`n = 10⁴..10⁶`) скрытые константы определяют производительность больше асимптотики. Поэтому TimSort использует Insertion Sort для подмассивов `n < 32`; `Arrays.sort()` переключается на Insertion в Quick Sort для малых частей.",
+                "example": "Galactic algorithms: Coppersmith-Winograd для умножения матриц `O(n^2.37)`, но константа настолько огромна, что Strassen `O(n^2.81)` быстрее до `n ~ 10²⁰`. Никто не использует Coppersmith в production. Fibonacci heap decreaseKey `O(1)` amortized vs Binary heap `O(log n)` — Fibonacci имеет огромные константы и сложную реализацию, на практике binary heap почти всегда быстрее.",
+                "when_to_apply": "При выборе алгоритма для известного диапазона `n`; при оптимизации hot path в production; на собеседовании при обсуждении trade-offs.",
+                "edge_cases": "«Constant time» ≠ «instant»: `HashMap.get() = O(1)` но ~100ns; `int[]` access ~1ns — разница в 100× при одинаковой асимптотике. Константа зависит от железа: cache size, SIMD, branch predictor. На разных CPU один алгоритм может быть в 10× быстрее.",
+                "related": "[[complexity-analysis-interview#Q29]] скрытые константы; [[complexity-analysis-interview#Q30]] профилирование; [[complexity-analysis-interview#Q19]] cache locality."
+              },
+              "label": "C",
+              "text": "Алгоритм B быстрее при `n = 100`. Big O — про поведение при `n → ∞`; на конкретных размерах скрытые константы могут доминировать.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Big O — это **верхняя граница** асимптотического поведения, не точная функция. `O(1)` и `O(n)` могут различаться в произвольное число раз на конкретном `n`. Утверждение «одинаковое время» противоречит самой природе Big O.",
+                "source_of_confusion": "В учебных задачах часто алгоритмы с разной асимптотикой имеют похожие константы, и студенты привыкают доверять Big O как точному показателю.",
+                "if_it_were_true": "Профилирование (JMH) было бы не нужно — достаточно Big O. На практике профилирование — стандарт.",
+                "how_it_should_be": "Big O — оценка closer to ∞; для конкретных `n` мерить через JMH или анализировать константы."
+              },
+              "label": "D",
+              "text": "Оба за одинаковое время — Big O точно определяет производительность.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое скрытые константы и почему они важны?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Merge Sort активно используется в Java. `Arrays.sort()` для **объектов** применяет **TimSort** — гибрид Merge и Insertion Sort. Он stable и гарантированно `O(n log n)`. Merge Sort нигде не устарел.",
+                "source_of_confusion": "Студенты смешивают «устаревший API» с «эффективностью». На JVM разные алгоритмы для разных типов данных.",
+                "if_it_were_true": "`Collections.sort(list)` не работал бы для `List<Integer>` — но он работает на TimSort. JDK 7 явно ввёл TimSort за stability и эффективность.",
+                "how_it_should_be": "Merge Sort активно используется (через TimSort для объектов); причина выбора Quick для примитивов — константы, не «устаревание»."
+              },
+              "label": "A",
+              "text": "Merge Sort устарел и больше не поддерживается JVM.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Merge Sort гарантированно `O(n log n)` во всех случаях (best, average, worst). Это его сильная сторона vs Quick Sort (`O(n²)` worst). Утверждение про `O(n²)` для Merge — фундаментально неверно.",
+                "source_of_confusion": "Возможно путаница с Bubble Sort (`O(n²)`) или с in-place вариантами Merge Sort с большой константой.",
+                "if_it_were_true": "TimSort (на основе Merge) не использовался бы — а `Collections.sort()` работал бы за `O(n²)`. Реально `O(n log n)`.",
+                "how_it_should_be": "Merge Sort = `O(n log n)` worst (гарантировано); Quick Sort = `O(n log n)` avg, `O(n²)` worst — обратная характеристика worst case."
+              },
+              "label": "B",
+              "text": "У Merge Sort асимптотика на самом деле `O(n²)`, а не `O(n log n)`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Big O скрывает константные множители: Quick Sort `≈ 1.4·n log n` ops, Merge Sort `≈ 2.5·n log n` ops — Quick в 2× быстрее с тем же `O(n log n)`. Причины: (1) **In-place vs out-of-place** — Quick работает в исходном массиве, Merge требует временный буфер `O(n)` + аллокация на каждом уровне рекурсии. (2) **Cache locality** — Quick partition работает с непрерывным сегментом (sequential access, prefetcher эффективен); Merge читает из двух подмассивов и пишет в третий (3 cache streams). (3) **Branch prediction** — Quick `if arr[j] < pivot` простой; Merge сложнее из-за конца одного массива. (4) **Меньше копирований** — Quick: каждый элемент moved `log n` раз через swap; Merge: copied `2·n log n` раз в temp и обратно.",
+                "example": "JMH benchmark на 10⁶ случайных int: Quick Sort ~80ms (0 MB allocated), Merge Sort ~180ms (8MB temp arrays), TimSort ~95ms (2MB gallop mode). Поэтому `Arrays.sort(int[])` использует Dual-Pivot QuickSort (Yaroslavskiy, JDK 7+), а `Arrays.sort(Object[])` — TimSort (нужна stability для объектов с compositekeys). Heap Sort: `O(n log n)` + `O(1)` space, но константа `~3·n log n` — медленнее Quick из-за random access к heap.",
+                "when_to_apply": "Quick Sort — примитивы, нет stability требования, защита от worst case (random pivot/Introsort). Merge/TimSort — stability важна (multi-key sort), гарантированный worst, можно жертвовать памятью. Heap Sort — гарантированный `O(n log n)` + in-place; самые большие константы.",
+                "edge_cases": "JIT warm-up — первый запуск медленнее в 10×; JMH делает warm-up. `Arrays.equals()` для объектов вызывает `equals()` — может быть дорого (string comparison). Cache size зависит от CPU: на старых L1=8KB Merge может выиграть; на современных L1=32KB Quick доминирует.",
+                "related": "[[complexity-analysis-interview#Q28]] O(1) может быть медленнее O(n); [[complexity-analysis-interview#Q30]] профилирование JMH; [[complexity-analysis-interview#Q19]] cache locality."
+              },
+              "label": "C",
+              "text": "Quick Sort имеет меньшие скрытые константы: in-place (не нужна доп. память `O(n)`), лучше cache locality (одна область памяти), меньше копирований.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Число **сравнений** у Quick и Merge примерно одинаково (`n log n`). Stability не связана с числом сравнений — она про сохранение порядка равных элементов. Скорость Quick определяется in-place, cache locality, простой partition.",
+                "source_of_confusion": "Студенты полагают, что stable сортировка делает «дополнительные проверки» для сохранения порядка. Stability — свойство алгоритма, не дополнительные операции.",
+                "if_it_were_true": "Unstable сортировки всегда были бы быстрее stable — но TimSort (stable) лишь немного медленнее Quick на random data; на nearly-sorted — быстрее (`O(n)` best case).",
+                "how_it_should_be": "Quick быстрее из-за in-place + cache + меньше копирований; stability — независимая характеристика."
+              },
+              "label": "D",
+              "text": "Quick Sort использует меньше операций сравнения, потому что он не stable.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как профилировать реальный алгоритм, а не оценивать через Big O?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`System.nanoTime()` действительно высокоточный (sub-microsecond) и для разовых замеров крупных операций (`>1 сек`) подходит. **Проблема в контексте микробенчмарка** — JIT компиляция, dead code elimination, OSR искажают результат. Для long-running операций `nanoTime()` норма.",
+                "source_of_confusion": "«Использовать nanoTime для измерения» корректно как способ получения времени. «Использовать nanoTime для микробенчмаркинга» — антипаттерн. Различие тонкое.",
+                "if_it_were_true": "JMH не существовал бы — все писали бы свои бенчмарки через `nanoTime`. JMH был создан в OpenJDK именно потому, что наивные замеры ошибаются на порядки.",
+                "how_it_should_be": "`nanoTime()` для разовых long-running замеров — ok; для микробенчмарков (`<1ms` per op) — антипаттерн, использовать JMH."
+              },
+              "label": "A",
+              "text": "`System.nanoTime()` вокруг вызова метода — он измеряет реальное время с наносекундной точностью.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "JMH — **рекомендованный** инструмент для микробенчмаркинга на JVM. Поддерживается Oracle, работает со всеми современными JDK (8, 11, 17, 21). Специально обходит ошибки наивных замеров: warm-up, dead code elimination, false sharing.",
+                "source_of_confusion": "Возможно, путаница с Google Caliper (устарел в 2014).",
+                "if_it_were_true": "Spring Framework, Netty, JDK internals не использовали бы JMH — а все используют для регрессионных замеров.",
+                "how_it_should_be": "JMH — действующий standard для JVM-микробенчмарков; работает на всех актуальных JDK."
+              },
+              "label": "B",
+              "text": "JMH (Java Microbenchmark Harness) — он создан Sun/Oracle и официально не работает с современными JDK.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "`System.currentTimeMillis()` имеет несколько фундаментальных проблем для микробенчмарка: (1) **Точность до миллисекунды** (на некоторых ОС — 10-15ms). Алгоритмы `O(n log n)` на `n = 1000` выполняются за микросекунды → ошибка >100%. (2) **Wall-clock, не CPU time**: учитывает GC паузы, context switches, фоновые процессы. Один замер может дать 5ms или 50ms. (3) **Не обходит JIT**: первые 10-100 вызовов через интерпретатор, потом JIT компилирует → внезапное ускорение в 10×. (4) **Не обходит dead code elimination**: без `Blackhole.consume(result)` JIT удаляет неиспользуемый код → замер 0ns. (5) **OSR (On-Stack Replacement)**: горячий метод компилируется во время выполнения → смесь интерпретируемого и компилируемого кода в замере.",
+                "example": "Naive: `long start = System.currentTimeMillis(); for (1000) algo(data); long elapsed = System.currentTimeMillis() - start;` — результат `0ms` (недостаточная точность) или ошибка в 10× из-за JIT warm-up. Правильно через JMH: `@Benchmark` + `@Warmup(5)` + `@Measurement(5)` + `@Fork(2)` + `@OutputTimeUnit(MICROSECONDS)` + `Blackhole.consume()`. JMH автоматически делает warm-up (5×1s — JIT prepares hot path), измерения (5×1s — statistical significance), Blackhole (prevents dead code elimination), форк JVM (изоляция от class loading).",
+                "when_to_apply": "Регрессионные тесты производительности в CI (JMH per PR); сравнение реализаций (JDK HashMap vs Eclipse Collections); поиск hot path (async-profiler с flame graphs); профилирование production (JFR, async-profiler) — не JMH.",
+                "edge_cases": "JMH overhead ~10ns на каждый замер — для операций <50ns точность теряется. Caching effects: повторный run прогревает cache, не отражая production. `@Fork(0)` — критическая ошибка, всегда `@Fork(2+)`. System load во время бенчмарка — запускать на изолированной машине без браузеров.",
+                "related": "[[complexity-analysis-interview#Q29]] скрытые константы; [[complexity-analysis-interview#Q19]] cache locality; [[complexity-analysis-interview#Q28]] O(1) vs O(n) на малых n."
+              },
+              "label": "C",
+              "text": "`System.currentTimeMillis()` в цикле — wall-clock time с миллисекундной точностью, недостаточной для оценки `n log n` алгоритмов на малых `n`.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "В Spring **нет** аннотации `@Benchmark` для микробенчмаркинга. `@Benchmark` принадлежит JMH (`org.openjdk.jmh.annotations.Benchmark`). Spring имеет `@Timed` от Micrometer для production метрик HTTP-запросов — другая задача.",
+                "source_of_confusion": "Spring Boot Actuator поддерживает много метрик через Micrometer (`@Timed`, `@Counted`) — студенты путают с микробенчмарками.",
+                "if_it_were_true": "Spring-проекты могли бы делать микробенчмарки без отдельного фреймворка — на практике все используют JMH (отдельный gradle/maven модуль).",
+                "how_it_should_be": "`@Benchmark` — это JMH; `@Timed` — Micrometer для production метрик; разные инструменты для разных задач."
+              },
+              "label": "D",
+              "text": "`@Benchmark` annotation из Spring — это полноценная замена JMH.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое complexity attack?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Java 8 **не переходила** на SHA-256 для `HashMap.hashCode()`. SHA-256 в 100× медленнее обычного хеша и непригоден для каждого `put`/`get`. Защита Java 8 — это **treeification**: коллизии в одном bucket превращаются в RB-дерево (`O(log n)`), а не остаются LinkedList (`O(n)`).",
+                "source_of_confusion": "Криптографические хеши действительно сопротивляются HashDoS, но их стоимость недопустима для in-memory структур. Используются в распределённых системах (consistent hashing), не в HashMap.",
+                "if_it_were_true": "`HashMap.put()` стал бы в 100× медленнее, и весь Java ecosystem развалился бы по производительности.",
+                "how_it_should_be": "Java 8 ввела treeification (RB-tree bucket при >8 элементов) — не криптохеш; стоимость минимальна, защита достаточна."
+              },
+              "label": "A",
+              "text": "Изменили хеш-функцию на криптостойкую SHA-256.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Algorithmic complexity attack — эксплуатация worst case алгоритма через подбор adversarial input. Java 7 HashMap: bucket = `LinkedList<Entry>`. При HashDoS-атаке цепочка растёт → `get()` становится `O(n)`, суммарно `O(n²)`. Java 8+ защиты: (1) `TREEIFY_THRESHOLD = 8` — bucket с ≥8 элементов превращается в RB-дерево. (2) `UNTREEIFY_THRESHOLD = 6` — обратное превращение в LinkedList. (3) `MIN_TREEIFY_CAPACITY = 64` — treeify только при capacity ≥64, иначе resize. Эффект: атака даёт `O(n log n)` вместо `O(n²)` — degradation, но не DoS. Требует, чтобы ключи реализовывали `Comparable`, иначе используется `System.identityHashCode` как tieBreakOrder.",
+                "example": "Атака HashDoS на Tomcat 2011 (28C3 talk): атакующий подбирал ключи с одинаковым `hashCode()` (для Java 7 — `\"Aa\"`, `\"BB\"`, `\"aA\"`...). POST с 10⁴ параметрами → 10⁴ элементов в одном bucket → 10⁸ операций per `get()` → CPU 100%, DoS. Глобальные патчи во всех runtimes: Java, PHP, Ruby on Rails, .NET, Python. Другие complexity attacks: ReDoS (regex `(a+)+$` + `\"aaaaaa...X\"` → catastrophic backtracking), Zip bomb (10KB → 1TB после распаковки), Quick Sort attack (sorted input → `O(n²)`), Billion laughs (XML entity expansion), GraphQL deep query.",
+                "when_to_apply": "При проектировании public API принимающих user input; в security-аудите high-throughput Map'ов; при обработке user-provided regex (timeout, RE2J); в JSON/XML парсерах (max depth, max array size); GraphQL (depth limit, cost analysis).",
+                "edge_cases": "Treeification не помогает против trivial DoS (миллион уникальных ключей → нагрузка на rehashing, GC). Salt seed может утечь через timing attack — использовать `ThreadLocalRandom`. Zip bomb — лимитировать **поток** распаковки, не финальный размер (checksum не помогает). ReDoS в JDK regex — даже `String.matches()` уязвим; аудитировать статически (rxxr2, recheck) или использовать RE2J (linear time).",
+                "related": "[[complexity-analysis-interview#Q14]] HashMap O(log n) worst; [[complexity-analysis-interview#Q24]] Quick Sort O(n²) attack; [[complexity-analysis-interview#Q23]] нижняя граница sorting."
+              },
+              "label": "B",
+              "text": "Treeification бакетов: при коллизиях `>= 8` элементов в bucket LinkedList превращается в красно-чёрное дерево, давая `O(log n)` worst вместо `O(n)`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Java **не отклоняет** ключи на основе collision count — это нарушило бы корректность `Map` (любые ключи должны быть accepted). Treeification — это структурная трансформация bucket, а не отклонение. После treeification `put` всё ещё работает, просто за `O(log n)` вместо `O(n)`.",
+                "source_of_confusion": "«Защита от DoS» интуитивно ассоциируется с rate limiting / rejection. Реально HashMap делает graceful degradation.",
+                "if_it_were_true": "Application код бы видел `IllegalStateException` при добавлении 101-го элемента с конкретным hashCode — но `HashMap` принимает любые ключи. JDK не делает такого breaking change.",
+                "how_it_should_be": "Java 8 трансформирует структуру bucket (treeify), не отклоняет ключи; API контракт `Map` сохраняется."
+              },
+              "label": "C",
+              "text": "Java 8 ввела ограничение на число коллизий — отклоняет ключи после 100 collisions.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "В Java `String.hashCode()` **детерминирован** и определён спецификацией (`s[0]·31^(n-1) + ... + s[n-1]`). Изменение спецификации сломало бы serialization, distributed systems, caching. Java **не** ввела random seed для `String.hashCode()`. Python 3.3+ и Ruby сделали randomized hash для строк, но Java не последовала из-за совместимости.",
+                "source_of_confusion": "Randomized hashing — известная защита от HashDoS (Crosby & Wallach 2003), и студенты предполагают, что Java тоже её применила.",
+                "if_it_were_true": "`\"abc\".hashCode()` давал бы разные значения в разных runs — каскадные баги в serialization, distributed cache (Hazelcast, Redis), unit tests. Спецификация String.hashCode явно фиксирует формулу.",
+                "how_it_should_be": "Java 8 защита — treeification (структурная); randomized hashing рассмотрен и отвергнут из-за breaking compatibility."
+              },
+              "label": "D",
+              "text": "Java 8 ввела случайный seed в hashCode — атакующий не может предсказать коллизии.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

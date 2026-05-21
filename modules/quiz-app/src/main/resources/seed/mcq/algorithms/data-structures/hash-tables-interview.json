@@ -1,0 +1,1925 @@
+{
+  "topic_slug": "hash-tables-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое хеш-таблица?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "containsValue в HashMap — это O(n + capacity) всегда: он сканирует все buckets и сравнивает значения через equals. Iteration — тоже O(n + capacity). Хеш-таблица даёт O(1) только для операций по ключу: get, put, remove, containsKey.",
+                "source_of_confusion": "Маркетинговое «O(1)» из учебников опускает, что это только для key-lookup; iterables/value-lookup не выигрывают от структуры массива buckets.",
+                "if_it_were_true": "Сервис, делающий `cache.containsValue(staleObject)` в hot-path на карте с 1M записей при p99-SLA 50ms, получил бы регулярные таймауты — что и наблюдалось в реальных incidents с reverse-lookup-кодом.",
+                "how_it_should_be": "Уточнить, что O(1) — только key-операции; для value-lookup нужен обратный индекс `Map<V, Set<K>>` или специализированный двусторонний словарь."
+              },
+              "label": "A",
+              "text": "Хеш-таблица гарантирует O(1) для всех операций без исключений, включая containsValue и iteration по полному набору значений.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Ядро структуры — массив buckets фиксированного размера. Хеш-функция превращает ключ произвольного типа в целое число, и индекс в массиве вычисляется через modulo (или битовую операцию для power-of-two capacity). Поскольку bucket-pointer в массиве — это random access, get/put/remove получают amortized O(1). При коллизиях (разные ключи, один индекс) применяются две классические стратегии: chaining (список/дерево в bucket) или open addressing (поиск следующей свободной ячейки в массиве). Java `HashMap` использует chaining + treeify при цепочке ≥ 8.",
+                "example": "Redis использует hash table как primary in-memory store: `dict.c` реализует chained hash с инкрементальным rehashing. При 100M ключей и доступе по `GET user:42` Redis выполняет хеш и indexing за ~50ns без сканирования; именно поэтому Redis отдаёт ~100k ops/sec на одно ядро.",
+                "when_to_apply": "Любой O(1) lookup по ключу: in-memory кэши, индексы БД, dedup, frequency counting, session storage, sharding. Это default-структура, когда нужен быстрый доступ по равенству (а не по диапазону — для range-запросов берём TreeMap/BTreeMap).",
+                "edge_cases": "Резкое падение производительности при плохом hashCode (все в один bucket) — поэтому в Java 8+ ввели treeify. iteration order не определён и может меняться между запусками JVM — нельзя полагаться в тестах. Initial capacity критичен: `new HashMap<>(1_500_000)` экономит ~20 resize-операций при 1M записей.",
+                "related": "[[hash-tables-interview#Q3]] коллизии; [[hash-tables-interview#Q8]] устройство HashMap; [[hash-tables-interview#Q12]] сложности операций."
+              },
+              "label": "B",
+              "text": "Хеш-таблица — структура, отображающая ключи в значения через `index = hash(key) mod capacity`; даёт O(1) среднее для get/put/remove, а коллизии разрешаются chaining либо open addressing.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Сортировка + бинарный поиск — это описание `TreeMap` (red-black tree) или sorted array; они дают O(log n). HashMap намеренно НЕ сортирует — порядок iteration зависит от hashCode и capacity, и формально не определён.",
+                "source_of_confusion": "Студентов часто учат «структуры для быстрого поиска» одновременно (BST, hash table), и алгоритмы смешиваются. «Bucket» иногда путают с «отсортированный сегмент».",
+                "if_it_were_true": "Код, ожидающий «отсортированный» вывод из `map.keySet()`, получал бы непредсказуемые результаты при апгрейде Java или изменении capacity — баги типа «тесты падают в CI после изменения порядка ключей».",
+                "how_it_should_be": "Описать TreeMap (O(log n), отсортированные ключи) как отдельную структуру для случаев, когда порядок важен; HashMap — для O(1) без порядка."
+              },
+              "label": "C",
+              "text": "Хеш-таблица сортирует ключи и использует бинарный поиск по отсортированному массиву.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Это описание `LinkedList` или `ArrayList`. Хеш-таблица использует массив buckets с random-access по индексу-хешу. `LinkedHashMap` поддерживает порядок вставки ДОПОЛНИТЕЛЬНО к hash-структуре, но базовый HashMap — нет.",
+                "source_of_confusion": "Слово «таблица» иногда воспринимается как «упорядоченный список»; chaining добавляет ассоциацию с linked list.",
+                "if_it_were_true": "`get(key)` стоил бы O(n) — линейный обход списка для поиска ключа; в production-системе с 10M записей это сделало бы любую операцию неприемлемо медленной.",
+                "how_it_should_be": "Указать, что элементы хранятся в массиве buckets с O(1) доступом по индексу; chaining внутри bucket — это запасной механизм, не основной storage."
+              },
+              "label": "D",
+              "text": "Хеш-таблица хранит элементы в связном списке, индексируемом по порядку вставки.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое хеш-функция и какие требования к ней?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Уникальность невозможна по pigeonhole principle: ключей бесконечно (например, всех String), а int — 2³². Коллизии неизбежны и нормальны — HashMap разрешает их через chaining/treeify. Требование к хеш-функции — равномерность, а не уникальность.",
+                "source_of_confusion": "Идеализация «hash = fingerprint» из криптографических контекстов (SHA-256), где для практических входов коллизий почти не бывает. Для HashMap масштабы другие.",
+                "if_it_were_true": "Любая попытка использовать String как ключ ломалась бы — два разных String с одинаковым hashCode (а их легко найти, например, \"Aa\" и \"BB\" в Java) делали бы HashMap неработоспособным.",
+                "how_it_should_be": "Сформулировать требование как «равномерное распределение значений хеша по доступному диапазону, при котором коллизии редки и не группируются»."
+              },
+              "label": "A",
+              "text": "Хеш-функция должна возвращать уникальные значения для каждого ключа, иначе HashMap сломается.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Это требование локально-чувствительного хеша (LSH), который применяется для approximate nearest-neighbor поиска (image similarity, document dedup). Для HashMap нужно ровно обратное — avalanche effect: малое изменение ключа должно давать большое изменение хеша, иначе ключи кластеризуются в соседних buckets.",
+                "source_of_confusion": "Интуиция «соседние данные → соседние индексы» из массивов и B-деревьев. В hash table эта интуиция приводит к катастрофе.",
+                "if_it_were_true": "Карта со счётчиками по последовательным `id=1,2,3,...` загнала бы все ключи в первые buckets — а остальной массив пустовал бы; деградация до O(n) на linear scan.",
+                "how_it_should_be": "Требование «avalanche effect» — близкие ключи должны давать максимально удалённые хеши; LSH — это отдельная задача, не для общеназначных HashMap."
+              },
+              "label": "B",
+              "text": "Хеш-функция должна сохранять близость ключей: близкие по значению ключи получают близкие хеши.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Четыре ключевых свойства: (1) **детерминизм** — `hash(x) == hash(x)` всегда, иначе теряется invariant Map; (2) **равномерность** — хеши должны покрывать диапазон без перекоса, иначе buckets перегружаются; (3) **скорость** — хеш вызывается на каждый put/get/contains, поэтому O(длины ключа) с маленькой константой; (4) **avalanche effect** — изменение одного бита ключа должно менять ~50% бит хеша, что предотвращает clustering. Для in-memory hash tables это даёт MurmurHash3 (Redis, Cassandra), xxHash (rocksDB, LZ4), CityHash (Google). Криптографические (SHA-256, MD5) подходят теоретически, но на порядок медленнее и не нужны для нон-adversarial scenario.",
+                "example": "Java `String.hashCode()` использует polynomial с base 31: `h = 31*h + c`. Простое число 31 даёт хорошее распределение и JIT-friendly (заменяется на shift+subtract `(h<<5) - h`). После этого HashMap применяет perturbation `h ^ (h>>>16)` для смешивания старших и младших бит. Для cryptographic-grade распределения Guava предлагает `Hashing.murmur3_128()`.",
+                "when_to_apply": "При написании custom hashCode для value-объектов: использовать `Objects.hash(field1, field2)` или Lombok `@EqualsAndHashCode`. В системах со sharding (Kafka partitioning, distributed cache) — MurmurHash или xxHash для лучшего распределения по узлам. Криптографические — только когда есть adversarial input и нужна защита (например, hash-flooding в открытых API).",
+                "edge_cases": "`String.hashCode()` имеет известные коллизии (например, \"Aa\" и \"BB\" дают одинаковый хеш) — этим пользовались HashDoS-атакующие. Поэтому Java 8+ добавил treeify. Кастомный `hashCode` с `return 1;` технически детерминирован, но катастрофически неравномерен — typical antipattern в junior-коде.",
+                "related": "[[hash-tables-interview#Q14]] perturbation; [[hash-tables-interview#Q4]] hashCode contract; [[hash-tables-interview#Q31]] HashDoS."
+              },
+              "label": "C",
+              "text": "Хорошая хеш-функция детерминирована, равномерно распределяет значения по диапазону, быстро вычисляется; для HashMap в production используют некриптографические функции (MurmurHash, xxHash, CityHash) с avalanche effect.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "SHA-256 на 1-2 порядка медленнее MurmurHash (~1 μs vs ~10 ns на 32-байтовый ключ), и эта стоимость ложится на каждый put/get. Криптографические хеши избыточны для нон-adversarial use case; Java и большинство языков используют обычные `hashCode` + treeify как защиту.",
+                "source_of_confusion": "«Hash» в безопасности и в структурах данных — разные требования. SHA-256 защищает от подбора preimage (нужно для подписей), а HashMap нужно только uniform distribution.",
+                "if_it_were_true": "Сервис с 50k RPS и 1KB-ключами тратил бы 50ms CPU/сек только на хеширование — это треть бюджета CPU при small object cache; throughput упал бы в 3-5 раз.",
+                "how_it_should_be": "Использовать MurmurHash/xxHash для скорости + treeify в HashMap как защиту от worst-case коллизий; криптографический хеш — только когда модель угроз требует resistance к адверсарной подделке коллизий."
+              },
+              "label": "D",
+              "text": "Для HashMap необходимо использовать криптографические хеши (SHA-256) для защиты от коллизий и атак.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое коллизии и как их разрешают?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Коллизии неизбежны по pigeonhole principle: ключей бесконечно, buckets — конечное число. Две классические стратегии: **chaining** — каждый bucket держит список (или дерево) элементов, и при коллизии новый элемент дописывается в этот список; **open addressing** — все элементы в одном массиве, при занятой ячейке ищется следующая свободная (linear/quadratic probing, double hashing). Chaining терпит любой load factor (даже >1), open addressing деградирует при LF > 0.7. Java HashMap с Java 8+ использует chaining + treeify в красно-чёрное дерево, что даёт O(log n) worst-case вместо O(n).",
+                "example": "Cassandra `Memtable` использует chaining для in-memory hash; при flush на диск (SSTable) — это уже B-tree-подобная структура. Python `dict` использует open addressing (perturbation-based probing); Go `map` — open addressing с bucketized chaining (8 элементов на bucket).",
+                "when_to_apply": "Chaining — когда LF может варьироваться, ключей много, кэш не главное (большинство языков SDK: Java, C#, Ruby). Open addressing — когда LF контролируется и важна cache locality (Python, Go, C++ flat_hash_map от Abseil). При проектировании custom hash table — chaining проще реализовать корректно, open addressing требует tombstones.",
+                "edge_cases": "Treeify в Java требует, чтобы ключи реализовывали `Comparable`; иначе используется `System.identityHashCode` как tie-breaker — менее эффективно, но всё равно O(log n). При treeify capacity должен быть ≥ 64 (`MIN_TREEIFY_CAPACITY`), иначе вместо treeify происходит resize.",
+                "related": "[[hash-tables-interview#Q11]] treeify; [[hash-tables-interview#Q15]] chaining; [[hash-tables-interview#Q16]] open addressing."
+              },
+              "label": "A",
+              "text": "Коллизия — два разных ключа дают одинаковый индекс bucket; Java HashMap разрешает их через chaining (связный список, при ≥8 элементов и capacity≥64 — красно-чёрное дерево), а open addressing ищет следующую свободную ячейку в массиве.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Идеальная хеш-функция (perfect hash) возможна только для **статичного, заранее известного** набора ключей (например, keywords компилятора). Для динамического HashMap коллизии неизбежны: множество возможных String бесконечно, а range int — конечен.",
+                "source_of_confusion": "Учебники иногда упоминают «perfect hashing» как теоретическую цель, не подчёркивая, что это работает только для статичных наборов.",
+                "if_it_were_true": "Не нужны были бы ни chaining, ни treeify, ни load factor — HashMap был бы тривиальным `Node[]`. Но любая попытка добавить новый ключ в карту со 100M записей всё равно вызовет коллизию, и игнорирование этого приведёт к потере данных.",
+                "how_it_should_be": "Уточнить, что perfect hashing работает только для статичного набора ключей (GNU `gperf`, например); для dynamic HashMap нужны механизмы разрешения коллизий."
+              },
+              "label": "B",
+              "text": "Коллизии в HashMap полностью предотвращаются выбором правильной хеш-функции — при идеальном хеше их нет.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Open addressing деградирует драматически при LF > 0.7 из-за primary/secondary clustering (соседние занятые ячейки сливаются). Chaining работает корректно при любом LF, просто цепочки становятся длиннее. На LF=0.5 open addressing быстрее (cache locality), но на LF=0.9 чтение open addressing может стоить десятки probes, а chaining — те же 1-2 элемента в списке.",
+                "source_of_confusion": "Учебники иногда сравнивают только asymptotic complexity, опуская constant factor и поведение на разных LF.",
+                "if_it_were_true": "Не было бы причин использовать chaining в Java HashMap; разработчики JDK выбирали бы open addressing для cache locality. Но Java HashMap при LF=0.95 (например, через `(int)(1_000_000/0.75)+1`) всё ещё работает приемлемо благодаря chaining.",
+                "how_it_should_be": "Указать, что open addressing нужно держать на LF < 0.7, а chaining терпит больше; выбор стратегии зависит от ожидаемого LF и важности cache locality."
+              },
+              "label": "C",
+              "text": "Open addressing и chaining дают одинаковую производительность при любом load factor — выбор между ними чисто эстетический.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Rehashing увеличивает capacity (обычно ×2) и перераспределяет ключи по новым индексам, что уменьшает плотность и количество коллизий — но не устраняет их полностью. Если все ключи имеют одинаковый hashCode, никакой rehash их не разделит — они снова окажутся в одном bucket.",
+                "source_of_confusion": "Если LF был 0.95 и стал 0.475, кажется, что «коллизий стало вдвое меньше» — это правда, но не «ноль коллизий».",
+                "if_it_were_true": "HashMap с capacity=2³² мог бы вместить любое число ключей без коллизий — но это невозможно ни физически (память), ни логически (pigeonhole). Реальные HashMap всегда имеют коллизии при достаточном размере.",
+                "how_it_should_be": "Уточнить, что rehashing **снижает** среднее число коллизий через расширение пространства buckets, но не гарантирует их отсутствие; для случая «все ключи в одном bucket» поможет только treeify, а не rehash."
+              },
+              "label": "D",
+              "text": "Rehashing полностью устраняет коллизии, перераспределяя все ключи через новый хеш-алгоритм.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Контракт hashCode() и equals()?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Контракт связывает `equals` (возвращает boolean) и `hashCode` (возвращает int — число!) через значение, а не через результат вызова. Правильная формулировка: если `a.equals(b) == true`, то `a.hashCode() == b.hashCode()` (одинаковые int-значения).",
+                "source_of_confusion": "Незнание сигнатур методов: разработчик помнит «equals и hashCode должны согласоваться», но не помнит типы возврата.",
+                "if_it_were_true": "В коде типа `if (a.hashCode())` Java выдаст compile error (`int cannot be converted to boolean`); попытка реализовать «hashCode возвращает true» физически невозможна.",
+                "how_it_should_be": "Сформулировать: `a.equals(b) ⟹ a.hashCode() == b.hashCode()` (равенство int-значений хешей)."
+              },
+              "label": "A",
+              "text": "Если `equals()` возвращает true, то `hashCode()` обязан также возвращать true для обоих объектов.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Контракт **асимметричен**: `equals ⟹ same hashCode`, но НЕ наоборот. Два разных объекта могут иметь одинаковый hashCode (это коллизия — нормально), но они не обязаны быть equal. Без асимметрии хеш-функция была бы тривиальной (например, `return 1;` нарушила бы только «обратное», но не реальный контракт).",
+                "source_of_confusion": "Интуиция «контракт = двусторонняя связь»; на деле hashCode — это lossy projection (int — узкий тип).",
+                "if_it_were_true": "Любая хеш-коллизия (например, `\"Aa\".hashCode() == \"BB\".hashCode()`) делала бы HashMap нерабочей: \"Aa\" и \"BB\" должны были бы быть equal, но это разные строки. Все HashMap в JDK сломались бы.",
+                "how_it_should_be": "Принять асимметрию: equals → same hashCode (обязательно), same hashCode → equals (не обязательно)."
+              },
+              "label": "B",
+              "text": "Контракт симметричен в обоих направлениях: equals и hashCode согласованы и в одну, и в обратную сторону.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Это обратное направление контракта, и оно **не обязательно**. Одинаковый hashCode — это коллизия, нормальное явление. HashMap внутри решает коллизии через chaining: сначала находит bucket по hashCode, затем перебирает элементы цепочки и сравнивает через equals — только тогда определяется, есть ли совпадение.",
+                "source_of_confusion": "Чтение контракта в одном направлении (`equals → hashCode`) и обобщение «значит и наоборот».",
+                "if_it_were_true": "Хеш-функция должна была бы быть injective (биекция), что невозможно для String/Object → int. HashMap не мог бы работать с произвольными ключами; коллизии стали бы багами.",
+                "how_it_should_be": "Контракт только в одну сторону: `equals ⟹ same hashCode`; одинаковый hashCode при `!equals` — это коллизия, нужная и нормальная."
+              },
+              "label": "C",
+              "text": "Контракт требует: два объекта с одинаковым hashCode обязательно equals.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Полный контракт состоит из 5 правил для equals (рефлексивность, симметричность, транзитивность, согласованность, `x.equals(null) == false`) и 2 правил для hashCode (согласованность во времени, согласованность с equals). Главное правило, которое чаще всего нарушают: **equal objects must have equal hashCodes**. Обратное направление (one-to-one) физически невозможно: hashCode возвращает int (2³² значений), а ключей бесконечно много. Поэтому коллизии — норма. HashMap при коллизии сначала ищет по hashCode (bucket), затем внутри bucket сравнивает кандидатов через equals.",
+                "example": "Lombok `@EqualsAndHashCode(of = {\"id\"})` генерирует пару методов, которые читают одно и то же поле `id`. Если изменить annotation на `equals` только без hashCode (или включить разные поля), HashMap сломается тихо: `set.add(obj)` сработает, но `set.contains(equalObj)` вернёт false. Знаменитый «потерянный объект в HashSet» — типичный bug на code review.",
+                "when_to_apply": "При создании любого value object, который будет ключом HashMap/HashSet или элементом этой Set. Records (Java 14+) генерируют контракт автоматически — предпочтительный вариант. Для классов — Lombok `@EqualsAndHashCode` или IDE-generator (IDEA, Eclipse). Никогда не писать вручную для production-кода без unit-тестов контракта.",
+                "edge_cases": "При наследовании контракт легко нарушается: Person и Employee (extends Person), где Person.equals сравнивает по name, может дать `person.equals(employee) == true`, но `employee.equals(person) == false` — нарушение симметричности. Лучше всего избегать наследования value objects; использовать composition.",
+                "related": "[[hash-tables-interview#Q5]] нарушение контракта; [[hash-tables-interview#Q6]] правильная реализация; [[hash-tables-interview#Q7]] immutable keys."
+              },
+              "label": "D",
+              "text": "Контракт: если `a.equals(b) == true`, то `a.hashCode() == b.hashCode()` обязательно; обратное не требуется — разные объекты могут иметь одинаковый hashCode (это коллизия, нормальное явление, разрешаемое chaining/treeify).",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что будет, если переопределить equals, но не hashCode?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`ClassCastException` бросается при касте объекта к несовместимому типу, и никак не связан с hashCode. Реальная проблема — функциональный bug без exception: `set.contains(equalObject)` тихо возвращает `false`, даже если объект логически \"тот же\".",
+                "source_of_confusion": "Разработчики ожидают, что Java «защищает» от нарушений контракта через runtime-проверки. На деле контракт hashCode/equals — это API contract, который JVM не проверяет; ответственность на программисте.",
+                "if_it_were_true": "Любое нарушение контракта приводило бы к exception, и баги ловились бы сразу. На деле приложения месяцами работают с потерянными в HashSet записями, пока кто-нибудь не заметит «дубликаты» в логе.",
+                "how_it_should_be": "Указать, что нарушение тихое: данные «теряются» в HashSet, но без исключения — это и делает баг особенно опасным."
+              },
+              "label": "A",
+              "text": "`equals()` выбросит `ClassCastException` при попытке сравнить объекты из разных buckets.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Алгоритм HashMap.get/contains: (1) вычислить `hashCode(key)`, (2) определить bucket по `index = (capacity-1) & hash`, (3) пройти по цепочке в этом bucket и сравнить кандидатов через `equals`. Если hashCode переопределён неправильно (или не переопределён вовсе), два логически равных объекта попадают в разные buckets — equals никогда не вызывается. Это самое коварное нарушение контракта в Java: код компилируется, тесты иногда проходят (если HashSet пуст или маленький), но в production данные «теряются».",
+                "example": "Класс `Person { String name; }` с переопределённым `equals` (сравнение по name) без hashCode. `Set<Person> seen = new HashSet<>(); seen.add(new Person(\"Alice\")); seen.contains(new Person(\"Alice\"));` — возвращает `false`! Lombok `@EqualsAndHashCode` или generation IDEA/Eclipse решает проблему. Records (Java 14+) делают это автоматически.",
+                "when_to_apply": "При создании любого класса-ключа Map или элемента Set: всегда генерировать пару методов одновременно через Lombok/IDE/records. На code review: проверять, что `@EqualsAndHashCode` либо обе аннотации присутствуют, либо ни одной. В тестах — assert-проверка контракта через EqualsVerifier (Jan Ouwens) или Guava `EqualsTester`.",
+                "edge_cases": "Hibernate proxy объекты имеют непредсказуемый hashCode из-за lazy loading: их нельзя использовать как ключи HashMap. Тестировать стоит и `set.add()` → `set.contains()`, и `map.put(k, v)` → `map.get(equalK)`, и `set.remove(equalK)`. Использовать `EqualsVerifier.forClass(MyKey.class).verify()` в unit-тестах — он находит все 8 нарушений контракта.",
+                "related": "[[hash-tables-interview#Q4]] контракт hashCode/equals; [[hash-tables-interview#Q6]] правильная реализация; [[hash-tables-interview#Q7]] immutable keys."
+              },
+              "label": "B",
+              "text": "`HashSet`/`HashMap` не найдут логически равный объект: поиск идёт сначала по hashCode (выбор bucket), и поскольку hashCode разный (унаследованный `Object.hashCode()` по identity), поиск попадает в другой bucket и `contains()` возвращает `false` без exception.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`put()` не проверяет контракт — он просто вычисляет hashCode (любое значение допустимо), кладёт элемент в соответствующий bucket. Никакой verification внутри Java collections нет. Bug проявится только при `get()`/`contains()`/`remove()`, и то не в виде exception, а в виде «не находит» — самый трудно отлаживаемый случай.",
+                "source_of_confusion": "Ожидание, что Java имеет «defensive checks» в стандартных коллекциях. На деле это design choice: проверки stalled бы производительность put в hot path.",
+                "if_it_were_true": "Контракт нарушался бы громко, и баги фиксились бы сразу — но на практике приложения работают с invisible duplicate'ами в HashSet, потому что bug тихий.",
+                "how_it_should_be": "Использовать EqualsVerifier в тестах для assert-проверки контракта; код не получает runtime-защиты от JDK."
+              },
+              "label": "C",
+              "text": "Метод `put()` выбросит исключение при попытке добавить объект с нарушенным контрактом.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Это не «больше коллизий» — это **функциональный bug**. `set.add(new Person(\"Alice\"))` и `set.add(new Person(\"Alice\"))` добавят два разных объекта в Set (потому что у них разный identity-hashCode), хотя пользователь ожидает один. `contains()` для нового `Person(\"Alice\")` вернёт false. Семантика Set сломана полностью.",
+                "source_of_confusion": "Разработчик предполагает, что «нарушение оптимизации» означает «медленнее», но коллекция работает. На деле — функциональная инкорректность, а не perf-degradation.",
+                "if_it_were_true": "Все Java-приложения с custom keys продолжали бы работать, просто медленнее. На деле многие имеют тихий bug с потерянными данными в Set/Map.",
+                "how_it_should_be": "Указать функциональное последствие: дубликаты добавляются как разные, `contains/remove` не находят логически равных — это сломанная семантика Set/Map, а не perf issue."
+              },
+              "label": "D",
+              "text": "Коллекция будет работать корректно, только с увеличенным числом коллизий.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как переопределять hashCode по правилам?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Монотонный hashCode (например, инкрементированный counter в конструкторе) кластеризует все ключи в первых buckets — это хуже, чем случайный. Хорошее распределение — равномерное по всему range int, а не монотонное.",
+                "source_of_confusion": "Интуиция «уникальные значения через counter» (как database IDENTITY) переносится из БД, где порядковые ID хороши для primary key. В hash table этот подход вреден.",
+                "if_it_were_true": "При capacity=16 первые 16 объектов попадут каждый в свой bucket, дальше — все в bucket[15] (или другой остаток). При 1M записей — все в bucket[14], потому что (1_000_000 & 15) = 0; деградация до O(n) на любой get.",
+                "how_it_should_be": "Использовать поля объекта (через `Objects.hash`) для равномерного распределения по диапазону int; counter в конструкторе — это antipattern для hashCode."
+              },
+              "label": "A",
+              "text": "hashCode должен возвращать постоянно увеличивающееся значение для минимизации коллизий и упорядоченного распределения.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`Objects.hash(field1, field2)` полностью корректен и рекомендован Effective Java (3rd ed., Item 11). Внутри он использует `Arrays.hashCode(Object[])` с тем же polynomial-31 алгоритмом. Ручная реализация нужна только для hot-path performance (избегание autoboxing и varargs array allocation).",
+                "source_of_confusion": "Перфекционисты-разработчики считают, что «стандартная утилита делает хуже, чем кастомная». Это правда только для микро-оптимизаций на 10ns в hot loop, а не для контракта.",
+                "if_it_were_true": "Lombok `@EqualsAndHashCode` (использующий аналог `Objects.hash`) и Java records (использующие `Objects.hash`) ломали бы контракт — но они работают корректно в миллиардах продакшен-кодов.",
+                "how_it_should_be": "Использовать `Objects.hash` или records по умолчанию; ручную реализацию — только для micro-benchmark-доказанных hot path с autoboxing-проблемой."
+              },
+              "label": "B",
+              "text": "Использование `Objects.hash()` нарушает контракт, поэтому нужна только ручная реализация с XOR и простым числом.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Алгоритм polynomial hash: `result = 31 * result + field.hashCode()` для каждого поля. Множитель 31 выбран как простое нечётное число с хорошими свойствами распределения и JIT-friendly (заменяется на `(h << 5) - h`). Все поля, по которым equals сравнивает, должны участвовать в hashCode — иначе контракт нарушится. Для null-safe: `Objects.hashCode(field)` или `(field != null ? field.hashCode() : 0)`. Records (Java 14+) — лучший подход для value objects: один-строчное определение и компилятор генерирует контракт автоматически.",
+                "example": "`record Money(BigDecimal amount, Currency currency) {}` — два поля, и записываются: equals (сравнивает оба), hashCode (`Objects.hash(amount, currency)`), toString. Без records: `@EqualsAndHashCode @Value class Money { BigDecimal amount; Currency currency; }` через Lombok. Ручная реализация: `int result = 17; result = 31*result + amount.hashCode(); result = 31*result + currency.hashCode(); return result;`.",
+                "when_to_apply": "Любой value object для HashMap/HashSet: предпочитать records; иначе Lombok `@Value` или `@EqualsAndHashCode`. Hot-path code на 100k+ RPS с маленькими объектами — можно ручная реализация с XOR (быстрее на 5-10ns из-за отсутствия autoboxing varargs). Для тестирования — EqualsVerifier.",
+                "edge_cases": "Не включать в hashCode mutable поля, которые могут измениться после `put()` — иначе ключ «потеряется». Не включать поля, которых нет в equals (нарушит «equal → same hashCode»). В наследовании передавать `super.hashCode()` через 31-polynomial. Учитывать `BigDecimal.equals` (учитывает scale) vs `compareTo` (не учитывает) — выбирать одно и использовать соответствующее в hashCode.",
+                "related": "[[hash-tables-interview#Q4]] контракт hashCode/equals; [[hash-tables-interview#Q5]] нарушение контракта; [[hash-tables-interview#Q14]] perturbation в HashMap."
+              },
+              "label": "C",
+              "text": "Правильный hashCode включает все поля, участвующие в `equals()`, использует простой множитель 31 для polynomial combination; `Objects.hash(field1, field2, ...)` — стандарт Java 7+, а Lombok `@EqualsAndHashCode` и records генерируют корректную пару автоматически.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Если equals сравнивает несколько полей, hashCode обязан включать те же. Иначе контракт нарушится: два объекта с одинаковым id, но разными name дадут одинаковый hashCode (правильно), но если equals сравнивает и name — они будут `!equals` при `same hashCode` (это допустимо!). Проблема обратная: если equals = `(id, name)`, а hashCode = `id`, то для двух equal objects (с равными id и name) hashCode совпадёт — это работает. Но если меняется требование equals (добавили поле), hashCode тоже надо обновить.",
+                "source_of_confusion": "«Один id уникален → одного достаточно для hashCode» — частая упрощённая логика. Это даже работает, пока equals тоже только по id. Но при расширении equals — рассинхрон.",
+                "if_it_were_true": "Любое изменение equals требовало бы синхронного изменения hashCode — что часто забывают; контракт нарушится.",
+                "how_it_should_be": "Включать все поля equals в hashCode — это стандарт; синхронизация ответственность Lombok/records/IDE-генератора."
+              },
+              "label": "D",
+              "text": "Для оптимальной производительности hashCode должен включать только один \"уникальный\" идентификатор, игнорируя остальные поля.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое immutable key и почему важен?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "HashMap при `put()` запоминает позицию по текущему hashCode ключа. После изменения mutable поля ключа hashCode меняется, но HashMap не «знает» об этом — записи в карте не пересортировываются автоматически. При следующем `get(sameKey)` вычисляется новый bucket, в нём записи нет — возвращается null. При этом запись физически всё ещё в карте (в старом bucket), но недоступна по этому ключу. Хуже того: iteration по `map.entrySet()` всё ещё покажет её. Это самый тихий и трудно-отлаживаемый bug в Java collections.",
+                "example": "Класс `class Person { String name; }` с реальным equals/hashCode по name. `Person alice = new Person(\"Alice\"); map.put(alice, \"data\"); alice.name = \"Bob\"; map.get(alice);` — возвращает null! Запись осталась в bucket, соответствующем hash(\"Alice\"), но get идёт в bucket для hash(\"Bob\"). Правильный подход — `record Person(String name) {}` — поле final, изменить невозможно.",
+                "when_to_apply": "При любом проектировании value objects для использования в Map/Set. Records (Java 14+) — golden standard: final fields by default. Если используется обычный класс — все поля, входящие в equals/hashCode, должны быть `private final`. Defensive copy для mutable container fields (List, Map) — клонировать в конструкторе. Для DTO с setters — использовать как ключ только если seterы недоступны (например, после `@JsonProperty` deserialization, если объект сразу immutable).",
+                "edge_cases": "Hibernate proxy объекты с lazy-load полями: hashCode до load и после load может различаться, если поле включено в hashCode — это типичная проблема. Решение: использовать только `id` (immutable после persist) в hashCode/equals для JPA-entity. Также `BigDecimal` с разным scale (`new BigDecimal(\"1.0\").equals(new BigDecimal(\"1.00\")) == false`) — выбирать `equals` или `compareTo`-семантику явно.",
+                "related": "[[hash-tables-interview#Q4]] контракт hashCode/equals; [[hash-tables-interview#Q5]] нарушение контракта; [[hash-tables-interview#Q25]] IdentityHashMap."
+              },
+              "label": "A",
+              "text": "hashCode ключа изменится → `get()` вычислит новый index и пойдёт в другой bucket → не найдёт запись → вернёт null; запись «потеряется» без исключения. Правило: использовать только immutable ключи (String, Integer, LocalDate, records).",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "HashMap не отслеживает изменения ключей — у Java нет listener-механизма для изменений полей. Запись остаётся в старом bucket навсегда; rehash тоже использует **новый** hashCode (изменённого ключа), поэтому при resize запись «перемещается» по новой логике — и теряется ещё надёжнее.",
+                "source_of_confusion": "Ожидание «умного» поведения коллекций, как у observable-структур (например, JavaFX `ObservableMap`). Стандартная HashMap не observable.",
+                "if_it_were_true": "HashMap имел бы overhead на listener-механизм для каждого ключа, что замедлило бы put/get на порядок. На деле — статическая привязка к hashCode на момент put.",
+                "how_it_should_be": "Изменение mutable полей ключа НЕ отслеживается — запись «теряется»; единственный надёжный путь — immutable keys."
+              },
+              "label": "B",
+              "text": "Если изменить поле объекта-ключа после put(), HashMap автоматически переместит запись в правильный bucket при следующем put или resize.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "HashMap ищет bucket по hashCode **первым**, и только при попадании в правильный bucket вызывает equals. Если hashCode изменился, поиск идёт в другой bucket, и equals никогда не вызывается. Без hashCode переопределения используется `Object.hashCode()` (identity), который вообще не меняется при изменении полей — но тогда два логически равных объекта дадут разный hashCode (см. Q5).",
+                "source_of_confusion": "Разработчик думает «equals достаточно для проверки равенства» — забывает архитектуру HashMap (hash-first).",
+                "if_it_were_true": "Можно было бы безопасно класть mutable объекты в HashSet и изменять их — но HashSet и HashMap фундаментально hash-based, не linear scan.",
+                "how_it_should_be": "Понимать, что hashCode → bucket → equals — три последовательных шага; нарушение любого делает поиск некорректным."
+              },
+              "label": "C",
+              "text": "Mutable ключи безопасны, если переопределить только `equals()` без hashCode — equals найдёт объект при изменении.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`ConcurrentModificationException` бросается при **структурных** изменениях коллекции во время iteration (fail-fast iterator), а не при изменении полей внутри ключа. Например, `map.put(newKey, v)` во время iteration вызовет CME. Изменение mutable поля существующего ключа — JVM этого не видит.",
+                "source_of_confusion": "Слово «modification» в имени exception ассоциируется с любыми изменениями. На деле речь о структурных изменениях `size`, `modCount`.",
+                "if_it_were_true": "Bug ловился бы быстро через exception. На деле он тихий: записи теряются, get возвращает null, баг проявляется только при scrutiny логов или метрик «потерянные кеши».",
+                "how_it_should_be": "CME — для структурных изменений во время iteration; mutable key — тихий bug без exception. Использовать immutable ключи или EqualsVerifier-тесты."
+              },
+              "label": "D",
+              "text": "Изменение ключа после `put()` вызовет `ConcurrentModificationException` при следующем обращении.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен HashMap внутри?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "HashMap = массив `Node<K,V>[] table` + chaining: каждый bucket может содержать связный список (или красно-чёрное дерево при treeify) элементов с одинаковым индексом. Без chaining нельзя разрешать коллизии — при одинаковом индексе новая запись затирала бы старую.",
+                "source_of_confusion": "Упрощённое представление hash table из учебников начального уровня: «hash → массив → значение».",
+                "if_it_were_true": "Любая коллизия (например, \"Aa\" и \"BB\" с одинаковым hashCode) приводила бы к потере данных: `map.put(\"Aa\", 1); map.put(\"BB\", 2); map.get(\"Aa\");` вернул бы 2 (или null), а не 1. HashMap был бы непригоден.",
+                "how_it_should_be": "Описать chaining: каждая ячейка `Node<K,V>` имеет ссылку `next`, формируя цепочку при коллизии; с Java 8+ — treeify при длине ≥ 8."
+              },
+              "label": "A",
+              "text": "HashMap хранит записи в одном массиве без вспомогательных структур — каждая ячейка содержит ровно один элемент.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "HashMap использует **битовую** операцию `(capacity - 1) & hash` вместо modulo (`%`). Эта оптимизация работает только если capacity — степень двойки, потому что тогда `(capacity-1)` — это маска младших бит (например, 16-1=15 = 0b1111). Поэтому Java округляет указанный capacity вверх до ближайшей степени двойки.",
+                "source_of_confusion": "Учебники описывают хеш-таблицы через `% capacity` как универсальный подход; не упоминают bit-twiddling оптимизацию Java.",
+                "if_it_were_true": "`new HashMap<>(17)` создавал бы карту с capacity=17, и `& 16` (= 0b10000) выбирал бы только bit 4 — почти все ключи попадали бы в один bucket. На деле Java округлит 17 до 32 и использует `& 31` (= 0b11111).",
+                "how_it_should_be": "Указать `(capacity-1) & hash` для O(1) индексации; capacity всегда степень двойки; новый capacity при создании округляется через `tableSizeFor`."
+              },
+              "label": "B",
+              "text": "Индекс bucket вычисляется через `hash % capacity`, поэтому capacity может быть любым числом.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Treeify применяется только к **конкретным** bucket'ам, у которых цепочка достигла TREEIFY_THRESHOLD (8) ПРИ ТОМ что общий capacity ≥ MIN_TREEIFY_CAPACITY (64). Большинство buckets — связные списки (или вовсе пустые/single-element). Тоже untreeify при сжатии до 6 элементов — обратно в список.",
+                "source_of_confusion": "Знание о treeify часто упрощается до «Java 8 заменила list на tree».",
+                "if_it_were_true": "Memory overhead был бы катастрофическим: TreeNode на ~48 байт против Node на ~32 байта; для пустой HashMap с 16 buckets это +256 байт постоянно. На деле tree-узлы аллоцируются лениво.",
+                "how_it_should_be": "Treeify условный: per-bucket, при ≥8 коллизий И capacity≥64; большинство buckets всё ещё linked list."
+              },
+              "label": "C",
+              "text": "При Java 8+ HashMap использует только красно-чёрное дерево для всех buckets, что гарантирует O(log n).",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Структура HashMap (Java 8+):",
+                "example": "Java 8 source code: `transient Node<K,V>[] table;`, `static class Node<K,V> implements Map.Entry<K,V>`, методы `putVal`, `getNode`, `treeifyBin`, `resize`. Можно посмотреть в `OpenJDK` репозитории. Spring Boot `BeanDefinitionMap` — это `LinkedHashMap` поверх HashMap с insertion order.",
+                "when_to_apply": "Знание устройства нужно на собеседовании senior+ и при диагностике performance issues (long GC pauses при resize, hot bucket из-за плохого hashCode). Понимание `(capacity-1) & hash` объясняет, почему `new HashMap<>(100)` создаёт capacity=128 (степень двойки ≥ 100), а не 100.",
+                "edge_cases": "При resize в Java 8+ оптимизация: элементы цепочки разделяются по биту `(hash & oldCapacity)` — те с битом 0 остаются на месте, с битом 1 переезжают на `oldPosition + oldCapacity`. Это избегает пересчёта индекса для всех. До Java 8 был bug: concurrent resize мог сформировать circular linked list → infinite loop в getNode.",
+                "related": "[[hash-tables-interview#Q11]] treeify; [[hash-tables-interview#Q13]] capacity = степень двойки; [[hash-tables-interview#Q14]] perturbation."
+              },
+              "label": "D",
+              "text": "HashMap = массив `Node<K,V>[] table` + chaining; `hash = key.hashCode() ^ (h >>> 16)` (perturbation для смешивания старших бит); индекс = `(capacity-1) & hash`; при коллизии — добавление в цепочку, при ≥8 элементов и capacity≥64 — treeify в красно-чёрное дерево.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое load factor и initial capacity?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Default load factor в Java HashMap = 0.75, не 1.0. При LF=1.0 коллизии накапливались бы сильнее: при заполнении 100% buckets число коллизий росло бы геометрически. 0.75 — это эмпирический баланс между памятью (capacity × loadFactor) и количеством коллизий.",
+                "source_of_confusion": "Интуитивное «полностью заполнена = пора расширяться» ассоциируется с ArrayList (где LF фактически 1.0). Hash table работает иначе из-за коллизий до полного заполнения.",
+                "if_it_were_true": "HashMap страдал бы от коллизий уже при 80-90% заполнения — все get/put становились бы O(log n) или хуже. На деле resize запускается раньше, поддерживая O(1) average.",
+                "how_it_should_be": "Default LF = 0.75; threshold = capacity × LF = 12 при capacity=16; при превышении — rehashing."
+              },
+              "label": "A",
+              "text": "Load factor по умолчанию равен 1.0 — HashMap расширяется только когда полностью заполнена.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Initial capacity задаёт стартовый размер `Node[] table`; задаётся через конструктор `new HashMap<>(initialCapacity)`. Любое значение округляется вверх до ближайшей степени двойки через `tableSizeFor`. Load factor — это `size / capacity` порог; при size > threshold вызывается `resize()`, который удваивает capacity и перераспределяет элементы. Trade-off: низкий LF (0.5) — меньше коллизий, больше памяти; высокий LF (0.9) — больше коллизий, меньше памяти. 0.75 — sweet spot по эксперементам Sun/Oracle.",
+                "example": "Для 1M ожидаемых элементов: `new HashMap<>((int)(1_000_000 / 0.75f) + 1)` → ~1_333_334 → округлено до 2_097_152 (≈ 2M). Без указания capacity HashMap начнёт с 16 и сделает ~17 resize-операций (16 → 32 → 64 → ... → 2M), каждая O(n) — суммарно ~10× работы. Java 19+ дал `HashMap.newHashMap(expectedSize)` — utility-метод, делающий правильный расчёт.",
+                "when_to_apply": "При создании HashMap с известным размером — всегда передавать initial capacity. Spring `ConcurrentReferenceHashMap`, Caffeine `LoadingCache` тоже принимают expected size. Для long-living структур (cache, registry) — sized init особенно критичен; для коротко-живущих temp map — обычно не имеет значения.",
+                "edge_cases": "Конструктор `new HashMap<>(N)` создаёт capacity ≈ N (округлённый до степени двойки), но threshold = N × 0.75 → resize произойдёт уже при N × 0.75 элементов! Поэтому формула `(int)(expected / 0.75f) + 1` нужна, чтобы threshold был ≥ expected. Constructor `(int initialCapacity, float loadFactor)` принимает оба параметра — для нестандартных trade-off. Java 19 `newHashMap(expectedSize)` решает эту проблему элегантно.",
+                "related": "[[hash-tables-interview#Q10]] rehashing; [[hash-tables-interview#Q13]] capacity = степень двойки; [[hash-tables-interview#Q32]] деградация HashMap."
+              },
+              "label": "B",
+              "text": "Initial capacity — начальный размер массива buckets (default 16, всегда округляется до степени двойки); load factor — порог заполнения для триггера rehashing (default 0.75); threshold = `capacity × loadFactor` — при превышении автоматически удваивается capacity и происходит rehashing.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "HashMap автоматически делает rehashing при превышении threshold; нет жёсткого лимита на размер (ограничение — `MAXIMUM_CAPACITY = 1 << 30` ~ 1B buckets, дальше HashMap deactivates resize, но работает с любым размером). Initial capacity — это **стартовый**, не максимальный.",
+                "source_of_confusion": "Аналогия с `ArrayList(int initialCapacity)` (хотя там тоже не максимум) и с типизированными буферами фиксированного размера в других языках.",
+                "if_it_were_true": "Все Spring-приложения с динамическими registries падали бы с IllegalStateException при росте; на деле HashMap молча resize и работает.",
+                "how_it_should_be": "Initial capacity — стартовый размер; HashMap автоматически расширяется через rehashing при превышении `capacity × loadFactor`."
+              },
+              "label": "C",
+              "text": "Initial capacity задаёт максимальное количество элементов — превышение вызывает `IllegalStateException`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Высокий LF означает больше коллизий: при LF=0.9 средняя длина цепочки в bucket больше, чем при LF=0.75. Это увеличивает время get/put: даже без treeify O(1) превращается в O(k) где k — длина цепочки. Бенчмарки JMH показывают: LF=0.9 на 15-25% медленнее LF=0.75 на типичной workload.",
+                "source_of_confusion": "«Экономия памяти = лучше» — упрощённая heuristic, игнорирующая performance trade-off.",
+                "if_it_were_true": "Java разработчики установили бы default LF=1.0; вместо этого десятилетиями держат 0.75 — это результат эмпирических измерений.",
+                "how_it_should_be": "Trade-off: память vs скорость. 0.75 — баланс. LF=0.5 — для performance-critical с памятью не жалко; LF=0.9+ — для memory-constrained embedded; обычно оставить дефолт."
+              },
+              "label": "D",
+              "text": "Высокий load factor (например, 0.9) всегда лучше, так как экономит память без потери скорости.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое rehashing?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Rehashing запускается только при `size > threshold` (capacity × loadFactor). Между resize-операциями put/get работают O(1) без накладных расходов. Если бы rehashing был при каждой вставке, put стоил бы O(n) постоянно — HashMap был бы непригоден.",
+                "source_of_confusion": "Незнание механизма amortized analysis: redo-операция кажется «постоянной», на деле она редкая.",
+                "if_it_were_true": "Insert 1M элементов стоил бы 1M × 500K = 500 миллиардов операций (квадратичный); реально — ~3M операций amortized.",
+                "how_it_should_be": "Rehashing — редкая (log n раз при росте), а put в среднем O(1) благодаря amortized-анализу (как ArrayList)."
+              },
+              "label": "A",
+              "text": "Rehashing происходит при каждой вставке для гарантии равномерного распределения.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Стандартный `HashMap` НЕ делает shrink: capacity только растёт. Даже после массового `clear()` или `remove()` массив остаётся прежнего размера. Если нужна shrink-семантика, надо создать новый HashMap и скопировать в него. ConcurrentHashMap тоже не shrink.",
+                "source_of_confusion": "Ассоциация с динамическими структурами в других языках (Python `dict` в некоторых версиях делает compact, Java ArrayList — нет shrink, тоже).",
+                "if_it_were_true": "При `cache.clear()` память освобождалась бы сразу — на деле GC соберёт массив только если HashMap сама станет unreachable. В session-storage с TTL это приводит к «утечкам» памяти, пока explicit recycle не сделают.",
+                "how_it_should_be": "Указать, что HashMap monotonically grows; для shrink — создавать новую карту, либо использовать специальные конструкции (Eclipse Collections `MutableMap.trim()`)."
+              },
+              "label": "B",
+              "text": "После rehashing capacity уменьшается, если элементов мало — для освобождения памяти.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Rehashing — ключевой механизм поддержания O(1) amortized для put. Алгоритм: (1) аллоцировать `Node[oldCapacity * 2]`; (2) пройти по всем bucket'ам старого массива; (3) для каждого элемента вычислить новый индекс. До Java 8 новый индекс пересчитывался полностью (`hash & (newCapacity-1)`). С Java 8+ оптимизация: т.к. capacity всегда power-of-two, удвоение добавляет один бит к маске. Элементы цепочки разделяются на две: те, у которых старший бит нового index = 0, остаются на старой позиции; те, у которых = 1, переезжают на `oldPosition + oldCapacity`. Это O(k) на bucket вместо O(k log n) пересчёта.",
+                "example": "HashMap из 1M элементов с initial capacity=16: 17 resize-операций (16 → 32 → 64 → ... → 2M), каждая стоит O(размер_на_тот_момент). Суммарно ~2M операций (геометрическая сумма). Если задать `new HashMap<>(1_500_000)` — 0 resize-операций, чистый O(1) на put. Это и есть мотивация задавать initial capacity.",
+                "when_to_apply": "При создании HashMap с known size — всегда указывать initial capacity. При диагностике latency spikes в Spring Boot apps (например, p99 latency 50ms → 500ms раз в час) — посмотреть, не происходит ли resize огромной HashMap (например, RequestMappingHandlerMapping при reload). Решение: warm-up + initial sizing.",
+                "edge_cases": "Resize — O(n) в одном вызове put, который выбился на этот вызов: stop-the-world для thread'а. Для real-time систем это unacceptable. ConcurrentHashMap решает это через cooperative resize (`transferIndex`): множество потоков помогают переносить. До Java 8 был bug: concurrent rehash в HashMap мог сформировать circular linked list → infinite loop в getNode (100% CPU).",
+                "related": "[[hash-tables-interview#Q9]] load factor; [[hash-tables-interview#Q19]] thread-safety; [[hash-tables-interview#Q20]] ConcurrentHashMap."
+              },
+              "label": "C",
+              "text": "Rehashing: при `size > threshold` создаётся новый массив **в 2 раза больше**, все элементы перераспределяются по новым индексам (в Java 8+ — оптимизация: элементы цепочки разделяются на 2 группы по одному биту `hash & oldCapacity` — те с битом 0 остаются на месте, остальные переезжают на `oldPosition + oldCapacity`). Суммарная стоимость O(n), amortized O(1) на put.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Rehashing не сортирует — он перераспределяет по новым индексам (capacity ×2). HashMap не поддерживает сортировку вообще; для сортировки — TreeMap (O(log n) операции, red-black tree). Iteration HashMap может варьироваться даже между запусками JVM.",
+                "source_of_confusion": "«Сортировка ускоряет поиск» — общая интуиция (binary search), но HashMap использует хеш-индексацию (random access по hash), а не binary search.",
+                "if_it_were_true": "Стоимость resize была бы O(n log n) (сортировка), и iteration HashMap была бы упорядочена; ни то, ни другое не наблюдается.",
+                "how_it_should_be": "Resize перераспределяет элементы по новым bucket'ам через хеш-индексацию; никакой сортировки; iteration order undefined в HashMap (используется LinkedHashMap для insertion order или TreeMap для sorted order)."
+              },
+              "label": "D",
+              "text": "Rehashing сортирует элементы по hashCode для ускорения будущих get() операций.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое treeify и как работает с Java 8+?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Treeify — это per-bucket оптимизация, не глобальная. Когда цепочка одного bucket переходит порог 8, и общий размер таблицы достаточно большой (≥64 buckets), цепочка `Node` заменяется деревом `TreeNode`/`TreeBin`. Дерево сохраняет hash-индексацию (bucket по-прежнему выбирается по hashCode), но внутри bucket вместо linear scan — `O(log k)` lookup в red-black tree. Если capacity < 64, вместо treeify происходит resize (это часто эффективнее: расширение массива снижает collision density). Untreeify при 6 элементов: при удалениях дерево возвращается в list — экономия памяти.",
+                "example": "Knight Capital-style DoS-сценарий: атакующий шлёт 1000 String с одинаковым hashCode. Без treeify: один bucket цепочки длиной 1000, каждый get/put стоит O(1000). С treeify: red-black tree глубиной ~10, get/put = O(log 1000) ≈ 10 операций. Java 8+ переживает атаку, до Java 8 — сервер бы повис на 100% CPU.",
+                "when_to_apply": "Знание полезно при объяснении HashDoS-защиты на собеседовании. На практике treeify работает «само», но важно: tree-узлы (`TreeNode extends LinkedHashMap.Entry`) занимают ~2× памяти Node, поэтому в worst-case taller bucket = больше памяти. Если в продакшене вы видите много treeified buckets — повод проверить hashCode-функцию.",
+                "edge_cases": "Treeify требует, чтобы ключи реализовывали `Comparable<K>` для упорядочивания в дереве. Если нет — используется `tieBreakOrder` через `System.identityHashCode` (адрес в памяти). Это работает, но identity-порядок нестабилен между запусками JVM. Лучше всегда делать custom keys Comparable, особенно когда они могут попасть в treeified bucket. Также: treeify сам по себе НЕ защищает от concurrent issues — `HashMap` остаётся thread-unsafe; для concurrent — ConcurrentHashMap.",
+                "related": "[[hash-tables-interview#Q8]] устройство HashMap; [[hash-tables-interview#Q31]] HashDoS; [[hash-tables-interview#Q32]] деградация HashMap."
+              },
+              "label": "A",
+              "text": "Treeify конвертирует **отдельный** bucket в красно-чёрное дерево, когда длина цепочки достигает TREEIFY_THRESHOLD=8 и общий capacity ≥ MIN_TREEIFY_CAPACITY=64; обратная конвертация (untreeify) при уменьшении до UNTREEIFY_THRESHOLD=6 элементов; даёт O(log n) worst-case вместо O(n) при плохом hashCode.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Treeify применяется **per-bucket**, а не глобально. Большинство buckets остаются связными списками (или single-element). Treeify-ятся только buckets с длинной цепочкой (≥8), что обычно происходит при плохом hashCode или HashDoS-атаке.",
+                "source_of_confusion": "Упрощение «Java 8 заменила list на tree» — слышали о изменении, не разобрались с granularity.",
+                "if_it_were_true": "HashMap = TreeMap; все операции O(log n), без O(1) average. Java разработчики не вводили бы новый класс TreeMap отдельно, если бы HashMap уже был tree-based.",
+                "how_it_should_be": "Treeify — per-bucket; большинство buckets остаются list; глобальная структура — массив, hashCode → index, list/tree внутри bucket."
+              },
+              "label": "B",
+              "text": "Treeify превращает **весь** HashMap в одно красно-чёрное дерево при достижении определённого размера.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Red-black tree нуждается в упорядочивании. Если ключи реализуют `Comparable<K>`, используется `compareTo`. Если нет — fallback на `tieBreakOrder`: сравнение через `System.identityHashCode`, что даёт стабильный порядок в рамках одной JVM, но не гарантирует hashCode-based порядок и нестабилен между запусками.",
+                "source_of_confusion": "Разработчики думают «hashCode уже даёт упорядочивание». На самом деле в treeified bucket все элементы имеют один hashCode (это коллизия!), поэтому compareTo / identityHash нужен как secondary order.",
+                "if_it_were_true": "Custom keys без Comparable работали бы оптимально в HashMap. На деле они работают **корректно**, но через identity-fallback — менее эффективно, чем native compareTo.",
+                "how_it_should_be": "Делать custom keys `Comparable<K>` для максимальной эффективности treeify; без Comparable работает, но через identityHashCode tie-breaker."
+              },
+              "label": "C",
+              "text": "Treeify работает для любых ключей независимо от их реализации `Comparable`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`TreeBin` полностью поддерживает все операции: insert, delete, find — все O(log k). Никакого «закрытого» состояния. Если новый элемент попадает в treeified bucket, он добавляется в дерево и балансируется. При удалениях до ≤6 элементов — untreeify обратно в list.",
+                "source_of_confusion": "Ассоциация «дерево + rehashing» из общей теории; на деле treeify ортогонален rehashing.",
+                "if_it_were_true": "Каждый treeify-event вызывал бы полный resize — это O(n) overhead, который бы блокировал put-операции на длительное время. На деле treeify локален и быстр.",
+                "how_it_should_be": "TreeBin поддерживает все операции; rehashing — отдельный механизм, активируемый только при `size > threshold`."
+              },
+              "label": "D",
+              "text": "После treeify bucket перестаёт поддерживать новые вставки и требует rehashing для добавления элементов.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сложности операций HashMap?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`containsKey()` — O(1) среднее, O(log n) worst-case (только при treeified bucket). Бинарный поиск используется в `TreeMap` (O(log n)) или `Arrays.binarySearch` на отсортированном массиве; HashMap не отсортирован.",
+                "source_of_confusion": "Смешение HashMap и TreeMap; «contains в чём-то отсортированном — O(log n)».",
+                "if_it_were_true": "Все contains/get вызовы в Spring `BeanFactory` (использует HashMap для bean registry) стоили бы O(log n) — это десятки операций вместо одной. На деле Spring выдерживает миллионы bean lookup с O(1).",
+                "how_it_should_be": "`containsKey()` имеет ту же сложность что `get()`: O(1) average, O(log n) worst-case (treeify), O(n) до Java 8 worst-case без treeify."
+              },
+              "label": "A",
+              "text": "`containsKey()` работает за O(log n) в HashMap, так как использует бинарный поиск по sorted buckets.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Iteration HashMap — O(n + capacity). При capacity=1_000_000 и size=10 итерация проходит 1M buckets, из которых 999990 пустых, чтобы найти 10 элементов. LinkedHashMap решает это через doubly-linked list (O(n) без capacity-penalty), но обычный HashMap — нет.",
+                "source_of_confusion": "«Hash table = O(1) везде» — упрощение; iteration не выигрывает от хеш-индексации.",
+                "if_it_were_true": "`map.forEach()` стоил бы O(size); на деле он стоит O(size + capacity). Это видно при profiling: HashMap с 10 элементами и capacity=1M медленнее обычной HashMap.",
+                "how_it_should_be": "Iteration — O(n + capacity). Для иттерации в insertion order и O(n) — использовать LinkedHashMap."
+              },
+              "label": "B",
+              "text": "Все операции HashMap — O(1) амортизированное, включая iteration.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "HashMap использует **chaining**, а не quadratic probing. Quadratic probing — это техника open addressing (Python dict, Go map). При плохом hashCode (все ключи в один bucket) HashMap деградирует до O(n) (без treeify, Java 7) или O(log n) (с treeify, Java 8+). O(n²) могло бы быть, если каждый put стоит O(n) и таких put N — суммарная вставка O(n²), но это не «сложность одной операции».",
+                "source_of_confusion": "Смешение разных техник resolution коллизий.",
+                "if_it_were_true": "Каждая операция стоила бы O(n²) — для 1M элементов это 10¹² операций, невозможно.",
+                "how_it_should_be": "HashMap = chaining (Java 8+: chaining + treeify); деградация при плохом hashCode — O(log n) worst-case с treeify, O(n) без."
+              },
+              "label": "C",
+              "text": "При плохой хеш-функции HashMap деградирует до O(n²) из-за quadratic probing.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Сводная таблица:",
+                "example": "Spring `ConcurrentReferenceHashMap` (используется в bean factory) делает get-операции O(1) под нагрузкой 100k RPS. Если же на reverse-lookup стоит `chm.containsValue(target)` — это O(n+capacity), и при N=10k bean'ов это сотни микросекунд per call. Для reverse-lookup правильное решение — Guava `BiMap` или manual `Map<V, Set<K>>` обратный индекс.",
+                "when_to_apply": "При оценке latency budget для код-ревью: любой containsValue в hot path = red flag. При выборе HashMap vs TreeMap: HashMap для O(1) get без сортировки, TreeMap для O(log n) с sorted iteration и range queries. При планировании capacity: large capacity + small size = wasted iteration O(capacity).",
+                "edge_cases": "До Java 8 worst-case был O(n), что эксплуатировалось через HashDoS. Java 8 ввела treeify → O(log n) worst — но это не идеально: tree-узлы тяжелее в памяти. `KeySet.contains(k)` — O(1), но `keySet().stream().filter(eq(k)).count()` — O(n) (stream полностью обходит set). `entrySet()` итерация может быть медленной, если capacity >> size.",
+                "related": "[[hash-tables-interview#Q11]] treeify; [[hash-tables-interview#Q32]] деградация; [[hash-tables-interview#Q10]] rehashing amortized."
+              },
+              "label": "D",
+              "text": "get/put/remove/containsKey — O(1) average, O(log n) worst-case (Java 8+ через treeify) или O(n) (до Java 8 / без treeify); containsValue — O(n + capacity) **всегда** (линейное сканирование); iteration — O(n + capacity).",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему capacity HashMap всегда степень двойки?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Iteration в порядке вставки — это особенность `LinkedHashMap` (через doubly-linked list поверх HashMap). Обычный HashMap не сохраняет порядок iteration вообще, и степень двойки этого никак не обеспечивает. Степень двойки нужна для битовой оптимизации индексации.",
+                "source_of_confusion": "Студенты путают features разных Map-классов: insertion order — LinkedHashMap, sorted — TreeMap, capacity-степень-двойки — HashMap.",
+                "if_it_were_true": "HashMap имел бы такие же гарантии порядка как LinkedHashMap — но тогда два класса дублировались бы, и `LinkedHashMap` не существовал бы в JDK.",
+                "how_it_should_be": "Степень двойки нужна для замены `% capacity` на битовую операцию `(capacity-1) & hash` — оптимизация скорости, а не порядка."
+              },
+              "label": "A",
+              "text": "Capacity в степени двойки нужна для поддержки итерации в порядке вставки.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "На современных CPU операция целочисленного деления (`%`, `/`) стоит ~20-30 циклов из-за отсутствия pipelined divider в большинстве архитектур. Битовая AND — 1 цикл. Если capacity = 2^k, то `capacity-1` это маска младших k бит (`16-1 = 0b1111`), и `(capacity-1) & hash` даёт остаток от деления. Поэтому HashMap всегда держит capacity как степень двойки. Конструктор `new HashMap<>(initialCapacity)` пропускает значение через `tableSizeFor`: 17 → 32, 100 → 128, 1000 → 1024. Метод: `n |= n >>> 1; n |= n >>> 2; ...` — заполняет все младшие биты, затем +1.",
+                "example": "Бенчмарк JMH: `hash % 1000` ~25 ns/op vs `hash & 1023` ~1 ns/op (при corresponding capacity 1024). На 100k RPS hash-операций (типичный микросервис с HashMap-кэшем) это разница 2.5 ms/sec CPU — почти 3% одного ядра. По модулю кажется мелочью, но архитектурно — критично для высоконагруженных систем.",
+                "when_to_apply": "Знание полезно для собеседования senior+. На практике: при инициализации HashMap с size = 100, вы получите capacity = 128 (не 100). При расчёте memory footprint: 1M HashMap имеет capacity ≥ 2M (с LF=0.75), а не точно 1M.",
+                "edge_cases": "`(capacity-1) & hash` использует только младшие k бит хеша; если hashCode имеет хорошие старшие биты и плохие младшие — много коллизий. Поэтому HashMap дополнительно применяет **perturbation**: `hash = h ^ (h >>> 16)` (см. Q14) — XOR старших и младших 16 бит для смешивания. Без perturbation `String.hashCode()` имел бы много коллизий на коротких строках в маленьких HashMap.",
+                "related": "[[hash-tables-interview#Q8]] устройство HashMap; [[hash-tables-interview#Q14]] perturbation; [[hash-tables-interview#Q10]] rehashing."
+              },
+              "label": "B",
+              "text": "Capacity = степень двойки позволяет заменить дорогую операцию `hash % capacity` на быструю битовую `(capacity-1) & hash` (один цикл CPU вместо ~20-30 для деления). При создании `new HashMap<>(N)` значение N округляется вверх до ближайшей степени двойки через `tableSizeFor`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "HashMap использует **степени двойки** (16, 32, 64, ...), не простые числа. Простые числа применяются в **open addressing** реализациях (например, классический Knuth Hash), где `index = hash % prime` даёт лучшее распределение для linear probing. Java HashMap — chaining, и битовая оптимизация важнее теоретически лучшего распределения.",
+                "source_of_confusion": "Из учебников по хеш-таблицам, где простые числа упоминаются в общей теории. На практике язык/библиотека выбирает между «простые числа vs степени двойки» по стратегии resolution коллизий.",
+                "if_it_were_true": "HashMap.capacity = ближайшее простое ≥ N; индексация через `hash % capacity` (медленнее на 20-30 циклов).",
+                "how_it_should_be": "Степень двойки для chaining HashMap; простые числа — для open addressing с linear/quadratic probing."
+              },
+              "label": "C",
+              "text": "HashMap использует простые числа как capacity для минимизации коллизий — это лучший подход.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Capacity удваивается при каждом rehashing (когда size > threshold = capacity × loadFactor). HashMap может вырасти до `MAXIMUM_CAPACITY = 1 << 30` (~1B buckets). Без предзаданного initial capacity и при росте до 1M элементов — capacity вырастет от 16 до 2_097_152 (17 resize-операций).",
+                "source_of_confusion": "Разработчик думает, что initial capacity = жёсткий размер. На деле это стартовое значение, дальше HashMap автомасштабируется.",
+                "if_it_were_true": "HashMap с 16 buckets не мог бы вместить 1M элементов; все были бы в 16 длинных цепочках. На деле resize происходит автоматически.",
+                "how_it_should_be": "Initial capacity = стартовый размер; автоматически удваивается при превышении threshold; настройка через конструктор `(int, float)`."
+              },
+              "label": "D",
+              "text": "Capacity всегда сохраняется равной начальному значению — HashMap не изменяет её автоматически.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое perturbation в hashCode?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Perturbation НЕ заменяет hashCode — она применяет к нему детерминированный XOR со сдвинутой версией: `hash = h ^ (h >>> 16)`. Значение пользовательского `hashCode()` сохраняется как основа; perturbation лишь смешивает старшие и младшие биты. Это не randomization, а bit-mixing.",
+                "source_of_confusion": "В Python и Ruby есть hash randomization (`PYTHONHASHSEED`) для защиты от HashDoS — там per-process random seed добавляется к hash. Java выбрала другой путь (treeify), и perturbation — это детерминированная функция.",
+                "if_it_were_true": "`\"hello\".hashCode()` давал бы разные значения в разных HashMap или между JVM-запусками — но реально Java гарантирует, что String.hashCode стабилен, и perturbation детерминирована.",
+                "how_it_should_be": "Perturbation — детерминированный XOR mixing; от HashDoS защищает не она, а treeify (Q11)."
+              },
+              "label": "A",
+              "text": "Perturbation заменяет hashCode() пользователя собственным случайным значением для безопасности от HashDoS.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Perturbation применяется ко всем ключам в `HashMap.hash(Object key)` — это статический метод, вызываемый на каждый put/get, независимо от типа ключа. Код: `static final int hash(Object key) { int h; return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16); }`.",
+                "source_of_confusion": "String — самый частый тип ключа, и его hashCode известен как имеющий слабости (короткие строки → ограниченный range). Возможно, разработчик слышал, что «String требует perturbation» и обобщил.",
+                "if_it_were_true": "HashMap должен был бы checking тип ключа на каждый put/get — это overhead. На деле perturbation применяется universally — O(1) операция (one XOR, one shift), почти бесплатно.",
+                "how_it_should_be": "Perturbation — universal для любого типа ключа; вызывается всегда; O(1) overhead."
+              },
+              "label": "B",
+              "text": "Perturbation нужна только при использовании String ключей — для других типов hashCode применяется напрямую.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "При capacity = 16, `(capacity-1) = 0b1111` — берутся только младшие 4 бита hash. Если hashCode имеет хорошие старшие 28 бит и плохие младшие 4 (например, hashCode = (id << 4)) — все ключи попадут в один bucket, и HashMap деградирует до O(n). Perturbation решает это: `h ^ (h >>> 16)` смешивает старшие и младшие биты, гарантируя, что плохое распределение в одной половине компенсируется хорошим в другой. Это дешёвая операция (one XOR + one shift = ~1 ns) с большим эффектом на качество распределения.",
+                "example": "Java `Long.hashCode(long value)` определён как `(int)(value ^ (value >>> 32))` — это perturbation на стороне типа. Для `String.hashCode` — polynomial с base 31, и старшие биты обычно лучше, чем младшие (накопленная сумма). HashMap.hash добавляет дополнительный mixing на уровне коллекции. Эта двухступенчатая защита — почему HashMap работает хорошо даже с не-идеальным custom hashCode.",
+                "when_to_apply": "Знание полезно для собеседования и при написании custom hash table (например, JCTools off-heap collection). На практике это абстракция, не требующая пользовательского вмешательства. Но: пишите hashCode так, чтобы все биты были «информативны» — `Objects.hash(field1, field2)` делает это автоматически.",
+                "edge_cases": "Perturbation **не спасает** от полностью одинакового hashCode (когда все ключи дают одно число): XOR `h ^ (h >>> 16)` тоже даст одно число. Защита от worst-case — treeify. До Java 8 perturbation была более агрессивной (несколько XOR + shifts), Java 8 упростили до одной XOR — потому что treeify покрывает worst-case случай.",
+                "related": "[[hash-tables-interview#Q8]] устройство HashMap; [[hash-tables-interview#Q13]] capacity = степень двойки; [[hash-tables-interview#Q2]] хеш-функции."
+              },
+              "label": "C",
+              "text": "Perturbation в HashMap: `hash = h ^ (h >>> 16)` — XOR старших 16 бит с младшими. Нужна потому что `(capacity-1) & hash` использует только младшие k бит хеша; без perturbation информация из старших бит терялась бы, и плохое распределение младших бит вело к кластеризации.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Perturbation — это **O(1)** операция: один XOR и один right shift. На современных CPU это ~1 нс, незаметно. Никакого O(log n) overhead — это бы убило производительность HashMap.",
+                "source_of_confusion": "Ассоциация «надёжность = больше работы»; представление, что perturbation — это «делать hash несколько раз».",
+                "if_it_were_true": "put/get стоили бы как у TreeMap (O(log n)); HashMap не имел бы преимущества над TreeMap.",
+                "how_it_should_be": "Perturbation — одна XOR + один shift, O(1); фундаментальное преимущество HashMap (O(1) avg) сохраняется."
+              },
+              "label": "D",
+              "text": "Perturbation увеличивает вычислительную стоимость hashCode до O(log n) для надёжности.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Chaining (separate chaining) — как работает?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Алгоритм: bucket — это указатель на голову списка `Node` (или TreeNode при treeify). При коллизии новый элемент дописывается в конец цепочки (Java 8+) или в голову (Java 7). Поиск: вычислили index → дошли до bucket → пошли по `next` ссылкам, сравнивая ключи через equals. Плюсы: терпит любой load factor (даже 5+, просто цепочки растут), удаление простое (просто отстёгиваем node из списка), не страдает от primary/secondary clustering. Минусы: каждый Node — отдельная аллокация (24-32 байта overhead на element), cache miss на каждый pointer chase (плохая cache locality по сравнению с open addressing).",
+                "example": "Java HashMap.putVal: `if ((p = tab[i = (n - 1) & hash]) == null) tab[i] = newNode(hash, key, value, null); else { ... traversal ... }`. Если bucket пуст — создаём первый Node; если занят — идём по списку, ищем дубликат для replace или добавляем в конец. С Java 8+ при длине ≥ 8 — конвертация в TreeNode (см. Q11).",
+                "when_to_apply": "Chaining — стандартный выбор для general-purpose hash table (Java, C#, Ruby SDK). Особенно хорош когда: load factor может варьироваться (динамическая нагрузка), ключи большие или с дорогим equals (cache locality второстепенна), нужны быстрые удаления. Open addressing предпочтительнее когда LF контролируется < 0.7 и важна cache locality (Python dict, Go map для small data, Abseil flat_hash_map).",
+                "edge_cases": "Memory overhead: для HashMap<Integer, Integer> с N=1M элементов: ~32 байта на Node × 1M = 32 MB на узлы + 8-16 MB на array = ~50 MB. Open addressing занимал бы ~20 MB. На каждый get — 1-2 cache miss (array lookup + node pointer). При плохом hashCode цепочки растут — Java 8+ treeify смягчает, но не убирает проблему: tree-узлы тяжелее. Решение: пишите хорошие hashCode-функции, используйте `Objects.hash`.",
+                "related": "[[hash-tables-interview#Q3]] коллизии; [[hash-tables-interview#Q16]] open addressing; [[hash-tables-interview#Q18]] выбор между ними."
+              },
+              "label": "A",
+              "text": "Chaining: каждый bucket содержит связный список (или дерево при treeify, Java 8+) элементов с одинаковым индексом; при `get()` сначала вычисляется bucket по hashCode, затем traversal по цепочке с equals-сравнением. Применяется в Java HashMap, LinkedHashMap, ConcurrentHashMap, Ruby Hash, .NET Dictionary.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Chaining использует **связный список** (или red-black дерево при treeify), а не отсортированный массив. Поиск по цепочке — O(k) linear scan через `next`-ссылки. Отсортированный массив требовал бы O(k log k) insert (поддержание порядка) — это бы свело на нет преимущества hash table.",
+                "source_of_confusion": "Студентов учат «отсортированное даёт O(log)» — обобщение не различает структуры внутри bucket.",
+                "if_it_were_true": "Insert в HashMap стоил бы O(log k) на цепочке + O(k log k) на сортировку; хуже, чем O(k) linear.",
+                "how_it_should_be": "Внутри bucket — связный список (linear search) или red-black tree (только при treeify); сортированный массив — это другая структура (например, sorted array used in `Arrays.sort` + binarySearch)."
+              },
+              "label": "B",
+              "text": "Chaining хранит все элементы одного bucket в отсортированном массиве для быстрого бинарного поиска.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Нет никакого разделения. Bucket — это просто список всех элементов с одинаковым индексом (т.е. с одинаковым `hash & (capacity-1)`), независимо от того, equal ли они. Дубликаты (по equals) заменяют значение в существующей записи. Разделение происходит только при rehashing (увеличение capacity ×2), что глобальная операция, не bucket-локальная.",
+                "source_of_confusion": "Возможно, спутали с B+ tree (которое splits на полные node) или с hash table extension techniques (extendible hashing — но это для disk-based структур).",
+                "if_it_were_true": "Каждая коллизия запускала бы какую-то split-операцию; на деле HashMap имеет lazy resize только при превышении threshold.",
+                "how_it_should_be": "Bucket аккумулирует все элементы с одним индексом; разделения нет; rehashing — глобальное удвоение capacity, не локальное split."
+              },
+              "label": "C",
+              "text": "Chaining требует, чтобы все ключи в одном bucket были одинаковыми — иначе bucket автоматически разделяется на два.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Chaining работает при любом LF, включая очень низкие (например, 0.1). Низкий LF означает много пустых buckets и короткие цепочки — это **хорошее** поведение, не плохое. Trade-off — больше памяти на (по большей части пустой) массив. Default LF=0.75 — это балансировка между памятью и скоростью.",
+                "source_of_confusion": "Связь «LF влияет на структуру» неверно перенесена с open addressing (где LF > 0.7 ломает алгоритм).",
+                "if_it_were_true": "`new HashMap<>(1_000_000, 0.1f)` (LF=0.1) был бы запрещён или работал бы некорректно — на деле он работает, просто занимает много памяти.",
+                "how_it_should_be": "Chaining работает при любом LF; низкий = больше памяти + короче цепочки; высокий = меньше памяти + длиннее цепочки; компромисс по умолчанию 0.75."
+              },
+              "label": "D",
+              "text": "Chaining нельзя использовать при load factor < 0.5 — список будет слишком коротким и неэффективным.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Open addressing — линейное и квадратичное пробирование?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Это описание **chaining**, а не open addressing. В open addressing все элементы хранятся **внутри** одного массива без внешних структур; коллизии разрешаются поиском следующей свободной ячейки в том же массиве. Никаких списков, никаких pointer-chains — только массив.",
+                "source_of_confusion": "Названия близки, и студенты путают концепции. «Open» в open addressing означает «открытая адресация» — поиск открытой (свободной) ячейки в массиве.",
+                "if_it_were_true": "Open addressing и chaining были бы синонимами; не было бы смысла в двух названиях и сравнении.",
+                "how_it_should_be": "Open addressing: все элементы в массиве; при коллизии — поиск следующей свободной ячейки через probing sequence."
+              },
+              "label": "A",
+              "text": "Open addressing хранит все элементы в отдельных связных списках за пределами основного массива.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Quadratic probing создаёт **меньше** primary clustering (когда подряд занятые ячейки сливаются в большой кластер) по сравнению с linear. Зато появляется **secondary** clustering: ключи с одинаковым начальным hash идут по одинаковой последовательности проб. Quadratic используется именно потому что primary clustering хуже — это самая частая проблема linear probing.",
+                "source_of_confusion": "Двойственность «primary vs secondary clustering» путает. Quadratic избавляется от primary, но получает secondary — это trade-off, в целом улучшение.",
+                "if_it_were_true": "Linear probing был бы стандартом везде; на деле Python `dict` использует perturbed probing (улучшение quadratic), Go map — bucketized linear-like.",
+                "how_it_should_be": "Quadratic уменьшает primary clustering, добавляет secondary; double hashing (см. Q17) решает и secondary."
+              },
+              "label": "B",
+              "text": "Quadratic probing создаёт больше кластеров, чем linear probing — поэтому используется реже.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Open addressing **физически не может** иметь LF > 1: элементов не может быть больше, чем slots в массиве (каждый slot держит максимум один элемент). LF приближение к 1 = таблица почти заполнена, и любая вставка может найти слот только после N-1 пробб — катастрофа. На практике LF держат < 0.7 для linear, < 0.85 для bucketized cuckoo.",
+                "source_of_confusion": "Студенты обобщают LF из chaining (где LF > 1 нормально, длинные цепочки).",
+                "if_it_were_true": "Python dict с 1M ключей и 100k slots работал бы — но это противоречит constant array size.",
+                "how_it_should_be": "Open addressing требует LF < 1 фундаментально (slots — capacity); resize запускается на LF=0.66 (Python) или 0.5 (Go) для предотвращения деградации."
+              },
+              "label": "C",
+              "text": "Open addressing работает корректно при load factor > 1 — элементов может быть больше, чем ячеек.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Открытая адресация: при коллизии (slot занят), пробуем slot `(hash + 1)`, потом `(hash + 2)`, и т.д. — это **linear probing**. Проблема: соседние занятые ячейки сливаются в кластеры, и каждая новая коллизия удлиняет кластер. **Quadratic** уменьшает это: `(hash + 1²), (hash + 2²), (hash + 3²)` — прыгаем дальше с каждой пробой, кластеры не сливаются. **Удаление** требует tombstones (маркеры «было занято, теперь свободно»): нельзя просто пометить как пустой, иначе нарушится последовательность проб для других ключей.",
+                "example": "Python `dict.lookup`: использует perturbed probing с компонентом hashCode для каждой следующей пробы (защита от HashDoS). Go `map` использует bucketized linear: bucket из 8 слотов, внутри linear scan. Abseil `flat_hash_map` (C++) — open addressing с SIMD-ускоренным поиском tombstones — даёт самый быстрый hash map в bench-mark'ах.",
+                "when_to_apply": "Open addressing предпочтительнее когда: LF контролируется (известна типичная нагрузка), важна cache locality (hot data в hot-path), памяти мало (нет overhead на pointer chain). Используется в high-performance kernels (Linux radix tree, в одном из вариантов), embedded systems, нативный код C++/Rust. Java выбрала chaining в HashMap из-за простоты и предсказуемости при произвольных LF.",
+                "edge_cases": "Удаление в open addressing требует tombstones: при удалении ключа K из slot S, нельзя ставить S=null — это сломает probing sequence для ключей, которые попали мимо S во время вставки. Tombstones накапливаются и замедляют поиск; периодический rehash их очищает. Также: open addressing более чувствителен к hashCode quality — плохой hashCode → длинные probing chains. Quadratic probing требует, чтобы size был степенью двойки или простым числом (иначе пробы могут не покрыть все slots).",
+                "related": "[[hash-tables-interview#Q15]] chaining; [[hash-tables-interview#Q17]] double hashing; [[hash-tables-interview#Q18]] выбор между ними."
+              },
+              "label": "D",
+              "text": "Open addressing хранит все элементы в одном массиве; при коллизии ищется следующая свободная ячейка через probing sequence. Linear probing: `(hash + i) mod size` — простой, но создаёт primary clustering. Quadratic probing: `(hash + i²) mod size` — уменьшает primary clustering, добавляет secondary. Применяется в Python dict, Go map, C++ flat_hash_map (Abseil).",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое double hashing?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Double hashing — это техника **open addressing** с двумя хеш-функциями для вычисления шага пробирования: `index = (h1(key) + i × h2(key)) % size`. Все элементы хранятся в **одном** массиве; никаких overflow-структур. Слова «double hashing» описывают использование двух хешей, а не двух массивов.",
+                "source_of_confusion": "Возможно ассоциация с extendible hashing (disk-based, используется в Oracle / DBMS) или с two-level cache в CPU. Это разные концепции.",
+                "if_it_were_true": "Алгоритм был бы overflow-table; на деле это open addressing с улучшенным probing.",
+                "how_it_should_be": "Двух массивов нет; «double» относится к двум хеш-функциям для probing sequence."
+              },
+              "label": "A",
+              "text": "Double hashing использует второй массив для хранения overflow элементов, не помещающихся в основной.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Linear probing страдает primary clustering (соседние занятые ячейки), quadratic — secondary clustering (ключи с одинаковым h1 идут по одной последовательности проб). Double hashing решает оба: шаг разный для каждого ключа благодаря h2(key). При поиске: вычисляем `h1(key)` и `h2(key)`, начинаем с `h1`, при коллизии — добавляем `h2`, потом `2*h2`, и т.д. Для каждого ключа последовательность проб уникальна. Условие коректности: gcd(h2(key), size) = 1 (чтобы последовательность покрывала все slots) — гарантируется, если size простое и h2 < size.",
+                "example": "Классический pair хеш-функций: `h1(k) = k mod prime1`, `h2(k) = prime2 - (k mod prime2)`, где prime2 < prime1. Java `Hashtable` (deprecated) использует похожее: `int index = (hash & 0x7FFFFFFF) % tab.length`, при коллизии — `index = (index + step) % tab.length`, где `step` зависит от hash. Современные реализации (Python `dict`) используют «perturbed probing» — гибрид double hashing и hashCode-bit-rotation.",
+                "when_to_apply": "Если строите кастомную hash table на C/C++/Rust с open addressing и нужна равномерность — double hashing хороший выбор. На практике в JVM не используется, потому что Java HashMap — chaining. В embedded и database-engine кодах (Cassandra row cache, RocksDB compaction) double hashing применяется для in-memory структур.",
+                "edge_cases": "h2 должна возвращать ненулевое значение (иначе step=0 и зацикливание на первой пробе). h2 должна быть взаимно-простой с size — это причина использовать prime size в classical CS, а не степень двойки. На степени двойки нужны другие техники (например, perturbed probing в Python).",
+                "related": "[[hash-tables-interview#Q16]] open addressing; [[hash-tables-interview#Q18]] выбор стратегии; [[hash-tables-interview#Q30]] cuckoo hashing."
+              },
+              "label": "B",
+              "text": "Double hashing: шаг пробирования вычисляется второй хеш-функцией. `index = (h1(key) + i × h2(key)) mod size`. Это полностью устраняет primary и secondary clustering, давая лучшую равномерность чем quadratic probing. Требует, чтобы `h2(key)` была взаимно-простой с size (обычно size = простое число и h2 < size).",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Double hashing — это **probing technique**, а не verification. Две хеш-функции дают два разных числа: h1 — стартовый индекс, h2 — шаг пробирования. Это часть алгоритма распределения ключей по слотам, а не checksumming/верификация.",
+                "source_of_confusion": "Слово «double» в обычной речи ассоциируется с «check twice for safety». В CS это значит «два разных хеша для разных целей».",
+                "if_it_were_true": "Double hashing не давал бы выигрыша в распределении — был бы просто linear probing с дополнительной проверкой; алгоритм был бы бесполезен.",
+                "how_it_should_be": "Двойное хеширование = пара хешей для probing sequence; равенство h1==h2 не требуется и не проверяется."
+              },
+              "label": "C",
+              "text": "Double hashing вычисляет хеш дважды для большей надёжности — два одинаковых результата подтверждают правильность ключа.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Double hashing — техника **open addressing**, не chaining. Все элементы в одном массиве, и double hashing определяет последовательность проб по слотам. Chaining использует указатели на связный список — там нет «пробирования», есть traversal списка.",
+                "source_of_confusion": "Не разобрались с принципиальным различием open addressing vs chaining.",
+                "if_it_were_true": "Алгоритм был бы бессмысленным внутри bucket: список уже линейный, обход всё равно O(k). Двойной хеш не помогает в chaining.",
+                "how_it_should_be": "Double hashing — улучшение probing в open addressing; в chaining применяются другие техники (treeify, second-level hash table — но это редкие варианты)."
+              },
+              "label": "D",
+              "text": "Double hashing применяется только в chaining как дополнительный уровень хеширования внутри bucket.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбирают chaining, а когда open addressing?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Open addressing быстрее **только при LF ≤ 0.7** благодаря cache locality (всё в одном массиве). При LF > 0.7 он резко деградирует из-за clustering — каждый probe промахивается, и поиск стоит десятки операций. Chaining терпит любой LF (просто длинные цепочки) — он более устойчив.",
+                "source_of_confusion": "Бенчмарки часто измеряют на низком LF, где open addressing действительно лидер; экстраполяция на все условия неверна.",
+                "if_it_were_true": "Java HashMap использовал бы open addressing — но Doug Lea выбрал chaining за устойчивость и простоту.",
+                "how_it_should_be": "Выбор зависит от LF, hashCode quality, важности cache locality, и сценария удалений; open addressing — нишевый, не универсальный winner."
+              },
+              "label": "A",
+              "text": "Open addressing всегда быстрее chaining при любом load factor и количестве элементов.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Java HashMap (chaining) — самая используемая Map в production уже 20+ лет. GC-overhead есть, но он минимален по сравнению с cache miss penalty — особенно для долгоживущих структур (cache, registry), которые попадают в Old Gen и не часто собираются. Для критичных по аллокации систем — `Eclipse Collections` или off-heap структуры.",
+                "source_of_confusion": "Anti-allocation evangelism в HFT / real-time системах — там избегают любых аллокаций в hot path.",
+                "if_it_were_true": "Spring, Hibernate, любой Java SDK не работали бы — они переполнены HashMap. Реально chaining в JVM выдерживает миллиарды операций.",
+                "how_it_should_be": "Chaining работает в production отлично; для allocation-sensitive workload — off-heap или Eclipse Collections, но это редкий specific case."
+              },
+              "label": "B",
+              "text": "Chaining нельзя использовать в production из-за накладных расходов на GC от множества Node-объектов.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Таблица сравнения:",
+                "example": "Cassandra `Memtable` использует ConcurrentSkipListMap (sorted) — но row cache внутри — chaining HashMap. Redis `dict.c` — open addressing с incremental rehashing (бы не вызывать pause при увеличении). Disruptor (LMAX) для inter-thread queue использует ring buffer, не hash table — другая концепция.",
+                "when_to_apply": "Выбирать chaining для: универсальной структуры, нестабильного LF, custom keys с не-идеальным hashCode, легкой реализации. Open addressing для: критичных по памяти/cache hot-path lookup, известного LF, перфоманс-критичных систем (game engine, network switch). Cuckoo hashing — для гарантированного O(1) worst-case (см. Q30).",
+                "edge_cases": "Open addressing с linear probing — самый простой, но primary clustering убивает производительность. Quadratic — лучше, но secondary clustering. Double hashing — лучший вариант, но требует prime size. Modern alternatives: Robin Hood hashing (выравнивает probe distances), Hopscotch hashing (Microsoft Bing), bucketized cuckoo (MemC3).",
+                "related": "[[hash-tables-interview#Q15]] chaining; [[hash-tables-interview#Q16]] open addressing; [[hash-tables-interview#Q30]] cuckoo hashing."
+              },
+              "label": "C",
+              "text": "Open addressing: лучший cache locality (всё в одном массиве, ~50% меньше памяти), но требует LF < 0.7 и хорошей hash-функции. Chaining: устойчивее к плохим хешам, любой LF (даже >1), простое удаление без tombstones — Java HashMap, .NET Dictionary, Ruby Hash используют chaining. Open addressing — Python dict, Go map, C++ Abseil flat_hash_map.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Удаление в open addressing требует **tombstones** (маркеры удалённых ячеек). Если просто пометить ячейку как пустую, probing sequence для других ключей сломается: следующий ключ, который попал бы дальше через коллизию, не дойдёт. Tombstones оставляют слот «было занято», и при поиске probe продолжается через них. Это усложняет реализацию: tombstones накапливаются, периодически нужен rehash для очистки. Chaining — просто отстегнуть node из списка, O(1) без tombstones.",
+                "source_of_confusion": "Симметрия insert/delete в массиве кажется естественной.",
+                "if_it_were_true": "Open addressing был бы тривиален в реализации; на деле delete — самая сложная часть, и многие embedded реализации просто не поддерживают delete (rebuild при необходимости).",
+                "how_it_should_be": "Open addressing delete = tombstones + периодический rehash для очистки; chaining delete = O(1) без tombstones."
+              },
+              "label": "D",
+              "text": "Удаление элемента из open addressing таблицы работает так же просто, как в chaining.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему HashMap небезопасна в многопотоке?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Четыре типа проблем:",
+                "example": "Production-инцидент: микросервис на Spring Boot держал `HashMap<String, ServiceMeta> registry` без синхронизации, регистрация новых сервисов шла из admin thread, чтение — из request thread. Через несколько недель в production — один из CPU ядер показал 100%, thread dump показал бесконечный цикл в HashMap.getNode. Это и был classic circular linked list bug. Fix: заменить на ConcurrentHashMap.",
+                "when_to_apply": "На code review: любое поле типа `HashMap`/`HashSet`/`LinkedHashMap` в shared (instance/static) контексте — red flag. Спрашивать: «кто и когда модифицирует?». Если есть concurrent put — заменить на ConcurrentHashMap. Если только read-only после инициализации — можно оставить HashMap, но лучше `Map.of()` (immutable) или `Collections.unmodifiableMap()` для защиты от случайной модификации.",
+                "edge_cases": "`Collections.synchronizedMap(new HashMap<>())` — wrapper с глобальным лок mutex; thread-safe, но медленный (нет параллелизма). Iterators всё равно требуют внешнего `synchronized(syncMap) { iterator() }`. `Hashtable` — legacy, тоже глобальный lock, не использовать в новом коде. `ConcurrentHashMap` — правильный выбор, но запрещает null. `ImmutableMap` (Guava) или `Map.of()` (Java 9+) — для read-only данных.",
+                "related": "[[hash-tables-interview#Q20]] ConcurrentHashMap; [[hash-tables-interview#Q21]] vs Hashtable; [[hash-tables-interview#Q22]] атомарные методы."
+              },
+              "label": "A",
+              "text": "HashMap небезопасна: возможны (1) lost updates при concurrent put в один bucket; (2) infinite loop при concurrent resize до Java 8 (формировался circular linked list); (3) несогласованное состояние при параллельном resize; (4) visibility issues — поток может не увидеть изменения другого без proper happens-before. Решение: ConcurrentHashMap или Collections.synchronizedMap.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Concurrent **только-read** HashMap безопасен ТОЛЬКО если HashMap полностью построена ДО старта потоков (publication через `final`-поле или volatile). Если же один поток делает put и другой — get, то get может видеть несогласованное состояние (например, во время resize). Также get при отсутствии happens-before может вернуть stale data.",
+                "source_of_confusion": "Полу-правда: если карта **immutable** после инициализации, многопоточный read действительно безопасен. Но «без put» включает любой `computeIfAbsent`, который тоже модифицирует.",
+                "if_it_were_true": "Многие кеш-имплементации обходились бы без synchronization. На деле read concurrent с put — это race condition.",
+                "how_it_should_be": "Read-only HashMap безопасен после инициализации с правильной publication; любой concurrent put → нужен ConcurrentHashMap."
+              },
+              "label": "B",
+              "text": "HashMap thread-safe при read-only операциях — несколько потоков могут безопасно делать только `get()` без `put()`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "CME бросается только при **структурных** изменениях коллекции во время **iteration** (fail-fast iterator). Concurrent put + get без iteration НЕ выбрасывает CME — приводит к тихим bugs (lost updates, infinite loops). Это и есть главная опасность: проблема тихая.",
+                "source_of_confusion": "Имя exception ассоциируется с любыми concurrent operations.",
+                "if_it_were_true": "Concurrent bug ловился бы быстро через exception. На деле многие production-инциденты с HashMap проходят месяцами незамеченными, пока не сжигают CPU.",
+                "how_it_should_be": "CME — только для iteration + structural modification; concurrent put/get без iteration — тихая инкорректность."
+              },
+              "label": "C",
+              "text": "HashMap выбрасывает `ConcurrentModificationException` при любом concurrent доступе.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Без synchronization `get()` может видеть partial updates: поток A пишет new Node[] table (resize), поток B читает table — может прочитать reference на новый массив, но без увиденных изменений в Node-ах. Memory model JMM требует, чтобы оба operations были под happens-before. Если только put синхронизирован, get без synchronization имеет visibility issues.",
+                "source_of_confusion": "«Read isn't dangerous» — упрощённая интуиция; на деле read без happens-before тоже unsafe в Java.",
+                "if_it_were_true": "ConcurrentHashMap не использовал бы volatile-чтение для get; на деле в `Node.val` поле volatile — это и обеспечивает безопасный lock-free read.",
+                "how_it_should_be": "Оба метода требуют синхронизации (или volatile-семантики); ConcurrentHashMap делает это автоматически через volatile fields + CAS + per-bucket lock."
+              },
+              "label": "D",
+              "text": "Достаточно синхронизировать только `put()` — `get()` всегда безопасен без блокировки.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена ConcurrentHashMap?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "ConcurrentHashMap НЕ использует глобальный лок. С Java 8+ применяется CAS на пустой bucket и `synchronized` на head-узле конкретного bucket при коллизии. Глобальный лок убил бы параллелизм — именно так работают Hashtable/synchronizedMap, и поэтому они медленные.",
+                "source_of_confusion": "Ассоциация «thread-safe = lock» из учебников по concurrency; опускается, что современные lock-free структуры используют CAS и per-bucket-локи.",
+                "if_it_were_true": "При 32 ядрах и 100k RPS на shared map с одним fair lock — очередь потоков на лок убила бы производительность; p99 latency ушёл бы в секунды. JMH-бенчмарки показывают, что ConcurrentHashMap на 32 потоках держит ~10× throughput Hashtable.",
+                "how_it_should_be": "Сказать «CAS + per-bucket synchronized», без упоминания глобального лока."
+              },
+              "label": "A",
+              "text": "Используется один глобальный `ReentrantLock` для всей таблицы, но fair-стратегия даёт высокую пропускную способность.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Segment-based locking был **до** Java 8. В Java 8+ его убрали в пользу более тонкой стратегии: CAS на пустой bucket, `synchronized` на head-узле bucket при коллизии. Это лучше масштабируется, чем фиксированные 16 сегментов.",
+                "source_of_confusion": "Многие старые статьи и книги (Effective Java 2nd ed, до 2018) описывают legacy Java 7 implementation. Информация устарела, а Stack Overflow ответы 2010-х годов всё ещё в топе поиска.",
+                "if_it_were_true": "При 64 ядрах все потоки конкурировали бы за всего 16 локов — bottleneck при write-heavy workload; не было бы выигрыша от перехода на Java 8+. На деле Java 8 ConcurrentHashMap на 2-3× быстрее Java 7 на high-concurrency.",
+                "how_it_should_be": "Указать, что segment-based архитектура была в Java 7; Java 8+ использует bucket-level locking — гранулярность улучшилась с 16 до capacity (например, 16384 buckets для большой карты)."
+              },
+              "label": "B",
+              "text": "ConcurrentHashMap использует ровно 16 сегментов (Segments) с отдельным lock на каждый — как было в Java 7.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`get()` в ConcurrentHashMap действительно lock-free, но **не использует CAS** — он просто читает `volatile` поле `Node.val`. CAS применяется только при модификации (put/remove). Утверждение про CAS на read — миф.",
+                "source_of_confusion": "«Lock-free = CAS» — расхожее упрощение. На деле lock-free read возможен через volatile/memory barriers без atomic compare-and-swap.",
+                "if_it_were_true": "CAS на каждом чтении добавил бы overhead `LOCK CMPXCHG` инструкции — это снизило бы read throughput на 30-50%. На современных CPU `LOCK CMPXCHG` стоит ~10-20 циклов из-за cache coherence; volatile read — ~1-2 цикла.",
+                "how_it_should_be": "Read = volatile read поля `Node.val`; CAS — только для writes (insert/update). Lock-free без CAS — это normal volatile, не CAS-loop."
+              },
+              "label": "C",
+              "text": "Не блокирует чтение — `get()` использует CAS и atomic read.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Java 8+ ConcurrentHashMap построен на трёх принципах:",
+                "example": "Spring Cloud Eureka регистр-сервис использует `ConcurrentHashMap<String, Application>` для service registry. При 100 service-instance updates/sec параллельно с тысячами read-requests на discovery, CHM выдерживает thanks to bucket-level locking. Глобальный лок не позволил бы такую нагрузку.",
+                "when_to_apply": "Любой shared mutable map в многопоточном коде: registry, кэши, counters, session storage, lookup tables. `ConcurrentHashMap<K, LongAdder>` — идеальный паттерн для concurrent counters (frequency, hit-count). `chm.computeIfAbsent(k, ...)` — для memoization с single-flight гарантией.",
+                "edge_cases": "`null` запрещён и для ключа, и для значения — иначе невозможно атомарно отличить «нет ключа» от «значение = null» в lock-free read. `size()` приближённый при concurrent modifications — не использовать для exact counting; вместо `mappingCount()` или внешний `LongAdder`. Iterators **weakly consistent**: не бросают CME, но могут не отразить недавние изменения (snapshot semantics). `compute*` лямбды не должны модифицировать ту же мапу — это может вызвать deadlock на bucket lock.",
+                "related": "[[hash-tables-interview#Q19]] thread-safety HashMap; [[hash-tables-interview#Q21]] vs Hashtable; [[hash-tables-interview#Q22]] атомарные методы."
+              },
+              "label": "D",
+              "text": "CAS на пустой bucket для атомарной вставки first node + `synchronized` на head-узле bucket при коллизии + lock-free volatile reads (без CAS) + кооперативный resize через `transferIndex` (атомарный счётчик незавершённых bucket'ов).",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем ConcurrentHashMap отличается от Hashtable и Collections.synchronizedMap?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Ровно наоборот. `synchronizedMap` использует обёртку с глобальным `synchronized(mutex)` на **каждую** операцию, включая `get()`. ConcurrentHashMap НЕ блокирует чтения вообще (lock-free volatile read). Поэтому CHM на 10-100× быстрее на read-heavy workload.",
+                "source_of_confusion": "Название «ConcurrentHashMap» наводит на мысль о более «защитной» (тяжёлой) реализации; на деле она оптимизирована под высокий concurrency.",
+                "if_it_were_true": "ConcurrentHashMap не имела бы преимуществ перед `synchronizedMap` — но JMH-бенчмарки показывают разницу в 10-100× на read-heavy workload, особенно при N > 32 потоков.",
+                "how_it_should_be": "synchronizedMap = глобальный lock на ВСЁ; CHM = bucket-level lock на write + lock-free read."
+              },
+              "label": "A",
+              "text": "`synchronizedMap` блокирует только при write, а ConcurrentHashMap блокирует при любой операции для maximum safety.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Главное различие — гранулярность локов:",
+                "example": "Spring `@Cacheable` под капотом использует ConcurrentHashMap для кэша. Тысячи параллельных `getCachedValue(key)` — все lock-free. Запись (через `computeIfAbsent`) только при cache miss, и она атомарна — гарантирует single computation per key. Замена на synchronizedMap снизила бы read throughput в 50-100×.",
+                "when_to_apply": "ConcurrentHashMap — default для любой shared mutable map в новом коде. synchronizedMap — только для legacy-интеропа или если нужна Map с null-значениями + thread-safety (редко). Hashtable — никогда в новом коде; только для backward compat (System.getProperties() возвращает Hashtable).",
+                "edge_cases": "Iterator у synchronizedMap требует внешней блокировки `synchronized(syncMap) { iterator() }` — без этого fail-fast не сработает корректно. ConcurrentHashMap `size()` приближённый — для exact count использовать `mappingCount()` или LongAdder. Hashtable `null` бросает NPE — миграция со старого кода требует null-checks. ConcurrentHashMap тоже запрещает null (намеренно, для семантической ясности).",
+                "related": "[[hash-tables-interview#Q19]] thread-safety HashMap; [[hash-tables-interview#Q20]] устройство CHM; [[hash-tables-interview#Q22]] атомарные методы."
+              },
+              "label": "B",
+              "text": "Hashtable и synchronizedMap используют **глобальный лок** на каждую операцию — get/put/remove блокируют всю карту; throughput не растёт с числом ядер. ConcurrentHashMap использует **bucket-level locking** + lock-free reads — параллельные write в разные buckets не конкурируют, reads не блокируются; throughput линейно масштабируется. Также CHM предоставляет атомарные методы (`computeIfAbsent`, `merge`), которые нельзя безопасно реализовать поверх synchronizedMap без внешнего лока.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Обе **запрещают** null. Hashtable бросает NPE из-за legacy-design (Java 1.0 era). ConcurrentHashMap запрещает namerenno — Doug Lea выбрал это для семантической ясности: если бы `get()` возвращал null, нельзя было бы атомарно отличить «нет ключа» от «есть, но null» в lock-free contexte. HashMap и LinkedHashMap — единственные стандартные Map, разрешающие null.",
+                "source_of_confusion": "Часто путают, какая именно map разрешает null. Тестирование показывает: HashMap.put(null, null) работает; ConcurrentHashMap.put(\"k\", null) бросает NPE.",
+                "if_it_were_true": "Можно было бы мигрировать с HashMap на CHM, не меняя null-handling. На практике миграция требует замены `null` на sentinel или Optional.",
+                "how_it_should_be": "Hashtable И ConcurrentHashMap запрещают null; HashMap/LinkedHashMap разрешают; разница между Hashtable и CHM в **гранулярности lock**, не в null-policy."
+              },
+              "label": "C",
+              "text": "ConcurrentHashMap позволяет null значения, в то время как Hashtable — нет; это главное различие.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Оба используют глобальный лок, но различаются API и наследование: Hashtable — class из Java 1.0 с собственными методами (`elements()`, `keys()` возвращают `Enumeration`, не Iterator), не наследуется от AbstractMap. `synchronizedMap` — wrapper вокруг любой Map с делегированием методов. Hashtable не имеет `computeIfAbsent`/`merge`; synchronizedMap наследует их от interface, но они не атомарны (default implementation в interface = read + write, под одним global lock — атомарно только в реализации после Java 8).",
+                "source_of_confusion": "Оба «медленные и глобально залоченные», кажутся одинаковыми.",
+                "if_it_were_true": "Можно было бы безопасно мигрировать с Hashtable на synchronizedMap без изменений; на практике Enumeration → Iterator ломает совместимость.",
+                "how_it_should_be": "Оба используют global lock (низкий concurrency), но различаются API; для нового кода всё равно использовать ConcurrentHashMap."
+              },
+              "label": "D",
+              "text": "Hashtable и synchronizedMap полностью эквивалентны и взаимозаменяемы — оба используют глобальный лок.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Атомарные методы ConcurrentHashMap?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Разница принципиальная. `compute()` выполняет read-modify-write **атомарно** под `synchronized(head)` для конкретного bucket. Последовательность `chm.get(k); chm.put(k, ...)` имеет race-window между чтением и записью: другой поток может вставить/обновить значение между ними — lost update. На concurrent counter с 10 потоков и 1M итераций каждый разница может быть в миллионы потерянных инкрементов.",
+                "source_of_confusion": "Код выглядит «той же логикой» в одну строку — кажется эквивалентным; забывается atomicity-гарантия.",
+                "if_it_were_true": "Счётчик `chm.compute(k, (k,v) -> v+1)` показывал бы те же значения, что и `chm.put(k, chm.get(k)+1)` — но второй теряет инкременты при concurrent доступе. JMH-тест: 8 потоков × 1M increments = 8M ожидаемых; `get+put` показывает 1-2M (потеряно 70-90%); `compute` — точно 8M.",
+                "how_it_should_be": "`compute` — атомарная операция под bucket-lock; `get+put` — две независимые операции с race-window между ними."
+              },
+              "label": "A",
+              "text": "Это синтаксический сахар — runtime-поведение идентично, просто короче в коде.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`compute` использует `synchronized(head)`, не optimistic locking. Лямбда выполняется ровно один раз. Если нужен retry-pattern — это `AtomicReference.updateAndGet` (CAS-loop), но это другая абстракция и используется только для атомарных reference, не для Map.",
+                "source_of_confusion": "ConcurrentHashMap ассоциируется с CAS (для пустого bucket insert); домысливается, что атомарные methods тоже на CAS-retry.",
+                "if_it_were_true": "Лямбда с side-effects (логирование, метрики) могла бы выполниться несколько раз — нарушение контракта `compute` (документация гарантирует single invocation). Это сломало бы все примеры типа `compute((k,v) -> { log.info(\"computing\"); return v+1; })`.",
+                "how_it_should_be": "`compute` — `synchronized(head)` + single invocation; гарантирует ровно один вызов лямбды."
+              },
+              "label": "B",
+              "text": "`compute` использует optimistic locking с retry — при contention повторяет вычисление лямбды.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Атомарные методы ConcurrentHashMap — `compute`, `computeIfAbsent`, `computeIfPresent`, `merge`, `putIfAbsent`, `replace` — гарантируют, что лямбда выполняется ровно один раз под bucket-локом, и результат записывается без race-window. Эквивалент тяжёлого кода:",
+                "example": "Word-frequency counter: `words.parallelStream().forEach(w -> counters.merge(w, 1, Integer::sum));` — корректен при concurrent updates. Без merge пришлось бы писать `synchronized(counters) { counters.put(w, counters.getOrDefault(w, 0) + 1); }` — global lock, плохая масштабируемость. Cache pattern: `caches.computeIfAbsent(key, k -> expensiveBuild(k))` — гарантия single-flight на ключ; полезно для memoization (только один поток вычисляет ценное значение, остальные ждут).",
+                "when_to_apply": "`merge(k, 1, Integer::sum)` — идеальный паттерн для concurrent counters. `computeIfAbsent(k, this::load)` — для memoization, lazy cache initialization. `compute(k, fn)` — для сложных update-логик с null-handling. `putIfAbsent` — простая «вставка, если нет», без вычисления. Каждый из этих методов невозможно корректно реализовать через `get+put` без external lock.",
+                "edge_cases": "Лямбда в `computeIfAbsent` **не должна модифицировать ту же мапу** (особенно тот же ключ) — это вызовет `IllegalStateException` или зависание из-за recursive lock attempt на bucket head (в Java 8 был JDK-8062841 deadlock-bug, фикс в 9+). Долгие вычисления внутри лямбды держат bucket lock — другие потоки на тот же bucket блокируются; для тяжёлых операций использовать `CompletableFuture` как значение или Caffeine cache. `merge` с return `null` из remapping удалит ключ — иногда непреднамеренно.",
+                "related": "[[hash-tables-interview#Q19]] thread-safety; [[hash-tables-interview#Q20]] устройство CHM; [[hash-tables-interview#Q21]] vs Hashtable."
+              },
+              "label": "C",
+              "text": "`compute` атомарно выполняет read-modify-write под `synchronized(head)` для конкретного bucket — между чтением и записью никто не вмешается; `get + put` не атомарны и теряют обновления при concurrent доступе. Это эквивалентно (но эффективнее) внешнего лока вокруг ручной get-modify-put-последовательности.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Атомарные методы предназначены именно для **multi-threaded** использования — это их основная польза. В single-threaded коде разницы с `get+put` нет (race-window не существует). Внешний lock не нужен — лок встроен в реализацию метода (synchronized на bucket head).",
+                "source_of_confusion": "«Atomic» иногда понимают как «однопоточное выполнение» — что неверно; atomic = неделимая операция с точки зрения других потоков.",
+                "if_it_were_true": "API не имел бы смысла — пользователи писали бы `synchronized` блоки сами; CHM не давала бы добавленной ценности перед synchronizedMap.",
+                "how_it_should_be": "Атомарные методы CHM работают в multi-threaded без external lock; lock встроен внутри (per-bucket synchronized); single-flight гарантирован."
+              },
+              "label": "D",
+              "text": "Атомарные методы работают только на single-threaded коде — в multi-threaded нужен внешний lock.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "LinkedHashMap — как устроен и зачем?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "LinkedHashMap — это HashMap + двусвязный список всех узлов. Каждая Entry хранит дополнительно ссылки `before`/`after`, формируя глобальный список. Это даёт два режима iteration:",
+                "example": "```class LRUCache<K, V> extends LinkedHashMap<K, V> { private final int capacity; LRUCache(int cap) { super(cap, 0.75f, true); this.capacity = cap; } @Override protected boolean removeEldestEntry(Map.Entry<K, V> eldest) { return size() > capacity; } }``` — полноценный LRU-кэш. Используется в Tomcat HTTP session manager, embedded-сценариях, тестах. Spring `HandlerMappingIntrospector` использует LinkedHashMap для cache mapping.",
+                "when_to_apply": "Простой in-process LRU без зависимостей (тесты, embedded). Кэши с детерминированным iteration order (debug, snapshot tests). Маршалинг данных с семантическим порядком ключей (HTTP-headers preservation). Когда нужно сохранить порядок вставки для UI/CSV-сериализации. Production-grade LRU/LFU — Caffeine cache (W-TinyLFU algorithm).",
+                "edge_cases": "**Не thread-safe** — для concurrent LRU использовать `Caffeine` или `ConcurrentLinkedHashMap` (Guava). **Access-order модифицирует структуру при read** — итерация одновременно с `get()` даст `ConcurrentModificationException` даже в single thread! `removeEldestEntry` вызывается ТОЛЬКО при `put`, не при `get` — eviction откладывается до следующей вставки. LRU неточен в multi-shard сценариях — для распределённых кэшей нужны другие алгоритмы. Memory overhead: ~16 байт на entry на 64-bit JVM.",
+                "related": "[[hash-tables-interview#Q8]] устройство HashMap; [[hash-tables-interview#Q24]] WeakHashMap; [[hash-tables-interview#Q33]] null-policies."
+              },
+              "label": "A",
+              "text": "`LinkedHashMap` extends `HashMap` и дополнительно поддерживает doubly-linked list всех entries в порядке вставки (default) или порядке доступа (`accessOrder=true`). Конструктор `(capacity, loadFactor, true)` включает access-order; переопределение `removeEldestEntry()` даёт LRU-eviction.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "LinkedHashMap **не сортирует** ключи. Он поддерживает **порядок вставки** (или порядок доступа), не порядок compareTo. Сортировка по compareTo — это `TreeMap` (O(log n) операции). LinkedHashMap — O(1) операции (как HashMap) + порядок вставки/доступа.",
+                "source_of_confusion": "«Linked» в названии ассоциируется с упорядоченностью, что верно — но это порядок вставки/доступа, а не сортировка по значению.",
+                "if_it_were_true": "Iteration по LinkedHashMap была бы в compareTo-порядке. На деле она в insertion-порядке: `lhm.put(\"c\", 1); lhm.put(\"a\", 2); lhm.keySet();` → `[c, a]`, не `[a, c]`.",
+                "how_it_should_be": "LinkedHashMap — порядок вставки/доступа; TreeMap — sorted по compareTo. Не смешивать."
+              },
+              "label": "B",
+              "text": "`LinkedHashMap` сортирует ключи по `compareTo()` — как `TreeMap`, но быстрее за счёт hash-indexing.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "LinkedHashMap **медленнее** HashMap и потребляет больше памяти. Каждый узел дополнительно хранит `before`/`after` ссылки (16 байт overhead на entry на 64-bit JVM). put/get/remove имеют ту же O(1) асимптотику, но constant factor выше — нужно обновлять doubly-linked list. Iteration быстрее ТОЛЬКО когда capacity >> size (HashMap пропускает пустые buckets, LinkedHashMap идёт по списку).",
+                "source_of_confusion": "«Дополнительная структура = больше возможностей = быстрее» — неверная эвристика; обычно дополнительные инварианты замедляют.",
+                "if_it_were_true": "Java разработчики установили бы LinkedHashMap по умолчанию или заменили HashMap. На деле HashMap — default за простоту и скорость.",
+                "how_it_should_be": "LinkedHashMap немного медленнее (constant factor) и тяжелее по памяти; iteration быстрее только при large capacity / small size; полезен за detereminstic order, а не скорость."
+              },
+              "label": "C",
+              "text": "LinkedHashMap всегда быстрее HashMap из-за дополнительной структуры списка для оптимизации iteration.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "LinkedHashMap наследуется от **HashMap** (не TreeMap). Range queries (`subMap`, `headMap`, `tailMap`) — это интерфейс `NavigableMap`, реализованный TreeMap и ConcurrentSkipListMap; LinkedHashMap не имеет таких методов.",
+                "source_of_confusion": "«Упорядоченная Map» → ассоциация с TreeMap. Но «упорядоченная по порядку вставки» ≠ «упорядоченная по ключу».",
+                "if_it_were_true": "`linkedMap.subMap(\"a\", \"m\")` компилировался бы; на деле метода нет.",
+                "how_it_should_be": "LinkedHashMap extends HashMap; для range queries — TreeMap или ConcurrentSkipListMap."
+              },
+              "label": "D",
+              "text": "LinkedHashMap наследуется от TreeMap и поддерживает range queries `subMap`, `headMap`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "WeakHashMap?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Ровно наоборот. WeakHashMap держит **weak-ссылки на ключи** и strong-ссылки на значения. Когда ключ становится unreachable извне — GC может его собрать, и entry удаляется при следующей операции на карте.",
+                "source_of_confusion": "Иногда полагают, что цель — экономить память на значениях (которые обычно тяжелее). Семантика обратная: weak-ключ = «забыть пару, когда ключ больше не нужен снаружи».",
+                "if_it_were_true": "Ключ оставался бы в карте, а значение пропадало; `map.get(key)` возвращал бы `null` при существующем ключе. Это бы сломало инварианты canonical map pattern (например, Hibernate identity-map).",
+                "how_it_should_be": "Weak — на ключи; values — strong; entry удаляется когда ключ unreachable извне."
+              },
+              "label": "A",
+              "text": "WeakHashMap кеширует weak-ссылки на **значения** (не на ключи) — значения могут быть собраны GC.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "WeakHashMap не имеет внутреннего Cleaner-потока. Очистка происходит только при **GC + последующей операции** на карте. Нельзя предсказать момент удаления — это lazy/non-deterministic semantics.",
+                "source_of_confusion": "Java 9+ ввела `java.lang.ref.Cleaner` как замену finalizers — иногда смешивают с механикой WeakReference.",
+                "if_it_were_true": "WeakHashMap имела бы overhead на background thread. Ожидание «удалится сразу» — но GC работает по своему расписанию (G1, ZGC, Shenandoah имеют разные паузы). На деле между `key=null` и удалением может пройти секунды или минуты.",
+                "how_it_should_be": "Очистка через GC + ReferenceQueue + следующая операция (lazy); никаких background-threads; время удаления non-deterministic."
+              },
+              "label": "B",
+              "text": "WeakHashMap автоматически вызывает `Cleaner` после `key = null` — не нужно ждать GC.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Именно это отличает WeakHashMap от HashMap. Обычный HashMap держит **strong-ссылки** на ключи (через `Node.key`), поэтому GC не может их собрать — это известная memory leak паттерн (cache, который растёт неограниченно). WeakHashMap решает это через WeakReference на ключ.",
+                "source_of_confusion": "Разработчик не знает разницы или путает с обычным HashMap.",
+                "if_it_were_true": "WeakHashMap не имела бы смысла существовать — была бы тождественна HashMap. На деле она специально создана для GC-aware caching.",
+                "how_it_should_be": "Обычный HashMap держит strong-ссылки на ключи (источник memory leaks при misuse); WeakHashMap — weak-ссылки, ключи могут быть собраны GC."
+              },
+              "label": "C",
+              "text": "Запись остаётся навсегда — JVM не собирает ключи в коллекциях.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "WeakHashMap хранит каждый ключ в `WeakReference<K>` (внутренний `Entry extends WeakReference`) и регистрирует ссылки в `ReferenceQueue queue`. Когда GC обнаруживает, что на объект-ключ нет strong/soft ссылок, он: (1) очищает WeakReference (ставит `.get() == null`); (2) помещает очищенную ссылку в queue. При следующем вызове `size()`/`get()`/`put()` WeakHashMap проходит по queue (`expungeStaleEntries`) и удаляет соответствующие entries. Это **lazy** cleanup: между моментом GC и следующей операцией entry формально ещё в карте (но ключ уже dead).",
+                "example": "```WeakHashMap<Object, String> cache = new WeakHashMap<>(); Object key = new Object(); cache.put(key, \"value\"); cache.size(); // 1 key = null; System.gc(); // через несколько gc()/sleep: cache.size(); // 0```. Hibernate `@OneToMany` через PersistenceContext использует похожий weak-pattern для identity map: сессия держит сущности, но при сборе сессии все detached сущности освобождаются. Swing PropertyChangeListener registry использует WeakHashMap для подписок — слушатели не предотвращают GC компонентов.",
+                "when_to_apply": "**Canonical Map pattern** — интернирование объектов (как `String.intern()`): один canonical instance на equals-эквивалентность. **Metadata caches**, привязанные к жизни объектов: ClassLoader → metadata, Bean → annotations. **Listener registry** в библиотеках UI (Swing): слушатели не удерживают компоненты. Когда жизненный цикл значения должен следовать жизненному циклу ключа извне.",
+                "edge_cases": "**String и autoboxed Integer не подходят** — `String.intern()` и Integer cache держат strong-ссылки в JVM, ключи никогда не освободятся. Время удаления **non-deterministic** — зависит от GC; не использовать как timer-eviction. Values держат strong-ссылки на ключ — если value ссылается на key, образуется cycle, и ключ не собирается. Решение: оборачивать values тоже в WeakReference или использовать Caffeine с weak-values. **Не thread-safe** — для concurrent: `Collections.synchronizedMap(new WeakHashMap<>())` или Guava `MapMaker.weakKeys()`.",
+                "related": "[[hash-tables-interview#Q23]] LinkedHashMap; [[hash-tables-interview#Q25]] IdentityHashMap; [[hash-tables-interview#Q7]] immutable keys."
+              },
+              "label": "D",
+              "text": "Запись из map будет удалена при следующей операции на карте (`size`, `get`, `put`) — WeakReference ключа очищается GC, помещается в ReferenceQueue, и lazy-cleanup при следующей операции удаляет entry.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "IdentityHashMap?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "IdentityHashMap намеренно НЕ использует `equals` — это её основная особенность. Она сравнивает ключи через `==` (reference equality). `new String(\"hello\")` и `new String(\"hello\")` — это два разных объекта в heap с разными адресами, поэтому `==` вернёт false, и `get` вернёт null.",
+                "source_of_confusion": "Название содержит «HashMap» — кажется обычной Map с какой-то «identity-фичей». На деле семантика равенства полностью изменена.",
+                "if_it_were_true": "Разработчики, которые сознательно выбрали IdentityHashMap для отслеживания objects-by-reference (например, в сериализации Kryo), получили бы баги — два «equal» объекта схлопывались бы в одну запись, и циклические ссылки не детектировались бы.",
+                "how_it_should_be": "IdentityHashMap использует `==` (reference) для сравнения; equals не вызывается; для двух `new String(\"hello\")` get вернёт null."
+              },
+              "label": "A",
+              "text": "`get` вернёт `1` — IdentityHashMap внутри использует обычный `equals()`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "IdentityHashMap намеренно нарушает контракт `Map`: вместо `key1.equals(key2)` использует `key1 == key2`. Хеш-функция — `System.identityHashCode(key)` (значение, основанное на адресе объекта при первом вызове, сохраняется в object header). Это даёт две гарантии: (1) Reference-based уникальность — два разных объекта с одинаковым содержимым — два разных ключа; (2) Стабильность для mutable объектов — даже если изменить внутренние поля, identityHashCode не меняется, и get найдёт запись. Внутри использует open addressing с linear probing на одном плоском массиве (Object[] table, чередуются key, value, key, value).",
+                "example": "```IdentityHashMap<String, Integer> map = new IdentityHashMap<>(); String a = new String(\"hello\"); String b = new String(\"hello\"); map.put(a, 1); map.get(b); // null — разные ссылки; map.get(a); // 1```. Но строки-литералы pool: `map.put(\"x\", 1); map.get(\"x\"); // 1` — компилятор интернирует одну ссылку. Hibernate `IdentityHashMap` использует для cascade-detection (избежать infinite loop в graph traversal). Kryo serialization — для tracking уже-сериализованных объектов.",
+                "when_to_apply": "Топологическая сортировка / cycle detection в графах: нужно отслеживать «посещённые узлы» по identity, не по equals (важно когда equals может вернуть true для разных узлов). Сериализация (Kryo, Java Serialization) — обработка циклических ссылок. Proxy/Object Graph Mapping (Hibernate cascade). Метаданные на конкретный instance — аннотации поведения на конкретный bean.",
+                "edge_cases": "**Нарушает Map contract** — нельзя использовать как drop-in для HashMap. **String literals interning**: `\"hello\"` и `\"hello\"` (литералы) — одна ссылка, identity-сравнение совпадёт. Тесты с литералами могут давать ложно-зелёный результат — тестировать с `new String`. **Память**: open addressing требует LF < 0.7 — для 1000 ключей выделяется ~2048 слотов; больше памяти, чем у chaining HashMap. equals/hashCode пользовательских классов **не вызываются** — даже если переопределены.",
+                "related": "[[hash-tables-interview#Q4]] equals/hashCode contract; [[hash-tables-interview#Q7]] immutable keys; [[hash-tables-interview#Q24]] WeakHashMap."
+              },
+              "label": "B",
+              "text": "`get` вернёт `null` — IdentityHashMap сравнивает ключи через `==` (reference equality), а не `equals()`; два разных `new String(\"hello\")` — это два разных объекта в heap с разными адресами и разными `System.identityHashCode`. Хеш-функция использует `System.identityHashCode(key)`, не `key.hashCode()`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "IdentityHashMap принимает любые `Object` как ключи, включая null. Никакой type restriction нет. `IdentityHashMap<String, Integer>` — валидный generic type, работает как с любым другим.",
+                "source_of_confusion": "Кажется, что «identity-mapping имеет смысл только для определённых типов».",
+                "if_it_were_true": "API был бы перегружен generic-ограничениями типа `IdentityHashMap<K extends Object & !immutable, V>` — на деле IdentityHashMap<K, V> работает с любым K.",
+                "how_it_should_be": "IdentityHashMap принимает любые типы ключей; никаких restrictions; ведёт себя одинаково с любыми Object."
+              },
+              "label": "C",
+              "text": "Будет выброшен `IllegalArgumentException`, потому что String не поддерживается IdentityHashMap.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "IdentityHashMap игнорирует пользовательский `hashCode()`. Использует `System.identityHashCode(key)` — это native метод, возвращающий hash на основе identity-маркера в object header (раз присвоенный, не меняется), не содержимого. Два `new String(\"hello\")` имеют разные identityHashCode (потому что разные объекты), и попадают в разные buckets.",
+                "source_of_confusion": "«Map = всегда вызывает hashCode» — общее правило для HashMap, но IdentityHashMap его нарушает; в этом её суть.",
+                "if_it_were_true": "Два `new String(\"hello\")` дали бы одинаковый identityHashCode (потому что одинаковый `hashCode()`), и они попадали бы в один bucket — но это противоречит реальному поведению.",
+                "how_it_should_be": "IdentityHashMap = `System.identityHashCode` + `==`; пользовательский hashCode/equals полностью игнорируются."
+              },
+              "label": "D",
+              "text": "IdentityHashMap всегда использует `key.hashCode()` ключа — поэтому два разных new String с одинаковым содержимым найдутся одинаково.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "EnumMap?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "EnumMap проверяет, что ключ принадлежит указанному в конструкторе enum-классу, и бросает `ClassCastException` при попытке вставить ключ не того типа. Но это побочная гарантия — основное преимущество в производительности и памяти, а не в type-safety (HashMap с generics уже type-safe в compile time).",
+                "source_of_confusion": "Разработчики, не знакомые с внутренним устройством, выделяют видимую разницу — runtime type check.",
+                "if_it_were_true": "EnumMap не имела бы смысла существовать как отдельный класс — `HashMap<E extends Enum<E>, V>` обеспечивает ту же type safety на этапе компиляции.",
+                "how_it_should_be": "Главное преимущество — perfect hashing через `ordinal()`; type check — побочный side effect."
+              },
+              "label": "A",
+              "text": "EnumMap безопаснее: бросает исключение, если положить значение неподходящего типа.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "EnumMap и EnumSet — отдельные классы. EnumSet (для enum-множеств) действительно использует bit-vector (`long` для ≤64 значений, `long[]` для больше). EnumMap использует **`Object[]` массив** (один слот на enum value, хранит value Object, не bit).",
+                "source_of_confusion": "Оба класса работают с enum и оба «оптимизированы»; предполагают общую реализацию.",
+                "if_it_were_true": "EnumMap могла бы хранить только boolean-значения (как EnumSet); реально она хранит произвольные V (Integer, String, Lambda, etc.).",
+                "how_it_should_be": "EnumSet = bit-vector (boolean storage); EnumMap = Object[] array (value storage); разные представления для разных задач."
+              },
+              "label": "B",
+              "text": "EnumMap использует EnumSet внутри — оба основаны на bit-vector представлении.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "EnumMap построен на ключевом наблюдении: множество enum-значений конечно и известно заранее. Это даёт условия для perfect hashing через direct array indexing:",
+                "example": "```enum HttpStatus { OK, NOT_FOUND, INTERNAL_ERROR, BAD_REQUEST }; EnumMap<HttpStatus, Counter> stats = new EnumMap<>(HttpStatus.class); for (HttpStatus s : HttpStatus.values()) stats.put(s, new Counter()); stats.get(response.getStatus()).increment(); // прямой array access```. Spring Boot HttpStatus stats, Kafka MessageType counters, Order state machine transitions — типичные cases. JMH bench-mark: EnumMap.get ~1ns, HashMap.get ~10ns.",
+                "when_to_apply": "State machines с enum-состояниями: `EnumMap<State, Transition>`. Per-enum-tag статистика/конфиги — счётчики по типам событий, лимиты по тарифам. Hot path с известным набором ключей: JVM сильно оптимизирует EnumMap (intrinsics для ordinal()). Замена switch в polymorphic dispatch: `EnumMap<EventType, Handler>` — позволяет добавлять handlers без compile-time switch'ей.",
+                "edge_cases": "Размер фиксирован при создании — нельзя расширить enum без пересоздания карты. Если enum пополнится новым значением после deserialization из старой версии — будет `ArrayIndexOutOfBoundsException` или невидимая запись. Не thread-safe — для concurrent: `Collections.synchronizedMap(new EnumMap<>(K.class))`. `ordinal()` хрупкий API — если изменить порядок enum-констант между версиями, persisted EnumMap (если так делать) сломается. Не подходит для int-ключей — для них Eclipse Collections `IntObjectHashMap`.",
+                "related": "[[hash-tables-interview#Q8]] устройство HashMap; [[hash-tables-interview#Q23]] LinkedHashMap; [[hash-tables-interview#Q12]] сложности операций."
+              },
+              "label": "C",
+              "text": "EnumMap внутри использует плоский массив `Object[K.values().length]` с индексом = `enum.ordinal()` — это perfect hashing без коллизий: O(1) гарантированно, без вычисления hashCode и без chaining; меньше памяти и cache-friendly из-за compact-layout.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "EnumMap бенчмаркируется быстрее HashMap по всем операциям на enum-ключах из-за direct array indexing. Type check на put — однократная проверка `key.getClass() == keyType` — O(1) и амортизируется на фоне отсутствия hashCode/equals/coll-traversal. JMH-бенчмарки: EnumMap.get/put на ~10× быстрее HashMap для enum keys.",
+                "source_of_confusion": "«Дополнительная проверка = overhead = медленнее» — типичная неверная эвристика.",
+                "if_it_were_true": "Документация Oracle не рекомендовала бы EnumMap. Реально Effective Java Item 37 явно советует EnumMap: «Enum maps are represented internally as arrays. This representation is extremely compact and efficient.»",
+                "how_it_should_be": "EnumMap всегда быстрее HashMap для enum-ключей за счёт perfect hashing; type-check — micro-cost на put, незаметный."
+              },
+              "label": "D",
+              "text": "EnumMap медленнее HashMap из-за дополнительной валидации типа на каждом put.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое consistent hashing?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Modulo-hashing — это глобальная операция, изменение N меняет результат для большинства ключей: ключ, который ранее отображался на shard 5, при N=101 может оказаться на shard 7 — и данные «потеряются» (физически на shard 5, но запрос пойдёт на 7). Consistent hashing (1997, MIT) решает это иначе: каждый узел занимает позицию на ринге, ключ маппится на свою позицию и идёт по часовой стрелке к первому узлу. Добавление узла «отнимает» только тот сегмент ринга, который был у соседа против часовой стрелки. Удаление узла — его ключи идут следующему. Перемещается ~K/N (1%) ключей, не 99%.",
+                "example": "Cassandra использует consistent hashing (token ring) + virtual nodes (256 по умолчанию). При scale-out с 10 до 11 nodes — переезжает ~9% данных (а не 99%), что критично для multi-TB кластеров. DynamoDB партицирует по hash range. Memcached Ketama (libketama) — фактический стандарт consistent hashing для distributed caches. Redis Cluster использует 16384 hash slots — упрощённая форма consistent hashing с фиксированным числом «узлов» (slots) на ринге.",
+                "when_to_apply": "Distributed caches (Memcached с Ketama, Redis Cluster). Distributed databases (Cassandra token ring, DynamoDB hash partition). CDN edge-selection: какой edge-сервер кэширует данный content URL. Load balancers с session affinity — клиент попадает на тот же бэкенд после rebalance. Любая система, где scaling-out не должен вызывать массовый rebalance.",
+                "edge_cases": "Без virtual nodes распределение крайне неравномерное — один узел может получить 50% данных при 4 узлах из-за случайных позиций на ринге. Hot keys не решаются consistent hashing — нужен дополнительный slicing (hot-key replication, chunked queues). Token ring metadata должен быть согласован между узлами — gossip protocol (Cassandra) или централизованный coordinator (Zookeeper в Kafka). Replica placement при factor=3: ключ идёт на 3 последовательных узла на ринге, но vnodes могут оказаться одного физического узла — нужен rack-aware placement (Cassandra NetworkTopologyStrategy).",
+                "related": "[[hash-tables-interview#Q28]] rendezvous hashing; [[hash-tables-interview#Q3]] коллизии; [[hash-tables-interview#Q31]] HashDoS."
+              },
+              "label": "A",
+              "text": "При `hash % N` смена N со 100 на 101 меняет destination практически **всех** ключей — нужно мигрировать ~99% данных. Consistent hashing решает это: и узлы, и ключи маппятся на круговое hash space (`[0, 2³²)`); ключ принадлежит первому узлу по часовой стрелке; добавление узла перемещает только ~K/N ключей (его «сектор» на ринге). Virtual nodes (50-200 per physical node) улучшают балансировку.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "При `hash % N` смена N со 100 на 101 меняет результат для ~99% ключей. Только случайно (~1/N) ключ останется на том же shard. Это вынуждает перенести ~99% данных между шардами — катастрофическая операция для distributed system.",
+                "source_of_confusion": "Интуитивно «добавили 1 из 100 — изменилось 1%». На деле modulo — глобальная операция, не локальная.",
+                "if_it_were_true": "Добавление шардов было бы дешёвой операцией, и consistent hashing не было бы нужно. На деле существование консистентного хеширования (1997, Akamai/MIT) и его повсеместное использование — прямое свидетельство, что modulo-rebalance — катастрофа.",
+                "how_it_should_be": "При `hash % N` перемещаются 99% ключей; consistent hashing меняет это на ~K/N (~1%)."
+              },
+              "label": "B",
+              "text": "Перераспределится только 1% ключей — самый загруженный шард будет автоматически разгружен.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "При `hash % N`, изменив N, мы используем **новый** алгоритм для всех queries. Ключ, который раньше указывал на shard 5, теперь укажет на shard 7. Если данные не перенесены — они физически на shard 5, но запрос идёт на shard 7 и получает miss (или старое значение, если shard 7 имел другой ключ с тем же `% 101`).",
+                "source_of_confusion": "Ожидание «backward compatibility» в простом modulo-sharding без явного rebalancing.",
+                "if_it_were_true": "Не было бы downtime/rebalancing проблем при scale-out — но именно это и главный вызов distributed systems, и причина существования consistent hashing.",
+                "how_it_should_be": "Modulo-resharding требует явной миграции данных; consistent hashing минимизирует объём миграции до K/N."
+              },
+              "label": "C",
+              "text": "Cluster продолжит работать без изменений — старые ключи будут найдены по старому алгоритму после resize.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Утверждение про TreeMap правда (Java-реализации часто используют `TreeMap<Long, Node>` для floor/ceiling lookup) — но это деталь реализации, не суть consistent hashing. Суть — **в распределении ключей на ринге** и минимизации rebalance при изменении topology. TreeMap — оптимизация O(log N) routing, но даже O(N) linear-scan по узлам реализует ту же семантику.",
+                "source_of_confusion": "Ассоциация «consistent hashing = TreeMap» правильная для Java, но не объясняет почему consistent hashing решает проблему.",
+                "if_it_were_true": "Любой sorted lookup решал бы проблему scale-out — но нет, нужна именно ring-семантика (key → first node clockwise).",
+                "how_it_should_be": "Главное — ring-семантика и K/N rebalance; TreeMap — implementation detail для эффективного routing."
+              },
+              "label": "D",
+              "text": "Consistent hashing использует TreeMap для хранения узлов — это даёт O(log N) на каждый routing, и это главное решение проблемы.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает rendezvous hashing?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Наоборот, HRW **проще и более distributed-friendly**: каждый узел независимо вычисляет, какому узлу принадлежит ключ. Никакого ring metadata, gossip protocol, координатора. Алгоритм: для ключа `k` вычисляется `hash(k, n)` для каждого узла n; выбирается узел с максимальным hash. Полностью stateless.",
+                "source_of_confusion": "«Новее = сложнее» — типичная неверная эвристика. HRW старше consistent hashing (1996 vs 1997), но реже упоминается в популярной литературе.",
+                "if_it_were_true": "GitHub, Microsoft, Google не использовали бы HRW в своих CDN/edge-системах; реально HRW популярен — Microsoft CARP, GitHub Pages routing.",
+                "how_it_should_be": "HRW stateless и не требует координатора; именно его простота — главное преимущество."
+              },
+              "label": "A",
+              "text": "HRW требует global coordinator и менее distributed-friendly, чем consistent hashing.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "HRW **не использует ring**. У него нет «позиции узла на пространстве». Алгоритм — direct comparison хешей `hash(key, node)` для всех узлов: выбирается max. Это его главное отличие от consistent hashing, где есть ring с позициями.",
+                "source_of_confusion": "Оба алгоритма решают одну задачу (load distribution с минимальным rebalance), поэтому смешивают.",
+                "if_it_were_true": "Не было бы причин использовать HRW — он был бы худшей версией consistent hashing (одинаковая структура, но O(N) lookup vs O(log N)).",
+                "how_it_should_be": "Consistent hashing = ring; HRW = direct argmax per query; разные подходы."
+              },
+              "label": "B",
+              "text": "HRW использует ring data structure, как consistent hashing — оба алгоритма по сути синонимы.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "HRW работает для любого N. CARP протокол Microsoft использует HRW в больших CDN-сетях. Ограничение — O(N) lookup, но не количество узлов. Для тысяч узлов используют hierarchical HRW (HRW для регионов → внутри региона consistent hashing).",
+                "source_of_confusion": "«Highest random weight» воспринимается как «два игрока». На деле argmax по всем N кандидатам.",
+                "if_it_were_true": "Алгоритм был бы тривиален и неинтересен; реально это конкурент consistent hashing в крупных системах.",
+                "how_it_should_be": "HRW масштабируется до тысяч узлов; ограничение — O(N) lookup, решается через hierarchy."
+              },
+              "label": "C",
+              "text": "HRW работает только для ровно 2 узлов — для больших кластеров не масштабируется.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Rendezvous hashing (Highest Random Weight, HRW): `node = argmax over nodes of hash(key, node)`. Хеш-функция должна равномерно распределять — обычно MurmurHash3 от конкатенации `key + \":\" + node_id`. При добавлении узла он «отнимает» только те ключи, для которых его hash оказался максимальным — статистически ~K/N (как в consistent hashing). При удалении узла ключи переезжают на узел со **вторым** по величине hash — никакого ring shift. Сложность lookup: O(N) — нужно вычислить hash для всех узлов; vs O(log N) для consistent hashing с TreeMap. Top-K replicas: отсортировать по hash и взять top-K — стабильные replicas при изменении кластера.",
+                "example": "Java реализация: ```String pickNode(String key, List<String> nodes) { return nodes.stream().max(Comparator.comparingLong(n -> MurmurHash3.hash(key + \":\" + n))).orElseThrow(); }```. Microsoft CARP (Cache Array Routing Protocol, 1998) использует HRW для выбора cache-server в CDN. GitHub Pages routing — выбор бэкенда без shared state. Cassandra использует похожий принцип для multi-DC replica placement.",
+                "when_to_apply": "CDN edge selection: Microsoft CARP. Multi-replica placement: top-K по hash даёт K реплик, стабильных при изменениях кластера. Малое N (≤100 узлов) — O(N) lookup приемлем, проще чем поддерживать ring metadata + gossip. Stateless services где нет координатора (serverless functions выбирают backend). Hierarchical: HRW для регионов → consistent hashing внутри.",
+                "edge_cases": "O(N) на каждый lookup — для тысяч узлов медленнее consistent hashing; решение — multi-level (HRW для DC, consistent hashing внутри). Несбалансированность при N≤10 — статистические отклонения заметны при малом числе узлов; нужны virtual replicas (как vnodes в consistent hashing). Хеш-функция должна быть качественной (MurmurHash, xxHash, FNV) — слабый hash даёт неравномерное распределение. Performance overhead: при высоком RPS и N=1000 это 1ns × 1000 = 1μs только на routing — может стать bottleneck.",
+                "related": "[[hash-tables-interview#Q27]] consistent hashing; [[hash-tables-interview#Q2]] хеш-функции; [[hash-tables-interview#Q3]] коллизии."
+              },
+              "label": "D",
+              "text": "Для каждого ключа HRW вычисляет `hash(key, node)` для **всех** узлов и выбирает узел с максимальным hash. Преимущества: stateless (нет ring metadata), лучшая балансировка, простая реализация, top-K по hash даёт стабильные реплики. Недостаток: O(N) на каждый lookup vs O(log N) для consistent hashing с TreeMap.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Bloom filter?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Bloom filter **не имеет false negatives** — это его фундаментальное свойство. Если все `k` бит для ключа установлены в 1, returns true. Если хотя бы один = 0, ключ **точно** не вставлялся (потому что при `add(key)` все его k бит установились бы в 1). Поэтому `false` всегда точен; «возможно» относится только к `true` (false positive возможен).",
+                "source_of_confusion": "Разработчик путает направление вероятностной ошибки.",
+                "if_it_were_true": "Cassandra теряла бы данные при чтении: фильтр сказал бы «нет ключа», SSTable не читался, существующая запись потерялась. Это бы сделало Bloom filter непригодным для production.",
+                "how_it_should_be": "Bloom filter: `false` — точное «нет»; `true` — «возможно есть» (false positive ≠ 0). Нет false negatives."
+              },
+              "label": "A",
+              "text": "`mightContain() == false` означает «возможно нет, но возможен false negative» — иногда фильтр пропускает существующий ключ.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Bloom filter — вероятностная структура с асимметричными ошибками: bit array `m` бит + `k` независимых хеш-функций. **add(x)**: вычисляет `h1(x), h2(x), ..., hk(x)` и устанавливает соответствующие биты в 1. **mightContain(x)**: проверяет все k бит — если все = 1, returns true; если хотя бы один = 0, returns false. Логика: если x был добавлен, все его k бит = 1 — невозможно получить false. Но true может быть случайным совпадением битов от других ключей (false positive). FP rate: `(1 − e^(−kn/m))^k`, оптимальные k = `(m/n) * ln(2)`.",
+                "example": "Guava Bloom filter: `BloomFilter<String> filter = BloomFilter.create(Funnels.stringFunnel(UTF_8), 1_000_000, 0.01);` — 1M expected entries, 1% FP rate. Cassandra SSTable: для каждого .db-файла хранится `.Filter.db` (Bloom filter всех ключей). При read query: проверяем filter → если false, skip SSTable (на ~90% запросов экономит disk I/O). RocksDB и LevelDB — аналогично. Web crawlers (Google) используют Bloom filter «посещали ли уже URL?» — позволяет хранить miliards URL в небольшой памяти.",
+                "when_to_apply": "Cassandra/RocksDB/LevelDB перед SSTable read — экономия 90%+ disk reads. Distributed caches: «может ли ключ быть в L1?» — если нет, идём на L2 без miss penalty. Web crawlers: «посещали URL?» без хранения миллионов URL. Spell checkers: false positive okay (просто пропустим warning), false negative недопустим. Database joins: probe-фильтр в HashJoin (Spark, BigQuery).",
+                "edge_cases": "**Нельзя удалить** элемент (стандартный Bloom): удаление одного set бита поломает другие записи. Для удалений — **Counting Bloom** или **Cuckoo Filter** (см. Q30). FP rate растёт с числом insertions — нужно правильно подбирать m, k под expected n. Не возвращает значение, только membership. Hash quality критичен: слабые хеши коррелируют, эффективное число независимых хешей меньше k. Размер: 1B ключей при 1% FP — ~10GB bit array (vs ~50GB+ для full hash set).",
+                "related": "[[hash-tables-interview#Q30]] Cuckoo hashing/filter; [[hash-tables-interview#Q27]] consistent hashing; [[hash-tables-interview#Q2]] хеш-функции."
+              },
+              "label": "B",
+              "text": "`mightContain() == false` гарантирует, что ключа **точно нет** в наборе — нет false negatives. `mightContain() == true` означает «возможно есть» — допустимы false positives (другие ключи установили те же биты). Cassandra использует это: при false — пропускает SSTable (экономия disk I/O); при true — читает SSTable (изредка впустую при false positive).",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Bloom filter — **вероятностная** структура. Точный ответ только для `false`. Для `true` возможен false positive (другие ключи установили те же биты «случайно»). Полностью точная membership structure — это hash set, но он занимает больше памяти.",
+                "source_of_confusion": "«Filter» = «проверка» = «точный да/нет» — неверная интуиция. Bloom — compromise точности ради экономии памяти.",
+                "if_it_were_true": "Bloom filter был бы заменой full hash set без trade-off. На деле компромисс: 10× меньше памяти за счёт 1% false positive.",
+                "how_it_should_be": "Probabilistic: false — точно нет; true — возможно есть (false positive с параметризуемой вероятностью)."
+              },
+              "label": "C",
+              "text": "Оба ответа Bloom filter гарантированы точно — это deterministic data structure.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Bloom filter возвращает `false`, когда хотя бы один из k бит для ключа = 0 — это значит, что ключ точно не вставлялся. Если бы всегда возвращался true — фильтр был бы бесполезен (Cassandra всегда читала бы SSTable). `false` — это и есть основная польза.",
+                "source_of_confusion": "Разработчик не понимает базовой механики структуры.",
+                "if_it_were_true": "Не было бы никакой оптимизации — Cassandra всегда читала бы SSTable, даже когда ключа явно нет.",
+                "how_it_should_be": "False — точное «нет»; именно этот случай — экономит I/O в LSM-trees / caching layers."
+              },
+              "label": "D",
+              "text": "Bloom filter возвращает только true — никогда false; всегда нужна реальная проверка после.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Cuckoo hashing?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Cuckoo hashing использует **две (или более) хеш-функций**. Каждый элемент может находиться в одной из двух позиций — `h1(key)` или `h2(key)`. Lookup всегда проверяет ровно эти две ячейки → O(1) worst-case. С одной хеш-функцией это был бы обычный linear probing без cuckoo-семантики.",
+                "source_of_confusion": "«Cuckoo» — кукушка, которая «занимает чужие гнёзда» — деталь алгоритма теряется в названии, и читают название без понимания механики.",
+                "if_it_were_true": "Cuckoo был бы тождественен linear probing — не было бы причин его использовать.",
+                "how_it_should_be": "Cuckoo = 2 хеш-функции (h1, h2) и две candidate-позиции на ключ; lookup = 2 чтения = O(1)."
+              },
+              "label": "A",
+              "text": "Cuckoo hashing использует только одну хеш-функцию — это даёт O(1) гарантированный lookup за счёт оптимизированной реализации.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Cuckoo — это **семейство hash table алгоритмов**, основанных на двух хеш-функциях. Без хеш-функций это была бы plain associative array с O(n) lookup.",
+                "source_of_confusion": "В названии нет слова «hash» (только «cuckoo»), путают с другими структурами.",
+                "if_it_were_true": "Не было бы O(1) lookup; алгоритм был бы бесполезен.",
+                "how_it_should_be": "Cuckoo HASHING = два или более хешей + recursive eviction; O(1) worst-case lookup."
+              },
+              "label": "B",
+              "text": "Cuckoo hashing не использует хеш-функции — работает через прямое сравнение ключей.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Cuckoo hashing — open addressing с гарантированным O(1) lookup за счёт двух хешей. Алгоритм insert: положить в `h1(k)`; если занят — вытолкнуть старый элемент на его альтернативную позицию (h2 для старого, или h1, если он был во h2-таблице); если и там занят — рекурсивно выселить следующего; если цепочка превышает порог (`log N`) или есть цикл — полный rebuild с новыми хеш-функциями. Lookup: проверяем h1-position и h2-position; если ключ там, он точно есть; иначе нет. Delete: просто очистить ячейку — никаких tombstones (в отличие от linear probing). Варианты: d-ary cuckoo (d>2 хеша) и bucketized cuckoo (k слотов на bucket) повышают LF до 95%+.",
+                "example": "Cuckoo filter — улучшение Bloom filter с поддержкой удаления (Fan et al., 2014). RocksDB block cache использует Cuckoo hashing для быстрого lookup. MemC3 — улучшенный Memcached на Cuckoo hashing — даёт +30% throughput vs original Memcached благодаря concurrent-friendly алгоритму. Network switches (Cisco silicon) используют Cuckoo для TLB и MAC tables: гарантия O(1) lookup критична для wire-speed forwarding (миллионы packets per second).",
+                "when_to_apply": "Cuckoo filter — когда нужны удаления в probabilistic membership structure. Network switches / hardware TLB — гарантия O(1) для wire-speed. Real-time systems с жёсткими SLA — нет амортизированных операций (никаких rehash во время критической операции). MemC3 / concurrent cache — bucketized cuckoo позволяет lock-free reads.",
+                "edge_cases": "Insert может зациклиться при load factor > 0.5 (для basic 2-table cuckoo). Решение — limit на eviction chain (обычно log N) + полный rebuild со сменой хеш-функций. Качество h1, h2 критично — должны быть **независимыми** (не коррелированы), иначе много циклов; обычно `h2(k) = MurmurHash(k + salt)`. Memory: load factor ограничен 50% для 2-table — двойная память против chaining. Bucketized cuckoo решает (LF до 95%). Concurrent version сложна — рекурсивные swaps плохо параллелизуются; MemC3 решает через optimistic lock + lazy update.",
+                "related": "[[hash-tables-interview#Q16]] open addressing; [[hash-tables-interview#Q17]] double hashing; [[hash-tables-interview#Q29]] Bloom filter (Cuckoo filter — его улучшение)."
+              },
+              "label": "C",
+              "text": "Cuckoo hashing использует **две хеш-функции**: `h1(key)` и `h2(key)` — две candidate-позиции на ключ. При insert если обе позиции заняты — выкидываем существующий элемент в его альтернативную позицию (рекурсивно, как «кукушка выселяет птенцов»). Lookup всегда O(1) worst-case (2 чтения), удаление тривиально без tombstones, но **insert может зациклиться** при load factor > 0.5 — требуется rebuild с новыми хешами.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Cuckoo hashing успешно применяется в системах с миллиардами ключей (MemC3, RocksDB, network switches с миллионами MAC entries). Ограничение — load factor (≤ 50% для basic 2-table, до 95% для bucketized), но не количество ключей. Cuckoo filter в RocksDB используется с billion-key наборами.",
+                "source_of_confusion": "Ассоциация «гарантированный O(1) = только для маленьких структур».",
+                "if_it_were_true": "Cuckoo filter не использовался бы в RocksDB и других production-системах с миллиардами keys.",
+                "how_it_should_be": "Cuckoo масштабируется до миллиардов; ограничение по LF, не по N."
+              },
+              "label": "D",
+              "text": "Cuckoo hashing подходит только для небольших key-spaces (≤ 1000 элементов) и не масштабируется.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое HashDoS-атака?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "HashDoS известна с CCS 2003, массовая эксплуатация — 2011-2012 в Java/PHP/Python/Ruby (CVE-2011-4858 для Java SE). Принцип: атакующий знает алгоритм `String.hashCode()` (polynomial-31), генерирует строки с одинаковым хешем (классический пример: \"Aa\" и \"BB\" имеют одинаковый hashCode), и отправляет HTTP POST с тысячами таких ключей. Сервер парсит form-data в HashMap, все ключи в одном bucket, обработка O(n²). При 60k параметров — 3.6B операций = десятки секунд CPU. Защита Java 8+: треify конвертирует длинные цепочки в red-black tree → O(log n). 60k коллизий: O(log 60000) ≈ 16 операций на lookup вместо 60000. Это смягчает атаку до манагеджебл уровня.",
+                "example": "Tomcat в 2011 был уязвим: `?a=1&b=2&...` с 60k одинаково-хешируемых ключей загружал CPU на минуты. Fix: добавлен `server.tomcat.max-parameter-count=10000` (default было unlimited). Spring Boot применяет это автоматически. Jackson установил лимит на JSON nesting depth (`MAX_NESTING_DEPTH = 1000`) для защиты от похожих атак на JSON parser. Hibernate Validator — лимиты на input length.",
+                "when_to_apply": "Любой публичный API, принимающий user-controlled keys (form data, JSON, XML attributes). Search indexes / facets — где пользователь может задать произвольный набор полей. Web-frameworks: проверить дефолтные limits (`server.tomcat.max-parameter-count`, `spring.servlet.multipart.max-request-size`). API gateway / WAF — request size + parameter count limits.",
+                "edge_cases": "Treeify работает только если ключи `Comparable`. Иначе fallback на `System.identityHashCode` как tie-breaker — менее эффективно, но всё равно O(log n). `TREEIFY_THRESHOLD = 8 + MIN_TREEIFY_CAPACITY = 64`: при capacity < 64 вместо treeify происходит resize. На маленьких картах атака может проходить дольше до treeify. Custom keys с константным hashCode (`return 1;`) — treeify помогает, но это симптом плохого hashCode. `ConcurrentHashMap` тоже уязвим без правильных hashCode — treeify там тоже есть, но bucket lock contention — отдельная проблема.",
+                "related": "[[hash-tables-interview#Q11]] treeify; [[hash-tables-interview#Q32]] деградация HashMap; [[hash-tables-interview#Q2]] хеш-функции."
+              },
+              "label": "A",
+              "text": "**Algorithmic complexity attack**: атакующий подбирает ключи (POST-параметры, JSON-ключи, HTTP headers) с **одинаковым hashCode** — все попадают в один bucket HashMap; bucket вырождается в O(n) цепочку, обработка одного запроса с N ключами стоит O(n²); CPU thread занят на секунды/минуты. Java 8+ защита: **treeify** при длине цепочки ≥ 8 (red-black tree, O(log n) worst-case) + на уровне приложения — Tomcat `maxParameterCount`, лимиты на JSON depth.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "HashDoS не про CPU cache. Атака подбирает ключи с одинаковым hashCode, что отправляет их в один bucket HashMap. Bucket вырождается в O(n) цепочку, и обработка одного запроса стоит O(n²) operations — CPU занят на секунды/минуты. Это про **algorithmic complexity**, не про cache.",
+                "source_of_confusion": "«DoS» в HTTP-контексте ассоциируется с сетевой/CPU нагрузкой; HashDoS — специфический подтип algorithmic complexity attack.",
+                "if_it_were_true": "Java 8 treeify не помогал бы (treeify не про cache), и Tomcat не вводил бы `maxParameterCount` (cache attack не зависит от количества параметров).",
+                "how_it_should_be": "HashDoS = algorithmic complexity attack на hash table collision; защита — treeify + парам-лимиты, не cache-related."
+              },
+              "label": "B",
+              "text": "HashDoS — атака на CPU кэш через специально подобранные ключи, забивающие L1.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Атака отправляет всё в **один** bucket (не random — все цели сходятся в одно место). Java 8 не использует CSPRNG для hash (overhead на каждый put/get неприемлем); вместо этого: (1) randomized hash seed для String в некоторых JVM (deprecated в OpenJDK 11+); (2) главное — treeify при длинных цепочках. Python и Ruby используют hash randomization (per-process random seed) — Java выбрала другой путь.",
+                "source_of_confusion": "Упоминание CSPRNG звучит правдоподобно — Python `PYTHONHASHSEED`, Ruby Hash seed.",
+                "if_it_were_true": "Каждый put/get страдал бы от overhead крипто-хеша (~1μs vs ~10ns); throughput Java HashMap упал бы в 100×.",
+                "how_it_should_be": "Атака в один bucket; защита — treeify (структурная) + парам-лимиты (на application layer); не CSPRNG."
+              },
+              "label": "C",
+              "text": "Атака подбирает ключи с одинаковым hashCode для забивания random buckets — защита через CSPRNG-хеши.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "HashDoS — это конкретно algorithmic complexity attack на in-memory hash tables (HashMap, dict, hash). DNS-флуд — отдельная категория DDoS-атак (network-layer), не связана с in-memory hash table.",
+                "source_of_confusion": "«Hash» и «DoS» по отдельности могут относиться к разным атакам; смешение терминов.",
+                "if_it_were_true": "Java SE Security Update CVE-2011-4858 не существовал бы как фикс в HashMap; Java документация не упоминала бы treeify как защиту от HashDoS.",
+                "how_it_should_be": "HashDoS — attack на in-memory hash structure через коллизионные ключи; никак не связана с DNS."
+              },
+              "label": "D",
+              "text": "HashDoS — атака на DNS-резолверы через массовые запросы — не имеет отношения к HashMap.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда HashMap деградирует до O(n)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Деградация возможна и в single-threaded коде. Главные причины: плохой hashCode (все ключи в один bucket → O(log n) с treeify / O(n) без), HashDoS (преднамеренные коллизии), `containsValue` (всегда O(n)). Concurrent modifications приводят к undefined behavior (потеря данных, infinite loop), а не к контролируемой деградации в O(n).",
+                "source_of_confusion": "Ассоциация «O(n) проблемы = thread safety проблемы».",
+                "if_it_were_true": "Все single-threaded benchmarks показывали бы стабильный O(1); на деле на adversarial payload — деградация даже на 1 thread.",
+                "how_it_should_be": "Деградация в single-threaded возможна; concurrent issues — отдельная категория (тоже опасна, но другого рода)."
+              },
+              "label": "A",
+              "text": "Только при concurrent modifications — single-threaded HashMap всегда O(1).",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Шесть основных способов деградации HashMap:",
+                "example": "Production-инциденты: ",
+                "when_to_apply": "Code review: ловить `new HashMap<>()` где известен размер; flag любой `containsValue` в hot path. Профилирование: если flame graph показывает много времени в `HashMap.getNode` traversal — плохой hashCode. Security review: user-input ключи без length-limit → потенциальный HashDoS. Tune-up: Java 19+ `HashMap.newHashMap(expectedSize)` — utility для правильного capacity.",
+                "edge_cases": "**Records спасают hashCode**: Java 14+ records авто-генерируют корректные hashCode/equals — используйте их для value objects. **Hibernate proxy** имеют разный hashCode после lazy load — не использовать как ключи. **Lombok `@EqualsAndHashCode`** на mutable классе — bug в ожидании; использовать только на `@Value` (immutable). **`Objects.hash`** имеет overhead (autoboxing varargs) — в hot path ручная XOR-комбинация быстрее на 5-10ns.",
+                "related": "[[hash-tables-interview#Q11]] treeify; [[hash-tables-interview#Q31]] HashDoS; [[hash-tables-interview#Q7]] immutable keys."
+              },
+              "label": "B",
+              "text": "**Множественные сценарии** даже в Java 17: (1) плохой hashCode (все ключи в один bucket — с treeify O(log n), без — O(n)); (2) HashDoS (преднамеренные коллизии); (3) недооцененная capacity (множественные resize до правильного размера); (4) mutable keys, изменённые после insert (get идёт в другой bucket → запись «теряется»); (5) `containsValue()` всегда O(n + capacity); (6) iteration O(n + capacity) при large capacity / small size.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "LF=0.75 — оптимальный баланс между памятью и производительностью. При его превышении срабатывает rehashing (capacity ×2), что поддерживает О(1) среднее. LF не вызывает деградацию сам по себе; он триггер для resize. LF=0.5 даёт меньше коллизий, но больше памяти; LF=0.9 — наоборот.",
+                "source_of_confusion": "«Высокий = плохо» — упрощённая эвристика; на деле HashMap спроектирован под LF=0.75.",
+                "if_it_were_true": "Java разработчики устанавливали бы default LF=0.5; реально 0.75 десятилетиями. JMH-бенчмарки подтверждают: 0.75 оптимален для большинства workload.",
+                "how_it_should_be": "LF=0.75 — default, не причина деградации; причины — плохой hashCode, HashDoS, containsValue, mutable keys."
+              },
+              "label": "C",
+              "text": "Высокий load factor (0.75) автоматически вызывает деградацию — нужно ставить ≤ 0.5.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`containsKey()` использует тот же путь, что и `get()` — O(1) average, O(log n) worst-case с treeify. Линейный поиск делает `containsValue()`, не containsKey. Это типичная путаница containsKey vs containsValue.",
+                "source_of_confusion": "Разработчик путает containsKey и containsValue, не помнит их структурное различие.",
+                "if_it_were_true": "Код `if (map.containsKey(k))` был бы катастрофически медленным; на деле это идиоматический паттерн, выполняется миллиардами раз в Spring.",
+                "how_it_should_be": "containsKey = O(1) average; containsValue = O(n + capacity) всегда — именно последний опасен в hot path."
+              },
+              "label": "D",
+              "text": "Только при `containsKey()`, потому что он сравнивает все ключи.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

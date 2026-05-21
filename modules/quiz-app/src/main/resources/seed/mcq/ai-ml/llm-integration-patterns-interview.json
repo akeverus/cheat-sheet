@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "llm-integration-patterns-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое LLM gateway?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Парсинг structured outputs — это отдельная функция, реализуемая через OpenAI Structured Outputs, Anthropic tool use или Instructor/Pydantic AI. Gateway оперирует на уровне HTTP-маршрутизации запросов, а не сериализации ответа.",
+                "source_of_confusion": "JSON-парсинг — частая боль при работе с LLM (hallucinated JSON), и кто-то мог запомнить gateway как «штука, которая чинит JSON». На самом деле это разные слои абстракции.",
+                "if_it_were_true": "Тогда gateway не давал бы centralized rate limiting и observability — каждая feature реализовывала бы routing/caching/fallback по-своему, и при падении OpenAI весь продукт лежал бы.",
+                "how_it_should_be": "Описать gateway как middleware между приложением и провайдерами, который занимается routing, caching, rate limiting, observability и fallback — а JSON-парсинг оставить отдельному слою на стороне приложения."
+              },
+              "label": "A",
+              "text": "Библиотека для парсинга LLM-ответов в structured JSON-формат через JSON Schema validation.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Кэширование — лишь одна из функций gateway, причём обычно semantic cache (по embeddings), а не plain Redis по строковому хэшу. Gateway шире: он включает routing, fallback, observability, cost tracking.",
+                "source_of_confusion": "Helicone и Portkey активно продают именно caching как фичу, поэтому новички ассоциируют gateway с кэшем. На деле кэш — необязательный модуль, а не суть паттерна.",
+                "if_it_were_true": "При смене провайдера (OpenAI → Anthropic) пришлось бы переписывать каждый сервис, так как routing и fallback хардкодились бы в коде — vendor lock-in во всей кодовой базе.",
+                "how_it_should_be": "Признать кэш одной из функций gateway, но главным считать unified routing между провайдерами и централизованную политику отказа/повторов."
+              },
+              "label": "B",
+              "text": "Паттерн кэширования LLM-ответов на уровне Redis внутри одного сервиса приложения.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "LLM gateway — это слой инфраструктуры, реализующий единый интерфейс к нескольким провайдерам (OpenAI, Anthropic, Bedrock, локальные модели). Он берёт на себя выбор модели по политике, retry/backoff при 429/5xx, переключение на запасной провайдер при недоступности первичного, semantic cache, per-user rate limits, audit logging и cost tracking. Архитектурно — это reverse proxy для LLM API: приложение делает один тип вызова, gateway решает, куда его направить и как обрабатывать ошибки.",
+                "example": "Notion AI использует кастомный gateway: первичный — Anthropic Claude, fallback — OpenAI GPT-4, для дешёвых задач — Claude Haiku. Один SDK-вызов из приложения, gateway решает всё. В open-source-мире такой паттерн реализует Portkey, LiteLLM Proxy и Helicone.",
+                "when_to_apply": "В enterprise с 2+ LLM-feature, где иначе каждая команда копипастит retry/observability. При требованиях governance — единая точка для аудита и политики. При желании mitigation vendor lock-in без переписывания кода приложения.",
+                "edge_cases": "Сам gateway становится SPOF — нужны HA-конфигурации и health checks. Latency-overhead 10–50 ms на проксирование добавляется к каждому запросу. Унификация параметров (`presence_penalty` у OpenAI, отсутствует у Anthropic) требует продуманного маппинга, иначе теряются возможности конкретных моделей.",
+                "related": "[[llm-integration-patterns-interview#Q17]] зачем abstraction; [[llm-integration-patterns-interview#Q18]] LiteLLM/Portkey; [[llm-integration-patterns-interview#Q7]] fallback между провайдерами."
+              },
+              "label": "C",
+              "text": "Middleware между приложением и LLM-провайдерами, централизующий routing, caching, rate limiting, observability и fallback.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Fine-tuning — это процесс обучения весов модели (или адаптеров) на специфичных данных. К gateway это не имеет отношения: gateway работает с уже задеплоенными моделями через API.",
+                "source_of_confusion": "И fine-tuning, и gateway относятся к «LLM в продакшне», поэтому новички могут смешивать слои. Fine-tuning — на стороне модели, gateway — на стороне инфраструктуры вызовов.",
+                "if_it_were_true": "Тогда gateway бы зависел от GPU-ресурсов и tooling типа Hugging Face PEFT, требовал недели на «настройку». На практике gateway деплоится за минуты как обычный HTTP-сервис.",
+                "how_it_should_be": "Описать gateway как инфраструктурный слой над уже задеплоенными моделями, а fine-tuning — как отдельный pipeline на стороне ML-команды (часто с MLflow или Weights & Biases)."
+              },
+              "label": "D",
+              "text": "Инструмент fine-tuning LLM-моделей под конкретный домен через LoRA-адаптеры и custom datasets.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Streaming responses — реализация?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "OpenAI и Anthropic SDK при `stream=True` возвращают итератор/async-итератор по chunk-объектам, где каждый чанк содержит `choices[0].delta.content` — фрагмент текста, который LLM только что сгенерировала. Сервер обёртывает их в SSE-фрейм `data: <chunk>\\n\\n` и пушит клиенту по мере поступления через `StreamingResponse`. Это даёт TTFT 200–800 ms и постепенное появление текста — пользователь видит, что система работает.",
+                "example": "ChatGPT, Claude.ai, Perplexity — все используют SSE-streaming. В FastAPI: `async def generate(): async for chunk in await client.chat.completions.create(stream=True, ...): yield f\"data: {chunk.choices[0].delta.content}\\n\\n\"`, затем `return StreamingResponse(generate(), media_type=\"text/event-stream\")`.",
+                "when_to_apply": "Любой chat UI, code assistant, RAG-системы, long-form generation. Production-default для пользовательских интерфейсов с LLM.",
+                "edge_cases": "Nginx-буферизация: нужно `proxy_buffering off` иначе SSE буферизуется и клиент получает текст пачками. Cloudflare и AWS ALB по умолчанию работают с SSE, но имеют idle timeouts (60s ALB) — для длинных генераций нужно периодически слать keep-alive. При cancel клиента через `AbortController` сервер должен закрывать соединение с LLM, иначе тратит токены впустую.",
+                "related": "[[llm-integration-patterns-interview#Q3]] SSE-формат; [[llm-integration-patterns-interview#Q4]] WebSocket vs SSE; [[llm-integration-patterns-interview#Q23]] TTFT-метрики."
+              },
+              "label": "A",
+              "text": "Установить `stream=True` в SDK, итерировать по chunks и yield каждой `delta.content` в `StreamingResponse` с `media_type=\"text/event-stream\"`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Это режим non-streaming: клиент ждёт полный ответ от LLM (обычно 2–30 секунд при типичной длине), потом получает его одним HTTP-ответом. TTFT при таком подходе равен общему времени генерации.",
+                "source_of_confusion": "Это самый простой код — никаких async-генераторов и SSE. Часто новички начинают с него, не задумываясь о UX, и переключаются на streaming только после жалоб «чат лагает».",
+                "if_it_were_true": "При 5-секундной генерации пользователь видит blank screen 5 секунд — это нарушает все UX-нормы для чатовых интерфейсов (Nielsen Norman Group: 1 секунда — потеря концентрации, 10 секунд — потеря внимания).",
+                "how_it_should_be": "Включить `stream=True`, обернуть OpenAI-итератор в async-генератор и отдавать каждую дельту клиенту через SSE — это даёт TTFT 200–800 ms вместо нескольких секунд."
+              },
+              "label": "B",
+              "text": "Получить весь ответ от LLM синхронно через `stream=False`, сохранить в строку и отправить клиенту одним блоком.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "WebSocket — это full-duplex протокол поверх upgraded HTTP. Технически он умеет streaming, но для одностороннего потока «сервер → клиент» это избыточно: нужен upgrade-handshake, ручной reconnect, отдельная обработка ping/pong.",
+                "source_of_confusion": "WebSocket — известный «real-time» инструмент, и кажется логичным использовать его для LLM. На практике SSE проще, поддерживается браузерным `EventSource` API с auto-reconnect, и работает через CDN-прокси (Cloudflare).",
+                "if_it_were_true": "Инфраструктура усложнилась бы: AWS ALB и многие nginx-конфиги по умолчанию не пропускают WebSocket, потребуется отдельный path-based routing. Cloudflare WebSocket поддерживает, но не кэширует — для одностороннего streaming это overhead без выгоды.",
+                "how_it_should_be": "Использовать WebSocket только если нужны interactive interruption от клиента (cancel, mid-stream tool calls), иначе SSE — стандарт для LLM streaming."
+              },
+              "label": "C",
+              "text": "Использовать WebSocket для двустороннего обмена streaming-данными между клиентом и сервером.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Это паттерн async job для **долгих** генераций (минуты, reasoning-модели o1/o3). Для обычного чата он создаёт лишние HTTP-запросы — клиент видит не настоящий streaming, а порции по 100 ms.",
+                "source_of_confusion": "Polling — простой паттерн без специфики SSE/WebSocket. Применим к задачам типа video transcoding, но для LLM с генерацией 2–10 секунд он создаёт latency и нагрузку без выгоды.",
+                "if_it_were_true": "При 100 RPS чата клиент генерирует 1000 polling-запросов в секунду на сервер — лишняя нагрузка на API gateway и БД для хранения промежуточного состояния. SSE даёт настоящий push без polling.",
+                "how_it_should_be": "Использовать polling только для **long-running** генераций (> 60s), для обычного чата — SSE-streaming через `StreamingResponse`."
+              },
+              "label": "D",
+              "text": "Запустить генерацию в background-thread и polling статуса через `/jobs/{id}` каждые 100 ms.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "SSE (Server-Sent Events) для streaming?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "SSE — это HTTP-based текстовый протокол, не бинарный, и не bidirectional: только server → client. Bidirectional бинарный поверх TCP с low latency — это WebSocket или gRPC, разные технологии.",
+                "source_of_confusion": "«Streaming» часто ассоциируется с gRPC или Kafka, и SSE может казаться чем-то аналогичным. На деле SSE проще: обычный HTTP-ответ с `Content-Type: text/event-stream`, который не закрывается, а пушит фреймы.",
+                "if_it_were_true": "Бинарный протокол не проходил бы через Cloudflare CDN и большинство корпоративных proxy без специальной настройки. SSE же работает через любую HTTP-инфраструктуру.",
+                "how_it_should_be": "Описать SSE как текстовый HTTP-протокол на базе `text/event-stream` для одностороннего streaming, и WebSocket/gRPC — как отдельные технологии для bidirectional случаев."
+              },
+              "label": "A",
+              "text": "Бинарный протокол поверх TCP для низколатентной bidirectional передачи данных, аналог gRPC streaming.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "SSE и WebSocket — разные протоколы. SSE работает на чистом HTTP (без upgrade), WebSocket требует `Upgrade: websocket` handshake и переключается на отдельный фрейм-протокол. У WebSocket нет `Content-Type` в классическом смысле — это бинарные/текстовые фреймы.",
+                "source_of_confusion": "Оба механизма решают похожую задачу «push с сервера», и в чьей-то голове они сливаются в один. На деле — разные RFC: SSE (W3C EventSource), WebSocket (RFC 6455).",
+                "if_it_were_true": "WebSocket требует upgrade-handshake и не имеет auto-reconnect — клиент должен сам ловить разрыв и переподключаться. Nginx и CDN часто блокируют WebSocket по умолчанию или не кэшируют.",
+                "how_it_should_be": "SSE — это plain HTTP с `Content-Type: text/event-stream` и форматом `data:`, встроенный auto-reconnect через `EventSource` API; WebSocket — отдельный bidirectional протокол."
+              },
+              "label": "B",
+              "text": "WebSocket с `Content-Type: text/plain` для single-direction streaming через upgrade-handshake.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "SSE действительно использует chunked transfer encoding **под капотом**, но добавляет фиксированный формат фреймов: `data: <text>\\n\\n`, опционально `event:`, `id:`, `retry:`. Это даёт парсер на клиенте и auto-reconnect.",
+                "source_of_confusion": "Многие думают, что SSE — это «просто HTTP с долго-открытым соединением». На самом деле формат строгий, что позволяет браузерам реализовать EventSource API.",
+                "if_it_were_true": "Без формата `data:` клиент не знал бы границы сообщений и не имел бы EventSource API. Сам пришлось бы парсить байты — теряется простота интеграции.",
+                "how_it_should_be": "Описать SSE как chunked encoding **с** стандартным форматом фреймов `data:`, что даёт EventSource API в браузерах и auto-reconnect."
+              },
+              "label": "C",
+              "text": "HTTP chunked transfer encoding без фиксированного формата сообщений и без EventSource API.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "SSE — это W3C-стандарт (часть HTML5) для одностороннего push от сервера к клиенту поверх обычного HTTP-соединения. Сервер устанавливает `Content-Type: text/event-stream`, держит соединение открытым и шлёт текстовые фреймы вида `data: <message>\\n\\n`. Браузерный `EventSource` API парсит их автоматически: добавляет обработчики `onmessage`, сам переподключается при разрыве (`retry:` поле задаёт интервал), отправляет `Last-Event-ID` для возобновления. OpenAI и Anthropic streaming API возвращают именно SSE.",
+                "example": "Простой SSE-ответ: `HTTP/1.1 200 OK\\nContent-Type: text/event-stream\\n\\ndata: Hello\\n\\ndata: world\\n\\ndata: [DONE]\\n\\n`. На клиенте — `const es = new EventSource(\"/chat\"); es.onmessage = e => append(e.data);`. ChatGPT, Claude.ai, Perplexity все используют SSE для streaming-ответов.",
+                "when_to_apply": "Для LLM token streaming, real-time нотификаций, server-push событий (новые комментарии, статус задач). Везде, где нужен только «сервер → клиент» и не требуется bidirectional обмен.",
+                "edge_cases": "В HTTP/1.1 каждое SSE-соединение занимает один TCP — есть лимит 6 параллельных соединений на домен в браузере (HTTP/2 решает мультиплексированием). Nginx буферизует ответ по умолчанию — нужно `proxy_buffering off` или `X-Accel-Buffering: no`. AWS ALB idle-timeout 60s — для долгих стримов нужны keep-alive чанки.",
+                "related": "[[llm-integration-patterns-interview#Q2]] streaming-реализация; [[llm-integration-patterns-interview#Q4]] WebSocket vs SSE; [[llm-integration-patterns-interview#Q25]] background jobs для очень длинных генераций."
+              },
+              "label": "D",
+              "text": "Стандарт HTTP `Content-Type: text/event-stream` с форматом `data:` для server→client streaming, с auto-reconnect и поддержкой через CDN.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "WebSocket vs SSE для LLM?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Latency-разница между WebSocket и SSE для одностороннего push пренебрежимо мала (десятки миллисекунд). Главные ограничения LLM-streaming — это сама генерация модели (TTFT 200–800 ms) и сеть, а не overhead протокола.",
+                "source_of_confusion": "WebSocket позиционируется как «real-time протокол», и кажется, что он быстрее. На деле SSE поверх HTTP/2 даёт сравнимый latency с WebSocket для server-push.",
+                "if_it_were_true": "Всё равно остаётся проблема: WebSocket не имеет встроенного auto-reconnect, требует upgrade-handshake, и многие CDN/корпоративные proxy его не пропускают по умолчанию.",
+                "how_it_should_be": "Признать, что для одностороннего LLM-streaming разница в latency не оправдывает усложнение инфраструктуры — SSE достаточно."
+              },
+              "label": "A",
+              "text": "WebSocket всегда предпочтительнее для LLM streaming из-за более низкой latency.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "SSE покрывает 95% LLM use-case: чат, code assistant, RAG — везде поток только в одну сторону (модель отдаёт токены). SSE работает на любом HTTP-стеке без модификаций (CDN, nginx, ALB), имеет встроенный auto-reconnect в `EventSource` и проще в дебаге (можно `curl` посмотреть). WebSocket нужен, когда клиент должен прерывать генерацию, отправлять voice/binary в процессе, или ведёт многосторонний обмен (multi-agent collab).",
+                "example": "ChatGPT, Claude.ai, Perplexity, Notion AI — все используют SSE для основного streaming-чата. WebSocket появляется в voice-режиме ChatGPT (двусторонний audio) и в OpenAI Realtime API, где аудио идёт в обе стороны одновременно.",
+                "when_to_apply": "SSE — default для текстового LLM-чата и RAG. WebSocket — только если есть конкретное требование bidirectional: voice mode, mid-stream cancel с дополнительной командой, collaborative editing с LLM.",
+                "edge_cases": "Для cancel-генерации SSE достаточно: клиент закрывает `EventSource`, сервер ловит `request.is_disconnected()` и закрывает соединение с LLM. WebSocket не даёт здесь преимущества. Если планируете масштабироваться до voice — заложите архитектуру с возможностью добавить WebSocket-endpoint, но не делайте его сразу «на всякий случай».",
+                "related": "[[llm-integration-patterns-interview#Q3]] SSE-формат; [[llm-integration-patterns-interview#Q2]] streaming-реализация; [[llm-integration-patterns-interview#Q25]] long-running jobs."
+              },
+              "label": "B",
+              "text": "SSE достаточно для LLM streaming (server→client); WebSocket — только когда нужны interactive interruption или multimodal-обмен от клиента.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "gRPC хорош для server-to-server streaming (микросервисы), но в браузере не работает напрямую — требуется grpc-web proxy, что добавляет операционную сложность. Protobuf-сжатие даёт минимальную экономию на текстовых LLM-ответах.",
+                "source_of_confusion": "gRPC популярен в backend-микросервисах и ассоциируется с «высокая производительность». Для LLM в браузере это overkill — браузер всё равно не умеет gRPC нативно.",
+                "if_it_were_true": "Усложнение frontend-стека: нужен grpc-web envoy proxy, генерация protobuf-клиентов, отдельная инфраструктура. Без реального выигрыша по latency — текстовый стрим LLM не выигрывает от protobuf.",
+                "how_it_should_be": "Использовать gRPC streaming для внутреннего канала «gateway → LLM provider» или «agent service → orchestrator», а к браузеру отдавать через SSE."
+              },
+              "label": "C",
+              "text": "gRPC bidirectional streaming оптимален для LLM из-за Protocol Buffers сжатия и HTTP/2.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Long-polling — это серия HTTP-запросов с длинным timeout: клиент отправляет запрос, сервер держит до получения данных, отвечает, клиент отправляет следующий. Для LLM-токенов это требует или склейки токенов в пачки, или 1 запрос на токен — обе альтернативы хуже SSE.",
+                "source_of_confusion": "Long-polling был популярен до SSE/WebSocket и встречается в legacy-системах. Для нового кода с LLM он не применяется.",
+                "if_it_were_true": "При 100 токенах в ответе клиент сделал бы 100 HTTP-запросов или получал бы текст пачками с задержкой 100–500 ms между ними — UX заметно хуже SSE-стрима.",
+                "how_it_should_be": "Использовать SSE для всех LLM-streaming сценариев в браузере; long-polling упоминать только в контексте legacy миграций."
+              },
+              "label": "D",
+              "text": "Long-polling с 30-секундными запросами эффективнее SSE для LLM responses.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Retry с exponential backoff?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Коды 4xx (кроме 408, 429) означают ошибку клиента — невалидный JSON, истёкший токен, нарушение schema. Повтор не исправит запрос, только потратит quota.",
+                "source_of_confusion": "«Retry всё на всякий случай» — наивная стратегия, которая встречается в legacy-коде. Фиксированный интервал 1 секунда исторически использовался в простых ретраях, но не учитывает паттерны нагрузки.",
+                "if_it_were_true": "При 400 (bad request) пять одинаковых запросов уйдут к провайдеру, получишь пять одинаковых 400 — потеря 80 ms × 5 = 400 ms на каждом ошибочном запросе. При массовом сбое провайдера фиксированный интервал даёт thundering herd: все клиенты ретраят синхронно в одно время.",
+                "how_it_should_be": "Retry только transient-коды (429, 5xx, timeout) с jittered exponential backoff (2s → 4s → 8s + случайный jitter), 400/401/422 пробрасывать наверх без повторов."
+              },
+              "label": "A",
+              "text": "Retry всех HTTP-ошибок включая 400, 401, 422 с фиксированным интервалом 1 секунда.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Линейный backoff (5s, 5s, 5s) не даёт провайдеру времени восстановиться при массовом сбое. Без jitter все клиенты синхронизируются на одной фазе ретрая и продолжают создавать пиковую нагрузку. Также нужно ретраить 5xx и timeout, не только 429.",
+                "source_of_confusion": "Линейный backoff проще в реализации и кажется «достаточным». Knee-jerk-фокус только на 429 игнорирует, что 502/503/504 при выкатке провайдера встречаются не реже.",
+                "if_it_were_true": "Капитальный downtime OpenAI 2024 (ноябрь): клиенты с линейным backoff сожгли в 3× больше токенов на ретраях, чем клиенты с exponential + jitter. AWS recommended pattern (Architecture Center) — exponential + full jitter именно для предотвращения thundering herd.",
+                "how_it_should_be": "Exponential backoff `base * 2^attempt` с jitter (`random.uniform(0, computed_delay)`) и расширенным набором retry-кодов: 429, 500–599, timeout, connection reset."
+              },
+              "label": "B",
+              "text": "Retry только HTTP 429 с линейным backoff 5 секунд между попытками без jitter.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Провайдеры LLM имеют официальные SLA 99.9% (Anthropic) / 99.9% (Azure OpenAI), что подразумевает несколько часов downtime в год и сотни transient-ошибок в день при высоком трафике. Без retry availability приложения упирается в availability провайдера.",
+                "source_of_confusion": "«Fail fast» — общепринятый принцип, и в некоторых контекстах (валидация входных данных) он правильный. Но для transient-сетевых ошибок fail fast убивает availability.",
+                "if_it_were_true": "При 0.1% transient-ошибок (429/503/timeout) availability приложения была бы 99.9%, но при типичном 1–3% transient на пиках — упала бы до 97–99%. SLA 99.9% невозможна без retry.",
+                "how_it_should_be": "Retry transient-ошибок с разумным limit (3–5 попыток) и exponential backoff; non-transient (400, 401, 422) — fail fast."
+              },
+              "label": "C",
+              "text": "Немедленно поднимать исключение без retry при любой ошибке LLM API.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Корректная retry-политика разделяет ошибки на transient (стоит повторить) и permanent (повтор не поможет). Transient: 429 (rate limit), 500 (server error), 502/503 (gateway), 504 (timeout), connection reset, read timeout. Permanent: 400 (bad request — невалидный prompt/JSON), 401/403 (auth — токен истёк или нет прав), 422 (validation — нарушение schema), 404. Exponential backoff `min(base * 2^attempt, max_delay)` распределяет повторы во времени, а добавление jitter (`random.uniform(0, delay)`) предотвращает thundering herd, когда все клиенты ретраят синхронно.",
+                "example": "`from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type; @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=60), retry=retry_if_exception_type((RateLimitError, APIError, APITimeoutError)))`. OpenAI Python SDK с версии 1.0 включает retry автоматически (2 попытки по умолчанию) — можно настроить через `OpenAI(max_retries=5)`.",
+                "when_to_apply": "Для любого LLM API-вызова в production. Особенно критично для агентных систем с цепочками вызовов — отказ одного звена иначе обрушит всю цепочку.",
+                "edge_cases": "Idempotency: если retry применяется к POST с побочными эффектами (создание записи в БД до LLM-вызова), нужен idempotency-key, иначе двойная запись. Total timeout: если вызов внутри HTTP-обработчика с timeout 30s, retry 5 × 60s = 5 минут превысит timeout. Stripe/OpenAI рекомендуют ограничивать суммарное время ожидания: `Retry-After` header из 429 — приоритетнее вычисленного backoff.",
+                "related": "[[llm-integration-patterns-interview#Q6]] circuit breaker; [[llm-integration-patterns-interview#Q14]] token bucket для pre-emptive rate limiting; [[llm-integration-patterns-interview#Q8]] timeouts."
+              },
+              "label": "D",
+              "text": "Retry 429, 500–599, timeout/connection errors с exponential backoff (2s → 4s → 8s → max 60s) и jitter; не retry'ать 400, 401, 403, 422.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Circuit breaker для LLM API?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Бесконечный retry — это противоположность circuit breaker, антипаттерн. При даунтайме провайдера каждый thread/connection занят ожиданием и накапливающимися повторами.",
+                "source_of_confusion": "«Не сдавайся, пока не получишь ответ» звучит как retry-стратегия. На деле бесконечный retry не учитывает паттерн отказа — если 100 запросов подряд упали, 101-й вероятно тоже упадёт.",
+                "if_it_were_true": "При даунтайме OpenAI все worker-threads (или async-tasks) застряли бы в retry-циклах с backoff. Thread pool exhaustion: новые HTTP-запросы клиентов не обрабатываются → приложение полностью неотзывчиво даже для health-check.",
+                "how_it_should_be": "Использовать circuit breaker: после N подряд идущих сбоев — открыть circuit, fail fast, освободить ресурсы. Через timeout — пробная попытка (half-open)."
+              },
+              "label": "A",
+              "text": "Retry бесконечно пока provider не ответит, блокируя поток выполнения.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Circuit breaker — это finite state machine с тремя состояниями. CLOSED (нормальная работа): все вызовы проходят, считается счётчик ошибок. При превышении порога (например, 5 ошибок за 10 секунд или 50% error rate) → OPEN: все вызовы немедленно бросают `CircuitOpenError` без обращения к API (fail fast). Через `reset_timeout` (30–60s) переход в HALF-OPEN: пропускается одна-две пробных запроса; если успех — CLOSED, если ошибка — снова OPEN. Это освобождает ресурсы приложения и даёт провайдеру время восстановиться, не получая шквал retry.",
+                "example": "Netflix Hystrix (legacy), Resilience4j (JVM), pybreaker (Python). `breaker = CircuitBreaker(fail_max=5, reset_timeout=60); @breaker def call(): return openai.chat.completions.create(...)`. В Spring Cloud — `@CircuitBreaker(name = \"openai\", fallbackMethod = \"fallback\")`. Cloud-провайдеры реализуют это в API gateway (Kong, Istio).",
+                "when_to_apply": "Для вызовов внешних сервисов с непредсказуемым downtime: LLM API, платёжные системы, сторонние REST API. Особенно ценен в high-throughput системах, где блокировка thread pool стоит дороже потери небольшого процента запросов.",
+                "edge_cases": "Подбор порогов: слишком чувствительный (`fail_max=2`) — открывается на флапах; слишком толерантный (`fail_max=50`) — не успевает помочь. В распределённых системах каждый pod имеет свой breaker — нет глобального состояния (можно реализовать через Redis, но усложняет). При HALF-OPEN пробный запрос — это «жертва» от реального пользователя; в критичных системах используют synthetic health-check.",
+                "related": "[[llm-integration-patterns-interview#Q5]] retry-стратегия; [[llm-integration-patterns-interview#Q7]] fallback на запасной провайдер; [[llm-integration-patterns-interview#Q14]] token bucket pre-emptive limiting."
+              },
+              "label": "B",
+              "text": "Автомат состояний CLOSED → OPEN → HALF-OPEN: при N ошибках подряд открыть circuit, fail fast без обращения к API; через cooldown пропустить пробный запрос.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Это просто отсутствие защиты от каскадного отказа. Логи покажут проблему, но не предотвратят thread pool exhaustion и degradation latency для всех пользователей.",
+                "source_of_confusion": "«Observability важна, ошибки логируются» — это правильно, но недостаточно. Circuit breaker — отдельный слой защиты, дополняющий, а не заменяющий логирование.",
+                "if_it_were_true": "Каждый запрос ждал бы timeout (30–60s) вместо мгновенного fallback. При 100 RPS и timeout 60s через минуту 6000 запросов застряли бы в ожидании → процесс OOM.",
+                "how_it_should_be": "Дополнить логирование circuit breaker'ом, который активно прерывает запросы при паттерне отказа."
+              },
+              "label": "C",
+              "text": "Логировать все ошибки и продолжать вызывать provider, игнорируя паттерн отказов.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Это смесь идеи fallback и retry, но без circuit breaker — нет различия между transient ошибкой и реальным downtime. Один 503 от OpenAI не означает, что провайдер лежит.",
+                "source_of_confusion": "Fallback — родственная техника, и кажется, что он заменяет circuit breaker. На деле они работают вместе: breaker определяет «провайдер X деградировал», fallback — «направить запросы на Y».",
+                "if_it_were_true": "При одиночных transient-ошибках весь трафик ушёл бы на secondary провайдер — а у него меньшая capacity или хуже качество. Лучше было бы дать primary шанс восстановиться.",
+                "how_it_should_be": "Использовать circuit breaker для определения «когда переключаться», и fallback chain — «куда переключаться». Один transient → retry на primary; систематические сбои → breaker open → fallback."
+              },
+              "label": "D",
+              "text": "Переключаться на другой provider при первой же ошибке без отслеживания состояния.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Fallback между providers (Claude → GPT)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Random routing не учитывает паттерны отказа: если Anthropic в downtime, треть запросов всё равно идёт к нему и фейлится. Это load balancing, а не fallback — и без health checks даже как LB работает плохо.",
+                "source_of_confusion": "Random round-robin — известный паттерн в load balancing (nginx upstream). Но fallback подразумевает «попробовать запасной только если первичный упал», а не равномерное распределение.",
+                "if_it_were_true": "При даунтайме одного провайдера ~33% запросов всё равно фейлились бы. Нет улучшения availability — только случайные ошибки 30–50% для пользователей.",
+                "how_it_should_be": "Иметь явный priority list: primary → secondary → tertiary, переключаться только при transient-ошибке primary через circuit breaker."
+              },
+              "label": "A",
+              "text": "Случайно выбирать provider для каждого запроса без учёта их текущего статуса.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "400 Bad Request означает проблему запроса (невалидный JSON, неподдерживаемый параметр, слишком длинный prompt). Другой провайдер вернёт тот же 400 или, что хуже, проглотит ошибку и вернёт некорректный ответ.",
+                "source_of_confusion": "«Переключиться при любой ошибке» — упрощение fallback-логики. На деле нужно различать transient (стоит fallback) и permanent (не стоит).",
+                "if_it_were_true": "Баг в промпте (например, content moderation triggered) каскадировал бы через всю fallback-chain. Все провайдеры вернули бы 400, итоговое время ответа выросло бы втрое без полезного результата.",
+                "how_it_should_be": "Триггерить fallback только на transient (RateLimitError, APIError 5xx, Timeout, ConnectionError); 400/401/422 пробрасывать наверх немедленно."
+              },
+              "label": "B",
+              "text": "Переключиться на fallback provider при любом исключении, включая 400 validation-ошибки.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Race fallback (или hedged requests) умножает стоимость на количество провайдеров. Для LLM, где input/output tokens напрямую тарифицируются — это 3× cost runway. Latency-выгода минимальна при правильно работающем primary.",
+                "source_of_confusion": "Hedging популярен в RPC (Google Maglev paper) для скрытия p99 latency. Для LLM при стоимости $0.01–0.10 за запрос экономика быстро ломается.",
+                "if_it_were_true": "Cost вырос бы в 3 раза немедленно: вместо $1000/день — $3000/день. На бизнес-метрике cost-per-user это разница между прибыльностью и убытком.",
+                "how_it_should_be": "Использовать hedging только для cheap-моделей (Haiku-class) или при критическом SLA, и тогда — с tail-only hedging (запускать запасной только через 80-й перцентиль latency primary)."
+              },
+              "label": "C",
+              "text": "Вызывать все providers параллельно и брать первый ответ (race fallback).",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Корректный fallback использует приоритетный список провайдеров и адаптер, унифицирующий API. На каждый запрос: пробуем primary; если transient-ошибка после retries — переключаемся на secondary; если и он не отвечает — tertiary; если все упали — `AllProvidersFailedError` или degraded-режим (например, заранее заготовленный ответ). Adapter layer (LiteLLM, Portkey) скрывает различия в API: разные имена параметров (`max_tokens` vs `max_output_tokens`), форматы сообщений (system message vs system role), стримминг-протоколы. Это делает код vendor-agnostic.",
+                "example": "`providers = [lambda m: anthropic.messages.create(model=\"claude-opus-4-7\", messages=m), lambda m: openai.chat.completions.create(model=\"gpt-4o\", messages=m), lambda m: bedrock.invoke(model=\"anthropic.claude-3-haiku\", messages=m)]`. Notion AI: primary Anthropic, fallback OpenAI, при бюджетных ограничениях — Bedrock-инстанс той же модели для дешевизны. LiteLLM `completion(model=\"claude-opus-4-7\", fallbacks=[\"gpt-4o\", \"bedrock/claude-haiku\"])` делает это в одну строку.",
+                "when_to_apply": "Production LLM-системы с SLA > 99.5%, где downtime одного провайдера недопустим. Также useful для регуляторных требований (некоторые рынки требуют локального провайдера как fallback для compliance).",
+                "edge_cases": "Quality drift: GPT-4 и Claude отвечают по-разному на один промпт — после fallback пользователь может заметить разный стиль. Решение: A/B-тестировать промпт на обоих или иметь model-specific prompt-templates. Cost-tracking: каждый fallback расходует quota у secondary, бюджет надо планировать на оба. Streaming-fallback сложен: если уже начали стримить с primary и он упал — нельзя начать заново на secondary прозрачно для клиента.",
+                "related": "[[llm-integration-patterns-interview#Q6]] circuit breaker; [[llm-integration-patterns-interview#Q17]] зачем abstraction; [[llm-integration-patterns-interview#Q18]] LiteLLM/Portkey."
+              },
+              "label": "D",
+              "text": "Последовательно пробовать providers по priority list при transient-ошибках (RateLimitError/APIError/Timeout) через adapter layer с единым интерфейсом.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Timeouts — как настраивать?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Timeouts должны соответствовать ожидаемой длительности операции. Non-streaming LLM-запрос на 200 токенов обычно укладывается в 5–10 секунд, на 2000 токенов — 15–30 секунд; 30–60 сек как общий timeout даёт запас. Для streaming суммарное время может быть минутами (long-form, reasoning), но первый токен (TTFT) должен прийти быстро — задержка > 3 секунд означает, что провайдер деградировал или модель «зависла» на reasoning-phase. TTFT мониторится отдельной метрикой и алертом, так как именно он определяет perceived latency.",
+                "example": "OpenAI Python SDK: `OpenAI(timeout=httpx.Timeout(60.0, connect=5.0))` для non-streaming; для streaming — `timeout=600.0` плюс watchdog на сервере, который закрывает stream при отсутствии новых chunks > 30s. Anthropic SDK аналогично: `client = Anthropic(timeout=60.0)`. Prometheus-метрика `llm_ttft_seconds` с алертом на p95 > 3s.",
+                "when_to_apply": "Любой production LLM-вызов. Особенно критично при использовании fallback chain: суммарный timeout всех попыток должен укладываться в HTTP-timeout вышестоящего сервера (например, AWS ALB idle 60s).",
+                "edge_cases": "SDK-default timeout у OpenAI — 600 секунд (10 минут) для non-streaming, что слишком много. Нужно явно ставить ниже. Reasoning-модели (o1, o3) могут «думать» минутами без output — для них либо длинный timeout, либо async job pattern. При cancellation клиента стрима нужно явно закрыть upstream-соединение с LLM (`AbortController` в Node, `request.is_disconnected()` в FastAPI), иначе платим за токены, которые никто не получит.",
+                "related": "[[llm-integration-patterns-interview#Q23]] TTFT/TPOT-метрики; [[llm-integration-patterns-interview#Q25]] background jobs для долгих генераций; [[llm-integration-patterns-interview#Q5]] retry-стратегия с timeout-ошибками."
+              },
+              "label": "A",
+              "text": "Non-streaming: 30–60 сек на full response; streaming: 5–10 мин на стрим, но отдельно мониторить TTFT < 3 сек как ключевую UX-метрику.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "5 секунд — это разумный TTFT-порог, но не общий timeout. Reasoning-модели (o1, o3) могут думать 30–120 секунд до первого токена; обычные генерации на 1000+ токенов также превышают 5 секунд.",
+                "source_of_confusion": "«Быстрый чат — это хорошо» — UX-аксиома, и кто-то распространяет её на абсолютный timeout. Но 5s timeout прерывает легитимные long-running запросы.",
+                "if_it_were_true": "Reasoning-задачи (математика, код-генерация с o1) системно прерывались бы — фича просто не работала бы. Long-form summary документа на 50 страниц — тоже выпадал бы в timeout.",
+                "how_it_should_be": "Разделить TTFT (5s alert threshold) и total timeout (60s non-streaming / 600s streaming). Для reasoning-моделей — отдельный профиль с более длинными лимитами или async job."
+              },
+              "label": "B",
+              "text": "Единый таймаут 5 секунд для всех LLM-вызовов, включая streaming reasoning-моделей.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Без timeout зависший провайдер держит TCP-соединение и worker неопределённо долго. Это classic resource leak.",
+                "source_of_confusion": "Длинные генерации (long-form, reasoning) требуют больших timeout, и кто-то делает экстремальный шаг — убирает их совсем. Но «долго» ≠ «бесконечно».",
+                "if_it_were_true": "При даунтайме провайдера или network-stalling каждый запрос держал бы соединение часами. AWS ALB всё равно закроет через 60–4000s, но за это время thread pool на сервере exhausted, новые запросы не обрабатываются.",
+                "how_it_should_be": "Иметь верхний bound timeout (600s для streaming) даже для самых длинных операций; для совсем долгих — async job pattern, а не sync HTTP."
+              },
+              "label": "C",
+              "text": "Отключить таймауты полностью чтобы не прерывать длинные генерации.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Default 600s — это safe upper bound, но не оптимальный production-таймаут. При типичной non-streaming генерации в 5–15 секунд timeout 600s маскирует проблемы: при деградации провайдера пользователь ждёт 10 минут без понимания, что что-то не так.",
+                "source_of_confusion": "«SDK знает лучше» — наивная вера в default values. Defaults делают safe для совместимости, не optimal для UX.",
+                "if_it_were_true": "При медленном провайдере пользователи смотрели бы на «загрузка...» по 5–10 минут без feedback. TTFT-метрики не настроены, проблему обнаружат через жалобы пользователей.",
+                "how_it_should_be": "Явно настраивать timeout под expected duration операции и иметь TTFT-мониторинг с алертом на ранние стадии деградации."
+              },
+              "label": "D",
+              "text": "Использовать default timeout SDK (600 сек у OpenAI) для всех запросов без явной настройки.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Model routing (small → large escalation)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Это «безопасный» подход, но экономически неоптимальный. GPT-4o input $2.50 / output $10.00 за миллион токенов; GPT-4o-mini — $0.15 / $0.60. На простых FAQ-задачах разница в качестве минимальна, а cost — 16×.",
+                "source_of_confusion": "«Лучшая модель — для всего» — интуитивно правильно. На практике 60–80% запросов в типичном чат-приложении — простые: «как сменить пароль», «где найти счёт» — для них Haiku/Mini достаточно.",
+                "if_it_were_true": "При 1M запросов/день средняя стоимость 1500 input + 500 output tokens = $0.0088 на GPT-4o, итого $8800/день. На GPT-4o-mini — $562/день. Это разница $8 млн/год.",
+                "how_it_should_be": "Использовать cascade routing: дешёвая модель first, escalation к мощной только при низкой confidence или сложных задачах."
+              },
+              "label": "A",
+              "text": "Всегда использовать самую мощную модель (GPT-4o, Claude Opus) для всех запросов независимо от сложности.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Дешёвые модели (GPT-3.5-turbo, Haiku) не справляются с complex reasoning — code generation, многошаговая логика, нюансы языка. Quality degradation теряет пользователей, что дороже экономии токенов.",
+                "source_of_confusion": "«Экономия важнее всего» — fokus на одной метрике cost без учёта retention и conversion. На деле LTV пользователя обычно > $10 — экономия $0.01 на запросе при потере 1% retention не окупается.",
+                "if_it_were_true": "Сложные запросы (code-review, аналитика, multi-step planning) получали бы плохие ответы — пользователи переходили бы к конкуренту. Анекдот: Cursor (AI code editor) пробовал в 2023 переключить на дешёвую модель — отток пользователей за неделю.",
+                "how_it_should_be": "Routing по сложности: дешёвая модель для FAQ/простых задач, дорогая — для сложных. Cascade + classifier."
+              },
+              "label": "B",
+              "text": "Всегда использовать самую дешёвую модель для всех запросов чтобы минимизировать затраты.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Cascade routing работает в две стадии. Стадия 1: запрос идёт на дешёвую модель (Haiku / Mini / 3.5-turbo). Стадия 2: если ответ имеет низкую confidence (logprobs ниже порога), содержит маркеры неуверенности («I'm not sure», «It depends»), или классификатор-роутер заранее пометил запрос как сложный — эскалируем к premium-модели (Opus / GPT-4o). Альтернатива cascade — pre-routing через lightweight classifier (LogReg, BERT-base), который смотрит на промпт и выбирает модель сразу. Эффект: 50–80% cost saving для приложений со смешанным трафиком, при минимальной потере качества (1–3% accuracy drop в зависимости от подбора порога).",
+                "example": "Notion AI: 70% запросов отвечает Claude Haiku, 30% эскалируется к Sonnet/Opus. RouteLLM (open-source от Anyscale) реализует cascade routing с pre-trained классификаторами. Anthropic Bedrock + AWS Lambda: первый вызов Haiku, при low-confidence — Sonnet, при критичных — Opus.",
+                "when_to_apply": "Приложения со смешанным трафиком: ChatOps, customer support, search assistants, code completion. Особенно ценно при большом масштабе (>100K запросов/день), где экономия покрывает overhead на классификатор.",
+                "edge_cases": "Cascade-routing удваивает latency для эскалируемых запросов (Haiku 500ms + Opus 2s = 2.5s вместо 2s сразу к Opus). Решение: pre-routing через классификатор, или streaming-эскалация (если первая модель начала плохо отвечать — стоп и переключение). Калибровка confidence-порога — нетривиальна: слишком высокий → лишняя эскалация, слишком низкий → пропуск сложных запросов.",
+                "related": "[[llm-integration-patterns-interview#Q13]] cost tracking; [[llm-integration-patterns-interview#Q10]] semantic cache как ещё один cost saving; [[llm-integration-patterns-interview#Q17]] abstraction для multi-model."
+              },
+              "label": "C",
+              "text": "Cascade routing: пробуем маленькую модель first, эскалируем к большой при низкой confidence, сложном промпте или явном hint из классификатора.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Длина prompt не коррелирует со сложностью. «Сколько будет 17×23 в уме?» — короткий, но сложный для small-моделей; «Перепиши мой email чтобы был профессиональным: [3000 слов]» — длинный, но простой.",
+                "source_of_confusion": "Length-based routing проще classifier-based — это первая мысль для упрощения cascade. На деле сложность не аппроксимируется длиной.",
+                "if_it_were_true": "Короткие математические задачи попадали бы на Haiku и получали неверные ответы. Длинные но простые тексты эскалировались бы на Opus и тратили лишние деньги.",
+                "how_it_should_be": "Использовать классификатор (LogReg/BERT) обученный на task-complexity или метаданные запроса (intent classification, presence of code, presence of reasoning markers), а не просто длину."
+              },
+              "label": "D",
+              "text": "Routing на основе только длины prompt без учёта сложности задачи.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Semantic caching?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Это exact-match cache — самый простой вариант, но с очень низким hit rate для свободно-формулируемых запросов. «Как работает Docker?» и «Объясни Docker» — разные хэши, но одинаковый intent.",
+                "source_of_confusion": "Exact-match cache — стандартный паттерн в HTTP-кэшировании (Redis, CDN). Для LLM с natural language input он недостаточен, так как пользователи редко пишут идентичные строки.",
+                "if_it_were_true": "Hit rate был бы 5–10% даже на FAQ-системах с повторяющимися темами. 90% запросов всё равно идёт в LLM, экономия минимальна.",
+                "how_it_should_be": "Использовать embeddings и vector similarity для нахождения семантически близких запросов в кэше."
+              },
+              "label": "A",
+              "text": "Кэшировать по SHA-256 хэшу полного prompt-строки (exact match), TTL 1 час.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Semantic cache использует векторное представление запросов вместо строкового. Для каждого запроса вычисляется embedding (через OpenAI text-embedding-3-small, $0.02/1M tokens, или local sentence-transformers). При поиске считается cosine similarity с уже закэшированными embeddings; если максимум превышает порог (обычно 0.92–0.97) — возвращается кэшированный ответ без обращения к LLM. Threshold балансирует precision и recall: высокий (0.97) — точно, но низкий hit rate; низкий (0.85) — много hits, но риск ошибочных совпадений. Типичный hit rate на FAQ-системах: 30–60%.",
+                "example": "GPTCache (open-source, ~$10K stars на GitHub) использует sqlite + faiss/milvus для хранения. Redis Stack включает Redis Vector Search для in-memory semantic cache. Klarna AI assistant заявил экономию $40M/год за счёт agressive caching (комбинация semantic + prompt cache на стороне Anthropic). Производственный пример: `query_emb = openai.embeddings.create(input=q, model=\"text-embedding-3-small\").data[0].embedding; hit = vector_db.search(query_emb, top_k=1, threshold=0.95)`.",
+                "when_to_apply": "FAQ-системы, knowledge-base assistants, customer support где пользователи задают вопросы о повторяющихся темах. Не подходит для personalized-чата с контекстом пользователя.",
+                "edge_cases": "Drift: при обновлении контента ответы в кэше устаревают — нужен TTL или manual invalidation. Negation-bug: «Как настроить Redis?» и «Как НЕ настраивать Redis?» имеют высокий cosine similarity, но противоположный intent — embeddings не всегда улавливают такие нюансы. Personalization: если ответы зависят от user_id (платный план, регион) — кэш должен быть per-user или включать эти атрибуты в ключ.",
+                "related": "[[llm-integration-patterns-interview#Q11]] prompt caching на стороне провайдера; [[llm-integration-patterns-interview#Q13]] cost tracking; [[llm-integration-patterns-interview#Q20]] cache hit rate как метрика."
+              },
+              "label": "B",
+              "text": "Embed query через embedding model → искать в vector DB top-k похожих запросов → при cosine similarity ≥ 0.95 вернуть кэшированный ответ; иначе вызов LLM и сохранение пары (embedding, response).",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Prefix-match создаёт ложные совпадения: «Docker swarm overlay network» и «Docker compose volumes» начинаются с «Docker» — для N=10 они попадают в один cache key.",
+                "source_of_confusion": "Prefix-hashing встречается в маршрутизации (URL routing, consistent hashing). Для семантического кэширования он не работает, так как смысл может радикально меняться после первых N символов.",
+                "if_it_were_true": "Cache pollution: первый запрос «Docker swarm setup» сохранил бы ответ, второй запрос «Docker volume permissions» получил бы тот же ответ. Пользователи увидели бы абсолютно неверный контент.",
+                "how_it_should_be": "Использовать embedding всего запроса (не префикс) и vector similarity для поиска."
+              },
+              "label": "C",
+              "text": "Кэшировать только первые N символов запроса (prefix-match) как ключ Redis.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Cosine similarity 0.50 — крайне низкий порог; на больших embedding-моделях даже несвязанные запросы имеют similarity 0.4–0.6 из-за общей структуры языка. На уровне 0.50 hit rate был бы высоким, но точность — катастрофически низкой.",
+                "source_of_confusion": "«Низкий threshold = больше hits» — наивная оптимизация cache hit rate без учёта качества. Правильный подход — оптимизировать (hit rate × precision), а не каждое по отдельности.",
+                "if_it_were_true": "«Как настроить Redis?» и «Как работает PostgreSQL?» могли бы дать similarity 0.55–0.65 — пользователь получил бы ответ про Redis на вопрос про PostgreSQL. Это хуже, чем отсутствие кэша.",
+                "how_it_should_be": "Threshold 0.92–0.97 в зависимости от embedding-модели и домена. Калибровать на validation-set: создать пары «семантически идентичные» и «семантически разные», выбрать threshold с максимальным F1."
+              },
+              "label": "D",
+              "text": "Устанавливать порог similarity 0.50 для максимального cache hit rate.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Prompt caching (provider-side)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Это типичная инверсия: кэшируется самая изменчивая часть. User queries уникальны (даже семантически близкие — текстуально разные), cache hit rate ~0%. Статический system prompt и документы при этом каждый раз отправляются на провайдер полной стоимостью.",
+                "source_of_confusion": "«Кэшировать на клиенте — дешевле» — общий принцип, но он применим к ответу, а не к запросу. Provider-side prompt caching работает наоборот: кэшируется prefix запроса на серверной стороне провайдера.",
+                "if_it_were_true": "Стоимость не снизилась бы — большой system prompt (5000+ токенов с документами) каждый раз обрабатывался бы полной ценой $0.015/1K input tokens на GPT-4o.",
+                "how_it_should_be": "Пометить статический prefix через `cache_control: ephemeral` (Anthropic) или использовать automatic prefix caching (OpenAI с октября 2024)."
+              },
+              "label": "A",
+              "text": "Кэшировать динамическую часть prompt (user query) на стороне клиента в Redis перед отправкой.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Anthropic кэширует только prefix до помеченной точки. Если пометить user message — кэширование не работает, так как каждый user message уникален. Провайдер ищет cached prefix, не находит и обрабатывает весь prompt с нуля.",
+                "source_of_confusion": "«Чем больше пометил — тем больше кэшируется» — наивное мышление. На деле cache работает на основе exact-prefix match, и динамические части ломают совпадение.",
+                "if_it_were_true": "Cache miss на 100% запросов — потрачены токены на `cache_control` overhead без выгоды. Стоимость даже немного выше, чем без кэша.",
+                "how_it_should_be": "Пометить только статичный начальный prefix (system prompt + documents); user message добавляется в конце без cache_control."
+              },
+              "label": "B",
+              "text": "Добавить `cache_control: {\"type\": \"ephemeral\"}` ко всему prompt, включая user message в конце.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Provider-side prompt caching кэширует уже обработанные внутренние представления токенов на стороне провайдера. У Anthropic это явный механизм: к блоку контента добавляется `cache_control: {\"type\": \"ephemeral\"}`, и блоки до этой точки кэшируются на 5 минут (можно extended на 1 час). При следующем запросе с тем же prefix — cached токены тарифицируются по сниженной цене ($0.30/1M вместо $3.00/1M на Claude Sonnet, скидка 90%). У OpenAI — автоматический prefix cache с октября 2024: блоки от 1024 токенов кэшируются автоматически, скидка 50% на input tokens. У GPT-4.1 — расширенные возможности.",
+                "example": "RAG-приложение с 10K-токеновым system prompt (большая инструкция + 5 документов) и переменным user query 200 токенов. Без cache: 10200 × $3.00/1M = $0.0306 per request. С Anthropic prompt cache: 10000 × $0.30/1M + 200 × $3.00/1M = $0.0036 per request. Экономия 88%. На 1M запросов/месяц — $30K saved. Notion использует prompt caching для AI features с большим system prompt; Cursor — для code context.",
+                "when_to_apply": "RAG с большим стабильным system prompt и документами; chat agents с длинной инструкцией; few-shot prompts с большим количеством примеров. Не подходит, если каждый запрос имеет уникальные документы (тогда префикс меняется и кэш не работает).",
+                "edge_cases": "TTL ephemeral cache — 5 минут (Anthropic) или auto-evicted у OpenAI; для нечастых запросов кэш «остывает» и преимущества теряются. Cache invalidation при изменении system prompt — даже один токен в prefix ломает совпадение и сбрасывает кэш. Минимальный размер блока для кэширования — 1024 токена у Anthropic, 1024 у OpenAI; меньшие блоки не кэшируются. Write-cost: первый запрос с cache_control стоит дороже обычного (1.25× у Anthropic) — выгода появляется со 2-го использования того же prefix.",
+                "related": "[[llm-integration-patterns-interview#Q10]] semantic cache на уровне приложения; [[llm-integration-patterns-interview#Q13]] cost tracking; [[llm-integration-patterns-interview#Q12]] batching API."
+              },
+              "label": "C",
+              "text": "Пометить статичный system prompt и RAG-документы через `cache_control: {\"type\": \"ephemeral\"}` (Anthropic) или полагаться на automatic prefix cache (OpenAI) — даёт 90% скидку на cached tokens (Anthropic), 50% на OpenAI.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "LLM API не поддерживает HTTP cache semantics — каждый запрос уникален с точки зрения inference engine, и провайдер не выдаёт ETag-заголовки. CDN не понимает семантику LLM и не может валидно кэшировать.",
+                "source_of_confusion": "HTTP-кэширование — стандартный паттерн для статичных ресурсов, и кто-то распространяет его на API. Для LLM-эндпоинтов (POST с уникальным body) это не работает: CDN кэширует только GET-запросы по дефолту.",
+                "if_it_were_true": "Если включить CDN-кэширование POST вручную — все пользователи получали бы одинаковые ответы на одинаковые запросы, что нарушает personalization. И ETag сложно валидировать на изменения внутри JSON-body.",
+                "how_it_should_be": "Использовать application-level cache (semantic cache в Redis Vector Search) и provider-side prompt cache (Anthropic ephemeral / OpenAI automatic)."
+              },
+              "label": "D",
+              "text": "Использовать HTTP ETag-заголовки для кэширования prompt на CDN-уровне (Cloudflare, CloudFront).",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Batching API requests?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "OpenAI и Anthropic предлагают Batch API для асинхронной обработки в обмен на скидку. Workflow: (1) подготовить JSONL-файл, где каждая строка — отдельный API-request с custom_id; (2) загрузить через `client.files.create(file=open(\"requests.jsonl\"), purpose=\"batch\")`; (3) создать batch job `client.batches.create(input_file_id=..., endpoint=\"/v1/chat/completions\", completion_window=\"24h\")`; (4) polling статуса каждые несколько минут; (5) когда `status=\"completed\"` — скачать output-файл с результатами. SLA — 24 часа (обычно реально 30 минут–6 часов). Скидка — 50% на input и output tokens.",
+                "example": "Bulk classification: классифицировать 100K customer support tickets по теме. Sync API: 100K × 500 tokens × $0.0025/1K = $125; Batch API: $62.5, экономия $62.5. Используется в: bulk-генерация embeddings, ночные ETL-пайплайны (агрегация инсайтов из логов), генерация SEO-контента, перевод корпуса документов. Anthropic Batch API запущен октябрь 2024, OpenAI — апрель 2024.",
+                "when_to_apply": "Bulk-задачи без требования real-time: классификация, embedding-генерация, summary длинных документов, синтетическая data generation для fine-tuning. Любой workflow, где задержка несколько часов приемлема и объём > 10K запросов.",
+                "edge_cases": "Limit на размер batch: OpenAI — 50K requests / 200MB JSONL / 90K queued requests; превышение — нужно split. Не подходит для streaming — Batch API возвращает completed responses, не stream. Failed requests в batch не retry'ятся автоматически — нужна логика для обработки rows с error. Поддерживается не для всех моделей: o1-preview/o1-mini могут не поддерживать (проверять docs). Бюджет: batch jobs учитываются в общем rate limit аккаунта.",
+                "related": "[[llm-integration-patterns-interview#Q13]] cost tracking; [[llm-integration-patterns-interview#Q25]] background jobs паттерн; [[llm-integration-patterns-interview#Q9]] model routing для дополнительной экономии."
+              },
+              "label": "A",
+              "text": "Async Batch API: загрузить JSONL-файл с requests, дождаться обработки через несколько часов (до 24h SLA), получить результаты со скидкой 50%.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Это application-level batching (micro-batching), а не Batch API. Он действительно может улучшить throughput за счёт меньшего количества HTTP-соединений, но не даёт 50% скидку — это скидка только за async Batch API провайдера.",
+                "source_of_confusion": "Слово «batching» используется в двух разных контекстах: application-level (объединение в одном HTTP) и provider-level (async batch processing). Они дают разные эффекты.",
+                "if_it_were_true": "Sync batching увеличивает latency для первых запросов в буфере (ждут пока соберётся пачка). При этом OpenAI sync API не принимает несколько запросов в одном вызове — нужны отдельные HTTP-запросы. Никакой 50%-скидки.",
+                "how_it_should_be": "Использовать Batch API через JSONL-файл + асинхронный poll — это и есть legitimate batching с дисконтом."
+              },
+              "label": "B",
+              "text": "Собирать sync-запросы в буфер на стороне приложения и слать пачками каждые 100 ms для снижения latency.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Это async parallel calls к sync API, что повышает throughput, но не даёт 50%-скидку. Это просто параллелизм на стороне клиента, не Batch API.",
+                "source_of_confusion": "Слово «batch» в asyncio.gather (параллельная обработка списка) вводит в заблуждение. Это разные вещи: async parallel и provider Batch API.",
+                "if_it_were_true": "Параллельный gather просто быстрее исчерпает rate limits (RPM/TPM лимиты) — стоимость та же, но throughput ограничен лимитами быстрее. Без скидки.",
+                "how_it_should_be": "Использовать gather для real-time параллелизма (одновременная обработка нескольких пользователей), а Batch API — для bulk non-realtime операций со скидкой."
+              },
+              "label": "C",
+              "text": "Параллельно слать sync-запросы через `asyncio.gather()` для удвоения throughput.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Batch API имеет SLA 24 часа — пользователь не может ждать столько на ответ в чате. Это для bulk-задач, а не для интерактивных.",
+                "source_of_confusion": "«50% скидка» звучит привлекательно, и кто-то может попытаться применить везде. Но скидка получается ценой latency.",
+                "if_it_were_true": "Пользователь спрашивает в чате, получает ответ через 6 часов — продукт неюзабелен. Конкуренты с обычным sync API выигрывают на UX.",
+                "how_it_should_be": "Использовать Batch API только для bulk и async-задач (классификация, ETL, summary длинных документов offline); для chat — sync API с streaming."
+              },
+              "label": "D",
+              "text": "Применять Batch API для real-time chat с пользователями ради экономии.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Cost tracking per user / feature?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Provider dashboard показывает агрегат по модели, но не по фичам приложения. Если расходы выросли на 30%, неизвестно — за счёт нового RAG-фичи или роста пользователей.",
+                "source_of_confusion": "«Провайдер уже считает токены» — да, но на стороне приложения. Чтобы атрибутировать к user/feature — нужно записывать на своей стороне.",
+                "if_it_were_true": "При cost runaway неизвестно, кто причина. Невозможно ввести quota enforcement (block free-tier user после $1/день). Невозможно посчитать unit economics (cost per active user, cost per feature).",
+                "how_it_should_be": "Записывать структурированные метрики per-request с user_id, feature, model, tokens, cost, latency — в Postgres/BigQuery/Snowflake."
+              },
+              "label": "A",
+              "text": "Трекать только общий счёт от провайдера (раз в день из их dashboard) без разбивки по user_id и feature.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "LLM-провайдеры тарифицируют по токенам, не по времени. Время вызова коррелирует с количеством output-токенов, но также зависит от latency сети, нагрузки на провайдер, model variance.",
+                "source_of_confusion": "Для compute-resources (EC2, Lambda) tарификация идёт по времени; кто-то распространяет этот mental model на LLM. Неверно.",
+                "if_it_were_true": "Длинные ответы занижались бы (если генерация быстрая, time × rate < tokens × rate). Короткие ответы при медленной сети завышались бы. Stored cost не совпадал бы с invoice от провайдера.",
+                "how_it_should_be": "Использовать `response.usage.prompt_tokens` и `response.usage.completion_tokens` из SDK-ответа, умножать на актуальные rates модели."
+              },
+              "label": "B",
+              "text": "Считать стоимость по времени вызова API без учёта token usage.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Production cost tracking требует per-request гранулярности. После каждого LLM-вызова в pipeline пишется структурированная запись с: input_tokens (из `usage.prompt_tokens`), output_tokens, model name, рассчитанный cost (token counts × актуальные rates из конфига), user_id, feature/endpoint, request_id (для tracing), timestamp, cache_hit (для semantic cache attribution). Эти записи агрегируются в OLAP-хранилище (ClickHouse, BigQuery, Snowflake), визуализируются в Grafana/Looker/Metabase. На основе этих данных строятся: cost per active user (DAU/MAU), cost per feature (для приоритизации оптимизаций), anomaly detection (alert при отклонении > 2σ от baseline), quota enforcement в реальном времени.",
+                "example": "Helicone (proxy-based): обернуть OpenAI client → автоматический tracking всех вызовов с UI. Langfuse: SDK с явными `langfuse.trace()` блоками для multi-step pipeline. Postgres + Grafana: своя таблица `llm_calls(id, user_id, feature, model, in_tokens, out_tokens, cost_cents, latency_ms, cache_hit, ts)` + dashboard с фильтрами. Klarna заявила, что детальный cost tracking позволил им увидеть, что AI handles 700 staff workload и переалоцировать ресурсы.",
+                "when_to_apply": "Любая production LLM-система. Критично для multi-tenant (SaaS с tier-based pricing) и для бюджетных ограничений (free-tier limits).",
+                "edge_cases": "Cardinality: per-user × per-feature × per-model даёт миллионы уникальных серий — Prometheus/TSDB могут не справиться, нужны OLAP-системы. Streaming: при failed mid-stream вызове usage может отсутствовать — нужно estimating tokens по chunks. Caching: при cache hit cost = 0, но это нужно явно записать (иначе аналитика «cost = 0 значит ничего не было» — теряем visibility). Rates меняются: при изменении price у провайдера старые записи остаются с историческими rates, новые — с новыми; для unit economics нужно фиксировать price snapshot per record.",
+                "related": "[[llm-integration-patterns-interview#Q20]] что трекать в LLM observability; [[llm-integration-patterns-interview#Q15]] per-user rate limits на основе cost; [[llm-integration-patterns-interview#Q22]] Helicone/Langfuse."
+              },
+              "label": "C",
+              "text": "Записывать на каждый запрос: input_tokens, output_tokens, model, user_id, feature, request_id, cost_usd (рассчитанный из tokens × rate), latency, cache_hit — в Postgres/ClickHouse/BigQuery.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Daily aggregation не даёт real-time видимости и атрибуции. Provider billing API возвращает агрегаты по модели/дате, не по features приложения.",
+                "source_of_confusion": "«Раз в сутки достаточно для финансовых отчётов» — для финансов да, но не для operational cost control.",
+                "if_it_were_true": "Cost runaway обнаружился бы только на следующий день — за ночь могли потерять тысячи долларов на bug (например, infinite loop в agent, который повторно вызывает LLM). Невозможно реагировать на анамалии в реальном времени.",
+                "how_it_should_be": "Real-time per-request tracking в OLAP-хранилище + alert на rate-of-change (cost per hour, per minute)."
+              },
+              "label": "D",
+              "text": "Агрегировать стоимость только раз в сутки через batch запрос к provider billing API.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Token bucket для LLM API?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Это reactive подход без pre-emptive limiting. При burst-нагрузке все параллельные запросы упираются в 429 одновременно, retry с exponential backoff создаёт «storm»: все клиенты ретраят в одно время, снова получают 429, ещё больше backoff, throughput падает в разы.",
+                "source_of_confusion": "«Провайдер сам ограничит — зачем дублировать?» — наивный подход. Pre-emptive limiting на стороне приложения сглаживает нагрузку и избегает 429-storm.",
+                "if_it_were_true": "При 200 RPS burst на лимите 100 RPS провайдера: 100 запросов уйдут успешно, 100 — получат 429. Retry через 1s — снова 200 RPS burst, снова 100 фейлятся. Throughput колеблется на 50% от capacity, latency растёт из-за retries.",
+                "how_it_should_be": "Реализовать token bucket / leaky bucket на стороне приложения, чтобы клиент сам ограничивал rate до лимита провайдера."
+              },
+              "label": "A",
+              "text": "Отправлять все запросы без ограничений со стороны приложения и обрабатывать 429 от провайдера через retry с backoff.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Token bucket — это алгоритм rate limiting, где bucket «наполняется» токенами с постоянной скоростью (`rate` токенов в секунду) до максимума (`capacity`). Каждый вызов потребляет 1 токен; если bucket пуст — вызов rejected (или ждёт следующего токена). Это даёт две гарантии: long-term rate не превышает `rate` (sustained throughput), но кратковременные bursts до `capacity` разрешены. Для LLM это идеально: провайдеры обычно дают burst-capacity (например, OpenAI Tier 1: 500 RPM = 8.3 RPS sustained, но burst до 10 RPS короткие промежутки). Pre-emptive limiting предотвращает 429 от провайдера, throughput стабилен.",
+                "example": "`from token_bucket import TokenBucket; bucket = TokenBucket(rate=100, capacity=200); if not bucket.consume(1): raise RateLimitedError(\"local limit\")`. Альтернативные libs: aiolimiter (async), ratelimit (sync). Для distributed rate limiting — Redis: `r.eval(lua_script, keys=[\"bucket:openai\"], args=[rate, capacity])`. Production-пример: Stripe использует token bucket в client SDK для API; OpenAI Python SDK имеет встроенный (отключаемый) rate limiter с 1.30+.",
+                "when_to_apply": "Перед любым внешним API-вызовом с rate limits: LLM, payment, geocoding. Особенно ценен в high-concurrency сценариях (async fan-out, agent loops), где случайные burst неизбежны.",
+                "edge_cases": "Token bucket в memory — per-process: при 5 pods приложения каждый имеет свой bucket, фактический rate = 5 × locallimit. Для multi-pod нужен Redis-based bucket. Token-based vs request-based limits: OpenAI лимитирует и RPM, и TPM (tokens-per-minute) — для TPM нужно знать длину prompt до вызова (по embedding или approx). Burst-capacity: слишком большой capacity нивелирует rate limit (можно за 1 сек выжать весь bucket); подбирать под реалистичные паттерны нагрузки.",
+                "related": "[[llm-integration-patterns-interview#Q15]] per-user rate limits; [[llm-integration-patterns-interview#Q16]] distributed rate limiting через Redis; [[llm-integration-patterns-interview#Q5]] retry-стратегия для 429."
+              },
+              "label": "B",
+              "text": "Token bucket с rate=100 RPS, capacity=200 (burst): при исчерпании bucket — немедленно `RateLimitedError` без обращения к API; pre-emptive предотвращает 429 от провайдера.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Fixed window — простой, но имеет проблему double-burst на границе окон. В минуте N в последние 5 секунд можно отправить 100 запросов, в минуте N+1 в первые 5 секунд — ещё 100, итого 200 запросов за 10 секунд при лимите 100 RPM.",
+                "source_of_confusion": "Fixed window проще реализовать («увеличиваем счётчик в Redis, обнуляем через 60s»). Подходит для грубого rate limiting, но не для строгих внешних лимитов.",
+                "if_it_were_true": "На границе минут провайдер всё равно вернёт 429 — на коротком окне (10–15s sliding) rate превышен. Token bucket / sliding window не имеют этой проблемы.",
+                "how_it_should_be": "Token bucket или sliding window log для точного limiting; fixed window — только для очень грубых ограничений."
+              },
+              "label": "C",
+              "text": "Fixed window counter: считать запросы в 1-минутном окне и блокировать при превышении.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Sleep-throttling — простой, но блокирует event loop предсказуемой задержкой. Не учитывает, что rate limit может позволить burst (10 запросов сразу, потом пауза), и теряет throughput.",
+                "source_of_confusion": "Sleep — самое прямолинейное решение для rate limiting. На деле оно serializes все запросы и не использует burst-capacity.",
+                "if_it_were_true": "При rate=100 RPS и `sleep(0.01)`: max 100 RPS даже при пустом bucket capacity. Concurrent calls не выигрывают — все ждут sleep последовательно (если не async). Latency растёт на 10ms на каждый вызов.",
+                "how_it_should_be": "Token bucket позволяет burst, не блокирует не нужные запросы, и работает корректно с concurrent calls."
+              },
+              "label": "D",
+              "text": "Throttle через `await asyncio.sleep(1/rate)` перед каждым запросом без учёта burst и concurrency.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Per-user rate limits?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Per-user rate limit реализуется через distributed counter с ключом, содержащим user_id и временное окно. Fixed window: `redis.incr(\"ratelimit:{user_id}:{minute_bucket}\")` + `expire(60s)`. Sliding window log: `ZADD ratelimit:{user_id} {timestamp} {request_id}` + `ZREMRANGEBYSCORE` для cleanup старых записей + `ZCARD` для текущего count. Лимиты настраиваются per-tier: free 10 RPM, pro 100 RPM, enterprise — через отдельную договорённость. При превышении возвращается HTTP 429 с заголовком `Retry-After: 60` и optionally `X-RateLimit-Remaining`, `X-RateLimit-Reset`.",
+                "example": "Stripe API: 100 RPS per-key, возвращает 429 с retry-after. OpenAI: TPM/RPM per-tier, видны в headers `x-ratelimit-remaining-requests`, `x-ratelimit-reset-requests`. В Python с redis: `count = redis.incr(key); if count == 1: redis.expire(key, 60); if count > limit: raise HTTPException(429)`. Production-grade: Kong API gateway с rate-limiting plugin, или Envoy с rate-limit service.",
+                "when_to_apply": "Любой multi-tenant SaaS с tier-based pricing. Особенно важно для LLM, где cost per request высокий и abuse может реально сжечь бюджет.",
+                "edge_cases": "Boundary effect у fixed window: пользователь может сделать 10 запросов в 12:00:59 и ещё 10 в 12:01:00 — суммарно 20 за 1 секунду на лимите 10 RPM. Sliding window решает это, но требует ZSET ops (медленнее). Cost-based limit: некоторые системы лимитируют не requests, а cost USD per period — справедливее для дорогих моделей. UX: 429 без explanation — плохо; нужны headers и понятное error message.",
+                "related": "[[llm-integration-patterns-interview#Q14]] token bucket для уровня приложения; [[llm-integration-patterns-interview#Q16]] distributed rate limit через Redis ZSET; [[llm-integration-patterns-interview#Q13]] cost tracking как основа cost-based limits."
+              },
+              "label": "A",
+              "text": "Redis INCR с TTL на ключ `ratelimit:{user_id}:{minute}` (fixed window) или ZSET для sliding window — превышение N запросов за минуту → HTTP 429 с `Retry-After`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Global limit защищает только от перерасхода provider quota, но не от user abuse. Один пользователь может выжечь весь бюджет, и другие получат RateLimitedError при попытке использовать продукт.",
+                "source_of_confusion": "«Лимит на провайдер уже есть» — да, но он защищает API-keys, не пользовательский experience. Нужен дополнительный слой per-user.",
+                "if_it_were_true": "Free-tier abuser посылает 1000 запросов в минуту — global quota исчерпан, paid users получают 429. Нет защиты по бизнес-модели.",
+                "how_it_should_be": "Per-user rate limit с tier-based лимитами (free: 10 RPM, pro: 100 RPM, enterprise: unlimited) + global limit как failsafe."
+              },
+              "label": "B",
+              "text": "Глобальный лимит на всё приложение без разбивки по пользователям и тарифам.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "In-memory counter работает только в single-instance. При Kubernetes HPA или multiple replicas каждый pod имеет свой counter — фактический лимит = N × locallimit.",
+                "source_of_confusion": "Простота реализации — `dict[user_id] = count` без внешних зависимостей. На single-pod работает, но при scaling ломается.",
+                "if_it_were_true": "При 3 replicas пользователь делает 30 запросов вместо 10. Pod restart теряет все counters — пользователь получает «новые» 10 квот.",
+                "how_it_should_be": "Использовать Redis (или другой distributed store) как single source of truth для counters; in-memory — только как L1 cache с правильной invalidation."
+              },
+              "label": "C",
+              "text": "In-memory counter в каждом instance приложения без синхронизации через Redis.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "IP не идентифицирует пользователя надёжно. Корпоративные сети используют NAT (сотни сотрудников за одним IP), VPN-провайдеры shared IP, мобильный CGNAT (тысячи устройств за одним IP).",
+                "source_of_confusion": "Rate limit по IP — стандарт для public API без auth (anti-DDoS). Для authenticated API не работает.",
+                "if_it_were_true": "Office workers за NAT блокируются взаимно — один коллега «съел» лимит, остальные не могут использовать продукт. Хакер с residential proxy pool (миллион IPs) обходит лимит вообще.",
+                "how_it_should_be": "Для authenticated API — лимит по user_id (или api_key для machine-to-machine); IP-based — только как дополнительный слой защиты от DDoS на anonymous endpoints."
+              },
+              "label": "D",
+              "text": "Rate limit по IP-адресу вместо user_id.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Distributed rate limiting (Redis)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Без shared state каждый pod имеет свой counter — limit нарушается пропорционально количеству replicas.",
+                "source_of_confusion": "«Локальный counter быстрее» — да, но не работает для distributed системы. Это базовая ошибка при первом scaling.",
+                "if_it_were_true": "При 5 pods и лимите 10 RPM на пользователя реальный лимит = 50 RPM (5×10). Horizontal autoscaling полностью обходит rate limit — увеличение replicas = пропорциональное увеличение abuse threshold.",
+                "how_it_should_be": "Использовать Redis (или другой shared store) как single source of truth для counters."
+              },
+              "label": "A",
+              "text": "In-memory HashMap в каждом pod без синхронизации между ними.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Sticky sessions нарушают load balancing: один pod может быть перегружен (если на нём «активные» пользователи), другие простаивают. При pod restart все counters теряются — пользователь получает свежий лимит.",
+                "source_of_confusion": "Sticky sessions решают проблему shared state «по-простому». Но создают новые проблемы: uneven load, потеря state при restart, сложная фильтрация для graceful shutdown.",
+                "if_it_were_true": "Pod handling «heavy» users перегружен и медленный; pod restart (rolling deploy) сбрасывает их state, abuser получает свежий лимит каждые 30 секунд.",
+                "how_it_should_be": "Использовать stateless pods + shared distributed store (Redis); load balancing работает корректно, state не теряется при restart."
+              },
+              "label": "B",
+              "text": "Sticky sessions чтобы каждый user всегда попадал на один pod.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Distributed rate limiting через Redis sorted set реализует sliding window log. Для каждого request: (1) `ZREMRANGEBYSCORE key 0 (now - window)` — удалить записи старше окна; (2) `ZCARD key` — посчитать активные записи; (3) если меньше лимита — `ZADD key now uuid()` + `EXPIRE key window`. Все три операции в Lua-скрипте `EVAL` для атомарности (иначе race condition между ZCARD и ZADD). Любой pod видит одинаковое состояние, distributed-consistency обеспечивается single-threaded моделью Redis. Альтернатива — token bucket в Redis через INCRBY + хитрая логика refill, но sliding window нативнее ложится на ZSET.",
+                "example": "Production setup: Redis Cluster для HA + Redis Sentinel для failover. Lua script: `local key=KEYS[1]; local now=tonumber(ARGV[1]); local window=tonumber(ARGV[2]); local limit=tonumber(ARGV[3]); redis.call('ZREMRANGEBYSCORE',key,0,now-window); local count=redis.call('ZCARD',key); if count<limit then redis.call('ZADD',key,now,ARGV[4]); redis.call('EXPIRE',key,window); return 1; else return 0; end`. Используется в Cloudflare, Stripe, GitHub API rate limiting.",
+                "when_to_apply": "Kubernetes deployment с HPA, где количество replicas меняется динамически. Multi-region setup, где нужна consistency через Redis cluster или Redis multi-region replication.",
+                "edge_cases": "Redis SPOF: если Redis недоступен — rate limiting не работает; нужен fallback (fail-open или fail-closed?). Latency overhead: каждый rate limit check добавляет 1–2 ms (Redis RTT) — для high-throughput может быть критично, тогда L1 cache в memory + L2 в Redis. Cardinality: миллионы пользователей × окна = много ключей в Redis; нужны правильные TTL для cleanup. Lua-script size: больший script — медленнее eval; для сложной логики использовать pipeline вместо одного eval.",
+                "related": "[[llm-integration-patterns-interview#Q15]] per-user rate limits концептуально; [[llm-integration-patterns-interview#Q14]] token bucket алгоритм; [[llm-integration-patterns-interview#Q20]] что трекать в observability."
+              },
+              "label": "C",
+              "text": "Sliding window через Redis sorted set (ZADD/ZREMRANGEBYSCORE/ZCARD) с Lua-скриптом для атомарности — все pods видят консистентный лимит, нет boundary-effect.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Атомарность через Lua — правильно, но fixed window сохраняет boundary-effect: 10 запросов в конце окна + 10 в начале следующего = 20 за 2 секунды на лимите 10 RPM.",
+                "source_of_confusion": "Fixed window проще для понимания (`INCR + EXPIRE`), и Lua добавляет атомарность. Но проблема не в атомарности — в самой схеме windowing.",
+                "if_it_were_true": "На границах окон пользователи могли бы делать burst 2× лимит, что подрывает суть rate limiting и создаёт неровную нагрузку на LLM-провайдера.",
+                "how_it_should_be": "Sliding window через ZSET (как в правильном варианте) или sliding window counter с weighted approach (взвешенный счёт текущего и предыдущего окна)."
+              },
+              "label": "D",
+              "text": "Использовать Lua-скрипты в Redis только для атомарности, но с fixed window вместо sliding.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем abstraction над provider?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "OpenAI-формат действительно популярен (LiteLLM, OpenRouter поддерживают его как «common»), но прямые вызовы SDK создают tight coupling. При смене провайдера, добавлении fallback, или A/B-тестировании моделей — нужно менять код во всех вызовах.",
+                "source_of_confusion": "«Не over-engineer, YAGNI» — справедливо для одного провайдера. При расширении до 2+ провайдеров или ожидании migration coupling начинает болеть.",
+                "if_it_were_true": "Anthropic выпускает Claude 5 с лучшим качеством по той же цене — нужно мигрировать. С прямыми вызовами OpenAI SDK по 50+ местам — недели работы, риск багов. С abstraction — один config-change.",
+                "how_it_should_be": "Создать тонкий interface `LLMClient` с методами `chat()`, `embed()`, `stream()` — это decouples приложение от вендора без значительного overhead."
+              },
+              "label": "A",
+              "text": "Напрямую вызывать OpenAI SDK везде в коде — формат стал де-факто стандартом, абстракция избыточна.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Узкий wrapper решает 10% проблемы. Retry — лишь один из cross-cutting concerns; fallback, caching, A/B testing, cost tracking, observability требуют общего слоя.",
+                "source_of_confusion": "Постепенное добавление wrappers — естественный путь evolution. Сначала retry, потом logging, потом caching — каждый отдельным wrapper. Получается «луковица» из 5 слоёв, сложная в поддержке.",
+                "if_it_were_true": "Дублирование кода: каждый сервис копирует retry, добавляет свой logging, своё caching. При смене провайдера — всё равно меняем код в каждом сервисе. Net result — overhead абстракции без её benefits.",
+                "how_it_should_be": "Единая abstraction layer (gateway или library), включающая все cross-cutting concerns. LiteLLM / Portkey именно это делают."
+              },
+              "label": "B",
+              "text": "Создавать wrapper только для retry-логики и оставлять остальное провайдер-специфичным.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Nginx работает на уровне HTTP-маршрутизации, не понимает семантику LLM. Он может балансировать по URL/method, но не делать intelligent routing по сложности промпта, не считать токены, не делать semantic caching.",
+                "source_of_confusion": "Nginx — стандартный gateway, и кажется логичным распространить его на LLM. Для простого reverse proxy подходит, но не для intelligent LLM routing.",
+                "if_it_were_true": "Нет model routing по сложности — все запросы идут на одну модель. Нет semantic caching — каждый запрос идёт в LLM. Нет cost tracking — нет visibility по features.",
+                "how_it_should_be": "LLM-specific gateway (Portkey, LiteLLM Proxy, Helicone), который понимает семантику запросов; nginx можно использовать перед ним для TLS termination и load balancing."
+              },
+              "label": "C",
+              "text": "Использовать HTTP gateway (nginx, Envoy) как единственный уровень абстракции.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Abstraction layer над LLM-провайдерами реализуется через adapter pattern: единый интерфейс `LLMClient` или функция `gateway.chat()`, под которым скрываются провайдер-специфичные адаптеры. Каждый адаптер транслирует унифицированные параметры в native формат провайдера (`max_tokens` vs `max_output_tokens`), нормализует ответы (OpenAI `choices[0].message.content` vs Anthropic `content[0].text`), маппит ошибки (rate limit, content moderation, server errors) в общую таксономию. Это даёт: (1) **migration** между провайдерами за config-change; (2) **A/B-тестирование** разных моделей на одной кодовой базе; (3) **fallback chain** прозрачно для приложения; (4) **centralized observability** — все вызовы проходят через один слой; (5) **cost tracking** в одном месте.",
+                "example": "LiteLLM Python: `from litellm import completion; response = completion(model=\"gpt-4o\", messages=[...])` — тот же вызов работает с `model=\"claude-opus-4-7\"`, `\"bedrock/claude-haiku\"`, `\"gemini/gemini-1.5-pro\"`, `\"ollama/llama3\"`. Production: Notion AI имеет внутренний LLMClient interface, поддерживающий OpenAI, Anthropic, Bedrock, On-prem Llama. Klarna AI Assistant — мульти-провайдер за gateway для cost-optimization.",
+                "when_to_apply": "Любой production-проект с LLM, который планирует жить > 6 месяцев. Особенно ценно для: enterprise с governance-требованиями (multi-vendor для compliance), стартапов до экономии (быстрый switch на дешёвую модель при росте трафика), critical systems с HA-требованиями (fallback между провайдерами).",
+                "edge_cases": "Lowest-common-denominator: абстракция теряет провайдер-специфичные фичи (OpenAI's `tools`, Anthropic's prompt caching, Google's `system_instruction`); либо escape-hatch для raw access, либо feature loss. Версионирование API: разные провайдеры эволюционируют независимо, абстракция должна успевать; LiteLLM имеет community-поддержку для этого. Performance: дополнительный слой добавляет 1–5 ms latency — обычно приемлемо для LLM-вызовов с 500+ ms TTFT.",
+                "related": "[[llm-integration-patterns-interview#Q18]] LiteLLM/Portkey/OpenRouter; [[llm-integration-patterns-interview#Q19]] нормализация параметров; [[llm-integration-patterns-interview#Q1]] LLM gateway концепция."
+              },
+              "label": "D",
+              "text": "Unified interface через adapter pattern: один метод `gateway.chat(model, messages, ...)` работает с OpenAI, Anthropic, Google, Bedrock — лёгкий switch, A/B-тестирование, fallback chain, centralized observability.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "LiteLLM, OpenRouter, Portkey?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Эти инструменты решают разные слои проблемы multi-provider. LiteLLM — open-source Python библиотека (можно как SDK in-process, можно как proxy-server), унифицирующая API 100+ моделей: OpenAI, Anthropic, Bedrock, Vertex, локальные через Ollama. OpenRouter — managed proxy-маркетплейс: один API key на их аккаунт, можно вызывать любую модель из их каталога, они проксируют к провайдерам и unified billing. Portkey — full-featured AI gateway: routing rules, fallback chains, semantic caching, guardrails (PII detection, content moderation), observability dashboard, prompt versioning; целит в enterprise. Helicone — близок к Portkey, но фокус на observability + caching, проще в self-host.",
+                "example": "LiteLLM SDK: `from litellm import completion; completion(model=\"claude-opus-4-7\", messages=[...])` — embedded в приложение. LiteLLM Proxy: deploy как docker-контейнер, приложение бьёт OpenAI-compatible endpoint. OpenRouter: использовать `https://openrouter.ai/api/v1` как base_url для OpenAI SDK, выбирать модель из их каталога (включая proprietary от Anthropic, exclusive on OpenRouter mistral-medium). Portkey: gateway между приложением и провайдерами с web UI для управления политиками.",
+                "when_to_apply": "LiteLLM — для встраивания в код без отдельной инфраструктуры (in-process SDK). OpenRouter — для экспериментов, когда нужно быстро попробовать 10+ моделей без подписок у каждого провайдера. Portkey/Helicone — для enterprise с requirements на governance, observability, compliance. Можно комбинировать: LiteLLM SDK + Helicone как observability proxy.",
+                "edge_cases": "Lock-in риск: OpenRouter добавляет наценку 5–20% over прямых вендоров, plus dependency на их availability. Portkey self-hosted требует поддержки инфраструктуры; managed — стоимость per request. LiteLLM как proxy добавляет network hop и SPOF; в продакшне Notion AI deploys multiple LiteLLM proxy pods за load balancer. Версии API провайдеров меняются — community-поддержка LiteLLM/OpenRouter актуальностью разная.",
+                "related": "[[llm-integration-patterns-interview#Q17]] зачем abstraction; [[llm-integration-patterns-interview#Q22]] Helicone/Langfuse/LangSmith observability; [[llm-integration-patterns-interview#Q1]] LLM gateway концепция."
+              },
+              "label": "A",
+              "text": "LiteLLM = Python SDK / proxy для 100+ моделей; OpenRouter = proxy-marketplace с одним API key для разных моделей; Portkey/Helicone = enterprise AI gateway с observability, caching, guardrails.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "LiteLLM не имеет отношения к fine-tuning — это inference-layer библиотека для унифицированного вызова моделей. OpenRouter поддерживает 100+ моделей разных вендоров, не только OpenAI. Portkey — full gateway с routing, fallback, caching, observability, guardrails.",
+                "source_of_confusion": "Названия инструментов не самоописательны, и без чтения docs легко перепутать их роли. «LiteLLM» звучит как «легкая LLM», что наводит на мысль о training.",
+                "if_it_were_true": "Команда выбрала бы LiteLLM, ожидая fine-tuning, и не получила бы того, что нужно. Время на переоценку и поиск правильного tool.",
+                "how_it_should_be": "Прочитать docs: LiteLLM = unified inference SDK; OpenRouter = multi-vendor marketplace; Portkey = full AI gateway."
+              },
+              "label": "B",
+              "text": "LiteLLM — только для fine-tuning, OpenRouter — только для OpenAI моделей, Portkey — только для caching.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Helicone — observability proxy с фокусом на cost tracking и caching, vendor-agnostic. LangSmith — proprietary tool от LangChain, tightly coupled с LangChain framework, фокус на tracing prompt chains и evaluation. Это разные продукты с частично пересекающейся функциональностью.",
+                "source_of_confusion": "Оба относятся к LLM observability, и без deep-dive легко считать их взаимозаменяемыми. На деле выбор зависит от того, используете ли LangChain.",
+                "if_it_were_true": "Команда без LangChain выбрала бы LangSmith и получила сложности интеграции с не-LangChain кодом (значительный boilerplate). Reversely, команда с LangChain выбрала бы Helicone и потеряла бы tight integration с LangChain tracing.",
+                "how_it_should_be": "Без LangChain — Helicone / Langfuse / Phoenix; с LangChain — LangSmith как естественный выбор."
+              },
+              "label": "C",
+              "text": "Helicone и LangSmith — идентичные инструменты, оба для prompt versioning.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Portkey предоставляет retry, fallback, circuit breaker как gateway features, но это не значит, что приложение может полностью полагаться на него без layered defense.",
+                "source_of_confusion": "«Gateway делает всё» — упрощение архитектуры. На деле resilience должна быть layered: приложение имеет свои retry/timeout, gateway имеет свои, провайдер имеет свои.",
+                "if_it_were_true": "При недоступности Portkey приложение полностью лежит — нет fallback на прямые вызовы провайдеров. Single point of failure.",
+                "how_it_should_be": "Использовать Portkey для централизованных policies, но иметь fallback в приложении (например, при недоступности Portkey — direct call с минимальным retry) и client-side circuit breaker как safety net."
+              },
+              "label": "D",
+              "text": "Portkey заменяет необходимость в retry и circuit breaker логике в приложении.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Model parameter normalization?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Anthropic не поддерживает `presence_penalty` и `frequency_penalty` — API вернёт 400 или проигнорирует. Игнорирование ошибок скрывает misconfiguration и приводит к разному поведению на разных провайдерах.",
+                "source_of_confusion": "«Try-except для всего» — приём в Python, но не для API-параметров. Тихое игнорирование создаёт hidden bugs.",
+                "if_it_were_true": "Разработчик настраивает `presence_penalty=2.0` для уменьшения повторений; на OpenAI работает, на Anthropic ignored, при fallback качество ответов разное — пользователи замечают inconsistency.",
+                "how_it_should_be": "Иметь явный маппинг параметров: common-набор (temperature, max_tokens, top_p) транслируется во все вендоры; provider-specific (`presence_penalty`) применяется только к OpenAI, для других игнорируется с warning в логи."
+              },
+              "label": "A",
+              "text": "Передавать все параметры всем providers и игнорировать ValidationError при неподдерживаемых.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Корректная нормализация — это explicit маппинг параметров. Common-набор: `temperature` (везде одинаково), `max_tokens` (OpenAI/Anthropic) ↔ `maxOutputTokens` (Google), `top_p` (везде). Provider-specific: `presence_penalty`/`frequency_penalty` (OpenAI only), `top_k` (Anthropic/Google), `stop_sequences` (Anthropic) vs `stop` (OpenAI). Abstraction layer должен: (1) валидировать input через schema; (2) маппить common-параметры на native имена; (3) применять provider-specific только к поддерживающим вендорам, иначе warn; (4) предоставлять escape hatch (`extra_body={...}`) для вызова native-фич без потери абстракции. LiteLLM реализует это в `litellm.completion()`: можно передавать любые параметры, оно само маппит на provider's native API.",
+                "example": "LiteLLM: `completion(model=\"claude-opus-4-7\", messages=[...], temperature=0.7, max_tokens=1000)` — параметры автоматически транслируются в Anthropic-формат (`max_tokens` в Anthropic тоже называется `max_tokens`, но в Google — `maxOutputTokens`). Для provider-specific: `completion(model=\"claude-opus-4-7\", ..., metadata={\"cache_control\": \"ephemeral\"})` — escape hatch для Anthropic prompt caching, который LiteLLM передаёт через `extra_body`.",
+                "when_to_apply": "Любая abstraction layer над 2+ провайдерами. Особенно ценно при switching между моделями для A/B testing или fallback: код приложения остаётся прежним, abstraction скрывает provider-specific.",
+                "edge_cases": "Lowest-common-denominator: некоторые provider-specific фичи теряются (Anthropic prompt caching, OpenAI structured outputs); решение — escape hatch с явным указанием provider. Default-значения отличаются: OpenAI temperature default 1.0, Anthropic — 1.0, но behavior разный — нужно явно ставить желаемое. Tokenization разная между вендорами: 1000 tokens в OpenAI ≠ 1000 tokens в Anthropic, нужен conversion при сравнении cost.",
+                "related": "[[llm-integration-patterns-interview#Q17]] зачем abstraction; [[llm-integration-patterns-interview#Q18]] LiteLLM реализация; [[llm-integration-patterns-interview#Q7]] fallback chain."
+              },
+              "label": "B",
+              "text": "Abstraction layer маппит common-параметры (temperature, max_tokens, top_p) на native имена каждого провайдера, валидирует input и обрабатывает provider-specific через optional/escape hatch; LiteLLM делает это автоматически.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Без abstraction каждый сервис имеет свой конфиг per-provider — при добавлении нового сервиса или провайдера обновления O(services × providers).",
+                "source_of_confusion": "Per-service config — естественный путь evolution в микросервисной архитектуре. Без gateway каждый микросервис управляет своими LLM-вызовами.",
+                "if_it_were_true": "При добавлении Bedrock как нового fallback — нужно обновить N сервисов, добавив credentials, retry logic, parameter mapping. Месяцы работы для команды из 20 сервисов.",
+                "how_it_should_be": "Centralize provider configuration в gateway или shared library; сервисы работают с unified interface."
+              },
+              "label": "C",
+              "text": "Поддерживать отдельные конфиг-файлы для каждого провайдера в каждом сервисе.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Lowest-common-denominator approach теряет важные параметры. `max_tokens` обязателен у Anthropic (без него — error); `top_p` важен для качества; `stop` нужен для structured outputs.",
+                "source_of_confusion": "«Самый безопасный путь — общее подмножество» — но потеря фич не оправдывается простотой.",
+                "if_it_were_true": "Без `max_tokens` Anthropic API возвращает 400; без `top_p` качество reasoning хуже на сложных задачах; без `stop` невозможно сделать structured output (нужно для JSON-режима).",
+                "how_it_should_be": "Маппить максимально широкий common-набор + предоставлять escape hatch для provider-specific без потери абстракции."
+              },
+              "label": "D",
+              "text": "Использовать только параметры, поддерживаемые всеми провайдерами (только `temperature`).",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что трекать в LLM systems?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Базовый HTTP observability недостаточен для LLM. Без token counts невозможно делать cost tracking — главная боль production-LLM. Без user_id нельзя атрибутировать расходы.",
+                "source_of_confusion": "Standard web observability (RED method: Rate/Errors/Duration) хорошо работает для CRUD-API. LLM требует расширенный набор: tokens, cost, cache hit, quality signals.",
+                "if_it_were_true": "При неожиданном росте расходов на 50% — невозможно определить причину: новый feature, рост пользователей, регрессия модели. Слепое сокращение бюджета без понимания.",
+                "how_it_should_be": "Расширить observability LLM-специфичными метриками: tokens, cost, TTFT, cache hit rate, user/feature attribution."
+              },
+              "label": "A",
+              "text": "Трекать только HTTP status code и total latency, без token metrics и user_id.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Логирование только ошибок не даёт baseline для нормальной работы. TTFT 3 секунд — это плохо или хорошо? Без baseline неизвестно.",
+                "source_of_confusion": "Sampling успешных запросов — приём для снижения log volume в high-traffic. Полное игнорирование — другая крайность.",
+                "if_it_were_true": "Деградация TTFT с 800 ms до 2.5 секунд (медленный, но не fail) — не замечена. Падение cache hit rate с 60% до 20% (cost spike) — не замечено. Регрессия качества модели — никак не отслежена.",
+                "how_it_should_be": "Sampling успешных запросов (10–100% в зависимости от volume) + full logging ошибок."
+              },
+              "label": "B",
+              "text": "Логировать только ошибки (4xx, 5xx) без успешных запросов.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Business metrics — lagging indicators: они отражают проблему через дни-недели. LLM-specific метрики (TTFT, cost, cache hit, error rate) — leading indicators, позволяющие реагировать в часы-минуты.",
+                "source_of_confusion": "«Что нельзя измерить деньгами — неважно» — упрощение. Бизнес-метрики важны, но недостаточны.",
+                "if_it_were_true": "Деградация TTFT с 1s до 5s — пользователи начинают уходить через 2 недели — retention падает. Только тогда начинается investigation. С leading indicators проблема решается за день.",
+                "how_it_should_be": "Комбинировать LLM operational metrics (TTFT, error rate, cost) с business metrics (conversion, retention, satisfaction); operational — для быстрой реакции, business — для долгосрочного направления."
+              },
+              "label": "C",
+              "text": "Трекать только бизнес-метрики (conversion, engagement, retention) без LLM-специфичных.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Production LLM observability требует трёх уровней. Per-request (granular tracing): какая модель, сколько токенов на input/output, рассчитанный cost, TTFT и total latency, user_id для attribution, feature/endpoint, request_id для tracing, hit или miss кэша, флаг moderation, status и error. Per-system (aggregated): RPS, error rate с разбивкой по кодам (429 vs 5xx vs timeout), cost per hour (alerting на отклонения), cost per feature (для приоритизации оптимизации), provider distribution (если multi-vendor — какая модель сколько обрабатывает). User-level: satisfaction (thumbs up/down feedback), feature usage (DAU per feature), cost per user (unit economics). Эти данные пишутся в OLAP (ClickHouse, BigQuery), визуализируются в Grafana/Looker, имеют alerts на отклонения (Prometheus AlertManager, PagerDuty).",
+                "example": "Klarna AI Assistant: трекает TTFT, cost per query, satisfaction (thumbs up rate), и атрибуцию по customer segment. Это позволило увидеть, что AI handles workload эквивалентный 700 staff. Production-стэк: app → OpenTelemetry → Collector → Tempo (traces) / Prometheus (metrics) / Loki (logs); cost в BigQuery; dashboards в Grafana. Helicone и Langfuse дают готовые dashboards для LLM-метрик.",
+                "when_to_apply": "Любая production LLM-система. Минимум: per-request tokens+cost+TTFT, ошибки. Optimum: полный стэк с satisfaction signals и cost attribution.",
+                "edge_cases": "PII в логах: пользовательские prompt могут содержать PII — нужна redaction перед хранением. Cardinality: per-user × per-feature × per-model — миллионы временных серий, нужно OLAP, а не Prometheus для high-cardinality. Cost recording: при streaming usage может быть incomplete (если client cancelled); нужно estimate из chunks. Sampling: для high-volume полное хранение каждого запроса дорого — sampling 10–100% с full sampling on errors.",
+                "related": "[[llm-integration-patterns-interview#Q13]] cost tracking детально; [[llm-integration-patterns-interview#Q21]] tracing prompt chains; [[llm-integration-patterns-interview#Q23]] TTFT/TPOT."
+              },
+              "label": "D",
+              "text": "Per-request: model, input_tokens, output_tokens, cost, TTFT, total_latency, user_id, feature, request_id, cache_hit, moderation_flagged; per-system: RPS, error rate (by code), cost per hour/day/feature; user-level: satisfaction (thumbs up/down), feature usage.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Tracing prompt chains?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Без общего trace_id или correlation ID невозможно связать retrieval + rerank + llm_call для одного запроса. Debugging требует ручной корреляции по timestamps, что нереалистично при 100+ RPS.",
+                "source_of_confusion": "Plain logging — first reflex для debug. Работает для single-step операций, не для distributed multi-step.",
+                "if_it_were_true": "При медленном ответе (5 секунд вместо 1) — нужно найти все log-строки одного запроса, отсортировать по времени, посчитать дельты. На 100 RPS это нечитаемая каша timestamps.",
+                "how_it_should_be": "Использовать distributed tracing с trace_id, parent_span_id; каждый шаг — span с context propagation."
+              },
+              "label": "A",
+              "text": "Логировать каждый шаг pipeline в отдельные log-строки без correlation ID.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Distributed tracing использует модель span: span — единица работы с началом, концом, attributes, parent reference. Pipeline становится деревом span: root `rag_pipeline` (2.5s), child `retrieval` (0.2s), child `rerank` (0.3s), child `llm_call` (2.0s); каждый child видит свой parent через context propagation. Trace_id связывает все spans одного запроса. В коде это `with tracer.start_as_current_span(\"retrieval\") as span: span.set_attribute(\"top_k\", 10); chunks = vector_db.search(query)`. OpenTelemetry — open standard, backends интерпретируют как trace tree: Tempo (Grafana), Jaeger (CNCF), LangSmith/Langfuse (LLM-specific с pretty-print prompts/responses).",
+                "example": "RAG pipeline: `with tracer.start_as_current_span(\"rag\") as root: with tracer.start_as_current_span(\"retrieval\") as s1: s1.set_attribute(\"top_k\", 10); chunks = retrieve(q); with tracer.start_as_current_span(\"rerank\") as s2: s2.set_attribute(\"model\", \"cohere-rerank\"); ranked = rerank(chunks); with tracer.start_as_current_span(\"llm\") as s3: s3.set_attribute(\"model\", \"gpt-4o\"); s3.set_attribute(\"input_tokens\", 1500); response = llm(prompt)`. Notion AI использует Langfuse для production tracing; Klarna — кастомный OpenTelemetry стэк.",
+                "when_to_apply": "Любой multi-step LLM pipeline: RAG, agent loops, prompt chains. Особенно критично для debugging perceived slowness: «почему ответ 5 секунд?» — trace показывает retrieval 4s vs llm 1s, проблема в индексе.",
+                "edge_cases": "Sampling: на high-throughput full tracing дорог; head-based sampling (1% traces) теряет редкие проблемы, tail-based (sample slow и errored) лучше. Async export: trace records должны экспортироваться асинхронно через batch span processor, иначе observability добавляет latency. Cardinality: attributes (user_id, model, feature) — индексируются; высокая cardinality дорогая, не делать unbounded attributes.",
+                "related": "[[llm-integration-patterns-interview#Q20]] полный observability stack; [[llm-integration-patterns-interview#Q22]] Helicone/Langfuse/LangSmith tools; [[llm-integration-patterns-interview#Q24]] async vs sync для performance."
+              },
+              "label": "B",
+              "text": "OpenTelemetry spans с parent-child иерархией: root span для pipeline, child spans для каждого шага (retrieval, rerank, llm_call) с latency, атрибутами (model, tokens, top_k) и нативной интеграцией с Tempo/Jaeger/LangSmith.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "При деградации latency без полного breakdown неизвестно bottleneck. Retrieval 2s + LLM 2s — total 4s; что оптимизировать?",
+                "source_of_confusion": "«LLM — самый дорогой шаг» — частично правда, но не всегда самый медленный. Vector search на cold index может быть медленнее LLM. Rerank на cross-encoder — тоже долгий.",
+                "if_it_were_true": "Команда тратит недели на оптимизацию LLM (model routing, caching) — а bottleneck в Vector DB. Слепая оптимизация.",
+                "how_it_should_be": "Tracing каждого шага, видеть breakdown в Grafana — оптимизировать измеренный bottleneck, а не предполагаемый."
+              },
+              "label": "C",
+              "text": "Трекать только финальный LLM-вызов без промежуточных шагов retrieval и rerank.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Synchronous trace export добавляет latency на каждый шаг: write в Tempo 5–20 ms × N шагов = десятки ms overhead. Observability ухудшает performance, что она должна измерять.",
+                "source_of_confusion": "«Записать сразу — надёжнее» — но трейсы не должны влиять на критический путь.",
+                "if_it_were_true": "RAG pipeline 1.5 секунд без tracing, 2 секунды с sync tracing. Tracing убрали как «дорогую тулзу». Без observability дальше работают слепо.",
+                "how_it_should_be": "Async batch span processor (OpenTelemetry default): spans накапливаются в memory, периодически flushed в backend; overhead < 1ms per span."
+              },
+              "label": "D",
+              "text": "Синхронно записывать трейсы в БД внутри каждого шага pipeline.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Helicone, Langfuse, LangSmith?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "LangSmith разработан LangChain Inc. и tightly coupled с LangChain framework. Для не-LangChain кода требует значительного boilerplate (manual span creation), теряя его главное преимущество — автоматический tracing.",
+                "source_of_confusion": "LangChain популярен в community, и LangSmith воспринимается как «дефолтный» tool. Без LangChain преимущества теряются.",
+                "if_it_were_true": "Команда без LangChain выбрала бы LangSmith и потратила недели на интеграцию вместо нативного использования Langfuse / Helicone. После этого нашла бы себя в Langsmith-specific data model и не смогла легко мигрировать.",
+                "how_it_should_be": "С LangChain — LangSmith; без — Langfuse (OSS) или Helicone (proxy)."
+              },
+              "label": "A",
+              "text": "LangSmith — лучший выбор для любого LLM-стека независимо от фреймворка.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Каждый tool занимает свою нишу. Helicone: HTTP-proxy перед OpenAI/Anthropic API, автоматически логирует все вызовы без code-changes — `base_url=\"https://oai.helicone.ai/v1\"` плюс auth header. Минимальная интеграция, фокус на observability + caching + rate limiting. Langfuse: open-source platform для tracing prompt chains, dataset management, A/B-тестирования промптов, LLM-as-judge evaluations; SDK с явными span-блоками. LangSmith: коммерческий tool от LangChain, нативно встраивается в LangChain-pipeline, авто-tracing chains/agents/tools. Phoenix (Arize): фокус на embedding drift detection (RAG quality monitoring) и LLM tracing, integrates с OpenTelemetry.",
+                "example": "Стартап без LangChain, нужен быстрый observability — Helicone proxy за 5 минут. Команда строит RAG с evaluations и prompt versioning — Langfuse. Team active using LangChain — LangSmith. Production RAG с monitoring embedding quality (drift, outliers) — Phoenix. Можно комбинировать: Helicone как proxy для auto-tracking + Langfuse для evaluation datasets.",
+                "when_to_apply": "Helicone — для quick win, без code changes, фокус на cost/caching. Langfuse — для full LLM observability stack с evaluation pipeline. LangSmith — только в LangChain-based проектах. Phoenix — когда нужно специфически monitoring embedding-quality.",
+                "edge_cases": "Helicone proxy — single point of failure, нужна HA. Langfuse self-host требует инфраструктуру (Postgres, Clickhouse); managed — стоимость per event. LangSmith — vendor lock-in в LangChain экосистему. Phoenix — менее зрелая documentation чем у конкурентов, активно разрабатывается. Все эти tools — proprietary data formats, миграция между ними дорогая — выбирать на длительный срок.",
+                "related": "[[llm-integration-patterns-interview#Q21]] tracing prompt chains; [[llm-integration-patterns-interview#Q20]] что трекать; [[llm-integration-patterns-interview#Q18]] LiteLLM/Portkey gateway tools."
+              },
+              "label": "B",
+              "text": "Helicone — proxy для auto-tracking с минимальной интеграцией; Langfuse — OSS tracing + datasets + evals; LangSmith — для LangChain стека; Phoenix (Arize) — фокус на embedding observability + LLM tracing.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Они решают пересекающиеся, но разные задачи. Helicone — proxy с фокусом на caching и cost; Langfuse — full observability + evaluation; LangSmith — LangChain-native; Phoenix — embedding drift.",
+                "source_of_confusion": "Все категоризируются как «LLM observability», поэтому новички видят их как один сегмент.",
+                "if_it_were_true": "Команда выбирает наугад, не получает нужных фич — например, Helicone не имеет evaluation pipeline (это Langfuse). Переделка integration через 6 месяцев.",
+                "how_it_should_be": "Изучить фичи каждого, выбрать под конкретные требования (auto-tracking vs evaluations vs embedding monitoring)."
+              },
+              "label": "C",
+              "text": "Все инструменты взаимозаменяемы и предоставляют идентичный функционал.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Plain logging не даёт LLM-specific метрики: cost breakdown, TTFT, cache hit rate, structured trace tree, evaluation pipeline.",
+                "source_of_confusion": "«Не over-engineer» — справедливо для прототипа. Для production с >100K запросов/день нужно специализированный инструментарий.",
+                "if_it_were_true": "Cost-runaway не замечен (логи показывают только success/fail). Регрессия качества модели — нет automated evaluation. Debugging медленных запросов — ручная корреляция timestamps.",
+                "how_it_should_be": "Использовать минимум одного LLM observability tool (Helicone для simple cases, Langfuse для serious production) — даже basic интеграция даёт значительный uplift."
+              },
+              "label": "D",
+              "text": "Достаточно стандартного Python logging без специализированных LLM observability tools.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Latency metrics: TTFT, TPOT?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "E2E (end-to-end) включает и TTFT (время до первого токена), и время генерации остальных токенов. Без разделения нельзя определить, медленный ли start (модель «думает») или медленная генерация (низкий TPS).",
+                "source_of_confusion": "E2E — простая, агрегированная метрика. Для non-streaming подходит, но для streaming маскирует UX-проблему.",
+                "if_it_were_true": "E2E 5 секунд — плохо или нет? Если 4.5s генерация быстрая (показывается пользователю), а TTFT 500ms — UX отличный. Если 5s — это весь wait перед началом текста — UX ужасный.",
+                "how_it_should_be": "Разделять TTFT (UX-критичный, optimize first) и TPOT/TPS (throughput, optimize для cost и user satisfaction на длинных ответах)."
+              },
+              "label": "A",
+              "text": "Измерять только E2E latency для оценки производительности LLM.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "TPOT (Time Per Output Token) — это время на один token, обычно 7–20 ms. Требование ≤ 1 секунда на token нереалистично и означает 1 TPS — катастрофически медленно. TPOT измеряется в ms/token, не seconds/token.",
+                "source_of_confusion": "«1 секунда — комфортный порог» — относится к TTFT и операциям в целом, не к per-token latency.",
+                "if_it_were_true": "OpenAI выпускает GPT-4o с TPS 100, TPOT 10ms — но по требованию ≤ 1 сек/токен это «достаточно». Метрика бессмысленна.",
+                "how_it_should_be": "TTFT < 3 секунд (критично для UX); TPS 30+ tokens/sec (комфортно для чтения, человек читает ~5 слов/секунду = ~7 tokens/sec)."
+              },
+              "label": "B",
+              "text": "TTFT и TPOT одинаково важны и должны быть ≤ 1 секунды каждая.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Высокий TPS при медленном TTFT даёт плохой UX. Пользователь смотрит на пустой экран, потом текст «вспыхивает». TTFT критичнее для perceived responsiveness.",
+                "source_of_confusion": "«Тhroughput — главная метрика» — применимо для batch processing. Для interactive UI первичен time to first response.",
+                "if_it_were_true": "Модель с TPS 200 и TTFT 10 секунд: 10 секунд blank screen, потом текст за 2 секунды. Vs модель TPS 50, TTFT 500 ms: текст появляется через 500 ms, длится 4 секунды. Второй вариант UX лучше, хоть total time дольше.",
+                "how_it_should_be": "Optimize TTFT first (faster perceived response), затем TPS (faster total completion)."
+              },
+              "label": "C",
+              "text": "Для chat UX оптимизировать только TPS (tokens per second).",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "LLM latency разделяется на три ключевые метрики. TTFT (Time To First Token) — время от отправки запроса до первого токена ответа; определяется временем сети + временем «думания» модели до начала генерации (для reasoning-моделей может быть секунды). TPOT (Time Per Output Token) или его обратная TPS (Tokens Per Second) — скорость генерации остальных токенов; зависит от inference engine, batch size провайдера, текущей нагрузки. E2E = TTFT + N_output_tokens × TPOT — суммарное время, для streaming это полное время от запроса до последнего токена. TTFT критичнее для perceived UX (Nielsen Norman: 100 ms — instant, 1s — interrupted attention, 10s — lost user). TPS определяет, удобно ли пользователю читать поток (комфорт ~7 tokens/sec, желательно 30+).",
+                "example": "GPT-4o: TTFT 0.5–1s, TPS 80–120. GPT-4o-mini: TTFT 0.3–0.7s, TPS 200–300 (быстрее). Claude Opus 4: TTFT 1–2s, TPS 70–100. Reasoning-модели (o1): TTFT может быть 30–120 секунд (модель думает перед output) — для них E2E важнее TTFT. Prometheus alert: `histogram_quantile(0.95, llm_ttft_seconds_bucket) > 3` для алерта на p95 TTFT.",
+                "when_to_apply": "Любая production LLM-система с user-facing UI. Алерты на TTFT > порога — leading indicator деградации. TPS — для capacity planning и cost optimization (быстрее inference = больше запросов на ту же GPU).",
+                "edge_cases": "Multi-step pipelines: TTFT всего pipeline = retrieval + rerank + first token; UX-метрика — TTFT всего pipeline, не только LLM. Streaming cancellation: если client cancels — TTFT и TPOT уже потрачены, но cost вернуть нельзя. Reasoning-модели: TTFT нерелевантен (модель думает молча) — нужна отдельная метрика «time to thinking complete» или просто E2E.",
+                "related": "[[llm-integration-patterns-interview#Q8]] timeouts и TTFT мониторинг; [[llm-integration-patterns-interview#Q20]] полный observability stack; [[llm-integration-patterns-interview#Q2]] streaming как способ улучшить perceived TTFT."
+              },
+              "label": "D",
+              "text": "TTFT — ключевая UX-метрика, целить < 1–3 сек; TPOT (или 1/TPS) — throughput метрика; E2E = TTFT + output_tokens × TPOT для capacity planning.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Sync vs async LLM calls?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Async LLM-клиенты используют `asyncio` для non-blocking I/O: пока ждём ответ от провайдера (network I/O), event loop может обрабатывать другие задачи. В FastAPI это означает, что один pod может обслуживать сотни-тысячи concurrent users при типичной LLM latency 2–10 секунд. `asyncio.gather` позволяет параллелить независимые LLM-вызовы (например, поиск + summary одновременно), уменьшая total latency. SDK-имплементация: `from openai import AsyncOpenAI; client = AsyncOpenAI(); response = await client.chat.completions.create(model=\"gpt-4o\", messages=[...])`. Для streaming — async generator: `async for chunk in await client.chat.completions.create(stream=True, ...)`.",
+                "example": "Notion AI FastAPI service handle 1000+ concurrent users per pod благодаря async. Без async понадобились бы десятки pods для той же нагрузки. `responses = await asyncio.gather(client.chat.completions.create(prompt1), client.chat.completions.create(prompt2), client.chat.completions.create(prompt3))` — 3 LLM-вызова параллельно за время одного.",
+                "when_to_apply": "Любой async web server (FastAPI, Starlette, aiohttp, Sanic, Quart) с LLM-вызовами. Для sync-фреймворков (Flask, Django sync mode) — thread pool или uWSGI workers, но это менее эффективно.",
+                "edge_cases": "Sync-блокирующие операции внутри async-handler (sync DB call, file I/O без aiofiles) всё равно блокируют event loop — нужно проверять весь стек на async-совместимость. Backpressure: при unlimited concurrent calls можно превысить provider rate limit одновременно — нужны semaphore или token bucket. Error propagation в `asyncio.gather`: один failed task отменяет остальные если не использовать `return_exceptions=True`.",
+                "related": "[[llm-integration-patterns-interview#Q25]] background jobs для очень долгих генераций; [[llm-integration-patterns-interview#Q5]] retry в async context; [[llm-integration-patterns-interview#Q14]] rate limiting в async."
+              },
+              "label": "A",
+              "text": "Async LLM-вызовы через `AsyncOpenAI` / `AsyncAnthropic` SDK с `await`: не блокирует event loop, `asyncio.gather` для параллельных вызовов, scales до тысяч concurrent connections.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Sync call внутри async-handler блокирует event loop на всё время LLM-вызова (2–30 секунд). FastAPI работает на одном event loop per process, и блокировка означает остановку обработки всех остальных запросов.",
+                "source_of_confusion": "Sync-API проще для понимания и тестирования. На single-pod без нагрузки работает. Проблема появляется под concurrent load.",
+                "if_it_were_true": "При 10 concurrent пользователях и LLM latency 5s: первый пользователь блокирует event loop на 5s, остальные ждут. Throughput = 1 request / 5 seconds = 0.2 RPS на pod. Health check падает по timeout, k8s restartит pod.",
+                "how_it_should_be": "Использовать async-клиент SDK: `from openai import AsyncOpenAI; await client.chat.completions.create(...)` — не блокирует event loop, можно обрабатывать тысячи concurrent запросов."
+              },
+              "label": "B",
+              "text": "Sync LLM-вызовы достаточны для production FastAPI-сервиса с обычной нагрузкой.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Thread pool с N workers даёт максимум N concurrent operations. При LLM latency 5s и 50 threads — 10 RPS максимум; для 100 RPS нужно 500 threads, что даёт значительный memory overhead и context-switching cost.",
+                "source_of_confusion": "Thread pool — классический паттерн для блокирующих операций. Работает, но не масштабируется как async.",
+                "if_it_were_true": "Для типичного LLM приложения с 1000 RPS понадобилось бы 5000 threads (latency 5s × 1000 RPS). Memory overhead 10MB × 5000 = 50 GB на один pod — нереалистично.",
+                "how_it_should_be": "Async без thread pool обрабатывает тысячи concurrent connections на одном pod без overhead threads. Thread pool — fallback для legacy sync-кода."
+              },
+              "label": "C",
+              "text": "Thread pool с sync calls — 50 workers достаточно для любой нагрузки.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Multiprocessing создаёт отдельный процесс — для высокочастотных операций overhead форка (100ms+) и memory overhead (новый Python interpreter, GIL не shared) делают его неподходящим.",
+                "source_of_confusion": "«Multiprocessing обходит GIL» — справедливо для CPU-bound задач. LLM — I/O-bound, и async лучше подходит.",
+                "if_it_were_true": "Каждый LLM-вызов = новый процесс с overhead 100ms+ запуска и 50 MB memory. При 100 RPS — невозможно.",
+                "how_it_should_be": "Asyncio для I/O-bound (LLM-вызовы), multiprocessing — только для CPU-bound preprocessing (например, локальная inference тяжёлой модели)."
+              },
+              "label": "D",
+              "text": "Использовать multiprocessing вместо asyncio для LLM-вызовов.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Background jobs для long generations?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "HTTP idle timeout на nginx/ALB/CloudFront обычно 60–300 секунд. Reasoning-модели (o1, o3) могут думать минутами без output. Connection закрывается до завершения генерации.",
+                "source_of_confusion": "«Просто держим connection» — простой mental model для async-операций. Не работает с реальными timeouts инфраструктуры.",
+                "if_it_were_true": "При генерации 5 минут на reasoning-модели: nginx закрывает connection через 60s, клиент получает 504 Gateway Timeout. Backend продолжает работать, но результат уже не дойдёт до клиента — заплатили за токены, пользователь видит error.",
+                "how_it_should_be": "Async job pattern: enqueue → return job_id → polling. Или WebSocket с keep-alive для long-running interactive."
+              },
+              "label": "A",
+              "text": "Держать HTTP-connection открытым на всё время генерации (несколько минут).",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Async job pattern для long-running операций. Workflow: (1) клиент отправляет запрос на `/generate`, сервер enqueues задачу в очередь (Celery с Redis/RabbitMQ, RQ для Python, BullMQ для Node.js), возвращает `{job_id: \"uuid\", status: \"pending\"}`; (2) worker process берёт задачу, вызывает LLM (5–30 минут для reasoning); (3) клиент polling `/status/{job_id}` каждые 2–5 секунд — получает `pending`/`processing`/`completed` с result; (4) при `completed` — отрисовать result; (5) при `failed` — показать error и опционально предложить retry. Это decouples клиентскую сессию от долгой backend-операции, не блокирует HTTP-таймауты, позволяет scale workers независимо от web-серверов.",
+                "example": "OpenAI Reasoning models (o1, o3) — Anthropic рекомендует async pattern для extended thinking. Production: `@app.post(\"/generate\") async def submit(req): job_id = uuid.uuid4(); celery.send_task(\"generate_task\", args=[req.dict()], task_id=str(job_id)); return {\"job_id\": job_id, \"status\": \"pending\"}; @app.get(\"/status/{job_id}\") async def status(job_id): task = celery.AsyncResult(job_id); return {\"status\": task.state, \"result\": task.result if task.successful() else None}`. Sora (video gen), DeepResearch — все используют async job pattern.",
+                "when_to_apply": "Reasoning-модели с extended thinking; long-form generation (essays 5000+ слов); multi-step agents с tool use; bulk processing per-user. Любая операция > 30 секунд.",
+                "edge_cases": "Polling-overhead: при 1000 пользователях polling раз в 2 секунды — 500 RPS только на status endpoint; можно WebSocket вместо polling для push-нотификаций. Storage задач: завершённые job results хранятся в Redis/Postgres — нужно TTL для cleanup. Worker scaling: at-most-once vs at-least-once semantics — что если worker умер mid-execution? Идempotency keys и task retries в Celery решают, но нужна явная настройка.",
+                "related": "[[llm-integration-patterns-interview#Q24]] sync vs async для коротких запросов; [[llm-integration-patterns-interview#Q12]] Batch API как альтернатива; [[llm-integration-patterns-interview#Q8]] timeouts."
+              },
+              "label": "B",
+              "text": "Enqueue задачу в очередь (Celery/RQ/Sidekiq), вернуть `job_id` немедленно, клиент polling статус-endpoint каждые 2–5 секунд (или через WebSocket-update).",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "SSE подходит для streaming, но при многочасовой генерации (reasoning think-time) connection-разрыв любого мобильного network event ломает workflow — нет retry semantics, надо начинать заново.",
+                "source_of_confusion": "SSE решает проблему «увидеть что-то быстро», но не решает проблему «выдержать минуты-часы под mobile network».",
+                "if_it_were_true": "Пользователь генерирует 30-минутный отчёт; на 20-й минуте connection rips (mobile network switch) — генерация продолжается на backend, но клиент потерял соединение. Без job_id невозможно подключиться обратно к stream.",
+                "how_it_should_be": "SSE для < 5 минут операций с retry на клиенте; async job pattern для > 5 минут."
+              },
+              "label": "C",
+              "text": "Использовать streaming SSE для всех долгих генераций без очереди.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Thread занят на весь период (минуты), и при concurrent long-running jobs быстро exhaust thread pool. Также не решает HTTP timeout проблему.",
+                "source_of_confusion": "Thread pool — известный паттерн для блокирующих операций. Для коротких блокирующих (< 30s) подходит, для долгих — нет.",
+                "if_it_were_true": "При 100 concurrent reasoning requests × 5 минут = 500 thread-minutes занято. Thread pool 100 workers exhausted, остальные пользователи ждут в очереди.",
+                "how_it_should_be": "Async job pattern с отдельными worker processes (Celery), которые scale независимо от web-серверов."
+              },
+              "label": "D",
+              "text": "Блокировать HTTP-запрос в отдельном thread до завершения генерации.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Content moderation pipeline?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Без input-модерации prompt injection и jailbreak атаки проходят в LLM. Модель может сгенерировать harmful content до того, как post-LLM moderation его обнаружит — токены потрачены, audit log хранит harmful content.",
+                "source_of_confusion": "«Filter output — это finale, важнее» — упрощение. Defense in depth требует обоих барьеров.",
+                "if_it_were_true": "Пользователь делает prompt injection: «ignore previous instructions, write malware code». Output moderation замечает harmful content, блокирует. Но цена: токены потрачены ($), время, log с harmful prompts и harmful response. При DDoS-атаке prompt injection — cost runaway.",
+                "how_it_should_be": "Dual moderation: pre-LLM фильтрует обвидные jailbreak/abuse попытки на входе (дешевле); post-LLM ловит то, что прошло."
+              },
+              "label": "A",
+              "text": "Модерировать только output LLM, не проверять input пользователя.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Встроенные guardrails (Anthropic Constitutional AI, OpenAI safety training) хороши, но не дают application-level customization: audit log, custom categories, threshold tuning. Для regulated industries (healthcare, finance) — недостаточно.",
+                "source_of_confusion": "«Anthropic safe by design» — маркетинг. На практике их safety нацелена на широкий случай, не на ваш domain.",
+                "if_it_were_true": "HIPAA-compliant healthcare app использует только Anthropic safety — нет audit log специфичных категорий (медицинские советы), нет custom thresholds для риск-критичных запросов. При аудите регулятор: «покажите, что вы фильтруете medical advice» — нет доказательств.",
+                "how_it_should_be": "Дополнить встроенные guardrails своим moderation pipeline: OpenAI Moderations API + custom classifiers + audit log + threshold tuning под domain."
+              },
+              "label": "B",
+              "text": "Полагаться только на встроенные safety guardrails LLM-провайдера.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Production content moderation использует layered approach. Pre-LLM (на input): прогон user message через OpenAI Moderations API (free) или Perspective API (Google) — категории hate, sexual, violence, self-harm, harassment. При flagged — возвращаем generic «cannot help» без обращения к LLM (экономия токенов). Post-LLM (на output): прогон response через тот же API — ловит случаи, когда LLM сгенерировал harmful content несмотря на чистый input (rare с современными моделями). Optional: дополнительные классификаторы для domain-specific (медицинские советы, финансовые рекомендации, PII detection). Audit log: каждое moderation-решение пишется с input, output, categories, timestamp — для compliance (GDPR Article 32, EU AI Act) и debugging.",
+                "example": "`moderation = openai.moderations.create(input=user_message); if moderation.results[0].flagged: return \"I cannot help with that request.\"`. Production: ChatGPT, Claude.ai — оба используют pre + post moderation. Replika (companion app) — domain-specific (self-harm detection priority). Bing Chat — добавочный layer для misinformation. Tools: OpenAI Moderations API, Anthropic safety filter, Google Perspective API, Lakera Guard, self-hosted classifiers (DeBERTa-tiny).",
+                "when_to_apply": "Любой user-facing LLM-продукт. Особенно критично для: kids/teens (COPPA), healthcare (HIPAA), finance (FINRA), legal advice. Также при high-risk content generation (long-form, creative).",
+                "edge_cases": "False positives: legitimate запросы blocked, frustration пользователей. Калибровка thresholds на real traffic — не оставлять defaults. Latency: moderation добавляет 100–300 ms на вход и выход — оптимизировать через streaming moderation для output. Language coverage: OpenAI Moderations работает на ~10 языках, для других нужны custom модели. Adversarial robustness: обходы через character substitution, base64 encoding — нужны дополнительные heuristics.",
+                "related": "[[llm-integration-patterns-interview#Q27]] audit logging; [[llm-integration-patterns-interview#Q28]] частые production-проблемы; [[llm-integration-patterns-interview#Q20]] что трекать в observability."
+              },
+              "label": "C",
+              "text": "Pre-LLM moderation (input) через OpenAI Moderations API / Perspective API + Post-LLM moderation (output) для defense in depth, с audit log и customizable categories.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Keyword blacklist не понимает контекст. «kill the process» (про процесс ОС) ложно блокируется, «k!ll» (с замещением буквы) проходит как unfiltered.",
+                "source_of_confusion": "Keyword filter — простая реализация на 5 минут, кажется «достаточной для начала». На деле fails быстро под reasonable adversarial pressure.",
+                "if_it_were_true": "Frustrated developer не может сказать «kill the process» в чате с code assistant — false positive. Adversarial user пишет «k!ll the kids» — passes filter, harmful content generated.",
+                "how_it_should_be": "ML-based moderation (OpenAI Moderations, Perspective) понимает context и intent; дополнительно keyword filter для specific high-risk terms как failsafe."
+              },
+              "label": "D",
+              "text": "Фильтровать по keyword blacklist вместо ML-based moderation.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Audit logging?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Полный отказ от логирования — крайность, нарушающая operational и compliance requirements. GDPR Article 32 требует audit trail для security; debugging production issues требует возможности воспроизвести.",
+                "source_of_confusion": "«Privacy by default» — общий принцип. На деле privacy балансирует с auditability и operational needs.",
+                "if_it_were_true": "При GDPR audit «покажите как обрабатываются personal data» — нет логов, нечем доказывать. При production bug «как воспроизвести?» — нет данных. При quality regression «какие промпты упали?» — слепая отладка.",
+                "how_it_should_be": "Logging с PII redaction: записываем sanitized prompt + metadata, raw prompt — только в encrypted storage с access control и short retention."
+              },
+              "label": "A",
+              "text": "Не логировать промпты пользователей из соображений privacy.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "GDPR Article 32 требует pseudonymization/encryption of personal data. Application logs обычно plaintext с broad read access (devops, support) — это нарушение.",
+                "source_of_confusion": "«Логи защищены» — verификация недостаточная. Standard logging infrastructure (CloudWatch, Stackdriver, ELK) обычно не имеет column-level encryption.",
+                "if_it_were_true": "Уязвимость в logging system: атакующий получает доступ ко всем prompt с PII (имена пациентов, медицинские данные). GDPR fine до 4% global turnover. Equifax 2017 как аналог — несмотря на другую природу, regulatory consequences для PII leak серьёзные.",
+                "how_it_should_be": "PII redaction перед логированием (через DLP API, regex, named entity recognition); raw данные — только в encrypted storage с strict access control."
+              },
+              "label": "B",
+              "text": "Хранить сырые промпты с PII (имена, email, медицинские данные) в application logs без redaction.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Production audit logging требует баланса compliance и operational needs. Структура записи: request_id (UUID для tracing), user_id (или pseudonymized hash), timestamp, input_redacted (через PII detection — names, emails, SSN, phone заменены на placeholders), full_input в encrypted-only storage для debugging (отдельный S3 bucket с stricter access), model, input/output tokens, cost, latency, moderation results, purpose (customer_support, content_generation), business context. Storage: S3 + Athena, BigQuery, Postgres + analytics. Свойства: append-only (нельзя изменить retroactively), encryption-at-rest (KMS), encryption-in-transit (TLS), retention policy (90 дней или согласно regulation), RBAC (отдельные roles для audit-readers vs ops vs developers).",
+                "example": "Klarna AI assistant: audit log на BigQuery с PII detection через Google DLP API; retention 90 дней; access only via approved queries. Healthcare AI (Hippocratic AI): HIPAA-compliant log в encrypted S3 с access logging. Replika: psychological context отдельным encrypted log для self-harm intervention. Tooling: Presidio (Microsoft, open-source PII detection), AWS Macie, Google Cloud DLP.",
+                "when_to_apply": "Любая production LLM-система. Critical для: regulated industries (healthcare, finance, legal), EU users (GDPR), kids (COPPA), enterprise (SOC2). Для всех — basic level (redacted input, output, metadata) даёт значительный uplift в debug-ability и compliance.",
+                "edge_cases": "PII detection false negatives: NER моделей пропускают unusual PII formats; нужен fallback regex и periodic audit на нет ли утечек. Right-to-erasure (GDPR Article 17): нужно уметь удалить все записи пользователя по запросу — sharded by user_id для быстрого delete. Audit log size: production system пишет миллиарды записей в год; cost-optimization через partitioning, compression (ZSTD), tiering (recent hot, old cold). Cross-border: data sovereignty — EU users → EU region storage; некоторые регуляции запрещают cross-border transfer.",
+                "related": "[[llm-integration-patterns-interview#Q26]] content moderation как часть compliance; [[llm-integration-patterns-interview#Q13]] cost tracking как другой level metadata; [[llm-integration-patterns-interview#Q20]] observability stack overall."
+              },
+              "label": "C",
+              "text": "Immutable append-only log с request_id, user_id, redacted_input (PII удалены), model, tokens, cost, moderation results, purpose; хранить в S3/BigQuery с encryption-at-rest, RBAC, retention policy под GDPR.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Aggregated metrics нужны для operational monitoring, но не покрывают audit requirements. GDPR right-to-erasure требует знать, какие именно данные пользователя обрабатывались, чтобы их удалить — агрегаты не дают этого.",
+                "source_of_confusion": "«Privacy через aggregation» — техника differential privacy, но она для analytics output, не для internal audit.",
+                "if_it_were_true": "Пользователь запрашивает удаление всех своих данных (GDPR Article 17). У вас агрегаты «пользователь X сделал 1000 запросов на тему Y». Удалить нечего конкретного, regulator не удовлетворён.",
+                "how_it_should_be": "Per-request audit log с redacted input + retention policy + delete-by-user mechanism для compliance requests."
+              },
+              "label": "D",
+              "text": "Агрегированные статистики (counts, averages) без raw запросов достаточны для compliance.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие частые проблемы LLM в production?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Quality важна, но инфраструктурные проблемы (cost runaway, provider downtime, rate limits) убивают availability раньше, чем quality становится bottleneck.",
+                "source_of_confusion": "ML-команды фокусируются на model evaluation и quality — это их специализация. Infrastructure часто недооценивается до первого incident.",
+                "if_it_were_true": "Команда тратит месяцы на fine-tuning и evaluation, выпускает в prod без monitoring и fallback. Первый день: provider downtime — full outage. Bug в production: cost runaway за ночь $10K. Quality улучшения никто не успел протестировать — сервис уже не работает.",
+                "how_it_should_be": "Балансировать quality work (evaluation, prompt tuning) с infrastructure (gateway, monitoring, fallback). Quality без reliability — academic exercise."
+              },
+              "label": "A",
+              "text": "Основная проблема — низкое качество ответов модели (hallucinations, неверный output).",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Это minimal viable prototype, но не production. Production требует retry, circuit breaker, fallback, rate limiting, monitoring, cost tracking, audit logging, content moderation.",
+                "source_of_confusion": "Демо в SDK-доке выглядит просто, и кажется, что production = демо + try/except.",
+                "if_it_were_true": "Provider downtime 30 минут → full outage product. Rate limit 429 burst → 50% запросов failed. Cost runaway без alerting → $10K bill за ночь. Все эти проблемы — реальные incidents в LLM startup space.",
+                "how_it_should_be": "Production-checklist: retry с backoff, circuit breaker, fallback provider, rate limit pre-emptive, observability (TTFT/cost/error rate), audit log, moderation."
+              },
+              "label": "B",
+              "text": "Достаточно простого `client.chat.completions.create()` с обработкой исключений.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Production LLM-система требует обработки целого спектра проблем, выходящих за рамки простых API-вызовов. Cost runaway: без per-feature tracking неконтролируемое увеличение расходов до critical level — нужно alerting на rate-of-change и quota-enforcement. Rate limits: без pre-emptive limiting у клиента — burst на провайдере, 429 storm с exponential backoff. Provider downtime: без fallback chain — full outage; средняя availability одного провайдера ~99.9% = 8.76 часов downtime/год. Async/sync: sync calls в FastAPI блокируют event loop, throughput падает на 100×. Streaming: без него perceived latency = total latency, UX страдает. Vendor lock-in: прямые SDK calls везде — migration занимает месяцы. Prompt injection: jailbreak attempts проходят без input moderation. Hallucinations: без guardrails (RAG-grounding, structured outputs, validation) — wrong answers в production.",
+                "example": "Реальные incidents 2024: AirCanada chatbot выдал неверный refund policy → суд обязал выполнить (hallucination без guardrails). ChatGPT downtime ноябрь 2024 — клиенты без fallback на Anthropic потеряли часы работы. Replit Agent — cost runaway инцидент пользователя ($800 за ночь на agent loop). Notion AI, Klarna, Perplexity — все имеют production-grade infrastructure: gateway, monitoring, fallback, moderation, cost limits.",
+                "when_to_apply": "Production-readiness checklist для любого LLM-проекта: проверить каждый из 12 пунктов перед launch. Особенно для customer-facing продуктов с реальным cost и SLA-требованиями.",
+                "edge_cases": "Premature optimization: для прототипа не нужны все 12 защит сразу — выбирать по риску. Cost runaway и provider downtime — высокий приоритет; vendor lock-in — низкий до первой migration. Over-engineering: гипертрофированная resilience стоит больше, чем cost runaway, который защищает. Balance — measure-based: что реально болит, то и фиксить first.",
+                "related": "[[llm-integration-patterns-interview#Q1]] LLM gateway как комплексное решение; [[llm-integration-patterns-interview#Q13]] cost tracking; [[llm-integration-patterns-interview#Q7]] fallback chain."
+              },
+              "label": "C",
+              "text": "Ключевые проблемы: cost runaway без tracking, нет rate limiting перед provider 429, нет fallback при downtime, sync вместо async (thread exhaustion), нет streaming (плохой UX), vendor lock-in (нельзя мигрировать), prompt injection без validation, hallucinations без guardrails.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Latency важна, но cost и reliability критичнее. Latency оптимизируется через streaming и model routing (известные техники), а cost и reliability требуют целого стека инфраструктуры.",
+                "source_of_confusion": "Latency — visible метрика (пользователи жалуются), cost и reliability — менее visible (но дороже в incidents).",
+                "if_it_were_true": "Команда оптимизирует TTFT с 2s до 800ms, празднует — но cost вырос 3× из-за переключения на быструю модель, и при сбое OpenAI всё лежит. Win по latency, loss по бизнесу.",
+                "how_it_should_be": "Latency, cost, reliability — все важны и должны оптимизироваться сбалансированно. Cost runaway и outage страшнее, чем medium latency для большинства бизнесов."
+              },
+              "label": "D",
+              "text": "Главная проблема — высокая latency LLM, всё остальное второстепенно.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

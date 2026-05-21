@@ -1,0 +1,1685 @@
+{
+  "topic_slug": "model-serving-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое model serving?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Production model serving — это отдельный HTTP/gRPC-сервис с lifecycle модели (load/unload/version), dynamic batching, метриками p50/p95/p99, health checks, autoscaling. `model.predict()` — это лишь inference call внутри handler, а не serving stack.",
+                "source_of_confusion": "В туториалах по ML Boot Camp и Kaggle stage заканчивается именно на `predict()`. Граница между research и production не показана, поэтому начинающие считают, что «обернуть в FastAPI» = serving.",
+                "if_it_were_true": "На 100 RPS такая система давала бы latency p99 5-10 секунд: каждый запрос монопольно занимает GPU, нет batching, OOM при concurrent calls, простой при load model weights.",
+                "how_it_should_be": "Использовать inference server (TorchServe, Triton, vLLM), который владеет жизненным циклом модели и оптимизирует утилизацию железа."
+              },
+              "label": "A",
+              "text": "Model serving — это вызов `model.predict()` из Python-скрипта или Jupyter notebook, который запускается по cron.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Полноценный serving stack отделяет загрузку весов от обработки запросов, держит модель в GPU/RAM как warm state, агрегирует входящие requests в batches (continuous или dynamic), экспонирует REST/gRPC API, отдаёт метрики Prometheus, поддерживает rolling-обновление модели без потери in-flight requests. Это другой класс системы, чем `predict()` в скрипте.",
+                "example": "Команда serve'ит Llama 3 70B через vLLM: один pod с 2× H100 (tensor-parallel), `--max-num-batched-tokens 4096`, OpenAI-compatible API на `:8000/v1/chat/completions`, метрики `vllm:num_requests_running` и `vllm:time_to_first_token_seconds` в Grafana, HPA по `vllm:num_requests_waiting`.",
+                "when_to_apply": "Production inference при concurrent traffic ≥ 10 RPS, требованиях к SLA (p95 ≤ N мс), нескольких версиях моделей в air-gapped среде, A/B-тестах, canary rollout. Любой serious self-hosted LLM или классическая ML с realtime SLA.",
+                "edge_cases": "Сам serving server не решает проблему cold start (load 70B модели = 1-3 минуты), не убирает GPU memory pressure (KV cache растёт линейно), требует отдельной инфраструктуры для Kubernetes operator / GPU scheduling / image registry с весами.",
+                "related": "[[model-serving-interview#Q2]] self-host vs API trade-offs; [[model-serving-interview#Q7]] Triton как универсальный server; [[model-serving-interview#Q9]] vLLM как LLM-default."
+              },
+              "label": "B",
+              "text": "Model serving — это inference server (vLLM, Triton, TorchServe, BentoML) с HTTP/gRPC API, который управляет загрузкой весов, dynamic batching, версиями моделей и метриками.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Flask + sync handler даёт single-threaded WSGI с одним worker per request: нет batching, GPU простаивает между requests, при concurrent traffic ставится очередь на уровне gunicorn. Это рабочий MVP, но не production serving.",
+                "source_of_confusion": "Flask — классика «hello world» MLE-туториалов 2017-2020 годов. С тех пор inference servers (Triton, vLLM) специально решают то, чего Flask не делает: dynamic batching, KV cache management, multi-model loading.",
+                "if_it_were_true": "Netflix, OpenAI, Hugging Face не разрабатывали бы свои serving stack'и. Throughput LLM на vLLM был бы такой же, как на Flask — а на Llama 2 7B разница 22× (15 req/sec vs 330 req/sec на A100).",
+                "how_it_should_be": "Flask допустим для маленькой sklearn-модели с < 1 RPS, для всего серьёзного — Triton / TorchServe / vLLM с правильным runtime."
+              },
+              "label": "C",
+              "text": "Достаточно завернуть модель в Flask app с одним `@app.route(\"/predict\")` endpoint — это и есть production serving.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Embedded подход (загрузить веса прямо в JVM/Python process) работает только для маленьких моделей (≤ 100 МБ): sklearn classifier, маленький transformer для re-ranking. Для LLM 7B+ модель весит 14-140 ГБ и должна жить в отдельном GPU-pod'е, иначе при N инстансов = N×140 ГБ GPU memory.",
+                "source_of_confusion": "Embedded хорошо знаком из микросервисной разработки: каждый pod самодостаточен, нет cross-service network hop. Эта интуиция плохо переносится на LLM — модель слишком тяжёлая, чтобы дублировать.",
+                "if_it_were_true": "Скейлинг web-tier'а с 5 до 50 pod'ов потребовал бы +45 GPU H100 (~$1.35M железа или $50K/час cloud), что экономически нереально.",
+                "how_it_should_be": "Web-tier остаётся stateless и легко масштабируется, инференс выносится в отдельные GPU-pod'ы (vLLM/Triton), web-tier ходит к ним через internal HTTP/gRPC."
+              },
+              "label": "D",
+              "text": "Embedded-модель в каждом инстансе приложения — best practice для LLM, потому что снижает network latency и упрощает deployment.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда self-host vs API?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Break-even по деньгам считается как: `GPU rental cost + ops overhead` против `provider tokens × price`. На A100 80GB cloud ($3-4/час, ~$2.5K/мес) можно прогнать ~30-50M output tokens/мес. На Llama 3 70B AWQ — это эквивалент ~$300-1000/мес затрат на GPT-4o API. Privacy/compliance аргументы (data residency, HIPAA, банковская тайна) часто перевешивают экономику и форсируют self-host даже при низких объёмах.",
+                "example": "Российский банк serve'ит Llama 3 70B AWQ на 4× A100 on-prem для обработки клиентских обращений: ~50M tokens/день, данные не покидают периметр, $40K железа окупается за 4 месяца при сравнении с OpenAI API; альтернатива (API) запрещена политикой ИБ.",
+                "when_to_apply": "Объём ≥ 10M tokens/мес стабильный + PII/compliance ограничения, либо нужна fine-tuned модель на собственных данных, либо low-latency требования (< 200ms TTFT в собственном регионе), либо air-gapped среда.",
+                "edge_cases": "Open-models (Llama, Qwen, DeepSeek) часто отстают от frontier на reasoning/multimodal задачах на 6-12 месяцев. MLOps-затраты (on-call, monitoring, security patches CUDA) обычно недооценивают: 1-2 FTE на команду. Capacity-планирование сложнее, чем «дать API больше денег».",
+                "related": "[[model-serving-interview#Q3]] GPU vs CPU выбор; [[model-serving-interview#Q24]] выбор GPU под модель; [[model-serving-interview#Q25]] on-prem vs cloud GPU."
+              },
+              "label": "A",
+              "text": "Self-host окупается примерно от 10-100M tokens/month и в случаях privacy/compliance (PII, банковские данные, медицина); API остаётся лучшим выбором для quick start, SOTA-моделей и команды без MLOps-экспертизы.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "На малых объёмах (< 1M tokens/мес) self-host жёстко проигрывает: A100 cloud ~$2.5K/мес даже при 1% утилизации, в то время как GPT-4o-mini обработает 1M tokens за ~$0.6. Break-even начинается с 10-100M tokens/мес.",
+                "source_of_confusion": "В блог-статьях про «cost of inference» часто берётся peak workload и idealistic GPU utilization 100%, что в реальности недостижимо при bursty traffic.",
+                "if_it_were_true": "Startup'ы с 10K MAU тратили бы тысячи долларов на GPU вместо $50/мес на OpenAI API и быстро бы разорились. На самом деле большинство early-stage AI-продуктов начинают с API.",
+                "how_it_should_be": "Зафиксировать tokens/мес и стоимость GPU, посчитать break-even — обычно это 10M+ tokens/мес."
+              },
+              "label": "B",
+              "text": "Self-host всегда дешевле API при любых объёмах, даже при 100K tokens/месяц.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "На chat и coding задачах Llama 3.1 405B и Qwen 2.5 в 2025 году близки к GPT-4o, иногда обходят на specific domains (русский язык — YandexGPT, китайский — Qwen). На reasoning frontier-задачах (математика, multimodal) gap пока остаётся, но не «катастрофический».",
+                "source_of_confusion": "Бенчмарки 2023 года (Llama 2 vs GPT-4) показывали огромный разрыв; устаревшие оценки переносят на 2025 без обновления.",
+                "if_it_were_true": "Meta, Mistral, Alibaba, DeepSeek не открывали бы веса — нет коммерческого смысла. На самом деле они активно конкурируют с closed-source и держатся в топах chatbot arena.",
+                "how_it_should_be": "Сравнивать конкретную open-модель с конкретной задачей на свежих бенчмарках (LMSYS Arena, MMLU-Pro 2025); для большинства бизнес-кейсов open-models достаточны."
+              },
+              "label": "C",
+              "text": "API всегда лучше self-host, потому что open-source модели катастрофически деградируют по сравнению с GPT-4 и Claude.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Self-host меняет one lock-in (OpenAI) на другой: NVIDIA CUDA ecosystem, Hugging Face hub для весов, специфичная версия PyTorch/vLLM. Переезд с CUDA на AMD ROCm — это месяцы работы, с HF на собственное хранилище — отдельный проект.",
+                "source_of_confusion": "Термин «vendor lock-in» обычно применяют только к SaaS-провайдерам, упуская инфраструктурные зависимости.",
+                "if_it_were_true": "Можно было бы свободно мигрировать с NVIDIA на AMD без переписывания stack'а. Реальность: до 2025 года 95% production LLM-deployment'ов работают только на CUDA.",
+                "how_it_should_be": "Признать, что self-host даёт независимость от LLM API провайдера, но создаёт зависимость от GPU vendor и open-source stack'а — это другая, но не нулевая, цена."
+              },
+              "label": "D",
+              "text": "Self-host полностью устраняет vendor lock-in — нет никаких зависимостей от внешних поставщиков.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "GPU vs CPU inference?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Для маленьких classification (логистическая регрессия, маленькие XGBoost), sentence-transformers embeddings, маленьких NER-моделей CPU работает в пределах SLA (1-5 ms latency) и стоит на порядок дешевле. GPU даёт выигрыш только когда модель достаточно велика, чтобы parallel matmul'ы окупали PCIe-overhead на загрузку входа.",
+                "source_of_confusion": "«GPU для ML» — расхожая фраза из эры deep learning training, где это абсолютно верно. Для inference маленьких моделей правило не работает.",
+                "if_it_were_true": "Vespa, Solr, sklearn в production не использовались бы — но они работают на CPU и обслуживают миллиарды запросов в день. Embedding-сервисы Yandex/Wolt часто крутятся на CPU.",
+                "how_it_should_be": "Выбирать акселератор по размеру модели и latency-требованиям, а не по принципу «ML = GPU»."
+              },
+              "label": "A",
+              "text": "GPU всегда быстрее CPU для любого ML inference, поэтому всё нужно serve'ить на GPU.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "llama.cpp с GGUF-квантизацией (Q4_K_M, Q5_K_M) запускает Llama 3 8B на CPU c throughput 5-15 tokens/sec, что приемлемо для local-dev, edge-deployment, on-device inference на ноутбуках. Apple Silicon с Metal делает это ещё быстрее.",
+                "source_of_confusion": "Большие облачные LLM (GPT-4) действительно крутятся на GPU/TPU, и от этого делается обобщение «LLM = GPU only».",
+                "if_it_were_true": "Ollama, LM Studio, llama.cpp не существовали бы — они построены именно вокруг CPU/Metal inference. Apple не пушил бы on-device LLM в iOS 18.",
+                "how_it_should_be": "CPU допустим для LLM при low-throughput сценариях (1-2 concurrent users) и quantized моделях; для serious serving с десятками RPS нужен GPU."
+              },
+              "label": "B",
+              "text": "CPU нельзя использовать для LLM в принципе — это технически невозможно.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "GPU выигрывает за счёт massive parallel matmul'ов и high-bandwidth memory (HBM3 даёт ~3 ТБ/с против ~50 ГБ/с DDR5). Это окупается, когда матричные операции составляют > 80% времени inference, что верно для трансформеров. Для маленьких моделей PCIe overhead и kernel launch latency перекрывают выгоду. Ключевой бюджет для LLM — GPU VRAM: 7B FP16 = 14 ГБ, 70B FP16 = 140 ГБ, плюс KV cache 1-10 ГБ.",
+                "example": "Команда serve'ит две модели: BERT-base (110M params, NER на CPU 8 vCPU, ~10ms latency, $50/мес на c6i.2xlarge) и Llama 3 8B (chat assistant на 1× A10G 24 ГБ, ~30 tokens/sec на запрос, $500/мес на g5.xlarge). Обе на GPU было бы недозагрузкой за $1000/мес; обе на CPU — Llama выдавала бы 1-3 tokens/sec, неприемлемо.",
+                "when_to_apply": "При выборе compute для нового сервиса: считаем размер модели и target throughput, проверяем помещается ли в GPU memory (вместе с KV cache), оцениваем latency budget. Embeddings (`all-MiniLM-L6-v2`, `e5-small`) — на CPU; chat LLM — на GPU.",
+                "edge_cases": "Apple Silicon (M2/M3) с Metal — между CPU и discrete GPU по производительности, не вписывается в классическую дихотомию. AMD MI300 догоняет H100, но CUDA-софт требует портирования на ROCm. CPU NUMA-эффекты могут давать 2× разницу между «правильной» и «неправильной» pinning стратегиями.",
+                "related": "[[model-serving-interview#Q16]] quantization для fit в GPU memory; [[model-serving-interview#Q24]] выбор конкретного GPU; [[model-serving-interview#Q13]] llama.cpp для CPU inference."
+              },
+              "label": "C",
+              "text": "Правило: LLM ≥ 7B параметров на production traffic → GPU (10-100× быстрее CPU), модели < 1B и classical ML → CPU обычно достаточен; embeddings отлично работают на CPU; ключевой constraint — GPU memory (24-80 ГБ).",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "70B FP16 = 140 ГБ, INT8 = 70 ГБ, INT4 = 35 ГБ — даже самая агрессивная квантизация не помещается в 24 ГБ. Максимум для 4090 — 13-14B INT4 или 7-8B FP16 с минимальным KV cache.",
+                "source_of_confusion": "Заголовки «70B на ноутбуке» в HN/Reddit часто умалчивают, что речь о CPU offload через llama.cpp с throughput 0.5-2 tokens/sec — это работает, но не на GPU only.",
+                "if_it_were_true": "Никто бы не покупал H100 за $30K, все бы держали кластеры RTX 4090. Реально провайдеры (Together, Anyscale) для 70B используют 2× H100 80 ГБ или 4× A100.",
+                "how_it_should_be": "Для 70B нужно либо multi-GPU с tensor parallelism (2× H100 80 ГБ), либо агрессивная квантизация + CPU offload через llama.cpp с потерей throughput."
+              },
+              "label": "D",
+              "text": "Можно спокойно загрузить 70B модель в одну RTX 4090 (24 ГБ VRAM), потому что современные оптимизации делают модели «маленькими».",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Latency vs throughput trade-offs?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Latency — время одного запроса (TTFT, p95), throughput — суммарное число tokens/sec на серверe. Они часто конфликтуют: batch=32 даёт высокий throughput, но per-request latency растёт; batch=1 даёт минимальную latency, но GPU простаивает 80% времени.",
+                "source_of_confusion": "В web-сервисах для маленьких stateless запросов улучшение latency и throughput часто скоррелировано (быстрее обработали — больше успели). В GPU inference batching ломает эту корреляцию.",
+                "if_it_were_true": "Не нужны были бы две метрики, в API-спецификациях не было бы отдельных параметров `max_num_batched_tokens` и `max_num_seqs`. Реально оба знака настраиваются отдельно в vLLM/TGI.",
+                "how_it_should_be": "Latency и throughput — разные метрики с trade-off; balance подбирается под SLA конкретного сервиса."
+              },
+              "label": "A",
+              "text": "Latency и throughput — это синонимы: оптимизация одной метрики автоматически улучшает другую.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Большой batch уменьшает latency на token среди batch'а, но увеличивает per-request latency: запросы ждут, пока соберётся batch, плюс forward pass на большом batch длиннее, чем на batch=1.",
+                "source_of_confusion": "Метафора «оптом дешевле» переносится с web-batch'инга на GPU; правда лишь частично — throughput растёт, но за счёт latency.",
+                "if_it_were_true": "Можно было бы поставить batch=256 и получить минимальную latency. Реально benchmarks vLLM на A100 показывают: batch=1 даёт TTFT 100ms, batch=256 — TTFT 800-1500ms.",
+                "how_it_should_be": "Маленький batch минимизирует latency одного запроса, большой — увеличивает throughput кластера; оптимум подбирается под SLA."
+              },
+              "label": "B",
+              "text": "Чем больше batch size — тем ниже latency каждого отдельного запроса.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "vLLM — флагманская реализация continuous batching через PagedAttention; это её главная фишка с 2023 года. Авторы vLLM (UC Berkeley) опубликовали оригинальную статью про PagedAttention, и эта техника позже стала отраслевым стандартом.",
+                "source_of_confusion": "Иногда путают «static batching» (старый naive подход в HF Transformers) с continuous batching и приписывают первое всем serving stack'ам.",
+                "if_it_were_true": "vLLM не имел бы 30K+ GitHub stars, NVIDIA не интегрировала бы поддержку vLLM в Triton. На самом деле vLLM — golden standard для open-source LLM serving в 2024-2025.",
+                "how_it_should_be": "Continuous batching — это сильнейшая фича vLLM, ровно поэтому он стал индустриальным стандартом."
+              },
+              "label": "C",
+              "text": "Continuous batching недоступна на vLLM, поэтому vLLM не годится для production.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Классические серверы выбирали один режим: или latency (batch=1, минимум очереди), или throughput (большой batch, ждём, пока соберётся). Continuous batching ломает эту дихотомию: GPU всегда полна работой, потому что готовые sequences «выходят» из batch'а сразу, и на их место входят новые. PagedAttention в vLLM делает это memory-efficient: KV cache хранится постранично, sequences разной длины не блокируют друг друга. Результат: throughput 5-20× по сравнению с naive HF при сопоставимом TTFT.",
+                "example": "Chat-сервис с SLA p95 TTFT ≤ 500ms и target 200 concurrent users: vLLM с `--max-num-seqs 64 --max-num-batched-tokens 4096` даёт TTFT ~200ms и throughput ~150 tokens/sec на A100 для Llama 3 8B. Naive HF с batch=8 на той же карте дал бы TTFT 800ms+ при том же throughput.",
+                "when_to_apply": "Любое serious LLM serving: chatbots, copilot, agents, embedding bulk-jobs. Continuous batching — default в vLLM, TGI, TensorRT-LLM (через `--inflight-batching`). Для классических non-autoregressive моделей (BERT, CV) обычное dynamic batching в Triton достаточно.",
+                "edge_cases": "`max_num_batched_tokens` нужно тюнить под GPU memory: слишком высокий → OOM при peak, слишком низкий → недогруз; начинать с 2K-4K. На длинных контекстах (32K+ tokens) KV cache растёт быстро и continuous batching упирается в memory; стратегия — chunked prefill + paged kv. Latency p99 может скакать, если queue scheduling не fair.",
+                "related": "[[model-serving-interview#Q14]] PagedAttention механика; [[model-serving-interview#Q15]] KV cache; [[model-serving-interview#Q9]] vLLM как реализация."
+              },
+              "label": "D",
+              "text": "Latency-optimized режим — маленький batch (часто 1), GPU underutilized, низкая TTFT; throughput-optimized — большой batch, высокая per-request latency; continuous batching (vLLM, TGI) даёт оба преимущества за счёт on-the-fly входа новых запросов в batch.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "TorchServe?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "TorchServe ориентирован на классические PyTorch-модели: ResNet, BERT, sentence-transformers, custom networks. Handler API даёт точку расширения для preprocessing (resize изображения, tokenization) и postprocessing (softmax, top-K). Поддерживает MAR-архивы (Model ARchive) — упакованный код + веса. Multi-model loading, версионирование, A/B traffic split на уровне server. Production-tested в AWS SageMaker, который под капотом часто использует именно TorchServe.",
+                "example": "Команда serve'ит fine-tuned BERT для classification (5 классов) через TorchServe: handler делает tokenization через HF tokenizer, inference на GPU, softmax + threshold в postprocess; `torch-model-archiver --model-name sentiment --version 1.0 --serialized-file model.pt --handler handler.py` создаёт MAR, deploy на K8s pod с T4 GPU, ~80 ms p95.",
+                "when_to_apply": "Classical PyTorch модели (CV: ResNet/EfficientNet, NLP: BERT/RoBERTa, embeddings: sentence-transformers); сценарии с custom Python preprocessing; команды, которые уже в PyTorch-экосистеме; AWS SageMaker (нативная интеграция).",
+                "edge_cases": "На LLM проигрывает vLLM/TGI на порядок (нет continuous batching, статическое batching); workers в TorchServe — отдельные Python processes, что даёт GIL-изоляцию, но требует дублирования весов в RAM каждого worker'а. Default batching — naive (`batch_size` + `max_batch_delay`).",
+                "related": "[[model-serving-interview#Q6]] TF Serving для TensorFlow; [[model-serving-interview#Q7]] Triton как универсал; [[model-serving-interview#Q9]] vLLM для LLM."
+              },
+              "label": "A",
+              "text": "TorchServe — официальный inference server для PyTorch (PyTorch Foundation + AWS), даёт handler API (initialize / preprocess / inference / postprocess), versioning, REST+gRPC; для LLM используется редко, так как нет continuous batching и PagedAttention.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "TorchServe не имеет PagedAttention, continuous batching реализован базово, нет AWQ/GPTQ нативной поддержки. На Llama 3 8B vLLM выдаёт 5-10× throughput по сравнению с TorchServe.",
+                "source_of_confusion": "TorchServe — «официальный» PyTorch server, а Llama 3 — PyTorch-модель; кажется логичным использовать связку. Но vLLM/TGI специально оптимизированы под autoregressive generation, чего нет в TorchServe.",
+                "if_it_were_true": "Hugging Face и UC Berkeley не разрабатывали бы TGI и vLLM, а ставили бы свои оптимизации поверх TorchServe. Реально TGI и vLLM — отдельные runtime, написанные с нуля для LLM.",
+                "how_it_should_be": "Для LLM используем vLLM/TGI/TensorRT-LLM; TorchServe — для классических PyTorch моделей."
+              },
+              "label": "B",
+              "text": "TorchServe оптимизирован для LLM-serving и заменяет vLLM в production.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "TorchServe работает только с PyTorch-моделями (TorchScript / `.pt` / `.mar`). Для TensorFlow есть TensorFlow Serving, для cross-framework нужен ONNX (через TorchServe-ONNX-handler) или Triton.",
+                "source_of_confusion": "Имя «Serve» обобщённое; начинающие думают, что один tool сервит всё подряд.",
+                "if_it_were_true": "Google и AWS не разделяли бы TorchServe и TF Serving — было бы один продукт. Реально это две отдельные codebase'ы.",
+                "how_it_should_be": "TorchServe = PyTorch only; для мульти-framework — Triton (`pytorch`, `tensorflow`, `onnxruntime`, `vllm` backends в одном сервере)."
+              },
+              "label": "C",
+              "text": "TorchServe умеет serve'ить TensorFlow модели через автоматическую конверсию весов.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Custom handler — это центральная часть TorchServe; именно для preprocessing (image resize, tokenization, normalization) и postprocessing (softmax, threshold, top-K) handler API и создан. Можно подключить любые Python-зависимости через `requirements.txt` в MAR-архиве.",
+                "source_of_confusion": "В Triton preprocessing часто выносится в Ensemble (Python backend для preprocess + model backend для inference); это переносят на TorchServe и считают, что у него такой возможности нет.",
+                "if_it_were_true": "Каждый клиент TorchServe тянул бы 500 МБ HF tokenizer + 300 МБ PIL для image preprocessing — это противоречит идее inference server'а.",
+                "how_it_should_be": "Handler API в TorchServe — стандартное место для preprocessing/postprocessing; всё это бежит на сервере, клиент шлёт сырой input."
+              },
+              "label": "D",
+              "text": "TorchServe не поддерживает custom preprocessing — обработка входа должна быть на клиенте.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "TensorFlow Serving?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "TF Serving работает только с TensorFlow/Keras SavedModel и нацелен на classical inference (CV, NLP до LLM-эры). Multi-framework — это про Triton; для LLM — vLLM/TGI. TF Serving никого не вытесняет, наоборот, теряет долю с миграцией ML-команд на PyTorch.",
+                "source_of_confusion": "Сильный бренд Google и долгая история (с 2016) создают впечатление актуальности. Но Google внутренне сместился на JAX + собственные TPU serving stack'и.",
+                "if_it_were_true": "vLLM и Triton не имели бы стабильного growth; реально оба растут, в то время как TF Serving stagnates.",
+                "how_it_should_be": "TF Serving — нишевый инструмент для legacy TensorFlow моделей; для нового зелёного поля выбирают Triton или vLLM."
+              },
+              "label": "A",
+              "text": "TF Serving — modern multi-framework inference server, который сейчас активно вытесняет vLLM и Triton.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "TF Serving — старейший production serving (открыт Google в 2016), оптимизирован под TensorFlow graph execution. Версионирование model directory: `models/my_model/1/`, `models/my_model/2/` — server автоматически подхватывает новую версию и hot-swap без downtime. gRPC API более производителен, чем REST, и используется внутри Google. Поддерживает model warmup (предзагрузка popular inputs для cache).",
+                "example": "Команда сервит TensorFlow ResNet-50 для image classification: `docker run -p 8501:8501 -v $(pwd)/models:/models -e MODEL_NAME=resnet tensorflow/serving`; обновление модели — просто положить веса в `models/resnet/2/`, server увидит и переключит трафик без рестарта; gRPC дать ~5 ms latency на T4 GPU vs REST ~12 ms.",
+                "when_to_apply": "Legacy TensorFlow модели (миграция на PyTorch не запланирована); compliance-сценарии, где требуется long-term support конкретной TF-версии; Google Cloud TPU serving (нативная интеграция через TF Serving + TPU); классический CV в production.",
+                "edge_cases": "Не работает с PyTorch (нужен TorchScript→ONNX→TF конвертер, который часто ломается). LLM не поддерживается (нет continuous batching). После TF 2.x перестал быть универсальным — JAX-модели требуют ручной конверсии. Поддержка от Google decreasing, новые фичи приходят редко.",
+                "related": "[[model-serving-interview#Q5]] TorchServe-аналог для PyTorch; [[model-serving-interview#Q7]] Triton как universal-альтернатива; [[model-serving-interview#Q28]] выбор stack'а под framework."
+              },
+              "label": "B",
+              "text": "TF Serving — production-grade inference server для TensorFlow/Keras SavedModel, поддерживает gRPC + REST, hot-swap моделей без рестарта, версионирование, A/B test; используется в основном для поддержки legacy TensorFlow систем, доля сокращается в пользу PyTorch.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "TF Serving читает только TensorFlow SavedModel формат (`.pb` + variables). PyTorch модели нужно сначала экспортировать в ONNX и потом в TF SavedModel — это многоступенчатая конверсия, которая часто теряет custom операторы.",
+                "source_of_confusion": "В универсальных описаниях «serving server» границы фреймворков размываются.",
+                "if_it_were_true": "TorchServe не существовал бы как отдельный продукт. Реально PyTorch Foundation создала TorchServe именно потому, что TF Serving не подходит для PyTorch экосистемы.",
+                "how_it_should_be": "Для PyTorch — TorchServe или Triton (`pytorch_libtorch` backend); для TensorFlow — TF Serving или Triton (`tensorflow_savedmodel` backend)."
+              },
+              "label": "C",
+              "text": "TF Serving подходит и для PyTorch-моделей напрямую — достаточно скопировать `.pt`-файл в model directory.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Hot-swap без рестарта — это flagship-фича TF Serving с 2017 года: `--model_config_file_poll_wait_seconds=60` опрашивает model registry, при появлении новой версии загружает её, переключает трафик и удаляет старую. In-flight requests завершаются на старой версии, новые идут на новую.",
+                "source_of_confusion": "В простых serving-стэках (Flask + load_model в startup) действительно нужен рестарт для обновления. Это переносят на TF Serving.",
+                "if_it_were_true": "Каждое обновление модели в Google AdWords (миллион запросов в секунду) приводило бы к 5-минутному downtime. Реально TF Serving делает rolling-обновление невидимым для пользователя.",
+                "how_it_should_be": "Hot-swap без рестарта — основная фича; для production-сетапа просто включить model polling."
+              },
+              "label": "D",
+              "text": "Hot-swap моделей в TF Serving требует ручного рестарта сервера и сбрасывает все in-flight requests.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "NVIDIA Triton Inference Server?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Triton — multi-framework: PyTorch (libtorch), TensorFlow (savedmodel), ONNX Runtime, TensorRT, OpenVINO, Python backend, vLLM (через TRT-LLM или vLLM-backend), кастомные backends на C++. TensorRT — только один из бэкендов.",
+                "source_of_confusion": "Triton разработан NVIDIA, и часто кажется, что он завязан на NVIDIA-only stack. На самом деле это general-purpose server, в котором TensorRT — это про максимальную производительность, но не единственный путь.",
+                "if_it_were_true": "AWS, Microsoft Azure не делали бы Triton-based managed serving для не-NVIDIA моделей. Реально SageMaker MultiModel и Azure ML используют Triton именно как multi-framework hub.",
+                "how_it_should_be": "Triton — multi-framework hub, TensorRT — один из бэкендов для max-perf на NVIDIA."
+              },
+              "label": "A",
+              "text": "Triton поддерживает только TensorRT-engine — это сужает его до NVIDIA Tensor-core оптимизаций.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Dynamic batching — флагманская фича Triton: `dynamic_batching { max_queue_delay_microseconds: 100, preferred_batch_size: [4,8,16] }` в `config.pbtxt`. Server собирает входящие requests в batch на лету, оптимизируя GPU utilization без участия клиента.",
+                "source_of_confusion": "В TorchServe batching через `BaseHandler.handle()` тоже базовый, и часть этой ограниченности переносят на Triton.",
+                "if_it_were_true": "Без dynamic batching Triton не давал бы преимуществ перед naive serving — но он лидер production performance на classical ML.",
+                "how_it_should_be": "Dynamic batching в Triton настраивается на серверной стороне через `config.pbtxt`; клиент шлёт single requests, batching прозрачен."
+              },
+              "label": "B",
+              "text": "Triton не умеет dynamic batching: батчинг настраивается только на клиенте.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Triton решает проблему «N моделей разных фреймворков → N разных serving сервисов» через единый rollout: один Triton-инстанс хостит ResNet ONNX, BERT TF SavedModel, custom Python preprocessing, LLM на TRT-LLM, всё через одну API surface. Model ensemble позволяет связать preprocessing → inference → postprocessing в DAG, который выполняется внутри сервера без сетевых hops. Multi-GPU scheduling балансирует instances между картами. Sampling rate, metrics (Prometheus), versioning, A/B test — всё из коробки.",
+                "example": "Команда serve'ит pipeline: image input → Python backend для preprocessing (resize, normalize) → ResNet-50 TensorRT для feature extraction → BERT TF SavedModel для caption generation → Python backend для postprocessing; всё через один Triton pod на 2× T4 GPU; ensemble декларируется в `config.pbtxt` как DAG, инференс — один HTTP call.",
+                "when_to_apply": "Heterogeneous model zoo (несколько фреймворков на одной команде); NVIDIA GPU infrastructure (где TRT и TRT-LLM дают max perf); production ML platforms (Yandex DataSphere, AWS SageMaker, Azure ML — часто на Triton под капотом); сложные multi-stage pipelines с ensembles.",
+                "edge_cases": "`config.pbtxt` достаточно verbose и легко ломается (typo в input shapes → silent failure). Для LLM в Triton рекомендуется TensorRT-LLM backend, что вводит NVIDIA vendor lock-in. Cold start модели в Triton медленнее vLLM (загрузка через model_repository, не lazy). Не работает на AMD ROCm officially.",
+                "related": "[[model-serving-interview#Q5]] TorchServe для PyTorch; [[model-serving-interview#Q11]] TensorRT-LLM как Triton-backend; [[model-serving-interview#Q28]] выбор serving stack по сценарию."
+              },
+              "label": "C",
+              "text": "Triton — универсальный inference server с поддержкой multi-framework (PyTorch / TF / ONNX / TensorRT / OpenVINO / vLLM), automatic dynamic batching, model ensembles, multi-GPU scheduling, gRPC и HTTP — фактический default для production ML с гетерогенным model zoo.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Triton — NVIDIA продукт, flagship для inference на NVIDIA GPU (CUDA, TensorRT, NVLink). AMD ROCm-поддержка есть только в community-fork (Triton-AMD), не в основной ветке.",
+                "source_of_confusion": "Имя «Triton» в ML-экосистеме перегружено: есть ещё OpenAI Triton (язык для kernel programming) и Inference Server, что путает контекст.",
+                "if_it_were_true": "NVIDIA не вкладывала бы $30M+/год в Triton Inference Server для конкурирующей платформы. Реально это часть NVIDIA NGC / NIM экосистемы.",
+                "how_it_should_be": "Triton — NVIDIA-flagship для NVIDIA GPU; для AMD есть отдельные runtime (ROCm + vLLM-AMD)."
+              },
+              "label": "D",
+              "text": "Triton работает только на AMD GPU — NVIDIA выпускает его именно как продукт для конкурентов.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "BentoML?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "BentoML — Python-first framework для упаковки и деплоя ML-сервисов, не специализированный LLM engine. Для LLM serving BentoML обычно интегрируется с vLLM (через `vllm` runner) — то есть BentoML обёртка, а vLLM делает реальный inference.",
+                "source_of_confusion": "В блогах BentoML позиционируется как «universal serving», и читатели проецируют это на LLM-домен.",
+                "if_it_were_true": "Авторы Llama 3 production deployment'ов писали бы про BentoML как core engine; реально пишут про vLLM/TGI, а BentoML — как convenience-обёртка для DevX.",
+                "how_it_should_be": "BentoML отлично пакует и деплоит сервисы вокруг vLLM, но сам по себе LLM-оптимизаций не привносит."
+              },
+              "label": "A",
+              "text": "BentoML — это специализированный LLM inference engine, который заменяет vLLM в production deployment'ах Llama и Mistral.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "BentoML имеет полную GPU-поддержку через Runner system: `@bentoml.Runnable(SUPPORTED_RESOURCES=(\"nvidia.com/gpu\",))`, можно конфигурировать `gpu_required: 1` в bentofile.yaml, runtime деплоит на GPU-pod в Kubernetes.",
+                "source_of_confusion": "BentoML — Python-first, и впечатление, что он подходит только для лёгких задач. Это неверно: production-deployment'ы CV/NLP моделей на GPU — основной use case.",
+                "if_it_were_true": "BentoCloud не имел бы GPU-инстансов в pricing. Реально BentoCloud предлагает A10G / A100 / H100 поды.",
+                "how_it_should_be": "BentoML работает с GPU через runners; декларация ресурсов в bentofile.yaml."
+              },
+              "label": "B",
+              "text": "BentoML не поддерживает GPU вообще — это CPU-only framework для маленьких моделей.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "BentoML framework-agnostic: есть встроенные интеграции с PyTorch, TensorFlow, sklearn, XGBoost, Hugging Face, ONNX, vLLM, fastai. Внутри `@bentoml.service` можно использовать любую Python-библиотеку.",
+                "source_of_confusion": "Иногда BentoML противопоставляют TF Serving (как «TF only») и по аналогии приписывают то же ограничение.",
+                "if_it_were_true": "BentoML не имел бы 6K+ GitHub stars и community — PyTorch разработчики (большинство ML-инженеров) не использовали бы tool «только для TF».",
+                "how_it_should_be": "BentoML — framework-agnostic; декларируем модель любого framework и сервим через единый API."
+              },
+              "label": "C",
+              "text": "BentoML работает только с TensorFlow и не поддерживает PyTorch / sklearn / XGBoost.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "BentoML решает проблему «у меня модель, мне нужен production сервис с минимумом boilerplate». Декоратор `@bentoml.api` превращает Python-функцию в HTTP endpoint, `bentoml build` пакует код + веса + dependencies в Docker image, `bentoml deploy` выкатывает на BentoCloud (managed) или Kubernetes (через operator). Runner system позволяет инкапсулировать тяжёлые модели в отдельные processes/pods, а легкий API gateway маршрутизирует. Поддерживает batching, GPU resources, OpenAPI spec auto-generation.",
+                "example": "Команда сервит fraud-detection XGBoost модель + sklearn preprocessing: `@bentoml.service class FraudDetector` с runner для XGBoost; `bentoml build` собирает образ; `bentoml deploy` — BentoCloud auto-генерирует Kubernetes manifests, HPA, ingress; ~200 строк кода против ~2000 на ручной Flask + Docker + Helm setup.",
+                "when_to_apply": "Classical ML pipelines с custom Python preprocessing; команды без DevOps-экспертизы (BentoML делает рутину); быстрый MVP/prototype в production; multi-model сервисы (несколько моделей в одной Bento). Для LLM — связка BentoML + vLLM runner.",
+                "edge_cases": "BentoCloud — vendor-managed, бесплатный tier ограничен. Без BentoCloud K8s-deployment требует своего operator или ручной Helm. Производительность сама по себе не лучше Triton/vLLM — выигрыш в DevX, не в throughput. Обновления BentoML иногда ломают backward compatibility в bentofile.yaml.",
+                "related": "[[model-serving-interview#Q5]] TorchServe для PyTorch; [[model-serving-interview#Q7]] Triton для multi-framework; [[model-serving-interview#Q9]] vLLM как LLM engine под BentoML обёрткой."
+              },
+              "label": "D",
+              "text": "BentoML — Python-first framework с decorator API (`@bentoml.service` / `@bentoml.api`), который абстрагирует упаковку модели в container и деплой (BentoCloud / Kubernetes / SageMaker); удобен для classical ML, custom code и быстрого MLE DevX.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "vLLM — главный для LLM serving?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "PagedAttention хранит KV cache постранично (как virtual memory в OS) — устраняет до 60-80% memory fragmentation, типичной для naive serving. Continuous batching позволяет новым запросам входить в активный batch на каждом decoding step — GPU всегда полна работой. Quantization (AWQ, GPTQ, FP8) интегрирована из коробки. OpenAI-compatible endpoint `/v1/chat/completions` делает drop-in replacement: тот же openai-python SDK, поменялся только `base_url`.",
+                "example": "Команда serve'ит Llama 3 70B AWQ для chat-assistant: `vllm/vllm-openai:latest --model meta-llama/Llama-3-70B-Instruct-AWQ --tensor-parallel-size 2 --max-num-batched-tokens 4096` на 2× H100 80 ГБ, throughput ~300-400 tokens/sec aggregate, TTFT ~200-300 ms, OpenAI SDK работает с `OPENAI_BASE_URL=http://vllm:8000/v1`.",
+                "when_to_apply": "Self-hosted production serving open-source LLM (Llama, Mistral, Qwen, DeepSeek, Gemma); migration path с OpenAI/Anthropic API; internal AI platforms в крупных компаниях (Yandex, Сбер, Wolt — стэк на vLLM); batch inference для offline scoring.",
+                "edge_cases": "`--max-num-batched-tokens` нужно тюнить под GPU memory (слишком высокий → OOM, низкий → недогруз; начинать с 2K-4K). Tensor parallelism требует NVLink/InfiniBand для эффективности — на PCIe медленнее single-GPU. Quantization не «бесплатна»: AWQ теряет ~1-3% на reasoning benchmarks. Cold start большой модели — 1-3 минуты загрузки весов в GPU.",
+                "related": "[[model-serving-interview#Q10]] TGI как ближайший конкурент; [[model-serving-interview#Q14]] PagedAttention механика; [[model-serving-interview#Q22]] OpenAI-compatible API."
+              },
+              "label": "A",
+              "text": "vLLM (UC Berkeley, открыт 2023) даёт PagedAttention + continuous batching + AWQ/GPTQ/FP8 quantization + OpenAI-compatible API, что даёт 5-20× throughput по сравнению с naive Hugging Face Transformers.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "vLLM имеет production-grade OpenAI-compatible API server: `python -m vllm.entrypoints.openai.api_server` или Docker `vllm/vllm-openai`; используется в production Anyscale, Together AI, Mistral La Plateforme, российскими AI-платформами.",
+                "source_of_confusion": "vLLM начинался как research-проект UC Berkeley (paper SOSP 2023), и образ «академический tool» оставался первые месяцы.",
+                "if_it_were_true": "Together AI не serve'ил бы Llama 3 405B production через vLLM. Реально Together AI и Anyscale построили коммерческий бизнес поверх vLLM.",
+                "how_it_should_be": "vLLM — production-grade server с Docker-image, Kubernetes-готовый, OpenAI API."
+              },
+              "label": "B",
+              "text": "vLLM работает только в Jupyter notebooks как research-инструмент, для production не используется.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "vLLM поддерживает AWQ, GPTQ, FP8 (на H100+), bitsandbytes (через `--quantization`); это критическая фича для cost-effective serving (70B FP16=140 ГБ → AWQ=35 ГБ, помещается в один H100).",
+                "source_of_confusion": "В ранних версиях vLLM (2023) quantization была ограничена, и эта информация осталась в устаревших туториалах.",
+                "if_it_were_true": "vLLM не подходил бы для serve'инга 70B+ моделей без 4× GPU, что нивелировало бы его cost advantage. Реально 70B AWQ на 1-2 H100 — типичный production setup.",
+                "how_it_should_be": "vLLM имеет встроенную quantization поддержку (AWQ/GPTQ/FP8); это ключевой инструмент для cost optimization."
+              },
+              "label": "C",
+              "text": "vLLM не поддерживает quantization, поэтому большие модели требуют FP16 веса полностью.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "vLLM написан с нуля с собственным C++/CUDA kernel для PagedAttention, custom scheduler для continuous batching, оптимизированной memory management. Это отдельный runtime, не обёртка над HF.",
+                "source_of_confusion": "vLLM использует HF tokenizers и модели формата HF (compatibility), что создаёт впечатление «обёртка».",
+                "if_it_were_true": "Throughput vLLM был бы равен HF, а не 5-20× выше. Бенчмарки на A100 Llama 2 7B: HF ~15 req/sec, vLLM ~330 req/sec.",
+                "how_it_should_be": "vLLM — самостоятельный inference engine с собственным CUDA kernel и scheduler; HF compatibility — только на уровне модели и tokenizer'а."
+              },
+              "label": "D",
+              "text": "vLLM — это просто HuggingFace Transformers с progress bar и nothing else, никаких архитектурных отличий.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Hugging Face TGI?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "TGI (Text Generation Inference) специализирован именно под autoregressive text generation (LLM): chat, completion, streaming. Для classification, embeddings, CV, regression TGI не подходит — это работа TorchServe/Triton.",
+                "source_of_confusion": "Hugging Face — universal hub для всех моделей, и кажется, что их serving solution тоже universal. На самом деле HF предлагает разные tools под разные задачи: `text-generation-inference` для LLM, `text-embeddings-inference` для embeddings, прямо в SageMaker — HF DLC контейнеры разных типов.",
+                "if_it_were_true": "Hugging Face не разрабатывал бы отдельный `text-embeddings-inference`, всё было бы в TGI. Реально это два разных проекта.",
+                "how_it_should_be": "TGI — для LLM generation, TEI — для embeddings, для classical ML — TorchServe/Triton."
+              },
+              "label": "A",
+              "text": "TGI заменяет TorchServe и TF Serving, став универсальным сервером для классической ML и LLM.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "TGI разработан Hugging Face специально для production text generation. Rust-based router + Python inference processes, что даёт высокую throughput и низкий overhead. Continuous batching через Inflight batching, оптимизированные attention kernels (Flash Attention 2), tensor parallelism через `NVIDIA NCCL`. На большинстве моделей throughput в пределах 10-20% от vLLM. Главная сила — tight integration с HF Hub (модели грузятся напрямую) и production deployment через HF Inference Endpoints (managed) или Docker container локально.",
+                "example": "Команда уже в HF-экосистеме (transformers + datasets + hub) serve'ит Llama 3 8B Instruct: `docker run --gpus all -p 8080:80 ghcr.io/huggingface/text-generation-inference:latest --model-id meta-llama/Llama-3-8B-Instruct --quantize bitsandbytes-nf4`; ~200-250 tokens/sec на A10G, OpenAI-compatible API на `:8080/v1`.",
+                "when_to_apply": "Команды уже глубоко в HF-стеке (HF Hub, transformers, accelerate); Hugging Face Inference Endpoints (managed serving); сценарии, где tight integration с HF tokenizer / model card / safetensors важна; production LLM serving альтернатива vLLM.",
+                "edge_cases": "Lisence для TGI с версии 1.0 стала более ограничительной (HF Hugging Face Inference Endpoints Restriction License) — нужно перечитать для коммерческого self-host. Performance на edge cases (длинный контекст, специфичные модели типа DeepSeek-V3) иногда хуже vLLM. Меньше community-вкладов, чем у vLLM.",
+                "related": "[[model-serving-interview#Q9]] vLLM как конкурент; [[model-serving-interview#Q22]] OpenAI-compatible API; [[model-serving-interview#Q28]] выбор stack по сценарию."
+              },
+              "label": "B",
+              "text": "TGI — основной конкурент vLLM от Hugging Face: OpenAI-compatible API, continuous batching, quantization (bitsandbytes / GPTQ / AWQ / EETQ), tensor parallelism; performance близок к vLLM, setup проще для команд уже в HF-экосистеме, используется на Inference Endpoints (HF managed serving).",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "TGI распространяется под лицензией HFOIL (HF Open Inference License) до 1.4, с 2.0 — Apache 2.0 (с некоторыми ограничениями на cloud-resell). Можно запустить локально и в production бесплатно. HF Inference Endpoints — это платный managed-сервис поверх TGI, но сам TGI бесплатен.",
+                "source_of_confusion": "HF имеет коммерческий сервис «Inference Endpoints», который часто путают с tool TGI.",
+                "if_it_were_true": "TGI не было бы Docker-image в открытом доступе на ghcr.io. Реально образ публичный, скачивается миллионы раз.",
+                "how_it_should_be": "TGI open-source (с нюансами лицензии), для self-host бесплатен; коммерческий managed сервис — отдельный продукт HF."
+              },
+              "label": "C",
+              "text": "TGI требует платную Hugging Face подписку для запуска — это не open-source.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "TGI поддерживает bitsandbytes (NF4, INT8), GPTQ, AWQ, EETQ; флаг `--quantize bitsandbytes-nf4` или `--quantize awq`. На H100 80 ГБ можно serve'ить Llama 3 70B AWQ (35 ГБ весов + KV cache).",
+                "source_of_confusion": "Иногда смешивают возможности TGI с возможностями HF Transformers (которые тоже поддерживают bitsandbytes), считая, что TGI унаследовал только базовые фичи.",
+                "if_it_were_true": "TGI не мог бы конкурировать с vLLM на cost-effective deployment. Реально TGI quantization-поддержка часто на уровне vLLM или впереди (EETQ — TGI-специфичная).",
+                "how_it_should_be": "TGI имеет богатую quantization поддержку; это must-have фича для cost-effective LLM serving."
+              },
+              "label": "D",
+              "text": "TGI не поддерживает quantization, поэтому 70B модели нельзя serve'ить на одной H100.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "TensorRT-LLM (NVIDIA)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "TensorRT-LLM — NVIDIA proprietary stack, работает только на NVIDIA GPU (Volta+). На AMD используется ROCm + vLLM-AMD fork; на Intel Gaudi — собственный Habana SynapseAI.",
+                "source_of_confusion": "Иногда «TensorRT» путают с TensorFlow Lite или ONNX Runtime (которые cross-vendor), приписывая универсальность.",
+                "if_it_were_true": "NVIDIA не имела бы конкурентного преимущества — но реально CUDA + TensorRT-LLM это часть NVIDIA moat. AMD ROCm пока в догоняющих.",
+                "how_it_should_be": "TensorRT-LLM — NVIDIA-only; для AMD/Intel — другие стэки."
+              },
+              "label": "A",
+              "text": "TensorRT-LLM работает на AMD MI300X и Intel Gaudi так же эффективно, как на NVIDIA H100.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "TensorRT engine compile'ится под конкретную GPU architecture (sm_80 для A100, sm_90 для H100, sm_89 для L40s) — переход между ними требует rebuild. Это значит CI/CD pipeline должен collect разные engine для разных GPU, что усложняет deployment.",
+                "source_of_confusion": "В мире JIT-компиляции (Java, .NET) bytecode часто portable между архитектурами. TensorRT — AOT-компиляция, и engine привязан к GPU SM-версии.",
+                "if_it_were_true": "Не было бы предупреждений в TRT-LLM docs «engine must be rebuilt for each GPU architecture». Это first-class concern в TRT-LLM deployment guide.",
+                "how_it_should_be": "При переходе с A100 на H100 нужен rebuild TRT engine; это часть operational cost'а TRT-LLM."
+              },
+              "label": "B",
+              "text": "TensorRT-LLM compile'ит модель один раз и engine работает на любом NVIDIA GPU без перекомпиляции.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "TensorRT-LLM построен поверх TensorRT (deep learning inference optimizer) и добавляет LLM-специфичные оптимизации: in-flight batching, FP8 на H100, INT4 AWQ kernel, custom attention kernels, NVLink-aware tensor parallelism. На NVIDIA H100 даёт +20-50% throughput по сравнению с vLLM на одной модели. Интегрируется в Triton Inference Server через `tensorrtllm_backend`. Цена: build engine занимает 10-30 минут на модель, требует rebuild на смене GPU/quantization, конфиг verbose. NVIDIA NIM (commercial) — упакованные TRT-LLM engines для популярных моделей.",
+                "example": "Inference platform serve'ит Llama 3 70B FP8 на H100 80 ГБ кластере: TRT-LLM build engine с `--use_fp8 --tp_size 2`, deploy через Triton с `tensorrtllm_backend`, throughput ~400-500 tokens/sec aggregate (на 20% выше vLLM при том же оборудовании); затраченные 2 недели MLEng-времени окупаются за месяц при 24/7 нагрузке.",
+                "when_to_apply": "Max-perf критичен (>$100K/мес GPU cost — даже 10% оптимизация это $10K/мес); команда с NVIDIA-expertise (CUDA, TensorRT); H100 / B100 fleet (где FP8 даёт большой gain); managed enterprise через NVIDIA NIM (where simplicity sacrificed for performance).",
+                "edge_cases": "Build pipeline — отдельная работа: per-GPU engines в registry, версионирование engines, rollback если новый engine медленнее старого. Vendor lock-in: с TRT-LLM практически невозможно переехать на AMD. Debug медленнее vLLM (Python трейсы менее доступны). Не все модели поддержаны из коробки — кастомные архитектуры требуют написания TRT-конвертера.",
+                "related": "[[model-serving-interview#Q9]] vLLM как доступная альтернатива; [[model-serving-interview#Q7]] Triton как host для TRT-LLM engines; [[model-serving-interview#Q16]] FP8 quantization."
+              },
+              "label": "C",
+              "text": "TensorRT-LLM (NVIDIA) даёт максимальный throughput на NVIDIA GPU через FP8/INT4 custom kernels, Flash Attention 2/3, Triton-integration; цена — сложный setup (per-GPU compile, длинный build, NVIDIA-only), оправдан при max-performance критичности и наличии NVIDIA-expertise в команде.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "На NVIDIA H100/B100 TRT-LLM обычно на 20-50% быстрее vLLM на FP8 моделях за счёт custom kernels и H100-specific оптимизаций. На A100 разница меньше (~10%).",
+                "source_of_confusion": "Иногда сравнивают «old TRT-LLM» с «new vLLM» (2024 versions), где gap минимален; на свежих версиях разрыв обратно — TRT-LLM лидер.",
+                "if_it_were_true": "NVIDIA NIM (managed serving) не использовал бы TRT-LLM как backbone — но он использует именно его.",
+                "how_it_should_be": "TRT-LLM быстрее vLLM на NVIDIA H100+ при правильном setup; за это платится сложностью."
+              },
+              "label": "D",
+              "text": "TensorRT-LLM медленнее vLLM на любых сценариях, поэтому смысла использовать его нет.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Ollama — local LLMs?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Ollama — single-instance runtime для local-machine: один процесс, один пользователь, без continuous batching, throughput ~5-20 req/sec на 7B моделях. Для тысяч RPS нужно 50-200 Ollama инстансов с балансировкой — операционно нереально, а economically — bloat.",
+                "source_of_confusion": "OpenAI-compatible API в Ollama создаёт впечатление, что это «как OpenAI, только локально», и переносится представление о scale.",
+                "if_it_were_true": "OpenAI / Anthropic строили бы свой stack на Ollama. Реально они держат custom inference engines, а production-self-host клиенты выбирают vLLM/TGI.",
+                "how_it_should_be": "Ollama для dev/local; для production scale — vLLM/TGI на GPU кластере."
+              },
+              "label": "A",
+              "text": "Ollama легко масштабируется на тысячи RPS в production, заменяя vLLM для крупных deployment'ов.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Ollama под капотом — llama.cpp с поддержкой CPU, Metal (Apple Silicon), CUDA, ROCm. На MacBook M1/M2/M3 работает через Metal с хорошей производительностью; на Linux без GPU — на CPU с GGUF квантизацией.",
+                "source_of_confusion": "«LLM = GPU» обобщение переносится на Ollama; реально это runtime, ориентированный на гетерогенное железо.",
+                "if_it_were_true": "Apple не показывал бы Ollama в своих keynote-демо на M3. Реально Ollama — flagship local-LLM на Apple Silicon.",
+                "how_it_should_be": "Ollama работает на CPU / Metal / CUDA / ROCm — кросс-платформенный."
+              },
+              "label": "B",
+              "text": "Ollama требует NVIDIA GPU и не работает без неё — на ноутбуке без дискретной GPU запустить нельзя.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Ollama с версии 0.1.14 имеет endpoint `:11434/v1/chat/completions`, совместимый с OpenAI; openai-python SDK работает с `base_url=\"http://localhost:11434/v1\"`. Это одно из ключевых преимуществ Ollama для интеграции с готовыми клиентами.",
+                "source_of_confusion": "Native Ollama API (`/api/generate`) был раньше, и в старых туториалах показывают только его, упуская позже добавленный OpenAI-compatible слой.",
+                "if_it_were_true": "Continue.dev / Aider / другие dev-tools не работали бы с Ollama out-of-the-box. Реально это plug-and-play.",
+                "how_it_should_be": "Ollama имеет полную OpenAI-compatible API; это снимает интеграционные барьеры."
+              },
+              "label": "C",
+              "text": "Ollama не имеет OpenAI-compatible API и интегрировать его с openai-python SDK нельзя.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Ollama решает «как просто запустить LLM на своей машине»: автоматически качает quantized модели из своего реестра, управляет жизненным циклом model server, держит OpenAI-compatible HTTP API. Под капотом — llama.cpp, что даёт CPU+Metal+CUDA+ROCm поддержку. Library моделей — Llama, Mistral, Qwen, DeepSeek, Phi, Gemma, всё уже в GGUF формате с пресетами квантизации. Идеальна для local dev (Cursor, Continue, Aider используют Ollama), быстрого POC, on-device inference.",
+                "example": "Разработчик локально тестирует RAG-приложение: `ollama pull qwen2.5:14b-instruct-q5_K_M`, `ollama serve`, в Python-коде `client = OpenAI(base_url=\"http://localhost:11434/v1\", api_key=\"dummy\")`, всё работает; на MacBook M3 Max — ~30-40 tokens/sec, никаких API costs, всё локально.",
+                "when_to_apply": "Local development (быстро попробовать модель без cloud); privacy-sensitive POC (данные не покидают ноутбук); edge deployment (single user per machine, IoT/embedded с GPU); evaluation моделей перед production deployment; dev tools (code assistants, summarizers) на dev-машине.",
+                "edge_cases": "Throughput для concurrent users низкий — не использовать как backend для multi-user сервиса. Memory management менее эффективен, чем vLLM на одинаковых моделях. Auto-update модели в registry может неожиданно потянуть гигабайты. Reproducibility среды страдает: версия модели = тег, который может быть пересобран.",
+                "related": "[[model-serving-interview#Q13]] llama.cpp под капотом; [[model-serving-interview#Q9]] vLLM для production scale; [[model-serving-interview#Q28]] выбор stack под сценарий."
+              },
+              "label": "D",
+              "text": "Ollama — runtime для local development и edge deployment'ов: one-command install (`ollama run llama3`), cross-platform (macOS / Linux / Windows), OpenAI-compatible API на `:11434`, под капотом llama.cpp с GGUF; не предназначена для production scale (single-instance, нет continuous batching).",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "llama.cpp — CPU inference?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "llama.cpp написан Georgi Gerganov, изначально как порт Llama на CPU; со временем вырос в универсальный LLM runtime. GGUF — собственный формат: tensor metadata + quantized weights в одном файле, mmap-friendly. Поддерживает диапазон quantization уровней (Q2_K — самый компактный с ощутимой деградацией, Q4_K_M — sweet spot quality/size, Q8_0 — близко к FP16). На Apple Silicon использует Metal Performance Shaders, на NVIDIA — CUDA, на AMD — Vulkan/ROCm, на CPU — оптимизированные AVX/NEON kernels. Используется внутри Ollama, LM Studio, Jan.ai.",
+                "example": "Разработчик локально запускает Llama 3 70B Q4_K_M (~40 ГБ) на MacBook M3 Max 64 ГБ unified memory: `./llama-cli -m llama-3-70b-instruct-q4_k_m.gguf -p \"Объясни PagedAttention\" -n 256`, throughput ~5-10 tokens/sec, никаких API costs, всё на устройстве.",
+                "when_to_apply": "Local development без cloud GPU; edge deployment (Raspberry Pi 5, Jetson, embedded); on-device assistants (mobile, desktop apps); reproducible offline benchmarks; обучение LLM-инфры в учебных целях; основа для Ollama / LM Studio / Jan.ai (которые поверх llama.cpp обёрнуты).",
+                "edge_cases": "Производительность ниже vLLM на NVIDIA H100 — llama.cpp оптимизирован под CPU и Metal в первую очередь. Continuous batching ограниченный (есть, но менее зрелый). Не все модели поддержаны сразу (DeepSeek-V3, новые архитектуры — задержка 1-2 недели). GGUF не совместим с другими runtime — нужно конвертировать обратно для миграции.",
+                "related": "[[model-serving-interview#Q12]] Ollama как обёртка; [[model-serving-interview#Q16]] quantization методы; [[model-serving-interview#Q3]] CPU inference для LLM."
+              },
+              "label": "A",
+              "text": "llama.cpp — C++ inference runtime для LLM с поддержкой CPU и GPU (Metal/CUDA/Vulkan), работает с GGUF-форматом (quantized weights), поддерживает Q2_K…Q8_0 уровни квантизации, позволяет запустить 70B модель на MacBook с 64+ ГБ unified memory.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "llama.cpp — C++ codebase (отсюда `.cpp` в имени), Python bindings (llama-cpp-python) — отдельный wrapper. Основная сборка — нативный binary `llama-cli` / `llama-server`.",
+                "source_of_confusion": "Python bindings очень популярны (llama-cpp-python для LangChain интеграции), и образ Python-first проекта закрепляется.",
+                "if_it_were_true": "Ollama не использовал бы llama.cpp как backend — Ollama написан на Go и сложно интегрировать Python. Реально Ollama linkует llama.cpp как C-library.",
+                "how_it_should_be": "llama.cpp — C++ библиотека с Python/Go/Rust bindings; основная распространяемая форма — нативный binary."
+              },
+              "label": "B",
+              "text": "llama.cpp поддерживает только Python — это Python-библиотека, а C++ название историческое.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "GGUF — собственный формат llama.cpp: блочная quantization, metadata о tensor types, mmap-friendly layout, специфичные quant types (Q4_K_M, Q5_K_S, IQ2_XXS). ONNX — XML-based открытый формат с другой философией (FP16/FP32 веса + compute graph). Конверсия GGUF↔ONNX нетривиальна и теряет quantization-специфичные оптимизации.",
+                "source_of_confusion": "Оба — «универсальные форматы для inference», и поверхностно кажутся аналогичными.",
+                "if_it_were_true": "llama.cpp читал бы ONNX напрямую. Реально нужен отдельный `convert.py` для конверсии HF → GGUF.",
+                "how_it_should_be": "GGUF специфичен для llama.cpp, оптимизирован под его quantization-схемы; ONNX — другой формат с другим целевым use case."
+              },
+              "label": "C",
+              "text": "GGUF — это просто переименованный ONNX, технически идентичный формат.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Q4_K_M (4-bit с medium block) теряет ~2-5% качества на reasoning benchmarks (MMLU, GSM8K) по сравнению с FP16, иногда больше на сложных моделях. Q8_0 (8-bit) ближе к FP16 (<1% loss). Это документировано в llama.cpp release notes и многих evaluation постах.",
+                "source_of_confusion": "На простых задачах (chitchat, summarization) разница не заметна, и пользователи делают вывод об «идентичности».",
+                "if_it_were_true": "Все продакшн-deployment'ы перешли бы на Q4_K_M. Реально для критичных бизнес-задач (RAG-retrieval, code generation) выбирают Q5_K_M или Q8_0.",
+                "how_it_should_be": "Q4_K_M — sweet spot quality/size; на сложных задачах нужно мерить, иногда выбрать Q5_K_M или Q8_0."
+              },
+              "label": "D",
+              "text": "Q4_K_M квантизация даёт качество, идентичное FP16, без любой потери на reasoning-задачах.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Continuous batching (PagedAttention)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Continuous batching — динамический механизм: на каждом decoding step batch перекомпилируется, готовые sequences (с EOS-токеном или max_tokens) уходят, новые запросы из очереди входят в batch. Это противоположность статическому batching, где batch фиксируется до конца обработки.",
+                "source_of_confusion": "Параметр `--max-num-seqs` в vLLM выглядит как «batch size», и упускается, что внутри происходит динамическая перетасовка.",
+                "if_it_were_true": "Throughput vLLM был бы только за счёт batching без преимущества над naive HF при variable-length запросах. Реально на variable-length traffic vLLM даёт 10-20× HF.",
+                "how_it_should_be": "Continuous batching ≠ static batching; разница в том, что sequences входят/выходят на лету, GPU всегда занят."
+              },
+              "label": "A",
+              "text": "Continuous batching — это просто статический batch=32 на серверной стороне, без динамики.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Naive (static) batching ждёт, пока все sequences в batch'е закончатся; самая длинная блокирует остальных, GPU простаивает. Continuous batching на каждом decoding step перекомпилирует batch: завершившиеся sequences освобождают слот, новые занимают; throughput держится близко к peak GPU utilization. PagedAttention решает memory-проблему: KV cache в naive подходе требует contiguous block из max_seq_len размера, что даёт 60-80% wastage; vLLM хранит KV cache в страницах фиксированного размера (обычно 16 токенов), как pages в OS virtual memory, и собирает их через page table. Это позволяет sequences разной длины эффективно делить GPU memory.",
+                "example": "Сервис обрабатывает microbatch из 32 запросов: длины 50, 200, 1000, 10000 tokens; naive batching — все 32 ждут самый длинный (10K tokens, ~5 сек), GPU занят на 30%; vLLM с continuous batching — короткие 50/200/1000-token запросы возвращаются за 0.1/0.5/2 сек, новые подменяют их в batch, GPU занят на 90%+, итоговый throughput в 3-5× выше.",
+                "when_to_apply": "Любое production LLM serving с variable-length traffic (чат, copilot, search, RAG); chat-сервисы, где пользовательские запросы и ответы существенно разной длины; high-concurrency endpoint'ы. Это default в vLLM, TGI, TensorRT-LLM (inflight batching).",
+                "edge_cases": "Tail latency p99 чувствительна к scheduling fairness — длинный запрос может «застрять» в batch'е на много steps. Memory pressure: при peak `max_num_batched_tokens` × `block_size` страниц должен помещаться в KV cache region. Prefill стадия (обработка длинного prompt'а) может блокировать decode для других sequences — лечится chunked prefill.",
+                "related": "[[model-serving-interview#Q15]] KV cache механика; [[model-serving-interview#Q9]] vLLM как реализация; [[model-serving-interview#Q4]] latency vs throughput."
+              },
+              "label": "B",
+              "text": "Continuous batching обрабатывает sequences разной длины в одном batch одновременно, готовые «выходят», новые добавляются на следующем decoding step; PagedAttention хранит KV cache в фиксированных блоках по 16 токенов (как virtual memory в OS), что устраняет fragmentation; вместе дают 5-10× throughput по сравнению с naive batching.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "PagedAttention — это **memory management** техника, не другой attention. Сам attention остаётся тем же (MHA, MQA, GQA), но KV cache, к которому attention обращается, хранится в страничной структуре с page table.",
+                "source_of_confusion": "Название «PagedAttention» содержит слово «Attention», что наводит на мысль о новом attention варианте; на самом деле речь про paging KV cache, а не про новый алгоритм внимания.",
+                "if_it_were_true": "Llama 3, GPT-4, Claude использовали бы PagedAttention в своих архитектурах. Реально архитектура моделей не меняется — меняется runtime memory manager в vLLM.",
+                "how_it_should_be": "PagedAttention — это технология memory management для KV cache; attention computation тот же."
+              },
+              "label": "C",
+              "text": "PagedAttention — это новый attention mechanism, заменяющий Multi-Head Attention и Grouped Query Attention.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Continuous batching увеличивает throughput в 5-10× на variable-length traffic; в vLLM нет флага для его отключения — это core механизм, без которого vLLM теряет смысл.",
+                "source_of_confusion": "Иногда путают «continuous batching снижает single-request latency на short prompt» (это бывает, latency p50 может быть на 10-30% выше) с «снижает throughput».",
+                "if_it_were_true": "Никто бы не выбирал vLLM, ведь его USP — это именно continuous batching. Реально vLLM — стандарт production LLM serving.",
+                "how_it_should_be": "Continuous batching повышает throughput и aggregate utilization; ценой может быть небольшая прибавка к single-request latency в edge cases."
+              },
+              "label": "D",
+              "text": "Continuous batching снижает throughput, поэтому в production его лучше отключать через `--disable-continuous-batching`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "KV cache?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "KV cache — это GPU memory структура: матрицы Key (K) и Value (V) из attention-механизма для всех previously processed tokens. При генерации token N модель reuse'ит K/V для tokens 0..N-1, не пересчитывает их с нуля. Это in-memory структура, не файл.",
+                "source_of_confusion": "Слово «cache» в общем IT-словаре чаще ассоциируется с disk-кэшами (browser cache, CDN cache).",
+                "if_it_were_true": "Latency LLM inference была бы в десятки раз выше — disk I/O намного медленнее GPU memory. Реально KV cache живёт в HBM3 GPU memory с пропускной способностью 3 ТБ/сек.",
+                "how_it_should_be": "KV cache — это GPU-resident структура с K/V матрицами из attention; никакого диска."
+              },
+              "label": "A",
+              "text": "KV cache хранит исходный prompt пользователя в виде текстового файла на диске для последующего reuse.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "KV cache растёт линейно с sequence length: `2 × num_layers × num_kv_heads × head_dim × seq_len × dtype_size`. Для Llama 3 8B при context 4K — ~2 ГБ KV cache на одну sequence; при context 128K — ~64 ГБ (превышает single GPU memory).",
+                "source_of_confusion": "Иногда термин «cache» подразумевает фиксированный buffer (как в L1/L2 CPU cache).",
+                "if_it_were_true": "Long-context inference (128K, 1M) не имел бы memory ограничений. Реально long-context — главная memory bottleneck в LLM serving, и стратегии (chunked prefill, KV cache quantization) специально про неё.",
+                "how_it_should_be": "KV cache растёт линейно с длиной sequence, для long-context может превышать веса модели."
+              },
+              "label": "B",
+              "text": "KV cache не зависит от sequence length — это статическая структура фиксированного размера.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "При генерации token N attention требует Q (для текущего token'а) × K (для всех 0..N-1 tokens) и weighted V (тоже для всех 0..N-1). K и V для prior tokens не меняются, поэтому их кэшируют. Размер: `2 × L × H_kv × D × N × bytes_per_param` (L — layers, H_kv — KV heads, D — head dim, N — sequence length). Для Llama 3 70B FP16, context 32K: ~32 ГБ KV cache на одну sequence — это сравнимо с весами Llama 3 8B (16 ГБ). Оптимизации: GQA (Grouped Query Attention) — 8 KV heads вместо 64 query heads, 8× экономия; MQA (Multi-Query) — 1 KV head, 64× экономия; FP8 KV cache quantization — 2× экономия; PagedAttention в vLLM — устраняет fragmentation.",
+                "example": "Команда serve'ит Llama 3 70B AWQ на 2× H100 80 ГБ с context 32K: веса ~35 ГБ (AWQ), KV cache на одну sequence ~8 ГБ (Llama 3 использует GQA с 8 KV heads). При batch 8 concurrent sequences — KV cache ~64 ГБ, общая GPU memory нагрузка ~99 ГБ на 2 H100 → впритык, нужен FP8 KV cache или меньший max_num_seqs.",
+                "when_to_apply": "Long-context inference (32K+, 128K+, 1M+ tokens) — обязательно понимать KV cache growth; capacity planning под GPU memory; выбор модели с GQA/MQA для дешёвого long-context (Llama 3 vs ранние модели с full MHA); включение FP8 KV cache при memory pressure.",
+                "edge_cases": "KV cache quantization до INT4 ухудшает quality на long contexts (внимание становится менее точным); MQA даёт больше шума на reasoning, чем GQA — модели тренируют под конкретный variant. PagedAttention требует runtime поддержки (vLLM, TensorRT-LLM) — naive HF Transformers её не имеет.",
+                "related": "[[model-serving-interview#Q14]] PagedAttention для KV cache; [[model-serving-interview#Q16]] quantization методов (включая KV cache); [[model-serving-interview#Q18]] tensor parallelism для разделения KV cache."
+              },
+              "label": "C",
+              "text": "KV cache хранит K и V матрицы из attention для всех previously processed tokens, чтобы не пересчитывать их на каждом step генерации; растёт линейно с sequence length и может быть больше, чем веса модели на long contexts; оптимизируется через GQA/MQA (меньше KV heads), FP8/INT4 quantization KV cache, PagedAttention (efficient memory layout).",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "GQA уменьшает KV cache: вместо `H` heads на K и V, использует `H/G` групп (G — число query heads на одну группу). Llama 3 8B: 32 query heads, 8 KV heads — 4× экономия KV cache по сравнению с full MHA. Это критическая оптимизация для long-context inference.",
+                "source_of_confusion": "Иногда «Grouped» интерпретируется как «дополнительные группы данных», что наводит на мысль об увеличении.",
+                "if_it_were_true": "Llama 3, Mistral, Qwen 2 не использовали бы GQA, оставались бы на full MHA. Реально все modern open-models с long-context используют GQA или MQA для memory efficiency.",
+                "how_it_should_be": "GQA уменьшает KV cache в G раз (где G — group size); это стандартная оптимизация для long-context inference в современных LLM."
+              },
+              "label": "D",
+              "text": "GQA (Grouped Query Attention) увеличивает размер KV cache, делая модели медленнее.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Quantization (FP16, INT8, INT4, GPTQ, AWQ)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Quantization снижает quality на 0.5-5% (на reasoning benchmarks) в зависимости от уровня; FP16 минимум потерь, INT4 — заметные потери. Это trade-off precision vs memory, не magic improvement.",
+                "source_of_confusion": "Иногда наблюдают, что quantized модель «работает лучше» на простой задаче — это случайная вариация, не закономерное улучшение.",
+                "if_it_were_true": "Все frontier LLM (GPT-4, Claude) запускались бы в INT4 для лучшего качества; реально OpenAI/Anthropic держат большие модели в высокой precision (предположительно BF16 или специализированные форматы).",
+                "how_it_should_be": "Quantization — это compression с quality loss; выбирается под constraint (GPU memory, latency, cost)."
+              },
+              "label": "A",
+              "text": "Quantization всегда улучшает quality модели — снижение точности активирует «sharper» representations.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "INT4 (AWQ, GPTQ) теряет 1-3% на простых benchmarks (MMLU, HellaSwag) и 3-7% на reasoning (GSM8K, MATH). На code generation потери могут быть ещё больше. Это документировано в paper'ах AWQ/GPTQ и многих evaluation постах.",
+                "source_of_confusion": "На простых chat-задачах INT4 субъективно «не хуже», и это обобщают на все benchmarks.",
+                "if_it_were_true": "Никто бы не serve'ил модели в FP16 — все были бы на INT4. Реально для критичных задач (RAG, code, reasoning) часто выбирают FP8 или FP16 ради качества.",
+                "how_it_should_be": "INT4 теряет качество, особенно на reasoning; стоит мерить на task-specific benchmarks перед production."
+              },
+              "label": "B",
+              "text": "INT4 quantization даёт качество, идентичное FP32, без любой потери на любых benchmarks.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "AWQ (Activation-aware Weight Quantization) — это метод квантизации (paper MIT, 2023), который смотрит на distribution активаций и сохраняет более важные веса в higher precision. Файлы AWQ-квантизованных моделей обычно хранятся в `.safetensors` формате с AWQ-specific metadata.",
+                "source_of_confusion": "В HF Hub теги вроде «AWQ» в названии модели создают впечатление формата файла.",
+                "if_it_were_true": "Не было бы paper «AWQ: Activation-aware Weight Quantization for LLM Compression» с описанием алгоритма. Реально AWQ — конкретный алгоритм, можно его применить и сохранить результат в любой формат.",
+                "how_it_should_be": "AWQ — метод квантизации; файлы хранятся в стандартных контейнерах (safetensors / GGUF / TRT engine) с метаданными о применённом методе."
+              },
+              "label": "C",
+              "text": "AWQ — это формат файла модели типа `.safetensors` или `.gguf`, а не метод квантизации.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Quantization снижает precision весов и/или активаций для уменьшения memory footprint и часто ускорения inference. FP16/BF16 — фактический baseline для LLM serving (FP32 редко используется). INT8 даёт 2× экономии, INT4 — 4×. Методы: GPTQ (post-training, layer-by-layer), AWQ (activation-aware, обычно лучше GPTQ на 0.5-1%), BitsAndBytes (HF-стандарт, nf4 / int8), FP8 (H100/B100 hardware-native, баланс quality/perf), EETQ (TGI-specific). Trade-off: 1-3% quality loss на простых benchmarks, больше на reasoning.",
+                "example": "Команда хочет serve'ить Llama 3 70B на одной H100 80 ГБ: FP16 (140 ГБ) не помещается, FP8 (70 ГБ) — впритык без KV cache, AWQ INT4 (~35 ГБ) — комфортно с context 32K и batch 4-8; quality на бизнес-задачах (RAG-генерация) ~98% от FP16, экономия ~75% GPU стоимости.",
+                "when_to_apply": "Fit большой модели в одну GPU (70B в H100 80 ГБ через AWQ); снижение cost при сохранении приемлемого quality; serving на edge / consumer GPU (RTX 4090 24 ГБ); H100/B100 deployment'ы (FP8 — sweet spot).",
+                "edge_cases": "Quality drop зависит от задачи: на chitchat не заметен, на math/code/reasoning может быть существенным — обязательно мерить на task-specific evals. INT4 на длинных reasoning chains часто ломает chain-of-thought. KV cache quantization (FP8 / INT4) — отдельная стратегия, её confusing с weight quantization. Calibration dataset для GPTQ/AWQ влияет на quality — выбирать репрезентативный для production traffic.",
+                "related": "[[model-serving-interview#Q15]] KV cache quantization; [[model-serving-interview#Q9]] vLLM с AWQ/GPTQ; [[model-serving-interview#Q24]] подбор GPU под model size после quantization."
+              },
+              "label": "D",
+              "text": "Quantization-выбор: FP16/BF16 — минимум потерь и базовый production уровень; INT8 — заметная потеря, обычно через bitsandbytes; INT4 — существенная потеря (но usable) через GPTQ/AWQ; FP8 — на H100+ нативно; пример экономии: 70B FP16 = 140 ГБ, AWQ INT4 ≈ 35 ГБ (помещается в один H100 80 ГБ).",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Speculative decoding?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Идея: дешёвая draft model (например, Llama 3 1B) бежит быстро и угадывает несколько tokens вперёд; target model (Llama 3 70B) за один forward pass на длине prompt+draft проверяет все draft tokens сразу. Statistically принятые tokens идентичны тому, что target сгенерировала бы сама — это математически доказано (rejection sampling). На задачах с predictable выводом (code generation, structured output) acceptance rate высокий (60-80%), что даёт ~2-3× speedup. Реализовано в vLLM, TGI, TensorRT-LLM, llama.cpp.",
+                "example": "Сервис чата serve'ит Llama 3 70B как target, Llama 3 8B как draft model: на code-generation задачах draft model угадывает 4-6 tokens вперёд с acceptance ~70%; latency on first token остаётся та же, на subsequent tokens ускорение ~2.5×; включается в vLLM через `--speculative-model meta-llama/Llama-3-8B-Instruct --num-speculative-tokens 5`.",
+                "when_to_apply": "Latency-критичные сценарии (interactive chat, code completion); workloads, где draft и target модели в одном семействе (Llama 3 1B + 70B); structured-output задачи с высоким acceptance rate. Особенно полезен на больших target моделях (70B+), где single forward expensive.",
+                "edge_cases": "На творческих/openended задачах (poetry, brainstorming) acceptance rate низкий — speculative decoding даёт меньше выигрыша или даже замедляет. Memory overhead — обе модели в GPU memory; для 70B + 8B target это +5 ГБ накладных. Tuning `num_speculative_tokens` — компромисс: больше — выше потенциальный gain, но при rejection всё перегенерируется.",
+                "related": "[[model-serving-interview#Q18]] tensor parallelism как другой подход к speedup; [[model-serving-interview#Q14]] continuous batching; [[model-serving-interview#Q4]] latency vs throughput."
+              },
+              "label": "A",
+              "text": "Speculative decoding: маленькая «draft» модель предсказывает N tokens вперёд, большая «target» модель верифицирует их одним forward pass; принятые tokens принимаются, отвергнутые перегенерируются target-моделью; итоговый output идентичен чистой target-модели, но 2-3× быстрее.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Speculative decoding математически identical чистому target-output: rejection sampling гарантирует, что принимаются только tokens с правильным распределением. Если draft предложил неверный token — target его отвергает и перегенерирует.",
+                "source_of_confusion": "Слово «speculative» наводит на мысль о «приблизительности».",
+                "if_it_were_true": "Speculative decoding не была бы default в vLLM/TGI на code-generation. Реально все major serving stack'и поддерживают его именно потому, что quality identical.",
+                "how_it_should_be": "Speculative decoding сохраняет distribution target-модели; quality не страдает, выигрывается latency."
+              },
+              "label": "B",
+              "text": "Speculative decoding ухудшает quality ответов, потому что draft model вносит ошибки в вывод.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Speculative decoding обязательно требует draft модель (или другой механизм быстрого предсказания вроде Medusa, lookahead decoding). Без draft нет «спекуляции» — target генерирует token-by-token.",
+                "source_of_confusion": "Иногда speculative decoding путают с prefix caching (где prompt prefix кэшируется в KV cache) — но это разные оптимизации.",
+                "if_it_were_true": "Реализация была бы тривиальной — просто включил флаг. Реально нужно явно указать draft model или альтернативный mechanism (`--use-medusa`).",
+                "how_it_should_be": "Speculative decoding нуждается в draft модели или эквивалентном предсказателе (Medusa heads, lookahead)."
+              },
+              "label": "C",
+              "text": "Speculative decoding можно делать без draft model — это просто кешированный output target-модели.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "При правильно подобранной draft модели и acceptance rate ≥ 50% speculative decoding ускоряет inference в 1.5-3×. На низком acceptance rate выигрыш минимален или ноль, но не замедляет (в худшем случае один лишний draft forward без acceptance — overhead малый).",
+                "source_of_confusion": "Иногда смешивают теоретическую формулировку «нужно сделать draft + verify» с гипотезой, что это «больше работы».",
+                "if_it_were_true": "Никто бы не включал speculative decoding. Реально это рекомендованная оптимизация в production guides vLLM/TGI.",
+                "how_it_should_be": "Speculative decoding ускоряет inference в 1.5-3× при подходящих задачах; в худшем случае нейтрален, не замедляет."
+              },
+              "label": "D",
+              "text": "Speculative decoding замедляет inference в 2-3 раза по сравнению с обычной генерацией.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Tensor parallelism, pipeline parallelism?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "TP и PP — разные стратегии: TP разбивает каждый слой (attention heads, MLP) между GPU, которые работают параллельно над одним forward step. PP разбивает модель на последовательные группы слоёв (stage 1, 2, 3) и обрабатывает разные batches на разных stages в pipeline manner.",
+                "source_of_confusion": "Оба — формы distributed training/inference, и упрощают до «разбить модель на несколько GPU».",
+                "if_it_were_true": "Megatron-LM, DeepSpeed, vLLM не имели бы отдельных параметров для TP и PP. Реально это разные флаги: `--tensor-parallel-size` и `--pipeline-parallel-size`.",
+                "how_it_should_be": "TP — параллелизм внутри слоя (attention/MLP heads разделены); PP — параллелизм между слоями (stages в pipeline)."
+              },
+              "label": "A",
+              "text": "Tensor parallelism (TP) и pipeline parallelism (PP) — это синонимы, обозначающие одно и то же распределение слоёв между GPU.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Tensor parallelism (TP): на каждом attention layer multi-head attention делится — например, 64 heads на 4 GPU → каждая GPU считает 16 heads параллельно; в конце AllReduce собирает выходы. Аналогично для MLP. Требует fast interconnect (NVLink, InfiniBand) — на PCIe AllReduce доминирует latency. Pipeline parallelism (PP): слои 0-19 на GPU 1, 20-39 на GPU 2, 40-59 на GPU 3; pipeline через microbatching (как assembly line) для утилизации stages. PP толерантен к медленным interconnect'ам (только point-to-point pass между stages), но имеет «bubbles» в pipeline на старте/конце inference. Для inference TP обычно выбор #1 (равномерная нагрузка, low latency), PP — для training больших моделей.",
+                "example": "Команда serve'ит Llama 3 70B FP16 (140 ГБ) на 2× H100 80 ГБ с NVLink: `vllm serve meta-llama/Llama-3-70B-Instruct --tensor-parallel-size 2` — каждая H100 держит ~70 ГБ весов и половину attention heads на каждом слое; AllReduce через NVLink ~5 ГБ/сек effective overhead; throughput ~300 tokens/sec aggregate.",
+                "when_to_apply": "TP — основной выбор для inference, когда модель не помещается в одну GPU и есть fast interconnect (NVLink/InfiniBand); 70B+ модели на multi-GPU node. PP — крупные модели (175B+) на multi-node кластере, где TP не масштабируется через slow interconnect между нодами; иногда комбинируется (TP внутри node, PP между nodes).",
+                "edge_cases": "TP `--tensor-parallel-size N` требует N делителем number of attention heads (Llama 3 70B имеет 64 heads, делится на 1/2/4/8, но не на 3). На PCIe TP может быть медленнее single-GPU из-за AllReduce overhead. PP создаёт pipeline bubbles на старте; для inference со streaming они особенно болезненны. Combine TP+PP сложно настраивать и debug'ить.",
+                "related": "[[model-serving-interview#Q19]] horizontal scaling pods; [[model-serving-interview#Q24]] выбор multi-GPU GPU; [[model-serving-interview#Q9]] vLLM TP setup."
+              },
+              "label": "B",
+              "text": "Tensor parallelism разбивает attention heads / MLP внутри слоя между GPU (parallel execution на каждый forward step через AllReduce); pipeline parallelism разбивает слои на sequential stages между GPU (microbatching между stages); оба применяются, когда модель не помещается в одну GPU, TP обычно быстрее для inference, PP проще на дешёвых интерконнектах.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "vLLM имеет first-class TP поддержку через `--tensor-parallel-size N` (с версии 0.1.0); это базовая фича для всех 70B+ deployment'ов на vLLM. Работает на NVLink-connected GPU (NCCL backend).",
+                "source_of_confusion": "Pipeline parallelism в vLLM появился позже TP, и иногда обе фичи смешивают.",
+                "if_it_were_true": "Никто не смог бы запустить Llama 3 70B FP16 на multi-GPU через vLLM. Реально это типичный production setup.",
+                "how_it_should_be": "vLLM поддерживает TP с самого начала; `--tensor-parallel-size` — стандартный флаг."
+              },
+              "label": "C",
+              "text": "Tensor parallelism не работает в vLLM — для multi-GPU нужно использовать только TGI или TensorRT-LLM.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Для inference TP обычно лучше PP: PP создаёт pipeline bubbles на старте/конце inference (особенно болезненно для streaming, где batches маленькие). PP полезен для training (где можно amortize bubble через большие microbatches) или для serving на slow interconnect.",
+                "source_of_confusion": "В training literature (Megatron papers) PP часто хвалится за scalability; это переносят на inference без оглядки на разницу контекста.",
+                "if_it_were_true": "vLLM/TGI рекомендовали бы PP по default. Реально документация говорит: «for inference, prefer TP if you have fast interconnect; use PP only for multi-node scaling».",
+                "how_it_should_be": "Для inference TP обычно быстрее PP; PP выгоден на slow interconnect или для multi-node кластеров."
+              },
+              "label": "D",
+              "text": "Pipeline parallelism всегда даёт лучший throughput, чем tensor parallelism, для inference.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Horizontal scaling LLM serving?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Cold start LLM pod включает: pull Docker image с весами (10-150 ГБ), копирование весов с локального SSD в GPU memory (зависит от PCIe — для 70B FP16 это 30-90 секунд), инициализация runtime (CUDA context, KV cache allocation). Итого 1-5 минут для production-size моделей.",
+                "source_of_confusion": "Опыт с stateless web service'ами (старт за 5-30 секунд) переносится на LLM. Веса модели — это фундаментальная разница.",
+                "if_it_were_true": "Можно было бы scale LLM как обычные web pods — реактивно по CPU/RPS. Реально на spike автоскейл не успевает: пока новый pod грузится, latency p99 разлетается.",
+                "how_it_should_be": "LLM pod cold start — минуты, не миллисекунды; нужна предусмотрительная стратегия (pre-warm, predictive scaling)."
+              },
+              "label": "A",
+              "text": "Cold start LLM pod измеряется в миллисекундах, как старт обычного Spring Boot приложения.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "HPA на CPU не работает для LLM: bottleneck — GPU memory и compute, CPU обычно простаивает на 50-80% даже под нагрузкой. Нужны custom метрики (queue_depth, GPU utilization, vllm:num_requests_waiting), и реактивный HPA не успевает за cold start.",
+                "source_of_confusion": "В Kubernetes-туториалах HPA on CPU — default; начинающие применяют ту же логику к LLM.",
+                "if_it_were_true": "Все LLM-сервисы скейлились бы по CPU. Реально production deployment'ы используют HPA на `vllm:num_requests_waiting` или `kafka:queue_depth`.",
+                "how_it_should_be": "Для LLM нужны GPU-specific метрики и pre-warm стратегия; CPU-based HPA бесполезен."
+              },
+              "label": "B",
+              "text": "Auto-scaling LLM работает идентично stateless микросервисам через HPA на CPU% — никаких особенностей нет.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "В отличие от stateless web pods (cold start секунды, любой instance может обработать любой request), LLM pods имеют тяжёлый model state в GPU memory. Cold start включает pull image, load весов с диска в GPU — для 70B FP16 это 1-3 минуты. Auto-scale на event-driven метрики (queue_depth, num_requests_waiting в vLLM) работает, но не достаточно — нужно держать pre-warm spare capacity, чтобы spike не обогнал cold start. Distributed inference добавляет сложность: GPU pod часто sticky к specific node (NUMA affinity, NVLink topology), что усложняет K8s scheduling.",
+                "example": "Команда serve'ит chat-сервис на 4 vLLM pods × 1× A10G каждый, K8s Service round-robin перед ними, HPA на `vllm:num_requests_waiting > 5` per pod; min replicas 2 (pre-warm), max 8; predictive scaling по cron на peak hours (9:00-21:00 MSK) поднимает baseline до 4 заранее.",
+                "when_to_apply": "Любое production LLM deployment с concurrent traffic ≥ 10 RPS; chat сервисы с peak/off-peak patterns; multi-region deployment'ы (LLM pods близко к пользователям); platforms с multiple моделями (router → разные backend pods).",
+                "edge_cases": "Sticky sessions: некоторые оптимизации (prefix caching в vLLM) лучше работают, когда клиент попадает в тот же pod — round-robin может терять prefix cache hit rate. NUMA-affinity: GPU привязан к specific CPU socket, неправильный pod placement даёт 30%+ penalty. Multi-region replication весов модели в registry — отдельная инфраструктура (Harbor, JFrog) для образов 50-150 ГБ.",
+                "related": "[[model-serving-interview#Q20]] GPU sharing для лучшей утилизации; [[model-serving-interview#Q21]] auto-scaling стратегии; [[model-serving-interview#Q26]] spot instances для inference."
+              },
+              "label": "C",
+              "text": "Horizontal scaling LLM — load balancer (NGINX / Envoy / K8s Service) → N vLLM/TGI pods, каждый с одной или несколькими GPU, balancing round-robin или least-connection; cold start медленный (1-3 минуты на load весов), GPU pods дорогие даже idle, auto-scale осторожно с pre-warm replicas и predictive scaling.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "GPU тарифицируется поминутно/посекундно вне зависимости от utilization. A100 на AWS p4d.24xlarge — ~$32/час за инстанс независимо, обрабатывает он 0 или 1000 RPS. Это центральная проблема LLM economics: GPU дорогие, idle = деньги впустую.",
+                "source_of_confusion": "Опыт с serverless (Lambda, Cloud Run), где платишь только за выполнение запросов, переносится на GPU.",
+                "if_it_were_true": "Можно было бы держать 100 idle GPU pods «на всякий случай». Реально мы балансируем pre-warm capacity со стоимостью простоя.",
+                "how_it_should_be": "GPU pods тарифицируются за время существования; idle = full стоимость, поэтому нужна правильная стратегия pre-warm vs scaling."
+              },
+              "label": "D",
+              "text": "GPU pods могут быть idle бесплатно — облако списывает деньги только за активную обработку запросов.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "GPU sharing (MIG, MPS)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "MIG (Multi-Instance GPU) — фича только datacenter GPU: A100 (40/80 ГБ), H100, H200, B200. Consumer GPU (RTX 4090, RTX 5090) не имеют MIG-поддержки на hardware уровне.",
+                "source_of_confusion": "Маркетинговые материалы NVIDIA фокусируются на A100/H100, но не всегда явно подчёркивают отсутствие MIG в gaming GPU.",
+                "if_it_were_true": "Small startup'ы могли бы строить GPU-cluster на RTX 4090 с MIG. Реально для MIG обязателен A100/H100 на ~$15-30K каждая.",
+                "how_it_should_be": "MIG — datacenter-only фича; для consumer GPU единственный путь шеринга — MPS (process-level) или time-sharing."
+              },
+              "label": "A",
+              "text": "MIG работает на consumer GPU вроде RTX 4090, поэтому это доступная технология для small startup'ов.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "MIG (Multi-Instance GPU) — hardware-isolation: GPU физически разделяется на изолированные slices с независимыми SMs, L2 cache, memory bandwidth; failure в одном MIG не влияет на другие. MPS (Multi-Process Service) — software process sharing: один CUDA context, несколько client processes делят compute time через scheduler.",
+                "source_of_confusion": "Оба про «разделить GPU между нагрузками», но различия фундаментальные на architectural уровне.",
+                "if_it_were_true": "NVIDIA не разрабатывал бы две отдельные технологии с разными требованиями к hardware.",
+                "how_it_should_be": "MIG — hardware isolation на A100/H100; MPS — software process sharing на любом NVIDIA GPU."
+              },
+              "label": "B",
+              "text": "MIG и MPS — это синонимы, два названия для одной технологии разделения GPU.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "GPU можно делить тремя способами: MIG (hardware isolation на A100+), MPS (software process sharing), Kubernetes time-sharing (CUDA streams). Каждый подходит для разных сценариев.",
+                "source_of_confusion": "В ранние эпохи CUDA (до 2017) GPU был exclusive resource per process; эта картина устарела.",
+                "if_it_were_true": "NVIDIA не вкладывала бы в MIG и MPS. Реально это часть enterprise GPU strategy.",
+                "how_it_should_be": "GPU можно делить через MIG / MPS / time-sharing; выбор стратегии — под нагрузку."
+              },
+              "label": "C",
+              "text": "GPU нельзя разделить между приложениями ни на каком уровне — это фундаментальная архитектурная ограниченность.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "MIG партиционирует GPU на architectural уровне: H100 80 ГБ можно разрезать на 1× full, 2× 40 ГБ, 3× 20 ГБ, 7× 10 ГБ; каждый partition — отдельный CUDA device (`/dev/nvidia*`), independent SMs, L2 cache, HBM bandwidth, защищён от noisy neighbors. Конфигурация через `nvidia-smi mig`. K8s NVIDIA device plugin аллоцирует MIG как отдельные ресурсы. MPS — proxy daemon, который принимает CUDA calls от нескольких processes и переотправляет в один shared CUDA context; нет isolation, но низкий overhead для co-located workloads. MIG идеален для multi-tenant (изоляция SLA), MPS — для batch jobs одной команды.",
+                "example": "ML-платформа в банке держит 10 разных моделей (fraud detection, OCR, NER, embeddings), каждая ≤ 10 ГБ; вместо 10 отдельных A10G ($4-5K каждая = $50K), используют 2× A100 80 ГБ MIG-нарезанных на 7×10 ГБ каждая → 14 MIG partitions для 10 моделей + резерв, общая стоимость ~$30K, экономия ~40%; каждая модель в своём MIG — изолированная latency SLA.",
+                "when_to_apply": "Multi-tenant inference (разные команды/клиенты на одном GPU кластере); множество маленьких моделей (embeddings, classifiers, мелкие LLM ≤ 7B); platforms с heterogeneous workload (хочется fair sharing); сценарии compliance, где нужна изоляция данных между моделями.",
+                "edge_cases": "MIG требует hardware reconfiguration (нужны NVIDIA admin privileges); смена нарезки = reboot GPU. MPS не даёт fault isolation — crash одного process может убить весь GPU context. K8s scheduling MIG-aware требует специфичных device plugin'ов (nvidia-device-plugin v0.13+). Не все workloads хорошо работают на маленьких MIG slices — LLM ≥ 13B не помещается в 10 ГБ partition.",
+                "related": "[[model-serving-interview#Q19]] horizontal scaling LLM pods; [[model-serving-interview#Q24]] выбор GPU; [[model-serving-interview#Q25]] on-prem vs cloud GPU."
+              },
+              "label": "D",
+              "text": "MIG (Multi-Instance GPU) на A100/H100 — hardware isolation: 80 ГБ A100 → до 7× MIG (10 ГБ каждая), каждый MIG изолирован (compute, memory, bandwidth); MPS (Multi-Process Service) — software sharing одного GPU между несколькими processes через единый CUDA context; для множества маленьких моделей MIG даёт экономию до 7×.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Auto-scaling на queue depth?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "LLM auto-scaling требует учитывать cold start time (1-3 минуты на загрузку весов 70B). Реактивный HPA, который ждёт «pod 80% loaded → start new», не успевает: pod загружается 2 минуты, за это время очередь растёт, p99 разлетается. Production-стратегия: KEDA или Prometheus Adapter с custom метриками (vLLM exposes `num_requests_running`, `num_requests_waiting`, `gpu_cache_usage_perc`); pre-warm baseline pods (min replicas ≥ 1, держит SLA в off-peak); predictive scaling по cron или ML-предсказанию (anticipate peak hours до их начала). Hybrid: small CPU-based fallback model на edge — если LLM pods переполнены, edge serve'ит downgrade-вариант.",
+                "example": "Команда serve'ит LLM chat: KEDA HPA на `vllm:num_requests_waiting > 5 per pod`, min replicas 2 (always-warm), max 10; cronjob ставит min=4 в 8:30 MSK (перед 9:00 peak); алёрт PagerDuty на `num_requests_waiting > 30` (значит spike обогнал scale-up). Метрики p99 latency держатся под 1.5s даже на 5× spikes.",
+                "when_to_apply": "Production LLM serving с peak/off-peak паттерном; chat-сервисы, copilot, summarization API; любые сценарии с variable demand. Особенно критично для bursty traffic (RAG-batch, агенты).",
+                "edge_cases": "Pre-warm pods — затраты на GPU даже в off-peak (нужно мерить cost vs SLA penalty). Predictive scaling требует исторических данных (минимум 2-4 недели) — для новых сервисов невозможно сразу. Spot-instance pods нельзя надёжно pre-warm — могут быть прерваны. KEDA + Prometheus adapter в K8s требует отдельной настройки и поддержки.",
+                "related": "[[model-serving-interview#Q19]] horizontal scaling fundamentals; [[model-serving-interview#Q20]] GPU sharing для denser pre-warm; [[model-serving-interview#Q26]] spot для batch off-peak."
+              },
+              "label": "A",
+              "text": "Auto-scaling LLM строится на трёх компонентах: HPA / KEDA на queue depth (или `vllm:num_requests_waiting`) + pre-warm pods (min replicas ≥ 1-2 для baseline + spare) + predictive scaling по historical pattern; чисто реактивный HPA не успевает за spikes из-за cold start 1-3 минуты.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "LLM bottleneck — GPU compute и memory, CPU обычно простаивает на 30-70% даже при пиковой нагрузке. HPA на CPU 80% не сработает — pod кажется недогруженным, хотя GPU забита и очередь растёт.",
+                "source_of_confusion": "Default HPA template в K8s использует CPU; начинающие применяют его без раздумий.",
+                "if_it_were_true": "Любая spike в LLM трафике била бы по latency, не вызывая scale-up. Реально production deployment'ы используют GPU/queue метрики.",
+                "how_it_should_be": "HPA на custom метрики (queue_depth, GPU utilization, num_requests_waiting) — обязательно для LLM."
+              },
+              "label": "B",
+              "text": "HPA на CPU% работает для LLM serving так же, как для обычных Spring Boot микросервисов — никаких специальных метрик не нужно.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "При threshold 100% busy spike в трафике гарантированно обгоняет cold start: пока новый pod грузится 2 минуты, очередь набирает 100+ запросов, latency разлетается. Правильный threshold — 70-80%, чтобы дать запас на cold start.",
+                "source_of_confusion": "Cost-optimization мышление: «не плати за idle». Это работает для stateless web, где cold start секунды, но не для LLM.",
+                "if_it_were_true": "Все production LLM deployment'ы регулярно ломали бы SLA. Реально threshold ставят 60-75% с pre-warm spare.",
+                "how_it_should_be": "Auto-scale срабатывает при ~70% utilization с pre-warm spare; threshold подбирается под cold start time и acceptable SLA penalty."
+              },
+              "label": "C",
+              "text": "Auto-scaling должен срабатывать только когда все существующие pods на 100% busy — это оптимально по cost.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Pre-warm pods — обязательная стратегия для production LLM SLA: они принимают traffic в первые минуты spike'а, пока новые pods грузятся. Без pre-warm spike → p99 latency разлетается до 5-30 секунд → пользователи уходят.",
+                "source_of_confusion": "Cost мышление: «pod не делает работу = не платить». Но real cost — это потерянные пользователи и SLA penalties.",
+                "if_it_were_true": "Yandex/Сбер запускали бы LLM-сервисы с min replicas = 0. Реально все production deployment'ы держат pre-warm baseline.",
+                "how_it_should_be": "Pre-warm pods — обязательный элемент для SLA; cost optimization — через MIG/spot для off-peak baseline, а не отказ от pre-warm."
+              },
+              "label": "D",
+              "text": "Pre-warm pods — это всегда waste of resources, их следует убрать ради экономии.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "OpenAI-compatible API?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "vLLM exposes endpoint `/v1/chat/completions` совместимый с OpenAI API; openai-python SDK работает, нужно только поменять `base_url=\"http://vllm:8000/v1\"` и любой fake API key. Никакой переписки логики не требуется.",
+                "source_of_confusion": "При первой self-host миграции команды боятся, что «всё новое» — но за последний год OpenAI-compat стал стандартом.",
+                "if_it_were_true": "Migration с OpenAI на self-host занимала бы месяцы. Реально — несколько часов на переключение `OPENAI_BASE_URL`.",
+                "how_it_should_be": "Migration через OpenAI-compatible API — просто смена base_url; код клиента не меняется."
+              },
+              "label": "A",
+              "text": "Self-hosted vLLM требует полностью переписать клиентский код, отказавшись от OpenAI SDK.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "OpenAI Chat Completions API стал индустриальным стандартом по умолчанию: SDK на всех языках (Python, JS, Go, Java), интеграции в фреймворках (LangChain, LlamaIndex, Vercel AI), tooling (LiteLLM как router). vLLM, TGI, Ollama, llama.cpp server, BentoML — все реализуют этот API. Это даёт три ключевые возможности: (1) migration path: начать с OpenAI API, при scale переключить на self-host без изменения кода; (2) routing: LiteLLM или Portkey распределяют запросы между провайдерами по cost/quality/latency; (3) A/B testing: сравнить OpenAI vs Llama 3 70B на одних и тех же запросах через одинаковый интерфейс.",
+                "example": "Команда мигрирует чат-бот с GPT-4o на self-hosted Llama 3 70B: в Python код был `client = OpenAI(api_key=os.getenv(\"OPENAI_API_KEY\"))`, меняют на `client = OpenAI(base_url=\"http://vllm.internal:8000/v1\", api_key=\"dummy\")`; LangChain pipeline тот же; A/B на 10% трафика сравнивают quality — миграция занимает часы, а не недели.",
+                "when_to_apply": "Любая self-host LLM миграция; multi-provider routing (LiteLLM проксирует OpenAI + Anthropic + self-host vLLM); A/B testing между моделями; будущее-proof клиентский код (поддержка нового провайдера через `base_url`).",
+                "edge_cases": "Не все endpoints совместимы: streaming через SSE — да, но advanced features (function calling, structured output) реализованы по-разному — нужно проверять. Rate limit semantics отличаются (OpenAI tier-based vs vLLM concurrent-limit). Token counting на self-host бесплатен — но придётся реализовать billing самим, если нужно.",
+                "related": "[[model-serving-interview#Q23]] streaming через SSE; [[model-serving-interview#Q9]] vLLM API server; [[model-serving-interview#Q12]] Ollama compatibility."
+              },
+              "label": "B",
+              "text": "OpenAI-compatible API позволяет vLLM, TGI, Ollama, LiteLLM и другим self-hosted решениям быть drop-in replacement для OpenAI/Anthropic: клиент использует openai-python SDK, меняется только `base_url`; это даёт migration path и mix-and-match (один клиент → разные backend модели).",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "vLLM/TGI поддерживают `/v1/chat/completions`, `/v1/completions` (legacy), `/v1/embeddings`, streaming через `stream=true` (SSE), tool calling (vLLM 0.5+). Это полный набор core endpoints.",
+                "source_of_confusion": "Tool calling и structured output появились позже; в старых туториалах фокус только на chat.",
+                "if_it_were_true": "Migration пришлось бы делить — chat через self-host, embeddings через OpenAI. Реально оба endpoints доступны.",
+                "how_it_should_be": "OpenAI-compatible API покрывает chat, completions, embeddings, streaming, tool calling — все core фичи."
+              },
+              "label": "C",
+              "text": "OpenAI-compatible API эмулирует только chat completions endpoint, остальные (embeddings, completions, streaming, tool use) не поддерживаются.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "OpenAI-compatible API — это просто JSON schema поверх HTTP; overhead serialization измеряется в микросекундах, на throughput LLM (генерация tokens занимает миллисекунды-секунды) не влияет.",
+                "source_of_confusion": "Иногда API-абстракции в других доменах (REST поверх gRPC) дают penalty; это переносят на LLM.",
+                "if_it_were_true": "Никто не использовал бы OpenAI-compat API в production. Реально это стандарт production deployment'ов.",
+                "how_it_should_be": "API-формат overhead ничтожен по сравнению с inference cost; никакого замедления."
+              },
+              "label": "D",
+              "text": "API-совместимость замедляет inference на 30-50% из-за overhead формат-конверсии.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Streaming responses?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Стандартный механизм streaming в OpenAI API и реализациях (vLLM, TGI, Ollama) — Server-Sent Events (SSE) поверх HTTP. WebSocket для LLM используется редко, в основном для bidirectional real-time (voice, agent stream input).",
+                "source_of_confusion": "В web-разработке для real-time часто думают сначала о WebSocket. Но для одностороннего push (server → client) SSE проще и адекватен.",
+                "if_it_were_true": "OpenAI SDK не имел бы простого `stream=True` параметра — нужно было бы открывать WebSocket. Реально SSE прозрачен.",
+                "how_it_should_be": "Streaming через SSE — стандарт; WebSocket — для bidirectional сценариев (voice)."
+              },
+              "label": "A",
+              "text": "Streaming работает только через WebSocket — никаких других транспортов LLM не поддерживают.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Streaming не меняет скорость генерации tokens; меняет лишь способ доставки клиенту (батч в конце vs poток chunks). На latency p99 разница незаметна — SSE overhead 100 μs на chunk на ~50 ms inter-token time.",
+                "source_of_confusion": "Иногда streaming путают со spec-decoding или другими оптимизациями, которые действительно меняют generation speed.",
+                "if_it_were_true": "Production-чат не включали бы streaming. Реально streaming — обязательная feature всех LLM API.",
+                "how_it_should_be": "Streaming меняет UX (быстрый first-token), но не throughput; overhead ничтожен."
+              },
+              "label": "B",
+              "text": "Streaming замедляет генерацию tokens из-за overhead на каждый chunk.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "SSE — однонаправленный поток событий поверх HTTP с `Content-Type: text/event-stream`. Каждое сообщение — строка `data: <json>\\n\\n`. Клиент использует EventSource API (JS) или AsyncIterator в OpenAI SDK. Time-To-First-Token (TTFT) — ключевая UX-метрика: для chat-сервиса хорошо 200-500 ms, критично < 1 секунды. С streaming пользователь видит первые слова через ~300 ms, без него — после полного завершения ~5-30 секунд. Также streaming позволяет client cancellation (закрытие SSE connection прерывает генерацию на сервере — vLLM, TGI обрабатывают это для экономии GPU).",
+                "example": "Chat-приложение использует OpenAI SDK: `stream = client.chat.completions.create(model=\"llama-3\", messages=[...], stream=True)`, в цикле `for chunk in stream: print(chunk.choices[0].delta.content, end=\"\")`; на сервере vLLM SSE отдаёт ~30 tokens/sec, первый chunk через 300 ms, общее время 10 секунд — пользователь видит response уже через секунду.",
+                "when_to_apply": "Любой interactive LLM-сервис (chat, copilot, search assistant); RAG-выходы с цитатами (поток позволяет показывать ответ + источники по мере готовности); code generation в IDE (Cursor, Continue показывают код по мере прихода); голосовые ассистенты (TTS-стриминг параллельно с LLM-стримингом).",
+                "edge_cases": "Reverse proxy (NGINX) по default буферизует HTTP-ответы, что ломает streaming — нужно `proxy_buffering off` для streaming routes. CDN (CloudFront) иногда не поддерживают SSE без специальной конфигурации. Token-by-token counting и rate limiting сложнее реализовать на streaming (нужно подсчитывать в момент завершения). При ошибке во время streaming клиент уже получил частичный ответ — нужны explicit `[ERROR]` события.",
+                "related": "[[model-serving-interview#Q22]] OpenAI-compatible API; [[model-serving-interview#Q4]] latency метрики; [[model-serving-interview#Q9]] vLLM streaming поддержка."
+              },
+              "label": "C",
+              "text": "Streaming реализуется через Server-Sent Events (SSE): клиент шлёт запрос с `stream=true`, сервер возвращает chunks `data: {\"choices\":[{\"delta\":{\"content\":\"...\"}}]}` по мере генерации tokens, завершается `data: [DONE]`; vLLM, TGI, Ollama поддерживают; критичен для UX, чтобы не заставлять пользователя ждать 5-30 секунд молча.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Streaming с самого начала — часть OpenAI API спецификации: `stream=true` в request body, SSE-формат ответа. vLLM, TGI, Ollama реализуют его идентично, что делает их drop-in replacement и для streaming use cases.",
+                "source_of_confusion": "Иногда «advanced features OpenAI» (assistants API, vision) действительно сложно повторить; это переносят на streaming.",
+                "if_it_were_true": "Self-host LLM не годились бы для chat-приложений. Реально streaming работает идентично через OpenAI-compat API.",
+                "how_it_should_be": "Streaming — стандартная часть OpenAI API, полностью поддерживается self-hosted serverами."
+              },
+              "label": "D",
+              "text": "Streaming несовместим с OpenAI API — это собственная фича OpenAI, которую self-host не может повторить.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой GPU выбрать (A100, H100, RTX 4090, ...)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Llama 3 70B FP16 весит ~140 ГБ; даже с агрессивной квантизацией (AWQ INT4 ~35 ГБ) не помещается в 24 ГБ. Максимум для 4090 — модели 7-13B в FP16, или 30B в INT4.",
+                "source_of_confusion": "Заголовки «70B на потребительских GPU» в HN/Reddit часто умалчивают, что речь о llama.cpp CPU offload (1-2 tokens/sec).",
+                "if_it_were_true": "Никто не покупал бы H100 за $30K. Реально для 70B production нужны 1-2× H100 80 ГБ или 2-4× A100.",
+                "how_it_should_be": "70B требует datacenter GPU с ≥ 80 ГБ или multi-GPU; consumer GPU — только до 13B FP16 или 30B INT4."
+              },
+              "label": "A",
+              "text": "RTX 4090 (24 ГБ VRAM) идеально подходит для serve'инга Llama 3 70B FP16 в production.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Реальная разница H100 vs A100 на LLM inference — 2-3× для FP16 (за счёт HBM3 и улучшенных Tensor Cores) и до 6× с FP8 (H100 поддерживает нативно, A100 — нет). Не 100×.",
+                "source_of_confusion": "Иногда NVIDIA marketing показывает peak FLOPS разницу (которая больше), но для LLM bottleneck — memory bandwidth, не peak compute.",
+                "if_it_were_true": "A100 был бы deprecated и снят с продаж сразу после релиза H100. Реально A100 широко используется в production.",
+                "how_it_should_be": "H100 быстрее A100 в 2-3× для FP16, до 6× для FP8; price-performance иногда лучше у A100."
+              },
+              "label": "B",
+              "text": "H100 быстрее A100 в 100 раз на любых LLM-моделях.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Capacity H100 ограничен в AWS, GCP, Azure до 2025-2026: waiting lists на p5/A3/ND H100v5 инстансы могут быть недели или месяцы. Региональная availability сильно отличается (us-east-1 проще, чем eu-central-1). RU/CN облака имеют свою специфику ограничений.",
+                "source_of_confusion": "Reserved-instances на готовые типы (T4, V100) доступны мгновенно; flagship GPU — нет.",
+                "if_it_were_true": "Не было бы CoreWeave, Lambda Labs, Together AI — специализированных GPU cloud-провайдеров. Реально они занимают нишу «H100 в наличии сейчас».",
+                "how_it_should_be": "Для H100 capacity-планирование критично; reserve через committed use или искать у secondary providers (CoreWeave, Lambda)."
+              },
+              "label": "C",
+              "text": "Cloud GPU (H100, A100) всегда доступны без waiting list в любом regionе и количестве.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Алгоритм выбора: (1) считаем размер модели после quantization (Llama 3 70B AWQ ≈ 35 ГБ, FP16 ≈ 140 ГБ); (2) считаем KV cache на target context length × max concurrent sequences (Llama 3 70B на 32K context, 8 sequences ≈ 64 ГБ); (3) выбираем GPU так, чтобы вес + KV cache + overhead помещались. Production-tier GPU: H100 80 ГБ (~$30K покупка / $3-5/час cloud) или 2× H100 для 70B FP16 с TP=2; A100 80 ГБ — дешевле, выбор для большинства open-source production (~$15-20K). L40s — без NVLink, но 48 ГБ VRAM и ~$8-10K делают его sweet spot для inference моделей до 13B. RTX 4090 24 ГБ — dev и edge для 7-13B.",
+                "example": "Команда выбирает GPU под Llama 3 70B AWQ + context 8K + batch 4: 35 ГБ веса + ~16 ГБ KV cache (8K × 4 seq × 0.5 ГБ/seq при GQA) = ~51 ГБ → не помещается в A100 40 ГБ, помещается в H100 80 ГБ или A100 80 ГБ; для cost-effectivness выбирают A100 80 ГБ (~$15K железа vs $30K H100).",
+                "when_to_apply": "Capacity planning для нового сервиса; оценка ТЭО self-host vs cloud GPU; выбор cloud instance type (g5/g6 vs p4d/p5 на AWS); подбор dev-hardware для команды (RTX A6000 для серьёзной разработки vs MacBook M3 Max для лёгкой).",
+                "edge_cases": "PCIe vs NVLink: multi-GPU без NVLink даёт AllReduce overhead 30-50% на TP — нужно проверять topology через `nvidia-smi topo -m`. Cooling и power: H100 потребляет ~700W и требует datacenter-grade охлаждения, для on-prem deployment'а — отдельный проект. Cloud H100 capacity непредсказуем: рекомендуется иметь fallback регион или secondary provider.",
+                "related": "[[model-serving-interview#Q3]] GPU vs CPU; [[model-serving-interview#Q16]] quantization для fit в GPU; [[model-serving-interview#Q25]] on-prem vs cloud trade-off."
+              },
+              "label": "D",
+              "text": "Выбор GPU: H100 / B100 (80-192 ГБ HBM3) — production max-perf; A100 (40/80 ГБ) — workhorse; L40s (48 ГБ) — budget production; RTX A6000 (48 ГБ) — dev с большими моделями; RTX 4090 (24 ГБ) — dev/small (≤ 13B); Apple M-series — local dev (Apple Silicon); ключевой constraint — GPU memory должна вмещать веса модели + KV cache на target concurrent batch.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "On-prem vs cloud GPU?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Экономика: cloud A100 80 ГБ ≈ $4/час = $35K/год (24/7 утилизация); покупка той же A100 ≈ $15K + ~$3K/год электричество и amortized DC = $24K/год для 3-летнего lifecycle. При 24/7 утилизации on-prem окупается за 4-6 месяцев. При 30% утилизации (bursty traffic) — наоборот, cloud дешевле, потому что не платишь за idle. Hybrid стратегия: on-prem baseline для steady traffic + cloud для peak'ов через autoscale. Российский контекст: cloud H100 практически недоступен после санкций, on-prem или альтернативные провайдеры (Selectel, Yandex Cloud GPU) — единственный путь.",
+                "example": "Yandex serve'ит YandexGPT 4 на on-prem A100/H100 кластере: utilization 60-80% 24/7, экономия ~$200K/мес vs cloud-эквивалент, плюс data residency для российских клиентов; для spike'ов используют overflow в Yandex Cloud GPU (Cloud-as-a-Service).",
+                "when_to_apply": "Steady 24/7 traffic с предсказуемым ростом (LLM platform в крупной компании); compliance/data residency требования; long-term economics при объёмах $50K+/мес на GPU; локации с санкциями на cloud H100 (Россия 2025-2026).",
+                "edge_cases": "On-prem hidden costs: power (H100 700W × 8760 ч = 6 МВт-ч/год × $0.05 = $300/год электричества per GPU), cooling (×0.5-1.0 multiplier на power), datacenter rent ($1000-3000/U/год), MLOps team (1-2 FTE на small fleet), hardware refresh каждые 3-4 года. Cloud hidden costs: data transfer out (egress) $0.05-0.09/ГБ — может быть существенным при больших ответах, reserved instance commitments lock-in на 1-3 года.",
+                "related": "[[model-serving-interview#Q2]] self-host vs API; [[model-serving-interview#Q24]] выбор конкретного GPU; [[model-serving-interview#Q26]] spot для cost-reduction."
+              },
+              "label": "A",
+              "text": "Cloud (AWS p4d / GCP A3 / Azure ND): нет upfront cost, auto-scale, multi-region, но $3-10/час за A100, capacity issues с H100; on-prem — $30K+ за H100 + датацентр / power / cooling, окупается при 24/7 утилизации за 6-12 месяцев; hybrid (on-prem baseline + cloud spike) часто оптимальный выбор для больших организаций.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "При 24/7 утилизации cloud дороже в 2-3× за 3-летний горизонт. Aксиома работает только для bursty / low-utilization workload'ов.",
+                "source_of_confusion": "Маркетинг cloud-провайдеров фокусируется на «no upfront», создавая впечатление, что cloud всегда дешевле.",
+                "if_it_were_true": "Netflix, Tesla, Meta не строили бы собственные GPU кластеры. Реально все они держат datacenter GPU для предсказуемой нагрузки.",
+                "how_it_should_be": "Cloud дешевле при низкой утилизации; on-prem — при 24/7 utilization."
+              },
+              "label": "B",
+              "text": "Cloud GPU всегда дешевле on-prem при любой утилизации — это аксиома.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Hidden costs on-prem существенные: electricity ($300-500/год per H100), cooling, datacenter space ($1000-3000/U/год), networking, security, MLOps team, hardware refresh каждые 3-4 года, остаточная стоимость почти 0 при resale.",
+                "source_of_confusion": "При покупке GPU upfront cost виден, runtime затраты amortize'ятся и не видны в P&L.",
+                "if_it_were_true": "Все startup'ы покупали бы GPU. Реально cost of ownership делает on-prem доступным только для серьёзных операций.",
+                "how_it_should_be": "On-prem TCO (Total Cost of Ownership) включает power / cooling / DC / team / refresh; считать всё, не только purchase price."
+              },
+              "label": "C",
+              "text": "On-prem deployment не имеет hidden costs — заплатил за GPU и пользуешься бесплатно.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "H100 capacity ограничен в 2024-2025: AWS p5 имеет waiting list, GCP A3 reservations на месяцы вперёд, Azure ND H100v5 ограничен по регионам. RU облака не имеют доступа к H100 из-за санкций. Specialized providers (CoreWeave, Lambda) имеют capacity, но цены выше.",
+                "source_of_confusion": "Опыт с обычными EC2 instances (доступны мгновенно) переносится на H100.",
+                "if_it_were_true": "Цены на H100 были бы низкими (как T4). Реально H100 — premium с premium pricing.",
+                "how_it_should_be": "H100 capacity-планирование требует reservations и backup regions; available cloud capacity непредсказуем."
+              },
+              "label": "D",
+              "text": "H100 в облаке доступен мгновенно в любом регионе мира в нужном количестве.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Spot instances для inference?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Spot instances могут быть прекращены в любой момент (AWS — 2-min warning, GCP — 30 секунд) — это убивает user-facing realtime SLA. В середине стримящегося ответа пользователь получит broken connection, repeat запроса = ещё одно ожидание cold start.",
+                "source_of_confusion": "«Cheap GPU» — заманчивая идея для cost-conscious команд, и они переоценивают свою способность handle interruptions.",
+                "if_it_were_true": "OpenAI / Anthropic держали бы spot для прода. Реально все realtime serving на on-demand или reserved.",
+                "how_it_should_be": "Spot для real-time chat не подходит; user-facing требует on-demand или reserved."
+              },
+              "label": "A",
+              "text": "Spot instances идеально подходят для real-time chatbot в production: экономия с лихвой компенсирует random reboots.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Spot — это «излишки» capacity провайдера, продаваемые с большой скидкой; когда нужны он-demand клиентам, spot terminate'ятся. Для idempotent workload'ов (batch inference 1M документов, embeddings generation, dataset annotation, regression evals) interruption — это просто переход к следующему доступному pod, прогресс checkpointed. Для realtime serving interrupt = плохой UX (clicked button → 2 minute wait → ошибка). AWS Spot Instances для G4dn / P3 могут давать 70-90% discount; GCP Preemptible — около 70%; Azure Spot — 60-90%. Многие специализированные провайдеры (Vast.ai, CoreWeave) тоже предлагают spot-like discount tier.",
+                "example": "Команда генерирует embeddings для 100M документов через sentence-transformers на A10G spot ($0.20/час vs on-demand $1.00/час): 10 параллельных spot workers, checkpoint каждые 10K документов, если spot terminate'ится — другой worker подхватывает с последнего checkpoint; total cost $2K вместо $10K, время ~3 дня вместо 1.",
+                "when_to_apply": "Batch inference (offline document processing, embedding generation, classification бэклога); regression evaluation на datasets перед production deployment; CI/CD GPU workers (lints, ML tests); dev/staging environment (developers tolerate interruptions); training jobs с frequent checkpoints.",
+                "edge_cases": "Capacity volatility: в peak demand часы spot capacity может вообще исчезнуть в нужном регионе. Checkpoint frequency vs cost: слишком частые checkpoints → I/O overhead, слишком редкие → теряется работа при interrupt. K8s spot scheduling требует Karpenter / cluster-autoscaler с spot-aware политикой. Замена дороже: после spot interrupt cold start новой ноды занимает время — суммарная скорость batch'а медленнее, чем on-demand.",
+                "related": "[[model-serving-interview#Q25]] cloud vs on-prem экономика; [[model-serving-interview#Q21]] auto-scaling для bursty workload; [[model-serving-interview#Q19]] cold start LLM pods."
+              },
+              "label": "B",
+              "text": "Spot instances — это discounted GPU (50-90% дешевле on-demand), которые могут быть прекращены провайдером с короткого warning (AWS 2 минуты, GCP 30 сек); подходят для batch inference, embeddings generation, background processing, dev/staging; не подходят для user-facing realtime serving.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "AWS Spot скидки на GPU инстансы регулярно 50-90% (зависит от региона и типа). G4dn.xlarge spot ~$0.16/час vs on-demand $0.526/час — 70% скидка. Это существенный экономический эффект для batch.",
+                "source_of_confusion": "Возможно, путают spot с reserved instance discount (1-3 года commit за 30-50% скидку).",
+                "if_it_were_true": "Никто не использовал бы spot из-за маленькой выгоды и operational complexity. Реально spot — основной механизм cost-reduction для batch workloads.",
+                "how_it_should_be": "Spot даёт 50-90% экономии в зависимости от instance type и региона; стоит ввязываться для idempotent workload'ов."
+              },
+              "label": "C",
+              "text": "Spot economy — только 10-20% по сравнению с on-demand; ради такой экономии не стоит ввязываться.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Spot и auto-scaling прекрасно комбинируются. Karpenter или cluster-autoscaler с node pool'ами разных типов (on-demand baseline + spot для scale-out) — стандартный pattern. Просто scale-out может «отказать» при отсутствии spot capacity — нужна fallback на on-demand.",
+                "source_of_confusion": "Иногда смешивают «не гарантируется capacity» (это правда) с «нельзя auto-scale» (неправда).",
+                "if_it_were_true": "AWS Karpenter / GCP Spot VMs auto-scaling group не существовали бы. Реально они flagship features.",
+                "how_it_should_be": "Spot + auto-scaling работают; нужна осторожность с fallback на on-demand при capacity miss."
+              },
+              "label": "D",
+              "text": "Spot instances запрещают auto-scaling — нельзя комбинировать с HPA.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие частые проблемы в model serving?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "OpenAI-compatible API — это уже стандартный фичекомплект всех современных serving stack'ов (vLLM, TGI, Ollama). Реальные production-проблемы лежат глубже: OOM, cold start, version rollout, cost runaway, monitoring.",
+                "source_of_confusion": "Новичков, впервые мигрирующих с OpenAI на self-host, удивляет, что API работает «не точно так же» в edge cases (tool calling, structured output) — и это становится приоритетной болью.",
+                "if_it_were_true": "Production-incident'ы в LLM-сервисах в первую очередь были бы про «не подключается openai SDK». Реально 90% incident'ов — OOM, latency spike, model regression.",
+                "how_it_should_be": "OpenAI compat решена; реальные проблемы — operational и quality stability."
+              },
+              "label": "A",
+              "text": "Главная проблема model serving — отсутствие OpenAI-compatible API; всё остальное вторично.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Naive batching, single-request handling, отсутствие continuous batching приводят к GPU utilization 20-40%. Это типичная проблема при переходе с HF Transformers на правильный inference server. На production требуется monitoring GPU utilization через DCGM exporter / Prometheus.",
+                "source_of_confusion": "Если посмотреть на `nvidia-smi` в момент инференса, можно увидеть 100% — это momentary GPU compute usage. Sustained utilization (что реально важно) часто ниже.",
+                "if_it_were_true": "Бенчмарки vLLM vs HF не показывали бы 20× разницу. Реально разница именно за счёт лучшей GPU utilization.",
+                "how_it_should_be": "GPU underutilization — реальная проблема; лечится переходом на правильный serving stack и тюнингом batching."
+              },
+              "label": "B",
+              "text": "GPU underutilization невозможна в принципе — современный hardware всегда работает на 100%.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Эти 8-10 проблем — это checklist production readiness LLM serving. OOM — typically при peak (long context + batch size up); лечится `--max-num-batched-tokens` тюнингом, KV cache quantization, или upgrade GPU. Cold start медленный — лечится pre-warm pods и cached image weights в node-local registry. Quality regression после quantization — нужны task-specific evals перед production rollout. Cost runaway — мониторинг GPU utilization и idle hours, MIG для denser sharing. Behavioral drift (vs OpenAI API) — A/B на 1% трафика и diff между outputs. Monitoring blind spots — token-level метрики (TTFT, time-per-output-token, prompt/completion lengths) экспортятся vLLM в Prometheus.",
+                "example": "Команда задеплоила Llama 3 70B AWQ на vLLM в production. За первый месяц: OOM при peak (long-context требует пересмотра max-num-batched-tokens), cold start медленный (добавили pre-warm 2 replicas), quality regression на code-generation (заменили AWQ → FP8 на новых H100), monitoring blind spot (без TTFT-алёрта пользователи жаловались, что «иногда долго думает»). Каждая проблема — отдельный fix sprint.",
+                "when_to_apply": "Production-readiness review перед launch; quarterly health-check существующих serving deployment'ов; incident postmortems для root-cause анализа; обучение junior MLE / SRE в команде.",
+                "edge_cases": "Список не исчерпывающий — есть и другие специфичные проблемы (token-counting accuracy, prompt injection защита, model-license compliance). Auto-detection problem hard — большинство этих проблем проявляются только под нагрузкой или с edge inputs, не на dev/staging.",
+                "related": "[[model-serving-interview#Q19]] cold start specifics; [[model-serving-interview#Q21]] auto-scaling решения; [[model-serving-interview#Q16]] quantization quality trade-off."
+              },
+              "label": "C",
+              "text": "Частые production-проблемы model serving: OOM (модель + KV cache не помещается под peak load), slow cold start (1-3 минуты на load 70B), request queueing при auto-scale (cold start обгоняет scale), GPU underutilization из-за naive batching, rolling rollout без downtime, cost runaway (GPU idle = деньги), quality regression после quantization, behavioral drift vs original API, monitoring blind spots (token-level метрики).",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Quantization — lossy compression: AWQ INT4 теряет 1-3% на простых benchmarks, до 7% на reasoning. На production задачах (code-generation, RAG-extraction) regression может быть болезненным. Необходимо мерить task-specific quality перед rollout.",
+                "source_of_confusion": "«Compression» иногда означает lossless (gzip, zstd); LLM quantization этот образ не выдерживает.",
+                "if_it_were_true": "Никто не выбирал бы FP16/FP8 над INT4. Реально для критичных задач часто оставляют higher precision.",
+                "how_it_should_be": "Quantization — lossy; quality drop зависит от метода и задачи; нужны task-specific evals."
+              },
+              "label": "D",
+              "text": "Quantization никогда не снижает quality модели — это lossless compression.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбрать какой serving stack?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`transformers.generate()` — research API, не production: нет continuous batching, GPU обслуживает запросы по одному, throughput на Llama 3 70B ~15 req/sec на A100. Для 10K req/min (167 req/sec) понадобится 12-15 GPU вместо 1-2 на vLLM.",
+                "source_of_confusion": "«FastAPI + HF» — стандартный туториал для маленьких моделей (BERT, sentence-transformers); для LLM этого катастрофически мало.",
+                "if_it_were_true": "Hugging Face не разрабатывал бы TGI, vLLM не существовал бы. Реально обе технологии созданы именно потому, что vanilla `generate()` не годится для production.",
+                "how_it_should_be": "Для LLM production нужен специализированный engine (vLLM, TGI, TensorRT-LLM); vanilla `generate()` — только для prototype."
+              },
+              "label": "A",
+              "text": "FastAPI + Hugging Face `transformers.generate()` напрямую — простой и достаточный production-стек.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "TensorRT-LLM действительно даёт +20-50% throughput над vLLM на NVIDIA H100, но цена — сложность развёртывания: manual model conversion в TRT engine (per-GPU-architecture compile, A100 ≠ H100), knowledge TRT internals, verbose Triton config, vendor lock-in. Для команды без NVIDIA-specialist'а это недели работы вместо часа на vLLM.",
+                "source_of_confusion": "«Самое быстрое» != «лучший выбор для команды». Бенчмарки часто игнорируют operational cost развёртывания и поддержки.",
+                "if_it_were_true": "Все production-deployment'ы LLM были бы на TRT-LLM. Реально vLLM доминирует — простота + 80% performance > 100% performance + сложность для большинства команд.",
+                "how_it_should_be": "TRT-LLM выбирают только при max-perf критичности и наличии NVIDIA-expertise; в общем случае vLLM эффективнее по ТЭО."
+              },
+              "label": "B",
+              "text": "TensorRT-LLM + Triton Inference Server — universally самый быстрый, всегда выбираем его для max-throughput.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Ollama построена поверх llama.cpp для single-machine local-dev сценариев; throughput на 70B модели ~5-20 req/sec в лучшем случае. Для 10K req/min понадобится 50+ Ollama-инстансов с балансировкой — operational кошмар без continuous batching и pre-warm стратегии.",
+                "source_of_confusion": "Onboarding в Ollama занимает минуту (`ollama run llama3` — и работает); простота установки путается с production-readiness.",
+                "if_it_were_true": "Yandex / Сбер / Anthropic использовали бы Ollama. Реально все они держат vLLM (или собственные engines) на GPU кластерах для production.",
+                "how_it_should_be": "Ollama — для local dev / POC; для production scale — vLLM/TGI/TRT-LLM."
+              },
+              "label": "C",
+              "text": "Ollama — самый простой и production-ready, идеально для 10K req/min на 70B модели.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "vLLM (UC Berkeley, открыт 2023) — open-source inference engine, де-факто стандарт 2025 для open-source моделей. Три ключевые оптимизации: (1) PagedAttention хранит KV cache в страницах фиксированного размера — устраняет fragmentation, использует ~95% GPU memory эффективно; (2) Continuous batching — новые запросы входят в batch на каждом decoding step, GPU всегда занят; (3) OpenAI-compatible API на `/v1/chat/completions` — drop-in замена для OpenAI SDK. На Llama 2 7B A100 80 ГБ vLLM даёт ~330 req/sec против ~15 у HF (22× ускорение). Для 10K req/min на Llama 3 70B AWQ — 1-2× H100 80 ГБ с TP=2, cloud cost ~$5-10/час против $50-100/час на 8 GPU с vanilla HF.",
+                "example": "Команда serve'ит chat assistant: `docker run --runtime nvidia --gpus all -v ~/.cache/huggingface:/root/.cache/huggingface -p 8000:8000 --ipc=host vllm/vllm-openai:latest --model meta-llama/Llama-3-70B-Instruct-AWQ --tensor-parallel-size 2 --max-num-batched-tokens 4096`; client использует `OpenAI(base_url=\"http://vllm:8000/v1\", api_key=\"dummy\")`, никаких изменений в логике; throughput ~300-400 tokens/sec aggregate на 2× H100.",
+                "when_to_apply": "Production self-hosted LLM serving (Llama, Mistral, Qwen, DeepSeek, Gemma); migration с OpenAI/Anthropic API на self-host; internal AI-platforms в крупных компаниях (Yandex, Сбер, Wolt); batch inference offline scoring; любой serving с throughput > 100 req/sec.",
+                "edge_cases": "`--max-num-batched-tokens` критично тюнить под GPU memory (слишком высокий → OOM, низкий → недогруз; baseline 2K-4K). Tensor parallelism через `--tensor-parallel-size N` требует NVLink/InfiniBand; на PCIe медленнее single GPU. Quantization (AWQ/GPTQ/FP8) обязательна для 70B+ на одной H100. Не для classical ML — для XGBoost / sklearn / CV нужен Triton или TorchServe.",
+                "related": "[[model-serving-interview#Q9]] vLLM детали; [[model-serving-interview#Q14]] PagedAttention; [[model-serving-interview#Q22]] OpenAI-compatible API; [[model-serving-interview#Q10]] TGI как альтернатива."
+              },
+              "label": "D",
+              "text": "vLLM в Docker с tensor parallelism и AWQ квантизацией — стандартный выбор 2025 для open-source LLM в production: PagedAttention + continuous batching дают 22× throughput vs vanilla HF на Llama 2 7B, на Llama 3 70B AWQ нужны 1-2× H100 80 ГБ против 12-15× с naive HF; OpenAI-compatible API упрощает migration клиентов.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

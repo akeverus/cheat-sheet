@@ -20,7 +20,15 @@ BEGIN { current_q = ""; in_mcq = 0; block_idx = 0; opt_label = ""; correct = "";
     next
 }
 
-/^> \[!mcq\]/ { in_mcq = 1; next }
+/^> \[!mcq\]/ {
+    # If we were already inside an MCQ block, this is a new sibling block → bump idx.
+    if (in_mcq) block_idx++
+    in_mcq = 1
+    # Reset per-block state so leftover label/text from a previous block doesn't leak
+    # into a new (possibly legacy-format) MCQ that has no `> - [x] A.` markers.
+    opt_label = ""; correct = ""; opt_text = ""
+    next
+}
 
 in_mcq && /^> - \[[ xX]\]/ {
     match($0, /^> - \[([ xX])\] ?([A-D])\. ?(.+?)$/, m)
@@ -35,7 +43,9 @@ in_mcq && /^> - \[[ xX]\]/ {
 in_mcq && /^>[[:space:]]+\*\*[^*]+\*\*/ {
     # Section line: capture name + content
     match($0, /^>[[:space:]]+\*\*([^*]+)\*\*[[:space:]]*(.*)$/, m)
-    sec_name = m[1]; gsub(/\.$/, "", sec_name)
+    sec_name = m[1]
+    # Strip trailing punctuation (. : ;) and whitespace
+    gsub(/[[:space:]]*[.:;]+[[:space:]]*$/, "", sec_name)
     sec_content = m[2]
     printf "%s\t%d\t%s\t%s\t%s\t%s\t%s\n", current_q, block_idx, opt_label, correct, opt_text, sec_name, sec_content
     next

@@ -1,0 +1,1985 @@
+{
+  "topic_slug": "dynamic-programming-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое DP и когда применяется?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "DP применимо строго при двух условиях. Optimal substructure означает, что f(n) выражается через f(k) для k<n при оптимальной игре, и эти подзадачи независимы. Overlapping subproblems отличают DP от Divide-and-Conquer: если бы каждая подзадача встречалась один раз, мемоизация ничего не дала бы и хватало бы обычной рекурсии. Когда оба свойства есть, DP превращает экспоненциальное `O(2^n)` в полиномиальное `O(n)` или `O(n*W)`.",
+                "example": "Fibonacci: `fib(n) = fib(n-1) + fib(n-2)` — оптимальная подструктура тривиальна, а `fib(3)` в дереве вызовов для `fib(6)` встречается 3 раза, `fib(2)` — 5 раз. Мемоизация сводит работу к `O(n)`. Shortest path в DAG (Dijkstra без negative): кратчайший путь `s→t` содержит кратчайшие пути `s→v` для всех промежуточных `v`.",
+                "when_to_apply": "Задачи на «минимум/максимум/число способов», задачи с состоянием небольшой размерности (`dp[i]`, `dp[i][j]`, `dp[i][mask]`), задачи с выбором на каждом шаге (взять/не взять, идти вправо/вниз). Production-системы: editor diff в Git (LCS-based), spell-checker auto-correct (Edit Distance), маршрутизация delivery (TSP через bitmask DP для `n≤22`).",
+                "edge_cases": "Не всякая задача с рекурсией — DP: longest simple path в графе с циклами не имеет optimal substructure (части оптимального пути могут пересекать друг друга). При большом state space (`2^n`, `n*W` с `W=10^9`) DP теоретически работает, но практически невозможен — это pseudo-polynomial complexity.",
+                "related": "[[dynamic-programming-interview#Q2]] optimal substructure; [[dynamic-programming-interview#Q3]] overlapping subproblems; [[dynamic-programming-interview#Q32]] DP vs Divide-and-Conquer."
+              },
+              "label": "A",
+              "text": "Optimal substructure (оптимум целого собирается из оптимумов подзадач) и overlapping subproblems (одни и те же подзадачи встречаются в наивной рекурсии многократно).",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Без overlapping subproblems кэш бесполезен: каждая подзадача встречается один раз, мемоизация не даёт ускорения, а накладные расходы на HashMap или массив только замедляют. Это ровно случай Merge Sort и Quick Sort — у них optimal substructure есть, но это не DP.",
+                "source_of_confusion": "Многие учебники определяют DP через optimal substructure первым (это «громкое» свойство), а перекрытия упоминают вторым, и читатель запоминает только первое. К тому же в задачах вроде Fibonacci перекрытия кажутся «и так очевидными».",
+                "if_it_were_true": "Merge Sort пришлось бы называть «DP-алгоритмом», а в Coursera/Sedgewick он стоит в разделе Divide-and-Conquer. Решение `O(n log n)` сортировки слиянием через мемоизацию не дало бы выигрыша — наоборот, дало бы оверхед на хранение всех `O(n log n)` подмассивов.",
+                "how_it_should_be": "Перечислить оба условия одновременно: optimal substructure плюс overlapping subproblems — только в их пересечении живёт DP."
+              },
+              "label": "B",
+              "text": "Достаточно только optimal substructure — перекрытия подзадач для DP не обязательны и относятся к Divide-and-Conquer.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "DP не связан с классом NP. Это техника: запомнить уже посчитанные подзадачи. Многие DP-задачи решают P-задачи (LCS, Fibonacci), а NP-полные через DP остаются экспоненциальными (TSP — `O(n^2 * 2^n)`, лучше brute-force `O(n!)`, но всё ещё экспоненциально).",
+                "source_of_confusion": "Bitmask DP часто упоминается рядом с TSP и Subset Sum, и студенты решают, что DP — это «способ решать NP-задачи». На самом деле DP — это просто кэш для рекурсии.",
+                "if_it_were_true": "Knapsack `O(n*W)` считался бы полиномиальным решением NP-полной задачи, что нарушило бы P≠NP (если бы оно было доказано). Реально Knapsack — pseudo-polynomial: время полиномиально в значении W, но экспоненциально в `log W` — числе битов представления.",
+                "how_it_should_be": "Описать DP как технику оптимизации рекурсии через кэш, применимую ко всем задачам с optimal substructure и overlapping subproblems — независимо от класса сложности."
+              },
+              "label": "C",
+              "text": "DP применяется тогда и только тогда, когда задача NP-полная и нужно найти приближённое решение за полиномиальное время.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Размерность state — это деталь реализации, а не определение DP. `dp[i][j]` для LCS/Edit Distance, `dp[i][k][hold]` для Stock-задач, `dp[i][mask]` для bitmask — всё это DP. Tabulation vs Memoization — это два способа реализации DP (bottom-up и top-down), а не разные концепции.",
+                "source_of_confusion": "Первые примеры DP в учебниках — Fibonacci и Climbing Stairs с одномерным dp. Студенты обобщают «DP = массив `dp[i]`» и не узнают DP в двумерных и многомерных задачах.",
+                "if_it_were_true": "LCS, Edit Distance, Knapsack, Matrix Chain Multiplication — половина классических DP-задач — выпали бы из определения DP. В CLRS и Sedgewick они стоят как канонические примеры именно DP.",
+                "how_it_should_be": "Сказать, что state может иметь любую размерность (1D, 2D, bitmask) — главное, чтобы выполнялись optimal substructure и overlapping subproblems."
+              },
+              "label": "D",
+              "text": "DP работает только для задач, где состояние можно представить одной целочисленной переменной `dp[i]` — двумерные таблицы относятся к табуляции, а не к DP.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое оптимальная подструктура?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "DP отлично работает с циклическими графами, если задача укладывается в state-space без перекрытия путей: Bellman-Ford, Floyd-Warshall — это DP по DAG из (vertex, edge_count). Проблема Longest Simple Path не в циклах, а в требовании «simple» (без повторов вершин), из-за которого подпути могут конфликтовать.",
+                "source_of_confusion": "Кажется, что «DAG → DP работает», «cycle → DP не работает». На самом деле граница проходит по другому: важно не наличие циклов, а можно ли независимо оптимизировать подзадачи.",
+                "if_it_were_true": "Bellman-Ford не работал бы в графах с отрицательными циклами — но он там работает (детектирует их за `O(VE)`). Floyd-Warshall не справлялся бы с циклами — но это его основной use-case.",
+                "how_it_should_be": "Объяснить, что Longest Simple Path не имеет optimal substructure не из-за циклов, а потому, что подпути оптимального пути могут разделять вершины и при склейке нарушать ограничение simple."
+              },
+              "label": "A",
+              "text": "Потому что граф может содержать циклы, а DP принципиально не работает с циклическими структурами данных — Fibonacci и Knapsack не используют граф.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Longest Simple Path действительно NP-hard, но это следствие, а не причина отсутствия optimal substructure. И DP отлично работает с NP-hard задачами: bitmask DP для TSP даёт `O(n^2 * 2^n)`, что лучше brute-force `O(n!)` при `n≤22`.",
+                "source_of_confusion": "Студенты связывают «нет оптимального DP-решения» с «задача NP-hard». На деле это разные характеристики: NP-hard говорит о сложности, а optimal substructure — о структуре подзадач.",
+                "if_it_were_true": "Subset Sum (NP-полная) не решалась бы через DP — но решается за `O(n*S)`. И обратно: множество P-задач не решается через DP (median by quickselect, sorting).",
+                "how_it_should_be": "Связать невозможность DP с тем, что оптимальный путь `A→C` может проходить через вершину, которая входит в оптимальный путь `A→B` — склейка `A→B→C` нарушит требование simple."
+              },
+              "label": "B",
+              "text": "Потому что Longest Simple Path — NP-полная задача, а DP работает только для P-задач.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Optimal substructure требует, чтобы оптимум целого собирался из оптимумов независимых подзадач. В Longest Simple Path оптимальный путь `A→C` через `B` означает, что и `A→B`, и `B→C` оптимальны на своих подзадачах. Но если самый длинный simple-путь `A→B` проходит через вершину `v`, и самый длинный simple-путь `B→C` тоже проходит через `v` — склейка пройдёт `v` дважды, нарушив условие simple. Поэтому подзадачи не независимы, и DP неприменим.",
+                "example": "Граф `A-B-C-A` (треугольник) с весами 1. Longest simple-путь `A→C` проходит через `B` (длина 2). Longest simple `A→B` через `C` (длина 2). Если их склеить через общую вершину `B` или `C`, получим повторение — но самостоятельно каждый из них оптимален.",
+                "when_to_apply": "Это объяснение нужно на интервью при вопросе «почему shortest path решается DP, а longest — нет». Применимо к задачам с глобальными ограничениями (no-repeat, unique resource), которые невозможно учесть в локальном state.",
+                "edge_cases": "В DAG longest path РЕШАЕТСЯ за `O(V+E)`, потому что без циклов «simple» автоматически гарантировано (одна и та же вершина не появится дважды). В деревьях longest path (diameter) тоже решается DP, потому что между двумя вершинами единственный путь.",
+                "related": "[[dynamic-programming-interview#Q1]] условия применимости DP; [[dynamic-programming-interview#Q3]] overlapping subproblems; [[graphs-interview#Q1]] DAG longest path."
+              },
+              "label": "C",
+              "text": "Если оптимальный путь `A→C` проходит через вершину `B`, то части `A→B` и `B→C` могут разделять промежуточные вершины — склейка нарушит требование «simple» и решение перестанет быть валидным.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "DP работает с любыми типами значений: float, BigDecimal, строки, объекты — это не ограничение. Например, Floyd-Warshall с double-весами или Edit Distance со строковыми операциями. State (ключ кэша) — целочисленный, но значение в кэше — любое.",
+                "source_of_confusion": "Большинство учебных примеров DP — на целочисленных задачах (Knapsack, Coin Change, LIS), и студенты думают, что это требование, а не случайность учебника.",
+                "if_it_were_true": "Floyd-Warshall с double-весами не работал бы — а он применяется в навигации, где расстояния задаются float-числами.",
+                "how_it_should_be": "Указать, что DP индифферентен к типу значений в подзадачах — главное, чтобы state имел конечное число дискретных значений для индексации кэша."
+              },
+              "label": "D",
+              "text": "Потому что Longest Simple Path требует floating-point вычислений, а DP работает только с целочисленными состояниями.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое перекрывающиеся подзадачи?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Мемоизация даёт ровно `O(n)`, а не `O(n log n)`. Каждое значение `fib(k)` вычисляется один раз — это `n` вычислений, каждое за `O(1)` (две арифметики + lookup). При использовании HashMap появляется амортизированная `O(1)` на lookup, а массив-кэш даёт строго `O(1)`.",
+                "source_of_confusion": "Студенты ассоциируют логарифмический множитель с любым хранением (как в Binary Search Tree-кэше), но `HashMap.get` в среднем `O(1)`, а массив `int[]` — гарантированно `O(1)`.",
+                "if_it_were_true": "Стандартный мемоизированный Fibonacci работал бы заметно медленнее, чем итеративный — на практике они работают за одно и то же время с точностью до constant factor.",
+                "how_it_should_be": "Указать корректную сложность `O(n)` — `n` уникальных подзадач, каждая за `O(1)` (массив-кэш)."
+              },
+              "label": "A",
+              "text": "С `O(2^n)` до `O(n log n)` — мемоизация добавляет logarithmic-кэш, и поэтому константа возрастает.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Дерево обходится один раз: первое вычисление `fib(k)` падает в кэш, повторные обращения сразу возвращают значение. Это даёт `n` вычислений суммарно — `O(n)`, не `O(n^2)`.",
+                "source_of_confusion": "Студенты иногда смешивают Fibonacci с 2D DP-задачами (LCS, Edit Distance), где состояние `dp[i][j]` действительно даёт `O(n*m)`. У Fibonacci state одномерный — `dp[i]`.",
+                "if_it_were_true": "Для `n=10^6` мемоизированный Fibonacci занимал бы `10^12` операций (часы), а реально работает за миллисекунды.",
+                "how_it_should_be": "Сказать `O(n)` для Fibonacci, а `O(n^2)` оставить для задач с 2D state (LCS, Edit Distance)."
+              },
+              "label": "B",
+              "text": "С `O(2^n)` до `O(n^2)` — мемоизация требует двойной обход дерева подзадач.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`O(log n)` для Fibonacci достигается не мемоизацией, а другим методом — matrix exponentiation `[[1,1],[1,0]]^n` через fast power. Мемоизация даёт `O(n)`, потому что все `n` подзадач от `fib(1)` до `fib(n)` действительно нужно посчитать.",
+                "source_of_confusion": "Существование `O(log n)` алгоритма для Fibonacci через матричное возведение в степень или формулу Бине вводит в заблуждение, но это другой подход — не DP с мемоизацией.",
+                "if_it_were_true": "Мемоизированный fib(10^9) считался бы за десятки операций — но он на стеке умрёт StackOverflowError для `n>10^5` (depth recursion).",
+                "how_it_should_be": "Различать алгоритмы: мемоизация даёт `O(n)`, matrix exponentiation — `O(log n)`. Это разные техники."
+              },
+              "label": "C",
+              "text": "С `O(2^n)` до `O(log n)` — мемоизация позволяет вычислять только корневые подзадачи, остальные складываются автоматически.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Наивный `fib(n) = fib(n-1) + fib(n-2)` строит дерево вызовов размера `Θ(φ^n) ≈ O(2^n)` — каждый узел делает два рекурсивных вызова. Мемоизация хранит уже вычисленные значения в массиве `memo[0..n]`. Первый вызов `fib(k)` идёт по рекурсии и заполняет `memo[k]`; повторные обращения возвращают `memo[k]` за `O(1)`. Уникальных подзадач ровно `n+1` — `fib(0)`, `fib(1)`, ..., `fib(n)` — поэтому суммарно `O(n)` времени, `O(n)` памяти (массив + стек рекурсии).",
+                "example": "При `n=40` наивный делает примерно `2^40 ≈ 10^12` операций (минуты на CPU), мемоизированный — 41 операцию. На production это разница между «функция таймаут» и «функция мгновенно».",
+                "when_to_apply": "Когда уравнение рекурсии содержит ≥2 рекурсивных вызовов с пересечением подзадач: Fibonacci, Climbing Stairs, House Robber, LIS, LCS. На production: ML feature engineering с recursive computation, dependency graph topological order с кэшированием.",
+                "edge_cases": "Память на стек рекурсии `O(n)` приводит к `StackOverflowError` при `n>10^4..10^5` в JVM (default stack ~512KB). Решение — tabulation (итеративное заполнение `dp[]`) с `O(1)` стеком, а далее space optimization до `O(1)` памяти.",
+                "related": "[[dynamic-programming-interview#Q5]] Fibonacci реализации; [[dynamic-programming-interview#Q4]] Memoization vs Tabulation; [[complexity-analysis-interview#Q1]] big-O анализ."
+              },
+              "label": "D",
+              "text": "С `O(2^n)` до `O(n)` — каждая из `n` уникальных подзадач `fib(0)..fib(n)` вычисляется ровно один раз благодаря кэшу, повторные обращения возвращают результат за `O(1)`.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Memoization vs Tabulation?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Memoization — это рекурсия с кэшем: считается только то, что понадобилось для ответа (lazy), но depth recursion даёт `O(n)` или `O(n*m)` фреймов на стеке. В JVM с default `-Xss512k` это означает StackOverflowError на `n≈10^4..10^5`. Tabulation — это итеративное заполнение таблицы в топологическом порядке зависимостей: стек постоянный, но порядок обхода определяется заранее и приходится посчитать все `dp[i][j]`, даже если для ответа достаточно подмножества.",
+                "example": "Edit Distance для строк длины 10000: memoized-версия упадёт StackOverflowError на глубине 20000 на JVM. Tabulation `O(n*m)` пройдёт за секунды. Но на разреженных задачах вроде sparse Knapsack с большой capacity и малым числом достижимых state — memoization экономит работу, потому что не заполняет недостижимые ячейки.",
+                "when_to_apply": "Memoization — на интервью для естественной формулировки и для разреженных state-space. Tabulation — в production, когда нужна предсказуемая память и стек, или когда нужна space optimization до `O(1)`/`O(min)` через rolling array. Production-системы (например, Elasticsearch fuzzy search с Edit Distance) всегда используют tabulation.",
+                "edge_cases": "Tabulation требует правильного порядка итераций: для 0/1 Knapsack обратный обход по `w` обязателен, иначе предмет учтётся дважды. Memoization в Java/Kotlin требует учитывать sentinel-значения: `int[] memo` инициализируется нулями, и `fib(0)=0` неотличим от «не посчитано» — нужен `Integer[]` с null или флаг `computed[]`.",
+                "related": "[[dynamic-programming-interview#Q5]] Fibonacci реализации; [[dynamic-programming-interview#Q28]] space optimization; [[dynamic-programming-interview#Q3]] overlapping subproblems."
+              },
+              "label": "A",
+              "text": "Memoization рекурсивна и расходует `O(depth)` стека, рискуя StackOverflowError; tabulation итеративна с `O(1)` стека, но обязана вычислять все подзадачи в правильном порядке, даже если часть из них не нужна для ответа.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Memoization имеет overhead на вызовы функций и lookup в кэше, что делает её на ~2-3x медленнее tabulation на плотных задачах (LCS, Edit Distance, Knapsack), где всё равно посещаются все ячейки. Production предпочитает tabulation за предсказуемость памяти/стека и возможность space optimization.",
+                "source_of_confusion": "Intuition «считаем только нужное → быстрее» верна по количеству вычислений, но забывает про constant factor: каждый рекурсивный вызов — это allocation frame, push/pop, HashMap lookup. На плотных DP-задачах этот overhead доминирует.",
+                "if_it_were_true": "Все production-DP-решения (Elasticsearch fuzzy search, Git diff, spell-checkers) были бы рекурсивными — но они итеративные именно из-за стабильности.",
+                "how_it_should_be": "Сказать, что memoization быстрее ТОЛЬКО на разреженных state-space (mahy unreachable states), а на плотных tabulation выигрывает за счёт constant factor и кэш-локальности массивов."
+              },
+              "label": "B",
+              "text": "Memoization всегда быстрее tabulation, потому что не заполняет лишние ячейки таблицы и поэтому всегда предпочтительнее в production.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Различия принципиальные: память на стек (`O(n)` vs `O(1)`), constant factor (рекурсия vs итерация), порядок вычислений (lazy vs eager), возможность space optimization (требует tabulation). Это конкретные production-критерии, не стилистика.",
+                "source_of_confusion": "Студенческие задачки на `n≤100` действительно работают одинаково — разница незаметна. Это создаёт иллюзию эквивалентности.",
+                "if_it_were_true": "Не было бы смысла переписывать решение из top-down в bottom-up на интервью — но это стандартное требование от senior-кандидатов.",
+                "how_it_should_be": "Перечислить конкретные различия (стек, constant factor, lazy/eager, space opt) и сказать, что они влияют на выбор в production."
+              },
+              "label": "C",
+              "text": "Memoization и tabulation эквивалентны по производительности, памяти и стеку — отличаются только синтаксисом, поэтому выбор чисто стилистический.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Tabulation отлично работает для любых размерностей state, если можно определить топологический порядок зависимостей. `dp[i][j]` для LCS, `dp[i][k][hold]` для Stocks, `dp[mask][i]` для bitmask TSP — всё это классические tabulation-реализации.",
+                "source_of_confusion": "Студенты, столкнувшись со сложным порядком обхода (например, по длине интервала для Burst Balloons), сдаются в tabulation и переходят на memoization. Это лень, а не ограничение метода.",
+                "if_it_were_true": "CLRS, Sedgewick, Kleinberg-Tardos — все писали бы LCS и Edit Distance через memoization. Реально они показывают tabulation как канонический способ.",
+                "how_it_should_be": "Указать, что tabulation требует понимания топологического порядка обхода (по длине интервала, по битмаске «по числу единиц», по диагоналям), но работает для DP любой размерности."
+              },
+              "label": "D",
+              "text": "Tabulation работает только для линейных DP (одномерный `dp[i]`), а двумерные и многомерные DP можно решать только через memoization.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Fibonacci через DP?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Naive имеет сложность `O(φ^n) ≈ O(1.618^n)` — для `n=50` это уже `10^10` операций (десятки секунд), для `n=10^6` — это `~10^200000` операций, что не выполнится никогда. Это не годится для production даже для `n=40`.",
+                "source_of_confusion": "Студенты, которым показали naive первым и сказали «вот так математически естественно», запоминают её как «default». На практике это всегда антипаттерн.",
+                "if_it_were_true": "Production использовал бы naive Fibonacci — и любой запрос с `n=50` приводил бы к p99 latency 30+ секунд. Это бы попало в post-mortem.",
+                "how_it_should_be": "В production для `n` до `10^4` использовать iterative space-optimized `O(n)` с двумя переменными; для больших `n` — matrix exponentiation `O(log n)`."
+              },
+              "label": "A",
+              "text": "Naive recursive `fib(n-1) + fib(n-2)` — она читается легче всего и поэтому проста в поддержке.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Memoized recursive даёт `O(n)` времени, но `O(n)` стека рекурсии. JVM с дефолтным `-Xss512k` падает StackOverflowError примерно на `n=10^4..10^5`. Для `n=10^6` гарантированно крэшнется.",
+                "source_of_confusion": "На LeetCode тесты обычно `n≤30`, memoized работает. Студенты не сталкиваются с stack overflow, пока не выходят за пределы учебных примеров.",
+                "if_it_were_true": "Сервис вычислений с user input `n` ломался бы на больших значениях с StackOverflowError, что в Spring Boot Actuator выглядело бы как 500-error и попало бы в Capacity One/Knight Capital-подобные incident-постмортемы.",
+                "how_it_should_be": "Переписать на итеративный space-optimized с двумя переменными — `O(n)` времени и `O(1)` стека."
+              },
+              "label": "B",
+              "text": "Memoized recursive с `int[] memo` — оптимально по времени `O(n)` и универсально для любых `n`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Для Fibonacci зависимость `dp[i] = dp[i-1] + dp[i-2]` использует только два предыдущих значения — массив можно заменить двумя переменными. Это даёт `O(1)` памяти и `O(1)` стека (итерация). Для `n=10^6` алгоритм отработает за ~10ms на современном CPU, не требует ни heap-аллокаций, ни рекурсии. Внимание: `fib(93)` уже переполняет `long` — для больших `n` нужен `BigInteger`.",
+                "example": "В сервисе расчёта пенсионных аннуитетов или биржевых деривативов часто встречаются последовательности Фибоначчи (Elliott Wave анализ, Retracement Levels). Iterative-версия гарантирует predictable latency и низкое потребление памяти на любых n.",
+                "when_to_apply": "Когда нужен Fibonacci в production-сервисе с потенциально большими `n`, при ограниченной памяти, в hot-path кода. Также как best-practice демонстрация на интервью — это сразу показывает понимание space optimization.",
+                "edge_cases": "Для `n≥93` `long` переполняется — нужен `BigInteger.add()`, что замедляет до `O(n^2)` из-за длинной арифметики. Для очень больших `n` лучше matrix exponentiation `[[1,1],[1,0]]^n` за `O(log n)` умножений длинных чисел, что даёт суммарно `O(M(n) log n)` где `M(n)` — стоимость умножения BigInteger.",
+                "related": "[[dynamic-programming-interview#Q4]] memoization vs tabulation; [[dynamic-programming-interview#Q28]] space optimization; [[dynamic-programming-interview#Q6]] Climbing Stairs (тот же recurrence)."
+              },
+              "label": "C",
+              "text": "Iterative space-optimized с двумя переменными `prev2, prev1` — `O(n)` времени, `O(1)` памяти, `O(1)` стека; для `n=10^6` отрабатывает за миллисекунды без риска StackOverflowError.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Matrix exponentiation даёт `O(log n)` умножений матриц 2×2, но constant factor больше, чем у простой итерации. Для small/medium `n` (до `~10^5`) iterative-версия с двумя переменными быстрее. Преимущество matrix exp проявляется только при очень больших `n` с использованием BigInteger.",
+                "source_of_confusion": "Студенты, узнав про `O(log n)`-трюк, переоценивают его универсальность. На практике для `n<10^5` он медленнее iterative из-за overhead на матричные операции.",
+                "if_it_were_true": "Все production-системы использовали бы matrix exp — на деле большинство применяют iterative с `BigInteger` или fast doubling `F(2k) = F(k)*(2*F(k+1)-F(k))`.",
+                "how_it_should_be": "Указать, что выбор зависит от диапазона `n`: для `n<10^4` — iterative `O(n)`, для `n>10^5` с BigInteger — matrix exp или fast doubling `O(log n)`."
+              },
+              "label": "D",
+              "text": "Matrix exponentiation `[[1,1],[1,0]]^n` — единственно правильный production-подход, всегда быстрее любого другого.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Climbing Stairs?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Сложность остаётся `O(n)`: каждое `dp[i]` вычисляется за константу из трёх предшественников `dp[i-1] + dp[i-2] + dp[i-3]`. Constant factor чуть больше (три сложения вместо двух), но big-O не меняется.",
+                "source_of_confusion": "«Больше вариантов → сложнее» — intuition, которая верна для brute-force (3^n вместо 2^n), но неверна для DP с одномерным state.",
+                "if_it_were_true": "`n=10^6` занимал бы `10^12` операций (часы), а реально занимает 10 ms.",
+                "how_it_should_be": "Объяснить, что в DP сложность определяется числом state'ов × стоимость перехода. Здесь state'ов `n`, переход `O(1)` — суммарно `O(n)`."
+              },
+              "label": "A",
+              "text": "Сложность вырастет до `O(n^2)` — добавление третьего варианта удваивает число подзадач.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Правильная рекуррентность — это сумма, а не произведение: `dp[i] = dp[i-1] + dp[i-2] + dp[i-3]`. Каждое слагаемое — число способов прийти из предыдущей ступеньки, и их множества способов не пересекаются (последний шаг уникален), поэтому используется сумма (правило сложения комбинаций).",
+                "source_of_confusion": "Студенты путают комбинаторные «или» (сложение независимых способов) и «и» (умножение независимых выборов в композиции). Здесь у нас «или»: способ кончается шагом-1 ИЛИ шагом-2 ИЛИ шагом-3.",
+                "if_it_were_true": "`dp[3] = dp[0] * dp[1] * dp[2] = 1 * 1 * 2 = 2`, реально для шагов 1/2/3 это 4 ({1+1+1}, {1+2}, {2+1}, {3}). Тест бы упал на любом базовом примере.",
+                "how_it_should_be": "Записать `dp[i] = dp[i-1] + dp[i-2] + dp[i-3]` — это известная последовательность Tribonacci."
+              },
+              "label": "B",
+              "text": "Recurrence будет `dp[i] = dp[i-1] * dp[i-2] * dp[i-3]` — произведение всех способов добраться до меньших ступенек.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Если последний шаг — 1, то осталось добраться до `i-1`; если 2 — до `i-2`; если 3 — до `i-3`. Множества способов не пересекаются (отличаются последним шагом), поэтому суммируются: `dp[i] = dp[i-1] + dp[i-2] + dp[i-3]`. Это Tribonacci-последовательность с базой `dp[0]=1, dp[1]=1, dp[2]=2`. Алгоритмически — то же DP с тремя предшественниками, `O(n)` времени, `O(1)` памяти при использовании трёх переменных.",
+                "example": "В мобильной игре c прыжками на платформы (Doodle Jump, Geometry Dash) число траекторий с разрешёнными шагами `{1,2,3}` считается за `O(n)`. Для `n=20` ответ `121415`, для `n=30` — `53798080`. Tribonacci растёт как `O(η^n)`, где η ≈ 1.839 (Tribonacci constant).",
+                "when_to_apply": "Обобщённый Climbing Stairs с произвольным набором шагов `S = {s1, ..., sk}` — recurrence `dp[i] = sum(dp[i-s] for s in S, s≤i)`, сложность `O(n*|S|)`. Применяется в backend для расчёта числа последовательностей операций, в game design для оценки баланса прыжков.",
+                "edge_cases": "Tribonacci растёт быстрее обычного long при `n>~80` — нужен BigInteger или модуль `10^9+7` (стандартный модуль на LeetCode/Codeforces). Если разрешены шаги назад (`-1, +1, +2`) — задача превращается в граф со циклами и теряет «однонаправленность», подход меняется на BFS/Dijkstra.",
+                "related": "[[dynamic-programming-interview#Q5]] Fibonacci; [[dynamic-programming-interview#Q9]] Min Cost Climbing Stairs; [[dynamic-programming-interview#Q12]] Coin Change (тот же паттерн «число способов»)."
+              },
+              "label": "C",
+              "text": "Recurrence становится `dp[i] = dp[i-1] + dp[i-2] + dp[i-3]` (Tribonacci), сложность остаётся `O(n)` времени и `O(1)` памяти при space-optimization до трёх переменных.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Задача остаётся в P: одномерный state `dp[i]`, переход `O(1)`, суммарно `O(n)`. NP-полнота появляется при глобальных ограничениях (no-repeat, subset sum), которых здесь нет.",
+                "source_of_confusion": "Студенты, узнав про bitmask DP, начинают видеть NP везде. Bitmask DP применяется для задач с глобальным ограничением (TSP, Subset Sum), а не для последовательностей с локальным выбором.",
+                "if_it_were_true": "Climbing Stairs c шагами {1,2,3} был бы аналогичной сложности TSP — но это базовая DP-задача из первой главы любого учебника.",
+                "how_it_should_be": "Указать, что класс задачи не меняется: остаётся `O(n)` DP с одномерным state."
+              },
+              "label": "D",
+              "text": "Задача станет NP-полной — она перестанет иметь полиномиальное решение и потребует bitmask DP за `O(n * 2^n)`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "House Robber?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`dp[i-1] - nums[i-1]` не давало бы отрицательных значений (`dp[i-1] ≥ nums[i-1]` всегда), но оно неверно семантически: это «максимум без последнего дома», что не гарантирует невзятие соседа. `dp[i-2]` чётко означает «лучшее на префиксе `[0..i-2]`», где дом `i-1` гарантированно не входит в продолжение.",
+                "source_of_confusion": "Студенты пытаются «вывести» `dp[i-2]` через `dp[i-1]`, но это не алгебраическое преобразование, а изменение семантики state.",
+                "if_it_were_true": "Тогда формула `dp[i-1] - nums[i-1]` всегда совпадала бы с `dp[i-2]`, но это не так: `dp[i-1] = max(dp[i-2], dp[i-3] + nums[i-1])`, и при `dp[i-3] + nums[i-1] > dp[i-2]` мы получим `dp[i-1] - nums[i-1] = dp[i-3] ≠ dp[i-2]`.",
+                "how_it_should_be": "Сформулировать через семантику state: «`dp[i-2]` — это максимум на префиксе, заканчивающемся не позже `i-2`, что позволяет безопасно добавить `nums[i]`»."
+              },
+              "label": "A",
+              "text": "Чтобы избежать отрицательных значений в массиве `dp`, которые могли бы привести к неверному результату при `Math.max`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "State `dp[i]` означает «максимальная сумма, доступная из домов `[0..i]`». Если мы решаем взять `nums[i]`, то `nums[i-1]` брать нельзя — нужна сумма из префикса `[0..i-2]`, что и есть `dp[i-2]`. Альтернатива «не брать `nums[i]`» даёт `dp[i-1]`. Финальное решение — максимум двух вариантов. Попытка вычислить через `dp[i-1] - nums[i-1]` ломается, потому что мы не знаем, входит ли `nums[i-1]` в `dp[i-1]` — он мог не входить, и тогда вычитание уменьшит сумму впустую.",
+                "example": "`nums = [2, 7, 9, 3, 1]`. `dp = [2, 7, 11, 11, 12]`. Для `dp[4]`: либо `dp[3]=11` (не берём `nums[4]`), либо `dp[2] + nums[4] = 11 + 1 = 12` (берём `nums[4]`, пропускаем `nums[3]`). Максимум — 12. Если бы применили `dp[3] - nums[3] + nums[4] = 11 - 3 + 1 = 9` — мы бы предположили, что `nums[3]` в `dp[3]`, но на самом деле `dp[3]=11=dp[2]` (не брали `nums[3]`), и `dp[3] - nums[3] = 8`, добавив `nums[4]=1`, получим 9 — неверный ответ.",
+                "when_to_apply": "State-based recurrence стандартен для всех DP с «брать/не брать»: 0/1 Knapsack, House Robber, Best Time to Buy and Sell Stock, Subset Sum. Production-сценарий: расчёт максимального набора задач (job scheduling) с конфликтами по времени — выбираем подмножество без пересечений.",
+                "edge_cases": "Для пустого массива и `n=1` нужны base cases `dp[0]=0` и `dp[1]=nums[0]`. Удобнее сразу делать space-optimized с двумя переменными `prev1, prev2`, инициализированными нулями — тогда edge cases обрабатываются автоматически.",
+                "related": "[[dynamic-programming-interview#Q8]] House Robber II (круг); [[dynamic-programming-interview#Q10]] 0/1 Knapsack (тот же паттерн взять/не взять); [[dynamic-programming-interview#Q14]] Partition Equal Subset Sum."
+              },
+              "label": "B",
+              "text": "`dp[i-2]` гарантирует, что дом `i-1` не входит в оптимальное решение префикса, и поэтому к этой сумме безопасно добавить `nums[i]`; через `dp[i-1] - nums[i-1]` это не выводится, потому что `dp[i-1]` может не включать `nums[i-1]`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Они не эквивалентны. `dp[i-1]` — это максимум из двух решений, и `nums[i-1]` может не входить в него. Вычитание `nums[i-1]` из `dp[i-1]` в этом случае даёт меньшее значение, чем `dp[i-2]`.",
+                "source_of_confusion": "При взгляде на массив `nums = [1, 2, 3]` (где соседи всегда меньше следующего), кажется, что `dp[i]` всегда увеличивается и `dp[i-1] - nums[i-1]` совпадает с `dp[i-2]`. На массивах с большим разбросом это ломается.",
+                "if_it_were_true": "Решения с обеими формулами давали бы одинаковый ответ, но на тесте `[2,1,1,2]` правильная формула даёт 4 (`nums[0]+nums[3]`), а альтернативная — 3 (вычтя `nums[2]=1` из `dp[2]=2`).",
+                "how_it_should_be": "Признать, что формулы дают разные ответы; использовать `dp[i-2]` именно потому что она семантически корректна."
+              },
+              "label": "C",
+              "text": "Это просто математическая идентичность — `dp[i-2]` и `dp[i-1] - nums[i-1]` дают одинаковый результат, выбор `dp[i-2]` сделан для читаемости.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Space optimization до двух переменных возможна потому, что `dp[i]` зависит только от `dp[i-1]` и `dp[i-2]` — это следствие формулы, а не её причина. Сама же формула выводится из семантики state: «можно ли добавить `nums[i]` после префикса `[0..i-2]`».",
+                "source_of_confusion": "Студенты, привыкшие к space-optimized версии, путают причину и следствие. Space optimization — это оптимизация над формулой, а не наоборот.",
+                "if_it_were_true": "Перейти к 1D DP было бы невозможно — но это стандартный приём. Также формула House Robber была бы «придумана» для оптимизации памяти, что противоречит истории её вывода.",
+                "how_it_should_be": "Сначала вывести семантически правильную recurrence `dp[i] = max(dp[i-1], dp[i-2] + nums[i])`, потом заметить, что нужны только два последних значения, и применить space optimization."
+              },
+              "label": "D",
+              "text": "Использование `dp[i-2]` нужно для совместимости с space-optimized версией с двумя переменными — без этого нельзя свести к `O(1)` памяти.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "House Robber II — круговой массив?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "В линейной House Robber state `dp[i]` зависит только от `dp[i-1]` и `dp[i-2]` — локально. На круге между `nums[0]` и `nums[n-1]` возникает дополнительная связь, и `dp[n-1]` уже зависит от того, входил ли `nums[0]` в решение — это нелокальная информация. Можно ввести `dp[i][took0]` (2D state), но проще наблюдение: оптимальное решение либо НЕ берёт `nums[0]` (тогда последний дом свободен — задача `nums[1..n-1]`), либо НЕ берёт `nums[n-1]` (задача `nums[0..n-2]`). Оба случая — линейные House Robber. Финальный ответ — максимум.",
+                "example": "`nums = [2, 3, 2]`. Прямой H.R.: 4 (`nums[0]+nums[2]`), но они соседи на круге, нельзя. Раздельные проходы: `nums[0..1] = max(2,3) = 3`, `nums[1..2] = max(3,2) = 3`. Ответ — 3, что верно. `nums = [1, 2, 3, 1]`: `nums[0..2]: max=4`, `nums[1..3]: max=3`, ответ 4.",
+                "when_to_apply": "Любая задача с циклическим ограничением, разрешимая декомпозицией на две «версии без одного элемента». Применяется в scheduling cyclic shifts (нельзя два соседних shift), в circular buffer optimization, в проектировании circular dependencies.",
+                "edge_cases": "Edge case `n=1`: нет круга, единственный дом — возвращаем `nums[0]`. Если использовать формулу с двумя проходами без проверки, при `n=1` второй проход даст `nums[0..-1]` (пустой) — ответ 0, что неверно.",
+                "related": "[[dynamic-programming-interview#Q7]] House Robber I; [[dynamic-programming-interview#Q26]] Burst Balloons (interval DP с граничными вершинами); [[dynamic-programming-interview#Q1]] optimal substructure."
+              },
+              "label": "A",
+              "text": "Циклическая зависимость «первый и последний дом — соседи» делает state нелокальным: в формулу нужно было бы тянуть информацию «брали ли мы дом 0», что взрывает state до 2D. Проще запретить либо первый, либо последний явно — два прохода `O(n)` каждый дают `O(n)`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Достаточно ровно двух проходов `O(n)` каждый, суммарно `O(n)`. Перебор начальной точки превратил бы это в `O(n^2)`, но не нужен: симметрия задачи позволяет фиксировать «выкинутый дом» одним из двух способов.",
+                "source_of_confusion": "Студенты, увидев слово «круг», вспоминают про circular array problems (sliding window на круге), где иногда удваивают массив для имитации циклического обхода. Здесь это лишнее.",
+                "if_it_were_true": "Для `n=10^5` решение работало бы за `10^10` операций — секунды. Реально работает за миллисекунды.",
+                "how_it_should_be": "Сказать, что декомпозиция на два независимых случая (без первого / без последнего) даёт линейную сложность."
+              },
+              "label": "B",
+              "text": "Любая задача на круге автоматически становится `O(n^2)` — двух проходов недостаточно, и круг требует полного перебора начальной точки.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Глобальная проверка «включили ли мы `nums[0]`» нелокальна — `dp[i]` не хранит эту информацию. Чтобы её сохранить, нужен 2D state `dp[i][took0]`, что эквивалентно двум проходам, но менее читаемо и склонно к багам.",
+                "source_of_confusion": "Желание решить в один проход — естественное, но в этой задаче оно ведёт к 2D state, что не упрощает решение.",
+                "if_it_were_true": "Двух проходов было бы не нужно, и решения с одним проходом без 2D state существовали бы — но их нет в LeetCode editorial, и они ломаются на edge cases.",
+                "how_it_should_be": "Признать, что либо 2D state, либо два прохода — других вариантов нет, и два прохода читаемее."
+              },
+              "label": "C",
+              "text": "Можно модифицировать recurrence: `dp[i] = max(dp[i-1], dp[i-2] + nums[i])` плюс глобальная проверка `dp[n-1] != include nums[0]`. Один проход достаточно.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "House Robber II в P, решается за `O(n)`. Два прохода дают именно точный оптимум, не аппроксимацию — это доказывается через перебор двух непересекающихся случаев (`nums[0]` входит / `nums[n-1]` входит, оба не могут одновременно).",
+                "source_of_confusion": "Студенты, столкнувшись с циклической структурой и не сразу видя декомпозицию, могут принять её за приближённое решение.",
+                "if_it_were_true": "Существовали бы контрпримеры, где два прохода дают не оптимум — но их нет в LeetCode/CLRS literature.",
+                "how_it_should_be": "Доказать корректность: оптимальное решение либо включает `nums[0]` (тогда `nums[n-1]` исключён — это решение второго прохода), либо нет (`nums[0]` исключён — первый проход). Это покрывает все случаи."
+              },
+              "label": "D",
+              "text": "House Robber II — это NP-hard из-за циклической структуры, и аппроксимация двумя проходами не гарантирует точный оптимум.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Min Cost Climbing Stairs?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "ArrayIndexOutOfBoundsException — это symptom, а не причина выбора формулы. Семантически `dp[i]` означает «минимум cost достичь *позиции* `i`», где позиций `n+1` (от `0` до `n`, верх). `cost[]` имеет длину `n` (только ступеньки). Чтобы попасть в позицию `i`, мы прыгаем С позиции `i-1` (заплатив `cost[i-1]`) или с позиции `i-2` (`cost[i-2]`).",
+                "source_of_confusion": "Студент сначала пишет формулу, ловит OutOfBounds, потом сдвигает индексы наугад. Правильный путь — определить семантику state и индексы вывести.",
+                "if_it_were_true": "Можно было бы свободно выбирать `cost[i]` vs `cost[i-1]` в зависимости от того, какой массив длиннее — но это даст математически разный результат.",
+                "how_it_should_be": "Объяснить через семантику: «оплачивается ступенька, с которой прыгаешь, а не на которую приходишь»."
+              },
+              "label": "A",
+              "text": "Это смещение нужно для совместимости с 0-индексацией массивов в Java — без него возникнет ArrayIndexOutOfBoundsException.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Алгоритм языко-независим. И Java, и Python одинаково индексируют массивы от 0. Формула определяется математикой задачи, а не языком.",
+                "source_of_confusion": "Студенты, переходящие между языками, иногда винят язык за свои недопонимания семантики.",
+                "if_it_were_true": "Алгоритм Knapsack давал бы разные ответы в Java и Python — но он одинаков.",
+                "how_it_should_be": "Подчеркнуть, что DP-формула определяется задачей, а не реализацией."
+              },
+              "label": "B",
+              "text": "Это особенность Java-индексации; в Python формула была бы `dp[i] = min(dp[i-1] + cost[i-1], dp[i-2] + cost[i-2])` с другими смещениями.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "В классической формулировке (LeetCode 746) платится cost ступеньки, *с которой* прыгаешь, а не *на которую*. Конечная точка (`i=n`, верх) не имеет cost — она вне массива. Если бы платили `cost[i]` за вход, то `cost[n]` тоже пришлось бы платить, но `cost.length=n`.",
+                "source_of_confusion": "Некоторые задачи (Minimum Path Sum в grid) платят cost за клетку, в которую входим. Студенты обобщают неверно.",
+                "if_it_were_true": "На тесте `cost=[10,15,20]` правильный ответ 15 (прыжок с 1 на верх, заплатив 15), а с `cost[i]` за вход формула выдала бы 35 (10+15+20 = вход на каждую) — это не совпадёт с LeetCode expected output.",
+                "how_it_should_be": "Уточнить условие: «pay cost при отправке прыжка», поэтому `cost[i-1]` при прыжке с `i-1` на `i`."
+              },
+              "label": "C",
+              "text": "`cost[i]` использовать корректнее — это та ступенька, на которую мы попадаем, и её стоимость нужно платить.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Задача LeetCode 746: можно начать с ступеньки 0 или 1, заплатить cost этой ступеньки и прыгнуть на 1 или 2 шага вперёд. Цель — достичь «верха» = позиции `n` (последний индекс массива — `n-1`). Поэтому `dp[i] = min(dp[i-1] + cost[i-1], dp[i-2] + cost[i-2])` для `i ≥ 2`, с базой `dp[0] = dp[1] = 0` (старт бесплатный, платится только при прыжке). Конечный ответ — `dp[n]`. Cost ступеньки `n` не существует, поэтому на финальный прыжок не платим — это объясняет, почему `i` в `dp[i]` идёт до `n`, а `cost` индексируется до `n-1`.",
+                "example": "`cost = [10, 15, 20]`, `n = 3`. `dp[2] = min(dp[1]+15, dp[0]+10) = min(15, 10) = 10`. `dp[3] = min(dp[2]+20, dp[1]+15) = min(30, 15) = 15`. Ответ 15 — прыгаем с ступеньки 1 (заплатив 15) сразу на верх. Это значение совпадает с LeetCode expected.",
+                "when_to_apply": "Базовая DP-задача на интервью — проверяет понимание разницы между state-индексом и cost-индексом. Production-аналог: оптимизация маршрутов с tolls (платой за участок, который проезжаешь), оплата API-вызовов (платится при отправке запроса, не при получении ответа).",
+                "edge_cases": "Off-by-one в индексах cost — частая ошибка: `cost[i]` вместо `cost[i-1]` даст неверный ответ. Также важно, что `dp[0]=dp[1]=0` (старт бесплатный), а не `dp[0]=cost[0]` — иначе двойной учёт первой ступеньки.",
+                "related": "[[dynamic-programming-interview#Q6]] Climbing Stairs (без cost); [[dynamic-programming-interview#Q22]] Minimum Path Sum (cost при входе в клетку); [[dynamic-programming-interview#Q12]] Coin Change."
+              },
+              "label": "D",
+              "text": "Семантика state: `dp[i]` — минимум cost достичь позиции `i` (верх — позиция `n`). Чтобы попасть в `i`, нужно прыгнуть с позиции `i-1` (заплатив `cost[i-1]`) или `i-2` (`cost[i-2]`). Cost платится за ступеньку, с которой прыгаешь, не за конечную.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "0/1 Knapsack?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Доступ к `dp[w - weights[i]]` всегда валиден при `w ≥ weights[i]` (это условие в цикле). Никакого OutOfBounds не будет — алгоритм отработает корректно по типам, но даст неверный (завышенный) результат.",
+                "source_of_confusion": "Студенты ищут «технический» симптом ошибки. Реальный bug — семантический: тихая неверность без exception.",
+                "if_it_were_true": "Bug было бы легко поймать в unit-тесте по exception. Реально он проходит тесты с округлёнными значениями и ловится только на edge cases вроде «один предмет, capacity > weight».",
+                "how_it_should_be": "Указать, что прямой проход даёт неверный ответ — задача превращается в Unbounded Knapsack, где предмет можно брать многократно."
+              },
+              "label": "A",
+              "text": "Алгоритм вылетит с IndexOutOfBoundsException, потому что прямой проход обращается к `dp[w - weights[i]]` за пределами массива.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "В двумерной версии `dp[i][w] = max(dp[i-1][w], dp[i-1][w-weights[i]] + values[i])` — мы берём предыдущую строку `i-1`, что гарантирует «предмет `i` ещё не взят». При space-opt в 1D массив прямой проход `for w in 0..W` затрёт `dp[w']` для малых `w'` раньше, чем понадобится для большего `w` — и тогда `dp[w - weights[i]]` уже учитывает текущий предмет. Обратный проход `for w in W..weights[i]` гарантирует, что `dp[w - weights[i]]` ещё представляет предыдущую итерацию (`i-1`).",
+                "example": "`weights = [3]`, `values = [4]`, `W = 6`. Прямой проход даёт `dp[3] = 4`, потом `dp[6] = dp[3] + 4 = 8` (два раза взяли предмет 0!). Обратный: `dp[6] = dp[3]+4 = 0+4 = 4`, потом `dp[3] = 4`. Правильный 0/1 ответ — 4, не 8.",
+                "when_to_apply": "Это знание критично при space-opt любого 0/1 Knapsack-like (Partition Equal Subset Sum, Target Sum, Last Stone Weight II). Production: оптимизация loading грузовиков, где каждая посылка уникальна — прямой проход дал бы overbooking.",
+                "edge_cases": "Для Unbounded Knapsack как раз нужен прямой проход — там предмет можно брать многократно. То есть direction iteration кодирует saemantику задачи. Coin Change II ставит монеты во внешний цикл и amount внутри в прямом порядке — это unbounded.",
+                "related": "[[dynamic-programming-interview#Q11]] Unbounded Knapsack (прямой проход); [[dynamic-programming-interview#Q13]] Coin Change II (порядок циклов); [[dynamic-programming-interview#Q28]] space optimization."
+              },
+              "label": "B",
+              "text": "При прямом проходе `dp[w - weights[i]]` уже содержит обновлённое значение текущей итерации `i` — это эквивалентно тому, что предмет `i` уже взят, и его можно взять снова. Задача неявно превращается в Unbounded Knapsack.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Направление прохода в space-opt 1D Knapsack определяет КОРРЕКТНОСТЬ, а не производительность. Прямой проход даёт Unbounded, обратный — 0/1. Это семантическое различие, не оптимизационное.",
+                "source_of_confusion": "Cache locality — реальная вещь (обратный проход на современных CPU работает чуть медленнее из-за prefetching), но это меньшая забота. Корректность важнее.",
+                "if_it_were_true": "На прямой проход можно было бы заменить произвольно — но тогда любой тестировщик заметил бы баг через 5 минут на простом случае.",
+                "how_it_should_be": "Сказать, что прямой проход меняет семантику задачи на Unbounded, и это нужно учитывать."
+              },
+              "label": "C",
+              "text": "Алгоритм даст правильный 0/1 Knapsack ответ — направление прохода не влияет на корректность, только на производительность из-за CPU cache locality.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Финальное `dp[W]` тоже неверно: оно вычисляется через `dp[w - weights[i]]` для смалой `w'`, которые уже «загрязнены» текущим предметом. Цепочка ошибок распространяется до `dp[W]`.",
+                "source_of_confusion": "Студенты, привыкшие к Suffix Sum или Prefix Sum, где промежуточные значения «технические», переносят интуицию на DP. В DP финальное значение строится из промежуточных, и их корректность критична.",
+                "if_it_were_true": "На тесте `weights=[3], W=6` финальный `dp[6]` был бы 4 (правильный 0/1) даже при прямом проходе, но он 8 (неверный) — что подтверждает: ошибка проникает в финальный ответ.",
+                "how_it_should_be": "Запомнить правило: «обратный проход для 0/1, прямой для Unbounded» как guard against subtle bugs."
+              },
+              "label": "D",
+              "text": "Прямой проход даст ровно `dp[W]` правильно для 0/1 Knapsack, но промежуточные значения `dp[w]` для малых `w` будут неверными — что не страшно, если нас интересует только финальный ответ.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Unbounded Knapsack?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Unbounded Knapsack — тоже DP, не greedy. Greedy на `values/weights` (Fractional Knapsack) работает только если предмет можно разбивать. Для Unbounded с целыми предметами greedy неоптимален (контрпример: Coin Change с `coins=[1,3,4]`, `amount=6`).",
+                "source_of_confusion": "Greedy и Unbounded оба позволяют «брать предмет много раз», и студенты обобщают, что Unbounded ≡ greedy. Это ошибка.",
+                "if_it_were_true": "Coin Change работал бы greedy для произвольных номиналов — но падает на `[1,3,4]`, `amount=6` (greedy даёт 3 монеты, оптимум 2).",
+                "how_it_should_be": "Указать, что и 0/1, и Unbounded — это DP, отличающийся направлением space-opt прохода и/или порядком циклов."
+              },
+              "label": "A",
+              "text": "Unbounded Knapsack требует greedy-алгоритма с сортировкой по `values/weights`, а 0/1 — это чистый DP; они не могут использовать одну реализацию.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Recurrence 0/1: `dp[i][w] = max(dp[i-1][w], dp[i-1][w-weights[i]] + values[i])` — обращаемся к предыдущей строке, то есть к состоянию «без предмета `i`». Recurrence Unbounded: `dp[i][w] = max(dp[i-1][w], dp[i][w-weights[i]] + values[i])` — обращаемся к ТЕКУЩЕЙ строке, где предмет `i` уже доступен. При сжатии до 1D массива: для 0/1 нужно, чтобы `dp[w-weights[i]]` ссылался на ПРЕДЫДУЩУЮ итерацию `i` — для этого обратный проход (правые `w` обновляются раньше левых). Для Unbounded — прямой проход (левые раньше), чтобы `dp[w-weights[i]]` уже содержал учтённый предмет.",
+                "example": "`weights=[2], values=[3], W=5`. 0/1: `dp[5] = 3` (взять один раз). Unbounded: `dp[5] = 6` (взять дважды, `2+2=4≤5`, value `3+3=6`). На прямом проходе 1D: `dp[2]=3 → dp[4]=dp[2]+3=6 → dp[5]=dp[3]+3=3`. Правильный Unbounded ответ — 6.",
+                "when_to_apply": "0/1 — уникальные предметы (выбор подмножества), Unbounded — повторяемые ресурсы (монеты, items в неограниченном количестве). Production: 0/1 — портфельный анализ инвестиций (одна акция уникальна), Unbounded — Coin Change в банке (купюр любого номинала «бесконечно»), оптимизация SQL CASE-выражений.",
+                "edge_cases": "При неправильном порядке циклов в Coin Change II (number of ways) можно случайно посчитать перестановки вместо комбинаций. Монеты во внешнем цикле, amount внутри в прямом порядке — даёт комбинации. amount снаружи, монеты внутри — перестановки.",
+                "related": "[[dynamic-programming-interview#Q10]] 0/1 Knapsack; [[dynamic-programming-interview#Q12]] Coin Change minimum; [[dynamic-programming-interview#Q13]] Coin Change II порядок циклов."
+              },
+              "label": "B",
+              "text": "В 0/1 каждое `dp[i][w]` смотрит на `dp[i-1][...]` (предыдущая строка — предмет ещё не взят); в Unbounded — на `dp[i][...]` (та же строка, предмет уже можно использовать). При space-opt это даёт обратный проход для 0/1 и прямой для Unbounded.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Обе задачи NP-hard в общем случае (даже Unbounded — это вариант Subset Sum). Обе решаются псевдо-полиномиальным DP за `O(n*W)`. Граница P vs NP здесь не разделяет 0/1 и Unbounded.",
+                "source_of_confusion": "Студенты, узнав про NP-hardness Knapsack, не различают подтипы и приписывают только одному из них NP-статус.",
+                "if_it_were_true": "Был бы алгоритм Unbounded Knapsack без зависимости от значения W в сложности — но `O(n*W)` это psуevdo-polynomial, не полностью полиномиальный.",
+                "how_it_should_be": "Подчеркнуть, что обе задачи pseudo-polynomial DP, а различие в порядке прохода 1D."
+              },
+              "label": "C",
+              "text": "0/1 — это NP-задача, Unbounded — P-задача; поэтому только Unbounded решается DP за полиномиальное время.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Unbounded не требует дополнительного измерения для счёта использований. Каждое `dp[w]` хранит лучший выбор, а информация «сколько раз брали предмет» восстанавливается из backtrace, если нужна. Сложность Unbounded — `O(n*W)`, такая же как 0/1.",
+                "source_of_confusion": "Студенты, не понимая, как 1D массив справляется с многократным использованием, придумывают дополнительные измерения.",
+                "if_it_were_true": "Сложность Unbounded была бы `O(n * W * max_uses) = O(n * W^2 / weights_min)` — на порядок хуже, чем фактическая.",
+                "how_it_should_be": "Объяснить, что многократное использование «прячется» в прямом обходе 1D массива: `dp[w]` накапливает несколько применений одного предмета без явного счётчика."
+              },
+              "label": "D",
+              "text": "В Unbounded используется матрица `dp[n][W][k]` с третьим измерением для подсчёта числа использований предмета, а в 0/1 — обычная `dp[n][W]`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Coin Change — минимум монет?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Greedy choice property не выполняется для произвольных номиналов. Например, `coins=[1,3,4]`, `amount=6`: greedy берёт `4`, потом для остатка `2` две монеты `1+1`, итого 3 монеты. Оптимум — `3+3`, две монеты. DP `dp[6] = min(dp[5]+1, dp[3]+1, dp[2]+1) = min(?, 1+1, ?) = 2`. Каноническая монетная система (US: 1/5/10/25) специально спроектирована, чтобы greedy был оптимальным — это математическое свойство, не общее.",
+                "example": "Российские монеты `[1, 2, 5, 10]` — caнonical, greedy работает. Старые французские `[1, 2, 5, 10, 20, 50, 100]` — canonical. Но `[1, 7, 10]` для amount `14`: greedy `10+1+1+1+1=5 монет`, оптимум `7+7=2`. На production это критично для «monetary systems», «билетов» и «упаковки коробок».",
+                "when_to_apply": "Используй DP всегда, когда не уверен в canonical-структуре номиналов. Используй greedy только если математически доказано, что система canonical (есть алгоритм Pearson 2005 для проверки за `O(coins^3)`).",
+                "edge_cases": "Сложность DP `O(amount * coins.length)` — pseudo-polynomial. Для `amount=10^9` DP не работает. Тогда нужен Branch-and-Bound или приближение. Также важно вернуть `-1` при unreachable amount: использовать sentinel `amount+1` (a-priori больше любого валидного ответа).",
+                "related": "[[dynamic-programming-interview#Q13]] Coin Change II ways; [[dynamic-programming-interview#Q31]] DP vs Greedy; [[dynamic-programming-interview#Q11]] Unbounded Knapsack."
+              },
+              "label": "A",
+              "text": "Greedy жадно берёт самую крупную монету, не предвидя случаев, когда комбинация мелких даёт меньшее число монет. DP перебирает все варианты `dp[i] = min(dp[i-c] + 1 for c in coins)` и находит глобальный оптимум.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Greedy для Coin Change не имеет константы приближения — погрешность может быть произвольно большой. На `coins=[1, k, k+1]`, `amount=2k`: greedy = `k+(k+1-1) + 1` = `k+1` монет (или хуже), оптимум 2. Соотношение `(k+1)/2` неограниченно растёт.",
+                "source_of_confusion": "Некоторые задачи на упаковку (Bin Packing) действительно имеют greedy с гарантированным приближением `O(11/9 OPT)`. Студенты переносят эту интуицию на Coin Change.",
+                "if_it_were_true": "Греди достаточен для billing-систем, не нужно DP — но реальные банки используют точные алгоритмы (DP или canonical-доказанные greedy), потому что выдача «лишней монеты» — это лишний оверхед или ошибка.",
+                "how_it_should_be": "Указать, что greedy может ошибаться неограниченно, поэтому DP обязателен для произвольных систем номиналов."
+              },
+              "label": "B",
+              "text": "Greedy дает приближённое решение в пределах константы от оптимума (например, 2-OPT), а DP — точное; на практике greedy всегда быстрее и поэтому предпочтительнее.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Простота номиналов не критерий. Caнonical = greedy-оптимальный — это математическое свойство, проверяемое по алгоритму Pearson. Например, `[1, 5, 10, 25]` canonical (все простые/составные смешаны), а `[1, 3, 4]` не canonical, хотя содержит лишь 3 (простое).",
+                "source_of_confusion": "Студенты ищут «простое» правило, но canonical/non-canonical разделение нетривиально.",
+                "if_it_were_true": "`coins=[1, 4, 9]` (только составные сверх 1) должны бы быть greedy-friendly — но для amount `12` greedy даёт `9+1+1+1=4`, оптимум `4+4+4=3`.",
+                "how_it_should_be": "Указать, что нет простого синтаксического критерия — нужен alg. Pearson или DP по умолчанию."
+              },
+              "label": "C",
+              "text": "Greedy работает для всех целочисленных систем номиналов, кроме случаев, где номиналы содержат простые числа — тогда нужен DP.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "DP даёт ТОЧНЫЙ ответ, не приближение. Backtracking за `O(coins^amount)` — это brute-force, который DP оптимизирует через мемоизацию до `O(amount * coins)`. Они дают одно и то же значение.",
+                "source_of_confusion": "Студенты ассоциируют «полный перебор» с точностью, а DP — с компромиссом. На деле DP — это just оптимизированный перебор, сохраняющий точность.",
+                "if_it_were_true": "Никто не использовал бы DP в production — но DP применяется в bank-side кассах, Bitcoin transaction fee minimization, billing.",
+                "how_it_should_be": "Подчеркнуть, что DP — это точное решение через смарт-кэширование, не приближение."
+              },
+              "label": "D",
+              "text": "DP для Coin Change — это эвристика, дающая приближённый ответ; точный ответ требует full backtracking за `O(coins^amount)`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Coin Change II — число способов?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Сложность остаётся `O(amount * coins)` независимо от порядка циклов, но при `amount` снаружи мы посчитаем перестановки (последовательности), а не комбинации (множества). Это даст ЗАВЫШЕННЫЙ ответ, не правильный.",
+                "source_of_confusion": "Студенты ищут performance-симптом ошибки, но в DP частая ошибка — семантическая (неверный ответ), а не алгоритмическая (замедление).",
+                "if_it_were_true": "Достаточно было бы написать unit-test на performance, чтобы поймать bug. Реально тесты на корректность ловят его.",
+                "how_it_should_be": "Указать, что сложность не меняется, но семантика подсчёта переходит с комбинаций на перестановки."
+              },
+              "label": "A",
+              "text": "Решение замедлится до `O(amount^2 * coins)`, но даст правильный ответ.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Алгоритм корректно обновляет `dp[i]`, но интерпретирует каждое использование монеты как «новый шаг» в последовательности. Например, для `coins=[1,2]`, `amount=3`: при amount-снаружи `dp[3] = dp[2] + dp[1] = 2 + 1 + 1 = ... 3` (перестановки 1+1+1, 1+2, 2+1), вместо 2 комбинаций (1+1+1, 1+2).",
+                "source_of_confusion": "Студенты ожидают, что неверная инициализация приводит к нулям. Здесь инициализация `dp[0]=1` корректна, проблема в порядке.",
+                "if_it_were_true": "Тест на любом тесте легко поймал бы — даже на `coins=[1]` базовый тест выдал бы `dp[amount]=0`. Реально баг тоньше: формулы как будто работают, но считают другое.",
+                "how_it_should_be": "Описать конкретное поведение: подсчёт перестановок вместо комбинаций."
+              },
+              "label": "B",
+              "text": "Алгоритм даст 0 для любого amount, потому что `dp[i] = 0` без обновления.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Coin Change II спрашивает «сколько способов» — без учёта порядка. Правильная формула: внешний цикл по монетам, внутренний по amount, prefix-style: `for c in coins: for i in c..amount: dp[i] += dp[i-c]`. Это гарантирует, что каждое подмножество монет учитывается ровно один раз — мы добавляем монету `c` только после того, как зафиксированы выборы предыдущих монет. Если же `amount` снаружи, мы на каждом шаге amount `i` пробуем добавить любую монету — это эквивалентно «какую монету бросили последней» в каждой последовательности, что даёт перестановки.",
+                "example": "`coins=[1,2]`, `amount=4`. Комбинации: `1+1+1+1`, `1+1+2`, `2+2` — 3 способа. Перестановки: `1111`, `112`, `121`, `211`, `22` — 5 способов. На LeetCode 518 expected 3; неправильный порядок даст 5.",
+                "when_to_apply": "Важно при подсчёте «число способов» в любых combinatorial DP: Partition, Subset Sum count, Number of paths in grid. Production: подсчёт уникальных конфигураций товаров в заказе (без учёта порядка), число уникальных рецептов из ингредиентов.",
+                "edge_cases": "В Permutation Coin Change (LeetCode 377 — Combination Sum IV, неудачное название) специально нужны перестановки — там amount-снаружи. То есть направление выбора зависит от семантики задачи, и нужно читать условие внимательно.",
+                "related": "[[dynamic-programming-interview#Q12]] Coin Change minimum; [[dynamic-programming-interview#Q11]] Unbounded Knapsack; [[dynamic-programming-interview#Q14]] Partition Equal Subset Sum."
+              },
+              "label": "C",
+              "text": "Алгоритм посчитает число перестановок (упорядоченных последовательностей монет), а не комбинаций (множеств) — для `coins=[1,2]`, `amount=3` ответ будет 3 (`1+1+1`, `1+2`, `2+1`) вместо 2 (`1+1+1`, `1+2`).",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Цикл конечен (от 0 до amount), infinite loop невозможен. Алгоритм терминируется, но даёт другой ответ.",
+                "source_of_confusion": "Студенты, не понимающие порядок, иногда подозревают «зацикливание» как объяснение странного поведения. Реально программа всегда детерминированно останавливается.",
+                "if_it_were_true": "В debug сразу видно было бы «зависание». Реально юнит-тесты проходят, но выдают неверные числа.",
+                "how_it_should_be": "Объяснить, что цикл конечен, проблема в семантике подсчёта."
+              },
+              "label": "D",
+              "text": "Произойдёт infinite loop из-за того, что `dp[i] += dp[i-c]` обновляет уже изменённое значение.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Partition Equal Subset Sum?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Partition Equal Subset Sum имеет DP-решение за `O(n * sum/2)` через сведение к Subset Sum. Brute-force `O(2^n)` — это первая интуиция, но не оптимальное решение.",
+                "source_of_confusion": "Студенты, не видя сходства с Knapsack, считают задачу принципиально новой.",
+                "if_it_were_true": "Для `n=200` brute-force `2^200` — невозможно. Реально LeetCode 416 принимает решение для `n≤200` за миллисекунды.",
+                "how_it_should_be": "Показать сведение: проверить, есть ли подмножество с суммой `total/2` — это subset sum, аналог 0/1 Knapsack."
+              },
+              "label": "A",
+              "text": "Это разные задачи; Partition требует backtracking за `O(2^n)` и не имеет DP-решения.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Если `total = sum(nums)` нечётный, разделение невозможно (return false сразу). Иначе нужно проверить, существует ли подмножество `S ⊂ nums` с `sum(S) = total/2`. Это классический Subset Sum: `dp[i] = true`, если сумму `i` можно собрать из подмножества `nums`. Recurrence: `dp[i] = dp[i] || dp[i - n]` для каждого `n in nums`, в обратном порядке `i` (как 0/1 Knapsack). Сложность `O(n * total/2)` времени и `O(total/2)` памяти.",
+                "example": "`nums=[1,5,11,5]`, total=22, target=11. `dp[0]=true`. После `n=1`: `dp[1]=true`. После `n=5`: `dp[5]=true, dp[6]=true`. После `n=11`: `dp[11]=true`. Ответ — true (`{1,5,5}` или `{11}` дают 11). На production: split tasks между двумя workers поровну, split inventory между two warehouses.",
+                "when_to_apply": "Любая «split в две группы»-задача: Last Stone Weight II, Target Sum, Minimum Subset Sum Difference. Production: load balancing, fair resource allocation, hash sharding по балансу.",
+                "edge_cases": "`total` может быть огромным (если значения большие) — pseudo-polynomial. Для `nums=[10^9, 10^9, ...]` `target=10^9*n/2` не помещается в массив. Решение: scale через GCD или приближение через FPTAS. Также важно сразу return false для нечётного total — иначе DP работает зря.",
+                "related": "[[dynamic-programming-interview#Q10]] 0/1 Knapsack; [[dynamic-programming-interview#Q30]] pseudo-polynomial complexity; [[dynamic-programming-interview#Q11]] Unbounded Knapsack contrast."
+              },
+              "label": "B",
+              "text": "Если массив разделён на две группы с равной суммой, каждая имеет сумму `total/2`. Задача сводится к «существует ли подмножество с суммой `target = total/2`» — это 0/1 Subset Sum (частный случай Knapsack, где value = weight). DP решает за `O(n * target)` через `boolean[]` массив.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Greedy LPT (Longest Processing Time) даёт приближение `4/3 OPT` (Graham 1969), но не точный ответ. Для точного решения нужен DP. Контрпример: `nums=[1, 5, 11, 5]`, LPT с двумя кучами даёт `{11}, {5,5,1}` — суммы 11 и 11, повезло. На `nums=[3,1,1,2,2,1]`, total=10, target=5: LPT может разойтись.",
+                "source_of_confusion": "Studенты, привыкшие к Multiway Partitioning через LPT, переносят greedy на exact partition.",
+                "if_it_were_true": "LeetCode 416 принимал бы greedy-решения — но они falsly предполагают разделимость, например для `nums=[1,2,3,5]` total=11 нечётно, LPT может вернуть true.",
+                "how_it_should_be": "Для exact partition использовать DP, для approximation — LPT с гарантией `4/3 OPT`."
+              },
+              "label": "C",
+              "text": "Это задача на Greedy с сортировкой массива и поочерёдным добавлением в меньшую кучу — `O(n log n)`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Не любое: `nums=[1, 2, 5]`, total=8, target=4 — но `{1,2}=3, {1,2,5}-{2}=4? нет, варианты {1+5=6}, {2+5=7}, {1+2=3}` — нет подмножества с суммой 4. Возвращаем false.",
+                "source_of_confusion": "Интуиция «если total чётный, можно разделить» — частая ошибка.",
+                "if_it_were_true": "LeetCode 416 был бы тривиальным — но это medium-задача с реальным DP-решением.",
+                "how_it_should_be": "Проверять не только чётность total, но и существование подмножества с суммой target через DP."
+              },
+              "label": "D",
+              "text": "Задача всегда возвращает true для массива длины ≥ 2 — любое чётное общее количество можно разделить пополам.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Longest Common Subsequence (LCS)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Всё наоборот: Substring требует непрерывности, LCS допускает разрывы. Поэтому recurrence LCS: при несовпадении `dp[i][j] = max(dp[i-1][j], dp[i][j-1])` — пропускаем символ в одной из строк. Recurrence Substring: при несовпадении `dp[i][j] = 0` — серия прерывается.",
+                "source_of_confusion": "«Subsequence» и «substring» — близкие слова, легко перепутать. Subsequence — разрешены пропуски, substring — нет.",
+                "if_it_were_true": "На входе `\"abcdef\"` и `\"acef\"` LCS было бы 0 (нет общей непрерывной подстроки длины ≥ 2), но реально LCS = 4 (`acef`).",
+                "how_it_should_be": "Subsequence разрешает пропуски (`acef` ⊂ `abcdef`), Substring не разрешает (`ce` ⊂ `abcdef` непрерывно)."
+              },
+              "label": "A",
+              "text": "LCS требует непрерывности символов в обеих строках, а Substring допускает разрывы; обе используют одинаковую recurrence.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Обе — P-задачи, решаемые DP за `O(m*n)`. LCS не требует ILP. Для нескольких строк LCS на k строк становится NP-hard, но на двух строках — полиномиально.",
+                "source_of_confusion": "LCS на k строк (Multiple Sequence Alignment) действительно NP-hard, и студенты обобщают это на парный случай.",
+                "if_it_were_true": "Git diff и Edit Distance не работали бы быстро — но они работают за миллисекунды для среднего размера файлов.",
+                "how_it_should_be": "Различать: 2-LCS — P (DP `O(mn)`), k-LCS — NP-hard для k≥3 (Maier 1978)."
+              },
+              "label": "B",
+              "text": "LCS — это NP-задача, Substring — P-задача; LCS требует ILP-solver, Substring решается DP.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Recurrence разная: LCS при несовпадении использует max соседних, Substring — обнуляет. Это даёт разные `dp[][]` таблицы. Сложность совпадает — `O(m*n)` для обеих — но ответы и значения dp существенно разные.",
+                "source_of_confusion": "Студенты, не сравнивавшие реализации, считают близкие задачи эквивалентными.",
+                "if_it_were_true": "Любой LCS-код работал бы как Substring и наоборот — на тесте `\"abcdef\"` / `\"acef\"`: LCS-код даёт 4, Substring-код даёт 1.",
+                "how_it_should_be": "Подчеркнуть разницу в логике несовпадения: LCS — max соседних, Substring — обнуление."
+              },
+              "label": "C",
+              "text": "LCS и Substring имеют одинаковую сложность `O(m*n)` и одинаковую recurrence — они отличаются только финальной сборкой ответа.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "LCS-recurrence: `dp[i][j] = dp[i-1][j-1] + 1` при `a[i-1]==b[j-1]`, иначе `dp[i][j] = max(dp[i-1][j], dp[i][j-1])`. Это означает «лучшая LCS префиксов» — при несовпадении мы пропускаем последний символ в одной из строк. Substring-recurrence: при совпадении `dp[i][j] = dp[i-1][j-1] + 1`, иначе `dp[i][j] = 0` — несовпадение сбрасывает счётчик. Финальный ответ для LCS — `dp[m][n]`, для Substring — `max(dp[i][j])` по всему массиву (потому что max-substring может закончиться в середине).",
+                "example": "`a=\"ABCBDAB\"`, `b=\"BDCAB\"`. LCS = `BCAB` или `BDAB` (длина 4) — общие символы в правильном порядке с пропусками. Substring = `AB` (длина 2) — самая длинная непрерывная общая подстрока. Применения LCS: Git diff (`--patience`), bioinformatics (DNA alignment с возможностью delete/insert). Substring: ML similarity (longest common phrase), code dedup (точная общая последовательность).",
+                "when_to_apply": "LCS — когда важна последовательность с возможностью пропусков (diff utilities, version control merge). Substring — когда нужна точная общая последовательность (plagiarism detection с phrase-matching, suffix-array preprocessing).",
+                "edge_cases": "Память `O(m*n)` критична для длинных строк (`m, n ≈ 10^5` даёт `10^10` ячеек — невозможно). Space optimization до `O(min(m,n))`: храним только две строки `dp[]` или одну с rolling overwrite. Для гигантских строк — алгоритм Hunt-Szymanski за `O((m+n) log min(m,n))` или Hirschberg's algorithm `O(mn)` time, `O(min(m,n))` space с возможностью восстановления самой LCS.",
+                "related": "[[dynamic-programming-interview#Q17]] Edit Distance (родственный алгоритм); [[dynamic-programming-interview#Q18]] Longest Palindromic Subsequence (LCS с реверсом); [[dynamic-programming-interview#Q20]] Longest Palindromic Substring (substring-вариант)."
+              },
+              "label": "D",
+              "text": "LCS — подпоследовательность с разрешёнными пропусками, поэтому при несовпадении `dp[i][j] = max(dp[i-1][j], dp[i][j-1])` — пропускаем символ в одной строке. Substring требует непрерывности, поэтому при несовпадении `dp[i][j] = 0` и серия начинается заново.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Longest Increasing Subsequence (LIS)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "LIS — это подпоследовательность, не вся последовательность. Например, для `[10, 9, 2, 5, 3, 7, 101, 18]` LIS = `[2, 3, 7, 18]` или `[2, 5, 7, 101]` — длина 4, а не 8. `tails` хранит другое: минимальный последний элемент возрастающей подпоследовательности каждой длины.",
+                "source_of_confusion": "Студенты, не разбираясь в patience sorting, придумывают «массив = вся последовательность», что не имеет смысла.",
+                "if_it_were_true": "Любой массив имел бы LIS = его длина — но `[5, 4, 3]` имеет LIS = 1, не 3.",
+                "how_it_should_be": "Объяснить, что `tails[i-1]` — минимальный хвост IS длины `i`."
+              },
+              "label": "A",
+              "text": "`tails[i]` — это i-й по порядку элемент входного массива; длина `tails` — число всех элементов, потому что LIS обязательно содержит все из них.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`tails` НЕ совпадает с фактическим LIS. Например, после обработки финальный `tails=[2,3,7,18]` — но в исходном массиве 7 идёт перед 101, не перед 18. То есть `tails` содержит «оптимальные хвосты», не реальную подпоследовательность.",
+                "source_of_confusion": "В удачном случае (sorted input) `tails` совпадает с LIS, и студенты обобщают.",
+                "if_it_were_true": "Можно было бы просто вернуть `tails` как LIS — но для реконструкции LIS нужен дополнительный механизм (parent-pointers).",
+                "how_it_should_be": "Сказать, что `tails` хранит «технические хвосты», и длина `tails` равна длине LIS, но содержимое — это не LIS."
+              },
+              "label": "B",
+              "text": "`tails` — это сам LIS как подпоследовательность входного массива; длина `tails` = длина LIS по определению.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Это описание классического `O(n^2)` DP, а не `O(n log n)` patience sorting. В patience `tails` гораздо короче входа и не имеет соответствия индексу элемента.",
+                "source_of_confusion": "Студенты смешивают `O(n^2)` DP (где `dp[i]` — длина IS, заканчивающейся в `i`) с patience sorting (где `tails[i]` — это хвосты разной длины).",
+                "if_it_were_true": "Сложность была бы `O(n^2)` (нужно для каждого `i` обходить все предыдущие), а не `O(n log n)`.",
+                "how_it_should_be": "Чётко разделять два подхода: `O(n^2)` с `dp[i] = length of IS ending at i`, и `O(n log n)` с `tails[k] = min last element of IS of length k+1`."
+              },
+              "label": "C",
+              "text": "`tails[i]` — это длина LIS, заканчивающейся на индексе `i`; финальный ответ — `tails[n-1]`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Идея patience sorting: представь карты в стопках. Каждая стопка — это IS; новая карта кладётся на самую левую стопку с верхом ≥ неё (binary search) или начинает новую. `tails[i]` = верх стопки i+1. Инвариант: `tails` отсортирован по возрастанию, длина `tails` = число стопок = длина LIS. Замена `tails[idx]` меньшим значением не уменьшает LIS (есть существующий хвост длины idx+1 ≥ нового), но даёт лучшие шансы для extension в будущем. Корректность: можно показать, что после обработки всех элементов длина `tails` равна максимальной длине IS.",
+                "example": "`nums=[10,9,2,5,3,7,101,18]`. После 10: `tails=[10]`. После 9: replace → `[9]`. После 2: replace → `[2]`. После 5: append → `[2,5]`. После 3: replace `5` → `[2,3]`. После 7: append → `[2,3,7]`. После 101: append → `[2,3,7,101]`. После 18: replace `101` → `[2,3,7,18]`. Длина 4 = LIS.",
+                "when_to_apply": "Когда нужен LIS за `O(n log n)` (для `n=10^5+`): scheduling tasks с deadline constraints, longest progression в финансовых индикаторах, longest non-decreasing run в датасете. Production: query optimization (longest covered prefix of index), version compatibility chains.",
+                "edge_cases": "Сам массив `tails` НЕ является LIS — он содержит «лучшие хвосты», но не настоящую подпоследовательность из входа. Для реконструкции LIS нужны дополнительные parent-указатели или второй проход. Также `Collections.binarySearch` в Java возвращает `-(insertion_point+1)` при отсутствии — это нужно обработать через `idx = -(idx + 1)`.",
+                "related": "[[dynamic-programming-interview#Q15]] LCS (тоже subsequence); [[dynamic-programming-interview#Q18]] Longest Palindromic Subsequence; [[arrays-strings-interview#Q1]] binary search."
+              },
+              "label": "D",
+              "text": "`tails[i]` — минимальный возможный последний элемент возрастающей подпоследовательности длины `i+1`. При обработке нового элемента мы либо расширяем (`>` всех в `tails` → append), либо «улучшаем» (binary search → перезапись `tails[idx]` меньшим значением). Длина `tails` == длина LIS, потому что мы поддерживаем по одному «оптимальному хвосту» для каждой возможной длины.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Edit Distance (Levenshtein)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Replace соответствует `dp[i-1][j-1]` — мы заменяем последний символ `word1` на последний `word2`, после чего оба префикса уменьшаются на 1 (отсюда `i-1` и `j-1`). `dp[i-1][j]` — это delete из `word1`.",
+                "source_of_confusion": "Все три варианта `dp[i-1][j]`, `dp[i][j-1]`, `dp[i-1][j-1]` визуально похожи, и студенты часто меняют их местами без понимания семантики.",
+                "if_it_were_true": "Для `\"abc\"` → `\"abd\"` правильный ответ 1 (replace `c` на `d`), а с неверным mapping ответ был бы тоже 1, но через delete + insert — это другая трассировка операций, хотя бы количество совпадает.",
+                "how_it_should_be": "Mapping: `dp[i-1][j]` = delete из word1 (длина word1 уменьшается), `dp[i][j-1]` = insert в word1 (длина word1 увеличивается, чтобы дойти до word2), `dp[i-1][j-1]` = replace (оба символа «использованы»)."
+              },
+              "label": "A",
+              "text": "`dp[i-1][j]` — это replace символа `word1[i-1]` на `word2[j-1]` с увеличением счётчика на 1.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Insert соответствует `dp[i][j-1]`, не `dp[i-1][j]`. Insert в `word1` означает добавить `word2[j-1]` в конец `word1`, после чего длина `word2` для оставшейся работы уменьшается (`j-1`), а `word1` остаётся прежней (`i`).",
+                "source_of_confusion": "Студенты делают mental flip между «что добавляем» и «откуда берём» — символ берётся из `word2`, и `j` уменьшается, не `i`.",
+                "if_it_were_true": "На тесте `word1=\"\"`, `word2=\"abc\"` алгоритм считал бы insert как `dp[i-1][j]+1` — но `i=0`, и переход на `dp[-1][j]` — это OutOfBounds или некорректный base case.",
+                "how_it_should_be": "Insert = `dp[i][j-1] + 1` (длина `word2` уменьшается на 1)."
+              },
+              "label": "B",
+              "text": "`dp[i-1][j]` — это insert в `word1`, что увеличивает длину первой строки на один символ.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Each cell `dp[i][j]` = минимум операций превратить `word1[0..i-1]` в `word2[0..j-1]`. Три перехода: (1) replace — заменили `word1[i-1]` на `word2[j-1]`, оба исчезли → `dp[i-1][j-1] + 1`; (2) delete — удалили `word1[i-1]`, нужно ещё превратить `word1[0..i-2]` в `word2[0..j-1]` → `dp[i-1][j] + 1`; (3) insert — добавили `word2[j-1]` в конец `word1`, теперь оба заканчиваются на этот символ, осталось превратить `word1[0..i-1]` в `word2[0..j-2]` → `dp[i][j-1] + 1`. Минимум трёх — `dp[i][j]`.",
+                "example": "`word1=\"cat\"`, `word2=\"cut\"`. `dp[3][3] = dp[2][2] + 1 = 1` (replace `a` на `u`). На каждом шаге мы можем выбрать: удалить букву из cat → `ct`, вставить букву в cat → `caut`, заменить букву → `cut`. Реальное применение: spellcheck в Google Docs использует Edit Distance + lookup в словаре, чтобы предложить «cat» при опечатке «cqt».",
+                "when_to_apply": "Fuzzy matching, spell correction, DNA alignment (где insertion/deletion/substitution мутации), plagiarism detection с tolerance, code refactoring auto-suggestions, Elasticsearch fuzzy queries (с `fuzziness=AUTO`). Большинство IDE auto-complete используют Edit Distance для ranking suggestions.",
+                "edge_cases": "Стандартный Edit Distance считает все три операции equally costly (cost=1). В bioinformatics часто разные penalty: insertion часто дороже substitution (gap penalty в Needleman-Wunsch). Для production-сценариев нужна weighted Edit Distance: `dp[i][j] = min(dp[i-1][j] + delCost, dp[i][j-1] + insCost, dp[i-1][j-1] + subCost)`.",
+                "related": "[[dynamic-programming-interview#Q15]] LCS (родственный алгоритм); [[dynamic-programming-interview#Q19]] Distinct Subsequences; [[arrays-strings-interview#Q5]] string matching."
+              },
+              "label": "C",
+              "text": "`dp[i-1][j]` — это delete символа `word1[i-1]`: мы удаляем последний символ из `word1`, переходя к подзадаче `word1[0..i-2]` vs `word2[0..j-1]`. Длина первой строки уменьшается, второй — остаётся.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Стандартный Levenshtein имеет только три операции (insert/delete/replace), и `dp[i-1][j]` — это delete. Damerau-Levenshtein добавляет четвёртую операцию transposition с recurrence `dp[i-2][j-2] + 1` (две предыдущие позиции в обеих строках), но это другая задача.",
+                "source_of_confusion": "Студенты, знакомые с Damerau-Levenshtein, могут смешивать их базовые таблицы.",
+                "if_it_were_true": "Levenshtein считал бы `\"ab\" → \"ba\"` за 1 (одна transposition), но реальный Levenshtein даёт 2 (replace + replace) или 2 (delete + insert).",
+                "how_it_should_be": "Различать Levenshtein (3 операции) и Damerau-Levenshtein (4 операции с transposition); `dp[i-1][j]` в обоих случаях — это delete."
+              },
+              "label": "D",
+              "text": "`dp[i-1][j]` — это transposition (swap двух соседних символов), четвёртая операция в Damerau-Levenshtein.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Longest Palindromic Subsequence?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "LCS(s, reverse(s)) даёт длину LPS для ЛЮБОЙ строки, не только палиндрома. Например, `s=\"bbbab\"`, `reverse(s)=\"babbb\"`, LCS = `\"bbbb\"` длиной 4 — это LPS. Логика: общая подпоследовательность `s` и `reverse(s)` читается одинаково в обоих направлениях → палиндром.",
+                "source_of_confusion": "Студенты, не зная про связь LCS и LPS, видят только тривиальный случай.",
+                "if_it_were_true": "Алгоритм был бы бесполезен — но он используется во всех editorial решениях LeetCode 516.",
+                "how_it_should_be": "Доказать: любая subsequence-палиндром `s` встречается и в `s`, и в `reverse(s)` (тот же набор символов в зеркальном порядке)."
+              },
+              "label": "A",
+              "text": "Реверс строки совпадает с самой строкой только для палиндромов, поэтому LCS(s, reverse(s)) = длина s; этот алгоритм работает только когда s уже палиндром.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Любая subsequence `s` соответствует подпоследовательности `reverse(s)` через зеркальное отображение индексов. Палиндром = последовательность, равная своему реверсу. Поэтому LPS(s) = LCS(s, reverse(s)). Альтернативная формулировка через interval DP: `dp[i][j]` = LPS подстроки `s[i..j]`, с переходом `dp[i][j] = dp[i+1][j-1] + 2` если `s[i]==s[j]`, иначе `max(dp[i+1][j], dp[i][j-1])`. Обе версии `O(n^2)` времени и `O(n^2)` памяти; interval DP не требует реверса строки и логически прозрачнее.",
+                "example": "`s=\"bbbab\"`. LPS = `\"bbbb\"` длиной 4 (палиндром, индексы 0,1,2,4 или 0,1,3,4). Через LCS: `reverse=\"babbb\"`, LCS = `bbbb` (длина 4). Через interval DP: `dp[0][4] = max(dp[1][4], dp[0][3]) = ... = 4`. Production: longest palindrome в DNA-последовательности для поиска hairpin loops, longest «бренд» в строке логов (часто симметричные коды), RNA structure prediction.",
+                "when_to_apply": "Когда нужна subsequence-палиндром (не substring). Применения: spell-check для палиндромных имён, lyrical structure analysis (rhyme patterns), палиндром-aware data compression. Если нужен substring-палиндром — другой алгоритм (Манакера за `O(n)`).",
+                "edge_cases": "LCS-подход требует двойной памяти (`s` + `reverse(s)`), interval DP — только `dp[][]`. Для очень длинных строк (`n=10^4+`) `O(n^2) = 10^8` ячеек — пограничный случай по памяти (`400MB` int) — нужна space optimization до `O(n)` (хранить только две строки/столбца). Интересный baseline: LPS — это нижняя граница для длины «дополнения до палиндрома» (palindromic completion), используется в bioinformatics для оценки симметрии.",
+                "related": "[[dynamic-programming-interview#Q15]] LCS (базовый алгоритм); [[dynamic-programming-interview#Q20]] Longest Palindromic Substring (другая задача); [[dynamic-programming-interview#Q17]] Edit Distance."
+              },
+              "label": "B",
+              "text": "Общая подпоследовательность `s` и `reverse(s)` — это последовательность символов, идентичная в обоих направлениях, то есть палиндром. LCS(s, reverse(s)) = длина LPS(s). Подвох: можно построить ту же formula напрямую через interval DP `dp[i][j]` за `O(n^2)`, что эквивалентно по сложности, но избегает реверса строки.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "LCS(s, reverse(s)) — это точный алгоритм для LPS, не эвристика. Brute-force `O(2^n)` существует, но DP-сведение даёт точный ответ за `O(n^2)`.",
+                "source_of_confusion": "Студенты, видя «трюк», подозревают приближение. Но в DP такие сведения — стандартный приём, и они точны.",
+                "if_it_were_true": "LeetCode 516 не принимался бы с DP-решением — но он принимается.",
+                "how_it_should_be": "Подчеркнуть точность сведения через биекцию между палиндромами `s` и common subsequences `s` и `reverse(s)`."
+              },
+              "label": "C",
+              "text": "Это эвристика, дающая приближённый ответ; точный LPS требует `O(2^n)` brute-force.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Манакер за `O(n)` — это для longest palindromic SUBSTRING, не SUBSEQUENCE. Для LPS (subsequence) `O(n^2)` — лучшая известная сложность, и для строк до `10^4` она работает быстро. Ограничение `n≤100` — выдуманное.",
+                "source_of_confusion": "Студенты путают LPS (subseq) и Longest Palindromic Substring (substr), приписывая Манакера обеим.",
+                "if_it_were_true": "На LeetCode 516 принимались бы только тестовые с `n≤100`, но реально constraint `1 ≤ s.length ≤ 1000`.",
+                "how_it_should_be": "Различать subsequence (LPS, `O(n^2)`) и substring (Манакер, `O(n)`); это разные задачи."
+              },
+              "label": "D",
+              "text": "Это трюк работает только для строк длины ≤ 100, для больших строк нужен Манакер за `O(n)`.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Distinct Subsequences?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "State `dp[i][j]` = число различных подпоследовательностей в `s[0..i-1]`, равных `t[0..j-1]`. Для каждого символа `s[i-1]` есть два решения: (1) НЕ использовать его в подпоследовательности → число способов = `dp[i-1][j]` (восстанавливаем без последнего символа); (2) использовать его, ТОЛЬКО если `s[i-1] == t[j-1]` → число способов = `dp[i-1][j-1]` (оба символа использованы как пара). Сумма даёт `dp[i][j]`. Base: `dp[i][0] = 1` для любого `i` (пустая подпоследовательность — один способ), `dp[0][j] = 0` для `j > 0` (нельзя из пустой `s` получить непустую `t`).",
+                "example": "`s=\"rabbbit\"`, `t=\"rabbit\"`. `dp[7][6] = 3` — три подпоследовательности: `rabbit` (символы 0,1,2,3,5,6), `rabbit` (0,1,2,4,5,6), `rabbit` (0,1,3,4,5,6). Все три используют разные комбинации `b`. Production: подсчёт количества способов «извлечь» подпоследовательность из текста — применяется в pattern matching engines, log line parsing, genome assembly counting.",
+                "when_to_apply": "Когда задача спрашивает «сколько раз `t` встречается как подпоследовательность в `s`». Practical applications: counting occurrences of substring-with-gaps (для biology motif discovery), tools для extraction-aware analytics.",
+                "edge_cases": "Числа могут переполнить `int` для длинных строк — нужно `long` или модуль `10^9+7` (как в Codeforces). Также: подпоследовательность — это с сохранением порядка, но с возможными пропусками. Не путать с substring (без пропусков): `s=\"aaaa\", t=\"aa\"` подпоследовательностей `C(4,2)=6`, substring 3.",
+                "related": "[[dynamic-programming-interview#Q15]] LCS (родственный алгоритм); [[dynamic-programming-interview#Q17]] Edit Distance; [[dynamic-programming-interview#Q23]] Word Break."
+              },
+              "label": "A",
+              "text": "`dp[i-1][j]` — число способов получить `t[0..j-1]` из `s[0..i-2]`, то есть **не используя** последний символ `s[i-1]`. Это всегда учитывается, потому что мы всегда имеем опцию «пропустить» символ из `s`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Наоборот: `dp[i-1][j]` представляет случай НЕИСПОЛЬЗОВАНИЯ `s[i-1]` (мы отступаем по `s` без отступа по `t`). Использование символа — это `dp[i-1][j-1]`, потому что и `s`, и `t` уменьшаются на 1.",
+                "source_of_confusion": "Студенты считают, что переход `i-1` означает «используем последний символ» — но это противоположно: `i-1` означает «эту ячейку рассматриваем без последнего символа `s`, опираясь на предыдущую строку».",
+                "if_it_were_true": "Recurrence была бы симметричной: `dp[i][j] = dp[i-1][j-1] + (если совпадение, ещё что-то)`. Реальная асимметрия отражает разное поведение для совпадения/несовпадения.",
+                "how_it_should_be": "Mapping: `dp[i-1][j]` = skip `s[i-1]`, `dp[i-1][j-1]` = use `s[i-1]` (только при равенстве)."
+              },
+              "label": "B",
+              "text": "`dp[i-1][j]` — это число способов получить `t[0..j-1]` из `s[0..i-1]` ИСПОЛЬЗУЯ символ `s[i-1]`; первое слагаемое представляет случай совпадения.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`dp[i-1][j]` имеет конкретную семантику — число подпоследовательностей `s[0..i-2]`, равных `t[0..j-1]`. Это специфичная цель, не «все возможные».",
+                "source_of_confusion": "Студенты, теряя жёсткую связь state с задачей, начинают читать abstrakt.",
+                "if_it_were_true": "Алгоритм был бы независим от `t`, но реально каждая ячейка связана с конкретным префиксом `t`.",
+                "how_it_should_be": "State всегда привязан к обоим префиксам: `dp[i][j]` = number of distinct ways `s[0..i-1]` matches `t[0..j-1]`."
+              },
+              "label": "C",
+              "text": "`dp[i-1][j]` — это количество всех возможных подпоследовательностей `s[0..i-2]` без оглядки на `t`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`dp[i-1][j]` — это число подпоследовательностей (multi-character matching), не одиночных вхождений символа. Запутывание count of char и count of subseq.",
+                "source_of_confusion": "Studенты, не привыкшие к 2D DP, упрощают семантику до одномерной.",
+                "if_it_were_true": "`dp[i][j]` зависел бы только от `t[j-1]`, а не от всего префикса `t[0..j-1]` — но это не так.",
+                "how_it_should_be": "Хранить семантику: state — это число способов сопоставить целые префиксы `s[0..i-1]` и `t[0..j-1]`, не одиночные символы."
+              },
+              "label": "D",
+              "text": "`dp[i-1][j]` — это число вхождений `t[j-1]` в `s[0..i-2]`; это count, не subsequence count.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Longest Palindromic Substring через DP?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Порядок не произвольный: `dp[i][j]` зависит от `dp[i+1][j-1]` (внутренняя подстрока), что соответствует МЕНЬШЕЙ длине. Перебор по длине гарантирует, что меньшие интервалы посчитаны раньше. Перебор по `i` сначала даст обращение к ещё незаполненным ячейкам.",
+                "source_of_confusion": "Студенты, привыкшие к LCS/Edit Distance с естественным порядком обхода, не видят интервальной структуры.",
+                "if_it_were_true": "Любой порядок обхода работал бы — но он даёт неверные результаты на простейших тестах.",
+                "how_it_should_be": "В interval DP всегда перебирать по длине интервала (от меньших к большим), чтобы зависимости были посчитаны заранее."
+              },
+              "label": "A",
+              "text": "Это произвольный выбор стиля — порядок обхода `i` сначала тоже работает с теми же результатами.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Recurrence: `dp[i][j] = true`, если `s[i]==s[j] && (j-i<=2 || dp[i+1][j-1])`. Здесь `dp[i+1][j-1]` — внутренняя подстрока длины `j-i-1`. Чтобы заполнить `dp[i][j]` (длина `j-i+1`), нужно сначала заполнить ВСЕ меньшие длины. Топологический порядок зависимостей — по возрастанию длины интервала. Альтернатива — заполнять `dp[i][j]` обратным проходом по `i` от `n-1` до 0 и прямым по `j` от `i` до `n-1`, но это менее интуитивно.",
+                "example": "`s=\"babad\"`. Сначала длины 1: `dp[i][i]=true` (одиночный символ — палиндром). Длина 2: `dp[0][1]=false` (`ba`), `dp[1][2]=true` (`aba`'s inner is `b`, but len 2 directly compares). Длина 3: `dp[0][2]=true` (`bab`, `s[0]==s[2]=b` and `dp[1][1]=true`). Финальный ответ — наибольшая длина с `dp[i][j]=true`.",
+                "when_to_apply": "Interval DP применяется для всех задач, где state зависит от внутренних подзадач: Burst Balloons, Matrix Chain Multiplication, Optimal BST, Palindromic Substring/Subsequence. Production: query optimization (cost of executing range of operations), expression tree balancing.",
+                "edge_cases": "Альтернатива — Expand around center за `O(n^2)` time и `O(1)` space (не нужен `dp[][]`). Манакера за `O(n)` — самый быстрый, но сложный в реализации. На интервью обычно достаточно DP или expand-around-center; Манакера спрашивают редко.",
+                "related": "[[dynamic-programming-interview#Q18]] Longest Palindromic Subsequence; [[dynamic-programming-interview#Q26]] Burst Balloons (interval DP); [[arrays-strings-interview#Q5]] string matching."
+              },
+              "label": "B",
+              "text": "Зависимость `dp[i][j]` ⟵ `dp[i+1][j-1]` (длина `j-i+1` зависит от длины `j-i-1`) — это interval DP, где меньшие интервалы должны быть посчитаны раньше больших. Перебор по `i` (с `j` фиксированным) обратится к `dp[i+1][...]`, которое ещё не вычислено в текущей итерации.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Сложность одинаковая `O(n^2)` и память одинаковая `O(n^2)` независимо от порядка. Порядок определяет КОРРЕКТНОСТЬ, а не размер таблицы.",
+                "source_of_confusion": "Студенты ищут performance-оправдание выбору, не семантическое.",
+                "if_it_were_true": "Можно было бы свободно выбирать порядок — но это даёт неверные ответы.",
+                "how_it_should_be": "Подчеркнуть, что порядок гарантирует доступ к уже заполненным ячейкам, что обеспечивает корректность."
+              },
+              "label": "C",
+              "text": "Перебор по `len` нужен только для оптимизации памяти; перебор по `i` работает за такую же сложность, но требует больше памяти.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Порядок обхода — алгоритмическое требование, не оптимизация JIT. Java JIT может оптимизировать любые циклы.",
+                "source_of_confusion": "Студенты, услышавшие про JIT-оптимизации, привязывают их ко всему.",
+                "if_it_were_true": "В Python или Go тот же алгоритм работал бы с другим порядком — но он одинаков во всех языках.",
+                "how_it_should_be": "Порядок определяется математической структурой interval DP, а не runtime-оптимизациями."
+              },
+              "label": "D",
+              "text": "Перебор по `len` — это требование Java JIT-компилятора для оптимизации loop unrolling.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Unique Paths в матрице?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Closed-form `C(m+n-2, m-1)` вычисляется быстрее DP, особенно с правильной формулой `C(n,k) = n*(n-1)*...*(n-k+1) / (k*(k-1)*...*1)`, сложность `O(min(m,n))`. Для small `m,n` (`m+n ≤ 60`) умещается в `long`; для больших — BigInteger, но всё равно быстрее `O(m*n)` DP при `m,n=10^9`.",
+                "source_of_confusion": "Студенты, привыкшие к DP, считают её универсальной. Combinatorics часто эффективнее.",
+                "if_it_were_true": "Для `m=10, n=10` DP заполнял бы 100 ячеек, closed-form — 10 умножений и делений. Closed-form явно быстрее.",
+                "how_it_should_be": "Closed-form `C(m+n-2, m-1)` лучше для production, когда нет obstacles или других усложнений в grid."
+              },
+              "label": "A",
+              "text": "Только DP, потому что closed-form требует BigInteger для биномиальных коэффициентов и работает медленнее.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "DP даёт корректный ответ при использовании `long` (или `BigInteger` для больших). Integer overflow — это deltail, который и closed-form, и DP должны учитывать.",
+                "source_of_confusion": "Studенты, видя ограничения LeetCode 62 (`m,n ≤ 100`, ответ ≤ 2^31-1), думают, что DP overflow исключён, но забывают про BigInteger для общего случая.",
+                "if_it_were_true": "DP-решения не принимались бы на LeetCode 62 — но они принимаются.",
+                "how_it_should_be": "DP с правильным типом — корректен; closed-form — тоже корректен; выбор по другим критериям."
+              },
+              "label": "B",
+              "text": "Только closed-form, потому что DP-решение этой задачи неверно из-за integer overflow.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Без obstacles: задача чисто комбинаторная — нужно `m-1` ходов вниз и `n-1` вправо в любом порядке, что даёт `C(m+n-2, m-1) = (m+n-2)! / ((m-1)!(n-1)!)` путей. Эффективная формула: `C(n,k) = ∏(n-i+1)/i for i=1..k`, сложность `O(k)`. С obstacles, weights, дополнительными правилами (например, есть только определённые типы клеток) — closed-form ломается, и нужно DP. Production-сценарий: маршрутизация в delivery-сервисе по grid без препятствий — closed-form моментально; с препятствиями (закрытые улицы) — DP.",
+                "example": "Для `m=23, n=12` (типичный LeetCode 62 case) closed-form `C(33, 11) = 193536720` за ~10 операций. DP — 276 ячеек. На production-уровне разница в latency ~100 наносекунд vs ~1 микросекунда. Critical для high-frequency запросов в order routing (Uber, DoorDash dispatch optimization).",
+                "when_to_apply": "Closed-form: clean grid без obstacles, нужна минимальная latency. DP: variations (Unique Paths II с obstacles, Unique Paths III где нужно пройти по всем cells, Minimum Path Sum с весами). Знание обоих позволяет выбирать оптимальное под задачу.",
+                "edge_cases": "Closed-form для `C(n,k)` через факториалы вызывает overflow для `n+k > 20` даже в `long`. Используй pairwise formula `result *= (n-i+1); result /= i` — это работает в `long` до `n ≈ 60`. Для больших нужен BigInteger. Также: знание combinatorics на интервью бонусом — рекрутер часто оценивает «обоюдное» понимание задачи.",
+                "related": "[[dynamic-programming-interview#Q22]] Minimum Path Sum (variation); [[dynamic-programming-interview#Q23]] Word Break; [[backtracking-interview#Q1]] alternative подход."
+              },
+              "label": "C",
+              "text": "Closed-form для базовой задачи без obstacles, DP — когда есть препятствия (Unique Paths II) или дополнительные ограничения. Closed-form работает за `O(min(m,n))`, не зависит от `m*n`, а DP даёт гибкость для variations.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Closed-form `C(m+n-2, m-1)` работает для любых `m, n ≥ 1`. Это общая формула, не частный случай.",
+                "source_of_confusion": "Студенты, не зная combinatorics, считают её ограниченной случаями.",
+                "if_it_were_true": "`m=n=10` не имело бы closed-form ответа, но `C(18, 9) = 48620` — это точный ответ для unique paths в 10×10 grid.",
+                "how_it_should_be": "Подчеркнуть универсальность closed-form для grid без obstacles."
+              },
+              "label": "D",
+              "text": "DP и closed-form — несопоставимы; closed-form работает только для grid с одной строкой или одним столбцом.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Minimum Path Sum?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Modifying `grid[i][j] += min(grid[i-1][j], grid[i][j-1])` экономит `O(m*n)` памяти, но имеет side-effect: после вызова grid содержит cumulative sums, не оригинальные values. Это нарушает principle of least surprise. В production-сценариях с shared data structures (Redis cache, in-memory store) modification вызывает race conditions. На интервью in-place демонстрирует понимание space optimization, но всегда уточняй разрешение от интервьюера.",
+                "example": "В Spring Boot REST endpoint, принимающем `int[][] grid` через JSON, модификация безопасна — request scope, грид уничтожается после ответа. В библиотеке matrix utilities (Apache Commons Math), где Matrix immutable — модификация запрещена контрактом. В микросервисе обработки видео грид fps-данных может разделяться между обработчиками — модификация нарушит других.",
+                "when_to_apply": "In-place modification как pattern: parsing buffers, image processing pipelines с явным владением, DP-задачи на интервью при ограниченной памяти. Документируй чётко в комментарии (`// MUTATES input grid`) для будущих maintainers.",
+                "edge_cases": "Concurrent access без сихронизации даёт data race. Также: если `grid` приходит из cache (Redis, Memcached), модификация in-place не записывается обратно — следующее чтение получит старые values, что выглядит как stale data. Лучше копировать в локальный массив и работать с ним: `int[][] dp = new int[m][n]; System.arraycopy(...)`. Это `O(m*n)` overhead, но безопасно.",
+                "related": "[[dynamic-programming-interview#Q21]] Unique Paths (тот же grid DP); [[dynamic-programming-interview#Q24]] Maximal Square; [[dynamic-programming-interview#Q28]] space optimization."
+              },
+              "label": "A",
+              "text": "In-place допустимо, если оригинальный grid не нужен дальше (его данные «потребляются» алгоритмом). Избегать, когда: grid — это shared resource, есть concurrent readers, нужна повторная работа на оригинале, или контракт API требует immutability.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "In-place экономит память, но скорость практически одинакова — оба варианта обходят `O(m*n)` ячеек. Premature optimization этого типа создаёт hidden bugs в multi-threaded коде.",
+                "source_of_confusion": "Студенты, видя «in-place» в LeetCode editorial, считают это best practice. Реальный production-код часто избегает mutation.",
+                "if_it_were_true": "Java Collections и Guava не имели бы immutable views (Collections.unmodifiableList, ImmutableList) — но они есть и используются повсеместно.",
+                "how_it_should_be": "In-place — это компромисс между памятью и safety; используется selectively, не по умолчанию."
+              },
+              "label": "B",
+              "text": "In-place всегда быстрее и должно использоваться по умолчанию во всех DP-задачах для лучшей производительности.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "In-place алгоритмически корректен в Minimum Path Sum: текущая ячейка `grid[i][j]` зависит только от `grid[i-1][j]` (выше) и `grid[i][j-1]` (слева), которые уже посчитаны при row-major обходе. Никаких математических нарушений нет.",
+                "source_of_confusion": "Некоторые DP-задачи действительно нельзя in-place (0/1 Knapsack из-за зависимости от предыдущей строки в обоих столбцах). Студенты обобщают на все DP.",
+                "if_it_were_true": "LeetCode 64 editorial был бы fundamental wrong — но он принимает in-place решения с positive feedback.",
+                "how_it_should_be": "In-place возможно, когда зависимости позволяют. В Minimum Path Sum они позволяют, в 0/1 Knapsack — нет (нужна предыдущая строка)."
+              },
+              "label": "C",
+              "text": "In-place никогда не допустимо в DP — нужно всегда создавать отдельный `dp[][]`, потому что иначе нарушается математическая корректность алгоритма.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "In-place работает для grid любого размера в Minimum Path Sum. Зависимости от верхней и левой соседних ячеек, которые обе уже посчитаны при row-major обходе — независимо от размера.",
+                "source_of_confusion": "Студенты, видя 2D-grid, ассоциируют его с большим объёмом данных и считают оптимизацию опасной.",
+                "if_it_were_true": "Невозможно было бы in-place реализовать Minimum Path Sum для `m,n>1` — но это стандартная техника в LeetCode editorial.",
+                "how_it_should_be": "Размер grid не влияет на корректность in-place; влияют семантические ограничения (shared state, immutability)."
+              },
+              "label": "D",
+              "text": "In-place допустимо только для grid размера 1×N или N×1; для двумерных grid обязателен отдельный массив.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Word Break?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Обратно: `n` — длина строки `s`, `m` — максимальная длина слова в словаре. Sorted словарь не даёт `O(log n)` поиска substring — для check substring нужно exact match, не порядок. Оптимизация через Trie даёт `O(n^2)` без множителя `m`.",
+                "source_of_confusion": "Студенты, привыкшие к binary search для arrays/lists, ошибочно переносят его на string lookup.",
+                "if_it_were_true": "Sorted-словарь оптимизация работала бы — но Trie / HashSet — реальные подходы.",
+                "how_it_should_be": "`n = s.length()`, `m = max(word.length() for word in dict)`. Оптимизация — Trie, не sorting."
+              },
+              "label": "A",
+              "text": "`n` — число слов в словаре, `m` — длина строки; оптимизация — sorted словарь и binary search до `O(n log n)`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Recurrence: `dp[i] = true` если существует `j < i` такой, что `dp[j] && dict.contains(s.substring(j, i))`. Вложенные циклы дают `O(n^2)` итераций, и каждый `substring` + `contains` — `O(i-j)` ≤ `O(m)`. Итого `O(n^2 * m)`. С Trie: для каждого начала `j` идём вперёд по символам `s[j], s[j+1], ...`, проходя Trie. Если в Trie есть word-end и `dp[j]=true`, ставим `dp[i]=true`. Это `O(n^2)` без множителя `m`, потому что substring extraction избегается.",
+                "example": "`s = \"leetcode\"`, `dict = {\"leet\", \"code\"}`. `dp[0]=true`. `dp[4] = dp[0] && \"leet\" ∈ dict = true`. `dp[8] = dp[4] && \"code\" ∈ dict = true`. Ответ — true. На практике: парсинг compound words в German NLP (`Donaudampfschifffahrtskapitänsmütze`), URL slug splitting, programmatic-tokenization.",
+                "when_to_apply": "Любая задача разбиения на префиксы из словаря: Sentence Screen Fitting, Word Break II (вывести все способы), code completion engine с tokenization. Production: парсинг user-generated content где разделители опущены, OCR text recovery.",
+                "edge_cases": "При `n=10^4` и `m=10^3` без Trie — `10^11` операций, неприемлемо. Также: `String.substring` в Java до 7u6 не копировал данные (sharing char array), но после копирует — каждый substring это `O(m)` allocation, что добавляет GC pressure. Используй `StringBuilder` или явный пройти по символам с Trie.",
+                "related": "[[dynamic-programming-interview#Q19]] Distinct Subsequences (string DP); [[dynamic-programming-interview#Q15]] LCS; [[trees-interview#Q1]] Trie data structure."
+              },
+              "label": "B",
+              "text": "`n` — длина строки `s`, `m` — максимальная длина слова в словаре. DP: `dp[i]` = можно ли разбить `s[0..i-1]`. Trie-оптимизация снижает сложность до `O(n^2)`: вместо `dict.contains(s.substring(j, i))` за `O(i-j)` мы проходим по Trie за один проход.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Стандартное обозначение: `n = |s|`, `m = max word length`. И есть оптимизация через Trie до `O(n^2)`. Также через memoized DFS — `O(n^2)`.",
+                "source_of_confusion": "Студенты, не зная стандарта, выдумывают свои интерпретации.",
+                "if_it_were_true": "Задача была бы безнадёжной — но LeetCode 139 имеет принимаемые решения за миллисекунды.",
+                "how_it_should_be": "`n = string length`, `m = max word length`, оптимизация — Trie."
+              },
+              "label": "C",
+              "text": "`n` — число unique подстрок в `s` (~`O(n^2)`), `m` — число попыток разбиения; нет известных оптимизаций для этой задачи.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Слова в словаре могут быть разной длины. Стандартная нотация: `n = |s|` (length of input string), `m = max word length`. Оптимизация — Trie.",
+                "source_of_confusion": "Студенты, привыкшие к dict с равной длиной слов (например, password databases), обобщают.",
+                "if_it_were_true": "Алгоритм работал бы только для very specific dictionaries — но он работает для произвольных.",
+                "how_it_should_be": "Стандартные обозначения: input string length и max word length; оптимизация — Trie снижает множитель `m`."
+              },
+              "label": "D",
+              "text": "`n` — число слов в словаре, `m` — длина каждого слова (предположительно равная для всех); сложность реально `O(n*m)`, и оптимизаций нет.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Maximal Square / Rectangle?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "`dp[i][j]` = сторона максимального квадрата с правым нижним углом в `(i, j)`. Квадрат стороны `k` в этой позиции требует, чтобы три «угла-предшественника» поддерживали квадраты стороны `k-1`: правый край сверху (`dp[i-1][j]`), нижний край слева (`dp[i][j-1]`), и диагональный (`dp[i-1][j-1]`). Если хотя бы один из них `< k-1`, квадрат стороны `k` не образуется — поэтому минимум определяет ограничение. Плюс 1 за саму клетку `(i,j)`. Финальный ответ — `max(dp[i][j]) ^ 2` (площадь).",
+                "example": "Matrix `[[\"1\",\"0\",\"1\",\"0\",\"0\"],[\"1\",\"0\",\"1\",\"1\",\"1\"],[\"1\",\"1\",\"1\",\"1\",\"1\"],[\"1\",\"0\",\"0\",\"1\",\"0\"]]`. `dp[2][3] = min(dp[1][3]=1, dp[2][2]=1, dp[1][2]=1) + 1 = 2`. `dp[2][4] = min(1, 2, 1) + 1 = 2`. Максимум `dp` = 2, площадь 4. На production: detection крупнейшего solid-color пятна в изображении (1=foreground), для image segmentation. CV-применения: licensing plate detection, sticker bounding box.",
+                "when_to_apply": "2D pattern recognition: maximal square of pixels одного цвета в bitmap, maximal solid region in dense matrix. Production: ad-placement optimization (максимальная rectangular area free for banner), warehouse storage planning, GUI layout (maximal empty space for widget).",
+                "edge_cases": "Maximal Rectangle (не square) — сложнее, через histogram approach с monotonic stack `O(R*C)`. Maximal Square — частный случай, и расширение на rectangles НЕ через тот же DP — нужна другая техника. Также важно: ответ — площадь (`side^2`), не сторона; легко перепутать тип возврата.",
+                "related": "[[dynamic-programming-interview#Q21]] Unique Paths (тот же grid); [[dynamic-programming-interview#Q22]] Minimum Path Sum; [[dynamic-programming-interview#Q26]] Burst Balloons (другой interval DP)."
+              },
+              "label": "A",
+              "text": "Чтобы клетка `(i,j)` была правым нижним углом квадрата стороны `k`, нужно, чтобы клетки выше, слева и по диагонали могли поддерживать квадрат стороны `k-1`. Самая «слабая» сторона ограничивает: минимум трёх соседних — это максимально возможный размер квадрата, заканчивающегося в `(i,j)`.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Задача — найти МАКСИМАЛЬНЫЙ квадрат, и минимум в recurrence ограничивает локальный размер. Финальный ответ — `max(dp[i][j])` по всему массиву, а не минимум.",
+                "source_of_confusion": "Студенты, видя `min`, думают, что мы ищем минимум — это путаница локального ограничения и глобальной цели.",
+                "if_it_were_true": "Ответом был бы наименьший квадрат — но это бессмысленная задача (всегда 1, если хоть одна `1` в matrix).",
+                "how_it_should_be": "`min` в recurrence — ограничение, `max` в финальной агрегации — глобальная цель."
+              },
+              "label": "B",
+              "text": "Используется минимум, потому что мы ищем минимальную сторону квадрата (наименьший по площади), а не максимальную.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Максимум дал бы НЕВЕРНЫЙ ответ. Если `dp[i-1][j]=2, dp[i][j-1]=1, dp[i-1][j-1]=2`, max=2, и `dp[i][j]=3` означал бы квадрат стороны 3 — но реально клетка слева поддерживает только сторону 1, поэтому квадрат стороны 3 не образуется (одна из клеток в его периметре равна 0).",
+                "source_of_confusion": "Студенты, не визуализирующие geometry, не понимают, что все три предшественника должны соответствовать одной и той же стороне.",
+                "if_it_were_true": "На любом тесте с asymmetric `1`-pattern ответ был бы завышен.",
+                "how_it_should_be": "Объяснить через geometry: квадрат стороны k требует все три предшественника ≥ k-1; минимум обеспечивает это."
+              },
+              "label": "C",
+              "text": "Минимум — это произвольный выбор; максимум дал бы тот же ответ, потому что мы строим квадрат, а не разные формы.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Min обоснован математически, не empirically. Это derive from definition «квадрат стороны k» — все четыре clearly defined edges должны существовать.",
+                "source_of_confusion": "Студенты, не знающие proof, считают алгоритмы магией.",
+                "if_it_were_true": "Алгоритм давал бы случайные результаты на различных входах — но он deterministic и correct.",
+                "how_it_should_be": "Min — это следствие определения геометрии квадрата, а не эмпирическое решение."
+              },
+              "label": "D",
+              "text": "Это empirical: пробовали max/min/avg/median, и min дал лучшие результаты в benchmarks.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Best Time to Buy and Sell Stock — серия задач?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "При `k ≥ n/2` ограничение «k transactions» становится нерелевантным — оптимум достигается с любым числом сделок, и можно использовать greedy (сумма всех положительных разностей) за `O(n)` времени и `O(1)` памяти.",
+                "source_of_confusion": "Студенты, не замечая граничный случай, обобщают `O(n*k)`-сложность на все входы.",
+                "if_it_were_true": "LeetCode 188 c `k=10^9` не имел бы решения — но имеет, через граничный case-check.",
+                "how_it_should_be": "При `k ≥ n/2` свести к Stock II (unlimited transactions) за `O(n)`."
+              },
+              "label": "A",
+              "text": "Stock IV всегда требует ровно `O(n*k)` памяти; для `n=10^4, k=10^9` это `10^13` ячеек — задача нерешаема в memory-constrained системах.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "3D state `dp[i][k][hold]` математически корректен и стандартен для Stock IV. Разделение buy/sell в отдельные измерения избыточно: они всегда чередуются (`buys = sells + hold`), что выражается через `k` и `hold`.",
+                "source_of_confusion": "Студенты пытаются «всё перебрать» и придумывают избыточные state.",
+                "if_it_were_true": "LeetCode 188 editorial использовал бы 4D state — но он использует 3D.",
+                "how_it_should_be": "3D state корректен и оптимален; разделение buy/sell — redundant."
+              },
+              "label": "B",
+              "text": "State должен быть `dp[i][buys][sells]` (4D с разделением buy/sell counts); 3D state математически некорректен.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Recurrence — `O(1)` (только два сравнения), поэтому сложность `O(n*k*2) = O(n*k)`, не `O(n^2 * k)`. Нет вложенных циклов внутри transition.",
+                "source_of_confusion": "Студенты ожидают, что 3D state дороже 2D, но «hold» — это booleanflag (2 states), который не добавляет асимптотической стоимости.",
+                "if_it_were_true": "Stock IV для `n=10^4, k=100` требовал бы `10^10` операций — но реально работает за `10^6` (`n*k*2`).",
+                "how_it_should_be": "3D state с boolean компонентом не меняет асимптотику; основная сложность — `O(n*k)`."
+              },
+              "label": "C",
+              "text": "State `dp[i][k][hold]` всегда даёт `O(n^2 * k)` сложности из-за вложенных циклов внутри recurrence; оптимизация — заменить на 2D state `dp[i][k]`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Recurrence: `dp[i][k][0]` = max profit на день `i` без акций при ≤ k оставшихся сделок = `max(dp[i-1][k][0], dp[i-1][k][1] + prices[i])` (либо вчера не держали, либо вчера держали и продали сегодня — продажа считается за одну сделку). `dp[i][k][1]` = с акцией = `max(dp[i-1][k][1], dp[i-1][k-1][0] - prices[i])` (либо вчера держали, либо купили сегодня после `k-1` использованных сделок). Сложность `O(n*k)` времени и памяти. Optimization: при `k ≥ n/2`, любая sequence sell-buy валидна — каждая «положительная разность» суммируется без ограничений. Это даёт Stock II за `O(n)`.",
+                "example": "`prices=[3,2,6,5,0,3], k=2`. Стандартный DP даёт profit 7 (купить за 2, продать за 6, купить за 0, продать за 3). При `k=1000` алгоритм сводится к Stock II: разности `[(2 to 6)=4, (0 to 3)=3]` = 7 — тот же ответ, но `O(n)` времени. На реальной бирже high-frequency trading delight в `k`-bounded portfolio rebalancing.",
+                "when_to_apply": "Algorithmic trading с ограничением на число сделок (комиссия, regulatory limits на day-trading). Также: scheduling cleaning sessions with limited slots, factory production with shift limits. Любая задача с ограничением «не более k операций на period».",
+                "edge_cases": "Off-by-one: что считать сделкой — buy+sell pair или каждая операция? Конвенция Stock-задач: одна сделка = одна пара buy+sell, поэтому `k=2` означает «не более 2 пар». При `k=0` ответ всегда 0 (никаких сделок). Также: учитывай transaction fee для variations Stock VI — добавляется `- fee` при sell. Cooldown (Stock V): после sell следующая buy не раньше через день, modifies state.",
+                "related": "[[dynamic-programming-interview#Q1]] DP applicability; [[dynamic-programming-interview#Q28]] space optimization; [[dynamic-programming-interview#Q31]] DP vs Greedy."
+              },
+              "label": "D",
+              "text": "State `dp[i][k][hold]`: день `i`, осталось `k` сделок, флаг `hold` (держим ли акцию). Переходы: hold/sell/buy. Оптимизация: при `k ≥ n/2` ограничение нерелевантно — сводится к Stock II (unlimited transactions) с greedy `O(n)`. Иначе full DP `O(n*k)`.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Burst Balloons?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "При прямом порядке (k первый): лопая `k`, мы получаем `nums[left-1] * nums[k] * nums[right+1]` сразу, и затем подзадачи `[left, k-1]` и `[k+1, right]` — но они уже не независимы, потому что соседи их крайних шариков (`k-1` и `k+1`) теперь — это разные шарики после лопания `k`. State не разделяется чисто. При обратном порядке (k последний): подзадачи `[left, k-1]` и `[k+1, right]` решаются ПЕРВЫМИ (рекурсивно), оставляя ровно три шарика `[left-1, k, right+1]`. В этот момент coins = `nums[left-1] * nums[k] * nums[right+1]`, что независимо от внутреннего порядка лопания подзадач. Recurrence: `dp[left][right] = max(dp[left][k-1] + nums[left-1]*nums[k]*nums[right+1] + dp[k+1][right] for k in [left, right])`.",
+                "example": "`nums=[3,1,5,8]`, padding `[1,3,1,5,8,1]`. Подзадача `[1,4]`: если `k=2` (значение 5) последний, то coins после внутри = `dp[1][1] + dp[3][4] + 1*5*1 = 3 + 40 + 5 = 48`... etc. На production это применяется в task scheduling с зависимостями (Critical Path), в game tree analysis для optimal endgame moves, в DNA splice site optimization.",
+                "when_to_apply": "Любая interval DP, где «выбор первого элемента» меняет state в сложный способ. Burst Balloons, Optimal BST, Matrix Chain Multiplication — все используют похожий «выбираем точку разбиения» pattern. Production: задачи композиции операций с побочными эффектами на соседей.",
+                "edge_cases": "Padding массива единицами с обеих сторон критичен: упрощает edge cases `left=0` и `right=n-1` (соседи всегда existed). Без padding нужен дополнительный branching. Также: time complexity `O(n^3)` — для `n=500` это `1.25 * 10^8`, на грани TL. Для `n>500` — нужны другие подходы (memo DFS).",
+                "related": "[[dynamic-programming-interview#Q20]] Longest Palindromic Substring (interval DP); [[dynamic-programming-interview#Q24]] Maximal Square; [[dynamic-programming-interview#Q26]] same task self-reference."
+              },
+              "label": "A",
+              "text": "Если `k` — последний в интервале `[left, right]`, то в момент его лопания соседи `left-1` и `right+1` уже фиксированы (они вне интервала и ещё не лопнуты). Это даёт независимые подзадачи `[left, k-1]` и `[k+1, right]`. Прямой порядок (k — первый) ломает независимость: после лопания `k` соседи `k-1` и `k+1` сливаются, и подзадачи не разделяются чисто.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Прямой порядок не просто медленнее — он НЕВЕРЕН математически из-за неразделимости подзадач. Это не вопрос оптимизации, а корректности.",
+                "source_of_confusion": "Студенты, не до конца понимая, винят performance, а не correctness.",
+                "if_it_were_true": "LeetCode 312 принимал бы «k first» решения, может быть медленные — но он отвергает их как wrong.",
+                "how_it_should_be": "«k last» — единственный корректный подход для этой interval DP."
+              },
+              "label": "B",
+              "text": "Прямой порядок «k первый» — это корректный DP, но он даёт `O(n^4)` вместо `O(n^3)`; обратный порядок — оптимизация.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Они НЕ эквивалентны: прямой порядок даёт неверный ответ, потому что подзадачи не независимы. Это семантическая разница, не стилистическая.",
+                "source_of_confusion": "Студенты, не пробовавшие оба, доверяют интуиции о симметрии.",
+                "if_it_were_true": "Любой порядок работал бы — но прямой даёт неверные числа.",
+                "how_it_should_be": "Проверять корректность на простых примерах (`nums=[3,1,5,8]`) — прямой порядок не даст 167 (correct answer)."
+              },
+              "label": "C",
+              "text": "Оба порядка эквивалентны и дают одинаковый ответ — обратный порядок выбран для traditional readability в editorial.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "И memoization, и tabulation используют один подход «k last». Не зависит от метода реализации.",
+                "source_of_confusion": "Студенты, видя разные стили (recursive vs iterative), думают, что они требуют разной логики.",
+                "if_it_were_true": "LeetCode editorial показал бы два разных алгоритма для memo и tab — но он показывает один.",
+                "how_it_should_be": "Метод реализации не влияет на математическую идею «k last»."
+              },
+              "label": "D",
+              "text": "Обратный порядок нужен только для memoization, но tabulation требует прямой порядок.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Predict the Winner — Game DP?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Алгоритм языко-независим. Вычитание — это математическая модель «оба игроки играют оптимально». В Python формула идентична: `dp[i][j] = max(nums[i] - dp[i+1][j], nums[j] - dp[i][j-1])`.",
+                "source_of_confusion": "Студенты, не понимая game-theoretic смысла, винят язык.",
+                "if_it_were_true": "Алгоритм давал бы разные результаты в Java и Python — но он одинаков.",
+                "how_it_should_be": "Объяснить через game theory: разница между первым и вторым игроками, рекурсивно меняющая знак."
+              },
+              "label": "A",
+              "text": "Вычитание — это особенность Java integer arithmetic; в Python формула была бы `dp[i+1][j] - nums[i]`.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Минус не эквивалентен сложению с константами. Он отражает фундаментальную game-theoretic симметрию: «мой плюс — оппонентов минус».",
+                "source_of_confusion": "Студенты ищут «технические» оправдания, не вникая в game theory.",
+                "if_it_were_true": "Можно было бы переписать через сложение и константы — но это даст другую семантику.",
+                "how_it_should_be": "Минус — это математическое моделирование, не trick."
+              },
+              "label": "B",
+              "text": "Минус используется, чтобы инвертировать знак для `Math.max`; математически это эквивалентно сложению с правильно подобранными константами.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "`dp[i][j]` определяется как «максимально достижимая разница счёта (текущий игрок − оппонент) при оптимальной игре обоих». Базовая идея game DP: оба игрока симметричны, и при переходе к подыгре «текущий ↔ оппонент» знак переворачивается. Если текущий взял `nums[i]`, его счёт = `nums[i] + (его счёт в `[i+1..j]`)`. Но в подыгре `[i+1..j]` ходит ОППОНЕНТ как первый, и его разница = `dp[i+1][j]`. Для нашего игрока эта разница идёт с минусом: `nums[i] + (-dp[i+1][j]) = nums[i] - dp[i+1][j]`. Аналогично для взятия `nums[j]`. Финальный ответ: `dp[0][n-1] >= 0` означает «текущий (первый) игрок выигрывает или ничья».",
+                "example": "`nums=[1, 5, 233, 7]`. `dp[0][3]`: либо `1 - dp[1][3]`, либо `7 - dp[0][2]`. `dp[1][3] = max(5 - dp[2][3], 7 - dp[1][2]) = max(5 - 226, 7 - 228) = max(-221, -221) = -221`. `dp[0][3] = max(1 - (-221), 7 - dp[0][2])`. Production: AI для двух-игроцких игр (chess endgame, Tic-Tac-Toe optimal), auction strategies, negotiation bots.",
+                "when_to_apply": "Любые turn-based games с perfect information и zero-sum: Stone Game series, Coin Pile Game, Tic-Tac-Toe, simple chess endgames. Production: game AI agents, optimal bidding в Vickrey auctions, negotiation systems.",
+                "edge_cases": "Не путать с Minimax: minimax обычно хранит две функции `max(state)` и `min(state)`, что эквивалентно но более громоздко. Single-state DP с invariant «разница» элегантнее, но требует осторожности с интерпретацией: положительный `dp[i][j]` значит current player wins, отрицательный — opponent wins (или current loses).",
+                "related": "[[dynamic-programming-interview#Q26]] Burst Balloons (interval DP); [[dynamic-programming-interview#Q1]] DP conditions; [[backtracking-interview#Q3]] minimax."
+              },
+              "label": "C",
+              "text": "`dp[i][j]` — разница счёта текущего игрока минус разница счёта оппонента в подыгре `[i..j]`. Когда текущий игрок берёт `nums[i]`, оппонент играет на `[i+1..j]`, и его «разница» = `dp[i+1][j]`. Для текущего игрока эта разница входит со знаком минус (его минус — наш плюс), отсюда `nums[i] - dp[i+1][j]`.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Сложение даст НЕВЕРНЫЙ ответ. Например, для `nums=[1, 5]`: правильно — first игрок берёт `5`, разница `5 - 1 = 4`. С `+`: `dp[0][1] = max(1+5, 5+1) = 6`, что не имеет game-theoretic смысла.",
+                "source_of_confusion": "Студенты, привыкшие к classical DP (Knapsack, LCS) с сложением, переносят без модификации.",
+                "if_it_were_true": "На любом тесте сразу видна разница: правильная формула даёт интерпретируемые числа, неправильная — нет.",
+                "how_it_should_be": "Game DP специфичен: знак переворачивается при смене игрока, что выражается через вычитание."
+              },
+              "label": "D",
+              "text": "Вычитание `dp[i+1][j]` — это случайный выбор; формула с `+ dp[i+1][j]` даёт тот же результат с другой интерпретацией.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как оптимизировать память DP?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Обратный проход в Unbounded даст ответ 0/1 Knapsack — то есть мы случайно «убьём» multi-take. Это семантически неверно для Unbounded задачи, но математически правильный 0/1 ответ.",
+                "source_of_confusion": "Студенты не различают «исключение multi-take» (что обратный проход делает) и «семантическую корректность» (что зависит от задачи).",
+                "if_it_were_true": "Это и есть правда: обратный проход в Unbounded даст 0/1 семантику. Студент путается, кода правильно описывает явление.",
+                "how_it_should_be": "Дополнить: «обратный проход даёт 0/1 семантику; для Unbounded нужен прямой проход»."
+              },
+              "label": "A",
+              "text": "Получим неверный 0/1 Knapsack ответ — обратный проход исключит multi-take, и алгоритм будет работать как 0/1.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Direction of iteration кодирует семантику. Обратный проход (`for w in W..weights[i] step -1`): когда обновляем `dp[w]`, `dp[w-weights[i]]` — это ещё значение «предыдущей итерации `i`», без учёта предмета `i`. Это 0/1 — каждый предмет учитывается один раз. Прямой проход (`for w in weights[i]..W`): когда обновляем `dp[w]`, `dp[w-weights[i]]` — это уже значение «текущей итерации `i`», с учётом предмета. Multi-take разрешён. Альтернативная формулировка для Coin Change (Unbounded): внешний цикл по monетам, внутренний прямой по amount.",
+                "example": "`weights=[2], values=[3], W=4`. Unbounded с прямым проходом: `dp[2]=3 → dp[4]=dp[2]+3=6` (два предмета). С обратным: `dp[4]=dp[2]+3=0+3=3, dp[2]=3` (один предмет). Production: Coin Change II в банке использует прямой проход (бесконечные монеты), Subset Sum в shipping (ограниченное число посылок) — обратный.",
+                "when_to_apply": "Знание направления критично для всех Knapsack-вариаций. Помни: «обратный → 0/1, прямой → Unbounded». В сложных вариациях (LeetCode 879 Profitable Schemes) могут смешиваться оба для разных аспектов state.",
+                "edge_cases": "Для Multi-dimensional Knapsack (несколько capacities) каждая dimension обновляется в обратном порядке для 0/1. Для Bounded Knapsack (limited copies каждого предмета) — нужны дополнительные трюки (binary splitting или monotone queue), стандартный direction не работает.",
+                "related": "[[dynamic-programming-interview#Q10]] 0/1 Knapsack; [[dynamic-programming-interview#Q11]] Unbounded Knapsack; [[dynamic-programming-interview#Q13]] Coin Change II порядок циклов."
+              },
+              "label": "B",
+              "text": "Получим 0/1 семантику вместо Unbounded — каждый предмет учитывается максимум один раз. Для Unbounded требуется прямой проход по `w` от `weights[i]` до `W`, чтобы `dp[w - weights[i]]` уже содержало текущий предмет, позволяя его повторное взятие.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Алгоритм даст ровно 0/1 семантику, не промежуточное. DP детерминистичен: обратный проход — это 0/1, прямой — Unbounded, нет промежуточных вариантов.",
+                "source_of_confusion": "Студенты думают, что «небольшая ошибка» в DP даёт небольшое искажение, но в реальности DP строго определён.",
+                "if_it_were_true": "На LeetCode тестах решения проходили бы с частичной точностью — но они либо принимаются, либо нет.",
+                "how_it_should_be": "Подчеркнуть детерминизм: обратный проход — точно 0/1, прямой — точно Unbounded."
+              },
+              "label": "C",
+              "text": "Алгоритм будет вычислять что-то промежуточное между 0/1 и Unbounded, дающее approximate solution.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Direction в Unbounded критичен: обратный даёт 0/1 ответ (исключает multi-take), прямой — Unbounded (разрешает). Они дают РАЗНЫЕ ответы при одинаковом коде.",
+                "source_of_confusion": "Студенты, не разобравшись в семантике 1D, считают direction техническим деталем.",
+                "if_it_were_true": "Unbounded Knapsack с обратным проходом давал бы правильные числа — но он даёт 0/1 числа (часто меньше Unbounded).",
+                "how_it_should_be": "Тестировать на простом примере (`weights=[2], W=4`): прямой даёт 2 предмета, обратный — 1."
+              },
+              "label": "D",
+              "text": "Direction прохода не влияет в Unbounded — поскольку multi-take разрешён, обратный и прямой дают одинаковый ответ.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Bitmask DP — TSP за O(n²·2ⁿ)?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "TSP — NP-hard. Brute-force перебор всех `(n-1)!` перестановок городов даёт `O(n!)`. Bitmask DP: `dp[mask][i]` — минимальная стоимость пути, посетившего города в `mask` и закончившегося в `i`. State space `2^n * n`, переход `O(n)`, итого `O(n^2 * 2^n)`. Для `n=20`: `400 * 10^6 = 4 * 10^8` — несколько секунд. Для `n=25`: `625 * 33M ≈ 2 * 10^10` — около минуты. Дальше memory становится проблемой (`2^25 * 25 = 800M` int = 3.2GB). Альтернативы для больших `n`: Christofides 1.5-approximation, Lin-Kernighan heuristic, ILP-solvers.",
+                "example": "Optimal route для 20 stops в delivery service (DPD, Boxberry route optimization), VLSI chip layout (component placement minimizing wire length), scheduling 15-20 server maintenance tasks с travel time between datacenters.",
+                "when_to_apply": "Bitmask DP для small-N оптимизационных задач с глобальным constraint: TSP, Hamiltonian Path, Set Cover, Assignment Problem (хотя последний эффективнее через Hungarian alg). Production-сценарий: route planning для drones/robots с N=15-20 waypoints, scheduling jobs на N machines с N=20.",
+                "edge_cases": "Memory дополнительно ограничивает: `2^n * n` int массив — для `n=22` это `92M` entries = 368MB, на границе JVM heap. Для economy используют сжатый state (по hash, set of reachable masks). Также: для TSP с возвратом в стартовую вершину base case `dp[1][0]=0` (mask `00...001` означает посетили только город 0). Финальный ответ — `min over i: dp[ALL][i] + dist[i][0]`.",
+                "related": "[[dynamic-programming-interview#Q1]] DP applicability; [[dynamic-programming-interview#Q30]] pseudo-polynomial complexity; [[graphs-interview#Q1]] graph algorithms."
+              },
+              "label": "A",
+              "text": "Bitmask DP работает для `n ≤ 20-22` за разумное время (`22^2 * 2^22 ≈ 2 * 10^9` операций — десятки секунд). Brute-force `O(n!) = 22! ≈ 10^21` неприменим. Bitmask DP экспоненциальный, но с гораздо меньшим основанием (`2` vs `n`), и для small `n` практически выполним.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`n=100` даёт `100^2 * 2^100 ≈ 10^34` — completely infeasible. Bitmask DP практичен только для `n ≤ 20-22`. Brute-force работает до `n=10-11` (`10! = 3.6M`, `11! = 40M` — секунды).",
+                "source_of_confusion": "Студенты overestimate practical bitmask DP, не считая `2^n` для конкретных `n`.",
+                "if_it_were_true": "TSP для 100 городов решался бы за секунды — но это исследовательская задача, требующая дни на approximation.",
+                "how_it_should_be": "Реальный диапазон `n ≤ 20-22` для bitmask DP, остальное — heuristics."
+              },
+              "label": "B",
+              "text": "Bitmask DP работает для `n ≤ 100` за разумное время; brute-force работает только для `n ≤ 8`.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Bitmask DP остаётся экспоненциальным (`O(n^2 * 2^n)`), не полиномиальным. P vs NP не решён. Bitmask DP даёт лучший экспоненциальный exponent, но не полиномиальный.",
+                "source_of_confusion": "Студенты, не привыкшие к exponential complexity classes, путают exponential improvement с polynomial.",
+                "if_it_were_true": "Это была бы revolution в Computer Science с Turing Award. Реально NP-status TSP не изменён.",
+                "how_it_should_be": "Bitmask DP — улучшение от `O(n!)` до `O(n^2 * 2^n)` (exponential, but smaller base) — практически полезно, но не решает P vs NP."
+              },
+              "label": "C",
+              "text": "Bitmask DP даёт полиномиальное время решения NP-hard задачи, что решает проблему P vs NP в положительную сторону.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Bitmask DP работает в любом языке. Python медленнее Java/C++ (constant factor `~10-50x`), но алгоритмически возможен. Для `n=18-20` Python работает за минуты, что приемлемо для исследований.",
+                "source_of_confusion": "Студенты, не работавшие в Python с алгоритмами, считают его «слишком медленным».",
+                "if_it_were_true": "Большинство алгоритмических соревнований на Python были бы невозможны — но Python на Codeforces работает с increased TL (3x обычно).",
+                "how_it_should_be": "Bitmask DP language-independent; Python add constant factor, не делает невозможным."
+              },
+              "label": "D",
+              "text": "Bitmask DP работает только в Java/C++; в Python невозможно из-за GIL и overhead на bit operations.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое pseudo-polynomial complexity?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`O(n*W)` — это точный алгоритм для Knapsack, не приближение. Pseudo-polynomial означает «полиномиальный в *значении* W, но экспоненциальный в *размере представления* W». Если `W = 10^9`, то `log W = 30` бит, и `O(n*W) = O(n * 2^30)` — экспоненциально в `log W`.",
+                "source_of_confusion": "Студенты ассоциируют NP-hardness с неточностью, но DP даёт точные ответы.",
+                "if_it_were_true": "`O(n*W)` был бы approximation алгоритмом — но он exact. FPTAS (Fully Polynomial-Time Approximation Scheme) — это уже approximation.",
+                "how_it_should_be": "Pseudo-polynomial — это терминологическая категория, описывающая зависимость от value vs bit-length."
+              },
+              "label": "A",
+              "text": "Потому что Knapsack — NP-hard, и истинно полиномиального алгоритма для него не существует (если P≠NP); `O(n*W)` — это лучшее приближение.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Cobham's thesis определяет полиномиальные алгоритмы относительно длины входа в битах. Целое число `W` представляется `⌈log₂(W+1)⌉` битами. Если сложность `f(W) = W`, то относительно `b = log W` это `f = 2^b` — экспоненциально. Pseudo-polynomial означает: алгоритм полиномиален в W (`O(W^k)` для some k), но экспоненциален в `log W`. Это разделяет «фактически быстрые» (size W small) от «теоретически быстрых». На практике Knapsack за `O(n*W)` работает для `W ≤ 10^6`, но не для `W = 10^9`.",
+                "example": "Subset Sum с `n=30, target=1000`: `O(n*target) = 30000` операций — мгновенно. С `target = 10^12`: `30 * 10^12 = 3*10^13` — годы. Pseudo-polynomial проявляется в production, когда размер value растёт быстрее чем размер data. Поэтому Capital One 2019 incident мог содержать DP по большим integer values, вызывая deadline misses.",
+                "when_to_apply": "Понимание pseudo-polynomial важно при выборе алгоритма для real-data: если values могут быть `10^9+`, DP не подходит, нужна approximation (FPTAS для Knapsack) или ILP. Production: budgeting с centov accuracy (multiply by 100, large W) — нужен FPTAS вместо DP.",
+                "edge_cases": "Многие классические DP — pseudo-polynomial: Knapsack, Subset Sum, Partition, Coin Change. Их «полиномиальность» обманчива. ILP (Integer Linear Programming) — NP-hard, но modern solvers (Gurobi, CPLEX) handle большие values efficient на practice. Для small `n` и large `W` ILP может быть быстрее DP.",
+                "related": "[[dynamic-programming-interview#Q10]] 0/1 Knapsack; [[complexity-analysis-interview#Q1]] big-O analysis; [[dynamic-programming-interview#Q1]] DP applicability."
+              },
+              "label": "B",
+              "text": "«Полиномиальный» в Computer Science измеряется относительно размера входа в битах. `W` записывается за `log W` бит, поэтому `O(n*W) = O(n * 2^log W)` — экспоненциальный в размере представления `W`. Для `W = 10^9` это `O(n * 10^9)` — практически невыполнимо, хотя `n` мал.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Pseudo-polynomial — это термин из complexity theory о зависимости от value vs bit-length, не о вероятности. DP даёт детерминированно правильный ответ.",
+                "source_of_confusion": "Студенты, знакомые с randomized algorithms (BPP class), переносят probabilistic understanding.",
+                "if_it_were_true": "Knapsack нуждался бы в multiple runs для надёжности — но он deterministic.",
+                "how_it_should_be": "Pseudo-polynomial относится к scaling в bit size of input, не к probabilistic guarantees."
+              },
+              "label": "C",
+              "text": "Pseudo-polynomial означает, что алгоритм даёт случайно правильный ответ с вероятностью полиномиально близкой к 1.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Pseudo-polynomial — формальный термин из complexity theory (Garey & Johnson, 1979), описывающий конкретный class сложности.",
+                "source_of_confusion": "Студенты, не читавшие CLRS rigorous chapters, считают термины marketing-spin.",
+                "if_it_were_true": "Термин не встречался бы в peer-reviewed CS papers — но он стандартен.",
+                "how_it_should_be": "Pseudo-polynomial — precise theoretical concept о relation between value-polynomial и bit-polynomial."
+              },
+              "label": "D",
+              "text": "Pseudo-polynomial — это маркетинговый термин для алгоритмов, которые работают медленно, но используют DP.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем DP отличается от Greedy?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Greedy применяется как для P, так и для NP-hard задач. NP-status не критерий. Greedy быстрее DP при выполнении greedy choice property, потому что не нужен кэш — `O(n log n)` обычно вместо `O(n*W)`.",
+                "source_of_confusion": "Студенты путают complexity class и алгоритмический подход.",
+                "if_it_were_true": "Greedy для Minimum Spanning Tree (Kruskal, P-задача) не применялся бы — но это canonical greedy.",
+                "how_it_should_be": "Greedy choice property — это about структуры задачи, не сложности класса."
+              },
+              "label": "A",
+              "text": "Greedy требует, чтобы задача была NP-полной; в P-задачах Greedy не нужен, потому что DP всегда быстрее.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Optimal substructure — необходимое, но недостаточное условие для Greedy. Greedy choice property означает: «существует локально оптимальный выбор, который ведёт к глобальному оптимуму». Если он выполняется, можно делать жадные шаги без backtracking. Без него локально оптимальный выбор может «загнать в тупик», и DP перебирает все возможности через memoization. Activity Selection (greedy by end time) — works. Fractional Knapsack (greedy by value/weight) — works. 0/1 Knapsack — greedy не works. Coin Change canonical — works, произвольная coins — не works.",
+                "example": "Caching policy LRU vs Optimal Belady: LRU — greedy by recent usage, не optimal. Belady (replace block accessed furthest in future) — optimal, но требует foresight (impossible in production). Greedy LRU работает «достаточно хорошо» эмпирически, но не оптимально. На production это accepted trade-off — Redis, Memcached используют LRU.",
+                "when_to_apply": "Used cases для Greedy: Huffman coding (по частоте), Dijkstra (по distance, BFS-like), Kruskal/Prim MST (по weight), Job Scheduling by deadline (Earliest Deadline First). Used cases для DP когда greedy не работает: 0/1 Knapsack, Coin Change with arbitrary denominations, Longest Common Subsequence, Edit Distance.",
+                "edge_cases": "Доказательство greedy choice property требует exchange argument: «если оптимальное решение не делает greedy choice, можно поменять — и улучшить или сохранить». Без proof greedy может ошибаться. На интервью всегда требуют либо proof, либо явное признание «greedy may be suboptimal here, use DP».",
+                "related": "[[dynamic-programming-interview#Q12]] Coin Change minimum (DP vs Greedy); [[dynamic-programming-interview#Q1]] DP conditions; [[dynamic-programming-interview#Q32]] DP vs Divide-and-Conquer."
+              },
+              "label": "B",
+              "text": "Greedy требует greedy choice property: на каждом шаге локально оптимальный выбор приводит к глобальному оптимуму без необходимости пересмотра. Без этого свойства DP перебирает все варианты для поиска оптимума. Coin Change `[1,3,4], amount=6`: greedy `4+1+1=3`, оптимум `3+3=2`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Greedy часто сам сортирует вход для применения (Kruskal сортирует edges, Activity Selection сортирует by end time). Сортировка — деталь реализации, не критерий применимости.",
+                "source_of_confusion": "Некоторые greedy начинают с сортировки, и студенты обобщают.",
+                "if_it_were_true": "Greedy на отсортированном Coin Change `[1,3,4]` работал бы — но он не работает (даёт 3 вместо 2).",
+                "how_it_should_be": "Greedy choice property — это о структуре задачи, не о порядке входа."
+              },
+              "label": "C",
+              "text": "Greedy требует сортированного входа; если массив не отсортирован, нужен DP.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Сложность не критерий применимости. Greedy для MST — `O(E log V)`, не `O(V)`. DP для Fibonacci — `O(n)`, не `O(n^2)`. Сложность зависит от задачи, не от метода.",
+                "source_of_confusion": "Студенты, видя «Greedy быстрее», обобщают на конкретные numbers.",
+                "if_it_were_true": "Существовала бы строгая иерархия `Greedy < DP` по сложности — но это не так.",
+                "how_it_should_be": "Greedy быстрее когда применим (нет необходимости в кэше), но complexities depend on task structure."
+              },
+              "label": "D",
+              "text": "Greedy всегда даёт `O(n)`-решение, а DP — `O(n^2)`; разница в сложности.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем DP отличается от Divide and Conquer?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "В Merge Sort `mergeSort([a, b, c, d])` разбивается на `mergeSort([a, b])` и `mergeSort([c, d])`. Эти подмассивы не пересекаются — ни элементы, ни границы. Дальнейшие разбиения тоже непересекающиеся. Дерево вызовов имеет `n log n` уникальных узлов без повторов. Мемоизация ничего не даёт. В Fibonacci `fib(5) = fib(4) + fib(3) = (fib(3)+fib(2)) + (fib(2)+fib(1))` — `fib(3)` и `fib(2)` повторяются, и мемоизация даёт `O(n)` вместо `O(2^n)`. Это критерий DP vs D&C: are subproblems shared?",
+                "example": "Merge Sort `[5, 2, 8, 1]` → split `[5,2]` и `[8,1]` → split `[5]`, `[2]`, `[8]`, `[1]` — все четыре уникальны. Дерево вызовов 7 узлов, ни одно не повторяется. В DP-задаче LCS `s=\"abc\", t=\"ac\"` подзадача `LCS(\"ab\", \"a\")` участвует в нескольких ветках recursion tree.",
+                "when_to_apply": "Понимать различие при выборе techniques: D&C — когда подзадачи независимы (sorting, FFT, closest pair of points). DP — когда подзадачи перекрываются (sequence comparisons, optimization with state). Production: сортировка через Merge — нет смысла в кэше; пересчёт matrix product chain — выгодно DP.",
+                "edge_cases": "Иногда добавление shared state превращает D&C в DP. Например, Strassen's matrix multiplication — D&C `O(n^2.81)`, но с прекалькуляцией повторных подматриц переходит в hybrid. Bottom-up Merge Sort итеративен и не имеет «дерева вызовов» в classical sense, но идея непересечения сохраняется.",
+                "related": "[[dynamic-programming-interview#Q1]] DP conditions; [[dynamic-programming-interview#Q3]] overlapping subproblems; [[divide-and-conquer-interview#Q1]] D&C basics."
+              },
+              "label": "A",
+              "text": "У них нет overlapping subproblems: при рекурсивном разбиении массива на половины получаемые подмассивы не пересекаются между ветвями. Мемоизация бесполезна — каждый подмассив встречается ровно один раз. Это Divide-and-Conquer, не DP.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Сложность не критерий DP vs D&C. Многие DP-задачи имеют `O(n log n)` (LIS с binary search) или `O(n)` (Fibonacci memoized). Многие D&C задачи имеют `O(n^2)` (naive closest pair).",
+                "source_of_confusion": "Студенты ассоциируют D&C с `O(n log n)` (Master theorem примеры), но это случайность задач.",
+                "if_it_were_true": "LIS `O(n log n)` относился бы к D&C — но это classical DP optimization.",
+                "how_it_should_be": "Сложность определяется задачей, не методом; критерий — overlapping subproblems."
+              },
+              "label": "B",
+              "text": "Merge Sort и Quick Sort работают за `O(n log n)`, а все DP-задачи работают за `O(n^2)` или хуже; разница в сложности.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Stability — это другое свойство (preservation of relative order of equal elements). Merge Sort стабилен, Quick Sort обычно нет. Это не связано с DP vs D&C.",
+                "source_of_confusion": "Студенты mention multiple свойства сортировок, забывая, что DP vs D&C — это об overlapping subproblems.",
+                "if_it_were_true": "Merge Sort (стабильный, `O(n log n)`) считался бы DP — но он D&C.",
+                "how_it_should_be": "Stability и worst-case complexity — orthogonal характеристики, не критерий DP."
+              },
+              "label": "C",
+              "text": "Merge Sort и Quick Sort нестабильны — Quick Sort имеет worst-case `O(n^2)`; DP-алгоритмы всегда детерминированы.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Merge Sort использует `O(n)` дополнительной памяти, не in-place. Quick Sort in-place. DP — variable: некоторые in-place (Minimum Path Sum), большинство — с additional memory.",
+                "source_of_confusion": "Студенты обобщают свойства алгоритмов, не разобравшись в деталях.",
+                "if_it_were_true": "Merge Sort с `O(n)` memory классифицировался бы как DP — но это classical D&C.",
+                "how_it_should_be": "Memory usage — implementation detail, не distinguishing criterion DP vs D&C."
+              },
+              "label": "D",
+              "text": "Merge Sort и Quick Sort modifying array in-place, а DP всегда использует additional memory; это отличие фундаментально.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как распознать DP-задачу на интервью?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Greedy даёт оптимум для подходящих задач (MST, Activity Selection). Backtracking даёт оптимум через exhaustive search. Слово «оптимальный» сужает до optimization problems, но не определяет метод.",
+                "source_of_confusion": "Студенты ищут single-keyword признак, но reality сложнее.",
+                "if_it_were_true": "Все optimization problems решались бы DP — но Dijkstra (Greedy) для shortest path в graphs с positive weights даёт оптимум.",
+                "how_it_should_be": "«Оптимальный» — necessary, не sufficient для DP."
+              },
+              "label": "A",
+              "text": "Любая задача со словом «оптимальный» — это DP; greedy и backtracking не дают оптимума.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Number test cases не релевантно methodу. Задача может иметь любое число тестов, выбор algorithm based on semantics.",
+                "source_of_confusion": "Студенты пытаются «extract» method clues из meta-information.",
+                "if_it_were_true": "Знание algorithm требовало бы looking at hidden test cases — что нелегально.",
+                "how_it_should_be": "Method determined by problem structure, не test setup."
+              },
+              "label": "B",
+              "text": "Если задача имеет несколько test cases с одинаковым input, это DP; если только один — Greedy или D&C.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Условия задач никогда не упоминают reализационные детали типа «использовать массив dp». Distinguishing — это работа решающего: парсить semantics задачи.",
+                "source_of_confusion": "Студенты ожидают «hints» в условии, но реальные задачи требуют analysis.",
+                "if_it_were_true": "LeetCode hints были бы reliable — но они часто misleading или absent.",
+                "how_it_should_be": "Анализ semantics, не keyword matching."
+              },
+              "label": "C",
+              "text": "DP-задача однозначно распознаётся по наличию array `dp[]` в expected solution — если в условии нет упоминания массивов, это не DP.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "explanation": "Стандартный protocol на интервью: (1) парсить задачу — есть ли минимум/максимум/число способов? Есть ли последовательность выборов? Если нет — скорее всего не DP. (2) Описать state в виде `f(i)` или `f(i, j)` — если state нужно много измерений (>3), может быть нерешаемо за разумное время. (3) Проверить optimal substructure — выражается ли `f(state)` через `f(smaller_state)`? (4) Проверить overlapping subproblems — встречается ли одна подзадача в дереве вызовов несколько раз? (5) Проверить greedy — есть ли локально оптимальный выбор, который ведёт к глобальному оптимуму? Если нет — DP.",
+                "example": "«Найти минимальное число монет для amount» — есть «минимум», выбор на каждом шаге (какую монету взять), state `dp[amount]`, optimal substructure (минимум для amount = минимум для (amount - coin) + 1 для best coin), overlapping (одно amount встречается много раз), greedy не работает для arbitrary coins. Все 5 признаков → DP.",
+                "when_to_apply": "Этот checklist полезен в первые 2-3 минуты на интервью, до начала кодирования. Часто на одного признака недостаточно: «есть min/max» — может быть Greedy. «Overlapping subproblems» — может быть memoized DFS. Combination всех signals даёт уверенность в выборе DP.",
+                "edge_cases": "Иногда DP конкурирует с Mathematical formula (Unique Paths = `C(m+n-2, m-1)`) или Network Flow (Min Cost Flow). На интервью спросить «есть ли closed-form solution?» — если да, она часто быстрее. Также: некоторые DP-задачи реально решаются Backtracking + memoization, что эквивалентно DP top-down.",
+                "related": "[[dynamic-programming-interview#Q1]] DP conditions; [[dynamic-programming-interview#Q31]] DP vs Greedy; [[dynamic-programming-interview#Q32]] DP vs D&C."
+              },
+              "label": "D",
+              "text": "Признаки DP: (1) задача про «минимум/максимум/число способов» с выбором на каждом шаге; (2) state можно описать малым числом параметров; (3) optimal substructure + overlapping subproblems в naive рекурсии; (4) greedy choice property не работает (контрпримеры). Если все четыре — это DP.",
+              "correct": true,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
