@@ -730,3 +730,454 @@ Expected: 9-10 коммитов с префиксами `diagnostic(...)`, `feat
 **Risks not covered in plan:**
 - Если quiz-app DB действительно есть и в ней десятки тысяч записей — Task 7 Step 3 может быть медленным. Маловероятно для personal-app.
 - Если Chrome букмарок > 1000 — Task 5 Step 1 даст огромный TSV. Все равно решаем через aggregations в Task 8, должно быть OK.
+
+---
+
+# ADDENDUM — Pivot 2026-05-21: master-checklist model
+
+**Status of original plan:** Tasks 1-9 — выполнены. **Tasks 10-11 — SUPERSEDED.** Task 12 — будет выполнена после A-G ниже.
+
+**Trigger:** пользователь пересмотрел Singularity-модель. Вместо 5 задач/неделя → один master-чеклист в существующей T-84507082 + Habit + переименование recurring. Полный backlog расширяется с 9 до ~67 циклов в 22 phases. Спека §9 описывает изменения.
+
+**Файлы, затрагиваемые этим addendum'ом:**
+- Modify: `docs/learning-plan/2026-05-20-self-learning-plan.md` (Section 3: с 9 циклов → 67; Section 5: переписать под master-checklist)
+- Create: `docs/learning-plan/diagnostic/11-roadmap-delta-draft.md` (draft Delta для T-84507082)
+- Modify: Singularity T-84507082 (note content)
+- Modify: Singularity T-f2cb5669 (title rename) — опционально
+- Create: Singularity Habit (новая)
+- Modify: `docs/learning-plan/diagnostic/10-cycle-1-tasks-draft.md` (mark OBSOLETE)
+
+## Task A: Расширить main plan markdown с 9 до 67 циклов
+
+**Files:**
+- Modify: `docs/learning-plan/2026-05-20-self-learning-plan.md` (sections 3 + 5)
+
+- [ ] **Step A.1: Заменить Section 3 (Backlog) на полные 67 циклов в 22 phases**
+
+Текущее (9 циклов) → заменить на структуру из спеки §9.4 / brainstorm-секции 2. Список phases и циклов:
+
+```
+Phase 1 — Priority (диагностика) [9]
+  Cycle 1 — System Design & Highload (DDIA)
+  Cycle 2 — Algorithms — Data Structures I (Trees focus)
+  Cycle 3 — AI/LLM Foundations
+  Cycle 4 — Kubernetes deep
+  Cycle 5 — Data Engineering — Kafka Streams
+  Cycle 6 — Go Concurrency
+  Cycle 7 — Reactive Streams (Reactor + RxJava)
+  Cycle 8 — Database Architecture deep
+  Cycle 9 — Spring Cloud / Microservices
+Phase 2 — Algorithms coverage [3]
+  Cycle 10 — Algorithmic Paradigms (DP, Backtracking, Greedy, D&C)
+  Cycle 11 — Sorting & Searching + Big-O
+  Cycle 12 — Data Structures II (Graphs, Hash, Heaps, Tries, LL, Stacks)
+Phase 3 — Java Core deep [4]
+  Cycle 13 — Java Concurrency deep
+  Cycle 14 — Java Collections + Streams API
+  Cycle 15 — Java Modern (Optional, CompletableFuture, Records, Sealed)
+  Cycle 16 — Java Memory Model + I/O / NIO
+Phase 4 — Kotlin [2]
+  Cycle 17 — Kotlin Language
+  Cycle 18 — Kotlin Coroutines + Flow
+Phase 5 — Go [1]
+  Cycle 19 — Go fundamentals + testing
+Phase 6 — Spring deep [4]
+  Cycle 20 — Spring Core (IoC, AOP, Beans)
+  Cycle 21 — Spring Data (JPA, R2DBC)
+  Cycle 22 — Spring Security
+  Cycle 23 — Spring Batch / Modulith / WebFlux
+Phase 7 — Databases deep [4]
+  Cycle 24 — PostgreSQL deep
+  Cycle 25 — SQL Patterns
+  Cycle 26 — NoSQL: MongoDB + Cassandra
+  Cycle 27 — Redis + Elasticsearch + Hibernate caching
+Phase 8 — Architecture [4]
+  Cycle 28 — Hexagonal / Clean / DDD
+  Cycle 29 — CQRS / Event Sourcing / Saga
+  Cycle 30 — Resilience Patterns
+  Cycle 31 — Networking + API Gateway + LB
+Phase 9 — Data Engineering coverage [3]
+  Cycle 32 — Apache Spark
+  Cycle 33 — Apache Flink
+  Cycle 34 — Data Lake / Lakehouse
+Phase 10 — Messaging & Search [2]
+  Cycle 35 — Kafka core
+  Cycle 36 — Messaging ecosystem (Redpanda, RabbitMQ, Solr)
+Phase 11 — API [3]
+  Cycle 37 — REST + HTTP + REST Maturity
+  Cycle 38 — GraphQL + gRPC
+  Cycle 39 — API Versioning + OpenAPI
+Phase 12 — Cloud [1]
+  Cycle 40 — AWS Core
+Phase 13 — DevOps & Containers [3]
+  Cycle 41 — Docker / Containers
+  Cycle 42 — CI/CD (Jenkins, GitLab CI, GHA)
+  Cycle 43 — Service Mesh + GitOps
+Phase 14 — Observability [3]
+  Cycle 44 — Metrics (Prometheus, Grafana, VM)
+  Cycle 45 — Logging (ELK, Loki)
+  Cycle 46 — Tracing & APM (OpenTelemetry, Jaeger)
+Phase 15 — Security [3]
+  Cycle 47 — OWASP Top 10 + AppSec
+  Cycle 48 — AuthN/Z (OAuth2, OIDC, JWT)
+  Cycle 49 — TLS/SSL + Zero Trust
+Phase 16 — Testing [3]
+  Cycle 50 — Test Strategies
+  Cycle 51 — Unit + Integration (JUnit, Mockito)
+  Cycle 52 — E2E + Performance + Chaos
+Phase 17 — Performance [2]
+  Cycle 53 — JVM tuning & profiling
+  Cycle 54 — App performance (DB, caching, network)
+Phase 18 — JVM + Alt Frameworks [2]
+  Cycle 55 — JVM internals + GraalVM Native
+  Cycle 56 — Micronaut & Quarkus
+Phase 19 — Code Quality + Patterns [2]
+  Cycle 57 — Design Patterns (GoF)
+  Cycle 58 — Refactoring + SOLID + Code Review
+Phase 20 — Behavioral & Leadership [2]
+  Cycle 59 — Behavioral STAR
+  Cycle 60 — Leadership topics
+Phase 21 — Trainers (hands-on) [5]
+  Cycle 61 — SQL Trainer (LeetCode SQL)
+  Cycle 62 — Git Trainer (rebase, bisect, reflog)
+  Cycle 63 — Docker Trainer
+  Cycle 64 — Kubernetes Trainer (kind/minikube)
+  Cycle 65 — DSA Visualizer (VisuAlgo + Algorithm Visualizer)
+Phase 22 — Misc [2]
+  Cycle 66 — Interview preparation meta
+  Cycle 67 — Cheat-sheet maintenance & meta-skills
+```
+
+Для **первых 9 циклов** (Phase 1) сохранить детальную секцию с Why/Done-when/Sources, которая уже есть в markdown'е. Для **Phase 2-22** — компактная запись по 1 циклу = 1 строка title (без Why/Done/Sources, чтобы документ оставался читаемым).
+
+Sources: ссылки на свои шпаргалки и букмарки — добавить compact mapping в конце Section 3, не per cycle.
+
+- [ ] **Step A.2: Заменить Section 5 (Singularity integration)**
+
+Старый текст про «5 задач/неделя» → новый текст про master-чеклист:
+
+```markdown
+## 5. Singularity integration (новая модель, см. spec §9)
+
+**Master Roadmap:** существующая задача-страница T-84507082 «План профессионального развития» (project «Учёба»). Полный Delta-чеклист = 67 циклов × 5 micro-task с фиксированным pattern в шапке.
+
+**Recurring time slot:** T-f2cb5669 (Пн-Пт 17:00 1h) переименован в «Учёба: текущий цикл (см. План профразвития)». Содержимого нет.
+
+**Habit:** «1ч учёбы сегодня», Пн-Пт, deepPurple.
+
+**Что НЕ в Singularity:** источники (URL букмарок, пути файлов), evidence, DDIA-главы — в этом markdown-файле.
+
+**Workflow:**
+1. Открыть T-84507082 → найти активный цикл → читать какой next.
+2. Сделать 1 час → отметить чек-бокс в master.
+3. Отметить Habit за день.
+4. По завершении цикла — следующий из backlog.
+```
+
+- [ ] **Step A.3: Verify**
+
+```bash
+grep -c '^### Cycle' docs/learning-plan/2026-05-20-self-learning-plan.md
+```
+
+Expected: ≥ 9 (детальные секции для Phase 1). Полный список циклов (1-67) присутствует, но в компактном формате внутри Phase 2-22.
+
+```bash
+grep -c '^Phase ' docs/learning-plan/2026-05-20-self-learning-plan.md
+```
+
+Expected: 22.
+
+- [ ] **Step A.4: Commit**
+
+```bash
+git add docs/learning-plan/2026-05-20-self-learning-plan.md
+git commit -m "feat(learning): expand backlog to 67 cycles in 22 phases; rewrite Singularity section under master-checklist model"
+```
+
+## Task B: Сгенерировать Roadmap-Delta draft
+
+**Files:**
+- Create: `docs/learning-plan/diagnostic/11-roadmap-delta-draft.md`
+
+- [ ] **Step B.1: Написать Delta-JSON для master-страницы**
+
+Полный Delta-array. Структура:
+
+```
+[
+  // === Header ===
+  {"insert":"План профессионального развития\n", "attributes":{"bold": true}},
+  {"insert":"\n"},
+  {"insert":"Бюджет: 5 ч/нед (1 ч × Пн-Пт). 67 циклов × 5 actions. ~16 мес чистого времени.\n"},
+  {"insert":"Детали в repo: docs/learning-plan/2026-05-20-self-learning-plan.md\n\n"},
+  
+  // === Pattern ===
+  {"insert":"Pattern (одинаково для каждого цикла):\n", "attributes":{"bold": true}},
+  {"insert":"  1. Прочитать свою шпаргалку\n"},
+  {"insert":"  2. Просмотреть закладки → выписать holes\n"},
+  {"insert":"  3. Закрыть holes — точечное чтение\n"},
+  {"insert":"  4. Hands-on (код / диаграмма / writeup)\n"},
+  {"insert":"  5. 20 MCQ через quiz-app ≥80% + commit cheatsheet\n\n"},
+
+  // === Phase 1 ===
+  {"insert":"━━━ Phase 1 — Priority (диагностика) ━━━\n", "attributes":{"bold": true}},
+  
+  {"insert":"\nCycle 1 — System Design & Highload (DDIA)\n", "attributes":{"bold": true}},
+  {"insert":"шпаргалка"}, {"insert":"\n","attributes":{"list":"unchecked"}},
+  {"insert":"закладки + holes"}, {"insert":"\n","attributes":{"list":"unchecked"}},
+  {"insert":"закрыть holes"}, {"insert":"\n","attributes":{"list":"unchecked"}},
+  {"insert":"hands-on"}, {"insert":"\n","attributes":{"list":"unchecked"}},
+  {"insert":"MCQ + commit"}, {"insert":"\n","attributes":{"list":"unchecked"}},
+
+  // ...повторить для Cycle 2-67 с одинаковыми 5 чекбоксами...
+  
+  {"insert":"\n━━━ Phase 22 — Misc ━━━\n", "attributes":{"bold": true}},
+  {"insert":"\nCycle 67 — Cheat-sheet maintenance & meta-skills\n", "attributes":{"bold": true}},
+  {"insert":"шпаргалка"}, {"insert":"\n","attributes":{"list":"unchecked"}},
+  // ... ещё 4 ...
+]
+```
+
+Файл `11-roadmap-delta-draft.md` содержит:
+1. Markdown-описание формата (для пользователя)
+2. JSON-блок с полным Delta (для машинной заливки)
+
+**Размер ожидаем:** ~67 × ~12 операций = ~800 операций. JSON ~30-50 КБ. Singularity Delta вмещает.
+
+- [ ] **Step B.2: Sanity check — операции корректны**
+
+```bash
+jq '. | length' < (jq '.delta' docs/learning-plan/diagnostic/11-roadmap-delta-draft.md)
+```
+
+Expected: ≥ 800.
+
+Или просто визуально: первые / последние 20 строк draft файла.
+
+- [ ] **Step B.3: Commit**
+
+```bash
+git add docs/learning-plan/diagnostic/11-roadmap-delta-draft.md
+git commit -m "diagnostic(roadmap): draft Delta for T-84507082 master-checklist (67 cycles, 22 phases)"
+```
+
+## Task C: Показать draft пользователю
+
+- [ ] **Step C.1: Показать в чат краткое summary**
+
+В сообщении:
+- Путь к draft (`docs/learning-plan/diagnostic/11-roadmap-delta-draft.md`)
+- Количество циклов / phases / чек-боксов
+- Примеры из 2-3 циклов (как выглядит структура)
+
+- [ ] **Step C.2: AskUserQuestion**
+
+```
+question: "Готов залить Roadmap в T-84507082?"
+options:
+  - Да, залей как есть
+  - Покажи 5 циклов более подробно — хочу посмотреть формат
+  - Хочу что-то поменять (опишу следующим сообщением)
+  - Не заливай в Singularity сейчас (оставь только в repo)
+```
+
+Если ответ ≠ «Да» → останавливаемся, обсуждаем, возможно возвращаемся к Task B.
+
+## Task D: Залить Delta в T-84507082 через updateNote
+
+**Files:**
+- Modify: Singularity note `N-T-84507082-aa58-4a6c-b5e7-af3df685f100`
+
+- [ ] **Step D.1: Извлечь Delta из draft в строку**
+
+```bash
+# Извлечь JSON блок из markdown-файла и подготовить как одну JSON-строку для updateNote
+# updateNote ожидает .content как string (массив сериализован в JSON-string)
+DRAFT=docs/learning-plan/diagnostic/11-roadmap-delta-draft.md
+jq -r '.delta | tostring' "$DRAFT" > /tmp/roadmap-delta.json
+wc -c /tmp/roadmap-delta.json
+```
+
+Expected: 30-50 КБ.
+
+- [ ] **Step D.2: Вызвать updateNote**
+
+```
+mcp__singularity__updateNote({
+  note: {
+    id: "N-T-84507082-aa58-4a6c-b5e7-af3df685f100",
+    containerId: "T-84507082-aa58-4a6c-b5e7-af3df685f100",
+    content: "<содержимое /tmp/roadmap-delta.json>"
+  }
+})
+```
+
+- [ ] **Step D.3: Verify**
+
+```
+mcp__singularity__getNote({ id: "N-T-84507082-aa58-4a6c-b5e7-af3df685f100" })
+```
+
+Expected: `.content` теперь содержит большой Delta-array, не `[{"insert":"\n"}]`.
+
+## Task E: Переименовать T-f2cb5669 (опционально)
+
+**Files:**
+- Modify: Singularity task `T-f2cb5669-13f9-4d1a-a98c-68a121de9a6d`
+
+- [ ] **Step E.1: Подтверждение через AskUserQuestion**
+
+```
+question: "Переименовать recurring задачу 'Почитать шпаргалки и разобрать план подготовки' в 'Учёба: текущий цикл'?"
+options:
+  - Да, переименуй
+  - Не трогай — оставь как есть
+  - Другое название (предложи)
+```
+
+- [ ] **Step E.2: Если "Да" — загрузить updateTask tool через ToolSearch**
+
+```
+ToolSearch({ query: "select:mcp__singularity__updateTask", max_results: 1 })
+```
+
+- [ ] **Step E.3: Вызвать updateTask**
+
+```
+mcp__singularity__updateTask({
+  task: {
+    id: "T-f2cb5669-13f9-4d1a-a98c-68a121de9a6d",
+    title: "Учёба: текущий цикл (см. План профразвития)"
+  }
+})
+```
+
+Note: recurrence-поля не трогаем, только title.
+
+## Task F: Создать Habit «1ч учёбы сегодня»
+
+- [ ] **Step F.1: Загрузить createHabit tool**
+
+```
+ToolSearch({ query: "select:mcp__singularity__createHabit", max_results: 1 })
+```
+
+- [ ] **Step F.2: Вызвать createHabit**
+
+```
+mcp__singularity__createHabit({
+  habit: {
+    title: "Учусь сегодня (1ч)",
+    color: "deepPurple",
+    status: 0
+  }
+})
+```
+
+(Опц. поля типа repeat-days, если поддерживаются — daily Пн-Пт. Если в схеме нет — оставить базовую daily, пользователь подстроит в UI.)
+
+- [ ] **Step F.3: Verify**
+
+```
+mcp__singularity__listHabits()
+```
+
+Expected: новая habit в списке.
+
+## Task G: Пометить obsolete старый draft
+
+**Files:**
+- Modify: `docs/learning-plan/diagnostic/10-cycle-1-tasks-draft.md`
+
+- [ ] **Step G.1: Добавить OBSOLETE-заголовок в самое начало файла**
+
+```bash
+sed -i.bak '1i\
+> ⚠️ OBSOLETE 2026-05-21. Старая модель (5 задач/неделя) отменена.\
+> Актуальная Roadmap-схема — в docs/learning-plan/diagnostic/11-roadmap-delta-draft.md\
+> и в Singularity T-84507082.\
+\
+' docs/learning-plan/diagnostic/10-cycle-1-tasks-draft.md
+rm docs/learning-plan/diagnostic/10-cycle-1-tasks-draft.md.bak
+head -5 docs/learning-plan/diagnostic/10-cycle-1-tasks-draft.md
+```
+
+Expected: первые строки — OBSOLETE marker.
+
+- [ ] **Step G.2: Commit**
+
+```bash
+git add docs/learning-plan/diagnostic/10-cycle-1-tasks-draft.md
+git commit -m "diagnostic(cleanup): mark cycle-1 tasks draft as OBSOLETE (model pivot)"
+```
+
+## Task H: Финальная проверка (заменяет старую Task 12)
+
+- [ ] **Step H.1: Проверить все артефакты**
+
+```bash
+ls -la docs/learning-plan/
+ls -la docs/learning-plan/diagnostic/
+```
+
+Expected:
+- `IMPLEMENTATION_PLAN.md` (этот файл)
+- `2026-05-20-self-learning-plan.md` (67 циклов, обновлённая Section 5)
+- `diagnostic/` с файлами 01-08 + 10 (OBSOLETE) + 11 (Roadmap Delta draft)
+
+- [ ] **Step H.2: Проверить git log**
+
+```bash
+git log --oneline | head -20
+```
+
+Expected: 14-15 коммитов, включая addendum-коммиты (`expand backlog`, `roadmap draft`, `cleanup obsolete`).
+
+- [ ] **Step H.3: Проверить Singularity состояние**
+
+```
+mcp__singularity__getNote({ id: "N-T-84507082-aa58-4a6c-b5e7-af3df685f100" })
+# содержит большой Delta
+
+mcp__singularity__getTask({ id: "T-f2cb5669-13f9-4d1a-a98c-68a121de9a6d" })
+# title переименован (если Task E принят)
+
+mcp__singularity__listHabits()
+# содержит "Учусь сегодня"
+```
+
+- [ ] **Step H.4: Summary пользователю**
+
+Сообщение в чат:
+- Сколько циклов в backlog (67)
+- Cycle 1 = System Design + DDIA
+- T-84507082 теперь содержит весь Roadmap; Habit активирован
+- Repo: `2026-05-20-self-learning-plan.md` = детальный план
+- Health cleanup — следующая сессия
+
+---
+
+## Addendum Self-Review
+
+**Spec §9 coverage:**
+- ✅ §9.2 архитектура → Tasks A-F покрывают: master (D), recurring rename (E), Habit (F), legacy не трогаем (no task), repo md (A)
+- ✅ §9.3 pattern → Task B Step B.1 жёстко закладывает pattern в Delta header
+- ✅ §9.4 backlog 67 циклов → Task A Step A.1 + Task B
+- ✅ §9.5 анти-паттерны → отражено в self-review: не создаём new tasks, pattern один раз, источники не дублируем
+- ✅ §9.6 updates существующих → Tasks A, G + spec уже обновлена
+
+**Placeholder check:**
+- Task B Step B.1 показывает первый цикл и последний с placeholder `// ...повторить для Cycle 2-67...` — это полностью объяснимая компрессия (паттерн идентичен, я не пишу 67 одинаковых блоков в плане; engineer экстраполирует). НЕ placeholder в смысле «придумать что писать».
+- Task F Step F.2 — `(Опц. поля типа repeat-days, если поддерживаются)`. Это **является** placeholder — нужно либо знать схему createHabit, либо иметь явное fallback. **Mitigation**: после Step F.1 (ToolSearch) увидим схему и заполним точно.
+
+**Type consistency:**
+- `T-84507082-aa58-4a6c-b5e7-af3df685f100` — везде одинаково.
+- `N-T-84507082-aa58-4a6c-b5e7-af3df685f100` — note id согласован.
+- `T-f2cb5669-13f9-4d1a-a98c-68a121de9a6d` — везде одинаково.
+- Delta-format: `{"insert": "...", "attributes": {...}}` — согласовано.
+
+**Risks:**
+- updateNote с очень большим content (50 КБ) может упасть. Mitigation: если упадёт — попробовать разбить (хотя note это единое поле, разбить не получится; альтернатива — отказаться от 67 циклов и сжать до 30).
+- updateTask с recurrence-полями может затереть recurrence. Mitigation: в Task E передаём только title, схема MCP должна оставить recurrence нетронутым (verify в Step H.3).
+- createHabit схема неизвестна точно — Task F Step F.1 загружает её, потом заполняем.
