@@ -1,4 +1,12 @@
-# Cycle 1 — Singularity tasks draft
+> ⚠️ **OBSOLETE 2026-05-21.** Старая модель (5 задач/неделя в Singularity) отменена brainstorm-pivot.
+> Актуальная модель — master-чеклист в T-84507082 + Habit + `roadmap-checklist.md`.
+> Полный backlog: [../roadmap-checklist.md](../roadmap-checklist.md).
+> Дизайн pivot'а: [../../superpowers/specs/2026-05-20-learning-plan-design.md §9](../../superpowers/specs/2026-05-20-learning-plan-design.md).
+> Файл сохранён как историческая запись.
+
+---
+
+# Cycle 1 — Singularity tasks draft (OBSOLETE)
 
 **Тема:** System Design & Highload (DDIA fundamentals)
 **Start:** 2026-05-25 (Monday) → 2026-05-29 (Friday), GMT+3
