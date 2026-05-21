@@ -31,6 +31,9 @@ dependencies {
     // --- Jackson (поддержка Java Time) ---
     implementation(libs.jackson.datatype.jsr310)
 
+    // --- JSON Schema Validation ---
+    implementation(libs.json.schema.validator)
+
     // --- Markdown рендеринг ---
     implementation(libs.flexmark.all)
     implementation(libs.jsoup)
