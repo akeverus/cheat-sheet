@@ -128,7 +128,115 @@
 
 ---
 
-После 9 циклов (~2.5 месяца чистого времени, 3-4 месяца с поправкой на пропуски/refresh) — повторить диагностику, обновить backlog.
+### Phases 2-22 — Полное покрытие (58 циклов)
+
+Phase 1 закрывает диагностические приоритеты. Phases 2-22 — покрытие всех 25 категорий interview, всех bookmark-папок и всех тренажёров. Для каждого цикла действует одинаковый pattern (см. §4). Источники для конкретного цикла — мапятся по подкатегории в `cheatsheets/interview/<category>/` + соответствующей папке Chrome закладок.
+
+**Phase 2 — Algorithms coverage** *(после Cycle 2)*
+- **Cycle 10**: Algorithmic Paradigms (DP, Backtracking, Greedy, Divide&Conquer, Recursion, Two-pointers)
+- **Cycle 11**: Sorting & Searching + Big-O Complexity
+- **Cycle 12**: Data Structures II (Graphs, Hash, Heaps, Tries, Linked Lists, Stacks/Queues)
+
+**Phase 3 — Java Core deep** *(27 файлов в `interview/programming-languages/java/`)*
+- **Cycle 13**: Java Concurrency deep (threads, executors, locks, atomic) — 56 MCQ в quiz уже есть
+- **Cycle 14**: Java Collections + Streams API
+- **Cycle 15**: Java Modern (Optional, CompletableFuture, Records, Sealed, Pattern matching)
+- **Cycle 16**: Java Memory Model + I/O / NIO
+
+**Phase 4 — Kotlin** *(11 файлов)*
+- **Cycle 17**: Kotlin Language (sealed, data, scope functions, DSL)
+- **Cycle 18**: Kotlin Coroutines + Flow deep
+
+**Phase 5 — Go (coverage)** *(Cycle 6 уже = Concurrency)*
+- **Cycle 19**: Go fundamentals + testing + idioms
+
+**Phase 6 — Spring deep** *(32 файла; Spring Cloud в Cycle 9)*
+- **Cycle 20**: Spring Core (IoC, AOP, Beans, lifecycle, profiles)
+- **Cycle 21**: Spring Data (JPA, R2DBC, repositories, transactions)
+- **Cycle 22**: Spring Security (OAuth2 Resource Server, JWT, method security)
+- **Cycle 23**: Spring Batch / Modulith / Integration / WebFlux
+
+**Phase 7 — Databases coverage** *(18 файлов; db-arch в Cycle 8)*
+- **Cycle 24**: PostgreSQL deep (MVCC, indexes, query plans, partitioning)
+- **Cycle 25**: SQL Patterns (joins, CTEs, window functions, optimization)
+- **Cycle 26**: NoSQL: MongoDB + Cassandra
+- **Cycle 27**: Redis + Elasticsearch + Hibernate caching
+
+**Phase 8 — Architecture** *(19 файлов)*
+- **Cycle 28**: Hexagonal / Clean / DDD
+- **Cycle 29**: CQRS / Event Sourcing / Saga
+- **Cycle 30**: Resilience Patterns (CB, retry, bulkhead, timeout)
+- **Cycle 31**: Networking + API Gateway + Load Balancing
+
+**Phase 9 — Data Engineering coverage** *(Kafka Streams в Cycle 5)*
+- **Cycle 32**: Apache Spark
+- **Cycle 33**: Apache Flink
+- **Cycle 34**: Data Lake / Lakehouse / Streaming Architecture
+
+**Phase 10 — Messaging & Search** *(7 файлов)*
+- **Cycle 35**: Kafka core (brokers, partitions, EOS, transactions)
+- **Cycle 36**: Messaging ecosystem (Redpanda, RabbitMQ, ActiveMQ, Solr)
+
+**Phase 11 — API** *(8 файлов)*
+- **Cycle 37**: REST + HTTP fundamentals + REST Maturity
+- **Cycle 38**: GraphQL + gRPC
+- **Cycle 39**: API Versioning + OpenAPI + API Design
+
+**Phase 12 — Cloud** *(6 файлов)*
+- **Cycle 40**: AWS Core (EC2, S3, IAM, RDS, Lambda, VPC)
+
+**Phase 13 — DevOps & Containers** *(13 файлов; K8s в Cycle 4)*
+- **Cycle 41**: Docker / Containers / multi-stage builds
+- **Cycle 42**: CI/CD (Jenkins, GitLab CI, GitHub Actions)
+- **Cycle 43**: Service Mesh + GitOps (Linkerd, Istio, ArgoCD)
+
+**Phase 14 — Observability** *(monitoring 9 + logging 1)*
+- **Cycle 44**: Metrics (Prometheus, Grafana, Victoria Metrics)
+- **Cycle 45**: Logging (ELK, Loki, structured)
+- **Cycle 46**: Tracing & APM (OpenTelemetry, Jaeger)
+
+**Phase 15 — Security** *(10 файлов)*
+- **Cycle 47**: OWASP Top 10 + Application Security
+- **Cycle 48**: AuthN/Z (OAuth2, OIDC, JWT, SAML, RBAC/ABAC)
+- **Cycle 49**: TLS/SSL + Zero Trust + Network Security
+
+**Phase 16 — Testing** *(14 файлов)*
+- **Cycle 50**: Test Strategies (Pyramid, Trophy, Honeycomb)
+- **Cycle 51**: Unit + Integration (JUnit, Mockito, Spring Test)
+- **Cycle 52**: E2E + Performance + Chaos + Test Automation
+
+**Phase 17 — Performance** *(7 файлов)*
+- **Cycle 53**: JVM tuning & profiling (GC, JIT, heap)
+- **Cycle 54**: App performance (DB tuning, caching, network)
+
+**Phase 18 — JVM Internals + Alt Frameworks** *(jvm 2 + jvm-alternatives 4)*
+- **Cycle 55**: JVM internals + GraalVM Native
+- **Cycle 56**: Micronaut & Quarkus
+
+**Phase 19 — Code Quality + Design Patterns** *(code-quality 7 + design-patterns 1)*
+- **Cycle 57**: Design Patterns (GoF + practical)
+- **Cycle 58**: Refactoring + SOLID + Code Review + Static Analysis
+
+**Phase 20 — Behavioral & Leadership** *(6 + 7 файлов)*
+- **Cycle 59**: Behavioral STAR (Conflict, Failure, Culture-fit)
+- **Cycle 60**: Leadership topics (Mentoring, Tech-decisions, Estimations)
+
+**Phase 21 — Trainers (hands-on)** *(из закладок Learning)*
+- **Cycle 61**: SQL Trainer (LeetCode SQL + analytical queries)
+- **Cycle 62**: Git Trainer (rebase, cherry-pick, bisect, reflog)
+- **Cycle 63**: Docker Trainer (build, multi-stage, security, compose)
+- **Cycle 64**: Kubernetes Trainer (kind/minikube, manifests, debug)
+- **Cycle 65**: DSA Visualizer (VisuAlgo + Algorithm Visualizer)
+
+**Phase 22 — Misc**
+- **Cycle 66**: Interview preparation meta (resume, process, system-design interviews)
+- **Cycle 67**: Cheat-sheet maintenance & meta-skills (TOC review, quiz-app workflow)
+
+---
+
+**Итого: 67 циклов × 5 actions = 335 чек-боксов.** Горизонт при 1ч/будний день: ~16 месяцев чистого времени, реалистично — ~2 года с пропусками.
+
+**После 67 циклов** — повторить полную диагностику, посмотреть что появилось нового, продлить backlog при необходимости.
 
 ## 4. Формат недельного цикла
 
@@ -142,14 +250,29 @@
 | **Чт** | Прогнать **20 MCQ из quiz-app** для темы цикла (уже сгенерированные!). Цель ≥ 80% correct. Wrong → возврат в `cheatsheets/<theme>/<file>.md` для дополнения. | Сессия в quiz-app (`review_state` заполняется) |
 | **Пт** | Расширить cheatsheet (свои новые понимания). Commit. | `git commit -m "learning(<theme>): ..."` |
 
-## 5. Singularity integration
+## 5. Singularity integration (master-checklist model)
 
-- **Проект:** «Учёба» (`P-606c59f5-5404-401d-a674-8660595e84bb`)
-- **Таск-группа:** базовая (по правилу CLAUDE.md — `Singularity API → пункт 1`)
-- **Шаблон названий:** `[Пн|Вт|Ср|Чт|Пт] <Theme>: <короткое описание дня>`
-- **Свойства задач:** `start` = соответствующий день недели в GMT+3, `useTime: false`, `notify: 1`, `notifies: [60]`, `priority: 1`, `isNote: false`.
-- **В note-поле:** Delta-array со ссылками: путь к шпаргалке в репе + URL букмарок + ожидаемый «done».
-- **Правило обновления:** когда цикл закрыт (все 5 задач отмечены) → создать следующую пятёрку из backlog. **Не auto-rolling**, делается вручную.
+**SUPERSEDED:** старая модель «5 задач/неделя» была отброшена 2026-05-21. Подробности — в spec §9.
+
+**Master Roadmap:** существующая задача-страница `T-84507082-aa58-4a6c-b5e7-af3df685f100` «План профессионального развития» в проекте «Учёба» (`P-606c59f5`). Содержимое — Delta-чеклист: pattern в шапке + 67 циклов с 5 чекбоксами каждый. Это единственный источник правды для прогресса в Singularity.
+
+**Recurring time slot:** `T-f2cb5669-13f9-4d1a-a98c-68a121de9a6d` (Пн-Пт 17:00 1ч, повтор) — переименован в нейтральное «Учёба: текущий цикл (см. План профразвития)». Содержимого нет, специфика цикла не дублируется.
+
+**Habit:** «Учусь сегодня (1ч)», Пн-Пт, deepPurple — для streak-мотивации.
+
+**Legacy T-c9b610cc** «Темы для повторения» (из 2025-01) — не трогаем. Java Concurrency и Java Reactive из легаси покрыты Cycle 13 и Cycle 7 соответственно.
+
+**Workflow:**
+1. Открыть `T-84507082` → найти первый незачёкнутый Cycle → читать какие 5 actions делать (фикс. pattern).
+2. Делать 1ч/будний день в окне 17:00–18:00 (recurring slot).
+3. Отметить чек-бокс в master по мере прохождения.
+4. По завершении цикла (все 5 чек-боксов) → next цикл из backlog. Не auto-rolling.
+5. Каждый день учёбы — отметить Habit «Учусь сегодня».
+
+**Чего в Singularity НЕТ** (живёт в repo):
+- Источники конкретного цикла (URL букмарок, пути файлов).
+- Evidence / why-обоснование цикла.
+- Конкретные книжные главы, LeetCode задачи и т.п.
 
 ## 6. Правила пересмотра
 
