@@ -73,7 +73,6 @@ class QuestionImportServiceTest {
                 .important(false)
                 .questionType(QuestionType.TEXT)
                 .codeSnippet(null)
-                .options(List.of())
                 .build();
 
         when(interviewPathResolver.getBasePath()).thenReturn(root);
@@ -148,7 +147,6 @@ class QuestionImportServiceTest {
                 .important(false)
                 .questionType(QuestionType.TEXT)
                 .codeSnippet(null)
-                .options(List.of())
                 .build();
         Question existing = new Question(
                 42L,

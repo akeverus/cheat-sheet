@@ -16,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,20 +28,16 @@ import java.util.regex.Pattern;
  * ## Q1. Что такое Spring Boot?
  * Spring Boot — это фреймворк...
  *
- * > [!mcq]
- * > - [ ] Вариант A | Объяснение
- * > - [x] Вариант B (правильный) | Объяснение
- * > - [ ] Вариант C | Объяснение
- * > - [ ] Вариант D | Объяснение
- *
- * ## Q2 Что такое DI? (ВАЖНО)
+ * ## Q2 Что такое DI? (!)
  * Dependency Injection — это паттерн...
  * </pre>
  *
  * <p>Поддерживаются номера с точкой и без ({@code Q1.} и {@code Q1}).
- * Маркер {@code (ВАЖНО)} определяет приоритетность вопроса.
- * Блок {@code > [!mcq]} — варианты ответа (опционально): парсируются в {@link ParsedOption}
- * и исключаются из хранимого {@code answer_markdown}.</p>
+ * Маркер {@code (!)} (или legacy {@code (ВАЖНО)}) определяет приоритетность вопроса.</p>
+ *
+ * <p>MCQ-варианты ответа больше не парсятся из markdown — они загружаются из
+ * seed-JSON через {@code McqJsonLoader}. Если в файле найден legacy
+ * {@code > [!mcq]} callout, парсер выдаст warning-лог.</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -55,33 +50,6 @@ public class MarkdownQuestionParser {
 
     /** Regex для извлечения code block: {@code ```lang ... ```}. */
     private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("```[a-zA-Z]*\\s*([\\s\\S]*?)```", Pattern.MULTILINE);
-
-    /**
-     * Regex начала MCQ callout-блока: {@code > [!mcq]} с опциональным вопросом-заголовком на той же строке.
-     * <p>Примеры: {@code > [!mcq]}, {@code > [!mcq] Вопрос?}, {@code > [!MCQ] Какой ответ?}</p>
-     */
-    private static final Pattern MCQ_CALLOUT_START = Pattern.compile("^>\\s*\\[!mcq\\]\\s*(.*)$", Pattern.CASE_INSENSITIVE);
-
-    /**
-     * Regex строки опции MCQ:
-     * {@code > - [ ] text} или {@code > - [x] text} с необязательным {@code | explanation}.
-     */
-    private static final Pattern MCQ_OPTION_LINE =
-            Pattern.compile("^>\\s*-\\s*\\[([ xX])\\]\\s*(.+?)(?:\\s*\\|\\s*(.+?))?\\s*$");
-
-    /**
-     * Regex для распознавания строки named-секции внутри callout-опции:
-     * {@code >     **Секция.** content...} — индентация ≥ 2 пробелов после {@code > }.
-     * <p>group(1) = название секции, group(2) = содержимое (одна строка или начало многострочного).</p>
-     */
-    private static final Pattern MCQ_SECTION_LINE =
-            Pattern.compile("^>\\s{2,}\\*\\*([^*]+?)\\*\\*\\s*(.*)$");
-
-    /**
-     * Regex для строки-продолжения внутри callout (любая строка с {@code > } префиксом,
-     * не являющаяся option-line, section-line, callout-start или пустой {@code >}).
-     */
-    private static final Pattern MCQ_CONTINUATION_LINE = Pattern.compile("^>\\s+(.+)$");
 
     /** Regex для удаления устаревшего маркера важности (case-insensitive): (важно). */
     private static final String REGEX_LEGACY_IMPORTANT = "(?iu)\\(важно\\)";
@@ -109,6 +77,13 @@ public class MarkdownQuestionParser {
      */
     public List<ParsedQuestion> parse(Path filePath) throws IOException {
         List<String> lines = Files.readAllLines(filePath, StandardCharsets.UTF_8);
+
+        boolean hasLegacyMcq = lines.stream().anyMatch(l -> l.trim().startsWith("> [!mcq]"));
+        if (hasLegacyMcq) {
+            log.warn("Legacy `> [!mcq]` callout found in {} — MCQ must be in seed JSON now",
+                    filePath.getFileName());
+        }
+
         List<ParsedQuestion> questions = new ArrayList<>();
 
         ParsedQuestionBuilder current = null;
@@ -158,32 +133,15 @@ public class MarkdownQuestionParser {
     }
 
     /**
-     * Вариант ответа, распарсенный из {@code > [!mcq]} блока.
-     *
-     * @param text         текст варианта (inline markdown допустим)
-     * @param correct      {@code true} если это правильный вариант {@code [x]}
-     * @param explanation  объяснение (multi-line из named-секций или inline после {@code |}; nullable)
-     * @param mcqBlockIdx  индекс MCQ-блока внутри одного вопроса (0-based); поддерживает
-     *                     несколько MCQ блоков на один {@code ## QN}
-     */
-    public record ParsedOption(String text, boolean correct, String explanation, int mcqBlockIdx) {
-        /** Совместимость со старыми вызовами (single-block, idx=0). */
-        public ParsedOption(String text, boolean correct, String explanation) {
-            this(text, correct, explanation, 0);
-        }
-    }
-
-    /**
      * Распарсенный вопрос из markdown-файла.
      *
      * @param questionNumber номер вопроса (строка, например {@code "1"})
      * @param questionText   текст вопроса (без маркеров и номера)
-     * @param answerMarkdown полный текст ответа в markdown (без MCQ блока)
-     * @param rawAnswer      полный текст ответа включая MCQ блок (для хеширования)
+     * @param answerMarkdown полный текст ответа в markdown
+     * @param rawAnswer      сырой текст ответа (для хеширования; совпадает с answerMarkdown)
      * @param important      {@code true} если помечен как ВАЖНО
      * @param questionType   тип вопроса (TEXT или CODE)
      * @param codeSnippet    первый блок кода из ответа (для типа CODE)
-     * @param options        варианты ответа из {@code > [!mcq]} блока (пустой список если нет)
      */
     @Builder(toBuilder = true)
     public record ParsedQuestion(
@@ -193,13 +151,8 @@ public class MarkdownQuestionParser {
             String rawAnswer,
             boolean important,
             QuestionType questionType,
-            String codeSnippet,
-            List<ParsedOption> options
-    ) {
-        public boolean hasMcqOptions() {
-            return options != null && !options.isEmpty();
-        }
-    }
+            String codeSnippet
+    ) {}
 
     /**
      * Определяет тип вопроса и извлекает блок кода из answer_markdown.
@@ -220,163 +173,8 @@ public class MarkdownQuestionParser {
         return new CodeExtractionResult(QuestionType.TEXT, null);
     }
 
-    /**
-     * Извлекает первый {@code > [!mcq]} блок из rawAnswer.
-     *
-     * <p>Если в одном вопросе встречается несколько {@code > [!mcq]} блоков подряд,
-     * учитывается только первый — остальные пропускаются с warning-логом.
-     * Поддержка нескольких блоков нарушила бы партиальный unique index
-     * {@code uq_answer_options_single_correct_per_question} в БД (V13). Авторам
-     * cheatsheet-ов следует разнести такие наборы по отдельным {@code ## QN} заголовкам.</p>
-     *
-     * @param rawAnswer текст ответа с возможным MCQ блоком
-     * @param contextDescription человекочитаемое описание места парсинга для warning-лога
-     */
-    private McqParseResult extractMcqFromAnswer(String rawAnswer, String contextDescription) {
-        if (rawAnswer == null || rawAnswer.isBlank()) {
-            return new McqParseResult(rawAnswer == null ? "" : rawAnswer, Collections.emptyList());
-        }
-
-        String[] lines = rawAnswer.split("\n", -1);
-        List<ParsedOption> options = new ArrayList<>();
-        List<String> answerLines = new ArrayList<>();
-        boolean inMcq = false;
-        int currentBlockIdx = -1; // -1 = ещё не было ни одного блока, 0+ = текущий блок
-
-        // State for the currently-being-built option (multi-line explanation accumulation)
-        OptionBuilder currentOption = null;
-
-        for (String line : lines) {
-            String trimmed = line.trim();
-
-            if (MCQ_CALLOUT_START.matcher(trimmed).matches()) {
-                // Flush option from предыдущего блока (если был)
-                if (currentOption != null) {
-                    options.add(currentOption.build(currentBlockIdx));
-                    currentOption = null;
-                }
-                inMcq = true;
-                currentBlockIdx++;
-                continue;
-            }
-
-            if (inMcq) {
-                Matcher optMatcher = MCQ_OPTION_LINE.matcher(trimmed);
-                if (optMatcher.matches()) {
-                    // Flush previous option's accumulated explanation
-                    if (currentOption != null) {
-                        options.add(currentOption.build(currentBlockIdx));
-                    }
-                    boolean correct = optMatcher.group(1).equalsIgnoreCase("x");
-                    String text = optMatcher.group(2).trim();
-                    String inlineExplanation = optMatcher.group(3) != null ? optMatcher.group(3).trim() : null;
-                    currentOption = new OptionBuilder(text, correct, inlineExplanation);
-                    continue;
-                }
-                if (trimmed.startsWith(">")) {
-                    // Indented section/continuation line — accumulate into current option's explanation
-                    if (currentOption != null) {
-                        Matcher sectionMatcher = MCQ_SECTION_LINE.matcher(line);
-                        Matcher continuationMatcher = MCQ_CONTINUATION_LINE.matcher(line);
-                        if (sectionMatcher.matches()) {
-                            String sectionName = sectionMatcher.group(1).trim();
-                            String sectionContent = sectionMatcher.group(2).trim();
-                            currentOption.addSection(sectionName, sectionContent);
-                        } else if (continuationMatcher.matches()) {
-                            String content = continuationMatcher.group(1).trim();
-                            if (!content.isEmpty()) {
-                                currentOption.appendContinuation(content);
-                            }
-                        }
-                        // Blank `>` line — section separator, skip
-                    }
-                    continue;
-                }
-                // Non-callout line — current MCQ block ended
-                if (currentOption != null) {
-                    options.add(currentOption.build(currentBlockIdx));
-                    currentOption = null;
-                }
-                inMcq = false;
-                if (!trimmed.isEmpty()) {
-                    answerLines.add(line);
-                }
-            } else {
-                answerLines.add(line);
-            }
-        }
-
-        // Flush the very last option if MCQ block ran to EOF
-        if (currentOption != null) {
-            options.add(currentOption.build(currentBlockIdx));
-        }
-
-        // Strip trailing blank lines
-        while (!answerLines.isEmpty() && answerLines.get(answerLines.size() - 1).isBlank()) {
-            answerLines.remove(answerLines.size() - 1);
-        }
-
-        if (currentBlockIdx > 0) {
-            log.debug("{}: распознано {} MCQ-блок(а/ов)", contextDescription, currentBlockIdx + 1);
-        }
-
-        return new McqParseResult(String.join("\n", answerLines), options);
-    }
-
-    /**
-     * Накопитель для построения {@link ParsedOption} с multi-line explanation.
-     * Собирает inline-explanation (после {@code |}) плюс named-секции из абзацев.
-     */
-    private static final class OptionBuilder {
-        private final String text;
-        private final boolean correct;
-        private final String inlineExplanation;
-        private final StringBuilder accumulatedExplanation = new StringBuilder();
-        private String lastSectionName;
-
-        OptionBuilder(String text, boolean correct, String inlineExplanation) {
-            this.text = text;
-            this.correct = correct;
-            this.inlineExplanation = inlineExplanation;
-        }
-
-        void addSection(String name, String content) {
-            if (accumulatedExplanation.length() > 0) {
-                accumulatedExplanation.append("\n\n");
-            }
-            // Strip trailing period from captured name to avoid double-dot when reconstructing
-            String cleanName = name.endsWith(".") ? name.substring(0, name.length() - 1) : name;
-            accumulatedExplanation.append("**").append(cleanName).append(".** ").append(content);
-            lastSectionName = cleanName;
-        }
-
-        void appendContinuation(String content) {
-            // Continuation of the current section (multi-line paragraph)
-            if (accumulatedExplanation.length() > 0 && lastSectionName != null) {
-                accumulatedExplanation.append(' ').append(content);
-            } else {
-                accumulatedExplanation.append(content);
-            }
-        }
-
-        ParsedOption build(int mcqBlockIdx) {
-            String explanation;
-            if (accumulatedExplanation.length() > 0) {
-                // Multi-line named-sections take precedence over inline `|` explanation
-                explanation = accumulatedExplanation.toString().trim();
-            } else if (inlineExplanation != null && !inlineExplanation.isBlank()) {
-                explanation = inlineExplanation;
-            } else {
-                explanation = null;
-            }
-            return new ParsedOption(text, correct, explanation, mcqBlockIdx);
-        }
-    }
-
     @Builder(toBuilder = true)
     private record CodeExtractionResult(QuestionType type, String codeSnippet) {}
-
-    private record McqParseResult(String answerWithoutMcq, List<ParsedOption> options) {}
 
     /** Внутренний builder для ParsedQuestion (для накопления answer). */
     private class ParsedQuestionBuilder {
@@ -396,17 +194,13 @@ public class MarkdownQuestionParser {
         }
 
         ParsedQuestion build(Path sourceFile) {
-            String fileName = sourceFile == null ? "<unknown>" : sourceFile.getFileName().toString();
-            String context = fileName + "#Q" + questionNumber;
-            McqParseResult mcq = extractMcqFromAnswer(answerMarkdown, context);
-            CodeExtractionResult extraction = extractCodeAndType(mcq.answerWithoutMcq());
+            CodeExtractionResult extraction = extractCodeAndType(answerMarkdown);
             return new ParsedQuestion(
                     questionNumber, questionText,
-                    mcq.answerWithoutMcq(),
+                    answerMarkdown,
                     answerMarkdown,
                     important,
-                    extraction.type(), extraction.codeSnippet(),
-                    mcq.options());
+                    extraction.type(), extraction.codeSnippet());
         }
     }
 }
