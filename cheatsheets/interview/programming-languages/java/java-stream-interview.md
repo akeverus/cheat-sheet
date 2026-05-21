@@ -14,7 +14,8 @@ aliases:
   - "Java Stream собеседование"
 prerequisites: []
 next: []
-updated: "2026-05-05"
+updated: "2026-05-20"
+mcq_format_version: 2
 ---
 # Вопросы на собеседовании: `Java Stream API`
 
@@ -134,17 +135,93 @@ List<String> result = names.stream()
     .toList(); // Java 16+
 ```
 
-> [!mcq]
-> - [ ] Stream хранит копию данных из коллекции и позволяет итерировать её несколько раз. | Stream не storage. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает re-iteration, пишет `for (...) stream.forEach(...)` — IllegalStateException на втором вызове. Каждый запрос требует нового `list.stream()`.
-> - [ ] Stream модифицирует исходную коллекцию при вызове filter или map. | Source immutable. ❌ ПОСЛЕДСТВИЕ: ложные ожидания мутации приводят к попыткам "удалить из коллекции через filter" — `list.stream().filter(...).count()` НЕ удаляет; нужен `list.removeIf(...)` или `list = list.stream().filter(...).toList()`.
-> - [x] Stream не хранит данные, не модифицирует источник и может быть использован только один раз. | ✓ ПРИМЕНЯТЬ: воспринимайте Stream как одноразовый pipeline; для повторных операций — храните `Supplier<Stream<T>>` или работайте с `Collection`/`List`. Source-агностичность позволяет использовать `IntStream.range`, `Stream.generate`, `Files.lines` единообразно. 📋 ПРАВИЛО: "Stream = no storage + no mutation + one-shot; повторное use = IllegalStateException". 🔗 См. Q2 (pipeline), Q3 (lazy evaluation), Q5 (intermediate vs terminal).
-> - [ ] Stream автоматически синхронизирует доступ к источнику при параллельной обработке. | parallelStream не sync. ❌ ПОСЛЕДСТВИЕ: classical bug — `parallelStream().forEach(x -> sharedList.add(x))` приводит к race conditions, lost updates, потери элементов. Используйте `collect(toList())` который thread-safe.
+> [!mcq] Какое утверждение о природе `Stream` относительно источника данных верно?
+>
+> - [ ] A. `Stream` хранит копию данных из коллекции и позволяет итерировать её несколько раз подряд.
+>
+>     **Что на самом деле.** `Stream` — это описание pipeline над источником, а не storage. Он не копирует элементы и закрывается после первой terminal-операции; повторный вызов любой terminal даёт `IllegalStateException: stream has already been operated upon or closed`.
+>
+>     **Откуда путаница.** Похоже на `Iterable`/`Collection`, которые можно обходить многократно. Документация Java 8 называет это «pipeline», но новички видят в нём «ленивую коллекцию».
+>
+>     **Если бы это было правдой.** Можно было бы кешировать `Stream<User> activeStream = users.stream().filter(active)` в field сервиса и переиспользовать на каждый HTTP-запрос. В реальности первый запрос работает, второй падает `IllegalStateException`, endpoint возвращает 500.
+>
+>     **Как было бы правильно.** Признать, что `Stream` одноразовый: для повторного прохода держите `Supplier<Stream<T>>` (`Supplier<Stream<T>> s = () -> list.stream().filter(active);`) и вызывайте `s.get()` каждый раз.
+>
+> - [ ] B. `Stream` модифицирует исходную коллекцию при вызове `filter` или `map`, удаляя/преобразуя элементы in place.
+>
+>     **Что на самом деле.** Источник `Stream` иммутабелен — `filter`/`map` возвращают новый `Stream`, не трогая исходный `List`. Чтобы изменить коллекцию, нужен `list.removeIf(predicate)` или `list = list.stream().filter(p).toList()`.
+>
+>     **Откуда путаница.** Аналогия с SQL `UPDATE`/`DELETE` или с императивным `iterator.remove()` сбивает: кажется, что declarative-операция тоже мутирует источник.
+>
+>     **Если бы это было правдой.** `users.stream().filter(u -> !u.isBlocked()).count()` втихаря бы удалял заблокированных пользователей. В реальном коде разработчик пишет это, удивляется почему `users.size()` не меняется, и тратит часы на debug — классический баг в Reddit-тредах по Stream API.
+>
+>     **Как было бы правильно.** Использовать `list.removeIf(predicate)` (mutating in place) либо `var filtered = list.stream().filter(p).toList()` (новый список, источник нетронут) — намерение мутации должно быть явным.
+>
+> - [x] C. `Stream` не хранит данные, не модифицирует источник и может быть использован только один раз — повторный terminal вызов даёт `IllegalStateException`.
+>
+>     **Развёрнутое объяснение.** `Stream` — это описание pipeline над `Spliterator` источника плюс цепочка intermediate-операций. Хранилища нет: элементы тянутся ленивой машиной выполнения по запросу terminal-операции. Источник остаётся иммутабельным (пока сам не модифицируется параллельно). После первой terminal-операции внутреннее состояние помечается `linkedOrConsumed = true`, и любая попытка повторного использования бросает `IllegalStateException`. Это сознательный design choice: позволяет использовать ленивые источники типа `Files.lines`, `Stream.generate` единообразно с конечными коллекциями.
+>
+>     **Пример.** В сервисе биллинга `var activeOrders = orders.stream().filter(Order::isPaid);` сохранили в локальную переменную, потом вызвали `activeOrders.count()` и `activeOrders.toList()` — второй вызов даёт `IllegalStateException`. Фикс: либо `var list = orders.stream().filter(Order::isPaid).toList()` (материализуем один раз), либо `Supplier<Stream<Order>> active = () -> orders.stream().filter(Order::isPaid)` (фабрика, каждый вызов даёт свежий Stream).
+>
+>     **Когда применять.** Воспринимайте `Stream` как одноразовый pipeline; для повторных проходов используйте `Supplier<Stream<T>>` либо материализуйте в `List`/`Set`. Source-агностичность позволяет писать одинаковый код поверх `IntStream.range(...)`, `Stream.generate(...)`, `Files.lines(...)` и `list.stream()`.
+>
+>     **Подводные камни.** Если источник `Stream` мутируется параллельно (`list.add(...)` пока pipeline ещё не запустился), при terminal-операции получите `ConcurrentModificationException`. Для I/O-источников (`Files.lines`) одноразовость означает обязательный `try-with-resources` — иначе file handle утечёт.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q2]] pipeline и его три части; [[java-stream-interview#Q3]] lazy evaluation; [[java-stream-interview#Q35]] классические ошибки (stream reuse).
+>
+> - [ ] D. `Stream` автоматически синхронизирует доступ к источнику при параллельной обработке через `parallelStream`.
+>
+>     **Что на самом деле.** `parallelStream` не оборачивает источник в synchronized или `ConcurrentHashMap`. Он только разбивает обход через `Spliterator.trySplit()` и запускает chunk'и в `ForkJoinPool.commonPool()`. Если внутри pipeline есть side-effects на shared mutable state (`sharedList.add(x)`), это classical race condition.
+>
+>     **Откуда путаница.** Слово «parallel» ассоциируется с thread-safe абстракциями вроде `ConcurrentHashMap` или `CompletableFuture`, и junior'у кажется, что `parallelStream` тоже «всё сам».
+>
+>     **Если бы это было правдой.** `urls.parallelStream().forEach(result::add)` всегда давал бы все элементы в произвольном порядке без потерь. Реально — `ArrayList.add` не atomic, в проде получаем потерянные элементы (3% drop на 1000 RPS) и редкий `ArrayIndexOutOfBoundsException`, irreproducible локально.
+>
+>     **Как было бы правильно.** Признать, что parallel pipeline безопасен только при отсутствии shared mutable state; для накопления использовать `collect(Collectors.toList())` (внутри thread-safe combiner) вместо `forEach(list::add)`.
 
-> [!mcq]
-> - [ ] `Stream.of()` без аргументов выбрасывает `IllegalArgumentException`, потому что Stream не может быть пустым. | Stream может быть пустым. ❌ ПОСЛЕДСТВИЕ: разработчик оборачивает `Stream.of(items.toArray())` в try-catch ожидая исключения на пустом массиве — на деле `Stream.of()` ≡ `Stream.empty()`, корректно работает; лишний boilerplate усложняет код.
-> - [ ] `Stream.concat(s1, s2)` можно повторно использовать для сложения нескольких стримов: `concat(concat(a,b), c).forEach(...); concat(...).count();`. | One-shot. ❌ ПОСЛЕДСТВИЕ: разработчик кеширует результат `Stream.concat(a, b)` в поле, второй terminal — `IllegalStateException: stream has already been operated upon`. concat возвращает обычный Stream — single-use правило сохраняется.
-> - [x] Factory-методы `Stream.of(...)`, `Stream.empty()`, `Stream.concat(s1, s2)` создают новый одноразовый Stream; повторное обращение к terminal операции — `IllegalStateException`. | ✓ ПРИМЕНЯТЬ: для нескольких источников — `Stream.concat(a, b)` (для 2-х) или `Stream.of(a, b, c).flatMap(Function.identity())` (для N); для условного источника — `condition ? stream : Stream.empty()`; для повторных проходов по тем же данным — `Supplier<Stream<T>> s = () -> Stream.of(...);` и `s.get()` каждый раз. 📋 ПРАВИЛО: «factory-методы Stream.of/empty/concat = одноразовые; для re-use — Supplier<Stream> или Collection». 🔗 См. Q4 (создание Stream), Q5 (terminal закрывает Stream), Q35 (типичные ошибки).
-> - [ ] `Stream.empty()` и `Stream.of((Object) null)` эквивалентны — оба создают стрим без элементов. | `Stream.of(null)` = 1 элемент. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Stream.of(maybeNull)` ожидая пустой стрим при null — получает Stream из одного null-элемента, NPE на следующем `map(String::length)`. Для null-safe — `Optional.ofNullable(x).stream()` или `Stream.ofNullable(x)` (Java 9+).
+> [!mcq] Как ведут себя factory-методы `Stream.of(...)`, `Stream.empty()`, `Stream.concat(...)` относительно повторного использования и `null`?
+>
+> - [ ] A. `Stream.of()` без аргументов выбрасывает `IllegalArgumentException`, потому что `Stream` не может быть пустым.
+>
+>     **Что на самом деле.** `Stream.of()` без аргументов эквивалентен `Stream.empty()` и возвращает корректный пустой Stream без исключения. Любая terminal-операция на нём даёт нейтральный результат (`count()` = 0, `findFirst()` = `Optional.empty()`, `reduce(0, Integer::sum)` = 0).
+>
+>     **Откуда путаница.** Аналогия с `List.of(...)` (тоже допускает пустой, но варарг) и желание «защититься от пустого пути» порождает миф о запрете empty Stream.
+>
+>     **Если бы это было правдой.** `Stream.of(items.toArray())` приходилось бы оборачивать в `try-catch(IllegalArgumentException)` или явный `if (items.isEmpty())`; вместо двух строк pipeline получали бы десять защитных. Реально — `Stream.of()` корректно работает, лишний boilerplate усложняет код без пользы.
+>
+>     **Как было бы правильно.** Признать, что Stream может быть пустым: `Stream.of()` ≡ `Stream.empty()`; используйте его без защитных проверок и опирайтесь на нейтральные элементы terminal-операций.
+>
+> - [ ] B. `Stream.concat(s1, s2)` можно повторно использовать: `concat(a, b).forEach(...); concat(a, b).count();` — оба вызова работают.
+>
+>     **Что на самом деле.** `Stream.concat` возвращает обычный `Stream`, к которому применяется общее правило one-shot: после первой terminal-операции вторая бросает `IllegalStateException`. Каждый вызов `concat(a, b)` создаёт новый Stream и тратит обходы исходных `a` и `b`, поэтому повторно использовать сами `a`/`b` тоже нельзя.
+>
+>     **Откуда путаница.** Сходство сигнатуры с `String.concat` (immutable, можно сколько угодно) или с `List.addAll` (мутирует, повторяемо) сбивает; кажется, что «склейка» — это побочно-эффектная операция, а не Stream-builder.
+>
+>     **Если бы это было правдой.** Программист кеширует `Stream<T> all = Stream.concat(orders, refunds);` в field бин-сервиса; первый запрос работает, второй — `IllegalStateException`, endpoint 500. На код-ревью «sometimes works» — классическая дыра.
+>
+>     **Как было бы правильно.** Признать, что concat-результат тоже одноразовый, и оборачивать вызов в `Supplier<Stream<T>>` или сразу материализовывать в `List`.
+>
+> - [x] C. Factory-методы `Stream.of(...)`, `Stream.empty()`, `Stream.concat(s1, s2)` создают новый одноразовый `Stream`; повторное обращение к terminal-операции — `IllegalStateException`.
+>
+>     **Развёрнутое объяснение.** Все три метода — `Stream.of(T...)`, `Stream.empty()`, `Stream.concat(Stream, Stream)` — возвращают новый `ReferencePipeline.Head`, который ничем не отличается от стримов, полученных через `list.stream()`. Внутренний флаг `linkedOrConsumed` помечается при первой terminal-операции, и любой повторный вызов даёт `IllegalStateException`. Для нескольких источников: 2 стрима — `Stream.concat(a, b)`; N стримов — `Stream.of(a, b, c).flatMap(Function.identity())` (читаемее, чем вложенные concat). Для условного источника удобен тернарник `condition ? source.stream() : Stream.empty()`.
+>
+>     **Пример.** В сервисе сводных отчётов нужно объединить `paidOrders.stream()` и `refunds.stream()`, отсортировать по дате и взять топ-50. Решение: `Stream.concat(paidOrders.stream(), refunds.stream()).sorted(byDate.reversed()).limit(50).toList()`. Для unit-тестов с edge case «нет данных» — `condition ? data.stream() : Stream.empty()` без `if/else` ветвлений.
+>
+>     **Когда применять.** Везде, где нужен явный/литеральный/условный/склеенный источник: `Stream.of(...)` для константного набора, `Stream.empty()` для null-safe возврата из метода с сигнатурой `Stream<T>`, `Stream.concat(a, b)` для пары стримов, `Stream.of(a, b, c).flatMap(identity)` для N стримов. Для повторных проходов сохраняйте `Supplier<Stream<T>>` (`Supplier<Stream<Order>> active = () -> Stream.concat(paid, refunded)`) и вызывайте `active.get()` каждый раз.
+>
+>     **Подводные камни.** `Stream.concat` глубокой вложенности (`concat(concat(concat(a,b),c),d)`) накапливает overhead и теряет characteristic'и (`SIZED`, `SUBSIZED`) — на N стримов лучше `Stream.of(a, b, c, d).flatMap(identity)`. Условный `condition ? stream : Stream.empty()` не материализует unused ветвь — это дешевле, чем `concat`+`filter`.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q4]] способы создания Stream; [[java-stream-interview#Q5]] terminal закрывает Stream; [[java-stream-interview#Q35]] типичные ошибки (stream reuse).
+>
+> - [ ] D. `Stream.empty()` и `Stream.of((Object) null)` эквивалентны — оба создают стрим без элементов.
+>
+>     **Что на самом деле.** `Stream.of((Object) null)` создаёт Stream из **одного** элемента-`null`. `Stream.empty()` — Stream без элементов. На следующем шаге `map(String::length)` первый дайт NPE, второй проходит мимо без вызова mapper'а.
+>
+>     **Откуда путаница.** Java 9+ ввела `Stream.ofNullable(x)` (`x` → пустой при `null`, иначе из одного элемента) — её путают с обычной `Stream.of(x)`, которая просто оборачивает значение как есть.
+>
+>     **Если бы это было правдой.** Любой `Stream.of(maybeNull)` в pipeline был бы безопасен и автоматически фильтровал null. В реальности `users.stream().map(User::findPhone).flatMap(p -> Stream.of(p))` (где `findPhone` может вернуть null) даёт NPE на следующем `map(String::length)`.
+>
+>     **Как было бы правильно.** Для null-safe варианта использовать `Stream.ofNullable(x)` (Java 9+) либо `Optional.ofNullable(x).stream()`; для явного пустого Stream — `Stream.empty()`.
 
 ## Q2. (!) Что такое stream pipeline и из чего он состоит?
 
@@ -178,17 +255,93 @@ List<String> result = List.of("alice", "bob", "charlie", "dave")
 // "dave" вообще не обрабатывался — limit прервал pipeline
 ```
 
-> [!mcq]
-> - [ ] Stream pipeline выполняет операции горизонтально: сначала все элементы проходят filter, затем все — map. | Vertical processing. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает horizontal — пишет `Stream.iterate(1, n -> n+1).filter(n -> n>1000).limit(5)`, удивляется почему быстро завершается без обработки 1000 элементов. На деле каждый элемент проходит весь pipeline.
-> - [x] Stream pipeline состоит из source, промежуточных операций и одной терминальной операции; элементы обрабатываются вертикально. | ✓ ПРИМЕНЯТЬ: vertical processing включает short-circuit оптимизации; `Stream.iterate(1, n -> n+1).map(n -> n*n).filter(n -> n>100).findFirst()` останавливается на первом подходящем — никаких лишних вычислений. Pipeline визуализируйте как matrix transposed. 📋 ПРАВИЛО: "pipeline = source → intermediate ops → ONE terminal op; вертикальная (per-element) обработка". 🔗 См. Q3 (lazy evaluation), Q5 (intermediate vs terminal), Q10 (short-circuit).
-> - [ ] В pipeline может быть несколько терминальных операций, которые последовательно применяются к одному стриму. | One terminal only. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.count(); stream.toList();` — второй вызов IllegalStateException. Создавайте новый stream для каждой terminal op.
-> - [ ] Промежуточные операции pipeline сразу выполняются и возвращают новую коллекцию для следующей операции. | Lazy. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `peek` для отладки, ждёт log output — без terminal operation peek не запускается, log пустой. peek полезен только в полном pipeline.
+> [!mcq] Что верно про структуру и порядок обработки элементов в stream pipeline?
+>
+> - [ ] A. Stream pipeline выполняет операции горизонтально: сначала все элементы проходят `filter`, затем все — `map`, и так далее по операциям.
+>
+>     **Что на самом деле.** Pipeline обрабатывает элементы вертикально (per-element): каждый элемент проходит весь pipeline до конца, прежде чем следующий начнёт обработку. Это позволяет short-circuit-операциям (`limit`, `findFirst`) остановить весь pipeline после нескольких элементов, не обрабатывая остальные.
+>
+>     **Откуда путаница.** Императивный mind-set «цикл по filter, затем цикл по map» — стандарт со времён loop fusion в C/SQL. Объяснение через таблицу-матрицу с горизонтальными ops тоже сбивает: legacy-учебники по Java 8 часто показывают «column by column».
+>
+>     **Если бы это было правдой.** `Stream.iterate(1, n -> n+1).filter(n -> n > 1000).limit(5)` пришлось бы обрабатывать все ~бесконечные элементы перед `filter`. Реально pipeline завершается за 1005 элементов — каждый элемент проходит весь pipeline вертикально, `limit(5)` срабатывает на пятом подходящем.
+>
+>     **Как было бы правильно.** Признать, что pipeline вертикален: один элемент → filter → map → terminal → следующий элемент. Эта модель объясняет short-circuit, infinite streams и loop fusion.
+>
+> - [x] B. Stream pipeline состоит из source, промежуточных операций и одной терминальной операции; элементы обрабатываются вертикально (один за другим через весь pipeline).
+>
+>     **Развёрнутое объяснение.** Pipeline — это direct acyclic chain: source (`Spliterator`) → N intermediate ops (lazy, возвращают новый `Stream`) → ровно одна terminal op (запускает выполнение). Каждый элемент проходит весь pipeline до terminal-операции, прежде чем следующий начнёт обработку (vertical processing). Это включает оптимизации: loop fusion (filter+map в одной итерации без промежуточных коллекций), short-circuit (`limit`, `findFirst` останавливают обход), lazy evaluation (без terminal — ничего не выполняется). Внутренне это реализовано через `Sink`-цепочку: каждая операция — это `Sink`, вызывающий downstream `Sink.accept(element)` или сигнализирующий `cancellationRequested()`.
+>
+>     **Пример.** `Stream.iterate(1, n -> n + 1).map(n -> n*n).filter(n -> n > 100).findFirst()` — pipeline на каждой итерации генерирует число, считает квадрат, проверяет `> 100`. На `1,2,...,10` `findFirst` ловит первый подходящий (`11*11 = 121`), pipeline останавливается. Без vertical-модели пришлось бы материализовать миллиарды квадратов перед filter.
+>
+>     **Когда применять.** Pipeline визуализируйте как transposed matrix (по столбцам, не по строкам); это объясняет, почему `Stream.iterate(...).limit(5)` корректно работает с бесконечным источником. Используйте short-circuit terminal'ы (`findFirst`, `anyMatch`) и `limit(n)` как intermediate для контроля бесконечных stream'ов.
+>
+>     **Подводные камни.** Stateful intermediate-операции (`sorted`, `distinct`) ломают чистый vertical mode: они буферизуют все элементы перед тем, как пропустить дальше. `sorted` на бесконечном Stream — OOM или зависание. `peek` тоже срабатывает per-element, но JIT (Java 9+, JEP 276) может скипнуть его при `SIZED` источниках, если результат не нужен — для production-side-effects используйте `forEach`.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q3]] lazy evaluation; [[java-stream-interview#Q5]] intermediate vs terminal; [[java-stream-interview#Q10]] short-circuit операции.
+>
+> - [ ] C. В pipeline может быть несколько терминальных операций, которые последовательно применяются к одному и тому же стриму.
+>
+>     **Что на самом деле.** Terminal-операция ровно одна; она «закрывает» Stream через флаг `linkedOrConsumed`. Любой повторный terminal даёт `IllegalStateException: stream has already been operated upon or closed`.
+>
+>     **Откуда путаница.** Аналогия с jQuery-style chaining (`$(...).hide().show().fadeIn()`) или builder API сбивает: кажется, что цепочка может бесконечно собирать результаты.
+>
+>     **Если бы это было правдой.** Можно было бы написать `var stream = users.stream().filter(active); long c = stream.count(); var list = stream.toList();` для двух разных metric'ов. Реально второй вызов падает; в проде это даёт `500 Internal Server Error` на endpoint, который проходит unit-test (там стрим вызывают раз).
+>
+>     **Как было бы правильно.** Создавать новый Stream под каждый terminal: `long c = users.stream().filter(active).count(); var list = users.stream().filter(active).toList();` — или сохранять `Supplier<Stream<User>>` для DRY.
+>
+> - [ ] D. Промежуточные операции pipeline выполняются сразу при добавлении в цепочку и возвращают новую коллекцию для следующей операции.
+>
+>     **Что на самом деле.** Intermediate-операции ленивы: они только описывают будущую работу через `Sink`-цепочку. Никакой работы не происходит до вызова terminal — поэтому `stream.filter(p).map(f)` без `toList()`/`forEach`/`count()` не делает ничего.
+>
+>     **Откуда путаница.** Императивный stream-API из других языков (Ruby `.select.map`, JS `.filter.map` до lazy iterables) выполняет каждую операцию сразу. Похожий синтаксис вводит в заблуждение.
+>
+>     **Если бы это было правдой.** `users.stream().filter(active).peek(emailService::send)` отправлял бы письма всем активным пользователям. Реально без terminal-операции pipeline не запускается — ноль писем отправлено, поддержка получает claim'ы за 3 дня молчания, классический «silent bug» из postmortem'ов команд, мигрирующих со Scala.
+>
+>     **Как было бы правильно.** Помнить, что без terminal-операции (`forEach`, `collect`, `count` и др.) ничего не выполняется. Для side-effects использовать terminal `forEach`, а не `peek` без terminal.
 
-> [!mcq]
-> - [ ] `Spliterator` нужен только для parallel streams; в sequential pipeline источником служит обычный `Iterator`. | Всегда Spliterator. ❌ ПОСЛЕДСТВИЕ: разработчик при создании custom-источника реализует `Iterator` — Stream API не примет, нужен `Spliterators.spliteratorUnknownSize(iterator, characteristics)` или `StreamSupport.stream(spliterator, false)`. Stream под капотом всегда работает через `Spliterator` независимо от parallel/sequential.
-> - [ ] Перевод `parallel()` в pipeline всегда даёт линейное ускорение пропорционально числу ядер. | Cost-benefit. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `parallel()` на стрим из 100 элементов с лёгкими операциями — на деле overhead split + ForkJoinPool dispatch + merge превышает выгоду; latency растёт в 2-3 раза по сравнению с sequential. Parallel окупается на N×W ≥ ~10_000 (N — элементы, W — work per element).
-> - [x] Источник Stream под капотом — `Spliterator` с характеристиками (`SIZED`, `ORDERED`, `DISTINCT`, `SORTED`, `IMMUTABLE`); они влияют на оптимизации pipeline и стоимость parallel. | ✓ ПРИМЕНЯТЬ: `ArrayList.spliterator()` — `SIZED+ORDERED+SUBSIZED` (хорошо splittable, дешёвый parallel); `LinkedList.spliterator()` — `SIZED+ORDERED` без SUBSIZED (плохо splittable, parallel почти бесполезен); `HashSet` — `SIZED+DISTINCT` (нет ORDERED — `findAny` быстрее `findFirst`); `TreeSet` — `SIZED+DISTINCT+SORTED+ORDERED`. Для `parallel` ищите `SUBSIZED` источники (массивы, ArrayList). 📋 ПРАВИЛО: «Spliterator characteristics → JIT optimizations + parallel splittability; для parallel: SIZED+SUBSIZED+IMMUTABLE/CONCURRENT». 🔗 См. Q20 (когда parallel), Q22 (ForkJoinPool), Q25 (Spliterator подробно).
-> - [ ] `parallel()` стрим всегда быстрее sequential, если данных больше тысячи. | Зависит от source/work. ❌ ПОСЛЕДСТВИЕ: на `LinkedList.parallelStream()` с лёгкими операциями (filter+sum) — sequential быстрее в 5-10×, потому что LinkedList не имеет O(1) split (нужно итерировать к середине). Слепое применение `parallel()` без бенчмарка — антипаттерн.
+> [!mcq] Какую роль играет `Spliterator` и как он влияет на производительность pipeline?
+>
+> - [ ] A. `Spliterator` нужен только для parallel streams; в sequential pipeline источником служит обычный `Iterator`.
+>
+>     **Что на самом деле.** Stream API под капотом **всегда** работает через `Spliterator`, независимо от sequential/parallel. Sequential просто игнорирует `trySplit()` и обходит источник через `tryAdvance` или `forEachRemaining`. Параллельный режим вызывает `trySplit()` рекурсивно для разбиения работы.
+>
+>     **Откуда путаница.** Slогаз «splitable iterator» намекает, что split — главная функция; на самом деле split — опция, а основная работа — обход + characteristics.
+>
+>     **Если бы это было правдой.** Custom-источник можно было бы реализовать через `Iterator`, передав в `Stream`-API напрямую. Реально нужно либо `Spliterators.spliteratorUnknownSize(iterator, characteristics)`, либо `StreamSupport.stream(spliterator, false)`. Попытка передать чистый `Iterator` в `StreamSupport.stream` даёт compile error на типах.
+>
+>     **Как было бы правильно.** Признать, что `Spliterator` — это базовый абстрактный источник Stream API; для адаптации legacy `Iterator` используйте `Spliterators.spliteratorUnknownSize(it, characteristics)`.
+>
+> - [ ] B. Перевод `parallel()` в pipeline всегда даёт линейное ускорение пропорционально числу ядер процессора.
+>
+>     **Что на самом деле.** Parallel — это cost/benefit trade-off: overhead на split, dispatch в `ForkJoinPool`, merge результатов. Окупается только когда total work (`N × W`, где N — элементы, W — работа на элемент) ≥ ~10⁴ и `Spliterator` поддерживает `SIZED+SUBSIZED` (хорошо делится).
+>
+>     **Откуда путаница.** Маркетинг Java 8 («параллелизм одной строкой кода») создал миф о free speedup. На практике parallel — самая частая причина перформанс-регрессий после миграции на Stream API.
+>
+>     **Если бы это было правдой.** `smallList.parallelStream().filter(active).toList()` (10 элементов, лёгкий predicate) ускорял бы код. Реально 100-1000 элементов с лёгкими операциями дают деградацию p99 latency с 5 ms до 20 ms из-за overhead'а split/merge, CPU +30% на координацию ForkJoin-задач — постмортем многих миграций.
+>
+>     **Как было бы правильно.** Признать, что parallel — измеряемое решение: всегда начинать с sequential, переходить на parallel только после JMH-бенчмарка на realistic dataset и при подтверждённой CPU-bound нагрузке.
+>
+> - [x] C. Источник Stream под капотом — `Spliterator` с характеристиками (`SIZED`, `ORDERED`, `DISTINCT`, `SORTED`, `IMMUTABLE`, `SUBSIZED`, `NONNULL`, `CONCURRENT`); они влияют на оптимизации pipeline и стоимость parallel.
+>
+>     **Развёрнутое объяснение.** Каждый источник Stream предоставляет `Spliterator` с битовой маской `characteristics()`. JIT/runtime использует их для оптимизаций: `SIZED` → pre-allocation buffer'ов; `ORDERED` → сохранение encounter order в merge'е; `DISTINCT` → `stream.distinct()` no-op; `SORTED` → `stream.sorted()` no-op; `SUBSIZED` → balanced O(1) split в parallel. `ArrayList.spliterator()` даёт `SIZED+ORDERED+SUBSIZED` — отлично делится в parallel. `LinkedList.spliterator()` — `SIZED+ORDERED` без `SUBSIZED` (split требует итерации к середине, по факту sequential). `HashSet` — `SIZED+DISTINCT` без `ORDERED` (`findAny` быстрее `findFirst`). `TreeSet` — `SIZED+DISTINCT+SORTED+ORDERED`. Источники типа `Files.lines` и `Stream.iterate(seed, next)` — без `SIZED`/`SUBSIZED`, parallel бесполезен.
+>
+>     **Пример.** Diagnose: `int chars = stream.spliterator().characteristics(); boolean sized = (chars & Spliterator.SIZED) != 0;` — позволяет проверить характеристики любой коллекции перед `parallel()`. В банковском batch'е выяснилось, что `ArrayList<Transaction>` (10M entries) даёт 8× speedup от parallel, а тот же batch на `LinkedList` — sequential.
+>
+>     **Когда применять.** Для parallel pipeline'ов выбирайте источники с `SIZED+SUBSIZED+IMMUTABLE` (массивы, `ArrayList`, `IntStream.range`); избегайте `LinkedList`, `Stream.iterate(seed, next)` без `hasNext`-предиката, `Files.lines` (unsized lazy I/O); для custom-источников реализуйте `trySplit()` грамотно и указывайте максимум characteristics через `Spliterators.spliterator(iterator, size, ORDERED | SIZED | SUBSIZED)`.
+>
+>     **Подводные камни.** `IMMUTABLE` и `CONCURRENT` взаимоисключающие — выбирайте одно. `NONNULL` нельзя для коллекций с `null`-элементами (`ArrayList.of(1, null, 2)` — Spliterator не должен иметь `NONNULL`). `estimateSize()` для unsized источников возвращает `Long.MAX_VALUE`, и pre-allocation pipeline'а пытается выделить 8 GB → OOM на `toList()`.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q20]] когда переходить на parallel; [[java-stream-interview#Q22]] ForkJoinPool; [[java-stream-interview#Q25]] Spliterator подробно.
+>
+> - [ ] D. `parallel()` стрим всегда быстрее sequential, если данных больше тысячи элементов.
+>
+>     **Что на самом деле.** Скорость зависит от characteristic'ов источника и веса работы на элемент. `LinkedList.parallelStream()` с лёгкими операциями (filter+sum) на 100k элементов в 5-10× медленнее sequential — `LinkedList.spliterator()` без `SUBSIZED` не делится бинарно, фактически работает sequential плюс overhead'ы координации.
+>
+>     **Откуда путаница.** «1000 элементов» — частый эвристический минимум из StackOverflow, но он игнорирует характеристики источника и вес операции.
+>
+>     **Если бы это было правдой.** Любая миграция `.stream()` → `.parallelStream()` на коллекциях ≥ 1000 элементов ускоряла бы код. В реальности — деградация на `LinkedList`, `HashSet` без `SUBSIZED`, lazy I/O источниках.
+>
+>     **Как было бы правильно.** Признать, что параллелизм окупается при ВСЕХ условиях: `SIZED+SUBSIZED` источник, CPU-bound нагрузка, `N × W ≥ 10⁴`, ассоциативные операции, отсутствие shared mutable state. Всегда JMH-бенчмарк перед production rollout.
 
 ## Q3. (!) Что такое lazy evaluation и почему она важна?
 
@@ -213,17 +366,93 @@ Stream<String> lazy = names.stream()
 List<String> result = lazy.toList(); // Теперь filter/map работают
 ```
 
-> [!mcq]
-> - [x] Благодаря lazy evaluation промежуточные операции не выполняются до вызова терминальной, что позволяет short-circuit операциям завершаться раньше. | ✓ ПРИМЕНЯТЬ: бесконечные стримы становятся практичными — `Stream.iterate(1, n -> n+1).filter(n -> n%17==0).limit(5)` работает; `findFirst` для первого совпадения экономит обходы; loop fusion (filter+map в одной итерации) — JIT оптимизация. 📋 ПРАВИЛО: "lazy = промежуточные ничего не делают до terminal; short-circuit + infinite streams + loop fusion бенефиты". 🔗 См. Q2 (pipeline), Q5 (intermediate vs terminal), Q10 (short-circuit).
-> - [ ] Промежуточные операции выполняются сразу при добавлении в цепочку, чтобы JVM могла оптимизировать pipeline. | Lazy. ❌ ПОСЛЕДСТВИЕ: разработчик считает что `stream.filter(...)` сразу обходит коллекцию, ставит `peek` ожидая увидеть в логах — peek не запускается без terminal operation. Дебаггинг застревает.
-> - [ ] Lazy evaluation означает, что терминальная операция выполняется асинхронно в фоновом потоке. | Не async. ❌ ПОСЛЕДСТВИЕ: путаница lazy и async приводит к ложным ожиданиям — `stream.toList()` в main thread блокирует main thread. Для асинхронности — `CompletableFuture.supplyAsync(() -> stream.toList())`.
-> - [ ] Lazy evaluation гарантирует, что каждый элемент обрабатывается в цепочке ровно один раз, даже при многократном вызове terminal операций. | Stream одноразовый. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает повторное использование stream после terminal — каждый terminal закрывает stream окончательно. Lazy не делает stream re-usable.
+> [!mcq] Что такое lazy evaluation в Stream API и какие практические выгоды она даёт?
+>
+> - [x] A. Промежуточные операции не выполняются до вызова terminal-операции; это позволяет short-circuit-операциям завершаться раньше, поддерживать бесконечные стримы и применять loop fusion.
+>
+>     **Развёрнутое объяснение.** Intermediate-операции (filter/map/flatMap/sorted/...) только формируют описание pipeline через `Sink`-цепочку, не делая реальной работы. Реальное выполнение запускает terminal-операция: она инициирует обход `Spliterator` источника и тянет элементы через зарегистрированные `Sink`-ы. Это даёт три ключевых эффекта. (1) Short-circuit: `findFirst`/`anyMatch`/`limit` могут остановить pipeline после нескольких элементов. (2) Infinite streams: `Stream.iterate(seed, next)` + `limit` практически применимы только благодаря lazy. (3) Loop fusion: JIT может скомпилировать `filter(p).map(f).filter(q)` в один цикл без промежуточных коллекций.
+>
+>     **Пример.** В сервисе подбора контента: `Stream.iterate(1, n -> n + 1).filter(n -> n % 17 == 0).map(this::expensiveLookup).filter(Item::isAvailable).findFirst()` — pipeline тянет по одному числу, считает `expensiveLookup` только для каждого 17-го числа и останавливается при первом доступном. Без lazy пришлось бы материализовать миллиарды чисел и lookup'ов всех 17-х.
+>
+>     **Когда применять.** Везде, где нужны short-circuit terminal'ы (`findFirst`, `anyMatch`, `noneMatch`) на больших данных или бесконечных Stream'ах; для loop fusion (filter+map+filter+map без промежуточных коллекций); для condition-driven обхода `Stream.iterate(seed, hasNext, next)` (Java 9+).
+>
+>     **Подводные камни.** Stateful intermediate (`sorted`, `distinct`) ломают lazy-выгоды: они буферизуют все элементы. `sorted` на бесконечном Stream — OOM. `peek` срабатывает per-element при terminal, но JIT (Java 9+, JEP 276) может скипнуть его при `SIZED` источниках и `count()`-terminal. Без terminal-операции pipeline вообще не выполняется — это ловушка для side-effects через `peek`.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q2]] pipeline и vertical processing; [[java-stream-interview#Q5]] intermediate vs terminal; [[java-stream-interview#Q10]] short-circuit операции.
+>
+> - [ ] B. Промежуточные операции выполняются сразу при добавлении в цепочку — JVM так оптимизирует pipeline.
+>
+>     **Что на самом деле.** Все intermediate-операции ленивы. Без terminal-операции ничего не выполняется; JIT-оптимизация применяется на этапе runtime, когда pipeline уже запущен terminal-операцией.
+>
+>     **Откуда путаница.** Eager semantics из Ruby `Array#select.map` или JS pre-iterator `Array.prototype.filter` (Java SE 7 streams в Guava/Apache Commons тоже были eager). Привычка из этих API заставляет ждать немедленного выполнения.
+>
+>     **Если бы это было правдой.** `stream.filter(p)` обходил бы коллекцию каждый раз при вызове, и `Stream.iterate(0, n -> n + 1).limit(5)` пришлось бы материализовать бесконечный Stream. В реальности pipeline ждёт terminal — разработчик ставит `peek(log::info)` и удивляется пустому логу.
+>
+>     **Как было бы правильно.** Признать, что intermediate-операции ленивы; JIT оптимизирует уже работающий pipeline. Для проверки порядка/значений — terminal-операции в дебаге, а не `peek` без terminal.
+>
+> - [ ] C. Lazy evaluation означает, что terminal-операция выполняется асинхронно в фоновом потоке.
+>
+>     **Что на самом деле.** Lazy и async — разные концепции. Lazy — это «не делать работу до запроса». Async — «делать работу в другом потоке». `stream.toList()` синхронно блокирует current thread до завершения.
+>
+>     **Откуда путаница.** Слово «lazy» в JavaScript часто связано с Promise/async; в Scala — с lazy val и Future. Java эту терминологию использует только для отложенных вычислений в текущем потоке.
+>
+>     **Если бы это было правдой.** `stream.toList()` в main-thread не блокировал бы main и обработка не влияла бы на UI/HTTP-thread. Реально — синхронно блокирует, при больших данных main thread зависает и health-check тимаутится.
+>
+>     **Как было бы правильно.** Для асинхронной обработки явно использовать `CompletableFuture.supplyAsync(() -> stream.toList(), executor)`. Lazy в Stream — только про отложенное выполнение, не про потоки.
+>
+> - [ ] D. Lazy evaluation гарантирует, что каждый элемент обрабатывается в цепочке ровно один раз, даже при многократном вызове terminal-операций на одном Stream.
+>
+>     **Что на самом деле.** Stream одноразовый: после первого terminal он закрыт (`linkedOrConsumed = true`). Любой повторный terminal даёт `IllegalStateException`. Lazy — про отложенность выполнения, не про многократное использование.
+>
+>     **Откуда путаница.** Аналогия с lazy data structures в Haskell, где значение вычисляется один раз и кешируется (memoization). В Java эта memoization относится к Stream'у в целом, а не к «один раз обработать и переиспользовать».
+>
+>     **Если бы это было правдой.** `var s = list.stream().filter(p); long c = s.count(); var l = s.toList();` работал бы как кешированный pipeline. В реальности `count()` закрывает Stream, `toList()` бросает `IllegalStateException`.
+>
+>     **Как было бы правильно.** Для кеширования материализуйте результат (`var list = stream.toList()`) либо используйте `Supplier<Stream<T>>` для повторных вызовов с свежим Stream'ом.
 
-> [!mcq]
-> - [ ] `count()` на `Stream.iterate(1, n -> n+1).limit(1_000_000)` использует lazy и не материализует элементы. | `count` обходит весь pipeline. ❌ ПОСЛЕДСТВИЕ: разработчик считает что `count` "знает" размер от `limit` — на деле обходит миллион элементов через `filter`/`map`, latency как у `forEach`. Для known-size — `list.size()`, не `stream().count()`.
-> - [ ] `forEach` и `findFirst` одинаково ленивы — оба обходят pipeline до первого элемента. | `forEach` обходит всё. ❌ ПОСЛЕДСТВИЕ: на бесконечном `Stream.iterate(1, n->n+1).forEach(...)` приложение зависает; разработчик ожидает что `forEach` "сработает один раз" как `findFirst`.
-> - [x] `findFirst` / `anyMatch` / `limit` могут завершить pipeline после первого совпадения, тогда как `count` / `forEach` / `toList` обходят все элементы. | ✓ ПРИМЕНЯТЬ: для существования — `anyMatch` вместо `filter().count() > 0`; для одного результата — `findFirst` вместо `toList().get(0)`; на parallel — `findAny` ещё быстрее (не ждёт encounter order). На бесконечных стримах — только short-circuit терминалы. 📋 ПРАВИЛО: «short-circuit terminal = lazy окупает себя; all-element terminal (`count`/`forEach`/`toList`/`reduce`) — обходит всё». 🔗 См. Q10 (short-circuit), Q5 (terminal classification), Q26 (бесконечные стримы).
-> - [ ] `peek` гарантированно вызывается для каждого элемента в lazy pipeline, даже если терминал short-circuit. | `peek` могут пропускать. ❌ ПОСЛЕДСТВИЕ: разработчик ставит `peek(log::info)` для аудита и ожидает увидеть все элементы, но JIT (Java 9+ JEP 276) пропускает `peek` если результат не нужен (например, перед `count` на `SIZED` источнике). Для гарантии — `forEach`.
+> [!mcq] Какие terminal-операции реализуют short-circuit, а какие всегда обходят все элементы стрима?
+>
+> - [ ] A. `count()` на `Stream.iterate(1, n -> n+1).limit(1_000_000)` использует lazy и не материализует все элементы — JVM «понимает» что нужен только размер.
+>
+>     **Что на самом деле.** `count()` обходит весь pipeline через intermediate-операции (`filter`, `map`), даже если итоговый результат — это просто число. JVM оптимизирует `count()` только когда источник имеет characteristic `SIZED` И в pipeline нет stateful-операций, влияющих на размер (`filter`, `flatMap`, `distinct`). После `limit(1_000_000)` size известен, но `filter`/`map` всё равно вычисляются на каждом элементе.
+>
+>     **Откуда путаница.** Похоже на SQL `COUNT(*)`, который часто использует индекс без full table scan. В Stream аналогичная оптимизация работает только в простейших случаях.
+>
+>     **Если бы это было правдой.** `users.stream().filter(active).count()` выполнялся бы за O(1). Реально обходит N элементов, выполняя `filter` для каждого — для existence check `filter().count() > 0` обходит весь Stream на 1M записей вместо O(1) с `anyMatch`.
+>
+>     **Как было бы правильно.** Для known-size коллекции использовать `list.size()`. Для подсчёта с filter — `count()`, понимая что это O(N). Для existence check — `anyMatch` (short-circuit).
+>
+> - [ ] B. `forEach` и `findFirst` одинаково ленивы — оба обходят pipeline до первого элемента и завершаются.
+>
+>     **Что на самом деле.** `forEach` обходит ВСЕ элементы, выполняя action для каждого. `findFirst` — short-circuit, останавливается после первого совпадения. На бесконечном `Stream.iterate(1, n -> n + 1).forEach(...)` приложение зависает; `findFirst` на том же источнике возвращает первый элемент.
+>
+>     **Откуда путаница.** Оба возвращают `void`/`Optional<T>` без накопления коллекции, и это создаёт ложное чувство «однократности» обоих.
+>
+>     **Если бы это было правдой.** `Stream.iterate(0, n -> n + 1).forEach(this::process)` обрабатывал бы один элемент. Реально pipeline зависает в бесконечном цикле — health-check timeout, K8s liveness probe убивает pod, crashloop.
+>
+>     **Как было бы правильно.** Признать, что `forEach` — all-element terminal без short-circuit; для «один элемент» — `findFirst().ifPresent(action)` или `limit(1).forEach(action)`.
+>
+> - [x] C. `findFirst` / `findAny` / `anyMatch` / `allMatch` / `noneMatch` могут завершить pipeline после первого совпадения; `count` / `forEach` / `toList` / `reduce` обходят все элементы.
+>
+>     **Развёрнутое объяснение.** Short-circuit terminal'ы возвращают результат, как только он определён: `findFirst` — после первого подходящего элемента, `anyMatch` — после первого `true`, `allMatch` — после первого `false`, `noneMatch` — после первого `true`. Они внутренне отвечают `true` из `Sink.cancellationRequested()`, и pipeline прекращает обход `Spliterator`. Non-short-circuit terminal'ы (`count`, `forEach`, `toList`, `reduce`) обходят весь источник: `count` нужно увидеть все, чтобы знать сколько, `reduce` — чтобы скомбинировать, `toList`/`forEach` — обработать все. На бесконечных стримах работают только short-circuit terminal'ы или intermediate `limit(N)` + non-short-circuit terminal.
+>
+>     **Пример.** Existence check «есть ли админ в системе»: `users.stream().anyMatch(User::isAdmin)` останавливается на первом админе; `users.stream().filter(User::isAdmin).count() > 0` на 1M пользователей обходит всех. JMH разница — 1000× на realistic distribution.
+>
+>     **Когда применять.** Existence check — `anyMatch`/`noneMatch` вместо `filter().count()`. Поиск одного результата — `findFirst()` вместо `toList().get(0)`. Validation «все валидны» — `allMatch`. На parallel — `findAny()` ещё быстрее, чем `findFirst()`, потому что не ждёт первый по encounter order. Бесконечные стримы — только short-circuit terminal или `limit` перед non-short-circuit.
+>
+>     **Подводные камни.** Vacuous truth на пустом Stream: `allMatch` = `true`, `noneMatch` = `true`, `anyMatch` = `false` — учитывайте в validation-логике. `findFirst` на parallel-stream дороже `findAny` из-за ожидания encounter order. `peek` может быть скипнут JIT'ом при short-circuit терминале — для аудита используйте `forEachOrdered` или `map(x -> { audit(x); return x; })`.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q10]] short-circuit операции подробно; [[java-stream-interview#Q5]] terminal classification; [[java-stream-interview#Q26]] бесконечные стримы.
+>
+> - [ ] D. `peek` гарантированно вызывается для каждого элемента в lazy pipeline, даже если terminal — short-circuit.
+>
+>     **Что на самом деле.** JIT (Java 9+, JEP 276) может пропустить вызовы `peek`, если результат не нужен для terminal-операции. Например, на `SIZED` источнике `stream.peek(log).count()` JIT может скипнуть `peek` — count берётся напрямую из `Spliterator.getExactSizeIfKnown()`. Также short-circuit terminal (`findFirst`) останавливает обход, и `peek` не вызывается на оставшихся элементах.
+>
+>     **Откуда путаница.** Документация Stream API раннего Java 8 не упоминала JIT-оптимизаций; разработчики опираются на «peek вызывается для всех элементов» как на инвариант.
+>
+>     **Если бы это было правдой.** Можно было бы использовать `peek` для production-аудита и логирования: `stream.peek(audit::log).count()` записывал бы все элементы. Реально на `SIZED` источнике JIT скипает `peek`, аудит-лог пустой, SOX-compliance check не проходит.
+>
+>     **Как было бы правильно.** Для production-аудита использовать terminal `forEach`/`forEachOrdered` либо `map(x -> { audit(x); return x; })`. `peek` оставлять только для временной отладки с пометкой «remove before commit».
 
 ## Q4. Какие способы создания Stream существуют?
 
@@ -256,11 +485,49 @@ try (Stream<String> lines = Files.lines(Path.of("data.csv"))) {
 }
 ```
 
-> [!mcq]
-> - [ ] Stream.generate(Math::random) является упорядоченным стримом, потому что элементы генерируются в порядке вызовов. | unordered. ❌ ПОСЛЕДСТВИЕ: parallelStream() с generate ведёт себя как ожидаемо в parallel mode — порядок не гарантирован. Для ordered infinite streams используйте `Stream.iterate(seed, next)`.
-> - [ ] Files.lines(path) загружает все строки файла в память при создании стрима. | Lazy чтение. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает eager load и not closing stream — file handle leak (особенно в Linux limited fd-pool). Критично: всегда `try-with-resources` для `Files.lines`.
-> - [x] Stream.iterate(seed, hasNext, next) является упорядоченным конечным стримом с предикатом завершения (Java 9+). | ✓ ПРИМЕНЯТЬ: для замены C-style for-loops в functional style — `Stream.iterate(1, i -> i <= 100, i -> i * 2)` вместо `for (int i=1; i<=100; i*=2)`; для генерации последовательностей с termination condition. До Java 9 нужно было `iterate(0, n -> n+1).limit(100)`. 📋 ПРАВИЛО: "Stream.iterate (Java 9+) с hasNext predicate = упорядоченный конечный stream; generate = unordered infinite". 🔗 См. Q1 (что такое stream), Q3 (lazy), Q10 (short-circuit на бесконечных).
-> - [ ] IntStream.range(0, 10) и IntStream.rangeClosed(0, 10) возвращают одинаковое количество элементов. | range exclusive end. ❌ ПОСЛЕДСТВИЕ: off-by-one ошибка — `IntStream.range(0, list.size())` (correct, 0..size-1) vs `IntStream.rangeClosed(0, list.size())` (wrong, IndexOutOfBoundsException на last+1).
+> [!mcq] Какое утверждение о способах создания Stream и их свойствах верно?
+>
+> - [ ] A. `Stream.generate(Math::random)` является упорядоченным стримом, потому что элементы генерируются в порядке вызовов `Supplier`.
+>
+>     **Что на самом деле.** `Stream.generate(supplier)` производит **неупорядоченный** бесконечный Stream. У него нет characteristic `ORDERED`, и при `parallel()` `Supplier` может вызываться в произвольном порядке из разных потоков. Для упорядоченного бесконечного Stream — `Stream.iterate(seed, next)`.
+>
+>     **Откуда путаница.** Идея «один supplier → последовательный вызов → последовательный порядок» интуитивна, но Stream API явно помечает `generate` как unordered (даёт parallel-friendly свойства).
+>
+>     **Если бы это было правдой.** `Stream.generate(idGen::next).parallel().limit(1000).toList()` со stateful counter давал бы упорядоченные ID. Реально supplier вызывается из разных потоков параллельно, race на counter без synchronized → дубликаты id в БД, `UNIQUE` constraint violation в bulk insert.
+>
+>     **Как было бы правильно.** Признать, что `Stream.generate` unordered (parallel-friendly); для упорядоченного бесконечного — `Stream.iterate(seed, next)`; для bulk-ID — UUID (stateless, race-safe) либо synchronized counter.
+>
+> - [ ] B. `Files.lines(path)` загружает все строки файла в память при создании Stream.
+>
+>     **Что на самом деле.** `Files.lines(path)` использует ленивое чтение через `BufferedReader.lines()`: строки читаются по запросу terminal-операцией, файл-handle остаётся открытым. Закрывается только при `Stream.close()` (вызывается автоматически в try-with-resources).
+>
+>     **Откуда путаница.** Аналогия с `Files.readAllLines` (eager, возвращает `List<String>`) сбивает: похожее имя метода, но семантика обратная.
+>
+>     **Если бы это было правдой.** На 50 GB лог-файле `Files.lines` бы упал OOM при создании. Реально — корректно работает с лениво вычитываемыми строками. Но без `try-with-resources` file-handle утекает; на Linux с дефолтным fd-limit 1024 после 10k таких чтений приложение крашится с «Too many open files».
+>
+>     **Как было бы правильно.** Признать lazy-семантику `Files.lines`; ВСЕГДА оборачивать в `try (Stream<String> lines = Files.lines(path)) { ... }` — без этого file-handle leak в production.
+>
+> - [x] C. `Stream.iterate(seed, hasNext, next)` (Java 9+) — упорядоченный конечный стрим с предикатом завершения; `Stream.iterate(seed, next)` — упорядоченный бесконечный; `Stream.generate(supplier)` — неупорядоченный бесконечный.
+>
+>     **Развёрнутое объяснение.** Java 9 добавила трёхпараметрическую перегрузку `Stream.iterate(seed, hasNext, next)` — это functional аналог C-style for-loop `for (int i = seed; hasNext.test(i); i = next.apply(i))`. Stream упорядоченный (`ORDERED` characteristic) и конечный (`hasNext.test(seed) == false` → пустой Stream). Старая двух-параметрическая форма `Stream.iterate(seed, next)` — бесконечная, упорядоченная (каждый элемент зависит от предыдущего); требует `limit()` для завершения. `Stream.generate(supplier)` — бесконечная, неупорядоченная (элементы независимы), хорошо параллелится.
+>
+>     **Пример.** Заменить C-style цикл: `Stream.iterate(1, i -> i <= 100, i -> i * 2).forEach(System.out::println)` вместо `for (int i = 1; i <= 100; i *= 2) System.out.println(i)`. Фибоначчи: `Stream.iterate(new long[]{0, 1}, f -> new long[]{f[1], f[0] + f[1]}).limit(10).mapToLong(f -> f[0]).forEach(System.out::println)`. Bulk UUID — `Stream.generate(UUID::randomUUID).limit(N).parallel().toList()`.
+>
+>     **Когда применять.** Конечные генерируемые последовательности с termination condition — `Stream.iterate(seed, hasNext, next)` (Java 9+). Зависящие от предыдущего значения бесконечные — `iterate(seed, next)` + `limit/findFirst`. Независимые элементы (UUID, случайные, константные) — `generate(supplier)` + `limit`. Парсинг ленивого источника (файл, regex) — `Files.lines`, `Pattern.splitAsStream`. Для `parallel` — предпочитайте `generate` или `IntStream.range` (sized), не `iterate`.
+>
+>     **Подводные камни.** На бесконечных стримах ВСЕГДА должен быть short-circuit terminal (`findFirst`, `limit + forEach`) — иначе hang/OOM. `Stream.iterate` (двухпараметрическая) плохо параллелится из-за зависимости от предыдущего элемента. `Files.lines` без `try-with-resources` течёт file handles. `Stream.of(null)` — это Stream из одного `null`-элемента, не пустой Stream (используйте `Stream.ofNullable` для null-safe).
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q1]] что такое Stream; [[java-stream-interview#Q3]] lazy evaluation; [[java-stream-interview#Q10]] short-circuit на бесконечных.
+>
+> - [ ] D. `IntStream.range(0, 10)` и `IntStream.rangeClosed(0, 10)` возвращают одинаковое количество элементов.
+>
+>     **Что на самом деле.** `range(0, 10)` — half-open `[0, 10)` — 10 элементов (0..9). `rangeClosed(0, 10)` — closed `[0, 10]` — 11 элементов (0..10). Разница на single element.
+>
+>     **Откуда путаница.** В разных языках интервалы вычисляются по-разному: Python `range(0, 10)` тоже half-open, но Kotlin `0..10` — closed; разработчик переключается между языками и забывает про конвенцию Java.
+>
+>     **Если бы это было правдой.** `IntStream.rangeClosed(0, list.size()).forEach(i -> list.get(i))` корректно бы итерировал индексы. Реально — `ArrayIndexOutOfBoundsException` на `list.size()`-индексе; production endpoint `GET /items` возвращает 500 при определённых размерах коллекции, на CI зелёный из-за edge case.
+>
+>     **Как было бы правильно.** Для индексации массива/`List` — `IntStream.range(0, list.size())` (half-open совпадает с size); для inclusive диапазона (например, `1..12` для месяцев) — `IntStream.rangeClosed(1, 12)`. Запомнить правило «`range` exclusive end, `rangeClosed` includes both ends».
 
 ## Q5. (!) В чём разница между intermediate и terminal операциями?
 
@@ -285,17 +552,93 @@ long count = stream.filter(s -> !s.isEmpty()).count();
 // stream.forEach(System.out::println); // Ошибка!
 ```
 
-> [!mcq]
-> - [ ] filter является терминальной операцией, так как возвращает новый отфильтрованный список. | filter intermediate. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что `stream.filter(...)` вернёт List, пишет `var result = stream.filter(...)` — получает Stream<T>, не List. Нужен `.toList()` после.
-> - [ ] После вызова count() на стриме можно вызвать toList(), чтобы собрать элементы. | One-shot. ❌ ПОСЛЕДСТВИЕ: классическая ошибка тестирования — `assertThat(stream.count()).isEqualTo(3); var list = stream.toList();` — вторая операция бросает IllegalStateException. Создавайте новый stream.
-> - [x] findFirst и anyMatch являются short-circuit терминальными операциями и могут завершить pipeline раньше, не обработав все элементы. | ✓ ПРИМЕНЯТЬ: `findFirst` для поиска первого совпадения (`users.stream().filter(u->u.isAdmin()).findFirst()`); `anyMatch` для existence check; `noneMatch`/`allMatch` для validation. На больших коллекциях экономия времени linear → constant в лучшем случае. 📋 ПРАВИЛО: "short-circuit terminal: findFirst/findAny/anyMatch/allMatch/noneMatch; intermediate short-circuit: limit". 🔗 См. Q3 (lazy), Q10 (short-circuit подробно), Q6 (stateful vs stateless).
-> - [ ] sorted является stateless операцией, так как только меняет порядок элементов, не создавая нового стрима. | sorted stateful. ❌ ПОСЛЕДСТВИЕ: разработчик использует sorted на бесконечном stream — приложение зависает / OOM (sorted ждёт все элементы перед сортировкой). На finite streams тоже плохо параллелизуется.
+> [!mcq] Как классифицируются операции `filter`, `findFirst`, `anyMatch`, `sorted`, `count` по типам intermediate/terminal/short-circuit/stateful?
+>
+> - [ ] A. `filter` — терминальная операция, так как возвращает новый отфильтрованный список.
+>
+>     **Что на самом деле.** `filter(Predicate)` — stateless intermediate-операция, возвращает `Stream<T>`, не `List<T>`. Она ленива и не делает работы без terminal-операции. Для получения списка нужна terminal `toList()` или `collect(toList())`.
+>
+>     **Откуда путаница.** Императивная привычка из C# LINQ: `Where(...)` возвращает `IEnumerable<T>`, который семантически близок к коллекции — и автокаст в `List` работает. В Java чёткое разделение Stream/Collection.
+>
+>     **Если бы это было правдой.** `var result = users.stream().filter(active)` возвращал бы `List<User>`. Реально — `Stream<User>`; следующий код `result.size()` даёт compile error (`Stream` не имеет `size`); junior копает 30 минут.
+>
+>     **Как было бы правильно.** Признать `filter` intermediate; завершать pipeline через `.toList()` (Java 16+) или `.collect(Collectors.toList())`.
+>
+> - [ ] B. После вызова `count()` на Stream можно вызвать `toList()`, чтобы собрать элементы.
+>
+>     **Что на самом деле.** Stream одноразовый: `count()` — terminal, закрывает Stream. Любой повторный terminal даёт `IllegalStateException: stream has already been operated upon or closed`.
+>
+>     **Откуда путаница.** Builder pattern и jQuery chaining создают иллюзию, что можно цепочно вызывать любые terminal-операции.
+>
+>     **Если бы это было правдой.** Удобно было бы получать count и list одновременно: `long c = stream.count(); var list = stream.toList();`. Реально — `IllegalStateException` на втором вызове. Классическая ошибка в test'ах: `assertThat(stream.count()).isEqualTo(3); var list = stream.toList();` — падает в CI.
+>
+>     **Как было бы правильно.** Создавать новый Stream под каждый terminal: `var list = users.stream().filter(p).toList(); long c = list.size();` — материализуем один раз, или `Collectors.teeing(counting(), toList(), ...)` для двух агрегатов за один проход.
+>
+> - [x] C. `findFirst` / `findAny` / `anyMatch` / `allMatch` / `noneMatch` — short-circuit terminal-операции и могут завершить pipeline после первого подходящего элемента; intermediate short-circuit — `limit(n)`.
+>
+>     **Развёрнутое объяснение.** Operations делятся по двум осям: intermediate vs terminal (возвращает Stream vs запускает выполнение) и stateless vs stateful (можно ли обрабатывать элемент независимо от других). Дополнительная характеристика — short-circuit (может ли остановить pipeline после нескольких элементов). Short-circuit terminal'ы: `findFirst`/`findAny` (один результат), `anyMatch`/`allMatch`/`noneMatch` (булева проверка). Они отвечают `true` из `Sink.cancellationRequested()`, и pipeline останавливает обход `Spliterator`. Intermediate short-circuit — только `limit(n)` (после N элементов отказывается принимать новые).
+>
+>     **Пример.** `users.stream().filter(User::isAdmin).findFirst()` на 1M записей — останавливается на первом admin'е; та же логика через `filter().toList().get(0)` обходит всех. На validation `users.stream().allMatch(User::isVerified)` — останавливается на первом невалидированном.
+>
+>     **Когда применять.** Existence check — `anyMatch`/`noneMatch`; первый результат — `findFirst()` (sequential) или `findAny()` (parallel, не ждёт encounter order); validation — `allMatch`. На бесконечных стримах — только short-circuit terminal или `limit` перед non-short-circuit. Все эти operations возвращают `Optional`/`boolean`, не `Stream` — это terminal'ы.
+>
+>     **Подводные камни.** Vacuous truth: на пустом Stream `allMatch` = `true`, `noneMatch` = `true`, `anyMatch` = `false`. Это может ввести в заблуждение валидацию: «все валидны» для пустого input. `findFirst()` на parallel-stream может быть медленнее `findAny()` из-за ожидания первого по encounter order.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q3]] lazy evaluation; [[java-stream-interview#Q10]] short-circuit подробно; [[java-stream-interview#Q6]] stateful vs stateless.
+>
+> - [ ] D. `sorted` — stateless операция, так как только меняет порядок элементов и не хранит состояние.
+>
+>     **Что на самом деле.** `sorted()` — stateful intermediate-операция: она должна увидеть все элементы перед тем, как пропустить первый дальше (нельзя сортировать на лету). Внутренне накапливает буфер, сортирует и затем эмитит. На бесконечном Stream — OOM/hang; на parallel — sequential bottleneck (collect все элементы → merge sort).
+>
+>     **Откуда путаница.** `sorted` в SQL `ORDER BY` ассоциируется с index lookup или streaming sort из движков. В Stream API нет index'ов — только in-memory buffer + Arrays.sort.
+>
+>     **Если бы это было правдой.** `Stream.iterate(0, n -> n + 1).sorted().limit(5)` корректно возвращал бы первые 5 чисел. Реально pipeline зависает — `sorted` пытается собрать все бесконечные элементы перед сортировкой; через 30 секунд OOM.
+>
+>     **Как было бы правильно.** Признать `sorted` stateful; ставить `limit`/`filter` ПЕРЕД `sorted` для уменьшения работы; для бесконечных стримов либо избегать `sorted`, либо `limit + sorted + limit` (внешний limit ограничивает источник).
 
-> [!mcq]
-> - [ ] `peek(Consumer)` — terminal-операция для побочных эффектов, аналог `forEach`. | peek = intermediate. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.peek(log::info)` ожидая что pipeline запустится — на деле peek intermediate, без terminal ничего не выполняется. Лог пустой, бизнес-логика не запускалась — баг в проде.
-> - [ ] `peek(log::info)` гарантированно вызывается для каждого элемента, поэтому подходит для production-аудита. | JIT может пропустить. ❌ ПОСЛЕДСТВИЕ: на Java 9+ JEP 276 разрешает JIT пропускать `peek` если результат не нужен (`stream.peek(log).count()` на `SIZED`-источнике может скипнуть всю цепочку); production-аудит теряется. Для гарантии — `forEach` или `map(x -> { log(x); return x; })`.
-> - [x] `peek` — intermediate-операция для отладки, JIT может пропустить вызовы при `SIZED`-источниках с Java 9+; для production side-effects используйте `forEach`. | ✓ ПРИМЕНЯТЬ: `peek` ТОЛЬКО для дебага (`stream.peek(System.out::println).filter(...).peek(...).toList()`); для аудита/логирования в проде — terminal `forEach` или `map(x -> { audit(x); return x; })`; никогда не полагайтесь на peek в бизнес-логике. 📋 ПРАВИЛО: «peek = debug-only intermediate; production side effects → forEach (terminal) или map с побочкой; JIT может скипать peek». 🔗 См. Q3 (lazy + JIT skip peek), Q17 (forEach), Q35 (типичные ошибки).
-> - [ ] Терминальные операции всегда обходят все элементы стрима, поэтому `count()` и `forEach` имеют одинаковую сложность. | short-circuit. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `stream.filter(...).count() > 0` для existence check — обходит весь стрим; на 1M записей вместо O(1) с `anyMatch` получает O(n). Для existence — `anyMatch`/`findAny`.
+> [!mcq] Какая роль у `peek` в pipeline и когда его использовать (или не использовать)?
+>
+> - [ ] A. `peek(Consumer)` — terminal-операция для побочных эффектов, аналог `forEach`.
+>
+>     **Что на самом деле.** `peek` — intermediate stateless-операция, возвращающая `Stream<T>`. Без terminal-операции pipeline не запускается, и `Consumer` ни разу не вызывается. Аналог `forEach` — это `forEach` (terminal).
+>
+>     **Откуда путаница.** Семантика «понаблюдать за элементами» звучит как finishing action; в Kafka/Reactive `peek` тоже бывает intermediate, но семантически воспринимается как terminal observer.
+>
+>     **Если бы это было правдой.** `users.stream().filter(active).peek(emailService::send)` отправлял бы письма всем активным пользователям. Реально pipeline без terminal не выполняется — ноль писем отправлено. Production silent bug: claim-инциденты от клиентов через 3 дня.
+>
+>     **Как было бы правильно.** Признать `peek` intermediate; для side-effects использовать terminal `forEach`/`forEachOrdered` либо добавить terminal после `peek` (например, `.count()`).
+>
+> - [ ] B. `peek(log::info)` гарантированно вызывается для каждого элемента, поэтому подходит для production-аудита.
+>
+>     **Что на самом деле.** Java 9+ JEP 276 разрешает JIT пропускать `peek`, если результат не нужен для terminal. Например, `stream.peek(log).count()` на `SIZED`-источнике может скипнуть `peek` полностью — count берётся из `Spliterator.getExactSizeIfKnown()` напрямую.
+>
+>     **Откуда путаница.** Документация раннего Java 8 не упоминала эту оптимизацию; разработчики опираются на «peek вызывается для всех» как на инвариант. Тесты на маленьких dataset'ах не проявляют скип (JIT не успевает оптимизировать).
+>
+>     **Если бы это было правдой.** `stream.peek(auditLog::write).count()` записывал бы каждый элемент в аудит-лог. Реально на больших объёмах JIT скипает `peek`, аудит-лог пустой; SOX-compliance audit проваливается, штраф 500K USD за неполноту записей.
+>
+>     **Как было бы правильно.** Для production-аудита использовать terminal `forEach`/`forEachOrdered` либо `map(x -> { auditLog.write(x); return x; })` — оба гарантированы JIT-инвариантами.
+>
+> - [x] C. `peek` — intermediate-операция для отладки; JIT (Java 9+, JEP 276) может пропустить вызовы при `SIZED`-источниках; для production-side-effects использовать terminal `forEach`/`forEachOrdered` либо `map(x -> { audit(x); return x; })`.
+>
+>     **Развёрнутое объяснение.** `peek(Consumer)` — stateless intermediate, возвращает `Stream<T>` и применяет `Consumer` к каждому элементу при прохождении через `peek`. Документировано как «mainly to support debugging». JEP 276 (Java 9+) разрешает компилятору пропускать вызовы, если результат не нужен для terminal-операции — например, `stream.peek(log).count()` на источнике с известным размером может полностью скипнуть `peek`. Также short-circuit terminal (`findFirst`) останавливает обход, и `peek` не вызывается на оставшихся элементах. Для гарантированных side-effects — terminal `forEach` (или `forEachOrdered` для сохранения encounter order на parallel).
+>
+>     **Пример.** Debug-pipeline: `stream.peek(System.out::println).filter(...).peek(System.out::println).toList()` — выводит элементы до/после filter. Production-audit: `orders.stream().filter(paid).map(o -> { auditLog.write(o); return o; }).collect(...)` — `map` не подвержен JIT-скипу. IntelliJ IDEA Stream Debugger мощнее `peek`-логов: вкладка «Trace Current Stream Chain» показывает таблицу значений после каждой операции.
+>
+>     **Когда применять.** Только для временной отладки: вставить `peek(System.out::println)`, разобраться, удалить перед commit. Pre-commit hook'и многих команд блокируют `peek` с лямбдой длиннее 30 символов. Для production-side-effects — terminal `forEach` или `map` с побочкой.
+>
+>     **Подводные камни.** На parallel-stream порядок вызовов `peek` не гарантирован; для упорядоченного аудита нужен `forEachOrdered` (сериализует, но сохраняет порядок). `peek` без последующего terminal не выполняется вообще — классический «забытый terminal» баг. Множественные `peek` подряд снижают читаемость pipeline'а.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q3]] lazy + JIT skip peek; [[java-stream-interview#Q17]] forEach и его ограничения; [[java-stream-interview#Q35]] типичные ошибки.
+>
+> - [ ] D. Terminal-операции всегда обходят все элементы стрима, поэтому `count()` и `forEach` имеют одинаковую сложность.
+>
+>     **Что на самом деле.** Среди terminal'ов есть short-circuit (`findFirst`, `anyMatch`, `allMatch`, `noneMatch`) — они могут остановить pipeline после нескольких элементов. `count()` и `forEach` обходят всё, но это не «всегда обходят все» — это только для non-short-circuit.
+>
+>     **Откуда путаница.** Слово «terminal» создаёт впечатление «выполняется до конца»; на самом деле terminal — это «запускает выполнение и возвращает результат», а длительность зависит от логики.
+>
+>     **Если бы это было правдой.** `users.stream().filter(active).count() > 0` для existence check работал бы за O(N), а альтернативы не было бы. Реально для existence — `anyMatch` за O(1) в лучшем случае; на 1M записей разница 1000×.
+>
+>     **Как было бы правильно.** Различать short-circuit (`findFirst`/`anyMatch`/`allMatch`/`noneMatch`) и non-short-circuit (`count`/`forEach`/`toList`/`reduce`) terminal'ы; для existence check — `anyMatch`/`noneMatch`, не `filter().count() > 0`.
 
 ## Q6. Чем отличаются stateless и stateful промежуточные операции?
 
@@ -318,11 +661,49 @@ Stream.generate(Math::random)
     .forEach(System.out::println);
 ```
 
-> [!mcq]
-> - [x] stateful операции (sorted, distinct) могут буферизировать все элементы и плохо параллелизуются, в отличие от stateless (filter, map). | ✓ ПРИМЕНЯТЬ: ставьте limit/filter ПЕРЕД sorted — `stream.filter(...).limit(10).sorted()` лучше чем `stream.sorted().limit(10)` (если порядок до filter не важен); distinct early для уменьшения работы; для bounded data — sorted OK, для streaming — избегайте. 📋 ПРАВИЛО: "stateless = filter/map/flatMap/peek (parallel-friendly); stateful = sorted/distinct/limit/skip (avoid early in pipeline)". 🔗 См. Q5 (intermediate vs terminal), Q9 (sorted/distinct/limit), Q14 (parallel streams).
-> - [ ] sorted является stateless операцией, так как не хранит состояние между элементами, а только сравнивает соседние. | sorted stateful. ❌ ПОСЛЕДСТВИЕ: разработчик использует `parallelStream().sorted()` ожидая хорошего scaling — на деле sorted имеет sequential bottleneck (collect всех элементов → merge sort), parallel speedup минимальный.
-> - [ ] filter является stateful операцией, так как запоминает предыдущие элементы для проверки уникальности. | filter stateless. ❌ ПОСЛЕДСТВИЕ: путаница concepts ведёт к попыткам использовать filter для distinct — на деле filter не помнит элементы. Для уникальности — `distinct()` или сложный `Predicate` с external Set (но избегайте side effects).
-> - [ ] limit является stateless операцией, так как просто передаёт первые N элементов без буферизации. | limit stateful (counter). ❌ ПОСЛЕДСТВИЕ: ложное представление о parallel performance — limit в parallel стримах sequential coordination, не scales. Для top-N — используйте `Comparator` + reduce или specialized libraries.
+> [!mcq] Какая категоризация intermediate-операций по stateful/stateless правильная?
+>
+> - [x] A. Stateful-операции (`sorted`, `distinct`, `limit`, `skip`) могут буферизировать элементы и плохо параллелизуются; stateless (`filter`, `map`, `flatMap`, `peek`, `mapMulti`) обрабатывают элементы независимо.
+>
+>     **Развёрнутое объяснение.** Stateless-операция применяет преобразование к одному элементу за раз, не нуждаясь в информации о других — `filter(p).map(f)` имеет 1:1 или 1:0 семантику без буферизации. Stateful-операция нуждается в знании других элементов: `sorted` собирает все, чтобы упорядочить; `distinct` хранит внутренний `Set` для проверки уникальности; `limit(n)` хранит счётчик; `skip(n)` — счётчик пропусков. На parallel stateless-операции делятся на chunk'и и обрабатываются независимо. Stateful — требуют координации между chunk'ами: `sorted` имеет sequential bottleneck при merge, `distinct` шарит `ConcurrentHashMap` (если без `ORDERED`) или buffer + Set (если с `ORDERED`).
+>
+>     **Пример.** Оптимизация порядка операций: `users.stream().filter(active).limit(10).sorted(byDate)` лучше, чем `sorted(byDate).filter(active).limit(10)` — фильтрация до сортировки сокращает работу с 100K до 5K элементов перед `sorted`. Для top-N с большим N — `Stream.iterate(...)` + heap-based collector (PriorityQueue в reduce) лучше, чем `sorted().limit(N)`.
+>
+>     **Когда применять.** Stateless — параллелятся хорошо, можно ставить в любом порядке pipeline'а. Stateful — ставьте позже: после `filter` (меньше работы для `sorted`/`distinct`), но до terminal. Для bounded data — `sorted`/`distinct` OK. Для streaming/infinite — избегайте `sorted` (OOM); `distinct` на бесконечном Stream имеет unbounded memory growth.
+>
+>     **Подводные камни.** `limit` в parallel — sequential coordination; для top-N часто быстрее sequential. `sorted` на parallel имеет sequential merge bottleneck — speedup минимальный. `distinct` сохраняет first-occurrence по encounter order на ordered Stream — для streaming используйте `unordered()` перед `distinct` для ускорения. `skip(n)` в parallel дороже, чем кажется — должны быть посчитаны элементы перед skip позицией.
+>
+>     **Связанные вопросы.** [[java-stream-interview#Q5]] intermediate vs terminal; [[java-stream-interview#Q9]] sorted/distinct/limit; [[java-stream-interview#Q20]] parallel streams.
+>
+> - [ ] B. `sorted` — stateless-операция, так как не хранит состояние между элементами, а только сравнивает соседние.
+>
+>     **Что на самом деле.** `sorted` — stateful: должна увидеть все элементы перед эмитом первого. Внутри буферизует элементы в массив/`List`, сортирует через `Arrays.sort` (Timsort), затем эмитит. На бесконечном Stream — OOM/hang. На parallel — sequential merge bottleneck.
+>
+>     **Откуда путаница.** Знание алгоритмов вроде bubble sort (соседние пары) или streaming sort (внешние алгоритмы из БД) сбивает: кажется, что `sorted` может работать lazily.
+>
+>     **Если бы это было правдой.** `parallelStream().sorted()` давал бы хороший speedup на 8 ядрах. Реально speedup минимален из-за sequential merge phase; sequential часто быстрее на маленьких dataset'ах из-за overhead'а parallel'а.
+>
+>     **Как было бы правильно.** Признать `sorted` stateful с буферизацией всех элементов; для streaming sort использовать внешние библиотеки (Apache Flink, KStream) или batch-обработку.
+>
+> - [ ] C. `filter` — stateful-операция, так как запоминает предыдущие элементы для проверки уникальности.
+>
+>     **Что на самом деле.** `filter(Predicate)` — stateless: применяет predicate к элементу независимо. Уникальность — это `distinct()` (stateful с внутренним Set), не `filter`.
+>
+>     **Откуда путаница.** Путаница concepts: `filter` иногда используют для дедупликации со внешним Set (`Set<T> seen = new HashSet<>(); filter(seen::add)`) — но это side-effect антипаттерн, нарушающий контракт stateless.
+>
+>     **Если бы это было правдой.** `filter` сам мог бы выполнять дедупликацию без `distinct`. Реально для уникальности нужен `distinct()` или специальный collector. Попытка использовать stateful Predicate ведёт к race conditions в parallel.
+>
+>     **Как было бы правильно.** Признать `filter` stateless; для уникальности — `distinct()` (auto-thread-safe в parallel) или `Collectors.toSet()` после filter.
+>
+> - [ ] D. `limit` — stateless-операция, так как просто передаёт первые N элементов без буферизации.
+>
+>     **Что на самом деле.** `limit(n)` — stateful: внутри держит счётчик `passed`, инкрементирует на каждом элементе, и отказывается принимать новые после достижения N (через `Sink.cancellationRequested() = true`). На parallel требует coordination — какой chunk даёт первые N по encounter order.
+>
+>     **Откуда путаница.** `limit` визуально похож на «отрезать хвост» — кажется, что это stateless подсчёт без накопления данных.
+>
+>     **Если бы это было правдой.** `parallelStream().limit(100)` давал бы parallel speedup. Реально на ordered-источнике `limit` требует sequential coordination (какие 100 элементов первые) — speedup минимальный. Для top-N лучше `Comparator + reduce` (heap-based) или `unordered().limit(100)` (любые 100, без encounter order).
+>
+>     **Как было бы правильно.** Признать `limit` stateful (с counter); на parallel для top-N — heap-based collector или `unordered()` перед `limit`.
 
 ## Q7. (!) Когда использовать map, flatMap и filter?
 

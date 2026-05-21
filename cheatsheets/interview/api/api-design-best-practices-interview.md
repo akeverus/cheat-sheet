@@ -137,7 +137,7 @@ API design — критическое skill. Хороший API: **intuitive, co
 >   
 >   **Подводные камни:** для не-CRUD действий (отправить письмо, перевыпустить токен) plural-noun плохо ложится — тогда используют sub-resource-as-action (`POST /users/123/password-resets`) или явный action-endpoint. Не злоупотреблять глубокой вложенностью (>2 уровней) — путь становится хрупким.
 >   
->   **Связанные вопросы:** [[Q2]] (URL structure), [[Q5]] (resource hierarchy), [[Q8]] (non-CRUD actions)
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q2]] (URL structure), [[api-design-best-practices-interview#Q5]] (resource hierarchy), [[api-design-best-practices-interview#Q8]] (non-CRUD actions)
 > 
 > - [ ] **B)** `GET /getUsers` — глагол в URL для ясности намерения
 >   
@@ -207,7 +207,7 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 >   
 >   **Подводные камни:** не путать «фильтр» (query) с «sub-resource» (path) — `/users/123/orders` это коллекция заказов пользователя 123, а не фильтр. Если фильтров очень много (search) — рассмотреть `POST /users/search` с телом, чтобы не упереться в лимит длины URL (~2KB на прокси).
 >   
->   **Связанные вопросы:** [[Q1]] (resource naming), [[Q4]] (date format), [[Q5]] (hierarchy)
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q1]] (resource naming), [[api-design-best-practices-interview#Q4]] (date format), [[api-design-best-practices-interview#Q5]] (hierarchy)
 > 
 > - [ ] **C)** `/users/status/active` — фильтры выражаются как сегменты path для красоты URL
 >   
@@ -286,7 +286,7 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 >   
 >   **Подводные камни:** одна конвенция должна быть **enforced** — добавь ArchUnit/Checkstyle-правило или Spotless-форматтер, иначе через год в API наберётся «исключений». Конвенция в URL (`/order-items` — hyphens) и в JSON (`order_items` — underscores) **разные** и это нормально: это разные слои, у них разные RFC.
 >   
->   **Связанные вопросы:** [[Q1]] (URL naming), [[Q4]] (date format), [[Q22]] (versioning strategy)
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q1]] (URL naming), [[api-design-best-practices-interview#Q4]] (date format), [[api-design-best-practices-interview#Q22]] (versioning strategy)
 > 
 > - [ ] **D)** Отказаться от любых конвенций — каждый разработчик выбирает имя поля сам по ситуации
 >   
@@ -365,7 +365,7 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 >   
 >   **Подводные камни:** **никогда** не использовать `java.util.Date` — он mutable и хранит UTC internally, но `toString()` показывает local time, что путает в логах. Для дат без времени (день рождения) — `LocalDate` и `format: date` (`"2025-04-19"`). Не путать `Instant` (UTC) с `LocalDateTime` (без timezone) — последний не годится для API.
 >   
->   **Связанные вопросы:** [[Q3]] (JSON naming conventions), [[Q2]] (URL structure)
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q3]] (JSON naming conventions), [[api-design-best-practices-interview#Q2]] (URL structure)
 
 ## Q5. (!) Resource hierarchy (parent/child)?
 
@@ -412,7 +412,7 @@ https://api.example.com/v1/users/123/orders?status=pending&limit=10
 >   
 >   **Подводные камни:** даже при nested URL стоит дублировать flat-вариант для случаев, когда parent неизвестен (`GET /orders/{id}` без userId — полезно для admin/support). Stripe именно так и делает: `/customers/cus_123/charges` **и** `/charges?customer=cus_123` сосуществуют.
 >   
->   **Связанные вопросы:** [[Q6]] (sub-resources vs flat), [[Q2]] (URL structure)
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q6]] (sub-resources vs flat), [[api-design-best-practices-interview#Q2]] (URL structure)
 > 
 > - [ ] **B)** Всегда делать 5+ уровней вложенности для максимально точного отражения иерархии данных
 >   
@@ -503,7 +503,7 @@ POST /orders {"user_id": 123, ...}
 >   
 >   **Подводные камни:** дублирование endpoints стоит maintenance — но окупается удобством. Главный риск: разъезжающаяся валидация (`POST /users/123/orders` валидирует, что user существует; `POST /orders {"user_id": 123}` забывает). Решение: общий service-layer вызывается из обоих controllers, валидация — в нём.
 >   
->   **Связанные вопросы:** [[Q5]] (resource hierarchy), [[Q7]] (bulk operations)
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q5]] (resource hierarchy), [[api-design-best-practices-interview#Q7]] (bulk operations)
 > 
 > - [ ] **C)** Решать по производительности БД — что быстрее JOIN-ится, то и nested
 >   
@@ -730,7 +730,7 @@ GET /events?since=2025-04-19T10:00:00Z&limit=100
 >   
 >   **Подводные камни:** cursor должен быть **opaque** для клиента (не парсить, не модифицировать) — иначе ломается обратная совместимость при смене схемы. Если sort-ключ не уникален, добавляй tie-breaker (`(created_at, id)`). Cursor нельзя «отмотать назад» в чистом виде — для bidirectional нужно отдавать `prev_cursor` отдельно.
 >   
->   **Связанные вопросы:** [[Q9]] (pagination strategies), [[Q11]] (filtering и sorting), [[Q16]] (idempotency)
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q9]] (pagination strategies), [[api-design-best-practices-interview#Q11]] (filtering и sorting), [[api-design-best-practices-interview#Q16]] (idempotency)
 > 
 > - [ ] **C)** Использовать только page-based (`?page=5&size=10`) — это компромисс между offset и cursor
 >   
@@ -820,7 +820,7 @@ GET /users?filter=age=gt=18;status==active
 >   
 >   **Подводные камни:** GET с query можно кэшировать (CDN, browser), POST /search — нет; не используй POST там где хватает GET. Документируй **точный** допустимый список filter-полей в OpenAPI — иначе клиент пробует случайные параметры. Sanitize/whitelist sort-поля → иначе ORDER BY injection через `?sort=password` или путь до полнотабличного скана по неиндексированному полю.
 >   
->   **Связанные вопросы:** [[Q9]] (pagination), [[Q10]] (cursor-based), [[Q12]] (field selection), [[Q13]] (error format)
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q9]] (pagination), [[api-design-best-practices-interview#Q10]] (cursor-based), [[api-design-best-practices-interview#Q12]] (field selection), [[api-design-best-practices-interview#Q13]] (error format)
 > 
 > - [ ] **D)** Принимать произвольные SQL-фрагменты в query (`?where=age>18 AND status='active'`) — это максимально гибко
 >   
@@ -908,7 +908,7 @@ GET /users?fields[user]=name,email
 >   
 >   **Подводные камни:** (1) cache-key должен включать набор полей, иначе CDN отдаст «не тот» вариант; (2) обязательно whitelist полей — иначе клиент пробует `?fields=password_hash` и получает leak; (3) обязательная проекция до БД, иначе только видимость оптимизации; (4) комбинация со sparse `?include=` (relations) ломает кэш окончательно — для таких случаев лучше GraphQL.
 >   
->   **Связанные вопросы:** [[Q3]] (snake_case vs camelCase), [[Q9]] (pagination), [[Q11]] (filtering и sorting), GraphQL vs REST
+>   **Связанные вопросы:** [[api-design-best-practices-interview#Q3]] (snake_case vs camelCase), [[api-design-best-practices-interview#Q9]] (pagination), [[api-design-best-practices-interview#Q11]] (filtering и sorting), GraphQL vs REST
 
 ## Q13. (!) Error response format?
 

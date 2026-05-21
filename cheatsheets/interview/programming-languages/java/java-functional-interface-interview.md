@@ -158,7 +158,7 @@ Transformer<String> ref = String::toUpperCase;  // method reference
 > - Generic SAM с разной арностью (например, `R apply(T t)` vs `R apply(T t, U u)`) — это разные интерфейсы, лямбда выбирает по target type.
 > - Методы `Object` (`toString`, `equals`, `hashCode`) — даже если переопределены abstract — не учитываются в SAM-подсчёте.
 >
-> **Связанные вопросы:** [[Q2]] — `@FunctionalInterface` annotation и compile-time проверка; [[Q4]] — стандартные интерфейсы `java.util.function`.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q2]] — `@FunctionalInterface` annotation и compile-time проверка; [[java-functional-interface-interview#Q4]] — стандартные интерфейсы `java.util.function`.
 
 ## Q2. Зачем нужна аннотация @FunctionalInterface?
 
@@ -224,7 +224,7 @@ public interface BadInterface {
 > - Методы из `Object` (`toString`, `equals`, `hashCode`) если объявлены abstract — НЕ считаются. `Comparator<T>` имеет abstract `equals(Object)` но остаётся functional interface.
 > - Generic SAM с разной арностью считается как один метод (если bound одинаковый). Но `void foo(T t)` и `void foo(T t1, T t2)` — это 2 разных метода, ошибка.
 >
-> **Связанные вопросы:** [[Q1]] — определение SAM; [[Q14]] — кастомные функциональные интерфейсы.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q1]] — определение SAM; [[java-functional-interface-interview#Q14]] — кастомные функциональные интерфейсы.
 >
 > ---
 >
@@ -350,7 +350,7 @@ Runnable r2 = () -> System.out.println(this);  // this = внешний клас
 > - **Сериализация лямбд**: возможна через `Serializable` cast (`(Runnable & Serializable) () -> ...`), но JLS не гарантирует кросс-JVM-совместимости — внутренняя структура lambda-class зависит от компилятора.
 > - **Debugging**: stack trace показывает имена вида `OuterClass.lambda$demo$0` — не сразу понятно где код.
 >
-> **Связанные вопросы:** [[Q12]] — effectively final и capture; [[Q1]] — SAM как target для лямбды.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q12]] — effectively final и capture; [[java-functional-interface-interview#Q1]] — SAM как target для лямбды.
 >
 > ---
 >
@@ -454,7 +454,7 @@ Supplier<List<String>> newList = ArrayList::new;
 > - **Примитивные специализации** (`IntPredicate`, `LongPredicate`, `DoublePredicate`) — для `IntStream`/`LongStream`/`DoubleStream`. Использование `Predicate<Integer>` с IntStream вызывает boxing.
 > - **Negate vs not**: `p.negate()` (instance метод) и `Predicate.not(p)` (static, Java 11+) делают одно и то же, но `not` читается лучше с method references: `Predicate.not(String::isEmpty)`.
 >
-> **Связанные вопросы:** [[Q4]] — основные интерфейсы; [[Q10]] — and/or/negate композиция; [[Q11]] — IntPredicate и другие специализации.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q4]] — основные интерфейсы; [[java-functional-interface-interview#Q10]] — and/or/negate композиция; [[java-functional-interface-interview#Q11]] — IntPredicate и другие специализации.
 >
 > ---
 >
@@ -567,7 +567,7 @@ Optional.empty().orElseGet(today);
 > - **`orElseGet` с side-effect** — каждый вызов `orElseGet` повторит вычисление; если supplier дорогой, кешируй вне.
 > - **Method reference vs lambda**: `LoggerFactory::getLogger` НЕ supplier (метод требует аргумент-класс). Нужно `() -> LoggerFactory.getLogger(...)`.
 >
-> **Связанные вопросы:** [[Q7]] — Supplier vs Callable vs Runnable; [[Q4]] — все стандартные интерфейсы; [[Q13]] — checked exceptions в лямбдах.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q7]] — Supplier vs Callable vs Runnable; [[java-functional-interface-interview#Q4]] — все стандартные интерфейсы; [[java-functional-interface-interview#Q13]] — checked exceptions в лямбдах.
 
 ## Q6. Чем Function отличается от UnaryOperator?
 
@@ -652,7 +652,7 @@ names.replaceAll(String::trim);  // replaceAll принимает UnaryOperator<
 > - **Boxing для примитивов**: используйте `IntUnaryOperator` для `int`, `LongUnaryOperator` для `long`. `UnaryOperator<Integer>` будет boxing на каждом элементе.
 > - **Concurrent modification**: `replaceAll` на ArrayList безопасен; на `CopyOnWriteArrayList` создаёт новую копию; на стандартных immutable List'ах (`List.of()`) бросает UnsupportedOperationException.
 >
-> **Связанные вопросы:** [[Q4]] — все стандартные интерфейсы; [[Q11]] — примитивные специализации; [[Q9]] — andThen/compose.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q4]] — все стандартные интерфейсы; [[java-functional-interface-interview#Q11]] — примитивные специализации; [[java-functional-interface-interview#Q9]] — andThen/compose.
 >
 > ---
 >
@@ -770,7 +770,7 @@ Supplier<String> s = () -> "lazy value";
 > - **Lambda capture в Callable**: captured-переменные те же effectively-final правила, как в любой лямбде.
 > - **ScheduledExecutorService.schedule(Runnable/Callable, ...)** — обе перегрузки, выбор по target type.
 >
-> **Связанные вопросы:** [[Q4]] — все стандартные интерфейсы; [[Q5]] — Supplier vs Consumer; [[Q13]] — checked exceptions в лямбдах.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q4]] — все стандартные интерфейсы; [[java-functional-interface-interview#Q5]] — Supplier vs Consumer; [[java-functional-interface-interview#Q13]] — checked exceptions в лямбдах.
 >
 > ---
 >
@@ -877,7 +877,7 @@ Function<Integer, ArrayList<String>> withCap = ArrayList::new;
 > - **NPE риск**: `bound::method` если bound = null — NPE сразу при создании method reference, не при вызове. `Function<String, Integer> f = (null)::length` — NullPointerException на присваивании.
 > - **Refactoring**: если переименовать метод, method reference сразу ломается на compile-time (это плюс). Лямбда же продолжает компилироваться даже если поведение поменялось.
 >
-> **Связанные вопросы:** [[Q1]] — SAM как target для method reference; [[Q3]] — лямбда vs анонимный класс; [[Q4]] — стандартные интерфейсы.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q1]] — SAM как target для method reference; [[java-functional-interface-interview#Q3]] — лямбда vs анонимный класс; [[java-functional-interface-interview#Q4]] — стандартные интерфейсы.
 >
 > ---
 >
@@ -1003,7 +1003,7 @@ plus3ThenTimes2.apply(5);  // (5+3)*2 = 16
 > - **Side effects в Function**: если одна из функций имеет side-effects (логирование, мутация), порядок может стать критичным. Compose vs andThen — это не только результат, но и порядок side-effects.
 > - **Производительность**: каждый `andThen/compose` создаёт новый Function-объект (через invokedynamic + LambdaMetafactory). На горячем пути в Stream это незаметно (JIT inline), но в micro-benchmarks разница есть.
 >
-> **Связанные вопросы:** [[Q4]] — Function/BiFunction; [[Q10]] — and/or/negate в Predicate; [[Q14]] — кастомные функциональные интерфейсы с композицией.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q4]] — Function/BiFunction; [[java-functional-interface-interview#Q10]] — and/or/negate в Predicate; [[java-functional-interface-interview#Q14]] — кастомные функциональные интерфейсы с композицией.
 >
 > ---
 >
@@ -1148,7 +1148,7 @@ List<String> nonEmpty = list.stream()
 > - **Ассоциативность**: `p1.and(p2).or(p3)` это `(p1 AND p2) OR p3`, не `p1 AND (p2 OR p3)`. Скобки в лямбде важны: `.and(p2.or(p3))` явно меняет порядок.
 > - **Type variance**: `Predicate.and(Predicate<? super T>)` — можно компонировать с predicate более общего типа. Это позволяет `Predicate<Number>` + `Predicate<Object>` → `Predicate<Number>`.
 >
-> **Связанные вопросы:** [[Q9]] — compose/andThen в Function; [[Q4]] — Predicate среди стандартных интерфейсов; [[Q11]] — IntPredicate/LongPredicate специализации.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q9]] — compose/andThen в Function; [[java-functional-interface-interview#Q4]] — Predicate среди стандартных интерфейсов; [[java-functional-interface-interview#Q11]] — IntPredicate/LongPredicate специализации.
 >
 > ---
 >
@@ -1252,7 +1252,7 @@ IntStream.range(0, 1000).map(squareInt).sum();
 > - **Generic совместимость**: `IntFunction<R>` (int → R) и `ToIntFunction<T>` (T → int) — разные интерфейсы. Не путайте.
 > - **Composition**: `IntUnaryOperator.andThen(IntUnaryOperator)` есть, но composition между разными специализациями (например, `IntUnaryOperator` + `LongUnaryOperator`) — сложнее, иногда нужны явные приведения.
 >
-> **Связанные вопросы:** [[Q4]] — generic функциональные интерфейсы; [[Q5]] — Consumer vs Supplier; [[Q9]] — composition.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q4]] — generic функциональные интерфейсы; [[java-functional-interface-interview#Q5]] — Consumer vs Supplier; [[java-functional-interface-interview#Q9]] — composition.
 >
 > ---
 >
@@ -1401,7 +1401,7 @@ list.forEach(x -> counter[0]++);  // изменяем элемент, а не с
 > - **Capture огромных объектов**: если лямбда захватывает `this`, удерживает весь outer объект. Memory leak'и через event listener'ы.
 > - **Java vs Kotlin**: Kotlin позволяет `var` capture в inline-функциях; Java НЕТ. Это конструктивное отличие, не баг.
 >
-> **Связанные вопросы:** [[Q3]] — лямбда vs анонимный класс (capture); [[Q1]] — SAM target type; [[Q13]] — checked exceptions в лямбдах.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q3]] — лямбда vs анонимный класс (capture); [[java-functional-interface-interview#Q1]] — SAM target type; [[java-functional-interface-interview#Q13]] — checked exceptions в лямбдах.
 
 ## Q13. Можно ли выбросить checked exception из лямбды?
 
@@ -1510,7 +1510,7 @@ ThrowingFunction<String, byte[]> reader = Files::readAllBytes;
 > - **CompletableFuture + checked**: внутри `.thenApply(Function)` тот же запрет. Нужен `.thenApplyAsync` с custom wrap'ом или CompletableFuture.completeExceptionally.
 > - **Streams parallel + checked wrapper**: исключения могут оборачиваться `RuntimeException` дважды (ваш + Spliterator). Распаковывайте через `getCause()` в catch.
 >
-> **Связанные вопросы:** [[Q1]] — SAM contract; [[Q14]] — кастомные функциональные интерфейсы с throws; [[Q7]] — Callable как «throwing Supplier».
+> **Связанные вопросы:** [[java-functional-interface-interview#Q1]] — SAM contract; [[java-functional-interface-interview#Q14]] — кастомные функциональные интерфейсы с throws; [[java-functional-interface-interview#Q7]] — Callable как «throwing Supplier».
 >
 > ---
 >
@@ -1671,7 +1671,7 @@ allValid.validate("user@example.com");  // true
 > - **Generic variance**: `Validator<? super Order>` принимает `Validator<Object>` — это нужно явно объявить в API: `void validateAll(Validator<? super T> v)`.
 > - **Эволюция**: если позже захотите добавить новый abstract метод (например, batch validation) — это **сломает** всех клиентов с лямбдами. default-методы — безопасный путь расширения.
 >
-> **Связанные вопросы:** [[Q1]] — определение SAM; [[Q2]] — `@FunctionalInterface` compile-time check; [[Q13]] — checked exceptions в лямбдах.
+> **Связанные вопросы:** [[java-functional-interface-interview#Q1]] — определение SAM; [[java-functional-interface-interview#Q2]] — `@FunctionalInterface` compile-time check; [[java-functional-interface-interview#Q13]] — checked exceptions в лямбдах.
 
 ## See also
 

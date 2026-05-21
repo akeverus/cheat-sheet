@@ -128,10 +128,10 @@ public Product getProduct(Long id) {
 >
 > **Подводные камни:**
 > - Аннотации **молча игнорируются** без `@EnableCaching` — методы выполняются всегда, баг неочевиден до измерения latency.
-> - Прокси работает только для **public** методов и **внешних** вызовов (не для self-invocation — см. [[Q15]]).
+> - Прокси работает только для **public** методов и **внешних** вызовов (не для self-invocation — см. [[spring-cache-interview#Q15]]).
 > - Дефолтный `ConcurrentMapCacheManager` не имеет TTL — в продакшене это утечка памяти.
 >
-> **Связанные вопросы:** [[Q2]] — подключение через `@EnableCaching`; [[Q3]] — механика `@Cacheable`; [[Q15]] — self-invocation problem.
+> **Связанные вопросы:** [[spring-cache-interview#Q2]] — подключение через `@EnableCaching`; [[spring-cache-interview#Q3]] — механика `@Cacheable`; [[spring-cache-interview#Q15]] — self-invocation problem.
 >
 > ---
 >
@@ -236,7 +236,7 @@ public class Application { ... }
 >
 > **Подводные камни:** `@EnableCaching` должна быть в context — на `@Configuration`-классе, `@SpringBootApplication` или любом импортируемом классе. Также `@Cacheable` не работает при self-invocation (вызов из того же класса минует прокси). Дефолтный кэш — `ConcurrentHashMap` без TTL и LRU — не для прод.
 >
-> **Связанные вопросы:** [[Q3]] — `@Cacheable`; [[Q9]] — выбор CacheManager (Caffeine/Redis)
+> **Связанные вопросы:** [[spring-cache-interview#Q3]] — `@Cacheable`; [[spring-cache-interview#Q9]] — выбор CacheManager (Caffeine/Redis)
 >
 > ---
 >
@@ -354,7 +354,7 @@ sequenceDiagram
 >
 > **Подводные камни:** (1) Self-invocation минует прокси — вызов из того же класса не кэшируется. (2) `null`-результаты кэшируются по умолчанию — нужно `unless = "#result == null"`. (3) Исключения НЕ кэшируются — каждый раз метод выполнится заново. (4) Параметры должны иметь корректный `equals/hashCode` для ключа.
 >
-> **Связанные вопросы:** [[Q4]] — `@CachePut` (всегда выполняет); [[Q7]] — генерация ключа по умолчанию
+> **Связанные вопросы:** [[spring-cache-interview#Q4]] — `@CachePut` (всегда выполняет); [[spring-cache-interview#Q7]] — генерация ключа по умолчанию
 >
 > ---
 >
@@ -432,7 +432,7 @@ public Product getProduct(Long id) {
 >
 > **Подводные камни:** (1) Ключ должен СОВПАДАТЬ с тем, что использует `@Cacheable` — иначе будет две записи. Часто пишут `key = "#result.id"` для согласованности. (2) Если метод вернёт `null` или бросит exception — кэш не обновится. (3) Не использовать `@CachePut` на read-методах — он гарантированно выполнит метод, теряя смысл кэша.
 >
-> **Связанные вопросы:** [[Q3]] — `@Cacheable` read-through; [[Q5]] — `@CacheEvict` для инвалидации; [[Q6]] — комбинирование через `@Caching`
+> **Связанные вопросы:** [[spring-cache-interview#Q3]] — `@Cacheable` read-through; [[spring-cache-interview#Q5]] — `@CacheEvict` для инвалидации; [[spring-cache-interview#Q6]] — комбинирование через `@Caching`
 >
 > ---
 >
@@ -557,7 +557,7 @@ public void clearAll() { }
 >
 > **Подводные камни:** (1) Если `deleteProduct` упал, в кэше остаётся запись на удалённый объект — последующее чтение даст «фантом», пока не истечёт TTL. (2) `allEntries = true` тоже подчиняется `beforeInvocation`. (3) Транзакционная семантика: eviction НЕ участвует в `@Transactional` rollback — это операция в кэше, а не в БД.
 >
-> **Связанные вопросы:** [[Q3]] — `@Cacheable` чтение; [[Q4]] — `@CachePut` запись; [[Q6]] — `@Caching` для комбинирования
+> **Связанные вопросы:** [[spring-cache-interview#Q3]] — `@Cacheable` чтение; [[spring-cache-interview#Q4]] — `@CachePut` запись; [[spring-cache-interview#Q6]] — `@Caching` для комбинирования
 
 ## Q6. Для чего нужны @Caching и @CacheConfig?
 
@@ -634,7 +634,7 @@ public class ProductService {
 >
 > **Подводные камни:** (1) `@CacheConfig` не передаётся по наследованию через interface — нужно явно ставить на класс. (2) Локальные атрибуты `@Cacheable` ПЕРЕОПРЕДЕЛЯЮТ значения из `@CacheConfig` — если на классе `cacheNames = "a"`, а на методе указан `value = "b"`, используется `"b"`. (3) `@Caching` многословен и снижает читаемость — если нужно >2-3 операций, часто проще вынести в явный код с `CacheManager`. (4) Spring 4.3+ поддерживает повторение `@CacheEvict`/`@CachePut` напрямую через `@Repeatable`, и `@Caching` нужен реже.
 >
-> **Связанные вопросы:** [[Q3]] — `@Cacheable`; [[Q4]] — `@CachePut`; [[Q5]] — `@CacheEvict`; [[Q7]] — keyGenerator
+> **Связанные вопросы:** [[spring-cache-interview#Q3]] — `@Cacheable`; [[spring-cache-interview#Q4]] — `@CachePut`; [[spring-cache-interview#Q5]] — `@CacheEvict`; [[spring-cache-interview#Q7]] — keyGenerator
 >
 > ---
 >
@@ -742,7 +742,7 @@ public B methodB(Long id) { ... }  // ключ тоже: 42L → коллизи�
 >
 > **Подводные камни:** (1) Ошибка проявляется в runtime через `ClassCastException` без понятного stack trace на причину. (2) Тесты на каждый метод изолированно проходят (кэш чист), баг ловится только в интеграционных сценариях. (3) Может проявляться непредсказуемо — зависит от порядка вызовов. (4) Опаснее всего при `@Cacheable` с одинаковыми value-классами разной семантики (например, `User` для покупателя и `User` для админа).
 >
-> **Связанные вопросы:** [[Q8]] — кастомный SpEL key; [[Q3]] — `@Cacheable` базовая семантика
+> **Связанные вопросы:** [[spring-cache-interview#Q8]] — кастомный SpEL key; [[spring-cache-interview#Q3]] — `@Cacheable` базовая семантика
 >
 > ---
 >
@@ -850,7 +850,7 @@ public User saveUser(User user) { ... }
 >
 > **Подводные камни:** (1) Без `-parameters` в `javac` имена параметров стираются — `#category` упадёт с `SpelEvaluationException`; используйте `#p0`/`#a0`. (2) `null`-параметр конкатенируется как строка `"null"` — `"null:5"` и `"null:6"` это разные ключи, что обычно нежелательно — обрабатывайте через `?:`. (3) Конкатенация чисел: `1 + 2` в SpEL даст `3`, а не `"1:2"` — без разделителя получите коллизию между `(1, 2)` и `(2, 1)`. (4) `#result` запрещён в `@Cacheable.key` — только в `@CachePut.key`/`@CacheEvict.key`/`unless`.
 >
-> **Связанные вопросы:** [[Q7]] — `SimpleKeyGenerator` дефолтный; [[Q9]] — `condition` и `unless` для условного кэширования; [[Q10]] — кастомный `KeyGenerator` для сложных ключей
+> **Связанные вопросы:** [[spring-cache-interview#Q7]] — `SimpleKeyGenerator` дефолтный; [[spring-cache-interview#Q9]] — `condition` и `unless` для условного кэширования; [[spring-cache-interview#Q10]] — кастомный `KeyGenerator` для сложных ключей
 >
 > ---
 >
@@ -975,7 +975,7 @@ public List<Product> getAll() { ... }
 >
 > **Подводные камни:** (1) `#result` в `condition` упадёт в runtime с `SpelEvaluationException` — не валидируется на старте. (2) `condition = false` означает «не использовать кэш ВООБЩЕ» — даже если в кэше уже лежит значение для этого ключа, оно не будет прочитано. (3) `unless` ВЫЧИСЛЯЕТСЯ после каждого вызова метода, даже при cache hit (для согласованности) — лишний overhead на горячем пути. (4) `condition` НЕ влияет на eviction в `@CacheEvict` — у него своя `condition`-семантика. (5) Сложные SpEL-выражения замедляют каждый вызов — для производительности предпочитайте простые проверки или вынесите в Java-логику.
 >
-> **Связанные вопросы:** [[Q3]] — `@Cacheable` базовая семантика; [[Q8]] — SpEL для `key`; [[Q10]] — кастомный `KeyGenerator`
+> **Связанные вопросы:** [[spring-cache-interview#Q3]] — `@Cacheable` базовая семантика; [[spring-cache-interview#Q8]] — SpEL для `key`; [[spring-cache-interview#Q10]] — кастомный `KeyGenerator`
 
 ## Q10. Как создать кастомный KeyGenerator?
 
@@ -1091,7 +1091,7 @@ public class CacheConfig implements CachingConfigurer {
 >
 > **Подводные камни:** (1) Бин КАСТОМНОГО `KeyGenerator` должен быть зарегистрирован ДО создания cache-aspect'а — обычно это естественно через `@Component`, но в сложных конфигурациях встречаются `BeanCurrentlyInCreationException`. (2) `@CacheConfig(keyGenerator = "...")` на классе vs `@Cacheable(keyGenerator = "...")` на методе — последнее переопределяет. (3) Если возвращаемый ключ — mutable объект (`HashMap`, `ArrayList`), его модификация после `put` ломает lookup — всегда возвращайте immutable (`String`, `Long`, `record`). (4) `KeyGenerator` НЕ участвует, если в аннотации указан `key = "..."` — SpEL `key` имеет приоритет. (5) Глобальный `CachingConfigurer.keyGenerator()` действует только если в аннотации не указаны НИ `key`, НИ `keyGenerator`.
 >
-> **Связанные вопросы:** [[Q7]] — `SimpleKeyGenerator` дефолтный и коллизия ключей; [[Q8]] — SpEL `key` для простых случаев; [[Q11]] — выбор `CacheManager` (другой extension-point)
+> **Связанные вопросы:** [[spring-cache-interview#Q7]] — `SimpleKeyGenerator` дефолтный и коллизия ключей; [[spring-cache-interview#Q8]] — SpEL `key` для простых случаев; [[spring-cache-interview#Q11]] — выбор `CacheManager` (другой extension-point)
 >
 > ---
 >
@@ -1160,7 +1160,7 @@ spring:
 >
 >     **Подводные камни:** если на classpath одновременно Redis и Caffeine, Spring Boot выберет Redis (приоритет выше) — это часто сюрприз; `type: none` полностью отключает кэширование (методы выполняются каждый раз); `ConcurrentMapCacheManager` не поддерживает TTL и eviction policy.
 >
->     **Связанные вопросы:** [[Q12]], [[Q13]], [[Q18]]
+>     **Связанные вопросы:** [[spring-cache-interview#Q12]], [[spring-cache-interview#Q13]], [[spring-cache-interview#Q18]]
 >
 > - [ ] **B) Spring Boot поддерживает только Redis и Caffeine — остальные провайдеры нужно подключать вручную через `@Bean CacheManager`**
 >
@@ -1302,7 +1302,7 @@ public class CacheConfig {
 >
 >     **Подводные камни:** `expireAfterWrite` — строгий TTL от записи; `expireAfterAccess` — sliding (TTL продлевается при чтении); `recordStats()` нужен для метрик через `CaffeineCacheMetrics`; `registerCustomCache` должен вызываться **до** первого обращения к `getCache(name)`, иначе создастся дефолтный.
 >
->     **Связанные вопросы:** [[Q11]], [[Q13]], [[Q18]]
+>     **Связанные вопросы:** [[spring-cache-interview#Q11]], [[spring-cache-interview#Q13]], [[spring-cache-interview#Q18]]
 
 ## Q13. Как подключить Redis-кэш?
 
@@ -1380,7 +1380,7 @@ Spring Boot автоматически создаёт `RedisCacheManager`. Да�
 >
 >     **Подводные камни:** объекты должны быть `Serializable`, иначе `NotSerializableException`; смена структуры класса (добавление поля) ломает уже закэшированные данные (`InvalidClassException`) — решается переходом на JSON-сериализатор; сетевые задержки добавляют latency (~1-2 мс vs ~100 нс у Caffeine); `null` не кэшируется по умолчанию — нужно `RedisCacheConfiguration.disableCachingNullValues()` инвертировать.
 >
->     **Связанные вопросы:** [[Q11]], [[Q12]], [[Q18]]
+>     **Связанные вопросы:** [[spring-cache-interview#Q11]], [[spring-cache-interview#Q12]], [[spring-cache-interview#Q18]]
 >
 > - [ ] **C) Подменить `CacheManager` через `@Primary @Bean ConcurrentMapCacheManager redisCacheManager()` — Spring сам поймёт, что нужен Redis по имени бина**
 >
@@ -1459,7 +1459,7 @@ spring:
 >
 >     **Подводные камни:** `RedisCacheConfiguration` immutable — `entryTtl(...)` возвращает новый объект, не мутирует исходный; забыл присвоить — TTL не применится. `spring.cache.redis.time-to-live` в `application.yml` ставит единый TTL для всех кэшей и не позволяет per-cache настройку.
 >
->     **Связанные вопросы:** [[Q9]] (атрибуты @Cacheable), [[Q13]] (CacheManager), [[Q18]] (синхронизация в кластере).
+>     **Связанные вопросы:** [[spring-cache-interview#Q9]] (атрибуты @Cacheable), [[spring-cache-interview#Q13]] (CacheManager), [[spring-cache-interview#Q18]] (синхронизация в кластере).
 >
 > - [ ] **B. Указать `@Cacheable(value = "products", ttl = "10m")` — TTL передаётся через атрибут аннотации.**
 >
@@ -1581,7 +1581,7 @@ public class ProductService {
 >
 >     **Подводные камни:** `AopContext.currentProxy()` требует `@EnableAspectJAutoProxy(exposeProxy = true)` и считается «грязным» способом — нарушает SRP. Инжекция self через `@Autowired` без `@Lazy` даёт `BeanCurrentlyInCreationException`. Самое чистое решение — вынести кэшируемую логику в отдельный бин.
 >
->     **Связанные вопросы:** [[Q5]] (AOP-прокси), [[Q14]] (TTL), [[Q16]] (ограничения abstraction).
+>     **Связанные вопросы:** [[spring-cache-interview#Q5]] (AOP-прокси), [[spring-cache-interview#Q14]] (TTL), [[spring-cache-interview#Q16]] (ограничения abstraction).
 
 ---
 
@@ -1618,7 +1618,7 @@ public class ProductService {
 >
 >     **Подводные камни:** ещё ограничения — нет TTL у `ConcurrentMapCacheManager`, нет распределённого кэша без отдельного backend (Redis/Hazelcast), `null` не кэшируется по умолчанию (нужно `allowCachingNullValues`), self-invocation не работает, смена структуры классов ломает Redis-кэш из-за сериализации.
 >
->     **Связанные вопросы:** [[Q4]] (ConcurrentMapCacheManager), [[Q15]] (self-invocation), [[Q18]] (распределённый кэш), [[Q19]] (WebFlux).
+>     **Связанные вопросы:** [[spring-cache-interview#Q4]] (ConcurrentMapCacheManager), [[spring-cache-interview#Q15]] (self-invocation), [[spring-cache-interview#Q18]] (распределённый кэш), [[spring-cache-interview#Q19]] (WebFlux).
 >
 > - [ ] **C. `null`-значения кэшируются автоматически и считаются валидным результатом — это поведение нельзя отключить.**
 >
@@ -1712,7 +1712,7 @@ class ProductServiceCacheTest {
 >
 >     **Подводные камни:** (1) если тестировать через `new ProductService(...)` без Spring-контекста — прокси не создастся и `@Cacheable` не сработает; (2) self-invocation (внутренний вызов метода через `this.`) обходит прокси — это надо проверять отдельно; (3) для условных кэшей (`condition`/`unless`) нужны отдельные тесты на каждую ветку.
 >
->     **Связанные вопросы:** [[Q15]] (self-invocation), [[Q16]] (ограничения Spring Cache), [[Q18]] (sync и кластер).
+>     **Связанные вопросы:** [[spring-cache-interview#Q15]] (self-invocation), [[spring-cache-interview#Q16]] (ограничения Spring Cache), [[spring-cache-interview#Q18]] (sync и кластер).
 >
 > - [ ] **D. Тестировать кэш нельзя без E2E-сценария с реальной нагрузкой — единичные вызовы не отражают поведение под concurrency.**
 >
@@ -1802,7 +1802,7 @@ if (lock.tryLock(0, 5, TimeUnit.SECONDS)) {
 >
 >     **Подводные камни:** (1) `sync = true` несовместим с `unless`, `condition`, реактивными типами и множественными `cacheNames` — `IllegalStateException` на старте; (2) при `sync = true` блокирующиеся потоки висят на загрузке — для долгих операций это может выжрать пул tomcat-threads; (3) для Redis нужно учитывать, что lease на лок может истечь раньше, чем завершится загрузка — фолбэк-стратегия обязательна.
 >
->     **Связанные вопросы:** [[Q14]] (cache provider характеристики), [[Q15]] (self-invocation), [[Q17]] (тестирование кэша).
+>     **Связанные вопросы:** [[spring-cache-interview#Q14]] (cache provider характеристики), [[spring-cache-interview#Q15]] (self-invocation), [[spring-cache-interview#Q17]] (тестирование кэша).
 
 ---
 

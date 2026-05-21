@@ -149,7 +149,7 @@ notificationService.sendEmail("user@example.com", "Hello");
 >
 > **Подводные камни:** `@Async` на private методе — silent no-op; вызов `this.asyncMethod()` обходит proxy; `@Async` в `@PostConstruct` не сработает (контекст ещё не готов); по умолчанию (до Boot 3.2) используется `SimpleAsyncTaskExecutor` без пула — каждый вызов создаёт новый поток.
 >
-> **Связанные вопросы:** [[Q3]] — внутренний механизм proxy, [[Q4]] — default executor, [[Q9]] — self-invocation.
+> **Связанные вопросы:** [[spring-async-interview#Q3]] — внутренний механизм proxy, [[spring-async-interview#Q4]] — default executor, [[spring-async-interview#Q9]] — self-invocation.
 >
 > ---
 >
@@ -228,7 +228,7 @@ userService.findUserAsync(1L)
 >
 > **Подводные камни:** забыть обернуть результат через `completedFuture()` — Spring отдаст caller-у `null`; смешивать блокирующий `.get()` без timeout в горячем пути; вызывать `.join()` в одном из пулов того же executor-а — потенциальный deadlock при насыщении.
 >
-> **Связанные вопросы:** [[Q7]] — exception handling, [[Q12]] — композиция нескольких async, [[Q15]] — отличие от `supplyAsync`.
+> **Связанные вопросы:** [[spring-async-interview#Q7]] — exception handling, [[spring-async-interview#Q12]] — композиция нескольких async, [[spring-async-interview#Q15]] — отличие от `supplyAsync`.
 >
 > ---
 >
@@ -330,7 +330,7 @@ sequenceDiagram
 >
 > **Подводные камни:** CGLIB не может проксировать `final` классы/методы; private методы не видны proxy; вызов через `this.` обходит proxy; `@Async` методы, вызываемые из `@PostConstruct`, не работают (BeanPostProcessor ещё не обернул bean).
 >
-> **Связанные вопросы:** [[Q9]] — self-invocation, [[Q11]] — требования к методу, [[Q10]] — взаимодействие с `@Transactional`.
+> **Связанные вопросы:** [[spring-async-interview#Q9]] — self-invocation, [[spring-async-interview#Q11]] — требования к методу, [[spring-async-interview#Q10]] — взаимодействие с `@Transactional`.
 >
 > ---
 >
@@ -409,7 +409,7 @@ spring:
 >
 > **Подводные камни:** `max-pool-size = Integer.MAX_VALUE` с `queue-capacity = Integer.MAX_VALUE` (Spring Boot 3.2 default) теоретически безопаснее, но всё ещё может привести к OOM при unbounded нагрузке; `SimpleAsyncTaskExecutor` иногда специально используют как middleware для тестов — не путать с production.
 >
-> **Связанные вопросы:** [[Q5]] — кастомный executor, [[Q6]] — `AsyncConfigurer`.
+> **Связанные вопросы:** [[spring-async-interview#Q5]] — кастомный executor, [[spring-async-interview#Q6]] — `AsyncConfigurer`.
 >
 > ---
 >
@@ -523,7 +523,7 @@ public void sendEmail(...) { ... }
 >
 > **Подводные камни:** `CallerRunsPolicy` может заблокировать ваш HTTP request-thread (если caller — Tomcat поток) и каскадно деградировать весь сервис; `DiscardPolicy` опасна молчаливой потерей данных; `setQueueCapacity(Integer.MAX_VALUE)` делает `maxPoolSize` бесполезным — `ThreadPoolExecutor` сначала заполняет очередь, и только потом увеличивает потоки.
 >
-> **Связанные вопросы:** [[Q4]] — default executor, [[Q6]] — `AsyncConfigurer`.
+> **Связанные вопросы:** [[spring-async-interview#Q4]] — default executor, [[spring-async-interview#Q6]] — `AsyncConfigurer`.
 >
 > ---
 >
@@ -640,7 +640,7 @@ public class AsyncConfig implements AsyncConfigurer {
 >
 > **Подводные камни:** только один `AsyncConfigurer` будет применён (при наличии нескольких — Spring выберет один и проигнорирует остальные); метод `getAsyncUncaughtExceptionHandler()` работает только для `void` методов — для `CompletableFuture` исключения уходят в future и обрабатываются через `.exceptionally()`.
 >
-> **Связанные вопросы:** [[Q5]] — кастомный executor, [[Q7]] — exception handling, [[Q8]] — `AsyncUncaughtExceptionHandler`.
+> **Связанные вопросы:** [[spring-async-interview#Q5]] — кастомный executor, [[spring-async-interview#Q7]] — exception handling, [[spring-async-interview#Q8]] — `AsyncUncaughtExceptionHandler`.
 >
 > ---
 >
@@ -754,7 +754,7 @@ fetchData()
 >
 > **Подводные камни:** handler НЕ срабатывает для `CompletableFuture` — для них используйте `.exceptionally()` или `.handle()`; handler выполняется в том же worker-потоке, что и упавший метод — медленный handler блокирует поток; не вызывайте из handler-а методы, которые сами могут выбросить exception, без try-catch.
 >
-> **Связанные вопросы:** [[Q2]] — типы возврата, [[Q8]] — `AsyncUncaughtExceptionHandler` детально.
+> **Связанные вопросы:** [[spring-async-interview#Q2]] — типы возврата, [[spring-async-interview#Q8]] — `AsyncUncaughtExceptionHandler` детально.
 
 ## Q8. Что такое AsyncUncaughtExceptionHandler?
 
@@ -818,7 +818,7 @@ public class CustomAsyncExceptionHandler implements AsyncUncaughtExceptionHandle
 >
 > **Подводные камни:** забыть зарегистрировать `AsyncUncaughtExceptionHandler` для `void` методов — exception просто пропадёт; не вызвать `.exceptionally()` на CompletableFuture — exception дойдёт только при `.get()` или вообще проигнорируется; смешать оба паттерна — handler не сработает для CompletableFuture, и exception потеряется.
 >
-> **Связанные вопросы:** [[Q2]] — типы возврата, [[Q7]] — обработка исключений общая.
+> **Связанные вопросы:** [[spring-async-interview#Q2]] — типы возврата, [[spring-async-interview#Q7]] — обработка исключений общая.
 >
 > ---
 >
@@ -980,7 +980,7 @@ public class OrderService {
 >
 > **Подводные камни:** проблема невидимая — нет ошибок, нет warning-ов, тесты проходят (особенно если в тестах SyncTaskExecutor). В production это проявляется как непонятный рост latency endpoint-а; self-injection с `@Lazy` обязательно — без него возникает циклическая зависимость при старте.
 >
-> **Связанные вопросы:** [[Q3]] — механизм AOP proxy, [[Q10]] — та же проблема с `@Transactional`, [[Q11]] — требования к методу.
+> **Связанные вопросы:** [[spring-async-interview#Q3]] — механизм AOP proxy, [[spring-async-interview#Q10]] — та же проблема с `@Transactional`, [[spring-async-interview#Q11]] — требования к методу.
 >
 > ---
 >
@@ -1104,7 +1104,7 @@ public void onOrderPlaced(OrderPlacedEvent event) {
 >
 > **Подводные камни:** `BEFORE_COMMIT` фаза события — async может прочитать данные, но изменения ещё могут откатиться; rollback caller не отменяет async; `propagation = REQUIRES_NEW` на caller-методе не помогает — суть в смене потока, а не в propagation; в тестах с `SyncTaskExecutor` проблема скрыта.
 >
-> **Связанные вопросы:** [[Q9]] — self-invocation, [[Spring Events]] — `@TransactionalEventListener`, [[Spring @Transactional]] — propagation.
+> **Связанные вопросы:** [[spring-async-interview#Q9]] — self-invocation, [[Spring Events]] — `@TransactionalEventListener`, [[Spring @Transactional]] — propagation.
 >
 > ---
 >
@@ -1214,7 +1214,7 @@ public class DataProcessor {
 >
 > **Подводные камни:** IDE-плагины (IntelliJ Spring plugin) предупреждают о таких ошибках, но не во всех случаях; SonarQube правило `spring:S6829` отлавливает часть; тесты с `SyncTaskExecutor` маскируют проблему — нужно интеграционное тестирование с реальным executor.
 >
-> **Связанные вопросы:** [[Q3]] — механизм AOP proxy, [[Q9]] — self-invocation, [[Q1]] — настройка `@EnableAsync`.
+> **Связанные вопросы:** [[spring-async-interview#Q3]] — механизм AOP proxy, [[spring-async-interview#Q9]] — self-invocation, [[spring-async-interview#Q1]] — настройка `@EnableAsync`.
 
 ## Q12. Как комбинировать несколько @Async вызовов?
 
@@ -1294,7 +1294,7 @@ public class UserAggregateService {
 >
 > **Подводные камни:** все три метода должны использовать разные executor-ы или один с достаточным `corePoolSize` — иначе они встанут в очередь и выполнятся последовательно; `allOf` не отменяет остальные при exception в одном — нужно явное `cancel()`; `.join()` всё ещё блокирует caller-поток — для не-блокирующего сценария используйте `.thenApply()` на результате `allOf`.
 >
-> **Связанные вопросы:** [[Q2]] — `CompletableFuture` тип возврата, [[Q15]] — отличия от `supplyAsync`, [[Java CompletableFuture]] — расширенный API.
+> **Связанные вопросы:** [[spring-async-interview#Q2]] — `CompletableFuture` тип возврата, [[spring-async-interview#Q15]] — отличия от `supplyAsync`, [[Java CompletableFuture]] — расширенный API.
 >
 > ---
 >
@@ -1419,7 +1419,7 @@ public Executor asyncExecutor() {
 >
 > **Подводные камни:** не забыть `MDC.clear()` в finally — worker-поток переиспользуется в pool, утечка контекста между задачами; SecurityContextHolder.clearContext() тоже обязателен; `TaskDecorator` применяется ко всем задачам пула — если разные `@Async` методы требуют разной propagation-логики, нужны разные executor-ы; не работает для `TaskExecutionAutoConfiguration` без явной конфигурации.
 >
-> **Связанные вопросы:** [[Q5]] — кастомный executor, [[Q4]] — default executor.
+> **Связанные вопросы:** [[spring-async-interview#Q5]] — кастомный executor, [[spring-async-interview#Q4]] — default executor.
 >
 > ---
 >
@@ -1566,7 +1566,7 @@ void shouldReturnResult() throws Exception {
 >
 > **Подводные камни:** `SyncTaskExecutor` маскирует проблемы threading (race conditions, MDC propagation) — нужно дополнить integration-тестами с реальным executor; `Awaitility` `atMost` слишком большой → медленные тесты, слишком маленький → flaky; `CompletableFuture.get()` без timeout вешает тест бесконечно при exception.
 >
-> **Связанные вопросы:** [[Q4]] — `SimpleAsyncTaskExecutor`, [[Q5]] — кастомный executor.
+> **Связанные вопросы:** [[spring-async-interview#Q4]] — `SimpleAsyncTaskExecutor`, [[spring-async-interview#Q5]] — кастомный executor.
 >
 > ---
 >
@@ -1651,7 +1651,7 @@ public CompletableFuture<Order> fetchOrderProgrammatic(Long id) {
 >
 > **Подводные камни:** `supplyAsync` без executor использует `ForkJoinPool.commonPool()` — опасно для I/O-bound задач (общий пул на всё приложение); смешивание `@Async` и `supplyAsync` создаёт два разных threading-режима, MDC propagation работает только для `@Async` (если настроен TaskDecorator); `@Async` без `@EnableAsync` — silent no-op.
 >
-> **Связанные вопросы:** [[Q2]] — типы возврата, [[Q3]] — AOP механизм, [[Q12]] — композиция, [[Java CompletableFuture]].
+> **Связанные вопросы:** [[spring-async-interview#Q2]] — типы возврата, [[spring-async-interview#Q3]] — AOP механизм, [[spring-async-interview#Q12]] — композиция, [[Java CompletableFuture]].
 >
 > ---
 >

@@ -1290,7 +1290,7 @@ listOf(1, 2, 3).asSequence().filter { it > 1 }.toList()  // избыточно
 > - **Boxing для примитивов**: нет `IntSequence` как у Java `IntStream`; для perf-critical числовых pipeline лучше Java Stream API
 > - **Нет parallel-режима**: Sequence сугубо последовательна; для параллелизма — `Flow.flatMapMerge` или `parallelStream`
 >
-> **Связанные вопросы:** [[Q8]] — Sequence vs List базовое отличие; [[Q10]] — практический выбор; [[Q11]] — операции над коллекциями.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q8]] — Sequence vs List базовое отличие; [[kotlin-collections-interview#Q10]] — практический выбор; [[kotlin-collections-interview#Q11]] — операции над коллекциями.
 >
 > ---
 >
@@ -1414,7 +1414,7 @@ a.any { it in b }
 > - **`sumOf` для BigDecimal**: нужно явно `sumOf<Order, BigDecimal>` (type inference иногда падает)
 > - **`any` на пустой**: возвращает `false` — это корректно, но проверяй edge-case в тестах
 >
-> **Связанные вопросы:** [[Q11]] — базовые операции; [[Q30]] — Sequence overhead; [[Q19]] — `mapNotNull` детально.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q11]] — базовые операции; [[kotlin-collections-interview#Q30]] — Sequence overhead; [[kotlin-collections-interview#Q19]] — `mapNotNull` детально.
 >
 > ---
 >
@@ -1532,7 +1532,7 @@ val immutable = persistentListOf(1, 2, 3)
 > - **`CopyOnWriteArrayList` дорог на запись** — каждый `add` копирует весь массив; подходит только для read-heavy workloads
 > - **`synchronizedList` для итерации** — нужна ручная обёртка `synchronized(list) { list.forEach { } }`
 >
-> **Связанные вопросы:** [[Q1]] — read-only vs mutable; [[Q6]] — действительно ли read-only immutable; [[Q37]] — Persistent Collections детально.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q1]] — read-only vs mutable; [[kotlin-collections-interview#Q6]] — действительно ли read-only immutable; [[kotlin-collections-interview#Q37]] — Persistent Collections детально.
 >
 > ---
 >
@@ -1636,7 +1636,7 @@ users.associateWith { it.email }
 > - **`associate` с Pair-allocation**: создаёт `Pair<K, V>` на каждый элемент; `associateBy({}, {})` эффективнее, если оба ключа и значения вычисляются.
 > - **Mutable map**: возвращают `LinkedHashMap` (сохраняет порядок вставки), не immutable.
 >
-> **Связанные вопросы:** [[Q42]] — детально про associateBy/With/associate; [[Q13]] — groupBy и partition; [[Q14]] — groupingBy для агрегаций.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q42]] — детально про associateBy/With/associate; [[kotlin-collections-interview#Q13]] — groupBy и partition; [[kotlin-collections-interview#Q14]] — groupingBy для агрегаций.
 >
 > ---
 >
@@ -1736,7 +1736,7 @@ posts.map { it.tags }.flatten().distinct()  // то же, но два шага
 > - **`flatMap` с Sequence** — `Sequence.flatMap` существует и lazy: каждый элемент преобразуется и стримится в результат без полной материализации
 > - **Empty inner collections**: `flatMap { it.tags }` корректно обрабатывает посты без тегов (пустой List просто не добавляет ничего)
 >
-> **Связанные вопросы:** [[Q12]] — детально про map vs flatMap; [[Q11]] — базовые операции коллекций.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q12]] — детально про map vs flatMap; [[kotlin-collections-interview#Q11]] — базовые операции коллекций.
 >
 > ---
 >
@@ -1873,7 +1873,7 @@ val pageSize = requestedSize.coerceIn(10, 100)
 > - **`average()` на пустой** — `Double.NaN`, а не exception. NaN в дальнейших вычислениях распространяется тихо
 > - **`sumOf` type inference**: для BigDecimal иногда нужно `sumOf<Order, BigDecimal> { it.amount }`
 >
-> **Связанные вопросы:** [[Q36]] — first/last/single и их безопасные варианты; [[Q31]] — оптимизация аллокаций; [[Q11]] — базовые операции.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q36]] — first/last/single и их безопасные варианты; [[kotlin-collections-interview#Q31]] — оптимизация аллокаций; [[kotlin-collections-interview#Q11]] — базовые операции.
 >
 > ---
 >
@@ -2004,7 +2004,7 @@ numbers.getOrNull(10)          // null
 > - **`first()` без predicate на бесконечной Sequence** — работает, но `first { p }` без match зависнет навсегда
 > - **`elementAt` на Sequence** — O(n), не O(1) (нет random access)
 >
-> **Связанные вопросы:** [[Q11]] — базовые операции; [[Q35]] — minOrNull/maxOrNull; [[Q19]] — mapNotNull для filter-null inline.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q11]] — базовые операции; [[kotlin-collections-interview#Q35]] — minOrNull/maxOrNull; [[kotlin-collections-interview#Q19]] — mapNotNull для filter-null inline.
 >
 > ---
 >
@@ -2077,7 +2077,27 @@ list2 = [1, 2, 3, 4, 5, 6]
 >
 > ---
 >
-> #### B) `kotlinx.collections.immutable` (`PersistentList`/`PersistentMap`) даёт истинную неизменяемость через structural sharing (HAMT для Map, RRB-tree для List), `add`/`put` за O(log n) без full copy — ✓ Верно
+> #### B) Structural sharing работает только для Persistent Map — для PersistentList всегда O(n) copy — ❌ Неверно
+>
+> **Что на самом деле:** Structural sharing реализован для **всех** persistent типов в библиотеке: `PersistentList` (RRB-tree), `PersistentMap` (HAMT), `PersistentSet` (HAMT на ключах). Это центральный design pattern библиотеки — без него persistent collections были бы непрактичны (каждая мутация O(n)).
+>
+> **Откуда путаница:** HAMT для Map — более известная техника (используется в Clojure, Scala Vector); RRB-tree для List менее известен, но реализован аналогично.
+>
+> **Если бы это было правдой:** разработчик пишет ручную immutable list через `ArrayList(prev).apply { add() }` на каждое изменение, в perf-тестах проигрывает PersistentList на 10× при списках > 1000 элементов, memory profile показывает в 4× больше allocations.
+>
+> ---
+>
+> #### C) `listOf()` и `persistentListOf()` — эквивалентны, оба создают immutable список — ❌ Неверно
+>
+> **Что на самом деле:** `listOf()` возвращает один из JVM-классов (`Collections$SingletonList` для одного элемента, `Arrays$ArrayList` для нескольких, `EmptyList` для пустого) под обёрткой контракта `List<T>`. Через `as MutableList` или reflection можно модифицировать backing-структуру. `persistentListOf()` — это `kotlinx.collections.immutable.PersistentList`, отдельный класс с tree-структурой и **отсутствующим** mutation API на уровне типа.
+>
+> **Откуда путаница:** оба читаются «как immutable list», и тип `List<T>` одинаков на уровне Kotlin compile-time. Но runtime-поведение разное.
+>
+> **Если бы это было правдой:** библиотечный код «принимает List, проверяет if (it is ArrayList) it.add() else copy», работает 6 месяцев, после Kotlin/JVM upgrade меняется реализация `listOf` (например, теперь возвращает `ImmutableCollections$ListN` из JDK), поведение ломается тихо на edge cases, баги воспроизводятся только в одном environment.
+>
+> ---
+>
+> #### D) `kotlinx.collections.immutable` (`PersistentList`/`PersistentMap`) даёт истинную неизменяемость через structural sharing (HAMT для Map, RRB-tree для List), `add`/`put` за O(log n) без full copy — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -2130,27 +2150,7 @@ list2 = [1, 2, 3, 4, 5, 6]
 > - **Builder для batch-операций**: цепочка `list.add().add().add()` создаёт промежуточные snapshots; для batch — `.builder().build()`
 > - **Не путать с `Collections.unmodifiableList`** — это просто read-only обёртка над mutable, не immutable
 >
-> **Связанные вопросы:** [[Q6]] — read-only ≠ immutable; [[Q7]] — kotlinx.collections.immutable детально; [[Q1]] — read-only vs mutable иерархия.
->
-> ---
->
-> #### C) `listOf()` и `persistentListOf()` — эквивалентны, оба создают immutable список — ❌ Неверно
->
-> **Что на самом деле:** `listOf()` возвращает один из JVM-классов (`Collections$SingletonList` для одного элемента, `Arrays$ArrayList` для нескольких, `EmptyList` для пустого) под обёрткой контракта `List<T>`. Через `as MutableList` или reflection можно модифицировать backing-структуру. `persistentListOf()` — это `kotlinx.collections.immutable.PersistentList`, отдельный класс с tree-структурой и **отсутствующим** mutation API на уровне типа.
->
-> **Откуда путаница:** оба читаются «как immutable list», и тип `List<T>` одинаков на уровне Kotlin compile-time. Но runtime-поведение разное.
->
-> **Если бы это было правдой:** библиотечный код «принимает List, проверяет if (it is ArrayList) it.add() else copy», работает 6 месяцев, после Kotlin/JVM upgrade меняется реализация `listOf` (например, теперь возвращает `ImmutableCollections$ListN` из JDK), поведение ломается тихо на edge cases, баги воспроизводятся только в одном environment.
->
-> ---
->
-> #### D) Structural sharing работает только для Persistent Map — для PersistentList всегда O(n) copy — ❌ Неверно
->
-> **Что на самом деле:** Structural sharing реализован для **всех** persistent типов в библиотеке: `PersistentList` (RRB-tree), `PersistentMap` (HAMT), `PersistentSet` (HAMT на ключах). Это центральный design pattern библиотеки — без него persistent collections были бы непрактичны (каждая мутация O(n)).
->
-> **Откуда путаница:** HAMT для Map — более известная техника (используется в Clojure, Scala Vector); RRB-tree для List менее известен, но реализован аналогично.
->
-> **Если бы это было правдой:** разработчик пишет ручную immutable list через `ArrayList(prev).apply { add() }` на каждое изменение, в perf-тестах проигрывает PersistentList на 10× при списках > 1000 элементов, memory profile показывает в 4× больше allocations.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q6]] — read-only ≠ immutable; [[kotlin-collections-interview#Q7]] — kotlinx.collections.immutable детально; [[kotlin-collections-interview#Q1]] — read-only vs mutable иерархия.
 
 ## Q38. (!) Чем отличаются `Collection`, `Iterable` и `Sequence` — когда что использовать?
 
@@ -2260,7 +2260,7 @@ fun processLargeFile(lines: Sequence<String>): List<String> =
 > - **`count()` на Iterable** — O(n), не constant; для известно-известного размера используй `Collection`
 > - **`Sequence.toList()` материализует** — после этого работа уже с eager List
 >
-> **Связанные вопросы:** [[Q8]] — Sequence vs List базовое; [[Q10]] — практический выбор; [[Q30]] — overhead Sequence.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q8]] — Sequence vs List базовое; [[kotlin-collections-interview#Q10]] — практический выбор; [[kotlin-collections-interview#Q30]] — overhead Sequence.
 >
 > ---
 >
@@ -2396,7 +2396,7 @@ val result = people.sortedWith(complex)
 > - **Stable sort**: stdlib гарантирует stability (для равных ключей порядок сохраняется) — это важно для multi-stage sorting
 > - **Null-handling**: `compareBy<T> { it.optionalField }` падает на null — используй `nullsFirst()`/`nullsLast()` обёртки
 >
-> **Связанные вопросы:** [[Q16]] — sorted/sortedBy/sortedWith детально; [[Q11]] — базовые операции.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q16]] — sorted/sortedBy/sortedWith детально; [[kotlin-collections-interview#Q11]] — базовые операции.
 >
 > ---
 >
@@ -2479,7 +2479,29 @@ val countAndLongest = grouping.aggregate { _, acc: Pair<Int, String>?, s, first 
 >
 > ---
 >
-> #### B) `groupBy` материализует `Map<K, List<V>>` с полными списками (eager); `groupingBy` возвращает `Grouping<T, K>` для агрегаций (`eachCount`/`fold`/`reduce`) без хранения промежуточных списков — ✓ Верно
+> #### B) `groupingBy` ленив в том смысле, что `eachCount` запускается только при `.toList()` — ❌ Неверно
+>
+> **Что на самом деле:** `eachCount()` / `fold()` / `reduce()` — **terminal operations** на `Grouping`: они сразу выполняют один проход по источнику и материализуют `Map<K, R>`. Lazy только intermediate шаги — но у `Grouping` нет intermediate операций (только terminal).
+>
+> «Lazy» в Grouping означает «не материализует промежуточные List на группы», а не «откладывает выполнение до terminal». Это другая ленивость, чем у Sequence.
+>
+> **Откуда путаница:** Sequence — lazy с явным terminal (`toList`); `Grouping` визуально похож на промежуточный шаг, но семантически — он сам результат построения descriptor, и `eachCount` — это уже terminal операция, не «build».
+>
+> **Если бы это было правдой:** разработчик ожидает «отложенного» поведения, оборачивает `grouping.eachCount()` в `lazy { }` ожидая что вычисление произойдёт только при первом доступе; в реальности `eachCount` уже выполнил O(N) обход; добавляет лишний `.toList()` на Map (который ничего не делает); CR-review требует убрать лишний wrapper, теряется час.
+>
+> ---
+>
+> #### C) `groupingBy.eachCount()` возвращает `List<Int>` — позиционно по группам — ❌ Неверно
+>
+> **Что на самом деле:** `eachCount()` возвращает **`Map<K, Int>`** — ключи групп → счётчик элементов. Никакого `List` или позиционного порядка нет; это именно `Map`, где ключ — результат `keySelector`, значение — count.
+>
+> **Откуда путаница:** аналогия с Python `Counter` (возвращает Counter-объект как Map) — корректна; но если ожидать stream API из других языков (например, parallel reduction → array), можно подумать о позиционном результате.
+>
+> **Если бы это было правдой:** разработчик пишет `grouping.eachCount()[0]` ожидая получить count первой группы; runtime возвращает `null` (нет ключа `0` в Map, если только Int не является keySelector), отчёт показывает «0 unique users» вместо реального count, dashboard не показывает данные.
+>
+> ---
+>
+> #### D) `groupBy` материализует `Map<K, List<V>>` с полными списками (eager); `groupingBy` возвращает `Grouping<T, K>` для агрегаций (`eachCount`/`fold`/`reduce`) без хранения промежуточных списков — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -2529,29 +2551,7 @@ val countAndLongest = grouping.aggregate { _, acc: Pair<Int, String>?, s, first 
 > - **`Grouping` нельзя итерировать** напрямую — это объект-описатель, не Iterable; нужна terminal-операция
 > - **`fold` vs `reduce`**: `fold` принимает initial и безопасен на пустых группах; `reduce` бросает на пустой
 >
-> **Связанные вопросы:** [[Q13]] — groupBy/associateBy/partition; [[Q14]] — groupingBy детально; [[Q33]] — associate functions.
->
-> ---
->
-> #### C) `groupingBy.eachCount()` возвращает `List<Int>` — позиционно по группам — ❌ Неверно
->
-> **Что на самом деле:** `eachCount()` возвращает **`Map<K, Int>`** — ключи групп → счётчик элементов. Никакого `List` или позиционного порядка нет; это именно `Map`, где ключ — результат `keySelector`, значение — count.
->
-> **Откуда путаница:** аналогия с Python `Counter` (возвращает Counter-объект как Map) — корректна; но если ожидать stream API из других языков (например, parallel reduction → array), можно подумать о позиционном результате.
->
-> **Если бы это было правдой:** разработчик пишет `grouping.eachCount()[0]` ожидая получить count первой группы; runtime возвращает `null` (нет ключа `0` в Map, если только Int не является keySelector), отчёт показывает «0 unique users» вместо реального count, dashboard не показывает данные.
->
-> ---
->
-> #### D) `groupingBy` ленив в том смысле, что `eachCount` запускается только при `.toList()` — ❌ Неверно
->
-> **Что на самом деле:** `eachCount()` / `fold()` / `reduce()` — **terminal operations** на `Grouping`: они сразу выполняют один проход по источнику и материализуют `Map<K, R>`. Lazy только intermediate шаги — но у `Grouping` нет intermediate операций (только terminal).
->
-> «Lazy» в Grouping означает «не материализует промежуточные List на группы», а не «откладывает выполнение до terminal». Это другая ленивость, чем у Sequence.
->
-> **Откуда путаница:** Sequence — lazy с явным terminal (`toList`); `Grouping` визуально похож на промежуточный шаг, но семантически — он сам результат построения descriptor, и `eachCount` — это уже terminal операция, не «build».
->
-> **Если бы это было правдой:** разработчик ожидает «отложенного» поведения, оборачивает `grouping.eachCount()` в `lazy { }` ожидая что вычисление произойдёт только при первом доступе; в реальности `eachCount` уже выполнил O(N) обход; добавляет лишний `.toList()` на Map (который ничего не делает); CR-review требует убрать лишний wrapper, теряется час.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q13]] — groupBy/associateBy/partition; [[kotlin-collections-interview#Q14]] — groupingBy детально; [[kotlin-collections-interview#Q33]] — associate functions.
 
 ## Q41. Как работают `chunked` и `windowed` — batch processing и скользящее окно?
 
@@ -2628,7 +2628,31 @@ val diffs: List<Int> = numbers.zipWithNext { a, b -> b - a }
 >
 > ---
 >
-> #### B) `chunked(n)` — непересекающиеся блоки фиксированного размера (последний может быть меньше); `windowed(n, step, partialWindows)` — скользящее окно с настраиваемым шагом и опциональными неполными окнами — ✓ Верно
+> #### B) `zipWithNext { a, b -> b - a }` — это частный случай `chunked(2)` с overlap=0 — ❌ Неверно
+>
+> **Что на самом деле:** `zipWithNext` ≡ `windowed(2, step=1)`: пары соседних с **перекрытием** (каждый элемент попадает в две пары). `chunked(2)` — пары без перекрытия: `[[a,b],[c,d],[e,f],...]`. Это принципиально разная семантика.
+>
+> Пример: для `[1,2,3,4,5]`:
+> - `zipWithNext` → `[(1,2), (2,3), (3,4), (4,5)]` — 4 пары
+> - `chunked(2)` → `[[1,2], [3,4], [5]]` — 2.5 пары
+>
+> **Откуда путаница:** оба «работают парами», но overlap-семантика отличается.
+>
+> **Если бы это было правдой:** расчёт дельт между соседними измерениями сенсоров через `readings.chunked(2) { it[1] - it[0] }` теряет половину дельт (для `[10, 12, 14, 17]` получим `[2, 3]` вместо `[2, 2, 3]`); график анализа температуры пропускает аномальные скачки, alert о перегреве оборудования не срабатывает.
+>
+> ---
+>
+> #### C) `windowed(3, partialWindows=false)` по умолчанию включает неполные окна в хвосте — ❌ Неверно
+>
+> **Что на самом деле:** `partialWindows=false` — это **default** значение; неполные окна **исключаются** (последние n-1 элементов не образуют окно). Для включения нужно явно передать `partialWindows = true`: `windowed(3, partialWindows = true)` даст в хвосте `[..., [9,10], [10]]`.
+>
+> **Откуда путаница:** «window» часто ассоциируется с «всё включить, даже неполное» (как в SQL window functions). Но по умолчанию Kotlin строг — пропускает incomplete tails.
+>
+> **Если бы это было правдой:** расчёт скользящего среднего цен за последние 30 дней через `prices.windowed(30) { it.average() }` «обрезает» последние 29 дней молча — отчёт «pricing trend» не показывает свежие данные (вчерашняя цена не входит ни в одно окно); бизнес замечает через неделю, аналитика дашборда отстаёт.
+>
+> ---
+>
+> #### D) `chunked(n)` — непересекающиеся блоки фиксированного размера (последний может быть меньше); `windowed(n, step, partialWindows)` — скользящее окно с настраиваемым шагом и опциональными неполными окнами — ✓ Верно
 >
 > **Развёрнутое объяснение:**
 >
@@ -2676,31 +2700,7 @@ val diffs: List<Int> = numbers.zipWithNext { a, b -> b - a }
 > - **`step > size`** в `windowed` — пропуски между окнами (sampling), не overlap
 > - **`chunked` last batch меньше**: при `repo.saveAll(batch)` это ок; если внешний API требует ровно N — добавь `chunked(N).filter { it.size == N }`
 >
-> **Связанные вопросы:** [[Q15]] — windowed/chunked/zipWithNext детально; [[Q11]] — базовые операции.
->
-> ---
->
-> #### C) `windowed(3, partialWindows=false)` по умолчанию включает неполные окна в хвосте — ❌ Неверно
->
-> **Что на самом деле:** `partialWindows=false` — это **default** значение; неполные окна **исключаются** (последние n-1 элементов не образуют окно). Для включения нужно явно передать `partialWindows = true`: `windowed(3, partialWindows = true)` даст в хвосте `[..., [9,10], [10]]`.
->
-> **Откуда путаница:** «window» часто ассоциируется с «всё включить, даже неполное» (как в SQL window functions). Но по умолчанию Kotlin строг — пропускает incomplete tails.
->
-> **Если бы это было правдой:** расчёт скользящего среднего цен за последние 30 дней через `prices.windowed(30) { it.average() }` «обрезает» последние 29 дней молча — отчёт «pricing trend» не показывает свежие данные (вчерашняя цена не входит ни в одно окно); бизнес замечает через неделю, аналитика дашборда отстаёт.
->
-> ---
->
-> #### D) `zipWithNext { a, b -> b - a }` — это частный случай `chunked(2)` с overlap=0 — ❌ Неверно
->
-> **Что на самом деле:** `zipWithNext` ≡ `windowed(2, step=1)`: пары соседних с **перекрытием** (каждый элемент попадает в две пары). `chunked(2)` — пары без перекрытия: `[[a,b],[c,d],[e,f],...]`. Это принципиально разная семантика.
->
-> Пример: для `[1,2,3,4,5]`:
-> - `zipWithNext` → `[(1,2), (2,3), (3,4), (4,5)]` — 4 пары
-> - `chunked(2)` → `[[1,2], [3,4], [5]]` — 2.5 пары
->
-> **Откуда путаница:** оба «работают парами», но overlap-семантика отличается.
->
-> **Если бы это было правдой:** расчёт дельт между соседними измерениями сенсоров через `readings.chunked(2) { it[1] - it[0] }` теряет половину дельт (для `[10, 12, 14, 17]` получим `[2, 3]` вместо `[2, 2, 3]`); график анализа температуры пропускает аномальные скачки, alert о перегреве оборудования не срабатывает.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q15]] — windowed/chunked/zipWithNext детально; [[kotlin-collections-interview#Q11]] — базовые операции.
 
 ## Q42. В чём разница между `associateBy`, `associateWith` и `associate`?
 
@@ -2804,7 +2804,7 @@ val emailToId: Map<String, Int> = users.associate { it.email to it.id }
 > - **`associate` создаёт Pair**: для perf-critical путей предпочитай `associateBy({}, {})`
 > - **Порядок сохраняется**: возвращает `LinkedHashMap` (предсказуемая итерация)
 >
-> **Связанные вопросы:** [[Q33]] — детально про associate functions; [[Q13]] — groupBy и partition; [[Q14]] — groupingBy.
+> **Связанные вопросы:** [[kotlin-collections-interview#Q33]] — детально про associate functions; [[kotlin-collections-interview#Q13]] — groupBy и partition; [[kotlin-collections-interview#Q14]] — groupingBy.
 >
 > ---
 >
@@ -2883,10 +2883,105 @@ val stats: List<Stats> = numbers.scan(Stats(0, 0, 0.0)) { acc, n ->
 
 
 > [!mcq]
-> - [ ] `scan` и `fold` возвращают одинаковый тип `T` — оба сворачивают коллекцию в одно значение | `fold(init){}` → `T` (одно значение); `scan(init){}` → `List<T>` со всеми промежуточными состояниями + начальное; размер `n+1`. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `val sum: Int = numbers.scan(0){a,b -> a+b}` ожидая `Int`, компилятор: `Type mismatch: List<Int>` vs `Int`; недопонимание во время сдачи PR.
-> - [x] `fold(init){}` сворачивает коллекцию в **одно** итоговое значение; `scan(init){}` (он же `runningFold`) возвращает **все промежуточные** накопления + начальное (размер n+1); `runningReduce{}` — то же что scan, но без init (размер n) | `scan/runningFold` нужен когда нужна история накопления (cumulative sum, moving max, время состояний), `fold` — финальный результат. ✓ ПРИМЕНЯТЬ: `prices.runningReduce { acc, p -> maxOf(acc, p) }` для running max в графике котировок; `transactions.fold(BigDecimal.ZERO) { acc, t -> acc + t.amount }` для итоговой суммы. 📋 ПРАВИЛО: «fold = final value; scan = trace of values». 🔗 См. Q11, Q26.
-> - [ ] `runningReduce` бросает `NoSuchElementException` на пустом списке как `reduce` | `runningReduce` действительно требует non-empty коллекцию (наследует контракт `reduce`); это **верное** наблюдение для отдельной части — но `scan` отличается тем, что **с initial безопасен на пустой**: `emptyList<Int>().scan(0){a,b->a+b}` → `[0]`. ❌ ПОСЛЕДСТВИЕ: команда заменяет `scan(0){}` на `runningReduce{}` для «упрощения», в проде на пустом фильтре получают exception вместо `[0]`, отчёт «total trend» падает.
-> - [ ] `scan(init){}` возвращает `List<T>` размера ровно `n` (исходный размер) — без начального значения | `scan(init)` возвращает размер `n+1` (включает начальное); `runningReduce{}` (без init) возвращает размер `n`. Часто путают именно из-за `+1`. ❌ ПОСЛЕДСТВИЕ: alignment отчёта по индексам (день → cumsum) даёт off-by-one: дата 1 января показывает накопление за 31 декабря, бизнес-аналитика выявляет ошибку только в годовом отчёте.
+>
+> **Вопрос:** Чем `scan` (он же `runningFold`) отличается от `fold` и от `runningReduce` по типу результата и контракту на пустой коллекции?
+>
+> ---
+>
+> #### A) `scan` и `fold` возвращают одинаковый тип `T` — оба сворачивают коллекцию в одно значение — ❌ Неверно
+>
+> **Что на самом деле:** `fold(init) { acc, x -> ... }` → `T` (одно итоговое значение). `scan(init) { acc, x -> ... }` → **`List<T>`** со всеми промежуточными накопленными значениями, включая начальное. Размер результата `scan` = `n + 1` (исходные элементы + initial), `fold` = 1 (только итог).
+>
+> Они отличаются именно тем, что `scan` сохраняет всю траекторию накопления, а `fold` — только финальную точку.
+>
+> **Откуда путаница:** оба принимают одинаковую сигнатуру лямбды `(R, T) -> R` и оба «накапливают». Без чтения сигнатуры легко предположить, что они возвращают одно и то же.
+>
+> **Если бы это было правдой:** разработчик пишет `val sum: Int = numbers.scan(0) { a, b -> a + b }` ожидая получить итоговую сумму как `Int`; компилятор выдаёт `Type mismatch: required Int, found List<Int>`; недопонимание во время code review, теряется час, в итоге PR разбивается на два — один с `fold` для суммы, второй с `scan` для running graph.
+>
+> ---
+>
+> #### B) `fold(init){}` сворачивает коллекцию в **одно** итоговое значение; `scan(init){}` (он же `runningFold`) возвращает **все промежуточные** накопления + начальное (размер n+1); `runningReduce{}` — то же что scan, но без init (размер n) — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Это семейство функций для accumulation, различающихся по тому, что возвращают и нужен ли initial:
+>
+> | Функция | Initial | Возвращает | Размер | На пустой |
+> |---------|---------|-----------|--------|-----------|
+> | `fold(init){}` | да | `R` (одно значение) | 1 | возвращает `init` |
+> | `reduce{}` | нет | `S` (одно значение) | 1 | NoSuchElementException |
+> | `scan(init){}` | да | `List<R>` (трасса) | n+1 | `[init]` |
+> | `runningFold(init){}` | да | `List<R>` (синоним scan) | n+1 | `[init]` |
+> | `runningReduce{}` | нет | `List<S>` (трасса) | n | пустой `List` |
+>
+> Логика: `fold`/`reduce` — это «свернуть в одно значение»; `scan`/`runningFold`/`runningReduce` — это «получить всю историю накопления». Initial-вариант (`fold`, `scan`) безопасен на пустой коллекции; без initial (`reduce`, `runningReduce`) — может бросать.
+>
+> Терминология `scan` пришла из функционального программирования (Haskell `scanl`, F# `Seq.scan`). В Kotlin 1.4+ добавили синоним `runningFold` для более явного читаемого имени.
+>
+> **Пример:**
+> ```kotlin
+> val numbers = listOf(1, 2, 3, 4, 5)
+>
+> // fold — итог
+> val total: Int = numbers.fold(0) { acc, n -> acc + n }  // 15
+>
+> // scan — траектория
+> val cumSum: List<Int> = numbers.scan(0) { acc, n -> acc + n }
+> // [0, 1, 3, 6, 10, 15]  ← размер 6 (n+1)
+>
+> // runningReduce — без init, размер n
+> val cumSumNoInit: List<Int> = numbers.runningReduce { acc, n -> acc + n }
+> // [1, 3, 6, 10, 15]  ← размер 5
+>
+> // Реальный кейс: running max цены акции для графика
+> val stockPrices = listOf(100, 120, 95, 130, 110, 140)
+> val highWatermark: List<Int> = stockPrices.runningReduce { max, p -> maxOf(max, p) }
+> // [100, 120, 120, 130, 130, 140]  ← рисуется на графике как линия high
+>
+> // Stateful accumulation без mutable var
+> data class Stats(val count: Int, val sum: Int, val avg: Double)
+> val trail: List<Stats> = numbers.scan(Stats(0, 0, 0.0)) { acc, n ->
+>     val c = acc.count + 1
+>     val s = acc.sum + n
+>     Stats(c, s, s.toDouble() / c)
+> }
+> ```
+>
+> **Когда применять:**
+> - **Yandex / Avito stock chart**: `prices.runningReduce { max, p -> maxOf(max, p) }` для high-watermark линии
+> - **Banking statement**: `transactions.scan(startBalance) { bal, t -> bal + t.amount }` для running balance
+> - **Game state replay**: `events.scan(initialState) { state, evt -> apply(state, evt) }` — все промежуточные state'ы для time-travel debugging
+>
+> **Подводные камни:**
+> - **`reduce`/`runningReduce` на пустой** — exception; `fold`/`scan` (с init) безопасны
+> - **`scan` включает initial** в результате (размер n+1) — частая off-by-one ошибка при alignment с датами
+> - **Mutable accumulator в lambda** — антипаттерн; lambda должна быть pure
+>
+> **Связанные вопросы:** [[kotlin-collections-interview#Q11]] — fold/reduce базово; [[kotlin-collections-interview#Q26]] — scan/runningFold/runningReduce детально; [[kotlin-collections-interview#Q19]] — agregation patterns.
+>
+> ---
+>
+> #### C) `runningReduce` бросает `NoSuchElementException` на пустом списке как `reduce` — ❌ Неверно
+>
+> **Что на самом деле:** `runningReduce` на **пустой** коллекции возвращает **пустой `List`** — не бросает exception. Это отличается от `reduce` (без `running`), который действительно бросает на пустой коллекции.
+>
+> `runningReduce` ведёт себя как «трасса reduce»: если коллекция пуста, трассы нет, возвращает empty. Если в коллекции 1 элемент — возвращает `[element]`. Если 2+ — применяет лямбду.
+>
+> **Откуда путаница:** имя `runningReduce` намекает «runtime-вариант reduce», и можно ожидать наследование throw-семантики `reduce`. Но Kotlin делает иначе: `running*` всегда возвращает `List`, и для пустого источника даёт пустой List.
+>
+> **Если бы это было правдой:** команда заменяет `scan(0){}` на `runningReduce{}` «для упрощения» (избавиться от initial=0); ошибочно ожидает throw на пустой; в проде ловит пустой List `[]` вместо ожидаемого `[0]`, downstream-код `result.last()` падает с `NoSuchElementException` (но из-за другого вызова), debugging уводит в неправильную сторону.
+>
+> ---
+>
+> #### D) `scan(init){}` возвращает `List<T>` размера ровно `n` (исходный размер) — без начального значения — ❌ Неверно
+>
+> **Что на самом деле:** `scan(init)` возвращает `List<T>` размера **`n + 1`** — он **включает initial** как первый элемент результата. Например, `listOf(1,2,3).scan(0) { a, b -> a + b }` → `[0, 1, 3, 6]` (4 элемента, не 3).
+>
+> Если нужен размер ровно `n` (без initial) — есть `runningReduce { acc, x -> ... }` (без init). Это распространённая путаница именно из-за `+1`.
+>
+> **Откуда путаница:** интуитивно «трассa N действий» = N точек. Но scan включает starting point (initial) — это даёт N+1 точек: 1 начальная + N промежуточных после каждого шага.
+>
+> **Если бы это было правдой:** разработчик пишет alignment отчёта «день → cumulative sum» через `dates.zip(amounts.scan(BigDecimal.ZERO) { acc, a -> acc + a })`; результаты сдвинуты на 1 (дата 1 января показывает накопление за 31 декабря, дата 2 января — за 1 января и т.д.); бизнес-аналитика выявляет off-by-one только в годовом отчёте на сверке с raw данными.
 
 ---
 

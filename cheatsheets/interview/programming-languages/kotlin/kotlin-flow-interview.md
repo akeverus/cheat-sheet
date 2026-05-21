@@ -539,7 +539,7 @@ interface OrderRepository : CoroutineCrudRepository<Order, Long> {
 > - **`@PreAuthorize` + `suspend`**: работает, но требует `kotlin-reflect` и Spring Security ≥ 5.5; раньше нужны были workaround через `MonoSecurityContext`.
 > - **OpenAPI generation** для Flow: Springdoc корректно понимает `Flow<T>` → `Flux<T>` начиная с v2.0; на старых версиях документация генерируется неверно.
 >
-> **Связанные вопросы:** [[Q1]] — определение Flow vs Sequence; [[Q5]] — Hot vs Cold flows и SharedFlow; [[Q14]] — memory leak при подписке на SharedFlow в Spring beans.
+> **Связанные вопросы:** [[kotlin-flow-interview#Q1]] — определение Flow vs Sequence; [[kotlin-flow-interview#Q5]] — Hot vs Cold flows и SharedFlow; [[kotlin-flow-interview#Q14]] — memory leak при подписке на SharedFlow в Spring beans.
 >
 > ---
 >
@@ -682,7 +682,7 @@ override fun onStop() { job.cancel() }
 > - **Multiple collectors на одной Flow** — каждый collect создаёт **отдельную subscribers entry** в SharedFlow. Параллельная подписка из 5 Activities = 5 lambda references.
 > - **Leak detection**: LeakCanary видит коллекторы с retained Activity. Но первопричина — `GlobalScope`, а не SharedFlow per se.
 >
-> **Связанные вопросы:** [[Q5]] — Hot vs Cold flow и SharedFlow basics; [[Q6]] — StateFlow и conflation; [[Q15]] — exception handling при collect отменяет коллектор автоматически.
+> **Связанные вопросы:** [[kotlin-flow-interview#Q5]] — Hot vs Cold flow и SharedFlow basics; [[kotlin-flow-interview#Q6]] — StateFlow и conflation; [[kotlin-flow-interview#Q15]] — exception handling при collect отменяет коллектор автоматически.
 >
 > ---
 >
@@ -806,7 +806,7 @@ flow.catch { emit(-1) }
 > - **`SupervisorJob` vs default Job**: дочерние flow с обычным Job отменяют parent при exception. SupervisorJob изолирует ошибки между siblings.
 > - **`launchIn` + exception**: `flow.launchIn(scope)` запускает на scope; необработанные исключения завершают scope (если не SupervisorScope).
 >
-> **Связанные вопросы:** [[Q14]] — memory leak при подписке без правильного scope; [[Q1]] — общая модель Flow и suspend; [[Q9]] — `retry`/`retryWhen` операторы для recovery.
+> **Связанные вопросы:** [[kotlin-flow-interview#Q14]] — memory leak при подписке без правильного scope; [[kotlin-flow-interview#Q1]] — общая модель Flow и suspend; [[kotlin-flow-interview#Q9]] — `retry`/`retryWhen` операторы для recovery.
 >
 > ---
 >
@@ -923,7 +923,7 @@ numbers.combine(letters) { n, l -> "$n$l" }
 > - **`combine` cardinality mismatch**: 3 эмиссии в a и 5 в b → combine выдаст 8 эмиссий (по одной на каждое изменение). Иногда удивляет.
 > - **`zip` early termination**: zip(short, infinite) завершается когда short закончится — infinite Flow отменяется. Это by design (попарно невозможно без короткого).
 >
-> **Связанные вопросы:** [[Q12]] — `flatMapLatest` тоже для reactive поиска; [[Q6]] — `StateFlow` как основной источник для combine; [[Q4]] — операторы преобразования.
+> **Связанные вопросы:** [[kotlin-flow-interview#Q12]] — `flatMapLatest` тоже для reactive поиска; [[kotlin-flow-interview#Q6]] — `StateFlow` как основной источник для combine; [[kotlin-flow-interview#Q4]] — операторы преобразования.
 >
 > ---
 >
@@ -1029,7 +1029,7 @@ flowOf(1, 2, 3)
 > - **`scan` сохраняет тип аккумулятора** — может отличаться от типа элементов: `Flow<Int>.scan("") { acc, v -> "$acc-$v" } : Flow<String>`.
 > - **`stateIn` + `scan` антипаттерн**: scan уже даёт continuous state stream, оборачивать в `stateIn` создаёт двойную buffering.
 >
-> **Связанные вопросы:** [[Q4]] — базовые intermediate операторы; [[Q6]] — StateFlow как стандартная альтернатива scan для UI state; [[Q16]] — combine для derived state из нескольких источников.
+> **Связанные вопросы:** [[kotlin-flow-interview#Q4]] — базовые intermediate операторы; [[kotlin-flow-interview#Q6]] — StateFlow как стандартная альтернатива scan для UI state; [[kotlin-flow-interview#Q16]] — combine для derived state из нескольких источников.
 >
 > ---
 >

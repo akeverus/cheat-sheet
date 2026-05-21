@@ -153,7 +153,7 @@ EmailListener.onOrderCreated()    InventoryListener.onOrderCreated()
 > - Async-листенеры разрывают транзакцию и стектрейс — исключение не долетит до публикатора.
 > - In-memory: при крэше процесса все непросмотренные события теряются. Для гарантий — Spring Modulith Event Publication Registry (outbox).
 >
-> **Связанные вопросы:** [[Q2]] — публикация и обработка через `ApplicationEventPublisher`; [[Q6]] — `@TransactionalEventListener` для транзакционных domain events; [[Q16]] — отличия от Kafka/RabbitMQ.
+> **Связанные вопросы:** [[spring-events-interview#Q2]] — публикация и обработка через `ApplicationEventPublisher`; [[spring-events-interview#Q6]] — `@TransactionalEventListener` для транзакционных domain events; [[spring-events-interview#Q16]] — отличия от Kafka/RabbitMQ.
 >
 > ---
 >
@@ -281,9 +281,9 @@ applicationContext.publishEvent(new OrderCreatedEvent(order));
 > **Подводные камни:**
 > - Если публикуете POJO (не наследник `ApplicationEvent`), Spring обернёт его в `PayloadApplicationEvent<T>` — это влияет на generic-type resolution для `ApplicationListener<PayloadApplicationEvent<MyType>>`.
 > - Не публикуйте mutable объект: один и тот же экземпляр получит каждый listener, и параллельные изменения вызовут гонку.
-> - `publishEvent()` синхронен: блокирует публикатора на время работы всех listener-ов. Для долгих операций используйте `@Async` (см. [[Q5]]).
+> - `publishEvent()` синхронен: блокирует публикатора на время работы всех listener-ов. Для долгих операций используйте `@Async` (см. [[spring-events-interview#Q5]]).
 >
-> **Связанные вопросы:** [[Q1]] — суть Spring Events; [[Q3]] — POJO vs `ApplicationEvent` для кастомных событий; [[Q5]] — async-публикация.
+> **Связанные вопросы:** [[spring-events-interview#Q1]] — суть Spring Events; [[spring-events-interview#Q3]] — POJO vs `ApplicationEvent` для кастомных событий; [[spring-events-interview#Q5]] — async-публикация.
 >
 > ---
 >
@@ -379,7 +379,7 @@ public record OrderCreatedEvent(Long orderId, String customerId, Instant occurre
 > - Для `ApplicationListener<E>` придётся писать `ApplicationListener<PayloadApplicationEvent<OrderCreatedEvent>>` — в этом случае `@EventListener` удобнее.
 > - Mutability ломает observability: один listener изменил поле, второй увидел изменённое. Используйте `record` или иммутабельные структуры.
 >
-> **Связанные вопросы:** [[Q1]] — суть Spring Events; [[Q2]] — публикация через `ApplicationEventPublisher`; [[Q10]] — return-value из listener-а как новое событие.
+> **Связанные вопросы:** [[spring-events-interview#Q1]] — суть Spring Events; [[spring-events-interview#Q2]] — публикация через `ApplicationEventPublisher`; [[spring-events-interview#Q10]] — return-value из listener-а как новое событие.
 >
 > ---
 >
@@ -532,7 +532,7 @@ public class StartupListener {
 > - Долгий warm-up задерживает readiness-probe в Kubernetes — пишите асинхронно (`@Async`), если не критично иметь warm-кэш в первую миллисекунду.
 > - Исключение в listener-е по умолчанию **не** валит приложение — оно логируется и проглатывается; явно ловите и проверяйте.
 >
-> **Связанные вопросы:** [[Q1]] — суть Spring Events; [[Q5]] — `@Async` для долгого warm-up без блокировки; [[Q8]] — `@Order` для последовательности warm-up listener-ов.
+> **Связанные вопросы:** [[spring-events-interview#Q1]] — суть Spring Events; [[spring-events-interview#Q5]] — `@Async` для долгого warm-up без блокировки; [[spring-events-interview#Q8]] — `@Order` для последовательности warm-up listener-ов.
 
 ## Q5. Как сделать обработку события асинхронной?
 
@@ -639,7 +639,7 @@ public class NotificationListener {
 > - В Spring Boot 3.2+ доступны virtual threads через `spring.threads.virtual.enabled=true` — но `synchronized` + I/O в виртуальном потоке вызывает pinning carrier-потока; используйте `ReentrantLock`.
 > - `@Async` работает только при вызове через прокси-бин (Spring AOP), self-invocation внутри одного класса async-механизм **не** включит.
 >
-> **Связанные вопросы:** [[Q1]] — суть Spring Events; [[Q6]] — `@TransactionalEventListener` (по умолчанию синхронный, но можно комбинировать с `@Async`); [[Q14]] — тестирование async listener-ов через `Awaitility`.
+> **Связанные вопросы:** [[spring-events-interview#Q1]] — суть Spring Events; [[spring-events-interview#Q6]] — `@TransactionalEventListener` (по умолчанию синхронный, но можно комбинировать с `@Async`); [[spring-events-interview#Q14]] — тестирование async listener-ов через `Awaitility`.
 >
 > ---
 >
@@ -765,7 +765,7 @@ public class OrderNotificationListener {
 > - При `AFTER_COMMIT` транзакция уже закрыта — для DB-операций в listener-е нужен явный `@Transactional(propagation = REQUIRES_NEW)`.
 > - Исключение в listener-е логируется как `WARN` и не валит публикатора. Для критичных операций добавьте handle + outbox-таблицу.
 >
-> **Связанные вопросы:** [[Q5]] — `@Async` для не блокирующих listener-ов; [[Q7]] — список фаз `AFTER_COMMIT`/`AFTER_ROLLBACK`/`BEFORE_COMMIT`/`AFTER_COMPLETION`; [[Q13]] — Spring Modulith и transactional outbox на базе этого механизма.
+> **Связанные вопросы:** [[spring-events-interview#Q5]] — `@Async` для не блокирующих listener-ов; [[spring-events-interview#Q7]] — список фаз `AFTER_COMMIT`/`AFTER_ROLLBACK`/`BEFORE_COMMIT`/`AFTER_COMPLETION`; [[spring-events-interview#Q13]] — Spring Modulith и transactional outbox на базе этого механизма.
 >
 > ---
 >
@@ -875,7 +875,7 @@ public void handle(MyEvent event) { }
 > - В `BEFORE_COMMIT` исключение **откатывает** транзакцию публикатора — будьте осторожны: что выглядит как «audit» может сломать main flow.
 > - `AFTER_COMMIT` не гарантирует delivery: если процесс упадёт сразу после commit, listener не отработает (для гарантий — Spring Modulith Event Publication Registry или Kafka outbox).
 >
-> **Связанные вопросы:** [[Q6]] — суть `@TransactionalEventListener`; [[Q5]] — `@Async` для отложенного выполнения; [[Q13]] — Spring Modulith outbox pattern, использующий эти фазы.
+> **Связанные вопросы:** [[spring-events-interview#Q6]] — суть `@TransactionalEventListener`; [[spring-events-interview#Q5]] — `@Async` для отложенного выполнения; [[spring-events-interview#Q13]] — Spring Modulith outbox pattern, использующий эти фазы.
 >
 > ---
 >
@@ -1020,7 +1020,7 @@ public class OrderLifecycleListeners {
 > - Не путайте с `@Priority` (jakarta.annotation) — Spring уважает свой `@Order`, JSR-250 `@Priority` тоже распознаётся, но в legacy-стиле.
 > - Если listener бросает исключение, последующие listener-ы по умолчанию **не вызываются** (sync chain). Для изоляции добавьте try/catch внутри метода.
 >
-> **Связанные вопросы:** [[Q5]] — `@Async` (где порядок теряется); [[Q7]] — фазы `@TransactionalEventListener` (`@Order` работает внутри фазы); [[Q10]] — chained events через return-value.
+> **Связанные вопросы:** [[spring-events-interview#Q5]] — `@Async` (где порядок теряется); [[spring-events-interview#Q7]] — фазы `@TransactionalEventListener` (`@Order` работает внутри фазы); [[spring-events-interview#Q10]] — chained events через return-value.
 
 ## Q9. Как условно обработать событие?
 
@@ -1115,7 +1115,7 @@ public class PremiumOrderListener {
 > - Для `@TransactionalEventListener` `condition` оценивается **в момент публикации**, не в момент commit — если ваше событие mutable и поля меняются после publish, фильтрация работает по старому состоянию.
 > - При сложной логике фильтра лучше один listener + явный if внутри, чем нечитаемое SpEL-выражение длиной в строку.
 >
-> **Связанные вопросы:** [[Q2]] — публикация событий; [[Q5]] — async listener-ы (`condition` работает и с ними); [[Q7]] — комбинация `condition` + `phase` для `@TransactionalEventListener`.
+> **Связанные вопросы:** [[spring-events-interview#Q2]] — публикация событий; [[spring-events-interview#Q5]] — async listener-ы (`condition` работает и с ними); [[spring-events-interview#Q7]] — комбинация `condition` + `phase` для `@TransactionalEventListener`.
 >
 > ---
 >
@@ -1253,7 +1253,7 @@ public List<NotificationEvent> onOrderCreated(OrderCreatedEvent event) {
 > - Возврат `Object` или `?` приводит к публикации события неизвестного типа, что нарушает type safety; явно типизируйте.
 > - В async-режиме порядок чейна неопределён — `CompletableFuture` может завершиться вне ожидаемой последовательности.
 >
-> **Связанные вопросы:** [[Q5]] — `@Async` с возвратом `CompletableFuture`; [[Q9]] — `condition` для условного chain-а; [[Q11]] — domain events и `AbstractAggregateRoot.registerEvent` как альтернатива chain-у.
+> **Связанные вопросы:** [[spring-events-interview#Q5]] — `@Async` с возвратом `CompletableFuture`; [[spring-events-interview#Q9]] — `condition` для условного chain-а; [[spring-events-interview#Q11]] — domain events и `AbstractAggregateRoot.registerEvent` как альтернатива chain-у.
 >
 > ---
 >
@@ -1385,7 +1385,7 @@ public class Order {
 > - `AbstractAggregateRoot.domainEvents` помечен `@Transient` — поле не персистится. Если забыли `@Transient` на собственной реализации — Hibernate попытается сохранить буфер событий, словив `MappingException`.
 > - Несколько `save()` в одной транзакции — события публикуются на каждый save (могут продублироваться, если забыть `@AfterDomainEventPublication`).
 >
-> **Связанные вопросы:** [[Q1]] — суть Spring Events; [[Q6]] — `@TransactionalEventListener` для consumer-стороны domain events; [[Q12]] — `@AfterDomainEventPublication` для очистки буфера; [[Q13]] — Spring Modulith и Event Publication Registry поверх этого механизма.
+> **Связанные вопросы:** [[spring-events-interview#Q1]] — суть Spring Events; [[spring-events-interview#Q6]] — `@TransactionalEventListener` для consumer-стороны domain events; [[spring-events-interview#Q12]] — `@AfterDomainEventPublication` для очистки буфера; [[spring-events-interview#Q13]] — Spring Modulith и Event Publication Registry поверх этого механизма.
 >
 > ---
 >
@@ -1533,7 +1533,7 @@ public class Order extends AbstractAggregateRoot<Order> {
 > - `events.clear()` нужно делать ДО или сразу после публикации, не до — иначе race в multi-threaded saves.
 > - Если забыть `@Transient` на поле — Hibernate сериализует буфер событий и сохранит в БД, словив mapping error.
 >
-> **Связанные вопросы:** [[Q11]] — `@DomainEvents` как pair-аннотация для накопления событий; [[Q6]] — `@TransactionalEventListener` на consumer-стороне; [[Q13]] — Spring Modulith управляет очисткой иначе через Event Publication Registry.
+> **Связанные вопросы:** [[spring-events-interview#Q11]] — `@DomainEvents` как pair-аннотация для накопления событий; [[spring-events-interview#Q6]] — `@TransactionalEventListener` на consumer-стороне; [[spring-events-interview#Q13]] — Spring Modulith управляет очисткой иначе через Event Publication Registry.
 
 ## Q13. Что такое Spring Modulith и как события используются для межмодульного взаимодействия?
 
@@ -1653,7 +1653,7 @@ Spring Modulith хранит невыполненные события в БД �
 > - `@ApplicationModuleListener` запускает new transaction — events не видят uncommitted changes публикатора (это и есть outbox-семантика).
 > - `ApplicationModules.verify()` в CI — обязательная защита границ, без неё команды быстро ломают модульность.
 >
-> **Связанные вопросы:** [[Q6]] — `@TransactionalEventListener` (база Modulith listener-ов); [[Q11]] — `@DomainEvents` как способ публикации; [[Q16]] — отличия от Kafka (Modulith внутри JVM, externalization наружу).
+> **Связанные вопросы:** [[spring-events-interview#Q6]] — `@TransactionalEventListener` (база Modulith listener-ов); [[spring-events-interview#Q11]] — `@DomainEvents` как способ публикации; [[spring-events-interview#Q16]] — отличия от Kafka (Modulith внутри JVM, externalization наружу).
 >
 > ---
 >
@@ -1835,7 +1835,7 @@ public class TestOrderCreatedListener {
 > - Для `@TransactionalEventListener(AFTER_COMMIT)` тест должен запускаться в реальной транзакции — внутри `@Transactional` теста listener не вызовется (тест откатывает транзакцию). Используйте `@Commit` или programmatic transaction.
 > - Async-листенеры в синхронных тестах могут «случайно» завершиться к моменту assert-а, но это flaky — всегда используйте `Awaitility`.
 >
-> **Связанные вопросы:** [[Q2]] — публикация через `ApplicationEventPublisher`; [[Q5]] — async listener-ы (`Awaitility`); [[Q6]] — особенности тестирования `@TransactionalEventListener`.
+> **Связанные вопросы:** [[spring-events-interview#Q2]] — публикация через `ApplicationEventPublisher`; [[spring-events-interview#Q5]] — async listener-ы (`Awaitility`); [[spring-events-interview#Q6]] — особенности тестирования `@TransactionalEventListener`.
 >
 > ---
 >
@@ -1933,7 +1933,7 @@ public class TestOrderCreatedListener {
 > - События вокруг lifecycle (`OrderCreatedEvent`, `OrderShippedEvent`) — полезные доменные понятия. События «callMethodX» — анти-паттерн, маскирующий direct call.
 > - Не публикуйте mutable объекты: race между listener-ами.
 >
-> **Связанные вопросы:** [[Q1]] — что такое Spring Events и зачем; [[Q6]] — `@TransactionalEventListener` для side-effects, привязанных к commit-у; [[Q16]] — когда даже Spring Events недостаточно и нужен Kafka.
+> **Связанные вопросы:** [[spring-events-interview#Q1]] — что такое Spring Events и зачем; [[spring-events-interview#Q6]] — `@TransactionalEventListener` для side-effects, привязанных к commit-у; [[spring-events-interview#Q16]] — когда даже Spring Events недостаточно и нужен Kafka.
 >
 > ---
 >
@@ -2082,7 +2082,7 @@ public class TestOrderCreatedListener {
 > - Spring Modulith Externalization работает только publisher-side; consumer на Kafka — обычный `@KafkaListener`.
 > - Kafka не гарантирует exactly-once без идемпотентности на consumer-стороне и transactional producer.
 >
-> **Связанные вопросы:** [[Q1]] — суть Spring Events; [[Q13]] — Spring Modulith и Event Publication Registry; [[Q15]] — когда вообще нужны events vs прямой вызов.
+> **Связанные вопросы:** [[spring-events-interview#Q1]] — суть Spring Events; [[spring-events-interview#Q13]] — Spring Modulith и Event Publication Registry; [[spring-events-interview#Q15]] — когда вообще нужны events vs прямой вызов.
 
 ---
 

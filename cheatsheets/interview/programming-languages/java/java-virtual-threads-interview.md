@@ -121,10 +121,10 @@ Virtual Threads позволяют писать **blocking-style код** с **n
 >
 > **Подводные камни:**
 > - VT — НЕ ускорение CPU-bound: с GIL-стилем нет, но carrier-ы всё равно ограничены ядрами; на CPU-задачах VT равноценен ParallelStream/ForkJoinPool.
-> - Старые библиотеки с `synchronized` блокировками вокруг I/O вызывают pinning (carrier застревает) — см. [[Q4]].
-> - Не пулить VT через `ThreadPoolExecutor(N)` — это убивает преимущество (см. [[Q13]]).
+> - Старые библиотеки с `synchronized` блокировками вокруг I/O вызывают pinning (carrier застревает) — см. [[java-virtual-threads-interview#Q4]].
+> - Не пулить VT через `ThreadPoolExecutor(N)` — это убивает преимущество (см. [[java-virtual-threads-interview#Q13]]).
 >
-> **Связанные вопросы:** [[Q3]] — детали carrier thread и mounting; [[Q4]] — pinning как срыв этой модели; [[Q12]] — измеримый overhead создания.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q3]] — детали carrier thread и mounting; [[java-virtual-threads-interview#Q4]] — pinning как срыв этой модели; [[java-virtual-threads-interview#Q12]] — измеримый overhead создания.
 >
 > ---
 >
@@ -234,11 +234,11 @@ System.out.println(t.isVirtual()); // true
 > - Тесты с большим числом параллельных сценариев — Testcontainers + VT для нагрузочного теста изнутри JVM.
 >
 > **Подводные камни:**
-> - `newVirtualThreadPerTaskExecutor()` НЕ кэширует — переиспользования нет, и это правильно (см. [[Q13]]).
+> - `newVirtualThreadPerTaskExecutor()` НЕ кэширует — переиспользования нет, и это правильно (см. [[java-virtual-threads-interview#Q13]]).
 > - НЕ оборачивать в `ScheduledThreadPoolExecutor` со своей VT-factory: scheduler удерживает потоки, и теряется dynamism. Используй `Thread.ofVirtual().start(() -> Thread.sleep(...))` напрямую.
 > - При закрытии executor через try-with-resources идёт ожидание всех задач — если задача висит, `close()` тоже зависнет. Тайм-аут — через явный `shutdown()` + `awaitTermination(timeout)`.
 >
-> **Связанные вопросы:** [[Q1]] — модель VT vs Platform Thread; [[Q13]] — почему не нужен пул VT; [[Q6]] — Spring Boot интеграция.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — модель VT vs Platform Thread; [[java-virtual-threads-interview#Q13]] — почему не нужен пул VT; [[java-virtual-threads-interview#Q6]] — Spring Boot интеграция.
 >
 > ---
 >
@@ -307,7 +307,7 @@ Carrier threads — это ForkJoinPool (по умолчанию `parallelism = 
 > - При большом `parallelism` (>2× CPU) растёт contention в work-stealing queue, throughput может упасть.
 > - `maxPoolSize=256` — при pinning от 256 синхронизированных VT новый VT может НЕ получить carrier и зависнуть до освобождения. Симптом: `jstack` показывает 256 carrier-ов в `synchronized + I/O` и горы VT в очереди scheduler-а.
 >
-> **Связанные вопросы:** [[Q1]] — что такое VT и как mount/unmount работает; [[Q4]] — pinning, который убивает carrier-pool; [[Q13]] — почему НЕ нужен дополнительный пул поверх VT.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — что такое VT и как mount/unmount работает; [[java-virtual-threads-interview#Q4]] — pinning, который убивает carrier-pool; [[java-virtual-threads-interview#Q13]] — почему НЕ нужен дополнительный пул поверх VT.
 >
 > ---
 >
@@ -469,7 +469,7 @@ try {
 > - `static synchronized` методы pin-ят на class monitor — это особенно коварно, потому что lock «невидимый».
 > - JEP 491 (target Java 24/25) убирает pinning для `synchronized`, но native-методы и `Object.wait()` под мониторами остаются — миграция не 100% устаревает.
 >
-> **Связанные вопросы:** [[Q3]] — carrier thread, который и заклинивается при pinning; [[Q5]] — почему `synchronized` в списке «не подходит для VT»; [[Q11]] — как диагностировать pinning через JFR/tracePinnedThreads.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q3]] — carrier thread, который и заклинивается при pinning; [[java-virtual-threads-interview#Q5]] — почему `synchronized` в списке «не подходит для VT»; [[java-virtual-threads-interview#Q11]] — как диагностировать pinning через JFR/tracePinnedThreads.
 
 ## Q5. Для каких задач Virtual Threads подходят, а для каких нет?
 
@@ -556,7 +556,7 @@ try {
 > - Кэширование результата (Caffeine) внутри CPU-задачи делает её «горячую» часть CPU и «холодную» I/O — может потребоваться разделение фаз.
 > - JIT-предупреждение: до C2 компиляции (тысячи итераций) ваш image-resize в 5× медленнее. CPU-bound в начале — это interpreted CPU, не помещение Loom.
 >
-> **Связанные вопросы:** [[Q4]] — pinning как ещё одно «не подходит» (synchronized + I/O); [[Q13]] — почему VT не нужен пул, и противоположно тому, что Platform нужен; [[Q14]] — сравнение с WebFlux (тоже не помогает CPU-bound).
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q4]] — pinning как ещё одно «не подходит» (synchronized + I/O); [[java-virtual-threads-interview#Q13]] — почему VT не нужен пул, и противоположно тому, что Platform нужен; [[java-virtual-threads-interview#Q14]] — сравнение с WebFlux (тоже не помогает CPU-bound).
 >
 > ---
 >
@@ -697,7 +697,7 @@ public AsyncTaskExecutor applicationTaskExecutor() {
 > - `@Transactional` с PROPAGATION_REQUIRES_NEW в `@Async` методе на VT — транзакция корректна, но связка с ThreadLocal-based транзакционным контекстом значит, что миллионы VT держат миллионы `TransactionSynchronizationManager` записей — память.
 > - Hikari `maximum-pool-size` не нужно увеличивать с включением VT — bottleneck не в потоках, а в коннекциях.
 >
-> **Связанные вопросы:** [[Q1]] — модель VT, которую Spring и оборачивает; [[Q5]] — почему нет смысла включать на CPU-bound сервисах; [[Q10]] — взаимодействие с HikariCP при включённом VT.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — модель VT, которую Spring и оборачивает; [[java-virtual-threads-interview#Q5]] — почему нет смысла включать на CPU-bound сервисах; [[java-virtual-threads-interview#Q10]] — взаимодействие с HikariCP при включённом VT.
 >
 > ---
 >
@@ -792,7 +792,7 @@ User user = CURRENT_USER.get();
 > - Существующие библиотеки (старая Hikari, Micrometer Tracing 1.x) всё ещё используют ThreadLocal — миграция не моментальная.
 > - `ScopedValue.get()` без active binding — `NoSuchElementException`, не `null`. Это другая семантика, чем у ThreadLocal.
 >
-> **Связанные вопросы:** [[Q1]] — модель VT, где ThreadLocal становится дорогим; [[Q8]] — StructuredTaskScope, который наследует ScopedValue bindings; [[Q11]] — диагностика thread state с ScopedValue.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — модель VT, где ThreadLocal становится дорогим; [[java-virtual-threads-interview#Q8]] — StructuredTaskScope, который наследует ScopedValue bindings; [[java-virtual-threads-interview#Q11]] — диагностика thread state с ScopedValue.
 >
 > ---
 >
@@ -934,10 +934,10 @@ try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
 > **Подводные камни:**
 > - В Java 21 — preview, нужен `--enable-preview` и `--add-modules jdk.incubator.concurrent` (зависит от версии JEP). В Java 25 — стандарт.
 > - `scope.join(Duration.ofSeconds(5))` для overall timeout — если забыть, по умолчанию ждёт неограниченно. Для production обязательно ставить timeout.
-> - `fork(...)` не наследует `ThreadLocal` (как и любые child VT). Использовать `ScopedValue` (см. [[Q7]]).
+> - `fork(...)` не наследует `ThreadLocal` (как и любые child VT). Использовать `ScopedValue` (см. [[java-virtual-threads-interview#Q7]]).
 > - Один scope — одни ошибки policy: для разных подзадач с разной обработкой нужны разные scopes (можно вложенные).
 >
-> **Связанные вопросы:** [[Q1]] — VT, на которых работает Structured Concurrency; [[Q7]] — ScopedValue, который наследуется через `fork`; [[Q9]] — сравнение с `coroutineScope` в Kotlin (та же идея).
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — VT, на которых работает Structured Concurrency; [[java-virtual-threads-interview#Q7]] — ScopedValue, который наследуется через `fork`; [[java-virtual-threads-interview#Q9]] — сравнение с `coroutineScope` в Kotlin (та же идея).
 
 ## Q9. Чем Virtual Threads отличаются от корутин Kotlin?
 
@@ -1024,12 +1024,12 @@ VT позволяют писать Java в blocking-стиле без изуче
 > - Mixed Kotlin/Java сервис: coroutines на Kotlin-сторонe, VT на Java-стороне, через `runBlocking(Dispatchers.IO)` interop.
 >
 > **Подводные камни:**
-> - VT всё ещё страдают от `synchronized` pinning ([[Q4]]); coroutines от этого иммунны (нет JNI/monitor проблемы).
+> - VT всё ещё страдают от `synchronized` pinning ([[java-virtual-threads-interview#Q4]]); coroutines от этого иммунны (нет JNI/monitor проблемы).
 > - kotlinx.coroutines имеет уже структурированный concurrency через `coroutineScope`/`supervisorScope` много лет — Java получила это только в JEP 453 (preview).
 > - Coroutines дают cancellation cooperatively (через `CancellationException` на suspend points). VT — через `Thread.interrupt()`, что не все JDK методы корректно обрабатывают.
 > - Performance: на чистом I/O-bound коде производительность сравнима. Coroutines чуть выигрывают в overhead на CPU-bound тестах из-за отсутствия mount/unmount цикла carrier-ов.
 >
-> **Связанные вопросы:** [[Q1]] — модель VT и mount/unmount; [[Q4]] — pinning, которого нет в coroutines; [[Q14]] — сравнение с reactive (третий подход в этом пространстве).
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — модель VT и mount/unmount; [[java-virtual-threads-interview#Q4]] — pinning, которого нет в coroutines; [[java-virtual-threads-interview#Q14]] — сравнение с reactive (третий подход в этом пространстве).
 >
 > ---
 >
@@ -1158,7 +1158,7 @@ spring:
 > - JDBC `Statement.executeQuery` может pin-нуть VT если внутри есть `synchronized` (в старых драйверах PostgreSQL 42.5- было). Обновляться до latest.
 > - Если БД ушла в timeout, VT всё равно ждут — нужен `connection-timeout` и `socket-timeout` на JDBC URL.
 >
-> **Связанные вопросы:** [[Q4]] — pinning, отдельный риск в JDBC-драйверах; [[Q5]] — VT не для CPU-bound, но JDBC blocking — идеальный кейс; [[Q13]] — Semaphore вместо thread pool как ограничитель.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q4]] — pinning, отдельный риск в JDBC-драйверах; [[java-virtual-threads-interview#Q5]] — VT не для CPU-bound, но JDBC blocking — идеальный кейс; [[java-virtual-threads-interview#Q13]] — Semaphore вместо thread pool как ограничитель.
 >
 > ---
 >
@@ -1252,7 +1252,7 @@ Thread.getAllStackTraces().keySet().stream()
 > - Visual VM, Mission Control умеют визуализировать VT, но при миллионах потоков GUI зависнет — анализировать только через CLI.
 > - Старые APM-агенты (AppDynamics pre-23, New Relic pre-9) не понимают VT — показывают пустые stack или crash.
 >
-> **Связанные вопросы:** [[Q4]] — pinning, диагностируемый через те же tools; [[Q12]] — расход создания миллионов VT (часто корень проблемы); [[Q1]] — VT модель, обуславливающая новые подходы к диагностике.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q4]] — pinning, диагностируемый через те же tools; [[java-virtual-threads-interview#Q12]] — расход создания миллионов VT (часто корень проблемы); [[java-virtual-threads-interview#Q1]] — VT модель, обуславливающая новые подходы к диагностике.
 >
 > ---
 >
@@ -1390,7 +1390,7 @@ try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 > - Если код держит сильные ссылки на VT (ThreadLocal с большим объектом, ScopedValue с map), память растёт линейно с числом VT. Тестировать heap дамп на N VT.
 > - JFR `jdk.VirtualThreadStart` events при миллионе VT генерируют гигабайты — sample 1% или фильтровать.
 >
-> **Связанные вопросы:** [[Q1]] — модель VT, объясняющая дешевизну; [[Q13]] — отсутствие необходимости в пуле как следствие дешевизны; [[Q11]] — diagnostic при миллионах VT.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — модель VT, объясняющая дешевизну; [[java-virtual-threads-interview#Q13]] — отсутствие необходимости в пуле как следствие дешевизны; [[java-virtual-threads-interview#Q11]] — diagnostic при миллионах VT.
 
 ## Q13. Почему не нужен пул виртуальных потоков?
 
@@ -1486,7 +1486,7 @@ try { db.query(...); } finally { semaphore.release(); }
 > - `CompletableFuture.runAsync(r)` без executor использует ForkJoinPool.commonPool (Platform). Передавать `vtExecutor` явно: `runAsync(r, vtExecutor)`.
 > - Если используете `Executors.newScheduledThreadPool(N, vtFactory)`: scheduler держит фиксированное число потоков для таймеров — это OK, не bottleneck (число scheduled tasks ≠ число executions).
 >
-> **Связанные вопросы:** [[Q1]] — модель VT, объясняющая «дешёвые потоки»; [[Q5]] — VT не для CPU-bound, и пул не помогает; [[Q10]] — ограничение на ресурсе (Hikari) — правильный паттерн.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — модель VT, объясняющая «дешёвые потоки»; [[java-virtual-threads-interview#Q5]] — VT не для CPU-bound, и пул не помогает; [[java-virtual-threads-interview#Q10]] — ограничение на ресурсе (Hikari) — правильный паттерн.
 >
 > ---
 >
@@ -1597,7 +1597,7 @@ VT и Reactive — две разных модели решения одной п
 > - WebFlux + Reactor имеет крутую кривую обучения; даже senior-developers делают ошибки с `subscribeOn`/`publishOn`.
 > - Smart мульти-парадигмальная архитектура (часть сервисов на MVC+VT для простых REST, часть на WebFlux для streaming) — хороший подход у LinkedIn.
 >
-> **Связанные вопросы:** [[Q5]] — общие сценарии когда VT не помогает; [[Q1]] — модель VT, отличающаяся от reactive; [[Q9]] — сравнение моделей VT/coroutines/reactive.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q5]] — общие сценарии когда VT не помогает; [[java-virtual-threads-interview#Q1]] — модель VT, отличающаяся от reactive; [[java-virtual-threads-interview#Q9]] — сравнение моделей VT/coroutines/reactive.
 >
 > ---
 >
@@ -1660,7 +1660,7 @@ Thread.ofPlatform().start(() -> {
 > **НЕ работает (pinning):**
 > - `synchronized` блок + `Thread.sleep` внутри — VT пинируется на carrier.
 > - JNI-метод, делающий блокировку — pinning.
-> - `Object.wait()` без timeout внутри `synchronized` — pinning ([[Q4]]).
+> - `Object.wait()` без timeout внутри `synchronized` — pinning ([[java-virtual-threads-interview#Q4]]).
 >
 > **Пример:**
 > ```java
@@ -1702,7 +1702,7 @@ Thread.ofPlatform().start(() -> {
 > - В тестах JUnit `@Timeout` + VT — таймер JUnit может срабатывать раньше из-за scheduler delay (carrier лазер не свободен). Использовать generous timeouts.
 > - `InterruptedException` от `Thread.sleep` в VT работает так же, как в Platform — нужно правильно обрабатывать (restore interrupt status).
 >
-> **Связанные вопросы:** [[Q1]] — модель VT, объясняющая mount/unmount; [[Q4]] — pinning, когда unmount не работает; [[Q3]] — carrier thread, на который VT мониpyется.
+> **Связанные вопросы:** [[java-virtual-threads-interview#Q1]] — модель VT, объясняющая mount/unmount; [[java-virtual-threads-interview#Q4]] — pinning, когда unmount не работает; [[java-virtual-threads-interview#Q3]] — carrier thread, на который VT мониpyется.
 >
 > ---
 >

@@ -152,7 +152,7 @@ graph LR
 >
 >   **Подводные камни:** Saga теряет `Isolation` — промежуточные состояния (Order=PENDING, Inventory=reserved) видны другим транзакциям, что порождает аномалии `lost update`/`dirty read`/`fuzzy read`. Нужны countermeasures: `semantic lock`, `commutative updates`, `pessimistic view`. Компенсации не всегда возможны (нельзя «отправить email обратно») — нужно различать compensable/pivot/retryable шаги.
 >
->   **Связанные вопросы:** [[Q2]], [[Q4]], [[Q14]], [[Q18]]
+>   **Связанные вопросы:** [[saga-pattern-interview#Q2]], [[saga-pattern-interview#Q4]], [[saga-pattern-interview#Q14]], [[saga-pattern-interview#Q18]]
 >
 > - [ ] **B) Saga — это просто цепочка синхронных REST-вызовов с try/catch для отката при ошибке**
 >
@@ -215,7 +215,7 @@ graph LR
 >
 >   **Подводные камни:** Eventual consistency требует UX-переосмысления: клиент получает `202 Accepted` + saga-id, финальный статус узнаёт через polling/SSE/webhook. Нужен Transactional Outbox + idempotent consumers + dedup. Компенсации требуют тщательного проектирования — не любое действие обратимо.
 >
->   **Связанные вопросы:** [[Q1]], [[Q3]], [[Q14]], [[Q18]], [[Q34]]
+>   **Связанные вопросы:** [[saga-pattern-interview#Q1]], [[saga-pattern-interview#Q3]], [[saga-pattern-interview#Q14]], [[saga-pattern-interview#Q18]], [[saga-pattern-interview#Q34]]
 >
 > - [ ] **C) REST-цепочки с try/catch дают ту же атомарность что и Saga, только проще в реализации**
 >
@@ -284,7 +284,7 @@ public class OrderService {
 >
 >   **Подводные камни:** Между commit Tᵢ и доставкой события другие транзакции видят промежуточное состояние — нужны countermeasures (`semantic lock` через статус PENDING, `commutative updates`, проверка версии). Без idempotency на consumer'е получите дубли при ретраях. Outbox-таблица растёт — нужен cleanup. Поэтому каждый шаг — это не только запись данных, но и продуманный «контракт промежуточного состояния».
 >
->   **Связанные вопросы:** [[Q1]], [[Q2]], [[Q4]], [[Q18]], [[Q34]]
+>   **Связанные вопросы:** [[saga-pattern-interview#Q1]], [[saga-pattern-interview#Q2]], [[saga-pattern-interview#Q4]], [[saga-pattern-interview#Q18]], [[saga-pattern-interview#Q34]]
 >
 > - [ ] **D) Локальная транзакция в Saga — это весь набор операций по нескольким сервисам, помеченный одним sagaId**
 >
@@ -323,9 +323,9 @@ Chris Richardson называет это `ACD`: Saga даёт Atomicity (чер�
 > - [x] **D) Saga сохраняет `ACD`: Atomicity через `compensating transactions` (`semantic atomicity`), Consistency (eventual), Durability на каждом шаге; теряет Isolation — поэтому нужны `countermeasures`**
 >     - **Развёрнутое объяснение:** Chris Richardson формулирует это как «`ACD` instead of `ACID`». **Atomicity** обеспечивается не rollback'ом, а семантической компенсацией: если шаг 3 упал — выполняются compensating transactions для шагов 1-2 (отменить резерв, отменить заказ). **Consistency** становится eventual: система рано или поздно приходит в валидное по бизнес-правилам состояние. **Durability** сохраняется локально в каждой БД. А вот **Isolation** теряется: промежуточные состояния (`Order=PENDING`, `Inventory=reserved`) видимы другим Saga.
 >     - **Пример:** Saga «оформить заказ» состоит из `OrderCreated → ItemsReserved → PaymentCharged`. Между шагами 2 и 3 другая Saga может прочитать `Inventory=reserved` для этого товара — это lost update / fuzzy read. Решается `semantic lock`: помечаем `Order.status=PENDING_PAYMENT`, и UI/другие Saga знают, что данные «грязные».
->     - **Когда применять:** Saga — выбор по умолчанию, когда нужны распределённые транзакции в микросервисах и допустима eventual consistency. Для жёстких требований к изоляции (биржевая торговля, банковские проводки в одной БД) — оставляйте ACID-монолит или используйте `TCC` ([[Q24]]).
->     - **Подводные камни:** разработчики из мира монолитов забывают, что `Isolation` пропала, и пишут код, который полагается на read-your-writes между Saga-шагами. Это даёт race conditions, которые проявляются только под нагрузкой. Обязательно применяйте countermeasures из [[Q19]]-[[Q21]] и явно документируйте «грязные» состояния в коде (`@JsonIgnore` для PENDING-полей, отдельные view-модели для consumer'ов).
->     - **Связанные вопросы:** [[Q18]] про аномалии без isolation, [[Q19]] про `semantic lock`, [[Q22]] про сравнение с 2PC.
+>     - **Когда применять:** Saga — выбор по умолчанию, когда нужны распределённые транзакции в микросервисах и допустима eventual consistency. Для жёстких требований к изоляции (биржевая торговля, банковские проводки в одной БД) — оставляйте ACID-монолит или используйте `TCC` ([[saga-pattern-interview#Q24]]).
+>     - **Подводные камни:** разработчики из мира монолитов забывают, что `Isolation` пропала, и пишут код, который полагается на read-your-writes между Saga-шагами. Это даёт race conditions, которые проявляются только под нагрузкой. Обязательно применяйте countermeasures из [[saga-pattern-interview#Q19]]-[[saga-pattern-interview#Q21]] и явно документируйте «грязные» состояния в коде (`@JsonIgnore` для PENDING-полей, отдельные view-модели для consumer'ов).
+>     - **Связанные вопросы:** [[saga-pattern-interview#Q18]] про аномалии без isolation, [[saga-pattern-interview#Q19]] про `semantic lock`, [[saga-pattern-interview#Q22]] про сравнение с 2PC.
 
 ## Q5. Что такое semantic consistency и чем она отличается от strong consistency?
 
@@ -361,7 +361,7 @@ sequenceDiagram
 >     - **Пример:** клиент жмёт «Купить» → `POST /orders` возвращает `202 Accepted` + `sagaId`. UI показывает «Обрабатываем платёж...» и периодически дёргает `GET /orders/{id}/status` или подписывается на `SSE`/WebSocket. Через 2-5 секунд статус становится `CONFIRMED` или `CANCELLED` (при отказе платёжки сработала компенсация — товар вернули в сток). Бизнес-инвариант «деньги списаны ⇔ товар зарезервирован» соблюдён в финале.
 >     - **Когда применять:** все сценарии, где можно жить с задержкой в сотни мс — секунды до финального ответа: e-commerce заказы, бронирования, multi-step онбординг, оформление кредита. UX строится через `202 Accepted` + асинхронный канал статуса (`polling`, `SSE`, `webhook`, `WebSocket`).
 >     - **Подводные камни:** клиенты, привыкшие к синхронному ответу, не готовы к промежуточным статусам — нужны явные UX-индикаторы («заказ обрабатывается»). Read-модели (`CQRS` view) должны различать «pending» и «confirmed» данные, иначе на главной странице покажется уже отменённый заказ. Аналитика и репортинг — только по confirmed-состояниям, иначе цифры «дышат».
->     - **Связанные вопросы:** [[Q4]] про ACID vs ACD, [[Q18]] про аномалии isolation, [[Q12]] про выбор orchestration/choreography.
+>     - **Связанные вопросы:** [[saga-pattern-interview#Q4]] про ACID vs ACD, [[saga-pattern-interview#Q18]] про аномалии isolation, [[saga-pattern-interview#Q12]] про выбор orchestration/choreography.
 > - [ ] B) `Semantic consistency` — это просто другое название для `strong consistency`, маркетинговый термин из NoSQL
 >     - **Что на самом деле:** это разные модели. `Strong consistency` (линейная согласованность) — любой клиент после commit'а видит обновлённые данные мгновенно, нет промежуточных состояний. `Semantic consistency` явно допускает промежуточные состояния (`PENDING`, `reserved`), гарантируя лишь финальную бизнес-согласованность.
 >     - **Откуда путаница:** оба слова содержат «consistency», и в маркетинговых статьях про распределённые БД термины иногда смешивают.
@@ -373,7 +373,7 @@ sequenceDiagram
 > - [ ] D) `Semantic consistency` гарантирует, что два параллельных Saga никогда не видят промежуточные состояния друг друга
 >     - **Что на самом деле:** ровно наоборот. `Semantic consistency` явно допускает видимость промежуточных состояний — в этом её отличие от `strong`/`isolation`. Чтобы скрыть «грязные» состояния от других Saga, применяются отдельные countermeasures: `semantic lock` (флаг `PENDING`), `pessimistic view` (отдельные read-модели для не-pending данных), `commutative updates`.
 >     - **Откуда путаница:** Isolation и Consistency путают в обыденной речи («данные согласованы» ассоциируется с «изолированы»).
->     - **Если бы это было правдой:** были бы лишними `semantic lock` и связанные паттерны из [[Q19]]-[[Q21]] — но они core-часть production Saga-систем.
+>     - **Если бы это было правдой:** были бы лишними `semantic lock` и связанные паттерны из [[saga-pattern-interview#Q19]]-[[saga-pattern-interview#Q21]] — но они core-часть production Saga-систем.
 
 ## Q6. (!) Что такое orchestration-based Saga?
 
@@ -418,7 +418,7 @@ sequenceDiagram
 >     - **Пример:** `Eventuate Tram Sagas` — `SagaDefinition` декларирует шаги через DSL: `.step().invokeParticipant(orderService::create).withCompensation(orderService::cancel).step().invokeParticipant(inventoryService::reserve)...`. Состояние хранится в таблице `saga_instance` (PostgreSQL), команды/реплаи едут через `eventuate-tram-messaging` поверх Kafka.
 >     - **Когда применять:** сложные многошаговые бизнес-процессы (≥3 шагов) с явным flow, ветвлениями (if/else по бизнес-данным), retry'ями, человеческими approval-шагами, timeout'ами. Особенно хорошо ложится на BPMN-нотацию (`Camunda`, `Flowable`).
 >     - **Подводные камни:** оркестратор — `SPOF` (single point of failure), нужно его масштабировать и делать `idempotent` обработку reply'ев (Kafka может доставить дубль). Легко скатиться в «god-object»: вся бизнес-логика участников переезжает в оркестратор. Правило: оркестратор знает «какой шаг следующий», но не «какую цену скидки применить» — это остаётся в `Order Service`.
->     - **Связанные вопросы:** [[Q7]] про state machine, [[Q8]] про преимущества/недостатки, [[Q10]] про choreography как альтернативу, [[Q25]] про реализацию на чистом Spring Boot + Kafka.
+>     - **Связанные вопросы:** [[saga-pattern-interview#Q7]] про state machine, [[saga-pattern-interview#Q8]] про преимущества/недостатки, [[saga-pattern-interview#Q10]] про choreography как альтернативу, [[saga-pattern-interview#Q25]] про реализацию на чистом Spring Boot + Kafka.
 > - [ ] C) Оркестрация-Saga — оркестратор содержит ВСЮ бизнес-логику участников: считает скидки, валидирует адреса, выбирает курьера, рассчитывает налоги
 >     - **Что на самом деле:** это god-object анти-паттерн. Оркестратор должен содержать только flow-логику («после ItemsReserved — иди на ChargePayment»), а бизнес-правила («есть ли товар на складе», «достаточно ли денег», «можем ли доставить в этот регион») остаются в агрегатах участников. Иначе теряется главное преимущество микросервисов — автономия команд: при добавлении нового типа товара пришлось бы менять оркестратор.
 >     - **Откуда путаница:** в простых примерах оркестратор действительно содержит много кода («оркестратор валидирует»), но это для краткости урока.

@@ -451,7 +451,7 @@ User user = User.newBuilder()
 >   - *Пример:* `User user = User.newBuilder().setId(1L).setName("Иван").addTags("java").build();` — типобезопасный builder с проверками на compile-time.
 >   - *Когда применять:* в Gradle-проектах используют `protobuf-gradle-plugin`, который автоматизирует вызов `protoc` и подключает сгенерированный код к compileJava. Это стандартный подход в production.
 >   - *Подводные камни:* `BlockingStub` не поддерживает client streaming и bidi (только unary и server streaming через `Iterator`); забытый `channel.shutdown()` приводит к утечке threads и connections; нужна зависимость `compileOnly 'org.apache.tomcat:annotations-api'` для `@Generated`.
->   - *Связанные вопросы:* [[Q5]] про `Channel` и `Stub`, [[Q2]] про Protocol Buffers.
+>   - *Связанные вопросы:* [[grpc-interview#Q5]] про `Channel` и `Stub`, [[grpc-interview#Q2]] про Protocol Buffers.
 
 ## Q5. Что такое `Channel` и `Stub` в gRPC?
 
@@ -506,7 +506,7 @@ channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
 >   - *Пример:* `ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9090).usePlaintext().build(); UserServiceGrpc.UserServiceBlockingStub stub = UserServiceGrpc.newBlockingStub(channel); GetUserResponse resp = stub.getUser(req);` — канал переиспользуется, стаб создаётся легко.
 >   - *Когда применять:* `Channel` создают один раз на адрес и держат на весь lifecycle приложения (бин в Spring). `Stub.withDeadlineAfter(5, TimeUnit.SECONDS)` создаёт новый стаб с per-call настройками — это нормально и дёшево.
 >   - *Подводные камни:* создание нового `Channel` на каждый запрос — антипаттерн (исчерпание portов, медленный handshake); забытый `channel.shutdown().awaitTermination()` приводит к утечке threads; `usePlaintext()` использовать только для разработки — в production обязательно TLS.
->   - *Связанные вопросы:* [[Q4]] про генерацию стабов, [[Q6]] про типы RPC.
+>   - *Связанные вопросы:* [[grpc-interview#Q4]] про генерацию стабов, [[grpc-interview#Q6]] про типы RPC.
 >
 > - [ ] **B) `Channel` — это сгенерированный клиент, а `Stub` — соединение с сервером**
 >   - *Что на самом деле:* всё ровно наоборот: `Channel` — соединение, `Stub` — сгенерированный клиент над соединением.
@@ -589,7 +589,7 @@ rpc Chat (stream ChatMessage) returns (stream ChatMessage);
 >   - *Пример:* `rpc Chat (stream ChatMessage) returns (stream ChatMessage);` — bidi-канал, где клиент и сервер шлют сообщения независимо, без request-response чередования.
 >   - *Когда применять:* Unary — для CRUD-операций; Server Streaming — подписки, server-sent events, выгрузка списков; Client Streaming — загрузка файлов, batch-импорт; Bidi — чаты, торговые системы, multiplayer-игры.
 >   - *Подводные камни:* `BlockingStub` поддерживает только Unary и Server Streaming (через `Iterator`); забытый `onCompleted()` в `StreamObserver` оставляет stream открытым; flow control HTTP/2 может приводить к backpressure, который надо учитывать; long-lived bidi-streams требуют keepalive-настроек, иначе разрываются балансировщиками.
->   - *Связанные вопросы:* [[Q5]] про `Channel` и `Stub`, [[Q7]] про реализацию Server Streaming.
+>   - *Связанные вопросы:* [[grpc-interview#Q5]] про `Channel` и `Stub`, [[grpc-interview#Q7]] про реализацию Server Streaming.
 >
 > - [ ] **C) Все четыре типа, но streaming реализован через WebSocket поверх HTTP/1.1**
 >   - *Что на самом деле:* gRPC построен на HTTP/2 и использует его native multiplexing — WebSocket не задействован. Существует gRPC-Web для браузеров, но даже он использует HTTP/2 или HTTP/1.1 framing, а не WebSocket.
@@ -1327,7 +1327,7 @@ gRPC определяет 17 стандартных кодов в `io.grpc.Statu
 >   - Пример: `if (!authService.canAccess(currentUser, request.getUserId())) { responseObserver.onError(Status.PERMISSION_DENIED.withDescription("Cannot access foreign profile").asRuntimeException()); return; }` — после успешной проверки JWT в interceptor бизнес-логика отказывает в доступе к чужому ресурсу.
 >   - Когда применять: row-level security (пользователь читает чужие данные), tenant isolation (пользователь tenant A пытается читать tenant B), feature-flags по ролям (admin-only метод), квоты на конкретный ресурс.
 >   - Подводные камни: не путать с `UNAUTHENTICATED` (нет/невалиден токен) — иначе сломается retry/refresh-логика; не путать с `RESOURCE_EXHAUSTED` (квота исчерпана глобально — можно retry позже) и `FAILED_PRECONDITION` (состояние ресурса не позволяет операцию).
->   - Связанные вопросы: [[Q15]] обработка ошибок и `Status`, [[Q18]] какие коды ретраить.
+>   - Связанные вопросы: [[grpc-interview#Q15]] обработка ошибок и `Status`, [[grpc-interview#Q18]] какие коды ретраить.
 >
 > - [ ] **C.** Любая ошибка доступа возвращается как `INTERNAL` — клиент сам решает по описанию, что произошло
 >   - Что на самом деле: `INTERNAL` (13) предназначен для нарушений инвариантов сервера (баги, потеря инвариантов БД); auth/authz имеют выделенные коды специально для машинной обработки.
@@ -1421,7 +1421,7 @@ sequenceDiagram
 >   - Пример: клиент → ServiceA (deadline 5s) → ServiceA вызывает ServiceB после 0.2s обработки (B получит deadline ≈ 4.8s) → B вызывает ServiceC после своих 0.3s (C получит ≈ 4.5s). Если ServiceC «зависнет» на 5 секунд, он сам прервёт работу с `DEADLINE_EXCEEDED` — гарантия E2E SLO.
 >   - Когда применять: всегда устанавливать deadline на edge-сервисе (API gateway); пропагировать через `Context.current().withDeadline(...).run(...)` или просто использовать stub в текущем контексте; в долгих server-side операциях периодически проверять `isCancelled()`.
 >   - Подводные камни: deadline пропагируется только если downstream-вызов сделан в том же `Context` (для async-кода нужно явно сохранять и восстанавливать `Context`); если использовать `Context.ROOT` или новый `Executor` без `Context.currentContextExecutor`, deadline теряется; deadline без буфера на retry приведёт к тому, что повторных попыток не будет.
->   - Связанные вопросы: [[Q15]] обработка ошибок (`DEADLINE_EXCEEDED`), [[Q18]] retry policy и взаимодействие с deadline, [[Q13]] interceptors для логирования времени.
+>   - Связанные вопросы: [[grpc-interview#Q15]] обработка ошибок (`DEADLINE_EXCEEDED`), [[grpc-interview#Q18]] retry policy и взаимодействие с deadline, [[grpc-interview#Q13]] interceptors для логирования времени.
 >
 > - [ ] **D.** Deadline применим только к unary RPC; для streaming RPC используется отдельный механизм keep-alive
 >   - Что на самом деле: deadline работает одинаково для всех типов RPC (unary, server/client/bidi streaming); keep-alive (HTTP/2 PING) — независимый механизм для обнаружения мёртвых соединений, не для бизнес-логики.
@@ -1491,7 +1491,7 @@ ManagedChannel channel = ManagedChannelBuilder
 >   - Пример: `retryPolicy.put("retryableStatusCodes", List.of("UNAVAILABLE", "DEADLINE_EXCEEDED"));` — корректно для read-методов; добавление `INVALID_ARGUMENT` сюда заставит клиент 3 раза слать заведомо невалидный запрос, увеличит p99 latency этого клиента в ~5 раз и удвоит ошибочный QPS на сервере.
 >   - Когда применять: для read-методов с идемпотентной семантикой (`GetUser`, `ListOrders`) — `UNAVAILABLE` + `DEADLINE_EXCEEDED`; для write-методов с идемпотентным контрактом (есть idempotency-key) — те же коды; для non-idempotent writes (`CreateOrder` без ключа) — лучше hedging выключить и retry только на `UNAVAILABLE` с `maxAttempts=2`.
 >   - Подводные камни: retry увеличивает фактический QPS сервера в `maxAttempts` раз при сбое — это может усугубить downstream-перегрузку (retry storm); комбинация retry + истекающий deadline может привести к тому, что попытка ретрая отменится сразу `DEADLINE_EXCEEDED`, не дав сервису восстановиться; need backoff + jitter, иначе все клиенты повторно атакуют сервер синхронно.
->   - Связанные вопросы: [[Q15]] какие статусы возвращает сервер, [[Q16]] семантика конкретных кодов (`UNAVAILABLE` vs `PERMISSION_DENIED`), [[Q17]] взаимодействие deadline и retry budget.
+>   - Связанные вопросы: [[grpc-interview#Q15]] какие статусы возвращает сервер, [[grpc-interview#Q16]] семантика конкретных кодов (`UNAVAILABLE` vs `PERMISSION_DENIED`), [[grpc-interview#Q17]] взаимодействие deadline и retry budget.
 
 ## Q19. Какие модели балансировки нагрузки поддерживает gRPC?
 
@@ -1538,7 +1538,7 @@ graph LR
 >   - **Пример:** `ManagedChannelBuilder.forTarget("dns:///user-service:9090").defaultLoadBalancingPolicy("round_robin")` — DNS отдаёт все IP подов, клиент открывает по соединению на каждый и распределяет RPC сам.
 >   - **Когда применять:** внутрикластерный gRPC в Kubernetes без service mesh (client-side + headless service), либо service mesh с Envoy/Istio для L7-роутинга.
 >   - **Подводные камни:** DNS-резолвер кэширует адреса — после scale-up новые поды могут не появиться до повторной резолюции; `pick_first` не балансирует вообще; в k8s обычный `ClusterIP` Service выступает L4-балансировщиком, нужен headless (`clusterIP: None`) для client-side.
->   - **Связанные вопросы:** [[Q20]], [[Q11]]
+>   - **Связанные вопросы:** [[grpc-interview#Q20]], [[grpc-interview#Q11]]
 > - [ ] **B) Достаточно поставить любой Kubernetes Service `ClusterIP` перед gRPC-подами — kube-proxy сделает L7-роутинг и каждый RPC попадёт на разный backend**
 >   - **Что на самом деле:** `ClusterIP` Service в k8s работает на уровне L4 (iptables/IPVS), он балансирует TCP-соединения, а не HTTP/2-стримы. Долгоживущий gRPC-channel приклеится к одному pod-у, и весь трафик пойдёт туда же до пересоздания соединения.
 >   - **Откуда путаница:** для HTTP/1.1 короткоживущих запросов `ClusterIP` действительно нормально балансирует — каждый запрос = новое соединение. С gRPC модель ломается.
@@ -1602,11 +1602,11 @@ public class ConsulNameResolverProvider extends NameResolverProvider {
 >   - **Пример:** для k8s headless service — `dns:///user-service.default.svc.cluster.local:9090` + `round_robin` LB; для Consul — кастомный `ConsulNameResolverProvider extends NameResolverProvider` с `getDefaultScheme() = "consul"`, регистрируется через SPI или вручную в `NameResolverRegistry`.
 >   - **Когда применять:** интеграция со своим service discovery (Consul, ZooKeeper, Eureka), кастомные стратегии шардирования по подмножеству backend-ов, динамическое обновление endpoints при scale-up без рестарта клиента.
 >   - **Подводные камни:** дефолтный DNS-резолвер кэширует ответы (`networkaddress.cache.ttl`) — может видеть «старые» поды после rolling-deploy; нужно либо тюнить TTL, либо использовать xDS/Consul; кастомный резолвер должен корректно реализовать `refresh()` и `shutdown()`, иначе утечки потоков.
->   - **Связанные вопросы:** [[Q19]], [[Q21]]
+>   - **Связанные вопросы:** [[grpc-interview#Q19]], [[grpc-interview#Q21]]
 > - [ ] **C) Это интерсептор, который автоматически добавляет заголовки `:authority` и `user-agent` к каждому RPC по правилам, заданным в `.proto`-файле**
 >   - **Что на самом деле:** добавление заголовков — задача `ClientInterceptor` и `CallCredentials`. `:authority` устанавливается каналом из target-URI, `user-agent` — самим gRPC-runtime по дефолту. `NameResolver` к заголовкам отношения не имеет, и в `.proto` нет синтаксиса «правил резолвинга».
 >   - **Откуда путаница:** слово «resolver» в HTTP/REST мире (например, в Spring `HandlerMethodArgumentResolver`) часто связано с обработкой запроса/заголовков. В gRPC терминология совсем другая.
->   - **Если бы это было правдой:** не существовало бы отдельной концепции `Metadata` и `Interceptor` — но они описаны в [[Q14]] и [[Q13]] как независимые механизмы.
+>   - **Если бы это было правдой:** не существовало бы отдельной концепции `Metadata` и `Interceptor` — но они описаны в [[grpc-interview#Q14]] и [[grpc-interview#Q13]] как независимые механизмы.
 > - [ ] **D) Это серверный компонент, который выбирает, какой `@GrpcService` обслуживает входящий RPC по имени метода в `path`**
 >   - **Что на самом деле:** маршрутизация на сервере по `path` (`/package.Service/Method`) — это работа `ServerImpl`/`HandlerRegistry`, не `NameResolver`. `NameResolver` живёт только на клиентской стороне.
 >   - **Откуда путаница:** в обоих случаях речь о «преобразовании имени в реализацию», и неподготовленному человеку легко перепутать клиентский service discovery с серверным dispatch.
@@ -1665,7 +1665,7 @@ ManagedChannel channel = NettyChannelBuilder
 >   - **Пример:** `ServerBuilder.forPort(443).useTransportSecurity(new File("server.crt"), new File("server.key")).addService(...)` + `NettyChannelBuilder.forAddress("svc:443").sslContext(GrpcSslContexts.forClient().trustManager(new File("ca.crt")).keyManager(new File("client.crt"), new File("client.key")).build())`.
 >   - **Когда применять:** любой production gRPC поверх публичной сети (обязательно TLS); inter-service в k8s/cloud без service mesh (mTLS вручную); сервисы в service mesh (mTLS автоматически).
 >   - **Подводные камни:** ротация сертификатов — самописный mTLS легко ломается, когда cert истёк; для k8s используют cert-manager + SPIFFE/SPIRE; `usePlaintext()` иногда попадает в prod-конфиг через копипасту из туториалов — надо запрещать линтером; для проверки SAN/CN в клиентском сертификате нужен `ServerInterceptor`, который читает SSL-сессию.
->   - **Связанные вопросы:** [[Q22]], [[Q20]]
+>   - **Связанные вопросы:** [[grpc-interview#Q22]], [[grpc-interview#Q20]]
 > - [ ] **D) Использовать gRPC over plaintext + JWT в заголовке `authorization` через `CallCredentials` — JWT уже подписан, его нельзя подделать, поэтому шифрование канала не нужно**
 >   - **Что на самом деле:** JWT подписан, но не зашифрован — содержимое (claims, userId, scopes) видно любому, кто перехватит трафик. Без TLS JWT можно просто скопировать из сети и переиграть в свой запрос (replay attack), пока не истёк. Authentication и transport security — ортогональные слои: JWT решает «кто это», TLS решает «никто не читает и не подменяет канал».
 >   - **Откуда путаница:** «JWT signed → secure» — частое упрощение. Signed защищает от модификации, но не от перехвата и replay.
@@ -1777,7 +1777,7 @@ public class JwtServerInterceptor implements ServerInterceptor {
 >
 >     **Подводные камни:** `CallCredentials` требует включённого TLS (gRPC по умолчанию отклоняет credentials через незащищённый канал — `requireFakeFeature` нужен только для тестов); токен передаётся при каждом RPC, поэтому при streaming-вызовах валидируется один раз на установление потока — refresh-логику надо строить аккуратно.
 >
->     **Связанные вопросы:** [[Q21]], [[Q23]]
+>     **Связанные вопросы:** [[grpc-interview#Q21]], [[grpc-interview#Q23]]
 
 ## Q23. (!) Как интегрировать gRPC со Spring Boot?
 
@@ -1873,7 +1873,7 @@ dependencies {
 >
 >     **Подводные камни:** `@GrpcClient` инжектирует stub на этапе init — если адрес недоступен, канал просто переходит в `IDLE` и подключится при первом вызове (NOT fail-fast); по умолчанию LogNet поднимает Netty-сервер на отдельном порту от HTTP — это два разных listener'а, и Spring Boot Actuator их не объединяет; reflection-сервис включается отдельно (`grpc.server.reflection-service-enabled: true`) — без него `grpcurl list` не работает.
 >
->     **Связанные вопросы:** [[Q22]], [[Q24]]
+>     **Связанные вопросы:** [[grpc-interview#Q22]], [[grpc-interview#Q24]]
 >
 > - [ ] **B.** Запускать `io.grpc.Server` вручную в `@PostConstruct` и поднимать клиентов как обычные `@Bean` через `ManagedChannelBuilder`
 >
@@ -2013,7 +2013,7 @@ class UserGrpcServiceIntegrationTest {
 >
 >     **Подводные камни:** забыть `shutdown()` — каналы накапливаются между тестами и тесты «текут»; `directExecutor()` означает синхронное выполнение, и если в проде async-цепочки маскируют race condition, in-process его не покажет; для streaming-тестов используйте `StreamRecorder` или Reactor's `StepVerifier`, иначе ассерты будут гоняться за асинхронными `onNext`.
 >
->     **Связанные вопросы:** [[Q22]], [[Q23]]
+>     **Связанные вопросы:** [[grpc-interview#Q22]], [[grpc-interview#Q23]]
 >
 > - [ ] **C.** Мокать stub целиком через Mockito (`mock(UserServiceBlockingStub.class)`) и тестировать сервис через эти моки
 >

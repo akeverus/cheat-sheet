@@ -104,7 +104,7 @@ allOpen {
 > ```
 > **Когда применять:** во всех Spring Boot проектах на Kotlin — это стандарт, добавляется в стартеры `spring-boot-starter` для Kotlin.
 > **Подводные камни:** интерфейсные proxy (JDK dynamic) не требуют `open`, но если бин не реализует интерфейс — Spring падает на CGLIB; кастомные мета-аннотации, наследующие `@Component`, тоже нужно добавлять в `allOpen { annotation(...) }`.
-> **Связанные вопросы:** [[Q4]] — `kotlin-jpa` плагин, [[Q14]] — типичные ошибки с `final`.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q4]] — `kotlin-jpa` плагин, [[kotlin-spring-interview#Q14]] — типичные ошибки с `final`.
 >
 > ---
 >
@@ -172,7 +172,7 @@ class BadService {
 > ```
 > **Когда применять:** в любом Spring Boot сервисе на Kotlin. Это стандарт.
 > **Подводные камни:** циклические зависимости (A→B, B→A) ломают constructor injection — это намёк на проблему дизайна, а не повод вернуться к `@Autowired`. Решение — рефакторинг или ленивый прокси через `ObjectProvider<T>`.
-> **Связанные вопросы:** [[Q14]] — антипаттерны с `lateinit`, [[Q7]] — тестирование.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q14]] — антипаттерны с `lateinit`, [[kotlin-spring-interview#Q7]] — тестирование.
 >
 > ---
 >
@@ -267,7 +267,7 @@ class Order(
 > ```
 > **Когда применять:** правило «обычный class для `@Entity`, data class для DTO» — стандарт в Spring + Kotlin.
 > **Подводные камни:** в R2DBC и Spring Data JDBC (без Hibernate proxy) ограничения мягче — там `data class` допустим. Для Hibernate — нет.
-> **Связанные вопросы:** [[Q4]] — `kotlin-jpa` плагин для no-arg, [[Q14]] — типичные ошибки.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q4]] — `kotlin-jpa` плагин для no-arg, [[kotlin-spring-interview#Q14]] — типичные ошибки.
 >
 > ---
 >
@@ -336,7 +336,7 @@ class User(
 > ```
 > **Когда применять:** в любом проекте с Hibernate/JPA на Kotlin — обязательная зависимость.
 > **Подводные камни:** плагин включается только для перечисленных аннотаций по умолчанию; для кастомных мета-аннотаций нужно явно добавить `noArg { annotation("com.example.MyEntity") }`. Без плагина обходной путь — default-значения у всех полей (`var name: String = ""`), но это уродует доменную модель.
-> **Связанные вопросы:** [[Q1]] — kotlin-spring плагин, [[Q3]] — почему обычный class, не data class.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q1]] — kotlin-spring плагин, [[kotlin-spring-interview#Q3]] — почему обычный class, не data class.
 >
 > ---
 >
@@ -441,7 +441,7 @@ Spring WebFlux автоматически адаптирует `suspend` → `Mo
 > ```
 > **Когда применять:** во всех новых WebFlux проектах на Kotlin — это рекомендованный стиль вместо ручных `Mono`/`Flux`.
 > **Подводные камни:** WebMVC (`spring-webmvc`) не поддерживает `suspend` напрямую до Spring 6+ (а полная поддержка с виртуальными потоками — Spring 6.1+). Внутри `suspend` нельзя вызывать blocking I/O без `withContext(Dispatchers.IO)` — заблокирует worker.
-> **Связанные вопросы:** [[Q6]] — CoroutineCrudRepository, [[Q14]] — антипаттерн с runBlocking.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q6]] — CoroutineCrudRepository, [[kotlin-spring-interview#Q14]] — антипаттерн с runBlocking.
 >
 > ---
 >
@@ -503,7 +503,7 @@ interface OrderRepository : CoroutineCrudRepository<Order, Long> {
 > ```
 > **Когда применять:** в WebFlux + R2DBC проектах на Kotlin. Это default-выбор для нового реактивного стека.
 > **Подводные камни:** транзакции требуют `R2dbcTransactionManager` или `ReactiveMongoTransactionManager` — обычный `JpaTransactionManager` не работает. `@Transactional` на suspend-методе работает с Spring 6+; до этого нужен manual `TransactionalOperator`.
-> **Связанные вопросы:** [[Q5]] — WebFlux + suspend, [[Q13]] — security с suspend.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q5]] — WebFlux + suspend, [[kotlin-spring-interview#Q13]] — security с suspend.
 >
 > ---
 >
@@ -601,7 +601,7 @@ fun `should process order asynchronously`() = runTest {
 > ```
 > **Когда применять:** для каждого unit-теста suspend-функции, всех корутинных сценариев включая Flow.
 > **Подводные камни:** `runTest` не подходит для Flow с горячими источниками (`StateFlow`, `SharedFlow`) — нужен `Turbine` или явный `collect` в `launch { }`. Для интеграционных тестов с реальной БД (`@SpringBootTest`) `runTest` тоже работает, но виртуальное время теряет смысл.
-> **Связанные вопросы:** [[Q5]] — suspend контроллеры, [[Q6]] — CoroutineCrudRepository.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q5]] — suspend контроллеры, [[kotlin-spring-interview#Q6]] — CoroutineCrudRepository.
 >
 > ---
 >
@@ -681,7 +681,7 @@ val user: User = javaService.unknown("1")  // может упасть NPE в run
 > ```
 > **Когда применять:** знать про platform types обязательно при работе с любым Java-API. Лучшая защита — явно объявлять `User?` при работе с Java-методами без аннотаций.
 > **Подводные камни:** `JpaRepository.findById(...)` возвращает `Optional<User>` — это не platform type (Optional non-null), но `.get()` без проверки бросит `NoSuchElementException`. Spring добавил KNullness annotations с 6.x, но многие сторонние библиотеки до сих пор без них.
-> **Связанные вопросы:** [[Q14]] — типичные ошибки, [[Q3]] — JPA entity nullable полей.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q14]] — типичные ошибки, [[kotlin-spring-interview#Q3]] — JPA entity nullable полей.
 >
 > ---
 >
@@ -790,7 +790,7 @@ class OrderHandler(private val service: OrderService) {
 > ```
 > **Когда применять:** для GraalVM Native Image / AOT-сборок DSL предпочтительнее (меньше runtime-рефлексии), для обычных Spring Boot — на вкус команды.
 > **Подводные камни:** DSL не работает напрямую с `@Component` сканированием — нужно либо одно, либо другое; смешивать допустимо, но требует аккуратности. `Profile`/`Conditional` через DSL имеют свой синтаксис.
-> **Связанные вопросы:** [[Q1]] — kotlin-spring и open-классы, [[Q13]] — Security DSL.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q1]] — kotlin-spring и open-классы, [[kotlin-spring-interview#Q13]] — Security DSL.
 >
 > ---
 >
@@ -873,7 +873,7 @@ data class CreateUserRequest(
 > ```
 > **Когда применять:** во всех Kotlin data class, используемых как Request DTO с `@Valid`. Это стандарт.
 > **Подводные камни:** Spring 6 / Hibernate Validator 8 начинают поддерживать сканирование конструктор-параметров (`@ValidateOnExecution`), но в подавляющем большинстве проектов всё ещё нужен `@field:`. Для JSON-Schema/Springdoc OpenAPI может потребоваться дополнительно `@get:`.
-> **Связанные вопросы:** [[Q14]] — список типичных ошибок, [[Q11]] — обработка `MethodArgumentNotValidException`.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q14]] — список типичных ошибок, [[kotlin-spring-interview#Q11]] — обработка `MethodArgumentNotValidException`.
 >
 > ---
 >
@@ -959,7 +959,7 @@ class UserNotFoundException(id: Long) : RuntimeException("User $id not found")
 > ```
 > **Когда применять:** во всех REST API на Spring (MVC и WebFlux). Это стандарт.
 > **Подводные камни:** `@RestControllerAdvice` работает только для исключений из `@Controller`-слоя; ошибки в `Filter`-цепочке (security, CORS) обрабатываются раньше и должны ловиться отдельно (`AuthenticationEntryPoint`, `AccessDeniedHandler`). Для WebFlux + suspend исключение нужно бросать из `suspend` функции — `Mono.error(...)` в reactive-цепочке тоже работает.
-> **Связанные вопросы:** [[Q10]] — валидация в контроллерах, [[Q13]] — Security ошибки.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q10]] — валидация в контроллерах, [[kotlin-spring-interview#Q13]] — Security ошибки.
 >
 > ---
 >
@@ -1031,7 +1031,7 @@ Extension functions — способ адаптировать Java-based Spring 
 > ```
 > **Когда применять:** для адаптации сторонних API, добавления удобных хелперов на Spring-классы без наследования, конвертеров (`.toResponse()` на доменной модели). Идеально для cross-cutting concerns, не требующих DI.
 > **Подводные камни:** extension не участвует в полиморфизме (resolved statically) — `parent.foo()` вызовет extension Parent, даже если у Child есть свой. `@Transactional`, `@Async`, `@Cacheable` на extension не работают — это статика вне Spring-бина. Extension не может иметь backing field.
-> **Связанные вопросы:** [[Q1]] — open-classes для proxy, [[Q5]] — `awaitSingle()` extension на `Mono`.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q1]] — open-classes для proxy, [[kotlin-spring-interview#Q5]] — `awaitSingle()` extension на `Mono`.
 >
 > ---
 >
@@ -1126,7 +1126,7 @@ suspend fun meReactive(): User {
 > ```
 > **Когда применять:** во всех reactive/coroutine контроллерах с Spring Security.
 > **Подводные камни:** Spring Security DSL для Kotlin (`http { authorizeHttpRequests { ... } }`) живёт в `org.springframework.security.config.annotation.web.invoke` — нужно `import` корректно. Для тестов нужны `@WithMockUser` или `WebTestClient.mutateWith(SecurityMockServerConfigurers.mockUser())`.
-> **Связанные вопросы:** [[Q5]] — suspend + WebFlux, [[Q6]] — CoroutineCrudRepository.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q5]] — suspend + WebFlux, [[kotlin-spring-interview#Q6]] — CoroutineCrudRepository.
 >
 > ---
 >
@@ -1217,7 +1217,7 @@ suspend fun getOrders(): List<Order> = orderService.findAll()
 > ```
 > **Когда применять:** **никогда** не использовать `runBlocking` в WebFlux/reactive контексте. Для адаптации blocking-кода в suspend — `withContext(Dispatchers.IO) { blockingCall() }`.
 > **Подводные камни:** Suspend-функция уже coroutine context, ей просто не нужен `runBlocking`. Если приходится вызывать blocking JDBC из реактивного контроллера — `withContext(Dispatchers.IO)` или вынос в `@Async`-сервис, но лучшее решение — мигрировать на R2DBC.
-> **Связанные вопросы:** [[Q5]] — suspend в WebFlux, [[Q6]] — CoroutineCrudRepository.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q5]] — suspend в WebFlux, [[kotlin-spring-interview#Q6]] — CoroutineCrudRepository.
 >
 > ---
 >
@@ -1285,7 +1285,7 @@ suspend fun getOrders(): List<Order> = orderService.findAll()
 > ```
 > **Когда применять:** новые Spring Boot проекты — Kotlin почти всегда выигрышен; legacy Java — постепенная миграция по модулям; embedded/нативные сборки требуют осторожности с reflection.
 > **Подводные камни:** компиляция Kotlin медленнее Java (улучшается с K2 в 2.0+); Spring AOT/Native имеет тонкости с reflection в Kotlin metadata; командам без опыта корутин может быть тяжело отлаживать suspend-stack traces.
-> **Связанные вопросы:** [[Q1]]-[[Q4]] — плагины и их роль, [[Q14]] — типичные ошибки.
+> **Связанные вопросы:** [[kotlin-spring-interview#Q1]]-[[kotlin-spring-interview#Q4]] — плагины и их роль, [[kotlin-spring-interview#Q14]] — типичные ошибки.
 >
 > ---
 >

@@ -95,7 +95,7 @@ driver.quit();
 >
 > **Подводные камни:** Каждая операция = network roundtrip → тесты медленнее unit-тестов на 2-3 порядка. Несовместимость версий driver и browser ломает session.
 >
-> **Связанные вопросы:** [[Q8]] — Selenium Grid, [[Q11]] — альтернативы (Playwright использует CDP напрямую).
+> **Связанные вопросы:** [[selenium-interview#Q8]] — Selenium Grid, [[selenium-interview#Q11]] — альтернативы (Playwright использует CDP напрямую).
 >
 > ---
 >
@@ -188,7 +188,7 @@ driver.findElement(By.xpath("//button[@type='submit' and contains(text(), 'Submi
 >
 > **Подводные камни:** CSS-классы — плохой выбор (часто меняются дизайнерами/Tailwind-генератором). Локаторы по `nth-child` хрупкие при добавлении элементов.
 >
-> **Связанные вопросы:** [[Q5]] — Page Object, [[Q10]] — flaky тесты, [[Q14]] — anti-patterns.
+> **Связанные вопросы:** [[selenium-interview#Q5]] — Page Object, [[selenium-interview#Q10]] — flaky тесты, [[selenium-interview#Q14]] — anti-patterns.
 >
 > ---
 >
@@ -270,7 +270,7 @@ WebElement element = fluentWait.until(d -> d.findElement(By.id("result")));
 >
 > **Подводные камни:** Смешивание implicit + explicit приводит к непредсказуемым суммарным таймаутам (баг описан в Selenium docs). После Selenium 4 implicit стал ещё более problematic с относительными локаторами.
 >
-> **Связанные вопросы:** [[Q4]] — Thread.sleep, [[Q10]] — flaky тесты.
+> **Связанные вопросы:** [[selenium-interview#Q4]] — Thread.sleep, [[selenium-interview#Q10]] — flaky тесты.
 >
 > ---
 >
@@ -357,7 +357,7 @@ String text = result.getText();
 >
 > **Подводные камни:** Если условие невозможно выразить через `ExpectedConditions`, можно написать кастомный `Function<WebDriver, T>` — это всё равно лучше sleep. Иногда нужен короткий sleep после `click()` на анимированной модалке — обычно решается через `elementToBeClickable` или ожидание `aria-hidden=false`.
 >
-> **Связанные вопросы:** [[Q3]] — типы wait, [[Q10]] — flaky тесты.
+> **Связанные вопросы:** [[selenium-interview#Q3]] — типы wait, [[selenium-interview#Q10]] — flaky тесты.
 >
 > ---
 >
@@ -482,7 +482,7 @@ void shouldLogin() {
 >
 > **Подводные камни:** God Object — не делайте один класс на весь сайт. Один Page Object = одна логическая страница/компонент. Возврат следующей страницы из метода (fluent chain) делает связи явными.
 >
-> **Связанные вопросы:** [[Q6]] — Page Factory, [[Q14]] — anti-patterns.
+> **Связанные вопросы:** [[selenium-interview#Q6]] — Page Factory, [[selenium-interview#Q14]] — anti-patterns.
 >
 > ---
 >
@@ -581,7 +581,7 @@ public class UserPage {
 >
 > **Подводные камни:** `List<WebElement>` с @FindBy — прокси для всего списка, но при каждом обращении к элементу ВНУТРИ списка тоже происходит поиск, что замедляет циклы. Для очень частых обращений лучше явный `driver.findElements()` с кешированием в локальную переменную в рамках одного метода.
 >
-> **Связанные вопросы:** [[Q5]] — Page Object, [[Q10]] — flaky тесты.
+> **Связанные вопросы:** [[selenium-interview#Q5]] — Page Object, [[selenium-interview#Q10]] — flaky тесты.
 >
 > ---
 >
@@ -689,7 +689,7 @@ driver.switchTo().window(mainWindow);  // вернуться
 >
 > **Подводные камни:** `driver.close()` закрывает текущее окно, `driver.quit()` — всю сессию. Если забыли вернуться на mainWindow после `close()`, следующая операция упадёт. После `defaultContent()` возврат на верхний уровень из любого вложенного frame.
 >
-> **Связанные вопросы:** [[Q14]] — anti-patterns, [[Q10]] — flaky тесты (window timing).
+> **Связанные вопросы:** [[selenium-interview#Q14]] — anti-patterns, [[selenium-interview#Q10]] — flaky тесты (window timing).
 >
 > ---
 >
@@ -791,7 +791,7 @@ java -jar selenium-server-4.x.x.jar node --hub http://hub:4444
 >
 > **Подводные камни:** Сетевая задержка между Hub и Node добавляет latency к каждой команде. Версии Grid и driver должны совпадать. Без `--max-sessions` Node может перегрузиться. Для Kubernetes лучше использовать distributed mode с Helm chart.
 >
-> **Связанные вопросы:** [[Q9]] — параллельные тесты, [[Q12]] — CI/CD.
+> **Связанные вопросы:** [[selenium-interview#Q9]] — параллельные тесты, [[selenium-interview#Q12]] — CI/CD.
 >
 > ---
 >
@@ -923,7 +923,7 @@ public class DriverFactory {
 >
 > **Подводные камни:** Тесты должны быть полностью изолированными (нет shared state в БД, нет fixtures на одного пользователя). Грид нужен для cross-machine параллельности. ThreadLocal.remove() обязателен иначе утечка browser-процессов.
 >
-> **Связанные вопросы:** [[Q8]] — Selenium Grid, [[Q14]] — anti-patterns.
+> **Связанные вопросы:** [[selenium-interview#Q8]] — Selenium Grid, [[selenium-interview#Q14]] — anti-patterns.
 >
 > ---
 >
@@ -1030,7 +1030,7 @@ void stillFlakyTest() { ... }
 >
 > **Подводные камни:** Retry скрывает реальные баги — используйте его осторожно, всегда логируйте retry-events. Видеозапись (Selenoid/Moon, BrowserStack) — мощный инструмент диагностики, особенно для timing-issues.
 >
-> **Связанные вопросы:** [[Q3]] — implicit vs explicit wait, [[Q4]] — Thread.sleep, [[Q14]] — anti-patterns.
+> **Связанные вопросы:** [[selenium-interview#Q3]] — implicit vs explicit wait, [[selenium-interview#Q4]] — Thread.sleep, [[selenium-interview#Q14]] — anti-patterns.
 >
 > ---
 >
@@ -1122,7 +1122,7 @@ try (Playwright playwright = Playwright.create()) {
 >
 > **Подводные камни:** Java-биндинги Playwright — обёртка над Node.js процессом (запускает headless Node для общения с браузерами). Это добавляет startup-overhead. Также Playwright моложе, экосистема меньше (плагины, отчёты).
 >
-> **Связанные вопросы:** [[Q3]] — wait в Selenium, [[Q10]] — flaky тесты, [[Q14]] — anti-patterns.
+> **Связанные вопросы:** [[selenium-interview#Q3]] — wait в Selenium, [[selenium-interview#Q10]] — flaky тесты, [[selenium-interview#Q14]] — anti-patterns.
 >
 > ---
 >
@@ -1232,7 +1232,7 @@ WebDriver driver = new ChromeDriver();
 >
 > **Подводные камни:** Требуется интернет при первом запуске (или предзагруженный кэш). В корпоративных средах за proxy может потребоваться `HTTPS_PROXY`. Если установлено несколько браузеров, нужно указать `ChromeOptions().setBinary("/path/to/chrome")`.
 >
-> **Связанные вопросы:** [[Q1]] — архитектура, [[Q8]] — Selenium Grid.
+> **Связанные вопросы:** [[selenium-interview#Q1]] — архитектура, [[selenium-interview#Q8]] — Selenium Grid.
 >
 > ---
 >
@@ -1364,7 +1364,7 @@ public class LoginSteps {
 >
 > **Подводные камни:** Антипаттерн — слишком технические step'ы («I click button with id submit») — это imperative, не BDD. Правильно — declarative («I confirm my order»). Регексы в @When/@Then становятся неуправляемыми при большом количестве — используйте Cucumber Expressions ({string}, {int}).
 >
-> **Связанные вопросы:** [[Q5]] — Page Object внутри step-definitions, [[Q15]] — test pyramid.
+> **Связанные вопросы:** [[selenium-interview#Q5]] — Page Object внутри step-definitions, [[selenium-interview#Q15]] — test pyramid.
 >
 > ---
 >
@@ -1468,7 +1468,7 @@ assertThat(response.jsonPath().getList("items")).hasSize(5);
 >
 > **Подводные камни:** Команды часто оправдывают «проверим всё через UI потому что это E2E». Real E2E — не «всё через UI», а минимально достаточный набор happy paths.
 >
-> **Связанные вопросы:** [[Q15]] — test pyramid, [[Q10]] — flaky тесты, [[Q11]] — альтернативы.
+> **Связанные вопросы:** [[selenium-interview#Q15]] — test pyramid, [[selenium-interview#Q10]] — flaky тесты, [[selenium-interview#Q11]] — альтернативы.
 >
 > ---
 >
@@ -1556,7 +1556,7 @@ UI-тесты — **дорогие** (медленные, flaky), должны �
 >
 > **Подводные камни:** Слепое следование пропорциям — не догма. Микросервис с тонкой бизнес-логикой может иметь больше integration-тестов на API-контракты. Frontend-heavy SPA (тонкий backend) — больше UI-тестов имеет смысл, но тогда лучше Playwright/Cypress, чем Selenium.
 >
-> **Связанные вопросы:** [[Q11]] — альтернативы, [[Q14]] — anti-patterns, [[Q12]] — CI/CD.
+> **Связанные вопросы:** [[selenium-interview#Q11]] — альтернативы, [[selenium-interview#Q14]] — anti-patterns, [[selenium-interview#Q12]] — CI/CD.
 >
 > ---
 >

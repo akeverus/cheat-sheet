@@ -330,7 +330,7 @@ public ErrorResponse handleCircuitOpen(CallNotPermittedException ex) {
 >
 > **Подводные камни:** при ретраях для non-idempotent операций (POST `/orders`) — обязательно идемпотентность по `Idempotency-Key`, иначе двойная оплата. Retry поверх OPEN CircuitBreaker — почти всегда бессмыслен (CB сразу бросает `CallNotPermittedException`).
 >
-> **Связанные вопросы:** [[Q9]] — конфигурация Retry в Spring Boot; [[Q15]] — комбинирование с CircuitBreaker; [[Q1]] — миграция с Hystrix
+> **Связанные вопросы:** [[resilience4j-interview#Q9]] — конфигурация Retry в Spring Boot; [[resilience4j-interview#Q15]] — комбинирование с CircuitBreaker; [[resilience4j-interview#Q1]] — миграция с Hystrix
 >
 > ---
 >
@@ -430,7 +430,7 @@ public class OrderService {
 >
 > **Подводные камни:** retry-exceptions работает по `instanceof`, поэтому `IOException` поймает и `SocketTimeoutException` — а timeout после `commit` уже non-safe. Используй точные классы исключений. `wait-duration` без jitter создаёт thundering herd при массовых сбоях downstream.
 >
-> **Связанные вопросы:** [[Q8]] — отличие от Spring Retry; [[Q15]] — комбинирование с CircuitBreaker; [[Q16]] — fallbackMethod и сигнатура
+> **Связанные вопросы:** [[resilience4j-interview#Q8]] — отличие от Spring Retry; [[resilience4j-interview#Q15]] — комбинирование с CircuitBreaker; [[resilience4j-interview#Q16]] — fallbackMethod и сигнатура
 >
 > ---
 >
@@ -542,7 +542,7 @@ public void handleRateLimit() {}
 >
 > **Подводные камни:** Resilience4j RateLimiter — **локальный**, in-memory. В кластере из 10 инстансов каждый получит свои 100 RPS → суммарно 1000 RPS на downstream. Для распределённого rate limiting — `bucket4j-redis` или Gateway. Edge-burst на границе окна: при `limit=100/s` за 2 секунды максимум 200, но можно увидеть 100+100 в течение 100ms.
 >
-> **Связанные вопросы:** [[Q11]] — конфигурация RateLimiter; [[Q15]] — комбинирование с CircuitBreaker; [[Q17]] — метрики `resilience4j.ratelimiter.available.permissions`
+> **Связанные вопросы:** [[resilience4j-interview#Q11]] — конфигурация RateLimiter; [[resilience4j-interview#Q15]] — комбинирование с CircuitBreaker; [[resilience4j-interview#Q17]] — метрики `resilience4j.ratelimiter.available.permissions`
 
 ## Q11. Как настроить RateLimiter в Spring Boot?
 
@@ -603,7 +603,7 @@ RateLimiterConfig config = RateLimiterConfig.custom()
 >
 > **Подводные камни:** дефолтные `500ns` и `50 permits` — это фактически «нет лимита» для большинства сценариев. Если положиться на default, можно случайно открыть downstream к перегрузке. Логи стартапа не предупреждают о typo.
 >
-> **Связанные вопросы:** [[Q10]] — алгоритм RateLimiter; [[Q17]] — Actuator метрики; [[Q20]] — ограничения аннотационного подхода
+> **Связанные вопросы:** [[resilience4j-interview#Q10]] — алгоритм RateLimiter; [[resilience4j-interview#Q17]] — Actuator метрики; [[resilience4j-interview#Q20]] — ограничения аннотационного подхода
 >
 > ---
 >
@@ -692,7 +692,7 @@ RateLimiterConfig config = RateLimiterConfig.custom()
 >
 > **Подводные камни:** SEMAPHORE Bulkhead НЕ прерывает уже стартовавший вызов — если downstream висит 30s, тред caller'а тоже висит 30s. Чтобы отрезать долгие вызовы, нужен `TimeLimiter` сверху (только для async). THREADPOOL Bulkhead может вернуть тред, но требует CompletableFuture.
 >
-> **Связанные вопросы:** [[Q13]] — SEMAPHORE vs THREADPOOL; [[Q14]] — комбинирование с TimeLimiter; [[Q15]] — порядок аспектов в цепочке
+> **Связанные вопросы:** [[resilience4j-interview#Q13]] — SEMAPHORE vs THREADPOOL; [[resilience4j-interview#Q14]] — комбинирование с TimeLimiter; [[resilience4j-interview#Q15]] — порядок аспектов в цепочке
 >
 > ---
 >
@@ -826,7 +826,7 @@ public CompletableFuture<String> asyncCall() {
 >
 > **Подводные камни:** THREADPOOL ломает `ThreadLocal` (Spring Security context, MDC для логов, transaction context). Нужен `ContextPropagator` для пробрасывания. SEMAPHORE не умеет прерывать вызов — нужен TimeLimiter сверху, который работает только с async.
 >
-> **Связанные вопросы:** [[Q12]] — концепция Bulkhead; [[Q14]] — TimeLimiter для прерывания; [[Q15]] — порядок аспектов
+> **Связанные вопросы:** [[resilience4j-interview#Q12]] — концепция Bulkhead; [[resilience4j-interview#Q14]] — TimeLimiter для прерывания; [[resilience4j-interview#Q15]] — порядок аспектов
 
 ## Q14. Когда нужен TimeLimiter?
 
@@ -900,7 +900,7 @@ public void handleTimeout() {}
 >
 > **Подводные камни:** `cancel-running-future: true` отправляет `Thread.interrupt()`, но если HTTP-клиент не уважает interrupt (Apache HttpClient < 4.3) — тред продолжает висеть, только Future-обёртка отдаёт TimeoutException. Реально нужны socket-timeouts на клиенте + TimeLimiter сверху.
 >
-> **Связанные вопросы:** [[Q4]] — состояния CircuitBreaker; [[Q13]] — THREADPOOL Bulkhead для async; [[Q15]] — порядок аспектов TimeLimiter→CB→Bulkhead
+> **Связанные вопросы:** [[resilience4j-interview#Q4]] — состояния CircuitBreaker; [[resilience4j-interview#Q13]] — THREADPOOL Bulkhead для async; [[resilience4j-interview#Q15]] — порядок аспектов TimeLimiter→CB→Bulkhead
 >
 > ---
 >
@@ -1011,7 +1011,7 @@ Decorators.ofSupplier(() -> paymentApi.process(payment))
 >
 > **Подводные камни:** TimeLimiter работает только с CompletableFuture/Mono; для sync — `slow-call-duration-threshold` в CB. Если CB и Retry на одном имени `payment`, метрики `resilience4j.retry.calls{kind="failed_with_retry"}` и `resilience4j.circuitbreaker.calls{kind="failed"}` дают разный счёт — это нормально (CB видит ретраи как отдельные вызовы).
 >
-> **Связанные вопросы:** [[Q4]] — состояния CircuitBreaker (CLOSED→OPEN); [[Q8]] — Retry vs Spring Retry; [[Q14]] — TimeLimiter для async
+> **Связанные вопросы:** [[resilience4j-interview#Q4]] — состояния CircuitBreaker (CLOSED→OPEN); [[resilience4j-interview#Q8]] — Retry vs Spring Retry; [[resilience4j-interview#Q14]] — TimeLimiter для async
 >
 > ---
 >
@@ -1109,7 +1109,7 @@ public User userFallback(Long id, CallNotPermittedException ex) {
 >
 > **Подводные камни:** fallback **не имеет права** долго работать или вызывать тот же сбойный сервис — иначе fallback зависает на тех же ресурсах. Не зови БД из fallback (если БД и есть сбойная зависимость) — отдавай in-memory cache или default. ThreadLocal/MDC в fallback могут отсутствовать, если использован THREADPOOL Bulkhead.
 >
-> **Связанные вопросы:** [[Q3]] — CallNotPermittedException при OPEN; [[Q7]] — настройка fallbackMethod; [[Q15]] — порядок аспектов и fallback на самом внешнем
+> **Связанные вопросы:** [[resilience4j-interview#Q3]] — CallNotPermittedException при OPEN; [[resilience4j-interview#Q7]] — настройка fallbackMethod; [[resilience4j-interview#Q15]] — порядок аспектов и fallback на самом внешнем
 >
 > ---
 >
@@ -1190,7 +1190,7 @@ resilience4j.retry.calls{name="svc", kind="failed_with_retry"}
 >
 > **Подводные камни:** `state` экспортируется как **отдельные метрики на каждое значение** (state="closed", state="open", state="half_open") — некоторые версии (Micrometer 1.10+) дают `gauge` с 0/1 per label. Если использовать `state="open" == 1` без `max(... ) by (name)`, легко двойное alerting. `kind="not_permitted"` (вызовы отброшенные в OPEN) НЕ входит в `failure.rate` — это считается через `resilience4j.circuitbreaker.not.permitted.calls`.
 >
-> **Связанные вопросы:** [[Q4]] — переходы между состояниями CB; [[Q18]] — Events vs Metrics; [[Q19]] — зависимости (micrometer-registry-prometheus)
+> **Связанные вопросы:** [[resilience4j-interview#Q4]] — переходы между состояниями CB; [[resilience4j-interview#Q18]] — Events vs Metrics; [[resilience4j-interview#Q19]] — зависимости (micrometer-registry-prometheus)
 >
 > ---
 >
@@ -1293,7 +1293,7 @@ circuitBreaker.getEventPublisher()
 >
 > **Подводные камни:** sync-вызов listener'ов — если кто-то засунул блокирующую операцию (HTTP, sync DB) — это замедляет нормальные вызовы метода. Обязательно `@Async` + ThreadPoolTaskExecutor. EventConsumerBuffer ограничен (default 100) — старые события дропаются.
 >
-> **Связанные вопросы:** [[Q4]] — state transitions CLOSED→OPEN→HALF_OPEN; [[Q17]] — Metrics vs Events; [[Q19]] — `resilience4j-spring-boot3` для Spring bridge
+> **Связанные вопросы:** [[resilience4j-interview#Q4]] — state transitions CLOSED→OPEN→HALF_OPEN; [[resilience4j-interview#Q17]] — Metrics vs Events; [[resilience4j-interview#Q19]] — `resilience4j-spring-boot3` для Spring bridge
 >
 > ---
 >
@@ -1395,7 +1395,7 @@ circuitBreaker.getEventPublisher()
 >
 > **Подводные камни:** для Spring Boot 3 нужна Resilience4j 2.x (1.x не поддерживает jakarta namespace). Для reactive стека дополнительно `resilience4j-reactor`. WebFlux + Resilience4j через аннотации — есть особенности с `Mono`/`Flux`, иногда programmatic API чище. CommonsLang/Vavr — больше не транзитивная зависимость в 2.x.
 >
-> **Связанные вопросы:** [[Q1]] — отличия от Hystrix; [[Q17]] — metrics через actuator; [[Q20]] — ограничения аннотационного подхода (AOP self-invocation)
+> **Связанные вопросы:** [[resilience4j-interview#Q1]] — отличия от Hystrix; [[resilience4j-interview#Q17]] — metrics через actuator; [[resilience4j-interview#Q20]] — ограничения аннотационного подхода (AOP self-invocation)
 >
 > ---
 >
@@ -1511,7 +1511,7 @@ public class OrderService {
 >
 > **Подводные камни:** self-injection может вызвать `BeanCurrentlyInCreationException` если есть другие циклические зависимости. `@Lazy` на self-инжекте помогает. Программный API не использует AOP, поэтому работает с private/final/static — но теряет декларативность.
 >
-> **Связанные вопросы:** [[Q3]] — Circuit Breaker logic; [[Q7]] — @CircuitBreaker setup; [[Q19]] — Spring Boot 3 зависимости и AOP-стартер
+> **Связанные вопросы:** [[resilience4j-interview#Q3]] — Circuit Breaker logic; [[resilience4j-interview#Q7]] — @CircuitBreaker setup; [[resilience4j-interview#Q19]] — Spring Boot 3 зависимости и AOP-стартер
 >
 > ---
 >

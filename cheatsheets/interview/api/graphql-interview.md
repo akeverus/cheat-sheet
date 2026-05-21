@@ -962,7 +962,7 @@ graph TD
 >
 >     **Подводные камни:** многие engine (graphql-java по умолчанию) выполняют `Query`-сиблинги последовательно из соображений простоты — параллелизм опционален. Если код полагается на параллельность, проверяй конфигурацию `ExecutionStrategy`. Также: `DataLoader` дедуплицирует запросы именно за счёт того, что все вложенные резолверы успевают зарегистрировать ключи до начала batch.
 >
->     **Связанные вопросы:** [[Q9]], [[Q11]], [[Q12]].
+>     **Связанные вопросы:** [[graphql-interview#Q9]], [[graphql-interview#Q11]], [[graphql-interview#Q12]].
 
 ## Q11. (!) Что такое проблема N+1 в GraphQL и как её решить?
 
@@ -1020,7 +1020,7 @@ SELECT * FROM authors WHERE id IN (1, 2, 3, ...)  -- 1 запрос
 >
 >     **Подводные камни:** `DataLoader` обязан создаваться per-request (через `@RequestScope` или `BatchLoaderRegistry`), иначе кэш «потечёт» между пользователями и вернёт чужие данные. Также batch-функция должна сохранять порядок ключей — если возвращаете `Map<Long, Author>`, отсутствующие ключи дадут `null` в соответствующих позициях, что нужно явно обрабатывать. И помните: DataLoader не решает over-fetching — только лишние round-trip'ы.
 >
->     **Связанные вопросы:** [[Q10]], [[Q12]], [[Q9]].
+>     **Связанные вопросы:** [[graphql-interview#Q10]], [[graphql-interview#Q12]], [[graphql-interview#Q9]].
 >
 > - [ ] **B.** N+1 — это про слишком большой объём данных в ответе; `DataLoader` сжимает payload и стримит данные клиенту чанками.
 >
@@ -1032,7 +1032,7 @@ SELECT * FROM authors WHERE id IN (1, 2, 3, ...)  -- 1 запрос
 >
 > - [ ] **C.** N+1 — проблема параллельного выполнения мутаций; решается переводом всех мутаций в последовательный режим через `DataLoader`.
 >
->     **Что на самом деле:** N+1 возникает на чтениях (Query) при обходе связей, мутации тут ни при чём. Мутации и так выполняются последовательно по спецификации (см. [[Q10]]). `DataLoader` — про батчинг, не про сериализацию.
+>     **Что на самом деле:** N+1 возникает на чтениях (Query) при обходе связей, мутации тут ни при чём. Мутации и так выполняются последовательно по спецификации (см. [[graphql-interview#Q10]]). `DataLoader` — про батчинг, не про сериализацию.
 >
 >     **Откуда путаница:** обе темы — performance + execution model, легко смешать в голове. На собеседовании это типичная путаница «слышал звон».
 >
@@ -1113,7 +1113,7 @@ public class DataLoaderConfig {
 >
 >     **Подводные камни:** при использовании `WebFlux` и `Mono`/`Flux` важно, чтобы DataLoader жил в правильном reactive context — иначе батчинг не сработает (резолверы выполнятся в разных tick'ах). В `graphql-java` есть `DataLoaderRegistry` который привязан к `ExecutionInput` — это и есть граница per-request. Тестирование: проверяй не только функциональность, но и изоляцию (один и тот же ключ в двух параллельных запросах не должен возвращать одинаковый объект из shared кэша).
 >
->     **Связанные вопросы:** [[Q11]], [[Q10]], [[Q15]].
+>     **Связанные вопросы:** [[graphql-interview#Q11]], [[graphql-interview#Q10]], [[graphql-interview#Q15]].
 >
 > - [ ] **C.** Spring требует регистрировать все `BatchLoader`-бины как prototype, иначе контекст не стартует — это техническое ограничение фреймворка, не более.
 >
@@ -1581,7 +1581,7 @@ graph TD
 >     **Пример:** `@QueryMapping public Book book(@Argument Long id) { return service.findById(id); }` — без явной регистрации в `RuntimeWiring`, Spring сам связывает метод с полем схемы `book(id: ID!)` по имени.
 >     **Когда применять:** любой Spring Boot 3+ проект, где требуется GraphQL endpoint; миграция с graphql-java-tools (он deprecated) или DGS, если важна минимизация зависимостей.
 >     **Подводные камни:** schema-first означает, что схему нужно поддерживать отдельно от Java-классов — рассинхронизация ловится только в рантайме. Загрузки файлов (Upload scalar) из коробки нет. Метрики и tracing требуют отдельной настройки через `Instrumentation`.
->     **Связанные вопросы:** [[Q20]], [[Q21]], [[Q28]]
+>     **Связанные вопросы:** [[graphql-interview#Q20]], [[graphql-interview#Q21]], [[graphql-interview#Q28]]
 > - [ ] Это форк Netflix DGS, который Spring Team взял в core и переименовал; внутри тот же `graphql-java-tools` со SDL-парсером Netflix.
 >     **Что на самом деле:** Spring for GraphQL — самостоятельный проект, разработанный командой Spring совместно с graphql-java; основан на `graphql-java` напрямую, а не на DGS. DGS остаётся отдельным проектом Netflix.
 >     **Откуда путаница:** оба проекта решают похожую задачу (schema-first GraphQL в Spring) и оба зрелые; новички путают, кто кого вдохновил.
@@ -1683,7 +1683,7 @@ public User currentUser(@AuthenticationPrincipal UserDetails user) {
 >     **Пример:** `@BatchMapping(typeName="Book") public Map<Book, Author> author(List<Book> books) { ... один SQL IN-запрос ... }` против `@SchemaMapping(typeName="Book") public Author author(Book book) { return repo.findById(book.authorId()); }` — второй вариант делает N запросов.
 >     **Когда применять:** `@BatchMapping` — всегда, когда поле связано с внешним источником (БД, HTTP, другой сервис) и есть риск N+1. `@SchemaMapping` — для вычисляемых полей, не требующих I/O (форматирование, derived fields).
 >     **Подводные камни:** `@BatchMapping` возвращает `Map<Parent, Child>` — порядок и сопоставление по `equals`/`hashCode` родителя; если у `Book` нет корректного `equals`, маппинг ломается. Также `@BatchMapping` ленив: если в запросе нет поля `author`, метод не вызывается вообще.
->     **Связанные вопросы:** [[Q11]], [[Q12]], [[Q21]]
+>     **Связанные вопросы:** [[graphql-interview#Q11]], [[graphql-interview#Q12]], [[graphql-interview#Q21]]
 > - [ ] `@SchemaMapping` — для Query-полей корневого уровня, `@BatchMapping` — для вложенных полей.
 >     **Что на самом деле:** корневые Query-поля — это `@QueryMapping`, не `@SchemaMapping`. `@SchemaMapping` как раз для вложенных полей произвольного типа (`@SchemaMapping(typeName="Book") public X y(Book b)`), но не батчевый.
 >     **Откуда путаница:** все три аннотации привязывают метод к полю схемы, легко смешать роли.
@@ -1774,7 +1774,7 @@ public CompletableFuture<Author> author(
 >     **Пример:** `@BatchMapping(typeName="Book") Mono<Map<Book, Author>> author(List<Book> books) { ... }` — Spring всё сделает сам. Альтернатива: `registry.forTypePair(Long.class, Author.class).registerMappedBatchLoader(...)` + `@SchemaMapping public CompletableFuture<Author> author(Book b, DataLoader<Long, Author> loader) { return loader.load(b.authorId()); }`.
 >     **Когда применять:** `@BatchMapping` — по умолчанию. `BatchLoaderRegistry` — когда один DataLoader переиспользуется между разными типами/полями, либо когда нужны нестандартные ключи (не сама родительская сущность).
 >     **Подводные камни:** DataLoader регистрируется автоматически только при HTTP-запросе через `WebGraphQlHandler`; в тестах через `ExecutionGraphQlService` без `WebGraphQlInterceptor` контекст DataLoader может отсутствовать. В тестах используют `GraphQlTester` или регистрируют DataLoader вручную в `ExecutionInput`.
->     **Связанные вопросы:** [[Q11]], [[Q12]], [[Q20]], [[Q33]]
+>     **Связанные вопросы:** [[graphql-interview#Q11]], [[graphql-interview#Q12]], [[graphql-interview#Q20]], [[graphql-interview#Q33]]
 > - [ ] DataLoader в Spring for GraphQL не работает — нужно переходить на Netflix DGS, где есть `@DgsDataLoader`.
 >     **Что на самом деле:** Spring for GraphQL поддерживает DataLoader полноценно (через `@BatchMapping` и `BatchLoaderRegistry`). `@DgsDataLoader` — это эквивалент в DGS, не замена.
 >     **Откуда путаница:** DGS появился раньше и более популярен в Netflix-стеке; кандидат мог не следить за развитием Spring for GraphQL.
@@ -1853,7 +1853,7 @@ query {
 >     **Пример:** атакующий шлёт запрос с глубиной 50 и алиасами — один запрос даёт миллиард SQL-обращений к БД при наивной реализации. Защита: `MaxQueryDepthInstrumentation(7)` + `MaxQueryComplexityInstrumentation(200)` + отключение интроспекции в проде + persisted queries.
 >     **Когда применять:** любой публичный GraphQL endpoint в production. Внутренние API между микросервисами с trusted-клиентами могут жить с менее строгими лимитами.
 >     **Подводные камни:** depth limit без complexity limit бесполезен — `users(first:10000) { name }` имеет глубину 2 и убьёт сервер. Persisted queries дают строжайшую защиту, но требуют доработки клиента. Интроспекция нужна в dev/staging для tooling (GraphiQL, codegen), отключать только в проде через профили.
->     **Связанные вопросы:** [[Q23]], [[Q25]], [[Q34]], [[Q37]]
+>     **Связанные вопросы:** [[graphql-interview#Q23]], [[graphql-interview#Q25]], [[graphql-interview#Q34]], [[graphql-interview#Q37]]
 
 ---
 
@@ -1936,7 +1936,7 @@ type User {
 >     **Пример:** `MaxQueryDepthInstrumentation(10)` + `MaxQueryComplexityInstrumentation(200)` с `FieldComplexityCalculator`, где `users` стоит `10 + child * first_arg`. Запрос `users(first: 10000) { name }` будет 10 + 10000 = 10010 — отклонён.
 >     **Когда применять:** для любого публичного GraphQL endpoint. Лимиты подбирают по 95-му перцентилю легитимных запросов в проде с запасом.
 >     **Подводные камни:** complexity-калькулятор должен учитывать пагинационные аргументы (`first`, `last`) — иначе `users(first: 10000)` будет считаться той же стоимости, что и `users(first: 10)`. Директивы `@cost` и `@listSize` из GraphQL Demand Control спецификации помогают декларативно объявлять веса в SDL. В тестах нужно проверять, что легитимные запросы фронта проходят (записать complexity всех запросов в CI).
->     **Связанные вопросы:** [[Q22]], [[Q37]]
+>     **Связанные вопросы:** [[graphql-interview#Q22]], [[graphql-interview#Q37]]
 > - [ ] Depth и complexity — синонимы; разные библиотеки называют одно и то же по-разному.
 >     **Что на самом деле:** это две различные метрики (структурная vs вычислительная), которые ловят разные классы атак. Они дополняют, а не дублируют друг друга.
 >     **Откуда путаница:** оба ограничивают «размер» запроса в общем смысле.
@@ -1996,7 +1996,7 @@ public List<Book> books() {
 >     **Пример:** Apollo Server с APQ + Cloudflare: первый запрос идёт как `POST` с полным текстом и хэшем, последующие — как `GET /graphql?extensions={"persistedQuery":{"sha256Hash":"abc"}}`. Cloudflare кэширует ответ на 60 секунд по этому URL. Hit-rate близок к REST-API.
 >     **Когда применять:** публичные GraphQL API с read-heavy нагрузкой (новостные ленты, каталоги товаров). Также если используется CDN/edge-кэширование.
 >     **Подводные камни:** инвалидация сложна — нужно либо короткий TTL, либо тегирование через CDN purge API. Авторизованные запросы (`Authorization` header) обычно нельзя кэшировать публично — нужен private cache или `Vary: Authorization`. Apollo Client поддерживает APQ из коробки, для других клиентов — самостоятельная реализация.
->     **Связанные вопросы:** [[Q25]], [[Q34]]
+>     **Связанные вопросы:** [[graphql-interview#Q25]], [[graphql-interview#Q34]]
 > - [ ] HTTP-кэш не работает, потому что GraphQL всегда возвращает 200 OK даже для ошибок, а CDN кэширует только 200-ответы.
 >     **Что на самом деле:** проблема не в кодах ответов (CDN кэширует именно 200), а в одинаковости URL. Кроме того, кэширование ошибочного ответа — действительно угроза, но решается через `Cache-Control` заголовок, а не корень проблемы.
 >     **Откуда путаница:** действительно есть отдельная подпроблема — не кэшировать ответы с `errors`.
@@ -2055,7 +2055,7 @@ sequenceDiagram
 >     **Пример:** для мобильного приложения с фиксированным набором запросов — registered (безопасность + производительность). Для веб-приложения с динамическими запросами от внутренних разработчиков — APQ (гибкость + производительность). Apollo Client + Apollo Router из коробки поддерживают оба режима через конфигурацию.
 >     **Когда применять:** registered — публичные API с строгими требованиями к безопасности (банкинг, медицина, любое HIPAA/PCI). APQ — внутренние API и read-heavy public API, где приоритет производительность.
 >     **Подводные камни:** registered ломает GraphiQL UI и ad-hoc запросы (нельзя «попробовать что-то новое»); нужен отдельный non-prod endpoint для разработки. APQ-кэш на сервере должен иметь TTL и LRU — иначе атакующий заполнит память миллионом случайных хэшей. Schema-evolution: при изменении запроса (даже добавление поля) меняется хэш — старые клиенты с прежним хэшем ломаются, нужны grace-периоды.
->     **Связанные вопросы:** [[Q24]], [[Q34]]
+>     **Связанные вопросы:** [[graphql-interview#Q24]], [[graphql-interview#Q34]]
 > - [ ] APQ и registered — это одно и то же, просто Apollo называет «APQ», а другие вендоры (Hasura, AWS AppSync) — «registered».
 >     **Что на самом деле:** это разные режимы. Apollo поддерживает оба: APQ через `apolloRequireApolloPersistedQueriesSetup`, registered — через `persistedQueries.experimental_dontKeepDeprecated`.
 >     **Откуда путаница:** разные вендоры действительно используют разные термины для близких механизмов.
@@ -2128,7 +2128,7 @@ type User @key(fields: "id") {
 >     **Пример:** Netflix, Apollo GraphOS, Shopify, Audi — все используют federated GraphQL для координации 100+ команд. Subgraph «Catalog» владеет `Product`, subgraph «Reviews» расширяет `Product` полем `reviews: [Review]` через `@key`. Запрос проходит через Apollo Router, который параллельно дёргает оба сервиса.
 >     **Когда применять:** организация с 5+ командами разработки, владеющими разными бизнес-доменами; необходимость единого API для клиентов; высокая частота независимых деплоев. Для одной команды и одного сервиса Federation — overkill.
 >     **Подводные камни:** Router становится критической точкой отказа — нужны HA и хороший мониторинг. Query planning сложен: плохо спроектированные `@key`-связи приводят к каскадным запросам. Cross-subgraph мутации — антипаттерн (атомарности нет, нужно saga). Federation 1 → 2 миграция нетривиальна (изменились директивы и семантика `@external`).
->     **Связанные вопросы:** [[Q27]], [[Q36]], [[Q39]]
+>     **Связанные вопросы:** [[graphql-interview#Q27]], [[graphql-interview#Q36]], [[graphql-interview#Q39]]
 
 ---
 
@@ -2175,7 +2175,7 @@ type User @key(fields: "id") {
 >     **Пример:** в Schema Stitching добавление `Reviews` сервиса требует доработки `mergeSchemas({...})` в gateway-коде, ревью, деплоя gateway. В Federation команда `Reviews` пишет свою схему с `@key` и пушит в registry — supergraph composition происходит автоматически, Router читает новую composed schema без изменения собственного кода.
 >     **Когда применять:** Federation — новые проекты, организации с независимыми командами. Schema Stitching — миграция legacy GraphQL-сервисов, у которых нет поддержки Federation директив; либо очень специфичные case с custom merging-логикой.
 >     **Подводные камни:** Schema Stitching не deprecated, но активно вытесняется Federation 2 в экосистеме Apollo и graphql-tools. У Federation тоже своя сложность — Schema Registry, validation, composition — это инфраструктура, требующая поддержки. Hybrid-подход (некоторые subgraph через Federation, некоторые через stitching) технически возможен, но усложняет.
->     **Связанные вопросы:** [[Q26]], [[Q36]]
+>     **Связанные вопросы:** [[graphql-interview#Q26]], [[graphql-interview#Q36]]
 > - [ ] Schema Stitching работает только с REST API, Federation — только с GraphQL.
 >     **Что на самом деле:** оба работают с GraphQL-сервисами. Stitching изначально создавался для объединения существующих GraphQL-схем; REST-обёртки делаются на другом уровне (BFF, adapter).
 >     **Откуда путаница:** есть отдельные библиотеки (`@graphql-mesh`) для объединения REST/GraphQL/gRPC, и кандидат может смешать с Stitching.
@@ -2270,7 +2270,7 @@ public class Book {
 >     **Пример:** Spring for GraphQL + Apollo Client + Codegen: команда пишет `book.graphqls`, фронтенд запускает `apollo-codegen --schema=book.graphqls`, бэкенд пишет `@QueryMapping public Book book(@Argument Long id)`. Связь типов автоматическая.
 >     **Когда применять:** любая команда из 2+ человек с разными ролями (backend/frontend/mobile); публичный API с внешними потребителями; долгоживущие API (3+ года), где контракт критичен. Code-first оправдан только для one-person internal-tool без фронтенд-партнёра.
 >     **Подводные камни:** schema-first требует синхронизации Java-типов и SDL — при добавлении поля в схему нужно не забыть добавить в Java и наоборот. Spring for GraphQL не валидирует это на старте полностью; компилятор не помогает. Mitigations: schema-linting в CI, generators типа `graphql-codegen-java` для DTO. Также эстетика SDL — он становится длинным; разделение на несколько `.graphqls`-файлов по доменам помогает.
->     **Связанные вопросы:** [[Q2]], [[Q19]]
+>     **Связанные вопросы:** [[graphql-interview#Q2]], [[graphql-interview#Q19]]
 > - [ ] Schema-first для Query, Code-first для Mutation — потому что Query редко меняется, а Mutation постоянно эволюционирует.
 >     **Что на самом деле:** смешанные подходы технически не поддерживаются ни Spring for GraphQL, ни SPQR. Нужен один подход на весь сервис. И Query, и Mutation одинаково эволюционируют.
 >     **Откуда путаница:** интуитивно кажется, что мутации меняются чаще и нужна «гибкость» code-first.
@@ -2353,7 +2353,7 @@ sequenceDiagram
 >     **Пример:** клиент дёргает `mutation { createUploadUrl(filename: "video.mp4", contentType: "video/mp4") { uploadUrl fileId } }`. Сервер генерирует pre-signed URL c TTL 15 минут и сохраняет `fileId -> {bucket, key, status: PENDING}` в БД. Клиент делает `PUT uploadUrl` напрямую в S3 — данные не проходят через GraphQL. После загрузки клиент шлёт `mutation { attachPhoto(fileId: "abc", postId: "1") }` — сервер валидирует, что объект существует в S3 (HEAD-запрос), обновляет статус. Async-вариант: S3 Event Notification → SQS → consumer обновляет статус.
 >     **Когда применять:** любые файлы крупнее 1-5 MB; production-системы с переменной нагрузкой; мобильные приложения (плохой канал — нужны resumable uploads через multipart S3 API).
 >     **Подводные камни:** orphan-файлы (загружен в S3, но `attachFile` не вызван) — нужна ночная cleanup-job. Безопасность: проверять Content-Length и Content-Type на сервере при выдаче URL (нельзя позволить загрузить 100 GB). Authentication: pre-signed URL содержит подпись, проверять права пользователя в момент выдачи. CORS на S3-бакете обязателен для прямой загрузки из браузера.
->     **Связанные вопросы:** [[Q5]]
+>     **Связанные вопросы:** [[graphql-interview#Q5]]
 > - [ ] Загрузка файлов в GraphQL невозможна — нужно делать отдельный REST-endpoint и связывать через ID.
 >     **Что на самом деле:** signed URL и есть «REST-endpoint для загрузки», но связывание происходит через GraphQL-мутации. Полностью отказываться от GraphQL для file-related API не нужно — структурные данные (метаданные, валидация, связи) хорошо ложатся на GraphQL.
 >     **Откуда путаница:** действительно, прямую upload через GraphQL делать не стоит — но это не означает отказ от GraphQL целиком.
@@ -2430,7 +2430,7 @@ public WebGraphQlInterceptor batchLimitInterceptor() {
 >     **Пример:** HTTP batching: клиент шлёт `[{query:"{user(id:1){name}}"},{query:"{books{title}}"}]` — один POST, один HTTPS-handshake. DataLoader: внутри запроса `users { friends { name } }` все вызовы `load(friendId)` группируются в `SELECT * FROM users WHERE id IN (...)`. Защита HTTP batching: ограничить размер массива (`max_batch_size: 5`), rate-limit по сумме операций, мониторинг через interceptor.
 >     **Когда применять:** HTTP batching — для high-latency сетей (мобильные клиенты), где amortization HTTPS-handshake критичен; для warm-up dashboard'а с десятком независимых запросов. DataLoader — всегда, когда есть N+1 на стороне сервера.
 >     **Подводные камни:** HTTP batching ломает HTTP/2 multiplexing — в HTTP/2 параллельные запросы и так почти бесплатны, и batching становится менее выгоден. Также batching усложняет отдельный кэш по запросам (Apollo Client кэширует по operation, не по batch). Метрики на отдельные operation'ы тоже сложнее: APM видит один POST с N операций. В production-готовых системах batching включают точечно для конкретных мобильных-сценариев.
->     **Связанные вопросы:** [[Q11]], [[Q12]], [[Q21]], [[Q33]]
+>     **Связанные вопросы:** [[graphql-interview#Q11]], [[graphql-interview#Q12]], [[graphql-interview#Q21]], [[graphql-interview#Q33]]
 
 ---
 
@@ -2533,7 +2533,7 @@ client.subscribe(
 >     **Пример:** `@SubscriptionMapping public Flux<OrderEvent> orderStatusChanged(@Argument String orderId) { return sink.asFlux().filter(e -> e.orderId().equals(orderId)); }` — где `sink` это `Sinks.Many.multicast().onBackpressureBuffer()`. Публикация: `sink.tryEmitNext(event)` из доменного service'а при изменении статуса.
 >     **Когда применять:** real-time UI (статусы заказов, чаты, dashboards с метриками), уведомления, live-collaboration (Google Docs-style). Для read-only feed (без обратной связи от клиента) можно вместо WebSocket использовать SSE — проще.
 >     **Подводные камни:** WebSocket — stateful, плохо масштабируется horizontal'но без sticky sessions или distributed pub/sub (Redis). Auth работает только на стадии connection_init — нужно проверять права при подписке и при каждом event'е (если событие может содержать данные, доступные не всем). Backpressure: если клиент медленнее сервера, buffer переполняется — нужны стратегии (DROP_LATEST, BUFFER с лимитом, TERMINATE). Connection-leak: разорванное соединение должно очищать ресурсы — `Flux.timeout(Duration.ofMinutes(30))`.
->     **Связанные вопросы:** [[Q5]], [[Q35]]
+>     **Связанные вопросы:** [[graphql-interview#Q5]], [[graphql-interview#Q35]]
 > - [ ] Subscription — синхронная операция; клиент опрашивает сервер каждые N секунд по обычному HTTP, как long polling.
 >     **Что на самом деле:** Subscription по спецификации — push-based через WebSocket или SSE. Long polling — это другой подход (REST с retry); GraphQL Subscription специально его избегает в пользу WebSocket.
 >     **Откуда путаница:** некоторые системы реализуют «фейковые» subscriptions через polling, но это не каноническая Subscription.
@@ -2631,7 +2631,7 @@ query GetOrders {
 >     **Пример:** Apollo Client 3.7+ поддерживает `@defer` из коробки — useQuery возвращает promise, который resolveит'ся постепенно с `loading: true` на defer-полях. В Spring for GraphQL 1.2+ есть экспериментальная поддержка — `@SchemaMapping`-методы для defer-полей могут возвращать `Mono<T>` с задержкой.
 >     **Когда применять:** UI с разнородными по скорости данными (dashboards, detail-страницы со sidebar'ом); длинные списки, где первые элементы важнее всех (поиск товаров, инфинит-скролл). Не нужно для простых CRUD-страниц.
 >     **Подводные камни:** директивы в статусе draft/RFC в GraphQL spec — финализация ожидается, но реализации могут отличаться. Поддержка в инструментах (Apollo Studio, GraphiQL) ограничена. На стороне сервера требует HTTP/2 или chunked transfer encoding — не все load balancer'ы пропускают multipart/mixed корректно. Кэширование multipart-ответов невозможно — теряется CDN-кэширование. Также сложнее отладка: в логах вместо одного response много chunk'ов.
->     **Связанные вопросы:** [[Q5]], [[Q31]]
+>     **Связанные вопросы:** [[graphql-interview#Q5]], [[graphql-interview#Q31]]
 > - [ ] `@defer` откладывает выполнение мутации на server-side — сервер ставит её в очередь и возвращает 202 Accepted.
 >     **Что на самом деле:** `@defer` про доставку частей response'а, не про async-обработку. Мутации к `@defer` отношения не имеют — он применяется к Query-полям и фрагментам.
 >     **Откуда путаница:** название «defer» ассоциируется с «отложить выполнение».
@@ -2743,7 +2743,7 @@ sequenceDiagram
 >     **Пример:** в Spring for GraphQL `@BatchMapping(typeName="Order") public Map<Order, Customer> customer(List<Order> orders) { ... }` — Spring сам создаёт DataLoader. Для resolver'ов через `@SchemaMapping`: `BatchLoaderRegistry.forTypePair(Long.class, Customer.class).registerMappedBatchLoader((ids, env) -> Mono.just(repo.findAllById(ids).stream().collect(toMap(Customer::id, c -> c))))`, и затем `@SchemaMapping(typeName="Order") public CompletableFuture<Customer> customer(Order o, DataLoader<Long, Customer> loader) { return loader.load(o.customerId()); }`.
 >     **Когда применять:** всегда, когда есть field-резолвер, обращающийся к внешнему источнику (БД, HTTP, кэш). Не нужно для in-memory вычислений или resolver'ов без I/O.
 >     **Подводные камни:** DataLoader кэширует результаты внутри запроса — `load(1)` после `load(1)` возвращает закэшированный без повторного batch-call. Это редко проблема, но в долгих запросах со stale-чтением может дать неконсистентные данные. Также: если batch-функция кидает exception, все futures в батче failит'ся — нужна аккуратная обработка ошибок (`exceptionsToFutures`). Тестирование: в unit-тестах резолверов DataLoader инжектится через `BatchLoaderRegistry.newRegistry()`, в integration через `GraphQlTester`.
->     **Связанные вопросы:** [[Q11]], [[Q12]], [[Q20]], [[Q21]]
+>     **Связанные вопросы:** [[graphql-interview#Q11]], [[graphql-interview#Q12]], [[graphql-interview#Q20]], [[graphql-interview#Q21]]
 > - [ ] DataLoader решает N+1 только для JPA-сущностей; для REST/gRPC-микросервисов нужны другие подходы.
 >     **Что на самом деле:** DataLoader агностичен к источнику данных — batch-функция может вызывать REST API, gRPC, Kafka, что угодно. Главное, чтобы источник поддерживал batch-операции (получение N сущностей по списку ID).
 >     **Откуда путаница:** в туториалах часто примеры с JPA.
@@ -2796,7 +2796,7 @@ GET /graphql?extensions={"persistedQuery":{"version":1,"sha256Hash":"abc123..."}
 >     **Пример:** Apollo Studio с registered queries в проде. CI/CD-pipeline: фронтенд-сборка извлекает все GraphQL-операции, считает SHA-256, пушит в Schema Registry. В runtime клиент шлёт хэш — Router проверяет в Registry, делает запрос. Cloudflare кэширует ответы по URL с TTL 60s. Hit rate ~70%, нагрузка на бэкенд снижается соответственно.
 >     **Когда применять:** публичные API с высоким трафиком; финтех/медтех с compliance-требованиями; мобильные приложения с фиксированным набором запросов и дорогим трафиком.
 >     **Подводные камни:** запросы с переменными — переменные передаются отдельно от хэша, поэтому хэш покрывает только структуру (`query GetUser($id: ID!) { user(id: $id) { ... } }`). При изменении запроса даже на пробел — меняется хэш; старые клиенты с прежним хэшем ломаются. Нужна grace-стратегия: rolling update сервера с поддержкой и старого, и нового хэша одновременно. Authorization-зависимые ответы нельзя кэшировать публично без `Vary: Authorization`.
->     **Связанные вопросы:** [[Q22]], [[Q24]], [[Q25]]
+>     **Связанные вопросы:** [[graphql-interview#Q22]], [[graphql-interview#Q24]], [[graphql-interview#Q25]]
 
 ---
 
@@ -2856,7 +2856,7 @@ public class SubscriptionService {
 >     **Пример:** для 10k-50k одновременных WS-соединений: 3 реплики Spring сервиса, sticky sessions через nginx `ip_hash`, Redis для pub/sub, мониторинг активных соединений через `actuator/metrics/spring.websocket.sessions.active`. Для 100k+ — выделенный gateway (Centrifugo) + основной сервис как event-publisher.
 >     **Когда применять:** scaling — с первой production-нагрузки выше 1k одновременных subscribers; sticky без pub/sub работает только для подписок, где события генерируются на той же реплике (редкий случай).
 >     **Подводные камни:** sticky sessions неравномерно распределяют нагрузку — реплика с «вип-пользователем» (много долгих подписок) перегружена; нужна стратегия rebalancing. Redis pub/sub не имеет persistence — события, пропущенные при reconnect, теряются (для гарантированной доставки — Kafka). Heartbeat: разорванные WS обнаруживаются только по таймауту — нужно ping/pong каждые 30s. Память: каждое WS-соединение это ~30-50 KB JVM heap — для 10k соединений нужно 500 MB только под буферы.
->     **Связанные вопросы:** [[Q5]], [[Q31]]
+>     **Связанные вопросы:** [[graphql-interview#Q5]], [[graphql-interview#Q31]]
 > - [ ] WebSocket — stateless, как и HTTP; 3 реплики работают сразу без дополнительной настройки.
 >     **Что на самом деле:** WebSocket — stateful (длительное TCP-соединение, привязанное к процессу). Без распределённого pub/sub реплики изолированы.
 >     **Откуда путаница:** WebSocket поверх HTTP, и кажется, что наследует stateless-семантику.
@@ -2924,7 +2924,7 @@ type Order {
 >     **Пример:** в Netflix 100+ команд, каждая со своим subgraph'ом. Команда «Recommendations» добавляет в свой subgraph поле `Movie.recommendedFor` с `@requires(fields: "viewHistory")` — Router автоматически дёргает `Users` subgraph за `viewHistory` и передаёт в `Recommendations`. В Stitching это требовало бы 100 правок gateway-конфига для каждой такой связи.
 >     **Когда применять:** Federation — для организаций с независимыми командами разработки (3+ команд), когда GraphQL API большой и эволюционирует часто. Stitching — для миграции legacy GraphQL-сервисов без поддержки Federation директив или для очень специфичных кейсов с custom merging.
 >     **Подводные камни:** Federation Router — критическая точка отказа, требует HA-конфигурации (3+ реплики, health-check, circuit-breaker для subgraph'ов). Cross-subgraph мутации не атомарны — saga-паттерн обязателен. Federation 1 → 2 миграция нетривиальна: изменилась семантика `@external`, появились `@shareable`, `@override`. Schema Registry — отдельная инфраструктура (Apollo Studio платный, Hive open-source).
->     **Связанные вопросы:** [[Q26]], [[Q27]], [[Q39]]
+>     **Связанные вопросы:** [[graphql-interview#Q26]], [[graphql-interview#Q27]], [[graphql-interview#Q39]]
 > - [ ] Federation поддерживает Subscriptions, а Schema Stitching — нет.
 >     **Что на самом деле:** оба подхода поддерживают Subscriptions, но через разные механизмы (federation passthrough vs stitched subscriptions). Это не главное преимущество.
 >     **Откуда путаница:** Subscriptions в распределённых архитектурах сложны, и кажется, что Federation решает это специально.
@@ -3015,7 +3015,7 @@ rate_limit:
 >     **Пример:** Spring for GraphQL + Bucket4j + Redis: `WebGraphQlInterceptor` парсит запрос, считает complexity через свой `Instrumentation`, делает `bucket.tryConsume(complexity)`. На входе также проверяется `MaxQueryComplexityInstrumentation` (отдельный hard-limit на один запрос). Метрики в Prometheus: `graphql_query_complexity_histogram`, `graphql_rate_limit_rejected_total`.
 >     **Когда применять:** публичные GraphQL API; B2B-API с разными tier-планами (free: 100 pts/min, premium: 10000 pts/min); защита от scrapers.
 >     **Подводные камни:** complexity-калькулятор должен корректно учитывать `first`/`last`/`limit`-аргументы — иначе `users(first: 10000) { name }` посчитается как 1, а реально это 10000 SQL-строк. Sebastian Marquez `@cost` и `@listSize` директивы помогают декларативно объявлять веса. Также: complexity не учитывает реальное время выполнения — медленный internal-сервис может «съесть» весь thread pool, даже если complexity низкая (для этого нужны timeout'ы и circuit breaker'ы).
->     **Связанные вопросы:** [[Q22]], [[Q23]]
+>     **Связанные вопросы:** [[graphql-interview#Q22]], [[graphql-interview#Q23]]
 > - [ ] Token bucket в GraphQL работает идеально — никаких отличий от REST.
 >     **Что на самом деле:** разница принципиальная — variable cost одного запроса. Эта проблема не существует в REST с его фиксированными эндпоинтами.
 >     **Откуда путаница:** базовая концепция rate limiting универсальна.
@@ -3115,7 +3115,7 @@ public class CustomExceptionResolver implements DataFetcherExceptionResolver {
 >     **Пример:** запрос `{ user(id: 1) { name posts { title } } }` при падении `posts` вернёт `{"data": {"user": {"name": "Alice", "posts": null}}, "errors": [{"message": "Service unavailable", "path": ["user", "posts"], "extensions": {"code": "SERVICE_UNAVAILABLE"}}]}`. UI рендерит имя пользователя, в секции posts показывает «Не удалось загрузить». В Spring for GraphQL `DataFetcherExceptionResolver` маппит exception'ы в `GraphQLError` с `extensions.code` для машиночитаемой обработки.
 >     **Когда применять:** дефолтное поведение для read-операций — partial response повышает UX. Для мутаций часто лучше fail-fast: если `createOrder` упал, не имеет смысла возвращать частичный результат — пробросить exception, чтобы клиент сделал retry.
 >     **Подводные камни:** Non-null поля (`field: Type!`) при ошибке распространяют null вверх по дереву до ближайшего nullable-родителя — это null propagation. Если у вас `User.id: ID!` и резолвер `id` упал, весь `user` станет null. В проде нельзя пробрасывать stack trace в `message` — атакующий получит детали инфраструктуры; используйте generic message и technical details в `extensions.code`. Логирование: каждый GraphQLError должен попадать в логи с request-id для traceability.
->     **Связанные вопросы:** [[Q15]]
+>     **Связанные вопросы:** [[graphql-interview#Q15]]
 
 ---
 
@@ -3199,7 +3199,7 @@ public class UserResolver {
 >     **Пример:** Users subgraph: `type User @key(fields: "id") { id: ID! name: String! }`. Orders subgraph: `type User @key(fields: "id") { id: ID! @external; orders: [Order!]! }` + resolver `@SchemaMapping(typeName="User") public List<Order> orders(User user) { return orderRepo.findByUserId(user.id()); }` + reference resolver `@SchemaMapping(typeName="User", field="__resolveReference") public User resolveReference(@Argument String id) { return new User(id, null); }` (только `id` — остальное приедет из Users subgraph).
 >     **Когда применять:** entity references — основа Federation. Используйте, когда тип логически принадлежит одному subgraph'у, но другие хотят добавить к нему свои поля. Anti-pattern: владеть одним типом из двух subgraph'ов одновременно (без @shareable).
 >     **Подводные камни:** entity resolver не должен делать тяжёлых запросов — он вызывается часто и для каждого reference. Используйте DataLoader внутри `__resolveReference` для batch'инга. `@key(fields: "id")` с составным ключом (`@key(fields: "namespace id")`) валиден, но усложняет JOIN'ы. Циклические ссылки между subgraph'ами (`A.b -> B.a -> A.b`) ломают composition — нужно разрывать через @shareable или редизайн.
->     **Связанные вопросы:** [[Q26]], [[Q27]], [[Q36]]
+>     **Связанные вопросы:** [[graphql-interview#Q26]], [[graphql-interview#Q27]], [[graphql-interview#Q36]]
 > - [ ] Apollo Router в runtime смотрит, в каком subgraph'е реализован метод `User.orders`, и направляет туда запрос на основе reflection.
 >     **Что на самом деле:** Router не делает runtime reflection. Composition supergraph schema, сгенерированная build-time из всех subgraph'ов, точно знает, кто владеет каким полем — это закодировано в metadata supergraph'а.
 >     **Откуда путаница:** Router выглядит как «магия», и кажется, что внутри что-то динамическое.
@@ -3270,7 +3270,7 @@ GraphQL или REST — на внешнем слое (developer experience), gRP
 >     **Пример:** Mobile/Web → `https://api.shop.com/graphql` (Apollo Router) → внутри Federation: User subgraph, Orders subgraph, Inventory subgraph. Эти subgraph'ы общаются между собой через gRPC. B2B-партнёры → `https://api.shop.com/rest/v1/orders` (REST gateway, читает данные у тех же микросервисов через gRPC).
 >     **Когда применять:** организация со зрелой архитектурой (10+ микросервисов), разными аудиториями (mobile/web/B2B), и достаточной командой для поддержки трёх стеков. Для стартапа с 2-3 сервисами достаточно одного протокола (обычно REST).
 >     **Подводные камни:** три стека = тройная нагрузка на DevOps (CI/CD для трёх типов API, три мониторинга, три набора инструментов). Контракт между REST gateway и GraphQL может стать узким местом — кто owner какого поля, как валидировать схему. gRPC-Web всё-таки используется в специальных кейсах (financial trading UI), но это исключение. Documentation: три типа API требуют отдельных порталов (GraphiQL для GraphQL, Swagger для REST, Protobuf API reference для gRPC) — обычно публикуют в общий developer portal.
->     **Связанные вопросы:** [[Q1]], [[Q18]]
+>     **Связанные вопросы:** [[graphql-interview#Q1]], [[graphql-interview#Q18]]
 > - [ ] Только REST с OpenAPI для всех — самый простой и универсальный подход; over-fetching исправляется через `fields`-параметр (`GET /orders?fields=id,total`).
 >     **Что на самом деле:** sparse fieldsets в REST частично решают over-fetching, но не решают N+1: чтобы загрузить order с customer и items, всё равно нужно 3 запроса (or Embedded resource через HAL, что усложняет API). GraphQL делает это одним запросом. Для разнородных мобильных клиентов GraphQL значительно эффективнее.
 >     **Откуда путаница:** REST действительно простой и универсальный — для маленьких проектов он лучший выбор.

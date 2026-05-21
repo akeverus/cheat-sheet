@@ -104,7 +104,7 @@ sealed class Result<out T> {
 >
 > **Подводные камни:** добавление нового варианта — **breaking change** для всех `when`-выражений в кодовой базе → запускайте сборку после добавления, чтобы компилятор показал все места. `sealed` нельзя делать `local` или `inner`, только top-level или nested в другом классе. При публикации как библиотеки клиенты в чужом модуле не смогут добавлять свои варианты — это и есть цель.
 >
-> **Связанные вопросы:** [[Q2]] — разница с `enum`; [[Q3]] — exhaustive `when`; [[Q8]] — ограничения Kotlin 1.5+.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q2]] — разница с `enum`; [[kotlin-sealed-classes-interview#Q3]] — exhaustive `when`; [[kotlin-sealed-classes-interview#Q8]] — ограничения Kotlin 1.5+.
 >
 > ---
 >
@@ -215,7 +215,7 @@ sealed class OrderState {
 >
 > **Подводные камни:** `enum` нельзя расширить — добавление нового члена ломает binary compatibility для библиотек. У `sealed` нет `values()` — итерировать все подклассы нужно через reflection (`MyClass::class.sealedSubclasses`), и это работает только для top-level подклассов и только на JVM. `enum` сериализуется в JSON по умолчанию (имя), а `sealed` требует явного дискриминатора.
 >
-> **Связанные вопросы:** [[Q1]] — основы `sealed class`; [[Q3]] — exhaustive `when`; [[Q10]] — kotlinx.serialization для sealed.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы `sealed class`; [[kotlin-sealed-classes-interview#Q3]] — exhaustive `when`; [[kotlin-sealed-classes-interview#Q10]] — kotlinx.serialization для sealed.
 >
 > ---
 >
@@ -335,7 +335,7 @@ fun area(shape: Shape): Double = when (shape) {  // when-выражение → 
 >
 > **Подводные камни:** при добавлении нового подкласса CI/линтер не подскажет, какие конкретно `when` сломались — нужно полное rebuild. Поведение exhaustive **различается между языковыми версиями**: код, компилирующийся в 1.6, может падать в 2.0. При смешении sealed с обычными типами в `when` (`when (x)` где `x: Any`) exhaustive не работает — нужно сначала smart-cast.
 >
-> **Связанные вопросы:** [[Q1]] — что такое sealed; [[Q4]] — sealed interface; [[Q15]] — типичные ошибки (`when` как statement).
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — что такое sealed; [[kotlin-sealed-classes-interview#Q4]] — sealed interface; [[kotlin-sealed-classes-interview#Q15]] — типичные ошибки (`when` как statement).
 
 ## Q4. Чем sealed interface отличается от sealed class?
 
@@ -423,7 +423,7 @@ fun handleIO(error: IOError): String = when (error) {
 >
 > **Подводные камни:** При множественной реализации интерфейсов в `when` exhaustiveness считается только по **одной оси** — компилятор не знает «комбинаций пересечений». Если `Error` реализует и `NetworkError`, и `IOError`, то `when(e: Error) { is NetworkError -> ...; is IOError -> ... }` не exhaustive по строгому смыслу — `TimeoutError` подходит обеим веткам, первая выигрывает. По умолчанию sealed interface объявляется в одном модуле, как sealed class (правило одинаковое с 1.5+). Java 17 sealed interface — отдельная история, requires `permits`.
 >
-> **Связанные вопросы:** [[Q1]] — основы sealed; [[Q7]] — sealed class vs interface choice; [[Q8]] — ограничения 1.5+.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы sealed; [[kotlin-sealed-classes-interview#Q7]] — sealed class vs interface choice; [[kotlin-sealed-classes-interview#Q8]] — ограничения 1.5+.
 >
 > ---
 >
@@ -569,7 +569,7 @@ fetchUser("123")
 >
 > **Подводные камни:** `@UnsafeVariance` в `flatMap` — необходимое зло для variance (compiler не может вывести правильно). Custom `Result` теряет интеграцию с `runCatching` и continuation API — нужно делать `runCatching { ... }.fold(::Success) { Failure(toDomainError(it)) }` мост. Если используете и kotlin.Result, и custom Result — нужен явный naming (`AppResult` vs `KResult`), чтобы избежать import-конфликтов. Arrow `Either<L, R>` функционально эквивалентен — рассмотрите его перед своей реализацией.
 >
-> **Связанные вопросы:** [[Q1]] — основы sealed; [[Q6]] — ADT и sum types; [[Q12]] — type-safety против stringly-typed.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы sealed; [[kotlin-sealed-classes-interview#Q6]] — ADT и sum types; [[kotlin-sealed-classes-interview#Q12]] — type-safety против stringly-typed.
 >
 > ---
 >
@@ -700,7 +700,7 @@ ADT — фундамент функционального программиро
 >
 > **Подводные камни:** ADT с большим числом вариантов (10+) становятся неудобными для `when` — рассмотрите Visitor pattern или sealed hierarchy nesting. Recursive ADT в Kotlin/JVM имеют накладные расходы на boxing — для perf-critical путей рассмотрите arrays of tags. Сериализация ADT нетривиальна — нужен дискриминатор (см. Q10).
 >
-> **Связанные вопросы:** [[Q1]] — основы sealed; [[Q5]] — Result как ADT; [[Q13]] — State machine как ADT.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы sealed; [[kotlin-sealed-classes-interview#Q5]] — Result как ADT; [[kotlin-sealed-classes-interview#Q13]] — State machine как ADT.
 >
 > ---
 >
@@ -817,7 +817,7 @@ data class User(val name: String) : Serializable, Comparable {
 >
 > **Подводные камни:** **sealed interface** имеет лимит на supertypes — класс не может имплементировать одновременно sealed interface из **разных модулей** (правило permits ограничивает scope модулем). Если используете both — choose one consistently в проекте, иначе путаница в navigation. Иногда хочется и общие поля, и multiple inheritance — тогда используйте sealed interface + abstract base class отдельно.
 >
-> **Связанные вопросы:** [[Q1]] — основы sealed; [[Q4]] — sealed interface; [[Q8]] — ограничения 1.5+.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы sealed; [[kotlin-sealed-classes-interview#Q4]] — sealed interface; [[kotlin-sealed-classes-interview#Q8]] — ограничения 1.5+.
 
 ## Q8. Какие ограничения у sealed class в Kotlin 1.5+?
 
@@ -908,7 +908,7 @@ data class Forbidden(...) : Base()  // ОШИБКА
 >
 > **Подводные камни:** в Gradle multi-module если один модуль зависит от другого и в зависимом модуле объявляется `class Foo : Payment()` — компилятор отдаст ошибку с не самым очевидным сообщением (`cannot inherit sealed type from different module`). Inline функции с sealed `when` могут компилироваться в неожиданное место — exhaustive проверяется в точке вызова, а не объявления. Для тестов sealed: тестовые подклассы должны лежать в **том же module**, что и sealed — обычно `src/test/kotlin` это OK (тесты часть того же compileTestKotlin task).
 >
-> **Связанные вопросы:** [[Q1]] — основы sealed; [[Q4]] — sealed interface scope такой же; [[Q15]] — типичные ошибки.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы sealed; [[kotlin-sealed-classes-interview#Q4]] — sealed interface scope такой же; [[kotlin-sealed-classes-interview#Q15]] — типичные ошибки.
 >
 > ---
 >
@@ -1059,7 +1059,7 @@ val result = validate(user) {
 >
 > **Подводные камни:** `@DslMarker` нужен, чтобы предотвратить случайный доступ к outer DSL scope внутри nested блоков — без него код компилируется, но семантика может быть неверной. При большом sealed AST (>20 вариантов) `when`-блоки становятся монстрами — рассмотрите Visitor pattern. Для DSL с мутируемым состоянием обертывайте builder, а не sealed напрямую — sealed-варианты должны быть immutable.
 >
-> **Связанные вопросы:** [[Q1]] — основы sealed; [[Q6]] — ADT как теоретическая основа; [[Q11]] — UiState DSL.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы sealed; [[kotlin-sealed-classes-interview#Q6]] — ADT как теоретическая основа; [[kotlin-sealed-classes-interview#Q11]] — UiState DSL.
 >
 > ---
 >
@@ -1189,7 +1189,7 @@ val restored = Json.decodeFromString<Event>(json)
 >
 > **Подводные камни:** при изменении `@SerialName` старые сериализованные данные становятся unreadable — поэтому имя дискриминатора фиксируйте раз и навсегда (как enum constant в БД). Дискриминатор-поле должно быть **уникальным** в JSON — если payload подкласса содержит свой `type`, будет конфликт; используйте custom `classDiscriminator`. Generics в sealed (например, `Result<T>`) требуют **дополнительной** конфигурации — `Json { ignoreUnknownKeys = true }` и явная типизация при decode. Polymorphic deserialization может быть медленнее моноклассической — для hot-path рассмотрите avro/protobuf.
 >
-> **Связанные вопросы:** [[Q1]] — основы sealed; [[Q5]] — Result pattern; [[Q14]] — variance в sealed.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы sealed; [[kotlin-sealed-classes-interview#Q5]] — Result pattern; [[kotlin-sealed-classes-interview#Q14]] — variance в sealed.
 >
 > ---
 >
@@ -1335,7 +1335,7 @@ when (val state = viewModel.state.collectAsState().value) {
 >
 > **Подводные камни:** иногда нужна **частичная** state — например, «отображаем кэшированные данные ПОКА загружаются свежие». Это смешанное состояние трудно выразить с pure sealed — решение: вложенные states `UiState.Success(data, isRefreshing = true)` или отдельный slot `data class CompleteState(content, banner: BannerState)`. Sealed нельзя сериализовать в Bundle без custom Parcelable — для process death recovery нужны @Parcelize и осторожность с generics. Слишком мелкозернистые states (Loading, Refreshing, BackgroundSync, Idle) → state explosion → рассмотрите hierarchical state machines (SCXML, Statelyx).
 >
-> **Связанные вопросы:** [[Q1]] — sealed основа; [[Q5]] — Result похожий паттерн; [[Q13]] — state machine как развитие.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — sealed основа; [[kotlin-sealed-classes-interview#Q5]] — Result похожий паттерн; [[kotlin-sealed-classes-interview#Q13]] — state machine как развитие.
 
 ## Q12. Как sealed class помогает избежать null и "Stringly typed" код?
 
@@ -1426,7 +1426,7 @@ fun processPayment(method: PaymentMethod, amount: Double) {
 >
 > **Подводные камни:** при общении с внешними API (REST, queues) всё равно нужен маппинг String ↔ sealed — это «граница системы». Делайте explicit `fromString(s: String): PaymentMethod?` с возвращаемым nullable для невалидных. При сериализации в JSON помните, что дискриминатор обычно — строка (см. Q10) — но это **контролируемая** строка, не proizвольная. Слишком много sealed-подклассов → consider тип-параметр или композицию (см. Q14).
 >
-> **Связанные вопросы:** [[Q1]] — sealed основы; [[Q6]] — ADT teorija; [[Q10]] — сериализация через дискриминатор.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — sealed основы; [[kotlin-sealed-classes-interview#Q6]] — ADT teorija; [[kotlin-sealed-classes-interview#Q10]] — сериализация через дискриминатор.
 >
 > ---
 >
@@ -1592,7 +1592,7 @@ sealed class OrderState {
 >
 > **Подводные камни:** «runtime exception на невалидном переходе» — не идеал, лучше типизировать сильнее. Альтернатива — **type-state pattern**: разные классы для каждого состояния с разными методами (`Pending.confirm(): Confirmed`, `Shipped` не имеет `confirm()`). Это даёт compile-time запрет, но усложняет хранение (нужно extract from sealed in runtime). Также State Machine с **side effects** (отправка email, обновление БД) требует transactional boundary — обычно команда обрабатывается в одной транзакции с persistent состоянием. Для distributed scenarios используйте Saga (Axon, Eventuate, Cadence) — sealed state-of-saga + compensation actions.
 >
-> **Связанные вопросы:** [[Q1]] — sealed основа; [[Q6]] — ADT для states/events; [[Q11]] — UiState как state machine для UI.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — sealed основа; [[kotlin-sealed-classes-interview#Q6]] — ADT для states/events; [[kotlin-sealed-classes-interview#Q11]] — UiState как state machine для UI.
 >
 > ---
 >
@@ -1728,7 +1728,7 @@ val intConsumer: Consumer<Int> = anyConsumer  // ОК благодаря in
 >
 > **Подводные камни:** `@UnsafeVariance` нужен когда T используется одновременно как в out, так и in (типичное место — `equals`, `flatMap`, `fold`); это compile-time escape hatch, который compiler позволяет, перекладывая ответственность на программиста. Variance работает только для own-параметров класса (declaration-site variance), для конкретного use-case есть use-site variance (`Result<out User>`). Java-интероп: Kotlin's `out` мапится на Java's `? extends`, `in` — на `? super`, что иногда генерирует verbose signatures.
 >
-> **Связанные вопросы:** [[Q1]] — sealed основа; [[Q5]] — Result с variance; [[Q6]] — ADT с дженериками.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — sealed основа; [[kotlin-sealed-classes-interview#Q5]] — Result с variance; [[kotlin-sealed-classes-interview#Q6]] — ADT с дженериками.
 >
 > ---
 >
@@ -1874,7 +1874,7 @@ sealed class Status {
 >
 > **Подводные камни при исправлении:** «Force expression» через `val _ = when {}` — некрасивый, но рабочий хак. Лучше — рефакторинг функции, чтобы она возвращала значение (что часто полезно и для тестирования). Расширение sealed (`PendingReview`) — намеренно делайте этот рефакторинг в отдельном MR без других изменений — full rebuild покажет все места. Перед публикацией библиотеки с sealed: фиксируйте список вариантов в semver — добавление варианта = breaking change для клиентов.
 >
-> **Связанные вопросы:** [[Q1]] — основы sealed; [[Q3]] — exhaustive when подробнее; [[Q11]] — UiState и compose recomposition.
+> **Связанные вопросы:** [[kotlin-sealed-classes-interview#Q1]] — основы sealed; [[kotlin-sealed-classes-interview#Q3]] — exhaustive when подробнее; [[kotlin-sealed-classes-interview#Q11]] — UiState и compose recomposition.
 
 ## See also
 

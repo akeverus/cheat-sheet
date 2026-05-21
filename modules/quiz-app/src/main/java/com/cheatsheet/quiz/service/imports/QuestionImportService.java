@@ -293,7 +293,7 @@ public class QuestionImportService {
             creates.add(new AnswerOptionRepository.AnswerOptionCreate(
                     opt.text(), opt.correct(), i,
                     OptionSource.MARKDOWN.name(), opt.explanation(),
-                    1, 2));
+                    1, 2, opt.mcqBlockIdx()));
         }
         answerOptionRepository.insertAll(questionId, creates);
     }

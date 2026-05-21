@@ -121,7 +121,7 @@ String result = switch (obj) {
 > - IDE (IntelliJ 2023.2+, Eclipse 4.30+) поначалу подсвечивали record patterns как ошибку — обновите IDE прежде чем дебажить.
 > - На Android (не Java) pattern matching недоступен — Kotlin `when` ≠ Java pattern matching.
 >
-> **Связанные вопросы:** [[Q2]] — детали `instanceof` patterns и flow scoping; [[Q3]] — switch expressions; [[Q4]] — record patterns.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q2]] — детали `instanceof` patterns и flow scoping; [[java-pattern-matching-interview#Q3]] — switch expressions; [[java-pattern-matching-interview#Q4]] — record patterns.
 >
 > ---
 >
@@ -240,7 +240,7 @@ use(s);  // можно, компилятор знает, что s определ
 > - В `else` ветке pattern binding из условия с `!` недоступна: `if (!(o instanceof String s)) {} else { use(s); /* ERROR */ }`.
 > - `||` НЕ propagate: `if (o instanceof String s || ...)` — `s` недоступна, потому что right side мог сработать без pattern.
 >
-> **Связанные вопросы:** [[Q1]] — обзор форм pattern matching; [[Q3]] — switch + pattern matching; [[Q7]] — null handling.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q1]] — обзор форм pattern matching; [[java-pattern-matching-interview#Q3]] — switch + pattern matching; [[java-pattern-matching-interview#Q7]] — null handling.
 >
 > ---
 >
@@ -366,7 +366,7 @@ String format(Object obj) {
 > - В switch statement (без присваивания) exhaustiveness НЕ требуется по умолчанию — будьте внимательны: `switch(s) { case Approved a -> ...; }` без присваивания скомпилируется и пропустит остальные ветки.
 > - Pattern matching с `case String s when s.length() > 5` — guard НЕ участвует в exhaustiveness; нужен fallback `case String s -> ...` для остальных строк.
 >
-> **Связанные вопросы:** [[Q5]] — sealed classes и exhaustiveness; [[Q9]] — yield в блочной форме; [[Q10]] — детали exhaustiveness check.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q5]] — sealed classes и exhaustiveness; [[java-pattern-matching-interview#Q9]] — yield в блочной форме; [[java-pattern-matching-interview#Q10]] — детали exhaustiveness check.
 
 ## Q4. Что такое Record Patterns (JEP 440) и зачем они нужны?
 
@@ -452,7 +452,7 @@ if (obj instanceof Triple(Integer i, Pair(String s1, String s2), Double d)) {
 > - **Var inference в record pattern:** `case Rectangle(var tl, var br)` — `tl` и `br` будут `Point`, не общий `Object`.
 > - **Generic record patterns** требуют `<?>` или явный type: `case Box<?>(Object v)` — иначе unchecked warning.
 >
-> **Связанные вопросы:** [[Q1]] — обзор форм pattern matching; [[Q11]] — generic types в record patterns; [[Q14]] — взаимодействие с unboxing.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q1]] — обзор форм pattern matching; [[java-pattern-matching-interview#Q11]] — generic types в record patterns; [[java-pattern-matching-interview#Q14]] — взаимодействие с unboxing.
 >
 > ---
 >
@@ -577,7 +577,7 @@ double area(Shape shape) {
 > - Sealed классы должны быть в том же модуле (или unnamed module). В мульти-модульном приложении permits-классы не могут быть в другом jpms-модуле.
 > - Если `default` всё-таки добавлен «на всякий случай» — refactoring-safety теряется молча, compile-time check пропадает.
 >
-> **Связанные вопросы:** [[Q3]] — switch expressions и exhaustiveness; [[Q4]] — record patterns с sealed; [[Q10]] — детали exhaustiveness check.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q3]] — switch expressions и exhaustiveness; [[java-pattern-matching-interview#Q4]] — record patterns с sealed; [[java-pattern-matching-interview#Q10]] — детали exhaustiveness check.
 >
 > ---
 >
@@ -702,7 +702,7 @@ case Integer i when i == 0 -> ...;  // недостижим!
 > - `default` всегда доминирует все последующие case — компилятор предупредит.
 > - В мульти-pattern (`case A, B when ...`) guard применяется ко всему набору.
 >
-> **Связанные вопросы:** [[Q3]] — switch expressions; [[Q10]] — exhaustiveness check; [[Q15]] — когда стоит/не стоит использовать pattern matching.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q3]] — switch expressions; [[java-pattern-matching-interview#Q10]] — exhaustiveness check; [[java-pattern-matching-interview#Q15]] — когда стоит/не стоит использовать pattern matching.
 >
 > ---
 >
@@ -829,7 +829,7 @@ String handle2(Object obj) {
 > - Внутри record pattern null-компонента приводит к NPE: `case Box(String s) -> ...` бросит NPE если `box.value()` вернул null.
 > - В switch statement (без присваивания) без default и без `case null` компилируется и бросает NPE — никакой compile-time check.
 >
-> **Связанные вопросы:** [[Q4]] — record patterns и NPE на null components; [[Q6]] — guarded patterns; [[Q10]] — exhaustiveness и null.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q4]] — record patterns и NPE на null components; [[java-pattern-matching-interview#Q6]] — guarded patterns; [[java-pattern-matching-interview#Q10]] — exhaustiveness и null.
 
 ## Q8. Как pattern matching заменяет Visitor-паттерн?
 
@@ -932,7 +932,7 @@ double perimeter(Shape shape) {
 > - Pattern matching на mutable иерархии без sealed — теряется exhaustiveness, та же ловушка что и default.
 > - Бизнес-логика внутри case → дублирование между функциями — выносите в отдельные методы.
 >
-> **Связанные вопросы:** [[Q5]] — sealed classes для exhaustiveness; [[Q12]] — практические применения; [[Q15]] — когда стоит/не стоит использовать pattern matching.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q5]] — sealed classes для exhaustiveness; [[java-pattern-matching-interview#Q12]] — практические применения; [[java-pattern-matching-interview#Q15]] — когда стоит/не стоит использовать pattern matching.
 >
 > ---
 >
@@ -1057,7 +1057,7 @@ String describe(Object obj) {
 > - Из вложенного `for`/`while` в case `yield` не «выпрыгивает» наружу — это `break` с labels или `yield` после loop.
 > - `throw` валиден вместо `yield` для exceptional ветвей — не «завершает нормально», поэтому compile проходит.
 >
-> **Связанные вопросы:** [[Q3]] — switch expressions overview; [[Q6]] — guarded patterns с блочной формой; [[Q12]] — практические применения с complex logic.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q3]] — switch expressions overview; [[java-pattern-matching-interview#Q6]] — guarded patterns с блочной формой; [[java-pattern-matching-interview#Q12]] — практические применения с complex logic.
 >
 > ---
 >
@@ -1200,7 +1200,7 @@ String colorName(Color c) {
 > - Stack trace может быть длинным — обернутая cause часто полезнее.
 > - Если бизнес-критично «никогда не упасть», добавьте default явно (но потеряете compile-time exhaustiveness).
 >
-> **Связанные вопросы:** [[Q3]] — switch expressions требуют exhaustiveness; [[Q5]] — sealed classes; [[Q7]] — null handling.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q3]] — switch expressions требуют exhaustiveness; [[java-pattern-matching-interview#Q5]] — sealed classes; [[java-pattern-matching-interview#Q7]] — null handling.
 >
 > ---
 >
@@ -1322,7 +1322,7 @@ if (obj instanceof Box<String>(String value)) {
 > - В record pattern с generic компонентом: `case Box<?>(Object o)` — o имеет тип Object, не T.
 > - Wildcard `Box<?>` без binding: можно использовать pattern, но binding variable `b` будет `Box<?>` — методы возвращают capture type.
 >
-> **Связанные вопросы:** [[Q4]] — record patterns; [[Q14]] — типы и unboxing в patterns; [[Q1]] — обзор форм pattern matching.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q4]] — record patterns; [[java-pattern-matching-interview#Q14]] — типы и unboxing в patterns; [[java-pattern-matching-interview#Q1]] — обзор форм pattern matching.
 
 ## Q12. Какие практические применения pattern matching в production-коде?
 
@@ -1421,7 +1421,7 @@ void handle(DomainEvent event) {
 > - Cross-cutting concerns (logging, tracing) — рекомендуется аспект, не повторение в каждом case.
 > - При thousands of events иерархия sealed становится огромной — рассмотрите hybrid approach (sealed для категорий, polymorphism внутри).
 >
-> **Связанные вопросы:** [[Q4]] — record patterns; [[Q5]] — sealed classes; [[Q8]] — pattern matching vs Visitor.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q4]] — record patterns; [[java-pattern-matching-interview#Q5]] — sealed classes; [[java-pattern-matching-interview#Q8]] — pattern matching vs Visitor.
 >
 > ---
 >
@@ -1535,7 +1535,7 @@ Pattern matching в Java пока беднее Scala, но догоняет. Sca
 > - Kotlin `when` без exhaustiveness check в statement-форме — easier to misuse чем Java sealed switch.
 > - Scala extractor (`unapply`) часто ловит NullPointerException — Java record patterns тоже, но более предсказуемо.
 >
-> **Связанные вопросы:** [[Q1]] — обзор форм pattern matching в Java; [[Q4]] — record patterns как замена tuple/list; [[Q11]] — generics и erasure.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q1]] — обзор форм pattern matching в Java; [[java-pattern-matching-interview#Q4]] — record patterns как замена tuple/list; [[java-pattern-matching-interview#Q11]] — generics и erasure.
 >
 > ---
 >
@@ -1663,7 +1663,7 @@ if (obj instanceof Wrapper<Integer>(Integer v)) { ... }
 > - Generic record (`Box<T>`) не может иметь primitive type parameter — T всегда reference. Используйте specialized records (`IntBox`, `LongBox`).
 > - При деконструкции `null`-component с примитивным типом — NPE на унbox.
 >
-> **Связанные вопросы:** [[Q4]] — record patterns deep dive; [[Q11]] — generics и type erasure; [[Q1]] — формы pattern matching.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q4]] — record patterns deep dive; [[java-pattern-matching-interview#Q11]] — generics и type erasure; [[java-pattern-matching-interview#Q1]] — формы pattern matching.
 >
 > ---
 >
@@ -1798,7 +1798,7 @@ record Circle(double radius) implements Shape {
 > - Polymorphism может маскировать business logic в data classes — нарушение SRP. Балансируйте.
 > - Pattern matching НЕ заменяет good OOP design — это complementary feature.
 >
-> **Связанные вопросы:** [[Q5]] — sealed types для closed hierarchies; [[Q8]] — pattern matching vs Visitor; [[Q12]] — практические применения.
+> **Связанные вопросы:** [[java-pattern-matching-interview#Q5]] — sealed types для closed hierarchies; [[java-pattern-matching-interview#Q8]] — pattern matching vs Visitor; [[java-pattern-matching-interview#Q12]] — практические применения.
 
 ## See also
 

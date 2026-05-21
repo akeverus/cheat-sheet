@@ -117,7 +117,7 @@ updated: "2026-05-15"
 >
 > **Если бы это было правдой:** невозможно было бы передать в pod даже URL Vault-сервера — он сам стал бы секретом без места хранения.
 >
-> **Связанные вопросы:** [[Q2]] — настройка Spring Vault; [[Q7]] — методы аутентификации; [[Q12]] — Vault Agent
+> **Связанные вопросы:** [[spring-vault-interview#Q2]] — настройка Spring Vault; [[spring-vault-interview#Q7]] — методы аутентификации; [[spring-vault-interview#Q12]] — Vault Agent
 
 ## Q2. Как настроить Spring Vault?
 
@@ -249,7 +249,7 @@ public class VaultConfig extends AbstractVaultConfiguration {
 >
 > **Если бы это было правдой:** Spring Cloud Vault не смог бы заменять `${db.password}` в `application.yml` — placeholder остался бы строкой `${db.password}`.
 >
-> **Связанные вопросы:** [[Q1]] — зачем Vault; [[Q3]] — чтение секретов; [[Q9]] — интеграция с PropertySource
+> **Связанные вопросы:** [[spring-vault-interview#Q1]] — зачем Vault; [[spring-vault-interview#Q3]] — чтение секретов; [[spring-vault-interview#Q9]] — интеграция с PropertySource
 
 ## Q3. Как читать секреты из Vault?
 
@@ -362,7 +362,7 @@ public class AppConfig {
 >
 > **Если бы это было правдой:** существование `spring-vault-core`, `spring-cloud-starter-vault-config` и `VaultTemplate` было бы бессмысленным.
 >
-> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q5]] — VaultLeaseContainer; [[Q9]] — PropertySource integration
+> **Связанные вопросы:** [[spring-vault-interview#Q4]] — dynamic secrets; [[spring-vault-interview#Q5]] — VaultLeaseContainer; [[spring-vault-interview#Q9]] — PropertySource integration
 
 ## Q4. Что такое Dynamic Secrets и как их использовать?
 
@@ -482,7 +482,7 @@ public class DynamicDbService {
 >
 > **Если бы это было правдой:** существование `database-secret-engines`, `aws-secret-backend`, dedicated документации по PKI рабочим процессам было бы необъяснимо.
 >
-> **Связанные вопросы:** [[Q5]] — VaultLeaseContainer и lease renewal; [[Q11]] — автоматическая ротация; [[Q8]] — PKI engine
+> **Связанные вопросы:** [[spring-vault-interview#Q5]] — VaultLeaseContainer и lease renewal; [[spring-vault-interview#Q11]] — автоматическая ротация; [[spring-vault-interview#Q8]] — PKI engine
 
 ## Q5. Что такое VaultLeaseContainer и зачем он нужен?
 
@@ -604,7 +604,7 @@ public class DatabaseCredentialService {
 >
 > **Если бы это было правдой:** Spring Vault имел бы две параллельные иерархии классов для одной задачи.
 >
-> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q11]] — автоматическая ротация; [[Q3]] — `@Value` resolution
+> **Связанные вопросы:** [[spring-vault-interview#Q4]] — dynamic secrets; [[spring-vault-interview#Q11]] — автоматическая ротация; [[spring-vault-interview#Q3]] — `@Value` resolution
 
 ## Q6. Как работает Transit Secrets Engine (шифрование как сервис)?
 
@@ -710,7 +710,7 @@ public class EncryptionService {
 >
 > **Если бы это было правдой:** банки и healthcare не использовали бы Transit для PCI DSS / HIPAA compliance.
 >
-> **Связанные вопросы:** [[Q1]] — обзор Vault; [[Q8]] — PKI engine; [[Q15]] — best practices
+> **Связанные вопросы:** [[spring-vault-interview#Q1]] — обзор Vault; [[spring-vault-interview#Q8]] — PKI engine; [[spring-vault-interview#Q15]] — best practices
 
 ## Q7. Какие методы аутентификации поддерживает Spring Vault?
 
@@ -817,7 +817,7 @@ spring:
 >
 > **Если бы это было правдой:** документация Vault не содержала бы 100+ страниц про auth methods и threat models.
 >
-> **Связанные вопросы:** [[Q2]] — настройка Spring Vault; [[Q1]] — обзор Vault; [[Q15]] — best practices
+> **Связанные вопросы:** [[spring-vault-interview#Q2]] — настройка Spring Vault; [[spring-vault-interview#Q1]] — обзор Vault; [[spring-vault-interview#Q15]] — best practices
 
 ## Q8. Как использовать Vault PKI для динамических TLS-сертификатов?
 
@@ -918,7 +918,7 @@ Vault PKI используется для:
 >
 > **Если бы это было правдой:** Vault PKI терял бы основное преимущество — ephemeral credentials.
 >
-> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q6]] — Transit engine; [[Q15]] — best practices
+> **Связанные вопросы:** [[spring-vault-interview#Q4]] — dynamic secrets; [[spring-vault-interview#Q6]] — Transit engine; [[spring-vault-interview#Q15]] — best practices
 
 ## Q9. Как Spring Cloud Vault интегрируется с Spring Boot PropertySource?
 
@@ -1040,7 +1040,7 @@ public class ApiConfig {
 >
 > **Если бы это было правдой:** пути в Vault не соответствовали бы Vault filesystem-like structure и были бы непрозрачны при `vault list secret/`.
 >
-> **Связанные вопросы:** [[Q2]] — bootstrap.yml; [[Q3]] — `@Value` resolution; [[Q13]] — KV v1 vs v2
+> **Связанные вопросы:** [[spring-vault-interview#Q2]] — bootstrap.yml; [[spring-vault-interview#Q3]] — `@Value` resolution; [[spring-vault-interview#Q13]] — KV v1 vs v2
 
 ## Q10. Как тестировать приложение с Spring Vault?
 
@@ -1172,7 +1172,7 @@ class SecretServiceTest {
 >
 > **Если бы это было правдой:** unit-тесты бизнес-логики стали бы slow и flaky из-за необходимости Vault container в каждом тесте.
 >
-> **Связанные вопросы:** [[Q3]] — VaultTemplate; [[Q2]] — bootstrap.yml; [[Q7]] — auth methods
+> **Связанные вопросы:** [[spring-vault-interview#Q3]] — VaultTemplate; [[spring-vault-interview#Q2]] — bootstrap.yml; [[spring-vault-interview#Q7]] — auth methods
 
 ## Q11. Как реализовать автоматическую ротацию секретов?
 
@@ -1287,7 +1287,7 @@ public class SecretRotationManager {
 >
 > **Если бы это было правдой:** не было бы необходимости в blog posts и официальной документации Spring Vault по теме DB credentials rotation.
 >
-> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q5]] — VaultLeaseContainer; [[Q15]] — best practices
+> **Связанные вопросы:** [[spring-vault-interview#Q4]] — dynamic secrets; [[spring-vault-interview#Q5]] — VaultLeaseContainer; [[spring-vault-interview#Q15]] — best practices
 
 ## Q12. Что такое Vault Agent и зачем он нужен?
 
@@ -1388,7 +1388,7 @@ Vault Agent монтирует файл `/vault/secrets/config` в pod. Spring B
 >
 > **Если бы это было правдой:** Vault Agent документация не требовала бы конфигурации `vault.address`.
 >
-> **Связанные вопросы:** [[Q1]] — обзор Vault; [[Q7]] — auth methods; [[Q9]] — PropertySource
+> **Связанные вопросы:** [[spring-vault-interview#Q1]] — обзор Vault; [[spring-vault-interview#Q7]] — auth methods; [[spring-vault-interview#Q9]] — PropertySource
 
 ## Q13. Какова разница между KV v1 и KV v2?
 
@@ -1493,7 +1493,7 @@ spring:
 >
 > **Если бы это было правдой:** миграция с v1 на v2 требовала бы полного переразвертывания Vault.
 >
-> **Связанные вопросы:** [[Q1]] — обзор Vault; [[Q3]] — чтение секретов; [[Q9]] — PropertySource paths
+> **Связанные вопросы:** [[spring-vault-interview#Q1]] — обзор Vault; [[spring-vault-interview#Q3]] — чтение секретов; [[spring-vault-interview#Q9]] — PropertySource paths
 
 ## Q14. Как обрабатывать ошибки при недоступности Vault?
 
@@ -1619,7 +1619,7 @@ public class ResilientSecretService {
 >
 > **Если бы это было правдой:** documentation HashiCorp не требовала бы Raft cluster mode для production.
 >
-> **Связанные вопросы:** [[Q11]] — ротация и graceful handling; [[Q15]] — best practices; [[Q5]] — VaultLeaseContainer
+> **Связанные вопросы:** [[spring-vault-interview#Q11]] — ротация и graceful handling; [[spring-vault-interview#Q15]] — best practices; [[spring-vault-interview#Q5]] — VaultLeaseContainer
 
 ## Q15. Какие best practices при работе с Spring Vault?
 
@@ -1723,7 +1723,7 @@ public class ResilientSecretService {
 >
 > **Если бы это было правдой:** не было бы регулярных CVE с утечкой credentials в logs.
 >
-> **Связанные вопросы:** [[Q4]] — dynamic secrets; [[Q7]] — auth methods; [[Q14]] — error handling
+> **Связанные вопросы:** [[spring-vault-interview#Q4]] — dynamic secrets; [[spring-vault-interview#Q7]] — auth methods; [[spring-vault-interview#Q14]] — error handling
 
 ## See also
 

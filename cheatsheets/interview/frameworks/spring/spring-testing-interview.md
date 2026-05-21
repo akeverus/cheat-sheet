@@ -160,7 +160,7 @@ class OrderServiceIntegrationTest {
 > - `webEnvironment = RANDOM_PORT` поднимает Tomcat — не забывайте `@LocalServerPort` для адреса.
 > - При `MOCK` (default) реальный сервер НЕ запускается, TestRestTemplate работать не будет — нужен MockMvc.
 >
-> **Связанные вопросы:** [[Q2]] — режимы `webEnvironment`; [[Q3]] — test slices; [[Q13]] — кеширование ApplicationContext.
+> **Связанные вопросы:** [[spring-testing-interview#Q2]] — режимы `webEnvironment`; [[spring-testing-interview#Q3]] — test slices; [[spring-testing-interview#Q13]] — кеширование ApplicationContext.
 >
 > ---
 >
@@ -286,7 +286,7 @@ class OrderControllerHttpTest {
 > - В `RANDOM_PORT` `@LocalServerPort` валиден только в test-классе, не в `@Configuration`.
 > - При `NONE` нельзя автоматически получить MockMvc — это не web-режим.
 >
-> **Связанные вопросы:** [[Q1]] — общее назначение `@SpringBootTest`; [[Q7]] — MockMvc fluent API; [[Q15]] — Testcontainers с RANDOM_PORT.
+> **Связанные вопросы:** [[spring-testing-interview#Q1]] — общее назначение `@SpringBootTest`; [[spring-testing-interview#Q7]] — MockMvc fluent API; [[spring-testing-interview#Q15]] — Testcontainers с RANDOM_PORT.
 >
 > ---
 >
@@ -390,7 +390,7 @@ class OrderControllerHttpTest {
 > - Spring Security включается в `@WebMvcTest` — без `@WithMockUser` или `csrf()` POST/PUT упадут с 403.
 > - Slice-аннотации НЕ комбинируются друг с другом — нельзя `@WebMvcTest + @DataJpaTest`. Для интеграционного теста используется `@SpringBootTest`.
 >
-> **Связанные вопросы:** [[Q4]] — `@WebMvcTest` детально; [[Q5]] — `@DataJpaTest`; [[Q6]] — обзор всех slice-аннотаций; [[Q9]] — `@MockBean` для slice-тестов.
+> **Связанные вопросы:** [[spring-testing-interview#Q4]] — `@WebMvcTest` детально; [[spring-testing-interview#Q5]] — `@DataJpaTest`; [[spring-testing-interview#Q6]] — обзор всех slice-аннотаций; [[spring-testing-interview#Q9]] — `@MockBean` для slice-тестов.
 
 `@WebMvcTest` загружает **только web-слой**: контроллеры, фильтры, `WebMvcConfigurer`, `HandlerMethodArgumentResolver`. Сервисы и репозитории — нужно мокировать.
 
@@ -483,7 +483,7 @@ class OrderControllerTest {
 > - JPA-репозитории и `@DataSource` НЕ создаются — если контроллер инжектит репозиторий напрямую (анти-паттерн), нужно мокировать.
 > - При множестве контроллеров без параметра `@WebMvcTest` загрузит все — это замедлит тест и потребует мокировать ВСЕ их зависимости.
 >
-> **Связанные вопросы:** [[Q3]] — общее понятие test slice; [[Q7]] — MockMvc детали; [[Q9]] — `@MockBean` особенности; [[Q14]] — тестирование Spring Security в `@WebMvcTest`.
+> **Связанные вопросы:** [[spring-testing-interview#Q3]] — общее понятие test slice; [[spring-testing-interview#Q7]] — MockMvc детали; [[spring-testing-interview#Q9]] — `@MockBean` особенности; [[spring-testing-interview#Q14]] — тестирование Spring Security в `@WebMvcTest`.
 >
 > ---
 >
@@ -635,7 +635,7 @@ class UserRepositoryRealDbTest { }
 > - `@DataJpaTest` не загружает `@EntityListeners` с зависимостями на `@Service` — они будут `null`.
 > - Lazy loading может работать иначе в тесте (одна транзакция на весь тест) vs в продакшене.
 >
-> **Связанные вопросы:** [[Q3]] — slices общая идея; [[Q6]] — другие data slices (`@DataJdbcTest`, `@DataMongoTest`); [[Q15]] — Testcontainers с `@ServiceConnection`.
+> **Связанные вопросы:** [[spring-testing-interview#Q3]] — slices общая идея; [[spring-testing-interview#Q6]] — другие data slices (`@DataJdbcTest`, `@DataMongoTest`); [[spring-testing-interview#Q15]] — Testcontainers с `@ServiceConnection`.
 >
 > ---
 >
@@ -768,7 +768,7 @@ class OrderDtoJsonTest {
 > - `@RestClientTest` мокает только сервер, а не сам клиент — нельзя проверить retry/timeout логику без дополнительных моков.
 > - Композиция slice-аннотаций не работает: нельзя `@DataJpaTest + @WebMvcTest` — каждый имеет свой `TypeExcludeFilter`.
 >
-> **Связанные вопросы:** [[Q3]] — концепция slice; [[Q4]] — `@WebMvcTest`; [[Q5]] — `@DataJpaTest`.
+> **Связанные вопросы:** [[spring-testing-interview#Q3]] — концепция slice; [[spring-testing-interview#Q4]] — `@WebMvcTest`; [[spring-testing-interview#Q5]] — `@DataJpaTest`.
 
 `MockMvc` — Spring-инструмент для тестирования web-слоя **без запуска реального HTTP-сервера**: симулирует HTTP-запросы через Spring DispatcherServlet.
 
@@ -877,7 +877,7 @@ MockMvc fluent API:
 > - При работе с async-контроллерами (`Callable`, `DeferredResult`) нужен `andExpect(request().asyncStarted())` + `asyncDispatch()`.
 > - В `@SpringBootTest` MockMvc нужно явно включить через `@AutoConfigureMockMvc` — в `@WebMvcTest` он включён сам.
 >
-> **Связанные вопросы:** [[Q4]] — `@WebMvcTest` + MockMvc; [[Q8]] — JSON через MockMvc; [[Q14]] — Spring Security в MockMvc.
+> **Связанные вопросы:** [[spring-testing-interview#Q4]] — `@WebMvcTest` + MockMvc; [[spring-testing-interview#Q8]] — JSON через MockMvc; [[spring-testing-interview#Q14]] — Spring Security в MockMvc.
 >
 > ---
 >
@@ -987,7 +987,7 @@ class OrderControllerTest {
 > - При `@RestControllerAdvice` важно тестировать формат ошибки (`$.error`, `$.timestamp`) — иначе изменение глобального handler-а сломает контракт без сигнала.
 > - Не забывайте про CSRF в Spring Security: для POST нужно `.with(csrf())` если фильтр включён.
 >
-> **Связанные вопросы:** [[Q7]] — основы MockMvc; [[Q14]] — Spring Security + JSON тесты.
+> **Связанные вопросы:** [[spring-testing-interview#Q7]] — основы MockMvc; [[spring-testing-interview#Q14]] — Spring Security + JSON тесты.
 >
 > ---
 >
@@ -1095,7 +1095,7 @@ class OrderControllerTest {
 > - `@MockBean` сбрасывает mock после каждого теста — не нужно явно вызывать `reset(mock)`.
 > - Mockito-mock через `@Mock` не сбрасывается между тестами по умолчанию (без extension) — может приводить к leak состояния.
 >
-> **Связанные вопросы:** [[Q10]] — `@SpyBean` (partial mock); [[Q13]] — кеш контекста и `@MockBean`.
+> **Связанные вопросы:** [[spring-testing-interview#Q10]] — `@SpyBean` (partial mock); [[spring-testing-interview#Q13]] — кеш контекста и `@MockBean`.
 >
 > ---
 >
@@ -1228,7 +1228,7 @@ class OrderEventTest {
 > - `@SpyBean` тоже загрязняет кеш контекста, как `@MockBean`.
 > - При тестировании self-invocation внутри класса (метод A вызывает метод B того же класса напрямую, без proxy) — spy не перехватит B.
 >
-> **Связанные вопросы:** [[Q9]] — `@MockBean` vs `@Mock`; [[Q13]] — кеш контекста и `@SpyBean`.
+> **Связанные вопросы:** [[spring-testing-interview#Q9]] — `@MockBean` vs `@Mock`; [[spring-testing-interview#Q13]] — кеш контекста и `@SpyBean`.
 >
 > ---
 >
@@ -1359,7 +1359,7 @@ class OrderControllerTest {
 > - При `proxyBeanMethods = false` методы `@Bean` друг друга НЕ вызывают через CGLIB — это влияет на singleton-семантику.
 > - `@TestConfiguration` inside `@WebMvcTest` нужно объявлять через `@Import`, а не как вложенный класс — иначе slice может его не подхватить.
 >
-> **Связанные вопросы:** [[Q3]] — test slices; [[Q12]] — `@DirtiesContext` для context override.
+> **Связанные вопросы:** [[spring-testing-interview#Q3]] — test slices; [[spring-testing-interview#Q12]] — `@DirtiesContext` для context override.
 
 `@DirtiesContext` помечает ApplicationContext как "грязный" → Spring пересоздаёт его после теста/класса:
 
@@ -1441,7 +1441,7 @@ class DatabaseMigrationTest {
 > - Не действует на `@SpringBootTest(webEnvironment = RANDOM_PORT)` если Tomcat уже занял порт — может быть `BindException` при retake.
 > - Несовместим с параллельным запуском тестов внутри класса (`@Execution(CONCURRENT)`) — пересоздание может race с другими методами.
 >
-> **Связанные вопросы:** [[Q11]] — `@TestConfiguration` для тестовых бинов; [[Q13]] — кеш контекста; [[Q15]] — Testcontainers как альтернатива.
+> **Связанные вопросы:** [[spring-testing-interview#Q11]] — `@TestConfiguration` для тестовых бинов; [[spring-testing-interview#Q13]] — кеш контекста; [[spring-testing-interview#Q15]] — Testcontainers как альтернатива.
 >
 > ---
 >
@@ -1560,7 +1560,7 @@ class UserTest extends BaseIntegrationTest {
 > - Если у вас 50 уникальных конфигураций — все 50 контекстов будут поднимать JVM (heap, threads, BD-pools).
 > - Не путать с Mockito mock reset — это другой механизм, работает после каждого теста независимо от cache.
 >
-> **Связанные вопросы:** [[Q9]] — `@MockBean` влияет на cache; [[Q12]] — `@DirtiesContext`; [[Q11]] — `@TestConfiguration` тоже формирует ключ.
+> **Связанные вопросы:** [[spring-testing-interview#Q9]] — `@MockBean` влияет на cache; [[spring-testing-interview#Q12]] — `@DirtiesContext`; [[spring-testing-interview#Q11]] — `@TestConfiguration` тоже формирует ключ.
 >
 > ---
 >
@@ -1713,7 +1713,7 @@ mockMvc.perform(get("/api/orders")
 > - `@WithUserDetails("alice")` требует `UserDetailsService` в контексте — иначе `UsernameNotFoundException`.
 > - При параллельных тестах `SecurityContext` уровня класса может протечь через `SecurityContextHolder.STRATEGY_THREADLOCAL`.
 >
-> **Связанные вопросы:** [[Q7]] — MockMvc; [[Q4]] — `@WebMvcTest` slice; [[Q11]] — `@TestConfiguration` для test SecurityFilterChain.
+> **Связанные вопросы:** [[spring-testing-interview#Q7]] — MockMvc; [[spring-testing-interview#Q4]] — `@WebMvcTest` slice; [[spring-testing-interview#Q11]] — `@TestConfiguration` для test SecurityFilterChain.
 >
 > ---
 >
@@ -1870,7 +1870,7 @@ class LegacyIntegrationTest {
 > - Тесты, использующие `@ServiceConnection`, попадают в свой context cache entry — не смешивать с `@SpringBootTest` без контейнеров.
 > - Image pull при первом запуске может быть медленным — на CI лучше pre-pull через docker pre-step.
 >
-> **Связанные вопросы:** [[Q1]] — `@SpringBootTest` базовая; [[Q5]] — `@DataJpaTest` (часто комбинируется); [[Q13]] — кеш контекста с Testcontainers.
+> **Связанные вопросы:** [[spring-testing-interview#Q1]] — `@SpringBootTest` базовая; [[spring-testing-interview#Q5]] — `@DataJpaTest` (часто комбинируется); [[spring-testing-interview#Q13]] — кеш контекста с Testcontainers.
 
 ---
 

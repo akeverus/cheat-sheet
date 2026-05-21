@@ -103,7 +103,7 @@ val email = Email("alice@example.com")
 > - При вызове через интерфейс Kotlin вынужден упаковать значение в обёртку.
 > - Jackson/JPA по умолчанию не понимают value class — нужен `KotlinModule`/`AttributeConverter`.
 >
-> **Связанные вопросы:** [[Q2]] — отличия от `data class`; [[Q3]] — как представлен в байт-коде; [[Q8]] — типовые применения (UserId, Money, Email).
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q2]] — отличия от `data class`; [[kotlin-value-classes-interview#Q3]] — как представлен в байт-коде; [[kotlin-value-classes-interview#Q8]] — типовые применения (UserId, Money, Email).
 >
 > ---
 >
@@ -216,7 +216,7 @@ id3 == id4                            // true
 > - В Spring контроллере `@RequestBody data class` десериализуется Jackson «из коробки», а value class требует `KotlinModule.Builder().build()` и иногда custom deserializer.
 > - `data class` поддерживает `componentN()` для всех полей — это используется в for-loop по map (`for ((k, v) in map)`); value class даёт только `component1()`.
 >
-> **Связанные вопросы:** [[Q1]] — что такое value class; [[Q4]] — конкретные ограничения value class; [[Q8]] — UserId/OrderId как value class.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — что такое value class; [[kotlin-value-classes-interview#Q4]] — конкретные ограничения value class; [[kotlin-value-classes-interview#Q8]] — UserId/OrderId как value class.
 >
 > ---
 >
@@ -341,7 +341,7 @@ fun process(ids: List<UserId>) {     // боксинг — ids хранит об
 > - `List<UserId>` в горячем пути — рассмотрите `LongArray`/`IntArray` или собственный buffer с inline accessor.
 > - Передача value class в reflection-based фреймворки (Jackson без KotlinModule, старые версии Hibernate) → boxing + потеря type safety на этапе сериализации.
 >
-> **Связанные вопросы:** [[Q1]] — общее описание value class; [[Q5]] — boxing при использовании через интерфейс; [[Q10]] — value class в коллекциях.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — общее описание value class; [[kotlin-value-classes-interview#Q5]] — boxing при использовании через интерфейс; [[kotlin-value-classes-interview#Q10]] — value class в коллекциях.
 >
 > ---
 >
@@ -487,7 +487,7 @@ value class UserId(val value: String) {
 > - Computed property без caching — каждый вызов делает вычисление заново; для дорогих операций используйте extension fun или отдельный helper.
 > - Companion object на value class — это обычный объект в куче, не value class; на него ссылок без overhead не получится.
 >
-> **Связанные вопросы:** [[Q1]] — что такое value class; [[Q5]] — реализация интерфейсов и boxing; [[Q15]] — best practices (init validation, factory).
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — что такое value class; [[kotlin-value-classes-interview#Q5]] — реализация интерфейсов и boxing; [[kotlin-value-classes-interview#Q15]] — best practices (init validation, factory).
 
 ## Q5. Как value class работает с интерфейсами?
 
@@ -562,7 +562,7 @@ describe(uid)  // здесь uid УПАКОВЫВАЕТСЯ в объект Iden
 > - `if (x is Identifier)` для value class — тоже boxing (instanceof требует объекта).
 > - `val list: List<Identifier> = listOf(UserId("1"), OrderId("2"))` — все элементы упакованы; для homogeneous-коллекции лучше `List<UserId>` (хотя generic тоже даёт boxing — см. Q10).
 >
-> **Связанные вопросы:** [[Q3]] — общая семантика inline/box; [[Q4]] — value class может implements interface; [[Q10]] — boxing в коллекциях.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q3]] — общая семантика inline/box; [[kotlin-value-classes-interview#Q4]] — value class может implements interface; [[kotlin-value-classes-interview#Q10]] — boxing в коллекциях.
 >
 > ---
 >
@@ -681,7 +681,7 @@ process(UserId(orderId.value))  // явное преобразование
 > - Конверсия `String → UserId` в Spring контроллере (`@PathVariable id: UserId`) требует регистрации `Converter<String, UserId>` или Kotlin Module — без него получите 400 Bad Request с криптическим стектрейсом.
 > - `value class` не серилизуется напрямую в JPA — нужен `AttributeConverter` (см. Q7).
 >
-> **Связанные вопросы:** [[Q1]] — общее описание value class; [[Q7]] — value class в JPA/Spring; [[Q14]] — когда typealias достаточно.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — общее описание value class; [[kotlin-value-classes-interview#Q7]] — value class в JPA/Spring; [[kotlin-value-classes-interview#Q14]] — когда typealias достаточно.
 >
 > ---
 >
@@ -822,7 +822,7 @@ fun kotlinModule(): KotlinModule = KotlinModule.Builder().build()
 > - Jackson и Hibernate — это две разные конфигурации. JPA-конвертер не делает value class сериализуемым в JSON; для REST API дополнительно нужен `KotlinModule.Builder().build()` для ObjectMapper или custom deserializer.
 > - В Spring Data JDBC (не JPA) — другой механизм: `AggregateReference` / `Converter<X, Y>`, регистрируется через `JdbcCustomConversions`.
 >
-> **Связанные вопросы:** [[Q1]] — общее описание value class; [[Q8]] — UserId/OrderId как типовое применение; [[Q14]] — когда value class неоправдан без конвертеров.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — общее описание value class; [[kotlin-value-classes-interview#Q8]] — UserId/OrderId как типовое применение; [[kotlin-value-classes-interview#Q14]] — когда value class неоправдан без конвертеров.
 >
 > ---
 >
@@ -955,7 +955,7 @@ fun connect(ip: IpAddress, port: Int) { }
 > - Не использовать value class для callback типов (`TaskHandler = (Task) -> Unit`) — для функциональных типов есть typealias.
 > - Иногда люди обворачивают value class в value class (`OrderIdHash(val v: UserId)`) — это допустимо, но усложняет понимание; обычно достаточно одного уровня wrapping.
 >
-> **Связанные вопросы:** [[Q1]] — что такое value class; [[Q2]] — отличие от data class; [[Q14]] — когда не стоит использовать value class.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — что такое value class; [[kotlin-value-classes-interview#Q2]] — отличие от data class; [[kotlin-value-classes-interview#Q14]] — когда не стоит использовать value class.
 
 ## Q9. Чем value class Kotlin отличается от record Java 16+?
 
@@ -1022,7 +1022,7 @@ fun connect(ip: IpAddress, port: Int) { }
 > - Pattern matching из Kotlin для Java record работает через `is`/`when` (Kotlin), но без deconstruction — это Java-фича.
 > - В микросервисах с DTO: record и data class взаимозаменяемы, выбор зависит от primary language модуля.
 >
-> **Связанные вопросы:** [[Q1]] — что такое value class; [[Q2]] — отличия от data class; [[Q4]] — ограничения value class.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — что такое value class; [[kotlin-value-classes-interview#Q2]] — отличия от data class; [[kotlin-value-classes-interview#Q4]] — ограничения value class.
 >
 > ---
 >
@@ -1141,7 +1141,7 @@ class UserIdBuffer(private val values: Array<String>) {
 > - `flatMap`, `map`, `filter` на `List<UserId>` — все промежуточные коллекции тоже boxed; для длинных цепочек последствия суммируются.
 > - JIT иногда устраняет boxing через escape analysis, но это не гарантировано — нельзя на это полагаться при capacity planning.
 >
-> **Связанные вопросы:** [[Q3]] — общая семантика inline/box; [[Q5]] — boxing через интерфейс; [[Q12]] — value class в suspend функциях.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q3]] — общая семантика inline/box; [[kotlin-value-classes-interview#Q5]] — boxing через интерфейс; [[kotlin-value-classes-interview#Q12]] — value class в suspend функциях.
 >
 > ---
 >
@@ -1243,7 +1243,7 @@ value class UserId(val value: String)  // error: @JvmInline required
 > - В будущем Project Valhalla может добавить новую аннотацию (например, `@JvmValhalla`), и тогда `@JvmInline` останется для legacy. Сейчас это не проблема.
 > - `@JvmInline` не делает value class «более inline» — это binary marker, не оптимизация. Не пытайтесь использовать его как perf-hint на data class или обычный класс — он не применим.
 >
-> **Связанные вопросы:** [[Q1]] — что такое value class; [[Q3]] — как inline проявляется в байт-коде; [[Q4]] — ограничения value class.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — что такое value class; [[kotlin-value-classes-interview#Q3]] — как inline проявляется в байт-коде; [[kotlin-value-classes-interview#Q4]] — ограничения value class.
 >
 > ---
 >
@@ -1357,7 +1357,7 @@ suspend fun fetchUser(id: UserId): User {
 > - `async { computeUserId() }` возвращает `Deferred<UserId>` — generic, UserId boxed внутри Deferred.
 > - Continuation сохраняет state при suspension — каждый параметр функции записывается в поле continuation; для value class это boxing на этот момент. Если функция часто suspendится в горячем пути — overhead заметен.
 >
-> **Связанные вопросы:** [[Q3]] — общая семантика inline/box; [[Q10]] — boxing в коллекциях (List<UserId>); [[Q5]] — boxing через интерфейс.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q3]] — общая семантика inline/box; [[kotlin-value-classes-interview#Q10]] — boxing в коллекциях (List<UserId>); [[kotlin-value-classes-interview#Q5]] — boxing через интерфейс.
 
 ## Q13. Как тестировать value class?
 
@@ -1503,7 +1503,7 @@ class AgeTest {
 > - В тестах boxing незаметен (всё медленно по сравнению с network/DB), не пытайтесь оптимизировать тесты по boxing.
 > - Тесты на сериализацию (Jackson, kotlinx.serialization) — отдельная категория, обычно через integration tests с реальным `ObjectMapper`.
 >
-> **Связанные вопросы:** [[Q1]] — общее описание value class; [[Q4]] — init блок и валидация; [[Q15]] — best practices (init, factory).
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q1]] — общее описание value class; [[kotlin-value-classes-interview#Q4]] — init блок и валидация; [[kotlin-value-classes-interview#Q15]] — best practices (init, factory).
 >
 > ---
 >
@@ -1620,7 +1620,7 @@ typealias TaskHandler = (Task) -> Unit
 > - Mixed paths — типичная ситуация. `UserId` хорош в DTO и Spring контроллерах, но проблематичен в Kafka stream-processing части того же сервиса. Решение — две разные сигнатуры для одной concepts (raw inside, wrapped outside).
 > - Иногда micro-overhead boxing незначим (10K сообщений/сек — нечувствительно); правило «всегда оптимизируйте boxing» неверно. Профилируйте до принятия решений.
 >
-> **Связанные вопросы:** [[Q3]] — общая семантика inline/box; [[Q10]] — value class в коллекциях; [[Q12]] — value class в suspend/Flow.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q3]] — общая семантика inline/box; [[kotlin-value-classes-interview#Q10]] — value class в коллекциях; [[kotlin-value-classes-interview#Q12]] — value class в suspend/Flow.
 >
 > ---
 >
@@ -1784,7 +1784,7 @@ value class Email private constructor(val value: String) {
 > - Factory `of(raw): Email?` возвращает nullable — заставляет caller обрабатывать null; альтернатива throwing `of(raw): Email`. Выбор зависит от семантики (валидация в boundary vs deep в коде).
 > - `AttributeConverter` с `autoApply = true` глобально применяется — если есть две entity с одинаковым value class, но разный маппинг, autoApply не подходит, используйте явный `@Convert`.
 >
-> **Связанные вопросы:** [[Q4]] — ограничения value class; [[Q7]] — JPA конвертеры; [[Q14]] — когда value class не нужен.
+> **Связанные вопросы:** [[kotlin-value-classes-interview#Q4]] — ограничения value class; [[kotlin-value-classes-interview#Q7]] — JPA конвертеры; [[kotlin-value-classes-interview#Q14]] — когда value class не нужен.
 >
 > ---
 >

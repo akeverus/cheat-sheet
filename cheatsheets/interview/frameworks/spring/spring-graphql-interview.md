@@ -119,7 +119,7 @@ Spring GraphQL добавляет аннотации `@QueryMapping`, `@Mutation
 >
 > **Подводные камни:** N+1 на сервере (нужны DataLoader/BatchMapping), сложность кэширования (нет URL-key), query complexity attacks (нужны depth/complexity limits), отсутствие HTTP-status semantics (все ошибки приходят в `errors[]` с HTTP 200).
 >
-> **Связанные вопросы:** [[Q5]] — N+1 и DataLoader, [[Q11]] — Spring Security, [[Q13]] — introspection.
+> **Связанные вопросы:** [[spring-graphql-interview#Q5]] — N+1 и DataLoader, [[spring-graphql-interview#Q11]] — Spring Security, [[spring-graphql-interview#Q13]] — introspection.
 
 ## Q2. Как настроить Spring GraphQL?
 
@@ -258,7 +258,7 @@ enum OrderStatus {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q1]] — что такое Spring GraphQL, [[Q3]] — реализация Query resolver, [[Q6]] — subscriptions через WebSocket.
+> **Связанные вопросы:** [[spring-graphql-interview#Q1]] — что такое Spring GraphQL, [[spring-graphql-interview#Q3]] — реализация Query resolver, [[spring-graphql-interview#Q6]] — subscriptions через WebSocket.
 
 ## Q3. Как реализовать Query resolver?
 
@@ -368,7 +368,7 @@ public class OrderItemResolver {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q5]] — N+1 при `@SchemaMapping`, [[Q12]] — детальное сравнение аннотаций, [[Q4]] — `@MutationMapping`.
+> **Связанные вопросы:** [[spring-graphql-interview#Q5]] — N+1 при `@SchemaMapping`, [[spring-graphql-interview#Q12]] — детальное сравнение аннотаций, [[spring-graphql-interview#Q4]] — `@MutationMapping`.
 
 ## Q4. Как реализовать Mutation?
 
@@ -484,7 +484,7 @@ public record OrderItemInput(
 >
 > ---
 >
-> **Связанные вопросы:** [[Q3]] — Query resolvers, [[Q7]] — error handling валидации, [[Q11]] — Spring Security.
+> **Связанные вопросы:** [[spring-graphql-interview#Q3]] — Query resolvers, [[spring-graphql-interview#Q7]] — error handling валидации, [[spring-graphql-interview#Q11]] — Spring Security.
 
 ## Q5. Что такое проблема N+1 в GraphQL и как её решить?
 
@@ -597,7 +597,7 @@ public BatchLoaderRegistry batchLoaderRegistry(OrderItemService itemService) {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q3]] — `@SchemaMapping` создаёт N+1, [[Q15]] — мониторинг и обнаружение медленных queries, [[Q10]] — пагинация.
+> **Связанные вопросы:** [[spring-graphql-interview#Q3]] — `@SchemaMapping` создаёт N+1, [[spring-graphql-interview#Q15]] — мониторинг и обнаружение медленных queries, [[spring-graphql-interview#Q10]] — пагинация.
 
 ## Q6. Как реализовать GraphQL Subscriptions?
 
@@ -709,7 +709,7 @@ spring:
 >
 > ---
 >
-> **Связанные вопросы:** [[Q1]] — обзор Spring GraphQL и WebFlux, [[Q11]] — auth для WebSocket, [[Q15]] — мониторинг подписок.
+> **Связанные вопросы:** [[spring-graphql-interview#Q1]] — обзор Spring GraphQL и WebFlux, [[spring-graphql-interview#Q11]] — auth для WebSocket, [[spring-graphql-interview#Q15]] — мониторинг подписок.
 
 ## Q7. Как обрабатывать ошибки в Spring GraphQL?
 
@@ -829,7 +829,7 @@ public class OrderController {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q3]] — `OrderNotFoundException` в Query resolver, [[Q11]] — `AccessDeniedException` от Spring Security, [[Q8]] — тестирование ошибок через `GraphQlTester`.
+> **Связанные вопросы:** [[spring-graphql-interview#Q3]] — `OrderNotFoundException` в Query resolver, [[spring-graphql-interview#Q11]] — `AccessDeniedException` от Spring Security, [[spring-graphql-interview#Q8]] — тестирование ошибок через `GraphQlTester`.
 
 ## Q8. Как тестировать Spring GraphQL?
 
@@ -960,7 +960,7 @@ query GetOrder($id: ID!) {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q7]] — error testing через `.errors()`, [[Q11]] — Security в тестах, [[Q15]] — мониторинг как альтернатива тестам в production.
+> **Связанные вопросы:** [[spring-graphql-interview#Q7]] — error testing через `.errors()`, [[spring-graphql-interview#Q11]] — Security в тестах, [[spring-graphql-interview#Q15]] — мониторинг как альтернатива тестам в production.
 
 ## Q9. Что такое GraphQL Directives и как их использовать?
 
@@ -1089,7 +1089,7 @@ public class AuthDirectiveWiring implements SchemaDirectiveWiring {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q11]] — auth через `@PreAuthorize` vs `@auth` directive, [[Q13]] — `@deprecated` для introspection, [[Q15]] — Instrumentation.
+> **Связанные вопросы:** [[spring-graphql-interview#Q11]] — auth через `@PreAuthorize` vs `@auth` directive, [[spring-graphql-interview#Q13]] — `@deprecated` для introspection, [[spring-graphql-interview#Q15]] — Instrumentation.
 
 ## Q10. Как реализовать пагинацию в GraphQL?
 
@@ -1209,7 +1209,7 @@ public Connection<Order> orders(
 >
 > ---
 >
-> **Связанные вопросы:** [[Q5]] — `@BatchMapping` для items, [[Q13]] — introspection и поля Connection, [[Q15]] — мониторинг slow queries.
+> **Связанные вопросы:** [[spring-graphql-interview#Q5]] — `@BatchMapping` для items, [[spring-graphql-interview#Q13]] — introspection и поля Connection, [[spring-graphql-interview#Q15]] — мониторинг slow queries.
 
 ## Q11. Как Spring GraphQL интегрируется с Spring Security?
 
@@ -1321,7 +1321,7 @@ Spring Security перехватывает запросы до их попада
 >
 > ---
 >
-> **Связанные вопросы:** [[Q7]] — `AccessDeniedException` → `ErrorType.FORBIDDEN`, [[Q9]] — `@auth` directive, [[Q6]] — auth для WebSocket subscriptions.
+> **Связанные вопросы:** [[spring-graphql-interview#Q7]] — `AccessDeniedException` → `ErrorType.FORBIDDEN`, [[spring-graphql-interview#Q9]] — `@auth` directive, [[spring-graphql-interview#Q6]] — auth для WebSocket subscriptions.
 
 ## Q12. Чем @SchemaMapping отличается от @QueryMapping и @MutationMapping?
 
@@ -1412,7 +1412,7 @@ public Customer customer(Order order) { ... }
 >
 > ---
 >
-> **Связанные вопросы:** [[Q3]] — Query resolver pattern, [[Q4]] — Mutation pattern, [[Q5]] — `@BatchMapping` для оптимизации `@SchemaMapping`.
+> **Связанные вопросы:** [[spring-graphql-interview#Q3]] — Query resolver pattern, [[spring-graphql-interview#Q4]] — Mutation pattern, [[spring-graphql-interview#Q5]] — `@BatchMapping` для оптимизации `@SchemaMapping`.
 
 ## Q13. Как работает introspection и когда его отключать?
 
@@ -1519,7 +1519,7 @@ GraphiQL и Apollo Sandbox используют introspection — при отк�
 >
 > ---
 >
-> **Связанные вопросы:** [[Q1]] — почему schema — публичный контракт, [[Q9]] — `@deprecated` directive виден в introspection, [[Q15]] — мониторинг introspection-attempts как security event.
+> **Связанные вопросы:** [[spring-graphql-interview#Q1]] — почему schema — публичный контракт, [[spring-graphql-interview#Q9]] — `@deprecated` directive виден в introspection, [[spring-graphql-interview#Q15]] — мониторинг introspection-attempts как security event.
 
 ## Q14. Как обрабатывать файловый upload в Spring GraphQL?
 
@@ -1604,7 +1604,7 @@ public Document uploadDocument(
 > - **Тестирование**: GraphQlTester не поддерживает multipart — нужен WebTestClient напрямую с multipart body.
 > - **Subscriptions с upload** не работают — multipart требует request/response, не WebSocket.
 >
-> **Связанные вопросы:** [[Q1]] — schema definition и custom scalars; [[Q4]] — @MutationMapping basics; [[Q15]] — мониторинг upload latency.
+> **Связанные вопросы:** [[spring-graphql-interview#Q1]] — schema definition и custom scalars; [[spring-graphql-interview#Q4]] — @MutationMapping basics; [[spring-graphql-interview#Q15]] — мониторинг upload latency.
 >
 > ---
 >
@@ -1745,7 +1745,7 @@ logging:
 > - **Subscription metrics отдельно**: long-lived connections не fit в request-duration model — нужны connection.count / messages.rate.
 > - **Persisted queries breaking traces**: если клиент шлёт hash вместо query, в logs ничего читаемого нет — нужен hash → query mapping.
 >
-> **Связанные вопросы:** [[Q5]] — N+1 проблема и DataLoader; [[Q13]] — query complexity для DoS protection; [[Q14]] — file upload latency.
+> **Связанные вопросы:** [[spring-graphql-interview#Q5]] — N+1 проблема и DataLoader; [[spring-graphql-interview#Q13]] — query complexity для DoS protection; [[spring-graphql-interview#Q14]] — file upload latency.
 >
 > ---
 >

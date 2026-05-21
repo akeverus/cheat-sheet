@@ -32,8 +32,8 @@ public class AnswerOptionRepository {
      */
     public List<AnswerOption> findByQuestionId(long questionId) {
         return jdbcTemplate.query(
-                "SELECT id, question_id, option_text, is_correct, display_order, source, explanation, prompt_version, quality_profile_version " +
-                        "FROM answer_options WHERE question_id = ? ORDER BY display_order ASC",
+                "SELECT id, question_id, option_text, is_correct, display_order, source, explanation, prompt_version, quality_profile_version, mcq_block_idx " +
+                        "FROM answer_options WHERE question_id = ? ORDER BY mcq_block_idx ASC, display_order ASC",
                 (rs, rowNum) -> new AnswerOption(
                         rs.getLong("id"),
                         rs.getLong("question_id"),
@@ -43,7 +43,8 @@ public class AnswerOptionRepository {
                         rs.getString("source"),
                         rs.getString("explanation"),
                         rs.getInt("prompt_version"),
-                        rs.getInt("quality_profile_version")),
+                        rs.getInt("quality_profile_version"),
+                        rs.getInt("mcq_block_idx")),
                 questionId);
     }
 
@@ -91,8 +92,8 @@ public class AnswerOptionRepository {
     @Transactional
     public void insertAll(long questionId, List<AnswerOptionCreate> options) {
         jdbcTemplate.batchUpdate(
-                "INSERT INTO answer_options (question_id, option_text, is_correct, display_order, source, explanation, prompt_version, quality_profile_version) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO answer_options (question_id, option_text, is_correct, display_order, source, explanation, prompt_version, quality_profile_version, mcq_block_idx) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 options, options.size(),
                 (ps, option) -> {
                     ps.setLong(1, questionId);
@@ -103,6 +104,7 @@ public class AnswerOptionRepository {
                     ps.setString(6, option.explanation());
                     ps.setInt(7, option.promptVersion());
                     ps.setInt(8, option.qualityProfileVersion());
+                    ps.setInt(9, option.mcqBlockIdx());
                 });
     }
 
@@ -116,6 +118,7 @@ public class AnswerOptionRepository {
      * @param explanation  объяснение, почему вариант правильный/неправильный (nullable)
      * @param promptVersion версия prompt-контракта генерации
      * @param qualityProfileVersion версия quality-профиля валидации
+     * @param mcqBlockIdx  индекс MCQ-блока внутри одного вопроса (0-based; 0 для single-block)
      */
     @Builder(toBuilder = true)
     public record AnswerOptionCreate(
@@ -125,7 +128,8 @@ public class AnswerOptionRepository {
             String source,
             String explanation,
             int promptVersion,
-            int qualityProfileVersion
+            int qualityProfileVersion,
+            int mcqBlockIdx
     ) {
         public AnswerOptionCreate(
                 String optionText,
@@ -134,7 +138,20 @@ public class AnswerOptionRepository {
                 String source,
                 String explanation
         ) {
-            this(optionText, correct, displayOrder, source, explanation, 1, 1);
+            this(optionText, correct, displayOrder, source, explanation, 1, 1, 0);
+        }
+
+        public AnswerOptionCreate(
+                String optionText,
+                boolean correct,
+                int displayOrder,
+                String source,
+                String explanation,
+                int promptVersion,
+                int qualityProfileVersion
+        ) {
+            this(optionText, correct, displayOrder, source, explanation,
+                    promptVersion, qualityProfileVersion, 0);
         }
 
         public AnswerOptionCreate {
@@ -148,6 +165,9 @@ public class AnswerOptionRepository {
             }
             if (qualityProfileVersion < 1) {
                 throw new IllegalArgumentException("qualityProfileVersion must be >= 1");
+            }
+            if (mcqBlockIdx < 0) {
+                throw new IllegalArgumentException("mcqBlockIdx must be >= 0");
             }
         }
     }

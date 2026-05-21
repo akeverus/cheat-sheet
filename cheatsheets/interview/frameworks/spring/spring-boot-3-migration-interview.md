@@ -95,7 +95,7 @@ updated: "2026-05-14"
 >
 > **Подводные камни:** многие third-party библиотеки задержались с jakarta-релизами (springdoc-openapi, swagger, custom internal libs). Проверить совместимость через `mvn dependency:tree` ДО старта миграции.
 >
-> **Связанные вопросы:** [[Q2]] — javax→jakarta детали; [[Q3]] — последовательность миграции 2.7→3.x; [[Q15]] — типичные проблемы.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q2]] — javax→jakarta детали; [[spring-boot-3-migration-interview#Q3]] — последовательность миграции 2.7→3.x; [[spring-boot-3-migration-interview#Q15]] — типичные проблемы.
 >
 > ---
 >
@@ -191,7 +191,7 @@ import jakarta.validation.constraints.NotNull;
 >
 > **Подводные камни:** Java SE пакеты (`javax.sql.DataSource`, `javax.crypto.*`, `javax.net.ssl.*`, `javax.management.*`, `javax.naming.*`) **остались javax** — это часть JDK от Oracle, не Java EE. Правило: если пакет из JDK rt.jar — javax; если из Java EE spec — jakarta.
 >
-> **Связанные вопросы:** [[Q1]] — Spring Boot 3 ключевые изменения; [[Q4]] — какие javax-пакеты НЕ мигрировали; [[Q15]] — типичные проблемы при миграции.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q1]] — Spring Boot 3 ключевые изменения; [[spring-boot-3-migration-interview#Q4]] — какие javax-пакеты НЕ мигрировали; [[spring-boot-3-migration-interview#Q15]] — типичные проблемы при миграции.
 >
 > ---
 >
@@ -280,7 +280,7 @@ import jakarta.validation.constraints.NotNull;
 >
 > **Подводные камни:** OpenRewrite не покрывает всё — Spring Security 6 lambda DSL, Hibernate 6 SQL generation, custom `WebSecurityConfigurerAdapter` нужно править вручную. Third-party библиотеки могут не иметь jakarta-версий — проверить через `mvn dependency:tree | grep javax`.
 >
-> **Связанные вопросы:** [[Q11]] — Spring Security 6 breaking changes; [[Q14]] — properties migrator; [[Q15]] — типичные проблемы при миграции.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q11]] — Spring Security 6 breaking changes; [[spring-boot-3-migration-interview#Q14]] — properties migrator; [[spring-boot-3-migration-interview#Q15]] — типичные проблемы при миграции.
 >
 > ---
 >
@@ -402,7 +402,7 @@ import jakarta.validation.constraints.NotNull;
 >
 > **Подводные камни:** `javax.annotation.Resource` (CDI) мигрировал в `jakarta.annotation.Resource`, но `javax.annotation.processing.*` (часть JDK для annotation processors) остался javax. Также `@PostConstruct`/`@PreDestroy` теперь в `jakarta.annotation.*`, но раньше jaxws-api тащил их через `javax.annotation`.
 >
-> **Связанные вопросы:** [[Q2]] — причины миграции javax→jakarta; [[Q3]] — порядок миграции SB 2.7→3.x; [[Q15]] — типичные проблемы.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q2]] — причины миграции javax→jakarta; [[spring-boot-3-migration-interview#Q3]] — порядок миграции SB 2.7→3.x; [[spring-boot-3-migration-interview#Q15]] — типичные проблемы.
 >
 > ---
 >
@@ -513,7 +513,7 @@ WeatherClient weatherClient = HttpServiceProxyFactory
 >
 > **Подводные камни:** нет встроенной поддержки service discovery (как у Feign+Eureka) — нужно вручную задавать baseUrl. Нет circuit breaker — интегрируется через Resilience4j вручную. Конфигурация ProxyFactory verbose — можно обернуть в свой `@Configuration`.
 >
-> **Связанные вопросы:** [[Q12]] — RestClient (Spring Boot 3.2+); [[Q1]] — ключевые изменения Spring Boot 3.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q12]] — RestClient (Spring Boot 3.2+); [[spring-boot-3-migration-interview#Q1]] — ключевые изменения Spring Boot 3.
 >
 > ---
 >
@@ -655,7 +655,7 @@ Content-Type: `application/problem+json`.
 >
 > **Подводные камни:** `Spring 6.0` не включал Problem Details по умолчанию — нужно явно ставить property. `Spring Boot 3.2+` упростил, но для `@ControllerAdvice` всё равно нужен `extends ResponseEntityExceptionHandler`. Кастомные fields добавляются через `setProperty`, не как поля POJO.
 >
-> **Связанные вопросы:** [[Q1]] — ключевые изменения Spring Boot 3; [[Q5]] — HTTP Interface Clients (тоже Spring 6 фича).
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q1]] — ключевые изменения Spring Boot 3; [[spring-boot-3-migration-interview#Q5]] — HTTP Interface Clients (тоже Spring 6 фича).
 >
 > ---
 >
@@ -789,7 +789,7 @@ public class MyHints implements RuntimeHintsRegistrar {
 >
 > **Подводные камни:** время сборки 5-15 минут vs секунды для JVM — медленнее dev loop. Некоторые библиотеки не имеют GraalVM-hints (особенно специфичные internal). Peak throughput может быть ниже чем у JVM с разогретым JIT для long-running.
 >
-> **Связанные вопросы:** [[Q8]] — AOT processing для JVM mode; [[Q1]] — ключевые изменения SB 3; [[Q10]] — Virtual Threads (другой подход к производительности).
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q8]] — AOT processing для JVM mode; [[spring-boot-3-migration-interview#Q1]] — ключевые изменения SB 3; [[spring-boot-3-migration-interview#Q10]] — Virtual Threads (другой подход к производительности).
 >
 > ---
 >
@@ -897,7 +897,7 @@ java -Dspring.aot.enabled=true -jar app.jar
 >
 > **Подводные камни:** при AOT processing динамические профили (`@Profile` с runtime-условиями) могут вести себя иначе — bean registration финализируется на этапе сборки. Тестировать AOT-сборку отдельно в pipeline.
 >
-> **Связанные вопросы:** [[Q7]] — GraalVM Native Image; [[Q1]] — ключевые изменения SB 3; [[Q10]] — Virtual Threads.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q7]] — GraalVM Native Image; [[spring-boot-3-migration-interview#Q1]] — ключевые изменения SB 3; [[spring-boot-3-migration-interview#Q10]] — Virtual Threads.
 >
 > ---
 >
@@ -1037,7 +1037,7 @@ management:
 >
 > **Подводные камни:** `Observation` имеет low-cardinality (для метрик, ограниченный набор значений) и high-cardinality (для трейсов, любые значения). Использовать `highCardinalityKeyValue` для metric labels — приведёт к cardinality explosion в Prometheus.
 >
-> **Связанные вопросы:** [[Q1]] — ключевые изменения SB 3; [[Q15]] — типичные проблемы при миграции.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q1]] — ключевые изменения SB 3; [[spring-boot-3-migration-interview#Q15]] — типичные проблемы при миграции.
 >
 > ---
 >
@@ -1159,7 +1159,7 @@ public TomcatProtocolHandlerCustomizer<?> protocolHandlerVirtualThreadExecutorCu
 > - **Не помогает для CPU-bound** — bottleneck в количестве cores.
 > - **JNI/native код**: блокирует platform thread (не VT-aware).
 >
-> **Связанные вопросы:** [[Q1]] — ключевые изменения SB 3; [[Q7]] — GraalVM Native (альтернатива для cold start); [[Q9]] — Observability.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q1]] — ключевые изменения SB 3; [[spring-boot-3-migration-interview#Q7]] — GraalVM Native (альтернатива для cold start); [[spring-boot-3-migration-interview#Q9]] — Observability.
 >
 > ---
 >
@@ -1287,7 +1287,7 @@ class SecurityConfig {
 >
 > **Подводные камни:** многие `@EnableMethodSecurity` defaults изменились (`prePostEnabled=true` дефолт вместо false). `RoleHierarchy` Bean больше не автоматически подхватывается — нужно явная регистрация. `H2 Console` блокируется CSRF — для dev `.requestMatchers(toH2Console()).permitAll()` + disable CSRF на этом пути.
 >
-> **Связанные вопросы:** [[Q1]] — ключевые изменения SB 3; [[Q3]] — порядок миграции; [[Q15]] — типичные проблемы.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q1]] — ключевые изменения SB 3; [[spring-boot-3-migration-interview#Q3]] — порядок миграции; [[spring-boot-3-migration-interview#Q15]] — типичные проблемы.
 >
 > ---
 >
@@ -1411,7 +1411,7 @@ Mono<Order> orderMono = client.get()
 >
 > **Подводные камни:** `RestClient.Builder` auto-configured в SB 3.2+ как `restClientBuilder()` Bean. `RestClient` thread-safe, можно создать один на приложение. Для timeout — настраивать через `ClientHttpRequestFactory` (например `JdkClientHttpRequestFactory.setReadTimeout()`).
 >
-> **Связанные вопросы:** [[Q5]] — HTTP Interface Clients (поверх RestClient); [[Q1]] — изменения SB 3; [[Q10]] — Virtual Threads (с RestClient блокирующий код становится дешёвым).
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q5]] — HTTP Interface Clients (поверх RestClient); [[spring-boot-3-migration-interview#Q1]] — изменения SB 3; [[spring-boot-3-migration-interview#Q10]] — Virtual Threads (с RestClient блокирующий код становится дешёвым).
 >
 > ---
 >
@@ -1523,7 +1523,7 @@ public class MyDataSourceAutoConfiguration { ... }
 >
 > **Подводные камни:** `spring.factories` всё ещё используется для других целей (ApplicationListener, EnvironmentPostProcessor) — он не удалён полностью, только EnableAutoConfiguration перенесён. Не путать с `META-INF/spring.factories` который ещё может содержать `org.springframework.context.ApplicationListener=...`.
 >
-> **Связанные вопросы:** [[Q8]] — AOT processing (тоже изменения в инфраструктуре); [[Q1]] — ключевые изменения SB 3.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q8]] — AOT processing (тоже изменения в инфраструктуре); [[spring-boot-3-migration-interview#Q1]] — ключевые изменения SB 3.
 >
 > ---
 >
@@ -1640,7 +1640,7 @@ The following properties have been renamed:
 >
 > **Подводные камни:** не покрывает 100% renames — Spring Boot 3.1, 3.2 добавляют новые renames. Каждый minor upgrade — снова подключить migrator. Не работает для third-party библиотек (только Spring Boot core). Может слегка замедлить startup (~50-100ms) — не оставлять в production.
 >
-> **Связанные вопросы:** [[Q3]] — последовательность миграции; [[Q9]] — Observability properties renames; [[Q15]] — типичные проблемы.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q3]] — последовательность миграции; [[spring-boot-3-migration-interview#Q9]] — Observability properties renames; [[spring-boot-3-migration-interview#Q15]] — типичные проблемы.
 >
 > ---
 >
@@ -1768,7 +1768,7 @@ management.metrics.export.*  → management.prometheus.*
 >
 > **Подводные камни:** Hibernate 6 generated SQL может отличаться → integration tests с реальной БД (Testcontainers) обязательны. Свои custom `WebSecurityConfigurerAdapter`-наследники переписывать вручную (OpenRewrite не покрывает 100%).
 >
-> **Связанные вопросы:** [[Q3]] — порядок миграции; [[Q11]] — Spring Security 6 breaking; [[Q9]] — Observability migration; [[Q14]] — properties migrator.
+> **Связанные вопросы:** [[spring-boot-3-migration-interview#Q3]] — порядок миграции; [[spring-boot-3-migration-interview#Q11]] — Spring Security 6 breaking; [[spring-boot-3-migration-interview#Q9]] — Observability migration; [[spring-boot-3-migration-interview#Q14]] — properties migrator.
 >
 > ---
 >

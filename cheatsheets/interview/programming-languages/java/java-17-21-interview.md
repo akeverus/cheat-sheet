@@ -2102,7 +2102,7 @@ switch (str) {
 > - **Null handling**: до Java 21 switch с null → NullPointerException. Java 21 разрешает `case null -> ...` явно. Без него null всё ещё NPE, даже с sealed hierarchy.
 > - **Sealed без permits clause**: в одном файле — permits implicit (все subtypes из файла). В разных файлах — нужно `permits A, B, C` явно.
 >
-> **Связанные вопросы:** [[Q40]] — Record Patterns как ortho­gonal feature; [[Q41]] — String Templates (тоже Java 21); [[Q35]] — sealed classes basics.
+> **Связанные вопросы:** [[java-17-21-interview#Q40]] — Record Patterns как ortho­gonal feature; [[java-17-21-interview#Q41]] — String Templates (тоже Java 21); [[java-17-21-interview#Q35]] — sealed classes basics.
 >
 > ---
 >
@@ -2273,7 +2273,7 @@ for (Object obj : shapes) {
 > - **Generic record patterns**: `case Pair<String, Integer>(var key, var value)` — работает с явными генериками, но компилятор требует `<>` либо diamond.
 > - **Unnamed pattern `_`**: доступен с Java 21 в pattern контексте, с Java 22 — также для unused переменных. Не путать с `_` как identifier (запрещён в Java 9+).
 >
-> **Связанные вопросы:** [[Q39]] — pattern matching for switch и sealed hierarchy; [[Q41]] — String Templates (тоже Java 21); [[Q15]] — records basics.
+> **Связанные вопросы:** [[java-17-21-interview#Q39]] — pattern matching for switch и sealed hierarchy; [[java-17-21-interview#Q41]] — String Templates (тоже Java 21); [[java-17-21-interview#Q15]] — records basics.
 >
 > ---
 >
@@ -2436,7 +2436,7 @@ PreparedStatement stmt = SQL."SELECT * FROM users WHERE name = \{userName}";
 > - **Performance**: STR делает аллокацию `StringTemplate` объекта на каждое использование. На hot path может быть медленнее чем StringBuilder + format. Бенчмарк перед production.
 > - **IDE поддержка**: IntelliJ показывает type inference, но syntax highlighting для template processors появилась только в 2024.
 >
-> **Связанные вопросы:** [[Q40]] — Record Patterns как другая Java 21 feature; [[Q39]] — sealed hierarchies и pattern matching; [[Q33]] — Text Blocks как ortho­gonal feature для multi-line strings.
+> **Связанные вопросы:** [[java-17-21-interview#Q40]] — Record Patterns как другая Java 21 feature; [[java-17-21-interview#Q39]] — sealed hierarchies и pattern matching; [[java-17-21-interview#Q33]] — Text Blocks как ortho­gonal feature для multi-line strings.
 >
 > ---
 >
@@ -2612,7 +2612,7 @@ java --enable-preview --source 21 hello.java
 > - **IDE поддержка**: IntelliJ Idea 2024.1+, VSCode/Eclipse — позже. Для CI/CD нужен JDK 21+.
 > - **Performance**: на runtime разницы нет — обычный class instance + method invocation.
 >
-> **Связанные вопросы:** [[Q39]] — pattern matching, тоже Java 21 final feature; [[Q40]] — Record Patterns; [[Q41]] — String Templates (preview, изменения в 23+).
+> **Связанные вопросы:** [[java-17-21-interview#Q39]] — pattern matching, тоже Java 21 final feature; [[java-17-21-interview#Q40]] — Record Patterns; [[java-17-21-interview#Q41]] — String Templates (preview, изменения в 23+).
 >
 > ---
 >

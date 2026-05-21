@@ -110,7 +110,7 @@ updated: "2026-05-15"
 >
 > ---
 >
-> **Связанные вопросы:** [[Q2]] — конфигурация состояний и переходов; [[Q13]] — SSM vs Saga Pattern для распределённых процессов.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q2]] — конфигурация состояний и переходов; [[spring-state-machine-interview#Q13]] — SSM vs Saga Pattern для распределённых процессов.
 
 ## Q2. Как настроить базовую State Machine?
 
@@ -238,7 +238,7 @@ public class OrderStateMachineConfig
 >
 > ---
 >
-> **Связанные вопросы:** [[Q3]] — отправка событий и получение состояния; [[Q8]] — StateMachineFactory для per-entity автоматов.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q3]] — отправка событий и получение состояния; [[spring-state-machine-interview#Q8]] — StateMachineFactory для per-entity автоматов.
 
 ## Q3. Как отправить событие и получить текущее состояние?
 
@@ -333,7 +333,7 @@ public class OrderFsmService {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q4]] — Guards для условных переходов; [[Q11]] — Listener для отслеживания `eventNotAccepted`.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q4]] — Guards для условных переходов; [[spring-state-machine-interview#Q11]] — Listener для отслеживания `eventNotAccepted`.
 
 ## Q4. Что такое Guard и для чего он нужен?
 
@@ -432,7 +432,7 @@ transitions
 >
 > ---
 >
-> **Связанные вопросы:** [[Q5]] — Action как side effect перехода; [[Q11]] — Listener для отслеживания `eventNotAccepted` от guard.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q5]] — Action как side effect перехода; [[spring-state-machine-interview#Q11]] — Listener для отслеживания `eventNotAccepted` от guard.
 
 ## Q5. Что такое Action в State Machine?
 
@@ -544,7 +544,7 @@ states.withStates()
 >
 > ---
 >
-> **Связанные вопросы:** [[Q4]] — Guard как pre-condition; [[Q6]] — Extended State для передачи данных между actions.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q4]] — Guard как pre-condition; [[spring-state-machine-interview#Q6]] — Extended State для передачи данных между actions.
 
 ## Q6. Что такое Extended State?
 
@@ -634,7 +634,7 @@ Extended State персистируется вместе с машиной со�
 >
 > ---
 >
-> **Связанные вопросы:** [[Q4]] — Guard читает Extended State; [[Q5]] — Action пишет в Extended State; [[Q7]] — persistence сериализует переменные.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q4]] — Guard читает Extended State; [[spring-state-machine-interview#Q5]] — Action пишет в Extended State; [[spring-state-machine-interview#Q7]] — persistence сериализует переменные.
 
 ## Q7. Как сохранять состояние State Machine (persistence)?
 
@@ -761,7 +761,7 @@ public class PersistableOrderFsmService {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q6]] — Extended State сериализуется вместе с состоянием; [[Q8]] — `StateMachineFactory` создаёт восстанавливаемые экземпляры.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q6]] — Extended State сериализуется вместе с состоянием; [[spring-state-machine-interview#Q8]] — `StateMachineFactory` создаёт восстанавливаемые экземпляры.
 
 ## Q8. Что такое StateMachineFactory и когда его использовать?
 
@@ -864,7 +864,7 @@ sm.startReactively().block();
 >
 > ---
 >
-> **Связанные вопросы:** [[Q7]] — persistence работает в связке с Factory; [[Q11]] — listener регистрируется на машину из Factory; [[Q15]] — singleton machine для нескольких объектов — типичная ошибка.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q7]] — persistence работает в связке с Factory; [[spring-state-machine-interview#Q11]] — listener регистрируется на машину из Factory; [[spring-state-machine-interview#Q15]] — singleton machine для нескольких объектов — типичная ошибка.
 
 ## Q9. Как реализовать иерархические состояния?
 
@@ -969,7 +969,7 @@ transitions
 >
 > ---
 >
-> **Связанные вопросы:** [[Q10]] — parallel regions vs hierarchy; [[Q3]] — `getState().getIds()` возвращает stack для composite states.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q10]] — parallel regions vs hierarchy; [[spring-state-machine-interview#Q3]] — `getState().getIds()` возвращает stack для composite states.
 
 ## Q10. Что такое regions (параллельные регионы)?
 
@@ -1072,7 +1072,7 @@ transitions
 >
 > ---
 >
-> **Связанные вопросы:** [[Q9]] — hierarchical vs parallel; [[Q3]] — `getState().getIds()` для параллельных регионов возвращает substate каждого региона.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q9]] — hierarchical vs parallel; [[spring-state-machine-interview#Q3]] — `getState().getIds()` для параллельных регионов возвращает substate каждого региона.
 
 ## Q11. Как добавить StateMachineListener?
 
@@ -1186,7 +1186,7 @@ public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent
 >
 > ---
 >
-> **Связанные вопросы:** [[Q5]] — Action vs Listener; [[Q14]] — `@WithStateMachine` как декларативная альтернатива.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q5]] — Action vs Listener; [[spring-state-machine-interview#Q14]] — `@WithStateMachine` как декларативная альтернатива.
 
 ## Q12. Как тестировать Spring State Machine?
 
@@ -1323,7 +1323,7 @@ class OrderStateMachineTest {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q4]] — Guard тестируется отдельно через StateContext mock; [[Q5]] — Action delegation в service позволяет unit-тестировать service независимо; [[Q11]] — Listener interactions через `expectStateChanged`.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q4]] — Guard тестируется отдельно через StateContext mock; [[spring-state-machine-interview#Q5]] — Action delegation в service позволяет unit-тестировать service независимо; [[spring-state-machine-interview#Q11]] — Listener interactions через `expectStateChanged`.
 
 ## Q13. State Machine vs Saga Pattern — когда что применять?
 
@@ -1412,7 +1412,7 @@ class OrderStateMachineTest {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q11]] — Listener публикует события для choreographed scenarios; [[Q7]] — persistence критична для долгоживущих Saga-orchestrator машин.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q11]] — Listener публикует события для choreographed scenarios; [[spring-state-machine-interview#Q7]] — persistence критична для долгоживущих Saga-orchestrator машин.
 
 ## Q14. Как использовать @WithStateMachine для декларативной обработки событий?
 
@@ -1524,7 +1524,7 @@ public class OrderEventHandler {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q5]] — Action как императивная альтернатива; [[Q11]] — Listener как императивная альтернатива; [[Q12]] — handler легко тестируется как обычный bean.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q5]] — Action как императивная альтернатива; [[spring-state-machine-interview#Q11]] — Listener как императивная альтернатива; [[spring-state-machine-interview#Q12]] — handler легко тестируется как обычный bean.
 
 ## Q15. Какие типичные ошибки при работе со Spring State Machine?
 
@@ -1632,7 +1632,7 @@ public class OrderEventHandler {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q8]] — Factory vs singleton; [[Q7]] — persistence обязательна для Factory подхода; [[Q11]] — Listener на `eventNotAccepted` помогает диагностировать race conditions.
+> **Связанные вопросы:** [[spring-state-machine-interview#Q8]] — Factory vs singleton; [[spring-state-machine-interview#Q7]] — persistence обязательна для Factory подхода; [[spring-state-machine-interview#Q11]] — Listener на `eventNotAccepted` помогает диагностировать race conditions.
 
 ## See also
 

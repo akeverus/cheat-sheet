@@ -64,7 +64,10 @@ class MarkdownQuestionParserTest {
     }
 
     @Test
-    void warnsWithFileAndQuestionContextWhenSkippingExtraMcqBlocks() throws IOException {
+    void noWarningEmittedForMultipleMcqBlocksAfterV15Migration() throws IOException {
+        // После V15 миграции (uq на (question_id, mcq_block_idx)) несколько MCQ блоков
+        // на один Q — допустимо, парсер сохраняет все с инкрементом mcqBlockIdx,
+        // никаких WARN не должно быть.
         Logger parserLogger = (Logger) LoggerFactory.getLogger(MarkdownQuestionParser.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
@@ -89,22 +92,24 @@ class MarkdownQuestionParserTest {
                     > - [ ] вариант D | объяснение
                     """);
 
-            parser().parse(file);
+            List<MarkdownQuestionParser.ParsedQuestion> questions = parser().parse(file);
 
+            // Оба блока попали в опции
+            assertThat(questions).hasSize(1);
+            assertThat(questions.get(0).options()).hasSize(8);
+            // Нет WARN-сообщений о пропуске
             assertThat(appender.list)
                     .filteredOn(e -> e.getLevel() == Level.WARN)
-                    .anySatisfy(e -> {
-                        assertThat(e.getFormattedMessage()).contains("transactions.md");
-                        assertThat(e.getFormattedMessage()).contains("Q7");
-                        assertThat(e.getFormattedMessage()).contains("[!mcq]");
-                    });
+                    .filteredOn(e -> e.getFormattedMessage().contains("пропущено"))
+                    .as("no skip-warnings after multi-block support")
+                    .isEmpty();
         } finally {
             parserLogger.detachAppender(appender);
         }
     }
 
     @Test
-    void usesOnlyFirstMcqBlockWhenQuestionHasMultiple() throws IOException {
+    void capturesAllMcqBlocksWithBlockIndex() throws IOException {
         Path file = tempDir.resolve("multi-mcq.md");
         Files.writeString(file, """
                 ## Q1. (!) dirty/non-repeatable/phantom?
@@ -128,12 +133,123 @@ class MarkdownQuestionParserTest {
 
         assertThat(questions).hasSize(1);
         MarkdownQuestionParser.ParsedQuestion q = questions.get(0);
-        // Только первый блок попал в опции
-        assertThat(q.options()).hasSize(4);
-        assertThat(q.options().stream().filter(MarkdownQuestionParser.ParsedOption::correct).count())
-                .as("ровно один правильный ответ — без нарушения uq_answer_options_single_correct_per_question")
-                .isEqualTo(1);
+        // Multi-block MCQ: оба блока сохранены, идентифицируются mcqBlockIdx 0 и 1
+        assertThat(q.options()).hasSize(8);
+
+        long block0Count = q.options().stream().filter(o -> o.mcqBlockIdx() == 0).count();
+        long block1Count = q.options().stream().filter(o -> o.mcqBlockIdx() == 1).count();
+        assertThat(block0Count).as("4 опции в блоке 0").isEqualTo(4);
+        assertThat(block1Count).as("4 опции в блоке 1").isEqualTo(4);
+
+        // В каждом блоке ровно один correct
+        long correctBlock0 = q.options().stream()
+                .filter(o -> o.mcqBlockIdx() == 0 && o.correct())
+                .count();
+        long correctBlock1 = q.options().stream()
+                .filter(o -> o.mcqBlockIdx() == 1 && o.correct())
+                .count();
+        assertThat(correctBlock0).isEqualTo(1);
+        assertThat(correctBlock1).isEqualTo(1);
+
         assertThat(q.options().get(0).text()).contains("Dirty read");
+        assertThat(q.options().get(4).text()).contains("Phantom");
+    }
+
+    @Test
+    void capturesMultiLineExplanationFromIndentedSections() throws IOException {
+        Path file = tempDir.resolve("multiline-mcq.md");
+        Files.writeString(file, """
+                ## Q1. (!) `@Transactional` rollback behavior?
+
+                Spring AOP-proxy перехватывает вызов и решает rollback по типу исключения.
+
+                > [!mcq] Что произойдёт при checked exception?
+                >
+                > - [ ] A. Транзакция автоматически откатится — Spring трактует любое исключение как rollback.
+                >
+                >     **Что на самом деле.** Spring откатывает только на RuntimeException и Error.
+                >
+                >     **Откуда путаница.** Аналогия с try-catch-finally.
+                >
+                >     **Если бы это было правдой.** Не нужен был бы rollbackFor параметр.
+                >
+                >     **Как было бы правильно.** Бросать unchecked exception или указать rollbackFor.
+                >
+                > - [x] B. Транзакция закоммитится, изменение попадёт в БД, исключение пробросится наверх.
+                >
+                >     **Развёрнутое объяснение.** Default-логика в DefaultTransactionAttribute.rollbackOn() возвращает true только для RuntimeException и Error.
+                >
+                >     **Пример.** Сервис списывает деньги и шлёт email — checked exception оставит деньги списанными.
+                >
+                >     **Когда применять.** Знать всегда — это default Spring behavior.
+                >
+                >     **Подводные камни.** rollbackFor не наследуется через REQUIRES_NEW.
+                >
+                >     **Связанные вопросы.** [[Q5]] propagation; [[Q12]] self-invocation.
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = parser().parse(file);
+
+        assertThat(questions).hasSize(1);
+        MarkdownQuestionParser.ParsedQuestion q = questions.get(0);
+        assertThat(q.options()).hasSize(2);
+
+        // Wrong option: 4 секции аккумулируются как explanation
+        MarkdownQuestionParser.ParsedOption wrong = q.options().get(0);
+        assertThat(wrong.correct()).isFalse();
+        assertThat(wrong.text()).startsWith("A.");
+        assertThat(wrong.explanation())
+                .as("multi-line explanation accumulates all named sections")
+                .contains("**Что на самом деле.** Spring откатывает только на RuntimeException")
+                .contains("**Откуда путаница.** Аналогия с try-catch-finally")
+                .contains("**Если бы это было правдой.** Не нужен был бы rollbackFor")
+                .contains("**Как было бы правильно.** Бросать unchecked");
+
+        // Correct option: 5 секций
+        MarkdownQuestionParser.ParsedOption correct = q.options().get(1);
+        assertThat(correct.correct()).isTrue();
+        assertThat(correct.text()).startsWith("B.");
+        assertThat(correct.explanation())
+                .contains("**Развёрнутое объяснение.** Default-логика")
+                .contains("**Пример.** Сервис списывает деньги")
+                .contains("**Когда применять.** Знать всегда")
+                .contains("**Подводные камни.** rollbackFor не наследуется")
+                .contains("**Связанные вопросы.** [[Q5]] propagation");
+    }
+
+    @Test
+    void inlinePipeExplanationStillWorksForLegacyFormat() throws IOException {
+        Path file = tempDir.resolve("legacy-mcq.md");
+        Files.writeString(file, """
+                ## Q1. Default GC?
+
+                > [!mcq]
+                > - [x] G1 | G1 — default с Java 9
+                > - [ ] CMS | Удалён в Java 14
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = parser().parse(file);
+        assertThat(questions.get(0).options()).hasSize(2);
+        assertThat(questions.get(0).options().get(0).explanation()).isEqualTo("G1 — default с Java 9");
+        assertThat(questions.get(0).options().get(1).explanation()).isEqualTo("Удалён в Java 14");
+    }
+
+    @Test
+    void mcqCalloutWithInlineQuestionHeaderStillRecognized() throws IOException {
+        Path file = tempDir.resolve("inline-q.md");
+        Files.writeString(file, """
+                ## Q1. Topic
+
+                > [!mcq] What is X?
+                > - [x] Correct answer here
+                > - [ ] Wrong A
+                > - [ ] Wrong B
+                > - [ ] Wrong C
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = parser().parse(file);
+        assertThat(questions.get(0).options()).hasSize(4);
+        assertThat(questions.get(0).options().get(0).correct()).isTrue();
     }
 
     @Test

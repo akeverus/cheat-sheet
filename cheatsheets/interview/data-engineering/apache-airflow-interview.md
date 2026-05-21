@@ -704,7 +704,7 @@ Hooks — для custom Python tasks. Operators — для declarative workflows
 > - **Lazy connection в Operator**: Operator открывает соединение в `execute()`, не в `__init__()` — поэтому DAG parse не упадёт при недоступной БД.
 > - **Custom Hooks**: для legacy систем без provider package можно унаследоваться от `BaseHook` и реализовать `get_conn()`.
 >
-> **Связанные вопросы:** [[Q6]] — что такое Operator; [[Q20]] — Connections и Variables; [[Q22]] — Sensor как специальный тип Operator.
+> **Связанные вопросы:** [[apache-airflow-interview#Q6]] — что такое Operator; [[apache-airflow-interview#Q20]] — Connections и Variables; [[apache-airflow-interview#Q22]] — Sensor как специальный тип Operator.
 >
 > ---
 >
@@ -821,7 +821,7 @@ wait_for_file = FileSensor(
 > - **Soft-fail vs fail**: `soft_fail=True` переводит sensor в `skipped` вместо `failed` по timeout — полезно для optional dependencies.
 > - **Deferrable sensors (Airflow 2.2+)**: `S3KeySensorAsync`, `DateTimeSensorAsync` — используют Triggerer вместо worker slot, ещё эффективнее reschedule.
 >
-> **Связанные вопросы:** [[Q21]] — Hooks vs Operators (Sensor — частный случай Operator); [[Q23]] — reschedule vs poke mode; [[Q24]] — deploy с deferrable sensors.
+> **Связанные вопросы:** [[apache-airflow-interview#Q21]] — Hooks vs Operators (Sensor — частный случай Operator); [[apache-airflow-interview#Q23]] — reschedule vs poke mode; [[apache-airflow-interview#Q24]] — deploy с deferrable sensors.
 >
 > ---
 >
@@ -955,7 +955,7 @@ sensor = FileSensor(
 > - **Triggerer process** для deferrable: нужен отдельный `airflow triggerer` процесс — не запустится из коробки, надо добавлять в deploy.
 > - **External task sensor**: `mode='reschedule'` особенно важен, потому что обычно ждём до конца дня — без reschedule парализует кластер.
 >
-> **Связанные вопросы:** [[Q22]] — что такое sensor; [[Q25]] — масштабирование DAG count (sensors часто bottleneck); [[Q26]] — best practice mode reschedule по умолчанию.
+> **Связанные вопросы:** [[apache-airflow-interview#Q22]] — что такое sensor; [[apache-airflow-interview#Q25]] — масштабирование DAG count (sensors часто bottleneck); [[apache-airflow-interview#Q26]] — best practice mode reschedule по умолчанию.
 >
 > ---
 >
@@ -1089,7 +1089,7 @@ helm install airflow apache-airflow/airflow
 > - **Webserver сессии**: при scale webserver replicas нужен Redis для shared session store, иначе пользователи теряют login.
 > - **Helm chart vs custom**: official Helm — хорош для start, но крупные команды часто пишут свой operator (`airflow-on-k8s-operator`) для GitOps workflow.
 >
-> **Связанные вопросы:** [[Q15]] — выбор executor (Kubernetes для prod); [[Q23]] — reschedule mode для sensors в prod; [[Q25]] — scaling DAG count.
+> **Связанные вопросы:** [[apache-airflow-interview#Q15]] — выбор executor (Kubernetes для prod); [[apache-airflow-interview#Q23]] — reschedule mode для sensors в prod; [[apache-airflow-interview#Q25]] — scaling DAG count.
 >
 > ---
 >
@@ -1228,7 +1228,7 @@ helm install airflow apache-airflow/airflow
 > - **DAG file size**: каждый DAG-файл парсится при каждом scan; если в файле тяжёлые imports или DB-запросы — это убивает scheduler. Top-level Python код DAG должен быть pure-functional.
 > - **Smart Sensors (deprecated)** vs **Deferrable Sensors (2.2+)**: для крупных install Deferrable Sensors почти обязательны — экономят worker slots на сотнях ждущих tasks.
 >
-> **Связанные вопросы:** [[Q17]] — CeleryExecutor scaling; [[Q18]] — KubernetesExecutor; [[Q24]] — production deploy с правильными конфигами; [[Q26]] — best practices для prod DAGs.
+> **Связанные вопросы:** [[apache-airflow-interview#Q17]] — CeleryExecutor scaling; [[apache-airflow-interview#Q18]] — KubernetesExecutor; [[apache-airflow-interview#Q24]] — production deploy с правильными конфигами; [[apache-airflow-interview#Q26]] — best practices для prod DAGs.
 
 ## Q26. Best practices для production DAGs?
 
@@ -1359,7 +1359,7 @@ helm install airflow apache-airflow/airflow
 > - **PythonOperator со side-effects на module-level** — выполнится при каждом parse, не только при run.
 > - **SLA не работает для очень коротких DAG** — `sla` checks делается по интервалам scheduler, малозаметно для DAG < 5 минут.
 >
-> **Связанные вопросы:** [[Q13]] — backfill требует idempotency; [[Q20]] — Connections и Variables для конфигурации; [[Q24]] — deploy DAG через git-sync; [[Q25]] — scaling tradeoffs.
+> **Связанные вопросы:** [[apache-airflow-interview#Q13]] — backfill требует idempotency; [[apache-airflow-interview#Q20]] — Connections и Variables для конфигурации; [[apache-airflow-interview#Q24]] — deploy DAG через git-sync; [[apache-airflow-interview#Q25]] — scaling tradeoffs.
 
 ## Q27. (!) Airflow vs Prefect vs Dagster?
 
@@ -1483,7 +1483,7 @@ helm install airflow apache-airflow/airflow
 > - **Community / providers**: Airflow имеет ~80 official providers (Snowflake, BigQuery, AWS, etc), у Prefect/Dagster — меньше готовых интеграций.
 > - **Stability vs novelty**: Airflow стабилен и зрел, но имеет накопленный legacy (XCom limits, scheduler quirks). Prefect/Dagster — современная архитектура, но меньше battle-tested patterns.
 >
-> **Связанные вопросы:** [[Q1]] — Airflow позиционирование как orchestrator; [[Q28]] — минусы Airflow которые компенсируют Prefect/Dagster; [[Q8]] — TaskFlow API как ответ Airflow на современные API.
+> **Связанные вопросы:** [[apache-airflow-interview#Q1]] — Airflow позиционирование как orchestrator; [[apache-airflow-interview#Q28]] — минусы Airflow которые компенсируют Prefect/Dagster; [[apache-airflow-interview#Q8]] — TaskFlow API как ответ Airflow на современные API.
 >
 > ---
 >
@@ -1591,7 +1591,7 @@ helm install airflow apache-airflow/airflow
 > - **Backward incompatibility внутри 2.x**: например `schedule_interval` → `schedule`, deprecated providers. Mitigation: следить за DeprecationWarning в логах.
 > - **Lock-in на cron-style scheduling**: event-driven через `TriggerDagRunOperator` работает, но громоздко.
 >
-> **Связанные вопросы:** [[Q19]] — XCom limits подробнее; [[Q23]] — reschedule/deferrable как mitigation для poke; [[Q25]] — scaling и DAG parsing overhead; [[Q27]] — Prefect/Dagster как альтернативы решающие конкретные минусы.
+> **Связанные вопросы:** [[apache-airflow-interview#Q19]] — XCom limits подробнее; [[apache-airflow-interview#Q23]] — reschedule/deferrable как mitigation для poke; [[apache-airflow-interview#Q25]] — scaling и DAG parsing overhead; [[apache-airflow-interview#Q27]] — Prefect/Dagster как альтернативы решающие конкретные минусы.
 >
 > ---
 >

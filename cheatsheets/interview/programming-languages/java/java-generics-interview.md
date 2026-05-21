@@ -14,7 +14,8 @@ aliases:
   - "Java Generics собеседование"
 prerequisites: []
 next: []
-updated: "2026-05-05"
+updated: "2026-05-20"
+mcq_format_version: 2
 ---
 # Вопросы на собеседовании: `Java Generics`
 
@@ -131,17 +132,93 @@ public class IntegerConsumer implements Consumer<Integer> {
 2. **Устранение кастов** — не нужно приводить `Object` к конкретному типу
 3. **Переиспользование кода** — один алгоритм работает с разными типами
 
-> [!mcq]
-> - [ ] Generic Type Parameter — это значение, передаваемое в метод во время выполнения программы. | Это runtime arg, не type. ❌ ПОСЛЕДСТВИЕ: путаница типов и значений приводит к ожиданию runtime-передачи Class<T> вместо compile-time выбора — лишний boilerplate `passClass(MyType.class)` где можно было `<T>`.
-> - [x] Generic Type Parameter — это переменная типа, объявляемая при описании класса, интерфейса или метода и заменяемая конкретным типом при использовании. | ✓ ПРИМЕНЯТЬ: `class Box<T>`, `<T> T firstOrNull(List<T>)`, `Map<K,V>`; основа typesafe API в JDK (`List<E>`, `Optional<T>`). Type-параметры выражают связь между входами и выходами без runtime overhead. 📋 ПРАВИЛО: "Generic Type Parameter = compile-time variable; T заменяется на конкретный тип при использовании". 🔗 См. Q3 (Generic Method vs Type), Q6 (Type Erasure), Q10 (Bounded Type Parameter).
-> - [ ] Generic Type Parameter — это параметр конструктора класса, который определяет начальное значение поля. | Конструктор != type-param. ❌ ПОСЛЕДСТВИЕ: путаница terminology в дизайне приводит к API типа `new Box(MyType)` вместо `new Box<MyType>()` — мутация типа в runtime, теряется типобезопасность.
-> - [ ] Generic Type Parameter — это аннотация, указывающая JVM, какой тип ожидается в runtime. | Аннотация != generic. ❌ ПОСЛЕДСТВИЕ: разработчик использует кастомные аннотации `@TypeOf(String.class)` для типизации, дублируя generics — теряет compile-time проверки, получает только runtime.
+> [!mcq] Что такое Generic Type Parameter в Java?
+>
+> - [x] A. Generic Type Parameter — это переменная типа, объявляемая в угловых скобках при описании класса, интерфейса или метода и заменяемая конкретным типом при использовании.
+>
+>     **Развёрнутое объяснение.** Type parameter живёт только на этапе компиляции: компилятор связывает входы и выходы через одну и ту же букву (`<T>`), проверяет совместимость, потом стирает её до bound (`Object` для unbounded, иначе — первая граница). В runtime никакой T в полях и сигнатурах не остаётся. Type parameter оформляется одной из четырёх синтаксических форм: на классе (`class Box<T>`), на интерфейсе (`interface List<E>`), на методе (`<T> T firstOrNull(List<T> list)`), на конструкторе (`<T> MyClass(T arg)`).
+>
+>     **Пример.** В JDK `Optional<T>` объявлен как `public final class Optional<T>` — параметр `T` связывает `Optional.of(T)` с `Optional.get(): T`, поэтому `Optional<User> u = Optional.of(user); User u2 = u.get();` не требует cast. Spring Data `JpaRepository<T, ID>` использует два параметра — `T` для сущности, `ID` для типа ключа.
+>
+>     **Когда применять.** Везде, где нужна типобезопасная связь между параметрами и возвратом — контейнеры (`List<T>`, `Map<K,V>`), функциональные интерфейсы (`Function<T,R>`), repository-слои, builders, DSL. Если параметр типа используется только в одном месте сигнатуры — обычно лучше wildcard `<?>`.
+>
+>     **Подводные камни.** Type parameter класса недоступен в `static` контексте — `static T value` не компилируется, потому что один `Class<Box>` существует для всех параметризаций. В static-методе нужен собственный `<T>` перед возвратом. Type parameter нельзя инстанциировать (`new T()` запрещён), нельзя использовать как тип `.class` (`T.class` запрещён), нельзя использовать в `instanceof T` (после erasure это `instanceof Object`).
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q3]] generic method vs generic type; [[java-generics-interview#Q6]] type erasure и backward compatibility; [[java-generics-interview#Q10]] bounded type parameter.
+>
+> - [ ] B. Generic Type Parameter — это значение, передаваемое в метод во время выполнения программы, аналог обычного аргумента, но с особой пометкой типа.
+>
+>     **Что на самом деле.** Type parameter — это compile-time variable, а не runtime value. В bytecode никаких «значений» T не существует — после type erasure T заменяется на `Object` или на bound (`Number`, `Comparable`). Runtime передача связана с `Class<T>` token, но это уже отдельный аргумент, а не параметр типа.
+>
+>     **Откуда путаница.** Термин «parameter» в обычных методах означает runtime-аргумент, и middle-разработчик переносит интуицию на generics. Дополнительно сбивает с толку рефлексия с `getActualTypeArguments()`, создающая иллюзию runtime-доступа к T.
+>
+>     **Если бы это было правдой.** Тогда `myMethod(MyType.class, data)` и `<MyType> myMethod(data)` были бы эквивалентны — но первый передаёт `Class<T>` явно, а второй использует compile-time подстановку без runtime-аргумента. Reflection не нашла бы тип в bytecode сигнатур методов, потому что generics стираются.
+>
+>     **Как было бы правильно.** Признать, что Generic Type Parameter — compile-time переменная типа, известная компилятору, а не runtime value; для runtime-доступа к типу нужен `Class<T>` token или Super Type Token.
+>
+> - [ ] C. Generic Type Parameter — это параметр конструктора класса, который определяет начальное значение поля при создании объекта.
+>
+>     **Что на самом деле.** Generic Type Parameter — это параметр типа (variable of type), а не параметр конструктора. Конструктор может принимать обычные runtime-аргументы плюс быть generic-методом с собственным `<T>`, но это два разных понятия. `class Box<T>` объявляет тип-переменную, а `new Box<String>("hello")` использует её для типизации поля и аргумента конструктора одновременно.
+>
+>     **Откуда путаница.** Синтаксис `new Box<String>("hello")` визуально похож на «два параметра» — middle-разработчик думает, что `<String>` тоже передаётся в конструктор. На деле `<String>` — это аргумент типа (компилятору), а `"hello"` — runtime-аргумент (конструктору).
+>
+>     **Если бы это было правдой.** Тогда `Box<T>` без явного конструктора не работал бы — но в Java можно объявить `class Box<T> { T value; void set(T v) { value = v; } }` без конструктора, и type parameter всё равно работает.
+>
+>     **Как было бы правильно.** Generic Type Parameter — это параметр типа класса/метода (compile-time), который заменяется конкретным типом при использовании; обычные параметры конструктора — отдельная сущность runtime-уровня.
+>
+> - [ ] D. Generic Type Parameter — это аннотация, указывающая JVM, какой тип ожидается в runtime через `@TypeOf(...)`-метаданные.
+>
+>     **Что на самом деле.** Generic Type Parameter — это синтаксическая конструкция языка (`<T>`), а не аннотация. Аннотации в Java существуют как отдельный механизм (`@Override`, `@SuppressWarnings`) и не заменяют generics. Type parameter обрабатывается на этапе компиляции компилятором, а не аннотационным процессором или JVM.
+>
+>     **Откуда путаница.** В некоторых языках (или фреймворках) аннотации используются для type hints (например, Python typing). Java имеет JSR-305 (`@Nullable`, `@NonNull`), и middle может ошибочно отождествить generics с этим механизмом.
+>
+>     **Если бы это было правдой.** Тогда `List<String>` записывалось бы как `@TypeOf(String.class) List` — но такого синтаксиса в Java нет, и `instanceof @TypeOf(String) List` не работает. Reflection через `getAnnotations()` не возвращает generic-аргументы.
+>
+>     **Как было бы правильно.** Generic Type Parameter — это языковая конструкция `<T>` в коде, обрабатываемая компилятором; аннотации — отдельный механизм для метаданных, не связанный с generics напрямую.
 
-> [!mcq]
-> - [ ] Generic-типы **ковариантны**: `List<Integer>` является подтипом `List<Number>`, потому что `Integer extends Number`. | Generics инвариантны. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `List<Number> nums = listOfIntegers;` — compile error «incompatible types», ищет cast вместо wildcard `List<? extends Number>`.
-> - [ ] Generic-типы **контравариантны**: `List<Number>` является подтипом `List<Integer>`, потому что Number — родитель Integer. | Тоже неверно — generics инвариантны. ❌ ПОСЛЕДСТВИЕ: путаница вариантности приводит к assignment по «родительской» интуиции из массивов (где covariance работает), но для generics это compile error.
-> - [x] Generic-типы по умолчанию **инвариантны**: `List<Integer>` НЕ является ни подтипом, ни супертипом `List<Number>`, несмотря на отношения между `Integer` и `Number`; для гибкости нужны wildcards (`? extends`, `? super`). | ✓ ПРИМЕНЯТЬ: для read-only API — `List<? extends Number>` (covariance); для write-only — `List<? super Integer>` (contravariance); правило **PECS** (Producer Extends, Consumer Super). Массивы ковариантны (`Integer[]` is `Number[]`) — но это unsafe, бросает `ArrayStoreException`. 📋 ПРАВИЛО: «generics invariant by default; wildcards дают co/contra-variance; arrays covariant но unsafe». 🔗 См. Q14 (Upper Bounded Wildcard), Q15 (Lower Bounded), Q16 (PECS).
-> - [ ] Generic-типы ковариантны для `final` классов (например, `String`) и инвариантны для остальных. | Final не влияет. ❌ ПОСЛЕДСТВИЕ: ложное правило приводит к попыткам `List<String>` присвоить `List<CharSequence>` ожидая что `final String` даёт covariance — compile error всё равно.
+> [!mcq] Как generic-типы относятся к наследованию своих type-аргументов?
+>
+> - [ ] A. Generic-типы ковариантны: `List<Integer>` является подтипом `List<Number>`, потому что `Integer extends Number`.
+>
+>     **Что на самом деле.** Generic-типы в Java инвариантны: `List<Integer>` и `List<Number>` — две независимые формы, ни одна не подтип другой. Если бы такое присвоение было разрешено, можно было бы добавить `Double` в `List<Integer>` через ссылку `List<Number>`, нарушив type safety. Java закрывает дыру на этапе компиляции через инвариантность.
+>
+>     **Откуда путаница.** Массивы в Java ковариантны (`Integer[]` — подтип `Object[]`), и middle переносит интуицию на generics. Также в других языках (Kotlin с `out`, Scala с `+T`) встроенная ковариантность встречается чаще.
+>
+>     **Если бы это было правдой.** Код `List<Number> nums = listOfIntegers; nums.add(3.14);` компилировался бы, но при `listOfIntegers.get(0)` возвращал бы Double, а cast к Integer — `ClassCastException`. Это та же дыра, что у массивов с `ArrayStoreException`, но в generic-форме.
+>
+>     **Как было бы правильно.** Признать, что generics инвариантны намеренно, и для ковариантного чтения использовать wildcard: `List<? extends Number> nums = listOfIntegers;`.
+>
+> - [ ] B. Generic-типы контравариантны: `List<Number>` является подтипом `List<Integer>`, потому что Number — супертип Integer.
+>
+>     **Что на самом деле.** Generic-типы инвариантны, как и в случае ковариантности — `List<Number>` и `List<Integer>` несовместимы напрямую. Контравариантность возможна только через wildcard `<? super T>`: например, `Consumer<? super Integer> c = someConsumerOfNumber;`.
+>
+>     **Откуда путаница.** Middle мог слышать про контравариантность для функциональных параметров в типизированных языках (Scala `Function1[-T, +R]`) и применить ту же логику к коллекциям. Также путает аналогия с массивами в обратную сторону.
+>
+>     **Если бы это было правдой.** Код `List<Integer> ints = listOfNumber;` компилировался бы, но `ints.get(0)` могло бы вернуть `Double`, а cast к Integer — `ClassCastException`. Семантика чтения сломалась бы.
+>
+>     **Как было бы правильно.** Generics инвариантны, контравариантность достигается через wildcard `<? super T>` — используется в consumer-позициях (`Consumer<? super T>`, `Comparator<? super T>`).
+>
+> - [x] C. Generic-типы по умолчанию инвариантны: `List<Integer>` не является ни подтипом, ни супертипом `List<Number>`, несмотря на отношения между `Integer` и `Number`; для гибкости нужны wildcards `? extends` и `? super`.
+>
+>     **Развёрнутое объяснение.** Инвариантность — намеренное решение JLS: если бы `List<Integer>` был подтипом `List<Number>`, можно было бы добавить `Double` через ссылку `List<Number>` и сломать типобезопасность исходной коллекции. Чтобы вернуть гибкость, используют wildcards: `<? extends T>` даёт ковариантность для чтения, `<? super T>` — контравариантность для записи, общее правило — PECS. Массивы в Java ковариантны исторически (с 1.0), но это закрывается runtime-проверкой через `ArrayStoreException` — generics закрывают ту же дыру compile-time.
+>
+>     **Пример.** Spring Data `Page<? extends User>` принимает `Page<AdminUser>` и `Page<RegularUser>` — read-only итерация безопасна. `Collections.copy(List<? super T> dest, List<? extends T> src)` — классический PECS: dest принимает `Object` или `Number` (супертип), src отдаёт `Integer` (подтип).
+>
+>     **Когда применять.** Понимание инвариантности необходимо при дизайне generic API: чтение — `<? extends T>`, запись — `<? super T>`, read+write — точный `<T>`. Используйте wildcards в публичных методах для гибкости вызывающих сторон.
+>
+>     **Подводные камни.** Внутри одного метода два `<? extends T>` — это два разных capture: `void copy(List<? extends T> a, List<? extends T> b) { a.set(0, b.get(0)); }` не компилируется, потому что capture#1 ≠ capture#2; нужен capture helper с собственным `<E>`. Также — `Object` не является подтипом `<? super T>` для произвольного `T`; nullы — единственное универсальное значение, которое принимают все wildcards.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q14]] upper bounded wildcard; [[java-generics-interview#Q15]] lower bounded wildcard; [[java-generics-interview#Q18]] правило PECS.
+>
+> - [ ] D. Generic-типы ковариантны для `final` классов (например, `String`) и инвариантны для остальных — компилятор использует свойство `final` для безопасной подстановки.
+>
+>     **Что на самом деле.** Финальность класса не влияет на инвариантность generics. `List<String>` (где `String` — final) точно так же не является подтипом `List<CharSequence>`, как `List<Integer>` не является подтипом `List<Number>`. JLS не имеет такого специального правила.
+>
+>     **Откуда путаница.** Логика «final → нет подтипов → подстановка безопасна» звучит правдоподобно для middle-разработчика. Дополнительно сбивает то, что для final-классов wildcard `<? extends String>` фактически совпадает с `<String>` по множеству валидных аргументов.
+>
+>     **Если бы это было правдой.** Тогда `List<CharSequence> cs = listOfString;` компилировался бы, и можно было бы добавить `StringBuilder` через ссылку `List<CharSequence>` — что нарушает type-safety исходного `List<String>`.
+>
+>     **Как было бы правильно.** Generics инвариантны независимо от `final` модификатора; для ковариантного присваивания используйте wildcard `<? extends String>` даже для final-классов.
 
 ## Q2. (!) Каковы преимущества использования `Generics`?
 
@@ -180,17 +257,93 @@ public static <T extends Comparable<T>> T max(List<T> list) {
 // Работает с любым Comparable: Integer, String, LocalDate...
 ```
 
-> [!mcq]
-> - [ ] Главное преимущество дженериков — устранение необходимости писать несколько перегруженных методов для каждого типа данных. | Это побочный эффект. ❌ ПОСЛЕДСТВИЕ: команда фокусируется только на устранении дубликатов — пропускает главную ценность (typesafety). Перегрузки можно устранить и через `Object`, но без typesafety.
-> - [ ] Главное преимущество дженериков — ускорение работы программы в runtime за счёт специализации байт-кода под конкретный тип. | Type erasure = no specialization. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает performance gain от generics — на деле no specialization, везде используется stub `Object`. Type-аргументы — compile-time только.
-> - [x] Главное преимущество дженериков — обнаружение ошибок типов на этапе компиляции, устранение явных приведений типов и возможность писать универсальные алгоритмы. | ✓ ПРИМЕНЯТЬ: typesafe collections (`List<User>` вместо `List`); generic utility methods (`max(List<T extends Comparable<T>>)`); type-safe builders (`return self();` через `<T extends Builder<T>>`). LinkedIn 2015 кейс: миграция legacy на generics сократила NPE/CCE на 40%. 📋 ПРАВИЛО: "generics = compile-time typesafety + no casts + reusable algorithms; не runtime perf". 🔗 См. Q1 (что такое generics), Q6 (Type Erasure), Q10 (Bounded Type).
-> - [ ] Главное преимущество дженериков — уменьшение потребления памяти за счёт совместного использования одного экземпляра класса несколькими типами. | Не про память. ❌ ПОСЛЕДСТВИЕ: ложные ожидания о memory benefits; на деле память не меняется (один Class на raw type был и до generics через type erasure).
+> [!mcq] В чём главное преимущество дженериков в Java?
+>
+> - [ ] A. Главное преимущество дженериков — устранение необходимости писать несколько перегруженных методов для каждого типа данных.
+>
+>     **Что на самом деле.** Устранение перегрузок — это побочный эффект, а не главное преимущество. Перегрузки можно убрать и через `Object` (как в pre-Java 5 коде), но без типобезопасности. Главное преимущество — compile-time проверки типов и устранение явных кастов, что даёт типобезопасные универсальные алгоритмы.
+>
+>     **Откуда путаница.** Middle, мигрировавший pre-Java 5 код, в первую очередь замечает исчезновение дубликатов (`int max(int[])`, `long max(long[])`) и приписывает это главной ценности. Реальная ценность — invariants, проверяемые компилятором.
+>
+>     **Если бы это было правдой.** Тогда `Object`-based API (`List` raw) был бы эквивалентен generics — но именно raw types бросают `ClassCastException` в runtime, чего generics не допускают на этапе компиляции.
+>
+>     **Как было бы правильно.** Главное преимущество — типобезопасность на этапе компиляции; устранение перегрузок и кастов — её следствия.
+>
+> - [ ] B. Главное преимущество дженериков — ускорение работы программы в runtime за счёт специализации байт-кода под конкретный тип.
+>
+>     **Что на самом деле.** Type erasure исключает специализацию: в runtime `List<String>` и `List<Integer>` — один и тот же `ArrayList`. Никакого speedup от специализации нет; наоборот, компилятор вставляет `checkcast` инструкции, что даёт минимальный overhead. Project Valhalla обещает specialized generics в будущем, но в текущей Java их нет.
+>
+>     **Откуда путаница.** В C++ templates делают monomorphization — для каждого типа компилируется свой код, и это даёт performance benefits. C# с reified generics тоже даёт specialization для value types. Java выбрала другой путь ради backward compatibility.
+>
+>     **Если бы это было правдой.** Тогда `List<int>` работал бы без autoboxing, и `List<Integer>` был бы быстрее `List` (raw) на хот-пути. На деле в обоих случаях создаются объекты `Integer`, и performance одинаков.
+>
+>     **Как было бы правильно.** Главное преимущество — compile-time типобезопасность, а не runtime perf. Specialization придёт с Project Valhalla; сейчас generics не дают и не отбирают перформанса в значимой степени.
+>
+> - [x] C. Главное преимущество дженериков — обнаружение ошибок типов на этапе компиляции, устранение явных приведений типов и возможность писать универсальные алгоритмы.
+>
+>     **Развёрнутое объяснение.** Дженерики сдвигают ошибки типов с runtime (`ClassCastException`) на compile-time, что радикально снижает количество багов в проде. Устранение кастов сокращает boilerplate и предотвращает `ClassCastException` при неверных предположениях о типе. Универсальные алгоритмы (например, `<T extends Comparable<T>> T max(List<T>)`) пишутся один раз и работают для всех типов — DRY на уровне типов, а не значений. Эти преимущества compile-time only, runtime perf при этом неизменен.
+>
+>     **Пример.** В Java 5 (2004) `Collections.sort(List<Comparable>)` стал `Collections.sort(List<T> list, Comparator<? super T> c)` — без generics приходилось писать `Comparator` для `Object` и кастить внутри, что приводило к `ClassCastException` при смешивании типов. После миграции LinkedIn 2015 на полные generics в репозиториях сообщал о снижении CCE на ~40%.
+>
+>     **Когда применять.** Любой API, где тип элементов важен: коллекции, репозитории, парсеры, builders, DTO-конвертеры. Если тип не используется в сигнатуре — не вводите generic ради generic; если используется только внутри — wildcard `<?>` достаточно.
+>
+>     **Подводные камни.** Type erasure делает невозможным `new T()`, `T.class`, `instanceof T<X>` — для runtime-доступа нужен `Class<T>` token или Super Type Token. Generics не работают с примитивами — `List<int>` запрещён, нужен autoboxing к `Integer` (overhead на hot-path). Heap pollution через raw types может тихо нарушить инварианты — нужны `-Xlint:unchecked` и `-Werror` в CI.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q1]] generic type parameter; [[java-generics-interview#Q6]] type erasure; [[java-generics-interview#Q21]] raw types и риски.
+>
+> - [ ] D. Главное преимущество дженериков — уменьшение потребления памяти за счёт совместного использования одного экземпляра класса несколькими типами.
+>
+>     **Что на самом деле.** Type erasure делает один `Class<ArrayList>` для всех параметризаций `ArrayList<X>` — но это было ещё до generics через raw types. Generics не уменьшают и не увеличивают memory footprint значимо. Преимущества — типобезопасность и сокращение кода, не память.
+>
+>     **Откуда путаница.** Middle видит, что `Class<ArrayList>` один на все типы, и интерпретирует это как «memory benefit». На деле тот же `Class<ArrayList>` был и до generics — generics просто не ломают эту экономию.
+>
+>     **Если бы это было правдой.** Тогда переход на generics дал бы измеримое снижение footprint в profiler'ах — но JFR, async-profiler и heap dump показывают одинаковую кучу для raw и parameterized коллекций. Бенчмарки JMH не различают их по аллокациям.
+>
+>     **Как было бы правильно.** Memory footprint не зависит от использования generics (с точностью до маргинального overhead bridge methods); главные преимущества — compile-time типобезопасность и универсальные алгоритмы.
 
-> [!mcq]
-> - [ ] Generics дают **zero overhead** в runtime: компилятор не вставляет никаких дополнительных инструкций, байт-код идентичен коду без generics. | Bridge methods и checkcasts вставляются. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает что `List<String>.get(0)` = чистый `list.get(0)` — на деле компилятор вставляет `checkcast String`, при override generic метода появляются bridge methods.
-> - [ ] Generics требуют значительного memory overhead в runtime, так как JVM хранит type-параметры в специальной таблице на каждый instance. | Type erasure → нет per-instance overhead. ❌ ПОСЛЕДСТВИЕ: ложные ожидания о memory cost приводят к избеганию generics в hot-path; на деле runtime-стоимость ровно такая же как у raw types.
-> - [x] Преимущества (typesafety, no casts, reusability) приходят с **скрытыми runtime-затратами**: компилятор вставляет `checkcast` при доступе к generic-полям и генерирует **bridge methods** для сохранения полиморфизма после erasure (например при override `get()` с covariant return type). | ✓ ПРИМЕНЯТЬ: смотрите `javap -c -p` чтобы увидеть bridge methods (`public bridge synthetic Object get()` рядом с `public String get()`); ProGuard/R8 минимизируют их в Android; understand bridge при reflection (`Method.isBridge()` для фильтрации). Cost минимален но не zero. 📋 ПРАВИЛО: «generics cost = checkcast + bridge methods; невидимы в исходниках, видны в bytecode». 🔗 См. Q1 (что такое generics), Q6 (Type Erasure), Q7 (как преобразует).
-> - [ ] Главное преимущество — runtime-полиморфизм для generic-параметров: JVM выбирает реализацию метода в зависимости от actual type-аргумента. | Erasure → один метод. ❌ ПОСЛЕДСТВИЕ: разработчик пытается реализовать «specialized» logic для разных T в одном методе — на деле в runtime T = Object, никакого dispatch по type-параметру нет.
+> [!mcq] Какие скрытые runtime-затраты добавляют дженерики?
+>
+> - [ ] A. Generics дают zero overhead в runtime: компилятор не вставляет никаких дополнительных инструкций, байт-код идентичен коду без generics.
+>
+>     **Что на самом деле.** Компилятор вставляет `checkcast` при доступе к generic-полям и значениям коллекций, генерирует bridge methods при override-е generic-методов. В `String s = list.get(0)` для `List<String>` в bytecode сидит `invokeinterface List.get` плюс `checkcast java/lang/String`. Это не «zero», хотя overhead и пренебрежимо мал.
+>
+>     **Откуда путаница.** Утверждение про «syntactic sugar» — общий миф про generics. Middle слышит, что generics — compile-time only, и переносит это на bytecode без дополнительной проверки через `javap -c`.
+>
+>     **Если бы это было правдой.** Тогда `javap -c MyClass` для `List<String>.get(0)` показал бы только `invokeinterface List.get` без `checkcast`. На деле checkcast виден на каждом get-вызове.
+>
+>     **Как было бы правильно.** Generics имеют минимальный, но не нулевой runtime cost: checkcast + bridge methods. Это всё ещё дешевле, чем потенциальные CCE без generics.
+>
+> - [ ] B. Generics требуют значительного memory overhead в runtime, так как JVM хранит type-параметры в специальной таблице на каждый instance.
+>
+>     **Что на самом деле.** Type erasure стирает type-параметры полностью — никакой per-instance таблицы JVM не хранит. Memory footprint `ArrayList<String>` и `ArrayList` (raw) идентичны. Type info сохраняется только в Signature attribute класса (один на класс, не на instance) — это используется reflection-методами вроде `getGenericSuperclass()`.
+>
+>     **Откуда путаница.** Аналогия с C# reified generics, где `List<int>` действительно имеет специализированную метаинформацию. Также пугают слова «metadata» и «reflection» — middle думает, что они хранятся per-instance.
+>
+>     **Если бы это было правдой.** Тогда heap dump показал бы рост памяти при создании множества generic-инстансов разных типов. Async-profiler и JFR не показывают никакой такой таблицы; instance footprint = object header + поля, без дополнительного места под type-параметры.
+>
+>     **Как было бы правильно.** Per-instance overhead отсутствует; есть только маргинальный per-class Signature attribute, используемый reflection — но это compile-time данные класса, не runtime instance overhead.
+>
+> - [x] C. Преимущества (typesafety, no casts, reusability) приходят со скрытыми runtime-затратами: компилятор вставляет checkcast при доступе к generic-значениям и генерирует bridge methods для сохранения полиморфизма после erasure.
+>
+>     **Развёрнутое объяснение.** После type erasure все T становятся `Object` или их bound, и компилятор вставляет `checkcast` инструкции на стороне вызывающего кода, чтобы вернуть статически известный тип. Bridge methods появляются при override generic-методов: например, `class StringList extends ArrayList<String>` с override `add(String)` после erasure имеет родительский `add(Object)` и собственный `add(String)` — компилятор синтезирует bridge `add(Object)`, который кастует и делегирует к `add(String)`. Это нужно для корректного virtual dispatch через интерфейс.
+>
+>     **Пример.** `javap -c -p StringList.class` покажет `public bridge synthetic boolean add(Object)` рядом с `public boolean add(String)`. В Spring AOP без фильтрации `Method.isBridge()` advice применился бы дважды — один раз на bridge `add(Object)`, второй на реальный `add(String)`. Mockito и Hibernate проксы тоже фильтруют bridge.
+>
+>     **Когда применять.** Знание полезно при reflection (фильтрация bridge через `isBridge()/isSynthetic()`), при анализе stack trace (synthetic frame обычно — bridge), при работе с ProGuard/R8 в Android (минимизация bridge), при профилировании hot-path кода.
+>
+>     **Подводные камни.** Bridge генерируется и для covariant return: `class Sub extends Super { @Override Sub clone() }` создаёт synthetic `Object clone()` рядом с реальным `Sub clone()`. Если override приходит через несколько уровней наследования с несовпадающими bounds, bridge может быть несколько. ProGuard может удалить bridge при aggressive shrinking, что ломает reflection-зависимый код.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q6]] type erasure; [[java-generics-interview#Q7]] как преобразуется код; [[java-generics-interview#Q23]] bridge methods подробно.
+>
+> - [ ] D. Главное преимущество — runtime-полиморфизм для generic-параметров: JVM выбирает реализацию метода в зависимости от фактического type-аргумента.
+>
+>     **Что на самом деле.** JVM не различает `List<String>` и `List<Integer>` в runtime — обе ссылки указывают на `ArrayList`, dispatch по type-параметру невозможен. Полиморфизм работает только по runtime-классу объекта (через virtual table), а не по generic-аргументу. Specialized dispatch обещает только Project Valhalla в будущем.
+>
+>     **Откуда путаница.** В C# reified generics действительно дают runtime-различимые типы. C++ templates делают monomorphization на этапе компиляции, что даёт «специализированный» dispatch. Middle переносит эти модели на Java, не учитывая erasure.
+>
+>     **Если бы это было правдой.** Тогда `<T> void process(List<T> list)` мог бы внутри сделать `if (T == String) ... else ...` — на деле такой синтаксис не существует, и любая «специализация» требует передачи `Class<T>` token и `if (clazz == String.class)`.
+>
+>     **Как было бы правильно.** Generic-параметр не участвует в runtime dispatch; полиморфизм работает только по конкретному runtime-классу объекта. Для «специализации» по T нужен явный `Class<T>` token.
 
 ## Q3. Чем `Generic Method` отличается от `Generic Type`?
 
@@ -222,11 +375,49 @@ String first = Utils.<String>firstOrNull(someList);
 
 Generic-метод может быть как в generic-классе, так и в обычном, и может быть статическим (в отличие от параметра типа класса, который в статическом контексте недоступен).
 
-> [!mcq]
-> - [ ] Generic Method отличается от Generic Type тем, что Generic Method не может быть статическим, тогда как Generic Type используется только в статическом контексте. | Обратная логика. ❌ ПОСЛЕДСТВИЕ: разработчик пытается использовать `T` (параметр типа КЛАССА) в `static` методе — compile error "non-static class T cannot be referenced from static context". Static методам нужны свои type-параметры.
-> - [ ] Generic Method отличается от Generic Type тем, что Generic Method допускает несколько параметров типа, а Generic Type — только один. | Оба support N. ❌ ПОСЛЕДСТВИЕ: ложные ограничения приводят к создание artificial chains `Generic<K> { class Inner<V> }` для двух параметров вместо `Generic<K, V>` напрямую.
-> - [x] Generic Method отличается от Generic Type тем, что параметр типа Generic Method объявляется перед возвращаемым типом и существует только в рамках этого метода, тогда как параметр Generic Type объявляется при описании класса и доступен во всех нестатических членах. | ✓ ПРИМЕНЯТЬ: Generic Method для utility-классов (`Collections.<T>emptyList()`, `Arrays.<T>asList()`) и static-методов; Generic Type для контейнеров (`List<E>`, `Map<K,V>`). Class type-param — fields, instance methods; Method type-param — только метод. 📋 ПРАВИЛО: "Generic Method = `<T>` перед return type, scope=method, can be static; Generic Type = `<T>` после class name, scope=instance". 🔗 См. Q1 (generics базово), Q4 (Type Inference), Q10 (Bounded Type).
-> - [ ] Generic Method отличается от Generic Type тем, что параметр типа Generic Method всегда должен указываться явно при вызове, тогда как для Generic Type компилятор всегда выводит тип автоматически. | Inference works для обоих. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Utils.<String>firstOrNull(list)` каждый раз — лишний boilerplate; type inference работает на 99% случаев из argument types.
+> [!mcq] Чем Generic Method отличается от Generic Type?
+>
+> - [ ] A. Generic Method отличается от Generic Type тем, что Generic Method не может быть статическим, тогда как Generic Type используется только в статическом контексте.
+>
+>     **Что на самом деле.** Логика обратная: параметр Generic Type класса нельзя использовать в `static` контексте (один Class на все параметризации после erasure), а Generic Method наоборот может быть статическим и часто такой и есть (`Collections.<T>emptyList()`). Static-методы объявляют свои собственные параметры типа независимо от класса.
+>
+>     **Откуда путаница.** Middle помнит, что «static и generic несовместимы», но забывает деталь: проблема только с class-level type parameter, не с method-level. Method-level `<T>` живёт только внутри метода и работает в любом контексте.
+>
+>     **Если бы это было правдой.** Тогда `Collections` в JDK не существовал бы — все его утилитарные методы static и generic: `<T> List<T> emptyList()`, `<T> void sort(List<T>, Comparator<? super T>)`, `<T> T max(Collection<T>)`. Этот класс — central abstraction в Java.
+>
+>     **Как было бы правильно.** Параметр Generic Type класса недоступен в static контексте; параметр Generic Method объявляется отдельно перед возвратом и может быть static — большинство utility-методов в JDK именно такие.
+>
+> - [ ] B. Generic Method отличается от Generic Type тем, что Generic Method допускает несколько параметров типа, а Generic Type — только один.
+>
+>     **Что на самом деле.** Оба поддерживают любое количество параметров типа. `Map<K, V>`, `BiFunction<T, U, R>`, `Function<T, R>` — generic-типы с двумя-тремя параметрами; `<K, V> Map<V, K> invert(Map<K, V> m)` — generic-метод с двумя.
+>
+>     **Откуда путаница.** В простых примерах для класса обычно один `<T>` (Box<T>, List<E>, Optional<T>), что создаёт иллюзию ограничения. На деле JDK активно использует multi-parameter generics.
+>
+>     **Если бы это было правдой.** Тогда `HashMap<String, Integer>` не работал бы — но он базовая структура данных в JVM, существует с Java 5.
+>
+>     **Как было бы правильно.** Generic Type и Generic Method оба поддерживают любое число параметров типа; ограничения нет.
+>
+> - [x] C. Generic Method отличается от Generic Type тем, что параметр типа Generic Method объявляется перед возвращаемым типом и существует только в рамках этого метода, тогда как параметр Generic Type объявляется при описании класса и доступен во всех нестатических членах.
+>
+>     **Развёрнутое объяснение.** Generic Type — параметр на уровне класса/интерфейса (`class Box<T>`, `interface List<E>`) — доступен в полях, instance-методах, конструкторах, но не в static контексте. Generic Method — параметр на уровне метода (`<T> T firstOrNull(List<T> list)`) — объявляется перед возвращаемым типом, живёт только в рамках метода, работает и в instance-, и в static-методах. Generic Method может быть как в обычном классе, так и в generic-классе — в последнем случае со своим собственным `<T>`, не связанным с class-level T.
+>
+>     **Пример.** В JDK `Collections.<T>emptyList()` — static generic method со своим `<T>`. В Spring `JpaRepository<T, ID>` — generic interface (class-level T). Метод `<S extends T> S save(S entity)` внутри `JpaRepository` — generic method со своим `<S>`, привязанным к class-level `<T>` через `extends`.
+>
+>     **Когда применять.** Generic Method — для utility-методов (статические, factory, conversions); Generic Type — для контейнеров и компонентов с состоянием, привязанным к типу (`List<E>`, `Optional<T>`, `Function<T, R>`). Если метод не использует поля класса и не требует instance — пишите его как Generic Method со своим `<T>`.
+>
+>     **Подводные камни.** В generic-классе static-метод не может использовать class-level T — нужен собственный `<T>` в сигнатуре. Generic Method со своим `<T>` в generic-классе скрывает class-level T в этом методе (shadowing) — обычно warning от компилятора. При перегрузке методов с разными generic-параметрами проверяйте erasure: `<T> void m(List<T>)` и `<T> void m(Set<T>)` — OK; `void m(List<String>)` и `void m(List<Integer>)` — compile error из-за одинаковой erasure.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q1]] generic type parameter; [[java-generics-interview#Q4]] type inference; [[java-generics-interview#Q26]] static контекст и generics.
+>
+> - [ ] D. Generic Method отличается от Generic Type тем, что параметр типа Generic Method всегда должен указываться явно при вызове, тогда как для Generic Type компилятор всегда выводит тип автоматически.
+>
+>     **Что на самом деле.** Type inference работает для обоих. `Collections.emptyList()` выводит T из target type (`List<String> empty = Collections.emptyList();`); `new ArrayList<>()` — diamond inference для generic-типа. Явное указание `Collections.<String>emptyList()` нужно только в редких ambiguity-кейсах.
+>
+>     **Откуда путаница.** Middle, изучавший generics в Java 5/6, помнит требование явного `<T>` до Java 7 diamond operator и улучшений Java 8 target typing. Современный Java (11+) делает inference почти всегда.
+>
+>     **Если бы это было правдой.** Тогда `List.of("a", "b")` требовал бы `List.<String>of("a", "b")` — но в реальном коде такое не пишут, IDE подсвечивает как redundant. Stream API (`stream.collect(Collectors.toList())`) тоже работает без явных type arguments.
+>
+>     **Как было бы правильно.** Type inference работает для generic-методов и generic-типов одинаково; явный `<T>` нужен только в случае ambiguity (например, при цепочках с лямбдами).
 
 ## Q4. (!) Что такое `Type Inference` (вывод типов)?
 
@@ -246,17 +437,93 @@ List<String> sorted = sort(list, Comparator.comparing(String::length));
 
 В Java 8 вывод типов был значительно улучшен — компилятор стал учитывать **целевой тип** (target type) в более широком контексте, включая аргументы лямбда-выражений. Подробнее об этом в [вопросах по Java 8](java-8-interview.md).
 
-> [!mcq]
-> - [ ] Type Inference — это механизм, при котором JVM определяет параметр типа в runtime на основе фактических значений аргументов метода. | Compile-time only. ❌ ПОСЛЕДСТВИЕ: разработчик ждёт runtime-magic для типов — пишет код без compile-проверок, удивляется CCE в проде. JVM не знает типы из-за type erasure.
-> - [ ] Type Inference — это механизм, при котором разработчик явно указывает параметр типа в угловых скобках перед вызовом метода, чтобы компилятор мог проверить корректность. | Это explicit type, не inference. ❌ ПОСЛЕДСТВИЕ: путаница приводит к коду `Map.<String,Integer>of(...)` где можно `Map.of(...)` с автовыводом — verbose без необходимости.
-> - [x] Type Inference — это способность компилятора автоматически определять параметр типа из контекста вызова, например из типа аргументов или из целевого типа переменной. | ✓ ПРИМЕНЯТЬ: diamond operator `<>` (Java 7+); inference из аргументов (`List.of("a", "b")` выводит `List<String>`); target type inference (`Map<String, Integer> map = new HashMap<>()` — Java 7+); `var list = List.of("a")` (Java 10+); улучшенный inference в Java 8 для лямбд. 📋 ПРАВИЛО: "Type Inference = compile-time deduction; diamond operator + target type + var (Java 10+)". 🔗 См. Q1 (generics базово), Q3 (Generic Method/Type), Q5 (соглашения).
-> - [ ] Type Inference — это механизм, при котором компилятор подставляет тип `Object` вместо неизвестного параметра типа, когда явного указания нет. | Это type erasure. ❌ ПОСЛЕДСТВИЕ: ложное представление о механизмах приводит к недоверию compiler — разработчик считает что без `<Type>` всё становится `Object`, добавляет лишние casts.
+> [!mcq] Что такое Type Inference в Java generics?
+>
+> - [ ] A. Type Inference — это механизм, при котором JVM определяет параметр типа в runtime на основе фактических значений аргументов метода.
+>
+>     **Что на самом деле.** Type Inference — compile-time механизм компилятора, а не JVM. После compile-фазы вся generic-информация стирается через type erasure, и JVM работает с raw types плюс checkcast. Никакого runtime вычисления типов нет.
+>
+>     **Откуда путаница.** Аналогия с динамическими языками (Python, JavaScript), где runtime определяет тип переменной по значению. Также сбивает термин «inference» — он звучит как «runtime deduction», хотя по сути это статический анализ типов компилятором.
+>
+>     **Если бы это было правдой.** Тогда `var list = new ArrayList<>(); list.add("x"); list.add(1);` имел бы тип `ArrayList<String>` или `ArrayList<Integer>` в зависимости от runtime — на деле в bytecode это `ArrayList<Object>` с inference в момент компиляции `var`.
+>
+>     **Как было бы правильно.** Type Inference — это compile-time deduction типа компилятором; runtime не участвует, а JVM работает только с уже стёртыми типами.
+>
+> - [ ] B. Type Inference — это механизм, при котором разработчик явно указывает параметр типа в угловых скобках перед вызовом метода, чтобы компилятор мог проверить корректность.
+>
+>     **Что на самом деле.** Это противоположность inference — explicit type argument: `Collections.<String>emptyList()`. Inference — это когда компилятор сам выводит тип без явного указания: `Collections.emptyList()` в контексте `List<String> empty = ...`.
+>
+>     **Откуда путаница.** Термин «type parameter» в обоих случаях похож, и middle путает activation механизма (явное указание) с результатом (compile-time типизация). Современный Java редко требует explicit type arguments — IDE даже хайлайтит их как redundant.
+>
+>     **Если бы это было правдой.** Тогда `List<String> list = new ArrayList<>();` без diamond inference не компилировался бы — на деле компилирует с Java 7+, тип выводится из target type.
+>
+>     **Как было бы правильно.** Type Inference — автоматический вывод типа компилятором без явного указания; explicit type argument — обратная конструкция, нужная только в случаях ambiguity.
+>
+> - [x] C. Type Inference — это способность компилятора автоматически определять параметр типа из контекста вызова, например из типа аргументов или из целевого типа переменной.
+>
+>     **Развёрнутое объяснение.** Java компилятор использует три источника для inference: типы аргументов метода (`List.of("a", "b")` выводит `T = String`), target type из контекста присваивания/возврата (`Map<String, Integer> m = new HashMap<>();` выводит K=String, V=Integer для diamond), и chain inference для цепочек (`stream().collect(Collectors.toMap(...))` пробрасывает типы через всю цепь). Java 8+ улучшил inference, добавив target typing для лямбд (`Comparator.comparing(User::getName)` знает целевой `Comparator<User>`) и улучшив поведение в chained calls. Java 10+ добавил `var` для локальных переменных.
+>
+>     **Пример.** `var users = repository.findAll();` выводит `var = List<User>` из возвращаемого типа метода. `Map<String, List<User>> byCity = users.stream().collect(groupingBy(User::getCity));` — inference проходит через `stream()`, `groupingBy`, method reference и target type, выводя `K=String`, `V=List<User>` без единого `<>`.
+>
+>     **Когда применять.** Всегда полагайтесь на inference в современном Java; explicit `<>` пишите только когда компилятор честно не может вывести (cycles, ambiguity, edge-cases). `var` (Java 10+) — для локальных переменных где тип очевиден или verbose; не злоупотребляйте для публичных API сигнатур (там тип должен быть явным).
+>
+>     **Подводные камни.** Inference не работает для полей класса, параметров методов и возвращаемых типов — там тип должен быть явным. В сложных лямбда-цепочках компилятор может не вывести (например, `null` без context, multi-target overloaded methods) — нужно дать подсказку через cast или промежуточную переменную. `var x = null;` запрещён компилятором — null без target type невозможно инферить.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q1]] generic type parameter; [[java-generics-interview#Q3]] generic method vs type; [[java-generics-interview#Q35]] var и Java 10+ изменения.
+>
+> - [ ] D. Type Inference — это механизм, при котором компилятор подставляет тип `Object` вместо неизвестного параметра типа, когда явного указания нет.
+>
+>     **Что на самом деле.** Это описание type erasure, а не inference. Type Inference выводит наиболее конкретный тип из контекста (например, `String` для `List.of("a")`, не `Object`). Type erasure же — это финальное стирание уже выведенного типа до Object/bound на этапе генерации bytecode.
+>
+>     **Откуда путаница.** Оба процесса compile-time и связаны с типами, middle путает их. Также путает наличие `Object` в bytecode после erasure — кажется, что компилятор «не вывел» тип, хотя на деле он вывел и проверил, а потом стёр.
+>
+>     **Если бы это было правдой.** Тогда `var list = List.of("a");` имел бы тип `List<Object>`, и `String s = list.get(0);` не компилировался бы. На деле inference даёт `List<String>`, и cast не нужен.
+>
+>     **Как было бы правильно.** Type Inference — вывод конкретного типа из контекста; type erasure — отдельный финальный этап стирания типов в bytecode. Это два разных механизма compile-времени.
 
-> [!mcq]
-> - [ ] В цепочке `stream().collect(Collectors.groupingBy(User::getRole))` компилятор всегда выводит результат как `Map<Object, List<Object>>`, потому что generic-методы из библиотеки не знают типа элементов. | Inference работает через chain. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Map<Role, List<User>> result = stream...collect(Collectors.<User, Role>groupingBy(...))` с лишними explicit type arguments — verbose, хотя inference справляется сам.
-> - [ ] Type inference работает только на уровне одного выражения и не «протекает» через chained method calls — каждый `.collect()`, `.map()` инферится независимо. | Inference составной. ❌ ПОСЛЕДСТВИЕ: разработчик добавляет промежуточные переменные `Stream<User> s = ...; Map<Role, ...> m = s.collect(...)` ожидая что цепочка не работает — на деле inference распространяется через всю цепь.
-> - [x] Type inference в Java 8+ использует **target typing** и **chain inference**: тип возвращаемого значения цепочки (`Map<Role, List<User>> result = users.stream().collect(Collectors.groupingBy(User::getRole))`) распространяется обратно через `collect` → `groupingBy` → method reference, инферя `<T>` и `<K>` без явных type arguments. | ✓ ПРИМЕНЯТЬ: target typing работает в `return`, assignment, method args, lambda return; для лямбд `Comparator.comparing(User::getName)` — компилятор знает целевой `Comparator<User>`; при ambiguity — добавьте explicit `<>` или промежуточную переменную. 📋 ПРАВИЛО: «Java 8+ inference = bidirectional: target type ↓ + arguments ↑; цепочки и лямбды инферятся как одно целое». 🔗 См. Q1 (generics базово), Q3 (Generic Method), java-8-interview (lambda inference).
-> - [ ] Type inference в Java 8+ полностью отказался от target typing в пользу контекста аргументов, поэтому `Collectors.groupingBy()` всегда требует explicit `<K, V>`. | Target typing — основа Java 8 inference. ❌ ПОСЛЕДСТВИЕ: разработчик пишет `Collectors.<User, Role>groupingBy(...)` всегда — лишний boilerplate; современный Java компилятор справляется без подсказок.
+> [!mcq] Как работает type inference в цепочках Stream API?
+>
+> - [ ] A. В цепочке `stream().collect(Collectors.groupingBy(User::getRole))` компилятор всегда выводит результат как `Map<Object, List<Object>>`, потому что generic-методы из библиотеки не знают типа элементов.
+>
+>     **Что на самом деле.** Type inference в Java 8+ работает через цепочки: тип элемента `Stream<User>` известен из источника (`users.stream()` где `users: List<User>`), method reference `User::getRole` известен компилятору, target type `Map<Role, List<User>>` пробрасывается обратно. Результат — `Map<Role, List<User>>`, не `Map<Object, List<Object>>`.
+>
+>     **Откуда путаница.** Middle, столкнувшийся с pre-Java 8 generics, помнит, что цепочки часто требовали явных type arguments. Java 8 значительно улучшил inference, и теперь explicit `<>` нужны крайне редко.
+>
+>     **Если бы это было правдой.** Тогда `Map<Role, List<User>> m = stream.collect(groupingBy(User::getRole));` не компилировался бы — но это рабочий код во всех современных проектах. JDK API дизайнерами рассчитан на inference.
+>
+>     **Как было бы правильно.** Type inference в Java 8+ работает через всю цепь Stream/Collector — компилятор выводит конкретные типы из источника, method references и target type без необходимости явных `<>`.
+>
+> - [ ] B. Type inference работает только на уровне одного выражения и не «протекает» через chained method calls — каждый `.collect()`, `.map()` инферится независимо.
+>
+>     **Что на самом деле.** Java 8 ввёл target typing для chained calls и лямбд. Inference учитывает target type на дальнем конце цепочки и пробрасывает его через intermediate calls. Например, `Stream<User>.map(...)` инферится с учётом того, что результат пойдёт в `Map<String, Integer>` через `collect`.
+>
+>     **Откуда путаница.** В Java 7 inference действительно был более локальным, и middle, перенесший знания с того периода, ожидает то же. Также сбивает усложнённость Stream API — кажется, что компилятор не справится.
+>
+>     **Если бы это было правдой.** Тогда `List<String> names = users.stream().map(User::getName).collect(toList());` требовал бы explicit type argument в каждом звене — но реальный код работает без них.
+>
+>     **Как было бы правильно.** Type inference в Java 8+ — chain-aware: target type из конца присваивания пробрасывается обратно через всю цепь method calls и лямбд.
+>
+> - [x] C. Type inference в Java 8+ использует target typing и chain inference: тип возвращаемого значения цепочки распространяется обратно через `collect` → `groupingBy` → method reference, выводя type-параметры без явных type arguments.
+>
+>     **Развёрнутое объяснение.** Target typing работает в нескольких контекстах: присваивание (`Map<Role, ...> m = ...`), возврат из метода, аргумент метода, тело лямбды. Inference составной — компилятор анализирует выражение целиком, не звено за звеном. Для лямбд `Comparator.comparing(User::getName)` компилятор знает, что результат — `Comparator<User>`, и инферит `T=User`, `U=String`. Если в цепочке возникает ambiguity (multi-target lambda, intersection types), компилятор может ошибиться — тогда нужны explicit `<>` или промежуточная переменная.
+>
+>     **Пример.** Spring `restTemplate.exchange(url, GET, null, new ParameterizedTypeReference<List<User>>(){})` — explicit Super Type Token, потому что generic info не дойдёт до runtime. Но `Map<String, List<Integer>> grouped = stream.collect(groupingBy(s -> s, mapping(String::length, toList())));` — полностью inferred через цепочку из 3 шагов.
+>
+>     **Когда применять.** Полагайтесь на inference в современном Java; explicit `<>` пишите только когда компилятор честно жалуется (ошибка «cannot infer», «incompatible types»). При работе со сложными Collectors комбинируйте через `Collectors.toMap`, `groupingBy`, `mapping` — все они хорошо инферятся в современном компиляторе.
+>
+>     **Подводные камни.** Inference может «удивить» при перегрузке методов с разными лямбда-сигнатурами (`map(Function)` vs `mapToInt(ToIntFunction)`) — нужны cast или explicit type. Diamond operator с anonymous inner class запрещён до Java 9 (`new ArrayList<>() { ... }` не работал в Java 7-8). Inference не пробрасывается через `?: ` ternary в некоторых случаях — нужны типизированные ветви.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q1]] generic type parameter; [[java-generics-interview#Q3]] generic method; [[java-generics-interview#Q38]] generic-методы и inference.
+>
+> - [ ] D. Type inference в Java 8+ полностью отказался от target typing в пользу контекста аргументов, поэтому `Collectors.groupingBy()` всегда требует explicit `<K, V>`.
+>
+>     **Что на самом деле.** Java 8 — расцвет target typing, не отказ. Target type из присваивания/возврата используется наравне с аргументами для inference. `Collectors.groupingBy` инферится без explicit type arguments — это рабочий паттерн в каждом современном Java-проекте.
+>
+>     **Откуда путаница.** Middle может смешивать «улучшения inference» с «упрощениями», думая, что Java избавилась от каких-то механизмов. На деле Java только добавляет inference-возможности, не убирая старые.
+>
+>     **Если бы это было правдой.** Тогда `stream.collect(groupingBy(User::getCity))` не компилировался бы без `<String, List<User>>` — но это типичный код в Spring/Hibernate проектах, работающий из коробки.
+>
+>     **Как было бы правильно.** Java 8+ улучшил inference, добавив target typing для лямбд и chains; explicit `<>` нужны только в edge-cases с ambiguity.
 
 ## Q5. Какие соглашения об именовании параметров типа?
 
@@ -274,11 +541,49 @@ List<String> sorted = sort(list, Comparator.comparing(String::length));
 
 Эти соглашения не обязательны синтаксически, но общеприняты и улучшают читаемость кода.
 
-> [!mcq]
-> - [ ] По соглашению параметр типа для элемента коллекции обозначается буквой `T`, а для общего типа — буквой `E`. | Перепутано. ❌ ПОСЛЕДСТВИЕ: nonstandard naming затрудняет чтение кода — code review медленнее, новые члены команды путаются. JDK convention однозначна.
-> - [ ] По соглашению параметр типа для ключа в Map обозначается буквой `V`, а для значения — буквой `K`. | Перепутано. ❌ ПОСЛЕДСТВИЕ: путаница K/V в коде приводит к багам на ровном месте — `map.computeIfAbsent(value, k -> ...)` (где key и value перепутаны) ведёт к runtime ошибкам.
-> - [x] По соглашению параметр типа для общего типа обозначается `T`, для элемента коллекции — `E`, для ключа — `K`, для значения — `V`, для числа — `N`, для результата — `R`. | ✓ ПРИМЕНЯТЬ: следуйте JDK конвенции — `Map<K,V>`, `List<E>`, `Function<T,R>`, `BiFunction<T,U,R>`. Дополнительные параметры — `S`, `U`, `V` после основных. 📋 ПРАВИЛО: "T=Type, E=Element, K=Key, V=Value, N=Number, R=Result; одна буква, capital". 🔗 См. Q1 (generics базово), Q4 (Type Inference), java-collections-interview.
-> - [ ] По соглашению параметр типа всегда должен быть однобуквенным заглавным символом, и использование других имён, таких как `Type` или `Element`, вызывает ошибку компиляции. | Не enforced. ❌ ПОСЛЕДСТВИЕ: миф о compile error приводит к попыткам `<RequestBody>` или `<UserId>` для clarity — хотя синтаксически валидно, нарушает читаемость. Используйте `T`, `K`, `V` стандартно.
+> [!mcq] Какие соглашения по именованию параметров типа в Java?
+>
+> - [ ] A. По соглашению параметр типа для элемента коллекции обозначается буквой `T`, а для общего типа — буквой `E`.
+>
+>     **Что на самом деле.** Конвенция обратная: `T` — общий тип (Type), `E` — элемент коллекции (Element). JDK использует `List<E>`, `Set<E>`, `Iterator<E>` — для коллекций элементов; `Box<T>`, `Optional<T>`, `Class<T>` — для контейнеров общего типа.
+>
+>     **Откуда путаница.** Алфавитный порядок T → E может намекать на «T = первый = base», но конвенция исходит не из алфавита, а из mnemonics: T=Type, E=Element. Также сбивает то, что в простых tutorial-ах часто используется только `T` без объяснения.
+>
+>     **Если бы это было правдой.** Тогда `interface List<T>` был бы стандартом в JDK — но реально это `interface List<E>`, потому что элемент коллекции — особый случай и подчёркивается отдельной буквой.
+>
+>     **Как было бы правильно.** Конвенция: T=Type (общий), E=Element (элемент коллекции); следуйте JDK для читаемости.
+>
+> - [ ] B. По соглашению параметр типа для ключа в Map обозначается буквой `V`, а для значения — буквой `K`.
+>
+>     **Что на самом деле.** Конвенция обратная: K=Key (ключ), V=Value (значение). JDK `Map<K, V>` — стандарт. Перепутанные K/V в коде создают серьёзные баги, потому что компилятор не различает «logical role», только тип-параметры по позиции.
+>
+>     **Откуда путаница.** Алфавитный порядок K → V соответствует key → value, но middle может перепутать direction. Также путает HashMap внутренней реализации, где иногда оба параметра — Object.
+>
+>     **Если бы это было правдой.** Тогда `Map<String, Integer>` означало бы «строковые значения, целочисленные ключи» — `map.get("hello")` возвращал бы `String`, а не `Integer`. Все примеры в JDK документации стали бы перевёрнуты.
+>
+>     **Как было бы правильно.** Конвенция: K=Key, V=Value; `Map<K, V>` означает «карта от ключей K к значениям V».
+>
+> - [x] C. По соглашению параметр типа для общего типа обозначается `T`, для элемента коллекции — `E`, для ключа — `K`, для значения — `V`, для числа — `N`, для результата — `R`.
+>
+>     **Развёрнутое объяснение.** Соглашение исходит из JDK и широко принято в Java-экосистеме. Каждая буква имеет mnemonic: T=Type (общий), E=Element (элемент коллекции), K=Key, V=Value, N=Number, R=Result (возврат функции). Дополнительные параметры берут S, U (вторичные после T), `T2` или `T3` в редких случаях. Синтаксически любое имя валидно (`<RequestType>`, `<MyParam>`), но это снижает читаемость и нарушает ожидания читателя. Конвенция не enforced компилятором, а культурой.
+>
+>     **Пример.** В JDK `Function<T, R>` — функция от T к R; `BiFunction<T, U, R>` — функция двух аргументов; `Function<T, T>` — endofunction (T → T). Spring `Repository<T, ID>` использует `T` для сущности, `ID` (нестандартно, но описательно для key type) для типа ключа.
+>
+>     **Когда применять.** Всегда следуйте JDK-конвенции в публичных API — это упрощает code review и onboarding. Для специфичных доменов допустимы описательные имена (`<UserId>`, `<RequestBody>`), но взвешивайте читаемость против culture-fit.
+>
+>     **Подводные камни.** При множественных параметрах не используйте `T1, T2, T3` — это говорит о слабом дизайне (нет различимых ролей у параметров). Конвенция `S` (Second type) у Function-related API часто путает с Spring's `<S extends T>` в JpaRepository.save. В Kotlin принято использовать описательные имена (`<UserType>`) — не переносите этот стиль обратно в Java.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q1]] generic type parameter; [[java-generics-interview#Q3]] generic method vs type; [[java-collections-interview#Q1]] коллекции в Java.
+>
+> - [ ] D. По соглашению параметр типа всегда должен быть однобуквенным заглавным символом, и использование других имён, таких как `Type` или `Element`, вызывает ошибку компиляции.
+>
+>     **Что на самом деле.** Синтаксически параметр типа может быть любым валидным Java-идентификатором: `<MyType>`, `<RequestBody>`, `<UserId>` компилируются. Конвенция однобуквенных имён — culture, а не language enforcement. Многобуквенные имена допустимы в случаях, где описательность важнее compactness.
+>
+>     **Откуда путаница.** Compiler error из других контекстов (`<Object>` нельзя) переносится на якобы запрет многобуквенных имён. Также в некоторых linter'ах включена жёсткая проверка convention с предупреждениями.
+>
+>     **Если бы это было правдой.** Тогда `class Cache<EntryType> {}` не компилировался бы — но это валидный Java-код. ErrorProne и Checkstyle могут предупредить, но компилятор пропустит.
+>
+>     **Как было бы правильно.** Соглашение — culture, не compiler rule; используйте `T`, `E`, `K`, `V`, `N`, `R` для читаемости, многобуквенные имена допустимы в обоснованных случаях.
 
 ## Q6. (!) Что такое `Type Erasure` и зачем оно нужно?
 
@@ -303,17 +608,93 @@ List<Integer> integers = new ArrayList<>();
 System.out.println(strings.getClass() == integers.getClass()); // true
 ```
 
-> [!mcq]
-> - [ ] Type Erasure нужен для повышения производительности дженерик-кода в runtime за счёт специализации байт-кода под конкретный тип. | Erasure НЕ specialization. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает Project Valhalla-like specialization — `List<int>` все ещё `List<Integer>` с boxing. Real specialization появится только с Valhalla (Java X+).
-> - [x] Type Erasure нужен для обратной совместимости с кодом, написанным до Java 5, чтобы байт-код с дженериками и без был взаимозаменяем. | ✓ ПРИМЕНЯТЬ: понимание erasure объясняет: (1) почему `new T()` не работает (нужен `Class<T>` factory); (2) почему `instanceof List<String>` запрещён (только `List<?>`); (3) почему overloading `m(List<String>)` и `m(List<Integer>)` — compile error (одинаковые erasures). C# взял другой путь — reified generics. 📋 ПРАВИЛО: "Type Erasure = compile-time only; runtime sees raw types; price = no `new T()` / `instanceof T<X>`". 🔗 См. Q7 (как преобразует код), Q8 (runtime info), Q9 (Reifiable types).
-> - [ ] Type Erasure нужен для уменьшения размера `.class` файлов за счёт хранения информации о типах только в исходном коде. | Размер не цель. ❌ ПОСЛЕДСТВИЕ: ложные ожидания о binary size benefits; `.class` files той же длины с/без generics. Сама причина введения — backward compatibility со всем pre-Java 5 ecosystem.
-> - [ ] Type Erasure нужен для защиты от несанкционированного доступа к параметрам типа через рефлексию в runtime. | Не security. ❌ ПОСЛЕДСТВИЕ: разработчик считает что generic typing скроет внутренние типы; на деле через `getGenericSuperclass()` всё доступно (Q8). Type Erasure — архитектурное решение, не security feature.
+> [!mcq] Зачем в Java введён механизм Type Erasure?
+>
+> - [ ] A. Type Erasure нужен для повышения производительности дженерик-кода в runtime за счёт специализации байт-кода под конкретный тип.
+>
+>     **Что на самом деле.** Type Erasure не делает specialization — наоборот, стирает type-параметры до Object/bound. Никакой performance gain от specialization в текущей Java нет. Specialization обещает только Project Valhalla в будущем (preview в EA-сборках). Главная причина erasure — backward compatibility с pre-Java 5 кодом.
+>
+>     **Откуда путаница.** C++ templates делают monomorphization (специализированный код для каждого типа), C# с reified generics тоже даёт specialization для value types. Middle переносит эти модели на Java, ожидая perf benefits.
+>
+>     **Если бы это было правдой.** Тогда `List<Integer>` был бы быстрее `List<Object>` за счёт inline `int`-операций без boxing — на деле они идентичны по performance, и `Integer` всегда boxed.
+>
+>     **Как было бы правильно.** Type Erasure — следствие backward compatibility, не performance feature; specialization придёт с Project Valhalla.
+>
+> - [x] B. Type Erasure нужен для обратной совместимости с кодом, написанным до Java 5, чтобы байт-код с дженериками и без был взаимозаменяем.
+>
+>     **Развёрнутое объяснение.** Java 5 (2004) ввела generics, но в экосистеме был миллион строк pre-generics кода (Collections API, библиотеки). Архитекторы JDK выбрали Type Erasure: generics существуют только на этапе компиляции, в runtime код выглядит как pre-generics. Это позволило старым библиотекам работать с новым типизированным кодом и наоборот. C# пошёл другим путём (reified generics с .NET 2.0), но без legacy-нагрузки.
+>
+>     **Пример.** `ArrayList<String>` после erasure становится `ArrayList` с полями `Object[] elementData`, методом `Object get(int)`. Pre-Java 5 код `List list = new ArrayList(); list.add("x"); String s = (String) list.get(0);` работает в Java 5+ без изменений; параллельно `List<String>` работает с типобезопасностью на compile-time. Оба компилируются в одинаковый bytecode.
+>
+>     **Когда применять.** Понимание erasure нужно при: дизайне generic API (`Class<T>` token для runtime-доступа), миграции legacy-кода (raw → parameterized), работе с reflection (`getGenericSuperclass()` для Super Type Token), профилировании bytecode (`javap -c` показывает реальные сигнатуры).
+>
+>     **Подводные камни.** Erasure запрещает `new T()`, `T.class`, `instanceof T<X>`, одинаковые erasures у overloaded методов (`m(List<String>)` и `m(List<Integer>)` — compile error). Generic поля и static-контекст имеют ограничения. Heap pollution через raw types может тихо нарушить инварианты. Erasure также делает невозможным переопределение методов по generic-аргументам — нужны bridge methods.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q7]] как erasure преобразует код; [[java-generics-interview#Q8]] runtime info через рефлексию; [[java-generics-interview#Q9]] reifiable types.
+>
+> - [ ] C. Type Erasure нужен для уменьшения размера `.class` файлов за счёт хранения информации о типах только в исходном коде.
+>
+>     **Что на самом деле.** `.class` файлы с generics и без имеют одинаковый размер (с точностью до Signature attribute класса, который мизерный). Generic-info сохраняется в Signature attribute, доступном через рефлексию, но это не «уменьшение размера», а отдельное место для compile-time metadata. Главная цель erasure — backward compatibility, не размер.
+>
+>     **Откуда путаница.** Аналогия с stripped debug-symbols: думают, что generic-info как debug-info тоже опционально и стрипается ради размера. На деле generic-info минимальна и не сравнима с debug.
+>
+>     **Если бы это было правдой.** Тогда отключение generics давало бы измеримое сокращение JAR-файлов — но эксперименты показывают разницу в единицы байт на класс. JVM не оптимизирован под размер ради ущерба фич.
+>
+>     **Как было бы правильно.** Type Erasure не связан с размером файлов; основная мотивация — backward compatibility с pre-Java 5 кодом.
+>
+> - [ ] D. Type Erasure нужен для защиты от несанкционированного доступа к параметрам типа через рефлексию в runtime.
+>
+>     **Что на самом деле.** Type Erasure не security feature. Информация о generic-аргументах сохраняется в Signature attribute класса, доступна через `getGenericSuperclass()`, `getGenericInterfaces()`, `getGenericReturnType()` — Super Type Token использует это. Erasure стирает поля и параметры методов, но не наследование с конкретным generic-аргументом.
+>
+>     **Откуда путаница.** Erasure звучит как «прятать что-то», и middle интерпретирует это как security. На деле это просто «упрощать bytecode для backward compat».
+>
+>     **Если бы это было правдой.** Тогда Jackson `TypeReference` не работал бы — но он работает именно потому, что generic-info сохраняется в Signature наследников. Никакой защиты от reflection нет.
+>
+>     **Как было бы правильно.** Type Erasure — backward compatibility, не security; generic-info частично доступна через рефлексию (Super Type Token).
 
-> [!mcq]
-> - [x] Type Erasure влечёт три практических следствия: запрет `new T()` и `T.class`, запрет `instanceof T<X>` и запрет одинаковых erasures у overloaded методов; всё это — цена backward compatibility. | ✓ ПРИМЕНЯТЬ: для factory без `new T()` передавайте `Class<T>` или `Supplier<T>`; для type-tag используйте Super Type Token; для overloading с generics — переименовывайте методы (`processStrings`/`processInts`). 📋 ПРАВИЛО: «erasure забирает: `new T()`, `T.class`, `instanceof T<X>`, distinct overloads». 🔗 См. Q7 (как преобразует), Q8 (Super Type Token), Q26 (static field).
-> - [ ] После erasure методы `m(List<String>)` и `m(List<Integer>)` имеют разные сигнатуры в байт-коде, поэтому overloading работает. | Сигнатуры одинаковы. ❌ ПОСЛЕДСТВИЕ: разработчик объявляет два метода с разными generic параметрами, ловит compile error «name clash: have the same erasure» и долго ищет причину.
-> - [ ] После erasure JVM хранит generic-параметры в специальной секции метаданных класса и доступна только через `Unsafe`. | Generic-параметры стираются полностью (кроме signature attribute для рефлексии). ❌ ПОСЛЕДСТВИЕ: попытка извлечь runtime-тип через `Unsafe.getInt(field, offset)` — работает с raw типом, generic-аргумент недоступен; иллюзия наличия данных.
-> - [ ] Erasure применяется только к generic-классам, но generic-методы сохраняют параметры типа в байт-коде через `MethodType` для invokedynamic. | Erasure применяется одинаково. ❌ ПОСЛЕДСТВИЕ: разработчик надеется, что generic-метод даст runtime type info без `Class<T>` — на практике в generic-методе `T` тоже стирается, рефлексия не помогает.
+> [!mcq] Какие практические следствия даёт type erasure для кода?
+>
+> - [x] A. Type Erasure влечёт три практических следствия: запрет `new T()` и `T.class`, запрет `instanceof T<X>` и запрет одинаковых erasures у overloaded методов; всё это — цена backward compatibility.
+>
+>     **Развёрнутое объяснение.** После erasure T становится Object (или bound), и JVM не знает конкретного типа. `new T()` запрещён, потому что неизвестно какой конструктор вызывать; `T.class` запрещён, потому что нет runtime-объекта Class для T; `instanceof T<X>` запрещён, потому что в bytecode проверка свелась бы к `instanceof Object`. Overloading с одинаковыми erasures (`m(List<String>)` и `m(List<Integer>)`) даёт compile error «name clash: have the same erasure» — в bytecode оба стали бы `m(List)`, и JVM не различил бы их. Эти ограничения — цена backward compatibility, которую Java заплатила за гладкую миграцию pre-Java 5 кода.
+>
+>     **Пример.** В Spring Data `JpaRepository.save` объявлен как `<S extends T> S save(S entity)` — generic-метод со своим bound, не использующий `new T()`. Hibernate `Session.get(Class<User> entityClass, Long id)` принимает `Class<T>` token явно. Mockito `mock(SomeClass.class)` — тоже через Class token. Jackson обходит instanceof через `TypeReference`.
+>
+>     **Когда применять.** Знание ограничений erasure нужно при дизайне generic API: для factory без `new T()` принимайте `Class<T>` или `Supplier<T>`; для type-tag используйте Super Type Token (`new TypeReference<List<User>>(){}`); для overloading с generics переименовывайте методы (`processStrings`/`processInts`) или используйте wildcard вместо параметра типа.
+>
+>     **Подводные камни.** `instanceof List<?>` (с wildcard) работает — `<?>` reifiable; `instanceof List` (raw) тоже работает с warning. Bridge methods могут создать иллюзию overloading на уровне reflection (`isBridge()` для фильтрации). Generic exception классы запрещены частично — `class MyException<T> extends Exception` компилируется, но `catch (MyException<String> e)` запрещён (erasure делает один catch для всех `MyException<X>`).
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q7]] как преобразует код erasure; [[java-generics-interview#Q8]] runtime info и Super Type Token; [[java-generics-interview#Q26]] static контекст и generics.
+>
+> - [ ] B. После erasure методы `m(List<String>)` и `m(List<Integer>)` имеют разные сигнатуры в байт-коде, поэтому overloading работает.
+>
+>     **Что на самом деле.** После erasure обе сигнатуры превращаются в `m(List)` — компилятор отвергает такой код с ошибкой «name clash: have the same erasure as another method». Generics стираются полностью, JVM видит одинаковые сигнатуры, и overloading невозможен.
+>
+>     **Откуда путаница.** В исходном коде сигнатуры различны (`List<String>` vs `List<Integer>`), и middle ожидает, что bytecode сохранит это различие. На деле bytecode — это уровень JVM, где generics стёрты.
+>
+>     **Если бы это было правдой.** Тогда `void process(List<String>) {}; void process(List<Integer>) {}` в одном классе компилировался бы — но это типичный compile error «name clash: process(List<String>) and process(List<Integer>) have the same erasure».
+>
+>     **Как было бы правильно.** После erasure сигнатуры идентичны, и overloading невозможен; нужно переименовать методы или использовать generic-метод с одним параметром.
+>
+> - [ ] C. После erasure JVM хранит generic-параметры в специальной секции метаданных класса и доступна только через `Unsafe`.
+>
+>     **Что на самом деле.** Generic-параметры стираются в bytecode для полей и параметров методов. Сохраняется только Signature attribute класса (для наследования с явным аргументом) и метода, доступный через стандартные reflection API (`getGenericSuperclass`, `getGenericReturnType`). Никакой `Unsafe`-специфичной таблицы нет.
+>
+>     **Откуда путаница.** `Unsafe` известен как «магия для скрытого доступа», и middle ассоциирует его с непубличными механизмами. На деле generic-info доступна стандартной рефлексией, и `Unsafe` для неё не нужен.
+>
+>     **Если бы это было правдой.** Тогда Jackson `TypeReference` использовал бы `Unsafe.getObject(...)` для извлечения generic-info — на деле в его коде стандартный `((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()`.
+>
+>     **Как было бы правильно.** Generic-info сохраняется в Signature attribute, доступна через стандартные reflection API; `Unsafe` не нужен.
+>
+> - [ ] D. Erasure применяется только к generic-классам, но generic-методы сохраняют параметры типа в байт-коде через `MethodType` для invokedynamic.
+>
+>     **Что на самом деле.** Erasure применяется к generic-классам и generic-методам одинаково — параметры типа стираются до Object или bound в обоих случаях. `MethodType` в `invokedynamic` оперирует stripped сигнатурами (`(List)Object`), а не generic. Generic-метод не даёт runtime type info без `Class<T>` token.
+>
+>     **Откуда путаница.** `invokedynamic` и `MethodHandle` известны как «новый механизм Java 7+», и middle думает, что они обходят erasure. На деле они работают с теми же stripped типами, что и обычные invokevirtual/invokestatic.
+>
+>     **Если бы это было правдой.** Тогда лямбды (которые компилируются через `invokedynamic`) сохраняли бы generic-info — но `lambda.getClass().getGenericInterfaces()` возвращает интерфейс с уже стёртыми параметрами.
+>
+>     **Как было бы правильно.** Erasure применяется одинаково к generic-классам и generic-методам; runtime type info требует `Class<T>` token или Super Type Token.
 
 ## Q7. (!) Как `Type Erasure` преобразует generic-код?
 
@@ -361,17 +742,93 @@ List list = new ArrayList();
 String s = (String) list.get(0); // вставленный каст
 ```
 
-> [!mcq]
-> - [ ] При type erasure неограниченный параметр типа `T` заменяется на `null`, а ограниченный `T extends Number` заменяется на `Object`. | `null` не type. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает specific behavior на основе ложного представления — пишет `if (field == null)` для проверки is-generic, не работает.
-> - [ ] При type erasure неограниченный параметр типа `T` заменяется на `Object`, а ограниченный `T extends Number` тоже заменяется на `Object`, потому что `Number` тоже является объектом. | T extends Number → Number. ❌ ПОСЛЕДСТВИЕ: разработчик пытается оптимизировать generic-код используя `Number` методы (`doubleValue()`), думая что внутри будет `Object` — на деле компилятор уже erases на `Number`, методы доступны напрямую.
-> - [x] При type erasure неограниченный параметр типа `T` заменяется на `Object`, а ограниченный `T extends Number` заменяется на первую границу `Number`; кроме того, компилятор вставляет приведения типов на стороне вызывающего кода. | ✓ ПРИМЕНЯТЬ: bounded types для доступа к методам base-class (`<T extends Comparable<T>>` даёт доступ к `compareTo`); множественные границы `<T extends Number & Comparable<T>>` (первая — class erasure). После erasure: `Box<T extends Number>` имеет `Number` поля, методы `Number` accessible. 📋 ПРАВИЛО: "unbounded T → Object; T extends X → X (первая граница); checkcast вставляется на caller-side". 🔗 См. Q6 (зачем erasure), Q8 (runtime info), Q10 (Bounded Type).
-> - [ ] При type erasure неограниченный параметр типа `T` заменяется на `Object`, ограниченный `T extends Number` заменяется на `Number`, но компилятор не вставляет никаких приведений типов, так как это снизило бы производительность. | Casts вставляются. ❌ ПОСЛЕДСТВИЕ: ложные ожидания приводят к недоверию compile output — на деле checkcast обязательны для typesafety, ClassCastException бросается на caller-side при типовом нарушении.
+> [!mcq] Как именно type erasure преобразует параметр типа T?
+>
+> - [ ] A. При type erasure неограниченный параметр типа `T` заменяется на `null`, а ограниченный `T extends Number` заменяется на `Object`.
+>
+>     **Что на самом деле.** `null` — это значение, а не тип; erasure работает с типами. Неограниченный T заменяется на Object, ограниченный — на первую границу: `T extends Number` → Number, `T extends Comparable<T>` → Comparable. Кроме того, компилятор вставляет checkcast на стороне вызывающего кода.
+>
+>     **Откуда путаница.** Возможно, миддл слышал про «erased to nothing» и интерпретировал «nothing» как `null`. Также путает то, что в bytecode generic-параметры действительно отсутствуют, но это «отсутствие» — Object, не null.
+>
+>     **Если бы это было правдой.** Тогда `Box<T> b = new Box<>(); b.set(null)` имело бы тип поля `null`, и любая операция падала бы NPE — но в реальности поле имеет тип Object, и `null` — допустимое значение.
+>
+>     **Как было бы правильно.** Unbounded T → Object; bounded T extends X → X (первая граница); компилятор вставляет checkcast.
+>
+> - [ ] B. При type erasure неограниченный параметр типа `T` заменяется на `Object`, а ограниченный `T extends Number` тоже заменяется на `Object`, потому что `Number` тоже является объектом.
+>
+>     **Что на самом деле.** Ограниченный `T extends Number` стирается до `Number` (первая граница), а не до Object. Это нужно, чтобы внутри generic-кода были доступны методы Number (`doubleValue`, `intValue`) без cast. Если бы все стиралось до Object, методы Number были бы недоступны.
+>
+>     **Откуда путаница.** «Все есть Object в Java» — общее правило, и миддл применяет его к erasure. На деле erasure стирает до самой конкретной границы, чтобы сохранить методы bound-типа доступными.
+>
+>     **Если бы это было правдой.** Тогда `<T extends Number> double sum(T n) { return n.doubleValue(); }` не компилировался бы — `n.doubleValue()` требует, чтобы `n` имел тип Number, а не Object.
+>
+>     **Как было бы правильно.** Bounded T extends X стирается до X (первой границы), сохраняя доступ к методам bound-типа.
+>
+> - [x] C. При type erasure неограниченный параметр типа `T` заменяется на `Object`, а ограниченный `T extends Number` заменяется на первую границу `Number`; кроме того, компилятор вставляет приведения типов на стороне вызывающего кода.
+>
+>     **Развёрнутое объяснение.** Erasure выполняет три преобразования. Первое: T → bound (Object для unbounded, первая граница для bounded). Второе: компилятор вставляет checkcast на caller-side — `String s = list.get(0)` для `List<String>` в bytecode выглядит как `(String) list.get(0)`. Третье: для multiple bounds `<T extends Number & Comparable<T> & Serializable>` стирается до Number (первая, и она должна быть классом если есть; интерфейсы идут после) — для остальных границ checkcast вставляется при необходимости. Bridge methods синтезируются для сохранения полиморфизма (см. отдельный MCQ).
+>
+>     **Пример.** Класс `class NumberBox<T extends Number> { T value; double sum() { return value.doubleValue(); } }` после erasure имеет поле `Number value` и метод `double sum() { return value.doubleValue(); }` — без cast. Метод `<T extends Number> T max(List<T>)` имеет в bytecode сигнатуру `Number max(List)`. Caller `Integer i = box.value` имеет неявный checkcast Integer.
+>
+>     **Когда применять.** Используйте bounded types для доступа к методам base-class: `<T extends Comparable<T>>` для сортировки, `<T extends Closeable>` для try-with-resources, `<T extends Number>` для арифметики. При множественных границах ставьте самую «богатую» (с большим API) первой — её методы будут доступны без cast после erasure.
+>
+>     **Подводные камни.** Для multiple bounds класс должен быть первым (`<T extends Number & Comparable<T>>`); если класс не первый — compile error «interface expected here». При наследовании с разными bounds (`class Sub<T extends Number> extends Super<T>`) может потребоваться bridge для совместимости. Class.cast в reflection использует bound-erased тип, не оригинальный T.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q6]] зачем erasure; [[java-generics-interview#Q8]] runtime info через рефлексию; [[java-generics-interview#Q10]] bounded type parameter.
+>
+> - [ ] D. При type erasure неограниченный параметр типа `T` заменяется на `Object`, ограниченный `T extends Number` заменяется на `Number`, но компилятор не вставляет никаких приведений типов, так как это снизило бы производительность.
+>
+>     **Что на самом деле.** Компилятор обязательно вставляет checkcast на caller-side для типобезопасности — без него `Integer i = list.get(0)` для `List<String>` не бросал бы ClassCastException, и инвариант контейнера был бы нарушен. Performance impact от checkcast минимален (JIT часто его инлайнит), но он нужен для безопасности.
+>
+>     **Откуда путаница.** Идея «оптимизации компилятором» приводит к ожиданию, что Java выкидывает «лишние» проверки. На деле checkcast — это контракт language safety, его нельзя пропустить.
+>
+>     **Если бы это было правдой.** Тогда `List<String> list = (List<String>) rawList; Integer i = list.get(0);` не бросал бы CCE при типовом нарушении — но реально бросает именно из-за вставленного checkcast.
+>
+>     **Как было бы правильно.** Checkcast обязателен для типобезопасности; performance impact минимален, и JIT часто его устраняет в hot-path.
 
-> [!mcq]
-> - [ ] При override generic-метода с covariant return type (например `Iterator<String>.next() : String` overriding `Iterator<E>.next() : E`) компилятор просто заменяет метод родителя — никакого дополнительного кода не генерируется. | Bridge methods обязательны. ❌ ПОСЛЕДСТВИЕ: разработчик не знает про bridge — при reflection видит «лишние» методы `Object next()` рядом с `String next()`, фильтрует их вручную вместо `Method.isBridge()`.
-> - [ ] Bridge methods — это устаревший механизм Java 5 для совместимости с Java 1.4, и в современной Java 17+ они больше не генерируются. | Bridge methods всё ещё генерируются. ❌ ПОСЛЕДСТВИЕ: разработчик ожидает чистый bytecode на Java 17 — на деле `javap` всё равно показывает bridge synthetic методы для поддержки virtual dispatch после erasure.
-> - [x] Помимо `T → Object` (или первой границы) и checkcast на caller-side, компилятор генерирует **bridge methods** при override generic-методов: для `class StringList extends ArrayList<String>` с override `add(String)` создаётся synthetic `add(Object)`, который делегирует в `add(String)` — это сохраняет полиморфизм после erasure. | ✓ ПРИМЕНЯТЬ: bridge methods нужны потому что после erasure родительский метод имеет сигнатуру `add(Object)`, а ребёнок — `add(String)`; без bridge virtual dispatch сломался бы. Для covariant return (`@Override Cat get()` vs `Animal get()` родителя) — тоже bridge. При reflection используйте `Method.isBridge()` чтобы исключать. 📋 ПРАВИЛО: «erasure: T→Object/bound + checkcast + bridge methods для polymorphism preservation». 🔗 См. Q6 (Type Erasure), Q8 (runtime info), Q24 (covariant return).
-> - [ ] Bridge methods генерируются только для абстрактных классов и интерфейсов; конкретные классы их не используют. | Любой override generic метода. ❌ ПОСЛЕДСТВИЕ: разработчик ищет bridge только в abstract `Comparable.compareTo` — пропускает их в обычных классах вроде `class IntList extends ArrayList<Integer>`, удивляется при reflection.
+> [!mcq] Что такое bridge methods и в каких случаях они генерируются?
+>
+> - [ ] A. При override generic-метода с covariant return type (например `Iterator<String>.next(): String` overriding `Iterator<E>.next(): E`) компилятор просто заменяет метод родителя — никакого дополнительного кода не генерируется.
+>
+>     **Что на самом деле.** При override generic-метода компилятор генерирует bridge method — synthetic метод с erased сигнатурой родителя, делегирующий к специализированному overriden методу. Для `Iterator<String>` родительский `next()` имеет тип возврата Object (после erasure), а ребёнок — String; bridge `Object next()` обязателен для virtual dispatch.
+>
+>     **Откуда путаница.** Override visually выглядит как «замена», и middle ожидает, что bytecode тоже простая замена. На деле bytecode сложнее из-за erasure родителя.
+>
+>     **Если бы это было правдой.** Тогда `for (String s : iterator)` для `Iterator<String>` не работал бы — JVM вызывает `Object next()` через интерфейс (стёртый), а специализированный `String next()` ребёнка не дотягивался бы без bridge.
+>
+>     **Как было бы правильно.** При override generic-метода компилятор генерирует bridge с erased сигнатурой родителя, делегирующий к специализированному overriden методу.
+>
+> - [ ] B. Bridge methods — это устаревший механизм Java 5 для совместимости с Java 1.4, и в современной Java 17+ они больше не генерируются.
+>
+>     **Что на самом деле.** Bridge methods генерируются и в современной Java (17, 21+) — это фундаментальный механизм для polymorphism preservation после erasure. `javap -c -p` на любом классе с override generic-метода покажет bridge synthetic методы.
+>
+>     **Откуда путаница.** Слова «устарело» и «Java 5» создают иллюзию архаичности. Также middle может надеяться, что новые версии Java «убрали лишнее».
+>
+>     **Если бы это было правдой.** Тогда `class MyList extends ArrayList<String>` в Java 21 не имел бы bridge `boolean add(Object)` — но `javap -c -p MyList.class` показывает его в любом современном Java.
+>
+>     **Как было бы правильно.** Bridge methods — текущий и постоянный механизм Java, генерируется во всех версиях для override generic-методов и covariant return.
+>
+> - [x] C. Помимо `T → Object` (или первой границы) и checkcast на caller-side, компилятор генерирует bridge methods при override generic-методов: для `class StringList extends ArrayList<String>` с override `add(String)` создаётся synthetic `add(Object)`, который кастует и делегирует к `add(String)`.
+>
+>     **Развёрнутое объяснение.** Bridge methods нужны потому что после erasure родительский метод имеет сигнатуру `boolean add(Object)` (из `ArrayList<E>.add(E)`), а специализированный ребёнок — `boolean add(String)`. Без bridge virtual dispatch через интерфейс `List<E>` не нашёл бы метод ребёнка — JVM искал бы `add(Object)`, который существует только в родителе. Bridge `add(Object)` в ребёнке делает checkcast в String и делегирует к `add(String)`. Аналогично для covariant return (`Sub clone()` поверх `Object clone()`) — bridge `Object clone()` делегирует к `Sub clone()`.
+>
+>     **Пример.** `class StringList extends ArrayList<String> { @Override public boolean add(String s) { return super.add(s); } }` — `javap -c -p StringList.class` покажет два метода: `public boolean add(String)` и `public bridge synthetic boolean add(Object)`. Bridge выполняет `checkcast String; aload_1; invokevirtual add:(Ljava/lang/String;)Z`.
+>
+>     **Когда применять.** При работе с reflection (Spring AOP, Mockito, Hibernate proxy) фильтруйте bridge через `Method.isBridge() || Method.isSynthetic()` — иначе advice применится дважды, mock не подцепится. При анализе stack trace synthetic frame часто — bridge. ProGuard/R8 в Android минимизируют bridge при aggressive shrinking.
+>
+>     **Подводные камни.** Bridge может создать видимость «дублирующего» метода в reflection — `getDeclaredMethods()` возвращает оба, нужна фильтрация. ClassCastException внутри bridge бросается со stack trace, указывающим на bridge, что путает при отладке. При наследовании с разными bounds может появиться несколько bridge для одного метода.
+>
+>     **Связанные вопросы.** [[java-generics-interview#Q6]] type erasure; [[java-generics-interview#Q8]] runtime info; [[java-generics-interview#Q23]] bridge methods подробно.
+>
+> - [ ] D. Bridge methods генерируются только для абстрактных классов и интерфейсов; конкретные классы их не используют.
+>
+>     **Что на самом деле.** Bridge methods генерируются для любого override generic-метода независимо от того, abstract или конкретный класс. `class StringList extends ArrayList<String>` (конкретный) тоже имеет bridge `add(Object)`. Bridge — это про сохранение полиморфизма, не про abstractness.
+>
+>     **Откуда путаница.** Comparable обычно ассоциируется с интерфейсом, и middle думает, что bridge только для interface-related override. На деле любой extends с generic-параметром даёт bridge.
+>
+>     **Если бы это было правдой.** Тогда `class IntList extends ArrayList<Integer>` не имел бы bridge — но `javap -c -p IntList.class` показывает `public bridge synthetic boolean add(Object)`. Mockito-spy и Spring AOP применяли бы advice только один раз, что и есть реальное поведение.
+>
+>     **Как было бы правильно.** Bridge methods генерируются для любого override generic-метода — abstract, конкретный, anonymous class, lambda; механизм универсален.
 
 ## Q8. (!) Доступна ли информация о generic-типе во время выполнения?
 

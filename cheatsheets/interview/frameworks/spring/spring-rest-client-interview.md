@@ -141,7 +141,7 @@ graph LR
 >
 > **Подводные камни:** В Spring MVC использование WebClient + `.block()` — антипаттерн; правильный выбор — RestClient. `RestClient.create(restTemplate)` сохраняет interceptors и converters при миграции.
 >
-> **Связанные вопросы:** [[Q2]] — почему RestTemplate deprecated; [[Q7]] — когда выбирать WebClient
+> **Связанные вопросы:** [[spring-rest-client-interview#Q2]] — почему RestTemplate deprecated; [[spring-rest-client-interview#Q7]] — когда выбирать WebClient
 
 ## Q2. Почему RestTemplate помечен как deprecated?
 
@@ -212,7 +212,7 @@ graph LR
 >
 > **Подводные камни:** Deprecation не блокирует CI/CD — это warning, не error. Не паниковать при апгрейде Spring 6, но планировать миграцию.
 >
-> **Связанные вопросы:** [[Q1]] — сравнение всех клиентов; [[Q13]] — миграция RestTemplate → RestClient
+> **Связанные вопросы:** [[spring-rest-client-interview#Q1]] — сравнение всех клиентов; [[spring-rest-client-interview#Q13]] — миграция RestTemplate → RestClient
 
 ## Q3. (!) Как работает RestClient?
 
@@ -316,7 +316,7 @@ client.delete()
 >
 > **Подводные камни:** Не забыть `.contentType()` для POST/PUT — иначе ContentType резолвится из HttpMessageConverter и может быть не тем, что ожидает API. URI variables не нужно URL-encode вручную — `{id}` делает это автоматически.
 >
-> **Связанные вопросы:** [[Q4]] — retrieve vs exchange; [[Q5]] — обработка ошибок
+> **Связанные вопросы:** [[spring-rest-client-interview#Q4]] — retrieve vs exchange; [[spring-rest-client-interview#Q5]] — обработка ошибок
 
 ## Q4. Чем retrieve() отличается от exchange()?
 
@@ -409,7 +409,7 @@ Optional<User> user = client.get()
 >
 > **Подводные камни:** В `exchange()` callback **обязан** прочитать response body или закрыть его — иначе connection leak. RestClient делает это автоматически после возврата из lambda, но в долгих обработках всё равно следить за ресурсами.
 >
-> **Связанные вопросы:** [[Q3]] — общая структура fluent API; [[Q5]] — `.onStatus()` для кастомных ошибок
+> **Связанные вопросы:** [[spring-rest-client-interview#Q3]] — общая структура fluent API; [[spring-rest-client-interview#Q5]] — `.onStatus()` для кастомных ошибок
 
 ## Q5. Как обрабатывать ошибки в RestClient?
 
@@ -506,7 +506,7 @@ RestClient client = RestClient.builder()
 >
 > **Подводные камни:** В `.onStatus()` handler **обязан** выбросить исключение или throw — нельзя «проглотить» ошибку и продолжить. Для возврата alternative-значения используйте `.exchange()`.
 >
-> **Связанные вопросы:** [[Q4]] — exchange для условной обработки; [[Q12]] — retry на уровне ClientHttpRequestFactory
+> **Связанные вопросы:** [[spring-rest-client-interview#Q4]] — exchange для условной обработки; [[spring-rest-client-interview#Q12]] — retry на уровне ClientHttpRequestFactory
 
 ## Q6. Как десериализовать коллекцию через RestClient?
 
@@ -600,7 +600,7 @@ Map<String, Object> data = client.get().uri("/info")
 >
 > **Подводные камни:** Anonymous class create new class per call site — не критично, но при экстремальном тюнинге можно вынести в static final. Spring `Page<T>` нельзя десериализовать напрямую — нужна `RestPage<T>` (custom с конструктором), потому что `Page` интерфейс.
 >
-> **Связанные вопросы:** [[Q3]] — общая структура RestClient; [[Q13]] — миграция с `RestTemplate.exchange(..., new ParameterizedTypeReference<>() {})`
+> **Связанные вопросы:** [[spring-rest-client-interview#Q3]] — общая структура RestClient; [[spring-rest-client-interview#Q13]] — миграция с `RestTemplate.exchange(..., new ParameterizedTypeReference<>() {})`
 
 ## Q7. (!) Когда использовать WebClient вместо RestClient?
 
@@ -695,7 +695,7 @@ Flux<User> allUsers = webClient.get()
 >
 > **Подводные камни:** `WebClient` + `.block()` в Spring MVC — антипаттерн, даёт деградацию по сравнению с RestClient. Если нужны Reactor-типы только локально — лучше использовать RestClient и обернуть в `CompletableFuture.supplyAsync()`.
 >
-> **Связанные вопросы:** [[Q8]] — `.block()` в WebClient; [[Q11]] — @HttpExchange с WebClient
+> **Связанные вопросы:** [[spring-rest-client-interview#Q8]] — `.block()` в WebClient; [[spring-rest-client-interview#Q11]] — @HttpExchange с WebClient
 
 ## Q8. Как сделать синхронный вызов через WebClient?
 
@@ -784,7 +784,7 @@ User user = webClient.get()
 >
 > **Подводные камни:** В WebFlux `.block()` определяется по имени потока (`reactor-http-nio-*` и т.п.). Reactor проверяет это через `BlockHound` при включенном `-javaagent`. Любой `.block()` в `@RestController` reactive метода — runtime error.
 >
-> **Связанные вопросы:** [[Q7]] — когда нужен WebClient; [[Q1]] — RestClient как замена для sync
+> **Связанные вопросы:** [[spring-rest-client-interview#Q7]] — когда нужен WebClient; [[spring-rest-client-interview#Q1]] — RestClient как замена для sync
 
 ## Q9. (!) Что такое @HttpExchange и как им пользоваться?
 
@@ -925,7 +925,7 @@ public class OrderService {
 >
 > **Подводные камни:** Можно вернуть `Mono<T>` для WebClient adapter и `T` для RestClient adapter — типы зависят от backend. Smешать в одном интерфейсе нельзя. Кастомные exception mapping настраиваются через `RestClient`/`WebClient` builder (`.defaultStatusHandler()`), а не на интерфейсе.
 >
-> **Связанные вопросы:** [[Q10]] — аннотации параметров; [[Q11]] — RestClient vs WebClient adapter
+> **Связанные вопросы:** [[spring-rest-client-interview#Q10]] — аннотации параметров; [[spring-rest-client-interview#Q11]] — RestClient vs WebClient adapter
 
 ## Q10. Какие аннотации параметров поддерживает @HttpExchange?
 
@@ -1042,7 +1042,7 @@ public interface SearchClient {
 >
 > **Подводные камни:** `URI` параметр должен быть **абсолютным** — он не комбинируется с baseUrl. Если нужно лишь переопределить путь — лучше путь через `@GetExchange("/dynamic")` + `@PathVariable`. Multipart upload требует, чтобы backend имел `MultipartResolver` (для RestClient — HttpComponents или Jetty).
 >
-> **Связанные вопросы:** [[Q9]] — общая структура @HttpExchange; [[Q11]] — выбор adapter
+> **Связанные вопросы:** [[spring-rest-client-interview#Q9]] — общая структура @HttpExchange; [[spring-rest-client-interview#Q11]] — выбор adapter
 
 ## Q11. Как подключить @HttpExchange к RestClient vs WebClient?
 
@@ -1154,7 +1154,7 @@ spring:
 >
 > **Подводные камни:** Spring Boot 3.2+ имеет авто-конфигурацию через `@ImportHttpServices` или manual bean registration — не нужно вручную создавать factory в простых случаях. RestClient adapter не сериализует `CompletableFuture` — для async parallel вызовов нужен WebClient или ручной `@Async`.
 >
-> **Связанные вопросы:** [[Q9]] — общая структура @HttpExchange; [[Q7]] — RestClient vs WebClient выбор
+> **Связанные вопросы:** [[spring-rest-client-interview#Q9]] — общая структура @HttpExchange; [[spring-rest-client-interview#Q7]] — RestClient vs WebClient выбор
 
 ## Q12. Как настроить таймауты, базовый URL и заголовки?
 
@@ -1286,7 +1286,7 @@ RestClient client = RestClient.builder()
 >
 > **Подводные камни:** Read timeout — это **socket read**, не общий request timeout. Если backend возвращает chunked response, каждый chunk должен прийти в пределах timeout, но total time может быть больше. Для total cap нужен `request-timeout` (Apache HC 5.2+) или вручную `CompletableFuture.orTimeout()`.
 >
-> **Связанные вопросы:** [[Q3]] — структура RestClient; [[Q5]] — error handling
+> **Связанные вопросы:** [[spring-rest-client-interview#Q3]] — структура RestClient; [[spring-rest-client-interview#Q5]] — error handling
 
 ## Q13. Как мигрировать с RestTemplate на RestClient?
 
@@ -1398,7 +1398,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > **Подводные камни:** `RestTemplate.getInterceptors()` — mutable list, изменения **после** `RestClient.create(rt)` **не** распространятся на RestClient (snapshot на момент создания). Если interceptors добавляются динамически — лучше создавать RestClient после полной инициализации, или конфигурировать оба в одном `@Configuration`. `errorHandler` ведёт себя различно: в RestTemplate он перехватывает ошибки, в RestClient `.retrieve()` использует свои `.onStatus()` handlers — может потребоваться адаптация error handling логики.
 >
-> **Связанные вопросы:** [[Q1]] — сравнение клиентов; [[Q2]] — почему RestTemplate deprecated; [[Q3]] — fluent API RestClient
+> **Связанные вопросы:** [[spring-rest-client-interview#Q1]] — сравнение клиентов; [[spring-rest-client-interview#Q2]] — почему RestTemplate deprecated; [[spring-rest-client-interview#Q3]] — fluent API RestClient
 
 ## See also
 
@@ -1468,7 +1468,7 @@ ResponseEntity<List<User>> resp = restClient.get().uri(url)
 >
 > **Подводные камни:** Если interceptor вызывает `exec.execute()` несколько раз (например, retry), нужно **повторно** скопировать body — InputStream может быть consumed. Для distributed tracing — использовать готовый `ClientHttpRequestInterceptor` из Micrometer или Sleuth/Brave, не писать свой.
 >
-> **Связанные вопросы:** [[Q12]] — конфигурация RestClient; [[Q5]] — обработка ошибок через .onStatus()
+> **Связанные вопросы:** [[spring-rest-client-interview#Q12]] — конфигурация RestClient; [[spring-rest-client-interview#Q5]] — обработка ошибок через .onStatus()
 
 - [Spring WebFlux](spring-webflux-interview.md) — WebClient в реактивном стеке
 - [Spring Framework](spring-framework-interview.md) — архитектура Spring, MessageConverters

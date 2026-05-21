@@ -148,7 +148,7 @@ graph TB
 >     - **Пример:** `Nginx` с `location /api/orders { proxy_pass http://orders_pool; }` — это L7-роутинг по `URL`. А `HAProxy` в `mode tcp` для проксирования `PostgreSQL` на `5432` — это L4, ему всё равно, что внутри пакета.
 >     - **Когда применять:** L4 — для не-HTTP трафика (`gRPC` без header-routing, `TCP` БД, `UDP` DNS) и максимальной пропускной способности. L7 — когда нужен path-based routing, `TLS` termination, WAF, sticky session по cookie, A/B-тесты по заголовку.
 >     - **Подводные камни:** L4 не может делать `TLS` termination без pass-through (сертификаты остаются на бэкендах); L7 добавляет латентность из-за парсинга `HTTP` и требует CPU на TLS. Часто используют двухуровневую схему: L4 на входе для DDoS-устойчивости + L7 внутри для роутинга.
->     - **Связанные вопросы:** [[Q2]] про `TLS` termination, [[Q40]] про L7-балансировку в `Envoy`/Istio.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q2]] про `TLS` termination, [[load-balancing-interview#Q40]] про L7-балансировку в `Envoy`/Istio.
 > - [ ] B) L4 работает только с `HTTP`, а L7 — с `TCP` и `UDP` любыми протоколами
 >     - **Что на самом деле:** ровно наоборот. L4 — это `TCP`/`UDP` и любой протокол поверх них (включая `HTTP`, но без его понимания). L7 специализирован именно на `HTTP`/`HTTPS` (и `gRPC`/`WebSocket` как надстройках над `HTTP`).
 >     - **Откуда путаница:** многие сталкиваются только с `HTTP` LB (`Nginx`/`ALB`) и считают, что «балансировка = HTTP-роутинг», а L4 ассоциируют с чем-то экзотическим.
@@ -242,7 +242,7 @@ spec:
 >     - **Пример:** `Nginx` с `listen 443 ssl; ssl_certificate api.example.com.crt; proxy_pass http://backend_pool;` — классический termination. В `Kubernetes` Ingress с `tls.secretName: api-tls-secret` делает то же самое на уровне ingress-контроллера.
 >     - **Когда применять:** когда нужен L7-роутинг, WAF, централизованное обновление сертификатов (Let's Encrypt в одном месте), разгрузка CPU бэкендов от шифрования. Между LB и бэкендами в `VPC`/Kubernetes часто оставляют `HTTP` — внутренняя сеть считается доверенной.
 >     - **Подводные камни:** трафик LB→бэкенд незашифрован, что недопустимо при compliance-требованиях (PCI DSS, HIPAA) — тогда нужно re-encryption или `mTLS`. Бэкенд не видит оригинальный `client IP` и `scheme` — нужно прокидывать `X-Forwarded-For`/`X-Forwarded-Proto`.
->     - **Связанные вопросы:** [[Q1]] про L7 vs L4, [[Q3]] про health checks (тоже работают через LB).
+>     - **Связанные вопросы:** [[load-balancing-interview#Q1]] про L7 vs L4, [[load-balancing-interview#Q3]] про health checks (тоже работают через LB).
 > - [ ] C) `TLS termination` — это процесс закрытия `TCP`-соединения после получения `RST`-пакета, не связан с шифрованием
 >     - **Что на самом деле:** «termination» в `TLS` означает завершение зашифрованного канала на конкретном узле, а не закрытие TCP. RST/FIN — это про разрыв TCP-соединения и к TLS отношения не имеет.
 >     - **Откуда путаница:** слово «termination» в сетях используется в разных контекстах (TCP termination, session termination, TLS termination), и их легко смешать.
@@ -339,7 +339,7 @@ containers:
 >     - **Пример:** `HAProxy` `option httpchk GET /health; server app1 10.0.0.1:8080 check inter 5s fall 3 rise 2` — проверка каждые 5 секунд, исключить после 3 неудач, вернуть после 2 успехов. В Kubernetes — `livenessProbe`/`readinessProbe`/`startupProbe` на разных стадиях жизни Pod.
 >     - **Когда применять:** всегда в production. Разделяйте liveness (нужен ли рестарт), readiness (готов ли принимать трафик) и startup (для долгого warmup, например Spring Boot). Эндпоинт `/health` должен быть быстрым и не зависеть от внешних сервисов — иначе падение БД каскадом убьёт все поды через liveness.
 >     - **Подводные камни:** слишком агрессивные probe (interval 1s, threshold 1) дают false positive при GC-паузах; слишком мягкие (interval 30s, fall 5) — клиенты долго получают ошибки. Health check на «глубокий» endpoint, проверяющий БД, превращает любой сбой БД в массовый рестарт подов — обычно делают shallow `/liveness` и deep `/readiness`.
->     - **Связанные вопросы:** [[Q1]] про L4/L7 (health checks на разных уровнях), [[Q2]] про `TLS` (для HTTPS health check), [[Q4]] про sticky sessions (когда узел upbecomes unhealthy, sticky-привязка теряется).
+>     - **Связанные вопросы:** [[load-balancing-interview#Q1]] про L4/L7 (health checks на разных уровнях), [[load-balancing-interview#Q2]] про `TLS` (для HTTPS health check), [[load-balancing-interview#Q4]] про sticky sessions (когда узел upbecomes unhealthy, sticky-привязка теряется).
 > - [ ] D) Health check работает только для базы данных, для веб-сервисов используется только `keepalive`
 >     - **Что на самом деле:** health check универсален — HTTP-сервисы, gRPC, TCP-сервисы, БД, очереди — все имеют свои health checks. `keepalive` — это про переиспользование TCP-соединений (TCP keepalive / HTTP keep-alive), он не проверяет работоспособность приложения, только живость TCP-канала.
 >     - **Откуда путаница:** `keepalive`-пакеты иногда называют «health-check на уровне TCP», но они проверяют только соединение, а не приложение (БД может висеть, но TCP-keepalive отвечать).
@@ -734,7 +734,7 @@ upstream backend_pool {
 >     - **Пример:** `upstream api { server pod1; server pod2; server pod3; }` без явного указания алгоритма — Nginx использует Round Robin и равномерно ротирует поды. Для Kubernetes Service `ClusterIP` kube-proxy в режиме iptables даёт фактически Round Robin между подами.
 >     - **Когда применять:** короткие REST-запросы (`<100ms`), stateless приложение, одинаковые поды по CPU/RAM, отсутствие sticky session. Это «золотой стандарт» для микросервисов в Kubernetes.
 >     - **Подводные камни:** Round Robin плох, если запросы сильно отличаются по длительности (один тянет 5s, остальные — 50ms): «толстые» запросы могут сконцентрироваться на одном узле. В таком случае стоит переключиться на `Least Connections`. Также Round Robin игнорирует фактическую загрузку — если под уже на 100% CPU, ему всё равно прилетит свой запрос.
->     - **Связанные вопросы:** [[Q6]] про сам Round Robin, [[Q8]] про Least Connections как альтернативу.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q6]] про сам Round Robin, [[load-balancing-interview#Q8]] про Least Connections как альтернативу.
 > - [ ] C) `Sticky Session` по cookie — это единственный надёжный способ балансировки в production
 >     - **Что на самом деле:** sticky session нужен только когда состояние пользователя живёт **на узле** (in-memory session, локальный кэш). Для stateless сервиса sticky session — антипаттерн: он мешает равномерному распределению и ломает graceful rollout (часть юзеров остаётся «прибита» к старому поду).
 >     - **Откуда путаница:** в монолитах с server-side session sticky был необходим, и эта привычка переносится на микросервисы по инерции.
@@ -817,7 +817,7 @@ server {
 >     - **Пример:** `server backend1:8080 max_fails=3 fail_timeout=30s;` — три ошибки за 30 секунд → сервер исключён на 30 секунд → следующий запрос (после окна) станет «проверочным». Это работает без специальных health-эндпоинтов, прямо на боевом трафике.
 >     - **Когда применять:** в OSS Nginx это стандартный механизм failover для микросервисов в Kubernetes/VM. Если нужен **активный** check со специальным `/health` эндпоинтом и тюнингом частоты — переходить на Nginx Plus или ставить перед Nginx внешний health-checker.
 >     - **Подводные камни:** `max_fails=0` **отключает** проверку (сервер считается всегда доступным) — частая ошибка при копипасте. Также пассивный check «узнаёт» о падении только при реальной ошибке клиента, то есть первые `max_fails` запросов после деградации получат `5xx`. Третий нюанс: если все серверы помечены недоступными, Nginx использует `no live upstreams while connecting` — на это нужен `backup` сервер.
->     - **Связанные вопросы:** [[Q3]] про health checks в целом, [[Q5]] про активную vs пассивную балансировку, [[Q12]] про конфигурацию failover.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q3]] про health checks в целом, [[load-balancing-interview#Q5]] про активную vs пассивную балансировку, [[load-balancing-interview#Q12]] про конфигурацию failover.
 > - [ ] D) `max_fails` — это retry: после ошибки Nginx 3 раза повторит запрос на том же сервере, и только потом переключится
 >     - **Что на самом деле:** retry на следующий сервер регулируется `proxy_next_upstream` и `proxy_next_upstream_tries`, и работает в рамках **одного клиентского запроса**. `max_fails` же это «банковский счёт» ошибок сервера во времени, не имеющий отношения к попыткам повтора одного запроса.
 >     - **Откуда путаница:** слово «fails» и число 3 ассоциируется с «3 попытки», что сливает в одно две независимые механики.
@@ -888,7 +888,7 @@ match health_ok {
 >     - **Пример:** активный — `upstream { zone backend 64k; server b1:8080; health_check interval=5s fails=3 passes=2 uri=/health; }` плюс `match health_ok { status 200; body ~ "UP"; }`. Пассивный — `upstream { server b1:8080 max_fails=3 fail_timeout=30s; }`.
 >     - **Когда применять:** активный — когда нужно «не светить клиенту 502» и есть SLA на latency p99/error rate (платёжные сервисы, API gateway). Пассивный — на бэкендах с большим RPS, где первые 3 ошибки в 30-секундном окне не критичны, и не хочется платить за Nginx Plus.
 >     - **Подводные камни:** активный check добавляет нагрузку на бэкенды (каждые 5s × количество балансировщиков × количество апстримов — может быть значимо). Также `/health` эндпоинт должен быть **lightweight** и **независим** от внешних зависимостей, иначе при деградации БД активный check выкинет все поды из пула одновременно. Пассивный страдает от «холодного старта»: после рестарта Nginx сервер считается живым, и первые запросы пойдут на упавший узел.
->     - **Связанные вопросы:** [[Q3]] про health check как концепцию, [[Q5]] про активную vs пассивную балансировку, [[Q11]] про базовую конфигурацию Nginx upstream.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q3]] про health check как концепцию, [[load-balancing-interview#Q5]] про активную vs пассивную балансировку, [[load-balancing-interview#Q11]] про базовую конфигурацию Nginx upstream.
 
 ## Q13. Как настроить rate limiting в Nginx?
 
@@ -1386,7 +1386,7 @@ backend api_servers
 >     - **Пример:** `upstream { server stable weight=9; server canary weight=1; }` в Nginx даёт 10% на canary. Полный blue-green в Kubernetes — два Deployment с label `version=blue|green` и Service, в котором selector меняется одним `kubectl patch`.
 >     - **Когда применять:** blue-green — когда деплой должен быть атомарным и мгновенно откатываемым (банковские транзакции, релизы со схемой БД, требующие full cutover). Canary — когда нужен реальный production-сигнал до полной раскатки (метрики ошибок, latency на маленькой выборке пользователей).
 >     - **Подводные камни:** blue-green удваивает потребление ресурсов на время деплоя и требует совместимости БД между версиями; canary требует, чтобы метрики были statistically significant на маленькой выборке, и нужен механизм sticky session (чтобы один и тот же пользователь не «прыгал» между версиями).
->     - **Связанные вопросы:** [[Q7]] про weighted round robin как механизм canary, [[Q21]] про connection draining при переключении, [[Q25]] про zero-downtime деплой.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q7]] про weighted round robin как механизм canary, [[load-balancing-interview#Q21]] про connection draining при переключении, [[load-balancing-interview#Q25]] про zero-downtime деплой.
 > - [ ] C) Blue-green делит трафик по геолокации (синий регион = EU, зелёный = US), а canary — по типу устройства
 >     - **Что на самом деле:** ни blue-green, ни canary не привязаны к геолокации или устройствам. Это стратегии version rollout, ортогональные географическому роутингу (`Q27` про geographic load balancing).
 >     - **Откуда путаница:** цвета «синий/зелёный» вызывают ассоциации с географическими картами, но это просто условные имена двух окружений.
@@ -1456,7 +1456,7 @@ vrrp_instance VI_1 {
 >     - **Пример:** `vrrp_instance VI_1 { state MASTER; virtual_ipaddress { 192.168.1.100 } }` в `keepalived` поднимает floating IP, который мигрирует при падении мастера. В `AWS` ALB с `subnets = [subnet-az-a, subnet-az-b, subnet-az-c]` автоматически распределяется по трём AZ.
 >     - **Когда применять:** Active-Passive — для on-prem с двумя физическими узлами (простая схема, понятный failover). Active-Active — когда нужно горизонтальное масштабирование самого LB (миллионы RPS). Managed multi-AZ — облако, не хочется управлять keepalived.
 >     - **Подводные камни:** VRRP требует общего L2-сегмента (не работает между AZ облака без overlay). DNS Round Robin страдает от TTL-кеширования клиентов (failover за минуты, не секунды). Anycast требует BGP и контроля над сетью — не доступен в типичной аренде VPS.
->     - **Связанные вопросы:** [[Q21]] про connection draining (тоже про zero-downtime), [[Q39]] про Anycast, [[Q26]] про DNS-based LB.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q21]] про connection draining (тоже про zero-downtime), [[load-balancing-interview#Q39]] про Anycast, [[load-balancing-interview#Q26]] про DNS-based LB.
 > - [ ] D) Запустить балансировщик внутри Kubernetes Pod с `restartPolicy: Always` — kubelet поднимет его при падении
 >     - **Что на самом деле:** kubelet перезапустит контейнер за десятки секунд, но в это время трафик не обрабатывается. Это не HA, а recovery. Плюс kubelet не помогает при падении ноды.
 >     - **Откуда путаница:** `restartPolicy: Always` ассоциируется с надёжностью, но это recovery-механизм, а не HA.
@@ -1506,7 +1506,7 @@ spec:
 >     - **Пример:** в Kubernetes `terminationGracePeriodSeconds: 60` + `preStop: sleep 15` даёт следующую последовательность: SIGTERM → preStop ждёт 15s (пока kube-proxy обновит iptables) → endpoint исключается из Service → существующие запросы достраиваются → SIGKILL через 60s. В `AWS ALB` параметр `deregistration_delay.timeout_seconds = 300` по умолчанию.
 >     - **Когда применять:** ВСЕГДА при rolling deployment, scale-down, ротации узлов. Без draining новые соединения «обрываются» в момент удаления, и клиенты видят 502/503.
 >     - **Подводные камни:** длинные WebSocket/SSE-соединения могут не завершиться за timeout — нужен либо больший grace period, либо graceful shutdown в самом приложении (отправить close-frame). Для batch-обработчиков с long polling timeout должен быть больше типичной длины запроса.
->     - **Связанные вопросы:** [[Q20]] про отказоустойчивость LB, [[Q25]] про zero-downtime деплой, [[Q31]] про WebSocket-балансировку.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q20]] про отказоустойчивость LB, [[load-balancing-interview#Q25]] про zero-downtime деплой, [[load-balancing-interview#Q31]] про WebSocket-балансировку.
 > - [ ] B) Балансировщик мгновенно сбрасывает все соединения с узлом, отправляя `RST` клиентам, чтобы не задерживать вывод узла
 >     - **Что на самом деле:** это поведение БЕЗ draining. Цель draining — именно избежать обрыва существующих соединений, дав запросам завершиться нормально (200 OK), а не получить `connection reset`.
 >     - **Откуда путаница:** при отсутствии конфигурации `deregistration_delay` некоторые балансировщики действительно режут соединения сразу — и этот сценарий ошибочно считают нормой.
@@ -1556,7 +1556,7 @@ spec:
 >     - **Пример:** Kubernetes `Service` с `type: LoadBalancer` и аннотацией `service.beta.kubernetes.io/aws-load-balancer-type: nlb` создаст `NLB` для internal gRPC между сервисами. `AWS ALB Ingress Controller` с `target-type: ip` нужен, если хочется L7-роутинг gRPC по methods.
 >     - **Когда применять:** `NLB` — `gRPC`/`TCP`/`UDP`, статический IP для allowlist клиента, минимальная latency. `ALB` — `HTTP`/`HTTPS`/`gRPC` с маршрутизацией по содержимому, интеграция с `Cognito`/`WAF`, `WebSocket`.
 >     - **Подводные камни:** `NLB` не делает `TLS termination` для гRPC до недавнего времени (теперь делает через `ACM`); `NLB` пропускает client IP через `proxy protocol v2` — приложение должно уметь его распарсить. `ALB` берёт ~$0.0225/час + LCU — обычно дороже, чем `NLB` под высокой нагрузкой.
->     - **Связанные вопросы:** [[Q1]] про L4 vs L7, [[Q30]] про балансировку gRPC, [[Q24]] про Kubernetes Ingress.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q1]] про L4 vs L7, [[load-balancing-interview#Q30]] про балансировку gRPC, [[load-balancing-interview#Q24]] про Kubernetes Ingress.
 > - [ ] C) AWS Classic Load Balancer — он поддерживает оба уровня и универсален для любого трафика
 >     - **Что на самом деле:** `Classic Load Balancer` (CLB) — устаревший продукт, AWS не рекомендует его для новых инсталляций. `gRPC` он не поддерживает (нет `HTTP/2` end-to-end). Современный выбор — `ALB` (L7) или `NLB` (L4).
 >     - **Откуда путаница:** старая документация и legacy CloudFormation-шаблоны часто содержат `CLB`.
@@ -1658,7 +1658,7 @@ management:
 >     - **Пример:** `livenessProbe: httpGet /actuator/health/liveness` в Spring Boot, где `liveness-state: ping` (без БД); `readinessProbe: httpGet /actuator/health/readiness` с `group.readiness.include: db, redis, kafka` — провалится при сбое БД и Pod исключится из ротации до восстановления зависимостей.
 >     - **Когда применять:** liveness — для детекции deadlock'ов внутри JVM/runtime приложения; readiness — для контроля участия в трафике с учётом всех зависимостей. Между ними `startupProbe` — для медленно стартующих приложений (Java/JVM warm-up).
 >     - **Подводные камни:** не путать `liveness` и `startup`: для медленного старта используй `startupProbe`, иначе liveness убьёт Pod до того, как приложение успеет инициализироваться. Если приложение в OOM-pause, readiness тоже провалится — но этого мало для рестарта, нужен именно liveness (или JVM `-XX:+ExitOnOutOfMemoryError`).
->     - **Связанные вопросы:** [[Q3]] про health checks вообще, [[Q24]] про Ingress и Service endpoints, [[Q25]] про zero-downtime.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q3]] про health checks вообще, [[load-balancing-interview#Q24]] про Ingress и Service endpoints, [[load-balancing-interview#Q25]] про zero-downtime.
 > - [ ] D) Это устаревшая рекомендация — современные версии Kubernetes 1.20+ автоматически защищают liveness от каскадных рестартов через rate limiting
 >     - **Что на самом деле:** в Kubernetes нет механизма rate-limit на liveness рестарты (есть `failureThreshold` и backoff между рестартами одного контейнера, но это не защищает от одновременного провала всех реплик). Рекомендация по сей день актуальна.
 >     - **Откуда путаница:** Kubernetes действительно добавляет фичи, и кажется, что любая «гигиена» уже встроена.
@@ -1730,7 +1730,7 @@ spec:
 >     - **Пример:** в `Ingress` указываешь `path: /api/users → backend: service: name: user-service`, в кластере крутится `nginx-ingress-controller`, на нём аннотация `kubernetes.io/ingress.class: nginx`; внешний `AWS NLB` слушает порты 80/443 контроллера. TLS-секрет `api-tls` (`secretName`) подсовывается в Nginx через Kubernetes Secret.
 >     - **Когда применять:** для HTTP/HTTPS трафика, требующего path-based и host-based routing, TLS termination в кластере, rate limiting через аннотации контроллера. Для TCP/UDP (БД, не-HTTP протоколы) — `Service: LoadBalancer` напрямую.
 >     - **Подводные камни:** Ingress API имеет ограниченную выразительность (нет header-routing в стандарте, нет canary через weights без аннотаций) — для сложных сценариев используют `Gateway API` (новый объект K8s) или `Istio VirtualService`. Аннотации контроллер-специфичны: `nginx.ingress.kubernetes.io/rewrite-target` не работает в Traefik.
->     - **Связанные вопросы:** [[Q1]] про L7, [[Q22]] про облачные LB, [[Q23]] про probes (тоже про Service endpoints).
+>     - **Связанные вопросы:** [[load-balancing-interview#Q1]] про L7, [[load-balancing-interview#Q22]] про облачные LB, [[load-balancing-interview#Q23]] про probes (тоже про Service endpoints).
 > - [ ] D) `Ingress` устарел в Kubernetes 1.25+ и заменён на `IngressGateway` из service mesh (Istio) — других вариантов нет
 >     - **Что на самом деле:** `Ingress` поддерживается как стабильный API (`networking.k8s.io/v1`). Есть новый `Gateway API`, который призван заменить Ingress на дистанции, но Ingress не deprecated. `IngressGateway` Istio — это надстройка над Envoy, не часть Kubernetes API.
 >     - **Откуда путаница:** активная разработка `Gateway API` создаёт ощущение «всё, старое мертво», но миграция — на годы.
@@ -1800,7 +1800,7 @@ spec:
 >     - **Пример:** Deployment с `maxSurge: 1, maxUnavailable: 0`, `readinessProbe: httpGet /actuator/health/readiness periodSeconds: 5`, `lifecycle.preStop.exec.command: ["sh","-c","sleep 15"]`, `terminationGracePeriodSeconds: 60`. На уровне приложения — graceful shutdown в Spring (`server.shutdown: graceful`).
 >     - **Когда применять:** для всех stateless-сервисов с внешним трафиком. Для stateful (`StatefulSet` БД) — другая стратегия (`OnDelete`/`partition`).
 >     - **Подводные камни:** `preStop sleep` нужен, потому что исключение из endpoints — асинхронный процесс (Endpoints controller → kube-proxy на всех нодах → iptables update). 15s — эмпирическое число, в больших кластерах может потребоваться 30s. Если у приложения долгие WebSocket-соединения, `terminationGracePeriodSeconds` нужно увеличивать до их типичной длительности или встраивать «мягкое» отключение в приложение.
->     - **Связанные вопросы:** [[Q21]] про connection draining, [[Q23]] про probes, [[Q19]] про blue-green/canary (альтернативные стратегии).
+>     - **Связанные вопросы:** [[load-balancing-interview#Q21]] про connection draining, [[load-balancing-interview#Q23]] про probes, [[load-balancing-interview#Q19]] про blue-green/canary (альтернативные стратегии).
 > - [ ] D) Использовать только blue-green деплой — RollingUpdate в Kubernetes не даёт реального zero-downtime
 >     - **Что на самом деле:** RollingUpdate с правильной настройкой даёт zero-downtime для stateless приложений. Blue-green — альтернатива с другим балансом (атомарное переключение vs прогрессивное), но не «единственный путь».
 >     - **Откуда путаница:** blue-green воспринимается как «надёжный» из-за полного дублирования окружения.
@@ -1863,7 +1863,7 @@ api.example.com  A  10.0.1.1  TTL=60  Weight=30  SetId=secondary
 >     - **Пример:** `Route 53` с TTL=60s, failover policy — узел падает в 12:00:00, health check заметит в 12:00:30, DNS-record обновится в 12:00:35. Клиенты с TTL=60 будут ходить на мёртвый IP до 12:01:00, плюс многие OS-resolver-ы агрессивно кешируют дольше TTL (Java JVM по умолчанию вообще forever).
 >     - **Когда применять:** на верхнем уровне глобальной инфраструктуры (gateway-region → конкретный регион), как первичный гео-роутинг. Внутри региона — обычный L4/L7 LB с быстрым failover.
 >     - **Подводные камни:** Java cache TTL для DNS по умолчанию `networkaddress.cache.ttl = -1` (forever) — нужно явно ставить в `java.security` или ENV. Браузеры кешируют DNS отдельно от OS. CDN-провайдеры (Cloudflare, Fastly) используют DNS + Anycast комбинированно, чтобы обойти TTL-проблему.
->     - **Связанные вопросы:** [[Q20]] про HA балансировщика, [[Q27]] про geographic load balancing, [[Q39]] про Anycast как альтернативу.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q20]] про HA балансировщика, [[load-balancing-interview#Q27]] про geographic load balancing, [[load-balancing-interview#Q39]] про Anycast как альтернативу.
 > - [ ] B) DNS не поддерживает HTTPS-трафик, поэтому DNS LB подходит только для нешифрованного HTTP
 >     - **Что на самом деле:** DNS возвращает IP-адреса, и протокол поверх (HTTP, HTTPS, gRPC, что угодно) не имеет значения. DNS — это резолюция имени в адрес, она происходит до TLS handshake.
 >     - **Откуда путаница:** новый `DNS-over-HTTPS` (DoH) шифрует САМ DNS-трафик, и это путают с тем, что DNS-LB якобы «не умеет HTTPS».
@@ -1918,7 +1918,7 @@ graph TB
 >     - **Пример:** `Route 53 geolocation routing` с правилами «`continent EU` → `lb-eu-frankfurt`, `country RU` → отдельный region (Россия), default → `lb-us-virginia`». Plus rejection правила: если из EU придёт запрос с `Authorization` от non-EU пользователя — отдельный домен.
 >     - **Когда применять:** для глобальных сервисов с регуляторными требованиями — обязательно с явным mapping региона на dataset. При проектировании учитывать data residency как первичный constraint, latency — вторичный.
 >     - **Подводные камни:** failover между регионами при отказе одного создаёт compliance-нарушение (трафик из EU уходит в US, потому что EU-регион упал) — нужно либо дублирование внутри одного юрисдикционного блока (Frankfurt + Dublin), либо явный отказ обслуживать с предупреждением. VPN и proxy-сервисы пользователя ломают geo-IP-routing — нужна гарантия через JWT-claim или явный header.
->     - **Связанные вопросы:** [[Q26]] про DNS-based LB (механизм geo-routing), [[Q39]] про Anycast, [[Q28]] про cross-zone в одном регионе.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q26]] про DNS-based LB (механизм geo-routing), [[load-balancing-interview#Q39]] про Anycast, [[load-balancing-interview#Q28]] про cross-zone в одном регионе.
 > - [ ] C) Geographic LB требует наличия серверов в каждой стране мира — это экономически невыгодно
 >     - **Что на самом деле:** geographic LB работает с тем количеством регионов, сколько их есть. Пользователи попадают на ближайший из доступных — не обязательно в своей стране.
 >     - **Откуда путаница:** идеальная гео-балансировка ассоциируется с покрытием «каждой страны», но это не требование.
@@ -1965,7 +1965,7 @@ graph TB
 >     - **Пример:** для `AWS ALB` cross-zone включён ВСЕГДА (нельзя выключить, бесплатно). Для `AWS NLB`/`GLB` — выключено по умолчанию, включается через атрибут `load_balancing.cross_zone.enabled = true` (платно из-за inter-AZ трафика). В Kubernetes аналог — `externalTrafficPolicy: Cluster` (cross-node маршрутизация) vs `Local` (только локальные поды).
 >     - **Когда применять:** включать cross-zone, когда инстансы распределены неравномерно по AZ (autoscaling может дать 5 в одной AZ и 1 в другой) — иначе перекос. Выключать, когда хочется минимизировать inter-AZ трафик (дорогой) и/или сохранить client IP через `Local` policy.
 >     - **Подводные камни:** inter-AZ трафик в AWS платный (~$0.01/GB) — для NLB на 1Tb/день это +$300/месяц. Если выключить cross-zone и в одной AZ упадут все инстансы, балансировщик в этой AZ останется без таргетов и вернёт 502 — нужно либо мониторить «healthy targets per AZ», либо принять cross-zone стоимость.
->     - **Связанные вопросы:** [[Q22]] про ALB/NLB, [[Q27]] про geographic LB, [[Q20]] про HA.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q22]] про ALB/NLB, [[load-balancing-interview#Q27]] про geographic LB, [[load-balancing-interview#Q20]] про HA.
 > - [ ] C) Только инстансы AZ-A (2 шт.) получат трафик, потому что у них больше реплик — cross-zone не учитывает AZ-B
 >     - **Что на самом деле:** трафик идёт во все живые таргеты независимо от AZ. AZ-B-инстанс получит ту же долю.
 >     - **Откуда путаница:** «больше реплик = больше трафика» воспринимается как разумная стратегия, но это неверная модель работы LB.
@@ -2036,7 +2036,7 @@ backend cache_servers
 >     - **Пример:** `Nginx upstream { hash $request_uri consistent; ... }` — кеширующий пул, где `user-123` всегда идёт на cache-2, пока пул не меняется. При добавлении cache-4 только ~25% ключей переедут (те, чьи позиции на кольце оказались ближе к cache-4, чем к старым узлам). В `HAProxy`: `balance uri; hash-type consistent`. Применяется в `Cassandra` (партиционирование), `Memcached` (клиентская hash-ring библиотека), `Redis Cluster` (16384 hash slots — дискретный вариант).
 >     - **Когда применять:** распределённые кеши (`Memcached`/`Redis`), partition-based БД (`Cassandra`), session affinity без cookie (по `user_id`), DHT (Chord). Везде, где локальность данных важна и/или дорого инвалидировать кеш.
 >     - **Подводные камни:** базовая реализация даёт неравномерное распределение — узел A может получить 40% кольца, а B — 10%. Решается виртуальными узлами (vnodes) — каждый физический узел представлен 100-200 точками на кольце; тогда распределение приближается к равномерному. Hot keys всё равно остаются hot — consistent hashing не балансирует нагрузку по ключам, только по диапазонам.
->     - **Связанные вопросы:** [[Q36]] про IP Hash (тот же принцип на IP), [[Q38]] про Maglev hashing (улучшенный consistent), [[Q33]] про stateful приложения.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q36]] про IP Hash (тот же принцип на IP), [[load-balancing-interview#Q38]] про Maglev hashing (улучшенный consistent), [[load-balancing-interview#Q33]] про stateful приложения.
 > - [ ] C) Consistent hashing гарантирует равномерное распределение нагрузки между серверами без виртуальных узлов
 >     - **Что на самом деле:** базовый consistent hashing неравномерен — нужны vnodes (виртуальные узлы) для равномерности. Maglev hashing даёт равномерность встроено, но это отдельный алгоритм.
 >     - **Откуда путаница:** реклама consistent hashing часто упоминает «равномерное распределение» как часть преимуществ, забывая про vnodes.
@@ -2096,7 +2096,7 @@ ManagedChannel channel = ManagedChannelBuilder
 >     - **Пример:** `Nginx` с `grpc_pass grpc://grpc_backend` — L7 для gRPC. Java gRPC-клиент с `defaultLoadBalancingPolicy("round_robin")` и `dns:///service.namespace.svc:9090` использует headless `Service` Kubernetes и сам распределяет вызовы. Istio с `Envoy`-sidecar балансирует gRPC-вызовы автоматически благодаря `LEAST_REQUEST`.
 >     - **Когда применять:** Nginx L7-grpc — если хочется централизованный балансировщик с TLS termination. Клиентская балансировка — для микросервисов между собой (нет лишнего hop). Service mesh — когда нужно outlier detection, circuit breaker, retry с backoff без правки приложений.
 >     - **Подводные камни:** Kubernetes стандартный `Service` (kube-proxy) — это L4 (iptables), поэтому gRPC через обычный Service распределяется плохо. Нужен либо headless `Service` (`clusterIP: None`) + клиентская балансировка, либо service mesh, либо ingress-controller с gRPC support. `HTTP/2` keep-alive по умолчанию долгий — клиент может «прилипнуть» к одному поду на часы, если у него стабильная нагрузка.
->     - **Связанные вопросы:** [[Q1]] про L4 vs L7, [[Q22]] про cloud LB (ALB vs NLB для gRPC), [[Q40]] про Istio service mesh.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q1]] про L4 vs L7, [[load-balancing-interview#Q22]] про cloud LB (ALB vs NLB для gRPC), [[load-balancing-interview#Q40]] про Istio service mesh.
 > - [ ] B) `gRPC` использует UDP вместо TCP, а L4-балансировщики не поддерживают UDP-балансировку
 >     - **Что на самом деле:** `gRPC` работает поверх `HTTP/2` поверх `TCP`. UDP не используется (есть экспериментальный `gRPC over QUIC`, но это не стандарт). И большинство L4-балансировщиков (`NLB`) поддерживают UDP.
 >     - **Откуда путаница:** HTTP/3 (QUIC) действительно UDP, и это переносят на gRPC.
@@ -2173,7 +2173,7 @@ backend ws_servers
 >     - **Пример:** `upstream websocket_backend { ip_hash; server ws1:8080; server ws2:8080; }` + `location /ws { proxy_pass http://websocket_backend; proxy_http_version 1.1; proxy_set_header Upgrade $http_upgrade; proxy_set_header Connection "upgrade"; proxy_read_timeout 3600s; }`. Для масштаба — состояние сессий в `Redis Pub/Sub`, чтобы доставка сообщений работала на любом узле.
 >     - **Когда применять:** для real-time приложений (чат, биржевые котировки, multiplayer-игры, IoT-сенсоры). Альтернативно — SSE (Server-Sent Events) проще балансировать (обычный HTTP, но требует `proxy_buffering off`).
 >     - **Подводные камни:** `ip_hash` ломается за NAT (много клиентов = один IP) — лучше sticky cookie через `sticky cookie srv_id` (только Nginx Plus) или явный routing по userId. Long-lived соединения мешают rolling deployment — при остановке Pod клиенты массово реконнектятся; нужна graceful disconnection (отправить `close frame` с retry instruction) и `terminationGracePeriodSeconds` >= типичной длительности сессии.
->     - **Связанные вопросы:** [[Q4]] про sticky session, [[Q21]] про connection draining, [[Q33]] про stateful приложения.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q4]] про sticky session, [[load-balancing-interview#Q21]] про connection draining, [[load-balancing-interview#Q33]] про stateful приложения.
 > - [ ] C) Использовать `mode tcp` в `Nginx stream` блоке — L4 балансировка автоматически поддерживает WebSocket
 >     - **Что на самом деле:** L4-балансировка действительно работает для WebSocket (TCP туннель), но теряется L7-роутинг (нельзя направить `/ws` на одни узлы, `/api` на другие) и TLS termination. Это допустимый вариант для чистого WS-кластера, но требует отдельной точки входа.
 >     - **Откуда путаница:** «WS — это TCP» воспринимается как «L4 = решение», но WS стартует с HTTP-handshake, и L7 даёт больше контроля.
@@ -2253,7 +2253,7 @@ Path-based routing упрощает архитектуру [микросерви
 >     - **Пример:** монолит API на одном домене `api.example.com`, под капотом — разные микросервисы. `/api/users/*` → user-service, `/api/orders/*` → order-service, `/api/payments/*` → payment-service. Path-routing позволяет не делать отдельные субдомены и обходиться без API Gateway, если нужен только роутинг.
 >     - **Когда применять:** при разделении монолита на микросервисы с сохранением единого URL для клиента; когда не нужны фичи API Gateway (трансформации, auth, throttling); внутри Kubernetes-кластера через Ingress. Альтернативы — host-based routing (`api.users.example.com`) или API Gateway (`Kong`, `AWS API Gateway`).
 >     - **Подводные камни:** в Nginx `location` matching имеет тонкие правила: exact (`=`) → prefix → regex, и неправильный порядок ломает роутинг. В Kubernetes Ingress `pathType: Prefix` означает префиксный match, `Exact` — точное совпадение. Аннотация `nginx.ingress.kubernetes.io/rewrite-target` нужна, если хочется убрать prefix перед передачей бэкенду (`/api/users/123` → backend получает `/123`).
->     - **Связанные вопросы:** [[Q1]] про L7-роутинг, [[Q11]] про Nginx upstream, [[Q24]] про Kubernetes Ingress.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q1]] про L7-роутинг, [[load-balancing-interview#Q11]] про Nginx upstream, [[load-balancing-interview#Q24]] про Kubernetes Ingress.
 > - [ ] C) Path-based routing замедляет балансировщик в 10 раз по сравнению с round-robin без анализа path
 >     - **Что на самом деле:** парсинг path — это парсинг первой строки HTTP-запроса (которая всё равно парсится для проксирования). Overhead — микросекунды на запрос, заметен только на ультра-низко-латентных нагрузках.
 >     - **Откуда путаница:** в гайдах сравнивают «L4 vs L7 latency», и абстрактно L7 медленнее, но не «в 10 раз» именно из-за path.
@@ -2325,7 +2325,7 @@ upstream backend {
 >     - **Пример:** `@Configuration @EnableRedisHttpSession(maxInactiveIntervalInSeconds = 3600)` + `LettuceConnectionFactory("redis-cluster", 6379)`. В application.yml: `spring.session.store-type: redis`. Аналогично в Node.js — `express-session` с `connect-redis`. В Python Django — `django.contrib.sessions.backends.cache` с Redis backend.
 >     - **Когда применять:** ВСЕГДА, когда есть возможность. Это де-факто стандарт современных веб-приложений. Альтернатива — JWT-токены с состоянием в самом токене (полностью stateless без внешнего хранилища, но с компромиссом инвалидации).
 >     - **Подводные камни:** Redis становится новой SPOF — нужен Redis Cluster или Sentinel для HA. Latency сети до Redis (~1ms) добавляется к каждому запросу — для очень latency-sensitive нагрузок может быть критично. Размер сессии в Redis ограничен (рекомендация: < 100KB), иначе деградирует производительность. Безопасность: данные сессии в Redis должны шифроваться при чувствительности (PCI/HIPAA).
->     - **Связанные вопросы:** [[Q4]] про sticky session (компромиссный путь), [[Q29]] про consistent hashing (для sharding session). См. также [вопросы по Redis](../databases/redis-interview.md).
+>     - **Связанные вопросы:** [[load-balancing-interview#Q4]] про sticky session (компромиссный путь), [[load-balancing-interview#Q29]] про consistent hashing (для sharding session). См. также [вопросы по Redis](../databases/redis-interview.md).
 > - [ ] C) Sharding по `userId` через consistent hashing — каждый пользователь всегда попадает на один сервер, состояние хранится локально на этом сервере
 >     - **Что на самом деле:** consistent hashing решает проблему распределения, но не отказоустойчивости: при падении «своего» узла пользователь теряет сессию (или ждёт восстановления узла). Это улучшение над `ip_hash`, но всё равно не stateless.
 >     - **Откуда путаница:** consistent hashing — продвинутая техника, и её ассоциируют с «лучшей» архитектурой.
@@ -2415,7 +2415,7 @@ histogram_quantile(0.99,
 >     - **Пример:** Nginx — формат логов `log_format upstream_log '$upstream_addr status: $upstream_status response_time: $upstream_response_time'` + `nginx-prometheus-exporter`. HAProxy — встроенный `stats uri /stats` + endpoint `/metrics` для Prometheus. ALB — CloudWatch metrics `TargetResponseTime`, `HTTPCode_Target_4XX_Count` по `LoadBalancer + TargetGroup + AvailabilityZone`. Dashboards в Grafana с per-backend breakdown и алерты в Alertmanager.
 >     - **Когда применять:** в production ВСЕГДА. Сразу при настройке нового балансировщика — экспортёр метрик + дашборд + алерты. Без этого диагностика инцидентов превращается в догадки.
 >     - **Подводные камни:** Nginx OSS не отдаёт per-backend метрики из коробки — нужен Nginx Plus или `nginx-prometheus-exporter` с парсингом access log. ALB не показывает latency БЭКЕНДА отдельно от полной transaction — нужно различать `RequestProcessingTime` (LB), `TargetResponseTime` (бэкенд), `ResponseProcessingTime` (LB). Высокая cardinality метрик per-backend взрывает Prometheus storage — фильтровать только важные перцентили.
->     - **Связанные вопросы:** [[Q12]] про health checks Nginx, [[Q15]] про HAProxy health, [[Q35]] про медленные бэкенды (требует именно per-backend latency).
+>     - **Связанные вопросы:** [[load-balancing-interview#Q12]] про health checks Nginx, [[load-balancing-interview#Q15]] про HAProxy health, [[load-balancing-interview#Q35]] про медленные бэкенды (требует именно per-backend latency).
 > - [ ] C) Достаточно метрик инфраструктуры (CPU, memory) на хостах балансировщика и бэкендов — приложение-специфичные метрики избыточны
 >     - **Что на самом деле:** CPU/memory показывают, что у сервера есть ресурсы, но не показывают, что балансировщик правильно распределяет нагрузку. Бэкенд может иметь 30% CPU, но получать 80% запросов и медленно отвечать из-за внутренней очереди.
 >     - **Откуда путаница:** инфраструктурные команды часто фокусируются на host-метриках.
@@ -2502,7 +2502,7 @@ backend app_servers
 >     - **Пример:** `upstream backend_pool { least_conn; server backend1:8080 max_fails=3 fail_timeout=30s; ... } location / { proxy_pass http://backend_pool; proxy_read_timeout 10s; proxy_next_upstream error timeout http_502 http_503; proxy_next_upstream_tries 2; }`. В HAProxy: `balance leastconn` + `timeout server 10s` + `option redispatch` + `server app1 ... check inter 3s fall 3 rise 2 slowstart 30s`.
 >     - **Когда применять:** для всех production-балансировщиков сервисов с переменной нагрузкой. Round Robin — только когда все бэкенды абсолютно одинаковы по производительности и нагрузка предсказуема.
 >     - **Подводные камни:** `proxy_next_upstream` может удвоить нагрузку на бэкенды при массовой деградации (retry storm) — нужно ограничивать `proxy_next_upstream_tries` и иметь circuit breaker. `slowstart` без `Nginx Plus` недоступен в OSS Nginx — альтернатива через HAProxy или Envoy. `Least Connections` плохо работает в short-lived соединениях (HTTP/2 multiplexing) — там лучше Least Request (P2C).
->     - **Связанные вопросы:** [[Q8]] про Least Connections, [[Q9]] про Least Response Time, [[Q37]] про Power of Two Choices.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q8]] про Least Connections, [[load-balancing-interview#Q9]] про Least Response Time, [[load-balancing-interview#Q37]] про Power of Two Choices.
 > - [ ] C) Увеличить `proxy_read_timeout` до 5 минут, чтобы все запросы успели завершиться, и продолжать слать на медленный бэкенд
 >     - **Что на самом деле:** удлинение таймаута усугубляет проблему — клиенты ждут дольше, очередь на медленном бэкенде растёт быстрее, ресурсы (потоки, память) тают. Нужно НАОБОРОТ — короткий таймаут + retry на другой узел.
 >     - **Откуда путаница:** «не падать с таймаутом» воспринимается как cooperative поведение.
@@ -2566,7 +2566,7 @@ backend app_servers
 >     - **Пример:** API популярного SaaS-приложения с IP Hash. Один крупный корпоративный клиент с 5000 сотрудниками выходит под единым IP — все 5000 запросов в секунду оседают на одном из 10 бэкендов. Этот бэкенд становится hot spot и его p99 растёт. При scale-out нагрузка не размазывается.
 >     - **Когда применять:** только в специфичных случаях, где предположение «client_ip = уникальный пользователь» выполняется: внутренние корпоративные API без NAT, IoT с уникальными статическими IP, специальные приложения. Для публичного API — НЕ использовать. Лучшие альтернативы: sticky cookie (`Nginx Plus`, `HAProxy cookie SERVERID insert`), session в Redis, consistent hashing по `userId` из JWT.
 >     - **Подводные камни:** при добавлении/удалении бэкенда меняется `% N`, и почти все клиенты «переезжают» на другой узел — теряются sticky-сессии массово. Решение — `hash $remote_addr consistent` (consistent hashing вместо modulo) в Nginx или `hash-type consistent` в HAProxy. Это не решает проблему NAT, но смягчает её при scale-out.
->     - **Связанные вопросы:** [[Q4]] про sticky session, [[Q29]] про consistent hashing, [[Q33]] про stateful приложения.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q4]] про sticky session, [[load-balancing-interview#Q29]] про consistent hashing, [[load-balancing-interview#Q33]] про stateful приложения.
 > - [ ] C) IP Hash не работает с IPv6 — поддерживается только IPv4, что делает его несовместимым с современными мобильными сетями
 >     - **Что на самом деле:** IP Hash работает с обеими версиями IP (`ip_hash` в Nginx с 1.3.2 поддерживает IPv6). Технических ограничений нет.
 >     - **Откуда путаница:** некоторые legacy-конфигурации действительно работали только с IPv4.
@@ -2623,7 +2623,7 @@ public ServerInstance selectServer(List<ServerInstance> pool) {
 >     - **Пример:** в Envoy режим `LEAST_REQUEST` использует P2C: на каждый запрос выбирает 2 случайных endpoint, сравнивает `active_requests` и шлёт на меньший. Параметр `choice_count: 3` (default 2) расширяет до P-of-K. Аналогично в Nginx Plus / HAProxy randomized leastconn. В Java: `int idx1 = random.nextInt(pool.size()); int idx2 = random.nextInt(pool.size()); return pool.get(idx1).activeConnections() <= pool.get(idx2).activeConnections() ? pool.get(idx1) : pool.get(idx2);`.
 >     - **Когда применять:** в service mesh (Envoy/Istio) — стандарт; для микросервисов с переменной нагрузкой; вместо обычного Least Connections (P2C дёшевле — не нужно сканировать весь пул при каждом запросе). Особенно хорош для большого N (100+ серверов), где сканирование Least Connections стоит дорого.
 >     - **Подводные камни:** P2C требует локальной статистики `active_requests` у балансировщика — для централизованного LB это просто (одна машина видит все), для распределённого sidecar-роя (Envoy) каждый sidecar видит только свои соединения, что слегка снижает оптимальность. При неоднородных серверах (разная мощность) P2C даёт неоптимальное распределение — нужны weights или другой алгоритм.
->     - **Связанные вопросы:** [[Q8]] про Least Connections, [[Q9]] про Least Response Time, [[Q40]] про Envoy/Istio.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q8]] про Least Connections, [[load-balancing-interview#Q9]] про Least Response Time, [[load-balancing-interview#Q40]] про Envoy/Istio.
 > - [ ] D) P2C использует ML-модель для предсказания нагрузки на бэкенды и заранее планирует распределение
 >     - **Что на самом деле:** P2C — простой статистический алгоритм без ML. Решение принимается в текущий момент по текущему состоянию двух кандидатов.
 >     - **Откуда путаница:** ML-balancing — отдельное направление исследований, и его путают с P2C.
@@ -2674,7 +2674,7 @@ graph TD
 >     - **Пример:** Google Maglev LB (исходный продукт), Katran (Facebook/Meta) на L4 для DDoS-устойчивости и быстрого пакета processing. В Envoy: `lb_policy: MAGLEV` + `consistent_hash_lb_config.table_size: 65537`. На уровне приложения — оригинальный Maglev paper (NSDI 2016) даёт алгоритм заполнения.
 >     - **Когда применять:** L4-балансировка с миллионами пакетов в секунду, где важен O(1) lookup; кластеры с частыми изменениями (autoscaling) и требованием минимального reshuffle ключей; CDN edge nodes. Альтернатива ring CH в распределённых БД (`Cassandra`, `DynamoDB`) — там ring выигрывает за счёт простоты.
 >     - **Подводные камни:** размер таблицы M влияет на качество распределения и память; рекомендация M = 65537 (простое, ~64K записей × 4 байта = 256KB на пул). При большом числе бэкендов (1000+) построение таблицы становится дорогим — нужно пересчитывать при каждом изменении. Maglev требует одинаковый размер таблицы у всех LB-узлов в кластере для согласованности маршрутизации — это координация при rollout.
->     - **Связанные вопросы:** [[Q29]] про consistent hashing, [[Q37]] про P2C, [[Q40]] про Envoy в Service Mesh.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q29]] про consistent hashing, [[load-balancing-interview#Q37]] про P2C, [[load-balancing-interview#Q40]] про Envoy в Service Mesh.
 > - [ ] C) Maglev — это только для L7-роутинга по HTTP-заголовкам, а ring consistent hashing — для L4 IP-based
 >     - **Что на самом деле:** оба алгоритма универсальны — работают с любым ключом (IP, header, URI). Maglev изначально создан для L4 (Google sees IP flow), но применим везде.
 >     - **Откуда путаница:** Cassandra ring CH работает с partition key — это L7-ассоциация, и обратное переносят на Maglev.
@@ -2732,7 +2732,7 @@ graph TD
 >     - **Пример:** Cloudflare Anycast обрабатывает короткие HTTPS-запросы — пользователь зашёл, получил страницу, переключился — никаких проблем. WebSocket через Anycast Cloudflare работает за счёт того, что Cloudflare поддерживает sticky session внутри своей сети через session ID, не на чистом Anycast. Игровой сервер (UDP, real-time) на чистом Anycast будет терять «соединения» периодически.
 >     - **Когда применять Anycast:** CDN (короткий трафик); DNS (UDP, отдельные запросы); DDoS mitigation (распределение по PoP); BGP-failover за секунды (быстрее, чем DNS TTL). Когда НЕ применять: stateful long-lived TCP (Database connections, SSH-туннели, WebSocket без recovery), gRPC bidirectional streams.
 >     - **Подводные камни:** отладка Anycast сложна — куда именно ушёл запрос? Через `traceroute` к Anycast IP видишь маршрут, но он может меняться. Анонсы BGP требуют контроля над сетью — не доступны в стандартном облаке, нужен `AWS Global Accelerator` (managed Anycast) или собственный AS. Anycast-IP — это публичный ресурс, требующий координации с провайдерами.
->     - **Связанные вопросы:** [[Q20]] про HA, [[Q26]] про DNS LB (сравнение с Anycast), [[Q27]] про geographic LB.
+>     - **Связанные вопросы:** [[load-balancing-interview#Q20]] про HA, [[load-balancing-interview#Q26]] про DNS LB (сравнение с Anycast), [[load-balancing-interview#Q27]] про geographic LB.
 > - [ ] C) Anycast несовместим с TLS из-за SNI — каждое соединение требует пересогласования сертификата
 >     - **Что на самом деле:** все Anycast-PoP имеют одинаковые сертификаты для домена — TLS-handshake работает прозрачно. SNI содержит hostname, и любой PoP отдаёт правильный сертификат.
 >     - **Откуда путаница:** распределённые сертификаты ассоциируются с проблемами sync, но Cloudflare/Fastly давно эту задачу решают.
@@ -2825,7 +2825,7 @@ spec:
 >     - **Пример:** `DestinationRule: loadBalancer.simple: LEAST_REQUEST + outlierDetection.consecutive5xxErrors: 5, baseEjectionTime: 30s` — Envoy балансирует с P2C, исключает endpoint на 30 секунд после 5 пятисоток подряд. `VirtualService: http: - route: - destination: subset: v1 weight: 90 - destination: subset: v2 weight: 10` — canary 10% на v2.
 >     - **Когда применять:** для микросервисной архитектуры в Kubernetes (10+ сервисов с межсервисными вызовами), где нужен единый подход к resilience и observability без копирования кода. Альтернатива — клиентские библиотеки (Resilience4j, Spring Cloud) с теми же фичами, но требующими разработки и поддержки.
 >     - **Подводные камни:** overhead — каждый Pod получает дополнительный контейнер (Envoy ~30MB RAM, ~5-10% CPU). При большом числе подов это существенно. Istio Control Plane (Istiod) — отдельный сервис, требует мониторинга. Конфигурация сложнее, чем простой Nginx: нужно понимать xDS, разделение `VirtualService`/`DestinationRule`, `ServiceEntry` для external traffic. Для маленьких систем (1-5 сервисов) Istio — overkill.
->     - **Связанные вопросы:** [[Q16]] про клиентскую vs серверную балансировку, [[Q37]] про P2C, [[Q30]] про gRPC (где Service Mesh особенно выигрывает).
+>     - **Связанные вопросы:** [[load-balancing-interview#Q16]] про клиентскую vs серверную балансировку, [[load-balancing-interview#Q37]] про P2C, [[load-balancing-interview#Q30]] про gRPC (где Service Mesh особенно выигрывает).
 
 
 ---

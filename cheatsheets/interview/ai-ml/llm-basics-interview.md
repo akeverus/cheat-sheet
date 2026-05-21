@@ -265,7 +265,7 @@ Attention(Q, K, V) = softmax(Q · K^T / sqrt(d_k)) · V
 > >
 > > **Подводные камни:** Decoder-only с causal mask не может «посмотреть вперёд» — это ограничивает некоторые задачи (например, fill-in-the-middle требует специального training). Bidirectional понимание (как у BERT) недоступно out-of-the-box.
 > >
-> > **Связанные вопросы:** [[Q2]] transformer architecture, [[Q3]] self-attention, [[Q5]] token.
+> > **Связанные вопросы:** [[llm-basics-interview#Q2]] transformer architecture, [[llm-basics-interview#Q3]] self-attention, [[llm-basics-interview#Q5]] token.
 
 ## Q5. (!) Что такое token?
 
@@ -298,7 +298,7 @@ Attention(Q, K, V) = softmax(Q · K^T / sqrt(d_k)) · V
 > >
 > > **Подводные камни:** Один и тот же текст может токенизироваться по-разному в разных моделях (GPT-4 vs Claude vs Llama используют разные tokenizer'ы). Считать токены приближённо «по словам» — ошибочно, особенно для не-английских языков и кода.
 > >
-> > **Связанные вопросы:** [[Q6]] сколько символов в token, [[Q7]] BPE/WordPiece/SentencePiece, [[Q8]] подсчёт токенов до отправки.
+> > **Связанные вопросы:** [[llm-basics-interview#Q6]] сколько символов в token, [[llm-basics-interview#Q7]] BPE/WordPiece/SentencePiece, [[llm-basics-interview#Q8]] подсчёт токенов до отправки.
 >
 > > [!fail]- B) Один токен = одно слово, разделённое пробелами (как при простом split по whitespace)
 > >
@@ -362,7 +362,7 @@ Attention(Q, K, V) = softmax(Q · K^T / sqrt(d_k)) · V
 > >
 > > **Подводные камни:** Tokenizer'ы Claude и Llama 3 чуть лучше для русского (специальные multilingual tokenizer'ы), но всё равно хуже английского. GPT-4o с обновлённым tokenizer'ом снизил overhead для не-английских языков ~20%, но не до паритета.
 > >
-> > **Связанные вопросы:** [[Q5]] что такое token, [[Q7]] BPE/WordPiece/SentencePiece, [[Q8]] подсчёт токенов до отправки.
+> > **Связанные вопросы:** [[llm-basics-interview#Q5]] что такое token, [[llm-basics-interview#Q7]] BPE/WordPiece/SentencePiece, [[llm-basics-interview#Q8]] подсчёт токенов до отправки.
 >
 > > [!fail]- C) Русский «дешевле» английского, потому что русские слова в среднем длиннее и реже встречаются в датасетах
 > >
@@ -416,7 +416,7 @@ BPE токенизация:
 >   - **Пример:** GPT/Claude/Llama используют BPE (через `tiktoken` или Hugging Face), BERT — WordPiece (`##` префикс у продолжений: `play`, `##ing`), T5/Llama-Multilingual — SentencePiece (`▁` маркер пробела).
 >   - **Когда применять:** BPE — для англо-доминированных моделей с ASCII pre-tokenization; WordPiece — если важна вероятностная согласованность с MLM; SentencePiece — для мультиязычных моделей и языков без пробелов.
 >   - **Подводные камни:** разные токенизаторы дают разное число токенов на тот же текст — оценка стоимости и context limit зависит от конкретной модели; нельзя «перенести» токены между моделями.
->   - **Связанные вопросы:** [[Q5]] (что такое token), [[Q6]] (сколько символов в token), [[Q8]] (как посчитать tokens).
+>   - **Связанные вопросы:** [[llm-basics-interview#Q5]] (что такое token), [[llm-basics-interview#Q6]] (сколько символов в token), [[llm-basics-interview#Q8]] (как посчитать tokens).
 
 ## Q8. (!) Как посчитать tokens до отправки?
 
@@ -457,7 +457,7 @@ count = client.beta.messages.count_tokens(
 >   - **Пример:** `tiktoken.encoding_for_model("gpt-4o").encode("Hello, world!")` вернёт `[13225, 11, 1917, 0]` — 4 токена. Для Claude: `client.beta.messages.count_tokens(model="claude-opus-4-5", messages=[...])`.
 >   - **Когда применять:** перед отправкой больших промптов в production (RAG, summarization), для precommit-проверок длины system prompt, для оценки стоимости batch-инференса.
 >   - **Подводные камни:** `tiktoken` для Claude НЕ работает — токенизация разная; system prompt и tool definitions тоже считаются; для chat-API есть фиксированные overhead-токены на каждое сообщение (роль, разделители).
->   - **Связанные вопросы:** [[Q5]] (token), [[Q7]] (BPE/WordPiece), [[Q9]] (context window).
+>   - **Связанные вопросы:** [[llm-basics-interview#Q5]] (token), [[llm-basics-interview#Q7]] (BPE/WordPiece), [[llm-basics-interview#Q9]] (context window).
 > - [ ] **B.** Разделить длину строки в символах на 4 и получить точное число токенов — это официальная формула OpenAI и Anthropic.
 >   - **Что на самом деле:** «1 token ≈ 4 символа английского текста» — лишь грубая эвристика для оценки. Реальный счёт зависит от языка (кириллица ≈ 2-3 токена/символ), кода, эмодзи и конкретного токенизатора.
 >   - **Откуда путаница:** OpenAI в документации приводит эту эвристику как rule-of-thumb для прикидки, но это не «официальная формула».
@@ -494,7 +494,7 @@ Context = system_prompt + chat_history + user_message + model_response
 >   - **Пример:** Claude 4.7 имеет 1M context; если system prompt + 50 turns истории = 950K токенов, у модели остаётся всего 50K на ответ; превышение → API возвращает ошибку или silently truncates.
 >   - **Когда применять:** при проектировании chat-приложений (управление историей), RAG (отбор chunks), агентов (длина tool-results), при выборе модели под задачу (нужен long-context для документов).
 >   - **Подводные камни:** «lost in the middle» — даже при 1M context модели хуже помнят информацию из середины; output тоже ест бюджет; tool definitions и thinking-tokens считаются.
->   - **Связанные вопросы:** [[Q8]] (как посчитать tokens), [[Q10]] (размеры context), [[Q11]] (что делать если данные не помещаются).
+>   - **Связанные вопросы:** [[llm-basics-interview#Q8]] (как посчитать tokens), [[llm-basics-interview#Q10]] (размеры context), [[llm-basics-interview#Q11]] (что делать если данные не помещаются).
 > - [ ] **C.** Context window относится только к input prompt — output модели не учитывается и может быть любой длины при наличии лимита `max_tokens`.
 >   - **Что на самом деле:** в большинстве API лимит общий: `prompt_tokens + completion_tokens ≤ context_window`. Поэтому `max_tokens` нужно подбирать так, чтобы остался запас на ответ.
 >   - **Откуда путаница:** OpenAI исторически имел отдельные лимиты для prompt и completion, но в современных моделях (gpt-4o, Claude) — общий бюджет.

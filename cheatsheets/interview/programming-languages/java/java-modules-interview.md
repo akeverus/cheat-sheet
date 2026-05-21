@@ -1231,7 +1231,7 @@ module com.example.service {
 > - **API-evolution** — если экспортируется `interface Foo`, добавление метода в Foo ломает реализации в downstream-модулях. Use `default`-методы или `sealed`-иерархии.
 > - **Module boundaries vs Maven module** — JPMS-модуль и Maven-модуль это разные понятия; один Maven-модуль может содержать несколько JPMS-модулей или наоборот.
 >
-> **Связанные вопросы:** [[Q5]] — `exports` vs `opens`; [[Q7]] — `requires transitive`; [[Q10]] — `provides`/`uses`; [[Q29]] — типичные ошибки.
+> **Связанные вопросы:** [[java-modules-interview#Q5]] — `exports` vs `opens`; [[java-modules-interview#Q7]] — `requires transitive`; [[java-modules-interview#Q10]] — `provides`/`uses`; [[java-modules-interview#Q29]] — типичные ошибки.
 
 ## Q29. Какие типичные ошибки допускают при работе с модулями?
 
@@ -1332,7 +1332,7 @@ module com.example.service {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q5]] — `exports` vs `opens`; [[Q12]] — рефлексия в JPMS; [[Q13]] — JVM-флаги обхода; [[Q37]] — Spring/Hibernate/Jackson с JPMS.
+> **Связанные вопросы:** [[java-modules-interview#Q5]] — `exports` vs `opens`; [[java-modules-interview#Q12]] — рефлексия в JPMS; [[java-modules-interview#Q13]] — JVM-флаги обхода; [[java-modules-interview#Q37]] — Spring/Hibernate/Jackson с JPMS.
 
 ## Q30. Каковы перспективы развития модульной системы `Java`?
 
@@ -1435,7 +1435,7 @@ module com.example.service {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q1]] — что такое JPMS; [[Q19]] — jlink; [[Q21]] — стратегии миграции; [[Q37]] — Spring/Hibernate/Jackson; [[Q38]] — bottom-up vs top-down.
+> **Связанные вопросы:** [[java-modules-interview#Q1]] — что такое JPMS; [[java-modules-interview#Q19]] — jlink; [[java-modules-interview#Q21]] — стратегии миграции; [[java-modules-interview#Q37]] — Spring/Hibernate/Jackson; [[java-modules-interview#Q38]] — bottom-up vs top-down.
 
 ## Q31. Чем отличаются `unnamed module`, `automatic module` и `named module` на практике?
 
@@ -1568,7 +1568,7 @@ jar --describe-module --file=mylib.jar
 >
 > ---
 >
-> **Связанные вопросы:** [[Q4]] — module path vs classpath; [[Q14]] — unnamed module; [[Q15]] — automatic module и его имя; [[Q16]] — сравнение трёх типов модулей; [[Q38]] — стратегии миграции.
+> **Связанные вопросы:** [[java-modules-interview#Q4]] — module path vs classpath; [[java-modules-interview#Q14]] — unnamed module; [[java-modules-interview#Q15]] — automatic module и его имя; [[java-modules-interview#Q16]] — сравнение трёх типов модулей; [[java-modules-interview#Q38]] — стратегии миграции.
 
 ## Q32. `Split packages`: почему запрещены в `JPMS` и как их устранить?
 
@@ -1707,7 +1707,7 @@ java --module-path mods \
 >
 > ---
 >
-> **Связанные вопросы:** [[Q17]] — split package как понятие; [[Q22]] — миграция Maven/Gradle; [[Q35]] — `jdeps` для диагностики; [[Q38]] — стратегии миграции.
+> **Связанные вопросы:** [[java-modules-interview#Q17]] — split package как понятие; [[java-modules-interview#Q22]] — миграция Maven/Gradle; [[java-modules-interview#Q35]] — `jdeps` для диагностики; [[java-modules-interview#Q38]] — стратегии миграции.
 
 ## Q33. `--add-opens` и `--add-exports`: когда и как использовать для рефлексии с `JPMS`?
 
@@ -1860,7 +1860,7 @@ tasks.withType<Test> {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q5]] — `exports` vs `opens`; [[Q12]] — рефлексия и JPMS; [[Q13]] — JVM-флаги обхода; [[Q37]] — Spring/Hibernate/Jackson сценарии.
+> **Связанные вопросы:** [[java-modules-interview#Q5]] — `exports` vs `opens`; [[java-modules-interview#Q12]] — рефлексия и JPMS; [[java-modules-interview#Q13]] — JVM-флаги обхода; [[java-modules-interview#Q37]] — Spring/Hibernate/Jackson сценарии.
 
 ## Q34. `jlink`: создание custom minimal JRE — практическое руководство
 
@@ -2031,7 +2031,7 @@ ENTRYPOINT ["/opt/myapp/bin/myapp"]
 >
 > ---
 >
-> **Связанные вопросы:** [[Q19]] — что такое jlink; [[Q20]] — плагины jlink; [[Q35]] — `jdeps` для анализа зависимостей; [[Q38]] — миграция и оценка.
+> **Связанные вопросы:** [[java-modules-interview#Q19]] — что такое jlink; [[java-modules-interview#Q20]] — плагины jlink; [[java-modules-interview#Q35]] — `jdeps` для анализа зависимостей; [[java-modules-interview#Q38]] — миграция и оценка.
 
 ## Q35. `jdeps`: анализ зависимостей модулей перед миграцией
 
@@ -2168,7 +2168,7 @@ jdeps --generate-module-info generated/ --module-path lib lib/mylib.jar
 >
 > ---
 >
-> **Связанные вопросы:** [[Q22]] — миграция проектов; [[Q32]] — split packages; [[Q34]] — jlink требует named modules; [[Q38]] — bottom-up vs top-down стратегии.
+> **Связанные вопросы:** [[java-modules-interview#Q22]] — миграция проектов; [[java-modules-interview#Q32]] — split packages; [[java-modules-interview#Q34]] — jlink требует named modules; [[java-modules-interview#Q38]] — bottom-up vs top-down стратегии.
 
 ## Q36. `ServiceLoader` с `JPMS`: директивы `uses` и `provides...with` в деталях
 
@@ -2323,7 +2323,7 @@ Optional<PaymentProvider> stripe = loader.stream()
 >
 > ---
 >
-> **Связанные вопросы:** [[Q10]] — `provides`/`uses` базовое определение; [[Q11]] — ServiceLoader в classpath vs JPMS; [[Q28]] — хорошие практики дизайна модулей.
+> **Связанные вопросы:** [[java-modules-interview#Q10]] — `provides`/`uses` базовое определение; [[java-modules-interview#Q11]] — ServiceLoader в classpath vs JPMS; [[java-modules-interview#Q28]] — хорошие практики дизайна модулей.
 
 ## Q37. Совместимость `Spring`, `Hibernate` и `Jackson` с `JPMS`: типичные проблемы
 
@@ -2487,7 +2487,7 @@ module com.example.app {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q5]] — `exports` vs `opens`; [[Q9]] — `open module`; [[Q12]] — рефлексия в JPMS; [[Q26]] — Spring и JPMS; [[Q27]] — Hibernate и JPMS.
+> **Связанные вопросы:** [[java-modules-interview#Q5]] — `exports` vs `opens`; [[java-modules-interview#Q9]] — `open module`; [[java-modules-interview#Q12]] — рефлексия в JPMS; [[java-modules-interview#Q26]] — Spring и JPMS; [[java-modules-interview#Q27]] — Hibernate и JPMS.
 
 ## Q38. Стратегии миграции legacy-кода: `Bottom-Up` vs `Top-Down` в деталях
 
@@ -2653,7 +2653,7 @@ jar --describe-module --file=lib/external.jar
 >
 > ---
 >
-> **Связанные вопросы:** [[Q21]] — стратегии миграции (overview); [[Q22]] — Maven/Gradle и модули; [[Q35]] — `jdeps` для подготовки; [[Q34]] — jlink требует named modules.
+> **Связанные вопросы:** [[java-modules-interview#Q21]] — стратегии миграции (overview); [[java-modules-interview#Q22]] — Maven/Gradle и модули; [[java-modules-interview#Q35]] — `jdeps` для подготовки; [[java-modules-interview#Q34]] — jlink требует named modules.
 
 ---
 

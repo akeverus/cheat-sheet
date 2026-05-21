@@ -143,7 +143,7 @@ updated: "2026-05-15"
 >
 > ---
 >
-> **Связанные вопросы:** [[Q2]] — подключение зависимости и `@EnableRetry`; [[Q17]] — отличия от Resilience4j
+> **Связанные вопросы:** [[spring-retry-interview#Q2]] — подключение зависимости и `@EnableRetry`; [[spring-retry-interview#Q17]] — отличия от Resilience4j
 
 ## Q2. Как подключить Spring Retry?
 
@@ -234,7 +234,7 @@ public class AppConfig {}
 >
 > ---
 >
-> **Связанные вопросы:** [[Q1]] — что такое Spring Retry; [[Q3]] — параметры `@Retryable`; [[Q9]] — self-invocation и proxy-механика
+> **Связанные вопросы:** [[spring-retry-interview#Q1]] — что такое Spring Retry; [[spring-retry-interview#Q3]] — параметры `@Retryable`; [[spring-retry-interview#Q9]] — self-invocation и proxy-механика
 
 ## Q3. (!) Как работает @Retryable?
 
@@ -319,7 +319,7 @@ public PaymentResult processPayment(PaymentRequest req) {
 >
 > ---
 >
-> **Связанные вопросы:** [[Q2]] — подключение и `@EnableRetry`; [[Q5]] — backoff-стратегии и `@Backoff`; [[Q9]] — почему self-invocation ломает retry
+> **Связанные вопросы:** [[spring-retry-interview#Q2]] — подключение и `@EnableRetry`; [[spring-retry-interview#Q5]] — backoff-стратегии и `@Backoff`; [[spring-retry-interview#Q9]] — почему self-invocation ломает retry
 
 ## Q4. (!) Что такое @Recover и каковы требования к сигнатуре?
 
@@ -420,7 +420,7 @@ public PaymentResult recoverGeneral(Exception e, PaymentRequest req) {
 >
 > **Подводные камни:** (1) забыли указать `@Recover` для конкретного исключения — летит оригинальный exception, и retry выглядит «сломанным»; (2) сигнатура аргументов не совпадает (например, в `@Retryable` параметр `Order order`, а в `@Recover` — `String orderId`) — Spring не подберёт метод; (3) первый аргумент должен быть **исключением**, а не бизнес-объектом — частая ошибка; (4) `@Recover` сам в self-invocation **не работает** по той же причине, что и `@Retryable` (нужен прокси); (5) если у нескольких `@Recover` одинаковая «дистанция» по типу исключения, поведение неопределённое — лучше держать иерархию однозначной.
 >
-> **Связанные вопросы:** [[Q3]] — параметры `@Retryable` и поведение при исчерпании попыток; [[Q9]] — self-invocation ломает и `@Retryable`, и `@Recover`; [[Q13]] — `RetryListener` как альтернатива `@Recover` для observability
+> **Связанные вопросы:** [[spring-retry-interview#Q3]] — параметры `@Retryable` и поведение при исчерпании попыток; [[spring-retry-interview#Q9]] — self-invocation ломает и `@Retryable`, и `@Recover`; [[spring-retry-interview#Q13]] — `RetryListener` как альтернатива `@Recover` для observability
 
 ## Q5. Какие backoff-стратегии поддерживает Spring Retry?
 
@@ -482,9 +482,9 @@ backOff.setMaxInterval(10000);
 >
 > **Когда применять:** **Fixed** — для локальных операций с предсказуемой transient-ошибкой (быстрый кэш, локальная очередь); **Exponential** — для удалённых HTTP/DB-сервисов под нагрузкой, чтобы дать им время на восстановление; **ExponentialRandom (jitter)** — стандарт де-факто для распределённых клиентов одного даунстрима (тысячи pod'ов одновременно ретраят — джиттер размазывает пик); **UniformRandom** — для scheduling-задач, где важна однородная плотность запросов.
 >
-> **Подводные камни:** (1) забыли `maxDelay` — экспонента уходит в минуты, retry «зависает» (`1s → 2s → 4s → ... → 1024s`); (2) `random = true` без `multiplier` — джиттер применяется к фиксированной паузе и теряет смысл; (3) `delay = 0` отключает паузу полностью — это нагрузочная атака на даунстрим; (4) backoff отрабатывает через `Thread.sleep`, блокируя поток — на больших ретраях это съедает thread pool (для реактивных стеков нужен `Retry.backoff()` из Reactor, см. [[Q11]]); (5) при stateful retry backoff между попытками **не** удерживается — пауза зависит от частоты переотправки сообщения брокером.
+> **Подводные камни:** (1) забыли `maxDelay` — экспонента уходит в минуты, retry «зависает» (`1s → 2s → 4s → ... → 1024s`); (2) `random = true` без `multiplier` — джиттер применяется к фиксированной паузе и теряет смысл; (3) `delay = 0` отключает паузу полностью — это нагрузочная атака на даунстрим; (4) backoff отрабатывает через `Thread.sleep`, блокируя поток — на больших ретраях это съедает thread pool (для реактивных стеков нужен `Retry.backoff()` из Reactor, см. [[spring-retry-interview#Q11]]); (5) при stateful retry backoff между попытками **не** удерживается — пауза зависит от частоты переотправки сообщения брокером.
 >
-> **Связанные вопросы:** [[Q3]] — параметры `@Backoff` в составе `@Retryable`; [[Q6]] — программная конфигурация через `RetryTemplate`; [[Q11]] — backoff для реактивных потоков
+> **Связанные вопросы:** [[spring-retry-interview#Q3]] — параметры `@Backoff` в составе `@Retryable`; [[spring-retry-interview#Q6]] — программная конфигурация через `RetryTemplate`; [[spring-retry-interview#Q11]] — backoff для реактивных потоков
 >
 > ---
 >
@@ -518,7 +518,7 @@ backOff.setMaxInterval(10000);
 >
 > ---
 >
-> **Связанные вопросы:** [[Q3]] — `@Backoff` в составе `@Retryable`; [[Q6]] — `RetryTemplate.builder()` с backoff; [[Q11]] — Reactor `Retry.backoff()` как неблокирующая альтернатива
+> **Связанные вопросы:** [[spring-retry-interview#Q3]] — `@Backoff` в составе `@Retryable`; [[spring-retry-interview#Q6]] — `RetryTemplate.builder()` с backoff; [[spring-retry-interview#Q11]] — Reactor `Retry.backoff()` как неблокирующая альтернатива
 
 ## Q6. Что такое RetryTemplate и когда его использовать?
 
@@ -596,9 +596,9 @@ retryTemplate.execute(
 >
 > **Когда применять:** (1) код вне Spring-контейнера (утилитный класс, batch job, тест без `@SpringBootTest`); (2) **динамическая** retry-политика, выбираемая в рантайме (`policy = isCritical ? new SimpleRetryPolicy(10) : new SimpleRetryPolicy(2)`); (3) нужен **`RecoveryCallback`** на конкретный вызов, а не общий `@Recover` для всего класса; (4) **stateful retry** (`RetryState`) для Kafka/JMS listeners — аннотацией это не выразить; (5) self-invocation внутри одного бина, где `@Retryable` не сработает из-за proxy bypass; (6) комбинирование с другими паттернами (CircuitBreaker, ExceptionClassifier) — программная сборка `RetryPolicy` гибче.
 >
-> **Подводные камни:** (1) `RetryTemplate` — synchronous, `Thread.sleep` блокирует поток (см. [[Q5]]); (2) забыли указать `retryOn(...)` — `SimpleRetryPolicy` по умолчанию ретраит **все** `Exception`, включая `NullPointerException` — маскирует баги; (3) если шарите один `RetryTemplate` между методами с разной политикой — состояние policy общее, легко получить непредсказуемое поведение; (4) `RecoveryCallback` вызывается **только при исчерпании** попыток, не при первой ошибке (как и `@Recover`); (5) при stateful-retry обязателен `RetryState` — без него поведение деградирует до stateless.
+> **Подводные камни:** (1) `RetryTemplate` — synchronous, `Thread.sleep` блокирует поток (см. [[spring-retry-interview#Q5]]); (2) забыли указать `retryOn(...)` — `SimpleRetryPolicy` по умолчанию ретраит **все** `Exception`, включая `NullPointerException` — маскирует баги; (3) если шарите один `RetryTemplate` между методами с разной политикой — состояние policy общее, легко получить непредсказуемое поведение; (4) `RecoveryCallback` вызывается **только при исчерпании** попыток, не при первой ошибке (как и `@Recover`); (5) при stateful-retry обязателен `RetryState` — без него поведение деградирует до stateless.
 >
-> **Связанные вопросы:** [[Q2]] — `@EnableRetry` для аннотационного пути (для `RetryTemplate` не нужен); [[Q3]] — `@Retryable` как декларативная альтернатива; [[Q5]] — backoff-стратегии и их API; [[Q12]] — stateful retry через `RetryState`; [[Q13]] — `RetryListener` и метрики
+> **Связанные вопросы:** [[spring-retry-interview#Q2]] — `@EnableRetry` для аннотационного пути (для `RetryTemplate` не нужен); [[spring-retry-interview#Q3]] — `@Retryable` как декларативная альтернатива; [[spring-retry-interview#Q5]] — backoff-стратегии и их API; [[spring-retry-interview#Q12]] — stateful retry через `RetryState`; [[spring-retry-interview#Q13]] — `RetryListener` и метрики
 >
 > ---
 >
@@ -614,7 +614,7 @@ retryTemplate.execute(
 >
 > #### D) `RetryTemplate` нужен только для асинхронного retry в реактивном коде (`Mono`/`Flux`); для синхронного блокирующего кода используется только `@Retryable`-аннотация — ❌ Неверно
 >
-> **Что на самом деле:** ровно наоборот — `RetryTemplate` **синхронный и блокирующий**. Для реактивного кода используют `Retry.backoff(...)` из Reactor (`Mono.retryWhen(...)`) или Resilience4j-reactor — `RetryTemplate` там не работает, потому что `Thread.sleep` блокирует event loop. См. [[Q11]] о реактивных стратегиях.
+> **Что на самом деле:** ровно наоборот — `RetryTemplate` **синхронный и блокирующий**. Для реактивного кода используют `Retry.backoff(...)` из Reactor (`Mono.retryWhen(...)`) или Resilience4j-reactor — `RetryTemplate` там не работает, потому что `Thread.sleep` блокирует event loop. См. [[spring-retry-interview#Q11]] о реактивных стратегиях.
 >
 > **Откуда путаница:** «программный API» иногда ассоциируется с «реактивным» — но `RetryTemplate` появился задолго до Reactor и остался императивным.
 >
@@ -622,7 +622,7 @@ retryTemplate.execute(
 >
 > ---
 >
-> **Связанные вопросы:** [[Q3]] — декларативный `@Retryable` как альтернатива; [[Q5]] — backoff-стратегии для `RetryTemplate`; [[Q11]] — реактивный retry через Reactor; [[Q12]] — stateful-retry через `RetryTemplate.setRetryState(...)`
+> **Связанные вопросы:** [[spring-retry-interview#Q3]] — декларативный `@Retryable` как альтернатива; [[spring-retry-interview#Q5]] — backoff-стратегии для `RetryTemplate`; [[spring-retry-interview#Q11]] — реактивный retry через Reactor; [[spring-retry-interview#Q12]] — stateful-retry через `RetryTemplate.setRetryState(...)`
 
 ## Q7. Какие RetryPolicy реализации есть в Spring Retry?
 
@@ -1230,7 +1230,7 @@ class PaymentServiceTest {
 >     - **Пример:** `@MockBean PaymentGateway gateway; when(gateway.charge(any())).thenThrow(new IOException()); paymentService.processPayment(req); verify(gateway, times(3)).charge(any());` — три попытки, потом `@Recover`.
 >     - **Когда применять:** unit/integration-тесты на retry-логику, проверка `maxAttempts`, типов исключений в `retryFor/noRetryFor`, поведения `@Recover` после исчерпания попыток.
 >     - **Подводные камни:** не забыть `@EnableRetry` (в `@SpringBootApplication` обычно уже есть), сократить `@Backoff` до 0–10 мс через test-конфиг или `@TestPropertySource`, не использовать `@SpyBean` без необходимости — `@MockBean` достаточно для проверки числа вызовов.
->     - **Связанные вопросы:** [[Q3]] про работу `@Retryable`, [[Q4]] про `@Recover`, [[Q9]] про self-invocation и прокси.
+>     - **Связанные вопросы:** [[spring-retry-interview#Q3]] про работу `@Retryable`, [[spring-retry-interview#Q4]] про `@Recover`, [[spring-retry-interview#Q9]] про self-invocation и прокси.
 
 ## Q17. Чем Spring Retry отличается от Resilience4j?
 
@@ -1257,7 +1257,7 @@ class PaymentServiceTest {
 >     - **Пример:** `@Retryable(retryFor = IOException.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))` + `@Recover IOException recover(IOException e, ...) { return fallback; }` — 5 строк, всё что нужно.
 >     - **Когда применять:** legacy/монолит на Spring, простые retry-кейсы, Spring Batch/Integration (они используют Spring Retry под капотом), нет требования к Circuit Breaker / Rate Limiter / реактиву.
 >     - **Подводные камни:** `CircuitBreakerRetryPolicy` в Spring Retry упрощён (нет HALF_OPEN), метрики только через `RetryListener` вручную, реактивный стек не поддерживается — для WebFlux лучше `Retry.backoff()` из Reactor или Resilience4j-reactor.
->     - **Связанные вопросы:** [[Q5]] про backoff-стратегии, [[Q8]] про CircuitBreakerRetryPolicy, [[Q11]] про Reactor/WebClient.
+>     - **Связанные вопросы:** [[spring-retry-interview#Q5]] про backoff-стратегии, [[spring-retry-interview#Q8]] про CircuitBreakerRetryPolicy, [[spring-retry-interview#Q11]] про Reactor/WebClient.
 > - [ ] **B) Resilience4j — он мощнее и современнее, поэтому лучше во всех случаях**
 >     - **Что на самом деле:** «мощнее» не значит «уместнее». Resilience4j тянет за собой больше зависимостей (`resilience4j-spring-boot3`, `resilience4j-micrometer`, и т.д.), требует YAML-конфигов на каждый instance, и для голого retry с `@Recover` даёт меньше выразительности (нет прямого аналога `@Recover` — нужен `fallbackMethod`, который работает не так).
 >     - **Откуда путаница:** Resilience4j действительно лидер в fault tolerance для microservices, но «лучше во всех случаях» — ложь. Для простой retry-логики в монолите он избыточен.

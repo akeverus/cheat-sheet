@@ -128,7 +128,7 @@ updated: "2026-04-25"
 >
 > **Подводные камни:** все DTO, попадающие в Jackson или validation, должны быть помечены `@Introspected` — иначе в native image будет `SerializationException`. Сторонние библиотеки, использующие рефлексию (старые версии Hibernate, некоторые JDBC-драйверы) требуют отдельной reflect-config для GraalVM.
 >
-> **Связанные вопросы:** [[Q4]], [[Q16]]
+> **Связанные вопросы:** [[micronaut-interview#Q4]], [[micronaut-interview#Q16]]
 >
 > ---
 >
@@ -196,7 +196,7 @@ updated: "2026-04-25"
 >
 > **Подводные камни:** Spring-эcosystem огромна (Spring Security, Spring Data REST, Spring Cloud Gateway) — у Micronaut аналоги есть, но менее зрелые. Миграция большого Spring-проекта на Micronaut обычно занимает 3-6 месяцев из-за `@Conditional`, `@Profile`, Spring Cloud Config.
 >
-> **Связанные вопросы:** [[Q1]], [[Q25]]
+> **Связанные вопросы:** [[micronaut-interview#Q1]], [[micronaut-interview#Q25]]
 >
 > ---
 >
@@ -274,7 +274,7 @@ updated: "2026-04-25"
 >
 > **Подводные камни:** оба фреймворка хороши, выбор часто определяется не техникой, а экосистемой компании (Red Hat support vs Oracle support). Не пытайтесь смешивать Quarkus extensions с Micronaut beans — это разные `BeanContainer` API.
 >
-> **Связанные вопросы:** [[Q1]], [[Q23]]
+> **Связанные вопросы:** [[micronaut-interview#Q1]], [[micronaut-interview#Q23]]
 >
 > ---
 >
@@ -619,7 +619,7 @@ public interface UserClient {
 > - `Flux<User> list()` БЕЗ `processes = JSON_STREAM` соберёт весь список перед эмиссией — не стриминг, а отложенный сбор.
 > - `CompletableFuture` пробрасывает исключения через `CompletionException` — оборачивайте при unwrap.
 >
-> **Связанные вопросы:** [[Q10]] — declarative @Client и compile-time generation; [[Q22]] — Reactor/RxJava в Micronaut; [[Q8]] — REST-контроллеры и их типы возвратов.
+> **Связанные вопросы:** [[micronaut-interview#Q10]] — declarative @Client и compile-time generation; [[micronaut-interview#Q22]] — Reactor/RxJava в Micronaut; [[micronaut-interview#Q8]] — REST-контроллеры и их типы возвратов.
 >
 > ---
 >

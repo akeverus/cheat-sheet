@@ -1178,7 +1178,7 @@ User parsed = User.parseFrom(bytes);       // десериализация
 > - **Большие enum**: добавление нового enum-value в proto3 — backward compat ОК, но старый клиент получит default (0) если не знает значения. Закладывать `UNKNOWN = 0` в каждый enum.
 > - **`Any` type** — гибкий, но теряет type safety. Для полиморфных сообщений лучше `oneof`.
 >
-> **Связанные вопросы:** [[Q27]] — сравнение с Apache Avro; [[Q29]] — выбор формата под use case; [[Q31]] — версионирование схем в микросервисах.
+> **Связанные вопросы:** [[java-serialization-interview#Q27]] — сравнение с Apache Avro; [[java-serialization-interview#Q29]] — выбор формата под use case; [[java-serialization-interview#Q31]] — версионирование схем в микросервисах.
 
 ## Q27. Что такое `Apache Avro` и чем он отличается от `Protobuf`?
 
@@ -1263,7 +1263,7 @@ User parsed = User.parseFrom(bytes);       // десериализация
 > - **Union types** (`["null", "string"]`) — first type в union считается default. `["string", "null"]` запрещён в FORWARD compatibility.
 > - **Logical types** (decimal, timestamp-millis) — нужны для финансовых данных, не путать с base types.
 >
-> **Связанные вопросы:** [[Q26]] — Protobuf для сравнения; [[Q29]] — выбор формата под use case; [[Q31]] — Schema Registry compatibility modes.
+> **Связанные вопросы:** [[java-serialization-interview#Q26]] — Protobuf для сравнения; [[java-serialization-interview#Q29]] — выбор формата под use case; [[java-serialization-interview#Q31]] — Schema Registry compatibility modes.
 >
 > ---
 >
@@ -1391,7 +1391,7 @@ input.close();
 > - **Lambda и inner classes**: Kryo не сериализует lambda по умолчанию (нет stable serialized form). Использовать `ClosureSerializer` + регистрацию.
 > - **Recursive references**: `kryo.setReferences(true)` обязательно для графов с циклами, иначе StackOverflow.
 >
-> **Связанные вопросы:** [[Q26]] — Protobuf как альтернатива для cross-language; [[Q29]] — выбор формата по use-case; [[Q39]] — FST как близкий аналог.
+> **Связанные вопросы:** [[java-serialization-interview#Q26]] — Protobuf как альтернатива для cross-language; [[java-serialization-interview#Q29]] — выбор формата по use-case; [[java-serialization-interview#Q39]] — FST как близкий аналог.
 >
 > ---
 >
@@ -1532,7 +1532,7 @@ graph TD
 > - **Protobuf без `optional`**: в proto3 default значения неотличимы от «не задано». Если semantics важна — proto3 `optional` keyword (Protobuf 3.15+).
 > - **Kryo + cross-version JVM upgrade**: смена JDK (8→17) может изменить `serialVersionUID`-эквивалент или semantics коллекций. Тестировать.
 >
-> **Связанные вопросы:** [[Q26]] — Protobuf детали; [[Q27]] — Avro и Schema Registry; [[Q28]] — Kryo; [[Q30]] — почему не Java Serialization в микросервисах.
+> **Связанные вопросы:** [[java-serialization-interview#Q26]] — Protobuf детали; [[java-serialization-interview#Q27]] — Avro и Schema Registry; [[java-serialization-interview#Q28]] — Kryo; [[java-serialization-interview#Q30]] — почему не Java Serialization в микросервисах.
 >
 > ---
 >
@@ -1639,7 +1639,7 @@ graph LR
 > - **Kafka Java Serializer** (`StringSerializer`/`ByteArraySerializer`) — НЕ Java Ser., это просто primitive serializers. Но JsonSerializer внутри Spring Kafka может использовать Jackson — ОК.
 > - **Migration legacy RMI** — болезненна. Часто переписывают на gRPC + Protobuf или REST + JSON, сохраняя interface signatures.
 >
-> **Связанные вопросы:** [[Q15]] — security риски Java Ser.; [[Q17]] — `ObjectInputFilter` для legacy; [[Q29]] — выбор формата по use-case; [[Q31]] — schema versioning.
+> **Связанные вопросы:** [[java-serialization-interview#Q15]] — security риски Java Ser.; [[java-serialization-interview#Q17]] — `ObjectInputFilter` для legacy; [[java-serialization-interview#Q29]] — выбор формата по use-case; [[java-serialization-interview#Q31]] — schema versioning.
 
 ## Q31. Как организовать версионирование схем в микросервисной архитектуре?
 
@@ -1750,7 +1750,7 @@ Accept: application/vnd.api.v2+json
 > - **Protobuf — поле с тегом >15 занимает 2 байта**: для горячих полей оставлять теги 1-15.
 > - **`oneof` в Protobuf**: нельзя добавлять/удалять поля из существующего `oneof` без слома совместимости.
 >
-> **Связанные вопросы:** [[Q26]] — Protobuf детали; [[Q27]] — Avro в Schema Registry; [[Q5]] — Java native `serialVersionUID` для контраста.
+> **Связанные вопросы:** [[java-serialization-interview#Q26]] — Protobuf детали; [[java-serialization-interview#Q27]] — Avro в Schema Registry; [[java-serialization-interview#Q5]] — Java native `serialVersionUID` для контраста.
 >
 > ---
 >
@@ -1886,7 +1886,7 @@ graph TB
 > - **Outbox latency**: между commit БД и Kafka publish — задержка polling'а. Compensating saga должна handle late events.
 > - **Event size limits**: Kafka default `message.max.bytes=1MB`. Large events (>500KB) — anti-pattern, использовать claim-check pattern (S3 ссылка в event).
 >
-> **Связанные вопросы:** [[Q26]] — Protobuf для commands; [[Q27]] — Avro для events; [[Q31]] — schema versioning rules.
+> **Связанные вопросы:** [[java-serialization-interview#Q26]] — Protobuf для commands; [[java-serialization-interview#Q27]] — Avro для events; [[java-serialization-interview#Q31]] — schema versioning rules.
 >
 > ---
 >
@@ -2048,7 +2048,7 @@ try (var ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
 > - **Jackson `PolymorphicTypeValidator` default**: с Jackson 2.10+ требуется явный validator при `activateDefaultTyping`. Не отключать ради «удобства».
 > - **XStream** (XML) тоже уязвим — CVE-2021-21351 и подобные. Если XStream в classpath — настроить `XStream.setupDefaultSecurity` и whitelist.
 >
-> **Связанные вопросы:** [[Q15]] — общие риски Java Ser.; [[Q16]] — gadget chains подробно; [[Q17]] — `ObjectInputFilter`; [[Q18]] — overall защита.
+> **Связанные вопросы:** [[java-serialization-interview#Q15]] — общие риски Java Ser.; [[java-serialization-interview#Q16]] — gadget chains подробно; [[java-serialization-interview#Q17]] — `ObjectInputFilter`; [[java-serialization-interview#Q18]] — overall защита.
 >
 > ---
 >
@@ -2218,7 +2218,7 @@ JVM гарантирует, что `enum`-константы десериали�
 > - **`@java.io.Serial` annotation (Java 14+)**: IDE и компилятор проверяют корректность сигнатуры. Использовать всегда.
 > - **Concurrency**: `INSTANCE` должен быть инициализирован thread-safe — лучше `static final` (JVM гарантирует safe publication).
 >
-> **Связанные вопросы:** [[Q9]] — `writeReplace`/`readResolve` подробно; [[Q12]] — `enum` Serialization детали; [[Q13]] — Serialization Proxy Pattern.
+> **Связанные вопросы:** [[java-serialization-interview#Q9]] — `writeReplace`/`readResolve` подробно; [[java-serialization-interview#Q12]] — `enum` Serialization детали; [[java-serialization-interview#Q13]] — Serialization Proxy Pattern.
 
 ## Q35. Что такое `serialPersistentFields` и когда его использовать?
 
@@ -2339,7 +2339,7 @@ public class FlexibleClass implements Serializable {
 > - **Не путать с `transient`**: `transient` исключает поле из default serialization; `serialPersistentFields` определяет полный список без зависимости от `transient`.
 > - **Несовместимость со records**: для record `serialPersistentFields` не применяется — record имеет фиксированный механизм через canonical constructor.
 >
-> **Связанные вопросы:** [[Q4]] — `transient` для контраста; [[Q10]] — custom `writeObject`/`readObject`; [[Q5]] — schema evolution в Java Ser.
+> **Связанные вопросы:** [[java-serialization-interview#Q4]] — `transient` для контраста; [[java-serialization-interview#Q10]] — custom `writeObject`/`readObject`; [[java-serialization-interview#Q5]] — schema evolution в Java Ser.
 >
 > ---
 >
@@ -2513,7 +2513,7 @@ public class UserEntity extends AbstractEntity {
 > - **`final` поля родителя через no-arg ctor**: если родитель имеет `private final String x` инициализируемый в no-arg ctor — это будет финальное значение в десериализованном объекте, не из потока.
 > - **Equality после round-trip**: если `equals/hashCode` использует parent fields, и они lost — equals возвращает false для логически идентичных объектов.
 >
-> **Связанные вопросы:** [[Q2]] — `Serializable` marker interface; [[Q7]] — наследование с non-Serializable parent; [[Q19]] — record и наследование; [[Q5]] — schema evolution.
+> **Связанные вопросы:** [[java-serialization-interview#Q2]] — `Serializable` marker interface; [[java-serialization-interview#Q7]] — наследование с non-Serializable parent; [[java-serialization-interview#Q19]] — record и наследование; [[java-serialization-interview#Q5]] — schema evolution.
 >
 > ---
 >
@@ -2711,7 +2711,7 @@ public HttpMessageConverter<MyFormat> myConverter() {
 > - **HATEOAS / RFC 7807 (problem details)**: Spring 6 добавил автоматический `application/problem+json` через `ProblemDetailHttpMessageConverter`.
 > - **WebFlux другой**: использует `HttpMessageReader/Writer`, не `HttpMessageConverter`. Конфигурация через `WebFluxConfigurer.configureHttpMessageCodecs`.
 >
-> **Связанные вопросы:** [[Q21]] — Jackson `ObjectMapper`; [[Q22]] — Jackson vs Gson; [[Q26]] — Protobuf для альтернативного content negotiation.
+> **Связанные вопросы:** [[java-serialization-interview#Q21]] — Jackson `ObjectMapper`; [[java-serialization-interview#Q22]] — Jackson vs Gson; [[java-serialization-interview#Q26]] — Protobuf для альтернативного content negotiation.
 >
 > ---
 >
@@ -2880,7 +2880,7 @@ Gson gson = new GsonBuilder()
 > - **Migration Jackson → Gson** (или обратно): аннотации не совместимы (`@JsonProperty` ≠ `@SerializedName`). Дорогостоящий refactor.
 > - **Jackson `JsonInclude.Include.NON_ABSENT`**: новое в 2.12, специально для `Optional<T>` — игнорировать `Optional.empty()` но писать `Optional.of(null)`.
 >
-> **Связанные вопросы:** [[Q21]] — Jackson basics; [[Q22]] — общий обзор Jackson vs Gson; [[Q24]] — custom serializers в Jackson.
+> **Связанные вопросы:** [[java-serialization-interview#Q21]] — Jackson basics; [[java-serialization-interview#Q22]] — общий обзор Jackson vs Gson; [[java-serialization-interview#Q24]] — custom serializers в Jackson.
 
 ## Q39. FST — быстрый аналог Java Serialization
 
@@ -2993,7 +2993,7 @@ User restored = (User) conf.asObject(bytes);
 > - **`setForceSerializable(true)`** позволяет сериализовать non-Serializable классы — мощно, но открывает security risks (gadget chains всё ещё применимы).
 > - **Versioning**: FST 2.x → 3.x было breaking changes в wire format. Pin major version в production.
 >
-> **Связанные вопросы:** [[Q28]] — Kryo как современная альтернатива; [[Q15]] — security риски Java Ser. (включая FST); [[Q30]] — почему всё же предпочитать JSON/Protobuf для inter-service.
+> **Связанные вопросы:** [[java-serialization-interview#Q28]] — Kryo как современная альтернатива; [[java-serialization-interview#Q15]] — security риски Java Ser. (включая FST); [[java-serialization-interview#Q30]] — почему всё же предпочитать JSON/Protobuf для inter-service.
 >
 > ---
 >

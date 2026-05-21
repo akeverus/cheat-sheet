@@ -1238,7 +1238,7 @@ if (result instanceof Result.Success success) {
 >
 > **Подводные камни:** при добавлении нового подкласса в Kotlin sealed — придётся вручную аудитить все Java switch'и (нет компилятор-варнингов). Для критических иерархий лучше предоставлять `accept(Visitor)` метод.
 >
-> **Связанные вопросы:** [[Q32]] — детальное сравнение Kotlin sealed vs Java 17 sealed; [[Q26]] — практики дизайна Kotlin API для Java.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q32]] — детальное сравнение Kotlin sealed vs Java 17 sealed; [[kotlin-interop-java-interview#Q26]] — практики дизайна Kotlin API для Java.
 >
 > ---
 >
@@ -1346,7 +1346,7 @@ User updated = user.copy("Bob", user.getAge()); // нельзя пропусти
 >
 > **Подводные камни:** при добавлении нового поля в `data class` все Java-вызовы `copy()` сломаются (новая обязательная позиция). Это известный pain-point — поэтому в публичных API для Java часто избегают `data class` и используют builder pattern.
 >
-> **Связанные вопросы:** [[Q4]] — `@JvmOverloads` для default-параметров; [[Q26]] — практики Java-friendly Kotlin API; [[Q28]] — `@JvmRecord` как альтернатива.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q4]] — `@JvmOverloads` для default-параметров; [[kotlin-interop-java-interview#Q26]] — практики Java-friendly Kotlin API; [[kotlin-interop-java-interview#Q28]] — `@JvmRecord` как альтернатива.
 >
 > ---
 >
@@ -1449,7 +1449,7 @@ graph TD
 >
 > **Подводные камни:** `@JvmOverloads` генерирует overload'ы линейно справа-налево, не комбинаторно — для функции с 3 defaults будет 4 версии (без 1, 2 или 3 параметров), не 8. Если нужны произвольные комбинации — пишите перегрузки вручную.
 >
-> **Связанные вопросы:** [[Q2]] — детальные различия `@JvmStatic`/`@JvmField`/`@JvmOverloads`; [[Q3]] — companion object без аннотаций; [[Q35]] — подводные камни с `companion object`.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q2]] — детальные различия `@JvmStatic`/`@JvmField`/`@JvmOverloads`; [[kotlin-interop-java-interview#Q3]] — companion object без аннотаций; [[kotlin-interop-java-interview#Q35]] — подводные камни с `companion object`.
 >
 > ---
 >
@@ -1573,7 +1573,7 @@ graph LR
 > - **Циклические зависимости через generic types**: иногда `kotlinc` не может разрешить тип, который определён в Java и параметризован Kotlin-классом. Решение — разнести по разным модулям.
 > - **KSP vs kapt**: KSP работает напрямую над Kotlin AST, не через stubs — быстрее, но не поддерживает Java AP.
 >
-> **Связанные вопросы:** [[Q34]] — почему Lombok ломается из-за этого порядка; [[Q22]] — вызов Java overloads из Kotlin.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q34]] — почему Lombok ломается из-за этого порядка; [[kotlin-interop-java-interview#Q22]] — вызов Java overloads из Kotlin.
 >
 > ---
 >
@@ -1703,7 +1703,7 @@ data class UserDto(val name: String)  // Java видит: name()
 > - **`copy()` отсутствует** для `@JvmRecord` — records по дизайну без copy/builder.
 > - **Compatibility**: до Kotlin 1.5 был баг — accessor методы виделись с `get`-префиксом некорректно. На новых версиях исправлено.
 >
-> **Связанные вопросы:** [[Q18]] — Kotlin properties из Java; [[Q25]] — `data class` vs `@JvmRecord`.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q18]] — Kotlin properties из Java; [[kotlin-interop-java-interview#Q25]] — `data class` vs `@JvmRecord`.
 >
 > ---
 >
@@ -1837,7 +1837,7 @@ class ProductEntity(
 > - **`@JvmField val`** — нет геттера, поле public, target = field автоматически.
 > - **Compile-time vs runtime annotations**: `@Retention(SOURCE)` теряются после компиляции — bevallesnek annotation processor может не увидеть.
 >
-> **Связанные вопросы:** [[Q18]] — Kotlin properties в Java; [[Q34]] — annotation processing порядок.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q18]] — Kotlin properties в Java; [[kotlin-interop-java-interview#Q34]] — annotation processing порядок.
 >
 > ---
 >
@@ -1983,7 +1983,7 @@ class UserServiceAdapter(private val javaService: JavaUserService) {
 > - **JSR-305 vs JSpecify**: JSR-305 (`@Nullable` от `javax.annotation`) — устаревшая, но широко используемая. Новый стандарт — JSpecify (`org.jspecify.annotations.@Nullable`). Kotlin 1.8+ поддерживает оба.
 > - **Аннотировать Java исходники** в своей кодовой базе — лучше всего; для third-party используйте JSR-305 mapping или Kotlin external annotations.
 >
-> **Связанные вопросы:** [[Q6]] — что такое platform types; [[Q7]] — `@Nullable`/`@NotNull` аннотации; [[Q8]] — nullability контракты в публичном Kotlin API.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q6]] — что такое platform types; [[kotlin-interop-java-interview#Q7]] — `@Nullable`/`@NotNull` аннотации; [[kotlin-interop-java-interview#Q8]] — nullability контракты в публичном Kotlin API.
 >
 > ---
 >
@@ -2109,7 +2109,7 @@ object JsonUtils {
 > - **Inline functions с `inline` параметрами без `reified`** — иногда компилятор оставляет non-inline copy для рекурсии или indirect calls. Это деталь реализации, не контракт.
 > - **`@PublishedApi internal inline`** — частая идиома для exposing inline functions, но из Java всё равно недоступно из-за reification.
 >
-> **Связанные вопросы:** [[Q19]] — top-level функции и `@file:JvmName`; [[Q21]] — suspend функции из Java через подобный mechanism; [[Q26]] — практики дизайна Java-friendly API.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q19]] — top-level функции и `@file:JvmName`; [[kotlin-interop-java-interview#Q21]] — suspend функции из Java через подобный mechanism; [[kotlin-interop-java-interview#Q26]] — практики дизайна Java-friendly API.
 >
 > ---
 >
@@ -2256,7 +2256,7 @@ val area = when (shape) {
 > - **Будущее Kotlin sealed на JVM 17+**: возможно, будут добавлять `PermittedSubclasses` для JVM target 17+ (обсуждается в KEEP), но пока нет.
 > - **`sealed interface`** в Kotlin — компилируется в обычный interface без специальных атрибутов.
 >
-> **Связанные вопросы:** [[Q24]] — Kotlin sealed из Java; [[Q26]] — design Kotlin API для Java; [[Q28]] — `@JvmRecord` как параллельный пример отдельных механизмов.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q24]] — Kotlin sealed из Java; [[kotlin-interop-java-interview#Q26]] — design Kotlin API для Java; [[kotlin-interop-java-interview#Q28]] — `@JvmRecord` как параллельный пример отдельных механизмов.
 >
 > ---
 >
@@ -2389,7 +2389,7 @@ fun findUserOptional(id: Long): Optional<User> =
 > - **Сериализация Optional**: не `Serializable` по умолчанию, плохо ведёт себя с Jackson без специальных модулей.
 > - **Performance**: `Optional` — это object allocation на каждый вызов, в hot path заметно. Kotlin `T?` — это null в байткоде, zero overhead.
 >
-> **Связанные вопросы:** [[Q6]] — platform types на границе; [[Q8]] — nullability контракты; [[Q37]] — Optional паттерны со Spring Data.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q6]] — platform types на границе; [[kotlin-interop-java-interview#Q8]] — nullability контракты; [[kotlin-interop-java-interview#Q37]] — Optional паттерны со Spring Data.
 >
 > ---
 >
@@ -2530,7 +2530,7 @@ val updated = request.copy(age = 30)
 > - **Lombok + Kotlin в одном модуле теоретически возможно** через `kapt`, но требует hack-конфигурации с `--no-stubs` и т.д. — не рекомендуется.
 > - **`@Builder.Default`** Lombok features — теряются при модульном разделении (потому что Lombok сработал в Java-модуле, до его использования в Kotlin).
 >
-> **Связанные вопросы:** [[Q27]] — порядок компиляции Kotlin+Java; [[Q29]] — annotation targets в Kotlin; [[Q22]] — overloaded methods from Java.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q27]] — порядок компиляции Kotlin+Java; [[kotlin-interop-java-interview#Q29]] — annotation targets в Kotlin; [[kotlin-interop-java-interview#Q22]] — overloaded methods from Java.
 >
 > ---
 >
@@ -2679,7 +2679,7 @@ class Config {
 > - **`const val` ограничения**: только примитивы и String. `Float.NaN` запрещён (не const-expression).
 > - **`@JvmField val` ограничения**: не может быть `lateinit` (геттер уже есть), не может быть `open` (нужен getter для polymorphism).
 >
-> **Связанные вопросы:** [[Q2]] — детали `@JvmStatic`/`@JvmField`/`@JvmOverloads`; [[Q3]] — companion object вызовы без аннотаций; [[Q9]] — `@JvmName`.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q2]] — детали `@JvmStatic`/`@JvmField`/`@JvmOverloads`; [[kotlin-interop-java-interview#Q3]] — companion object вызовы без аннотаций; [[kotlin-interop-java-interview#Q9]] — `@JvmName`.
 >
 > ---
 >
@@ -2846,7 +2846,7 @@ AnimalExtKt.speak(new Dog()); // "..." — тот же эффект
 > - **Не доступны через интерфейсы**: `interface Walker; fun Walker.walk()` — это статика на конкретном типе, не часть virtual table.
 > - **`@JvmName` на extension** в файле — для управления имени Java helper class (`StringExtensionsKt` → `Strings`).
 >
-> **Связанные вопросы:** [[Q5]] — extension functions из Java basic; [[Q19]] — top-level functions; [[Q12]] — SAM conversion в extensions.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q5]] — extension functions из Java basic; [[kotlin-interop-java-interview#Q19]] — top-level functions; [[kotlin-interop-java-interview#Q12]] — SAM conversion в extensions.
 >
 > ---
 >
@@ -2964,7 +2964,7 @@ fun findByEmail(email: String): User? = repo.findByEmail(email)
 > - **Reactive Spring Data**: `Mono<User>` и `Flow<User>` — это reactive types, не путать с обычным nullable.
 > - **Custom queries (`@Query`)**: nullable return type работает, если query может вернуть пустой результат — Spring сам конвертирует.
 >
-> **Связанные вопросы:** [[Q33]] — Optional vs T? интероп в общем; [[Q8]] — nullability контракты; [[Q34]] — почему data class предпочтительнее Lombok в Spring контексте.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q33]] — Optional vs T? интероп в общем; [[kotlin-interop-java-interview#Q8]] — nullability контракты; [[kotlin-interop-java-interview#Q34]] — почему data class предпочтительнее Lombok в Spring контексте.
 >
 > ---
 >
@@ -3136,7 +3136,7 @@ val objects: List<Any> = readOnly // OK — ковариантность раб�
 > - **`Function0`/`Function1` лямбды**: Kotlin функциональные типы имеют `out R` для результата, что часто требует suppression при возврате из Kotlin в Java.
 > - **`*` (star projection)** в Kotlin → `?` в Java (unbounded wildcard) — это уже Java-видимое, аннотации не нужны.
 >
-> **Связанные вопросы:** [[Q14]] — basics of `in`/`out` vs `extends`/`super`; [[Q15]] — когда нужны `@JvmSuppressWildcards`/`@JvmWildcard`; [[Q16]] — интероп коллекций; [[Q26]] — Java-friendly Kotlin API design.
+> **Связанные вопросы:** [[kotlin-interop-java-interview#Q14]] — basics of `in`/`out` vs `extends`/`super`; [[kotlin-interop-java-interview#Q15]] — когда нужны `@JvmSuppressWildcards`/`@JvmWildcard`; [[kotlin-interop-java-interview#Q16]] — интероп коллекций; [[kotlin-interop-java-interview#Q26]] — Java-friendly Kotlin API design.
 >
 > ---
 >

@@ -51,7 +51,7 @@
 
 ## 3. Backlog (приоритизированный, 9 циклов)
 
-### Cycle 1: System Design & Highload — *2026-05-25 → 05-29*
+### Cycle 1: System Design & Highload
 
 - **Why:** ранк #1. Прямой intent из Singularity (T-1930a052: «читать Высоконагруженные приложения»). 7/0 general покрытие. Senior-уровень требует уверенного SD.
 - **Done when:** в `cheatsheets/interview/system-design/` появилась шпаргалка ≥ 600 строк по одной из ключевых тем (CAP/PACELC, sharding, replication, caching, event-sourcing). Пройдено 20 MCQ по system-design с ≥ 80% correct.
@@ -61,7 +61,7 @@
   - Букмарки: «Backend Roadmap», backend-cheats README
   - quiz-app: тема `system-design` (165 вопросов из текущего распределения)
 
-### Cycle 2: Algorithms — Data Structures (deep practice) — *2026-06-01 → 06-05*
+### Cycle 2: Algorithms — Data Structures (deep practice)
 
 - **Why:** ранк #2. 6 тем из топ-20 quiz importance + 3 тренажёра в букмарках + явный practice-intent.
 - **Done when:** прорешать 25 LeetCode-Medium по одной DS (рекомендую Trees — самая весомая 71%). Пройти MCQ из `algorithms/data-structures/trees-interview` с ≥ 85%.
@@ -70,7 +70,7 @@
   - Тренажёры: VisuAlgo, Algorithm Visualizer (закладки)
   - LeetCode (внешнее)
 
-### Cycle 3: AI/LLM Foundations — *2026-06-08 → 06-12*
+### Cycle 3: AI/LLM Foundations
 
 - **Why:** ранк #3. 18 букмарок (самая большая learning-папка) + 9/0 general + 73% важности llm-basics.
 - **Done when:** создан `cheatsheets/ai-ml/llm-fundamentals.md` ≥ 500 строк (токенизация, attention, context, embeddings, RAG, prompt engineering). 30 MCQ из ai-ml с ≥ 80%.
@@ -78,7 +78,7 @@
   - Свои: `cheatsheets/interview/ai-ml/*.md` (9 файлов)
   - Букмарки: awesome-ai-memory, system-prompts-and-models, Claude Code Docs
 
-### Cycle 4: Kubernetes (deep) — *2026-06-15 → 06-19*
+### Cycle 4: Kubernetes (deep)
 
 - **Why:** ранк #4. Используется на работе (Argo CD в букмарках), но без систематического self-study. 53% важности + тренажёр в Learning.
 - **Done when:** `cheatsheets/devops/kubernetes-deep.md` ≥ 500 строк (контроллеры, scheduling, networking, RBAC, storage). Hands-on: kind/minikube + 5 манифестов разных типов.
@@ -87,7 +87,7 @@
   - Тренажёр Kubernetes (Learning)
   - DevOps > Kubernetes букмарки (6 шт)
 
-### Cycle 5: Data Engineering — Kafka Streams — *2026-06-22 → 06-26*
+### Cycle 5: Data Engineering — Kafka Streams
 
 - **Why:** ранк #5. kafka-streams=82% важности (#2 в распределении). avg 948 строк в data-engineering (вторая самая тонкая).
 - **Done when:** `kafka-streams-interview.md` расширен до ≥ 800 строк. Hands-on: минимальное Streams-приложение с windowing.
@@ -95,7 +95,7 @@
   - Свои: `cheatsheets/interview/data-engineering/kafka-streams-interview.md`
   - Apache Kafka docs (DevOps букмарки)
 
-### Cycle 6: Go programming (concurrency) — *2026-06-29 → 07-03*
+### Cycle 6: Go programming (concurrency)
 
 - **Why:** ранк #6. 3 темы в топ-20 quiz + avg 970 строк (тонко).
 - **Done when:** `go-concurrency-interview.md` ≥ 500 строк (goroutines, channels, sync, context, patterns). Утилита на Go (например, CLI для парсинга своих диагностик).
@@ -103,14 +103,14 @@
   - Свои: `cheatsheets/interview/programming-languages/go/*.md`
   - Documentation > Go букмарки
 
-### Cycle 7: Reactive Streams — *2026-07-06 → 07-10*
+### Cycle 7: Reactive Streams
 
 - **Why:** ранк #7. 6/0 general + rxjava 56% + используется со Spring.
 - **Done when:** `project-reactor-interview.md` ≥ 600 строк (backpressure, operators, error handling, testing reactive code). 5 pipeline-задач.
 - **Источники:**
   - Свои: `cheatsheets/interview/reactive/*.md`
 
-### Cycle 8: Database Architecture deep — *2026-07-13 → 07-17*
+### Cycle 8: Database Architecture deep
 
 - **Why:** ранк #8. db-architecture 83% — лидер распределения важности.
 - **Done when:** `database-architecture-interview.md` ≥ 700 строк. 20 MCQ с ≥ 85%.
@@ -118,7 +118,7 @@
   - Свои: `cheatsheets/interview/databases/database-architecture-interview.md`
   - Documentation > Databases букмарки
 
-### Cycle 9: Spring Cloud / Microservices ecosystem — *2026-07-20 → 07-24*
+### Cycle 9: Spring Cloud / Microservices ecosystem
 
 - **Why:** ранк #9. 17 букмарок Spring + cloud 70% важности.
 - **Done when:** `spring-cloud-interview.md` ≥ 600 строк (service discovery, config server, circuit breakers, gateway, distributed tracing).

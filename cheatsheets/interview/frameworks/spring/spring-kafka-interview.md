@@ -152,7 +152,7 @@ Spring Kafka — интеграция Apache Kafka в экосистему Sprin
 > - Версия `spring-kafka` тесно связана с версией `kafka-clients` — нельзя апгрейдить broker до новых semantics без апгрейда client.
 > - `MessageListenerContainer.start()` блокирует поток до `partition assignment` — это влияет на startup time и health-check.
 >
-> **Связанные вопросы:** [[Q2]] — `KafkaTemplate` details; [[Q3]] — `@KafkaListener` варианты; [[Q8]] — `ConcurrentKafkaListenerContainerFactory`.
+> **Связанные вопросы:** [[spring-kafka-interview#Q2]] — `KafkaTemplate` details; [[spring-kafka-interview#Q3]] — `@KafkaListener` варианты; [[spring-kafka-interview#Q8]] — `ConcurrentKafkaListenerContainerFactory`.
 
 ## Q2. Как настроить KafkaTemplate и отправить сообщение?
 
@@ -251,7 +251,7 @@ public class OrderProducer {
 > - При `acks=0` future завершается сразу — но это **at-most-once**, broker ack не дожидается. Опасно для финансовых событий.
 > - `transaction.id` + `enable.idempotence=true` меняют семантику: `.get()` бросает `ProducerFencedException` если другой producer перехватил `transactional.id`.
 >
-> **Связанные вопросы:** [[Q7]] — Kafka transactions, `executeInTransaction`; [[Q14]] — idempotent producer; [[Q13]] — ordering и partition key.
+> **Связанные вопросы:** [[spring-kafka-interview#Q7]] — Kafka transactions, `executeInTransaction`; [[spring-kafka-interview#Q14]] — idempotent producer; [[spring-kafka-interview#Q13]] — ordering и partition key.
 >
 > ---
 >
@@ -377,7 +377,7 @@ public class OrderConsumer {
 > - **`@KafkaHandler` требует Jackson type info** — без `__TypeId__` header dispatcher не различит типы.
 > - **Exception в любом `@KafkaHandler` методе** прерывает обработку записи — стандартная `DefaultErrorHandler` retry/DLT работает на уровне всего dispatcher-класса, не индивидуальных handlers.
 >
-> **Связанные вопросы:** [[Q4]] — consumer groups и partition assignment; [[Q5]] — error handling в listener; [[Q10]] — `JsonDeserializer` type headers.
+> **Связанные вопросы:** [[spring-kafka-interview#Q4]] — consumer groups и partition assignment; [[spring-kafka-interview#Q5]] — error handling в listener; [[spring-kafka-interview#Q10]] — `JsonDeserializer` type headers.
 >
 > ---
 >
@@ -454,7 +454,7 @@ Topic "orders" (3 partitions)
 > - **`session.timeout.ms` < `max.poll.interval.ms`**: если listener долго обрабатывает запись, истекает poll interval → consumer kicked out → rebalance. Симптом в логах: `Member ... has failed, removing it from the group`.
 > - **`groupId` collision**: два разных приложения с одним `groupId` будут «съедать» сообщения друг у друга — баг типа «у меня только половина сообщений приходит».
 >
-> **Связанные вопросы:** [[Q3]] — `concurrency` параметр; [[Q8]] — `ConcurrentKafkaListenerContainerFactory`; [[Q9]] — offset commits в group context.
+> **Связанные вопросы:** [[spring-kafka-interview#Q3]] — `concurrency` параметр; [[spring-kafka-interview#Q8]] — `ConcurrentKafkaListenerContainerFactory`; [[spring-kafka-interview#Q9]] — offset commits в group context.
 >
 > ---
 >
@@ -620,7 +620,7 @@ public void handle(OrderEvent event) { ... }
 > - **Order break после retry**: если запись retries 10s, последующие записи partition ждут — для critical-path задайте `addRetryableExceptions` только сетевым.
 > - **`@RetryableTopic`** (Spring Kafka 2.7+) — альтернатива: создаёт отдельные retry-topics для async retry, не блокирует основной.
 >
-> **Связанные вопросы:** [[Q6]] — DLT в детали; [[Q9]] — offset commit semantic; [[Q15]] — pause/resume в backpressure.
+> **Связанные вопросы:** [[spring-kafka-interview#Q6]] — DLT в детали; [[spring-kafka-interview#Q9]] — offset commit semantic; [[spring-kafka-interview#Q15]] — pause/resume в backpressure.
 
 ## Q6. Что такое Dead Letter Topic (DLT) и как его использовать?
 
@@ -711,7 +711,7 @@ public void handleDlt(
 > - **Schema evolution**: при изменении schema в original topic, old DLT записи могут не десериализоваться — используйте `ErrorHandlingDeserializer` для DLT consumer.
 > - **DLT producer transactions**: если main consumer transactional, recoverer publishing должен быть в том же `KafkaTemplate` — иначе DLT публикация может потеряться при rollback.
 >
-> **Связанные вопросы:** [[Q5]] — error handler retries leading to DLT; [[Q7]] — transactional DLT publishing; [[Q13]] — ordering preservation in DLT replay.
+> **Связанные вопросы:** [[spring-kafka-interview#Q5]] — error handler retries leading to DLT; [[spring-kafka-interview#Q7]] — transactional DLT publishing; [[spring-kafka-interview#Q13]] — ordering preservation in DLT replay.
 >
 > ---
 >
@@ -831,7 +831,7 @@ public void processAndPublish(OrderCommand cmd) {
 > - **`read_committed` lag**: consumer ждёт commit/abort marker — latency растёт на размер `transaction.timeout.ms` worst-case.
 > - **Кросс-кластерные transactions невозможны**: MirrorMaker copy не сохраняет transactional semantics.
 >
-> **Связанные вопросы:** [[Q14]] — idempotent producer (обязательно для transactional); [[Q9]] — `sendOffsetsToTransaction`; [[Q12]] — Kafka Streams exactly-once.
+> **Связанные вопросы:** [[spring-kafka-interview#Q14]] — idempotent producer (обязательно для transactional); [[spring-kafka-interview#Q9]] — `sendOffsetsToTransaction`; [[spring-kafka-interview#Q12]] — Kafka Streams exactly-once.
 >
 > ---
 >
@@ -930,7 +930,7 @@ public void handle(OrderEvent event, Acknowledgment ack) {
 > - **`ack.acknowledge()` thread-safety**: вызывается в consumer thread; нельзя acknowledge из `@Async` без careful coordination.
 > - **Rebalance взаимодействие**: при добавлении/удалении consumer вся группа коротко останавливается (или incrementally с `CooperativeStickyAssignor`).
 >
-> **Связанные вопросы:** [[Q4]] — Consumer Group + partitions; [[Q9]] — AckMode для concurrent контейнера; [[Q3]] — listener thread model.
+> **Связанные вопросы:** [[spring-kafka-interview#Q4]] — Consumer Group + partitions; [[spring-kafka-interview#Q9]] — AckMode для concurrent контейнера; [[spring-kafka-interview#Q3]] — listener thread model.
 >
 > ---
 >
@@ -1076,7 +1076,7 @@ spring:
 > - **`MANUAL_IMMEDIATE` + sync = blocking listener thread**: при медленном broker round-trip throughput падает 10x. Используй async или `MANUAL`.
 > - **Out-of-order ack**: при concurrent processing записей одной партиции (`@Async`) ack может прийти не в порядке offset — Spring сохраняет highest, но window между ack-ами может быть data loss.
 >
-> **Связанные вопросы:** [[Q3]] — `@KafkaListener` параметры; [[Q5]] — error handler vs ack interaction; [[Q7]] — `sendOffsetsToTransaction` в transactional context.
+> **Связанные вопросы:** [[spring-kafka-interview#Q3]] — `@KafkaListener` параметры; [[spring-kafka-interview#Q5]] — error handler vs ack interaction; [[spring-kafka-interview#Q7]] — `sendOffsetsToTransaction` в transactional context.
 
 ## Q10. Как работает сериализация/десериализация в Spring Kafka?
 
@@ -1176,7 +1176,7 @@ public ConsumerFactory<String, Object> consumerFactory() {
 > - **`ErrorHandlingDeserializer` обёртка** обязательна, иначе bad payload убивает consumer thread → infinite restart loop.
 > - **Schema evolution**: добавление optional field — OK; удаление required field ломает consumers. Confluent Schema Registry + backward/forward compat checks.
 >
-> **Связанные вопросы:** [[Q3]] — @KafkaListener basics; [[Q5]] — DeserializationException handling; [[Q11]] — тестирование с EmbeddedKafka.
+> **Связанные вопросы:** [[spring-kafka-interview#Q3]] — @KafkaListener basics; [[spring-kafka-interview#Q5]] — DeserializationException handling; [[spring-kafka-interview#Q11]] — тестирование с EmbeddedKafka.
 >
 > ---
 >
@@ -1308,7 +1308,7 @@ class OrderConsumerTest {
 > - **`await()` без timeout** — flaky tests. Всегда atMost(5-10s) с meaningful assertions.
 > - **Kraft mode (KIP-500)**: новые версии Kafka работают без Zookeeper. EmbeddedKafka поддерживает с Spring Kafka 3.1+.
 >
-> **Связанные вопросы:** [[Q3]] — @KafkaListener config; [[Q9]] — AckMode тестирование; [[Q13]] — ordering guarantees test.
+> **Связанные вопросы:** [[spring-kafka-interview#Q3]] — @KafkaListener config; [[spring-kafka-interview#Q9]] — AckMode тестирование; [[spring-kafka-interview#Q13]] — ordering guarantees test.
 >
 > ---
 >
@@ -1476,7 +1476,7 @@ public class KafkaStreamsConfig {
 > - **`exactly_once_v2`** требует Kafka 2.5+ broker.
 > - **Spring Cloud Stream binder** — declarative альтернатива, но meno гибкая чем raw Streams DSL.
 >
-> **Связанные вопросы:** [[Q3]] — @KafkaListener basics; [[Q14]] — idempotent producer; [[Q13]] — ordering для stateful processing.
+> **Связанные вопросы:** [[spring-kafka-interview#Q3]] — @KafkaListener basics; [[spring-kafka-interview#Q14]] — idempotent producer; [[spring-kafka-interview#Q13]] — ordering для stateful processing.
 >
 > ---
 >
@@ -1589,7 +1589,7 @@ record.headers().add(new RecordHeader("sequence", ByteBuffer.allocate(8).putLong
 > - **`max.in.flight.requests.per.connection > 1` + retries** ломает ordering при failures (out-of-order retry). С `enable.idempotence=true` Kafka сохраняет ordering автоматически.
 > - **Cross-partition ordering**: НЕ гарантировано. Если бизнес-логика требует global ordering, partition by key не работает — нужен single partition или event sourcing с aggregator.
 >
-> **Связанные вопросы:** [[Q12]] — Kafka Streams reuse partition strategy; [[Q14]] — idempotent producer для ordering safety; [[Q5]] — error handler не должен ломать ordering.
+> **Связанные вопросы:** [[spring-kafka-interview#Q12]] — Kafka Streams reuse partition strategy; [[spring-kafka-interview#Q14]] — idempotent producer для ordering safety; [[spring-kafka-interview#Q5]] — error handler не должен ломать ordering.
 >
 > ---
 >
@@ -1722,7 +1722,7 @@ Idempotent producer присваивает каждому сообщению seq
 > - **Producer restart with same `transactional.id`** — fences старого producer'а. Если ID не уникален между instances — split-brain.
 > - **Consumer `read_committed`** добавляет latency (ждёт commit для visibility).
 >
-> **Связанные вопросы:** [[Q8]] — KafkaTransactionManager basics; [[Q9]] — AckMode interplay с transactions; [[Q13]] — ordering с idempotent producer.
+> **Связанные вопросы:** [[spring-kafka-interview#Q8]] — KafkaTransactionManager basics; [[spring-kafka-interview#Q9]] — AckMode interplay с transactions; [[spring-kafka-interview#Q13]] — ordering с idempotent producer.
 >
 > ---
 >
@@ -1854,7 +1854,7 @@ public void handle(ConsumerRecord<String, OrderEvent> record,
 > - **`partition.pause(...)` vs `container.pause()`**: container — все partitions, raw — selective.
 > - **Не путать с `setAutoStartup(false)`**: эта property останавливает container полностью, requires `start()` через registry для resumption.
 >
-> **Связанные вопросы:** [[Q5]] — error handler без pause создаёт infinite retries; [[Q3]] — @KafkaListener lifecycle; [[Q9]] — AckMode interplay с pause.
+> **Связанные вопросы:** [[spring-kafka-interview#Q5]] — error handler без pause создаёт infinite retries; [[spring-kafka-interview#Q3]] — @KafkaListener lifecycle; [[spring-kafka-interview#Q9]] — AckMode interplay с pause.
 >
 > ---
 >

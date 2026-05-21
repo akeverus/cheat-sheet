@@ -462,7 +462,7 @@ Table: urls
 > Bit.ly: MySQL + Redis (legacy stack); modern (Yandex Cloud Shortener, Hootsuite Owly) — DynamoDB-style KV. Google goo.gl (до закрытия) — Bigtable.
 > **Когда применять:** Read-heavy workload (100:1 reads:writes), schema-on-read (атрибуты могут эволюционировать без миграций), нужен global secondary index для query patterns кроме PK, multi-region replication из коробки (DynamoDB Global Tables).
 > **Подводные камни:** Cross-partition queries (например, "top-100 URLs by clicks") требуют scan — нужен отдельный analytics store. Hot partition при единичном viral URL — митигировать write sharding (suffix к ключу) или CDN edge cache. Стоимость GSI = удвоение write capacity.
-> **Связанные вопросы:** [[Q7]] — Database schema; [[Q9]] — scale reads через cache/CDN; [[Q11]] — sharding strategies для самой DB.
+> **Связанные вопросы:** [[design-url-shortener-interview#Q7]] — Database schema; [[design-url-shortener-interview#Q9]] — scale reads через cache/CDN; [[design-url-shortener-interview#Q11]] — sharding strategies для самой DB.
 >
 > ---
 >
@@ -555,7 +555,7 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 > Cache-Control: `public, max-age=300, s-maxage=3600` — короткий browser TTL (revocation), длинный CDN TTL (offload).
 > **Когда применять:** Любой read-heavy KV сервис: bit.ly (Akamai + Redis), TikTok shortlinks (Cloudflare + own KV), Twitter t.co (Fastly + Manhattan KV store). 100:1 read:write — caching обязателен; 10:1 — рекомендован; 1:1 — необязателен.
 > **Подводные камни:** Cache invalidation при revocation — short TTL + explicit purge через CDN API. Stale cache при rolling restart — warm-up через replay logs. CDN cost — CloudFront $0.085/GB egress; для viral URLs можно превысить DB cost.
-> **Связанные вопросы:** [[Q10]] — cache-aside vs write-through trade-offs; [[Q15]] — graceful degradation при cache outage; [[Q11]] — sharding для write capacity (orthogonal к read scaling).
+> **Связанные вопросы:** [[design-url-shortener-interview#Q10]] — cache-aside vs write-through trade-offs; [[design-url-shortener-interview#Q15]] — graceful degradation при cache outage; [[design-url-shortener-interview#Q11]] — sharding для write capacity (orthogonal к read scaling).
 
 **Write-through:**
 - On shorten: write DB + Redis atomically
@@ -622,7 +622,7 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 > ```
 > **Когда применять:** Read-heavy KV workload с power-law распределением (Pareto 20/80). Twitter t.co, bit.ly, Yandex Cloud Object Storage metadata — все используют cache-aside + LFU. Negative caching (короткий TTL на 404) защищает от amplified DB load при scanning attacks.
 > **Подводные камни:** Thundering herd — cache expiry на популярном ключе → миллион concurrent DB queries; митигировать через probabilistic early refresh (XFetch algorithm) или single-flight pattern. Cold start — после Redis restart первые минуты hit ratio 0%; warm-up через replay top-1000 ключей. Stale data при DB update — invalidate через `DEL short_code` или короткий TTL.
-> **Связанные вопросы:** [[Q9]] — multi-tier cache architecture; [[Q13]] — TTL и expiration semantics; [[Q15]] — graceful degradation при Redis outage.
+> **Связанные вопросы:** [[design-url-shortener-interview#Q9]] — multi-tier cache architecture; [[design-url-shortener-interview#Q13]] — TTL и expiration semantics; [[design-url-shortener-interview#Q15]] — graceful degradation при Redis outage.
 >
 > ---
 >
@@ -699,7 +699,7 @@ User → CDN (edge) → Load Balancer → App → Redis → DB (primary+replicas
 > DynamoDB hash partitioning: hash(short_code) → 10GB/3000 RCU partition; auto-split at threshold. Cassandra: `PARTITION KEY = short_code` + `num_tokens: 256`.
 > **Когда применять:** Любая горизонтально-масштабируемая KV-система с unpredictable growth. Используется в DynamoDB, Cassandra, Riak, Twitter Manhattan, Bit.ly's MySQL sharding layer. Особенно важно когда reshard происходит без downtime (online cluster expansion).
 > **Подводные камни:** Hot partition при viral URL — даже с perfect hashing один short_code = один shard; митигировать через write sharding (suffix к ключу — `viral_url#0`, `viral_url#1`, ..., aggregation на read) или CDN edge cache. Cross-shard query ("count URLs created today") требует scatter-gather; для analytics использовать отдельный store (Kafka → ClickHouse). Vnode count tradeoff: больше vnodes = равномернее, но больше metadata overhead.
-> **Связанные вопросы:** [[Q4]] — distributed code generation (Snowflake); [[Q14]] — analytics в отдельной системе; [[Q15]] — replication внутри shard для durability.
+> **Связанные вопросы:** [[design-url-shortener-interview#Q4]] — distributed code generation (Snowflake); [[design-url-shortener-interview#Q14]] — analytics в отдельной системе; [[design-url-shortener-interview#Q15]] — replication внутри shard для durability.
 >
 > ---
 >
@@ -802,7 +802,7 @@ INSERT INTO urls (short_code, long_url) VALUES ('myalias', '...');
 > ```
 > **Когда применять:** Любой scenario с unique resource claim: usernames (Twitter @handle), email addresses, ticket reservations, vanity URLs (Bit.ly Pro, Rebrandly, TinyURL custom domains). UNIQUE — single source of truth для concurrent integrity.
 > **Подводные камни:** Reserved namespace — заранее INSERT системных alias ("admin", "api", "login", "support", "terms") при bootstrap, чтобы user не мог их claim. Case sensitivity — `ProMo2026` vs `promo2026` должны считаться одинаковыми; либо normalize на write (lowercase), либо `UNIQUE INDEX ON LOWER(short_code)`. Cross-shard uniqueness — при sharding по short_code constraint работает per-shard, но т.к. lookup тоже идёт через hash → один alias = один shard, всё ок.
-> **Связанные вопросы:** [[Q6]] — collision avoidance для generated codes; [[Q4]] — code generation с гарантией uniqueness; [[Q16]] — abuse prevention (reserved trademarks).
+> **Связанные вопросы:** [[design-url-shortener-interview#Q6]] — collision avoidance для generated codes; [[design-url-shortener-interview#Q4]] — code generation с гарантией uniqueness; [[design-url-shortener-interview#Q16]] — abuse prevention (reserved trademarks).
 
 **DB expiration:**
 - `expires_at` timestamp
@@ -880,7 +880,7 @@ SET short_code long_url EX 86400
 > ```
 > **Когда применять:** Bit.ly использует DynamoDB TTL для free-tier ссылок (30 days). Twitter t.co — soft delete с 90-day retention для compliance. Любой mass-storage сервис где cleanup нельзя блокировать main flow: S3 Lifecycle Policies, Cloudflare KV namespace expiration, Redis EXPIRE.
 > **Подводные камни:** DynamoDB TTL — eventual (до 48 часов задержки), не подходит для time-critical revocation; в этом случае дополнительная app-level проверка. Index on `expires_at` для sweep — занимает место, но без него full scan. Cache invalidation — expired URL в Redis должен быть удалён или иметь TTL <= DB expires_at, иначе serve expired content из cache.
-> **Связанные вопросы:** [[Q9]] — cache TTL coordination; [[Q14]] — analytics для expired URLs (preserve history); [[Q16]] — revocation для malicious URLs (immediate, not lazy).
+> **Связанные вопросы:** [[design-url-shortener-interview#Q9]] — cache TTL coordination; [[design-url-shortener-interview#Q14]] — analytics для expired URLs (preserve history); [[design-url-shortener-interview#Q16]] — revocation для malicious URLs (immediate, not lazy).
 >
 > ---
 >
@@ -966,7 +966,7 @@ SET short_code long_url EX 86400
 > ```
 > **Когда применять:** Любой sub-100ms read path с heavy write side-effects: ad-impression tracking (Google Ads), feed view counters (Twitter), purchase events (Shopify). Bit.ly использует Kafka + custom aggregation; YouTube view counts — async pipeline через Bigtable + Dataflow.
 > **Подводные камни:** At-least-once delivery в Kafka → возможны duplicate clicks; дедупликация по `(short_code, ip_hash, ts_minute)`. Backpressure при Kafka outage — local buffer на app server (disk-backed queue, Apache Kafka producer's `acks=1` + `linger.ms=100`) на 5-10 min outage; затем drop с metric alarm. Replay для backfill — возможен через Kafka retention 7 days. GDPR — IP hashing на ingest, retention policy для PII.
-> **Связанные вопросы:** [[Q15]] — reliability при Kafka outage; [[Q9]] — почему redirect path должен быть read-only; [[Q16]] — abuse detection через analytics signals.
+> **Связанные вопросы:** [[design-url-shortener-interview#Q15]] — reliability при Kafka outage; [[design-url-shortener-interview#Q9]] — почему redirect path должен быть read-only; [[design-url-shortener-interview#Q16]] — abuse detection через analytics signals.
 >
 > ---
 >
@@ -1047,7 +1047,7 @@ SET short_code long_url EX 86400
 > ```
 > **Когда применять:** Любой high-availability сервис: bit.ly (multi-region active-active), Cloudflare DNS (anycast + 200+ POP), AWS Route 53 (100% SLA через cross-region replication). Twitter t.co — multi-DC с automatic failover; Yandex Cloud Object Storage — Erasure coding across 3 AZ + cross-region replication.
 > **Подводные камни:** Cascade failures — circuit breakers должны иметь bulkhead isolation (отдельные thread pools для DB и Redis), иначе DB outage exhaust app threads waiting на timeout. Split-brain в Redis Sentinel — конфигурировать quorum правильно (3+ nodes, odd number). Chaos engineering — регулярно тестировать failover (Chaos Monkey, AWS Fault Injection Simulator); не тестированные failover работают только 40% времени (Netflix data). Stateful storage — DB recovery time часто >5 min, что съедает 99.99% budget; multi-region для real four-nines.
-> **Связанные вопросы:** [[Q4]] — distributed counter (Snowflake) убирает SPOF при code generation; [[Q9]] — multi-tier cache как защита от DB outage; [[Q11]] — sharding replicas per shard.
+> **Связанные вопросы:** [[design-url-shortener-interview#Q4]] — distributed counter (Snowflake) убирает SPOF при code generation; [[design-url-shortener-interview#Q9]] — multi-tier cache как защита от DB outage; [[design-url-shortener-interview#Q11]] — sharding replicas per shard.
 >
 > ---
 >
@@ -1168,7 +1168,7 @@ SET short_code long_url EX 86400
 > ```
 > **Когда применять:** Bit.ly использует именно такой stack (Safe Browsing + own classifier + user reports). Twitter t.co — multi-layer с real-time + ML. Discord invite links — invite scanning + rate limiting + reporting. Любой user-generated link/content платформа: Reddit URLs, Facebook external links.
 > **Подводные камни:** False positives — legitimate URLs (small business, niche blogs) могут не попасть в GSB и быть flagged ML — нужен appeal process. Latency на shorten — Safe Browsing API ~50ms; параллельные calls + cache (известные clean domains кешировать на час). Adversarial — атакующие тестируют classifier через rapid create/revoke цикл; мониторить per-account success rate. Compliance — log scan decisions для DMCA defense.
-> **Связанные вопросы:** [[Q17]] — rate limiting как часть anti-abuse; [[Q14]] — analytics для anomaly detection; [[Q15]] — circuit breaker при Safe Browsing outage (fail-closed vs fail-open).
+> **Связанные вопросы:** [[design-url-shortener-interview#Q17]] — rate limiting как часть anti-abuse; [[design-url-shortener-interview#Q14]] — analytics для anomaly detection; [[design-url-shortener-interview#Q15]] — circuit breaker при Safe Browsing outage (fail-closed vs fail-open).
 
 **Why:** prevent abuse, DoS, cost control.
 
@@ -1265,7 +1265,7 @@ Retry-After: 60
 > ```
 > **Когда применять:** GitHub API (5000/hr authenticated, token bucket), Stripe API (sliding window, per-API-key), AWS API Gateway (token bucket + WAF). Yandex Cloud — GCRA через Redis. Twitter API v2 — sliding window log для точности. Любой public API: shortener, payment, messaging, AI inference.
 > **Подводные камни:** Cross-region — глобальный rate limit требует replicated Redis (Redis Enterprise Active-Active или DynamoDB conditional update) + eventual consistency на checks; trade-off accuracy vs latency. Cost — Redis storage scaled с N users × N rate-limit policies; partitioning by user_id для horizontal scale. Hot keys — high-traffic API key создаёт single Redis key hotspot; sharding ключа на N parts с aggregation на check. Fail-open vs fail-closed при Redis outage — обычно fail-open (skip rate limit), но logging для audit; fail-closed только для critical anti-abuse.
-> **Связанные вопросы:** [[Q15]] — circuit breaker при Redis outage; [[Q16]] — rate limiting как часть anti-abuse stack; [[rate-limiter-interview]] — глубокий dive в алгоритмы.
+> **Связанные вопросы:** [[design-url-shortener-interview#Q15]] — circuit breaker при Redis outage; [[design-url-shortener-interview#Q16]] — rate limiting как часть anti-abuse stack; [[rate-limiter-interview]] — глубокий dive в алгоритмы.
 >
 > ---
 >

@@ -166,7 +166,7 @@ public class UserController {
 > - В Spring Boot 3 / Jakarta EE 9+ используется namespace `jakarta.validation.*`, импорты `javax.validation.*` сломают компиляцию.
 > - Для активации на сервисном уровне (`@Service` + `@Validated`) нужен `MethodValidationPostProcessor` — он стартует автоматически только при наличии Bean Validation API в classpath.
 >
-> **Связанные вопросы:** [[Q2]], [[Q3]], [[Q11]]
+> **Связанные вопросы:** [[spring-validation-interview#Q2]], [[spring-validation-interview#Q3]], [[spring-validation-interview#Q11]]
 >
 > ---
 >
@@ -314,7 +314,7 @@ public class EventRequest {
 > - `@NotNull` не имплицирует `@Valid` — каскадная валидация вложенного объекта требует обе аннотации.
 > - Для `Optional<T>` ни одна из трёх не работает корректно — нужно либо разворачивать, либо использовать `@NotEmpty` (пустой Optional).
 >
-> **Связанные вопросы:** [[Q1]], [[Q5]]
+> **Связанные вопросы:** [[spring-validation-interview#Q1]], [[spring-validation-interview#Q5]]
 >
 > ---
 >
@@ -445,7 +445,7 @@ public class UserService {
 > - `@Valid` на коллекции (`List<@Valid Item>`) валидирует элементы, но `@Valid List<Item>` без аннотации на типе — нет. В Jakarta 3.0 используется `List<@Valid Item>`.
 > - Группы наследуются: если не указать группу, применяется `Default.class`; constraint без `groups = ...` попадает в `Default`.
 >
-> **Связанные вопросы:** [[Q1]], [[Q5]], [[Q6]], [[Q11]]
+> **Связанные вопросы:** [[spring-validation-interview#Q1]], [[spring-validation-interview#Q5]], [[spring-validation-interview#Q6]], [[spring-validation-interview#Q11]]
 >
 > ---
 >
@@ -590,7 +590,7 @@ public ResponseEntity<?> create(@Valid @RequestBody UserRequest req, BindingResu
 > - `propertyPath` для сервисного `@Validated` начинается с имени метода (`create.req.email`) — клиенту обычно нужно отрезать первые два сегмента.
 > - В Spring Boot `ResponseEntityExceptionHandler` уже даёт дефолтный `400` для `MethodArgumentNotValidException`, но без `errors[]` — приходится переопределять либо handler, либо `handleMethodArgumentNotValid`.
 >
-> **Связанные вопросы:** [[Q3]], [[Q5]], [[Q11]]
+> **Связанные вопросы:** [[spring-validation-interview#Q3]], [[spring-validation-interview#Q5]], [[spring-validation-interview#Q11]]
 
 ## Q5. Как работает каскадная валидация вложенных объектов?
 
@@ -688,9 +688,9 @@ public class Address {
 > - Циклические ссылки (`A.b → B.a → A.b`) Hibernate Validator не отслеживает — будет `StackOverflowError`. Делайте либо DTO ациклическими, либо помечайте «обратные» ссылки без `@Valid`.
 > - Каскад не имеет «глубины» — он работает до листьев. Это может быть дорого для больших графов; для пакетной обработки используйте manual `Validator.validate()` с ограничением.
 > - `@Valid` в Jakarta 3.0 на generic-параметре требует `@Target(TYPE_USE)` импорт-форму: `List<@Valid Item>`.
-> - При каскаде применяется та же группа, что у вызывающего, если не указана иная (см. [[Q6]]).
+> - При каскаде применяется та же группа, что у вызывающего, если не указана иная (см. [[spring-validation-interview#Q6]]).
 >
-> **Связанные вопросы:** [[Q3]], [[Q6]], [[Q7]]
+> **Связанные вопросы:** [[spring-validation-interview#Q3]], [[spring-validation-interview#Q6]], [[spring-validation-interview#Q7]]
 >
 > ---
 >
@@ -840,7 +840,7 @@ public interface OrderedChecks {}
 > - Группа-интерфейс должна быть **пустой** (никаких методов) — иначе теряет смысл marker-pattern.
 > - `@GroupSequence` выполняет группы строго последовательно: следующая стартует только если предыдущая прошла без ошибок (fail-fast).
 >
-> **Связанные вопросы:** [[Q3]], [[Q5]], [[Q7]]
+> **Связанные вопросы:** [[spring-validation-interview#Q3]], [[spring-validation-interview#Q5]], [[spring-validation-interview#Q7]]
 >
 > ---
 >

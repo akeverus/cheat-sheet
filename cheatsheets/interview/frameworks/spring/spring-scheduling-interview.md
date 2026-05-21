@@ -140,7 +140,7 @@ public class ReportJob {
 >
 > **Подводные камни:** метод должен быть в Spring-бине (не в обычном объекте `new`); по умолчанию метод не должен иметь параметров и возвращать `void`; `@Scheduled` не работает на `private`-методах через CGLIB-прокси; по умолчанию все задачи выполняются в одном single-threaded `TaskScheduler` — для параллельности нужен кастомный пул.
 >
-> **Связанные вопросы:** [[Q6]] (в каком потоке выполняется), [[Q7]] (как настроить пул потоков).
+> **Связанные вопросы:** [[spring-scheduling-interview#Q6]] (в каком потоке выполняется), [[spring-scheduling-interview#Q7]] (как настроить пул потоков).
 >
 > ---
 >
@@ -247,7 +247,7 @@ fixedRate:   |--work(2s)--|  3s  |--work(3s)--|  2s  |--work--|
 >
 > **Подводные камни:** `fixedRate` при долгой задаче не накапливает «пропущенные» запуски — выполняется один раз, как только освободится поток. Чтобы получить параллельные запуски, нужен пул потоков (`@Async` + `TaskScheduler` с многопоточным executor-ом) и осознанная стратегия идемпотентности.
 >
-> **Связанные вопросы:** [[Q3]] (cron syntax), [[Q6]] (поток выполнения), [[Q7]] (пул потоков).
+> **Связанные вопросы:** [[spring-scheduling-interview#Q3]] (cron syntax), [[spring-scheduling-interview#Q6]] (поток выполнения), [[spring-scheduling-interview#Q7]] (пул потоков).
 >
 > ---
 >
@@ -362,7 +362,7 @@ Spring использует **6 полей** (Unix cron — 5), добавляя
 >
 > **Подводные камни:** часовой пояс по умолчанию — server local time; для предсказуемости укажите `zone = "UTC"` или `zone = "Europe/Moscow"`. Поле dayOfWeek в Spring — 0-7 или MON-SUN (в Quartz — 1-7 со сдвигом). Выражение `0 0 0 31 2 *` (31 февраля) валидно, но никогда не выполнится — отлавливается только в рантайме. `?` нужен, когда нужно ИЛИ dayOfMonth ИЛИ dayOfWeek, но не оба сразу.
 >
-> **Связанные вопросы:** [[Q2]] (fixedRate vs cron), [[Q5]] (вынести cron в конфигурацию).
+> **Связанные вопросы:** [[spring-scheduling-interview#Q2]] (fixedRate vs cron), [[spring-scheduling-interview#Q5]] (вынести cron в конфигурацию).
 >
 > ---
 >
@@ -468,7 +468,7 @@ public class CacheWarmupJob {
 >
 > **Подводные камни:** `initialDelay` НЕ ждёт полной готовности контекста — он отсчитывается от момента регистрации задачи в scheduler, что происходит во время инициализации бинов. Если приложение поднимается медленнее, чем initialDelay — таймер всё равно сработает. Для строгой привязки к готовности используйте `SchedulingConfigurer` или слушайте `ApplicationReadyEvent` и регистрируйте задачи программно через `TaskScheduler`. Также `initialDelay` нельзя комбинировать с `cron` через `initialDelay` напрямую до Spring 6 — там был только `initialDelayString` обходной путь.
 >
-> **Связанные вопросы:** [[Q2]] (fixedRate vs fixedDelay), [[Q5]] (cron в конфигурации), [[Q9]] (TaskScheduler программно).
+> **Связанные вопросы:** [[spring-scheduling-interview#Q2]] (fixedRate vs fixedDelay), [[spring-scheduling-interview#Q5]] (cron в конфигурации), [[spring-scheduling-interview#Q9]] (TaskScheduler программно).
 
 ## Q5. Как вынести cron-выражение в конфигурацию?
 
@@ -551,7 +551,7 @@ sync:
 >
 > **Подводные камни:** свойство `reporting.cron` должно быть строкой — нельзя писать его как `cron: 0 0 8 * * *` без кавычек в YAML, иначе YAML-парсер может интерпретировать `*` как ссылку или специальный токен. Всегда оборачивайте cron в двойные кавычки. Также `@RefreshScope` НЕ работает с `@Scheduled` напрямую — после рефреша свойства задачи продолжат идти по старому расписанию, потому что они зарегистрированы в `TaskScheduler` один раз при создании бина. Для динамического обновления нужен `SchedulingConfigurer` с пересозданием задач.
 >
-> **Связанные вопросы:** [[Q3]] (cron syntax), [[Q4]] (initialDelay), [[Q9]] (TaskScheduler программно).
+> **Связанные вопросы:** [[spring-scheduling-interview#Q3]] (cron syntax), [[spring-scheduling-interview#Q4]] (initialDelay), [[spring-scheduling-interview#Q9]] (TaskScheduler программно).
 >
 > ---
 >
@@ -655,7 +655,7 @@ sync:
 >
 > **Подводные камни:** даже с pool size = 10 ОДНА задача никогда не запускается параллельно сама с собой — пул просто разводит РАЗНЫЕ задачи. Для параллельных запусков одной задачи нужно сочетание `@Scheduled` + `@Async` (с `@EnableAsync`) и осознанная стратегия идемпотентности (иначе данные перепишутся). Также `spring.task.scheduling.pool.size` появилось в Spring Boot 2.1 — на старых версиях только `SchedulingConfigurer`. И `ThreadPoolTaskScheduler` под капотом — это `ScheduledThreadPoolExecutor`, который НЕ растёт сверх `poolSize` (нет corePoolSize/maxPoolSize, как у обычного `ThreadPoolTaskExecutor`).
 >
-> **Связанные вопросы:** [[Q2]] (fixedRate single-thread behaviour), [[Q7]] (детальная настройка пула), [[Q8]] (параллельность через `@Async`).
+> **Связанные вопросы:** [[spring-scheduling-interview#Q2]] (fixedRate single-thread behaviour), [[spring-scheduling-interview#Q7]] (детальная настройка пула), [[spring-scheduling-interview#Q8]] (параллельность через `@Async`).
 >
 > ---
 >

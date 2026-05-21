@@ -286,7 +286,7 @@ On disconnect: DEL user:X
 > - Pub/sub fan-out: если pubsub-кластер недоступен — весь чат стоит; нужен fallback/circuit breaker.
 > - Presence TTL должен быть длиннее heartbeat interval — иначе race: presence истекает между heartbeat-ами.
 >
-> **Связанные вопросы:** [[Q4]] — connection routing и presence service; [[Q6]] — high-level architecture с broker-tier; [[Q8]] — выбор broker (Redis vs Kafka).
+> **Связанные вопросы:** [[design-chat-system-interview#Q4]] — connection routing и presence service; [[design-chat-system-interview#Q6]] — high-level architecture с broker-tier; [[design-chat-system-interview#Q8]] — выбор broker (Redis vs Kafka).
 >
 > ---
 >
@@ -473,7 +473,7 @@ S3 (where X connected) SUBSCRIBE user:X → push to X's WS
 > - Дублирование: пользователь онлайн → Redis push + Kafka → notification service видит как offline-event → дубль push. Решение: notification service сверяется с presence до отправки push.
 > - Operational complexity: 2 broker-кластера = 2× operational burden, мониторинг, backups.
 >
-> **Связанные вопросы:** [[Q5]] — pub/sub каналы `user:{id}` для broker-routed delivery; [[Q7]] — message delivery flow с persistence-first; [[Q18]] — push notifications для offline через Kafka consumer.
+> **Связанные вопросы:** [[design-chat-system-interview#Q5]] — pub/sub каналы `user:{id}` для broker-routed delivery; [[design-chat-system-interview#Q7]] — message delivery flow с persistence-first; [[design-chat-system-interview#Q18]] — push notifications для offline через Kafka consumer.
 >
 > ---
 >
@@ -608,7 +608,7 @@ Allows "list conversations by recent activity."
 > - Wide partition: 10M+ сообщений в одной conversation → партиция > 100MB, Cassandra warns/throttles. Mitigation: bucket по дате/году, archive в S3 (cold tier).
 > - TTL и tombstones: при тяжёлой retention-политике количество tombstone-марки растёт; нужен tuned compaction strategy (TimeWindowCompactionStrategy для time-series).
 >
-> **Связанные вопросы:** [[Q10]] — почему NoSQL подходит chat-write-heavy patterns; [[Q11]] — sharding strategy и hot partition mitigation; [[Q14]] — ordering через TIMEUUID + per-conversation sequence.
+> **Связанные вопросы:** [[design-chat-system-interview#Q10]] — почему NoSQL подходит chat-write-heavy patterns; [[design-chat-system-interview#Q11]] — sharding strategy и hot partition mitigation; [[design-chat-system-interview#Q14]] — ordering через TIMEUUID + per-conversation sequence.
 
 ## Q10. (!) SQL vs NoSQL для chat?
 
@@ -697,7 +697,7 @@ Allows "list conversations by recent activity."
 > - Cross-store transactions невозможны: что если user удалён в Postgres, но messages в Cassandra остались? Нужны eventual consistency + cleanup jobs.
 > - Search-сценарии: full-text по messages требует ETL в Elasticsearch (для non-E2E) — добавляет lag.
 >
-> **Связанные вопросы:** [[Q9]] — детали Cassandra schema для messages; [[Q11]] — sharding strategy в Cassandra; [[Q15]] — Redis для presence storage детально.
+> **Связанные вопросы:** [[design-chat-system-interview#Q9]] — детали Cassandra schema для messages; [[design-chat-system-interview#Q11]] — sharding strategy в Cassandra; [[design-chat-system-interview#Q15]] — Redis для presence storage детально.
 >
 > ---
 >
@@ -812,7 +812,7 @@ Allows "list conversations by recent activity."
 > - Range queries усложняются: чтобы прочитать «last 50» при bucket'ing нужно знать активные buckets — обычно metadata table.
 > - Tombstones и compaction: bucket по дате хорошо для TimeWindowCompactionStrategy; per-conversation TTL drift делает compaction менее предсказуемым.
 >
-> **Связанные вопросы:** [[Q9]] — Cassandra schema с partition by conversation_id; [[Q10]] — почему NoSQL и polyglot storage; [[Q17]] — group chat fan-out для очень больших групп.
+> **Связанные вопросы:** [[design-chat-system-interview#Q9]] — Cassandra schema с partition by conversation_id; [[design-chat-system-interview#Q10]] — почему NoSQL и polyglot storage; [[design-chat-system-interview#Q17]] — group chat fan-out для очень больших групп.
 >
 > ---
 >
@@ -943,7 +943,7 @@ Allows "list conversations by recent activity."
 > - Cassandra LWT (lightweight transactions) дороже обычного INSERT в 4× (paxos round); для hot path лучше `INSERT` + асинхронный dedup job, либо использовать `IF NOT EXISTS` точечно.
 > - Out-of-order delivery всё ещё возможен: at-least-once гарантирует доставку, но не порядок — ordering решается отдельно через TIMEUUID/sequence.
 >
-> **Связанные вопросы:** [[Q7]] — message delivery flow с persist-first + ACK; [[Q13]] — delivery vs read receipts; [[Q14]] — ordering guarantees отдельно от delivery.
+> **Связанные вопросы:** [[design-chat-system-interview#Q7]] — message delivery flow с persist-first + ACK; [[design-chat-system-interview#Q13]] — delivery vs read receipts; [[design-chat-system-interview#Q14]] — ordering guarantees отдельно от delivery.
 >
 > ---
 >
@@ -1072,7 +1072,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Eventual consistency: read-event может прийти позже delivery-event (out-of-order from network); нужна логика «read implies delivered», обновляет оба статуса atomically.
 > - Privacy bilateral: если user отключил read receipts, server должен **не публиковать** read-event к sender'у, даже если статус сохранён локально (для unread count).
 >
-> **Связанные вопросы:** [[Q12]] — delivery semantics через end-to-end ACK chain; [[Q14]] — ordering для message_id уникальности; [[Q17]] — groups и fan-out для status updates.
+> **Связанные вопросы:** [[design-chat-system-interview#Q12]] — delivery semantics через end-to-end ACK chain; [[design-chat-system-interview#Q14]] — ordering для message_id уникальности; [[design-chat-system-interview#Q17]] — groups и fan-out для status updates.
 
 ## Q14. Ordering guarantees?
 
@@ -1141,7 +1141,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Out-of-order delivery: client может получить M3 перед M2 из-за network paths; client-side reorder by message_id обязателен.
 > - Per-conversation ordering не даёт «causally consistent» order между разными чатами — если важно (rare), нужны Lamport timestamps.
 >
-> **Связанные вопросы:** [[Q9]] — TIMEUUID в Cassandra schema; [[Q12]] — delivery guarantees отдельно от ordering; [[Q17]] — group ordering — shared sequence per group.
+> **Связанные вопросы:** [[design-chat-system-interview#Q9]] — TIMEUUID в Cassandra schema; [[design-chat-system-interview#Q12]] — delivery guarantees отдельно от ordering; [[design-chat-system-interview#Q17]] — group ordering — shared sequence per group.
 >
 > ---
 >
@@ -1265,7 +1265,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Redis-cluster sharding by user_id hash; pub/sub каналы должны быть на одной shard как key (либо использовать Redis Streams для cross-shard).
 > - Heartbeat traffic: 500M × 1 ping/30s × 50B = 800MB/s gateway-traffic — нужно учитывать в capacity planning.
 >
-> **Связанные вопросы:** [[Q4]] — presence в connection routing; [[Q5]] — broker-routed delivery использует presence для lookup; [[Q16]] — typing indicators похожий fire-and-forget pattern.
+> **Связанные вопросы:** [[design-chat-system-interview#Q4]] — presence в connection routing; [[design-chat-system-interview#Q5]] — broker-routed delivery использует presence для lookup; [[design-chat-system-interview#Q16]] — typing indicators похожий fire-and-forget pattern.
 >
 > ---
 >
@@ -1379,7 +1379,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Group chat большой (100+ участников): 100 typing events fan-out — допустим, но bigger groups (1000+) лучше throttle на сервере (один event per «X people typing» аггрегат).
 > - Privacy: showing typing раскрывает activity user'а; настройка `disable typing visibility` нужна для privacy-focused users.
 >
-> **Связанные вопросы:** [[Q8]] — Redis pub/sub vs Kafka выбор брокера; [[Q15]] — presence — похожий ephemeral pattern с TTL; [[Q17]] — group chat fan-out для typing на участников.
+> **Связанные вопросы:** [[design-chat-system-interview#Q8]] — Redis pub/sub vs Kafka выбор брокера; [[design-chat-system-interview#Q15]] — presence — похожий ephemeral pattern с TTL; [[design-chat-system-interview#Q17]] — group chat fan-out для typing на участников.
 >
 > ---
 >
@@ -1511,7 +1511,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Read-time fan-out требует более sophisticated offline-state: «непрочитанные счётчики» нужно хранить per-user-per-channel (Q13 statuses table).
 > - Cross-region groups: members в US + EU + Asia → write-once but replicate to all regions для local-read latency.
 >
-> **Связанные вопросы:** [[Q9]] — partition by conversation_id для group storage; [[Q13]] — per-recipient status в группах; [[Q18]] — push notifications для offline group members.
+> **Связанные вопросы:** [[design-chat-system-interview#Q9]] — partition by conversation_id для group storage; [[design-chat-system-interview#Q13]] — per-recipient status в группах; [[design-chat-system-interview#Q18]] — push notifications для offline group members.
 
 ## Q18. Push notifications для offline?
 
@@ -1609,7 +1609,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Privacy: lock-screen preview настраивается user'ом; для sensitive chats показывать «You have new message» без content.
 > - E2E encryption: push содержит только ciphertext-preview или generic «new message» — app decrypt'ит после open.
 >
-> **Связанные вопросы:** [[Q7]] — persist-first delivery pattern; [[Q15]] — presence check как branching point; [[Q19]] — E2E encryption и push preview privacy.
+> **Связанные вопросы:** [[design-chat-system-interview#Q7]] — persist-first delivery pattern; [[design-chat-system-interview#Q15]] — presence check как branching point; [[design-chat-system-interview#Q19]] — E2E encryption и push preview privacy.
 >
 > ---
 >
@@ -1755,7 +1755,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Key verification: nobody verifies safety numbers — vulnerable to MITM (server подменяет prekey). UI «scan QR» rarely used.
 > - Server-side search/sync невозможен: search history клиент должен делать локально (Q21).
 >
-> **Связанные вопросы:** [[Q18]] — push notifications и E2E preview privacy; [[Q20]] — media encryption: client-side encrypt before upload; [[Q21]] — search невозможен server-side при E2E.
+> **Связанные вопросы:** [[design-chat-system-interview#Q18]] — push notifications и E2E preview privacy; [[design-chat-system-interview#Q20]] — media encryption: client-side encrypt before upload; [[design-chat-system-interview#Q21]] — search невозможен server-side при E2E.
 >
 > ---
 >
@@ -1899,7 +1899,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Bandwidth costs: S3 egress dominates бюджет; CDN cache hit ratio критичен (target 90%+).
 > - Privacy: presigned URLs истекают; не делай долгожителей (≤ 1 час).
 >
-> **Связанные вопросы:** [[Q9]] — message schema только с reference, не blob; [[Q19]] — E2E encryption применяется к media так же как к тексту; [[Q11]] — sharding не относится к media (S3 native distributed).
+> **Связанные вопросы:** [[design-chat-system-interview#Q9]] — message schema только с reference, не blob; [[design-chat-system-interview#Q19]] — E2E encryption применяется к media так же как к тексту; [[design-chat-system-interview#Q11]] — sharding не относится к media (S3 native distributed).
 >
 > ---
 >
@@ -2013,7 +2013,7 @@ message_status: (message_id, user_id, status, timestamp)
 > - Privacy в non-E2E: company admin может search все channels — это feature Slack Enterprise, но обсуждается с employees.
 > - Multi-language search: stemming, tokenization для рус/кит/ара — нужны специфические analyzers в ES.
 >
-> **Связанные вопросы:** [[Q9]] — message storage в Cassandra не имеет full-text index by default; [[Q10]] — Elasticsearch добавляется как отдельный storage в polyglot setup; [[Q19]] — E2E encryption блокирует server-side search.
+> **Связанные вопросы:** [[design-chat-system-interview#Q9]] — message storage в Cassandra не имеет full-text index by default; [[design-chat-system-interview#Q10]] — Elasticsearch добавляется как отдельный storage в polyglot setup; [[design-chat-system-interview#Q19]] — E2E encryption блокирует server-side search.
 >
 > ---
 >

@@ -2120,7 +2120,7 @@ session.close(CloseStatus.SERVICE_RESTARTED);
 > - **Graceful shutdown**: при rolling deploy pod должен отправить close frame `CloseStatus.SERVICE_RESTARTED` (1012) клиентам, чтобы они переподключились к другому поду.
 > - **Connection storms**: если 1M клиентов одновременно реконнектятся (после deploy), это DDoS на load balancer. Нужен exponential backoff на клиенте.
 >
-> **Связанные вопросы:** [[Q33]] — Spring Cloud Gateway nativе WebSocket routing; [[Q11]] — sticky sessions vs distributed state; [[Q24]] — service discovery для backend сервисов.
+> **Связанные вопросы:** [[api-gateway-interview#Q33]] — Spring Cloud Gateway nativе WebSocket routing; [[api-gateway-interview#Q11]] — sticky sessions vs distributed state; [[api-gateway-interview#Q24]] — service discovery для backend сервисов.
 >
 > ---
 >
@@ -2282,7 +2282,7 @@ Client → API Gateway → Lambda Function → Response
 > - **No HTTP/2 для backend**: API Gateway → Lambda всегда HTTP/1.1, что лимитирует throughput для streaming.
 > - **CORS** в HTTP API настраивается declarative (без `OPTIONS` обработчика). В REST API — нужен Mock integration.
 >
-> **Связанные вопросы:** [[Q34]] — WebSocket API для real-time; [[Q12]] — JWT validation на Gateway; [[Q15]] — кэширование стратегии.
+> **Связанные вопросы:** [[api-gateway-interview#Q34]] — WebSocket API для real-time; [[api-gateway-interview#Q12]] — JWT validation на Gateway; [[api-gateway-interview#Q15]] — кэширование стратегии.
 >
 > ---
 >
@@ -2467,7 +2467,7 @@ POST /graphql
 > - **Query complexity manual scoring**: автоматически считать сложность через AST traversal легко, но веса полей нужно настраивать вручную — иначе либо false positives, либо реальные thundering herds.
 > - **Federation v1 vs v2**: разные синтаксисы директив, миграция через `extend type` → `@key` непростая.
 >
-> **Связанные вопросы:** [[Q1]] — GraphQL единственный endpoint vs REST many endpoints; [[Q12]] — auth для GraphQL queries; [[Q15]] — кэширование GraphQL queries проблемнее REST.
+> **Связанные вопросы:** [[api-gateway-interview#Q1]] — GraphQL единственный endpoint vs REST many endpoints; [[api-gateway-interview#Q12]] — auth для GraphQL queries; [[api-gateway-interview#Q15]] — кэширование GraphQL queries проблемнее REST.
 >
 > ---
 >
@@ -2662,7 +2662,7 @@ exchange.getResponse().getHeaders()
 > - **Sunset deadline ignoring**: clients ignore deprecation warnings, нужны рекламные кампании, dashboard, forced cutoff с warning emails.
 > - **API Gateway не панацея**: backend service сам решает как обрабатывать v1 vs v2 — Gateway только маршрутизирует.
 >
-> **Связанные вопросы:** [[Q4]] — routing predicates в Spring Cloud Gateway; [[Q15]] — кэширование по версиям; [[Q33]] — backward compatibility в schema evolution.
+> **Связанные вопросы:** [[api-gateway-interview#Q4]] — routing predicates в Spring Cloud Gateway; [[api-gateway-interview#Q15]] — кэширование по версиям; [[api-gateway-interview#Q33]] — backward compatibility в schema evolution.
 >
 > ---
 >
@@ -2929,7 +2929,7 @@ spring:
 > - **Bulkhead**: rate limit + thread pool отделение per-service. Без него падающий сервис исчерпывает thread pool Gateway → cascade.
 > - **Fallback логика**: не всегда «вернуть error». Часто — cached response, default value, queue для async retry.
 >
-> **Связанные вопросы:** [[Q34]] — WebSocket reconnect strategies; [[Q37]] — versioning с deprecated header; [[Q12]] — error handling в Gateway.
+> **Связанные вопросы:** [[api-gateway-interview#Q34]] — WebSocket reconnect strategies; [[api-gateway-interview#Q37]] — versioning с deprecated header; [[api-gateway-interview#Q12]] — error handling в Gateway.
 >
 > ---
 >

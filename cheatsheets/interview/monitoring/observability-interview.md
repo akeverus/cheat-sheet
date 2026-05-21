@@ -1258,7 +1258,7 @@ processors:
 >
 > **Подводные камни:** tail-sampling требует, чтобы **все spans одного trace** попали на один Collector instance — нужен loadbalancing exporter с `routing_key: traceID`. Без этого Collector видит фрагменты трейса и принимает неверные решения. Также `decision_wait` должен быть больше максимального трейса — иначе trim long traces.
 >
-> **Связанные вопросы:** [[Q27]] — управление стоимостью телеметрии; [[Q34]] — OTel Collector processors; [[Q39]] — FinOps и sampling.
+> **Связанные вопросы:** [[observability-interview#Q27]] — управление стоимостью телеметрии; [[observability-interview#Q34]] — OTel Collector processors; [[observability-interview#Q39]] — FinOps и sampling.
 
 ## Q27. Как управлять стоимостью логов и трейсов?
 
@@ -1333,7 +1333,7 @@ processors:
 >
 > **Подводные камни:** **cold storage retrieval cost** — S3 Glacier дешевле хранит, но дорогая выборка (~$0.03/GB). Если инциденты часто требуют warm-данные — лучше HDD, а не Glacier. Также **drop health-checks** ломает uptime monitoring, если он строится по логам — нужны отдельные synthetic probes.
 >
-> **Связанные вопросы:** [[Q26]] — sampling стратегии; [[Q28]] — observability без перегруза; [[Q39]] — FinOps детально.
+> **Связанные вопросы:** [[observability-interview#Q26]] — sampling стратегии; [[observability-interview#Q28]] — observability без перегруза; [[observability-interview#Q39]] — FinOps детально.
 >
 > ---
 >
@@ -1421,7 +1421,7 @@ processors:
 >
 > **Подводные камни:** **дроп при переполнении queue** означает потерю данных в момент перегрузки — именно когда они нужны. Нужно alerting на `otel_exporter_dropped_spans_total`. Также **dynamic log level** не работает для loggers, инициализированных до Spring context (например, static init блоки).
 >
-> **Связанные вопросы:** [[Q8]] — cardinality control; [[Q26]] — sampling; [[Q34]] — memory_limiter в OTel Collector.
+> **Связанные вопросы:** [[observability-interview#Q8]] — cardinality control; [[observability-interview#Q26]] — sampling; [[observability-interview#Q34]] — memory_limiter в OTel Collector.
 >
 > ---
 >
@@ -1504,7 +1504,7 @@ processors:
 >
 > **Подводные камни:** **Loki не для full-text search** — он индексирует только labels, поиск по `|=` или regex медленный на больших объёмах. Если нужен ELK-style search — лучше OpenSearch. **Tempo требует traceID для запросов** — нельзя «найти все медленные трейсы за час» без external index (TraceQL частично решает). **Vendor lock-in минимален** — OTel обеспечивает миграцию.
 >
-> **Связанные вопросы:** [[Q27]] — управление стоимостью; [[Q34]] — OTel Collector; [[Q39]] — FinOps.
+> **Связанные вопросы:** [[observability-interview#Q27]] — управление стоимостью; [[observability-interview#Q34]] — OTel Collector; [[observability-interview#Q39]] — FinOps.
 >
 > ---
 >
@@ -1609,7 +1609,7 @@ processors:
 >
 > **Подводные камни:** **action items без дедлайнов** — главная причина повторения инцидентов. Нужен tracker (Jira label `post-mortem`) и monthly review нерешённых items. **Скрытые root causes** — если первая обнаруженная причина (cert) лежит поверх системной (cron silent failure), нужно «Five Whys» до системной.
 >
-> **Связанные вопросы:** [[Q31]] — observability в CI/CD; [[Q33]] — maturity model; [[Q38]] — Runbook.
+> **Связанные вопросы:** [[observability-interview#Q31]] — observability в CI/CD; [[observability-interview#Q33]] — maturity model; [[observability-interview#Q38]] — Runbook.
 >
 > ---
 >
@@ -1739,7 +1739,7 @@ spec:
 >
 > **Подводные камни:** **Low-traffic canary** — при 5% трафика на сервис с 100 RPS получаем 5 RPS на новой версии, статистики на 60 секунд может быть недостаточно (false positives). Решение: увеличить window до 5–10 минут или использовать synthetic load. **Метрики до окончания warm-up** — первые 30 секунд после старта pod показывают спайки латентности (JVM warmup, connection pool init); нужен `initialDelay` в analysis.
 >
-> **Связанные вопросы:** [[Q30]] — post-mortem; [[Q23]] — SLO/burn rate; [[Q33]] — maturity model.
+> **Связанные вопросы:** [[observability-interview#Q30]] — post-mortem; [[observability-interview#Q23]] — SLO/burn rate; [[observability-interview#Q33]] — maturity model.
 >
 > ---
 >
@@ -1801,7 +1801,7 @@ spec:
 >
 > **Подводные камни:** **postmortem-расследование cardinality** — Prometheus уже упал, нужно понять, какой именно label виноват. Использовать `prometheus_tsdb_head_series_created_total` per metric перед падением. **Auto-instrumentation** (Spring Boot Actuator) иногда добавляет `uri` label с path variables — нужен URI normalization.
 >
-> **Связанные вопросы:** [[Q8]] — cardinality в Prometheus; [[Q26]] — sampling трейсов для high-cardinality; [[Q33]] — зрелость observability.
+> **Связанные вопросы:** [[observability-interview#Q8]] — cardinality в Prometheus; [[observability-interview#Q26]] — sampling трейсов для high-cardinality; [[observability-interview#Q33]] — зрелость observability.
 >
 > ---
 >
@@ -1903,7 +1903,7 @@ spec:
 >
 > **Подводные камни:** **L5 без L1-L4** — команды покупают AI-based anomaly detection, не имея structured logs. Это «решение в поисках проблемы». Развитие должно быть последовательным. **MTTD сложно мерить точно**: нужно знать, когда инцидент *реально* начался — это требует post-mortem дисциплины.
 >
-> **Связанные вопросы:** [[Q30]] — post-mortem; [[Q31]] — CI/CD observability; [[Q32]] — anti-patterns.
+> **Связанные вопросы:** [[observability-interview#Q30]] — post-mortem; [[observability-interview#Q31]] — CI/CD observability; [[observability-interview#Q32]] — anti-patterns.
 >
 > ---
 >
@@ -2093,7 +2093,7 @@ service:
 >
 > **Подводные камни:** **Loadbalancing exporter и pod restarts** — при перезапуске Gateway pod трейсы могут разорваться (spans на разных Gateway). Решение: использовать `sticky session` через `headless service`. **Memory pressure в Gateway** при tail-sampling — нужен `memory_limiter` обязательно, иначе OOM. **Версионная совместимость** OTel Collector меняется быстро — pinned version в Helm chart.
 >
-> **Связанные вопросы:** [[Q26]] — sampling стратегии; [[Q28]] — observability без перегруза; [[Q39]] — FinOps и sampling.
+> **Связанные вопросы:** [[observability-interview#Q26]] — sampling стратегии; [[observability-interview#Q28]] — observability без перегруза; [[observability-interview#Q39]] — FinOps и sampling.
 >
 > ---
 >
@@ -2208,7 +2208,7 @@ pyroscope.profiler.event=cpu,alloc,lock
 >
 > **Подводные камни:** **JFR overhead не всегда 1%** — при включении `alloc` profiling может вырасти до 3–5% на allocation-heavy сервисах. **eBPF требует privileged container** или `CAP_BPF` capability — security implications в multi-tenant clusters. **Profiles большие** — flame graph для часа работы = 100+ MB, нужны компрессия и retention policy.
 >
-> **Связанные вопросы:** [[Q34]] — OTel Collector и profiling pipeline; [[Q36]] — chaos engineering; [[Q39]] — FinOps.
+> **Связанные вопросы:** [[observability-interview#Q34]] — OTel Collector и profiling pipeline; [[observability-interview#Q36]] — chaos engineering; [[observability-interview#Q39]] — FinOps.
 >
 > ---
 >
@@ -2345,7 +2345,7 @@ Observe → Hypothesize → Experiment → Observe results → Fix gaps → Repe
 >
 > **Подводные камни:** **Chaos в peak hours** — может вызвать реальную деградацию для пользователей. Решение: запускать в low-traffic окнах. **Compound failures** — если одновременно chaos + реальный инцидент, сложно отделить. Решение: **chaos calendar** и интеграция с alerting (не алертить во время запланированного chaos). **Stakeholder communication** — бизнес должен знать, что chaos = намеренные сбои, иначе panic.
 >
-> **Связанные вопросы:** [[Q33]] — maturity model (L5 = proactive); [[Q35]] — profiling под нагрузкой; [[Q37]] — alert fatigue.
+> **Связанные вопросы:** [[observability-interview#Q33]] — maturity model (L5 = proactive); [[observability-interview#Q35]] — profiling под нагрузкой; [[observability-interview#Q37]] — alert fatigue.
 >
 > ---
 >
@@ -2496,7 +2496,7 @@ route:
 >
 > **Подводные камни:** **Silence-all-the-things** — можно перестараться и заглушить реально важное. Решение: silence только с TTL (1 неделя max), требовать justification. **Burn rate alerts требуют SLO** — без определённых SLI/SLO формула не работает (см. Q23). **Dependency silencing** требует знания graph зависимостей сервисов — нужен service map в Grafana / Istio.
 >
-> **Связанные вопросы:** [[Q23]] — SLO/burn rate; [[Q24]] — multi-window strategy; [[Q38]] — Runbook.
+> **Связанные вопросы:** [[observability-interview#Q23]] — SLO/burn rate; [[observability-interview#Q24]] — multi-window strategy; [[observability-interview#Q38]] — Runbook.
 >
 > ---
 >
@@ -2673,7 +2673,7 @@ kubectl rollout undo deployment/orders-service -n production
 >
 > **Подводные камни:** **Runbook drift** — система меняется, runbook устаревает. Решение: указывать `Updated date`, monthly review, тестирование runbook в GameDays. **Слишком длинный runbook** — никто не читает. Сохранять под 1 экран для диагностики, mitigation — отдельная секция. **Hardcoded URLs/commands** — при миграции (cluster rename, service mesh migration) ломаются ссылки.
 >
-> **Связанные вопросы:** [[Q30]] — post-mortem; [[Q37]] — alert fatigue; [[Q33]] — maturity model.
+> **Связанные вопросы:** [[observability-interview#Q30]] — post-mortem; [[observability-interview#Q37]] — alert fatigue; [[observability-interview#Q33]] — maturity model.
 >
 > ---
 >
@@ -2834,7 +2834,7 @@ Counter.builder("http.requests")
 >
 > **Подводные камни:** **Drop health checks** может сломать uptime monitoring, если он строится на этих логах — нужны отдельные synthetic probes. **Per-service caps** при exceeded → drop telemetry → инцидент не диагностируется. Caps должны быть с alerting, не hard stop. **Cardinality cleanup** требует понимания, какие labels используются в queries — нужен grep по Grafana dashboards перед удалением.
 >
-> **Связанные вопросы:** [[Q26]] — sampling детально; [[Q27]] — управление стоимостью логов; [[Q32]] — anti-patterns (cardinality).
+> **Связанные вопросы:** [[observability-interview#Q26]] — sampling детально; [[observability-interview#Q27]] — управление стоимостью логов; [[observability-interview#Q32]] — anti-patterns (cardinality).
 >
 > ---
 >
@@ -2983,7 +2983,7 @@ await expect(page).toHaveURL('/confirmation');
 >
 > **Подводные камни:** **Synthetic scripts maintenance** — при изменении UI/API скрипты ломаются (false alerts). Решение: synthetic scripts — это код, нужен code review и обновление при UI changes. **Cost** — multi-region synthetic за 100+ check/min может стоить $100–500/мес. **False positives от CDN/network jitter** — нужен `for: 2m` в alert и multi-region quorum (3 из 5). **Synthetic users в production** — нужно фильтровать в analytics, чтобы не искажать business metrics.
 >
-> **Связанные вопросы:** [[Q23]] — SLO/SLI; [[Q31]] — CI/CD observability; [[Q37]] — alert fatigue.
+> **Связанные вопросы:** [[observability-interview#Q23]] — SLO/SLI; [[observability-interview#Q31]] — CI/CD observability; [[observability-interview#Q37]] — alert fatigue.
 >
 > ---
 >

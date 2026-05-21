@@ -124,7 +124,7 @@ public class IntegrationConfig { ... }
 >
 > **Подводные камни:** EIP-паттерны решают **асинхронную** интеграцию. Для синхронного RPC (REST между микросервисами) Spring Integration избыточен — хватит `WebClient`/`RestTemplate`. Не путать каналы Spring Integration (in-process) с реальными брокерами (Kafka, RabbitMQ) — каналы это абстракция, под ними может быть как `LinkedBlockingQueue`, так и Kafka topic через адаптер.
 >
-> **Связанные вопросы:** [[Q2]] — типы MessageChannel; [[Q4]] — Gateway как фасад; [[Q11]] — Spring Integration vs Apache Camel.
+> **Связанные вопросы:** [[spring-integration-interview#Q2]] — типы MessageChannel; [[spring-integration-interview#Q4]] — Gateway как фасад; [[spring-integration-interview#Q11]] — Spring Integration vs Apache Camel.
 >
 > ---
 >
@@ -228,7 +228,7 @@ public class IntegrationConfig { ... }
 > - **Полл-задержка**: `Pollers.fixedDelay(1000)` означает 1 сек latency на каждое сообщение. Для low-latency лучше `ExecutorChannel`.
 > - **`PublishSubscribeChannel` synchronous by default** — медленный подписчик блокирует всех остальных. Передать `TaskExecutor` через `setTaskExecutor()` для async fan-out.
 >
-> **Связанные вопросы:** [[Q1]] — EIP-словарь; [[Q9]] — транзакции в Spring Integration; [[Q3]] — Service Activator как handler канала.
+> **Связанные вопросы:** [[spring-integration-interview#Q1]] — EIP-словарь; [[spring-integration-interview#Q9]] — транзакции в Spring Integration; [[spring-integration-interview#Q3]] — Service Activator как handler канала.
 >
 > ---
 >
@@ -335,7 +335,7 @@ public MessageHandler orderHandler(OrderService service) {
 > - **`outputChannel` имеет приоритет над `replyChannel` из заголовков** — если оба заданы, reply идёт в `outputChannel`. Это ломает request-reply через Gateway.
 > - **Метод должен быть `public`** — иначе Spring AOP не сможет проксировать.
 >
-> **Связанные вопросы:** [[Q4]] — Gateway как обратная сторона Service Activator; [[Q5]] — Java DSL `.handle()` как альтернатива; [[Q7]] — обработка ошибок в handler.
+> **Связанные вопросы:** [[spring-integration-interview#Q4]] — Gateway как обратная сторона Service Activator; [[spring-integration-interview#Q5]] — Java DSL `.handle()` как альтернатива; [[spring-integration-interview#Q7]] — обработка ошибок в handler.
 >
 > ---
 >
@@ -456,7 +456,7 @@ public void submit(Order order) {
 > - **`CompletableFuture` требует `AsyncTaskExecutor`** в `@MessagingGateway(asyncExecutor = "...")` — иначе future будет уже завершённым (синхронным).
 > - **Reply correlation**: Gateway генерирует уникальный `TemporaryReplyChannel` на каждый вызов — это thread-safe для concurrent calls.
 >
-> **Связанные вопросы:** [[Q3]] — Service Activator как ответ на сообщение Gateway; [[Q1]] — Gateway-паттерн в EIP-каталоге; [[Q10]] — тестирование через Gateway.
+> **Связанные вопросы:** [[spring-integration-interview#Q3]] — Service Activator как ответ на сообщение Gateway; [[spring-integration-interview#Q1]] — Gateway-паттерн в EIP-каталоге; [[spring-integration-interview#Q10]] — тестирование через Gateway.
 >
 > ---
 >
@@ -568,7 +568,7 @@ public class OrderIntegrationFlow {
 > - **`flow.get()` vs `flowReturning(...).get()`**: первый не возвращает результат, второй возвращает Mono/Future — важно для Gateway request-reply.
 > - **Lifecycle ordering**: если flow использует bean, который ещё не готов, нужны `@DependsOn` или `phase` настройка endpoint-ов.
 >
-> **Связанные вопросы:** [[Q4]] — Gateway как точка входа в flow; [[Q1]] — DSL-методы соответствуют EIP-паттернам; [[Q8]] — Kafka adapter в DSL.
+> **Связанные вопросы:** [[spring-integration-interview#Q4]] — Gateway как точка входа в flow; [[spring-integration-interview#Q1]] — DSL-методы соответствуют EIP-паттернам; [[spring-integration-interview#Q8]] — Kafka adapter в DSL.
 >
 > ---
 >
@@ -686,7 +686,7 @@ public BatchResult aggregate(List<OrderResult> results) {
 > - **`groupTimeout` создаёт `ScheduledFuture` на каждое первое сообщение группы** — на high-throughput надо настраивать `TaskScheduler` pool.
 > - **Order не гарантирован после параллельной обработки**: если порядок важен, использовать `ResequencingMessageHandler`.
 >
-> **Связанные вопросы:** [[Q5]] — DSL для split/aggregate; [[Q9]] — persistence через MessageStore; [[Q1]] — Splitter и Aggregator в EIP-каталоге.
+> **Связанные вопросы:** [[spring-integration-interview#Q5]] — DSL для split/aggregate; [[spring-integration-interview#Q9]] — persistence через MessageStore; [[spring-integration-interview#Q1]] — Splitter и Aggregator в EIP-каталоге.
 >
 > ---
 >
@@ -821,7 +821,7 @@ public RequestHandlerRetryAdvice retryAdvice() {
 > - **`recoveryCallback` возвращает значение, которое становится reply** — `null` ломает downstream, который ждёт payload.
 > - **Retry на `DirectChannel`-flow** блокирует caller на N\*backoff времени — может выбить HTTP timeout наверху.
 >
-> **Связанные вопросы:** [[Q9]] — транзакции и rollback при ошибке; [[Q10]] — тестирование error-flow; [[Q3]] — Service Activator как точка отказа.
+> **Связанные вопросы:** [[spring-integration-interview#Q9]] — транзакции и rollback при ошибке; [[spring-integration-interview#Q10]] — тестирование error-flow; [[spring-integration-interview#Q3]] — Service Activator как точка отказа.
 >
 > ---
 >
@@ -950,7 +950,7 @@ public KafkaProducerMessageHandler<String, String> kafkaOutboundAdapter(
 > - **Auto-commit риски**: при `AckMode.RECORD/BATCH/TIME` сообщение коммитится **после** успешной обработки в Spring Integration. При async-flow (`QueueChannel`) commit может произойти **до** реального завершения handler-а — потеря сообщения при crash. Использовать `MANUAL_IMMEDIATE` + явный `acknowledge()`.
 > - **No DLQ автоматически**: `errorChannel` обработает exception, но send в DLT-topic надо делать вручную (через outbound adapter в errorChannel-flow).
 >
-> **Связанные вопросы:** [[Q1]] — Kafka adapter как реализация Channel Adapter pattern; [[Q9]] — transactional Kafka producer/consumer; [[Q7]] — error handling для Kafka сообщений; [[Q11]] — Spring Integration vs Spring Kafka — когда что.
+> **Связанные вопросы:** [[spring-integration-interview#Q1]] — Kafka adapter как реализация Channel Adapter pattern; [[spring-integration-interview#Q9]] — transactional Kafka producer/consumer; [[spring-integration-interview#Q7]] — error handling для Kafka сообщений; [[spring-integration-interview#Q11]] — Spring Integration vs Spring Kafka — когда что.
 >
 > ---
 >
@@ -1075,7 +1075,7 @@ IntegrationFlow flow = IntegrationFlow
 > - **`ChainedKafkaTransactionManager`** для Kafka + JDBC tx atomically.
 > - **PublishSubscribeChannel** не propagates transaction между subscribers — каждый в своей tx.
 >
-> **Связанные вопросы:** [[Q3]] — MessageChannel types; [[Q7]] — error handling для tx rollback; [[Q8]] — Kafka adapter с transactions.
+> **Связанные вопросы:** [[spring-integration-interview#Q3]] — MessageChannel types; [[spring-integration-interview#Q7]] — error handling для tx rollback; [[spring-integration-interview#Q8]] — Kafka adapter с transactions.
 >
 > ---
 >
@@ -1213,7 +1213,7 @@ class OrderIntegrationTest {
 > - **GenericMessage vs ErrorMessage**: error channel получает `ErrorMessage` (с `MessagingException` payload), не raw exception.
 > - **Не путать с `@MockBean`**: substitution на handler level, не bean level — flow остаётся wired.
 >
-> **Связанные вопросы:** [[Q9]] — transactional flow testing; [[Q3]] — channel types; [[Q15]] — мониторинг flows.
+> **Связанные вопросы:** [[spring-integration-interview#Q9]] — transactional flow testing; [[spring-integration-interview#Q3]] — channel types; [[spring-integration-interview#Q15]] — мониторинг flows.
 >
 > ---
 >
@@ -1303,7 +1303,7 @@ class OrderIntegrationTest {
 > - **Spring Integration JDBC adapters** покрывают 90% DB integration; Camel JDBC component делает то же.
 > - **Migration cost**: переход Integration → Camel = переписать flows на RouteBuilder.
 >
-> **Связанные вопросы:** [[Q1]] — EIP patterns как foundation; [[Q12]] — Integration vs Spring Kafka; [[Q15]] — мониторинг.
+> **Связанные вопросы:** [[spring-integration-interview#Q1]] — EIP patterns как foundation; [[spring-integration-interview#Q12]] — Integration vs Spring Kafka; [[spring-integration-interview#Q15]] — мониторинг.
 >
 > ---
 >
@@ -1411,7 +1411,7 @@ Real-time stream processing (windowing, joins):
 > - **Integration overhead**: каждый Channel = JMS-like overhead vs direct method call.
 > - **Testability**: Spring Integration flows тестируются с MockIntegrationContext, @KafkaListener — с EmbeddedKafka.
 >
-> **Связанные вопросы:** [[Q8]] — Kafka inbound adapter; [[Q11]] — Integration vs Camel; [[Q14]] — Enricher pattern.
+> **Связанные вопросы:** [[spring-integration-interview#Q8]] — Kafka inbound adapter; [[spring-integration-interview#Q11]] — Integration vs Camel; [[spring-integration-interview#Q14]] — Enricher pattern.
 >
 > ---
 >
@@ -1518,7 +1518,7 @@ public IntegrationFlow claimCheckRetrieveFlow(ClaimCheckTransformer claimCheck) 
 > - **No transactional atomicity**: write S3 + send Kafka — два разных write. Crash между ними = orphan S3 object или orphan queue message.
 > - **Cost monitoring**: S3 PUT/GET requests тоже стоят денег ($0.005/1000 GET). На high RPS считать total.
 >
-> **Связанные вопросы:** [[Q1]] — EIP patterns; [[Q14]] — Enricher (reverse pattern); [[Q11]] — Camel также supports.
+> **Связанные вопросы:** [[spring-integration-interview#Q1]] — EIP patterns; [[spring-integration-interview#Q14]] — Enricher (reverse pattern); [[spring-integration-interview#Q11]] — Camel также supports.
 >
 > ---
 >
@@ -1628,7 +1628,7 @@ Enricher делает запрос в `customerLookupChannel` и добавля�
 > - **Enrichment failure handling**: что делать если lookup failed? Skip message? Process с partial data? Use compensating logic.
 > - **Header bloat**: enrichment добавляет headers → message size растёт. На Kafka это может превысить broker limits.
 >
-> **Связанные вопросы:** [[Q13]] — Claim Check (orthogonal pattern); [[Q1]] — EIP patterns; [[Q12]] — Aggregator для batching.
+> **Связанные вопросы:** [[spring-integration-interview#Q13]] — Claim Check (orthogonal pattern); [[spring-integration-interview#Q1]] — EIP patterns; [[spring-integration-interview#Q12]] — Aggregator для batching.
 >
 > ---
 >
@@ -1729,7 +1729,7 @@ management:
 > - **`integrationgraph` endpoint** не должен быть публичен — flow structure leaks internal architecture.
 > - **Tracing с Sleuth/Micrometer Tracing**: messages передают trace context через `MessageHeaders` — propagation работает между sync channels, но async (QueueChannel) требует custom interceptor.
 >
-> **Связанные вопросы:** [[Q9]] — transaction monitoring; [[Q10]] — testing с MockIntegrationContext; [[Q3]] — channel types и их metrics differences.
+> **Связанные вопросы:** [[spring-integration-interview#Q9]] — transaction monitoring; [[spring-integration-interview#Q10]] — testing с MockIntegrationContext; [[spring-integration-interview#Q3]] — channel types и их metrics differences.
 >
 > ---
 >

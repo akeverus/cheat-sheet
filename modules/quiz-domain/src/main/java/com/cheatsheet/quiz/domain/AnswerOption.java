@@ -15,6 +15,9 @@ import lombok.Builder;
  * @param explanation  объяснение, почему вариант правильный/неправильный (nullable)
  * @param promptVersion версия prompt-контракта генерации
  * @param qualityProfileVersion версия quality-профиля валидации
+ * @param mcqBlockIdx  индекс MCQ-блока внутри одного вопроса (0-based). Позволяет иметь
+ *                     несколько `&gt; [!mcq]` блоков на один Q (например: общая концепция
+ *                     + production gotcha). Для legacy single-block вопросов всегда 0.
  */
 @Builder(toBuilder = true)
 public record AnswerOption(
@@ -26,7 +29,8 @@ public record AnswerOption(
         String source,
         String explanation,
         int promptVersion,
-        int qualityProfileVersion
+        int qualityProfileVersion,
+        int mcqBlockIdx
 ) {
     public AnswerOption(
             long id,
@@ -37,7 +41,22 @@ public record AnswerOption(
             String source,
             String explanation
     ) {
-        this(id, questionId, optionText, correct, displayOrder, source, explanation, 1, 1);
+        this(id, questionId, optionText, correct, displayOrder, source, explanation, 1, 1, 0);
+    }
+
+    public AnswerOption(
+            long id,
+            long questionId,
+            String optionText,
+            boolean correct,
+            int displayOrder,
+            String source,
+            String explanation,
+            int promptVersion,
+            int qualityProfileVersion
+    ) {
+        this(id, questionId, optionText, correct, displayOrder, source, explanation,
+                promptVersion, qualityProfileVersion, 0);
     }
 
     /**
@@ -54,6 +73,9 @@ public record AnswerOption(
         }
         if (qualityProfileVersion < 1) {
             throw new IllegalArgumentException("qualityProfileVersion не может быть < 1: " + qualityProfileVersion);
+        }
+        if (mcqBlockIdx < 0) {
+            throw new IllegalArgumentException("mcqBlockIdx не может быть отрицательным: " + mcqBlockIdx);
         }
     }
 }

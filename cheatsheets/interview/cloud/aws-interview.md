@@ -119,7 +119,7 @@ updated: "2026-04-25"
 >
 >     **Подводные камни.** Vendor lock-in (труднее мигрировать), сложный pricing (особенно data transfer out — частая причина «неожиданных» счетов), огромная поверхность IAM требует осторожности.
 >
->     **Связанные вопросы.** [[Q2]] regions/AZ/edge, [[Q3]] pricing model, [[Q31]] Well-Architected Framework.
+>     **Связанные вопросы.** [[aws-interview#Q2]] regions/AZ/edge, [[aws-interview#Q3]] pricing model, [[aws-interview#Q31]] Well-Architected Framework.
 >
 > - [ ] B. AWS — это исключительно IaaS-платформа (Infrastructure as a Service), предоставляющая только виртуальные машины и сетевые ресурсы; managed-сервисы (RDS, DynamoDB, Lambda) к AWS не относятся и предоставляются партнёрами.
 >
@@ -183,7 +183,7 @@ Region (us-east-1, eu-central-1)
 >
 >     **Подводные камни.** Cross-AZ data transfer стоит денег ($0.01-0.02/GB) — heavy chatty workloads между AZ могут «дорожать». Edge Location не хранит данные постоянно — это кэш с TTL, не replacement для S3 cross-region replication.
 >
->     **Связанные вопросы.** [[Q21]] CloudFront CDN, [[Q32]] Multi-AZ vs Multi-Region, [[Q13]] RDS.
+>     **Связанные вопросы.** [[aws-interview#Q21]] CloudFront CDN, [[aws-interview#Q32]] Multi-AZ vs Multi-Region, [[aws-interview#Q13]] RDS.
 >
 > - [ ] C. Edge Location — это специальный тип AZ с GPU-инстансами для ML-workload; Regions включают только обычные AZ для CPU-задач.
 >
@@ -247,7 +247,7 @@ Region (us-east-1, eu-central-1)
 >
 >     **Подводные камни.** NAT Gateway тарифицируется за GB обработанного трафика ($0.045/GB) + $0.045/hour — может стоить больше, чем EC2 за ним. CloudWatch Logs ingestion ($0.50/GB) скрытно дорожает при verbose logging. Inter-Region transfer ($0.02/GB) дороже cross-AZ.
 >
->     **Связанные вопросы.** [[Q5]] Reserved/Spot/Savings Plans, [[Q33]] Cost optimization tips, [[Q34]] частые ошибки.
+>     **Связанные вопросы.** [[aws-interview#Q5]] Reserved/Spot/Savings Plans, [[aws-interview#Q33]] Cost optimization tips, [[aws-interview#Q34]] частые ошибки.
 >
 > - [ ] D. Цена EC2 рассчитывается только по CPU-часам; storage (EBS), networking и операционная система (Windows-лицензия) включены бесплатно во все instance types.
 >
@@ -313,7 +313,7 @@ Region (us-east-1, eu-central-1)
 >
 >     **Подводные камни.** Graviton требует ARM-сборок Docker-образов (multi-arch или явный `--platform`). T-family непригоден для sustained-нагрузки из-за CPU credits. Smaller-than-large (nano/micro/small) на M/C/R не существуют — только на T.
 >
->     **Связанные вопросы.** [[Q5]] Reserved/Spot/Savings Plans для оптимизации цены, [[Q7]] Auto Scaling Groups, [[Q3]] AWS pricing model.
+>     **Связанные вопросы.** [[aws-interview#Q5]] Reserved/Spot/Savings Plans для оптимизации цены, [[aws-interview#Q7]] Auto Scaling Groups, [[aws-interview#Q3]] AWS pricing model.
 
 ## Q5. (!) Reserved Instances, Spot Instances, Savings Plans?
 
@@ -347,7 +347,7 @@ Region (us-east-1, eu-central-1)
 >
 >     **Подводные камни.** RI привязывает к family/AZ — если переедете на новое поколение, скидка не переносится (Savings Plans гибче). Spot interruption rate в среднем 5%, но в популярных типах может быть 20%+ — нужна диверсификация по типам/AZ. Standard RI продаются на Marketplace, Convertible — нет.
 >
->     **Связанные вопросы.** [[Q3]] AWS pricing model, [[Q7]] Auto Scaling Groups (mixed instances policy для Spot+On-Demand), [[Q4]] EC2 families.
+>     **Связанные вопросы.** [[aws-interview#Q3]] AWS pricing model, [[aws-interview#Q7]] Auto Scaling Groups (mixed instances policy для Spot+On-Demand), [[aws-interview#Q4]] EC2 families.
 >
 > - [ ] B. Spot Instances — это просто «дешёвый On-Demand»: цена ниже на 30–50% за счёт того, что AWS использует более старое оборудование. Прерываний не бывает, поэтому Spot безопасно использовать для production-БД и любых stateful-нагрузок.
 >
@@ -408,7 +408,7 @@ Region (us-east-1, eu-central-1)
 >
 >     **Подводные камни.** EBS привязан к AZ — нельзя attach к инстансу в другой AZ (нужно snapshot → restore). Default `DeleteOnTermination=true` для root EBS-volume — при terminate инстанса диск удаляется. Instance store на t-instances вообще нет (только M/C/R/I с NVMe-вариантами).
 >
->     **Связанные вопросы.** [[Q4]] EC2 families (I-family = instance store), [[Q7]] Auto Scaling (AMI в launch template), [[Q11]] EBS snapshots vs S3 backup.
+>     **Связанные вопросы.** [[aws-interview#Q4]] EC2 families (I-family = instance store), [[aws-interview#Q7]] Auto Scaling (AMI в launch template), [[aws-interview#Q11]] EBS snapshots vs S3 backup.
 >
 > - [ ] C. EBS — это локальный диск на физическом хосте, а instance store — сетевой блочный сторадж в S3. Поэтому EBS быстрее, но теряется при перезагрузке, а instance store медленнее, но переживает рестарт.
 >
@@ -461,7 +461,7 @@ Metric: CPU < 30% → scale down (-1)
 >     - **Пример:** ASG `web-asg` с `min=2, max=10, desired=4` и target tracking по `ASGAverageCPUUtilization=50%`. При CPU 80% ASG добавляет инстансы (до 10), при CPU 20% — убирает (до 2). За `Application Load Balancer` это даёт автоматический horizontal scale-out для stateless web-приложений.
 >     - **Когда применять:** stateless workloads с переменной нагрузкой (web, API, воркеры), batch-обработка с предсказуемыми пиками (scheduled), ML-инференс (target tracking по `RequestCountPerTarget`). Для stateful (БД, брокеры) ASG обычно не подходит — там нужен ручной/Operator-driven scaling.
 >     - **Подводные камни:** cold start новых инстансов (boot AMI + warmup приложения 2–5 мин) — используйте `warm pools` и `lifecycle hooks`. Target tracking по CPU плохо работает для I/O-bound сервисов — берите `RequestCountPerTarget` или custom metric. `max` без cost-alert опасен: cascade failure может разогнать группу до потолка и сжечь бюджет.
->     - **Связанные вопросы:** [[Q4]] про EC2 instance types (что попадает в `Launch Template`), [[Q5]] про Spot Instances (можно использовать в ASG через mixed instances policy), [[Q8]] про Lambda (альтернатива ASG для serverless workloads).
+>     - **Связанные вопросы:** [[aws-interview#Q4]] про EC2 instance types (что попадает в `Launch Template`), [[aws-interview#Q5]] про Spot Instances (можно использовать в ASG через mixed instances policy), [[aws-interview#Q8]] про Lambda (альтернатива ASG для serverless workloads).
 > - [ ] D) `Auto Scaling Group` — это vertical scaling: AWS меняет размер инстанса (с `t3.small` на `t3.large`) при росте нагрузки
 >     - **Что на самом деле:** ASG делает только horizontal scaling — добавляет/убирает одинаковые инстансы по `Launch Template`. Vertical scaling требует stop → resize → start вручную или через скрипт, и в AWS это не автоматизировано на уровне ASG.
 >     - **Откуда путаница:** оба механизма — это «scaling», и новички часто не различают horizontal/vertical в облаке.
@@ -506,7 +506,7 @@ def handler(event, context):
 >     - **Пример:** `def handler(event, context): return {"statusCode": 200, "body": "Hello"}` — функция за API Gateway отдаёт HTTP-ответ. Триггер из S3: при загрузке `s3://uploads/photo.jpg` Lambda автоматически вызывается, генерирует thumbnail и пишет в `s3://thumbnails/`. Cost: 1M invocations × 200 ms × 128 MB ≈ $0.20.
 >     - **Когда применять:** event-driven workloads (S3 events, DynamoDB Streams, SQS), low-traffic API с непредсказуемой нагрузкой, scheduled jobs (вместо cron+EC2), glue-логика между сервисами, batch-обработка коротких задач. Сильно дешевле EC2 при низком/неравномерном RPS.
 >     - **Подводные камни:** **cold start** (100 мс–1 c для Python/Node, до 5–10 c для Java/.NET) — критично для low-latency API; используйте `Provisioned Concurrency` или GraalVM native-image. **15-минутный timeout** на одно выполнение — для длинных задач нужен Step Functions или Fargate. **VPC ENI** добавляет overhead при первом запросе. Cost при высоком устойчивом RPS становится выше EC2 — после ~80% utilization 24/7 экономичнее контейнеры.
->     - **Связанные вопросы:** [[Q7]] про Auto Scaling Groups (альтернатива на EC2 для устойчивых нагрузок), [[Q9]] про S3 (типичный источник событий для Lambda), отдельный файл [AWS Lambda](aws-lambda-interview.md) для deep dive.
+>     - **Связанные вопросы:** [[aws-interview#Q7]] про Auto Scaling Groups (альтернатива на EC2 для устойчивых нагрузок), [[aws-interview#Q9]] про S3 (типичный источник событий для Lambda), отдельный файл [AWS Lambda](aws-lambda-interview.md) для deep dive.
 
 
 ## Q9. (!) S3 — основные понятия?
@@ -539,7 +539,7 @@ s3://my-bucket/path/to/file.json
 >     - **Пример:** `s3://my-company-prod-uploads/users/123/avatar.png` — bucket `my-company-prod-uploads` (имя уникально на весь мир), key `users/123/avatar.png`. URL `https://my-company-prod-uploads.s3.eu-central-1.amazonaws.com/users/123/avatar.png`. Объекты до 5 TB, durability 11 nines (99.999999999%), доступность 99.99%, strong read-after-write consistency (с 2020 — раньше была eventual).
 >     - **Когда применять:** хранение статики (картинки, видео, бэкапы), data lake для аналитики (Parquet/CSV для Athena/Redshift Spectrum), артефакты CI/CD, hosting статических сайтов, источник событий для Lambda. Default-выбор для любого «положить blob в облако».
 >     - **Подводные камни:** глобальные имена ведут к **enumeration**: если bucket `my-company-backups` существует, атакующий может это узнать через DNS, не имея доступа. Поэтому используйте непредсказуемые префиксы (`acme-prod-uploads-7f3a1b2c`). Старая практика «много мелких файлов в одном префиксе» уже не вызывает hot-partition (с 2018 S3 scales автоматически), но `LIST` на bucket с миллионами объектов всё ещё медленный — используйте `Inventory` или базу метаданных. Public access блокируется по умолчанию — включить случайно сложнее, чем раньше, но всё ещё возможно.
->     - **Связанные вопросы:** [[Q10]] про S3 storage classes (выбор класса под access pattern), [[Q11]] про EBS vs EFS vs S3 (когда что), [[Q12]] про versioning и lifecycle policies, [[Q8]] про Lambda (S3 events как trigger).
+>     - **Связанные вопросы:** [[aws-interview#Q10]] про S3 storage classes (выбор класса под access pattern), [[aws-interview#Q11]] про EBS vs EFS vs S3 (когда что), [[aws-interview#Q12]] про versioning и lifecycle policies, [[aws-interview#Q8]] про Lambda (S3 events как trigger).
 > - [ ] B) Объект в S3 адресуется только числовым `object_id`, который AWS назначает автоматически; имя bucket — это просто человекочитаемая метка для UI, никакой роли в API не играет
 >     - **Что на самом деле:** ключ (key) задаётся клиентом при `PUT`, это произвольная строка до 1024 байт (`users/123/photo.jpg`, `2026/05/15/log.json`). Никакого числового ID S3 не присваивает. Bucket name — обязательная часть запроса (`PUT /key HTTP/1.1\nHost: bucket.s3.amazonaws.com`), без него API-вызов невозможен.
 >     - **Откуда путаница:** в традиционных object stores (Swift, Ceph) объект иногда адресуется внутренним ID — и эту модель ошибочно переносят на S3.
@@ -734,7 +734,7 @@ my-file.json (v3, current)
 >
 >     **Подводные камни.** Multi-AZ ≠ read replica: standby в Multi-AZ недоступен для чтения, это просто горячий резерв. Storage autoscaling включается отдельно. Major version upgrade требует downtime даже на Multi-AZ. Snapshot восстанавливается в *новый* instance — старый endpoint не переедет.
 >
->     **Связанные вопросы.** [[Q14]] про Aurora, [[Q15]] про DynamoDB как альтернативу для не-реляционных нагрузок.
+>     **Связанные вопросы.** [[aws-interview#Q14]] про Aurora, [[aws-interview#Q15]] про DynamoDB как альтернативу для не-реляционных нагрузок.
 >
 > - [ ] RDS — это просто EC2 с предустановленной БД, AWS ничего не автоматизирует
 >
@@ -799,7 +799,7 @@ my-file.json (v3, current)
 >
 >     **Подводные камни.** Не все Postgres extensions поддерживаются (нет TimescaleDB, ограничен `pg_cron`). Cross-region replication через Global Database — отдельный продукт, не бесплатный. I/O-billing в стандартной Aurora съедает бюджет на write-heavy нагрузках — нужна Aurora I/O-Optimized. Major version upgrade всё равно требует blue/green deployment для нулевого downtime.
 >
->     **Связанные вопросы.** [[Q13]] про базовый RDS, [[Q15]] про DynamoDB как NoSQL-альтернативу.
+>     **Связанные вопросы.** [[aws-interview#Q13]] про базовый RDS, [[aws-interview#Q15]] про DynamoDB как NoSQL-альтернативу.
 >
 > - [ ] Aurora работает только с MySQL, для PostgreSQL нужен обычный RDS
 >
@@ -869,7 +869,7 @@ my-file.json (v3, current)
 >
 >     **Подводные камни.** Scan дорогой и медленный — это последнее средство, не основной паттерн. Transactions ограничены 100 items / 4 MB. Streams хранят события только 24 часа — для durability нужен Kinesis/EventBridge. On-demand биллинг легко уходит в космос на bursty workloads без cap — мониторить и алертить по RCU/WCU.
 >
->     **Связанные вопросы.** [[Q13]] про реляционные RDS, [[Q14]] про Aurora, когда нужны SQL-возможности.
+>     **Связанные вопросы.** [[aws-interview#Q13]] про реляционные RDS, [[aws-interview#Q14]] про Aurora, когда нужны SQL-возможности.
 >
 > - [ ] DynamoDB поддерживает полноценный SQL и ACID-транзакции через PartiQL, поэтому миграция с Postgres тривиальна
 >

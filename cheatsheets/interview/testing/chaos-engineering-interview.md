@@ -995,10 +995,83 @@ graph TB
 
 
 > [!mcq]
-> - [ ] Chaos Mesh — это set of bash-скриптов которые запускаются по cron | ❌ ПОСЛЕДСТВИЕ: Chaos Mesh — это Kubernetes-нативная платформа на CRD; декларативные YAML, не imperative scripts; интеграция с k8s lifecycle, RBAC
-> - [ ] Chaos Mesh поддерживает только pod-kill | ❌ ПОСЛЕДСТВИЕ: поддерживает 10+ fault types: PodChaos, NetworkChaos, IOChaos, StressChaos, DNSChaos, TimeChaos, KernelChaos, HTTPChaos, JVMChaos, AWSChaos
-> - [ ] Chaos Mesh работает только на bare-metal K8s, не cloud | ❌ ПОСЛЕДСТВИЕ: работает на любом K8s (EKS, GKE, AKS, on-prem); требует только linux nodes для chaos-daemon; cloud-агностичен
-> - [x] Chaos Mesh = Kubernetes-нативная платформа от PingCAP (CNCF incubating); архитектура Controller Manager + Chaos Daemon per node + CRDs; поддерживает PodChaos, NetworkChaos, IOChaos, StressChaos, DNSChaos, TimeChaos, KernelChaos, HTTPChaos, JVMChaos | ✓ ПРИМЕНЯТЬ: для K8s-первых организаций; rich dashboard для визуализации; workflow для chain экспериментов; RBAC + multi-tenancy 📋 ПРАВИЛО: Chaos Mesh = CRD-driven fault injection для K8s 🔗 См. Q22
+>
+> **Что такое Chaos Mesh и какие fault types он поддерживает?**
+>
+> ---
+>
+> #### A) Chaos Mesh — это набор bash-скриптов, запускаемых по cron — ❌ Неверно
+>
+> **Что на самом деле:** Chaos Mesh — это Kubernetes-нативная платформа от PingCAP, построенная на CRD (Custom Resource Definitions). Эксперименты описываются декларативными YAML-манифестами, которые контроллер применяет как обычные ресурсы кластера (`kubectl apply -f podchaos.yaml`). Никаких bash, никаких внешних cron-демонов: всё интегрировано в lifecycle Kubernetes, контроллер сам отслеживает состояние и применяет fault.
+>
+> **Откуда путаница:** в pre-K8s эпоху chaos-инструменты часто действительно были набором скриптов (Chaos Monkey изначально — Spinnaker pipeline с shell). Если перенести эту модель в современный кластер, теряется RBAC, audit, declarative state, и эксперимент становится «сторонним процессом» вместо first-class объекта инфраструктуры.
+>
+> ---
+>
+> #### B) Chaos Mesh поддерживает только pod-kill — ❌ Неверно
+>
+> **Что на самом деле:** Chaos Mesh покрывает 10+ типов сбоев на разных уровнях:
+>
+> | Уровень | CRD | Что инжектирует |
+> |---|---|---|
+> | Pod | `PodChaos` | kill / failure / container-kill |
+> | Сеть | `NetworkChaos` | latency / loss / corrupt / partition / bandwidth |
+> | Диск/IO | `IOChaos` | задержка чтения/записи, ошибки |
+> | CPU/Memory | `StressChaos` | искусственная нагрузка |
+> | DNS | `DNSChaos` | подмена / задержка резолва |
+> | Время | `TimeChaos` | сдвиг системного времени в pod |
+> | Ядро | `KernelChaos` | инъекция ошибок в syscalls |
+> | HTTP | `HTTPChaos` | задержки / abort на HTTP уровне |
+> | JVM | `JVMChaos` | byteman-based injection (exception, latency) |
+> | AWS | `AWSChaos` | EC2 stop, EBS detach |
+>
+> **Откуда путаница:** многие знают Chaos Mesh по статьям о pod-kill (самый зрелищный пример). На практике сценарии deeper failures — DNS, time skew, JVM exception — выявляют тоньше скрытые баги, чем pod kill.
+>
+> ---
+>
+> #### C) Chaos Mesh работает только на bare-metal Kubernetes, не в облаке — ❌ Неверно
+>
+> **Что на самом деле:** Chaos Mesh cloud-agnostic. Работает на любом K8s-дистрибутиве — EKS, GKE, AKS, OpenShift, K3s, on-prem kubeadm. Единственное требование — Linux-узлы (chaos-daemon — это DaemonSet, который использует Linux namespaces, cgroups, tc/iptables для инжекции).
+>
+> **Откуда путаница:** в managed-кластерах (EKS, GKE) часть привилегированных операций может быть ограничена. Chaos Mesh требует `privileged: true` для chaos-daemon, что иногда требует адаптации Pod Security Policies — но это не отсутствие поддержки, а вопрос конфигурации.
+>
+> ---
+>
+> #### D) Chaos Mesh — Kubernetes-нативная платформа от PingCAP, CNCF Incubating; архитектура Controller Manager + Chaos Daemon per node + CRDs; покрывает Pod / Network / IO / Stress / DNS / Time / Kernel / HTTP / JVM / AWS сбои — ✓ Верно
+>
+> **Развёрнутое объяснение:**
+>
+> Chaos Mesh состоит из трёх главных компонентов:
+> 1. **Controller Manager** — Deployment, который наблюдает за CRD-объектами (PodChaos, NetworkChaos и т.д.), валидирует, шедулит, отслеживает lifecycle экспериментов.
+> 2. **Chaos Daemon** — DaemonSet на каждой ноде. Получает команды от Controller Manager и применяет fault внутри namespace pod-а (через nsenter, tc, iptables, BPF).
+> 3. **CRDs** — `PodChaos`, `NetworkChaos`, `Schedule`, `Workflow` и т.д. Описывают эксперимент декларативно.
+>
+> ```mermaid
+> graph TB
+>   Dashboard[Chaos Dashboard] --> Controller[Chaos Controller Manager]
+>   CR[ChaosMesh CR YAML] --> Controller
+>   Controller --> Daemon1[Chaos Daemon Node 1]
+>   Controller --> Daemon2[Chaos Daemon Node 2]
+>   Daemon1 --> Pod1[Target Pod]
+>   Daemon2 --> Pod2[Target Pod]
+> ```
+>
+> **Когда применять:**
+> - Кластер на Kubernetes как primary platform (а не VM/bare-metal).
+> - Нужна визуализация и dashboard (Chaos Dashboard) для команд без deep CLI-привычек.
+> - Нужны Workflows — последовательность fault-ов с условиями (Argo-подобный DAG).
+> - Multi-tenancy: разные команды экспериментируют в своих namespace, RBAC изолирует.
+>
+> **Подводные камни:**
+> - Chaos Daemon требует `privileged` контейнер — обсудите с security team до установки.
+> - В GKE Autopilot могут быть ограничения на privileged workloads — проверьте режим кластера.
+> - Не использовать для full-cluster experiments в продакшене без согласования: один неверный selector (`mode: all`) — и эксперимент уносит весь сервис.
+>
+> **Связанные вопросы:**
+> - [[chaos-engineering-interview#Q22]] — конкретный пример PodChaos с разбором mode/selector/duration.
+> - [[chaos-engineering-interview#Q23]] — NetworkChaos для симуляции latency и partition.
+> - [[chaos-engineering-interview#Q24]] — сравнение с Litmus и выбор между ними.
+> - [[chaos-engineering-interview#Q33]] — abort conditions, без которых эксперимент превращается в реальный инцидент.
 
 ## Q22. (!) Как написать `PodChaos` эксперимент на Chaos Mesh?
 

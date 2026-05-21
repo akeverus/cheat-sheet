@@ -537,7 +537,7 @@ public class ReportService {
 > - **Параметры через `:name` (named) или `$1`/`$2` (positional)**: R2DBC native — positional `$N`, Spring добавляет named как обёртку. На некоторых драйверах (например, MS SQL Server R2DBC) named параметры не работают без `.bind("name", value)`.
 > - **No automatic transaction management для raw SQL**: `@Transactional` работает с DatabaseClient методами через `TransactionalOperator`, но требует явной обёртки если транзакция нужна между несколькими SQL вызовами.
 >
-> **Связанные вопросы:** [[Q12]] — custom converters для R2DBC mapping; [[Q13]] — batch insert через `DatabaseClient.inConnectionMany`; [[Q5]] — реактивные транзакции с `TransactionalOperator`.
+> **Связанные вопросы:** [[spring-r2dbc-interview#Q12]] — custom converters для R2DBC mapping; [[spring-r2dbc-interview#Q13]] — batch insert через `DatabaseClient.inConnectionMany`; [[spring-r2dbc-interview#Q5]] — реактивные транзакции с `TransactionalOperator`.
 >
 > ---
 >
@@ -672,7 +672,7 @@ public class R2dbcConfig extends AbstractR2dbcConfiguration {
 > - **Spring Boot autoconfig**: если есть `@EnableR2dbcRepositories`, custom converters не подхватываются автоматически — нужен `AbstractR2dbcConfiguration`.
 > - **Direction sensitivity**: один и тот же класс не может быть и Reading, и Writing converter; нужно два разных класса (или anonymous inner classes).
 >
-> **Связанные вопросы:** [[Q11]] — DatabaseClient использует те же converters; [[Q15]] — интеграция с Spring Security UserDetailsService для UserStatus enum; [[Q4]] — entity mapping в Repository.
+> **Связанные вопросы:** [[spring-r2dbc-interview#Q11]] — DatabaseClient использует те же converters; [[spring-r2dbc-interview#Q15]] — интеграция с Spring Security UserDetailsService для UserStatus enum; [[spring-r2dbc-interview#Q4]] — entity mapping в Repository.
 >
 > ---
 >
@@ -770,7 +770,7 @@ public Mono<Void> batchInsert(List<Order> orders) {
 > - **Backpressure**: `Flux.fromIterable` + `.buffer(500)` не учитывает скорость БД. При медленной БД memory накапливается. Лучше — `.limitRate(N)` или `concatMap` вместо `flatMap`.
 > - **Получение generated IDs**: `Statement.returnGeneratedValues("id")` нужно вызывать ДО `execute()`, и потом маппить result.
 >
-> **Связанные вопросы:** [[Q11]] — DatabaseClient как раз даёт `inConnectionMany`; [[Q5]] — транзакции вокруг batch для atomic insert; [[Q12]] — custom converter применяется в `bind()`.
+> **Связанные вопросы:** [[spring-r2dbc-interview#Q11]] — DatabaseClient как раз даёт `inConnectionMany`; [[spring-r2dbc-interview#Q5]] — транзакции вокруг batch для atomic insert; [[spring-r2dbc-interview#Q12]] — custom converter применяется в `bind()`.
 >
 > ---
 >
@@ -882,7 +882,7 @@ spring:
 > - **Тесты с Testcontainers**: оба URL должны указывать на тот же контейнер, иначе R2DBC увидит unmigrated схему.
 > - **`r2dbc-migrate` library** — альтернатива Flyway, нативно для R2DBC. Но менее зрелый, ограничен в features (нет undo, нет baseline strategy).
 >
-> **Связанные вопросы:** [[Q1]] — обзор Spring Data R2DBC; [[Q11]] — DatabaseClient для runtime SQL после миграции; [[Q15]] — интеграция с WebFlux на уровне controllers.
+> **Связанные вопросы:** [[spring-r2dbc-interview#Q1]] — обзор Spring Data R2DBC; [[spring-r2dbc-interview#Q11]] — DatabaseClient для runtime SQL после миграции; [[spring-r2dbc-interview#Q15]] — интеграция с WebFlux на уровне controllers.
 >
 > ---
 >
@@ -1005,7 +1005,7 @@ public class OrderController {
 > - **`@Transactional` в WebFlux**: работает только с R2DBC через `ReactiveTransactionManager`. С JPA — нужен `TransactionTemplate` внутри `boundedElastic`.
 > - **Reactor blockhound** — диагностический tool, который ловит блокирующие вызовы в reactive потоках. Включать в тестовом контуре для defense.
 >
-> **Связанные вопросы:** [[Q1]] — обзор R2DBC; [[Q11]] — DatabaseClient — preferred API в WebFlux; [[Q14]] — миграции через JDBC при boot (там блокировка допустима).
+> **Связанные вопросы:** [[spring-r2dbc-interview#Q1]] — обзор R2DBC; [[spring-r2dbc-interview#Q11]] — DatabaseClient — preferred API в WebFlux; [[spring-r2dbc-interview#Q14]] — миграции через JDBC при boot (там блокировка допустима).
 >
 > ---
 >

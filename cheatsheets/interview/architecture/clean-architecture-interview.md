@@ -416,7 +416,7 @@ public class Order {
 >
 >     Подводные камни: соблазн добавить JPA-аннотации «для удобства» приводит к смешению слоёв. Решение — разделять `domain.Order` (чистая доменная модель) и `persistence.OrderJpaEntity` (модель хранения) с маппером между ними.
 >
->     Связанные вопросы: [[Q2]] — правило зависимостей запрещает Entities знать о внешних слоях; [[Q5]] — Use Cases оркестрируют работу Entities.
+>     Связанные вопросы: [[clean-architecture-interview#Q2]] — правило зависимостей запрещает Entities знать о внешних слоях; [[clean-architecture-interview#Q5]] — Use Cases оркестрируют работу Entities.
 
 ## Q5. (!) Что такое Use Cases (Interactors) и какова их роль?
 
@@ -507,7 +507,7 @@ public class CreateOrderInteractor implements CreateOrderUseCase {
 >
 >     Подводные камни: соблазн объединить несколько сценариев в «толстый сервис» (`OrderService` с 20 методами) ломает SRP. Также вредно тащить HTTP-объекты (`HttpServletRequest`) внутрь Use Case — это утечка деталей доставки.
 >
->     Связанные вопросы: [[Q4]] — Entities, которыми оркестрирует Use Case; [[Q6]] — Interface Adapters, вызывающие Use Cases.
+>     Связанные вопросы: [[clean-architecture-interview#Q4]] — Entities, которыми оркестрирует Use Case; [[clean-architecture-interview#Q6]] — Interface Adapters, вызывающие Use Cases.
 >
 > - [ ] **B) Реализовать всю бизнес-логику системы, включая инварианты доменных объектов.**
 >
@@ -598,7 +598,7 @@ public class OrderController {
 >
 >     Подводные камни: соблазн втащить бизнес-логику в Controller («проверим тут, что заказ не пустой») приводит к её дублированию и к тому, что логика не покрыта unit-тестами Use Case'а. Controller обязан быть тонким — только маппинг и делегирование.
 >
->     Связанные вопросы: [[Q2]] — правило зависимостей: адаптер зависит от Use Case, а не наоборот; [[Q5]] — Use Cases, которые вызывают адаптеры.
+>     Связанные вопросы: [[clean-architecture-interview#Q2]] — правило зависимостей: адаптер зависит от Use Case, а не наоборот; [[clean-architecture-interview#Q5]] — Use Cases, которые вызывают адаптеры.
 >
 > - [ ] **C) Это интерфейсы Java (`interface`), определяющие контракты между классами.**
 >

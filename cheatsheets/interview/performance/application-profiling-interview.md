@@ -1397,7 +1397,7 @@ public class ProfilingTrigger {
 > - **Time-dependent state**: на воскресенье profiles могут отличаться от понедельника. Снимать в representative time windows.
 > - **Cold start vs steady state**: первые 30-60 секунд после старта — JIT ещё работает, профиль искажён. Warm-up обязателен.
 >
-> **Связанные вопросы:** [[Q5]] — JFR continuous profiling; [[Q12]] — async-profiler как low-overhead альтернатива; [[Q29]] — Pyroscope для production continuous profiling.
+> **Связанные вопросы:** [[application-profiling-interview#Q5]] — JFR continuous profiling; [[application-profiling-interview#Q12]] — async-profiler как low-overhead альтернатива; [[application-profiling-interview#Q29]] — Pyroscope для production continuous profiling.
 >
 > ---
 >
@@ -1530,7 +1530,7 @@ graph TB
 > - **Cost**: каждый PR запускает performance test = compute time + benchmark infrastructure.
 > - **Не все services equal**: для admin UI performance budget избыточен, для checkout API — обязателен.
 >
-> **Связанные вопросы:** [[Q29]] — Pyroscope continuous profiling integration; [[Q30]] — нерепрезентативная нагрузка как риск; [[Q5]] — JFR + JMH в benchmark suite.
+> **Связанные вопросы:** [[application-profiling-interview#Q29]] — Pyroscope continuous profiling integration; [[application-profiling-interview#Q30]] — нерепрезентативная нагрузка как риск; [[application-profiling-interview#Q5]] — JFR + JMH в benchmark suite.
 >
 > ---
 >
@@ -1625,7 +1625,7 @@ graph TB
 > - **Не врать про инструменты**: если упомянул `async-profiler --wall`, готовься объяснить отличие от cpu-режима.
 > - **Не уходить в детали flame graph chart**: senior говорит о бизнес-эффекте, в hands-on раунде покажут.
 >
-> **Связанные вопросы:** [[Q14]] — CPU bottleneck workflow; [[Q25]] — continuous profiling; [[Q31]] — profiling maturity levels.
+> **Связанные вопросы:** [[application-profiling-interview#Q14]] — CPU bottleneck workflow; [[application-profiling-interview#Q25]] — continuous profiling; [[application-profiling-interview#Q31]] — profiling maturity levels.
 >
 > ---
 >
@@ -1802,7 +1802,7 @@ executor.submit(() -> {
 > - **ClassLoader leaks**: tomcat redeploy → старый ClassLoader не GC'нется. Видно как «Class A loaded by 2 different ClassLoaders».
 > - **Anonymous classes**: MAT показывает `Foo$$Lambda$23` — для трассировки в код нужны debug-symbols.
 >
-> **Связанные вопросы:** [[Q18]] — heap dump basics; [[Q19]] — memory leak detection workflow; [[Q37]] — MAT vs VisualVM.
+> **Связанные вопросы:** [[application-profiling-interview#Q18]] — heap dump basics; [[application-profiling-interview#Q19]] — memory leak detection workflow; [[application-profiling-interview#Q37]] — MAT vs VisualVM.
 >
 > ---
 >
@@ -1925,7 +1925,7 @@ hikari.connection-timeout: 3000
 > - **`Interpreter` в стеке**: метод ещё не JIT-компилирован → нерепрезентативные данные. Warm-up 30+ секунд перед снятием.
 > - **GC frames**: видны как `G1GC.scan_root` — это GC threads, отдельно от application threads. Если их много — переходить на GC profiling.
 >
-> **Связанные вопросы:** [[Q12]] — основы flame graph; [[Q13]] — типы flame graph (CPU/alloc/lock); [[Q15]] — on-CPU vs off-CPU; [[Q14]] — CPU bottleneck workflow.
+> **Связанные вопросы:** [[application-profiling-interview#Q12]] — основы flame graph; [[application-profiling-interview#Q13]] — типы flame graph (CPU/alloc/lock); [[application-profiling-interview#Q15]] — on-CPU vs off-CPU; [[application-profiling-interview#Q14]] — CPU bottleneck workflow.
 >
 > ---
 >
@@ -2082,7 +2082,7 @@ java -XX:StartFlightRecording=duration=60s,filename=profile.jfr,settings=profile
 > - **Container security**: K8s pods часто блокируют `CAP_SYS_ADMIN` → fallback на `itimer` mode (менее точный, но работает).
 > - **Запись wall vs cpu mode**: путаница частая. `cpu` = on-CPU only, `wall` = on-CPU + off-CPU (видит ожидание I/O).
 >
-> **Связанные вопросы:** [[Q3]] — safepoint bias detail; [[Q9]] — async-profiler internals; [[Q11]] — JFR vs async-profiler choosing.
+> **Связанные вопросы:** [[application-profiling-interview#Q3]] — safepoint bias detail; [[application-profiling-interview#Q9]] — async-profiler internals; [[application-profiling-interview#Q11]] — JFR vs async-profiler choosing.
 
 ## Q36. Profiling в production — low-overhead инструменты
 
@@ -2199,7 +2199,7 @@ public JfrMeterRegistry jfrMeterRegistry(JfrConfig config) {
 > - **Compressed pointers**: dump сохраняется в uncompressed формате, размер на диске больше чем `Used Heap`.
 > - **Networking impact**: пока STW идёт — все потоки заблокированы, gRPC keep-alive failing, downstream services видят timeouts.
 >
-> **Связанные вопросы:** [[Q18]] — heap dump basics; [[Q19]] — memory leak detection; [[Q27]] — production profiling safety.
+> **Связанные вопросы:** [[application-profiling-interview#Q18]] — heap dump basics; [[application-profiling-interview#Q19]] — memory leak detection; [[application-profiling-interview#Q27]] — production profiling safety.
 >
 > ---
 >
@@ -2349,7 +2349,7 @@ OutgoingReferences: EventBus → List<Listener> → 10k объектов → в�
 > - **Class instances vs static fields**: static fields в class metadata (PermGen/Metaspace), не в heap. Их retained = только instance heap, не class itself.
 > - **Производительность**: dominator tree вычисляется O(N log N) при открытии dump. Для 32GB dump — 5-10 минут на powerful machine.
 >
-> **Связанные вопросы:** [[Q18]] — heap dump basics; [[Q19]] — memory leak detection; [[Q33]] — MAT workflow.
+> **Связанные вопросы:** [[application-profiling-interview#Q18]] — heap dump basics; [[application-profiling-interview#Q19]] — memory leak detection; [[application-profiling-interview#Q33]] — MAT workflow.
 >
 > ---
 >
@@ -2492,7 +2492,7 @@ TIMED_WAITING — Thread.sleep(), wait(timeout), park(timeout)
 > - **Connection validation**: `connection-test-query` запускается при checkout — если БД медленная, это добавляет latency.
 > - **CPU не показывает проблему**: при pool exhaustion CPU низкий (потоки парк'ятся), но throughput падает. Метрика для алерта — `hikaricp.connections.pending`.
 >
-> **Связанные вопросы:** [[Q20]] — thread dump basics; [[Q21]] — lock contention; [[Q15]] — off-CPU analysis.
+> **Связанные вопросы:** [[application-profiling-interview#Q20]] — thread dump basics; [[application-profiling-interview#Q21]] — lock contention; [[application-profiling-interview#Q15]] — off-CPU analysis.
 >
 > ---
 >
@@ -2648,7 +2648,7 @@ public void benchmarkJsonSerialization(Blackhole bh) {
 > - **Instrumentation и async**: для `CompletableFuture` chain instrumentation портит timing — внутренний код framework тоже инструментируется.
 > - **Mixed approach**: некоторые tools (JFR) делают sampling + targeted instrumentation для критичных событий (GC, allocation). Лучшее обоих миров.
 >
-> **Связанные вопросы:** [[Q2]] — sampling vs instrumentation theory; [[Q3]] — safepoint bias; [[Q9]] — async-profiler internals.
+> **Связанные вопросы:** [[application-profiling-interview#Q2]] — sampling vs instrumentation theory; [[application-profiling-interview#Q3]] — safepoint bias; [[application-profiling-interview#Q9]] — async-profiler internals.
 >
 > ---
 >
@@ -2830,7 +2830,7 @@ Gauge.builder("jvm.gc.allocation.rate", ...)
 > - **NUMA-aware allocation**: на multi-socket системах outside TLAB ещё медленнее (cross-socket memory access).
 > - **String deduplication (G1)**: меняет picture — duplicates merge, total allocation выглядит ниже.
 >
-> **Связанные вопросы:** [[Q17]] — allocation profiling basics; [[Q22]] — GC analysis; [[Q8]] — JFR events.
+> **Связанные вопросы:** [[application-profiling-interview#Q17]] — allocation profiling basics; [[application-profiling-interview#Q22]] — GC analysis; [[application-profiling-interview#Q8]] — JFR events.
 
 ## Q41. Database Query Profiling — slow query log, EXPLAIN
 
@@ -2961,7 +2961,7 @@ logging.level.org.hibernate.orm.jdbc.bind: TRACE  # параметры
 > - **Function index**: для `WHERE LOWER(email) = ?` нужен `CREATE INDEX ON users(LOWER(email))`.
 > - **Hot inserts**: новые данные находятся в одной части индекса → page contention. Решение — partition table.
 >
-> **Связанные вопросы:** [[Database Performance]] — SQL optimization; [[Q22]] — GC connection с DB latency; [[Q15]] — off-CPU profiling видит DB wait.
+> **Связанные вопросы:** [[Database Performance]] — SQL optimization; [[application-profiling-interview#Q22]] — GC connection с DB latency; [[application-profiling-interview#Q15]] — off-CPU profiling видит DB wait.
 >
 > ---
 >
@@ -3142,7 +3142,7 @@ management.metrics.enable.reactor: true
 > - **Schedulers.boundedElastic блокирующий код**: для legacy blocking JDBC внутри reactive pipeline. Тогда thread dump для этого пула информативен traditional way.
 > - **Virtual threads (Java 21+)**: меняют картину — каждый запрос на своём virtual thread, thread dump снова осмысленный (но миллионы потоков). Pyroscope с virtual-thread-aware sampling.
 >
-> **Связанные вопросы:** [[Q20]] — thread dump basics; [[Q15]] — on-CPU vs off-CPU; [[Q14]] — CPU bottleneck.
+> **Связанные вопросы:** [[application-profiling-interview#Q20]] — thread dump basics; [[application-profiling-interview#Q15]] — on-CPU vs off-CPU; [[application-profiling-interview#Q14]] — CPU bottleneck.
 >
 > ---
 >
