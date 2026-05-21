@@ -64,7 +64,7 @@ public class QuestionRepository {
 
     /**
      * Возвращает id вопроса по топику и порядковому номеру (как в `## Q<N>` заголовке).
-     * Конвенция slug-а: `<file_path>#Q<number>`, где file_path строится на основе topic + ".md".
+     * Конвенция slug-а: `<topic>.md#Q<number>`, где topic — относительный путь в cheatsheets/interview/.
      *
      * @param topic   тема (например, {@code "databases/elasticsearch-interview"})
      * @param qNumber номер вопроса (например, 5)
