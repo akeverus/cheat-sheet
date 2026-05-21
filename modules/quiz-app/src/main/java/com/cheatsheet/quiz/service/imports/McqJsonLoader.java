@@ -96,8 +96,9 @@ public class McqJsonLoader {
      * @return результат с количеством вставленных вариантов и пропущенных вопросов
      */
     public McqLoadResult loadForTopic(String categoryPath, String topicSlug) {
-        Path resourcePath = Paths.get("seed/mcq", categoryPath, topicSlug + ".json");
-        Resource resource = new ClassPathResource(resourcePath.toString());
+        String resourcePath = "seed/mcq/" + categoryPath + "/" + topicSlug + ".json";
+        Path resourcePathForError = Paths.get(resourcePath);
+        Resource resource = new ClassPathResource(resourcePath);
         if (!resource.exists()) {
             return McqLoadResult.notFound();
         }
@@ -105,16 +106,16 @@ public class McqJsonLoader {
             JsonNode tree = objectMapper.readTree(in);
             Set<ValidationMessage> errors = schema.validate(tree);
             if (!errors.isEmpty()) {
-                throw new InvalidMcqSeedException(resourcePath, errors);
+                throw new InvalidMcqSeedException(resourcePathForError, errors);
             }
             McqSeed seed = objectMapper.treeToValue(tree, McqSeed.class);
             if (!seed.topicSlug().equals(topicSlug)) {
-                throw new InvalidMcqSeedException(resourcePath,
+                throw new InvalidMcqSeedException(resourcePathForError,
                         "topic_slug mismatch: expected " + topicSlug + " got " + seed.topicSlug());
             }
             return upsertOptions(categoryPath, seed);
         } catch (IOException e) {
-            throw new InvalidMcqSeedException(resourcePath, e.getMessage());
+            throw new InvalidMcqSeedException(resourcePathForError, e.getMessage());
         }
     }
 
