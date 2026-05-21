@@ -63,6 +63,25 @@ public class QuestionRepository {
     }
 
     /**
+     * Возвращает id вопроса по топику и порядковому номеру (как в `## Q<N>` заголовке).
+     * Конвенция slug-а: `<file_path>#Q<number>`, где file_path строится на основе topic + ".md".
+     *
+     * @param topic   тема (например, {@code "databases/elasticsearch-interview"})
+     * @param qNumber номер вопроса (например, 5)
+     * @return Optional с id вопроса, или пустой, если не найден
+     */
+    public Optional<Long> findIdByTopicAndQuestionNumber(String topic, int qNumber) {
+        // Slug pattern: <topic>.md#Q<qNumber>
+        // e.g. "databases/elasticsearch-interview.md#Q5"
+        String slug = topic + ".md#Q" + qNumber;
+        return jdbcTemplate.query(
+                "SELECT id FROM questions WHERE slug = ?",
+                (rs, rowNum) -> rs.getLong("id"),
+                slug
+        ).stream().findFirst();
+    }
+
+    /**
      * Находит вопрос по ID.
      *
      * @param id идентификатор вопроса
