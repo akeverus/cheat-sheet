@@ -1,0 +1,965 @@
+{
+  "topic_slug": "algorithms-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каким должен быть первый шаг при ответе на алгоритмическую задачу на собеседовании?",
+          "options": [
+            {
+              "sections": {
+                "explanation": "Уточнение задачи — обязательный первый шаг по канону Cracking the Coding Interview. До написания кода нужно проговорить границы входа (размер `n`, диапазон значений), edge cases (пустой массив, один элемент, дубликаты, отрицательные числа, переполнение `int`) и формат вывода (один ответ или все валидные). Это превращает абстрактную задачу в формальный контракт и одновременно демонстрирует интервьюеру инженерную дисциплину.",
+                "example": "Получив «найди дубликаты в массиве», уточняем: `n` до 10⁵, значения от `-10⁹` до `10⁹`, возможны коллизии int — значит нужен `HashMap<Integer, Integer>` или сортировка `O(n log n)`. Без уточнения можно случайно взять `boolean[] seen = new boolean[max]` и съесть гигабайты памяти.",
+                "when_to_apply": "Любой live-coding раунд в Google, Meta, Amazon, Yandex — раунд оценивает не только код, но и communication. Senior-уровень обязательно ждёт clarifying-вопросы; junior часто пропускает этот шаг и теряет баллы.",
+                "edge_cases": "Не задавай слишком много вопросов — 2-4 ключевых достаточно. Если интервьюер отвечает «решайте на ваше усмотрение», явно зафиксируй принятое предположение в коде комментарием — это страховка.",
+                "related": "[[algorithms-interview#Q2]] чек-лист первых 30 секунд; [[algorithms-interview#Q16]] стратегия подготовки."
+              },
+              "label": "A",
+              "text": "Уточнить ограничения, типы данных и edge cases, прежде чем писать код.",
+              "correct": true,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Сразу писать оптимальное решение опасно: без понимания задачи легко решить не ту, а если решение не сложилось, кандидат тратит молчаливые минуты и интервьюер не видит ход мысли. Brute force, проговорённый вслух, лучше молчания.",
+                "source_of_confusion": "Кажется, что демонстрация эрудиции = выбор «правильного» паттерна сразу. Но коммуникация и итерация ценятся выше готового шаблона.",
+                "if_it_were_true": "Интервьюер не имел бы возможности оценить процесс мышления — а именно его оценивают на FAANG. Кандидаты, выдающие «оптимальный ответ» без объяснения, регулярно проваливают раунды.",
+                "how_it_should_be": "Сначала уточнить условия, затем озвучить brute force, потом оптимизировать — это даёт сигналы для оценки во всех чек-боксах."
+              },
+              "label": "B",
+              "text": "Сразу написать самый оптимальный алгоритм, какой приходит в голову, и проговорить только результат.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Псевдокод без понимания задачи легко уходит мимо требований. Псевдокод полезен как промежуточный шаг после уточнения и обсуждения подхода, а не как первый шаг.",
+                "source_of_confusion": "В академических курсах учат сначала формализовать решение псевдокодом. Но академический мир оторван от диалога с интервьюером, где роль формализации играет уточнение требований.",
+                "if_it_were_true": "Кандидат потратил бы 10 минут на псевдокод задачи, которую неправильно понял (например, искал все пары вместо одной), и пришлось бы переписывать с нуля.",
+                "how_it_should_be": "Псевдокод — инструмент третьего-четвёртого шага: уточнение → brute force → псевдокод оптимизации → код."
+              },
+              "label": "C",
+              "text": "Написать подробный псевдокод решения в комментариях, не задавая вопросов.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Поиск похожей задачи на LeetCode во время интервью невозможен (или прямо запрещён). Память на конкретные задачи менее ценна, чем владение паттернами: Two Pointers, Sliding Window, Binary Search, DFS/BFS, DP.",
+                "source_of_confusion": "Многие готовятся через grinding 300+ задач и думают, что цель — узнать задачу. На деле интервьюер часто рандомизирует условие именно чтобы исключить узнавание.",
+                "if_it_were_true": "Подготовка свелась бы к запоминанию — но реальные интервью FAANG и big tech намеренно избегают популярных задач или модифицируют их (изменили вход, добавили constraint), чтобы узнавание не работало.",
+                "how_it_should_be": "Учить паттерны, а не задачи: одного владения Two Pointers достаточно, чтобы решить десятки задач семейства."
+              },
+              "label": "D",
+              "text": "Мысленно перебрать похожие задачи с LeetCode и применить готовое решение по памяти.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое из утверждений про clarifying-вопросы в первые 30 секунд интервью верно?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "«Какой худший случай работы алгоритма?» — вопрос к решению, а не к задаче. Его задают после выбора подхода, а не на этапе уточнения требований. На clarifying-этапе спрашивают про вход: размер, диапазон, дубликаты, ordering, мутабельность.",
+                "source_of_confusion": "Worst-case анализ — частый блок интервью, и кандидат хочет показать знание Big O сразу. Но порядок шагов важен: сначала задача, потом решение, потом анализ.",
+                "if_it_were_true": "Анализ сложности до выбора алгоритма был бы бессмысленным — нельзя оценить worst case того, что ещё не выбрано.",
+                "how_it_should_be": "В первые 30 секунд спрашиваем про вход (размер, типы, edge cases); worst case обсуждаем после реализации."
+              },
+              "label": "A",
+              "text": "Спросить, какой худший случай работы алгоритма допустим по времени.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Размер входа `n` определяет допустимую сложность: при `n ≤ 20` подойдёт даже `O(2ⁿ)` backtracking; при `n ≤ 10⁴` нужен `O(n²)`; при `n ≤ 10⁶` обязателен `O(n log n)` или `O(n)`. Возможность дубликатов меняет логику (Two Sum vs Three Sum), и наличие сортировки открывает Binary Search / Two Pointers. Эти три параметра — `n`, дубликаты, ordering — определяют половину выбора алгоритма.",
+                "example": "На задачу Two Sum с `n=10⁹` решение через HashMap (`O(n)` time, `O(n)` space) не пройдёт по памяти — нужно `Long.MAX_VALUE / 2` байт. Уточнение размера сразу подсказало бы, что нужен два-проходный алгоритм с external sort и Two Pointers.",
+                "when_to_apply": "На любом whiteboard-раунде в FAANG, Yandex, Avito, T-Bank — clarifying-вопросы оцениваются явно в rubric. Senior-кандидата без них могут «зарубить» даже при идеальном коде.",
+                "edge_cases": "Если интервьюер сам даёт ограничения в условии — не повторяй их вопросом, а проговори вслух, что ты их учёл. Это та же демонстрация дисциплины, но без раздражающего «уточнения уже сказанного».",
+                "related": "[[algorithms-interview#Q1]] шаблон ответа; [[algorithms-interview#Q7]] классы сложности; [[algorithms-interview#Q15]] выбор алгоритма."
+              },
+              "label": "B",
+              "text": "Уточнить размер входа, возможность дубликатов и упорядоченность данных.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Можно ли подключить внешнюю библиотеку — не clarifying-вопрос к задаче. Обычно интервьюер ожидает реализацию с нуля или ограничивает разрешённые библиотеки (только стандартный JDK). В Google/Meta whiteboard-раундах библиотеки чаще запрещены.",
+                "source_of_confusion": "В работе мы привыкли тянуть Guava/Apache Commons на любую утилитарную операцию. В интервью же оценивают понимание алгоритма, а не умение найти библиотеку.",
+                "if_it_were_true": "Интервью свелось бы к «знаете ли вы, где в Guava функция Lists.partition» — это не оценка алгоритмического мышления.",
+                "how_it_should_be": "Спрашивать про задачу, а не про инструменты. В худшем случае уточнить «могу ли я использовать `Arrays.sort()`?» — это про доступные примитивы, а не про задачу."
+              },
+              "label": "C",
+              "text": "Спросить, можно ли подключить внешнюю библиотеку для ускорения решения.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Whiteboard и язык программирования согласуют до начала интервью, не в первые 30 секунд задачи. Этот вопрос — про logistics, а не про требования к решению.",
+                "source_of_confusion": "Кандидат волнуется и старается прояснить любую неопределённость. Но logistics уже зафиксированы в письме о раунде.",
+                "if_it_were_true": "Тратятся ценные секунды на бытовое вместо алгоритмического. Интервьюер не получает сигнала об инженерной дисциплине.",
+                "how_it_should_be": "Logistics проясняем заранее по email/чату. На задаче спрашиваем про данные и edge cases."
+              },
+              "label": "D",
+              "text": "Согласовать, будет ли whiteboard или IDE, и какой язык программирования.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая парадигма решения подходит для задач с перекрывающимися подзадачами и поиском оптимума?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Greedy не подходит: он делает локально оптимальный выбор без сохранения промежуточных результатов и не справляется, когда подзадачи перекрываются и требуется глобальный оптимум. Classic counterexample — Coin Change с номиналами `{1, 3, 4}` для суммы `6`: greedy даст `4+1+1=3 монеты`, оптимум `3+3=2 монеты`.",
+                "source_of_confusion": "Greedy и DP оба ищут оптимум, и студенты путают их по этому признаку. Различие — наличие overlapping subproblems и optimal substructure.",
+                "if_it_were_true": "Если бы greedy работал на любой задаче с оптимумом, не существовало бы Bellman optimality principle и всей DP-теории.",
+                "how_it_should_be": "Greedy применим, только если есть greedy choice property и matroid-структура; иначе нужен DP."
+              },
+              "label": "A",
+              "text": "Greedy — он всегда находит глобальный оптимум через локально оптимальные выборы.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Divide and Conquer разбивает задачу на независимые подзадачи, решает их рекурсивно и комбинирует. Independent — ключевое: если подзадачи перекрываются, наивный D&C даст экспоненциальную сложность (Naive Fibonacci `O(2ⁿ)`).",
+                "source_of_confusion": "D&C и DP оба используют рекурсию и подзадачи; различие — overlapping. Без overlap → D&C; с overlap → DP (D&C + memoization).",
+                "if_it_were_true": "Merge Sort с overlap давал бы `O(n²)` вместо `O(n log n)`. Реально подзадачи в Merge Sort независимы (разные половины), и потому master theorem даёт `O(n log n)`.",
+                "how_it_should_be": "D&C для independent подзадач (Merge Sort, Binary Search, Strassen); DP — для overlap (Knapsack, LCS, Edit Distance)."
+              },
+              "label": "B",
+              "text": "Divide and Conquer — он эффективно работает с перекрывающимися подзадачами через рекурсию.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Dynamic Programming определяется ровно двумя свойствами — **optimal substructure** (оптимум задачи строится из оптимумов подзадач) и **overlapping subproblems** (одни и те же подзадачи встречаются многократно). Memoization (top-down) или tabulation (bottom-up) кэшируют результаты подзадач, превращая экспоненциальное время в полиномиальное. Это даёт `O(n×m)` для Knapsack, LCS, Edit Distance.",
+                "example": "Naive Fibonacci рекурсивно вычисляет `F(n)` за `O(2ⁿ)` — потому что `F(5)` пересчитывается многократно. DP с memo сводит к `O(n)`: каждый `F(k)` считается ровно один раз. На `n=40` это разница между минутами и микросекундами.",
+                "when_to_apply": "Coin Change, 0/1 Knapsack, LCS, LIS, Edit Distance, Stock series, Word Break, бот-задачи на сетке. На LeetCode DP — один из топ-3 чаще всего встречающихся тегов на собеседованиях в Google, Meta, Amazon.",
+                "edge_cases": "DP не панацея: при больших состояниях `n×m×k` (5+ измерений) кэш не помещается в память — нужна state compression или bitmask DP. Перебор всех состояний может быть медленнее меморизованной рекурсии, если только треть состояний реально достижима.",
+                "related": "[[algorithms-interview#Q14]] сравнение Greedy/DP/D&C/Backtracking; [[dynamic-programming-interview#Q1]] определение DP; [[algorithms-interview#Q15]] выбор алгоритма."
+              },
+              "label": "C",
+              "text": "Dynamic Programming — он использует memoization для решения перекрывающихся подзадач и поиска глобального оптимума.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Backtracking ищет все валидные пути или один путь через DFS с откатом. Он не предназначен для оптимизации с overlapping subproblems — это перебор пространства решений с pruning. Сложность экспоненциальная: `O(2ⁿ)` для subsets, `O(n!)` для permutations.",
+                "source_of_confusion": "Backtracking и DP оба используют рекурсию, и backtracking иногда меморизуется (становясь DP). Но базовый backtracking — это перебор, а не DP.",
+                "if_it_were_true": "Backtracking без меморизации на Coin Change давал бы `O(coins^amount)` — для `amount=100, coins=10` это нереально. С DP — `O(coins × amount)`.",
+                "how_it_should_be": "Backtracking — для генерации (subsets, permutations, N-Queens, Sudoku). Для оптимизации с overlap → DP."
+              },
+              "label": "D",
+              "text": "Backtracking — он перебирает все варианты с откатом и находит оптимум за полиномиальное время.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая структура данных лучше всего подходит для подсчёта частот элементов в неотсортированном массиве?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`TreeMap<T, Integer>` тоже работает, но даёт `O(log n)` на put/get вместо `O(1)`. Для подсчёта частот ordering не нужен — TreeMap избыточен и даёт `n log n` вместо `n`.",
+                "source_of_confusion": "Студенты выбирают TreeMap по привычке «упорядоченная коллекция = безопаснее», но для частот порядок не требуется.",
+                "if_it_were_true": "На `n=10⁶` подсчёт частот через TreeMap занимает ~`6×10⁶` операций сравнения вместо `~10⁶` hash-вычислений. На горячем пути это 5-10x slowdown.",
+                "how_it_should_be": "TreeMap применять, когда нужен ordered traversal или `firstKey/lastKey/floorKey/ceilingKey`. Для частот — HashMap."
+              },
+              "label": "A",
+              "text": "`TreeMap<T, Integer>` — он гарантирует упорядоченность ключей и быстрый доступ.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`ArrayList<T>` не даёт быстрого поиска: `contains()` и `indexOf()` за `O(n)`. Подсчёт через ArrayList требует `O(n²)`: для каждого элемента — линейный поиск.",
+                "source_of_confusion": "ArrayList — самая знакомая коллекция, и студенты переносят её на задачу подсчёта по инерции.",
+                "if_it_were_true": "На `n=10⁵` подсчёт через ArrayList занимает `10¹⁰` операций — около часа. С HashMap — миллисекунды.",
+                "how_it_should_be": "ArrayList — для последовательного доступа по индексу. Для lookup и подсчёта — HashMap/HashSet."
+              },
+              "label": "B",
+              "text": "`ArrayList<T>` — он экономит память и даёт быстрый последовательный доступ.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "`HashMap<T, Integer>` даёт `O(1)` среднюю стоимость операций `put`, `get`, `containsKey`, что превращает подсчёт частот в `O(n)` time + `O(n)` space. Идиома `map.merge(key, 1, Integer::sum)` лаконично инкрементирует счётчик. Worst case `O(log n)` после Java 8 treeification при коллизиях, но на нормальных hash-функциях практически недостижим.",
+                "example": "Подсчёт частоты слов в логе на 100M строк: `Map<String, Long> freq = lines.stream().collect(Collectors.groupingBy(identity(), counting()))` — `O(n)` time. Альтернатива через `merge` без stream API одинаково быстра и часто читаемее.",
+                "when_to_apply": "Топ-K элементов (`HashMap + PriorityQueue`), детекция дубликатов (`HashMap.containsKey`), Two Sum через дополнение `target - x`, реализация Bag/Multiset. На LeetCode HashMap — топ-1 структура по частоте использования.",
+                "edge_cases": "При user-controlled ключах есть HashDoS-риск (CVE-2011-4838) — Java 8 защищает treeification до `O(log n)`. Для конкурентного доступа используем `ConcurrentHashMap`. Если ключ — `int` в небольшом диапазоне, `int[]` быстрее HashMap из-за отсутствия boxing.",
+                "related": "[[algorithms-interview#Q5]] сложности коллекций; [[algorithms-interview#Q6]] выбор collection; [[hash-tables-interview#Q1]] HashMap внутри."
+              },
+              "label": "C",
+              "text": "`HashMap<T, Integer>` — он даёт `O(1)` среднюю стоимость инкремента счётчика по ключу.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`PriorityQueue` отдаёт min/max за `O(log n)`, но не поддерживает быстрый поиск по ключу — `contains()` за `O(n)`. Для подсчёта частот придётся всё равно использовать HashMap, а PriorityQueue — только для финального top-K.",
+                "source_of_confusion": "PriorityQueue ассоциируется с «сортировкой на лету», и кажется, что она поможет посчитать частоты в порядке убывания. Но сначала нужно посчитать, потом отсортировать.",
+                "if_it_were_true": "PriorityQueue стала бы универсальной structures of choice — но в JDK она не покрывает map-семантику (key → value).",
+                "how_it_should_be": "Сначала HashMap для подсчёта, потом PriorityQueue для top-K по count."
+              },
+              "label": "D",
+              "text": "`PriorityQueue<T>` — она автоматически сортирует элементы по частоте.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая сложность у операции `get(index)` в `LinkedList` в Java?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`O(1)` — у `ArrayList`, потому что внутри `Object[]`. У `LinkedList` `get(index)` идёт по узлам последовательно, что даёт `O(n)`.",
+                "source_of_confusion": "Слово «list» в обоих именах сбивает: студенты думают, что любой `List.get(i)` константен. Но `List` — интерфейс с разными гарантиями у реализаций.",
+                "if_it_were_true": "LinkedList был бы универсальным выбором для всех случаев — но реальная константа на `get(i)` так велика, что ArrayList даже на add/remove в середине часто быстрее (cache locality).",
+                "how_it_should_be": "ArrayList — `O(1)` get; LinkedList — `O(1)` add/remove с ссылкой на узел, `O(n)` get/set по индексу."
+              },
+              "label": "A",
+              "text": "`O(1)` — `LinkedList` хранит элементы в массиве, индексация даёт прямой доступ.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "`LinkedList` в Java — это doubly-linked list. `get(index)` начинает с `head` или `tail` (выбирает ближайший конец оптимизацией `if (index < size/2)`) и идёт по `next`/`prev` ссылкам, что даёт `O(n)` в худшем случае. Эта характеристика принципиально отличает LinkedList от ArrayList и часто становится причиной production-замедлений, когда LinkedList выбран «по привычке».",
+                "example": "Итерация `for (int i = 0; i < list.size(); i++) list.get(i)` по LinkedList даёт `O(n²)` — на `n=10⁵` это `10¹⁰` операций. Используем `for-each` (внутри Iterator идёт по ссылкам) для `O(n)`, либо ArrayList изначально.",
+                "when_to_apply": "LinkedList выбираем, когда нужен `O(1)` add/remove в середине **с уже имеющейся ссылкой на узел** — типично в реализации LRU Cache (`LinkedHashMap` под капотом использует именно doubly-linked list). Если доступ по индексу — ArrayList всегда лучше.",
+                "edge_cases": "Joshua Bloch (автор Java Collections) публично говорил, что почти не использует LinkedList в production. Cache locality ArrayList перекрывает теоретический O(n) на сдвиге элементов до `n ~ 1000`. Реально LinkedList оправдан очень редко.",
+                "related": "[[algorithms-interview#Q6]] выбор collection; [[linked-lists-interview#Q1]] устройство LinkedList; [[hash-tables-interview#Q12]] LinkedHashMap."
+              },
+              "label": "B",
+              "text": "`O(n)` — `LinkedList` хранит элементы в узлах со ссылками, доступ по индексу требует обхода.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`O(log n)` — это сложность для сбалансированных деревьев (TreeMap, TreeSet, AVL). LinkedList не является деревом, у него линейная топология.",
+                "source_of_confusion": "Студенты иногда путают `LinkedList` со skip list (где `O(log n)` поиск через многоуровневые ссылки). Skip List и LinkedList — разные структуры.",
+                "if_it_were_true": "LinkedList был бы конкурентом TreeMap для упорядоченных коллекций — но порядок в LinkedList только insertion order, без сортировки.",
+                "how_it_should_be": "`O(log n)` — TreeMap, TreeSet, ConcurrentSkipListMap; `O(n)` — LinkedList.get(i)."
+              },
+              "label": "C",
+              "text": "`O(log n)` — `LinkedList` использует сбалансированное дерево для индексации.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`O(1)` амортизированно — это сложность `ArrayList.add(end)` или `HashMap.put`. У `LinkedList.get(i)` нет амортизации: каждый вызов отдельно `O(n)`.",
+                "source_of_confusion": "Амортизированный анализ — модная тема, и студенты переносят её на любые операции коллекций. Но амортизация имеет смысл только при повторяющихся операциях с дешёвыми / редкими дорогими.",
+                "if_it_were_true": "Существовала бы хитрая стратегия кэширования последнего доступа — её нет в `java.util.LinkedList`.",
+                "how_it_should_be": "Амортизированное `O(1)` — ArrayList.add(), HashMap.put(). `O(n)` — LinkedList.get(i) без амортизации."
+              },
+              "label": "D",
+              "text": "`O(1)` амортизированно — `LinkedList` кэширует последний доступ для быстрого повторного обращения.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую коллекцию выбрать для реализации стека в новом коде на Java?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`java.util.Stack` — устаревший класс, наследник `Vector`. Все методы синхронизированы (synchronized), что даёт overhead в single-threaded коде. Javadoc явно рекомендует использовать `Deque` (а именно `ArrayDeque`) вместо Stack для новых разработок.",
+                "source_of_confusion": "Имя `Stack` интуитивно подсказывает «класс для стека». Но это legacy с Java 1.0, оставленный для backward compatibility.",
+                "if_it_were_true": "Контрибьюторы JDK не помечали бы Stack как «consider using Deque» — но именно эта рекомендация написана в Javadoc.",
+                "how_it_should_be": "В production-коде ArrayDeque вместо Stack. В legacy-коде trade-off: рефакторинг на ArrayDeque vs совместимость."
+              },
+              "label": "A",
+              "text": "`java.util.Stack` — он специально создан для стека и оптимизирован для LIFO-операций.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "`LinkedList` реализует `Deque`, но `ArrayDeque` быстрее в большинстве сценариев: cache locality, меньше allocation overhead (не создаёт объект-узел на каждый элемент). Effective Java (Joshua Bloch) явно рекомендует ArrayDeque.",
+                "source_of_confusion": "LinkedList «звучит правильно» для стека: каждый push — новый узел во главу. Но cache miss на каждом push делает практическую производительность хуже ArrayDeque.",
+                "if_it_were_true": "Бенчмарки JMH показывали бы LinkedList выигрывающим — на деле ArrayDeque стабильно быстрее в 2-3x на push/pop heavy workload.",
+                "how_it_should_be": "ArrayDeque — default для Deque/Stack/Queue. LinkedList — только если нужны explicit ссылки на узлы (LRU custom)."
+              },
+              "label": "B",
+              "text": "`LinkedList` — он даёт `O(1)` push/pop через ссылки на head и tail.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "`ArrayDeque` — рекомендованный default для Stack/Queue/Deque в современной Java. Внутри — циклический массив с `O(1)` амортизированной стоимостью push/pop с обоих концов. Не синхронизирован (быстрее Stack), хорошая cache locality (быстрее LinkedList), допускает `null` запрещён (защита от багов). Используется методами `push()`, `pop()`, `peek()` — те же имена, что и у `Stack`.",
+                "example": "Реализация DFS итеративно: `Deque<Node> stack = new ArrayDeque<>(); stack.push(root); while (!stack.isEmpty()) { Node n = stack.pop(); ... for child: stack.push(child); }`. Это идиома топ-50 LeetCode задач (Number of Islands, Valid Parentheses, etc.).",
+                "when_to_apply": "Любой алгоритм с LIFO-семантикой: DFS итеративный, balanced parentheses, monotonic stack, expression evaluation. Также для BFS как очередь (`offer`/`poll`) и для двухсторонней очереди (sliding window maximum через monotonic deque).",
+                "edge_cases": "ArrayDeque не допускает `null` — попытка `push(null)` бросит NullPointerException. Если нужны null-значения, используем LinkedList. ArrayDeque не thread-safe — для конкурентного доступа `ConcurrentLinkedDeque`.",
+                "related": "[[algorithms-interview#Q5]] сложности коллекций; [[stacks-queues-interview#Q1]] Stack vs ArrayDeque; [[two-pointers-sliding-window-interview#Q12]] monotonic deque."
+              },
+              "label": "C",
+              "text": "`ArrayDeque` — он не синхронизирован, имеет хорошую cache locality и явно рекомендован Effective Java.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`ArrayList` — это список с произвольным доступом по индексу, а не стек. Можно эмулировать стек через `add(end)`/`remove(end)`, но Object[] сдвиг при insertion не нужен — и нет API `push/pop/peek`. Стилистически плохо.",
+                "source_of_confusion": "ArrayList — самая знакомая коллекция, и студенты считают, что она универсальна. Но семантика стека требует Deque API.",
+                "if_it_were_true": "Любая коллекция была бы взаимозаменяема — но семантика типа (Stack vs List) имеет значение для читаемости кода: `stack.push()` яснее, чем `list.add()`.",
+                "how_it_should_be": "Используем тип, отражающий семантику: Deque/ArrayDeque для стека/очереди, List/ArrayList для индексируемой коллекции."
+              },
+              "label": "D",
+              "text": "`ArrayList` — он даёт амортизированное `O(1)` на добавление в конец и работает как стек.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Алгоритм должен обработать `n=10⁶` элементов за 1 секунду. Какая максимальная допустимая сложность?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "`O(n²)` на `n=10⁶` даёт `10¹²` операций. CPU обрабатывает ~`10⁸-10⁹` операций в секунду — итого минимум 10³ секунд (~17 минут). Это категорически не укладывается в 1 секунду.",
+                "source_of_confusion": "Студенты помнят, что `O(n²)` «работает на собеседовании», и переносят это на любой `n`. Но `O(n²)` работает только до `n ~ 10⁴`.",
+                "if_it_were_true": "Bubble Sort на 1M элементов завершился бы за секунду — реально он работает часы.",
+                "how_it_should_be": "Считай произведение: `n × ожидаемая сложность × константа` должно быть `< 10⁸-10⁹`."
+              },
+              "label": "A",
+              "text": "`O(n²)` — квадратичная сложность приемлема для большинства задач.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Правило большого пальца: современный CPU выполняет ~`10⁸-10⁹` простых операций в секунду. `O(n log n)` на `n=10⁶` даёт `10⁶ × 20 ≈ 2×10⁷` операций — спокойно укладывается в 1 секунду с запасом. Это сложность Merge Sort, Quick Sort, Heap Sort, и `O(n log n)` — компромисс «безопасно для большинства задач интервью».",
+                "example": "Сортировка 1M записей через `Arrays.sort()` в Java занимает 100-300ms на современном Intel/AMD CPU — внутри Dual-Pivot Quick Sort. Это `O(n log n)` с малой константой и хорошей cache locality.",
+                "when_to_apply": "Когда задача допускает сортировку или построение сбалансированного дерева; задачи поиска K-th smallest, merge K lists, top-K элементов через heap, Closest Pair через D&C.",
+                "edge_cases": "`O(n log n)` имеет большую константу из-за рекурсивных вызовов и аллокаций. На `n < 100` insertion sort `O(n²)` часто быстрее — поэтому TimSort переключается на insertion для маленьких частей. Worst case Quick Sort `O(n²)` на adversarial input — Java использует Dual-Pivot с random/median-of-three для защиты.",
+                "related": "[[algorithms-interview#Q1]] шаблон ответа; [[algorithms-interview#Q5]] сложности структур; [[complexity-analysis-interview#Q1]] Big O."
+              },
+              "label": "B",
+              "text": "`O(n log n)` — на `10⁶` это около `2×10⁷` операций, что укладывается в 1 секунду.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "`O(2ⁿ)` на `n=10⁶` — число с 300’000 знаков. Это не вычислимо никаким способом и за вселенную с её атомами.",
+                "source_of_confusion": "Студенты иногда видят `O(2ⁿ)` в контексте subset generation и думают, что «n маленькое». Но `n` ограничен 20-25 для `O(2ⁿ)`.",
+                "if_it_were_true": "Backtracking на subsets для `n=10⁶` завершился бы — реально лимит `n ~ 20`.",
+                "how_it_should_be": "`O(2ⁿ)` допустим только для `n ≤ 20-25`; для бóльших `n` нужна оптимизация через DP или bitmask."
+              },
+              "label": "C",
+              "text": "`O(2ⁿ)` — экспоненциальная сложность приемлема для перебора всех подмножеств.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "`O(n!)` для `n=10⁶` — `(10⁶)!` — астрономическое число (~`5×10⁵⁶⁵⁵⁷⁵²`). Применимо только для `n ≤ 10-11` при разумных временных рамках.",
+                "source_of_confusion": "`O(n!)` появляется в задачах permutations, и студенты путают «маленькое n» с «любое n».",
+                "if_it_were_true": "Travelling Salesman через brute force `O(n!)` решался бы за миллион городов — реально брутфорс не работает уже на 15.",
+                "how_it_should_be": "`O(n!)` — только для `n ≤ 10-11`; для больших нужны branch-and-bound, DP по подмножествам (Held-Karp `O(n²·2ⁿ)`)."
+              },
+              "label": "D",
+              "text": "`O(n!)` — факториальная сложность универсальна для большинства комбинаторных задач.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем структурировать раздел `algorithms/` на подкаталоги (complexity, data-structures, sorting-searching, algorithmic-paradigms)?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Подкаталоги — не «визуальная красота», а семантическое разделение по уровню абстракции: complexity — теория измерения, data-structures — контейнеры, sorting-searching — конкретные алгоритмы, algorithmic-paradigms — мета-подходы. Это упрощает поиск и обучение.",
+                "source_of_confusion": "Студенты считают, что плоская структура «проще» — но плоский каталог с 50 файлами теряется при поиске глазами.",
+                "if_it_were_true": "Все 17 файлов в корне `algorithms/` создавали бы когнитивный overload при навигации.",
+                "how_it_should_be": "Структурируем по mental model: сначала foundations (complexity), потом building blocks (data-structures), потом manipulations (sorting/searching), потом meta (paradigms)."
+              },
+              "label": "A",
+              "text": "Чтобы каталоги выглядели аккуратно в IDE — это вопрос исключительно визуальной организации.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Git не накладывает технических ограничений на число файлов в каталоге — производительность сохраняется до тысяч файлов. Структура диктуется семантикой, не Git.",
+                "source_of_confusion": "Студенты могли слышать про лимиты файловых систем (32K в FAT32, ~10K в ext3 без htree) и переносят это на современные VCS.",
+                "if_it_were_true": "Project с моно-репо подходом (Google, Facebook) с миллионами файлов в одном Git не работал бы. Реально Git масштабируется хорошо.",
+                "how_it_should_be": "Структурируем по доменной семантике, а не по техническим лимитам Git."
+              },
+              "label": "B",
+              "text": "Git не работает эффективно с большим количеством файлов в одном каталоге, нужно разделить.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Разделение по подкаталогам отражает педагогическую иерархию: `complexity/` (как измерять алгоритмы) — фундамент перед всем; `data-structures/` (контейнеры) — building blocks; `sorting-searching/` (классические алгоритмы на массивах) — applications структур; `algorithmic-paradigms/` (D&C, DP, Greedy, Backtracking) — мета-подходы. Эта иерархия совпадает с порядком изучения и упрощает навигацию для готовящихся к собеседованию.",
+                "example": "Кандидат, готовящийся к интервью, идёт по порядку: complexity → arrays/strings → hash tables → two-pointers → searching/sorting → trees/graphs → DP. Каталог отражает этот roadmap и подсказывает, какие темы относятся к одному уровню абстракции.",
+                "when_to_apply": "При проектировании любой knowledge base или учебного материала: разделяй темы по уровню абстракции и роли (foundation, building block, application, meta). Это улучшает discovery и обучение.",
+                "edge_cases": "Граница между подкаталогами иногда нечёткая: `Binary Search` относится к searching, но и к D&C парадигме — мы выбираем основную классификацию по самому распространённому контексту изучения.",
+                "related": "[[algorithms-interview#Q9]] порядок изучения; [[algorithms-interview#Q10]] complexity; [[algorithms-interview#Q11]] data-structures."
+              },
+              "label": "C",
+              "text": "Разделение отражает уровень абстракции — теория сложности, контейнеры, алгоритмы, парадигмы — и упрощает навигацию.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Тесты не привязаны к структуре документации шпаргалок. Они располагаются в отдельной директории (`src/test/...`) и не связаны с организацией контента.",
+                "source_of_confusion": "Студенты могут переносить convention из Maven/Gradle проектов («test followtest structure of main») на документацию.",
+                "if_it_were_true": "Папка `cheatsheets/` содержала бы тесты — но это документация, не код.",
+                "how_it_should_be": "Cheatsheets — учебный материал; организация диктуется педагогикой, не тестовой архитектурой."
+              },
+              "label": "D",
+              "text": "Подкаталоги соответствуют папкам с тестами и упрощают связь документации с unit-tests.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "С чего начать изучение алгоритмов, если есть базовое программирование, но нет глубокой подготовки?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Сразу решать LeetCode без понимания Big O — путь к узнаванию задач без понимания. Кандидат «решает» 200 задач, но не может оценить сложность своего решения и не знает, какой подход применить к новой задаче.",
+                "source_of_confusion": "Grinding LeetCode популярен в соцсетях, и кажется, что это панацея. Но без фундамента это запоминание без переноса знаний.",
+                "if_it_were_true": "Кандидаты с 500 решёнными задачами проходили бы интервью на 100% — реально провал-rate высокий именно из-за отсутствия фундамента.",
+                "how_it_should_be": "Сначала освоить Big O и базовые структуры, потом решать задачи с фокусом на паттернах."
+              },
+              "label": "A",
+              "text": "Сразу решать 200 задач на LeetCode — практика важнее теории.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Big O / анализ сложности — фундамент алгоритмов. Без него нельзя сравнивать решения, обосновывать выбор и понимать, почему `O(n log n)` лучше `O(n²)`. После complexity идут массивы/строки (основа большинства задач), хеш-таблицы (топ-1 структура), Two Pointers / Sliding Window (снижение `O(n²) → O(n)`), Binary Search, рекурсия, деревья/графы, DP/Greedy. Этот порядок повторяет path из топ-курсов (Princeton Algorithms, MIT 6.006).",
+                "example": "Кандидат после освоения complexity видит задачу «Subarray sum equals K» и сразу думает: «brute force `O(n²)` через два цикла, оптимизация через prefix sum + HashMap `O(n)`». Без complexity-фундамента он бы написал `O(n²)` и не заметил TLE.",
+                "when_to_apply": "Любой кандидат на middle+ позицию должен пройти этот roadmap. Senior — глубже копать в DP, графы, advanced data structures (Segment Tree, Fenwick). Junior — закрепить foundations.",
+                "edge_cases": "Roadmap — это направление, не догма. Если задачи по DP блокируют прогресс, можно временно перейти к графам и вернуться. Главное — последовательно закрывать gap'ы, не пропуская complexity.",
+                "related": "[[algorithms-interview#Q16]] стратегия подготовки; [[algorithms-interview#Q10]] complexity; [[algorithms-interview#Q7]] классы сложности."
+              },
+              "label": "B",
+              "text": "Освоить анализ сложности (Big O), затем массивы/строки, хеш-таблицы, Two Pointers, и далее по roadmap.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Начинать с advanced топиков (Segment Tree, Suffix Automaton, Heavy-Light Decomposition) без foundations — путь к фрустрации. Эти темы редко встречаются на обычных интервью и требуют прочной базы.",
+                "source_of_confusion": "Студенты Codeforces могут переоценивать важность competitive-программирования для индустриальных интервью.",
+                "if_it_were_true": "Каждый middle-разработчик владел бы Segment Tree — реально на интервью эти структуры почти не спрашивают.",
+                "how_it_should_be": "Сначала foundations (complexity, arrays, hash maps), advanced — после прочной базы и под конкретные задачи."
+              },
+              "label": "C",
+              "text": "Начать с advanced топиков (Segment Tree, Suffix Array, Persistent Data Structures) для глубокого понимания.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Читать CLRS от корки до корки — академически правильно, но медленно: 1300 страниц с математическими доказательствами. Для индустриального интервью нужны паттерны и практика, а не полное mathematical understanding.",
+                "source_of_confusion": "CLRS — авторитетный учебник, и студенты считают «прочитать его = выучить алгоритмы». Но прочесть и применить — разные навыки.",
+                "if_it_were_true": "Шесть месяцев чтения CLRS гарантировали бы offer — но без практических задач навык остаётся теоретическим.",
+                "how_it_should_be": "CLRS — справочник для глубоких тем; для интервью — focused roadmap + LeetCode practice."
+              },
+              "label": "D",
+              "text": "Прочитать CLRS (Introduction to Algorithms) от корки до корки за полгода до собеседования.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что включает в себя тема «Анализ сложности» (`complexity/`) в контексте подготовки к интервью?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Big O — только одна из нотаций. Полный анализ требует также Omega (нижняя граница), Theta (точная граница), пространственной сложности, амортизированного анализа и понимания master theorem для D&C.",
+                "source_of_confusion": "В индустрии говорят «Big O» обобщённо, и студенты думают, что других нотаций не существует.",
+                "if_it_were_true": "Анализ Quick Sort через одну только `O(n²)` worst case упускал бы средний `Θ(n log n)` — теряется важная характеристика.",
+                "how_it_should_be": "Знать все три нотации (O, Ω, Θ), space complexity, амортизацию и master theorem."
+              },
+              "label": "A",
+              "text": "Только Big O нотация и сложности базовых операций — этого достаточно для интервью.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "`complexity/complexity-analysis-interview.md` покрывает: Big O / Omega / Theta нотации, лучший/средний/худший случай, амортизированный анализ (ArrayList.add, HashMap.put), пространственная сложность, master theorem для D&C, recursion tree analysis, конкретные сложности Java Collections, специфика HashMap.get `O(log n)` worst case с Java 8+ (treeification), complexity attacks (HashDoS), Stirling approximation для n!. Это полный набор для middle-senior интервью.",
+                "example": "На вопрос «какая сложность `Arrays.sort(int[])` в Java?» полный ответ: avg `O(n log n)` (Dual-Pivot Quick Sort), worst `O(n²)` теоретически возможен на adversarial input, в практике защищён randomization. Без знания master theorem кандидат не объяснит происхождение `n log n`.",
+                "when_to_apply": "На каждом алгоритмическом раунде; при оценке выбора алгоритма; при объяснении trade-offs; при защите архитектурного решения с упоминанием SLA / latency / throughput.",
+                "edge_cases": "Big O игнорирует константы — но в реальности TimSort быстрее Heap Sort с тем же `O(n log n)`. На собеседовании важно упомянуть Big O как верхнюю границу + конкретные константные различия.",
+                "related": "[[complexity-analysis-interview#Q1]] Big O; [[complexity-analysis-interview#Q3]] нотации; [[complexity-analysis-interview#Q14]] HashMap worst case."
+              },
+              "label": "B",
+              "text": "Big O / Omega / Theta нотации, амортизированный анализ, master theorem, сложности Java Collections и complexity attacks.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Анализ сложности — это математическая абстракция роста функции, не measurement производительности. JMH и benchmarking — отдельная тема (performance engineering), часто за пределами алгоритмического интервью.",
+                "source_of_confusion": "В работе мы часто benchmark'им код через JMH, и кажется, что это и есть «анализ сложности». Но это разные уровни абстракции.",
+                "if_it_were_true": "Можно было бы не учить Big O — но без него нельзя предсказать поведение при росте `n`.",
+                "how_it_should_be": "Complexity analysis — теоретический фундамент; JMH benchmarking — дополнение для performance-critical кода."
+              },
+              "label": "C",
+              "text": "Бенчмарки JMH и измерение реального времени выполнения через `System.nanoTime()`.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Профилирование и анализ heap dumps — операционная задача (production debugging), а не алгоритмический анализ. Это разные инструменты для разных целей.",
+                "source_of_confusion": "Memory profiling и space complexity звучат похоже. Но space complexity — теоретическая характеристика, profiling — runtime измерение.",
+                "if_it_were_true": "Кандидат, владеющий JProfiler, проходил бы алгоритмическое интервью — реально это два разных набора навыков.",
+                "how_it_should_be": "Complexity — теория; profiling — практика runtime. Оба полезны, но не взаимозаменяемы."
+              },
+              "label": "D",
+              "text": "Профилирование JVM heap dumps и анализ allocation rate через JProfiler.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие структуры данных входят в подраздел `data-structures/` шпаргалок по алгоритмам?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Только массивы и связные списки — это устаревший набор. Современный алгоритмический интервью требует широкого спектра структур, особенно HashMap (топ-1 по частоте), деревья и графы.",
+                "source_of_confusion": "Студенты могут начать с этих двух и думать, что покрыли тему. Но даже базовое FAANG интервью без HashMap не обойдётся.",
+                "if_it_were_true": "Кандидат завалил бы 70% задач на FAANG, где почти всегда нужны хеш-таблицы или деревья.",
+                "how_it_should_be": "Полный набор: arrays/strings, linked lists, stacks/queues, trees, heaps, hash tables, graphs, tries/union-find."
+              },
+              "label": "A",
+              "text": "Только массивы и связные списки — этого достаточно для базового уровня.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "Полный набор структур данных в шпаргалках: arrays/strings (Two Sum, Kadane, KMP), linked lists (Floyd, LRU, K-group), stacks/queues (monotonic, BlockingQueue), trees (BST, AVL, RB, B-Tree, обходы), heaps (PriorityQueue, top-K, median stream), hash tables (HashMap внутри, ConcurrentHashMap), graphs (BFS, DFS, Dijkstra, MST), tries и union-find (autocomplete, Number of Islands). Каждая — отдельный файл с глубоким разбором и кодом.",
+                "example": "На задачу LRU Cache (Top Interview Question) нужны одновременно HashMap (`O(1)` lookup) и Doubly-linked list (`O(1)` move-to-head). Это объединяет 2-3 структуры из подраздела data-structures.",
+                "when_to_apply": "Любая алгоритмическая задача стоит на структурах: выбор правильной коллекции часто важнее выбора алгоритма. Готовясь к интервью, проходим все 8 файлов раздела.",
+                "edge_cases": "Не все структуры одинаково часто спрашивают: arrays/strings и hash tables — топ-1, графы и деревья — топ-2-3, tries и union-find — реже, но для senior-уровня обязательны (autocomplete, social networks).",
+                "related": "[[algorithms-interview#Q5]] сложности структур; [[algorithms-interview#Q6]] выбор collection; [[algorithms-interview#Q9]] порядок изучения."
+              },
+              "label": "B",
+              "text": "Arrays/strings, linked lists, stacks/queues, trees, heaps, hash tables, graphs, tries и union-find.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Persistent data structures, Heavy-Light Decomposition, Suffix Automaton — структуры из competitive programming. На индустриальных интервью FAANG/RU они почти не встречаются.",
+                "source_of_confusion": "Codeforces / TopCoder специалисты могут переоценивать частоту таких тем на индустриальных собеседованиях.",
+                "if_it_were_true": "Все middle разработчики Java знали бы Suffix Automaton — реально это нишевое знание для олимпиадников.",
+                "how_it_should_be": "Сначала классические структуры (arrays через graphs), потом по необходимости advanced (Segment Tree для range queries)."
+              },
+              "label": "C",
+              "text": "Persistent Data Structures, Heavy-Light Decomposition, Suffix Automaton и Treap.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Spring Beans, JPA Entities, Lombok аннотации — это framework-specific темы, не алгоритмические структуры данных. Они в разделе frameworks/.",
+                "source_of_confusion": "Java-разработчики часто используют слово «структура» для DTO/Entity. Но в алгоритмическом контексте структура — это контейнер с определёнными операциями.",
+                "if_it_were_true": "Каталог `data-structures/` содержал бы Spring концепты — но это разные слои абстракции.",
+                "how_it_should_be": "Алгоритмические структуры в data-structures/; framework-specific — в frameworks/."
+              },
+              "label": "D",
+              "text": "Spring Beans, JPA Entities и Lombok аннотации.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой алгоритм используется внутри `Arrays.sort(int[])` в современной Java?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Bubble Sort — учебный алгоритм с `O(n²)` сложностью. Production JDK не использует его — он медленнее на любом `n > 50`.",
+                "source_of_confusion": "Bubble Sort первый встречается в курсах, и студенты помнят имя без понимания, что это не production-выбор.",
+                "if_it_were_true": "`Arrays.sort(int[])` на 1M элементов занимал бы минуты — реально миллисекунды.",
+                "how_it_should_be": "Production-сортировки — TimSort (Object[]) и Dual-Pivot Quick (int[]); Bubble Sort — только для обучения."
+              },
+              "label": "A",
+              "text": "Bubble Sort — простой и эффективный для int[] массивов.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "TimSort используется для `Arrays.sort(Object[])` и `Collections.sort(List)`. Для примитивов `int[]`, `long[]` JDK использует **Dual-Pivot Quick Sort** (Vladimir Yaroslavskiy, 2009). Это разные алгоритмы для разных API.",
+                "source_of_confusion": "TimSort часто называют «алгоритмом Java по умолчанию», и студенты переносят это на все sort-API. Но JDK разделяет primitive и Object пути.",
+                "if_it_were_true": "JDK имел бы одинаковую сортировку для всех типов — но trade-off различается: для Object нужна stability (TimSort стабильный), для primitive — скорость (Dual-Pivot Quick).",
+                "how_it_should_be": "TimSort для Object[] (stability важна, элементы могут быть равными по `equals`); Dual-Pivot Quick для primitive (нет stability вопроса, нужна максимальная скорость)."
+              },
+              "label": "B",
+              "text": "TimSort — гибрид Merge Sort и Insertion Sort, используется для всех типов массивов.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Dual-Pivot Quick Sort (изобретён Vladimir Yaroslavskiy в 2009, оптимизирован для JDK 7+) использует два pivot вместо одного: разбивает массив на три части (< p1, [p1, p2], > p2), что снижает число сравнений и swap'ов. Сложность `O(n log n)` avg, `O(n²)` worst (защита random pivot). На реальных данных быстрее classic Quick Sort на 5-10%. Применяется для `int[]`, `long[]`, `short[]`, `byte[]`, `char[]`, `double[]`, `float[]`.",
+                "example": "Сортировка `int[]` на 1M элементов через `Arrays.sort()`: ~50-100ms на современном CPU. Внутри — `DualPivotQuicksort.sort()` (см. `java.util.DualPivotQuicksort` в JDK source). Для очень маленьких массивов (`< 47`) переключается на insertion sort.",
+                "when_to_apply": "Когда нужна максимальная скорость сортировки primitives без требования stability. Object[] требует другого алгоритма (TimSort), потому что важна stability для compound сравнений.",
+                "edge_cases": "Worst case `O(n²)` теоретически возможен на adversarial input — JDK защищается через random pivot и median-of-three. На отсортированном входе деградации нет благодаря выбору pivot. Не stable — для int это не важно, но для Object нужен TimSort.",
+                "related": "[[algorithms-interview#Q5]] сложности; [[sorting-algorithms-interview#Q1]] Dual-Pivot; [[complexity-analysis-interview#Q24]] Quick Sort worst case."
+              },
+              "label": "C",
+              "text": "Dual-Pivot Quick Sort — оптимизированный вариант Quick Sort с двумя pivot, специально для примитивных типов.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Merge Sort стабильный и гарантирует `O(n log n)` worst case, но требует `O(n)` дополнительной памяти. JDK использует его частично (как fallback в TimSort), но не как основной алгоритм для `int[]`.",
+                "source_of_confusion": "Merge Sort — академически «самый правильный» с гарантированным `O(n log n)` — и студенты предполагают, что JDK выберет его. На деле trade-off памяти и скорости в production предпочитает Quick Sort variants.",
+                "if_it_were_true": "Сортировка 1M элементов аллоцировала бы 4MB временного буфера — overhead вызывал бы GC pause на горячем пути.",
+                "how_it_should_be": "Merge Sort — для Object[] (TimSort = Merge + Insertion); Dual-Pivot Quick — для primitive[]."
+              },
+              "label": "D",
+              "text": "Merge Sort — гарантирует `O(n log n)` worst case и используется для всех типов в JDK.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая алгоритмическая парадигма подходит для генерации всех перестановок строки длины n?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Greedy не подходит для генерации **всех** валидных решений — он находит один локально оптимальный. Перестановки — это перебор полного пространства, а не оптимизация.",
+                "source_of_confusion": "Greedy часто звучит как «правильный выбор», и студенты применяют его универсально. Но для генерации greedy выбирает один путь и теряет остальные.",
+                "if_it_were_true": "Permutations через greedy дали бы 1 результат вместо n! — задача не решена.",
+                "how_it_should_be": "Greedy — для оптимизации с greedy choice property; для генерации всех — Backtracking."
+              },
+              "label": "A",
+              "text": "Greedy — на каждом шаге выбираем локально оптимальную перестановку.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Dynamic Programming строится на overlapping subproblems и optimal substructure. У перестановок нет перекрывающихся подзадач (каждая перестановка уникальна), и нет понятия «оптимума» — нужны все, а не лучшая.",
+                "source_of_confusion": "DP — мощная техника, и студенты думают, что она универсальна. Но DP применим только при overlap + optimum.",
+                "if_it_were_true": "Memoization помогла бы — но кешировать нечего, каждая permutation уникальна.",
+                "how_it_should_be": "DP для оптимизации с overlap; Backtracking для генерации полного пространства."
+              },
+              "label": "B",
+              "text": "Dynamic Programming — мемоизация промежуточных перестановок снижает сложность.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Backtracking — DFS с откатом по пространству решений. Для permutations: фиксируем первый элемент, рекурсивно генерируем permutations оставшихся, откатываемся (swap back), фиксируем следующий. Сложность `O(n × n!)` — n! перестановок, на каждую `O(n)` копирование. Шаблон работает также для subsets (`O(2ⁿ)`), combinations, N-Queens, Sudoku, Word Search.",
+                "example": "Java-код:\n```java\nvoid permute(int[] nums, int start, List<List<Integer>> result) {\n  if (start == nums.length) {\n    result.add(toList(nums));\n    return;\n  }\n  for (int i = start; i < nums.length; i++) {\n    swap(nums, start, i);\n    permute(nums, start + 1, result);\n    swap(nums, start, i); // откат\n  }\n}\n```\nЭто LeetCode 46 Permutations — classic backtracking template.",
+                "when_to_apply": "Subsets, permutations, combinations, N-Queens, Sudoku, Word Search, Generate Parentheses, Palindrome Partitioning, Combination Sum. Все задачи семейства «сгенерируй все валидные конфигурации» решаются одним шаблоном с pruning.",
+                "edge_cases": "Без pruning backtracking экспоненциальный — для `n > 12` нужна оптимизация: branch-and-bound, ранний выход, sorted input. Для дубликатов в input используем `set` или sort + `if (i > start && nums[i] == nums[i-1]) continue`.",
+                "related": "[[algorithms-interview#Q14]] сравнение парадигм; [[backtracking-interview#Q1]] шаблон; [[algorithms-interview#Q3]] парадигмы."
+              },
+              "label": "C",
+              "text": "Backtracking — DFS с откатом перебирает все валидные перестановки за `O(n × n!)`.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Divide and Conquer разбивает задачу на независимые подзадачи. У permutations нет такого структурного разбиения — каждая зависит от выбора предыдущих элементов.",
+                "source_of_confusion": "D&C ассоциируется с рекурсией, и студенты путают рекурсивный backtracking с D&C. Различие: D&C combine'ит результаты подзадач, backtracking перебирает с откатом.",
+                "if_it_were_true": "Permutations через D&C дали бы `O(n log n)` — на деле задача неустранимо `O(n!)`.",
+                "how_it_should_be": "D&C — Merge Sort, Quick Sort, Binary Search, Strassen. Permutations — Backtracking."
+              },
+              "label": "D",
+              "text": "Divide and Conquer — разбиваем строку на половины и комбинируем перестановки рекурсивно.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем принципиально отличается DP от Greedy при решении оптимизационной задачи?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Сложность DP обычно полиномиальная (`O(n×m)`, `O(n×k)`), а не всегда меньше Greedy. Greedy часто `O(n log n)` — а DP `O(n²)`. Различие — не в сложности, а в применимости.",
+                "source_of_confusion": "Студенты ассоциируют DP с «оптимизацией» и предполагают, что он всегда быстрее. На самом деле DP даёт правильный ответ там, где Greedy нет.",
+                "if_it_were_true": "DP заменял бы Greedy всегда — но Activity Selection через DP `O(n²)` медленнее Greedy `O(n log n)` с тем же результатом.",
+                "how_it_should_be": "DP — когда Greedy неверен (Coin Change, 0/1 Knapsack); Greedy — когда есть greedy choice property."
+              },
+              "label": "A",
+              "text": "DP всегда быстрее Greedy за счёт мемоизации промежуточных результатов.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "**DP** требует **optimal substructure** + **overlapping subproblems** — оптимум строится из оптимумов подзадач, и одни и те же подзадачи встречаются многократно. Memoization кэширует, превращая `O(2ⁿ)` в `O(n×m)`. **Greedy** требует **greedy choice property** — локально оптимальный выбор приводит к глобальному оптимуму без необходимости пересмотра. DP перебирает все варианты эффективно через cache, Greedy выбирает один путь и не возвращается.",
+                "example": "**Coin Change** `{1,3,4}` для суммы `6`: Greedy даёт `4+1+1=3 монеты`, DP даёт `3+3=2 монеты`. Greedy неверен здесь, потому что нет greedy choice property. Для `{1,5,10,25}` (US coins) Greedy работает — есть matroid-структура.\n\n**Activity Selection** с `(start, finish)`: Greedy по `finish` `O(n log n)` даёт оптимум — это classic пример greedy choice property.",
+                "when_to_apply": "DP — Coin Change, 0/1 Knapsack, LCS, LIS, Edit Distance, Stock series, Word Break. Greedy — Activity Selection, Fractional Knapsack, Huffman coding, Dijkstra (positive weights), Kruskal/Prim MST.",
+                "edge_cases": "Проверка применимости Greedy сложна: нужно доказать exchange argument или показать matroid-структуру. На интервью часто доказывают через counterexample (если есть — не работает Greedy) или mathematical induction (если выполняется — работает). DP всегда «безопасный» выбор, если есть memo-структура.",
+                "related": "[[algorithms-interview#Q3]] парадигмы; [[algorithms-interview#Q15]] выбор алгоритма; [[dynamic-programming-interview#Q1]] DP; [[greedy-algorithms-interview#Q1]] Greedy."
+              },
+              "label": "B",
+              "text": "DP перебирает все варианты с мемоизацией, Greedy делает локально оптимальный выбор без возврата.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "Greedy не работает только в задачах разрешения. Он применим во многих оптимизационных задачах (Dijkstra, Huffman, MST). Различие — не в типе задачи, а в наличии greedy choice property.",
+                "source_of_confusion": "Студенты могут классифицировать алгоритмы по типу задачи, а не по применимости свойств.",
+                "if_it_were_true": "Dijkstra (классический greedy) не считался бы greedy — но это эталонный пример.",
+                "how_it_should_be": "Различаем по наличию свойств: optimal substructure + overlap → DP; greedy choice property → Greedy."
+              },
+              "label": "C",
+              "text": "DP применим только к оптимизационным задачам, Greedy — только к задачам разрешения (decision problems).",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "DP может использовать как top-down (memoization), так и bottom-up (tabulation) подход. Greedy не использует таблицу — он линейно проходит по входу, делая выбор.",
+                "source_of_confusion": "Студенты думают, что таблица — обязательный признак DP. Но top-down DP использует HashMap для memo, не таблицу.",
+                "if_it_were_true": "Top-down DP с HashMap не считался бы DP — но это полноценный DP.",
+                "how_it_should_be": "DP — memoization (top-down) или tabulation (bottom-up); Greedy — линейный проход с выбором."
+              },
+              "label": "D",
+              "text": "DP использует двумерную таблицу для хранения состояний, Greedy — одномерную.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой алгоритм выбрать для нахождения кратчайшего пути в неориентированном графе без весов?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Dijkstra применим для графов с **положительными весами**. В графе без весов он работает, но overkill — heap operations `O(log V)` на каждое расширение бессмысленны, когда любая edge стоит 1.",
+                "source_of_confusion": "Dijkstra ассоциируется с «shortest path», и студенты применяют его универсально. Но для unweighted graph BFS проще и быстрее.",
+                "if_it_were_true": "Dijkstra на unweighted graph давал бы тот же результат — но с overhead `O((V+E) log V)` вместо `O(V+E)`.",
+                "how_it_should_be": "Dijkstra — weighted positive; BFS — unweighted; Bellman-Ford — negative weights; Floyd-Warshall — all pairs."
+              },
+              "label": "A",
+              "text": "Dijkstra — он находит кратчайший путь в графе любого типа.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "explanation": "**BFS** (Breadth-First Search) в unweighted graph даёт shortest path в смысле минимального числа рёбер. Работает через очередь (`ArrayDeque`): обходит граф по уровням, гарантируя, что первое достижение target — кратчайшее. Сложность `O(V+E)`, без логарифмического overhead Dijkstra. Это canonical алгоритм для unweighted графов.",
+                "example": "**Word Ladder** (LeetCode 127): найти кратчайшую трансформацию `hit → cog` через словарь — каждая трансформация одного символа = ребро веса 1. BFS даёт минимальное число шагов. **Number of Islands** через BFS — тот же шаблон.",
+                "when_to_apply": "Любой граф с unit weights, level-order traversal, social network distance (степень знакомства), Word Ladder, knight's shortest path, multi-source BFS (несколько источников одновременно), bipartite check, connected components.",
+                "edge_cases": "BFS для weighted graph даст неверный результат — нужно Dijkstra. Для **negative weights** даже Dijkstra не работает — нужно Bellman-Ford. Multi-source BFS требует инициализации очереди всеми источниками одновременно.",
+                "related": "[[algorithms-interview#Q3]] парадигмы; [[graphs-interview#Q1]] BFS; [[algorithms-interview#Q15]] выбор алгоритма."
+              },
+              "label": "B",
+              "text": "BFS — он гарантирует кратчайший путь в unweighted графе за `O(V+E)`.",
+              "correct": true,
+              "order": 1
+            },
+            {
+              "sections": {
+                "what_actually": "DFS не гарантирует shortest path. Он находит **какой-то** путь, идя в глубину сначала. Без модификации (iterative deepening) первый найденный путь — не обязательно кратчайший.",
+                "source_of_confusion": "DFS и BFS оба «обходят граф», и студенты путают их свойства. Различие: DFS идёт вглубь (stack), BFS по уровням (queue).",
+                "if_it_were_true": "DFS на social network давал бы friends 1st degree сначала — реально может выдать 5th degree раньше 1st.",
+                "how_it_should_be": "DFS — для cycle detection, topological sort, connected components. BFS — для shortest path."
+              },
+              "label": "C",
+              "text": "DFS — он быстрее BFS за счёт меньшего использования памяти.",
+              "correct": false,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Floyd-Warshall находит кратчайший путь между **всеми парами** вершин за `O(V³)`. Для одного source-target в unweighted graph это огромный overkill: `V³` против `V+E`.",
+                "source_of_confusion": "Студенты могут запомнить Floyd-Warshall как «универсальный» shortest path. Но он применим только для small dense graphs.",
+                "if_it_were_true": "Floyd-Warshall на graph с 10K вершин занимает ~10¹² операций — реально не работает в production.",
+                "how_it_should_be": "Floyd-Warshall — only when need all-pairs и `V ≤ ~500`. Single-source unweighted — BFS."
+              },
+              "label": "D",
+              "text": "Floyd-Warshall — он эффективно работает для любого размера графа.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая стратегия подготовки к алгоритмическому интервью наиболее эффективна для middle-разработчика?",
+          "options": [
+            {
+              "sections": {
+                "what_actually": "Решить 500+ задач без структуры — путь к burnout и узнаванию задач без переноса. Качество > количества: 150 задач с разбором паттернов даёт больше, чем 500 механических решений.",
+                "source_of_confusion": "Соцсети и LeetCode-инфлюэнсеры пропагандируют grinding 500+. Это работает для memorizers, но не для problem-solvers.",
+                "if_it_were_true": "Каждый, решивший 500 задач, проходил бы FAANG — реально conversion rate низкий именно из-за отсутствия фокуса на паттернах.",
+                "how_it_should_be": "150-200 задач с фокусом на паттернах (Two Pointers, Sliding Window, DFS/BFS, DP) и mock interviews."
+              },
+              "label": "A",
+              "text": "Решить максимум задач на LeetCode (500+), не разбирая паттерны и не делая mock interviews.",
+              "correct": false,
+              "order": 0
+            },
+            {
+              "sections": {
+                "what_actually": "Изучать только Java без алгоритмов — путь к языковым quiz-вопросам, но не к coding раундам. Алгоритмическое интервью оценивает problem-solving, который инварианти к языку.",
+                "source_of_confusion": "Senior Java-разработчики могут перевешивать важность языковых деталей. Но на алгоритмическом раунде Java vs Python даёт минимум 5% разницы — основное в алгоритме.",
+                "if_it_were_true": "JVM-эксперт без алгоритмов проходил бы coding раунды — реально нет.",
+                "how_it_should_be": "Алгоритмы + знание Java Collections + practice вместе."
+              },
+              "label": "B",
+              "text": "Изучить все тонкости Java и JVM, не уделяя внимания алгоритмам — синьорность важнее.",
+              "correct": false,
+              "order": 1
+            },
+            {
+              "sections": {
+                "explanation": "Эффективная стратегия — баланс foundations, паттерны, практика, communication. Конкретно: 1) освоить Big O и базовые структуры (1 неделя); 2) изучить паттерны — Two Pointers, Sliding Window, Binary Search, DFS/BFS, DP по 1D/2D/строки, Backtracking (3-4 недели); 3) решить 150-200 LeetCode Top Interview Questions с фокусом на разборе паттерна, а не решения (6-8 недель); 4) делать mock interviews (Pramp, interviewing.io, peers) — communication важна; 5) повторять Java Collections внутри (HashMap treeification, ConcurrentHashMap segments). Edge cases — обязательный чек-лист: пустой вход, 1 элемент, дубликаты, переполнение int, отрицательные числа.",
+                "example": "После 8-недельной подготовки кандидат на интервью в Google: получает задачу «Longest Substring Without Repeating Characters» (LC 3) — за 30 секунд распознаёт Sliding Window паттерн, проговаривает clarifying-вопросы (ASCII vs Unicode, case-sensitivity), пишет `O(n)` с HashMap, проверяет edge cases (пустая строка, 1 символ, все одинаковые). Это типичный flow успешного раунда.",
+                "when_to_apply": "Любая middle-senior подготовка к FAANG, Yandex, T-Bank, Avito, Tinkoff. Junior — начать с complexity и базовых структур. Senior — углубиться в DP, графы, system design подключить.",
+                "edge_cases": "Подготовка 2-3 месяца — оптимум для middle. Меньше — недостаточно практики; больше — потеря свежести знаний к интервью. Mock interviews обязательны: 3-5 раз перед реальным.",
+                "related": "[[algorithms-interview#Q1]] шаблон ответа; [[algorithms-interview#Q9]] roadmap; [[algorithms-interview#Q2]] clarifying-вопросы."
+              },
+              "label": "C",
+              "text": "Освоить Big O, паттерны (Two Pointers, Sliding Window, DFS/BFS, DP), решить 150-200 задач LeetCode и делать mock interviews.",
+              "correct": true,
+              "order": 2
+            },
+            {
+              "sections": {
+                "what_actually": "Чтение CLRS без практики — теоретическое знание без навыка применения. Доказать корректность Quick Sort на whiteboard не нужно — нужно реализовать его быстро.",
+                "source_of_confusion": "CLRS — золотой стандарт learning, но он academic. Industrial интервью требует practical коды, а не доказательств.",
+                "if_it_were_true": "PhD по algorithms гарантировали бы offer — реально многие учёные провалят LeetCode Medium из-за отсутствия practice.",
+                "how_it_should_be": "CLRS — для глубины; LeetCode + mocks — для практики и интервью-готовности."
+              },
+              "label": "D",
+              "text": "Прочитать CLRS полностью и доказать корректность всех алгоритмов на whiteboard.",
+              "correct": false,
+              "order": 3
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
