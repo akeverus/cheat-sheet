@@ -1,0 +1,1205 @@
+{
+  "topic_slug": "redpanda-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Redpanda и в чём его ключевое отличие от Apache Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это Kafka-совместимая streaming-платформа на C++ без JVM и без ZooKeeper, поставляемая одним бинарником.",
+              "correct": true,
+              "sections": {
+                "explanation": "Redpanda реализует Kafka wire protocol, поэтому существующие Kafka-клиенты подключаются без изменений. При этом сам брокер написан на C++ поверх фреймворка Seastar (тот же, что у ScyllaDB), не использует JVM и не зависит от ZooKeeper. Метаданные и репликация работают через Raft per-partition. Один бинарник содержит брокер, Schema Registry и HTTP-прокси.",
+                "example": "Чтобы локально поднять Redpanda, достаточно `docker run -p 9092:9092 redpandadata/redpanda redpanda start --overprovisioned --smp 1` — никаких отдельных ZooKeeper-нод или Schema Registry-процессов запускать не нужно.",
+                "when_to_apply": "Команды, которым нужен Kafka-совместимый API, но не хочется тянуть JVM-ops (GC tuning, heap dumps) и сопровождать отдельные ZooKeeper/Schema Registry/Connect-кластера. Особенно популярно у cloud-native стартапов и financial/gaming-систем, где важна предсказуемая p99-latency.",
+                "edge_cases": "При корректном применении полезно зафиксировать версию Kafka API, которую вы реально используете: Redpanda поддерживает не всё одинаково — относительно свежие транзакции и idempotent producer ведут себя хорошо, но экзотические admin-операции лучше проверить заранее.",
+                "related": "[[redpanda-interview#Q2]] таблица различий Kafka vs Redpanda; [[redpanda-interview#Q6]] Raft вместо ZooKeeper; [[kafka-interview#Q1]] базовая модель Kafka."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это форк Apache Kafka на Java, оптимизированный за счёт замены ZooKeeper на etcd.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda — это не форк Kafka и не Java-проект. Кодовая база полностью независимая, написана с нуля на C++ поверх Seastar. ZooKeeper не заменяется на etcd, а полностью устранён: для метаданных и репликации используется встроенный Raft per-partition.",
+                "source_of_confusion": "Путаница идёт от того, что многие альтернативы Kafka действительно являются форками (например, Confluent ksqlDB-расширения), а etcd часто упоминается рядом с Raft, поэтому возникает ассоциация «убрали ZK, значит, поставили etcd».",
+                "if_it_were_true": "Если бы Redpanda был JVM-форком, он унаследовал бы GC-паузы и сложность ops, и не было бы смысла рекламировать «no JVM, no GC pauses» как ключевую ценность; benchmarks показывали бы Kafka-подобный p99.",
+                "how_it_should_be": "Корректно: независимая C++-реализация Kafka wire protocol, без ZooKeeper и без etcd — Raft встроен прямо в брокер."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это надстройка над Kafka, которая ускоряет существующий кластер за счёт DPDK-плагина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda — самостоятельный брокер, а не плагин или sidecar над Kafka. DPDK действительно упоминается как одна из техник оптимизации сети внутри Redpanda, но это внутренняя деталь реализации, а не плагин, который ставится поверх существующих Kafka-нод.",
+                "source_of_confusion": "В блогах Redpanda Data регулярно упоминают DPDK и kernel-bypass как причины низкой latency, и читатель может решить, что речь о патче поверх Kafka. Аналогии с сетевыми ускорителями вроде Cilium тоже подталкивают к такой модели.",
+                "if_it_were_true": "Если бы Redpanda был надстройкой, его нельзя было бы развернуть без существующего Kafka-кластера; команды не смогли бы выбирать «Kafka или Redpanda» как взаимозаменяемые продукты в новых проектах.",
+                "how_it_should_be": "Корректно: Redpanda — самостоятельный брокер, который заменяет Kafka целиком, сохраняя совместимость по wire protocol."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это managed-сервис Confluent с собственным API, несовместимым с Kafka-клиентами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda развивает компания Redpanda Data (ранее Vectorized.io), а не Confluent. И его ключевое преимущество — как раз совместимость с Kafka wire protocol: те же Kafka-клиенты (Java, Python, Go, kafkajs и т.д.) работают без изменений.",
+                "source_of_confusion": "Confluent Cloud и Redpanda Cloud конкурируют в одной нише managed streaming, поэтому в новостях их часто упоминают рядом. Из этого возникает ощущение, что Redpanda — это вариант продукта Confluent.",
+                "if_it_were_true": "Если бы API было несовместимым, миграционная история не строилась бы вокруг MirrorMaker 2 и стандартных Kafka-клиентов, а требовала бы переписать продюсеры и консьюмеры.",
+                "how_it_should_be": "Корректно: независимая компания Redpanda Data, отдельный продукт, совместимый по wire protocol с Apache Kafka."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое описание Redpanda относительно Kafka наиболее точное?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Redpanda на C++ с shard-per-core и Raft per-partition, без JVM и ZooKeeper, но с меньшей экосистемой нативных интеграций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сравнение Redpanda и Kafka сводится к трём осям: рантайм (C++ vs Java/JVM), архитектура потоков (shard-per-core на Seastar vs JVM thread pools), и координация (Raft per-partition vs ZooKeeper/KRaft). Redpanda выигрывает по предсказуемости latency и простоте развёртывания (один бинарник вместо отдельных ZK/Connect/Schema Registry). Минус — экосистема Kafka накопилась с 2011-го, она гораздо больше: Kafka Connect connectors, операторы для Kubernetes, тысячи Stack Overflow-ответов.",
+                "example": "Команда мигрирует financial-сервис с 6 Kafka + 3 ZooKeeper нод на 3 Redpanda-ноды: получает тот же throughput при меньшем footprint и стабильный p99 без GC-спайков, но в обмен теряет несколько узких Kafka Connect-коннекторов, которые приходится переписать на стандартные.",
+                "when_to_apply": "Этим сравнением пользуются на дизайн-ревью при выборе брокера для нового сервиса, при оценке TCO managed-варианта (Redpanda Cloud vs Confluent Cloud), и при ответе на интервью-вопрос «зачем нужна Redpanda, если есть Kafka».",
+                "edge_cases": "Сравнение «p99 latency» очень зависит от вендорских бенчмарков; в реальных нагрузках разница обычно меньше, чем в маркетинговых материалах. Также Kafka в режиме KRaft уже не требует ZooKeeper, поэтому формулировку «Kafka требует ZK» с 2024 года стоит уточнять.",
+                "related": "[[redpanda-interview#Q1]] что такое Redpanda; [[redpanda-interview#Q4]] shard-per-core; [[redpanda-interview#Q6]] Raft без ZooKeeper; [[kafka-interview#Q1]] основы Kafka."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Redpanda всегда быстрее Kafka в 100 раз и полностью покрывает все интеграции Kafka Connect.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Заявленный выигрыш у Redpanda в реальных независимых бенчмарках — порядка 3-10× по p99-latency и в разы по throughput на одно ядро, но никак не 100×. По экосистеме Redpanda сознательно полагается на стандартный Kafka Connect: не все коннекторы тестируются вендором, и узкие края могут не работать.",
+                "source_of_confusion": "В маркетинге Redpanda мелькают цифры вроде «10× lower p99», и при пересказе они округляются до «в десятки и сотни раз быстрее». Параллельно совместимость по wire protocol воспринимается как «всё работает идеально».",
+                "if_it_were_true": "Если бы Redpanda был в 100× быстрее, миграция была бы массовой и однозначной; не было бы смысла обсуждать trade-offs или оставаться на Kafka из-за экосистемы.",
+                "how_it_should_be": "Корректно: разница в performance заметная (3-10×), но не двух порядков; экосистема Kafka больше и часть коннекторов требует валидации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Redpanda — это Kafka, переписанный на Rust командой Confluent.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda написан на C++, а не на Rust, и разрабатывается компанией Redpanda Data (бывшая Vectorized.io), независимой от Confluent. Rust используется в Redpanda для WASM data transforms SDK, но не для самого брокера.",
+                "source_of_confusion": "Rust популярен в современных distributed-системах (TiKV, Materialize, Apache Iceberg-Rust), поэтому модно предполагать, что новый брокер тоже на Rust. Confluent — самый известный спонсор Kafka, и его легко приписать любому Kafka-подобному продукту.",
+                "if_it_were_true": "Если бы это был проект Confluent, не было бы конкуренции Redpanda Cloud vs Confluent Cloud, и история лицензии BSL не имела бы смысла как защита от облачных провайдеров.",
+                "how_it_should_be": "Корректно: C++ + Seastar, независимая компания Redpanda Data, конкурент Confluent на рынке managed streaming."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Redpanda и Kafka по архитектуре идентичны: thread pools + JVM, отличие только в названии и упаковке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Архитектурно Redpanda и Kafka сильно отличаются. Kafka использует JVM и пул потоков с общим состоянием и блокировками; Redpanda — C++ и shared-nothing shard-per-core поверх Seastar. Это влияет на CPU-utilization, memory footprint и поведение latency-spikes (GC vs no GC).",
+                "source_of_confusion": "Совместимость по wire protocol создаёт ощущение, что и внутри всё устроено одинаково. Маркетинг «drop-in replacement» усиливает это впечатление.",
+                "if_it_were_true": "Если бы архитектуры совпадали, не было бы заметной разницы в p99 latency и в footprint; не имели бы смысла бенчмарки «10× lower p99» и истории про устранение GC-пауз.",
+                "how_it_should_be": "Корректно: совместимость по протоколу, но принципиально разная реализация (C++ shard-per-core vs JVM thread pools)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что означает «single binary» в контексте развертывания Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один процесс на ноду содержит брокер, Schema Registry и HTTP-прокси — отдельные ZooKeeper/Schema Registry/Connect не нужны.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Apache Kafka типичный deployment состоит из Kafka-брокеров, ZooKeeper-нод (или KRaft-контроллеров в новых версиях), отдельного Schema Registry, Kafka Connect и MirrorMaker — это разные JVM-процессы, часто на разных машинах. Redpanda поставляется единым нативным бинарником `redpanda`, который содержит брокер, встроенный Schema Registry и HTTP REST proxy (Pandaproxy). На каждом узле кластера запускается один процесс, конфигурируемый через `redpanda.yaml`.",
+                "example": "В Kubernetes Redpanda разворачивается как StatefulSet с одним контейнером на под и одним PV; не нужны отдельные StatefulSet для ZooKeeper и Deployment для Schema Registry, как в типичном Strimzi-сетапе Kafka.",
+                "when_to_apply": "Когда команда хочет упростить эксплуатацию streaming-кластера: меньше процессов — меньше точек отказа, проще observability, проще scaling. Особенно ценно при ограниченных DevOps-ресурсах и при cloud-native-развёртываниях, где каждый отдельный компонент удорожает кластер.",
+                "edge_cases": "«Single binary» не означает «одна нода»: для production-кластера всё равно нужен минимум 3 узла для кворума Raft. Также Kafka Connect для Redpanda не встроен — нужно поднять стандартный Kafka Connect отдельно, если требуются коннекторы.",
+                "related": "[[redpanda-interview#Q1]] что такое Redpanda; [[redpanda-interview#Q10]] встроенный Schema Registry; [[redpanda-interview#Q14]] HTTP-прокси; [[kafka-interview#Q3]] компоненты Kafka."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Имеется в виду режим, при котором весь кластер запускается в одной JVM-инсталляции с shared heap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Redpanda нет JVM в принципе. «Single binary» относится к нативному C++ бинарнику, а не к JVM-инсталляции. Кластер также не запускается «в одной JVM» — каждый узел кластера — отдельный процесс на своей машине/поде.",
+                "source_of_confusion": "В мире Java фраза «single binary» иногда означает fat-JAR со встроенными зависимостями. Перенос этого смысла на Redpanda даёт неверную картину.",
+                "if_it_were_true": "Если бы кластер жил в одной JVM, не было бы distributed-консенсуса и репликации (всё было бы в одном heap), и при падении процесса данные были бы недоступны. Это противоречит самой идее distributed log.",
+                "how_it_should_be": "Корректно: «single binary» — это нативный C++ исполняемый файл, по одному процессу на ноду в кластере из нескольких нод."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это образ Docker с Kafka + ZooKeeper + Schema Registry внутри одного контейнера для production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda не упаковывает Kafka и ZooKeeper в один контейнер. У него нет ни Kafka-кода, ни ZooKeeper. Single binary — это собственный исполняемый файл, не all-in-one Docker-образ из легаси-компонентов.",
+                "source_of_confusion": "Существуют all-in-one Docker-образы для dev-окружений (например, `landoop/fast-data-dev`), которые упаковывают Kafka + ZK + Schema Registry. Эту модель ошибочно проецируют на Redpanda.",
+                "if_it_were_true": "Если бы Redpanda был композитом из Kafka и ZooKeeper, у него были бы те же GC-паузы и сложности с операционным сопровождением ZooKeeper, и не было бы смысла рекламировать «no JVM, no ZK».",
+                "how_it_should_be": "Корректно: собственный нативный бинарник без Kafka- и ZooKeeper-кода внутри."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это значит, что весь production-кластер всегда умещается в один узел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "«Single binary» характеризует упаковку процесса, а не количество узлов кластера. Для production-Redpanda нужен полноценный кластер из нескольких нод, чтобы Raft мог обеспечить fault tolerance и кворум при выборе лидеров партиций.",
+                "source_of_confusion": "Слово «single» подталкивает к мысли об «одной машине». Кроме того, dev-режим Redpanda действительно умеет работать на одной ноде, и его иногда принимают за production-конфигурацию.",
+                "if_it_were_true": "Если бы кластер всегда был одной нодой, не было бы репликации и отказоустойчивости — потеря единственного узла означала бы потерю всех данных и всех топиков.",
+                "how_it_should_be": "Корректно: один бинарник на ноду, но кластер состоит из нескольких таких нод (обычно 3 и более) для Raft-кворума."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое архитектура shard-per-core в Redpanda на базе Seastar?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Каждое ядро CPU обрабатывает свой шард данных в shared-nothing модели, без локов и общей памяти между ядрами, с асинхронным I/O.",
+              "correct": true,
+              "sections": {
+                "explanation": "Seastar — это C++ фреймворк, на котором также построен ScyllaDB. Он реализует модель thread-per-core: на каждое ядро привязывается один поток, и каждый такой поток владеет своими структурами данных (партициями, очередями, кэшами). Никаких локов между ядрами нет — обмен идёт через explicit message-passing. I/O полностью асинхронный (io_uring/AIO). Результат — отсутствие contention, предсказуемая latency и почти линейное масштабирование с числом ядер.",
+                "example": "На 32-ядерной машине Redpanda запускает 32 reactor-потока, каждый со своим набором партиций. Запрос на партицию `orders-7` всегда обрабатывается одним и тем же ядром, без перехода на другой поток и без блокировок на shared mutex.",
+                "when_to_apply": "Когда нужна максимальная утилизация многоядерных серверов и стабильная p99 при высоком RPS — характерно для financial trading, gaming, ad-tech, IoT. Та же модель работает у ScyllaDB; именно поэтому Redpanda и ScyllaDB часто упоминаются вместе.",
+                "edge_cases": "Shard-per-core накладывает требования на pinning и NUMA-локальность: если оркестратор перебрасывает контейнер по нодам или ядрам, эффект разрушается. Также нужно аккуратно выставлять `--smp` и `--memory` при ограниченном CPU-resource в Kubernetes.",
+                "related": "[[redpanda-interview#Q5]] no GC; [[redpanda-interview#Q12]] почему быстрее Kafka; [[scylladb-interview#Q1]] Seastar в ScyllaDB; [[scalability-patterns-interview#Q1]] sharding."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все запросы обрабатываются одним dispatcher-потоком, который раздаёт задачи фиксированному пулу worker-потоков через shared queue.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание классической thread-pool модели (как в Kafka на JVM), а не shard-per-core. В Seastar нет глобального dispatcher и shared queue: каждый reactor владеет своим состоянием и общается с другими через message-passing.",
+                "source_of_confusion": "Шаблоны Executor/ForkJoinPool в JVM и аналогичные thread-pool-подходы в Netty стали для разработчиков «значением по умолчанию» для модели concurrency. Это легко переносится на любую новую систему.",
+                "if_it_were_true": "Если бы Redpanda работал через shared queue, у него были бы те же проблемы lock-contention, что и у JVM-брокеров, и не получилось бы получить линейное масштабирование с числом ядер.",
+                "how_it_should_be": "Корректно: shared-nothing reactor на каждое ядро, без shared queue и без блокирующих локов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На каждое CPU-ядро ставится отдельный JVM-процесс с собственным heap, координирующийся через RMI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого JVM в Redpanda нет, тем более RMI. Shard-per-core реализован внутри одного нативного процесса средствами Seastar; ядра обмениваются сообщениями через lock-free очереди в памяти, а не через сетевой RPC.",
+                "source_of_confusion": "Конструкция «много JVM по одной на ядро» встречается у Vert.x и Akka, и человек может проецировать эту картину на Redpanda. RMI — типичный пример «cross-process» RPC в Java-вселенной.",
+                "if_it_were_true": "Если бы каждое ядро было отдельной JVM, deployment не был бы «single binary», и накладные расходы на heap/GC × N ядер были бы огромными.",
+                "how_it_should_be": "Корректно: один нативный процесс, внутри которого N reactor-ов (по числу ядер) общаются in-process через message-passing."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это режим, при котором все ядра используют общий heap и общий планировщик задач OS.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shared heap и общий планировщик — это как раз то, чего Seastar избегает. Reactor pinning к ядру обходит обычный OS-scheduler в hot path, а структуры данных партиционированы между ядрами без shared heap.",
+                "source_of_confusion": "В большинстве языковых runtime'ов (JVM, .NET, Go) heap общий, и поэтому модель «shared heap + OS scheduler» воспринимается как нормальная. Из неё трудно представить альтернативу.",
+                "if_it_were_true": "Если бы heap был общий, false sharing и cache line ping-pong между ядрами съели бы выигрыш в latency, и архитектура не давала бы линейного scaling.",
+                "how_it_should_be": "Корректно: per-shard локальная память и собственный reactor-планировщик, без shared heap между ядрами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему отсутствие JVM в Redpanda влияет на стабильность p99-latency?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В C++ нет GC-пауз с stop-the-world, поэтому p99 не получает спайков на десятки-сотни миллисекунд от сборки мусора.",
+              "correct": true,
+              "sections": {
+                "explanation": "В JVM-приложениях garbage collector периодически выполняет циклы, включая stop-the-world фазы, во время которых все потоки приложения приостанавливаются. Для брокера это означает, что во время GC новые requests копятся в очередях сокета и user-space, что отражается на хвосте distribution latency (p99/p999). У Kafka на тяжёлых нагрузках типичны GC-паузы 10-500 ms. Redpanda на C++ управляет памятью вручную (pool allocators, RAII), и пауз в этом смысле нет — latency определяется только обработкой запросов и I/O.",
+                "example": "В трейдинговом сервисе Kafka p99 продюсера прыгает с 5 ms до 200 ms во время major GC; та же нагрузка на Redpanda держит p99 в районе 5-10 ms стабильно. Аналогичную выгоду наблюдают при переходе с Cassandra (JVM) на ScyllaDB (Seastar).",
+                "when_to_apply": "Когда требуется предсказуемая p99/p999 — financial systems (HFT-adjacent), gaming backend, real-time bidding, telemetry с tight SLA. Здесь даже редкая 100 ms пауза нарушает контракт.",
+                "edge_cases": "«No GC» не означает «no latency spikes»: остаются disk fsync, network jitter, NUMA-эффекты, cgroup throttling в Kubernetes. Перед миграцией стоит профилировать full latency budget, а не списывать всё на GC.",
+                "related": "[[redpanda-interview#Q4]] shard-per-core; [[redpanda-interview#Q11]] latency benchmarks; [[redpanda-interview#Q12]] почему быстрее; [[scylladb-interview#Q3]] no-GC у ScyllaDB."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "C++ автоматически освобождает память без какого-либо менеджера памяти, поэтому накладные расходы на аллокации нулевые.",
+              "correct": false,
+              "sections": {
+                "what_actually": "C++ не освобождает память автоматически — за этим следит код через RAII, smart pointers и custom allocators. Redpanda использует свои pool/arena allocators для горячего пути, что даёт предсказуемость, но «нулевых» накладных расходов на аллокации не бывает.",
+                "source_of_confusion": "Маркетинговая фраза «no GC» иногда воспринимается как «никакого управления памятью вообще». Smart pointers и allocators остаются вне поля зрения.",
+                "if_it_were_true": "Если бы аллокации были бесплатными, не нужны были бы тонкие тюнинги per-shard memory и pre-allocated buffers, которые описаны в документации Redpanda.",
+                "how_it_should_be": "Корректно: явное управление памятью через RAII и pool allocators — это не «без затрат», а «без stop-the-world пауз»."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В C++ GC всегда выполняется в отдельном процессе, поэтому он не блокирует основной брокер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В C++ как языке нет встроенного GC, ни в отдельном процессе, ни в основном. Redpanda не использует garbage collection в традиционном смысле — память управляется вручную, а freed memory возвращается аллокатору в том же процессе.",
+                "source_of_confusion": "Есть проекты, где GC выносится «вбок» (например, Shenandoah/ZGC в JVM минимизируют паузы, но они всё равно in-process). Этот образ перекочёвывает на C++ ошибочно.",
+                "if_it_were_true": "Если бы в C++ был отдельный GC-процесс, он точно так же требовал бы синхронизации с основным брокером, и stop-the-world фаза не исчезла бы, а просто переехала.",
+                "how_it_should_be": "Корректно: в C++ нет GC, память управляется explicit-механизмами в том же процессе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Отсутствие JVM не влияет на latency — GC в Kafka давно не приводит к паузам, выигрыша по p99 в Redpanda нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Современные JVM-сборщики (G1, ZGC, Shenandoah) действительно сильно сократили длительность пауз, но полностью pause-free они не являются и под высокой нагрузкой всё равно дают видимые spikes. Бенчмарки независимых команд стабильно показывают, что у Redpanda p99/p999 ровнее, чем у Kafka на одинаковом железе.",
+                "source_of_confusion": "Реклама «pauseless GC» в новых JVM-сборщиках и улучшения в Kafka дают ощущение, что разница исчезла. Но «sub-millisecond pause» в маркетинге часто означает «обычно», а не «всегда».",
+                "if_it_were_true": "Если бы выигрыша не было, история про «10× lower p99» в бенчмарках Redpanda не возникла бы, и команды не мигрировали бы ради latency.",
+                "how_it_should_be": "Корректно: даже у современных JVM-сборщиков есть остаточные паузы, и no-GC C++ даёт более предсказуемую p99."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Redpanda обходится без ZooKeeper для координации кластера?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Каждая партиция образует собственную Raft-группу, которая отвечает за репликацию, лидера и метаданные — отдельный ZooKeeper не нужен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Redpanda с самого начала спроектирован без ZooKeeper. Координация решается через встроенный Raft-консенсус, причём не на уровне всего кластера, а на уровне каждой партиции: партиция = Raft-группа из реплик. Лидер партиции — это лидер Raft-группы; репликация записи — это commit в Raft-логе; смена лидера происходит через стандартный leader election с heartbeats и term'ами. Метаданные кластера (топики, brokers, ACL) также хранятся в специальной системной Raft-группе.",
+                "example": "При падении ноды-лидера партиции `orders-3` оставшиеся реплики этой партиции инициируют выборы внутри своей Raft-группы и за сотни миллисекунд выбирают нового лидера — без обращения к внешнему координатору и без участия других партиций.",
+                "when_to_apply": "Когда команда хочет уменьшить число операционных компонентов и ускорить failover. Особенно полезно в multi-tenant и cloud-native кластерах, где каждый дополнительный компонент (ZooKeeper-нода) усложняет SRE-работу. KRaft в Kafka — попытка пойти тем же путём.",
+                "edge_cases": "Большое число Raft-групп (по одной на партицию) — это нагрузка на сеть и diskиз-за heartbeats и AppendEntries. Поэтому очень тонко-партиционированные топики (десятки тысяч партиций на ноду) могут стать узким местом, и нужно следить за `raft_replicate_ms` и connection-bandwidth.",
+                "related": "[[redpanda-interview#Q1]] что такое Redpanda; [[redpanda-interview#Q3]] single binary; [[distributed-systems-interview#Q5]] Raft; [[kafka-interview#Q4]] KRaft в Kafka."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Redpanda хранит метаданные в Redis Cluster, который заменяет роль ZooKeeper.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda не использует Redis ни для метаданных, ни для координации. Метаданные и репликация работают через внутренний Raft в самом брокере; никакого внешнего KV-стора не требуется.",
+                "source_of_confusion": "Redis иногда используется как сервис-discovery в legacy-системах, и при поиске «замены ZooKeeper» Redis всплывает первым. Это создаёт ложную ассоциацию.",
+                "if_it_were_true": "Если бы Redpanda зависел от Redis, нельзя было бы называть кластер «single binary, no external dependencies». Также Redis Cluster сам по себе требует отдельной эксплуатации, что противоречило бы цели «simpler ops».",
+                "how_it_should_be": "Корректно: координация полностью внутренняя, через Raft per-partition, без внешних KV-сторов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Redpanda работает только в single-node режиме, поэтому консенсус не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda — distributed-брокер, в production используется минимум 3 ноды для кворума Raft. Single-node режим — это исключительно dev/test сценарий. Консенсус как раз и нужен для replication и failover в distributed-кластере.",
+                "source_of_confusion": "Слово «single binary» и легкие dev-quickstarts с одной нодой создают впечатление, что Redpanda живёт без распределённости.",
+                "if_it_were_true": "Если бы это было правдой, любая авария ноды означала бы потерю данных, и Redpanda не мог бы конкурировать с Kafka в production. Раздел Raft был бы вообще не нужен.",
+                "how_it_should_be": "Корректно: distributed-кластер с Raft-репликацией поверх 3+ нод; single-node — только для dev."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Координация идёт через внешний etcd, который запускается рядом как отдельный кластер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda не зависит от etcd. Внутренний Raft реализован прямо в коде брокера; никакого отдельного etcd-кластера разворачивать не требуется.",
+                "source_of_confusion": "etcd — самый известный продакшн-Raft-кластер (используется в Kubernetes), поэтому фраза «вместо ZooKeeper — Raft» автоматически вызывает «значит etcd».",
+                "if_it_were_true": "Если бы Redpanda зависел от etcd, маркетинг «single binary, no external coordinator» был бы ложью; кроме того, etcd plagued тем же ops-overhead, что и ZooKeeper.",
+                "how_it_should_be": "Корректно: Raft встроен в брокер, никаких отдельных etcd/ZooKeeper-кластеров не требуется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое tiered storage в Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Старые сегменты партиций автоматически выгружаются в object storage (S3, GCS, Azure Blob), а свежие данные остаются на локальном диске.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tiered storage отделяет «hot» и «cold» уровни хранения. Свежие сегменты log'а пишутся и читаются с локального диска, а сегменты, выходящие за retention threshold (по времени или по размеру), уезжают в дешёвое объектное хранилище. Чтения из cold-уровня прозрачны для клиента — брокер просто подгружает нужные сегменты обратно по требованию, с большей latency и cache-эффектами.",
+                "example": "Команда настраивает `cloud_storage_enabled: true` и `cloud_storage_bucket: my-redpanda-bucket`. Топики с retention 2 года теперь занимают на локальных дисках всего объём последних 7 дней, а остальное хранится в S3 Standard-IA по куда меньшей цене.",
+                "when_to_apply": "Используется для long retention (месяцы и годы): аудит, compliance, ML feature store, event sourcing. Сохраняет TCO низким за счёт object storage и позволяет уменьшить количество дорогих NVMe-дисков на брокерах.",
+                "edge_cases": "Cold-чтения с S3 значительно медленнее: при перезапуске consumer'а с самого начала топика throughput падает, поэтому SLA на «catch-up from beginning» нужно проверять отдельно. Также важно контролировать egress-cost при кросс-регионных операциях.",
+                "related": "[[redpanda-interview#Q3]] single binary; [[redpanda-interview#Q11]] performance; [[kafka-interview#Q9]] KIP-405 tiered storage; [[scalability-patterns-interview#Q3]] data tiering."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tiered storage в Redpanda означает, что разные топики физически хранятся на разных типах RAID-массивов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tiered storage в Redpanda — это про автоматическое перемещение сегментов в object storage, а не про выбор RAID-уровня для топика. На уровне локального диска все топики используют тот же volume, что и брокер.",
+                "source_of_confusion": "Термин «tier» часто ассоциируется с storage tiering в SAN-системах (SSD vs HDD), и его легко интерпретировать как RAID-конфигурацию.",
+                "if_it_were_true": "Если бы это было про RAID, фича не имела бы смысла в облачных средах, где RAID-уровни абстрагированы EBS/GCP PD. И операционно перенастройка RAID не давала бы возможности экономить на «холодных» данных как S3.",
+                "how_it_should_be": "Корректно: локальный диск (hot) + object storage S3/GCS/Azure (cold) с прозрачным reading."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это режим, в котором consumer-группы хранятся в Redis, а данные топиков остаются в Kafka.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tiered storage не касается consumer groups и тем более не разделяет хранилище между Redis и Kafka. Это о том, где физически лежат сегменты log'а одного и того же кластера Redpanda.",
+                "source_of_confusion": "Идея «разделить хранение между быстрым in-memory и более медленным persistent» правильна по сути, но конкретно в Redpanda реализация другая (local disk + S3, а не Redis + Kafka).",
+                "if_it_were_true": "Если бы consumer offsets хранились в Redis, при падении Redis оффсеты были бы потеряны, что нарушало бы exactly-once и at-least-once гарантии. Это противоречит производственным гарантиям Redpanda.",
+                "how_it_should_be": "Корректно: tiered storage — это hot/cold-разделение сегментов лога между локальным диском и object storage; offsets хранятся в самой Redpanda."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это синоним replication factor — данные хранятся на нескольких уровнях вложенных кластеров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replication factor и tiered storage — разные концепции. Replication factor определяет, на скольких репликах внутри кластера хранится партиция. Tiered storage решает, где (локальный диск или object storage) живут сегменты лога. Они независимы и могут использоваться вместе.",
+                "source_of_confusion": "Оба слова содержат идею «уровней», поэтому термин tier подменяется replication.",
+                "if_it_were_true": "Если бы это было то же самое, нельзя было бы получить экономию на cold-данных: реплицирование увеличивает стоимость, а tiered storage снижает её за счёт перемещения в дешёвое хранилище.",
+                "how_it_should_be": "Корректно: replication factor отвечает за durability внутри кластера, tiered storage — за hot/cold-разделение между локальным диском и облачным хранилищем."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что подразумевается под Kafka wire protocol compatibility в Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Redpanda реализует тот же бинарный протокол, что и Apache Kafka, поэтому стандартные Kafka-клиенты работают без изменений.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kafka wire protocol — это бинарный TCP-протокол, по которому продюсеры/консьюмеры/админ-инструменты общаются с брокером (Produce, Fetch, Metadata, ListOffsets, OffsetCommit и т.д.). Redpanda реализует этот же протокол: тот же набор API-ключей, те же версии запросов, те же сериализация и фрейминг. Из-за этого клиентам (kafka-clients, kafkajs, sarama, confluent-kafka-python) не нужно знать, что на другом конце — Redpanda, а не Kafka.",
+                "example": "Java-приложение использует обычный `KafkaProducer` с `bootstrap.servers=redpanda:9092` — никаких новых зависимостей не нужно, и поведение `send()` идентично работе с Kafka-брокером.",
+                "when_to_apply": "Когда нужно мигрировать с Kafka на Redpanda без переписывания клиентского кода или хотите оставить опции миграции открытыми. Также удобно для команд, у которых уже есть инструменты вокруг Kafka (kcat, Kafka Connect, ksqlDB-как-client).",
+                "edge_cases": "«Wire protocol compatibility» не означает 100% feature parity. Часть admin/transactional/EOS-функций добавлялись в Redpanda позже; всегда стоит проверить версию протокола, поддерживаемую конкретным клиентом, и таблицу совместимости в документации.",
+                "related": "[[redpanda-interview#Q9]] какие клиенты работают; [[redpanda-interview#Q10]] Schema Registry; [[redpanda-interview#Q20]] миграция; [[kafka-interview#Q5]] протокол Kafka."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Redpanda эмулирует Kafka через REST API-шлюз, поэтому клиенты должны переключиться на HTTP-вызовы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda поддерживает родной бинарный Kafka-протокол по TCP на стандартном порту 9092 (и/или 9093 для TLS). HTTP REST API (Pandaproxy) есть, но это отдельный, опциональный слой для клиентов, у которых нет нативной Kafka-библиотеки. Основной путь — бинарный протокол, как у Kafka.",
+                "source_of_confusion": "Существование Pandaproxy и Confluent REST Proxy в экосистеме Kafka создаёт впечатление, что вся коммуникация идёт через HTTP. Это не так — REST это just один из путей.",
+                "if_it_were_true": "Если бы клиенты должны были переписываться под HTTP, ценностное предложение «drop-in replacement Kafka» рассыпалось бы — стоимость миграции была бы очень высокой.",
+                "how_it_should_be": "Корректно: бинарный Kafka-протокол по TCP как основной; REST proxy — дополнительная опция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это совместимость только на уровне Avro-схем — клиенты должны использовать спец-сериализатор Redpanda.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wire protocol — это про network/binary framing, а не про сериализацию payload. Avro/Protobuf/JSON Schema — выбор приложения, поверх wire protocol. Redpanda не требует специального сериализатора.",
+                "source_of_confusion": "Schema Registry часто упоминается рядом с Kafka, и совместимость по схемам путают с совместимостью на уровне протокола.",
+                "if_it_were_true": "Если бы требовался спец-сериализатор, нельзя было бы говорить о drop-in replacement: продюсеры и консьюмеры должны были бы менять зависимости.",
+                "how_it_should_be": "Корректно: совместимость по бинарному framing'у; payload-сериализация остаётся выбором клиента, как и в Kafka."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Redpanda поддерживает Kafka-клиентов через обёртку MirrorMaker, которая транслирует запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MirrorMaker — это инструмент репликации сообщений между двумя Kafka-кластерами (или Kafka и Redpanda), а не proxy между клиентом и брокером. Wire protocol compatibility в Redpanda реализована в самом брокере, без промежуточного MirrorMaker.",
+                "source_of_confusion": "MirrorMaker действительно фигурирует в сценариях миграции Kafka → Redpanda, и это создаёт ассоциацию «работает только через MirrorMaker».",
+                "if_it_were_true": "Если бы клиентам приходилось подключаться к Redpanda через MirrorMaker, latency и сложность стали бы хуже, чем у обычного Kafka, и проект потерял бы смысл.",
+                "how_it_should_be": "Корректно: MirrorMaker используется для миграции между кластерами; клиенты подключаются напрямую к Redpanda по wire protocol."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что верно про поддержку Kafka-клиентов в Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все основные клиенты (Java kafka-clients, kafkajs, sarama, confluent-kafka-python и др.) работают без изменений, включая Debezium и Kafka Connect.",
+              "correct": true,
+              "sections": {
+                "explanation": "Поскольку Redpanda реализует Kafka wire protocol, любой клиент, написанный по стандарту Kafka API, подключается с тем же конфигом, что и к Kafka. Это касается mainstream Kafka-libраrаrий на всех языках (Java, Python, Go, Node.js, .NET, Ruby), а также инфраструктурных инструментов: Kafka Connect (с коннекторами Debezium и др.), kcat, ksqlDB как клиент, Confluent CLI tools.",
+                "example": "Существующий Java-сервис продолжает использовать `org.apache.kafka:kafka-clients:3.x` и просто меняет `bootstrap.servers` на адрес Redpanda. Debezium MySQL коннектор пишет CDC-события в топик `dbserver1.inventory.customers` на Redpanda — никаких изменений в конфигурации коннектора не нужно.",
+                "when_to_apply": "При миграции с Kafka на Redpanda и при использовании Redpanda для новых сервисов, где команда уже знает Kafka-инструментарий. Также полезно, когда нужно подключить готовые SaaS-интеграции, рассчитанные на Kafka.",
+                "edge_cases": "Очень узкие admin API, advanced transactions или некоторые экзотические configs могут поддерживаться частично или были добавлены позже. Перед production-миграцией стоит протестировать конкретные коннекторы и сценарии, особенно если используется EOS (exactly-once semantics).",
+                "related": "[[redpanda-interview#Q8]] wire protocol; [[redpanda-interview#Q10]] Schema Registry + Connect; [[redpanda-interview#Q20]] миграция; [[kafka-interview#Q6]] клиенты Kafka."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Работают только Java- и Scala-клиенты; для Python, Go и Node.js Redpanda предоставляет собственные библиотеки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda поддерживает любые клиенты, реализующие Kafka wire protocol, независимо от языка. Никаких отдельных Redpanda-only SDK для Python/Go/Node.js не требуется — используются те же `kafka-python`, `confluent-kafka-python`, `sarama`, `kafkajs`, что и для Kafka.",
+                "source_of_confusion": "Многие новые продукты-конкуренты Kafka действительно требуют собственный SDK (NATS JetStream, Pulsar). Это переносится на Redpanda по аналогии.",
+                "if_it_were_true": "Если бы для каждого языка требовался свой SDK, drop-in миграция была бы невозможна, и каждое приложение пришлось бы переписывать. Это противоречит ключевой ценности проекта.",
+                "how_it_should_be": "Корректно: любые Kafka-клиенты на любом языке работают; собственных Redpanda-SDK для базового produce/consume не требуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Поддерживаются только продюсеры; Kafka-консьюмеры требуют переписывания под Redpanda Consumer API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wire protocol covers и продюсера, и консьюмера, и admin-клиента. Никакого отдельного Redpanda Consumer API не существует — используется обычный Kafka Consumer API.",
+                "source_of_confusion": "В некоторых streaming-продуктах действительно есть существенные расхождения между producer- и consumer-семантикой между Kafka и альтернативой; читатель может предположить такое же ограничение у Redpanda.",
+                "if_it_were_true": "Если бы консьюмеры требовали переписывания, exit-стратегия (откатиться обратно на Kafka) стала бы сложной, и большинство команд не выбрало бы Redpanda.",
+                "how_it_should_be": "Корректно: и продюсеры, и консьюмеры, и admin-клиенты Kafka работают без изменений."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Никакой совместимости с Kafka-клиентами нет — Redpanda использует собственный proprietary-протокол на gRPC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda специально реализует Kafka wire protocol, чтобы быть drop-in replacement; gRPC-протокола в качестве основного канала клиентов нет. Внутри для админ-задач (rpk через admin API) используется HTTP/REST, но не gRPC, и это не пересекается с клиентским data plane.",
+                "source_of_confusion": "Современные cloud-native продукты часто используют gRPC, и его приписывают любому новому брокеру.",
+                "if_it_were_true": "Если бы протокол был свой, не было бы смысла говорить о Kafka-compatible streaming-платформе, и все маркетинговые материалы были бы построены иначе.",
+                "how_it_should_be": "Корректно: основной клиентский протокол — Kafka wire protocol по TCP; gRPC не используется как основной."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как в Redpanda работают Schema Registry и Kafka Connect?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Schema Registry встроен в брокер и совместим с Confluent Schema Registry API; Kafka Connect не встроен — используется стандартный Kafka Connect против Redpanda.",
+              "correct": true,
+              "sections": {
+                "explanation": "Schema Registry поставляется как часть `redpanda` бинарника и слушает HTTP на отдельном порту (по умолчанию 8081). API совместим с Confluent Schema Registry: те же endpoints (`/subjects`, `/schemas`, `/compatibility`), поддерживает Avro, JSON Schema, Protobuf. Kafka Connect (фреймворк коннекторов) — отдельный JVM-процесс, его в Redpanda не встраивают: запускается обычный Confluent Kafka Connect или альтернатива (например, Kafka Connect от Strimzi), указывающая `bootstrap.servers` на Redpanda.",
+                "example": "Команда поднимает Redpanda и сразу регистрирует Avro-схему: `curl -X POST -H 'Content-Type: application/vnd.schemaregistry.v1+json' --data '{\"schema\": \"...\"}' http://redpanda:8081/subjects/orders-value/versions`. Параллельно Debezium MySQL connector работает в отдельном Kafka Connect cluster, пишущем CDC в Redpanda-топики.",
+                "when_to_apply": "Когда нужен schema-aware messaging без поднятия отдельного Schema Registry-кластера; и когда нужны коннекторы из экосистемы Kafka (Debezium, JDBC sink/source, S3 sink), которые можно запустить в стандартном Kafka Connect.",
+                "edge_cases": "Часть продвинутых фич Confluent Schema Registry (schema linking между регионами, advanced ACL) может отсутствовать. Также Kafka Connect для Redpanda нужно эксплуатировать отдельно (не «single binary»), и его JVM-природа возвращает часть проблем, от которых уходили.",
+                "related": "[[redpanda-interview#Q3]] single binary; [[redpanda-interview#Q9]] клиенты; [[redpanda-interview#Q14]] HTTP proxy; [[kafka-interview#Q7]] Schema Registry."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Schema Registry в Redpanda нужно ставить отдельно как Java-процесс; Kafka Connect встроен в брокер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: Schema Registry встроен в Redpanda (HTTP на порту 8081 в том же процессе брокера), а Kafka Connect не встроен и требует отдельной инсталляции.",
+                "source_of_confusion": "В мире Kafka обычно Schema Registry — это отдельный Java-процесс от Confluent. По привычке это переносится на Redpanda.",
+                "if_it_were_true": "Если бы Schema Registry был отдельным JVM-процессом, ценностное предложение «single binary» сильно бы похудело: пришлось бы добавлять ещё один компонент с GC и ops-нагрузкой.",
+                "how_it_should_be": "Корректно: Schema Registry встроен; Kafka Connect развернуть отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Schema Registry в Redpanda поддерживает только Protobuf; Kafka Connect не работает вовсе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенный Schema Registry в Redpanda поддерживает Avro, JSON Schema и Protobuf — те же форматы, что Confluent Schema Registry. Kafka Connect работает: его подключают к Redpanda как к Kafka и используют стандартные коннекторы.",
+                "source_of_confusion": "Protobuf активно продвигается в новых проектах и cloud-native системах, и его иногда воспринимают как «единственный современный» сериализатор.",
+                "if_it_were_true": "Если бы поддерживался только Protobuf, миграция с Avro-based Kafka-сервисов потребовала бы переписать сериализацию повсюду, и совместимость с Confluent SR-API не имела бы смысла.",
+                "how_it_should_be": "Корректно: Schema Registry поддерживает Avro/JSON Schema/Protobuf; Kafka Connect — внешний, но полностью работающий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Redpanda нет ни Schema Registry, ни поддержки Kafka Connect — это принципиально payload-agnostic система без интеграций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Redpanda есть встроенный Schema Registry и полная поддержка стандартного Kafka Connect. Это не «payload-agnostic без интеграций», а Kafka-совместимая streaming-платформа с богатой совместимой экосистемой.",
+                "source_of_confusion": "Минималистичный single-binary-маркетинг иногда воспринимается как «никаких дополнительных фич, только базовый broker».",
+                "if_it_were_true": "Если бы не было Schema Registry, schema evolution в продакшене стало бы болью, и большинство команд не смогло бы заменить Kafka на Redpanda без потери возможностей.",
+                "how_it_should_be": "Корректно: Schema Registry встроен, Kafka Connect стандартный — экосистема Kafka используется через wire protocol."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно интерпретировать заявленные performance-показатели Redpanda относительно Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Вендорские бенчмарки показывают p99 в разы ниже и больший throughput на ядро, но реальный выигрыш зависит от настроек Kafka и нагрузки; независимые бенчмарки подтверждают преимущество, но обычно меньше вендорских.",
+              "correct": true,
+              "sections": {
+                "explanation": "Бенчмарки Redpanda Data заявляют p50/p99 latency в 3-10× ниже Kafka и до 10× больше throughput на CPU-ядро. Это вендорские цифры, и их стоит читать с поправкой: они получены на конкретных конфигурациях, на которых архитектурные преимущества Redpanda (no GC, shard-per-core, DPDK-опции) проявляются максимально. Независимые бенчмарки (например, OpenMessaging) обычно подтверждают, что Redpanda быстрее, особенно по хвостам distribution, но margin меньше — часто 1.5-3×, а не 10×.",
+                "example": "В команде SRE поднимают тест: 100k msg/s, RF=3, payload 1 KB. Kafka p99 ≈ 50 ms, Redpanda p99 ≈ 8 ms — выигрыш 6×. При другой конфигурации (`batch.size`, `linger.ms`) разница может сократиться до 2-3×.",
+                "when_to_apply": "При оценке миграции и при ответе на интервью-вопрос «насколько быстрее Redpanda». Также при capacity planning: можно держать в уме, что на той же машине Redpanda обычно справится с большим RPS, особенно с предсказуемой p99.",
+                "edge_cases": "Бенчмарки на чужом железе не предскажут вашу production-нагрузку: важны NUMA, диск (NVMe vs SATA), сеть, размер сообщений и retention policy. Тестируйте на своём профиле трафика перед решением.",
+                "related": "[[redpanda-interview#Q5]] no GC; [[redpanda-interview#Q12]] почему быстрее; [[redpanda-interview#Q18]] когда выбирать; [[performance-testing-interview#Q4]] методология бенчмарков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Redpanda гарантированно даёт ровно 100-кратный выигрыш по throughput на любом железе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никаких гарантий 100× не существует. Заявленный максимум в вендорских бенчмарках — около 10× по throughput per core при определённых условиях, и в реальной нагрузке разница обычно меньше. Никакая система не даёт фиксированный множитель «вне зависимости от железа».",
+                "source_of_confusion": "Округление маркетинговых цифр и нелюбовь к нюансам приводит к утверждению «в десятки раз быстрее».",
+                "if_it_were_true": "Если бы выигрыш был 100×, Kafka вытеснили бы практически мгновенно, и не было бы необходимости в обсуждении trade-offs.",
+                "how_it_should_be": "Корректно: выигрыш заметный (часто 2-10×), но конкретное число зависит от workload и тюнинга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Redpanda всегда медленнее Kafka, потому что C++ не умеет async I/O.",
+              "correct": false,
+              "sections": {
+                "what_actually": "C++ прекрасно поддерживает async I/O — Seastar построен поверх Linux AIO/io_uring и направлен на high-throughput async-сценарии. Redpanda в большинстве бенчмарков быстрее Kafka, особенно по latency tail.",
+                "source_of_confusion": "Стереотип «C++ — это синхронный low-level» сохраняется у части разработчиков, которые работали с C++ давно или с ограниченным async-API.",
+                "if_it_were_true": "Если бы C++ не умел async I/O, фреймворки Seastar, Folly, Boost.Asio не существовали бы как production-tooling, и ScyllaDB/Redpanda не выигрывали бы у JVM-конкурентов.",
+                "how_it_should_be": "Корректно: C++ и Seastar полностью async; Redpanda обычно быстрее Kafka на сравнимом железе."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Real-world производительность Redpanda и Kafka неизменно одинакова, выигрыша по p99 нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Independent-бенчмарки (OpenMessaging, академические работы) фиксируют, что у Redpanda обычно ровнее latency tail и больше throughput на ядро, особенно для нагрузок с маленькими сообщениями и без больших batch'ей.",
+                "source_of_confusion": "Скепсис к вендорским цифрам иногда переходит в крайность «никакой разницы нет».",
+                "if_it_were_true": "Если бы выигрыша не было, не было бы и продукта — Redpanda Data не смог бы продавать managed-сервис как latency-oriented альтернативу Confluent.",
+                "how_it_should_be": "Корректно: выигрыш есть, особенно по p99; масштаб зависит от workload."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие архитектурные решения позволяют Redpanda быть быстрее Kafka на том же железе?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "C++ вместо JVM, отсутствие GC-пауз, shard-per-core, async-I/O Seastar, опции DPDK/direct I/O и отсутствие round-trips к ZooKeeper для метаданных.",
+              "correct": true,
+              "sections": {
+                "explanation": "Скорость Redpanda — это сумма нескольких факторов. Во-первых, C++ без JVM устраняет GC-паузы и снижает memory overhead. Во-вторых, shard-per-core Seastar убирает lock contention между ядрами и обеспечивает почти линейное масштабирование с CPU. В-третьих, async I/O через io_uring/AIO позволяет насыщать диск и сеть без блокирующих потоков. В-четвёртых, DPDK/kernel-bypass и direct I/O сокращают системные вызовы. В-пятых, Raft per-partition хранит метаданные локально и не требует round-trips к внешнему координатору.",
+                "example": "На том же 32-ядерном узле с NVMe Redpanda держит 1M msg/s с p99 ≈ 10 ms; Kafka на той же машине упирается в GC и thread-contention где-то на 400-600k msg/s с p99 50-100 ms в хвостах.",
+                "when_to_apply": "Когда отвечаете на инженерный вопрос «почему вообще быстрее», когда обосновываете выбор Redpanda для latency-sensitive сценариев, и когда планируете capacity для cloud-native deployments.",
+                "edge_cases": "Все эти преимущества раскрываются только при правильной настройке pinning, NUMA и `--smp`/`--memory`. В Kubernetes с динамическим cgroup-throttling выигрыш может быть существенно меньше, чем на bare metal.",
+                "related": "[[redpanda-interview#Q4]] shard-per-core; [[redpanda-interview#Q5]] no GC; [[redpanda-interview#Q6]] Raft без ZK; [[redpanda-interview#Q11]] benchmarks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Главная причина — отсутствие реплик: Redpanda не реплицирует данные, и поэтому write latency ниже.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda реплицирует данные через Raft per-partition, как и Kafka со своими ISR; durability и replication factor у обоих сравнимы. Высокая performance достигается не за счёт отсутствия репликации, а за счёт более эффективного рантайма.",
+                "source_of_confusion": "Идея «отключим репликацию ради скорости» — частый dev-trick в тестовых сценариях, и его переносят на production-причины успеха.",
+                "if_it_were_true": "Если бы реплик не было, Redpanda нельзя было бы использовать в production: потеря любого узла приводила бы к потере данных. Это противоречит позиционированию для financial и mission-critical-нагрузок.",
+                "how_it_should_be": "Корректно: репликация есть (Raft), а скорость — следствие C++/Seastar/no-GC/no-ZK, а не её отсутствия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Redpanda хранит все сообщения только в RAM без записи на диск, поэтому быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda — durable log: сообщения пишутся на диск (с fsync согласно настройкам). RAM используется для page cache и буферов, как и в Kafka, но не как единственное хранилище.",
+                "source_of_confusion": "In-memory брокеры (Memphis, Redis Streams в некоторых режимах) действительно хранят данные в RAM, и эту модель пытаются проецировать на Redpanda.",
+                "if_it_were_true": "Если бы данные жили только в RAM, перезапуск ноды означал бы потерю всего, и Redpanda не могла бы быть Kafka-совместимой по durability-семантике.",
+                "how_it_should_be": "Корректно: durable on-disk log; RAM используется для page cache и buffers, как и в Kafka."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Redpanda пишется на ассемблере, что и даёт скорость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda написан на C++ (с использованием Seastar). Ассемблер может появляться только в виде SIMD-оптимизаций в отдельных hot-path функциях, что характерно для современных C++ проектов вообще. Это не определяющий фактор.",
+                "source_of_confusion": "Миф «низкоуровневый язык = ассемблер» популярен в публикациях для неспециалистов.",
+                "if_it_were_true": "Если бы значительная часть кода была на ассемблере, проект было бы невозможно поддерживать в open source и быстро развивать.",
+                "how_it_should_be": "Корректно: основной язык — C++; ассемблер если и используется, то точечно для SIMD."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое WASM Data Transforms в Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это исполнение WebAssembly-функций прямо внутри брокера для трансформации сообщений (фильтрация, обогащение, миграция схем) без отдельного stream-processing процесса.",
+              "correct": true,
+              "sections": {
+                "explanation": "WASM Data Transforms (с 2023) позволяют деплоить в Redpanda небольшие функции, скомпилированные в WebAssembly (Rust, Go, JavaScript через AssemblyScript). Когда сообщение приходит в topic, к нему может быть применена WASM-функция: она читает запись, трансформирует её и пишет в выходной топик. Всё это происходит внутри брокера, без отдельного Kafka Streams/Flink-приложения. Полезно для лёгкой stream-обработки прямо на инфраструктуре messaging.",
+                "example": "Команда пишет на Rust функцию, которая обогащает событие `order_created` пользовательскими данными из enrichment-таблицы и пишет в `order_created_enriched`. Деплой — это `rpk transform deploy`, без поднятия Flink-кластера.",
+                "when_to_apply": "Лёгкая трансформация: фильтрация PII, простой routing, миграция схем (transform old → new), нормализация полей. Когда нет потребности в сложных оконных операциях или joins, и хочется снизить количество сервисов.",
+                "edge_cases": "WASM-функции живут в брокере и тратят его CPU; для тяжёлых трансформаций или больших stateful-операций (joins/windows) лучше использовать настоящий stream processor (Flink/ksqlDB). Также WASM-runtime накладывает ограничения на доступ к сети и blocking I/O.",
+                "related": "[[redpanda-interview#Q1]] что такое Redpanda; [[stream-processing-interview#Q1]] stream processing; [[kafka-streams-interview#Q1]] Kafka Streams; [[serverless-interview#Q1]] WASM в edge."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это инструмент для генерации Avro-схем из WSDL-файлов на стороне брокера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Data Transforms не имеют отношения к WSDL и схемам. Они исполняют пользовательский код (как функции FaaS) для обработки сообщений.",
+                "source_of_confusion": "Слово «schema transforms» иногда употребляют рядом, и в SOAP-мире WSDL — известный формат описания. Это полностью разные пространства.",
+                "if_it_were_true": "Если бы это была генерация схем, фича не имела бы продуктового смысла как замена stream processing — это была бы просто dev-утилита.",
+                "how_it_should_be": "Корректно: пользовательский код в WASM, исполняемый в брокере для трансформации сообщений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это специальный режим, в котором сообщения не сохраняются на диск, а пересылаются между топиками в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WASM Data Transforms не отменяют durable storage. Входной и выходной топики ведут себя как обычные durable topics. Transform — это шаг обработки, а не способ обойти persistence.",
+                "source_of_confusion": "«Transform» можно ошибочно интерпретировать как in-flight routing, который не пишется на диск.",
+                "if_it_were_true": "Если бы данные не сохранялись, при падении брокера трансформированные сообщения терялись бы; и фича не была бы безопасной для production-нагрузок.",
+                "how_it_should_be": "Корректно: входной и выходной топики — durable; transform — это computation поверх них."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это легаси-фича с самого первого релиза Redpanda для запуска SQL-запросов внутри брокера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WASM Data Transforms — относительно свежая фича (2023+), а не легаси. И это не SQL-движок: исполняется пользовательский WASM-код, написанный на Rust/Go/JS. SQL-style процессинг — это другая категория, например ksqlDB.",
+                "source_of_confusion": "ksqlDB и Materialize действительно выполняют SQL поверх Kafka-данных, и эту модель путают с тем, что делает Redpanda.",
+                "if_it_were_true": "Если бы фича была SQL-движком, она документировалась бы как ksqlDB-аналог, а не как «embedded code execution».",
+                "how_it_should_be": "Корректно: новая (2023+) WASM-based фича для пользовательского кода, не SQL."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое встроенный HTTP-прокси Redpanda (Pandaproxy)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "REST API для produce/consume сообщений по HTTP, встроенный в брокер и совместимый по семантике с Confluent REST Proxy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pandaproxy — это HTTP REST API, доступный по тому же бинарнику Redpanda (по умолчанию порт 8082). Через него клиенты, не имеющие нативной Kafka-библиотеки (IoT-устройства, браузерный JS, простые интеграции), могут отправлять и получать сообщения. Семантика и формат запросов совместимы с Confluent REST Proxy: те же endpoint'ы и content-types (например, `application/vnd.kafka.json.v2+json`).",
+                "example": "IoT-устройство, у которого нет места для Kafka SDK, отправляет JSON в топик через `curl -X POST http://redpanda:8082/topics/my-topic -H 'Content-Type: application/vnd.kafka.json.v2+json' -d '{\"records\":[{\"value\":{\"sensor\":42}}]}'`.",
+                "when_to_apply": "Когда клиенту неудобно или невозможно использовать нативный Kafka-протокол: IoT, edge-устройства, browser-based приложения, простые сервисы, у которых уже есть HTTP-клиент и не хочется тащить Kafka-зависимость, mobile apps с ограничениями.",
+                "edge_cases": "HTTP per-request overhead значительно выше нативного TCP/Kafka протокола, и throughput на одно соединение ниже. Для high-RPS сценариев это не замена нативному клиенту, а fallback. Также HTTP/1.1 без keep-alive дополнительно ухудшает latency.",
+                "related": "[[redpanda-interview#Q3]] single binary; [[redpanda-interview#Q8]] wire protocol; [[redpanda-interview#Q9]] клиенты Kafka; [[kafka-interview#Q12]] REST Proxy."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это HTTP-балансировщик, заменяющий nginx перед кластером Redpanda.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pandaproxy — это REST API для общения с topics, а не L7/L4 балансировщик. Балансировкой клиентских соединений к брокерам обычно занимаются nginx/HAProxy/Envoy перед кластером или внешний service mesh, не сам Pandaproxy.",
+                "source_of_confusion": "Слово «proxy» в названии может ассоциироваться с reverse-proxy/балансировщиком.",
+                "if_it_were_true": "Если бы это был балансировщик, он бы не описывался endpoint'ами вроде `/topics/{name}` и не предоставлял бы REST API для produce/consume.",
+                "how_it_should_be": "Корректно: REST API для работы с топиками, а не балансировщик трафика."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это GraphQL-сервер для запросов к Schema Registry.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pandaproxy — REST, а не GraphQL, и его предмет — produce/consume сообщений, а не схемы. Со схемами работает встроенный Schema Registry на другом порту (по умолчанию 8081), и он тоже REST.",
+                "source_of_confusion": "GraphQL и REST часто упоминают как альтернативы, и читатель может на ровном месте подменить одно другим.",
+                "if_it_were_true": "Если бы это был GraphQL для Schema Registry, документация и примеры использовали бы query/mutation, а не curl с POST на `/topics`.",
+                "how_it_should_be": "Корректно: REST API для produce/consume; Schema Registry — отдельный REST-сервис в том же бинарнике."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это отдельный сервис на Java, который надо ставить рядом с Redpanda.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pandaproxy встроен в нативный бинарник Redpanda — никаких отдельных Java-сервисов поднимать не требуется. Это часть концепции «single binary».",
+                "source_of_confusion": "Confluent REST Proxy — это отдельный JVM-процесс, и его архитектуру переносят на Redpanda по аналогии.",
+                "if_it_were_true": "Если бы пришлось ставить Java-сервис отдельно, фраза «single binary» была бы неверной, и преимущество в ops-простоте исчезло бы.",
+                "how_it_should_be": "Корректно: REST proxy — часть того же нативного бинарника Redpanda."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Redpanda Console?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Web UI для просмотра топиков, сообщений, consumer-групп, схем и ACL — аналог AKHQ/Kafdrop/Kowl, который Redpanda Data развивает после покупки Kowl.",
+              "correct": true,
+              "sections": {
+                "explanation": "Redpanda Console — отдельный web-интерфейс (не встроенный в брокер) для админских задач: просмотр топиков и партиций, чтение последних сообщений, инспекция consumer-групп и их lag'а, работа со схемами в Schema Registry, управление ACL. Console развивается на базе проекта Kowl, который Redpanda Data приобрела в 2021. Поставляется как отдельный Docker-контейнер.",
+                "example": "Команда поднимает `docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 docker.redpanda.com/redpandadata/console:latest` и видит UI с топиками, в котором инженеры быстро смотрят содержимое сообщений и lag по группам, не залезая в `rpk` или CLI.",
+                "when_to_apply": "Для оперативной работы SRE и dev-команд: разбор инцидентов, проверка наличия событий, аудит consumer-групп, ad-hoc просмотр схем. Также удобно как замена/дополнение AKHQ или Kafdrop в Kafka-инфраструктурах.",
+                "edge_cases": "Console — это отдельный сервис, его нужно развёртывать и securirовать; в production обычно ставится за SSO/Ingress с ACL. Также UI работает поверх Kafka API, поэтому имеет смысл проверить, как он ведёт себя на топиках с очень большим числом партиций (производительность UI может проседать).",
+                "related": "[[redpanda-interview#Q14]] HTTP proxy; [[redpanda-interview#Q10]] Schema Registry; [[kafka-interview#Q13]] UI для Kafka; [[observability-interview#Q4]] инструменты SRE."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это CLI-инструмент, заменяющий `rpk`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Console — это web UI, а не CLI. CLI-инструмент в экосистеме Redpanda называется `rpk`, и эти продукты дополняют друг друга, а не заменяют.",
+                "source_of_confusion": "Слово «console» в Unix-мире иногда ассоциируется с терминалом/CLI.",
+                "if_it_were_true": "Если бы это был CLI, не имело бы смысла говорить о Docker-образе и порту 8080 в типичных туториалах.",
+                "how_it_should_be": "Корректно: Console — web UI; `rpk` — CLI; они дополняют друг друга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это внутренняя metrics-панель для Prometheus, встроенная в брокер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Console — это не Prometheus dashboard. Метрики в Prometheus-формате Redpanda экспортирует через свой метрик-endpoint, и обычно их визуализируют в Grafana, а не в Console.",
+                "source_of_confusion": "В современных стеках UI для брокеров часто включают графики, и любой web-инструмент с цифрами воспринимается как «metrics панель».",
+                "if_it_were_true": "Если бы Console был встроенной Prometheus-панелью, для просмотра сообщений и работы со схемами всё равно понадобился бы отдельный инструмент. Это противоречит позиционированию Console как admin UI.",
+                "how_it_should_be": "Корректно: Console — admin UI; метрики смотрят через Prometheus + Grafana отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это часть `redpanda` бинарника, всегда работающая на порту 9092.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Console — отдельный сервис, отдельный Docker-образ; в основной `redpanda` бинарник он не входит. Порт 9092 занимает Kafka wire protocol брокера, а не Console.",
+                "source_of_confusion": "Маркетинг «single binary» создаёт ожидание, что все компоненты Redpanda встроены в один процесс.",
+                "if_it_were_true": "Если бы Console был встроен в брокер, не нужно было бы отдельного Docker-образа `redpandadata/console`, и документация описывала бы его как built-in HTTP service.",
+                "how_it_should_be": "Корректно: Console — отдельный сервис; основной бинарник Redpanda ‒ только брокер, Schema Registry, HTTP proxy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какова структура редакций Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Open source (BSL) с core-фичами и tiered storage, Enterprise (платная) с advanced security и audit, Redpanda Cloud — managed-сервис в облаке, включая BYOC.",
+              "correct": true,
+              "sections": {
+                "explanation": "Самостоятельная open-source-версия распространяется под лицензией BSL и включает базовый streaming, Schema Registry, HTTP proxy, tiered storage. Enterprise-редакция (платная подписка) добавляет audit logging, продвинутую безопасность (SASL/OAuthbearer и др.), более тонкие RBAC, 24/7 поддержку. Redpanda Cloud — managed offering: классический SaaS (Redpanda Data управляет инфраструктурой в AWS/GCP/Azure) и BYOC (Bring Your Own Cloud) — кластер живёт в VPC клиента, но управляется Redpanda Data.",
+                "example": "Стартап использует open-source Redpanda на 3 EC2-нодах. По мере роста переключается на Redpanda Cloud BYOC: брокеры остаются в его AWS-аккаунте, но обновлениями, бекапами и мониторингом занимается Redpanda Data.",
+                "when_to_apply": "Open source — для команд, готовых эксплуатировать самостоятельно и без жёстких compliance/audit-требований. Enterprise — для регулируемых индустрий (financial, healthcare), которым нужны audit logging и расширенный security. Cloud — для команд, не желающих заниматься ops; BYOC — когда данные не должны покидать собственный аккаунт по compliance-причинам.",
+                "edge_cases": "Часть фич доступна только в Enterprise (audit log) или только в Cloud (multi-region). Перед выбором нужно сверять матрицу фич с требованиями. Также BSL накладывает ограничения на коммерческое использование «как сервис» — публичный SaaS на open-source Redpanda не сделать.",
+                "related": "[[redpanda-interview#Q17]] BSL; [[redpanda-interview#Q18]] когда выбирать; [[redpanda-interview#Q19]] когда не выбирать; [[licensing-interview#Q1]] open-source модели."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "У Redpanda всего одна редакция — open source под Apache 2.0, никаких Enterprise- или Cloud-версий нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Redpanda есть три уровня: open source (под BSL, не Apache 2.0), Enterprise и Redpanda Cloud. Большая часть выручки компании — managed-сервис.",
+                "source_of_confusion": "Многие популярные брокеры (Apache Kafka, NATS) распространяются под Apache 2.0 как чисто open source. Это переносится на Redpanda.",
+                "if_it_were_true": "Если бы существовала только Apache 2.0 версия, не было бы смысла в BSL и в commercial model Redpanda Data — компания не получала бы выручки.",
+                "how_it_should_be": "Корректно: три редакции (Open source BSL, Enterprise, Cloud) — лицензия не Apache 2.0."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все фичи закрытые и доступны только в Redpanda Cloud по подписке; локально установить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Open-source Redpanda свободно скачивается и устанавливается локально или на собственной инфраструктуре. Cloud — это удобный managed-вариант, а не единственный путь.",
+                "source_of_confusion": "Существуют SaaS-only продукты (Snowflake-style), и эта модель ассоциируется со всеми новыми streaming-сервисами.",
+                "if_it_were_true": "Если бы локально установить было нельзя, нельзя было бы говорить о «single binary» и про community edition; GitHub-репозитория с исходниками не существовало бы.",
+                "how_it_should_be": "Корректно: open source доступен для self-host; Cloud — отдельный managed-вариант."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Open source является форком Apache Kafka, а Cloud — это просто rebrand AWS MSK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda не форк Kafka и не имеет отношения к AWS MSK. Это независимый продукт, и Redpanda Cloud — это managed-сервис, который Redpanda Data строит на своей инфраструктуре, не на MSK.",
+                "source_of_confusion": "AWS MSK — самый известный managed Kafka, и любой managed streaming у некоторых ассоциируется с ним.",
+                "if_it_were_true": "Если бы Cloud был rebrand MSK, не существовало бы BYOC-варианта и собственного control plane Redpanda Data.",
+                "how_it_should_be": "Корректно: независимый продукт; Cloud — собственный managed сервис, включая BYOC; MSK — другой проект (AWS managed Kafka)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Business Source License (BSL), под которой распространяется Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Source-available лицензия: код доступен и можно self-host'ить, но нельзя предлагать Redpanda как сервис третьим лицам без коммерческой подписки; через 4 года версия становится Apache 2.0.",
+              "correct": true,
+              "sections": {
+                "explanation": "BSL — это «source-available» лицензия, не классический OSI-open-source. Код доступен в репозитории, его можно читать, модифицировать и использовать в собственной инфраструктуре. Главное ограничение — нельзя предлагать «Redpanda-as-a-Service» сторонним клиентам без отдельного коммерческого соглашения. Через определённый срок (обычно 4 года) старые версии автоматически конвертируются в Apache 2.0 и становятся полностью open source. Тот же подход использует CockroachDB.",
+                "example": "Команда внутри банка устанавливает Redpanda BSL на свои сервера — это разрешено. Облачный провайдер, который хотел бы продавать «managed Redpanda» в публичном маркетплейсе, не имеет права делать это без соглашения с Redpanda Data.",
+                "when_to_apply": "Понимание BSL важно при выборе брокера для regulated-индустрий, при оценке long-term-зависимостей и при планировании собственных SaaS-продуктов поверх Redpanda. Также при сравнении лицензий с Apache 2.0 Kafka.",
+                "edge_cases": "Точные условия BSL зависят от текущей версии лицензии и конкретного «Additional Use Grant» от Redpanda Data — стоит сверять условия с юристом перед продакшеном. Также, в отличие от Apache 2.0, BSL не одобрена OSI/FSF, что иногда блокирует использование внутри корпораций.",
+                "related": "[[redpanda-interview#Q16]] редакции; [[redpanda-interview#Q19]] минусы; [[licensing-interview#Q3]] BSL vs Apache; [[cockroachdb-interview#Q5]] BSL у CockroachDB."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "BSL — это классическая Apache 2.0 лицензия без всяких ограничений на коммерческое использование.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSL и Apache 2.0 — это разные лицензии. Apache 2.0 — permissive open source без ограничений на коммерческое использование; BSL — source-available, с явным запретом на коммерческое предложение «as a service».",
+                "source_of_confusion": "Многие популярные open-source проекты используют Apache 2.0, и этот шаблон по инерции переносится на Redpanda.",
+                "if_it_were_true": "Если бы Redpanda была под Apache 2.0, AWS и GCP могли бы запустить свои managed Redpanda без соглашений с вендором, и не было бы смысла в BSL.",
+                "how_it_should_be": "Корректно: BSL — source-available, с ограничениями на «as a service»; через 4 года старые версии становятся Apache 2.0."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "BSL вообще запрещает любое использование Redpanda — это полностью закрытая лицензия без доступа к исходникам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исходный код Redpanda доступен на GitHub, его можно читать, форкать (с ограничениями) и использовать. BSL не «закрытая proprietary» лицензия, а «source-available» с конкретными ограничениями.",
+                "source_of_confusion": "«Not open source» иногда воспринимается как «полностью закрыто». На самом деле спектр шире: open-source, source-available, proprietary.",
+                "if_it_were_true": "Если бы код был полностью закрыт, не существовало бы публичного GitHub-репозитория `redpanda-data/redpanda` и community PR-ов.",
+                "how_it_should_be": "Корректно: код открыт для чтения и self-hosted-использования; ограничения только на «коммерческий managed-сервис»."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "BSL разрешает использовать Redpanda как сервис, но запрещает self-hosting.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BSL ровно наоборот: self-hosting разрешён (это основной use case open-source-релиза), а вот предлагать managed-сервис третьим лицам — нет.",
+                "source_of_confusion": "Перепутаны направления ограничений: BSL защищает бизнес-модель managed-сервиса вендора, а не пользователя.",
+                "if_it_were_true": "Если бы self-hosting был запрещён, не имел бы смысла community edition и страница «download Redpanda binary for Linux».",
+                "how_it_should_be": "Корректно: self-host разрешён; managed-as-a-service сторонним клиентам — нет."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В каких сценариях обычно стоит выбрать Redpanda вместо Apache Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Когда критична низкая и предсказуемая p99-latency, важна простота ops (single binary, без ZK) и команда небольшая; для cloud-native deployments и проектов без legacy Kafka-ecosystem.",
+              "correct": true,
+              "sections": {
+                "explanation": "Redpanda даёт выгоду в трёх измерениях: latency (no GC, shard-per-core → стабильный p99), ops (один бинарник, нет ZK/Connect/Schema Registry-зоопарка), cost (меньше нод и нативный footprint). Соответственно выбор оправдан там, где эти метрики критичны: financial и trading платформы, gaming backend, real-time bidding, IoT-телеметрия, новые cloud-native сервисы, где команда хочет быстрый time-to-market без поднятия ZooKeeper и Connect отдельно.",
+                "example": "Команда финтех-стартапа запускает новый payment-сервис: 3 ноды Redpanda на Kubernetes, без отдельных ZooKeeper-подов; p99 publish ≈ 5 ms; SRE-команда из 2 человек справляется с эксплуатацией.",
+                "when_to_apply": "Latency-sensitive системы, малые SRE-команды, новые проекты без долгов Kafka-инфраструктуры, проекты в managed cloud, где можно использовать Redpanda Cloud.",
+                "edge_cases": "Даже в этих сценариях стоит проверить, что нужные коннекторы Kafka Connect протестированы вашей командой, и что нет специфических Kafka-фич, которых нет в Redpanda. Также понимание BSL обязательно перед production-выбором.",
+                "related": "[[redpanda-interview#Q11]] performance; [[redpanda-interview#Q19]] когда не выбирать; [[redpanda-interview#Q20]] миграция; [[messaging-comparison-interview#Q1]] выбор брокера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда и везде — Redpanda стратегически превосходит Kafka во всех сценариях без исключений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нет универсального «всегда». У Kafka есть зрелая экосистема, большее сообщество, больше готовых коннекторов и интеграций, проверенных историй на extreme scale. В ряде сценариев (большие legacy-инсталляции, очень узкие фичи, требования Apache 2.0) Kafka остаётся правильным выбором.",
+                "source_of_confusion": "Маркетинг любого нового продукта подаёт его как «лучше во всём». Без оговорок это превращается в universal recommendation.",
+                "if_it_were_true": "Если бы Redpanda всегда выигрывал, Kafka исчез бы из новых проектов; на практике это не так.",
+                "how_it_should_be": "Корректно: Redpanda — лучший выбор для latency-sensitive, ops-light, cloud-native — но не universally; для зрелых Kafka-инсталляций и Apache-strict проектов Kafka может оставаться лучше."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только для batch ETL-задач, где latency не важна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоречит основному value-proposition Redpanda: ключевая ценность как раз в низкой latency. Для batch ETL подходят и Kafka, и Redpanda, и часто другие инструменты (Spark, Airflow). Latency-нечувствительные batch-нагрузки — не та область, где Redpanda максимально проявляет себя.",
+                "source_of_confusion": "Любой streaming-броker может использоваться для batch-сценариев, и читатель может выбрать самый «нестандартный» сценарий как «единственный».",
+                "if_it_were_true": "Если бы Redpanda был только для batch, не было бы смысла в shard-per-core и no-GC: для batch latency не критична.",
+                "how_it_should_be": "Корректно: Redpanda — для latency-sensitive streaming; batch — допустимо, но не его основная сильная сторона."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только для проектов на Java, потому что Redpanda внутри использует JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redpanda не использует JVM — он на C++. И язык приложения, которое подключается к Redpanda, не имеет значения, потому что клиенты есть на любом языке (Java, Python, Go, JS, .NET).",
+                "source_of_confusion": "Kafka действительно тесно связан с JVM-миром, и эта связь по инерции переносится на Redpanda.",
+                "if_it_were_true": "Если бы Redpanda был JVM-only, не было бы смысла рекламировать no-JVM и no-GC как ключевые ценности.",
+                "how_it_should_be": "Корректно: Redpanda на C++; клиенты на любом языке; выбор брокера не зависит от языка приложения."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда лучше остаться на Apache Kafka, а не переходить на Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Большая существующая Kafka-инсталляция, сильная зависимость от специфических Kafka-фич/коннекторов, требование Apache 2.0 лицензии, или приоритет максимальной экосистемы и community.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kafka остаётся более безопасным выбором в нескольких ситуациях. Во-первых, при больших legacy-инсталляциях миграция несёт операционный риск и долгую verification. Во-вторых, у Kafka больше community и готовых ответов: фактически каждая ошибка уже описана в Stack Overflow. В-третьих, новые фичи (некоторые EOS-сценарии, продвинутые transactional API) могут появляться в Kafka раньше. В-четвёртых, BSL пугает часть корпораций, у которых формальный compliance требует Apache 2.0/OSI-лицензию. В-пятых, при extreme scale (десятки petabyte, сотни тысяч топиков) Kafka накопил больше production-кейсов.",
+                "example": "Финансовая корпорация с 50 Kafka-кластерами и сотней коннекторов рассматривает миграцию. Оценка показывает, что переписать MirrorMaker- и Connect-конфиги, тестировать каждый коннектор и обучить операторов займёт больше времени, чем фичевый бэклог на ближайший год. Решение — остаться на Kafka и при необходимости использовать KRaft для устранения ZK.",
+                "when_to_apply": "При высокой стоимости миграции, при наличии узких Kafka-фич, при формальных требованиях к лицензии. Также для команд, у которых уже сильная Kafka-экспертиза, и time-to-value на новой технологии непропорционально дорог.",
+                "edge_cases": "Даже в этих случаях стоит хотя бы периодически переоценивать выбор: Redpanda быстро добавляет фичи, и Kafka KRaft уменьшает разрыв в простоте ops. Решение «остаёмся на Kafka» не должно становиться вечным по умолчанию.",
+                "related": "[[redpanda-interview#Q17]] BSL; [[redpanda-interview#Q18]] когда выбирать; [[redpanda-interview#Q20]] миграция; [[kafka-interview#Q15]] зрелость экосистемы."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Никогда — переход на Redpanda всегда оправдан, независимо от размера и зрелости инсталляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Миграционные риски и кост — реальны. Никогда — это слишком сильное утверждение. Решение зависит от объёма данных, числа клиентов, специфики используемых фич Kafka, ресурсов SRE-команды и compliance-ограничений.",
+                "source_of_confusion": "Энтузиазм по поводу новой технологии иногда перевешивает осторожность; команды любят считать любое улучшение «однозначным».",
+                "if_it_were_true": "Если бы переход всегда был оправдан, его делали бы все крупные компании; на практике многие сознательно остаются на Kafka.",
+                "how_it_should_be": "Корректно: миграция оправдана не всегда; есть конкретные ситуации, в которых Kafka — лучший выбор."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только если ваше приложение написано на C++ — тогда якобы лучше Kafka.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Язык приложения не определяет выбор брокера. Kafka- и Redpanda-клиенты есть на любых популярных языках, и брокер не пересекается с языком клиентского кода.",
+                "source_of_confusion": "Логика «runtime брокера на C++ → клиент на C++ лучше» звучит интуитивно, но не имеет под собой инженерных оснований.",
+                "if_it_were_true": "Если бы выбор брокера зависел от языка клиента, нельзя было бы рекомендовать ни Kafka, ни Redpanda универсально, и весь рынок выглядел бы иначе.",
+                "how_it_should_be": "Корректно: выбор брокера определяют latency-требования, ops, экосистема и compliance, а не язык клиентского кода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только если в команде нет ни одного DevOps-инженера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствие DevOps как раз тяжелее даётся на Kafka: ZooKeeper, Connect, Schema Registry — отдельные системы. Redpanda обычно проще в эксплуатации для малых команд, а не наоборот.",
+                "source_of_confusion": "Возможно, читатель путает «больше моделей deployment» с «больше ops»: на самом деле Kafka накладывает больше операционной нагрузки, чем Redpanda.",
+                "if_it_were_true": "Если бы Kafka был проще для команд без DevOps, реклама Redpanda «simpler ops» теряла бы основу.",
+                "how_it_should_be": "Корректно: малым командам без сильной DevOps-функции обычно проще с Redpanda."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие подходы используются для миграции с Apache Kafka на Redpanda?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MirrorMaker 2 для непрерывной репликации Kafka → Redpanda с последующим переключением клиентов; dual-write на оба кластера с поэтапным переключением чтений; cut-over с остановкой и копированием через rpk.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три типичных подхода. Первый — MirrorMaker 2 настраивает асинхронную репликацию Kafka → Redpanda; данные синхронизируются непрерывно, и в момент cut-over клиенты переключают `bootstrap.servers` на Redpanda. Второй — приложения некоторое время пишут одновременно в оба кластера (dual-write), и команды постепенно переключают consumer'ы на Redpanda. Третий — cut-over: остановить продюсеры, скопировать данные (rpk-командами или MirrorMaker), запустить на новой стороне, переключить клиентов. На практике чаще всего используется MirrorMaker 2 благодаря зрелости инструмента и совместимости wire protocol.",
+                "example": "Команда настраивает MirrorMaker 2 с source-кластером Kafka и target-кластером Redpanda, реплицирует ~150 топиков в течение недели, проверяет lag и consistency, затем поэтапно переключает каждый сервис на новые `bootstrap.servers`, начиная с некритичных сервисов и заканчивая ядром платёжного потока.",
+                "when_to_apply": "Любая нетривиальная миграция. MirrorMaker 2 — для больших долгоживущих кластеров с непрерывной нагрузкой; dual-write — когда важно сравнивать поведение двух кластеров и иметь быстрый rollback; cut-over — для небольших нагрузок или для систем, допускающих короткое окно простоя.",
+                "edge_cases": "Сложности: offset translation (MirrorMaker 2 хранит mapping offsets через checkpoint topic, но не всегда идеален); порядок сообщений между несколькими топиками; транзакции и EOS-сценарии; ACL и schemas — их нужно мигрировать отдельно. Также важно тестировать throughput end-to-end до production cut-over.",
+                "related": "[[redpanda-interview#Q8]] wire protocol; [[redpanda-interview#Q9]] клиенты; [[redpanda-interview#Q18]] когда выбирать; [[kafka-interview#Q14]] MirrorMaker."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Миграция возможна только через ручной экспорт сообщений в CSV и импорт обратно — никаких автоматических инструментов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существуют автоматические инструменты: MirrorMaker 2 для онлайн-репликации, `rpk` (CLI Redpanda) для cluster-management и копирования данных, скрипты на основе Kafka Connect. Ручной экспорт через CSV не используется в production.",
+                "source_of_confusion": "Сценарий миграции БД через dump/restore (pg_dump → CSV → import) переносят на streaming-системы по аналогии.",
+                "if_it_were_true": "Если бы единственным способом был CSV, миграция была бы практически невыполнимой для realtime-нагрузок с миллионами сообщений в секунду — потерялся бы порядок и timestamps.",
+                "how_it_should_be": "Корректно: MirrorMaker 2 / dual-write / rpk-based cut-over; CSV — это не serious-инструмент для streaming-миграций."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Никакая миграция невозможна — Kafka и Redpanda несовместимы по данным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wire protocol совместим, и любые инструменты, которые работают с Kafka (MirrorMaker, Kafka Connect, kcat), работают и с Redpanda. Это и есть основа стратегии миграции.",
+                "source_of_confusion": "Слово «миграция» иногда вызывает страх несовместимости форматов; в случае Redpanda это не оправдано.",
+                "if_it_were_true": "Если бы данные были несовместимы, продукт не позиционировался бы как «drop-in replacement Kafka», и истории успешных миграций не существовало бы.",
+                "how_it_should_be": "Корректно: совместимость по wire protocol позволяет использовать стандартные Kafka-инструменты миграции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный путь — поднять Redpanda как Kafka Connect-приёмник, а Kafka оставить как основной кластер навсегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не «миграция», а гибридное использование, и оно тоже возможно, но не является «единственным путём». Полноценная миграция предполагает в итоге уход от Kafka, а не вечную пару Kafka+Redpanda.",
+                "source_of_confusion": "Сценарий «add sink, keep source» характерен для шин данных (Debezium → analytical store) и переносится на брокеры.",
+                "if_it_were_true": "Если бы это был единственный путь, у Redpanda не было бы продаж как замены Kafka, и команды не имели бы смысла отказываться от двух кластеров вместо одного.",
+                "how_it_should_be": "Корректно: миграционных стратегий несколько (MirrorMaker, dual-write, cut-over); гибридное использование — отдельный сценарий, не единственный."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

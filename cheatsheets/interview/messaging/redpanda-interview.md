@@ -85,12 +85,7 @@ updated: "2026-04-25"
 
 **Применения:** same as Kafka — event streaming, microservices, real-time analytics, log aggregation.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q2. (!) Redpanda vs Kafka — отличия? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q2. (!) Redpanda vs Kafka — отличия?
 
 | Критерий | Apache Kafka | Redpanda |
 |----------|--------------|----------|
@@ -107,12 +102,7 @@ updated: "2026-04-25"
 | Adoption | Massive | Growing |
 | Ecosystem | Huge | Compatible но smaller native |
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q3. Single binary — что значит? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q3. Single binary — что значит?
 
 **Apache Kafka deployment:**
 - Kafka brokers (Java)
@@ -128,12 +118,7 @@ updated: "2026-04-25"
 
 **Effect:** **massively simpler ops**. Container deployments easier. Less moving parts.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q4. (!) C++ + Seastar (shard-per-core)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q4. (!) C++ + Seastar (shard-per-core)?
 
 **Seastar** — same framework как **ScyllaDB**.
 
@@ -150,12 +135,7 @@ updated: "2026-04-25"
 
 **Result:** better CPU utilization, lower latency.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q5. No JVM, no GC pauses? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q5. No JVM, no GC pauses?
 
 **Kafka** — JVM:
 - GC pauses (10-500 ms)
@@ -170,12 +150,7 @@ updated: "2026-04-25"
 
 Same advantage как **ScyllaDB vs Cassandra**.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q6. (!) No ZooKeeper — Raft консенсус? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q6. (!) No ZooKeeper — Raft консенсус?
 
 **Kafka historically** require ZooKeeper для:
 - Cluster metadata
@@ -191,12 +166,7 @@ Same advantage как **ScyllaDB vs Cassandra**.
 - Fewer components
 - Faster failover
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q7. Tiered storage? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q7. Tiered storage?
 
 **Tiered storage** в Redpanda — old data offloaded к **object storage (S3, GCS, Azure Blob)**.
 
@@ -215,12 +185,7 @@ cloud_storage_region: us-east-1
 
 Same idea как **Pulsar tiered storage**, **Kafka Tiered Storage** (KIP-405).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q8. (!) Kafka wire protocol compatibility? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q8. (!) Kafka wire protocol compatibility?
 
 **Redpanda implements** Kafka wire protocol.
 
@@ -237,12 +202,7 @@ producer.send('my-topic', b'message')
 
 **Some advanced features** не supported (Kafka transactions on Redpanda — supported недавно).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q9. Kafka clients работают? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q9. Kafka clients работают?
 
 **Да** — все mainstream Kafka clients:
 - Java (kafka-clients)
@@ -255,12 +215,7 @@ producer.send('my-topic', b'message')
 
 **ORM/connectors** (Debezium, Kafka Connect) — supported.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q10. Schema Registry, Connect? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q10. Schema Registry, Connect?
 
 **Schema Registry** — built into Redpanda (Avro, JSON Schema, Protobuf).
 
@@ -273,12 +228,7 @@ curl http://redpanda:8081/subjects
 
 **Redpanda Console** — UI для browsing topics, schemas, consumers.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q11. (!) Performance claims (latency, throughput)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q11. (!) Performance claims (latency, throughput)?
 
 **Redpanda Data benchmark** results (vary):
 - **p50 latency:** 2-3 ms (vs Kafka 10-15 ms)
@@ -293,12 +243,7 @@ curl http://redpanda:8081/subjects
 
 **Independent benchmarks** generally confirm Redpanda is **faster** but margins less than vendor claims.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q12. (!) Why faster than Kafka? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q12. (!) Why faster than Kafka?
 
 1. **C++ vs Java** — no JVM overhead
 2. **No GC pauses** — predictable latency
@@ -311,12 +256,7 @@ curl http://redpanda:8081/subjects
 
 **Result:** typically 3-10x lower latency, higher throughput per CPU.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q13. WASM transforms? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q13. WASM transforms?
 
 **Redpanda WASM Data Transforms** (с 2023) — execute WebAssembly functions inside broker.
 
@@ -339,12 +279,7 @@ fn process(event: WriteEvent, writer: RecordWriter) -> Result<()> {
 
 Похоже на **Kafka Streams**, но **inside broker** (no separate process).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q14. Built-in HTTP proxy? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q14. Built-in HTTP proxy?
 
 **Pandaproxy** — HTTP REST API для Kafka topics.
 
@@ -365,19 +300,14 @@ curl http://redpanda:8082/consumers/my-group/instances/my-instance/records
 
 Same as **Confluent REST Proxy**, но built-in.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q15. Console (UI)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q15. Console (UI)?
 
 **Redpanda Console** — web UI для:
 - Browse topics, partitions
 - Inspect messages
 - Manage consumer groups
 - View schemas
-- Connect cluster管理
+- Connect cluster управления
 - Roles, ACLs
 
 ```bash
@@ -387,12 +317,7 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 
 Аналог **AKHQ, Kafdrop, Kowl** (предыдущая версия Console).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q16. (!) Open source vs Enterprise vs Cloud? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q16. (!) Open source vs Enterprise vs Cloud?
 
 **Open source (Free):**
 - Source available (BSL license)
@@ -412,12 +337,7 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 
 В **2025** — растущая популярность managed Redpanda Cloud (alternative Confluent Cloud).
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q17. Source available license (BSL)? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q17. Source available license (BSL)?
 
 **Business Source License (BSL)** — same как CockroachDB.
 
@@ -431,12 +351,7 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 
 Похоже на **Elastic License**, **Cockroach License**.
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q18. (!) Когда выбрать Redpanda над Kafka? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q18. (!) Когда выбрать Redpanda над Kafka?
 
 **Выбирай Redpanda когда:**
 - **Lower latency** critical (financial, gaming, real-time)
@@ -453,12 +368,7 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 - Need **specific Kafka features** Redpanda lacks
 - Risk-averse organization
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q19. Когда не выбирать Redpanda? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q19. Когда не выбирать Redpanda?
 
 1. **Bleeding edge needs** — Kafka has more features earlier
 2. **Specific tools** только Kafka (rare)
@@ -468,12 +378,7 @@ docker run -p 8080:8080 -e KAFKA_BROKERS=redpanda:9092 \
 6. **License concerns** (BSL вызывает opinions)
 7. **Want completely free, Apache** project (use Kafka)
 
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление## Q20. Migration Kafka → Redpanda? ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
+## Q20. Migration Kafka → Redpanda?
 
 **Approaches:**
 
@@ -499,7 +404,7 @@ rpk topic create my-topic
 
 ## See also
 
-- [Apache Kafka](kafka-interview.md) — main conkurent (Redpanda compatible)
+- [Apache Kafka](kafka-interview.md) — main конкурент (Redpanda compatible)
 - [Kafka Streams](../data-engineering/kafka-streams-interview.md) — works against Redpanda
 - [NATS](nats-interview.md) — another lightweight alternative
 - [Apache Pulsar](pulsar-interview.md) — another alternative
@@ -512,14 +417,7 @@ rpk topic create my-topic
 - [Scalability Patterns](../architecture/scalability-patterns-interview.md) — shard-per-core
 - [Performance Testing](../performance/performance-testing-interview.md) — benchmarking
 - [OpenTelemetry](../monitoring/opentelemetry-interview.md) — Redpanda metrics
-
-
-> [!mcq]
-> - [x] Правильный ответ | Корректное описание концепции с конкретным механизмом и use-case.
-> - [ ] Альтернативное решение которое не подходит | Почему ошибка в этом подходе ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Другая альтернатива с критическим недостатком | Это смежное, но отличное понятие ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-> - [ ] Третий вариант который не работает в production | Противоположное направление- [AWS SQS и SNS](aws-sqs-sns-interview.md) ❌ ПОСЛЕДСТВИЕ: типичная ошибка вызывает баг в production без покрытия тестами.
-- [Apache Kafka](kafka-interview.md)
+- [AWS SQS и SNS](aws-sqs-sns-interview.md)
 - [Сравнение Message Brokers](message-brokers-comparison-interview.md)
 - [NATS](nats-interview.md)
 - [Apache Pulsar](pulsar-interview.md)
