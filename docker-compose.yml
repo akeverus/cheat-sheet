@@ -1,9 +1,13 @@
-# Запуск: docker compose up -d
+# Запуск:   docker compose up -d
+# Логи:     docker compose logs -f interview-prep
+# Перед стартом скопируй .env.example → .env и заполни ключи.
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: quiz-postgres
+    restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_DB: interview
       POSTGRES_USER: ${POSTGRES_USER:-interview}
@@ -16,12 +20,25 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   interview-prep:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${APP_VERSION:-0.0.1-SNAPSHOT}
+    image: cheat-sheet-quiz:${APP_VERSION:-latest}
+    container_name: quiz-app
+    restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     environment:
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=75 -XX:+UseG1GC}
       # Primary: openai или deepseek
       AI_PROVIDER: ${AI_PROVIDER:-openai}
       SPRING_PROFILES_ACTIVE: postgres
@@ -52,9 +69,15 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     # Volume для двусторонней синхронизации избранного между UI и MD-файлами
     volumes:
       - ./cheatsheets:/app/cheatsheets
 
 volumes:
   postgres-data:
+    driver: local

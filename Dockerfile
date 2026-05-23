@@ -24,9 +24,13 @@ COPY --from=builder /build/modules/quiz-app/build/libs/*.jar app.jar
 # Для сборки образа нужна папка cheatsheets в корне проекта (см. README)
 COPY cheatsheets /app/cheatsheets
 
+# Каталог для SQLite-БД; подключается как volume в docker-compose
+RUN mkdir -p /app/data/db
 RUN chown -R app:app /app
 
 USER app
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
+  CMD curl -fsS http://localhost:8080/actuator/health || exit 1
 ENTRYPOINT ["java", "-jar", "app.jar"]
