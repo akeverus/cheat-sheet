@@ -150,7 +150,7 @@
 <section class="card review-forecast" th:if="${reviewForecast != null and !reviewForecast.isEmpty()}">
     <h3>Прогноз повторений на 7 дней</h3>
     <p class="review-forecast-hint">Сколько вопросов прилетит в каждый день. Помогает распределить нагрузку.</p>
-    <ul class="forecast-list" th:with="maxCnt=${#aggregates.max(reviewForecast.![count])}">
+    <ul class="forecast-list" th:with="maxCnt=${#lists.isEmpty(reviewForecast) ? 1 : T(java.util.Collections).max(reviewForecast.![count])}">
         <li th:each="day : ${reviewForecast}" class="forecast-row">
             <span class="forecast-day" th:text="${day.day()}">2026-04-20</span>
             <span class="forecast-bar" role="img" th:aria-label="${day.count() + ' вопросов'}">
