@@ -65,4 +65,25 @@ class SecurityConfigWebMvcTest {
                         .header("X-Admin-Token", "test-admin-token"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void contentSecurityPolicyAllowsKnownCdnDeps() throws Exception {
+        // Шаблоны грузят шрифты с Google Fonts, highlight.js с cdnjs и
+        // mermaid с jsdelivr. Если кто-то снова сожмёт CSP до "self
+        // 'unsafe-inline'" — страницы посыпятся console errors. Этот тест —
+        // защита от такой регрессии.
+        String csp = mockMvc.perform(MockMvcRequestBuilders.get("/"))
+                .andReturn()
+                .getResponse()
+                .getHeader("Content-Security-Policy");
+
+        assertThat(csp).isNotNull();
+        assertThat(csp).contains("https://cdnjs.cloudflare.com");
+        assertThat(csp).contains("https://cdn.jsdelivr.net");
+        assertThat(csp).contains("https://fonts.googleapis.com");
+        assertThat(csp).contains("https://fonts.gstatic.com");
+        assertThat(csp).contains("script-src-elem");
+        assertThat(csp).contains("style-src-elem");
+        assertThat(csp).contains("font-src");
+    }
 }
