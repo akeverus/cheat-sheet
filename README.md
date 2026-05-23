@@ -252,6 +252,14 @@ docker compose build interview-prep --no-cache
 docker compose up -d interview-prep
 ```
 
+**Готовый шаблон env-файла** лежит в `.env.example` — скопируйте его в `.env` и заполните ключи. Compose читает `.env` автоматически.
+
+**Лёгкая альтернатива без PostgreSQL** — `docker-compose.sqlite.yml`. Поднимает только приложение с SQLite в volume `quiz-data`, ничего больше. Полезно для smoke-теста или одиночного инстанса:
+
+```bash
+APP_ADMIN_TOKEN=local-secret docker compose -f docker-compose.sqlite.yml up -d
+```
+
 ---
 
 ## Способ 5. Запуск с PostgreSQL без Docker
@@ -280,42 +288,35 @@ Flyway автоматически применит миграции из `db/mig
 
 ---
 
-## Режимы работы (с AI и без)
+## Режимы работы (источники MCQ)
 
-### Без AI-ключей — режим флешкарт
+### По умолчанию — seed-first (JSON-сидеры)
 
-Приложение определяет отсутствие ключей в `AppProperties.isAiEnabled()` и переключает MVC в `flashcardMode=true`. Пользователь видит:
+Варианты ответа берутся из `modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>.json`. AI **не вызывается в рантайме**, даже если задан API-ключ. Это поведение по умолчанию для всего проекта — реквесты к LLM делаются только когда вы сами это попросите.
 
-- вопрос;
-- эталонный ответ из markdown;
-- кнопки самооценки SM-2 (Снова / Сложно / Хорошо / Легко).
-
-Для запуска ничего дополнительно делать не нужно — просто **не задавайте** `OPENAI_API_KEY` и `DEEPSEEK_API_KEY`:
+- Если для вопроса есть seed-варианты → они отдаются как есть.
+- Если нет → UI деградирует в режим флешкарт (ответ + кнопки самооценки SM-2: Снова / Сложно / Хорошо / Легко).
+- Цена: 0 токенов, 0 латентности.
 
 ```bash
+./gradlew bootRun         # без ключей и без AI — нормальный сценарий
+```
+
+### Опционально — on-demand AI fallback
+
+Когда seed-варианта нет и вы хотите, чтобы LLM сгенерировал опции на лету — включите fallback:
+
+```bash
+export OPENAI_API_KEY=sk-...
+export AI_FALLBACK_ENABLED=true        # без этого ключ не используется в рантайме
 ./gradlew bootRun
 ```
 
-### С AI-ключом — режим теста
+Только при `AI_FALLBACK_ENABLED=true` **и** заданном `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` сервис обратится в LLM. Запросы кэшируются в БД и in-memory (Caffeine) — повторное открытие вопроса в LLM не идёт.
 
-Доступны: автогенерация 4 вариантов ответа, 3 прогрессивных подсказки, Mermaid-диаграммы.
+### Совсем без AI — режим флешкарт
 
-```bash
-# Только OpenAI
-export OPENAI_API_KEY=sk-...
-./gradlew bootRun
-
-# Только DeepSeek (поменять провайдера через AI_PROVIDER)
-export DEEPSEEK_API_KEY=sk-...
-AI_PROVIDER=deepseek ./gradlew bootRun
-
-# Оба ключа: основной — OpenAI, fallback — Spring AI
-export OPENAI_API_KEY=sk-...
-export SPRING_AI_API_KEY=sk-...
-./gradlew bootRun
-```
-
-Запросы кэшируются в БД и in-memory (Caffeine). Повторное открытие вопроса не вызывает новых обращений к LLM.
+Если ключи не заданы (или fallback выключен), `AppProperties.isAiEnabled()` вернёт false. MVC форсит `flashcardMode=true`, и пользователь видит вопрос + эталонный ответ из markdown без выбора вариантов.
 
 ---
 
@@ -332,6 +333,7 @@ export SPRING_AI_API_KEY=sk-...
 | `OPENAI_MODEL` | Модель OpenAI | `gpt-4.1-mini` |
 | `DEEPSEEK_API_KEY` | Ключ DeepSeek | `sk-...` |
 | `APP_ADMIN_TOKEN` | Токен для admin-эндпоинтов; пусто = без проверки | `secret` |
+| `AI_FALLBACK_ENABLED` | Разрешить on-demand AI-генерацию опций (по умолчанию `false` — seed-first) | `true` |
 
 ### PostgreSQL (профиль `postgres`)
 
