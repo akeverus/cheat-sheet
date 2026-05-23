@@ -129,9 +129,25 @@ app:
   # --- Директория данных (SQLite и др.) ---
   data-dir: data
 
-# --- Actuator (health для Docker healthcheck) ---
+# --- Actuator (health для Docker / Kubernetes healthcheck) ---
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info
+  endpoint:
+    health:
+      # Включаем /actuator/health/liveness и /actuator/health/readiness —
+      # отдельные пробы для K8s/cloud-runner, чтобы оркестратор различал
+      # «процесс жив» и «готов принимать трафик».
+      probes:
+        enabled: true
+      show-details: never
+      show-components: never
+  info:
+    env:
+      enabled: false
+    git:
+      enabled: false
+    build:
+      enabled: true

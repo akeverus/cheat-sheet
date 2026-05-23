@@ -47,9 +47,14 @@ class PublicEndpointsSmokeTest {
                 .andExpect(content().contentTypeCompatibleWith("text/html"));
     }
 
-    @org.junit.jupiter.api.Test
-    void actuatorHealthReturnsUp() throws Exception {
-        mockMvc.perform(get("/actuator/health"))
+    @ParameterizedTest(name = "{0} → 200")
+    @ValueSource(strings = {
+            "/actuator/health",
+            "/actuator/health/liveness",
+            "/actuator/health/readiness"
+    })
+    void actuatorHealthProbesReturnUp(String path) throws Exception {
+        mockMvc.perform(get(path))
                 .andExpect(status().isOk())
                 // Spring Boot actuator V3 negotiates its own vendor media type.
                 .andExpect(content().contentTypeCompatibleWith(
