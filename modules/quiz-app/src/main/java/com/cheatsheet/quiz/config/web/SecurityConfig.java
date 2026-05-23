@@ -63,7 +63,19 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
-                                "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"))
+                                // CDN-зависимости UI:
+                                //  - highlight.js (CSS + JS)         → cdnjs.cloudflare.com
+                                //  - mermaid (JS)                    → cdn.jsdelivr.net
+                                //  - Google Fonts (CSS + .woff2)     → fonts.googleapis.com / fonts.gstatic.com
+                                // *-elem явно дублируем, иначе ряд браузеров не падёт на fallback в style-src/script-src.
+                                "default-src 'self'; "
+                                        + "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+                                        + "script-src-elem 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+                                        + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+                                        + "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+                                        + "font-src 'self' data: https://fonts.gstatic.com; "
+                                        + "img-src 'self' data:; "
+                                        + "connect-src 'self'"))
                         .referrerPolicy(ref -> ref.policy(
                                 org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .frameOptions(frame -> frame.sameOrigin())
