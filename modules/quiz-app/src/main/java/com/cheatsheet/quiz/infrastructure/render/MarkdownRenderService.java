@@ -31,6 +31,14 @@ public class MarkdownRenderService {
     private static final Parser PARSER = Parser.builder(MARKDOWN_OPTIONS).build();
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder(MARKDOWN_OPTIONS).build();
 
+    /**
+     * Obsidian-style wiki-link: {@code [[topic#anchor|label]]}.
+     * group 1 — slug темы (без префикса), group 2 — отброшенный якорь #Qn (мы его не маршрутизируем),
+     * group 3 — необязательный label.
+     */
+    private static final java.util.regex.Pattern WIKI_LINK =
+            java.util.regex.Pattern.compile("\\[\\[([^\\]|#\\s]+)(#[^\\]|]+)?(?:\\|([^\\]]+))?\\]\\]");
+
     private final AppProperties appProperties;
 
     /** Safelist для HTML после markdown: только безопасные теги, без script/iframe/form. Подходит для th:utext. */
@@ -38,7 +46,13 @@ public class MarkdownRenderService {
             .addTags("pre", "code", "table", "thead", "tbody", "tr", "th", "td")
             .removeTags("script", "iframe", "object", "embed", "form")
             .addAttributes("div", "class")   // mermaid diagrams: <div class="mermaid">
-            .addAttributes("code", "class"); // highlight.js language hints: <code class="language-java">
+            .addAttributes("code", "class")  // highlight.js language hints: <code class="language-java">
+            .addAttributes("a", "class")
+            // wiki-link даёт relative href вида /?topic=foo — без preserveRelativeLinks
+            // jsoup пытается «отабсолютить» его и убирает href; без removeProtocols
+            // protocol-whitelist отбрасывает href, у которого нет схемы.
+            .removeProtocols("a", "href", "ftp", "ftps", "http", "https", "mailto")
+            .preserveRelativeLinks(true);
 
     /** Паттерн для mermaid code-блоков: ```mermaid ... ```. */
     private static final java.util.regex.Pattern MERMAID_BLOCK =
@@ -57,6 +71,7 @@ public class MarkdownRenderService {
             return "";
         }
         String processed = preprocessMermaid(markdown);
+        processed = preprocessWikiLinks(processed);
         Node document = PARSER.parse(processed);
         String html = HTML_RENDERER.render(document);
         return Jsoup.clean(html, HTML_SAFELIST);
@@ -66,6 +81,26 @@ public class MarkdownRenderService {
     private String preprocessMermaid(String markdown) {
         return MERMAID_BLOCK.matcher(markdown).replaceAll(
                 mr -> "\n<div class=\"mermaid\">\n" + mr.group(1).trim() + "\n</div>\n\n");
+    }
+
+    /**
+     * Конвертирует Obsidian-style wiki-links в обычный markdown-link на роут темы.
+     * {@code [[topic]]} → {@code [topic](/?topic=topic)},
+     * {@code [[topic|label]]} → {@code [label](/?topic=topic)},
+     * {@code [[topic#Qn]]} → {@code [topic#Qn](/?topic=topic)} (якорь оставляем в label, не в URL).
+     */
+    private String preprocessWikiLinks(String markdown) {
+        return WIKI_LINK.matcher(markdown).replaceAll(mr -> {
+            String slug = mr.group(1).trim();
+            String anchor = mr.group(2);
+            String label = mr.group(3);
+            if (label == null || label.isBlank()) {
+                label = anchor == null ? slug : slug + anchor;
+            }
+            // \\ для java-replaceAll: $ и \\ в label экранируем, чтобы не сломать regex backrefs.
+            String safeLabel = java.util.regex.Matcher.quoteReplacement(label);
+            return "[" + safeLabel + "](/?topic=" + slug + ")";
+        });
     }
 
     /**
