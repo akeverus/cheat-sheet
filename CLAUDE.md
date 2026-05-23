@@ -56,10 +56,12 @@ com.cheatsheet.quiz
 
 ## AI / LLM Pipeline
 
+- **Seed-first by default.** MCQ-варианты грузятся из `modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>.json` через `McqJsonLoader` на старте. AI в рантайме НЕ зовётся, даже если API-ключ задан.
+- AI вызывается только когда выставлен `app.ai.fallback-enabled=true` (env `AI_FALLBACK_ENABLED`) И есть ключ. Поведение нужно сохранять — пользователь явно сказал «AI в совсем крайнем случае».
 - Three supported providers: `deepseek`, `openai`, `spring-ai` (configured via `app.aiProvider`)
 - `AiQuestionClient` is the entry point; `AbstractAiClient` handles retry logic (429/5xx, up to `app.ai.maxRetries`)
 - Question generation uses a **prompt-first single-call** approach: `QuestionPromptBuilder` assembles the prompt → AI returns strict JSON → `QuestionGeneratedJsonMapper` parses it
-- `AIQuestionService` generates multiple-choice options; `QuestionPromptBuilderForOptions` builds the prompt for that path
+- `AIQuestionService` generates multiple-choice options ТОЛЬКО когда `AppProperties.isAiFallbackAllowed()` = true; иначе возвращает пустой список (флешкарт-режим)
 - Prompts live in `src/main/resources/prompts/` (consolidated into `general.txt`)
 - `AdaptiveDifficultyService` adjusts question difficulty based on session performance
 
@@ -74,8 +76,11 @@ com.cheatsheet.quiz
 | `app.ai.maxRetries` | `3` |
 | `app.preload.startupPreload` | `false` |
 | `app.preload.fullWarmup` | `false` |
+| `app.ai.fallback-enabled` | `false` (env `AI_FALLBACK_ENABLED`) |
 
-**No-AI mode:** если `OPENAI_API_KEY` и `DEEPSEEK_API_KEY` оба пусты — `AppProperties.isAiEnabled()` вернёт `false`, `AIQuestionService.getOrCreateOptions` вернёт пустой список, MVC-слой форсит `flashcardMode=true`. Без ключей приложение показывает флешкарты, а не «Вопросы недоступны».
+**Источники MCQ:** дефолт — JSON-сидеры из `seed/mcq/<category>/<topic>.json` (см. AI / LLM Pipeline выше).
+- Если `app.ai.fallback-enabled=false` (дефолт): `AIQuestionService.getOrCreateOptions` отдаёт пустой список когда seed-варианта нет → MVC форсит `flashcardMode=true`. То же поведение и при пустых ключах (`isAiEnabled()` → false).
+- AI-fallback включается только явно: `AI_FALLBACK_ENABLED=true` + любой из `OPENAI_API_KEY` / `DEEPSEEK_API_KEY`.
 
 Production profile (`prod`): disables Swagger UI. PostgreSQL profile: `postgres`.
 
