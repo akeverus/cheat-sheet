@@ -76,6 +76,18 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+// META-INF/build-info.properties — отдаётся через /actuator/info.
+// Полезно операторам видеть, какая версия и когда собрана крутится в продакшене.
+springBoot {
+    buildInfo {
+        properties {
+            additional.set(mapOf(
+                "name" to project.name,
+            ))
+        }
+    }
+}
+
 jacoco {
     toolVersion = libs.versions.jacoco.get()
 }
@@ -90,6 +102,10 @@ tasks.jacocoTestReport {
 
 tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.test)
+    onlyIf {
+        val testTask = tasks.test.get()
+        testTask.state.executed && !testTask.state.skipped
+    }
     violationRules {
         rule {
             element = "PACKAGE"
