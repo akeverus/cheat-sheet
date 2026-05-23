@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'modules/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'modules/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - '.github/workflows/ci.yml'
+
+# Не держать параллельные раны на одной ветке/PR — экономия минут раннера.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build · Test · Jacoco
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Кэш Gradle-зависимостей + wrapper между ранами.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Build (no tests)
+        run: ./gradlew build -x test --no-daemon
+
+      # `check` гоняет тесты + jacocoTestCoverageVerification + ArchUnit —
+      # один gate как в local-verify.
+      - name: Run tests + coverage + arch checks
+        run: ./gradlew check --no-daemon
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            modules/*/build/reports/tests/
+            modules/*/build/test-results/
+          retention-days: 7
+
+      - name: Upload jacoco HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: modules/quiz-app/build/reports/jacoco/test/html/
+          retention-days: 14
+
+  docker-build:
+    name: Docker image · smoke build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-test
+    # Only on master pushes — для PR build пропускаем чтобы не съесть minutes.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Не пушим в registry — только smoke build, чтобы поймать сломанный Dockerfile.
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: cheat-sheet-quiz:ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
