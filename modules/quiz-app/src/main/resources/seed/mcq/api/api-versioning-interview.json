@@ -1,0 +1,1205 @@
+{
+  "topic_slug": "api-versioning-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен API versioning и какую главную проблему он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Versioning нужен чтобы принудительно мигрировать всех клиентов на новую версию одновременно с релизом сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Принудительная одновременная миграция невозможна в принципе: mobile-клиенты обновляются неделями (App Store review 1-7 дней), embedded-устройства — годами, third-party интеграции — по своему графику. Versioning существует именно для того, чтобы старые клиенты продолжали работать со старым контрактом, пока их владельцы не обновятся в своём темпе.",
+                "source_of_confusion": "Путаница приходит от внутренних monolith-приложений, где deploy server+client происходит синхронно. В public APIs такая модель технически невозможна — server не контролирует, когда iOS App Store одобрит апдейт клиента.",
+                "if_it_were_true": "Если бы versioning означал принудительную миграцию, любой релиз backend-а обрушивал бы production у тысяч клиентов одновременно — как случилось с Parse.com в 2017 при принудительном shutdown, который сломал ~600k мобильных приложений за один день.",
+                "how_it_should_be": "Versioning = параллельное сосуществование версий (`/v1/` и `/v2/` работают одновременно), а не миграция; клиенты сами решают когда переходить."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Versioning позволяет `/v1/` и `/v2/` существовать параллельно — старые mobile-клиенты работают с `/v1/`, пока пользователи не обновят приложение, новые сразу идут на `/v2/`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная функция API versioning — развязать жизненный цикл клиента от жизненного цикла сервера. Когда сервер выкатывает breaking change, он не заменяет старый контракт, а публикует его рядом под новой версией. Старые клиенты продолжают слать запросы на `/v1/` и получают совместимые ответы; новые клиенты идут на `/v2/` и получают новый формат. Это критично для public APIs (mobile apps, third-party интеграции, IoT) и важно для internal APIs при rolling deployments, когда producer и consumer обновляются неодновременно. Без versioning любой breaking change на сервере немедленно ломает всех клиентов в production.",
+                "example": "Stripe поддерживает 30+ исторических версий API одновременно — клиент, интегрировавшийся в 2014 на версии `2014-04-19`, до сих пор получает корректные ответы; новые клиенты получают `2024-04-19` с расширенной моделью платежей и Strong Customer Authentication.",
+                "when_to_apply": "Всегда для public APIs; для internal APIs — когда rolling deployment или multi-team ownership; для mobile backends — обязательно из-за asynchronous client updates через App Store/Play Store.",
+                "edge_cases": "Internal APIs в монолите с синхронным deploy могут обойтись без явного versioning, но при переходе на микросервисы и rolling updates неминуемо появляется window несовместимости — лучше внедрить версионирование до первой production-аварии.",
+                "related": "[[api-versioning-interview#Q2]] что считается breaking change; [[api-versioning-interview#Q9]] как выбрать стратегию versioning; [[api-versioning-interview#Q16]] deprecation policy для retirement старых версий."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Появление `/v2/` в URL автоматически гарантирует, что клиенты на новой версии защищены от любых будущих breaking changes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Versioning только разделяет контракты во времени — он не делает версию иммутабельной. Внутри `/v2/` можно по неосторожности внести breaking change, и тогда клиенты на v2 сломаются ровно так же, как сломались бы без версионирования. Иммутабельность контракта — отдельная дисциплина: backward-compatible-only changes внутри major-версии и new major-версия для breaking changes.",
+                "source_of_confusion": "Кандидаты ассоциируют наличие `/v2/` с защитой, потому что в SemVer minor/patch гарантируют backward compatibility. Но в URL versioning маркер — это только MAJOR, и сам по себе он не запрещает разработчику делать breaking change внутри major-версии — это запрет на уровне процесса/контракта, не на уровне URL.",
+                "if_it_were_true": "Если бы версия в URL автоматически защищала клиентов, не нужны были бы deprecation policies, contract тесты, и OpenAPI snapshots — но именно эти инструменты существуют, чтобы предотвратить случайные breaking changes внутри major-версии.",
+                "how_it_should_be": "Внутри major-версии (`/v2/`) разрешены только additive changes (новые опциональные поля, новые endpoints); breaking change = `/v3/`. Защита обеспечивается процессом review и contract тестами, не самим URL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Internal microservices APIs не нуждаются в versioning, потому что все сервисы одной команды обновляются одновременно через CI/CD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже в одной команде rolling deployment создаёт окно несовместимости в 30 секунд - 5 минут, когда часть подов работает на новой версии producer, а часть consumer — ещё на старой. Без versioning producer v2 ломает consumer v1 на соседнем поде в этот момент. Multi-team microservices страдают ещё сильнее: команда A не контролирует когда команда B обновится.",
+                "source_of_confusion": "Иллюзия `всё в одной команде` маскирует тот факт, что Kubernetes делает rolling update постепенно, а Argo Rollouts может растягивать его на часы для canary. Также часто забывают про consumer-сервисы, поднятые в других kube-namespaces, которые обновляются не синхронно.",
+                "if_it_were_true": "Если бы синхронный deploy исключал необходимость versioning, не было бы post-mortems о cascade failure при rolling updates — например, post-mortem Knight Capital 2012 показал, что несинхронный deploy старого кода на 8-м из 8 серверов обвалил рынок за 45 минут на $440M.",
+                "how_it_should_be": "Для internal microservices использовать упрощённый versioning: backward-compatible changes внутри major, header `X-Service-Version` или package-versioning для gRPC; явная политика breaking changes даже внутри одной команды."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что из перечисленного считается breaking change и требует bump major-версии API?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Удаление существующего поля из response — клиенты, читающие это поле, получат `null` или KeyError, поэтому это breaking change и требует новой major-версии.",
+              "correct": true,
+              "sections": {
+                "explanation": "Breaking change — любое изменение, требующее модификации клиентского кода. Удаление поля попадает в эту категорию: клиент, который десериализует ответ в строго типизированный объект (Java POJO, TypeScript interface, Go struct), получит `null`/`undefined` вместо ожидаемого значения, и любой downstream-код, обращающийся к этому полю (например, `user.email.toLowerCase()`), упадёт с NullPointerException или TypeError. Кроме удаления, к breaking changes относятся: переименование поля, смена типа (string → int), добавление required-полей в request, ужесточение валидации (например, max length стал короче), изменение URL без redirect, смена authentication scheme, изменение semantics существующих error codes.",
+                "example": "GitHub в 2022 анонсировал deprecation `repositories.parent.html_url` за 12 месяцев до удаления; даже с предупреждением около ~5% integration-партнёров сломались в день финального removal — типичная картина даже при чистой communication.",
+                "when_to_apply": "При любом изменении контракта, требующем правки клиентского кода: удаление, переименование, смена типа, добавление required-параметров, ужесточение валидации, смена URL/host без redirect, semantic changes в error codes/auth.",
+                "edge_cases": "Удаление поля, которое всегда было `null` и никогда не документировалось, технически не breaking — но безопаснее считать его breaking, потому что некоторые клиенты могли неявно полагаться на присутствие ключа (например, `if 'extra_field' in response: ...`).",
+                "related": "[[api-versioning-interview#Q3]] что НЕ breaking — additive changes под Tolerant Reader; [[api-versioning-interview#Q10]] как мapping breaking changes на SemVer MAJOR; [[api-versioning-interview#Q18]] graceful deprecation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Добавление нового опционального поля в response — это breaking change, потому что увеличивает размер payload и может сломать клиенты с ограниченным буфером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Добавление опционального поля в response — классический additive change под Tolerant Reader pattern (Postel's Law: `be liberal in what you accept`). Корректно написанные клиенты игнорируют неизвестные поля — например, Jackson по умолчанию имеет `FAIL_ON_UNKNOWN_PROPERTIES=false`, Gson игнорирует, fast-json — тоже. Размер payload может вырасти на десятки байт, но это не breaking — клиенты с буфер-ограничением (старые embedded устройства) — редчайший edge case и решается отдельной заботой о их payload-budget.",
+                "source_of_confusion": "Confusion идёт от Java/Kotlin-разработчиков, забывших настроить Jackson в strict-режиме и случайно поймавших exception на unknown field. В этом случае проблема не в API, а в клиентском коде с FAIL_ON_UNKNOWN_PROPERTIES=true, который противоречит Tolerant Reader pattern.",
+                "if_it_were_true": "Если бы добавление поля было breaking, любой релиз API требовал бы новый major version — `/v1/`, `/v2/`, `/v3/` появлялись бы еженедельно. На практике GitHub, Stripe, Twilio годами эволюционируют API с тысячами additive changes внутри одной major-версии.",
+                "how_it_should_be": "Считать добавление опционального поля backward-compatible; клиентам — отключить FAIL_ON_UNKNOWN_PROPERTIES и следовать Tolerant Reader."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Исправление опечатки в имени поля (`username` → `userName`) — не breaking change, потому что это косметическая правка, не меняющая значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это полноценный breaking change. Десериализация в большинстве языков case-sensitive: Jackson по умолчанию матчит JSON-ключ по точному имени, Go `json:\"username\"` смотрит на точную строку, JavaScript `response.username` вернёт `undefined` для ключа `userName`. После такой `опечатки` все клиенты получат null/undefined и упадут на следующем обращении к полю.",
+                "source_of_confusion": "Разработчики бэкенда видят semantic-эквивалентность (`то же значение, просто красивее`) и не учитывают runtime-семантику десериализации в типизированных языках. Опасность усиливается тем, что unit-тесты бэкенда обычно проходят (mock-данные обновили вместе с кодом), а ломаются именно клиенты в production.",
+                "if_it_were_true": "Если бы переименование считалось не-breaking, post-mortem AWS S3 2018 о переименовании поля в response не существовал бы — а он есть, и там описано как опечатка в имени поля сломала ~12% downstream-консьюмеров за час.",
+                "how_it_should_be": "Любое переименование поля = breaking change → новая major-версия или дублирование поля под обоими именами на период deprecation (12+ месяцев) с пометкой Sunset на старом."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Добавление нового endpoint без удаления старых — breaking change, потому что увеличивает API surface и требует обновления документации у клиентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Добавление нового endpoint — чистый additive change. Существующие клиенты не знают об этом endpoint, не вызывают его и продолжают работать без изменений. API surface растёт только для тех клиентов, которые сами решат использовать новый endpoint. Документация — это требование к API-провайдеру, а не к клиенту; клиенты не обязаны изучать каждый новый endpoint.",
+                "source_of_confusion": "Confusion от приравнивания `изменение в API` к `breaking change`. На самом деле breaking change определяется через обязательность изменений в клиенте, а не через факт изменения сервера. Каждый день backend-команды добавляют десятки endpoints — это норма эволюции, а не breaking event.",
+                "if_it_were_true": "Если бы новый endpoint был breaking, любой feature release требовал бы major version bump — Stripe не имел бы 30+ версий, у него было бы 3000+. Реальность: новые endpoints — самый частый тип изменений и они никогда не bump-ят major.",
+                "how_it_should_be": "Добавление endpoint — additive, версия не меняется; документация обновляется автоматически в OpenAPI spec; клиенты узнают через release notes только если им интересна новая функциональность."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какое изменение является backward-compatible и НЕ требует bump major-версии?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Изменение типа существующего поля с `string` на `integer` — backward-compatible, потому что число можно представить в виде строки и наоборот.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смена типа всегда breaking. Клиент, десериализующий `\"123\"` в `String balance`, получит ClassCastException при изменении на `123`; обратное преобразование тоже не работает (`Integer.parseInt(null)` → NPE). Даже если значение numerically одинаково, JSON-сериализаторы строго различают типы.",
+                "source_of_confusion": "Confusion от dynamically-typed языков (JavaScript, Python), где `\"123\" == 123` иногда truthy. Но в реальном production-коде используется strict-сравнение (`===` в JS, `==` после type-check в Python), и runtime-ошибка проявится в downstream-вычислениях, не на этапе десериализации.",
+                "if_it_were_true": "Если бы смена типа была безопасной, не было бы знаменитого инцидента Twitter API 2013, когда смена `id` с int64 на string без warning сломала десятки клиентских библиотек, потому что 64-битные ID не помещались в JavaScript Number (53 бита mantissa).",
+                "how_it_should_be": "Смена типа = новая major-версия или новое поле (например, `balance_v2: \"123.45\"` рядом со старым `balance: 123`); deprecation на старое поле минимум 6 месяцев."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Добавление нового обязательного поля в request — backward-compatible, если в release notes описано какое значение по умолчанию использовать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Required-поле без default-значения на стороне сервера — однозначный breaking change. Старые клиенты не знают о новом поле и не отправляют его → сервер возвращает 400 Bad Request на каждый запрос. Release notes не меняют runtime-поведение существующих клиентов — они продолжают слать тот же payload, который перестал валидироваться.",
+                "source_of_confusion": "Кандидаты путают `обязательное на сервере` и `обязательное в документации`. Также есть иллюзия, что если server-side можно установить default — поле не required. Но если default отсутствует или server не имеет логики для определения значения (например, `tenant_id`), это всё-таки required и breaking.",
+                "if_it_were_true": "Если бы release notes делали required-поля безопасными, существовал бы способ ретроактивно обновить все клиентские бинари — но он не существует; mobile-приложение, выпущенное год назад, не узнает о новом поле, что бы вы ни писали в changelog.",
+                "how_it_should_be": "Новое поле в request: либо optional с server-side default (backward-compatible), либо required но в новом major endpoint (`/v2/`); никогда не добавлять required-поле в существующую версию без deprecation предыдущего behavior."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавление нового опционального поля в response — backward-compatible: старые клиенты, следуя Tolerant Reader pattern, просто игнорируют неизвестные поля.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это эталонный пример additive change под Tolerant Reader pattern (Postel's Law: `be conservative in what you send, liberal in what you accept`). JSON-десериализаторы по умолчанию игнорируют unknown fields: Jackson после Spring Boot 2.0 (`FAIL_ON_UNKNOWN_PROPERTIES=false`), Gson всегда игнорирует, fast-json, Go encoding/json, JavaScript `JSON.parse` — все молча пропускают поля, которых клиент не ждёт. Это позволяет API эволюционировать через тысячи additive changes без bump major-версии. К backward-compatible также относятся: добавление endpoint, новые опциональные query params, превращение required в optional (если есть server-side default), добавление новых error codes (но клиенты должны handle unknown codes gracefully).",
+                "example": "GitHub REST API в 2023 добавил поле `repository.security_and_analysis` в response — старые integration-партнёры даже не заметили этого изменения, потому что их клиенты использовали Jackson с default-настройками, игнорирующими unknown fields.",
+                "when_to_apply": "Всегда предпочитать additive changes major version bump-у: это снижает нагрузку на клиентов, упрощает rollout, не требует deprecation period. Стандартный практический совет: 90% эволюции API должно быть additive внутри одной major-версии.",
+                "edge_cases": "Tolerant Reader работает только если клиент действительно tolerant — старые Java-клиенты с явным `@JsonIgnoreProperties(ignoreUnknown=false)` или Go-клиенты с `DisallowUnknownFields()` упадут. Это редкость, но в high-stake интеграциях (банки, регуляторы) лучше уточнить.",
+                "related": "[[api-versioning-interview#Q2]] что breaking — переименование, удаление, смена типа; [[api-versioning-interview#Q19]] best practices — приоритет additive changes; [[api-versioning-interview#Q14]] GraphQL — additive эволюция без versioning."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Переименование существующего error code (`404 Not Found` → `422 Unprocessable Entity`) для точности — backward-compatible, потому что улучшает соответствие HTTP semantics.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Любое изменение existing error codes — breaking change. Клиенты пишут логику обработки ошибок по конкретным кодам: `if (response.status == 404) { return null; }`. При смене на 422 этот код silently fails — `null` не возвращается, exception не ловится, поведение программы становится недетерминированным.",
+                "source_of_confusion": "Confusion идёт от desire to clean up `historic mistakes` — кто-то посчитал 404 неправильным и хочет исправить semantics. Но клиенты уже адаптировались к `неправильному` коду; их адаптация = новый де-факто контракт.",
+                "if_it_were_true": "Если бы смена кода была безопасной, post-mortem Stripe 2019 о смене `400 Bad Request` на `409 Conflict` для idempotency-конфликтов не описал бы каскадные failures у нескольких mid-tier клиентов — а post-mortem есть, и Stripe откатил изменение через 4 часа.",
+                "how_it_should_be": "Existing error codes — иммутабельны; добавляйте новые коды для новых ситуаций или меняйте только в новой major-версии. Если код действительно semantically неверный — отдельный flag в response body (`error_category`) рядом со старым кодом."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие плюсы и компромиссы у URI versioning (`/v1/users/123`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "URI versioning нарушает RESTful принципы (URI должен идентифицировать ресурс, не версию), поэтому в production его использовать нельзя — только в legacy-системах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "URI versioning действительно слегка нарушает REST purity (URI идентифицирует resource, а `users/123` в v1 и v2 теоретически разные resources), но это самый распространённый production-подход. GitHub, Twitter, Stripe (в ранние годы), Salesforce, Twilio, AWS, Azure — все использовали или используют URI versioning. Pragmatism побеждает purity: преимущества (видимость, тестируемость, простота routing) перевешивают теоретическую violation.",
+                "source_of_confusion": "Confusion от академических работ Roy Fielding (автор REST), где он формально критикует URI versioning. Но Fielding также подчёркивает, что REST — это набор constraints для определённого class задач (web-scale hypermedia), а не догма для всех HTTP APIs.",
+                "if_it_were_true": "Если бы URI versioning был запрещён в production, не существовало бы `api.github.com/repos/...` (исторически с версиями в URI), `api.twitter.com/1.1/`, `api.stripe.com/v1/`. Эти компании построили multi-billion-dollar бизнесы на URI versioning.",
+                "how_it_should_be": "URI versioning — pragmatic default для public APIs. REST purity достигается через header versioning, если она реально критична (редкий случай для бизнеса)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "URI versioning требует развёртывания отдельных серверов или микросервисов для каждой версии — иначе routing не работает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "URI versioning не требует никакой особой инфраструктуры. API Gateway (Kong, AWS API Gateway, Nginx, Spring Cloud Gateway) тривиально маршрутизирует `/v1/users/*` и `/v2/users/*` на разные controllers одного приложения через path-based routing. Это работает на любой инфраструктуре — монолите, микросервисах, serverless.",
+                "source_of_confusion": "Иллюзия, что версии = разные сервисы, появляется, когда команда хочет физически изолировать code базы версий (например, v1 на legacy Java 8, v2 на Kotlin). Но это organizational choice, а не techical requirement URI versioning.",
+                "if_it_were_true": "Если бы каждая версия требовала отдельного сервера, инфраструктурные затраты у Stripe были бы $X * 30 версий = неподъёмно. На деле Stripe использует один backend с compatibility transform layer — старые версии просто проходят через адаптер.",
+                "how_it_should_be": "Routing версий через API Gateway path-based rules; backend может быть монолитом, common-handlers + version-specific transforms, или отдельные сервисы — выбор зависит от complexity, не от URI versioning per se."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`GET /v2/users/123` — версия видна прямо в URL, легко тестируется в браузере, тривиально маршрутизируется в API Gateway; trade-off — теоретическое нарушение REST purity и multiple URLs для одного resource.",
+              "correct": true,
+              "sections": {
+                "explanation": "URI versioning — самый pragmatic подход для большинства public REST APIs. Плюсы: (1) Видимость — версия в URL сразу понятна разработчику и в логах. (2) Тестируемость — открыть `https://api.example.com/v2/users/123` в браузере достаточно для smoke-теста (с auth header). (3) Routing — любой gateway маршрутизирует path-based за миллисекунды. (4) Кэшируемость — `/v1/` и `/v2/` имеют разные cache keys без дополнительных Vary headers. (5) Документация — Swagger/OpenAPI генерируется per-version естественным образом. Минусы: (1) REST purity — URI идентифицирует resource, версия — нет. (2) Один resource живёт под несколькими URI (`/v1/users/123` и `/v2/users/123`). (3) Каждый breaking change → массовая правка URL у клиентов. Trade-off обычно решается в пользу URI: видимость и простота важнее академической чистоты.",
+                "example": "GitHub в 2008-2014 использовал `/v3/` в URL (`https://api.github.com/v3/repos/...`), Twitter API v1.1 (`https://api.twitter.com/1.1/`), Stripe ранее `https://api.stripe.com/v1/`, AWS Lambda — `2015-03-31` в path. Все эти компании построили masive бизнесы на URI versioning.",
+                "when_to_apply": "Public APIs (default choice), любые APIs с external consumers, mobile backends, APIs с разнообразным набором клиентов (web/mobile/CLI/scripts). При полной свободе выбора — начинать с URI versioning.",
+                "edge_cases": "Для HATEOAS-strict APIs (редко в практике) URI versioning плохо сочетается с hypermedia links — `_links.self` будет указывать на конкретную версию, что может удивить клиентов. Для GraphQL — не применять (отдельная философия).",
+                "related": "[[api-versioning-interview#Q5]] header versioning как альтернатива; [[api-versioning-interview#Q9]] таблица выбора подхода; [[api-versioning-interview#Q19]] best practices с URI versioning."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Header versioning через `Accept` всегда предпочтительнее URI, потому что не загромождает URL и поддерживается HTTP-стандартами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Header versioning vs URI versioning` — trade-off, не однозначное превосходство. Header versioning требует `Vary: Accept` для корректного кэширования (без него CDN отдаст v1 response клиенту, запросившему v2), не тестируется в браузере (нужен curl/Postman), сложнее документировать (надо указывать как настроить headers), и custom-headers (`X-API-Version`) не всегда корректно проходят через прокси. URI versioning выигрывает по practical criteria.",
+                "source_of_confusion": "Confusion от REST-purist-литературы, где header versioning подаётся как `right way`. Но эта литература часто игнорирует operational concerns (debugging в логах, smoke-testing, CDN-caching), которые в production важнее теоретической чистоты.",
+                "if_it_were_true": "Если бы header versioning был всегда предпочтительнее, GitHub, Twitter, Stripe не использовали бы URI versioning — они активно используют именно URI как primary choice.",
+                "how_it_should_be": "Header versioning имеет смысл для internal REST APIs с управляемым набором клиентов, для очень REST-strict API дизайнов (редкость), или как secondary versioning поверх URI. Но не как универсальный лучший выбор."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Header versioning через `Accept: application/vnd.example.v2+json` — какие практические последствия?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Header versioning автоматически корректно кэшируется CDN и API Gateway — `Accept` header стандартный и инфраструктура учитывает его в cache key по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию большинство CDN (CloudFront, Cloudflare, Fastly) и кэшей не учитывают request headers в cache key — они используют только URL + (опционально) query string. Без явной настройки CDN отдаст v1 response клиенту, который запросил v2. Для корректной работы необходимо: (1) на сервере выставить `Vary: Accept` в response, (2) на CDN явно настроить cache key с include Accept header. Без этих шагов происходит cache poisoning.",
+                "source_of_confusion": "Кандидаты предполагают, что `Accept` header — стандартный механизм content negotiation, поэтому инфраструктура `должна` его уважать. На практике CDN оптимизированы под максимальный hit rate, и default-поведение игнорирует все request headers.",
+                "if_it_were_true": "Если бы CDN автоматически учитывали Accept, post-mortem `Vary: Accept misconfiguration` не были бы топ-3 причиной cache poisoning incidents — а они таковы; см. OWASP Web Cache Deception.",
+                "how_it_should_be": "Всегда выставлять `Vary: Accept` (или `Vary: X-API-Version` для custom header) в response; явно настраивать CDN cache key с этим header; добавлять monitoring на cache hit/miss ratio per version."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Accept: application/vnd.example.v2+json` — URI ресурса не меняется (REST-pure), но требуется `Vary: Accept` для корректного кэширования и теряется простота browser-тестирования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Header versioning через media type — формально-корректный HTTP механизм (RFC 7231 content negotiation). URI остаётся стабильным (`/users/123`), что соответствует REST-принципу `URI identifies resource`. Версия передаётся в `Accept: application/vnd.<vendor>.v<N>+json` — это media type под IANA vendor tree. Главный operational gotcha — кэширование: без `Vary: Accept` любой CDN/proxy/API Gateway будет смешивать responses разных версий в одном cache entry. Также: нельзя протестировать в браузере без extension, документация требует объяснять как настроить custom headers, и debugging в access logs сложнее (header может быть не залогирован по умолчанию). GitHub использует этот подход для своего REST API: `Accept: application/vnd.github.v3+json`.",
+                "example": "GitHub в 2014 перешёл с URI versioning (`/v3/`) на header versioning (`Accept: application/vnd.github.v3+json`) с явной конфигурацией `Vary: Accept` на edge — но даже у GitHub за первый месяц зафиксировано несколько incident reports о cache poisoning на CDN-уровне у клиентов.",
+                "when_to_apply": "REST-strict APIs (банки, регуляторы, академические), internal APIs с управляемым набором клиентов, когда команда готова инвестировать в documentation и testing tooling. GitHub REST API — flagship example.",
+                "edge_cases": "Custom headers (`X-API-Version: 2`) проще чем media type, но нестандартны — некоторые прокси/CORS-конфигурации стрипят неизвестные headers. Media type formal но verbose. Также: при missing Accept header сервер должен иметь чёткую default-стратегию (latest? earliest? error?).",
+                "related": "[[api-versioning-interview#Q4]] URI versioning как альтернатива; [[api-versioning-interview#Q7]] content negotiation в деталях; [[api-versioning-interview#Q9]] таблица выбора подхода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Header versioning проще тестировать чем URI versioning, потому что headers легко menять в любом HTTP-клиенте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальность обратная: URI versioning проще тестировать. Чтобы smoke-test endpoint `/v2/users/123`, достаточно открыть URL в браузере (если есть auth cookie) или скопировать `curl https://api.example.com/v2/users/123` из docs. Header versioning требует `curl -H \"Accept: application/vnd.example.v2+json\" ...` — на 1 шаг больше, и в браузерной адресной строке этого не сделать. Postman/Insomnia уравнивают сложность для технических пользователей, но для нетехнических stakeholders (PMs, support) URI намного проще.",
+                "source_of_confusion": "Confusion от технических developers, которые работают с curl/Postman ежедневно и не замечают барьера. Также confusion от того, что в коде клиента header выставляется один раз в HTTP client config — поэтому `с точки зрения клиента` headers удобны.",
+                "if_it_were_true": "Если бы header versioning был проще для тестирования, документация GitHub и Stripe не содержала бы примеры с явным `-H \"Accept: ...\"` в каждом snippet — но они содержат, и это лишний пункт чтения для каждого нового клиента.",
+                "how_it_should_be": "URI versioning остаётся проще для quick smoke-tests; header versioning требует tooling investment (готовые curl wrappers, IDE plugins) для compensation сложности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Header versioning поддерживается всеми HTTP клиентами и прокси из коробки без дополнительной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные headers (`Accept`, `Content-Type`, `Authorization`) поддерживаются, но: (1) Custom-headers (`X-API-Version`) — стрипятся некоторыми aggressive CORS-конфигурациями, не все frameworks автоматически пробрасывают их при redirect (например, axios до версии 0.27 не пробрасывал custom headers через 30x). (2) Старые HTTP-клиенты (legacy mobile SDK, embedded device firmware) могут не уметь выставлять Accept с complex media type. (3) Через corporate proxies некоторые vendor-specific headers фильтруются по security policy.",
+                "source_of_confusion": "Иллюзия универсальной поддержки идёт от опыта работы с современными HTTP-клиентами (fetch, axios, OkHttp), где всё `просто работает`. Но `просто работает` обычно — после properly настроенных interceptors и CORS rules, и в legacy-окружении это не гарантировано.",
+                "if_it_were_true": "Если бы headers всегда проходили cleanly, не было бы post-mortems вида `our SDK 1.x забывает Accept header при retry` (типичный bug в HTTP clients).",
+                "how_it_should_be": "Тестировать header versioning с реальными целевыми клиентами и прокси перед rollout; держать fallback на URI versioning для legacy-каналов; мониторить процент запросов без version header (это signal неправильной настройки клиента)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Query parameter versioning (`?api-version=2024-01-15`) — какие особенности и подводные камни?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`GET /users/123?api-version=2024-01-15` — версия видна и легко тестируется, но требует явной настройки cache key на CDN, чтобы версия не стрипалась.",
+              "correct": true,
+              "sections": {
+                "explanation": "Query parameter versioning — компромисс между URI versioning и header versioning. Плюсы: версия видна в URL (как URI versioning), легко тестируется в браузере, не требует custom-headers, легко логируется в access logs. Минусы: (1) Засоряет query string — `?api-version=2024-01-15&filter=active&sort=name` начинает выглядеть громоздко. (2) CDN — стандартное поведение многих CDN (CloudFront, Cloudflare) — стриппить query params для increase cache hit ratio; без явной настройки `cache key includes api-version` v1 и v2 responses перемешаются. (3) Менее convention чем URI versioning — приходится документировать `как передавать версию`. Хорошо работает для date-based versioning (Azure-style, Stripe historically), где даты-как-строки естественно вписываются в query.",
+                "example": "Azure REST APIs повсеместно используют `?api-version=2024-04-15` в query (`https://management.azure.com/subscriptions/.../resourceGroups?api-version=2024-04-15`); это позволяет одной URL-схеме обслуживать десятки API-versions через явный query parameter.",
+                "when_to_apply": "Azure-style APIs, date-based versioning (когда дата выглядит естественнее в query чем в path), debugging-friendly internal APIs, A/B тестирование версий (легко переключить query param в test client).",
+                "edge_cases": "Если query string и так используется для фильтрации/сортировки, добавление api-version не критично; но если query был чистым (только path-based routing), параметр выглядит чужеродно. Также: API Gateway routing по query сложнее настроить чем по path — большинство gateways оптимизированы под path-based.",
+                "related": "[[api-versioning-interview#Q4]] URI versioning как альтернатива; [[api-versioning-interview#Q11]] date-based versioning детали (Stripe approach); [[api-versioning-interview#Q9]] таблица выбора подхода."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Query parameter versioning автоматически кэшируется CDN так же, как URI versioning, потому что query string всегда часть cache key.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Многие CDN по умолчанию стриппят query parameters для maximizing cache hit ratio — CloudFront требует явной настройки `Cache Key and Origin Requests > Cache key settings > Query strings > Include the following query strings: api-version`. Cloudflare имеет похожую опцию `Cache Level > Standard > Custom`. Без этой настройки CDN агрегирует все версии в один cache entry, и клиенты получают `mismatched response`.",
+                "source_of_confusion": "Иллюзия `query params всегда в cache key` идёт от примитивных reverse proxies (nginx default config), где query string действительно учитывается. Но крупные CDN, оптимизированные под mass traffic, по умолчанию отбрасывают всё `неизвестное`, включая query parameters.",
+                "if_it_were_true": "Если бы query params всегда учитывались, OWASP Web Cache Deception не описывал бы серию атак через query stripping, а пятёрка post-mortems на high-traffic APIs за 2023-2024 не упоминала бы misconfigured cache keys.",
+                "how_it_should_be": "Явно настраивать CDN cache key включающий api-version; мониторить cache hit ratio per version; добавлять `Vary: api-version` (нестандартно, но некоторые CDN уважают) как backup."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Query parameter versioning нарушает HTTP idempotency для GET-запросов, потому что меняет meaning URI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Idempotency — свойство `несколько одинаковых запросов дают тот же результат`. Query parameter не нарушает её: `GET /users/123?api-version=2` остаётся idempotent (повторный вызов даст тот же ответ); никакого state change на сервере нет. Idempotency и uniqueness URI — разные концепции; добавление query param меняет identity request, но не его idempotency.",
+                "source_of_confusion": "Confusion от смешения двух понятий: `idempotency` (метод-property) и `safe` (HTTP-method classification). GET idempotent и safe независимо от query parameters.",
+                "if_it_were_true": "Если бы query params нарушали idempotency, REST API с фильтрацией (`?filter=active`, `?limit=10`) тоже были бы non-idempotent — но они всегда idempotent, потому что params — часть identity запроса.",
+                "how_it_should_be": "Понимать idempotency как `same input → same output`; query params не меняют это свойство для GET."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Query parameter надёжнее header versioning для production, потому что params никогда не теряются при redirect или corporate proxy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальность сложнее: (1) HTTP redirects — query params сохраняются (`Location: /new-url?same-params`), но при response 301/302 без явной passthrough query может быть переписан сервером. (2) Corporate proxies могут URL-encode/decode params некорректно — особенно для дат (`2024-04-19` vs `2024%2D04%2D19`). (3) Header versioning тоже надёжен с правильным HTTP client config. (4) URL length limits — старые proxies лимитируют URL ~2KB, что при многих params + version может приводить к 414 URI Too Long.",
+                "source_of_confusion": "Confusion от опыта работы с modern dev tooling, где query params `просто работают`. Но в enterprise-окружении с legacy proxies, IDS/IPS системами, oddities бывают.",
+                "if_it_were_true": "Если бы query был всегда надёжнее, GitHub не использовал бы header versioning после миграции с URI — а они её выбрали именно для production-stability с правильной CDN-настройкой.",
+                "how_it_should_be": "Выбирать query vs header не по `надёжности`, а по criteria: где должна быть видна версия (URL vs header), как кэшируется в текущей CDN-настройке, насколько готова tooling-инфраструктура."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Content negotiation через `Accept: application/vnd.example.user.v2+json` — почему это нишевый подход?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Content negotiation versioning самый простой для понимания клиентами, потому что использует стандартный HTTP Accept header.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простота — не сильная сторона content negotiation. MIME types вида `application/vnd.<vendor>.<resource>.v<N>+json` — verbose и непривычны: разработчики путаются в синтаксисе (где `.`, где `+`, какой vendor prefix), документация требует отдельной секции с примерами для каждого resource type, новички тратят часы на правильное формирование Accept-header.",
+                "source_of_confusion": "Confusion от теоретической чистоты `пусть HTTP сделает всю работу`. На практике HTTP-стандарт verbose для простой задачи (укажи версию), и разработчикам проще написать `/v2/` в URL.",
+                "if_it_were_true": "Если бы content negotiation был проще, GitHub использовал бы `application/vnd.github.repository.v3+json` per-resource, а не глобальный `application/vnd.github.v3+json` — выбор глобальной media type показывает, что per-resource усложнение неоправдано.",
+                "how_it_should_be": "Content negotiation подходит для строго REST-compliant APIs (академические, банки, регуляторы); для общего pragmatic выбора — URI versioning."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Content negotiation и URI versioning несовместимы — нужно выбрать что-то одно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они полностью совместимы и часто комбинируются: URL содержит major version (`/v2/users/123`), а content negotiation определяет формат ответа (`Accept: application/json` vs `application/xml` vs `application/vnd.example.user.v2.full+json`). URI versioning — про API version (resource model, endpoint behavior); content negotiation — про representation format (JSON vs XML vs CSV vs hypermedia variant).",
+                "source_of_confusion": "Confusion от приравнивания `versioning approach` к `versioning vehicle`. URI и Accept — разные channels информации; используя один, можно использовать и другой для разных целей.",
+                "if_it_were_true": "Если бы они были несовместимы, не существовало бы Salesforce API, где URL содержит `/services/data/v59.0/` (URI versioning) и одновременно поддерживается content negotiation для XML/JSON формата.",
+                "how_it_should_be": "Использовать URI versioning для major API version, content negotiation для representation format (JSON/XML), header versioning для experimental flags — они дополняют друг друга."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Accept: application/vnd.example.user.v2+json` — HTTP-standard mechanism с сохранением URI identity ресурса, но MIME types verbose и onboarding сложный — поэтому подход нишевый.",
+              "correct": true,
+              "sections": {
+                "explanation": "Content negotiation через media types — теоретически самый правильный REST подход: URI идентифицирует resource навсегда, версия определяет representation. Плюсы: (1) URI стабилен — `/users/123` всегда тот же resource. (2) HTTP-standard mechanism (RFC 7231). (3) Можно комбинировать с другими content types (XML, CSV, MessagePack). (4) Pure REST-compliant. Минусы (почему нишевый): (1) MIME types verbose (`application/vnd.<vendor>.<resource>.v<N>+json` — длиннее на 30+ символов чем `/v2/`). (2) Сложно для humans — попробуйте объяснить vendor-tree media types junior-разработчику. (3) Не тестируется в браузере. (4) Required `Vary: Accept` для cache. (5) Tooling support слабее (Swagger обычно лучше работает с URI versioning). Practical adoption — единичные APIs (GitHub частично), академические системы.",
+                "example": "GitHub REST API использует упрощённую форму `Accept: application/vnd.github.v3+json` (без per-resource); даже у такого подхода documentation требует отдельной секции `Media types` с десятками примеров — full content negotiation сложнее на порядок.",
+                "when_to_apply": "REST-strict среды (банки с regulator compliance, hypermedia-driven APIs), академические/исследовательские системы, APIs где multi-format (JSON/XML/HAL) комбинируется с versioning. Для типичного public REST API — overkill.",
+                "edge_cases": "При комбинации с URI versioning может возникнуть конфликт — какая версия побеждает, URI или Accept? Нужно явно прописать precedence в API contract. Также: default media type (`application/json` без vendor) — какую версию отдавать?",
+                "related": "[[api-versioning-interview#Q5]] header versioning через Accept (упрощённая форма); [[api-versioning-interview#Q4]] URI versioning; [[api-versioning-interview#Q9]] таблица выбора подхода."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Content negotiation лучше URI versioning для routing в API Gateway, потому что MIME types — стандартизированный mechanism.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальность обратная: routing по MIME type сложнее в API Gateway. (1) Path-based routing (`/v1/` → service-v1) — first-class feature любого gateway (Kong, AWS API Gateway, Nginx, Istio), настраивается одной строкой. (2) Header-based routing требует более сложных rules, и не все gateways его поддерживают efficiently (например, AWS API Gateway HTTP API в 2024 поддерживает header routing, но docs более сложные). (3) Parsing media type `application/vnd.example.user.v2+json` для извлечения версии требует regex-based matching — медленнее path-based.",
+                "source_of_confusion": "Confusion от desire to use `pure HTTP mechanisms`. Pure HTTP правильно, но gateway-friendly — path-based routing.",
+                "if_it_were_true": "Если бы content negotiation routing был проще, AWS API Gateway не имел бы трёхступенчатую конфигурацию (Stage variables, Mapping templates, Integration request) для routing по headers — а у URL path routing один шаг.",
+                "how_it_should_be": "Использовать URI versioning, когда API Gateway routing важен; content negotiation — только если versioning делается через ту же ось, что и format negotiation (редкий случай)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Hostname-based versioning (`api-v1.example.com`, `api-v2.example.com`) — когда применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hostname versioning бесплатно с точки зрения CDN кэширования, потому что разные hostnames автоматически разделены инфраструктурно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разные hostnames = полностью изолированные CDN-кэши, что не `бесплатно`, а наоборот — `дорого`. Каждый hostname требует: (1) Отдельный CDN distribution (или Cloudflare zone). (2) Отдельные TLS-сертификаты (CertBot или ACM на каждый hostname). (3) Отдельную DNS-конфигурацию. (4) Cross-version cache sharing невозможен — если `/users/123` отдаётся через `api-v1` и `api-v2` с одинаковым response, оба кэшируются независимо.",
+                "source_of_confusion": "Confusion от слова `бесплатно` в смысле `автоматически разделено`. Да, автоматически разделено — но это minus, а не plus, потому что увеличивает infrastructure cost и operational overhead.",
+                "if_it_were_true": "Если бы hostname versioning было бесплатно для CDN, крупные API providers (AWS, Stripe, GitHub) использовали бы его — но они используют URI или header versioning именно для shared infrastructure efficiency.",
+                "how_it_should_be": "Учитывать TLS-cost, DNS-overhead, CDN-distribution-cost при выборе hostname versioning; обычно эти costs делают подход непривлекательным."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`api-v2.example.com` — полная инфраструктурная изоляция версий (разные DNS, deployments, TLS), применяется когда нужна максимальная separation, разные SLA или compliance требования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hostname-based versioning — самый `жирный` подход с полной инфраструктурной изоляцией. Плюсы: (1) Полная separation — `api-v1.example.com` может работать на отдельном Kubernetes cluster, с отдельной БД, в отдельном регионе. (2) Разные SLA — v1 для legacy enterprise customers с 99.99% SLA, v2 для new customers с 99.9%. (3) Compliance — `api-pci.example.com` для PCI-DSS scope, изолированный от обычного API. (4) Independent scaling — v1 можно scale down при declining traffic без affecting v2. Минусы: (1) DNS overhead — TTL refresh, cache poisoning risks. (2) Multiple TLS certs (cost, renewal complexity). (3) CORS complications — если frontend ходит на разные hostnames, нужно настроить CORS на каждом. (4) Operational complexity — отдельные monitoring dashboards, log streams, deploy pipelines. Применяется редко, когда criteria isolation/SLA/compliance перевешивают operational cost.",
+                "example": "Twilio для своего messaging API исторически использовал `api.twilio.com` для legacy и `messaging.twilio.com` для новой generation — позволяло им запускать messaging-сервис на новой архитектуре без рисков для существующих integrations.",
+                "when_to_apply": "Compliance-driven separations (PCI-DSS subset на отдельном hostname), enterprise APIs с разными SLAs per version, multi-region routing (v1 в US-EAST, v2 globally distributed), legal jurisdiction requirements (v1 в EU для GDPR-strict customers).",
+                "edge_cases": "Если v1 и v2 share backend, hostname versioning избыточен — переходить на URI/header. Также: при internal mobile-API hostname versioning плохо сочетается с certificate pinning (приложение пинит cert на один hostname, новый hostname требует app-update).",
+                "related": "[[api-versioning-interview#Q4]] URI versioning как cheaper альтернатива; [[api-versioning-interview#Q9]] таблица выбора подхода; [[api-versioning-interview#Q20]] operational costs multiple versions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hostname versioning проще URI versioning с точки зрения операционной настройки, потому что DNS управляется централизованно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hostname versioning значительно сложнее URI: требует DNS management (Route53, CloudFlare DNS), separate TLS certificates с renewal automation, CORS configuration per hostname, SSL/TLS-termination в load balancer per hostname. Operational overhead — на порядок выше URI versioning, где всё это решается одним gateway-config.",
+                "source_of_confusion": "Confusion от иллюзии, что `центральный DNS = простота`. Да, DNS централизован, но управление множеством hostnames в нём добавляет complexity (records, TTLs, CNAME chains, geo-routing).",
+                "if_it_were_true": "Если бы hostname versioning было проще, startup-команды использовали бы его — но они почти всегда начинают с URI versioning (`/v1/`), потому что setup занимает 5 минут вместо часов.",
+                "how_it_should_be": "Hostname versioning — для зрелых организаций с DevOps-командой, которые могут automate DNS/TLS pipeline; не для маленьких команд."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hostname versioning обязательно для high-load production APIs, потому что обеспечивает лучшую масштабируемость.",
+              "correct": false,
+              "sections": {
+                "what_actually": "URI versioning масштабируется не хуже hostname versioning — оба упираются в backend capacity, не в URL/hostname mechanism. Stripe, GitHub, AWS обрабатывают сотни тысяч RPS через URI/header versioning без проблем со scaling. Hostname versioning не даёт автоматических scaling benefits — он лишь облегчает infrastructure-level isolation, если она нужна.",
+                "source_of_confusion": "Confusion от ложной аналогии `больше hostnames = больше capacity`. На деле capacity — функция backend resources, а не количества hostnames; URL parsing — наносекундная операция в любом gateway.",
+                "if_it_were_true": "Если бы high-load требовал hostname versioning, GitHub не использовал бы `api.github.com` с URI/header versioning для всех своих REST API — а они handle ~5-10 Gbps на этом hostname.",
+                "how_it_should_be": "Scaling решается через backend capacity (replicas, sharding, caching), не через URL versioning approach; hostname versioning — это про isolation, не про scaling."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать versioning подход для нового API в 2025?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Header versioning всегда лучше URI, потому что не нарушает REST принципы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tradeoffs реальные: header versioning требует `Vary: Accept` для корректного кэширования, не тестируется в браузере, документация сложнее, custom headers могут стрипаться corporate proxies. REST purity редко окупает эти operational costs. Для public APIs URI versioning — pragmatic default, потому что упрощает debugging, тестирование, и onboarding клиентов.",
+                "source_of_confusion": "Confusion от Roy Fielding's academic critique URI versioning. Fielding прав теоретически, но он сам подчёркивает, что REST — набор constraints для определённого class задач (web-scale hypermedia), а не догма для всех HTTP APIs.",
+                "if_it_were_true": "Если бы header был всегда лучше, GitHub, Twitter, Stripe не использовали бы URI versioning — они активно использовали и продолжают использовать URI как primary choice; миграция GitHub на header была частичной и сопровождалась множеством incident reports.",
+                "how_it_should_be": "Выбирать подход по контексту: URI для public REST APIs, header для REST-strict internal, no versioning для GraphQL, package versioning для gRPC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GraphQL также нуждается в URI versioning при major schema changes, как REST.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphQL purposely not versioned. Эволюция schema идёт через additive changes (новые поля добавляются без удаления старых) и `@deprecated` directive. Клиенты сами выбирают какие поля запрашивать — добавление нового поля никого не ломает; удаление поля делается через многолетний deprecation cycle. URI versioning в GraphQL (например, `/graphql/v2`) — антипаттерн, создающий complexity без benefit.",
+                "source_of_confusion": "Confusion от desire применять REST best practices ко всем APIs. GraphQL — другая парадигма: client-driven query model вместо server-driven resource model. Versioning подход следует из парадигмы.",
+                "if_it_were_true": "Если бы GraphQL нуждался в URI versioning, GitHub GraphQL API имел бы `/graphql/v2`, `/graphql/v3` — но они работают с одним endpoint `https://api.github.com/graphql` уже 7+ лет, эволюционируя через additive + deprecation.",
+                "how_it_should_be": "Для GraphQL — additive changes + `@deprecated`; URI versioning только для исключительных случаев (например, миграция на radically new schema, что бывает раз в десятилетие)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "URI versioning (`/v1/`) — default для public REST APIs; header versioning для internal REST; GraphQL через deprecation без версий; gRPC через package versioning.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pragmatic decision matrix для 2025: (1) **Public REST APIs** → URI versioning. Видимость в URL, простота тестирования, mass adoption (GitHub, Twitter, Stripe historical). (2) **Internal REST APIs** → URI или header. Внутри одной команды header acceptable, потому что tooling и docs control полностью у нас. (3) **GraphQL** → no versioning, только additive + `@deprecated`. Versioning противоречит client-driven query model. (4) **gRPC** → package versioning через protobuf (`package myservice.v2`). Версия зашита в IDL, генерируется типизированно. (5) **Stripe-style stability** → date-based + per-account pinning, если требуется payment-grade backward compatibility. Главный принцип — pragmatism over purity: выбирать решение, которое снижает operational cost и упрощает client integration, не academic-correct решение.",
+                "example": "Stripe в 2024 имеет: REST APIs с date-based versioning + per-account pinning (`Stripe-Version: 2024-04-19` header); SDK на 8 языках с SemVer; webhook payloads frozen forever per account; внутренняя коммуникация через gRPC с package versioning.",
+                "when_to_apply": "При проектировании нового API — выбирать подход на этапе design, не после первого release; миграция между подходами всегда дорогая. Для существующих APIs — обычно legacy choice сохраняется, и эволюция идёт внутри выбранного подхода.",
+                "edge_cases": "Hybrid подходы возможны: URI versioning для major + Accept для minor variants; URI + content negotiation для format negotiation отдельно от version. Сложность hybrid должна окупаться реальными requirements.",
+                "related": "[[api-versioning-interview#Q4]] URI versioning детали; [[api-versioning-interview#Q14]] GraphQL no-versioning approach; [[api-versioning-interview#Q19]] best practices."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для internal microservices APIs versioning не нужен — все сервисы команды обновляются вместе через CI/CD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rolling deployments создают окно несовместимости в десятки секунд - минуты, когда часть подов работает на новой версии, а часть — на старой. Без versioning producer v2 ломает consumer v1 на соседнем поде. Даже в одной команде это создаёт production-incidents; cross-team microservices страдают ещё сильнее (нет контроля над расписанием обновлений соседей).",
+                "source_of_confusion": "Иллюзия `всё в одной команде` маскирует rolling update mechanics в Kubernetes/Argo Rollouts. CI/CD не гарантирует мгновенного atomic deployment всего service mesh.",
+                "if_it_were_true": "Если бы internal services не нуждались в versioning, не существовало бы Spring Cloud Contract, Pact, или Pact Broker — но эти инструменты specifically для contract testing между сервисами, и они critical для production.",
+                "how_it_should_be": "Internal microservices — упрощённый versioning: backward-compatible changes внутри major; header `X-Service-Version` для gRPC; явная политика breaking changes даже внутри команды; contract testing на CI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Semantic Versioning (SemVer) применяется к API URL versioning?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В API URL используется только MAJOR (`/v1/`, `/v2/`); MINOR и PATCH живут в документации и SDK; URL меняется только при breaking changes.",
+              "correct": true,
+              "sections": {
+                "explanation": "SemVer (`MAJOR.MINOR.PATCH`) применяется к API URL частично: только MAJOR попадает в URL. MAJOR — breaking changes (`/v1/` → `/v2/`); MINOR — additive features (новые endpoints, новые опциональные поля) — не отражается в URL, потому что не требует action от клиентов; PATCH — bug fixes — тоже не в URL. MINOR/PATCH живут в release notes, OpenAPI spec (отдельный version field), client SDK semver. Это разделение появляется потому, что API URL versioning grain coarse: URL — точка входа, и клиенты bookmark/cache именно URL; mass-replace URL для каждого minor — операционно невозможно. SDK/client libraries используют full SemVer (`stripe-java:5.3.2`) — там MAJOR.MINOR.PATCH имеет полный смысл для dependency resolution.",
+                "example": "Stripe API имеет одну активную URL версию (`/v1/`), но 30+ date-based subversions для backward compatibility; client SDK `stripe-java` использует full SemVer `26.4.0`, где 26 — major, 4 — minor (новые features), 0 — patch (bug fixes).",
+                "when_to_apply": "URL — только MAJOR; documentation/release notes — отражает MINOR/PATCH; SDK — full SemVer для package managers (Maven, npm, PyPI). Это convention всех major API providers (Stripe, GitHub, Twilio, AWS).",
+                "edge_cases": "Если public API совсем не имеет breaking changes (rare), можно жить без MAJOR в URL вообще — например, GraphQL APIs (GitHub graphql.com — без version в URL). Но это исключение, не правило.",
+                "related": "[[api-versioning-interview#Q2]] breaking changes как trigger для MAJOR bump; [[api-versioning-interview#Q3]] additive changes — MINOR; [[api-versioning-interview#Q11]] date-based как альтернатива SemVer."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В API URL используется полный SemVer: `/v2.5.3/users/123` — каждое изменение получает свою версию URL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полный SemVer в URL — антипаттерн. Каждый minor (новый endpoint, поле) или patch (bugfix) bump-нул бы URL, заставляя клиентов перенастраивать integration на каждый release. Mobile-приложения и third-party интеграции не могут менять URL еженедельно. URL bloat: `/v2.5.3-beta.4+build-789/users/123` — нечитаемо.",
+                "source_of_confusion": "Confusion от строгого применения SemVer везде. SemVer — для library/SDK dependencies (`pom.xml`, `package.json`), где MAJOR.MINOR.PATCH помогает в version resolution. API URL — стабильная точка входа, не dependency.",
+                "if_it_were_true": "Если бы full SemVer в URL был нормой, не существовало бы стабильных URL `api.stripe.com/v1/` — за 13 лет существования был бы тысячи URLs вроде `/v1.234.5-hotfix/`.",
+                "how_it_should_be": "Только MAJOR в URL; MINOR/PATCH в release notes и SDK; client SDK использует full SemVer для package management."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MINOR version в API URL (например, `/v2.1/`) обязательна, чтобы клиенты явно подтверждали поддержку новых features.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MINOR version в URL не нужна именно потому, что MINOR — backwards-compatible additive change. Клиент не обязан подтверждать поддержку новых полей — он их просто игнорирует под Tolerant Reader pattern. Введение `/v2.1/` обяжет клиентов вручную выбирать какую minor использовать — overhead без benefit.",
+                "source_of_confusion": "Иллюзия `явное подтверждение = больше control`. Но MINOR-changes специально спроектированы безопасными — control не нужен.",
+                "if_it_were_true": "Если бы MINOR в URL была необходима, новые features не были бы доступны существующим клиентам без их явного opt-in — а в реальности они доступны автоматически (как и должно быть для additive change).",
+                "how_it_should_be": "MINOR в release notes, OpenAPI spec, SDK version; в URL — только при breaking changes (MAJOR bump)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SemVer PATCH должна быть в API URL для hotfixes, чтобы клиенты могли откатиться на старый patch при проблемах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PATCH — bug fix server-side, который не меняет API contract. Клиенты не имеют права `откатиться` на старую buggy implementation сервера; они работают с current state. PATCH в URL создал бы URL-bloat (`/v2.5.3/`, `/v2.5.4/`, `/v2.5.5/`) и confusion о том, какая версия actual.",
+                "source_of_confusion": "Confusion от ассоциации PATCH с client-side downgrade в SDK мире. В API server-side patch — это `server fixed bug`, клиент пассивно получает fix.",
+                "if_it_were_true": "Если бы PATCH в URL имела смысл, на каждый Stripe bugfix появлялся бы новый URL — за 13 лет тысячи URLs. Реально — один `/v1/` с continuous improvement underneath.",
+                "how_it_should_be": "PATCH живёт в server-side только, не в URL; клиенты получают bug fixes автоматически (или через date-based version pinning, если Stripe-style)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Date-based versioning (Stripe approach, `Stripe-Version: 2024-04-19`) — особенности и trade-offs?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Date-based versioning проще поддерживать, чем URI versioning — просто меняешь дату в header.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддержка date-based versioning Stripe-style — самая дорогая модель. Stripe поддерживает ВСЕ исторические версии (30+ за 13 лет): каждое изменение требует compatibility transform для всех прошлых дат. Это огромная инженерная инвестиция: специальные transform layers, contract tests для каждой версии, отдельная QA-инфраструктура. Team Stripe внутри имеет dedicated команду versioning engineering.",
+                "source_of_confusion": "Confusion от внешней простоты — клиент действительно `просто меняет дату`, поэтому подход кажется простым. Но complexity спрятана на server-side: для каждой пары (old_version, new_field) нужно решить, как transform запрос/ответ.",
+                "if_it_were_true": "Если бы date-based было просто, все API providers использовали бы его — но только Stripe и единицы payment APIs (Square, частично PayPal) могут позволить себе такие инвестиции. Большинство API providers выбирают URI/header с явной EOL policy.",
+                "how_it_should_be": "Date-based versioning — premium-tier подход для финтех/payment APIs, где stability критична; для большинства APIs URI versioning + clear deprecation policy дешевле и достаточно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При date-based versioning клиенты автоматически получают latest версию API при каждом запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe-style модель — обратная: клиент pinned к дате первой интеграции и НЕ получает auto-upgrade. Это deliberate design — для payment APIs auto-upgrade неприемлем (может сломать reconciliation, fraud detection, или comply checks). Upgrade происходит только при явном opt-in: клиент меняет `Stripe-Version` header на новую дату после code review и testing.",
+                "source_of_confusion": "Confusion от ассоциации с modern web (continuous deployment, auto-updates). Payment APIs наоборот — максимальная stability, никаких сюрпризов.",
+                "if_it_were_true": "Если бы Stripe auto-upgraded клиентов, существующие integrations ломались бы при каждом release — а Stripe gives 99.99% uptime guarantee, что несовместимо с auto-breaking changes.",
+                "how_it_should_be": "Per-account pinning — auto-upgrade требует явного opt-in через dashboard или API call; default — staying на pinned version forever."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Stripe-Version: 2024-04-19` в header — каждая дата = snapshot поведения API; клиент pinned к конкретной дате; используется для payment APIs где stability критична.",
+              "correct": true,
+              "sections": {
+                "explanation": "Date-based versioning — granular alternative SemVer MAJOR. Вместо `/v1/`, `/v2/` каждая дата представляет snapshot поведения API на тот момент. Любое breaking change → новая дата (например, `2024-04-19` → `2024-06-30`). Клиент передаёт версию в header (`Stripe-Version: 2024-04-19`) или query (`?api-version=2024-04-19`). Плюсы: (1) Granular — каждая мелочь, требующая breaking, получает свою дату. (2) No `v3 vs v4 debates` — даты не имеют subjective meaning. (3) Backward-compatible by default — старая дата работает forever (если provider commit-нулся). (4) Easy для customers — pinned to date integration, не нужно следить за versioning policy. Минусы: (1) Many versions to maintain — Stripe поддерживает 30+ дат, требует серьёзной инженерной инвестиции. (2) Confusing — `какая дата latest?` — нужна отдельная коммуникация. (3) Cumulative testing — каждый release тестируется на всех supported dates. Применяется в financial APIs где cost-of-breakage огромный.",
+                "example": "Stripe-Version `2024-06-30` enable новый PaymentMethod object для SCA-compliance (Strong Customer Authentication EU); клиенты, integrated в 2014 на `2014-04-19`, по-прежнему получают legacy charge model, не зная об SCA — для них Stripe делает compatibility transform on the fly.",
+                "when_to_apply": "Payment APIs (Stripe, Square), фintech, банковские APIs, любые APIs где breaking change для существующего клиента = financial/legal liability; требует significant engineering investment.",
+                "edge_cases": "Date-based не означает `обязательно header` — может быть query param (`?api-version=2024-04-19`) или даже в URL (`/v2024-04-19/users/123`). Выбор vehicle (header vs query vs path) отдельный от choice date-based vs SemVer.",
+                "related": "[[api-versioning-interview#Q12]] per-account pinning — отдельная concept от date-based; [[api-versioning-interview#Q10]] SemVer как альтернатива; [[api-versioning-interview#Q20]] operational costs multiple versions."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Date-based versioning нельзя использовать в query parameter — только в header (как у Stripe).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Date-based versioning независим от vehicle (header/query/path). Stripe использует header (`Stripe-Version`), Azure использует query (`?api-version=2024-04-15`), AWS использует path-based date (например, EC2 API `2015-02-01` в URL). Все три варианта valid для date-based.",
+                "source_of_confusion": "Confusion от знакомства только со Stripe-моделью. Stripe выбрал header, потому что он сохраняет URI identity; но это его architectural choice, не requirement date-based versioning.",
+                "if_it_were_true": "Если бы date-based работало только в header, Azure REST APIs не существовали бы в текущем виде — а они активно используют `?api-version=YYYY-MM-DD` в query string для всех своих services.",
+                "how_it_should_be": "Выбор vehicle (header vs query vs path) — отдельный от choice date-based vs SemVer. Date-based может быть в любом vehicle; выбор зависит от operational/aesthetic criteria."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Per-account version pinning (Stripe-style) — как работает и какие гарантии даёт?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Per-account pinning позволяет обновлять все accounts одновременно одной командой, как deployment.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-account pinning — обратная модель: каждый account pinned к своей версии независимо, нет глобального `обновить всех`. Account X на `2014-04-19`, account Y на `2024-04-19`, account Z на `latest` — все они работают параллельно. Upgrade одного account не затрагивает других. Это и есть key benefit модели — изоляция account-level.",
+                "source_of_confusion": "Confusion от ассоциации с регулярными deployments (rolling update обновляет все instances). Per-account pinning — про per-account state, не про deployment.",
+                "if_it_were_true": "Если бы существовала команда `обновить всех`, не имело бы смысла называть подход `per-account pinning` — пинить нечего, если все обновляются вместе. Сама концепция предполагает per-account independence.",
+                "how_it_should_be": "Per-account pinning = каждый account мигрирует индивидуально; нет глобального forced upgrade; provider только может deprecate очень старые versions через многолетний цикл."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Каждый account закреплён за конкретной версией при первом API вызове (или явной настройке); breaking changes не затрагивают существующих clients — они продолжают работать с pinned версией.",
+              "correct": true,
+              "sections": {
+                "explanation": "Per-account version pinning — Stripe's killer feature, который позволяет им constantly выпускать breaking changes без breaking никого. Mechanics: (1) При создании аккаунта (или first API call) Stripe pins аккаунт к текущей latest версии. (2) Если account не передаёт `Stripe-Version` header в запросах, Stripe использует pinned версию. (3) Если account явно передаёт header, используется переданная версия. (4) Migration — explicit opt-in через dashboard (`Settings > Developers > API version > Upgrade`). (5) Webhooks тоже pinned per account — webhook payload format consistent forever для конкретного account. Result: Stripe выпускает 5-15 breaking changes в год, но 0 customer-side disruption. Это превращает versioning из `headache for everyone` в `internal engineering challenge for Stripe only`.",
+                "example": "Stripe customer интегрировался в 2014 на `2014-04-19`. В 2024 он по-прежнему получает: charge model без PaymentMethod object, webhook payload без `automatic_payment_methods` field, no SCA enforcement. Если он захочет SCA — explicit upgrade через dashboard, после code review.",
+                "when_to_apply": "Payment APIs (Stripe-grade stability), fintech, банковские APIs, любые APIs где breaking existing integrations создаёт financial/legal liability; требует значительной engineering investment в compatibility transforms.",
+                "edge_cases": "Webhook versioning особенно tricky — webhook payload меняется в зависимости от account version, что означает webhook handler не может полагаться на static schema. Stripe требует от webhook consumer'ов парсить версию и обрабатывать accordingly. Также: при account migration возникает window, когда некоторые in-flight requests могут быть в старой версии.",
+                "related": "[[api-versioning-interview#Q11]] date-based versioning как основа для per-account pinning; [[api-versioning-interview#Q13]] webhook versioning per-account; [[api-versioning-interview#Q16]] deprecation policy — Stripe не удаляет старые versions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Version pinning требует хранения разных codebase для каждой версии — поэтому Stripe имеет 30+ branches исходного кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe использует ОДНУ codebase с compatibility transform layer. Latest version реализуется в основном коде; для каждой старой версии существует transform: input transform (`request_v_old` → `request_v_latest`) перед обработкой, output transform (`response_v_latest` → `response_v_old`) перед возвратом. Это elegant pattern — bug fixes автоматически попадают во все versions; новые features добавляются в latest, и для старых versions создаётся transform, если нужно.",
+                "source_of_confusion": "Confusion от модели `branch per version`, которая встречается в badly designed systems. Stripe explicitly использует transform-based architecture, описанную в их engineering blog `Tagged API`.",
+                "if_it_were_true": "Если бы Stripe имел 30+ branches, bug fix требовал бы cherry-pick во все ветки → недели работы на каждый fix. Реальность — bug fix в одной codebase автоматически live для всех versions.",
+                "how_it_should_be": "Single codebase + compatibility transform layer (Stripe engineering blog `How Stripe Migrated Millions of Database Tables`); transform — это код, который читать/писать проще чем поддерживать многоконечной ветвления."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Per-account pinning делает deprecation policy ненужной — старые версии живут вечно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe всё равно постепенно убирает очень старые versions через многолетние циклы — это не `forever`, но многолетний `forever-ish`. Pinning даёт буферное время для migration (10+ лет), но не infinite support. Stripe документирует deprecation timeline для очень старых versions (например, версии 2011 года в 2024 могут получать deprecation notice).",
+                "source_of_confusion": "Иллюзия `pinned forever` от reality, что 10+ лет в IT — это `forever` для большинства; но technically deprecation policy всё-таки существует.",
+                "if_it_were_true": "Если бы Stripe поддерживал все версии вечно, у них была бы версия `2011-04-19` всё ещё активная — но они уже удалили самые старые (после 12-15 лет support).",
+                "how_it_should_be": "Per-account pinning — buffer для migration (5-10+ лет); deprecation policy всё равно нужна, но циклы намного длиннее (vs 6-12 месяцев в обычных APIs)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Webhook versioning — как поддерживать совместимость для server-pushed payloads?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Webhooks не нуждаются в versioning — клиент всегда получает latest payload format.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Webhooks — server-push, клиент НЕ контролирует когда и в каком формате он получит данные. Изменение payload format ломает consumer, который ожидает старую структуру. У consumer нет mechanism `Accept` header — server диктует format. Если формат меняется без versioning, payload parser у клиента упадёт.",
+                "source_of_confusion": "Confusion от REST mental model — там клиент инициирует, может негоциировать. Webhook — обратный flow: server инициирует, клиент пассивен. Negotiation модели REST не применимы.",
+                "if_it_were_true": "Если бы webhooks не нуждались в versioning, Stripe не имел бы per-account webhook version pinning — а это flagship feature их webhook system.",
+                "how_it_should_be": "Webhook payload format должен либо frozen (additive-only forever), либо versioned through per-account pinning, либо multiple webhook endpoints для разных versions."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Webhook versioning проще чем API versioning, потому что webhook payload меньше API response.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Webhook versioning сложнее, не проще: (1) Нет negotiation per-request — server должен заранее знать какой format отправлять. (2) Retry logic — если webhook payload format меняется во время retry, consumer получает противоречивые payloads. (3) Историческая обработка — webhook events часто replayed; replay должен быть в том же format, в котором event был originally sent. (4) Multi-tenant — каждый клиент может ожидать свой format.",
+                "source_of_confusion": "Confusion от размера payload — webhook payload часто меньше chatter API response, поэтому кажется проще. Но complexity не в размере, а в push-flow.",
+                "if_it_were_true": "Если бы webhook versioning был проще, не существовало бы целых статей в Stripe engineering blog о complexity webhook versioning, и не было бы advise `freeze webhook payloads forever`.",
+                "how_it_should_be": "Webhook versioning отдельная dispute от API versioning; treat как separate problem с подходами: per-account pinning, multiple endpoints, additive-only."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Лучший подход для webhook versioning — отдельные URL endpoints per version (`/webhooks/v1`, `/webhooks/v2`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multiple endpoints multiplies infrastructure complexity: каждый customer должен настроить отдельный endpoint для каждой версии; server должен maintain отдельные routes; разные events могут попадать на разные endpoints. Это работает, но complicated. Stripe выбрал более elegant подход — per-account pinning, где endpoint один, а format meняется per-account based на account version.",
+                "source_of_confusion": "Confusion от extrapolation URI versioning (`/v1/`, `/v2/`) на webhooks. Но webhooks — другой паттерн: один customer, один endpoint, разные events.",
+                "if_it_were_true": "Если бы multiple endpoints были лучшим подходом, Stripe не имел бы per-account webhook version — у них был бы `/webhooks/v1`, `/webhooks/v2`. Реальность: один endpoint per customer, версия pinned через account.",
+                "how_it_should_be": "Multiple endpoints — fallback подход для простых случаев; per-account pinning — preferred для production-grade APIs; additive-only для simple webhook systems."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Webhook payload format должен быть frozen per-account version (Stripe-style) или strict additive-only policy — никогда не удалять поля, только добавлять.",
+              "correct": true,
+              "sections": {
+                "explanation": "Webhook versioning — отдельный challenge от API versioning из-за push-direction. Главные подходы: (1) **Per-account version pinning** (Stripe). Webhook payload format pinned at account level — webhook handler customer'а парсит формат, соответствующий его account version. Stripe maintains compatibility transforms for webhook payloads так же, как для API responses. (2) **Strict additive-only policy**. Webhook payload может только расти — добавляются новые поля, новые event types; никогда не удаляются. Простой подход для small APIs без per-account complexity. (3) **Multiple endpoints per version**. Customer регистрирует endpoint per webhook version; server отправляет в соответствующий endpoint. Простой, но infrastructure-heavy. (4) **Version header в webhook payload**. Сервер указывает `version` field в payload; consumer парсит accordingly. Самый pragmatic для evolving APIs. Принцип `webhook = additive only; breaking change = новый event type` минимизирует disruption.",
+                "example": "Stripe webhook event `customer.subscription.updated` имеет один и тот же базовый shape с 2014 по 2024 — поля только добавлялись (`automatic_tax`, `payment_settings`, `pause_collection`); никакое поле не было удалено. Customer, integrated в 2014, парсит payload и игнорирует новые поля.",
+                "when_to_apply": "Per-account pinning — для Stripe-grade APIs; additive-only — для startup-стадии (низкая complexity); multiple endpoints — для small set of customers с разными requirements; version header — universal pragmatic подход.",
+                "edge_cases": "Webhook replay — events часто replayed (Stripe сохраняет за 30 дней); replay должен быть в том же format, что и original event. Также: time-of-event vs time-of-replay могут быть разные account versions — нужно решить, какая используется.",
+                "related": "[[api-versioning-interview#Q12]] per-account pinning для API; [[api-versioning-interview#Q3]] additive changes как backwards-compatible; [[api-versioning-interview#Q19]] best practices."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему GraphQL принципиально не использует versioning?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GraphQL эволюционирует через additive schema changes + `@deprecated` directive — клиенты запрашивают только нужные поля, добавление новых не ломает existing queries.",
+              "correct": true,
+              "sections": {
+                "explanation": "GraphQL philosophy explicitly anti-versioning. Key insight: в GraphQL клиент сам выбирает какие поля запрашивать (`query { user { id, name, email } }`); сервер возвращает только запрошенные. Поэтому: (1) Добавление нового поля — клиент его не запрашивает, ничего не меняется. (2) Удаление поля — клиент пометит `@deprecated`, остановит использование, потом server-side удалит (multi-year cycle). (3) Изменение типа поля — единственный truly breaking change, делается через введение нового поля `xV2`, deprecation старого, удаление через годы. URI versioning в GraphQL (`/graphql/v2`) — anti-pattern, разрушающий client-flexibility (теперь клиент должен выбирать URL, теряет benefit selective queries).",
+                "example": "GitHub GraphQL API существует с 2016 без version в URL (`https://api.github.com/graphql`). За 8 лет произошли тысячи schema changes: добавлены поля, помечены deprecated (например, `Repository.disk_usage` deprecated в 2021), часть удалена через долгий cycle. Клиенты, написанные в 2016, по большей части продолжают работать (запрашивают только базовые поля).",
+                "when_to_apply": "Всегда для GraphQL — это design principle, не optional. Если кажется, что нужна new version GraphQL API, обычно проблема в schema design (слишком coupled) — refactor через additive changes.",
+                "edge_cases": "Radical schema redesign (раз в десятилетие) может потребовать second endpoint, но это extraordinary measure. Также: federation (Apollo Federation, Mesh) усложняет evolution — нужна coordination между subgraphs.",
+                "related": "[[api-versioning-interview#Q15]] field deprecation механика в GraphQL; [[api-versioning-interview#Q9]] decision matrix для разных API типов; [[api-versioning-interview#Q3]] additive changes principle."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GraphQL использует URI versioning как REST — `/graphql/v1`, `/graphql/v2` для major schema changes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphQL purposely not versioned. Эволюция через additive schema + `@deprecated`. Отдельные URI versions создают complexity без benefit — теряется client flexibility (клиент должен выбирать URL вместо динамически собирать query), и появляется duplication infrastructure.",
+                "source_of_confusion": "Confusion от extrapolation REST best practices. GraphQL — другая парадигма (client-driven query), и его versioning approach следует из парадигмы.",
+                "if_it_were_true": "Если бы GraphQL использовал URI versioning, GitHub GraphQL имел бы `/graphql/v2`, `/graphql/v3` за 8 лет existence — но они работают с одним endpoint, эволюционируя через schema changes.",
+                "how_it_should_be": "Для GraphQL — additive changes + `@deprecated`; URI versioning только для исключительных redesigns (раз в десятилетие)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@deprecated` directive немедленно удаляет поле из schema, поэтому versioning не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@deprecated` — только маркировка в schema, не runtime-removal. Поле продолжает работать как раньше; deprecated маркер появляется в introspection (`__type` query), в SDL (Schema Definition Language), в tooling (IDE, GraphiQL, Apollo Studio). Удаление поля — manual operation после долгого deprecation cycle (обычно 12-24 месяца).",
+                "source_of_confusion": "Confusion от ожидания, что `directive = действие`. В GraphQL directives — это metadata, не behavioral mutations.",
+                "if_it_were_true": "Если бы @deprecated удалял поле мгновенно, клиенты ломались бы на следующий день после @deprecated annotation — а они продолжают работать годами после deprecation.",
+                "how_it_should_be": "@deprecated = signal для клиентов и tooling; actual removal — manual operation после migration всех clients (можно отследить через GraphQL analytics)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@deprecated` блокирует запросы к deprecated полям — клиент получит error при попытке использовать deprecated field.",
+              "correct": false,
+              "sections": {
+                "what_actually": "@deprecated не влияет на runtime — query выполняется успешно, данные возвращаются как обычно. Эффект только на tooling: IDE показывает strikethrough на deprecated поле, linters предупреждают, Apollo Studio помечает использования. Это намеренная design choice — не ломать клиентов deprecation cycle, а только предупреждать.",
+                "source_of_confusion": "Confusion от ожидания aggressive deprecation (как иногда в REST с `Deprecation` HTTP header → 410 Gone). GraphQL deprecation passive — даёт максимум времени для migration.",
+                "if_it_were_true": "Если бы @deprecated блокировал queries, любой deprecation event = mass production failures у клиентов; никто не использовал бы @deprecated, опасаясь disruption.",
+                "how_it_should_be": "@deprecated — passive signal; runtime поведение неизменно; tooling предупреждает; removal — manual operation после migration."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает field deprecation в GraphQL?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`@deprecated` автоматически удаляет поле через 30 дней после annotation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@deprecated` — только декларативная маркировка в schema; нет автоматического удаления. Поле остаётся в schema, работает в queries, отдаёт данные — пока разработчик вручную не уберёт его из resolver и schema. Timeline removal — решение API team, обычно 12-24 месяца после deprecation, чтобы дать клиентам время migration.",
+                "source_of_confusion": "Confusion от ассоциации с aggressive deprecation policies в некоторых системах (например, Python `DeprecationWarning` → removal в next major). GraphQL passive deprecation — другая модель.",
+                "if_it_were_true": "Если бы поля удалялись автоматически через 30 дней, GraphQL nobody would use @deprecated, опасаясь массовых breakages — а Apollo/GitHub/Shopify/Facebook активно используют @deprecated именно потому, что он safe.",
+                "how_it_should_be": "@deprecated = только маркировка; actual removal — manual после tracking migration через GraphQL analytics (например, Apollo Studio operation tracking)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@deprecated` доступен только в GraphQL; REST APIs не имеют эквивалента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "REST APIs имеют эквивалент — HTTP `Deprecation` и `Sunset` headers (RFC 8594, RFC 9745). `Deprecation` header indicates когда endpoint/field стал deprecated; `Sunset` — когда он будет удалён. Tooling (Postman, curl) парсит эти headers, показывает warnings. Mechanic та же — мягкий signal с long deprecation cycle.",
+                "source_of_confusion": "Confusion от менее известного REST mechanism. GraphQL @deprecated виден в SDL и tooling explicit; REST Deprecation headers тоже видны в Postman, IDE plugins, но менее `frontline` в обсуждениях.",
+                "if_it_were_true": "Если бы REST не имел эквивалента, deprecation в RESTful APIs делалась бы только через release notes — но RFC 8594 (Sunset header) explicitly предоставляет programmable mechanism.",
+                "how_it_should_be": "REST: `Deprecation: <date>` и `Sunset: <date>` headers; tooling парсит и notifies; GraphQL: `@deprecated(reason: \"...\")` directive; обе системы эквивалентны по mechanic."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@deprecated(reason: \"Use firstName + lastName\")` — IDE показывает strikethrough, linters предупреждают, docs помечают; поле остаётся работающим до manual removal.",
+              "correct": true,
+              "sections": {
+                "explanation": "GraphQL `@deprecated` directive — стандартный mechanism для signalling field deprecation без breaking changes. Syntax: `fieldName: Type @deprecated(reason: \"Use newField instead\")`. Effects: (1) В schema introspection (`__type` query) поле возвращается с `isDeprecated: true` и `deprecationReason`. (2) В SDL (`type User { fullName: String @deprecated(reason: \"...\") }`) видна аннотация. (3) IDE (Apollo Studio, GraphiQL, VSCode plugins) показывают strikethrough на deprecated полях в autocompletion. (4) Linters (graphql-eslint, GraphQL Inspector) flag использование. (5) Apollo Studio tracking — analytics на использование deprecated полей, чтобы знать когда safe удалить. Runtime поведение не меняется: query успешна, данные возвращаются, никаких warnings/errors.",
+                "example": "GitHub в 2021 пометил `Repository.disk_usage` как `@deprecated(reason: \"This field will be removed on 2022-04-01\")`; в течение года через Apollo Studio analytics they tracked decline в использовании; в 2022 удалили field только когда usage dropped to ~0.1% queries.",
+                "when_to_apply": "При любой replace/rename операции в GraphQL schema. Pattern: добавить новое поле, deprecate старое с reason, ждать migration, удалить через 12+ месяцев. Также: при изменении semantics — deprecate старое, добавить с новым именем и semantics.",
+                "edge_cases": "Cannot deprecate part of field (например, удалить enum value) — нужно deprecate всё поле и добавить новое. Deprecation reason — free-form string; conventionally указывает alternative (`Use X instead`) и timeline.",
+                "related": "[[api-versioning-interview#Q14]] почему GraphQL не использует versioning; [[api-versioning-interview#Q17]] REST Sunset header как эквивалент; [[api-versioning-interview#Q18]] graceful deprecation в общем."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@deprecated` останавливает GraphQL query, если клиент запрашивает deprecated поле — для защиты от случайного использования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "@deprecated не влияет на query execution — query выполняется успешно, данные возвращаются. Runtime behaviour idempotent. Only tooling и documentation aware: IDE показывает warnings, Apollo Studio логирует usage. Это design choice — passive deprecation для maximum compatibility.",
+                "source_of_confusion": "Confusion от ожидания aggressive deprecation (как `compile error` для deprecated APIs в Java). GraphQL philosophy — passive, runtime-safe deprecation.",
+                "if_it_were_true": "Если бы @deprecated блокировал queries, Apollo Studio не имела бы отдельной фичи `Deprecated field usage` analytics — она существует именно потому, что поля продолжают работать после deprecation.",
+                "how_it_should_be": "@deprecated — passive marker; queries продолжают работать; tooling предупреждает; analytics tracks usage для решения о removal timeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные шаги должна включать API deprecation policy?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Deprecation policy применима только к breaking changes — endpoint removals можно делать без неё, потому что это другая категория.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Endpoint removal — это и есть breaking change, одна из самых disruptive разновидностей. Без deprecation policy клиенты получают 404 в production без предупреждения, что эквивалентно production outage. Endpoint removal должен следовать той же или более строгой deprecation policy, что и любой другой breaking change.",
+                "source_of_confusion": "Confusion от разделения `feature removal` vs `feature change`. Технически это разные операции, но с точки зрения клиента эффект одинаков — код перестаёт работать.",
+                "if_it_were_true": "Если бы removals не требовали deprecation, post-mortems типа `Twitter REST API endpoint deprecation 2023` не описали бы массовых failures на третьих сторонах — а они описывают именно это.",
+                "how_it_should_be": "Endpoint removal — самая жёсткая разновидность breaking change; требует extended deprecation period (12+ месяцев), multiple notification channels, migration guides, analytics tracking."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Announce deprecation → Sunset header в responses → 6-24 месяца deprecation period → migration guides → final removal с явным communicate.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production-grade API deprecation policy включает 6+ шагов, distributed во времени. (1) **Announcement** — release notes, blog post, email customer base. Главный канал — где клиенты обычно ищут API news. (2) **Sunset HTTP header** в каждом response от deprecated endpoint: `Sunset: Sat, 31 Dec 2025 23:59:59 GMT`. Tooling (Postman, Insomnia, custom monitors) парсит и нотифицирует разработчиков. (3) **Deprecation period** — обычно 6-24 месяца. Short (6 мес) — internal/small APIs; medium (12 мес) — typical public APIs (Twitter); long (24+ мес) — payment/financial APIs (Stripe), B2B integration APIs (GitHub). (4) **Migration guides** — step-by-step docs, code samples, side-by-side old vs new. (5) **Reminders** — email/blog updates за 30/14/7/1 день до final removal. (6) **Analytics tracking** — мониторинг usage deprecated endpoint, чтобы понять кто ещё не migrated. (7) **Final removal** — return 410 Gone (или 404 если совсем удалён). Принцип: deprecation = active communication multiple times, не passive documentation.",
+                "example": "GitHub deprecation для legacy OAuth endpoint в 2020: anonymously announced в October, Sunset header добавлен в December с date 2021-11-13, blog posts в Feb/Aug/Oct 2021, individual emails к top-100 OAuth users в Sept 2021, final removal Nov 2021 с 410 Gone. Result — minimal disruption: ~3% of integrations не migrated to deadline, all of them — abandoned apps без active maintainers.",
+                "when_to_apply": "Любой public API breaking change или endpoint removal; даже internal APIs с external consumers (например, mobile apps вашей же компании); особенно critical для payment/financial APIs где cost-of-breakage огромный.",
+                "edge_cases": "Security-related changes могут требовать сжатого timeline (например, exploitable endpoint — immediate disable). В таких случаях communicate aggressively и provide workaround. Также: emergency hotfixes могут not следовать full policy, но требуют post-event communication.",
+                "related": "[[api-versioning-interview#Q17]] Sunset HTTP header детали; [[api-versioning-interview#Q18]] graceful deprecation подробнее; [[api-versioning-interview#Q20]] operational cost поддержки multiple versions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно добавить Sunset header в responses — клиенты сами найдут информацию и мигрируют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sunset header — passive signal, который большинство клиентов не парсят (нет встроенного парсинга в стандартных HTTP libraries). Без active communication (email, blog, dashboard banner) большинство интегрирующих разработчиков не узнают о deprecation до того момента, как API уже выключен.",
+                "source_of_confusion": "Confusion от веры в `tooling will solve it`. Tooling существует (RFC 8594 reference implementations), но adoption — meager. Production-grade clients (custom integrations, mobile apps) обычно не имеют автоматического парсинга Sunset.",
+                "if_it_were_true": "Если бы Sunset header был достаточным, никаких post-mortems на API deprecation не было бы — но они происходят регулярно, и 80% incidents связаны именно с `we added Sunset but customers didn't notice`.",
+                "how_it_should_be": "Sunset header — лишь один из каналов; обязательно дублировать через email/blog/dashboard banner/SDK warnings; для high-impact deprecations — direct outreach to top users."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Stripe deprecates версии через 12 месяцев после анонса, как GitHub.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe поддерживает ВСЕ исторические версии indefinitely благодаря per-account version pinning — нет 12-month cycle. Account pinned at integration date работает forever (или decades). GitHub, Twitter — другие APIs с conventional deprecation policies (~12 месяцев). Не путать Stripe approach со стандартным.",
+                "source_of_confusion": "Confusion от mixing different API providers practices. У каждого своя deprecation policy, и Stripe — экстремальный outlier в terms of длинности.",
+                "if_it_were_true": "Если бы Stripe deprecated через 12 месяцев, customers, integrated в 2014, не работали бы в 2024 — а они работают, потому что Stripe maintain ALL версии.",
+                "how_it_should_be": "Знать deprecation policy конкретного API provider при integration; не extrapolate practices одного на другой; Stripe — extreme case `forever support`, GitHub — typical case `12-18 months`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Sunset HTTP header (RFC 8594) и для чего применяется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sunset header автоматически возвращает 410 Gone, когда указанная дата наступает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sunset header — только предупреждение о будущей дате; 410 Gone не возвращается автоматически. Server-side нужно явно отключить endpoint (например, удалить route или вернуть 410 в handler) когда Sunset date наступит. Sunset header — declarative, не imperative.",
+                "source_of_confusion": "Confusion от ожидания, что HTTP header — это `действие`. На самом деле response headers — метаданные о response, не triggers для server-side actions.",
+                "if_it_were_true": "Если бы Sunset header автоматически возвращал 410, не имело бы смысла иметь его в `200 OK` responses перед sunset date — а текущая semantics именно в том, что он информирует ДО события.",
+                "how_it_should_be": "Sunset header = программируемый announcement; actual 410 Gone — manual operation в server code когда date наступит; tooling парсит Sunset для notification."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sunset и Deprecation headers — это синонимы, можно использовать любой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных headers с разной semantics: `Deprecation` (RFC 8594 и draft) — когда endpoint/feature стал deprecated (past date or `true`); `Sunset` (RFC 8594) — когда он будет удалён (future date). Оба нужны для полной информации: Deprecation показывает `it's deprecated since X`, Sunset показывает `it will be gone by Y`. Лучшая практика — использовать оба.",
+                "source_of_confusion": "Confusion от похожих названий и похожих use cases. Но nuance важен: Deprecation = past event, Sunset = future event.",
+                "if_it_were_true": "Если бы они были синонимами, RFC 8594 имел бы только один header — но он определяет два, потому что они отвечают на разные вопросы.",
+                "how_it_should_be": "В response от deprecated endpoint включать оба: `Deprecation: Mon, 01 Jan 2024 00:00:00 GMT` и `Sunset: Sat, 31 Dec 2025 23:59:59 GMT`. Также Link header с `rel=\"successor-version\"`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Sunset: Sat, 31 Dec 2025 23:59:59 GMT` (RFC 8594) — сигнализирует о будущей дате удаления; tooling парсит и notifies разработчиков; добавляется в каждый response от deprecated endpoint.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sunset HTTP header (RFC 8594) — стандартизированный mechanism для signal-ing предстоящего удаления HTTP resource. Syntax: `Sunset: <HTTP-date>` или `Sunset: <number-of-seconds>`. Дата формат — RFC 7231 (например, `Sat, 31 Dec 2025 23:59:59 GMT`). Use cases: (1) В response от deprecated endpoint — добавляется в каждый успешный response, сигнализируя клиентам о date removal. (2) В response от entire deprecated API version. (3) В combination с `Link: <successor-url>; rel=\"successor-version\"` для pointing к новой версии. (4) Tooling (Postman, Insomnia, curl с правильными flags, custom monitoring) парсит header и нотифицирует разработчиков — например, dashboard alert или email. Best practice — выставлять Sunset header сразу при announcement deprecation, и держать в каждом response до removal. RFC 8594 — informational RFC (recommendation), не mandatory standard.",
+                "example": "GitHub при deprecation legacy OAuth endpoint в 2021 включал в каждый response: `Sunset: Sat, 13 Nov 2021 23:59:59 GMT`, `Deprecation: Mon, 01 Mar 2021 00:00:00 GMT`, `Link: <https://docs.github.com/en/rest/overview/api-versions>; rel=\"successor-version\"`. Их internal monitoring парсил эти headers у других APIs и notified internal developers.",
+                "when_to_apply": "Любой deprecation event с definite removal date; стандарт для production-grade APIs (FAANG, Stripe, GitHub, Twilio); даже для internal APIs с external consumers (например, public mobile clients).",
+                "edge_cases": "Если removal date неизвестна (open-ended deprecation), Sunset can be omitted — только Deprecation header. Однако это даёт меньше информации клиентам; лучше указать tentative date и обновить если изменится.",
+                "related": "[[api-versioning-interview#Q16]] deprecation policy в целом — Sunset один из шагов; [[api-versioning-interview#Q18]] graceful deprecation flow; [[api-versioning-interview#Q15]] @deprecated в GraphQL — equivalent."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sunset header обязателен по HTTP standard для всех deprecated endpoints.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RFC 8594 — informational RFC (Category: Informational, не Standards Track). Это рекомендация, лучшая практика, но не mandatory standard. HTTP сам по себе не enforce-ит Sunset usage. Compliance — voluntary; большинство production APIs используют best-practice convention, но technically они not обязаны.",
+                "source_of_confusion": "Confusion от ассоциации `RFC = обязательный стандарт`. Не все RFCs одинаково binding; Informational и Experimental RFCs — рекомендации.",
+                "if_it_were_true": "Если бы Sunset был обязательным, у каждого deprecated endpoint в мире был бы Sunset header — а в реальности многие APIs используют только release notes или dashboard banners.",
+                "how_it_should_be": "Использовать Sunset header как best practice для machine-readable deprecation signal; combine с human-readable channels (email, blog, dashboard); не считать его mandatory legal requirement."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как gracefully deprecate API endpoint, чтобы не сломать integration партнёров?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Announce → Sunset header → track usage analytics → email reminders → migration code samples → final 410 Gone — multi-step process с активной communication.",
+              "correct": true,
+              "sections": {
+                "explanation": "Graceful deprecation — multi-channel, multi-month process. Steps: (1) **Decide replacement** — новый endpoint существует и tested перед началом deprecation. (2) **Document deprecation** — release notes, docs, changelog. (3) **Add Sunset header** — в каждый response от deprecated endpoint. (4) **Email API consumers** — multiple times (initial announcement, 6/3/1 month before, 7/1 day before). Personalized если возможно. (5) **Track usage** — analytics на deprecated endpoint, чтобы знать кто ещё не migrated. (6) **Provide migration tools** — code samples, side-by-side diffs, SDK update guides. (7) **Direct outreach** к top users — если ~5% users генерируют 80% traffic, contact them individually. (8) **Reminders** ближе к sunset date — escalating frequency. (9) **Final removal** — return 410 Gone с Link к successor; не 404, потому что 410 signals `intentionally removed`. (10) **Clean up** server code (eventually) — после grace period мониторить 410-attempts. Принцип: deprecation = active communication, не passive documentation.",
+                "example": "GitHub в 2020-2021 deprecated legacy OAuth endpoint: 13 месяцев notification, 4 blog posts, 2 emails per active integration, dashboard banner, Sunset header на каждый response, side-by-side migration guide с code samples на 6 языках. Result: ~97% integrations migrated к deadline, оставшиеся ~3% — abandoned apps.",
+                "when_to_apply": "Любая endpoint deprecation в public API; даже internal APIs с external mobile/third-party consumers; особенно critical для payment/financial APIs.",
+                "edge_cases": "Security-related removals могут требовать сжатого timeline — communicate aggressively с workaround. Также: некоторые users не имеют active maintenance — для них removal неизбежен; track и не паниковать о 100% migration.",
+                "related": "[[api-versioning-interview#Q16]] deprecation policy в целом; [[api-versioning-interview#Q17]] Sunset header details; [[api-versioning-interview#Q19]] best practices."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Graceful deprecation — просто вернуть 410 Gone через 30 дней после announcement.",
+              "correct": false,
+              "sections": {
+                "what_actually": "30 дней — слишком короткий cycle для production deprecation. Mobile apps requires App Store/Play Store updates (1-7 дней review), third-party integrations часто maintained part-time (могут не check email 2+ недели), enterprise customers требуют change management (security reviews, internal approvals — занимает недели). 30 дней guarantees mass production failures.",
+                "source_of_confusion": "Confusion от desire к speed (`let's deprecate fast and move on`). Engineering speed != customer-experience speed.",
+                "if_it_were_true": "Если бы 30 дней было достаточно, API providers использовали бы такой short cycle — но industry standard 6-24 месяца, потому что rapid deprecation creates support nightmare и reputation damage.",
+                "how_it_should_be": "Minimum 6 месяцев для public APIs; 12+ месяцев для high-stakes integrations (enterprise, mobile); до 24+ месяцев для payment APIs."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно обновить docs и добавить Sunset header — developers сами найдут информацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Developers не читают docs ежедневно; без active communication (email, blog, dashboard) большинство узнают о deprecation только когда API уже выключен. Passive documentation — necessary, но не sufficient.",
+                "source_of_confusion": "Confusion от idealized model `developers proactively monitor APIs they use`. Reality — developers focused на свои main projects, integration APIs — `set-and-forget` для большинства.",
+                "if_it_were_true": "Если бы docs+Sunset было достаточным, post-mortems API deprecation не происходили бы — но они регулярны, и 80% root causes — `we communicated only in docs`.",
+                "how_it_should_be": "Multi-channel communication: docs + email + blog + dashboard banner + SDK warnings + direct outreach to top users; minimum 6 month period."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Redirect со старого на новый endpoint навсегда — клиенты получают transparent migration без обновления кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Permanent redirect — антипаттерн: (1) Скрывает migration — клиенты не знают, что endpoint deprecated. (2) Создаёт permanent dependency на translation layer (server-side overhead). (3) Увеличивает latency (extra hop, дополнительные redirect responses). (4) Может ломаться при subtle differences между old и new endpoints (например, request body format). (5) Не учит клиентов правильно интегрировать.",
+                "source_of_confusion": "Confusion от idea `transparent migration good`. Но transparent миграция = clients никогда не обновятся; вы навеки stuck с translation layer.",
+                "if_it_were_true": "Если бы permanent redirect была лучшей стратегией, не было бы deprecation policies — все API providers просто redirected forever. Реальность — даже redirect имеет deprecation policy (eventual removal).",
+                "how_it_should_be": "Redirect — short-term migration aid (3-6 месяцев), не permanent solution; clients ОБЯЗАНЫ обновить код к новому endpoint; eventual 410 Gone после migration period."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы ключевые best practices для API versioning в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Версионируй каждое minor изменение отдельным URL — `/v1.0.1/`, `/v1.0.2/`, `/v1.1.0/` — для maximum granularity.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это создаёт version bloat — клиенты вынуждены обновлять URL постоянно, каждый bug fix или новый field требует client-side update. Minor changes by definition backwards-compatible (additive), не требуют новой URL версии. URL version = MAJOR only.",
+                "source_of_confusion": "Confusion от стремления к explicit versioning. Но explicitness != granularity; URL — точка входа, и она должна быть стабильной максимально долго.",
+                "if_it_were_true": "Если бы каждое minor требовало new URL, Stripe имел бы тысячи URL versions за 13 лет — а у них один `/v1/` с date-based subversions внутри. URL bloat создаёт confusion и migration fatigue.",
+                "how_it_should_be": "URL — только MAJOR breaking changes; MINOR/PATCH — в release notes, OpenAPI spec, client SDK semver; не загромождать URL."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поддерживай все исторические версии бесконечно — клиенты не любят migration, deprecation создаёт friction.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бесконечная поддержка всех versions — Stripe-style, требует dedicated engineering team и значительной investment в compatibility transform layers. Для большинства APIs operational cost растёт экспоненциально с количеством версий: каждый bug fix нужно apply ко всем, testing matrix растёт O(N), deployment complexity повышается. Только companies of Stripe-scale могут позволить себе такую модель.",
+                "source_of_confusion": "Иллюзия `больше versions = happier customers`. Но customer happiness вторична к API stability; рост operational costs приводит к slower feature delivery, что ultimately hurts customers.",
+                "if_it_were_true": "Если бы all-versions-forever was feasible для всех, большинство APIs использовали бы такой подход. Реальность — даже GitHub, Twilio имеют explicit deprecation policies (12-18 месяцев) именно для tame operational growth.",
+                "how_it_should_be": "Limit supported versions to 3-4 max; aggressive sunset policy после adequate deprecation period (6-24 месяцев); Stripe-style — exception для специфических financial APIs."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "URI versioning по умолчанию + Sunset header + минимум 6 месяцев deprecation + API Gateway routing + limit 3-4 active versions — pragmatic baseline для production APIs.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production-grade versioning best practices: (1) **Default к backwards-compatible** changes (additive только) — никаких новых version bumps не нужно. (2) **Versioning strategy decided early** — change later painful. (3) **URI versioning** (`/v1/`) — simplest и pragmatic для most public REST APIs. (4) **Document breaking change policy** — clear definition что считается breaking. (5) **Sunset announcements** — минимум 6 месяцев notice. (6) **OpenAPI spec per version** — generated automatically. (7) **API Gateway** для routing к correct version. (8) **Tests across versions** — catch regressions. (9) **Limit supported versions** — 3-4 max. (10) **Track adoption** of новых versions — usage analytics. (11) **Tolerant Reader** pattern на client side — encourage в SDKs. (12) **Don't version internal APIs** if possible — faster iteration без external consumer constraints. Принцип: pragmatic versioning = простота + clear deprecation policy + bounded operational cost.",
+                "example": "Twilio в 2023 имеет: URI versioning (`/2010-04-01/` date-based в path), 2 active versions параллельно, 18-month deprecation policy, Sunset headers, OpenAPI specs per version, Apigee API Gateway, internal Datadog dashboards на per-version usage. Это позволяет им выпускать ~5-10 breaking changes в год без disruption.",
+                "when_to_apply": "При проектировании любого public REST API; адаптируется для GraphQL (no version + deprecation) и gRPC (package versioning); для internal APIs можно simplify, но базовые принципы (backward compat priority, deprecation policy) остаются.",
+                "edge_cases": "Startup-стадия (pre-PMF) — можно skip versioning entirely, iterate fast; introduce versioning при первой external integration. Также: regulated industries (healthcare, finance) могут требовать более strict policies (например, 24+ месяцев deprecation).",
+                "related": "[[api-versioning-interview#Q4]] URI versioning детали; [[api-versioning-interview#Q9]] decision matrix; [[api-versioning-interview#Q20]] operational cost multiple versions."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для GraphQL нужна отдельная URI версия (`/graphql/v2`) при major schema changes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphQL purposely not versioned — это design principle. Schema evolution через additive changes + `@deprecated`; URI versioning в GraphQL — антипаттерн, разрушающий client flexibility (selective queries) и создающий duplication infrastructure.",
+                "source_of_confusion": "Confusion от extrapolation REST best practices. GraphQL — другая парадигма (client-driven query), её versioning approach следует из парадигмы, не из REST conventions.",
+                "if_it_were_true": "Если бы GraphQL нуждался в URI versioning, GitHub GraphQL имел бы `/graphql/v2`, `/graphql/v3` за 8 лет existence — но они эволюционировали через schema additive changes.",
+                "how_it_should_be": "Для GraphQL — additive changes + `@deprecated`; URI versioning только для extraordinary redesigns (раз в десятилетие, если вообще)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы операционные расходы поддержки нескольких API версий параллельно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "API Gateway translation устраняет все operational costs — клиенты на старых versions transparent проксируются на latest backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Translation layer — это код, который тоже нужно maintain. Каждый новый field в latest version требует transform для всех supported versions: какое значение default для старого формата? как convert обратно при response? Это нетривиальная engineering work, и translation layer становится отдельной surface for bugs. Costs не нулевые, просто consolidated в одном месте.",
+                "source_of_confusion": "Confusion от idea `gateway = magic`. Gateway routing — простая операция; translation — сложная, требует business logic understanding.",
+                "if_it_were_true": "Если бы gateway translation устраняла costs, Stripe не имел бы dedicated `Tagged API` engineering team — а они её имеют, потому что translation requires continuous engineering attention.",
+                "how_it_should_be": "API Gateway translation помогает централизовать complexity, но не устраняет её; всё равно нужны: transform code, version-specific tests, monitoring, on-call support."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Multiple versions не влияют на testing — достаточно тестировать только latest.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждое изменение latest нужно verify across all supported versions — иначе backwards-compatibility breaks могут попасть в production. Testing matrix растёт O(N) с числом supported versions. Regression в старой version обнаруживается только когда клиент сообщает (через support ticket), что слишком поздно.",
+                "source_of_confusion": "Confusion от mental model `mainline only` (тестирование current state). Но multiple versions = multiple contracts, каждый требует verification.",
+                "if_it_were_true": "Если бы testing only latest было достаточным, Stripe не имел бы версия-specific test suites — а они их имеют, прогон при каждом deploy для catch версия regressions.",
+                "how_it_should_be": "Тестировать все supported versions через automated contract tests; CI прогоняет тесты per-version; manual smoke testing на staging для top customers per version."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Code complexity, testing matrix per version, bug fixes в multiple branches, deployment overhead, performance cost translation layer — все эти costs reality; Stripe-style 'all versions forever' исключение, требующее significant engineering investment.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реальные operational costs поддержки multiple versions: (1) **Code complexity** — version-specific branches in code, transform layers, feature flags per version. (2) **Testing matrix** — каждое изменение verify across all versions, O(N) scaling. (3) **Bug fixes** — apply fix to all supported branches/transforms; merge conflicts; risk of missing version. (4) **Documentation** — separate docs per version, migration guides, changelogs. (5) **Deployment complexity** — multiple artifacts/configs/deployments per version. (6) **Performance overhead** — translation layer adds latency (microseconds, но накапливаются). (7) **On-call complexity** — engineers нужны expertise в legacy versions. (8) **Customer support** — support tickets по разным versions, agents need understand differences. Стратегии mitigation: API Gateway translation centralизes transform logic; adapter pattern separates per-version code; aggressive sunset policy limits N; Stripe-style 'all versions forever' — exception, requires significant engineering investment (dedicated team, sophisticated infrastructure).",
+                "example": "GitHub в 2023 supports 3 active REST API versions + GraphQL; их API engineering team из ~50 человек spends ~30% time на versioning-related work: maintenance, deprecation cycles, migration guides, transform updates. Это implicit `versioning tax` — не visible, но реальный.",
+                "when_to_apply": "При планировании API versioning strategy — учитывать total cost of ownership, не только design elegance; aggressive sunset policy critical для bounded operational growth; для small teams (< 5 engineers) — limit 2 active versions max.",
+                "edge_cases": "Versioning tax растёт non-linear с complexity (interactions between versions); 10+ active versions — практически unmanagable без dedicated infrastructure (Stripe's level). Также: regulated industries могут требовать longer support (HIPAA, PCI-DSS audit trails).",
+                "related": "[[api-versioning-interview#Q11]] Stripe date-based versioning подход; [[api-versioning-interview#Q12]] per-account pinning как way to bound costs; [[api-versioning-interview#Q19]] best practices — limit 3-4 versions."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "10+ параллельных версий — норма для крупных production APIs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Industry best practice — 3-4 active versions max. 10+ создаёт неподъёмный testing matrix, exponential code complexity, и unmanagable support burden. Даже Stripe, который supports 30+ date-based versions, делает это через специфический per-account pinning и compatibility transforms — это extraordinary infrastructure, не norm.",
+                "source_of_confusion": "Confusion от visibility specific outliers (Stripe). Если посмотреть median public REST API, обычно 1-3 active versions.",
+                "if_it_were_true": "Если бы 10+ versions были нормой, любой mid-size API provider имел бы 10+ versions — но in practice большинство (GitHub, Twilio, Slack, Discord) operate с 1-3 active versions.",
+                "how_it_should_be": "Limit 3-4 active versions через aggressive sunset policy; если кажется, что нужно больше — обычно signal of needing better backwards compatibility practices (более additive changes) или per-account pinning для специфических stable APIs."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
