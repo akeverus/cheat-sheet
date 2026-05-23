@@ -36,6 +36,9 @@ class LlmPipelineIntegrationTest {
     static void setInterviewPath(DynamicPropertyRegistry registry) {
         TestInterviewPath.register(registry);
         registry.add("app.openai.api-key", () -> "test-key");
+        // Тест проверяет именно LLM-пайплайн, поэтому AI-fallback включён
+        // явно (по умолчанию seed-first, AI отключён).
+        registry.add("app.ai.fallback-enabled", () -> "true");
     }
 
     @Autowired

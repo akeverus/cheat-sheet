@@ -60,6 +60,13 @@ class AIQuestionServiceTest {
             public boolean isAiEnabled() {
                 return true;
             }
+
+            @Override
+            public boolean isAiFallbackAllowed() {
+                // Тесты этого класса покрывают именно AI-генерацию опций,
+                // поэтому fallback включён явно.
+                return true;
+            }
         };
         appProperties.setInterviewPath("cheatsheets/interview");
 

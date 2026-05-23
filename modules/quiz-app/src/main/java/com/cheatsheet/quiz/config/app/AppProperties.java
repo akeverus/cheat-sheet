@@ -118,6 +118,17 @@ public class AppProperties {
         return openaiSet || deepseekSet;
     }
 
+    /**
+     * @return true, если можно генерировать варианты ответа через AI «на лету».
+     * По умолчанию false: проект использует JSON-сидеры из {@code seed/mcq/**} как
+     * основной источник опций, а AI трогаем только если кто-то осознанно включит
+     * {@code app.ai.fallback-enabled=true} и при этом задан хотя бы один ключ.
+     */
+    public boolean isAiFallbackAllowed() {
+        Ai aiCfg = getAi();
+        return isAiEnabled() && aiCfg != null && aiCfg.isFallbackEnabled();
+    }
+
     // ========== Вложенные классы конфигурации ==========
 
     /**
@@ -182,6 +193,13 @@ public class AppProperties {
         @Min(100)
         private int answerPreviewLength = 500;
 
+        /**
+         * Разрешить on-demand AI-генерацию вариантов ответа, если в БД нет seed-варианта.
+         * <p>По умолчанию <b>false</b>: основной источник MCQ — JSON-сидеры в
+         * {@code seed/mcq/<category>/<topic>.json}. AI трогаем только если seed реально
+         * отсутствует и кто-то осознанно включил флаг через {@code app.ai.fallback-enabled=true}.
+         */
+        private boolean fallbackEnabled = false;
     }
 
     /**

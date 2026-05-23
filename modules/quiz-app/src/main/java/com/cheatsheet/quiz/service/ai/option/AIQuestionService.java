@@ -59,7 +59,10 @@ public class AIQuestionService {
                 return existing;
             }
 
-            if (!appProperties.isAiEnabled()) {
+            // Seed-first: если для вопроса нет загруженных вариантов и AI-fallback
+            // не разрешён (app.ai.fallback-enabled=false по умолчанию), просто
+            // возвращаем пусто — UI покажет флешкарту, никаких AI-вызовов в рантайме.
+            if (!appProperties.isAiFallbackAllowed()) {
                 return List.of();
             }
 
