@@ -4,10 +4,48 @@
 <body>
 <header th:replace="~{fragments/header :: header(pageTitle='Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
 <main>
-<section class="card" role="alert">
-    <h2>Произошла ошибка</h2>
-    <p>К сожалению, при обработке запроса произошла внутренняя ошибка сервера. Попробуйте обновить страницу или вернуться на главную.</p>
-    <a href="/" th:href="@{/}" class="btn">На главную</a>
+<section class="card error-card" role="alert" aria-labelledby="error-heading">
+    <div class="error-code" th:text="${status} ?: '⚠️'" aria-hidden="true">500</div>
+
+    <h2 id="error-heading" class="error-title"
+        th:with="code=${status != null ? status : 500}"
+        th:text="${code == 404 ? 'Такой страницы нет' :
+                  (code == 403 ? 'Доступ запрещён' :
+                  (code == 401 ? 'Требуется авторизация' :
+                  (code == 400 ? 'Некорректный запрос' :
+                  (code &gt;= 500 ? 'Внутренняя ошибка сервера' : 'Что-то пошло не так'))))}">
+        Ошибка
+    </h2>
+
+    <p class="error-body"
+       th:with="code=${status != null ? status : 500}"
+       th:text="${code == 404 ? 'Возможно, ссылка устарела или вы свернули не туда. Загляните на главную и продолжите тренировку.' :
+                 (code == 403 ? 'Эта страница защищена админ-токеном. Если он у вас есть — добавьте его в заголовок X-Admin-Token и попробуйте снова.' :
+                 (code == 401 ? 'Нужно представиться, чтобы продолжить.' :
+                  'Запрос не дошёл до результата. Попробуйте обновить страницу или вернуться на главную — если повторится, посмотрите в логи приложения.'))}">
+        Что-то пошло не так
+    </p>
+
+    <details class="error-details" th:if="${message != null and !#strings.isEmpty(message)} or ${path != null}">
+        <summary>Подробности для разработчика</summary>
+        <dl class="error-meta">
+            <dt th:if="${path != null}">Путь</dt>
+            <dd th:if="${path != null}"><code th:text="${path}">/</code></dd>
+            <dt th:if="${status != null}">HTTP status</dt>
+            <dd th:if="${status != null}" th:text="${status}">500</dd>
+            <dt th:if="${error != null}">Reason</dt>
+            <dd th:if="${error != null}" th:text="${error}">Internal Server Error</dd>
+            <dt th:if="${message != null and !#strings.isEmpty(message)}">Сообщение</dt>
+            <dd th:if="${message != null and !#strings.isEmpty(message)}"><code th:text="${message}">—</code></dd>
+            <dt th:if="${timestamp != null}">Время</dt>
+            <dd th:if="${timestamp != null}" th:text="${timestamp}">—</dd>
+        </dl>
+    </details>
+
+    <div class="error-actions">
+        <a th:href="@{/}" class="btn">На главную</a>
+        <a th:href="@{/stats}" class="btn btn-secondary">Открыть статистику</a>
+    </div>
 </section>
 </main>
 </body>
