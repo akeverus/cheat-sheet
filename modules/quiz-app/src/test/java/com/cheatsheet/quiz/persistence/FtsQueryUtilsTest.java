@@ -14,13 +14,6 @@ class FtsQueryUtilsTest {
     }
 
     @Test
-    void sanitizeForSqliteFtsQuotesEachToken() {
-        String sanitized = FtsQueryUtils.sanitizeForSqliteFts(" java (list) \"token\" ");
-
-        assertThat(sanitized).isEqualTo("\"java\" \"list\" \"token\"");
-    }
-
-    @Test
     void sanitizeForPostgresRemovesUnsafeCharacters() {
         String sanitized = FtsQueryUtils.sanitizeForPostgres("john's \\query");
 

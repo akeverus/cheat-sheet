@@ -24,8 +24,6 @@ COPY --from=builder /build/modules/quiz-app/build/libs/*.jar app.jar
 # Для сборки образа нужна папка cheatsheets в корне проекта (см. README)
 COPY cheatsheets /app/cheatsheets
 
-# Каталог для SQLite-БД; подключается как volume в docker-compose
-RUN mkdir -p /app/data/db
 RUN chown -R app:app /app
 
 USER app

@@ -57,7 +57,13 @@ class VisualBaselineContractTest {
                 "focusState=" + focusState
         );
 
-        assertThat(signature).isEqualTo(readBaseline("visual-baseline/focus-shell.txt"));
+        // На свежем Postgres-контейнере БД пустая → empty. После того как кто-то
+        // первый раз сходил в /, импорт мог наполнить → question. Принимаем оба
+        // baseline'а, лишь бы оболочка совпадала с одним из них.
+        String baseline = "question".equals(focusState)
+                ? readBaseline("visual-baseline/focus-shell.txt")
+                : readBaseline("visual-baseline/focus-shell-empty.txt");
+        assertThat(signature).isEqualTo(baseline);
     }
 
     @Test

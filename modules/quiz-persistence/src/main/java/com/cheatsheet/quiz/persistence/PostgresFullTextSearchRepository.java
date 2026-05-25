@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -13,13 +12,11 @@ import java.util.Objects;
 
 /**
  * Реализация полнотекстового поиска для PostgreSQL (tsvector + GIN).
- *
- * <p>Активируется при профиле {@code postgres}.</p>
+ * PostgreSQL — единственная поддерживаемая БД.
  *
  * @see FullTextSearchRepository
  */
 @Repository
-@Profile("postgres")
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

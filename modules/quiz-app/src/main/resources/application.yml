@@ -6,12 +6,23 @@ spring:
     name: interview-prep
     version: "@projectVersion@"
   datasource:
-    driver-class-name: org.sqlite.JDBC
-    url: jdbc:sqlite:./data/db/interview.db
+    # PostgreSQL — единственная поддерживаемая БД. На локалке поднимай через
+    # docker-compose (см. README) или укажи свои POSTGRES_* в env.
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:interview}}
+    username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:interview}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:interview}}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
   flyway:
     locations: classpath:db/migration
     baseline-on-migrate: true
     enabled: true
+    # При INTERVIEW_RESET_ON_STARTUP=true Flyway сначала чистит схему,
+    # потом накатывает миграции — удобно для перезаливки vault из JSON-сидеров.
+    clean-on-validation-error: false
+    clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
   thymeleaf:
     cache: false
 
@@ -85,10 +96,6 @@ app:
     warmup-random-seed: ${PRELOAD_WARMUP_RANDOM_SEED:-1} # -1 = новый random subset на каждый прогрев
     log-progress-every: 50       # логировать прогресс предзагрузки каждые N вопросов
 
-  # --- SQLite ---
-  sqlite:
-    enable-wal: true
-
   # --- Кэш вариантов ответов ---
   cache:
     option-max-size: 500
@@ -103,6 +110,12 @@ app:
   # --- Импорт вопросов из markdown ---
   import-settings:
     min-code-block-length: 50   # минимальная длина code block для типа CODE
+
+  # --- Сброс БД при старте + переимпорт вопросов и MCQ из JSON-сидеров.
+  # При true приложение чистит questions/answer_options через TRUNCATE и
+  # переимпортирует всё из cheatsheets/interview/**/*.md + seed/mcq/**.json.
+  # Никакого AI в этом цикле не вызывается.
+  interview-reset-on-startup: ${INTERVIEW_RESET_ON_STARTUP:false}
 
   # --- Security ---
   security:
@@ -125,9 +138,6 @@ app:
         - Retry-After
       allow-credentials: true
       max-age-seconds: 3600
-
-  # --- Директория данных (SQLite и др.) ---
-  data-dir: data
 
 # --- Actuator (health для Docker / Kubernetes healthcheck) ---
 management:

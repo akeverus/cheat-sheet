@@ -70,10 +70,6 @@ public class AppProperties {
     @Valid @NotNull
     private Preload preload = new Preload();
 
-    /** Настройки SQLite. */
-    @Valid @NotNull
-    private Sqlite sqlite = new Sqlite();
-
     /** Настройки in-memory кэша вариантов ответов. */
     @Valid @NotNull
     private Cache cache = new Cache();
@@ -90,8 +86,13 @@ public class AppProperties {
     @Valid @NotNull
     private Import importSettings = new Import();
 
-    /** Директория данных (SQLite и др.), относительно рабочей директории. */
-    private String dataDir = "data";
+    /**
+     * Если true — при старте приложения чистит таблицы questions/answer_options
+     * (TRUNCATE … RESTART IDENTITY CASCADE) и переимпортирует всё из
+     * cheatsheets/interview/**.md + seed/mcq/**.json. AI не вызывается.
+     * <p>Привязан к {@code INTERVIEW_RESET_ON_STARTUP} env-var.
+     */
+    private boolean interviewResetOnStartup = false;
 
     /** Токен для защиты чувствительных endpoint (`/api/admin/*`, `/api/regenerate`, `/export`). */
     private String adminToken = "";
@@ -349,17 +350,6 @@ public class AppProperties {
         /** Минимальная длина code block для определения типа вопроса CODE (символов). */
         @Min(10)
         private int minCodeBlockLength = 50;
-    }
-
-    /**
-     * Настройки SQLite.
-     *
-     * <p>Настраивается через {@code app.sqlite.*}.</p>
-     */
-    @Getter @Setter
-    public static class Sqlite {
-        /** Включить WAL-режим для лучшей конкурентной производительности. */
-        private boolean enableWal = true;
     }
 
     /**

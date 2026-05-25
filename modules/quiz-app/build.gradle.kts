@@ -22,10 +22,7 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.database.postgresql)
 
-    // --- SQLite ---
-    implementation(libs.sqlite.jdbc)
-
-    // --- PostgreSQL (профиль postgres, Docker) ---
+    // --- PostgreSQL — единственная поддерживаемая БД ---
     runtimeOnly(libs.postgresql)
 
     // --- Jackson (поддержка Java Time) ---
@@ -74,6 +71,9 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // Все тесты грузят application-test.yml → Testcontainers Postgres
+    // (jdbc:tc:postgresql:16-alpine), даже если в тест-классе нет @ActiveProfiles("test").
+    systemProperty("spring.profiles.active", "test")
 }
 
 // META-INF/build-info.properties — отдаётся через /actuator/info.

@@ -4,8 +4,6 @@ import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,70 +12,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Тесты {@link QuestionRepository} с SQLite in-memory.
+ * Тесты {@link QuestionRepository} на реальном PostgreSQL через Testcontainers
+ * (shared, reused). Между тестами таблицы чистятся в {@link AbstractPostgresRepositoryTest}.
  */
-class QuestionRepositoryTest {
+class QuestionRepositoryTest extends AbstractPostgresRepositoryTest {
 
-    private JdbcTemplate jdbcTemplate;
     private QuestionRepository repository;
 
     @BeforeEach
-    void setUp() {
-        SingleConnectionDataSource ds = new SingleConnectionDataSource("jdbc:sqlite::memory:", true);
-        jdbcTemplate = new JdbcTemplate(ds);
-
-        // Инициализация схемы (агрегированная из всех миграций)
-        jdbcTemplate.execute("""
-                CREATE TABLE questions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    slug TEXT NOT NULL UNIQUE,
-                    source_slug TEXT,
-                    file_path TEXT NOT NULL,
-                    topic TEXT NOT NULL,
-                    question_text TEXT NOT NULL,
-                    answer_markdown TEXT NOT NULL,
-                    is_important INTEGER NOT NULL DEFAULT 0,
-                    source_hash TEXT NOT NULL,
-                    question_type TEXT NOT NULL DEFAULT 'TEXT',
-                    code_snippet TEXT,
-                    diagram_mermaid TEXT,
-                    regen_count INTEGER NOT NULL DEFAULT 0,
-                    takeaway TEXT,
-                    difficulty TEXT NOT NULL DEFAULT 'MEDIUM',
-                    short_explanation TEXT,
-                    detailed_explanation TEXT,
-                    common_mistake TEXT,
-                    tags TEXT
-                )
-                """);
-        jdbcTemplate.execute("""
-                CREATE TABLE review_state (
-                    question_id INTEGER PRIMARY KEY,
-                    repetitions INTEGER NOT NULL DEFAULT 0,
-                    interval_days INTEGER NOT NULL DEFAULT 0,
-                    ease_factor REAL NOT NULL DEFAULT 2.5,
-                    next_review_at INTEGER NOT NULL,
-                    last_result TEXT NOT NULL DEFAULT 'NEW',
-                    correct_count INTEGER NOT NULL DEFAULT 0,
-                    wrong_count INTEGER NOT NULL DEFAULT 0,
-                    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
-                )
-                """);
-        jdbcTemplate.execute("""
-                CREATE TABLE answer_options (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    question_id INTEGER NOT NULL,
-                    option_text TEXT NOT NULL,
-                    is_correct INTEGER NOT NULL DEFAULT 0,
-                    display_order INTEGER NOT NULL,
-                    source TEXT NOT NULL,
-                    explanation TEXT,
-                    prompt_version INTEGER NOT NULL DEFAULT 1,
-                    quality_profile_version INTEGER NOT NULL DEFAULT 1,
-                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
-                )
-                """);
+    void initRepository() {
         repository = new QuestionRepository(jdbcTemplate);
     }
 

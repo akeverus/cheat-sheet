@@ -3,8 +3,6 @@ package com.cheatsheet.quiz.persistence;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import com.cheatsheet.quiz.domain.TopicStats;
 
@@ -14,49 +12,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
 /**
- * Тесты {@link QuestionStatsRepository}, в том числе getAggregatedStats при пустой БД.
+ * Тесты {@link QuestionStatsRepository} на реальном PostgreSQL через Testcontainers.
  */
-class QuestionStatsRepositoryTest {
+class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
 
-    private JdbcTemplate jdbcTemplate;
     private QuestionStatsRepository repository;
 
     @BeforeEach
-    void setUp() {
-        SingleConnectionDataSource ds = new SingleConnectionDataSource("jdbc:sqlite::memory:", true);
-        jdbcTemplate = new JdbcTemplate(ds);
-
-        jdbcTemplate.execute("""
-                CREATE TABLE questions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    slug TEXT NOT NULL UNIQUE,
-                    source_slug TEXT,
-                    file_path TEXT NOT NULL,
-                    topic TEXT NOT NULL,
-                    question_text TEXT NOT NULL,
-                    answer_markdown TEXT NOT NULL,
-                    is_important INTEGER NOT NULL DEFAULT 0,
-                    source_hash TEXT NOT NULL,
-                    question_type TEXT NOT NULL DEFAULT 'TEXT',
-                    code_snippet TEXT,
-                    diagram_mermaid TEXT,
-                    regen_count INTEGER NOT NULL DEFAULT 0,
-                    takeaway TEXT
-                )
-                """);
-        jdbcTemplate.execute("""
-                CREATE TABLE review_state (
-                    question_id INTEGER PRIMARY KEY,
-                    repetitions INTEGER NOT NULL DEFAULT 0,
-                    interval_days INTEGER NOT NULL DEFAULT 0,
-                    ease_factor REAL NOT NULL DEFAULT 2.5,
-                    next_review_at INTEGER NOT NULL,
-                    last_result TEXT NOT NULL DEFAULT 'NEW',
-                    correct_count INTEGER NOT NULL DEFAULT 0,
-                    wrong_count INTEGER NOT NULL DEFAULT 0,
-                    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
-                )
-                """);
+    void initRepository() {
         repository = new QuestionStatsRepository(jdbcTemplate);
     }
 

@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Общие проверки для интеграционных тестов полнотекстового поиска
- * (SqliteFtsIntegrationTest, PostgresIntegrationTest).
+ * (PostgresFullTextSearchRepository).
  */
 public final class SearchTestAssertions {
 

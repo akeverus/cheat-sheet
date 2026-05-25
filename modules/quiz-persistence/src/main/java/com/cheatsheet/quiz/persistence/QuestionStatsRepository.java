@@ -285,8 +285,10 @@ public class QuestionStatsRepository {
      */
     public List<ForecastDay> findReviewForecast(long nowEpoch, int days) {
         long endEpoch = nowEpoch + (long) days * 86_400L;
+        // next_review_at хранится как BIGINT (unix-epoch секунды).
+        // to_timestamp(epoch)::date — PostgreSQL-эквивалент SQLite DATE(?, 'unixepoch').
         return jdbcTemplate.query(
-                "SELECT DATE(next_review_at, 'unixepoch') AS day, COUNT(*) AS cnt " +
+                "SELECT to_timestamp(next_review_at)::date AS day, COUNT(*) AS cnt " +
                         "FROM review_state " +
                         "WHERE next_review_at >= ? AND next_review_at < ? " +
                         "GROUP BY day ORDER BY day",

@@ -153,6 +153,13 @@ public class MvcModelAttributeMapper {
         model.addAttribute("topicStatsJson", state.topicStatsJson());
         model.addAttribute("coverageGaps", state.coverageGaps());
         model.addAttribute("reviewForecast", state.reviewForecast());
+        // Передаём max(count) уже вычисленный — Thymeleaf 3.1 запрещает
+        // T(java.util.Collections) в SpEL, считать в шаблоне нельзя.
+        long maxForecast = state.reviewForecast() == null ? 1L
+                : state.reviewForecast().stream()
+                        .mapToLong(com.cheatsheet.quiz.persistence.QuestionStatsRepository.ForecastDay::count)
+                        .max().orElse(1L);
+        model.addAttribute("reviewForecastMax", Math.max(maxForecast, 1L));
     }
 
     /**

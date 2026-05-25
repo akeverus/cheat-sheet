@@ -13,6 +13,11 @@ dependencies {
     implementation(libs.slf4j.api)
     compileOnly("jakarta.persistence:jakarta.persistence-api:3.1.0")
 
+    // Flyway: миграции живут в classpath:db/migration в этом модуле и
+    // подхватываются и приложением, и тестами.
+    implementation(libs.flyway.core)
+    runtimeOnly(libs.flyway.database.postgresql)
+
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
 
@@ -21,7 +26,9 @@ dependencies {
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-jdbc")
-    testImplementation("org.xerial:sqlite-jdbc")
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testRuntimeOnly("org.postgresql:postgresql")
 }
 
 tasks.withType<Test> {

@@ -6,11 +6,8 @@ import java.util.List;
 /**
  * Контракт полнотекстового поиска по вопросам.
  *
- * <p>Реализации:</p>
- * <ul>
- *   <li>{@link SqliteFtsRepository} — SQLite FTS5 (профиль по умолчанию);</li>
- *   <li>{@link PostgresFullTextSearchRepository} — PostgreSQL tsvector (профиль postgres).</li>
- * </ul>
+ * <p>Единственная реализация — {@link PostgresFullTextSearchRepository}
+ * (tsvector + GIN, поддержка русской морфологии).</p>
  */
 public interface FullTextSearchRepository {
 
@@ -25,7 +22,7 @@ public interface FullTextSearchRepository {
 
     /**
      * Удаляет запись из индекса при удалении вопроса.
-     * SQLite: очищает questions_fts. PostgreSQL: no-op (search_vector в той же таблице).
+     * Для текущей PostgreSQL-реализации — no-op (search_vector в той же таблице).
      *
      * @param questionId идентификатор вопроса
      */
