@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -21,6 +23,8 @@ class StartupRunnerTest {
     private QuestionImportService questionImportService;
     @Mock
     private PreloadService preloadService;
+    @Mock
+    private JdbcTemplate jdbcTemplate;
 
     private AppProperties appProperties;
 
@@ -36,7 +40,8 @@ class StartupRunnerTest {
         StartupRunner runner = new StartupRunner(
                 questionImportService,
                 preloadService,
-                appProperties
+                appProperties,
+                jdbcTemplate
         );
 
         runner.run(null);
@@ -44,6 +49,7 @@ class StartupRunnerTest {
         verify(questionImportService).importAll();
         verify(preloadService).preloadNext(any());
         verify(preloadService).warmupAll();
+        verify(jdbcTemplate, never()).execute(anyString());
     }
 
     @Test
@@ -53,7 +59,8 @@ class StartupRunnerTest {
         StartupRunner runner = new StartupRunner(
                 questionImportService,
                 preloadService,
-                appProperties
+                appProperties,
+                jdbcTemplate
         );
 
         runner.run(null);
@@ -61,5 +68,22 @@ class StartupRunnerTest {
         verify(questionImportService).importAll();
         verify(preloadService, never()).preloadNext(any());
         verify(preloadService, never()).warmupAll();
+        verify(jdbcTemplate, never()).execute(anyString());
+    }
+
+    @Test
+    void runTruncatesDataWhenResetOnStartupEnabled() {
+        appProperties.setInterviewResetOnStartup(true);
+        StartupRunner runner = new StartupRunner(
+                questionImportService,
+                preloadService,
+                appProperties,
+                jdbcTemplate
+        );
+
+        runner.run(null);
+
+        verify(jdbcTemplate).execute(anyString());
+        verify(questionImportService).importAll();
     }
 }
