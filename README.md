@@ -32,20 +32,19 @@
 
 ## TL;DR — самый быстрый запуск
 
-Для разработчика, у которого уже стоит JDK 17:
+Проект использует **только PostgreSQL** — самый простой путь это docker compose:
 
 ```bash
-# 1. Если в репо нет gradle/wrapper/gradle-wrapper.jar — выполнить один раз:
-gradle wrapper
+# 1. Заполнить .env (хотя бы APP_ADMIN_TOKEN)
+cp .env.example .env
+echo "APP_ADMIN_TOKEN=$(openssl rand -hex 32)" >> .env
 
-# 2. (опционально) задать ключ для AI-генерации вариантов ответа
-export OPENAI_API_KEY=sk-...
-
-# 3. Запуск
-./gradlew bootRun
+# 2. Поднять стек (PostgreSQL + приложение)
+docker compose up -d
 ```
 
-Откройте **http://localhost:8080**. Без ключа приложение работает в режиме «флешкарт».
+Откройте **http://localhost:8080**. По умолчанию MCQ берутся из `seed/mcq/**.json`,
+AI не вызывается. Чтобы перезалить вопросы — `INTERVIEW_RESET_ON_STARTUP=true docker compose up -d --force-recreate interview-prep`.
 
 ---
 
@@ -68,10 +67,9 @@ export OPENAI_API_KEY=sk-...
 |-----------|--------|-------|
 | **JDK** | 17+ | Сборка и запуск |
 | **Gradle** | 8.x (или wrapper) | Сборка |
-| **SQLite** | 3.24+ | Профиль по умолчанию (встроенный JDBC, ставить отдельно НЕ нужно) |
-| **PostgreSQL** | 11+ | Опционально, профиль `postgres` |
-| **Docker / Docker Compose** | актуальная | Опционально, контейнерный запуск |
-| **API-ключ** OpenAI или DeepSeek | — | Опционально, для AI-режима |
+| **PostgreSQL** | 14+ | Единственная поддерживаемая БД (локально через docker compose) |
+| **Docker / Docker Compose** | актуальная | Нужен для запуска БД и для прогонов тестов (Testcontainers) |
+| **API-ключ** OpenAI или DeepSeek | — | Опционально и только если включаешь `AI_FALLBACK_ENABLED=true` |
 
 Проверка версий:
 
@@ -116,12 +114,21 @@ export DEEPSEEK_API_KEY=sk-...
 ./gradlew bootRun
 ```
 
-**Что происходит:**
+**Перед первым `./gradlew bootRun` подними PostgreSQL** (он нужен всегда):
+
+```bash
+docker compose up -d postgres
+# или свой локальный postgres:
+# createdb -O interview interview
+```
+
+**Что происходит при старте приложения:**
 
 1. Gradle скачивает зависимости (первый запуск — 1–3 минуты).
-2. Стартует модуль `quiz-app` на порту 8080.
-3. Flyway применяет миграции из `modules/quiz-app/src/main/resources/db/migration/` к локальной SQLite (файл `data/db/interview.db` появится в текущей рабочей директории).
-4. Выполняется первичный импорт markdown-вопросов из `cheatsheets/interview/` в БД.
+2. Стартует модуль `quiz-app` на порту 8080, подключается к PostgreSQL.
+3. Flyway применяет миграции из `modules/quiz-persistence/src/main/resources/db/migration/`.
+4. Выполняется первичный импорт markdown-вопросов из `cheatsheets/interview/` + MCQ-сидов из `seed/mcq/**.json` в БД.
+5. При `INTERVIEW_RESET_ON_STARTUP=true` сначала TRUNCATE-ит вопросы/опции, потом переимпорт — удобно после правки слагов или удаления тем.
 
 **Запуск с дополнительными параметрами:**
 
@@ -334,8 +341,9 @@ export AI_FALLBACK_ENABLED=true        # без этого ключ не исп�
 | `DEEPSEEK_API_KEY` | Ключ DeepSeek | `sk-...` |
 | `APP_ADMIN_TOKEN` | Токен для admin-эндпоинтов; пусто = без проверки | `secret` |
 | `AI_FALLBACK_ENABLED` | Разрешить on-demand AI-генерацию опций (по умолчанию `false` — seed-first) | `true` |
+| `INTERVIEW_RESET_ON_STARTUP` | При `true` TRUNCATE-ит вопросы/опции на старте и переимпортирует из MD/JSON | `false` |
 
-### PostgreSQL (профиль `postgres`)
+### PostgreSQL (единственная БД)
 
 | Переменная | По умолчанию |
 |-----------|--------------|

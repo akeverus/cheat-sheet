@@ -31,8 +31,10 @@ App runs at http://localhost:8080. Swagger UI at http://localhost:8080/swagger-u
 
 Three Gradle modules:
 - **`quiz-domain`** — pure domain model (`InterviewQuestion`, `InterviewSession`, `QuestionOption`, etc.). No Spring, no infrastructure dependencies.
-- **`quiz-persistence`** — JDBC repositories, Flyway migrations. Supports SQLite (default) and PostgreSQL (`--spring.profiles.active=postgres`).
+- **`quiz-persistence`** — JDBC repositories + Flyway migrations (`src/main/resources/db/migration/`). **PostgreSQL only** (since 2026-05-25); локально стартуется через `docker compose up -d postgres`.
 - **`quiz-app`** — Spring Boot application: controllers, services, AI integration, config.
+
+Тесты обоих модулей крутятся на **Testcontainers PostgreSQL 16-alpine** (нужен Docker daemon). `quiz-persistence` тесты наследуются от `AbstractPostgresRepositoryTest` — один контейнер на JVM, TRUNCATE между тестами. `quiz-app` тесты подхватывают `jdbc:tc:postgresql:16-alpine:///` из `application-test.yml`.
 
 ## Architecture & Layer Rules
 
