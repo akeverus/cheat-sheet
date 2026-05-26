@@ -31,20 +31,29 @@ public class DailyActivityRepository {
     /**
      * Инкрементирует счётчик ответов на сегодня.
      * При первом вызове за день создаёт запись.
-     * Использует атомарный upsert (SQLite и PostgreSQL совместимый).
+     *
+     * <p>Реализовано через UPDATE-then-INSERT (а не ON CONFLICT), чтобы не
+     * зависеть от диалектных особенностей upsert: ON CONFLICT в Postgres 16
+     * с TEXT PK + binary-protocol JDBC выдаёт «bad SQL grammar». UPDATE-первый
+     * паттерн работает на любых RDBMS и даёт корректное поведение
+     * single-user app, где race на одну дату маловероятен.
      */
     public void incrementToday(boolean correct, int defaultGoal) {
         String today = LocalDate.now().format(DATE_FMT);
         int correctInc = correct ? 1 : 0;
 
-        jdbcTemplate.update(
-                "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) " +
-                        "VALUES (?, 1, ?, ?) " +
-                        "ON CONFLICT(activity_date) DO UPDATE SET " +
-                        "questions_answered = questions_answered + 1, " +
-                        "correct_count = correct_count + excluded.correct_count",
-                today, correctInc, defaultGoal
+        int updated = jdbcTemplate.update(
+                "UPDATE daily_activity SET questions_answered = questions_answered + 1, " +
+                        "correct_count = correct_count + ? WHERE activity_date = ?",
+                correctInc, today
         );
+        if (updated == 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) " +
+                            "VALUES (?, 1, ?, ?)",
+                    today, correctInc, defaultGoal
+            );
+        }
     }
 
     /**
@@ -96,14 +105,19 @@ public class DailyActivityRepository {
     }
 
     /**
-     * Обновляет цель на сегодня.
+     * Обновляет цель на сегодня. UPDATE-first, иначе INSERT (тот же подход
+     * что в {@link #incrementToday}, см. комментарий там).
      */
     public void updateDailyGoal(int goal) {
         String today = LocalDate.now().format(DATE_FMT);
-        jdbcTemplate.update(
-                "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) " +
-                        "VALUES (?, 0, 0, ?) " +
-                        "ON CONFLICT(activity_date) DO UPDATE SET daily_goal = excluded.daily_goal",
-                today, goal);
+        int updated = jdbcTemplate.update(
+                "UPDATE daily_activity SET daily_goal = ? WHERE activity_date = ?",
+                goal, today);
+        if (updated == 0) {
+            jdbcTemplate.update(
+                    "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) " +
+                            "VALUES (?, 0, 0, ?)",
+                    today, goal);
+        }
     }
 }
