@@ -5,6 +5,8 @@ import com.cheatsheet.quiz.domain.AnswerOption;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.Striped;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -19,11 +21,17 @@ import java.util.concurrent.locks.Lock;
 public class CacheConfig {
 
     @Bean
-    Cache<Long, List<AnswerOption>> optionCacheBackend(AppProperties props) {
-        return Caffeine.newBuilder()
+    Cache<Long, List<AnswerOption>> optionCacheBackend(AppProperties props, MeterRegistry meterRegistry) {
+        // recordStats() обязателен — без него CaffeineCacheMetrics видит нули.
+        Cache<Long, List<AnswerOption>> cache = Caffeine.newBuilder()
                 .maximumSize(props.getCache().getOptionMaxSize())
                 .expireAfterWrite(props.getCache().getTtlHours(), TimeUnit.HOURS)
+                .recordStats()
                 .build();
+        // Экспортирует cache.gets{result=hit|miss}, cache.puts, cache.evictions
+        // под тегом cache=optionCache — видно через /actuator/metrics.
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, "optionCache");
+        return cache;
     }
 
     @Bean

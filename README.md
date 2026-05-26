@@ -506,6 +506,8 @@ MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always \
 | `mcq.seed.options.inserted`                        | Сумма опций, вставленных из сидеров за время жизни процесса.                                          |
 | `mcq.seed.questions.skipped`                       | Seed-вопросы, для которых в БД нет соответствующей записи (обычно — рассинхрон сидера и markdown).    |
 | `mcq.ai.fallback{outcome=suppressed\|called\|error}` | `suppressed` — seed-first сработал (норма). `called` — ушли в AI (только при `AI_FALLBACK_ENABLED=true`). `error` — AI-ответ упал. |
+| `cache.gets{cache=optionCache,result=hit\|miss}`     | Caffeine cache hit/miss для готовых option-листов. Низкий hit ratio = много обращений в БД, есть смысл поднять `app.cache.option-max-size`. |
+| `cache.puts{cache=optionCache}` / `cache.evictions{cache=optionCache}` | Сколько options попало в кэш / сколько вытеснилось (по max-size или TTL). |
 
 Если `mcq.ai.fallback{outcome=called}` растёт без флага `AI_FALLBACK_ENABLED`
 или `mcq.seed.questions.skipped` непустой — это сигнал расследовать.
