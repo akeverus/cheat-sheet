@@ -403,6 +403,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Design Twitter (X)`](system-design/design-twitter-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `Design Instagram`](system-design/design-instagram-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `Design YouTube`](system-design/design-youtube-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `Design Netflix`](system-design/design-netflix-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Web Crawler`](system-design/design-web-crawler-interview.md) — `26` вопросов
 - [Вопросы на собеседовании: `Design Key-Value Store`](system-design/design-key-value-store-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Typeahead / Autocomplete`](system-design/design-typeahead-interview.md) — `30` вопросов

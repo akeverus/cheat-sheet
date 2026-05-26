@@ -44,7 +44,7 @@ Master-план генерации interview-материалов через с�
 
 ## Фаза 3 — добавить недостающие критичные
 
-- [ ] **design-netflix-interview** (NEW). Video streaming (ABR/HLS/DASH/CMAF), Open Connect CDN, recommendation system (CF + DL), encoding pipeline (per-title/per-chunk), chaos engineering, multi-region, DRM (Widevine/FairPlay/PlayReady), microservices stack (Eureka/Zuul/Hystrix/Atlas).
+- [x] **design-netflix-interview** ~~(NEW)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 179 KB). Покрыто: Open Connect CDN, encoding pipeline per-title/per-chunk, codec ladder H.264/HEVC/VP9/AV1, ABR BOLA + ML, DRM trio, recommendation 2-stage + bandits, artwork personalization, microservices Netflix OSS, resilience patterns, Chaos Monkey/Kong, multi-region active-active, A/B platform, data platform Kafka+Flink+Iceberg, downloads, anti-fraud household graph, cost optimization. Завершено 2026-05-26.
 - [ ] **design-dropbox-interview** (NEW). File storage + sync: chunking (4 MB blocks), deduplication (content-addressable storage), delta sync (rsync algorithm), conflict resolution, offline mode, sharing model, encryption at rest, mobile uploads.
 - [ ] **design-google-maps-interview** (NEW). Geo: quadtree vs S2 vs H3, tile pyramid (zoom 0..21), routing (Dijkstra → CRP/CH/A*), traffic data (real-time + historical), POI search, ETA prediction.
 - [ ] **design-pastebin-interview** (NEW). Document storage: anonymous + auth, short URL, syntax highlighting, expiration, raw vs view, abuse mitigation, full-text search.
@@ -65,7 +65,8 @@ Master-план генерации interview-материалов через с�
 ## Состояние
 
 Запущено: 2026-05-26.
-Текущая итерация: **Фаза 2 завершена** → переходим в **Фаза 3 (NEW cases)** → **design-netflix-interview** (video streaming, Open Connect CDN, ABR, recommendation system).
+Текущая итерация: **Фаза 3** → следующее **design-dropbox-interview** (NEW: chunking, CAS dedup, delta sync, conflict resolution, offline).
 Закрыто (Фаза 1): design-feed-system, design-payment-system, design-rate-limiter.
 Закрыто (Фаза 2): design-url-shortener, design-typeahead, design-search.
+Закрыто (Фаза 3): design-netflix.
 Все: 30 Q + 30 MCQ JSON, BUILD SUCCESSFUL.

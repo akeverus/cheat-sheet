@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "design-netflix-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор functional + non-functional requirements точнее всего описывает Netflix-style streaming на интервью?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Stream VOD на TV/Mobile/Web/Console + browse + search + recommendations + continue watching + downloads + multi-profile; нефункционально 270M subs, 200M DAU, p99 start playback < 2 сек, rebuffering < 1%, availability 99.99%, multi-region active-active.",
+              "correct": true,
+              "sections": {
+                "explanation": "Senior-уровень сразу проговаривает что Netflix read-heavy по metadata и bandwidth-heavy по video — отсюда разделение control plane (microservices в AWS) и data plane (Open Connect CDN). Functional покрывает основные user journeys: смотреть, искать, получать рекомендации, продолжать на другом устройстве, качать offline. NFR диктуют архитектуру: 270M subs и 1 Pbps peak egress задают CDN-стратегию, p99 start < 2 сек — pre-positioning и edge cache, rebuffering < 1% — ABR и BOLA, 99.99% — multi-region active-active с Chaos Engineering.",
+                "example": "Netflix действительно держит p99 start playback около 1.5 сек на крупных регионах за счёт OCA внутри ISP и cached homepage fallback при сбоях recommendation-сервиса.",
+                "when_to_apply": "На интервью эти требования зафиксируй до архитектуры — потом будешь обосновывать Open Connect, Cassandra LOCAL_QUORUM, Hystrix → Resilience4j и Chaos Monkey.",
+                "edge_cases": "Live streaming (boxing, NFL) — отдельный продукт с другими требованиями; user-generated content и social features в scope не входят.",
+                "related": "Q2 capacity; Q3 SLO/QoE; Q24 multi-region."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Достаточно потокового воспроизведения и поиска — рекомендации, continue watching и downloads не относятся к core MVP крупного streaming-сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Recommendations отвечают за 80%+ просмотров на Netflix (homepage rows + Because You Watched), continue watching критичен для multi-device UX, downloads нужны для мобильного использования в самолётах и метро.",
+                "source_of_confusion": "Кандидат думает в категориях минимального плеера, а не продуктовой платформы.",
+                "if_it_were_true": "Netflix не отличался бы от любого VLC-плеера и не удерживал бы 270M подписчиков.",
+                "how_it_should_be": "Включить recommendation, continue watching, downloads и multi-profile в core functional требования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главное — поддержать любые non-functional нормы из cloud SLA провайдера, NFR-цифры (DAU, p99, availability) проговаривать не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явных NFR (270M subs, 1 Pbps peak, p99 < 2 сек, 99.99%) невозможно обосновать ни Open Connect, ни multi-region, ни Cassandra-стратегию.",
+                "source_of_confusion": "Перенос enterprise-практики «SLA задаст облако» на consumer-scale streaming.",
+                "if_it_were_true": "Любой single-region setup на одном CDN считался бы валидным для 270M подписчиков.",
+                "how_it_should_be": "Назвать конкретные числа: DAU, peak egress, p99 latency, availability — и считать дальше capacity (Q2)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Live streaming, user-generated content и real-time chat — обязательная часть scope Netflix-интервью, поэтому требования к VOD упомянуть кратко.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Live streaming Netflix запустил отдельно (boxing, NFL), UGC и chat в продукт не входят. Scope интервью — это on-demand video.",
+                "source_of_confusion": "Смешение Netflix с Twitch/YouTube Live/TikTok.",
+                "if_it_were_true": "Архитектура бы крутилась вокруг ingest-pipeline и WebRTC, а не вокруг encoding farm и OCA.",
+                "how_it_should_be": "Явно исключить live, UGC, chat из scope и сфокусироваться на VOD requirements."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "270M subs, 200M DAU, 100M concurrent peak, avg bitrate 5 Mbps. Какой capacity estimate ближе всего к Netflix-масштабу?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "~100 Gbps peak egress, ~1 TB master content, encoding farm ~5K EC2-hours/year — обычный нагрузочный профиль для regional video-сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это масштаб одного region у крупной IPTV-компании, а не Netflix с 270M subs. Реальные числа в 10-1000× больше.",
+                "source_of_confusion": "Подмена глобального streaming на regional IPTV.",
+                "if_it_were_true": "Netflix обходился бы 10 серверами и одним AWS regions, без Open Connect.",
+                "how_it_should_be": "Считать аккуратно: 100M concurrent × 5 Mbps = 500 Tbps avg, peak ~1 Pbps; ~100 PB master + variants."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "~1 Pbps peak egress (100M concurrent × 5 Mbps avg, evening US+EU overlap), ~100 PB master + ~10 variants ≈ 300 PB с regional replication, encoding farm ~500K EC2-hours/year на Spot, ~27 TB metadata в Cassandra.",
+              "correct": true,
+              "sections": {
+                "explanation": "Считаем поэтапно: 100M concurrent × 5 Mbps = 500 Tbps среднего egress, на вечернем пике US+EU overlap удваивается до ~1 Pbps. Каталог ~10 PB unique content, на каждый title 5-10 encoding variants (codec × resolution × bitrate ladder) дают ~10× expansion → ~100 PB master + variants, плюс репликация ключевого контента по регионам → ~300 PB совокупно. Encoding farm на 5K часов нового контента/год × ~100 EC2-hours per content-hour = 500K EC2-hours/year. Metadata 270M users × 100 KB = ~27 TB в Cassandra.",
+                "example": "Netflix фактически на пиках держит около 15%+ глобального internet egress и платит ~$200-400M/год на CDN через Open Connect, что в 10× дешевле commercial CDN.",
+                "when_to_apply": "На интервью этим расчётом обосновываешь выбор Open Connect (Q4), per-title encoding (Q8) и multi-region storage (Q6).",
+                "edge_cases": "При запуске нового популярного шоу (Squid Game) пик может временно превысить 1 Pbps в одном регионе; Spot prices растут в peak hours.",
+                "related": "Q4 Open Connect cost; Q7 encoding pipeline; Q24 multi-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "~10 Pbps постоянного egress 24/7, ~10 EB master storage, encoding farm полностью на On-Demand EC2 без Spot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "10 Pbps — это всё мировое потребление видео разом; реальный peak Netflix ~1 Pbps. 10 EB storage завышено на 30×.",
+                "source_of_confusion": "Переоценка масштаба на порядок и игнорирование суточных циклов трафика.",
+                "if_it_were_true": "Netflix съедал бы весь интернет 24/7, а encoding стоил бы $250M/год вместо $25K на Spot.",
+                "how_it_should_be": "Учитывать сезонные/суточные пики (вечер US+EU), 100M concurrent, и Spot fleet для embarrassingly parallel encoding."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Capacity estimation на интервью не делают — нужно сразу рисовать архитектуру и сервисы; цифры подстраиваются под решение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Capacity estimate — обязательный шаг senior system design: он диктует CDN-стратегию, sharding Cassandra, размер encoding fleet, multi-region storage.",
+                "source_of_confusion": "Желание быстрее перейти к «весёлой» части — рисованию микросервисов.",
+                "if_it_were_true": "Решения по архитектуре были бы оторваны от реальности и не масштабировались.",
+                "how_it_should_be": "Сначала subs/DAU/concurrent → egress → storage → encoding → metadata; затем выбор технологий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор SLO + fallback-стратегий лучше всего описывает streaming pipeline уровня Netflix?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один SLO — uptime 99.9% на homepage; rebuffering и start latency не отслеживают, потому что зависят от клиентской сети.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rebuffering и start latency — главные QoE-метрики, прямо коррелирующие с retention; Netflix отслеживает их per-region/per-device/per-title.",
+                "source_of_confusion": "Сваливание всей ответственности на «плохой Wi-Fi у пользователя» — антипаттерн.",
+                "if_it_were_true": "Регрессии в encoder или ABR-алгоритме оставались бы невидимыми до массового churn.",
+                "how_it_should_be": "Назвать rebuffering ratio < 1%, start playback p99 < 2 сек, QoE composite, availability 99.99% как отдельные SLO."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только business SLA от партнёров (ISP, DRM-провайдеры) — внутренние SLO не нужны, так как Netflix не отвечает за upstream.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутренние SLO — основа alerting и rollback-решений; ISP-SLA не описывают качество видео, recommendation latency или DRM license response time.",
+                "source_of_confusion": "Путаница между B2B-контрактами и observability product-сервиса.",
+                "if_it_were_true": "Никто не заметил бы регрессии в recommendation сервиса или плохой ABR-decision.",
+                "how_it_should_be": "Завести стек SLO: start latency p99, rebuffering ratio, play failure rate, recommendation latency, QoE composite."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Start playback p99 < 2 сек, rebuffering ratio < 1%, play failure < 0.5%, recommendation latency p99 < 300 ms, availability 99.99%, plus composite QoE как главная business-метрика; при сбоях — CDN fallback на commercial Akamai, license cached 24h, recommendation fallback на global popularity.",
+              "correct": true,
+              "sections": {
+                "explanation": "QoE composite (start latency + rebuffering + sustained bitrate + resolution achieved) — главная business-метрика Netflix, потому что прямо коррелирует с retention. Каждая ключевая метрика имеет SLO + alert threshold (например, rebuffering > 3% за час). Fallback patterns обязательны на каждом критичном пути: CDN miss → commercial CloudFront/Akamai, license server down → cached license валиден 24h, recommendation down → static popular homepage. Это позволяет деградировать gracefully вместо полного blackout.",
+                "example": "Netflix Atlas dashboards показывают QoE per-device/per-region; при регрессии Chaos Monkey-style experiments выявляют root cause до прод-инцидента.",
+                "when_to_apply": "На интервью этот набор SLO обосновывает выбор multi-CDN (Q4, Q30), circuit breaker (Q20) и Chaos Engineering (Q23).",
+                "edge_cases": "В peak hours (премьера популярного шоу) thresholds временно ослабляются; ISP outage может уронить regional метрики без вины Netflix.",
+                "related": "Q12 ABR; Q20 resilience; Q23 chaos."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один composite QoE score — достаточный SLO без декомпозиции; отдельные метрики (rebuffering, start latency) не нужны для alerting.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Composite QoE удобен для business reporting, но для alerting нужны декомпозированные метрики — иначе непонятно где сломалось (encoder, CDN, ABR, recommendation).",
+                "source_of_confusion": "Стремление к одному «магическому» KPI вместо honest multi-dimensional observability.",
+                "if_it_were_true": "Невозможно было бы отличить сбой encoder farm от сбоя recommendation-сервиса.",
+                "how_it_should_be": "Композитный QoE + декомпозированные SLO с отдельными alert thresholds (как в реальном Netflix Atlas)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Netflix построил собственный CDN Open Connect (OCA), а не использует commercial CDN провайдеров целиком?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Netflix не доверяет commercial CDN по security-причинам и хранит весь контент только в собственном дата-центре в Калифорнии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix не имеет собственных ДЦ; control plane крутится на AWS. Open Connect это распределённая edge-инфраструктура у ISP/IXP, не центральный ДЦ.",
+                "source_of_confusion": "Смешение private cloud и edge CDN.",
+                "if_it_were_true": "Latency для пользователей в EU/APAC была бы 200+ ms через trans-atlantic links.",
+                "how_it_should_be": "OCA размещены физически у ISP-партнёров и в IXP, чтобы быть максимально близко к user-у."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Open Connect полностью покрывает streaming на 100%; commercial CDN никогда не используется, даже как fallback.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На пике ~95% трафика идёт через OCA, ~5% — fallback на AWS/commercial CDN при cache miss или OCA outage.",
+                "source_of_confusion": "Маркетинговая фраза «Netflix has its own CDN» воспринимается как «commercial CDN не нужен».",
+                "if_it_were_true": "Любой OCA outage в регионе означал бы полный blackout, что противоречит 99.99% availability.",
+                "how_it_should_be": "OCA как primary CDN + fallback к AWS/commercial — multi-tier стратегия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Open Connect — это просто branded название для AWS CloudFront, размещённого в AWS edge locations; нет физических серверов у ISP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OCA — это физические 2U-серверы с SSD и 100+ Gbps NIC, которые Netflix отгружает ISP и IXP. Это не AWS, а отдельная edge-инфраструктура.",
+                "source_of_confusion": "Предположение что любой CDN — это просто облачный сервис.",
+                "if_it_were_true": "Netflix платил бы AWS CloudFront за весь egress и не получал бы 10× экономии.",
+                "how_it_should_be": "Понять что OCA — отдельная physical CDN infrastructure, отличная от AWS edge."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "На 1 Pbps peak commercial CDN стоил бы $1-3B/год; Open Connect через peering с ISP даёт ~10× экономии ($200-400M/год) и лучшую latency. OCA — 2U-серверы с 200-400 TB SSD, размещаются у Tier-1/regional ISP и в IXP; ~95% трафика идёт через OCA, ~5% fallback на AWS.",
+              "correct": true,
+              "sections": {
+                "explanation": "Commercial CDN (Akamai, Cloudflare, CloudFront) тарифицирует egress в $10-20/TB; на масштабе Netflix это $1-3B/год. Open Connect cuts cost в 10× за счёт peering с ISP: Netflix отдаёт ISP серверы (OCA) бесплатно, ISP получают локальную раздачу без upstream transit costs, Netflix получает control, lower cost и predictable performance. Один OCA — 2U-сервер с 200-400 TB SSD и 100-200 Gbps NIC, кеширует популярный контент региона ISP. Tier-1 ISP получают десятки OCA в крупных POPs, regional ISP — 1-3 OCA, IXP — peering без участия ISP.",
+                "example": "Netflix Open Connect развёрнут в 1000+ локациях у Comcast, Verizon, Deutsche Telekom, МТС и других. YouTube использует похожую модель — Google Global Cache (GGC).",
+                "when_to_apply": "На интервью этим обосновываешь cost optimization (Q28) и latency targets (Q3). Аналогичные patterns применимы для любого video/large-file streaming на planet scale.",
+                "edge_cases": "ISP без peering capacity → пользователи раздачи получают через commercial CDN; небольшие региональные ISP могут не иметь OCA → latency выше.",
+                "related": "Q5 pre-positioning; Q28 cost; Q30 single-CDN антипаттерн."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Netflix решает проблему cold cache при премьерах популярных шоу через pre-positioning контента?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Ночью (04:00-06:00 local time, минимум трафика) ML-модель predicts top титры по region (historical patterns, time-of-day, social trending, marketing) и push контент с origin AWS на OCA через peer-to-peer inter-OCA replication. Top 1000 титров → все OCA, long tail → fewer OCAs с fallback на miss; премьерный release — emergency push в ночь премьеры. Target cache hit ratio 95%+.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pre-positioning решает проблему cold cache: не ждать пока user запросит видео, а заранее предсказать что будет популярно завтра и push контент на OCA. Predictive signals: historical watch patterns per region (Squid Game в Korea — peak times), time-of-day (children's утром, drama вечером), day-of-week (binge weekends), социальные тренды (Twitter, Reddit), маркетинг (новый release), demographics per ISP. Размещение приоритизировано: top 1000 титров везде, long tail точечно. Update window выбран в наименее активные часы локально; внутри сети OCA реплицируются peer-to-peer (BitTorrent-like) чтобы не нагружать AWS origin.",
+                "example": "Netflix перед премьерой Stranger Things ночью push-ит сезон на все OCA в США и EU; в результате на старте просмотра p99 start playback держится около 1.5 сек.",
+                "when_to_apply": "Применимо когда контент известен заранее и есть predictable popularity; для UGC/live этот pattern не работает — там pull-based необходим.",
+                "edge_cases": "Live event surge → emergency manual push; regional content licensing → не push в страны без прав; премьера в небольшом ISP → fallback на AWS если ML не предсказала.",
+                "related": "Q4 OCA; Q6 storage tiers; Q30 pull-only CDN антипаттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pre-positioning не используется — все запросы идут pull-based, OCA кеширует на первый request пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pure pull-based CDN ведёт к cold cache spike на премьерах: первые тысячи запросов уходят на origin, latency взлетает, OCA медленно прогревается.",
+                "source_of_confusion": "Привычка к CloudFront/CDN-as-a-service где push не используют.",
+                "if_it_were_true": "Stranger Things premiere ушатывал бы AWS origin на пару часов, p99 start latency деградировал бы в 10×.",
+                "how_it_should_be": "Combine pull + push (pre-positioning) для известных популярных титров, особенно перед премьерой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Pre-positioning делается в peak hours (вечером, когда максимум трафика), чтобы убедиться что user сразу получает контент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pre-positioning делается ночью (04:00-06:00 local) — в часы минимального трафика, чтобы не конкурировать за bandwidth с live viewers.",
+                "source_of_confusion": "Интуиция «делай push когда max нагрузка» — наоборот вредна.",
+                "if_it_were_true": "Pre-positioning конкурировал бы с live streaming за uplink ISP и ухудшал бы rebuffering для real users.",
+                "how_it_should_be": "Off-peak push window локально per region (04:00-06:00) когда uplink свободен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Весь контент Netflix полностью реплицируется на каждый OCA — ML-предсказания не нужны, потому что storage дёшев.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один OCA имеет 200-400 TB SSD, а полный каталог Netflix — ~300 PB с variants. Полная реплика невозможна физически.",
+                "source_of_confusion": "Игнорирование разницы между catalog size и edge SSD capacity.",
+                "if_it_were_true": "Каждый OCA стоил бы $30M+ железа и большая часть контента не использовалась бы.",
+                "how_it_should_be": "Selective caching через ML-predicted popularity (top 5% титров даёт 80% watch hours)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Netflix организует storage tiers для видео-контента (от hot к cold)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один tier S3 Standard для всего каталога; OCA не имеют локального SSD storage, только cache в RAM на пару GB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S3 Standard стоит $0.023/GB/month — для 100 PB это $2.3M/month только за hot tier. Без edge SSD на OCA latency была бы 100-300 ms (cross-region), а не <50 ms.",
+                "source_of_confusion": "Упрощение до single-tier storage без понимания cost/latency trade-off.",
+                "if_it_were_true": "Storage стоимость взлетела бы 3-5×, а latency не достигла бы targets.",
+                "how_it_should_be": "Multi-tier: OCA SSD (hot) + S3 Standard (warm) + Glacier (cold), плюс master master files отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Hot tier — OCA SSD 200-400 TB на каждый сервер (top 5% титров даёт 80% watch hours, latency < 50ms in-ISP). Warm tier — regional AWS S3 Standard в US-East/EU-West/APAC (top 50% контента, fallback при OCA miss, latency 100-300ms). Cold tier — S3 Glacier для long tail и license-preserved archival (retrieval minutes-hours). Master 4K HDR original — never deleted, в S3 + Glacier backup, replicated 3× для active content.",
+              "correct": true,
+              "sections": {
+                "explanation": "Three-tier storage оптимизирует cost vs latency: SSD на OCA для самого популярного (top 5% титров → 80% watch hours), regional S3 как warm storage для остального активного контента (top 50%), Glacier для архивного long tail и license-preserved старых титров. Master files (4K HDR оригиналы) хранятся вечно как source of truth для re-encoding при появлении нового codec или нового bitrate ladder. Cost model: S3 Standard $0.023/GB/month → 100 PB = $2.3M/month, S3 Glacier $0.004/GB/month → 100 PB cold = $400K/month, OCA железо amortized $10/TB/month → 200 PB = $2M/month.",
+                "example": "Сезон Squid Game в Korea держится в SSD OCA Сеула; 10-летнее старое аниме лежит в Glacier и достаётся при редком запросе.",
+                "when_to_apply": "Применимо для любого large-scale video/media storage где access pattern сильно skewed (Pareto 80/20).",
+                "edge_cases": "Long tail surge (вирусное возрождение старого шоу) → промоут из Glacier в Standard вручную; legal retention периодов варьируется по странам.",
+                "related": "Q4 OCA; Q5 pre-positioning; Q28 cost optimization."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Весь контент только в Glacier (cheap storage) + retrieval on-demand при каждом запросе; OCA и S3 Standard не используют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Glacier retrieval занимает минуты-часы — несовместимо с интерактивным VOD playback. Glacier подходит только для archival.",
+                "source_of_confusion": "Желание минимизировать storage cost любой ценой, игнорируя access latency.",
+                "if_it_were_true": "Каждый клик «Play» создавал бы 5-минутную паузу на restore — Netflix потерял бы всех пользователей.",
+                "how_it_should_be": "Multi-tier с Glacier только для cold archival; hot content всегда в SSD или S3 Standard."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все titles хранятся только на OCA edge SSD без любых S3 backing — origin не нужен, потому что OCA имеют достаточно места.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OCA SSD 200-400 TB не вмещает 300 PB total. Origin S3 нужен и как source-of-truth, и как fallback при OCA miss/outage.",
+                "source_of_confusion": "Преувеличение OCA storage capacity.",
+                "if_it_were_true": "Cache miss было бы fatal: контент негде брать, fallback не работает.",
+                "how_it_should_be": "OCA — selective edge cache, S3 — durable origin для всего каталога."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стадии включает encoding pipeline Netflix (от мастера до раздачи через OCA)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Studio отдаёт один файл H.264 1080p, Netflix кладёт его в S3 без перекодирования; client сам ресэмплирует под разрешение экрана.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single bitrate H.264 без бэкенд-encoding делает невозможным ABR и не покрывает 4K/HDR/мобильные сценарии. Client-side resampling даёт плохое качество и нагружает device.",
+                "source_of_confusion": "Игнорирование того, что Netflix кодирует 30-50 variants per title.",
+                "if_it_were_true": "Пользователи на 4K TV получали бы upscaled 1080p, на 3G — полностью stuck buffering.",
+                "how_it_should_be": "Multi-bitrate ladder + multi-codec encoding на backend, ABR на client (Q12)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Encoding делается полностью на client-стороне (TV/phone): Netflix отдаёт raw 4K master, device локально перекодирует под свою сеть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Client-side encoding невозможен на phone/TV: занимает часы, нагружает battery/CPU, и невозможно реплицировать VMAF-quality на client.",
+                "source_of_confusion": "Смешение transcoding на сервере с ABR-выбором bitrate на клиенте.",
+                "if_it_were_true": "Battery iPhone разряжался бы за 10 минут просмотра; Smart TV не имели бы CPU для realtime encoding.",
+                "how_it_should_be": "Server-side encoding всех variants заранее на encoding farm; client только выбирает bitrate (ABR)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ingest 4K HDR master (Apple ProRes 1-2 TB) от studio с валидацией → pre-processing (color space Rec.2020 → Rec.709, audio normalization LUFS, subtitle extraction) → encoding farm на AWS EC2 Spot (10K+ instances parallel) → 30-50 variants per title (codec × resolution × bitrate ladder: 240p/360p/480p/720p/1080p/4K в H.264/HEVC/VP9/AV1) → VMAF QC → packaging (HLS TS + DASH fMP4 + CMAF unified) → S3 master + variants → pre-positioning на OCA.",
+              "correct": true,
+              "sections": {
+                "explanation": "Pipeline начинается с ingest: studio загружает 4K HDR мастер обычно в Apple ProRes (1-2 TB), Netflix валидирует checksum, длину, audio sync, subtitle timing. Pre-processing нормализует color space (Rec.2020 HDR → Rec.709 SDR для legacy devices), аудио (LUFS), извлекает субтитры. Encoding farm — 10K+ EC2 Spot instances кодируют параллельно per-chunk; на выходе 30-50 variants per title по нескольким codec (H.264 для legacy, HEVC для mobile/TV, VP9 для Chrome/Android, AV1 для новых девайсов). QC через VMAF — собственный perceptual quality metric Netflix (ML model trained на crowd-sourced ratings). Packaging создаёт HLS .ts + DASH fMP4 + CMAF unified container. Throughput: 5K часов нового контента/год × ~100 EC2-hours per content-hour = 500K EC2-hours/year на Spot ($25K/год).",
+                "example": "Эпизод Stranger Things 4K HDR (ProRes 2 TB) после pipeline даёт ~40 output файлов общим объёмом ~50 GB на различных codec/resolution/bitrate, готовых для ABR.",
+                "when_to_apply": "Pattern применим для любого VOD-сервиса с разнообразными devices; для UGC масштаб per-video меньше но количество видео больше.",
+                "edge_cases": "HDR titles требуют отдельных HDR10/Dolby Vision encodes; encoding нового codec ретроспективно для каталога — фоновая batch-задача на месяцы.",
+                "related": "Q8 per-title vs per-chunk; Q9 codec ladder; Q10 Spot fleet."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Encoding запускается on-demand при первом запросе пользователя — экономия storage за счёт lazy generation variants.",
+              "correct": false,
+              "sections": {
+                "what_actually": "On-demand encoding занимает часы на 4K title; user не может ждать. Netflix кодирует все variants заранее в batch на encoding farm.",
+                "source_of_confusion": "Pattern «lazy generation» путают с подходящим для thumbnails, а не для full video.",
+                "if_it_were_true": "Первый зритель премьерного эпизода ждал бы 2 часа encoding перед playback.",
+                "how_it_should_be": "Pre-encoded variants на этапе ingest, не on-demand."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём отличие per-title encoding (2015) от per-chunk/per-shot encoding (2018, Dynamic Optimizer) и какую экономию даёт?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Per-title и per-chunk — одно и то же; разница только в маркетинговом названии, экономия минимальна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-title — fixed ladder per титр; per-chunk — variable bitrate per shot внутри титра. Экономия per-chunk add 15-30% поверх per-title.",
+                "source_of_confusion": "Поверхностное знание подходов без понимания granularity.",
+                "if_it_were_true": "Netflix не публиковал бы отдельные техблоги про оба подхода и не получал бы $50-100M/год экономии.",
+                "how_it_should_be": "Знать что per-title — adaptive ladder for entire title, per-chunk — adaptive bitrate per shot."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Per-title — single global ladder для всего каталога без анализа content; per-chunk — анализ ladder отдельно для каждого фильма (это и есть «per-title»).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Терминология перепутана: «per-title» означает custom ladder per title (то, что описано как per-chunk в варианте). Old approach был fixed ladder для всего каталога.",
+                "source_of_confusion": "Перевернутое понимание исторической эволюции encoding в Netflix.",
+                "if_it_were_true": "Технические блоги Netflix про per-title (2015) и Dynamic Optimizer (2018) описывали бы одно и то же.",
+                "how_it_should_be": "Old: fixed ladder; 2015: per-title (custom ladder per title); 2018: per-shot (variable bitrate per shot)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Netflix вообще не оптимизирует bitrate per title — все titles получают одинаковый bitrate ladder, потому что users не замечают разницу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-title и per-chunk encoding дают 20-50% bitrate reduction суммарно — это сотни миллионов в год на bandwidth. Netflix именно из-за этого инвестировал в оба подхода.",
+                "source_of_confusion": "Игнорирование того, что bandwidth для Netflix — главный operational cost после контента.",
+                "if_it_were_true": "Netflix платил бы commercial CDN на ~$500M/год больше.",
+                "how_it_should_be": "Знать про per-title (2015) и Dynamic Optimizer per-shot (2018) как ключевые technical wins."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "До 2015 — fixed ladder для всего каталога (cartoon @ 1080p те же 3 Mbps как action movie, что over-encodes cartoon и under-encodes action). Per-title (2015): анализ complexity per title → custom ladder (cartoon 2 Mbps, action 4 Mbps), даёт 20% bitrate reduction → $50-100M/год savings на 1 Pbps. Per-chunk/per-shot (2018, Dynamic Optimizer): анализ bitrate per shot внутри титра (dialogue → low, action sequence → high), additional 15-30% reduction. Алгоритм: scene detection → per-shot complexity analysis (motion vectors, frequency domain) → allocate budget → encode → concatenate. QC через VMAF per chunk.",
+              "correct": true,
+              "sections": {
+                "explanation": "Old approach (до 2015) использовал fixed bitrate ladder для всех титров: simple cartoon @ 1080p получал те же 3 Mbps что и action movie, что приводило к over-compression cartoon (тратили лишние биты) и under-compression action (visually хуже). Per-title encoding (Netflix 2015): анализируем content title-as-whole, cartoon (low complexity) достижим на 2 Mbps @ 1080p, action movie (high motion) требует 4 Mbps. Custom ladder per title даёт 20% bitrate reduction в среднем → на 1 Pbps это $50-100M/год экономии на bandwidth. Per-chunk encoding (Netflix 2018, Dynamic Optimizer): идём ещё глубже, анализируем bitrate per shot внутри одного титра. Dialogue scene (talking heads) → low bitrate, action sequence → high bitrate. Per-shot encoded chunks мерджатся в единый stream. Additional 15-30% reduction поверх per-title. Algorithm: scene detection → per-shot complexity analysis (motion vectors, frequency) → bitrate budget allocation → encode → concatenate. QC сложнее: VMAF per chunk.",
+                "example": "Mindhunter (90% dialogue) после per-shot encoding сэкономил ~25% bandwidth относительно per-title; Stranger Things с action sequences — ~15%.",
+                "when_to_apply": "Применимо для любого крупного video catalog где content complexity сильно варьируется; embarrassingly parallel encoding на cloud очень помогает.",
+                "edge_cases": "Sports/live streaming менее предсказуем — per-shot анализ сложнее; encoding time дольше из-за content analysis перед encoding.",
+                "related": "Q7 pipeline; Q9 codecs; Q28 cost; Q30 fixed ladder антипаттерн."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая стратегия codec ladder (H.264/HEVC/VP9/AV1) у Netflix и почему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "H.264 — fallback для legacy devices (всегда encoded, universal compat 95%+); HEVC — primary для mobile/smart TV (~30-40% saving, патентные royalties); VP9 — Android+Chrome (royalty-free от Google); AV1 — постепенный rollout с новых devices (50% saving vs H.264, royalty-free AOMedia, encoding в 5-10× CPU дороже HEVC). Client сообщает supported codecs → server выбирает best supported (highest compression + hardware decode). Fallback chain: AV1 → HEVC → VP9 → H.264.",
+              "correct": true,
+              "sections": {
+                "explanation": "Netflix кодирует в 4 codec одновременно и динамически выбирает best supported для конкретного device. H.264/AVC (2003) — universal baseline (95%+ devices), всегда encoded как fallback, но платит MPEG LA royalty. HEVC/H.265 (2013) — 30-40% bandwidth saving vs H.264, primary для mobile и smart TV, требует hardware decoder и патентные royalties. VP9 (2013, Google) — те же 30-40% saving, royalty-free, native для Android и Chrome. AV1 (2018, AOMedia) — 50% saving vs H.264, royalty-free, encoding в 5-10× CPU дороже HEVC, hardware decoding с iPhone 15+/Pixel 9+. На 1 Pbps AV1 saving = $100-200M/год. Стратегия: client сообщает supported codecs в request, server выбирает highest compression с hardware decode, fallback chain AV1 → HEVC → VP9 → H.264.",
+                "example": "iPhone 15 получает AV1 stream (battery friendly, smaller files), iPhone 7 получает HEVC (no AV1 support), старый Smart TV — H.264 (universal fallback).",
+                "when_to_apply": "Любой crucial bandwidth scenario должен иметь multi-codec поддержку; royalty-aware кодирование критично на больших объёмах.",
+                "edge_cases": "Encoding AV1 для всего каталога — multi-month batch job; HDR variants (HDR10 vs Dolby Vision) кодируются отдельно с разным dynamic range mapping.",
+                "related": "Q7 pipeline; Q10 Spot fleet; Q30 one codec антипаттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix использует только H.264 для всех devices — это самый совместимый codec, остальные не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "H.264-only означает на 30-50% больше bandwidth на тех же visual quality — это $300-500M/год лишнего CDN-cost. Netflix кодирует в 4 codec именно для экономии.",
+                "source_of_confusion": "Упрощение «совместимость превыше всего» без учёта economics.",
+                "if_it_were_true": "Netflix платил бы в разы больше за CDN и был бы менее конкурентен.",
+                "how_it_should_be": "H.264 как fallback, новые codec (HEVC/VP9/AV1) для устройств которые могут их декодировать."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Netflix кодирует только в AV1 (самый эффективный) и отдаёт его всем устройствам — legacy просто не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AV1 hardware decoding есть только в iPhone 15+, Pixel 9+, новых TV — большинство существующих devices не имеют AV1 hardware decoder. Software decoding AV1 убивает battery.",
+                "source_of_confusion": "Преждевременное принятие новейшего codec без учёта device install base.",
+                "if_it_were_true": "iPhone 12 не мог бы смотреть Netflix; battery flagship-смартфонов разряжался бы за 30 минут просмотра.",
+                "how_it_should_be": "Multi-codec ladder с device-aware selection и fallback на H.264."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Codec выбирается случайно при streaming, чтобы distribute load на decoding hardware — это балансирует battery drain.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Codec выбирается детерминированно: client сообщает capabilities, server picks best supported. Random selection ломал бы ABR и hardware acceleration.",
+                "source_of_confusion": "Смешение load balancing на сервере с codec selection на клиенте.",
+                "if_it_were_true": "Один user в одной сессии получал бы скачки качества на каждый chunk.",
+                "how_it_should_be": "Stable codec selection на per-session basis с hardware decode preference."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Netflix использует EC2 Spot instances для encoding farm и как обрабатывает Spot interruptions?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Encoding на Spot невозможен из-за непредсказуемых terminations; Netflix использует только On-Demand EC2 с auto-scaling.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Encoding workload идеален для Spot: embarrassingly parallel, fault-tolerant, идemпотентный, не realtime. Netflix экономит 10× на Spot vs On-Demand.",
+                "source_of_confusion": "Преувеличение риска Spot interruption для batch workload.",
+                "if_it_were_true": "Encoding стоил бы $250K/год вместо $25K — 10× потери на embarrassingly parallel job.",
+                "how_it_should_be": "Spot fleet с diversification + job re-queue в SQS при interruption."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Encoding workload embarrassingly parallel (per-chunk independent), fault-tolerant (chunk fail → re-encode), idempotent (same input → same output), не realtime. Spot price на 70-90% ниже On-Demand → 500K EC2-hours/year × $0.05 = $25K/год vs $250K на On-Demand. Architecture: encoding job queue (SQS) → Spot fleet 10K instances → S3 output. Diversification (c5, c5n, m5 types) снижает risk одновременных terminations; Spot interruption → job re-queued в SQS; distributed file locks через S3 ETag.",
+              "correct": true,
+              "sections": {
+                "explanation": "Encoding workload характеризуется идеальными свойствами для Spot: embarrassingly parallel (каждый chunk независим), fault-tolerant (chunk failure → просто re-encode), idempotent (одинаковый input даёт одинаковый output), не realtime (encoding может идти часами). Spot price 70-90% ниже On-Demand: $0.05/hour vs $0.50/hour. На 500K EC2-hours/год это $25K vs $250K — 10× экономии. Architecture: encoding jobs кладутся в SQS queue, Spot fleet из 10K+ instances забирает jobs параллельно, output пишется в S3. Diversification fleet с разными instance types (c5, c5n, m5) снижает риск одновременной termination всех instances одного типа. При Spot interruption (2-min warning от AWS) текущий chunk просто re-queued в SQS, idempotent encoding гарантирует тот же результат после restart. Distributed file locks через S3 ETag предотвращают double-encoding.",
+                "example": "Netflix encoding orchestrator (на базе Spinnaker для deployment) запускает FFmpeg + custom optimizations + VMAF QC на Spot fleet с 90%+ Spot reliance.",
+                "when_to_apply": "Pattern применим для любого batch workload без realtime requirements: encoding, ML training, data analytics, image processing.",
+                "edge_cases": "Spot price spikes в peak hours → fleet auto-switches на менее загруженные instance types; региональный capacity outage → fallback на другой region.",
+                "related": "Q7 encoding pipeline; Q28 cost; Q30 On-Demand антипаттерн."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Netflix использует Spot, но без diversification — все 10K instances одного типа (c5.large) ради единообразия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Without diversification одновременная termination всех c5.large instances приостановит encoding на часы. Netflix использует fleet с 5-10 instance types.",
+                "source_of_confusion": "Желание упростить fleet configuration в ущерб availability.",
+                "if_it_were_true": "Spot price spike на одном типе обрушил бы encoding pipeline целиком.",
+                "how_it_should_be": "Spot fleet с diversification по instance types (c5, c5n, m5, c6i) и availability zones."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Encoding на Spot работает только если job не прерывается — при interruption job просто теряется без re-encoding.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без retry/re-queue mechanism Spot interruption означала бы потерянные chunks и неполный output. Netflix использует SQS + idempotent encoding для recovery.",
+                "source_of_confusion": "Незнание fault-tolerant patterns для batch workload.",
+                "if_it_were_true": "10-30% chunks терялись бы при типичной Spot interruption rate, делая Spot непригодным.",
+                "how_it_should_be": "Job queue (SQS) + idempotent processing + re-queue at interruption + S3 ETag locks."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём отличие HLS, DASH и CMAF, и почему Netflix мигрировал на CMAF?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "HLS, DASH и CMAF — синонимы; разница только в namespace MIME-type, технически идентичны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HLS (Apple spec, RFC 8216, manifest .m3u8, сегменты .ts/fMP4), DASH (ISO/IEC 23009-1, manifest .mpd, fMP4 chunks), CMAF (2017, единый fMP4 для обоих). Это разные spec.",
+                "source_of_confusion": "Поверхностное знание streaming protocols без разбора container vs manifest.",
+                "if_it_were_true": "Не было бы смысла в CMAF как unifying spec и в проблеме double-storage до CMAF.",
+                "how_it_should_be": "Знать что HLS и DASH — отдельные protocols, CMAF — unified container format поверх них."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix использует только HLS, потому что Apple iOS — крупнейшая audience; DASH и CMAF не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "iOS — большая, но не доминирующая audience; Chrome/Android/Smart TV (60%+ Netflix viewers) нативно поддерживают DASH а не HLS. Single-protocol — антипаттерн.",
+                "source_of_confusion": "Переоценка iOS share для глобального streaming-сервиса.",
+                "if_it_were_true": "Smart TV пришлось бы polyfill через JavaScript player с большими накладными расходами.",
+                "how_it_should_be": "Multi-protocol с CMAF unified encoding (single source, dual manifest)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "HLS (HTTP Live Streaming, Apple RFC 8216, manifest .m3u8 + сегменты .ts/fMP4 since v6, native Safari/iOS, LL-HLS sub-3-sec latency); DASH (MPEG-DASH ISO/IEC 23009-1, manifest .mpd + fMP4 chunks, native Chrome/Firefox/Android/Smart TV, нет native Safari); CMAF (Common Media Application Format, 2017 spec to unify, единый fMP4 chunk используется обоими, single encoding → two manifests). Netflix мигрировал на CMAF — saves storage 2× (no separate TS + fMP4), LL-CMAF позволяет 1-3 sec latency.",
+              "correct": true,
+              "sections": {
+                "explanation": "HLS — Apple-spec (RFC 8216), manifest .m3u8 описывает сегменты (.ts с HLS v3-v5 или fMP4 since HLS v6), native в Safari/iOS, LL-HLS даёт sub-3-sec latency. DASH — ISO/IEC 23009-1, manifest .mpd + fMP4 chunks, native в Chrome/Firefox/Android/Smart TV, не работает natively на Safari — нужен Shaka Player polyfill. До CMAF Netflix вынужден был хранить две копии каждого variant (TS для HLS + fMP4 для DASH), что удваивало storage на S3 и OCA. CMAF (2017 spec) унифицирует container: один fMP4 chunk используется обоими protocols, генерируется два manifest файла (.m3u8 + .mpd). Это даёт: 2× storage savings, single encoding pass вместо двойного, ниже CDN cache fragmentation, LL-CMAF chunked encoding с 1-3 sec latency.",
+                "example": "После миграции на CMAF Netflix сократил storage на OCA на ~40% (одна копия вместо двух) и упростил cache invalidation; single fMP4 файл работает и для iOS Safari, и для Chrome Smart TV.",
+                "when_to_apply": "Любой VOD/live сервис мульти-platform должен таргетить CMAF; HLS-only оправдан только для iOS-exclusive продуктов.",
+                "edge_cases": "Очень старые Smart TV без HLS v6 не понимают fMP4 в HLS — fallback на TS chunks; live LL-CMAF требует Chunked Transfer Encoding на CDN.",
+                "related": "Q7 encoding pipeline; Q12 ABR."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "CMAF — это специальный codec для Netflix, не используется другими streaming-сервисами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CMAF — открытый ISO/IEC 23000-19 spec, используется YouTube, Amazon Prime, Disney+, HBO Max и другими. Это container format (fMP4), не codec.",
+                "source_of_confusion": "Путаница container format и codec; брендирование «Netflix uses CMAF» воспринимается как proprietary.",
+                "if_it_were_true": "Apple и Microsoft не согласовали бы spec, CMAF не стандартизировали в ISO.",
+                "how_it_should_be": "Понять CMAF как открытый container spec, общеиндустриальный стандарт."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Adaptive Bitrate (ABR) в Netflix и в чём отличие BOLA от ML-based подхода?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ABR не используется — Netflix всегда отдаёт максимальный bitrate для устройства, а буферизация компенсирует медленную сеть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без ABR на медленной сети playback просто стопался бы навсегда (buffer drain). ABR — критичный механизм адаптации к network conditions.",
+                "source_of_confusion": "Незнание ABR как fundamental concept video streaming.",
+                "if_it_were_true": "Любой пользователь с throttled 3G не мог бы смотреть Netflix вообще.",
+                "how_it_should_be": "ABR динамически выбирает bitrate на основе throughput + buffer + device."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "ABR полностью контролируется сервером — Netflix server анализирует сеть и push нужный bitrate; client пассивен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ABR работает на client side, потому что только client знает свой buffer level, throughput, screen resolution, battery. Server только выдаёт manifest с list bitrate вариантов.",
+                "source_of_confusion": "Перенос server-side rendering pattern на streaming.",
+                "if_it_were_true": "Server не знал бы что buffer уже полный и продолжал бы отдавать на максимуме, теряя ресурсы.",
+                "how_it_should_be": "Client-side ABR по rate-based/buffer-based/ML алгоритмам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ABR использует только rate-based подход (switch на bitrate ≈ measured throughput); buffer level и device characteristics не учитываются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pure rate-based ABR buffer-blind: может быстро drain buffer если throughput колеблется. Netflix использует BOLA (buffer-based) + ML-hybrid.",
+                "source_of_confusion": "Знание самого простого ABR алгоритма без понимания эволюции к buffer-aware.",
+                "if_it_were_true": "Rebuffering ratio был бы 5-10% вместо <1%.",
+                "how_it_should_be": "Hybrid algorithm с throughput + buffer + screen + battery как features."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ABR работает на клиенте: каждые 2-4 сек измеряет throughput + buffer level + screen resolution + battery, выбирает next chunk bitrate. Algorithms: rate-based (simple, buffer-blind), buffer-based BOLA (Bo Wei 2016, Lyapunov optimization, maximize log(quality) - penalty(rebuffer risk), provably near-optimal), hybrid ABR-PB (Netflix combine throughput + buffer для smooth switching), ML-based (Netflix moves towards, features include history+context+content type, trained на millions sessions с QoE labels). Slow start: первый chunk low bitrate → ramp up. Resolution cap: не качаем 4K на phone.",
+              "correct": true,
+              "sections": {
+                "explanation": "ABR (Adaptive Bitrate) — client-side механизм где плеер каждые 2-4 сек (типичная chunk duration) принимает решение какой bitrate variant запросить следующим. Inputs: measured throughput за последние chunks, buffer level (сколько секунд видео уже buffered), screen resolution (нет смысла 4K на телефоне), battery state (economical mode на mobile). Algorithms эволюционировали: rate-based (switch на bitrate ≈ throughput) — simple но buffer-blind, может drain буфер; BOLA (Buffer Occupancy based Lyapunov Algorithm, Bo Wei 2016) — maximize utility = log(quality) - penalty(rebuffer risk), switch на higher bitrate когда buffer высокий, на lower когда низкий, provably near-optimal; hybrid ABR-PB (Netflix) — combine throughput + buffer для smooth switching без частых quality drops; ML-based — Netflix движется сюда, features (throughput history, buffer, device, screen, time-of-day, content type), model trained на millions real sessions с QoE labels, predicts optimal bitrate per chunk. Edge cases: slow start (первый chunk low для quick playback → ramp up), network drop (switch на lowest bitrate), resolution capping на mobile.",
+                "example": "На iPhone в метро ABR быстро downshift с 4K на 720p при потере сигнала, потом ramp up обратно когда сигнал восстановится — пользователь видит лёгкое падение качества вместо stall.",
+                "when_to_apply": "Любой VOD сервис должен иметь ABR; для live латентность критичнее → нужны более агрессивные алгоритмы (LL-HLS/LL-CMAF + специальный ABR).",
+                "edge_cases": "Cellular metered connections — учитывать data cap user-а; HDR требует особого ABR ladder (HDR variants на меньших bitrate выглядят хуже SDR).",
+                "related": "Q11 CMAF; Q3 QoE; Q30 fixed bitrate антипаттерн."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какую DRM-стратегию использует Netflix и как работает license flow?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Netflix использует три DRM по платформам: Widevine (Android, Chrome, Smart TV Tizen/webOS, security levels L1 keys в TEE → 4K HDR allowed, L2 software-protected → 1080p max, L3 pure software → 480p max), FairPlay (iOS, Safari, Apple TV, Apple-only), PlayReady (Windows, Xbox, Edge, Microsoft). License flow: client → auth server (subscriber check) → DRM license server (Widevine/FairPlay/PlayReady) → encrypted key blob to client → decrypt + decode в TEE → display. Content encryption AES-128 CBC/CTR, common encryption CENC. Persistent licenses для offline downloads (30 days). Forensic watermarking per-user invisible water в video для tracing leaks.",
+              "correct": true,
+              "sections": {
+                "explanation": "Studios (Disney, Warner, Sony) требуют hardware-level content protection как условие лицензирования premium content. Без DRM Netflix не получает доступ к Hollywood каталогу. Три ecosystem-specific DRM покрывают весь device landscape: Widevine — Google-owned для Android/Chrome/Smart TV (Tizen, webOS), имеет три security levels: L1 (keys в Trusted Execution Environment, ARM TrustZone, разрешает 4K HDR), L2 (software-protected keys, max 1080p), L3 (pure software, max 480p как защита от ripper). FairPlay — Apple-only для iOS/Safari/Apple TV. PlayReady — Microsoft для Windows/Xbox/Edge. License flow: client → auth server проверяет subscriber → license server выдаёт encrypted key blob tied к device certificate → client decrypts и decodes в TEE → отображает. Content encrypted AES-128 CBC или CTR (CENC common encryption). Persistent licenses для offline (Q27) валидны typically 30 days. Forensic watermarking встраивает per-user invisible signal в pixel-level video — позволяет trace утечки до конкретного account. Netflix имеет собственный license server, 24h client-side caching license, revocation list для compromised devices.",
+                "example": "iPhone требует FairPlay для 4K HDR Stranger Things, Chrome Smart TV — Widevine L1, Xbox — PlayReady. Если security level понижен (jailbreak detected) — отдаётся максимум 480p.",
+                "when_to_apply": "Любой premium video service лицензированного контента; UGC без лицензионных требований DRM может не использовать.",
+                "edge_cases": "Linux desktop часто получает только L3 (no Widevine L1 hardware) → max 480p; некоторые старые Smart TV без TEE — те же ограничения.",
+                "related": "Q7 packaging; Q27 downloads; Q30 no DRM антипаттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix использует одну DRM-систему (custom proprietary) для всех платформ; Widevine/FairPlay/PlayReady не применяются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Studios требуют именно стандартные DRM (Widevine/FairPlay/PlayReady) — они привязаны к hardware TEE конкретных платформ. Proprietary DRM не покрывает iOS hardware decoder.",
+                "source_of_confusion": "Желание упростить DRM landscape игнорируя ecosystem realities.",
+                "if_it_were_true": "Apple/Google не разрешили бы Netflix использовать hardware decoder, studios не лицензировали бы 4K HDR контент.",
+                "how_it_should_be": "Multi-DRM стратегия по платформам: Widevine для Android/Chrome, FairPlay для iOS, PlayReady для Windows/Xbox."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DRM не нужна — Netflix полагается только на network-level encryption (HTTPS); этого достаточно для защиты контента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTPS защищает только transport, но не content-at-rest на device. После decryption на client любой может dump raw stream без DRM. Studios требуют именно DRM.",
+                "source_of_confusion": "Смешение transport security с content protection.",
+                "if_it_were_true": "Hollywood контент моментально утекал бы в torrents в день premiere.",
+                "how_it_should_be": "HTTPS + DRM (Widevine/FairPlay/PlayReady) + TEE-based key handling."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Netflix использует одну Widevine на всех платформах включая iOS; Apple FairPlay не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "iOS не поддерживает Widevine в native player; для iOS hardware decode нужна FairPlay. Без FairPlay 4K HDR на iPhone не воспроизводится.",
+                "source_of_confusion": "Желание унифицировать DRM на одной системе без учёта Apple ecosystem.",
+                "if_it_were_true": "iPhone/iPad/Apple TV получали бы максимум 480p software-decoded, что неприемлемо.",
+                "how_it_should_be": "FairPlay для всех Apple devices, Widevine для Android/Chrome/Smart TV, PlayReady для Microsoft."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Из каких компонентов состоит recommendation system Netflix и почему именно ансамбль подходов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только Collaborative Filtering (SVD matrix factorization) — этого достаточно для всех recommendation scenarios на Netflix.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pure CF страдает от cold start (новые users / новые titles), не учитывает content features, не моделирует sequence behaviour (binge patterns). Netflix использует ансамбль.",
+                "source_of_confusion": "Знание одной классической техники без понимания её ограничений.",
+                "if_it_were_true": "Новый user или новый title всегда получали бы плохие рекомендации; binge-pattern игнорировался бы.",
+                "how_it_should_be": "Ensemble: CF + content-based + deep learning + contextual bandits + page-level optimization."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix комбинирует: Collaborative Filtering (SVD matrix factorization, user-item похожесть, cold start problem для новых), Content-based filtering (metadata features: жанр/режиссёр/актёры/год, помогает с item cold start), Deep Learning (DNN ranking, two-tower architecture user-item embed, Transformer BERT4Rec для sequence), Contextual Bandits (online learning, explore vs exploit, multi-armed bandit с user context), Page-level optimization (optimize порядок rows + items с diversity ensure). Pipeline: watch events → Kafka → Spark feature store → daily model retraining + online ranking с bonus за recent activity.",
+              "correct": true,
+              "sections": {
+                "explanation": "Recommendation у Netflix — главный driver retention (80%+ просмотров идут с recommendation rows), поэтому решается ансамблем подходов: Collaborative Filtering (SVD matrix factorization user × item, recommend picks похожих users) — классика, страдает от cold start; Content-based filtering использует metadata features (жанр, режиссёр, актёры, год, страна) и past genre preferences — помогает с item cold start; Deep Learning — DNN ranking где input (user_embed, item_embed, context) → score, two-tower architecture как у YouTube/LinkedIn, Transformer для sequence modeling (BERT4Rec) учитывает binge patterns; Contextual Bandits (Q17) — online learning балансирует explore новые items + exploit known, multi-armed bandit с user context; Page-level optimization — не просто top-K items, а optimize порядок rows + items в rows для overall engagement с diversity constraint (не 10 action подряд). Training pipeline: watch events → Kafka → Spark feature store → daily model retraining (offline batch) + online ranking уровень с bonus за recent activity (последние клики).",
+                "example": "Если ты только что закончил Stranger Things, ensemble генерирует «Because You Watched Stranger Things» row с similar sci-fi, «Trending Now» с popular этой недели, «Continue Watching» с твоими открытыми эпизодами, диверсифицируя по жанрам.",
+                "when_to_apply": "Любой content-heavy platform (Netflix, YouTube, Spotify, TikTok) использует ensemble; pure CF подходит только для small-scale prototype.",
+                "edge_cases": "Cold start новый user → fallback на global trending в его регионе; cold start новый title → contextual bandit explore.",
+                "related": "Q15 two-stage retrieval; Q16 artwork; Q17 bandits."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Netflix использует только rule-based recommendations: «showing popular movies of this genre», без ML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rule-based не масштабируется на 270M users — каждый user имеет уникальный таste. Personalization через ML — главный competitive advantage Netflix.",
+                "source_of_confusion": "Упрощение до legacy enterprise recommendation systems 2000-х.",
+                "if_it_were_true": "Engagement и retention были бы драматически ниже; конкуренты с ML съели бы рынок.",
+                "how_it_should_be": "ML ensemble с millions training examples и real-time inference."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Netflix использует только Transformers (BERT4Rec) для всех recommendation tasks; CF и content-based устарели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Transformers — мощная техника но не покрывает все scenarios: для candidate generation быстрее CF/embedding ANN, для cold start нужен content-based, для page-level — separate optimization layer.",
+                "source_of_confusion": "Hype-driven подход «Transformers solve everything».",
+                "if_it_were_true": "Inference latency был бы 500ms+ per request; cold start не решался бы.",
+                "how_it_should_be": "Ensemble где каждый подход покрывает свою sub-task в pipeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем Netflix использует two-stage retrieval (candidate generation + ranking) вместо single-stage?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Single-stage retrieval запускает heavy ML scoring сразу для всего каталога (~10K титров) на каждый запрос; latency 5+ сек неприемлема.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это и есть проблема single-stage. Two-stage решает её: candidate generation быстро (~50ms) сужает до 1K, ranking тщательно scoring только их (~200ms).",
+                "source_of_confusion": "Описание проблемы, но не объяснение решения.",
+                "if_it_were_true": "Это было бы причиной использовать two-stage, а не контраргумент.",
+                "how_it_should_be": "Two-stage explicitly решает latency проблему single-stage."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Two-stage используется только для search, для recommendation Netflix scoring весь каталог single-stage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Recommendation и search оба используют two-stage retrieval (стандарт у Netflix, YouTube, Google, Pinterest). Single-stage scoring 10K титров × 270M users не масштабируется.",
+                "source_of_confusion": "Разделение search и recommendation pipeline без понимания shared architecture.",
+                "if_it_were_true": "Recommendation latency был бы секунды вместо <300ms.",
+                "how_it_should_be": "Two-stage для обоих: candidate gen (broad recall) + ranking (precision)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Two-stage retrieval: Stage 1 candidate generation (broad recall ~10K → ~1000 items из multiple sources: recently popular per region, genre matches user history, similar items CF, trending, Because You Watched related), latency <50ms parallel queries. Stage 2 online ranking (precision, ML model scores each candidate с features user_embed+item_embed+context+time+device, top 10-20 per row), latency <200ms GPU inference batch. Stage 3 page layout (row ordering Top Picks first, diversity constraint no same-genre consecutive rows). Eligibility filters: licensing region, age rating, уже watched, profile-specific.",
+              "correct": true,
+              "sections": {
+                "explanation": "Two-stage retrieval — стандарт у Netflix (как у YouTube, Google, Pinterest) потому что single-stage scoring всех 10K титров heavy ML model на каждый user request заняло бы секунды и не масштабировалось бы. Stage 1 (candidate generation, broad recall): несколько параллельных источников генерируют 1000 кандидатов с good recall — recently popular в user region, genre matches user history, similar to liked items (item-item CF), trending now, «Because You Watched X» related items. Latency < 50 ms за счёт parallel queries и pre-computed embeddings. Stage 2 (online ranking, precision): ML model scores каждого из 1000 кандидатов используя features (user_embed, item_embed, context, time-of-day, device), выбирает top 10-20 per row. Latency < 200 ms через GPU inference в batch. Stage 3 (page layout): determines row ordering (Top Picks → My List → Trending), per-row items ordered by score, diversity constraint предотвращает 10 action movies подряд. Eligibility filters применяются на каждом этапе: content licensing region, age rating preferences, уже watched titles, profile-specific exclusions.",
+                "example": "Запрос homepage Netflix: parallel candidate generation выдаёт 1000 кандидатов за 40ms, GPU ranking model scores их за 150ms, page layout sorts rows и применяет diversity — total <300ms p99.",
+                "when_to_apply": "Любая система recommendation/search/feed с large catalog (1K+ items) должна использовать two-stage retrieval.",
+                "edge_cases": "Cold start user без history → candidate generation fallback на global trending; cold start item → contextual bandit добавляет explore candidates.",
+                "related": "Q14 ensemble; Q16 page layout; Q17 bandits."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Two-stage retrieval работает только для cold storage — для hot recommendation Netflix scoring весь каталог в RAM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Two-stage используется для всех recommendation requests, не только cold. Hot-in-RAM scoring 10K титров × 200M DAU тоже не помещается даже в TB RAM кластера.",
+                "source_of_confusion": "Смешение storage tier (hot/cold) с retrieval pattern (single/two-stage).",
+                "if_it_were_true": "RAM требования были бы немыслимы (270M users × full catalog scoring).",
+                "how_it_should_be": "Two-stage independent of storage tier; pre-computed embeddings + ANN search для candidate gen."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализована personalized homepage и artwork personalization у Netflix?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все 270M пользователей видят одну и ту же homepage; персонализируется только список Continue Watching.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждая homepage уникальна: per-user row ordering, per-row item selection, per-title artwork variant. Это основа Netflix UX.",
+                "source_of_confusion": "Сравнение с TV-каналами или статичными streaming-сервисами.",
+                "if_it_were_true": "Engagement упал бы драматически — главный driver retention.",
+                "how_it_should_be": "Full personalization на homepage: rows order + items + artwork."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Homepage персонализируется один раз при регистрации и больше не меняется; artwork всегда стандартный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Homepage пересчитывается часто (каждые часы) на основе recent activity; artwork выбирается ML моделью per user × per title по past click patterns.",
+                "source_of_confusion": "Static personalization вместо dynamic.",
+                "if_it_were_true": "Recommendation бы не учитывал binge yesterday; CTR на posters не оптимизировался бы.",
+                "how_it_should_be": "Dynamic personalization rows + artwork по recent behavior."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Artwork personalization — недействующий миф; все пользователи видят одинаковый poster каждого фильма.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix запатентовал artwork personalization (2017+), ML модель выбирает best image variant per user из 5-10 вариантов per title. Документировано в Netflix Tech Blog.",
+                "source_of_confusion": "Незнание Netflix-патентованной техники.",
+                "if_it_were_true": "Netflix Tech Blog лгал бы про A/B-tested +20-30% CTR на personalized artwork.",
+                "how_it_should_be": "Знать про artwork variants + ML selection per user × title."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Personalized homepage: 270M users → 270M unique homepages, каждая row (Trending, Top Picks, Because You Watched) персонализирована, order of rows differs per user, items в rows ranked individually. Artwork personalization (Netflix patent): для каждого title 5-10 cover image variants, ML выбирает best per user из past clicks (romance fan → couple-on-poster, action fan → explosion-variant), boost +20-30% CTR. Stored mapping user_id → (title_id → image_id) в EVCache. New artwork variants tested на 1% traffic (Q25 A/B), metric CTR + downstream watch completion, auto-promote winners.",
+              "correct": true,
+              "sections": {
+                "explanation": "Netflix homepage полностью персонализирована per user: 270M users → 270M unique pages. Каждая row (Trending, Top Picks for You, Because You Watched X, New Releases, My List) персонализирована — order of rows differs per user, items внутри rows ranked individually через two-stage retrieval (Q15). Artwork personalization — Netflix-патентованная техника (запатентовали 2017+, документировано в Tech Blog): для каждого title подготовлено 5-10 cover image variants (different scenes, different actors прoominent, different mood). ML модель выбирает best image per user × per title исходя из past click patterns: romance fan → couple-on-poster, action fan → explosion variant, comedy fan → smile-variant. Реальный engagement boost: +20-30% click-through на posters (A/B-tested). Implementation: image variants хранятся в S3 + CDN, ML model selects per user × per row, mapping user_id → (title_id → image_id) кешится в EVCache. A/B testing новых variants на 1% traffic, metric CTR + downstream watch completion, auto-promote winners (Q25).",
+                "example": "Для Good Will Hunting один user видит poster с Matt Damon (если он fan Matt Damon), другой видит Robin Williams (если он недавно смотрел его фильмы), третий — общий cinematic poster.",
+                "when_to_apply": "Применимо к любому visual-driven content discovery; для audio (Spotify) применяется аналог для album art и playlist covers.",
+                "edge_cases": "Новый title без click data → fallback на default artwork; legal/marketing constraints могут запрещать варианты artwork.",
+                "related": "Q14 recommendation; Q15 two-stage; Q25 A/B testing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем Netflix применяет contextual bandits (LinUCB, Thompson Sampling) в recommendation pipeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Pure exploit (всегда top-ranked items) делает user видит то же → engagement drops. Pure explore (random) → frustration. Contextual bandits балансируют explore-exploit per context: каждый arm = item, reward = engagement (watched > 5 min), context = user state + time + device. LinUCB estimates reward + uncertainty per item, picks highest reward + λ × uncertainty (explore high-uncertainty items). Thompson Sampling samples from posterior distribution per item, naturally balances. Use cases: new title launch (no engagement data), cold-start users, long-tail item discovery. Statistical efficiency (faster learning) vs pure ranking complexity.",
+              "correct": true,
+              "sections": {
+                "explanation": "Recommendation system сталкивается с фундаментальной дилеммой: pure exploit (всегда top-ranked items) приводит к filter bubble — user видит то же контент, engagement drops, нет discovery новых titles; pure explore (random items) — frustration пользователя нерелевантным контентом. Contextual bandits решают это: каждый «arm» = item to recommend, reward = user engagement (watched > 5 min для серий, finished movie для фильмов), context = user state + time-of-day + device + recent activity. Algorithm balances explore-exploit per context. LinUCB (Linear Upper Confidence Bound) — estimate expected reward + uncertainty per item, picks item с highest «reward + λ × uncertainty» — items с high uncertainty получают explore boost. Thompson Sampling — samples reward from posterior distribution per item, naturally balances explore-exploit, used в Netflix recommendation. Use cases: new title launch (no engagement data → high uncertainty → explore), cold-start users (limited history), long-tail item discovery. Trade-offs: статистическая эффективность (faster learning) vs implementation complexity vs pure ranking.",
+                "example": "Netflix запускает новый показ Squid Game 2 без engagement data — Thompson Sampling добавляет его в recommendation rows для разных user contexts, быстро собирает signal, и через 48 часов уже знает кому показывать.",
+                "when_to_apply": "Любая recommendation/search/ad system с cold-start items или long-tail catalog; classic pure ranking хорош когда catalog стабилен и engagement data богат.",
+                "edge_cases": "Bandits плохо работают на extremely cold catalog без любого prior; нужен warm-up period с manual seeding.",
+                "related": "Q14 ensemble; Q15 candidate gen; Q25 A/B."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Contextual bandits — устаревшая техника, используется только в академии; Netflix использует только Transformers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix активно использует contextual bandits в production (документировано в Tech Blog) для cold-start items и long-tail discovery. Transformers и bandits — разные tools для разных tasks.",
+                "source_of_confusion": "Hype-driven dismiss классических ML techniques.",
+                "if_it_were_true": "Netflix не публиковал бы папки про LinUCB и Thompson Sampling в recommendation.",
+                "how_it_should_be": "Понять bandits как complement к Transformers/CF для explore-exploit balance."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Contextual bandits случайно выбирают item без учёта user context; это просто epsilon-greedy random exploration.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Epsilon-greedy — самый простой bandit, не contextual. Contextual bandits (LinUCB, Thompson Sampling) учитывают user context для personalization explore-exploit.",
+                "source_of_confusion": "Знание самого простого bandit без понимания contextual generalization.",
+                "if_it_were_true": "Не было бы смысла в slov «contextual» в названии техники.",
+                "how_it_should_be": "Contextual bandits = bandits + context features для personalized explore."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bandits используются только в рекламе (ad bidding), не в content recommendation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bandits широко применяются в content recommendation: Netflix, Spotify, LinkedIn, Pinterest все используют contextual bandits для cold-start items и personalized explore.",
+                "source_of_confusion": "Знание applications bandits только в ad-tech.",
+                "if_it_were_true": "Netflix Tech Blog не публиковал бы статьи про bandits в recommendation.",
+                "how_it_should_be": "Bandits universal pattern для explore-exploit, применим в любых ranking системах."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая high-level архитектура Netflix верно описывает разделение control plane и data plane?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один monolith service на AWS, который обрабатывает и metadata, и video streaming в одном процессе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix — pioneer микросервисной архитектуры (сотни сервисов) с явным разделением control plane (AWS) и data plane (Open Connect).",
+                "source_of_confusion": "Незнание Netflix-published архитектуры.",
+                "if_it_were_true": "Netflix не открывал бы Eureka/Hystrix/Zuul/Spinnaker, не делился бы микросервисными practices.",
+                "how_it_should_be": "Microservices на AWS для control + Open Connect для video bytes."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Two planes: control plane (AWS microservices) — metadata, recommendation, search, user account, billing, license server, hundreds сервисов, stateful Cassandra/MySQL/Elasticsearch. Data plane (Open Connect) — video bytes flow, OCA приближают bytes к user, 95% requests serve from OCA 5% from AWS. Clients → AWS API Gateway/Edge Auth → Zuul Gateway (routing, filters, A/B test bucketing) → microservices (discover через Eureka, gRPC inside cluster, HTTP/2 cross-region, Kafka async events) → Cassandra (profile, watch history) + EVCache (hot data) + Elasticsearch (search) + MySQL (billing). Video flow: Client → OCA (in-ISP) → fallback AWS origin.",
+              "correct": true,
+              "sections": {
+                "explanation": "Netflix архитектура явно разделена на два plane с разными scaling characteristics. Control plane на AWS — это сотни микросервисов: catalog, recommendation, search, user account, billing, license server, watch history. Storage: Cassandra (profile, watch history по user_id), MySQL (billing — нужна strong consistency), Elasticsearch (search index), EVCache (distributed hot cache). Communication: gRPC внутри cluster, HTTP/2 cross-region, Kafka для async events. Все client requests идут через AWS API Gateway / Edge Auth → Zuul Gateway, который делает auth, rate limit, dynamic routing, edge filters (request rewrites, A/B test bucketing). Service discovery через Eureka — services регистрируют свои instances, others discover через registry. Data plane — Open Connect (Q4), отдельная edge-инфраструктура для video bytes. 95% video traffic serve from OCA in-ISP, 5% fallback на AWS origin при cache miss или OCA outage. License server отдельно обслуживает DRM requests (Widevine/FairPlay/PlayReady) — он часть control plane но критичен и для data plane.",
+                "example": "User кликает «Play Stranger Things» — client запрос в Zuul через CDN edge, Zuul orchestrates: User Service (auth), Catalog Service (metadata), Recommendation Service (continue watching position), License Server (DRM key); video bytes идут параллельно от OCA в локальном ISP.",
+                "when_to_apply": "Pattern control/data plane separation применим для любого bandwidth-heavy сервиса (Netflix, YouTube, Spotify, Twitch).",
+                "edge_cases": "Live streaming требует tighter latency между control и data plane; emerging edge compute (Cloudflare Workers) может объединять planes для simpler use cases.",
+                "related": "Q4 OCA; Q19 OSS stack; Q24 multi-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все video bytes раздаёт AWS S3 напрямую без CDN; control plane не нужен потому что нет microservices.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S3 directly не масштабируется на 1 Pbps egress (стоило бы billions/year, latency высокая). Open Connect специально построен для этого. Control plane (microservices) — отдельный layer для metadata.",
+                "source_of_confusion": "Упрощение архитектуры до «S3 + frontend».",
+                "if_it_were_true": "Netflix CDN costs были бы $1-3B/год вместо $200-400M через OCA.",
+                "how_it_should_be": "Open Connect CDN + AWS microservices, чёткое разделение planes."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Control и data plane объединены в одном сервисе: video bytes и metadata идут через одни и те же microservices.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Video bytes (TB/sec) и metadata (KB/request) имеют разные scaling needs. Объединение приведёт к thread starvation в metadata services и неэффективному resource usage.",
+                "source_of_confusion": "Желание упростить архитектуру без понимания scaling differences.",
+                "if_it_were_true": "Metadata requests были бы заблокированы heavy video streams; throughput упал бы.",
+                "how_it_should_be": "Явное разделение planes: AWS microservices для control + Open Connect для data."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие компоненты включает Netflix OSS stack и какова их современная замена?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Netflix OSS — это просто marketing; реальный stack Netflix полностью на AWS managed services без open-source компонентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix OSS — реальный open-source stack (Eureka, Ribbon, Hystrix, Zuul, Atlas, Spinnaker, Chaos Monkey), многое стало industry standards.",
+                "source_of_confusion": "Игнорирование Netflix-published open source projects на GitHub.",
+                "if_it_were_true": "Spring Cloud Netflix не интегрировал бы эти проекты как стандарт.",
+                "how_it_should_be": "Знать Netflix OSS projects и их современные replacements."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix OSS включает только Hystrix; всё остальное — closed-source proprietary.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix OSS обширен: Eureka (discovery), Ribbon (LB), Hystrix (CB), Zuul (gateway), Atlas (metrics), Spinnaker (CD), Chaos Monkey (chaos), Mantis (streaming).",
+                "source_of_confusion": "Знание только самого известного компонента.",
+                "if_it_were_true": "Многие индустриальные tools не существовали бы.",
+                "how_it_should_be": "Перечислить весь стек с current replacement statuses."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Netflix OSS stack: Eureka (service discovery, регистрация instances + health checks), Ribbon (client-side load balancer, round-robin/weighted, deprecated в favor of Spring Cloud LoadBalancer), Hystrix (circuit breaker, deprecated 2018 → Resilience4j), Zuul (API Gateway, edge gateway, dynamic routing, filters), Atlas (time-series metrics, multi-dimensional Prometheus-like), Spinnaker (deployment CD pipeline multi-cloud), Chaos Monkey (chaos engineering, random instance termination), Mantis (stream processing real-time anomaly detection). Современная замена 2020+: Eureka → Consul/Kubernetes discovery, Ribbon → Spring Cloud LoadBalancer, Hystrix → Resilience4j, Zuul → Envoy + Spring Cloud Gateway, Atlas → Prometheus + Grafana. Netflix постепенно мигрирует на open standards (gRPC + Envoy + K8s).",
+              "correct": true,
+              "sections": {
+                "explanation": "Netflix OSS — открытая часть internal stack Netflix, многое стало индустриальным стандартом и интегрировано в Spring Cloud Netflix. Компоненты: Eureka — service discovery, services регистрируют свои instances + health checks, others discover через registry; Ribbon — client-side load balancer (round-robin или weighted), deprecated в favor of Spring Cloud LoadBalancer; Hystrix — circuit breaker (deprecated 2018, теперь Resilience4j); Zuul — API Gateway, edge gateway с dynamic routing и filters (auth, rate limit, A/B bucketing); Atlas — time-series metrics, multi-dimensional как Prometheus; Spinnaker — deployment CD pipeline multi-cloud; Chaos Monkey — chaos engineering random instance termination (Q23); Mantis — stream processing для real-time anomaly detection. Современный stack 2020+: Netflix мигрирует на open standards — Eureka → Consul / Kubernetes service discovery, Ribbon → Spring Cloud LoadBalancer, Hystrix → Resilience4j, Zuul → Envoy + Spring Cloud Gateway, Atlas → Prometheus + Grafana. Большинство новых deployments на gRPC + Envoy + K8s.",
+                "example": "Spring Boot приложение использует @LoadBalanced RestTemplate (Ribbon) + @EnableEurekaClient (Eureka) + @CircuitBreaker (Resilience4j) — это прямые потомки Netflix OSS.",
+                "when_to_apply": "Знание Netflix OSS важно для understanding microservice patterns; в new projects лучше использовать modern replacements (Envoy, Resilience4j, Prometheus).",
+                "edge_cases": "Legacy systems всё ещё на Hystrix/Ribbon требуют migration plan; некоторые компоненты (Spinnaker, Chaos Monkey) до сих пор актуальны.",
+                "related": "Q18 architecture; Q20 resilience; Q23 chaos."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Современный Netflix полностью использует только Hystrix и Eureka — никакой миграции на новые tools не произошло.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hystrix deprecated в 2018 (заменён Resilience4j), Eureka постепенно уступает Kubernetes/Consul. Netflix continuously модернизирует stack.",
+                "source_of_confusion": "Знание исторического Netflix stack без обновления на 2020+.",
+                "if_it_were_true": "Spring Cloud Netflix не объявлял бы Hystrix deprecated.",
+                "how_it_should_be": "Knowledge of evolution: Hystrix → Resilience4j, Eureka → Consul/K8s, Zuul → Envoy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие resilience patterns Netflix применяет для предотвращения cascade failures?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Netflix полагается только на retry с большим timeout — если сервис medlennый, просто retry с backoff.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pure retry без circuit breaker/timeout/bulkhead усиливает cascade failure — больше retries → больше нагрузки на упавший downstream → быстрее cascade.",
+                "source_of_confusion": "Знание retry без понимания его опасности без других patterns.",
+                "if_it_were_true": "Любой downstream slowdown превращался бы в полный outage за минуты.",
+                "how_it_should_be": "Combination: bulkhead + circuit breaker + fallback + tight timeout + bounded retry."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix применяет только circuit breaker и больше ничего; bulkhead и fallback не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Circuit breaker один не предотвращает thread starvation (нужен bulkhead) и не даёт graceful degradation (нужен fallback). Netflix применяет full stack.",
+                "source_of_confusion": "Знание только одного pattern.",
+                "if_it_were_true": "Thread pool одного service exhaust threads нужные другим — частичный outage.",
+                "how_it_should_be": "Layered defense: bulkhead + circuit breaker + fallback + timeout + retry."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Resilience4j — это просто новое имя для Hystrix; патерны не изменились с 2010-х.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Resilience4j — наследник Hystrix но с modern API (functional, no AOP-only), lightweight (без RxJava), активная разработка vs deprecated Hystrix.",
+                "source_of_confusion": "Поверхностное приравнивание replacement tool к original.",
+                "if_it_were_true": "Spring Cloud не deprecated Hystrix и не рекомендовал Resilience4j.",
+                "how_it_should_be": "Resilience4j — modern lightweight reimplementation patterns с лучшим API."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Layered defense: Bulkhead (изоляция, отдельные thread pools per dependency — slow Recommendation не exhaust threads нужные Catalog, аналогия водонепроницаемых отсеков), Circuit Breaker (Resilience4j наследник Hystrix, 3 states Closed → Open fail-fast → Half-Open test recovery, при threshold failures break + return fallback immediately), Fallback (каждый remote call имеет fallback: Recommendation fail → cached homepage from 1h ago, Search fail → static popular titles, License fail → cached 24h), Timeout (aggressive per-service 50-200ms, lower than upstream prevents cascade), Retry (exponential backoff + jitter, idempotency required, max 3 bounded), Rate limiting (per-service quota от runaway client).",
+              "correct": true,
+              "sections": {
+                "explanation": "Netflix применяет layered defense из нескольких resilience patterns одновременно: Bulkhead — изоляция dependencies через отдельные thread pools (slow Recommendation Service не exhaust threads нужные Catalog Service, аналогия водонепроницаемых отсеков корабля); Circuit Breaker (Resilience4j наследник Hystrix) — 3 states: Closed (normal traffic) → Open (fail-fast после threshold failures, return fallback immediately) → Half-Open (test recovery с небольшим traffic), это предотвращает hammering упавшего downstream; Fallback — каждый remote call имеет fallback path, Recommendation fail → cached homepage from 1 hour ago в EVCache, Search fail → static popular titles, License fail → cached license валиден 24h; Timeout — aggressive per-service 50-200ms, lower than upstream timeout, prevents cascade waiting; Retry — exponential backoff + jitter для thundering herd avoidance, idempotency required, bounded max 3; Rate Limiting — per-service quota защищает от runaway client. Combination: @CircuitBreaker + @Bulkhead(THREADPOOL) + @TimeLimiter + fallback method.",
+                "example": "Если Recommendation Service отвечает > 200ms, bulkhead изолирует threads, circuit breaker открывается после 10 fails за 60s, fallback возвращает cached homepage из EVCache — user видит лёгкую деградацию (старый порядок rows) вместо blank page.",
+                "when_to_apply": "Любая system с external dependencies должна применять эти patterns; критичность зависит от scale и SLO.",
+                "edge_cases": "Слишком агрессивный timeout режет легитимные slow requests; слишком long timeout не предотвращает cascade. Calibration через A/B и chaos.",
+                "related": "Q19 OSS stack; Q23 chaos; Q30 no CB антипаттерн."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организован Catalog Service Netflix с использованием Elasticsearch и GraphQL Gateway?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Catalog metadata (title info, episodes, multi-language localization, region-specific licensing flags, rich descriptors mood/theme). Storage: Cassandra master data по title_id + Elasticsearch search index (full-text, fuzzy typos, faceted filters genre/year/language/rating, geo-restrictions per country, per-language analyzers russian/english/japanese) + EVCache hot для most-accessed titles. GraphQL Gateway: Federated GraphQL (Apollo Federation / Netflix Studio Edge), каждый сервис exposes schema fragment, client requests { title { name, recommendations { ... } } } — gateway orchestrates, заменяет REST для mobile/Web, built-in batching reduces round trips. Caching per-query в EVCache TTL 5min, invalidation через pub/sub when title metadata updated.",
+              "correct": true,
+              "sections": {
+                "explanation": "Catalog service хранит metadata всех Netflix titles: title info (name, year, genre, cast, director, description), episode metadata для сериалов, multi-language localization (translations, subtitles), region-specific licensing flags (какой контент available в каком регионе), rich descriptors (mood, theme, era — используется в recommendation). Storage tier: master data в Cassandra (partition по title_id, легко lookup по ID, eventual consistency acceptable), search index в Elasticsearch (full-text + filters + facets), hot cache в EVCache (most-accessed titles типа top 1000 — в RAM). Elasticsearch index: per-language analyzers (russian, english, japanese — разные tokenization, stemming, stopwords), fuzzy matching для typos, faceted filters (genre, year, language, rating, geo-restrictions filter by user country). GraphQL Gateway — Federated GraphQL (Apollo Federation или внутренний Netflix Studio Edge): каждый microservice exposes свой schema fragment, client делает single GraphQL query `{ title { name, recommendations { ... }, episodes { ... } } }`, gateway orchestrates calls к multiple services. Заменяет REST для mobile + Web clients, built-in batching reduces round trips. Caching: per-query cache в EVCache с TTL 5 minutes (catalog data rarely changes), invalidation через pub/sub когда title metadata updated.",
+                "example": "Mobile app делает GraphQL query «дай title Stranger Things + episodes + similar titles» — gateway parallel calls Catalog Service (metadata), Episode Service (список), Recommendation Service (similar), aggregates, кеширует в EVCache на 5 min.",
+                "when_to_apply": "GraphQL Federation подходит для frontend с complex aggregation needs; Elasticsearch — стандарт для search/filters/facets; EVCache — для high-read hot metadata.",
+                "edge_cases": "GraphQL N+1 problem требует DataLoader pattern для batching; новый title не сразу в Elasticsearch (indexing delay seconds-minutes).",
+                "related": "Q14 recommendation; Q18 architecture."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Catalog service использует только MySQL и REST API; Elasticsearch и GraphQL не нужны для metadata.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MySQL не масштабируется на 270M users × 10K titles × full-text search + facets. Netflix использует Cassandra + Elasticsearch + GraphQL.",
+                "source_of_confusion": "Применение legacy stack для consumer-scale service.",
+                "if_it_were_true": "Search latency был бы 1-2s вместо <200ms; aggregation для GraphQL pattern был бы невозможен.",
+                "how_it_should_be": "Cassandra (master) + Elasticsearch (search) + EVCache (hot) + GraphQL gateway для frontend."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Catalog service полностью in-memory без persistent storage — данные пересоздаются при перезапуске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Catalog — source of truth для всего контента, terabytes metadata. In-memory only невозможно сохранить и restart означал бы потерю данных.",
+                "source_of_confusion": "Перенос caching strategy на authoritative storage.",
+                "if_it_were_true": "Любой restart означал бы потерю всех metadata; пересоздание заняло бы дни.",
+                "how_it_should_be": "Persistent storage (Cassandra) + cache (EVCache) поверх."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "GraphQL Federation не используется в Netflix; они используют только REST с custom URL versioning.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix Studio Edge — internal GraphQL Federation platform, актвно используется для mobile + Web. Документировано в Netflix Tech Blog.",
+                "source_of_confusion": "Незнание Netflix-published architecture changes (2018+).",
+                "if_it_were_true": "Netflix Tech Blog не публиковал бы статьи про GraphQL adoption.",
+                "how_it_should_be": "GraphQL Federation для frontend aggregation, REST для service-to-service."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Netflix реализует continue watching с синхронизацией между устройствами через Cassandra + Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Continue watching хранится только локально на каждом устройстве; нет cross-device sync, user должен помнить позицию вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cross-device sync — главная feature continue watching: user смотрит S1E5 на phone до 23:45 → открывает TV → продолжается с 23:45. Без backend storage это невозможно.",
+                "source_of_confusion": "Игнорирование multi-device use case Netflix.",
+                "if_it_were_true": "Phone → TV transition был бы невозможен; user терял бы позицию каждый раз.",
+                "how_it_should_be": "Backend Cassandra storage + Kafka events + multi-device sync."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Storage в Cassandra: CREATE TABLE watch_progress (user_id uuid, title_id uuid, position_ms bigint, updated_at timestamp, device_id text, PRIMARY KEY (user_id, title_id)) — partition by user_id (все progress one user — one node), cluster by title_id, eventual consistency LOCAL_QUORUM acceptable. Update flow: client сообщает position каждые 30s (или на pause/seek) → Watch Service write Cassandra + emit Kafka event → consumed by analytics pipeline, recommendation feature store, multi-device sync. Sync: Phone updates каждые 30s → TV opens → queries Cassandra → resumes from saved position, latency 5-10s cross-region (eventual). Last-write-wins для two devices simultaneously. Volume: 200M DAU × 4h × 1/30s = ~27K updates/sec sustained.",
+              "correct": true,
+              "sections": {
+                "explanation": "Continue watching solves classic multi-device sync problem. Storage в Cassandra schema partition by user_id (все progress одного user-а localized в одном node — fast lookup), cluster by title_id, position_ms сохраняет позицию в миллисекундах. Cassandra eventual consistency с LOCAL_QUORUM acceptable — небольшое запаздывание sync (5-10s cross-region) приемлемо для UX. Update flow: client (phone, TV, web) сообщает position каждые 30 sec (или на pause/seek/close) → Watch Service делает write в Cassandra + emit Kafka event → event consumed by parallel pipelines: analytics (Iceberg для batch), recommendation feature store (для real-time updates), multi-device sync service. Sync: Phone updates каждые 30s → user закрывает phone → TV открывает Netflix app → Watch Service queries Cassandra LOCAL_QUORUM → resumes from saved position. Latency 5-10s acceptable для cross-region replication. Edge case: two devices simultaneously (например phone и TV одновременно) → last-write-wins (latest position wins). Offline progress (Q27) — buffered locally на client, synced when reconnect. Volume: 200M DAU × 4 hours/day × 1 update/30 sec = ~96M updates/hour, ~27K/sec sustained — Cassandra cluster sized accordingly.",
+                "example": "User смотрит Stranger Things S1E5 на phone до 23:45 в метро → закрывает Netflix → дома открывает Apple TV → Netflix sees recent watch_progress в Cassandra, начинает с 23:45 автоматически. Total latency восстановления — секунды.",
+                "when_to_apply": "Любой multi-device VOD/audio service нуждается в таком pattern; pattern также применим для game save states, document collaboration.",
+                "edge_cases": "Cross-region delay 30+ sec возможен при peak load — user может увидеть старую позицию пока replication догонит; offline-on watch progress буферизуется и батчем синхронизируется при reconnect.",
+                "related": "Q21 catalog; Q27 downloads; Q24 multi-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cassandra partition by title_id (не user_id) — каждый title содержит все user-позиции в одном partition.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Partition by title_id создал бы hot partitions для популярных titles (millions users → one partition). Netflix partitions by user_id для distribution и быстрого user-specific lookup.",
+                "source_of_confusion": "Незнание Cassandra partition key best practices.",
+                "if_it_were_true": "Stranger Things partition содержал бы 100M+ rows → hot partition, Cassandra cluster degradation.",
+                "how_it_should_be": "Partition by user_id, cluster by title_id для скорости user-specific queries."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Watch progress хранится только в Kafka topics без Cassandra; consumers читают всю historical Kafka для restoration.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka — append-only log, не подходит для random-access by user_id. Cassandra нужна как primary storage; Kafka — event stream для async consumers.",
+                "source_of_confusion": "Перенос event sourcing pattern на чистый Kafka-as-DB.",
+                "if_it_were_true": "TV открывает Netflix → должна re-read весь Kafka log за месяцы — невозможно в realtime.",
+                "how_it_should_be": "Cassandra primary store + Kafka events для async pipelines."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Chaos Engineering у Netflix и какие инструменты входят в Simian Army?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Chaos Engineering — это синтетический load testing в staging; в production Netflix никогда не вводит failures.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix pioneered chaos в production: Chaos Monkey terminate real instances в business hours. Staging-only chaos не выявляет real-world failure modes.",
+                "source_of_confusion": "Безопасный «staging-only» подход вместо radical Netflix philosophy.",
+                "if_it_were_true": "Netflix не публиковал бы Chaos Monkey/Kong и не имел бы 99.99% uptime.",
+                "how_it_should_be": "Chaos в production = пресечь real failures, validate fallback patterns continuously."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Chaos Engineering включает только Chaos Monkey (terminate instances); другие tools не существуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Simian Army — целый suite: Chaos Monkey (instance), Gorilla (AZ), Kong (region), Latency Monkey (latency injection), Conformity Monkey, Security Monkey, Janitor Monkey.",
+                "source_of_confusion": "Знание только самого известного компонента.",
+                "if_it_were_true": "Netflix testing failures только на уровне single instance — не покрывает AZ/region failures.",
+                "how_it_should_be": "Layered chaos: instance (Monkey), AZ (Gorilla), region (Kong), latency, security, conformity."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Netflix-pioneered approach: prove resilience by deliberately injecting failures в production. Simian Army: Chaos Monkey (random instance termination, continuously in business hours), Chaos Gorilla (kill entire AZ, weekly), Chaos Kong (kill entire AWS region, monthly), Latency Monkey (inject 1-10s latency, hourly), Conformity Monkey (detect mis-configured instances, daily), Security Monkey (security violations, continuously), Janitor Monkey (orphaned resources, daily). Philosophy: «If you can't fix something, automate breaking it daily so the fix becomes mandatory». Recovery: ASG auto-spawn replicas, LB reroutes, < 30s full recovery target. Cultural: engineers expect their service to suffer → defensive code. Game days — manual chaos exercises full team. Open-source 2012, inspiration for AWS Fault Injection Simulator, Gremlin, LitmusChaos.",
+              "correct": true,
+              "sections": {
+                "explanation": "Chaos Engineering — Netflix-pioneered approach: prove resilience system deliberately injecting failures in production. Это противоположно «safe staging-only testing» — Netflix считает что production уже имеет real failures, лучше симулировать их controllably чем ждать. Simian Army — suite инструментов на разных уровнях: Chaos Monkey (random instance termination в business hours — самый известный), Chaos Gorilla (убивает entire availability zone weekly), Chaos Kong (kills entire AWS region monthly — экстремальный test), Latency Monkey (injects 1-10s latency hourly — проверяет timeouts), Conformity Monkey (detects mis-configured instances daily), Security Monkey (security violations), Janitor Monkey (cleans orphaned resources). Philosophy: «If you can't fix something, automate breaking it daily so the fix becomes mandatory» — психологически вынуждает команды писать defensive code. Implementation: Chaos Monkey randomly picks instance from ASG, terminates с warning, monitoring measures impact, alert если impact > threshold. Recovery: ASG auto-spawns replica, LB reroutes traffic, target < 30s full recovery. Cultural impact: engineers know their service will be «harmed» — пишут defensive code, fallbacks, retries by default. Game days — manual chaos exercises с full team simulating major outages. Open-source с 2012, inspired AWS Fault Injection Simulator, Gremlin, LitmusChaos.",
+                "example": "Каждый день Chaos Monkey убивает несколько Recommendation Service instances — никто из 200M users не замечает потому что ASG автоматически spawns replacement, LB rerouted traffic, circuit breaker handled brief downtime.",
+                "when_to_apply": "Любая высоконагруженная distributed system должна делать chaos engineering; критично для multi-region active-active systems.",
+                "edge_cases": "Stateful services (Cassandra) требуют осторожности с chaos — потеря данных недопустима; Chaos Kong запускается только monthly с подготовкой команды.",
+                "related": "Q20 resilience; Q24 multi-region; Q30 no chaos антипаттерн."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Chaos Engineering не используется в Netflix; они полагаются только на load testing и manual incident response.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chaos Engineering — defining innovation от Netflix. Chaos Monkey запущен в 2010, документация и open-source 2012, основа Netflix culture.",
+                "source_of_confusion": "Незнание Netflix history и open-source contributions.",
+                "if_it_were_true": "AWS Fault Injection Simulator не существовал бы; Gremlin не имел бы рыночной basis.",
+                "how_it_should_be": "Знать Chaos Engineering как Netflix-pioneered practice и Simian Army как suite."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Netflix организует multi-region active-active (US-East + EU-West + APAC) deployment?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Single region (только US-East) — Netflix не использует multi-region потому что AWS reliability достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix multi-region active-active: US-East-1 + EU-West-1 + AP-Northeast-1 (плюс secondary). Single region не даст latency targets для EU/APAC и не выдерживает region outage.",
+                "source_of_confusion": "Недооценка scale и geo требований.",
+                "if_it_were_true": "EU/APAC users имели бы 200+ ms cross-Atlantic latency; AWS US-East outage = Netflix полностью down.",
+                "how_it_should_be": "Active-active multi-region с per-region full stack."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Multi-region active-passive: только US-East активен, EU/APAC standby и активируются только при US-East outage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Active-passive не покрывает latency требования EU/APAC (cross-Atlantic 100+ms) и не utilize standby capacity. Netflix использует active-active.",
+                "source_of_confusion": "Знание DR pattern для enterprise apps вместо consumer-scale active-active.",
+                "if_it_were_true": "EU users имели бы плохой UX в normal operation; standby capacity простаивала.",
+                "how_it_should_be": "Active-active: каждый region serves local traffic с full stack."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Cross-region strong consistency: все writes идут через EACH_QUORUM в Cassandra, синхронно реплицируются на 3 regions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EACH_QUORUM cross-region даёт 100+ ms latency на каждый write — неприемлемо для interactive UX. Netflix использует LOCAL_QUORUM + async replication.",
+                "source_of_confusion": "Желание strong consistency без понимания latency cost.",
+                "if_it_were_true": "Click на pause занимал бы 200ms+ из-за cross-region write — UX deterioration.",
+                "how_it_should_be": "LOCAL_QUORUM in-region writes + async cross-region replication, eventual consistency."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Active-active deployment: US-East-1 (primary US), EU-West-1 (primary EU), AP-Northeast-1 (primary APAC) + secondaries для DR. Per-region: full microservices replica + Cassandra multi-DC replication + local Eureka registry + local OCA cluster. Routing: AWS Route 53 latency-based, DNS TTL 60s для quick failover, health checks per region. Cassandra: LOCAL_QUORUM writes (latency < 10ms in-region), async replication к other regions (5-30s lag), EACH_QUORUM только для critical writes. Eventual consistency: watch progress acceptable 30s lag, profile changes — route to home region. Failover: single AZ loss → ASG другой AZ (automatic), region loss → Route 53 reroute 1-2 min, planned overcapacity 2× в survivors. Chaos Kong simulates entire region loss monthly.",
+              "correct": true,
+              "sections": {
+                "explanation": "Netflix multi-region active-active удовлетворяет three goals: latency < 100 ms из любой geo, region outage → < 5 minutes switchover, local data residency (GDPR в EU). Primary regions: US-East-1 (N. Virginia) для US, EU-West-1 (Ireland) для EU, AP-Northeast-1 (Tokyo) для APAC, plus secondary regions per geo для disaster recovery. Per-region stack — полная replica: full microservices (catalog, recommendation, user, watch), Cassandra multi-DC replication, local Eureka registry (services discover в-region first), local OCA cluster (Open Connect). Routing: AWS Route 53 latency-based routing направляет user-а к nearest region по DNS, TTL 60 sec для quick failover, health checks per region. Cassandra multi-region: LOCAL_QUORUM writes (latency < 10 ms in-region) — большинство writes, async replication к other regions (5-30 sec lag normal), EACH_QUORUM для critical writes (slow, only при необходимости sync cross-region). Eventual consistency: watch progress eventually consistent (acceptable 30 sec lag), user profile changes — synchronous route to home region (rare operation). Failover scenarios: single AZ loss → ASG spawns в другой AZ (automatic, < 30s); region loss → Route 53 reroutes traffic to next region (1-2 minutes); cross-region disaster → regional traffic concentrates в survivors с planned overcapacity 2×. Chaos Kong simulates entire region loss monthly to verify everything works.",
+                "example": "Когда AWS US-East-1 имел outage 2017, Netflix Route 53 в течение 2 минут перенаправил US traffic в US-West-2, users заметили только minor delays в start playback — Continue Watching мог немного отставать.",
+                "when_to_apply": "Любой global service с > 10M users должен использовать multi-region active-active; latency < 100ms из любой geo нельзя достичь single region.",
+                "edge_cases": "GDPR требует data в EU не покидать EU — некоторые user data exclusively в EU region, иногда cross-region sync блокируется regulations.",
+                "related": "Q4 OCA; Q22 continue watching; Q23 Chaos Kong."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроена A/B testing platform Netflix для 1000+ одновременных экспериментов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Scale: Netflix runs 1000+ active experiments simultaneously. Platform: in-house experimentation infrastructure (open-sourced ABBA-like), bucketing service (consistent hashing по user_id), config service stores variants per experiment, metric pipeline collects engagement signals. Experiment design: control + 1-5 treatment variants, initial 1% traffic, ramp 5% → 25% → 50% → 100% при positive metrics, auto-rollback при regression > 1%. Metrics: primary retention D7/D30, secondary watch hours/completion/CTR, guardrail error rate + latency. Statistical: sequential testing (mSPRT) для early stopping, Bayesian inference для quick decisions, holdout 1% always для long-term effects. Pitfalls: network effects user-to-user invalidate per-user A/B → cluster-randomized для recommendation, multi-arm bandits для exploration без full A/B.",
+              "correct": true,
+              "sections": {
+                "explanation": "Netflix runs 1000+ active experiments одновременно — каждое изменение UX, recommendation, encoding, artwork тестируется через A/B platform. Platform — in-house infrastructure (open-sourced ABBA-like для metric analysis): bucketing service использует consistent hashing по user_id для stable assignment в experiment buckets, config service хранит variants per experiment (control + treatments), metric pipeline собирает engagement signals (watch hours, retention, CTR). Experiment design: control + 1-5 treatment variants, начальная allocation 1% traffic, ramp при positive metrics 5% → 25% → 50% → 100%, auto-rollback при regression > 1% (guardrail violation). Metrics layered: primary — retention (D7, D30 returning users) — главная business metric; secondary — watch hours, completion rate, CTR; guardrail — error rate, latency, должны не деградировать ни при каких условиях. Statistical tools: sequential testing (mixture Sequential Probability Ratio Test mSPRT) для early stopping при clear winner, Bayesian inference для quick decisions с less data, holdout group 1% всегда (для long-term effects detection). Pitfalls: network effects (user-to-user interactions invalidate per-user A/B → cluster-randomized experiments для social/recommendation changes), multi-arm bandits для exploration без full A/B overhead.",
+                "example": "Netflix тестирует новый artwork variant для Stranger Things — 1% users получают new artwork, system measures CTR + downstream watch completion 48 hours, если winner → ramp 5% → 25% → 100% за неделю.",
+                "when_to_apply": "Любой product-driven company должен иметь A/B platform от ранних дней; статистика mSPRT нужна для high-throughput experiments.",
+                "edge_cases": "Recommendation experiments часто network-effect-prone (друг советует подруге) — нужны cluster-randomized; multi-arm bandits для cold-start titles.",
+                "related": "Q14 recommendation; Q16 artwork; Q30 no A/B антипаттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix не делает A/B testing — все decisions принимаются по интуиции product managers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix — pioneer data-driven product development. 1000+ active experiments одновременно (Netflix Tech Blog), каждое UX change A/B-tested.",
+                "source_of_confusion": "Незнание Netflix culture data-driven decisions.",
+                "if_it_were_true": "Netflix не публиковал бы статьи про experimentation platform.",
+                "how_it_should_be": "Знать A/B platform как core competence Netflix."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Netflix запускает A/B тесты сразу на 100% traffic для быстрого результата; не использует gradual rollout.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100% rollout без gradual ramp — антипаттерн: regression влияет на всех users сразу. Netflix uses 1% → 5% → 25% → 100% ramp с auto-rollback.",
+                "source_of_confusion": "Желание быстрее получить результат без понимания risk.",
+                "if_it_were_true": "Каждая регрессия означала бы 270M users impacted simultaneously.",
+                "how_it_should_be": "Gradual ramp с guardrail metrics + auto-rollback при regression."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "A/B platform работает только для UI changes; backend изменения (encoding, recommendation) не тестируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backend изменения (encoding ladder, recommendation model, ABR algorithm) — главные A/B candidates у Netflix. Каждое имеет measurable QoE impact.",
+                "source_of_confusion": "Узкое понимание A/B testing scope.",
+                "if_it_were_true": "Encoding/recommendation regressions выкатывались бы без measurement.",
+                "how_it_should_be": "A/B everything: UI, encoding, recommendation, ABR, infrastructure changes."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие компоненты включает data platform Netflix (Kafka, Iceberg, Spark, Flink) и каковы их роли?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Netflix использует только monolithic Hadoop кластер; Kafka/Flink/Iceberg не нужны для analytics.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix модернизированный stack: Kafka (events), Flink (realtime stream processing), Spark (batch), Iceberg (data lake), Snowflake (BI). Monolithic Hadoop legacy.",
+                "source_of_confusion": "Знание 2010-х Big Data stack без обновления.",
+                "if_it_were_true": "Real-time recommendation feature updates были бы невозможны через batch-only Hadoop.",
+                "how_it_should_be": "Modern stream + batch + lakehouse stack."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Stream layer: Apache Kafka primary event backbone (trillions events/day, 100+ clusters across regions, topics watch_events/profile_changes/recommendation_clicks/errors). Stream processing: Apache Flink low-latency real-time (recommendations, fraud) с stateful processing exactly-once semantics. Batch: Apache Spark на EMR — ETL daily/hourly aggregations, ML training. Data lake: Apache Iceberg на S3 — schema evolution, time travel queries, partition pruning. Warehouse: Snowflake/Druid для BI, Tableau dashboards. Pipeline: Kafka events → Flink real-time → online features (EVCache) → Iceberg на S3 → Spark batch → ML training → models S3 → Snowflake → dashboards. Feature store: Netflix Metaflow + custom. Volume: 1 trillion events/day, 100 PB+ Iceberg, 10K+ pipelines.",
+              "correct": true,
+              "sections": {
+                "explanation": "Netflix data platform — modern lakehouse stack с stream + batch + warehouse layers. Stream layer: Apache Kafka — primary event backbone, trillions events/day, 100+ Kafka clusters across regions для durability и locality, topics: watch_events (что smотрят, какая позиция), profile_changes (settings, preferences), recommendation_clicks, errors. Stream processing: Apache Flink — low-latency real-time processing для recommendations (online feature updates), fraud detection (anomaly detection в реальном времени), stateful processing с exactly-once semantics для accuracy. Batch processing: Apache Spark на AWS EMR — ETL daily/hourly aggregations для metrics dashboards, ML training pipelines (recommendation models retrained daily). Data lake: Apache Iceberg на S3 — modern table format с schema evolution (можно добавлять колонки without migration), time travel queries (query data as of specific timestamp), partition pruning для efficient access. Warehouse: Snowflake / Druid для BI analytics, Tableau dashboards для product teams. Full pipeline: Kafka events → Flink realtime → online features (EVCache для recommendation runtime) → Iceberg на S3 (durable storage) → Spark batch → ML training → models в S3 → Snowflake (analytics) → Tableau (dashboards). Feature store: Netflix Metaflow (open-sourced) + custom feature store для train-serve consistency (same features в training и в inference). Volume: 1 trillion events/day, 100 PB+ в Iceberg, 10K+ data pipelines.",
+                "example": "User click «Play» → Kafka watch_event → Flink updates online recommendation features в EVCache в реальном времени (< 1s lag) → одновременно event пишется в Iceberg для daily batch training next day.",
+                "when_to_apply": "Любой data-driven сервис должен иметь streaming + batch + lakehouse separation; Iceberg/Hudi/Delta — modern lakehouse standards.",
+                "edge_cases": "Late-arriving events требуют windowing strategies в Flink; schema evolution требует backward-compatible changes в Kafka topics и Iceberg.",
+                "related": "Q14 recommendation training; Q22 watch events; Q25 A/B metrics."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Netflix использует только Kafka — все processing (batch, streaming, ML training) через consumer groups.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka — event log, не processing engine. Stream processing (Flink) и batch (Spark) нужны для compute. Storage tier (Iceberg) для durable analytical queries.",
+                "source_of_confusion": "Желание упростить stack до одного tool.",
+                "if_it_were_true": "Complex ML training joined data across days не работал бы в Kafka.",
+                "how_it_should_be": "Kafka (events) + Flink (stream) + Spark (batch) + Iceberg (storage) — каждый для своей задачи."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все analytics в Netflix делается в Snowflake — Iceberg/Spark/Flink не используются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Snowflake — analytical warehouse для BI/dashboards, но не подходит для 100 PB raw data lake или real-time stream processing. Netflix uses layered stack.",
+                "source_of_confusion": "Узкое понимание data stack как «warehouse only».",
+                "if_it_were_true": "Snowflake costs были бы $100M+/year для всех 100 PB.",
+                "how_it_should_be": "Iceberg/S3 для cheap lake storage, Spark/Flink для compute, Snowflake для BI top tier."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Netflix реализует downloads для offline viewing на мобильных устройствах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Offline downloads не поддерживаются — Netflix только online streaming.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix поддерживает offline downloads с 2016+ для mobile/tablet — это критичная feature для travel use case.",
+                "source_of_confusion": "Незнание Netflix mobile features.",
+                "if_it_were_true": "Netflix терял бы пользователей которым важен offline viewing в самолёте.",
+                "how_it_should_be": "Знать downloads как ключевую mobile feature."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Downloads сохраняются как обычные video файлы без DRM — user может копировать их на другие устройства.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Studios требуют DRM для offline; downloads encrypted с persistent licenses tied to device. Free copying было бы catastrophic для licensing.",
+                "source_of_confusion": "Игнорирование DRM requirements от content providers.",
+                "if_it_were_true": "Hollywood контент моментально утекал бы в torrents.",
+                "how_it_should_be": "Encrypted local files + DRM persistent licenses + device binding."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Download = encrypted local file на device (HEVC или AV1 mobile-optimized, smaller files, lower bitrate vs streaming для battery+storage). DRM license (Widevine/FairPlay) persistent, tied to device, expiration typically 30 days after download. Storage: up to 100 episodes per device, local FS encrypted at rest. Restrictions: некоторые titles нельзя скачать (licensing limits), max downloads per account, auto-delete after expiry или watch + 48h. Sync online: watch progress saved locally → sync when reconnect → updated на сервере → Continue Watching updates (Q22). License revocation: suspended account → next online check → license invalidated → cannot play. Device limit ~5 downloaded devices per account.",
+              "correct": true,
+              "sections": {
+                "explanation": "Offline downloads решают use case viewing без internet (самолёт, метро, плохой Wi-Fi в гостинице). Implementation: download — encrypted local file на device storage, codec mobile-optimized (HEVC или AV1 — smaller files vs H.264, better для phone/tablet battery), lower bitrate vs streaming (battery + storage savings, screen size phone не требует 4K). DRM critical: persistent license (Widevine/FairPlay в зависимости от platform) tied к device, expiration typically 30 days after download (если user не открывал app), revocable. Storage limits: up to 100 episodes per device (per user setting), local file system encrypted at rest. Restrictions: некоторые titles нельзя скачать (licensing limits — например premium новинки), max downloads per account, auto-delete after expiry или watch + 48 hours grace. Sync with online: watch progress saved locally → sync when reconnect to internet → updated на сервере в Cassandra → Continue Watching shows correct position (Q22). License revocation: suspended account → next online check (app periodically calls home) → license invalidated → playback prohibited. Device limit ~5 downloaded devices per account чтобы предотвратить sharing exploits.",
+                "example": "User скачивает Stranger Things S4 перед 14-часовым полётом → смотрит offline в самолёте → progress saved locally → по приземлении (Wi-Fi в аэропорту) progress sync → Continue Watching на TV дома показывает корректную позицию.",
+                "when_to_apply": "Любой VOD сервис с mobile clients должен поддерживать offline; для browser/desktop downloads обычно не реализуют (legal/security complexity).",
+                "edge_cases": "Account banned mid-flight — user продолжает смотреть пока license валиден, при следующем check license revoked; license expiry за 30 дней может frustrate долго-travel users.",
+                "related": "Q9 codecs; Q13 DRM; Q22 continue watching."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Downloads просто streaming контента в буфер; никаких offline files не сохраняется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это просто preloading, не downloads. Real downloads сохраняют полный episode на device storage для viewing без любого internet connectivity.",
+                "source_of_confusion": "Смешение buffering streaming с offline downloads.",
+                "if_it_were_true": "В самолёте без Wi-Fi user не мог бы ничего смотреть.",
+                "how_it_should_be": "Полная offline copy на device с DRM protection."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие основные категории cost optimization у Netflix и как Open Connect + Spot + Reserved + per-title encoding снижают затраты?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Netflix не оптимизирует costs — главное это product features, infrastructure costs незначительны на их revenue.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Infrastructure costs Netflix — миллиарды/год. Open Connect, per-title encoding, Spot fleet specifically инвестировано для cost reduction.",
+                "source_of_confusion": "Преувеличение Netflix revenue vs infrastructure cost ratio.",
+                "if_it_were_true": "Netflix не публиковал бы статьи про Open Connect savings vs commercial CDN.",
+                "how_it_should_be": "Cost optimization — major engineering priority при scale."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix полностью использует On-Demand EC2 без Reserved/Spot — flexibility important than savings.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spot для encoding (10× saving) и Reserved для steady-state services (60% saving) — обязательные optimizations при Netflix scale. On-Demand only был бы 10× более дорогим compute.",
+                "source_of_confusion": "Знание базовой EC2 pricing без understanding RI/Spot.",
+                "if_it_were_true": "Encoding costs $250K/year вместо $25K; microservices compute $300M вместо $100M.",
+                "how_it_should_be": "Reserved для steady-state, Spot для batch, On-Demand только для unpredictable bursts."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главная cost categorization — это только AWS EC2 instances; CDN, encoding, storage не отдельные buckets.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN egress — крупнейший infrastructure cost у Netflix ($300-500M/year), не EC2. Storage и encoding — отдельные categories с разными optimization patterns.",
+                "source_of_confusion": "Узкое понимание cost structure большого streaming.",
+                "if_it_were_true": "Netflix не инвестировал бы в Open Connect specifically для CDN savings.",
+                "how_it_should_be": "Знать distribution costs: CDN (largest), compute, storage, encoding отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cost buckets (annual): CDN egress $300-500M — оптимизирован Open Connect (95% traffic через OCA at ~$2/TB vs commercial CDN $20/TB = 10× cheaper, total $200-400M/year saved). AWS Compute EC2 $100-200M — Reserved + Savings Plans (3-year RI 60% discount, steady-state services как microservices/Cassandra). AWS Storage S3 $50-100M — lifecycle policies (Standard → IA after 30d unused → Glacier after 1y). Encoding $25-50M — Spot instances 90% discount (vs On-Demand). Studio licensing $15-20B — largest cost, content deals (вне infra optimization). Per-title encoding (Q8) 20-30% bitrate reduction → $50-100M/year. WebP/AVIF artwork → 30-50% smaller posters savings on CDN.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cost optimization — major engineering priority при Netflix scale. Top cost buckets (annual): CDN egress $300-500M — самая крупная инфра-категория, оптимизирована через Open Connect: 95% traffic через OCA at ~$2/TB (cost of operating OCA + ISP peering), vs commercial CDN $20/TB → 10× cheaper, total $200-400M/year saved. AWS Compute EC2 $100-200M — оптимизация через Reserved Instances и Savings Plans (3-year RI даёт 60% discount от On-Demand), используется для steady-state services (microservices, Cassandra cluster), Spot для bursty workloads (encoding). AWS Storage S3 $50-100M — lifecycle policies автоматически перемещают данные: Standard → IA (Infrequent Access) after 30 days unused → Glacier after 1 year unused, спасает миллионы. Encoding $25-50M — Spot instances 90% discount vs On-Demand (Q10), embarrassingly parallel workload идеален для Spot. Studio licensing $15-20B — самый большой cost overall (Hollywood content deals), вне infrastructure optimization но shapes everything else. Per-title encoding (Q8) даёт 20-30% bitrate reduction → equivalent CDN savings $50-100M/year. Image optimization: WebP/AVIF artwork → 30-50% smaller posters vs JPEG, savings on CDN bandwidth для homepage assets. Trade-offs: aggressive Spot use → orchestration complexity, Reserved Instances commitment → less flexibility, Open Connect requires ISP relationships (years to build).",
+                "example": "На пике трафика Open Connect serves ~950 Gbps на крупном ISP за <$2K/day infrastructure cost; commercial CDN тарифицировал бы то же в $20K+/day. На годовом масштабе разница составляет $200M+ savings.",
+                "when_to_apply": "Любой консумерский сервис на petascale должен оптимизировать CDN/compute/storage; small-scale costs обычно dominated by people, не infrastructure.",
+                "edge_cases": "Spot price spikes требуют fallback на On-Demand для critical encoding; Reserved Instances commitment иногда лишний если traffic растёт нелинейно.",
+                "related": "Q4 OCA; Q8 per-title; Q10 Spot; Q30 antipatterns."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Netflix детектирует и обрабатывает account/password sharing (crackdown 2023)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Detection через household graph: ML model identifies «household» = devices that watch in same home Wi-Fi periodically. Outside-household streams trigger verification. Signals: device locations (IP, geo, ISP), login patterns (time-of-day, frequency), watch patterns (simultaneous streams на 3+ different IP ranges), device fingerprints (unique IDs across logins). Enforcement: friction (не block) — user prompted to verify primary location, soft warnings before hard block, adoption of «Extra Member» subscription ($7.99/month). Edge cases: traveling household member — temporary access allowed, student dormitory flexibility, different time-zones accommodation. Crackdown 2023 increased Extra Member adoption, billions $$ revenue.",
+              "correct": true,
+              "sections": {
+                "explanation": "Account sharing был массовым (по оценкам 100M+ households sharing) и стоил Netflix billions/year потерянного revenue. 2023 crackdown stricter «Primary household» detection + Extra members $7.99/month. Detection signals: device locations — IP addresses, geo-location, ISP (sharing across countries vs same neighborhood); login patterns — time-of-day, frequency, simultaneous logins; watch patterns — simultaneous streams на 3+ different IP ranges (один user не может быть в трёх городах сразу); device fingerprints — unique device IDs across logins (через browser fingerprinting, device cookies, hardware identifiers). Algorithm: «Household» определяется как devices that watch in same home Wi-Fi periodically (clusters в graph). ML model identifies household graph (devices clusters по spatial + temporal patterns). Outside-household streams trigger verification challenge. Enforcement: graduated (friction не block) — user prompted to verify primary location (email confirmation, в-app), soft warnings before hard block, adoption of «Extra Member» $7.99/month subscription как legalization sharing. Edge cases: traveling household member (vacation, business trip) — temporary access allowed by IP+time signals; student dormitory (away from home часть года) — flexibility per university calendar; different time-zones — accommodate (например family международная). Other fraud types: stolen credit cards (fraud signals on signup), subscription fraud free-trial abuse (device fingerprint blocklist), bot accounts (rate limiting + CAPTCHA).",
+                "example": "User в Лондоне streaming с двух IP в Нью-Йорке одновременно — flagged as cross-household sharing → verification challenge → option upgrade на Extra Member.",
+                "when_to_apply": "Subscription services с per-user pricing должны иметь sharing detection; UGC/free services без аналогичной проблемы.",
+                "edge_cases": "VPN users могут получать false positives (IP looks remote); business travelers с frequent geo changes требуют ML adjustment.",
+                "related": "Q14 user signals; Q24 multi-region IPs."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Netflix не отслеживает account sharing — share свободно с кем угодно без последствий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С 2023 Netflix активно борется с account sharing (crackdown announcement). Detection и enforcement через ML household graph.",
+                "source_of_confusion": "Игнорирование 2023 anti-sharing initiative.",
+                "if_it_were_true": "Netflix не разработал бы «Extra Member» subscription и не получал бы billions $$ дополнительного revenue.",
+                "how_it_should_be": "Знать про 2023 crackdown и household graph detection."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Detection основан только на IP address: разные IP = разные households, automatic block.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pure IP-based detection даёт false positives (mobile users часто меняют IP — Wi-Fi → 4G → coffee shop). Netflix использует multi-signal ML model.",
+                "source_of_confusion": "Упрощение detection до single signal.",
+                "if_it_were_true": "Mobile users получали бы постоянные verification challenges → массовый churn.",
+                "how_it_should_be": "Multi-signal: IP + geo + device fingerprint + watch pattern + temporal."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Detected sharing immediately blocks account без any warning или friction.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix uses graduated enforcement: friction (verification challenge) → soft warnings → Extra Member offer → hard block только в крайнем случае. Immediate block убил бы PR.",
+                "source_of_confusion": "Желание агрессивного enforcement без понимания UX implications.",
+                "if_it_were_true": "Massive PR fallout, churn спайки, customer complaints в массе.",
+                "how_it_should_be": "Graduated approach: verify → warn → upsell Extra Member → block if needed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор антипаттернов и подводных камней в архитектуре Netflix-style streaming наиболее критичен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Главный антипаттерн — использование микросервисов вместо monolith; нужен один сервис на всё.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Микросервисы — pioneered Netflix specifically для resilience и independent deploy. Монолит на consumer scale = single point of failure и невозможность independent scaling.",
+                "source_of_confusion": "Anti-microservices hype без понимания scale realities.",
+                "if_it_were_true": "Netflix не открывал бы Eureka/Zuul/Hystrix; один deploy ломал бы весь сервис.",
+                "how_it_should_be": "Microservices правильные для consumer-scale + chaos engineering для proof."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "(1) Synchronous calls между всеми сервисами — cascade failures, slow downstream blocks upstream → fix через async (Kafka events для side effects), tight timeouts, bulkheads. (2) Single CDN provider без fallback → multi-CDN. (3) No chaos testing → Chaos Monkey + monthly Kong drills. (4) Strong consistency между regions → eventual + LOCAL_QUORUM. (5) Каждый сервис без circuit breaker → Resilience4j всех external calls. (6) Sync click counter updates → async через Kafka aggregation. (7) Без A/B platform → experimentation от day 1. (8) Fixed bitrate ladder для всего content → per-title encoding 20% saving. (9) One codec для всех devices → device-aware AV1→HEVC→VP9→H.264. (10) No DRM → Widevine/FairPlay/PlayReady. (11) Pure pull-based CDN → pre-positioning overnight. (12) Без observability на QoE → composite QoE metric + alert. (13) Encoding на On-Demand EC2 → Spot fleet 10× cheaper. (14) Monolith service → microservices independent deploy. (15) Без forensic watermarking → per-user watermark.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главные антипаттерны и подводные камни Netflix-style streaming собраны из реального опыта эволюции архитектуры. (1) Sync calls cascade — microservice A → B sync → C sync, A waits whole chain; C slow → B threads blocked → A threads blocked, fix через async Kafka events + tight timeouts + bulkheads. (2) Single CDN provider — outage = 0 revenue, fix multi-CDN (Open Connect + commercial fallback). (3) No chaos testing — untested failover работает only ~40% времени, fix Chaos Monkey continuous + monthly Kong drills. (4) Strong cross-region consistency — cross-region sync writes 100+ ms latency, fix eventual consistency + LOCAL_QUORUM. (5) No circuit breaker — slow downstream cascades, fix Resilience4j всех external calls. (6) Sync click counter — hot title spike → row contention, fix async через Kafka aggregation. (7) No A/B platform — rollout без measurement = guessing, fix experimentation from day 1. (8) Fixed bitrate ladder — cartoon over-encoded action under-encoded, fix per-title encoding 20% bandwidth saving. (9) One codec — H.264 only = 30% extra bandwidth vs AV1, fix device-aware codec ladder. (10) No DRM — studios refuse to license, fix Widevine/FairPlay/PlayReady. (11) Pull-based CDN only — cold cache spike at premiere, fix pre-positioning overnight. (12) No QoE observability — metrics ok but rebuffering high, fix composite QoE metric + alert on degradation. (13) On-Demand EC2 encoding — 10× over Spot cost. (14) Monolith service — один deploy ломает всё, fix microservices independent deploy. (15) No forensic watermarking — leaked content untraceable, fix per-user embedded watermark.",
+                "example": "Netflix испытывает каждый из этих антипаттернов на собственном опыте до решения — Chaos Monkey появился именно потому что они увидели «untested failover не работает в реальности», Hystrix/Resilience4j из cascade incidents 2010-х.",
+                "when_to_apply": "Чек-лист на architecture review любого consumer-scale streaming/feed/recommendation service.",
+                "edge_cases": "Не все patterns обязательны на small scale — microservices overhead больше pays off > 10M users, chaos engineering требует mature ops culture.",
+                "related": "Все Q1-Q29."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главный антипаттерн — избыточное использование async; нужно делать всё sync для предсказуемости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sync calls cascade — sees crisis pattern № 1 у Netflix. Async (Kafka events) — recommended pattern для side effects.",
+                "source_of_confusion": "Знание sync semantics без понимания cascade failure risks.",
+                "if_it_were_true": "Netflix не использовал бы Kafka и не имел бы async pipelines для recommendation.",
+                "how_it_should_be": "Async где возможно (side effects, analytics, notifications); sync только для critical-path queries."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный антипаттерн — использование AWS вместо собственных дата-центров.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Netflix на AWS — proven approach. Real антипаттерны — single CDN, no chaos, sync cascade, fixed bitrate ladder, one codec, no DRM, etc.",
+                "source_of_confusion": "Cloud-vs-DC debate вместо real architectural antipatterns.",
+                "if_it_were_true": "Netflix мигрировал бы из AWS обратно на own DCs.",
+                "how_it_should_be": "Знать architectural antipatterns: sync cascade, single CDN, no chaos, fixed ladder etc."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
