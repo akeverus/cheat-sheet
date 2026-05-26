@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.infrastructure.health;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +59,20 @@ class SeedCoverageHealthIndicatorTest {
         assertThat(health.getDetails()).containsEntry("questionsTotal", 100);
         assertThat(health.getDetails()).containsEntry("questionsWithOptions", 20);
         assertThat(health.getDetails()).containsEntry("coverageRatio", 0.2);
+    }
+
+    @Test
+    void databaseFailureReportsDownInsteadOfThrowing() {
+        when(jdbc.queryForObject(startsWith("SELECT COUNT(*) FROM questions"), eq(Integer.class)))
+                .thenThrow(new DataAccessResourceFailureException("connection refused"));
+
+        Health health = indicator.health();
+
+        // Контракт: если БД лежит, indicator возвращает DOWN с reason, а не
+        // даёт исключению уйти наружу (иначе /actuator/health сломается целиком).
+        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getDetails()).containsEntry("reason", "database query failed");
+        assertThat(health.getDetails()).containsEntry("error", "DataAccessResourceFailureException");
     }
 
     @Test

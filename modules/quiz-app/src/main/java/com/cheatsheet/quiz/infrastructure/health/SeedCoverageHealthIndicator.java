@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.infrastructure.health;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -35,11 +36,23 @@ public class SeedCoverageHealthIndicator implements HealthIndicator {
 
     @Override
     public Health health() {
-        Integer total = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM questions", Integer.class);
-        Integer withOptions = jdbcTemplate.queryForObject(
-                "SELECT COUNT(DISTINCT question_id) FROM answer_options", Integer.class);
-        int totalCount = total == null ? 0 : total;
-        int withOptionsCount = withOptions == null ? 0 : withOptions;
+        int totalCount;
+        int withOptionsCount;
+        try {
+            Integer total = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM questions", Integer.class);
+            Integer withOptions = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(DISTINCT question_id) FROM answer_options", Integer.class);
+            totalCount = total == null ? 0 : total;
+            withOptionsCount = withOptions == null ? 0 : withOptions;
+        } catch (DataAccessException e) {
+            // БД недоступна — отдаём DOWN, не палим stack trace. Сам Spring `db`
+            // indicator уже скажет почему БД лежит; мы лишь говорим, что
+            // seed-coverage невозможно посчитать.
+            return Health.down()
+                    .withDetail("reason", "database query failed")
+                    .withDetail("error", e.getClass().getSimpleName())
+                    .build();
+        }
 
         if (totalCount == 0) {
             return Health.up()
