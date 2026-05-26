@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "design-rate-limiter-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор functional и non-functional requirements корректно зафиксировать для глобального rate limiter Cloudflare/Stripe-scale (1M req/sec, p99 < 10 ms) и какой trade-off по CAP из них следует?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Functional: allow/deny по композиции ключей (user/IP/API-key/endpoint), 429 + Retry-After + X-RateLimit-*. Non-functional: p99 decision < 10 ms, throughput 1M ops/sec, availability 99.99%, accuracy ±10%, fairness per-key, consistency eventual между nodes.",
+              "correct": true,
+              "sections": {
+                "explanation": "Rate limiter — это AP-система: жертвуем strong consistency между nodes ради latency и availability. Точность ±5-10% приемлема, потому что у sliding window counter approximation как раз такой error budget, а strict accuracy блокирует масштабирование. Availability 99.99% обязателен — limiter на critical path и не должен быть SPOF. Fairness через per-key isolation: один heavy user не должен задушить остальных. P99 < 10 ms — стандарт индустрии, потому что decision лежит inline в request path.",
+                "example": "Cloudflare декларирует sub-millisecond rate limit decision на edge; Stripe API rate limits возвращают X-RateLimit-Limit/Remaining/Reset на каждом ответе; GitHub использует 5000 req/hour quota с composite (user + app + IP) композицией.",
+                "when_to_apply": "Любой public API (Stripe, Twilio, GitHub), edge protection (Cloudflare, Fastly), B2B-партнёрский tier с quotas, защита внутренних сервисов от cascading failures.",
+                "edge_cases": "Для финтех auth-endpoints fairness уступает security: 5 failed login attempts → strict lockout даже ценой UX. Multi-region active-active требует per-region Redis cluster — глобальный counter создаст cross-region latency 100+ ms.",
+                "related": "Q2 capacity estimation; Q11 single-node vs distributed; Q23 fail-open vs fail-closed; Q18 HTTP 429 контракт."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Strong consistency на всех counters между nodes, 100% accuracy, p99 < 1 ms, availability 100%, выбираем CP по CAP — без compromises.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Strong consistency на 1M ops/sec через distributed Redis с consensus (Raft/Paxos) физически невозможна без 10-50 ms latency на write — это в 10× выше target. 100% accuracy требует sliding window log с O(limit) memory, что не масштабируется. 100% availability — миф (CAP диктует выбор P в реальной сети).",
+                "source_of_confusion": "Кандидат пытается выглядеть строго и обещает максимум по всем осям, забывая что rate limiter специально создан как AP-система.",
+                "if_it_were_true": "Если бы strong consistency на 1M ops/sec была реальностью, Cloudflare не публиковал бы статью «Counting things, a lot of different things» о sliding window counter approximation; они переключились бы на консенсус.",
+                "how_it_should_be": "Eventual между nodes, accuracy ±1-10%, p99 < 10 ms, availability 99.99% — это и есть Cloudflare-стандарт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Functional только: «блокировать abuse»; non-functional обсуждать после первого incident, accuracy не критична, fairness опциональна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без явных NFR кандидат пропускает fairness, failure modes, latency budget — а именно эти оси проверяет интервьюер на senior-уровне. «После incident» в production невозможно: rate limiter без fairness уже не защищает от noisy neighbour.",
+                "source_of_confusion": "Подход «MVP first» работает для feature flags, но не для критической инфраструктуры на 1M req/sec.",
+                "if_it_were_true": "Если бы NFR можно было откладывать, первая DDoS-атака уложила бы Redis в hot-key burn — что и случилось с GitHub в 2018 (1.35 Tbps attack); они выжили только потому, что NFR были продуманы заранее.",
+                "how_it_should_be": "Functional + NFR (latency, throughput, fairness, availability) фиксируются сразу, до выбора алгоритма."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Token bucket с capacity 100 и refill 10/sec на всё; обсуждение требований не нужно — алгоритм решает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прыжок в алгоритм без NFR — классическая senior-trap. Token bucket с фиксированными константами не покрывает per-tenant quotas, не отвечает на вопрос «что делать при Redis fail», не фиксирует target latency.",
+                "source_of_confusion": "Кандидат знает один популярный алгоритм и пытается им «закрыть» весь дизайн.",
+                "if_it_were_true": "Если бы алгоритм определял требования, Stripe и GitHub не имели бы разных tier-схем; реально capacity/refill — это переменные tenant config, не константы.",
+                "how_it_should_be": "Сначала requirements (latency, accuracy, fairness, scope), затем выбор алгоритма с обоснованием trade-offs."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Capacity estimation для глобального rate limiter (1M req/sec peak, 100M active users, 5M API keys): какая оценка Redis storage и cluster size корректна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Storage: 200 GB; cluster: 200 master shards × 3 replicas = 600 nodes; per-key state 1 KB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-key state в Redis hash для token bucket — это 50-100 B (tokens + last_refill + overhead), не 1 KB. 200M active keys × 100 B = 20 GB, не 200 GB. 200 shards — overkill: 1M ops/sec / 50K ops/sec на master = 20 shards достаточно.",
+                "source_of_confusion": "Кандидат завышает per-key size, забывая что Redis HSET с двумя полями занимает порядка 60-80 B; и линейно экстраполирует cluster size без учёта per-shard throughput.",
+                "if_it_were_true": "Если бы 1 KB на key было нормой, AWS ElastiCache счёт за 200 GB Redis cluster был бы $50K+/month — никто не хранил бы простые counters в Redis на таком объёме.",
+                "how_it_should_be": "Per-key 100 B, storage 20 GB, cluster 20 master shards (×3 replicas = 60 nodes)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Storage: 20 GB; cluster: 20 master shards × 3 replicas = 60 nodes; per-key 50-100 B; throughput 50K ops/sec на master.",
+              "correct": true,
+              "sections": {
+                "explanation": "Active keys (user + IP + API key combinations) ≈ 200M; per-key hash для token bucket с двумя полями (tokens, last_refill) занимает 50-100 B с Redis overhead → 20 GB total. Throughput 50K ops/sec на single Redis master — стандартный benchmark (cluster mode, Lua script + EVALSHA). 1M ops/sec / 50K = 20 master shards. Replication factor 3 (1 master + 2 replicas) для durability и failover → 60 nodes. Network bandwidth: 1M × 100 B × 2 (request+response) = 200 MB/sec per cluster.",
+                "example": "Stripe blog описывает похожую схему: Redis cluster с десятками shards, atomic Lua scripts, EVALSHA для bandwidth. AWS ElastiCache r6g.xlarge даёт ~50K ops/sec на master, $1.5K/month каждый — 60 nodes ≈ $20K/month.",
+                "when_to_apply": "Любая capacity estimation для distributed rate limiter: количество active keys × per-key size = storage; total ops / per-shard ops = shard count; ×3 для replication.",
+                "edge_cases": "Hot keys (1 merchant с 100K req/sec) ломают балансировку → нужны local counters (Q11) или dedicated hot cluster (Q12). Cross-region не входит в 20 GB — каждый регион свой Redis cluster, чтобы избежать 100+ ms latency.",
+                "related": "Q11 single-node vs distributed; Q12 hot key problem; Q14 consistent hashing; Q10 Redis Lua."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Storage: 2 GB; cluster: 2 master shards × 1 replica; per-key 10 B; throughput 500K ops/sec на master.",
+              "correct": false,
+              "sections": {
+                "what_actually": "10 B per key недостижимо: даже один integer counter + Redis overhead ~30 B; HSET с двумя полями — 60-80 B. 500K ops/sec на single master — выше benchmark (50K реальный, до 200K в idealized Lua-only без network). 1 replica недостаточно для 99.99% availability — при потере master будет 1-2 минут downtime.",
+                "source_of_confusion": "Underestimate per-key size (думают как про raw int) и переоценка Redis throughput (берут lab-benchmark вместо production).",
+                "if_it_were_true": "Если бы 500K ops/sec на single shard были реальностью, никто не строил бы Redis Cluster — все жили бы на одном instance. Реально limit ~50-100K ops/sec на shard.",
+                "how_it_should_be": "Per-key 50-100 B; throughput 50K на master; 20+ shards с replication factor 3."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Storage не важна — keys эфемерны; cluster: 1 Redis instance с persistent disk; throughput unlimited.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эфемерность не отменяет memory footprint в данный момент — даже с TTL 60 sec, 200M активных keys одновременно занимают 20 GB. Single Redis — SPOF; одна реплика недостаточна для production. Unlimited throughput — миф: Redis single-threaded на ~50K ops/sec.",
+                "source_of_confusion": "Кандидат игнорирует concurrent active state, путая «keys эфемерны» с «memory не нужна».",
+                "if_it_were_true": "Если бы single Redis instance держал 1M ops/sec, Cloudflare не строил бы global edge с тысячами nodes — хватило бы одного сервера.",
+                "how_it_should_be": "Storage 20 GB реально, cluster mode обязателен, replication factor 3 для availability."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие scope-уровни (ключи) корректно использовать в production rate limiter и как их комбинировать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только per-user; остальные уровни (IP, API key, endpoint) избыточны и создают сложность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-user в одиночку не защищает от unauthenticated traffic (scraping, DDoS до auth), от B2B-партнёров с разными tier-ами, от expensive endpoints (search, export). Каждый уровень закрывает свой вектор атаки.",
+                "source_of_confusion": "Кандидат упрощает схему, думая что один уровень достаточен для всех сценариев.",
+                "if_it_were_true": "Если бы per-user был достаточен, GitHub не имел бы отдельных limit для unauthenticated (60 req/hour), authenticated (5000), Search API (30 req/min) — все эти tier-ы существуют именно потому, что один уровень не покрывает все случаи.",
+                "how_it_should_be": "Composite multi-tier: per-IP (DDoS), per-API-key (B2B), per-user (individual abuse), per-endpoint (expensive ops)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только per-IP — самый универсальный, защищает от всего и не требует authentication.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-IP проваливается за NAT/CGNAT (тысячи пользователей с одним публичным IP), не различает paid B2B-партнёров от free users, не защищает от distributed botnets (1M уникальных IP с 1 req/sec каждый = 1M req/sec).",
+                "source_of_confusion": "Per-IP «универсален» только в простых случаях; в реальности CGNAT и botnets его пробивают.",
+                "if_it_were_true": "Если бы per-IP был достаточен, Cloudflare Bot Management не существовал бы как отдельный продукт — он нужен именно потому, что IP-based фильтрация недостаточна против современных ботов.",
+                "how_it_should_be": "Per-IP — один из tier-ов, в composite с per-user и behavioral signals."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Composite: per-IP + per-user + per-API-key + per-endpoint + per-region, комбинируются через AND (request разрешён только если все tier-ы allow) или OR (любой deny → 429); порядок проверок — от дешёвого к дорогому.",
+              "correct": true,
+              "sections": {
+                "explanation": "Composite позволяет закрыть разные векторы атаки разными ключами: per-IP против scraping/DDoS, per-user против individual abuse, per-API-key против B2B-tier abuse, per-endpoint против атаки на expensive operations (search, export). Порядок важен для performance: per-IP check ≈ 0.5 ms (cheap), per-user check 1-2 ms (requires user lookup) — дешёвое сначала отсекает 99% traffic до дорогих checks. Композиция обычно AND для allow (все должны пропустить), OR для deny (любой deny → 429).",
+                "example": "Stripe: per-API-key tier (test 25 req/sec, live 100, enterprise негот.) + per-endpoint cost (/v1/reports = 10 weight); GitHub: per-user 5000 req/hour + per-app 12500 + Search API 30/min; AWS API Gateway: usage plans с composite api_key + method + region.",
+                "when_to_apply": "Любой production rate limiter: всегда composite. Single-tier хватает только для PoC / staging.",
+                "edge_cases": "AND создаёт race condition между tier checks (Q15): tier A consume, tier B deny → нужен atomic Lua над всеми. Per-region для compliance/geo-fence (Q25).",
+                "related": "Q15 multi-tier composite; Q16 cost-based weighted; Q17 per-tenant quotas; Q21 layered architecture."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только global counter — простой и предотвращает overload системы; per-key tier не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Global counter — это circuit breaker, не fairness. Один noisy user может выжать весь global limit, при этом легитимные users получат 429. Fairness требует per-key изоляции.",
+                "source_of_confusion": "Кандидат смешивает overload protection (global) с rate limiting (per-key fairness).",
+                "if_it_were_true": "Если бы global был достаточен, один scraper мог бы DoS-нуть весь API — что и происходило с Twitter API до введения per-token limits.",
+                "how_it_should_be": "Global — один из tier-ов (circuit breaker), но не единственный; per-key обязателен для fairness."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать token bucket в distributed environment с Redis, чтобы избежать race condition между N pods?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sequential: GET tokens → если > 0, SET tokens-1; реализовать в application layer на Java/Python.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GET + SET — два сетевых вызова с race condition: pod A читает tokens=1, pod B читает tokens=1, оба decrement → tokens=-1 (или оба разрешают). Между GET и SET нет atomicity.",
+                "source_of_confusion": "Кандидат не понимает что Redis команды atomic индивидуально, но не последовательность из них.",
+                "if_it_were_true": "Если бы GET+SET был корректным, distributed counters не нуждались бы в Lua/MULTI/WATCH — реально классическая race condition валит 5-10% counter consistency при concurrent access.",
+                "how_it_should_be": "Atomic RMW через Lua script (single-threaded execution в Redis)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Two-phase commit между Redis nodes с distributed lock на каждый decrement.",
+              "correct": false,
+              "sections": {
+                "what_actually": "2PC + distributed lock на 1M ops/sec даст latency 50-100 ms на decision — это в 10× выше target. Lock contention на популярные keys приведёт к thundering herd.",
+                "source_of_confusion": "Кандидат применяет тяжёлый distributed transaction pattern к простой counter operation.",
+                "if_it_were_true": "Если бы 2PC был нужен для каждого rate limit decision, ни одна production система не работала бы в millisecond latency.",
+                "how_it_should_be": "Single Lua script с atomic execution в Redis — без locks, без 2PC."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Optimistic concurrency через Redis WATCH/MULTI/EXEC, retry при conflict.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WATCH/MULTI/EXEC работает, но при high contention (популярный API key) даёт 50%+ retry rate; retry-loop добавляет latency и нестабилен под нагрузкой. Lua быстрее и проще.",
+                "source_of_confusion": "Кандидат знает OCC pattern из RDBMS, переносит на Redis без учёта что Lua даёт строгую atomicity без retry.",
+                "if_it_were_true": "Если бы WATCH/MULTI/EXEC был лучше Lua, Redis команда не публиковала бы Lua как preferred способ для atomic RMW.",
+                "how_it_should_be": "Lua script (EVALSHA для bandwidth efficiency) — single-call atomic, без retry."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Atomic Lua script: внутри script читает HMGET (tokens, last_refill), пересчитывает refill, decrements, HMSET; вызывается через EVALSHA с pre-loaded SHA1.",
+              "correct": true,
+              "sections": {
+                "explanation": "Redis выполняет Lua scripts single-threaded и atomically — никакая другая команда не может выполниться между HMGET и HMSET внутри script. Это решает race condition между N pods без распределённых locks. Лua получает (key, capacity, refill_rate, now, requested) через KEYS/ARGV, делает refill calculation (tokens = min(capacity, tokens + elapsed × refill_rate)), проверяет tokens >= requested, decrement, сохраняет с EXPIRE. EVALSHA вместо EVAL экономит bandwidth — отправляется только SHA1 вместо полного script.",
+                "example": "Stripe blog описывает именно такой подход; redis-cell module инкапсулирует token bucket Lua. AWS ElastiCache официально рекомендует EVALSHA для high-throughput rate limiting. Envoy ratelimit service использует ту же схему.",
+                "when_to_apply": "Любой distributed rate limiter с shared state. Особенно при > 10K ops/sec, где race condition статистически неизбежна.",
+                "edge_cases": "Lua script не должен делать blocking calls (нет SLEEP, нет cross-shard ops без hash tags). Script-cache flush после Redis restart — fallback на EVAL необходим.",
+                "related": "Q10 distributed Redis Lua; Q11 hybrid local+Redis; Q13 clock drift; Q14 consistent hashing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём принципиальное отличие leaky bucket от token bucket, и когда выбрать leaky bucket?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Token bucket разрешает burst до capacity (мгновенный input), output rate переменный; leaky bucket — фиксированный output rate (smooth drain), burst запрещён. Leaky выбирают, когда downstream нуждается в stable load (network shaping, message queue throttling).",
+              "correct": true,
+              "sections": {
+                "explanation": "Token bucket: если у вас 100 tokens в bucket, можно мгновенно сделать 100 requests — это burst-friendly. Output (rate выхода requests) не ограничен, ограничен только refill rate долгосрочно. Leaky bucket: requests попадают в очередь, дренируются с фиксированной скоростью leak_rate; downstream видит stable input в любой момент. Принципиально: token bucket защищает rate-limiter side (счёт токенов), leaky bucket защищает downstream side (стабильность нагрузки на backend).",
+                "example": "Cisco/Juniper routers используют leaky bucket для network packet shaping (стабильный output на канал). Kafka consumers с rate limit — leaky (стабильный throughput к processor). Stripe API — token bucket (allow burst для UX). AWS API Gateway — token bucket (`burst_limit` параметр).",
+                "when_to_apply": "Leaky bucket: traffic shaping, downstream-protection, message queue consumer throttling. Token bucket: user-facing API с occasional spikes, B2B-партнёрский tier с burst tolerance.",
+                "edge_cases": "Leaky bucket с in-memory queue требует memory O(queue_size); при overflow — drop policy (tail-drop, RED). Token bucket с capacity = refill_rate × 1 sec ≈ ведёт себя как leaky.",
+                "related": "Q4 token bucket алгоритм; Q9 сравнение 5 алгоритмов; Q26 adaptive AIMD; Q21 edge vs gateway."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Token bucket и leaky bucket — одно и то же, разные названия. Различий нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных алгоритма с разным поведением на input/output. Token bucket разрешает burst, leaky bucket smooths output. Путать их — типичная ошибка на интервью.",
+                "source_of_confusion": "Кандидат слышал оба термина, но не углублялся в механику; считает что counters одинаковые.",
+                "if_it_were_true": "Если бы они были одинаковы, не было бы отдельных Wikipedia-статей и разных RFC; и industry-литература не различала бы их.",
+                "how_it_should_be": "Token bucket — burst-friendly (variable output); leaky bucket — smooth (constant output)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Leaky bucket быстрее token bucket по latency и всегда предпочтительнее в production.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Latency сопоставима (оба O(1) memory, atomic Redis Lua). «Всегда предпочтительнее» неверно: 95% public API используют token bucket именно потому, что burst-tolerance улучшает UX.",
+                "source_of_confusion": "Кандидат запомнил что leaky bucket «более строгий», и спутал строгость с предпочтительностью.",
+                "if_it_were_true": "Если бы leaky был всегда лучше, Stripe, AWS, GitHub не использовали бы token bucket — реально они используют именно его.",
+                "how_it_should_be": "Выбор зависит от use case: API → token (burst); shaping/queue → leaky (smooth)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Leaky bucket позволяет неограниченный burst, token bucket — фиксированный rate. Используется как замена fixed window.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перевёрнутая характеристика: leaky bucket именно ограничивает burst (фиксированный output), token bucket — разрешает burst до capacity. Замена fixed window — это sliding window counter, не leaky bucket.",
+                "source_of_confusion": "Кандидат меняет термины местами и привязывает к неправильному use case.",
+                "if_it_were_true": "Если бы leaky разрешал unbounded burst, он не отличался бы от no-limit; смысл алгоритма исчез бы.",
+                "how_it_should_be": "Leaky = smooth output (anti-burst); token = burst-tolerant; sliding counter заменяет fixed window."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Fixed window counter: какая ключевая проблема возникает на границах окна и почему её нельзя игнорировать в production?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Memory blow-up: на каждый key хранится N timestamps (где N = limit).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fixed window хранит O(1) memory (один counter per window), а не O(limit) timestamps. Memory blow-up — это проблема sliding window log, не fixed window.",
+                "source_of_confusion": "Кандидат путает алгоритмы; sliding log хранит timestamps, fixed window — counter.",
+                "if_it_were_true": "Если бы fixed window требовал N timestamps, он не был бы дешевейшим в industry — реально это самый memory-efficient алгоритм.",
+                "how_it_should_be": "Memory O(1); главная проблема — edge burst 2×."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Edge burst 2×: на границе двух окон можно сделать 2× limit за короткое время. Например limit 100/min: 100 req в 00:59:30-00:59:59 + 100 req в 01:00:00-01:00:30 → 200 req за 60 секунд (вокруг границы). Это пробивает DDoS protection и нарушает строгий rate limit.",
+              "correct": true,
+              "sections": {
+                "explanation": "Fixed window резкий: counter сбрасывается ровно в начале нового окна (например 01:00:00). Атакующий может концентрировать requests в конце предыдущего окна и в начале следующего → удвоить эффективный rate за окно. Для DDoS protection это catastrophe — атакующий планирует burst на boundaries. Для строгих per-second limits (банк-перевод 1/sec на user) — нарушение safety guarantee. Алгоритм НЕ подходит для security-критичных endpoints.",
+                "example": "Cloudflare blog 2017 объясняет переход с fixed window на sliding window counter именно по причине edge burst. AWS API Gateway изначально использовал fixed window, теперь — token bucket. Twitter в 2015 имел инцидент: scraper использовал edge burst для 2× rate.",
+                "when_to_apply": "Fixed window ОК только для очень неточных limits (analytics throttling, soft rate hints), где 2× burst допустим. Для production critical paths — sliding window counter.",
+                "edge_cases": "Edge burst масштабируется с малым window: при window=1 sec эффект менее заметен (1 sec burst); при window=1 hour — 2 hour window для атаки. Trade-off: больше window → больше edge problem.",
+                "related": "Q7 sliding window log accuracy; Q8 sliding window counter compromise; Q9 сравнение алгоритмов; Q30 антипаттерны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Clock drift между nodes — counters расходятся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Clock drift — общая проблема distributed rate limiting (Q13), не специфичная для fixed window. Edge burst — другая проблема, связанная с алгоритмом, не с инфраструктурой.",
+                "source_of_confusion": "Кандидат смешивает algorithm-level проблему (edge burst) с infrastructure-level (clock drift).",
+                "if_it_were_true": "Если бы clock drift была главной проблемой fixed window, замена на NTP решала бы её — но реально edge burst остаётся даже при perfect clock.",
+                "how_it_should_be": "Edge burst 2× — algorithm-level проблема; clock drift — отдельный infrastructure concern."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hot key problem — один популярный key создаёт высокую нагрузку на Redis shard.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hot key — это infrastructure problem (Q12), общий для любого алгоритма с shared state. Не специфичен для fixed window.",
+                "source_of_confusion": "Кандидат подменяет специфичную для алгоритма проблему общей инфраструктурной.",
+                "if_it_were_true": "Если бы hot key был специфичен для fixed window, переключение на token bucket решало бы его — реально hot key одинаково страдает на любом алгоритме.",
+                "how_it_should_be": "Hot key — orthogonal проблема; edge burst — algorithm-level."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Sliding window log: какие точные trade-offs по точности и памяти, и в каких use cases этот алгоритм оправдан?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Точность ±5%, память O(1) — самый дешёвый алгоритм.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sliding window log даёт идеальную точность (точный sliding window), а не ±5%. Память O(limit), а не O(1) — каждый request добавляет timestamp в sorted set. Это самый дорогой по памяти, а не самый дешёвый.",
+                "source_of_confusion": "Кандидат путает sliding window log (точный, O(limit)) с sliding window counter (approx, O(1)).",
+                "if_it_were_true": "Если бы sliding log был O(1) с точностью ±5%, не было бы смысла в sliding window counter — все использовали бы log.",
+                "how_it_should_be": "Sliding log: 100% точность, O(limit) память; sliding counter: ±1%, O(1)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Точность ±20%, память O(N²).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой O(N²) — sliding log хранит N timestamps линейно. Точность не ±20%, а идеальная (по определению реальный sliding window).",
+                "source_of_confusion": "Кандидат путает с неэффективными ad-hoc реализациями.",
+                "if_it_were_true": "Если бы memory был O(N²), при limit 10K имели бы 100M элементов на key — невозможно.",
+                "how_it_should_be": "Memory O(limit) linear; точность perfect."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Точность — идеальная (точный sliding window без approximation), память O(limit) — каждый request добавляет timestamp в sorted set; 50-80 B на timestamp. Подходит для low-volume strict limits (5 login attempts/hour, 10 transactions/min). НЕ подходит для high-volume (10K+ req/sec per key → 800 KB на key, не масштабируется).",
+              "correct": true,
+              "sections": {
+                "explanation": "Sliding window log хранит для каждого key Redis sorted set с timestamps всех requests за последний window. На request: ZREMRANGEBYSCORE удаляет старые timestamps (за окном), ZCARD считает оставшиеся; если >= limit → deny, иначе ZADD now. Точность идеальная — точное число requests в реальном sliding window. Цена — memory O(limit) на key: при limit 10K req/min и 50 B/timestamp = 500 KB на один key; для 100M keys = 50 TB Redis — нереально.",
+                "example": "Auth0 и других IAM-системах используют sliding log для login attempts (5 attempts/hour — низкий limit, perfect accuracy нужна). Stripe для critical financial operations (10 transfers/hour). GitHub использует для security-sensitive operations.",
+                "when_to_apply": "Низкий limit (< 100 per window), точность критична: security/auth attempts, financial guardrails, sensitive operations. НЕ подходит для public API edge protection.",
+                "edge_cases": "При очень коротком window (1 sec) memory может быть ОК даже при высоком rate (10K timestamps на 1 sec = 500 KB но TTL 1 sec). Sorted set ZRANGEBYSCORE O(log N) — на больших sets медленнее INCR.",
+                "related": "Q8 sliding window counter compromise; Q9 сравнение 5 алгоритмов; Q22 Bloom filter alternative."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Точность зависит от частоты GC; память O(window_size).",
+              "correct": false,
+              "sections": {
+                "what_actually": "GC к Redis sorted set не имеет отношения; точность по определению идеальна. Память O(limit), а не O(window_size) — два разных параметра.",
+                "source_of_confusion": "Кандидат смешивает понятия из Java GC и алгоритм.",
+                "if_it_were_true": "Если бы точность зависела от GC, sliding log не использовался бы в production вообще.",
+                "how_it_should_be": "Точность 100%, memory O(limit) (число events в window, не длина window)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Sliding window counter (Cloudflare-стандарт): как алгоритм компромиссит точность и стоимость, и какая формула decision?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Используется только текущий window counter; previous window игнорируется. Точность ±50%.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это fixed window, а не sliding counter. Sliding counter использует ВЗВЕШЕННУЮ сумму текущего и предыдущего window. Игнорирование previous window — это и есть edge burst проблема, которую sliding counter решает.",
+                "source_of_confusion": "Кандидат не понимает разницу между fixed window и sliding counter.",
+                "if_it_were_true": "Если бы только current использовался, алгоритм был бы тот же fixed window с edge burst.",
+                "how_it_should_be": "Estimated = previous_count × (1 - elapsed_fraction) + current_count."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Хранит все timestamps в sorted set, точно вычисляет sliding count.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это sliding window log (Q7), а не sliding counter. Sliding counter — это approximation O(1) memory без timestamps.",
+                "source_of_confusion": "Кандидат путает два sliding-варианта.",
+                "if_it_were_true": "Если бы sliding counter использовал timestamps, у него был бы O(limit) memory — и не был бы default-выбором Cloudflare.",
+                "how_it_should_be": "Counter хранит ТОЛЬКО два числа (current_count, previous_count); approximation через weighted sum."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использует Bloom filter для approximation membership; точность зависит от false-positive rate filter.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom filter — отдельный паттерн (Q22) для memory-efficient set membership, не для rate limiting counters. Sliding counter не использует Bloom filter.",
+                "source_of_confusion": "Кандидат смешивает два разных memory-efficient pattern.",
+                "if_it_were_true": "Если бы sliding counter был на Bloom filter, у него были бы false-positives — недопустимо для rate limit (ошибочно отказывать).",
+                "how_it_should_be": "Sliding counter использует ровно 2 числа на key, без Bloom filter."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Counters для текущего и предыдущего window; estimated = previous × (1 - elapsed_in_current/window_size) + current. Decision: estimated >= limit → deny. Memory O(1), accuracy ±1% на нормальном трафике, atomic через Redis INCR. Cloudflare-стандарт для edge rate limiting благодаря балансу точности и стоимости.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sliding window counter хранит для каждого key два числа: счётчик текущего окна и счётчик предыдущего. На decision вычисляется доля текущего окна (elapsed_in_current / window_size, от 0 до 1) и предполагается, что requests в предыдущем окне распределены равномерно. Поэтому estimated = previous_count × (1 - elapsed) + current_count. Пример: limit 100/min, на 01:00:42 (elapsed 0.7), previous=80, current=30 → estimated = 80 × 0.3 + 30 = 54 < 100 → allow. Точность ±1% на нормальном трафике; ±10-20% при extreme burst в самом конце предыдущего окна.",
+                "example": "Cloudflare blog «Counting things, a lot of different things» описывает именно этот алгоритм как basis их rate limiter. AWS WAF Rate-based rules используют sliding window counter. nginx-limit-req — leaky bucket вариант, но nginx Plus rate-limit добавил sliding counter в 2020.",
+                "when_to_apply": "Default-выбор для high-throughput APIs (1K+ req/sec per key), edge protection, любое место где O(limit) memory неприемлем но edge burst недопустим.",
+                "edge_cases": "Approximation предполагает uniform distribution в previous window; при bursty traffic в самом конце previous window (последние 10% времени) — недооценка реального rate до 30%. На границах нужен safety margin (limit × 0.95).",
+                "related": "Q6 fixed window edge burst; Q7 sliding window log accuracy; Q9 сравнение алгоритмов; Q10 Redis Lua."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Сравнительный анализ 5 алгоритмов (token bucket, leaky bucket, fixed window, sliding window log, sliding window counter): какой default-выбор для high-throughput public API и почему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Default для high-throughput public API — token bucket ИЛИ sliding window counter, в зависимости от потребности в burst-tolerance. Token bucket — если API нужен burst (Stripe, AWS); sliding counter — если smooth output critical (Cloudflare edge). Fixed window НЕ используется в production из-за edge burst; sliding window log — только для low-volume strict (login attempts). Leaky bucket — для downstream shaping (queue throttling).",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор алгоритма зависит от приоритета: token bucket — best UX (burst-tolerance), O(1) memory, atomic Lua; sliding window counter — best accuracy/memory trade-off, Cloudflare-стандарт; fixed window — простой но edge burst 2× недопустим в production; sliding window log — perfect accuracy, но O(limit) memory не масштабируется; leaky bucket — smooth output, но user-unfriendly для public API. На практике 90% production APIs используют token bucket (burst OK) или sliding counter (strict без burst).",
+                "example": "Stripe — token bucket с per-tenant capacity/burst. GitHub — token bucket для core API, sliding counter для Search. Cloudflare edge — sliding window counter. AWS API Gateway — token bucket (`burst_limit`, `rate_limit`). Twitter v2 — token bucket per endpoint.",
+                "when_to_apply": "Public B2B API с paid tier — token bucket с per-tenant capacity. Edge DDoS protection — sliding window counter. Internal microservice throttling — leaky bucket для smooth downstream. Auth attempts — sliding window log (low limit, perfect accuracy).",
+                "edge_cases": "Composite: edge — sliding counter, gateway — token bucket, service — leaky bucket. Разные уровни — разные алгоритмы по приоритетам.",
+                "related": "Q4 token bucket; Q5 leaky bucket; Q6 fixed window; Q7 sliding log; Q8 sliding counter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Default — fixed window, потому что самый простой и cheap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fixed window имеет edge burst 2×, что недопустимо для production rate limiting (Q6). Простота не оправдывает security gap. Production стандарт — sliding counter или token bucket.",
+                "source_of_confusion": "Кандидат оценивает только cost/complexity, игнорируя correctness.",
+                "if_it_were_true": "Если бы fixed window был default, Cloudflare blog 2017 не объяснял бы переход на sliding counter; AWS API Gateway не использовал бы token bucket.",
+                "how_it_should_be": "Default — token bucket (burst OK) или sliding counter (strict)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Default — sliding window log, потому что perfect accuracy.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sliding log имеет O(limit) memory: при 10K req/sec per key — 800 KB на key, для 100M keys = 80 TB Redis. Не масштабируется. Используется только для low-volume strict (< 100 events per window).",
+                "source_of_confusion": "Кандидат оптимизирует accuracy в одиночку, игнорируя scaling.",
+                "if_it_were_true": "Если бы sliding log был default, Stripe нуждался бы в петабайтах Redis для rate limiting — нереально.",
+                "how_it_should_be": "Sliding log только для low-volume; default — token bucket или sliding counter."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Default — leaky bucket, потому что guaranteed smooth output.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Leaky bucket user-unfriendly: не разрешает burst даже при наличии «спокойных» периодов. Для public API это плохой UX; используется для downstream shaping (Q5).",
+                "source_of_confusion": "Кандидат фокусируется на downstream-protection, игнорируя user experience.",
+                "if_it_were_true": "Если бы leaky был default, AWS API Gateway не давал бы burst_limit параметр; реально burst — стандартная фича.",
+                "how_it_should_be": "Leaky — для shaping/queue; default для API — token bucket."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Distributed rate limiting на Redis: какой подход устраняет race condition между N pods и почему naive INCR + GET не работает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Naive INCR + GET работает: INCR атомарный, и если результат > limit, deny.",
+              "correct": false,
+              "sections": {
+                "what_actually": "INCR + GET имеет проблему: после INCR counter уже increment-ирован, даже если ты потом deny. Это «overshoot»: на N concurrent requests counter поднимется на N, даже если все они должны быть deny. При лимите 100 и burst 200 concurrent requests — counter = 200, все deny, но при следующем check уже 200, и легитимные tokens не освобождаются.",
+                "source_of_confusion": "Кандидат знает, что INCR атомарный, и думает, что этого достаточно. Не учитывает что overshoot увеличивает counter без contractual decrement.",
+                "if_it_were_true": "Если бы INCR + GET работал, не было бы смысла в Lua scripts — реально библиотеки типа redis-cell используют Lua именно для атомарного check-and-increment.",
+                "how_it_should_be": "Atomic Lua script: check + increment в одной транзакции; revert если deny не делается, но check ДО increment."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Atomic Lua script с EVALSHA: один call в Redis, single-threaded execution, читает state (HMGET tokens, last_refill), пересчитывает refill, проверяет capacity, decrement, сохраняет (HMSET + EXPIRE); возвращает (allowed, remaining). Гарантия atomicity — Redis Lua выполняется без interleaving с другими command-ами. EVALSHA вместо EVAL экономит bandwidth.",
+              "correct": true,
+              "sections": {
+                "explanation": "Redis выполняет Lua scripts single-threaded и atomically: пока script работает, никакая другая команда не может выполниться на этом instance. Это решает race condition между N pods без distributed locks. Внутри script читается state (HMGET key tokens last_refill), пересчитывается refill (tokens = min(capacity, tokens + elapsed × refill_rate)), проверяется tokens >= requested, decrement, сохраняется (HMSET + EXPIRE). EVALSHA передаёт только SHA1 хэш script (40 bytes) вместо full text — экономит bandwidth на 1M ops/sec.",
+                "example": "Stripe rate limiter использует именно такую схему (publicly documented). redis-cell module инкапсулирует token bucket Lua. Envoy ratelimit service — Lua-based с Redis backend. AWS ElastiCache рекомендует EVALSHA в production guide.",
+                "when_to_apply": "Любой distributed rate limiter с shared Redis state. Особенно при > 10K ops/sec, где race condition статистически неизбежна.",
+                "edge_cases": "Script должен не использовать blocking commands (нет BLPOP, нет cross-shard ops без hash tag). После Redis restart script cache очищается — fallback на EVAL с SCRIPT LOAD необходим (NOSCRIPT error → re-load).",
+                "related": "Q4 token bucket алгоритм; Q11 hybrid local+Redis; Q13 clock drift (TIME command); Q14 consistent hashing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Distributed lock через Redlock на каждый decision.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redlock на каждый rate limit decision добавляет 5-10 ms latency (acquire + release) — в 10× выше target p99 10 ms. Lock contention на популярные keys создаёт thundering herd. Atomic Lua даёт ту же гарантию без lock overhead.",
+                "source_of_confusion": "Кандидат применяет тяжёлый distributed coordination pattern к простой counter operation.",
+                "if_it_were_true": "Если бы Redlock был приемлем, Stripe не публиковал бы Lua-based approach как preferred.",
+                "how_it_should_be": "Lua script — atomic без explicit lock; lock-free для high-throughput."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Master-slave fan-out: pod пишет в master, replicas async-replicate, для check читать из любой replica.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Async replication к replicas даёт eventual consistency с lag 1-10 ms. Read из stale replica → counter показывает старое значение → разрешение лишних requests. Для rate limiter strong consistency требуется хотя бы в пределах one shard (через master).",
+                "source_of_confusion": "Кандидат применяет паттерн read replicas из RDBMS, забывая что rate limiter нужен fresh state.",
+                "if_it_were_true": "Если бы async replicas работали, Redis Cluster не требовал бы READONLY команды и не было бы документации о read-from-replica caveats.",
+                "how_it_should_be": "Все ops через master (или Lua с CONSISTENT read через WAIT)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Trade-off single-node (in-process counter) vs distributed (Redis shared state): какой подход выбрать и при каких условиях гибрид оптимален?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда single-node — Redis избыточен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single-node даёт rate limit per-pod, не глобальный. При 10 pods и limit 100/sec — эффективный global limit 1000/sec, в 10× выше intended. Defeats цель глобального fairness.",
+                "source_of_confusion": "Кандидат оптимизирует latency, забывая о correctness глобального лимита.",
+                "if_it_were_true": "Если бы single-node был достаточен, не было бы Redis cluster в Stripe, GitHub, Cloudflare — у всех distributed state.",
+                "how_it_should_be": "Distributed (Redis) для глобального лимита; локальный fallback при Redis fail."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда distributed — Redis обязателен для каждого decision.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Distributed на каждый decision даёт 1-5 ms latency (network к Redis). При 1M req/sec все они hit Redis — overload даже после sharding. Local pre-check отсекает 99% abuse до Redis call.",
+                "source_of_confusion": "Кандидат оптимизирует accuracy, забывая о latency и Redis load.",
+                "if_it_were_true": "Если бы every-decision-Redis было оптимально, не было бы паттерна local cache + Redis hybrid.",
+                "how_it_should_be": "Hybrid: local pre-check (cheap, per-pod) + Redis (authoritative, global)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Гибрид: local counter per-pod как первая линия (cheap, 99% abuse отсекается без Redis); distributed Redis как authoritative source для global limit. Local threshold = global_limit × 1.2 / pod_count для конвергенции. При Redis fail — fallback на local-only (Q24). Trade-off: точность vs latency vs Redis load.",
+              "correct": true,
+              "sections": {
+                "explanation": "Гибридный подход даёт лучшие свойства обоих: local pre-check отсекает 99% abuse без Redis call (< 0.001 ms decision); distributed Redis обеспечивает глобальный source of truth для edge cases. Local threshold устанавливается чуть выше global_limit / pod_count (× 1.2 safety margin) — при routing skew local не блокирует легитимный traffic раньше глобального. При Redis fail — переключение на local-only (Q24), conservative limit. Это уменьшает Redis load с 1M ops/sec до ~10-100K ops/sec.",
+                "example": "Envoy adaptive concurrency filter + global ratelimit service — именно гибрид. Netflix Hystrix bulkhead использует local + central state. Google SRE book chapter 21 описывает adaptive throttling: client-side local + server-side global.",
+                "when_to_apply": "Любой high-throughput rate limiter (> 100K req/sec global). При low-volume (< 10K req/sec) можно обойтись только Redis. При extreme high (10M+ req/sec) — добавить edge-level (Cloudflare) как третий уровень.",
+                "edge_cases": "Local threshold tuning сложен: слишком низкий — false positives при skew; слишком высокий — overshoot перед Redis sync. Periodic sync local→Redis (every 100 ms) для approximation глобального state.",
+                "related": "Q10 atomic Lua; Q12 hot key; Q23 fail-open; Q24 graceful degradation."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Single-node с in-memory queue и periodic sync через Kafka к global aggregator.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka sync даёт lag 1-10 sec — слишком много для real-time rate limiting. Aggregator становится bottleneck. Архитектура over-engineered для простой counter problem.",
+                "source_of_confusion": "Кандидат применяет event-sourcing паттерн там, где простой Redis Lua достаточен.",
+                "if_it_were_true": "Если бы Kafka aggregator был лучше, Stripe и Cloudflare не использовали бы Redis — реально Kafka для другого (event log, не state).",
+                "how_it_should_be": "Hybrid local + Redis; Kafka не для rate limit decisions."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Hot key problem: один merchant с 100K req/sec бьёт по одному Redis key. Какие mitigations применять?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Игнорировать — Redis справится с любой нагрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis single-threaded на ~50-100K ops/sec на shard. 100K req/sec на один key → один shard 100% CPU, остальные shards idle, latency p99 для других keys на том же shard растёт catastrophically.",
+                "source_of_confusion": "Кандидат не знает single-threaded архитектуру Redis или думает что cluster автоматически распределяет одну key.",
+                "if_it_were_true": "Если бы Redis справлялся, не было бы публикаций о Redis hotspot mitigation от Stripe, GitHub, AWS.",
+                "how_it_should_be": "Local counter, sharding hot key, dedicated hot cluster — слойная защита."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просто увеличить число replicas на этом shard.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Replicas помогают только для read-heavy workloads, но rate limiter — write-heavy (каждый decision = increment). Все writes идут на master. Replicas не разгружают master.",
+                "source_of_confusion": "Кандидат знает паттерн read-replicas из RDBMS, не учитывает write-pattern rate limiter.",
+                "if_it_were_true": "Если бы replicas помогали для writes, Redis sharding не было бы нужно — реально writes требуют sharding.",
+                "how_it_should_be": "Local counter (99% rejected без Redis), sharding hot key через per-pod sub-counters, dedicated hot cluster."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Изменить алгоритм с token bucket на leaky bucket.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Алгоритм не влияет на hot key problem — это infrastructure-level concern. И token, и leaky bucket страдают одинаково от концентрации requests на одном Redis key.",
+                "source_of_confusion": "Кандидат смешивает algorithm-level и infrastructure-level проблемы.",
+                "if_it_were_true": "Если бы алгоритм решал hotspot, выбор leaky bucket был бы no-brainer — реально hot key страдает на любом алгоритме.",
+                "how_it_should_be": "Hot key — infrastructure: local counters, per-pod sub-sharding, dedicated cluster."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Layered mitigation: (1) local counter per-pod отсекает 99% requests до Redis call; (2) sharding hot key через per-pod sub-counters (key + pod_id, periodic sum); (3) dedicated Redis cluster для top-N hot keys; (4) edge-level limit (Envoy/Cloudflare) — coarse per-IP отсекает до backend. Стандартный production approach (Stripe, GitHub Memcached LRU).",
+              "correct": true,
+              "sections": {
+                "explanation": "Hot key — типичная distributed cache проблема, решается слоями. Уровень 1: local counter — 99% requests от hot merchant rejected на pod, Redis call только редко. Уровень 2: sharding ключа — counter:{key}:{pod_id} per pod, периодически (1 раз/сек) суммируются в Redis; trade-off — burst-окна между sync. Уровень 3: dedicated Redis cluster для top-N hot keys (Q12), mapping в config service. Уровень 4: edge (Envoy/Cloudflare) — 80% abuse rejected без backend Redis hit.",
+                "example": "Stripe blog публикует sharding strategy для hot merchants; GitHub использует Memcached LRU для top API keys; Twitter API имеет dedicated tier для firehose customers. AWS DynamoDB DAX — аналогичный паттерн для DB hot keys.",
+                "when_to_apply": "Любой rate limiter с power-law distribution traffic (top 1% keys = 50%+ traffic). Особенно critical для public APIs с large merchants.",
+                "edge_cases": "Sharding hot key создаёт consistency window между sync — burst-окна где hot key превышает limit; mitigation — local threshold conservative. Identification top-N keys требует sampling/HeavyHitters алгоритм.",
+                "related": "Q11 hybrid local+Redis; Q14 consistent hashing; Q22 Bloom filter; Q28 sticky routing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Clock drift между nodes (например 2 sec skew между pod A и pod B): как влияет на rate limiter и какое решение authoritative time?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать Redis TIME command как authoritative source: внутри Lua script вызывать `redis.call('TIME')` вместо передачи `now` из application. Все nodes видят single источник правды; NTP/chrony синхронизация nodes — стандартная infra practice как backup. Для high-frequency (1 ms windows) — PTP (Precision Time Protocol).",
+              "correct": true,
+              "sections": {
+                "explanation": "Clock drift между nodes ломает sliding window decisions и token bucket refill calculation. Token bucket: 2 sec skew × refill rate 10/sec = 20 tokens разница. Sliding window log: timestamps из разных nodes не aligned, ranges перекрываются. Решение: использовать Redis TIME command (`redis.call('TIME')`) внутри Lua — Redis возвращает свой clock, single source of truth для всех clients. NTP/chrony — defense-in-depth: даже без Redis TIME, nodes должны быть синхронизированы < 50 ms drift.",
+                "example": "Stripe rate limiter использует Redis TIME (publicly documented). Финансовые системы (HFT) используют PTP с GPS-source для sub-microsecond accuracy. Google Spanner — TrueTime API с atomic clocks (отдельный паттерн).",
+                "when_to_apply": "Любой distributed rate limiter с time-based windows. Особенно critical при window < 1 sec, где skew 100 ms = 10% error budget.",
+                "edge_cases": "Redis TIME даёт текущее Redis master time; replication lag к replica adds 1-10 ms. Lua script вызывается на master shard — consistency в пределах одного shard guaranteed.",
+                "related": "Q4 token bucket refill; Q10 atomic Lua; Q14 consistent hashing; Q28 sticky routing."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Игнорировать — clock drift в production < 1 ms, не важен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без NTP/chrony drift может быть 5-30 sec/day между nodes. С NTP — < 50 ms typically, но bursty network может дать 100-500 ms spikes. Игнорирование приводит к flaky tests и production incidents.",
+                "source_of_confusion": "Кандидат предполагает что cloud providers гарантируют sync, забывая что NTP — best-effort с возможными drift spikes.",
+                "if_it_were_true": "Если бы drift был < 1 ms, не было бы Google TrueTime, AWS Time Sync Service, и Redis не имел бы TIME command.",
+                "how_it_should_be": "NTP/chrony минимум; Redis TIME для critical decisions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать каждый client's local time в Lua args — Redis Lua просто пересчитывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Передача client's local time в Lua воспроизводит skew проблему: pod A передаёт 01:00:00, pod B передаёт 01:00:02 на тот же window — decisions расходятся.",
+                "source_of_confusion": "Кандидат знает Lua args, но не понимает что time должен быть authoritative.",
+                "if_it_were_true": "Если бы client time был достаточно, Redis не предоставлял бы TIME command.",
+                "how_it_should_be": "Use redis.call('TIME') inside Lua вместо ARGV[].now."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Vector clocks / Lamport timestamps в state per key.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vector/Lamport clocks нужны для логического ordering events (например causal consistency), не для физического времени refill rate. Refill в token bucket — real wall-clock time, не logical.",
+                "source_of_confusion": "Кандидат знает distributed systems theory, но применяет не к месту.",
+                "if_it_were_true": "Если бы Lamport был решением для rate limiter, Cloudflare использовал бы его — реально wall-clock с Redis TIME.",
+                "how_it_should_be": "Wall-clock через Redis TIME; Lamport — для другого класса проблем."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Consistent hashing для sharding rate-limit keys между Redis shards: как Redis Cluster реализует это и зачем hash tags?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Naive `hash(key) % N` без hash tags; при добавлении shard 95% keys перешардируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Naive `mod N` имеет именно эту проблему 95% data movement при scale change. Redis Cluster использует CRC16(key) mod 16384 slot mapping (не mod N), плюс slots distributed across masters — resharding moves slots (groups of keys), не пересчитывает hash.",
+                "source_of_confusion": "Кандидат знает naive approach, не знает Redis Cluster slot architecture.",
+                "if_it_were_true": "Если бы Redis использовал naive mod N, scaling cluster был бы catastrophe — реально resharding seamless благодаря slots.",
+                "how_it_should_be": "Redis Cluster: CRC16 → slot → master; slot movement, не key-level rehash."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Redis Cluster использует CRC16(key) mod 16384 slot mapping; slots distributed across masters; resharding перемещает slots (group of keys) — minimum data movement. Hash tags `{user_id}_endpoint_A` и `{user_id}_endpoint_B` сужают hash к user_id (то что внутри `{}`) — оба key попадают на один slot/shard, что позволяет atomic Lua над несколькими keys одного user. Без hash tags Lua с multiple keys ломается с CROSSSLOT error.",
+              "correct": true,
+              "sections": {
+                "explanation": "Redis Cluster имеет 16384 hash slots, распределённые между master nodes. Key mapping: CRC16(key) mod 16384 → slot → master. Это позволяет seamless resharding — при добавлении нового master перемещаются только конкретные slots, остальные keys остаются на месте. Hash tags `{user_id}` внутри key используются для группировки: `rl:{user_42}:api` и `rl:{user_42}:search` оба хешируются по `user_42`, попадают на один slot, что позволяет MULTI/Lua над ними. Это critical для composite rate limit (per-user + per-endpoint) — атомарность check всех tier-ов на одном shard.",
+                "example": "Stripe использует hash tags для composite rate limits per merchant. AWS ElastiCache Cluster mode требует hash tags для multi-key operations. Envoy ratelimit service документирует hash tag pattern для composite descriptors.",
+                "when_to_apply": "Любой rate limiter на Redis Cluster с composite keys (user × endpoint, ip × api_key). Hash tags обязательны для atomic multi-key Lua.",
+                "edge_cases": "Hash tag создаёт уязвимость для hot key — все keys одного user на одном shard; если merchant очень популярный, shard перегружается (Q12). Mitigation — отдельный prefix для hot merchants на dedicated cluster.",
+                "related": "Q12 hot key; Q10 atomic Lua; Q15 multi-tier composite; Q11 distributed coordination."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ketama-style consistent hashing с physical nodes (без virtual).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ketama применяется в Memcached, не Redis Cluster. Redis использует slot-based partitioning, не consistent hashing ring. И Ketama без virtual nodes даёт плохую balance — обычно 100-200 virtual nodes на physical.",
+                "source_of_confusion": "Кандидат смешивает Memcached и Redis paradigms.",
+                "if_it_were_true": "Если бы Redis использовал Ketama без virtual nodes, balance был бы плохим — реально Redis Cluster через slots даёт лучшую balance.",
+                "how_it_should_be": "Redis Cluster: 16384 slots, virtual partitioning; Memcached: Ketama с virtual nodes."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hash tags увеличивают cluster size — каждый tag создаёт новый shard.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hash tags не влияют на cluster size. Они только меняют какую часть key учитывает CRC16. Cluster size = число master shards, фиксируется на provisioning.",
+                "source_of_confusion": "Кандидат не понимает что hash tag — это часть key, не отдельный namespace.",
+                "if_it_were_true": "Если бы hash tag создавал shard, добавление 1000 tags увеличивало бы cluster до 1000 nodes — нереально.",
+                "how_it_should_be": "Hash tag — суффикс key для grouping на один slot; cluster size фиксирован."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Multi-tier limits (per-user + per-IP + per-API-key + per-endpoint): какой порядок проверок и как избежать race condition между check и consume на разных tier-ах?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Проверять только один tier (самый строгий), остальные не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один tier не покрывает все векторы атаки: per-IP против DDoS, per-user против abuse, per-API-key против B2B, per-endpoint против expensive ops. Combining tiers — composite, не «один самый строгий».",
+                "source_of_confusion": "Кандидат упрощает к single-tier; теряет coverage.",
+                "if_it_were_true": "Если бы single tier хватал, GitHub не имел бы separate limits для core/search/graphql.",
+                "how_it_should_be": "Composite: все tiers проверяются последовательно; deny если любой fail."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Проверять все tiers concurrent (parallel) для минимизации latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Parallel checks создают race condition: все стартуют, все consume tokens у себя, но если хоть один deny — другие уже consume-ed, токен потерян. Также не отсекает дорогие checks при cheap deny.",
+                "source_of_confusion": "Кандидат оптимизирует latency, забывая о correctness и cost ordering.",
+                "if_it_were_true": "Если бы parallel был корректным, Lua scripts не были бы single-threaded — реально атомарность важнее parallelism.",
+                "how_it_should_be": "Sequential cheap-to-expensive; atomic Lua для composite check + consume."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sequential cheap-to-expensive (global → per-IP → per-API-key → per-user → per-endpoint); один atomic Lua script делает check + consume всех tier-ов на одном Redis shard (через hash tags); если любой deny — abort без consume на других tier-ах. Cheapest first отсекает DDoS до expensive user-lookup.",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-tier требует двух решений: (1) порядок — cheap проверки первые отсекают 99% abuse до expensive checks (per-IP ~0.5 ms vs per-user 2 ms требует user lookup); (2) atomicity — все tiers через один Lua script на одном shard (hash tags `{user_42}:ip:1.2.3.4`, `{user_42}:api:abc`) — single-threaded execution, deny на любом aborts весь script без consume. Это предотвращает «потерю токена» при partial consume: если tier A consume, tier B deny — без Lua tier A counter уже incremented, проблема.",
+                "example": "Stripe rate limiter использует composite: per-API-key tier + per-endpoint cost + per-IP fallback, всё в одном Lua. GitHub composite: user + app + IP, atomic. Envoy ratelimit service descriptors — последовательный list, evaluated в order, fail-fast.",
+                "when_to_apply": "Любой production multi-tier limiter. Особенно critical при composite checks where one tier deny должен abort others (race window 1-5 ms на network, неприемлемо для high-throughput).",
+                "edge_cases": "Если tiers на разных shards (no hash tags) — нет atomic cross-shard в Redis; нужен либо co-locate (hash tag), либо approximate (eventual consistency + reconciliation). Production typically co-locates через user_id hash tag.",
+                "related": "Q14 hash tags; Q10 atomic Lua; Q16 cost-based weighted; Q3 scope per-tier."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reverse order: expensive первый (per-endpoint), cheap последний; так expensive проверяется до consume cheap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reverse order инвертирует логику cheap-first: если 99% requests DDoS, expensive check выполняется на всех 99% перед deny — расход CPU/memory на zero-value work.",
+                "source_of_confusion": "Кандидат пытается оптимизировать correctness, но проиграл performance.",
+                "if_it_were_true": "Если бы reverse был оптимальным, sequential cheap-first не был бы стандартным паттерном в industry.",
+                "how_it_should_be": "Cheap-to-expensive; DDoS отсекается на per-IP без user lookup."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Cost-based (weighted) rate limiting: как реализовать, чтобы разные endpoints стоили разное число tokens, и какие production-примеры?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Все endpoints стоят 1 token; weighting не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без weighting cheap endpoint (`GET /me`) и expensive (`POST /export`) сжигают одинаковый budget; user может через 100 expensive requests перегрузить backend, не достигнув rate limit. Production APIs (Stripe, GitHub) используют weighting.",
+                "source_of_confusion": "Кандидат не различает request-cost; думает rate limit per request count.",
+                "if_it_were_true": "Если бы flat cost хватал, Stripe не имел бы /v1/reports = 10 weight; GitHub GraphQL не имел бы computed cost.",
+                "how_it_should_be": "Weighted cost: cheap ops = 1 token, expensive = N tokens."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать отдельный rate limiter на каждый endpoint.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельные limiters на endpoint — это per-endpoint tier (Q15), но не cost-based. Cost-based — один limiter, разная цена per request. Separate limiters не предотвращают перегрузку через смесь cheap + expensive.",
+                "source_of_confusion": "Кандидат смешивает per-endpoint и cost-based — это разные patterns.",
+                "if_it_were_true": "Если бы per-endpoint достаточно было, Stripe не публиковал бы cost weights в documentation.",
+                "how_it_should_be": "Cost-based: один limiter, request cost варьируется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Динамически вычислять cost на сервере как функцию latency response.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost вычисляется ДО выполнения (cost mapping `{endpoint → weight}` в config), не post-hoc по latency. Post-hoc cost не предотвращает overload (request уже выполнен).",
+                "source_of_confusion": "Кандидат думает в направлении adaptive throttling (Q26), но не cost-based.",
+                "if_it_were_true": "Если бы post-hoc cost был решением, backend всё равно был бы перегружен — limiter был бы reactive, не preventive.",
+                "how_it_should_be": "Pre-defined cost mapping (config); adaptive — отдельный pattern."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cost mapping в config (например `/v1/charges = 1, /v1/reports = 10, /v1/search = 5`); на request передавать cost в Lua args; token bucket decrement-ит на cost вместо 1. Examples: Stripe API (`/v1/reports` = 10), GitHub GraphQL (computed cost по query depth/breadth, 5000 points/hour), AWS API Gateway (per-method weight). Validate cost ≤ capacity (иначе request никогда не пройдёт).",
+              "correct": true,
+              "sections": {
+                "explanation": "Cost-based rate limiting: вместо fixed «1 token per request» каждый endpoint имеет cost weight. Limit измеряется в tokens/sec (не requests/sec). Token bucket Lua принимает cost как ARGV[5], decrement tokens на cost. Cheap ops (GET /me) = 1 token; expensive (POST /export?type=full) = 100 tokens. Это fair: user не может через много expensive requests перегрузить backend быстрее, чем через много cheap. GraphQL может computed cost по AST (query depth × breadth).",
+                "example": "Stripe documented: /v1/charges = 1 weight, /v1/reports = 10 weight, /v1/refunds = 5. GitHub GraphQL: 5000 points/hour, computed cost per query. AWS API Gateway: usage plans с per-method cost. Twilio: per-endpoint pricing tier.",
+                "when_to_apply": "Любой API с heterogeneous endpoint cost (search, export, bulk operations). Особенно GraphQL (cost вычисляется dynamic). B2B-партнёрский tier обязательно cost-based.",
+                "edge_cases": "Cost mapping должен hot-reload (новый endpoint deployed → нужно добавить cost без restart). Validate cost ≤ capacity (иначе forever deny). Cost для GraphQL computed dynamic — parser overhead +1-5 ms.",
+                "related": "Q4 token bucket; Q17 per-tenant quotas; Q15 multi-tier; Q9 algorithm comparison."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Per-tenant quotas + bursting (Stripe/GitHub patterns): как структурировать config и какая разница между quota и rate limit?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Per-tenant config с разными limits/burst (например enterprise: 1000 req/sec sustained, 5000 burst; default: 10 req/sec, 100 burst). Token bucket с capacity > sustained rate даёт burst-tolerance. Quota — long-term (req/month, биллинг), rate limit — short-term (req/sec, fairness). Quota tracking не на critical path (отдельный metering service). Config в Redis hash или PostgreSQL с cache, hot reload.",
+              "correct": true,
+              "sections": {
+                "explanation": "Quota и rate limit — разные временные масштабы и цели. Rate limit: req/sec, fairness, защита backend, на critical path API request. Quota: req/month, биллинг, контракт, off-path metering. Per-tenant config: каждый tenant имеет свой `{rate: X/sec, burst: Y, monthly_quota: Z}`. Burst через token bucket: capacity > sustained rate (например capacity 5000, refill 1000/sec → 5-sec burst at 2000 req/sec). Config storage: Redis hash для hot lookup; PostgreSQL для durability; cache invalidation через pub/sub.",
+                "example": "Stripe: test 25 req/sec; live 100 req/sec sustained, 200 burst; enterprise — negotiable. GitHub REST: 5000 req/hour (authenticated), 12500 (apps), Search 30 req/min. GitHub GraphQL: 5000 points/hour cost-based. AWS API Gateway: usage plans (rate, burst, quota_per_day/month).",
+                "when_to_apply": "Любой SaaS/B2B-платформа с tiered pricing. Quota обязателен для billing-contracts; rate limit — для fairness и protection.",
+                "edge_cases": "Quota reset на plan upgrade (Q30): нужно atomically delete counter при event. Burst vs sustained tuning — слишком большой burst дай возможность атаки на edge boundary; слишком маленький — bad UX.",
+                "related": "Q4 token bucket capacity/refill; Q15 multi-tier; Q16 cost-based; Q27 monitoring."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Quota и rate limit — одно и то же, не нужно различать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это две разные концепции: quota — long-term (месяц), rate limit — short-term (секунда). Quota — для billing, rate limit — для fairness/protection. Tracking — разные системы (off-path metering vs in-path limiter).",
+                "source_of_confusion": "Кандидат смешивает контрактную метрику (quota) с infrastructure protection (rate limit).",
+                "if_it_were_true": "Если бы они были одно, Stripe не имел бы separate quota tracking (charges history) и rate limit (X-RateLimit-*).",
+                "how_it_should_be": "Quota — month/year, billing; rate limit — sec/min, protection."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все tenants одинаковый limit; differentiation через custom endpoint per-tenant.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Custom endpoint per-tenant — anti-pattern (operational nightmare). Tenant differentiation — через config (limits per tenant в DB/Redis), один endpoint, dynamic limit lookup.",
+                "source_of_confusion": "Кандидат не знает паттерн config-driven tenant differentiation.",
+                "if_it_were_true": "Если бы custom endpoints были стандартом, Stripe имел бы тысячи endpoints (по числу tenants) — нереально.",
+                "how_it_should_be": "Single endpoint, per-tenant config (rate, burst, quota)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Burst запрещён — всегда sustained rate без exceptions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Burst — стандартная feature: позволяет occasional spike без deny. Token bucket capacity > refill rate именно для этого. Без burst UX плохой: caller с 100 sustained req/sec не может сделать 110 в одну секунду даже если 90 в следующую.",
+                "source_of_confusion": "Кандидат пытается строго не разрешить burst, не понимая важность для UX.",
+                "if_it_were_true": "Если бы burst был запрещён, Stripe/AWS не публиковали бы burst_limit как параметр конфигурации.",
+                "how_it_should_be": "Burst tolerance через capacity > rate; tunable per-tenant."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "HTTP контракт rate limiter: какие headers возвращать и какой статус код согласно RFC 6585?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Возвращать 503 Service Unavailable — это стандарт для rate limit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "503 означает service-side issue (sick backend, maintenance), не client violation. Rate limit — это 429 (Too Many Requests, RFC 6585), указывает что проблема на client side (он превысил limit). Различие важно для retry logic и monitoring.",
+                "source_of_confusion": "Кандидат путает 503 (server problem) с 429 (client violation).",
+                "if_it_were_true": "Если бы 503 был стандартом для rate limit, RFC 6585 не вводил бы 429 — реально 429 специально для этого случая.",
+                "how_it_should_be": "429 Too Many Requests; 503 — для другого (service down)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "HTTP 429 Too Many Requests (RFC 6585) с обязательным `Retry-After: N` (seconds или HTTP-date) и informational headers: `X-RateLimit-Limit: 100`, `X-RateLimit-Remaining: 0`, `X-RateLimit-Reset: 1700000060` (Unix timestamp). На successful responses те же `X-RateLimit-*` headers — позволяет clients узнавать remaining до deny. IETF RateLimit Fields draft стандартизирует новый header `RateLimit: limit=100, remaining=50, reset=30`.",
+              "correct": true,
+              "sections": {
+                "explanation": "RFC 6585 определяет 429 Too Many Requests именно для rate limiting. Обязателен Retry-After header — без него client не знает когда retry, что приводит к thundering herd. X-RateLimit-* (de-facto pre-standard) дают clients visibility: даже на successful 200 response они видят remaining tokens и могут throttle на своей стороне. IETF draft «RateLimit Fields» стандартизирует это в единый `RateLimit` header, но X- prefix всё ещё универсален. Pitfalls: не возвращать 503 (это server issue); не возвращать 200 с rate limit message (ломает retry).",
+                "example": "Stripe: `Retry-After: 1`, `X-RateLimit-Limit: 100`, `X-RateLimit-Remaining: 50`. GitHub: `X-RateLimit-Limit: 5000`, `X-RateLimit-Remaining: 4999`, `X-RateLimit-Reset: 1700000060`, `X-RateLimit-Used: 1`. Cloudflare возвращает 429 с custom error page или JSON.",
+                "when_to_apply": "Любой public API. Особенно critical для SDK/client libraries — они парсят headers для built-in retry с backoff.",
+                "edge_cases": "Retry-After может быть либо integer seconds, либо HTTP-date (`Wed, 21 Oct 2025 07:28:00 GMT`). Clients должны парсить оба. X-RateLimit-Reset — Unix timestamp или relative seconds — variability между APIs (Stripe absolute, GitHub absolute).",
+                "related": "Q19 client-side backoff; Q23 fail-open; Q27 monitoring; Q30 антипаттерны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "200 OK с body `{error: rate_limit_exceeded}`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "200 OK с error body ломает client retry logic: HTTP libraries (axios, requests) рассматривают 200 как success, не triggering retry. Это анти-паттерн «soft error в success response».",
+                "source_of_confusion": "Кандидат хочет custom error format, забывая о HTTP semantics.",
+                "if_it_were_true": "Если бы 200 + error был корректным, RFC не вводил бы 4xx status codes — реально 4xx для client errors.",
+                "how_it_should_be": "429 + body с deteils; never 200 для error."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "418 I'm a Teapot — humor-style для rate limit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "418 — это joke RFC 2324 (HTCPCP), не для production. Использование в реальной системе ломает client expectations и monitoring (alerting не настроен на 418).",
+                "source_of_confusion": "Кандидат знает мем, но не понимает что в production нужны standard status codes.",
+                "if_it_were_true": "Если бы 418 был стандартом, библиотеки имели бы built-in handling — реально 418 unspecified.",
+                "how_it_should_be": "429 per RFC 6585; 418 — мем, не production."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Client-side retry на 429: какие компоненты должны быть и какие варианты jitter работают лучше?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Fixed retry `sleep(1)` после 429 — простой и предсказуемый.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fixed retry создаёт thundering herd: 1000 clients одновременно получили 429, все retry через 1 sec → 1000 concurrent retries → второй wave 429 → infinite loop. Это классический outage pattern.",
+                "source_of_confusion": "Кандидат считает простоту главным; забывает о coordinated failure mode.",
+                "if_it_were_true": "Если бы fixed retry работал, AWS SDK не имел бы built-in exponential backoff.",
+                "how_it_should_be": "Exponential backoff + jitter; никогда fixed."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Бесконечный retry без backoff, доверять server's Retry-After.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бесконечный retry без cap на attempts может зациклиться (если server постоянно отвечает 429). Retry-After может быть слишком короткий для recovery (server underestimated). Нужны: max attempts, exponential backoff, jitter, idempotency.",
+                "source_of_confusion": "Кандидат полностью полагается на server, не делает client-side safety.",
+                "if_it_were_true": "Если бы infinite retry был корректным, у retry storms не было бы названия.",
+                "how_it_should_be": "Max attempts (5-10), exponential backoff, full jitter."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Exponential backoff с full jitter: `sleep = random(0, min(retry_after, 2^attempt))`. Max attempts 5-10. Idempotency-Key обязателен для POST/PUT retry. Varianты jitter: full (random(0, backoff)) — лучше distribution; equal (backoff/2 + random(0, backoff/2)) — гарантирует min wait; decorrelated (random(backoff_min, prev_sleep × 3)) — self-smoothing. Full jitter — AWS recommended.",
+              "correct": true,
+              "sections": {
+                "explanation": "Exponential backoff: каждый attempt увеличивает sleep × 2 (1, 2, 4, 8, 16 sec) — предотвращает immediate retry storm. Jitter: добавляет randomness, decorrelates clients (без jitter они синхронизируются и retry одновременно). Full jitter (`sleep = random(0, backoff)`) даёт лучшее distribution согласно AWS Architecture Blog «Exponential Backoff And Jitter». Equal jitter гарантирует minimum wait. Decorrelated jitter (`random(min, prev × 3)`) — Marc Brooker's algorithm, self-smoothing. Idempotency: GET safe to retry; POST/PUT requires Idempotency-Key (Stripe pattern).",
+                "example": "AWS SDK built-in: exponential backoff + full jitter, max 5 attempts. Stripe SDK: Idempotency-Key + exponential. GitHub Octokit: respects Retry-After + jitter. Google API Client: equal jitter implementation.",
+                "when_to_apply": "Любой client side вызывающий rate-limited API. Особенно critical для long-running batch jobs, ETL, data sync.",
+                "edge_cases": "Если server returns Retry-After significantly больше exponential backoff — respect server's value (server knows better). Idempotency-Key для POST: Stripe требует, GitHub recommends. На 5xx errors также retry, но с разным max attempts (transient vs permanent).",
+                "related": "Q18 HTTP 429 contract; Q23 fail-open; Q30 антипаттерны (no jitter)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Polynomial backoff (1, 4, 9, 16, 25 sec) без jitter.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Polynomial без jitter всё равно создаёт thundering herd: все clients retry в синхронизированные моменты. Industry-стандарт — exponential (быстрее растёт, fewer attempts) с jitter (decorrelates clients).",
+                "source_of_confusion": "Кандидат знает что нужно «расти» по attempts, но выбирает неоптимальную форму.",
+                "if_it_were_true": "Если бы polynomial без jitter работал, AWS не писал бы blog про exponential backoff + jitter.",
+                "how_it_should_be": "Exponential + jitter (full, equal, or decorrelated)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "High-level architecture рейт-лимитера: какая layered архитектура корректна и почему фильтрация происходит снизу вверх по cost?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только один layer (in-service); edge/gateway не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один layer (in-service) hit-ит backend каждым request — DDoS прорывается до application code. Edge (Cloudflare) отсекает 80%+ abuse до того как достигнет backend; gateway (Envoy) — 15% remaining; service — 5% legitimate edge cases.",
+                "source_of_confusion": "Кандидат упрощает архитектуру, не думая о cost фильтрации.",
+                "if_it_were_true": "Если бы один layer хватал, Cloudflare/Akamai не существовали бы как продукты.",
+                "how_it_should_be": "Layered: edge → gateway → service, дешёвое сначала."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только edge layer (Cloudflare); gateway и service redundant.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Edge cheap, но coarse — только per-IP/geo. Не различает paid B2B от free, не знает business logic (per-user quotas, per-endpoint cost). Нужны fine-grained tier на gateway/service.",
+                "source_of_confusion": "Кандидат знает что edge cheap, не видит ограничений (granularity).",
+                "if_it_were_true": "Если бы edge хватало, Envoy/Kong не публиковали бы rate limit filters; реально нужны для fine-grained.",
+                "how_it_should_be": "Edge для coarse (IP, geo); gateway для medium (API key); service для fine (user, endpoint)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Random order layers — нет иерархии cost.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без cost ordering DDoS прорывается через дешёвые слои в дорогие — backend перегружается. Cheap-first отсекает 99% до expensive checks. Стандартный паттерн в industry.",
+                "source_of_confusion": "Кандидат не думает о cost оптимизации фильтрации.",
+                "if_it_were_true": "Если бы random был оптимален, не было бы паттерна «cheap → expensive» в industry literature.",
+                "how_it_should_be": "Layered cheap-to-expensive: edge → gateway → service."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Three layers по cost: (1) Edge (Cloudflare/AWS WAF) — per-IP, geo, sub-ms latency, отсекает 80%+ DDoS; (2) API Gateway (Envoy/Kong/AWS API Gateway) — per-API-key, global checks, 1-3 ms; (3) In-service — per-user, per-endpoint, business logic, 0.1-1 ms local или 2-5 ms Redis. Каждый layer фильтрует traffic; самый дешёвый — первый. Все три применяются последовательно. Config service (etcd/Consul) для per-tenant limits.",
+              "correct": true,
+              "sections": {
+                "explanation": "Layered architecture rate limiter — стандартный production паттерн. Edge layer (Cloudflare/Fastly/AWS WAF): per-IP, geo-fence, sub-millisecond, отсекает volumetric DDoS (80%+ abuse). Gateway layer (Envoy/Kong/AWS API Gateway): per-API-key, composite checks, Lua-based или filter-based, Redis shared state, 1-3 ms latency. Service layer (in-process): per-user, per-endpoint, business-specific logic, local + Redis hybrid (Q11). Config service (etcd, Consul, custom) для per-tenant limits с hot reload. Каждый layer закрывает свою granularity, последовательная фильтрация снижает load на дорогие layers.",
+                "example": "Stripe: Cloudflare (edge) → Envoy (gateway) → Ruby service. GitHub: Fastly + AWS WAF (edge) → Kong (gateway) → Rails. Twitter: own edge proxy → Envoy → microservices. Netflix: Zuul gateway + service-level Hystrix.",
+                "when_to_apply": "Любой public API at scale. Single-layer достаточно только для internal/staging.",
+                "edge_cases": "Inter-layer coordination: edge не знает business logic, service не знает global state — нужен careful tier ordering. Если edge slowed (CDN issue), traffic накапливается перед gateway — нужны circuit breakers.",
+                "related": "Q11 hybrid local+Redis; Q21 edge vs gateway vs service; Q15 multi-tier; Q23 fail-open."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Trade-offs между edge (Cloudflare/Envoy), API gateway (Envoy/Kong), in-service rate limiting: где какой ставить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Edge: sub-ms latency, coarse granularity (IP/geo), whole-infrastructure scope, для DDoS/scraping. Gateway (Envoy/Kong/AWS API Gateway): 1-3 ms, medium granularity (API key, route), all-services scope, для B2B tier и public API. In-service: 0.1-1 ms local или 2-5 ms Redis, fine granularity (user, endpoint, business rules), single-service scope, для per-tenant business logic. Все три применяются последовательно. Cloudflare встроен в edge; Envoy — через external rate limit service gRPC; in-service — local + Redis hybrid.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каждый layer имеет свои сильные стороны: edge cheap и видит весь traffic (DDoS protection, sub-ms), но coarse — нет user context, нет business rules. Gateway имеет API key context, может composite checks, но не знает per-tenant business logic. In-service видит full context (user, endpoint, business rules) — например «не больше 5 transfers per hour per user» — banking logic, недоступная на edge. Trade-off: edge fastest но coarsest; in-service slowest но finest. Layered approach использует все три.",
+                "example": "Cloudflare Rate Limiting: edge rules `(http.request.uri.path == \"/api/login\")` → block. Envoy ratelimit filter → gRPC service backed by Redis. Kong rate-limiting plugin — multiple algorithms. AWS API Gateway usage plans (per-API-key throttle/burst).",
+                "when_to_apply": "Edge: всегда для public APIs (DDoS, bot protection). Gateway: при API key tier (B2B). In-service: при complex business rules (banking, marketplace).",
+                "edge_cases": "Composite layers требуют carefully designed tier order: cheap → expensive. Edge и gateway могут конфликтовать по headers (X-Forwarded-For mismatch). Service-level не должен повторять edge checks — анти-паттерн «doing it twice».",
+                "related": "Q20 high-level architecture; Q15 multi-tier; Q25 DDoS mitigation; Q23 fail-open."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только in-service — самый гибкий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "In-service не масштабируется до DDoS volumetric (1M req/sec hit backend before any filtering). Edge нужен для отсечения 80%+ abuse до backend.",
+                "source_of_confusion": "Кандидат оптимизирует гибкость, забывая о scale.",
+                "if_it_were_true": "Если бы in-service хватал, Cloudflare/AWS WAF не существовали бы.",
+                "how_it_should_be": "Layered: edge для scale, in-service для гибкости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Edge и in-service одинаково; gateway избыточен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway полезен для composite checks across services (per-API-key глобально для всех downstream). Без gateway либо edge перегружен fine-grained rules, либо in-service дублирует код.",
+                "source_of_confusion": "Кандидат недооценивает gateway role.",
+                "if_it_were_true": "Если бы gateway был избыточен, Envoy и Kong не имели бы rate limit filters.",
+                "how_it_should_be": "All three layers: edge → gateway → service."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только gateway — universal layer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway не имеет edge-level DDoS protection (1M req/sec прорывается до gateway). И не имеет business context для per-user/per-endpoint rules.",
+                "source_of_confusion": "Кандидат знает gateway как central layer, не учитывает что он не покрывает edge/service.",
+                "if_it_were_true": "Если бы gateway хватал, не было бы Cloudflare + Envoy + in-service в архитектурах Stripe/GitHub.",
+                "how_it_should_be": "All three layers; gateway — middle."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Bloom filter / counting Bloom для memory-efficient rate limiting: когда подходит и когда нет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Bloom filter везде — memory-efficient default.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom filter имеет false-positives (item «есть в set», хотя реально нет). Для rate limit это означает ошибочный 429 для легитимного user — UX disaster. Bloom применим только когда false-positives acceptable (approximate hot set detection).",
+                "source_of_confusion": "Кандидат знает Bloom как memory-efficient, забывает про false-positive cost.",
+                "if_it_were_true": "Если бы Bloom хватал везде, Stripe/GitHub использовали бы его для per-user limits — реально для per-user используют exact counters.",
+                "how_it_should_be": "Bloom — для approximate (hot set, bot scoring), не для exact rate limit."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Counting Bloom filter (4-bit или 8-bit counters в каждой ячейке): memory ~190 MB на 100M IPs (vs 800 MB naive set с counters), false-positive rate настраиваемый (1-5%). Подходит для approximate use cases: «отклонить IP если он сделал > 1000 req/hour», hot set tracking, bot scoring на edge. НЕ подходит для exact per-user limits (false-positive = ошибочный 429), strict financial limits. Real use: Akamai/Cloudflare edge nodes для bot detection.",
+              "correct": true,
+              "sections": {
+                "explanation": "Counting Bloom filter — Bloom filter с counters (вместо bits): каждая ячейка содержит 4 или 8 битов, increment на add. Memory: 100M IPs × 10 bits/IP × 1.5 (для 1% false-positive) ≈ 190 MB; vs naive set 100M × 8 B = 800 MB. Trade-off: false-positive rate (1-5%) настраивается через size m и k hash functions. Pro: massive memory savings, approximate count для hot set detection. Cons: false-positives = ошибочный 429 для легитимного user; невозможно exact count.",
+                "example": "Akamai и Cloudflare edge nodes используют counting Bloom для bot scoring (вероятностный rank IPs). Google использует counting Bloom для search query frequency tracking. Reddit использует для duplicate detection.",
+                "when_to_apply": "Memory-constrained edge nodes (1 GB limit), approximate hot set tracking, bot detection. НЕ для exact per-user counters.",
+                "edge_cases": "False-positive rate растёт с filled ratio (set гарантирует <1% при правильном sizing). Counter overflow в 4-bit (max 15) — нужно scale to 8-bit для больших counters. Невозможно «remove» element точно (counting Bloom поддерживает decrement, но с риском false-negative от collision).",
+                "related": "Q12 hot key; Q25 DDoS bot detection; Q7 sliding window log alternative; Q27 monitoring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bloom filter заменяет sliding window counter в любых сценариях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom и sliding counter — разные паттерны: Bloom для set membership (probabilistic), sliding counter для rate counting (deterministic с approximation в time). Не взаимозаменяемы.",
+                "source_of_confusion": "Кандидат смешивает два разных memory-efficient pattern.",
+                "if_it_were_true": "Если бы Bloom заменял sliding counter, Cloudflare blog не описывал бы sliding counter отдельно — реально оба паттерна используются для разных задач.",
+                "how_it_should_be": "Bloom для set membership; sliding counter для time-based rate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bloom filter имеет false-negatives — пропускает abusers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bloom filter имеет false-POSITIVES (item «есть», когда нет), но NO false-negatives (если в set, всегда detect). Counting Bloom может иметь false-negatives только при decrement с collision. Для rate limit обычно add-only — нет false-negatives.",
+                "source_of_confusion": "Кандидат путает false-positive и false-negative properties.",
+                "if_it_were_true": "Если бы Bloom пропускал abusers, он не использовался бы для bot detection — реально false-positive (extra block) приемлем, false-negative (miss attacker) нет.",
+                "how_it_should_be": "False-positive only; no false-negative в standard Bloom."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Fail-open vs fail-closed при недоступности Redis: какой выбор и как обосновать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всегда fail-closed (deny all) — безопасность важнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fail-closed на all-services при Redis outage = full API outage. Для public read-only API (например GitHub repo browsing) это unnecessary downtime, потерь больше чем от 10-min abuse. Decision должен зависеть от service criticality.",
+                "source_of_confusion": "Кандидат применяет security-first без учёта uptime cost.",
+                "if_it_were_true": "Если бы fail-closed был universal, public APIs во время Redis outage были бы недоступны — реально fail-open для read-only standard.",
+                "how_it_should_be": "Context-dependent: auth/payments — fail-closed; public read — fail-open."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Всегда fail-open (allow all) — uptime критичнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fail-open на auth endpoint = brute force attack во время Redis outage. Для payments = potential fraud burst. Не подходит для security-sensitive operations.",
+                "source_of_confusion": "Кандидат универсально оптимизирует uptime, не учитывает security.",
+                "if_it_were_true": "Если бы fail-open был universal, никто не строил бы fail-closed paths — реально для auth/payments fail-closed обязателен.",
+                "how_it_should_be": "Per-endpoint policy: auth/payments closed, public read open, hybrid для mixed."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hybrid рекомендован: per-service criticality. Public read-only API (GitHub repo browsing) — fail-open (uptime priority). Auth, payments, financial operations — fail-closed (security priority). Hybrid + local fallback counter (Q24) при Redis fail — circuit breaker открывает, switch на in-process counter conservative limit, alert. Circuit breaker timeout 50 ms, 3 fails consecutive → open. Monitoring: `redis_rate_limiter_unavailable=1` alert обязателен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Choice fail-open vs fail-closed — per-endpoint, не universal. Hybrid approach: per-service policy декларируется в config, при Redis unavailable circuit breaker открывается и применяется fallback (Q24: local counter с conservative limit). Это даёт лучшие свойства: uptime для public read, security для auth/payments. Alerting critical: silent fail-open без monitoring = DDoS прошёл незамеченным. Pitfall: fail-closed без circuit breaker → cascading outage если Redis lags (slow not down).",
+                "example": "Stripe: auth endpoints fail-closed; public read-only (api/v1/docs/) fail-open. AWS API Gateway: configurable per-endpoint. Cloudflare: edge fail-open by default (uptime priority for CDN), но Cloudflare Bot Management fail-closed (security).",
+                "when_to_apply": "Любой production rate limiter. Без явной policy default fail-open часто backfires в security.",
+                "edge_cases": "Circuit breaker должен иметь half-open state для probe recovery; не stuck в open forever. Local fallback counter (Q24) — conservative limit (global_limit × 1.5 / pod_count) во время outage.",
+                "related": "Q11 hybrid local+Redis; Q24 graceful degradation; Q25 DDoS mitigation; Q27 monitoring alerts."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Fail-closed на read-only, fail-open на auth — security проще на read.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перевёрнутая логика: auth должен быть fail-closed (защита от brute force во время outage), read-only — fail-open (uptime).",
+                "source_of_confusion": "Кандидат перепутал read vs write priorities.",
+                "if_it_were_true": "Если бы read fail-closed было нормой, GitHub браузинг repo был бы недоступен при каждом Redis hiccup.",
+                "how_it_should_be": "Auth/payments fail-closed; public read fail-open."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Graceful degradation при Redis unavailable: какой паттерн local fallback counter и какой conservative limit выбрать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Local counter с global_limit (без deviation) — точно матчит intended.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Local counter per-pod с global_limit даёт effective limit pod_count × global_limit (10 pods × 1000 = 10000, в 10× выше). Нужен либо divide by pod_count, либо conservative reduce.",
+                "source_of_confusion": "Кандидат не учитывает что local counter multiplied by pods.",
+                "if_it_were_true": "Если бы local с global было правильно, distributed rate limiter не нужен был бы вообще.",
+                "how_it_should_be": "Local limit = global_limit / pod_count × 1.5 (safety margin)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Local counter полностью отключить — fail-open на любой Redis fail.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полный fail-open во время Redis outage = unlimited abuse (Q23 показывает что для auth/payments это disaster). Local fallback даёт some protection (conservative limit) даже при Redis down.",
+                "source_of_confusion": "Кандидат думает all-or-nothing.",
+                "if_it_were_true": "Если бы fail-open был достаточно, не было бы паттерна local fallback в Netflix Hystrix, Resilience4j.",
+                "how_it_should_be": "Local conservative counter; Redis recovery — circuit breaker closes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Local fallback counter использует Memcached.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Memcached — external dependency, тоже может быть unavailable. Local — это in-process (Caffeine Java, cachetools Python), без network call, без shared state. Memcached дал бы тот же class of problem что Redis.",
+                "source_of_confusion": "Кандидат смешивает local cache с external cache.",
+                "if_it_were_true": "Если бы Memcached был fallback, его availability была бы новой dependency — реально fallback это in-process.",
+                "how_it_should_be": "In-process (Caffeine/cachetools/Guava) — no external dependency."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "In-memory counter per-pod (Caffeine cache Java / cachetools Python) с TTL равным rate limit window. Local limit = (global_limit / pod_count) × 1.5 (safety margin для routing skew). При Redis unavailable circuit breaker открывается → switch на local; при recovery → circuit closes. Trade-off: точность снижена (10 pods × local = 1.5× global), но защита от abuse сохраняется. Real: Netflix Hystrix, Resilience4j built-in patterns.",
+              "correct": true,
+              "sections": {
+                "explanation": "Local fallback counter — in-process hash map с TTL (Caffeine для Java, cachetools для Python, Guava Cache как альтернатива). Limit per-pod вычисляется conservative: global_limit / pod_count даёт точное распределение, × 1.5 margin компенсирует routing skew (одни pods могут получить больше traffic чем другие). При 10 pods и global 1000/sec — local limit ≈ 150/sec per pod, effective global 1500/sec — в 1.5× от intended, всё ещё лучше unlimited. Circuit breaker (Resilience4j) управляет переключением: failure threshold 3 consecutive, recovery probe через half-open state.",
+                "example": "Netflix Hystrix — pioneer этого pattern (deprecated in favor of Resilience4j). Resilience4j Bulkhead/CircuitBreaker. Envoy adaptive concurrency filter — analog для downstream protection. AWS SDK имеет client-side throttling fallback.",
+                "when_to_apply": "Любой rate limiter с shared state (Redis, etcd). Обязателен для high-availability services где Redis outage не должен означать API outage.",
+                "edge_cases": "Routing skew может быть extreme (sticky routing к одному pod 10× normal). Pod count dynamic (HPA scale) — пересчёт local limit на каждый scale event. Cold start: новый pod не имеет recent counter history — может временно allow extra requests.",
+                "related": "Q23 fail-open vs fail-closed; Q11 hybrid local+Redis; Q26 adaptive; Q27 monitoring."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "DDoS mitigation: какие уровни защиты применять и в каком порядке escalation от soft до hard block?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Layered defence: (1) Network DDoS — BGP anycast + scrubbing (Cloudflare, Akamai), до 100+ Tbps; (2) Application DDoS (L7) — per-IP rate limiting на edge (100 req/min, 10 req/min для /api/login); (3) Bot detection — fingerprinting (browser canvas, fonts), behavioral signals; (4) CAPTCHA escalation — Turnstile/hCaptcha/reCAPTCHA при suspicious activity; (5) Geo-fence — block/restrict by country. Escalation: normal → suspicious (CAPTCHA) → failed CAPTCHA (temp block 1h) → repeat offender (permanent + log).",
+              "correct": true,
+              "sections": {
+                "explanation": "DDoS — это слойная угроза, нужна слойная защита. Network DDoS (volumetric, до Tbps) обрабатывается BGP anycast + scrubbing centers (Cloudflare, Akamai, AWS Shield Advanced) — rate limiter не involved, чисто infrastructure. Application DDoS (L7) — per-IP/per-key rate limiting на edge: 100 req/min общий, более строгий для critical endpoints (`/login` 10/min). Bot detection: device fingerprinting (canvas, fonts, screen, audio context), behavioral (mouse movement, timing patterns) — Cloudflare Bot Management, AWS WAF Bot Control. CAPTCHA escalation: soft challenge (Turnstile, invisible) на suspicious, hard (reCAPTCHA v2) на confirmed bot. Geo-fence для compliance и abuse hot spots.",
+                "example": "Cloudflare Bot Management — multi-layer: rate limit → bot score → challenge → block. AWS Shield Advanced + WAF Bot Control. GitHub: Cloudflare edge + own bot detection. Stripe: Radar для bot scoring на payments.",
+                "when_to_apply": "Любой public API. Auth endpoints (login, password reset) — особенно critical (brute force защита). Public registration — bot mitigation для account creation.",
+                "edge_cases": "Legitimate users могут попасть в CAPTCHA (false-positive) — нужен soft challenge сначала. Geo-fence может блокировать VPN users — нужен whitelist для known legitimate VPN exit nodes. Anti-bot создаёт UX friction — balance с conversion.",
+                "related": "Q3 scope per-IP/geo; Q19 client backoff (vs DDoS retry); Q23 fail-open в auth (closed); Q22 Bloom for bot scoring."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только per-IP rate limiting — universal solution.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Per-IP пробивается distributed botnets (1M unique IPs с 1 req/sec каждый = 1M req/sec, под per-IP limit). Нужен multi-layer: bot detection, CAPTCHA, geo-fence.",
+                "source_of_confusion": "Кандидат знает per-IP как стандарт, не учитывает что современные attacks distributed.",
+                "if_it_were_true": "Если бы per-IP хватало, Cloudflare Bot Management не существовал бы.",
+                "how_it_should_be": "Layered: network + application + bot + CAPTCHA + geo."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Polled traffic analysis: каждые 5 минут пересчёт rules.",
+              "correct": false,
+              "sections": {
+                "what_actually": "5-минутный polling даёт DDoS window 5 минут на atomic atrack — этого достаточно для serious damage. Real-time rate limiting + bot detection обязательны.",
+                "source_of_confusion": "Кандидат не понимает скорость DDoS атак.",
+                "if_it_were_true": "Если бы 5-min polling хватал, не было бы инцидентов типа GitHub 2018 (1.35 Tbps за минуты).",
+                "how_it_should_be": "Real-time per-request decision + быстрая адаптация rules."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Direct CAPTCHA на каждый request — максимальная защита.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CAPTCHA на каждый request = unusable UX (conversion drop 50%+). CAPTCHA — escalation step при suspicious, не default. Layered approach: normal traffic allow, suspicious — CAPTCHA, failed — block.",
+                "source_of_confusion": "Кандидат оптимизирует security, забывая о UX.",
+                "if_it_were_true": "Если бы CAPTCHA-on-every-request работал, Cloudflare Turnstile была бы стандартом — реально она для escalation.",
+                "how_it_should_be": "Escalation: normal → CAPTCHA → block; не на every request."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Adaptive rate limiting (auto-tune по latency/error): какой алгоритм и какие сигналы использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Линейное увеличение limit при low load, hard reset при overload.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Линейное увеличение медленно реагирует на load spikes; hard reset (sudden drop) создаёт oscillation. AIMD (additive increase, multiplicative decrease) стабильнее и широко применяется (inspired by TCP congestion control).",
+                "source_of_confusion": "Кандидат не знает proven AIMD pattern из TCP.",
+                "if_it_were_true": "Если бы linear+reset работал, TCP congestion control использовал бы его — реально TCP использует AIMD именно для стабильности.",
+                "how_it_should_be": "AIMD: additive increase когда healthy, multiplicative decrease (×0.5) при overload."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "AIMD (Additive Increase Multiplicative Decrease) inspired by TCP congestion control: при metrics.latency_p99 > target → rate_limit *= 0.5 (multiplicative decrease); при healthy → rate_limit = min(rate_limit + increment, max_limit) (additive increase). Сигналы: service.latency_p99 > 500 ms, error_rate > 5%, CPU > 80%. Tools: Netflix concurrency-limits, Envoy adaptive concurrency filter, Google SRE adaptive throttling (chapter 21 SRE book).",
+              "correct": true,
+              "sections": {
+                "explanation": "AIMD — proven pattern из TCP congestion control: additive increase (медленное, безопасное увеличение rate когда система healthy) + multiplicative decrease (быстрое, агрессивное снижение rate при overload). Это даёт stability + convergence к optimal rate. Signals: service.latency_p99 > target (например 500 ms на authorize), service.error_rate > 5%, service.cpu > 80%. Когда сигнал triggered → rate_limit ×= 0.5; когда healthy 30 sec подряд → rate_limit += increment до max. Это автоматически защищает backend от overload и восстанавливается после spike.",
+                "example": "Netflix concurrency-limits (open source library) — реализация AIMD для services. Envoy adaptive concurrency filter — adaptive RPS based on latency. Google SRE book chapter 21 «Handling Overload» описывает adaptive throttling. AWS DynamoDB auto-scaling read/write capacity — similar pattern.",
+                "when_to_apply": "Services с variable load patterns (B2C, e-commerce), critical paths где static limit либо слишком строгий (UX) либо слишком слабый (overload).",
+                "edge_cases": "Hysteresis: limit может «дёргаться» при noisy metrics → нужен smoothing (EWMA) или dead zone (не reagировать на mini-fluctuations). Cold start: при первом deploy нет history → conservative initial limit. Coordinated descent: если все services снижают rate одновременно (cascading), может образоваться cascade — нужен per-service circuit.",
+                "related": "Q24 graceful degradation; Q27 monitoring metrics; Q23 fail-open; Q11 hybrid local+Redis."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Static limit конфигурируется через config; adaptive не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Static limit либо слишком строгий (плохой UX при normal load) либо слишком слабый (overload при spike). Adaptive дополняет static — base limit static, adjustment dynamic.",
+                "source_of_confusion": "Кандидат оптимизирует простоту, не учитывает variable load.",
+                "if_it_were_true": "Если бы static хватал, Netflix не open-source-нул бы concurrency-limits library.",
+                "how_it_should_be": "Static base + adaptive adjustment."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "ML-модель предсказывает optimal rate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ML overkill для большинства cases. AIMD простой, stable, hardware-tested через десятилетия в TCP. ML может быть для предсказательных load forecasting, но не для real-time decision.",
+                "source_of_confusion": "Кандидат пытается добавить ML «потому что fancy».",
+                "if_it_were_true": "Если бы ML был лучше AIMD, TCP не использовал бы AIMD — реально simple wins.",
+                "how_it_should_be": "AIMD — proven и простой; ML — для capacity planning, не real-time."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Monitoring rate limiter: какие core metrics обязательны и какие alerts настроить?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только log every decision в file для post-hoc analysis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Logging every decision в file = огромный IO load (1M decisions/sec × 200 B = 200 MB/sec write). Real-time metrics в Prometheus + sampling logs — стандарт. Alerts на metrics, не на logs.",
+                "source_of_confusion": "Кандидат смешивает logs и metrics.",
+                "if_it_were_true": "Если бы log-only хватал, не было бы Prometheus + Grafana standard в industry.",
+                "how_it_should_be": "Metrics (Prometheus) + sampling logs + alerts на metrics."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только CPU/memory сервера — общие infrastructure metrics.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Infrastructure metrics не показывают rate limiter behavior: сколько deny, кто denied, latency decision. Нужны application metrics (decision_total, latency, top_keys).",
+                "source_of_confusion": "Кандидат знает classic infrastructure monitoring, не учитывает app-specific.",
+                "if_it_were_true": "Если бы CPU/memory хватало, application metrics не существовали бы как separate category.",
+                "how_it_should_be": "Infrastructure + application metrics (decisions, latency, top denied)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Core metrics: (1) rate_limit_decisions_total{result=allow|deny, tier, key_type} — counter; (2) rate_limit_decision_latency_seconds — histogram, p99 < 10 ms target; (3) rate_limit_redis_calls_total{status} + redis_latency — health Redis; (4) rate_limit_local_fallback_total — fail-over events; (5) rate_limit_top_keys (top-K denied) — гонcyba абузеров; (6) rate_limit_429_response_total{endpoint} — client-side perception. Alerts: page при p99 > 50 ms 5 min; Slack при top_key_denials >100/sec (DDoS suspect); email при local_fallback > 0 (Redis issues). Tracing с trace_id propagation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production rate limiter monitoring имеет несколько layers: core decision metrics (allow/deny по tier и key type), performance (latency p99), infrastructure health (Redis calls success/failure, latency), fail-over events (local fallback triggered), abuse detection (top denied keys), client perception (429 rate per endpoint). Каждая метрика имеет alert thresholds: p99 latency > 50 ms 5 min → page (rate limiter degraded); top denied key denials > 100/sec → Slack (possible DDoS or misconfigured client); local_fallback > 0 → email (Redis issue, need investigation). Tracing critical: trace_id propagated через rate-limit check для visibility «request rejected by per-IP tier на edge».",
+                "example": "Stripe blog описывает похожий monitoring stack (Prometheus + Grafana + PagerDuty). Cloudflare публикует blog posts about top denied keys analytics. AWS Shield Advanced даёт DDoS attack metrics. Envoy ratelimit service экспортирует Prometheus metrics out-of-box.",
+                "when_to_apply": "Любой production rate limiter. Без monitoring невозможно различить «работает correctly» от «silently broken».",
+                "edge_cases": "Cardinality explosion: top_keys метрика может иметь миллионы unique values; нужен sampling или top-N aggregation. P99 latency сильно зависит от Redis pool tuning — отдельные alerts для Redis connection pool exhaustion.",
+                "related": "Q23 fail-open alerts; Q24 graceful degradation events; Q26 adaptive metrics; Q12 hot key detection."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только success rate (% allow); deny details не важны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Success rate сам по себе не показывает почему deny: per-IP DDoS vs per-user abuse vs misconfigured client — это разные сценарии с разными actions. Top denied keys + tier breakdown обязательны.",
+                "source_of_confusion": "Кандидат упрощает к single metric, теряет diagnostics.",
+                "if_it_were_true": "Если бы success rate хватал, не было бы X-RateLimit-* headers для clients — реально diagnostics важны для всех.",
+                "how_it_should_be": "Full breakdown: per-tier, per-key-type, top denied, latency."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Sticky vs random routing: какой impact на shared state rate limiter и когда использовать гибрид?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sticky всегда хуже — failover теряет state.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sticky имеет преимущества (cache locality, меньше Redis load); failover проблема mitigated через shared Redis state. Гибрид (sticky + Redis source of truth) даёт лучшие свойства обоих.",
+                "source_of_confusion": "Кандидат знает один недостаток sticky, обобщает на universal.",
+                "if_it_were_true": "Если бы sticky всегда хуже, AWS ALB не предоставлял бы session affinity.",
+                "how_it_should_be": "Sticky для cache locality + Redis для source of truth."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Random всегда лучше — даже distribution.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Random создаёт higher Redis load (каждый pod нуждается в lookup для каждого user). Sticky использует pod cache, снижает Redis calls в 10× при cache hit rate 90%.",
+                "source_of_confusion": "Кандидат знает «balanced distribution» как good, не учитывает cache locality.",
+                "if_it_were_true": "Если бы random был всегда лучше, Cloudflare не использовал бы sticky routing к origin.",
+                "how_it_should_be": "Гибрид: sticky для locality + Redis для consistency."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Sticky + полностью local state без Redis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без Redis при sticky pod failure все local state потеряны — user limit reset к zero, можно сделать unlimited burst до новый routing converge. Redis нужен как backup source of truth.",
+                "source_of_confusion": "Кандидат оптимизирует cost (no Redis), теряет durability.",
+                "if_it_were_true": "Если бы sticky без Redis работал, AWS ALB не имел бы рекомендации использовать distributed state.",
+                "how_it_should_be": "Sticky + Redis (cache locality + durability)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sticky routing: same user → same pod; pod cache last N decisions (LRU); Redis remains source of truth for global state. Pros: lower Redis load (cache hit 90%+), better cache locality; failover preserves state через Redis. Cons: hot user creates hot pod; mitigation — random fallback при pod overload signal. Real: AWS ALB sticky sessions; Envoy session affinity headers; Cloudflare использует sticky routing к origin для cache locality.",
+              "correct": true,
+              "sections": {
+                "explanation": "Sticky routing + shared Redis — гибридный подход. Sticky (session affinity через cookie, consistent hash или header) даёт cache locality: pod хранит per-user state в local LRU, при cache hit избегает Redis call. Cache hit rate 90%+ даёт 10× снижение Redis load. Redis остаётся source of truth — sticky pod failover не теряет данные, новый pod подтягивает state из Redis. Trade-offs: hot user может создать hot pod (нужен либо более sophisticated sticky algorithm с migration, либо random fallback при overload). Failover smooth благодаря Redis backup state.",
+                "example": "AWS ALB sticky sessions (cookie-based). Envoy session affinity (header или hash). Cloudflare использует consistent hash routing к origin для cache locality. Kubernetes Service sessionAffinity ClientIP — simple sticky.",
+                "when_to_apply": "Любой high-throughput rate limiter где cache locality важна. Особенно эффективно при power-law traffic (top 10% users = 90% traffic).",
+                "edge_cases": "Sticky к dead pod может зависать пока LB не обновит routing — нужен fast health check. Cookie-based sticky не работает для machine-to-machine API (нет cookie) — нужен hash-based routing по API key. Hot user creates hot pod (Q12 mitigation applies).",
+                "related": "Q11 hybrid local+Redis; Q12 hot key; Q24 graceful degradation; Q14 consistent hashing."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Тестирование rate limiter: какие уровни тестов обязательны и как property-based testing помогает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Multi-level testing: (1) Unit — token bucket boundary (100 req/sec → 100 allowed, 101-я denied), sliding window precision, cost-based weighting, edge cases (clock back-jump, overflow, zero refill); (2) Integration — Testcontainers real Redis, atomic Lua under concurrent load, distributed multi-pod scenarios; (3) Load — k6/Gatling/Locust на 1M req/sec, measure decision latency p99, throughput; chaos kill Redis master mid-test; (4) Property-based — Hypothesis/ScalaCheck: «для ANY sequence requests allowed count ≤ limit + 1»; ловит edge cases human tests miss; (5) Compliance — 429 headers correct (Retry-After, X-RateLimit-*), HTTP RFC 6585.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production rate limiter требует multi-level testing. Unit: алгоритмы (token bucket, sliding window) с конкретными edge cases — boundary при limit (100-я allow, 101-я deny), clock back-jump, overflow. Integration: real Redis через Testcontainers для проверки atomic Lua, concurrent scenarios (5 pods + shared Redis → global limit observable). Load: k6/Gatling/Locust на 1M req/sec — measure decision latency p99, throughput, error rate; chaos engineering (kill Redis master mid-test) для failover validation. Property-based: Hypothesis (Python) / ScalaCheck (Scala) формулирует invariants как properties («for ANY sequence requests allowed count ≤ limit + 1 (1 для approximation)»); генератор пробует random sequences, ловит edge cases человеческое мышление пропускает.",
+                "example": "Resilience4j open source rate-limit benchmarks. Stripe/Cloudflare имеют private load test infrastructure. Hypothesis library used by Dropbox, Mozilla для property-based testing. JUnit 5 + Testcontainers стандарт для Java/Kotlin integration tests.",
+                "when_to_apply": "Любой production rate limiter. Особенно critical для security-sensitive (auth, payments) — все 5 levels обязательны.",
+                "edge_cases": "Chaos testing должен включать Redis network partition (не только kill master) — даёт другой class of bugs. Property-based with stateful generators (для sequence of operations с state) — Hypothesis state machines.",
+                "related": "Q4 token bucket; Q10 atomic Lua; Q23 fail-open; Q30 антипаттерны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только load tests — production behavior.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Load tests дороги, медленные, не отлавливают algorithm bugs (например edge burst в fixed window). Unit + integration для логики, load для performance — complementary.",
+                "source_of_confusion": "Кандидат знает что load test «реалистичный», не учитывает что он late в feedback loop.",
+                "if_it_were_true": "Если бы load-only хватал, не было бы Testcontainers integration tests в industry.",
+                "how_it_should_be": "All levels: unit + integration + load + property-based."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только unit tests — достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unit tests не покрывают distributed race conditions, Redis failure modes, load behavior. Нужны integration (real Redis), load (Gatling/k6), property-based для edge cases.",
+                "source_of_confusion": "Кандидат знает unit-tests как basics, не учитывает distributed nature.",
+                "if_it_were_true": "Если бы unit-tests хватало, не было бы Testcontainers, chaos engineering, property-based testing.",
+                "how_it_should_be": "Multi-level: unit + integration (Testcontainers) + load + property-based."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только manual exploratory testing — coverage достаточная.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual testing не reproducible, не покрывает edge cases (clock skew, Redis failover, concurrent load), не runs в CI. Industry-стандарт — automated multi-level.",
+                "source_of_confusion": "Кандидат недооценивает automated testing.",
+                "if_it_were_true": "Если бы manual хватало, CI/CD не имел бы testing stages.",
+                "how_it_should_be": "Automated unit + integration + load + property-based в CI."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор антипаттернов rate limiter критичен в production и почему каждый ломает систему?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Антипаттерны OK если performance acceptable; security не приоритет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Антипаттерны вызывают конкретные production incidents: DB counter — throughput < 1K/sec; no jitter retry — thundering herd; fixed window — edge burst 2× DDoS bypass. Каждый имеет real-world consequences.",
+                "source_of_confusion": "Кандидат недооценивает антипаттерны, считая их теоретическими.",
+                "if_it_were_true": "Если бы антипаттерны были OK, GitHub не имел бы инцидента 2018, Cloudflare не публиковал бы post-mortems.",
+                "how_it_should_be": "Антипаттерны — конкретные failure modes; avoid each."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Critical антипаттерны: (1) DB-backed counter (UPDATE rate_limits SET count=count+1) — row lock, throughput < 1K/sec, fix: Redis/in-memory; (2) Naive INCR+GET без Lua — race condition между pods, fix atomic Lua (Q10); (3) Single Redis instance — SPOF, fix cluster + replicas + fail-open (Q23); (4) No TTL на keys — память Redis растёт линейно, OOM через дни; (5) Fixed window для critical APIs — 2× edge burst, fix sliding counter; (6) No jitter в client retry — thundering herd, fix exponential + full jitter (Q19); (7) No local counter для DDoS — 1M req/sec hit Redis, fix hybrid (Q11); (8) Per-pod limit вместо global — N pods × limit = N× effective; (9) Не учитывать X-Forwarded-For — per-IP limit на LB IP (один!) бесполезен; (10) Hard 429 без graceful degradation — third-party down → all clients 429 одновременно; (11) Auth endpoint без CAPTCHA escalation — brute force через прокси; (12) Different limits на разных pods — config rollout не атомарный, inconsistent behavior; (13) Не reset limit на plan upgrade — user paid for upgrade, old limit; (14) Sync to disk fsync на каждый request — IOPS ceiling, latency 10+ ms; (15) Не logging blocked requests — невозможно понять почему clients failing.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production rate limiter incidents типично вызваны одним из 15 типичных антипаттернов. Каждый имеет конкретный симптом и fix. DB-backed counter — самый дорогой по throughput (row lock), fix Redis. Naive INCR+GET — race condition, fix atomic Lua. Single Redis — SPOF, fix cluster. No TTL — OOM. Fixed window — edge burst. No jitter — thundering herd. No local — Redis overload. Per-pod limit — N× effective. X-Forwarded-For ignored — per-IP useless behind LB. Hard 429 без degradation — cascading. Auth без CAPTCHA — brute force. Inconsistent pod config — unpredictable. No quota reset on upgrade — UX bug. Fsync on request — IOPS bottleneck. No logging — debug nightmare.",
+                "example": "Cloudflare blog 2017 — переход с fixed window после edge burst incident. GitHub 2018 — 1.35 Tbps attack — выжили благодаря layered defence. AWS API Gateway docs документируют CAPTCHA escalation pattern. Stripe rate limit blog описывает atomic Lua approach. Hat Trick: Twitter инцидент с per-pod limit (2014).",
+                "when_to_apply": "Любая production rate limiter design review должна chekнуть все 15 антипаттернов. Code review checklist обязателен.",
+                "edge_cases": "Некоторые антипаттерны OK в специфичных контекстах: fixed window для analytics throttling (точность не critical); local-only без Redis для PoC/staging. Контекст определяет.",
+                "related": "Q4 token bucket; Q6 fixed window edge; Q10 atomic Lua; Q19 client backoff; Q23 fail-open; Q24 graceful degradation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только один антипаттерн critical — все остальные minor.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Production incidents показывают что каждый из 15 антипаттернов критичен в своём контексте. DB counter ломает throughput; fixed window — security; no jitter — availability; per-pod limit — fairness. Все одинаково критичны.",
+                "source_of_confusion": "Кандидат пытается prioritize единственный антипаттерн.",
+                "if_it_were_true": "Если бы был один critical, industry literature не описывала бы 15 — реально все имеют equal importance в своём context.",
+                "how_it_should_be": "All 15 антипаттернов важны; контекст определяет какой бьёт первым."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Антипаттерны — это для startup; enterprise может позволить себе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Enterprise страдает от антипаттернов даже больше: масштаб усиливает проблемы (DB counter в enterprise = catastrophic throughput cliff, single Redis = full outage millions users). GitHub, Stripe, Cloudflare — enterprise scale — публикуют post-mortems о избежании антипаттернов.",
+                "source_of_confusion": "Кандидат считает что enterprise имеет «запас прочности» — реально наоборот.",
+                "if_it_were_true": "Если бы enterprise мог позволить, не было бы публичных incidents у Cloudflare/GitHub.",
+                "how_it_should_be": "Антипаттерны критичны для любого scale; enterprise сильнее страдает."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

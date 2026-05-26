@@ -34,7 +34,7 @@ Master-план генерации interview-материалов через с�
 
 - [x] **design-feed-system-interview** ~~(1 Q сейчас)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, BUILD SUCCESSFUL). Завершено 2026-05-26.
 - [x] **design-payment-system-interview** ~~(1 Q сейчас)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL). Завершено 2026-05-26.
-- [ ] **design-rate-limiter-interview** (1 Q сейчас). Token bucket / leaky bucket / fixed window / sliding window / sliding log; distributed rate limiting (Redis cluster, atomicity via Lua); per-user/per-IP/per-API-key; 429 + Retry-After; cost-based.
+- [x] **design-rate-limiter-interview** ~~(1 Q сейчас)~~ → **30 Q + 30 MCQ JSON** (rotation 8/8/7/7, ratio 1.14, schema VALID, BUILD SUCCESSFUL, 168 KB). Завершено 2026-05-26.
 
 ## Фаза 2 — расширить тонкие
 
@@ -65,5 +65,5 @@ Master-план генерации interview-материалов через с�
 ## Состояние
 
 Запущено: 2026-05-26.
-Текущая итерация: **Фаза 1 → design-rate-limiter-interview** (следующая).
-Закрыто: design-feed-system (30 Q + JSON), design-payment-system (30 Q + JSON, BUILD SUCCESSFUL).
+Текущая итерация: **Фаза 1 завершена** → переходим в **Фаза 2 (расширить тонкие)** → design-url-shortener (8 Q → 28+ Q).
+Закрыто: design-feed-system (30 Q + JSON), design-payment-system (30 Q + JSON), design-rate-limiter (30 Q + JSON, BUILD SUCCESSFUL).

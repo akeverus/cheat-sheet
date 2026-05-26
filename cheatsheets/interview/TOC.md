@@ -395,7 +395,7 @@ updated: "2026-04-20"
 
 - [Вопросы на собеседовании: `System Design`](system-design/system-design-interview.md) — `41` вопрос
 - [Вопросы на собеседовании: `Design URL Shortener`](system-design/design-url-shortener-interview.md) — `17` вопросов
-- [Вопросы на собеседовании: `Design Rate Limiter`](system-design/design-rate-limiter-interview.md) — `18` вопросов
+- [Вопросы на собеседовании: `Design Rate Limiter`](system-design/design-rate-limiter-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Chat System`](system-design/design-chat-system-interview.md) — `21` вопрос
 - [Вопросы на собеседовании: `Design Feed System`](system-design/design-feed-system-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Search System`](system-design/design-search-interview.md) — `20` вопросов
