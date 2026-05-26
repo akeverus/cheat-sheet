@@ -135,33 +135,9 @@ tasks.processResources {
     }
 }
 
-/**
- * Оффлайн-сид вариантов ответа через Claude (Anthropic SDK).
- *
- * Запускает scripts/seed-options.py, который проходит по вопросам без
- * answer_options и заполняет их батчами с prompt-caching на системном промпте.
- *
- * Требуется: pip install anthropic, ANTHROPIC_API_KEY в env.
- *
- * Примеры:
- *   ./gradlew :quiz-app:seedOptions                                                  # все pending, batch=10
- *   ./gradlew :quiz-app:seedOptions -PseedArgs="--dry-run --limit 20"                # посчитать
- *   ./gradlew :quiz-app:seedOptions -PseedArgs="--topic databases/% --batch 15"      # только databases
- *   ./gradlew :quiz-app:seedOptions -PseedArgs="--model claude-opus-4-7 --overwrite" # перегенерить всё на opus
- *
- * Прямой запуск без Gradle тоже работает: `python3 scripts/seed-options.py --help`.
- */
-tasks.register<Exec>("seedOptions") {
-    group = "application"
-    description = "Seeds answer_options via Claude (offline batch, idempotent)."
-    workingDir = rootProject.projectDir
-    executable = "python3"
-    args("scripts/seed-options.py")
-    // Дополнительные аргументы через -PseedArgs="..."
-    val extra: String? = project.findProperty("seedArgs") as String?
-    if (!extra.isNullOrBlank()) {
-        args(extra.split(" ").filter { it.isNotBlank() })
-    }
-    // Прокидываем ANTHROPIC_API_KEY из env хоста
-    System.getenv("ANTHROPIC_API_KEY")?.let { environment("ANTHROPIC_API_KEY", it) }
-}
+// Раньше тут жил task `seedOptions`, дёргавший scripts/seed-options.py для
+// офлайн-сидинга `answer_options` через Claude SDK напрямую в SQLite. После
+// миграции на PostgreSQL и переход к JSON-сидерам (modules/quiz-app/src/main/
+// resources/seed/mcq/) сам скрипт превращён в deprecation-stub. Workflow
+// генерации опций теперь через skill mcq-quality-fixer + правка JSON-сидеров;
+// загрузка в Postgres — на старте через McqJsonLoader.
