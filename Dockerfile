@@ -12,11 +12,18 @@ RUN gradle :quiz-app:bootJar --no-daemon -q
 # Финальный образ от непривилегированного пользователя
 FROM eclipse-temurin:17-jre
 ARG VERSION=0.0.1-SNAPSHOT
+# CI пробрасывает --build-arg BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+# и --build-arg VCS_REF=$(git rev-parse --short HEAD).
+ARG BUILD_DATE=unknown
+ARG VCS_REF=unknown
 # OCI-стандарт labels — registries (GHCR, Docker Hub) их подхватывают для
-# карточки образа и интеграции с GitHub.
+# карточки образа и интеграции с GitHub. `docker inspect <image>` покажет
+# created/revision — удобно для post-mortem «какая сборка в проде».
 LABEL org.opencontainers.image.title="cheat-sheet-quiz" \
       org.opencontainers.image.description="Interview prep app with MCQ engine and spaced repetition" \
       org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.source="https://github.com/sergeyvoronin/cheat-sheet" \
       org.opencontainers.image.documentation="https://github.com/sergeyvoronin/cheat-sheet#readme"
