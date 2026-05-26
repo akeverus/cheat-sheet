@@ -1,0 +1,1205 @@
+{
+  "topic_slug": "design-payment-system-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой минимальный набор non-functional requirements корректно зафиксировать для платёжной системы Stripe-scale (50K txn/sec peak, 1B customers) и какой CAP-выбор из них следует?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Durability RPO=0 на ledger, strong consistency на балансах, eventual на read-models, availability 99.99% на authorize, p99 < 2 сек, idempotency на mutating endpoints, PCI-DSS Level 1.",
+              "correct": true,
+              "sections": {
+                "explanation": "Платёжная система — CP на ledger (нельзя терять/дублировать деньги) и AP на read-models (аналитика, dashboards). Durability приоритет № 1: даже потеря миллисекунды записи приводит к рассогласованию ledger и реальных денег. Availability 99.99% на authorize-path — стандарт индустрии, так как downtime = прямой revenue loss. PCI Level 1 обязателен при > 6M транзакций/год.",
+                "example": "Stripe публично декларирует 99.999% uptime на authorize. Adyen использует multi-DC ledger с `LOCAL_QUORUM` write для атомарности баланса в регионе и async-репликацию для analytics-stack.",
+                "when_to_apply": "Любой платёжный процессор, банк-as-a-service (BaaS), маркетплейс с split-payouts, кошелёк с мульти-валютой.",
+                "edge_cases": "На multi-region active-active возникает trade-off: cross-region writes ledger дают 100+ ms latency vs SLA 200 ms на status-fetch — поэтому customer pinned на home region, cross-region replication async.",
+                "related": "Q2 capacity estimation; Q5 double-entry; Q24 PCI-DSS; Q27 multi-region."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Strong consistency на всё (ledger, balances, аналитика), 100% availability на всех endpoints, p99 < 50 ms на любую операцию, выбираем CP по CAP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Strong consistency на 50K txn/sec через несколько регионов физически невозможна без катастрофической latency. 100% availability — миф (CAP диктует выбор). p99 < 50 ms на authorize нереалистично, так как PSP-вызов сам по себе 800-1500 ms.",
+                "source_of_confusion": "Кандидат пытается выглядеть строго и обещает максимум по всем осям, как Spanner-маркетинг.",
+                "if_it_were_true": "Если бы 100% availability существовало, никаких региональных outages не было бы в принципе; Stripe-incident 2021 на 3 часа показал, что даже у лидера 99.999% — не 100%.",
+                "how_it_should_be": "Strong только на ledger (CP), eventual на аналитике (AP); availability 99.99%, а latency-цели — per-operation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Eventual consistency на ledger (можно расходиться на минуты), best-effort idempotency, availability 99.9%, latency не критичен, durability не обязательна для тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Eventual consistency на ledger означает, что баланс merchant может временно показывать разные значения в разных read-points; для денег это catastrophe — двойные списания, missing money. Best-effort idempotency значит retry создаст дубль платежа.",
+                "source_of_confusion": "Кандидат переносит подход из non-money систем (соцсети, чаты, feed-fanout) в финтех, где eventual ок.",
+                "if_it_were_true": "Если бы ledger мог расходиться — каждый network blip приводил бы к двойному списанию; merchant получал бы lawsuit от customer; банк-эмитент отзывал бы acquiring license.",
+                "how_it_should_be": "Strong consistency на ledger (entries атомарны), eventual только на views/reports/dashboards."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только functional requirements (POST /payments, refund, status); non-functional обсуждать после MVP, capacity по 1K txn/sec достаточно для оценки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без NFR теряется fundamental scope: idempotency, durability, PCI compliance — это не «после MVP», это часть архитектурного выбора с первого дня. 1K txn/sec — порядок маленького startup, не Stripe-scale.",
+                "source_of_confusion": "Подход «MVP first, scale later» работает для соцсетей, но не для финтеха: PCI compliance, durability, retry-safety нельзя ретрофитить.",
+                "if_it_were_true": "Если бы NFR можно было откладывать, ledger без идемпотентности на проде создал бы double-charges на каждом retry — миллионы долларов утечки за неделю.",
+                "how_it_should_be": "NFR (durability, consistency, PCI) обсуждаются сразу после functional scope, до архитектурных решений."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая статья расходов доминирует в платёжной системе Stripe-scale при $20B GMV/year и почему capacity estimation на 50K txn/sec — это правильный pessimistic peak?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Infrastructure (compute + DB) — $50-100M/year. Capacity 50K — это steady-state Black Friday-кратный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Infrastructure для Stripe-scale обычно $5-15M/year, не $50-100M. PSP interchange/scheme fees доминируют ($100-200M на $20B GMV). Capacity 50K — это peak, не steady-state.",
+                "source_of_confusion": "Кандидат фокусируется на технических расходах (servers/storage), забывая что в финтехе fee-структура (interchange 1.5-2.5%, scheme 0.1-0.15%) — главная статья.",
+                "if_it_were_true": "Если бы infrastructure доминировала, Stripe вкладывался бы в self-hosted DC; реально они на AWS с marginal cost на compute.",
+                "how_it_should_be": "Главная статья — interchange/scheme fees через card networks; infrastructure second-tier."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Interchange и scheme fees — $100-200M/year (1-2% от GMV). Capacity 50K txn/sec = steady-state 5800 txn/sec × peak ×8-10 (Black Friday, IPO события).",
+              "correct": true,
+              "sections": {
+                "explanation": "Interchange (1.5-2.5% от amount, идёт issuer-у) + scheme fee (0.1-0.15%, network) = ~1.5-2.5% от GMV. На $20B GMV это $100-200M/year — главная статья расходов. Capacity 50K txn/sec правильно оценивается как peak: steady-state 500M tx/day / 86400 = 5800 txn/sec, peak в Black Friday/Cyber Monday/IPO события — ×8-10. API total включая reads/webhooks/retry: 50K × ~5 = 250K req/sec.",
+                "example": "Stripe в 2023 опубликовал ~$1T processed; при марже 2.9% это $29B revenue, из которых большая часть идёт на interchange. Black Friday 2022 Shopify обслуживал peak 24K orders/min — порядок 400 orders/sec у одного merchant, при умножении на N merchants на платформе — десятки тысяч.",
+                "when_to_apply": "Любой эстимейт для финтех-платформы: всегда выделять interchange/scheme как top cost. Capacity-расчёт через `peak = steady_state × 8-10` подходит для систем с сезонностью (ритейл, ticket sales).",
+                "edge_cases": "Для B2B-платформ без e-commerce-сезона peak коэффициент ниже (×2-3), для краудфандинга может быть ×100 на запуск кампании.",
+                "related": "Q3 SLA per operation; Q13 interchange механика; Q24 PCI scope влияет на infrastructure cost."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Chargeback fees ($15-50 × ~0.9% transactions) — $90-180M/year, превышают infrastructure. Capacity 50K = network-bottleneck PSP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chargeback ratio здоровых merchants — 0.1-0.3%, не 0.9% (0.9% это Visa VDMP threshold для штрафа). На $20B GMV при 500M tx и 0.2% chargebacks = 1M chargebacks × $25 = $25M/year — заметно, но не топ-статья. Capacity bottleneck — PSP latency (1500 ms), не network bandwidth.",
+                "source_of_confusion": "Путаница threshold (Visa 0.9%) с реальным средним по индустрии; и confusion network bottleneck (latency vs throughput).",
+                "if_it_were_true": "Если бы 0.9% было нормой, merchant попадал бы в Visa Dispute Monitoring Program → штрафы до $50K/month, потеря acquiring license.",
+                "how_it_should_be": "Реальный ratio 0.1-0.3%, fees заметны но не доминируют; топ — interchange/scheme."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Compliance audit и penetration testing — $30-50M/year. Capacity 50K — это per-region, мульти-региональная архитектура удваивает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PCI Level 1 audit $100-500K/year, penetration testing еще $50-200K — порядок $1M/year, не $30-50M. Capacity 50K — это global peak, мульти-регион не удваивает, а распределяет (US-east + EU-west + APAC обслуживают разные customers).",
+                "source_of_confusion": "Преувеличение compliance-затрат (они большие для startup, но не для Stripe-scale); и неверная модель multi-region (распределение, не дублирование).",
+                "if_it_were_true": "Если бы compliance стоил $30-50M, не было бы PCI L1 startup-ов — порог входа в индустрию был бы запретительным.",
+                "how_it_should_be": "Compliance ~$1-3M/year; capacity 50K — глобальный peak, распределённый по регионам."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая операция в Payment System — самая SLO-critical и почему её p99 не должен превышать 2 секунды даже при оптимизации остальных endpoints?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Webhook outbound — без него merchant не узнает о платеже, p99 < 500ms strict.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Webhook outbound — async-операция (at-least-once delivery, retry в течение 72 часов); её latency не критична в SLA real-time-смысле. p99 latency для webhook не имеет смысла, потому что это асинхронная доставка, измеряется через `delivery lag p99`.",
+                "source_of_confusion": "Кандидат фокусируется на ответе merchant'у, забывая что для customer-facing experience критичен authorize-flow (момент клика «Pay»).",
+                "if_it_were_true": "Если бы webhook был sync-critical, любой slow merchant блокировал бы Stripe-pipeline; на деле webhooks независимы и retry-tolerant.",
+                "how_it_should_be": "Webhook — async, измеряется delivery-lag; SLA = at-least-once в 72ч."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GET /payments/:id status — fetch вызывается клиентом часто после authorize, p99 < 200ms key UX metric.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Status-fetch важен (p99 < 200ms — стандартная цель), но не самый critical SLO. Status — read-operation, ответ может идти из cache/read-replica; если cache не работает, fallback на PSP refresh. Authorize-path куда критичнее.",
+                "source_of_confusion": "Кандидат думает в категориях user-facing latency, но забывает, что critical path для конверсии — это создание платежа, а не его статус.",
+                "if_it_were_true": "Если бы status был самой critical операцией, Stripe SDK polling-ом мог бы убить производительность; на деле SDK ждёт webhook + statuс check как fallback.",
+                "how_it_should_be": "Authorize — самая критичная; status — second-tier с быстрым read-cache."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "POST /payments (authorize) — любой неуспешный платёж = lost customer; p99 < 2 сек включает PSP-call 800-1500 ms который не оптимизируется на нашей стороне.",
+              "correct": true,
+              "sections": {
+                "explanation": "Authorize — `customer-facing critical path`: пользователь жмёт «Pay» и ждёт ответа. Если latency > 3 сек — cart abandonment растёт в разы (Shopify данные: каждые 100ms = -1% conversion). p99 < 2 сек — индустриальный стандарт. Основной bottleneck — PSP-call (Stripe API сама 800-1500 ms, мы поверх неё), который не оптимизировать без перехода на низкоуровневое acquiring (несколько лет). Остальные этапы: TLS+auth 30 ms, idempotency lookup 5 ms, risk service 100 ms, vault 20 ms, ledger 30 ms, outbox 20 ms — итого ~1.2 сек без 3DS challenge.",
+                "example": "Stripe рекомендует timeout 30 сек на client-side, но обычный authorize укладывается в 1-2 сек. Если 3DS challenge invoked, latency растёт до 5-30 сек async — но это уже за пределами synchronous budget, обрабатывается через redirect-flow.",
+                "when_to_apply": "Все B2C-checkout-системы (Stripe, Shopify, Square), b2b с realtime payment confirmation. SLA на authorize — основной KPI отдела платежей.",
+                "edge_cases": "При 3DS challenge p99 не считается на synchronous-window, потому что user уходит на ACS issuer-а; используется отдельный SLO `3DS-completion-rate`. Cold-start первого платежа merchant иногда добавляет 200-500 ms (создание Stripe Customer object).",
+                "related": "Q4 idempotency; Q11 3DS challenge vs frictionless; Q28 latency budget breakdown."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reconciliation batch — daily job не вкладывается в SLA, может работать часами без проблем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reconciliation важен, но он batch-job с window до 06:00 UTC, не real-time SLA. Если reconciliation запоздает на час, customer ничего не заметит; если authorize запоздает на 3 сек — customer уходит.",
+                "source_of_confusion": "Кандидат смешивает offline-jobs с online SLA. Reconciliation — important но not customer-facing.",
+                "if_it_were_true": "Если бы reconciliation был SLO-critical, его пришлось бы делать streaming-ом каждую секунду; обычно daily через Spark на data lake — достаточно.",
+                "how_it_should_be": "Reconciliation — batch с T+1 deadline; критичные операции — authorize/capture с realtime SLA."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать idempotency-key для `POST /payments`, чтобы retry после network blip не создавал двойное списание, и какая компонента ключа защищает от случайного reuse?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Хранить (idempotency_key, response_body) в Redis с TTL 24ч; на каждый запрос делать SETNX и при collision возвращать cached response — без сравнения payload.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без сравнения payload (request_hash) если client случайно reuse ключ на другой payload (refund вместо payment), второй запрос вернёт cached response от первого — операция не выполнится, а client будет думать, что выполнилась. Это рассогласование.",
+                "source_of_confusion": "Упрощённое восприятие idempotency — `key уникален значит достаточно`. Stripe документация явно требует request hash для защиты от accidental reuse.",
+                "if_it_were_true": "Если бы reuse ключа был ок, Stripe не возвращал бы 409 `idempotency_key_mismatch`; на деле любое расхождение payload — 409, чтобы предотвратить silent failure.",
+                "how_it_should_be": "Хранить (key, request_hash, response, status); при collision сравнивать hash, mismatch → 409."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать только timestamp как ключ (millisecond precision), сравнивать в окне ±100 ms — этого достаточно для защиты от retry storms.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Timestamp как ключ не идемпотентен между разными retry: client retry через 5 сек получит другой timestamp → новый payment. Два concurrent client с тем же timestamp создадут collision-ошибку, не дедупликацию.",
+                "source_of_confusion": "Идея «window-based dedup» работает в low-throughput системах (например логи), но не подходит для финансовых операций.",
+                "if_it_were_true": "Если бы timestamp был достаточен, не было бы UUIDv4 в Stripe API; их формат `req_<random>` — client-generated unique.",
+                "how_it_should_be": "Client генерирует UUIDv4, передаёт в header `Idempotency-Key`; server хранит и matches."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Idempotency-key как глобальный namespace (без tenant scoping), TTL 1 час — этого хватит для покрытия retry-burst.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без tenant scope (merchant_id) два разных merchant могут случайно сгенерировать одинаковый ключ (UUID collision pseudo-random, или client использует counter); их запросы будут conflict. TTL 1 час недостаточно — retry бывают через часы (мобильный offline).",
+                "source_of_confusion": "Кандидат не учитывает мульти-tenant природу платёжной платформы; и думает что UUID collision невозможны (на 10B UUID/year риск ~1).",
+                "if_it_were_true": "Если бы 1 час было ок, мобильное приложение в самолёте 4ч не смогло бы безопасно retry; реально Stripe держит 24ч.",
+                "how_it_should_be": "PK = `(merchant_id, idempotency_key)`, TTL 24 часа (Stripe default), всегда tenant-scoped."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Header `Idempotency-Key: <UUID v4>`, storage хранит `(merchant_id, key, SHA256(request_body), response, status)` с TTL 24ч; на retry — compare hash, mismatch → 409 `idempotency_key_mismatch`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Stripe-канонический паттерн. Client передаёт UUIDv4 в header. Server хранит запись с PK `(merchant_id, key)` и request_hash. На повторный request: (1) если key найден и hash совпадает — return cached response (replay); (2) если key найден и hash не совпадает — 409, защита от случайного reuse того же ключа для другой операции; (3) если key найден в статусе `in_flight` — 409 + `Retry-After`. TTL 24 часа — баланс между удобством retry и размером store.",
+                "example": "В Stripe `POST /v1/charges` с `Idempotency-Key: req_abc123` дважды — второй вызов вернёт тот же `charge_id` мгновенно. Если попытаться с тем же ключом сделать refund — 409 `idempotency_key_mismatch`.",
+                "when_to_apply": "Все mutating-операции платёжной системы: create payment, refund, transfer, payout. Standard Stripe/Adyen/Braintree контракт.",
+                "edge_cases": "Inflight 5xx — client retry → cached error → client решает retry с новым ключом. TTL expired → retry того же ключа = новый платёж (риск дубля если client не понял); защита — задокументировать window. Concurrent retry on in_flight — return 409 с Retry-After.",
+                "related": "Q7 lifecycle авторизации; Q10 outbox для idempotent event publish; Q15 webhook idempotent receivers."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что критично в реализации double-entry ledger для платежей и какой инвариант гарантирует, что деньги не исчезают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Каждая транзакция — ≥2 entries; `SUM(amount_minor) GROUP BY transaction_id = 0` per currency; entries append-only (никаких UPDATE/DELETE); balance = `SUM(entries WHERE account_id=X)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Double-entry — фундамент 700 лет (Лука Пачоли, 1494). Каждое движение денег имеет как минимум 2 строки: debit на одном аккаунте, credit на другом, сумма = 0. Append-only журнал означает, что коррекции делаются через reverse entries, не UPDATE — это даёт полную audit-trail. Balance per account реконструируется суммированием entries. Инвариант проверяется continuous (per-transaction в коде) и batch (overnight job по всему ledger).",
+                "example": "Authorize $100: `customer_pending +10000`, `merchant_pending -10000` (sum=0). Capture: reverse pending + add `customer_settled +10000`, `merchant_available -10000`, `psp_clearing -300` (Stripe 3% fee), `fee_revenue +300` (sum=0). TigerBeetle DB именно так устроена.",
+                "when_to_apply": "Все платёжные процессоры (Stripe, Adyen), wallets (Wise, Revolut), banking-as-a-service (Mercury, Synapse), DeFi-протоколы с ledger.",
+                "edge_cases": "Multi-currency: separate entries per currency, FX-conversion = две транзакции с парой entries в каждой валюте + fx_revenue entry. Hash-chain `hash_n = SHA256(prev_hash || entry_n)` опционально для tamper-detection.",
+                "related": "Q6 storage для ledger; Q17 reconciliation проверяет invariant против PSP; Q22 multi-currency entries."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Каждая транзакция = одна строка в `balances` table с UPDATE; для аудита включить triggers, которые пишут в `audit_log`; balance читается напрямую, не вычисляется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "UPDATE на balance row создаёт race conditions при concurrent transactions: два списания одновременно могут перезаписать друг друга, потеряв money. Audit_log через trigger — fragile (trigger может fail, BACKUP может пропустить). Read-balance напрямую неверифицируем — нельзя реконструировать историю.",
+                "source_of_confusion": "Mental-model OLTP CRUD: одна row = одно состояние, UPDATE для изменений. Подходит для inventory, не для денег.",
+                "if_it_were_true": "Если бы UPDATE на balance был ок, FTX/Mt.Gox-инцидентов с потерянными монетами не было бы; в реальности крупные крипто-биржи теряли coins именно через UPDATE-based ledger без double-entry.",
+                "how_it_should_be": "Append-only entries; balance вычисляется суммой. Никаких UPDATE/DELETE на ledger."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Использовать float (DOUBLE PRECISION) для amount; double-entry опционально — главное synced replication; balance — materialized view с auto-refresh каждую минуту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Float для денег приводит к round-off ошибкам: `0.1 + 0.2 = 0.30000000000000004`. На миллионах транзакций накапливается discrepancy в тысячи долларов. Без double-entry потерянная transaction никак не обнаружится. Materialized view с 1-min refresh — stale balance, race window для double-spend.",
+                "source_of_confusion": "Float — default тип в большинстве языков; кандидат думает «деньги это числа, плавающая точка подходит». На деле всегда integer minor units.",
+                "if_it_were_true": "Если бы float был ок, банковский софт писали бы на JavaScript. Реально все ledger используют BIGINT в центах/копейках, либо BigDecimal с fixed-precision.",
+                "how_it_should_be": "BIGINT в minor units (cents/копейки), double-entry, balance реконструируется из entries."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Event sourcing на Kafka: каждое движение — event, balance — projection через Kafka Streams; без отдельной БД для ledger.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka даёт at-least-once delivery, не exactly-once на default settings. Без идемпотентности projection дубли event-ов приводят к двойному zachisleniu. Kafka retention обычно 7 дней (увеличение до годов дорогое), не подходит для PCI 7-year retention.",
+                "source_of_confusion": "Event sourcing модный паттерн; кандидат экстраполирует CQRS-подход на финтех. На деле даже event-sourced ledger хранит снимки в БД для query и aud.",
+                "if_it_were_true": "Если бы только Kafka хватало, банки заменили бы Core Banking системы на Kafka Streams. Реально Core Banking — это RDBMS с double-entry, Kafka — для async-eventов поверх.",
+                "how_it_should_be": "RDBMS (Postgres/TigerBeetle) для ledger + Kafka для async event distribution + outbox pattern для атомарности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой storage best fits для double-entry ledger Stripe-scale (50K txn/sec, PCI 7-year retention, ACID-критично) и почему MongoDB/DynamoDB single-table обычно неподходящий выбор?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "MongoDB с replica set: BSON документ за payment = атомарная запись; horizontal scaling через sharding; flexible schema упрощает evolution.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB до v4.0 не имел multi-document transactions; даже сейчас они работают плохо на cross-shard. Атомарность в пределах одного document помогает, но double-entry требует записи 2+ entries атомарно — это multi-document. Без транзакций один INSERT может пройти, а второй fail — ledger разъезжается.",
+                "source_of_confusion": "MongoDB маркетинг flexibility и horizontal scaling; кандидат не знает истории v3.x когда транзакций не было.",
+                "if_it_were_true": "Если бы MongoDB подходил, Stripe/Adyen использовали бы её. Реально все они на Postgres или собственных движках.",
+                "how_it_should_be": "Postgres (sharded by merchant_id) или Cassandra с LWT для multi-DC; для extreme scale — TigerBeetle."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Postgres (sharded by merchant_id) для hot tier 90 дней + Iceberg/Parquet на S3 для cold archive; double-entry через ACID transactions, partition pruning ускоряет queries; альтернатива — TigerBeetle для extreme scale.",
+              "correct": true,
+              "sections": {
+                "explanation": "Postgres ACID гарантирует атомарность multi-row INSERT (две entries в одной BEGIN/COMMIT). Sharding по merchant_id даёт ровную нагрузку (нет hot-merchant на одном shard, если sub-shard by month). Hot 90 дней в Postgres — queryable, < 90 дней охватывает 95% queries (disputes, recent activity); cold tier на S3 Parquet через Apache Iceberg/Glue catalog — дешёвый long-term storage с возможностью query через Athena/Trino. TigerBeetle — purpose-built database для double-entry, 1M txn/sec на одной ноде через io_uring + batched commit; используется emerging fintech.",
+                "example": "Stripe и Square — Postgres-based с custom sharding. Adyen — Java + Cassandra с собственным bookkeeping. Plaid и Stripe Treasury экспериментируют с TigerBeetle для high-throughput accounts.",
+                "when_to_apply": "Любой ledger с ACID-критичными операциями; sharding обязателен при > 5K txn/sec на one node. Iceberg/Parquet для PCI 7-year archive — стандарт fintech data lake.",
+                "edge_cases": "Cross-shard queries (например `top spenders globally`) делаются через ETL в Snowflake/BigQuery, не на ledger напрямую. Re-sharding (когда merchant перерос свой shard) — manual operation с downtime или live-resharding через Citus/Vitess.",
+                "related": "Q5 invariants проверяются на этом storage; Q22 multi-currency layout; Q27 multi-region replication."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DynamoDB single-table design: payment + entries в одной row через nested attributes; on-demand billing scales автоматически; partition key = merchant_id, sort key = timestamp.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DynamoDB single-table не поддерживает multi-item transactions с rollback на cross-partition уровне; TransactWriteItems ограничен 100 items и 4MB. Для ledger с миллиардами entries это не масштабируется. Nested attributes делают entries non-queryable (нельзя SUM efficient). Hot partition риск если один merchant генерирует 10K txn/sec.",
+                "source_of_confusion": "AWS-маркетинг DynamoDB как «scale infinitely»; ledger требует range scans + aggregations, что DynamoDB делает плохо.",
+                "if_it_were_true": "Если бы DynamoDB single-table подходил, AWS Payment Cryptography использовал бы её. Реально AWS внутри для Payments использует RDS/Aurora.",
+                "how_it_should_be": "Postgres sharded или TigerBeetle; DynamoDB ок для idempotency-store или session-data."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Redis Cluster с AOF persistence; INCR/DECR на balances atomic; ACID гарантируется single-thread исполнением команд; backup через RDB snapshots.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis — in-memory, persistence есть (AOF/RDB), но даже с `fsync always` есть риск потерять последние write при crash. RDB snapshots — point-in-time, не continuous. AOF rewrite может lose data при corner case. Для PCI 7-year retention Redis не подходит (storage cost экспоненциальный). INCR/DECR атомарны на single key, но double-entry — multi-key операция.",
+                "source_of_confusion": "Redis быстрый и single-threaded — кандидат думает «значит ACID». На деле Redis BA (basically available), не CP.",
+                "if_it_were_true": "Если бы Redis подходил, Stripe держал бы все балансы в RAM. Реально Redis используется только для idempotency-cache и velocity counters.",
+                "how_it_should_be": "Redis для idempotency/cache/counters; ledger в persistent ACID DB."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем разделять `authorize` и `capture` в платёжной системе (вместо одного auth-and-capture call) и какое последствие пропуска capture в течение 7 дней?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Разделение нужно только для подписок (recurring billing) — на e-commerce always auto-capture; пропуск capture создаёт штраф merchant'у от issuer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auth/capture split критичен для e-commerce (capture при отгрузке через 1-3 дня), hospitality (pre-auth при заселении, capture при checkout), car rental (pre-auth deposit). Подписки используют MIT — другой механизм. Пропуск capture не создаёт штраф; issuer просто снимает hold через 7 дней (hold-release, auth expires).",
+                "source_of_confusion": "Кандидат не различает merchant categories; путает MIT recurring с standard one-time auth/capture flow.",
+                "if_it_were_true": "Если бы штраф был, no-show в отелях не было бы возможен; реально гостиница берёт pre-auth и не captures если customer не приехал.",
+                "how_it_should_be": "Split нужен для delayed fulfillment; expired auth = hold released без штрафа."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Разделение — historical artifact card networks; современные API (Stripe PaymentIntent) рекомендуют auto-capture; expired auth конвертируется в `cancelled` без последствий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe PaymentIntent поддерживает оба mode (`automatic` и `manual` capture), и manual широко используется для delayed shipping. Это не historical, а core fintech pattern. Expired auth не `cancelled` — это `expired` (separate state), и hold released на customer's bank account.",
+                "source_of_confusion": "Кандидат видел `setup_future_usage` в Stripe-docs и подумал, что split deprecated.",
+                "if_it_were_true": "Если бы split был deprecated, Amazon/Shopify auto-capture'или бы при order — реально они капчурят только при отгрузке (защита от cancellation).",
+                "how_it_should_be": "Split — core pattern, не historical; expired ≠ cancelled."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Authorize резервирует сумму на счёте customer (hold), capture делает реальное списание; разделение нужно для delayed fulfillment (отгрузка через 1-3 дня), hospitality, car rental; auth expires через 7 дней (hold release) — pre-auth снимается issuer-ом автоматически без fees.",
+              "correct": true,
+              "sections": {
+                "explanation": "Authorize — это `сообщение` card network что merchant хочет зарезервировать сумму; issuer уменьшает available limit на карте customer, но fact списания не происходит. Capture — это запрос `теперь действительно спиши`. Разделение нужно во всех сценариях с гарантированным товаром но отложенной поставкой: Amazon капчурит только при отгрузке (1-3 дня после order), отели pre-auth $200 deposit при чек-ине и capture финальную сумму при чек-ауте, car rental pre-auth $500 covering damages. Если capture не происходит в 7 дней, issuer автоматически снимает hold — деньги возвращаются на available limit customer. Никаких fees за expired auth. Дополнительные преимущества: `void` (отмена до capture) проще refund-а: нет fees, мгновенно, нет PCI dispute risk.",
+                "example": "Booking.com при бронировании отеля: auth $1500 при reserve, capture $1200 после stay (если no-show fees отличаются). Hotwire/Expedia аналогично. Amazon: auth при order, capture при ship — если warehouse out-of-stock, void (без refund-комплекта).",
+                "when_to_apply": "Любая система с delayed fulfillment, partial-amount-final (отели, car rental), high-risk fraud где void проще refund.",
+                "edge_cases": "Re-auth через 7 дней: если capture запаздывает, нужен fresh authorize (customer's bank может decline second auth). Some networks (Visa CTAP) дают 30-day window, но это специальный contract.",
+                "related": "Q8 saga для capture-flow; Q18 refund vs void; Q19 chargeback после settle."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Auth — это soft-hold (не движение денег), capture — фактический transfer; пропуск capture в 7 дней => acquirer штраф $5 per expired authorization из-за network overhead.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auth — реальный hold на customer's bank (уменьшает available, но не posted balance). Acquirer не штрафует merchant за expired auth; cost per auth — копейки, не $5. Card networks могут иметь chargeback fees, но не auth-expiry fees.",
+                "source_of_confusion": "Преувеличение fee-структуры; кандидат смешивает chargeback fees ($15-50) с авто-expiry.",
+                "if_it_were_true": "Если бы $5 штраф был, e-commerce платил бы миллионы за cancelled-orders авто-expiry; реально нет таких fees.",
+                "how_it_should_be": "Expired auth — бесплатный hold release; никаких per-expiry fees."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему 2PC (XA transactions) не подходит для платёжных операций между internal DB и external PSP (Stripe, Adyen), и какой паттерн используется вместо?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "2PC недоступен потому что Postgres XA имеет performance issues; используем eventual consistency через Kafka — merchant получит callback когда система догонит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Postgres XA работает, но 2PC требует чтобы все participants поддерживали prepare-phase; Stripe/Adyen — external companies, они не запустят prepare-фазу для вашего coordinator. Kafka сама не решает проблему consistency, нужен outbox + saga.",
+                "source_of_confusion": "Кандидат знает что XA медленный, делает вывод что это причина; реально причина — невозможность cross-organisation 2PC.",
+                "if_it_were_true": "Если бы Kafka eventual consistency был достаточен без orchestrator, не было бы Temporal/Cadence/Camunda — saga орchestration инструментов.",
+                "how_it_should_be": "Saga с compensating actions + outbox для атомарной публикации событий; 2PC невозможен cross-company."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Используем local DB transaction + sync HTTP call к Stripe в той же транзакции; если Stripe возвращает success — commit, иначе rollback.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DB transaction блокирует rows на время HTTP-call (800-1500 ms Stripe latency) — connection pool starvation, throughput падает в 100 раз. Если HTTP timeout, неясно — Stripe charged или нет; rollback local не отменит charge у Stripe. Гарантий нет.",
+                "source_of_confusion": "Кандидат пытается распространить ACID на external call; синхронные транзакции с external API — antipattern.",
+                "if_it_were_true": "Если бы это работало, Stripe SDK поставлялся бы с XA-recovery механизмами; реально SDK не имеет distributed transaction support.",
+                "how_it_should_be": "Saga: PSP call вне DB transaction, idempotency + compensation для rollback charge."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "2PC недоступен из-за CAP-theorem violations в multi-region; используем 3PC (three-phase commit) с pre-commit phase для устранения coordinator failure window.",
+              "correct": false,
+              "sections": {
+                "what_actually": "3PC решает coordinator-failure issue 2PC через дополнительную phase, но всё равно требует participants поддержку prepare. Stripe/Adyen не поддерживают ни 2PC, ни 3PC — это closed APIs. CAP не запрещает 2PC, только compromises availability при network partition.",
+                "source_of_confusion": "Книжное знание о 3PC как `improvement of 2PC`; в реальном финтехе 3PC так же неприменим, как 2PC.",
+                "if_it_were_true": "Если бы 3PC использовался cross-company, существовал бы PSP-3PC-protocol. Реально нет такого стандарта.",
+                "how_it_should_be": "Saga, не 3PC; protocol-mismatch не lossable через distributed commit."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Stripe/Adyen — external companies, не participate в наш 2PC coordinator (нет prepare-phase API); используем saga: последовательность local transactions с compensating actions на каждый шаг + idempotency обязательна.",
+              "correct": true,
+              "sections": {
+                "explanation": "2PC требует чтобы все participants реализовали prepare-phase (vote yes/no, hold locks). External PSP не предоставляет такого API — у них только `POST /charges` (single phase commit). Поэтому используется saga: последовательность local transactions, каждая с compensation. Если шаг N fail → выполняем compensations для N-1, N-2, ..., 1. Saga не atomic и не isolated, но возможна cross-org. Idempotency обязательна на каждом шаге — без неё retry on failure ломает state (двойной charge).",
+                "example": "Onboarding merchant: (1) Create merchant in PG → если fail rollback; (2) Create Stripe Connect account → compensation: `Stripe.delete(account_id)`; (3) Create KYC case → compensation: `KYC.cancel(case_id)`; (4) Send welcome email → no compensation acceptable. Tools: Temporal, Cadence, AWS Step Functions, Camunda.",
+                "when_to_apply": "Все distributed flows в финтехе: onboarding, payment with risk-check + PSP-call + ledger, refund involving multiple systems. Стандарт индустрии.",
+                "edge_cases": "Compensations могут сами fail → need retry с backoff + DLQ. Long-running sagas (subscription billing) могут занять дни — нужны durable workflows (Temporal). Some operations не имеют true compensation (welcome email уже отправлен) — accept partial inconsistency.",
+                "related": "Q9 orchestration vs choreography; Q10 outbox для надёжной публикации; Q26 PSP routing внутри saga."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Где правильно применять orchestration (центральный coordinator) vs choreography (events) для платёжного flow и почему чистый choreography сложен для debugging?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Orchestration для critical happy-path (authorize → capture → settle с rollback на failure) через Temporal/Step Functions; choreography для side-effects (notifications, analytics, fraud-feedback) через Kafka — debugging упрощается central state, side-effects loose-coupled.",
+              "correct": true,
+              "sections": {
+                "explanation": "Industry standard: payment lifecycle (создание платежа → fraud check → PSP call → capture → settle) живёт в orchestrator (явная state machine, visualizable, durable workflow с retry/timeout/compensation built-in). Side-effects (отправка email, обновление analytics, fraud model feedback) — choreography через Kafka events. Это даёт лучшее из обоих: видимость critical flow + расширяемость via subscriptions без модификации orchestrator. Temporal — самый популярный outsourced (используют Stripe internal, Datadog, Coinbase, HashiCorp), AWS Step Functions — managed, Camunda — enterprise legacy. Choreography для side-effects лёгкий — добавил новый consumer на топик и работает без orchestrator-change.",
+                "example": "Stripe внутренний Workflow Engine для PaymentIntent state machine (CREATED → REQUIRES_PAYMENT_METHOD → REQUIRES_CONFIRMATION → PROCESSING → SUCCEEDED). Kafka topic `payment.captured` подписан risk-feedback-service, accounting-service, customer-notify-service — каждый делает своё.",
+                "when_to_apply": "Любой финтех с phased flow + side-effects. Orchestrator для money movement, choreography для side communication.",
+                "edge_cases": "Orchestrator workflow может стать слишком сложным (50+ steps) — нужно дробить на sub-workflows. Choreography может создать `event spaghetti` если producers/consumers разрастаются — нужен event catalog (Schema Registry).",
+                "related": "Q8 saga для money flow в orchestrator; Q10 outbox связывает DB transaction и Kafka event; Q26 PSP routing внутри orchestrator."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только orchestration — central state machine упрощает понимание; events deprecated по причине inconsistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чистый orchestration создаёт `god service`: PaymentOrchestrator знает всё про fraud, risk, notifications, analytics, settlement. Single point of failure, единая БД с state, сложно scale. Events не deprecated — они идеальны для loose-coupling non-critical (analytics, notifications, fraud-feedback).",
+                "source_of_confusion": "Кандидат прочитал про Temporal/Camunda и решил `state machines везде`.",
+                "if_it_were_true": "Если бы events были inconsistent, Kafka не доминировал бы как backbone финтех-стека.",
+                "how_it_should_be": "Hybrid: orchestration критичный flow + choreography for side-effects."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только choreography через Kafka — loose coupling это всегда лучше; debugging решается через distributed tracing (Jaeger/Datadog).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Чистый choreography размывает business logic по N сервисам; flow `authorize → risk → capture → settle → webhook` живёт в 5 разных подписках на 5 разных топиков. При incident нужно собрать flow вручную из logs/traces. Distributed tracing помогает, но не показывает business state machine; tracing виден post-mortem, не proactive.",
+                "source_of_confusion": "Microservices-evangelism `decoupling is always good`; кандидат не различает technical decoupling и business-flow visibility.",
+                "if_it_were_true": "Если бы tracing решал debugging, Temporal/Cadence не существовали бы — а они на $1B+ valuation, потому что orchestration востребован.",
+                "how_it_should_be": "Orchestration для critical happy-path (authorize/capture/settle), choreography для side-effects (notifications/analytics)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Orchestration vs choreography — false dichotomy; на Spring Boot достаточно `@TransactionalEventListener` для синхронной публикации events внутри транзакций, без отдельных тools.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TransactionalEventListener — Spring синхронный механизм после commit, не решает distributed orchestration. Нет durability (workflow state теряется при restart), нет retry с backoff, нет compensation chain, нет visibility состояния workflow. Подходит для in-process events, не для cross-service saga.",
+                "source_of_confusion": "Кандидат знает Spring ecosystem и пытается решить distributed problem local tools.",
+                "if_it_were_true": "Если бы Spring достаточно, не было бы Temporal/Cadence — спецификализированных workflow-движков. Реально они существуют именно потому что generic frameworks недостаточны.",
+                "how_it_should_be": "Temporal или AWS Step Functions для durable workflows; Spring events для in-process логики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен outbox pattern при публикации события `PaymentAuthorized` в Kafka после успешного INSERT в БД, и какое последствие наивного `db.commit(); kafka.send();`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Outbox — это performance optimization: batch публикация быстрее single sends; alternative — отправка events в Kafka синхронно в коде, с try-catch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Outbox не про performance, а про atomicity/consistency. Try-catch на kafka.send() не решает: после `db.commit(); kafka.send() FAIL;` транзакция committed в БД, event lost — нет способа восстановить кроме reconciliation. Naive sync publish с try-catch — этот именно antipattern outbox решает.",
+                "source_of_confusion": "Кандидат думает в performance-terms (batch send), не в consistency terms (atomicity между системами).",
+                "if_it_were_true": "Если бы это была оптимизация, можно было бы переключаться по нагрузке; реально outbox — обязательный pattern для строгой consistency.",
+                "how_it_should_be": "Outbox решает consistency, не performance; try-catch не помогает в gap."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Outbox устраняет gap между DB commit и Kafka send: один атомарный transaction записывает в `payments` + `outbox`; publisher worker отдельно читает outbox и шлёт в Kafka. Без outbox: если Kafka send fail после commit — event lost, consumers не узнают; если послать перед commit — event на phantom state.",
+              "correct": true,
+              "sections": {
+                "explanation": "Outbox решает atomicity между двумя системами (DB + Kafka), которая невозможна без 2PC. В одной local transaction делается INSERT в `payments` и в `outbox` таблицу. Отдельный publisher worker (polling или CDC через Debezium на WAL) читает outbox, шлёт в Kafka, помечает as published. Гарантии: at-least-once delivery (publisher может упасть после send, до mark — повторит) → consumers должны быть idempotent. Debezium CDC лучше polling: real-time без нагрузки на основную БД, читает Postgres WAL.",
+                "example": "Stripe internal: после INSERT charge в БД, INSERT event в outbox; Debezium connector читает Postgres logical replication slot, выкатывает в Kafka topic `charges.created`. Consumers (analytics, webhook-dispatcher, risk-feedback) обрабатывают event с дедупликацией по event_id.",
+                "when_to_apply": "Все системы где DB-write должен породить event/notification: payments, orders, user-signup. Стандарт для микросервисной архитектуры с Kafka backbone.",
+                "edge_cases": "Outbox table растёт быстро — нужен ретеншен (delete rows > 30 дней). Backpressure если Kafka недоступна — outbox накапливается, мониторить unpublished count. Ordering per-aggregate guaranteed через partition key = aggregate_id.",
+                "related": "Q5 atomicity ledger + outbox; Q15 webhook dispatcher consume из outbox-topic; Q17 reconciliation учитывает unpublished events."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Outbox — legacy подход из 2010-х; современный паттерн — Kafka transactions (`isolation.level=read_committed`) с producer-side transactional API, который атомарно фиксирует в Kafka + DB через Kafka Connect.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka transactions гарантируют атомарность внутри Kafka (write в multiple topics atomic), но не между Kafka и external DB. Kafka Connect — это инструмент для интеграции, не для distributed transactions. Outbox остаётся актуальным паттерном — Stripe/Adyen используют его сегодня.",
+                "source_of_confusion": "Кандидат слышал про Kafka transactional producer и проэкстраполировал на cross-system transactions.",
+                "if_it_were_true": "Если бы Kafka transactions решали проблему, outbox-pattern не упоминался бы в `microservices.io` как канонический; реально это standard в индустрии.",
+                "how_it_should_be": "Outbox по-прежнему правильный pattern; Kafka transactions хороши для intra-Kafka idempotency."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно отправлять в Kafka до commit DB: если Kafka send success, делаем commit; если fail — rollback DB. Это базовая ACID комбинация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если Kafka send прошёл, а DB commit fail — event отправлен о состоянии, которого нет в БД. Consumers начнут обработку phantom payment, который потом не подтверждён в системе. Это хуже чем lost event — это `phantom event` consistency violation.",
+                "source_of_confusion": "Кандидат пытается перевернуть порядок думая, что Kafka-first решает; реально оба порядка broken без outbox.",
+                "if_it_were_true": "Если бы Kafka-first работало, distributed-tx через external messaging был бы тривиален; в реальности оба порядка имеют race.",
+                "how_it_should_be": "Outbox: оба write в одной БД-транзакции; publisher отдельно с at-least-once."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что определяет, будет ли 3D Secure 2.0 транзакция `frictionless` или `challenge`, и почему в EU PSD2 SCA нельзя просто отключить 3DS для удобства customer-а?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ACS issuer всегда требует challenge для transactions > 30 EUR; frictionless существует только в US-режиме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Challenge invoked не только по amount, а по risk-score ACS (~100 data points: device, location, transaction history). ~85% EU транзакций проходят frictionless даже > 30 EUR. В US 3DS обычно opt-in, frictionless по умолчанию через `requestor_initiated_3ds=optional`.",
+                "source_of_confusion": "Кандидат знает про SCA threshold 30 EUR, экстраполирует на 100% challenge.",
+                "if_it_were_true": "Если бы было 100% challenge в EU, cart abandonment был бы 30%+; реально friction добавляется только на high-risk transactions.",
+                "how_it_should_be": "Challenge решается ACS risk-engine, не amount alone; frictionless valid в EU при low-risk."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Frictionless и challenge — это два разных protocol версии 3DS (1.0 и 2.0); merchant выбирает версию через config.",
+              "correct": false,
+              "sections": {
+                "what_actually": "3DS 1.0 deprecated с 2022 — все challenges вынуждены через 2.0 (или 2.2). Frictionless и challenge — это два возможных исхода 2.0 protocol, не разные protocols. Merchant не выбирает — issuer ACS решает по risk-score.",
+                "source_of_confusion": "Кандидат смешивает версии 3DS с режимами flow внутри 2.0.",
+                "if_it_were_true": "Если бы версии решали, merchants просто `выбирали бы 1.0` и не делали SCA — но это закрыто регулятором.",
+                "how_it_should_be": "Один protocol 3DS 2.0/2.2 с frictionless ИЛИ challenge outcome."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "ACS issuer оценивает risk-score по ~100 signals (device, location, history) и выбирает frictionless (~85% случаев) или challenge (~15%, push в banking app/SMS OTP/biometry); в EU PSD2 SCA обязателен для > 30 EUR с исключениями (low-value, TRA, MIT) — отключить нельзя без soft-decline `1A` от issuer.",
+              "correct": true,
+              "sections": {
+                "explanation": "3DS 2.0 — это протокол `risk-based authentication`. Merchant передаёт в authorize-call расширенный набор signals (device fingerprint, billing address, prior transactions). ACS (Access Control Server) issuer-а оценивает risk-score за < 1 sec; если risk низкий — frictionless (no user interaction); если высокий — challenge (push в banking app, SMS-OTP, biometry). EU PSD2 SCA требует strong customer authentication для большинства transactions > 30 EUR; исключения: low-value (< 30 EUR), TRA (Transaction Risk Analysis exemption если fraud rate merchant < 0.13%), MIT (Merchant Initiated Transaction после первого CIT с 3DS), trusted recipients (whitelist у customer). Без 3DS на > 30 EUR — issuer выдаёт `soft decline 1A`, который merchant может re-submit с 3DS.",
+                "example": "Stripe RadarSocial / Adyen RevenueAccelerate автоматически tune-ят 3DS routing: если risk низкий — пробуют frictionless, если decline `1A` — retry с challenge. Visa CB 3.0 (Compelling Evidence) даёт preferable evidence rules для merchants с 3DS.",
+                "when_to_apply": "EU/UK/India PSD2-equivalent системы. В US 3DS opt-in для merchant — но 3DS даёт `liability shift` (chargeback ответственность на issuer), что часто стоит friction.",
+                "edge_cases": "Frictionless rate зависит от issuer-а (некоторые EU банки challenge почти всегда); у крупных merchants заключают direct контракты с networks о TRA exemption. Anti-pattern — forcing challenge на каждой транзакции (cart abandonment 15-30%).",
+                "related": "Q19 chargeback liability shift; Q24 PCI scope не зависит от 3DS; Q20 anti-fraud сочетается с 3DS как final gate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "3DS 2.0 challenge всегда вызывает SMS-OTP — это единственный mechanism authentication.",
+              "correct": false,
+              "sections": {
+                "what_actually": "3DS 2.0 поддерживает множество challenge methods: push в banking app (наиболее популярный, ~60%), biometry (Face ID/Touch ID через app), SMS-OTP (legacy), email link, hardware token. Issuer выбирает доступный method.",
+                "source_of_confusion": "Кандидат экстраполирует опыт банков 2015 года, где SMS был основным.",
+                "if_it_were_true": "Если бы только SMS, FIDO2/biometry-проекты bank-ов не существовали бы; реально SMS deprecated многими банками из-за SIM-swap fraud.",
+                "how_it_should_be": "Multiple challenge methods: push, biometry, OTP — issuer выбирает по device capability."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем большие платёжные платформы (Booking, Uber, Klarna) интегрируют несколько PSP (Stripe + Adyen + Worldpay) вместо одного, и какое типичное время на интеграцию нового PSP?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Compliance требование PCI-DSS: один PSP создаёт single-vendor-risk audit-fail; для Level 1 нужно минимум 3 PSP с auto-routing между ними.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PCI-DSS не требует множественности PSP. Compliance focus на network segmentation, encryption, access controls. Multi-PSP — это business/resilience выбор, не regulatory. Большие merchants выбирают multi-PSP по cost/coverage/resilience, не для PCI audit.",
+                "source_of_confusion": "Кандидат смешивает PCI compliance с business continuity. PCI требует, чтобы один PSP был compliant, а не наличия нескольких.",
+                "if_it_were_true": "Если бы PCI требовал 3 PSP, никакого SaaS-platform не было бы на одном Stripe; реально многие startups работают с одним PSP годами.",
+                "how_it_should_be": "Multi-PSP — это resilience/coverage/cost, не compliance."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один PSP всегда выгоднее (контрактные скидки за volume); multi-PSP только для exotic regions где coverage отсутствует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Volume-скидки реальны (например > $1B/year даёт 0.5% discount), но они не перевешивают резильентность. Booking.com теряет $5M+ при 1-часовом Stripe-outage. Coverage не только exotic regions — local methods (СБП в RU, Alipay в CN, iDEAL в NL) часто не покрываются одним PSP. A/B на acceptance rate показывает разницу 1-3% между PSP — на $20B GMV это $200-600M revenue.",
+                "source_of_confusion": "Кандидат фокусируется на pricing-аспекте, забывая resilience и acceptance-rate.",
+                "if_it_were_true": "Если бы volume скидки превышали outage cost, Adyen/Stripe/Braintree не существовали бы — был бы один доминант.",
+                "how_it_should_be": "Multi-PSP оправдан для resilience + coverage + acceptance rate optimization, даже при volume скидках."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Интеграция PSP занимает 1-2 недели; платформы держат N PSP потому что миграция дешевле sticking с одним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальная интеграция PSP — 2-4 месяца engineering (vault setup, webhook handling, dispute flows, reconciliation reports, edge cases). Это нетривиальная работа. Платформы держат multi-PSP не из-за «миграция дешевле», а потому что каждый PSP имеет уникальные strengths (Stripe DX, Adyen enterprise scale, local methods coverage).",
+                "source_of_confusion": "Кандидат недооценивает интеграционный complexity, исходя из «API documentation хороша значит интеграция быстрая».",
+                "if_it_were_true": "Если бы 1-2 недели хватало, любой startup был бы multi-PSP с дня 1; реально большинство стартует с одним PSP и интегрирует второй после Series B.",
+                "how_it_should_be": "Интеграция 2-4 месяца; multi-PSP оправдан resilience + coverage + acceptance + cost arbitrage."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Resilience (PSP outage = 0 revenue с одного — нужен fallback), cost optimization (per-region pricing arbitrage), coverage (local methods Alipay/СБП/iDEAL differ per PSP), и A/B на acceptance rate (PSP-A 92%, PSP-B 89% на тех же cards); интеграция нового PSP — 2-4 месяца engineering.",
+              "correct": true,
+              "sections": {
+                "explanation": "Multi-PSP — это `infrastructure diversification` подход. Booking.com (gateway между customer и PSP) держит Stripe + Adyen + Worldpay + Braintree; при Stripe-outage smart router переключает traffic на Adyen с минимальной деградацией. Uber делает то же: per-region routing (US → Braintree, EU → Adyen). Cost arbitrage: Adyen Interchange++ выгоднее Stripe blended для large transactions. Coverage: СБП в RU только у local PSP, Alipay в CN — у Adyen Connect. Acceptance rate: одна и та же card route через разных PSP даёт разные success rates из-за PSP-specific tokenization и issuer-relationship — A/B тестирование на 1% traffic показывает разницу до 3%, на $20B GMV это $200-600M.",
+                "example": "Klarna Pay Later интегрирует 10+ acquiring partners для разных markets. Stripe сам внутри использует Worldpay/FIS как acquiring partner. PayPal Braintree включает PayPal-wallet + cards через Visa/MC. Apple Pay везде требует Tokenization Service Provider (TSP) интеграцию.",
+                "when_to_apply": "Любая платформа > $1B GMV; B2B-payment shops (Adyen, Checkout.com); marketplaces с multi-country sellers (Etsy, Airbnb).",
+                "edge_cases": "Multi-PSP создаёт complexity reconciliation (нужно сверять с N PSP reports). Smart routing требует ML acceptance-rate model + real-time PSP health monitoring. Cost обоснован для merchants > $100M GMV; для smaller — single PSP проще.",
+                "related": "Q26 smart routing деталь; Q15 webhook handling per-PSP; Q17 reconciliation усложняется."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Из чего складывается типичная Stripe-комиссия 2.9% + $0.30 на US card-not-present transaction и какой компонент уходит acquirer-у vs issuer-у vs network-у?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Interchange 1.5-2.5% (issuer), scheme fee 0.1-0.15% (Visa/MC network), acquirer markup 0.3-1% (Stripe/PSP); flat $0.30 — PSP fee per transaction; Amex closed-loop объединяет issuer+network+acquirer.",
+              "correct": true,
+              "sections": {
+                "explanation": "Stripe blended pricing 2.9% + $0.30 — это сумма трёх слоёв. **Interchange** 1.5-2.5% идёт issuer-у (банк, выпустивший карту customer): это компенсация за credit risk, fraud loss, rewards programs. **Scheme fee** 0.1-0.15% идёт card network (Visa, Mastercard) за маршрутизацию messages. **Acquirer markup** 0.3-1% — это Stripe-маржа как payment processor. **Flat $0.30** — Stripe per-transaction fee, покрывает infrastructure. **Amex closed-loop**: один игрок (American Express) сразу issuer + network + acquirer — поэтому Amex дороже (3.5-4%), но контролирует whole-flow. **Interchange++** pricing: merchant платит реальный interchange + scheme + acquirer markup отдельно (прозрачно vs blended); используется enterprise.",
+                "example": "На $100 transaction: $1.50-2.50 issuer-у, $0.10-0.15 Visa/MC, $0.30-1 PSP, итого $2.90 + $0.30 flat = $3.20 total fee. Pricing зависит от card type: rewards/premium cards имеют higher interchange (banks subsidize rewards), debit cards — lower interchange (Durbin Amendment в US limits debit interchange к 0.05% + $0.21 для regulated banks).",
+                "when_to_apply": "Понимание interchange критично для negotiating контракта с PSP; для merchants > $10M в год Interchange++ обычно выгоднее blended 2.9%.",
+                "edge_cases": "Cross-border transactions добавляют ~1% interchange surcharge. Regulated debit (US Durbin) имеет cap. EU PSD2 capped interchange 0.2% debit / 0.3% credit — поэтому EU rates выгоднее.",
+                "related": "Q26 PSP routing по cost; Q22 multi-currency FX добавляет другой layer; Q16 settlement когда деньги реально движутся."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Stripe берёт 2.9% за свою работу полностью; $0.30 — это покрытие interchange.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe не оставляет себе 2.9% — большая часть уходит issuer-у через interchange (1.5-2.5%). Stripe маржа реально ~0.3-1%, остальное passthrough. $0.30 — flat fee Stripe, не interchange compensation.",
+                "source_of_confusion": "Кандидат не понимает 4-party модель, думает что вся комиссия идёт PSP.",
+                "if_it_were_true": "Если бы Stripe оставлял 2.9%, его маржа была бы экзорбитантной; реально маржа ~1-2%.",
+                "how_it_should_be": "2.9% распределена между issuer (interchange), network (scheme), PSP (markup); $0.30 — flat PSP fee."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все card networks одинаковы — Visa, Mastercard, Amex, Discover берут идентичные fees потому что compete за merchants.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Networks конкурируют не fees, а coverage / brand / programs. Visa и MC примерно сопоставимы (open-loop), Amex дороже (closed-loop premium), Discover дешевле в US (нишевой), UnionPay в China доминирует. Fees структурно разные между networks из-за бизнес-моделей.",
+                "source_of_confusion": "Кандидат предполагает рынок-совершенной-конкуренции без знания специфики card industry.",
+                "if_it_were_true": "Если бы все одинаковые, ни один merchant не платил бы Amex 3.5% когда есть Visa 2.9%; реально Amex дороже но дают cardholder spending power.",
+                "how_it_should_be": "Visa/MC примерно равны, Amex closed-loop premium, Discover/UnionPay nichee."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Interchange — это fee acquirer-у; issuer берёт scheme fee; Visa/MC получает только flat $0.30 за messaging.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inverted: interchange идёт ISSUER-у (банк customer), не acquirer-у; scheme fee идёт NETWORK-у (Visa/MC); acquirer markup отдельно. Flat $0.30 — это PSP fee, не network. Networks (Visa/MC) получают scheme fee % от amount, не flat.",
+                "source_of_confusion": "Кандидат путает направление потока fees в 4-party модели.",
+                "if_it_were_true": "Если бы networks получали только flat $0.30, доход Visa был бы $30M на 100M tx — реально миллиарды через scheme fees.",
+                "how_it_should_be": "Interchange → issuer; scheme fee → network; markup → acquirer/PSP; flat → PSP."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие два типа tokenization используются в современных платёжных системах (network vs local) и какое преимущество network tokens даёт для subscription billing?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Network tokenization — это AES-256 шифрование PAN на стороне merchant; local tokenization — это hash MD5 на PSP. Используется для GDPR compliance.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Network token не AES-encrypted PAN — это совершенно другой identifier, generated network (Visa Token Service, Mastercard Digital Enablement), tied к device+merchant. Local PSP token — opaque string `tok_xxx`, не hash. AES/MD5 — это encryption/hash, не tokenization. GDPR не специфичен к tokens; PCI-DSS — да.",
+                "source_of_confusion": "Кандидат смешивает encryption с tokenization. Это разные concepts: encryption обратима с key, tokenization — irreversible mapping в vault.",
+                "if_it_were_true": "Если бы tokenization была AES, anyone с key мог бы recover PAN — это нарушало бы PCI scope reduction.",
+                "how_it_should_be": "Network token = identifier from VTS/MDES, local token = opaque PSP-string; ни то ни другое не encryption."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Network tokenization** (Visa Token Service, Mastercard Digital Enablement) — issuer/network выдаёт token прямо для merchant+device; при reissue карты token остаётся valid (network обновляет mapping → resolves `expired card` churn в subscriptions). **Local tokenization** (Stripe/Adyen vault) — PSP хранит PAN, выдаёт opaque `tok_xxx`; expired при reissue, требует Update API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Двa fundamentally разных подхода. **Network tokenization**: card networks (Visa Token Service VTS, Mastercard Digital Enablement Service MDES) выдают token прямо merchant-у, attached к этому merchant_id + device. При expire/reissue карты network сама обновляет PAN-binding на back-end — token остаётся valid, merchant ничего не делает. Это критично для subscription billing: traditional `expired card decline` rate был 5-7% / month; network tokens снижают до 1-2%. Apple Pay / Google Pay используют network tokens на устройстве. **Local tokenization**: PSP (Stripe, Adyen) держит PAN в собственном vault (HSM-protected, AES-256-GCM, per-merchant key через KMS); возвращает opaque `tok_xxx` / `pm_xxx`. Token валиден только для этого merchant + этого PSP — нельзя перенести в другой PSP без re-tokenization. При expire требует Customer Update API для swap. Local tokenization дешевле network token (последний платит fees сети), но создаёт vendor lock-in.",
+                "example": "Stripe `setup_future_usage` + Customer object даёт local tokenization; `card_network_tokens` enabled делает network tokenization. Spotify migrate-нул на network tokens в 2022 и снизил involuntary churn на 38%. Netflix аналогично. Pricing: Visa берёт ~$0.05 per network token use.",
+                "when_to_apply": "Subscription/recurring billing (Spotify, Netflix, SaaS). Apple Pay/Google Pay (network tokens обязательны). PCI scope reduction — обе работают.",
+                "edge_cases": "Network tokens могут fail если customer полностью закрыл карту (issuer не reissue); тогда нужен другой payment method update flow. Local tokens fail если PSP закрывает аккаунт merchant (rare, но complete-loss event).",
+                "related": "Q23 subscription dunning без network tokens страдает churn; Q24 PCI scope обе подходят; Q12 PSP migration усложняется local tokens."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Network tokens — это physical security devices (HSM); local tokens — software-only.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HSM используется обоими типами как infrastructure для key management. Network tokens живут logically в network systems (VTS/MDES), не physically на HSM. Local tokens — PSP-managed soft references. Это не различение по hardware vs software, а по `где живёт mapping` (network systems vs PSP vault).",
+                "source_of_confusion": "Кандидат экстраполирует hardware-token (например YubiKey) на network tokenization.",
+                "if_it_were_true": "Если бы network tokens были physical, выпустить новый telephony-merchant токен требовало бы delivery hardware к каждому customer; реально это backend mapping.",
+                "how_it_should_be": "Network tokens — backend mapping в VTS/MDES; local tokens — backend mapping в PSP vault; HSM используется обоими."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Один тип — `PCI tokenization`; разница только в provider (Visa, MC, или Stripe). Все имеют одинаковые свойства rotation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Network и local tokens — fundamentally разные mechanism с разными свойствами. Network tokens поддерживают `silent rotation` через issuer-card-reissue (token остаётся valid). Local PSP tokens — НЕ имеют этого: при reissue PSP token expires, требует Update API.",
+                "source_of_confusion": "Кандидат генерализирует tokenization без знания specifics; маркетинг иногда смешивает.",
+                "if_it_were_true": "Если бы они были одинаковыми, Visa не инвестировала бы $1B+ в VTS; реально VTS — отдельный бизнес network-а из-за уникальных свойств.",
+                "how_it_should_be": "Два типа с разными свойствами; network = silent rotation + device binding, local = PSP-internal без auto-rotation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой контракт delivery даёт Stripe для webhooks и почему receiver обязан быть idempotent и проверять HMAC signature с timestamp window?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Exactly-once delivery в ordered sequence; signature по public key; receiver должен throw 500 для retry если processing fail.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe гарантирует at-least-once, НЕ exactly-once. Ordering НЕ гарантировано — нужно проверять `status` field в payload. Signature по shared secret (HMAC-SHA256), не public-key. Throwing 500 правильно для retry, но receiver должен быть idempotent на дубли. Exactly-once в distributed system невозможен без application-level dedup.",
+                "source_of_confusion": "Кандидат идеализирует контракт; распространённое заблуждение что webhooks exactly-once.",
+                "if_it_were_true": "Если бы было exactly-once, не нужны были бы processed_events tables на стороне receiver; реально все production receivers дедуплицируют.",
+                "how_it_should_be": "At-least-once + unordered; signature shared-secret; receiver idempotent обязательно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Webhooks fire-and-forget (no retry); если receiver не отвечает 200 за 5 секунд — event lost.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe retry-policy с exponential backoff (5s, 25s, 2m, ...) до 72 часов. Нет lost events за 72ч если receiver временно offline. Только после 72ч идёт в dead-letter; merchant видит в dashboard. Fire-and-forget значит revenue loss при каждом sync issue — недопустимо.",
+                "source_of_confusion": "Кандидат не учитывает business-critical характер webhooks; путает с фрагментарным notification system.",
+                "if_it_were_true": "Если бы fire-and-forget, при любом merchant downtime теряли бы payment confirmations; реально retry-mechanism critical.",
+                "how_it_should_be": "Retry с exponential backoff до 72ч; receiver должен отвечать 200 за 5 сек для acknowledged."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**At-least-once delivery** (retry с exponential backoff 5s/25s/2m/... до 72ч), **ordering НЕ гарантировано** (используй `status` в payload), **HMAC-SHA256 signature** `t=ts,v1=hmac(ts.body)` с shared secret; receiver обязан проверять (1) signature valid, (2) timestamp в окне 5 минут (replay protection), (3) дедуплицировать по `event_id` через `INSERT processed_events ON CONFLICT DO NOTHING`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Stripe webhook contract — индустриальный стандарт. Delivery at-least-once: producer (Stripe) пытается доставить retry-ами; если receiver upstream не отвечал 4-5 раз — переходит к eventual delivery через 72-часовое окно. **Signing** через HMAC-SHA256 над `timestamp.body` с shared secret из webhook endpoint конфига. Header `Stripe-Signature: t=1700000000,v1=<hex_hmac>`. Receiver verify: `hmac_sha256(secret, t + '.' + raw_body) == v1`. **Timestamp window 5 минут** защищает от replay attacks — старый webhook не может быть re-injected attacker-ом. **Idempotent receivers** через event_id dedup: `INSERT INTO processed_events (event_id, handled_at) VALUES (?, NOW()) ON CONFLICT DO NOTHING RETURNING id` — если RETURNING пусто, event уже обработан, return 200 без re-processing. **Ordering не гарантировано**: webhook `payment_intent.created` может прийти ПОСЛЕ `payment_intent.succeeded` из-за retry; receiver проверяет `status` в payload, не предполагает order.",
+                "example": "Stripe SDK имеет helper: `stripe.Webhook.constructEvent(payload, sig_header, endpoint_secret)` — verify + parse в одной операции. GitHub webhooks аналогично HMAC; Slack — signing-secret. Receiver pattern: return 200 быстро (< 1 сек), enqueue work async; если processing fail — НЕ throw 500, потому что дубль retry создаст duplicate work.",
+                "when_to_apply": "Любая integration с external system: Stripe/Adyen webhooks к merchant, Shopify webhooks к app, GitHub webhooks к CI, Slack events.",
+                "edge_cases": "Webhook backlog > 1h — alert: receiver слишком медленный или down. Dead-letter после 72ч — manual recovery через Stripe Dashboard `Events` API. Multi-tenant receivers нужно scope event_id с merchant_id чтобы избежать collision.",
+                "related": "Q10 outbox даёт at-least-once на sender; Q4 idempotency-key симметричный pattern на API side."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Webhook отправляется только если merchant отвечает 200 OK с custom token; иначе Stripe disable endpoint после первой ошибки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stripe не требует custom token в response — только 200 status code. Disabling endpoint после первой ошибки противоречит at-least-once contract. Реально Stripe держит endpoint enabled до 72ч failures, потом email merchant с warning.",
+                "source_of_confusion": "Кандидат изобретает custom протокол без знания Stripe-API.",
+                "if_it_were_true": "Если бы first-error disable, любой merchant с minor maintenance window терял бы webhooks; реально tolerance большая.",
+                "how_it_should_be": "200 OK достаточно; retry до 72ч; disable только после long-term failure."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличается `authorize/capture` от `settlement` и почему типичный merchant получает деньги T+1 (через 1 день после capture), не мгновенно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Authorize и settlement — это синонимы; T+1 это network throttling, можно ускорить за extra fee.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Authorize, capture, settlement — три разные операции. Authorize = network message о резервации hold. Capture = `now actually charge`. Settlement = реальное money movement через ACH/SWIFT/network clearing files. T+1 не throttling, а архитектура card networks: end-of-day batch processing через clearing files. Можно ускорить через Real-Time Payments (FedNow, SEPA Instant), но это другой rail, не card.",
+                "source_of_confusion": "Кандидат не различает messaging-flow (authorize/capture) и money-flow (settlement).",
+                "if_it_were_true": "Если бы это были синонимы, понятие `pre-authorization hold` не существовало бы; реально это разные phase lifecycle.",
+                "how_it_should_be": "Authorize=hold, capture=charge message, settle=real money movement; T+1 — batch nature of card networks."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Capture сразу переводит деньги в merchant bank; T+1 — это PSP buffer для протекции от chargeback.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Capture — это messaging к acquirer; деньги ещё не двинулись. Buffer от chargeback существует (rolling reserve), но T+1 — это не buffer, а fundamental delay card-clearing system. Chargeback rolling reserve обычно 5-10% balance на 6 месяцев, отдельно от T+1.",
+                "source_of_confusion": "Кандидат смешивает T+1 settlement delay с chargeback protection mechanism (rolling reserve).",
+                "if_it_were_true": "Если бы capture был instant transfer, ACH не существовал бы; реально capture — это `authorize to charge` message, не money movement.",
+                "how_it_should_be": "Capture = message; settlement через 1-2 дня через ACH; rolling reserve отдельный risk-tool."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все networks используют SWIFT для settlement; ACH only для US domestic.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Networks (Visa/MC) используют собственные clearing systems (Base I/II для Visa, IPM для MC) — это не SWIFT. SWIFT — это inter-bank messaging для wire transfers, не для card settlement. ACH (Automated Clearing House) — US domestic batch system; EU имеет SEPA, UK имеет BACS. SWIFT для wire transfers $25-50 cost, для card settlement не подходит.",
+                "source_of_confusion": "Кандидат смешивает network clearing (Visa Base I/II) с inter-bank messaging (SWIFT).",
+                "if_it_were_true": "Если бы все через SWIFT, settlement cost был бы $25-50 на transaction — экономика card payments невозможна.",
+                "how_it_should_be": "Networks clearing files (Base I/II, IPM) + ACH/SEPA/BACS для money movement merchant; SWIFT для international wire."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Authorize** = card network message о резервации hold (deny/approve), **capture** = `now actually charge` message → moves to settlement queue, **settlement** = реальное money movement через clearing files (Visa Base I/II, MC IPM) → ACH/SEPA → merchant bank account; T+1 = batch nature of card-clearing system (end-of-day file submission, T+1 file delivery, T+1 ACH settlement). Real-Time Payments (FedNow, SEPA Instant) — параллельный rail для instant payouts.",
+              "correct": true,
+              "sections": {
+                "explanation": "Полный flow: **Authorize** на day T = network message → issuer reserves amount on customer card (hold; не money movement). **Capture** на day T = merchant says `charge it`; acquirer aggregates with other captures. **End of day T**: acquirer формирует clearing file (Visa BASE II — фиксированный bin-формат, MC IPM — Integrated Product Messages) и отправляет в card network. **Day T+1**: network forwards к each issuer who debits cardholder accounts; acquirer получает aggregated settlement file. **Day T+1/T+2**: acquirer переводит merchant суммарную позицию через ACH (US batch, 1-2 business days, cheap), SEPA (EU batch), или BACS (UK). Total: merchant видит money T+1 или T+2 после capture. **Faster Payments**: real-time rails (FedNow US 2023, SEPA Instant EU, Faster Payments UK, TIPS) обходят ACH batch — instant payouts < 30 sec, но требуют отдельной интеграции, стоят дороже.",
+                "example": "Stripe Instant Payouts — поверх RTP/FedNow за 1.5% fee. Square Cash App same-day deposit. Adyen уже поддерживает SEPA Instant для EU merchants. Chargeback после settlement: clawback с merchant balance (negative balance возможен).",
+                "when_to_apply": "Любая acquiring system. Real-Time Payments для gig-economy (Uber driver instant payouts, Lyft Express Pay) и premium merchants готовых платить за speed.",
+                "edge_cases": "Weekend settlement: acquirer не работает sat/sun batch — Friday's transactions settle Monday/Tuesday. International settlement добавляет FX layer (acquirer-конверсия с network rate + markup). Chargeback после settle = clawback through merchant negative balance.",
+                "related": "Q17 reconciliation сверяет capture-counts с settlement files; Q22 multi-currency FX в settlement."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие categories discrepancies выявляет daily reconciliation между internal ledger и PSP report и почему monthly cadence — это antipattern для high-volume processor?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Категории: (a) **в PSP не в ledger** (phantom — bug в нашей записи), (b) **в ledger не в PSP** (in-flight, retry tomorrow), (c) **amount mismatch** (fee/FX difference), (d) **status mismatch** (race в lifecycle); **monthly cadence** — antipattern: discrepancy не находишь 30 дней, к моменту обнаружения тысячи tickets от merchants + accumulated loss $X миллионов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reconciliation — daily обязателен. **Flow** (T+1 06:00 UTC): (1) PSP report (CSV/JSON через SFTP/API) → S3; (2) Reconciliation Spark job на EMR: load PSP transactions for day T + load internal entries for day T → LEFT JOIN ON external_id; (3) Categorize по 4 buckets; (4) Auto-resolve known patterns (fees rounding $0.01 differences); (5) Open Jira/Slack alert на unresolved. **Phantom transaction** (a): PSP charged customer но мы не записали — bug в коде, требует backfill ledger entries. **In ledger not PSP** (b): обычно in-flight (мы записали authorize, PSP ещё не settled); retry next day. **Amount mismatch** (c): PSP взял $0.31 вместо $0.30 fee — за месяц на 10M tx = $100K утечка; нужно manual review fee schedule. **Status mismatch** (d): captured у нас vs pending у PSP — race condition в lifecycle. **Tools**: Modern Treasury и Twosense — open-source reconciliation. Stripe internal AccountingIntegrity. Spark on EMR + S3 — стандарт.",
+                "example": "Square public engineering blog описывает их streaming reconciliation через Flink: каждый event сравнивается в real-time, не batch. Booking.com daily reconciliation с 10+ PSP — Jira tickets автоматически создаются на > $1000 unresolved. Adyen Settlement Detail Report — стандартный CSV формат для daily import.",
+                "when_to_apply": "Любой processor > 100K transactions/month. Critical для split-payouts marketplaces (Etsy, Airbnb) где разные seller-ы получают разные cuts.",
+                "edge_cases": "Streaming reconciliation (real-time via Flink) для critical merchants — каждое событие сверяется немедленно. Cross-region reconciliation — после multi-region replication. Cold archive reconciliation на S3 Iceberg — для long-term audit trails.",
+                "related": "Q5 ledger invariants проверяются reconciliation; Q16 settlement-file служит источником PSP report; Q19 chargeback affects reconciliation as new event."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Discrepancy всегда означает fraud; нужен manual review каждой; cadence — monthly для cost efficiency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большинство discrepancies — не fraud, а technical noise (in-flight, race conditions, fee rounding). Manual review каждой невозможен на high-volume (10K discrepancies/day). Monthly cadence создаёт snowball: к моменту разбора discrepancy не воспроизводится (state changed), customer support overwhelm-нут tickets.",
+                "source_of_confusion": "Кандидат gravitates к security-mindset; не понимает что reconciliation о technical correctness, fraud — отдельный pipeline.",
+                "if_it_were_true": "Если бы monthly было ок, Stripe не invest-вал бы в daily reconciliation; реально они real-time streaming.",
+                "how_it_should_be": "Daily обязательно; auto-resolve known patterns; manual review только на unresolved > threshold."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно сверять total sum (Σ ledger = Σ PSP) — если совпадает, all good; categorization не нужна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sum match — слабая check: можно иметь phantom transaction +$100 и missing transaction -$100, sum совпадает, но обе нарушения. Categorization необходима для определения root cause каждой discrepancy.",
+                "source_of_confusion": "Кандидат думает финансовая reconciliation = bank-style balance check; реально transaction-level совпадение нужно.",
+                "if_it_were_true": "Если бы sum достаточен, Visa/MC не публиковали бы detailed clearing files — реально per-transaction reconciliation.",
+                "how_it_should_be": "Sum-check недостаточен; нужна row-level LEFT JOIN + categorization."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Reconciliation не нужен если есть outbox pattern; outbox гарантирует consistency без external sweep.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Outbox гарантирует at-least-once publish внутренних events, но не сверку с external party (PSP). PSP может decline transaction, или взять wrong fee, или race-condition; outbox это не покроет — нужна external sweep.",
+                "source_of_confusion": "Кандидат экстраполирует internal consistency на external; reconciliation — это external-system проверка.",
+                "if_it_were_true": "Если бы outbox решал, Stripe не имел бы AccountingIntegrity-команду; реально reconciliation cross-system всегда нужна.",
+                "how_it_should_be": "Outbox для internal-event consistency, reconciliation для external-system match."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что отличает `void` от `refund` в payment lifecycle и почему refund на закрытую карту может занять недели через manual process?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Void и refund — одна операция, разные API endpoints; refund на закрытую карту mgновенный через `forced_refund` flag.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Void и refund — разные операции с разными свойствами. Void возможен ТОЛЬКО до capture или до settlement; refund — после settlement. Void: без fees, instant, hold cancelled. Refund: с fees (или без, зависит от PSP), 5-10 business days back to card. `forced_refund` flag не существует в Stripe/Adyen API; на закрытую карту refund идёт `card account credit` mechanism через issuer.",
+                "source_of_confusion": "Кандидат предполагает unified-API mental model; реально это разные flows.",
+                "if_it_were_true": "Если бы был forced_refund, Wells Fargo не страдал бы от закрытых-карт-refund-проблем; реально это известная отрасль pain.",
+                "how_it_should_be": "Void до capture/settle (instant, no fees); refund после (5-10 дней); закрытая карта — manual flow."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "**Void** = отмена до capture или settlement (instant, no fees, hold released); **refund** = обратный transfer после settle (5-10 business days back to card, может потерять scheme fees). Refund на **закрытую карту**: issuer выдаёт `card account credit` (deposit на customer's bank account через manual process — недели), или fallback на cheque/manual transfer от PSP.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Void**: до capture можно отменить holding cleanly — issuer снимает hold с customer's available balance мгновенно, никаких fees, customer cards остаётся с прежним balance. До end-of-day settlement также возможно сделать `cancel` (зависит от PSP — Stripe называет это void; Adyen — cancel). **Refund**: после settlement money уже у merchant и у customer списано — нужно делать reverse через card networks. Refund initiates сразу, но customer видит credit на карте через 5-10 business days (issuer-dependent). Multiple partial refunds возможны до total = original. Scheme fees могут не возвращаться (interchange returns, scheme fee — нет — minor loss). **Refund на закрытую карту**: customer закрыл аккаунт после purchase, теперь refund физически некуда. Issuer-process: (1) Issuer выдаёт credit на bank account через ACH; (2) Если bank account тоже закрыт — issues `cheque mailed to customer's last known address`; (3) Some networks (Visa Account Updater) auto-route через `replacement card account`. **Time**: 1-4 недели, иногда дольше. **PSP пробует automatic resolution**, если fail — escalates merchant с instruction `contact customer directly`.",
+                "example": "Stripe `Refund.create(charge: 'ch_xxx', amount: 5000)` — partial $50 refund. Если Stripe.Refund возвращает `requires_action`, customer должен подтвердить через issuer-app (rare). Booking.com partial refunds для no-shows: charge $300, refund $200 при partial refund-policy.",
+                "when_to_apply": "Любой e-commerce/SaaS; high-touch для travel/hotels (complex refund rules); subscriptions (prorated refunds).",
+                "edge_cases": "Refund > 60 дней after settle — некоторые PSP block (Stripe usually 6 months window). EU PSD2 customer recall right — direct debit refund до 8 недель by law. Concurrent refunds: row-level lock на payment в БД для consistency.",
+                "related": "Q19 chargeback alternative to refund; Q5 ledger entries для refund inverse; Q15 webhook `charge.refunded` notification."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Refund возвращается customer через 24 часа; void занимает 5-10 дней потому что нужно undo authorization message.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Inverted: void — instant (mгновенный hold release), refund — 5-10 business days. Authorization message undo (void) — это просто новое network message; не требует ACH settlement reversal. Refund требует reversed money movement через ACH — отсюда delay.",
+                "source_of_confusion": "Кандидат интуитивно думает что refund (`returning money`) проще чем void (`cancelling unstarted`); реально наоборот.",
+                "if_it_were_true": "Если бы было так, instant-refund был бы стандартом UX; реально все PSP документируют 5-10 дней.",
+                "how_it_should_be": "Void instant, refund 5-10 дней; направление correct: cancellation проще reversal."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Все refunds идут через chargeback channel (быстрее); void не существует в современных API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chargeback — это customer-initiated dispute через issuer (counts против merchant chargeback ratio, penalty fee). Refund — merchant-initiated, no penalty, не chargeback. Они categorically разные.  Void exists во всех modern PSP API (Stripe `cancel`, Adyen `cancelOrRefund`).",
+                "source_of_confusion": "Кандидат смешивает merchant-initiated refund с customer-initiated dispute (chargeback).",
+                "if_it_were_true": "Если бы refunds шли через chargeback, every merchant имел бы chargeback ratio 50%+, Visa banned бы их.",
+                "how_it_should_be": "Refund — merchant API; chargeback — customer dispute; void exists для pre-capture cancel."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое chargeback и почему в платёжной системе nужно мониторить ratio < 0.9% и какой fix даёт 3DS (`liability shift`)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Chargeback — это refund initiated по error customer; ratio 0.9% это comfortable safe-zone; 3DS не влияет на ratio.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chargeback — это dispute initiated customer через issuer (не refund). 0.9% — это Visa VDMP threshold (Visa Dispute Monitoring Program), не safe zone — это уже warning zone с штрафами. 3DS дает `liability shift`: при successful 3DS-authenticated transaction merchant НЕ ответственен за fraud chargeback (10.4 reason code) — issuer covers loss.",
+                "source_of_confusion": "Кандидат смешивает refund (merchant action) с chargeback (customer dispute) и не знает VDMP threshold semantics.",
+                "if_it_were_true": "Если бы 0.9% было ok, у Visa не было бы программы penalty $50K/month; реально это red flag.",
+                "how_it_should_be": "Chargeback ≠ refund; 0.9% = VDMP warning; 3DS = liability shift на fraud disputes."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Chargeback — это automated PSP-fraud-blocker; ratio measures false-positive rate; 3DS добавляет friction но не helps.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chargeback — это customer-initiated через issuer, не PSP-side automation. Это distinct event lifecycle: customer claims `not me / not received / not as described`, issuer reverses money. 3DS даёт liability shift на 10.4 (fraud) — issuer берёт loss, не merchant. Это direct fix на main chargeback category.",
+                "source_of_confusion": "Кандидат экстраполирует PSP fraud-blocker (Q20) на chargeback mechanism.",
+                "if_it_were_true": "Если бы 3DS не помогал, Stripe Radar не рекомендовал бы 3DS-routing на high-risk; реально это core defence.",
+                "how_it_should_be": "Chargeback — customer dispute; 3DS — defence через liability shift на fraud disputes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "**Chargeback** = customer dispute через issuer (`I didn't recognize this charge / not received / fraud`) → issuer reverses settlement, merchant теряет деньги + fee $15-50. **Ratio < 0.9%** обязателен (Visa VDMP threshold — превышение даёт штрафы; 1.8% → High-Risk Program, может потерять acquiring license). **3DS liability shift**: при successful 3DS-authenticated transaction merchant не ответственен за 10.4 (fraud) chargeback — issuer covers loss. Reason codes: 10.4 fraud, 13.1 not received, 13.3 not as described, 13.4 counterfeit.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Chargeback lifecycle**: (1) Customer dispute → issuer raises chargeback to network (Visa/MC); (2) Acquirer reverses settled amount from merchant; (3) Merchant has 7-30 day window для represent: submit evidence (delivery proof, screenshots, IP match, 3DS auth data); (4) Issuer reviews → win (money back to merchant, $25 fee stays lost) или lose (permanent loss); (5) Pre-arbitration / arbitration redko. **Win rates**: avg merchant 30-40%, strong evidence (3DS + delivery + IP match) 60-80%, no evidence 0%. **VDMP thresholds**: 0.9% chargebacks / monthly tx → Visa Dispute Monitoring Program, penalties $50K/month после 4 months breach. 1.8% → High-Risk Program, потеря acquiring. **3DS liability shift**: critical defence на 10.4 fraud. **Prevention tools**: Verifi/Ethoca chargeback alerts (issuer-notification до raise, proactive refund saves chargeback fee), Visa CE 3.0 (Compelling Evidence 3.0 — evidence-based automatic win), clear billing descriptor (`ACME-INC SF` vs `SQ*XYZ123` причина many `unrecognized` disputes).",
+                "example": "Stripe Radar Risk Insights показывает chargeback risk scoring. Shopify integration с Ethoca для preemptive refunds. Reason code 10.4: `Other Fraud — Card-Absent Environment` — самая распространённая, 50%+ chargebacks. Booking.com: hotel no-show charge → chargeback 13.1 — нужны evidence терминов (no-show policy customer signed).",
+                "when_to_apply": "Все e-commerce и hospitality; subscription billing где customer забыл cancellation; high-value items (electronics, luxury).",
+                "edge_cases": "Multi-currency: chargeback от EU customer на US merchant идёт через cross-border arbitration. Friendly fraud: customer claims `not recognized` после legitimately ordering — представляет 30-40% всех chargebacks. Pre-arbitration escalation — редко (< 5% disputes), но затратно.",
+                "related": "Q11 3DS — главная защита; Q20 anti-fraud predicts; Q15 webhook `charge.dispute.created` notification."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Chargeback = merchant ошибка billing; ratio 5% normal; nothing helps кроме decline more transactions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chargeback в большинстве cases — customer-initiated dispute (legitimate concerns или friendly fraud), не merchant ошибка billing. 5% — это catastrophe-level, banned would быть от acquiring через неделю. Decline-more = revenue loss больше чем chargeback loss; правильный fix через 3DS, evidence, prevention tools.",
+                "source_of_confusion": "Кандидат не различает chargeback (customer action) от billing-error (внутренний refund).",
+                "if_it_were_true": "Если бы 5% было ok, никакого merchant не имел бы acquiring; реально 0.3-0.5% — healthy range.",
+                "how_it_should_be": "Healthy ratio 0.1-0.3%; >0.9% = VDMP penalty; defence через 3DS + evidence + prevention."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие три уровня anti-fraud system используются в современных платёжных платформах и почему `pure ML model` без rule-engine — это antipattern?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только ML — rule engine deprecated; deep learning model обучается на всех historic transactions и сам выявляет patterns.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pure ML — antipattern. ML модели имеют drift, особенно на новых fraud patterns (post-COVID CNP wave, новые attack vectors). Rule engine даёт deterministic baseline защиты от known patterns (velocity 5+ cards/IP, blacklisted IP, BIN-country mismatch). ML дополняет rule, не заменяет. Также ML inference latency 50-100ms — rule check 1-5ms; для critical path баланс важен.",
+                "source_of_confusion": "Кандидат hype-driven из AI marketing; не знает limitations производственных ML systems.",
+                "if_it_were_true": "Если бы pure ML работал, Sift/Forter/Riskified не комбинировали бы rules + ML; реально все используют hybrid.",
+                "how_it_should_be": "Hybrid: rules для known patterns (fast baseline) + ML для probabilistic risk score + 3DS как final gate."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только rules — ML overhyped; добавляем 50 правил, blacklist IP/card, и достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rules не успевают за adversaries. Attackers обходят known rules за дни (новые IPs через residential proxies, new BIN ranges). ML с features (graph embedding network connections, sequential pattern) ловит unknown attacks. Также 50 rules становятся unmaintainable, conflicts между rules, false-positive rate растёт.",
+                "source_of_confusion": "Кандидат skeptical к ML, fall back на legacy rule-engine подход.",
+                "if_it_were_true": "Если бы rules достаточно, Stripe Radar не использовал бы deep learning model; реально hybrid стандарт.",
+                "how_it_should_be": "Rules + ML + 3DS final gate; rules alone недостаточно при адверсариях."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Anti-fraud — это responsibility issuer, не merchant; merchant просто принимает любую auth-approved transaction.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Issuer делает свою проверку, но merchant ответственен за fraud chargebacks (через VDMP ratio). Merchant `pure trust issuer` означает: high chargeback ratio → VDMP penalties → потеря acquiring. Merchant-side fraud detection критичен для protect chargeback ratio.",
+                "source_of_confusion": "Кандидат думает в категориях `issuer = bank, bank handles fraud`; реально это shared responsibility.",
+                "if_it_were_true": "Если бы issuer полностью защищал, Sift не имел бы business model на $billion valuation.",
+                "how_it_should_be": "Merchant-side anti-fraud обязателен; issuer parallel layer; обе нужны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "**Три уровня**: (1) **Rule engine** (deterministic, < 5 ms): velocity (5+ cards/IP/10 min), BIN-country mismatch, blacklists, AVS decline; (2) **ML model** (XGBoost / DLRM, 50-100 ms): features amount + time + device fingerprint + network embedding → fraud score 0..1, threshold APPROVE/REVIEW/DECLINE; (3) **3DS как final gate** на high-risk transactions → liability shift. Pure ML — antipattern: drift на new attacks, no deterministic baseline; rule-engine even простой даёт fast safety net.",
+              "correct": true,
+              "sections": {
+                "explanation": "**Layered defence** — стандарт индустрии. **Rule engine**: deterministic правила выполняются < 5 ms (Redis-based counters для velocity), purpose — fast filtering known attacks. Velocity: card_per_ip, attempt_per_card, decline_burst. Blacklists: IP/email/card/device fingerprint. AVS (Address Verification Service) decline. BIN-country mismatch (card US + IP RU = review). **ML model**: gradient-boosted (XGBoost) или DLRM на ~100 features. Features: amount, time-of-day, country, device fingerprint (browser canvas/fonts/screen — 99.9% uniqueness), past behavior, network embedding (graph features — customer connected to known fraudsters). Inference latency 50-100ms на CPU, < 10ms на GPU (TF Serving / Triton). Output: probability 0..1. Threshold tuning per merchant: trade-off false-positive (lost revenue) vs catch rate (chargeback loss). **3DS final gate** на high-risk: invoke challenge → liability shift на issuer (fraud chargeback 10.4 покрывается issuer-ом). **Feedback loop**: chargeback → label transaction as fraud → retrain ML weekly. **Adversarial**: residential proxies + automation обходят device fingerprint — defence через graph features, behavioral biometrics.",
+                "example": "Stripe Radar — proprietary ML на ~10K features, public Radar Risk Insights дашборд. Sift Sciences / Forter / Riskified — 3rd-party providers собирающие global signal (один device fingerprint используется multiple merchants → community fraud detection). Booking.com проблема travel-fraud — собственная ML с travel-specific features (lead time booking, single-night cheap hotel-pattern).",
+                "when_to_apply": "Все e-commerce processors. Critical для CNP (Card-Not-Present) — chargeback risk выше чем в-person. High-risk merchants (travel, electronics, digital goods) — primary users.",
+                "edge_cases": "Over-blocking risk: false-positive cost обычно > fraud cost; tuning threshold per-merchant. Adversarial: card testing attacks (1000 small transactions checking valid cards) — отдельная защита через velocity + CAPTCHA. PSD2 SCA exemption only при TRA (Transaction Risk Analysis) certification и fraud rate < 0.13%.",
+                "related": "Q11 3DS как final gate; Q19 chargeback feedback в ML training; Q4 idempotency предотвращает retry-amplification."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
