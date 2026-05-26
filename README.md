@@ -382,16 +382,11 @@ export AI_FALLBACK_ENABLED=true        # без этого ключ не исп�
 
 | Профиль | Назначение | Особенности |
 |---------|-----------|-------------|
-| `default` | Локальная разработка | SQLite (`data/db/interview.db`), Swagger UI **включён** |
-| `prod` | Production | Swagger UI **выключен**; используется по умолчанию в Docker |
-| `postgres` | PostgreSQL | Datasource на PostgreSQL, миграции из `db/migration-postgres/` |
+| `default` | Локальная разработка | PostgreSQL (через `docker compose up -d postgres`), Swagger UI **включён**, Thymeleaf cache **off** |
+| `prod` | Production | Swagger UI **выключен** (security: API-карта не светится), Thymeleaf cache **on**, `APP_ADMIN_TOKEN` обязателен (fail-fast на старте) |
+| `test` | Тесты | Testcontainers PostgreSQL, тестовые сидеры из `src/test/resources` |
 
-Профили можно комбинировать:
-
-```bash
-# Production + PostgreSQL
-SPRING_PROFILES_ACTIVE=prod,postgres ./gradlew bootRun
-```
+Активация: `SPRING_PROFILES_ACTIVE=prod ./gradlew bootRun` или env-var в Docker.
 
 ---
 
