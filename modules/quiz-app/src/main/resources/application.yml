@@ -28,6 +28,12 @@ spring:
     hikari:
       maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
       minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      # leak-detection-threshold: если connection не вернётся в пул за 30s,
+      # Hikari логирует stack trace его получения. Ловит места где код
+      # забывает try-with-resources или транзакцию. Норм. Hikari connection
+      # реально удерживается на длинных запросах, поэтому 30s — большой
+      # запас. 0 = отключено (default), не рекомендуется в проде.
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION_MS:30000}
       # reWriteBatchedInserts превращает N мелких INSERT в один большой
       # INSERT VALUES (...), (...), (...) на стороне драйвера. На стартовом
       # импорте сидеров (77 топиков × N вопросов × 4 опции) даёт 5-10×
