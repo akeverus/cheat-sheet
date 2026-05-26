@@ -17,7 +17,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **268**.
+Всего файлов: **301**.
 
 ## Быстрые маршруты подготовки
 
@@ -31,14 +31,30 @@ updated: "2026-04-20"
 ## ai-ml
 
 - [Вопросы на собеседовании: `LLM Basics`](ai-ml/llm-basics-interview.md) — `30` вопросов
-- [Вопросы на собеседовании: `RAG (Retrieval-Augmented Generation)`](ai-ml/rag-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `RAG (Retrieval-Augmented Generation)`](ai-ml/rag-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Vector Databases`](ai-ml/vector-databases-interview.md) — `28` вопросов
-- [Вопросы на собеседовании: `Embeddings`](ai-ml/embeddings-interview.md) — `29` вопросов
-- [Вопросы на собеседовании: `Prompt Engineering`](ai-ml/prompt-engineering-interview.md) — `28` вопросов
-- [Вопросы на собеседовании: `LLM Integration Patterns`](ai-ml/llm-integration-patterns-interview.md) — `28` вопросов
-- [Вопросы на собеседовании: `AI Agents`](ai-ml/ai-agents-interview.md) — `28` вопросов
-- [Вопросы на собеседовании: `MLOps`](ai-ml/mlops-interview.md) — `28` вопросов
-- [Вопросы на собеседовании: `Model Serving`](ai-ml/model-serving-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `Embeddings`](ai-ml/embeddings-interview.md) — `39` вопросов
+- [Вопросы на собеседовании: `Prompt Engineering`](ai-ml/prompt-engineering-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `LLM Integration Patterns`](ai-ml/llm-integration-patterns-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `AI Agents`](ai-ml/ai-agents-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `MLOps`](ai-ml/mlops-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `Model Serving`](ai-ml/model-serving-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `MCP (Model Context Protocol)`](ai-ml/mcp-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `Function Calling / Tool Use`](ai-ml/function-calling-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `Reasoning Models (o1/o3/R1)`](ai-ml/reasoning-models-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `Multi-Agent Orchestration`](ai-ml/multi-agent-orchestration-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `Agentic Design Patterns`](ai-ml/agentic-patterns-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `AI Safety / Guardrails`](ai-ml/ai-safety-guardrails-interview.md) — `32` вопроса
+- [Вопросы на собеседовании: `Fine-tuning LLM (LoRA/QLoRA/RLHF/DPO)`](ai-ml/fine-tuning-llm-interview.md) — `35` вопросов
+- [Вопросы на собеседовании: `LLM Evaluation`](ai-ml/llm-evaluation-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `LLM Inference Optimization`](ai-ml/inference-optimization-interview.md) — `36` вопросов
+- [Вопросы на собеседовании: `Long Context vs RAG`](ai-ml/long-context-vs-rag-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `AI/LLM Observability`](ai-ml/ai-observability-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `Code Agents`](ai-ml/code-agents-interview.md) — `31` вопрос
+- [Вопросы на собеседовании: `Multimodal AI`](ai-ml/multimodal-ai-interview.md) — `31` вопрос
+- [Вопросы на собеседовании: `AI Compliance & Governance`](ai-ml/ai-compliance-governance-interview.md) — `32` вопроса
+- [Вопросы на собеседовании: `Open-Source LLM Ecosystem`](ai-ml/open-source-llms-interview.md) — `34` вопроса
+- [Вопросы на собеседовании: `AI Application Architecture Patterns`](ai-ml/ai-application-architecture-interview.md) — `32` вопроса
 
 ## algorithms
 
@@ -105,6 +121,11 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Edge Computing`](architecture/edge-computing-interview.md) — `18` вопросов
 - [Вопросы на собеседовании: `BFF` Pattern](architecture/bff-pattern-interview.md) — `17` вопросов
 - [Вопросы на собеседовании: `Strangler Fig` Pattern](architecture/strangler-fig-interview.md) — `18` вопросов
+- [Вопросы на собеседовании: Latency Numbers и Back-of-the-Envelope](architecture/latency-numbers-interview.md) — `24` вопроса
+- [Вопросы на собеседовании: `DNS`](architecture/dns-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `CDN` (Content Delivery Network)](architecture/cdn-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `Reverse Proxy`](architecture/reverse-proxy-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `Service Discovery`](architecture/service-discovery-interview.md) — `30` вопросов
 
 ## behavioral
 
@@ -170,6 +191,8 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `PostgreSQL`](databases/postgresql-interview.md) — `55` вопросов
 - [Вопросы на собеседовании: `Redis`](databases/redis-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `SQL`](databases/sql-interview.md) — `53` вопроса
+- [Вопросы на собеседовании: `Database Replication`](databases/database-replication-interview.md) — `31` вопрос
+- [Вопросы на собеседовании: `Database Sharding`](databases/database-sharding-interview.md) — `34` вопроса
 
 ## design-patterns
 
@@ -374,9 +397,19 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Design URL Shortener`](system-design/design-url-shortener-interview.md) — `17` вопросов
 - [Вопросы на собеседовании: `Design Rate Limiter`](system-design/design-rate-limiter-interview.md) — `18` вопросов
 - [Вопросы на собеседовании: `Design Chat System`](system-design/design-chat-system-interview.md) — `21` вопрос
-- [Вопросы на собеседовании: `Design Feed System`](system-design/design-feed-system-interview.md) — `18` вопросов
+- [Вопросы на собеседовании: `Design Feed System`](system-design/design-feed-system-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Search System`](system-design/design-search-interview.md) — `20` вопросов
 - [Вопросы на собеседовании: `Design Payment System`](system-design/design-payment-system-interview.md) — `20` вопросов
+- [Вопросы на собеседовании: `Design Twitter (X)`](system-design/design-twitter-interview.md) — `27` вопросов
+- [Вопросы на собеседовании: `Design Instagram`](system-design/design-instagram-interview.md) — `27` вопросов
+- [Вопросы на собеседовании: `Design YouTube`](system-design/design-youtube-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `Design Web Crawler`](system-design/design-web-crawler-interview.md) — `26` вопросов
+- [Вопросы на собеседовании: `Design Key-Value Store`](system-design/design-key-value-store-interview.md) — `30` вопросов
+- [Вопросы на собеседовании: `Design Typeahead / Autocomplete`](system-design/design-typeahead-interview.md) — `25` вопросов
+- [Вопросы на собеседовании: `OO Design: Parking Lot`](system-design/design-parking-lot-oo-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `OO Design: Elevator System`](system-design/design-elevator-oo-interview.md) — `26` вопросов
+- [Вопросы на собеседовании: `OO Design: Vending Machine`](system-design/design-vending-machine-oo-interview.md) — `24` вопроса
+- [Вопросы на собеседовании: `Design Uber/Lyft`](system-design/design-uber-interview.md) — `30` вопросов
 
 ## testing
 

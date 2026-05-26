@@ -1,0 +1,1805 @@
+{
+  "topic_slug": "design-feed-system-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой набор functional/non-functional требований корректно зафиксировать для News Feed масштаба 500M DAU в первые минуты дизайна?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Functional: post text/media, home feed из followed people, like/comment/share, ranking (chrono или algo), infinite scroll, push-уведомления. Non-functional: read-heavy ~100:1, p99 feed load < 200 ms, 99.99% availability, eventual для feed (5-10 сек lag OK), strong для auth.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический core-scope feed-кейса: write (post), read (home feed), engagement (RT/like), ranking, real-time (push). Non-functional чётко делит CAP по доменам — feed это AP (eventual), identity это CP (strong). Read:write ~100:1 диктует heavy caching (Redis + CDN) и fan-out on write. 99.99% = 52 мин/год downtime — реалистично для multi-region active-active.",
+                "example": "Senior за 2 минуты проговаривает: `users post short text+media, see home feed of followed people sorted by ranking, like/comment/share, infinite scroll, push on @mention; 500M DAU, 200M posts/day, read:write 100:1, p99 < 200 ms, 99.99%`. Интервьюер кивает — переходим к capacity.",
+                "when_to_apply": "Любой 45-60-мин кейс на social feed: Twitter, Facebook News Feed, Instagram, Threads. Этот scope-список диктует все дальнейшие trade-offs (fan-out, celebrity, ranking).",
+                "edge_cases": "Если интервьюер хочет акцент на DMs или live video — нужно явно переключить scope. Без functional-scope capacity estimation повисает в воздухе.",
+                "related": "Q2 capacity; Q4 push vs pull; см. design-twitter-interview Q1 параллельный scope."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Functional: posts, DMs, live streaming, ads platform, full content moderation, end-to-end шифрование. Non-functional: strong consistency на весь feed, p99 < 20 ms на любой запрос.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это перегруженный scope: DMs/livestream/ads/moderation обычно out-of-scope на интервью. Strong consistency на feed 500M DAU при fan-out 460K writes/sec физически невозможна без катастрофической latency. p99 < 20 ms через регионы — нереалистично.",
+                "source_of_confusion": "Кандидат копирует продакшен Facebook/X со всеми фичами и обещает максимум по всем NFR-осям.",
+                "if_it_were_true": "Если бы feed был CP, fan-out 460K writes/sec требовал бы distributed transaction — система легла бы при первом же celebrity-посте.",
+                "how_it_should_be": "Scope ограничить post/feed/engagement/ranking; явно вынести DMs/livestream/ads в out-of-scope. Strong только для auth; feed = eventual."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только NFR: 500M DAU, 99.99%, p99 < 200 ms. Functional уточняем после выбора БД и языка программирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "NFR диктуются из functional. Без знания операций (что мы читаем/пишем) нельзя посчитать QPS или объёмы. Выбор БД зависит от nature чтения и записи — нельзя его делать до scope.",
+                "source_of_confusion": "Кандидат, начитавшись DDIA, начинает с цифр SLA, считая их главными.",
+                "if_it_were_true": "Если бы 500M DAU задавалось без понимания операций, capacity estimation превратилась бы в гадание — 500M чего? Постов? Чтений?",
+                "how_it_should_be": "Functional → потом NFR (DAU/QPS/SLA) → потом capacity → потом архитектура."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только два требования: пользователи постят твиты и хранят их в Postgres. Чтение feed — деталь реализации, обсудим в самом конце.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Read-path (home feed) — это 80% сложности feed-системы; без него не появится развилка push/pull, celebrity, ranking. Кандидат, ограничивающийся write-path, не покажет глубины.",
+                "source_of_confusion": "Принцип `start with smallest scope` берётся буквально и доводится до абсурда — выкидывается главное.",
+                "if_it_were_true": "Если бы read-path не входил в scope, обсуждение Redis/Cassandra/fan-out выглядело бы оторванным от требований.",
+                "how_it_should_be": "Минимальный scope обязательно включает read-path (home/user timeline) — без него feed не feed."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие порядки чисел получаются в capacity estimation для feed 500M DAU и какие архитектурные решения они диктуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "500M DAU × 100 постов/день = 50B постов/день ≈ 600K posts/sec; средний пост 50 MB; read:write = 1:1; fan-out игнорируем — auto-scaling справится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Цифры завышены в порядки: средний user пишет < 1 поста/день (200M posts/day на 500M DAU), пост с медиа 200-500 KB (не 50 MB), read:write для feed = 100:1 (не 1:1). Fan-out 460K timeline writes/sec — это основная нагрузка системы, игнорировать нельзя.",
+                "source_of_confusion": "Кандидат берёт максимальные значения и умножает — получает абсурдные числа, которые сам не объяснит.",
+                "if_it_were_true": "При 600K posts/sec и 50 MB/пост никакая инфра не хватит — пришлось бы строить отдельную галактику дата-центров.",
+                "how_it_should_be": "Брать средние: 200M posts/day (~2.3K/sec), 300 B metadata + медиа в S3+CDN, read:write 100:1."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "500M DAU, 200M posts/day ≈ 2.3K posts/sec; 10 feed-fetches/user/day → 58K fetches/sec (peak ×3 = 175K); fan-out 2.3K × 200 avg followers = 460K timeline writes/sec; 60 GB/день raw + ~110 TB за 5 лет; Redis cache top-1M активных × 1000 IDs × 80 B = 80 GB.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонические числа Twitter/X-scale: write 2.3K/sec, read 58-175K/sec, fan-out 460K/sec — это основные drivers всей архитектуры. Из них вытекает: Cassandra для posts (write-throughput), Redis cluster для timeline cache (80 GB → 1 shard), Kafka для async fan-out, CDN для media. Average 200 followers, но celebrities искажают распределение — отсюда celebrity-problem.",
+                "example": "Twitter Engineering публикует tweets/sec: 6-12K base, до 25K peak (Super Bowl, NYE). На fan-out 1.2-2.4M timeline writes/sec базируется выбор 500+ Cassandra nodes и 100+ Redis instances.",
+                "when_to_apply": "Любой social feed после фиксации NFR: `DAU × ops/day × bytes/op → storage; reads × per-read → bandwidth; writes × fan-out → timeline QPS`.",
+                "edge_cases": "Average followers 200, но P99 ~10K, max ~100M (celebs) — это запускает разговор про hybrid push/pull. CDN egress отдельный poll: 0.5-2 GB/sec.",
+                "related": "Q5 celebrity problem (распределение followers); Q8 Redis sizing; Q22 sharding под эти числа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Capacity estimation не нужна на интервью — достаточно сказать `используем cloud auto-scaling, инфра сама подстроится`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Capacity estimation — обязательная часть system design interview: показывает, что кандидат умеет считать. Auto-scaling решает elasticity на минутах, но не объёмы хранения (110 TB за 5 лет) или fan-out (460K writes/sec).",
+                "source_of_confusion": "В cloud-эре кандидаты думают, что cloud решает всё; на самом деле он распределяет provisioning, но не уменьшает фундаментальную нагрузку.",
+                "if_it_were_true": "Если бы auto-scaling решал всё, не нужно было бы выбирать между Cassandra и MySQL — провайдер бы знал лучше. Но провайдер не знает паттерн доступа.",
+                "how_it_should_be": "Делать `DAU × ops × bytes` и получать порядки storage/throughput/fan-out — это база любого кейса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Достаточно посчитать только storage метаданных за день; reads и fan-out — вторичные метрики, не диктуют архитектуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reads (58-175K/sec) и fan-out (460K writes/sec) — основные drivers архитектуры (Redis cache, Kafka, async workers). Storage — это только часть картины (определяет выбор Cassandra vs Postgres).",
+                "source_of_confusion": "Кандидат запомнил пример с DAU × bytes и не идёт дальше — не понимает, что reads вызывают cache, а fan-out — async-pipeline.",
+                "if_it_were_true": "Если бы reads не считались, было бы непонятно зачем Redis ZSET — Cassandra сама бы выдержала. Но при 175K read/sec она не справится без cache.",
+                "how_it_should_be": "Считать `storage + read QPS + write QPS + fan-out QPS` — все четыре оси."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему важно явно классифицировать операции feed-системы как read-heavy vs write-heavy и какие архитектурные решения вытекают из read:write ≈ 100:1?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Классификация не важна — современные БД (Postgres, Cassandra) одинаково хорошо обрабатывают любые нагрузки, поэтому проектируем под средний случай и масштабируем по факту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "БД не одинаково хорошо: Cassandra оптимизирована под high-throughput writes (LSM-tree), Postgres под транзакционные read/write с ACID, Redis под low-latency reads. Без классификации нагрузки кандидат выбирает БД наугад и в продакшене получает 100K read/sec на одной Postgres-реплике.",
+                "source_of_confusion": "Маркетинг cloud-вендоров (DynamoDB, Aurora) обещает `любая нагрузка`, и кандидат принимает это за технический факт.",
+                "if_it_were_true": "Если бы любая БД справлялась с любой нагрузкой, не было бы trade-off между write-throughput Cassandra и read-latency Redis. Реальность: каждая БД оптимизирована под свой паттерн.",
+                "how_it_should_be": "Сначала классифицировать (read:write ratio), потом выбирать БД и кэши под конкретный паттерн."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Feed-write classification определяет только индексы Postgres — если postgresql справляется с auto-vacuum, проблем нет; sharding и cache добавим позже при росте нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Postgres на 175K read/sec даже с индексами и pgbouncer лежит — single-master ограничен ~10-30K connections. Sharding и cache — не `позже`, а с самого начала: при read:write = 100:1 cache hit-rate должен быть 95%+, иначе origin не выдержит.",
+                "source_of_confusion": "Кандидат привык к CRUD-приложениям с 10-1000 RPS и думает, что Postgres универсален.",
+                "if_it_were_true": "Если бы Postgres держал 175K read/sec, Twitter не строил бы Manhattan и не сидел бы на Cassandra. Реальность: для feed нужны денормализованные timeline-кэши.",
+                "how_it_should_be": "Сразу проектировать с Redis (timeline ZSET), Cassandra (posts), CDN — без них read-heavy feed не масштабируется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Read:write = 100:1 диктует heavy caching (Redis + CDN), read replicas (`LOCAL_QUORUM` на write, `ONE` на read), fan-out on write (оптимизирует read за счёт write, если write дешевле — выгодно). Slack-чат — контрпример (write-heavy), фан-аут не нужен.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классификация определяет всё: cache strategy (95%+ hit rate), DB choice (Cassandra под высокий write), репликация (read replicas с relaxed consistency), pre-computation (fan-out on write — обмен дешёвых writes на дорогие reads). Контрпример Slack показывает, что feed-механика fan-out не универсальна — write-heavy чат живёт по другим правилам.",
+                "example": "Twitter: 12K writes/sec vs 12M reads/sec → 1000:1 → Redis ZSET timeline cache + Cassandra posts. Slack: 100K messages/sec в каналы, fan-out не нужен — fetch отдаёт хронологию из channel-stream напрямую.",
+                "when_to_apply": "Любой кейс на social/messaging — первый шаг после capacity estimation: проклассифицировать операции и выбрать стратегию.",
+                "edge_cases": "При read:write 1:1 (chat) fan-out становится anti-pattern — write amplification бьёт по throughput. Граница ~1:10 — точка, где fan-out начинает окупаться.",
+                "related": "Q4 push vs pull (диктуется этой классификацией); Q21 cache strategy; см. design-chat-system-interview контрпример."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Read:write ratio не влияет на архитектуру — главное правильно выбрать ORM (Hibernate / SQLAlchemy) и настроить connection pool.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ORM и connection pool — это micro-optimization уровня одного сервиса. Read:write ratio определяет архитектуру всей системы: какие БД, какие кэши, какие async-пайплайны. ORM не спасёт от 175K read/sec на одной Postgres-реплике.",
+                "source_of_confusion": "Кандидат-backend думает в категориях one-service-one-DB и не видит system-design картины.",
+                "if_it_were_true": "Если бы ORM решал read-heavy проблему, Hibernate-приложения не нуждались бы в Redis и read replicas. Реальность: ORM ускоряет код, но не меняет throughput БД.",
+                "how_it_should_be": "Сначала классификация нагрузки → выбор архитектурного паттерна (cache, replica, fan-out) → потом ORM-tuning."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём фундаментальный trade-off между fan-out on write (push) и fan-out on read (pull) для feed на 500M DAU и почему ни один в чистом виде не масштабируется?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Push всегда выигрывает, потому что read O(1) важнее write amplification — диски дешёвые, latency важнее. Pull использовать никогда не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Push не справляется с celebrity: пост @elonmusk = 100M timeline writes за минуту = 167K writes/sec в один Redis-cluster на один пост. Это hot key и DDoS на свою же систему. Pull спасает именно от этого — для celebrity не делаем fanout, читаем on demand.",
+                "source_of_confusion": "Кандидат правильно понимает, что push даёт O(1) read, но не видит обратную сторону — write amplification.",
+                "if_it_were_true": "Если бы push всегда выигрывал, Twitter не разрабатывал бы hybrid (push для regular + pull для celebs). Реальность: при > 100K followers push становится антипаттерном.",
+                "how_it_should_be": "Push для regular users (< 10K followers), pull для celebrities (> 100K) — hybrid (Q6)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Pull всегда лучше, потому что нет write amplification и нет hot key проблемы — read O(N follows) приемлемо при N=200, а если медленно — добавим Redis-кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pull при 200 follows = 200 sequential queries + merge-sort за 200 ms — это уже за пределами budget. На 175K read/sec это 35M queries/sec на posts-store. Cache не решает: для каждого user уникальный merge — кэшировать нечего без pre-computation (которая = push).",
+                "source_of_confusion": "Кандидат видит `O(1) write` у pull и не считает суммарный read-cost.",
+                "if_it_were_true": "Если бы pull масштабировался, Twitter не вкладывался бы в Redis ZSET timelines. Но Twitter инвестировал именно в push именно для read-latency.",
+                "how_it_should_be": "Pull для celebrities (мало celebs, переиспользуемый cache); push для regular (амортизация на много follower-ов)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Push и pull эквивалентны — выбирать по личным предпочтениям команды. Главное — иметь хорошую observability, чтобы видеть проблемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Push и pull имеют принципиально разные cost models: push дорог на write (×N followers), дёшев на read (O(1)); pull обратный. На 500M DAU выбор не косметический — он определяет, выживет ли система. Observability показывает симптомы, но не лечит fundamental trade-off.",
+                "source_of_confusion": "Лозунг `there's no silver bullet` берётся как `всё равно что выбрать`. На самом деле выбор очень контекстен.",
+                "if_it_were_true": "Если бы выбор был косметическим, не было бы целых докладов на InfoQ про Twitter Timelines. Реальность: выбор push/pull/hybrid — главное архитектурное решение feed-системы.",
+                "how_it_should_be": "Push для regular, pull для celebs, hybrid в проде. Observability — для мониторинга, не для выбора."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Push: read O(1) через `LRANGE user:42:timeline 0 49`, но write amplification ×N followers (10M followers = 10M writes), wasted work для inactive. Pull: cheap writes O(1), но read дорогой (200 queries + merge-sort), сложный online ranking. Ни один не масштабируется в чистом виде — production = hybrid.",
+              "correct": true,
+              "sections": {
+                "explanation": "Push: write amplification × fan-out (на celebrity = catastrophic), wasted writes для inactive followers, но read O(1) и стабильные p99. Pull: O(1) write, но N×latency на read и сложно делать ranking без pre-computed candidate pool. Hybrid (Q6): push для regular users, pull для celebrities + active/inactive optimization (Q7). Twitter Timelines (Scala) использовал `skip and pull` для top accounts.",
+                "example": "Push push push: `ZADD follower_1:timeline <ts> post_id; ZADD follower_2:timeline ...` (×N). Read: `ZREVRANGE user:42:timeline 0 49` за 5 ms. Pull: `for follow in follows: SELECT posts WHERE user_id=follow LIMIT 50` → merge-sort 200 results.",
+                "when_to_apply": "Стартап < 1M MAU — pure push. Соцсеть 100M+ — hybrid. Twitter/X-scale — hybrid + multi-region + edge.",
+                "edge_cases": "Граница celebrity ~10-100K followers — A/B-тюнинг. Inactive (>90 дней) — lazy backfill вместо fanout (Q7).",
+                "related": "Q5 celebrity decision; Q6 hybrid details; Q7 inactive optimization; см. design-twitter-interview Q9-10."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно решить celebrity problem (пользователь с 10M+ followers, пост = 10M timeline writes) и какие конкретные threshold-стратегии используются на проде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Threshold detection (`followers_count > 100K` → skip write-fanout); pull на read из `celebrity_posts` со слиянием с push-timeline; async с приоритетами (active → first, inactive → later/skip); CDN/edge cache для body поста; pre-warming edge per region. Twitter Timelines (Scala) — `skip and pull` для top accounts.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический набор: (1) threshold > 100K detection — главный switch; (2) pull-side fetch из per-celebrity cache (высокий cache hit rate, один cache на всех readers); (3) priority queue active-first; (4) CDN для body — миллион подписчиков читают edge, не БД; (5) pre-warming. На read: merge-sort push-timeline + pulled celebrity posts. Twitter (исторически) — exactly this pattern в сервисе Timelines.",
+                "example": "@elonmusk пост: skip fanout (10M followers > 100K); записываем в `celebrity_posts:elonmusk` ZSET. Followers при GET /feed → fetch own push-timeline + ZRANGEBYSCORE celebrity_posts:elonmusk для каждого followed celeb → merge → rank → return. Body поста — в CDN с TTL 60 сек.",
+                "when_to_apply": "Любая social сеть с power-law распределением followers (Twitter, Instagram, YouTube subscribers). При average 200 follows и P99 10K, max 100M — celebrity-problem обязателен.",
+                "edge_cases": "Граница (10K, 100K, 1M) — A/B-тюнинг; кандидат-celeb (быстро растущий) — гистерезис на switch (не дёргать туда-сюда). При unfollow celebrity нужно invalidate pulled cache на readers.",
+                "related": "Q4 push vs pull (база); Q6 hybrid; Q23 hot keys (viral posts); см. design-twitter-interview Q9."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просто увеличить размер Redis-cluster в 10 раз — масштабируем горизонтально, hot key сам растворится. CDN не нужен, читаем из Redis напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hot key не растворяется горизонтальным масштабированием — все 10M writes уходят на тот shard, что содержит timeline целевого follower, и они идут параллельно в 10M разных shards. Но сам fanout от одного celebrity-поста = 167K writes/sec — это нагрузка на Kafka и workers, не на target shards. CDN критичен: body поста статичен, без CDN миллион reads идёт в Cassandra.",
+                "source_of_confusion": "Кандидат думает, что hot key = `один ключ, много reads/writes`, не понимая, что в Redis cluster ключи распределены по slots — fanout пишет в 10M разных ключей.",
+                "if_it_were_true": "Если бы увеличение cluster-а решало, Twitter не строил бы Timelines service с pull-стратегией. Реальность: bottleneck — fanout queue и worker throughput.",
+                "how_it_should_be": "Threshold + skip fanout + pull-on-read + CDN. Размер cluster важен, но не решает fundamental write amplification."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Celebrity problem решается ограничением — запретить аккаунты с > 10M followers, чтобы система не страдала. Существующих celebs разбить на 10 sub-аккаунтов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это технически невозможный business decision — отрезать celebrity audience = убить продукт. Twitter/Instagram именно на celebs построили growth. Разбивать на sub-аккаунты — не решение, follower нужно следить за 10 ID, UX ломается.",
+                "source_of_confusion": "Кандидат пытается решить инженерную проблему через product constraint, не понимая, что celebrity — это feature, не bug.",
+                "if_it_were_true": "Если бы можно было ограничивать аудиторию, не нужны были бы hybrid push/pull. Но business требует поддержку celebs.",
+                "how_it_should_be": "Решать технически: threshold detection + hybrid (push regular + pull celeb) + CDN + edge."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Делать synchronous fanout в request thread поста celebrity, чтобы все followers получили обновление гарантированно. Если 10M writes занимают 5 минут — клиент подождёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synchronous fanout в request thread — катастрофический антипаттерн (Q30): client ждёт 5 минут, timeout, retry, dup, DB-load × N. Async через Kafka + workers — единственно работающий путь. Celeb-fanout — это не `сделать гарантированно`, а `вообще не делать` и pull на read.",
+                "source_of_confusion": "Кандидат боится eventual consistency и хочет гарантировать доставку синхронно.",
+                "if_it_were_true": "Если бы клиент ждал 5 минут, retention падал бы катастрофически. Twitter post latency должен быть < 200 ms.",
+                "how_it_should_be": "POST /posts возвращает 201 за 200 ms; fanout async через Kafka; для celebs — pull-on-read, без fanout вообще."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен hybrid (push+pull) подход на проде и как работает feed-fetch для пользователя, у которого среди follow-ов есть и regular accounts, и celebrities?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Hybrid это просто A/B-тест: 50% юзеров — push, 50% — pull. Через 2 недели смотрим метрики, выбираем победителя для всех. Per-pessage celebrity-detection не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hybrid — не A/B-тест двух стратегий, а архитектурное разделение по типу автора: regular → push, celebrity → pull. Оба flow существуют параллельно ВСЕГДА. A/B используют для tuning threshold (где граница celeb), но не для выбора `push vs pull`.",
+                "source_of_confusion": "Кандидат путает A/B-тест с архитектурным решением.",
+                "if_it_were_true": "Если бы 50%-юзеров получали pure pull, у них feed грузился бы 500 ms+ при наличии 200 follows — UX ломается.",
+                "how_it_should_be": "Hybrid: всегда push для regular + pull для celebs. Threshold tuning — отдельный A/B."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Write side: regular (< 10K followers) → push fanout в Redis timelines; celebrity (> 100K) → no push, только в собственный `user_posts` cache. Read side: GET /feed → fetch push-timeline (ZREVRANGEBYSCORE) + per-celebrity pull → merge + rank → MGET bodies → enrich → return. Tuning: дробный fanout (1% сразу + остальное async), inactive_threshold 90 дней.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический production-flow: write разветвляется по followers_count threshold, read сливает оба источника. Per-celebrity cache переиспользуется всеми readers (cache hit rate высокий — много follow одного @elonmusk). Дробный fanout (immediate 1% + async batched 99%) даёт мгновенный feel + survival при traffic spike. Inactive 90 дней — не fanout, lazy backfill на login.",
+                "example": "`Feed.get(user_42)`: (1) `ZREVRANGEBYSCORE user:42:timeline cursor -inf LIMIT 0 200` → 180 push-posts; (2) для каждого из 3 followed celebs → `ZREVRANGEBYSCORE celeb_posts:elonmusk cursor -inf LIMIT 0 20` → 60 celeb-posts; (3) merge → 240 candidates; (4) rank → top 50; (5) `MGET posts:id1,id2,...` → bodies.",
+                "when_to_apply": "100M+ MAU social с power-law следования. Boundary 10K-100K — A/B-тюнинг. Twitter/X — exactly this pattern.",
+                "edge_cases": "User unfollow celebrity → invalidate его pulled-cache (или TTL короткий). Pending fanout при celeb-промоушене (regular становится celeb) — флаг гистерезис.",
+                "related": "Q4 push vs pull (база); Q5 celebrity decision; Q7 active/inactive; см. design-twitter-interview Q9-Q10."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Hybrid = push в Redis + дублирование в Cassandra для durability. На read берём из Redis, fallback на Cassandra. Celebrity не выделяем — Redis cluster справится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это путаница терминов: Redis+Cassandra dual-store — это не hybrid push/pull, а cache+source-of-truth. Hybrid push/pull — про разделение по типу автора (regular/celeb). Без celeb-выделения один пост @elonmusk = 100M timeline writes за минуту = 1.7M writes/sec на Kafka — Redis cluster не главное узкое место.",
+                "source_of_confusion": "Кандидат смешивает понятия `dual storage` и `dual fanout strategy`.",
+                "if_it_were_true": "Если бы dual-store решал celebrity, Twitter не строил бы Timelines service. Реальность: bottleneck на write amplification, не на storage tier.",
+                "how_it_should_be": "Push для regular + pull для celebs (separation by author type). Redis+Cassandra — отдельная история кэширования."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Hybrid = client-side merge: на телефоне юзера приложение отдельно fetch-ит push-timeline и list-постов каждого celeb из followed, делает локальный merge-sort. Server-side ничего не делает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Client-side merge невозможен по latency: 200 follow-ов × 50 ms = 10 секунд для load feed-а. Мобильный traffic дороже, battery быстрее садится. Ranking невозможен на client (нет feature store, model). Server-side merge через Feed Service — единственный production-pattern.",
+                "source_of_confusion": "Кандидат пытается унести логику на client, чтобы упростить server.",
+                "if_it_were_true": "Если бы client merge работал, не было бы Feed Service в архитектурах Twitter/FB. Но real-time ranking и filter требуют server.",
+                "how_it_should_be": "Server: Feed Service делает merge+rank+filter; client получает готовый ranked list."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как оптимизировать fanout с учётом active/inactive followers (`last_login_at` метрика) и в чём суть lazy backfill при возвращении inactive user-а?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Inactive — не оптимизируем; fanout идёт всем followers одинаково. Если пользователь не заходит 6 месяцев — записи в его Redis-timeline накапливаются, TTL не ставим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это wasted writes: 50-70% followers (Twitter docs) неактивны в данный момент, fanout к ним = trash в Redis. Без TTL Redis cluster раздувается: 100M inactive × 80 KB = 8 TB бесполезных данных. На login backfill не сработает — данные уже устарели, нужно строить заново.",
+                "source_of_confusion": "Кандидат боится eventual consistency и хочет, чтобы данные `всегда были готовы`.",
+                "if_it_were_true": "Если бы fanout всем работал, Twitter не описывал бы tier-стратегии в их докладах. Реальность: 50-70% writes — wasted.",
+                "how_it_should_be": "Tier: hot (< 7 дней) — fanout всегда; warm (7-30) — batched delay; cold (> 30) — skip + lazy backfill on login."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Inactive — делать fanout с задержкой 1 час, чтобы экономить ресурсы. Lazy backfill означает, что мы fetch-ом из Cassandra достаём посты при первом запросе, без отдельного async job.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Часовая задержка не помогает — fanout всё равно делается на все followers, экономии нет, только latency растёт. Lazy backfill — это не sync-fetch при запросе (это 10 сек load feed-а), а async-job, который собирает посты в background и заполняет ZSET.",
+                "source_of_confusion": "Кандидат путает delay со skip; lazy backfill с sync read-from-source.",
+                "if_it_were_true": "Если бы sync-fetch при запросе работал, не было бы нужды в timeline-кэше вообще — все из Cassandra. Но 200 follows × 50 ms = 10 сек load.",
+                "how_it_should_be": "Skip fanout для cold tier; на login флаг timeline_stale=true → async job собирает посты → заполняет ZSET → снимает флаг."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tier: hot (< 7 дней без визита) — fanout всегда, high priority в Kafka; warm (7-30 дней) — fanout с задержкой 30-60 сек, batch-режим; cold (> 30 дней) — skip fanout, lazy backfill. На login флаг `timeline_stale=true` → async job собирает посты от follow за месяц → заполняет ZSET → снимает флаг. UI показывает skeleton 1-2 сек.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tier-стратегия экономит 50-70% wasted writes (по докладам Twitter). Lazy backfill — это async job, не sync-fetch: при появлении user-а триггерим background-сборку из `posts_by_user` каждого follow за последние 30 дней, складываем в ZSET, снимаем stale-флаг. UI показывает skeleton до завершения (1-2 сек). На следующий fetch ZSET готов, обычный flow.",
+                "example": "User @alice не заходил 60 дней (cold). Posts @bob (она следует) за это время в fanout не попадали. @alice логинится → app GET /feed → response: `timeline_stale=true, retry in 2s`. Async job: `for follow in alice.follows: posts = SELECT FROM posts_by_user WHERE user_id=follow AND created_at > now-30d; ZADD alice_timeline ts post_id ...` → snake snake → done. Через 2 сек /feed возвращает normal.",
+                "when_to_apply": "Любая social сеть с long-tail активности (50%+ users не заходят неделю). Twitter, FB, Insta — все используют variant of this.",
+                "edge_cases": "User зашёл после года отсутствия — backfill только последние 30 дней (не весь архив, иначе job на минуты). При флапе active/inactive (заходит раз в 31 день) — boundary handling, иначе постоянный backfill.",
+                "related": "Q4 push vs pull; Q5 celebrity (orthogonal оптимизация); Q21 cache TTL strategies."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Active/inactive не различаем — удаляем inactive user-ов из системы через 90 дней без активности; их данные не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Удалять inactive users — катастрофическое business-решение: GDPR/legal требует retention, продукт теряет пользователей, retention-маркетинг (`мы скучаем по тебе`) ломается. Inactive — это норма, оптимизировать нужно их fanout-cost, не существование.",
+                "source_of_confusion": "Кандидат экстремизирует `экономия ресурсов`.",
+                "if_it_were_true": "Если бы удаляли inactive, продукт сократился бы в 2-3 раза. Twitter/FB сохраняют годами для retention-кампаний.",
+                "how_it_should_be": "Tier active/warm/cold + lazy backfill. Не удалять users."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно структурировать storage для user timeline (Redis cache + persistent backing) и почему post bodies хранятся отдельно от timeline?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Всё в одной таблице Postgres `timeline_with_bodies (user_id, ts, post_id, body)` — простая модель, можно делать SQL join-ы. Redis не нужен — Postgres держит до 175K QPS на правильно настроенной инстансе с pgbouncer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Postgres single-master не держит 175K QPS на feed-нагрузке даже с pgbouncer. Дублирование `body` в timeline = N×storage (тот же пост 200 раз для 200 followers). Edit поста = N×updates вместо 1. Это catastrophic scaling antipattern.",
+                "source_of_confusion": "Кандидат-backend привык к monolithic PostgreSQL и не верит в polyglot persistence.",
+                "if_it_were_true": "Если бы Postgres держал такую нагрузку, Twitter и FB не строили бы Cassandra+Redis-stacks. Реальность: read-heavy feed требует кэшей и денормализации.",
+                "how_it_should_be": "Redis ZSET (post_ids only) + Cassandra `posts` (bodies) — разделение responsibility."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Хранить timeline в S3 как JSON-файлы (один файл на user) — durable, дешёво, можно версионировать. Cache в Redis не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S3 на read — это 50-200 ms latency и rate limit 5500 reads/sec на prefix. Для feed нужен < 5 ms на ZRANGEBYSCORE. S3 — для durable archive, не для hot path. Updating JSON = read-modify-write на every post — не масштабируется.",
+                "source_of_confusion": "Кандидат привык к web app с static assets в S3, считает что S3 подходит для всего.",
+                "if_it_were_true": "Если бы S3 подходил, Redis не было бы нужно. Но S3 latency на 2 порядка выше Redis.",
+                "how_it_should_be": "Redis для hot timeline; Cassandra/Postgres для durable backing; S3 — для media и archives."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только Cassandra с одной таблицей `feed_items(user_id, post_id, body)`, без Redis. Cassandra LSM-tree и так быстрая, кэширование избыточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra read p99 = 10-30 ms — не плохо, но для feed нужно < 5 ms. На 175K read/sec Cassandra cluster потребует 500+ nodes против 10-20 Redis instances. Дублирование body × N followers — storage amplification и edit-amplification.",
+                "source_of_confusion": "Кандидат думает, что Cassandra `достаточно быстрая` и забывает про cache layer.",
+                "if_it_were_true": "Если бы Cassandra хватало, Redis не было бы в Twitter-стэке. Но Twitter использует Redis для timeline cache именно для latency.",
+                "how_it_should_be": "Redis ZSET (hot) + Cassandra (cold backing) + posts отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Per-user ZSET в Redis (`ZADD user:42:timeline <ts> <post_id>`, `ZREVRANGE` для fetch, `ZREMRANGEBYRANK 0 -1001` для trim до top-1000) + persistent backing в Cassandra (`CREATE TABLE timelines (user_id, ts, post_id, PRIMARY KEY (user_id, ts)) WITH CLUSTERING ORDER BY (ts DESC)` + TWCS compaction). Post bodies — отдельный store `posts(post_id PRIMARY KEY, body, ...)`, на read batch MGET. Разделение: edit/delete поста = 1 write в `posts`, timeline не трогаем; дедупликация (1 body на N timeline entries).",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический stack: Redis ZSET для hot path (5 ms range fetch), Cassandra с partition по user_id + clustering по ts DESC для durable backing (range scan = one partition = O(log N) + linear), TWCS compaction оптимизирован для time-series (старые SSTables дропаются целиком). Bodies separately в `posts(post_id PK)`: random access для batch MGET, edit = 1 write (а не N), 1 body на N timeline entries (дедуп).",
+                "example": "Post by @bob → fanout writes `ZADD alice:timeline 1716700000 post_123`. Alice opens feed → `ZREVRANGE alice:timeline 0 49` → [post_123, post_098, ...] → `MGET posts:post_123 posts:post_098 ...` → bodies. Bob edits post_123 → `UPDATE posts SET body=... WHERE post_id=post_123` (1 write), timeline не трогаем.",
+                "when_to_apply": "Любой social feed с read-heavy паттерном и shared content. Twitter, Insta, FB News Feed — exactly this pattern.",
+                "edge_cases": "Redis eviction — нужен fallback на Cassandra (regenerate timeline). Cassandra TWCS требует правильного window_size (1 день/1 неделя). При edit cached body в Redis — invalidate + repopulate.",
+                "related": "Q9 Redis ZSET details; Q10 posts master table choice; Q21 cache strategy."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему Redis sorted set (ZSET) — оптимальная структура для user timeline и как считается память для 100M активных пользователей?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "ZSET: score=timestamp, `ZADD user:42:timeline <ts> <post_id>` (вставка O(log N)), `ZREVRANGE 0 49` (top-50 O(log N + M)), `ZREVRANGEBYSCORE <cursor> -inf LIMIT 0 50` (cursor-pagination), `ZREMRANGEBYRANK 0 -1001` (trim top-1000). Memory: skiplist+ziplist entry ~64-80 B; 1000 × 80 B = 80 KB/user; 1M active × 80 KB = 80 GB (1 shard `r6gd.4xlarge` 128 GB); 100M → cluster 16-32 master shards. AOF every 1 sec + RDB hourly. Pipelining обязателен.",
+              "correct": true,
+              "sections": {
+                "explanation": "ZSET даёт всё что нужно: O(log N) insert, O(log N + M) range fetch с автосортировкой по score (=timestamp DESC), trim до top-N одной командой. Memory считается точно: ~80 B на entry (skiplist node + ziplist хранение); 1000 entries × 80 B = 80 KB/user (стандартный trim до 1000 — пользователи редко скроллят дальше). 100M активных × 80 KB = 8 TB — кластер 16-32 master shards (`r6gd.4xlarge` 128 GB RAM каждый). AOF 1 sec — допустимая потеря (timeline регенерируется из posts за минуты), RDB hourly для DR. Pipelining критичен — без него RTT × N команд убивает throughput.",
+                "example": "Fanout worker батчит 1000 ZADD в pipeline → 1 RTT (5 ms), 1000× throughput vs sequential. На fetch: `ZREVRANGEBYSCORE user:42:timeline (current_cursor -inf LIMIT 0 200` → 5 ms, 200 IDs.",
+                "when_to_apply": "Любая time-ordered хронология с top-N доступом: feed, leaderboard, recent activity. Redis ZSET — golden hammer для этого.",
+                "edge_cases": "Memory fragmentation при frequent ADD/REMRANGE — мониторить `used_memory_rss` vs `used_memory`. При горячих shards (один user-celebrity-shard читают много) — read replicas или per-shard caching. `maxmemory-policy allkeys-lru` для eviction.",
+                "related": "Q8 storage tier; Q21 cache strategy; Q23 hot keys mitigation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просто Redis LIST (`LPUSH user:42:timeline post_id`, `LRANGE 0 49`). Sorted set избыточен — мы уже вставляем в хронологическом порядке. Memory: 100M × 200 KB = 20 TB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LIST не подходит: (1) fan-out может приходить out-of-order (Kafka не гарантирует порядок между partitions), и LIST не пересортирует; (2) trim до top-N сложнее; (3) cursor-pagination по timestamp невозможна — только по rank. ZSET решает все три проблемы. 200 KB/user — это завышенная оценка (на самом деле 80 KB).",
+                "source_of_confusion": "Кандидат не знает, что Kafka не гарантирует global order между partitions при fanout.",
+                "if_it_were_true": "Если бы fanout гарантировал order, LIST работал бы. Но в production это не так.",
+                "how_it_should_be": "ZSET — обязательно для feed; LIST подходит для строго ordered (single producer) cases."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Redis HASH `timeline_hash:user_42` с полями `post_id → ts`. На fetch — `HGETALL` + сортировка в приложении. Memory: 100M × 50 KB = 5 TB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HASH не подходит: (1) `HGETALL` возвращает ВСЕ entries — не top-N (если 1000 entries, придётся гонять все 1000 на каждый fetch); (2) сортировка в app = O(N log N) CPU на каждый request; (3) cursor-pagination невозможна — нужен server-side скан. ZSET делает всё это в Redis O(log N).",
+                "source_of_confusion": "Кандидат знает только HASH/STRING из Redis и не знаком с ZSET.",
+                "if_it_were_true": "Если бы HASH работал, не существовало бы ZSET в Redis. Но именно для time-series данных нужен sorted-set.",
+                "how_it_should_be": "ZSET со score=timestamp — единственный правильный выбор для timeline."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Не использовать Redis — слишком expensive. Хранить timeline в Memcached с key `timeline:42`, value = serialized JSON-array. Memory не считаем — Memcached сам управляет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Memcached — это flat key-value без structure; storing JSON-array требует read-modify-write на каждый new post (с lock?), что не масштабируется. Memcached eviction (LRU) непредсказуем — timeline может evictнуться внезапно. Redis даёт structure (ZSET), persistence (AOF/RDB), atomic ops (ZADD).",
+                "source_of_confusion": "Кандидат знает Memcached как `универсальный кэш` и не различает с Redis.",
+                "if_it_were_true": "Если бы Memcached хватало, FB не разрабатывал бы McRouter поверх и не мигрировал бы на Redis для structured data.",
+                "how_it_should_be": "Redis ZSET для structured timeline; Memcached — для простых k-v кэшей (например, decoded JWT)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать posts master table между Cassandra / DynamoDB / Postgres для 200M posts/day с retention 5 лет (~110 TB) и какие конкретные критерии важны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Использовать MongoDB — flexible schema идеально для постов, sharding встроенный. Все большие компании на MongoDB сидят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MongoDB не используется для feed-systems такого масштаба в Twitter/FB/Insta. На 200M writes/day MongoDB cluster требует больше операционных усилий, чем Cassandra (replication lag, oplog management, чувствительность к JSON-структуре). Sharding встроен, но manual shard key выбор — частая ошибка.",
+                "source_of_confusion": "MongoDB маркетинг 2015-2018 создал миф о `универсальной NoSQL`. Реальность: Mongo — для document workloads с complex queries, не для high-write time-series.",
+                "if_it_were_true": "Если бы Mongo подходил, Twitter не строил бы Manhattan/Cassandra. Реальные feed-системы выбирают Cassandra или Dynamo.",
+                "how_it_should_be": "Cassandra (proven for write-heavy time-series) — стандарт. Mongo для document apps, не для feed."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Cassandra — write throughput очень высокий, p99 write 5-10 ms, multi-region active-active через `LOCAL_QUORUM`, sharding по `post_id` встроенный (token ring), TWCS для time-series. Schema: `CREATE TABLE posts (post_id bigint PRIMARY KEY, user_id bigint, body text, media_ids list<bigint>, created_at timestamp)`. Альтернативы: DynamoDB (managed, RCU/WCU, global tables) — когда нет команды на Cassandra; Postgres (Citus/Aurora) — startup до 10M MAU, потом миграция.",
+              "correct": true,
+              "sections": {
+                "explanation": "Cassandra — proven choice для feed posts: LSM-tree write throughput, multi-region active-active с LOCAL_QUORUM (eventual), partition по post_id даёт ровное распределение, TWCS compaction оптимизирован под time-series (старые SSTable дропаются целиком при retention). Twitter, Discord, Instagram — на Cassandra. Альтернативы: DynamoDB подходит когда managed важнее cost и нет специалистов по Cassandra (Lyft, Stripe non-core). Postgres (Citus shard, Aurora) — для startup до 10M MAU; миграция на Cassandra по мере роста.",
+                "example": "Schema: `CREATE TABLE posts (post_id bigint PRIMARY KEY, user_id bigint, body text, media_ids list<bigint>, created_at timestamp);`. Один partition = один пост, идеально для random access (batch MGET по post_ids из timeline). `posts_by_user(user_id, ts, post_id)` denormalized для `все посты юзера X` — partition by user_id.",
+                "when_to_apply": "Cassandra — feed/social/IoT/logs (write-heavy time-series). DynamoDB — когда managed критичен. Postgres — startup или сильная transactional семантика.",
+                "edge_cases": "Cassandra hot partition если post_id не random (sequential ID concentrates writes) — использовать Snowflake/UUID-v4. TWCS требует правильного window_size (1 день обычно). Multi-region writes: LOCAL_QUORUM на write дёшев, но cross-DC eventual.",
+                "related": "Q8 storage layout; Q22 sharding strategies; Q26 multi-region."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Postgres единственный выбор — ACID, SQL, indexes. Шардинг через Citus или partitioning по post_id range. 200M posts/day — это всего ~2.3K writes/sec, Postgres-master такое вытянет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Postgres-master на 2.3K writes/sec ещё вытянет, но (1) feed-reads = 175K/sec — single-master не справится; (2) growth 200M/day → 110 TB за 5 лет — partitioning по range = hot partition (свежие посты), нужен hash-sharding (Citus); (3) ACID не нужен для posts (eventual fine). Cassandra оптимизирована под именно эту нагрузку.",
+                "source_of_confusion": "Кандидат-backend верит в `Postgres до победы` и боится NoSQL.",
+                "if_it_were_true": "Если бы Postgres хватало, Twitter/Insta не мигрировали бы на Cassandra. Реальный stack: Cassandra для posts, Postgres для users.",
+                "how_it_should_be": "Cassandra для posts (write-heavy, time-series). Postgres для users (ACID identity)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Хранить посты прямо в S3 как JSON-файлы (один файл на пост), путь `s3://posts/<year>/<month>/<day>/<post_id>.json`. Cassandra/Dynamo избыточны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "S3 read latency 50-200 ms — на feed-fetch это 200×50 ms = 10 секунд. S3 rate limit 5500 reads/sec на prefix — fanout в 460K/sec в один prefix не пройдёт. S3 — durable cold storage, не hot path. Batch MGET 50 posts из Cassandra = 15 ms, из S3 = 50 × 50 ms = 2.5 сек.",
+                "source_of_confusion": "Кандидат привык к web-blob storage в S3 и переносит на posts.",
+                "if_it_were_true": "Если бы S3 хватало для hot reads, не было бы CDN. Но S3 — origin, нужен tier выше для latency.",
+                "how_it_should_be": "Cassandra/Dynamo для hot posts; S3 для media + archives + cold posts."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём ключевая разница между chronological и algorithmic feed, какие конкретные продукты что используют и почему algorithmic подняли engagement на ~20%?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Chronological всегда лучше для UX — пользователи контролируют что видят. Все соцсети должны вернуться к чисто хронологическому feed, как Twitter до 2016.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это product-opinion, не engineering decision. Метрики показывают, что algorithmic ranking поднимает time-on-app на ~15-25% (Instagram 2016, FB EdgeRank → ML). UX-control важен, поэтому Twitter/X добавляет `Following` (chrono) рядом с `For You` (algo). Threads/Bluesky выбрали chrono — это product positioning, а не universal best.",
+                "source_of_confusion": "Кандидат принимает HN/Reddit мнение как технический факт.",
+                "if_it_were_true": "Если бы chrono всегда побеждал, Instagram и FB вернулись бы к нему — они тестировали и предпочли algo по engagement.",
+                "how_it_should_be": "Trade-off: chrono для control, algo для engagement. Гибрид (For You + Following) — production-standard."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Algorithmic всегда лучше — больше engagement = больше revenue. Filter bubble и `почему я вижу это?` frustration — мифы, реальные пользователи не жалуются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Filter bubble и frustration — реальные проблемы (FB Cambridge Analytica fallout, Instagram teen mental health исследования 2021, EU DSA regulations). Algo даёт engagement, но имеет real costs: ESG riskи, regulatory pushback, user trust drop. Поэтому Twitter добавил toggle `Following`.",
+                "source_of_confusion": "Кандидат смотрит только на business metric engagement и игнорирует social/regulatory impact.",
+                "if_it_were_true": "Если бы algo был unconditionally win, Twitter не делал бы chrono-toggle. Threads/Bluesky не выбирали бы chrono.",
+                "how_it_should_be": "Hybrid: algo as default, chrono as opt-in (Twitter), или chrono as default + algo on demand (Bluesky)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Chronological (reverse-chrono): свежие сверху, простая модель, пользователь контролирует — но при 500 follows пост из 9:00 утра `утонет` к вечеру. Algorithmic: ML-ranking по relevance signals (engagement, affinity, recency decay) — Instagram +20% time-on-app (2016), но filter bubble и `why am I seeing this?`. Реальные: Instagram (с 2016), FB (EdgeRank → ML), TikTok For You — algo; Threads/Bluesky — chrono; Twitter/X — hybrid (For You + Following). Implementation: algo = candidate generation + ranking model; chrono = ZREVRANGE без ranking-stage.",
+              "correct": true,
+              "sections": {
+                "explanation": "Каноничный trade-off: chrono простой и предсказуемый (`ZREVRANGE timeline 0 49`), но при > 100 follows missing content; algo лучше engagement за счёт ML-ranking, но имеет UX-cost (filter bubble) и infrastructure-cost (Q13 ML pipeline). Instagram перешёл в 2016 → +20% time-on-app — это публичная цифра. Hybrid (Twitter `For You` + `Following`) — production-standard.",
+                "example": "Chrono implementation: `ZREVRANGE user:42:timeline 0 49` → 50 latest posts. Algo: same ZRANGE → 1000 candidates → feature extraction → ML model → top-50 by score. Pipeline сложнее на 2 порядка, latency +50 ms на ranking.",
+                "when_to_apply": "Startup < 10M MAU — chrono (simpler). 100M+ — algo для engagement + chrono toggle. Niche/decentralized (Bluesky, Mastodon) — chrono by design.",
+                "edge_cases": "Algo dropdown в `Following` chrono — UX-must для user trust. Cold start новых users — chrono pure (нет signals для ranking) или trending.",
+                "related": "Q12 ranking features; Q13 ML pipeline; Q14-15 cold start."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Chronological и algorithmic — одно и то же; algo это chrono с фильтром по time decay. Engagement boost происходит от лучшего UI, не от ranking.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Algo фундаментально другой: candidate generation + multi-feature ML model (affinity, engagement, content embedding, dwell time), не просто time decay. Engagement boost замерен A/B-тестами (Instagram 2016 +20%, FB EdgeRank historically) — именно от ranking, не от UI. UI был тот же.",
+                "source_of_confusion": "Кандидат не различает простой time-decay (chrono с recency boost) и real ML ranking.",
+                "if_it_were_true": "Если бы это было одно и то же, не нужны были бы Feature Store, ML pipeline, GPU inference. Insta/FB бы не вкладывали миллиарды в это.",
+                "how_it_should_be": "Algo = full ML stack с feature store + model serving. Chrono = просто sort by ts. Это разные системы."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие категории signals/features используются в ranking model для feed и какой смысл pmi(user, author) для affinity?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только recency: `age_minutes` и `exp(-age/decay)`. Других features не нужно — пользователь хочет свежие посты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если бы только recency, не было бы разницы с chrono feed. Algo поднимает engagement за счёт personalization: affinity (user знает кого лайкает), engagement signals (популярные посты), media weight (видео > текст), negative signals (hide, unfollow). Recency — одна из 6+ категорий features, не единственная.",
+                "source_of_confusion": "Кандидат упрощает ML до простого scoring formula.",
+                "if_it_were_true": "Если бы recency хватало, Insta не показывал бы +20% engagement при переходе с chrono на algo.",
+                "how_it_should_be": "Multi-feature: recency + engagement + affinity + user history + media weight + negative signals."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Использовать только embeddings от LLM (GPT-4 на пост и user history) — современный подход решает всё, классические signals устарели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LLM embeddings — это ОДНА категория features (content + user history), но не заменяет engagement signals (количество лайков ≠ semantic similarity), affinity (PMI требует interaction logs, не embedding), negative signals (hide — поведенческий signal, не текстовый). Production используют embeddings ВМЕСТЕ с classic signals.",
+                "source_of_confusion": "Кандидат-2024 переоценивает LLM и недооценивает классические recommender features.",
+                "if_it_were_true": "Если бы embeddings хватало, Meta/Google не строили бы feature stores с тысячами signals.",
+                "how_it_should_be": "Embeddings как часть feature set; engagement/affinity/negative signals остаются критичны."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только engagement (likes/comments) на пост — больше лайков = выше в ranking. Personalization не нужна, top posts хороши для всех.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это `popularity ranking`, не personalized. Без affinity feed превращается в Reddit-frontpage — все видят одно и то же. User-history и affinity — главные drivers personalization, без них algo не лучше trending.",
+                "source_of_confusion": "Кандидат думает, что engagement-based = personalized. На самом деле это global popularity.",
+                "if_it_were_true": "Если бы popularity хватало, не было бы разницы между Insta For You (personalized) и trending tab.",
+                "how_it_should_be": "Engagement + affinity + user history — personalization triplet."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Категории: (1) Recency (`age_minutes`, `exp(-age/decay)`); (2) Engagement per post (likes/comments/reshares/CTR, normalized по age и author follower count); (3) Affinity user×author (past interactions: likes, replies, profile visits, DM-чаты; `pmi(user, author)` — pointwise mutual information, измеряет насколько user часто взаимодействует с author относительно baseline); (4) User history (embeddings по последним 100 viewed, topic preferences); (5) Media-type weight (video > image > text engagement-wise, dwell time); (6) Negative signals (hide, not-interested, unfollow, mute — сильный отрицательный вес). Feature store: Feast/Tecton/Michelangelo для offline+online consistency. EdgeRank: `score = Σ_e (affinity_e × weight_e × time_decay_e)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический набор feature-категорий для feed ranking. PMI (pointwise mutual information) = `log(P(user, author) / (P(user) × P(author)))` — измеряет насколько часто пара user-author co-occur (через likes/replies) относительно случайной baseline. Высокий PMI = strong affinity (user 'клиент' автора). Feature store (Feast/Tecton/Michelangelo от Uber) обеспечивает offline-training-features=online-serving-features консистентность — критично, иначе train/serve skew.",
+                "example": "User @alice часто лайкает @bob → pmi(alice, bob) высокий → bob's posts получают affinity boost. Negative signal: @alice скрыла 3 поста @charlie → weight charlie posts × 0.1 в ranking. EdgeRank historically: `score = affinity × engagement × time_decay`.",
+                "when_to_apply": "Любой production feed с algo ranking. Категории те же; конкретные models меняются (DLRM, Wide&Deep, Transformer).",
+                "edge_cases": "Cold start: новый user — нет history → fallback на content embedding + trending; новый author — нет engagement signals → exploration bonus (Q15). Feature drift: model trained на старых features → retrain regularly.",
+                "related": "Q11 chrono vs algo; Q13 ML pipeline; Q14-15 cold start."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как устроен ML pipeline для feed ranking (offline и online части), что такое candidate generation и почему без него ranker не справляется с latency?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Offline: engagement logs → Kafka → Spark/Flink → feature store; train (TF/PyTorch); eval (AUC, NDCG); push model в registry. Online: feed request → candidate generation (~1K кандидатов из push timeline + celebs + trending + ads) → featurize (online store) → ranking model (top-K) → return top 50 → client interaction → Kafka. Candidate generation критичен: без него ranker обрабатывал бы 100K+ постов и не уложился бы в latency budget 50 ms. Inference: 1-5 ms на request batched на TF Serving/TorchServe/Triton, GPU для тяжёлых. A/B: 0.5-1% трафика → метрики (DAU, session_time, complaint_rate). Holdout-control всегда. Continuous learning через streaming (Flink) для свежих signals.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический ML pipeline production-feed-системы. Candidate generation — это two-stage pattern: stage 1 (recall) набирает ~1000 кандидатов из источников (push-timeline ~500, celebs ~200, trending ~200, ads ~100); stage 2 (ranking) сортирует precision-моделью. Без stage 1 ranker должен бы оценить 100K posts (все возможные для user) — это 100K × 1 ms = 100 sec, не уложиться. Inference 1-5 ms батчевый на GPU/TPU через TF Serving. Continuous learning через Flink — горячие тренды (события, viral) учитываются за минуты.",
+                "example": "Feed.get(@alice): (1) candidates = push_timeline(500) + celebs(200) + trending(200) + ads(100) = 1000; (2) featurize via online store (Feast/Tecton) → vectors 200-500 features each; (3) batch inference на GPU 1000 vectors → scores; (4) sort top 50 → return. Latency: candidate gen 30 ms + featurize 10 ms + inference 5 ms = 45 ms total для ranking-stage.",
+                "when_to_apply": "Любой production feed с algo ranking. Insta/FB/TikTok/YouTube — exactly this pattern.",
+                "edge_cases": "Train/serve skew (offline features ≠ online features) — feature store solves; model staleness (модель устарела за день) — daily retrain + online updates; cold candidates (новые посты) — exploration bonus (Q15).",
+                "related": "Q12 features; Q14-15 cold start; Q27 A/B testing."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один LLM (например GPT-4) принимает request и возвращает ranked list постов в JSON. Сложного pipeline не нужно — LLM делает всё.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GPT-4 не подходит для feed ranking: (1) latency 1-5 секунд на request — недопустимо для < 50 ms budget; (2) cost — $0.01 на request × 175K req/sec = $1750/sec = $150M/день, нереально; (3) GPT не знает в realtime engagement signals на конкретные посты; (4) нет fine-tuning на user-specific affinity. Production использует специализированные ranking models (DLRM, Wide&Deep).",
+                "source_of_confusion": "Кандидат-2024 переоценивает универсальность LLM.",
+                "if_it_were_true": "Если бы LLM подходил, FB/Insta не разрабатывали бы DLRM и не использовали бы GPU farms для ranking. Реальность: ranking models — это narrow specialized models.",
+                "how_it_should_be": "Pipeline: candidate generation + specialized ranking model (DLRM/Wide&Deep) + serving (TF Serving/Triton). LLM — для отдельных задач (toxicity, semantic search), не для main ranking."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сортировать по time × engagement_count — простая формула без ML. ML pipeline для feed избыточен, добавляет ops complexity.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простая формула не даёт personalization: все users видят одно и то же sorted by engagement. Это `trending feed`, не `for you`. Production-feeds (Insta For You, TikTok) показывают +20-50% engagement vs chrono именно благодаря personalized ranking. Ops complexity ML — это реальная цена, но окупается revenue.",
+                "source_of_confusion": "Кандидат боится ML ops и предлагает упрощение.",
+                "if_it_were_true": "Если бы простой формулы хватало, FB/Insta/TikTok не строили бы ML platforms. Реальный engagement lift измерен A/B-тестами.",
+                "how_it_should_be": "ML pipeline обязателен для personalized feed; простая формула — fallback при ML failure (Q28 graceful degradation)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только offline batch ranking: ночью пересчитываем feed для всех users, сохраняем в Redis, на read отдаём готовое. Real-time inference не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Offline-only батч не работает: (1) свежие посты появляются за день — никак не попадут в pre-computed feed; (2) user interactions меняют affinity intra-day; (3) cold start новых users требует online featurization. Batch для precomputation candidate pool — OK, но ranking-stage должен быть online.",
+                "source_of_confusion": "Кандидат боится online inference latency и хочет всё offload в batch.",
+                "if_it_were_true": "Если бы offline хватало, не нужен был бы TF Serving / GPU farms. Но real-time нужен для свежих signals.",
+                "how_it_should_be": "Hybrid: offline для candidate generation + features → online ranking 1-5 ms inference."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стратегии cold start используются для нового пользователя (нет history, нет signals) и почему D1 retention — главная метрика успеха?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Cold start не нужен — пусть новый user сам найдёт кого подписаться через search. Если retention низкий, виноват маркетинг, не feed.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Empty feed = немедленный churn. D1 retention (вернулся через сутки) — главный KPI onboarding: если у нового user-а нет контента, он не вернётся. Все social-продукты вкладывают в cold start: editorial defaults (50 куратор-аккаунтов), topic onboarding (выбор интересов), trending feed. Search не работает для onboarding — user не знает кого искать.",
+                "source_of_confusion": "Кандидат-engineer не видит product-side важности onboarding.",
+                "if_it_were_true": "Если бы search хватало, не было бы wizard-ов `выбери темы` при регистрации.",
+                "how_it_should_be": "Editorial defaults + topic onboarding + trending — обязательные стратегии cold start."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Стратегии: (1) Editorial defaults — куратор-командой выбирают 50 `качественных` аккаунтов (новости, авторитетные блоги) → onboarding wizard `выбери интересные`; (2) Topic onboarding — на регистрации выбираем темы (sport/tech/music) → feed = trending в этих темах; (3) Location-based — geo-IP → trending в стране/городе; (4) Demographic-based — возраст/пол → коллаборативные похожие профили; (5) Trending feed — просто top-N global trending; (6) Sponsored/discoverable rows — `кого подписаться` в feed. Метрика: D1 retention (вернулся через сутки) — главный рычаг, cold start — главный driver D1.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический набор cold-start стратегий + правильная метрика. D1 retention — главный KPI потому что: (1) измеряется через сутки (быстрый feedback loop); (2) если user не вернулся в D1, вероятность D7/D30 драматически падает (~5% conversion); (3) feed quality — главный driver D1 для social. Cold-start стратегии работают параллельно: editorial для quality baseline, topic-based для personalization, demographic — для collaborative filtering, sponsored — для discovery.",
+                "example": "Twitter onboarding 2020-х: (1) выбери 3 темы (sport/tech/news/...); (2) предлагаем 15 топ-аккаунтов в этих темах; (3) если пропустил wizard — feed заполняется trending в гео; (4) показываем `Who to follow` rows. D1 retention новых users: 30-40% — норма для top social.",
+                "when_to_apply": "Любая social/content платформа с user-generated feed: Twitter, Insta, TikTok, YouTube, Spotify (cold-start playlists).",
+                "edge_cases": "User пропускает wizard — fallback на geo+trending. User в new geo (нет local trending) — fallback global. Гипер-niche topic (выбрал только `quantum computing`) — широкий related topics.",
+                "related": "Q15 cold start для нового поста; Q12 ranking features; Q11 chrono vs algo."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Показывать новому user только posts от его контактов из адресной книги (имея permission). Если контактов нет — пустой feed с приглашением позвать друзей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Contacts-based onboarding (Insta делал это) частично работает, но: (1) большинство пользователей не дают permission; (2) контакты могут не быть на платформе; (3) `пустой feed с приглашением` = D1 churn. Editorial + topic-based onboarding работает для всех, contacts — только если есть permission.",
+                "source_of_confusion": "Кандидат знает один паттерн (Insta) и применяет его универсально.",
+                "if_it_were_true": "Если бы contacts хватало, Twitter (без contact-import) не имел бы onboarding. Но Twitter имеет topic-based и editorial.",
+                "how_it_should_be": "Multi-strategy: contacts (если есть) + editorial + topic + trending. Не полагаться на одну."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сразу запускать ML ranking с initial embeddings от LLM (на основе username и bio пользователя). Editorial defaults и topic onboarding — устаревший подход.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ML без signals не даёт качественного personalization — embedding от bio (3-10 слов) даёт грубое similarity, недостаточное для feed. Editorial и topic onboarding — это explicit signals, на 2 порядка точнее implicit (bio). Production-системы используют ML + explicit onboarding, не ML вместо.",
+                "source_of_confusion": "Кандидат-ML переоценивает unsupervised approaches.",
+                "if_it_were_true": "Если бы LLM embeddings хватало, TikTok не делал бы topic wizard. Но TikTok делает — потому что explicit signals лучше implicit.",
+                "how_it_should_be": "Explicit (topic wizard) + implicit (bio embedding) → blend для cold start."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как решается cold start для нового поста (engagement signals = 0) и почему epsilon-greedy/Thompson sampling критичен против `rich get richer`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Новые посты не показывать, пока не наберут хотя бы 100 лайков — это гарантирует качество feed. Engagement растёт органически от первых читателей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это catch-22: пост не показывается → нет engagement → не показывается → нет engagement. Никогда не выйдет из cold start. `Первые читатели` не появятся, если ranking не выдаёт impressions новым постам. Нужна exploration policy (epsilon-greedy/Thompson sampling) для буста.",
+                "source_of_confusion": "Кандидат думает, что engagement самопроизвольно появится, не понимая обратной связи.",
+                "if_it_were_true": "Если бы это работало, новые posts не появлялись бы в feed-ах NUNCA. Но Insta/Twitter показывают новые посты — потому что есть exploration bonus.",
+                "how_it_should_be": "Author quality score (стартовый по автору) + content embedding similarity + exploration bonus 5% impressions."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запускать каждый новый пост в `trial feed` 100 случайных users, считать likes, если > threshold — продвигать в global. Иначе — скрыть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "100 random users — слишком маленькая выборка для statistical confidence (low likes ≠ bad content, может быть случайность). Random users игнорируют affinity — пост на nichetopic будет downvoted random crowd. Нужно personalized exploration с affinity-aware bandit, не uniform random.",
+                "source_of_confusion": "Кандидат знает A/B testing pattern и применяет его как universal solution.",
+                "if_it_were_true": "Если бы random trial работал, не нужны были бы content embeddings и author signals.",
+                "how_it_should_be": "Personalized exploration (Thompson sampling по similarity) — показываем тем, для кого пост релевантен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стратегии: (1) Author quality score — engagement автора в среднем = стартовый score нового поста; (2) Content features only — embedding текста+media → similarity к past engaging posts; (3) Exploration bonus — multi-armed bandit (epsilon-greedy / Thompson sampling): бустим новые посты на ~5% impressions, чтобы собрать signals; (4) Implicit signals — time-to-first-like, dwell time, scroll-past rate за первые 10 минут; (5) Cohort-baseline — похожие посты у того же автора в прошлом → expected engagement. Trap: если ranker полностью отвергает новые посты, появится `rich get richer` — старые доминируют, новые не получают шанса. Нужен epsilon-greedy или Thompson sampling.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический набор стратегий cold-start для контента. Multi-armed bandit (epsilon-greedy: с вероятностью ε=5% выбираем случайный новый пост; Thompson sampling: выбор пропорционален posterior probability) решает exploration-exploitation trade-off. Без него new posts не получают impressions, и feed застаивается. Author quality — baseline (engagement автора в среднем); content embedding — semantic similarity к engaging past posts; implicit signals (dwell time, scroll-past) — собираем в первые минуты для refining estimate.",
+                "example": "@bob публикует пост → cold start score = bob_author_avg × content_embedding_similarity_to_engaging. Exploration: 5% impressions выделяем под новые посты (epsilon=0.05). Через 10 минут собрали 1000 impressions, 50 likes, dwell 3 sec avg → переоцениваем score, ranker начинает показывать больше или меньше.",
+                "when_to_apply": "Любой content-recommendation system: feed, YouTube, TikTok, Netflix. Без exploration policy системы скатываются в `rich get richer`.",
+                "edge_cases": "Slow burn posts (виральный через сутки) — нужны long-tail exploration. Spammers exploit exploration — rate limit per author. Bandit cold start сам по себе (нет history bandit-policy) — uniform random первые N часов.",
+                "related": "Q14 cold start user; Q12 ranking features; Q23 viral posts."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Просто использовать time decay — новые посты автоматически в топе (свежие выше), за неделю decay их вниз. Cold start решается сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Time decay помогает recency, но не personalization. Без affinity feed нового user-а будет полон случайных свежих постов. Cold start — это про matching content with audience, не про recency alone.",
+                "source_of_confusion": "Кандидат путает chrono ranking с cold-start strategy.",
+                "if_it_were_true": "Если бы time decay хватало, не нужны были бы content embeddings и multi-armed bandits.",
+                "how_it_should_be": "Time decay + author score + content embedding + exploration bonus — multi-faceted cold start."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выглядит high-level architecture feed-системы и какие конкретные сервисы за что отвечают?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Monolithic Spring Boot app, который делает всё: posts, feed, ranking, fanout — в одной JVM. Базы данных Postgres для всего. Так проще деплоить и debug.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Monolith на 500M DAU не масштабируется: scaling-bottleneck (fanout требует другого throughput чем feed-read), deployment-blast-radius (баг в ranking ломает posts), tech-stack lock (нельзя использовать Cassandra+Redis+ML отдельно). Microservices разделяют scaling и blast radius. Startup < 1M MAU OK monolith, но 500M — обязательно сервисы.",
+                "source_of_confusion": "Кандидат начитался `monolith vs microservices` debates и пытается доказать monolith superior.",
+                "if_it_were_true": "Если бы monolith справлялся, Twitter/FB не имели бы 1000+ микросервисов. Реальность: на масштабе разделение обязательно.",
+                "how_it_should_be": "Feed Service, Post Service, User Service, Ranking Service, Fanout Workers — раздельно по responsibility."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только Kafka и Cassandra — больше ничего не нужно. Все services пишут в Kafka, читают из Cassandra. Feed формируется на client из raw events.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Event sourcing only — это специфический паттерн, не для feed: (1) client не может делать ranking без feature store; (2) Cassandra read-latency 10-30 ms × N сложных queries не уложится в feed latency; (3) нет separation read-path и write-path. Kafka + Cassandra — building blocks, не whole architecture.",
+                "source_of_confusion": "Кандидат увлёкся event sourcing и применяет paradigm универсально.",
+                "if_it_were_true": "Если бы Kafka+Cassandra хватало, не было бы Redis для timeline cache и Feed Service для merge+rank.",
+                "how_it_should_be": "Multi-layer: API Gateway, Feed/Post/User/Ranking services, Kafka, Redis, Cassandra, Graph DB, ES."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Lambda-based: каждый endpoint — отдельная Lambda на AWS. Lambda triggers по Kafka, S3 для всего storage. Никаких stateful сервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lambda не подходит для feed: cold start 100-500 ms (не уложится в 200 ms p99); persistent connections (WebSocket для real-time updates) невозможны; cost при 175K req/sec catastrophic ($0.20 per 1M Lambda × 175K req/sec = $15M/month только на invocations); нет stateful in-memory caching (ranking model load на каждом invocation).",
+                "source_of_confusion": "Serverless маркетинг обещает `просто работает`.",
+                "if_it_were_true": "Если бы Lambda хватало, Twitter/FB сидели бы на Lambda. Реальность: stateful servers на k8s/EC2.",
+                "how_it_should_be": "Stateful long-running services (Feed/Ranking) на k8s; Lambda — для batch/cron/edge functions."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Mobile/Web Clients → LB/CDN → API Gateway → распределение по сервисам: Feed Service (read-path: merge push-timeline+celeb-pull+ranking), Post Service (write-path: validation+persistence+kafka emit), User Service (profile+graph), Ranking Service (gRPC, scores из model registry), Fanout Workers (async consumers Kafka → Redis), Search via ES, Posts → Cassandra, User → Postgres, Graph (Neo4j или sharded MySQL edges), Redis Cluster (timelines), S3 (media), Flink (stream aggregation). Real-time updates через WebSocket/SSE/long-polling.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический stack feed-системы 500M DAU. Каждый сервис имеет single responsibility: Feed Service — read-path merge+rank+enrich; Post Service — write validation+persistence+kafka; User Service — identity+social graph; Ranking Service — model serving (gRPC, separate scaling из-за GPU); Fanout Workers — async Kafka consumers, заполняющие Redis ZSET timelines. Posts DB Cassandra (write-heavy), User DB Postgres (ACID identity), Graph отдельно (Neo4j или edges table в sharded MySQL), Redis Cluster для hot timelines, S3+CDN для media, ES для search, Flink для stream aggregation (likes, trending).",
+                "example": "POST /posts → API → Post Service → INSERT Cassandra + Kafka.publish(posts.created) → Fanout Workers parallel: ZADD Redis timelines + Search index ES + Moderation ML. GET /feed → API → Feed Service → fetch Redis (push) + Cassandra (celebs) → merge → Ranking gRPC → MGET bodies → User RPC enrichment → return.",
+                "when_to_apply": "Production feed/social 100M+ MAU. Microservices с polyglot persistence — стандарт.",
+                "edge_cases": "Cross-service tx (post creation должна быть atomic для DB+Kafka) — outbox pattern. Service discovery (динамические endpoints) — Consul/Eureka. Tracing (distributed traces через все сервисы) — Jaeger/Zipkin.",
+                "related": "Q17 post creation flow; Q18 feed fetch flow; Q26 multi-region."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выглядит post creation flow от клиентского `POST /posts` до видимости в feed подписчиков, какие async-шаги делаются и зачем `Idempotency-Key`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Flow: (1) POST /posts {body, media_ids}; (2) Auth → API Gateway → Post Service; (3) Post Service: validate (length, banned content basic check), INSERT INTO posts, publish to Kafka `posts.created`, respond 201 (optimistic UI); (4) Async consumers parallel: Fanout worker → ZADD Redis timelines активных followers (skip celebrity), Search indexer → POST ES, Moderation pipeline → ML toxicity check, Analytics → BigQuery via Flink; (5) Через 1-5 сек пост виден в feed подписчиков. Latency: user видит свой пост сразу (UI optimistic), followers — SLO p95 < 5 сек, p99 < 30 сек. Idempotency: client отправляет `Idempotency-Key` (UUID v4) — защита от double-submit; Post Service делает `INSERT ... ON CONFLICT DO NOTHING`. Backpressure: если Kafka lag > N, switch в degraded mode (только active hot tier).",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический async post creation flow с optimistic UI и idempotency. Все heavy ops (fanout × N followers, search indexing, moderation, analytics) уносятся в parallel async consumers через Kafka — Post Service отвечает 201 за < 200 ms. Idempotency-Key защищает от network-retry (mobile flaky connection дублирует POST): server detect дублирующий UUID и не вставляет повторно. Backpressure (degraded mode при Kafka lag) — graceful degradation, не катастрофический accept-or-die.",
+                "example": "User @bob postит → app генерирует `Idempotency-Key: 7f3a-...` → POST с retry on network error. Server first request → INSERT posts + Kafka publish + return 201. Second retry (network flaked) → INSERT ON CONFLICT DO NOTHING → 201 same response. Fanout workers parallel: alice (active follower of bob, < 7d) → ZADD alice_timeline; charlie (inactive 60d) → skip; search index → ES; toxicity ML → mark if needed.",
+                "when_to_apply": "Любой write-heavy social/messaging endpoint с retry-prone clients (mobile). Insta/Twitter/FB — exactly this pattern.",
+                "edge_cases": "Kafka producer fails after DB INSERT → outbox pattern (запись в outbox table → poller publish). Moderation finds toxicity post-fanout → soft-delete + invalidate timelines. Idempotency cache TTL (например 24h) — после TTL дубль возможен (edge case).",
+                "related": "Q16 architecture; Q18 read flow; Q28 backpressure."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Synchronous flow: POST /posts → Post Service делает INSERT + fanout всем followers (ZADD ×N) + search index + moderation в одном request thread. Возврат 201 после полного завершения. Если 10K followers — клиент ждёт 5-10 сек.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Synchronous fanout в request thread — катастрофический антипаттерн (Q30): client timeout, retry, дубли, DB load × N, ranking-cascade. Mobile networks flaky — connection drops при долгом hold. Async через Kafka — единственно правильный путь.",
+                "source_of_confusion": "Кандидат боится eventual consistency и хочет гарантии в request.",
+                "if_it_were_true": "Если бы sync хватало, не нужны были бы Kafka и Fanout Workers. Реальность: фундаментально не масштабируется.",
+                "how_it_should_be": "Async: Post Service возвращает 201 после INSERT+Kafka; fanout в workers parallel."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "POST /posts → Post Service возвращает 201 после INSERT, не публикует в Kafka. Fanout делается по периодическому cron-job каждые 5 минут — сканируем новые posts с last 5 min, делаем ZADD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cron polling не масштабируется и не real-time: (1) 5-min lag = posts видны только через 5 минут (SLO p95 < 5 сек ломается); (2) scan-by-time-range на 200M posts/day = full scan миллионов записей каждые 5 минут; (3) нет ordering guarantees; (4) hard to recover from failure. Kafka push-based — стандарт.",
+                "source_of_confusion": "Кандидат знаком с DB-polling pattern и пытается применить.",
+                "if_it_were_true": "Если бы polling работал, не нужен был бы Kafka. Но Kafka даёт streaming с low latency.",
+                "how_it_should_be": "Kafka publish on INSERT; workers consume real-time."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "POST /posts → Post Service возвращает 201 без INSERT. Все posts хранятся только в Kafka. На read — пересобираем feed из Kafka events каждый раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka — не general purpose storage: (1) retention обычно 7-30 дней, для 5-летнего archive нужна Cassandra/S3; (2) random access по post_id невозможен (Kafka — append-only log, чтение sequential); (3) consumer offset state requires coordination; (4) на каждый feed-fetch reprocessing миллионов events = catastrophic latency. Kafka — это transport, Cassandra — storage.",
+                "source_of_confusion": "Event sourcing taken to extreme — `Kafka as DB`.",
+                "if_it_were_true": "Если бы Kafka was DB, не нужны были бы Cassandra/Postgres. Но реальный stack использует оба.",
+                "how_it_should_be": "Kafka для async event delivery; Cassandra/S3 для durable random-access storage."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какой read flow для timeline fetch (GET /feed?cursor=...) и как уложиться в latency budget p99 < 200 ms — что съедает основное время?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто SELECT * FROM posts WHERE user_id IN (SELECT followed_id FROM follows WHERE follower_id=42) ORDER BY ts DESC LIMIT 50. SQL делает всё за нас.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один SQL не справится: (1) subquery follows 200 IDs + scan posts → 200 partition reads в Cassandra = 200-500 ms; (2) нет ranking; (3) нет filter (block/mute); (4) нет enrichment (author info, media URLs). Реальный flow — multi-step с Redis cache, ranking RPC, batch fetch.",
+                "source_of_confusion": "Кандидат-SQL applies relational paradigm к distributed feed.",
+                "if_it_were_true": "Если бы SQL хватало, Twitter не строил бы Feed Service с merge+rank pipeline. Реальный flow — multi-source aggregation.",
+                "how_it_should_be": "Multi-step: Redis fetch + celeb pull + merge + ranking RPC + MGET bodies + enrich + filter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Flow: (1) GET /feed?cursor=<ts_ms>; (2) API Gateway → Feed Service; (3) ZREVRANGEBYSCORE user:42:timeline <cursor> -inf LIMIT 0 200 (Redis ~5 ms); (4) fetch celebrity posts followed by user (per-celeb cache ~30 ms); (5) merge candidates in-memory; (6) ranking RPC gRPC to Ranking Service (~50 ms, GPU inference batched); (7) select top-50; (8) MGET posts:<id1>,<id2>... (Cassandra ~15 ms via cache); (9) enrich (author, media URLs batch ~10 ms); (10) apply blocked/muted filter (~5 ms); (11) return JSON. Latency budget 200 ms: TLS+auth 5, timeline 5, celebs 30, ranking 50, bodies 15, enrich 20, filter 5, serialize 20, buffer 50 = 200 ms. Самое тяжёлое — ranking (50 ms); без него chrono 30 ms. Cold cache далеко в прошлом → Cassandra 50-100 ms.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический read-flow с budget-breakdown. Ranking — самая дорогая стадия (50 ms на GPU inference batched); без него chrono feed за 30 ms total. Cache miss (пагинация в прошлое > timeline trim 1000) → Cassandra read 50-100 ms, latency drops к 300 ms. Per-celeb cache shared между all followers — высокий cache hit rate. Buffer 50 ms — для tail latency variance.",
+                "example": "GET /feed?cursor=1716700000 для @alice: (1) Redis ZREVRANGEBYSCORE alice_timeline (1716700000 -inf LIMIT 0 200 → 180 IDs in 5 ms; (2) alice follows 3 celebs → fetch elonmusk_posts, mrbeast_posts, neil_degrasse_posts cached → 60 IDs in 30 ms; (3) merge 240 candidates; (4) gRPC Ranking.score(candidates, user_features) → top 50 in 50 ms; (5) MGET posts:id1...posts:id50 → 15 ms; (6) enrich author info via UserCache batch → 10 ms; (7) filter alice_blocks → 5 ms; (8) return. Total ~115 ms + serialize/network ~50 ms = 165 ms p50.",
+                "when_to_apply": "Любой ranked feed-fetch с personalization. Budget breakdown — must для capacity planning.",
+                "edge_cases": "Tail latency: GPU batching ждёт 5 ms для batch — minimal batch=1 для low latency. Cold cache + cold Cassandra row → 200-300 ms — допустимо для p99 > 200ms occasional. Network egress > 1 MB JSON → split в multiple responses или binary protocol.",
+                "related": "Q4 push vs pull; Q9 Redis ZSET; Q13 ranking; Q24 SLO."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Просто GET /feed → Redis ZREVRANGE → return. Никакого ranking, enrichment, filtering — клиент сам делает что нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Client-side ranking невозможен (нет feature store, model); enrichment author info требует UserCache lookup — client делать N round-trips = catastrophic. Filtering blocks — нельзя на client (privacy). Server делает heavy lifting.",
+                "source_of_confusion": "Кандидат пытается унести логику на client для упрощения server.",
+                "if_it_were_true": "Если бы client мог, не нужен был бы Feed Service. Но real-time ranking и filter — server-only.",
+                "how_it_should_be": "Server: full pipeline (Redis + celeb + rank + enrich + filter); client: render."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Хранить весь pre-rendered HTML в Memcached, на read — просто GET memcached:feed_html_user_42. Никаких pipelines.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pre-rendered HTML на каждого user × каждое возможное состояние feed (cursor, time) — combinatorial explosion. На 500M users × 1000 timeline positions × media = TBs cached HTML, никогда не хватит. Personalized feed меняется каждые секунды — cache invalidation impossible.",
+                "source_of_confusion": "Кандидат знает HTTP-page-caching pattern (CDN) и применяет к personalized feed.",
+                "if_it_were_true": "Если бы pre-render работал, не нужен был бы ranking pipeline. Но personalization breaks page caching.",
+                "how_it_should_be": "API JSON response из Feed Service на request basis; client renders. Cache на API-level не page-level."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как выбрать между long-polling, SSE и WebSocket для real-time feed updates и какой production-stack правильный?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только long-polling — он самый совместимый, работает через любой HTTP-прокси и не имеет complexity WebSocket. На 100M connections справится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Long-polling overhead: HTTP headers на каждый poll (~1 KB) × миллионы connections = bandwidth bottleneck; thread-per-connection model не масштабируется (10K threads per server); reconnect-loop при timeout. На 100M idle connections WebSocket с правильным tuning держит лучше (~100K-1M per server vs long-poll ~5-10K).",
+                "source_of_confusion": "Кандидат боится WebSocket complexity и выбирает `simpler` long-polling.",
+                "if_it_were_true": "Если бы long-poll масштабировался, Twitter/FB не строили бы WebSocket-fleets. Реальность: WebSocket для in-app real-time.",
+                "how_it_should_be": "FCM/APNs для push; WebSocket для in-app real-time; SSE для one-way streaming; long-poll fallback."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только WebSocket — он лучший, самый быстрый. SSE и long-poll не нужны вообще, FCM/APNs тоже устарели — WebSocket работает на mobile тоже.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WebSocket не работает когда mobile app в background (OS killing TCP connections to save battery). Для notifications во время backgrounded — обязательно FCM (Android) / APNs (iOS) push. SSE проще WebSocket для one-way и работает через любой HTTP proxy (corporate networks). Каждый протокол имеет свою nишу.",
+                "source_of_confusion": "Кандидат запомнил `WebSocket лучше` и не различает foreground/background mobile.",
+                "if_it_were_true": "Если бы WebSocket хватало, не было бы FCM/APNs. Но Apple/Google requires push для background.",
+                "how_it_should_be": "FCM/APNs (background) + WebSocket (foreground in-app) + SSE/long-poll (fallback)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Long polling: client GET /feed/updates?since=<ts> → server держит до new data/timeout (pros: простая инфра, любой proxy; cons: HTTP overhead, не масштабируется 100M-1B connections). SSE: one-way server→client по HTTP (pros: проще WebSocket, native browser API, через прокси; cons: только text, без bidirectional). WebSocket: two-way persistent (pros: low overhead, real-time лайки/комменты; cons: дорого держать миллионы connect, sticky LB, reconnect nuances). Production stack: push (mobile) — FCM/APNs; in-app real-time — WebSocket (Phoenix, Centrifugo, Soketi, custom Go); один сервер 100K-1M idle WebSocket с tuning (ulimit, SO_REUSEPORT). Pattern: WebSocket notification `у тебя 5 новых постов` → user тапает → GET /feed обычным flow.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический сравнительный анализ + правильный production stack. Long-polling — fallback для legacy clients/proxies; SSE — для one-way streaming (server-side events типа `новые лайки`); WebSocket — для bidirectional (chat, live reactions); FCM/APNs — для push notifications mobile (когда app в background). На один WebSocket-server (Go/Phoenix/Centrifugo) можно держать 100K-1M idle connections с tuning ulimit (file descriptors) и SO_REUSEPORT (multi-process listen). Pattern thin-notification (`5 new posts badge`) + fat-fetch (regular /feed) — оптимален: WebSocket не передаёт large payloads.",
+                "example": "Twitter web app: WebSocket /ws → connect → idle keep-alive. Bob postит → fanout → notification: server WebSocket.send(alice, `{type:'new_posts', count:5}`). Alice UI badge updates. Alice clicks badge → standard GET /feed.",
+                "when_to_apply": "Real-time UX для in-app: notifications, live counters, presence. Mobile background — FCM/APNs обязательно (WebSocket не работает sleeping app).",
+                "edge_cases": "WebSocket reconnect storm (server restart kicks 1M users) — back-off + reconnect jitter обязательны. Sticky LB для WebSocket (connection bound to one server) — нужен consistent hashing. NAT timeouts — periodic ping/pong keep-alive.",
+                "related": "Q24 freshness SLO; Q16 architecture; Q28 backpressure."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Polling каждые 30 секунд — client автоматически делает GET /feed/updates каждые 30 сек. Real-time не нужен, latency 30 сек приемлема.",
+              "correct": false,
+              "sections": {
+                "what_actually": "30-sec polling: (1) battery drain — постоянные network ops; (2) 30-sec lag не real-time (user видит ответы через 30 сек — UX broken); (3) load на server: 500M users / 30 sec = 16M polls/sec, всё время — даже когда нет updates. WebSocket-push экономит bandwidth (server только при event).",
+                "source_of_confusion": "Кандидат избегает WebSocket и выбирает naive polling.",
+                "if_it_were_true": "Если бы polling хватало, не было бы push-уведомлений. Но real-time UX требует sub-second updates.",
+                "how_it_should_be": "Push-based (FCM/WebSocket); polling — только fallback при поломке push."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как handle millions of followers (10M+) для celebrity — какие конкретные техники (sharded fanout, batched writes, region-aware) применяются на проде?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто увеличить размер Redis-cluster и количество Kafka partitions. Если 1 worker не справляется — добавим 10 worker-ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Naive scaling not enough: 10M writes per celeb-post распределённые по 1000 Kafka partitions = 10K writes per partition, sequential consume — 10 сек на partition. Нужны паттерны: sharded fanout (key=follower_id для parallel), batched writes Redis pipeline (1000 ZADD в 1 RTT = 1000× throughput), region-aware (локальный fanout per region), pre-compute off-peak. Numbers count не магия.",
+                "source_of_confusion": "Кандидат верит в `больше серверов = лучше`, не понимая batching и parallelism нюансов.",
+                "if_it_were_true": "Если бы scaling хватало, не нужны были бы pipelining и region-aware. Реальные оптимизации дают × порядка throughput.",
+                "how_it_should_be": "Sharded fanout (parallel) + batched writes (1000× через pipeline) + region-aware (локальность) + pre-compute (off-peak)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Sync fanout в request thread — гарантирует доставку. 10M followers × 1 ms = 10 sec, client подождёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "См. Q5/Q17/Q30 — sync fanout катастрофический антипаттерн. Client timeout, retry, дубли. Async через Kafka — единственный путь.",
+                "source_of_confusion": "Кандидат хочет гарантии в request thread.",
+                "if_it_were_true": "Никто не строит prod-системы с 10-sec request latency.",
+                "how_it_should_be": "Async Kafka + sharded workers + batched writes."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Удалить followers > 10K автоматически — пользователю не нужно столько подписчиков, система не должна страдать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Catastrophic business decision (см. Q5). Celebrity audience — product feature, не bug.",
+                "source_of_confusion": "Кандидат пытается решить технику через product constraint.",
+                "if_it_were_true": "Insta/Twitter без celebs — мёртвый продукт.",
+                "how_it_should_be": "Скейлить технически: sharded fanout, batching, region-aware, hybrid push/pull."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Техники (см. Q5/Q7 базу): (1) Sharded fanout — Kafka topic N=1000 partitions, key=follower_id, N workers parallel; linear scaling; (2) Batched writes Redis — worker аккумулирует 1000 ZADD в pipeline → 1 RTT, 1000× throughput; (3) Async + retry с idempotency — ZADD идемпотентен (тот же score+member), retry безопасен; (4) Timeline trimming — ZSET ограничен top-1000, `ZREMRANGEBYRANK 0 -1001` при вставке, inactive часть сама вылетает; (5) Region-aware fanout — followers распределены по регионам, fanout локально, cross-region async через Kafka MirrorMaker; (6) Pre-compute at off-peak — часть fanout откладываем 30-60 сек (low priority); viral пост → мгновенно бустим всех active.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический набор техник для massive-followers fanout. Sharded partitioning по follower_id даёт horizontal scaling; pipelining Redis batched writes — 1000× throughput по сравнению с sequential ZADD; idempotency через ZADD (score+member tuple) делает retry безопасным; timeline trimming держит память bounded (1000 entries × 80 B = 80 KB/user); region-aware reduces cross-region latency и cost; pre-compute off-peak smoothes peak load. На сочетании этих техник Twitter Timelines (Scala) держит 460K timeline writes/sec.",
+                "example": "@elonmusk пост → Kafka topic `posts.fanout` 1000 partitions, key=follower_id хэшируется по 1000 partitions; 1000 workers consume parallel, каждый видит 100K followers; worker батчит 1000 ZADD в pipeline → 1 RTT 5 ms → 200 ms на все 100K followers. Total fanout 10M followers за ~200 ms wall-clock (parallel).",
+                "when_to_apply": "Любые massive-fanout cases: feed, broadcast notifications, group messaging. Discord, Slack channel-broadcast — exactly эти техники.",
+                "edge_cases": "Kafka partition skew (один celebrity-follower на hot partition) — re-partition logic. Pipeline failure mid-batch — retry whole batch (ZADD idempotent). Cross-region replication lag — accept eventual.",
+                "related": "Q5 celebrity; Q7 active/inactive; Q22 sharding; Q23 hot keys."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 21,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая каноническая L1-L5 cache strategy для feed-системы и как делать invalidation при post edit?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "L1 Client (mobile/web) — recently viewed posts/profiles, 5-10 MB, TTL 5-15 min. L2 CDN/edge — public profiles + media thumbnails, TTL 1-6 ч, invalidate через cache-buster URL (`?v=<hash>`). L3 Redis — user timeline ZSET, post bodies (hash, TTL 1ч), user profiles (TTL 1ч), counters (write-through + periodic flush). L4 Application local — ranking model in-memory cache (decoded features), Caffeine/Guava. L5 DB — Cassandra (posts), Postgres (users). Invalidation: post edit → publish `post.updated` → fanout invalidate post cache + re-push в affected timelines; follow change → invalidate user timeline cache (regenerate next visit). Cache stampede: singleflight (Go) / Caffeine Loader (один поток грузит, остальные ждут); `XX` flag на Redis SET.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический multi-layer cache + invalidation pattern. Layers идут от client (5 MB, 5-15 min) через CDN (cache-buster URL) → Redis (ZSET timelines, TTL 1ч bodies) → app-local (Caffeine для decoded model features) → DB. Каждый layer absorbs traffic: L1 cuts 30% обращений, L2 — 60% media, L3 — 95% reads из Cassandra. Invalidation event-driven через Kafka: post.updated → invalidate post cache + re-push timeline entries (минимизация stale views). Stampede protection (singleflight) — один thread loads cache, остальные ждут (защита от thundering herd на cache miss).",
+                "example": "Bob edits post_123 → POST /posts/123 → Post Service updates Cassandra + Kafka publish `post.updated:123`. Invalidation worker consumes → DEL posts:123 в Redis (forced miss next read) + re-fetch + repopulate. CDN serves /post/123.html → next request invalidates via cache-buster (URL changes на `?v=newhash`). Client app — purges local cache on app open if any post.updated received during session.",
+                "when_to_apply": "Любая read-heavy система с personalized content. Cache stampede protection — для всех high-traffic Redis operations.",
+                "edge_cases": "Cache stampede: 1M users hit expired cache simultaneously → singleflight to dedupe. Stale-while-revalidate: serve stale 30 sec while async refresh — UX continuity. Cache invalidation event lost (Kafka consumer lag) → TTL is safety net.",
+                "related": "Q8 storage; Q9 Redis details; Q23 hot keys."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Один cache достаточно — Redis для всего. CDN, client cache, app-local — избыточная сложность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single-tier Redis недостаточно: (1) media в Redis = TB-storage cost; (2) client cache reduces network roundtrip к Redis (5 ms vs cached 0 ms); (3) CDN edge — geographic latency cut (50 ms NYC→London без CDN, 5 ms с CDN); (4) app-local cache избавляет от Redis RTT для in-process state. Каждый layer оптимизирует свою ось.",
+                "source_of_confusion": "Кандидат знает Redis и считает что `один golden hammer хватит`.",
+                "if_it_were_true": "Если бы Redis-only хватало, не было бы Cloudflare/Fastly CDN. Реальность: каждый layer absorbs специфичный traffic.",
+                "how_it_should_be": "Multi-layer L1-L5 — каждый layer для своего use-case."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "No cache — Cassandra достаточно быстрая. Cache добавляет complexity (invalidation, stampede), не стоит того.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cassandra read p99 10-30 ms; на 175K read/sec нужно 500+ nodes. С Redis cache hit 95%, Cassandra нагрузка падает до 8.7K read/sec — 20× фактор экономии (10-20 nodes). Cache complexity реальна, но окупается по cost и latency.",
+                "source_of_confusion": "Кандидат избегает cache из-за `cache invalidation is one of the two hard problems`.",
+                "if_it_were_true": "Если бы Cassandra хватало, не было бы Redis в Twitter-стэке. Реальность: cache layer обязателен для feed.",
+                "how_it_should_be": "Cache + Cassandra. Invalidation сложна, но решаема (event-driven + TTL safety net)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кэшировать на бесконечный TTL, никогда не invalidate — пусть stale data будет вечно. Это упрощает архитектуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бесконечный TTL = stale data вечно: edit поста никогда не отразится, deleted post всегда видим, GDPR right-to-be-forgotten не работает. Cache invalidation обязательна. TTL — safety net на случай missed invalidation events.",
+                "source_of_confusion": "Кандидат пытается избежать complexity invalidation и принимает крайнюю меру.",
+                "if_it_were_true": "Если бы бесконечный TTL работал, edited posts никогда не обновлялись бы. UX broken.",
+                "how_it_should_be": "TTL + event-driven invalidation. TTL — safety; events — primary."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие правильные sharding keys для posts/users/timelines/follows/notifications в feed-системе и почему graph (follows) требует двух denormalized индексов?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Sharding не нужен — современные БД (Postgres + Citus, Cassandra) сами разбираются. Указываем только PK и достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sharding key — explicit decision: определяет distribution (даже vs hot partition), query patterns (single-shard vs scatter-gather), re-sharding cost. Cassandra использует partition key, Citus — distribution column. Без explicit выбора получаем hot partitions (timestamp-sequential PK), скособоченное распределение, scatter-gather queries.",
+                "source_of_confusion": "Кандидат думает, что БД магически решает sharding.",
+                "if_it_were_true": "Если бы автоматический sharding работал, не было бы doc-ов на эту тему. Реальность: requires deep design.",
+                "how_it_should_be": "Explicit choice per table: posts по post_id (random), timelines по user_id (locality), follows — два индекса (follower_id + followed_id)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "posts по post_id (hash — random access, ровное распределение); posts_by_user (denorm) по user_id (`все посты юзера X` — один shard); users по user_id (hash — identifier PK); timelines (Redis) по user_id (все timeline-операции одного user — один shard); follows (edges) — по follower_id ИЛИ followed_id (часто нужны обе стороны — два denorm-индекса edges_by_follower и edges_by_followed); notifications по recipient_id (все уведомления юзера — один shard). Cross-shard query (топ постов по миру) → MapReduce / stream Kafka → OLAP (BigQuery). Re-sharding — consistent hashing или Vitess Reshard. Tools: Vitess (YouTube), Citus (Postgres), ProxySQL; Cassandra/Dynamo — built-in (token ring/partition key).",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический набор sharding decisions. Posts — random hash на post_id даёт даже distribution и random access pattern; posts_by_user denormalized — для `все посты user-а` за один shard; users по user_id — identifier; timelines — by user_id locality (все ops одного user на одном Redis shard, pipelining возможен). Follows требует ДВА индекса (denormalized): edges_by_follower (для `кого user follows`) и edges_by_followed (для `кто follows user-а` — нужен для fanout). Cross-shard analytics — отдельный OLAP pipeline через Kafka → BigQuery, не online query.",
+                "example": "User @alice follows @bob → INSERT edges_by_follower(alice_id, bob_id) + INSERT edges_by_followed(bob_id, alice_id) — two writes (eventual consistency через Kafka). Read `alice followings` → edges_by_follower (one shard). Read `bob's followers for fanout` → edges_by_followed (one shard).",
+                "when_to_apply": "Любое social-graph design. Tools: Cassandra/Dynamo built-in; Postgres → Citus/Vitess; sharded MySQL для startup.",
+                "edge_cases": "Re-sharding на growth — consistent hashing minimizes data movement. Hot follower (celeb's edges_by_followed = 10M entries) — partition by follow_chunk_id. Cross-shard query — accept latency или OLAP offline.",
+                "related": "Q8 storage layout; Q10 Cassandra; Q23 hot partitions."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Все по timestamp — это natural ordering, easy range queries. posts(ts), users(created_at), timelines(ts).",
+              "correct": false,
+              "sections": {
+                "what_actually": "Timestamp-sharding = catastrophic hot partition: все свежие writes уходят на один shard (последний timestamp range), создаёт write-hotspot. Random hash (post_id UUID/Snowflake) распределяет ровно.",
+                "source_of_confusion": "Кандидат знает `time-series database` design (InfluxDB) и применяет к feed.",
+                "if_it_were_true": "Если бы timestamp-sharding работал, Cassandra рекомендовала бы его. Реальность: time-series в Cassandra используют TWCS compaction + composite key, не timestamp как partition key.",
+                "how_it_should_be": "Hash by random ID (post_id Snowflake) для distribution; ts как clustering key для ordering внутри partition."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Sharding только по user_id для всего — единый shard key упрощает архитектуру. Cross-shard joins не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "User_id для всего breaks posts: `все посты в системе` или `все posts по hashtag` нужен другой sharding key. Posts должны быть по post_id (random) для ровного распределения. Один shard key не работает для всех access patterns.",
+                "source_of_confusion": "Кандидат стремится к упрощению через `один shard key для всего`.",
+                "if_it_were_true": "Если бы один key хватало, не было бы denorm-indexes и многотабличного дизайна.",
+                "how_it_should_be": "Per-table shard key based on dominant access pattern."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие конкретные техники mitigate viral post / hot key problem (1M reads/min, 100K writes/sec на один post_id) и почему single Redis HASH для likers — антипаттерн?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Просто увеличить размер Redis-shard, на котором лежит hot key — vertical scaling решит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vertical scaling не помогает: один shard ограничен CPU/network одного host. 1M reads/min на один key = 16K ops/sec — Redis single shard tops out 100K ops/sec для одной key (network bound). Нужна replication (читать с N shards) и counter sharding (writes распределить).",
+                "source_of_confusion": "Кандидат думает в категориях `больше железа = быстрее` и не понимает single-key bottleneck.",
+                "if_it_were_true": "Если бы vertical scaling решал, не было бы doc-ов про hot keys.",
+                "how_it_should_be": "Replicate hot key + counter sharding + async aggregation + CDN."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Просто игнорировать — это редкое событие, viral посты случаются раз в месяц. Если что — manual scale up.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Viral — не редкое: news events, sport finals, celebrity feuds = ежедневно. Manual scale-up через 5 минут после spike — система уже легла. Нужна automatic detection + mitigation.",
+                "source_of_confusion": "Кандидат недооценивает частоту viral events на крупной платформе.",
+                "if_it_were_true": "Если бы редкое, не было бы целых движков для hot-key detection.",
+                "how_it_should_be": "Automatic detection (threshold-based) + replicate hot key + async aggregation."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Митигации: (1) Replicate hot key — распознавание viral (counter > threshold) → копируем post body в N=10 shards, client случайно выбирает shard на read; (2) Counter sharding — `INCR post:42:likes:shard_<rand 0..15>` на 16 shards, read = `SUM(post:42:likes:shard_*)`; (3) Async aggregation — likes → Kafka → Flink window aggregate → final count в Redis 1×/сек (user видит slightly stale, но system не падает); (4) CDN/edge cache для body — body статичен → TTL 60 sec, миллионы reads из edge; (5) Probabilistic counting — HyperLogLog для unique viewers (`1.2M people viewed`), 12 KB вместо 1M entries; (6) Rate-limit write side — likes spam от ботов capped per-user-per-post. Антипаттерн: один Redis HASH `post:42:likers` — при viral виден latency degradation; better — отдельная Cassandra row partition.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический набор техник для hot key. Replicate (10× для read) + counter sharding (16× для write) + async aggregation (Flink window) + CDN (edge serves body) + HyperLogLog (probabilistic unique counts) + rate-limit. Single HASH `post:42:likers` плох: добавление user в HASH = atomic op на один shard, при 100K writes/sec hash растёт неограниченно (1M entries в одной HASH = 50 MB и slow ops). Cassandra row partition по likes(post_id, user_id) распределяет по cluster.",
+                "example": "@elonmusk post виральный → detection: redis_zset_card > 100K в минуту → trigger replication: copy post:42:body на 10 shards (post:42:body:rep_0..9). Likes counter: `INCR post:42:likes:shard_<rand 0..15>` (16 shards parallel write). Periodic aggregation: Flink reads kafka events → SUM → updates final post:42:likes_total каждую секунду. Body serving: CDN edge cache TTL 60 sec absorbs миллионы reads.",
+                "when_to_apply": "Любая user-generated platform где content goes viral: Twitter, Reddit, TikTok, news sites.",
+                "edge_cases": "Hot key detection lag (60 sec) — система может лечь раньше. Pre-emptive replication для known celebs. Cache invalidation на edit hot post — must через purge_cache API.",
+                "related": "Q5 celebrity (related but distinct); Q9 Redis details; Q21 cache strategy."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Заблокировать виральный пост на время — `пост недоступен из-за высокой нагрузки, повторите попытку`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blocking viral content = catastrophic UX и product. Viral momentum — это main revenue/engagement driver. Block = lose user trust + miss monetization. Mitigation через replication, не блокировка.",
+                "source_of_confusion": "Кандидат думает в категориях `circuit breaker` и применяет к user-facing content.",
+                "if_it_were_true": "Если бы blocking приемлемо, не вкладывались бы в hot-key mitigation.",
+                "how_it_should_be": "Serve always; scale через replication + caching. Circuit breaker только для downstream service failures."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 24,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие конкретные SLO для freshness (post→feed) и feed-load latency задают Twitter-like система и какие knobs ими управляют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Только p99 < 1 секунды на feed-load. Freshness не SLO — это деталь реализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Freshness — это user-facing SLO: если post виден через 5 минут после публикации, user считает приложение поломанным. Freshness — first-class metric и SLO target (p95 < 10 sec для feed). Без freshness SLO нельзя оценить qualifying fanout latency.",
+                "source_of_confusion": "Кандидат знает latency-SLO для requests и забывает event-propagation SLO.",
+                "if_it_were_true": "Если бы freshness не SLO, fanout мог бы быть batched раз в час — никто бы не заметил.",
+                "how_it_should_be": "Freshness SLO (p50 < 2s, p95 < 10s, p99 < 60s) + feed-load latency SLO раздельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SLO задаются по cost — что дешевле, то и target. Если ranking дорогой — отключаем, p99 не важен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SLO задаются по user impact, потом проверяется feasibility и cost. Cost-driven SLO = product degradation: ranking off → engagement drop 20% → revenue loss. Cost optimization через choices (Q29), не через SLO sacrifice.",
+                "source_of_confusion": "Кандидат пытается оптимизировать cost через ослабление SLO.",
+                "if_it_were_true": "Никто не строит prod с cost-only SLO — это убийство продукта.",
+                "how_it_should_be": "User-impact SLO → enforce cost-effective ways to meet them (better caching, batch ranking, smaller models)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Только страховые SLO — 99% uptime, без specific latency targets. Конкретные числа меняются от месяца к месяцу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Uptime SLO недостаточно: система может быть `up` но slow (p99 = 5 sec — это user-visible поломка, не downtime). Latency SLO обязательны. Конкретные числа стабильны для production (Twitter target latency не меняется месяц к месяцу).",
+                "source_of_confusion": "Кандидат знаком с базовым uptime SRE и не видит latency-SLO как first-class.",
+                "if_it_were_true": "Если бы только uptime, slow degradation не была бы alert-able.",
+                "how_it_should_be": "Latency SLO (p50/p95/p99) per endpoint + freshness SLO + error rate SLO."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Freshness = post→feed latency для активного follower. SLO примеры Twitter-like: p50 freshness < 2 sec, p95 freshness < 10 sec, p99 freshness < 60 sec; p50 feed load < 100 ms, p99 feed load < 500 ms; feed_error_rate < 0.01%. Trade-off: push fanout → freshness 1-5 sec, latency feed ~50 ms; pure pull → freshness instant но latency 200-500 ms; stale cache → latency 10 ms, freshness 30 sec. Knobs: fanout worker count → freshness; cache TTL → latency vs staleness; ranking complexity → latency. Monitor: `feed_freshness_seconds_bucket` histogram, p95/p99 alerts (alert p95 > 30s 5 минут подряд).",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический SLO breakdown для feed. Freshness и feed-load — independent metrics с независимыми SLO. Trade-off explicit: больше workers = лучше freshness (но dollar cost); longer cache TTL = лучше latency (но stale data); проще ranking = быстрее latency (но lower engagement). Monitoring через histogram `feed_freshness_seconds_bucket` (Prometheus) с alert thresholds. p95 freshness > 30 sec 5 минут подряд — page-alert (что-то сломалось в fanout pipeline).",
+                "example": "Twitter SLO Dashboards: freshness p50 1.8s, p95 8s, p99 45s, error 0.005%; feed-load p50 80ms, p99 350ms. После deploy bug — p95 freshness jumped to 45s, alert fires, on-call paged, rollback. Knob: fanout workers 200 → 400 instances → p95 freshness 8s → 5s.",
+                "when_to_apply": "Любая real-time content delivery система: feed, chat, notifications.",
+                "edge_cases": "Freshness end-to-end measurement requires distributed tracing (kafka timestamp at publish vs Redis ZADD time). Cold cache p99 — buffer in SLO. Multi-region: freshness intra-region vs cross-region SLO раздельно.",
+                "related": "Q4 push vs pull; Q18 latency budget; Q26 multi-region."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 25,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как корректно реализовать block/mute/hide filtering для feed (где filter — на read или на write fanout) и почему block — двусторонний, а mute — односторонний?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Block (двусторонний): A блокирует B → B не видит постов A, A не видит постов B; применяется на read time (filter после ranking), хранится в `user_blocks` (partition by blocker_id), cache in memory per-request. Mute (односторонний): A muted B → A не видит постов B (B не знает). Hide post (per-post): user скрывает конкретный пост — сильный negative signal для ranking. Где filter: перед ranking — исключаем blocked authors из candidate pool (efficiency); дополнительно после ranking — race condition защита (block добавлен между шагами). Trade-off: filter в Cassandra на write fanout — экономит read filter, но block-event требует `ZREM` из всех affected timelines (дорого, sync invalidation для 200 followers); filter on read дешевле, неконсистентность не критична (пост из заблокированного может промелькнуть 5 sec). Privacy: block list приватная, не светим в API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический design для block/mute/hide. Block двусторонний (privacy norm: оба перестают видеть друг друга — Twitter, FB pattern); mute односторонний (user manages own feed, target unaware — soft filtering). Hide post — per-post negative signal: не filter но strong demote сигнал для ranking model на future similar content. Filter на read (а не на write fanout) выбран потому что write-time filter требует ZREM при block-event (дорого — найти и удалить из 200 timelines); read-time filter дешёвый (in-memory blocks list lookup per request). 5-sec inconsistency window приемлема — UX не страдает.",
+                "example": "Alice blocks Bob → INSERT user_blocks(blocker=alice, blocked=bob). Bob posts → fanout to alice_timeline (worker не знает про block). Alice GET /feed → Feed Service: (1) fetch timeline → 50 candidates including bob's post; (2) ranking; (3) load alice's blocks list (cache); (4) filter out bob's post; (5) return 49 posts. Bob never knows alice blocked him — UI shows nothing about it.",
+                "when_to_apply": "Любая social platform с privacy controls. Blocks must be on read (cheap, consistent с current block state); writes ok to send (will be filtered on read).",
+                "edge_cases": "Block после filter но во время рендера — accept (negligible window). Mass block (user blocks 1000 accounts) — efficient lookup via Bloom filter или hash. Block-list privacy — never expose в API, never log в analytics.",
+                "related": "Q18 read flow; Q12 ranking (hide as negative signal); Q21 cache."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Block = убрать user из БД (account delete). Mute = local mobile setting, server не знает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Block ≠ delete: deleted account = lose history (UX broken для blocked user). Mute server-side обязательно: cross-device sync (user mutes Bob on phone, expects mute on web too).",
+                "source_of_confusion": "Кандидат смешивает разные концепты.",
+                "if_it_were_true": "Если бы block = delete, accidental block был бы catastrophic.",
+                "how_it_should_be": "Block = soft user_blocks table; mute = server-side preference; hide = ranking negative signal."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Filter всё на write fanout — при post creation проверяем блоки автора и не пишем в timelines blocked users. На read ничего не фильтруем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Filter на write fanout не работает: (1) lookup ALL blocked-by users в момент write — дорого (для celeb с 10M followers — проверять каждого на 1M block lists); (2) если user блокирует ПОСЛЕ post creation, posts остаются в timeline; (3) ZREM для cleanup требует scan всех followers' timelines. Read-time filter дешевле и consistent с current state.",
+                "source_of_confusion": "Кандидат пытается оптимизировать read через write-side filtering.",
+                "if_it_were_true": "Если бы write-side filter работал, не было бы Q25 trade-off обсуждения.",
+                "how_it_should_be": "Filter на read (consistent с current blocks). Optional: pre-filter candidate pool (efficiency)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Block — strong write-time guarantee: при block A→B сразу `ZREM` всех постов B из A's timeline + удалить A's подписку на B атомарно. Все три действия в одной транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Distributed transaction (Redis ZREM + Postgres user_blocks INSERT + edges_by_follower DELETE) поверх distributed system невозможна без 2PC (latency catastrophic). Eventual consistency приемлема: block записывается в user_blocks, read-time filter обеспечивает effect, async cleanup ZREM (если делать) — eventually.",
+                "source_of_confusion": "Кандидат хочет ACID гарантии в distributed контексте.",
+                "if_it_were_true": "Distributed tx с 2PC = 100+ ms latency на block action — UX broken.",
+                "how_it_should_be": "Eventual: write user_blocks (Postgres), filter on read. Async ZREM cleanup optional."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 26,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как организован multi-region deployment feed-системы (3-5 регионов, active-active) и что такое `LOCAL_QUORUM` в Cassandra для multi-DC?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один регион (us-east-1) на AWS — достаточно. Multi-region слишком сложно, регуляторные требования и cost не оправдают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single-region не подходит для 500M DAU global product: (1) latency EU-user → us-east = 100-200 ms (без CDN edge); (2) regional outage (AWS us-east outages 2017, 2021) = весь продукт лежит 4+ часа; (3) regulatory (GDPR EU data residency) требует EU region. Multi-region обязателен.",
+                "source_of_confusion": "Кандидат недооценивает global scale + DR + regulatory.",
+                "if_it_were_true": "Twitter/FB не были бы multi-region. Реальность: 3-5 регионов стандарт.",
+                "how_it_should_be": "3-5 регионов active-active + GeoDNS routing + Cassandra multi-DC."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Архитектура: 3-5 регионов (US-East, US-West, EU-West, APAC-Singapore, APAC-Tokyo), каждый — full stack (Feed/Post/Redis/Cassandra ring). Cassandra multi-DC replication, `LOCAL_QUORUM` на write+read — quorum внутри local DC (быстро, без cross-region latency), eventual cross-region. Kafka MirrorMaker → cross-region post stream. Routing: GeoDNS (Route53 latency-based), user pinned к home region (hash by user_id или geo). Consistency: posts → eventually consistent across regions (5-30 sec), user profile/follows — also eventually; money/billing → отдельная CP-система strong consistency. Failover: health checks per region, auto-failover Route53 TTL 60 sec; DR drill ежемесячный chaos test. Pitfalls: cross-region write для celeb fanout дорого — fanout локально per-region, async-replicate index; timezone-aware ranking (APAC weight другой чем US).",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический multi-region active-active design. Cassandra multi-DC: каждый ring в каждом регионе, replication strategy = NetworkTopologyStrategy с RF=3 per DC. LOCAL_QUORUM = 2 из 3 replicas в local DC должны ACK на write/read — это быстро (intra-DC latency 1-5 ms), не блокируется cross-region. Cross-region replication async (eventual). Kafka MirrorMaker реплицирует event streams cross-region. GeoDNS routes user к nearest healthy region; user-pinning стабилизирует (один user не перепрыгивает регионы каждый request — иначе cache miss всегда). Failover auto через Route53 health checks, TTL 60 sec для быстрого re-routing. Chaos drill ежемесячно — обязательная практика (Netflix Simian Army влияние).",
+                "example": "EU-user opens app → DNS → eu-west endpoint → Feed Service eu-west → Redis eu-west (timeline data) → Cassandra eu-west (LOCAL_QUORUM read) → response 100 ms. US-celebrity posts → us-east Cassandra → Kafka MirrorMaker → eu-west Cassandra (5-30 sec eventual) → eu-west fanout workers populate Redis eu-west.",
+                "when_to_apply": "Любой global product 100M+ DAU. Compliance: GDPR EU residency, China data laws — multi-region обязательны.",
+                "edge_cases": "Conflict resolution (user edits profile in 2 regions) — last-write-wins by timestamp или CRDTs. Region failover storm (10M users re-routed) — capacity headroom needed. Cross-region cost — bandwidth dominates, минимизировать.",
+                "related": "Q5 celebrity (per-region fanout); Q10 Cassandra; Q29 cost (region bandwidth)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Active-passive: один primary регион принимает все writes, остальные read-only replicas. Failover вручную при outage primary.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Active-passive: (1) writes на cross-region latency для не-primary users (EU-user write → us-east = 100 ms); (2) manual failover RTO часы — недопустимо; (3) primary region capacity must handle all global writes; (4) regional outage = весь продукт degraded read-only. Active-active с local writes — стандарт.",
+                "source_of_confusion": "Кандидат знает active-passive из transactional DBs (Postgres) и переносит на distributed NoSQL.",
+                "if_it_were_true": "Если бы active-passive хватало, Twitter/FB не строили бы Cassandra multi-DC.",
+                "how_it_should_be": "Active-active с LOCAL_QUORUM, eventual cross-region consistency."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Strong consistency cross-region — `EACH_QUORUM` (Cassandra) для всех writes: quorum во всех DC должен подтвердить. Гарантирует consistency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EACH_QUORUM = cross-DC RTT × нескольких регионов = 200-500 ms на каждый write. Для 2.3K writes/sec это блокирует event loop, throughput катастрофически падает. Eventual cross-region — стандарт для feed; strong нужно только для money/billing.",
+                "source_of_confusion": "Кандидат боится eventual consistency и пытается forcefully strong.",
+                "if_it_were_true": "Если бы EACH_QUORUM работал, не было бы LOCAL_QUORUM как default. Реальность: LOCAL_QUORUM + Kafka MirrorMaker для eventual.",
+                "how_it_should_be": "LOCAL_QUORUM (intra-DC) + async cross-region. Strong consistency — отдельный microservice (auth, billing)."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 27,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как должна быть устроена A/B testing платформа для feed changes (ranking model, cache strategy, ranking weights) и почему сетевой эффект усложняет experiment design?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Random split 50/50 + сравнить метрики. Дополнительная инфра не нужна — простое coin flip per user.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Naive 50/50 не работает для social: (1) network effects — treatment user влияет на control (treatment Alice ranks Bob's post lower → less engagement → less data для Bob's ranking → control bias); (2) нет stable bucketing (random не повторяется при reload); (3) нет holdout long-term; (4) нет sequential testing для early stop. Production A/B platform — целая инфра.",
+                "source_of_confusion": "Кандидат знает classic A/B testing (web pages) и применяет к social.",
+                "if_it_were_true": "Если бы coin flip хватало, не было бы Statsig/Optimizely/internal experimentation platforms.",
+                "how_it_should_be": "Stable bucketing (hash user_id+exp_id) + sequential testing + cluster-randomized для network effects + holdout."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Только qualitative testing — внутренние сотрудники проверяют новый feed; если им нравится — деплоим всем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Internal dogfooding не репрезентативно: tech-employees ≠ average user (interests, devices, engagement patterns). Quantitative A/B на real users — обязательно. Internal — sanity check, не replacement.",
+                "source_of_confusion": "Кандидат недооценивает важность quantitative metrics.",
+                "if_it_were_true": "Если бы internal хватало, A/B platforms не строились бы.",
+                "how_it_should_be": "Internal dogfooding + quantitative A/B на real users + sequential testing."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Эксперимент = бакет users + control + treatment + метрики. Платформа: bucketing service (hash user_id+experiment_id) → stable распределение; конфиг experiment в feature flag system (Unleash, LaunchDarkly, custom); Feed Service читает flag → выбирает model_version/cache_strategy/ranking_weight. Метрики: engagement (likes/share/comment per session), time-on-app, session count, retention D1/D7/D30; negative — report rate, hide rate, unfollow rate. Stat: sequential testing (mSPRT) для ранней остановки; holdout 1% всегда (long-term effects). Rollout: 1% → 5% → 10% → 50% → 100% при положительных метриках; auto-rollback если KPI деградирует > 1%. Pitfalls: network effects (cluster-randomized experiments) и novelty bias (новая фича сначала растёт, потом возвращается к baseline).",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический A/B platform для social feed. Stable hash bucketing (hash by user_id+experiment_id) даёт consistent assignment без cookies/storage. Sequential testing (mSPRT — mixture Sequential Probability Ratio Test) разрешает early stop при clear winner — не нужно ждать fixed sample size. Holdout 1% (постоянная control) ловит long-term effects (3-6 месяцев). Cluster-randomized solves network effects: randomize группами друзей вместо individuals — treatment unit = social cluster, не user. Novelty bias — measure stable plateau, не initial spike.",
+                "example": "Experiment: new ranking model v2. Bucketing: hash(user_id + 'exp_42') mod 100 < 5 → treatment, else control. Feed Service: if user in treatment → call ranking_service_v2 else v1. Metrics tracked: engagement_per_session, time_on_app, complaint_rate. Sequential test: after 7 days mSPRT confidence > 95% → ramp 5% → 10%. Auto-rollback: if complaint_rate +20% → revert.",
+                "when_to_apply": "Любая ML-driven feature change в feed. Network effects mandatory для social products.",
+                "edge_cases": "Cross-experiment interference (две одновременных experiments на same users) — orthogonal namespaces. Sample ratio mismatch (one bucket > other) — bug detector. Long-term holdout maintenance — discipline issue.",
+                "related": "Q13 ML pipeline; Q24 SLO (метрики); Q11 chrono vs algo (decisions through A/B)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Только manual deploy → wait week → look at dashboards. Если engagement просел — rollback вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Manual deploy на всех = blast radius 100%. Если новая модель broken для 10% users, эти 10% страдают неделю до noticing. Auto-rollback + gradual rollout обязательны. `A/B testing != manual rollout`.",
+                "source_of_confusion": "Кандидат не знает modern experimentation practices.",
+                "if_it_were_true": "Никто не deploys ML changes на 100% сразу.",
+                "how_it_should_be": "Gradual ramp 1→5→10→50→100% + auto-rollback на KPI degradation."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 28,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие layered defenses (edge/gateway/app/kafka) против spike (crisis news, celebrity, DDoS, bot storm) и что такое graceful degradation (rank сломан → chrono mode)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Один слой защиты — rate limit per IP на API Gateway 1000 req/sec. Этого достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Single-layer недостаточно: (1) IP-based rate limit обходится bot-net (миллион IP); (2) per-IP не защищает от per-user abuse; (3) ничего не делает с Kafka backpressure (lag растёт); (4) circuit breaker для downstream failures отсутствует. Defense-in-depth multi-layer обязателен.",
+                "source_of_confusion": "Кандидат знает один паттерн (rate limit) и applies universally.",
+                "if_it_were_true": "Если бы хватало, не было бы layered architecture в production.",
+                "how_it_should_be": "Edge (WAF/CDN) + Gateway (token bucket per-user) + App (bulkhead/circuit breaker) + Kafka backpressure + graceful degradation."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Graceful degradation не нужна — система должна работать или не работать вообще. Half-broken state confuses users.",
+              "correct": false,
+              "sections": {
+                "what_actually": "All-or-nothing = catastrophic outage при partial failures. Graceful degradation maintains user experience continuously: ranking down → users still see feed (chrono); media down → text-only; localization down → English fallback. Industry best practice — degrade с graceful messaging (`some features temporarily unavailable`), not hard fail.",
+                "source_of_confusion": "Кандидат идеализирует `clean error states`.",
+                "if_it_were_true": "Если бы all-or-nothing работало, AWS S3 outage 2017 не affected бы продукты, использовавшие S3 — все бы lay down. Реально работали degraded.",
+                "how_it_should_be": "Graceful degradation per-feature + clear user comms."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если spike — auto-scale up по CPU > 80%. Никаких rate limits — пусть scaling решает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Auto-scaling задержка — 60-300 sec (instance provisioning). За это время spike убивает systemу. Rate limits absorb spike мгновенно (token bucket в memory). Scaling — для steady growth, не для spikes. Также: bot storm не уйдёт от scaling — он экспоненциально расширится.",
+                "source_of_confusion": "Кандидат верит в `cloud auto-scaling magic`.",
+                "if_it_were_true": "Если бы scaling решал, не было бы rate limits.",
+                "how_it_should_be": "Rate limit immediate (memory-based) + scaling background (для sustained growth)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Layered defenses: (1) Edge/WAF — CDN rate limiting per IP, bot detection (CAPTCHA, JS challenges); (2) API Gateway — per-user rate limit (token bucket): 100 req/min на feed-fetch, per-endpoint rate limit global; (3) Application — bulkhead (ranking-service отдельный thread pool от feed-service), circuit breaker (Resilience4j): падение ranking → degrade в chrono mode; (4) Backpressure от Kafka — posts → consumer lag растёт → reactive throttle на Post Service (медленнее принимаем writes); (5) Graceful degradation — rank сломан → отдаём chrono, Redis недоступен → fallback на pull-from-Cassandra (медленнее, работает), media недоступны → text-only. Monitoring: consumer_lag Kafka, redis_evicted_keys, circuit_breaker_state; alert thresholds + auto-scaling (HPA Kubernetes).",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический defense-in-depth с graceful degradation. Каждый layer absorbs specific class of traffic: edge — bots/raw traffic; gateway — abusive users; app — service-to-service failures; kafka — backpressure для wrong-sized work. Graceful degradation key insight: вместо `все падает или работает` — `работает с reduced functionality`. Ranking-service down → fallback к chrono (still functional feed, just без personalization). Redis down → fallback Cassandra (slower но works). Media CDN down → text-only feed (UX degraded но usable).",
+                "example": "Bot storm: 10M req/sec from botnet → CDN edge identifies (rate per IP, JS challenge fails) → blocks 99% at edge → 100K reach gateway → per-user token bucket rate-limits to 1K/sec → app sees normal load. Crisis news: Posts/sec 10× normal → Kafka lag growing → backpressure signal → Post Service rate-limits to 1.5× normal → workers catch up. Ranking service GPU OOM → circuit breaker trips → Feed Service degrades to chrono mode → users see feed без personalization but functional.",
+                "when_to_apply": "Любой high-traffic public API. Defense-in-depth — мандатная архитектура.",
+                "edge_cases": "False positive rate-limit на legit user — UX issue. Circuit breaker too aggressive — over-degrades. Backpressure cascades — careful tuning. Monitor `degraded_mode_active` метрику для alerting.",
+                "related": "Q23 hot keys (spike subtype); Q24 SLO; Q16 architecture."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие top cost buckets для feed-системы Twitter/X-scale и какие конкретные оптимизации дают порядок снижения стоимости (per-title encoding, WebP, RIs, spot)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Top buckets: (1) CDN egress — $0.5-2M/month (видео/медиа dominates); (2) Compute (k8s nodes) — $200-500K/month; (3) Cassandra cluster + storage — $100-300K/month; (4) Redis cluster — $50-150K/month; (5) Kafka cluster + storage — $30-100K/month. Оптимизации: per-title video encoding (Netflix-style) — bandwidth -50%; Image WebP/AVIF vs JPEG/PNG — 30-50% smaller; Edge cache TTL longer = меньше origin traffic; Reserved Instances/Savings Plans — 30-60% скидка; Spot instances для batch (ranking training, indexing) — 70-90% скидка; Cold storage (S3 IA/Glacier) для постов > 1 года; Tiered cache (hot Redis, warm Memcached, cold Cassandra); Kafka compression (zstd) — 4× меньше storage+bandwidth. Trade-offs: меньше реплик = дешевле но риски DR; длинный cache TTL = дешевле но stale; слабее ranking model = cheaper GPU но lower engagement.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический cost breakdown + optimizations. CDN dominates (videos/media bandwidth) — поэтому per-title encoding и WebP/AVIF дают порядок savings. Compute optimization via RI/Spot — 30-90% off для known/elastic workloads. Storage tiering (S3 hot → IA → Glacier) — старые posts (>1 года) почти бесплатны. Kafka compression zstd — 4× меньше disk и network. Each optimization tied to specific cost bucket. Trade-offs explicit: cost vs DR risk, cost vs UX (stale feed), cost vs engagement (smaller model).",
+                "example": "Twitter/X 2023 cost mix (estimated): CDN $1.5M/month, EC2 $400K, Cassandra $200K, Redis $100K, Kafka $80K. Optimizations applied: WebP/AVIF saved $300K/month CDN; RI commitment 3-year saved $150K compute; Spot для ML training $50K compute; S3 Glacier для old posts $20K storage; zstd Kafka $20K storage+network. Total savings $540K/month = ~25%.",
+                "when_to_apply": "Любой large-scale system. FinOps stream должен быть continuous, не one-time.",
+                "edge_cases": "Per-title encoding offline cost (CPU intensive) — окупается at scale. Spot for batch reliable through checkpoint+retry. Cold storage retrieval cost — calculate (Glacier $0.01/GB retrieval).",
+                "related": "Q26 multi-region (cost dimension); Q21 cache (tiering); Q13 ML (GPU cost)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оптимизации не нужны — cloud вендор сам всё оптимизирует. AWS Free Tier хватит для прода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AWS Free Tier — для dev/test, не для prod 500M DAU. Cloud не оптимизирует cost — он provides options. Cost optimization — это conscious decisions: Reserved Instances 30-60% дешевле on-demand, Spot 70-90% дешевле для batch, CDN bandwidth optimization (WebP/AVIF) -30-50%.",
+                "source_of_confusion": "Кандидат недооценивает cloud cost reality для 500M DAU.",
+                "if_it_were_true": "Если бы cloud auto-optimized, FAANG не имели бы дедicated FinOps teams.",
+                "how_it_should_be": "Explicit optimization: RIs, Spot, encoding, cold storage tiering, compression."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Optimize только compute через k8s autoscaling. Storage и bandwidth — secondary.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CDN egress (bandwidth) — самый большой bucket для media-heavy feed ($0.5-2M/month vs compute $200-500K). Игнорировать bandwidth = leave on table 50%+ savings. Encoding/compression optimizations dominate.",
+                "source_of_confusion": "Кандидат думает что compute = main cost (так в маленьких apps).",
+                "if_it_were_true": "Netflix не вкладывался бы в per-title encoding если bandwidth был secondary.",
+                "how_it_should_be": "Optimize all dimensions: CDN/bandwidth (encoding, WebP) + compute (RI/Spot) + storage (tiering) + Kafka (compression)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Cost не важен — VC funding покроет. Focus на engagement, cost optimization позже.",
+              "correct": false,
+              "sections": {
+                "what_actually": "VC funding не infinite; at scale 500M DAU cost становится existential issue. Twitter/X cost optimization программа после Musk acquisition — пример. FinOps embedded в platform engineering — стандарт.",
+                "source_of_confusion": "Кандидат думает в категориях startup, не unit economics.",
+                "if_it_were_true": "Companies wouldn't have FinOps teams. Реальность: cost = constraint at scale.",
+                "how_it_should_be": "Cost optimization continuous, не afterthought."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 30,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие топ-антипаттерны feed-системы (sync fanout, single global ZSET, strong consistency, no celebrity handling, no backpressure) и как их избежать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Антипаттернов нет — любой подход работает если правильно протестирован. Главное — хорошие unit-tests.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Unit tests не ловят architectural antipatterns: sync fanout правильно работает в test (10 followers), failing only при scale (10K+). Антипаттерны — это architectural choices, не bugs. `Чинить` через tests невозможно.",
+                "source_of_confusion": "Кандидат думает что quality = test coverage; забывает architectural quality.",
+                "if_it_were_true": "Если бы tests решали, не было бы Q30. Реальность: architectural patterns — отдельная axis качества.",
+                "how_it_should_be": "Знать antipatterns + избегать; tests дополняют не заменяют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Топ-12 антипаттернов: (1) Sync fanout в request thread — POST ждёт 5 сек fanout 10K followers → fix: async Kafka; (2) Один большой ZSET для global feed — hot key — fix: per-user ZSET; (3) Read all follow-ов synchronously — 200 sequential queries → 10× latency → fix: batch MGET, parallel RPC; (4) Counter в одной row для likes viral — lock contention 100K writes/sec → fix: counter sharding/async aggregation; (5) Strong consistency на timeline — QUORUM write на 100 timelines → 10× latency → fix: eventual; (6) Без кэша user data в feed pipeline — 50 user-lookups/feed = 50 RTT → fix: Redis cache + bulk fetch; (7) Без celebrity handling — @elonmusk-post подвешивает fanout → fix: hybrid push+pull; (8) Без backpressure на Kafka producer — broker OOM → fix: linger.ms, batch.size, acks=1, max in-flight; (9) Без A/B-инфраструктуры — rollout new ranking → engagement -20% незаметен неделю → fix: ML pipeline + A/B + auto-rollback; (10) Без observability на freshness — посты с задержкой 30 мин незаметны → fix: freshness_seconds end-to-end; (11) Single-region deploy — regional outage = весь продукт 4 часа → fix: multi-region active-active; (12) Storing media as DB blobs — DB IO/storage растут → fix: S3 + CDN, в DB только URL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Канонический список антипаттернов feed-системы. Каждый — это конкретный architectural choice который кажется правильным в малом, но катастрофически ломается at scale. Sync fanout intuitive (immediate consistency), но 10K followers × 1 ms = 10 sec request latency. Single global ZSET intuitive (one structure for all), но hot key bottleneck. Strong consistency intuitive (avoid stale data), но distributed strong = catastrophic latency. Без celebrity handling — система работает на dev (нет celebs в test data), падает в prod на первом popular user. Без backpressure — Kafka brokers OOM при spike. Каждый антипаттерн имеет concrete fix.",
+                "example": "Real-world: Tumblr 2010 sync fanout — каждый post ждал fanout всем followers → request timeouts → outages → миграция на async. Twitter early — single global ZSET для trending tags → hot key → migration на per-shard counter aggregation. Path: identify antipattern → understand cost → apply canonical fix.",
+                "when_to_apply": "Pre-deploy architecture review; production incident postmortems; code review.",
+                "edge_cases": "Антипаттерн в одном context = pattern в другом (sync OK при < 100 followers, broken at scale). Знать threshold перехода. Tech debt accumulation — refactor before scale doubles.",
+                "related": "Все Q1-Q29 — каждый Q описывает соответствующий правильный паттерн против антипаттерна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Главный антипаттерн — использовать NoSQL вместо Postgres. Postgres универсален, NoSQL = misguided trend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Postgres-only для 500M DAU feed = antipattern: read-heavy 175K/sec, write 460K/sec на fanout, time-series 200M posts/day — single-master Postgres не справится. NoSQL (Cassandra, Redis) chosen for specific reasons (LSM-tree write throughput, multi-region active-active, low-latency ZSET). Polyglot persistence — пafтерн, не антипаттерн.",
+                "source_of_confusion": "Кандидат-Postgres-fan боится NoSQL и обвиняет industry.",
+                "if_it_were_true": "Если бы Postgres хватало, Twitter/FB не мигрировали бы на Cassandra. Реальность: workload-driven choice.",
+                "how_it_should_be": "Polyglot persistence: Postgres для users/ACID, Cassandra для posts/time-series, Redis для timeline cache, ES для search."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный антипаттерн — async вообще. Sync code проще debug и reason about. Все системы должны быть синхронными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sync everywhere = catastrophic for feed: sync fanout 10K followers = 10 sec request, sync ranking inference = sync block I/O. Async через Kafka/queues — фундамент scalable feed. Debug сложнее, но решается через distributed tracing (Jaeger), structured logging, observability.",
+                "source_of_confusion": "Кандидат-junior боится async из-за debugging complexity.",
+                "if_it_were_true": "Если бы sync хватало, не было бы Kafka/RabbitMQ/SQS. Реальность: async — стандарт.",
+                "how_it_should_be": "Async для long-running/parallel ops; sync для simple low-latency ops. Tracing для debugability."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
