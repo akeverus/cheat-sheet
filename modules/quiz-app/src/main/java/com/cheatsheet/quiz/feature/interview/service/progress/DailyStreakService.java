@@ -38,7 +38,12 @@ public class DailyStreakService {
         try {
             dailyActivityRepository.incrementToday(event.isCorrect(), defaultDailyGoal);
         } catch (Exception e) {
-            log.warn("Не удалось обновить daily_activity: {}", e.getMessage());
+            // Логируем полный exception (class + message + cause), иначе SQL-ошибки
+            // вроде «bad grammar» теряются за обобщённым WARN и streak молча не
+            // апдейтится — пользователь видит «не выучил ничего сегодня» при
+            // успешных ответах.
+            log.warn("Не удалось обновить daily_activity [{}]: {}",
+                    e.getClass().getSimpleName(), e.getMessage(), e);
         }
     }
 
