@@ -1,10 +1,16 @@
 server:
   port: ${SERVER_PORT:8080}
+  # Graceful shutdown: при SIGTERM сервер перестаёт принимать новые запросы,
+  # но даёт активным завершиться. K8s/docker compose шлют SIGTERM до SIGKILL
+  # (по умолчанию 30s grace), поэтому Spring lifecycle тоже 30s.
+  shutdown: graceful
 
 spring:
   application:
     name: interview-prep
     version: "@projectVersion@"
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:30s}
   datasource:
     # PostgreSQL — единственная поддерживаемая БД. На локалке поднимай через
     # docker-compose (см. README) или укажи свои POSTGRES_* в env.
