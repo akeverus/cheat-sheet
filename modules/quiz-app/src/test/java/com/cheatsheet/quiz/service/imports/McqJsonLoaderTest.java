@@ -4,6 +4,7 @@ import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,13 +26,23 @@ class McqJsonLoaderTest {
 
     private QuestionRepository questionRepository;
     private AnswerOptionRepository answerOptionRepository;
+    private SimpleMeterRegistry meterRegistry;
     private McqJsonLoader loader;
 
     @BeforeEach
     void setUp() {
         questionRepository = mock(QuestionRepository.class);
         answerOptionRepository = mock(AnswerOptionRepository.class);
-        loader = new McqJsonLoader(new ObjectMapper(), questionRepository, answerOptionRepository);
+        meterRegistry = new SimpleMeterRegistry();
+        loader = new McqJsonLoader(new ObjectMapper(), questionRepository, answerOptionRepository, meterRegistry);
+    }
+
+    private double counter(String name, String result) {
+        return meterRegistry.find(name).tag("result", result).counter().count();
+    }
+
+    private double counter(String name) {
+        return meterRegistry.find(name).counter().count();
     }
 
     @Test
@@ -61,6 +72,10 @@ class McqJsonLoaderTest {
         assertThat(creates.get(1).correct()).isFalse();
         assertThat(creates.get(1).optionText()).startsWith("B. ");
         assertThat(creates.get(1).explanation()).contains("**Что на самом деле.**");
+
+        assertThat(counter("mcq.seed.topic.requests", "found")).isEqualTo(1.0);
+        assertThat(counter("mcq.seed.options.inserted")).isEqualTo(4.0);
+        assertThat(counter("mcq.seed.questions.skipped")).isEqualTo(0.0);
     }
 
     @Test
@@ -68,6 +83,8 @@ class McqJsonLoaderTest {
         McqLoadResult result = loader.loadForTopic("test", "nonexistent");
         assertThat(result.found()).isFalse();
         verify(answerOptionRepository, times(0)).insertAll(anyLong(), any());
+        assertThat(counter("mcq.seed.topic.requests", "notfound")).isEqualTo(1.0);
+        assertThat(counter("mcq.seed.topic.requests", "found")).isEqualTo(0.0);
     }
 
     @Test
@@ -81,6 +98,8 @@ class McqJsonLoaderTest {
         assertThat(result.questionsSkipped()).isEqualTo(1);
         assertThat(result.optionsInserted()).isEqualTo(0);
         verify(answerOptionRepository, times(0)).insertAll(anyLong(), any());
+        assertThat(counter("mcq.seed.questions.skipped")).isEqualTo(1.0);
+        assertThat(counter("mcq.seed.options.inserted")).isEqualTo(0.0);
     }
 
     @Test

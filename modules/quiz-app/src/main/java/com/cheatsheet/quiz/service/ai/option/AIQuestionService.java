@@ -10,6 +10,8 @@ import com.cheatsheet.quiz.service.ai.AiQuestionClient;
 import com.cheatsheet.quiz.service.ai.dto.GeneratedOptions;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.google.common.util.concurrent.Striped;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,9 @@ public class AIQuestionService {
     TransactionTemplate transactionTemplate;
     Striped<Lock> questionLocks;
     AppProperties appProperties;
+    Counter fallbackSuppressedCounter;
+    Counter fallbackCalledCounter;
+    Counter fallbackErrorCounter;
 
     public AIQuestionService(
             AnswerOptionRepository answerOptionRepository,
@@ -34,7 +39,8 @@ public class AIQuestionService {
             OptionCache optionCache,
             Striped<Lock> questionLocks,
             TransactionTemplate transactionTemplate,
-            AppProperties appProperties
+            AppProperties appProperties,
+            MeterRegistry meterRegistry
     ) {
         this.answerOptionRepository = answerOptionRepository;
         this.aiQuestionClient = aiQuestionClient;
@@ -42,6 +48,18 @@ public class AIQuestionService {
         this.transactionTemplate = transactionTemplate;
         this.questionLocks = questionLocks;
         this.appProperties = appProperties;
+        this.fallbackSuppressedCounter = Counter.builder("mcq.ai.fallback")
+                .tag("outcome", "suppressed")
+                .description("Question option requests that returned empty because AI fallback is disabled (seed-first default)")
+                .register(meterRegistry);
+        this.fallbackCalledCounter = Counter.builder("mcq.ai.fallback")
+                .tag("outcome", "called")
+                .description("Question option requests that triggered an AI generation call")
+                .register(meterRegistry);
+        this.fallbackErrorCounter = Counter.builder("mcq.ai.fallback")
+                .tag("outcome", "error")
+                .description("AI fallback calls that threw an exception")
+                .register(meterRegistry);
     }
 
     public List<AnswerOption> getOrCreateOptions(Question question) {
@@ -63,12 +81,20 @@ public class AIQuestionService {
             // не разрешён (app.ai.fallback-enabled=false по умолчанию), просто
             // возвращаем пусто — UI покажет флешкарту, никаких AI-вызовов в рантайме.
             if (!appProperties.isAiFallbackAllowed()) {
+                fallbackSuppressedCounter.increment();
                 return List.of();
             }
 
-            GeneratedOptions generated = aiQuestionClient.generateOptions(question.questionText(), question.codeSnippet())
-                    .orElseThrow(() -> new AiGenerationException(
-                            "AI не вернул валидные варианты ответа для вопроса id=" + question.id()));
+            fallbackCalledCounter.increment();
+            GeneratedOptions generated;
+            try {
+                generated = aiQuestionClient.generateOptions(question.questionText(), question.codeSnippet())
+                        .orElseThrow(() -> new AiGenerationException(
+                                "AI не вернул валидные варианты ответа для вопроса id=" + question.id()));
+            } catch (RuntimeException e) {
+                fallbackErrorCounter.increment();
+                throw e;
+            }
             List<AnswerOptionCreate> created = QuestionResponseMapper.mapToCreates(generated, aiQuestionClient.sourceId());
             transactionTemplate.executeWithoutResult(status -> {
                 answerOptionRepository.deleteByQuestionId(question.id());

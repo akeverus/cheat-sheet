@@ -14,6 +14,8 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -69,14 +71,33 @@ public class McqJsonLoader {
     private final QuestionRepository questionRepository;
     private final AnswerOptionRepository answerOptionRepository;
     private final JsonSchema schema;
+    private final Counter topicFoundCounter;
+    private final Counter topicNotFoundCounter;
+    private final Counter optionsInsertedCounter;
+    private final Counter questionsSkippedCounter;
 
     public McqJsonLoader(ObjectMapper objectMapper,
                         QuestionRepository questionRepository,
-                        AnswerOptionRepository answerOptionRepository) {
+                        AnswerOptionRepository answerOptionRepository,
+                        MeterRegistry meterRegistry) {
         this.objectMapper = objectMapper;
         this.questionRepository = questionRepository;
         this.answerOptionRepository = answerOptionRepository;
         this.schema = loadSchema();
+        this.topicFoundCounter = Counter.builder("mcq.seed.topic.requests")
+                .tag("result", "found")
+                .description("Topic JSON seed lookups that resolved to a real file")
+                .register(meterRegistry);
+        this.topicNotFoundCounter = Counter.builder("mcq.seed.topic.requests")
+                .tag("result", "notfound")
+                .description("Topic JSON seed lookups with no matching file")
+                .register(meterRegistry);
+        this.optionsInsertedCounter = Counter.builder("mcq.seed.options.inserted")
+                .description("Total answer options inserted from JSON seeds")
+                .register(meterRegistry);
+        this.questionsSkippedCounter = Counter.builder("mcq.seed.questions.skipped")
+                .description("Seed questions skipped because the matching DB question is missing")
+                .register(meterRegistry);
     }
 
     private JsonSchema loadSchema() {
@@ -100,8 +121,10 @@ public class McqJsonLoader {
         Path resourcePathForError = Paths.get(resourcePath);
         Resource resource = new ClassPathResource(resourcePath);
         if (!resource.exists()) {
+            topicNotFoundCounter.increment();
             return McqLoadResult.notFound();
         }
+        topicFoundCounter.increment();
         try (InputStream in = resource.getInputStream()) {
             JsonNode tree = objectMapper.readTree(in);
             Set<ValidationMessage> errors = schema.validate(tree);
@@ -130,6 +153,7 @@ public class McqJsonLoader {
             if (questionId.isEmpty()) {
                 log.warn("No question found for topic={}, q_number={}", topic, question.qNumber());
                 skipped++;
+                questionsSkippedCounter.increment();
                 continue;
             }
             long qId = questionId.get();
@@ -147,6 +171,7 @@ public class McqJsonLoader {
                 }
                 answerOptionRepository.insertAll(qId, creates);
                 totalInserted += creates.size();
+                optionsInsertedCounter.increment(creates.size());
             }
         }
         return McqLoadResult.ok(totalInserted, skipped);
