@@ -212,4 +212,25 @@ class QuestionRepositoryTest extends AbstractPostgresRepositoryTest {
 
         assertThat(ids).isEmpty();
     }
+
+    @Test
+    void findIdByTopicAndQuestionNumberMatchesOnSlugPattern() {
+        // McqJsonLoader использует этот метод, чтобы найти question_id
+        // для каждого JSON-сидера: slug = «<topic>.md#Q<N>».
+        long expected = repository.insert(sampleQuestion(
+                "databases/postgres-interview.md#Q5", "databases/postgres-interview"));
+
+        Optional<Long> found = repository.findIdByTopicAndQuestionNumber(
+                "databases/postgres-interview", 5);
+
+        assertThat(found).contains(expected);
+    }
+
+    @Test
+    void findIdByTopicAndQuestionNumberReturnsEmptyForMissing() {
+        Optional<Long> found = repository.findIdByTopicAndQuestionNumber(
+                "no-such/topic", 42);
+
+        assertThat(found).isEmpty();
+    }
 }
