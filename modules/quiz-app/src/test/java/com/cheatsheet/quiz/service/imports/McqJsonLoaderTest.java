@@ -108,4 +108,12 @@ class McqJsonLoaderTest {
                 .isInstanceOf(InvalidMcqSeedException.class)
                 .hasMessageContaining("topic_slug mismatch");
     }
+
+    @Test
+    void emptyQuestionsArrayFailsSchemaValidation() {
+        // Контракт mcq-schema.json: questions.minItems = 1.
+        // Пустой сидер обязан быть отвергнут на этапе загрузки, не доходить до БД.
+        assertThatThrownBy(() -> loader.loadForTopic("test", "empty-questions"))
+                .isInstanceOf(InvalidMcqSeedException.class);
+    }
 }
